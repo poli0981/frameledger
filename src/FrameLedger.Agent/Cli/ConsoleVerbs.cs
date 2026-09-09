@@ -39,8 +39,8 @@ internal sealed class ConsoleVerbs(IServiceProvider services, AgentPaths paths)
             AgentVerb.ConsentList => await ListAsync().ConfigureAwait(false),
             AgentVerb.ConsentGrant => await GrantAsync(cmd.ExePath!).ConfigureAwait(false),
             AgentVerb.ConsentRevoke => await RevokeAsync(cmd.ExePath!).ConfigureAwait(false),
-            AgentVerb.Capture => await CaptureAsync(cmd.ExePath!, cmd.Seconds).ConfigureAwait(false),
-            AgentVerb.Launch => await LaunchAsync(cmd.ExePath!, cmd.Arguments, cmd.Seconds).ConfigureAwait(false),
+            AgentVerb.Capture => await CaptureAsync(cmd.ExePath!, cmd.Seconds, cmd.PartialFlushSeconds).ConfigureAwait(false),
+            AgentVerb.Launch => await LaunchAsync(cmd.ExePath!, cmd.Arguments, cmd.Seconds, cmd.PartialFlushSeconds).ConfigureAwait(false),
             AgentVerb.Recover => await RecoverAsync().ConfigureAwait(false),
             AgentVerb.Sessions => await SessionsAsync(cmd.Last).ConfigureAwait(false),
             AgentVerb.DbPath => DbPath(),
@@ -113,12 +113,12 @@ internal sealed class ConsoleVerbs(IServiceProvider services, AgentPaths paths)
         return outcome is ConsentWriteOutcome.Written or ConsentWriteOutcome.NotFound ? _exitOk : _exitRefused;
     }
 
-    private async Task<int> CaptureAsync(string exePath, int seconds)
+    private async Task<int> CaptureAsync(string exePath, int seconds, int partialFlushSeconds)
     {
         string normalised = ExecutableIdentity.Normalise(exePath);
         ExecutableFingerprint? observed = ExecutableIdentity.Read(exePath);
 
-        RecordedSession recorded = await Get<AgentRecording>().Recorder(seconds, launcher: null).RecordAsync(new RecordRequest
+        RecordedSession recorded = await Get<AgentRecording>().Recorder(seconds, launcher: null, partialFlushSeconds).RecordAsync(new RecordRequest
         {
             NormalisedExePath = normalised,
             Observed = observed,
@@ -135,7 +135,7 @@ internal sealed class ConsoleVerbs(IServiceProvider services, AgentPaths paths)
     /// environment at all (decision D7): the loader compares the variable's value, and not setting it is the
     /// only honest "no". A launcher-fronted title that exits or sits on its window is handed to the election.
     /// </summary>
-    private async Task<int> LaunchAsync(string exePath, string arguments, int seconds)
+    private async Task<int> LaunchAsync(string exePath, string arguments, int seconds, int partialFlushSeconds)
     {
         string normalised = ExecutableIdentity.Normalise(exePath);
         ExecutableFingerprint? observed = ExecutableIdentity.Read(exePath);
@@ -152,7 +152,7 @@ internal sealed class ConsoleVerbs(IServiceProvider services, AgentPaths paths)
 
         var launcher = new ProcessLauncher(vulkan?.Variables, enableVulkanLayer: !engaged);
         AgentRecording recording = Get<AgentRecording>();
-        RecordedSession recorded = await recording.Recorder(seconds, launcher).RecordAsync(new RecordRequest
+        RecordedSession recorded = await recording.Recorder(seconds, launcher, partialFlushSeconds).RecordAsync(new RecordRequest
         {
             NormalisedExePath = normalised,
             Observed = observed,

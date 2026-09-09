@@ -15,7 +15,10 @@ public sealed class AgentCommandLineSurfaceTests
         // --exe / --seconds / --args are the host's three, with the same property: none can widen WHAT is
         // injected or skip a check. --last pages `sessions`. --data-dir is HANDOFF §P2 decision D6: a scratch
         // ledger for an operator or a test, and it exists only under --console.
-        AgentCommandLine.AcceptedOptions.Should().BeEquivalentTo(["--exe", "--seconds", "--args", "--last", "--data-dir"]);
+        // --partial-flush-seconds joined in P2 PR-G, and this assertion is what made adding it a deliberate
+        // act: it bounds how often a RUNNING session writes its own crash-recovery file, so like --seconds it
+        // cannot widen what is injected or skip a check.
+        AgentCommandLine.AcceptedOptions.Should().BeEquivalentTo(["--exe", "--seconds", "--args", "--last", "--data-dir", "--partial-flush-seconds"]);
     }
 
     [Fact]
@@ -112,5 +115,14 @@ public sealed class AgentCommandLineSurfaceTests
 
         AgentCommandLine.Parse(["--console", "capture", "--exe", "game.exe"]).Seconds.Should().Be(0);
         AgentCommandLine.Parse(["--console", "sessions", "--last", "0"]).Error.Should().NotBeNull();
+
+        // Same rule for the flush: 0 means "the product's 60 s", so garbage must not read as it.
+        foreach (string bad in new[] { "abc", "0", "-2", "1.5" })
+        {
+            AgentCommandLine.Parse(["--console", "capture", "--exe", "g.exe", "--partial-flush-seconds", bad]).Error.Should().NotBeNull(bad);
+        }
+
+        AgentCommandLine.Parse(["--console", "capture", "--exe", "g.exe"]).PartialFlushSeconds.Should().Be(0, "absent is the product's interval");
+        AgentCommandLine.Parse(["--console", "capture", "--exe", "g.exe", "--partial-flush-seconds", "2"]).PartialFlushSeconds.Should().Be(2);
     }
 }

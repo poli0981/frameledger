@@ -29,7 +29,13 @@ namespace FrameLedger.Agent.Tests;
 /// D6 exists; every Agent this class starts is given one, and the directory is deleted with the test.
 /// </para>
 /// </remarks>
+// ONE COLLECTION FOR EVERY CLASS THAT STARTS hook-harness, so they never run at the same time. xUnit
+// parallelises across classes but never within a collection, and two harnesses of the same image are exactly
+// the ambiguity TargetResolver refuses on ("2 processes share the image and none can be singled out") —
+// measured 2026-09-10, when this class and its sibling first ran concurrently. Refusing was correct; the
+// suites were wrong to be concurrent.
 [Trait("Category", "Integration")]
+[Collection("agent-harness")]
 public sealed class AgentEndToEndTests : IDisposable
 {
     private static string Harness => Path.Combine(AppContext.BaseDirectory, "hook-harness.exe");

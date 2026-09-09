@@ -72,11 +72,17 @@ internal sealed class AgentRecording
     /// wants the 8 s row, and the product's 30 s minimum is for sessions nobody bounded. The Agent keeps the
     /// product's 60 s <c>.partial</c> flush.
     /// </summary>
-    public SessionRecorder Recorder(int seconds, IProcessLauncher? launcher)
+    public SessionRecorder Recorder(int seconds, IProcessLauncher? launcher, int partialFlushSeconds = 0)
     {
         TimeSpan minimum = seconds > 0
             ? TimeSpan.FromSeconds(Math.Min(seconds, (int)SessionFinalizer.MinimumSessionLength.TotalSeconds))
             : SessionFinalizer.MinimumSessionLength;
+        // The product's 60 s unless an operator asked for shorter (P2 PR-G, --partial-flush-seconds): a
+        // kill-and-recover run needs a prefix on disk before the kill, and waiting a minute for one would
+        // make the test's timing the thing under test.
+        TimeSpan flush = partialFlushSeconds > 0
+            ? TimeSpan.FromSeconds(partialFlushSeconds)
+            : PartialSessionWriter.DefaultFlushInterval;
         return new SessionRecorder(
             new Factory(this, seconds, launcher),
             _games,
@@ -87,7 +93,7 @@ internal sealed class AgentRecording
             _crashes,
             Poller,
             TimeProvider.System,
-            new RecorderOptions { MinimumSessionLength = minimum });
+            new RecorderOptions { MinimumSessionLength = minimum, PartialFlushInterval = flush });
     }
 
     /// <summary>L1 + L2 + L3 under the composite, one poller per session; the poller owns and disposes the layers.</summary>

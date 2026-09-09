@@ -50,12 +50,28 @@ The anti-cheat guard is the one component where a bug can cost someone an accoun
 - Harness presents 120 s at a controlled cadence → Overlay injected → ring drained → session written → assert every aggregate against expected values.
 - Harness simulates: resolution change mid-run (segments), stub upscaler exports (`upscaler` detection), RT PSO + dispatch (RT flags), AS builds without dispatch (inline RayQuery path), PSO compile spikes (stutter attribution), and a fault-triggering hook path (self-disable).
 - `.partial` recovery: kill the Agent mid-capture, restart, assert `interrupted` session recovered.
+  **Built 2026-09-10 (P2 PR-G): `PartialRecoveryEndToEndTests`** — the shipped `FrameLedger.Agent.exe`
+  captures `hook-harness` with `--partial-flush-seconds 2`, the test polls until a flush has actually
+  landed (never a sleep), `Process.Kill`s the Agent, and then `--console recover` turns the valid prefix
+  into an `interrupted` row whose `frame_count` IS the prefix, deletes the file, and finds nothing on a
+  second pass. `PartialSessionFileTests` already kills at every byte offset; what this adds is that the
+  Agent wrote a recoverable prefix *on its own* before it died.
 - Guard integration: harness loads a **dummy DLL named like an anti-cheat module** → injection refused pre-launch; loaded late → safety unhook. (A renamed harmless DLL, not real anti-cheat software.)
 
 ## Hook overhead measurement (NFR-1, per release)
 
 1. `hook-harness` in a fixed workload, present-rate uncapped: 3 runs hooked vs 3 unhooked → mean present-call cost delta must be ≤ 1 µs (measured with QPC around the call site in an instrumented harness build).
 2. Real game, fixed 10-minute scene, capture ON vs OFF, 3 runs each: **game's own Avg FPS delta ≤ 0.5%**, Agent CPU ≤ 1% of a core, Agent RSS ≤ 150 MB, Overlay resident ≤ 8 MB.
+
+   > **NOT MEASURED. The runbook exists as of 2026-09-10 (P2 PR-G); the run is the owner's.**
+   > `tools/fps-impact-runbook.ps1` sequences the six launches, holds consent granted for the ON leg and
+   > revoked for the OFF leg — the same launch path both times, so the only difference is the injection —
+   > reads the Agent's CPU and RSS itself, prompts for the number only the operator can see (the game's own
+   > benchmark average), and prints the block for `spike-notes` §14. **It does not measure FPS and says so
+   > first:** FrameLedger's frame times exist only in the hooked leg, so they cannot be both sides of this
+   > comparison. Dev-only, never in `build.ps1 check` — it launches a real game. The harness-level
+   > per-present cost (item 1's neighbour) is P0's 8.4 ns in `spike-notes` §3, and is not this number.
+   > Until the run happens, the honest state of this line is *unmeasured*, not *passing*.
 3. Results recorded in the release notes ("measured overhead this release: …").
 
 ## Tier cross-validation (accuracy regression net) — **GONE, 2026-08-28, and this is the entry to read before planning P5**

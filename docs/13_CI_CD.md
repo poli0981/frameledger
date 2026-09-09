@@ -10,6 +10,32 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 - `runs-on: windows-latest`, .NET SDK pinned by `global.json` via `actions/setup-dotnet`, MSVC via `ilammy/msvc-dev-cmd`, NuGet cached.
 - Single step of substance: **`./build.ps1 check`** — the same script, with the same switches (none), a developer runs before pushing. The gate list lives in `12_BUILD` §Local quality gate, **once**, rather than being restated here where it goes stale.
 - ~~**`-SkipIntegration` is the one place local and CI deliberately differ**~~ — **gone since 2026-09-06.** From 2026-08-05 CI passed it for a measured reason: §S16 puts the injecting process's ancestors in the scan set, a .NET test host loads `System.Security.Cryptography.ProtectedData.dll`, and the guard's `protect` fragment refused our own harness (§S19(b)). The signer half now verifies that module's embedded signature offline and reads `O=Microsoft Corporation` on the compiled-in bound, so the nine `Category=Integration` cases run here, and a green CI IS evidence for the managed drain and the capture host's end-to-end behaviour. The switch remains in `build.ps1`, loud, for a developer who must.
+- **The hosted runner refuses guard scans intermittently — THREE failures in eight gate runs, measured
+  2026-09-10 while merging P2's stack.** Every one was an `Category=Integration` case, every one passed on
+  a re-run of the identical commit, and none was caused by the code under review. Two distinct shapes, and
+  the second is not §S19(b):
+    - `ShmDrainIntegrationTests.AnUnhookRequestStopsTheCaptureSideAndTheDrainCanSeeIt` at
+      `GuardedInjectAsync(...).IsAllowed` — the guard refusing our own harness, §S19(b)'s shape.
+    - `CaptureHostEndToEndTests.WhenTheTargetExitsTheHostStopsAndSaysWhy` with
+      **`ProcessTreeUnavailable — could not establish the scan set`**: the guard could not walk the
+      ancestors at all. That is a *different* failure from the fragment/signer one, and §S19(b) does not
+      cover it. A runner under load whose process enumeration fails is the obvious hypothesis and it is
+      **untested** — nobody has instrumented it.
+  So: §S19(b)'s refusal is **reduced, not gone**, and it is not the only way a scan fails here. The
+  earlier version of this bullet said "one run in the low tens", written after the first failure and
+  wrong by the end of the same evening; it is corrected rather than quietly deleted, because a frequency
+  claim made from one observation is exactly the shape this file keeps catching.
+  **Re-run before investigating**; if it reproduces, read the module list and the scan-set reason, not the test.
+- **A re-run ERASES the evidence, which is why the count above had to be kept by hand.**
+  `gh run rerun --failed` updates the original run's conclusion, so `gh run list` showed **18 success, 1
+  cancelled, 0 failed** across the twenty runs that contained all three failures above. Anyone measuring
+  this flake rate from the run history will measure zero. Read the job logs, or keep the tally as it
+  happens.
+- **The step that would diagnose it runs AFTER the thing it diagnoses, so a gate failure skips it.**
+  The signer probe below is step 8; the quality gate is step 7, and the job stops there. On the
+  2026-09-10 failure the probe therefore printed nothing, which is the one run where its output would
+  have named the refusing module. Moving it before the gate (or giving it `if: always()`) is a one-line
+  change nobody has made, recorded here rather than done quietly in an unrelated PR.
 - **Signer probe step** (2026-09-06): `fl-probe-signer` runs as its own step after the gate — `continue-on-error`, a measurement and not a gate — because `ctest fl_signer_probe` passes on a regular expression and prints nothing, so §S19(b)'s CI leg was never readable from the log. Its answers are read off this step.
 - Uploads coverage artifacts.
 - **Changelog gate**, on pull requests only: the changed-file list comes from GitHub's own view of the PR — not `git diff`, so a shallow checkout cannot silently produce a short one — and an empty list is refused rather than read as "no `src/` changes". It is a **step of the required `check` job** and deliberately not a job of its own: `main`'s required contexts are exactly `check` and the two `analyze` jobs, so a new job would go red while the merge button stayed green, which is what already makes `Rules / validate` advisory (§S23-2).

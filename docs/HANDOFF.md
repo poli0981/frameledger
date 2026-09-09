@@ -1126,6 +1126,24 @@ P1's core is merged (`15_ROADMAP` §P1). What comes next is P2 — the Agent, th
 SQLite — and this section carries its **order**, the **decisions that live in no other file**,
 and what each slice must make fail on unmodified `main`. Status lives where it lives.
 
+> ### What is left, as of 2026-09-10: **two measurements, no code.**
+>
+> All nine slices below are written and their gates are green (PR-0 #143, A #144, B #145, E1 #146
+> merged; C #147 → D #148 → E2 #149 → F #150 → G stacked and open, merged one at a time). What P2
+> still owes is what a PR cannot produce:
+>
+> 1. **The milestone session** — a real title, Tier 1, its `upscaler` / render→output / `fg_mode` /
+>    `rt_flag` read against the game's own settings menu. The *technical* half is in the merge gate
+>    (`AgentEndToEndTests`: the shipped Agent, `hook-harness`, one hooked row), and the harness has
+>    no upscaler to measure, which is exactly what the real title supplies.
+> 2. **The ≤ 0.5 % FPS-impact run** (`14_TESTING` §Hook overhead item 2, P1's last debt via §R4).
+>    `tools/fps-impact-runbook.ps1` sequences it; the number it needs is the game's own benchmark
+>    average, which only the operator can read.
+>
+> Both have slots, with the exact commands, in `docs/spike-notes.md` §14 — plus §S1's
+> launcher-fronted election run, whose code is built and whose first real launcher is still owed.
+> **Nothing in that section has been run.** Do not read an empty table as a passing one.
+
 **The order, one PR each, merged one at a time** (`main` is `strict: true` — every merge puts
 the next PR `BEHIND`, and every PR touching `src/` conflicts in `CHANGELOG.md`):
 
@@ -1188,6 +1206,26 @@ recorder to exist — it runs in **G**; §S1's first real-title launch-mode run 
 election are **F** and **G**; the ⏳ feature rows in `17_HOOK_ENGINE` §Hook inventory are not P2 —
 their columns (`hdr_flag`, `pt_confidence`, `pso_stutter_pct`, `vram_proc*`, `latency_*`) are an
 honest NULL in P2's schema, never a 0.
+
+## P3 — what comes after P2's two runs (not started; here so the order is not re-derived)
+
+`15_ROADMAP` §P3 is the UI. Two items P2 deliberately left standing are P3's first, and both are
+*replacements* rather than new ground:
+
+1. **The pipe (`07_IPC` §C).** Decision D10 put it here. The P2 Agent has no client: `--serve` logs
+   to `%LOCALAPPDATA%\FrameLedger\logs\agent-*.log` and `--console` prints. `04_CAPTURE`
+   §Threading model already says where the reader joins — one more producer, never a second reader
+   of the ring — and `07_IPC` §Messages is written and unimplemented. `SessionProgress` at 1 Hz is
+   what makes the Dashboard's live card worth having.
+2. **FR-2.1's consent dialog, which retires `ConsentProvenance.AgentConsoleOperator`.** The console
+   verb exists because the reviewed wording does not: `09_I18N` reviews `Safety_*` strings as legal
+   text in en/vi/ja, and no `.resx` exists anywhere in this tree. The dialog is the first thing that
+   needs one. When it lands, the enum gains its FR-2.1 member, the console verb becomes the
+   developer path it always said it was, and `19_SAFETY` §User-facing consent stops carrying an
+   exception. **Do not add the enum member before the reviewed text exists** — a declared value no
+   code can produce is the §S29(c) shape, and `GameConsentRecordTests` turns red on purpose.
+
+Everything else in P3 is `08_UI` and `16_WPFUI_SYNTAX` as written.
 
 ## Owner-only — no PR can close these
 
@@ -1310,6 +1348,18 @@ diagnosis*.
   the *wrong* PR to prove none of its own work had been lost. This is wrong by design rather
   than by bad luck — the tree has one HEAD, and a background job racing you for it will
   sometimes win. Use a separate worktree, or keep it in the foreground.
+- **CI's Integration cases fail on the runner about one run in three, and it is never the code.**
+  Measured 2026-09-10 while merging P2's stack: **three failures in eight gate runs**, every one an
+  `Category=Integration` case, every one green on a re-run of the identical commit. Two shapes were guard
+  scans failing — `GuardedInjectAsync(...).IsAllowed` false (§S19(b)'s fragment/signer shape) and
+  `ProcessTreeUnavailable — could not establish the scan set`, which §S19(b) does **not** cover — and one
+  was a fixture bug this repo owned (a pooled SQLite handle on `ledger.db` outliving `DisposeAsync`, so a
+  recursive `Directory.Delete` threw and xUnit blamed an unrelated test). **Re-run first. If it
+  reproduces, read the module list and the scan-set reason rather than the test.**
+  Two traps inside this one: `ci.yml`'s signer probe — the step that would name the refusing module —
+  runs *after* the gate, so the one run that needed it printed nothing; and `gh run rerun --failed`
+  rewrites the original run's conclusion, so the run history shows those three failures as **successes**
+  and the flake rate reads zero (`13_CI_CD`).
 - **MA0004 and xUnit1030 are all-or-nothing PER METHOD, in opposite directions.** A test method may
   not `ConfigureAwait(false)` (xUnit1030) and, once ANY await in it carries a `ConfigureAwait`, MA0004
   demands one on every other await too — so a helper's `.ConfigureAwait(false)` copied into a test

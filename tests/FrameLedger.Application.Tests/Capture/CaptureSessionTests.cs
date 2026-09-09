@@ -41,8 +41,18 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         {
             Directory.Delete(_dir, recursive: true);
         }
-        catch (DirectoryNotFoundException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            // MEASURED ON CI 2026-09-10, and it failed a test that had already passed: this class opens a
+            // real SQLite ledger, Microsoft.Data.Sqlite pools connections, and the pooled handle on
+            // ledger.db can outlive DisposeAsync by enough for the recursive delete to throw IOException —
+            // which xUnit reports against the TEST, not the fixture, so `AnIncompleteAttachIsRetried…`
+            // failed for something that has nothing to do with attaching.
+            //
+            // The narrow `catch (DirectoryNotFoundException)` this replaces was the ONLY one of its kind:
+            // every sibling fixture in this repository already catches IOException (CaptureSessionLaunchTests,
+            // SessionRecorderTests, LedgerFixture, PartialSessionFileTests…), and this is the one that holds
+            // a database. A scratch directory left behind under %TEMP% is not worth a red build.
         }
     }
 
