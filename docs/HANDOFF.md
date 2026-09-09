@@ -1156,11 +1156,17 @@ milestone must not wait on a new native target crossing every gate — it lands 
   is the consent store, its provenance and the disclosure, and `package-closure-check` keeps only
   the CaptureHost out. Restate §S27 and §S18 blocker 3 in the PRs that do it (C, F); the
   re-ratification is the owner's (below). P3's dialog retires the console provenance.
+  **Built 2026-09-10 (PR-F):** `Agent --console consent grant`, `OperatorDisclosure` moved to
+  `Application.Consent` with an `OperatorSurface`, `ConsentProvenance.AgentConsoleOperator`, the
+  acknowledgement carrying its provenance and the store refusing a nameless one.
 - **D7 — the FR-2.4 kill switch is the FOURTH input of `HookedCaptureGate`**, not an upstream
   check: the gate's own remark calls itself *"the ONLY managed logic between the user's intent and
   the guard"*, and a global switch is intent. `HookRequest.FromConsent` gains the parameter. The
   Vulkan layer honours it by the Agent **not** setting `FRAMELEDGER_ENABLE_VK_LAYER`; mid-session it
-  is `unhookRequested`.
+  is `unhookRequested`. **Built 2026-09-10 (PR-F):** `HookRequest.FromConsent(…, killSwitchEngaged)`,
+  `AntiCheatRefusalReason.KillSwitchEngaged` (27, mirrored natively), `IKillSwitch` read by
+  `CaptureSession` before the request and at every scan boundary, `ProcessLauncher(enableVulkanLayer:
+  false)`, `settings.hooking.kill_switch`, `Agent --console killswitch on|off|status`.
 - **D8 — FR-11 is NOT a consent precondition in P2.** `ILegalAcceptanceStore` (read-only) is declared
   in B so the precondition is one `if` when the owner turns it on.
 - **D9 — P2 never clears `hook_blocked_reason`.** A tri-state `hook_prescan_state`
@@ -1304,6 +1310,14 @@ diagnosis*.
   the *wrong* PR to prove none of its own work had been lost. This is wrong by design rather
   than by bad luck — the tree has one HEAD, and a background job racing you for it will
   sometimes win. Use a separate worktree, or keep it in the foreground.
+- **MA0004 and xUnit1030 are all-or-nothing PER METHOD, in opposite directions.** A test method may
+  not `ConfigureAwait(false)` (xUnit1030) and, once ANY await in it carries a `ConfigureAwait`, MA0004
+  demands one on every other await too — so a helper's `.ConfigureAwait(false)` copied into a test
+  method turns every neighbouring `await` red. Rule: helpers `false`, test methods either none at all
+  or `true` on every await; measured 2026-09-10 across three rebuilds of one test file.
+- **A Bash heredoc rewrites `\n` inside a Python string even when the heredoc is quoted.** The
+  replacement text arrived with real newlines, the assert that it matched the file failed, and the
+  diagnosis pointed at the file. Write patch scripts with the editor tool and run them by path.
 - **Anything that writes a file with a script writes LF, and `.gitattributes` hides it until
   it does not.** `dotnet format --verify-no-changes` is the documented victim, but a Python
   or PowerShell `write` is the usual cause. `git commit` prints *"LF will be replaced by

@@ -21,6 +21,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- The command-line surface and the composition are internal; the test project pins both. -->
+    <InternalsVisibleTo Include="FrameLedger.Agent.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Serilog" />
     <PackageReference Include="Serilog.Extensions.Hosting" />
@@ -46,5 +51,22 @@
     Overlay anywhere before this import existed.
   -->
   <Import Project="$(MSBuildThisFileDirectory)..\..\FrameLedger.Overlay.targets" />
+
+  <!--
+    The Vulkan implicit layer beside the Agent (P1 item 3, P2 PR-F). the console `launch` verb writes a manifest
+    pointing at THIS copy and hands the launched process VK_ADD_IMPLICIT_LAYER_PATH, so the layer is
+    discoverable only by that process: no registry, nothing machine-wide (VkLayerLaunchEnvironment).
+    Warn-not-fail like the others: build.ps1 runs the native build first, and a missing DLL is reported by
+    `launch` itself. The kill switch (FR-2.4) is honoured by NOT setting the enable variable (decision D7).
+  -->
+  <PropertyGroup>
+    <FlVkLayerDir>$(MSBuildThisFileDirectory)..\..\build\native\x64-release\FrameLedger.VkLayer\</FlVkLayerDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="$(FlVkLayerDir)FrameLedger.VkLayer.dll" Condition="Exists('$(FlVkLayerDir)FrameLedger.VkLayer.dll')">
+      <Link>FrameLedger.VkLayer.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
 </Project>

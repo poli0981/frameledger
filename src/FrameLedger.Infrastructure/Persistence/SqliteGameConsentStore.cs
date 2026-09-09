@@ -107,6 +107,12 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
         OperatorAcknowledgement acknowledgement, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(acknowledgement);
+        if (acknowledgement.Provenance == ConsentProvenance.NotRecorded)
+        {
+            // An acknowledgement that names no disclosure is not one: writing it would mint a consent stamp
+            // whose provenance says nothing was shown, the exact record HookRequest.FromConsent refuses.
+            throw new ArgumentException("an acknowledgement must name the disclosure surface that produced it", nameof(acknowledgement));
+        }
 
         try
         {
@@ -132,7 +138,8 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
                     size = fp.SizeBytes,
                     mtime = fp.MtimeUnixMs,
                     at,
-                    provenance = nameof(ConsentProvenance.UnshippedHostOperator),
+                    // The acknowledgement names its own surface (P2 PR-F); NotRecorded is refused above.
+                    provenance = acknowledgement.Provenance.ToString(),
                     disclosure = acknowledgement.DisclosureVersion,
                 };
                 await c.ExecuteAsync(new CommandDefinition(existing is null ? _insertGrant : _updateGrant, p, tx, cancellationToken: token))

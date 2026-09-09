@@ -115,7 +115,10 @@ CREATE TABLE games (
 > PR-B) it was written from this document — the file store and its DTOs were deleted the same day.
 > The two fields the consumer needed and this table lacked are columns now:
 > `hook_consent_provenance` and `hook_consent_disclosure_version`; the third pre-scan state is
-> `hook_prescan_state`.
+> `hook_prescan_state`. **`ConsentProvenance` has a third name since 2026-09-10 (P2 PR-F):**
+> `AgentConsoleOperator`, the Agent's own `--console consent grant` (HANDOFF §P2 decision D4) — a
+> shipped producer, still not FR-2.1, stamped by the Agent's clock; the store writes the NAME the
+> acknowledgement carries and refuses `NotRecorded`.
 >
 > **Still unanswered, and it is an owner decision rather than a coding one:** who
 > clears `hook_blocked_reason` when a re-scan comes back clean. `19_SAFETY` §A game
@@ -279,6 +282,7 @@ CREATE TABLE session_annotations (
 );
 
 CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+-- keys in use: hooking.kill_switch = '1' (FR-2.4, P2 PR-F; anything else, or no row, is off)
 CREATE TABLE legal_acceptance (doc TEXT PRIMARY KEY, version TEXT NOT NULL, accepted_at INTEGER NOT NULL);
 ```
 

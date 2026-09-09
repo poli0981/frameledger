@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>FrameLedger.Agent.Tests</RootNamespace>
+
+    <!--
+      The end-to-end case reads FlControlBlock.guardTicks through its OWN mapped view, to prove
+      the Agent published a tick from outside the Agent — the same arrangement CaptureHost.Tests
+      uses, for the same reason. Reading a mapped struct needs unsafe.
+    -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+
+    <!--
+      The Agent is an Exe with RuntimeIdentifier win-x64. A referencing project with no RID makes
+      restore resolve two different graphs, so the RID is set here too.
+    -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\FrameLedger.Agent\FrameLedger.Agent.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <!--
+    hook-harness is the ONLY thing this suite ever injects into: our own dummy D3D app, built from
+    this tree, carrying no anti-cheat and belonging to no publisher. A test in this class asserts
+    that constraint ON ITSELF, exactly as CaptureHostEndToEndTests does, so it cannot grow into
+    something that injects elsewhere by increments (§S9, §S27).
+
+    The Overlay, the guard, the rules seed, the NVAPI bridge and the Vulkan layer come with the
+    Agent's own imports (the ProjectReference carries their copy items); this adds the harness.
+  -->
+  <Import Project="$(MSBuildThisFileDirectory)..\..\FrameLedger.DrainFixtures.targets" />
+
+</Project>

@@ -1,7 +1,7 @@
 using FluentAssertions;
 using FrameLedger.Application.Capture;
+using FrameLedger.Application.Consent;
 using FrameLedger.CaptureHost;
-using FrameLedger.CaptureHost.Consent;
 
 namespace FrameLedger.CaptureHost.Tests;
 

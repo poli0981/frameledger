@@ -44,4 +44,12 @@ public sealed record OperatorAcknowledgement
 
     /// <summary>When the operator acknowledged, UTC.</summary>
     public required DateTimeOffset AcknowledgedAt { get; init; }
+
+    /// <summary>
+    /// Which disclosure surface produced this (P2 PR-F): the unshipped host's verb or the Agent's console
+    /// (<see cref="ConsentProvenance.AgentConsoleOperator"/>, decision D4). Never
+    /// <see cref="ConsentProvenance.NotRecorded"/> — an acknowledgement that names no disclosure is not one, and
+    /// the store refuses it.
+    /// </summary>
+    public ConsentProvenance Provenance { get; init; } = ConsentProvenance.UnshippedHostOperator;
 }

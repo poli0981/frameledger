@@ -177,6 +177,11 @@ enum class Reason : std::uint8_t {
     // layer's ring", not as a refusal.
     kTargetIsVulkanLayered,
 
+    // FR-2.4's global kill switch (P2 PR-F, HANDOFF §P2 decision D7): the fourth
+    // input of the managed HookedCaptureGate, refused before consent is read. The
+    // guard never produces it; it is here for the reason the consent refusals are.
+    kKillSwitchEngaged,
+
     // NOT A REASON. The count, so appending above it updates the exported
     // FlGuardReasonCount by construction.
     //

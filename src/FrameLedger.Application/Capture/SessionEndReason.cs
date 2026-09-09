@@ -122,4 +122,17 @@ public enum SessionEndReason
     /// (<see cref="Domain.AntiCheat.AntiCheatRefusalReason.LaunchNoPresentationRuntime"/>). Nothing was injected.
     /// </summary>
     LaunchNoPresentationRuntime,
+
+    /// <summary>
+    /// The gate refused because FR-2.4's global switch is on
+    /// (<see cref="Domain.AntiCheat.AntiCheatRefusalReason.KillSwitchEngaged"/>; P2 PR-F, decision D7). Nothing was
+    /// injected; a Tier-2 row records it.
+    /// </summary>
+    RefusedKillSwitch,
+
+    /// <summary>
+    /// FR-2.4's global switch was turned on mid-session: at the next guard-scan boundary the loop published
+    /// <c>unhookRequested</c> and stopped. The user's stop, not a safety refusal — the guard never said no.
+    /// </summary>
+    KillSwitchEngaged,
 }

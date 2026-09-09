@@ -19,6 +19,40 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Added
 
+- **P2 PR-F — the Agent host: `--serve` (watcher → orchestrator → recorder), `--console` verbs, the consent
+  grant (decision D4) and the kill switch as the gate's fourth input (decision D7) (2026-09-10).**
+  `FrameLedger.Agent` is a Generic Host now: `Composition.AgentServices` registers every `Application` port
+  to its one shipped adapter, `WatcherHostedService` runs `PartialRecovery` first and then
+  `Application.Watch.CaptureOrchestrator` — one process snapshot per second (`ToolhelpProcessSnapshotSource`),
+  `ProcessWatcher` (exact normalised path, or the file name when exactly one `games` row carries it →
+  `StalePath`, keyed on the real path), `ProcessTree` (a child that started before its parent is a reused
+  pid), `DescendantElection` (the newest tracked descendant; a launcher's consent does not extend to what it
+  spawns), ONE session per game at a time through the new `ISessionRecorder` port. `--console` carries
+  `consent list|grant|revoke`, `capture`, `launch` (with the election after `LaunchTargetExited` /
+  `LaunchNoPresentationRuntime`), `recover`, `sessions`, `db path`, `games add`, `killswitch on|off|status`,
+  and `--data-dir` under `--console` only (decision D6); `--diag`, `--install-task`, `--uninstall-task`,
+  `--register-vklayer`, `--unregister-vklayer` answer "not implemented in P2", exit 2. **D4:** `Agent
+  --console consent grant` shows `OperatorDisclosure` (moved to `Application.Consent`, one text, an
+  `OperatorSurface` for the first line and the stamp), refuses redirected stdin, and records the new
+  `ConsentProvenance.AgentConsoleOperator` with the Agent's clock; `OperatorAcknowledgement` carries its
+  provenance and `SqliteGameConsentStore` writes that name and refuses `NotRecorded`. **D7:** FR-2.4 is
+  `HookRequest.FromConsent`'s fourth input — `AntiCheatRefusalReason.KillSwitchEngaged` (27, added to the
+  native reason table so the mirror holds), checked before consent is read; `IKillSwitch`
+  (`Infrastructure.Settings.SettingsKillSwitch` over `settings.hooking.kill_switch`) is read by
+  `CaptureSession` before the request and at every guard-scan boundary, where an engaged switch publishes
+  `unhookRequested` and ends the session as `KillSwitchEngaged` (`RefusedKillSwitch` when refused up front);
+  `ProcessLauncher(enableVulkanLayer: false)` keeps the layer off by never setting
+  `FRAMELEDGER_ENABLE_VK_LAYER`. A bounded `--console capture --seconds N` lowers the discard threshold to N.
+  Tests: `AgentEndToEndTests` (Integration, in the gate) runs the shipped `FrameLedger.Agent.exe` against
+  `hook-harness` with a scratch ledger and reads back ONE hooked `sessions` row — the milestone's technical
+  half — plus the kill-switch refusal with no ring in the target, `consent grant` refusing redirected stdin,
+  and the unbuilt flags' exit 2; `AgentCommandLineSurfaceTests` pins the surface (no pid, payload, force,
+  yes, override); `ProcessWatcherTests`, `ProcessTreeAndElectionTests`, `CaptureOrchestratorTests`,
+  `ToolhelpProcessSnapshotSourceTests` (this process and a child it starts), `SettingsKillSwitchTests`, the
+  gate's `TheKillSwitchIsTheFourthInputAndOutranksAValidConsent`, the loop's
+  `AnEngagedKillSwitchRefusesBeforeTheGuardAndStopsARunningSessionAtTheNextScan`, and the store's
+  provenance round-trip. The capture host uses the moved disclosure unchanged.
+
 - **P2 PR-E2 — the NVAPI bridge: `FrameLedger.NvapiBridge.dll`, L3 `NvapiTelemetrySource`, and the NGX probe
   in-process (2026-09-10).** A new native target, `src/native/FrameLedger.NvapiBridge/` — a C ABI
   (`fl_nvapi_bridge.h`: refcounted `FlNvInit`/`FlNvShutdown`, `FlNvReadSample` into a fixed struct with a

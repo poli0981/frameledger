@@ -18,7 +18,6 @@ using FrameLedger.Application.Metrics;
 using FrameLedger.Application.Recording;
 using FrameLedger.Application.Rules;
 using FrameLedger.CaptureHost.Capture;
-using FrameLedger.CaptureHost.Consent;
 using FrameLedger.CaptureHost.Consume;
 using FrameLedger.CaptureHost.Telemetry;
 using FrameLedger.Domain.Consent;

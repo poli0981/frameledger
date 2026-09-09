@@ -31,16 +31,26 @@ namespace FrameLedger.Infrastructure.Capture;
 public sealed class ProcessLauncher : IProcessLauncher
 {
     private readonly IReadOnlyDictionary<string, string>? _environment;
+    private readonly bool _enableVulkanLayer;
 
     /// <summary>A launcher whose children get <paramref name="environment"/> on top of this process's.</summary>
     /// <param name="environment">
     /// Variables added to every child's environment — the Vulkan layer's, from
     /// <see cref="VkLayerLaunchEnvironment.Variables"/>, when the layer is staged beside the host.
     /// </param>
-    public ProcessLauncher(IReadOnlyDictionary<string, string>? environment = null) => _environment = environment;
+    /// <param name="enableVulkanLayer">
+    /// Whether the child gets <see cref="VkLayerLaunchEnvironment.EnableVariable"/>. False is how FR-2.4's kill
+    /// switch reaches the Vulkan layer (P2 PR-F, decision D7): the loader compares the variable's value, so not
+    /// setting it is the only honest "no" — the layer is never mapped, and nothing has to be told to stop.
+    /// </param>
+    public ProcessLauncher(IReadOnlyDictionary<string, string>? environment = null, bool enableVulkanLayer = true)
+    {
+        _environment = environment;
+        _enableVulkanLayer = enableVulkanLayer;
+    }
 
     /// <inheritdoc />
-    public (int Pid, ITargetLiveness Alive)? Start(string exePath, string arguments) => Start(exePath, arguments, _environment);
+    public (int Pid, ITargetLiveness Alive)? Start(string exePath, string arguments) => Start(exePath, arguments, _environment, _enableVulkanLayer);
 
     /// <summary>Start <paramref name="exePath"/> with <paramref name="arguments"/>; null when it could not be started or pinned.</summary>
     /// <param name="exePath">The consented executable.</param>
@@ -49,8 +59,9 @@ public sealed class ProcessLauncher : IProcessLauncher
     /// Variables added to the child's environment — the Vulkan layer's, from
     /// <c>VkLayerLaunchEnvironment</c>, when the layer is staged beside this host (P1 item 3).
     /// </param>
+    /// <param name="enableVulkanLayer">False leaves <see cref="VkLayerLaunchEnvironment.EnableVariable"/> unset (the kill switch, decision D7).</param>
     public static (int Pid, ITargetLiveness Alive)? Start(string exePath, string arguments,
-        IReadOnlyDictionary<string, string>? environment = null)
+        IReadOnlyDictionary<string, string>? environment = null, bool enableVulkanLayer = true)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(exePath);
 
@@ -59,7 +70,11 @@ public sealed class ProcessLauncher : IProcessLauncher
             UseShellExecute = false,
             WorkingDirectory = Path.GetDirectoryName(exePath) ?? string.Empty,
         };
-        psi.Environment[VkLayerLaunchEnvironment.EnableVariable] = "1";
+        if (enableVulkanLayer)
+        {
+            psi.Environment[VkLayerLaunchEnvironment.EnableVariable] = "1";
+        }
+
         foreach ((string name, string value) in environment ?? new Dictionary<string, string>(StringComparer.Ordinal))
         {
             psi.Environment[name] = value;

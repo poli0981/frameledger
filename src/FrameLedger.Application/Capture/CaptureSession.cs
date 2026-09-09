@@ -42,7 +42,8 @@ public sealed class CaptureSession(
     IRuntimeModuleSnapshot? modules = null,
     INgxDriverProbe? ngx = null,
     IProcessLauncher? launcher = null,
-    ICaptureObserver? observer = null)
+    ICaptureObserver? observer = null,
+    IKillSwitch? killSwitch = null)
 {
     /// <summary>Start one session, or say why not.</summary>
     /// <remarks>
@@ -164,7 +165,10 @@ public sealed class CaptureSession(
         ExecutableFingerprint observed, string payloadPath, Stopwatch? started, CancellationToken ct)
     {
         int waitMs = started is null ? 0 : checked((int)options.LaunchWaitBudget.TotalMilliseconds);
-        HookRequest request = HookRequest.FromConsent(record, observed, pid, payloadPath, waitMs);
+        // THE FOURTH INPUT (FR-2.4, decision D7) is read here and handed to the request, so the refusal is
+        // the gate's — a check upstream of it would make the gate's own "ONLY managed logic" remark false.
+        bool engaged = await IsKillSwitchEngagedAsync(ct).ConfigureAwait(false);
+        HookRequest request = HookRequest.FromConsent(record, observed, pid, payloadPath, waitMs, engaged);
         AntiCheatVerdict verdict = await gate.StartAsync(request, ct).ConfigureAwait(false);
         TimeSpan? launchWait = started?.Elapsed;
         // THE ONE VERDICT THAT IS NEITHER: the guard passed and injected nothing because the target
@@ -205,8 +209,13 @@ public sealed class CaptureSession(
         AntiCheatRefusalReason.PreviouslyBlocked => SessionEndReason.RefusedPreviouslyBlocked,
         AntiCheatRefusalReason.LaunchTargetExited => SessionEndReason.LaunchTargetExited,
         AntiCheatRefusalReason.LaunchNoPresentationRuntime => SessionEndReason.LaunchNoPresentationRuntime,
+        AntiCheatRefusalReason.KillSwitchEngaged => SessionEndReason.RefusedKillSwitch,
         _ => SessionEndReason.RefusedByGuard,
     };
+
+    /// <summary>FR-2.4 as this session reads it; a loop built without a switch reads "off".</summary>
+    private async ValueTask<bool> IsKillSwitchEngagedAsync(CancellationToken ct) =>
+        killSwitch is not null && await killSwitch.IsEngagedAsync(ct).ConfigureAwait(false);
 
     /// <summary>
     /// Retries ONLY on <see cref="ShmAttachRefusal.Incomplete"/>, bounded by wall
@@ -308,7 +317,7 @@ public sealed class CaptureSession(
     {
         var buffer = new FlFrameRecord[512];
 
-        bool mayContinue = await ScanAsync(pid, sink, supervisor, state.Loaded, ct).ConfigureAwait(false);
+        bool mayContinue = await ScanAsync(pid, sink, supervisor, state, ct).ConfigureAwait(false);
 
         DateTimeOffset nextScan = DateTimeOffset.UtcNow + options.ScanInterval;
         DateTimeOffset attachSettledAt = DateTimeOffset.UtcNow + options.AttachBudget;
@@ -336,7 +345,7 @@ public sealed class CaptureSession(
             {
                 try
                 {
-                    mayContinue = await ScanAsync(pid, sink, supervisor, state.Loaded, ct).ConfigureAwait(false);
+                    mayContinue = await ScanAsync(pid, sink, supervisor, state, ct).ConfigureAwait(false);
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)
                 {
@@ -361,7 +370,9 @@ public sealed class CaptureSession(
         DrainInto(sink, buffer, state);
         observer?.Tick(state.Progress(sink, supervisor));
         await FlushNativeLogAsync(sink, alive, end, ct).ConfigureAwait(false);
-        return Conclude(end, faulted, mayContinue);
+        // The switch's stop is the user's, not the guard's: it ends the session as its own reason rather
+        // than as the safety refusal a false mayContinue would otherwise read as.
+        return state.KillSwitchStopped ? SessionEndReason.KillSwitchEngaged : Conclude(end, faulted, mayContinue);
     }
 
     /// <summary>
@@ -389,12 +400,23 @@ public sealed class CaptureSession(
     /// Overlay's watchdog catches it on the next tick. The scan's exception propagates: the caller
     /// decides whether a throw ends the session or only the supervision.
     /// </remarks>
-    private static async Task<bool> ScanAsync(int pid, ICaptureSink sink, GuardSupervisor supervisor,
-        ModuleTally loaded, CancellationToken ct)
+    private async Task<bool> ScanAsync(int pid, ICaptureSink sink, GuardSupervisor supervisor,
+        DrainState state, CancellationToken ct)
     {
+        // FR-2.4 mid-session (decision D7), on the scan's own cadence: an engaged switch is published as
+        // unhookRequested — the signal the Overlay already stops on — with the supervisor's own count, so
+        // the tick stays the supervisor's and nothing here attests to a scan that did not run.
+        if (await IsKillSwitchEngagedAsync(ct).ConfigureAwait(false))
+        {
+            sink.PublishGuardResult(supervisor.CompletedEvaluations, unhookRequested: true);
+            state.Loaded.Take(pid);
+            state.KillSwitchStopped = true;
+            return false;
+        }
+
         bool mayContinue = await supervisor.ScanOnceAsync(pid, ct).ConfigureAwait(false);
         sink.PublishGuardResult(supervisor.CompletedEvaluations, supervisor.UnhookRequested);
-        loaded.Take(pid);
+        state.Loaded.Take(pid);
         return mayContinue;
     }
 
@@ -435,6 +457,9 @@ public sealed class CaptureSession(
     /// <summary>Everything one session accumulates, owned by the loop; the observer reads it between ticks.</summary>
     private sealed class DrainState(ModuleTally loaded)
     {
+        /// <summary>Set when a scan boundary found FR-2.4's switch on and published the stop (P2 PR-F).</summary>
+        public bool KillSwitchStopped { get; set; }
+
         public List<FlFrameRecord> Records { get; } = [];
 
         public List<ulong> Gaps { get; } = [];

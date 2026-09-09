@@ -60,7 +60,8 @@ public sealed class HookedCaptureGateTests
         bool enabled = true,
         ConsentProvenance provenance = ConsentProvenance.UnshippedHostOperator,
         string? blocked = null,
-        int waitMs = 0) =>
+        int waitMs = 0,
+        bool killSwitch = false) =>
         HookRequest.FromConsent(
             GameConsentRecord.Stored(
                 OnDisk, enabled, DateTimeOffset.UnixEpoch, provenance, "unshipped-host-operator/1",
@@ -68,7 +69,31 @@ public sealed class HookedCaptureGateTests
             OnDisk,
             targetPid: 1234,
             payloadPath: @"C:\FrameLedger\FrameLedger.Overlay.dll",
-            waitMs);
+            waitMs,
+            killSwitch);
+
+    [Fact]
+    public async Task TheKillSwitchIsTheFourthInputAndOutranksAValidConsent()
+    {
+        // FR-2.4 (P2 PR-F, HANDOFF §P2 decision D7): a fully consented, enabled, unblocked game is refused
+        // with its own reason when the global switch is on, and the guard is never asked — in either entry.
+        var guard = new RecordingGuard();
+        var gate = new HookedCaptureGate(guard);
+        CancellationToken ct = TestContext.Current.CancellationToken;
+
+        AntiCheatVerdict attach = await gate.StartAsync(Request(killSwitch: true), ct);
+        AntiCheatVerdict launch = await gate.StartAsync(Request(waitMs: 60_000, killSwitch: true), ct);
+
+        attach.Reason.Should().Be(AntiCheatRefusalReason.KillSwitchEngaged);
+        launch.Reason.Should().Be(AntiCheatRefusalReason.KillSwitchEngaged);
+        attach.IsAllowed.Should().BeFalse();
+        guard.InjectCalls.Should().Be(0);
+        guard.WhenReadyCalls.Should().Be(0);
+
+        // Off again: the same record reaches the guard, so the switch decided and not the record.
+        (await gate.StartAsync(Request(), ct)).IsAllowed.Should().BeTrue();
+        guard.InjectCalls.Should().Be(1);
+    }
 
     [Fact]
     public async Task AnEnabledConsentedGame_ReachesTheGuard()
@@ -223,13 +248,15 @@ public sealed class HookedCaptureGateTests
         AntiCheatVerdict notEnabled = await gate.StartAsync(Request(enabled: false), ct);
         AntiCheatVerdict noConsent = await gate.StartAsync(Request(provenance: ConsentProvenance.NotRecorded), ct);
         AntiCheatVerdict blocked = await gate.StartAsync(Request(blocked: "EasyAntiCheat appeared after a patch"), ct);
+        AntiCheatVerdict killed = await gate.StartAsync(Request(killSwitch: true), ct);
 
         notEnabled.Reason.Should().Be(AntiCheatRefusalReason.HookNotEnabled);
         noConsent.Reason.Should().Be(AntiCheatRefusalReason.ConsentMissing);
         blocked.Reason.Should().Be(AntiCheatRefusalReason.PreviouslyBlocked);
+        killed.Reason.Should().Be(AntiCheatRefusalReason.KillSwitchEngaged);
 
         // ...and none of them borrows a reason the native guard owns.
-        new[] { notEnabled.Reason, noConsent.Reason, blocked.Reason }
+        new[] { notEnabled.Reason, noConsent.Reason, blocked.Reason, killed.Reason }
             .Should().OnlyHaveUniqueItems()
             .And.NotContain(AntiCheatRefusalReason.BlockedExecutable);
 

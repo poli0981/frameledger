@@ -5,7 +5,6 @@ using FrameLedger.Application.Capture;
 using FrameLedger.Application.Consent;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
-using FrameLedger.CaptureHost.Consent;
 using FrameLedger.Domain.Consent;
 using FrameLedger.Domain.Sessions;
 using FrameLedger.Infrastructure.Persistence;

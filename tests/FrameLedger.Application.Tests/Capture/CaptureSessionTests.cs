@@ -225,7 +225,7 @@ public sealed class CaptureSessionTests : IAsyncDisposable
 
     private static CaptureSession Loop(IGameConsentStore store, CountingGuard guard, FakeSink? sink,
         FakeLiveness? alive = null, int? pid = _pid, SessionEndReason resolveReason = SessionEndReason.Running,
-        CaptureOptions? options = null) =>
+        CaptureOptions? options = null, IKillSwitch? killSwitch = null) =>
         new(store,
             new HookedCaptureGate(guard),
             guard,
@@ -239,7 +239,8 @@ public sealed class CaptureSessionTests : IAsyncDisposable
                 AttachBudget = TimeSpan.FromMilliseconds(50),
                 MaxDuration = TimeSpan.FromMilliseconds(120),
                 LogFlushGrace = TimeSpan.FromMilliseconds(1),
-            });
+            },
+            killSwitch: killSwitch);
 
     [Fact]
     public async Task TheModuleSnapshotIsTakenBesideEveryGuardScanAndOnceMoreBeforeTheLastDrain()
@@ -672,5 +673,35 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         r.Reason.Should().Be(SessionEndReason.SupervisionFaulted);
         r.Records.Should().NotBeEmpty("the drain ran before the guard threw, and those frames are real");
         sink.Published.Should().ContainSingle("the tick must NOT advance past the evaluation that threw");
+    }
+
+    [Fact]
+    public async Task AnEngagedKillSwitchRefusesBeforeTheGuardAndStopsARunningSessionAtTheNextScan()
+    {
+        // FR-2.4 (P2 PR-F, decision D7). Engaged from the start: the gate refuses with its own reason and the
+        // guard is never asked. Engaged mid-session: at the next scan boundary the loop publishes
+        // unhookRequested — the signal the Overlay already stops on — and ends as KillSwitchEngaged, which is
+        // the user's stop and not the SafetyUnhook a refused scan would read as.
+        var guard = new CountingGuard();
+        var engaged = new DelegateKillSwitch(() => true);
+        using var refusedSink = new FakeSink();
+        CaptureOutcome refused = await Loop(await StoreWithAsync(), guard, refusedSink, killSwitch: engaged)
+            .RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+        refused.Reason.Should().Be(SessionEndReason.RefusedKillSwitch);
+        refused.Verdict.Reason.Should().Be(AntiCheatRefusalReason.KillSwitchEngaged);
+        guard.InjectCalls.Should().Be(0, "the switch is checked before consent is read, so the guard is never reached");
+
+        int asks = 0;
+        var flipsAfterTwo = new DelegateKillSwitch(() => ++asks > 2);
+        using var sink = new FakeSink(recordsToServe: 3);
+        var stopped = new CountingGuard();
+        CaptureOutcome result = await Loop(await StoreWithAsync(), stopped, sink, killSwitch: flipsAfterTwo)
+            .RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        result.Reason.Should().Be(SessionEndReason.KillSwitchEngaged);
+        sink.Published.Should().Contain(p => p.Unhook, "the stop is published on the ring the way a safety stop is");
+        sink.Published[^1].Ticks.Should().Be(stopped.EvaluateCalls > 0 ? (uint)stopped.EvaluateCalls : 0u,
+            "the tick stays the supervisor's own count; nothing here attests to a scan that did not run");
+        result.Records.Should().HaveCount(3, "the last drain still runs on this path");
     }
 }
