@@ -19,6 +19,23 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Added
 
+- **P2 PR-G — kill-and-recover end to end, the FPS-impact runbook, and P2's closing sweep (2026-09-10).**
+  `PartialRecoveryEndToEndTests` (Integration, in the merge gate) is `14_TESTING`'s long-standing
+  `.partial` line, built: the shipped `FrameLedger.Agent.exe` captures `hook-harness` with the new
+  `--console … --partial-flush-seconds <n>`, the test polls until a flush has actually landed, kills the
+  Agent, and `--console recover` turns the valid prefix into an `interrupted` row whose `frame_count` is
+  that prefix, deletes the file, and finds nothing on a second pass. The new option is under `--console`
+  only and pinned by `AgentCommandLineSurfaceTests` beside the others: it bounds how often a running
+  session writes its own crash-recovery file and names nothing about injection.
+  `tools/fps-impact-runbook.ps1` (dev-only, never in `build.ps1 check`) sequences item 2's six launches —
+  consent granted for the ON leg, revoked for the OFF leg, the same launch path both times so the only
+  difference is the injection — reads the Agent's CPU and RSS, prompts for the game's own benchmark
+  average, and prints the `spike-notes` §14 block. **It does not measure FPS and says so first:**
+  FrameLedger's frame times exist only in the hooked leg. `spike-notes` §14 holds the three empty slots
+  (the milestone row against a title's menus, §S1's launcher-fronted election, the FPS table) with the
+  exact commands; `14_TESTING` item 2 now says *unmeasured* rather than nothing. **P2's code is complete;
+  what remains are two measurements only the owner can take.**
+
 - **P2 PR-F — the Agent host: `--serve` (watcher → orchestrator → recorder), `--console` verbs, the consent
   grant (decision D4) and the kill switch as the gate's fourth input (decision D7) (2026-09-10).**
   `FrameLedger.Agent` is a Generic Host now: `Composition.AgentServices` registers every `Application` port

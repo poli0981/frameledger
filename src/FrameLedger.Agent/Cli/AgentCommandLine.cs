@@ -14,7 +14,7 @@ namespace FrameLedger.Agent.Cli;
 /// </remarks>
 internal sealed record AgentCommandLine
 {
-    public static readonly string[] AcceptedOptions = ["--exe", "--seconds", "--args", "--last", "--data-dir"];
+    public static readonly string[] AcceptedOptions = ["--exe", "--seconds", "--args", "--last", "--data-dir", "--partial-flush-seconds"];
 
     /// <summary>The flags the design names and P2 does not build; each answers "not implemented in P2", exit 2.</summary>
     public static readonly string[] NotImplementedFlags = ["--diag", "--install-task", "--uninstall-task", "--register-vklayer", "--unregister-vklayer"];
@@ -24,6 +24,7 @@ internal sealed record AgentCommandLine
         + "       FrameLedger.Agent --console [--data-dir <dir>] consent list | consent grant --exe <path> | consent revoke --exe <path>\n"
         + "                                                     | capture --exe <path> [--seconds <n>] | launch --exe <path> [--args \"<string>\"] [--seconds <n>]\n"
         + "                                                     | recover | sessions [--last <n>] | db path | games add --exe <path>\n"
+        + "                                                     [--partial-flush-seconds <n>] on capture/launch\n"
         + "                                                     | killswitch on | killswitch off | killswitch status";
 
     public AgentVerb Verb { get; init; }
@@ -35,6 +36,15 @@ internal sealed record AgentCommandLine
     public string Arguments { get; init; } = string.Empty;
 
     public int Last { get; init; } = 10;
+
+    /// <summary>
+    /// How often a running session flushes its <c>.partial</c>, in seconds; 0 keeps the product's 60 s
+    /// (P2 PR-G). It exists so a kill-and-recover test does not have to wait a minute for a prefix to exist,
+    /// and it has the property every option on this surface must have: it names nothing about injection —
+    /// not the payload, not the target, not a check — and cannot make a session measure anything it would
+    /// not otherwise measure. Under <c>--console</c> only, like the rest.
+    /// </summary>
+    public int PartialFlushSeconds { get; init; }
 
     public string? DataDirectory { get; init; }
 
@@ -134,6 +144,7 @@ internal sealed record AgentCommandLine
             Arguments = parsed.Arguments,
             Last = parsed.Last,
             DataDirectory = parsed.DataDirectory,
+            PartialFlushSeconds = parsed.PartialFlushSeconds,
         };
     }
 
@@ -147,6 +158,8 @@ internal sealed record AgentCommandLine
         public int Seconds { get; private set; }
 
         public int Last { get; private set; } = 10;
+
+        public int PartialFlushSeconds { get; private set; }
 
         public string Arguments { get; private set; } = string.Empty;
 
@@ -171,6 +184,14 @@ internal sealed record AgentCommandLine
                     }
 
                     Last = last;
+                    return null;
+                case "--partial-flush-seconds":
+                    if (!int.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out int flush) || flush <= 0)
+                    {
+                        return "'--partial-flush-seconds' needs a positive whole number";
+                    }
+
+                    PartialFlushSeconds = flush;
                     return null;
                 case "--args":
                     Arguments = value;

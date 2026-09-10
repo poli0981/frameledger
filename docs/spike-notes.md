@@ -2457,3 +2457,91 @@ produced no false refusal on any real install.
 > 2026-08-02** — the FPS-impact criterion moved to the end of P1, and the
 > harness-level per-present cost stayed in P0 as item 2. This file went on asking
 > for a decision that two other documents had already recorded.
+
+---
+
+## 14 · The P2 milestone and the FPS-impact run *(slots — the owner's runs)*
+
+**Nothing below has been run.** The section exists because P2's code is finished and its two
+remaining obligations are measurements a script cannot take: a real title, read against its own
+settings menu, and a benchmark whose number only the operator can see. Written as empty slots with
+the exact commands rather than left absent, so the next session cannot mistake "not measured" for
+"not required" — the failure mode this file's own rules name first.
+
+### 14.1 · The milestone session — Tier 1, a real title, against its menus
+
+`15_ROADMAP` §P2: *"first real hooked session persisted with measured upscaler/RT data."*
+
+**The technical half is met and is in the merge gate (2026-09-10, P2 PR-F):**
+`AgentEndToEndTests` runs the shipped `FrameLedger.Agent.exe --console capture --exe hook-harness.exe`
+and reads back one `sessions` row — tier 1, `d3d11`, > 100 frames, `guard_ticks_published ≥ 1`, the
+blobs beside it, no `.partial` left. What the harness cannot supply is a *game*: it has no upscaler,
+no frame generation and no ray tracing, so `upscaler`, `fg_mode` and `rt_flag` are honestly `N/A`
+there. The milestone is the row where they are not.
+
+**The run, when the owner takes it** (candidates from §9: Cyberpunk 2077, Lies of P, Cronos):
+
+```
+FrameLedger.Agent --console consent grant  --exe "<title>.exe"      # type the phrase
+FrameLedger.Agent --console launch         --exe "<title>.exe" --seconds 600
+FrameLedger.Agent --console sessions --last 1
+```
+
+| Field | Read from the row | The game's own menu | Agree? |
+|---|---|---|---|
+| `upscaler` | | | |
+| `upscaler_quality` | | | *(`N/A` is the measured answer on every title so far — §9, P0 exit criterion 1)* |
+| `render_w` × `render_h` → `output_w` × `output_h` | | | |
+| `fg_mode` / `fg_factor` | | | |
+| `rt_flag` | | | |
+| `telemetry_source` | | *(expect `l1+lhm+nvapi` on this box since PR-E2)* | |
+
+**One launch per capture** (HANDOFF §Traps): a title measured off / ×2 / ×4 is three launches.
+
+### 14.2 · §S1's launcher-fronted title — launch mode and the descendant election
+
+The election is built (P2 PR-F, `DescendantElection`) and unit-tested against fabricated snapshots;
+what has never happened is a real launcher spawning a real game under it. An Epic- or
+Ubisoft-fronted title is the case: the consented executable exits or never presents, the guard
+answers `LaunchTargetExited` / `LaunchNoPresentationRuntime` with nothing injected, and the Agent
+then elects the newest tracked descendant and attaches.
+
+**The elected image needs its own consent record** — a launcher's consent does not extend to what it
+spawns — so the run is: `consent grant` the launcher, `launch` it, read the `election:` line, then
+`consent grant` the game the election named and `launch` again.
+
+| | |
+|---|---|
+| Title / launcher | |
+| Guard's answer for the launcher | |
+| `election:` line | |
+| Session row for the elected image | |
+
+### 14.3 · FPS impact ≤ 0.5 % — `14_TESTING` §Hook overhead item 2
+
+The last thing P1 owes (§R4 moved it here because it needs P2's drain and recorder). Run
+`tools/fps-impact-runbook.ps1`; it prints the block that replaces this one.
+
+```
+./tools/fps-impact-runbook.ps1 -Exe "<title>.exe" -GameArgs "-benchmark" -Seconds 600
+```
+
+| Run | Leg | Game avg FPS | Agent CPU (% of a core) | Agent RSS (MB) |
+|---|---|---|---|---|
+| 1 | ON | | | |
+| 2 | ON | | | |
+| 3 | ON | | | |
+| 1 | OFF | | | |
+| 2 | OFF | | | |
+| 3 | OFF | | | |
+
+Gates: FPS delta ≤ 0.5 %, Agent CPU ≤ 1 % of a core, Agent RSS ≤ 150 MB. **Overlay resident ≤ 8 MB is
+not measured by the runbook** and is left blank rather than guessed: it is a module inside the game
+process, and reading the target's memory is what CLAUDE.md rule 4 forbids — an external tool that
+inspects module sizes is the way to fill it.
+
+### 14.4 · §H7's six overlays — still owner-only
+
+Unchanged by P2 and repeated here because it is the other measurement no PR can close: the
+compare-and-restore path is proven against a fixture (`ctest fl_unhook_inline`), and §H7 still asks
+for one capture with each of the six overlays actually resident on the dev machine.
