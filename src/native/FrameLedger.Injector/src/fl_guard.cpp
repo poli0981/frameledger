@@ -524,6 +524,8 @@ const char* ReasonName(Reason r) noexcept {
         return "LaunchNoPresentationRuntime";
     case Reason::kTargetIsVulkanLayered:
         return "TargetIsVulkanLayered";
+    case Reason::kKillSwitchEngaged:
+        return "KillSwitchEngaged";
     case Reason::kCount:
         break;    // not a reason; falls through to the guard below
     }

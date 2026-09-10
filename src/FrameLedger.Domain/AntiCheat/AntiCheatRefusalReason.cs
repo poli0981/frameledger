@@ -197,4 +197,13 @@ public enum AntiCheatRefusalReason
     /// "attach to the layer's ring". <c>CaptureLoop</c> is the one place that distinction is made.
     /// </remarks>
     TargetIsVulkanLayered = 26,
+
+    /// <summary>
+    /// FR-2.4's global "disable all hooking" switch is on (P2 PR-F, HANDOFF §P2 decision D7). The FOURTH
+    /// input of <c>HookedCaptureGate</c>, checked before consent is even read: a global switch is intent,
+    /// and the gate is "the ONLY managed logic between the user's intent and the guard". The native guard
+    /// never produces it; it is in this enum for the same reason the three consent refusals are — one
+    /// reason table, one mirror surface.
+    /// </summary>
+    KillSwitchEngaged = 27,
 }

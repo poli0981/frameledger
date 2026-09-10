@@ -639,6 +639,16 @@ Enabling hooking is a **per-game** action, gated by a one-time dialog per game t
 
 Consent is stored per game (`games.hook_consent_at`), **stamped by the Agent, never supplied by a client** (`07_IPC` §The pipe is not a trust boundary). Wording lives in `.resx` and is reviewed with the same care as the legal documents.
 
+> **The Agent stamps one since 2026-09-10 (P2 PR-F, HANDOFF §P2 decision D4):** `FrameLedger.Agent --console
+> consent grant` shows `OperatorDisclosure` (the same four statements, first line naming the surface), requires
+> the typed phrase, refuses redirected stdin, and records `ConsentProvenance.AgentConsoleOperator` with the
+> Agent's own clock — the property a file store could not uphold. It is still **not FR-2.1's dialog**, and its
+> text says so first; P3's dialog retires it. **FR-2.4's kill switch is built the same day as the FOURTH input
+> of `HookedCaptureGate`** (decision D7): `settings.hooking.kill_switch = 1` refuses every game with
+> `KillSwitchEngaged` before consent is read, stops a running session at its next guard-scan boundary by
+> publishing `unhookRequested`, and keeps the Vulkan layer off by never setting `FRAMELEDGER_ENABLE_VK_LAYER`
+> on a launch.
+
 The default for every newly added game is **hooking off — Tier 2**. Nothing is ever injected because the user merely added a game.
 
 ### A game already enabled can become blocked later

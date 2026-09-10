@@ -253,4 +253,37 @@ public sealed class SqliteGameConsentStoreTests
         row.Fingerprint.Should().Be(Fingerprint());
         (await games.ListAsync(Ct)).Should().ContainSingle();
     }
+
+    [Fact]
+    public async Task TheAgentConsolesAcknowledgementStampsItsOwnProvenanceAndANamelessOneIsRefused()
+    {
+        // P2 PR-F (decision D4): the acknowledgement names the surface that produced it, and the store
+        // writes that NAME. NotRecorded is not a surface, and a stamp with it would be the timestamp-without-
+        // disclosure record HookRequest.FromConsent exists to refuse — so the store refuses to mint it.
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        var store = new SqliteGameConsentStore(f.Db);
+        ExecutableFingerprint fp = Fingerprint();
+
+        (await store.RecordOperatorAcknowledgementAsync(new OperatorAcknowledgement
+        {
+            Fingerprint = fp,
+            DisclosureVersion = "agent-console-operator/1",
+            AcknowledgedAt = DateTimeOffset.UnixEpoch,
+            Provenance = ConsentProvenance.AgentConsoleOperator,
+        }, Ct)).Should().Be(ConsentWriteOutcome.Written);
+
+        GameConsentRecord record = await store.FindAsync(fp.ExePath, Ct);
+        record.Provenance.Should().Be(ConsentProvenance.AgentConsoleOperator);
+        record.DisclosureVersion.Should().Be("agent-console-operator/1");
+        record.HookEnabled.Should().BeTrue();
+
+        Func<Task> nameless = async () => await store.RecordOperatorAcknowledgementAsync(new OperatorAcknowledgement
+        {
+            Fingerprint = fp,
+            DisclosureVersion = "x",
+            AcknowledgedAt = DateTimeOffset.UnixEpoch,
+            Provenance = ConsentProvenance.NotRecorded,
+        }, Ct).ConfigureAwait(false);
+        await nameless.Should().ThrowAsync<ArgumentException>().ConfigureAwait(true);
+    }
 }

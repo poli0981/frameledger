@@ -27,7 +27,7 @@ namespace FrameLedger.Application.Recording;
 /// reader of the ring (<c>04_CAPTURE</c> §Threading model).
 /// </para>
 /// </remarks>
-public sealed class SessionRecorder
+public sealed class SessionRecorder : ISessionRecorder
 {
     private readonly ICaptureSessionFactory _sessions;
     private readonly IGameRepository _games;

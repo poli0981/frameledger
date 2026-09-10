@@ -82,6 +82,12 @@ src/
                                #   never a pid), ProcessLauncher, the module snapshot, the marker scan
   FrameLedger.Shared/          # IPC contracts (System.Text.Json source-gen) + ShmRecord struct mirror
   FrameLedger.Agent/           # capture orchestrator: watcher, injector control, shm drain, recorder
+                               #   BUILT 2026-09-10 (P2 PR-F): a Generic Host. `--serve` = watcher
+                               #   (Application.Watch: ProcessWatcher, ProcessTree, DescendantElection,
+                               #   CaptureOrchestrator over ISessionRecorder) -> recorder -> the gate;
+                               #   `--console` = the operator's verbs incl. `consent grant` (decision D4,
+                               #   ConsentProvenance.AgentConsoleOperator) and `killswitch` (FR-2.4,
+                               #   the gate's FOURTH input, decision D7). --data-dir under --console only.
   FrameLedger.App/             # WPF UI
   FrameLedger.CaptureHost/     # UNSHIPPED, and since P2 PR-C (2026-09-09) a THIN SHELL: verbs,
                                #   the operator disclosure, the report consumer, and the composition

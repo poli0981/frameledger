@@ -38,7 +38,8 @@ public sealed class HookedCaptureGate(IAntiCheatGuard guard)
     /// the guard is even asked.
     /// </summary>
     /// <remarks>
-    /// The three inputs come from <c>IGameConsentStore</c>. This comment said
+    /// The three consent inputs come from <c>IGameConsentStore</c>; the fourth, FR-2.4's kill switch,
+    /// from <c>IKillSwitch</c> since P2 PR-F (decision D7). This comment said
     /// "consent lives in the Agent's database" in the present tense while no
     /// database, no <c>games</c> table and no consent writer existed in any
     /// <c>.cs</c> file (§S27) — the same present-tense-claim-about-an-absent-thing
@@ -50,6 +51,16 @@ public sealed class HookedCaptureGate(IAntiCheatGuard guard)
         CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+
+        // FR-2.4 FIRST (P2 PR-F, HANDOFF §P2 decision D7): the global switch is the user's intent about every
+        // game at once, so it outranks a per-game consent and is refused before that consent is even read.
+        if (request.KillSwitchEngaged)
+        {
+            return AntiCheatVerdict.Refused(
+                AntiCheatRefusalReason.KillSwitchEngaged,
+                "kill switch",
+                "the global 'disable all hooking' switch is on (FR-2.4); nothing is injected until it is turned off");
+        }
 
         if (!request.HookEnabled)
         {

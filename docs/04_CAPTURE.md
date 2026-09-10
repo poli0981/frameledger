@@ -106,6 +106,22 @@ which makes the notification more important than it was, not less.
 - Watchlist match on normalized full path (`GetFinalPathNameByHandle` — junctions/symlinks), filename fallback with a stale-path warning badge.
 - Process tree assembled from ppid chains; the **capture target** is the descendant that actually presents. In launch mode we know it; in attach mode we wait for the first ring handshake. ~~or (Tier 2) elect the PID with the most presents in the first 10 s~~ — there is no Tier-2 present stream to elect from. Re-elect if the presenting PID dies while the tree lives (level-transition relaunches).
 
+> **Built 2026-09-10 (P2 PR-F), in `Application.Watch` with one adapter.** `ToolhelpProcessSnapshotSource`
+> (`Infrastructure.Watch`) takes the 1 Hz snapshot — pid, parent pid and image name from
+> `CreateToolhelp32Snapshot`; the full image path (normalised the way a consent record's is) and the creation
+> time through a `PROCESS_QUERY_LIMITED_INFORMATION` handle, and a process that refuses even that is listed with
+> both null so it can match nothing. `ProcessWatcher` diffs it against the watchlist — the `games` rows — on the
+> normalised full path first and on the file name only when exactly ONE row carries it (`StalePath`, the
+> "stale-path warning badge"; the session is keyed on the path the process actually runs from, so consent for the
+> old path does not follow the binary). `ProcessTree` reads ppid chains with the one rule that defeats pid
+> reuse: a child that started before its parent is not its child. `DescendantElection` picks the newest-started
+> descendant whose image is tracked — a launcher's consent does not extend to what it spawns, so the elected image
+> needs its own record. `CaptureOrchestrator` is the `--serve` loop: one snapshot per second, ONE session per game
+> at a time through `ISessionRecorder`, attach mode only; it decides nothing about hooking, the recorder's loop
+> reaches the gate exactly as a console verb does. `WatcherHostedService` runs `PartialRecovery` first, every
+> start, then the orchestrator. There is no `Channel` and no second consumer: `PollOnceAsync` is the only writer
+> of the running-session table, and the sessions run on their own tasks.
+
 ## Launch mode vs attach mode
 
 **Launch mode (preferred).** User starts the game from FrameLedger (or FrameLedger is set as the launch wrapper): `CreateProcess(CREATE_SUSPENDED)` → guard → inject → `ResumeThread`. Catches swapchain creation and upscaler init, which attach mode can miss entirely — a game that creates its DLSS feature during startup will otherwise report `upscaler = unknown` for the whole session.
@@ -127,7 +143,9 @@ which makes the notification more important than it was, not less.
 > the moment PR-D's warmer host reached the poll 20 ms sooner; `fl_guard` pins it in both directions). A target that exits first, or maps no runtime inside the budget (60 s in the
 > host), answers `LaunchTargetExited` / `LaunchNoPresentationRuntime` with nothing injected; a launcher
 > that spawns the real game and quits lands on the first, and re-electing the descendant is the Agent's
-> (P2, §Process watcher). **The host never terminates what it launched**: any refusal after the start
+> (P2, §Process watcher) — **built 2026-09-10 (PR-F)**: the Agent's `--console launch` hands either
+> answer to `DescendantElection` and runs an attach-mode session against the newest tracked descendant.
+> **The host never terminates what it launched**: any refusal after the start
 > leaves the title running unhooked, which is Tier 2.
 >
 > **What it measures about itself, which is the input §S1 deferred on.** The report prints the wait
@@ -234,7 +252,7 @@ What the Agent checks **before** asking the guard is the thing the native side s
 |---|---|---|---|
 | **Session loop** (`CaptureSession.RunAsync`, one async loop per session) | `Task.Delay(100 ms)` drain ticks; the 30 s guard scan is awaited inline | The ring reader, for the life of the session — drain, `PublishGuardResult`, `SetPaused`, `RequestLogFlush` — and the record buffer it fills | Samples foreground per tick, drains the telemetry queue per tick (PR-D), writes `.partial` itself (PR-D) |
 | **Telemetry** (`fl-telemetry`, `TelemetryPoller`, one per session) | 1 Hz, never faster than 500 ms | Its own `ConcurrentQueue` of `TelemetrySample` | Reads the composite source only; L2 has a thread of its own inside the library, and the composite is read from this thread and no other |
-| **Watcher** (PR-F, `PeriodicTimer(1 s)`) | 1 Hz process snapshot | A `Channel<WatcherEvent>` with the orchestrator as single consumer | Never the ring, never the database |
+| **Watcher** (built 2026-09-10, PR-F: `CaptureOrchestrator.RunAsync` on a `PeriodicTimer(1 s)`) | 1 Hz process snapshot | The watcher's events and the running-session table — `PollOnceAsync` is their only writer; there is no `Channel`, because there is no second consumer | The `games` rows (one read per poll) and never the ring; each session it starts runs on its own task |
 | **Finalize** (PR-D) | Once, on the session loop's task | The one SQLite connection, behind a `SemaphoreSlim(1)` | `ApplicationStopping` cancels the loop; finalize gets a grace window, then the `.partial` stays for recovery |
 
 Rules the table encodes: **nothing but the session loop touches `ShmRingReader`** — no lock is
@@ -307,7 +325,8 @@ because a layer cannot leave a running game's loader chain.
 > retention sweep, and the `.partial` is deleted only on `Saved` or `Discarded`. `Interrupted` is
 > `PartialRecovery`'s alone: at startup every pending file becomes an `interrupted` row from its valid
 > prefix, or is dropped for one of three stated reasons (already stored, too short, unreadable). The
-> unshipped host lowers the discard threshold to 5 s for bounded operator captures; the Agent keeps 30 s.
+> unshipped host lowers the discard threshold to 5 s for bounded operator captures; the Agent keeps 30 s
+> for every session nobody bounded and lowers it to the bound for a `--console capture --seconds N` (PR-F).
 
 ## Crash & exit classification
 

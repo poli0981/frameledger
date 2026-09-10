@@ -93,8 +93,10 @@ public sealed class GameConsentRecordTests
         // raised for, so adding one has to be a deliberate act that turns this red.
         string[] names = Enum.GetNames<ConsentProvenance>();
 
+        // Three since P2 PR-F (2026-09-10): the Agent's console verb is a shipped producer with a disclosure of
+        // its own (HANDOFF §P2 decision D4). Still no FR-2.1 member, for the reason above.
         names.Should().BeEquivalentTo(
-            [nameof(ConsentProvenance.NotRecorded), nameof(ConsentProvenance.UnshippedHostOperator)]);
+            [nameof(ConsentProvenance.NotRecorded), nameof(ConsentProvenance.UnshippedHostOperator), nameof(ConsentProvenance.AgentConsoleOperator)]);
         ((int)ConsentProvenance.NotRecorded).Should().Be(0, "the default must mean no disclosure was shown");
     }
 

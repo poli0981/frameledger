@@ -34,6 +34,12 @@
 > matches a blocklist — two matchers that can disagree is a fail-open by
 > construction, and a test asserts there is only one (§S15 item 1).
 
+> **The Agent box exists as of 2026-09-10 (P2 PR-F).** `ProcessWatcher` is `Application.Watch`
+> (`CaptureOrchestrator` over `ToolhelpProcessSnapshotSource`); `Injector` is the guard facade reached
+> through `HookedCaptureGate`; `ShmReader` is `CaptureSession` over `ShmRingReader`; `VendorTelemetry` is
+> the L1 + L2 + L3 composite; `SessionRecorder` is `Application.Recording`. The named pipe on the left
+> is **not** built (P3, `07_IPC`), so today's Agent has no UI client: `--serve` logs, `--console` prints.
+
 ## Why this shape
 
 - **Hooking in-process is the only way to get the facts we care about.** Render resolution vs output resolution, upscaler identity and quality preset, whether frame generation is actually running, whether rays are actually being traced — none of these are observable from outside the process. The previous ETW-only design could only guess from file/module presence, which measured badly against real games.

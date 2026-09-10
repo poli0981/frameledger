@@ -1,8 +1,11 @@
-namespace FrameLedger.CaptureHost.Consent;
+using FrameLedger.Domain.Consent;
+
+namespace FrameLedger.Application.Consent;
 
 /// <summary>
-/// What an operator is told before a consent record may be written here, and the
-/// exact act that writes one.
+/// What an operator is told before a consent record may be written from a console, and the
+/// exact act that writes one. Moved here from the unshipped capture host with P2 PR-F, because the
+/// Agent's <c>--console consent grant</c> (HANDOFF §P2 decision D4) shows the same text.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -26,11 +29,17 @@ namespace FrameLedger.CaptureHost.Consent;
 /// can supply is not an explicit human action, and this is the one place the
 /// difference is enforceable.
 /// </para>
+/// <para>
+/// <b>Two surfaces, one text.</b> The first line names the binary — the unshipped host, or the
+/// Agent's console — and the <see cref="ConsentProvenance"/> stamped follows the surface. Everything
+/// after the first line is identical, so the substance an operator acknowledged is one text with one
+/// review history, and <see cref="VersionOf"/> keeps the two version strings apart.
+/// </para>
 /// </remarks>
-internal static class OperatorDisclosure
+public static class OperatorDisclosure
 {
     /// <summary>
-    /// Stamped onto every record this path writes, so a later change to the wording
+    /// Stamped onto every record the unshipped host writes, so a later change to the wording
     /// does not silently re-interpret acknowledgements already made.
     /// </summary>
     /// <remarks>
@@ -44,36 +53,45 @@ internal static class OperatorDisclosure
     /// </para>
     /// <para>
     /// <b>NOTHING RE-PROMPTS ON A VERSION MISMATCH, and this field is provenance rather
-    /// than a control.</b> Traced 2026-08-28: it is written by <c>Program</c>, merged
+    /// than a control.</b> Traced 2026-08-28: it is written by the grant verb, merged
     /// forward by the store, cleared on revoke, and read by exactly one non-test caller —
     /// the status line in <c>consent list</c>. <c>HookRequest.FromConsent</c> never sees it,
     /// so a record stamped /1 still yields consent today. Whether that is acceptable is an
-    /// owner decision, not a coding one: the realistic population is one developer's own
-    /// build tree, which <c>git clean</c> removes. If a wording change is ever material
+    /// owner decision, not a coding one. If a wording change is ever material
     /// enough to require re-consent, <b>that re-prompt has to be built — it does not exist</b>,
     /// and saying so here is what stops the next reader assuming the stamp does something.
     /// </para>
     /// </remarks>
     public const string Version = "unshipped-host-operator/2";
 
+    /// <summary>
+    /// The Agent console's stamp (P2 PR-F). Its text is <see cref="Version"/>'s with a different first
+    /// line, so it starts at /1 of its own series rather than inheriting /2 — the series names the
+    /// surface, and an operator who acknowledged the host's text did not acknowledge this binary's.
+    /// </summary>
+    public const string AgentConsoleVersion = "agent-console-operator/1";
+
     private const string _phrase = "I ACCEPT THE INJECTION RISK";
+
+    private const string _hostHeader = "FrameLedger capture host — a DEVELOPER TOOL. This is not the FrameLedger app.";
+
+    private const string _agentHeader = "FrameLedger Agent console — an OPERATOR SURFACE. This is not the FrameLedger app's consent dialog.";
 
     // A string[] printed in a foreach, not a run of Console.WriteLine("literal"):
     // AnalysisLevel latest-all + TreatWarningsAsErrors turns CA1303 into a build error.
     private static readonly string[] _lines =
     [
-        "FrameLedger capture host — a DEVELOPER TOOL. This is not the FrameLedger app.",
         "",
         "  This is NOT the per-game consent dialog FR-2.1 specifies. That dialog does not",
         "  exist yet: its wording has to be reviewed as legal text in en, vi and ja, and no",
         "  such text has been written. What you are about to record is an OPERATOR",
-        "  ACKNOWLEDGEMENT at an unshipped binary, and the record says exactly that.",
+        "  ACKNOWLEDGEMENT at a console, and the record says exactly that.",
         "",
         "  What gets injected, and why: FrameLedger.Overlay.dll, into the game process, to",
         "  measure the real render resolution, upscaler, frame generation and ray tracing",
         "  state. Passive measurement cannot do this accurately.",
         "",
-        "  If you do not enable hooking, this host still records the session: its start,",
+        "  If you do not enable hooking, FrameLedger still records the session: its start,",
         "  end and duration, plus whatever hardware telemetry this machine provides. Every",
         "  frame-derived value — frame times, resolution, upscaler, frame generation, ray",
         "  tracing — reads N/A. That is Tier 2. It needs no elevation, and it is what every",
@@ -87,13 +105,28 @@ internal static class OperatorDisclosure
         "",
     ];
 
-    /// <summary>Show the disclosure and read the confirmation. False means nothing may be written.</summary>
+    /// <summary>The version string a record acknowledged through <paramref name="surface"/> carries.</summary>
+    public static string VersionOf(OperatorSurface surface) =>
+        surface == OperatorSurface.AgentConsole ? AgentConsoleVersion : Version;
+
+    /// <summary>The provenance a record acknowledged through <paramref name="surface"/> carries.</summary>
+    public static ConsentProvenance ProvenanceOf(OperatorSurface surface) =>
+        surface == OperatorSurface.AgentConsole ? ConsentProvenance.AgentConsoleOperator : ConsentProvenance.UnshippedHostOperator;
+
+    /// <summary>Show the unshipped host's disclosure and read the confirmation. False means nothing may be written.</summary>
     /// <param name="output">Where the disclosure goes.</param>
     /// <param name="input">The operator's reply, or null when stdin is redirected.</param>
-    public static bool Confirm(TextWriter output, TextReader? input)
+    public static bool Confirm(TextWriter output, TextReader? input) => Confirm(output, input, OperatorSurface.UnshippedHost);
+
+    /// <summary>Show the disclosure for <paramref name="surface"/> and read the confirmation. False means nothing may be written.</summary>
+    /// <param name="output">Where the disclosure goes.</param>
+    /// <param name="input">The operator's reply, or null when stdin is redirected.</param>
+    /// <param name="surface">Which binary is asking; only the first line and the stamped provenance differ.</param>
+    public static bool Confirm(TextWriter output, TextReader? input, OperatorSurface surface)
     {
         ArgumentNullException.ThrowIfNull(output);
 
+        output.WriteLine(surface == OperatorSurface.AgentConsole ? _agentHeader : _hostHeader);
         foreach (string line in _lines)
         {
             output.WriteLine(line);

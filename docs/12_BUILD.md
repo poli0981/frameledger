@@ -90,6 +90,16 @@ Native debugging notes: use **`hook-harness`, never a real game**, for step-thro
 
 Agent flags: `--serve`, `--console`, `--diag`, `--install-task`, `--uninstall-task`, `--register-vklayer`, `--unregister-vklayer`.
 
+> **Built 2026-09-10 (P2 PR-F): `--serve` and `--console`; the other five answer "not implemented in P2"
+> with exit 2** rather than being silently accepted (`--diag` is the App's anyway, `10_LOGGING`). The console
+> surface, pinned by `AgentCommandLineSurfaceTests`: `consent list | grant --exe | revoke --exe`, `capture --exe
+> [--seconds n]`, `launch --exe [--args "…"] [--seconds n]`, `recover`, `sessions [--last n]`, `db path`,
+> `games add --exe`, `killswitch on | off | status`, and `--data-dir <dir>` — **under `--console` only**
+> (HANDOFF §P2 decision D6): `--serve` never takes one, so the product's `%LOCALAPPDATA%\FrameLedger` is not
+> selectable and an integration test cannot point the product at a profile. `AgentEndToEndTests` runs the
+> shipped `FrameLedger.Agent.exe` against `hook-harness` with a scratch `--data-dir` and reads the one
+> `sessions` row back — the milestone's technical half, in the merge gate.
+
 ## Bundled assets
 
 - ~~`assets/native/PresentMon.exe` (pinned, SHA-256 verified at build) for the Tier-2 fallback~~ — **DROPPED 2026-08-27, and there are no bundled native assets at all.** §S31 measured PresentMon classifying every frame of a ×4 capture as an application frame (row P2); the owner then dropped it outright. It is not bundled, not fetched, not used, and `tools/frametype-oracle.ps1` — the parser that consumed its output — is deleted with it. `assets/` does not exist and now has no reason to. **And since 2026-08-28 Tier 2 is not a measurement at all**: the ladder is two rungs, `EtwFrameSource` is deleted from the design, and whether a shipped build ever regains a no-injection measurement is `20_OPEN_QUESTIONS` §G.

@@ -180,6 +180,13 @@ the recount becomes the next thing that needs recounting.
 > whether accepting the Legal Gate (FR-11) is a precondition of stamping consent; and
 > whether §S18 blocker 3's "the Agent is the sole host of the guard" is re-ratified now
 > that a third project imports `FrameLedger.Guard.targets`.
+>
+> **Three of these were decided 2026-09-09 and built 2026-09-10 (P2 PR-F):** the kill switch IS an
+> input to `HookedCaptureGate` — the fourth, checked first (decision D7); what an operator is shown
+> before a console record is written is `OperatorDisclosure`, one text for the unshipped host and the
+> Agent's console, still not a reviewed `Safety_*` string and saying so first (decision D4); FR-11 is NOT
+> a precondition of stamping consent in P2 (decision D8). The `hook_blocked_reason` clearing and the
+> §S18 blocker-3 re-ratification stay the owner's.
 
 > **2026-08-09, and the count does not move: still nine.** The upscaler identity hook
 > landed (`HANDOFF` item 2) and closed nothing in this table, which is worth stating so
@@ -1226,6 +1233,20 @@ rather than a missing feature.~~
 > and `NoSecondRingReaderTests` (nothing but `ShmRingReader` opens the ring). The resolver still has
 > no pid parameter — `TargetResolver.Resolve(normalisedExePath)` is the only way to a pid, and the
 > gate is the only way from a pid to the guard.
+
+> **Restated 2026-09-10 (P2 PR-F): the Agent is the injecting entry point now, by design.**
+> `FrameLedger.Agent --serve` watches the `games` table and records a session per tracked process;
+> `--console capture | launch` do it on an operator's verb; both reach `FlGuardedInject` through
+> `SessionRecorder → CaptureSession → HookedCaptureGate` and nothing else. What holds rule 1 is what the
+> 2026-09-09 restatement said it would be: the only producers of an acknowledgement are a disclosure shown
+> to a human — now including the Agent's own console (`ConsentProvenance.AgentConsoleOperator`, decision D4,
+> stamped by the Agent's clock, refusing redirected stdin), the provenance is recorded by NAME and travels
+> with the acknowledgement (a nameless one is refused by the store), `HookRequest.FromConsent` stays the
+> gate's only producer — with a FOURTH input, FR-2.4's kill switch (decision D7), which can only refuse —
+> and every anti-cheat check still runs afterwards. The command line is pinned
+> (`AgentCommandLineSurfaceTests`: no pid, no payload, no override; `--data-dir` only under `--console`).
+> `package-closure-check` keeps its meaning for the CaptureHost only. **The owner's re-ratification of this
+> and §S18 blocker 3 is still HANDOFF §Owner-only item 5**; the ✅ stands on the properties above.
 
 ### S25 ✅ · Both runtime stops were unreachable in a non-presenting process, and pause was unreachable on a ticking one — **closed 2026-08-05**
 
@@ -4284,7 +4305,7 @@ Each of these is referenced by an existing doc but specified nowhere.
 
 | Area | What is missing | Referenced by |
 |---|---|---|
-| **Agent lifecycle** | Scheduled-task definition, start-at-logon, how elevation is requested and persisted, what "Repair" repairs | `08_UI` Settings, `11_UPDATER`, `12_BUILD` flags |
+| **Agent lifecycle** | Scheduled-task definition, start-at-logon, how elevation is requested and persisted, what "Repair" repairs. **`--serve` exists since 2026-09-10 (P2 PR-F)** — a Generic Host around the watcher, stopped by Ctrl+C with a 15 s finalize grace — and `--install-task` / `--uninstall-task` answer "not implemented in P2"; the task definition and start-at-logon are what stays open | `08_UI` Settings, `11_UPDATER`, `12_BUILD` flags |
 | **Session identity** | ~~`sessions` has no GUID column, yet `SessionStarted`/`StopSession`/`.partial` files are all keyed by `sessionGuid`.~~ **`sessions.session_guid` (UNIQUE) exists since 2026-09-09 (P2 PR-B), with `qpc_epoch` / `qpc_frequency` beside it.** ~~Still open: the `.partial` file format is undefined, and it is the crash-recovery artifact — PR-D's, pre-committed in HANDOFF §P2 (CRC-framed append-only chunks, the valid prefix wins)~~ **Built 2026-09-10 (P2 PR-D): `06_DATA_MODEL` §The `.partial` file, `PartialSessionFile` + `PartialRecovery`, killed at every byte in the merge gate.** What stays open here is the pipe's use of the guid (P3) | `07_IPC`, `04_CAPTURE`, `06_DATA_MODEL` |
 | **Settings registry** | The `settings` table is key/value with no key list, defaults, types, or validation — and no message for the UI to push a changed setting to the Agent | `06_DATA_MODEL`, FR-10 |
 | **Error taxonomy** | `07_IPC` lists `CaptureError` codes; no canonical mapping to resx keys and user-facing text, though `09_I18N` requires safety strings to be reviewed as legal text | `07_IPC`, `09_I18N` |

@@ -31,7 +31,7 @@ namespace FrameLedger.Application.AntiCheat;
 public sealed class HookRequest
 {
     private HookRequest(int targetPid, string payloadPath, bool hookEnabled, DateTimeOffset? consentedAt,
-        string? blockedReason, int waitForPresentationRuntimeMs)
+        string? blockedReason, int waitForPresentationRuntimeMs, bool killSwitchEngaged)
     {
         TargetPid = targetPid;
         PayloadPath = payloadPath;
@@ -39,7 +39,14 @@ public sealed class HookRequest
         ConsentedAt = consentedAt;
         BlockedReason = blockedReason;
         WaitForPresentationRuntimeMs = waitForPresentationRuntimeMs;
+        KillSwitchEngaged = killSwitchEngaged;
     }
+
+    /// <summary>
+    /// FR-2.4's global "disable all hooking" switch, as read when the request was built (P2 PR-F, decision D7).
+    /// The gate's FOURTH input and the first one it checks: it can only downgrade, like every other field here.
+    /// </summary>
+    public bool KillSwitchEngaged { get; }
 
     /// <summary>
     /// Launch mode's budget: how long the guard may wait for the target to map a presentation runtime
@@ -88,9 +95,10 @@ public sealed class HookRequest
     /// <param name="targetPid">The process to inject into.</param>
     /// <param name="payloadPath">The Overlay, resolved beside the guard (§S22).</param>
     /// <param name="waitForPresentationRuntimeMs">Launch mode's budget; zero is attach mode.</param>
+    /// <param name="killSwitchEngaged">FR-2.4's global switch as read from the settings store just now (decision D7).</param>
     public static HookRequest FromConsent(
         GameConsentRecord record, ExecutableFingerprint observed, int targetPid, string payloadPath,
-        int waitForPresentationRuntimeMs = 0)
+        int waitForPresentationRuntimeMs = 0, bool killSwitchEngaged = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(payloadPath);
         ArgumentOutOfRangeException.ThrowIfNegative(waitForPresentationRuntimeMs);
@@ -100,7 +108,7 @@ public sealed class HookRequest
         if (!record.IsFromStore)
         {
             return new HookRequest(targetPid, payloadPath, hookEnabled: false, consentedAt: null,
-                blockedReason: null, waitForPresentationRuntimeMs);
+                blockedReason: null, waitForPresentationRuntimeMs, killSwitchEngaged);
         }
 
         // A TIMESTAMP IS NOT CONSENT. games.hook_consent_at is a bare DateTime, so a record could carry
@@ -122,6 +130,6 @@ public sealed class HookRequest
         }
 
         return new HookRequest(targetPid, payloadPath, record.HookEnabled, consentedAt, record.BlockedReason,
-            waitForPresentationRuntimeMs);
+            waitForPresentationRuntimeMs, killSwitchEngaged);
     }
 }

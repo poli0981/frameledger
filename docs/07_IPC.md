@@ -264,6 +264,10 @@ same class of bug as record drift.
 
 Unchanged in spirit from v1, bumped to `v2` for the new message set.
 
+> **P3, not P2** (HANDOFF §P2 decision D10, restated 2026-09-10 with PR-F): the Agent's `--serve` is
+> watcher-driven and logs to `logs\agent-*.log`; nothing below exists in code yet, and the P2 Agent has no
+> client. The pipe reader joins the threading model as one more producer when it is written (`04_CAPTURE`).
+
 - Message mode, single server (Agent), max 2 clients (UI + future CLI), `PIPE_REJECT_REMOTE_CLIENTS`.
 - ACL: current interactive user's SID + Administrators. Reject clients whose token user differs.
 - Framing: 4-byte LE length + UTF-8 JSON, max 1 MB. `System.Text.Json` source-generated contexts in `FrameLedger.Shared`.
