@@ -9,7 +9,7 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 ### `ci.yml` — push to `main` + all PRs · **repo-local**
 - `runs-on: windows-latest`, .NET SDK pinned by `global.json` via `actions/setup-dotnet`, MSVC via `ilammy/msvc-dev-cmd`, NuGet cached.
 - Single step of substance: **`./build.ps1 check`** — the same script, with the same switches (none), a developer runs before pushing. The gate list lives in `12_BUILD` §Local quality gate, **once**, rather than being restated here where it goes stale.
-- ~~**`-SkipIntegration` is the one place local and CI deliberately differ**~~ — **gone since 2026-09-06.** From 2026-08-05 CI passed it for a measured reason: §S16 puts the injecting process's ancestors in the scan set, a .NET test host loads `System.Security.Cryptography.ProtectedData.dll`, and the guard's `protect` fragment refused our own harness (§S19(b)). The signer half now verifies that module's embedded signature offline and reads `O=Microsoft Corporation` on the compiled-in bound, so the nine `Category=Integration` cases run here, and a green CI IS evidence for the managed drain and the capture host's end-to-end behaviour. The switch remains in `build.ps1`, loud, for a developer who must.
+- ~~**`-SkipIntegration` is the one place local and CI deliberately differ**~~ — **gone since 2026-09-06.** From 2026-08-05 CI passed it for a measured reason: §S16 puts the injecting process's ancestors in the scan set, a .NET test host loads `System.Security.Cryptography.ProtectedData.dll`, and the guard's `protect` fragment refused our own harness (§S19(b)). The signer half now verifies that module's embedded signature offline and reads `O=Microsoft Corporation` on the compiled-in bound, so the `Category=Integration` cases run here — **nine** when this was written, **20 across six classes** as of 2026-09-13 (Agent 6, CaptureHost 7, Infrastructure 7); count them with `grep -rl 'Category", "Integration' tests` rather than trusting either number — and a green CI IS evidence for the managed drain and the capture host's end-to-end behaviour. The switch remains in `build.ps1`, loud, for a developer who must.
 - **The hosted runner refuses guard scans intermittently — THREE failures in eight gate runs, measured
   2026-09-10 while merging P2's stack.** Every one was an `Category=Integration` case, every one passed on
   a re-run of the identical commit, and none was caused by the code under review. Two distinct shapes, and
@@ -31,11 +31,17 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
   cancelled, 0 failed** across the twenty runs that contained all three failures above. Anyone measuring
   this flake rate from the run history will measure zero. Read the job logs, or keep the tally as it
   happens.
-- **The step that would diagnose it runs AFTER the thing it diagnoses, so a gate failure skips it.**
+- ~~**The step that would diagnose it runs AFTER the thing it diagnoses, so a gate failure skips it.**
   The signer probe below is step 8; the quality gate is step 7, and the job stops there. On the
   2026-09-10 failure the probe therefore printed nothing, which is the one run where its output would
   have named the refusing module. Moving it before the gate (or giving it `if: always()`) is a one-line
-  change nobody has made, recorded here rather than done quietly in an unrelated PR.
+  change nobody has made, recorded here rather than done quietly in an unrelated PR.~~ **FALSE when
+  written, corrected 2026-09-13.** The probe step has carried `if: always()` since #137 (`c5932cc`,
+  2026-09-06) — four days *before* the failure this bullet describes — so a red gate does not skip it.
+  Why the probe's output was not read on 2026-09-10 is therefore **unmeasured**: the run was re-run
+  (`gh run rerun --failed`, next bullet), which replaced its logs, so the original step output is gone.
+  The next Integration failure is the measurement: read the probe step *before* re-running. Struck rather
+  than deleted because a session planned a workflow change on this bullet's word.
 - **Signer probe step** (2026-09-06): `fl-probe-signer` runs as its own step after the gate — `continue-on-error`, a measurement and not a gate — because `ctest fl_signer_probe` passes on a regular expression and prints nothing, so §S19(b)'s CI leg was never readable from the log. Its answers are read off this step.
 - Uploads coverage artifacts.
 - **Changelog gate**, on pull requests only: the changed-file list comes from GitHub's own view of the PR — not `git diff`, so a shallow checkout cannot silently produce a short one — and an empty list is refused rather than read as "no `src/` changes". It is a **step of the required `check` job** and deliberately not a job of its own: `main`'s required contexts are exactly `check` and the two `analyze` jobs, so a new job would go red while the merge button stayed green, which is what already makes `Rules / validate` advisory (§S23-2).
