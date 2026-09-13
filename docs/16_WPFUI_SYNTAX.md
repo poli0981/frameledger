@@ -57,10 +57,12 @@ private static readonly IHost _host = Host.CreateDefaultBuilder()
     .Build();
 ```
 
+**As built (P3 PR-2, 2026-09-13), three deviations from the sketch above:** `Host.CreateApplicationBuilder()` rather than `CreateDefaultBuilder`; `MainWindow` is **transient** (a language change rebuilds it in the new culture — `09_I18N` §Mechanics — and `Services.ShellHost` tracks the live one), so `App.xaml` sets `ShutdownMode="OnExplicitShutdown"` and the host's `IHostApplicationLifetime` is what ends the process (the shell host stops it when the live window closes; the old window of a rebuild closing is not an exit); and the run is one `Task` started from a synchronous `OnStartup` (`async void` overrides are VSTHRD100 under this repo's analyzers) that opens the ledger, starts the host, awaits its shutdown, tears down, and only then calls `Shutdown()`.
+
 Theme rules:
 - Manual Light/Dark: `ApplicationThemeManager.Apply(ApplicationTheme.Dark)`.
 - System: `SystemThemeWatcher.Watch(mainWindow)` — call it in the window's `Loaded` handler (needs an HWND), and unwatch when switching to manual.
-- Persist the choice in `settings`; re-apply before the main window shows to avoid a flash.
+- Persist the choice in `settings`; re-apply before the main window shows to avoid a flash. **Measured 2026-09-13: this is a correctness rule, not a cosmetic one** — `ApplicationThemeManager.Apply(theme, backdrop, updateAccent: true)` is what registers the `SystemAccentColor*` resources the control templates `StaticResource` at first Measure; a `FluentWindow` shown before any `Apply` throws `XamlParseException: Cannot find resource named 'SystemAccentColorPrimary'`. The shell applies the theme in its constructor before `InitializeComponent()` and again from `Loaded` for the watcher.
 - Subscribe `ApplicationThemeManager.Changed` once, centrally, to re-theme ScottPlot (below).
 
 ## Main window skeleton
@@ -167,7 +169,7 @@ var result = await box.ShowDialogAsync(); // Wpf.Ui.Controls.MessageBoxResult.Pr
 ```
 
   ⚠ Name clash with `System.Windows.MessageBox` — in App code, `using MessageBox = Wpf.Ui.Controls.MessageBox;` and ban the System one (BannedSymbols/analyzer note).
-- Rich in-flow dialogs: `IContentDialogService` (host wired in MainWindow).
+- Rich in-flow dialogs: `IContentDialogService` (host wired in MainWindow — a `ui:ContentDialogHost`, since 4.3.0 marks `SetDialogHost(ContentPresenter)` obsolete).
 - Transient in-app: `ISnackbarService.Show(title, message, ControlAppearance.Success, new SymbolIcon(SymbolRegular.Checkmark24), TimeSpan.FromSeconds(4))`.
 - System/tray notifications: H.NotifyIcon only (08_UI §Notifications policy).
 
@@ -178,7 +180,7 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
 ## Gotchas checklist
 
 - [ ] Dictionaries order: `ThemesDictionary` → `ControlsDictionary` → app styles. Wrong order = default-looking controls.
-- [ ] `SystemThemeWatcher.Watch` after HWND exists (`Loaded`), not in the constructor.
+- [ ] `SystemThemeWatcher.Watch` after HWND exists (`Loaded`), not in the constructor — but `ApplicationThemeManager.Apply(…, updateAccent: true)` BEFORE the first window's XAML loads, or the accent resources are missing at first Measure (§App bootstrap).
 - [ ] Menu row lives **outside** `ui:TitleBar` (its area is the drag region; a Menu inside becomes undraggable/unclickable territory).
 - [ ] Don't set `AllowsTransparency`/`WindowStyle` on `FluentWindow` — it manages its own chrome.
 - [ ] Mica is Win 11-only: leave `WindowBackdropType="Mica"`; the library falls back on Win 10 — verify visuals in the Win 10 VM pass (14_TESTING matrix).

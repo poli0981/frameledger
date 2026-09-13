@@ -1,0 +1,51 @@
+<Page x:Class="FrameLedger.App.Pages.DashboardPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:res="clr-namespace:FrameLedger.App"
+      xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
+      Title="{x:Static res:Strings.Dashboard_Header}">
+    <ScrollViewer>
+        <StackPanel Style="{StaticResource PageRoot}">
+            <ui:TextBlock FontTypography="Title" Text="{x:Static vm:DashboardViewModel.Header}" />
+
+            <!-- 08_UI §Dashboard: the Agent status card. Every value reads N/A until the Agent answered. -->
+            <ui:Card Margin="0,16,0,0" HorizontalAlignment="Stretch">
+                <StackPanel>
+                    <ui:TextBlock FontTypography="Subtitle" Margin="0,0,0,12" Text="{x:Static vm:DashboardViewModel.AgentHeader}" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Dashboard_Agent_State}" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ViewModel.AgentState}" />
+                        <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Dashboard_Agent_Version}" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ViewModel.AgentVersion}" />
+                        <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Dashboard_Agent_Telemetry}" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ViewModel.TelemetrySource}" />
+                        <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Dashboard_Agent_Overlay}" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ViewModel.OverlayBuildId}" />
+                        <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Dashboard_Agent_Elevated}" />
+                        <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ViewModel.Elevated}" />
+                        <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.Dashboard_Agent_Sessions}" />
+                        <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ViewModel.RunningSessions}" />
+                    </Grid>
+                </StackPanel>
+            </ui:Card>
+
+            <ui:TextBlock Margin="0,24,0,0"
+                          Appearance="Secondary"
+                          Text="{x:Static vm:DashboardViewModel.EmptyText}"
+                          TextWrapping="Wrap" />
+        </StackPanel>
+    </ScrollViewer>
+</Page>

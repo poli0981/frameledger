@@ -88,7 +88,11 @@ src/
                                #   `--console` = the operator's verbs incl. `consent grant` (decision D4,
                                #   ConsentProvenance.AgentConsoleOperator) and `killswitch` (FR-2.4,
                                #   the gate's FOURTH input, decision D7). --data-dir under --console only.
-  FrameLedger.App/             # WPF UI
+  FrameLedger.App/             # WPF UI — the SHELL since 2026-09-13 (P3 PR-2): Generic Host,
+                               #   FluentWindow + TitleBar/Menu/NavigationView, theme + language
+                               #   persisted in `settings`, the Agent pill over the pipe (starts
+                               #   `FrameLedger.Agent.exe --serve` beside itself when absent),
+                               #   five pages of which four are empty states; Strings.resx en/vi/ja
   FrameLedger.CaptureHost/     # UNSHIPPED, and since P2 PR-C (2026-09-09) a THIN SHELL: verbs,
                                #   the operator disclosure, the report consumer, and the composition
                                #   of Application.Capture.CaptureSession over Infrastructure's
@@ -108,7 +112,8 @@ tools/                         # changelog-check, chokepoint-check, coverage-gat
                                # rules-validate, vendor-exports, versioninfo-check,
                                # vklayer-blastradius
                                # (PowerShell). This line used to name three, one of which
-                               # — resx-audit — does not exist.
+                               # — resx-audit — ~~does not exist~~ exists since 2026-09-13 with
+                               # resx-gen (the committed Strings.Designer.cs generator).
                                # native tooling lives under src/native/tools:
                                #   fl-layout-dump  -> struct offsets for the C# mirror test
                                #   hook-harness    -> dummy D3D11 + D3D12 + Vulkan + OpenGL app

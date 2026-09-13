@@ -1,0 +1,12 @@
+<Page x:Class="FrameLedger.App.Pages.ComparePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:res="clr-namespace:FrameLedger.App"
+      xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
+      Title="{x:Static res:Strings.Compare_Header}">
+    <StackPanel Style="{StaticResource PageRoot}">
+        <ui:TextBlock FontTypography="Title" Text="{x:Static vm:CompareViewModel.Header}" />
+        <ui:TextBlock Margin="0,16,0,0" Appearance="Secondary" Text="{x:Static vm:CompareViewModel.EmptyText}" TextWrapping="Wrap" />
+    </StackPanel>
+</Page>

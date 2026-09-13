@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    日本語: machine-drafted (docs/09_I18N.md §Translation workflow), every entry marked <comment>review</comment>
+    until a reviewer signs off. No Safety_* key lives in this family; those arrive in FrameLedger.Shared (P3 PR-4)
+    marked "safety: human review required", and are shown in English until reviewed.
+  -->
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="About_Body_Format" xml:space="preserve">
+    <value>FrameLedger {0} — 明示的に有効化したゲーム内でグラフィックス API をフックし、ゲーム性能を計測します。GPLv3。</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Title" xml:space="preserve">
+    <value>FrameLedger について</value>
+    <comment>review</comment>
+  </data>
+  <data name="Agent_Banner_Missing_Body" xml:space="preserve">
+    <value>このアプリの隣に FrameLedger.Agent.exe が見つかりません。セッションは閲覧できますが、ライブ状態とキャプチャ操作は利用できません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Agent_Banner_Offline_Body" xml:space="preserve">
+    <value>キャプチャエージェントが応答しません。ライブラリ、履歴、グラフは引き続き使えます。ライブ状態のみ利用できません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Agent_Banner_Offline_Title" xml:space="preserve">
+    <value>キャプチャエージェントがオフライン</value>
+    <comment>review</comment>
+  </data>
+  <data name="Agent_Banner_Retry" xml:space="preserve">
+    <value>再試行</value>
+    <comment>review</comment>
+  </data>
+  <data name="Agent_State_Connected" xml:space="preserve">
+    <value>エージェント接続済み</value>
+    <comment>review</comment>
+  </data>
+  <data name="Agent_State_Connecting" xml:space="preserve">
+    <value>エージェントに接続中…</value>
+    <comment>review</comment>
+  </data>
+  <data name="Agent_State_Missing" xml:space="preserve">
+    <value>エージェント未インストール</value>
+    <comment>review</comment>
+  </data>
+  <data name="Agent_State_Offline" xml:space="preserve">
+    <value>エージェントはオフライン</value>
+    <comment>review</comment>
+  </data>
+  <data name="Agent_State_Starting" xml:space="preserve">
+    <value>エージェントを起動中…</value>
+    <comment>review</comment>
+  </data>
+  <data name="App_Title" xml:space="preserve">
+    <value>FrameLedger</value>
+    <comment>review</comment>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>キャンセル</value>
+    <comment>review</comment>
+  </data>
+  <data name="Common_No" xml:space="preserve">
+    <value>いいえ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Common_NotAvailable" xml:space="preserve">
+    <value>N/A</value>
+    <comment>review</comment>
+  </data>
+  <data name="Common_Ok" xml:space="preserve">
+    <value>OK</value>
+    <comment>review</comment>
+  </data>
+  <data name="Common_Yes" xml:space="preserve">
+    <value>はい</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Empty" xml:space="preserve">
+    <value>比較するセッションを 2〜5 個選んでください。ゲームが異なっても構いません。計測ティアが異なる場合は先に確認します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Header" xml:space="preserve">
+    <value>比較</value>
+    <comment>review</comment>
+  </data>
+  <data name="Crash_Body" xml:space="preserve">
+    <value>FrameLedger は回復できないエラーに遭遇しました。詳細はログフォルダーにあります。キャプチャエージェントは動作を続けます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Crash_Title" xml:space="preserve">
+    <value>FrameLedger が予期せず停止しました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Agent_Elevated" xml:space="preserve">
+    <value>管理者権限</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Agent_Header" xml:space="preserve">
+    <value>キャプチャエージェント</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Agent_Overlay" xml:space="preserve">
+    <value>オーバーレイのビルド</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Agent_Sessions" xml:space="preserve">
+    <value>実行中のセッション</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Agent_State" xml:space="preserve">
+    <value>状態</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Agent_Telemetry" xml:space="preserve">
+    <value>テレメトリソース</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Agent_Version" xml:space="preserve">
+    <value>エージェントのバージョン</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Empty" xml:space="preserve">
+    <value>まだセッションがありません。追跡中のゲームを起動すれば、あとは FrameLedger が行います。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Header" xml:space="preserve">
+    <value>ダッシュボード</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Empty" xml:space="preserve">
+    <value>まだゲームがありません。「ファイル ▸ ゲームを追加…」から追加してください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Header" xml:space="preserve">
+    <value>ゲーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Logs_Empty" xml:space="preserve">
+    <value>ログビューアーは後のビルドで提供されます。ファイルはデータフォルダーの logs にあります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Logs_Header" xml:space="preserve">
+    <value>ログ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_File" xml:space="preserve">
+    <value>ファイル(_F)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_File_AddGame" xml:space="preserve">
+    <value>ゲームを追加…</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_File_Exit" xml:space="preserve">
+    <value>終了(_X)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_File_Export" xml:space="preserve">
+    <value>エクスポート</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_File_ImportLibrary" xml:space="preserve">
+    <value>ライブラリをインポート…</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_Help" xml:space="preserve">
+    <value>ヘルプ(_H)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_Help_About" xml:space="preserve">
+    <value>FrameLedger について</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_Help_CheckUpdates" xml:space="preserve">
+    <value>更新を確認</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_Help_Documentation" xml:space="preserve">
+    <value>ドキュメント</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_Help_ReportBug" xml:space="preserve">
+    <value>不具合を報告…</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_Tools" xml:space="preserve">
+    <value>ツール(_T)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_Tools_AgentStatus" xml:space="preserve">
+    <value>エージェントの状態…</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_Tools_DbMaintenance" xml:space="preserve">
+    <value>データベースのメンテナンス…</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_Tools_OpenDataFolder" xml:space="preserve">
+    <value>データフォルダーを開く</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_Tools_UpdateRules" xml:space="preserve">
+    <value>検出ルールを更新</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_Tools_VulkanLayer" xml:space="preserve">
+    <value>Vulkan レイヤーの登録…</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nav_Compare" xml:space="preserve">
+    <value>比較</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nav_Dashboard" xml:space="preserve">
+    <value>ダッシュボード</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nav_Games" xml:space="preserve">
+    <value>ゲーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nav_Logs" xml:space="preserve">
+    <value>ログ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nav_Settings" xml:space="preserve">
+    <value>設定</value>
+    <comment>review</comment>
+  </data>
+  <data name="NotYet_Body" xml:space="preserve">
+    <value>この機能は後のビルドで提供されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="NotYet_Title" xml:space="preserve">
+    <value>未実装</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Appearance_Header" xml:space="preserve">
+    <value>外観</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Header" xml:space="preserve">
+    <value>設定</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Language_Label" xml:space="preserve">
+    <value>言語</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Language_Note" xml:space="preserve">
+    <value>すぐに適用されます。ウィンドウは新しい言語で再構築されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Theme_Dark" xml:space="preserve">
+    <value>ダーク</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Theme_Label" xml:space="preserve">
+    <value>テーマ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Theme_Light" xml:space="preserve">
+    <value>ライト</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Theme_System" xml:space="preserve">
+    <value>システムに従う</value>
+    <comment>review</comment>
+  </data>
+</root>

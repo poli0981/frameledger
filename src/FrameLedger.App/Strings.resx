@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    The App's user-visible strings, NEUTRAL = en (docs/09_I18N.md: en is written first and is authoritative).
+    Keys are Area_Element_Qualifier, sorted; Strings.Designer.cs is GENERATED from this file by
+    tools/resx-gen.ps1 and tools/resx-audit.ps1 fails the build when it is stale or when vi/ja drift.
+    No Safety_* key lives here: those are FrameLedger.Shared's (P3 PR-4), reviewed as legal text.
+  -->
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="About_Body_Format" xml:space="preserve">
+    <value>FrameLedger {0} — measures game performance by hooking graphics APIs inside games you explicitly enabled. GPLv3.</value>
+  </data>
+  <data name="About_Title" xml:space="preserve">
+    <value>About FrameLedger</value>
+  </data>
+  <data name="Agent_Banner_Missing_Body" xml:space="preserve">
+    <value>FrameLedger.Agent.exe was not found beside this application. Sessions are still readable; live status and capture control are not.</value>
+  </data>
+  <data name="Agent_Banner_Offline_Body" xml:space="preserve">
+    <value>The capture agent is not answering. Your library, history and charts still work; only live status is unavailable.</value>
+  </data>
+  <data name="Agent_Banner_Offline_Title" xml:space="preserve">
+    <value>Capture agent offline</value>
+  </data>
+  <data name="Agent_Banner_Retry" xml:space="preserve">
+    <value>Retry</value>
+  </data>
+  <data name="Agent_State_Connected" xml:space="preserve">
+    <value>Agent connected</value>
+  </data>
+  <data name="Agent_State_Connecting" xml:space="preserve">
+    <value>Connecting to agent…</value>
+  </data>
+  <data name="Agent_State_Missing" xml:space="preserve">
+    <value>Agent not installed</value>
+  </data>
+  <data name="Agent_State_Offline" xml:space="preserve">
+    <value>Agent offline</value>
+  </data>
+  <data name="Agent_State_Starting" xml:space="preserve">
+    <value>Starting agent…</value>
+  </data>
+  <data name="App_Title" xml:space="preserve">
+    <value>FrameLedger</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Common_No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="Common_NotAvailable" xml:space="preserve">
+    <value>N/A</value>
+  </data>
+  <data name="Common_Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Common_Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="Compare_Empty" xml:space="preserve">
+    <value>Pick two to five sessions to compare — cross-game is fine; mixed capture tiers ask first.</value>
+  </data>
+  <data name="Compare_Header" xml:space="preserve">
+    <value>Compare</value>
+  </data>
+  <data name="Crash_Body" xml:space="preserve">
+    <value>FrameLedger hit an error it could not recover from. The details are in the log folder; the capture agent keeps running.</value>
+  </data>
+  <data name="Crash_Title" xml:space="preserve">
+    <value>FrameLedger stopped unexpectedly</value>
+  </data>
+  <data name="Dashboard_Agent_Elevated" xml:space="preserve">
+    <value>Elevated</value>
+  </data>
+  <data name="Dashboard_Agent_Header" xml:space="preserve">
+    <value>Capture agent</value>
+  </data>
+  <data name="Dashboard_Agent_Overlay" xml:space="preserve">
+    <value>Overlay build</value>
+  </data>
+  <data name="Dashboard_Agent_Sessions" xml:space="preserve">
+    <value>Running sessions</value>
+  </data>
+  <data name="Dashboard_Agent_State" xml:space="preserve">
+    <value>State</value>
+  </data>
+  <data name="Dashboard_Agent_Telemetry" xml:space="preserve">
+    <value>Telemetry source</value>
+  </data>
+  <data name="Dashboard_Agent_Version" xml:space="preserve">
+    <value>Agent version</value>
+  </data>
+  <data name="Dashboard_Empty" xml:space="preserve">
+    <value>No sessions yet — launch a tracked game and FrameLedger will do the rest.</value>
+  </data>
+  <data name="Dashboard_Header" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="Games_Empty" xml:space="preserve">
+    <value>No games yet — add one with File ▸ Add game…</value>
+  </data>
+  <data name="Games_Header" xml:space="preserve">
+    <value>Games</value>
+  </data>
+  <data name="Logs_Empty" xml:space="preserve">
+    <value>The log viewer arrives with a later build; the files are in the data folder under logs.</value>
+  </data>
+  <data name="Logs_Header" xml:space="preserve">
+    <value>Logs</value>
+  </data>
+  <data name="Menu_File" xml:space="preserve">
+    <value>_File</value>
+  </data>
+  <data name="Menu_File_AddGame" xml:space="preserve">
+    <value>Add game…</value>
+  </data>
+  <data name="Menu_File_Exit" xml:space="preserve">
+    <value>E_xit</value>
+  </data>
+  <data name="Menu_File_Export" xml:space="preserve">
+    <value>Export</value>
+  </data>
+  <data name="Menu_File_ImportLibrary" xml:space="preserve">
+    <value>Import library…</value>
+  </data>
+  <data name="Menu_Help" xml:space="preserve">
+    <value>_Help</value>
+  </data>
+  <data name="Menu_Help_About" xml:space="preserve">
+    <value>About FrameLedger</value>
+  </data>
+  <data name="Menu_Help_CheckUpdates" xml:space="preserve">
+    <value>Check for updates</value>
+  </data>
+  <data name="Menu_Help_Documentation" xml:space="preserve">
+    <value>Documentation</value>
+  </data>
+  <data name="Menu_Help_ReportBug" xml:space="preserve">
+    <value>Report a bug…</value>
+  </data>
+  <data name="Menu_Tools" xml:space="preserve">
+    <value>_Tools</value>
+  </data>
+  <data name="Menu_Tools_AgentStatus" xml:space="preserve">
+    <value>Agent status…</value>
+  </data>
+  <data name="Menu_Tools_DbMaintenance" xml:space="preserve">
+    <value>Database maintenance…</value>
+  </data>
+  <data name="Menu_Tools_OpenDataFolder" xml:space="preserve">
+    <value>Open data folder</value>
+  </data>
+  <data name="Menu_Tools_UpdateRules" xml:space="preserve">
+    <value>Update detection rules</value>
+  </data>
+  <data name="Menu_Tools_VulkanLayer" xml:space="preserve">
+    <value>Vulkan layer registration…</value>
+  </data>
+  <data name="Nav_Compare" xml:space="preserve">
+    <value>Compare</value>
+  </data>
+  <data name="Nav_Dashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="Nav_Games" xml:space="preserve">
+    <value>Games</value>
+  </data>
+  <data name="Nav_Logs" xml:space="preserve">
+    <value>Logs</value>
+  </data>
+  <data name="Nav_Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="NotYet_Body" xml:space="preserve">
+    <value>This part of FrameLedger arrives with a later build.</value>
+  </data>
+  <data name="NotYet_Title" xml:space="preserve">
+    <value>Not built yet</value>
+  </data>
+  <data name="Settings_Appearance_Header" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
+  <data name="Settings_Header" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Settings_Language_Label" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="Settings_Language_Note" xml:space="preserve">
+    <value>Applies at once; the window is rebuilt in the new language.</value>
+  </data>
+  <data name="Settings_Theme_Dark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="Settings_Theme_Label" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="Settings_Theme_Light" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="Settings_Theme_System" xml:space="preserve">
+    <value>Follow system</value>
+  </data>
+</root>

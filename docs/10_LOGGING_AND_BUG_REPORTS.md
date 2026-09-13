@@ -2,7 +2,7 @@
 
 ## Serilog configuration
 
-- Sinks: rolling file per process — `logs/ui-.log`, `logs/agent-.log` (`rollingInterval: Day`, `retainedFileCountLimit: 7`, `fileSizeLimitBytes: 10 MB`, `rollOnFileSizeLimit: true`). Console sink in DEBUG builds.
+- Sinks: rolling file per process — `logs/ui-.log`, `logs/agent-.log` (`rollingInterval: Day`, `retainedFileCountLimit: 7`, `fileSizeLimitBytes: 10 MB`, `rollOnFileSizeLimit: true`). Console sink in DEBUG builds. *(`ui-.log` is written since 2026-09-13, P3 PR-2, with `Process=ui` enriched and every unhandled path — Dispatcher, AppDomain, unobserved task — logged as Fatal/Error; the crash dialog and minidump of §Crash handling are still P4's.)*
 - Minimum level `Information` (`Debug` toggle in Settings → applies live via `LoggingLevelSwitch`).
 - Enrichers: process name, version, `SessionGuid` and `GamePid` scoped properties during capture (`LogContext.PushProperty`).
 - Template: `[{Timestamp:HH:mm:ss.fff} {Level:u3}] {SourceContext} {Message:lj} {Properties:j}{NewLine}{Exception}`.

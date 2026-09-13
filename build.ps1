@@ -426,13 +426,17 @@ function Invoke-ProjectGates {
         Skip-Gate 'changelog-check' 'tools/changelog-check.ps1 not implemented yet'
     }
 
+    # 09_I18N's gate, built with the first .resx family (P3 PR-2, 2026-09-13): every key in en/vi/ja, ja
+    # Safety_* marked for human review, the generated accessor current. Self-test first (at least four
+    # cases must go red), then the live pass; a tree with no family is red, not skipped.
     Write-Step 'resx-audit'
-    $resxTool = Join-Path $repo 'tools/resx-audit'
+    $resxTool = Join-Path $repo 'tools/resx-audit.ps1'
     if (Test-Path $resxTool) {
-        Invoke-Checked 'resx-audit' { & $resxTool }
+        Invoke-Checked 'resx-audit (self-test)' { & $resxTool -SelfTest }
+        Invoke-Checked 'resx-audit' { & $resxTool -Root $repo }
     }
     else {
-        Skip-Gate 'resx-audit' 'tools/resx-audit not implemented yet (no .resx files exist)'
+        throw 'resx-audit: tools/resx-audit.ps1 is missing — 09_I18N names it and build.ps1 used to skip it loudly'
     }
 
     # The shared-memory struct mirror. CLAUDE.md §Struct mirroring calls this the

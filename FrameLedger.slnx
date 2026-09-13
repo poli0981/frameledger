@@ -10,6 +10,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/FrameLedger.Agent.Tests/FrameLedger.Agent.Tests.csproj" />
+    <Project Path="tests/FrameLedger.App.Tests/FrameLedger.App.Tests.csproj" />
     <Project Path="tests/FrameLedger.Application.Tests/FrameLedger.Application.Tests.csproj" />
     <Project Path="tests/FrameLedger.CaptureHost.Tests/FrameLedger.CaptureHost.Tests.csproj" />
     <Project Path="tests/FrameLedger.Domain.Tests/FrameLedger.Domain.Tests.csproj" />
