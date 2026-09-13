@@ -37,8 +37,12 @@
 > **The Agent box exists as of 2026-09-10 (P2 PR-F).** `ProcessWatcher` is `Application.Watch`
 > (`CaptureOrchestrator` over `ToolhelpProcessSnapshotSource`); `Injector` is the guard facade reached
 > through `HookedCaptureGate`; `ShmReader` is `CaptureSession` over `ShmRingReader`; `VendorTelemetry` is
-> the L1 + L2 + L3 composite; `SessionRecorder` is `Application.Recording`. The named pipe on the left
-> is **not** built (P3, `07_IPC`), so today's Agent has no UI client: `--serve` logs, `--console` prints.
+> the L1 + L2 + L3 composite; `SessionRecorder` is `Application.Recording`. ~~The named pipe on the left
+> is **not** built (P3, `07_IPC`), so today's Agent has no UI client: `--serve` logs, `--console` prints.~~
+> **The pipe's read half is built 2026-09-13 (P3 PR-1):** `--serve` listens on `\\.\pipe\FrameLedger.v2`,
+> answers `Hello` / `GetStatus` / `Ping`, and narrates every session (`SessionStarted` at the attach, `SessionProgress`
+> at 1 Hz, the safety and error events, `SessionCompleted`); `--console` still prints and hosts no pipe. The
+> command half — the messages a client sends to change a state — is PR-1b, and the App that connects is PR-2.
 
 ## Why this shape
 

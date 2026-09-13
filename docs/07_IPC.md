@@ -264,20 +264,43 @@ same class of bug as record drift.
 
 Unchanged in spirit from v1, bumped to `v2` for the new message set.
 
-> **P3, not P2** (HANDOFF §P2 decision D10, restated 2026-09-10 with PR-F): the Agent's `--serve` is
+> ~~**P3, not P2** (HANDOFF §P2 decision D10, restated 2026-09-10 with PR-F): the Agent's `--serve` is
 > watcher-driven and logs to `logs\agent-*.log`; nothing below exists in code yet, and the P2 Agent has no
-> client. The pipe reader joins the threading model as one more producer when it is written (`04_CAPTURE`).
+> client. The pipe reader joins the threading model as one more producer when it is written (`04_CAPTURE`).~~
+>
+> **The READ half is built, 2026-09-13 (P3 PR-1; HANDOFF §P3 decisions D11–D13).** `FrameLedger.Shared.Ipc`
+> holds the envelope, the message set below (read half only), `IpcJsonContext` and `IpcFraming`;
+> `Infrastructure.Ipc.PipeServer` is the Agent's end and `PipeClient` the UI's; `PipeServerHostedService` runs
+> the server under `--serve` only — `--console` composes it and never starts it, so it publishes to nobody.
+> The events come from `Application.Ipc.SessionEventPublisher`, the recorder's second observer
+> (`ISessionObserver`), on each session's own task; `SessionProgress` is computed once a second and only
+> while a client is connected. **The command half — `SetWatchlist`, `SetHookEnabled`, `LaunchGame`,
+> `PauseCapture`/`ResumeCapture`, `StopSession`, `UpdateRules`, `Shutdown` — is PR-1b**: none of those types
+> is declared in `Shared.Ipc` until its handler exists, and the Agent answers them `Error UnknownType` today.
 
-- Message mode, single server (Agent), max 2 clients (UI + future CLI), `PIPE_REJECT_REMOTE_CLIENTS`.
-- ACL: current interactive user's SID + Administrators. Reject clients whose token user differs.
+- Message mode, single server (Agent), max 2 clients (UI + future CLI), `PIPE_REJECT_REMOTE_CLIENTS`. *(Built:
+  `CreateNamedPipe` through CsWin32 with these flags stated in code, two instances, a semaphore slot per client
+  so a third connection waits rather than a third instance existing — `PipeServerClientTests`.)*
+- ACL: current interactive user's SID + Administrators. Reject clients whose token user differs. *(Built as the
+  SDDL `D:P(A;;GA;;;<user SID>)(A;;GA;;;BA)` on the instance — `PipeAccessControl.Sddl`, what `20_OPEN_QUESTIONS`
+  §G asked for — and the token check by impersonation on the client's FIRST frame, because the kernel refuses
+  `ImpersonateNamedPipeClient` before the client has written; a stranger is disconnected without an answer and
+  counted. The client side uses `PipeOptions.CurrentUserOnly`, the mirror check on the server's owner.)*
 - Framing: 4-byte LE length + UTF-8 JSON, max 1 MB. `System.Text.Json` source-generated contexts in `FrameLedger.Shared`.
-- Envelope: `{ "type": …, "id": …, "payload": … }`; `Ack` correlates by `id`; events have no `id`.
+  *(Header and body go out in one write, so on the message-mode pipe one frame is one message; the reader
+  reassembles by length alone. Over the cap, or a stream ending inside a frame, is `IpcFramingException`.)*
+- Envelope: `{ "type": …, "id": …, "payload": … }`; `Ack` correlates by `id`; events have no `id`. *(camelCase
+  on the wire, nulls omitted, unknown fields skipped both ways — `IpcCodecTests` pins the last, which is what
+  makes an additive field safe.)*
+- A request the Agent cannot answer gets `Error { code, message }` with the request's `id`: `UnknownType`,
+  `Malformed` (no `id` when the envelope itself could not be read), `ProtocolMismatch`, `HandlerFaulted`. The
+  connection survives all four.
 
 ### Messages
 
 | Type | Dir | Payload / notes |
 |---|---|---|
-| `Hello` | UI→A | `{ appVersion, protocol: 2 }` → `HelloAck { agentVersion, protocol, elevated, overlayBuildId, vulkanLayerRegistered, telemetrySource /* composite, e.g. l1+lhm+nvapi */, cpuTempAvailable, etwAvailable }` |
+| `Hello` | UI→A | `{ appVersion, protocol: 2 }` → `HelloAck { agentVersion, protocol, pid, elevated, overlayBuildId, vulkanLayerRegistered, telemetrySource /* composite, e.g. l1+lhm+nvapi */, cpuTempAvailable, ~~etwAvailable~~ }` — `etwAvailable` struck 2026-09-13 with the tier it described (2026-08-28); `pid` added. `vulkanLayerRegistered` is **false by construction** today (the layer is per-launch, never registered) and `cpuTempAvailable` false unelevated; `telemetrySource` is the composite stood up once on the first `Hello` |
 | `GetStatus` | UI→A | → `StatusAck { state, activeSession?, tier? }` |
 | `SetWatchlist` | UI→A | `{ entries: [{ gameId, exePath }] }` — full replace; UI re-sends on connect. **Carries no hooking state** (see §The pipe is not a trust boundary) |
 | `LaunchGame` | UI→A | `{ gameId }` → suspended-launch + inject path (`04_CAPTURE` §Launch mode) |
@@ -286,14 +309,14 @@ Unchanged in spirit from v1, bumped to `v2` for the new message set.
 | `StopSession` | UI→A | `{ sessionGuid }` — graceful unhook + finalize |
 | `UpdateRules` | UI→A | **no payload** — a trigger, not a source. The Agent re-reads only its own `%LOCALAPPDATA%\FrameLedger\rules\` copy |
 | `Shutdown` | UI→A | graceful stop |
-| `SessionStarted` | A→UI | `{ sessionGuid, gameId, pid, tier, startedAt }` |
-| `SessionProgress` | A→UI | 1 Hz: `{ elapsedS, nativeFps5s, displayedFps5s, fgFactor?, fgMode, upscaler, upscalerQuality, renderW/H, outputW/H, rtActive, gpuTempC?, cpuTempC?, vramProcMb, latencyUs? }` |
-| `SessionCompleted` | A→UI | `{ sessionGuid, sessionId, exitStatus, tier }` — UI loads the full row from SQLite |
-| `CaptureRefused` | A→UI | `{ gameId, reason, signal }` — **guard fired**; UI shows the plain-language explanation — ~~and the Tier-2 offer~~; there is no alternative measurement to offer, only the option to record the session unmeasured (`08_UI` §Safety events) |
-| `CaptureDegraded` | A→UI | `{ sessionGuid, from, to, reason }` — Tier 1 → Tier 2 mid-flight, or overlay self-disabled. **Under a two-rung ladder this means measurement STOPPED**, not that it continued at lower fidelity, and the notice must say so |
-| `SafetyUnhook` | A→UI | `{ sessionGuid, signal }` — anti-cheat appeared mid-session; prominent UI notice |
-| `CaptureError` | A→UI | `{ code, message }` — `InjectFailed`, `RingVersionMismatch`, `EtwAccessDenied`, ~~`PresentMonMissing`~~ (retired with the tool, 2026-08-27 — a code naming an implementation nobody chose), `TelemetryUnavailable`, `DbWriteFailed` |
-| `Ping`/`Pong` | both | 15 s keepalive |
+| `SessionStarted` | A→UI | `{ sessionGuid, gameId, gameName, pid, tier, startedAt }` — **published at the attach**, i.e. when the session becomes Tier 1 and the live card has something to show; a session that never attaches has no `SessionStarted`, only its `SessionCompleted` (tier 2) and, when a refusal or error caused that, the event below that names it |
+| `SessionProgress` | A→UI | 1 Hz: `{ sessionGuid, elapsedS, presents5s, presentedFps5s?, presentedQualifier, nativeFps5s?, displayedFps5s?, fgFactor?, fgMode, upscaler?, upscalerQuality?, renderW/H?, outputW/H?, rtActive?, gpuTempC?, cpuTempC?, vramProcMb?, latencyUs? }` — a 5 s rolling window over the ring through the SAME Domain calculators the row uses (`SessionProgressCalculator`, D13). **Rule 6 at the wire (2026-09-13):** `nativeFps5s` / `displayedFps5s` / `fgFactor` are present only when frame generation was measured in the window; otherwise `presentedFps5s` stands alone with `presentedQualifier` (`census_not_run` · `no_fg_runtime` · `fg_runtime_loaded` · `none_withheld`, the row's `presented_qualifier` from the same function). Every unmeasured field is absent, never 0. Suppressed when no client is connected |
+| `SessionCompleted` | A→UI | `{ sessionGuid, sessionId?, exitStatus, tier, finalize, reason }` — UI loads the full row from SQLite; `sessionId` is null and `finalize` is `discarded` when the row was not stored (under the minimum length); `exitStatus` is the row's vocabulary (`normal` · `crashed` · `unhooked_safety` · `degraded`); `reason` is the loop's `SessionEndReason` |
+| `CaptureRefused` | A→UI | `{ gameId, gameName, reason, family?, signal? }` — **guard fired**; UI shows the plain-language explanation — ~~and the Tier-2 offer~~; there is no alternative measurement to offer, only the option to record the session unmeasured (`08_UI` §Safety events). *(Built: for `RefusedByGuard`, `RefusedPreviouslyBlocked`, `RefusedKillSwitch` and `PreScanCouldNotVerify` — the last with no family, because "could not verify" is neither a hit nor a pass; `family`/`signal` are the verdict's. A game merely not enabled or not consented raises nothing: that is an ordinary Tier-2 row, not a refusal to explain.)* |
+| `CaptureDegraded` | A→UI | `{ sessionGuid, from: 1, to: 2, reason }` — Tier 1 → Tier 2 mid-flight, or overlay self-disabled. **Under a two-rung ladder this means measurement STOPPED**, not that it continued at lower fidelity, and the notice must say so. *(Built: `SupervisionLost`, `WriterSelfDisabled`, `WriterStoppedBlocklisted`, `WriterNeverInstalledHooks`, `SupervisionFaulted`, `KillSwitchEngaged` — `RecordedSessionEvents.Classify` is the table.)* |
+| `SafetyUnhook` | A→UI | `{ sessionGuid, family?, signal? }` — anti-cheat appeared mid-session; prominent UI notice. *(Built: the verdict that FIRED, not the pass that started the session — `CaptureOutcome.Verdict` carries the supervisor's last verdict on this reason since 2026-09-13.)* |
+| `CaptureError` | A→UI | `{ sessionGuid?, code, message }` — `InjectFailed`, `RingVersionMismatch`, `AttachRefused`, ~~`EtwAccessDenied`~~ (struck 2026-09-13 with the tier), ~~`PresentMonMissing`~~ (retired with the tool, 2026-08-27 — a code naming an implementation nobody chose), `TelemetryUnavailable`, `DbWriteFailed`, `SessionFaulted` (the session's task threw before finalize; the `.partial` stays for recovery, and no `SessionCompleted` follows). *(Built: `RingVersionMismatch` for a layout / record-size / build-id refusal — the "restart the game after an update" case — `AttachRefused` for the rest of the ring's refusals, `InjectFailed` for a target that could not be started, pinned, read or singled out.)* |
+| `Ping`/`Pong` | ~~both~~ UI→A | 15 s keepalive, **client-driven** (built 2026-09-13): the client pings, the Agent answers; the Agent initiates nothing on an idle connection |
 
 ## The pipe is not a trust boundary
 

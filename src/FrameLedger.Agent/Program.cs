@@ -91,12 +91,14 @@ internal static class Program
         HostApplicationBuilder builder = Host.CreateApplicationBuilder();
         builder.Services.AddFrameLedgerAgent(db, paths);
         builder.Services.AddHostedService<WatcherHostedService>();
+        // The pipe (07_IPC §C), the product's UI channel: --serve only, never under --console (P3 PR-1).
+        builder.Services.AddHostedService<PipeServerHostedService>();
         // Finalize's grace on shutdown (04_CAPTURE §Threading model): a session that does not make it leaves
         // its .partial for the next start's recovery.
         builder.Services.Configure<HostOptions>(static o => o.ShutdownTimeout = TimeSpan.FromSeconds(15));
 
         using IHost host = builder.Build();
-        AgentConsole.Line($"serve: ledger {paths.Database}; logs {paths.Logs}; Ctrl+C stops");
+        AgentConsole.Line($@"serve: ledger {paths.Database}; logs {paths.Logs}; pipe \.\pipe\{Shared.Ipc.IpcProtocol.PipeName}; Ctrl+C stops");
         await host.RunAsync().ConfigureAwait(false);
         return _exitOk;
     }

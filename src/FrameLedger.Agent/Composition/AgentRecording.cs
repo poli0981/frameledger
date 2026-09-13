@@ -31,6 +31,7 @@ internal sealed class AgentRecording
     private readonly IPartialSessionStore _partials;
     private readonly SessionFinalizer _finalizer;
     private readonly ICrashEventSource _crashes;
+    private readonly ISessionObserver _observer;
 
     public AgentRecording(
         IGameConsentStore store,
@@ -47,7 +48,8 @@ internal sealed class AgentRecording
         IHardwareSnapshotSource hardware,
         IPartialSessionStore partials,
         SessionFinalizer finalizer,
-        ICrashEventSource crashes)
+        ICrashEventSource crashes,
+        ISessionObserver observer)
     {
         _store = store;
         _gate = gate;
@@ -64,6 +66,7 @@ internal sealed class AgentRecording
         _partials = partials;
         _finalizer = finalizer;
         _crashes = crashes;
+        _observer = observer;
     }
 
     /// <summary>
@@ -93,7 +96,8 @@ internal sealed class AgentRecording
             _crashes,
             Poller,
             TimeProvider.System,
-            new RecorderOptions { MinimumSessionLength = minimum, PartialFlushInterval = flush });
+            new RecorderOptions { MinimumSessionLength = minimum, PartialFlushInterval = flush },
+            _observer);
     }
 
     /// <summary>L1 + L2 + L3 under the composite, one poller per session; the poller owns and disposes the layers.</summary>

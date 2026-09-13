@@ -1248,7 +1248,7 @@ because a criterion already true on `main` is decoration.
 | PR | Slice | Fails on unmodified `main` because… |
 |---|---|---|
 | 0 | P2 sweep: the doc/tool drift PR-G left (`coverage-gate.ps1` prose, `13_CI_CD`'s count and its signer-probe claim, `09_I18N`'s member count, `17_HOOK_ENGINE`'s §H9 cite, this file's D-labels, `ci.yml`'s census comment), this head, the roadmap amendment | `grep -n "exactly two members" docs/09_I18N.md` matched; `§H9` resolved to nothing; two START HEREs |
-| 1 | **The pipe, read half**: `Shared.Ipc` contracts + `JsonSerializerContext`; the Agent's `PipeServerHostedService`; `Hello`/`HelloAck`, `GetStatus`/`StatusAck`, `Ping`/`Pong`; the events (`SessionStarted`/`Progress`/`Completed`/`CaptureRefused`/`CaptureDegraded`/`SafetyUnhook`/`CaptureError`); a 1 Hz `SessionProgress` publisher; `Infrastructure.Ipc.PipeClient` | `grep -rn NamedPipeServerStream src` is empty; `FrameLedger.Shared` holds no JSON type; `04_CAPTURE` §Live progress has no producer |
+| ~~1~~ | ~~**The pipe, read half**: `Shared.Ipc` contracts + `JsonSerializerContext`; the Agent's `PipeServerHostedService`; `Hello`/`HelloAck`, `GetStatus`/`StatusAck`, `Ping`/`Pong`; the events (`SessionStarted`/`Progress`/`Completed`/`CaptureRefused`/`CaptureDegraded`/`SafetyUnhook`/`CaptureError`); a 1 Hz `SessionProgress` publisher; `Infrastructure.Ipc.PipeClient`~~ **LANDED 2026-09-13** — status in `CHANGELOG.md`; `07_IPC` §C carries what was built and the one deviation (`etwAvailable` struck) | ~~`grep -rn NamedPipeServerStream src` is empty; `FrameLedger.Shared` holds no JSON type; `04_CAPTURE` §Live progress has no producer~~ |
 | 1b | **The pipe, command half**: `SetWatchlist` (identity only), `SetHookEnabled` (the Agent re-scans and stamps), `LaunchGame`, `PauseCapture`/`ResumeCapture`, `StopSession`, `UpdateRules` (a trigger, no payload), `Shutdown` | the Agent accepts no command from outside; `CaptureOrchestrator` has no stop/pause surface; `SetHookEnabled` has no handler |
 | 2 | **resx + the App shell**: `Strings.resx` en/vi/ja for App and Shared, the generated class, `tools/resx-audit.ps1` (+`-SelfTest`) as `build.ps1` step 15; the Generic Host bootstrap, `FluentWindow`, TitleBar/Menu/NavigationView, theme + persistence, `INavigationService`, Serilog `ui-*.log`, five empty pages, the Agent status pill over `Hello`, auto-start of `--serve` on connect failure; `tests/FrameLedger.App.Tests` | `find . -name '*.resx'` is empty; step 15 prints "skipped loudly"; `App.xaml` uses `StartupUri` and `MainWindow` is a plain `Window` |
 | 2b *(owner decides)* | `FL_MOCK=1` / `Agent --serve --mock`, `--data-dir` only: a `MockSessionSource` hosted service that emits pipe events and inserts synthesised sessions through `ISessionRepository` — and can never resolve `HookedCaptureGate` (asserted) | CLAUDE.md says "specified but not implemented"; `grep FL_MOCK src` is empty |
@@ -1268,10 +1268,15 @@ charts (6) after Games (5) because the summary opens from the Sessions tab; Sett
 
 **Decisions taken 2026-09-13 (owner, with the plan), so nobody re-derives them:**
 
-- **D11 — the pipe's transport.** `Infrastructure.Ipc.PipeServer` over `NamedPipeServerStream`
+- **D11 — the pipe's transport.** `Infrastructure.Ipc.PipeServer` over ~~`NamedPipeServerStream`
   (`PipeTransmissionMode.Message`, `PipeOptions.Asynchronous | CurrentUserOnly`, remote clients rejected,
-  two instances), the ACL a `PipeSecurity` of the current user's SID plus Administrators, and the client's
-  token user compared to the server's — which is the SDDL `20_OPEN_QUESTIONS` §G asked for. Framing is
+  two instances), the ACL a `PipeSecurity` of the current user's SID plus Administrators~~ **`CreateNamedPipe`
+  itself (CsWin32), so the flags and the DACL are stated in code rather than left to a library default:**
+  message mode, overlapped, `PIPE_REJECT_REMOTE_CLIENTS`, two instances, the SDDL `D:P(A;;GA;;;<user>)(A;;GA;;;BA)`
+  on every instance, and the client's token user compared to the server's by impersonation on the client's
+  first frame (the kernel refuses it earlier). The CLIENT uses `PipeOptions.CurrentUserOnly`. *(As built
+  2026-09-13; the wording above was the plan's, kept struck because it named a library path the build did not
+  take.)* Framing is
   `07_IPC` §C as written: 4-byte LE length + UTF-8 JSON ≤ 1 MB, `Shared.Ipc.IpcEnvelope { type, id?, payload }`,
   `IpcJsonContext : JsonSerializerContext` on the `RecordingJsonContext` pattern, unknown fields ignored and
   tested in both directions.

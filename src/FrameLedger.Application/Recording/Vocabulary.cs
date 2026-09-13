@@ -1,4 +1,5 @@
 using FrameLedger.Domain.Metrics;
+using FrameLedger.Domain.Sessions;
 using FrameLedger.Shared;
 
 namespace FrameLedger.Application.Recording;
@@ -68,5 +69,16 @@ public static class Vocabulary
         FrameApi.Vulkan => "vulkan",
         FrameApi.OpenGL => "opengl",
         _ => null,
+    };
+
+    /// <summary><c>exit_status</c> (<c>04_CAPTURE</c> §Crash and exit classification); the column's writer and the pipe's <c>SessionCompleted</c> both spell it here.</summary>
+    public static string ExitStatusText(ExitStatus status) => status switch
+    {
+        ExitStatus.Normal => "normal",
+        ExitStatus.Crashed => "crashed",
+        ExitStatus.UnhookedSafety => "unhooked_safety",
+        ExitStatus.Degraded => "degraded",
+        ExitStatus.Interrupted => "interrupted",
+        _ => throw new ArgumentOutOfRangeException(nameof(status), status, "not a sessions.exit_status value"),
     };
 }

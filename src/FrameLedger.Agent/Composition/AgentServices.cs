@@ -1,17 +1,20 @@
 using FrameLedger.Application.AntiCheat;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Consent;
+using FrameLedger.Application.Ipc;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
 using FrameLedger.Application.Watch;
 using FrameLedger.Infrastructure.AntiCheat;
 using FrameLedger.Infrastructure.Blobs;
 using FrameLedger.Infrastructure.Capture;
+using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Infrastructure.Recording;
 using FrameLedger.Infrastructure.Settings;
 using FrameLedger.Infrastructure.Telemetry;
 using FrameLedger.Infrastructure.Watch;
+using FrameLedger.Shared.Ipc;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FrameLedger.Agent.Composition;
@@ -36,7 +39,8 @@ namespace FrameLedger.Agent.Composition;
 /// </remarks>
 internal static class AgentServices
 {
-    public static IServiceCollection AddFrameLedgerAgent(this IServiceCollection services, LedgerDatabase db, AgentPaths paths)
+    // pipeName: a test names its own pipe so it never answers a real UI; the product uses the default.
+    public static IServiceCollection AddFrameLedgerAgent(this IServiceCollection services, LedgerDatabase db, AgentPaths paths, string? pipeName = null)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(db);
@@ -79,6 +83,33 @@ internal static class AgentServices
         services.AddSingleton<IProcessSnapshotSource, ToolhelpProcessSnapshotSource>();
         services.AddSingleton<IExecutableIdentitySource, ExecutableIdentitySource>();
         services.AddSingleton<ISessionRecorder>(static sp => sp.GetRequiredService<AgentRecording>().Recorder(seconds: 0, launcher: null));
+
+        AddPipe(services, pipeName);
+
+        return services;
+    }
+
+    /// <summary>
+    /// The pipe, read half (P3 PR-1, <c>07_IPC</c> §C, HANDOFF §P3 D11–D13). Events leave through <c>SessionEventPublisher</c>,
+    /// the recorder's observer; requests are answered by <c>AgentRequestHandler</c>; the server itself is started by
+    /// <c>PipeServerHostedService</c> under <c>--serve</c> only, so under <c>--console</c> this is composed and inert. The
+    /// status the handler answers with is read lazily, which keeps the server → handler → publisher → server cycle out of
+    /// construction.
+    /// </summary>
+    private static void AddPipe(IServiceCollection services, string? pipeName)
+    {
+        services.AddSingleton(new PipeServerOptions { PipeName = pipeName ?? IpcProtocol.PipeName });
+        services.AddSingleton<IIpcRequestHandler>(static sp => new AgentRequestHandler(
+            AgentIdentityFactory.OfThisProcess(),
+            TelemetryDescriptor(),
+            () => sp.GetRequiredService<SessionEventPublisher>().Status));
+        services.AddSingleton(static sp => new PipeServer(
+            sp.GetRequiredService<PipeServerOptions>(),
+            sp.GetRequiredService<IIpcRequestHandler>(),
+            static line => Serilog.Log.Information("{Line}", line)));
+        services.AddSingleton<IIpcEventPublisher>(static sp => sp.GetRequiredService<PipeServer>());
+        services.AddSingleton(static sp => new SessionEventPublisher(sp.GetRequiredService<IIpcEventPublisher>(), TimeProvider.System));
+        services.AddSingleton<ISessionObserver>(static sp => sp.GetRequiredService<SessionEventPublisher>());
         services.AddSingleton(static sp => new CaptureOrchestrator(
             sp.GetRequiredService<ISessionRecorder>(),
             sp.GetRequiredService<IGameRepository>(),
@@ -87,6 +118,20 @@ internal static class AgentServices
             new OrchestratorOptions { PayloadPath = AgentPaths.Payload },
             static line => Serilog.Log.Information("{Line}", line)));
 
-        return services;
+    }
+
+    /// <summary>
+    /// <c>HelloAck.telemetrySource</c>: the layers this machine composes, read once on the first <c>Hello</c> by
+    /// standing the composite up and taking it down again — a library start, which is why it is not done at
+    /// composition and not done per request.
+    /// </summary>
+    private static Func<string?> TelemetryDescriptor()
+    {
+        var descriptor = new Lazy<string?>(static () =>
+        {
+            using TelemetryPoller poller = AgentRecording.Poller();
+            return poller.Descriptor;
+        }, LazyThreadSafetyMode.ExecutionAndPublication);
+        return () => descriptor.Value;
     }
 }

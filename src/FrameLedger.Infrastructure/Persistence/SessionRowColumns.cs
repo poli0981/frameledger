@@ -1,5 +1,6 @@
 using System.Data.Common;
 using FrameLedger.Application.Persistence;
+using FrameLedger.Application.Recording;
 using FrameLedger.Domain.Sessions;
 
 namespace FrameLedger.Infrastructure.Persistence;
@@ -275,15 +276,7 @@ internal static class SessionRowColumns
         ThrottlePct = D(r, "throttle_pct"),
     };
 
-    public static string ExitStatusText(ExitStatus status) => status switch
-    {
-        ExitStatus.Normal => "normal",
-        ExitStatus.Crashed => "crashed",
-        ExitStatus.UnhookedSafety => "unhooked_safety",
-        ExitStatus.Degraded => "degraded",
-        ExitStatus.Interrupted => "interrupted",
-        _ => throw new ArgumentOutOfRangeException(nameof(status), status, "not a sessions.exit_status value"),
-    };
+    public static string ExitStatusText(ExitStatus status) => Vocabulary.ExitStatusText(status);
 
     public static ExitStatus ParseExitStatus(string text) => text switch
     {

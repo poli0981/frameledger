@@ -127,6 +127,27 @@ public static class FgLadder
             : null;
     }
 
+    /// <summary>
+    /// The qualifier the one number that stands alone must carry (CLAUDE.md rule 6, as amended):
+    /// <c>sessions.presented_qualifier</c> and the live card's <c>SessionProgress.presentedQualifier</c> — one
+    /// function, so the row and the pipe cannot disagree about what the census said.
+    /// </summary>
+    public static string PresentedQualifier(FlWriterState writer, string? withheld)
+    {
+        if (withheld is not null)
+        {
+            return "none_withheld";
+        }
+
+        var census = (FlRuntimeCensus)writer.RuntimeCensus;
+        if (!census.HasFlag(FlRuntimeCensus.Ran))
+        {
+            return "census_not_run";
+        }
+
+        return (census & FlRuntimeCensusFamilies.Fg) == FlRuntimeCensus.None ? "no_fg_runtime" : "fg_runtime_loaded";
+    }
+
     /// <summary>DXGI's counter as a second witness beside a counted <c>none</c>; null when it was not read.</summary>
     public static string? DxgiBesideNone(FlWriterState writer)
     {

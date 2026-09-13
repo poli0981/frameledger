@@ -40,10 +40,11 @@ public sealed class SessionRecorder : ISessionRecorder
     private readonly Func<ITelemetryPoller?> _pollers;
     private readonly TimeProvider _clock;
     private readonly RecorderOptions _options;
+    private readonly ISessionObserver? _observer;
 
     public SessionRecorder(ICaptureSessionFactory sessions, IGameRepository games, IHardwareSnapshotRepository snapshots,
         IHardwareSnapshotSource hardware, IPartialSessionStore partials, SessionFinalizer finalizer, ICrashEventSource crashes,
-        Func<ITelemetryPoller?> pollers, TimeProvider clock, RecorderOptions? options = null)
+        Func<ITelemetryPoller?> pollers, TimeProvider clock, RecorderOptions? options = null, ISessionObserver? observer = null)
     {
         _sessions = sessions ?? throw new ArgumentNullException(nameof(sessions));
         _games = games ?? throw new ArgumentNullException(nameof(games));
@@ -56,6 +57,9 @@ public sealed class SessionRecorder : ISessionRecorder
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         _crashPolicy = new CrashAutoDisablePolicy(games);
         _options = options ?? new RecorderOptions();
+        // The second listener (P3 PR-1): the pipe's publisher. Optional, because the unshipped host and every
+        // recorder test have nobody to tell; when present it hears each step AFTER the recorder's own work.
+        _observer = observer;
     }
 
     public async Task<RecordedSession> RecordAsync(RecordRequest request, CancellationToken ct = default)
@@ -68,7 +72,24 @@ public sealed class SessionRecorder : ISessionRecorder
         ExecutableFingerprint fingerprint = request.Observed ?? new ExecutableFingerprint { ExePath = request.NormalisedExePath, SizeBytes = 0, MtimeUnixMs = 0 };
         GameRow game = await _games.EnsureAsync(fingerprint, request.GameName ?? Path.GetFileNameWithoutExtension(request.NormalisedExePath), ct).ConfigureAwait(false);
         long snapshotId = await _snapshots.EnsureAsync(_hardware.Take(), startedAt, ct).ConfigureAwait(false);
+        _observer?.Started(new SessionStartedInfo(guid, game.Id, game.Name, request.NormalisedExePath, request.Mode, startedAt, _clock.TimestampFrequency));
 
+        try
+        {
+            return await RecordStartedAsync(request, game, guid, startedAt, qpcEpoch, snapshotId, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // Told, then rethrown: the orchestrator logs it as FAULTED and the .partial stays for recovery. The
+            // observer hears it so a UI is not left with a session that started and never ended.
+            _observer?.Faulted(guid, ex);
+            throw;
+        }
+    }
+
+    private async Task<RecordedSession> RecordStartedAsync(RecordRequest request, GameRow game, Guid guid, DateTimeOffset startedAt,
+        long qpcEpoch, long snapshotId, CancellationToken ct)
+    {
         ITelemetryPoller? poller = _pollers();
         try
         {
@@ -88,14 +109,16 @@ public sealed class SessionRecorder : ISessionRecorder
             };
 
             using var writer = new PartialSessionWriter(_partials.Create(header), _clock, _options.PartialFlushInterval);
-            var run = new Run(writer, poller, _clock);
+            var run = new Run(writer, poller, _clock, _observer, guid);
             writer.Note("started " + request.Mode);
             CaptureOutcome outcome = await RunLoopAsync(request, run, ct).ConfigureAwait(false);
             DateTimeOffset endedAt = _clock.GetUtcNow();
             run.FinalFlush();
             writer.Note("ended " + outcome.Reason);
 
-            return await FinalizeAsync(request, game, header, outcome, run, endedAt, writer, ct).ConfigureAwait(false);
+            RecordedSession recorded = await FinalizeAsync(request, game, header, outcome, run, endedAt, writer, ct).ConfigureAwait(false);
+            _observer?.Ended(recorded);
+            return recorded;
         }
         finally
         {
@@ -208,8 +231,11 @@ public sealed class SessionRecorder : ISessionRecorder
         return id.Length == 0 ? null : id;
     }
 
-    /// <summary>The recorder's ears on the loop: the flush and the telemetry drain, on the loop's task.</summary>
-    private sealed class Run(PartialSessionWriter writer, ITelemetryPoller? poller, TimeProvider clock) : ICaptureObserver
+    /// <summary>
+    /// The recorder's ears on the loop: the flush and the telemetry drain, on the loop's task — and, after
+    /// each of those, the outside observer's turn with the same tick.
+    /// </summary>
+    private sealed class Run(PartialSessionWriter writer, ITelemetryPoller? poller, TimeProvider clock, ISessionObserver? observer, Guid guid) : ICaptureObserver
     {
         private readonly List<TelemetrySample> _drained = [];
         private CaptureProgress? _last;
@@ -220,6 +246,7 @@ public sealed class SessionRecorder : ISessionRecorder
         {
             AttachedAt = clock.GetUtcNow();
             writer.Note($"attached pid={pid} layout={handshake.LayoutVersion} build={handshake.BuildIdString()}");
+            observer?.Attached(guid, pid, handshake);
         }
 
         public void Tick(CaptureProgress progress)
@@ -227,6 +254,7 @@ public sealed class SessionRecorder : ISessionRecorder
             _last = progress;
             DrainTelemetry();
             writer.OnTick(progress);
+            observer?.Tick(guid, progress, _drained);
         }
 
         public void FinalFlush()

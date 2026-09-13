@@ -99,22 +99,8 @@ public static class SessionAggregator
         };
     }
 
-    /// <summary>The qualifier the one number that stands alone must carry (CLAUDE.md rule 6, as amended).</summary>
-    private static string PresentedQualifier(Context c)
-    {
-        if (c.Withheld is not null)
-        {
-            return "none_withheld";
-        }
-
-        var census = (FlRuntimeCensus)c.Input.Writer.RuntimeCensus;
-        if (!census.HasFlag(FlRuntimeCensus.Ran))
-        {
-            return "census_not_run";
-        }
-
-        return (census & FlRuntimeCensusFamilies.Fg) == FlRuntimeCensus.None ? "no_fg_runtime" : "fg_runtime_loaded";
-    }
+    /// <summary>The qualifier the one number that stands alone must carry (CLAUDE.md rule 6, as amended); the ladder's, shared with the live card (P3 PR-1).</summary>
+    private static string PresentedQualifier(Context c) => FgLadder.PresentedQualifier(c.Input.Writer, c.Withheld);
 
     private static SessionRow ApplyUpscaler(SessionRow row, Context c)
     {
