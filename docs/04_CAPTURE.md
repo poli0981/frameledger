@@ -254,14 +254,17 @@ What the Agent checks **before** asking the guard is the thing the native side s
 | **Telemetry** (`fl-telemetry`, `TelemetryPoller`, one per session) | 1 Hz, never faster than 500 ms | Its own `ConcurrentQueue` of `TelemetrySample` | Reads the composite source only; L2 has a thread of its own inside the library, and the composite is read from this thread and no other |
 | **Watcher** (built 2026-09-10, PR-F: `CaptureOrchestrator.RunAsync` on a `PeriodicTimer(1 s)`) | 1 Hz process snapshot | The watcher's events and the running-session table — `PollOnceAsync` is their only writer; there is no `Channel`, because there is no second consumer | The `games` rows (one read per poll) and never the ring; each session it starts runs on its own task |
 | **Finalize** (PR-D) | Once, on the session loop's task | The one SQLite connection, behind a `SemaphoreSlim(1)` | `ApplicationStopping` cancels the loop; finalize gets a grace window, then the `.partial` stays for recovery |
+| **Pipe** (built 2026-09-13, P3 PR-1: `PipeServer.RunAsync` accepting, one reader and one writer task per client) | Per frame | Each client's bounded outbound queue (drop-oldest, so a publisher never waits) and the answer to each request | `Hello` / `GetStatus` / `Ping` read `AgentStatus`, an immutable snapshot the publisher swaps whole; **never the ring, never the recorder**. The events themselves are handed over ON the session loop's task by `SessionEventPublisher` (`ISessionObserver`, called after the recorder's own work each tick) — the loop enqueues a frame and returns |
 
 Rules the table encodes: **nothing but the session loop touches `ShmRingReader`** — no lock is
 added to the reader, because there is no second party; a diagnostic wanting a look at the ring
 is a second consumer on a single-consumer ring and is refused by review and by
 `NoSecondRingReaderTests`. The ring holds ~16 s at a game's present rate, so a 100 ms cadence
 has two orders of magnitude of headroom, and `TotalDropped > 0` stays a session warning rather
-than a tuning knob. There is no UI thread in P2; the pipe reader (P3) joins as one more
-`Channel` producer, not as a reader of anything above.
+than a tuning knob. ~~There is no UI thread in P2; the pipe reader (P3) joins as one more
+`Channel` producer, not as a reader of anything above.~~ **The pipe's read half joined 2026-09-13 exactly so** (the row above): nothing on
+the pipe's tasks touches the ring or the recorder, and the session loop never waits on a client. The command half (PR-1b) is the
+`Channel` producer this sentence anticipated.
 
 ## Telemetry poller
 
@@ -352,6 +355,14 @@ Crash-within-60s-of-injection happening twice for the same game ⇒ **hooking au
 ## Live progress
 
 `SessionProgress` at 1 Hz to the UI (`07_IPC`): rolling 5 s Native FPS, Displayed FPS, FG factor, current render→output resolution, upscaler + quality, RT active flag, GPU/CPU temp, per-process VRAM, elapsed. Suppressed when no UI client is connected. This is what makes the Dashboard live card genuinely useful — it is showing *measured* settings, not guesses.
+
+> **Built 2026-09-13 (P3 PR-1, HANDOFF §P3 decision D13): `Application.Ipc.SessionProgressCalculator`**, over the last 5 s of the
+> ring's records through the same calculators the row uses — `FrameTimeSeries` for the presented rate, `FgWindow` + the FG ladder for
+> Native / Displayed / factor, `UpscaleExtent` for the resolutions — so the live number and the stored one cannot disagree. Rule 6 holds
+> at the wire: Native / Displayed / factor appear only when frame generation was measured in the window; otherwise the presented rate
+> stands alone with the census qualifier (`FgLadder.PresentedQualifier`, the row's). CPU temperature is null until the Agent composes a
+> CPU sensor, and every other unmeasured field is null, never 0. Rate-limited to 1 Hz inside the observer's `Tick`, computed only while
+> a client is connected, and a fault in the computation is counted rather than allowed to end the session.
 
 ## Overhead rules (NFR-1)
 

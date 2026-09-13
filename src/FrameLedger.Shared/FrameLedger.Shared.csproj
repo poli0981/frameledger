@@ -17,7 +17,9 @@
     architecture: nothing crashes, the Agent just reads garbage into fields that
     look plausible (CLAUDE.md §Struct mirroring, docs/12_BUILD.md §Managed build).
 
-    The IPC contracts half is still unwritten; only the mirrors are here.
+    The IPC contracts half lives in Ipc/ since 2026-09-13 (P3 PR-1): the envelope,
+    the read-half message set, the source-generated context and the framing. The
+    command half joins in PR-1b, one message at a time, each with its handler.
   -->
 
   <PropertyGroup>

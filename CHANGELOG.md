@@ -19,6 +19,41 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Added
 
+- **P3 PR-1 — the command pipe, read half: `Shared.Ipc`, the Agent's pipe server, the session narration and the
+  1 Hz live progress (2026-09-13).** `FrameLedger.Shared.Ipc` holds channel C's contract (`07_IPC` §C): the
+  envelope, the read-half message set (`Hello`/`HelloAck`, `GetStatus`/`StatusAck`, `Ping`/`Pong`, `Error`, and
+  the seven Agent → UI events), `IpcJsonContext` (source-generated, camelCase, nulls omitted, unknown members
+  skipped both ways — pinned) and `IpcFraming` (4-byte LE length + UTF-8 JSON ≤ 1 MB, one write per frame, every
+  refusal driven). `Infrastructure.Ipc.PipeServer` creates `\\.\pipe\FrameLedger.v2` through `CreateNamedPipe`
+  with the DACL stated as SDDL (`D:P(A;;GA;;;<user>)(A;;GA;;;BA)`, `PipeAccessControl` — what §G asked for),
+  `PIPE_REJECT_REMOTE_CLIENTS`, two instances with a slot each so a third client waits, and the client's token
+  user compared by impersonation on its first frame; a stranger is disconnected without an answer and counted.
+  `PipeClient` is the UI's end (`CurrentUserOnly`, acks correlated by id, events on a channel). `Application.Ipc`:
+  `AgentRequestHandler` answers the three requests (`ProtocolMismatch` / `UnknownType` / `Malformed` /
+  `HandlerFaulted` as `Error`, connection kept), `SessionEventPublisher` is the recorder's new second observer
+  (`ISessionObserver`, decision D13) — `SessionStarted` at the attach, `SessionProgress` once a second and only
+  while a client listens, the finished session's events through `RecordedSessionEvents` (the reason → event
+  table, pinned per reason) — and `AgentStatus` is the snapshot `GetStatus` reads. `SessionProgressCalculator`
+  computes the live window through the SAME Domain calculators as the row, and rule 6 holds at the wire:
+  Native / Displayed / factor only when frame generation was measured, else the presented rate with the census
+  qualifier — now `FgLadder.PresentedQualifier`, one function for the row and the pipe. The Agent hosts it under
+  `--serve` only (`PipeServerHostedService`); `--console` composes it inert. `HelloAck` drops `etwAvailable`
+  (the tier is gone) and gains `pid`; `vulkanLayerRegistered` and `cpuTempAvailable` are honest falses.
+  `CaptureOutcome.Verdict` now carries the verdict that FIRED on a safety unhook, so `SafetyUnhook` names its
+  family and signal. `Vocabulary.ExitStatusText` is the one spelling of `exit_status` for the column and the
+  event. In the gate: `IpcFramingTests`, `IpcCodecTests`, `PipeServerClientTests` (a real pipe, in-process, incl.
+  the refused stranger and the waiting third client), the calculator / events / publisher suites, and
+  `PipeEndToEndTests` (Integration, `agent-harness`): the Agent's own composition in-process on a test-named pipe,
+  the watcher finding `hook-harness`, and a client hearing `SessionStarted` → ≥ 3 `SessionProgress` a second apart
+  → `SessionCompleted` for the same guid. **One thing that test measured on the way (2026-09-13):** the watcher's
+  file-name fallback (`ProcessWatcher`, `StalePath`) adopted a sibling test assembly's `hook-harness.exe` running
+  from another directory, started a session for it, and refused it for want of consent on THAT path — so the
+  test's target is now a byte-identical copy of the harness under a run-unique name, and the story is keyed on
+  the pid and the guid. Recorded because the same fallback would adopt a second install of a tracked game on a
+  real machine; whether that is the wanted behaviour is `04_CAPTURE` §Process watcher's question, not this PR's.
+  **Not in this PR:** the command half (PR-1b), the App that connects (PR-2), and any keepalive the Agent
+  initiates — `Ping` is the client's.
+
 - **P2 PR-G — kill-and-recover end to end, the FPS-impact runbook, and P2's closing sweep (2026-09-10).**
   `PartialRecoveryEndToEndTests` (Integration, in the merge gate) is `14_TESTING`'s long-standing
   `.partial` line, built: the shipped `FrameLedger.Agent.exe` captures `hook-harness` with the new

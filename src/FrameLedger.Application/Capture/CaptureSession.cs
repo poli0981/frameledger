@@ -259,7 +259,9 @@ public sealed class CaptureSession(
             NgxDriver = state.Loaded.Ngx,
             TouchQpc = state.Loaded.TouchQpc,
             Reason = end,
-            Verdict = verdict,
+            // On a safety unhook the verdict that matters is the one that FIRED mid-session, not the pass that
+            // let the session start: the pipe's SafetyUnhook names its family and signal (P3 PR-1).
+            Verdict = end == SessionEndReason.SafetyUnhook && supervisor.LastVerdict is { } fired ? fired : verdict,
             AttachRefusal = ShmAttachRefusal.Ok,
             Records = state.Records,
             GapBefore = state.GapBefore,

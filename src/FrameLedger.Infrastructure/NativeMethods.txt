@@ -17,3 +17,10 @@ PDH_FMT_COUNTERVALUE
 PDH_FMT
 QueryPerformanceCounter
 QueryPerformanceFrequency
+// The command pipe (07_IPC §C, P3 PR-1): created through CreateNamedPipe rather than the framework's
+// constructor so the DACL is the SDDL PipeAccessControl states and PIPE_REJECT_REMOTE_CLIENTS is set
+// explicitly — what the kernel enforces is what the code says, not a library default nobody can read.
+CreateNamedPipe
+SECURITY_ATTRIBUTES
+FILE_FLAGS_AND_ATTRIBUTES
+NAMED_PIPE_MODE
