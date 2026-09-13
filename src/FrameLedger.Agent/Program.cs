@@ -16,6 +16,7 @@
 using FrameLedger.Agent.Cli;
 using FrameLedger.Agent.Composition;
 using FrameLedger.Agent.Hosting;
+using FrameLedger.Application.Ipc;
 using FrameLedger.Application.Rules;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Infrastructure.Rules;
@@ -89,6 +90,8 @@ internal static class Program
     private static async Task<int> ServeAsync(LedgerDatabase db, AgentPaths paths)
     {
         HostApplicationBuilder builder = Host.CreateApplicationBuilder();
+        // Before the composition, so its TryAdd keeps this one: Shutdown over the pipe stops the host (PR-1b).
+        builder.Services.AddSingleton<IAgentLifetime, HostAgentLifetime>();
         builder.Services.AddFrameLedgerAgent(db, paths);
         builder.Services.AddHostedService<WatcherHostedService>();
         // The pipe (07_IPC §C), the product's UI channel: --serve only, never under --console (P3 PR-1).

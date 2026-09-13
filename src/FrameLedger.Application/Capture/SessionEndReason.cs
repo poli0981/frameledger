@@ -135,4 +135,11 @@ public enum SessionEndReason
     /// <c>unhookRequested</c> and stopped. The user's stop, not a safety refusal — the guard never said no.
     /// </summary>
     KillSwitchEngaged,
+
+    /// <summary>
+    /// The user asked for THIS session to end (<c>StopSession</c> over the pipe, P3 PR-1b; FR-3.6 "user stop"):
+    /// the loop saw its stop token at a tick, drained once more and finalized. The target keeps running,
+    /// unhooked from here — <c>exit_status</c> is <c>normal</c>, and the row is stored like any other.
+    /// </summary>
+    StoppedByUser,
 }

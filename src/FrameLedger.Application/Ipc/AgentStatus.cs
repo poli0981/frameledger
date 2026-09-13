@@ -23,9 +23,10 @@ public sealed record AgentStatus(IReadOnlyList<ActiveSession> Sessions)
         : Sessions.Count > 0 ? RecordingState
         : IdleState;
 
-    public StatusAck ToAck()
+    /// <summary>The ack; <paramref name="paused"/> is FR-3.9's global pause, which is not a session state and travels beside it.</summary>
+    public StatusAck ToAck(bool paused = false)
     {
         ActiveSession? primary = Sessions.FirstOrDefault(static s => s.Tier == 1) ?? (Sessions.Count > 0 ? Sessions[0] : null);
-        return new StatusAck(State, primary, primary?.Tier, Sessions);
+        return new StatusAck(State, primary, primary?.Tier, Sessions, paused);
     }
 }

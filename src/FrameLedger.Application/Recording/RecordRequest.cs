@@ -20,4 +20,16 @@ public sealed record RecordRequest
 
     /// <summary>What the <c>games</c> row is called when it has to be created; defaults to the file name.</summary>
     public string? GameName { get; init; }
+
+    /// <summary>
+    /// The session's identity, when the caller needs to know it before the session ends — the orchestrator
+    /// chooses one so <c>StopSession</c> can name it (P3 PR-1b). Null: the recorder mints its own.
+    /// </summary>
+    public Guid? SessionGuid { get; init; }
+
+    /// <summary>
+    /// The user's stop for this one session (FR-3.6): the loop ends as <see cref="Capture.SessionEndReason.StoppedByUser"/>
+    /// at its next tick and finalizes. Distinct from the host's cancellation, which leaves a <c>.partial</c>.
+    /// </summary>
+    public CancellationToken StopToken { get; init; }
 }

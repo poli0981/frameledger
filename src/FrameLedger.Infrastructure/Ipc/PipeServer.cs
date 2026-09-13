@@ -220,7 +220,7 @@ public sealed class PipeServer : IIpcEventPublisher, IDisposable
         return false;
     }
 
-    private byte[] Answer(byte[] frame)
+    private async ValueTask<byte[]> AnswerAsync(byte[] frame, CancellationToken ct)
     {
         IpcEnvelope request;
         try
@@ -234,7 +234,7 @@ public sealed class PipeServer : IIpcEventPublisher, IDisposable
 
         try
         {
-            return _handler.Handle(request);
+            return await _handler.HandleAsync(request, ct).ConfigureAwait(false);
         }
         catch (JsonException ex)
         {
@@ -349,7 +349,7 @@ public sealed class PipeServer : IIpcEventPublisher, IDisposable
                     identified = true;
                 }
 
-                Enqueue(_owner.Answer(frame));
+                Enqueue(await _owner.AnswerAsync(frame, ct).ConfigureAwait(false));
             }
         }
 

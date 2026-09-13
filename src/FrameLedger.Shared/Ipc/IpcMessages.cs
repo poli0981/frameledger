@@ -1,7 +1,7 @@
-// The message set of 07_IPC §Messages — the READ half as of P3 PR-1 (2026-09-13): Hello/GetStatus/Ping and
-// the Agent → UI events. The command half (SetWatchlist, SetHookEnabled, LaunchGame, Pause/Resume, StopSession,
-// UpdateRules, Shutdown) is PR-1b (HANDOFF §P3), and none of it is declared here until it has a handler — a
-// declared message nobody answers is the §S29(c) shape.
+// The message set of 07_IPC §Messages: the READ half (P3 PR-1, 2026-09-13: Hello/GetStatus/Ping and the
+// Agent → UI events) and the COMMAND half (P3 PR-1b, the same day: SetWatchlist, LaunchGame, SetHookEnabled,
+// Pause/Resume, StopSession, UpdateRules, Shutdown). Every type here has a handler in AgentRequestHandler or
+// AgentCommandHandler — a declared message nobody answers is the §S29(c) shape.
 //
 // ONE FILE FOR THE WHOLE SET, deliberately (MA0048 is suppressed for this project, see the csproj): the types
 // are one wire contract read against one table in 07_IPC, and the property names ARE the JSON — camelCase by the
@@ -24,6 +24,26 @@ public static class IpcMessageType
     /// <summary>The Agent's answer when it cannot answer: unknown type, malformed payload, protocol mismatch.</summary>
     public const string Error = "Error";
 
+    public const string SetWatchlist = "SetWatchlist";
+    public const string WatchlistAck = "WatchlistAck";
+    public const string LaunchGame = "LaunchGame";
+    public const string LaunchAck = "LaunchAck";
+    public const string SetHookEnabled = "SetHookEnabled";
+    public const string HookEnabledAck = "HookEnabledAck";
+
+    /// <summary>The Agent's answer to <c>SetHookEnabled</c> when its own pre-scan said no (07_IPC: "may reply Refused").</summary>
+    public const string Refused = "Refused";
+
+    public const string PauseCapture = "PauseCapture";
+    public const string ResumeCapture = "ResumeCapture";
+    public const string PauseAck = "PauseAck";
+    public const string StopSession = "StopSession";
+    public const string StopAck = "StopAck";
+    public const string UpdateRules = "UpdateRules";
+    public const string UpdateRulesAck = "UpdateRulesAck";
+    public const string Shutdown = "Shutdown";
+    public const string ShutdownAck = "ShutdownAck";
+
     public const string SessionStarted = "SessionStarted";
     public const string SessionProgress = "SessionProgress";
     public const string SessionCompleted = "SessionCompleted";
@@ -40,6 +60,13 @@ public static class IpcErrorCode
     public const string Malformed = "Malformed";
     public const string ProtocolMismatch = "ProtocolMismatch";
     public const string HandlerFaulted = "HandlerFaulted";
+
+    /// <summary><c>SetHookEnabled true</c> passed the pre-scan and was NOT stamped: FR-2.1's reviewed disclosure does not exist yet (P3 PR-4).</summary>
+    public const string DisclosureUnavailable = "DisclosureUnavailable";
+
+    public const string UnknownGame = "UnknownGame";
+
+    public const string ExecutableUnreadable = "ExecutableUnreadable";
 }
 
 /// <summary>Codes a <see cref="CaptureErrorEvent"/> carries (<c>07_IPC</c> §Messages, <c>CaptureError</c>).</summary>
@@ -83,7 +110,7 @@ public sealed record ActiveSession(Guid SessionGuid, long GameId, string? GameNa
 /// <c>StatusAck</c>. <see cref="State"/> is <c>idle</c>, <c>recording</c> (a session runs, nothing hooked) or
 /// <c>capturing</c> (at least one ring attached); <see cref="ActiveSession"/> is the hooked one when there is one.
 /// </summary>
-public sealed record StatusAck(string State, ActiveSession? ActiveSession, int? Tier, IReadOnlyList<ActiveSession> ActiveSessions);
+public sealed record StatusAck(string State, ActiveSession? ActiveSession, int? Tier, IReadOnlyList<ActiveSession> ActiveSessions, bool Paused = false);
 
 public sealed record PingRequest;
 
@@ -170,3 +197,54 @@ public sealed record CaptureDegradedEvent(Guid SessionGuid, int From, int To, st
 public sealed record SafetyUnhookEvent(Guid SessionGuid, string? Family, string? Signal);
 
 public sealed record CaptureErrorEvent(Guid? SessionGuid, string Code, string Message);
+
+// ----------------------------------------------------------------------------------------------------------------
+// The command half (P3 PR-1b). 07_IPC §The pipe is not a trust boundary: none of these carries a verdict, a
+// clearance, a consent record or a rules source — a client asks, the Agent establishes the fact itself.
+// ----------------------------------------------------------------------------------------------------------------
+
+/// <summary>One watchlist entry: identity only. <c>GameId</c> is the client's hint and is never trusted over the path.</summary>
+public sealed record WatchlistEntry(long? GameId, string ExePath);
+
+/// <summary><c>SetWatchlist</c>: ensure a <c>games</c> row per entry (hooking OFF when new). Removal is FR-1.4's, not this message's.</summary>
+public sealed record SetWatchlistRequest(IReadOnlyList<WatchlistEntry> Entries);
+
+public sealed record WatchlistGame(long GameId, string ExePath, string Name);
+
+public sealed record WatchlistAck(IReadOnlyList<WatchlistGame> Games, IReadOnlyList<string> Unreadable);
+
+/// <summary><c>LaunchGame</c>: start the title in launch mode (<c>04_CAPTURE</c> §Launch mode) and run the launcher election after it.</summary>
+public sealed record LaunchGameRequest(long GameId, string? Arguments);
+
+public sealed record LaunchAck(long GameId, bool Accepted, string Outcome, Guid? SessionGuid);
+
+/// <summary>
+/// <c>SetHookEnabled</c>. <c>DisclosureVersion</c> is the version of the reviewed FR-2.1 text the client showed; the
+/// Agent compares it to its own and stamps from its own clock (P3 PR-4). It is never a consent timestamp.
+/// </summary>
+public sealed record SetHookEnabledRequest(long GameId, bool Enabled, string? DisclosureVersion);
+
+/// <summary><c>Outcome</c> is the store's word (<c>Written</c>, <c>NotFound</c>, …); <c>Prescan</c> is <c>clean</c> when one ran and passed.</summary>
+public sealed record HookEnabledAck(long GameId, bool Enabled, string Outcome, string? Prescan);
+
+/// <summary>The Agent's pre-scan refused to enable: the reason, and the family/signal when it named one. The block is on the row.</summary>
+public sealed record RefusedAck(long GameId, string Reason, string? Family, string? Signal);
+
+public sealed record PauseCaptureRequest;
+
+public sealed record ResumeCaptureRequest;
+
+public sealed record PauseAck(bool Paused);
+
+public sealed record StopSessionRequest(Guid SessionGuid);
+
+public sealed record StopAck(Guid SessionGuid, bool Accepted, string? Reason);
+
+/// <summary><c>UpdateRules</c>: a trigger, no payload — the Agent re-reads only its own rules copy (07_IPC).</summary>
+public sealed record UpdateRulesRequest;
+
+public sealed record UpdateRulesAck(string Outcome);
+
+public sealed record ShutdownRequest;
+
+public sealed record ShutdownAck;
