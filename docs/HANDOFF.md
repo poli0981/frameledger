@@ -1120,7 +1120,7 @@ reference comes out.~~ — **L2 was written, 2026-09-03.** The obligation now bu
 
 ---
 
-## P2 — **START HERE** (2026-09-09, owner-approved plan)
+## ~~P2 — **START HERE**~~ — CODE COMPLETE 2026-09-10; the live head is §P3 below (struck 2026-09-13 so this file holds one START HERE, not two)
 
 P1's core is merged (`15_ROADMAP` §P1). What comes next is P2 — the Agent, the recorder,
 SQLite — and this section carries its **order**, the **decisions that live in no other file**,
@@ -1128,8 +1128,8 @@ and what each slice must make fail on unmodified `main`. Status lives where it l
 
 > ### What is left, as of 2026-09-10: **two measurements, no code.**
 >
-> All nine slices below are written and their gates are green (PR-0 #143, A #144, B #145, E1 #146
-> merged; C #147 → D #148 → E2 #149 → F #150 → G stacked and open, merged one at a time). What P2
+> All nine slices below are written and their gates are green (PR-0 #143, A #144, B #145, E1 #146,
+> C #147, D #148, E2 #149, F #150, G #151 — ~~stacked and open~~ **all merged 2026-09-10**). What P2
 > still owes is what a PR cannot produce:
 >
 > 1. **The milestone session** — a real title, Tier 1, its `upscaler` / render→output / `fg_mode` /
@@ -1194,11 +1194,16 @@ milestone must not wait on a new native target crossing every gate — it lands 
   2026-09-03/05/06), so any new field is a layout bump. P2 needs none: finalize's "stop writing" is
   `SetPaused`, and every counter to be stored already exists. `FlControlBlock.Reserved[11]` is the
   Agent-side slack if one is ever needed.
-- **`FrameLedger.Application` gains a reference to `FrameLedger.Shared`** (A); Domain still
+- **D1 — `FrameLedger.Application` gains a reference to `FrameLedger.Shared`** (A); Domain still
   references nothing and mirrors the record enums with a bidirectional test.
-- **The pipe (`07_IPC`) is P3**, not P2; `--serve` is watcher-driven and logs. **No `EtwFrameSource`**
-  (§G). **`FileGameConsentStore` is retired in B**; the CaptureHost writes a build-tree `ledger.db`
+- **D10 — the pipe (`07_IPC`) is P3**, not P2; `--serve` is watcher-driven and logs. **No `EtwFrameSource`**
+  (§G). **D5 — `FileGameConsentStore` is retired in B**; the CaptureHost writes a build-tree `ledger.db`
   so the Agent stays the sole owner of `%LOCALAPPDATA%\FrameLedger`.
+- **D6 — `--data-dir` exists only under `--console`** (F; `12_BUILD` §Debugging), so `--serve` can never
+  be pointed at a ledger that is not the Agent's own.
+- *(Numbering, recorded 2026-09-13: D1, D5, D6 and D10 were cited by number from `CHANGELOG`, `04_CAPTURE`,
+  `12_BUILD` and `07_IPC` while this list carried them unlabelled — labels added above. **D2 and D3 were
+  never assigned**; the numbering skips them. Nobody needs to hunt for a missing decision.)*
 
 **What P1 still owes, and where it lands:** the ≤ 0.5 % real-game FPS-impact measurement
 (`14_TESTING` §Hook overhead item 2, moved to the end of P1 by §R4) needs the drain and the
@@ -1207,10 +1212,12 @@ election are **F** and **G**; the ⏳ feature rows in `17_HOOK_ENGINE` §Hook in
 their columns (`hdr_flag`, `pt_confidence`, `pso_stutter_pct`, `vram_proc*`, `latency_*`) are an
 honest NULL in P2's schema, never a 0.
 
-## P3 — what comes after P2's two runs (not started; here so the order is not re-derived)
+## P3 — **START HERE** (2026-09-13, owner-approved plan)
 
-`15_ROADMAP` §P3 is the UI. Two items P2 deliberately left standing are P3's first, and both are
-*replacements* rather than new ground:
+`15_ROADMAP` §P3 is the UI — and since 2026-09-13 it is **all of `08_UI`**, Settings, Logs, the tray
+and the first-run Legal Gate included (the owner chose the full surface over a shell-first cut; the
+roadmap's §P3/§P4 split is amended to say so). Two items P2 deliberately left standing are P3's
+first, and both are *replacements* rather than new ground:
 
 1. **The pipe (`07_IPC` §C).** Decision D10 put it here. The P2 Agent has no client: `--serve` logs
    to `%LOCALAPPDATA%\FrameLedger\logs\agent-*.log` and `--console` prints. `04_CAPTURE`
@@ -1226,6 +1233,75 @@ honest NULL in P2's schema, never a 0.
    code can produce is the §S29(c) shape, and `GameConsentRecordTests` turns red on purpose.
 
 Everything else in P3 is `08_UI` and `16_WPFUI_SYNTAX` as written.
+
+> ### What P2 still owes while P3 runs — measurements, not code
+>
+> `spike-notes` §14 holds four empty slots and says in its first line that nothing in it has been run:
+> the milestone session on a real title against its own menus (§14.1), §S1's launcher-fronted election
+> (§14.2), the ≤ 0.5 % FPS-impact run (§14.3) and §H7's six overlays (§14.4). All four are the owner's,
+> none blocks a P3 slice, and a P3 session must not read an empty table as a passing one.
+
+**The order, one PR each, merged one at a time** (`main` is `strict: true`; every PR touching `src/`
+conflicts in `CHANGELOG.md` — §Traps). Each row names what makes it fail on unmodified `main`,
+because a criterion already true on `main` is decoration.
+
+| PR | Slice | Fails on unmodified `main` because… |
+|---|---|---|
+| 0 | P2 sweep: the doc/tool drift PR-G left (`coverage-gate.ps1` prose, `13_CI_CD`'s count and its signer-probe claim, `09_I18N`'s member count, `17_HOOK_ENGINE`'s §H9 cite, this file's D-labels, `ci.yml`'s census comment), this head, the roadmap amendment | `grep -n "exactly two members" docs/09_I18N.md` matched; `§H9` resolved to nothing; two START HEREs |
+| 1 | **The pipe, read half**: `Shared.Ipc` contracts + `JsonSerializerContext`; the Agent's `PipeServerHostedService`; `Hello`/`HelloAck`, `GetStatus`/`StatusAck`, `Ping`/`Pong`; the events (`SessionStarted`/`Progress`/`Completed`/`CaptureRefused`/`CaptureDegraded`/`SafetyUnhook`/`CaptureError`); a 1 Hz `SessionProgress` publisher; `Infrastructure.Ipc.PipeClient` | `grep -rn NamedPipeServerStream src` is empty; `FrameLedger.Shared` holds no JSON type; `04_CAPTURE` §Live progress has no producer |
+| 1b | **The pipe, command half**: `SetWatchlist` (identity only), `SetHookEnabled` (the Agent re-scans and stamps), `LaunchGame`, `PauseCapture`/`ResumeCapture`, `StopSession`, `UpdateRules` (a trigger, no payload), `Shutdown` | the Agent accepts no command from outside; `CaptureOrchestrator` has no stop/pause surface; `SetHookEnabled` has no handler |
+| 2 | **resx + the App shell**: `Strings.resx` en/vi/ja for App and Shared, the generated class, `tools/resx-audit.ps1` (+`-SelfTest`) as `build.ps1` step 15; the Generic Host bootstrap, `FluentWindow`, TitleBar/Menu/NavigationView, theme + persistence, `INavigationService`, Serilog `ui-*.log`, five empty pages, the Agent status pill over `Hello`, auto-start of `--serve` on connect failure; `tests/FrameLedger.App.Tests` | `find . -name '*.resx'` is empty; step 15 prints "skipped loudly"; `App.xaml` uses `StartupUri` and `MainWindow` is a plain `Window` |
+| 2b *(owner decides)* | `FL_MOCK=1` / `Agent --serve --mock`, `--data-dir` only: a `MockSessionSource` hosted service that emits pipe events and inserts synthesised sessions through `ISessionRepository` — and can never resolve `HookedCaptureGate` (asserted) | CLAUDE.md says "specified but not implemented"; `grep FL_MOCK src` is empty |
+| 3 | **Ports the UI reads and writes**: `ISessionRepository.ListByGameAsync` / segments / sensors, `ISessionAnnotationRepository`, `ILegalAcceptanceStore.RecordAsync`, `IGameRepository.UpdateMetadataAsync` / `RemoveAsync`, the **settings registry** (closes §G's row — D16 below), `IRtOverrideRepository` (FR-8.3), `display_res`/`display_hz` producer; tests for the four PR-B adapters that have none | no port lists sessions by game; `session_annotations` has no repository; `legal_acceptance` has no writer; `ISettingsStore`'s own doc calls the registry open |
+| 4 | **FR-2.1's consent dialog**: `Safety_*` en + vi (ja marked `safety: human review required`, shown as en) in `Shared`, `SafetyDisclosureVersion`; `ConsentProvenance.ConsentDialog` whose only producer is the Agent's `SetHookEnabled` handler; `HelloAck.disclosureVersion` and the App **refusing to open the dialog** on mismatch (§S23-1's shape); the dialog itself per `19_SAFETY` §User-facing consent; FR-2.2's disabled toggle with the reason inline; FR-2.5's InfoBar; `GameConsentRecordTests`, `19_SAFETY`, `09_I18N` and item 2 above updated | `Enum.GetNames<ConsentProvenance>()` has three names; no `Safety_*` key exists; `19_SAFETY` still carries the console exception |
+| 5 | **Games + Dashboard**: the grid, game detail (header, **Supports** vs **Last session measured**, the hooking control → PR-4's dialog, the Sessions tab), Dashboard (Agent status + capability badges, the live card over `SessionProgress`, recent sessions, totals), FR-1.1 add / FR-1.4 remove; `FpsReadout` and `TriStateChip` | no page binds a `SessionRow`; nothing renders `62 → 118 FPS (×1.9 FG)`; `SessionProgress` has no consumer |
+| 6 | **Session summary + charts**: `ChartTheme` + `ChartPalette.xaml`, min/max decimation (FR-5.3), frametime timeline with stutter markers, segment ribbon and sensor overlay, distribution, the summary window (stat cards, chips + override flyout, crash InfoBar, tags/notes), CSV/JSON/PNG export, the post-session toast | no ScottPlot plot exists; no decimator; no exporter |
+| 7 | **Trend / Sensors / Latency / Compare**: hardware-change markers (FR-6.3), the mid-session-change exclusion + toggle (FR-6.4), sensors with per-process and adapter VRAM as separate series, the latency tab, Compare 2–5 with the **mixed-tier `ContentDialog` guard** (FR-6.2) and tier legend | no query groups by `capture_tier`; no Compare page |
+| 8 | **Settings + safety UI + Logs + tray**: FR-10 with the kill switch first, hook-enabled list + revoke, Vulkan layer state with real `--register-vklayer`/`--unregister-vklayer`, language switch, retention, the Agent section with real `--install-task`/`--uninstall-task`, privacy opt-in; the **safety notices** (`CaptureRefused`/`SafetyUnhook`/auto-disable as persistent InfoBar or dialog, never a toast, with "record this session without measuring it"); the Logs page; the tray with FR-3.9; the App's `--diag` | the kill switch has a console verb only; `AgentCommandLine.NotImplementedFlags` still lists five; no Logs page |
+| 9 | **First run + Legal Gate (FR-11) + closing sweep**: the four documents from `legal/*.md` through `ILegalAcceptanceStore.RecordAsync`, re-shown on a version increment, the Agent-setup and hooking-explainer screens, D8 unchanged unless the owner turns it on; the docs sweep (`01_ARCHITECTURE`, `07_IPC`, `19_SAFETY`, `09_I18N`, CLAUDE.md, this section struck); NFR-4 measured | no code writes a `legal_acceptance` row; the App has no first run |
+
+**Why this order:** the pipe (1) first because the Dashboard's live card (5), the consent stamp (4) and
+the tray's pause (8) all need it; resx (2) before the dialog (4) because the dialog is the first thing
+that needs a reviewed `.resx`; ports (3) before Games (5) because every page reads through a port;
+charts (6) after Games (5) because the summary opens from the Sessions tab; Settings and the Legal Gate
+(8–9) last because nothing depends on them and the roadmap used to place them in P4.
+
+**Decisions taken 2026-09-13 (owner, with the plan), so nobody re-derives them:**
+
+- **D11 — the pipe's transport.** `Infrastructure.Ipc.PipeServer` over `NamedPipeServerStream`
+  (`PipeTransmissionMode.Message`, `PipeOptions.Asynchronous | CurrentUserOnly`, remote clients rejected,
+  two instances), the ACL a `PipeSecurity` of the current user's SID plus Administrators, and the client's
+  token user compared to the server's — which is the SDDL `20_OPEN_QUESTIONS` §G asked for. Framing is
+  `07_IPC` §C as written: 4-byte LE length + UTF-8 JSON ≤ 1 MB, `Shared.Ipc.IpcEnvelope { type, id?, payload }`,
+  `IpcJsonContext : JsonSerializerContext` on the `RecordingJsonContext` pattern, unknown fields ignored and
+  tested in both directions.
+- **D12 — commands join as one more producer.** A `Channel<AgentCommand>` with a single consumer
+  (`PipeCommandHostedService`) that calls `CaptureOrchestrator` — which gains `StopSessionAsync(guid)` and
+  `SetPaused(bool)`, the latter reaching `ShmRingReader.SetPaused` on the session loop's own task, never
+  from the pipe thread (`04_CAPTURE` §Threading model; `NoSecondRingReaderTests` stands). `SetHookEnabled true`
+  is: the static pre-scan (`RecordGuardBlockAsync` on a block) → `RecordOperatorAcknowledgementAsync` with
+  `Provenance = ConsentDialog`, the disclosure version from the Agent's own copy of the string, and
+  `AcknowledgedAt` from the Agent's clock. A client can request; it cannot attest (`07_IPC` §The pipe is not a
+  trust boundary).
+- **D13 — `SessionProgress` is a third `ICaptureObserver`.** `ProgressPublisher` in `AgentRecording`,
+  rate-limited to 1 Hz inside `Tick`, snapshots the live lists there and never holds them; `nativeFps5s` /
+  `displayedFps5s` / `fgFactor` come from Domain's calculators over the last 5 s of records through
+  `FrameSampleMapper`, upscaler and resolutions from the newest record, temperatures and VRAM from the newest
+  `TelemetrySample`. Suppressed when no client is connected. A field that is not measured is null, never 0.
+- **D14 — `Safety_*` lives in `FrameLedger.Shared`, once.** Both processes reference the same resource;
+  `SafetyDisclosureVersion` is a constant beside it; `HelloAck` carries the Agent's; on a mismatch the App
+  says "restart both" and does not show the dialog — the ring handshake's rule (§S23-1) one layer up.
+- **D15 — the App opens `ledger.db` directly**, under `06_DATA_MODEL` §Writer ownership: it writes `games`'
+  user-editable fields, `session_annotations`, `settings` and `legal_acceptance`, reads everything, and never
+  writes a hook-state column — `IGameRepository` has no method that could, and stays that way.
+- **D16 — the settings registry** (closes §G's row, written into `06_DATA_MODEL` in PR-3): `ui.language`,
+  `ui.theme`, `ui.start_with_windows`, `ui.minimize_to_tray`, `capture.background`, `hooking.kill_switch`
+  (exists), `capture.min_session_s` (30), `telemetry.interval_ms` (1000; 500–2000), `retention.raw_sessions_per_game`
+  (20), `update.channel`, `privacy.online_metadata` (0), `log.debug` (0). The Agent reads `hooking.*`,
+  `capture.*`, `telemetry.*` and `retention.*` at each session start, so no "setting changed" message is needed;
+  the UI owns the rest.
+- **D17 — `FL_MOCK`, if the owner wants it, is `--serve --mock` under `--data-dir` only** (D6's shape), so a
+  synthetic session can never land in the profile's ledger.
 
 ## Owner-only — no PR can close these
 

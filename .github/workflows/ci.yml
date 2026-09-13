@@ -147,11 +147,13 @@ jobs:
 
       # §S29(d)'s pre-committed measurement: can tools/vklayer-blastradius.ps1 run
       # HERE? It needs a Vulkan loader and vulkaninfo.exe, which ship with a GPU
-      # driver's runtime, not with Windows. A census, printed, never a gate: if the
-      # runner has them, the next PR wires the script as a step (the runner is
-      # disposable, so registering an implicit layer under HKCU is acceptable
-      # here where it is not on a dev box); if it does not, (d) is deferred on a
-      # measured rationale rather than an assumed one.
+      # driver's runtime, not with Windows. A census, printed, never a gate.
+      # READ 2026-09-06 and again 2026-09-10 (run 34427267214): vulkan-1.dll
+      # PRESENT, vulkaninfo.exe ABSENT (System32 and PATH), no ICD registry key.
+      # So the "absent" row of 20_OPEN_QUESTIONS §S29(d) applies — deferred on
+      # that measurement, the script stays hand-run — and the "next PR wires the
+      # script" clause this comment used to carry is struck (2026-09-13). The
+      # step stays so a change in the runner image is noticed rather than assumed.
       - name: Vulkan runtime census (§S29(d) — measurement, not a gate)
         if: always()
         continue-on-error: true

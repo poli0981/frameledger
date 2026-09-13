@@ -356,6 +356,23 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Changed
 
+- **P3 PR-0 — the P2 sweep: what PR-G's closing sweep left stale, corrected in place (2026-09-13).**
+  Docs and tools only, no `src/`. `tools/coverage-gate.ps1` said Domain and Application were "empty
+  today" and the metric calculators "do not exist yet" four days after both had armed it; `13_CI_CD`
+  counted nine `Category=Integration` cases (20 across six classes) and claimed the signer probe ran
+  after the gate with `if: always()` "a one-line change nobody has made" — the step has carried it since
+  #137, before the failure the bullet describes, so *why* the probe was not read on 2026-09-10 is now
+  recorded as unmeasured rather than as a workflow defect; `09_I18N` said `ConsentProvenance` had two
+  members (three since PR-F); `17_HOOK_ENGINE` cited `20_OPEN_QUESTIONS` §H9, answered and removed in the
+  P0 spike; `ci.yml`'s census comment still promised "the next PR wires the script" after the census had
+  read `vulkaninfo.exe` absent twice. HANDOFF: P2's START HERE struck, **§P3 is the head** with the
+  slice table (0, 1, 1b, 2, 2b, 3–9) and decisions D11–D17; D1/D5/D6/D10 labelled where they were
+  cited by number and defined unlabelled, and D2/D3 recorded as never assigned. `15_ROADMAP` §P3 takes
+  the pipe, i18n, the Legal Gate, Settings, Logs and the tray from §P4 (owner, 2026-09-13). §G's
+  threading-model row struck with its pointer; the settings-registry and pipe-security rows carry the
+  decisions that close them. What P2 still owes is unchanged and is measurement: `spike-notes` §14's
+  four slots, all empty, all the owner's.
+
 - **The FG `N/A` and the upscaler `N/A` carry their witnesses.** Hell Is Us at XeSS + XeSS-FG (2026-09-06):
   no Streamline token on that plugin at XeSS, so nothing counted, and the report printed a bare *N/A (a hook
   ran …)* while the driver's FG word, the tags, the ffx census, the module census and the executable's own

@@ -9,13 +9,16 @@
     EVER READ IT. 14_TESTING says ">= 80% on Domain + Application" and "Domain
     metric calculators >= 95% or the PR fails"; neither was enforced anywhere.
 
-    THE GATE IS SELF-ARMING. Domain and Application are empty today (guard logic
-    went to C++ under 20_OPEN_QUESTIONS §S13(a)), so there is nothing to measure
-    and a threshold would be decorative. Rather than skip - a skipped gate reads
-    as a passed one, which is the defect shape this project keeps finding - the
-    script checks whether the project has any .cs file. No source => report the
-    emptiness explicitly and pass. First .cs file => the threshold applies
-    immediately, with no second commit to remember.
+    THE GATE IS SELF-ARMING. When it was written Domain and Application were
+    empty (guard logic went to C++ under 20_OPEN_QUESTIONS §S13(a)), so there was
+    nothing to measure and a threshold would have been decorative. Rather than
+    skip - a skipped gate reads as a passed one, which is the defect shape this
+    project keeps finding - the script checks whether the project has any .cs
+    file. No source => report the emptiness explicitly and pass. First .cs file
+    => the threshold applies immediately, with no second commit to remember.
+    It armed on 2026-09-09 (P2 PR-A: Domain.Metrics; PR-C: Application.Capture)
+    and has been biting since; this paragraph said "empty today" for four days
+    after that, corrected 2026-09-13 rather than rewritten as if it never had.
 
     That ordering matters: adding a threshold AFTER the code exists is how the
     number gets negotiated down to whatever the code already scores.
@@ -191,8 +194,9 @@ foreach ($t in $targets) {
     }
 }
 
-# Domain metric calculators, 95%. They do not exist yet; when they do, this
-# matches on namespace so it needs no maintenance to start biting.
+# Domain metric calculators, 95%. Matched on namespace so it needed no
+# maintenance to start biting - which it did on 2026-09-09 (P2 PR-A). This
+# comment said "they do not exist yet" until 2026-09-13.
 $calcPattern = '^FrameLedger\.Domain\.(Metrics|Calculators)\.'
 $calcs = @($classRates.Keys | Where-Object { $_ -match $calcPattern })
 if ($calcs.Count -eq 0) {
