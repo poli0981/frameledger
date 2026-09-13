@@ -16,14 +16,23 @@ namespace FrameLedger.Application.Watch;
 /// </summary>
 /// <remarks>
 /// <para>
-/// <b>Single consumer, by construction.</b> <see cref="PollOnceAsync"/> is the only writer of the running-session
-/// table and the only reader of the watcher; the sessions themselves run on their own tasks and touch nothing
-/// here. <c>04_CAPTURE</c> §Threading model's watcher row is this method on a <see cref="PeriodicTimer"/>.
+/// <b>The running-session table has one lock, and the sessions themselves never take it.</b> Until P3 PR-1b
+/// <see cref="PollOnceAsync"/> was the table's only writer; the pipe's <c>LaunchGame</c> and <c>StopSession</c>
+/// now reach it from the pipe's tasks too, so the table is guarded rather than queued (HANDOFF §P3 decision
+/// D12 as built: two commands do not justify a channel and a second place a start can wait). Each session
+/// runs on its own task and touches nothing here.
 /// </para>
 /// <para>
-/// <b>Attach mode only.</b> A watched process is one the user started elsewhere; launch mode is the console
-/// verb's, and the election after a launcher exits is <see cref="ElectAfterLaunchAsync"/>, called by that verb.
-/// A <see cref="TrackedProcessGone"/> starts nothing: the session's own loop sees the exit first.
+/// <b>Attach mode from the watcher, launch mode on request.</b> A watched process is one the user started
+/// elsewhere; <see cref="LaunchAsync"/> starts the title itself through the <see cref="ILaunchRecorderFactory"/>
+/// the composition root supplies (the console's <c>launch</c> verb builds the same by hand), and the election
+/// after a launcher exits is <see cref="ElectAfterLaunchAsync"/>, which both share. A
+/// <see cref="TrackedProcessGone"/> starts nothing: the session's own loop sees the exit first.
+/// </para>
+/// <para>
+/// <b>A stop is a token, not a cancellation.</b> <see cref="StopSession"/> cancels the session's own stop
+/// token, which the loop reads at its next tick and ends as <see cref="SessionEndReason.StoppedByUser"/> —
+/// drained, finalized, stored — where the host's cancellation would leave a <c>.partial</c> for recovery.
 /// </para>
 /// </remarks>
 public sealed class CaptureOrchestrator
@@ -34,11 +43,13 @@ public sealed class CaptureOrchestrator
     private readonly IExecutableIdentitySource _identity;
     private readonly OrchestratorOptions _options;
     private readonly Action<string> _log;
+    private readonly ILaunchRecorderFactory? _launches;
     private readonly ProcessWatcher _watcher = new();
-    private readonly Dictionary<long, Task> _running = new();
+    private readonly Lock _table = new();
+    private readonly Dictionary<long, Running> _running = [];
 
     public CaptureOrchestrator(ISessionRecorder recorder, IGameRepository games, IProcessSnapshotSource processes,
-        IExecutableIdentitySource identity, OrchestratorOptions options, Action<string> log)
+        IExecutableIdentitySource identity, OrchestratorOptions options, Action<string> log, ILaunchRecorderFactory? launches = null)
     {
         _recorder = recorder ?? throw new ArgumentNullException(nameof(recorder));
         _games = games ?? throw new ArgumentNullException(nameof(games));
@@ -46,10 +57,20 @@ public sealed class CaptureOrchestrator
         _identity = identity ?? throw new ArgumentNullException(nameof(identity));
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _log = log ?? throw new ArgumentNullException(nameof(log));
+        _launches = launches;
     }
 
     /// <summary>Sessions started here that have not finished.</summary>
-    public int RunningSessions => _running.Values.Count(static t => !t.IsCompleted);
+    public int RunningSessions
+    {
+        get
+        {
+            lock (_table)
+            {
+                return _running.Values.Count(static r => !r.Task.IsCompleted);
+            }
+        }
+    }
 
     /// <summary>Poll until cancelled, then wait for every running session to finalize.</summary>
     public async Task RunAsync(CancellationToken ct)
@@ -98,6 +119,62 @@ public sealed class CaptureOrchestrator
     }
 
     /// <summary>
+    /// <c>StopSession</c> (P3 PR-1b): ask the session with this guid to end at its next tick. False when no running
+    /// session started here carries it — an elected session after a launch, or a console capture, is not addressable.
+    /// </summary>
+    public bool StopSession(Guid sessionGuid)
+    {
+        lock (_table)
+        {
+            foreach (Running r in _running.Values)
+            {
+                if (r.SessionGuid == sessionGuid && !r.Task.IsCompleted)
+                {
+                    r.Stop.Cancel();
+                    _log($"session {sessionGuid:N}: stop requested; the loop ends at its next tick");
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// <c>LaunchGame</c> (P3 PR-1b): start the game with id <paramref name="gameId"/> in launch mode, under the
+    /// one-session-per-game rule, and run the launcher election after it. Consent is still the gate's, one process
+    /// later; this method decides only that a session starts.
+    /// </summary>
+    public async ValueTask<LaunchResult> LaunchAsync(long gameId, string arguments, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(arguments);
+        if (_launches is null)
+        {
+            return LaunchResult.Of(LaunchOutcome.Unavailable);
+        }
+
+        IReadOnlyList<GameRow> rows = await _games.ListAsync(ct).ConfigureAwait(false);
+        GameRow? game = rows.FirstOrDefault(g => g.Id == gameId);
+        if (game is null)
+        {
+            return LaunchResult.Of(LaunchOutcome.UnknownGame);
+        }
+
+        lock (_table)
+        {
+            if (_running.TryGetValue(gameId, out Running? current) && !current.Task.IsCompleted)
+            {
+                return LaunchResult.Of(LaunchOutcome.SessionRunning);
+            }
+
+            var running = new Running(Guid.NewGuid());
+            running.Task = RunLaunchAsync(game, arguments, running.SessionGuid, running.Stop.Token, ct);
+            _running[gameId] = running;
+            return new LaunchResult(LaunchOutcome.Accepted, running.SessionGuid);
+        }
+    }
+
+    /// <summary>
     /// After a launch-mode session ended with the launcher gone (<see cref="SessionEndReason.LaunchTargetExited"/>)
     /// or sitting on its window (<see cref="SessionEndReason.LaunchNoPresentationRuntime"/>): elect the newest
     /// tracked descendant and run an attach-mode session against it. Null when nothing was elected.
@@ -121,31 +198,36 @@ public sealed class CaptureOrchestrator
         }
 
         _log($"election: pid {elected.Value.Pid} ({path}) is the newest tracked descendant; attaching");
-        return await _recorder.RecordAsync(Attach(path, null), ct).ConfigureAwait(false);
+        return await _recorder.RecordAsync(Attach(path, null, null, default), ct).ConfigureAwait(false);
     }
 
     private void Start(TrackedProcessAppeared appeared, CancellationToken ct)
     {
-        if (_running.TryGetValue(appeared.Game.Id, out Task? running) && !running.IsCompleted)
+        lock (_table)
         {
-            _log($"watch: pid {appeared.Pid} ({appeared.Game.Name}) appeared while a session for that game is running; one at a time");
-            return;
-        }
+            if (_running.TryGetValue(appeared.Game.Id, out Running? current) && !current.Task.IsCompleted)
+            {
+                _log($"watch: pid {appeared.Pid} ({appeared.Game.Name}) appeared while a session for that game is running; one at a time");
+                return;
+            }
 
-        _log(appeared.StalePath
-            ? $"watch: pid {appeared.Pid} matched {appeared.Game.Name} BY FILE NAME ONLY — it runs from {appeared.ImagePath}, not the path on record; the session is keyed on the real path"
-            : $"watch: pid {appeared.Pid} ({appeared.Game.Name}) appeared; starting a session");
-        RecordRequest request = Attach(appeared.ImagePath, appeared.Game.Name);
-        _running[appeared.Game.Id] = RunAndReportAsync(request, ct);
+            _log(appeared.StalePath
+                ? $"watch: pid {appeared.Pid} matched {appeared.Game.Name} BY FILE NAME ONLY — it runs from {appeared.ImagePath}, not the path on record; the session is keyed on the real path"
+                : $"watch: pid {appeared.Pid} ({appeared.Game.Name}) appeared; starting a session");
+            var running = new Running(Guid.NewGuid());
+            RecordRequest request = Attach(appeared.ImagePath, appeared.Game.Name, running.SessionGuid, running.Stop.Token);
+            running.Task = RunAndReportAsync(_recorder, request, ct);
+            _running[appeared.Game.Id] = running;
+        }
     }
 
     /// <summary>The session on its own task, reporting its own end; nothing else awaits a stored task.</summary>
-    private async Task RunAndReportAsync(RecordRequest request, CancellationToken ct)
+    private async Task RunAndReportAsync(ISessionRecorder recorder, RecordRequest request, CancellationToken ct)
     {
         try
         {
-            RecordedSession r = await Task.Run(() => _recorder.RecordAsync(request, ct), ct).ConfigureAwait(false);
-            _log($"session {r.SessionGuid:N}: {r.Outcome.Reason}; {r.Finalize.Status} (tier {(int)r.Row.Tier}, exit={r.ExitStatus}, frames={r.Row.FrameCount})");
+            RecordedSession r = await Task.Run(() => recorder.RecordAsync(request, ct), ct).ConfigureAwait(false);
+            Report(r);
         }
         catch (OperationCanceledException)
         {
@@ -157,7 +239,48 @@ public sealed class CaptureOrchestrator
         }
     }
 
-    private RecordRequest Attach(string normalisedExePath, string? gameName)
+    /// <summary>Launch mode on its own task: the environment, the session, the election, each reported.</summary>
+    private async Task RunLaunchAsync(GameRow game, string arguments, Guid sessionGuid, CancellationToken stop, CancellationToken ct)
+    {
+        try
+        {
+            string path = game.Fingerprint.ExePath;
+            using ILaunchRecording launch = await _launches!.PrepareAsync(path, ct).ConfigureAwait(false);
+            _log($"launch: {game.Name}: {launch.Description}");
+            var request = new RecordRequest
+            {
+                NormalisedExePath = path,
+                Observed = _identity.Read(path),
+                PayloadPath = _options.PayloadPath,
+                Mode = CaptureMode.Launch,
+                Arguments = arguments,
+                GameName = game.Name,
+                SessionGuid = sessionGuid,
+                StopToken = stop,
+            };
+            RecordedSession r = await Task.Run(() => launch.Recorder.RecordAsync(request, ct), ct).ConfigureAwait(false);
+            Report(r);
+
+            RecordedSession? elected = await ElectAfterLaunchAsync(r, ct).ConfigureAwait(false);
+            if (elected is not null)
+            {
+                Report(elected);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _log("session: cancelled before it could finalize; the .partial stays for recovery");
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            _log($"session: FAULTED {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    private void Report(RecordedSession r) =>
+        _log($"session {r.SessionGuid:N}: {r.Outcome.Reason}; {r.Finalize.Status} (tier {(int)r.Row.Tier}, exit={r.ExitStatus}, frames={r.Row.FrameCount})");
+
+    private RecordRequest Attach(string normalisedExePath, string? gameName, Guid? sessionGuid, CancellationToken stop)
     {
         ExecutableFingerprint? observed = _identity.Read(normalisedExePath);
         return new RecordRequest
@@ -167,24 +290,51 @@ public sealed class CaptureOrchestrator
             PayloadPath = _options.PayloadPath,
             Mode = CaptureMode.Attach,
             GameName = gameName,
+            SessionGuid = sessionGuid,
+            StopToken = stop,
         };
     }
 
     private void Reap()
     {
-        foreach ((long gameId, Task task) in _running.ToArray())
+        lock (_table)
         {
-            if (task.IsCompleted)
+            foreach ((long gameId, Running running) in _running.ToArray())
             {
-                _running.Remove(gameId);
+                if (running.Task.IsCompleted)
+                {
+                    _running.Remove(gameId);
+                    running.Dispose();
+                }
             }
         }
     }
 
-    private Task DrainRunningAsync()
+    private async Task DrainRunningAsync()
     {
-        Task[] all = [.. _running.Values];
-        _running.Clear();
-        return Task.WhenAll(all);
+        Running[] all;
+        lock (_table)
+        {
+            all = [.. _running.Values];
+            _running.Clear();
+        }
+
+        await Task.WhenAll(all.Select(static r => r.Task)).ConfigureAwait(false);
+        foreach (Running r in all)
+        {
+            r.Dispose();
+        }
+    }
+
+    /// <summary>One started session: its guid (chosen here, so the stop is addressable), its task, its stop token.</summary>
+    private sealed class Running(Guid sessionGuid) : IDisposable
+    {
+        public Guid SessionGuid { get; } = sessionGuid;
+
+        public CancellationTokenSource Stop { get; } = new();
+
+        public Task Task { get; set; } = System.Threading.Tasks.Task.CompletedTask;
+
+        public void Dispose() => Stop.Dispose();
     }
 }

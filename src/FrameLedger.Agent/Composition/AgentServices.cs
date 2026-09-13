@@ -1,9 +1,11 @@
+using FrameLedger.Agent.Hosting;
 using FrameLedger.Application.AntiCheat;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Consent;
 using FrameLedger.Application.Ipc;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
+using FrameLedger.Application.Rules;
 using FrameLedger.Application.Watch;
 using FrameLedger.Infrastructure.AntiCheat;
 using FrameLedger.Infrastructure.Blobs;
@@ -11,11 +13,13 @@ using FrameLedger.Infrastructure.Capture;
 using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Infrastructure.Recording;
+using FrameLedger.Infrastructure.Rules;
 using FrameLedger.Infrastructure.Settings;
 using FrameLedger.Infrastructure.Telemetry;
 using FrameLedger.Infrastructure.Watch;
 using FrameLedger.Shared.Ipc;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace FrameLedger.Agent.Composition;
 
@@ -99,10 +103,24 @@ internal static class AgentServices
     private static void AddPipe(IServiceCollection services, string? pipeName)
     {
         services.AddSingleton(new PipeServerOptions { PipeName = pipeName ?? IpcProtocol.PipeName });
+        // The command half (PR-1b). The pause is the one global flag every session reads; the lifetime is the
+        // host's under --serve and a logged no-op under --console (TryAdd: --serve registers its own first).
+        services.AddSingleton<CapturePause>();
+        services.TryAddSingleton<IAgentLifetime, NoAgentLifetime>();
+        services.AddSingleton(static sp => new AgentCommandHandler(
+            sp.GetRequiredService<IGameRepository>(),
+            sp.GetRequiredService<IGameConsentStore>(),
+            sp.GetRequiredService<IAntiCheatGuard>(),
+            sp.GetRequiredService<IExecutableIdentitySource>(),
+            sp.GetRequiredService<CaptureOrchestrator>(),
+            sp.GetRequiredService<CapturePause>(),
+            sp.GetRequiredService<IAgentLifetime>(),
+            static async ct => (await new RulesSeeder(new FileSystemRulesStore()).EnsureSeededAsync(ct).ConfigureAwait(false)).ToString()));
         services.AddSingleton<IIpcRequestHandler>(static sp => new AgentRequestHandler(
             AgentIdentityFactory.OfThisProcess(),
             TelemetryDescriptor(),
-            () => sp.GetRequiredService<SessionEventPublisher>().Status));
+            () => sp.GetRequiredService<SessionEventPublisher>().Status,
+            () => sp.GetRequiredService<AgentCommandHandler>()));
         services.AddSingleton(static sp => new PipeServer(
             sp.GetRequiredService<PipeServerOptions>(),
             sp.GetRequiredService<IIpcRequestHandler>(),
@@ -116,7 +134,9 @@ internal static class AgentServices
             sp.GetRequiredService<IProcessSnapshotSource>(),
             sp.GetRequiredService<IExecutableIdentitySource>(),
             new OrchestratorOptions { PayloadPath = AgentPaths.Payload },
-            static line => Serilog.Log.Information("{Line}", line)));
+            static line => Serilog.Log.Information("{Line}", line),
+            sp.GetRequiredService<ILaunchRecorderFactory>()));
+        services.AddSingleton<ILaunchRecorderFactory, AgentLaunches>();
 
     }
 

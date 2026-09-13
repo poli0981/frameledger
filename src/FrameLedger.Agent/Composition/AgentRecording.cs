@@ -32,6 +32,7 @@ internal sealed class AgentRecording
     private readonly SessionFinalizer _finalizer;
     private readonly ICrashEventSource _crashes;
     private readonly ISessionObserver _observer;
+    private readonly CapturePause _pause;
 
     public AgentRecording(
         IGameConsentStore store,
@@ -49,7 +50,8 @@ internal sealed class AgentRecording
         IPartialSessionStore partials,
         SessionFinalizer finalizer,
         ICrashEventSource crashes,
-        ISessionObserver observer)
+        ISessionObserver observer,
+        CapturePause pause)
     {
         _store = store;
         _gate = gate;
@@ -67,6 +69,7 @@ internal sealed class AgentRecording
         _finalizer = finalizer;
         _crashes = crashes;
         _observer = observer;
+        _pause = pause;
     }
 
     /// <summary>
@@ -156,7 +159,8 @@ internal sealed class AgentRecording
             _ngx,
             launcher,
             observer,
-            _killSwitch);
+            _killSwitch,
+            _pause);
 
     /// <summary>The session and its collaborators, wired the only way the Agent allows; the recorder supplies the observer.</summary>
     private sealed class Factory(AgentRecording owner, int seconds, IProcessLauncher? launcher) : ICaptureSessionFactory

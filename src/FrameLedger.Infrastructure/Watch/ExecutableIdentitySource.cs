@@ -8,5 +8,7 @@ namespace FrameLedger.Infrastructure.Watch;
 public sealed class ExecutableIdentitySource : IExecutableIdentitySource
 {
     /// <inheritdoc />
+    public string Normalise(string exePath) => ExecutableIdentity.Normalise(exePath);
+
     public ExecutableFingerprint? Read(string normalisedExePath) => ExecutableIdentity.Read(normalisedExePath);
 }

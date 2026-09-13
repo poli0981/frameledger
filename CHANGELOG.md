@@ -19,6 +19,39 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Added
 
+- **P3 PR-1b — the command pipe, command half: `SetWatchlist`, `LaunchGame`, `SetHookEnabled` (pre-scan, no stamp
+  yet), pause/resume, `StopSession`, `UpdateRules`, `Shutdown` (2026-09-13).** `Application.Ipc.AgentCommandHandler`
+  answers every UI → Agent row of `07_IPC` §Messages under the one rule of §The pipe is not a trust boundary — the
+  Agent establishes each fact itself. `SetHookEnabled false` revokes through the store; `SetHookEnabled true` runs
+  the static pre-scan of the executable's directory, records a block or a "could not verify" through
+  `RecordGuardBlockAsync` and answers `Refused { reason, family?, signal? }`, and answers a clean scan **`Error
+  DisclosureUnavailable` with nothing stamped** — FR-2.1's reviewed text does not exist (PR-4), and a client's
+  `disclosureVersion` is a claim, not a disclosure shown. `SetWatchlist` ensures identity rows (hooking off when
+  new) and removes nothing; `UpdateRules` is the seeder's outcome and ignores any payload; `Shutdown` asks
+  `IAgentLifetime` (the host's under `--serve`, a logged no-op under `--console`). `PauseCapture`/`ResumeCapture`
+  flip `CapturePause`, one in-memory flag every session loop reads at its tick and tells the ring once per
+  transition — supervision never pauses — and `StatusAck` gains `paused`. `StopSession` cancels the session's own
+  stop token (`RecordRequest.StopToken`; the orchestrator now names every session it starts, `RecordRequest.SessionGuid`),
+  which the loop reads at its next tick and ends as the new `SessionEndReason.StoppedByUser`: drained once more,
+  finalized, `exit_status = normal`, the target left running. `LaunchGame` is `CaptureOrchestrator.LaunchAsync`
+  over the new `ILaunchRecorderFactory` (the Agent's `AgentLaunches`: the Vulkan layer's environment unless the
+  kill switch is on, the console's `launch` shape), one session per game, the launcher election after. The
+  orchestrator's running-session table has one lock now that the pipe's tasks reach it (HANDOFF §P3 D12 as built:
+  no `Channel`). `IExecutableIdentitySource` gains `Normalise`, so a client's spelling is never a key. In the gate:
+  `AgentCommandHandlerTests` (over the real SQLite consent store: the block recorded, nothing stamped, a path in
+  an `UpdateRules` payload ignored), `CaptureSessionTests` (a stop token ends as `StoppedByUser` with the last drain
+  run; the pause told once per transition while the guard keeps scanning), `CaptureOrchestratorTests` (stop
+  cancels the request's own token; launch once per game, refused for what it cannot name, the environment
+  released with the session), and `PipeEndToEndTests` grows two scenarios over the real Agent composition and a
+  real ring: the watched harness narrated → paused (status says so, state stays `capturing`) → resumed → stopped
+  by guid (`StoppedByUser`, `normal`, harness still alive) → the session-less commands, including a real pre-scan
+  answered `DisclosureUnavailable`; and `LaunchGame` starting the harness in launch mode and narrating it to
+  `TargetExited`. **Measured on the way:** wiring the command handler into the request handler eagerly is a DI
+  cycle (server → handler → commands → orchestrator → recorder → observer → publisher → server) that the
+  container did not refuse and the first e2e run HUNG on (`--blame-hang` dump, 2026-09-13); the command handler is
+  resolved lazily on the first command, and the e2e now writes the composition's Serilog lines to its scratch
+  directory so the next hang leaves evidence. **Not in this PR:** the consent stamp (PR-4) and the App (PR-2).
+
 - **P3 PR-1 — the command pipe, read half: `Shared.Ipc`, the Agent's pipe server, the session narration and the
   1 Hz live progress (2026-09-13).** `FrameLedger.Shared.Ipc` holds channel C's contract (`07_IPC` §C): the
   envelope, the read-half message set (`Hello`/`HelloAck`, `GetStatus`/`StatusAck`, `Ping`/`Pong`, `Error`, and

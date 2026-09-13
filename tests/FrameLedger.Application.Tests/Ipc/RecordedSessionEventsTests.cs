@@ -38,6 +38,7 @@ public sealed class RecordedSessionEventsTests
     [InlineData(SessionEndReason.RefusedHookNotEnabled, RecordedSessionEvents.Kind.None)]
     [InlineData(SessionEndReason.RefusedConsentMissing, RecordedSessionEvents.Kind.None)]
     [InlineData(SessionEndReason.Running, RecordedSessionEvents.Kind.None)]
+    [InlineData(SessionEndReason.StoppedByUser, RecordedSessionEvents.Kind.None)]
     public void EveryReasonHasOneKind(SessionEndReason reason, RecordedSessionEvents.Kind expected) =>
         RecordedSessionEvents.Classify(reason).Should().Be(expected);
 

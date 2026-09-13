@@ -3,8 +3,9 @@ using FrameLedger.Shared.Ipc;
 namespace FrameLedger.Application.Ipc;
 
 /// <summary>
-/// The read half of <c>07_IPC</c> §Messages: <c>Hello</c>, <c>GetStatus</c>, <c>Ping</c>. Nothing here changes
-/// a state — the command half (PR-1b) is where <c>07_IPC</c> §The pipe is not a trust boundary starts to bite.
+/// The read half of <c>07_IPC</c> §Messages — <c>Hello</c>, <c>GetStatus</c>, <c>Ping</c> — and the front door
+/// for the command half: anything else is offered to <see cref="AgentCommandHandler"/> when one is composed, and
+/// answered <c>Error UnknownType</c> otherwise.
 /// </summary>
 /// <remarks>
 /// The telemetry descriptor is a function because composing the layers costs a library start; the identity is a
@@ -15,25 +16,38 @@ public sealed class AgentRequestHandler : IIpcRequestHandler
     private readonly AgentIdentity _identity;
     private readonly Func<string?> _telemetryDescriptor;
     private readonly Func<AgentStatus> _status;
+    private readonly Func<AgentCommandHandler?> _commands;
 
-    public AgentRequestHandler(AgentIdentity identity, Func<string?> telemetryDescriptor, Func<AgentStatus> status)
+    /// <summary>
+    /// <c>commands</c> is a function, resolved on the first command rather than at construction: the command
+    /// handler reaches the orchestrator, which reaches the recorder, whose observer publishes through the pipe
+    /// server that owns this handler — a cycle a container cannot build eagerly, and one a request can walk lazily.
+    /// </summary>
+    public AgentRequestHandler(AgentIdentity identity, Func<string?> telemetryDescriptor, Func<AgentStatus> status, Func<AgentCommandHandler?>? commands = null)
     {
         _identity = identity ?? throw new ArgumentNullException(nameof(identity));
         _telemetryDescriptor = telemetryDescriptor ?? throw new ArgumentNullException(nameof(telemetryDescriptor));
         _status = status ?? throw new ArgumentNullException(nameof(status));
+        _commands = commands ?? (static () => null);
     }
 
-    public byte[] Handle(IpcEnvelope request)
+    public async ValueTask<byte[]> HandleAsync(IpcEnvelope request, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(request);
-        return request.Type switch
+        switch (request.Type)
         {
-            IpcMessageType.Hello => Hello(request),
-            IpcMessageType.GetStatus => IpcCodec.Encode(IpcMessageType.StatusAck, request.Id, _status().ToAck()),
-            IpcMessageType.Ping => IpcCodec.Encode(IpcMessageType.Pong, request.Id, new PongAck()),
-            _ => IpcCodec.Encode(IpcMessageType.Error, request.Id,
-                new ErrorAck(IpcErrorCode.UnknownType, $"'{request.Type}' is not a request this Agent answers (07_IPC §Messages, read half)")),
-        };
+            case IpcMessageType.Hello:
+                return Hello(request);
+            case IpcMessageType.GetStatus:
+                return IpcCodec.Encode(IpcMessageType.StatusAck, request.Id, _status().ToAck(_commands()?.IsPaused ?? false));
+            case IpcMessageType.Ping:
+                return IpcCodec.Encode(IpcMessageType.Pong, request.Id, new PongAck());
+            default:
+                AgentCommandHandler? commands = _commands();
+                byte[]? command = commands is null ? null : await commands.HandleAsync(request, ct).ConfigureAwait(false);
+                return command ?? IpcCodec.Encode(IpcMessageType.Error, request.Id,
+                    new ErrorAck(IpcErrorCode.UnknownType, $"'{request.Type}' is not a request this Agent answers (07_IPC §Messages)"));
+        }
     }
 
     private byte[] Hello(IpcEnvelope request)

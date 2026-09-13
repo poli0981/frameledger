@@ -235,7 +235,7 @@ public sealed class CaptureSessionTests : IAsyncDisposable
 
     private static CaptureSession Loop(IGameConsentStore store, CountingGuard guard, FakeSink? sink,
         FakeLiveness? alive = null, int? pid = _pid, SessionEndReason resolveReason = SessionEndReason.Running,
-        CaptureOptions? options = null, IKillSwitch? killSwitch = null) =>
+        CaptureOptions? options = null, IKillSwitch? killSwitch = null, ICapturePauseSource? pause = null) =>
         new(store,
             new HookedCaptureGate(guard),
             guard,
@@ -250,7 +250,111 @@ public sealed class CaptureSessionTests : IAsyncDisposable
                 MaxDuration = TimeSpan.FromMilliseconds(120),
                 LogFlushGrace = TimeSpan.FromMilliseconds(1),
             },
-            killSwitch: killSwitch);
+            killSwitch: killSwitch,
+            pause: pause);
+
+    private static readonly bool[] _pauseThenResume = [true, false];
+
+    private sealed class SwitchablePause : ICapturePauseSource
+    {
+        public bool IsPaused { get; set; }
+    }
+
+    private sealed class PauseObservingSink : ICaptureSink
+    {
+        public List<bool> PauseCalls { get; } = [];
+
+        public FlWriterState WriterState => new() { Status = (uint)FlStatus.Ready };
+
+        public FlShmHandshake Handshake => default;
+
+        public long TotalDropped => 0;
+
+        public long TotalGaps => 0;
+
+        public DrainResult Drain(Span<FlFrameRecord> into, IList<ulong> gapIndices) => new(0, 0, 0);
+
+        public void PublishGuardResult(uint completedEvaluations, bool unhookRequested)
+        {
+        }
+
+        public void SetPaused(bool paused) => PauseCalls.Add(paused);
+
+        public void RequestLogFlush()
+        {
+        }
+
+        public void Dispose()
+        {
+        }
+    }
+
+    [Fact]
+    public async Task AStopTokenEndsTheSessionAsStoppedByUserWithTheTargetStillRunning()
+    {
+        // FR-3.6's "user stop" (P3 PR-1b): the loop reads its own stop token at a tick and ends with a reason the
+        // recorder finalizes — not the host's cancellation, which would leave a .partial. The target is untouched.
+        IGameConsentStore store = await StoreWithAsync().ConfigureAwait(true);
+        var guard = new CountingGuard();
+        using var sink = new FakeSink(recordsToServe: 3);
+        using var alive = new FakeLiveness();
+        using var stop = new CancellationTokenSource();
+        CaptureSession loop = Loop(store, guard, sink, alive, options: new CaptureOptions
+        {
+            DrainInterval = TimeSpan.FromMilliseconds(1),
+            ScanInterval = TimeSpan.FromSeconds(30),
+            AttachBudget = TimeSpan.FromSeconds(5),
+            MaxDuration = TimeSpan.FromSeconds(30),
+            LogFlushGrace = TimeSpan.FromMilliseconds(1),
+        });
+
+        Task<CaptureOutcome> running = loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken, stop.Token);
+        await Task.Delay(30, TestContext.Current.CancellationToken).ConfigureAwait(true);
+        running.IsCompleted.Should().BeFalse("nothing has ended the session");
+        await stop.CancelAsync().ConfigureAwait(true);
+        CaptureOutcome r = await running.ConfigureAwait(true);
+
+        r.Reason.Should().Be(SessionEndReason.StoppedByUser);
+        r.Records.Should().HaveCount(3, "the drains before and at the stop are kept");
+        alive.HasExited.Should().BeFalse("the stop is the session's, never the target's");
+        sink.Events.Last().Should().Be("drain", "the last drain runs after the stop is seen");
+    }
+
+    [Fact]
+    public async Task ThePauseIsToldToTheRingOncePerTransitionAndNeverStopsSupervision()
+    {
+        IGameConsentStore store = await StoreWithAsync().ConfigureAwait(true);
+        var guard = new CountingGuard();
+        var pause = new SwitchablePause();
+        using var sink = new PauseObservingSink();
+        using var alive = new FakeLiveness();
+        using var stop = new CancellationTokenSource();
+        // This case needs its own observing sink, so the attacher is built directly rather than through Loop().
+        var loop = new CaptureSession(store, new HookedCaptureGate(guard), guard, new FixedResolver(_pid, SessionEndReason.Running),
+            new DelegateLivenessSource(_ => alive), new DelegateRingAttacher(_ => (sink, ShmAttachRefusal.Ok)),
+            new CaptureOptions
+            {
+                DrainInterval = TimeSpan.FromMilliseconds(1),
+                ScanInterval = TimeSpan.FromMilliseconds(5),
+                AttachBudget = TimeSpan.FromSeconds(5),
+                MaxDuration = TimeSpan.FromSeconds(30),
+                LogFlushGrace = TimeSpan.FromMilliseconds(1),
+            }, pause: pause);
+
+        Task<CaptureOutcome> running = loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken, stop.Token);
+        await Task.Delay(20, TestContext.Current.CancellationToken).ConfigureAwait(true);
+        int scansBeforePause = guard.EvaluateCalls;
+        pause.IsPaused = true;
+        await Task.Delay(30, TestContext.Current.CancellationToken).ConfigureAwait(true);
+        pause.IsPaused = false;
+        await Task.Delay(20, TestContext.Current.CancellationToken).ConfigureAwait(true);
+        await stop.CancelAsync().ConfigureAwait(true);
+        CaptureOutcome r = await running.ConfigureAwait(true);
+
+        r.Reason.Should().Be(SessionEndReason.StoppedByUser);
+        sink.PauseCalls.Should().Equal(_pauseThenResume, "told once per transition, never per tick");
+        guard.EvaluateCalls.Should().BeGreaterThan(scansBeforePause, "supervision keeps scanning while the recording is paused");
+    }
 
     [Fact]
     public async Task TheModuleSnapshotIsTakenBesideEveryGuardScanAndOnceMoreBeforeTheLastDrain()

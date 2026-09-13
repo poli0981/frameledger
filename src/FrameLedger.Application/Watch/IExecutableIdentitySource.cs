@@ -10,4 +10,7 @@ public interface IExecutableIdentitySource
 {
     /// <summary>The fingerprint of <paramref name="normalisedExePath"/>, or null when the file cannot be read.</summary>
     ExecutableFingerprint? Read(string normalisedExePath);
+
+    /// <summary>The path as the <c>games</c> table keys it (P3 PR-1b: a client's path arrives however the client spelled it).</summary>
+    string Normalise(string exePath);
 }

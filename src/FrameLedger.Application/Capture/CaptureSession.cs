@@ -43,7 +43,8 @@ public sealed class CaptureSession(
     INgxDriverProbe? ngx = null,
     IProcessLauncher? launcher = null,
     ICaptureObserver? observer = null,
-    IKillSwitch? killSwitch = null)
+    IKillSwitch? killSwitch = null,
+    ICapturePauseSource? pause = null)
 {
     /// <summary>Start one session, or say why not.</summary>
     /// <remarks>
@@ -79,7 +80,7 @@ public sealed class CaptureSession(
     /// </para>
     /// </remarks>
     public async Task<CaptureOutcome> RunAsync(string normalisedExePath, ExecutableFingerprint? observed,
-        string payloadPath, CancellationToken ct = default)
+        string payloadPath, CancellationToken ct = default, CancellationToken stop = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(normalisedExePath);
 
@@ -101,7 +102,7 @@ public sealed class CaptureSession(
             return new CaptureOutcome { Reason = refused };
         }
 
-        return await SessionAsync(pid.Value, alive, record, observed!.Value, payloadPath, started: null, ct)
+        return await SessionAsync(pid.Value, alive, record, observed!.Value, payloadPath, started: null, ct, stop)
             .ConfigureAwait(false);
     }
 
@@ -123,7 +124,7 @@ public sealed class CaptureSession(
     /// </para>
     /// </remarks>
     public async Task<CaptureOutcome> RunLaunchedAsync(string normalisedExePath, ExecutableFingerprint? observed,
-        string payloadPath, string arguments, CancellationToken ct = default)
+        string payloadPath, string arguments, CancellationToken ct = default, CancellationToken stop = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(normalisedExePath);
         if (launcher is null)
@@ -145,7 +146,7 @@ public sealed class CaptureSession(
             return new CaptureOutcome { Reason = refused };
         }
 
-        return await SessionAsync(launched.Value.Pid, alive, record, observed!.Value, payloadPath, started, ct)
+        return await SessionAsync(launched.Value.Pid, alive, record, observed!.Value, payloadPath, started, ct, stop)
             .ConfigureAwait(false);
     }
 
@@ -162,7 +163,7 @@ public sealed class CaptureSession(
 
     /// <summary>Gate, attach, drain — shared by both modes; <paramref name="started"/> non-null is launch mode.</summary>
     private async Task<CaptureOutcome> SessionAsync(int pid, ITargetLiveness alive, GameConsentRecord record,
-        ExecutableFingerprint observed, string payloadPath, Stopwatch? started, CancellationToken ct)
+        ExecutableFingerprint observed, string payloadPath, Stopwatch? started, CancellationToken ct, CancellationToken stop)
     {
         int waitMs = started is null ? 0 : checked((int)options.LaunchWaitBudget.TotalMilliseconds);
         // THE FOURTH INPUT (FR-2.4, decision D7) is read here and handed to the request, so the refusal is
@@ -197,7 +198,7 @@ public sealed class CaptureSession(
         using (sink)
         {
             observer?.Attached(pid, sink.Handshake);
-            CaptureOutcome result = await DrainAsync(pid, alive, sink, verdict, ct).ConfigureAwait(false);
+            CaptureOutcome result = await DrainAsync(pid, alive, sink, verdict, ct, stop).ConfigureAwait(false);
             return result with { LaunchWait = launchWait, TargetPid = pid, ExitCode = alive.ExitCode };
         }
     }
@@ -247,11 +248,11 @@ public sealed class CaptureSession(
     }
 
     private async Task<CaptureOutcome> DrainAsync(int pid, ITargetLiveness alive, ICaptureSink sink,
-        AntiCheatVerdict verdict, CancellationToken ct)
+        AntiCheatVerdict verdict, CancellationToken ct, CancellationToken stop)
     {
         var supervisor = new GuardSupervisor(guard);
         var state = new DrainState(new ModuleTally(modules, ngx));
-        SessionEndReason end = await SuperviseAsync(pid, alive, sink, supervisor, state, ct).ConfigureAwait(false);
+        SessionEndReason end = await SuperviseAsync(pid, alive, sink, supervisor, state, ct, stop).ConfigureAwait(false);
 
         return new CaptureOutcome
         {
@@ -315,7 +316,7 @@ public sealed class CaptureSession(
     /// </para>
     /// </remarks>
     private async Task<SessionEndReason> SuperviseAsync(int pid, ITargetLiveness alive, ICaptureSink sink,
-        GuardSupervisor supervisor, DrainState state, CancellationToken ct)
+        GuardSupervisor supervisor, DrainState state, CancellationToken ct, CancellationToken stop)
     {
         var buffer = new FlFrameRecord[512];
 
@@ -331,13 +332,12 @@ public sealed class CaptureSession(
         Exception? faulted = null;
         while (mayContinue)
         {
+            ApplyPause(sink, state);
             state.Focus.Sample(alive.IsForeground);
             DrainInto(sink, buffer, state);
             observer?.Tick(state.Progress(sink, supervisor));
 
-            end = SessionEndClassifier.Classify(
-                alive.HasExited, sink.WriterState.Status, supervisor.UnhookRequested,
-                DateTimeOffset.UtcNow > attachSettledAt);
+            end = EndOf(alive, sink, supervisor, attachSettledAt, stop);
             if (end != SessionEndReason.Running || (hardStop is not null && DateTimeOffset.UtcNow >= hardStop))
             {
                 break;
@@ -456,11 +456,42 @@ public sealed class CaptureSession(
         }
     }
 
+    /// <summary>
+    /// The tick's verdict: the classifier's, or — when the classifier says nothing ended and the user's stop
+    /// token for THIS session is set (P3 PR-1b) — <see cref="SessionEndReason.StoppedByUser"/>. Read here, at a
+    /// tick, so the last drain still runs and the session finalizes; the host's cancellation would not give it that.
+    /// </summary>
+    private static SessionEndReason EndOf(ITargetLiveness alive, ICaptureSink sink, GuardSupervisor supervisor,
+        DateTimeOffset attachSettledAt, CancellationToken stop)
+    {
+        SessionEndReason end = SessionEndClassifier.Classify(
+            alive.HasExited, sink.WriterState.Status, supervisor.UnhookRequested,
+            DateTimeOffset.UtcNow > attachSettledAt);
+        return end == SessionEndReason.Running && stop.IsCancellationRequested ? SessionEndReason.StoppedByUser : end;
+    }
+
+    /// <summary>
+    /// FR-3.9's global pause, applied on the tick it changes: the ring is told once per transition, and
+    /// supervision continues regardless — a paused session is still a hooked process under a 30 s scan.
+    /// </summary>
+    private void ApplyPause(ICaptureSink sink, DrainState state)
+    {
+        bool paused = pause?.IsPaused ?? false;
+        if (paused != state.Paused)
+        {
+            sink.SetPaused(paused);
+            state.Paused = paused;
+        }
+    }
+
     /// <summary>Everything one session accumulates, owned by the loop; the observer reads it between ticks.</summary>
     private sealed class DrainState(ModuleTally loaded)
     {
         /// <summary>Set when a scan boundary found FR-2.4's switch on and published the stop (P2 PR-F).</summary>
         public bool KillSwitchStopped { get; set; }
+
+        /// <summary>What the ring was last told about FR-3.9's pause (P3 PR-1b).</summary>
+        public bool Paused { get; set; }
 
         public List<FlFrameRecord> Records { get; } = [];
 

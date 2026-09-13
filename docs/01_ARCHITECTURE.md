@@ -42,7 +42,9 @@
 > **The pipe's read half is built 2026-09-13 (P3 PR-1):** `--serve` listens on `\\.\pipe\FrameLedger.v2`,
 > answers `Hello` / `GetStatus` / `Ping`, and narrates every session (`SessionStarted` at the attach, `SessionProgress`
 > at 1 Hz, the safety and error events, `SessionCompleted`); `--console` still prints and hosts no pipe. The
-> command half — the messages a client sends to change a state — is PR-1b, and the App that connects is PR-2.
+> command half — the messages a client sends to change a state — ~~is PR-1b~~ is built the same day (PR-1b:
+> `SetWatchlist`, `LaunchGame`, `SetHookEnabled` with the pre-scan and no stamp until PR-4, pause/resume,
+> `StopSession`, `UpdateRules`, `Shutdown`), and the App that connects is PR-2.
 
 ## Why this shape
 

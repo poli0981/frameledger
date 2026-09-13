@@ -67,7 +67,7 @@ public sealed class SessionRecorder : ISessionRecorder
         ArgumentNullException.ThrowIfNull(request);
         DateTimeOffset startedAt = _clock.GetUtcNow();
         long qpcEpoch = _clock.GetTimestamp();
-        var guid = Guid.NewGuid();
+        Guid guid = request.SessionGuid ?? Guid.NewGuid();
 
         ExecutableFingerprint fingerprint = request.Observed ?? new ExecutableFingerprint { ExePath = request.NormalisedExePath, SizeBytes = 0, MtimeUnixMs = 0 };
         GameRow game = await _games.EnsureAsync(fingerprint, request.GameName ?? Path.GetFileNameWithoutExtension(request.NormalisedExePath), ct).ConfigureAwait(false);
@@ -130,8 +130,8 @@ public sealed class SessionRecorder : ISessionRecorder
     {
         CaptureSession session = _sessions.Create(run);
         return request.Mode == CaptureMode.Launch
-            ? await session.RunLaunchedAsync(request.NormalisedExePath, request.Observed, request.PayloadPath, request.Arguments, ct).ConfigureAwait(false)
-            : await session.RunAsync(request.NormalisedExePath, request.Observed, request.PayloadPath, ct).ConfigureAwait(false);
+            ? await session.RunLaunchedAsync(request.NormalisedExePath, request.Observed, request.PayloadPath, request.Arguments, ct, request.StopToken).ConfigureAwait(false)
+            : await session.RunAsync(request.NormalisedExePath, request.Observed, request.PayloadPath, ct, request.StopToken).ConfigureAwait(false);
     }
 
     private async Task<RecordedSession> FinalizeAsync(RecordRequest request, GameRow game, PartialHeader header, CaptureOutcome outcome,

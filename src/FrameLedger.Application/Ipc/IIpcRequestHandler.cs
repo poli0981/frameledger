@@ -9,5 +9,5 @@ namespace FrameLedger.Application.Ipc;
 public interface IIpcRequestHandler
 {
     /// <summary>The ack — <c>Error</c> when the type is unknown or the payload is not what the type needs.</summary>
-    byte[] Handle(IpcEnvelope request);
+    ValueTask<byte[]> HandleAsync(IpcEnvelope request, CancellationToken ct);
 }
