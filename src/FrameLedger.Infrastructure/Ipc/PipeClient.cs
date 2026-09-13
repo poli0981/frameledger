@@ -61,6 +61,24 @@ public sealed class PipeClient : IAsyncDisposable
         where TRequest : class
         where TAck : class
     {
+        IpcEnvelope ack = await RequestEnvelopeAsync(type, payload, timeout, ct).ConfigureAwait(false);
+        if (!string.Equals(ack.Type, ackType, StringComparison.Ordinal))
+        {
+            throw new IpcRequestException("UnexpectedAck", $"expected {ackType}, the Agent answered {ack.Type}");
+        }
+
+        return IpcCodec.Payload<TAck>(ack) ?? throw new IpcRequestException("EmptyAck", $"{ack.Type} carried no payload");
+    }
+
+    /// <summary>
+    /// One request, whatever non-<c>Error</c> envelope answers it — for a caller that distinguishes two acks of
+    /// one request (<c>HookEnabledAck</c> vs <c>Refused</c>, P3 PR-4) rather than treating the second as a failure.
+    /// </summary>
+    /// <exception cref="IpcRequestException">The Agent answered <c>Error</c>.</exception>
+    /// <exception cref="TimeoutException">No ack within <paramref name="timeout"/>.</exception>
+    public async Task<IpcEnvelope> RequestEnvelopeAsync<TRequest>(string type, TRequest payload, TimeSpan timeout, CancellationToken ct = default)
+        where TRequest : class
+    {
         string id = Interlocked.Increment(ref _nextId).ToString(CultureInfo.InvariantCulture);
         var tcs = new TaskCompletionSource<IpcEnvelope>(TaskCreationOptions.RunContinuationsAsynchronously);
         _pending[id] = tcs;
@@ -74,12 +92,7 @@ public sealed class PipeClient : IAsyncDisposable
                 throw new IpcRequestException(error?.Code ?? IpcMessageType.Error, error?.Message ?? "the Agent answered Error with no payload");
             }
 
-            if (!string.Equals(ack.Type, ackType, StringComparison.Ordinal))
-            {
-                throw new IpcRequestException("UnexpectedAck", $"expected {ackType}, the Agent answered {ack.Type}");
-            }
-
-            return IpcCodec.Payload<TAck>(ack) ?? throw new IpcRequestException("EmptyAck", $"{ack.Type} carried no payload");
+            return ack;
         }
         finally
         {

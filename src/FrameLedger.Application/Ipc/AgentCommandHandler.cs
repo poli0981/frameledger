@@ -14,8 +14,10 @@ namespace FrameLedger.Application.Ipc;
 /// not a trust boundary is the rule every method here follows — no inbound message asserts a safety fact; the
 /// Agent establishes each one itself. <c>SetHookEnabled</c> is where that bites: the pre-scan runs here, a block
 /// is recorded here, and the consent stamp — the Agent's clock, the Agent's provenance — is stamped here or not
-/// at all. Until FR-2.1's reviewed disclosure exists (P3 PR-4) it is not at all: an enable is answered
-/// <c>Error DisclosureUnavailable</c> after the pre-scan, and nothing is written but a block.
+/// at all. ~~Until FR-2.1's reviewed disclosure exists (P3 PR-4) it is not at all~~ Since PR-4 (2026-09-13) it is
+/// stamped when the client's <c>disclosureVersion</c> equals this Agent's (D14) — <c>ConsentProvenance.ConsentDialog</c>,
+/// this clock — and answered <c>Error DisclosureVersionMismatch</c> otherwise; a composition that wired no version
+/// still answers <c>Error DisclosureUnavailable</c>, and in every case nothing is written but a block until then.
 /// </summary>
 public sealed class AgentCommandHandler
 {
@@ -28,15 +30,18 @@ public sealed class AgentCommandHandler
     private readonly IAgentLifetime _lifetime;
     private readonly Func<CancellationToken, ValueTask<string>> _updateRules;
     private readonly string? _disclosureVersion;
+    private readonly TimeProvider _clock;
 
     /// <summary>
-    /// <c>disclosureVersion</c> is the version of FR-2.1's reviewed disclosure this Agent carries: null until P3
-    /// PR-4 ships one, and while it is null no <c>SetHookEnabled true</c> stamps anything.
+    /// <c>disclosureVersion</c> is the version of FR-2.1's reviewed disclosure this Agent carries
+    /// (<c>Shared.Safety.SafetyDisclosure.Version</c> under <c>--serve</c>); while it is null no <c>SetHookEnabled true</c>
+    /// stamps anything. <c>clock</c> is the stamp's — the Agent's, never the client's.
     /// </summary>
     public AgentCommandHandler(IGameRepository games, IGameConsentStore consent, IAntiCheatGuard guard, IExecutableIdentitySource identity,
         CaptureOrchestrator orchestrator, CapturePause pause, IAgentLifetime lifetime, Func<CancellationToken, ValueTask<string>> updateRules,
-        string? disclosureVersion = null)
+        string? disclosureVersion = null, TimeProvider? clock = null)
     {
+        _clock = clock ?? TimeProvider.System;
         _games = games ?? throw new ArgumentNullException(nameof(games));
         _consent = consent ?? throw new ArgumentNullException(nameof(consent));
         _guard = guard ?? throw new ArgumentNullException(nameof(guard));
@@ -117,8 +122,8 @@ public sealed class AgentCommandHandler
     /// <summary>
     /// The Agent re-runs the static pre-scan and stamps — or refuses — itself (<c>07_IPC</c> §The pipe is not a
     /// trust boundary). A revoke needs no scan. An enable: the scan first, a block recorded and answered
-    /// <c>Refused</c>; a clean scan is then answered <c>Error DisclosureUnavailable</c> until the reviewed
-    /// disclosure exists (PR-4), so nothing is ever stamped on the strength of a client's word.
+    /// <c>Refused</c>; a clean scan is then stamped by <see cref="StampAsync"/> only when the client's disclosure
+    /// version is this Agent's, so nothing is ever stamped on the strength of a client's word.
     /// </summary>
     private async ValueTask<byte[]> SetHookEnabledAsync(IpcEnvelope request, CancellationToken ct)
     {
@@ -159,15 +164,40 @@ public sealed class AgentCommandHandler
                 new RefusedAck(game.Id, reason, NullIfEmpty(verdict.Family), NullIfEmpty(verdict.Signal)));
         }
 
+        return await StampAsync(request, game, fingerprint.Value, payload.DisclosureVersion, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// The stamp (P3 PR-4, D14): the client's version must be this Agent's — a client that showed other text, or
+    /// none, gets <c>DisclosureVersionMismatch</c> and nothing written; a composition with no version at all gets
+    /// <c>DisclosureUnavailable</c>. The record carries this Agent's version, this Agent's clock, and
+    /// <see cref="ConsentProvenance.ConsentDialog"/>; the store's own rules (a block is never cleared by a grant,
+    /// a stale fingerprint under a block is refused) still apply and come back as the ack's <c>outcome</c>.
+    /// </summary>
+    private async ValueTask<byte[]> StampAsync(IpcEnvelope request, GameRow game, ExecutableFingerprint fingerprint, string? clientVersion, CancellationToken ct)
+    {
         if (_disclosureVersion is null)
         {
             return Error(request, IpcErrorCode.DisclosureUnavailable,
-                "the pre-scan is clean, and nothing was stamped: FR-2.1's reviewed consent dialog does not exist yet (P3 PR-4); "
-                + "until it does, hooking is enabled through `FrameLedger.Agent --console consent grant`");
+                "the pre-scan is clean, and nothing was stamped: this Agent was composed without FR-2.1's disclosure version; "
+                + "hooking is enabled through `FrameLedger.Agent --console consent grant` on such a build");
         }
 
-        // PR-4 lands here: the disclosure version compared, the stamp with the Agent's clock and provenance.
-        return Error(request, IpcErrorCode.DisclosureUnavailable, "the consent stamp is not wired yet (P3 PR-4)");
+        if (!string.Equals(clientVersion, _disclosureVersion, StringComparison.Ordinal))
+        {
+            return Error(request, IpcErrorCode.DisclosureVersionMismatch,
+                $"the client showed disclosure '{clientVersion ?? "(none)"}' and this Agent stamps against '{_disclosureVersion}': nothing was stamped — restart both");
+        }
+
+        ConsentWriteOutcome outcome = await _consent.RecordOperatorAcknowledgementAsync(new OperatorAcknowledgement
+        {
+            Fingerprint = fingerprint,
+            DisclosureVersion = _disclosureVersion,
+            AcknowledgedAt = _clock.GetUtcNow(),
+            Provenance = ConsentProvenance.ConsentDialog,
+        }, ct).ConfigureAwait(false);
+        return IpcCodec.Encode(IpcMessageType.HookEnabledAck, request.Id,
+            new HookEnabledAck(game.Id, Enabled: outcome == ConsentWriteOutcome.Written, outcome.ToString(), Prescan: "clean"));
     }
 
     private byte[] Stop(IpcEnvelope request)

@@ -175,7 +175,8 @@ public sealed class SqliteGameConsentStoreTests
     [InlineData("1")]
     [InlineData("42")]
     [InlineData("unshippedhostoperator")]
-    [InlineData("ConsentDialog")]
+    [InlineData("consentdialog")]
+    [InlineData("ConsentDialogV2")]
     public async Task AProvenanceThatIsNotADeclaredNameReadsAsNotRecorded(string planted)
     {
         // Enum.TryParse parses numbers and ignores case unless told not to; this is the field that decides

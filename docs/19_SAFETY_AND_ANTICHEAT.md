@@ -639,11 +639,30 @@ Enabling hooking is a **per-game** action, gated by a one-time dialog per game t
 
 Consent is stored per game (`games.hook_consent_at`), **stamped by the Agent, never supplied by a client** (`07_IPC` §The pipe is not a trust boundary). Wording lives in `.resx` and is reviewed with the same care as the legal documents.
 
+> **Built 2026-09-13 (P3 PR-4).** The dialog is `FrameLedger.App`'s `ConsentPrompt` over WPF UI's `ContentDialog`,
+> its text `FrameLedger.Shared`'s `Safety_Consent_*` family and nothing else: the intro (which says it recommends
+> neither choice), what is injected and why, **Tier 1 and Tier 2 as two paragraphs of the same shape** (each
+> enumerating what the session records; Tier 2 is described by what it does, never as less), the anti-cheat
+> statement including the 30 s unhook, the terms-of-service statement, and the typed acknowledgement — the
+> primary button is disabled until the phrase is typed exactly, and Enter never enables. `en` and `vi` are
+> written (the owner reviews `vi`); **`ja` is the English verbatim, marked `safety: human review required`**,
+> which the resx audit enforces (`09_I18N` §Safety-critical strings). The wording carries a version
+> (`Shared.Safety.SafetyDisclosure.Version = consent-dialog/1`; bump on any change of meaning in any
+> language): the Agent's `HelloAck` names the version it stamps against, the App **does not open the dialog**
+> when it differs from its own (D14 — it says "restart both"), the App sends the version it showed, and the
+> Agent's `SetHookEnabled` handler re-runs the pre-scan, compares the version to its own, and stamps
+> `ConsentProvenance.ConsentDialog` from its own clock or answers `Error DisclosureVersionMismatch` with
+> nothing written. `HookingConsentTests` (App), `AgentCommandHandlerTests` (Agent side) and
+> `PipeEndToEndTests` (the real pipe, the real pre-scan, the row read back) pin each half. The toggle that opens
+> it is the game page's, PR-5.
+
 > **The Agent stamps one since 2026-09-10 (P2 PR-F, HANDOFF §P2 decision D4):** `FrameLedger.Agent --console
 > consent grant` shows `OperatorDisclosure` (the same four statements, first line naming the surface), requires
 > the typed phrase, refuses redirected stdin, and records `ConsentProvenance.AgentConsoleOperator` with the
 > Agent's own clock — the property a file store could not uphold. It is still **not FR-2.1's dialog**, and its
-> text says so first; P3's dialog retires it. **FR-2.4's kill switch is built the same day as the FOURTH input
+> text says so first; ~~P3's dialog retires it~~ **P3 PR-4's dialog (2026-09-13, above) is the user path; the verb
+> stays as the developer path it always said it was** — its provenance value stays distinguishable in the row.
+> **FR-2.4's kill switch is built the same day as the FOURTH input
 > of `HookedCaptureGate`** (decision D7): `settings.hooking.kill_switch = 1` refuses every game with
 > `KillSwitchEngaged` before consent is read, stops a running session at its next guard-scan boundary by
 > publishing `unhookRequested`, and keeps the Vulkan layer off by never setting `FRAMELEDGER_ENABLE_VK_LAYER`

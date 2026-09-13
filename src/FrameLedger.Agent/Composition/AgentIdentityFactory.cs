@@ -1,6 +1,7 @@
 using System.Reflection;
 using FrameLedger.Application.Ipc;
 using FrameLedger.Infrastructure.AntiCheat;
+using FrameLedger.Shared.Safety;
 
 namespace FrameLedger.Agent.Composition;
 
@@ -19,7 +20,9 @@ internal static class AgentIdentityFactory
             // (P1 item 3; --register-vklayer is P3 PR-8). False is the truth, not a placeholder.
             VulkanLayerRegistered: false,
             // AgentRecording.Poller composes LhmComputerAdapter(enableCpuAndMemory: false): no CPU sensor unelevated.
-            CpuTempAvailable: false);
+            CpuTempAvailable: false,
+            // D14: the FR-2.1 text this build stamps against; the App compares it with its own before showing the dialog.
+            DisclosureVersion: SafetyDisclosure.Version);
     }
 
     private static string Version()

@@ -118,7 +118,7 @@ CREATE TABLE games (
 > PR-B) it was written from this document — the file store and its DTOs were deleted the same day.
 > The two fields the consumer needed and this table lacked are columns now:
 > `hook_consent_provenance` and `hook_consent_disclosure_version`; the third pre-scan state is
-> `hook_prescan_state`. **`ConsentProvenance` has a third name since 2026-09-10 (P2 PR-F):**
+> `hook_prescan_state`. **`ConsentProvenance` has a third name since 2026-09-10 (P2 PR-F)** — and a fourth, `ConsentDialog`, since 2026-09-13 (P3 PR-4), the only one a shipped user path produces:
 > `AgentConsoleOperator`, the Agent's own `--console consent grant` (HANDOFF §P2 decision D4) — a
 > shipped producer, still not FR-2.1, stamped by the Agent's clock; the store writes the NAME the
 > acknowledgement carries and refuses `NotRecorded`.
