@@ -1,29 +1,35 @@
 namespace FrameLedger.Application.Persistence;
 
 /// <summary>
-/// <c>sessions</c> and its blobs. <c>04_CAPTURE</c> §Finalizing step 5: the row, the segments and the blobs
-/// land in ONE transaction, or none of them do.
+/// <c>sessions</c> and the tables under it. The Agent writes (finalize, retention sweep); the UI reads — by
+/// game for the Sessions tab (NFR-4: a game with 100 sessions opens in ≤ 500 ms, which is why the list is one
+/// query over the aggregate columns and the blobs are fetched per session on demand).
 /// </summary>
 public interface ISessionRepository
 {
-    /// <summary>Inserts everything, atomically; returns the new <c>sessions.id</c>.</summary>
-    /// <exception cref="InvalidOperationException">The <c>session_guid</c> is already stored.</exception>
     ValueTask<long> InsertFinalizedAsync(FinalizedSession session, CancellationToken ct = default);
 
-    /// <summary>Whether a session with this guid is already stored — the recovery path's first question.</summary>
     ValueTask<bool> ExistsAsync(Guid sessionGuid, CancellationToken ct = default);
 
     ValueTask<SessionRow?> FindAsync(Guid sessionGuid, CancellationToken ct = default);
 
-    /// <summary>The newest sessions, all games, newest first.</summary>
+    ValueTask<SessionRow?> FindByIdAsync(long sessionId, CancellationToken ct = default);
+
     ValueTask<IReadOnlyList<SessionRow>> ListRecentAsync(int count, CancellationToken ct = default);
 
-    /// <summary>
-    /// <c>06_DATA_MODEL</c> §Retention: raw blobs are kept for the last <paramref name="keep"/> sessions of the
-    /// game; aggregates and segments are kept forever. Returns how many sessions lost their blobs.
-    /// </summary>
+    /// <summary>A game's sessions, newest first, at most <paramref name="limit"/>.</summary>
+    ValueTask<IReadOnlyList<SessionRow>> ListByGameAsync(long gameId, int limit, CancellationToken ct = default);
+
+    /// <summary>Every game's sessions in aggregate (count, hooked count, playtime, last played), for the library grid and the Dashboard totals.</summary>
+    ValueTask<IReadOnlyList<GameSessionSummary>> SummariseByGameAsync(CancellationToken ct = default);
+
     ValueTask<int> SweepRetentionAsync(long gameId, int keep, CancellationToken ct = default);
 
-    /// <summary>The <c>frame_blobs</c> row, or null when retention swept it or nothing was stored.</summary>
     ValueTask<FrameBlobs?> FindFramesAsync(long sessionId, CancellationToken ct = default);
+
+    /// <summary>The session's segments in frame order (the ribbon, <c>08_UI</c> §Session summary).</summary>
+    ValueTask<IReadOnlyList<SegmentRow>> FindSegmentsAsync(long sessionId, CancellationToken ct = default);
+
+    /// <summary>The session's sensor series, still encoded (the sensor strip decodes what it draws).</summary>
+    ValueTask<IReadOnlyList<SensorBlob>> FindSensorsAsync(long sessionId, CancellationToken ct = default);
 }

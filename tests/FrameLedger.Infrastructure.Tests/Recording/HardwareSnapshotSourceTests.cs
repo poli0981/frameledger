@@ -40,7 +40,7 @@ public sealed class HardwareSnapshotSourceTests
         s.OsBuild.Should().NotBeNullOrWhiteSpace();
         s.RamGb.Should().BeGreaterThan(0);
         s.Hash.Should().HaveLength(64);
-        s.DisplayRes.Should().BeNull("not taken in P2");
+        s.DisplayRes.Should().Be(PrimaryDisplay.Read().Resolution, "the display producer exists since P3 PR-3 (it was null in P2)");
     }
 
     [Fact]

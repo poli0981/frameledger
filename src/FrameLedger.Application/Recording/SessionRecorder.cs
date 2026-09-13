@@ -37,14 +37,16 @@ public sealed class SessionRecorder : ISessionRecorder
     private readonly SessionFinalizer _finalizer;
     private readonly ICrashEventSource _crashes;
     private readonly CrashAutoDisablePolicy _crashPolicy;
-    private readonly Func<ITelemetryPoller?> _pollers;
+    private readonly Func<RecorderOptions, ITelemetryPoller?> _pollers;
     private readonly TimeProvider _clock;
     private readonly RecorderOptions _options;
+    private readonly IRecorderPolicy? _policy;
     private readonly ISessionObserver? _observer;
 
     public SessionRecorder(ICaptureSessionFactory sessions, IGameRepository games, IHardwareSnapshotRepository snapshots,
         IHardwareSnapshotSource hardware, IPartialSessionStore partials, SessionFinalizer finalizer, ICrashEventSource crashes,
-        Func<ITelemetryPoller?> pollers, TimeProvider clock, RecorderOptions? options = null, ISessionObserver? observer = null)
+        Func<RecorderOptions, ITelemetryPoller?> pollers, TimeProvider clock, RecorderOptions? options = null, ISessionObserver? observer = null,
+        IRecorderPolicy? policy = null)
     {
         _sessions = sessions ?? throw new ArgumentNullException(nameof(sessions));
         _games = games ?? throw new ArgumentNullException(nameof(games));
@@ -60,6 +62,9 @@ public sealed class SessionRecorder : ISessionRecorder
         // The second listener (P3 PR-1): the pipe's publisher. Optional, because the unshipped host and every
         // recorder test have nobody to tell; when present it hears each step AFTER the recorder's own work.
         _observer = observer;
+        // D16 (P3 PR-3): the Agent re-reads its settings at each session start; the policy is that read, and
+        // a recorder without one (the tests, the unshipped host) runs under its baseline options unchanged.
+        _policy = policy;
     }
 
     public async Task<RecordedSession> RecordAsync(RecordRequest request, CancellationToken ct = default)
@@ -68,6 +73,7 @@ public sealed class SessionRecorder : ISessionRecorder
         DateTimeOffset startedAt = _clock.GetUtcNow();
         long qpcEpoch = _clock.GetTimestamp();
         Guid guid = request.SessionGuid ?? Guid.NewGuid();
+        RecorderOptions options = _policy is null ? _options : await _policy.ResolveAsync(_options, ct).ConfigureAwait(false);
 
         ExecutableFingerprint fingerprint = request.Observed ?? new ExecutableFingerprint { ExePath = request.NormalisedExePath, SizeBytes = 0, MtimeUnixMs = 0 };
         GameRow game = await _games.EnsureAsync(fingerprint, request.GameName ?? Path.GetFileNameWithoutExtension(request.NormalisedExePath), ct).ConfigureAwait(false);
@@ -76,7 +82,7 @@ public sealed class SessionRecorder : ISessionRecorder
 
         try
         {
-            return await RecordStartedAsync(request, game, guid, startedAt, qpcEpoch, snapshotId, ct).ConfigureAwait(false);
+            return await RecordStartedAsync(request, game, guid, startedAt, qpcEpoch, snapshotId, options, ct).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -88,9 +94,9 @@ public sealed class SessionRecorder : ISessionRecorder
     }
 
     private async Task<RecordedSession> RecordStartedAsync(RecordRequest request, GameRow game, Guid guid, DateTimeOffset startedAt,
-        long qpcEpoch, long snapshotId, CancellationToken ct)
+        long qpcEpoch, long snapshotId, RecorderOptions options, CancellationToken ct)
     {
-        ITelemetryPoller? poller = _pollers();
+        ITelemetryPoller? poller = _pollers(options);
         try
         {
             poller?.Start();
@@ -108,7 +114,7 @@ public sealed class SessionRecorder : ISessionRecorder
                 TelemetryDescriptor = poller?.Descriptor,
             };
 
-            using var writer = new PartialSessionWriter(_partials.Create(header), _clock, _options.PartialFlushInterval);
+            using var writer = new PartialSessionWriter(_partials.Create(header), _clock, options.PartialFlushInterval);
             var run = new Run(writer, poller, _clock, _observer, guid);
             writer.Note("started " + request.Mode);
             CaptureOutcome outcome = await RunLoopAsync(request, run, ct).ConfigureAwait(false);
@@ -116,7 +122,7 @@ public sealed class SessionRecorder : ISessionRecorder
             run.FinalFlush();
             writer.Note("ended " + outcome.Reason);
 
-            RecordedSession recorded = await FinalizeAsync(request, game, header, outcome, run, endedAt, writer, ct).ConfigureAwait(false);
+            RecordedSession recorded = await FinalizeAsync(request, game, header, outcome, run, endedAt, writer, options, ct).ConfigureAwait(false);
             _observer?.Ended(recorded);
             return recorded;
         }
@@ -135,7 +141,7 @@ public sealed class SessionRecorder : ISessionRecorder
     }
 
     private async Task<RecordedSession> FinalizeAsync(RecordRequest request, GameRow game, PartialHeader header, CaptureOutcome outcome,
-        Run run, DateTimeOffset endedAt, PartialSessionWriter writer, CancellationToken ct)
+        Run run, DateTimeOffset endedAt, PartialSessionWriter writer, RecorderOptions options, CancellationToken ct)
     {
         bool hooked = outcome.AttachRefusal == ShmAttachRefusal.Ok;
         bool hadPid = hooked || outcome.TargetPid != 0;
@@ -148,8 +154,8 @@ public sealed class SessionRecorder : ISessionRecorder
             Skeleton = skeleton,
             Hooked = hooked ? Hooked(outcome, header.QpcFrequency) : null,
             Sensors = writer.Sensors,
-            RetentionKeep = _options.RetentionKeep,
-            MinimumSessionLength = _options.MinimumSessionLength,
+            RetentionKeep = options.RetentionKeep,
+            MinimumSessionLength = options.MinimumSessionLength,
         };
         FinalizedSession built = _finalizer.Build(input);
 

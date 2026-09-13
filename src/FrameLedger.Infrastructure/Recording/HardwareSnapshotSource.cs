@@ -32,6 +32,8 @@ public sealed class HardwareSnapshotSource : IHardwareSnapshotSource
             // No factory is a snapshot with no GPU, not a session that cannot start.
         }
 
+        // display_res / display_hz were "null until P3" (CHANGELOG, PR-B); the producer is PrimaryDisplay (P3 PR-3).
+        (string? resolution, double? hz) = PrimaryDisplay.Read();
         return new HardwareSnapshot
         {
             CpuName = CpuName(),
@@ -39,6 +41,8 @@ public sealed class HardwareSnapshotSource : IHardwareSnapshotSource
             GpuDriver = gpu?.DriverVersion,
             RamGb = Math.Round(GC.GetGCMemoryInfo().TotalAvailableMemoryBytes / (1024.0 * 1024 * 1024), 1),
             OsBuild = Environment.OSVersion.Version.ToString(),
+            DisplayRes = resolution,
+            DisplayHz = hz,
         };
     }
 

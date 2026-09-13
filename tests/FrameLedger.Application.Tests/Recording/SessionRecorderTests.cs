@@ -244,7 +244,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
             new Factory(store, guard, clock, records, liveness ?? _alive),
             games, new FakeSnapshots(), new FixedHardware(), partials,
             new SessionFinalizer(sessions, new RawSeriesCodec()), new NoCrashEvents(),
-            () => poller ? new FakePoller() : null, clock,
+            _ => poller ? new FakePoller() : null, clock,
             new RecorderOptions { PartialFlushInterval = TimeSpan.FromSeconds(10) });
         return new Harness { Recorder = recorder, Games = games, Sessions = sessions, Partials = partials, Clock = clock };
     }
