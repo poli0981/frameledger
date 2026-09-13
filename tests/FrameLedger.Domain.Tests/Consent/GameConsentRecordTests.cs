@@ -86,18 +86,23 @@ public sealed class GameConsentRecordTests
     }
 
     [Fact]
-    public void NoProvenanceValueClaimsTheConsentDialogThatDoesNotExist()
+    public void EveryProvenanceValueHasAProducerAndTheListIsPinned()
     {
-        // FR-2.1's dialog needs reviewed Safety_* wording in en/vi/ja, and no .resx file exists anywhere
-        // in this tree. A declared-but-producerless value is the "reads as sanctioned" shape §S29(c) was
-        // raised for, so adding one has to be a deliberate act that turns this red.
+        // A declared-but-producerless value is the "reads as sanctioned" shape §S29(c) was raised for, so
+        // adding one has to be a deliberate act that turns this red. Four since P3 PR-4 (2026-09-13):
+        // ConsentDialog arrived WITH its reviewed Safety_Consent_* text in FrameLedger.Shared (en + vi; ja the
+        // English verbatim, marked for human review) and its producer, the Agent's SetHookEnabled stamp.
         string[] names = Enum.GetNames<ConsentProvenance>();
 
-        // Three since P2 PR-F (2026-09-10): the Agent's console verb is a shipped producer with a disclosure of
-        // its own (HANDOFF §P2 decision D4). Still no FR-2.1 member, for the reason above.
         names.Should().BeEquivalentTo(
-            [nameof(ConsentProvenance.NotRecorded), nameof(ConsentProvenance.UnshippedHostOperator), nameof(ConsentProvenance.AgentConsoleOperator)]);
+        [
+            nameof(ConsentProvenance.NotRecorded),
+            nameof(ConsentProvenance.UnshippedHostOperator),
+            nameof(ConsentProvenance.AgentConsoleOperator),
+            nameof(ConsentProvenance.ConsentDialog),
+        ]);
         ((int)ConsentProvenance.NotRecorded).Should().Be(0, "the default must mean no disclosure was shown");
+        ((int)ConsentProvenance.ConsentDialog).Should().Be(3, "the name is what is stored; the number must still never move");
     }
 
     [Fact]

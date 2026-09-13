@@ -55,4 +55,12 @@ public enum ConsentProvenance
     /// requires. P3's dialog retires this member's producer; the member stays so old rows keep their name.
     /// </remarks>
     AgentConsoleOperator = 2,
+
+    /// <summary>
+    /// FR-2.1's consent dialog (P3 PR-4, 2026-09-13): the App showed <c>FrameLedger.Shared</c>'s reviewed
+    /// <c>Safety_Consent_*</c> text and the user typed the acknowledgement; the Agent compared the disclosure
+    /// version the App sent with its own and stamped from its own clock. The only member a shipped USER path
+    /// produces — the two operator members are developer surfaces that say so in their first line.
+    /// </summary>
+    ConsentDialog = 3,
 }

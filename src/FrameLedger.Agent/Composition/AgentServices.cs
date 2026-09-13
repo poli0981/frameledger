@@ -19,6 +19,7 @@ using FrameLedger.Infrastructure.Settings;
 using FrameLedger.Infrastructure.Telemetry;
 using FrameLedger.Infrastructure.Watch;
 using FrameLedger.Shared.Ipc;
+using FrameLedger.Shared.Safety;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -119,7 +120,10 @@ internal static class AgentServices
             sp.GetRequiredService<CaptureOrchestrator>(),
             sp.GetRequiredService<CapturePause>(),
             sp.GetRequiredService<IAgentLifetime>(),
-            static async ct => (await new RulesSeeder(new FileSystemRulesStore()).EnsureSeededAsync(ct).ConfigureAwait(false)).ToString()));
+            static async ct => (await new RulesSeeder(new FileSystemRulesStore()).EnsureSeededAsync(ct).ConfigureAwait(false)).ToString(),
+            // P3 PR-4 (D14): the reviewed disclosure this Agent stamps against, and its own clock for the stamp.
+            SafetyDisclosure.Version,
+            TimeProvider.System));
         services.AddSingleton<IIpcRequestHandler>(static sp => new AgentRequestHandler(
             AgentIdentityFactory.OfThisProcess(),
             TelemetryDescriptor(),

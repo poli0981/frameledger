@@ -99,6 +99,14 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         public void RequestShutdown() => Requests++;
     }
 
+    /// <summary>The Agent's clock for the stamp (a client cannot attest a time).</summary>
+    private sealed class FakeClock : TimeProvider
+    {
+        public static readonly DateTimeOffset Now = new(2026, 9, 13, 12, 0, 0, TimeSpan.Zero);
+
+        public override DateTimeOffset GetUtcNow() => Now;
+    }
+
     private sealed class Harness
     {
         public required AgentCommandHandler Handler { get; init; }
@@ -120,7 +128,7 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         public int RulesUpdates { get; set; }
     }
 
-    private async Task<Harness> BuildAsync(bool consented = true)
+    private async Task<Harness> BuildAsync(bool consented = true, string? disclosureVersion = null)
     {
         _db ??= await LedgerDatabase.OpenAsync(Path.Combine(_dir, LedgerPaths.DatabaseFileName), ct: Ct).ConfigureAwait(false);
         var consent = new SqliteGameConsentStore(_db);
@@ -144,7 +152,8 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
             new OrchestratorOptions { PayloadPath = @"C:\FL\FrameLedger.Overlay.dll" }, static _ => { });
         Harness h = null!;
         var handler = new AgentCommandHandler(games, consent, guard, identity, orchestrator, pause, lifetime,
-            _ => { h.RulesUpdates++; return ValueTask.FromResult("AlreadyCurrent"); });
+            _ => { h.RulesUpdates++; return ValueTask.FromResult("AlreadyCurrent"); },
+            disclosureVersion, new FakeClock());
         h = new Harness
         {
             Handler = handler,
@@ -240,7 +249,7 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task SetHookEnabledTrueWithACleanScanStampsNothingWhileTheDisclosureDoesNotExist()
+    public async Task SetHookEnabledTrueWithACleanScanStampsNothingWhenTheAgentCarriesNoDisclosure()
     {
         Harness h = await BuildAsync(consented: false).ConfigureAwait(true);
         long gameId = h.Games.Rows[_exe].Id;
@@ -250,12 +259,52 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         ack.Type.Should().Be(IpcMessageType.Error);
         ErrorAck error = IpcCodec.Payload<ErrorAck>(ack)!;
         error.Code.Should().Be(IpcErrorCode.DisclosureUnavailable);
-        error.Message.Should().Contain("PR-4").And.Contain("consent grant");
+        error.Message.Should().Contain("consent grant");
         h.Guard.Scanned.Should().ContainSingle("the pre-scan ran first");
         GameConsentRecord record = await h.Consent.FindAsync(_exe, Ct).ConfigureAwait(true);
         record.HookEnabled.Should().BeFalse();
         record.ConsentedAt.Should().BeNull("a client's version string is not a disclosure shown; nothing is stamped");
         record.Provenance.Should().Be(ConsentProvenance.NotRecorded);
+    }
+
+    [Fact]
+    public async Task SetHookEnabledTrueWithAnotherDisclosureVersionStampsNothing()
+    {
+        Harness h = await BuildAsync(consented: false, disclosureVersion: "consent-dialog/9").ConfigureAwait(true);
+        long gameId = h.Games.Rows[_exe].Id;
+
+        foreach (string? claimed in new[] { "consent-dialog/8", null, "" })
+        {
+            IpcEnvelope ack = await AskAsync(h.Handler, IpcMessageType.SetHookEnabled, new SetHookEnabledRequest(gameId, Enabled: true, claimed)).ConfigureAwait(true);
+            ack.Type.Should().Be(IpcMessageType.Error, claimed ?? "(null)");
+            ErrorAck error = IpcCodec.Payload<ErrorAck>(ack)!;
+            error.Code.Should().Be(IpcErrorCode.DisclosureVersionMismatch);
+            error.Message.Should().Contain("consent-dialog/9").And.Contain("restart both");
+        }
+
+        GameConsentRecord record = await h.Consent.FindAsync(_exe, Ct).ConfigureAwait(true);
+        record.HookEnabled.Should().BeFalse("D14: text the Agent does not stand behind stamps nothing");
+        record.Provenance.Should().Be(ConsentProvenance.NotRecorded);
+    }
+
+    [Fact]
+    public async Task SetHookEnabledTrueWithTheAgentsDisclosureVersionStampsFromTheAgentsClockWithConsentDialogProvenance()
+    {
+        Harness h = await BuildAsync(consented: false, disclosureVersion: "consent-dialog/9").ConfigureAwait(true);
+        long gameId = h.Games.Rows[_exe].Id;
+
+        IpcEnvelope ack = await AskAsync(h.Handler, IpcMessageType.SetHookEnabled, new SetHookEnabledRequest(gameId, Enabled: true, "consent-dialog/9")).ConfigureAwait(true);
+
+        ack.Type.Should().Be(IpcMessageType.HookEnabledAck);
+        HookEnabledAck enabled = IpcCodec.Payload<HookEnabledAck>(ack)!;
+        enabled.Should().Be(new HookEnabledAck(gameId, Enabled: true, nameof(ConsentWriteOutcome.Written), "clean"));
+        h.Guard.Scanned.Should().ContainSingle("the pre-scan ran first, and passed");
+
+        GameConsentRecord record = await h.Consent.FindAsync(_exe, Ct).ConfigureAwait(true);
+        record.HookEnabled.Should().BeTrue();
+        record.Provenance.Should().Be(ConsentProvenance.ConsentDialog, "FR-2.1's member, produced by the Agent and nobody else");
+        record.DisclosureVersion.Should().Be("consent-dialog/9", "the Agent's version, not the client's echo of it");
+        record.ConsentedAt.Should().Be(FakeClock.Now, "the Agent's clock: a client cannot attest a time");
     }
 
     [Fact]

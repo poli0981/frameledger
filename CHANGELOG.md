@@ -19,6 +19,33 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Added
 
+- **P3 PR-4 — FR-2.1's consent dialog: the reviewed `Safety_*` family in `Shared`, `ConsentProvenance.ConsentDialog`,
+  and the Agent's stamp (2026-09-13).** `src/FrameLedger.Shared/Strings.resx` + `.vi` + `.ja` — 20 `Safety_*` keys:
+  the dialog (intro that recommends neither choice, what is injected and why, **Tier 1 and Tier 2 as two
+  paragraphs of the same shape**, the anti-cheat statement with the 30 s unhook, the terms statement, the typed
+  phrase, the two buttons, the version-mismatch and agent-unavailable sentences) and the safety notices PR-5
+  and PR-8 will render (`Safety_Refused_*`, `Safety_Blocked_Toggle_Format`, `Safety_AutoDisabled_Format`,
+  `Safety_Unhooked_Format`, `Safety_RecordWithoutMeasuring`). `en` and `vi` written; **`ja` is the English
+  verbatim under `safety: human review required`**, which `resx-audit` enforces. `Shared.Safety.SafetyDisclosure.Version`
+  = `consent-dialog/1` (D14): `HelloAck.disclosureVersion` names what the Agent stamps against; the App's
+  `HookingConsent` does not open the dialog on a mismatch (and says "restart both"), shows `ConsentPrompt`
+  (WPF UI `ContentDialog`, primary button bound to the typed phrase, Enter keeps hooking off), and sends
+  `SetHookEnabled { enabled: true, disclosureVersion }` — the version it showed, never a timestamp. The Agent's
+  handler re-runs the pre-scan, compares the version to its own, and **stamps `ConsentProvenance.ConsentDialog`
+  from its own clock** (`HookEnabledAck { enabled, outcome, prescan: "clean" }`) or answers the new
+  `Error DisclosureVersionMismatch` with nothing written; `DisclosureUnavailable` remains for a composition
+  that wired no version. `PipeClient.RequestEnvelopeAsync` lets the App tell a `Refused` from a
+  `HookEnabledAck` (both are answers, neither is an error). `ConsentProvenance` has four names and
+  `GameConsentRecordTests` pins them with the number. Tests: `HookingConsentTests` (App: the handshake gates the
+  dialog, a declined dialog sends nothing, the request carries our version, stamped / refused / error each come
+  back as what they are, the phrase is exact), `SafetyStringsTests` (every key in three languages through the
+  satellites, vi translated, ja the English, no recommending word in any consent string), the handler's
+  mismatch and stamp cases with a fake clock, and the real pipe end to end: wrong version → mismatch, our
+  version → `ConsentDialog` on the row with the Agent's clock. Docs: `19_SAFETY` §User-facing consent (built;
+  the console verb is the developer path), `09_I18N` (four members; the family arrived), `07_IPC` (`HelloAck`,
+  `SetHookEnabled` as built), `06_DATA_MODEL` (the fourth name), HANDOFF item 2 and row 4 struck, D14 as built,
+  CLAUDE.md. **Not in this PR:** the toggle that opens the dialog, FR-2.2's disabled state and FR-2.5's InfoBar
+  are the game page's (PR-5); the `ja` review is a human's.
 - **P3 PR-3 — the ports the UI reads and writes, the settings registry (D16), schema 0002, and the display
   producer (2026-09-13).** `ISessionRepository` gains `FindByIdAsync`, `ListByGameAsync` (newest first, bounded),
   `SummariseByGameAsync` (count, hooked count, playtime, last played per game — one query), `FindSegmentsAsync`,

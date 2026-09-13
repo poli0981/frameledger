@@ -143,6 +143,11 @@ public partial class App : System.Windows.Application
             new AgentConnectionOptions(),
             UiIdentity.Version));
         builder.Services.AddHostedService<AgentConnectionHostedService>();
+        builder.Services.AddSingleton<IAgentRequests>(static sp => sp.GetRequiredService<AgentConnection>());
+
+        // FR-2.1 (P3 PR-4): the consent dialog and the request it ends in; the toggle that opens it is the game page's (PR-5).
+        builder.Services.AddSingleton<IConsentPrompt, ConsentPrompt>();
+        builder.Services.AddSingleton<HookingConsent>();
 
         // The shell: the window is TRANSIENT because a language change rebuilds it (09_I18N §Mechanics); the
         // shell host tracks the live one. Pages and their view models are transient (16 §Navigation).
