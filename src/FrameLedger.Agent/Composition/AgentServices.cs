@@ -6,6 +6,7 @@ using FrameLedger.Application.Ipc;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
 using FrameLedger.Application.Rules;
+using FrameLedger.Application.Settings;
 using FrameLedger.Application.Watch;
 using FrameLedger.Infrastructure.AntiCheat;
 using FrameLedger.Infrastructure.Blobs;
@@ -59,6 +60,9 @@ internal static class AgentServices
         services.AddSingleton<ISessionRepository, SqliteSessionRepository>();
         services.AddSingleton<IHardwareSnapshotRepository, SqliteHardwareSnapshotRepository>();
         services.AddSingleton<ISettingsStore, SqliteSettingsStore>();
+        // The registry over the store (P3 PR-3, D16): the recorder resolves its three keys at each session start.
+        services.AddSingleton<RegisteredSettings>();
+        services.AddSingleton<IRecorderPolicy, SettingsRecorderPolicy>();
         services.AddSingleton<SettingsKillSwitch>();
         services.AddSingleton<IKillSwitch>(static sp => sp.GetRequiredService<SettingsKillSwitch>());
 
@@ -149,7 +153,7 @@ internal static class AgentServices
     {
         var descriptor = new Lazy<string?>(static () =>
         {
-            using TelemetryPoller poller = AgentRecording.Poller();
+            using TelemetryPoller poller = AgentRecording.Poller(TimeSpan.FromSeconds(1));
             return poller.Descriptor;
         }, LazyThreadSafetyMode.ExecutionAndPublication);
         return () => descriptor.Value;

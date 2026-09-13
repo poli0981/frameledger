@@ -19,6 +19,32 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Added
 
+- **P3 PR-3 — the ports the UI reads and writes, the settings registry (D16), schema 0002, and the display
+  producer (2026-09-13).** `ISessionRepository` gains `FindByIdAsync`, `ListByGameAsync` (newest first, bounded),
+  `SummariseByGameAsync` (count, hooked count, playtime, last played per game — one query), `FindSegmentsAsync`,
+  `FindSensorsAsync`; `ISessionAnnotationRepository` (new) writes the UI-owned row beside a session — tags as a
+  JSON array, notes, and **FR-8.3's per-session overrides, which live on `session_annotations` and never on
+  `sessions`** (`06_DATA_MODEL` §Writer ownership), beside the measurement rather than over it, so clearing one
+  restores what was measured; `Application.TriState.TriStateResolution` is the precedence (manual → measured →
+  inherited from `games.*_default` → N/A). `IGameRepository` gains `FindByIdAsync`, `UpdateMetadataAsync` (FR-1.3,
+  wholesale; every field that changed is marked `user` in `field_provenance` so detection cannot overwrite it),
+  `SetTriStateDefaultAsync`, and `RemoveAsync(keepSessions)` (FR-1.4: keep = `games.removed_at`, the row leaves
+  the library and a later launch restores it; delete = the cascade). `ILegalAcceptanceStore.RecordAsync` /
+  `ListAsync` (the writer FR-11's gate calls in PR-9). `GameRow` now carries the metadata, the tri-state defaults,
+  `hook_consent_at`, `hook_prescan_state` and `removed_at`. **The settings registry**: `SettingsRegistry` (12 keys,
+  kind, default, range or choices, who reads) and `RegisteredSettings` over `ISettingsStore` — validating writes,
+  tolerant reads, nothing cached; `SettingsRecorderPolicy` resolves `capture.min_session_s`,
+  `retention.raw_sessions_per_game` (0 = unlimited) and `telemetry.interval_ms` at each session start through
+  the new `IRecorderPolicy` on `SessionRecorder`, whose poller factory now takes the session's options; the
+  App's appearance keys are the registry's. `0002_annotation_overrides_and_removal.sql`, the first append
+  (`LatestVersion` = 2). `Infrastructure.Recording.PrimaryDisplay` fills `hardware_snapshots.display_res` /
+  `display_hz` from `EnumDisplaySettingsW` — they were "null until P3" since PR-B. Tests: the four PR-B adapters
+  that had none (`SqliteGameRepositoryTests`, `SqliteHardwareSnapshotRepositoryTests`, `SqliteSettingsStoreTests`,
+  `SqliteLegalAcceptanceStoreTests`), the annotation repository incl. the resolution over stored rows, the
+  session queries incl. **NFR-4 measured: a 100-session game lists in a few ms against the 500 ms ceiling**,
+  the registry both directions, the policy, the resolution, the display producer. `20_OPEN_QUESTIONS` §G's
+  "Settings registry" row is closed; `06_DATA_MODEL` gains §Settings registry and the 0002 note; HANDOFF §P3
+  row 3 is struck with the one deviation (no `IRtOverrideRepository` — see above).
 - **P3 PR-2 — the first `.resx` family, its generator and its gate, and the App shell (2026-09-13).**
   `src/FrameLedger.App/Strings.resx` + `.vi` + `.ja` (65 keys, `ja` machine-drafted and marked `review`),
   `tools/resx-gen.ps1` writing the committed `Strings.Designer.cs` (the SDK-style WPF project runs no

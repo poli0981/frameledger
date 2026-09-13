@@ -1,5 +1,7 @@
 using FrameLedger.Application.Persistence;
+using FrameLedger.Application.TriState;
 using FrameLedger.Domain.Consent;
+using FrameLedger.Domain.Metrics;
 
 namespace FrameLedger.Application.Tests.Recording;
 
@@ -54,4 +56,14 @@ internal sealed class FakeGameRepository : IGameRepository
         Injections.Add((gameId, at));
         return ValueTask.FromResult(true);
     }
+
+    public ValueTask<GameRow?> FindByIdAsync(long gameId, CancellationToken ct = default) =>
+        ValueTask.FromResult(Rows.Values.FirstOrDefault(r => r.Id == gameId));
+
+    // The UI's half (P3 PR-3) — no recorder test reaches these; the SQLite adapter has its own tests.
+    public ValueTask<bool> UpdateMetadataAsync(long gameId, GameMetadata metadata, CancellationToken ct = default) => throw new NotSupportedException();
+
+    public ValueTask<bool> SetTriStateDefaultAsync(long gameId, TriStateKind kind, Tri value, CancellationToken ct = default) => throw new NotSupportedException();
+
+    public ValueTask<bool> RemoveAsync(long gameId, bool keepSessions, CancellationToken ct = default) => throw new NotSupportedException();
 }

@@ -1,13 +1,16 @@
 namespace FrameLedger.Application.Persistence;
 
 /// <summary>
-/// READ-ONLY view of <c>legal_acceptance</c>. The UI writes it (FR-11, P3); nothing in the Agent does.
+/// <c>legal_acceptance</c>: one row per document (FR-11). Read by both processes; written by the UI's Legal
+/// Gate only (<c>06_DATA_MODEL</c> §Writer ownership) — the writer exists since P3 PR-3, the gate that calls it
+/// is PR-9's.
 /// </summary>
-/// <remarks>
-/// Declared now so that making the Legal Gate a precondition of consent (owner decision D8 in HANDOFF §P2:
-/// not in P2) is one <c>if</c> at the consent store when the owner turns it on — not a new port.
-/// </remarks>
 public interface ILegalAcceptanceStore
 {
     ValueTask<LegalAcceptance?> FindAsync(string document, CancellationToken ct = default);
+
+    ValueTask<IReadOnlyList<LegalAcceptance>> ListAsync(CancellationToken ct = default);
+
+    /// <summary>Records (or re-records, on a version increment) the acceptance of one document.</summary>
+    ValueTask RecordAsync(LegalAcceptance acceptance, CancellationToken ct = default);
 }

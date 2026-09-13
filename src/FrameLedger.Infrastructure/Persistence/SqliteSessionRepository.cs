@@ -34,6 +34,16 @@ public sealed class SqliteSessionRepository : ISessionRepository
 
     private const string _exists = "SELECT COUNT(*) FROM sessions WHERE session_guid = @guid";
 
+    private const string _selectSegments =
+        "SELECT swapchain_id, start_frame, end_frame, render_w, render_h, output_w, output_h, upscaler, upscaler_quality, fg_mode, "
+        + "native_fps, displayed_fps, p1_low_fps FROM session_segments WHERE session_id = @sessionId ORDER BY start_frame, swapchain_id";
+
+    private const string _selectSensors = "SELECT series, hz, codec, data FROM sensor_blobs WHERE session_id = @sessionId ORDER BY series";
+
+    // One pass over the aggregate columns; SUM(capture_tier = 1) is SQLite's boolean-as-integer idiom.
+    private const string _summarise =
+        "SELECT game_id, COUNT(*), SUM(capture_tier = 1), SUM(duration_s), MAX(ended_at) FROM sessions GROUP BY game_id ORDER BY game_id";
+
     private const string _sweepFrames =
         "DELETE FROM frame_blobs WHERE session_id IN ("
         + "SELECT id FROM sessions WHERE game_id = @gameId ORDER BY started_at DESC, id DESC LIMIT -1 OFFSET @keep)";
@@ -78,6 +88,42 @@ public sealed class SqliteSessionRepository : ISessionRepository
             new CommandDefinition(SessionRowColumns.Select + " WHERE session_guid = @guid", new { guid = sessionGuid.ToString("D") }, cancellationToken: token),
             SessionRowColumns.Read), ct);
 
+    public ValueTask<SessionRow?> FindByIdAsync(long sessionId, CancellationToken ct = default) =>
+        _db.ReadAsync((c, token) => SqliteReaders.ReadOneAsync(
+            c,
+            new CommandDefinition(SessionRowColumns.Select + " WHERE id = @sessionId", new { sessionId }, cancellationToken: token),
+            SessionRowColumns.Read), ct);
+
+    public ValueTask<IReadOnlyList<SessionRow>> ListByGameAsync(long gameId, int limit, CancellationToken ct = default)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(limit);
+        return _db.ReadAsync((c, token) => SqliteReaders.ReadAllAsync(
+            c,
+            new CommandDefinition(SessionRowColumns.Select + " WHERE game_id = @gameId ORDER BY started_at DESC, id DESC LIMIT @limit", new { gameId, limit }, cancellationToken: token),
+            SessionRowColumns.Read), ct);
+    }
+
+    public ValueTask<IReadOnlyList<GameSessionSummary>> SummariseByGameAsync(CancellationToken ct = default) =>
+        _db.ReadAsync((c, token) => SqliteReaders.ReadAllAsync(
+            c, new CommandDefinition(_summarise, cancellationToken: token),
+            static r => new GameSessionSummary
+            {
+                GameId = r.GetInt64(0),
+                SessionCount = r.GetInt64(1),
+                HookedCount = r.GetInt64(2),
+                TotalSeconds = r.GetDouble(3),
+                LastPlayedAt = SqliteReaders.Int64(r, 4) is { } ended ? DateTimeOffset.FromUnixTimeMilliseconds(ended) : null,
+            }), ct);
+
+    public ValueTask<IReadOnlyList<SegmentRow>> FindSegmentsAsync(long sessionId, CancellationToken ct = default) =>
+        _db.ReadAsync((c, token) => SqliteReaders.ReadAllAsync(
+            c, new CommandDefinition(_selectSegments, new { sessionId }, cancellationToken: token), ReadSegment), ct);
+
+    public ValueTask<IReadOnlyList<SensorBlob>> FindSensorsAsync(long sessionId, CancellationToken ct = default) =>
+        _db.ReadAsync((c, token) => SqliteReaders.ReadAllAsync(
+            c, new CommandDefinition(_selectSensors, new { sessionId }, cancellationToken: token),
+            static r => new SensorBlob { Series = r.GetString(0), Hz = r.GetDouble(1), Codec = r.GetString(2), Data = (byte[])r.GetValue(3) }), ct);
+
     public ValueTask<IReadOnlyList<SessionRow>> ListRecentAsync(int count, CancellationToken ct = default)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
@@ -102,6 +148,23 @@ public sealed class SqliteSessionRepository : ISessionRepository
     public ValueTask<FrameBlobs?> FindFramesAsync(long sessionId, CancellationToken ct = default) =>
         _db.ReadAsync((c, token) => SqliteReaders.ReadOneAsync(
             c, new CommandDefinition(_selectFrames, new { sessionId }, cancellationToken: token), ReadFrames), ct);
+
+    private static SegmentRow ReadSegment(DbDataReader r) => new()
+    {
+        SwapchainId = r.GetInt64(0),
+        StartFrame = r.GetInt64(1),
+        EndFrame = r.GetInt64(2),
+        RenderW = (int?)SqliteReaders.Int64(r, 3),
+        RenderH = (int?)SqliteReaders.Int64(r, 4),
+        OutputW = (int?)SqliteReaders.Int64(r, 5),
+        OutputH = (int?)SqliteReaders.Int64(r, 6),
+        Upscaler = SqliteReaders.String(r, 7),
+        UpscalerQuality = SqliteReaders.String(r, 8),
+        FgMode = SqliteReaders.String(r, 9),
+        NativeFps = SqliteReaders.Double(r, 10),
+        DisplayedFps = SqliteReaders.Double(r, 11),
+        P1LowFps = SqliteReaders.Double(r, 12),
+    };
 
     private static FrameBlobs ReadFrames(DbDataReader r) => new()
     {

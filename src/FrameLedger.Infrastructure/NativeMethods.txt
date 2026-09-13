@@ -24,3 +24,7 @@ CreateNamedPipe
 SECURITY_ATTRIBUTES
 FILE_FLAGS_AND_ATTRIBUTES
 NAMED_PIPE_MODE
+// The primary display's mode for hardware_snapshots.display_res / display_hz (P3 PR-3, Recording.PrimaryDisplay).
+EnumDisplaySettings
+DEVMODEW
+ENUM_DISPLAY_SETTINGS_MODE
