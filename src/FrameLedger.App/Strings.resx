@@ -1647,4 +1647,16 @@
   <data name="Maintenance_Status_Working" xml:space="preserve">
     <value>Working…</value>
   </data>
+  <data name="A11y_Games_Sort" xml:space="preserve">
+    <value>Sort games</value>
+  </data>
+  <data name="A11y_Logs_Source" xml:space="preserve">
+    <value>Log source</value>
+  </data>
+  <data name="A11y_Logs_Level" xml:space="preserve">
+    <value>Minimum log level</value>
+  </data>
+  <data name="A11y_Logs_Tail" xml:space="preserve">
+    <value>Log lines</value>
+  </data>
 </root>

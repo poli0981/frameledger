@@ -15,23 +15,23 @@
                       Visibility="{Binding NameDetected, Converter={StaticResource BoolToVis}}" />
             <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:EditGameViewModel.NameLabel}" />
         </DockPanel>
-        <ui:TextBox Margin="0,4,0,12" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
+        <ui:TextBox Margin="0,4,0,12" AutomationProperties.Name="{x:Static vm:EditGameViewModel.NameLabel}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 
         <DockPanel>
             <ui:Badge DockPanel.Dock="Right" Margin="8,0,0,0" Appearance="Info" Content="{x:Static vm:EditGameViewModel.DetectedBadge}"
                       Visibility="{Binding PublisherDetected, Converter={StaticResource BoolToVis}}" />
             <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:EditGameViewModel.PublisherLabel}" />
         </DockPanel>
-        <ui:TextBox Margin="0,4,0,12" Text="{Binding Publisher, UpdateSourceTrigger=PropertyChanged}" />
+        <ui:TextBox Margin="0,4,0,12" AutomationProperties.Name="{x:Static vm:EditGameViewModel.PublisherLabel}" Text="{Binding Publisher, UpdateSourceTrigger=PropertyChanged}" />
 
         <DockPanel>
             <ui:Badge DockPanel.Dock="Right" Margin="8,0,0,0" Appearance="Info" Content="{x:Static vm:EditGameViewModel.DetectedBadge}"
                       Visibility="{Binding VersionDetected, Converter={StaticResource BoolToVis}}" />
             <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:EditGameViewModel.VersionLabel}" />
         </DockPanel>
-        <ui:TextBox Margin="0,4,0,12" Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}" />
+        <ui:TextBox Margin="0,4,0,12" AutomationProperties.Name="{x:Static vm:EditGameViewModel.VersionLabel}" Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}" />
 
         <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:EditGameViewModel.NotesLabel}" />
-        <ui:TextBox Margin="0,4,0,0" MinHeight="72" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" />
+        <ui:TextBox Margin="0,4,0,0" MinHeight="72" AutomationProperties.Name="{x:Static vm:EditGameViewModel.NotesLabel}" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" />
     </StackPanel>
 </UserControl>

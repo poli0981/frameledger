@@ -143,6 +143,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void Exit() => _shell.Quit();
 
+    /// <summary>08_UI §Accessibility: Ctrl+1…5 (and the keypad) — the NavigationView's pages in its order.</summary>
+    [RelayCommand]
+    private void NavigateTo(string? key) => _ = ShellShortcuts.Navigate(_navigator, key);
+
     /// <summary>Tools ▸ Agent status… is the Dashboard's Agent card.</summary>
     [RelayCommand]
     private void AgentStatus() => _navigator.Navigate<DashboardPage>();

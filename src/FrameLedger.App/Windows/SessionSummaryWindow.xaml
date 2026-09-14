@@ -101,8 +101,9 @@
 
                 <!-- annotations -->
                 <ui:TextBlock Margin="0,16,0,0" FontTypography="Subtitle" Text="{x:Static vm:SessionSummaryViewModel.AnnotationsHeader}" />
-                <ui:TextBox Margin="0,6,0,0" PlaceholderText="{x:Static vm:SessionSummaryViewModel.TagsPlaceholder}" Text="{Binding ViewModel.Tags, UpdateSourceTrigger=PropertyChanged}" />
+                <ui:TextBox Margin="0,6,0,0" AutomationProperties.Name="{x:Static vm:SessionSummaryViewModel.TagsPlaceholder}" PlaceholderText="{x:Static vm:SessionSummaryViewModel.TagsPlaceholder}" Text="{Binding ViewModel.Tags, UpdateSourceTrigger=PropertyChanged}" />
                 <ui:TextBox Margin="0,6,0,0" MinHeight="72" AcceptsReturn="True" TextWrapping="Wrap"
+                            AutomationProperties.Name="{x:Static vm:SessionSummaryViewModel.NotesPlaceholder}"
                             PlaceholderText="{x:Static vm:SessionSummaryViewModel.NotesPlaceholder}" Text="{Binding ViewModel.Notes, UpdateSourceTrigger=PropertyChanged}" />
                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                     <ui:Button Appearance="Primary" Command="{Binding ViewModel.SaveAnnotationCommand}" Content="{x:Static vm:SessionSummaryViewModel.SaveText}" Icon="{ui:SymbolIcon Save24}" />

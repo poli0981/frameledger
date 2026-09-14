@@ -19,18 +19,21 @@
         <WrapPanel Grid.Row="1" Margin="0,12,0,8" Orientation="Horizontal">
             <ComboBox MinWidth="120"
                       Margin="0,0,8,4"
+                      AutomationProperties.Name="{x:Static res:Strings.A11y_Logs_Source}"
                       DisplayMemberPath="Label"
                       ItemsSource="{x:Static vm:LogsViewModel.Sources}"
                       SelectedValue="{Binding ViewModel.Source, Mode=TwoWay}"
                       SelectedValuePath="Value" />
             <ComboBox MinWidth="170"
                       Margin="0,0,8,4"
+                      AutomationProperties.Name="{x:Static res:Strings.A11y_Logs_Level}"
                       DisplayMemberPath="Label"
                       ItemsSource="{x:Static vm:LogsViewModel.Levels}"
                       SelectedValue="{Binding ViewModel.Level, Mode=TwoWay}"
                       SelectedValuePath="Value" />
             <ui:TextBox MinWidth="220"
                         Margin="0,0,8,4"
+                        AutomationProperties.Name="{x:Static res:Strings.Logs_Search_Placeholder}"
                         Icon="{ui:SymbolIcon Search24}"
                         PlaceholderText="{x:Static res:Strings.Logs_Search_Placeholder}"
                         Text="{Binding ViewModel.Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
@@ -51,6 +54,7 @@
 
         <TextBox x:Name="Tail"
                  Grid.Row="2"
+                 AutomationProperties.Name="{x:Static res:Strings.A11y_Logs_Tail}"
                  AcceptsReturn="True"
                  FontFamily="Consolas"
                  FontSize="12"

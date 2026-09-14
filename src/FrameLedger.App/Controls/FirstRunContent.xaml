@@ -44,6 +44,7 @@
                                         Icon="{ui:SymbolIcon Open24}" />
                 </StackPanel>
                 <TextBox Grid.Row="1"
+                         AutomationProperties.Name="{Binding ViewModel.SelectedDocument.Title}"
                          AcceptsReturn="True"
                          IsReadOnly="True"
                          IsReadOnlyCaretVisible="True"

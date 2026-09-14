@@ -2,7 +2,8 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                     xmlns:controls="clr-namespace:FrameLedger.App.Controls"
-                    xmlns:converters="clr-namespace:FrameLedger.App.Converters">
+                    xmlns:converters="clr-namespace:FrameLedger.App.Converters"
+                    xmlns:res="clr-namespace:FrameLedger.App">
     <!--
         Our styles, merged LAST (16_WPFUI_SYNTAX §App bootstrap). Colours only through theme brushes with
         DynamicResource; the chart palette (16 §Theming) arrives with the charts (P3 PR-6) as its own dictionary.
@@ -102,6 +103,7 @@
                                                   HorizontalAlignment="Right" />
                                 <Border Grid.Column="3" Margin="12,-2,0,0" VerticalAlignment="Top">
                                     <ui:Button x:Name="CloseButton" Padding="4" Background="Transparent" BorderThickness="0" IsEnabled="True"
+                                               AutomationProperties.Name="{x:Static res:Strings.Common_Close}"
                                                Command="{Binding Path=TemplateButtonCommand, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}">
                                         <ui:Button.Icon>
                                             <ui:SymbolIcon Symbol="Dismiss24" />

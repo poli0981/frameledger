@@ -2187,6 +2187,21 @@
   </data>
   <data name="Maintenance_Status_Working" xml:space="preserve">
     <value>実行中…</value>
+  </data>
+  <data name="A11y_Games_Sort" xml:space="preserve">
+    <value>ゲームの並べ替え</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Logs_Source" xml:space="preserve">
+    <value>ログのソース</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Logs_Level" xml:space="preserve">
+    <value>最小ログレベル</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Logs_Tail" xml:space="preserve">
+    <value>ログの行</value>
     <comment>review</comment>
   </data>
 </root>

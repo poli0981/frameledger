@@ -108,7 +108,8 @@
             <ui:CardControl Margin="0,12,0,0" Header="{x:Static vm:GameDetailViewModel.HookingHeader}" Icon="{ui:SymbolIcon ShieldTask24}">
                 <StackPanel Orientation="Horizontal">
                     <ui:TextBlock Appearance="Secondary" VerticalAlignment="Center" Margin="0,0,12,0" Text="{Binding ViewModel.HookStatusText}" />
-                    <ui:ToggleSwitch IsChecked="{Binding ViewModel.HookEnabled, Mode=OneWay}"
+                    <ui:ToggleSwitch AutomationProperties.Name="{x:Static vm:GameDetailViewModel.HookingHeader}"
+                                     IsChecked="{Binding ViewModel.HookEnabled, Mode=OneWay}"
                                      IsEnabled="{Binding ViewModel.HookToggleEnabled}"
                                      Command="{Binding ViewModel.ToggleHookingCommand}" />
                 </StackPanel>
@@ -232,7 +233,7 @@
                     <StackPanel Margin="0,12,0,0">
                         <StackPanel Orientation="Horizontal">
                             <ui:TextBlock Appearance="Secondary" VerticalAlignment="Center" Margin="0,0,8,0" Text="{x:Static vm:GameDetailViewModel.TrendMetricLabel}" />
-                            <ComboBox MinWidth="180" DisplayMemberPath="Label" ItemsSource="{x:Static vm:GameDetailViewModel.TrendMetrics}"
+                            <ComboBox MinWidth="180" AutomationProperties.Name="{x:Static vm:GameDetailViewModel.TrendMetricLabel}" DisplayMemberPath="Label" ItemsSource="{x:Static vm:GameDetailViewModel.TrendMetrics}"
                                       SelectedValue="{Binding ViewModel.TrendMetric, Mode=TwoWay}" SelectedValuePath="Value" />
                             <CheckBox Margin="16,0,0,0" VerticalAlignment="Center" Content="{x:Static vm:GameDetailViewModel.IncludeMidSessionText}"
                                       IsChecked="{Binding ViewModel.IncludeMidSession}" />

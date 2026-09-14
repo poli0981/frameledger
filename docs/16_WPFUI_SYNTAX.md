@@ -205,3 +205,9 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
   bar with no exit, which is exactly how the safety notices shipped (2026-09-14). `Styles/FrameLedger.xaml` carries
   the upstream template plus one presenter column; `PagesLoadTests.TheInfoBarTemplateRendersItsContent` renders both
   templates and turns red when upstream gains a presenter, which is when the copy comes out.
+- [ ] **No dialog in 4.3.0 closes on Esc.** Neither `ContentDialog.cs` nor `MessageBox.cs` at the 4.3.0 tag handles a
+  key (read 2026-09-15), and `ContentDialog.CloseButtonText` DEFAULTS to "Close" — an empty string is how a dialog
+  says it has no Close button. `MessageBox.Close()` is `[Obsolete("Use Close with MessageBoxResult instead")]` while no
+  such overload is public; the Close button's own path is `TemplateButtonCommand.Execute(MessageBoxButton.Close)`.
+  `Services/DialogKeyboard` registers one class handler on `Window` (bubbling `KeyDown`, so a dropdown's Esc wins) and
+  closes through those paths; `AccessibilityTests.EscapeClosesTheOpenDialogWithNoResult` holds it (`08_UI` §Accessibility).

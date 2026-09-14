@@ -26,6 +26,10 @@ public static class Strings
     /// <summary>Every key, for an audit that walks them.</summary>
     public static IReadOnlyList<string> Keys { get; } =
     [
+        nameof(A11y_Games_Sort),
+        nameof(A11y_Logs_Level),
+        nameof(A11y_Logs_Source),
+        nameof(A11y_Logs_Tail),
         nameof(About_Body_Format),
         nameof(About_Title),
         nameof(AddGame_Added_Format),
@@ -570,6 +574,14 @@ public static class Strings
         nameof(Upscaler_None),
         nameof(Upscaler_Unknown),
     ];
+
+    public static string A11y_Games_Sort => ResourceManager.GetString(nameof(A11y_Games_Sort), Culture) ?? nameof(A11y_Games_Sort);
+
+    public static string A11y_Logs_Level => ResourceManager.GetString(nameof(A11y_Logs_Level), Culture) ?? nameof(A11y_Logs_Level);
+
+    public static string A11y_Logs_Source => ResourceManager.GetString(nameof(A11y_Logs_Source), Culture) ?? nameof(A11y_Logs_Source);
+
+    public static string A11y_Logs_Tail => ResourceManager.GetString(nameof(A11y_Logs_Tail), Culture) ?? nameof(A11y_Logs_Tail);
 
     public static string About_Body_Format => ResourceManager.GetString(nameof(About_Body_Format), Culture) ?? nameof(About_Body_Format);
 
