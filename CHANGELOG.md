@@ -17,6 +17,14 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Two Settings descriptions were centred once they wrapped (2026-09-14).** A `TextBlock` with a `MaxWidth`
+  inside a stretched `StackPanel` is centred by WPF as soon as its text wraps, so the descriptions under
+  *Record games launched outside FrameLedger* and *Fetch store metadata online* showed their second line offset
+  (owner screenshots, en and vi). Both carry `HorizontalAlignment="Left"` now, like the Vulkan layer and logon
+  task rows already did. XAML only.
+
 ### Added
 
 - **P3 PR-9 — first run, the Legal Gate (FR-11), the closing sweep (2026-09-14).** `FirstRunWindow` /
