@@ -19,6 +19,16 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Fixed
 
+- **A safety notice was a red bar with no way to close it (2026-09-14).** WPF UI 4.3.0's `InfoBar` template has no
+  `ContentPresenter`, so the action button every persistent banner carries as the InfoBar's Content — "Record this
+  session without measuring it" on a refusal, Dismiss on an unhook or a degrade, the only dismissal once
+  `IsClosable="False"` removed the X per `08_UI` §Notifications policy — compiled, bound and was never drawn. The
+  Agent-offline banner's Retry and the game page's Re-enable were dropped the same way. `Styles/FrameLedger.xaml`
+  now re-templates `ui:InfoBar` with the upstream template verbatim plus one presenter column, collapsed without
+  content; no view model changed. `PagesLoadTests.TheInfoBarTemplateRendersItsContent` renders the app's template
+  and the library's and asserts the button appears under one and not the other, so it turns red when upstream
+  gains a presenter and the copy should go. `legal/licenses/wpfui-MIT.txt` added (the template is MIT text).
+  Docs: `08_UI` §Notifications policy correction, `16_WPFUI_SYNTAX` §Gotchas, HANDOFF §Traps.
 - **Two Settings descriptions were centred once they wrapped (2026-09-14).** A `TextBlock` with a `MaxWidth`
   inside a stretched `StackPanel` is centred by WPF as soon as its text wraps, so the descriptions under
   *Record games launched outside FrameLedger* and *Fetch store metadata online* showed their second line offset
