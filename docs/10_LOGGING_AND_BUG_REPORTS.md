@@ -45,10 +45,22 @@ Tails the active files (shared read), level filter, text search, pause autoscrol
    > PawnIO question) and the disclosure version, plus OS version, bitness, locale and the write time — **no
    > CPU/GPU name or driver version**, which live in the ledger's hardware snapshots and are the session
    > metadata option this list already has; `settings.json` = every registry key's effective value (there is no
-   > path-valued key). No session JSON and no dumps. The bundle is written and nothing else happens: no preview
-   > dialog yet, no browser, no clipboard. Tests: `BugBundleBuilderTests` (the seven-day cut, the overlay cap, a
+   > path-valued key). No session JSON and no dumps. ~~The bundle is written and nothing else happens: no preview
+   > dialog yet, no browser, no clipboard.~~ Tests: `BugBundleBuilderTests` (the seven-day cut, the overlay cap, a
    > `game-crash.log` beside ours is not shipped, both JSON files), `LogsViewModelTests` (the cancelled save writes
    > nothing).
+   >
+   > **Steps 1 (the Help menu), 3 and 4 built 2026-09-14 (P4 PR-3)** as `App/Services/BugReportFlow`, the one flow
+   > behind Help ▸ Report a bug… and the Logs page's button: step 2's zip → step 3's `ContentDialog`
+   > (`BugReportPreviewPrompt` / `Dialogs/BugReportPreviewContent`) listing every entry `WriteAsync` returned, with
+   > "Show the zip in Explorer" and the drag instruction → step 4 as the dialog's two buttons: **Open GitHub issue**
+   > opens `issues/new?template=bug_report.yml&title=[Bug]%20&labels=bug&app-version=…&os=…` — the form's field
+   > ids are **hyphenated** (`app-version`, `os`), which is what GitHub prefills by, not the underscores step 4
+   > above spelled; the OS is the form's own spelling (`Windows 11 26100.2314`, `IssueLink.OsText`) — and **Copy
+   > summary as Markdown** puts `sysinfo.json`'s twelve keys on the clipboard as a table. Both behind ports
+   > (`IBugReportPreview`, `IUrlOpener`, `IClipboard`) so `BugReportFlowTests` pins the exact URL without a browser.
+   > Still open from this list: the **crash dialog and the minidump** (§Crash handling, step 1's third entry point)
+   > and the optional session-metadata / dump checkboxes of step 2.
 3. **Preview step:** the dialog lists every file included and lets the user open the zip before continuing. Nothing is ever sent automatically.
 4. "Open GitHub issue" → launches browser to
    `https://github.com/poli0981/frameledger/issues/new?template=bug_report.yml&title=[Bug]%20&labels=bug&app_version=…&os=…`

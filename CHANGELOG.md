@@ -19,6 +19,24 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Added
 
+- **P4 PR-3 — the bug report's steps 3–4, Help ▸ Documentation, and File ▸ Export as the submenu it was specified
+  as (2026-09-14).** `App/Services/BugReportFlow` is the one flow behind Help ▸ Report a bug… and the Logs page's
+  button: step 2's zip where the user says, then step 3's `ContentDialog` (`BugReportPreviewPrompt` /
+  `Dialogs/BugReportPreviewContent`) listing every entry the builder wrote, with "Show the zip in Explorer" and the
+  drag instruction, then step 4 as its two buttons — **Open GitHub issue** (`IssueLink.NewIssue`:
+  `issues/new?template=bug_report.yml&title=[Bug]%20&labels=bug&app-version=…&os=…`, the form's real hyphenated
+  field ids, the OS in the form's own spelling `Windows 11 26100.2314`) and **Copy summary as Markdown**
+  (`sysinfo.json`'s twelve keys as a table). Nothing is ever sent by itself. Three ports keep it testable without a
+  desktop: `IBugReportPreview`, `IUrlOpener` (`ShellUrlOpener`), `IClipboard` (`WpfClipboard`). Help ▸
+  Documentation opens the README (`docs/` is developer-facing). File ▸ Export is now the submenu `08_UI` §Menu bar
+  specifies: Session CSV / Session JSON for the session last selected on a Sessions tab or opened in a summary
+  window (`SessionSelection`, written by the game page and the summary opener; `SessionExportService` over the
+  summary window's own `SessionExporter` writers), Chart PNG opening that session's summary window where the
+  plot lives; no selection says so in the strip. `BugBundleBuilder.SysInfoOf` is public for the link and the
+  Markdown. Tests: `BugReportFlowTests` (the zip, the preview's entries against the archive, the exact URL, the
+  Markdown, close, cancel), `SessionExportServiceTests` (CSV and JSON where the user says, unknown session,
+  cancelled save, the selection), `LogsViewModelTests` over the flow. 14 App strings en/vi/ja. Docs: `10_LOGGING`
+  §Bug report flow built note (the crash dialog and minidump stay open), `08_UI` §Shell menu note, HANDOFF §P4.
 - **P4 PR-2 — the "is Vulkan" fact, and the layer's registration following the ledger (2026-09-14).** The rule
   `12_BUILD` §The Vulkan layer is not registered at install time states — registered only while at least one
   Vulkan game has hooking enabled, unregistered when the last is disabled — had no way to know which game was

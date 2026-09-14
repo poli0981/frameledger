@@ -17,14 +17,18 @@ public sealed class SessionSummaryOpener : ISessionSummaryOpener
     private readonly IServiceProvider _services;
     private readonly ShellHost _shell;
 
-    public SessionSummaryOpener(IServiceProvider services, ShellHost shell)
+    private readonly SessionSelection _selection;
+
+    public SessionSummaryOpener(IServiceProvider services, ShellHost shell, SessionSelection selection)
     {
         _services = services ?? throw new ArgumentNullException(nameof(services));
         _shell = shell ?? throw new ArgumentNullException(nameof(shell));
+        _selection = selection ?? throw new ArgumentNullException(nameof(selection));
     }
 
     public void Open(long sessionId)
     {
+        _selection.Set(sessionId);    // File ▸ Export follows the window the user opened last (P4 PR-3)
         SessionSummaryWindow? window = null;
         var viewModel = new SessionSummaryViewModel(
             _services.GetRequiredService<ISessionRepository>(),

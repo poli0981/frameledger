@@ -132,6 +132,48 @@
   <data name="Menu_File_Export" xml:space="preserve">
     <value>Export</value>
   </data>
+  <data name="Menu_File_Export_Csv" xml:space="preserve">
+    <value>Session CSV</value>
+  </data>
+  <data name="Menu_File_Export_Json" xml:space="preserve">
+    <value>Session JSON</value>
+  </data>
+  <data name="Menu_File_Export_Png" xml:space="preserve">
+    <value>Chart PNG</value>
+  </data>
+  <data name="Export_NoSelection_Body" xml:space="preserve">
+    <value>Select a session on a game's Sessions tab first, or open its summary.</value>
+  </data>
+  <data name="Export_Png_Body" xml:space="preserve">
+    <value>The chart is exported from the session summary window, which is open now.</value>
+  </data>
+  <data name="BugReport_Title" xml:space="preserve">
+    <value>Report a bug</value>
+  </data>
+  <data name="BugReport_Preview_Intro_Format" xml:space="preserve">
+    <value>The bundle was written to {0} ({1} files). Nothing has been sent. It contains:</value>
+  </data>
+  <data name="BugReport_Preview_Drag" xml:space="preserve">
+    <value>Open the GitHub issue form and drag the zip file into the issue description. FrameLedger cannot upload it for you, and the form carries only the version and Windows build.</value>
+  </data>
+  <data name="BugReport_OpenIssue" xml:space="preserve">
+    <value>Open GitHub issue</value>
+  </data>
+  <data name="BugReport_CopyMarkdown" xml:space="preserve">
+    <value>Copy summary as Markdown</value>
+  </data>
+  <data name="BugReport_OpenZipFolder" xml:space="preserve">
+    <value>Show the zip in Explorer</value>
+  </data>
+  <data name="BugReport_Copied" xml:space="preserve">
+    <value>The environment summary is on the clipboard as Markdown; paste it into the issue.</value>
+  </data>
+  <data name="BugReport_ClipboardRefused" xml:space="preserve">
+    <value>The clipboard refused the text; another program may be holding it.</value>
+  </data>
+  <data name="BugReport_BrowserRefused" xml:space="preserve">
+    <value>The browser could not be opened.</value>
+  </data>
   <data name="Menu_File_ImportLibrary" xml:space="preserve">
     <value>Import library…</value>
   </data>

@@ -262,6 +262,15 @@ public partial class App : System.Windows.Application
         services.AddSingleton(static _ => new LogTail(UiPaths.Logs));
         services.AddSingleton(static sp => new BugBundleBuilder(UiPaths.Logs, sp.GetRequiredService<RegisteredSettings>()));
 
+        // The bug report's steps 3-4 and the shell's Export (P4 PR-3): the preview dialog, the browser, the clipboard,
+        // the flow over them, the session the shell exports, and the CSV/JSON service the summary window's writers serve.
+        services.AddSingleton<IUrlOpener, ShellUrlOpener>();
+        services.AddSingleton<IClipboard, WpfClipboard>();
+        services.AddSingleton<IBugReportPreview, BugReportPreviewPrompt>();
+        services.AddSingleton<BugReportFlow>();
+        services.AddSingleton<SessionSelection>();
+        services.AddSingleton<SessionExportService>();
+
         // The layer registration and the logon task (P3 PR-8b): read from the machine, written by the Agent's flags.
         services.AddSingleton<IMaintenanceState, MaintenanceState>();
         services.AddSingleton<IAgentTool, AgentTool>();

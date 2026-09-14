@@ -35,10 +35,21 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     private string _agentBannerBody = string.Empty;
 
     private readonly AddGameFlow _addGame;
+    private readonly BugReportFlow _bugReports;
+    private readonly IUrlOpener _urls;
+    private readonly SessionSelection _selection;
+    private readonly SessionExportService _exports;
+    private readonly ISessionSummaryOpener _summaries;
 
-    public MainWindowViewModel(AgentConnection agent, ISnackbarService snackbar, IShellPresence shell, IPageNavigator navigator, AddGameFlow addGame, SafetyNotices notices)
+    public MainWindowViewModel(AgentConnection agent, ISnackbarService snackbar, IShellPresence shell, IPageNavigator navigator, AddGameFlow addGame, SafetyNotices notices,
+        BugReportFlow bugReports, IUrlOpener urls, SessionSelection selection, SessionExportService exports, ISessionSummaryOpener summaries)
     {
         Notices = notices ?? throw new ArgumentNullException(nameof(notices));
+        _bugReports = bugReports ?? throw new ArgumentNullException(nameof(bugReports));
+        _urls = urls ?? throw new ArgumentNullException(nameof(urls));
+        _selection = selection ?? throw new ArgumentNullException(nameof(selection));
+        _exports = exports ?? throw new ArgumentNullException(nameof(exports));
+        _summaries = summaries ?? throw new ArgumentNullException(nameof(summaries));
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _snackbar = snackbar ?? throw new ArgumentNullException(nameof(snackbar));
         _shell = shell ?? throw new ArgumentNullException(nameof(shell));
@@ -144,6 +155,65 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             _snackbar.Show(Strings.Rules_Update_Title, Strings.Rules_Update_Failed, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.Warning24), TimeSpan.FromSeconds(4));
         }
     }
+
+    /// <summary>Help ▸ Documentation (P4 PR-3): the README is the user-facing entry point; `docs/` is the developers'.</summary>
+    [RelayCommand]
+    private void Documentation()
+    {
+        if (!_urls.Open(IssueLink.Documentation))
+        {
+            _snackbar.Show(Strings.Menu_Help_Documentation, Strings.BugReport_BrowserRefused, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.Warning24), TimeSpan.FromSeconds(4));
+        }
+    }
+
+    /// <summary>Help ▸ Report a bug… (P4 PR-3): <c>10_LOGGING</c> §Bug report flow steps 2–4, the same flow the Logs page's button runs.</summary>
+    [RelayCommand]
+    private async Task ReportBugAsync() => _ = await _bugReports.RunAsync().ConfigureAwait(true);
+
+    /// <summary>File ▸ Export ▸ Session CSV, for the session last selected on a Sessions tab or opened in a summary window.</summary>
+    [RelayCommand]
+    private async Task ExportCsvAsync()
+    {
+        if (_selection.SessionId is { } id)
+        {
+            _ = await _exports.ExportCsvAsync(id).ConfigureAwait(true);
+        }
+        else
+        {
+            NoSelection();
+        }
+    }
+
+    [RelayCommand]
+    private async Task ExportJsonAsync()
+    {
+        if (_selection.SessionId is { } id)
+        {
+            _ = await _exports.ExportJsonAsync(id).ConfigureAwait(true);
+        }
+        else
+        {
+            NoSelection();
+        }
+    }
+
+    /// <summary>File ▸ Export ▸ Chart PNG needs the summary window's live plot, so it opens that window and says so.</summary>
+    [RelayCommand]
+    private void ExportPng()
+    {
+        if (_selection.SessionId is { } id)
+        {
+            _summaries.Open(id);
+            _snackbar.Show(Strings.Menu_File_Export, Strings.Export_Png_Body, ControlAppearance.Secondary, new SymbolIcon(SymbolRegular.Info24), TimeSpan.FromSeconds(4));
+        }
+        else
+        {
+            NoSelection();
+        }
+    }
+
+    private void NoSelection() =>
+        _snackbar.Show(Strings.Menu_File_Export, Strings.Export_NoSelection_Body, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.Info24), TimeSpan.FromSeconds(4));
 
     /// <summary>Every menu item of <c>08_UI</c> §Menu bar that a later slice builds says so, in a 4 s snackbar, rather than doing nothing.</summary>
     [RelayCommand]

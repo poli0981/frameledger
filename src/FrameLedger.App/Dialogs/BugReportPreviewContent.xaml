@@ -1,0 +1,32 @@
+<UserControl x:Class="FrameLedger.App.Dialogs.BugReportPreviewContent"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             d:DataContext="{d:DesignInstance Type=vm:BugReportPreviewViewModel}"
+             mc:Ignorable="d"
+             MinWidth="480">
+    <!--
+        10_LOGGING §Bug report flow step 3: every file in the zip, listed, before anything else happens. Nothing is
+        ever sent automatically; the primary button opens the issue form and the zip is dragged in by hand.
+    -->
+    <StackPanel>
+        <ui:TextBlock TextWrapping="Wrap" Text="{Binding Intro}" />
+        <Border Margin="0,10,0,10" Padding="10,6" CornerRadius="6"
+                Background="{DynamicResource ControlFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1">
+            <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding Entries}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock FontFamily="Consolas" Text="{Binding}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </Border>
+        <ui:HyperlinkButton Padding="0" Content="{x:Static vm:BugReportPreviewViewModel.ShowZipText}" Command="{Binding ShowZipCommand}" />
+        <ui:TextBlock Margin="0,10,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:BugReportPreviewViewModel.DragInstruction}" />
+    </StackPanel>
+</UserControl>

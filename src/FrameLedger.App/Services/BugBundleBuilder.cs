@@ -83,9 +83,12 @@ public sealed class BugBundleBuilder
         written.Add(entryName);
     }
 
-    private string SysInfo(HelloAck? agent)
+    private string SysInfo(HelloAck? agent) => JsonSerializer.Serialize(new Dictionary<string, string>(SysInfoOf(agent, _clock.GetUtcNow()), StringComparer.Ordinal), AppJsonContext.Default.DictionaryStringString);
+
+    /// <summary>The twelve keys of <c>sysinfo.json</c>, also the issue link's prefill and the clipboard Markdown (P4 PR-3).</summary>
+    public static IReadOnlyDictionary<string, string> SysInfoOf(HelloAck? agent, DateTimeOffset now)
     {
-        var info = new Dictionary<string, string>(StringComparer.Ordinal)
+        return new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["app_version"] = UiIdentity.Version,
             ["agent_version"] = agent?.AgentVersion ?? "not connected",
@@ -98,9 +101,8 @@ public sealed class BugBundleBuilder
             ["os"] = Environment.OSVersion.VersionString,
             ["os_64bit"] = Environment.Is64BitOperatingSystem.ToString(),
             ["locale"] = CultureInfo.CurrentUICulture.Name,
-            ["written_at"] = _clock.GetUtcNow().ToString("O", CultureInfo.InvariantCulture),
+            ["written_at"] = now.ToString("O", CultureInfo.InvariantCulture),
         };
-        return JsonSerializer.Serialize(info, AppJsonContext.Default.DictionaryStringString);
     }
 
     private async Task<string> SettingsJsonAsync(CancellationToken ct)

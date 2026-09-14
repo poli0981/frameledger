@@ -1228,13 +1228,17 @@ schema 0004 for the key's exe half (NOT the consent fingerprint), Tools ▸ Upda
 filled — status in `CHANGELOG.md`, the decisions in `05_DETECTION` §Caching's built note; store auto-import (Steam / GOG / Epic /
 itch.io — the first-run flow's step 4 and File ▸ Import library both say "later build"), ~~the
 capability-vs-measured separation in the UI (the game page's Supports row is empty until this)~~ **(PR-1)**, Velopack +
-the updater (`11_UPDATER`; the Settings channel row is stored and unused), the bug-report flow's steps 3–5
-(`10_LOGGING`: the preview dialog, the GitHub issue link — step 2's bundle exists), ~~the "is Vulkan" fact the
+the updater (`11_UPDATER`; the Settings channel row is stored and unused), ~~the bug-report flow's steps 3–5
+(`10_LOGGING`: the preview dialog, the GitHub issue link — step 2's bundle exists)~~ **LANDED 2026-09-14 (P4 PR-3:
+`BugReportFlow`, the preview dialog, the issue link with the form's real field ids, the Markdown clipboard fallback;
+the crash dialog + minidump stay open — `10_LOGGING` built note)**, ~~the "is Vulkan" fact the
 layer's register/unregister-on-consent automation needs (`17_HOOK_ENGINE` §Vulkan built note)~~ **LANDED
 2026-09-14 (P4 PR-2): a static PE fact (`PeImports` + the bounded scan) stored as `vulkan` in `capability_flags`,
 and `VkLayerReconciler` moving the HKCU registration after every consent change and sweep — the built note
 carries it**, the Help menu's
-Documentation / Check for updates / Report a bug items, and `legal/licenses/` populated by the license-gathering
+~~Documentation~~ / Check for updates / ~~Report a bug~~ items **(Documentation and Report a bug landed with PR-3;
+Check for updates waits for the updater; File ▸ Export became the three-leaf submenu `08_UI` specifies)**, and
+`legal/licenses/` populated by the license-gathering
 script. Decisions that live only here: D11–D17 below still hold; nothing in P4 may add a third writer to
 `ledger.db` or a message that carries a safety fact over the pipe.
 

@@ -21,11 +21,9 @@ public sealed partial class LogsViewModel : ObservableObject, IDisposable
     public static readonly TimeSpan RefreshPeriod = TimeSpan.FromSeconds(2);
 
     private readonly LogTail _tail;
-    private readonly BugBundleBuilder _bundles;
-    private readonly IFileSaver _saver;
-    private readonly IAgentRequests _agent;
-    private readonly IMessageStrip _strip;
+    private readonly BugReportFlow _bugReports;
     private readonly TimeProvider _clock;
+    private readonly IMessageStrip _strip;
     private readonly UiThread _ui = new();
     private IReadOnlyList<string> _lines = [];
     private ITimer? _timer;
@@ -51,12 +49,10 @@ public sealed partial class LogsViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string? _currentFile;
 
-    public LogsViewModel(LogTail tail, BugBundleBuilder bundles, IFileSaver saver, IAgentRequests agent, IMessageStrip strip, TimeProvider? clock = null)
+    public LogsViewModel(LogTail tail, BugReportFlow bugReports, IMessageStrip strip, TimeProvider? clock = null)
     {
         _tail = tail ?? throw new ArgumentNullException(nameof(tail));
-        _bundles = bundles ?? throw new ArgumentNullException(nameof(bundles));
-        _saver = saver ?? throw new ArgumentNullException(nameof(saver));
-        _agent = agent ?? throw new ArgumentNullException(nameof(agent));
+        _bugReports = bugReports ?? throw new ArgumentNullException(nameof(bugReports));
         _strip = strip ?? throw new ArgumentNullException(nameof(strip));
         _clock = clock ?? TimeProvider.System;
         Pending = RefreshAsync();
@@ -123,7 +119,7 @@ public sealed partial class LogsViewModel : ObservableObject, IDisposable
         }
     }
 
-    /// <summary><c>10_LOGGING</c> §Bug report flow step 2: the zip, where the user says; nothing is sent (steps 3–4 are P4's).</summary>
+    /// <summary><c>10_LOGGING</c> §Bug report flow: the zip where the user says, the preview, then the issue form or the clipboard — nothing is ever sent by itself.</summary>
     [RelayCommand]
     private Task ExportBundleAsync() => Pending = ExportBundleCoreAsync();
 
@@ -160,24 +156,6 @@ public sealed partial class LogsViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(TotalCount));
     }
 
-    private async Task ExportBundleCoreAsync()
-    {
-        DateTimeOffset now = _clock.GetUtcNow();
-        string? path = _saver.PickSavePath("Zip archive (*.zip)|*.zip", BugBundleBuilder.SuggestedName(now));
-        if (path is null)
-        {
-            return;
-        }
-
-        try
-        {
-            IReadOnlyList<string> written = await _bundles.WriteAsync(path, _agent.Hello).ConfigureAwait(true);
-            _strip.Success(Strings.Logs_ExportBundle, string.Format(CultureInfo.CurrentCulture, Strings.Logs_Bundle_Exported_Format, path, written.Count));
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            Serilog.Log.Warning(ex, "ui: the bug bundle could not be written");
-            _strip.Warn(Strings.Logs_ExportBundle, string.Format(CultureInfo.CurrentCulture, Strings.Logs_Bundle_Failed_Format, ex.Message));
-        }
-    }
+    /// <summary><c>10_LOGGING</c> §Bug report flow steps 2–4 (P4 PR-3), the same flow Help ▸ Report a bug runs.</summary>
+    private async Task ExportBundleCoreAsync() => _ = await _bugReports.RunAsync().ConfigureAwait(true);
 }
