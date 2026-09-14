@@ -797,4 +797,232 @@
     <value>不明なアップスケーラー</value>
     <comment>review</comment>
   </data>
+  <data name="Chart_Axis_Count" xml:space="preserve">
+    <value>フレーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Axis_Fps" xml:space="preserve">
+    <value>FPS</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Axis_Frametime" xml:space="preserve">
+    <value>フレームタイム (ms)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Axis_Percentile" xml:space="preserve">
+    <value>パーセンタイル</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Axis_Sensor" xml:space="preserve">
+    <value>°C / %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Axis_Time" xml:space="preserve">
+    <value>時間 (秒)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Decimated_Format" xml:space="preserve">
+    <value>{0} フレーム、{1} 点の min/max で描画</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Series_Displayed" xml:space="preserve">
+    <value>表示</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Series_GpuLoad" xml:space="preserve">
+    <value>GPU 負荷 %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Series_GpuTemp" xml:space="preserve">
+    <value>GPU °C</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Series_Native" xml:space="preserve">
+    <value>ネイティブ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Series_Percentile" xml:space="preserve">
+    <value>フレームタイムのパーセンタイル別 FPS</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Series_Stutter" xml:space="preserve">
+    <value>スタッター</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Series_StutterPso" xml:space="preserve">
+    <value>スタッター (PSO コンパイル)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_SessionDiscarded_Format" xml:space="preserve">
+    <value>セッションを破棄しました: {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_SessionSaved_Format" xml:space="preserve">
+    <value>セッションを保存しました: {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Override_Apply" xml:space="preserve">
+    <value>適用</value>
+    <comment>review</comment>
+  </data>
+  <data name="Override_Body" xml:space="preserve">
+    <value>実測値は保存されたまま、上書き値が代わりに表示され、手動として示されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Override_Default" xml:space="preserve">
+    <value>このゲームの既定にも設定</value>
+    <comment>review</comment>
+  </data>
+  <data name="Override_Keep" xml:space="preserve">
+    <value>実測値を使う</value>
+    <comment>review</comment>
+  </data>
+  <data name="Override_Title_Format" xml:space="preserve">
+    <value>このセッションの {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Annotations_Header" xml:space="preserve">
+    <value>タグとメモ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Crash_Body" xml:space="preserve">
+    <value>このセッションはクラッシュで終了しました。クラッシュまでのデータは完全です。フックが原因かどうかについてはここでは何も示しません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Crash_Title" xml:space="preserve">
+    <value>ゲームがクラッシュしました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Distribution_Header" xml:space="preserve">
+    <value>分布</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Export_Csv" xml:space="preserve">
+    <value>CSV を書き出す</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Export_Failed_Format" xml:space="preserve">
+    <value>書き出しに失敗しました: {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Export_Json" xml:space="preserve">
+    <value>JSON を書き出す</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Export_Png" xml:space="preserve">
+    <value>PNG を書き出す</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Export_Tier2" xml:space="preserve">
+    <value>何も実測していないセッションにはフレーム単位の行がありません。JSON には記録された内容が含まれます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Exported_Format" xml:space="preserve">
+    <value>{0} に書き出しました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Frametime_Header" xml:space="preserve">
+    <value>フレームタイム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Line_Format" xml:space="preserve">
+    <value>{0} · {1} · {2} · {3}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Lows_Presented" xml:space="preserve">
+    <value>(提示)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_NotFound" xml:space="preserve">
+    <value>このセッションは台帳にありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Notes_Placeholder" xml:space="preserve">
+    <value>メモ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Open" xml:space="preserve">
+    <value>開く</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Save" xml:space="preserve">
+    <value>保存</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Saved" xml:space="preserve">
+    <value>保存しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Show_Displayed" xml:space="preserve">
+    <value>表示フレームを表示</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Show_Sensors" xml:space="preserve">
+    <value>センサーを重ねる</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Avg" xml:space="preserve">
+    <value>平均</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Duration" xml:space="preserve">
+    <value>時間</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Median" xml:space="preserve">
+    <value>中央値</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_MinMax" xml:space="preserve">
+    <value>最小 / 最大</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_MinMax_Format" xml:space="preserve">
+    <value>{0} / {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_P01Low" xml:space="preserve">
+    <value>0.1% Low</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_P1Low" xml:space="preserve">
+    <value>1% Low</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_StdDev" xml:space="preserve">
+    <value>フレームタイム σ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_StdDev_Format" xml:space="preserve">
+    <value>{0:0.00} ms</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Stutter" xml:space="preserve">
+    <value>スタッター</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Stutter_Format" xml:space="preserve">
+    <value>{0} (時間の {1:0.0}%)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Tags_Placeholder" xml:space="preserve">
+    <value>タグ (コンマ区切り)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Tier2_Body" xml:space="preserve">
+    <value>このセッションはフックされていません。時間とハードウェアテレメトリは記録されましたが、実測はなく、描画するフレームもありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Title_Format" xml:space="preserve">
+    <value>{0} — {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Unhooked_Body" xml:space="preserve">
+    <value>アンチチートモジュールが出現したため、FrameLedger はこのセッション中にフックを解除しました。実測データはそこで終わります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Unhooked_Title" xml:space="preserve">
+    <value>実測が早期に停止しました</value>
+    <comment>review</comment>
+  </data>
 </root>

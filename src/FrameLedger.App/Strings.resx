@@ -603,4 +603,175 @@
   <data name="Upscaler_Unknown" xml:space="preserve">
     <value>Unknown upscaler</value>
   </data>
+  <data name="Chart_Axis_Count" xml:space="preserve">
+    <value>Frames</value>
+  </data>
+  <data name="Chart_Axis_Fps" xml:space="preserve">
+    <value>FPS</value>
+  </data>
+  <data name="Chart_Axis_Frametime" xml:space="preserve">
+    <value>Frametime (ms)</value>
+  </data>
+  <data name="Chart_Axis_Percentile" xml:space="preserve">
+    <value>Percentile</value>
+  </data>
+  <data name="Chart_Axis_Sensor" xml:space="preserve">
+    <value>°C / %</value>
+  </data>
+  <data name="Chart_Axis_Time" xml:space="preserve">
+    <value>Time (s)</value>
+  </data>
+  <data name="Chart_Decimated_Format" xml:space="preserve">
+    <value>{0} frames, drawn as {1} min/max points</value>
+  </data>
+  <data name="Chart_Series_Displayed" xml:space="preserve">
+    <value>Displayed</value>
+  </data>
+  <data name="Chart_Series_GpuLoad" xml:space="preserve">
+    <value>GPU load %</value>
+  </data>
+  <data name="Chart_Series_GpuTemp" xml:space="preserve">
+    <value>GPU °C</value>
+  </data>
+  <data name="Chart_Series_Native" xml:space="preserve">
+    <value>Native</value>
+  </data>
+  <data name="Chart_Series_Percentile" xml:space="preserve">
+    <value>FPS by percentile of frametime</value>
+  </data>
+  <data name="Chart_Series_Stutter" xml:space="preserve">
+    <value>Stutter</value>
+  </data>
+  <data name="Chart_Series_StutterPso" xml:space="preserve">
+    <value>Stutter (PSO compile)</value>
+  </data>
+  <data name="Dashboard_SessionDiscarded_Format" xml:space="preserve">
+    <value>Session discarded: {0}</value>
+  </data>
+  <data name="Dashboard_SessionSaved_Format" xml:space="preserve">
+    <value>Session saved: {0}</value>
+  </data>
+  <data name="Override_Apply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="Override_Body" xml:space="preserve">
+    <value>The measured value stays stored; the override is shown instead and marked as manual.</value>
+  </data>
+  <data name="Override_Default" xml:space="preserve">
+    <value>Also set as this game's default</value>
+  </data>
+  <data name="Override_Keep" xml:space="preserve">
+    <value>Use the measured value</value>
+  </data>
+  <data name="Override_Title_Format" xml:space="preserve">
+    <value>{0} for this session</value>
+  </data>
+  <data name="Summary_Annotations_Header" xml:space="preserve">
+    <value>Tags and notes</value>
+  </data>
+  <data name="Summary_Crash_Body" xml:space="preserve">
+    <value>This session ended with a crash. The data up to the crash is complete; nothing here says the hook caused it or did not.</value>
+  </data>
+  <data name="Summary_Crash_Title" xml:space="preserve">
+    <value>The game crashed</value>
+  </data>
+  <data name="Summary_Distribution_Header" xml:space="preserve">
+    <value>Distribution</value>
+  </data>
+  <data name="Summary_Export_Csv" xml:space="preserve">
+    <value>Export CSV</value>
+  </data>
+  <data name="Summary_Export_Failed_Format" xml:space="preserve">
+    <value>Export failed: {0}</value>
+  </data>
+  <data name="Summary_Export_Json" xml:space="preserve">
+    <value>Export JSON</value>
+  </data>
+  <data name="Summary_Export_Png" xml:space="preserve">
+    <value>Export PNG</value>
+  </data>
+  <data name="Summary_Export_Tier2" xml:space="preserve">
+    <value>A session that measured nothing has no per-frame rows to export; the JSON carries what was recorded.</value>
+  </data>
+  <data name="Summary_Exported_Format" xml:space="preserve">
+    <value>Exported to {0}</value>
+  </data>
+  <data name="Summary_Frametime_Header" xml:space="preserve">
+    <value>Frametime</value>
+  </data>
+  <data name="Summary_Line_Format" xml:space="preserve">
+    <value>{0} · {1} · {2} · {3}</value>
+  </data>
+  <data name="Summary_Lows_Presented" xml:space="preserve">
+    <value>(presented)</value>
+  </data>
+  <data name="Summary_NotFound" xml:space="preserve">
+    <value>This session is no longer in the ledger.</value>
+  </data>
+  <data name="Summary_Notes_Placeholder" xml:space="preserve">
+    <value>Notes</value>
+  </data>
+  <data name="Summary_Open" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="Summary_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Summary_Saved" xml:space="preserve">
+    <value>Saved.</value>
+  </data>
+  <data name="Summary_Show_Displayed" xml:space="preserve">
+    <value>Show displayed frames</value>
+  </data>
+  <data name="Summary_Show_Sensors" xml:space="preserve">
+    <value>Sensor overlay</value>
+  </data>
+  <data name="Summary_Stat_Avg" xml:space="preserve">
+    <value>Average</value>
+  </data>
+  <data name="Summary_Stat_Duration" xml:space="preserve">
+    <value>Duration</value>
+  </data>
+  <data name="Summary_Stat_Median" xml:space="preserve">
+    <value>Median</value>
+  </data>
+  <data name="Summary_Stat_MinMax" xml:space="preserve">
+    <value>Min / Max</value>
+  </data>
+  <data name="Summary_Stat_MinMax_Format" xml:space="preserve">
+    <value>{0} / {1}</value>
+  </data>
+  <data name="Summary_Stat_P01Low" xml:space="preserve">
+    <value>0.1% Low</value>
+  </data>
+  <data name="Summary_Stat_P1Low" xml:space="preserve">
+    <value>1% Low</value>
+  </data>
+  <data name="Summary_Stat_StdDev" xml:space="preserve">
+    <value>Frametime σ</value>
+  </data>
+  <data name="Summary_Stat_StdDev_Format" xml:space="preserve">
+    <value>{0:0.00} ms</value>
+  </data>
+  <data name="Summary_Stat_Stutter" xml:space="preserve">
+    <value>Stutter</value>
+  </data>
+  <data name="Summary_Stat_Stutter_Format" xml:space="preserve">
+    <value>{0} ({1:0.0}% of time)</value>
+  </data>
+  <data name="Summary_Tags_Placeholder" xml:space="preserve">
+    <value>Tags, comma-separated</value>
+  </data>
+  <data name="Summary_Tier2_Body" xml:space="preserve">
+    <value>This session was not hooked: duration and hardware telemetry were recorded, nothing was measured, and there are no frames to chart.</value>
+  </data>
+  <data name="Summary_Title_Format" xml:space="preserve">
+    <value>{0} — {1}</value>
+  </data>
+  <data name="Summary_Unhooked_Body" xml:space="preserve">
+    <value>FrameLedger unhooked during this session because an anti-cheat module appeared. The measured data ends there.</value>
+  </data>
+  <data name="Summary_Unhooked_Title" xml:space="preserve">
+    <value>Measurement stopped early</value>
+  </data>
 </root>

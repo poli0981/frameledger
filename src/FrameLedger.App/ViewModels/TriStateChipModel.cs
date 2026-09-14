@@ -6,6 +6,9 @@ namespace FrameLedger.App.ViewModels;
 /// <summary>One RT / PT / RR chip (<c>08_UI</c> §Tri-state feature chips): the label, the value, and where it came from (the tooltip).</summary>
 public sealed record TriStateChipModel(string Label, Tri Value, TriStateSource Source)
 {
+    /// <summary>Which feature this chip is, for the override that writes it back.</summary>
+    public TriStateKind Kind { get; init; } = TriStateKind.RayTracing;
+
     public string ValueText => Value switch
     {
         Tri.Yes => Strings.Chip_Yes,
@@ -29,7 +32,7 @@ public sealed record TriStateChipModel(string Label, Tri Value, TriStateSource S
 
     public bool IsNotApplicable => Value == Tri.NotApplicable;
 
-    public static TriStateChipModel Of(TriStateKind kind, ResolvedTriState resolved) => new(LabelOf(kind), resolved.Value, resolved.Source);
+    public static TriStateChipModel Of(TriStateKind kind, ResolvedTriState resolved) => new(LabelOf(kind), resolved.Value, resolved.Source) { Kind = kind };
 
     public static string LabelOf(TriStateKind kind) => kind switch
     {
