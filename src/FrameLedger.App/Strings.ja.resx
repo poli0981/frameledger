@@ -1025,4 +1025,264 @@
     <value>実測が早期に停止しました</value>
     <comment>review</comment>
   </data>
+  <data name="Compare_Col_Date" xml:space="preserve">
+    <value>日付</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Col_Fps" xml:space="preserve">
+    <value>FPS</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Col_Game" xml:space="preserve">
+    <value>ゲーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Col_MidSession" xml:space="preserve">
+    <value>設定変更あり</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Col_Tier" xml:space="preserve">
+    <value>ティア</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Curves_Header" xml:space="preserve">
+    <value>パーセンタイル曲線</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Export_Png" xml:space="preserve">
+    <value>PNG を書き出す</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Legend_Format" xml:space="preserve">
+    <value>{0} · {1} ({2})</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_Displayed" xml:space="preserve">
+    <value>表示 FPS</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_Duration" xml:space="preserve">
+    <value>時間</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_MaxGpuTemp" xml:space="preserve">
+    <value>GPU 最高 °C</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_Median" xml:space="preserve">
+    <value>中央値</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_Native" xml:space="preserve">
+    <value>ネイティブ FPS</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_P01Low" xml:space="preserve">
+    <value>0.1% Low</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_P1Low" xml:space="preserve">
+    <value>1% Low</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_Presented" xml:space="preserve">
+    <value>提示 FPS</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_StutterPct" xml:space="preserve">
+    <value>スタッター時間 %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Mixed_Body" xml:space="preserve">
+    <value>選択したセッションの少なくとも 1 つはフックされておらず、時間とハードウェアテレメトリのみ記録され、フレーム由来の値はすべて N/A です。フックされたセッションとの比較は片側が空の比較です。グラフにはティアの凡例が付き、利用できない指標は N/A のままです。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Mixed_Legend" xml:space="preserve">
+    <value>ティア混在: T1 セッションは実測、T2 セッションにはフレームデータも曲線もありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Mixed_Proceed" xml:space="preserve">
+    <value>ティアをまたいで比較する</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Mixed_Title" xml:space="preserve">
+    <value>これらのセッションは異なるものを測定しています</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_NoCandidates" xml:space="preserve">
+    <value>セッションはまだありません。比較するものがありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Pick_Header" xml:space="preserve">
+    <value>2〜5 個のセッションを選択</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Run" xml:space="preserve">
+    <value>比較</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Selected_Format" xml:space="preserve">
+    <value>{0} 件選択</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Table_Header" xml:space="preserve">
+    <value>統計</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Table_Metric" xml:space="preserve">
+    <value>指標</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_TooMany" xml:space="preserve">
+    <value>最大 5 セッションまで選択してください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Latency_Avg" xml:space="preserve">
+    <value>平均</value>
+    <comment>review</comment>
+  </data>
+  <data name="Latency_Axis" xml:space="preserve">
+    <value>レイテンシ (ms)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Latency_Empty" xml:space="preserve">
+    <value>このセッションでは Reflex がレイテンシを報告していません。このタブは、ゲームの Reflex 統合が報告するフックされたセッションでのみデータがあります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Latency_Header" xml:space="preserve">
+    <value>PC レイテンシ (Reflex)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Latency_P95" xml:space="preserve">
+    <value>p95</value>
+    <comment>review</comment>
+  </data>
+  <data name="Latency_Series" xml:space="preserve">
+    <value>PC レイテンシ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Latency_Stats_Format" xml:space="preserve">
+    <value>平均 {0:0.0} ms · p95 {1:0.0} ms</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Axis_Mb" xml:space="preserve">
+    <value>MB</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Empty" xml:space="preserve">
+    <value>このセッションにはセンサー系列が記録されていません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GpuHotspot" xml:space="preserve">
+    <value>GPU ホットスポット °C</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GpuLoad" xml:space="preserve">
+    <value>GPU 負荷 %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GpuPower" xml:space="preserve">
+    <value>GPU 電力 W</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GpuTemp" xml:space="preserve">
+    <value>GPU コア °C</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_VramAdapter" xml:space="preserve">
+    <value>アダプター全体の VRAM 使用量 (MB)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_VramProcess" xml:space="preserve">
+    <value>このゲームの VRAM 使用量 (MB)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Temps_Header" xml:space="preserve">
+    <value>温度と負荷</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Vram_Header" xml:space="preserve">
+    <value>VRAM</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tabs_SelectASession" xml:space="preserve">
+    <value>セッションタブでセッションを選択するとここに表示されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tabs_SelectedNoFrames" xml:space="preserve">
+    <value>選択したセッションの生データは保持ポリシーにより削除され、集計値のみ残っています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tabs_SelectedNotHooked" xml:space="preserve">
+    <value>選択したセッションはフックされていないため、描画するフレームがありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Average_Note" xml:space="preserve">
+    <value>平均は、フレーム生成が実測された場合はネイティブ FPS、未実測の場合は提示 FPS です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Axis_Date" xml:space="preserve">
+    <value>日付</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Change_Cpu" xml:space="preserve">
+    <value>CPU</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Change_Display" xml:space="preserve">
+    <value>ディスプレイ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Change_Format" xml:space="preserve">
+    <value>{0}: {1} → {2}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Change_Gpu" xml:space="preserve">
+    <value>GPU</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Change_GpuDriver" xml:space="preserve">
+    <value>GPU ドライバー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Change_Os" xml:space="preserve">
+    <value>OS</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Empty" xml:space="preserve">
+    <value>フックされたセッションはまだありません。傾向には実測セッションが必要です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Excluded_Format" xml:space="preserve">
+    <value>{0} セッションを除外 (セッション中に設定変更)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_IncludeMidSession" xml:space="preserve">
+    <value>セッション中に設定が変更されたセッションも含める</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_Average" xml:space="preserve">
+    <value>平均 FPS</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_Displayed" xml:space="preserve">
+    <value>表示 FPS</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_Label" xml:space="preserve">
+    <value>指標</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_MaxGpuTemp" xml:space="preserve">
+    <value>GPU 最高 °C</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_P01Low" xml:space="preserve">
+    <value>0.1% Low</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_P1Low" xml:space="preserve">
+    <value>1% Low</value>
+    <comment>review</comment>
+  </data>
 </root>

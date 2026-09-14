@@ -5,6 +5,7 @@
       xmlns:res="clr-namespace:FrameLedger.App"
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
       xmlns:controls="clr-namespace:FrameLedger.App.Controls"
+      xmlns:charts="clr-namespace:FrameLedger.App.Charts"
       Title="{x:Static res:Strings.Games_Header}">
     <!--
         08_UI §Games › Game detail. The two rows — Supports (files on disk) and Last session measured (the
@@ -137,7 +138,8 @@
                                       Text="{x:Static vm:GameDetailViewModel.SessionsEmptyText}"
                                       Visibility="{Binding ViewModel.SessionsEmpty, Converter={StaticResource BoolToVis}}" />
                         <DataGrid x:Name="SessionsGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column"
-                                  ItemsSource="{Binding ViewModel.Sessions}" SelectionMode="Extended" MouseDoubleClick="OnSessionDoubleClick">
+                                  ItemsSource="{Binding ViewModel.Sessions}" SelectionMode="Extended" MouseDoubleClick="OnSessionDoubleClick"
+                                  SelectedItem="{Binding ViewModel.SelectedSession, Mode=TwoWay}">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Date}" Binding="{Binding DateText}" />
                                 <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Duration}" Binding="{Binding DurationText}" />
@@ -213,19 +215,53 @@
                     </StackPanel>
                 </TabItem>
                 <TabItem Header="{x:Static vm:GameDetailViewModel.TabFrametime}">
-                    <ui:TextBlock Margin="0,12,0,0" Appearance="Secondary" Text="{x:Static vm:GameDetailViewModel.LaterText}" />
+                    <StackPanel Margin="0,12,0,0">
+                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.SelectedNote}"
+                                      Visibility="{Binding ViewModel.SelectedNote, Converter={StaticResource NullToCollapsed}}" />
+                        <charts:FrametimeChart x:Name="Frametime" Height="320" Visibility="{Binding ViewModel.SelectedHasSeries, Converter={StaticResource BoolToVis}}" />
+                    </StackPanel>
                 </TabItem>
                 <TabItem Header="{x:Static vm:GameDetailViewModel.TabDistribution}">
-                    <ui:TextBlock Margin="0,12,0,0" Appearance="Secondary" Text="{x:Static vm:GameDetailViewModel.LaterText}" />
+                    <StackPanel Margin="0,12,0,0">
+                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.SelectedNote}"
+                                      Visibility="{Binding ViewModel.SelectedNote, Converter={StaticResource NullToCollapsed}}" />
+                        <charts:DistributionChart x:Name="Distribution" Height="280" Visibility="{Binding ViewModel.SelectedHasSeries, Converter={StaticResource BoolToVis}}" />
+                    </StackPanel>
                 </TabItem>
                 <TabItem Header="{x:Static vm:GameDetailViewModel.TabTrend}">
-                    <ui:TextBlock Margin="0,12,0,0" Appearance="Secondary" Text="{x:Static vm:GameDetailViewModel.LaterText}" />
+                    <StackPanel Margin="0,12,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <ui:TextBlock Appearance="Secondary" VerticalAlignment="Center" Margin="0,0,8,0" Text="{x:Static vm:GameDetailViewModel.TrendMetricLabel}" />
+                            <ComboBox MinWidth="180" DisplayMemberPath="Label" ItemsSource="{x:Static vm:GameDetailViewModel.TrendMetrics}"
+                                      SelectedValue="{Binding ViewModel.TrendMetric, Mode=TwoWay}" SelectedValuePath="Value" />
+                            <CheckBox Margin="16,0,0,0" VerticalAlignment="Center" Content="{x:Static vm:GameDetailViewModel.IncludeMidSessionText}"
+                                      IsChecked="{Binding ViewModel.IncludeMidSession}" />
+                        </StackPanel>
+                        <ui:TextBlock Margin="0,6,0,0" Appearance="Tertiary" Text="{Binding ViewModel.TrendExcludedText}"
+                                      Visibility="{Binding ViewModel.TrendExcludedText, Converter={StaticResource NullToCollapsed}}" />
+                        <ui:TextBlock Margin="0,6,0,0" Appearance="Tertiary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.TrendAverageNote}" />
+                        <ui:TextBlock Margin="0,12,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.TrendEmptyText}"
+                                      Visibility="{Binding ViewModel.TrendEmpty, Converter={StaticResource BoolToVis}}" />
+                        <charts:TrendChart x:Name="Trend" Height="320" Visibility="{Binding ViewModel.TrendEmpty, Converter={StaticResource InverseBoolToVis}}" />
+                    </StackPanel>
                 </TabItem>
                 <TabItem Header="{x:Static vm:GameDetailViewModel.TabSensors}">
-                    <ui:TextBlock Margin="0,12,0,0" Appearance="Secondary" Text="{x:Static vm:GameDetailViewModel.LaterText}" />
+                    <StackPanel Margin="0,12,0,0">
+                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.SelectedNote}"
+                                      Visibility="{Binding ViewModel.SelectedNote, Converter={StaticResource NullToCollapsed}}" />
+                        <charts:SensorsChart x:Name="Sensors" Visibility="{Binding ViewModel.SelectedHasSeries, Converter={StaticResource BoolToVis}}" />
+                    </StackPanel>
                 </TabItem>
                 <TabItem Header="{x:Static vm:GameDetailViewModel.TabLatency}">
-                    <ui:TextBlock Margin="0,12,0,0" Appearance="Secondary" Text="{x:Static vm:GameDetailViewModel.LaterText}" />
+                    <StackPanel Margin="0,12,0,0">
+                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.SelectedNote}"
+                                      Visibility="{Binding ViewModel.SelectedNote, Converter={StaticResource NullToCollapsed}}" />
+                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.LatencyEmptyText}"
+                                      Visibility="{Binding ViewModel.HasLatency, Converter={StaticResource InverseBoolToVis}}" />
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{Binding ViewModel.LatencyText}"
+                                      Visibility="{Binding ViewModel.HasLatency, Converter={StaticResource BoolToVis}}" />
+                        <charts:LatencyChart x:Name="Latency" Height="280" Visibility="{Binding ViewModel.HasLatency, Converter={StaticResource BoolToVis}}" />
+                    </StackPanel>
                 </TabItem>
             </TabControl>
         </StackPanel>

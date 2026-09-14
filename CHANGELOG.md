@@ -19,6 +19,25 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Added
 
+- **P3 PR-7 — Trend, Sensors, Latency, and Compare with the mixed-tier guard (2026-09-14).** The game page's tabs
+  2–6: Frametime and Distribution of the selected session (the summary window's own charts); **Trend** through
+  `Charts/TrendSeriesBuilder` — one point per hooked session oldest first (Average = Native where frame generation
+  was measured, Presented where not; Displayed only where measured; the lows; max GPU °C), FR-6.4's exclusion of
+  mid-session-change sessions by default with the toggle and the excluded count, FR-6.3's markers wherever two
+  consecutive sessions' hardware snapshots differ (GPU driver, GPU, CPU, display mode, OS) as labelled lines on
+  a date axis; **Sensors** (core / hotspot °C, load %, power W on one plot; the game's own per-present VRAM and
+  the adapter-wide sensor as two differently-labelled series on another); **Latency** (the `latency_us` blob with
+  the stored avg / p95 lines, only when Reflex reported). **Compare** (`CompareViewModel`): the last 200 sessions
+  across games in a checkbox picker (2–5), `IMixedTierPrompt` — a blocking `ContentDialog` that compares nothing on
+  a decline (FR-6.2), the tier legend on the chart and an `InfoBar` when it proceeds — one percentile curve per
+  hooked session (`Charts/PercentileCurve`, shared with the distribution), the stat table with Native / Displayed /
+  Presented FPS as three separate rows, the best value of each row highlighted (higher wins for FPS, lower for
+  temperature and stutter, N/A never), Tier-2 cells at N/A, PNG export. Tests (App, 74): `TrendSeriesBuilderTests`
+  (order, the exclusion, Average/Displayed per shape, the markers' text), `CompareViewModelTests` (the picker's
+  bounds, a declined guard, an acknowledged mixed comparison with its legend and N/A cells, the best-of-row
+  rule), the selected-session series and the trend toggles on the game page, and all four new charts rendered
+  through Skia in `PagesLoadTests`. 65 new App strings in en/vi/ja. Docs: `08_UI` §Games tabs and §Compare built
+  notes, HANDOFF row 7 struck.
 - **P3 PR-6 — the session summary window and the charts: `ChartTheme` over two palettes, min/max decimation,
   the frametime timeline with stutter markers, segment ribbon and sensor overlay, the distribution, FR-8.3's
   override, tags/notes, and CSV/JSON/PNG export (2026-09-14).** `Charts/SessionSeriesLoader` decodes a session's

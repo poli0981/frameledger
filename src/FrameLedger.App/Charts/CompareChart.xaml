@@ -1,0 +1,8 @@
+<UserControl x:Class="FrameLedger.App.Charts.CompareChart"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
+             MinHeight="300">
+    <!-- 08_UI §Compare: overlaid percentile curves; the tier legend is stamped on the plot when tiers are mixed (FR-6.2). -->
+    <sp:WpfPlot x:Name="Plot" />
+</UserControl>

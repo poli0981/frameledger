@@ -4,9 +4,111 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:res="clr-namespace:FrameLedger.App"
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
+      xmlns:charts="clr-namespace:FrameLedger.App.Charts"
       Title="{x:Static res:Strings.Compare_Header}">
-    <StackPanel Style="{StaticResource PageRoot}">
-        <ui:TextBlock FontTypography="Title" Text="{x:Static vm:CompareViewModel.Header}" />
-        <ui:TextBlock Margin="0,16,0,0" Appearance="Secondary" Text="{x:Static vm:CompareViewModel.EmptyText}" TextWrapping="Wrap" />
-    </StackPanel>
+    <!-- 08_UI §Compare: the picker (2–5, cross-game), the overlaid percentile curves, the stat table; FR-6.2's guard is the view model's. -->
+    <ScrollViewer>
+        <StackPanel Style="{StaticResource PageRoot}">
+            <ui:TextBlock FontTypography="Title" Text="{x:Static vm:CompareViewModel.Header}" />
+            <ui:TextBlock Margin="0,16,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:CompareViewModel.EmptyText}"
+                          Visibility="{Binding ViewModel.IsEmpty, Converter={StaticResource BoolToVis}}" />
+
+            <Grid Margin="0,16,0,0" Visibility="{Binding ViewModel.IsEmpty, Converter={StaticResource InverseBoolToVis}}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ui:TextBlock Grid.Column="0" FontTypography="Subtitle" Text="{x:Static vm:CompareViewModel.PickHeader}" />
+                <ui:TextBlock Grid.Column="1" Margin="0,0,16,0" VerticalAlignment="Center" Appearance="Secondary" Text="{Binding ViewModel.SelectedText}" />
+                <ui:Button Grid.Column="2" Appearance="Primary" Command="{Binding ViewModel.CompareCommand}" IsEnabled="{Binding ViewModel.CanCompare}"
+                           Content="{x:Static vm:CompareViewModel.RunText}" Icon="{ui:SymbolIcon ArrowSwap24}" />
+            </Grid>
+
+            <DataGrid Margin="0,8,0,0" MaxHeight="320" AutoGenerateColumns="False" CanUserAddRows="False" HeadersVisibility="Column"
+                      ItemsSource="{Binding ViewModel.Candidates}" SelectionMode="Single"
+                      Visibility="{Binding ViewModel.IsEmpty, Converter={StaticResource InverseBoolToVis}}">
+                <DataGrid.Columns>
+                    <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="40" />
+                    <DataGridTextColumn Header="{x:Static res:Strings.Compare_Col_Game}" Binding="{Binding GameName}" IsReadOnly="True" Width="2*" />
+                    <DataGridTextColumn Header="{x:Static res:Strings.Compare_Col_Date}" Binding="{Binding DateText}" IsReadOnly="True" Width="*" />
+                    <DataGridTextColumn Header="{x:Static res:Strings.Compare_Col_Tier}" Binding="{Binding TierText}" IsReadOnly="True" Width="Auto" />
+                    <DataGridTextColumn Header="{x:Static res:Strings.Compare_Col_Fps}" Binding="{Binding ReadoutLine}" IsReadOnly="True" Width="2*" />
+                    <DataGridTemplateColumn Header="{x:Static res:Strings.Compare_Col_MidSession}" IsReadOnly="True">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:CompareCandidateViewModel}">
+                                <ui:SymbolIcon Symbol="Warning24" Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                                               Visibility="{Binding SettingsChangedMidSession, Converter={StaticResource BoolToVis}}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <StackPanel Visibility="{Binding ViewModel.HasResult, Converter={StaticResource BoolToVis}}">
+                <ui:InfoBar Margin="0,12,0,0" IsClosable="False" Severity="Warning"
+                            IsOpen="{Binding ViewModel.IsMixed, Mode=OneWay}"
+                            Title="{x:Static res:Strings.Compare_Mixed_Title}"
+                            Message="{Binding ViewModel.TierLegend}" />
+                <Grid Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ui:TextBlock Grid.Column="0" FontTypography="Subtitle" Text="{x:Static vm:CompareViewModel.CurvesHeader}" />
+                    <ui:Button Grid.Column="1" Click="OnExportPng" Content="{x:Static vm:CompareViewModel.ExportPngText}" />
+                </Grid>
+                <charts:CompareChart x:Name="Chart" Margin="0,6,0,0" Height="340" />
+
+                <ui:TextBlock Margin="0,16,0,0" FontTypography="Subtitle" Text="{x:Static vm:CompareViewModel.TableHeader}" />
+                <!-- the header row: one label per compared session -->
+                <ItemsControl Margin="0,6,0,0" ItemsSource="{Binding ViewModel.Compared}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="1" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:CompareCandidateViewModel}">
+                            <ui:TextBlock Margin="4,0" Appearance="Secondary" FontTypography="Caption" TextWrapping="Wrap" Text="{Binding Label}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <ItemsControl ItemsSource="{Binding ViewModel.Rows}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:CompareRowViewModel}">
+                            <Border BorderThickness="0,0,0,1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Padding="0,6">
+                                <DockPanel>
+                                    <ui:TextBlock DockPanel.Dock="Left" Width="140" Appearance="Secondary" Text="{Binding Metric}" />
+                                    <ItemsControl ItemsSource="{Binding Cells}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <UniformGrid Rows="1" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type vm:CompareCell}">
+                                                <TextBlock Margin="4,0" Text="{Binding Text}" Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsBest}" Value="True">
+                                                                    <Setter Property="FontWeight" Value="Bold" />
+                                                                    <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </DockPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
 </Page>

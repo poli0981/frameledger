@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FrameLedger.App.Charts;
 using FrameLedger.App.Pages;
 using FrameLedger.App.Services;
 using FrameLedger.Application.Persistence;
@@ -28,7 +29,10 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private readonly IEditGamePrompt _edit;
     private readonly IMessageStrip _strip;
     private readonly ISessionSummaryOpener _summaries;
+    private readonly SessionSeriesLoader _loader;
+    private readonly IHardwareSnapshotRepository _hardware;
     private readonly long? _gameId;
+    private GameDetail? _detail;
 
     [ObservableProperty]
     private string _name = string.Empty;
@@ -81,8 +85,36 @@ public sealed partial class GameDetailViewModel : ObservableObject
     [ObservableProperty]
     private bool _sessionsEmpty = true;
 
+    [ObservableProperty]
+    private SessionItemViewModel? _selectedSession;
+
+    [ObservableProperty]
+    private string _selectedNote = Strings.Tabs_SelectASession;
+
+    [ObservableProperty]
+    private bool _selectedHasSeries;
+
+    [ObservableProperty]
+    private string _latencyText = string.Empty;
+
+    [ObservableProperty]
+    private bool _hasLatency;
+
+    [ObservableProperty]
+    private TrendMetric _trendMetric = TrendMetric.Average;
+
+    [ObservableProperty]
+    private bool _includeMidSession;
+
+    [ObservableProperty]
+    private bool _trendEmpty = true;
+
+    [ObservableProperty]
+    private string _trendExcludedText = string.Empty;
+
     public GameDetailViewModel(GameLibrary library, GameSelection selection, HookingConsent consent, IPageNavigator navigator,
-        IConfirmations confirmations, IEditGamePrompt edit, IMessageStrip strip, ISessionSummaryOpener summaries)
+        IConfirmations confirmations, IEditGamePrompt edit, IMessageStrip strip, ISessionSummaryOpener summaries,
+        SessionSeriesLoader loader, IHardwareSnapshotRepository hardware)
     {
         _library = library ?? throw new ArgumentNullException(nameof(library));
         ArgumentNullException.ThrowIfNull(selection);
@@ -92,6 +124,8 @@ public sealed partial class GameDetailViewModel : ObservableObject
         _edit = edit ?? throw new ArgumentNullException(nameof(edit));
         _strip = strip ?? throw new ArgumentNullException(nameof(strip));
         _summaries = summaries ?? throw new ArgumentNullException(nameof(summaries));
+        _loader = loader ?? throw new ArgumentNullException(nameof(loader));
+        _hardware = hardware ?? throw new ArgumentNullException(nameof(hardware));
         _gameId = selection.GameId;
         Pending = LoadAsync();
     }
@@ -134,7 +168,43 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
     public static string TabLatency => Strings.GameDetail_Tab_Latency;
 
-    public static string LaterText => string.Format(CultureInfo.CurrentCulture, Strings.GameDetail_Tab_Later_Format, Strings.GameDetail_Tab_Frametime);
+    public static string TrendMetricLabel => Strings.Trend_Metric_Label;
+
+    public static string IncludeMidSessionText => Strings.Trend_IncludeMidSession;
+
+    public static string TrendEmptyText => Strings.Trend_Empty;
+
+    public static string TrendAverageNote => Strings.Trend_Average_Note;
+
+    public static string LatencyHeader => Strings.Latency_Header;
+
+    public static string LatencyEmptyText => Strings.Latency_Empty;
+
+    public static string SensorsEmptyText => Strings.Sensors_Empty;
+
+    public static IReadOnlyList<Choice<TrendMetric>> TrendMetrics { get; } =
+    [
+        new(TrendMetric.Average, Strings.Trend_Metric_Average),
+        new(TrendMetric.Displayed, Strings.Trend_Metric_Displayed),
+        new(TrendMetric.P1Low, Strings.Trend_Metric_P1Low),
+        new(TrendMetric.P01Low, Strings.Trend_Metric_P01Low),
+        new(TrendMetric.MaxGpuTemp, Strings.Trend_Metric_MaxGpuTemp),
+    ];
+
+    /// <summary>The selected session's decoded series (null: none selected, Tier 2, or swept).</summary>
+    public SessionSeries? SelectedSeries { get; private set; }
+
+    public IReadOnlyList<TrendPoint> TrendPoints { get; private set; } = [];
+
+    public IReadOnlyList<HardwareChange> HardwareChanges { get; private set; } = [];
+
+    public string TrendMetricText => TrendMetrics.First(c => c.Value == TrendMetric).Label;
+
+    /// <summary>Raised when the selected session's series (re)loaded — the Frametime, Distribution, Sensors and Latency tabs redraw.</summary>
+    public event EventHandler? SelectionPresented;
+
+    /// <summary>Raised when the trend was rebuilt.</summary>
+    public event EventHandler? TrendPresented;
 
     public GameRow? Game { get; private set; }
 
@@ -162,8 +232,76 @@ public sealed partial class GameDetailViewModel : ObservableObject
         }
 
         Game = detail.Row;
+        _detail = detail;
         NotFound = false;
         Present(detail);
+        await RebuildTrendAsync(ct).ConfigureAwait(true);
+    }
+
+    partial void OnSelectedSessionChanged(SessionItemViewModel? value) => Pending = LoadSelectedAsync(value);
+
+    partial void OnTrendMetricChanged(TrendMetric value) => RebuildTrendPoints();
+
+    partial void OnIncludeMidSessionChanged(bool value) => RebuildTrendPoints();
+
+    private async Task LoadSelectedAsync(SessionItemViewModel? session)
+    {
+        SelectedSeries = null;
+        HasLatency = false;
+        LatencyText = string.Empty;
+        if (session is null)
+        {
+            SelectedNote = Strings.Tabs_SelectASession;
+        }
+        else if (!session.IsHooked)
+        {
+            SelectedNote = Strings.Tabs_SelectedNotHooked;
+        }
+        else
+        {
+            SelectedSeries = await _loader.LoadAsync(session.Id).ConfigureAwait(true);
+            SelectedNote = SelectedSeries is null ? Strings.Tabs_SelectedNoFrames : string.Empty;
+            HasLatency = SelectedSeries?.LatencyUs is { Length: > 0 } && session.Row.ReflexActive == true;
+            LatencyText = HasLatency && session.Row.LatencyAvgUs is long avg && session.Row.LatencyP95Us is long p95
+                ? string.Format(CultureInfo.CurrentCulture, Strings.Latency_Stats_Format, avg / 1000.0, p95 / 1000.0)
+                : string.Empty;
+        }
+
+        SelectedHasSeries = SelectedSeries is not null;
+        SelectionPresented?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>FR-6.3: the snapshots of this game's sessions, then the markers between consecutive ones that differ.</summary>
+    private async Task RebuildTrendAsync(CancellationToken ct)
+    {
+        if (_detail is null)
+        {
+            return;
+        }
+
+        var snapshots = new Dictionary<long, HardwareSnapshot?>();
+        foreach (long id in _detail.Sessions.Select(static s => s.SnapshotId).Distinct())
+        {
+            snapshots[id] = await _hardware.FindAsync(id, ct).ConfigureAwait(true);
+        }
+
+        HardwareChanges = TrendSeriesBuilder.Changes(_detail.Sessions, id => snapshots.GetValueOrDefault(id));
+        RebuildTrendPoints();
+    }
+
+    private void RebuildTrendPoints()
+    {
+        if (_detail is null)
+        {
+            return;
+        }
+
+        TrendPoints = TrendSeriesBuilder.Points(_detail.Sessions, TrendMetric, IncludeMidSession);
+        int excluded = IncludeMidSession ? 0 : TrendSeriesBuilder.ExcludedCount(_detail.Sessions);
+        TrendExcludedText = excluded > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.Trend_Excluded_Format, excluded) : string.Empty;
+        TrendEmpty = TrendPoints.Count == 0;
+        OnPropertyChanged(nameof(TrendMetricText));
+        TrendPresented?.Invoke(this, EventArgs.Empty);
     }
 
     [RelayCommand]

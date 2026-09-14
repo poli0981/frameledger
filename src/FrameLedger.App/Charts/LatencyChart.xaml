@@ -1,0 +1,8 @@
+<UserControl x:Class="FrameLedger.App.Charts.LatencyChart"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
+             MinHeight="240">
+    <!-- 08_UI §Games › Latency (Tier 1 + Reflex only): the PC latency timeline with the stored avg / p95 lines. -->
+    <sp:WpfPlot x:Name="Plot" />
+</UserControl>

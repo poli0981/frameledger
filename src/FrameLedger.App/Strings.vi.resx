@@ -769,4 +769,199 @@
   <data name="Summary_Unhooked_Title" xml:space="preserve">
     <value>Đo dừng sớm</value>
   </data>
+  <data name="Compare_Col_Date" xml:space="preserve">
+    <value>Ngày</value>
+  </data>
+  <data name="Compare_Col_Fps" xml:space="preserve">
+    <value>FPS</value>
+  </data>
+  <data name="Compare_Col_Game" xml:space="preserve">
+    <value>Game</value>
+  </data>
+  <data name="Compare_Col_MidSession" xml:space="preserve">
+    <value>Đổi cài đặt</value>
+  </data>
+  <data name="Compare_Col_Tier" xml:space="preserve">
+    <value>Tier</value>
+  </data>
+  <data name="Compare_Curves_Header" xml:space="preserve">
+    <value>Đường phân vị</value>
+  </data>
+  <data name="Compare_Export_Png" xml:space="preserve">
+    <value>Xuất PNG</value>
+  </data>
+  <data name="Compare_Legend_Format" xml:space="preserve">
+    <value>{0} · {1} ({2})</value>
+  </data>
+  <data name="Compare_Metric_Displayed" xml:space="preserve">
+    <value>FPS hiển thị</value>
+  </data>
+  <data name="Compare_Metric_Duration" xml:space="preserve">
+    <value>Thời lượng</value>
+  </data>
+  <data name="Compare_Metric_MaxGpuTemp" xml:space="preserve">
+    <value>GPU tối đa °C</value>
+  </data>
+  <data name="Compare_Metric_Median" xml:space="preserve">
+    <value>Trung vị</value>
+  </data>
+  <data name="Compare_Metric_Native" xml:space="preserve">
+    <value>FPS gốc</value>
+  </data>
+  <data name="Compare_Metric_P01Low" xml:space="preserve">
+    <value>0.1% Low</value>
+  </data>
+  <data name="Compare_Metric_P1Low" xml:space="preserve">
+    <value>1% Low</value>
+  </data>
+  <data name="Compare_Metric_Presented" xml:space="preserve">
+    <value>FPS xuất khung</value>
+  </data>
+  <data name="Compare_Metric_StutterPct" xml:space="preserve">
+    <value>% thời gian giật</value>
+  </data>
+  <data name="Compare_Mixed_Body" xml:space="preserve">
+    <value>Ít nhất một phiên đã chọn không hook: nó chỉ ghi thời lượng và telemetry phần cứng, mọi giá trị từ khung hình là N/A. So sánh với phiên đã hook là so sánh với một bên trống. Biểu đồ sẽ mang chú thích tier và các chỉ số không có vẫn là N/A.</value>
+  </data>
+  <data name="Compare_Mixed_Legend" xml:space="preserve">
+    <value>Khác tier: phiên T1 đo được; phiên T2 không có dữ liệu khung hình và không có đường.</value>
+  </data>
+  <data name="Compare_Mixed_Proceed" xml:space="preserve">
+    <value>Vẫn so sánh khác tier</value>
+  </data>
+  <data name="Compare_Mixed_Title" xml:space="preserve">
+    <value>Các phiên này đo những thứ khác nhau</value>
+  </data>
+  <data name="Compare_NoCandidates" xml:space="preserve">
+    <value>Chưa có phiên nào — chưa có gì để so sánh.</value>
+  </data>
+  <data name="Compare_Pick_Header" xml:space="preserve">
+    <value>Chọn 2 đến 5 phiên</value>
+  </data>
+  <data name="Compare_Run" xml:space="preserve">
+    <value>So sánh</value>
+  </data>
+  <data name="Compare_Selected_Format" xml:space="preserve">
+    <value>Đã chọn {0}</value>
+  </data>
+  <data name="Compare_Table_Header" xml:space="preserve">
+    <value>Thống kê</value>
+  </data>
+  <data name="Compare_Table_Metric" xml:space="preserve">
+    <value>Chỉ số</value>
+  </data>
+  <data name="Compare_TooMany" xml:space="preserve">
+    <value>Chọn tối đa 5 phiên.</value>
+  </data>
+  <data name="Latency_Avg" xml:space="preserve">
+    <value>TB</value>
+  </data>
+  <data name="Latency_Axis" xml:space="preserve">
+    <value>Độ trễ (ms)</value>
+  </data>
+  <data name="Latency_Empty" xml:space="preserve">
+    <value>Reflex không báo độ trễ cho phiên này. Thẻ này chỉ có dữ liệu với phiên đã hook mà tích hợp Reflex của game có báo.</value>
+  </data>
+  <data name="Latency_Header" xml:space="preserve">
+    <value>Độ trễ PC (Reflex)</value>
+  </data>
+  <data name="Latency_P95" xml:space="preserve">
+    <value>p95</value>
+  </data>
+  <data name="Latency_Series" xml:space="preserve">
+    <value>Độ trễ PC</value>
+  </data>
+  <data name="Latency_Stats_Format" xml:space="preserve">
+    <value>TB {0:0.0} ms · p95 {1:0.0} ms</value>
+  </data>
+  <data name="Sensors_Axis_Mb" xml:space="preserve">
+    <value>MB</value>
+  </data>
+  <data name="Sensors_Empty" xml:space="preserve">
+    <value>Phiên này không ghi chuỗi cảm biến nào.</value>
+  </data>
+  <data name="Sensors_Series_GpuHotspot" xml:space="preserve">
+    <value>GPU điểm nóng °C</value>
+  </data>
+  <data name="Sensors_Series_GpuLoad" xml:space="preserve">
+    <value>Tải GPU %</value>
+  </data>
+  <data name="Sensors_Series_GpuPower" xml:space="preserve">
+    <value>Công suất GPU W</value>
+  </data>
+  <data name="Sensors_Series_GpuTemp" xml:space="preserve">
+    <value>GPU lõi °C</value>
+  </data>
+  <data name="Sensors_Series_VramAdapter" xml:space="preserve">
+    <value>VRAM toàn card (MB)</value>
+  </data>
+  <data name="Sensors_Series_VramProcess" xml:space="preserve">
+    <value>VRAM game này dùng (MB)</value>
+  </data>
+  <data name="Sensors_Temps_Header" xml:space="preserve">
+    <value>Nhiệt độ và tải</value>
+  </data>
+  <data name="Sensors_Vram_Header" xml:space="preserve">
+    <value>VRAM</value>
+  </data>
+  <data name="Tabs_SelectASession" xml:space="preserve">
+    <value>Chọn một phiên ở thẻ Phiên chơi để xem tại đây.</value>
+  </data>
+  <data name="Tabs_SelectedNoFrames" xml:space="preserve">
+    <value>Chuỗi thô của phiên đã chọn đã bị dọn bởi chính sách lưu trữ; chỉ còn số liệu tổng hợp.</value>
+  </data>
+  <data name="Tabs_SelectedNotHooked" xml:space="preserve">
+    <value>Phiên đã chọn không hook; không có khung hình để vẽ.</value>
+  </data>
+  <data name="Trend_Average_Note" xml:space="preserve">
+    <value>Trung bình là FPS gốc khi đã đo frame generation và FPS xuất khung khi chưa đo.</value>
+  </data>
+  <data name="Trend_Axis_Date" xml:space="preserve">
+    <value>Ngày</value>
+  </data>
+  <data name="Trend_Change_Cpu" xml:space="preserve">
+    <value>CPU</value>
+  </data>
+  <data name="Trend_Change_Display" xml:space="preserve">
+    <value>Màn hình</value>
+  </data>
+  <data name="Trend_Change_Format" xml:space="preserve">
+    <value>{0}: {1} → {2}</value>
+  </data>
+  <data name="Trend_Change_Gpu" xml:space="preserve">
+    <value>GPU</value>
+  </data>
+  <data name="Trend_Change_GpuDriver" xml:space="preserve">
+    <value>Driver GPU</value>
+  </data>
+  <data name="Trend_Change_Os" xml:space="preserve">
+    <value>Hệ điều hành</value>
+  </data>
+  <data name="Trend_Empty" xml:space="preserve">
+    <value>Chưa có phiên nào hook — xu hướng cần các phiên đã đo.</value>
+  </data>
+  <data name="Trend_Excluded_Format" xml:space="preserve">
+    <value>Loại {0} phiên (đổi cài đặt giữa chừng)</value>
+  </data>
+  <data name="Trend_IncludeMidSession" xml:space="preserve">
+    <value>Gồm cả các phiên đổi cài đặt giữa chừng</value>
+  </data>
+  <data name="Trend_Metric_Average" xml:space="preserve">
+    <value>FPS trung bình</value>
+  </data>
+  <data name="Trend_Metric_Displayed" xml:space="preserve">
+    <value>FPS hiển thị</value>
+  </data>
+  <data name="Trend_Metric_Label" xml:space="preserve">
+    <value>Chỉ số</value>
+  </data>
+  <data name="Trend_Metric_MaxGpuTemp" xml:space="preserve">
+    <value>GPU tối đa °C</value>
+  </data>
+  <data name="Trend_Metric_P01Low" xml:space="preserve">
+    <value>0.1% Low</value>
+  </data>
+  <data name="Trend_Metric_P1Low" xml:space="preserve">
+    <value>1% Low</value>
+  </data>
 </root>

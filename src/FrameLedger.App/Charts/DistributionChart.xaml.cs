@@ -1,5 +1,4 @@
 using System.Windows.Controls;
-using FrameLedger.Domain.Metrics;
 using ScottPlot;
 using ScottPlot.Plottables;
 
@@ -66,16 +65,7 @@ public partial class DistributionChart : UserControl
         plot.YLabel(Strings.Chart_Axis_Fps);
         if (series is { AppFrameTimesMs.Length: > 1 })
         {
-            IReadOnlyList<double> sorted = Percentile.Sorted(series.AppFrameTimesMs);
-            var xs = new double[101];
-            var ys = new double[101];
-            for (int i = 0; i <= 100; i++)
-            {
-                xs[i] = i;
-                double? ft = Percentile.Linear(sorted, i / 100.0);
-                ys[i] = ft is > 0 ? 1000.0 / ft.Value : 0;
-            }
-
+            (double[] xs, double[] ys) = PercentileCurve.Of(series.AppFrameTimesMs);
             Scatter line = plot.Add.ScatterLine(xs, ys, ChartTheme.Current.Percentile);
             line.LineWidth = 2;
             line.LegendText = Strings.Chart_Series_Percentile;

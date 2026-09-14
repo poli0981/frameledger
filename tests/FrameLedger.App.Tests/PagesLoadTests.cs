@@ -94,6 +94,16 @@ public sealed class PagesLoadTests
         }
     }
 
+    private sealed class NoMixed : IMixedTierPrompt
+    {
+        public Task<bool> AcknowledgeAsync(CancellationToken ct = default) => Task.FromResult(true);
+    }
+
+    private sealed class NoSaver : IFileSaver
+    {
+        public string? PickSavePath(string filter, string suggestedName) => null;
+    }
+
     private sealed class NoPicker : IGamePicker
     {
         public string? PickExecutable() => null;
@@ -154,15 +164,20 @@ public sealed class PagesLoadTests
         var games = new GamesViewModel(s.Library, selection, nav, addGame);
         Task pending2 = games.Pending;
         await pending2;
-        var detail = new GameDetailViewModel(s.Library, selection, consent, nav, new NoConfirm(), new NoEdit(), strip, new NoSummaries());
+        var detail = new GameDetailViewModel(s.Library, selection, consent, nav, new NoConfirm(), new NoEdit(), strip, new NoSummaries(),
+            new SessionSeriesLoader(s.Sessions), new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db));
+        var compare = new CompareViewModel(s.Library, new SessionSeriesLoader(s.Sessions), new NoMixed(), new NoSaver(), strip);
         Task pending3 = detail.Pending;
         await pending3;
+        Task pending4 = compare.Pending;
+        await pending4;
 
         string loaded = await OnStaAsync(() =>
         {
             Render(new DashboardPage(dashboard));
             Render(new GamesPage(games));
             Render(new GameDetailPage(detail));
+            Render(new ComparePage(compare));
             var readout = new FpsReadout { Model = FpsPresentation.FromRow(detail.Sessions[0].Row) };
             Render(readout);
             var chip = new TriStateChip { Model = new TriStateChipModel("RT", Tri.Yes, Application.TriState.TriStateSource.Measured) };
@@ -194,7 +209,21 @@ public sealed class PagesLoadTests
             distribution.Show(series);
             Render(distribution);
             using ScottPlot.Image histogram = distribution.HistogramPlot.GetImage(320, 240);
-            return frametime.DrawnPoints;
+            var trend = new TrendChart();
+            trend.Show([new TrendPoint(DateTimeOffset.UtcNow.AddDays(-1), 60, 1, false), new TrendPoint(DateTimeOffset.UtcNow, 65, 2, false)], [new HardwareChange(DateTimeOffset.UtcNow, "GPU driver: a → b")], "avg");
+            Render(trend);
+            using ScottPlot.Image trendImage = trend.ScottPlot.GetImage(640, 320);
+            var sensors = new SensorsChart();
+            sensors.Show(series);
+            Render(sensors);
+            var latency = new LatencyChart();
+            latency.Show(series, 12_000, 18_000);
+            Render(latency);
+            var compareChart = new CompareChart();
+            compareChart.Show([new CompareCurve("a", [0, 50, 100], [30, 60, 90])], Strings.Compare_Mixed_Legend);
+            Render(compareChart);
+            using ScottPlot.Image compareImage = compareChart.ScottPlot.GetImage(640, 320);
+            return frametime.DrawnPoints + (sensors.DrawnSeries > 0 ? 0 : 1_000_000) + (trend.DrawnPoints == 2 ? 0 : 1_000_000) + (compareChart.DrawnCurves == 1 ? 0 : 1_000_000);
         });
 
         drawn.Should().BeGreaterThan(0).And.BeLessThanOrEqualTo(Decimator.DefaultBuckets * 2 + 2100, "FR-5.3: decimated per draw (the series, the markers, the sensors)");
