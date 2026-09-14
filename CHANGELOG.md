@@ -19,6 +19,19 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Fixed
 
+- **A DXGI present counter that went backwards read as four billion unseen presents (2026-09-14).** The Present
+  hook reads `IDXGISwapChain::GetLastPresentCount` before forwarding and took `now − previous` on the chain's slot
+  as unsigned arithmetic. A chain released and re-created at the same address inherits the slot and its old count
+  while DXGI's count for the new chain starts near zero, so the difference wrapped to ~4e9: the owner's ledger
+  held `dxgi_unseen_total = 4294967243` (−53 as `uint32`) on a title whose pacer never presented past the hook, the
+  record byte saturated at 255, and that saturation is the `DxgiSaturated` refusal that took the frame-generation
+  factor with it. `fl_dxgi_count.h` now owns the arithmetic: a regression is a reset — the present claims no delta
+  (as a chain's first hooked present does), nothing is added, the slot re-arms on the new reading — and the
+  session total saturates at `UINT32_MAX` rather than wrapping, the same direction the record byte already took
+  (a numerator must read high and be refused, never low and be believed). Compile-time `static_assert`s pin the
+  algebra; ctest `fl_dxgi_count` (`hook-harness --probe-dxgi-count`) drives the two behaviours. Hook-path cost: one
+  compare on the virtual call the hook already made (`--probe-cost` in the PR). Docs: `fl_shm.h` @48/@52,
+  `17_HOOK_ENGINE` §Hook inventory.
 - **A safety notice was a red bar with no way to close it (2026-09-14).** WPF UI 4.3.0's `InfoBar` template has no
   `ContentPresenter`, so the action button every persistent banner carries as the InfoBar's Content — "Record this
   session without measuring it" on a refusal, Dismiss on an unhook or a degrade, the only dismissal once
