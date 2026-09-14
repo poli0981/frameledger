@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- Tiếng Việt: do maintainer soạn (docs/09_I18N.md §Translation workflow). Bộ khoá phải trùng Strings.resx; resx-audit kiểm tra. -->
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="About_Body_Format" xml:space="preserve">
+    <value>FrameLedger {0} — đo hiệu năng game bằng cách hook API đồ hoạ bên trong những game bạn đã bật rõ ràng. GPLv3.</value>
+  </data>
+  <data name="About_Title" xml:space="preserve">
+    <value>Giới thiệu FrameLedger</value>
+  </data>
+  <data name="Agent_Banner_Missing_Body" xml:space="preserve">
+    <value>Không tìm thấy FrameLedger.Agent.exe cạnh ứng dụng. Vẫn đọc được các phiên chơi; trạng thái trực tiếp và điều khiển thu thập thì không.</value>
+  </data>
+  <data name="Agent_Banner_Offline_Body" xml:space="preserve">
+    <value>Capture agent không phản hồi. Thư viện, lịch sử và biểu đồ vẫn hoạt động; chỉ trạng thái trực tiếp là không có.</value>
+  </data>
+  <data name="Agent_Banner_Offline_Title" xml:space="preserve">
+    <value>Capture agent ngoại tuyến</value>
+  </data>
+  <data name="Agent_Banner_Retry" xml:space="preserve">
+    <value>Thử lại</value>
+  </data>
+  <data name="Agent_State_Connected" xml:space="preserve">
+    <value>Đã kết nối agent</value>
+  </data>
+  <data name="Agent_State_Connecting" xml:space="preserve">
+    <value>Đang kết nối agent…</value>
+  </data>
+  <data name="Agent_State_Missing" xml:space="preserve">
+    <value>Chưa cài agent</value>
+  </data>
+  <data name="Agent_State_Offline" xml:space="preserve">
+    <value>Agent ngoại tuyến</value>
+  </data>
+  <data name="Agent_State_Starting" xml:space="preserve">
+    <value>Đang khởi động agent…</value>
+  </data>
+  <data name="App_Title" xml:space="preserve">
+    <value>FrameLedger</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Huỷ</value>
+  </data>
+  <data name="Common_No" xml:space="preserve">
+    <value>Không</value>
+  </data>
+  <data name="Common_NotAvailable" xml:space="preserve">
+    <value>N/A</value>
+  </data>
+  <data name="Common_Ok" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Common_Yes" xml:space="preserve">
+    <value>Có</value>
+  </data>
+  <data name="Compare_Empty" xml:space="preserve">
+    <value>Chọn hai đến năm phiên chơi để so sánh — khác game vẫn được; khác mức thu thập sẽ hỏi trước.</value>
+  </data>
+  <data name="Compare_Header" xml:space="preserve">
+    <value>So sánh</value>
+  </data>
+  <data name="Crash_Body" xml:space="preserve">
+    <value>FrameLedger gặp lỗi không khôi phục được. Chi tiết nằm trong thư mục log; capture agent vẫn chạy.</value>
+  </data>
+  <data name="Crash_Title" xml:space="preserve">
+    <value>FrameLedger dừng đột ngột</value>
+  </data>
+  <data name="Dashboard_Agent_Elevated" xml:space="preserve">
+    <value>Quyền nâng cao</value>
+  </data>
+  <data name="Dashboard_Agent_Header" xml:space="preserve">
+    <value>Capture agent</value>
+  </data>
+  <data name="Dashboard_Agent_Overlay" xml:space="preserve">
+    <value>Bản build overlay</value>
+  </data>
+  <data name="Dashboard_Agent_Sessions" xml:space="preserve">
+    <value>Phiên chơi đang chạy</value>
+  </data>
+  <data name="Dashboard_Agent_State" xml:space="preserve">
+    <value>Trạng thái</value>
+  </data>
+  <data name="Dashboard_Agent_Telemetry" xml:space="preserve">
+    <value>Nguồn telemetry</value>
+  </data>
+  <data name="Dashboard_Agent_Version" xml:space="preserve">
+    <value>Phiên bản agent</value>
+  </data>
+  <data name="Dashboard_Empty" xml:space="preserve">
+    <value>Chưa có phiên chơi nào — khởi chạy một game đang theo dõi, FrameLedger sẽ lo phần còn lại.</value>
+  </data>
+  <data name="Dashboard_Header" xml:space="preserve">
+    <value>Bảng điều khiển</value>
+  </data>
+  <data name="Games_Empty" xml:space="preserve">
+    <value>Chưa có game nào — thêm bằng Tệp ▸ Thêm game…</value>
+  </data>
+  <data name="Games_Header" xml:space="preserve">
+    <value>Game</value>
+  </data>
+  <data name="Logs_Empty" xml:space="preserve">
+    <value>Trình xem log sẽ có ở bản sau; các tệp nằm trong thư mục dữ liệu, mục logs.</value>
+  </data>
+  <data name="Logs_Header" xml:space="preserve">
+    <value>Log</value>
+  </data>
+  <data name="Menu_File" xml:space="preserve">
+    <value>_Tệp</value>
+  </data>
+  <data name="Menu_File_AddGame" xml:space="preserve">
+    <value>Thêm game…</value>
+  </data>
+  <data name="Menu_File_Exit" xml:space="preserve">
+    <value>T_hoát</value>
+  </data>
+  <data name="Menu_File_Export" xml:space="preserve">
+    <value>Xuất</value>
+  </data>
+  <data name="Menu_File_ImportLibrary" xml:space="preserve">
+    <value>Nhập thư viện…</value>
+  </data>
+  <data name="Menu_Help" xml:space="preserve">
+    <value>Trợ _giúp</value>
+  </data>
+  <data name="Menu_Help_About" xml:space="preserve">
+    <value>Giới thiệu FrameLedger</value>
+  </data>
+  <data name="Menu_Help_CheckUpdates" xml:space="preserve">
+    <value>Kiểm tra cập nhật</value>
+  </data>
+  <data name="Menu_Help_Documentation" xml:space="preserve">
+    <value>Tài liệu</value>
+  </data>
+  <data name="Menu_Help_ReportBug" xml:space="preserve">
+    <value>Báo lỗi…</value>
+  </data>
+  <data name="Menu_Tools" xml:space="preserve">
+    <value>_Công cụ</value>
+  </data>
+  <data name="Menu_Tools_AgentStatus" xml:space="preserve">
+    <value>Trạng thái agent…</value>
+  </data>
+  <data name="Menu_Tools_DbMaintenance" xml:space="preserve">
+    <value>Bảo trì cơ sở dữ liệu…</value>
+  </data>
+  <data name="Menu_Tools_OpenDataFolder" xml:space="preserve">
+    <value>Mở thư mục dữ liệu</value>
+  </data>
+  <data name="Menu_Tools_UpdateRules" xml:space="preserve">
+    <value>Cập nhật quy tắc nhận diện</value>
+  </data>
+  <data name="Menu_Tools_VulkanLayer" xml:space="preserve">
+    <value>Đăng ký Vulkan layer…</value>
+  </data>
+  <data name="Nav_Compare" xml:space="preserve">
+    <value>So sánh</value>
+  </data>
+  <data name="Nav_Dashboard" xml:space="preserve">
+    <value>Bảng điều khiển</value>
+  </data>
+  <data name="Nav_Games" xml:space="preserve">
+    <value>Game</value>
+  </data>
+  <data name="Nav_Logs" xml:space="preserve">
+    <value>Log</value>
+  </data>
+  <data name="Nav_Settings" xml:space="preserve">
+    <value>Cài đặt</value>
+  </data>
+  <data name="NotYet_Body" xml:space="preserve">
+    <value>Phần này của FrameLedger sẽ có ở bản sau.</value>
+  </data>
+  <data name="NotYet_Title" xml:space="preserve">
+    <value>Chưa xây dựng</value>
+  </data>
+  <data name="Settings_Appearance_Header" xml:space="preserve">
+    <value>Giao diện</value>
+  </data>
+  <data name="Settings_Header" xml:space="preserve">
+    <value>Cài đặt</value>
+  </data>
+  <data name="Settings_Language_Label" xml:space="preserve">
+    <value>Ngôn ngữ</value>
+  </data>
+  <data name="Settings_Language_Note" xml:space="preserve">
+    <value>Áp dụng ngay; cửa sổ được dựng lại bằng ngôn ngữ mới.</value>
+  </data>
+  <data name="Settings_Theme_Dark" xml:space="preserve">
+    <value>Tối</value>
+  </data>
+  <data name="Settings_Theme_Label" xml:space="preserve">
+    <value>Chủ đề</value>
+  </data>
+  <data name="Settings_Theme_Light" xml:space="preserve">
+    <value>Sáng</value>
+  </data>
+  <data name="Settings_Theme_System" xml:space="preserve">
+    <value>Theo hệ thống</value>
+  </data>
+</root>

@@ -196,7 +196,7 @@ document the app displays for acceptance (FR-11) is a defect, not a template.
 13. `tools/license-check.ps1` — asserts every vendored third-party has a licence copy in `legal/licenses/`, and that no Intel IGCL / AMD ADLX material has appeared in the tree
 13b. `tools/accuracy-check.ps1 -SelfTest`, then live — the accuracy block is ONE text (`legal/ACCURACY.md`) embedded verbatim in `README.md` and `legal/DISCLAIMER.md` §4; a copy that drifted, a copy with no markers, or an empty source is red. Four self-test cases, both directions (§S23-6, 2026-09-06)
 14. `tools/changelog-check.ps1 -SelfTest` — nine cases, five expected RED. The live half needs a pull request's changed-file list and is supplied by `ci.yml`
-15. `tools/resx-audit` — **skipped loudly; it does not exist, and no `.resx` file does either**
+15. `tools/resx-audit.ps1` — ~~**skipped loudly; it does not exist, and no `.resx` file does either**~~ **built 2026-09-13 (P3 PR-2)**: `-SelfTest` first (11 fixture cases, both directions), then the live pass over every `Strings.resx` family under `src/` — key sets equal across en/vi/ja, `Safety_*` in `ja` marked for review or signed, `Strings.Designer.cs` current with `tools/resx-gen.ps1`. A tree with no family is red (`09_I18N` §Translation workflow)
 16. **struct-mirror** — reads this run's `.trx` and fails when `ShmLayoutMirrorTests` did not execute, so deleting the mirror test is red as well as breaking it
 17. Placeholder guard — fails if any `{{` token other than `{{RELEASE_DATE}}` survives in `README.md` or `legal/*.md`
 

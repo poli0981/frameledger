@@ -1,0 +1,21 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--
+        Our styles, merged LAST (16_WPFUI_SYNTAX §App bootstrap). Colours only through theme brushes with
+        DynamicResource; the chart palette (16 §Theming) arrives with the charts (P3 PR-6) as its own dictionary.
+    -->
+    <Style x:Key="PageRoot" TargetType="StackPanel">
+        <Setter Property="Margin" Value="28,20,28,20" />
+    </Style>
+
+    <Style x:Key="FieldLabel" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Setter Property="Margin" Value="0,0,16,6" />
+        <Setter Property="MinWidth" Value="140" />
+    </Style>
+
+    <Style x:Key="FieldValue" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="Margin" Value="0,0,0,6" />
+    </Style>
+</ResourceDictionary>

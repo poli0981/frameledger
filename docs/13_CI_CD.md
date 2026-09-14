@@ -47,8 +47,9 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 - **Changelog gate**, on pull requests only: the changed-file list comes from GitHub's own view of the PR — not `git diff`, so a shallow checkout cannot silently produce a short one — and an empty list is refused rather than read as "no `src/` changes". It is a **step of the required `check` job** and deliberately not a job of its own: `main`'s required contexts are exactly `check` and the two `analyze` jobs, so a new job would go red while the merge button stayed green, which is what already makes `Rules / validate` advisory (§S23-2).
 
 > **Three claims in this section were false and are corrected 2026-08-06.** There is no Vulkan SDK
-> step and there will not be one — the Khronos headers are vendored. `resx-audit` does not exist and
-> is skipped loudly, so no artifact of it is uploaded. And the struct-mirror parenthesis — *"that
+> step and there will not be one — the Khronos headers are vendored. `resx-audit` ~~does not exist and
+> is skipped loudly, so no artifact of it is uploaded~~ (exists since 2026-09-13, P3 PR-2, as a hard step
+> of the gate — red on a missing key, never an artifact; `12_BUILD` line 15). And the struct-mirror parenthesis — *"that
 > gate does not exist and `build.ps1` skips it loudly"* — has been false since 2026-08-05:
 > `build.ps1` implements it as a hard throwing gate that reads the run's `.trx` and fails when
 > `ShmLayoutMirrorTests` did not execute. `12_BUILD` carried the identical stale sentence and is

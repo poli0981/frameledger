@@ -19,6 +19,31 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Added
 
+- **P3 PR-2 — the first `.resx` family, its generator and its gate, and the App shell (2026-09-13).**
+  `src/FrameLedger.App/Strings.resx` + `.vi` + `.ja` (65 keys, `ja` machine-drafted and marked `review`),
+  `tools/resx-gen.ps1` writing the committed `Strings.Designer.cs` (the SDK-style WPF project runs no
+  `ResXFileCodeGenerator`), and `tools/resx-audit.ps1` as `build.ps1` step 15 — self-test (11 fixture
+  cases, both directions) then live: identifier keys, exact key sets across the three files, `Safety_*`
+  in `ja` marked `safety: human review required` with the English verbatim or `safety: reviewed by <name>`,
+  the accessor current; a tree with no family is red. `09_I18N` §Translation workflow and §Safety-critical
+  strings, `12_BUILD` line 15, `13_CI_CD` and `CLAUDE.md` stop saying the tool does not exist. The App is a
+  Generic Host under `16_WPFUI_SYNTAX` §App bootstrap: `FluentWindow`, TitleBar with the Agent pill, the
+  Menu row (unbuilt items say so in a snackbar), NavigationView (Dashboard · Games · Compare · Logs, Settings
+  in the footer), the offline `InfoBar` with Retry, `SnackbarPresenter`, `ContentDialogHost`; theme
+  (Light/Dark/System with `SystemThemeWatcher`) and language (rebuilds the shell in the new culture) both
+  persisted in `settings` under D16's `ui.theme`/`ui.language` through `SqliteSettingsStore` — the App opens
+  `ledger.db` directly per `06_DATA_MODEL` §Writer ownership (D15). `Services.AgentConnection` is `07_IPC`
+  §Client behavior as a state machine over `PipeClient`: 8 × 250 ms connect, start `FrameLedger.Agent.exe
+  --serve` beside the App when absent, `Hello`/`GetStatus`, keepalive pings, the event stream, retry every
+  5 s; the Dashboard's Agent card shows `HelloAck`/`StatusAck` with `N/A` until answered. Serilog
+  `logs/ui-.log` per `10_LOGGING`. `tests/FrameLedger.App.Tests` (16): every key resolves in en/vi/ja and
+  the satellites really load, the accessor's keys are the resx's, appearance settings round-trip, and the
+  connection against an in-process `PipeServer` — Missing with nothing to start, Connected on `Hello`,
+  Starting → Connected through a launcher that brings the server up, Offline then Connected again when it
+  returns. Measured: first window at 1.3 s. Three things `16_WPFUI` now records: `MainWindow` is transient
+  with `ShutdownMode=OnExplicitShutdown` and the host lifetime ending the process; the run is one task from
+  a synchronous `OnStartup`; and `ApplicationThemeManager.Apply(…, updateAccent: true)` must precede the
+  first window's XAML or the accent resources are missing at first Measure (`XamlParseException`).
 - **P3 PR-1b — the command pipe, command half: `SetWatchlist`, `LaunchGame`, `SetHookEnabled` (pre-scan, no stamp
   yet), pause/resume, `StopSession`, `UpdateRules`, `Shutdown` (2026-09-13).** `Application.Ipc.AgentCommandHandler`
   answers every UI → Agent row of `07_IPC` §Messages under the one rule of §The pipe is not a trust boundary — the
