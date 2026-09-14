@@ -9,9 +9,8 @@
 // The Agent is the sole owner of %LOCALAPPDATA%\FrameLedger (§S18 blocker 3, ratified) and the only
 // thing that may write there; `--data-dir` exists only under `--console` (HANDOFF §P2 decision D6).
 //
-// Flags 12_BUILD §Debugging lists that P2 does not build answer "not implemented", exit 2:
-//   --diag --install-task --uninstall-task --register-vklayer --unregister-vklayer
-// (--diag is the App's anyway, 10_LOGGING.)
+// The maintenance flags (P3 PR-8b) — --register-vklayer, --unregister-vklayer, --install-task, --uninstall-task —
+// run over the product directory and exit; --diag is the App's (10_LOGGING) and answers "not implemented", exit 2.
 
 using FrameLedger.Agent.Cli;
 using FrameLedger.Agent.Composition;
@@ -46,7 +45,7 @@ internal static class Program
 
         if (cmd.Verb == AgentVerb.NotImplemented)
         {
-            AgentConsole.Problem($"{cmd.Flag}: not implemented in P2 (12_BUILD §Debugging names it; HANDOFF §P2 scopes it out)");
+            AgentConsole.Problem($"{cmd.Flag}: not this binary's — FrameLedger.exe --diag writes the report (10_LOGGING §Diagnostics extras)");
             return _exitNotImplemented;
         }
 
@@ -75,9 +74,13 @@ internal static class Program
             await using (db.ConfigureAwait(false))
             {
                 Log.Information("ledger: {Path} (schema {Schema}, migration {Migration})", db.Path, db.SchemaVersion, db.Migration);
-                return cmd.Verb == AgentVerb.Serve
-                    ? await ServeAsync(db, paths).ConfigureAwait(false)
-                    : await ConsoleAsync(cmd, db, paths).ConfigureAwait(false);
+                return cmd.Verb switch
+                {
+                    AgentVerb.Serve => await ServeAsync(db, paths).ConfigureAwait(false),
+                    AgentVerb.RegisterVkLayer or AgentVerb.UnregisterVkLayer or AgentVerb.InstallTask or AgentVerb.UninstallTask =>
+                        await new MaintenanceVerbs(db, paths).RunAsync(cmd).ConfigureAwait(false),
+                    _ => await ConsoleAsync(cmd, db, paths).ConfigureAwait(false),
+                };
             }
         }
         finally

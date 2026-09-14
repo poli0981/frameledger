@@ -1389,10 +1389,6 @@
     <value>ログオン時にエージェントを起動</value>
     <comment>review</comment>
   </data>
-  <data name="Settings_Agent_Task_Later" xml:space="preserve">
-    <value>スケジュールタスクはトレイビルドで追加されます。それまではアプリが起動時に隣のエージェントを開始します。</value>
-    <comment>review</comment>
-  </data>
   <data name="Settings_Applied" xml:space="preserve">
     <value>適用しました。キャプチャエージェントは次回のセッション開始時に読み込みます。</value>
     <comment>review</comment>
@@ -1489,10 +1485,6 @@
     <value>閉じるときにトレイに最小化</value>
     <comment>review</comment>
   </data>
-  <data name="Settings_MinimizeToTray_Later" xml:space="preserve">
-    <value>トレイは次のビルドで追加されます。スイッチは今から保存されます。</value>
-    <comment>review</comment>
-  </data>
   <data name="Settings_OnlineMetadata_Body" xml:space="preserve">
     <value>既定ではオフです。FrameLedger はテレメトリを送信せず、更新確認、検出ルールの取得、そして (これがオンの場合のみ) ゲームのストアメタデータ以外にネットワーク通信を行いません。セッションに関する情報がこのマシンから出ることはありません。</value>
     <comment>review</comment>
@@ -1546,7 +1538,7 @@
     <comment>review</comment>
   </data>
   <data name="Settings_VkLayer_NotRegistered" xml:space="preserve">
-    <value>未登録です。Vulkan ゲームは起動モードでのみ、起動ごとのマニフェストで実測されます。マシン全体への登録はトレイビルドで追加されます。</value>
+    <value>未登録です。FrameLedger から起動した Vulkan ゲームは起動ごとのマニフェストで実測されます。登録は修復ツールであり、通常の経路ではありません。</value>
     <comment>review</comment>
   </data>
   <data name="Settings_VkLayer_Registered" xml:space="preserve">
@@ -1559,6 +1551,106 @@
   </data>
   <data name="Settings_Window_Header" xml:space="preserve">
     <value>ウィンドウ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_Task_Installed" xml:space="preserve">
+    <value>インストール済み: エージェントはログオン時に最低権限で起動します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_Task_NotInstalled" xml:space="preserve">
+    <value>未インストール: アプリが起動時に隣のエージェントを開始します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_Task_Register" xml:space="preserve">
+    <value>登録</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_Task_Remove" xml:space="preserve">
+    <value>削除</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_Task_Repair" xml:space="preserve">
+    <value>修復</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_Task_Stale" xml:space="preserve">
+    <value>別の場所用にインストールされています。「修復」でこのインストールを指すようにします。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_Task_Unknown" xml:space="preserve">
+    <value>タスクスケジューラが応答しませんでした。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_MinimizeToTray_Body" xml:space="preserve">
+    <value>ウィンドウを閉じても FrameLedger はトレイに残ります。終了はトレイメニューとファイルメニューにあります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Tool_Done_Format" xml:space="preserve">
+    <value>{0}: 完了しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Tool_Failed_Format" xml:space="preserve">
+    <value>{0} が失敗しました (終了コード {1}): {2}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_VkLayer_NotStaged" xml:space="preserve">
+    <value>レイヤー DLL がキャプチャエージェントの横にありません。登録するものはありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_VkLayer_Note" xml:space="preserve">
+    <value>登録すると、このユーザーのすべての Vulkan プロセスにレイヤーが読み込まれますが、FrameLedger が起動したプロセス以外では何もしません。FrameLedger からの起動には登録は不要です。ボタンは状態を修復するもので、フックが有効なゲームがある間のみ使用できます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_VkLayer_Register" xml:space="preserve">
+    <value>登録</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_VkLayer_Unregister" xml:space="preserve">
+    <value>登録解除</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tray_AgentStatus" xml:space="preserve">
+    <value>エージェントの状態</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tray_Exit" xml:space="preserve">
+    <value>終了</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tray_Open" xml:space="preserve">
+    <value>FrameLedger を開く</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tray_Pause" xml:space="preserve">
+    <value>キャプチャを一時停止</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tray_Resume" xml:space="preserve">
+    <value>キャプチャを再開</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tray_SessionSaved_Body_Format" xml:space="preserve">
+    <value>{0} — クリックして表示</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tray_SessionSaved_Title" xml:space="preserve">
+    <value>セッションを保存しました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tray_State_Capturing_Format" xml:space="preserve">
+    <value>FrameLedger — {0} を実測中</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tray_State_Idle" xml:space="preserve">
+    <value>FrameLedger — 待機中</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tray_State_Paused" xml:space="preserve">
+    <value>FrameLedger — キャプチャ一時停止中</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tray_State_RecordingOnly_Format" xml:space="preserve">
+    <value>FrameLedger — {0} を実測なしで記録中</value>
     <comment>review</comment>
   </data>
 </root>

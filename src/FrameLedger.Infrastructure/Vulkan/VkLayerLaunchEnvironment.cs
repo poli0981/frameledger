@@ -39,7 +39,8 @@ public sealed class VkLayerLaunchEnvironment : IDisposable
     /// <summary>The layer's name, as the manifest and the loader log carry it.</summary>
     public const string LayerName = "VK_LAYER_FRAMELEDGER_overlay";
 
-    private const string _manifestFileName = "VkLayer_FRAMELEDGER_overlay.json";
+    /// <summary>The manifest's file name, the same under a launch directory and under a registration.</summary>
+    public const string ManifestFileName = "VkLayer_FRAMELEDGER_overlay.json";
 
     private static readonly JsonSerializerOptions _manifestOptions = new() { WriteIndented = true };
 
@@ -102,8 +103,7 @@ public sealed class VkLayerLaunchEnvironment : IDisposable
 
         System.IO.Directory.CreateDirectory(dir);
         bool added = AddEnableListEntry(enableList, image);
-        string manifest = Path.Combine(dir, _manifestFileName);
-        File.WriteAllText(manifest, ManifestJson(Path.GetFullPath(layerDllPath)), new UTF8Encoding(false));
+        string manifest = WriteManifest(dir, layerDllPath);
 
         var variables = new Dictionary<string, string>(StringComparer.Ordinal)
         {
@@ -111,6 +111,17 @@ public sealed class VkLayerLaunchEnvironment : IDisposable
             [ImplicitLayerPathVariable] = dir,
         };
         return new VkLayerLaunchEnvironment(dir, image, enableList, manifest, added, variables);
+    }
+
+    /// <summary>Writes the manifest for <paramref name="layerDllPath"/> under <paramref name="directory"/>; the path written.</summary>
+    public static string WriteManifest(string directory, string layerDllPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(directory);
+        ArgumentException.ThrowIfNullOrWhiteSpace(layerDllPath);
+        System.IO.Directory.CreateDirectory(directory);
+        string manifest = Path.Combine(directory, ManifestFileName);
+        File.WriteAllText(manifest, ManifestJson(Path.GetFullPath(layerDllPath)), new UTF8Encoding(false));
+        return manifest;
     }
 
     /// <summary>The manifest, with the DLL's absolute path — the shape <c>VkLayer_FRAMELEDGER_overlay.json.in</c> generates.</summary>

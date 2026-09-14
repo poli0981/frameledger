@@ -8,7 +8,7 @@ namespace FrameLedger.Application.Ipc;
 /// <param name="Pid">This process.</param>
 /// <param name="Elevated">Whether the process is privileged; no capture tier needs it (ADR-9).</param>
 /// <param name="OverlayBuildId">The guard's build id, which the Overlay shares; null when the native side did not answer.</param>
-/// <param name="VulkanLayerRegistered">False by construction: the layer is per-launch, never machine-wide (P1 item 3).</param>
+/// <param name="VulkanLayerRegistered">Whether the HKCU implicit-layer registration named our manifest at this process's start (P3 PR-8b; a launch never needs it).</param>
 /// <param name="CpuTempAvailable">False until the Agent composes a CPU sensor (LHM's CPU half is off unelevated).</param>
 /// <param name="DisclosureVersion">The FR-2.1 disclosure this Agent stamps against (<c>Shared.Safety.SafetyDisclosure.Version</c> under <c>--serve</c>; null on a composition that carries none) — D14, P3 PR-4.</param>
 public sealed record AgentIdentity(

@@ -394,6 +394,19 @@ is not something this loader supports.
 - The self-scan uses the **same matcher and the same rules file as the injection guard** (`fl_ac_rules.h`, compiled into both targets). Not a copy: a layer with its own blocklist would be a second matcher that can disagree with the first. Every uncertainty — rules unreadable, malformed, enumeration failed, a truncated list — resolves to passthrough, which is the opposite polarity from the injection guard and the same principle: leave the host alone.
 - Registered only while at least one Vulkan game has hooking enabled; unregistered on uninstall (Velopack hook) and when the last such game is disabled. **Never at install time** — `12_BUILD` §The Vulkan layer is not registered at install time.
 
+  > **Built 2026-09-14 (P3 PR-8b), as the repair tools and no more.** `Infrastructure.Vulkan.VkLayerRegistration`
+  > writes the one DWORD under `HKCU\SOFTWARE\Khronos\Vulkan\ImplicitLayers` named by the manifest's path
+  > (`%LOCALAPPDATA%\FrameLedger\vklayer\VkLayer_FRAMELEDGER_overlay.json`, written by the same code the launch
+  > path uses); the Agent's `--register-vklayer` refuses unless a game has hooking enabled, `--unregister-vklayer`
+  > also removes a stale value naming our manifest elsewhere, and `HelloAck.vulkanLayerRegistered` reads the key
+  > at the Agent's start. Two things this build does **not** do, stated rather than implied: (1) the automatic
+  > register-on-first-enable / unregister-on-last-disable needs to know which enabled game is a *Vulkan* title,
+  > and the ledger does not hold that fact until P4's capability flags — so the check is "any enabled game"; (2)
+  > a registration buys nothing today: the layer gates on `FRAMELEDGER_ENABLE_VK_LAYER=1`, which only a launch
+  > sets, and a launch already reaches the layer through `VK_ADD_IMPLICIT_LAYER_PATH`. Registration becomes
+  > useful the day background capture sets the variable for a tracked Vulkan title started elsewhere, and not
+  > before; until then the Settings button and the flag reflect and repair a state nothing needs.
+
 ### The enable-list
 
 Referenced everywhere, specified nowhere until now (`20_OPEN_QUESTIONS` §S4).

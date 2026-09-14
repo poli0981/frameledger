@@ -7,6 +7,7 @@ using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Settings;
 using FrameLedger.Domain.Consent;
 using FrameLedger.Infrastructure.Persistence;
+using FrameLedger.Infrastructure.Startup;
 using FrameLedger.Shared.Ipc;
 using FrameLedger.Shared.Safety;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,6 +36,32 @@ public sealed class SettingsViewModelTests
         public Task<bool> ShowAsync(string gameName, CancellationToken ct = default) => Task.FromResult(false);
     }
 
+    private sealed class FakeMaintenance : IMaintenanceState
+    {
+        public MaintenanceSnapshot Snapshot { get; set; } = new(false, false, LogonTaskState.NotInstalled);
+
+        public int Reads { get; private set; }
+
+        public Task<MaintenanceSnapshot> ReadAsync(CancellationToken ct = default)
+        {
+            Reads++;
+            return Task.FromResult(Snapshot);
+        }
+    }
+
+    private sealed class FakeTool : IAgentTool
+    {
+        public List<string> Flags { get; } = [];
+
+        public AgentToolResult Result { get; set; } = new(0, "done");
+
+        public Task<AgentToolResult> RunAsync(string flag, CancellationToken ct = default)
+        {
+            Flags.Add(flag);
+            return Task.FromResult(Result);
+        }
+    }
+
     private sealed class FakeRun : IRunAtLogon
     {
         public bool IsSet { get; set; }
@@ -61,10 +88,19 @@ public sealed class SettingsViewModelTests
         public required RecordingStrip Strip { get; init; }
 
         public required SettingsViewModel Vm { get; init; }
+
+        public required FakeMaintenance Maintenance { get; init; }
+
+        public required FakeTool Tool { get; init; }
+
+        public required WindowClosePolicy ClosePolicy { get; init; }
     }
 
-    private static async Task<Harness> OpenAsync(ScratchLedger s, FakeAgentLink? agent = null, FakeRun? run = null)
+    private static async Task<Harness> OpenAsync(ScratchLedger s, FakeAgentLink? agent = null, FakeRun? run = null, FakeMaintenance? maintenance = null, FakeTool? tool = null)
     {
+        maintenance ??= new FakeMaintenance();
+        tool ??= new FakeTool();
+        var closePolicy = new WindowClosePolicy();
         var store = new SqliteSettingsStore(s.Db);
         var appearance = new AppearanceSettings(store);
         await appearance.LoadAsync(Ct).ConfigureAwait(false);
@@ -72,11 +108,11 @@ public sealed class SettingsViewModelTests
         agent ??= new FakeAgentLink();
         run ??= new FakeRun();
         var strip = new RecordingStrip();
-        var shell = new ShellHost(new ServiceCollection().BuildServiceProvider(), null!, null!);
-        var vm = new SettingsViewModel(appearance, new NoTheme(), shell, settings, s.Library, new HookingConsent(agent, new NoPrompt()), agent, run, strip);
+        var shell = new ShellHost(new ServiceCollection().BuildServiceProvider(), null!, null!, closePolicy);
+        var vm = new SettingsViewModel(appearance, new NoTheme(), shell, settings, s.Library, new HookingConsent(agent, new NoPrompt()), agent, run, strip, maintenance, tool, closePolicy);
         Task pending = vm.Pending;
         await pending.ConfigureAwait(false);
-        return new Harness { Ledger = s, Settings = settings, Agent = agent, Run = run, Strip = strip, Vm = vm };
+        return new Harness { Ledger = s, Settings = settings, Agent = agent, Run = run, Strip = strip, Vm = vm, Maintenance = maintenance, Tool = tool, ClosePolicy = closePolicy };
     }
 
     [Fact]
@@ -93,8 +129,9 @@ public sealed class SettingsViewModelTests
         h.Vm.UpdateChannel.Should().Be("stable");
         h.Vm.LogDebug.Should().BeFalse();
         h.Vm.KillSwitchState.Should().Be(Strings.Settings_KillSwitch_Off);
-        h.Vm.VulkanLayerText.Should().Be(Strings.Settings_VkLayer_NotRegistered);
+        h.Vm.VulkanLayerText.Should().Be(Strings.Settings_VkLayer_NotStaged, "no layer DLL in the fake");
         h.Vm.ElevationText.Should().Be(Strings.Settings_Agent_NotElevated);
+        h.Vm.TaskText.Should().Be(Strings.Settings_Agent_Task_NotInstalled);
         h.Strip.Shown.Should().BeEmpty("loading is not a change");
         (await new SqliteSettingsStore(s.Db).GetAsync(SettingsRegistry.HookingKillSwitch.Key, Ct)).Should().BeNull("nothing was written by the load");
     }
@@ -180,7 +217,7 @@ public sealed class SettingsViewModelTests
 
         h.Vm.HookedGames.Should().ContainSingle();
         h.Strip.Shown.Should().ContainSingle().Which.Body.Should().Be(Shared.Strings.Safety_Consent_AgentUnavailable);
-        h.Vm.VulkanLayerText.Should().Be(Strings.Settings_VkLayer_Unknown, "no HelloAck, no claim");
+        h.Vm.ElevationText.Should().Be(Strings.Settings_VkLayer_Unknown, "no HelloAck, no claim");
     }
 
     [Fact]
@@ -200,6 +237,60 @@ public sealed class SettingsViewModelTests
         run.IsSet.Should().BeFalse();
         run.Applied.Should().Be(1);
         (await h.Settings.GetBooleanAsync(SettingsRegistry.UiStartWithWindows, Ct)).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task TheLayerButtonsFollowTheRegistrationRuleAndRunTheAgentsFlag()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        var maintenance = new FakeMaintenance { Snapshot = new MaintenanceSnapshot(true, false, LogonTaskState.NotInstalled) };
+        Harness h = await OpenAsync(s, maintenance: maintenance);
+
+        h.Vm.CanRegisterLayer.Should().BeFalse("no game has hooking on (12_BUILD: registered only while one does)");
+        h.Vm.CanUnregisterLayer.Should().BeFalse();
+        h.Vm.VulkanLayerText.Should().Be(Strings.Settings_VkLayer_NotRegistered);
+
+        maintenance.Snapshot = new MaintenanceSnapshot(true, true, LogonTaskState.NotInstalled);
+        await h.Vm.UnregisterLayerCommand.ExecuteAsync(null);
+
+        h.Tool.Flags.Should().Equal("--unregister-vklayer");
+        h.Vm.VulkanLayerText.Should().Be(Strings.Settings_VkLayer_Registered, "the state is re-read from the machine, never assumed from the button");
+        h.Strip.Shown.Should().ContainSingle().Which.Kind.Should().Be("success");
+    }
+
+    [Fact]
+    public async Task TheTaskButtonsFollowTaskSchedulersAnswerAndAFailureIsSaid()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        var maintenance = new FakeMaintenance { Snapshot = new MaintenanceSnapshot(false, false, LogonTaskState.Stale) };
+        var tool = new FakeTool { Result = new AgentToolResult(1, "schtasks failed: access denied") };
+        Harness h = await OpenAsync(s, maintenance: maintenance, tool: tool);
+
+        h.Vm.CanInstallTask.Should().BeFalse();
+        h.Vm.CanRepairTask.Should().BeTrue();
+        h.Vm.CanRemoveTask.Should().BeTrue();
+        h.Vm.TaskText.Should().Be(Strings.Settings_Agent_Task_Stale);
+
+        await h.Vm.RepairTaskCommand.ExecuteAsync(null);
+
+        tool.Flags.Should().Equal("--install-task");
+        h.Strip.Shown.Should().ContainSingle().Which.Body.Should().Contain("access denied");
+        h.Vm.IsToolRunning.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task MinimizeToTrayMovesTheClosePolicyAtOnce()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        Harness h = await OpenAsync(s);
+
+        h.Vm.MinimizeToTray = true;
+        Task pending = h.Vm.Pending;
+        await pending;
+
+        h.ClosePolicy.MinimizeToTray.Should().BeTrue();
+        h.ClosePolicy.HidesOnClose.Should().BeFalse("no tray icon exists in a test, so a close is still a close");
+        (await h.Settings.GetBooleanAsync(SettingsRegistry.UiMinimizeToTray, Ct)).Should().BeTrue();
     }
 
     [Fact]

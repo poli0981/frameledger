@@ -129,6 +129,16 @@ public sealed class PagesLoadTests
         }
     }
 
+    private sealed class NoMaintenance : IMaintenanceState
+    {
+        public Task<MaintenanceSnapshot> ReadAsync(CancellationToken ct = default) => Task.FromResult(new MaintenanceSnapshot(false, false, Infrastructure.Startup.LogonTaskState.NotInstalled));
+    }
+
+    private sealed class NoTool : IAgentTool
+    {
+        public Task<AgentToolResult> RunAsync(string flag, CancellationToken ct = default) => Task.FromResult(new AgentToolResult(-1, "no agent in this test"));
+    }
+
     private static Task<T> OnStaAsync<T>(Func<T> work)
     {
         var tcs = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -163,7 +173,7 @@ public sealed class PagesLoadTests
         var store = new SqliteSettingsStore(s.Db);
         var appearance = new AppearanceSettings(store);
         await appearance.LoadAsync().ConfigureAwait(false);
-        var settings = new SettingsViewModel(appearance, new NoTheme(), new ShellHost(new ServiceCollection().BuildServiceProvider(), null!, null!), new RegisteredSettings(store), s.Library, consent, new NoAgent(), new NoRun(), strip);
+        var settings = new SettingsViewModel(appearance, new NoTheme(), new ShellHost(new ServiceCollection().BuildServiceProvider(), null!, null!, new WindowClosePolicy()), new RegisteredSettings(store), s.Library, consent, new NoAgent(), new NoRun(), strip, new NoMaintenance(), new NoTool(), new WindowClosePolicy());
         Task pending1 = settings.Pending;
         await pending1.ConfigureAwait(false);
         var logs = new LogsViewModel(new LogTail(Path.Combine(Path.GetTempPath(), "fl-nologs-" + Guid.NewGuid().ToString("N"))), new BugBundleBuilder(Path.GetTempPath(), new RegisteredSettings(store)), new NoSaver(), new NoAgent(), strip);

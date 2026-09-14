@@ -74,8 +74,20 @@ public sealed class AgentCommandLineSurfaceTests
         }
 
         AgentCommandLine.NotImplementedFlags.Should().BeEquivalentTo(
-            ["--diag", "--install-task", "--uninstall-task", "--register-vklayer", "--unregister-vklayer"],
-            "12_BUILD §Debugging's list, minus --serve and --console which are built");
+            ["--diag"],
+            "12_BUILD §Debugging's list, minus --serve and --console (P2) and the four maintenance flags (P3 PR-8b); --diag is the App's");
+    }
+
+    [Fact]
+    public void TheMaintenanceFlagsAreTopLevelVerbsThatTakeNoOptions()
+    {
+        AgentCommandLine.Parse(["--register-vklayer"]).Verb.Should().Be(AgentVerb.RegisterVkLayer);
+        AgentCommandLine.Parse(["--unregister-vklayer"]).Verb.Should().Be(AgentVerb.UnregisterVkLayer);
+        AgentCommandLine.Parse(["--install-task"]).Verb.Should().Be(AgentVerb.InstallTask);
+        AgentCommandLine.Parse(["--uninstall-task"]).Verb.Should().Be(AgentVerb.UninstallTask);
+        AgentCommandLine.Parse(["--install-task", "--data-dir", @"C:\x"]).Error.Should().Contain("takes no options", "the product directory is not selectable (D6)");
+        AgentCommandLine.Parse(["--console", "--register-vklayer"]).Error.Should().Contain("usage", "a flag, not a console verb");
+        AgentCommandLine.MaintenanceFlags.Keys.Should().BeEquivalentTo(["--register-vklayer", "--unregister-vklayer", "--install-task", "--uninstall-task"]);
     }
 
     [Fact]

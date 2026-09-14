@@ -43,9 +43,9 @@
                 <MenuItem Header="{x:Static res:Strings.Menu_File_Exit}" Command="{Binding ViewModel.ExitCommand}" />
             </MenuItem>
             <MenuItem Header="{x:Static res:Strings.Menu_Tools}">
-                <MenuItem Header="{x:Static res:Strings.Menu_Tools_AgentStatus}" Command="{Binding ViewModel.NotYetCommand}" />
+                <MenuItem Header="{x:Static res:Strings.Menu_Tools_AgentStatus}" Command="{Binding ViewModel.AgentStatusCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_Tools_UpdateRules}" Command="{Binding ViewModel.NotYetCommand}" />
-                <MenuItem Header="{x:Static res:Strings.Menu_Tools_VulkanLayer}" Command="{Binding ViewModel.NotYetCommand}" />
+                <MenuItem Header="{x:Static res:Strings.Menu_Tools_VulkanLayer}" Command="{Binding ViewModel.VulkanLayerCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_Tools_OpenDataFolder}" Command="{Binding ViewModel.OpenDataFolderCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_Tools_DbMaintenance}" Command="{Binding ViewModel.NotYetCommand}" />
             </MenuItem>

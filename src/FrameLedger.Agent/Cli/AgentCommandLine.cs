@@ -16,11 +16,21 @@ internal sealed record AgentCommandLine
 {
     public static readonly string[] AcceptedOptions = ["--exe", "--seconds", "--args", "--last", "--data-dir", "--partial-flush-seconds"];
 
-    /// <summary>The flags the design names and P2 does not build; each answers "not implemented in P2", exit 2.</summary>
-    public static readonly string[] NotImplementedFlags = ["--diag", "--install-task", "--uninstall-task", "--register-vklayer", "--unregister-vklayer"];
+    /// <summary>The one flag 12_BUILD lists that is not this binary's: <c>--diag</c> is the App's (<c>10_LOGGING</c>), and here it answers so, exit 2.</summary>
+    public static readonly string[] NotImplementedFlags = ["--diag"];
+
+    /// <summary>The maintenance flags (P3 PR-8b): top-level, no options, never under <c>--console</c>.</summary>
+    public static readonly IReadOnlyDictionary<string, AgentVerb> MaintenanceFlags = new Dictionary<string, AgentVerb>(StringComparer.Ordinal)
+    {
+        ["--register-vklayer"] = AgentVerb.RegisterVkLayer,
+        ["--unregister-vklayer"] = AgentVerb.UnregisterVkLayer,
+        ["--install-task"] = AgentVerb.InstallTask,
+        ["--uninstall-task"] = AgentVerb.UninstallTask,
+    };
 
     private const string _usage =
         "usage: FrameLedger.Agent --serve\n"
+        + "       FrameLedger.Agent --register-vklayer | --unregister-vklayer | --install-task | --uninstall-task\n"
         + "       FrameLedger.Agent --console [--data-dir <dir>] consent list | consent grant --exe <path> | consent revoke --exe <path>\n"
         + "                                                     | capture --exe <path> [--seconds <n>] | launch --exe <path> [--args \"<string>\"] [--seconds <n>]\n"
         + "                                                     | recover | sessions [--last <n>] | db path | games add --exe <path>\n"
@@ -65,6 +75,13 @@ internal sealed record AgentCommandLine
         if (NotImplementedFlags.Contains(args[0], StringComparer.Ordinal))
         {
             return new AgentCommandLine { Verb = AgentVerb.NotImplemented, Flag = args[0] };
+        }
+
+        if (MaintenanceFlags.TryGetValue(args[0], out AgentVerb maintenance))
+        {
+            return args.Length == 1
+                ? new AgentCommandLine { Verb = maintenance, Flag = args[0] }
+                : new AgentCommandLine { Error = $"{args[0]} takes no options" };
         }
 
         if (string.Equals(args[0], "--serve", StringComparison.Ordinal))

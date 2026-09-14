@@ -11,20 +11,48 @@ namespace FrameLedger.App.Services;
 /// (<c>09_I18N</c> §Mechanics: "re-create the main window shell; state preserved via VM"), and turns the
 /// user closing the live one into a host shutdown. The window is a transient service so a rebuild is a fresh
 /// XAML load in the new culture; the application's <c>ShutdownMode</c> is explicit so that closing the OLD
-/// window of a rebuild does not end the process.
+/// window of a rebuild does not end the process. With minimize-to-tray on (P3 PR-8b) the user's close hides the
+/// window instead, and only <see cref="Quit"/> — the tray's and the File menu's — ends the host.
 /// </summary>
-public sealed class ShellHost(IServiceProvider services, INavigationService navigation, IHostApplicationLifetime lifetime)
+public sealed class ShellHost(IServiceProvider services, INavigationService navigation, IHostApplicationLifetime lifetime, WindowClosePolicy policy) : IShellPresence
 {
     private MainWindow? _current;
     private Type _page = typeof(DashboardPage);
+    private bool _exiting;
 
     public void Show()
     {
         MainWindow window = services.GetRequiredService<MainWindow>();
+        window.Closing += OnClosing;
         window.Closed += OnClosed;
         _current = window;
         window.Show();
         navigation.Navigate(_page);
+    }
+
+    public bool IsShown => _current is { IsVisible: true, WindowState: not WindowState.Minimized };
+
+    public void Reveal()
+    {
+        if (_current is null)
+        {
+            Show();
+            return;
+        }
+
+        _current.Show();
+        if (_current.WindowState == WindowState.Minimized)
+        {
+            _current.WindowState = WindowState.Normal;
+        }
+
+        _current.Activate();
+    }
+
+    public void Quit()
+    {
+        _exiting = true;
+        lifetime.StopApplication();
     }
 
     /// <summary>The page the shell will open on, kept across a rebuild.</summary>
@@ -39,6 +67,16 @@ public sealed class ShellHost(IServiceProvider services, INavigationService navi
     }
 
     public Window? Current => _current;
+
+    /// <summary>FR-10 minimize-to-tray: the user's close of the live window hides it while a tray icon exists to come back from.</summary>
+    private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        if (!_exiting && ReferenceEquals(sender, _current) && policy.HidesOnClose && sender is Window window)
+        {
+            e.Cancel = true;
+            window.Hide();
+        }
+    }
 
     private void OnClosed(object? sender, EventArgs e)
     {

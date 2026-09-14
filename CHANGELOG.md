@@ -19,6 +19,26 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Added
 
+- **P3 PR-8b — the tray, the Agent's maintenance flags, the Settings buttons over them (2026-09-14).** The tray
+  (H.NotifyIcon.Wpf, `TrayHost` over a WPF-free `TrayViewModel`): four drawn icons — ● a Tier-1 session runs,
+  ◐ sessions run and none is measured, ⏸ the Agent reports paused, a ring otherwise — the tooltip naming the
+  game; menu Open / Pause–Resume capture (`PauseCapture`/`ResumeCapture`, the state shown is the `PauseAck`'s) /
+  Agent status / Exit; a left click opens the window; **minimize to tray on close** honoured through
+  `WindowClosePolicy` while a tray icon exists; **FR-3.8's balloon** "Session saved — game — click to view" only
+  while the window is off screen (the Dashboard's snackbar otherwise — one event, one channel), its click opening
+  the summary; a safety event is never a balloon. Tools ▸ Agent status… / Vulkan layer registration… navigate.
+  The Agent's `--install-task` / `--uninstall-task` (`Infrastructure.Startup.LogonTask`: `\FrameLedger\FrameLedger.Agent`
+  through the Task Scheduler COM API — `schtasks /Create /SC ONLOGON` is "Access is denied" unelevated, measured —
+  this user's logon trigger, interactive token, lowest run level, `--serve`) and `--register-vklayer` /
+  `--unregister-vklayer` (`Infrastructure.Vulkan.VkLayerRegistration`: the HKCU `ImplicitLayers` DWORD named by
+  the manifest; register refuses while no game has hooking on; unregister also removes a stale value naming our
+  manifest elsewhere); `HelloAck.vulkanLayerRegistered` now reads the key; `--diag` is the one flag the Agent
+  still answers "not this binary's". Settings: Register / Unregister the layer and Register / Repair / Remove the
+  task run the flag as a child process and re-read the machine. Tests: `TrayViewModelTests` (7), the Settings
+  additions (3), `VkLayerRegistrationTests` (under a test's own key), `LogonTaskTests` (Integration: a real task
+  under a test's own name), `AgentCommandLineSurfaceTests` (the flags are verbs), the e2e flags case now `--diag`.
+  27 App strings en/vi/ja. Docs: `08_UI` §Shell tray note and §Settings 8b note, `17_HOOK_ENGINE` §Vulkan built
+  note with its two stated gaps, `12_BUILD` §Agent flags, HANDOFF row 8 struck.
 - **P3 PR-8a — Settings, the safety notices, the Logs page, `--diag` (2026-09-14).** The Settings page over the
   registry (`RegisteredSettings`, D16): Capture first — the global kill switch (`hooking.kill_switch`, the gate's
   fourth input, so a running measured session stops at its next 30 s re-scan) with its state line, the

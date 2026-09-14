@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FrameLedger.App.Services;
 using FrameLedger.Application.Settings;
+using FrameLedger.Infrastructure.Startup;
 
 namespace FrameLedger.App.ViewModels;
 
@@ -33,6 +34,9 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly IAgentLink _agent;
     private readonly IRunAtLogon _runAtLogon;
     private readonly IMessageStrip _strip;
+    private readonly IMaintenanceState _maintenance;
+    private readonly IAgentTool _tool;
+    private readonly WindowClosePolicy _closePolicy;
     private bool _loading = true;
 
     [ObservableProperty]
@@ -78,6 +82,17 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string _elevationText = Strings.Settings_VkLayer_Unknown;
 
+    [ObservableProperty]
+    private string _taskText = Strings.Settings_Agent_Task_Unknown;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanRegisterLayer))]
+    [NotifyPropertyChangedFor(nameof(CanUnregisterLayer))]
+    private MaintenanceSnapshot _maintenanceSnapshot = new(false, false, LogonTaskState.Unknown);
+
+    [ObservableProperty]
+    private bool _isToolRunning;
+
     public SettingsViewModel(
         AppearanceSettings appearance,
         IThemeApplier theme,
@@ -87,8 +102,14 @@ public sealed partial class SettingsViewModel : ObservableObject
         HookingConsent consent,
         IAgentLink agent,
         IRunAtLogon runAtLogon,
-        IMessageStrip strip)
+        IMessageStrip strip,
+        IMaintenanceState maintenance,
+        IAgentTool tool,
+        WindowClosePolicy closePolicy)
     {
+        _maintenance = maintenance ?? throw new ArgumentNullException(nameof(maintenance));
+        _tool = tool ?? throw new ArgumentNullException(nameof(tool));
+        _closePolicy = closePolicy ?? throw new ArgumentNullException(nameof(closePolicy));
         _appearance = appearance ?? throw new ArgumentNullException(nameof(appearance));
         _themes = theme ?? throw new ArgumentNullException(nameof(theme));
         _shell = shell ?? throw new ArgumentNullException(nameof(shell));
@@ -147,6 +168,17 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public string KillSwitchState => KillSwitch ? Strings.Settings_KillSwitch_On : Strings.Settings_KillSwitch_Off;
 
+    /// <summary>12_BUILD: the registration exists only while a game has hooking on — the button follows the same rule as the Agent's flag.</summary>
+    public bool CanRegisterLayer => MaintenanceSnapshot.LayerStaged && !MaintenanceSnapshot.LayerRegistered && HookedGames.Count > 0;
+
+    public bool CanUnregisterLayer => MaintenanceSnapshot.LayerRegistered;
+
+    public bool CanInstallTask => MaintenanceSnapshot.Task == LogonTaskState.NotInstalled;
+
+    public bool CanRepairTask => MaintenanceSnapshot.Task == LogonTaskState.Stale;
+
+    public bool CanRemoveTask => MaintenanceSnapshot.Task is LogonTaskState.Installed or LogonTaskState.Stale;
+
     /// <summary>A pending load or write, for a test to await; the UI does not.</summary>
     public Task Pending { get; private set; } = Task.CompletedTask;
 
@@ -184,7 +216,49 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     partial void OnBackgroundCaptureChanged(bool value) => Persist(SettingsRegistry.CaptureBackground, value);
 
-    partial void OnMinimizeToTrayChanged(bool value) => Persist(SettingsRegistry.UiMinimizeToTray, value);
+    partial void OnMinimizeToTrayChanged(bool value)
+    {
+        if (!_loading)
+        {
+            _closePolicy.MinimizeToTray = value;
+        }
+
+        Persist(SettingsRegistry.UiMinimizeToTray, value);
+    }
+
+    partial void OnMaintenanceSnapshotChanged(MaintenanceSnapshot value)
+    {
+        OnPropertyChanged(nameof(CanInstallTask));
+        OnPropertyChanged(nameof(CanRepairTask));
+        OnPropertyChanged(nameof(CanRemoveTask));
+        TaskText = value.Task switch
+        {
+            LogonTaskState.Installed => Strings.Settings_Agent_Task_Installed,
+            LogonTaskState.NotInstalled => Strings.Settings_Agent_Task_NotInstalled,
+            LogonTaskState.Stale => Strings.Settings_Agent_Task_Stale,
+            _ => Strings.Settings_Agent_Task_Unknown,
+        };
+        VulkanLayerText = !value.LayerStaged
+            ? Strings.Settings_VkLayer_NotStaged
+            : value.LayerRegistered ? Strings.Settings_VkLayer_Registered : Strings.Settings_VkLayer_NotRegistered;
+    }
+
+    /// <summary>The Agent's <c>--register-vklayer</c>, then the state as the machine holds it.</summary>
+    [RelayCommand]
+    private Task RegisterLayerAsync() => RunToolAsync("--register-vklayer", Strings.Settings_VkLayer_Register);
+
+    [RelayCommand]
+    private Task UnregisterLayerAsync() => RunToolAsync("--unregister-vklayer", Strings.Settings_VkLayer_Unregister);
+
+    [RelayCommand]
+    private Task InstallTaskAsync() => RunToolAsync("--install-task", Strings.Settings_Agent_Task_Register);
+
+    /// <summary>Repair is the same flag: <c>schtasks /Create /F</c> rewrites the action with this install's path.</summary>
+    [RelayCommand]
+    private Task RepairTaskAsync() => RunToolAsync("--install-task", Strings.Settings_Agent_Task_Repair);
+
+    [RelayCommand]
+    private Task RemoveTaskAsync() => RunToolAsync("--uninstall-task", Strings.Settings_Agent_Task_Remove);
 
     partial void OnOnlineMetadataChanged(bool value) => Persist(SettingsRegistry.PrivacyOnlineMetadata, value);
 
@@ -273,8 +347,32 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
 
         Shared.Ipc.HelloAck? hello = _agent.Hello;
-        VulkanLayerText = hello is null ? Strings.Settings_VkLayer_Unknown : hello.VulkanLayerRegistered ? Strings.Settings_VkLayer_Registered : Strings.Settings_VkLayer_NotRegistered;
         ElevationText = hello is null ? Strings.Settings_VkLayer_Unknown : hello.Elevated ? Strings.Settings_Agent_Elevated : Strings.Settings_Agent_NotElevated;
+        MaintenanceSnapshot = await _maintenance.ReadAsync().ConfigureAwait(true);
+        OnPropertyChanged(nameof(CanRegisterLayer));
+    }
+
+    private async Task RunToolAsync(string flag, string label)
+    {
+        IsToolRunning = true;
+        try
+        {
+            AgentToolResult result = await _tool.RunAsync(flag).ConfigureAwait(true);
+            if (result.Succeeded)
+            {
+                _strip.Success(label, string.Format(CultureInfo.CurrentCulture, Strings.Settings_Tool_Done_Format, label));
+            }
+            else
+            {
+                _strip.Warn(label, string.Format(CultureInfo.CurrentCulture, Strings.Settings_Tool_Failed_Format, label, result.ExitCode, result.Output));
+            }
+
+            await RefreshCoreAsync().ConfigureAwait(true);
+        }
+        finally
+        {
+            IsToolRunning = false;
+        }
     }
 
     private async Task RevokeAsync(HookedGameViewModel game)

@@ -4,8 +4,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FrameLedger.App.Pages;
 using FrameLedger.App.Services;
-using Microsoft.Extensions.Hosting;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
 
@@ -16,7 +16,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 {
     private readonly AgentConnection _agent;
     private readonly ISnackbarService _snackbar;
-    private readonly IHostApplicationLifetime _lifetime;
+    private readonly IShellPresence _shell;
+    private readonly IPageNavigator _navigator;
     private readonly UiThread _ui = new();
 
     [ObservableProperty]
@@ -33,12 +34,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
     private readonly AddGameFlow _addGame;
 
-    public MainWindowViewModel(AgentConnection agent, ISnackbarService snackbar, IHostApplicationLifetime lifetime, AddGameFlow addGame, SafetyNotices notices)
+    public MainWindowViewModel(AgentConnection agent, ISnackbarService snackbar, IShellPresence shell, IPageNavigator navigator, AddGameFlow addGame, SafetyNotices notices)
     {
         Notices = notices ?? throw new ArgumentNullException(nameof(notices));
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _snackbar = snackbar ?? throw new ArgumentNullException(nameof(snackbar));
-        _lifetime = lifetime ?? throw new ArgumentNullException(nameof(lifetime));
+        _shell = shell ?? throw new ArgumentNullException(nameof(shell));
+        _navigator = navigator ?? throw new ArgumentNullException(nameof(navigator));
         _addGame = addGame ?? throw new ArgumentNullException(nameof(addGame));
         _agent.Changed += OnAgentChanged;
         Refresh();
@@ -74,9 +76,17 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task AddGameAsync() => _ = await _addGame.RunAsync().ConfigureAwait(true);
 
-    /// <summary>Exit is a host shutdown (App.RunAsync tears down and then ends the process), not a bare <c>Application.Shutdown</c>.</summary>
+    /// <summary>Exit is a host shutdown through the shell (App.RunAsync tears down and then ends the process) — a real exit, whatever minimize-to-tray says.</summary>
     [RelayCommand]
-    private void Exit() => _lifetime.StopApplication();
+    private void Exit() => _shell.Quit();
+
+    /// <summary>Tools ▸ Agent status… is the Dashboard's Agent card.</summary>
+    [RelayCommand]
+    private void AgentStatus() => _navigator.Navigate<DashboardPage>();
+
+    /// <summary>Tools ▸ Vulkan layer registration… is the Settings page's Capture section.</summary>
+    [RelayCommand]
+    private void VulkanLayer() => _navigator.Navigate<SettingsPage>();
 
     [RelayCommand]
     private static void OpenDataFolder()

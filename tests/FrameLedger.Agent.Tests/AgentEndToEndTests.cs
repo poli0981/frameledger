@@ -229,14 +229,16 @@ public sealed class AgentEndToEndTests : IDisposable
     }
 
     [Fact]
-    public async Task TheUnbuiltFlagsAnswerNotImplementedWithExitTwo()
+    public async Task TheAppsDiagFlagAnswersNotThisBinarysWithExitTwo()
     {
+        // The four maintenance flags are real since P3 PR-8b and run against the PRODUCT directory (a registration,
+        // a scheduled task), so an end-to-end test never invokes them; --diag is the App's and still exits 2 here.
         var psi = new ProcessStartInfo(Agent) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true };
-        psi.ArgumentList.Add("--register-vklayer");
+        psi.ArgumentList.Add("--diag");
         using Process agent = Process.Start(psi)!;
         (string output, int exit) = await FinishAsync(agent);
 
         exit.Should().Be(2, output);
-        output.Should().Contain("not implemented in P2", output);
+        output.Should().Contain("not this binary", output);
     }
 }

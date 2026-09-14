@@ -53,8 +53,11 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private bool _recentEmpty = true;
 
-    public DashboardViewModel(IAgentLink agent, GameLibrary library, GameSelection selection, IPageNavigator navigator, ISessionSummaryOpener summaries, IMessageStrip strip)
+    private readonly IShellPresence? _presence;
+
+    public DashboardViewModel(IAgentLink agent, GameLibrary library, GameSelection selection, IPageNavigator navigator, ISessionSummaryOpener summaries, IMessageStrip strip, IShellPresence? presence = null)
     {
+        _presence = presence;
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _library = library ?? throw new ArgumentNullException(nameof(library));
         _selection = selection ?? throw new ArgumentNullException(nameof(selection));
@@ -157,10 +160,15 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
         }
     }
 
-    /// <summary>FR-3.8's post-session notice, in-app (the tray toast with "View" arrives with the tray, PR-8). A safety stop is never a toast (08_UI §Notifications policy) — the game page's bars carry those.</summary>
+    /// <summary>FR-3.8's post-session notice, in-app while the window is on screen; the tray's balloon carries it otherwise (P3 PR-8b, one event → one channel). A safety stop is never a toast (08_UI §Notifications policy) — the shell's notices carry those.</summary>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format string is a resource that follows the UI culture, which changes at runtime")]
     private void Notice(SessionCompletedEvent completed)
     {
+        if (_presence is { IsShown: false })
+        {
+            return;
+        }
+
         string game = Live.GameName.Length > 0 ? Live.GameName : Strings.Common_NotAvailable;
         if (completed.SessionId is not null)
         {

@@ -23,4 +23,16 @@ internal enum AgentVerb
     KillSwitchOn,
     KillSwitchOff,
     KillSwitchStatus,
+
+    /// <summary><c>--register-vklayer</c> (P3 PR-8b): the HKCU registration, a repair tool (<c>12_BUILD</c> §The Vulkan layer is not registered at install time).</summary>
+    RegisterVkLayer,
+
+    /// <summary><c>--unregister-vklayer</c>.</summary>
+    UnregisterVkLayer,
+
+    /// <summary><c>--install-task</c>: the logon scheduled task for <c>--serve</c>, this user, lowest privileges.</summary>
+    InstallTask,
+
+    /// <summary><c>--uninstall-task</c>.</summary>
+    UninstallTask,
 }

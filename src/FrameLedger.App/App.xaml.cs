@@ -73,8 +73,9 @@ public partial class App : System.Windows.Application
             ApplyCulture(appearance.Language);
             var registered = new RegisteredSettings(store);
             LoggingLevel.SetDebug(await registered.GetBooleanAsync(SettingsRegistry.LogDebug).ConfigureAwait(true));
+            var closePolicy = new WindowClosePolicy { MinimizeToTray = await registered.GetBooleanAsync(SettingsRegistry.UiMinimizeToTray).ConfigureAwait(true) };
 
-            _host = BuildHost(_db, appearance, registered);
+            _host = BuildHost(_db, appearance, registered, closePolicy);
             await _host.StartAsync().ConfigureAwait(true);
             Log.Information("ui: started ({Version}), ledger {Ledger}", UiIdentity.Version, UiPaths.Database);
             await _host.WaitForShutdownAsync().ConfigureAwait(true);
@@ -169,7 +170,7 @@ public partial class App : System.Windows.Application
         Strings.Culture = culture;
     }
 
-    private static IHost BuildHost(LedgerDatabase db, AppearanceSettings appearance, RegisteredSettings registered)
+    private static IHost BuildHost(LedgerDatabase db, AppearanceSettings appearance, RegisteredSettings registered, WindowClosePolicy closePolicy)
     {
         HostApplicationBuilder builder = Host.CreateApplicationBuilder();
         builder.Services.AddSerilog();
@@ -185,6 +186,7 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton<ISettingsStore, SqliteSettingsStore>();
         builder.Services.AddSingleton(appearance);
         builder.Services.AddSingleton(registered);
+        builder.Services.AddSingleton(closePolicy);
         builder.Services.AddSingleton<IThemeApplier, WpfThemeApplier>();
 
         // The Agent over the pipe (07_IPC §Client behavior): connect, start it when it is not there, tell the shell.
@@ -207,6 +209,9 @@ public partial class App : System.Windows.Application
         // The shell: the window is TRANSIENT because a language change rebuilds it (09_I18N §Mechanics); the
         // shell host tracks the live one. Pages and their view models are transient (16 §Navigation).
         builder.Services.AddSingleton<ShellHost>();
+        builder.Services.AddSingleton<IShellPresence>(static sp => sp.GetRequiredService<ShellHost>());
+        builder.Services.AddSingleton<TrayViewModel>();
+        builder.Services.AddSingleton<TrayHost>();
         builder.Services.AddTransient<MainWindow>();
         builder.Services.AddSingleton<MainWindowViewModel>();
         builder.Services.AddTransient<DashboardPage>();
@@ -256,6 +261,10 @@ public partial class App : System.Windows.Application
         services.AddSingleton<SafetyNotices>();
         services.AddSingleton(static _ => new LogTail(UiPaths.Logs));
         services.AddSingleton(static sp => new BugBundleBuilder(UiPaths.Logs, sp.GetRequiredService<RegisteredSettings>()));
+
+        // The layer registration and the logon task (P3 PR-8b): read from the machine, written by the Agent's flags.
+        services.AddSingleton<IMaintenanceState, MaintenanceState>();
+        services.AddSingleton<IAgentTool, AgentTool>();
     }
 
     /// <summary><c>10_LOGGING</c> §Serilog configuration: <c>logs/ui-.log</c>, daily, 7 kept, 10 MB, the one template; the level follows <c>log.debug</c> at runtime.</summary>
