@@ -1,11 +1,18 @@
-Velopack — https://github.com/velopack/velopack
-NuGet package Velopack 1.2.0. The package declares the licence expression MIT and ships no licence file, so
-this copy is ours to distribute. The copyright line below is the package's own <copyright> field, verbatim
-(its <authors> field: Velopack Ltd, Caelan Sayler, Kevin Bost); the licence text is the standard MIT text.
+Microsoft.Extensions.FileProviders.Physical 10.0.10
+
+Licence declared: MIT
+Text below: the standard MIT text; the package ships no licence file
+Copyright: © Microsoft Corporation. All rights reserved.
+Authors: Microsoft
+Project: https://dot.net/
+Ships in: Agent, App
+Third-party notices: notices-b7d456965950.txt (THIRD-PARTY-NOTICES.TXT)
+
+-------------------------------------------------------------------------------
 
 MIT License
 
-Copyright © Velopack Ltd. All rights reserved.
+Copyright: © Microsoft Corporation. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

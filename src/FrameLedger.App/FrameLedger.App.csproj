@@ -48,6 +48,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- P4 PR-6: the licence texts travel with the package (legal/THIRD_PARTY_NOTICES.md: "Full license texts must be
+         shipped in legal/licenses/ in release packages"). PUBLISH ONLY: a build output has no recipient, and copying
+         ~1 MB into every bin/ and test run would be noise. The App publishes into the same out/app as the Agent, so
+         one copy covers both. release.yml adds the .NET runtime's own licence and notices beside these. -->
+    <None Include="..\..\legal\licenses\**\*" LinkBase="licenses" CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\..\legal\THIRD_PARTY_NOTICES.md" Link="licenses\THIRD_PARTY_NOTICES.md" CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\..\LICENSE" Link="licenses\FrameLedger-GPL-3.0.txt" CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="WPF-UI" />
     <PackageReference Include="WPF-UI.Abstractions" />
     <PackageReference Include="WPF-UI.DependencyInjection" />

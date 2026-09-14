@@ -387,6 +387,9 @@ function Invoke-ProjectGates {
     Write-Step 'license-check'
     $licenseTool = Join-Path $repo 'tools/license-check.ps1'
     if (Test-Path $licenseTool) {
+        # P4 PR-6: the NuGet half's generator proves itself first (fourteen cases, five that must be RED), then
+        # license-check runs its live -Check over this build's restore output as its section 3.
+        Invoke-Checked 'license-gather (self-test)' { & (Join-Path $repo 'tools/license-gather.ps1') -SelfTest }
         Invoke-Checked 'license-check' { & $licenseTool }
     }
     else {

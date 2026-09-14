@@ -54,7 +54,7 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 > `build.ps1` implements it as a hard throwing gate that reads the run's `.trx` and fails when
 > `ShmLayoutMirrorTests` did not execute. `12_BUILD` carried the identical stale sentence and is
 > corrected with it; restating the gate list in two documents is what let one of them rot.
-- **Licence guard:** `tools/license-check` fails the build if a vendored dependency is missing its licence copy, or if Intel IGCL / AMD ADLX headers appear anywhere in the tree (`docs/18_GPU_VENDOR_APIS.md` §Vendor SDKs we deliberately do not use). Licensing regressions are silent and hard to unwind later — catch them at PR time.
+- **Licence guard:** `tools/license-check` fails the build if a vendored dependency is missing its licence copy, or if Intel IGCL / AMD ADLX headers appear anywhere in the tree (`docs/18_GPU_VENDOR_APIS.md` §Vendor SDKs we deliberately do not use), or — since P4 PR-6 — if `legal/licenses/nuget/` is not what `tools/license-gather.ps1` writes for the NuGet packages this build ships. A Dependabot bump therefore goes red until someone re-runs the script and commits the texts, which is the point: the new version's licence is read by a person before it ships. Licensing regressions are silent and hard to unwind later — catch them at PR time.
 - **Placeholder guard:** fails if any `{{` token survives in `README.md` or `legal/*.md`. Those are shipped, legally operative documents (FR-11 displays them in the first-run Legal Gate); an unsubstituted `{{DEVELOPER_NAME}}` in an EULA is not a cosmetic defect.
 - `permissions: contents: read`.
 
