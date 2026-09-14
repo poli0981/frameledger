@@ -22,7 +22,7 @@
                             <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_KillSwitch_Label}" />
                             <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.KillSwitchState}" />
                         </StackPanel>
-                        <ui:ToggleSwitch Grid.Column="1" Margin="12,0" IsChecked="{Binding ViewModel.KillSwitch, Mode=TwoWay}" />
+                        <ui:ToggleSwitch Grid.Column="1" Margin="12,0" AutomationProperties.Name="{x:Static res:Strings.Settings_KillSwitch_Label}" IsChecked="{Binding ViewModel.KillSwitch, Mode=TwoWay}" />
                     </Grid>
                 </ui:CardExpander.Header>
                 <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_KillSwitch_Body}" TextWrapping="Wrap" />
@@ -94,6 +94,7 @@
                     </StackPanel>
                 </ui:CardControl.Header>
                 <ui:NumberBox MinWidth="140"
+                              AutomationProperties.Name="{x:Static res:Strings.Settings_MinSession_Label}"
                               Maximum="{x:Static vm:SettingsViewModel.MinSessionMaximum}"
                               Minimum="{x:Static vm:SettingsViewModel.MinSessionMinimum}"
                               SpinButtonPlacementMode="Inline"
@@ -107,6 +108,7 @@
                     </StackPanel>
                 </ui:CardControl.Header>
                 <ui:NumberBox MinWidth="140"
+                              AutomationProperties.Name="{x:Static res:Strings.Settings_Interval_Label}"
                               Maximum="{x:Static vm:SettingsViewModel.IntervalMaximum}"
                               Minimum="{x:Static vm:SettingsViewModel.IntervalMinimum}"
                               SpinButtonPlacementMode="Inline"
@@ -120,6 +122,7 @@
                     </StackPanel>
                 </ui:CardControl.Header>
                 <ui:NumberBox MinWidth="140"
+                              AutomationProperties.Name="{x:Static res:Strings.Settings_Retention_Label}"
                               Maximum="{x:Static vm:SettingsViewModel.RetentionMaximum}"
                               Minimum="0"
                               SpinButtonPlacementMode="Inline"
@@ -132,7 +135,7 @@
                         <ui:TextBlock MaxWidth="560" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Settings_Background_Body}" TextWrapping="Wrap" />
                     </StackPanel>
                 </ui:CardControl.Header>
-                <ui:ToggleSwitch IsChecked="{Binding ViewModel.BackgroundCapture, Mode=TwoWay}" />
+                <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_Background_Label}" IsChecked="{Binding ViewModel.BackgroundCapture, Mode=TwoWay}" />
             </ui:CardControl>
 
             <!-- Agent: elevation is optional and no tier needs it; the logon task arrives with the tray build. -->
@@ -175,6 +178,7 @@
             <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static vm:SettingsViewModel.AppearanceHeader}" />
             <ui:CardControl Margin="0,4,0,0" Header="{x:Static vm:SettingsViewModel.ThemeLabel}" Icon="{ui:SymbolIcon Color24}">
                 <ComboBox MinWidth="180"
+                          AutomationProperties.Name="{x:Static vm:SettingsViewModel.ThemeLabel}"
                           DisplayMemberPath="Label"
                           ItemsSource="{x:Static vm:SettingsViewModel.Themes}"
                           SelectedValue="{Binding ViewModel.SelectedTheme, Mode=TwoWay}"
@@ -182,6 +186,7 @@
             </ui:CardControl>
             <ui:CardControl Margin="0,8,0,0" Header="{x:Static vm:SettingsViewModel.LanguageLabel}" Icon="{ui:SymbolIcon LocalLanguage24}">
                 <ComboBox MinWidth="180"
+                          AutomationProperties.Name="{x:Static vm:SettingsViewModel.LanguageLabel}"
                           DisplayMemberPath="Label"
                           ItemsSource="{x:Static vm:SettingsViewModel.Languages}"
                           SelectedValue="{Binding ViewModel.SelectedLanguage, Mode=TwoWay}"
@@ -197,7 +202,7 @@
                         <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_StartWithWindows_Body}" />
                     </StackPanel>
                 </ui:CardControl.Header>
-                <ui:ToggleSwitch IsChecked="{Binding ViewModel.StartWithWindows, Mode=TwoWay}" />
+                <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_StartWithWindows_Label}" IsChecked="{Binding ViewModel.StartWithWindows, Mode=TwoWay}" />
             </ui:CardControl>
             <ui:CardControl Margin="0,8,0,0" Icon="{ui:SymbolIcon ArrowMinimize24}">
                 <ui:CardControl.Header>
@@ -206,7 +211,7 @@
                         <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_MinimizeToTray_Body}" />
                     </StackPanel>
                 </ui:CardControl.Header>
-                <ui:ToggleSwitch IsChecked="{Binding ViewModel.MinimizeToTray, Mode=TwoWay}" />
+                <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_MinimizeToTray_Label}" IsChecked="{Binding ViewModel.MinimizeToTray, Mode=TwoWay}" />
             </ui:CardControl>
 
             <!-- Privacy, updates, logging, legal. -->
@@ -218,7 +223,7 @@
                         <ui:TextBlock MaxWidth="560" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Settings_OnlineMetadata_Body}" TextWrapping="Wrap" />
                     </StackPanel>
                 </ui:CardControl.Header>
-                <ui:ToggleSwitch IsChecked="{Binding ViewModel.OnlineMetadata, Mode=TwoWay}" />
+                <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_OnlineMetadata_Label}" IsChecked="{Binding ViewModel.OnlineMetadata, Mode=TwoWay}" />
             </ui:CardControl>
 
             <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Updates_Header}" />
@@ -230,6 +235,7 @@
                     </StackPanel>
                 </ui:CardControl.Header>
                 <ComboBox MinWidth="140"
+                          AutomationProperties.Name="{x:Static res:Strings.Settings_UpdateChannel_Label}"
                           DisplayMemberPath="Label"
                           ItemsSource="{x:Static vm:SettingsViewModel.UpdateChannels}"
                           SelectedValue="{Binding ViewModel.UpdateChannel, Mode=TwoWay}"
@@ -243,7 +249,7 @@
                         <ui:TextBlock MaxWidth="560" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Settings_AutoCheck_Body}" TextWrapping="Wrap" />
                     </StackPanel>
                 </ui:CardControl.Header>
-                <ui:ToggleSwitch IsChecked="{Binding ViewModel.AutoCheckUpdates, Mode=TwoWay}" />
+                <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_AutoCheck_Label}" IsChecked="{Binding ViewModel.AutoCheckUpdates, Mode=TwoWay}" />
             </ui:CardControl>
 
             <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Logging_Header}" />
@@ -254,7 +260,7 @@
                         <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_LogDebug_Body}" />
                     </StackPanel>
                 </ui:CardControl.Header>
-                <ui:ToggleSwitch IsChecked="{Binding ViewModel.LogDebug, Mode=TwoWay}" />
+                <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_LogDebug_Label}" IsChecked="{Binding ViewModel.LogDebug, Mode=TwoWay}" />
             </ui:CardControl>
 
             <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Legal_Header}" />

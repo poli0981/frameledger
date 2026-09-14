@@ -21,6 +21,24 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Added
 
+- **P4 PR-8 — the accessibility pass, with the section it passes against written first (NFR-9, 2026-09-15).**
+  NFR-9 was one sentence and `08_UI` one bullet ("Ctrl+1…5; grids fully navigable; Esc closes flyouts/dialogs"), none
+  of it built. `08_UI` §Accessibility now says what each clause means here and names the check: **Ctrl+1 … Ctrl+5**
+  and the keypad open Dashboard / Games / Compare / Logs / Settings (`MainWindow` `InputBindings` →
+  `MainWindowViewModel.NavigateToCommand` → `ShellShortcuts`), and `AccessibilityTests` holds the bindings, the map and
+  the NavigationView's order together; **Esc closes the open `ContentDialog` or `MessageBox` with no result**, through
+  its own Close path, and never a dialog that offers no Close button (`Services/DialogKeyboard`, one class handler on
+  `Window` registered in `App.OnStartup`, bubbling so a dropdown's Esc wins) — WPF UI 4.3.0 handles no key in either
+  dialog, measured in its source; **every input that shows no text of its own has an `AutomationProperties.Name`** —
+  thirty controls had none (every Settings toggle, number box and choice box, the hooking switch, the trend metric,
+  the Games and Logs filters and search boxes, the log tail, the edit-game and consent text boxes, the Legal Gate's
+  document, the summary window's tags and notes, and the icon-only close button in the `InfoBar` template), a scan of
+  the App's XAML goes red on the next one (proven by removing one name), and four new strings name the controls that
+  had no label to borrow (en/vi/ja); **no XAML hard-codes a colour** (a second scan), so contrast is the Fluent
+  themes'; the manifest is Per-Monitor V2 (a third). Known gaps are stated there: ScottPlot plots are not
+  keyboard-operable, and no Narrator pass has been done. Docs: `08_UI` §Accessibility and §UX rules, `02_SPEC` NFR-9,
+  `16_WPFUI_SYNTAX` §Gotchas (no Esc in 4.3.0, `CloseButtonText` defaults to "Close", the obsolete `MessageBox.Close`),
+  `15_ROADMAP`, HANDOFF §P4. The Database maintenance dialog's status line is `LiveSetting="Polite"`, so a result is read out.
 - **P4 PR-7 — Tools ▸ Database maintenance: integrity check, backup, the retention sweep on demand, compaction
   (2026-09-15).** `06_DATA_MODEL` §Retention promised the four since P0; the menu item said "not built yet". **The
   sweep is the Agent's**, because `frame_blobs` and `sensor_blobs` are (§Writer ownership): the App sends the new

@@ -1247,7 +1247,7 @@ script~~ **LANDED 2026-09-15 (P4 PR-6: `tools/license-gather.ps1` → `legal/lic
 `15_ROADMAP` §P4's last two items were not in the list above: ~~DB maintenance~~ **LANDED 2026-09-15 (P4 PR-7:
 Tools ▸ Database maintenance — the retention sweep on demand is the Agent's, over a new `SweepRetention` command with
 no payload; integrity check, `VACUUM INTO` backup and compaction run in the App and change no row — `06_DATA_MODEL`
-§Retention built note)**, and the accessibility pass, which needs `08_UI` §Accessibility written before any code.
+§Retention built note)**, and ~~the accessibility pass, which needs `08_UI` §Accessibility written before any code~~ **LANDED 2026-09-15 (P4 PR-8: the section first, then `AccessibilityTests` — Ctrl+1…5, Esc on every dialog, an automation name on every textless input, theme colours only)**.
 
 ## P3 — ~~**START HERE**~~ (2026-09-13, owner-approved plan; **code-complete 2026-09-14** — every row below is struck with its PR)
 

@@ -60,7 +60,7 @@
         <DockPanel Margin="0,12,0,0">
             <ui:ProgressRing Width="16" Height="16" Margin="0,0,8,0" DockPanel.Dock="Left" IsIndeterminate="True"
                              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" />
-            <ui:TextBlock MaxWidth="680" HorizontalAlignment="Left" Text="{Binding Status}" TextWrapping="Wrap" />
+            <ui:TextBlock MaxWidth="680" HorizontalAlignment="Left" AutomationProperties.LiveSetting="Polite" Text="{Binding Status}" TextWrapping="Wrap" />
         </DockPanel>
     </StackPanel>
 </UserControl>

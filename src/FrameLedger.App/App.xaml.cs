@@ -55,6 +55,8 @@ public partial class App : System.Windows.Application
         UiPaths.EnsureDirectories();
         ConfigureLogging();
         HookCrashHandlers();
+        // 08_UI §Accessibility (P4 PR-8): Esc closes the open ContentDialog or MessageBox, before any window exists.
+        DialogKeyboard.Register();
         _run = DiagReport.Requested(e.Args) ? DiagAsync() : RunAsync();
     }
 

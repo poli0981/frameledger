@@ -13,6 +13,20 @@
                  WindowBackdropType="Mica"
                  WindowCornerPreference="Round"
                  WindowStartupLocation="CenterScreen">
+    <!-- 08_UI §Accessibility (P4 PR-8): Ctrl+1…5 open the NavigationView's pages in its order; ShellShortcuts holds the map. -->
+    <ui:FluentWindow.InputBindings>
+        <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="1" Key="D1" Modifiers="Control" />
+        <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="2" Key="D2" Modifiers="Control" />
+        <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="3" Key="D3" Modifiers="Control" />
+        <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="4" Key="D4" Modifiers="Control" />
+        <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="5" Key="D5" Modifiers="Control" />
+        <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="1" Key="NumPad1" Modifiers="Control" />
+        <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="2" Key="NumPad2" Modifiers="Control" />
+        <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="3" Key="NumPad3" Modifiers="Control" />
+        <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="4" Key="NumPad4" Modifiers="Control" />
+        <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="5" Key="NumPad5" Modifiers="Control" />
+    </ui:FluentWindow.InputBindings>
+
     <!--
         docs/16_WPFUI_SYNTAX.md §Main window skeleton: TitleBar row, a classic Menu row BELOW it (never inside the
         drag region), then the NavigationView. Every string is a resx key; every colour a theme brush.

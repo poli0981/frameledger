@@ -31,6 +31,7 @@
 
             <ui:TextBlock Margin="0,18,0,6" Appearance="Secondary" Text="{Binding TypeToConfirm}" TextWrapping="Wrap" />
             <ui:TextBox x:Name="Acknowledgement"
+                        AutomationProperties.Name="{Binding TypeToConfirm}"
                         Text="{Binding Typed, UpdateSourceTrigger=PropertyChanged}"
                         PlaceholderText="{x:Static vm:ConsentDialogViewModel.Phrase}" />
         </StackPanel>

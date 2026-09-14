@@ -19,10 +19,12 @@
                 </Grid.ColumnDefinitions>
                 <ui:TextBlock Grid.Column="0" FontTypography="Title" Text="{x:Static vm:GamesViewModel.Header}" />
                 <ui:TextBox Grid.Column="1" MinWidth="220" Margin="0,0,12,0" VerticalAlignment="Center"
+                            AutomationProperties.Name="{x:Static vm:GamesViewModel.SearchPlaceholder}"
                             Icon="{ui:SymbolIcon Search24}"
                             PlaceholderText="{x:Static vm:GamesViewModel.SearchPlaceholder}"
                             Text="{Binding ViewModel.Search, UpdateSourceTrigger=PropertyChanged}" />
                 <ComboBox Grid.Column="2" MinWidth="150" Margin="0,0,12,0" VerticalAlignment="Center"
+                          AutomationProperties.Name="{x:Static res:Strings.A11y_Games_Sort}"
                           DisplayMemberPath="Label"
                           ItemsSource="{x:Static vm:GamesViewModel.Sorts}"
                           SelectedValue="{Binding ViewModel.Sort, Mode=TwoWay}"

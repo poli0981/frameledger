@@ -1642,4 +1642,16 @@
   <data name="Maintenance_Status_Working" xml:space="preserve">
     <value>Đang thực hiện…</value>
   </data>
+  <data name="A11y_Games_Sort" xml:space="preserve">
+    <value>Sắp xếp game</value>
+  </data>
+  <data name="A11y_Logs_Source" xml:space="preserve">
+    <value>Nguồn log</value>
+  </data>
+  <data name="A11y_Logs_Level" xml:space="preserve">
+    <value>Mức log tối thiểu</value>
+  </data>
+  <data name="A11y_Logs_Tail" xml:space="preserve">
+    <value>Các dòng log</value>
+  </data>
 </root>
