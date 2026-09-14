@@ -62,6 +62,9 @@
 //                    (20_OPEN_QUESTIONS §S29(g))
 //   --probe-sl-seen  the g_slSeen word's encoding: free feature bits, and
 //                        saturation going HIGH rather than wrapping low
+//   --probe-dxgi-count
+//                    GetLastPresentCount deltas: a counter that went backwards is
+//                        a reset (nothing unseen), and the session total saturates
 //   --hold-presenting-fg N
 //                    present for N seconds, evaluating kFeatureDLSS_G once per
 //                    --presents-per-eval presents and passing the scaling-input
@@ -122,6 +125,7 @@
 
 #include "dxr_raygen_dxil.h"
 #include "fl_d3d12_vtable.h"
+#include "fl_dxgi_count.h"
 #include "fl_dxgi_vtable.h"
 #include "fl_hook_inventory.h"
 #include "fl_rt_accum.h"
@@ -2006,6 +2010,43 @@ bool ProbeSlSeen() {
     return g_failures == 0;
 }
 
+// The arithmetic behind dxgiUnseen (@52) and dxgiPresentsUnseen (@48), fl_dxgi_count.h.
+//
+// WHAT THIS PROBE IS FOR. The Present hook reads GetLastPresentCount before forwarding
+// and takes `now - previous` on the same slot. The field algebra is pinned by the
+// header's static_asserts; what is BEHAVIOUR is the two directions a plausible edit
+// changes: a counter that went backwards (a chain re-created at the same address, so
+// the slot kept the old count) must read as a reset and add nothing -- the owner's
+// ledger held dxgi_unseen_total = 4294967243 (2026-09-14) when it read as ~4e9 unseen
+// presents -- and the session total must saturate rather than wrap, because it is the
+// numerator of Displayed and a low number there is the one rule 6 forbids.
+bool ProbeDxgiCount() {
+    std::printf("\n[dxgi] GetLastPresentCount deltas: a regression is a reset, a total saturates\n");
+
+    using namespace fl::dxgicount;
+
+    Delta same = UnseenBetween(100u, 101u);
+    Check(same.valid && same.unseen == 0u, "a delta of one is DXGI agreeing with the hook: valid, nothing unseen");
+    Delta held = UnseenBetween(100u, 100u);
+    Check(held.valid && held.unseen == 0u, "an unchanged counter is a valid zero, never a wrap to 4294967295");
+    Delta pacer = UnseenBetween(100u, 104u);
+    Check(pacer.valid && pacer.unseen == 3u, "the 2.8.0 pacer: four counted, one seen, three unseen (§H5 row P1-DXGI)");
+
+    // The regression, in the two shapes it takes: a re-created chain (small new count
+    // against a large old one) and a genuinely wrapped counter.
+    Delta recreated = UnseenBetween(25'971u, 12u);
+    Check(!recreated.valid && recreated.unseen == 0u,
+          "a counter that went backwards is a reset: no delta, nothing unseen, nothing added");
+    Delta wrapped = UnseenBetween(UINT32_MAX, 3u);
+    Check(!wrapped.valid, "a wrapped counter is a reset too");
+
+    Check(SaturatingAdd(7u, 5u) == 12u, "an ordinary add is an add");
+    Check(SaturatingAdd(UINT32_MAX - 2u, 5u) == UINT32_MAX,
+          "the session total saturates HIGH rather than wrapping low");
+
+    return g_failures == 0;
+}
+
 // The ABI check: right module name, right symbol name, WRONG GENERATION.
 //
 // This case is invisible to module scoping, which is why it needs its own
@@ -2984,6 +3025,9 @@ int main(int argc, char** argv) {
             ranSomething = true;
         } else if (std::strcmp(argv[i], "--probe-sl-seen") == 0) {
             ok = ProbeSlSeen() && ok;
+            ranSomething = true;
+        } else if (std::strcmp(argv[i], "--probe-dxgi-count") == 0) {
+            ok = ProbeDxgiCount() && ok;
             ranSomething = true;
         } else if (std::strcmp(argv[i], "--probe-sl-abi") == 0) {
             ok = ProbeSlAbi() && ok;
