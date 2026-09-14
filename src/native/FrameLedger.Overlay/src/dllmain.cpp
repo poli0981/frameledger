@@ -44,6 +44,7 @@
 #include <cstring>
 #include <fl_ac_rules.h>
 #include <fl_d3d12_vtable.h>
+#include <fl_dxgi_count.h>
 #include <fl_dxgi_vtable.h>
 #include <fl_hook_inventory.h>
 #include <fl_patch_check.h>
@@ -2343,6 +2344,15 @@ void RecordPresent(IDXGISwapChain* sc, UINT syncInterval, UINT flags) noexcept {
     // patches do not cover. A delta of exactly 1 every time says DXGI saw nothing more
     // than we did. DXGI_PRESENT_TEST presents are already filtered above and do not
     // move this counter (measured, #35), so they cannot read as unseen presents.
+    //
+    // A COUNTER THAT WENT BACKWARDS IS A RESET, NOT A DELTA (2026-09-14, fl_dxgi_count.h):
+    // a chain released and re-created at the same address inherits the slot and its old
+    // count, and `now - previous` as unsigned wrapped to ~4e9 -- the owner's ledger held
+    // dxgi_unseen_total = 4294967243 and a record byte saturated at 255, which is the
+    // DxgiSaturated refusal. On a regression the record claims no delta (as on a chain's
+    // first hooked present), nothing is added, and the slot re-arms on the new count.
+    // The session total saturates rather than wrapping for the same reason the record
+    // byte does: a numerator must read high and be refused, never low and be believed.
     bool    dxgiDelta = false;
     uint8_t dxgiUnseenHere = 0;
     if (slot != nullptr) {
@@ -2350,11 +2360,15 @@ void RecordPresent(IDXGISwapChain* sc, UINT syncInterval, UINT flags) noexcept {
         const uint32_t epoch = g_dxgiEpoch.load(std::memory_order_relaxed);
         if (SUCCEEDED(sc->GetLastPresentCount(&dxgiCount))) {
             if (slot->haveDxgiCount && slot->dxgiEpoch == epoch) {
-                const uint32_t delta = dxgiCount - slot->lastDxgiCount;
-                dxgiDelta = true;
-                if (delta > 1u) {
-                    g_dxgiUnseen.fetch_add(delta - 1u, std::memory_order_relaxed);
-                    dxgiUnseenHere = fl::slseen::SaturateToByte(delta - 1u);
+                const fl::dxgicount::Delta d = fl::dxgicount::UnseenBetween(slot->lastDxgiCount, dxgiCount);
+                dxgiDelta = d.valid;
+                if (d.valid && d.unseen != 0u) {
+                    uint32_t total = g_dxgiUnseen.load(std::memory_order_relaxed);
+                    uint32_t next = fl::dxgicount::SaturatingAdd(total, d.unseen);
+                    while (!g_dxgiUnseen.compare_exchange_weak(total, next, std::memory_order_relaxed)) {
+                        next = fl::dxgicount::SaturatingAdd(total, d.unseen);
+                    }
+                    dxgiUnseenHere = fl::slseen::SaturateToByte(d.unseen);
                 }
             } else if (!slot->haveDxgiCount && g_state != nullptr &&
                        !g_dxgiBeforeHookPublished.exchange(true, std::memory_order_relaxed)) {

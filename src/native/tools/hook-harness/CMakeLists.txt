@@ -148,6 +148,15 @@ add_test(NAME fl_sl_inputs COMMAND hook-harness --probe-sl-inputs)
 # wrong by silently swallowing the next FlSlSeen enumerator.
 add_test(NAME fl_sl_seen COMMAND hook-harness --probe-sl-seen)
 
+# The arithmetic behind dxgiUnseen (@52) and dxgiPresentsUnseen (@48), fl_dxgi_count.h.
+# A GetLastPresentCount reading that went BACKWARDS (a chain re-created at the same
+# address, so the slot kept the old count) used to wrap `now - previous` to ~4e9 and
+# add it to the session total: the owner's ledger held dxgi_unseen_total = 4294967243
+# (2026-09-14). Behaviour here: a regression is a reset that adds nothing and claims
+# no delta, and the total saturates HIGH rather than wrapping -- it is the numerator
+# of Displayed, and low is the direction rule 6 forbids.
+add_test(NAME fl_dxgi_count COMMAND hook-harness --probe-dxgi-count)
+
 # §H7 — our unhook must not silently remove an overlay that hooked the same
 # slot after us. Simulated rather than depending on RTSS being installed, so it
 # is deterministic and runs on CI; the dev machine can then confirm against the

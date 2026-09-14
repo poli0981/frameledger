@@ -711,7 +711,9 @@ struct alignas(64) FlWriterState {
     // presents below DXGI, or on another object, does not. Hook-local counters,
     // watchdog-published (the region-2 cache-line rule above). Took reserved[0..1],
     // additive, no layout bump.
-    uint32_t dxgiPresentsUnseen;    // @48  presents DXGI counted between two hooked presents, beyond the one seen
+    uint32_t dxgiPresentsUnseen;    // @48  presents DXGI counted between two hooked presents, beyond the one seen.
+                                    //      SATURATES at UINT32_MAX and a reading that went backwards adds nothing
+                                    //      (fl_dxgi_count.h, 2026-09-14: 4294967243 was one wrapped delta, not a count)
     uint32_t dxgiPresentSamples;    // @52  hooked presents on which the counter was read
 
     // THE LoadLibrary DETOUR'S TWO WORDS (2026-09-06, P1 item 1; 17_HOOK_ENGINE §DLL
@@ -891,6 +893,11 @@ struct alignas(64) FlFrameRecord {
     // buckets see it. SATURATES AT 255: a NUMERATOR, so a wrap would read low rather than
     // high, but 255 is still a sentinel the consumer refuses rather than a count. Took the
     // first byte of v3's reserved word; additive, no offset moved, no layout bump.
+    // A COUNTER THAT WENT BACKWARDS IS NOT A DELTA (2026-09-14, fl_dxgi_count.h): a chain
+    // re-created at the same address inherits the slot's old count, and the unsigned
+    // difference wrapped to ~4e9 -- saturating this byte at 255 (the DxgiSaturated refusal)
+    // and adding the wrap to @48. On a regression the present claims no delta, exactly as
+    // a chain's first hooked present does, and the slot re-arms on the new reading.
     uint8_t dxgiUnseen;    // @52
 
     uint8_t reserved[3];    // @53..55  MUST BE ZERO
