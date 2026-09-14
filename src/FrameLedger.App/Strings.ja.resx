@@ -353,14 +353,6 @@
     <value>設定</value>
     <comment>review</comment>
   </data>
-  <data name="NotYet_Body" xml:space="preserve">
-    <value>この機能は後のビルドで提供されます。</value>
-    <comment>review</comment>
-  </data>
-  <data name="NotYet_Title" xml:space="preserve">
-    <value>未実装</value>
-    <comment>review</comment>
-  </data>
   <data name="Rules_Update_Title" xml:space="preserve">
     <value>検出ルール</value>
     <comment>review</comment>
@@ -2067,6 +2059,134 @@
   </data>
   <data name="Uninstall_DataFolder_Body" xml:space="preserve">
     <value>データフォルダー（%LOCALAPPDATA%\FrameLedger：ライブラリ、すべてのセッション、ログ、設定）も削除しますか？後でインストールするために残す場合は「いいえ」を選んでください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Title" xml:space="preserve">
+    <value>データベースのメンテナンス</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Intro" xml:space="preserve">
+    <value>セッションは ledger という 1 つの SQLite ファイルに保存されています。確認とバックアップは読み取りのみです。圧縮は同じ内容でファイルを書き直し、セッションが実行されていないときだけ行います。整理は保持設定に従って生データを削除します。これらの行は Agent のものなので、Agent が実行します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Integrity_Label" xml:space="preserve">
+    <value>整合性の確認</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Integrity_Body" xml:space="preserve">
+    <value>ファイル全体に SQLite の整合性チェックを実行します。読み取りのみです。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Integrity_Button" xml:space="preserve">
+    <value>確認</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Integrity_Ok" xml:space="preserve">
+    <value>問題は見つかりませんでした。SQLite の整合性チェックは "ok" と答えました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Integrity_Problems_Format" xml:space="preserve">
+    <value>SQLite が {0} 件の問題を報告しました。最初の問題: {1}。まずファイルをバックアップしてから、バグを報告してください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Backup_Label" xml:space="preserve">
+    <value>バックアップ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Backup_Body" xml:space="preserve">
+    <value>選択したファイルに ledger の整合したコピーを書き込みます。実行中も Agent は記録を続けます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Backup_Button" xml:space="preserve">
+    <value>バックアップ…</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Backup_Filter" xml:space="preserve">
+    <value>SQLite データベース (*.db)|*.db</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Backup_Done_Format" xml:space="preserve">
+    <value>{0} にバックアップしました ({1} MB)。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Backup_IsLedger" xml:space="preserve">
+    <value>そのファイルは ledger そのものです。バックアップには別のファイルを選んでください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Sweep_Label" xml:space="preserve">
+    <value>生データの整理</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Sweep_Body" xml:space="preserve">
+    <value>保持設定に従い、各ゲームの最新のセッションを除くすべてのセッションから、フレームごとのデータとセンサーの系列を削除します。平均値、パーセンタイル、要約の行は残ります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Sweep_Button" xml:space="preserve">
+    <value>整理…</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Sweep_Unlimited" xml:space="preserve">
+    <value>保持は無制限に設定されています (設定 ▸ キャプチャ)。整理するものはありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Sweep_NoAgent" xml:space="preserve">
+    <value>Agent に接続されていません。生データの削除は Agent が行います。Agent を起動してもう一度お試しください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Sweep_AgentTooOld" xml:space="preserve">
+    <value>実行中の Agent は整理機能より前のバージョンです。FrameLedger を再起動して同梱の Agent を起動してから、もう一度お試しください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Sweep_Confirm_Title" xml:space="preserve">
+    <value>生データを削除しますか？</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Sweep_Confirm_Body_Format" xml:space="preserve">
+    <value>各ゲームの最新 {0} 件を除くすべてのセッションのフレームごとのデータとセンサーの系列が完全に削除されます。要約は残りますが、それらのセッションのフレームタイムのグラフは表示されなくなります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Sweep_Confirm_Button" xml:space="preserve">
+    <value>削除</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Sweep_Done_Format" xml:space="preserve">
+    <value>{1} 件のゲームにわたる {0} 件のセッションから生データを削除しました。各ゲームの最新 {2} 件は保持されています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Compact_Label" xml:space="preserve">
+    <value>圧縮</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Compact_Body" xml:space="preserve">
+    <value>削除されたデータで空いた領域をディスクに返すため、ファイルを書き直します。セッションが実行されていないときだけ行います。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Compact_Button" xml:space="preserve">
+    <value>圧縮</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Compact_SessionRunning" xml:space="preserve">
+    <value>セッションが実行中です。圧縮はファイル全体を書き直すため、セッションの終了を待ちます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Compact_Done_Format" xml:space="preserve">
+    <value>圧縮しました: 前 {0} MB、後 {1} MB。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Busy" xml:space="preserve">
+    <value>ledger が使用中でした (Agent が書き込み中)。何も変更されていません。しばらくしてからもう一度お試しください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Failed_Format" xml:space="preserve">
+    <value>完了しませんでした: {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Status_Ready" xml:space="preserve">
+    <value>操作を選んでください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Maintenance_Status_Working" xml:space="preserve">
+    <value>実行中…</value>
     <comment>review</comment>
   </data>
 </root>

@@ -1244,6 +1244,11 @@ carries it**, the Help menu's
 script~~ **LANDED 2026-09-15 (P4 PR-6: `tools/license-gather.ps1` → `legal/licenses/nuget/`, 77 packages, `license-check` §3 both directions; the runtime's notices by `release.yml`)**. Decisions that live only here: D11–D17 below still hold; nothing in P4 may add a third writer to
 `ledger.db` or a message that carries a safety fact over the pipe.
 
+`15_ROADMAP` §P4's last two items were not in the list above: ~~DB maintenance~~ **LANDED 2026-09-15 (P4 PR-7:
+Tools ▸ Database maintenance — the retention sweep on demand is the Agent's, over a new `SweepRetention` command with
+no payload; integrity check, `VACUUM INTO` backup and compaction run in the App and change no row — `06_DATA_MODEL`
+§Retention built note)**, and the accessibility pass, which needs `08_UI` §Accessibility written before any code.
+
 ## P3 — ~~**START HERE**~~ (2026-09-13, owner-approved plan; **code-complete 2026-09-14** — every row below is struck with its PR)
 
 `15_ROADMAP` §P3 is the UI — and since 2026-09-13 it is **all of `08_UI`**, Settings, Logs, the tray

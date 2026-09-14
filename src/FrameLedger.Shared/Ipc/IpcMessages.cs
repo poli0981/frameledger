@@ -44,6 +44,10 @@ public static class IpcMessageType
     public const string Shutdown = "Shutdown";
     public const string ShutdownAck = "ShutdownAck";
 
+    /// <summary>Tools ▸ Database maintenance (P4 PR-7): the on-demand retention sweep, which the Agent runs because the blob tables are its.</summary>
+    public const string SweepRetention = "SweepRetention";
+    public const string SweepRetentionAck = "SweepRetentionAck";
+
     public const string SessionStarted = "SessionStarted";
     public const string SessionProgress = "SessionProgress";
     public const string SessionCompleted = "SessionCompleted";
@@ -269,3 +273,17 @@ public sealed record UpdateRulesAck(string Outcome);
 public sealed record ShutdownRequest;
 
 public sealed record ShutdownAck;
+
+/// <summary>
+/// <c>SweepRetention</c> (P4 PR-7): a trigger, no payload. The Agent applies <c>06_DATA_MODEL</c> §Retention to every
+/// game with the <c>retention.raw_sessions_per_game</c> it reads itself — the client names no number, because the
+/// rows it would delete are the Agent's (§Writer ownership).
+/// </summary>
+public sealed record SweepRetentionRequest;
+
+/// <summary>
+/// What the sweep did: <see cref="Keep"/> is the setting it applied (0 = unlimited, and then nothing was swept),
+/// <see cref="Games"/> the games that have sessions, <see cref="Sessions"/> the sessions whose raw frame or sensor
+/// series were removed. Aggregates and segments are never touched.
+/// </summary>
+public sealed record SweepRetentionAck(int Keep, int Games, int Sessions);

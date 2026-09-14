@@ -251,6 +251,30 @@ public sealed class PagesLoadTests
     /// Content, the library's does not — so this turns red the day upstream renders it, which is the day the
     /// override comes out rather than staying by habit.
     /// </summary>
+    /// <summary>Tools ▸ Database maintenance's dialog body (P4 PR-7) under the real dictionaries: its icons, the converter key, every binding.</summary>
+    [Fact]
+    public async Task TheDatabaseMaintenanceDialogLoads()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        var vm = new DatabaseMaintenanceViewModel(new LedgerMaintenance(s.Db), s.Db.Path, new NoAgent(), new NoSaver(), new NoMaintenancePrompts(), new RegisteredSettings(new SqliteSettingsStore(s.Db)));
+
+        double width = await OnStaAsync(() =>
+        {
+            var content = new Dialogs.DatabaseMaintenanceContent(vm);
+            Render(content);
+            return content.ActualWidth;
+        });
+
+        width.Should().BeGreaterThan(0);
+    }
+
+    private sealed class NoMaintenancePrompts : IDatabaseMaintenancePrompts
+    {
+        public Task ShowAsync(CancellationToken ct = default) => Task.CompletedTask;
+
+        public Task<bool> ConfirmSweepAsync(int keep, CancellationToken ct = default) => Task.FromResult(false);
+    }
+
     [Fact]
     public async Task TheInfoBarTemplateRendersItsContent()
     {

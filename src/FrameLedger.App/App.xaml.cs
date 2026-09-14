@@ -284,6 +284,9 @@ public partial class App : System.Windows.Application
 
         AddUpdates(services);
 
+        // Tools ▸ Database maintenance (P4 PR-7): the dialog builds its view model over the ledger each time it opens.
+        services.AddSingleton<IDatabaseMaintenancePrompts, DatabaseMaintenancePrompts>();
+
         // FR-11 (P3 PR-9): the gate over the UI's own table, the documents this build embeds, the window that shows them.
         services.AddSingleton<ILegalAcceptanceStore, SqliteLegalAcceptanceStore>();
         services.AddSingleton(static sp => new LegalGate(sp.GetRequiredService<ILegalAcceptanceStore>(), LegalDocuments.Load()));

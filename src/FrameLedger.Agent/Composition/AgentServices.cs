@@ -168,7 +168,9 @@ internal static class AgentServices
             // P3 PR-4 (D14): the reviewed disclosure this Agent stamps against, and its own clock for the stamp.
             SafetyDisclosure.Version,
             TimeProvider.System,
-            sp.GetRequiredService<VkLayerReconciler>()));
+            sp.GetRequiredService<VkLayerReconciler>(),
+            // P4 PR-7: the on-demand retention sweep, over the Agent's own settings read and its own blob tables.
+            ct => new RetentionSweep(sp.GetRequiredService<ISessionRepository>(), sp.GetRequiredService<RegisteredSettings>()).RunAsync(ct)));
         services.AddSingleton<IIpcRequestHandler>(static sp => new AgentRequestHandler(
             AgentIdentityFactory.OfThisProcess(sp.GetRequiredService<AgentPaths>().VkLayerDirectory),
             TelemetryDescriptor(),

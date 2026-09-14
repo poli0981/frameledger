@@ -52,6 +52,22 @@ public sealed class SqliteSessionRepository : ISessionRepository
         "DELETE FROM sensor_blobs WHERE session_id IN ("
         + "SELECT id FROM sessions WHERE game_id = @gameId ORDER BY started_at DESC, id DESC LIMIT -1 OFFSET @keep)";
 
+    // P4 PR-7: the same rule as the two statements above, every game at once. ROW_NUMBER per game in the same order
+    // the per-game sweep uses (newest first, id breaking a tie), so the two can never disagree about which session
+    // is the Nth; a removed game's kept sessions are in `sessions` and are swept like any other.
+    private const string _rankedBeyondKeep =
+        "SELECT id FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY game_id ORDER BY started_at DESC, id DESC) AS rn FROM sessions) WHERE rn > @keep";
+
+    private const string _countSweptSessions =
+        "SELECT COUNT(*) FROM (" + _rankedBeyondKeep + ") r "
+        + "WHERE EXISTS (SELECT 1 FROM frame_blobs f WHERE f.session_id = r.id) OR EXISTS (SELECT 1 FROM sensor_blobs s WHERE s.session_id = r.id)";
+
+    private const string _sweepFramesAll = "DELETE FROM frame_blobs WHERE session_id IN (" + _rankedBeyondKeep + ")";
+
+    private const string _sweepSensorsAll = "DELETE FROM sensor_blobs WHERE session_id IN (" + _rankedBeyondKeep + ")";
+
+    private const string _countGamesWithSessions = "SELECT COUNT(DISTINCT game_id) FROM sessions";
+
     private readonly LedgerDatabase _db;
 
     public SqliteSessionRepository(LedgerDatabase db) => _db = db ?? throw new ArgumentNullException(nameof(db));
@@ -146,6 +162,19 @@ public sealed class SqliteSessionRepository : ISessionRepository
             int frames = await c.ExecuteAsync(new CommandDefinition(_sweepFrames, new { gameId, keep }, tx, cancellationToken: token)).ConfigureAwait(false);
             await c.ExecuteAsync(new CommandDefinition(_sweepSensors, new { gameId, keep }, tx, cancellationToken: token)).ConfigureAwait(false);
             return frames;
+        }, ct);
+    }
+
+    public ValueTask<RetentionSweepResult> SweepRetentionAllAsync(int keep, CancellationToken ct = default)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(keep, 1);
+        return _db.WriteAsync(async (c, tx, token) =>
+        {
+            long sessions = await c.ExecuteScalarAsync<long>(new CommandDefinition(_countSweptSessions, new { keep }, tx, cancellationToken: token)).ConfigureAwait(false);
+            await c.ExecuteAsync(new CommandDefinition(_sweepFramesAll, new { keep }, tx, cancellationToken: token)).ConfigureAwait(false);
+            await c.ExecuteAsync(new CommandDefinition(_sweepSensorsAll, new { keep }, tx, cancellationToken: token)).ConfigureAwait(false);
+            long games = await c.ExecuteScalarAsync<long>(new CommandDefinition(_countGamesWithSessions, transaction: tx, cancellationToken: token)).ConfigureAwait(false);
+            return new RetentionSweepResult(checked((int)games), checked((int)sessions));
         }, ct);
     }
 

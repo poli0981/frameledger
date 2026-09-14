@@ -270,12 +270,6 @@
   <data name="Nav_Settings" xml:space="preserve">
     <value>Settings</value>
   </data>
-  <data name="NotYet_Body" xml:space="preserve">
-    <value>This part of FrameLedger arrives with a later build.</value>
-  </data>
-  <data name="NotYet_Title" xml:space="preserve">
-    <value>Not built yet</value>
-  </data>
   <data name="Rules_Update_Title" xml:space="preserve">
     <value>Detection rules</value>
   </data>
@@ -1556,5 +1550,101 @@
   </data>
   <data name="Uninstall_DataFolder_Body" xml:space="preserve">
     <value>Also delete the data folder (%LOCALAPPDATA%\FrameLedger: your library, every session, logs and settings)? Choose No to keep it for a later install.</value>
+  </data>
+  <data name="Maintenance_Title" xml:space="preserve">
+    <value>Database maintenance</value>
+  </data>
+  <data name="Maintenance_Intro" xml:space="preserve">
+    <value>Your sessions live in one SQLite file, the ledger. Checking and backing up only read it. Compacting rewrites the file with the same contents and waits until no session runs. Sweeping removes raw series by your retention setting; the Agent does it, because those rows are the Agent's.</value>
+  </data>
+  <data name="Maintenance_Integrity_Label" xml:space="preserve">
+    <value>Check integrity</value>
+  </data>
+  <data name="Maintenance_Integrity_Body" xml:space="preserve">
+    <value>Runs SQLite's integrity check over the whole file. Reads only.</value>
+  </data>
+  <data name="Maintenance_Integrity_Button" xml:space="preserve">
+    <value>Check</value>
+  </data>
+  <data name="Maintenance_Integrity_Ok" xml:space="preserve">
+    <value>No problems found: SQLite's integrity check answered "ok".</value>
+  </data>
+  <data name="Maintenance_Integrity_Problems_Format" xml:space="preserve">
+    <value>SQLite reported {0} problem(s). The first: {1}. Back up the file before anything else, then report a bug.</value>
+  </data>
+  <data name="Maintenance_Backup_Label" xml:space="preserve">
+    <value>Back up</value>
+  </data>
+  <data name="Maintenance_Backup_Body" xml:space="preserve">
+    <value>Writes a consistent copy of the ledger to a file you choose. The Agent keeps recording while it runs.</value>
+  </data>
+  <data name="Maintenance_Backup_Button" xml:space="preserve">
+    <value>Back up…</value>
+  </data>
+  <data name="Maintenance_Backup_Filter" xml:space="preserve">
+    <value>SQLite database (*.db)|*.db</value>
+  </data>
+  <data name="Maintenance_Backup_Done_Format" xml:space="preserve">
+    <value>Backed up to {0} ({1} MB).</value>
+  </data>
+  <data name="Maintenance_Backup_IsLedger" xml:space="preserve">
+    <value>That file is the ledger itself. Choose another file for the backup.</value>
+  </data>
+  <data name="Maintenance_Sweep_Label" xml:space="preserve">
+    <value>Sweep raw data</value>
+  </data>
+  <data name="Maintenance_Sweep_Body" xml:space="preserve">
+    <value>Removes the per-frame and sensor series of all but the newest sessions per game, as the retention setting says. Averages, percentiles and charts' summary rows stay.</value>
+  </data>
+  <data name="Maintenance_Sweep_Button" xml:space="preserve">
+    <value>Sweep…</value>
+  </data>
+  <data name="Maintenance_Sweep_Unlimited" xml:space="preserve">
+    <value>Retention is unlimited (Settings ▸ Capture), so there is nothing to sweep.</value>
+  </data>
+  <data name="Maintenance_Sweep_NoAgent" xml:space="preserve">
+    <value>The Agent is not connected. The raw data is the Agent's to remove; start it and try again.</value>
+  </data>
+  <data name="Maintenance_Sweep_AgentTooOld" xml:space="preserve">
+    <value>The running Agent predates the sweep. Restart FrameLedger so the Agent beside it starts, then try again.</value>
+  </data>
+  <data name="Maintenance_Sweep_Confirm_Title" xml:space="preserve">
+    <value>Remove raw data?</value>
+  </data>
+  <data name="Maintenance_Sweep_Confirm_Body_Format" xml:space="preserve">
+    <value>The per-frame and sensor series of every session except the newest {0} per game will be removed for good. Summaries stay; frame-time charts of those sessions will no longer draw.</value>
+  </data>
+  <data name="Maintenance_Sweep_Confirm_Button" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="Maintenance_Sweep_Done_Format" xml:space="preserve">
+    <value>Raw series removed from {0} session(s) across {1} game(s); the newest {2} per game are kept.</value>
+  </data>
+  <data name="Maintenance_Compact_Label" xml:space="preserve">
+    <value>Compact</value>
+  </data>
+  <data name="Maintenance_Compact_Body" xml:space="preserve">
+    <value>Rewrites the file to give space freed by removed data back to the disk. Waits until no session runs.</value>
+  </data>
+  <data name="Maintenance_Compact_Button" xml:space="preserve">
+    <value>Compact</value>
+  </data>
+  <data name="Maintenance_Compact_SessionRunning" xml:space="preserve">
+    <value>A session is running. Compacting rewrites the whole file, so it waits until the session ends.</value>
+  </data>
+  <data name="Maintenance_Compact_Done_Format" xml:space="preserve">
+    <value>Compacted: {0} MB before, {1} MB after.</value>
+  </data>
+  <data name="Maintenance_Busy" xml:space="preserve">
+    <value>The ledger was busy (the Agent was writing). Nothing changed; try again in a moment.</value>
+  </data>
+  <data name="Maintenance_Failed_Format" xml:space="preserve">
+    <value>That did not complete: {0}</value>
+  </data>
+  <data name="Maintenance_Status_Ready" xml:space="preserve">
+    <value>Choose an action.</value>
+  </data>
+  <data name="Maintenance_Status_Working" xml:space="preserve">
+    <value>Working…</value>
   </data>
 </root>

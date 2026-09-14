@@ -1,0 +1,66 @@
+<UserControl x:Class="FrameLedger.App.Dialogs.DatabaseMaintenanceContent"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:res="clr-namespace:FrameLedger.App"
+             xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             d:DataContext="{d:DesignInstance Type=vm:DatabaseMaintenanceViewModel}"
+             mc:Ignorable="d"
+             MinWidth="600">
+    <!--
+        Tools ▸ Database maintenance (P4 PR-7, 06_DATA_MODEL §Retention). Four actions, each one card and one button; the
+        outcome of the last one is the line at the bottom. Two only read (check, back up); compacting is refused while a
+        session runs; the sweep is the Agent's and asks first. Buttons are disabled while an action runs.
+    -->
+    <StackPanel>
+        <ui:TextBlock MaxWidth="700" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Maintenance_Intro}" TextWrapping="Wrap" />
+
+        <ui:CardControl Margin="0,12,0,0" Icon="{ui:SymbolIcon ShieldCheckmark24}">
+            <ui:CardControl.Header>
+                <StackPanel>
+                    <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Maintenance_Integrity_Label}" />
+                    <ui:TextBlock MaxWidth="440" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Maintenance_Integrity_Body}" TextWrapping="Wrap" />
+                </StackPanel>
+            </ui:CardControl.Header>
+            <ui:Button MinWidth="120" Command="{Binding CheckIntegrityCommand}" Content="{x:Static res:Strings.Maintenance_Integrity_Button}" />
+        </ui:CardControl>
+
+        <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Save24}">
+            <ui:CardControl.Header>
+                <StackPanel>
+                    <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Maintenance_Backup_Label}" />
+                    <ui:TextBlock MaxWidth="440" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Maintenance_Backup_Body}" TextWrapping="Wrap" />
+                </StackPanel>
+            </ui:CardControl.Header>
+            <ui:Button MinWidth="120" Command="{Binding BackUpCommand}" Content="{x:Static res:Strings.Maintenance_Backup_Button}" />
+        </ui:CardControl>
+
+        <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Broom24}">
+            <ui:CardControl.Header>
+                <StackPanel>
+                    <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Maintenance_Sweep_Label}" />
+                    <ui:TextBlock MaxWidth="440" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Maintenance_Sweep_Body}" TextWrapping="Wrap" />
+                </StackPanel>
+            </ui:CardControl.Header>
+            <ui:Button MinWidth="120" Command="{Binding SweepCommand}" Content="{x:Static res:Strings.Maintenance_Sweep_Button}" />
+        </ui:CardControl>
+
+        <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon ArrowMinimize24}">
+            <ui:CardControl.Header>
+                <StackPanel>
+                    <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Maintenance_Compact_Label}" />
+                    <ui:TextBlock MaxWidth="440" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Maintenance_Compact_Body}" TextWrapping="Wrap" />
+                </StackPanel>
+            </ui:CardControl.Header>
+            <ui:Button MinWidth="120" Command="{Binding CompactCommand}" Content="{x:Static res:Strings.Maintenance_Compact_Button}" />
+        </ui:CardControl>
+
+        <DockPanel Margin="0,12,0,0">
+            <ui:ProgressRing Width="16" Height="16" Margin="0,0,8,0" DockPanel.Dock="Left" IsIndeterminate="True"
+                             Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" />
+            <ui:TextBlock MaxWidth="680" HorizontalAlignment="Left" Text="{Binding Status}" TextWrapping="Wrap" />
+        </DockPanel>
+    </StackPanel>
+</UserControl>

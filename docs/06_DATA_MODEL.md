@@ -2,7 +2,7 @@
 
 `%LOCALAPPDATA%\FrameLedger\ledger.db`. Pragmas: `journal_mode=WAL`, `synchronous=NORMAL`, `foreign_keys=ON`, `busy_timeout=5000`. `Microsoft.Data.Sqlite` + Dapper; all writes in explicit transactions.
 
-**Writer ownership:** Agent writes `sessions`, `session_segments`, `frame_blobs`, `sensor_blobs`, `hardware_snapshots`, the hook-state columns on `games`, **and since P4 PR-1 (2026-09-14) the *detected* columns on `games`** — `engine`, `engine_version`, `platform` under the per-field provenance rule (`05_DETECTION` §Caching: a `user` field is never touched), `capability_flags` whole, and the cache key `detection_rules_version` / `detection_exe_size_bytes` / `detection_exe_mtime_ms` — through `IGameRepository.ApplyDetectionAsync` only. The UI and the Agent were both already writers of `games`; this adds columns to the Agent's half, not a third writer (HANDOFF §P4). **And since P4 PR-4 the UI's library import writes `platform`, `store_id` and `game_version` through `ApplyStoreMetadataAsync`** — the same per-field provenance rule, badged `detected` (a store's record is not the user's typing), on columns the UI already owned. UI writes `games` (user-editable fields — since P3 PR-3 that is the FR-1.3 metadata, the `*_default` tri-states, and `removed_at`; never a `hook_*` column), `session_annotations` (tags, notes, and since schema 0002 the FR-8.3 overrides — which is WHY they are on this table and not on `sessions`), `settings`, `legal_acceptance`. Both read everything. The ports say the same in their names: `IGameRepository.UpdateMetadataAsync` / `SetTriStateDefaultAsync` / `RemoveAsync`, `ISessionAnnotationRepository`, `RegisteredSettings`, `ILegalAcceptanceStore.RecordAsync` (all P3 PR-3).
+**Writer ownership:** Agent writes `sessions`, `session_segments`, `frame_blobs`, `sensor_blobs`, `hardware_snapshots`, the hook-state columns on `games`, **and since P4 PR-1 (2026-09-14) the *detected* columns on `games`** — `engine`, `engine_version`, `platform` under the per-field provenance rule (`05_DETECTION` §Caching: a `user` field is never touched), `capability_flags` whole, and the cache key `detection_rules_version` / `detection_exe_size_bytes` / `detection_exe_mtime_ms` — through `IGameRepository.ApplyDetectionAsync` only. The UI and the Agent were both already writers of `games`; this adds columns to the Agent's half, not a third writer (HANDOFF §P4). **And since P4 PR-4 the UI's library import writes `platform`, `store_id` and `game_version` through `ApplyStoreMetadataAsync`** — the same per-field provenance rule, badged `detected` (a store's record is not the user's typing), on columns the UI already owned. **Maintenance (P4 PR-7) adds no writer:** the retention sweep on demand is the Agent's, asked over the pipe; the UI's `VACUUM` rewrites pages with the same contents and changes no row (§Retention built note). UI writes `games` (user-editable fields — since P3 PR-3 that is the FR-1.3 metadata, the `*_default` tri-states, and `removed_at`; never a `hook_*` column), `session_annotations` (tags, notes, and since schema 0002 the FR-8.3 overrides — which is WHY they are on this table and not on `sessions`), `settings`, `legal_acceptance`. Both read everything. The ports say the same in their names: `IGameRepository.UpdateMetadataAsync` / `SetTriStateDefaultAsync` / `RemoveAsync`, `ISessionAnnotationRepository`, `RegisteredSettings`, `ILegalAcceptanceStore.RecordAsync` (all P3 PR-3).
 
 ## Schema (v2 — hook architecture)
 
@@ -384,6 +384,18 @@ Because Tier-1 and Tier-2 sessions carry different fields, every query that comp
 ## Retention
 
 Default: raw blobs for the **last 20 sessions per game** (configurable N or unlimited — `retention.raw_sessions_per_game`, 0 = unlimited, §Settings registry). Aggregates and segments kept forever. Sweep at finalize + on demand (Tools → DB maintenance, which also offers `PRAGMA integrity_check`, `VACUUM`, backup).
+
+> **Built 2026-09-15 (P4 PR-7).** The on-demand sweep is the **Agent's**: the App sends `SweepRetention` (`07_IPC`),
+> and the Agent runs `ISessionRepository.SweepRetentionAllAsync` — the finalize's per-game rule for every game in one
+> transaction, `ROW_NUMBER() OVER (PARTITION BY game_id ORDER BY started_at DESC, id DESC)`, so the two can never
+> disagree about which session is the Nth, and a removed game's kept sessions are swept like any other. A keep of 0
+> never reaches it: unlimited is honoured by not sweeping. The other three run in the App through
+> `Infrastructure.Persistence.LedgerMaintenance` and change no row: `PRAGMA integrity_check`; a backup through
+> `VACUUM INTO` (a complete, consistent copy while the Agent keeps writing; never over an existing file and never onto
+> the ledger, its WAL or its shared-memory file — the save dialog's "replace?" would otherwise have deleted the live
+> database); and compaction, `VACUUM` + `wal_checkpoint(TRUNCATE)`, refused while a fresh `GetStatus` reports a
+> session. `LedgerDatabase.MaintainAsync` is the one way to run a statement outside a transaction, and it is for
+> these statements only.
 
 ## Migrations
 

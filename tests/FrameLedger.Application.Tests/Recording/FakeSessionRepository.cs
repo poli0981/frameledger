@@ -38,6 +38,17 @@ internal sealed class FakeSessionRepository : ISessionRepository
         return ValueTask.FromResult(SweptPerCall);
     }
 
+    /// <summary>Every keep an all-games sweep was asked for (P4 PR-7), and the result it answers.</summary>
+    public List<int> SweepAlls { get; } = [];
+
+    public RetentionSweepResult SweepAllResult { get; set; } = new(0, 0);
+
+    public ValueTask<RetentionSweepResult> SweepRetentionAllAsync(int keep, CancellationToken ct = default)
+    {
+        SweepAlls.Add(keep);
+        return ValueTask.FromResult(SweepAllResult);
+    }
+
     public ValueTask<FrameBlobs?> FindFramesAsync(long sessionId, CancellationToken ct = default) =>
         ValueTask.FromResult(sessionId >= 1 && sessionId <= Stored.Count ? Stored[(int)sessionId - 1].Frames : null);
 

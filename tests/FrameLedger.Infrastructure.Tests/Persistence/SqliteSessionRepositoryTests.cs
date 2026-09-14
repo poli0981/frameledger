@@ -199,6 +199,45 @@ public sealed class SqliteSessionRepositoryTests
     }
 
     [Fact]
+    public async Task SweepingEveryGameKeepsTheNewestNOfEachAndCountsWhatWent()
+    {
+        // P4 PR-7: Tools ▸ Database maintenance's sweep, the per-game rule above applied to every game in one statement.
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        (long first, long snapshotId) = await SeedAsync(f);
+        long second = (await new SqliteGameRepository(f.Db).EnsureAsync(new ExecutableFingerprint { ExePath = @"C:\Games\U\u.exe", SizeBytes = 3, MtimeUnixMs = 4 }, "U", Ct)).Id;
+        var repo = new SqliteSessionRepository(f.Db);
+        var firstIds = new List<long>();
+        for (int i = 0; i < 4; i++)
+        {
+            firstIds.Add(await repo.InsertFinalizedAsync(new FinalizedSession { Row = Row(first, snapshotId, started: DateTimeOffset.UnixEpoch.AddHours(i)), Frames = Frames(10) }, Ct));
+        }
+
+        // The second game's oldest session carries sensors only (a recording nothing measured): swept, and counted once.
+        await repo.InsertFinalizedAsync(new FinalizedSession
+        {
+            Row = Row(second, snapshotId, started: DateTimeOffset.UnixEpoch),
+            Sensors = [new SensorBlob { Series = "gpu_temp", Hz = 1, Codec = SeriesCodec.Tag, Data = SeriesCodec.EncodeFloat32([1f]) }],
+        }, Ct);
+        long secondNew = await repo.InsertFinalizedAsync(new FinalizedSession { Row = Row(second, snapshotId, started: DateTimeOffset.UnixEpoch.AddHours(9)), Frames = Frames(10) }, Ct);
+        await repo.InsertFinalizedAsync(new FinalizedSession { Row = Row(second, snapshotId, started: DateTimeOffset.UnixEpoch.AddHours(10)), Frames = Frames(10) }, Ct);
+
+        RetentionSweepResult result = await repo.SweepRetentionAllAsync(keep: 2, Ct);
+
+        result.Should().Be(new RetentionSweepResult(Games: 2, Sessions: 3));
+        (await repo.FindFramesAsync(firstIds[0], Ct)).Should().BeNull();
+        (await repo.FindFramesAsync(firstIds[1], Ct)).Should().BeNull();
+        (await repo.FindFramesAsync(firstIds[2], Ct)).Should().NotBeNull("each game keeps its own newest two");
+        (await repo.FindFramesAsync(secondNew, Ct)).Should().NotBeNull();
+        long sensors = await f.Db.ReadAsync((c, ct) => c.ExecuteScalarAsync<long>(new CommandDefinition("SELECT COUNT(*) FROM sensor_blobs", cancellationToken: ct)), Ct);
+        sensors.Should().Be(0);
+        (await repo.ListRecentAsync(10, Ct)).Should().HaveCount(7, "aggregates and segments are kept forever");
+        (await repo.SweepRetentionAllAsync(keep: 2, Ct)).Should().Be(new RetentionSweepResult(Games: 2, Sessions: 0), "a second sweep finds nothing left to remove");
+
+        Func<Task> zero = async () => await repo.SweepRetentionAllAsync(keep: 0, Ct).ConfigureAwait(false);
+        await zero.Should().ThrowAsync<ArgumentOutOfRangeException>("a keep of zero would delete every raw series; unlimited is the caller's to honour by not sweeping");
+    }
+
+    [Fact]
     public async Task ListRecentIsNewestFirstAndBounded()
     {
         await using LedgerFixture f = await LedgerFixture.OpenAsync();

@@ -265,12 +265,6 @@
   <data name="Nav_Settings" xml:space="preserve">
     <value>Cài đặt</value>
   </data>
-  <data name="NotYet_Body" xml:space="preserve">
-    <value>Phần này của FrameLedger sẽ có ở bản sau.</value>
-  </data>
-  <data name="NotYet_Title" xml:space="preserve">
-    <value>Chưa xây dựng</value>
-  </data>
   <data name="Rules_Update_Title" xml:space="preserve">
     <value>Quy tắc nhận diện</value>
   </data>
@@ -1551,5 +1545,101 @@
   </data>
   <data name="Uninstall_DataFolder_Body" xml:space="preserve">
     <value>Xoá luôn thư mục dữ liệu (%LOCALAPPDATA%\FrameLedger: thư viện, mọi phiên, log và cài đặt)? Chọn Không để giữ lại cho lần cài sau.</value>
+  </data>
+  <data name="Maintenance_Title" xml:space="preserve">
+    <value>Bảo trì cơ sở dữ liệu</value>
+  </data>
+  <data name="Maintenance_Intro" xml:space="preserve">
+    <value>Các phiên của bạn nằm trong một tệp SQLite gọi là ledger. Kiểm tra và sao lưu chỉ đọc tệp. Thu gọn ghi lại tệp với cùng nội dung và chỉ chạy khi không có phiên nào. Dọn dẹp xoá dữ liệu thô theo cài đặt lưu giữ; việc này do Agent làm vì các dòng đó thuộc về Agent.</value>
+  </data>
+  <data name="Maintenance_Integrity_Label" xml:space="preserve">
+    <value>Kiểm tra toàn vẹn</value>
+  </data>
+  <data name="Maintenance_Integrity_Body" xml:space="preserve">
+    <value>Chạy kiểm tra toàn vẹn của SQLite trên toàn bộ tệp. Chỉ đọc.</value>
+  </data>
+  <data name="Maintenance_Integrity_Button" xml:space="preserve">
+    <value>Kiểm tra</value>
+  </data>
+  <data name="Maintenance_Integrity_Ok" xml:space="preserve">
+    <value>Không phát hiện vấn đề: kiểm tra toàn vẹn của SQLite trả lời "ok".</value>
+  </data>
+  <data name="Maintenance_Integrity_Problems_Format" xml:space="preserve">
+    <value>SQLite báo {0} vấn đề. Vấn đề đầu tiên: {1}. Hãy sao lưu tệp trước tiên, rồi báo lỗi.</value>
+  </data>
+  <data name="Maintenance_Backup_Label" xml:space="preserve">
+    <value>Sao lưu</value>
+  </data>
+  <data name="Maintenance_Backup_Body" xml:space="preserve">
+    <value>Ghi một bản sao nhất quán của ledger vào tệp bạn chọn. Agent vẫn ghi phiên trong lúc sao lưu.</value>
+  </data>
+  <data name="Maintenance_Backup_Button" xml:space="preserve">
+    <value>Sao lưu…</value>
+  </data>
+  <data name="Maintenance_Backup_Filter" xml:space="preserve">
+    <value>Cơ sở dữ liệu SQLite (*.db)|*.db</value>
+  </data>
+  <data name="Maintenance_Backup_Done_Format" xml:space="preserve">
+    <value>Đã sao lưu vào {0} ({1} MB).</value>
+  </data>
+  <data name="Maintenance_Backup_IsLedger" xml:space="preserve">
+    <value>Tệp đó chính là ledger. Hãy chọn tệp khác để sao lưu.</value>
+  </data>
+  <data name="Maintenance_Sweep_Label" xml:space="preserve">
+    <value>Dọn dữ liệu thô</value>
+  </data>
+  <data name="Maintenance_Sweep_Body" xml:space="preserve">
+    <value>Xoá chuỗi dữ liệu từng khung hình và cảm biến của mọi phiên trừ các phiên mới nhất của mỗi game, theo cài đặt lưu giữ. Giá trị trung bình, phân vị và các dòng tóm tắt vẫn được giữ.</value>
+  </data>
+  <data name="Maintenance_Sweep_Button" xml:space="preserve">
+    <value>Dọn dẹp…</value>
+  </data>
+  <data name="Maintenance_Sweep_Unlimited" xml:space="preserve">
+    <value>Lưu giữ đang là không giới hạn (Cài đặt ▸ Ghi), nên không có gì để dọn.</value>
+  </data>
+  <data name="Maintenance_Sweep_NoAgent" xml:space="preserve">
+    <value>Agent chưa kết nối. Dữ liệu thô do Agent xoá; hãy khởi động Agent rồi thử lại.</value>
+  </data>
+  <data name="Maintenance_Sweep_AgentTooOld" xml:space="preserve">
+    <value>Agent đang chạy là phiên bản cũ chưa có chức năng dọn dẹp. Hãy khởi động lại FrameLedger để Agent đi kèm được khởi động, rồi thử lại.</value>
+  </data>
+  <data name="Maintenance_Sweep_Confirm_Title" xml:space="preserve">
+    <value>Xoá dữ liệu thô?</value>
+  </data>
+  <data name="Maintenance_Sweep_Confirm_Body_Format" xml:space="preserve">
+    <value>Chuỗi dữ liệu từng khung hình và cảm biến của mọi phiên, trừ {0} phiên mới nhất của mỗi game, sẽ bị xoá vĩnh viễn. Phần tóm tắt được giữ; biểu đồ thời gian khung hình của các phiên đó sẽ không còn vẽ được.</value>
+  </data>
+  <data name="Maintenance_Sweep_Confirm_Button" xml:space="preserve">
+    <value>Xoá</value>
+  </data>
+  <data name="Maintenance_Sweep_Done_Format" xml:space="preserve">
+    <value>Đã xoá dữ liệu thô của {0} phiên trên {1} game; {2} phiên mới nhất của mỗi game được giữ lại.</value>
+  </data>
+  <data name="Maintenance_Compact_Label" xml:space="preserve">
+    <value>Thu gọn</value>
+  </data>
+  <data name="Maintenance_Compact_Body" xml:space="preserve">
+    <value>Ghi lại tệp để trả lại cho ổ đĩa phần dung lượng đã được giải phóng. Chỉ chạy khi không có phiên nào.</value>
+  </data>
+  <data name="Maintenance_Compact_Button" xml:space="preserve">
+    <value>Thu gọn</value>
+  </data>
+  <data name="Maintenance_Compact_SessionRunning" xml:space="preserve">
+    <value>Đang có phiên chạy. Thu gọn ghi lại toàn bộ tệp nên phải chờ phiên kết thúc.</value>
+  </data>
+  <data name="Maintenance_Compact_Done_Format" xml:space="preserve">
+    <value>Đã thu gọn: trước {0} MB, sau {1} MB.</value>
+  </data>
+  <data name="Maintenance_Busy" xml:space="preserve">
+    <value>Ledger đang bận (Agent đang ghi). Không có gì thay đổi; hãy thử lại sau giây lát.</value>
+  </data>
+  <data name="Maintenance_Failed_Format" xml:space="preserve">
+    <value>Thao tác không hoàn tất: {0}</value>
+  </data>
+  <data name="Maintenance_Status_Ready" xml:space="preserve">
+    <value>Hãy chọn một thao tác.</value>
+  </data>
+  <data name="Maintenance_Status_Working" xml:space="preserve">
+    <value>Đang thực hiện…</value>
   </data>
 </root>

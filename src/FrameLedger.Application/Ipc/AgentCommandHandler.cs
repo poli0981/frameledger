@@ -33,6 +33,7 @@ public sealed class AgentCommandHandler
     private readonly string? _disclosureVersion;
     private readonly TimeProvider _clock;
     private readonly VkLayerReconciler? _layer;
+    private readonly Func<CancellationToken, ValueTask<SweepRetentionAck>>? _sweepRetention;
 
     /// <summary>
     /// <c>disclosureVersion</c> is the version of FR-2.1's reviewed disclosure this Agent carries
@@ -41,8 +42,11 @@ public sealed class AgentCommandHandler
     /// </summary>
     public AgentCommandHandler(IGameRepository games, IGameConsentStore consent, IAntiCheatGuard guard, IExecutableIdentitySource identity,
         CaptureOrchestrator orchestrator, CapturePause pause, IAgentLifetime lifetime, Func<CancellationToken, ValueTask<string>> updateRules,
-        string? disclosureVersion = null, TimeProvider? clock = null, VkLayerReconciler? layer = null)
+        string? disclosureVersion = null, TimeProvider? clock = null, VkLayerReconciler? layer = null,
+        Func<CancellationToken, ValueTask<SweepRetentionAck>>? sweepRetention = null)
     {
+        // P4 PR-7: Tools ▸ Database maintenance's sweep — composed under --serve, absent (UnknownType) where nothing wired it.
+        _sweepRetention = sweepRetention;
         _clock = clock ?? TimeProvider.System;
         // P4 PR-2: the layer's registration follows every consent change this handler makes (12_BUILD §The Vulkan
         // layer is not registered at install time); null in tests that do not care, and the sweep reconciles anyway.
@@ -75,6 +79,8 @@ public sealed class AgentCommandHandler
             IpcMessageType.StopSession => Stop(request),
             IpcMessageType.UpdateRules => IpcCodec.Encode(IpcMessageType.UpdateRulesAck, request.Id, new UpdateRulesAck(await _updateRules(ct).ConfigureAwait(false))),
             IpcMessageType.Shutdown => Shutdown(request),
+            IpcMessageType.SweepRetention when _sweepRetention is not null =>
+                IpcCodec.Encode(IpcMessageType.SweepRetentionAck, request.Id, await _sweepRetention(ct).ConfigureAwait(false)),
             _ => null,
         };
     }
