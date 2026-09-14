@@ -48,6 +48,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
     private readonly AddGameFlow _addGame;
     private readonly UpdateService _updates;
+    private readonly IDatabaseMaintenancePrompts _maintenance;
     private readonly BugReportFlow _bugReports;
     private readonly IUrlOpener _urls;
     private readonly SessionSelection _selection;
@@ -57,8 +58,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
     public MainWindowViewModel(AgentConnection agent, ISnackbarService snackbar, IShellPresence shell, IPageNavigator navigator, AddGameFlow addGame, SafetyNotices notices,
         BugReportFlow bugReports, IUrlOpener urls, SessionSelection selection, SessionExportService exports, ISessionSummaryOpener summaries, ImportLibraryFlow import,
-        UpdateService updates)
+        UpdateService updates, IDatabaseMaintenancePrompts maintenance)
     {
+        _maintenance = maintenance ?? throw new ArgumentNullException(nameof(maintenance));
         Notices = notices ?? throw new ArgumentNullException(nameof(notices));
         _updates = updates ?? throw new ArgumentNullException(nameof(updates));
         _import = import ?? throw new ArgumentNullException(nameof(import));
@@ -267,8 +269,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     private void NoSelection() =>
         _snackbar.Show(Strings.Menu_File_Export, Strings.Export_NoSelection_Body, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.Info24), TimeSpan.FromSeconds(4));
 
-    /// <summary>Every menu item of <c>08_UI</c> §Menu bar that a later slice builds says so, in a 4 s snackbar, rather than doing nothing.</summary>
+    /// <summary>
+    /// Tools ▸ Database maintenance… (P4 PR-7): integrity check, backup, the retention sweep (the Agent's) and compaction.
+    /// It was the last menu item that said "not built yet"; the placeholder command went with it.
+    /// </summary>
     [RelayCommand]
-    private void NotYet() =>
-        _snackbar.Show(Strings.NotYet_Title, Strings.NotYet_Body, ControlAppearance.Secondary, new SymbolIcon(SymbolRegular.Info24), TimeSpan.FromSeconds(4));
+    private Task DatabaseMaintenanceAsync() => _maintenance.ShowAsync();
 }

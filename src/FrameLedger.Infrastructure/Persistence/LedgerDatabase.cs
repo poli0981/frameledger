@@ -111,6 +111,26 @@ public sealed class LedgerDatabase : IAsyncDisposable
     }
 
     /// <summary>
+    /// Runs <paramref name="work"/> OUTSIDE any transaction, serialised with every other caller (P4 PR-7): for the
+    /// statements SQLite refuses inside one — <c>VACUUM</c>, <c>VACUUM INTO</c>, <c>wal_checkpoint</c> — and only for
+    /// maintenance. A domain write goes through <see cref="WriteAsync{T}"/>.
+    /// </summary>
+    public async ValueTask<T> MaintainAsync<T>(Func<SqliteConnection, CancellationToken, Task<T>> work, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(work);
+
+        await _gate.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            return await work(_connection, ct).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    /// <summary>
     /// Runs <paramref name="work"/> inside one explicit transaction: committed when it returns, rolled back
     /// when it throws. <c>06_DATA_MODEL</c>: "all writes in explicit transactions".
     /// </summary>

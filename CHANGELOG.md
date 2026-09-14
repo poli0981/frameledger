@@ -21,6 +21,28 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Added
 
+- **P4 PR-7 — Tools ▸ Database maintenance: integrity check, backup, the retention sweep on demand, compaction
+  (2026-09-15).** `06_DATA_MODEL` §Retention promised the four since P0; the menu item said "not built yet". **The
+  sweep is the Agent's**, because `frame_blobs` and `sensor_blobs` are (§Writer ownership): the App sends the new
+  `SweepRetention` command (no payload; `07_IPC` row), and the Agent's `RetentionSweep` reads its own
+  `retention.raw_sessions_per_game` and runs `ISessionRepository.SweepRetentionAllAsync` — the finalize's per-game
+  rule for every game in one transaction (`ROW_NUMBER() OVER (PARTITION BY game_id …)`, a removed game's kept sessions
+  included), answering `SweepRetentionAck { keep, games, sessions }`; unlimited (0) never reaches the repository, which
+  refuses a keep below 1. The other three run in the App through `LedgerMaintenance` and change no row:
+  `PRAGMA integrity_check`; a backup through `VACUUM INTO`, which is consistent while the Agent writes and **refuses
+  the ledger, its WAL and its shared-memory file as a destination** — the save dialog's "replace?" would otherwise have
+  let "delete the existing file first" delete the live database; and compaction (`VACUUM` + `wal_checkpoint(TRUNCATE)`)
+  refused while a fresh `GetStatus` reports a session, with SQLite's busy error a status line rather than a crash.
+  `LedgerDatabase.MaintainAsync` runs a statement outside a transaction, for these only. The dialog
+  (`DatabaseMaintenanceContent` / `DatabaseMaintenanceViewModel`, `DatabaseMaintenancePrompts`) confirms the sweep with a
+  Danger button and shows one status line; the menu's last `NotYetCommand` and the `NotYet_*` strings are gone.
+  Strings en/vi/ja. Tests: `LedgerMaintenanceTests` (healthy, a backup that opens at the same schema with the same rows,
+  never over a file or onto the ledger in any spelling, compaction that returns the space of ten swept series),
+  `SqliteSessionRepositoryTests` (every game keeps its own newest N, a sensors-only session counted once, a second
+  sweep finds nothing, a keep of 0 refused), `RetentionSweepTests`, `AgentCommandHandlerTests` (the composed sweep
+  answers; none composed is not a command), `DatabaseMaintenanceViewModelTests` (twelve cases, the ledger-as-backup
+  refusal among them), `PagesLoadTests` (the dialog loads under the real dictionaries). Docs: `07_IPC`,
+  `06_DATA_MODEL` §Retention and §Writer ownership, `08_UI`, `15_ROADMAP`, HANDOFF §P4.
 - **P4 PR-6 — every NuGet package the App and the Agent ship has its licence text, and the gate keeps it true
   (2026-09-15).** `tools/license-gather.ps1` reads the two publish roots' restore output (`obj/project.assets.json`,
   win-x64, every package with a runtime or native asset that is not a suppressed build-time dependency) and writes

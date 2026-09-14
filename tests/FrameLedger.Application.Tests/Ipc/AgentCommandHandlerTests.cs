@@ -128,7 +128,7 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         public int RulesUpdates { get; set; }
     }
 
-    private async Task<Harness> BuildAsync(bool consented = true, string? disclosureVersion = null)
+    private async Task<Harness> BuildAsync(bool consented = true, string? disclosureVersion = null, Func<CancellationToken, ValueTask<SweepRetentionAck>>? sweep = null)
     {
         _db ??= await LedgerDatabase.OpenAsync(Path.Combine(_dir, LedgerPaths.DatabaseFileName), ct: Ct).ConfigureAwait(false);
         var consent = new SqliteGameConsentStore(_db);
@@ -153,7 +153,7 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         Harness h = null!;
         var handler = new AgentCommandHandler(games, consent, guard, identity, orchestrator, pause, lifetime,
             _ => { h.RulesUpdates++; return ValueTask.FromResult("AlreadyCurrent"); },
-            disclosureVersion, new FakeClock());
+            disclosureVersion, new FakeClock(), sweepRetention: sweep);
         h = new Harness
         {
             Handler = handler,
@@ -166,6 +166,33 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
             Lifetime = lifetime,
         };
         return h;
+    }
+
+    [Fact]
+    public async Task SweepRetentionRunsTheComposedSweepAndAnswersItsCounts()
+    {
+        int runs = 0;
+        Harness h = await BuildAsync(sweep: _ =>
+        {
+            runs++;
+            return ValueTask.FromResult(new SweepRetentionAck(20, 3, 7));
+        }).ConfigureAwait(true);
+
+        IpcEnvelope ack = await AskAsync(h.Handler, IpcMessageType.SweepRetention, new SweepRetentionRequest()).ConfigureAwait(true);
+
+        ack.Type.Should().Be(IpcMessageType.SweepRetentionAck);
+        IpcCodec.Payload<SweepRetentionAck>(ack).Should().Be(new SweepRetentionAck(20, 3, 7));
+        runs.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task WithNoSweepComposedSweepRetentionIsNotACommandThisHalfAnswers()
+    {
+        Harness h = await BuildAsync().ConfigureAwait(true);
+
+        byte[]? ack = await h.Handler.HandleAsync(IpcCodec.Decode(IpcCodec.Encode(IpcMessageType.SweepRetention, "1", new SweepRetentionRequest())), Ct).ConfigureAwait(true);
+
+        ack.Should().BeNull("the request handler then answers UnknownType, which the App reads as an Agent that predates the sweep");
     }
 
     private static async Task<IpcEnvelope> AskAsync<T>(AgentCommandHandler handler, string type, T payload)

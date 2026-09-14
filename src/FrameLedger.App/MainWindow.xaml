@@ -51,7 +51,7 @@
                 <MenuItem Header="{x:Static res:Strings.Menu_Tools_UpdateRules}" Command="{Binding ViewModel.UpdateRulesCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_Tools_VulkanLayer}" Command="{Binding ViewModel.VulkanLayerCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_Tools_OpenDataFolder}" Command="{Binding ViewModel.OpenDataFolderCommand}" />
-                <MenuItem Header="{x:Static res:Strings.Menu_Tools_DbMaintenance}" Command="{Binding ViewModel.NotYetCommand}" />
+                <MenuItem Header="{x:Static res:Strings.Menu_Tools_DbMaintenance}" Command="{Binding ViewModel.DatabaseMaintenanceCommand}" />
             </MenuItem>
             <MenuItem Header="{x:Static res:Strings.Menu_Help}">
                 <MenuItem Header="{x:Static res:Strings.Menu_Help_CheckUpdates}" Command="{Binding ViewModel.CheckForUpdatesCommand}" />

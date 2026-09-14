@@ -295,6 +295,38 @@ public static class Strings
         nameof(Logs_Showing_Format),
         nameof(Logs_Source_Agent),
         nameof(Logs_Source_Ui),
+        nameof(Maintenance_Backup_Body),
+        nameof(Maintenance_Backup_Button),
+        nameof(Maintenance_Backup_Done_Format),
+        nameof(Maintenance_Backup_Filter),
+        nameof(Maintenance_Backup_IsLedger),
+        nameof(Maintenance_Backup_Label),
+        nameof(Maintenance_Busy),
+        nameof(Maintenance_Compact_Body),
+        nameof(Maintenance_Compact_Button),
+        nameof(Maintenance_Compact_Done_Format),
+        nameof(Maintenance_Compact_Label),
+        nameof(Maintenance_Compact_SessionRunning),
+        nameof(Maintenance_Failed_Format),
+        nameof(Maintenance_Integrity_Body),
+        nameof(Maintenance_Integrity_Button),
+        nameof(Maintenance_Integrity_Label),
+        nameof(Maintenance_Integrity_Ok),
+        nameof(Maintenance_Integrity_Problems_Format),
+        nameof(Maintenance_Intro),
+        nameof(Maintenance_Status_Ready),
+        nameof(Maintenance_Status_Working),
+        nameof(Maintenance_Sweep_AgentTooOld),
+        nameof(Maintenance_Sweep_Body),
+        nameof(Maintenance_Sweep_Button),
+        nameof(Maintenance_Sweep_Confirm_Body_Format),
+        nameof(Maintenance_Sweep_Confirm_Button),
+        nameof(Maintenance_Sweep_Confirm_Title),
+        nameof(Maintenance_Sweep_Done_Format),
+        nameof(Maintenance_Sweep_Label),
+        nameof(Maintenance_Sweep_NoAgent),
+        nameof(Maintenance_Sweep_Unlimited),
+        nameof(Maintenance_Title),
         nameof(Menu_File),
         nameof(Menu_File_AddGame),
         nameof(Menu_File_Exit),
@@ -326,8 +358,6 @@ public static class Strings
         nameof(Notice_Refused_Recording),
         nameof(Notice_Refused_Title_Format),
         nameof(Notice_Unhooked_Title),
-        nameof(NotYet_Body),
-        nameof(NotYet_Title),
         nameof(Override_Apply),
         nameof(Override_Body),
         nameof(Override_Default),
@@ -1079,6 +1109,70 @@ public static class Strings
 
     public static string Logs_Source_Ui => ResourceManager.GetString(nameof(Logs_Source_Ui), Culture) ?? nameof(Logs_Source_Ui);
 
+    public static string Maintenance_Backup_Body => ResourceManager.GetString(nameof(Maintenance_Backup_Body), Culture) ?? nameof(Maintenance_Backup_Body);
+
+    public static string Maintenance_Backup_Button => ResourceManager.GetString(nameof(Maintenance_Backup_Button), Culture) ?? nameof(Maintenance_Backup_Button);
+
+    public static string Maintenance_Backup_Done_Format => ResourceManager.GetString(nameof(Maintenance_Backup_Done_Format), Culture) ?? nameof(Maintenance_Backup_Done_Format);
+
+    public static string Maintenance_Backup_Filter => ResourceManager.GetString(nameof(Maintenance_Backup_Filter), Culture) ?? nameof(Maintenance_Backup_Filter);
+
+    public static string Maintenance_Backup_IsLedger => ResourceManager.GetString(nameof(Maintenance_Backup_IsLedger), Culture) ?? nameof(Maintenance_Backup_IsLedger);
+
+    public static string Maintenance_Backup_Label => ResourceManager.GetString(nameof(Maintenance_Backup_Label), Culture) ?? nameof(Maintenance_Backup_Label);
+
+    public static string Maintenance_Busy => ResourceManager.GetString(nameof(Maintenance_Busy), Culture) ?? nameof(Maintenance_Busy);
+
+    public static string Maintenance_Compact_Body => ResourceManager.GetString(nameof(Maintenance_Compact_Body), Culture) ?? nameof(Maintenance_Compact_Body);
+
+    public static string Maintenance_Compact_Button => ResourceManager.GetString(nameof(Maintenance_Compact_Button), Culture) ?? nameof(Maintenance_Compact_Button);
+
+    public static string Maintenance_Compact_Done_Format => ResourceManager.GetString(nameof(Maintenance_Compact_Done_Format), Culture) ?? nameof(Maintenance_Compact_Done_Format);
+
+    public static string Maintenance_Compact_Label => ResourceManager.GetString(nameof(Maintenance_Compact_Label), Culture) ?? nameof(Maintenance_Compact_Label);
+
+    public static string Maintenance_Compact_SessionRunning => ResourceManager.GetString(nameof(Maintenance_Compact_SessionRunning), Culture) ?? nameof(Maintenance_Compact_SessionRunning);
+
+    public static string Maintenance_Failed_Format => ResourceManager.GetString(nameof(Maintenance_Failed_Format), Culture) ?? nameof(Maintenance_Failed_Format);
+
+    public static string Maintenance_Integrity_Body => ResourceManager.GetString(nameof(Maintenance_Integrity_Body), Culture) ?? nameof(Maintenance_Integrity_Body);
+
+    public static string Maintenance_Integrity_Button => ResourceManager.GetString(nameof(Maintenance_Integrity_Button), Culture) ?? nameof(Maintenance_Integrity_Button);
+
+    public static string Maintenance_Integrity_Label => ResourceManager.GetString(nameof(Maintenance_Integrity_Label), Culture) ?? nameof(Maintenance_Integrity_Label);
+
+    public static string Maintenance_Integrity_Ok => ResourceManager.GetString(nameof(Maintenance_Integrity_Ok), Culture) ?? nameof(Maintenance_Integrity_Ok);
+
+    public static string Maintenance_Integrity_Problems_Format => ResourceManager.GetString(nameof(Maintenance_Integrity_Problems_Format), Culture) ?? nameof(Maintenance_Integrity_Problems_Format);
+
+    public static string Maintenance_Intro => ResourceManager.GetString(nameof(Maintenance_Intro), Culture) ?? nameof(Maintenance_Intro);
+
+    public static string Maintenance_Status_Ready => ResourceManager.GetString(nameof(Maintenance_Status_Ready), Culture) ?? nameof(Maintenance_Status_Ready);
+
+    public static string Maintenance_Status_Working => ResourceManager.GetString(nameof(Maintenance_Status_Working), Culture) ?? nameof(Maintenance_Status_Working);
+
+    public static string Maintenance_Sweep_AgentTooOld => ResourceManager.GetString(nameof(Maintenance_Sweep_AgentTooOld), Culture) ?? nameof(Maintenance_Sweep_AgentTooOld);
+
+    public static string Maintenance_Sweep_Body => ResourceManager.GetString(nameof(Maintenance_Sweep_Body), Culture) ?? nameof(Maintenance_Sweep_Body);
+
+    public static string Maintenance_Sweep_Button => ResourceManager.GetString(nameof(Maintenance_Sweep_Button), Culture) ?? nameof(Maintenance_Sweep_Button);
+
+    public static string Maintenance_Sweep_Confirm_Body_Format => ResourceManager.GetString(nameof(Maintenance_Sweep_Confirm_Body_Format), Culture) ?? nameof(Maintenance_Sweep_Confirm_Body_Format);
+
+    public static string Maintenance_Sweep_Confirm_Button => ResourceManager.GetString(nameof(Maintenance_Sweep_Confirm_Button), Culture) ?? nameof(Maintenance_Sweep_Confirm_Button);
+
+    public static string Maintenance_Sweep_Confirm_Title => ResourceManager.GetString(nameof(Maintenance_Sweep_Confirm_Title), Culture) ?? nameof(Maintenance_Sweep_Confirm_Title);
+
+    public static string Maintenance_Sweep_Done_Format => ResourceManager.GetString(nameof(Maintenance_Sweep_Done_Format), Culture) ?? nameof(Maintenance_Sweep_Done_Format);
+
+    public static string Maintenance_Sweep_Label => ResourceManager.GetString(nameof(Maintenance_Sweep_Label), Culture) ?? nameof(Maintenance_Sweep_Label);
+
+    public static string Maintenance_Sweep_NoAgent => ResourceManager.GetString(nameof(Maintenance_Sweep_NoAgent), Culture) ?? nameof(Maintenance_Sweep_NoAgent);
+
+    public static string Maintenance_Sweep_Unlimited => ResourceManager.GetString(nameof(Maintenance_Sweep_Unlimited), Culture) ?? nameof(Maintenance_Sweep_Unlimited);
+
+    public static string Maintenance_Title => ResourceManager.GetString(nameof(Maintenance_Title), Culture) ?? nameof(Maintenance_Title);
+
     public static string Menu_File => ResourceManager.GetString(nameof(Menu_File), Culture) ?? nameof(Menu_File);
 
     public static string Menu_File_AddGame => ResourceManager.GetString(nameof(Menu_File_AddGame), Culture) ?? nameof(Menu_File_AddGame);
@@ -1140,10 +1234,6 @@ public static class Strings
     public static string Notice_Refused_Title_Format => ResourceManager.GetString(nameof(Notice_Refused_Title_Format), Culture) ?? nameof(Notice_Refused_Title_Format);
 
     public static string Notice_Unhooked_Title => ResourceManager.GetString(nameof(Notice_Unhooked_Title), Culture) ?? nameof(Notice_Unhooked_Title);
-
-    public static string NotYet_Body => ResourceManager.GetString(nameof(NotYet_Body), Culture) ?? nameof(NotYet_Body);
-
-    public static string NotYet_Title => ResourceManager.GetString(nameof(NotYet_Title), Culture) ?? nameof(NotYet_Title);
 
     public static string Override_Apply => ResourceManager.GetString(nameof(Override_Apply), Culture) ?? nameof(Override_Apply);
 

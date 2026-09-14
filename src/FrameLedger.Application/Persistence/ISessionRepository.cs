@@ -28,6 +28,14 @@ public interface ISessionRepository
 
     ValueTask<int> SweepRetentionAsync(long gameId, int keep, CancellationToken ct = default);
 
+    /// <summary>
+    /// <c>06_DATA_MODEL</c> §Retention on demand (P4 PR-7): the per-game rule of <see cref="SweepRetentionAsync"/> for
+    /// every game at once, a removed game whose sessions were kept included, in one transaction. <paramref name="keep"/>
+    /// must be at least 1 — "unlimited" is the caller's to honour by not sweeping, never a keep of zero that deletes
+    /// every raw series.
+    /// </summary>
+    ValueTask<RetentionSweepResult> SweepRetentionAllAsync(int keep, CancellationToken ct = default);
+
     ValueTask<FrameBlobs?> FindFramesAsync(long sessionId, CancellationToken ct = default);
 
     /// <summary>The session's segments in frame order (the ribbon, <c>08_UI</c> §Session summary).</summary>
