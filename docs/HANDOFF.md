@@ -1240,8 +1240,8 @@ and `VkLayerReconciler` moving the HKCU registration after every consent change 
 carries it**, the Help menu's
 ~~Documentation~~ / ~~Check for updates~~ / ~~Report a bug~~ items **(Documentation and Report a bug landed with PR-3;
 ~~Check for updates waits for the updater~~ — PR-5; File ▸ Export became the three-leaf submenu `08_UI` specifies)**, and
-`legal/licenses/` populated by the license-gathering
-script. Decisions that live only here: D11–D17 below still hold; nothing in P4 may add a third writer to
+~~`legal/licenses/` populated by the license-gathering
+script~~ **LANDED 2026-09-15 (P4 PR-6: `tools/license-gather.ps1` → `legal/licenses/nuget/`, 77 packages, `license-check` §3 both directions; the runtime's notices by `release.yml`)**. Decisions that live only here: D11–D17 below still hold; nothing in P4 may add a third writer to
 `ledger.db` or a message that carries a safety fact over the pipe.
 
 ## P3 — ~~**START HERE**~~ (2026-09-13, owner-approved plan; **code-complete 2026-09-14** — every row below is struck with its PR)

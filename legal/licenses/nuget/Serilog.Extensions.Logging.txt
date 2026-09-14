@@ -1,0 +1,14 @@
+Serilog.Extensions.Logging 10.0.0
+
+Licence declared: Apache-2.0
+Text below: the shared Apache-2.0 text; the package ships no licence file
+Copyright: not stated by the package
+Authors: Microsoft,Serilog Contributors
+Project: https://github.com/serilog/serilog-extensions-logging
+Ships in: Agent, App
+
+-------------------------------------------------------------------------------
+
+Licensed under the Apache License, Version 2.0. The full text is apache-2.0.txt in the directory above this one.
+
+Copyright: not stated by the package (authors: Microsoft,Serilog Contributors)

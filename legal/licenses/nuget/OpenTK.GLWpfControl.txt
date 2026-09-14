@@ -1,0 +1,42 @@
+OpenTK.GLWpfControl 4.3.3
+
+Licence declared: a URL only: https://github.com/varon/GLWpfControl/blob/master/LICENSE.md
+Text below: tools/license-overrides/OpenTK.GLWpfControl.txt, a reviewed copy of the text behind that URL
+Copyright: Copyright (c) 2022 Team OpenTK.
+Authors: varon NogginBops
+Project: https://www.opentk.net
+Ships in: App
+
+-------------------------------------------------------------------------------
+
+Reviewed override for OpenTK.GLWpfControl 4.3.3 (tools/license-gather.ps1).
+
+The package declares no licence expression and no licence file, only
+<licenseUrl>https://github.com/varon/GLWpfControl/blob/master/LICENSE.md</licenseUrl>. The text below
+is that file, fetched from https://raw.githubusercontent.com/varon/GLWpfControl/master/LICENSE.md on
+2026-09-14, verbatim. It is the default branch as of that day, not a copy pinned to the 4.3.3 tag.
+OpenTK.GLWpfControl arrives transitively under ScottPlot.WPF.
+
+-------------------------------------------------------------------------------
+
+MIT License
+
+Copyright (c) 2019 varon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

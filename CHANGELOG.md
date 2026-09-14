@@ -21,6 +21,38 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Added
 
+- **P4 PR-6 — every NuGet package the App and the Agent ship has its licence text, and the gate keeps it true
+  (2026-09-15).** `tools/license-gather.ps1` reads the two publish roots' restore output (`obj/project.assets.json`,
+  win-x64, every package with a runtime or native asset that is not a suppressed build-time dependency) and writes
+  one text per package into `legal/licenses/nuget/`: the package's own licence file verbatim when it has one; for a
+  URL-only package a reviewed override (`tools/license-overrides/`: Mono.Posix.NETStandard → the Mono LICENSE file
+  its link resolves to, OpenTK.GLWpfControl → its LICENSE.md, both fetched 2026-09-15 with provenance); for an SPDX
+  expression with no file, MIT's text under the package's own `<copyright>` field (never an invented holder —
+  "not stated" when the package states none) or a pointer to the shared Apache-2.0 / MPL-2.0 text with the MPL
+  Source Code Form link. Distinct third-party notice files are copied once (twenty-seven Microsoft.Extensions
+  packages carry the same 78 KB file). An MPL-2.0 package that *applies* Exhibit B is red — the MPL text itself,
+  which carries the sentence as a template, is excluded, as `spike-notes` §M4 learned. **77 packages ship; the
+  notices table named about fifteen** — LibreHardwareMonitorLib's three MPL-2.0 dependencies (BlackSharp.Core,
+  DiskInfoToolkit, RAMSPDToolkit-NDD), HidSharp, Mono.Posix, the OpenTK/GLFW and SkiaSharp/HarfBuzz families under
+  ScottPlot and the Microsoft.Extensions stack were in every build without a row. The three MPL packages were
+  searched upstream the §M4 way (the sentence once per repository, in LICENSE; no source file carries an MPL
+  notice) and are recorded clear in `legal/THIRD_PARTY_NOTICES.md`. `license-check` §3 runs `-Check` (regenerate,
+  compare both directions — a bump, a removal or a hand edit is red) and asserts the shared texts the generated ones
+  point at exist; `build.ps1` runs the gatherer's fourteen-case self-test first. **The output is culture-invariant, and that
+  was measured rather than assumed:** under tr-TR `-Check` went red on an unchanged tree, because PowerShell's `-match`
+  ignores case in the current culture and "LICENSE" lower-cases to "lıcense" there; file names now match with
+  `CultureInvariant`, ordering is ordinal, and a self-test case runs the gatherer under tr-TR in a child process (in-process
+  it proved nothing — the Regex cache kept the first culture — and a culture-sensitive mutant passed until the case
+  moved out). The App's publish now carries
+  `legal/licenses/` as `licenses/` (plus `THIRD_PARTY_NOTICES.md` and the GPL text), and `release.yml` adds the .NET
+  runtime's licence and notices from the runtime packs the publish used (their version follows the SDK, so they
+  are not committed) and asserts all of it in the published tree — verified on a local publish (runtime 10.0.12,
+  84 generated files). The hand copies `wpfui-MIT.txt` and `velopack-MIT.txt` are folded into the generated
+  `nuget/WPF-UI.txt` and `nuget/Velopack.txt`. The generated directory is `nuget/`, not `packages/`: the
+  repository's `.gitignore` ignores every `packages/` (a NuGet-era rule), which would have left CI comparing
+  against nothing. Docs: `THIRD_PARTY_NOTICES` (intro, four transitive rows, two checklist items ticked),
+  `legal/licenses/README.md` (rewritten: what is generated, what is hand-committed, the stale M3/M4 paragraph),
+  `12_BUILD` gate 13, `13_CI_CD` licence guard, `16_WPFUI_SYNTAX` checklist, HANDOFF §P4.
 - **P4 PR-5 — Velopack, the updater, `release.yml`, and one version source (`11_UPDATER`, 2026-09-14).**
   `FrameLedger.App/Update/`: `VelopackUpdateClient` behind the `IUpdateClient` port (Velopack's `UpdateManager` over
   its GitHub source for this repository; the `stable` channel is the releases GitHub does not mark pre-release, `beta`

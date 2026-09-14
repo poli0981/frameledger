@@ -25,6 +25,11 @@
     2. Every vendored third-party component has a licence copy in
        legal/licenses/.
 
+    3. Every NuGet package the App and the Agent SHIP has its licence text in
+       legal/licenses/nuget/, exactly as tools/license-gather.ps1 writes it
+       from this build's restore output (P4 PR-6). Until then this gate knew one
+       package, LibreHardwareMonitorLib, while 77 shipped.
+
     Exit 0 clean, 1 on any violation.
 #>
 [CmdletBinding()]
@@ -360,6 +365,44 @@ else {
     }
 }
 
+# --- 3. Every shipped NuGet package has its licence text ----------------------
+#
+# §1 and §2 cover what is VENDORED into the tree, keyed on directories. What ships
+# from NuGet was covered for one package (§2b) while 77 shipped when this section
+# was written (2026-09-14, P4 PR-6) -- most of them transitive dependencies
+# nobody wrote a row for: LibreHardwareMonitorLib's three MPL-2.0 helpers,
+# ScottPlot's OpenTK and SkiaSharp families, the Microsoft.Extensions stack.
+#
+# tools/license-gather.ps1 reads the two publish roots' restore output, so the
+# list is what the build resolved rather than what someone remembered. -Check
+# regenerates into a temporary directory and compares both directions: a package
+# added, removed or bumped without re-running it, or a hand edit, is red here.
+$gather = Join-Path $PSScriptRoot 'license-gather.ps1'
+if (-not (Test-Path $gather)) {
+    $violations.Add('tools/license-gather.ps1 is missing, so no shipped NuGet package has been checked for its licence text')
+}
+else {
+    $gatherOutput = @(& $gather -Check -RepoRoot $RepoRoot *>&1 | ForEach-Object { "$_" })
+    if ($LASTEXITCODE -ne 0) {
+        foreach ($line in $gatherOutput | Where-Object { $_.TrimStart().StartsWith('- ') }) {
+            $violations.Add('NuGet licence texts: ' + $line.TrimStart().Substring(2))
+        }
+        $violations.Add('legal/licenses/nuget/ is not what tools/license-gather.ps1 writes for this build — run it and commit the result (a package was added, removed, bumped, or a text was edited by hand)')
+    }
+
+    # The generated texts point at shared full texts rather than repeating them;
+    # a pointer to a file that is not there is a licence we do not ship.
+    $packagesDir = Join-Path $licenceDir 'nuget'
+    foreach ($shared in 'apache-2.0.txt', 'mpl-2.0.txt') {
+        $pointing = @(if (Test-Path $packagesDir) {
+                Get-ChildItem $packagesDir -Filter *.txt | Where-Object { Select-String -Path $_.FullName -SimpleMatch "$shared in the directory above" -Quiet }
+            })
+        if ($pointing.Count -gt 0 -and -not (Test-Path (Join-Path $licenceDir $shared))) {
+            $violations.Add("$($pointing.Count) package text(s) in legal/licenses/nuget/ rely on legal/licenses/$shared, which is missing")
+        }
+    }
+}
+
 # --- Report -----------------------------------------------------------------
 if ($violations.Count -gt 0) {
     Write-Host 'LICENCE CHECK FAILED' -ForegroundColor Red
@@ -369,5 +412,5 @@ if ($violations.Count -gt 0) {
     exit 1
 }
 
-Write-Host 'licence check OK — no rejected vendor SDK material, vendored licences present' -ForegroundColor Green
+Write-Host 'licence check OK — no rejected vendor SDK material, vendored licences present, every shipped NuGet package has its text' -ForegroundColor Green
 exit 0

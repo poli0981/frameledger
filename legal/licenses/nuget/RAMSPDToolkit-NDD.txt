@@ -1,0 +1,17 @@
+RAMSPDToolkit-NDD 1.4.2
+
+Licence declared: MPL-2.0
+Text below: the shared MPL-2.0 text; the package ships no licence file
+Copyright: Florian K.
+Authors: RAMSPDToolkit-NDD
+Project: https://github.com/Blacktempel/RAMSPDToolkit
+Ships in: Agent, App
+MPL-2.0 Exhibit B: not found in the package's 2 text file(s); the package ships no source, so the upstream repository is where it would have to be ruled out
+
+-------------------------------------------------------------------------------
+
+Subject to the terms of the Mozilla Public License, Version 2.0. The full text is mpl-2.0.txt in the directory above this one.
+
+Source Code Form (MPL-2.0 section 3.2): https://github.com/Blacktempel/RAMSPDToolkit
+
+Copyright: Florian K.

@@ -1,0 +1,14 @@
+Dapper 2.1.79
+
+Licence declared: Apache-2.0
+Text below: the shared Apache-2.0 text; the package ships no licence file
+Copyright: 2019 Stack Exchange, Inc.
+Authors: Sam Saffron,Marc Gravell,Nick Craver
+Project: https://github.com/DapperLib/Dapper
+Ships in: Agent, App
+
+-------------------------------------------------------------------------------
+
+Licensed under the Apache License, Version 2.0. The full text is apache-2.0.txt in the directory above this one.
+
+Copyright: 2019 Stack Exchange, Inc.

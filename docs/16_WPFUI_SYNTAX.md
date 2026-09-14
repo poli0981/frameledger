@@ -198,7 +198,7 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
 - [ ] VS Designer sometimes renders WPF UI controls unstyled at design time — judge by running, not the previewer.
 - [ ] `TargetPageType` navigation requires the page registered in DI; a missing registration throws at runtime — smoke-test every nav item.
 - [ ] resx localization unchanged: `Content="{x:Static res:Strings.Key}"` works on all WPF UI controls (09_I18N).
-- [ ] MIT license copy for WPF UI ships in `legal/licenses/` (THIRD_PARTY_NOTICES checklist) — `wpfui-MIT.txt`, since 2026-09-14.
+- [x] MIT license copy for WPF UI ships in `legal/licenses/` (THIRD_PARTY_NOTICES checklist) — ~~`wpfui-MIT.txt`, since 2026-09-14~~ `legal/licenses/nuget/WPF-UI.txt` since 2026-09-15, generated from the package's own LICENSE.md and carried into the published `licenses/`.
 - [ ] **`ui:InfoBar` renders no Content in 4.3.0.** It is a `ContentControl`, the docs and the §Control mapping row
   above both say "banner with an action button", and the library template has no `ContentPresenter` — so a
   `ui:Button` written as the InfoBar's child compiles, binds, and is never drawn. With `IsClosable="False"` that is a

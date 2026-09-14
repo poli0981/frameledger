@@ -1,6 +1,6 @@
 # FrameLedger — Third-Party Notices
 
-FrameLedger is licensed under **GPL-3.0-only**. It includes or depends on the third-party components below, each under its own license. All listed licenses are compatible with distribution alongside/within a GPL-3.0 application. Full license texts must be shipped in `legal/licenses/` in release packages. Populating that directory is a P4 task, driven by a license-gathering script and enforced at build time by `tools/license-check` (`docs/12_BUILD.md` §Local quality gate).
+FrameLedger is licensed under **GPL-3.0-only**. It includes or depends on the third-party components below, each under its own license. All listed licenses are compatible with distribution alongside/within a GPL-3.0 application. Full license texts must be shipped in `legal/licenses/` in release packages. Populating that directory was a P4 task, driven by a license-gathering script and enforced at build time by `tools/license-check` (`docs/12_BUILD.md` §Local quality gate) — **built 2026-09-15 (P4 PR-6):** `tools/license-gather.ps1` writes one text per NuGet package the App and the Agent ship into `legal/licenses/nuget/` (the list, `INDEX.md`, is read from the build's restore output, not from this table), the gate fails when that directory is not what the script writes, and a release carries the directory plus the .NET runtime's own licence and notices (`release.yml`).
 
 > ⚠ **Bundling audit — last checked 2026-08-05.** Two rows below claimed material
 > this repository does not contain, and the licence gate could not have caught
@@ -32,17 +32,21 @@ FrameLedger is licensed under **GPL-3.0-only**. It includes or depends on the th
 *(The **Intel PresentMon** row was removed on 2026-08-27. It is not bundled, not fetched, not redistributed and no longer used at all — §S31 retired it as a measurement oracle and the owner then dropped it outright — so a notice for it would be over-disclosure, which this document treats as a defect in the same way an omission is. `tools/license-check.ps1`'s matching claim was removed in the same commit, because a bidirectional check whose subject no longer exists cannot go green honestly: it would be asserting agreement about nothing.)*
 | Vulkan headers / loader interfaces | `FrameLedger.VkLayer` implicit layer | Apache-2.0 | Khronos headers; layer implemented against the documented loader–layer interface |
 | LibreHardwareMonitorLib | GPU sensors (all vendors) + CPU/motherboard sensors (optional, elevated) | MPL-2.0 | See §GPU telemetry below. Consumed unmodified |
-| WPF UI (`Wpf.Ui`, lepoco) | Fluent UI theme/controls/navigation | MIT | © lepo.co, Leszek Pomianowski and contributors. License copy must ship with the app (MIT requirement) |
+| WPF UI (`Wpf.Ui`, lepoco) | Fluent UI theme/controls/navigation | MIT | © lepo.co, Leszek Pomianowski and contributors. License copy must ship with the app (MIT requirement) — `legal/licenses/nuget/WPF-UI.txt`, the package's own LICENSE.md |
 | Fluent UI System Icons | Icon font bundled inside WPF UI | MIT | © Microsoft. Segoe Fluent Icons is **not** bundled (its EULA forbids redistribution) and must not be used |
 | CommunityToolkit.Mvvm | MVVM framework | MIT | |
 | ScottPlot 5 | Charts | MIT | |
 | Serilog (+ file sink) | Logging | Apache-2.0 | |
-| Velopack | Installer/updater | MIT | © Velopack Ltd. (the package's copyright field). Referenced by the App since 2026-09-14 (P4 PR-5); the package ships no licence file, so the copy is `legal/licenses/velopack-MIT.txt` |
+| Velopack | Installer/updater | MIT | © Velopack Ltd. (the package's copyright field). Referenced by the App since 2026-09-14 (P4 PR-5); the package ships no licence file, so the text is `legal/licenses/nuget/Velopack.txt` |
 | Microsoft.Data.Sqlite / SQLitePCLraw | Database | MIT / Apache-2.0 | SQLite itself: public domain |
 | Dapper | Data access | Apache-2.0 | |
 | CsWin32 (build-time) | Win32 interop source generator | MIT | Build-time only |
 | NVIDIA NVAPI SDK | NVIDIA GPU telemetry + Reflex latency | MIT | **Vendored 2026-08-05** — nine headers + `amd64/nvapi64.lib`, at `src/native/third_party/nvapi/`. See §GPU telemetry below |
 | H.NotifyIcon.Wpf | Tray icon | MIT | |
+| **Transitive, under LibreHardwareMonitorLib** — BlackSharp.Core, DiskInfoToolkit, RAMSPDToolkit-NDD | Hardware access helpers LHM 0.9.6 depends on | MPL-2.0 | Not named by this table until 2026-09-15. **Exhibit B clear:** authenticated code search of each upstream repository (Blacktempel/BlackSharp, /DiskInfoToolkit, /RAMSPDToolkit) finds the sentence once, in `LICENSE` — the template — and no source file carries an MPL notice at all, so the repository licence governs and §3.3 Secondary Licenses applies. Default branch as searched; the nuspecs pin commits `c70b735c`, `25319eae`, `3b47b960`. Source Code Form links are in each package's text |
+| **Transitive, under LibreHardwareMonitorLib** — HidSharp; Mono.Posix.NETStandard; System.IO.Ports, System.Management, System.CodeDom, System.IO.FileSystem.AccessControl | USB HID, POSIX helpers, serial ports, WMI | Apache-2.0 (HidSharp's LICENSE.txt); MIT (Mono's LICENSE, reviewed override); MIT (Microsoft) | Mono.Posix.NETStandard declares only a URL; its text is the Mono LICENSE file that URL resolves to, fetched 2026-09-15 and committed as `tools/license-overrides/Mono.Posix.NETStandard.txt` |
+| **Transitive, under ScottPlot.WPF** — SkiaSharp, HarfBuzzSharp and their Win32 native assets; OpenTK 4.x; OpenTK.GLWpfControl; OpenTK.redist.glfw | 2-D rendering, text shaping, OpenGL host | MIT; GLFW is zlib (its COPYING.md) | The native Skia and HarfBuzz builds carry their own third-party notices, shipped once each in `legal/licenses/nuget/notices-*.txt`. OpenTK.GLWpfControl declares only a URL (reviewed override, like Mono.Posix) |
+| **Transitive** — Microsoft.Extensions.* (Hosting, DependencyInjection, Logging, Configuration, Options, …), Serilog.Extensions.*, Serilog.Sinks.Console, SQLite (SourceGear's native build), SQLitePCLRaw.* | Host, DI, logging plumbing; the SQLite engine | MIT; Apache-2.0; SQLite is public domain | The complete, versioned list is `legal/licenses/nuget/INDEX.md` — 77 packages on 2026-09-15 |
 | Roslynator, Meziantou.Analyzer, VS Threading Analyzers (build-time) | Static analysis | Apache-2.0 / MIT | Build-time only |
 
 ## GPU telemetry — what is bundled and what is not
@@ -93,10 +97,10 @@ All product names, logos, and brands are property of their respective owners and
 
 ## Attribution requirements checklist (release gate)
 
-- [ ] `legal/licenses/` contains full texts: MIT (per-project copies, **including `nvapi-MIT.txt`**), BSD-2-Clause (MinHook), MPL-2.0, Apache-2.0
+- [x] `legal/licenses/` contains full texts: MIT (per-project copies, **including `nvapi-MIT.txt`**), BSD-2-Clause (MinHook), MPL-2.0, Apache-2.0 — **2026-09-15 (P4 PR-6):** the vendored natives' copies as before, plus one generated text per shipped NuGet package in `legal/licenses/nuget/` (77), gated by `license-check` §3; the .NET runtime's licence and notices are added to the package by `release.yml`. The copies ship: the App's publish carries `legal/licenses/` as `licenses/`
 - [ ] About → Third-party tab lists this table with versions filled from `Directory.Packages.props`
 - ~~PresentMon license + copyright shipped beside the bundled binary~~ — **removed 2026-08-27 with the dependency.** Nothing Intel-authored is distributed by this project
-- [ ] MPL-2.0 source-availability note points to upstream LibreHardwareMonitor repository
+- [x] MPL-2.0 source-availability note points to upstream LibreHardwareMonitor repository — every MPL-2.0 package text in `legal/licenses/nuget/` names its Source Code Form (MPL-2.0 §3.2), LHM's `https://github.com/LibreHardwareMonitor/LibreHardwareMonitor` included (2026-09-15)
 - [x] LHM checked for MPL-2.0 Exhibit B on any depended-upon file — clear as of 0.9.6 / commit `3d331e33`, 2026-08-02
 - [x] **AMD FidelityFX headers are vendored** (2026-09-04) — five headers, MIT **by exception**: `license-check.ps1` §2d asserts each vendored path against the exception list inside the vendored `license.md` and each header's own banner, file by file. No binary, no source
 - [x] **AMD FidelityFX SDK 3.0 host headers are vendored** (2026-09-05) — ten headers at tag `fsr3-v3.0.4`, MIT at the root **and** inline: `license-check.ps1` §2e asserts the root grant and every header's banner, file by file, in a directory of its own because the licence shape differs from the row above. No binary, no source, no shaders

@@ -1,0 +1,14 @@
+Serilog 4.4.0
+
+Licence declared: Apache-2.0
+Text below: the shared Apache-2.0 text; the package ships no licence file
+Copyright: Copyright © Serilog Contributors
+Authors: Serilog Contributors
+Project: https://serilog.net/
+Ships in: Agent, App
+
+-------------------------------------------------------------------------------
+
+Licensed under the Apache License, Version 2.0. The full text is apache-2.0.txt in the directory above this one.
+
+Copyright: Copyright © Serilog Contributors
