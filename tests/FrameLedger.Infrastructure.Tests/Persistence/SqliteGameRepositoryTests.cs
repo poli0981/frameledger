@@ -88,6 +88,39 @@ public sealed class SqliteGameRepositoryTests
         (await repo.ApplyDetectionAsync(row.Id + 99, new DetectionWrite { CapabilityIds = [], RulesVersion = "v", ExeSizeBytes = 0, ExeMtimeMs = 0 }, Ct)).Should().BeFalse();
     }
 
+    /// <summary>The import's write (P4 PR-4) under the same provenance rule: a store fills empty fields and badges them; a user's platform stays; a null store value erases nothing; the hook columns are untouched.</summary>
+    [Fact]
+    public async Task AStoreWriteFillsAndBadgesButNeverOverwritesTheUser()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        var repo = new SqliteGameRepository(f.Db);
+        GameRow row = await repo.EnsureAsync(_exe, "T", Ct);
+
+        (await repo.ApplyStoreMetadataAsync(row.Id, new StoreMetadata { Platform = "steam", StoreId = "1091500", GameVersion = "15877371" }, Ct)).Should().BeTrue();
+        GameRow first = (await repo.FindByIdAsync(row.Id, Ct))!;
+        first.Platform.Should().Be("steam");
+        first.StoreId.Should().Be("1091500");
+        first.GameVersion.Should().Be("15877371");
+        first.HookEnabled.Should().BeFalse("import never enables hooking");
+        JsonSerializer.Deserialize<Dictionary<string, string>>(first.FieldProvenanceJson!).Should().BeEquivalentTo(new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["platform"] = "detected",
+            ["store_id"] = "detected",
+            ["game_version"] = "detected",
+        });
+
+        (await repo.UpdateMetadataAsync(row.Id, new GameMetadata { Name = "T", Platform = "gog", StoreId = "1091500", GameVersion = "15877371" }, Ct)).Should().BeTrue();
+        (await repo.ApplyStoreMetadataAsync(row.Id, new StoreMetadata { Platform = "epic", StoreId = "e1", GameVersion = null }, Ct)).Should().BeTrue();
+        GameRow second = (await repo.FindByIdAsync(row.Id, Ct))!;
+        second.Platform.Should().Be("gog", "the user chose it");
+        second.StoreId.Should().Be("e1", "still badged detected, so refreshed");
+        second.GameVersion.Should().Be("15877371", "null erases nothing");
+
+        Func<Task> notAStore = async () => await repo.ApplyStoreMetadataAsync(row.Id, new StoreMetadata { Platform = "none" }, Ct).ConfigureAwait(true);
+        await notAStore.Should().ThrowAsync<ArgumentException>();
+        (await repo.ApplyStoreMetadataAsync(row.Id + 99, new StoreMetadata { Platform = "steam" }, Ct)).Should().BeFalse();
+    }
+
     private static async Task<long> AddSessionAsync(LedgerFixture f, long gameId)
     {
         long snapshotId = await new SqliteHardwareSnapshotRepository(f.Db).EnsureAsync(new HardwareSnapshot { GpuName = "G" }, DateTimeOffset.UnixEpoch, Ct).ConfigureAwait(false);

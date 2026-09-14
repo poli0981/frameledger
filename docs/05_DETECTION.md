@@ -160,6 +160,24 @@ Everything else in the table is in the data and has a fixture; `rules-validate.p
 
 **Auto-import (FR-1.2):** Steam via `libraryfolders.vdf` → all `appmanifest_*.acf`; GOG via `HKLM\SOFTWARE\WOW6432Node\GOG.com\Games\*`; Epic via `Manifests\*.item`; itch by receipt scan. Import presents a review checklist; nothing is launched, nothing is hooked on import.
 
+> **Built 2026-09-14 (P4 PR-4).** `Application.Import.LibraryImporter` over four `IStoreLibrarySource` adapters in
+> `Infrastructure.Import` — `SteamLibrarySource` (`libraryfolders.vdf` + `appmanifest_*.acf` through
+> `ValveKeyValues`, the Steam root from `HKCU\Software\Valve\Steam\SteamPath`), `GogLibrarySource` (the HKLM
+> keys, read-only, the first HKLM read in the tree), `EpicLibrarySource` (`*.item` JSON: `DisplayName`,
+> `InstallLocation`, `LaunchExecutable`, `AppName`, `AppVersionString`), `ItchLibrarySource`
+> (`%APPDATA%\itch\apps\*\.itch\receipt.json.gz`). **Two stores do not name the game's executable** (Steam,
+> itch): `ExecutableLocator` walks the install three levels deep, drops the helpers by name fragment and takes
+> the largest — a *guess the review list marks as such*; GOG's `exe` and Epic's `LaunchExecutable` are the store's
+> own. The review (`ImportReviewPrompt`) ticks only what can be imported: a row already in the library or with no
+> executable on disk cannot be. Every added row lands exactly as File ▸ Add game… lands it — hooking off — and
+> the store's platform, id and version go through `IGameRepository.ApplyStoreMetadataAsync` under the same
+> provenance rule as a detection write (a value the user typed is never overwritten). The table above says
+> "walk up to the nearest manifest" for the per-game metadata extractors; those are still unbuilt
+> (`GameFileProbe` keeps `manifest_field` uncollected) — the import reads the launchers' own indexes instead.
+> **Privacy:** local files and registry keys the launchers already wrote, read-only; no process is touched, nothing
+> is fetched (CLAUDE.md rule 8's "opt-in store metadata" is the online lookup, which does not exist). First-run
+> step 4 now points at File ▸ Import library… rather than saying "later build".
+
 **Publisher/version order:** store manifest → PE `CompanyName`/`ProductVersion` → *(opt-in)* Steam `appdetails` lookup, cached 7 days.
 
 ## Capability hints (explicitly labelled as such)

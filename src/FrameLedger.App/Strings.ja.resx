@@ -229,6 +229,66 @@
     <value>ライブラリをインポート…</value>
     <comment>review</comment>
   </data>
+  <data name="Import_Title" xml:space="preserve">
+    <value>ライブラリを取り込む</value>
+    <comment>review</comment>
+  </data>
+  <data name="Import_Intro" xml:space="preserve">
+    <value>ストアがインストール済みと報告しているゲームです。追加するものにチェックを付けてください。手動で追加したゲームと同じく、どれもフック無効で始まります。起動も送信もしません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Import_Column_Platform" xml:space="preserve">
+    <value>ストア</value>
+    <comment>review</comment>
+  </data>
+  <data name="Import_Column_Name" xml:space="preserve">
+    <value>ゲーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Import_Column_Exe" xml:space="preserve">
+    <value>追加する実行ファイル</value>
+    <comment>review</comment>
+  </data>
+  <data name="Import_Column_Note" xml:space="preserve">
+    <value>備考</value>
+    <comment>review</comment>
+  </data>
+  <data name="Import_Note_Already" xml:space="preserve">
+    <value>ライブラリに登録済み</value>
+    <comment>review</comment>
+  </data>
+  <data name="Import_Note_NoExe" xml:space="preserve">
+    <value>実行ファイルが見つかりません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Import_Note_Guessed" xml:space="preserve">
+    <value>推定 — 確認してください</value>
+    <comment>review</comment>
+  </data>
+  <data name="Import_Selected_Format" xml:space="preserve">
+    <value>{1} 件中 {0} 件を選択</value>
+    <comment>review</comment>
+  </data>
+  <data name="Import_SelectAll" xml:space="preserve">
+    <value>すべて選択</value>
+    <comment>review</comment>
+  </data>
+  <data name="Import_SelectNone" xml:space="preserve">
+    <value>選択解除</value>
+    <comment>review</comment>
+  </data>
+  <data name="Import_Add" xml:space="preserve">
+    <value>選択したものを追加</value>
+    <comment>review</comment>
+  </data>
+  <data name="Import_NothingFound" xml:space="preserve">
+    <value>このマシンの Steam、GOG Galaxy、Epic、itch.io にインストール済みのゲームは見つかりませんでした。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Import_Done_Format" xml:space="preserve">
+    <value>{0} 件のゲームをフック無効で追加しました。{1} 件はそのままです。</value>
+    <comment>review</comment>
+  </data>
   <data name="Menu_Help" xml:space="preserve">
     <value>ヘルプ(_H)</value>
     <comment>review</comment>
@@ -1862,7 +1922,7 @@
     <comment>review</comment>
   </data>
   <data name="FirstRun_Import_Body" xml:space="preserve">
-    <value>Steam、GOG、Epic、itch.io のライブラリの取り込みは後のビルドで追加されます。今はゲームページからゲームを 1 つずつ追加してください。各ゲームはフックがオフの状態で始まります。</value>
+    <value>FrameLedger は Steam、GOG Galaxy、Epic、itch.io のインストール済みゲームを読み取り、チェックリストから追加できます — 入った後、ゲームページの「ファイル ▸ ライブラリを取り込む…」から。取り込んだゲームはどれも、手動で追加したものと同じくフック無効で始まります。</value>
     <comment>review</comment>
   </data>
   <data name="FirstRun_Import_Header" xml:space="preserve">

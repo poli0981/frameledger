@@ -54,6 +54,10 @@ public sealed class SqliteGameRepository : IGameRepository
 
     private const string _delete = "DELETE FROM games WHERE id = @id";
 
+    private const string _applyStore =
+        "UPDATE games SET platform = @platform, store_id = @storeId, game_version = @gameVersion, field_provenance = @provenance, "
+        + "updated_at = @now WHERE id = @id";
+
     private const string _applyDetection =
         "UPDATE games SET engine = @engine, engine_version = @engineVersion, platform = @platform, capability_flags = @flags, "
         + "field_provenance = @provenance, detection_rules_version = @rules, detection_exe_size_bytes = @size, detection_exe_mtime_ms = @mtime, "
@@ -210,6 +214,41 @@ public sealed class SqliteGameRepository : IGameRepository
                 now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             };
             return await c.ExecuteAsync(new CommandDefinition(_applyDetection, p, tx, cancellationToken: token)).ConfigureAwait(false) == 1;
+        }, ct);
+    }
+
+    public ValueTask<bool> ApplyStoreMetadataAsync(long gameId, StoreMetadata store, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(store);
+        if (!GameMetadata.Platforms.Contains(store.Platform, StringComparer.Ordinal) || string.Equals(store.Platform, "none", StringComparison.Ordinal))
+        {
+            throw new ArgumentException($"'{store.Platform}' is not a store (steam|gog|epic|itch)", nameof(store));
+        }
+
+        return _db.WriteAsync(async (c, tx, token) =>
+        {
+            GameRow? before = await SqliteReaders.ReadOneAsync(c, new CommandDefinition(_selectById, new { id = gameId }, tx, cancellationToken: token), Read).ConfigureAwait(false);
+            if (before is null)
+            {
+                return false;
+            }
+
+            // The same rule as a detection write (05_DETECTION §Caching): the user's value stays, a badged one is
+            // refreshed, an empty one is filled and badged. A store's facts are detected facts, not the user's.
+            Dictionary<string, string> map = FieldProvenance.Parse(before.FieldProvenanceJson);
+            string platform = FieldProvenance.Resolve(map, "platform", string.Equals(before.Platform, "none", StringComparison.Ordinal) ? null : before.Platform, store.Platform) ?? "none";
+            string? storeId = FieldProvenance.Resolve(map, "store_id", before.StoreId, store.StoreId);
+            string? gameVersion = FieldProvenance.Resolve(map, "game_version", before.GameVersion, store.GameVersion);
+            var p = new
+            {
+                id = gameId,
+                platform,
+                storeId,
+                gameVersion,
+                provenance = map.Count == 0 ? before.FieldProvenanceJson : JsonSerializer.Serialize(map, LedgerJsonContext.Default.DictionaryStringString),
+                now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            };
+            return await c.ExecuteAsync(new CommandDefinition(_applyStore, p, tx, cancellationToken: token)).ConfigureAwait(false) == 1;
         }, ct);
     }
 

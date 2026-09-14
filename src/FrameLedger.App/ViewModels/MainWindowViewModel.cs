@@ -40,11 +40,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly SessionSelection _selection;
     private readonly SessionExportService _exports;
     private readonly ISessionSummaryOpener _summaries;
+    private readonly ImportLibraryFlow _import;
 
     public MainWindowViewModel(AgentConnection agent, ISnackbarService snackbar, IShellPresence shell, IPageNavigator navigator, AddGameFlow addGame, SafetyNotices notices,
-        BugReportFlow bugReports, IUrlOpener urls, SessionSelection selection, SessionExportService exports, ISessionSummaryOpener summaries)
+        BugReportFlow bugReports, IUrlOpener urls, SessionSelection selection, SessionExportService exports, ISessionSummaryOpener summaries, ImportLibraryFlow import)
     {
         Notices = notices ?? throw new ArgumentNullException(nameof(notices));
+        _import = import ?? throw new ArgumentNullException(nameof(import));
         _bugReports = bugReports ?? throw new ArgumentNullException(nameof(bugReports));
         _urls = urls ?? throw new ArgumentNullException(nameof(urls));
         _selection = selection ?? throw new ArgumentNullException(nameof(selection));
@@ -155,6 +157,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             _snackbar.Show(Strings.Rules_Update_Title, Strings.Rules_Update_Failed, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.Warning24), TimeSpan.FromSeconds(4));
         }
     }
+
+    /// <summary>File ▸ Import library… (FR-1.2, P4 PR-4): the stores' installed titles through the review checklist; hooking off for every row added.</summary>
+    [RelayCommand]
+    private async Task ImportLibraryAsync() => _ = await _import.RunAsync().ConfigureAwait(true);
 
     /// <summary>Help ▸ Documentation (P4 PR-3): the README is the user-facing entry point; `docs/` is the developers'.</summary>
     [RelayCommand]
