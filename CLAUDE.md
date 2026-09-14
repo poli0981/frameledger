@@ -86,7 +86,8 @@ src/
                                #   (Application.Watch: ProcessWatcher, ProcessTree, DescendantElection,
                                #   CaptureOrchestrator over ISessionRecorder) -> recorder -> the gate;
                                #   `--console` = the operator's verbs incl. `consent grant` (decision D4,
-                               #   ConsentProvenance.AgentConsoleOperator) and `killswitch` (FR-2.4,
+                               #   ConsentProvenance.AgentConsoleOperator — the DEVELOPER path since P3 PR-4
+                               #   built FR-2.1's dialog, ConsentProvenance.ConsentDialog) and `killswitch` (FR-2.4,
                                #   the gate's FOURTH input, decision D7). --data-dir under --console only.
   FrameLedger.App/             # WPF UI — the SHELL since 2026-09-13 (P3 PR-2): Generic Host,
                                #   FluentWindow + TitleBar/Menu/NavigationView, theme + language

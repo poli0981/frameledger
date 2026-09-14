@@ -67,7 +67,8 @@ public sealed class AgentRequestHandler : IIpcRequestHandler
             _identity.OverlayBuildId,
             _identity.VulkanLayerRegistered,
             Descriptor(),
-            _identity.CpuTempAvailable));
+            _identity.CpuTempAvailable,
+            _identity.DisclosureVersion));
     }
 
     /// <summary>Null when the layers cannot be composed at all — an absent descriptor, never an invented one.</summary>

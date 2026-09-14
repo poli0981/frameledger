@@ -61,8 +61,11 @@ public static class IpcErrorCode
     public const string ProtocolMismatch = "ProtocolMismatch";
     public const string HandlerFaulted = "HandlerFaulted";
 
-    /// <summary><c>SetHookEnabled true</c> passed the pre-scan and was NOT stamped: FR-2.1's reviewed disclosure does not exist yet (P3 PR-4).</summary>
+    /// <summary><c>SetHookEnabled true</c> passed the pre-scan and was NOT stamped: this Agent carries no reviewed disclosure (a build without <c>Shared.Safety.SafetyDisclosure</c> wired — the unshipped host's composition, never <c>--serve</c>).</summary>
     public const string DisclosureUnavailable = "DisclosureUnavailable";
+
+    /// <summary><c>SetHookEnabled true</c> named a disclosure version other than the Agent's own: nothing stamped, restart both (D14).</summary>
+    public const string DisclosureVersionMismatch = "DisclosureVersionMismatch";
 
     public const string UnknownGame = "UnknownGame";
 
@@ -89,6 +92,8 @@ public sealed record HelloRequest(string AppVersion, int Protocol);
 /// <c>HelloAck</c>: what this Agent is. <c>etwAvailable</c> from the original table is gone with the ETW tier
 /// (2026-08-28); <c>VulkanLayerRegistered</c> is false by construction today — the layer is handed to a launched
 /// process through <c>VK_ADD_IMPLICIT_LAYER_PATH</c>, never registered machine-wide (P1 item 3).
+/// <c>DisclosureVersion</c> (P3 PR-4, D14) is the FR-2.1 text this Agent stamps against; the App refuses to open
+/// the consent dialog when it differs from its own <c>SafetyDisclosure.Version</c>.
 /// </summary>
 public sealed record HelloAck(
     string AgentVersion,
@@ -98,7 +103,8 @@ public sealed record HelloAck(
     string? OverlayBuildId,
     bool VulkanLayerRegistered,
     string? TelemetrySource,
-    bool CpuTempAvailable);
+    bool CpuTempAvailable,
+    string? DisclosureVersion = null);
 
 /// <summary><c>GetStatus</c>: no payload.</summary>
 public sealed record GetStatusRequest;
@@ -220,7 +226,8 @@ public sealed record LaunchAck(long GameId, bool Accepted, string Outcome, Guid?
 
 /// <summary>
 /// <c>SetHookEnabled</c>. <c>DisclosureVersion</c> is the version of the reviewed FR-2.1 text the client showed; the
-/// Agent compares it to its own and stamps from its own clock (P3 PR-4). It is never a consent timestamp.
+/// Agent compares it to its own and stamps from its own clock (built P3 PR-4: <c>ConsentProvenance.ConsentDialog</c>,
+/// or <c>Error DisclosureVersionMismatch</c>). It is never a consent timestamp.
 /// </summary>
 public sealed record SetHookEnabledRequest(long GameId, bool Enabled, string? DisclosureVersion);
 

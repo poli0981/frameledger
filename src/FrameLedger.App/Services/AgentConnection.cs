@@ -16,7 +16,7 @@ namespace FrameLedger.App.Services;
 /// Runs on the thread pool; <see cref="Changed"/> and <see cref="EventReceived"/> fire there, and a view model
 /// marshals to the dispatcher. Nothing here touches WPF.
 /// </remarks>
-public sealed class AgentConnection : IAsyncDisposable
+public sealed class AgentConnection : IAgentRequests, IAsyncDisposable
 {
     private readonly IAgentLauncher _launcher;
     private readonly Func<PipeClient> _pipes;
@@ -76,6 +76,21 @@ public sealed class AgentConnection : IAsyncDisposable
 
             await WaitForRetryAsync(ct).ConfigureAwait(false);
         }
+    }
+
+    public bool IsConnected => State == AgentConnectionState.Connected && _client is not null;
+
+    /// <inheritdoc />
+    public Task<IpcEnvelope> RequestAsync<TRequest>(string type, TRequest payload, CancellationToken ct = default)
+        where TRequest : class
+    {
+        PipeClient? client = _client;
+        if (client is null || State != AgentConnectionState.Connected)
+        {
+            throw new InvalidOperationException("the Agent is not connected");
+        }
+
+        return client.RequestEnvelopeAsync(type, payload, _options.RequestTimeout, ct);
     }
 
     /// <summary>Ask the Agent for its status now; null when not connected or when the request failed.</summary>

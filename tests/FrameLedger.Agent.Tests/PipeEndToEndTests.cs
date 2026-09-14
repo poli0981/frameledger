@@ -9,6 +9,7 @@ using FrameLedger.Domain.Consent;
 using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Shared.Ipc;
+using FrameLedger.Shared.Safety;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
@@ -251,6 +252,7 @@ public sealed class PipeEndToEndTests : IDisposable
         hello.OverlayBuildId.Should().NotBeNullOrEmpty("the guard answers its build id");
         hello.TelemetrySource.Should().Contain("l1", "the Agent composes L1 + L2 + L3");
         hello.Pid.Should().Be(Environment.ProcessId);
+        hello.DisclosureVersion.Should().Be(SafetyDisclosure.Version, "D14: the Agent names the FR-2.1 text it stamps against");
         (await client.GetStatusAsync(_ack, Ct).ConfigureAwait(false)).State.Should().Be("idle");
     }
 
@@ -316,11 +318,24 @@ public sealed class PipeEndToEndTests : IDisposable
         revoked.Enabled.Should().BeFalse();
         revoked.Outcome.Should().Be(nameof(ConsentWriteOutcome.Written));
 
-        Func<Task> enable = async () => await client.RequestAsync<SetHookEnabledRequest, HookEnabledAck>(IpcMessageType.SetHookEnabled,
+        // The real pre-scan of the scratch directory is clean; what decides the stamp is the disclosure version (D14).
+        Func<Task> otherText = async () => await client.RequestAsync<SetHookEnabledRequest, HookEnabledAck>(IpcMessageType.SetHookEnabled,
             new SetHookEnabledRequest(gameId, Enabled: true, "client-says-so"), IpcMessageType.HookEnabledAck, _ack, Ct).ConfigureAwait(false);
-        (await enable.Should().ThrowAsync<IpcRequestException>().ConfigureAwait(false)).Which.Code.Should().Be(IpcErrorCode.DisclosureUnavailable,
-            "the real pre-scan of the scratch directory is clean, and nothing is stamped without the reviewed disclosure (PR-4)");
-        (await new SqliteGameConsentStore(services.GetRequiredService<LedgerDatabase>()).FindAsync(ConsentedExecutable, Ct).ConfigureAwait(false)).HookEnabled.Should().BeFalse();
+        (await otherText.Should().ThrowAsync<IpcRequestException>().ConfigureAwait(false)).Which.Code.Should().Be(IpcErrorCode.DisclosureVersionMismatch,
+            "a client that showed other text, or none, stamps nothing");
+        var consent = new SqliteGameConsentStore(services.GetRequiredService<LedgerDatabase>());
+        (await consent.FindAsync(ConsentedExecutable, Ct).ConfigureAwait(false)).HookEnabled.Should().BeFalse();
+
+        DateTimeOffset before = DateTimeOffset.UtcNow.AddSeconds(-1);
+        HookEnabledAck enabled = await client.RequestAsync<SetHookEnabledRequest, HookEnabledAck>(IpcMessageType.SetHookEnabled,
+            new SetHookEnabledRequest(gameId, Enabled: true, SafetyDisclosure.Version), IpcMessageType.HookEnabledAck, _ack, Ct).ConfigureAwait(false);
+        enabled.Enabled.Should().BeTrue();
+        enabled.Prescan.Should().Be("clean");
+        GameConsentRecord stamped = await consent.FindAsync(ConsentedExecutable, Ct).ConfigureAwait(false);
+        stamped.HookEnabled.Should().BeTrue();
+        stamped.Provenance.Should().Be(ConsentProvenance.ConsentDialog, "FR-2.1's member, produced by the Agent's stamp and nothing else");
+        stamped.DisclosureVersion.Should().Be(SafetyDisclosure.Version);
+        stamped.ConsentedAt.Should().BeOnOrAfter(before, "the Agent's clock stamped it, just now");
 
         UpdateRulesAck rules = await client.RequestAsync<UpdateRulesRequest, UpdateRulesAck>(IpcMessageType.UpdateRules, new UpdateRulesRequest(), IpcMessageType.UpdateRulesAck, _ack, Ct).ConfigureAwait(false);
         rules.Outcome.Should().NotBeNullOrEmpty();
