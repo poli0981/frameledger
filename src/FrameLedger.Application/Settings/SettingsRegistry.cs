@@ -91,13 +91,21 @@ public static class SettingsRegistry
         AgentReads = true,
     };
 
-    /// <summary><c>11_UPDATER</c>: the Velopack channel (P4 reads it).</summary>
+    /// <summary><c>11_UPDATER</c>: the release feed's channel — <c>stable</c> is the releases GitHub does not mark pre-release, <c>beta</c> adds the ones it does (P4 PR-5 reads it).</summary>
     public static readonly SettingDefinition UpdateChannel = new()
     {
         Key = "update.channel",
         Kind = SettingKind.Choice,
         Default = "stable",
         Choices = ["stable", "beta"],
+    };
+
+    /// <summary><c>11_UPDATER</c> §Flow: the startup silent check, "if enabled" — on by default, one request to GitHub Releases after start (P4 PR-5).</summary>
+    public static readonly SettingDefinition UpdateAutoCheck = new()
+    {
+        Key = "update.auto_check",
+        Kind = SettingKind.Boolean,
+        Default = "1",
     };
 
     /// <summary>CLAUDE.md rule 8: the opt-in store-metadata fetch, off by default.</summary>
@@ -121,7 +129,7 @@ public static class SettingsRegistry
     [
         UiLanguage, UiTheme, UiStartWithWindows, UiMinimizeToTray,
         CaptureBackground, HookingKillSwitch, CaptureMinSessionSeconds, TelemetryIntervalMs, RetentionRawSessionsPerGame,
-        UpdateChannel, PrivacyOnlineMetadata, LogDebug,
+        UpdateChannel, UpdateAutoCheck, PrivacyOnlineMetadata, LogDebug,
     ];
 
     private static readonly Dictionary<string, SettingDefinition> _byKey = All.ToDictionary(static d => d.Key, StringComparer.Ordinal);

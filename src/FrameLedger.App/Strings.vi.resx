@@ -1286,7 +1286,7 @@
     <value>Khởi động FrameLedger cùng Windows</value>
   </data>
   <data name="Settings_UpdateChannel_Body" xml:space="preserve">
-    <value>Lưu ngay; trình cập nhật sẽ có ở bản sau. Không bao giờ cập nhật khi game đang được hook.</value>
+    <value>Ổn định, hoặc ổn định kèm bản tiền phát hành. Bản cập nhật tìm thấy sẽ tải ở nền và chỉ được áp dụng khi bạn khởi động lại — không bao giờ khi game đang được hook.</value>
   </data>
   <data name="Settings_UpdateChannel_Label" xml:space="preserve">
     <value>Kênh</value>
@@ -1461,5 +1461,95 @@
   </data>
   <data name="FirstRun_Title" xml:space="preserve">
     <value>Chào mừng đến với FrameLedger</value>
+  </data>
+  <data name="Update_UpToDate_Format" xml:space="preserve">
+    <value>FrameLedger {0} đã là phiên bản mới nhất.</value>
+  </data>
+  <data name="Update_NotInstalled" xml:space="preserve">
+    <value>Bản này không được cài bằng trình cài đặt FrameLedger nên không tự cập nhật được. Hãy tải bản phát hành từ GitHub.</value>
+  </data>
+  <data name="Update_Available_Title_Format" xml:space="preserve">
+    <value>Có bản cập nhật {0}</value>
+  </data>
+  <data name="Update_Available_Body_Format" xml:space="preserve">
+    <value>Có thể tải phiên bản {0} ({1} MB) ngay bây giờ. Bản cập nhật chỉ được áp dụng khi bạn khởi động lại FrameLedger, và không bao giờ khi game đang được hook.</value>
+  </data>
+  <data name="Update_Notes_Header" xml:space="preserve">
+    <value>Thay đổi</value>
+  </data>
+  <data name="Update_Download" xml:space="preserve">
+    <value>Tải về</value>
+  </data>
+  <data name="Update_Later" xml:space="preserve">
+    <value>Để sau</value>
+  </data>
+  <data name="Update_Unsigned_Footer" xml:space="preserve">
+    <value>Bản phát hành không được ký mã nên SmartScreen có thể cảnh báo. Checksum SHA-256 của mỗi bản phát hành được công bố kèm theo.</value>
+  </data>
+  <data name="Update_Err_Title" xml:space="preserve">
+    <value>Kiểm tra cập nhật thất bại</value>
+  </data>
+  <data name="Update_Err404" xml:space="preserve">
+    <value>Không tìm thấy nguồn phát hành. Kho mã có thể đã chuyển đi.</value>
+  </data>
+  <data name="Update_Err_RateLimited" xml:space="preserve">
+    <value>Đã chạm giới hạn tần suất của GitHub. Kiểm tra ẩn danh cho phép 60 yêu cầu mỗi giờ; hãy thử lại sau khoảng một giờ.</value>
+  </data>
+  <data name="Update_Err_Server" xml:space="preserve">
+    <value>GitHub đang gặp sự cố. Hãy thử lại sau.</value>
+  </data>
+  <data name="Update_Err_Offline" xml:space="preserve">
+    <value>Không kết nối được GitHub: không có mạng, lỗi DNS, hoặc hết thời gian chờ.</value>
+  </data>
+  <data name="Update_Err_Corrupt" xml:space="preserve">
+    <value>Gói tải về không khớp checksum và đã bị loại bỏ. Hãy thử lại; nếu lặp lại lần nữa, hãy báo lỗi.</value>
+  </data>
+  <data name="Update_Err_Unknown" xml:space="preserve">
+    <value>Kiểm tra cập nhật thất bại vì lý do FrameLedger không nhận ra. Chi tiết nằm trong log.</value>
+  </data>
+  <data name="Update_OpenReleases" xml:space="preserve">
+    <value>Mở trang phát hành</value>
+  </data>
+  <data name="Update_Banner_Title" xml:space="preserve">
+    <value>Cập nhật</value>
+  </data>
+  <data name="Update_Banner_Downloading_Format" xml:space="preserve">
+    <value>Đang tải phiên bản {0}… {1}%</value>
+  </data>
+  <data name="Update_Banner_Ready_Format" xml:space="preserve">
+    <value>Phiên bản {0} đã tải xong và được xác minh. Khởi động lại FrameLedger để áp dụng — Agent sẽ được dừng trước và khởi động lại sau đó.</value>
+  </data>
+  <data name="Update_Banner_Deferred_Format" xml:space="preserve">
+    <value>Phiên bản {0} đã tải xong. Đang có phiên chạy nên bản cập nhật chỉ được áp dụng sau khi phiên kết thúc — hãy khởi động lại khi đó.</value>
+  </data>
+  <data name="Update_Banner_Applying_Format" xml:space="preserve">
+    <value>Đang áp dụng phiên bản {0}: dừng Agent, rồi khởi động lại FrameLedger…</value>
+  </data>
+  <data name="Update_Banner_Restart" xml:space="preserve">
+    <value>Khởi động lại để cập nhật</value>
+  </data>
+  <data name="Update_HookedRefused" xml:space="preserve">
+    <value>Đang có phiên chạy. FrameLedger không cập nhật khi game đang được hook hoặc ghi; bản cập nhật sẽ được áp dụng sau khi phiên kết thúc.</value>
+  </data>
+  <data name="Update_AgentStillRunning" xml:space="preserve">
+    <value>Agent không dừng kịp thời nên chưa áp dụng gì. Hãy thử lại sau giây lát.</value>
+  </data>
+  <data name="Update_Toast_Title" xml:space="preserve">
+    <value>Có bản cập nhật</value>
+  </data>
+  <data name="Update_Toast_Body_Format" xml:space="preserve">
+    <value>FrameLedger {0} đang được tải ở nền. Chỉ áp dụng khi bạn khởi động lại.</value>
+  </data>
+  <data name="Settings_AutoCheck_Label" xml:space="preserve">
+    <value>Kiểm tra cập nhật khi khởi động</value>
+  </data>
+  <data name="Settings_AutoCheck_Body" xml:space="preserve">
+    <value>Một yêu cầu tới GitHub Releases vài giây sau khi khởi động, chỉ với bản đã cài đặt. Bản cập nhật tìm thấy sẽ tải ở nền; không có gì được áp dụng nếu bạn không khởi động lại.</value>
+  </data>
+  <data name="Uninstall_DataFolder_Title" xml:space="preserve">
+    <value>Xoá dữ liệu FrameLedger?</value>
+  </data>
+  <data name="Uninstall_DataFolder_Body" xml:space="preserve">
+    <value>Xoá luôn thư mục dữ liệu (%LOCALAPPDATA%\FrameLedger: thư viện, mọi phiên, log và cài đặt)? Chọn Không để giữ lại cho lần cài sau.</value>
   </data>
 </root>

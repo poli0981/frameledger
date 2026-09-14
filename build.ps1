@@ -426,6 +426,12 @@ function Invoke-ProjectGates {
         Skip-Gate 'changelog-check' 'tools/changelog-check.ps1 not implemented yet'
     }
 
+    # The release body's extractor (P4 PR-5, 13_CI_CD §release.yml): self-test only
+    # here — the live pass needs a tag's version and runs in release.yml, where a
+    # missing or empty `## [x.y.z]` section is a red release rather than an empty note.
+    Write-Step 'release-notes'
+    Invoke-Checked 'release-notes (self-test)' { & (Join-Path $repo 'tools/release-notes.ps1') -SelfTest }
+
     # 09_I18N's gate, built with the first .resx family (P3 PR-2, 2026-09-13): every key in en/vi/ja, ja
     # Safety_* marked for human review, the generated accessor current. Self-test first (at least four
     # cases must go red), then the live pass; a tree with no family is red, not skipped.

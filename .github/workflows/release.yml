@@ -1,0 +1,203 @@
+# FrameLedger release (docs/13_CI_CD.md §release.yml, docs/12_BUILD.md §Publish & package).
+#
+# On a tag `v*`: the same gate ci.yml runs, then publish → pack → checksums →
+# a GitHub Release whose body is CHANGELOG.md's section for the version. Three
+# things are refused loudly rather than papered over, because a release is the
+# one artefact nobody can re-run:
+#   - the tag's numeric core must equal the VERSION file (the one version source;
+#     the native VERSIONINFO blocks are built from it and versioninfo-check
+#     compares them);
+#   - CHANGELOG.md must carry a non-empty `## [x.y.z]` section for the tag
+#     (tools/release-notes.ps1) — an empty release body is a defect, not a default;
+#   - the published tree must hold both entry points and every shipped native
+#     binary, checked by name, because `dotnet publish` warns rather than fails
+#     when a .targets-staged DLL is missing.
+#
+# Unsigned by policy (11_UPDATER §Unsigned releases): SHA256SUMS.txt is published
+# beside the assets and printed into the release body.
+#
+# A pre-release tag (`v0.1.0-beta.1`, 13_CI_CD §Branch & release policy) marks the
+# GitHub release as pre-release; the App's stable channel ignores it and the beta
+# channel sees it. The managed assemblies take the tag's full version through
+# -p:Version; the native blocks keep the numeric core (CMake's project() accepts
+# nothing else).
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+# The Release API is contents: write; nothing else is needed and nothing else is granted.
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Set up MSVC (x64)
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      # Same pin as ci.yml, for the same reason (the gate's clang-format step).
+      - name: Pin clang-format
+        shell: pwsh
+        run: |
+          pip install --disable-pip-version-check "clang-format==22.1.3"
+          clang-format --version
+
+      - name: Cache NuGet
+        uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Version gate (tag vs VERSION, CHANGELOG section)
+        id: version
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag = $env:GITHUB_REF_NAME
+          $m = [regex]::Match($tag, '^v(\d+\.\d+\.\d+)(-[0-9A-Za-z.]+)?$')
+          if (-not $m.Success) { throw "tag '$tag' is not vMAJOR.MINOR.PATCH[-prerelease]" }
+          $full = $tag.Substring(1)
+          $core = $m.Groups[1].Value
+          $pre = if ($m.Groups[2].Success) { 'true' } else { 'false' }
+          $file = (Get-Content VERSION -Raw).Trim()
+          if ($core -ne $file) { throw "tag $tag has numeric core $core but VERSION says $file — bump VERSION in the same commit as the changelog section, then tag" }
+          New-Item -ItemType Directory -Force out | Out-Null
+          ./tools/release-notes.ps1 -Version $full -OutFile out/notes.md
+          if ($LASTEXITCODE -ne 0) { throw 'release notes' }
+          "version=$full" >> $env:GITHUB_OUTPUT
+          "prerelease=$pre" >> $env:GITHUB_OUTPUT
+          Write-Host "releasing $full (pre-release: $pre)"
+
+      # 12_BUILD §Release-time token substitution: the effective date of a legal
+      # document is the date it ships. The only placeholder that survives into the
+      # repository, substituted here and nowhere else; the App embeds legal/*.md at
+      # build time, so this runs BEFORE the build.
+      - name: Substitute {{RELEASE_DATE}}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $date = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd')
+          $n = 0
+          foreach ($f in Get-ChildItem legal -Filter *.md) {
+            $t = Get-Content $f.FullName -Raw
+            if ($t.Contains('{{RELEASE_DATE}}')) {
+              [System.IO.File]::WriteAllText($f.FullName, $t.Replace('{{RELEASE_DATE}}', $date), [System.Text.UTF8Encoding]::new($false))
+              $n++
+            }
+          }
+          Write-Host "RELEASE_DATE = $date in $n file(s)"
+          if (Select-String -Path legal/*.md, README.md -Pattern '\{\{' -Quiet) { throw 'a {{ token survived substitution' }
+
+      # The identical gate ci.yml runs — native build, tests, every check including
+      # versioninfo-check against VERSION. A release never skips it.
+      - name: Quality gate
+        shell: pwsh
+        run: ./build.ps1 check
+        env:
+          CI: 'true'
+
+      - name: Publish App + Agent (self-contained, ReadyToRun)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $v = '${{ steps.version.outputs.version }}'
+          dotnet publish src/FrameLedger.App   -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -p:Version=$v -o out/app
+          if ($LASTEXITCODE -ne 0) { throw 'App publish failed' }
+          dotnet publish src/FrameLedger.Agent -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -p:Version=$v -o out/app
+          if ($LASTEXITCODE -ne 0) { throw 'Agent publish failed' }
+
+      # What ships is what matters: the two entry points and the four shipped native
+      # binaries (versioninfo-check's list) must be in the tree, and the unshipped
+      # capture host must not be (package-closure-check proves it statically; this
+      # reads the directory).
+      - name: Assert the published tree
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $required = 'FrameLedger.exe', 'FrameLedger.Agent.exe', 'FrameLedger.Overlay.dll', 'FrameLedger.VkLayer.dll', 'FrameLedger.Guard.dll', 'FrameLedger.NvapiBridge.dll', 'rules/detection-rules.json'
+          $missing = @($required | Where-Object { -not (Test-Path (Join-Path out/app $_)) })
+          if ($missing.Count -gt 0) { throw "out/app is missing: $($missing -join ', ')" }
+          if (Test-Path out/app/FrameLedger.CaptureHost.exe) { throw 'out/app contains the unshipped capture host (12_BUILD: exactly two roots)' }
+          ./tools/versioninfo-check.ps1 -BuildDir out/app
+          if ($LASTEXITCODE -ne 0) { throw 'versioninfo-check over the published tree' }
+          $size = (Get-ChildItem out/app -Recurse -File | Measure-Object Length -Sum).Sum / 1MB
+          Write-Host ("published tree: {0:N0} MB" -f $size)
+
+      # Velopack's packer, pinned to the library version the App references
+      # (Directory.Packages.props). No --icon: assets/icon.ico does not exist yet
+      # (12_BUILD §Publish & package says so rather than pointing at a file that is not there).
+      #
+      # --packId is FrameLedger.App, NOT FrameLedger, and that is a data-loss rule:
+      # Velopack installs into %LOCALAPPDATA%\<packId> and deletes that directory on
+      # uninstall, and %LOCALAPPDATA%\FrameLedger is the DATA folder (LedgerPaths:
+      # ledger.db, logs, the layer manifest). The same id would put the install inside
+      # the ledger's folder and have the uninstaller remove every session without the
+      # question 12_BUILD promises. The title the user sees is still "FrameLedger".
+      - name: Pack (Velopack)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          dotnet tool install -g vpk --version 1.2.0
+          if ($LASTEXITCODE -ne 0) { throw 'vpk install failed' }
+          $v = '${{ steps.version.outputs.version }}'
+          vpk pack --packId FrameLedger.App --packVersion $v --packDir out/app --mainExe FrameLedger.exe --packTitle FrameLedger --packAuthors FrameLedger --releaseNotes out/notes.md --outputDir out/release
+          if ($LASTEXITCODE -ne 0) { throw 'vpk pack failed' }
+          Get-ChildItem out/release | ForEach-Object { Write-Host ("  {0,-48} {1,12:N0}" -f $_.Name, $_.Length) }
+          if (-not (Test-Path out/release/FrameLedger.App-win-Setup.exe)) { throw 'vpk did not produce FrameLedger.App-win-Setup.exe (README §Install names it)' }
+
+      - name: Checksums
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $lines = Get-ChildItem out/release -File | Sort-Object Name | ForEach-Object {
+            '{0}  {1}' -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant(), $_.Name
+          }
+          [System.IO.File]::WriteAllLines('out/release/SHA256SUMS.txt', $lines, [System.Text.UTF8Encoding]::new($false))
+          $notes = Get-Content out/notes.md -Raw
+          $notes += "`n`n## SHA-256`n`nReleases are not code-signed (11_UPDATER). Verify before running:`n`n``````text`n" + ($lines -join "`n") + "`n``````"
+          [System.IO.File]::WriteAllText('out/notes.md', $notes, [System.Text.UTF8Encoding]::new($false))
+          Get-Content out/release/SHA256SUMS.txt
+
+      - name: Create the GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $v = '${{ steps.version.outputs.version }}'
+          $ghArgs = @('release', 'create', $env:GITHUB_REF_NAME, '--title', "FrameLedger $v", '--notes-file', 'out/notes.md', '--verify-tag')
+          if ('${{ steps.version.outputs.prerelease }}' -eq 'true') { $ghArgs += '--prerelease' }
+          $ghArgs += Get-ChildItem out/release -File | ForEach-Object { $_.FullName }
+          gh @ghArgs
+          if ($LASTEXITCODE -ne 0) { throw 'gh release create failed' }
+
+      - name: Upload the published tree (for the smoke checklist)
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ github.ref_name }}
+          path: |
+            out/release/**
+            out/notes.md
+          if-no-files-found: warn
+          retention-days: 30

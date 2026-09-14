@@ -75,6 +75,10 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string _updateChannel = "stable";
 
+    /// <summary><c>11_UPDATER</c> §Flow: the startup silent check, on by default (P4 PR-5).</summary>
+    [ObservableProperty]
+    private bool _autoCheckUpdates = true;
+
     [ObservableProperty]
     private bool _logDebug;
 
@@ -268,6 +272,8 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     partial void OnUpdateChannelChanged(string value) => Persist(SettingsRegistry.UpdateChannel, value);
 
+    partial void OnAutoCheckUpdatesChanged(bool value) => Persist(SettingsRegistry.UpdateAutoCheck, value);
+
     partial void OnStartWithWindowsChanged(bool value)
     {
         if (_loading)
@@ -329,6 +335,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             MinimizeToTray = await _settings.GetBooleanAsync(SettingsRegistry.UiMinimizeToTray).ConfigureAwait(true);
             OnlineMetadata = await _settings.GetBooleanAsync(SettingsRegistry.PrivacyOnlineMetadata).ConfigureAwait(true);
             UpdateChannel = await _settings.GetAsync(SettingsRegistry.UpdateChannel).ConfigureAwait(true);
+            AutoCheckUpdates = await _settings.GetBooleanAsync(SettingsRegistry.UpdateAutoCheck).ConfigureAwait(true);
             LogDebug = await _settings.GetBooleanAsync(SettingsRegistry.LogDebug).ConfigureAwait(true);
 
             // The Run entry is the truth for "start with Windows"; the settings row follows it.

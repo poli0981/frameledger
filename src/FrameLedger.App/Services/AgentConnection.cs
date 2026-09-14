@@ -27,6 +27,7 @@ public sealed class AgentConnection : IAgentLink, IAsyncDisposable
     private PipeClient? _client;
     private long _rounds;
     private long _launches;
+    private volatile bool _holdLaunches;
 
     public AgentConnection(IAgentLauncher launcher, Func<PipeClient> pipes, AgentConnectionOptions options, string appVersion)
     {
@@ -55,6 +56,12 @@ public sealed class AgentConnection : IAgentLink, IAsyncDisposable
 
     /// <summary>Skip the wait before the next round (the banner's Retry).</summary>
     public void RetryNow() => _retryNow.Release();
+
+    /// <summary>True while the update's apply has asked that no Agent be started from beside this executable.</summary>
+    public bool LaunchesHeld => _holdLaunches;
+
+    /// <inheritdoc />
+    public void SetLaunchHold(bool hold) => _holdLaunches = hold;
 
     /// <summary>Loop until cancelled.</summary>
     public async Task RunAsync(CancellationToken ct)
@@ -129,7 +136,7 @@ public sealed class AgentConnection : IAgentLink, IAsyncDisposable
     {
         Set(AgentConnectionState.Connecting, null, null);
         PipeClient? client = await TryConnectAsync(ct).ConfigureAwait(false);
-        if (client is null && _launcher.CanLaunch)
+        if (client is null && _launcher.CanLaunch && !_holdLaunches)
         {
             Set(AgentConnectionState.Starting, null, null);
             if (_launcher.TryStart())

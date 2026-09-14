@@ -1291,7 +1291,7 @@
     <value>Start FrameLedger with Windows</value>
   </data>
   <data name="Settings_UpdateChannel_Body" xml:space="preserve">
-    <value>Stored now; the updater arrives in a later build. Updates never apply while a game is hooked.</value>
+    <value>Stable, or stable plus pre-releases. A found update downloads in the background and is applied only when you restart — never while a game is hooked.</value>
   </data>
   <data name="Settings_UpdateChannel_Label" xml:space="preserve">
     <value>Channel</value>
@@ -1466,5 +1466,95 @@
   </data>
   <data name="FirstRun_Title" xml:space="preserve">
     <value>Welcome to FrameLedger</value>
+  </data>
+  <data name="Update_UpToDate_Format" xml:space="preserve">
+    <value>FrameLedger {0} is the latest version.</value>
+  </data>
+  <data name="Update_NotInstalled" xml:space="preserve">
+    <value>This copy was not set up by the FrameLedger installer, so it cannot update itself. Download releases from GitHub.</value>
+  </data>
+  <data name="Update_Available_Title_Format" xml:space="preserve">
+    <value>Update {0} is available</value>
+  </data>
+  <data name="Update_Available_Body_Format" xml:space="preserve">
+    <value>Version {0} ({1} MB) can be downloaded now. It is applied only when you restart FrameLedger, and never while a game is hooked.</value>
+  </data>
+  <data name="Update_Notes_Header" xml:space="preserve">
+    <value>What changed</value>
+  </data>
+  <data name="Update_Download" xml:space="preserve">
+    <value>Download</value>
+  </data>
+  <data name="Update_Later" xml:space="preserve">
+    <value>Later</value>
+  </data>
+  <data name="Update_Unsigned_Footer" xml:space="preserve">
+    <value>Releases are not code-signed, so SmartScreen may warn. The SHA-256 checksums of every release are published beside it.</value>
+  </data>
+  <data name="Update_Err_Title" xml:space="preserve">
+    <value>Update check failed</value>
+  </data>
+  <data name="Update_Err404" xml:space="preserve">
+    <value>No release feed found. The repository may have moved.</value>
+  </data>
+  <data name="Update_Err_RateLimited" xml:space="preserve">
+    <value>GitHub rate limit reached. Anonymous checks allow 60 requests an hour; try again in about an hour.</value>
+  </data>
+  <data name="Update_Err_Server" xml:space="preserve">
+    <value>GitHub is having trouble. Try again later.</value>
+  </data>
+  <data name="Update_Err_Offline" xml:space="preserve">
+    <value>GitHub could not be reached: no network, a DNS failure, or a timeout.</value>
+  </data>
+  <data name="Update_Err_Corrupt" xml:space="preserve">
+    <value>The downloaded package failed its checksum and was discarded. Try again; if it happens twice, report a bug.</value>
+  </data>
+  <data name="Update_Err_Unknown" xml:space="preserve">
+    <value>The update check failed for a reason FrameLedger does not recognise. The details are in the log.</value>
+  </data>
+  <data name="Update_OpenReleases" xml:space="preserve">
+    <value>Open releases page</value>
+  </data>
+  <data name="Update_Banner_Title" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="Update_Banner_Downloading_Format" xml:space="preserve">
+    <value>Downloading version {0}… {1}%</value>
+  </data>
+  <data name="Update_Banner_Ready_Format" xml:space="preserve">
+    <value>Version {0} is downloaded and verified. Restart FrameLedger to apply it — the Agent is stopped first and started again afterwards.</value>
+  </data>
+  <data name="Update_Banner_Deferred_Format" xml:space="preserve">
+    <value>Version {0} is downloaded. A session is running, so it is applied only after the session ends — restart then.</value>
+  </data>
+  <data name="Update_Banner_Applying_Format" xml:space="preserve">
+    <value>Applying version {0}: stopping the Agent, then restarting FrameLedger…</value>
+  </data>
+  <data name="Update_Banner_Restart" xml:space="preserve">
+    <value>Restart to update</value>
+  </data>
+  <data name="Update_HookedRefused" xml:space="preserve">
+    <value>A session is running. FrameLedger does not update while a game is hooked or recorded; the update is applied after the session ends.</value>
+  </data>
+  <data name="Update_AgentStillRunning" xml:space="preserve">
+    <value>The Agent did not stop in time, so nothing was applied. Try again in a moment.</value>
+  </data>
+  <data name="Update_Toast_Title" xml:space="preserve">
+    <value>Update available</value>
+  </data>
+  <data name="Update_Toast_Body_Format" xml:space="preserve">
+    <value>FrameLedger {0} is downloading in the background. It is applied only when you restart.</value>
+  </data>
+  <data name="Settings_AutoCheck_Label" xml:space="preserve">
+    <value>Check for updates at startup</value>
+  </data>
+  <data name="Settings_AutoCheck_Body" xml:space="preserve">
+    <value>One request to GitHub Releases a few seconds after start, only for an installed copy. A found update downloads in the background; nothing is applied without your restart.</value>
+  </data>
+  <data name="Uninstall_DataFolder_Title" xml:space="preserve">
+    <value>Remove FrameLedger data?</value>
+  </data>
+  <data name="Uninstall_DataFolder_Body" xml:space="preserve">
+    <value>Also delete the data folder (%LOCALAPPDATA%\FrameLedger: your library, every session, logs and settings)? Choose No to keep it for a later install.</value>
   </data>
 </root>

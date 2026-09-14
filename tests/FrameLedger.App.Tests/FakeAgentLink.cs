@@ -16,6 +16,11 @@ internal sealed class FakeAgentLink : IAgentLink
 
     public List<(string Type, object Payload)> Sent { get; } = [];
 
+    /// <summary>Every <see cref="SetLaunchHold"/> call, in order (P4 PR-5: the apply holds, a failed apply releases).</summary>
+    public List<bool> Holds { get; } = [];
+
+    public void SetLaunchHold(bool hold) => Holds.Add(hold);
+
     public Func<string, object, IpcEnvelope> Answer { get; set; } = static (_, _) => throw new InvalidOperationException("no answer scripted");
 
     public event EventHandler? Changed;

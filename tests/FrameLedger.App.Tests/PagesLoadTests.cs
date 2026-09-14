@@ -47,6 +47,10 @@ public sealed class PagesLoadTests
 
         public Task<IpcEnvelope> RequestAsync<TRequest>(string type, TRequest payload, CancellationToken ct = default)
             where TRequest : class => throw new NotSupportedException();
+
+        public void SetLaunchHold(bool hold)
+        {
+        }
     }
 
     private sealed class NoNavigation : IPageNavigator

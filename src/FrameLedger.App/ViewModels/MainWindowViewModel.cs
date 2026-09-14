@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FrameLedger.App.Pages;
 using FrameLedger.App.Services;
+using FrameLedger.App.Update;
 using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Shared.Ipc;
 using Wpf.Ui;
@@ -34,7 +35,19 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _agentBannerBody = string.Empty;
 
+    /// <summary>08_UI §Notifications policy: "update downloaded" is in-app and persistent — the banner follows <see cref="UpdateService.Stage"/>.</summary>
+    [ObservableProperty]
+    private bool _isUpdateBannerVisible;
+
+    [ObservableProperty]
+    private string _updateBannerBody = string.Empty;
+
+    /// <summary>FR-12: the button is live only while no session runs; deferred, it stays visible and disabled with the body saying why.</summary>
+    [ObservableProperty]
+    private bool _canRestartToUpdate;
+
     private readonly AddGameFlow _addGame;
+    private readonly UpdateService _updates;
     private readonly BugReportFlow _bugReports;
     private readonly IUrlOpener _urls;
     private readonly SessionSelection _selection;
@@ -43,9 +56,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly ImportLibraryFlow _import;
 
     public MainWindowViewModel(AgentConnection agent, ISnackbarService snackbar, IShellPresence shell, IPageNavigator navigator, AddGameFlow addGame, SafetyNotices notices,
-        BugReportFlow bugReports, IUrlOpener urls, SessionSelection selection, SessionExportService exports, ISessionSummaryOpener summaries, ImportLibraryFlow import)
+        BugReportFlow bugReports, IUrlOpener urls, SessionSelection selection, SessionExportService exports, ISessionSummaryOpener summaries, ImportLibraryFlow import,
+        UpdateService updates)
     {
         Notices = notices ?? throw new ArgumentNullException(nameof(notices));
+        _updates = updates ?? throw new ArgumentNullException(nameof(updates));
         _import = import ?? throw new ArgumentNullException(nameof(import));
         _bugReports = bugReports ?? throw new ArgumentNullException(nameof(bugReports));
         _urls = urls ?? throw new ArgumentNullException(nameof(urls));
@@ -58,7 +73,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         _navigator = navigator ?? throw new ArgumentNullException(nameof(navigator));
         _addGame = addGame ?? throw new ArgumentNullException(nameof(addGame));
         _agent.Changed += OnAgentChanged;
+        _updates.PropertyChanged += OnUpdatesChanged;
         Refresh();
+        RefreshUpdate();
     }
 
     public static string Title => Strings.App_Title;
@@ -66,9 +83,38 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     /// <summary>08_UI §Notifications policy: the safety events, as persistent InfoBars above every page — never toasts.</summary>
     public SafetyNotices Notices { get; }
 
-    public void Dispose() => _agent.Changed -= OnAgentChanged;
+    public void Dispose()
+    {
+        _agent.Changed -= OnAgentChanged;
+        _updates.PropertyChanged -= OnUpdatesChanged;
+    }
 
     private void OnAgentChanged(object? sender, EventArgs e) => _ui.Post(Refresh);
+
+    private void OnUpdatesChanged(object? sender, PropertyChangedEventArgs e) => RefreshUpdate();
+
+    /// <summary>The banner's three faces: downloading (with the percent), ready (the button live), deferred (FR-12, the button waits).</summary>
+    [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime; a cached CompositeFormat would pin the first culture")]
+    private void RefreshUpdate()
+    {
+        string version = _updates.Version ?? string.Empty;
+        (IsUpdateBannerVisible, UpdateBannerBody, CanRestartToUpdate) = _updates.Stage switch
+        {
+            UpdateStage.Downloading => (true, string.Format(CultureInfo.CurrentCulture, Strings.Update_Banner_Downloading_Format, version, _updates.Percent), false),
+            UpdateStage.Ready => (true, string.Format(CultureInfo.CurrentCulture, Strings.Update_Banner_Ready_Format, version), true),
+            UpdateStage.Deferred => (true, string.Format(CultureInfo.CurrentCulture, Strings.Update_Banner_Deferred_Format, version), false),
+            UpdateStage.Applying => (true, string.Format(CultureInfo.CurrentCulture, Strings.Update_Banner_Applying_Format, version), false),
+            _ => (false, string.Empty, false),
+        };
+    }
+
+    /// <summary>Help ▸ Check for updates (P4 PR-5): <c>11_UPDATER</c> §Flow, "Manual check".</summary>
+    [RelayCommand]
+    private Task CheckForUpdatesAsync() => _updates.CheckInteractivelyAsync();
+
+    /// <summary>The banner's button: the Agent stopped, the updater told to wait for this process, the host ended (FR-12 is checked again inside).</summary>
+    [RelayCommand]
+    private Task RestartToUpdateAsync() => _updates.RestartToUpdateAsync();
 
     private void Refresh()
     {

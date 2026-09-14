@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Threading;
 using FrameLedger.App.Pages;
 using FrameLedger.App.Services;
+using FrameLedger.App.Update;
 using FrameLedger.App.ViewModels;
 using FrameLedger.Application.Import;
 using FrameLedger.Application.Persistence;
@@ -281,10 +282,24 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IMaintenanceState, MaintenanceState>();
         services.AddSingleton<IAgentTool, AgentTool>();
 
+        AddUpdates(services);
+
         // FR-11 (P3 PR-9): the gate over the UI's own table, the documents this build embeds, the window that shows them.
         services.AddSingleton<ILegalAcceptanceStore, SqliteLegalAcceptanceStore>();
         services.AddSingleton(static sp => new LegalGate(sp.GetRequiredService<ILegalAcceptanceStore>(), LegalDocuments.Load()));
         services.AddSingleton<IFirstRunFlow, FirstRunFlow>();
+    }
+
+    /// <summary>
+    /// The updater (P4 PR-5, <c>11_UPDATER</c>): Velopack behind the <see cref="IUpdateClient"/> port, the dialogs behind
+    /// <see cref="IUpdatePrompts"/>, the flow that holds FR-12, and the startup check as a hosted service.
+    /// </summary>
+    private static void AddUpdates(IServiceCollection services)
+    {
+        services.AddSingleton<IUpdateClient, VelopackUpdateClient>();
+        services.AddSingleton<IUpdatePrompts, UpdatePrompts>();
+        services.AddSingleton<UpdateService>();
+        services.AddHostedService<UpdateHostedService>();
     }
 
     /// <summary>FR-1.2's library import (P4 PR-4): the stores, the executable guess, the importer over the games port, the review checklist behind a port.</summary>

@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FrameLedger.App.Pages;
 using FrameLedger.App.Services;
+using FrameLedger.App.Update;
 using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Shared.Ipc;
 
@@ -23,6 +24,7 @@ public sealed partial class TrayViewModel : ObservableObject, IDisposable
     private readonly IShellPresence _shell;
     private readonly ISessionSummaryOpener _summaries;
     private readonly IPageNavigator _navigator;
+    private readonly UpdateService _updates;
     private readonly UiThread _ui = new();
     private readonly Dictionary<Guid, (int Tier, string Name)> _running = [];
 
@@ -35,15 +37,26 @@ public sealed partial class TrayViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(Tooltip))]
     private bool _isPaused;
 
-    public TrayViewModel(IAgentLink agent, IShellPresence shell, ISessionSummaryOpener summaries, IPageNavigator navigator)
+    public TrayViewModel(IAgentLink agent, IShellPresence shell, ISessionSummaryOpener summaries, IPageNavigator navigator, UpdateService updates)
     {
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _shell = shell ?? throw new ArgumentNullException(nameof(shell));
         _summaries = summaries ?? throw new ArgumentNullException(nameof(summaries));
         _navigator = navigator ?? throw new ArgumentNullException(nameof(navigator));
+        _updates = updates ?? throw new ArgumentNullException(nameof(updates));
         _agent.Changed += OnAgentChanged;
         _agent.EventReceived += OnAgentEvent;
+        _updates.Available += OnUpdateAvailable;
         IsPaused = _agent.Status?.Paused ?? false;
+    }
+
+    /// <summary><c>08_UI</c> §Notifications policy: "update available" reaches a minimized app as a balloon; on screen, the shell's banner is the one channel.</summary>
+    private void OnUpdateAvailable(object? sender, UpdateAvailableEventArgs e)
+    {
+        if (!_shell.IsShown)
+        {
+            ToastRequested?.Invoke(this, new TrayToastEventArgs(Strings.Update_Toast_Title, string.Format(CultureInfo.CurrentCulture, Strings.Update_Toast_Body_Format, e.Version), null));
+        }
     }
 
     /// <summary>A balloon to show (the host decides how); never raised while the window is on screen.</summary>
@@ -69,6 +82,7 @@ public sealed partial class TrayViewModel : ObservableObject, IDisposable
     {
         _agent.Changed -= OnAgentChanged;
         _agent.EventReceived -= OnAgentEvent;
+        _updates.Available -= OnUpdateAvailable;
     }
 
     [RelayCommand]

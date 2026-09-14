@@ -21,6 +21,9 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- NFR-9: Per-Monitor V2. Declared in app.manifest; kept here as the
          reminder that it is a requirement, not a default. -->
+    <!-- 11_UPDATER (P4 PR-5): Velopack must run before any window exists, so the
+         entry point is Program.Main rather than the generated App.Main. -->
+    <StartupObject>FrameLedger.App.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
@@ -51,6 +54,7 @@
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="ScottPlot.WPF" />
     <PackageReference Include="H.NotifyIcon.Wpf" />
+    <PackageReference Include="Velopack" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Serilog" />
     <PackageReference Include="Serilog.Extensions.Hosting" />

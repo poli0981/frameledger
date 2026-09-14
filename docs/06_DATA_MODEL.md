@@ -330,7 +330,8 @@ switch's rule); integers are invariant-culture within an inclusive range; choice
 | `capture.min_session_s` | int | `30` | 5–600 | Agent, per session (FR-3.6) |
 | `telemetry.interval_ms` | int | `1000` | 500–2000 | Agent, per session (FR-3.5) |
 | `retention.raw_sessions_per_game` | int | `20` | 0–10000; **0 = unlimited** | Agent, per session (§Retention) |
-| `update.channel` | choice | `stable` | `stable` · `beta` | UI (P4) |
+| `update.channel` | choice | `stable` | `stable` · `beta` | UI (P4 PR-5 reads it: `beta` = GitHub pre-releases too) |
+| `update.auto_check` | bool | `1` | | UI (P4 PR-5: the startup silent check, `11_UPDATER` §Flow "if enabled") |
 | `privacy.online_metadata` | bool | `0` | | UI (P4; CLAUDE.md rule 8) |
 | `log.debug` | bool | `0` | | UI |
 

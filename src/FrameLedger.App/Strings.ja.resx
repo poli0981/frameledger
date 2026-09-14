@@ -1714,7 +1714,7 @@
     <comment>review</comment>
   </data>
   <data name="Settings_UpdateChannel_Body" xml:space="preserve">
-    <value>今すぐ保存されます。アップデーターは後のビルドで追加されます。ゲームがフックされている間は更新されません。</value>
+    <value>安定版のみ、または安定版とプレリリース。見つかった更新はバックグラウンドでダウンロードされ、再起動時にのみ適用されます。ゲームがフックされている間は適用されません。</value>
     <comment>review</comment>
   </data>
   <data name="Settings_UpdateChannel_Label" xml:space="preserve">
@@ -1947,6 +1947,126 @@
   </data>
   <data name="FirstRun_Title" xml:space="preserve">
     <value>FrameLedger へようこそ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_UpToDate_Format" xml:space="preserve">
+    <value>FrameLedger {0} は最新バージョンです。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_NotInstalled" xml:space="preserve">
+    <value>このコピーは FrameLedger のインストーラーで導入されていないため、自動更新できません。GitHub からリリースをダウンロードしてください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Available_Title_Format" xml:space="preserve">
+    <value>アップデート {0} が利用可能です</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Available_Body_Format" xml:space="preserve">
+    <value>バージョン {0}（{1} MB）を今すぐダウンロードできます。適用は FrameLedger の再起動時のみで、ゲームがフックされている間は行われません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Notes_Header" xml:space="preserve">
+    <value>変更内容</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Download" xml:space="preserve">
+    <value>ダウンロード</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Later" xml:space="preserve">
+    <value>後で</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Unsigned_Footer" xml:space="preserve">
+    <value>リリースはコード署名されていないため、SmartScreen が警告する場合があります。各リリースの SHA-256 チェックサムはリリースと一緒に公開されています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Err_Title" xml:space="preserve">
+    <value>更新の確認に失敗しました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Err404" xml:space="preserve">
+    <value>リリースフィードが見つかりません。リポジトリが移動した可能性があります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Err_RateLimited" xml:space="preserve">
+    <value>GitHub のレート制限に達しました。匿名の確認は 1 時間に 60 回までです。約 1 時間後にもう一度お試しください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Err_Server" xml:space="preserve">
+    <value>GitHub に問題が発生しています。後でもう一度お試しください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Err_Offline" xml:space="preserve">
+    <value>GitHub に接続できませんでした。ネットワークがない、DNS の失敗、またはタイムアウトです。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Err_Corrupt" xml:space="preserve">
+    <value>ダウンロードしたパッケージのチェックサムが一致せず、破棄されました。もう一度お試しください。2 回続く場合はバグを報告してください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Err_Unknown" xml:space="preserve">
+    <value>FrameLedger が認識できない理由で更新の確認に失敗しました。詳細はログにあります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_OpenReleases" xml:space="preserve">
+    <value>リリースページを開く</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Banner_Title" xml:space="preserve">
+    <value>アップデート</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Banner_Downloading_Format" xml:space="preserve">
+    <value>バージョン {0} をダウンロード中… {1}%</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Banner_Ready_Format" xml:space="preserve">
+    <value>バージョン {0} のダウンロードと検証が完了しました。FrameLedger を再起動して適用してください。Agent は先に停止し、その後再び起動します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Banner_Deferred_Format" xml:space="preserve">
+    <value>バージョン {0} のダウンロードが完了しました。セッションが実行中のため、適用はセッション終了後になります。そのときに再起動してください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Banner_Applying_Format" xml:space="preserve">
+    <value>バージョン {0} を適用しています。Agent を停止してから FrameLedger を再起動します…</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Banner_Restart" xml:space="preserve">
+    <value>再起動して更新</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_HookedRefused" xml:space="preserve">
+    <value>セッションが実行中です。ゲームがフックまたは記録されている間、FrameLedger は更新しません。更新はセッション終了後に適用されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_AgentStillRunning" xml:space="preserve">
+    <value>Agent が時間内に停止しなかったため、何も適用されませんでした。しばらくしてからもう一度お試しください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Toast_Title" xml:space="preserve">
+    <value>アップデートがあります</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Toast_Body_Format" xml:space="preserve">
+    <value>FrameLedger {0} をバックグラウンドでダウンロードしています。適用は再起動時のみです。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_AutoCheck_Label" xml:space="preserve">
+    <value>起動時に更新を確認する</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_AutoCheck_Body" xml:space="preserve">
+    <value>起動の数秒後に GitHub Releases へ 1 回だけ要求します（インストール済みのコピーのみ）。見つかった更新はバックグラウンドでダウンロードされ、再起動しない限り適用されません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Uninstall_DataFolder_Title" xml:space="preserve">
+    <value>FrameLedger のデータを削除しますか？</value>
+    <comment>review</comment>
+  </data>
+  <data name="Uninstall_DataFolder_Body" xml:space="preserve">
+    <value>データフォルダー（%LOCALAPPDATA%\FrameLedger：ライブラリ、すべてのセッション、ログ、設定）も削除しますか？後でインストールするために残す場合は「いいえ」を選んでください。</value>
     <comment>review</comment>
   </data>
 </root>
