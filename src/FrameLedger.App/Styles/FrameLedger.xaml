@@ -11,6 +11,7 @@
     <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis" />
     <converters:NullToCollapsedConverter x:Key="NullToCollapsed" />
     <converters:NotNullConverter x:Key="NotNull" />
+    <converters:ZeroToVisibleConverter x:Key="ZeroToVisible" />
 
     <Style x:Key="PageRoot" TargetType="StackPanel">
         <Setter Property="Margin" Value="28,20,28,20" />

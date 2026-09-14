@@ -19,6 +19,30 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Added
 
+- **P3 PR-8a — Settings, the safety notices, the Logs page, `--diag` (2026-09-14).** The Settings page over the
+  registry (`RegisteredSettings`, D16): Capture first — the global kill switch (`hooking.kill_switch`, the gate's
+  fourth input, so a running measured session stops at its next 30 s re-scan) with its state line, the
+  hook-enabled games with a per-row "Turn off" that is `SetHookEnabled { enabled: false }` over the pipe (the
+  App still writes no hook-state column, D15), the Vulkan layer state from `HelloAck`, the safety-document link;
+  then minimum session length / sensor interval / raw-series retention as bounded `NumberBox`es that refuse an
+  out-of-range value in place, background capture, the Agent's elevation state with the "not required by any
+  tier" paragraph, "Start FrameLedger with Windows" as this user's `HKCU\…\Run` value
+  (`Infrastructure.Startup.RunAtLogon`), minimize-to-tray (stored; honoured by PR-8b), online metadata (off),
+  the update channel (stored), debug logging (moves the App's Serilog `LoggingLevelSwitch` at once), and Legal
+  reopen as a "not yet" line until PR-9. **Safety notices** (`Services/SafetyNotices`, `08_UI` §Notifications
+  policy): `CaptureRefused`, `SafetyUnhook` and `CaptureDegraded` become persistent `InfoBar`s above every page
+  with the family and signal named from the `Safety_*` strings, never a toast, never a timeout; the one button
+  on a refusal is "Record this session without measuring it" — the acknowledgement, since the Agent already
+  records Tier 2; `CaptureError` goes to the 4 s strip. **Logs** (`LogTail`, `LogsViewModel`): the newest
+  `ui-*.log` / `agent-*.log` with shared read and a 2 MB cap, level filter over the template's prefix, search,
+  pause, a 2 s refresh only while the page is shown, Open logs folder, and Export bug bundle = `10_LOGGING` step
+  2 (`BugBundleBuilder`: our logs of the last seven days verbatim, the five newest overlay logs, `sysinfo.json`,
+  `settings.json`; nothing is sent, steps 3–5 are P4's). **`FrameLedger.exe --diag`** writes the environment and
+  capability report to `logs/diag-<ts>.txt` and stdout without starting the host. Tests (App, 100; Infrastructure
+  +2): `SettingsViewModelTests`, `SafetyNoticesTests`, `LogTailTests`, `LogsViewModelTests`,
+  `BugBundleBuilderTests`, `DiagReportTests`, `RunAtLogonTests`, and both pages rendered in `PagesLoadTests`. 69
+  new App strings in en/vi/ja. Docs: `08_UI` §Notifications policy/§Logs/§Settings built notes, `10_LOGGING`
+  built notes, HANDOFF row 8 amended (8b: tray, layer and task verbs), CLAUDE.md's App line.
 - **P3 PR-7 — Trend, Sensors, Latency, and Compare with the mixed-tier guard (2026-09-14).** The game page's tabs
   2–6: Frametime and Distribution of the selected session (the summary window's own charts); **Trend** through
   `Charts/TrendSeriesBuilder` — one point per hooked session oldest first (Average = Native where frame generation

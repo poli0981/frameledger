@@ -128,6 +128,7 @@ public static class Strings
         nameof(Dashboard_Totals_Games),
         nameof(Dashboard_Totals_Playtime),
         nameof(Dashboard_Totals_ThisWeek),
+        nameof(Diag_Written_Format),
         nameof(EditGame_Detected),
         nameof(EditGame_Name),
         nameof(EditGame_Notes),
@@ -213,8 +214,20 @@ public static class Strings
         nameof(Latency_P95),
         nameof(Latency_Series),
         nameof(Latency_Stats_Format),
+        nameof(Logs_Bundle_Exported_Format),
+        nameof(Logs_Bundle_Failed_Format),
         nameof(Logs_Empty),
+        nameof(Logs_ExportBundle),
         nameof(Logs_Header),
+        nameof(Logs_Level_All),
+        nameof(Logs_Level_Error),
+        nameof(Logs_Level_Warning),
+        nameof(Logs_OpenFolder),
+        nameof(Logs_Pause),
+        nameof(Logs_Search_Placeholder),
+        nameof(Logs_Showing_Format),
+        nameof(Logs_Source_Agent),
+        nameof(Logs_Source_Ui),
         nameof(Menu_File),
         nameof(Menu_File_AddGame),
         nameof(Menu_File_Exit),
@@ -236,6 +249,13 @@ public static class Strings
         nameof(Nav_Games),
         nameof(Nav_Logs),
         nameof(Nav_Settings),
+        nameof(Notice_Degraded_Body_Format),
+        nameof(Notice_Degraded_Title),
+        nameof(Notice_Dismiss),
+        nameof(Notice_Error_Title),
+        nameof(Notice_Refused_Recording),
+        nameof(Notice_Refused_Title_Format),
+        nameof(Notice_Unhooked_Title),
         nameof(NotYet_Body),
         nameof(NotYet_Title),
         nameof(Override_Apply),
@@ -271,14 +291,63 @@ public static class Strings
         nameof(Sessions_Col_Resolution),
         nameof(Sessions_Col_Tags),
         nameof(Sessions_Col_Tier),
+        nameof(Settings_Agent_Elevated),
+        nameof(Settings_Agent_Elevation_Body),
+        nameof(Settings_Agent_Elevation_Label),
+        nameof(Settings_Agent_Header),
+        nameof(Settings_Agent_NotElevated),
+        nameof(Settings_Agent_Task_Label),
+        nameof(Settings_Agent_Task_Later),
         nameof(Settings_Appearance_Header),
+        nameof(Settings_Applied),
+        nameof(Settings_Background_Body),
+        nameof(Settings_Background_Label),
+        nameof(Settings_Capture_Header),
+        nameof(Settings_Channel_Beta),
+        nameof(Settings_Channel_Stable),
         nameof(Settings_Header),
+        nameof(Settings_HookedGames_Empty),
+        nameof(Settings_HookedGames_Label),
+        nameof(Settings_HookedGames_Revoke),
+        nameof(Settings_Interval_Body),
+        nameof(Settings_Interval_Label),
+        nameof(Settings_Invalid_Format),
+        nameof(Settings_KillSwitch_Body),
+        nameof(Settings_KillSwitch_Label),
+        nameof(Settings_KillSwitch_Off),
+        nameof(Settings_KillSwitch_On),
         nameof(Settings_Language_Label),
         nameof(Settings_Language_Note),
+        nameof(Settings_Legal_Header),
+        nameof(Settings_Legal_Reopen),
+        nameof(Settings_LogDebug_Body),
+        nameof(Settings_LogDebug_Label),
+        nameof(Settings_Logging_Header),
+        nameof(Settings_MinimizeToTray_Label),
+        nameof(Settings_MinimizeToTray_Later),
+        nameof(Settings_MinSession_Body),
+        nameof(Settings_MinSession_Label),
+        nameof(Settings_OnlineMetadata_Body),
+        nameof(Settings_OnlineMetadata_Label),
+        nameof(Settings_Policy_Header),
+        nameof(Settings_Privacy_Header),
+        nameof(Settings_Retention_Body),
+        nameof(Settings_Retention_Label),
+        nameof(Settings_SafetyDocs),
+        nameof(Settings_StartWithWindows_Body),
+        nameof(Settings_StartWithWindows_Label),
         nameof(Settings_Theme_Dark),
         nameof(Settings_Theme_Label),
         nameof(Settings_Theme_Light),
         nameof(Settings_Theme_System),
+        nameof(Settings_UpdateChannel_Body),
+        nameof(Settings_UpdateChannel_Label),
+        nameof(Settings_Updates_Header),
+        nameof(Settings_VkLayer_Label),
+        nameof(Settings_VkLayer_NotRegistered),
+        nameof(Settings_VkLayer_Registered),
+        nameof(Settings_VkLayer_Unknown),
+        nameof(Settings_Window_Header),
         nameof(Summary_Annotations_Header),
         nameof(Summary_Crash_Body),
         nameof(Summary_Crash_Title),
@@ -549,6 +618,8 @@ public static class Strings
 
     public static string Dashboard_Totals_ThisWeek => ResourceManager.GetString(nameof(Dashboard_Totals_ThisWeek), Culture) ?? nameof(Dashboard_Totals_ThisWeek);
 
+    public static string Diag_Written_Format => ResourceManager.GetString(nameof(Diag_Written_Format), Culture) ?? nameof(Diag_Written_Format);
+
     public static string EditGame_Detected => ResourceManager.GetString(nameof(EditGame_Detected), Culture) ?? nameof(EditGame_Detected);
 
     public static string EditGame_Name => ResourceManager.GetString(nameof(EditGame_Name), Culture) ?? nameof(EditGame_Name);
@@ -719,9 +790,33 @@ public static class Strings
 
     public static string Latency_Stats_Format => ResourceManager.GetString(nameof(Latency_Stats_Format), Culture) ?? nameof(Latency_Stats_Format);
 
+    public static string Logs_Bundle_Exported_Format => ResourceManager.GetString(nameof(Logs_Bundle_Exported_Format), Culture) ?? nameof(Logs_Bundle_Exported_Format);
+
+    public static string Logs_Bundle_Failed_Format => ResourceManager.GetString(nameof(Logs_Bundle_Failed_Format), Culture) ?? nameof(Logs_Bundle_Failed_Format);
+
     public static string Logs_Empty => ResourceManager.GetString(nameof(Logs_Empty), Culture) ?? nameof(Logs_Empty);
 
+    public static string Logs_ExportBundle => ResourceManager.GetString(nameof(Logs_ExportBundle), Culture) ?? nameof(Logs_ExportBundle);
+
     public static string Logs_Header => ResourceManager.GetString(nameof(Logs_Header), Culture) ?? nameof(Logs_Header);
+
+    public static string Logs_Level_All => ResourceManager.GetString(nameof(Logs_Level_All), Culture) ?? nameof(Logs_Level_All);
+
+    public static string Logs_Level_Error => ResourceManager.GetString(nameof(Logs_Level_Error), Culture) ?? nameof(Logs_Level_Error);
+
+    public static string Logs_Level_Warning => ResourceManager.GetString(nameof(Logs_Level_Warning), Culture) ?? nameof(Logs_Level_Warning);
+
+    public static string Logs_OpenFolder => ResourceManager.GetString(nameof(Logs_OpenFolder), Culture) ?? nameof(Logs_OpenFolder);
+
+    public static string Logs_Pause => ResourceManager.GetString(nameof(Logs_Pause), Culture) ?? nameof(Logs_Pause);
+
+    public static string Logs_Search_Placeholder => ResourceManager.GetString(nameof(Logs_Search_Placeholder), Culture) ?? nameof(Logs_Search_Placeholder);
+
+    public static string Logs_Showing_Format => ResourceManager.GetString(nameof(Logs_Showing_Format), Culture) ?? nameof(Logs_Showing_Format);
+
+    public static string Logs_Source_Agent => ResourceManager.GetString(nameof(Logs_Source_Agent), Culture) ?? nameof(Logs_Source_Agent);
+
+    public static string Logs_Source_Ui => ResourceManager.GetString(nameof(Logs_Source_Ui), Culture) ?? nameof(Logs_Source_Ui);
 
     public static string Menu_File => ResourceManager.GetString(nameof(Menu_File), Culture) ?? nameof(Menu_File);
 
@@ -764,6 +859,20 @@ public static class Strings
     public static string Nav_Logs => ResourceManager.GetString(nameof(Nav_Logs), Culture) ?? nameof(Nav_Logs);
 
     public static string Nav_Settings => ResourceManager.GetString(nameof(Nav_Settings), Culture) ?? nameof(Nav_Settings);
+
+    public static string Notice_Degraded_Body_Format => ResourceManager.GetString(nameof(Notice_Degraded_Body_Format), Culture) ?? nameof(Notice_Degraded_Body_Format);
+
+    public static string Notice_Degraded_Title => ResourceManager.GetString(nameof(Notice_Degraded_Title), Culture) ?? nameof(Notice_Degraded_Title);
+
+    public static string Notice_Dismiss => ResourceManager.GetString(nameof(Notice_Dismiss), Culture) ?? nameof(Notice_Dismiss);
+
+    public static string Notice_Error_Title => ResourceManager.GetString(nameof(Notice_Error_Title), Culture) ?? nameof(Notice_Error_Title);
+
+    public static string Notice_Refused_Recording => ResourceManager.GetString(nameof(Notice_Refused_Recording), Culture) ?? nameof(Notice_Refused_Recording);
+
+    public static string Notice_Refused_Title_Format => ResourceManager.GetString(nameof(Notice_Refused_Title_Format), Culture) ?? nameof(Notice_Refused_Title_Format);
+
+    public static string Notice_Unhooked_Title => ResourceManager.GetString(nameof(Notice_Unhooked_Title), Culture) ?? nameof(Notice_Unhooked_Title);
 
     public static string NotYet_Body => ResourceManager.GetString(nameof(NotYet_Body), Culture) ?? nameof(NotYet_Body);
 
@@ -835,13 +944,95 @@ public static class Strings
 
     public static string Sessions_Col_Tier => ResourceManager.GetString(nameof(Sessions_Col_Tier), Culture) ?? nameof(Sessions_Col_Tier);
 
+    public static string Settings_Agent_Elevated => ResourceManager.GetString(nameof(Settings_Agent_Elevated), Culture) ?? nameof(Settings_Agent_Elevated);
+
+    public static string Settings_Agent_Elevation_Body => ResourceManager.GetString(nameof(Settings_Agent_Elevation_Body), Culture) ?? nameof(Settings_Agent_Elevation_Body);
+
+    public static string Settings_Agent_Elevation_Label => ResourceManager.GetString(nameof(Settings_Agent_Elevation_Label), Culture) ?? nameof(Settings_Agent_Elevation_Label);
+
+    public static string Settings_Agent_Header => ResourceManager.GetString(nameof(Settings_Agent_Header), Culture) ?? nameof(Settings_Agent_Header);
+
+    public static string Settings_Agent_NotElevated => ResourceManager.GetString(nameof(Settings_Agent_NotElevated), Culture) ?? nameof(Settings_Agent_NotElevated);
+
+    public static string Settings_Agent_Task_Label => ResourceManager.GetString(nameof(Settings_Agent_Task_Label), Culture) ?? nameof(Settings_Agent_Task_Label);
+
+    public static string Settings_Agent_Task_Later => ResourceManager.GetString(nameof(Settings_Agent_Task_Later), Culture) ?? nameof(Settings_Agent_Task_Later);
+
     public static string Settings_Appearance_Header => ResourceManager.GetString(nameof(Settings_Appearance_Header), Culture) ?? nameof(Settings_Appearance_Header);
 
+    public static string Settings_Applied => ResourceManager.GetString(nameof(Settings_Applied), Culture) ?? nameof(Settings_Applied);
+
+    public static string Settings_Background_Body => ResourceManager.GetString(nameof(Settings_Background_Body), Culture) ?? nameof(Settings_Background_Body);
+
+    public static string Settings_Background_Label => ResourceManager.GetString(nameof(Settings_Background_Label), Culture) ?? nameof(Settings_Background_Label);
+
+    public static string Settings_Capture_Header => ResourceManager.GetString(nameof(Settings_Capture_Header), Culture) ?? nameof(Settings_Capture_Header);
+
+    public static string Settings_Channel_Beta => ResourceManager.GetString(nameof(Settings_Channel_Beta), Culture) ?? nameof(Settings_Channel_Beta);
+
+    public static string Settings_Channel_Stable => ResourceManager.GetString(nameof(Settings_Channel_Stable), Culture) ?? nameof(Settings_Channel_Stable);
+
     public static string Settings_Header => ResourceManager.GetString(nameof(Settings_Header), Culture) ?? nameof(Settings_Header);
+
+    public static string Settings_HookedGames_Empty => ResourceManager.GetString(nameof(Settings_HookedGames_Empty), Culture) ?? nameof(Settings_HookedGames_Empty);
+
+    public static string Settings_HookedGames_Label => ResourceManager.GetString(nameof(Settings_HookedGames_Label), Culture) ?? nameof(Settings_HookedGames_Label);
+
+    public static string Settings_HookedGames_Revoke => ResourceManager.GetString(nameof(Settings_HookedGames_Revoke), Culture) ?? nameof(Settings_HookedGames_Revoke);
+
+    public static string Settings_Interval_Body => ResourceManager.GetString(nameof(Settings_Interval_Body), Culture) ?? nameof(Settings_Interval_Body);
+
+    public static string Settings_Interval_Label => ResourceManager.GetString(nameof(Settings_Interval_Label), Culture) ?? nameof(Settings_Interval_Label);
+
+    public static string Settings_Invalid_Format => ResourceManager.GetString(nameof(Settings_Invalid_Format), Culture) ?? nameof(Settings_Invalid_Format);
+
+    public static string Settings_KillSwitch_Body => ResourceManager.GetString(nameof(Settings_KillSwitch_Body), Culture) ?? nameof(Settings_KillSwitch_Body);
+
+    public static string Settings_KillSwitch_Label => ResourceManager.GetString(nameof(Settings_KillSwitch_Label), Culture) ?? nameof(Settings_KillSwitch_Label);
+
+    public static string Settings_KillSwitch_Off => ResourceManager.GetString(nameof(Settings_KillSwitch_Off), Culture) ?? nameof(Settings_KillSwitch_Off);
+
+    public static string Settings_KillSwitch_On => ResourceManager.GetString(nameof(Settings_KillSwitch_On), Culture) ?? nameof(Settings_KillSwitch_On);
 
     public static string Settings_Language_Label => ResourceManager.GetString(nameof(Settings_Language_Label), Culture) ?? nameof(Settings_Language_Label);
 
     public static string Settings_Language_Note => ResourceManager.GetString(nameof(Settings_Language_Note), Culture) ?? nameof(Settings_Language_Note);
+
+    public static string Settings_Legal_Header => ResourceManager.GetString(nameof(Settings_Legal_Header), Culture) ?? nameof(Settings_Legal_Header);
+
+    public static string Settings_Legal_Reopen => ResourceManager.GetString(nameof(Settings_Legal_Reopen), Culture) ?? nameof(Settings_Legal_Reopen);
+
+    public static string Settings_LogDebug_Body => ResourceManager.GetString(nameof(Settings_LogDebug_Body), Culture) ?? nameof(Settings_LogDebug_Body);
+
+    public static string Settings_LogDebug_Label => ResourceManager.GetString(nameof(Settings_LogDebug_Label), Culture) ?? nameof(Settings_LogDebug_Label);
+
+    public static string Settings_Logging_Header => ResourceManager.GetString(nameof(Settings_Logging_Header), Culture) ?? nameof(Settings_Logging_Header);
+
+    public static string Settings_MinimizeToTray_Label => ResourceManager.GetString(nameof(Settings_MinimizeToTray_Label), Culture) ?? nameof(Settings_MinimizeToTray_Label);
+
+    public static string Settings_MinimizeToTray_Later => ResourceManager.GetString(nameof(Settings_MinimizeToTray_Later), Culture) ?? nameof(Settings_MinimizeToTray_Later);
+
+    public static string Settings_MinSession_Body => ResourceManager.GetString(nameof(Settings_MinSession_Body), Culture) ?? nameof(Settings_MinSession_Body);
+
+    public static string Settings_MinSession_Label => ResourceManager.GetString(nameof(Settings_MinSession_Label), Culture) ?? nameof(Settings_MinSession_Label);
+
+    public static string Settings_OnlineMetadata_Body => ResourceManager.GetString(nameof(Settings_OnlineMetadata_Body), Culture) ?? nameof(Settings_OnlineMetadata_Body);
+
+    public static string Settings_OnlineMetadata_Label => ResourceManager.GetString(nameof(Settings_OnlineMetadata_Label), Culture) ?? nameof(Settings_OnlineMetadata_Label);
+
+    public static string Settings_Policy_Header => ResourceManager.GetString(nameof(Settings_Policy_Header), Culture) ?? nameof(Settings_Policy_Header);
+
+    public static string Settings_Privacy_Header => ResourceManager.GetString(nameof(Settings_Privacy_Header), Culture) ?? nameof(Settings_Privacy_Header);
+
+    public static string Settings_Retention_Body => ResourceManager.GetString(nameof(Settings_Retention_Body), Culture) ?? nameof(Settings_Retention_Body);
+
+    public static string Settings_Retention_Label => ResourceManager.GetString(nameof(Settings_Retention_Label), Culture) ?? nameof(Settings_Retention_Label);
+
+    public static string Settings_SafetyDocs => ResourceManager.GetString(nameof(Settings_SafetyDocs), Culture) ?? nameof(Settings_SafetyDocs);
+
+    public static string Settings_StartWithWindows_Body => ResourceManager.GetString(nameof(Settings_StartWithWindows_Body), Culture) ?? nameof(Settings_StartWithWindows_Body);
+
+    public static string Settings_StartWithWindows_Label => ResourceManager.GetString(nameof(Settings_StartWithWindows_Label), Culture) ?? nameof(Settings_StartWithWindows_Label);
 
     public static string Settings_Theme_Dark => ResourceManager.GetString(nameof(Settings_Theme_Dark), Culture) ?? nameof(Settings_Theme_Dark);
 
@@ -850,6 +1041,22 @@ public static class Strings
     public static string Settings_Theme_Light => ResourceManager.GetString(nameof(Settings_Theme_Light), Culture) ?? nameof(Settings_Theme_Light);
 
     public static string Settings_Theme_System => ResourceManager.GetString(nameof(Settings_Theme_System), Culture) ?? nameof(Settings_Theme_System);
+
+    public static string Settings_UpdateChannel_Body => ResourceManager.GetString(nameof(Settings_UpdateChannel_Body), Culture) ?? nameof(Settings_UpdateChannel_Body);
+
+    public static string Settings_UpdateChannel_Label => ResourceManager.GetString(nameof(Settings_UpdateChannel_Label), Culture) ?? nameof(Settings_UpdateChannel_Label);
+
+    public static string Settings_Updates_Header => ResourceManager.GetString(nameof(Settings_Updates_Header), Culture) ?? nameof(Settings_Updates_Header);
+
+    public static string Settings_VkLayer_Label => ResourceManager.GetString(nameof(Settings_VkLayer_Label), Culture) ?? nameof(Settings_VkLayer_Label);
+
+    public static string Settings_VkLayer_NotRegistered => ResourceManager.GetString(nameof(Settings_VkLayer_NotRegistered), Culture) ?? nameof(Settings_VkLayer_NotRegistered);
+
+    public static string Settings_VkLayer_Registered => ResourceManager.GetString(nameof(Settings_VkLayer_Registered), Culture) ?? nameof(Settings_VkLayer_Registered);
+
+    public static string Settings_VkLayer_Unknown => ResourceManager.GetString(nameof(Settings_VkLayer_Unknown), Culture) ?? nameof(Settings_VkLayer_Unknown);
+
+    public static string Settings_Window_Header => ResourceManager.GetString(nameof(Settings_Window_Header), Culture) ?? nameof(Settings_Window_Header);
 
     public static string Summary_Annotations_Header => ResourceManager.GetString(nameof(Summary_Annotations_Header), Culture) ?? nameof(Summary_Annotations_Header);
 

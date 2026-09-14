@@ -8,9 +8,127 @@
     <ScrollViewer>
         <StackPanel Style="{StaticResource PageRoot}">
             <ui:TextBlock FontTypography="Title" Text="{x:Static vm:SettingsViewModel.Header}" />
-            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static vm:SettingsViewModel.AppearanceHeader}" />
 
-            <!-- 08_UI §Settings: the WPF UI settings idiom — CardControl rows. -->
+            <!-- 08_UI §Settings: Capture first, most important — the kill switch, the hook-enabled games, the layer, the safety link. -->
+            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Capture_Header}" />
+            <ui:CardExpander Margin="0,4,0,0" IsExpanded="True" Icon="{ui:SymbolIcon ShieldError24}">
+                <ui:CardExpander.Header>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_KillSwitch_Label}" />
+                            <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.KillSwitchState}" />
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1" Margin="12,0" IsChecked="{Binding ViewModel.KillSwitch, Mode=TwoWay}" />
+                    </Grid>
+                </ui:CardExpander.Header>
+                <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_KillSwitch_Body}" TextWrapping="Wrap" />
+            </ui:CardExpander>
+
+            <ui:CardExpander Margin="0,8,0,0" IsExpanded="True" Icon="{ui:SymbolIcon Games24}" Header="{x:Static res:Strings.Settings_HookedGames_Label}">
+                <StackPanel>
+                    <ui:TextBlock Appearance="Secondary"
+                                  Text="{x:Static res:Strings.Settings_HookedGames_Empty}"
+                                  Visibility="{Binding ViewModel.HookedGames.Count, Converter={StaticResource ZeroToVisible}}" />
+                    <ItemsControl ItemsSource="{Binding ViewModel.HookedGames}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <ui:TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{Binding Name}" />
+                                    <ui:Button Grid.Column="1"
+                                               Appearance="Secondary"
+                                               Command="{Binding RevokeCommand}"
+                                               Content="{x:Static res:Strings.Settings_HookedGames_Revoke}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ui:CardExpander>
+
+            <ui:CardControl Margin="0,8,0,0" Header="{x:Static res:Strings.Settings_VkLayer_Label}" Icon="{ui:SymbolIcon Layer24}">
+                <ui:TextBlock MaxWidth="420" Appearance="Secondary" Text="{Binding ViewModel.VulkanLayerText}" TextWrapping="Wrap" />
+            </ui:CardControl>
+            <ui:HyperlinkButton Margin="0,6,0,0"
+                                Command="{Binding ViewModel.OpenSafetyDocsCommand}"
+                                Content="{x:Static res:Strings.Settings_SafetyDocs}"
+                                Icon="{ui:SymbolIcon Open24}" />
+
+            <!-- Recording policy: the three numbers and background capture (D16: the Agent reads them at session start). -->
+            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Policy_Header}" />
+            <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Timer24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_MinSession_Label}" />
+                        <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_MinSession_Body}" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:NumberBox MinWidth="140"
+                              Maximum="{x:Static vm:SettingsViewModel.MinSessionMaximum}"
+                              Minimum="{x:Static vm:SettingsViewModel.MinSessionMinimum}"
+                              SpinButtonPlacementMode="Inline"
+                              Value="{Binding ViewModel.MinSessionSeconds, Mode=TwoWay}" />
+            </ui:CardControl>
+            <ui:CardControl Margin="0,8,0,0" Icon="{ui:SymbolIcon Pulse24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_Interval_Label}" />
+                        <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_Interval_Body}" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:NumberBox MinWidth="140"
+                              Maximum="{x:Static vm:SettingsViewModel.IntervalMaximum}"
+                              Minimum="{x:Static vm:SettingsViewModel.IntervalMinimum}"
+                              SpinButtonPlacementMode="Inline"
+                              Value="{Binding ViewModel.TelemetryIntervalMs, Mode=TwoWay}" />
+            </ui:CardControl>
+            <ui:CardControl Margin="0,8,0,0" Icon="{ui:SymbolIcon Database24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_Retention_Label}" />
+                        <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_Retention_Body}" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:NumberBox MinWidth="140"
+                              Maximum="{x:Static vm:SettingsViewModel.RetentionMaximum}"
+                              Minimum="0"
+                              SpinButtonPlacementMode="Inline"
+                              Value="{Binding ViewModel.RetentionRawSessions, Mode=TwoWay}" />
+            </ui:CardControl>
+            <ui:CardControl Margin="0,8,0,0" Icon="{ui:SymbolIcon Eye24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_Background_Label}" />
+                        <ui:TextBlock MaxWidth="560" Appearance="Secondary" Text="{x:Static res:Strings.Settings_Background_Body}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch IsChecked="{Binding ViewModel.BackgroundCapture, Mode=TwoWay}" />
+            </ui:CardControl>
+
+            <!-- Agent: elevation is optional and no tier needs it; the logon task arrives with the tray build. -->
+            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Agent_Header}" />
+            <ui:CardExpander Margin="0,4,0,0" Icon="{ui:SymbolIcon Person24}">
+                <ui:CardExpander.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_Agent_Elevation_Label}" />
+                        <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.ElevationText}" />
+                    </StackPanel>
+                </ui:CardExpander.Header>
+                <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_Agent_Elevation_Body}" TextWrapping="Wrap" />
+            </ui:CardExpander>
+            <ui:CardControl Margin="0,8,0,0" Header="{x:Static res:Strings.Settings_Agent_Task_Label}" Icon="{ui:SymbolIcon CalendarClock24}">
+                <ui:TextBlock MaxWidth="420" Appearance="Secondary" Text="{x:Static res:Strings.Settings_Agent_Task_Later}" TextWrapping="Wrap" />
+            </ui:CardControl>
+
+            <!-- Appearance (PR-2) and window. -->
+            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static vm:SettingsViewModel.AppearanceHeader}" />
             <ui:CardControl Margin="0,4,0,0" Header="{x:Static vm:SettingsViewModel.ThemeLabel}" Icon="{ui:SymbolIcon Color24}">
                 <ComboBox MinWidth="180"
                           DisplayMemberPath="Label"
@@ -18,7 +136,6 @@
                           SelectedValue="{Binding ViewModel.SelectedTheme, Mode=TwoWay}"
                           SelectedValuePath="Value" />
             </ui:CardControl>
-
             <ui:CardControl Margin="0,8,0,0" Header="{x:Static vm:SettingsViewModel.LanguageLabel}" Icon="{ui:SymbolIcon LocalLanguage24}">
                 <ComboBox MinWidth="180"
                           DisplayMemberPath="Label"
@@ -27,6 +144,69 @@
                           SelectedValuePath="Value" />
             </ui:CardControl>
             <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" Text="{x:Static vm:SettingsViewModel.LanguageNote}" TextWrapping="Wrap" />
+
+            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Window_Header}" />
+            <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Power24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_StartWithWindows_Label}" />
+                        <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_StartWithWindows_Body}" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch IsChecked="{Binding ViewModel.StartWithWindows, Mode=TwoWay}" />
+            </ui:CardControl>
+            <ui:CardControl Margin="0,8,0,0" Icon="{ui:SymbolIcon ArrowMinimize24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_MinimizeToTray_Label}" />
+                        <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_MinimizeToTray_Later}" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch IsChecked="{Binding ViewModel.MinimizeToTray, Mode=TwoWay}" />
+            </ui:CardControl>
+
+            <!-- Privacy, updates, logging, legal. -->
+            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Privacy_Header}" />
+            <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Globe24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_OnlineMetadata_Label}" />
+                        <ui:TextBlock MaxWidth="560" Appearance="Secondary" Text="{x:Static res:Strings.Settings_OnlineMetadata_Body}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch IsChecked="{Binding ViewModel.OnlineMetadata, Mode=TwoWay}" />
+            </ui:CardControl>
+
+            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Updates_Header}" />
+            <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon ArrowSync24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_UpdateChannel_Label}" />
+                        <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_UpdateChannel_Body}" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ComboBox MinWidth="140"
+                          DisplayMemberPath="Label"
+                          ItemsSource="{x:Static vm:SettingsViewModel.UpdateChannels}"
+                          SelectedValue="{Binding ViewModel.UpdateChannel, Mode=TwoWay}"
+                          SelectedValuePath="Value" />
+            </ui:CardControl>
+
+            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Logging_Header}" />
+            <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Bug24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_LogDebug_Label}" />
+                        <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_LogDebug_Body}" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch IsChecked="{Binding ViewModel.LogDebug, Mode=TwoWay}" />
+            </ui:CardControl>
+
+            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Legal_Header}" />
+            <ui:CardAction Margin="0,4,0,24" Command="{Binding ViewModel.ReopenLegalCommand}" Icon="{ui:SymbolIcon DocumentText24}">
+                <ui:TextBlock Text="{x:Static res:Strings.Settings_Legal_Reopen}" />
+            </ui:CardAction>
         </StackPanel>
     </ScrollViewer>
 </Page>

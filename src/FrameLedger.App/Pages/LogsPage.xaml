@@ -5,8 +5,66 @@
       xmlns:res="clr-namespace:FrameLedger.App"
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
       Title="{x:Static res:Strings.Logs_Header}">
-    <StackPanel Style="{StaticResource PageRoot}">
-        <ui:TextBlock FontTypography="Title" Text="{x:Static vm:LogsViewModel.Header}" />
-        <ui:TextBlock Margin="0,16,0,0" Appearance="Secondary" Text="{x:Static vm:LogsViewModel.EmptyText}" TextWrapping="Wrap" />
-    </StackPanel>
+    <Grid Margin="24,16,24,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TextBlock Grid.Row="0" FontTypography="Title" Text="{x:Static vm:LogsViewModel.Header}" />
+
+        <!-- 08_UI §Logs: source toggle, level filter, search, pause-scroll; the two buttons. -->
+        <WrapPanel Grid.Row="1" Margin="0,12,0,8" Orientation="Horizontal">
+            <ComboBox MinWidth="120"
+                      Margin="0,0,8,4"
+                      DisplayMemberPath="Label"
+                      ItemsSource="{x:Static vm:LogsViewModel.Sources}"
+                      SelectedValue="{Binding ViewModel.Source, Mode=TwoWay}"
+                      SelectedValuePath="Value" />
+            <ComboBox MinWidth="170"
+                      Margin="0,0,8,4"
+                      DisplayMemberPath="Label"
+                      ItemsSource="{x:Static vm:LogsViewModel.Levels}"
+                      SelectedValue="{Binding ViewModel.Level, Mode=TwoWay}"
+                      SelectedValuePath="Value" />
+            <ui:TextBox MinWidth="220"
+                        Margin="0,0,8,4"
+                        Icon="{ui:SymbolIcon Search24}"
+                        PlaceholderText="{x:Static res:Strings.Logs_Search_Placeholder}"
+                        Text="{Binding ViewModel.Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <ui:ToggleSwitch Margin="0,0,16,4"
+                             Content="{x:Static res:Strings.Logs_Pause}"
+                             IsChecked="{Binding ViewModel.IsPaused, Mode=TwoWay}" />
+            <ui:Button Margin="0,0,8,4"
+                       Appearance="Secondary"
+                       Command="{Binding ViewModel.OpenFolderCommand}"
+                       Content="{x:Static res:Strings.Logs_OpenFolder}"
+                       Icon="{ui:SymbolIcon FolderOpen24}" />
+            <ui:Button Margin="0,0,0,4"
+                       Appearance="Secondary"
+                       Command="{Binding ViewModel.ExportBundleCommand}"
+                       Content="{x:Static res:Strings.Logs_ExportBundle}"
+                       Icon="{ui:SymbolIcon FolderZip24}" />
+        </WrapPanel>
+
+        <TextBox x:Name="Tail"
+                 Grid.Row="2"
+                 AcceptsReturn="True"
+                 FontFamily="Consolas"
+                 FontSize="12"
+                 HorizontalScrollBarVisibility="Auto"
+                 IsReadOnly="True"
+                 IsReadOnlyCaretVisible="True"
+                 Text="{Binding ViewModel.Text, Mode=OneWay}"
+                 TextChanged="OnTailChanged"
+                 TextWrapping="NoWrap"
+                 VerticalScrollBarVisibility="Auto" />
+
+        <ui:TextBlock Grid.Row="3"
+                      Margin="0,6,0,0"
+                      Appearance="Secondary"
+                      Text="{Binding ViewModel.Status}" />
+    </Grid>
 </Page>

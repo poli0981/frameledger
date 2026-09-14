@@ -110,7 +110,7 @@
     <value>Game</value>
   </data>
   <data name="Logs_Empty" xml:space="preserve">
-    <value>Trình xem log sẽ có ở bản sau; các tệp nằm trong thư mục dữ liệu, mục logs.</value>
+    <value>Chưa có tệp nhật ký cho nguồn này.</value>
   </data>
   <data name="Logs_Header" xml:space="preserve">
     <value>Log</value>
@@ -963,5 +963,212 @@
   </data>
   <data name="Trend_Metric_P1Low" xml:space="preserve">
     <value>1% Low</value>
+  </data>
+  <data name="Diag_Written_Format" xml:space="preserve">
+    <value>Đã ghi chẩn đoán vào {0}</value>
+  </data>
+  <data name="Logs_Bundle_Exported_Format" xml:space="preserve">
+    <value>Đã ghi gói báo lỗi: {0} ({1} tệp). Không gửi đi đâu cả.</value>
+  </data>
+  <data name="Logs_Bundle_Failed_Format" xml:space="preserve">
+    <value>Xuất gói báo lỗi thất bại: {0}</value>
+  </data>
+  <data name="Logs_ExportBundle" xml:space="preserve">
+    <value>Xuất gói báo lỗi</value>
+  </data>
+  <data name="Logs_Level_All" xml:space="preserve">
+    <value>Mọi mức</value>
+  </data>
+  <data name="Logs_Level_Error" xml:space="preserve">
+    <value>Chỉ lỗi</value>
+  </data>
+  <data name="Logs_Level_Warning" xml:space="preserve">
+    <value>Cảnh báo và lỗi</value>
+  </data>
+  <data name="Logs_OpenFolder" xml:space="preserve">
+    <value>Mở thư mục nhật ký</value>
+  </data>
+  <data name="Logs_Pause" xml:space="preserve">
+    <value>Tạm dừng</value>
+  </data>
+  <data name="Logs_Search_Placeholder" xml:space="preserve">
+    <value>Tìm</value>
+  </data>
+  <data name="Logs_Showing_Format" xml:space="preserve">
+    <value>{0} dòng trong {1} ({2})</value>
+  </data>
+  <data name="Logs_Source_Agent" xml:space="preserve">
+    <value>Agent</value>
+  </data>
+  <data name="Logs_Source_Ui" xml:space="preserve">
+    <value>Ứng dụng</value>
+  </data>
+  <data name="Notice_Degraded_Body_Format" xml:space="preserve">
+    <value>Hook đã dừng ({0}); phiên tiếp tục mà không đo.</value>
+  </data>
+  <data name="Notice_Degraded_Title" xml:space="preserve">
+    <value>Đã dừng đo</value>
+  </data>
+  <data name="Notice_Dismiss" xml:space="preserve">
+    <value>Bỏ qua</value>
+  </data>
+  <data name="Notice_Error_Title" xml:space="preserve">
+    <value>Lỗi thu thập</value>
+  </data>
+  <data name="Notice_Refused_Recording" xml:space="preserve">
+    <value>Phiên vẫn được ghi — thời lượng và telemetry phần cứng — với mọi giá trị từ khung hình là N/A.</value>
+  </data>
+  <data name="Notice_Refused_Title_Format" xml:space="preserve">
+    <value>{0}: từ chối hook</value>
+  </data>
+  <data name="Notice_Unhooked_Title" xml:space="preserve">
+    <value>Đã dừng đo</value>
+  </data>
+  <data name="Settings_Agent_Elevated" xml:space="preserve">
+    <value>Đang chạy với quyền quản trị.</value>
+  </data>
+  <data name="Settings_Agent_Elevation_Body" xml:space="preserve">
+    <value>Không tier nào cần quyền quản trị. Nó chỉ tuỳ chọn mở khoá nhiệt độ CPU (qua PawnIO) và gắn vào game tự chạy với quyền quản trị. Mọi thứ khác — hook, đo, ghi — đều chạy không cần.</value>
+  </data>
+  <data name="Settings_Agent_Elevation_Label" xml:space="preserve">
+    <value>Quyền quản trị</value>
+  </data>
+  <data name="Settings_Agent_Header" xml:space="preserve">
+    <value>Capture agent</value>
+  </data>
+  <data name="Settings_Agent_NotElevated" xml:space="preserve">
+    <value>Đang chạy với quyền người dùng thường.</value>
+  </data>
+  <data name="Settings_Agent_Task_Label" xml:space="preserve">
+    <value>Khởi động agent khi đăng nhập</value>
+  </data>
+  <data name="Settings_Agent_Task_Later" xml:space="preserve">
+    <value>Tác vụ theo lịch sẽ có ở bản tray; hiện tại ứng dụng tự khởi động agent cạnh nó khi mở.</value>
+  </data>
+  <data name="Settings_Applied" xml:space="preserve">
+    <value>Đã áp dụng. Capture agent đọc ở lần bắt đầu phiên kế tiếp.</value>
+  </data>
+  <data name="Settings_Background_Body" xml:space="preserve">
+    <value>Capture agent theo dõi các game đã thêm; game không do nó khởi chạy vẫn được ghi, và chỉ đo nếu game đó bật hooking và không phải game Vulkan.</value>
+  </data>
+  <data name="Settings_Background_Label" xml:space="preserve">
+    <value>Ghi game khởi chạy ngoài FrameLedger</value>
+  </data>
+  <data name="Settings_Capture_Header" xml:space="preserve">
+    <value>Thu thập</value>
+  </data>
+  <data name="Settings_Channel_Beta" xml:space="preserve">
+    <value>Beta</value>
+  </data>
+  <data name="Settings_Channel_Stable" xml:space="preserve">
+    <value>Ổn định</value>
+  </data>
+  <data name="Settings_HookedGames_Empty" xml:space="preserve">
+    <value>Chưa có game nào bật hooking.</value>
+  </data>
+  <data name="Settings_HookedGames_Label" xml:space="preserve">
+    <value>Game đang bật hooking</value>
+  </data>
+  <data name="Settings_HookedGames_Revoke" xml:space="preserve">
+    <value>Tắt</value>
+  </data>
+  <data name="Settings_Interval_Body" xml:space="preserve">
+    <value>Tần suất lấy mẫu telemetry phần cứng trong phiên (500–2000).</value>
+  </data>
+  <data name="Settings_Interval_Label" xml:space="preserve">
+    <value>Chu kỳ cảm biến (ms)</value>
+  </data>
+  <data name="Settings_Invalid_Format" xml:space="preserve">
+    <value>{0} nằm ngoài {1}–{2}.</value>
+  </data>
+  <data name="Settings_KillSwitch_Body" xml:space="preserve">
+    <value>Khi bật, không inject vào game nào và không bật lớp Vulkan, bất kể cài đặt từng game; phiên đang đo sẽ dừng ở lần quét an toàn kế tiếp. Phiên vẫn được ghi mà không đo.</value>
+  </data>
+  <data name="Settings_KillSwitch_Label" xml:space="preserve">
+    <value>Tắt toàn bộ hooking</value>
+  </data>
+  <data name="Settings_KillSwitch_Off" xml:space="preserve">
+    <value>Cài đặt từng game quyết định</value>
+  </data>
+  <data name="Settings_KillSwitch_On" xml:space="preserve">
+    <value>Toàn bộ hooking đang tắt</value>
+  </data>
+  <data name="Settings_Legal_Header" xml:space="preserve">
+    <value>Pháp lý</value>
+  </data>
+  <data name="Settings_Legal_Reopen" xml:space="preserve">
+    <value>Mở lại các tài liệu pháp lý</value>
+  </data>
+  <data name="Settings_LogDebug_Body" xml:space="preserve">
+    <value>Áp dụng cho ứng dụng này ngay. Capture agent giữ mức riêng của nó.</value>
+  </data>
+  <data name="Settings_LogDebug_Label" xml:space="preserve">
+    <value>Ghi nhật ký gỡ lỗi</value>
+  </data>
+  <data name="Settings_Logging_Header" xml:space="preserve">
+    <value>Nhật ký</value>
+  </data>
+  <data name="Settings_MinSession_Body" xml:space="preserve">
+    <value>Phiên ngắn hơn sẽ bị bỏ.</value>
+  </data>
+  <data name="Settings_MinSession_Label" xml:space="preserve">
+    <value>Độ dài phiên tối thiểu (giây)</value>
+  </data>
+  <data name="Settings_MinimizeToTray_Label" xml:space="preserve">
+    <value>Thu vào khay khi đóng</value>
+  </data>
+  <data name="Settings_MinimizeToTray_Later" xml:space="preserve">
+    <value>Khay hệ thống sẽ có ở bản kế; công tắc được lưu ngay từ giờ.</value>
+  </data>
+  <data name="Settings_OnlineMetadata_Body" xml:space="preserve">
+    <value>Mặc định tắt. FrameLedger không gửi telemetry và không gọi mạng ngoài kiểm tra cập nhật, tải quy tắc phát hiện, và — chỉ khi bật — siêu dữ liệu cửa hàng cho game của bạn. Không dữ liệu phiên nào rời khỏi máy này.</value>
+  </data>
+  <data name="Settings_OnlineMetadata_Label" xml:space="preserve">
+    <value>Tải siêu dữ liệu cửa hàng trực tuyến</value>
+  </data>
+  <data name="Settings_Policy_Header" xml:space="preserve">
+    <value>Ghi phiên</value>
+  </data>
+  <data name="Settings_Privacy_Header" xml:space="preserve">
+    <value>Quyền riêng tư</value>
+  </data>
+  <data name="Settings_Retention_Body" xml:space="preserve">
+    <value>Giữ dữ liệu theo khung hình của các phiên mới nhất; phiên cũ chỉ giữ số liệu tổng hợp. 0 = giữ tất cả.</value>
+  </data>
+  <data name="Settings_Retention_Label" xml:space="preserve">
+    <value>Số chuỗi thô giữ lại mỗi game</value>
+  </data>
+  <data name="Settings_SafetyDocs" xml:space="preserve">
+    <value>Đọc hook làm gì và không làm gì</value>
+  </data>
+  <data name="Settings_StartWithWindows_Body" xml:space="preserve">
+    <value>Mục Run cho riêng người dùng này; không ảnh hưởng toàn máy.</value>
+  </data>
+  <data name="Settings_StartWithWindows_Label" xml:space="preserve">
+    <value>Khởi động FrameLedger cùng Windows</value>
+  </data>
+  <data name="Settings_UpdateChannel_Body" xml:space="preserve">
+    <value>Lưu ngay; trình cập nhật sẽ có ở bản sau. Không bao giờ cập nhật khi game đang được hook.</value>
+  </data>
+  <data name="Settings_UpdateChannel_Label" xml:space="preserve">
+    <value>Kênh</value>
+  </data>
+  <data name="Settings_Updates_Header" xml:space="preserve">
+    <value>Cập nhật</value>
+  </data>
+  <data name="Settings_VkLayer_Label" xml:space="preserve">
+    <value>Lớp Vulkan</value>
+  </data>
+  <data name="Settings_VkLayer_NotRegistered" xml:space="preserve">
+    <value>Chưa đăng ký. Game Vulkan chỉ được đo ở chế độ khởi chạy, qua manifest theo từng lần chạy; đăng ký toàn máy sẽ có ở bản tray.</value>
+  </data>
+  <data name="Settings_VkLayer_Registered" xml:space="preserve">
+    <value>Đã đăng ký cho người dùng này (HKCU)</value>
+  </data>
+  <data name="Settings_VkLayer_Unknown" xml:space="preserve">
+    <value>Chưa rõ cho đến khi capture agent trả lời.</value>
+  </data>
+  <data name="Settings_Window_Header" xml:space="preserve">
+    <value>Cửa sổ</value>
   </data>
 </root>

@@ -1,3 +1,4 @@
+using System.IO;
 using System.Windows;
 using FluentAssertions;
 using FrameLedger.App.Charts;
@@ -6,8 +7,11 @@ using FrameLedger.App.Pages;
 using FrameLedger.App.Services;
 using FrameLedger.App.ViewModels;
 using FrameLedger.Application.Persistence;
+using FrameLedger.Application.Settings;
 using FrameLedger.Domain.Metrics;
+using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Shared.Ipc;
+using Microsoft.Extensions.DependencyInjection;
 using Wpf.Ui.Markup;
 
 namespace FrameLedger.App.Tests;
@@ -109,6 +113,22 @@ public sealed class PagesLoadTests
         public string? PickExecutable() => null;
     }
 
+    private sealed class NoTheme : IThemeApplier
+    {
+        public void Apply(AppTheme theme, Window? window)
+        {
+        }
+    }
+
+    private sealed class NoRun : IRunAtLogon
+    {
+        public bool IsSet => false;
+
+        public void Apply(bool enabled)
+        {
+        }
+    }
+
     private static Task<T> OnStaAsync<T>(Func<T> work)
     {
         var tcs = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -135,6 +155,21 @@ public sealed class PagesLoadTests
         thread.IsBackground = true;
         thread.Start();
         return tcs.Task;
+    }
+
+    /// <summary>The two PR-8a pages' view models, loaded (the Logs tail over a directory with no file).</summary>
+    private static async Task<(SettingsViewModel Settings, LogsViewModel Logs)> SettingsAndLogsAsync(ScratchLedger s, HookingConsent consent, IMessageStrip strip)
+    {
+        var store = new SqliteSettingsStore(s.Db);
+        var appearance = new AppearanceSettings(store);
+        await appearance.LoadAsync().ConfigureAwait(false);
+        var settings = new SettingsViewModel(appearance, new NoTheme(), new ShellHost(new ServiceCollection().BuildServiceProvider(), null!, null!), new RegisteredSettings(store), s.Library, consent, new NoAgent(), new NoRun(), strip);
+        Task pending1 = settings.Pending;
+        await pending1.ConfigureAwait(false);
+        var logs = new LogsViewModel(new LogTail(Path.Combine(Path.GetTempPath(), "fl-nologs-" + Guid.NewGuid().ToString("N"))), new BugBundleBuilder(Path.GetTempPath(), new RegisteredSettings(store)), new NoSaver(), new NoAgent(), strip);
+        Task pending2 = logs.Pending;
+        await pending2.ConfigureAwait(false);
+        return (settings, logs);
     }
 
     private static void Render(FrameworkElement element)
@@ -171,6 +206,8 @@ public sealed class PagesLoadTests
         await pending3;
         Task pending4 = compare.Pending;
         await pending4;
+        (SettingsViewModel settings, LogsViewModel logs) = await SettingsAndLogsAsync(s, consent, strip);
+        using LogsViewModel _ = logs;
 
         string loaded = await OnStaAsync(() =>
         {
@@ -178,14 +215,17 @@ public sealed class PagesLoadTests
             Render(new GamesPage(games));
             Render(new GameDetailPage(detail));
             Render(new ComparePage(compare));
+            Render(new SettingsPage(settings));
+            Render(new LogsPage(logs));
             var readout = new FpsReadout { Model = FpsPresentation.FromRow(detail.Sessions[0].Row) };
             Render(readout);
             var chip = new TriStateChip { Model = new TriStateChipModel("RT", Tri.Yes, Application.TriState.TriStateSource.Measured) };
             Render(chip);
-            return "dashboard,games,detail,readout,chip";
+            return "dashboard,games,detail,settings,logs,readout,chip";
         });
 
-        loaded.Should().Be("dashboard,games,detail,readout,chip");
+        loaded.Should().Be("dashboard,games,detail,settings,logs,readout,chip");
+        settings.MinSessionSeconds.Should().Be(30);
         games.Games.Should().ContainSingle();
         detail.Sessions.Should().HaveCount(2);
         detail.Sessions.Should().Contain(static r => r.TierText == Strings.Tier_NotHooked);
