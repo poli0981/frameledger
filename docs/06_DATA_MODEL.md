@@ -192,6 +192,10 @@ CREATE TABLE sessions (
   fg_mode TEXT NOT NULL DEFAULT 'na',
   fg_source TEXT,                              -- api|cadence|manual (`etw` removed 2026-08-28: no producer, no tier)
   fg_factor REAL,
+  -- schema 0003 (2026-09-14): why fg_factor is NULL while fg_mode names a technology — FgRefusalKind as
+  -- Vocabulary.FgRefusal spells it (not_counted, no_evaluations, non_uniform, dxgi_saturated, …). NULL when a
+  -- factor stands or the writer predates the column. A REASON for the UI, never an input to fg_mode or a number.
+  fg_refusal TEXT,
   -- FlWriterState.runtimeCensus, raw (FlRuntimeCensus bits). Which vendor runtime modules
   -- the loader reported in the process. NOT a measurement and never a source for fg_mode
   -- or upscaler: it qualifies the presented figure when fg_mode is 'na' (03_METRICS §Rung
@@ -390,6 +394,12 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > time the runner ran two scripts on a real file: `ALTER TABLE ADD COLUMN` only — the three override
 > columns on `session_annotations` and `games.removed_at`. `LedgerDatabaseTests` asserts one
 > `schema_migrations` row per script, so `LatestVersion` is 2.
+
+> **`0003_fg_refusal.sql` (2026-09-14) — `sessions.fg_refusal`.** The owner's ledger held two hooked rows with
+> `fg_mode = 'dlssg'`, `fg_source = 'api'` and `fg_factor` NULL — the identity stood, the count refused — and
+> nothing recorded which refusal; every FG surface said N/A beside a detection that had succeeded. One
+> `ALTER TABLE ADD COLUMN`, written by the Agent (`SessionAggregator.ApplyFg`), read by the UI for the "factor not
+> counted" tooltip (`08_UI` §FPS display rule). `LatestVersion` is 3; `LedgerDatabaseTests` asserts the column.
 
 > **Built 2026-09-09 (P2 PR-B):** `Infrastructure.Persistence.MigrationRunner` over scripts embedded in
 > the assembly (so the schema a build applies is the one it was tested against), one transaction per

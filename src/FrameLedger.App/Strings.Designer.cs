@@ -143,7 +143,19 @@ public static class Strings
         nameof(Exit_Normal),
         nameof(Exit_UnhookedSafety),
         nameof(Fg_Active),
+        nameof(Fg_Factor_NotCounted),
         nameof(Fg_None),
+        nameof(Fg_Refusal_AmbiguousBand),
+        nameof(Fg_Refusal_CountSaturated),
+        nameof(Fg_Refusal_DxgiSaturated),
+        nameof(Fg_Refusal_MultipleStreams),
+        nameof(Fg_Refusal_NoBatches),
+        nameof(Fg_Refusal_NoEvaluations),
+        nameof(Fg_Refusal_NonUniform),
+        nameof(Fg_Refusal_NotCounted),
+        nameof(Fg_Refusal_TooShort),
+        nameof(Fg_Refusal_Unattributed),
+        nameof(Fg_Refusal_Unknown),
         nameof(Fg_Unknown),
         nameof(FirstRun_Accept),
         nameof(FirstRun_Agent_Body),
@@ -183,11 +195,14 @@ public static class Strings
         nameof(Fps_Census_NotRun),
         nameof(Fps_Census_NotRun_Tooltip),
         nameof(Fps_Census_RuntimeLoaded),
+        nameof(Fps_Census_RuntimeLoaded_Named_Format),
         nameof(Fps_Census_RuntimeLoaded_Tooltip),
         nameof(Fps_Census_Withheld),
         nameof(Fps_Census_Withheld_Tooltip),
         nameof(Fps_Fg_Chip_Format),
         nameof(Fps_Fg_Format),
+        nameof(Fps_Fg_Identified_Format),
+        nameof(Fps_Fg_Identified_Tooltip_Format),
         nameof(Fps_Native_Tooltip),
         nameof(Fps_None_Tooltip),
         nameof(Fps_Presented_Format),
@@ -697,7 +712,31 @@ public static class Strings
 
     public static string Fg_Active => ResourceManager.GetString(nameof(Fg_Active), Culture) ?? nameof(Fg_Active);
 
+    public static string Fg_Factor_NotCounted => ResourceManager.GetString(nameof(Fg_Factor_NotCounted), Culture) ?? nameof(Fg_Factor_NotCounted);
+
     public static string Fg_None => ResourceManager.GetString(nameof(Fg_None), Culture) ?? nameof(Fg_None);
+
+    public static string Fg_Refusal_AmbiguousBand => ResourceManager.GetString(nameof(Fg_Refusal_AmbiguousBand), Culture) ?? nameof(Fg_Refusal_AmbiguousBand);
+
+    public static string Fg_Refusal_CountSaturated => ResourceManager.GetString(nameof(Fg_Refusal_CountSaturated), Culture) ?? nameof(Fg_Refusal_CountSaturated);
+
+    public static string Fg_Refusal_DxgiSaturated => ResourceManager.GetString(nameof(Fg_Refusal_DxgiSaturated), Culture) ?? nameof(Fg_Refusal_DxgiSaturated);
+
+    public static string Fg_Refusal_MultipleStreams => ResourceManager.GetString(nameof(Fg_Refusal_MultipleStreams), Culture) ?? nameof(Fg_Refusal_MultipleStreams);
+
+    public static string Fg_Refusal_NoBatches => ResourceManager.GetString(nameof(Fg_Refusal_NoBatches), Culture) ?? nameof(Fg_Refusal_NoBatches);
+
+    public static string Fg_Refusal_NoEvaluations => ResourceManager.GetString(nameof(Fg_Refusal_NoEvaluations), Culture) ?? nameof(Fg_Refusal_NoEvaluations);
+
+    public static string Fg_Refusal_NonUniform => ResourceManager.GetString(nameof(Fg_Refusal_NonUniform), Culture) ?? nameof(Fg_Refusal_NonUniform);
+
+    public static string Fg_Refusal_NotCounted => ResourceManager.GetString(nameof(Fg_Refusal_NotCounted), Culture) ?? nameof(Fg_Refusal_NotCounted);
+
+    public static string Fg_Refusal_TooShort => ResourceManager.GetString(nameof(Fg_Refusal_TooShort), Culture) ?? nameof(Fg_Refusal_TooShort);
+
+    public static string Fg_Refusal_Unattributed => ResourceManager.GetString(nameof(Fg_Refusal_Unattributed), Culture) ?? nameof(Fg_Refusal_Unattributed);
+
+    public static string Fg_Refusal_Unknown => ResourceManager.GetString(nameof(Fg_Refusal_Unknown), Culture) ?? nameof(Fg_Refusal_Unknown);
 
     public static string Fg_Unknown => ResourceManager.GetString(nameof(Fg_Unknown), Culture) ?? nameof(Fg_Unknown);
 
@@ -777,6 +816,8 @@ public static class Strings
 
     public static string Fps_Census_RuntimeLoaded => ResourceManager.GetString(nameof(Fps_Census_RuntimeLoaded), Culture) ?? nameof(Fps_Census_RuntimeLoaded);
 
+    public static string Fps_Census_RuntimeLoaded_Named_Format => ResourceManager.GetString(nameof(Fps_Census_RuntimeLoaded_Named_Format), Culture) ?? nameof(Fps_Census_RuntimeLoaded_Named_Format);
+
     public static string Fps_Census_RuntimeLoaded_Tooltip => ResourceManager.GetString(nameof(Fps_Census_RuntimeLoaded_Tooltip), Culture) ?? nameof(Fps_Census_RuntimeLoaded_Tooltip);
 
     public static string Fps_Census_Withheld => ResourceManager.GetString(nameof(Fps_Census_Withheld), Culture) ?? nameof(Fps_Census_Withheld);
@@ -786,6 +827,10 @@ public static class Strings
     public static string Fps_Fg_Chip_Format => ResourceManager.GetString(nameof(Fps_Fg_Chip_Format), Culture) ?? nameof(Fps_Fg_Chip_Format);
 
     public static string Fps_Fg_Format => ResourceManager.GetString(nameof(Fps_Fg_Format), Culture) ?? nameof(Fps_Fg_Format);
+
+    public static string Fps_Fg_Identified_Format => ResourceManager.GetString(nameof(Fps_Fg_Identified_Format), Culture) ?? nameof(Fps_Fg_Identified_Format);
+
+    public static string Fps_Fg_Identified_Tooltip_Format => ResourceManager.GetString(nameof(Fps_Fg_Identified_Tooltip_Format), Culture) ?? nameof(Fps_Fg_Identified_Tooltip_Format);
 
     public static string Fps_Native_Tooltip => ResourceManager.GetString(nameof(Fps_Native_Tooltip), Culture) ?? nameof(Fps_Native_Tooltip);
 

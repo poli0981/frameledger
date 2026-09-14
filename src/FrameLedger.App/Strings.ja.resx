@@ -445,6 +445,54 @@
     <value>FG 有効 (技術未特定)</value>
     <comment>review</comment>
   </data>
+  <data name="Fg_Factor_NotCounted" xml:space="preserve">
+    <value>倍率は未計数</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_Refusal_AmbiguousBand" xml:space="preserve">
+    <value>比率が「なし」と実在する倍率の間にあります</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_Refusal_CountSaturated" xml:space="preserve">
+    <value>フレームごとの計数が上限に達しました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_Refusal_DxgiSaturated" xml:space="preserve">
+    <value>DXGI のプレゼントカウンターが上限に達しました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_Refusal_MultipleStreams" xml:space="preserve">
+    <value>複数のスワップチェーンがプレゼントしました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_Refusal_NoBatches" xml:space="preserve">
+    <value>Streamline のバッチを排出したプレゼントがありません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_Refusal_NoEvaluations" xml:space="preserve">
+    <value>アプリケーションフレームのトークンが計数されませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_Refusal_NonUniform" xml:space="preserve">
+    <value>セッション中にフレーム生成の状態が変わりました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_Refusal_NotCounted" xml:space="preserve">
+    <value>アプリケーションフレームを計数したレコードがありません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_Refusal_TooShort" xml:space="preserve">
+    <value>確認に必要なフレーム数に足りません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_Refusal_Unattributed" xml:space="preserve">
+    <value>プレゼントをスワップチェーンに帰属できません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_Refusal_Unknown" xml:space="preserve">
+    <value>計数が確定しませんでした</value>
+    <comment>review</comment>
+  </data>
   <data name="Fg_None" xml:space="preserve">
     <value>フレーム生成なし</value>
     <comment>review</comment>
@@ -519,6 +567,18 @@
   </data>
   <data name="Fps_Fg_Format" xml:space="preserve">
     <value>{0} → {1} FPS (×{2:0.0} FG)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Census_RuntimeLoaded_Named_Format" xml:space="preserve">
+    <value>FG ランタイム読み込み済み ({0}) — 生成フレームを含む可能性</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Fg_Identified_Format" xml:space="preserve">
+    <value>{0} 有効 — 倍率は未計数</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Fg_Identified_Tooltip_Format" xml:space="preserve">
+    <value>{0} はこのプロセスで確認されましたが、フレーム計数は確定しませんでした ({1})。この数値はプレゼントされたフレームを数えており、生成フレームを含む可能性があります — Native ではなく Displayed として読んでください。</value>
     <comment>review</comment>
   </data>
   <data name="Fps_Native_Tooltip" xml:space="preserve">

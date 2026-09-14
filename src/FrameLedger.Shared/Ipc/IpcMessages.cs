@@ -161,6 +161,20 @@ public sealed record SessionProgressEvent
     /// <summary>The row's vocabulary: <c>na</c>, <c>none</c>, <c>dlssg</c>, <c>fsrfg</c>, <c>xefg</c>, <c>unknown</c>.</summary>
     public required string FgMode { get; init; }
 
+    /// <summary>
+    /// The row's <c>fg_refusal</c> (schema 0003): why <see cref="FgFactor"/> is absent while <see cref="FgMode"/> names a
+    /// technology — <c>no_evaluations</c>, <c>non_uniform</c>, … Absent when a factor stands. Added 2026-09-14; an older
+    /// client ignores it (<c>07_IPC</c> §C, unknown fields).
+    /// </summary>
+    public string? FgRefusal { get; init; }
+
+    /// <summary>
+    /// <c>FlWriterState.runtimeCensus</c>, raw, so the live card can name the frame-generation module behind
+    /// <c>fg_runtime_loaded</c> the way the stored row's <c>fg_runtime_census</c> lets the summary. Absent before the
+    /// first record. Added 2026-09-14.
+    /// </summary>
+    public long? FgRuntimeCensus { get; init; }
+
     public string? Upscaler { get; init; }
 
     /// <summary>The vendor's own preset value, as the row stores it; null when no record carried params.</summary>

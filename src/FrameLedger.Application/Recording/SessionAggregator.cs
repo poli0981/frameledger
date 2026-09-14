@@ -89,6 +89,7 @@ public static class SessionAggregator
             DisplayedP1LowFps = usable && c.Verdict is FgVerdict.Named or FgVerdict.ActiveUnidentified ? c.Stats.P1LowFps : null,
             DisplayedCountedBy = usable ? (fg!.DxgiCounted ? "dxgi" : "hook") : null,
             FgNoneWithheldReason = c.Withheld,
+            FgRefusal = usable ? null : fg?.Refusal is { } refusal ? Vocabulary.FgRefusal(refusal.Kind) : null,
             PresentedQualifier = PresentedQualifier(c),
             FgDriverReported = c.Input.Ngx.FgCreatedAndEvaluated ? "dlssg" : null,
             FgRuntimeCensus = c.Input.Writer.RuntimeCensus,

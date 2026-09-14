@@ -46,6 +46,25 @@ public static class Vocabulary
         _ => NotApplicable,
     };
 
+    /// <summary>
+    /// <c>fg_refusal</c> (schema 0003): why no factor was published, as a token the UI can name a reason for;
+    /// null for <see cref="FgRefusalKind.None"/>, which is the value a window carries when a factor stands.
+    /// </summary>
+    public static string? FgRefusal(FgRefusalKind kind) => kind switch
+    {
+        FgRefusalKind.NotCounted => "not_counted",
+        FgRefusalKind.Unattributed => "unattributed",
+        FgRefusalKind.MultipleStreams => "multiple_streams",
+        FgRefusalKind.CountSaturated => "count_saturated",
+        FgRefusalKind.DxgiSaturated => "dxgi_saturated",
+        FgRefusalKind.NoEvaluations => "no_evaluations",
+        FgRefusalKind.TooShortToCheck => "too_short",
+        FgRefusalKind.NonUniform => "non_uniform",
+        FgRefusalKind.AmbiguousBand => "ambiguous_band",
+        FgRefusalKind.NoBatches => "no_batches",
+        _ => null,
+    };
+
     /// <summary><c>fg_source</c>: NULL = not measured; <c>api</c> a hooked identity; <c>cadence</c> the count alone; <c>none</c> the counted negative.</summary>
     public static string? FgSource(FgVerdict verdict) => verdict switch
     {

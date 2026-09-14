@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using FrameLedger.Application.Persistence;
+using FrameLedger.Shared;
 using FrameLedger.Shared.Ipc;
 
 namespace FrameLedger.App.Services;
@@ -11,10 +12,18 @@ namespace FrameLedger.App.Services;
 /// and what a table's Native / Displayed / FG× columns say, where <c>—</c> (measured none) and <c>N/A</c> (not
 /// measured) are two different negatives that must not collapse.
 /// </summary>
+/// <remarks>
+/// <b>Four shapes since 2026-09-14, not three.</b> A row whose <c>fg_mode</c> names a technology and whose
+/// <c>fg_factor</c> is NULL — identity stood, the count refused (<c>fg_refusal</c>) — used to fall into the
+/// Generated shape and print <c>N/A → N/A FPS (×0.0 FG)</c>, a factor nobody counted. It is now
+/// <see cref="FpsReadoutKind.IdentifiedUncounted"/>: Presented FPS, a warning chip naming the technology, the
+/// refusal as the tooltip, and <c>N/A</c> in the Displayed and FG× columns — the number may include generated
+/// frames, so "Native" never appears beside it (<c>03_METRICS</c> §Rung 0's qualifier, third row).
+/// </remarks>
 [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime; a cached CompositeFormat would pin the first culture")]
 public static class FpsPresentation
 {
-    /// <summary>The row's shape: generated when a frame-generation mode was measured, none when measured none, presented otherwise.</summary>
+    /// <summary>The row's shape: generated when a factor was counted, none when measured none, identified-uncounted when a technology was named without a factor, presented otherwise.</summary>
     public static FpsReadoutModel FromRow(SessionRow row)
     {
         ArgumentNullException.ThrowIfNull(row);
@@ -23,7 +32,7 @@ public static class FpsPresentation
             return FpsReadoutModel.Unavailable;
         }
 
-        return Shape(row.FgMode, row.NativeFps, row.DisplayedFps, row.FgFactor, row.PresentedFps ?? row.NativeFps, ParseQualifier(row.PresentedQualifier));
+        return Shape(row.FgMode, row.NativeFps, row.DisplayedFps, row.FgFactor, row.PresentedFps ?? row.NativeFps, ParseQualifier(row.PresentedQualifier), row.FgRefusal, row.FgRuntimeCensus);
     }
 
     /// <summary>The live card's shape from a 1 Hz progress event (<c>07_IPC</c>: the FG fields are set only when measured).</summary>
@@ -35,13 +44,13 @@ public static class FpsPresentation
             return FpsReadoutModel.Unavailable;
         }
 
-        return Shape(progress.FgMode, progress.NativeFps5s, progress.DisplayedFps5s, progress.FgFactor, progress.PresentedFps5s ?? progress.NativeFps5s, ParseQualifier(progress.PresentedQualifier));
+        return Shape(progress.FgMode, progress.NativeFps5s, progress.DisplayedFps5s, progress.FgFactor, progress.PresentedFps5s ?? progress.NativeFps5s, ParseQualifier(progress.PresentedQualifier), progress.FgRefusal, progress.FgRuntimeCensus);
     }
 
     /// <summary>The table's Native column: the native figure when FG was measured, else the Presented figure (its qualifier is the tooltip).</summary>
     public static string NativeColumn(SessionRow row) => FromRow(row).PrimaryText;
 
-    /// <summary>The table's Displayed column: the figure when FG was measured, <c>—</c> when measured none, <c>N/A</c> when not measured.</summary>
+    /// <summary>The table's Displayed column: the figure when FG was counted, <c>—</c> when measured none, <c>N/A</c> when not measured or not counted.</summary>
     public static string DisplayedColumn(SessionRow row)
     {
         FpsReadoutModel m = FromRow(row);
@@ -53,13 +62,13 @@ public static class FpsPresentation
         };
     }
 
-    /// <summary>The table's FG× column, on the same rule as <see cref="DisplayedColumn"/>.</summary>
+    /// <summary>The table's FG× column, on the same rule as <see cref="DisplayedColumn"/>: a factor only where one was counted.</summary>
     public static string FactorColumn(SessionRow row)
     {
         FpsReadoutModel m = FromRow(row);
         return m.Kind switch
         {
-            FpsReadoutKind.Generated => m.Factor is double f ? string.Format(CultureInfo.CurrentCulture, "×{0:0.0}", f) : Strings.Common_NotAvailable,
+            FpsReadoutKind.Generated when m.Factor is double f => string.Format(CultureInfo.CurrentCulture, "×{0:0.0}", f),
             FpsReadoutKind.None => Strings.Common_Dash,
             _ => Strings.Common_NotAvailable,
         };
@@ -73,22 +82,40 @@ public static class FpsPresentation
         {
             FpsReadoutKind.Generated => Strings.Fps_Native_Tooltip,
             FpsReadoutKind.None => Strings.Fps_None_Tooltip,
-            FpsReadoutKind.Presented => m.QualifierTooltip,
+            FpsReadoutKind.Presented or FpsReadoutKind.IdentifiedUncounted => m.QualifierTooltip,
             _ => Strings.Tier_NA_Tooltip,
         };
     }
 
-    public static string GeneratedLine(double? native, double? displayed, double? factor) =>
-        string.Format(CultureInfo.CurrentCulture, Strings.Fps_Fg_Format, Formats.Fps(native), Formats.Fps(displayed), factor ?? 0);
+    /// <summary>
+    /// The "Frame Generation" label a game page or the live card shows: the technology with its factor chip when
+    /// counted, the technology with "factor not counted" when identified only, else the row's token as a name.
+    /// </summary>
+    public static string FrameGenerationLabel(FpsReadoutModel model, string? fgMode)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+        return model.Kind switch
+        {
+            FpsReadoutKind.Generated when model.FactorChip is { } chip => Formats.FrameGeneration(fgMode) + " " + chip,
+            FpsReadoutKind.IdentifiedUncounted => Formats.FrameGeneration(fgMode) + " · " + Strings.Fg_Factor_NotCounted,
+            _ => Formats.FrameGeneration(fgMode),
+        };
+    }
+
+    public static string GeneratedLine(double? native, double? displayed, double factor) =>
+        string.Format(CultureInfo.CurrentCulture, Strings.Fps_Fg_Format, Formats.Fps(native), Formats.Fps(displayed), factor);
 
     public static string PresentedLine(double? presented) => string.Format(CultureInfo.CurrentCulture, Strings.Fps_Presented_Format, Formats.Fps(presented));
 
     public static string FactorChip(double factor) => string.Format(CultureInfo.CurrentCulture, Strings.Fps_Fg_Chip_Format, factor);
 
-    public static string QualifierText(FpsQualifier qualifier) => qualifier switch
+    /// <summary>The census chip; a loaded frame-generation runtime is named when the census says which (<c>08_UI</c> §FPS display rule).</summary>
+    public static string QualifierText(FpsQualifier qualifier, long? runtimeCensus = null) => qualifier switch
     {
         FpsQualifier.NoRuntime => Strings.Fps_Census_NoRuntime,
-        FpsQualifier.RuntimeLoaded => Strings.Fps_Census_RuntimeLoaded,
+        FpsQualifier.RuntimeLoaded => FrameGenerationModule(runtimeCensus) is { } module
+            ? string.Format(CultureInfo.CurrentCulture, Strings.Fps_Census_RuntimeLoaded_Named_Format, module)
+            : Strings.Fps_Census_RuntimeLoaded,
         FpsQualifier.Withheld => Strings.Fps_Census_Withheld,
         _ => Strings.Fps_Census_NotRun,
     };
@@ -101,6 +128,80 @@ public static class FpsPresentation
         _ => Strings.Fps_Census_NotRun_Tooltip,
     };
 
+    /// <summary>The chip for an identified, uncounted technology: <c>DLSS-G active — factor not counted</c>.</summary>
+    public static string IdentifiedText(string? technology) =>
+        string.Format(CultureInfo.CurrentCulture, Strings.Fps_Fg_Identified_Format, technology ?? Strings.Fg_Unknown);
+
+    /// <summary>Its tooltip: the technology, the refusal in plain words, and why the number reads as Displayed.</summary>
+    public static string IdentifiedTooltip(string? technology, string? refusal) =>
+        string.Format(CultureInfo.CurrentCulture, Strings.Fps_Fg_Identified_Tooltip_Format, technology ?? Strings.Fg_Unknown, RefusalText(refusal));
+
+    /// <summary>The row's <c>fg_refusal</c> token in the user's words; an unknown token is the honest "did not resolve".</summary>
+    public static string RefusalText(string? refusal) => refusal switch
+    {
+        "not_counted" => Strings.Fg_Refusal_NotCounted,
+        "unattributed" => Strings.Fg_Refusal_Unattributed,
+        "multiple_streams" => Strings.Fg_Refusal_MultipleStreams,
+        "count_saturated" => Strings.Fg_Refusal_CountSaturated,
+        "dxgi_saturated" => Strings.Fg_Refusal_DxgiSaturated,
+        "no_evaluations" => Strings.Fg_Refusal_NoEvaluations,
+        "too_short" => Strings.Fg_Refusal_TooShort,
+        "non_uniform" => Strings.Fg_Refusal_NonUniform,
+        "ambiguous_band" => Strings.Fg_Refusal_AmbiguousBand,
+        "no_batches" => Strings.Fg_Refusal_NoBatches,
+        _ => Strings.Fg_Refusal_Unknown,
+    };
+
+    /// <summary>
+    /// The frame-generation module the census saw, by the file names <c>fl_shm.h</c> §FlRuntimeCensus lists — the
+    /// first family bit set, or null when the census carries none (or did not run). A name, not a measurement.
+    /// </summary>
+    public static string? FrameGenerationModule(long? runtimeCensus)
+    {
+        if (runtimeCensus is not { } raw)
+        {
+            return null;
+        }
+
+        var census = (FlRuntimeCensus)(uint)raw;
+        if (census.HasFlag(FlRuntimeCensus.SlDlssG))
+        {
+            return "sl.dlss_g.dll";
+        }
+
+        if (census.HasFlag(FlRuntimeCensus.NvngxDlssG))
+        {
+            return "nvngx_dlssg.dll";
+        }
+
+        if (census.HasFlag(FlRuntimeCensus.LibXessFg))
+        {
+            return "libxess_fg.dll";
+        }
+
+        if (census.HasFlag(FlRuntimeCensus.FfxFrameInterpolation))
+        {
+            return "ffx_frameinterpolation_x64.dll";
+        }
+
+        if (census.HasFlag(FlRuntimeCensus.FfxFsr3))
+        {
+            return "ffx_fsr3_x64.dll";
+        }
+
+        if (census.HasFlag(FlRuntimeCensus.AmdFfxFrameGeneration))
+        {
+            return "amd_fidelityfx_framegeneration_dx12.dll";
+        }
+
+        if (census.HasFlag(FlRuntimeCensus.AmdFfxDx12))
+        {
+            return "amd_fidelityfx_dx12.dll";
+        }
+
+        return null;
+    }
+
     /// <summary>The stored / wire token → the qualifier; an unknown token is "census not run", the honest unknown.</summary>
     public static FpsQualifier ParseQualifier(string? token) => token switch
     {
@@ -110,17 +211,31 @@ public static class FpsPresentation
         _ => FpsQualifier.CensusNotRun,
     };
 
-    private static FpsReadoutModel Shape(string? fgMode, double? native, double? displayed, double? factor, double? presented, FpsQualifier qualifier)
+    private static FpsReadoutModel Shape(string? fgMode, double? native, double? displayed, double? factor, double? presented, FpsQualifier qualifier, string? refusal, long? runtimeCensus)
     {
-        // fg_mode: 'na' = not measured; 'none' = measured none; anything else = measured generation.
+        // fg_mode: 'na' = not measured; 'none' = measured none; a technology with a factor = counted generation;
+        // a technology WITHOUT a factor = identified, and the count refused (fg_refusal says why).
         if (string.IsNullOrEmpty(fgMode) || string.Equals(fgMode, "na", StringComparison.Ordinal))
         {
-            return new FpsReadoutModel { Kind = FpsReadoutKind.Presented, Presented = presented, Qualifier = qualifier };
+            return new FpsReadoutModel { Kind = FpsReadoutKind.Presented, Presented = presented, Qualifier = qualifier, RuntimeCensus = runtimeCensus };
         }
 
         if (string.Equals(fgMode, "none", StringComparison.Ordinal))
         {
             return new FpsReadoutModel { Kind = FpsReadoutKind.None, Native = native ?? presented };
+        }
+
+        if (factor is null)
+        {
+            return new FpsReadoutModel
+            {
+                Kind = FpsReadoutKind.IdentifiedUncounted,
+                Presented = presented,
+                Qualifier = qualifier,
+                Technology = Formats.FrameGeneration(fgMode),
+                Refusal = refusal,
+                RuntimeCensus = runtimeCensus,
+            };
         }
 
         return new FpsReadoutModel { Kind = FpsReadoutKind.Generated, Native = native, Displayed = displayed, Factor = factor };

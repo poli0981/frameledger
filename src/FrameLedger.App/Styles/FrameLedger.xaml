@@ -191,6 +191,10 @@
                         <DataTrigger Binding="{Binding Model.Kind, RelativeSource={RelativeSource Self}}" Value="Presented">
                             <Setter TargetName="Qualifier" Property="Visibility" Value="Visible" />
                         </DataTrigger>
+                        <!-- Identified, uncounted (2026-09-14): the technology named on a warning chip, never a factor. -->
+                        <DataTrigger Binding="{Binding Model.Kind, RelativeSource={RelativeSource Self}}" Value="IdentifiedUncounted">
+                            <Setter TargetName="Qualifier" Property="Visibility" Value="Visible" />
+                        </DataTrigger>
                         <DataTrigger Binding="{Binding Model.QualifierIsWarning, RelativeSource={RelativeSource Self}}" Value="True">
                             <Setter TargetName="Qualifier" Property="Background" Value="{DynamicResource SystemFillColorCautionBackgroundBrush}" />
                             <Setter TargetName="QualifierText" Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />

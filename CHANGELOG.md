@@ -29,6 +29,28 @@ GitHub release body, so a missing section will mean an empty release note.
   and the library's and asserts the button appears under one and not the other, so it turns red when upstream
   gains a presenter and the copy should go. `legal/licenses/wpfui-MIT.txt` added (the template is MIT text).
   Docs: `08_UI` §Notifications policy correction, `16_WPFUI_SYNTAX` §Gotchas, HANDOFF §Traps.
+- **Frame generation read N/A beside a detection that had succeeded (2026-09-14).** Two of the owner's hooked rows
+  carried `fg_mode = 'dlssg'`, `fg_source = 'api'` and `fg_factor` NULL — the Streamline tags named DLSS-G, the
+  census had `sl.dlss_g.dll`, and the token count refused — and every FG surface in the App said N/A: the readout
+  fell into the "detected" shape and printed `N/A → N/A FPS (×0.0 FG)` (a factor nobody counted, from `factor ?? 0`),
+  the game page said `DLSS-G ` with a trailing space, the grid's Displayed and FG× said N/A with no reason, and the
+  reason existed nowhere — `FgWindow.Refusal` was computed and dropped. Now: **schema 0003** adds `sessions.fg_refusal`
+  (`Vocabulary.FgRefusal`: `not_counted`, `no_evaluations`, `non_uniform`, `dxgi_saturated`, …), written by
+  `SessionAggregator.ApplyFg` whenever no factor is published; `SessionProgress` gains optional `fgRefusal` and
+  `fgRuntimeCensus`; and the UI gains a fourth shape, `FpsReadoutKind.IdentifiedUncounted` — Presented FPS with a
+  warning chip "DLSS-G active — factor not counted", the refusal in plain words as its tooltip ("read it as Displayed,
+  not Native"), `DLSS-G · factor not counted` on the game page, N/A in Displayed and FG× (no factor exists; it is not
+  a measured none). `GeneratedLine` no longer accepts a missing factor. The `fg_runtime_loaded` chip now names the
+  module from the census (`08_UI` §FPS display rule asked for it from the start): `FG runtime loaded (sl.dlss_g.dll)
+  — may include generated frames`. 15 App strings en/vi/ja (`Fg_Refusal_*`, `Fps_Fg_Identified_*`,
+  `Fps_Census_RuntimeLoaded_Named_Format`, `Fg_Factor_NotCounted`). Tests: `FpsPresentationTests` (the shape, the
+  live wire, the module name, the counted label), `GameDetailViewModelTests` (the page and the grid),
+  `SessionAggregatorTests` (identity without a count records the refusal, the owner's zero-token shape, a counted
+  factor carries none), `SessionProgressCalculatorTests`, `LedgerDatabaseTests` (the column). Docs: `03_METRICS`
+  §Metrics FG factor row, `08_UI` §FPS display rule, `06_DATA_MODEL` §sessions + §Migrations, `07_IPC` §Messages.
+  What this does NOT do: decide the count. Why the count refused on those two rows is what the new column will
+  say on the next capture — the `dxgi_unseen_total` of 4294967243 on one of them (a `uint32` gone negative in the
+  Overlay's DXGI delta) is a separate, native fix.
 - **Two Settings descriptions were centred once they wrapped (2026-09-14).** A `TextBlock` with a `MaxWidth`
   inside a stretched `StackPanel` is centred by WPF as soon as its text wraps, so the descriptions under
   *Record games launched outside FrameLedger* and *Fetch store metadata online* showed their second line offset

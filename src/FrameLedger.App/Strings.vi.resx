@@ -334,6 +334,42 @@
   <data name="Fg_Active" xml:space="preserve">
     <value>FG hoạt động (chưa xác định công nghệ)</value>
   </data>
+  <data name="Fg_Factor_NotCounted" xml:space="preserve">
+    <value>hệ số chưa đếm được</value>
+  </data>
+  <data name="Fg_Refusal_AmbiguousBand" xml:space="preserve">
+    <value>tỷ lệ nằm giữa 'không' và mọi hệ số thực tế</value>
+  </data>
+  <data name="Fg_Refusal_CountSaturated" xml:space="preserve">
+    <value>bộ đếm mỗi khung đã chạm trần</value>
+  </data>
+  <data name="Fg_Refusal_DxgiSaturated" xml:space="preserve">
+    <value>bộ đếm present của DXGI đã chạm trần</value>
+  </data>
+  <data name="Fg_Refusal_MultipleStreams" xml:space="preserve">
+    <value>có nhiều hơn một swapchain present</value>
+  </data>
+  <data name="Fg_Refusal_NoBatches" xml:space="preserve">
+    <value>không lần present nào xả một batch Streamline</value>
+  </data>
+  <data name="Fg_Refusal_NoEvaluations" xml:space="preserve">
+    <value>không đếm được token khung hình ứng dụng nào</value>
+  </data>
+  <data name="Fg_Refusal_NonUniform" xml:space="preserve">
+    <value>trạng thái frame generation thay đổi giữa phiên</value>
+  </data>
+  <data name="Fg_Refusal_NotCounted" xml:space="preserve">
+    <value>không bản ghi nào đếm khung hình ứng dụng</value>
+  </data>
+  <data name="Fg_Refusal_TooShort" xml:space="preserve">
+    <value>quá ít khung hình để kiểm tra</value>
+  </data>
+  <data name="Fg_Refusal_Unattributed" xml:space="preserve">
+    <value>không quy được các lần present về một swapchain</value>
+  </data>
+  <data name="Fg_Refusal_Unknown" xml:space="preserve">
+    <value>phép đếm không cho kết quả</value>
+  </data>
   <data name="Fg_None" xml:space="preserve">
     <value>Không có frame generation</value>
   </data>
@@ -390,6 +426,15 @@
   </data>
   <data name="Fps_Fg_Format" xml:space="preserve">
     <value>{0} → {1} FPS (×{2:0.0} FG)</value>
+  </data>
+  <data name="Fps_Census_RuntimeLoaded_Named_Format" xml:space="preserve">
+    <value>Đã nạp runtime FG ({0}) — có thể gồm khung hình sinh thêm</value>
+  </data>
+  <data name="Fps_Fg_Identified_Format" xml:space="preserve">
+    <value>{0} đang hoạt động — chưa đếm được hệ số</value>
+  </data>
+  <data name="Fps_Fg_Identified_Tooltip_Format" xml:space="preserve">
+    <value>{0} được nhận diện trong tiến trình, nhưng phép đếm khung hình không cho kết quả ({1}). Con số này đếm các khung hình được present và có thể gồm cả khung hình sinh thêm — hãy đọc nó là Displayed, không phải Native.</value>
   </data>
   <data name="Fps_Native_Tooltip" xml:space="preserve">
     <value>Native: khung hình game render · Hiển thị: khung hình lên màn hình kể cả khung sinh thêm</value>
