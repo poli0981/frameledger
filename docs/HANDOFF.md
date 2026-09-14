@@ -1212,7 +1212,26 @@ election are **F** and **G**; the ⏳ feature rows in `17_HOOK_ENGINE` §Hook in
 their columns (`hdr_flag`, `pt_confidence`, `pso_stutter_pct`, `vram_proc*`, `latency_*`) are an
 honest NULL in P2's schema, never a 0.
 
-## P3 — **START HERE** (2026-09-13, owner-approved plan)
+## P4 — **START HERE** (2026-09-14: P3 is code-complete; the stack awaits the owner's merges)
+
+P3's slices are all struck below. What is left of P3 is not code: the owner merges #154 → #155 → #156 → #158 →
+#159 → #160 → #161 → #162 → #163 → PR-9 in order (squash; after each merge the next branch is rebased
+`--onto origin/main`), reviews the `vi` strings, and signs the `ja` `Safety_*` family when a human can.
+The owner-only measurements of §P2 (`spike-notes` §14) are still open and still owner-only.
+
+**P4 is `15_ROADMAP` §P4**, in this order, each a PR that fails on unpatched `main` for a stated reason:
+detection rules engine + `detection-rules.json` validator and fixtures (the anticheat blocklist is already
+consumed by the guard; the engine/platform/capability halves are not), store auto-import (Steam / GOG / Epic /
+itch.io — the first-run flow's step 4 and File ▸ Import library both say "later build"), the
+capability-vs-measured separation in the UI (the game page's Supports row is empty until this), Velopack +
+the updater (`11_UPDATER`; the Settings channel row is stored and unused), the bug-report flow's steps 3–5
+(`10_LOGGING`: the preview dialog, the GitHub issue link — step 2's bundle exists), the "is Vulkan" fact the
+layer's register/unregister-on-consent automation needs (`17_HOOK_ENGINE` §Vulkan built note), the Help menu's
+Documentation / Check for updates / Report a bug items, and `legal/licenses/` populated by the license-gathering
+script. Decisions that live only here: D11–D17 below still hold; nothing in P4 may add a third writer to
+`ledger.db` or a message that carries a safety fact over the pipe.
+
+## P3 — ~~**START HERE**~~ (2026-09-13, owner-approved plan; **code-complete 2026-09-14** — every row below is struck with its PR)
 
 `15_ROADMAP` §P3 is the UI — and since 2026-09-13 it is **all of `08_UI`**, Settings, Logs, the tray
 and the first-run Legal Gate included (the owner chose the full surface over a shell-first cut; the
@@ -1259,7 +1278,7 @@ because a criterion already true on `main` is decoration.
 | ~~6~~ | ~~**Session summary + charts**: `ChartTheme` + `ChartPalette.xaml`, min/max decimation (FR-5.3), frametime timeline with stutter markers, segment ribbon and sensor overlay, distribution, the summary window (stat cards, chips + override flyout, crash InfoBar, tags/notes), CSV/JSON/PNG export, the post-session toast~~ **LANDED 2026-09-14** — status in `CHANGELOG.md`; `08_UI` §Session summary and `16_WPFUI` §ScottPlot theme sync carry what was built. **Two things on purpose:** the override is a `ContentDialog`, not a `ui:Flyout` (a flyout anchored to a chip inside an `ItemsControl` has no reliable placement target across the three places chips appear), and FR-3.8's toast is an in-app notice until the tray exists (PR-8) — the "View" action needs a balloon with an action, which the snackbar has not | ~~no ScottPlot plot exists; no decimator; no exporter~~ |
 | ~~7~~ | ~~**Trend / Sensors / Latency / Compare**: hardware-change markers (FR-6.3), the mid-session-change exclusion + toggle (FR-6.4), sensors with per-process and adapter VRAM as separate series, the latency tab, Compare 2–5 with the **mixed-tier `ContentDialog` guard** (FR-6.2) and tier legend~~ **LANDED 2026-09-14** — status in `CHANGELOG.md`; `08_UI` §Games (tabs 2–6) and §Compare carry what was built. **One thing on purpose:** the tier grouping is done in memory over the loaded rows (`06_DATA_MODEL` §Comparison safety's rule is that a comparison never crosses tiers unasked — `TrendSeriesBuilder` takes hooked rows only and `CompareViewModel` gates the mix), not as a SQL `GROUP BY capture_tier`; the row's criterion said "query" and the honest statement of what holds the rule is the two classes | ~~no query groups by `capture_tier`; no Compare page~~ |
 | ~~8~~ | ~~**Settings + safety UI + Logs + tray**: FR-10 with the kill switch first, hook-enabled list + revoke, Vulkan layer state with real `--register-vklayer`/`--unregister-vklayer`, language switch, retention, the Agent section with real `--install-task`/`--uninstall-task`, privacy opt-in; the **safety notices** (`CaptureRefused`/`SafetyUnhook`/auto-disable as persistent InfoBar or dialog, never a toast, with "record this session without measuring it"); the Logs page; the tray with FR-3.9; the App's `--diag`~~ — **struck 2026-09-14: 8a (#162) built Settings, the safety notices, Logs and `--diag`; 8b built the tray (H.NotifyIcon, four states, pause over the pipe, the FR-3.8 balloon only while the window is off screen), the four Agent maintenance flags (the logon task through the Task Scheduler COM API — `schtasks` is denied unelevated; the HKCU layer value) and the Settings buttons over them. Two honest gaps in `17_HOOK_ENGINE` §Vulkan's built note: the register/unregister-on-consent automation needs the "is Vulkan" fact (P4), and a registration buys nothing until background capture sets the enable variable.** | ~~the kill switch has a console verb only; `AgentCommandLine.NotImplementedFlags` still lists five; no Logs page~~ |
-| 9 | **First run + Legal Gate (FR-11) + closing sweep**: the four documents from `legal/*.md` through `ILegalAcceptanceStore.RecordAsync`, re-shown on a version increment, the Agent-setup and hooking-explainer screens, D8 unchanged unless the owner turns it on; the docs sweep (`01_ARCHITECTURE`, `07_IPC`, `19_SAFETY`, `09_I18N`, CLAUDE.md, this section struck); NFR-4 measured | no code writes a `legal_acceptance` row; the App has no first run |
+| ~~9~~ | ~~**First run + Legal Gate (FR-11) + closing sweep**: the four documents from `legal/*.md` through `ILegalAcceptanceStore.RecordAsync`, re-shown on a version increment, the Agent-setup and hooking-explainer screens, D8 unchanged unless the owner turns it on; the docs sweep (`01_ARCHITECTURE`, `07_IPC`, `19_SAFETY`, `09_I18N`, CLAUDE.md, this section struck); NFR-4 measured~~ — **struck 2026-09-14: built (`08_UI` §First-run flow built note carries the gate, the embedded documents, the version rule and the NFR-4 numbers; `06_DATA_MODEL` §legal_acceptance and `20_OPEN_QUESTIONS` §G's versioning row say who writes the version). D8 unchanged.** | ~~no code writes a `legal_acceptance` row; the App has no first run~~ |
 
 **Why this order:** the pipe (1) first because the Dashboard's live card (5), the consent stamp (4) and
 the tray's pause (8) all need it; resx (2) before the dialog (4) because the dialog is the first thing

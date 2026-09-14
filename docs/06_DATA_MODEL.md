@@ -296,6 +296,12 @@ CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE legal_acceptance (doc TEXT PRIMARY KEY, version TEXT NOT NULL, accepted_at INTEGER NOT NULL);
 ```
 
+> **Written since 2026-09-14 (P3 PR-9).** `doc` is one of `eula` / `gpl` / `disclaimer` / `privacy`
+> (`App.Services.LegalDocuments.Keys`); `version` is the document's own `**Version:**` line as embedded in the
+> App at build (`GPL-3.0-only` for the licence text) — the App is the only writer, one row per document per
+> Accept, re-recorded when the embedded version differs from the row's. `20_OPEN_QUESTIONS` §G "Legal doc
+> versioning" closes on that.
+
 ## Settings registry
 
 HANDOFF §P3 decision D16, built as `Application.Settings.SettingsRegistry` (P3 PR-3, 2026-09-13) and

@@ -139,6 +139,15 @@ public sealed class PagesLoadTests
         public Task<AgentToolResult> RunAsync(string flag, CancellationToken ct = default) => Task.FromResult(new AgentToolResult(-1, "no agent in this test"));
     }
 
+    private sealed class NoFirstRun : IFirstRunFlow
+    {
+        public Task<bool> IsRequiredAsync(CancellationToken ct = default) => Task.FromResult(false);
+
+        public Task<bool> RunAsync(CancellationToken ct = default) => Task.FromResult(true);
+
+        public Task ShowDocumentsAsync(CancellationToken ct = default) => Task.CompletedTask;
+    }
+
     private static Task<T> OnStaAsync<T>(Func<T> work)
     {
         var tcs = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -173,13 +182,31 @@ public sealed class PagesLoadTests
         var store = new SqliteSettingsStore(s.Db);
         var appearance = new AppearanceSettings(store);
         await appearance.LoadAsync().ConfigureAwait(false);
-        var settings = new SettingsViewModel(appearance, new NoTheme(), new ShellHost(new ServiceCollection().BuildServiceProvider(), null!, null!, new WindowClosePolicy()), new RegisteredSettings(store), s.Library, consent, new NoAgent(), new NoRun(), strip, new NoMaintenance(), new NoTool(), new WindowClosePolicy());
+        var settings = new SettingsViewModel(appearance, new NoTheme(), new ShellHost(new ServiceCollection().BuildServiceProvider(), null!, null!, new WindowClosePolicy()), new RegisteredSettings(store), s.Library, consent, new NoAgent(), new NoRun(), strip, new NoMaintenance(), new NoTool(), new WindowClosePolicy(), new NoFirstRun());
         Task pending1 = settings.Pending;
         await pending1.ConfigureAwait(false);
         var logs = new LogsViewModel(new LogTail(Path.Combine(Path.GetTempPath(), "fl-nologs-" + Guid.NewGuid().ToString("N"))), new BugBundleBuilder(Path.GetTempPath(), new RegisteredSettings(store)), new NoSaver(), new NoAgent(), strip);
         Task pending2 = logs.Pending;
         await pending2.ConfigureAwait(false);
         return (settings, logs);
+    }
+
+    /// <summary>The first-run steps (PR-9): the gate, then the Agent step, under the same dictionaries.</summary>
+    private static void RenderFirstRun(ScratchLedger s)
+    {
+        using var firstRun = new FirstRunViewModel(new LegalGate(new SqliteLegalAcceptanceStore(s.Db), LegalDocuments.Load()), new NoAgent(), readOnly: false);
+        Render(new FirstRunContent(firstRun));
+        firstRun.NextCommand.Execute(null);
+        Render(new FirstRunContent(firstRun));
+    }
+
+    /// <summary>The two control templates (PR-5), rendered on the STA thread.</summary>
+    private static void RenderControls(GameDetailViewModel detail)
+    {
+        var readout = new FpsReadout { Model = FpsPresentation.FromRow(detail.Sessions[0].Row) };
+        Render(readout);
+        var chip = new TriStateChip { Model = new TriStateChipModel("RT", Tri.Yes, Application.TriState.TriStateSource.Measured) };
+        Render(chip);
     }
 
     private static void Render(FrameworkElement element)
@@ -227,14 +254,12 @@ public sealed class PagesLoadTests
             Render(new ComparePage(compare));
             Render(new SettingsPage(settings));
             Render(new LogsPage(logs));
-            var readout = new FpsReadout { Model = FpsPresentation.FromRow(detail.Sessions[0].Row) };
-            Render(readout);
-            var chip = new TriStateChip { Model = new TriStateChipModel("RT", Tri.Yes, Application.TriState.TriStateSource.Measured) };
-            Render(chip);
-            return "dashboard,games,detail,settings,logs,readout,chip";
+            RenderFirstRun(s);
+            RenderControls(detail);
+            return "dashboard,games,detail,settings,logs,firstrun,readout,chip";
         });
 
-        loaded.Should().Be("dashboard,games,detail,settings,logs,readout,chip");
+        loaded.Should().Be("dashboard,games,detail,settings,logs,firstrun,readout,chip");
         settings.MinSessionSeconds.Should().Be(30);
         games.Games.Should().ContainSingle();
         detail.Sessions.Should().HaveCount(2);

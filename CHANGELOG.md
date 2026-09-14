@@ -19,6 +19,22 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Added
 
+- **P3 PR-9 — first run, the Legal Gate (FR-11), the closing sweep (2026-09-14).** `FirstRunWindow` /
+  `FirstRunContent` / `FirstRunViewModel`, shown before the shell whenever `LegalGate` says a document has no
+  acceptance at this build's version: the four documents embedded at build (`legal/EULA.md`, `LICENSE`,
+  `legal/DISCLAIMER.md`, `legal/PRIVACY_POLICY.md` — the text this build was reviewed with, authoring comments
+  stripped, `{{RELEASE_DATE}}` left for release), one Accept writing four `legal_acceptance` rows with each
+  document's own `**Version:**` line, Decline ending the host, a closed window counting as a decline; the
+  Agent-setup step (unelevated by default, elevation optional and required by no tier, the `HelloAck` facts as
+  they arrive); the hooking explainer reusing the consent dialog's reviewed Tier 1 / Tier 2 paragraphs and
+  saying hooking stays off until enabled per game; the import placeholder. Settings ▸ "Reopen the legal
+  documents" shows them read-only. D8 unchanged: the gate is not a consent precondition. NFR-4: the first
+  window's time from process start is logged every run (1.3–1.5 s on the dev box), the 100-session query is
+  asserted under 500 ms, charts draw ≤ 2 × 2000 points per series. Tests (App, 120): `LegalDocumentsTests`,
+  `FirstRunViewModelTests` (6), the Settings reopen, both first-run steps in `PagesLoadTests`. 29 App strings
+  en/vi/ja. Docs: `08_UI` §First-run flow built note with the NFR-4 numbers, `06_DATA_MODEL` §legal_acceptance,
+  `20_OPEN_QUESTIONS` §G legal-versioning row answered, `15_ROADMAP` §P3 code-complete, `09_I18N` scope line,
+  CLAUDE.md's App line, HANDOFF row 9 struck and the one START HERE moved to a P4 pointer.
 - **P3 PR-8b — the tray, the Agent's maintenance flags, the Settings buttons over them (2026-09-14).** The tray
   (H.NotifyIcon.Wpf, `TrayHost` over a WPF-free `TrayViewModel`): four drawn icons — ● a Tier-1 session runs,
   ◐ sessions run and none is measured, ⏸ the Agent reports paused, a ring otherwise — the tooltip naming the

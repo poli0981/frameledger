@@ -37,6 +37,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly IMaintenanceState _maintenance;
     private readonly IAgentTool _tool;
     private readonly WindowClosePolicy _closePolicy;
+    private readonly IFirstRunFlow _firstRun;
     private bool _loading = true;
 
     [ObservableProperty]
@@ -105,8 +106,10 @@ public sealed partial class SettingsViewModel : ObservableObject
         IMessageStrip strip,
         IMaintenanceState maintenance,
         IAgentTool tool,
-        WindowClosePolicy closePolicy)
+        WindowClosePolicy closePolicy,
+        IFirstRunFlow firstRun)
     {
+        _firstRun = firstRun ?? throw new ArgumentNullException(nameof(firstRun));
         _maintenance = maintenance ?? throw new ArgumentNullException(nameof(maintenance));
         _tool = tool ?? throw new ArgumentNullException(nameof(tool));
         _closePolicy = closePolicy ?? throw new ArgumentNullException(nameof(closePolicy));
@@ -295,9 +298,9 @@ public sealed partial class SettingsViewModel : ObservableObject
         Persist(SettingsRegistry.LogDebug, value);
     }
 
-    /// <summary>The legal documents reopen with the first-run flow (PR-9); until then the item says so.</summary>
+    /// <summary>FR-11: the documents again, read-only — nothing is re-recorded.</summary>
     [RelayCommand]
-    private void ReopenLegal() => _strip.Info(Strings.NotYet_Title, Strings.NotYet_Body);
+    private Task ReopenLegalAsync() => Pending = _firstRun.ShowDocumentsAsync();
 
     [RelayCommand]
     private static void OpenSafetyDocs()

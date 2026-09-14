@@ -1245,4 +1245,82 @@
   <data name="Tray_State_RecordingOnly_Format" xml:space="preserve">
     <value>FrameLedger — recording {0} without measuring</value>
   </data>
+  <data name="FirstRun_Accept" xml:space="preserve">
+    <value>Accept all four</value>
+  </data>
+  <data name="FirstRun_Agent_Body" xml:space="preserve">
+    <value>FrameLedger starts a small capture agent beside itself, as a standard user — not elevated. Elevation is optional and is not required by any capture tier: it only unlocks CPU temperature (through PawnIO) and attaching to games that run elevated themselves. Below is what the agent reports about this machine.</value>
+  </data>
+  <data name="FirstRun_Agent_Header" xml:space="preserve">
+    <value>The capture agent</value>
+  </data>
+  <data name="FirstRun_Back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="FirstRun_Cap_CpuTemp" xml:space="preserve">
+    <value>CPU temperature</value>
+  </data>
+  <data name="FirstRun_Cap_Elevated" xml:space="preserve">
+    <value>Elevated</value>
+  </data>
+  <data name="FirstRun_Cap_Overlay" xml:space="preserve">
+    <value>Overlay build</value>
+  </data>
+  <data name="FirstRun_Cap_State" xml:space="preserve">
+    <value>Agent</value>
+  </data>
+  <data name="FirstRun_Cap_Telemetry" xml:space="preserve">
+    <value>Telemetry source</value>
+  </data>
+  <data name="FirstRun_Cap_Version" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="FirstRun_Decline" xml:space="preserve">
+    <value>Decline and exit</value>
+  </data>
+  <data name="FirstRun_Doc_Disclaimer" xml:space="preserve">
+    <value>Disclaimer</value>
+  </data>
+  <data name="FirstRun_Doc_Eula" xml:space="preserve">
+    <value>End User License Agreement</value>
+  </data>
+  <data name="FirstRun_Doc_Gpl" xml:space="preserve">
+    <value>GNU GPL v3</value>
+  </data>
+  <data name="FirstRun_Doc_Privacy" xml:space="preserve">
+    <value>Privacy Policy</value>
+  </data>
+  <data name="FirstRun_Explainer_Header" xml:space="preserve">
+    <value>What hooking means</value>
+  </data>
+  <data name="FirstRun_Explainer_Intro" xml:space="preserve">
+    <value>FrameLedger measures a game by loading a library into its process — hooking. Hooking is off for every game until you enable it for that game, one at a time, after a dialog that repeats what is written here. The Disclaimer you accepted states the risk; this screen states what each choice records.</value>
+  </data>
+  <data name="FirstRun_Explainer_Off" xml:space="preserve">
+    <value>Nothing changes until you add a game and enable hooking for it. Every game you add starts with hooking off.</value>
+  </data>
+  <data name="FirstRun_Finish" xml:space="preserve">
+    <value>Finish</value>
+  </data>
+  <data name="FirstRun_Import_Body" xml:space="preserve">
+    <value>Importing a Steam, GOG, Epic or itch.io library arrives with a later build. For now, add games one at a time from the Games page — each one starts with hooking off.</value>
+  </data>
+  <data name="FirstRun_Import_Header" xml:space="preserve">
+    <value>Your library</value>
+  </data>
+  <data name="FirstRun_Legal_Body" xml:space="preserve">
+    <value>Four documents describe what this software does, what it does not do, and what it may cost you. Please read them; Accept covers all four. Declining closes FrameLedger.</value>
+  </data>
+  <data name="FirstRun_Legal_Header" xml:space="preserve">
+    <value>Before you start</value>
+  </data>
+  <data name="FirstRun_Legal_Online" xml:space="preserve">
+    <value>View on GitHub</value>
+  </data>
+  <data name="FirstRun_Next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="FirstRun_Title" xml:space="preserve">
+    <value>Welcome to FrameLedger</value>
+  </data>
 </root>

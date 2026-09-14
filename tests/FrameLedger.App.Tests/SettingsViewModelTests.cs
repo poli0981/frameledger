@@ -62,6 +62,21 @@ public sealed class SettingsViewModelTests
         }
     }
 
+    private sealed class FakeFirstRun : IFirstRunFlow
+    {
+        public int Shown { get; private set; }
+
+        public Task<bool> IsRequiredAsync(CancellationToken ct = default) => Task.FromResult(false);
+
+        public Task<bool> RunAsync(CancellationToken ct = default) => Task.FromResult(true);
+
+        public Task ShowDocumentsAsync(CancellationToken ct = default)
+        {
+            Shown++;
+            return Task.CompletedTask;
+        }
+    }
+
     private sealed class FakeRun : IRunAtLogon
     {
         public bool IsSet { get; set; }
@@ -94,6 +109,8 @@ public sealed class SettingsViewModelTests
         public required FakeTool Tool { get; init; }
 
         public required WindowClosePolicy ClosePolicy { get; init; }
+
+        public required FakeFirstRun FirstRun { get; init; }
     }
 
     private static async Task<Harness> OpenAsync(ScratchLedger s, FakeAgentLink? agent = null, FakeRun? run = null, FakeMaintenance? maintenance = null, FakeTool? tool = null)
@@ -101,6 +118,7 @@ public sealed class SettingsViewModelTests
         maintenance ??= new FakeMaintenance();
         tool ??= new FakeTool();
         var closePolicy = new WindowClosePolicy();
+        var firstRun = new FakeFirstRun();
         var store = new SqliteSettingsStore(s.Db);
         var appearance = new AppearanceSettings(store);
         await appearance.LoadAsync(Ct).ConfigureAwait(false);
@@ -109,10 +127,10 @@ public sealed class SettingsViewModelTests
         run ??= new FakeRun();
         var strip = new RecordingStrip();
         var shell = new ShellHost(new ServiceCollection().BuildServiceProvider(), null!, null!, closePolicy);
-        var vm = new SettingsViewModel(appearance, new NoTheme(), shell, settings, s.Library, new HookingConsent(agent, new NoPrompt()), agent, run, strip, maintenance, tool, closePolicy);
+        var vm = new SettingsViewModel(appearance, new NoTheme(), shell, settings, s.Library, new HookingConsent(agent, new NoPrompt()), agent, run, strip, maintenance, tool, closePolicy, firstRun);
         Task pending = vm.Pending;
         await pending.ConfigureAwait(false);
-        return new Harness { Ledger = s, Settings = settings, Agent = agent, Run = run, Strip = strip, Vm = vm, Maintenance = maintenance, Tool = tool, ClosePolicy = closePolicy };
+        return new Harness { Ledger = s, Settings = settings, Agent = agent, Run = run, Strip = strip, Vm = vm, Maintenance = maintenance, Tool = tool, ClosePolicy = closePolicy, FirstRun = firstRun };
     }
 
     [Fact]
@@ -291,6 +309,18 @@ public sealed class SettingsViewModelTests
         h.ClosePolicy.MinimizeToTray.Should().BeTrue();
         h.ClosePolicy.HidesOnClose.Should().BeFalse("no tray icon exists in a test, so a close is still a close");
         (await h.Settings.GetBooleanAsync(SettingsRegistry.UiMinimizeToTray, Ct)).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ReopenTheLegalDocumentsShowsThemReadOnly()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        Harness h = await OpenAsync(s);
+
+        await h.Vm.ReopenLegalCommand.ExecuteAsync(null);
+
+        h.FirstRun.Shown.Should().Be(1);
+        h.Strip.Shown.Should().BeEmpty("no \"not yet\" line any more");
     }
 
     [Fact]

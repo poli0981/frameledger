@@ -28,6 +28,8 @@ public sealed class ShellHost(IServiceProvider services, INavigationService navi
         _current = window;
         window.Show();
         navigation.Navigate(_page);
+        // NFR-4 "cold start ≤ 2 s": measured from the process's own start, printed every run so a regression is a log line.
+        Serilog.Log.Information("ui: shell shown {Ms} ms after process start", (long)(DateTime.Now - System.Diagnostics.Process.GetCurrentProcess().StartTime).TotalMilliseconds);
     }
 
     public bool IsShown => _current is { IsVisible: true, WindowState: not WindowState.Minimized };

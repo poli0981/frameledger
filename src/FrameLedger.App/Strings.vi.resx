@@ -1240,4 +1240,82 @@
   <data name="Tray_State_RecordingOnly_Format" xml:space="preserve">
     <value>FrameLedger — đang ghi {0} mà không đo</value>
   </data>
+  <data name="FirstRun_Accept" xml:space="preserve">
+    <value>Chấp nhận cả bốn</value>
+  </data>
+  <data name="FirstRun_Agent_Body" xml:space="preserve">
+    <value>FrameLedger khởi động một capture agent nhỏ bên cạnh nó, với quyền người dùng thường — không nâng quyền. Nâng quyền là tuỳ chọn và không tier thu thập nào yêu cầu: nó chỉ mở khoá nhiệt độ CPU (qua PawnIO) và gắn vào game tự chạy với quyền quản trị. Bên dưới là những gì agent báo cáo về máy này.</value>
+  </data>
+  <data name="FirstRun_Agent_Header" xml:space="preserve">
+    <value>Capture agent</value>
+  </data>
+  <data name="FirstRun_Back" xml:space="preserve">
+    <value>Quay lại</value>
+  </data>
+  <data name="FirstRun_Cap_CpuTemp" xml:space="preserve">
+    <value>Nhiệt độ CPU</value>
+  </data>
+  <data name="FirstRun_Cap_Elevated" xml:space="preserve">
+    <value>Nâng quyền</value>
+  </data>
+  <data name="FirstRun_Cap_Overlay" xml:space="preserve">
+    <value>Bản overlay</value>
+  </data>
+  <data name="FirstRun_Cap_State" xml:space="preserve">
+    <value>Agent</value>
+  </data>
+  <data name="FirstRun_Cap_Telemetry" xml:space="preserve">
+    <value>Nguồn telemetry</value>
+  </data>
+  <data name="FirstRun_Cap_Version" xml:space="preserve">
+    <value>Phiên bản</value>
+  </data>
+  <data name="FirstRun_Decline" xml:space="preserve">
+    <value>Từ chối và thoát</value>
+  </data>
+  <data name="FirstRun_Doc_Disclaimer" xml:space="preserve">
+    <value>Tuyên bố miễn trừ</value>
+  </data>
+  <data name="FirstRun_Doc_Eula" xml:space="preserve">
+    <value>Thoả thuận cấp phép người dùng cuối</value>
+  </data>
+  <data name="FirstRun_Doc_Gpl" xml:space="preserve">
+    <value>GNU GPL v3</value>
+  </data>
+  <data name="FirstRun_Doc_Privacy" xml:space="preserve">
+    <value>Chính sách quyền riêng tư</value>
+  </data>
+  <data name="FirstRun_Explainer_Header" xml:space="preserve">
+    <value>Hooking nghĩa là gì</value>
+  </data>
+  <data name="FirstRun_Explainer_Intro" xml:space="preserve">
+    <value>FrameLedger đo game bằng cách nạp một thư viện vào tiến trình của game — hooking. Hooking tắt với mọi game cho đến khi bạn bật cho từng game, sau một hộp thoại nhắc lại những gì viết ở đây. Tuyên bố miễn trừ bạn đã chấp nhận nêu rủi ro; màn hình này nêu mỗi lựa chọn ghi lại gì.</value>
+  </data>
+  <data name="FirstRun_Explainer_Off" xml:space="preserve">
+    <value>Không có gì thay đổi cho đến khi bạn thêm game và bật hooking cho nó. Mọi game thêm vào đều bắt đầu với hooking tắt.</value>
+  </data>
+  <data name="FirstRun_Finish" xml:space="preserve">
+    <value>Hoàn tất</value>
+  </data>
+  <data name="FirstRun_Import_Body" xml:space="preserve">
+    <value>Nhập thư viện Steam, GOG, Epic hay itch.io sẽ có ở bản sau. Hiện tại, thêm từng game từ trang Game — mỗi game bắt đầu với hooking tắt.</value>
+  </data>
+  <data name="FirstRun_Import_Header" xml:space="preserve">
+    <value>Thư viện của bạn</value>
+  </data>
+  <data name="FirstRun_Legal_Body" xml:space="preserve">
+    <value>Bốn tài liệu mô tả phần mềm này làm gì, không làm gì, và có thể khiến bạn phải trả giá gì. Vui lòng đọc; Chấp nhận áp dụng cho cả bốn. Từ chối sẽ đóng FrameLedger.</value>
+  </data>
+  <data name="FirstRun_Legal_Header" xml:space="preserve">
+    <value>Trước khi bắt đầu</value>
+  </data>
+  <data name="FirstRun_Legal_Online" xml:space="preserve">
+    <value>Xem trên GitHub</value>
+  </data>
+  <data name="FirstRun_Next" xml:space="preserve">
+    <value>Tiếp</value>
+  </data>
+  <data name="FirstRun_Title" xml:space="preserve">
+    <value>Chào mừng đến với FrameLedger</value>
+  </data>
 </root>

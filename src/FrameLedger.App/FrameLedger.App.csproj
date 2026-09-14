@@ -35,6 +35,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- FR-11 (P3 PR-9): the Legal Gate shows exactly the documents this build was reviewed with, so they are
+         embedded here from the repository's legal/ and LICENSE rather than read from a folder at run time.
+         {{RELEASE_DATE}} stays as written until release.yml substitutes it (12_BUILD §Release-time token substitution). -->
+    <EmbeddedResource Include="..\..\legal\EULA.md" LogicalName="legal/EULA.md" />
+    <EmbeddedResource Include="..\..\legal\DISCLAIMER.md" LogicalName="legal/DISCLAIMER.md" />
+    <EmbeddedResource Include="..\..\legal\PRIVACY_POLICY.md" LogicalName="legal/PRIVACY_POLICY.md" />
+    <EmbeddedResource Include="..\..\LICENSE" LogicalName="LICENSE" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="WPF-UI" />
     <PackageReference Include="WPF-UI.Abstractions" />
     <PackageReference Include="WPF-UI.DependencyInjection" />

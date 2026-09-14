@@ -145,6 +145,32 @@ public static class Strings
         nameof(Fg_Active),
         nameof(Fg_None),
         nameof(Fg_Unknown),
+        nameof(FirstRun_Accept),
+        nameof(FirstRun_Agent_Body),
+        nameof(FirstRun_Agent_Header),
+        nameof(FirstRun_Back),
+        nameof(FirstRun_Cap_CpuTemp),
+        nameof(FirstRun_Cap_Elevated),
+        nameof(FirstRun_Cap_Overlay),
+        nameof(FirstRun_Cap_State),
+        nameof(FirstRun_Cap_Telemetry),
+        nameof(FirstRun_Cap_Version),
+        nameof(FirstRun_Decline),
+        nameof(FirstRun_Doc_Disclaimer),
+        nameof(FirstRun_Doc_Eula),
+        nameof(FirstRun_Doc_Gpl),
+        nameof(FirstRun_Doc_Privacy),
+        nameof(FirstRun_Explainer_Header),
+        nameof(FirstRun_Explainer_Intro),
+        nameof(FirstRun_Explainer_Off),
+        nameof(FirstRun_Finish),
+        nameof(FirstRun_Import_Body),
+        nameof(FirstRun_Import_Header),
+        nameof(FirstRun_Legal_Body),
+        nameof(FirstRun_Legal_Header),
+        nameof(FirstRun_Legal_Online),
+        nameof(FirstRun_Next),
+        nameof(FirstRun_Title),
         nameof(Format_Duration_HoursMinutes_Format),
         nameof(Format_Duration_MinutesSeconds_Format),
         nameof(Format_Playtime_Hours_Format),
@@ -674,6 +700,58 @@ public static class Strings
     public static string Fg_None => ResourceManager.GetString(nameof(Fg_None), Culture) ?? nameof(Fg_None);
 
     public static string Fg_Unknown => ResourceManager.GetString(nameof(Fg_Unknown), Culture) ?? nameof(Fg_Unknown);
+
+    public static string FirstRun_Accept => ResourceManager.GetString(nameof(FirstRun_Accept), Culture) ?? nameof(FirstRun_Accept);
+
+    public static string FirstRun_Agent_Body => ResourceManager.GetString(nameof(FirstRun_Agent_Body), Culture) ?? nameof(FirstRun_Agent_Body);
+
+    public static string FirstRun_Agent_Header => ResourceManager.GetString(nameof(FirstRun_Agent_Header), Culture) ?? nameof(FirstRun_Agent_Header);
+
+    public static string FirstRun_Back => ResourceManager.GetString(nameof(FirstRun_Back), Culture) ?? nameof(FirstRun_Back);
+
+    public static string FirstRun_Cap_CpuTemp => ResourceManager.GetString(nameof(FirstRun_Cap_CpuTemp), Culture) ?? nameof(FirstRun_Cap_CpuTemp);
+
+    public static string FirstRun_Cap_Elevated => ResourceManager.GetString(nameof(FirstRun_Cap_Elevated), Culture) ?? nameof(FirstRun_Cap_Elevated);
+
+    public static string FirstRun_Cap_Overlay => ResourceManager.GetString(nameof(FirstRun_Cap_Overlay), Culture) ?? nameof(FirstRun_Cap_Overlay);
+
+    public static string FirstRun_Cap_State => ResourceManager.GetString(nameof(FirstRun_Cap_State), Culture) ?? nameof(FirstRun_Cap_State);
+
+    public static string FirstRun_Cap_Telemetry => ResourceManager.GetString(nameof(FirstRun_Cap_Telemetry), Culture) ?? nameof(FirstRun_Cap_Telemetry);
+
+    public static string FirstRun_Cap_Version => ResourceManager.GetString(nameof(FirstRun_Cap_Version), Culture) ?? nameof(FirstRun_Cap_Version);
+
+    public static string FirstRun_Decline => ResourceManager.GetString(nameof(FirstRun_Decline), Culture) ?? nameof(FirstRun_Decline);
+
+    public static string FirstRun_Doc_Disclaimer => ResourceManager.GetString(nameof(FirstRun_Doc_Disclaimer), Culture) ?? nameof(FirstRun_Doc_Disclaimer);
+
+    public static string FirstRun_Doc_Eula => ResourceManager.GetString(nameof(FirstRun_Doc_Eula), Culture) ?? nameof(FirstRun_Doc_Eula);
+
+    public static string FirstRun_Doc_Gpl => ResourceManager.GetString(nameof(FirstRun_Doc_Gpl), Culture) ?? nameof(FirstRun_Doc_Gpl);
+
+    public static string FirstRun_Doc_Privacy => ResourceManager.GetString(nameof(FirstRun_Doc_Privacy), Culture) ?? nameof(FirstRun_Doc_Privacy);
+
+    public static string FirstRun_Explainer_Header => ResourceManager.GetString(nameof(FirstRun_Explainer_Header), Culture) ?? nameof(FirstRun_Explainer_Header);
+
+    public static string FirstRun_Explainer_Intro => ResourceManager.GetString(nameof(FirstRun_Explainer_Intro), Culture) ?? nameof(FirstRun_Explainer_Intro);
+
+    public static string FirstRun_Explainer_Off => ResourceManager.GetString(nameof(FirstRun_Explainer_Off), Culture) ?? nameof(FirstRun_Explainer_Off);
+
+    public static string FirstRun_Finish => ResourceManager.GetString(nameof(FirstRun_Finish), Culture) ?? nameof(FirstRun_Finish);
+
+    public static string FirstRun_Import_Body => ResourceManager.GetString(nameof(FirstRun_Import_Body), Culture) ?? nameof(FirstRun_Import_Body);
+
+    public static string FirstRun_Import_Header => ResourceManager.GetString(nameof(FirstRun_Import_Header), Culture) ?? nameof(FirstRun_Import_Header);
+
+    public static string FirstRun_Legal_Body => ResourceManager.GetString(nameof(FirstRun_Legal_Body), Culture) ?? nameof(FirstRun_Legal_Body);
+
+    public static string FirstRun_Legal_Header => ResourceManager.GetString(nameof(FirstRun_Legal_Header), Culture) ?? nameof(FirstRun_Legal_Header);
+
+    public static string FirstRun_Legal_Online => ResourceManager.GetString(nameof(FirstRun_Legal_Online), Culture) ?? nameof(FirstRun_Legal_Online);
+
+    public static string FirstRun_Next => ResourceManager.GetString(nameof(FirstRun_Next), Culture) ?? nameof(FirstRun_Next);
+
+    public static string FirstRun_Title => ResourceManager.GetString(nameof(FirstRun_Title), Culture) ?? nameof(FirstRun_Title);
 
     public static string Format_Duration_HoursMinutes_Format => ResourceManager.GetString(nameof(Format_Duration_HoursMinutes_Format), Culture) ?? nameof(Format_Duration_HoursMinutes_Format);
 
