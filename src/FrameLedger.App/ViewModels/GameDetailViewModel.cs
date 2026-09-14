@@ -535,7 +535,11 @@ public sealed partial class GameDetailViewModel : ObservableObject
         _ => row.RrDefault,
     };
 
-    /// <summary><c>capability_flags</c> (<c>05_DETECTION</c> §Capability hints): an object of flags or an array of tokens → product names. Nothing writes it before P4; an unreadable value is no chips.</summary>
+    /// <summary>
+    /// <c>capability_flags</c> (<c>05_DETECTION</c> §Capability hints): an array of the rule ids the Agent's detection sweep
+    /// writes (P4 PR-1 — <c>dlss</c>, <c>dlss_g</c>, <c>dlss_rr</c>, <c>streamline</c>, <c>fsr</c>, <c>xess</c>, <c>xefg</c>), or
+    /// an object of flags in the older spelling, → product names. An unreadable value is no chips.
+    /// </summary>
     internal static IReadOnlyList<string> CapabilityNames(string? json)
     {
         if (string.IsNullOrWhiteSpace(json))
@@ -559,8 +563,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private static string CapabilityName(string token) => token switch
     {
         "dlss" => "DLSS",
-        "dlssg" => "DLSS-G",
-        "dlssd" => "DLSS Ray Reconstruction",
+        "dlssg" or "dlss_g" => "DLSS-G",
+        "dlssd" or "dlss_rr" => "DLSS Ray Reconstruction",
+        "streamline" => "Streamline",
         "fsr" => "FSR",
         "fsrfg" => "FSR Frame Generation",
         "xess" => "XeSS",

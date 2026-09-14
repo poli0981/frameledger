@@ -1220,10 +1220,14 @@ P3's slices are all struck below. What is left of P3 is not code: the owner merg
 The owner-only measurements of §P2 (`spike-notes` §14) are still open and still owner-only.
 
 **P4 is `15_ROADMAP` §P4**, in this order, each a PR that fails on unpatched `main` for a stated reason:
-detection rules engine + `detection-rules.json` validator and fixtures (the anticheat blocklist is already
-consumed by the guard; the engine/platform/capability halves are not), store auto-import (Steam / GOG / Epic /
-itch.io — the first-run flow's step 4 and File ▸ Import library both say "later build"), the
-capability-vs-measured separation in the UI (the game page's Supports row is empty until this), Velopack +
+~~detection rules engine + `detection-rules.json` validator and fixtures (the anticheat blocklist is already
+consumed by the guard; the engine/platform/capability halves are not)~~ **LANDED 2026-09-14 (P4 PR-1)** — the
+engine, validator and corpus already existed; what was missing was a caller and a writer: `DetectionSweep` +
+`DetectionHostedService` under `--serve`, `IGameRepository.ApplyDetectionAsync` under the provenance rule,
+schema 0004 for the key's exe half (NOT the consent fingerprint), Tools ▸ Update rules wired, the Supports row
+filled — status in `CHANGELOG.md`, the decisions in `05_DETECTION` §Caching's built note; store auto-import (Steam / GOG / Epic /
+itch.io — the first-run flow's step 4 and File ▸ Import library both say "later build"), ~~the
+capability-vs-measured separation in the UI (the game page's Supports row is empty until this)~~ **(PR-1)**, Velopack +
 the updater (`11_UPDATER`; the Settings channel row is stored and unused), the bug-report flow's steps 3–5
 (`10_LOGGING`: the preview dialog, the GitHub issue link — step 2's bundle exists), the "is Vulkan" fact the
 layer's register/unregister-on-consent automation needs (`17_HOOK_ENGINE` §Vulkan built note), the Help menu's

@@ -2,7 +2,7 @@
 
 `%LOCALAPPDATA%\FrameLedger\ledger.db`. Pragmas: `journal_mode=WAL`, `synchronous=NORMAL`, `foreign_keys=ON`, `busy_timeout=5000`. `Microsoft.Data.Sqlite` + Dapper; all writes in explicit transactions.
 
-**Writer ownership:** Agent writes `sessions`, `session_segments`, `frame_blobs`, `sensor_blobs`, `hardware_snapshots`, and the hook-state columns on `games`. UI writes `games` (user-editable fields — since P3 PR-3 that is the FR-1.3 metadata, the `*_default` tri-states, and `removed_at`; never a `hook_*` column), `session_annotations` (tags, notes, and since schema 0002 the FR-8.3 overrides — which is WHY they are on this table and not on `sessions`), `settings`, `legal_acceptance`. Both read everything. The ports say the same in their names: `IGameRepository.UpdateMetadataAsync` / `SetTriStateDefaultAsync` / `RemoveAsync`, `ISessionAnnotationRepository`, `RegisteredSettings`, `ILegalAcceptanceStore.RecordAsync` (all P3 PR-3).
+**Writer ownership:** Agent writes `sessions`, `session_segments`, `frame_blobs`, `sensor_blobs`, `hardware_snapshots`, the hook-state columns on `games`, **and since P4 PR-1 (2026-09-14) the *detected* columns on `games`** — `engine`, `engine_version`, `platform` under the per-field provenance rule (`05_DETECTION` §Caching: a `user` field is never touched), `capability_flags` whole, and the cache key `detection_rules_version` / `detection_exe_size_bytes` / `detection_exe_mtime_ms` — through `IGameRepository.ApplyDetectionAsync` only. The UI and the Agent were both already writers of `games`; this adds columns to the Agent's half, not a third writer (HANDOFF §P4). UI writes `games` (user-editable fields — since P3 PR-3 that is the FR-1.3 metadata, the `*_default` tri-states, and `removed_at`; never a `hook_*` column), `session_annotations` (tags, notes, and since schema 0002 the FR-8.3 overrides — which is WHY they are on this table and not on `sessions`), `settings`, `legal_acceptance`. Both read everything. The ports say the same in their names: `IGameRepository.UpdateMetadataAsync` / `SetTriStateDefaultAsync` / `RemoveAsync`, `ISessionAnnotationRepository`, `RegisteredSettings`, `ILegalAcceptanceStore.RecordAsync` (all P3 PR-3).
 
 ## Schema (v2 — hook architecture)
 
@@ -56,7 +56,10 @@ CREATE TABLE games (
   hook_blocked_reason TEXT,                    -- set by the static AC pre-scan; non-null = toggle disabled in UI
   hook_autodisabled_reason TEXT,               -- set after repeated crashes
   hook_crash_count INTEGER NOT NULL DEFAULT 0,
-  capability_flags TEXT,                       -- JSON: what the game SHIPS (dlss/dlssg/dlssd/fsr/xess) — never a measurement
+  capability_flags TEXT,                       -- JSON: what the game SHIPS — never a measurement. Since P4 PR-1 (2026-09-14) a JSON
+                                               -- array of the rule ids of rules/detection-rules.json (dlss, dlss_g, dlss_rr, streamline,
+                                               -- fsr, xess, xefg), written whole by the Agent's detection sweep; this line used to spell
+                                               -- the App's tokens (dlssg/dlssd), which the App still reads for older rows
 
   -- tri-state defaults inherited by new sessions
   rt_default TEXT NOT NULL DEFAULT 'na',
@@ -400,6 +403,11 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > nothing recorded which refusal; every FG surface said N/A beside a detection that had succeeded. One
 > `ALTER TABLE ADD COLUMN`, written by the Agent (`SessionAggregator.ApplyFg`), read by the UI for the "factor not
 > counted" tooltip (`08_UI` §FPS display rule). `LatestVersion` is 3; `LedgerDatabaseTests` asserts the column.
+
+> **`0004_detection_cache.sql` (P4 PR-1, 2026-09-14) — `games.detection_exe_size_bytes` / `detection_exe_mtime_ms`.**
+> The detection cache key's exe half (`05_DETECTION` §Caching), apart from `exe_size_bytes` / `exe_mtime_ms`,
+> which are the consent fingerprint the gate reads and which a background scan must never refresh.
+> `LatestVersion` is 4; `LedgerDatabaseTests` asserts the columns.
 
 > **Built 2026-09-09 (P2 PR-B):** `Infrastructure.Persistence.MigrationRunner` over scripts embedded in
 > the assembly (so the schema a build applies is the one it was tested against), one transaction per

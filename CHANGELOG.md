@@ -17,6 +17,31 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ## [Unreleased]
 
+### Added
+
+- **P4 PR-1 — the detection rules engine wired into the Agent, and the Supports row (2026-09-14).** The engine,
+  schema, validator and fixture corpus existed since P0 with no production caller and no writer. Now:
+  `Application.Detection.DetectionSweep` runs `StaticGameDetector` over the real `GameFileProbe` for every game in
+  the library whose `DetectionCacheKey` is stale — never scanned, the exe changed, the rules moved on — and
+  persists through the new `IGameRepository.ApplyDetectionAsync`; `Agent.Hosting.DetectionHostedService` hosts it
+  under `--serve` on its own task (the probe blocks on file I/O; the 1 Hz poll never waits on it), every 15 s and
+  at once when `UpdateRules` re-seeds the rules file. **Schema 0004** `games.detection_exe_size_bytes` /
+  `detection_exe_mtime_ms`: the key's exe half apart from `exe_size_bytes` / `exe_mtime_ms`, which are the consent
+  fingerprint the gate reads and which a background scan must never refresh. The repository applies
+  `05_DETECTION` §Caching's provenance rule per field — a `user` field is never touched, a `detected` one is
+  refreshed, an empty field with no entry is filled and badged (without that clause a fresh game could never
+  receive an engine), a null detected value erases nothing — and writes `capability_flags` whole as a JSON array of
+  the rule ids (`dlss`, `dlss_g`, `dlss_rr`, `streamline`, `fsr`, `xess`, `xefg`; the App's `CapabilityNames` reads
+  both spellings). App: Tools ▸ Update detection rules is a real command (`UpdateRules` over the pipe, the seeder's
+  outcome in a snackbar); the game page's Supports row shows what the sweep wrote and says "not scanned yet" only
+  until the Agent's next tick. Tests: `DetectionSweepTests` (5: scanned once then current, exe change and rules
+  change re-scan, unreadable exe and unusable rules, the wake, the key field by field),
+  `SqliteGameRepositoryTests` (the provenance rule end to end, the consent fingerprint untouched),
+  `LedgerDatabaseTests` (0004), `GameDetailViewModelTests` (the Supports row from a detection write, the rule
+  ids). 4 App strings en/vi/ja + the Supports empty-state reworded. Docs: `05_DETECTION` §Caching built note,
+  `06_DATA_MODEL` §Writer ownership / §games / §Migrations, `04_CAPTURE` §Threading model, `08_UI` §Games,
+  HANDOFF §P4 and `15_ROADMAP` §P4 struck.
+
 ### Fixed
 
 - **A DXGI present counter that went backwards read as four billion unseen presents (2026-09-14).** The Present

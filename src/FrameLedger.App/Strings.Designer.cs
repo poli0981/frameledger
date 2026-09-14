@@ -309,6 +309,10 @@ public static class Strings
         nameof(RemoveGame_Keep),
         nameof(RemoveGame_Removed_Format),
         nameof(RemoveGame_Title_Format),
+        nameof(Rules_Update_Done_Format),
+        nameof(Rules_Update_Failed),
+        nameof(Rules_Update_NoAgent),
+        nameof(Rules_Update_Title),
         nameof(Sensors_Axis_Mb),
         nameof(Sensors_Empty),
         nameof(Sensors_Series_GpuHotspot),
@@ -1043,6 +1047,14 @@ public static class Strings
     public static string RemoveGame_Removed_Format => ResourceManager.GetString(nameof(RemoveGame_Removed_Format), Culture) ?? nameof(RemoveGame_Removed_Format);
 
     public static string RemoveGame_Title_Format => ResourceManager.GetString(nameof(RemoveGame_Title_Format), Culture) ?? nameof(RemoveGame_Title_Format);
+
+    public static string Rules_Update_Done_Format => ResourceManager.GetString(nameof(Rules_Update_Done_Format), Culture) ?? nameof(Rules_Update_Done_Format);
+
+    public static string Rules_Update_Failed => ResourceManager.GetString(nameof(Rules_Update_Failed), Culture) ?? nameof(Rules_Update_Failed);
+
+    public static string Rules_Update_NoAgent => ResourceManager.GetString(nameof(Rules_Update_NoAgent), Culture) ?? nameof(Rules_Update_NoAgent);
+
+    public static string Rules_Update_Title => ResourceManager.GetString(nameof(Rules_Update_Title), Culture) ?? nameof(Rules_Update_Title);
 
     public static string Sensors_Axis_Mb => ResourceManager.GetString(nameof(Sensors_Axis_Mb), Culture) ?? nameof(Sensors_Axis_Mb);
 

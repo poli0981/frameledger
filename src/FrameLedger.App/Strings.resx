@@ -189,6 +189,18 @@
   <data name="NotYet_Title" xml:space="preserve">
     <value>Not built yet</value>
   </data>
+  <data name="Rules_Update_Title" xml:space="preserve">
+    <value>Detection rules</value>
+  </data>
+  <data name="Rules_Update_Done_Format" xml:space="preserve">
+    <value>Rules checked ({0}); the agent is re-scanning the library's games.</value>
+  </data>
+  <data name="Rules_Update_NoAgent" xml:space="preserve">
+    <value>The capture agent is not connected, so the rules cannot be updated.</value>
+  </data>
+  <data name="Rules_Update_Failed" xml:space="preserve">
+    <value>The agent did not answer the rules update.</value>
+  </data>
   <data name="Settings_Appearance_Header" xml:space="preserve">
     <value>Appearance</value>
   </data>
@@ -502,7 +514,7 @@
     <value>No sessions yet — launch the game and FrameLedger will do the rest.</value>
   </data>
   <data name="GameDetail_Supports_Empty" xml:space="preserve">
-    <value>Not scanned yet — the capability scan arrives with a later build.</value>
+    <value>Not scanned yet — the capture agent scans a game's files within seconds of running.</value>
   </data>
   <data name="GameDetail_Supports_Format" xml:space="preserve">
     <value>Supports {0}</value>
