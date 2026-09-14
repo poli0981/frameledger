@@ -147,6 +147,15 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **The native log test read another process's log, and was filed as a flake four times (2026-09-14).**
+  `guard_test.cpp`'s `FindOverlayLog` took the first `overlay-<pid>-*.log` by name in the real
+  `%LOCALAPPDATA%\FrameLedger\logs`, which keeps every run's log — 2130 on the dev box. A harness that drew a
+  reused pid (6840) read a finished log from 2026-09-06 and failed on its STOP line; a re-run drew a fresh pid and
+  passed. The failure output had printed the stale path every time. It now takes the newest log created at or after
+  the child process started (`GetProcessTimes`), and the test now plants a 1999-dated log under the child's pid
+  before injecting, so the old lookup is red on every run instead of on pid reuse — measured: with the lookup
+  reverted, 9 of 18 assertions failed reading the planted file; with the fix, 18 of 18 pass and the file is removed
+  either way. Test-only: no shipped binary changes.
 - **A DXGI present counter that went backwards read as four billion unseen presents (2026-09-14).** The Present
   hook reads `IDXGISwapChain::GetLastPresentCount` before forwarding and took `now − previous` on the chain's slot
   as unsigned arithmetic. A chain released and re-created at the same address inherits the slot and its old count
