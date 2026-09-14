@@ -1650,6 +1650,12 @@ diagnosis*.
   `origin/main`; capture old base SHAs *before* merging a stacked pair.
 - **Do not pass `--delete-branch`**: `main` is checked out in the primary worktree,
   which blocks it. GitHub deletes the remote branch anyway.
+- **A control that compiles, binds and passes its view-model tests can still draw nothing.** WPF UI 4.3.0's
+  `InfoBar` has no `ContentPresenter`, so every action button this repo placed as an InfoBar's child — the one
+  dismissal of a safety notice — was silently dropped, and the owner met a red bar with no exit (2026-09-14).
+  `SafetyNoticesTests` was green throughout: it asserted the model, and nothing instantiated the template.
+  When a control's affordance matters, render it (`PagesLoadTests` has the STA harness) and walk the visual
+  tree for the element — `16_WPFUI_SYNTAX` §Gotchas carries the fix and the test that retires it.
 
 ---
 
