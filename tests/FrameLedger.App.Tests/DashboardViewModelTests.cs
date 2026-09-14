@@ -32,6 +32,28 @@ public sealed class DashboardViewModelTests
         public void Change() => Changed?.Invoke(this, EventArgs.Empty);
     }
 
+    private sealed class NoSummaries : ISessionSummaryOpener
+    {
+        public List<long> Opened { get; } = [];
+
+        public void Open(long sessionId) => Opened.Add(sessionId);
+    }
+
+    private sealed class NoStrip : IMessageStrip
+    {
+        public void Info(string title, string body)
+        {
+        }
+
+        public void Success(string title, string body)
+        {
+        }
+
+        public void Warn(string title, string body)
+        {
+        }
+    }
+
     private sealed class FakeNavigator : IPageNavigator
     {
         public List<string> Pages { get; } = [];
@@ -52,7 +74,8 @@ public sealed class DashboardViewModelTests
         var selection = new GameSelection();
         var nav = new FakeNavigator();
 
-        using var vm = new DashboardViewModel(link, s.Library, selection, nav);
+        var summaries = new NoSummaries();
+        using var vm = new DashboardViewModel(link, s.Library, selection, nav, summaries, new NoStrip());
         Task pending1 = vm.Pending;
         await pending1;
 
@@ -70,6 +93,8 @@ public sealed class DashboardViewModelTests
         vm.OpenGameCommand.Execute(vm.Recent[0]);
         selection.GameId.Should().Be(game.Id);
         nav.Pages.Should().Equal("GameDetailPage");
+        vm.OpenSessionCommand.Execute(vm.Recent[0]);
+        summaries.Opened.Should().ContainSingle().Which.Should().Be(vm.Recent[0].Id, "a recent row opens its summary (08_UI §Dashboard)");
     }
 
     [Fact]
@@ -78,7 +103,7 @@ public sealed class DashboardViewModelTests
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
         GameRow game = await s.GameAsync("Alpha");
         var link = new FakeLink();
-        using var vm = new DashboardViewModel(link, s.Library, new GameSelection(), new FakeNavigator());
+        using var vm = new DashboardViewModel(link, s.Library, new GameSelection(), new FakeNavigator(), new NoSummaries(), new NoStrip());
         Task pending2 = vm.Pending;
         await pending2;
         vm.Live.IsActive.Should().BeFalse();

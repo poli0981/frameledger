@@ -1,5 +1,6 @@
 using System.Windows;
 using FluentAssertions;
+using FrameLedger.App.Charts;
 using FrameLedger.App.Controls;
 using FrameLedger.App.Pages;
 using FrameLedger.App.Services;
@@ -86,6 +87,13 @@ public sealed class PagesLoadTests
         }
     }
 
+    private sealed class NoSummaries : ISessionSummaryOpener
+    {
+        public void Open(long sessionId)
+        {
+        }
+    }
+
     private sealed class NoPicker : IGamePicker
     {
         public string? PickExecutable() => null;
@@ -140,13 +148,13 @@ public sealed class PagesLoadTests
         var consent = new HookingConsent(new NoAgent(), new NoPrompt());
 
         // The view models load off the STA thread; the pages bind to them on it.
-        using var dashboard = new DashboardViewModel(new NoAgent(), s.Library, selection, nav);
+        using var dashboard = new DashboardViewModel(new NoAgent(), s.Library, selection, nav, new NoSummaries(), strip);
         Task pending1 = dashboard.Pending;
         await pending1;
         var games = new GamesViewModel(s.Library, selection, nav, addGame);
         Task pending2 = games.Pending;
         await pending2;
-        var detail = new GameDetailViewModel(s.Library, selection, consent, nav, new NoConfirm(), new NoEdit(), strip);
+        var detail = new GameDetailViewModel(s.Library, selection, consent, nav, new NoConfirm(), new NoEdit(), strip, new NoSummaries());
         Task pending3 = detail.Pending;
         await pending3;
 
@@ -166,5 +174,30 @@ public sealed class PagesLoadTests
         games.Games.Should().ContainSingle();
         detail.Sessions.Should().HaveCount(2);
         detail.Sessions.Should().Contain(static r => r.TierText == Strings.Tier_NotHooked);
+    }
+    [Fact]
+    public async Task TheChartsDrawThroughSkiaUnderTheThemeDictionaries()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Alpha");
+        long withFrames = await s.SessionWithFramesAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-2), frames: 3000, spikeEvery: 400);
+        SessionSeries series = (await new SessionSeriesLoader(s.Sessions).LoadAsync(withFrames, TestContext.Current.CancellationToken))!;
+
+        // A missing native library or a wrong ScottPlot member is red here, not at the first summary window.
+        int drawn = await OnStaAsync(() =>
+        {
+            var frametime = new FrametimeChart();
+            frametime.Show(series, displayed: true, sensors: true);
+            Render(frametime);
+            using ScottPlot.Image image = frametime.ScottPlot.GetImage(640, 320);
+            var distribution = new DistributionChart();
+            distribution.Show(series);
+            Render(distribution);
+            using ScottPlot.Image histogram = distribution.HistogramPlot.GetImage(320, 240);
+            return frametime.DrawnPoints;
+        });
+
+        drawn.Should().BeGreaterThan(0).And.BeLessThanOrEqualTo(Decimator.DefaultBuckets * 2 + 2100, "FR-5.3: decimated per draw (the series, the markers, the sensors)");
+        series.Stutter!.Count(static f => f).Should().Be(7);
     }
 }

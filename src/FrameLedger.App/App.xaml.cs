@@ -190,6 +190,12 @@ public partial class App : System.Windows.Application
         services.AddSingleton<AddGameFlow>();
         services.AddSingleton<IMessageStrip, SnackbarStrip>();
         services.AddSingleton<IEditGamePrompt, EditGamePrompt>();
+
+        // The session summary (P3 PR-6): the series loader over the ports, the exports' file picker, the window opener.
+        services.AddSingleton<IHardwareSnapshotRepository, SqliteHardwareSnapshotRepository>();
+        services.AddSingleton<Charts.SessionSeriesLoader>();
+        services.AddSingleton<IFileSaver, FileSaver>();
+        services.AddSingleton<ISessionSummaryOpener, SessionSummaryOpener>();
     }
 
     /// <summary><c>10_LOGGING</c> §Serilog configuration: <c>logs/ui-.log</c>, daily, 7 kept, 10 MB, the one template.</summary>

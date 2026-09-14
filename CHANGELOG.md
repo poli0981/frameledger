@@ -19,6 +19,33 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Added
 
+- **P3 PR-6 — the session summary window and the charts: `ChartTheme` over two palettes, min/max decimation,
+  the frametime timeline with stutter markers, segment ribbon and sensor overlay, the distribution, FR-8.3's
+  override, tags/notes, and CSV/JSON/PNG export (2026-09-14).** `Charts/SessionSeriesLoader` decodes a session's
+  blobs once (cumulative time, the generated and gap bits, the application-frame view with
+  `Domain.Metrics.StutterDetector` over it, segments from frame index to seconds, sensors aligned to `t_ms`);
+  `Charts/Decimator` is FR-5.3 (every bucket's min and max in order, ≤ 4000 points per draw — a 500k-point
+  series keeps its spike and its dip); `FrametimeChart` (native by default, the every-present series behind the
+  FR-5.4 toggle only when generated frames exist, PSO-compile stutter coloured apart per FR-5.5, alternating
+  segment spans, GPU temperature / load on the right axis) and `DistributionChart` (FPS histogram, the percentile
+  curve through `Domain.Metrics.Percentile`) draw ScottPlot 5.1.59 plots under `ChartTheme` — one subscription to
+  `ApplicationThemeManager.Changed` re-colours every live plot from `Styles/ChartPalette.{Dark,Light}.xaml`, the
+  one place hex colours are allowed, with `ChartPaletteTests` pinning the two files' key parity.
+  `Windows/SessionSummaryWindow` (a secondary `FluentWindow` with its own dialog host) shows the stored
+  aggregates as stat cards — never recomputed, the lows labelled *(presented)* when frame generation was not
+  measured — the chips resolved through `TriStateResolution` with FR-8.3's dialog writing the override to
+  `session_annotations` beside the measurement (and the game default on request), the crash and safety-unhook
+  bars, the tags/notes editor, and FR-9: `SessionExporter` writes the CSV with `03_METRICS` §Export schema's
+  column line verbatim and its `#` header block, InvariantCulture throughout, no rows for Tier 2; the JSON
+  (`frameledger-session/1`); PNG via `Plot.SavePng`. Opened from a Sessions-tab row and from the Dashboard's
+  recent list; FR-3.8 is an in-app notice on `SessionCompleted` until the tray exists. Tests (App, 67):
+  `DecimatorTests`, `ChartPaletteTests`, `SessionSeriesLoaderTests` (the bits, the views, the segment mapping,
+  −1 sensor ticks dropped, a 2000-frame round trip with stutter flags), `SessionExporterTests` (the schema line,
+  the header, invariance under vi-VN, a Tier-2 export with no rows, the JSON with N/A omitted),
+  `SessionSummaryViewModelTests` (cards from the row, the override beside the measurement and its clearing,
+  tags de-duplicated, exports through a scripted saver). 57 new App strings in en/vi/ja. Docs: `08_UI` §Session
+  summary and `16_WPFUI` §ScottPlot theme sync built notes, HANDOFF row 6 struck with the two deliberate
+  deviations (a dialog rather than a flyout; the toast waits for the tray).
 - **P3 PR-5 — Games and Dashboard: the grid, the game page, the hooking control, the Sessions tab, the live
   card, `FpsReadout` and `TriStateChip` (2026-09-14).** `Services.FpsPresentation` decides CLAUDE.md rule 6 in ONE
   place for rows and for 1 Hz progress events — generated (`62 → 118 FPS (×1.9 FG)`, Native first, the factor a

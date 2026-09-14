@@ -42,6 +42,20 @@ public static class Strings
         nameof(Agent_State_Offline),
         nameof(Agent_State_Starting),
         nameof(App_Title),
+        nameof(Chart_Axis_Count),
+        nameof(Chart_Axis_Fps),
+        nameof(Chart_Axis_Frametime),
+        nameof(Chart_Axis_Percentile),
+        nameof(Chart_Axis_Sensor),
+        nameof(Chart_Axis_Time),
+        nameof(Chart_Decimated_Format),
+        nameof(Chart_Series_Displayed),
+        nameof(Chart_Series_GpuLoad),
+        nameof(Chart_Series_GpuTemp),
+        nameof(Chart_Series_Native),
+        nameof(Chart_Series_Percentile),
+        nameof(Chart_Series_Stutter),
+        nameof(Chart_Series_StutterPso),
         nameof(Chip_NA),
         nameof(Chip_No),
         nameof(Chip_Pt),
@@ -81,6 +95,8 @@ public static class Strings
         nameof(Dashboard_Live_Vram_Format),
         nameof(Dashboard_Live_Waiting),
         nameof(Dashboard_Recent_Header),
+        nameof(Dashboard_SessionDiscarded_Format),
+        nameof(Dashboard_SessionSaved_Format),
         nameof(Dashboard_Totals_Games),
         nameof(Dashboard_Totals_Playtime),
         nameof(Dashboard_Totals_ThisWeek),
@@ -187,6 +203,11 @@ public static class Strings
         nameof(Nav_Settings),
         nameof(NotYet_Body),
         nameof(NotYet_Title),
+        nameof(Override_Apply),
+        nameof(Override_Body),
+        nameof(Override_Default),
+        nameof(Override_Keep),
+        nameof(Override_Title_Format),
         nameof(RemoveGame_Body),
         nameof(RemoveGame_Delete),
         nameof(RemoveGame_Keep),
@@ -213,6 +234,42 @@ public static class Strings
         nameof(Settings_Theme_Label),
         nameof(Settings_Theme_Light),
         nameof(Settings_Theme_System),
+        nameof(Summary_Annotations_Header),
+        nameof(Summary_Crash_Body),
+        nameof(Summary_Crash_Title),
+        nameof(Summary_Distribution_Header),
+        nameof(Summary_Export_Csv),
+        nameof(Summary_Export_Failed_Format),
+        nameof(Summary_Export_Json),
+        nameof(Summary_Export_Png),
+        nameof(Summary_Export_Tier2),
+        nameof(Summary_Exported_Format),
+        nameof(Summary_Frametime_Header),
+        nameof(Summary_Line_Format),
+        nameof(Summary_Lows_Presented),
+        nameof(Summary_Notes_Placeholder),
+        nameof(Summary_NotFound),
+        nameof(Summary_Open),
+        nameof(Summary_Save),
+        nameof(Summary_Saved),
+        nameof(Summary_Show_Displayed),
+        nameof(Summary_Show_Sensors),
+        nameof(Summary_Stat_Avg),
+        nameof(Summary_Stat_Duration),
+        nameof(Summary_Stat_Median),
+        nameof(Summary_Stat_MinMax),
+        nameof(Summary_Stat_MinMax_Format),
+        nameof(Summary_Stat_P01Low),
+        nameof(Summary_Stat_P1Low),
+        nameof(Summary_Stat_StdDev),
+        nameof(Summary_Stat_StdDev_Format),
+        nameof(Summary_Stat_Stutter),
+        nameof(Summary_Stat_Stutter_Format),
+        nameof(Summary_Tags_Placeholder),
+        nameof(Summary_Tier2_Body),
+        nameof(Summary_Title_Format),
+        nameof(Summary_Unhooked_Body),
+        nameof(Summary_Unhooked_Title),
         nameof(Tier_Dash_Tooltip),
         nameof(Tier_Hooked),
         nameof(Tier_Hooked_Tooltip),
@@ -254,6 +311,34 @@ public static class Strings
     public static string Agent_State_Starting => ResourceManager.GetString(nameof(Agent_State_Starting), Culture) ?? nameof(Agent_State_Starting);
 
     public static string App_Title => ResourceManager.GetString(nameof(App_Title), Culture) ?? nameof(App_Title);
+
+    public static string Chart_Axis_Count => ResourceManager.GetString(nameof(Chart_Axis_Count), Culture) ?? nameof(Chart_Axis_Count);
+
+    public static string Chart_Axis_Fps => ResourceManager.GetString(nameof(Chart_Axis_Fps), Culture) ?? nameof(Chart_Axis_Fps);
+
+    public static string Chart_Axis_Frametime => ResourceManager.GetString(nameof(Chart_Axis_Frametime), Culture) ?? nameof(Chart_Axis_Frametime);
+
+    public static string Chart_Axis_Percentile => ResourceManager.GetString(nameof(Chart_Axis_Percentile), Culture) ?? nameof(Chart_Axis_Percentile);
+
+    public static string Chart_Axis_Sensor => ResourceManager.GetString(nameof(Chart_Axis_Sensor), Culture) ?? nameof(Chart_Axis_Sensor);
+
+    public static string Chart_Axis_Time => ResourceManager.GetString(nameof(Chart_Axis_Time), Culture) ?? nameof(Chart_Axis_Time);
+
+    public static string Chart_Decimated_Format => ResourceManager.GetString(nameof(Chart_Decimated_Format), Culture) ?? nameof(Chart_Decimated_Format);
+
+    public static string Chart_Series_Displayed => ResourceManager.GetString(nameof(Chart_Series_Displayed), Culture) ?? nameof(Chart_Series_Displayed);
+
+    public static string Chart_Series_GpuLoad => ResourceManager.GetString(nameof(Chart_Series_GpuLoad), Culture) ?? nameof(Chart_Series_GpuLoad);
+
+    public static string Chart_Series_GpuTemp => ResourceManager.GetString(nameof(Chart_Series_GpuTemp), Culture) ?? nameof(Chart_Series_GpuTemp);
+
+    public static string Chart_Series_Native => ResourceManager.GetString(nameof(Chart_Series_Native), Culture) ?? nameof(Chart_Series_Native);
+
+    public static string Chart_Series_Percentile => ResourceManager.GetString(nameof(Chart_Series_Percentile), Culture) ?? nameof(Chart_Series_Percentile);
+
+    public static string Chart_Series_Stutter => ResourceManager.GetString(nameof(Chart_Series_Stutter), Culture) ?? nameof(Chart_Series_Stutter);
+
+    public static string Chart_Series_StutterPso => ResourceManager.GetString(nameof(Chart_Series_StutterPso), Culture) ?? nameof(Chart_Series_StutterPso);
 
     public static string Chip_NA => ResourceManager.GetString(nameof(Chip_NA), Culture) ?? nameof(Chip_NA);
 
@@ -332,6 +417,10 @@ public static class Strings
     public static string Dashboard_Live_Waiting => ResourceManager.GetString(nameof(Dashboard_Live_Waiting), Culture) ?? nameof(Dashboard_Live_Waiting);
 
     public static string Dashboard_Recent_Header => ResourceManager.GetString(nameof(Dashboard_Recent_Header), Culture) ?? nameof(Dashboard_Recent_Header);
+
+    public static string Dashboard_SessionDiscarded_Format => ResourceManager.GetString(nameof(Dashboard_SessionDiscarded_Format), Culture) ?? nameof(Dashboard_SessionDiscarded_Format);
+
+    public static string Dashboard_SessionSaved_Format => ResourceManager.GetString(nameof(Dashboard_SessionSaved_Format), Culture) ?? nameof(Dashboard_SessionSaved_Format);
 
     public static string Dashboard_Totals_Games => ResourceManager.GetString(nameof(Dashboard_Totals_Games), Culture) ?? nameof(Dashboard_Totals_Games);
 
@@ -545,6 +634,16 @@ public static class Strings
 
     public static string NotYet_Title => ResourceManager.GetString(nameof(NotYet_Title), Culture) ?? nameof(NotYet_Title);
 
+    public static string Override_Apply => ResourceManager.GetString(nameof(Override_Apply), Culture) ?? nameof(Override_Apply);
+
+    public static string Override_Body => ResourceManager.GetString(nameof(Override_Body), Culture) ?? nameof(Override_Body);
+
+    public static string Override_Default => ResourceManager.GetString(nameof(Override_Default), Culture) ?? nameof(Override_Default);
+
+    public static string Override_Keep => ResourceManager.GetString(nameof(Override_Keep), Culture) ?? nameof(Override_Keep);
+
+    public static string Override_Title_Format => ResourceManager.GetString(nameof(Override_Title_Format), Culture) ?? nameof(Override_Title_Format);
+
     public static string RemoveGame_Body => ResourceManager.GetString(nameof(RemoveGame_Body), Culture) ?? nameof(RemoveGame_Body);
 
     public static string RemoveGame_Delete => ResourceManager.GetString(nameof(RemoveGame_Delete), Culture) ?? nameof(RemoveGame_Delete);
@@ -596,6 +695,78 @@ public static class Strings
     public static string Settings_Theme_Light => ResourceManager.GetString(nameof(Settings_Theme_Light), Culture) ?? nameof(Settings_Theme_Light);
 
     public static string Settings_Theme_System => ResourceManager.GetString(nameof(Settings_Theme_System), Culture) ?? nameof(Settings_Theme_System);
+
+    public static string Summary_Annotations_Header => ResourceManager.GetString(nameof(Summary_Annotations_Header), Culture) ?? nameof(Summary_Annotations_Header);
+
+    public static string Summary_Crash_Body => ResourceManager.GetString(nameof(Summary_Crash_Body), Culture) ?? nameof(Summary_Crash_Body);
+
+    public static string Summary_Crash_Title => ResourceManager.GetString(nameof(Summary_Crash_Title), Culture) ?? nameof(Summary_Crash_Title);
+
+    public static string Summary_Distribution_Header => ResourceManager.GetString(nameof(Summary_Distribution_Header), Culture) ?? nameof(Summary_Distribution_Header);
+
+    public static string Summary_Export_Csv => ResourceManager.GetString(nameof(Summary_Export_Csv), Culture) ?? nameof(Summary_Export_Csv);
+
+    public static string Summary_Export_Failed_Format => ResourceManager.GetString(nameof(Summary_Export_Failed_Format), Culture) ?? nameof(Summary_Export_Failed_Format);
+
+    public static string Summary_Export_Json => ResourceManager.GetString(nameof(Summary_Export_Json), Culture) ?? nameof(Summary_Export_Json);
+
+    public static string Summary_Export_Png => ResourceManager.GetString(nameof(Summary_Export_Png), Culture) ?? nameof(Summary_Export_Png);
+
+    public static string Summary_Export_Tier2 => ResourceManager.GetString(nameof(Summary_Export_Tier2), Culture) ?? nameof(Summary_Export_Tier2);
+
+    public static string Summary_Exported_Format => ResourceManager.GetString(nameof(Summary_Exported_Format), Culture) ?? nameof(Summary_Exported_Format);
+
+    public static string Summary_Frametime_Header => ResourceManager.GetString(nameof(Summary_Frametime_Header), Culture) ?? nameof(Summary_Frametime_Header);
+
+    public static string Summary_Line_Format => ResourceManager.GetString(nameof(Summary_Line_Format), Culture) ?? nameof(Summary_Line_Format);
+
+    public static string Summary_Lows_Presented => ResourceManager.GetString(nameof(Summary_Lows_Presented), Culture) ?? nameof(Summary_Lows_Presented);
+
+    public static string Summary_Notes_Placeholder => ResourceManager.GetString(nameof(Summary_Notes_Placeholder), Culture) ?? nameof(Summary_Notes_Placeholder);
+
+    public static string Summary_NotFound => ResourceManager.GetString(nameof(Summary_NotFound), Culture) ?? nameof(Summary_NotFound);
+
+    public static string Summary_Open => ResourceManager.GetString(nameof(Summary_Open), Culture) ?? nameof(Summary_Open);
+
+    public static string Summary_Save => ResourceManager.GetString(nameof(Summary_Save), Culture) ?? nameof(Summary_Save);
+
+    public static string Summary_Saved => ResourceManager.GetString(nameof(Summary_Saved), Culture) ?? nameof(Summary_Saved);
+
+    public static string Summary_Show_Displayed => ResourceManager.GetString(nameof(Summary_Show_Displayed), Culture) ?? nameof(Summary_Show_Displayed);
+
+    public static string Summary_Show_Sensors => ResourceManager.GetString(nameof(Summary_Show_Sensors), Culture) ?? nameof(Summary_Show_Sensors);
+
+    public static string Summary_Stat_Avg => ResourceManager.GetString(nameof(Summary_Stat_Avg), Culture) ?? nameof(Summary_Stat_Avg);
+
+    public static string Summary_Stat_Duration => ResourceManager.GetString(nameof(Summary_Stat_Duration), Culture) ?? nameof(Summary_Stat_Duration);
+
+    public static string Summary_Stat_Median => ResourceManager.GetString(nameof(Summary_Stat_Median), Culture) ?? nameof(Summary_Stat_Median);
+
+    public static string Summary_Stat_MinMax => ResourceManager.GetString(nameof(Summary_Stat_MinMax), Culture) ?? nameof(Summary_Stat_MinMax);
+
+    public static string Summary_Stat_MinMax_Format => ResourceManager.GetString(nameof(Summary_Stat_MinMax_Format), Culture) ?? nameof(Summary_Stat_MinMax_Format);
+
+    public static string Summary_Stat_P01Low => ResourceManager.GetString(nameof(Summary_Stat_P01Low), Culture) ?? nameof(Summary_Stat_P01Low);
+
+    public static string Summary_Stat_P1Low => ResourceManager.GetString(nameof(Summary_Stat_P1Low), Culture) ?? nameof(Summary_Stat_P1Low);
+
+    public static string Summary_Stat_StdDev => ResourceManager.GetString(nameof(Summary_Stat_StdDev), Culture) ?? nameof(Summary_Stat_StdDev);
+
+    public static string Summary_Stat_StdDev_Format => ResourceManager.GetString(nameof(Summary_Stat_StdDev_Format), Culture) ?? nameof(Summary_Stat_StdDev_Format);
+
+    public static string Summary_Stat_Stutter => ResourceManager.GetString(nameof(Summary_Stat_Stutter), Culture) ?? nameof(Summary_Stat_Stutter);
+
+    public static string Summary_Stat_Stutter_Format => ResourceManager.GetString(nameof(Summary_Stat_Stutter_Format), Culture) ?? nameof(Summary_Stat_Stutter_Format);
+
+    public static string Summary_Tags_Placeholder => ResourceManager.GetString(nameof(Summary_Tags_Placeholder), Culture) ?? nameof(Summary_Tags_Placeholder);
+
+    public static string Summary_Tier2_Body => ResourceManager.GetString(nameof(Summary_Tier2_Body), Culture) ?? nameof(Summary_Tier2_Body);
+
+    public static string Summary_Title_Format => ResourceManager.GetString(nameof(Summary_Title_Format), Culture) ?? nameof(Summary_Title_Format);
+
+    public static string Summary_Unhooked_Body => ResourceManager.GetString(nameof(Summary_Unhooked_Body), Culture) ?? nameof(Summary_Unhooked_Body);
+
+    public static string Summary_Unhooked_Title => ResourceManager.GetString(nameof(Summary_Unhooked_Title), Culture) ?? nameof(Summary_Unhooked_Title);
 
     public static string Tier_Dash_Tooltip => ResourceManager.GetString(nameof(Tier_Dash_Tooltip), Culture) ?? nameof(Tier_Dash_Tooltip);
 

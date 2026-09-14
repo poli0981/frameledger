@@ -1,0 +1,17 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- The chart palette for the light theme; same keys as ChartPalette.Dark.xaml (ChartPaletteTests). -->
+    <Color x:Key="Chart_Figure">#00000000</Color>
+    <Color x:Key="Chart_Data">#14000000</Color>
+    <Color x:Key="Chart_Axis">#FF404040</Color>
+    <Color x:Key="Chart_Grid">#26000000</Color>
+    <Color x:Key="Chart_Native">#FF0A6FB3</Color>
+    <Color x:Key="Chart_Displayed">#FF7B48D6</Color>
+    <Color x:Key="Chart_Stutter">#FFD32F2F</Color>
+    <Color x:Key="Chart_StutterPso">#FFE68A00</Color>
+    <Color x:Key="Chart_Sensor">#FF2E8B57</Color>
+    <Color x:Key="Chart_SensorSecondary">#FFB8860B</Color>
+    <Color x:Key="Chart_Segment">#1A0A6FB3</Color>
+    <Color x:Key="Chart_Histogram">#CC0A6FB3</Color>
+    <Color x:Key="Chart_Percentile">#FFB8860B</Color>
+</ResourceDictionary>

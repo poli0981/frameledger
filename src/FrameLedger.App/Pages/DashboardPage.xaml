@@ -107,7 +107,7 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:RecentSessionViewModel}">
                         <ui:CardAction Margin="0,0,0,6" IsChevronVisible="True"
-                                       Command="{Binding DataContext.ViewModel.OpenGameCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                       Command="{Binding DataContext.ViewModel.OpenSessionCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                        CommandParameter="{Binding}">
                             <Grid>
                                 <Grid.ColumnDefinitions>

@@ -27,6 +27,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private readonly IConfirmations _confirmations;
     private readonly IEditGamePrompt _edit;
     private readonly IMessageStrip _strip;
+    private readonly ISessionSummaryOpener _summaries;
     private readonly long? _gameId;
 
     [ObservableProperty]
@@ -81,7 +82,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private bool _sessionsEmpty = true;
 
     public GameDetailViewModel(GameLibrary library, GameSelection selection, HookingConsent consent, IPageNavigator navigator,
-        IConfirmations confirmations, IEditGamePrompt edit, IMessageStrip strip)
+        IConfirmations confirmations, IEditGamePrompt edit, IMessageStrip strip, ISessionSummaryOpener summaries)
     {
         _library = library ?? throw new ArgumentNullException(nameof(library));
         ArgumentNullException.ThrowIfNull(selection);
@@ -90,6 +91,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         _confirmations = confirmations ?? throw new ArgumentNullException(nameof(confirmations));
         _edit = edit ?? throw new ArgumentNullException(nameof(edit));
         _strip = strip ?? throw new ArgumentNullException(nameof(strip));
+        _summaries = summaries ?? throw new ArgumentNullException(nameof(summaries));
         _gameId = selection.GameId;
         Pending = LoadAsync();
     }
@@ -166,6 +168,16 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
     [RelayCommand]
     private void Back() => _navigator.Navigate<GamesPage>();
+
+    /// <summary>A session row opens its summary window (08_UI §Games: "Row → Session summary").</summary>
+    [RelayCommand]
+    private void OpenSession(SessionItemViewModel? session)
+    {
+        if (session is not null)
+        {
+            _summaries.Open(session.Id);
+        }
+    }
 
     [RelayCommand]
     private Task ToggleHookingAsync() => RunAsync(HookEnabled ? DisableAsync : EnableAsync);

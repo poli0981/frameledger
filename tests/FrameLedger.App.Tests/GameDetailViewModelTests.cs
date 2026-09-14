@@ -72,6 +72,13 @@ public sealed class GameDetailViewModelTests
         public Task<GameMetadata?> EditAsync(GameMetadata current, string? provenanceJson, CancellationToken ct = default) => Task.FromResult(answer);
     }
 
+    private sealed class NoSummaries : ISessionSummaryOpener
+    {
+        public List<long> Opened { get; } = [];
+
+        public void Open(long sessionId) => Opened.Add(sessionId);
+    }
+
     private sealed class FakeStrip : IMessageStrip
     {
         public List<string> Lines { get; } = [];
@@ -91,7 +98,7 @@ public sealed class GameDetailViewModelTests
         var nav = new FakeNavigator();
         var strip = new FakeStrip();
         var vm = new GameDetailViewModel(s.Library, new GameSelection { GameId = gameId }, new HookingConsent(agent, prompt), nav,
-            new FakeConfirmations(remove), new FakeEdit(edit), strip);
+            new FakeConfirmations(remove), new FakeEdit(edit), strip, new NoSummaries());
         Task pending = vm.Pending;
         await pending.ConfigureAwait(false);
         return (vm, agent, prompt, nav, strip);

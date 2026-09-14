@@ -598,4 +598,175 @@
   <data name="Upscaler_Unknown" xml:space="preserve">
     <value>Upscaler không rõ</value>
   </data>
+  <data name="Chart_Axis_Count" xml:space="preserve">
+    <value>Khung hình</value>
+  </data>
+  <data name="Chart_Axis_Fps" xml:space="preserve">
+    <value>FPS</value>
+  </data>
+  <data name="Chart_Axis_Frametime" xml:space="preserve">
+    <value>Frametime (ms)</value>
+  </data>
+  <data name="Chart_Axis_Percentile" xml:space="preserve">
+    <value>Phân vị</value>
+  </data>
+  <data name="Chart_Axis_Sensor" xml:space="preserve">
+    <value>°C / %</value>
+  </data>
+  <data name="Chart_Axis_Time" xml:space="preserve">
+    <value>Thời gian (s)</value>
+  </data>
+  <data name="Chart_Decimated_Format" xml:space="preserve">
+    <value>{0} khung hình, vẽ bằng {1} điểm min/max</value>
+  </data>
+  <data name="Chart_Series_Displayed" xml:space="preserve">
+    <value>Hiển thị</value>
+  </data>
+  <data name="Chart_Series_GpuLoad" xml:space="preserve">
+    <value>Tải GPU %</value>
+  </data>
+  <data name="Chart_Series_GpuTemp" xml:space="preserve">
+    <value>GPU °C</value>
+  </data>
+  <data name="Chart_Series_Native" xml:space="preserve">
+    <value>Native</value>
+  </data>
+  <data name="Chart_Series_Percentile" xml:space="preserve">
+    <value>FPS theo phân vị frametime</value>
+  </data>
+  <data name="Chart_Series_Stutter" xml:space="preserve">
+    <value>Giật hình</value>
+  </data>
+  <data name="Chart_Series_StutterPso" xml:space="preserve">
+    <value>Giật hình (biên dịch PSO)</value>
+  </data>
+  <data name="Dashboard_SessionDiscarded_Format" xml:space="preserve">
+    <value>Đã bỏ phiên: {0}</value>
+  </data>
+  <data name="Dashboard_SessionSaved_Format" xml:space="preserve">
+    <value>Đã lưu phiên: {0}</value>
+  </data>
+  <data name="Override_Apply" xml:space="preserve">
+    <value>Áp dụng</value>
+  </data>
+  <data name="Override_Body" xml:space="preserve">
+    <value>Giá trị đo được vẫn được lưu; giá trị ghi đè hiển thị thay thế và được đánh dấu là thủ công.</value>
+  </data>
+  <data name="Override_Default" xml:space="preserve">
+    <value>Đặt làm mặc định của game này</value>
+  </data>
+  <data name="Override_Keep" xml:space="preserve">
+    <value>Dùng giá trị đo được</value>
+  </data>
+  <data name="Override_Title_Format" xml:space="preserve">
+    <value>{0} cho phiên này</value>
+  </data>
+  <data name="Summary_Annotations_Header" xml:space="preserve">
+    <value>Thẻ và ghi chú</value>
+  </data>
+  <data name="Summary_Crash_Body" xml:space="preserve">
+    <value>Phiên này kết thúc bằng crash. Dữ liệu đến lúc crash là đầy đủ; không có gì ở đây nói hook gây ra hay không gây ra.</value>
+  </data>
+  <data name="Summary_Crash_Title" xml:space="preserve">
+    <value>Game đã crash</value>
+  </data>
+  <data name="Summary_Distribution_Header" xml:space="preserve">
+    <value>Phân bố</value>
+  </data>
+  <data name="Summary_Export_Csv" xml:space="preserve">
+    <value>Xuất CSV</value>
+  </data>
+  <data name="Summary_Export_Failed_Format" xml:space="preserve">
+    <value>Xuất thất bại: {0}</value>
+  </data>
+  <data name="Summary_Export_Json" xml:space="preserve">
+    <value>Xuất JSON</value>
+  </data>
+  <data name="Summary_Export_Png" xml:space="preserve">
+    <value>Xuất PNG</value>
+  </data>
+  <data name="Summary_Export_Tier2" xml:space="preserve">
+    <value>Phiên không đo gì thì không có dòng theo khung hình để xuất; JSON mang những gì đã ghi.</value>
+  </data>
+  <data name="Summary_Exported_Format" xml:space="preserve">
+    <value>Đã xuất ra {0}</value>
+  </data>
+  <data name="Summary_Frametime_Header" xml:space="preserve">
+    <value>Frametime</value>
+  </data>
+  <data name="Summary_Line_Format" xml:space="preserve">
+    <value>{0} · {1} · {2} · {3}</value>
+  </data>
+  <data name="Summary_Lows_Presented" xml:space="preserve">
+    <value>(xuất khung)</value>
+  </data>
+  <data name="Summary_NotFound" xml:space="preserve">
+    <value>Phiên này không còn trong sổ.</value>
+  </data>
+  <data name="Summary_Notes_Placeholder" xml:space="preserve">
+    <value>Ghi chú</value>
+  </data>
+  <data name="Summary_Open" xml:space="preserve">
+    <value>Mở</value>
+  </data>
+  <data name="Summary_Save" xml:space="preserve">
+    <value>Lưu</value>
+  </data>
+  <data name="Summary_Saved" xml:space="preserve">
+    <value>Đã lưu.</value>
+  </data>
+  <data name="Summary_Show_Displayed" xml:space="preserve">
+    <value>Hiện khung hiển thị</value>
+  </data>
+  <data name="Summary_Show_Sensors" xml:space="preserve">
+    <value>Lớp cảm biến</value>
+  </data>
+  <data name="Summary_Stat_Avg" xml:space="preserve">
+    <value>Trung bình</value>
+  </data>
+  <data name="Summary_Stat_Duration" xml:space="preserve">
+    <value>Thời lượng</value>
+  </data>
+  <data name="Summary_Stat_Median" xml:space="preserve">
+    <value>Trung vị</value>
+  </data>
+  <data name="Summary_Stat_MinMax" xml:space="preserve">
+    <value>Tối thiểu / Tối đa</value>
+  </data>
+  <data name="Summary_Stat_MinMax_Format" xml:space="preserve">
+    <value>{0} / {1}</value>
+  </data>
+  <data name="Summary_Stat_P01Low" xml:space="preserve">
+    <value>0.1% Low</value>
+  </data>
+  <data name="Summary_Stat_P1Low" xml:space="preserve">
+    <value>1% Low</value>
+  </data>
+  <data name="Summary_Stat_StdDev" xml:space="preserve">
+    <value>Frametime σ</value>
+  </data>
+  <data name="Summary_Stat_StdDev_Format" xml:space="preserve">
+    <value>{0:0.00} ms</value>
+  </data>
+  <data name="Summary_Stat_Stutter" xml:space="preserve">
+    <value>Giật hình</value>
+  </data>
+  <data name="Summary_Stat_Stutter_Format" xml:space="preserve">
+    <value>{0} ({1:0.0}% thời gian)</value>
+  </data>
+  <data name="Summary_Tags_Placeholder" xml:space="preserve">
+    <value>Thẻ, cách nhau bằng dấu phẩy</value>
+  </data>
+  <data name="Summary_Tier2_Body" xml:space="preserve">
+    <value>Phiên này không hook: đã ghi thời lượng và telemetry phần cứng, không đo gì, và không có khung hình để vẽ.</value>
+  </data>
+  <data name="Summary_Title_Format" xml:space="preserve">
+    <value>{0} — {1}</value>
+  </data>
+  <data name="Summary_Unhooked_Body" xml:space="preserve">
+    <value>FrameLedger đã gỡ hook trong phiên này vì một mô-đun anti-cheat xuất hiện. Dữ liệu đo kết thúc tại đó.</value>
+  </data>
+  <data name="Summary_Unhooked_Title" xml:space="preserve">
+    <value>Đo dừng sớm</value>
+  </data>
 </root>

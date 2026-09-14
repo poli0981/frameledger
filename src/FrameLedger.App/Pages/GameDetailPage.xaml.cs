@@ -1,3 +1,4 @@
+using System.Windows.Input;
 using FrameLedger.App.ViewModels;
 using Wpf.Ui.Abstractions.Controls;
 
@@ -14,4 +15,12 @@ public partial class GameDetailPage : INavigableView<GameDetailViewModel>
     }
 
     public GameDetailViewModel ViewModel { get; }
+
+    private void OnSessionDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (SessionsGrid.SelectedItem is SessionItemViewModel session)
+        {
+            ViewModel.OpenSessionCommand.Execute(session);
+        }
+    }
 }

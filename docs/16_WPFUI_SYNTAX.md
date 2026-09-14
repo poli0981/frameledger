@@ -178,6 +178,16 @@ var result = await box.ShowDialogAsync(); // Wpf.Ui.Controls.MessageBoxResult.Pr
 
 On startup and on `ApplicationThemeManager.Changed`: for every live plot set figure/data background, axis/grid/tick colors, and series palette from the current theme resources (`ChartPalette.xaml`), then `Refresh()`. Centralize in `ChartTheme.Apply(Plot plot)` — pages never color plots ad hoc.
 
+> **Built 2026-09-14 (P3 PR-6).** `Charts/ChartTheme.Apply(Plot)` + `ChartTheme.Attach(WpfPlot)` (weakly held; one
+> subscription to `ApplicationThemeManager.Changed` re-applies and refreshes every live plot). The palette is
+> **two** dictionaries, `Styles/ChartPalette.Dark.xaml` and `ChartPalette.Light.xaml`, `Color` resources with
+> explicit ARGB hex — the one place hex is allowed — read into `Charts/ChartPalette` per theme and cached;
+> `ChartPaletteTests` fails when the two files' key sets drift from what the record reads. Series colours come
+> from the palette too (native, displayed, stutter, PSO stutter, sensors, segment span, histogram, percentile).
+> Pinned `ScottPlot.WPF` 5.1.59: `Add.SignalXY` for the decimated series, `Add.Scatter` (no line) for markers,
+> `Add.HorizontalSpan` for the ribbon, `Add.Bars` over `Statistics.Histogram.WithBinCount`, `Add.ScatterLine`
+> for the percentile curve, a series' `Axes.YAxis = plot.Axes.Right` for the sensor overlay.
+
 ## Gotchas checklist
 
 - [ ] Dictionaries order: `ThemesDictionary` → `ControlsDictionary` → app styles. Wrong order = default-looking controls.

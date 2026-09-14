@@ -136,8 +136,8 @@
                         <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap"
                                       Text="{x:Static vm:GameDetailViewModel.SessionsEmptyText}"
                                       Visibility="{Binding ViewModel.SessionsEmpty, Converter={StaticResource BoolToVis}}" />
-                        <DataGrid AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column"
-                                  ItemsSource="{Binding ViewModel.Sessions}" SelectionMode="Extended">
+                        <DataGrid x:Name="SessionsGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column"
+                                  ItemsSource="{Binding ViewModel.Sessions}" SelectionMode="Extended" MouseDoubleClick="OnSessionDoubleClick">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Date}" Binding="{Binding DateText}" />
                                 <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Duration}" Binding="{Binding DurationText}" />
@@ -199,6 +199,15 @@
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Tags}" Binding="{Binding TagsText}" />
+                                <DataGridTemplateColumn>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
+                                            <ui:Button Appearance="Secondary" Padding="8,2" Content="{x:Static res:Strings.Summary_Open}"
+                                                       Command="{Binding DataContext.ViewModel.OpenSessionCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                                       CommandParameter="{Binding}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
                     </StackPanel>

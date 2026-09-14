@@ -1,0 +1,118 @@
+<ui:FluentWindow x:Class="FrameLedger.App.Windows.SessionSummaryWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
+                 xmlns:controls="clr-namespace:FrameLedger.App.Controls"
+                 xmlns:charts="clr-namespace:FrameLedger.App.Charts"
+                 Title="{Binding ViewModel.Title}"
+                 Width="1100"
+                 Height="820"
+                 MinWidth="760"
+                 MinHeight="520"
+                 ExtendsContentIntoTitleBar="True"
+                 WindowBackdropType="Mica"
+                 WindowCornerPreference="Round"
+                 WindowStartupLocation="CenterOwner">
+    <!-- 08_UI §Session summary: a secondary FluentWindow. Stat cards from the stored aggregates, never recomputed. -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <ui:TitleBar Grid.Row="0" Title="{Binding ViewModel.Title}" ShowMaximize="True" ShowMinimize="True" />
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Style="{StaticResource PageRoot}">
+                <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:SessionSummaryViewModel.NotFoundText}"
+                              Visibility="{Binding ViewModel.NotFound, Converter={StaticResource BoolToVis}}" />
+
+                <ui:InfoBar IsClosable="False" Severity="Error" Margin="0,0,0,12"
+                            IsOpen="{Binding ViewModel.IsCrashed, Mode=OneWay}"
+                            Title="{x:Static vm:SessionSummaryViewModel.CrashTitle}"
+                            Message="{x:Static vm:SessionSummaryViewModel.CrashBody}" />
+                <ui:InfoBar IsClosable="False" Severity="Warning" Margin="0,0,0,12"
+                            IsOpen="{Binding ViewModel.IsUnhooked, Mode=OneWay}"
+                            Title="{x:Static vm:SessionSummaryViewModel.UnhookedTitle}"
+                            Message="{x:Static vm:SessionSummaryViewModel.UnhookedBody}" />
+
+                <!-- header line + chips -->
+                <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.Line}" />
+                <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding ViewModel.Chips}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:TriStateChipModel}">
+                            <!-- FR-8.3: click → the override dialog -->
+                            <Button Padding="0" Background="Transparent" BorderThickness="0"
+                                    Command="{Binding DataContext.ViewModel.OverrideCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    CommandParameter="{Binding}">
+                                <controls:TriStateChip Model="{Binding}" />
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- stat cards -->
+                <ItemsControl Margin="0,12,0,0" ItemsSource="{Binding ViewModel.Stats}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="4" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:StatCardModel}">
+                            <ui:Card Margin="0,0,8,8">
+                                <StackPanel>
+                                    <ui:TextBlock Appearance="Secondary" Text="{Binding Label}" />
+                                    <ui:TextBlock FontTypography="Subtitle" Text="{Binding Value}" />
+                                    <ui:TextBlock Appearance="Tertiary" Text="{Binding Suffix}" Visibility="{Binding Suffix, Converter={StaticResource NullToCollapsed}}" />
+                                </StackPanel>
+                            </ui:Card>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <ui:TextBlock Margin="0,8,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:SessionSummaryViewModel.Tier2Text}"
+                              Visibility="{Binding ViewModel.IsHooked, Converter={StaticResource InverseBoolToVis}}" />
+
+                <!-- charts -->
+                <StackPanel Visibility="{Binding ViewModel.IsHooked, Converter={StaticResource BoolToVis}}">
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ui:TextBlock Grid.Column="0" FontTypography="Subtitle" Text="{x:Static vm:SessionSummaryViewModel.FrametimeHeader}" />
+                        <CheckBox Grid.Column="1" Margin="0,0,16,0" Content="{x:Static vm:SessionSummaryViewModel.ShowDisplayedText}"
+                                  IsChecked="{Binding ViewModel.ShowDisplayed}" IsEnabled="{Binding ViewModel.HasDisplayed}"
+                                  Visibility="{Binding ViewModel.HasDisplayed, Converter={StaticResource BoolToVis}}" />
+                        <CheckBox Grid.Column="2" Content="{x:Static vm:SessionSummaryViewModel.ShowSensorsText}"
+                                  IsChecked="{Binding ViewModel.ShowSensors}" IsEnabled="{Binding ViewModel.HasSensors}" />
+                    </Grid>
+                    <ui:TextBlock Appearance="Tertiary" Text="{Binding ViewModel.DecimationNote}" />
+                    <charts:FrametimeChart x:Name="Frametime" Margin="0,6,0,0" Height="300" />
+                    <ui:TextBlock Margin="0,16,0,0" FontTypography="Subtitle" Text="{x:Static vm:SessionSummaryViewModel.DistributionHeader}" />
+                    <charts:DistributionChart x:Name="Distribution" Margin="0,6,0,0" Height="260" />
+                </StackPanel>
+
+                <!-- annotations -->
+                <ui:TextBlock Margin="0,16,0,0" FontTypography="Subtitle" Text="{x:Static vm:SessionSummaryViewModel.AnnotationsHeader}" />
+                <ui:TextBox Margin="0,6,0,0" PlaceholderText="{x:Static vm:SessionSummaryViewModel.TagsPlaceholder}" Text="{Binding ViewModel.Tags, UpdateSourceTrigger=PropertyChanged}" />
+                <ui:TextBox Margin="0,6,0,0" MinHeight="72" AcceptsReturn="True" TextWrapping="Wrap"
+                            PlaceholderText="{x:Static vm:SessionSummaryViewModel.NotesPlaceholder}" Text="{Binding ViewModel.Notes, UpdateSourceTrigger=PropertyChanged}" />
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <ui:Button Appearance="Primary" Command="{Binding ViewModel.SaveAnnotationCommand}" Content="{x:Static vm:SessionSummaryViewModel.SaveText}" Icon="{ui:SymbolIcon Save24}" />
+                    <ui:Button Margin="16,0,0,0" Command="{Binding ViewModel.ExportCsvCommand}" Content="{x:Static vm:SessionSummaryViewModel.ExportCsvText}" />
+                    <ui:Button Margin="8,0,0,0" Command="{Binding ViewModel.ExportJsonCommand}" Content="{x:Static vm:SessionSummaryViewModel.ExportJsonText}" />
+                    <ui:Button Margin="8,0,0,0" Click="OnExportPng" Content="{x:Static vm:SessionSummaryViewModel.ExportPngText}"
+                               IsEnabled="{Binding ViewModel.IsHooked}" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+        <ui:ContentDialogHost x:Name="DialogHost" Grid.Row="1" />
+    </Grid>
+</ui:FluentWindow>

@@ -19,6 +19,8 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
     private readonly GameLibrary _library;
     private readonly GameSelection _selection;
     private readonly IPageNavigator _navigator;
+    private readonly ISessionSummaryOpener _summaries;
+    private readonly IMessageStrip _strip;
     private readonly UiThread _ui = new();
 
     [ObservableProperty]
@@ -51,12 +53,14 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private bool _recentEmpty = true;
 
-    public DashboardViewModel(IAgentLink agent, GameLibrary library, GameSelection selection, IPageNavigator navigator)
+    public DashboardViewModel(IAgentLink agent, GameLibrary library, GameSelection selection, IPageNavigator navigator, ISessionSummaryOpener summaries, IMessageStrip strip)
     {
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _library = library ?? throw new ArgumentNullException(nameof(library));
         _selection = selection ?? throw new ArgumentNullException(nameof(selection));
         _navigator = navigator ?? throw new ArgumentNullException(nameof(navigator));
+        _summaries = summaries ?? throw new ArgumentNullException(nameof(summaries));
+        _strip = strip ?? throw new ArgumentNullException(nameof(strip));
         _agent.Changed += OnAgentChanged;
         _agent.EventReceived += OnAgentEvent;
         Refresh();
@@ -106,6 +110,16 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
         ThisWeekText = totals.SessionsThisWeek.ToString(CultureInfo.CurrentCulture);
     }
 
+    /// <summary>08_UI §Dashboard: a recent session opens its summary; the game page is one click further.</summary>
+    [RelayCommand]
+    private void OpenSession(RecentSessionViewModel? session)
+    {
+        if (session is not null)
+        {
+            _summaries.Open(session.Id);
+        }
+    }
+
     [RelayCommand]
     private void OpenGame(RecentSessionViewModel? session)
     {
@@ -135,10 +149,26 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
                 break;
             case IpcMessageType.SessionCompleted when IpcCodec.Payload<SessionCompletedEvent>(envelope) is { } completed:
                 Live.Stop(completed);
+                Notice(completed);
                 Pending = LoadAsync();
                 break;
             default:
                 break;
+        }
+    }
+
+    /// <summary>FR-3.8's post-session notice, in-app (the tray toast with "View" arrives with the tray, PR-8). A safety stop is never a toast (08_UI §Notifications policy) — the game page's bars carry those.</summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format string is a resource that follows the UI culture, which changes at runtime")]
+    private void Notice(SessionCompletedEvent completed)
+    {
+        string game = Live.GameName.Length > 0 ? Live.GameName : Strings.Common_NotAvailable;
+        if (completed.SessionId is not null)
+        {
+            _strip.Success(Strings.Dashboard_Live_Header, string.Format(CultureInfo.CurrentCulture, Strings.Dashboard_SessionSaved_Format, game));
+        }
+        else
+        {
+            _strip.Info(Strings.Dashboard_Live_Header, string.Format(CultureInfo.CurrentCulture, Strings.Dashboard_SessionDiscarded_Format, game));
         }
     }
 
