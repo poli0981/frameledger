@@ -169,6 +169,62 @@
     <value>エクスポート</value>
     <comment>review</comment>
   </data>
+  <data name="Menu_File_Export_Csv" xml:space="preserve">
+    <value>セッション CSV</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_File_Export_Json" xml:space="preserve">
+    <value>セッション JSON</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_File_Export_Png" xml:space="preserve">
+    <value>チャート PNG</value>
+    <comment>review</comment>
+  </data>
+  <data name="Export_NoSelection_Body" xml:space="preserve">
+    <value>先にゲームのセッションタブでセッションを選ぶか、そのサマリーを開いてください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Export_Png_Body" xml:space="preserve">
+    <value>チャートはセッションサマリーウィンドウから書き出します。いま開きました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="BugReport_Title" xml:space="preserve">
+    <value>バグを報告</value>
+    <comment>review</comment>
+  </data>
+  <data name="BugReport_Preview_Intro_Format" xml:space="preserve">
+    <value>バンドルを {0} に書き出しました ({1} ファイル)。まだどこにも送信していません。内容:</value>
+    <comment>review</comment>
+  </data>
+  <data name="BugReport_Preview_Drag" xml:space="preserve">
+    <value>GitHub の issue フォームを開き、zip ファイルを説明欄にドラッグしてください。FrameLedger が代わりにアップロードすることはできず、フォームにはバージョンと Windows ビルドしか載りません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="BugReport_OpenIssue" xml:space="preserve">
+    <value>GitHub で issue を開く</value>
+    <comment>review</comment>
+  </data>
+  <data name="BugReport_CopyMarkdown" xml:space="preserve">
+    <value>概要を Markdown でコピー</value>
+    <comment>review</comment>
+  </data>
+  <data name="BugReport_OpenZipFolder" xml:space="preserve">
+    <value>zip をエクスプローラーで表示</value>
+    <comment>review</comment>
+  </data>
+  <data name="BugReport_Copied" xml:space="preserve">
+    <value>環境の概要を Markdown としてクリップボードにコピーしました。issue に貼り付けてください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="BugReport_ClipboardRefused" xml:space="preserve">
+    <value>クリップボードがテキストを受け付けませんでした。他のプログラムが使用中かもしれません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="BugReport_BrowserRefused" xml:space="preserve">
+    <value>ブラウザーを開けませんでした。</value>
+    <comment>review</comment>
+  </data>
   <data name="Menu_File_ImportLibrary" xml:space="preserve">
     <value>ライブラリをインポート…</value>
     <comment>review</comment>

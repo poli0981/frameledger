@@ -43,7 +43,7 @@ public sealed class LogsViewModelTests : IDisposable
         Write("ui-20260914.log", "[12:00:00.000 INF] hello\n[12:00:00.001 WRN] careful\n");
         Write("agent-20260914.log", "[12:00:00.000 INF] agent here\n");
         var strip = new RecordingStrip();
-        using var vm = new LogsViewModel(new LogTail(_dir), new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))), new PathSaver(null), new FakeAgentLink(), strip);
+        using var vm = new LogsViewModel(new LogTail(_dir), new BugReportFlow(new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))), new PathSaver(null), new FakeAgentLink(), new ClosePreview(), new NoUrlOpener(), new NoClipboard(), strip), strip);
         Task pending1 = vm.Pending;
         await pending1;
 
@@ -70,7 +70,7 @@ public sealed class LogsViewModelTests : IDisposable
     public async Task WithoutAFileTheStatusSaysSo()
     {
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
-        using var vm = new LogsViewModel(new LogTail(_dir), new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))), new PathSaver(null), new FakeAgentLink(), new RecordingStrip());
+        using var vm = new LogsViewModel(new LogTail(_dir), new BugReportFlow(new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))), new PathSaver(null), new FakeAgentLink(), new ClosePreview(), new NoUrlOpener(), new NoClipboard(), new RecordingStrip()), new RecordingStrip());
         Task pending = vm.Pending;
         await pending;
 
@@ -88,7 +88,7 @@ public sealed class LogsViewModelTests : IDisposable
         Directory.CreateDirectory(Path.GetDirectoryName(zip)!);
         var saver = new PathSaver(zip);
         var strip = new RecordingStrip();
-        using var vm = new LogsViewModel(new LogTail(_dir), new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))), saver, new FakeAgentLink(), strip);
+        using var vm = new LogsViewModel(new LogTail(_dir), new BugReportFlow(new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))), saver, new FakeAgentLink(), new ClosePreview(), new NoUrlOpener(), new NoClipboard(), strip), strip);
         Task pending1 = vm.Pending;
         await pending1;
 
@@ -106,7 +106,7 @@ public sealed class LogsViewModelTests : IDisposable
     {
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
         var strip = new RecordingStrip();
-        using var vm = new LogsViewModel(new LogTail(_dir), new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))), new PathSaver(null), new FakeAgentLink(), strip);
+        using var vm = new LogsViewModel(new LogTail(_dir), new BugReportFlow(new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))), new PathSaver(null), new FakeAgentLink(), new ClosePreview(), new NoUrlOpener(), new NoClipboard(), strip), strip);
 
         await vm.ExportBundleCommand.ExecuteAsync(null);
 

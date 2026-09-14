@@ -38,7 +38,11 @@
             <MenuItem Header="{x:Static res:Strings.Menu_File}">
                 <MenuItem Header="{x:Static res:Strings.Menu_File_AddGame}" Command="{Binding ViewModel.AddGameCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_File_ImportLibrary}" Command="{Binding ViewModel.NotYetCommand}" />
-                <MenuItem Header="{x:Static res:Strings.Menu_File_Export}" Command="{Binding ViewModel.NotYetCommand}" />
+                <MenuItem Header="{x:Static res:Strings.Menu_File_Export}">
+                    <MenuItem Header="{x:Static res:Strings.Menu_File_Export_Csv}" Command="{Binding ViewModel.ExportCsvCommand}" />
+                    <MenuItem Header="{x:Static res:Strings.Menu_File_Export_Json}" Command="{Binding ViewModel.ExportJsonCommand}" />
+                    <MenuItem Header="{x:Static res:Strings.Menu_File_Export_Png}" Command="{Binding ViewModel.ExportPngCommand}" />
+                </MenuItem>
                 <Separator />
                 <MenuItem Header="{x:Static res:Strings.Menu_File_Exit}" Command="{Binding ViewModel.ExitCommand}" />
             </MenuItem>
@@ -51,8 +55,8 @@
             </MenuItem>
             <MenuItem Header="{x:Static res:Strings.Menu_Help}">
                 <MenuItem Header="{x:Static res:Strings.Menu_Help_CheckUpdates}" Command="{Binding ViewModel.NotYetCommand}" />
-                <MenuItem Header="{x:Static res:Strings.Menu_Help_ReportBug}" Command="{Binding ViewModel.NotYetCommand}" />
-                <MenuItem Header="{x:Static res:Strings.Menu_Help_Documentation}" Command="{Binding ViewModel.NotYetCommand}" />
+                <MenuItem Header="{x:Static res:Strings.Menu_Help_ReportBug}" Command="{Binding ViewModel.ReportBugCommand}" />
+                <MenuItem Header="{x:Static res:Strings.Menu_Help_Documentation}" Command="{Binding ViewModel.DocumentationCommand}" />
                 <Separator />
                 <MenuItem Header="{x:Static res:Strings.Menu_Help_About}" Command="{Binding ViewModel.AboutCommand}" />
             </MenuItem>

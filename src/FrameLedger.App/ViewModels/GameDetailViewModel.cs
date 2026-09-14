@@ -31,6 +31,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private readonly ISessionSummaryOpener _summaries;
     private readonly SessionSeriesLoader _loader;
     private readonly IHardwareSnapshotRepository _hardware;
+    private readonly SessionSelection _selection;
     private readonly long? _gameId;
     private GameDetail? _detail;
 
@@ -114,8 +115,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
     public GameDetailViewModel(GameLibrary library, GameSelection selection, HookingConsent consent, IPageNavigator navigator,
         IConfirmations confirmations, IEditGamePrompt edit, IMessageStrip strip, ISessionSummaryOpener summaries,
-        SessionSeriesLoader loader, IHardwareSnapshotRepository hardware)
+        SessionSeriesLoader loader, IHardwareSnapshotRepository hardware, SessionSelection sessionSelection)
     {
+        _selection = sessionSelection ?? throw new ArgumentNullException(nameof(sessionSelection));
         _library = library ?? throw new ArgumentNullException(nameof(library));
         ArgumentNullException.ThrowIfNull(selection);
         _consent = consent ?? throw new ArgumentNullException(nameof(consent));
@@ -238,7 +240,11 @@ public sealed partial class GameDetailViewModel : ObservableObject
         await RebuildTrendAsync(ct).ConfigureAwait(true);
     }
 
-    partial void OnSelectedSessionChanged(SessionItemViewModel? value) => Pending = LoadSelectedAsync(value);
+    partial void OnSelectedSessionChanged(SessionItemViewModel? value)
+    {
+        _selection.Set(value?.Id);    // File ▸ Export acts on this (P4 PR-3)
+        Pending = LoadSelectedAsync(value);
+    }
 
     partial void OnTrendMetricChanged(TrendMetric value) => RebuildTrendPoints();
 

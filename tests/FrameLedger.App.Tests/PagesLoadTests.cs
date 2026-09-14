@@ -208,7 +208,7 @@ public sealed class PagesLoadTests
         var settings = new SettingsViewModel(appearance, new NoTheme(), new ShellHost(new ServiceCollection().BuildServiceProvider(), null!, null!, new WindowClosePolicy()), new RegisteredSettings(store), s.Library, consent, new NoAgent(), new NoRun(), strip, new NoMaintenance(), new NoTool(), new WindowClosePolicy(), new NoFirstRun());
         Task pending1 = settings.Pending;
         await pending1.ConfigureAwait(false);
-        var logs = new LogsViewModel(new LogTail(Path.Combine(Path.GetTempPath(), "fl-nologs-" + Guid.NewGuid().ToString("N"))), new BugBundleBuilder(Path.GetTempPath(), new RegisteredSettings(store)), new NoSaver(), new NoAgent(), strip);
+        var logs = new LogsViewModel(new LogTail(Path.Combine(Path.GetTempPath(), "fl-nologs-" + Guid.NewGuid().ToString("N"))), new BugReportFlow(new BugBundleBuilder(Path.GetTempPath(), new RegisteredSettings(store)), new NoSaver(), new NoAgent(), new ClosePreview(), new NoUrlOpener(), new NoClipboard(), strip), strip);
         Task pending2 = logs.Pending;
         await pending2.ConfigureAwait(false);
         return (settings, logs);
@@ -316,7 +316,7 @@ public sealed class PagesLoadTests
         Task pending2 = games.Pending;
         await pending2;
         var detail = new GameDetailViewModel(s.Library, selection, consent, nav, new NoConfirm(), new NoEdit(), strip, new NoSummaries(),
-            new SessionSeriesLoader(s.Sessions), new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db));
+            new SessionSeriesLoader(s.Sessions), new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db), new SessionSelection());
         var compare = new CompareViewModel(s.Library, new SessionSeriesLoader(s.Sessions), new NoMixed(), new NoSaver(), strip);
         Task pending3 = detail.Pending;
         await pending3;

@@ -42,6 +42,15 @@ public static class Strings
         nameof(Agent_State_Offline),
         nameof(Agent_State_Starting),
         nameof(App_Title),
+        nameof(BugReport_BrowserRefused),
+        nameof(BugReport_ClipboardRefused),
+        nameof(BugReport_Copied),
+        nameof(BugReport_CopyMarkdown),
+        nameof(BugReport_OpenIssue),
+        nameof(BugReport_OpenZipFolder),
+        nameof(BugReport_Preview_Drag),
+        nameof(BugReport_Preview_Intro_Format),
+        nameof(BugReport_Title),
         nameof(Chart_Axis_Count),
         nameof(Chart_Axis_Fps),
         nameof(Chart_Axis_Frametime),
@@ -142,6 +151,8 @@ public static class Strings
         nameof(Exit_Interrupted),
         nameof(Exit_Normal),
         nameof(Exit_UnhookedSafety),
+        nameof(Export_NoSelection_Body),
+        nameof(Export_Png_Body),
         nameof(Fg_Active),
         nameof(Fg_Factor_NotCounted),
         nameof(Fg_None),
@@ -273,6 +284,9 @@ public static class Strings
         nameof(Menu_File_AddGame),
         nameof(Menu_File_Exit),
         nameof(Menu_File_Export),
+        nameof(Menu_File_Export_Csv),
+        nameof(Menu_File_Export_Json),
+        nameof(Menu_File_Export_Png),
         nameof(Menu_File_ImportLibrary),
         nameof(Menu_Help),
         nameof(Menu_Help_About),
@@ -514,6 +528,24 @@ public static class Strings
 
     public static string App_Title => ResourceManager.GetString(nameof(App_Title), Culture) ?? nameof(App_Title);
 
+    public static string BugReport_BrowserRefused => ResourceManager.GetString(nameof(BugReport_BrowserRefused), Culture) ?? nameof(BugReport_BrowserRefused);
+
+    public static string BugReport_ClipboardRefused => ResourceManager.GetString(nameof(BugReport_ClipboardRefused), Culture) ?? nameof(BugReport_ClipboardRefused);
+
+    public static string BugReport_Copied => ResourceManager.GetString(nameof(BugReport_Copied), Culture) ?? nameof(BugReport_Copied);
+
+    public static string BugReport_CopyMarkdown => ResourceManager.GetString(nameof(BugReport_CopyMarkdown), Culture) ?? nameof(BugReport_CopyMarkdown);
+
+    public static string BugReport_OpenIssue => ResourceManager.GetString(nameof(BugReport_OpenIssue), Culture) ?? nameof(BugReport_OpenIssue);
+
+    public static string BugReport_OpenZipFolder => ResourceManager.GetString(nameof(BugReport_OpenZipFolder), Culture) ?? nameof(BugReport_OpenZipFolder);
+
+    public static string BugReport_Preview_Drag => ResourceManager.GetString(nameof(BugReport_Preview_Drag), Culture) ?? nameof(BugReport_Preview_Drag);
+
+    public static string BugReport_Preview_Intro_Format => ResourceManager.GetString(nameof(BugReport_Preview_Intro_Format), Culture) ?? nameof(BugReport_Preview_Intro_Format);
+
+    public static string BugReport_Title => ResourceManager.GetString(nameof(BugReport_Title), Culture) ?? nameof(BugReport_Title);
+
     public static string Chart_Axis_Count => ResourceManager.GetString(nameof(Chart_Axis_Count), Culture) ?? nameof(Chart_Axis_Count);
 
     public static string Chart_Axis_Fps => ResourceManager.GetString(nameof(Chart_Axis_Fps), Culture) ?? nameof(Chart_Axis_Fps);
@@ -713,6 +745,10 @@ public static class Strings
     public static string Exit_Normal => ResourceManager.GetString(nameof(Exit_Normal), Culture) ?? nameof(Exit_Normal);
 
     public static string Exit_UnhookedSafety => ResourceManager.GetString(nameof(Exit_UnhookedSafety), Culture) ?? nameof(Exit_UnhookedSafety);
+
+    public static string Export_NoSelection_Body => ResourceManager.GetString(nameof(Export_NoSelection_Body), Culture) ?? nameof(Export_NoSelection_Body);
+
+    public static string Export_Png_Body => ResourceManager.GetString(nameof(Export_Png_Body), Culture) ?? nameof(Export_Png_Body);
 
     public static string Fg_Active => ResourceManager.GetString(nameof(Fg_Active), Culture) ?? nameof(Fg_Active);
 
@@ -975,6 +1011,12 @@ public static class Strings
     public static string Menu_File_Exit => ResourceManager.GetString(nameof(Menu_File_Exit), Culture) ?? nameof(Menu_File_Exit);
 
     public static string Menu_File_Export => ResourceManager.GetString(nameof(Menu_File_Export), Culture) ?? nameof(Menu_File_Export);
+
+    public static string Menu_File_Export_Csv => ResourceManager.GetString(nameof(Menu_File_Export_Csv), Culture) ?? nameof(Menu_File_Export_Csv);
+
+    public static string Menu_File_Export_Json => ResourceManager.GetString(nameof(Menu_File_Export_Json), Culture) ?? nameof(Menu_File_Export_Json);
+
+    public static string Menu_File_Export_Png => ResourceManager.GetString(nameof(Menu_File_Export_Png), Culture) ?? nameof(Menu_File_Export_Png);
 
     public static string Menu_File_ImportLibrary => ResourceManager.GetString(nameof(Menu_File_ImportLibrary), Culture) ?? nameof(Menu_File_ImportLibrary);
 
