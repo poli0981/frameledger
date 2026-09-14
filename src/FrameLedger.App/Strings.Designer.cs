@@ -380,6 +380,8 @@ public static class Strings
         nameof(Settings_Agent_Task_Unknown),
         nameof(Settings_Appearance_Header),
         nameof(Settings_Applied),
+        nameof(Settings_AutoCheck_Body),
+        nameof(Settings_AutoCheck_Label),
         nameof(Settings_Background_Body),
         nameof(Settings_Background_Label),
         nameof(Settings_Capture_Header),
@@ -507,6 +509,34 @@ public static class Strings
         nameof(Trend_Metric_MaxGpuTemp),
         nameof(Trend_Metric_P01Low),
         nameof(Trend_Metric_P1Low),
+        nameof(Uninstall_DataFolder_Body),
+        nameof(Uninstall_DataFolder_Title),
+        nameof(Update_AgentStillRunning),
+        nameof(Update_Available_Body_Format),
+        nameof(Update_Available_Title_Format),
+        nameof(Update_Banner_Applying_Format),
+        nameof(Update_Banner_Deferred_Format),
+        nameof(Update_Banner_Downloading_Format),
+        nameof(Update_Banner_Ready_Format),
+        nameof(Update_Banner_Restart),
+        nameof(Update_Banner_Title),
+        nameof(Update_Download),
+        nameof(Update_Err_Corrupt),
+        nameof(Update_Err_Offline),
+        nameof(Update_Err_RateLimited),
+        nameof(Update_Err_Server),
+        nameof(Update_Err_Title),
+        nameof(Update_Err_Unknown),
+        nameof(Update_Err404),
+        nameof(Update_HookedRefused),
+        nameof(Update_Later),
+        nameof(Update_Notes_Header),
+        nameof(Update_NotInstalled),
+        nameof(Update_OpenReleases),
+        nameof(Update_Toast_Body_Format),
+        nameof(Update_Toast_Title),
+        nameof(Update_Unsigned_Footer),
+        nameof(Update_UpToDate_Format),
         nameof(Upscaler_None),
         nameof(Upscaler_Unknown),
     ];
@@ -1219,6 +1249,10 @@ public static class Strings
 
     public static string Settings_Applied => ResourceManager.GetString(nameof(Settings_Applied), Culture) ?? nameof(Settings_Applied);
 
+    public static string Settings_AutoCheck_Body => ResourceManager.GetString(nameof(Settings_AutoCheck_Body), Culture) ?? nameof(Settings_AutoCheck_Body);
+
+    public static string Settings_AutoCheck_Label => ResourceManager.GetString(nameof(Settings_AutoCheck_Label), Culture) ?? nameof(Settings_AutoCheck_Label);
+
     public static string Settings_Background_Body => ResourceManager.GetString(nameof(Settings_Background_Body), Culture) ?? nameof(Settings_Background_Body);
 
     public static string Settings_Background_Label => ResourceManager.GetString(nameof(Settings_Background_Label), Culture) ?? nameof(Settings_Background_Label);
@@ -1472,6 +1506,62 @@ public static class Strings
     public static string Trend_Metric_P01Low => ResourceManager.GetString(nameof(Trend_Metric_P01Low), Culture) ?? nameof(Trend_Metric_P01Low);
 
     public static string Trend_Metric_P1Low => ResourceManager.GetString(nameof(Trend_Metric_P1Low), Culture) ?? nameof(Trend_Metric_P1Low);
+
+    public static string Uninstall_DataFolder_Body => ResourceManager.GetString(nameof(Uninstall_DataFolder_Body), Culture) ?? nameof(Uninstall_DataFolder_Body);
+
+    public static string Uninstall_DataFolder_Title => ResourceManager.GetString(nameof(Uninstall_DataFolder_Title), Culture) ?? nameof(Uninstall_DataFolder_Title);
+
+    public static string Update_AgentStillRunning => ResourceManager.GetString(nameof(Update_AgentStillRunning), Culture) ?? nameof(Update_AgentStillRunning);
+
+    public static string Update_Available_Body_Format => ResourceManager.GetString(nameof(Update_Available_Body_Format), Culture) ?? nameof(Update_Available_Body_Format);
+
+    public static string Update_Available_Title_Format => ResourceManager.GetString(nameof(Update_Available_Title_Format), Culture) ?? nameof(Update_Available_Title_Format);
+
+    public static string Update_Banner_Applying_Format => ResourceManager.GetString(nameof(Update_Banner_Applying_Format), Culture) ?? nameof(Update_Banner_Applying_Format);
+
+    public static string Update_Banner_Deferred_Format => ResourceManager.GetString(nameof(Update_Banner_Deferred_Format), Culture) ?? nameof(Update_Banner_Deferred_Format);
+
+    public static string Update_Banner_Downloading_Format => ResourceManager.GetString(nameof(Update_Banner_Downloading_Format), Culture) ?? nameof(Update_Banner_Downloading_Format);
+
+    public static string Update_Banner_Ready_Format => ResourceManager.GetString(nameof(Update_Banner_Ready_Format), Culture) ?? nameof(Update_Banner_Ready_Format);
+
+    public static string Update_Banner_Restart => ResourceManager.GetString(nameof(Update_Banner_Restart), Culture) ?? nameof(Update_Banner_Restart);
+
+    public static string Update_Banner_Title => ResourceManager.GetString(nameof(Update_Banner_Title), Culture) ?? nameof(Update_Banner_Title);
+
+    public static string Update_Download => ResourceManager.GetString(nameof(Update_Download), Culture) ?? nameof(Update_Download);
+
+    public static string Update_Err_Corrupt => ResourceManager.GetString(nameof(Update_Err_Corrupt), Culture) ?? nameof(Update_Err_Corrupt);
+
+    public static string Update_Err_Offline => ResourceManager.GetString(nameof(Update_Err_Offline), Culture) ?? nameof(Update_Err_Offline);
+
+    public static string Update_Err_RateLimited => ResourceManager.GetString(nameof(Update_Err_RateLimited), Culture) ?? nameof(Update_Err_RateLimited);
+
+    public static string Update_Err_Server => ResourceManager.GetString(nameof(Update_Err_Server), Culture) ?? nameof(Update_Err_Server);
+
+    public static string Update_Err_Title => ResourceManager.GetString(nameof(Update_Err_Title), Culture) ?? nameof(Update_Err_Title);
+
+    public static string Update_Err_Unknown => ResourceManager.GetString(nameof(Update_Err_Unknown), Culture) ?? nameof(Update_Err_Unknown);
+
+    public static string Update_Err404 => ResourceManager.GetString(nameof(Update_Err404), Culture) ?? nameof(Update_Err404);
+
+    public static string Update_HookedRefused => ResourceManager.GetString(nameof(Update_HookedRefused), Culture) ?? nameof(Update_HookedRefused);
+
+    public static string Update_Later => ResourceManager.GetString(nameof(Update_Later), Culture) ?? nameof(Update_Later);
+
+    public static string Update_Notes_Header => ResourceManager.GetString(nameof(Update_Notes_Header), Culture) ?? nameof(Update_Notes_Header);
+
+    public static string Update_NotInstalled => ResourceManager.GetString(nameof(Update_NotInstalled), Culture) ?? nameof(Update_NotInstalled);
+
+    public static string Update_OpenReleases => ResourceManager.GetString(nameof(Update_OpenReleases), Culture) ?? nameof(Update_OpenReleases);
+
+    public static string Update_Toast_Body_Format => ResourceManager.GetString(nameof(Update_Toast_Body_Format), Culture) ?? nameof(Update_Toast_Body_Format);
+
+    public static string Update_Toast_Title => ResourceManager.GetString(nameof(Update_Toast_Title), Culture) ?? nameof(Update_Toast_Title);
+
+    public static string Update_Unsigned_Footer => ResourceManager.GetString(nameof(Update_Unsigned_Footer), Culture) ?? nameof(Update_Unsigned_Footer);
+
+    public static string Update_UpToDate_Format => ResourceManager.GetString(nameof(Update_UpToDate_Format), Culture) ?? nameof(Update_UpToDate_Format);
 
     public static string Upscaler_None => ResourceManager.GetString(nameof(Upscaler_None), Culture) ?? nameof(Upscaler_None);
 

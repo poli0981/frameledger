@@ -107,7 +107,7 @@ Agent flags: `--serve`, `--console`, ~~`--diag`~~ (the App's — `FrameLedger.ex
   The struck text is kept because the *reason* it was written is still live. What it said next, and what remains true:
 
   > **planned, not present.** `assets/` does not exist, nothing fetches or verifies the binary, and `EtwFrameSource` is unwritten. `20_OPEN_QUESTIONS` §M2 (does the pinned console binary still exist, run unelevated, and emit the 2.x column set?) is unanswered, so this is not merely unpinned — there is nothing to pin yet.
-- Vulkan layer manifest, **written** with the installed layer path at install time (Velopack hook) — but **not registered there**. Registration is a separate, later act.
+- ~~Vulkan layer manifest, **written** with the installed layer path at install time (Velopack hook) — but **not registered there**.~~ **The install hook writes nothing (P4 PR-5):** the manifest is written by the registrar the first time the ledger asks for the layer (`VkLayerRegistrar.Register`, P4 PR-2), so an install that never enables a Vulkan game has no manifest either. Registration is a separate, later act.
 
 ### The Vulkan layer is not registered at install time
 
@@ -135,15 +135,50 @@ repairs state, it does not grant machine-wide reach on its own).
 > after every sweep; the flag and the button run the same rule. The uninstall hook is still the updater's
 > (P4, Velopack).
 
+## Version
+
+**One source: the `VERSION` file at the repository root** (`MAJOR.MINOR.PATCH`, nothing else — P4 PR-5,
+2026-09-14). Before it, the managed assemblies carried the SDK's default `1.0.0` while CMake said `0.1.0`,
+two products claiming to be one.
+
+- `Directory.Build.props` reads it into `<Version>` (assembly, file and informational versions; SourceLink's
+  `+sha` suffix is off so About, `Hello` and the bug bundle print the version a user can find on the releases
+  page). The read is conditional on `$(Version)` being empty, so `release.yml` passes `-p:Version=0.1.0-beta.1`
+  for a pre-release and the assemblies carry the tag's full version.
+- `src/native/CMakeLists.txt` reads the same file into `project(VERSION …)`, which the `.rc` template turns
+  into every VERSIONINFO block. CMake's `project()` accepts numbers only, so the native `FileVersion` is the
+  numeric core even for a pre-release.
+- `tools/versioninfo-check.ps1` compares every built binary's `FileVersion` against the file (`x.y.z.0`), so a
+  read that silently produced `0.0.0` on either side is red in the gate.
+- `release.yml` refuses a tag whose numeric core is not the file's. Bumping the version is one edit to
+  `VERSION`, in the same commit as the changelog section, before the tag.
+
+The Velopack package version is the tag's (`vpk pack --packVersion`), and `UpdateManager.CurrentVersion` reads
+the installed package's manifest — not the assembly — which is why the two are made to agree here rather than
+assumed to.
+
 ## Publish & package
 
 ```
 cmake --build --preset x64-release
 dotnet publish src/FrameLedger.App   -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -o out/app
 dotnet publish src/FrameLedger.Agent -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -o out/app
-vpk pack --packId FrameLedger --packVersion {ver} --packDir out/app --mainExe FrameLedger.exe --icon assets/icon.ico
+vpk pack --packId FrameLedger.App --packVersion {ver} --packDir out/app --mainExe FrameLedger.exe --packTitle FrameLedger --releaseNotes out/notes.md --outputDir out/release
 ```
 
+> **Run by `release.yml` since 2026-09-14 (P4 PR-5)** — `13_CI_CD` §release.yml carries the steps around it
+> (the version gate, `{{RELEASE_DATE}}`, the published-tree assertion, checksums, the release). Both publishes
+> take `-p:Version=<tag>` (§Version). No `--icon`: `assets/icon.ico` does not exist, and this line named it
+> for six weeks.
+>
+> **The package id is `FrameLedger.App`, and this line said `FrameLedger` until 2026-09-14 — which would have
+> deleted every user's ledger on uninstall.** Velopack installs into `%LOCALAPPDATA%\<packId>` and removes that
+> directory when the app is uninstalled; `%LOCALAPPDATA%\FrameLedger` is the data folder (`LedgerPaths`, `07_IPC`,
+> `legal/PRIVACY_POLICY.md` §1). With the same id the install would live inside the ledger's folder and the
+> uninstaller would take `ledger.db` with it, without the question below. The title users see stays "FrameLedger"
+> (`--packTitle`); the installer is `FrameLedger.App-win-Setup.exe`. `UninstallHook.AreSeparate` refuses the data
+> delete if the two ever overlap again, so a future id change fails safe rather than silently.
+>
 > **Exactly two roots, and a gate now says so.** `src/FrameLedger.CaptureHost` — the unshipped
 > capture host — is outside the package because neither root references it, and
 > `tools/package-closure-check.ps1` is what keeps that true rather than remembered. It matters
@@ -168,15 +203,15 @@ vpk pack --packId FrameLedger --packVersion {ver} --packDir out/app --mainExe Fr
 > prevent.
 
 - No trimming (WPF + reflection), no NativeAOT (WPF unsupported), **no obfuscation** (GPLv3 policy, and `19_SAFETY` forbids making our binaries harder to identify).
-- `SatelliteResourceLanguages=en;vi;ja`. Expected package ≈ 95–130 MB self-contained.
-- Velopack hooks: installed → offer Agent setup + Vulkan layer registration; uninstalled → unregister the layer, remove the scheduled task, ask about the data folder.
+- `SatelliteResourceLanguages=en;vi;ja`. ~~Expected package ≈ 95–130 MB self-contained.~~ **Measured 2026-09-14 (P4 PR-5): the published tree is 250 MB in 362 files** (App + Agent, self-contained, ReadyToRun roughly doubles the IL). The installer compresses it and has not been measured — the first tag is that measurement.
+- Velopack hooks (**built 2026-09-14, P4 PR-5**: `App/Update/VelopackHooks`, wired in the hand-written `Program.Main` before any window). **Install registers nothing** — the first-run flow is the offer (Agent setup), and the layer follows the ledger (§The Vulkan layer is not registered at install time); this line used to say "offer Agent setup + Vulkan layer registration", and the second half was the thing the section below forbids. Uninstall runs `UninstallHook`: `Shutdown` to a running Agent over the pipe (best effort, it holds the install directory), unregister the layer (HKCU), remove the logon task, then **ask** about the data folder — deleted on Yes only, never when it and the install overlap (`AreSeparate`), and a question unanswered inside Velopack's 30 s callback budget keeps it.
 
 ## Release-time token substitution
 
 `{{RELEASE_DATE}}` in `legal/*.md` is the **only** placeholder that survives into
 the repository, and it is deliberate: the effective date of a legal document is
-the date it ships, which is not knowable at authoring time. `release.yml` — **which
-does not exist yet; `13_CI_CD` §release.yml records that** —
+the date it ships, which is not knowable at authoring time. `release.yml` (**built 2026-09-14**, P4 PR-5 — the step runs before the
+build, because the App embeds `legal/*.md`)
 substitutes it with the tag date when packaging, and `ci.yml` fails the build if
 **any other** `{{` token appears in `README.md` or `legal/*.md` (`13_CI_CD.md`
 §ci.yml). Everything else — repository URL, slug, developer identity, contact
@@ -196,13 +231,14 @@ document the app displays for acceptance (FR-11) is a defect, not a template.
 7. `tools/coverage-gate.ps1` — reads this run's cobertura reports; self-arming, and armed today for
    `FrameLedger.Domain` and `FrameLedger.Application`
 8. `tools/rules-validate.ps1` (schema + `anticheat` block sanity — a malformed or empty blocklist is a safety bug)
-9. `tools/versioninfo-check.ps1` — reads the built binary, because what ships is what an anti-cheat vendor sees
+9. `tools/versioninfo-check.ps1` — reads the built binary, because what ships is what an anti-cheat vendor sees; since P4 PR-5 it also compares every `FileVersion` against the `VERSION` file (§Version)
 10. `tools/chokepoint-check.ps1` — injection and evasion primitives confined to one file, native **and** managed, plus the `FL_GUARD_TESTABLE` symbol check against the shipped artifacts
 11. **`tools/hookinventory-check.ps1`** — three passes: A resolves every vendor symbol the Overlay names against `docs/vendor-exports.json`, B sweeps for stray literals, C reads the BUILT Overlay's import table and asserts it imports no vendor module. C skips loudly under `-SkipNative`. **Missing from this list until 2026-08-28**, which is §R10 happening again
 12. **`tools/package-closure-check.ps1`** — both halves: the self-test (5 cases, 4 of which must go RED) **and** a live pass over this repository. It walks the transitive `ProjectReference` closure of the two publish roots below and fails on anything outside the allowlist, naming the reference edge. `FrameLedger.CaptureHost` is an injecting entry point kept out of the package by construction, and `20_OPEN_QUESTIONS` §S27 is closed on exactly that basis
 13. `tools/license-check.ps1` — asserts every vendored third-party has a licence copy in `legal/licenses/`, and that no Intel IGCL / AMD ADLX material has appeared in the tree
 13b. `tools/accuracy-check.ps1 -SelfTest`, then live — the accuracy block is ONE text (`legal/ACCURACY.md`) embedded verbatim in `README.md` and `legal/DISCLAIMER.md` §4; a copy that drifted, a copy with no markers, or an empty source is red. Four self-test cases, both directions (§S23-6, 2026-09-06)
 14. `tools/changelog-check.ps1 -SelfTest` — nine cases, five expected RED. The live half needs a pull request's changed-file list and is supplied by `ci.yml`
+14b. `tools/release-notes.ps1 -SelfTest` — five cases over a fixture changelog (a dated and an undated section, a missing one, a prefix that must not match, an empty one). The live half needs a tag's version and runs in `release.yml`, where a missing or empty section is a red release (P4 PR-5)
 15. `tools/resx-audit.ps1` — ~~**skipped loudly; it does not exist, and no `.resx` file does either**~~ **built 2026-09-13 (P3 PR-2)**: `-SelfTest` first (11 fixture cases, both directions), then the live pass over every `Strings.resx` family under `src/` — key sets equal across en/vi/ja, `Safety_*` in `ja` marked for review or signed, `Strings.Designer.cs` current with `tools/resx-gen.ps1`. A tree with no family is red (`09_I18N` §Translation workflow)
 16. **struct-mirror** — reads this run's `.trx` and fails when `ShmLayoutMirrorTests` did not execute, so deleting the mirror test is red as well as breaking it
 17. Placeholder guard — fails if any `{{` token other than `{{RELEASE_DATE}}` survives in `README.md` or `legal/*.md`

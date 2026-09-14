@@ -6,19 +6,59 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html) — `MAJOR`
 bumps for a database schema or IPC protocol break (`docs/11_UPDATER.md`).
 
-`release.yml` **will** read the section for the tag being released and use it as the
-GitHub release body, so a missing section will mean an empty release note.
+`release.yml` reads the section for the tag being released (`tools/release-notes.ps1`) and
+uses it as the GitHub release body. A missing or empty `## [x.y.z]` section is a **red
+release**, not an empty note — so cutting a release means moving the `[Unreleased]` entries
+under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, then tagging
+(`docs/13_CI_CD.md` §Branch & release policy).
 
-> **It does not exist yet** — `.github/workflows/` holds `ci.yml`, `codeql.yml` and
-> `rules-publish.yml` only, and `docs/13_CI_CD.md` records that. Written in the future
-> tense here from 2026-08-06 rather than describing a workflow nobody has. Note also
-> that this file has no `## [x.y.z]` heading yet, so the first release needs one
-> created before a tag has anything to find.
+> **Built 2026-09-14 (P4 PR-5).** From 2026-08-06 until then this paragraph said the workflow
+> "will" exist and that a missing section "will mean an empty release note"; the second half
+> was the wrong design and is replaced rather than implemented. This file still has no
+> `## [x.y.z]` heading: the first one is the owner's, in the commit that cuts the first tag.
 
 ## [Unreleased]
 
 ### Added
 
+- **P4 PR-5 — Velopack, the updater, `release.yml`, and one version source (`11_UPDATER`, 2026-09-14).**
+  `FrameLedger.App/Update/`: `VelopackUpdateClient` behind the `IUpdateClient` port (Velopack's `UpdateManager` over
+  its GitHub source for this repository; the `stable` channel is the releases GitHub does not mark pre-release, `beta`
+  adds the ones it does), `UpdateFailureMapper` (the §Error mapping rows from the exception: 404 / 403+429 / 5xx /
+  transport / checksum / unknown; an HttpClient timeout is Offline, not a cancel), `FrameLedgerFileDownloader` (Velopack's
+  downloader with `User-Agent: FrameLedger/<version>`), `UpdateService` — the startup silent check 5 s after start when the copy is
+  installed and the new `update.auto_check` setting (default on) says so, every failure a log line; Help ▸ Check for
+  updates with the dialogs (`UpdatePrompts` over WPF-UI's `MessageBox`: the offer with the release notes and the
+  unsigned-release footer, up to date, not an installed copy, the six error rows — a 404 offers the releases page, an
+  unknown failure offers the bug report); the background download, retried once on a checksum failure; and **FR-12 as the shape of the whole thing**: a
+  downloaded package is `Ready` only while the Agent reports no session, otherwise `Deferred` until the last
+  `SessionCompleted`, and the apply itself is refused with a session running. The apply (`Restart to update`, the
+  shell's new persistent InfoBar) sends `Shutdown` to the Agent, holds the connection's relaunch (`IAgentLink.SetLaunchHold`),
+  waits for the pipe to drop (an Agent that does not stop in 10 s leaves everything as it was), hands Velopack the
+  package (`WaitExitThenApplyUpdates`) and ends the host; the restarted App starts the Agent beside itself as always,
+  and — when Velopack reports the restart — re-validates the logon task's action path (`--install-task` on `Stale`).
+  `Program.Main` is now hand-written so `VelopackApp.Run()` precedes any window: the uninstall hook (`UninstallHook`,
+  delegates for the test) asks a running Agent to stop, unregisters the Vulkan layer, removes the logon task and
+  **asks** about the data folder (deleted on Yes only; unanswered inside Velopack's 30 s budget keeps it); install
+  registers nothing. The tray raises "update available" as a balloon only while the window is off screen. Settings ▸
+  Updates gained the startup-check toggle and the channel row's real text. **One version source:** `VERSION` at the
+  repository root, read by `Directory.Build.props` (`<Version>`, SourceLink's `+sha` suffix off) and by
+  `src/native/CMakeLists.txt`, with `versioninfo-check` comparing every built binary's `FileVersion` against it.
+  **`release.yml`** on a `v*` tag: the tag's numeric core must equal `VERSION` and `CHANGELOG.md` must carry a
+  non-empty `## [x.y.z]` section (`tools/release-notes.ps1`, self-tested in `build.ps1`), `{{RELEASE_DATE}}`
+  substituted before the build, the identical gate, publish App + Agent self-contained + ReadyToRun with
+  `-p:Version=<tag>`, the published tree asserted by name (both entry points, the four shipped natives, the rules
+  seed, no capture host), `vpk pack`, `SHA256SUMS.txt` printed into the release body, `gh release create`
+  (`--prerelease` for a `-beta.N` tag). **The package id is `FrameLedger.App`**: Velopack installs into and, on
+  uninstall, deletes `%LOCALAPPDATA%\<packId>`, and `%LOCALAPPDATA%\FrameLedger` is the data folder — the id the docs
+  named would have removed every user's ledger without asking (`UninstallHook.AreSeparate` now refuses the data delete
+  if the two ever overlap). Published locally before the PR: 250 MB in 362 files, every assertion of the workflow's
+  tree step green; `vpk pack` and the release itself are unexercised until a tag. `legal/PRIVACY_POLICY.md` is now **2.1-draft**: the update check and download
+  rows describe requests the software makes, which is a material change the policy's own rule says re-shows the Legal
+  Gate. `legal/licenses/velopack-MIT.txt`. Tests: `UpdateServiceTests` (the skips, the channels, Deferred ↔ Ready,
+  the dialogs and rows, the apply's three endings), `UpdateFailureMapperTests`, `UninstallHookTests`, the
+  connection's hold, the tray's balloon, the settings toggle. Docs: `11_UPDATER` built note, `12_BUILD` §Version and
+  §Publish & package, `13_CI_CD` §release.yml, `08_UI`, `06_DATA_MODEL`, HANDOFF §P4, `15_ROADMAP`, README §Privacy.
 - **P4 PR-4 — the library import: Steam, GOG Galaxy, Epic and itch.io through a review checklist, hooking off for
   every row (FR-1.2, 2026-09-14).** `Application.Import.LibraryImporter` over four `IStoreLibrarySource` adapters in
   `Infrastructure.Import`: `SteamLibrarySource` (`libraryfolders.vdf` + `appmanifest_*.acf` through a new

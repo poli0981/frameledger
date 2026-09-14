@@ -5,7 +5,20 @@
 # hard to retrofit, and two of them are open questions (see below).
 
 cmake_minimum_required(VERSION 3.28)
-project(FrameLedgerNative VERSION 0.1.0 LANGUAGES CXX RC)
+
+# ONE version source (P4 PR-5, docs/12_BUILD.md §Version): the VERSION file at the
+# repository root, which Directory.Build.props reads for the managed assemblies.
+# tools/versioninfo-check.ps1 compares every built binary's FileVersion against
+# the same file, so a read that silently produced 0.0.0 here would be red there.
+set(FL_VERSION_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../../VERSION")
+# Re-configure when the file changes, or a bumped VERSION would ship yesterday's version blocks.
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${FL_VERSION_PATH}")
+file(READ "${FL_VERSION_PATH}" FL_VERSION_FILE)
+string(STRIP "${FL_VERSION_FILE}" FL_VERSION_FILE)
+if(NOT FL_VERSION_FILE MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+    message(FATAL_ERROR "VERSION must be MAJOR.MINOR.PATCH (read '${FL_VERSION_FILE}')")
+endif()
+project(FrameLedgerNative VERSION ${FL_VERSION_FILE} LANGUAGES CXX RC)
 
 if(NOT WIN32)
     message(FATAL_ERROR "FrameLedger's native layer is Windows-only.")

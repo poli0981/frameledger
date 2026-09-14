@@ -109,9 +109,10 @@ public sealed class AgentConnectionTests : IAsyncDisposable
         _serving = null;
     }
 
-    private AgentConnection Start(FakeLauncher launcher)
+    private AgentConnection Start(FakeLauncher launcher, bool holdLaunches = false)
     {
         _connection = new AgentConnection(launcher, () => new PipeClient(_pipeName), _fast, "app-test");
+        _connection.SetLaunchHold(holdLaunches);
         _connection.Changed += (s, _) =>
         {
             lock (_seen)
@@ -132,6 +133,34 @@ public sealed class AgentConnectionTests : IAsyncDisposable
         }
 
         condition().Should().BeTrue(because);
+    }
+
+    [Fact]
+    public async Task WhileLaunchesAreHeldAnAbsentAgentIsNotStartedAndIsStartedOnceReleased()
+    {
+        // P4 PR-5: the update's apply asks the Agent to stop and must not have this loop start it again under the updater.
+        FakeLauncher? launcher = null;
+        launcher = new FakeLauncher(() =>
+        {
+            StartServer();
+            return true;
+        })
+        { CanLaunch = true };
+        AgentConnection c = Start(launcher, holdLaunches: true);
+
+        await WaitForAsync(() => c.Rounds >= 2, "two rounds found nothing").ConfigureAwait(true);
+        launcher.Starts.Should().Be(0, "held");
+        c.LaunchesHeld.Should().BeTrue();
+        lock (_seen)
+        {
+            _seen.Should().NotContain(AgentConnectionState.Starting, "a held round never says it is starting one");
+            _seen.Should().NotContain(AgentConnectionState.Missing, "an Agent could be started, so the pill says Offline, not Missing");
+        }
+
+        c.SetLaunchHold(false);
+        c.RetryNow();
+        await WaitForAsync(() => c.State == AgentConnectionState.Connected, "released: started, then connected").ConfigureAwait(true);
+        launcher.Starts.Should().Be(1);
     }
 
     [Fact]

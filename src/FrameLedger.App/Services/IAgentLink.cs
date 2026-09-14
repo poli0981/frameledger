@@ -16,4 +16,10 @@ public interface IAgentLink : IAgentRequests
     event EventHandler? Changed;
 
     event EventHandler<AgentEventArgs>? EventReceived;
+
+    /// <summary>
+    /// While held, a round that finds no Agent does not start one beside this executable (P4 PR-5: the update's
+    /// apply asks the Agent to stop and must not have it restarted under the updater). Released on a failed apply.
+    /// </summary>
+    void SetLaunchHold(bool hold);
 }

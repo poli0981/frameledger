@@ -1,6 +1,6 @@
 # 13 — CI/CD
 
-FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, and repo-local workflows where they do not. `ci.yml` is repo-local **by necessity, not preference**: the ops repo's `reusable-desktop-csharp.yml` runs `dotnet restore` / `build` / `test` directly and exposes no input for a native pre-step, MSVC setup, or the Vulkan SDK. FrameLedger's build is mixed-toolchain and native-first, and `12_BUILD.md` §Local quality gate commits to CI running *the identical script* as local — a promise a pure-managed template cannot keep. CodeQL and release still call the ops repo.
+FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, and repo-local workflows where they do not. `ci.yml` is repo-local **by necessity, not preference**: the ops repo's `reusable-desktop-csharp.yml` runs `dotnet restore` / `build` / `test` directly and exposes no input for a native pre-step, MSVC setup, or the Vulkan SDK. FrameLedger's build is mixed-toolchain and native-first, and `12_BUILD.md` §Local quality gate commits to CI running *the identical script* as local — a promise a pure-managed template cannot keep. CodeQL is repo-local too (its own heading below says why), and so is `release.yml` since 2026-09-14 — the same native pre-step and the identical gate make a caller stub impossible for it as well; this sentence said both "still call the ops repo" until then.
 
 > ⚠ Known gotcha (learned on earlier migrations): caller stubs **must declare explicit `permissions:` blocks** — permissions do not inherit into reusable workflows. Every stub below lists its own.
 
@@ -67,17 +67,39 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 - Languages: `csharp` **and `cpp`** (manual build mode for C++, driven by the CMake preset). The native layer is where memory-safety bugs would live; excluding it would defeat the purpose. Verify the mixed template exposes a C++ build-command input; if it does not, this one goes repo-local too.
 - `permissions: security-events: write, contents: read`.
 
-### `release.yml` — on tag `v*` · **PLANNED, NOT PRESENT**
+### `release.yml` — on tag `v*` · **repo-local, built 2026-09-14 (P4 PR-5)**
 
-> `.github/workflows/` contains `ci.yml`, `codeql.yml` and `rules-publish.yml`. There is no release
-> automation at all: the publish commands exist only as a fenced block in `12_BUILD` §Publish &
-> package, and **nothing in this repository has ever run `dotnet publish`** — which is why
-> `out/app`'s real contents had never been asserted by anything until
-> `tools/package-closure-check.ps1` started walking the reference closure statically. Recorded
-> 2026-08-06 rather than left describing a workflow that does not exist.
-- Build + test (same script, native first) → publish App+Agent self-contained → ~~verify PresentMon SHA-256~~ *(retired 2026-08-27 — the console binary is not bundled; owner decision, `20_OPEN_QUESTIONS` §G)* → **verify VERSIONINFO present on `FrameLedger.Overlay.dll` and `FrameLedger.VkLayer.dll`** (identifiability is a safety requirement, `19_SAFETY`) → `vpk pack` → generate `SHA256SUMS.txt` → create GitHub Release with Velopack assets + checksums, release notes from `CHANGELOG.md` section.
-- Optional final step: submit installer hash to VirusTotal and append the report link to release notes (helps unsigned-binary trust).
-- `permissions: contents: write`.
+> This heading said **PLANNED, NOT PRESENT** from 2026-08-06 until the workflow existed, with the note that
+> "nothing in this repository has ever run `dotnet publish`". Still true of the *repository's history*: the
+> workflow has not been exercised by a tag yet. The first tag is the measurement; until then every claim below is
+> what the file says, not what a run showed.
+
+- `runs-on: windows-latest`, the same .NET / MSVC / clang-format pins as `ci.yml`, `permissions: contents: write`
+  (the Release API) and nothing else.
+- **Version gate first.** The tag must be `vMAJOR.MINOR.PATCH[-prerelease]`; its numeric core must equal the
+  `VERSION` file (`12_BUILD` §Version); and `CHANGELOG.md` must carry a **non-empty** `## [x.y.z]` section for the
+  full version, extracted by `tools/release-notes.ps1` (self-tested on every `build.ps1 check`). A missing
+  section is a red release, not an empty note — the ledger's header said the opposite for five weeks.
+- `{{RELEASE_DATE}}` substituted in `legal/*.md` with the run's UTC date **before the build**, because the App
+  embeds those documents (FR-11); any `{{` token left anywhere after that fails the job.
+- **The identical gate** — `./build.ps1 check`, native first, every tool including `versioninfo-check` against
+  `VERSION`. A release never skips it.
+- `dotnet publish` App + Agent, self-contained + ReadyToRun, `-p:Version=<tag>`, into one `out/app`.
+- **The published tree asserted by name**: `FrameLedger.exe`, `FrameLedger.Agent.exe`, the four shipped natives
+  `versioninfo-check` lists, `rules/detection-rules.json`; `FrameLedger.CaptureHost.exe` absent (`12_BUILD`:
+  exactly two roots — `package-closure-check` proves it statically, this reads the directory); `versioninfo-check`
+  run again over `out/app`, because a `.targets`-staged DLL that failed to copy is a warning to `dotnet publish`.
+- `vpk pack --packId FrameLedger.App` (the `vpk` tool pinned to the library's 1.2.0) with the release notes;
+  `FrameLedger.App-win-Setup.exe` must come out, because README §Install names it. **Not `--packId FrameLedger`**:
+  Velopack installs into and uninstalls `%LOCALAPPDATA%\<packId>`, which with that id is the data folder
+  (`12_BUILD` §Publish & package). No `--icon` until `assets/icon.ico` exists.
+- `SHA256SUMS.txt` over every asset, published beside them and printed into the release body (`11_UPDATER`
+  §Unsigned releases).
+- `gh release create` with the assets, `--verify-tag`, and `--prerelease` for a `-beta.N` tag.
+- The assets and the notes are also uploaded as a workflow artifact for the smoke checklist (`14_TESTING`
+  §Release smoke).
+- ~~Optional final step: submit installer hash to VirusTotal~~ — not built; an upload of the installer to a third
+  party is a decision the owner makes, not a step a workflow adds quietly.
 
 ### `rules-publish.yml` — on change to `rules/detection-rules.json` in `main`
 - Runs `tools/rules-validate` and fails on anti-cheat removals. The raw file on `main` **is** the distribution endpoint (05_DETECTION), so this workflow only gates correctness.
@@ -126,8 +148,8 @@ Central package management makes Dependabot PRs single-file diffs.
 ## Branch & release policy
 
 - `main` protected: CI + CodeQL required, linear history, no direct pushes.
-- Release: update `CHANGELOG.md` (Keep a Changelog format) → tag `vX.Y.Z` → `release.yml` does the rest → smoke-test the produced installer on a clean Win 10 VM + Win 11 (manual checklist in 14_TESTING §Release smoke).
-- Pre-releases: `vX.Y.Z-beta.N` tags mark the GitHub release as pre-release; Velopack stable channel ignores them (explicit beta channel is v2 backlog).
+- Release: in ONE commit, bump `VERSION` and move the `[Unreleased]` entries of `CHANGELOG.md` under `## [X.Y.Z] - date` (Keep a Changelog format) → tag `vX.Y.Z` → `release.yml` does the rest (and refuses a tag that disagrees with either file) → smoke-test the produced installer on a clean Win 10 VM + Win 11 (manual checklist in 14_TESTING §Release smoke).
+- Pre-releases: `vX.Y.Z-beta.N` tags mark the GitHub release as pre-release; the App's `stable` channel ignores them and its `beta` channel (Settings ▸ Updates, `update.channel`) includes them — built with P4 PR-5, so ~~explicit beta channel is v2 backlog~~ is struck. The managed assemblies carry the full tag version; the native VERSIONINFO blocks carry the numeric core (`12_BUILD` §Version).
 
 ## Repo hygiene checklist (one-time setup)
 

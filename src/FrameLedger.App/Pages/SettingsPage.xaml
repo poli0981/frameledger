@@ -235,6 +235,16 @@
                           SelectedValue="{Binding ViewModel.UpdateChannel, Mode=TwoWay}"
                           SelectedValuePath="Value" />
             </ui:CardControl>
+            <!-- 11_UPDATER §Flow (P4 PR-5): the startup silent check, "if enabled" — the one request rule 8 permits, and the user's to turn off. -->
+            <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon CloudArrowDown24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_AutoCheck_Label}" />
+                        <ui:TextBlock MaxWidth="560" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Settings_AutoCheck_Body}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch IsChecked="{Binding ViewModel.AutoCheckUpdates, Mode=TwoWay}" />
+            </ui:CardControl>
 
             <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Logging_Header}" />
             <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Bug24}">

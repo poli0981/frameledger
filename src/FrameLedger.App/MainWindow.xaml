@@ -54,7 +54,7 @@
                 <MenuItem Header="{x:Static res:Strings.Menu_Tools_DbMaintenance}" Command="{Binding ViewModel.NotYetCommand}" />
             </MenuItem>
             <MenuItem Header="{x:Static res:Strings.Menu_Help}">
-                <MenuItem Header="{x:Static res:Strings.Menu_Help_CheckUpdates}" Command="{Binding ViewModel.NotYetCommand}" />
+                <MenuItem Header="{x:Static res:Strings.Menu_Help_CheckUpdates}" Command="{Binding ViewModel.CheckForUpdatesCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_Help_ReportBug}" Command="{Binding ViewModel.ReportBugCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_Help_Documentation}" Command="{Binding ViewModel.DocumentationCommand}" />
                 <Separator />
@@ -73,6 +73,22 @@
                 <ui:Button Appearance="Secondary"
                            Command="{Binding ViewModel.RetryAgentCommand}"
                            Content="{x:Static res:Strings.Agent_Banner_Retry}" />
+            </ui:InfoBar>
+
+            <!--
+                11_UPDATER (P4 PR-5): "update downloaded" is in-app and PERSISTENT, with the one action. The button is
+                disabled, not hidden, while a session runs (FR-12) — the body says the update waits for the session's end.
+            -->
+            <ui:InfoBar Margin="12,4,12,0"
+                        IsClosable="False"
+                        IsOpen="{Binding ViewModel.IsUpdateBannerVisible}"
+                        Message="{Binding ViewModel.UpdateBannerBody}"
+                        Severity="Informational"
+                        Title="{x:Static res:Strings.Update_Banner_Title}">
+                <ui:Button Appearance="Primary"
+                           Command="{Binding ViewModel.RestartToUpdateCommand}"
+                           Content="{x:Static res:Strings.Update_Banner_Restart}"
+                           IsEnabled="{Binding ViewModel.CanRestartToUpdate}" />
             </ui:InfoBar>
 
             <!--

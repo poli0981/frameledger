@@ -1,6 +1,9 @@
 using FluentAssertions;
 using FrameLedger.App.Services;
+using FrameLedger.App.Tests.Update;
+using FrameLedger.App.Update;
 using FrameLedger.App.ViewModels;
+using FrameLedger.Application.Settings;
 using FrameLedger.Shared.Ipc;
 
 namespace FrameLedger.App.Tests;
@@ -47,11 +50,40 @@ public sealed class TrayViewModelTests
 
     private static SessionCompletedEvent Completed(Guid guid, long? sessionId) => new(guid, sessionId, "normal", 1, "ok", "exit");
 
+    /// <summary>An updater over a client that finds <paramref name="next"/>, wired to the same link as the tray (P4 PR-5).</summary>
+    private static UpdateService Updates(IAgentLink link, UpdateCandidate? next = null) =>
+        new(new FakeUpdateClient { Next = next }, link, new RegisteredSettings(new MemorySettings()), new FakeUpdatePrompts(), new FakeShell(), new RecordingStrip());
+
+    [Fact]
+    public async Task AnUpdateFoundWhileTheWindowIsOffScreenIsABalloonAndOnScreenIsNot()
+    {
+        // 08_UI §Notifications policy: "update available" reaches a minimized app as a balloon; on screen the shell's banner is the one channel.
+        var link = new FakeAgentLink();
+        var candidate = new UpdateCandidate("0.2.0", null, 1);
+        using UpdateService hidden = Updates(link, candidate);
+        using var vm = new TrayViewModel(link, new FakeShell { IsShown = false }, new FakeSummaries(), new NoNavigation(), hidden);
+        var toasts = new List<TrayToastEventArgs>();
+        vm.ToastRequested += (_, t) => toasts.Add(t);
+
+        await hidden.CheckSilentlyAsync(TestContext.Current.CancellationToken);
+
+        toasts.Should().ContainSingle().Which.Title.Should().Be(Strings.Update_Toast_Title);
+        toasts[0].SessionId.Should().BeNull("a click reveals the window; there is no session to open");
+
+        using UpdateService shown = Updates(link, candidate);
+        using var onScreen = new TrayViewModel(link, new FakeShell { IsShown = true }, new FakeSummaries(), new NoNavigation(), shown);
+        var none = new List<TrayToastEventArgs>();
+        onScreen.ToastRequested += (_, t) => none.Add(t);
+        await shown.CheckSilentlyAsync(TestContext.Current.CancellationToken);
+        none.Should().BeEmpty();
+    }
+
     [Fact]
     public void TheStateFollowsTheSessionsAndTheirTier()
     {
         var link = new FakeAgentLink();
-        using var vm = new TrayViewModel(link, new FakeShell(), new FakeSummaries(), new NoNavigation());
+        using UpdateService updates = Updates(link);
+        using var vm = new TrayViewModel(link, new FakeShell(), new FakeSummaries(), new NoNavigation(), updates);
         vm.State.Should().Be(TrayState.Idle);
         vm.Tooltip.Should().Be(Strings.Tray_State_Idle);
 
@@ -74,7 +106,8 @@ public sealed class TrayViewModelTests
     public async Task PauseIsOneRequestAndTheStateIsTheAgentsAnswer()
     {
         var link = new FakeAgentLink { Answer = static (type, _) => FakeAgentLink.Envelope(IpcMessageType.PauseAck, new PauseAck(string.Equals(type, IpcMessageType.PauseCapture, StringComparison.Ordinal))) };
-        using var vm = new TrayViewModel(link, new FakeShell(), new FakeSummaries(), new NoNavigation());
+        using UpdateService updates = Updates(link);
+        using var vm = new TrayViewModel(link, new FakeShell(), new FakeSummaries(), new NoNavigation(), updates);
         link.Raise(IpcMessageType.SessionStarted, Started(Guid.NewGuid(), 1));
 
         await vm.TogglePauseCommand.ExecuteAsync(null);
@@ -95,7 +128,8 @@ public sealed class TrayViewModelTests
     public async Task WithoutAnAgentPauseSendsNothing()
     {
         var link = new FakeAgentLink { IsConnected = false };
-        using var vm = new TrayViewModel(link, new FakeShell(), new FakeSummaries(), new NoNavigation());
+        using UpdateService updates = Updates(link);
+        using var vm = new TrayViewModel(link, new FakeShell(), new FakeSummaries(), new NoNavigation(), updates);
 
         await vm.TogglePauseCommand.ExecuteAsync(null);
 
@@ -109,7 +143,8 @@ public sealed class TrayViewModelTests
         var link = new FakeAgentLink();
         var shell = new FakeShell { IsShown = true };
         var summaries = new FakeSummaries();
-        using var vm = new TrayViewModel(link, shell, summaries, new NoNavigation());
+        using UpdateService updates = Updates(link);
+        using var vm = new TrayViewModel(link, shell, summaries, new NoNavigation(), updates);
         var toasts = new List<TrayToastEventArgs>();
         vm.ToastRequested += (_, t) => toasts.Add(t);
         var first = Guid.NewGuid();
@@ -136,7 +171,8 @@ public sealed class TrayViewModelTests
     public void ADiscardedSessionAndASafetyEventRaiseNoBalloon()
     {
         var link = new FakeAgentLink();
-        using var vm = new TrayViewModel(link, new FakeShell { IsShown = false }, new FakeSummaries(), new NoNavigation());
+        using UpdateService updates = Updates(link);
+        using var vm = new TrayViewModel(link, new FakeShell { IsShown = false }, new FakeSummaries(), new NoNavigation(), updates);
         var toasts = new List<TrayToastEventArgs>();
         vm.ToastRequested += (_, t) => toasts.Add(t);
         var guid = Guid.NewGuid();
@@ -155,7 +191,8 @@ public sealed class TrayViewModelTests
     {
         var shell = new FakeShell();
         var nav = new NoNavigation();
-        using var vm = new TrayViewModel(new FakeAgentLink(), shell, new FakeSummaries(), nav);
+        using UpdateService updates = Updates(new FakeAgentLink());
+        using var vm = new TrayViewModel(new FakeAgentLink(), shell, new FakeSummaries(), nav, updates);
 
         vm.OpenCommand.Execute(null);
         vm.AgentStatusCommand.Execute(null);
@@ -170,7 +207,8 @@ public sealed class TrayViewModelTests
     public void ADisconnectClearsTheRunningSessions()
     {
         var link = new FakeAgentLink();
-        using var vm = new TrayViewModel(link, new FakeShell(), new FakeSummaries(), new NoNavigation());
+        using UpdateService updates = Updates(link);
+        using var vm = new TrayViewModel(link, new FakeShell(), new FakeSummaries(), new NoNavigation(), updates);
         link.Raise(IpcMessageType.SessionStarted, Started(Guid.NewGuid(), 1));
         vm.State.Should().Be(TrayState.Capturing);
 

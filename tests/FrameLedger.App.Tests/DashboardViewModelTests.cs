@@ -30,6 +30,10 @@ public sealed class DashboardViewModelTests
             where T : class => EventReceived?.Invoke(this, new AgentEventArgs(IpcCodec.Decode(IpcCodec.Encode(type, null, payload))));
 
         public void Change() => Changed?.Invoke(this, EventArgs.Empty);
+
+        public void SetLaunchHold(bool hold)
+        {
+        }
     }
 
     private sealed class NoSummaries : ISessionSummaryOpener

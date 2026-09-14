@@ -218,6 +218,23 @@ public sealed class SettingsViewModelTests
     }
 
     [Fact]
+    public async Task TheStartupUpdateCheckIsOnByDefaultAndItsToggleIsPersisted()
+    {
+        // 11_UPDATER §Flow, "if enabled" (P4 PR-5): update.auto_check, default 1, the row the updater reads.
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        Harness h = await OpenAsync(s);
+
+        h.Vm.AutoCheckUpdates.Should().BeTrue();
+        (await new SqliteSettingsStore(s.Db).GetAsync(SettingsRegistry.UpdateAutoCheck.Key, Ct)).Should().BeNull("nothing was written by the load");
+
+        h.Vm.AutoCheckUpdates = false;
+        Task pending = h.Vm.Pending;
+        await pending;
+
+        (await h.Settings.GetBooleanAsync(SettingsRegistry.UpdateAutoCheck, Ct)).Should().BeFalse();
+    }
+
+    [Fact]
     public async Task ARevokeTheAgentCannotTakeStaysInTheListAndSaysWhy()
     {
         await using ScratchLedger s = await ScratchLedger.OpenAsync();

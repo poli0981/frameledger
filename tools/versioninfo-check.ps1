@@ -22,7 +22,15 @@
 #>
 [CmdletBinding()]
 param(
-    [string]$BuildDir = (Join-Path (Split-Path $PSScriptRoot -Parent) 'build/native/x64-release')
+    [string]$BuildDir = (Join-Path (Split-Path $PSScriptRoot -Parent) 'build/native/x64-release'),
+
+    # P4 PR-5: the one version source (docs/12_BUILD.md §Version). Every binary's
+    # FileVersion must be this, with the fourth component the .rc template adds.
+    # Default: the repository's VERSION file; an empty string skips the comparison.
+    [string]$ExpectedVersion = $(
+        $f = Join-Path (Split-Path $PSScriptRoot -Parent) 'VERSION'
+        if (Test-Path $f) { (Get-Content $f -Raw).Trim() } else { '' }
+    )
 )
 
 Set-StrictMode -Version Latest
@@ -80,6 +88,13 @@ foreach ($name in $required) {
         $errors.Add("$name carries no OriginalFilename — an unnamed binary is the state this check exists to prevent")
     } elseif ($vi.OriginalFilename -ne $name) {
         $errors.Add("$name OriginalFilename is '$($vi.OriginalFilename)' — a renamed binary is harder to identify, which is the wrong direction")
+    }
+
+    # The version the binary says is the version the repository says (P4 PR-5). A
+    # native block reading 0.0.0 beside a managed assembly reading 0.1.0 is two
+    # products claiming to be one, and the release workflow would ship it.
+    if ($ExpectedVersion -and $vi.FileVersion.Trim() -ne "$ExpectedVersion.0") {
+        $errors.Add("$name FileVersion is '$($vi.FileVersion)', expected '$ExpectedVersion.0' — the VERSION file is the one source (12_BUILD §Version)")
     }
 
     ++$checked

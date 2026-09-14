@@ -54,6 +54,19 @@
     <SatelliteResourceLanguages>en;vi;ja</SatelliteResourceLanguages>
 
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+
+    <!-- ONE version source (P4 PR-5, docs/12_BUILD.md §Version): the VERSION file
+         at the repository root. src/native/CMakeLists.txt reads the same file for
+         the VERSIONINFO blocks, and tools/versioninfo-check.ps1 compares the built
+         binaries against it, so the managed and native halves cannot drift. The
+         condition lets release.yml pass -p:Version=<tag> for a pre-release
+         (0.1.0-beta.1 is not a number CMake's project() accepts, so the native
+         FileVersion stays the numeric core). SourceLink's "+sha" suffix is off so
+         About, Hello and the bug bundle print the version a user can find on the
+         releases page. -->
+    <FrameLedgerVersionFile>$(MSBuildThisFileDirectory)VERSION</FrameLedgerVersionFile>
+    <Version Condition="'$(Version)' == '' And Exists('$(FrameLedgerVersionFile)')">$([System.IO.File]::ReadAllText('$(FrameLedgerVersionFile)').Trim())</Version>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 
   <!-- Test projects: documentation comments are noise, and xUnit's own
