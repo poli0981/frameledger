@@ -97,6 +97,8 @@ internal static class Program
         builder.Services.AddSingleton<IAgentLifetime, HostAgentLifetime>();
         builder.Services.AddFrameLedgerAgent(db, paths);
         builder.Services.AddHostedService<WatcherHostedService>();
+        // The static detection sweep (P4 PR-1, 05_DETECTION §Caching): its own task, because the probe blocks on file I/O.
+        builder.Services.AddHostedService<DetectionHostedService>();
         // The pipe (07_IPC §C), the product's UI channel: --serve only, never under --console (P3 PR-1).
         builder.Services.AddHostedService<PipeServerHostedService>();
         // Finalize's grace on shutdown (04_CAPTURE §Threading model): a session that does not make it leaves

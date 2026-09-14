@@ -20,6 +20,74 @@ public sealed class SqliteGameRepositoryTests
 
     private static readonly ExecutableFingerprint _exe = new() { ExePath = @"C:\Games\T\t.exe", SizeBytes = 10, MtimeUnixMs = 20 };
 
+    /// <summary>
+    /// The Agent's detection write (P4 PR-1) under the provenance rule of <c>05_DETECTION</c> §Caching: an empty field
+    /// is filled and badged <c>detected</c>; a <c>detected</c> field is refreshed; a <c>user</c> field is never touched;
+    /// a null detected value erases nothing; the flags and the cache key are always written — and the consent
+    /// fingerprint (<c>exe_size_bytes</c> / <c>exe_mtime_ms</c>) is not, because the gate reads it.
+    /// </summary>
+    [Fact]
+    public async Task ADetectionWriteFillsEmptyFieldsRefreshesDetectedOnesAndNeverTouchesTheUsers()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        var repo = new SqliteGameRepository(f.Db);
+        GameRow row = await repo.EnsureAsync(_exe, "Title", Ct);
+
+        (await repo.ApplyDetectionAsync(row.Id, new DetectionWrite
+        {
+            EngineId = "unity",
+            EngineVersion = "2022.3.1",
+            PlatformId = "steam",
+            CapabilityIds = ["dlss", "dlss_g", "streamline"],
+            RulesVersion = "2026.09.1",
+            ExeSizeBytes = 777,
+            ExeMtimeMs = 888,
+        }, Ct)).Should().BeTrue();
+
+        GameRow first = (await repo.FindByIdAsync(row.Id, Ct))!;
+        first.Engine.Should().Be("unity");
+        first.EngineVersion.Should().Be("2022.3.1");
+        first.Platform.Should().Be("steam", "the default 'none' is an empty field with nothing to protect");
+        first.CapabilityFlagsJson.Should().Be("[\"dlss\",\"dlss_g\",\"streamline\"]");
+        first.DetectionRulesVersion.Should().Be("2026.09.1");
+        first.DetectionExeSizeBytes.Should().Be(777);
+        first.DetectionExeMtimeMs.Should().Be(888);
+        first.Fingerprint.SizeBytes.Should().Be(10, "the consent fingerprint is the gate's, never the sweep's");
+        first.Fingerprint.MtimeUnixMs.Should().Be(20);
+        JsonSerializer.Deserialize<Dictionary<string, string>>(first.FieldProvenanceJson!).Should().BeEquivalentTo(new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["engine"] = "detected",
+            ["engine_version"] = "detected",
+            ["platform"] = "detected",
+        });
+
+        // The user corrects the engine; the platform stays detected.
+        (await repo.UpdateMetadataAsync(row.Id, new GameMetadata { Name = "Title", Platform = "steam", Engine = "Unreal Engine", EngineVersion = "2022.3.1" }, Ct)).Should().BeTrue();
+
+        // A re-run with a newer answer refreshes what detection owns and leaves the user's correction alone;
+        // a null engine version erases nothing; an empty capability list clears the flags.
+        (await repo.ApplyDetectionAsync(row.Id, new DetectionWrite
+        {
+            EngineId = "godot",
+            EngineVersion = null,
+            PlatformId = "gog",
+            CapabilityIds = [],
+            RulesVersion = "2026.10.1",
+            ExeSizeBytes = 777,
+            ExeMtimeMs = 888,
+        }, Ct)).Should().BeTrue();
+
+        GameRow second = (await repo.FindByIdAsync(row.Id, Ct))!;
+        second.Engine.Should().Be("Unreal Engine", "a user field is never overwritten — the rule 05_DETECTION §Caching exists for");
+        second.EngineVersion.Should().Be("2022.3.1", "null detected = not established = left alone");
+        second.Platform.Should().Be("gog", "a detected field is refreshed");
+        second.CapabilityFlagsJson.Should().Be("[]");
+        second.DetectionRulesVersion.Should().Be("2026.10.1");
+        JsonSerializer.Deserialize<Dictionary<string, string>>(second.FieldProvenanceJson!)!["engine"].Should().Be("user");
+
+        (await repo.ApplyDetectionAsync(row.Id + 99, new DetectionWrite { CapabilityIds = [], RulesVersion = "v", ExeSizeBytes = 0, ExeMtimeMs = 0 }, Ct)).Should().BeFalse();
+    }
+
     private static async Task<long> AddSessionAsync(LedgerFixture f, long gameId)
     {
         long snapshotId = await new SqliteHardwareSnapshotRepository(f.Db).EnsureAsync(new HardwareSnapshot { GpuName = "G" }, DateTimeOffset.UnixEpoch, Ct).ConfigureAwait(false);

@@ -245,6 +245,22 @@
     <value>未実装</value>
     <comment>review</comment>
   </data>
+  <data name="Rules_Update_Title" xml:space="preserve">
+    <value>検出ルール</value>
+    <comment>review</comment>
+  </data>
+  <data name="Rules_Update_Done_Format" xml:space="preserve">
+    <value>ルールを確認しました ({0})。エージェントがライブラリのゲームを再スキャンしています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Rules_Update_NoAgent" xml:space="preserve">
+    <value>キャプチャエージェントが接続されていないため、ルールを更新できません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Rules_Update_Failed" xml:space="preserve">
+    <value>エージェントがルール更新に応答しませんでした。</value>
+    <comment>review</comment>
+  </data>
   <data name="Settings_Appearance_Header" xml:space="preserve">
     <value>外観</value>
     <comment>review</comment>
@@ -662,7 +678,7 @@
     <comment>review</comment>
   </data>
   <data name="GameDetail_Supports_Empty" xml:space="preserve">
-    <value>未スキャン — 機能スキャンは後のビルドで追加されます。</value>
+    <value>未スキャン — キャプチャエージェントは起動後数秒でゲームのファイルをスキャンします。</value>
     <comment>review</comment>
   </data>
   <data name="GameDetail_Supports_Format" xml:space="preserve">

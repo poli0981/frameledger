@@ -2,6 +2,7 @@ using FrameLedger.Agent.Hosting;
 using FrameLedger.Application.AntiCheat;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Consent;
+using FrameLedger.Application.Detection;
 using FrameLedger.Application.Ipc;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
@@ -11,6 +12,7 @@ using FrameLedger.Application.Watch;
 using FrameLedger.Infrastructure.AntiCheat;
 using FrameLedger.Infrastructure.Blobs;
 using FrameLedger.Infrastructure.Capture;
+using FrameLedger.Infrastructure.Detection;
 using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Infrastructure.Recording;
@@ -91,11 +93,29 @@ internal static class AgentServices
         // The watcher (this PR): snapshots, identity, and the orchestrator over an unbounded recorder.
         services.AddSingleton<IProcessSnapshotSource, ToolhelpProcessSnapshotSource>();
         services.AddSingleton<IExecutableIdentitySource, ExecutableIdentitySource>();
+
+        AddDetection(services);
         services.AddSingleton<ISessionRecorder>(static sp => sp.GetRequiredService<AgentRecording>().Recorder(seconds: 0, launcher: null));
 
         AddPipe(services, pipeName);
 
         return services;
+    }
+
+    /// <summary>The static detection sweep (P4 PR-1, <c>05_DETECTION</c> §Caching): hosted under <c>--serve</c> only, composed and inert under <c>--console</c>.</summary>
+    private static void AddDetection(IServiceCollection services)
+    {
+        // The static detection sweep (P4 PR-1, 05_DETECTION §Caching): the rules file RulesSeeder seeds (the two
+        // paths agree, RulesPathAgreementTests), the real probe, and the sweep over the games table. Hosted under
+        // --serve only (DetectionHostedService); composed and inert under --console.
+        services.AddSingleton<IDetectionRulesSource>(static _ => new DetectionRulesFile());
+        services.AddSingleton<IGameFileProbe, GameFileProbe>();
+        services.AddSingleton(static sp => new DetectionSweep(
+            sp.GetRequiredService<IGameRepository>(),
+            sp.GetRequiredService<IDetectionRulesSource>(),
+            sp.GetRequiredService<IGameFileProbe>(),
+            sp.GetRequiredService<IExecutableIdentitySource>(),
+            static line => Serilog.Log.Information("{Line}", line)));
     }
 
     /// <summary>
@@ -120,7 +140,14 @@ internal static class AgentServices
             sp.GetRequiredService<CaptureOrchestrator>(),
             sp.GetRequiredService<CapturePause>(),
             sp.GetRequiredService<IAgentLifetime>(),
-            static async ct => (await new RulesSeeder(new FileSystemRulesStore()).EnsureSeededAsync(ct).ConfigureAwait(false)).ToString(),
+            // UpdateRules: re-seed the rules file, then wake the detection sweep (P4 PR-1) — a rules change is the
+            // re-run trigger 05_DETECTION §Caching names, so the games table follows within the same second.
+            async ct =>
+            {
+                RulesSeedOutcome outcome = await new RulesSeeder(new FileSystemRulesStore()).EnsureSeededAsync(ct).ConfigureAwait(false);
+                sp.GetRequiredService<DetectionSweep>().RequestNow();
+                return outcome.ToString();
+            },
             // P3 PR-4 (D14): the reviewed disclosure this Agent stamps against, and its own clock for the stamp.
             SafetyDisclosure.Version,
             TimeProvider.System));

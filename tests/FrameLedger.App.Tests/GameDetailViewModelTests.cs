@@ -138,6 +138,39 @@ public sealed class GameDetailViewModelTests
         }
     }
 
+    /// <summary>The Supports row (P4 PR-1): what the Agent's detection sweep wrote, as product names, and nothing measured.</summary>
+    [Fact]
+    public async Task TheSupportsRowReadsWhatTheDetectionSweepWrote()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow game = await s.GameAsync("Scanned");
+            (await s.Games.ApplyDetectionAsync(game.Id, new DetectionWrite
+            {
+                EngineId = "unreal",
+                EngineVersion = "5.4",
+                PlatformId = "steam",
+                CapabilityIds = ["dlss", "dlss_g", "streamline"],
+                RulesVersion = "2026.09.1",
+                ExeSizeBytes = 1,
+                ExeMtimeMs = 1,
+            }, Ct)).Should().BeTrue();
+
+            (GameDetailViewModel vm, _, _, _, _) = await BuildAsync(s, game.Id);
+
+            vm.SupportsEmpty.Should().BeFalse();
+            vm.Supports.Should().Equal("Supports DLSS", "Supports DLSS-G", "Supports Streamline");
+            vm.Subtitle.Should().Contain("Steam", "the detected platform reaches the header");
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
+
     [Fact]
     public async Task TheHeaderTheTwoRowsAndTheSessionsTabReadFromTheLedger()
     {
@@ -158,7 +191,7 @@ public sealed class GameDetailViewModelTests
             vm.Name.Should().Be("Alpha");
             vm.Subtitle.Should().Be("Pub · 1.2 · Steam");
             vm.Lifetime.Kind.Should().Be(FpsReadoutKind.Generated, "the last HOOKED session, not the last session");
-            vm.SupportsEmpty.Should().BeTrue("nothing wrote capability_flags before P4");
+            vm.SupportsEmpty.Should().BeTrue("the Agent's sweep has not written capability_flags for this game yet");
             vm.Measured.Should().Contain(static m => m.StartsWith("DLSS", StringComparison.Ordinal)).And.Contain(static m => m.StartsWith("DLSS-G", StringComparison.Ordinal));
             vm.Chips.Should().HaveCount(3);
             vm.Chips[0].IsYes.Should().BeTrue("rt_flag = yes on the last hooked session");
@@ -323,6 +356,8 @@ public sealed class GameDetailViewModelTests
     {
         GameDetailViewModel.CapabilityNames("{\"dlss\":true,\"dlssg\":true,\"fsr\":false,\"weird\":true}").Should().Equal("DLSS", "DLSS-G");
         GameDetailViewModel.CapabilityNames("[\"xess\",\"xefg\"]").Should().Equal("XeSS", "XeFG");
+        GameDetailViewModel.CapabilityNames("[\"dlss\",\"dlss_g\",\"dlss_rr\",\"streamline\",\"fsr\"]")
+            .Should().Equal("DLSS", "DLSS-G", "DLSS Ray Reconstruction", "Streamline", "FSR"); // the rule ids of rules/detection-rules.json, as the Agent's sweep writes them (P4 PR-1)
         GameDetailViewModel.CapabilityNames("not json").Should().BeEmpty();
         GameDetailViewModel.CapabilityNames(null).Should().BeEmpty();
     }

@@ -40,4 +40,12 @@ public interface IGameRepository
     /// Touches no hook-state column: revoking consent is the pipe's <c>SetHookEnabled false</c>, sent first.
     /// </summary>
     ValueTask<bool> RemoveAsync(long gameId, bool keepSessions, CancellationToken ct = default);
+
+    /// <summary>
+    /// The Agent's detection sweep (P4 PR-1): persist one static detection run under the provenance rule of
+    /// <c>05_DETECTION</c> §Caching — a <c>user</c> field is never overwritten, a <c>detected</c> one is refreshed, an
+    /// empty field with no provenance is filled and badged <c>detected</c>; <c>capability_flags</c> and the cache key
+    /// are always written. False when the game does not exist.
+    /// </summary>
+    ValueTask<bool> ApplyDetectionAsync(long gameId, DetectionWrite detection, CancellationToken ct = default);
 }

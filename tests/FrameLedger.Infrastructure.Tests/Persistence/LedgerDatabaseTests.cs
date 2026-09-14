@@ -44,6 +44,20 @@ public sealed class LedgerDatabaseTests
         columns.Should().Contain("fg_refusal").And.Contain("fg_none_withheld_reason", "0003 appends beside 0001's columns, it edits nothing");
     }
 
+    /// <summary>Schema 0004 (P4 PR-1): the detection cache key's exe half on <c>games</c>, apart from the consent fingerprint.</summary>
+    [Fact]
+    public async Task ScriptFourAddsTheDetectionCacheColumns()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(4);
+        IReadOnlyList<string> columns = await f.Db.ReadAsync(async (c, ct) =>
+            (IReadOnlyList<string>)[.. await c.QueryAsync<string>(new CommandDefinition(
+                "SELECT name FROM pragma_table_info('games')", cancellationToken: ct)).ConfigureAwait(false)], Ct);
+        columns.Should().Contain("detection_exe_size_bytes").And.Contain("detection_exe_mtime_ms")
+            .And.Contain("exe_size_bytes", "the consent fingerprint keeps its own columns; the sweep never writes them");
+    }
+
     [Fact]
     public async Task ReopeningIsANoOp()
     {

@@ -50,8 +50,17 @@ public sealed record GameRow
     /// <summary><c>field_provenance</c> as stored (JSON object field → <c>detected|user</c>); null or absent reads as <c>user</c> for every field.</summary>
     public string? FieldProvenanceJson { get; init; }
 
-    /// <summary><c>capability_flags</c> as stored — what the game SHIPS, never a measurement (FR-1.5).</summary>
+    /// <summary><c>capability_flags</c> as stored — what the game SHIPS, never a measurement (FR-1.5). Since P4 PR-1 a JSON array of the rule ids of <c>rules/detection-rules.json</c>.</summary>
     public string? CapabilityFlagsJson { get; init; }
+
+    /// <summary>The <c>rulesVersion</c> the last static detection ran under (<c>DetectionCacheKey</c>'s rules half); null = never scanned.</summary>
+    public string? DetectionRulesVersion { get; init; }
+
+    /// <summary>The exe size the last static detection saw (schema 0004) — the key's exe half, NOT the consent fingerprint.</summary>
+    public long? DetectionExeSizeBytes { get; init; }
+
+    /// <summary>The exe mtime (unix ms) the last static detection saw (schema 0004).</summary>
+    public long? DetectionExeMtimeMs { get; init; }
 
     // FR-8.3 game defaults, inherited by sessions that measured nothing.
     public Tri RtDefault { get; init; } = Tri.NotApplicable;

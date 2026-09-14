@@ -66,4 +66,33 @@ internal sealed class FakeGameRepository : IGameRepository
     public ValueTask<bool> SetTriStateDefaultAsync(long gameId, TriStateKind kind, Tri value, CancellationToken ct = default) => throw new NotSupportedException();
 
     public ValueTask<bool> RemoveAsync(long gameId, bool keepSessions, CancellationToken ct = default) => throw new NotSupportedException();
+
+    /// <summary>Every detection write, in order (P4 PR-1); the row gains the cache key and the flags so a second sweep sees it as current.</summary>
+    public List<(long GameId, DetectionWrite Write)> Detections { get; } = [];
+
+    public ValueTask<bool> ApplyDetectionAsync(long gameId, DetectionWrite detection, CancellationToken ct = default)
+    {
+        Detections.Add((gameId, detection));
+        foreach ((string key, GameRow row) in Rows)
+        {
+            if (row.Id != gameId)
+            {
+                continue;
+            }
+
+            Rows[key] = row with
+            {
+                Engine = detection.EngineId ?? row.Engine,
+                EngineVersion = detection.EngineVersion ?? row.EngineVersion,
+                Platform = detection.PlatformId ?? row.Platform,
+                CapabilityFlagsJson = "[" + string.Join(",", detection.CapabilityIds.Select(static c => "\"" + c + "\"")) + "]",
+                DetectionRulesVersion = detection.RulesVersion,
+                DetectionExeSizeBytes = detection.ExeSizeBytes,
+                DetectionExeMtimeMs = detection.ExeMtimeMs,
+            };
+            return ValueTask.FromResult(true);
+        }
+
+        return ValueTask.FromResult(false);
+    }
 }

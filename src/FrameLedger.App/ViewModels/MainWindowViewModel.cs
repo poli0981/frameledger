@@ -6,6 +6,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FrameLedger.App.Pages;
 using FrameLedger.App.Services;
+using FrameLedger.Infrastructure.Ipc;
+using FrameLedger.Shared.Ipc;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
 
@@ -112,6 +114,35 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             CloseButtonText = Strings.Common_Ok,
         };
         await box.ShowDialogAsync().ConfigureAwait(true);
+    }
+
+    /// <summary>
+    /// Tools ▸ Update detection rules (P4 PR-1): the Agent re-seeds the rules file and wakes its detection sweep, so every
+    /// game's engine / platform / Supports row follows within the second (<c>05_DETECTION</c> §Caching). The ack's
+    /// outcome is the seeder's word — <c>AlreadyCurrent</c>, <c>Updated</c>, … — shown as is; there is no fetch yet.
+    /// </summary>
+    [RelayCommand]
+    [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format string is a resource that follows the UI culture, which changes at runtime; a cached CompositeFormat would pin the first culture")]
+    private async Task UpdateRulesAsync()
+    {
+        if (!_agent.IsConnected)
+        {
+            _snackbar.Show(Strings.Rules_Update_Title, Strings.Rules_Update_NoAgent, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.Warning24), TimeSpan.FromSeconds(4));
+            return;
+        }
+
+        try
+        {
+            IpcEnvelope ack = await _agent.RequestAsync(IpcMessageType.UpdateRules, new UpdateRulesRequest()).ConfigureAwait(true);
+            string outcome = IpcCodec.Payload<UpdateRulesAck>(ack)?.Outcome ?? string.Empty;
+            _snackbar.Show(Strings.Rules_Update_Title, string.Format(CultureInfo.CurrentCulture, Strings.Rules_Update_Done_Format, outcome),
+                ControlAppearance.Secondary, new SymbolIcon(SymbolRegular.Info24), TimeSpan.FromSeconds(4));
+        }
+        catch (Exception ex) when (ex is IpcRequestException or TimeoutException or System.IO.IOException or InvalidOperationException)
+        {
+            Serilog.Log.Warning(ex, "ui: update rules did not complete");
+            _snackbar.Show(Strings.Rules_Update_Title, Strings.Rules_Update_Failed, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.Warning24), TimeSpan.FromSeconds(4));
+        }
     }
 
     /// <summary>Every menu item of <c>08_UI</c> §Menu bar that a later slice builds says so, in a 4 s snackbar, rather than doing nothing.</summary>

@@ -22,7 +22,8 @@ public sealed class SqliteGameRepository : IGameRepository
         "id, name, exe_path, exe_size_bytes, exe_mtime_ms, hook_enabled, hook_blocked_reason, hook_autodisabled_reason, "
         + "hook_crash_count, hook_last_injected_at, added_at, updated_at, "
         + "platform, store_id, engine, engine_version, publisher, game_version, cover_path, notes, field_provenance, capability_flags, "
-        + "rt_default, pt_default, rr_default, hook_consent_at, hook_prescan_state, removed_at";
+        + "rt_default, pt_default, rr_default, hook_consent_at, hook_prescan_state, removed_at, "
+        + "detection_rules_version, detection_exe_size_bytes, detection_exe_mtime_ms";
 
     private const string _selectByPath = $"SELECT {_columns} FROM games WHERE exe_path = @path";
 
@@ -52,6 +53,11 @@ public sealed class SqliteGameRepository : IGameRepository
     private const string _remove = "UPDATE games SET removed_at = @now, updated_at = @now WHERE id = @id AND removed_at IS NULL";
 
     private const string _delete = "DELETE FROM games WHERE id = @id";
+
+    private const string _applyDetection =
+        "UPDATE games SET engine = @engine, engine_version = @engineVersion, platform = @platform, capability_flags = @flags, "
+        + "field_provenance = @provenance, detection_rules_version = @rules, detection_exe_size_bytes = @size, detection_exe_mtime_ms = @mtime, "
+        + "updated_at = @now WHERE id = @id";
 
     private readonly LedgerDatabase _db;
 
@@ -171,6 +177,42 @@ public sealed class SqliteGameRepository : IGameRepository
             return n == 1;
         }, ct);
 
+    public ValueTask<bool> ApplyDetectionAsync(long gameId, DetectionWrite detection, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(detection);
+        ArgumentException.ThrowIfNullOrWhiteSpace(detection.RulesVersion, nameof(detection));
+        return _db.WriteAsync(async (c, tx, token) =>
+        {
+            GameRow? before = await SqliteReaders.ReadOneAsync(c, new CommandDefinition(_selectById, new { id = gameId }, tx, cancellationToken: token), Read).ConfigureAwait(false);
+            if (before is null)
+            {
+                return false;
+            }
+
+            // The provenance rule (05_DETECTION §Caching), applied per field: a user's value is never overwritten, a
+            // detected one is refreshed, and an empty field with no provenance is filled and badged. A null detected
+            // value leaves the field as it is — detection never erases.
+            Dictionary<string, string> map = FieldProvenance.Parse(before.FieldProvenanceJson);
+            string? engine = FieldProvenance.Resolve(map, "engine", before.Engine, detection.EngineId);
+            string? engineVersion = FieldProvenance.Resolve(map, "engine_version", before.EngineVersion, detection.EngineVersion);
+            string platform = FieldProvenance.Resolve(map, "platform", string.Equals(before.Platform, "none", StringComparison.Ordinal) ? null : before.Platform, detection.PlatformId) ?? "none";
+            var p = new
+            {
+                id = gameId,
+                engine,
+                engineVersion,
+                platform,
+                flags = JsonSerializer.Serialize(detection.CapabilityIds.ToArray(), LedgerJsonContext.Default.StringArray),
+                provenance = map.Count == 0 ? before.FieldProvenanceJson : JsonSerializer.Serialize(map, LedgerJsonContext.Default.DictionaryStringString),
+                rules = detection.RulesVersion,
+                size = detection.ExeSizeBytes,
+                mtime = detection.ExeMtimeMs,
+                now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            };
+            return await c.ExecuteAsync(new CommandDefinition(_applyDetection, p, tx, cancellationToken: token)).ConfigureAwait(false) == 1;
+        }, ct);
+    }
+
     private static Task<GameRow?> ReadByPathAsync(SqliteConnection c, SqliteTransaction? tx, string path, CancellationToken ct) =>
         SqliteReaders.ReadOneAsync(c, new CommandDefinition(_selectByPath, new { path }, tx, cancellationToken: ct), Read);
 
@@ -211,6 +253,9 @@ public sealed class SqliteGameRepository : IGameRepository
         HookConsentAt = At(SqliteReaders.Int64(r, 25)),
         HookPrescanState = SqliteReaders.String(r, 26) ?? "not_run",
         RemovedAt = At(SqliteReaders.Int64(r, 27)),
+        DetectionRulesVersion = SqliteReaders.String(r, 28),
+        DetectionExeSizeBytes = SqliteReaders.Int64(r, 29),
+        DetectionExeMtimeMs = SqliteReaders.Int64(r, 30),
     };
 
     private static DateTimeOffset? At(long? unixMs) => unixMs is { } ms ? DateTimeOffset.FromUnixTimeMilliseconds(ms) : null;
@@ -219,6 +264,34 @@ public sealed class SqliteGameRepository : IGameRepository
     internal static class FieldProvenance
     {
         public const string User = "user";
+
+        public const string Detected = "detected";
+
+        /// <summary>
+        /// The value a detection run leaves in <paramref name="field"/>, and the map updated to match (P4 PR-1). Null
+        /// <paramref name="detected"/> = not established: the current value stays and the map is untouched. A field
+        /// badged <c>detected</c> is refreshed. A field with no entry and no value has nothing to protect: it is filled
+        /// and badged. Anything else — a <c>user</c> entry, an unrecognised entry, or a value with no entry — reads as
+        /// the user's (<c>05_DETECTION</c> §Caching, <c>06_DATA_MODEL</c> §games) and is left alone.
+        /// </summary>
+        public static string? Resolve(Dictionary<string, string> map, string field, string? current, string? detected)
+        {
+            if (detected is null)
+            {
+                return current;
+            }
+
+            bool writable = map.TryGetValue(field, out string? badge)
+                ? string.Equals(badge, Detected, StringComparison.Ordinal)
+                : string.IsNullOrEmpty(current);
+            if (!writable)
+            {
+                return current;
+            }
+
+            map[field] = Detected;
+            return detected;
+        }
 
         /// <summary>The stored JSON after a user edit: every field whose value changed is now <c>user</c>; the rest keep what they had.</summary>
         public static string? AfterUserEdit(string? storedJson, GameMetadata before, GameMetadata after)

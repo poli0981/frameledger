@@ -190,6 +190,22 @@ Three things this section previously implied that are not true, and are worth st
 
 - Detection results cached per game; refreshed when exe timestamp/size changes or `rulesVersion` changes. Implemented as `DetectionCacheKey` (path + size + mtime + `rulesVersion`).
 - **A re-run never overwrites a field the user supplied.** `games.field_provenance` records where each value came from; anything not marked `detected` is left alone, and an absent or unrecognised provenance reads as *user*. Without this rule the re-run triggered by every rules update silently clobbers every correction the user has ever made — a data-loss bug that surfaces weeks later on somebody else's machine. Stated here because no document said it before, and the safe default is the one that costs a badge rather than a value.
+  > **Built 2026-09-14 (P4 PR-1), and two things this section did not say.** *When it runs:* the Agent's
+  > `DetectionHostedService` (`--serve` only) sweeps the library on its own task — every 15 s, and at once
+  > when `UpdateRules` re-seeds the rules file — through `Application.Detection.DetectionSweep`, which runs
+  > `StaticGameDetector` over the real `GameFileProbe` for every game whose key is stale and persists through
+  > `IGameRepository.ApplyDetectionAsync`. A game the App adds is scanned on the next tick (the App writes the
+  > row, the Agent reads the table); no Agent running means no scan, and the game page says "not scanned yet".
+  > *The key's exe half is NOT `exe_size_bytes` / `exe_mtime_ms`:* those are the consent fingerprint the gate
+  > reads (`SqliteGameConsentStore` refuses a mismatch while a block stands), so schema 0004 gave the key its own
+  > `detection_exe_size_bytes` / `detection_exe_mtime_ms` beside `detection_rules_version`. *And the provenance
+  > rule, applied per field in the repository:* a `user` entry, an unrecognised entry, or a value with no entry is
+  > the user's and stays; a `detected` entry is refreshed; **an empty field with no entry has nothing to protect
+  > and is filled and badged `detected`** — without that clause a freshly added game could never receive an
+  > engine at all, since `EnsureAsync` writes no provenance. A null detected value erases nothing.
+  > `capability_flags` is written whole every run (a JSON array of the rule ids — `dlss`, `dlss_g`, `dlss_rr`,
+  > `streamline`, `fsr`, `xess`, `xefg`) because the Supports row has no user-edit surface and a stale "Supports
+  > DLSS-G" after the DLL left is the confusion §Capability hints exists to prevent.
 - Strings scans bounded to 8 MB, local only.
 - Module enumeration uses read-only handles (`PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ`); never a handle with write access outside the injection call itself.
 - No game memory is read for detection purposes — all runtime facts come from arguments to APIs we hooked (CLAUDE.md rule 4).

@@ -120,7 +120,11 @@ which makes the notification more important than it was, not less.
 > at a time through `ISessionRecorder`, attach mode only; it decides nothing about hooking, the recorder's loop
 > reaches the gate exactly as a console verb does. `WatcherHostedService` runs `PartialRecovery` first, every
 > start, then the orchestrator. There is no `Channel` and no second consumer: `PollOnceAsync` is the only writer
-> of the running-session table, and the sessions run on their own tasks.
+> of the running-session table, and the sessions run on their own tasks. **Since P4 PR-1 (2026-09-14) a second
+> hosted service runs beside it under `--serve`: `DetectionHostedService`, the static detection sweep
+> (`05_DETECTION` §Caching) on its own task, because `GameFileProbe` blocks on file I/O and the 1 Hz poll must
+> not wait on it. It reads game files and writes the detected columns of `games`; it never touches a process,
+> a hook, or a consent column.**
 
 ## Launch mode vs attach mode
 

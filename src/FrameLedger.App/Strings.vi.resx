@@ -184,6 +184,18 @@
   <data name="NotYet_Title" xml:space="preserve">
     <value>Chưa xây dựng</value>
   </data>
+  <data name="Rules_Update_Title" xml:space="preserve">
+    <value>Quy tắc nhận diện</value>
+  </data>
+  <data name="Rules_Update_Done_Format" xml:space="preserve">
+    <value>Đã kiểm tra quy tắc ({0}); agent đang quét lại các game trong thư viện.</value>
+  </data>
+  <data name="Rules_Update_NoAgent" xml:space="preserve">
+    <value>Agent ghi chưa kết nối nên không thể cập nhật quy tắc.</value>
+  </data>
+  <data name="Rules_Update_Failed" xml:space="preserve">
+    <value>Agent không phản hồi yêu cầu cập nhật quy tắc.</value>
+  </data>
   <data name="Settings_Appearance_Header" xml:space="preserve">
     <value>Giao diện</value>
   </data>
@@ -497,7 +509,7 @@
     <value>Chưa có phiên nào — hãy chạy game, FrameLedger lo phần còn lại.</value>
   </data>
   <data name="GameDetail_Supports_Empty" xml:space="preserve">
-    <value>Chưa quét — tính năng quét khả năng sẽ có ở bản sau.</value>
+    <value>Chưa quét — agent ghi sẽ quét file của game trong vài giây sau khi chạy.</value>
   </data>
   <data name="GameDetail_Supports_Format" xml:space="preserve">
     <value>Hỗ trợ {0}</value>
