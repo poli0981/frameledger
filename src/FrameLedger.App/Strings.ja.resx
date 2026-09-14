@@ -1653,4 +1653,108 @@
     <value>FrameLedger — {0} を実測なしで記録中</value>
     <comment>review</comment>
   </data>
+  <data name="FirstRun_Accept" xml:space="preserve">
+    <value>4 つすべてに同意する</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Agent_Body" xml:space="preserve">
+    <value>FrameLedger は小さなキャプチャエージェントを標準ユーザーとして (昇格せずに) 起動します。昇格は任意で、どのキャプチャティアにも必須ではありません。CPU 温度 (PawnIO 経由) と、昇格して動作するゲームへのアタッチを有効にするだけです。以下はエージェントがこのマシンについて報告した内容です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Agent_Header" xml:space="preserve">
+    <value>キャプチャエージェント</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Back" xml:space="preserve">
+    <value>戻る</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Cap_CpuTemp" xml:space="preserve">
+    <value>CPU 温度</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Cap_Elevated" xml:space="preserve">
+    <value>昇格</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Cap_Overlay" xml:space="preserve">
+    <value>オーバーレイビルド</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Cap_State" xml:space="preserve">
+    <value>エージェント</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Cap_Telemetry" xml:space="preserve">
+    <value>テレメトリソース</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Cap_Version" xml:space="preserve">
+    <value>バージョン</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Decline" xml:space="preserve">
+    <value>拒否して終了</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Doc_Disclaimer" xml:space="preserve">
+    <value>免責事項</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Doc_Eula" xml:space="preserve">
+    <value>エンドユーザー使用許諾契約</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Doc_Gpl" xml:space="preserve">
+    <value>GNU GPL v3</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Doc_Privacy" xml:space="preserve">
+    <value>プライバシーポリシー</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Explainer_Header" xml:space="preserve">
+    <value>フックとは</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Explainer_Intro" xml:space="preserve">
+    <value>FrameLedger はゲームのプロセスにライブラリを読み込むこと (フック) でゲームを実測します。フックはすべてのゲームでオフであり、ここに書かれた内容を繰り返すダイアログの後、ゲームごとに有効にするまで変わりません。同意した免責事項はリスクを述べています。この画面は各選択が何を記録するかを述べます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Explainer_Off" xml:space="preserve">
+    <value>ゲームを追加してフックを有効にするまで何も変わりません。追加したゲームはすべてフックがオフの状態で始まります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Finish" xml:space="preserve">
+    <value>完了</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Import_Body" xml:space="preserve">
+    <value>Steam、GOG、Epic、itch.io のライブラリの取り込みは後のビルドで追加されます。今はゲームページからゲームを 1 つずつ追加してください。各ゲームはフックがオフの状態で始まります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Import_Header" xml:space="preserve">
+    <value>ライブラリ</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Legal_Body" xml:space="preserve">
+    <value>4 つの文書は、このソフトウェアが何を行い、何を行わず、どのような代償があり得るかを説明します。お読みください。「同意する」は 4 つすべてに適用されます。拒否すると FrameLedger は終了します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Legal_Header" xml:space="preserve">
+    <value>はじめる前に</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Legal_Online" xml:space="preserve">
+    <value>GitHub で表示</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Next" xml:space="preserve">
+    <value>次へ</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Title" xml:space="preserve">
+    <value>FrameLedger へようこそ</value>
+    <comment>review</comment>
+  </data>
 </root>

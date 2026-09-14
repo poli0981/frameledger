@@ -1,0 +1,134 @@
+<UserControl x:Class="FrameLedger.App.Controls.FirstRunContent"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:res="clr-namespace:FrameLedger.App"
+             xmlns:vm="clr-namespace:FrameLedger.App.ViewModels">
+    <!-- 08_UI §First-run flow: four steps in one control; the window is a frame around it. -->
+    <Grid Margin="24,16,24,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ui:TextBlock Grid.Row="0" FontTypography="Title" Text="{Binding ViewModel.StepText}" />
+
+        <!-- Step 1: the Legal Gate. -->
+        <Grid Grid.Row="1" Margin="0,12,0,0" Visibility="{Binding ViewModel.IsLegalStep, Converter={StaticResource BoolToVis}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <ui:TextBlock Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,12" Appearance="Secondary" Text="{x:Static vm:FirstRunViewModel.LegalBody}" TextWrapping="Wrap" />
+            <ListBox Grid.Row="1"
+                     Grid.Column="0"
+                     Margin="0,0,12,0"
+                     DisplayMemberPath="Title"
+                     ItemsSource="{Binding ViewModel.Documents}"
+                     SelectedItem="{Binding ViewModel.SelectedDocument, Mode=TwoWay}" />
+            <Grid Grid.Row="1" Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <StackPanel Grid.Row="0" Margin="0,0,0,6" Orientation="Horizontal">
+                    <ui:TextBlock VerticalAlignment="Center" Appearance="Secondary" Text="{Binding ViewModel.SelectedDocument.Version}" />
+                    <ui:HyperlinkButton Margin="12,0,0,0"
+                                        Command="{Binding ViewModel.OpenOnlineCommand}"
+                                        Content="{x:Static res:Strings.FirstRun_Legal_Online}"
+                                        Icon="{ui:SymbolIcon Open24}" />
+                </StackPanel>
+                <TextBox Grid.Row="1"
+                         AcceptsReturn="True"
+                         IsReadOnly="True"
+                         IsReadOnlyCaretVisible="True"
+                         Text="{Binding ViewModel.SelectedDocument.Text, Mode=OneWay}"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto" />
+            </Grid>
+        </Grid>
+
+        <!-- Step 2: Agent setup, the facts as the Agent reports them. -->
+        <StackPanel Grid.Row="1" Margin="0,12,0,0" Visibility="{Binding ViewModel.IsAgentStep, Converter={StaticResource BoolToVis}}">
+            <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:FirstRunViewModel.AgentBody}" TextWrapping="Wrap" />
+            <Grid Margin="0,16,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.FirstRun_Cap_State}" />
+                <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ViewModel.AgentState}" />
+                <TextBlock Grid.Row="1" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.FirstRun_Cap_Version}" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ViewModel.AgentVersion}" />
+                <TextBlock Grid.Row="2" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.FirstRun_Cap_Telemetry}" />
+                <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ViewModel.TelemetrySource}" />
+                <TextBlock Grid.Row="3" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.FirstRun_Cap_Overlay}" />
+                <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ViewModel.OverlayBuildId}" />
+                <TextBlock Grid.Row="4" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.FirstRun_Cap_CpuTemp}" />
+                <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ViewModel.CpuTemperature}" />
+                <TextBlock Grid.Row="5" Grid.Column="0" Style="{StaticResource FieldLabel}" Text="{x:Static res:Strings.FirstRun_Cap_Elevated}" />
+                <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding ViewModel.Elevated}" />
+            </Grid>
+        </StackPanel>
+
+        <!-- Step 3: the hooking explainer — the consent dialog's reviewed tier paragraphs, and what "off" means. -->
+        <ScrollViewer Grid.Row="1" Margin="0,12,0,0" Visibility="{Binding ViewModel.IsExplainerStep, Converter={StaticResource BoolToVis}}">
+            <StackPanel>
+                <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:FirstRunViewModel.ExplainerIntro}" TextWrapping="Wrap" />
+                <ui:TextBlock Margin="0,16,0,4" FontTypography="BodyStrong" Text="{x:Static res:Strings.Tier_Hooked}" />
+                <ui:TextBlock Text="{x:Static vm:FirstRunViewModel.ExplainerHooked}" TextWrapping="Wrap" />
+                <ui:TextBlock Margin="0,16,0,4" FontTypography="BodyStrong" Text="{x:Static res:Strings.Tier_NotHooked}" />
+                <ui:TextBlock Text="{x:Static vm:FirstRunViewModel.ExplainerNotHooked}" TextWrapping="Wrap" />
+                <ui:TextBlock Margin="0,16,0,0" Appearance="Secondary" Text="{x:Static vm:FirstRunViewModel.ExplainerOff}" TextWrapping="Wrap" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Step 4: the import placeholder. -->
+        <StackPanel Grid.Row="1" Margin="0,12,0,0" Visibility="{Binding ViewModel.IsImportStep, Converter={StaticResource BoolToVis}}">
+            <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:FirstRunViewModel.ImportBody}" TextWrapping="Wrap" />
+        </StackPanel>
+
+        <!-- Buttons: Decline/Accept on the gate; Back/Next on the middle steps; Finish at the end; Close in read-only mode. -->
+        <StackPanel Grid.Row="2" Margin="0,16,0,0" HorizontalAlignment="Right" Orientation="Horizontal">
+            <StackPanel Orientation="Horizontal" Visibility="{Binding ViewModel.IsLegalStep, Converter={StaticResource BoolToVis}}">
+                <StackPanel Orientation="Horizontal" Visibility="{Binding ViewModel.ReadOnly, Converter={StaticResource InverseBoolToVis}}">
+                    <ui:Button Margin="0,0,8,0"
+                               Appearance="Secondary"
+                               Command="{Binding ViewModel.DeclineCommand}"
+                               Content="{x:Static res:Strings.FirstRun_Decline}" />
+                    <ui:Button Appearance="Primary"
+                               Command="{Binding ViewModel.AcceptCommand}"
+                               Content="{x:Static res:Strings.FirstRun_Accept}" />
+                </StackPanel>
+                <ui:Button Appearance="Primary"
+                           Command="{Binding ViewModel.CloseCommand}"
+                           Content="{x:Static res:Strings.Common_Ok}"
+                           Visibility="{Binding ViewModel.ReadOnly, Converter={StaticResource BoolToVis}}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Visibility="{Binding ViewModel.IsAgentStep, Converter={StaticResource BoolToVis}}">
+                <ui:Button Appearance="Primary" Command="{Binding ViewModel.NextCommand}" Content="{x:Static res:Strings.FirstRun_Next}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Visibility="{Binding ViewModel.IsExplainerStep, Converter={StaticResource BoolToVis}}">
+                <ui:Button Margin="0,0,8,0" Appearance="Secondary" Command="{Binding ViewModel.BackCommand}" Content="{x:Static res:Strings.FirstRun_Back}" />
+                <ui:Button Appearance="Primary" Command="{Binding ViewModel.NextCommand}" Content="{x:Static res:Strings.FirstRun_Next}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Visibility="{Binding ViewModel.IsImportStep, Converter={StaticResource BoolToVis}}">
+                <ui:Button Margin="0,0,8,0" Appearance="Secondary" Command="{Binding ViewModel.BackCommand}" Content="{x:Static res:Strings.FirstRun_Back}" />
+                <ui:Button Appearance="Primary" Command="{Binding ViewModel.FinishCommand}" Content="{x:Static res:Strings.FirstRun_Finish}" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -265,6 +265,11 @@ public partial class App : System.Windows.Application
         // The layer registration and the logon task (P3 PR-8b): read from the machine, written by the Agent's flags.
         services.AddSingleton<IMaintenanceState, MaintenanceState>();
         services.AddSingleton<IAgentTool, AgentTool>();
+
+        // FR-11 (P3 PR-9): the gate over the UI's own table, the documents this build embeds, the window that shows them.
+        services.AddSingleton<ILegalAcceptanceStore, SqliteLegalAcceptanceStore>();
+        services.AddSingleton(static sp => new LegalGate(sp.GetRequiredService<ILegalAcceptanceStore>(), LegalDocuments.Load()));
+        services.AddSingleton<IFirstRunFlow, FirstRunFlow>();
     }
 
     /// <summary><c>10_LOGGING</c> §Serilog configuration: <c>logs/ui-.log</c>, daily, 7 kept, 10 MB, the one template; the level follows <c>log.debug</c> at runtime.</summary>
