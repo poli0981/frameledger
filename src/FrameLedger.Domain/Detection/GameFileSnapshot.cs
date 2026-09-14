@@ -108,4 +108,14 @@ public sealed record GameFileSnapshot
     /// members say.
     /// </summary>
     public required IReadOnlySet<DetectionSignalType> UncollectedFacts { get; init; }
+
+    /// <summary>
+    /// Whether the executable references the Vulkan loader — <c>vulkan-1.dll</c> in its import or delay-import
+    /// table, or as an ASCII / UTF-16 string in the bounded scan (a loader reached through <c>LoadLibrary</c>, the
+    /// shape <c>hook-harness --vulkan</c> and many titles take). Null = the file could not be read for it. A static
+    /// fact about the file, not a rule signal: the rules cannot express it (P4 PR-2, <c>05_DETECTION</c> §Capability
+    /// hints), and it exists so the layer can be registered for a Vulkan title before it ever runs
+    /// (<c>17_HOOK_ENGINE</c> §Vulkan).
+    /// </summary>
+    public bool? VulkanLoaderReferenced { get; init; }
 }

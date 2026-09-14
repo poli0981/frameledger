@@ -19,6 +19,27 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Added
 
+- **P4 PR-2 — the "is Vulkan" fact, and the layer's registration following the ledger (2026-09-14).** The rule
+  `12_BUILD` §The Vulkan layer is not registered at install time states — registered only while at least one
+  Vulkan game has hooking enabled, unregistered when the last is disabled — had no way to know which game was
+  Vulkan; the check was "any enabled game". Now the fact is static: `GameFileProbe` reads the executable's import
+  and delay-load tables (`Infrastructure.Detection.PeImports`, bounded, read-only, no exception for a malformed
+  file) and looks for `vulkan-1.dll` as an ASCII or UTF-16 string in the bounded scan (a `LoadLibraryW` loader —
+  `hook-harness --vulkan`'s shape); `StaticDetectionResult.UsesVulkan` is true / false / null, and the sweep
+  stores a true as the id `vulkan` in `capability_flags` beside the rule ids ("Supports Vulkan" on the game page).
+  `Application.Vulkan.VkLayerReconciler` over the new `IVkLayerRegistrar` port (`Infrastructure.Vulkan.VkLayerRegistrar`,
+  the same manifest and HKCU value `--register-vklayer` writes) computes the desired registration from the consent
+  store's enabled games joined to their flags and moves the registration to it — after the pipe handler's stamp,
+  revoke and guard block, after the console `consent grant` / `revoke`, and after every detection sweep, so the
+  crash policy's auto-disable and a fact that arrives after the consent converge within one interval; not staged
+  = nothing to do. `--register-vklayer` runs the reconciler and refuses when no hook-enabled game references the
+  loader; Settings' Register button follows the same rule (`HookedGameViewModel.UsesVulkan`). An Agent off the
+  profile ledger (`--data-dir`) gets an inert registrar: a test or developer ledger never touches HKCU. Tests:
+  `VkLayerReconcilerTests` (first Vulkan game registers, last disables, a D3D game does not, idempotent, not
+  staged), `PeImportsTests` (a synthetic PE32+: both directories, the wide literal through the probe, a malformed
+  file, a non-PE reads as unknown), `DetectionSweepTests` and `StaticGameDetectorTests` (the three-valued fact).
+  `Settings_VkLayer_Note` reworded en/vi/ja. Docs: `17_HOOK_ENGINE` §Vulkan built note gap (1) closed,
+  `12_BUILD` §The Vulkan layer…, `05_DETECTION` §Capability hints, `08_UI` §Settings, HANDOFF §P4.
 - **P4 PR-1 — the detection rules engine wired into the Agent, and the Supports row (2026-09-14).** The engine,
   schema, validator and fixture corpus existed since P0 with no production caller and no writer. Now:
   `Application.Detection.DetectionSweep` runs `StaticGameDetector` over the real `GameFileProbe` for every game in

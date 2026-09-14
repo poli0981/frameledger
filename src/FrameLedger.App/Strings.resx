@@ -1261,7 +1261,7 @@
     <value>The layer DLL is not beside the capture agent; there is nothing to register.</value>
   </data>
   <data name="Settings_VkLayer_Note" xml:space="preserve">
-    <value>Registration puts the layer into every Vulkan process of this user, where it stays inert unless FrameLedger launched that process. Launching from FrameLedger needs no registration; the buttons repair state and are allowed only while a game has hooking on.</value>
+    <value>Registration puts the layer into every Vulkan process of this user, where it stays inert unless FrameLedger launched that process. Launching from FrameLedger needs no registration. The capture agent registers the layer on its own while a hook-enabled game references the Vulkan loader and removes it when the last one is disabled; the buttons repair that state and are allowed only under the same rule.</value>
   </data>
   <data name="Settings_VkLayer_Register" xml:space="preserve">
     <value>Register</value>

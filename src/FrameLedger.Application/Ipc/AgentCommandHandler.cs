@@ -2,6 +2,7 @@ using FrameLedger.Application.AntiCheat;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Consent;
 using FrameLedger.Application.Persistence;
+using FrameLedger.Application.Vulkan;
 using FrameLedger.Application.Watch;
 using FrameLedger.Domain.AntiCheat;
 using FrameLedger.Domain.Consent;
@@ -31,6 +32,7 @@ public sealed class AgentCommandHandler
     private readonly Func<CancellationToken, ValueTask<string>> _updateRules;
     private readonly string? _disclosureVersion;
     private readonly TimeProvider _clock;
+    private readonly VkLayerReconciler? _layer;
 
     /// <summary>
     /// <c>disclosureVersion</c> is the version of FR-2.1's reviewed disclosure this Agent carries
@@ -39,9 +41,12 @@ public sealed class AgentCommandHandler
     /// </summary>
     public AgentCommandHandler(IGameRepository games, IGameConsentStore consent, IAntiCheatGuard guard, IExecutableIdentitySource identity,
         CaptureOrchestrator orchestrator, CapturePause pause, IAgentLifetime lifetime, Func<CancellationToken, ValueTask<string>> updateRules,
-        string? disclosureVersion = null, TimeProvider? clock = null)
+        string? disclosureVersion = null, TimeProvider? clock = null, VkLayerReconciler? layer = null)
     {
         _clock = clock ?? TimeProvider.System;
+        // P4 PR-2: the layer's registration follows every consent change this handler makes (12_BUILD §The Vulkan
+        // layer is not registered at install time); null in tests that do not care, and the sweep reconciles anyway.
+        _layer = layer;
         _games = games ?? throw new ArgumentNullException(nameof(games));
         _consent = consent ?? throw new ArgumentNullException(nameof(consent));
         _guard = guard ?? throw new ArgumentNullException(nameof(guard));
@@ -143,6 +148,7 @@ public sealed class AgentCommandHandler
         if (!payload.Enabled)
         {
             ConsentWriteOutcome revoked = await _consent.RevokeAsync(path, ct).ConfigureAwait(false);
+            await ReconcileLayerAsync(ct).ConfigureAwait(false);
             return IpcCodec.Encode(IpcMessageType.HookEnabledAck, request.Id, new HookEnabledAck(game.Id, Enabled: false, revoked.ToString(), Prescan: null));
         }
 
@@ -159,6 +165,7 @@ public sealed class AgentCommandHandler
             // A refusal, or a scan that reached no answer: the store records which (a default verdict is
             // "could not verify", never a block), and both are answered as a refusal to enable.
             await _consent.RecordGuardBlockAsync(fingerprint.Value, verdict, ct).ConfigureAwait(false);
+            await ReconcileLayerAsync(ct).ConfigureAwait(false);
             string reason = verdict.Reason == AntiCheatRefusalReason.Allow ? "PreScanCouldNotVerify" : verdict.Reason.ToString();
             return IpcCodec.Encode(IpcMessageType.Refused, request.Id,
                 new RefusedAck(game.Id, reason, NullIfEmpty(verdict.Family), NullIfEmpty(verdict.Signal)));
@@ -196,8 +203,21 @@ public sealed class AgentCommandHandler
             AcknowledgedAt = _clock.GetUtcNow(),
             Provenance = ConsentProvenance.ConsentDialog,
         }, ct).ConfigureAwait(false);
+        if (outcome == ConsentWriteOutcome.Written)
+        {
+            await ReconcileLayerAsync(ct).ConfigureAwait(false);
+        }
+
         return IpcCodec.Encode(IpcMessageType.HookEnabledAck, request.Id,
             new HookEnabledAck(game.Id, Enabled: outcome == ConsentWriteOutcome.Written, outcome.ToString(), Prescan: "clean"));
+    }
+
+    private async ValueTask ReconcileLayerAsync(CancellationToken ct)
+    {
+        if (_layer is not null)
+        {
+            _ = await _layer.ReconcileAsync(ct).ConfigureAwait(false);
+        }
     }
 
     private byte[] Stop(IpcEnvelope request)

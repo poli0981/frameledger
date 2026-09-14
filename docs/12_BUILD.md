@@ -128,6 +128,13 @@ the `--register-vklayer` Agent flag (§Agent flags — a manual repair tool, not
 normal path), and the Settings button (`08_UI` §Settings — it reflects and
 repairs state, it does not grant machine-wide reach on its own).
 
+> **Enforced 2026-09-14 (P4 PR-2).** "A Vulkan game" is a static fact of the executable — it imports or
+> `LoadLibrary`s `vulkan-1.dll` — read by the Agent's detection sweep into `capability_flags` as `vulkan`
+> (`17_HOOK_ENGINE` §Vulkan built note). `Application.Vulkan.VkLayerReconciler` registers when the first
+> hook-enabled game carries it and unregisters when the last one is disabled, after every consent change and
+> after every sweep; the flag and the button run the same rule. The uninstall hook is still the updater's
+> (P4, Velopack).
+
 ## Publish & package
 
 ```

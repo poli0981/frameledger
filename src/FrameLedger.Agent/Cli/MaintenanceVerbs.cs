@@ -1,4 +1,4 @@
-using FrameLedger.Domain.Consent;
+using FrameLedger.Application.Vulkan;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Infrastructure.Startup;
 using FrameLedger.Infrastructure.Vulkan;
@@ -41,16 +41,24 @@ internal sealed class MaintenanceVerbs(LedgerDatabase db, AgentPaths paths)
             return _exitUsage;
         }
 
-        IReadOnlyList<GameConsentRecord> enabled = await new SqliteGameConsentStore(db).ListEnabledAsync().ConfigureAwait(false);
-        if (enabled.Count == 0)
+        // The same rule the Agent applies on its own (P4 PR-2, VkLayerReconciler): registered only while a hook-enabled
+        // game references the Vulkan loader. The flag is the repair tool for that state, never a way past it.
+        IVkLayerRegistrar registrar = Composition.AgentServices.Registrar(paths);
+        var reconciler = new VkLayerReconciler(new SqliteGameConsentStore(db), new SqliteGameRepository(db), registrar, AgentConsole.Line);
+        VkLayerReconcileOutcome outcome = await reconciler.ReconcileAsync().ConfigureAwait(false);
+        if (!outcome.Staged)
         {
-            AgentConsole.Problem("vklayer: refused — no game has hooking enabled, and the layer is registered only while one does (12_BUILD §The Vulkan layer is not registered at install time)");
+            AgentConsole.Problem("vklayer: refused — this Agent does not run over the profile ledger (--data-dir), and a test or developer ledger never registers anything in HKCU");
             return _exitRefused;
         }
 
-        string manifest = VkLayerLaunchEnvironment.WriteManifest(paths.VkLayerDirectory, AgentPaths.VkLayerDll);
-        new VkLayerRegistration().Register(manifest);
-        AgentConsole.Line($"vklayer: registered {manifest} under HKCU\\{VkLayerRegistration.DefaultKeyPath} (this user; inert in any process without {VkLayerLaunchEnvironment.EnableVariable}=1)");
+        if (!outcome.Desired)
+        {
+            AgentConsole.Problem("vklayer: refused — no hook-enabled game references the Vulkan loader, and the layer is registered only while one does (12_BUILD §The Vulkan layer is not registered at install time)");
+            return _exitRefused;
+        }
+
+        AgentConsole.Line($"vklayer: registered {ManifestPath} under HKCU\\{VkLayerRegistration.DefaultKeyPath} (this user; inert in any process without {VkLayerLaunchEnvironment.EnableVariable}=1){(outcome.Changed ? string.Empty : " — already was")}");
         return _exitOk;
     }
 

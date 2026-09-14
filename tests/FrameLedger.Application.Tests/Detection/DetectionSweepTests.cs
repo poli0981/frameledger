@@ -41,11 +41,14 @@ public sealed class DetectionSweepTests
     {
         public int Calls { get; private set; }
 
+        public bool? VulkanLoaderReferenced { get; set; }
+
         public ValueTask<GameFileSnapshot> SnapshotAsync(string exePath, DetectionRuleSet rules, CancellationToken ct = default)
         {
             Calls++;
             return ValueTask.FromResult(new GameFileSnapshot
             {
+                VulkanLoaderReferenced = VulkanLoaderReferenced,
                 ExePath = exePath,
                 ExeNameWithoutExtension = "game",
                 GameDirectory = "C:/Games/Title",
@@ -156,6 +159,24 @@ public sealed class DetectionSweepTests
         Task<bool> waiting = sweep.WaitAsync(TimeSpan.FromSeconds(30), Ct);
         sweep.RequestNow();
         (await waiting).Should().BeTrue("a waiter is woken early");
+    }
+
+    /// <summary>The Vulkan fact rides in <c>capability_flags</c> under its own id (P4 PR-2): appended when the probe saw the loader, absent when it did not or could not look.</summary>
+    [Fact]
+    public async Task TheVulkanFactIsStoredAsACapabilityIdOnlyWhenTheLoaderWasSeen()
+    {
+        (DetectionSweep sweep, FakeGameRepository games, _, ScriptedProbe probe, _, List<string> log) = await BuildAsync();
+
+        probe.VulkanLoaderReferenced = true;
+        await sweep.SweepOnceAsync(Ct);
+        games.Detections[^1].Write.CapabilityIds.Should().Equal("dlss", "vulkan");
+        log[^1].Should().Contain("vulkan=yes");
+
+        probe.VulkanLoaderReferenced = null;
+        games.Rows[_exe] = games.Rows[_exe] with { DetectionRulesVersion = null };    // stale again
+        await sweep.SweepOnceAsync(Ct);
+        games.Detections[^1].Write.CapabilityIds.Should().Equal("dlss");
+        log[^1].Should().Contain("vulkan=unknown", "could not look is not \"no\", and it is not stored as a fact either way");
     }
 
     [Fact]

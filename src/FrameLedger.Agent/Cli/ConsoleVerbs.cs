@@ -3,6 +3,7 @@ using FrameLedger.Application.Capture;
 using FrameLedger.Application.Consent;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
+using FrameLedger.Application.Vulkan;
 using FrameLedger.Application.Watch;
 using FrameLedger.Domain.AntiCheat;
 using FrameLedger.Domain.Consent;
@@ -101,6 +102,11 @@ internal sealed class ConsoleVerbs(IServiceProvider services, AgentPaths paths)
         }).ConfigureAwait(false);
 
         AgentConsole.Line($"consent: {outcome}");
+        if (outcome == ConsentWriteOutcome.Written)
+        {
+            _ = await Get<VkLayerReconciler>().ReconcileAsync().ConfigureAwait(false);    // P4 PR-2: the developer path follows the same layer rule
+        }
+
         return outcome == ConsentWriteOutcome.Written ? _exitOk : _exitRefused;
     }
 
@@ -110,6 +116,7 @@ internal sealed class ConsoleVerbs(IServiceProvider services, AgentPaths paths)
             .RevokeAsync(ExecutableIdentity.Normalise(exePath))
             .ConfigureAwait(false);
         AgentConsole.Line($"revoke: {outcome}");
+        _ = await Get<VkLayerReconciler>().ReconcileAsync().ConfigureAwait(false);
         return outcome is ConsentWriteOutcome.Written or ConsentWriteOutcome.NotFound ? _exitOk : _exitRefused;
     }
 

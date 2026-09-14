@@ -8,6 +8,7 @@ using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
 using FrameLedger.Application.Rules;
 using FrameLedger.Application.Settings;
+using FrameLedger.Application.Vulkan;
 using FrameLedger.Application.Watch;
 using FrameLedger.Infrastructure.AntiCheat;
 using FrameLedger.Infrastructure.Blobs;
@@ -19,6 +20,7 @@ using FrameLedger.Infrastructure.Recording;
 using FrameLedger.Infrastructure.Rules;
 using FrameLedger.Infrastructure.Settings;
 using FrameLedger.Infrastructure.Telemetry;
+using FrameLedger.Infrastructure.Vulkan;
 using FrameLedger.Infrastructure.Watch;
 using FrameLedger.Shared.Ipc;
 using FrameLedger.Shared.Safety;
@@ -94,7 +96,7 @@ internal static class AgentServices
         services.AddSingleton<IProcessSnapshotSource, ToolhelpProcessSnapshotSource>();
         services.AddSingleton<IExecutableIdentitySource, ExecutableIdentitySource>();
 
-        AddDetection(services);
+        AddDetection(services, paths);
         services.AddSingleton<ISessionRecorder>(static sp => sp.GetRequiredService<AgentRecording>().Recorder(seconds: 0, launcher: null));
 
         AddPipe(services, pipeName);
@@ -103,7 +105,7 @@ internal static class AgentServices
     }
 
     /// <summary>The static detection sweep (P4 PR-1, <c>05_DETECTION</c> §Caching): hosted under <c>--serve</c> only, composed and inert under <c>--console</c>.</summary>
-    private static void AddDetection(IServiceCollection services)
+    private static void AddDetection(IServiceCollection services, AgentPaths paths)
     {
         // The static detection sweep (P4 PR-1, 05_DETECTION §Caching): the rules file RulesSeeder seeds (the two
         // paths agree, RulesPathAgreementTests), the real probe, and the sweep over the games table. Hosted under
@@ -116,7 +118,22 @@ internal static class AgentServices
             sp.GetRequiredService<IGameFileProbe>(),
             sp.GetRequiredService<IExecutableIdentitySource>(),
             static line => Serilog.Log.Information("{Line}", line)));
+
+        // The layer's registration follows the ledger (P4 PR-2, 12_BUILD §The Vulkan layer is not registered at
+        // install time): the same manifest and key --register-vklayer writes, reconciled after every consent change
+        // the handler makes and after every sweep.
+        // Inert off the profile ledger: a --data-dir Agent (tests, developers) never touches the user's HKCU.
+        services.AddSingleton<IVkLayerRegistrar>(_ => Registrar(paths));
+        services.AddSingleton(static sp => new VkLayerReconciler(
+            sp.GetRequiredService<IGameConsentStore>(),
+            sp.GetRequiredService<IGameRepository>(),
+            sp.GetRequiredService<IVkLayerRegistrar>(),
+            static line => Serilog.Log.Information("{Line}", line)));
     }
+
+    /// <summary>The layer registrar for <paramref name="paths"/>: the real HKCU one over the profile ledger, inert anywhere else (P4 PR-2).</summary>
+    internal static IVkLayerRegistrar Registrar(AgentPaths paths) =>
+        paths.IsProfile ? new VkLayerRegistrar(paths.VkLayerDirectory, AgentPaths.VkLayerDll) : new InertVkLayerRegistrar();
 
     /// <summary>
     /// The pipe, read half (P3 PR-1, <c>07_IPC</c> §C, HANDOFF §P3 D11–D13). Events leave through <c>SessionEventPublisher</c>,
@@ -150,7 +167,8 @@ internal static class AgentServices
             },
             // P3 PR-4 (D14): the reviewed disclosure this Agent stamps against, and its own clock for the stamp.
             SafetyDisclosure.Version,
-            TimeProvider.System));
+            TimeProvider.System,
+            sp.GetRequiredService<VkLayerReconciler>()));
         services.AddSingleton<IIpcRequestHandler>(static sp => new AgentRequestHandler(
             AgentIdentityFactory.OfThisProcess(sp.GetRequiredService<AgentPaths>().VkLayerDirectory),
             TelemetryDescriptor(),

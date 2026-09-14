@@ -171,6 +171,14 @@ Files shipped with a game tell us what it *supports*. These populate a **"Suppor
 - FSR `ffx_fsr2_*.dll`, `ffx_frameinterpolation_*.dll`, `amd_fidelityfx_*.dll`, `ffx_api*.dll` — a hint still, even though `amd_fidelityfx_dx12.dll` / `_upscaler_dx12.dll` / `_framegeneration_dx12.dll` are *hooked* since 2026-09-04: the measured chip comes from the dispatch, never from the file
 - XeSS `libxess.dll`, XeFG `libxess_fg.dll`
 - DXR-capable: `d3d12.dll` usage + RT-capable GPU (capability only — says nothing about the game)
+- **Vulkan (since P4 PR-2, 2026-09-14) — a code-level fact, not a rule.** The rules can only ask about files
+  beside the executable, and the Vulkan loader is not one of them (`vulkan-1.dll` lives in System32). So
+  `GameFileProbe` reads the executable's import and delay-load tables (`Infrastructure.Detection.PeImports`,
+  bounded and read-only) and looks for the loader's name as an ASCII or UTF-16 string in the bounded scan;
+  `StaticDetectionResult.UsesVulkan` is true / false / null (could not read), and the sweep stores a true as the
+  id `vulkan` in `capability_flags` beside the rule ids. It is what `17_HOOK_ENGINE` §Vulkan's register-on-consent
+  automation keys on, and what the game page shows as "Supports Vulkan". Never a claim about what a session
+  presented — that is `sessions.api`, measured.
 
 The UI wording is deliberate: **"Supports DLSS-G"** (capability, from files) versus **"Frame Generation: DLSS-G ×1.9"** (measured, from this session). Users conflating these is exactly the confusion the old design created.
 

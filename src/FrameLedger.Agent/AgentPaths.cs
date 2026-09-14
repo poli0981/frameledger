@@ -13,6 +13,13 @@ internal sealed record AgentPaths(string DataDirectory)
 {
     public static AgentPaths Default => new(LedgerPaths.DefaultDirectory);
 
+    /// <summary>
+    /// The profile ledger (<c>%LOCALAPPDATA%\FrameLedger</c>) rather than a <c>--data-dir</c>: machine-wide side effects —
+    /// the Vulkan layer's HKCU registration (P4 PR-2) — are taken only here, so a test or developer ledger never
+    /// reaches the user's registry (HANDOFF D6/D17's shape).
+    /// </summary>
+    public bool IsProfile => string.Equals(Path.GetFullPath(DataDirectory), Path.GetFullPath(LedgerPaths.DefaultDirectory), StringComparison.OrdinalIgnoreCase);
+
     public string Database => Path.Combine(DataDirectory, LedgerPaths.DatabaseFileName);
 
     public string Tmp => Path.Combine(DataDirectory, "tmp");
