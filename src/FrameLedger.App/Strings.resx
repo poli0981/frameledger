@@ -1047,9 +1047,6 @@
   <data name="Settings_Agent_Task_Label" xml:space="preserve">
     <value>Start the agent at logon</value>
   </data>
-  <data name="Settings_Agent_Task_Later" xml:space="preserve">
-    <value>The scheduled task arrives with the tray build; until then the app starts the agent beside itself when it opens.</value>
-  </data>
   <data name="Settings_Applied" xml:space="preserve">
     <value>Applied. The capture agent reads it at the next session start.</value>
   </data>
@@ -1122,9 +1119,6 @@
   <data name="Settings_MinimizeToTray_Label" xml:space="preserve">
     <value>Minimize to tray on close</value>
   </data>
-  <data name="Settings_MinimizeToTray_Later" xml:space="preserve">
-    <value>The tray arrives with the next build; the switch is stored now.</value>
-  </data>
   <data name="Settings_OnlineMetadata_Body" xml:space="preserve">
     <value>Off by default. FrameLedger sends no telemetry and makes no network call except the update check, the detection-rules fetch, and — only with this on — store metadata for your games. Nothing about your sessions ever leaves this machine.</value>
   </data>
@@ -1165,7 +1159,7 @@
     <value>Vulkan layer</value>
   </data>
   <data name="Settings_VkLayer_NotRegistered" xml:space="preserve">
-    <value>Not registered. Vulkan games are measured in launch mode only, through a per-launch manifest; machine-wide registration arrives with the tray build.</value>
+    <value>Not registered. Vulkan games launched from FrameLedger are measured through a per-launch manifest; registration is a repair tool, not the normal path.</value>
   </data>
   <data name="Settings_VkLayer_Registered" xml:space="preserve">
     <value>Registered for this user (HKCU)</value>
@@ -1175,5 +1169,80 @@
   </data>
   <data name="Settings_Window_Header" xml:space="preserve">
     <value>Window</value>
+  </data>
+  <data name="Settings_Agent_Task_Installed" xml:space="preserve">
+    <value>Installed: the agent starts at logon with lowest privileges.</value>
+  </data>
+  <data name="Settings_Agent_Task_NotInstalled" xml:space="preserve">
+    <value>Not installed: the app starts the agent beside itself when it opens.</value>
+  </data>
+  <data name="Settings_Agent_Task_Register" xml:space="preserve">
+    <value>Register</value>
+  </data>
+  <data name="Settings_Agent_Task_Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="Settings_Agent_Task_Repair" xml:space="preserve">
+    <value>Repair</value>
+  </data>
+  <data name="Settings_Agent_Task_Stale" xml:space="preserve">
+    <value>Installed for another location; Repair points it at this install.</value>
+  </data>
+  <data name="Settings_Agent_Task_Unknown" xml:space="preserve">
+    <value>Task Scheduler did not answer.</value>
+  </data>
+  <data name="Settings_MinimizeToTray_Body" xml:space="preserve">
+    <value>Closing the window keeps FrameLedger in the tray; Exit is in the tray menu and the File menu.</value>
+  </data>
+  <data name="Settings_Tool_Done_Format" xml:space="preserve">
+    <value>{0}: done.</value>
+  </data>
+  <data name="Settings_Tool_Failed_Format" xml:space="preserve">
+    <value>{0} failed (exit {1}): {2}</value>
+  </data>
+  <data name="Settings_VkLayer_NotStaged" xml:space="preserve">
+    <value>The layer DLL is not beside the capture agent; there is nothing to register.</value>
+  </data>
+  <data name="Settings_VkLayer_Note" xml:space="preserve">
+    <value>Registration puts the layer into every Vulkan process of this user, where it stays inert unless FrameLedger launched that process. Launching from FrameLedger needs no registration; the buttons repair state and are allowed only while a game has hooking on.</value>
+  </data>
+  <data name="Settings_VkLayer_Register" xml:space="preserve">
+    <value>Register</value>
+  </data>
+  <data name="Settings_VkLayer_Unregister" xml:space="preserve">
+    <value>Unregister</value>
+  </data>
+  <data name="Tray_AgentStatus" xml:space="preserve">
+    <value>Agent status</value>
+  </data>
+  <data name="Tray_Exit" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="Tray_Open" xml:space="preserve">
+    <value>Open FrameLedger</value>
+  </data>
+  <data name="Tray_Pause" xml:space="preserve">
+    <value>Pause capture</value>
+  </data>
+  <data name="Tray_Resume" xml:space="preserve">
+    <value>Resume capture</value>
+  </data>
+  <data name="Tray_SessionSaved_Body_Format" xml:space="preserve">
+    <value>{0} — click to view</value>
+  </data>
+  <data name="Tray_SessionSaved_Title" xml:space="preserve">
+    <value>Session saved</value>
+  </data>
+  <data name="Tray_State_Capturing_Format" xml:space="preserve">
+    <value>FrameLedger — measuring {0}</value>
+  </data>
+  <data name="Tray_State_Idle" xml:space="preserve">
+    <value>FrameLedger — idle</value>
+  </data>
+  <data name="Tray_State_Paused" xml:space="preserve">
+    <value>FrameLedger — capture paused</value>
+  </data>
+  <data name="Tray_State_RecordingOnly_Format" xml:space="preserve">
+    <value>FrameLedger — recording {0} without measuring</value>
   </data>
 </root>

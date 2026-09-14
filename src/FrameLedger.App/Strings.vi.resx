@@ -1042,9 +1042,6 @@
   <data name="Settings_Agent_Task_Label" xml:space="preserve">
     <value>Khởi động agent khi đăng nhập</value>
   </data>
-  <data name="Settings_Agent_Task_Later" xml:space="preserve">
-    <value>Tác vụ theo lịch sẽ có ở bản tray; hiện tại ứng dụng tự khởi động agent cạnh nó khi mở.</value>
-  </data>
   <data name="Settings_Applied" xml:space="preserve">
     <value>Đã áp dụng. Capture agent đọc ở lần bắt đầu phiên kế tiếp.</value>
   </data>
@@ -1117,9 +1114,6 @@
   <data name="Settings_MinimizeToTray_Label" xml:space="preserve">
     <value>Thu vào khay khi đóng</value>
   </data>
-  <data name="Settings_MinimizeToTray_Later" xml:space="preserve">
-    <value>Khay hệ thống sẽ có ở bản kế; công tắc được lưu ngay từ giờ.</value>
-  </data>
   <data name="Settings_OnlineMetadata_Body" xml:space="preserve">
     <value>Mặc định tắt. FrameLedger không gửi telemetry và không gọi mạng ngoài kiểm tra cập nhật, tải quy tắc phát hiện, và — chỉ khi bật — siêu dữ liệu cửa hàng cho game của bạn. Không dữ liệu phiên nào rời khỏi máy này.</value>
   </data>
@@ -1160,7 +1154,7 @@
     <value>Lớp Vulkan</value>
   </data>
   <data name="Settings_VkLayer_NotRegistered" xml:space="preserve">
-    <value>Chưa đăng ký. Game Vulkan chỉ được đo ở chế độ khởi chạy, qua manifest theo từng lần chạy; đăng ký toàn máy sẽ có ở bản tray.</value>
+    <value>Chưa đăng ký. Game Vulkan khởi chạy từ FrameLedger được đo qua manifest theo từng lần chạy; đăng ký là công cụ sửa lỗi, không phải đường thường.</value>
   </data>
   <data name="Settings_VkLayer_Registered" xml:space="preserve">
     <value>Đã đăng ký cho người dùng này (HKCU)</value>
@@ -1170,5 +1164,80 @@
   </data>
   <data name="Settings_Window_Header" xml:space="preserve">
     <value>Cửa sổ</value>
+  </data>
+  <data name="Settings_Agent_Task_Installed" xml:space="preserve">
+    <value>Đã cài: agent khởi động khi đăng nhập với quyền thấp nhất.</value>
+  </data>
+  <data name="Settings_Agent_Task_NotInstalled" xml:space="preserve">
+    <value>Chưa cài: ứng dụng tự khởi động agent cạnh nó khi mở.</value>
+  </data>
+  <data name="Settings_Agent_Task_Register" xml:space="preserve">
+    <value>Đăng ký</value>
+  </data>
+  <data name="Settings_Agent_Task_Remove" xml:space="preserve">
+    <value>Gỡ</value>
+  </data>
+  <data name="Settings_Agent_Task_Repair" xml:space="preserve">
+    <value>Sửa</value>
+  </data>
+  <data name="Settings_Agent_Task_Stale" xml:space="preserve">
+    <value>Đã cài cho vị trí khác; Sửa sẽ trỏ về bản cài này.</value>
+  </data>
+  <data name="Settings_Agent_Task_Unknown" xml:space="preserve">
+    <value>Task Scheduler không trả lời.</value>
+  </data>
+  <data name="Settings_MinimizeToTray_Body" xml:space="preserve">
+    <value>Đóng cửa sổ sẽ giữ FrameLedger trong khay; Thoát nằm ở menu khay và menu File.</value>
+  </data>
+  <data name="Settings_Tool_Done_Format" xml:space="preserve">
+    <value>{0}: xong.</value>
+  </data>
+  <data name="Settings_Tool_Failed_Format" xml:space="preserve">
+    <value>{0} thất bại (exit {1}): {2}</value>
+  </data>
+  <data name="Settings_VkLayer_NotStaged" xml:space="preserve">
+    <value>Không có DLL lớp bên cạnh capture agent; không có gì để đăng ký.</value>
+  </data>
+  <data name="Settings_VkLayer_Note" xml:space="preserve">
+    <value>Đăng ký đưa lớp vào mọi tiến trình Vulkan của người dùng này, ở đó nó bất hoạt trừ khi FrameLedger khởi chạy tiến trình đó. Khởi chạy từ FrameLedger không cần đăng ký; các nút chỉ sửa trạng thái và chỉ được phép khi có game đang bật hooking.</value>
+  </data>
+  <data name="Settings_VkLayer_Register" xml:space="preserve">
+    <value>Đăng ký</value>
+  </data>
+  <data name="Settings_VkLayer_Unregister" xml:space="preserve">
+    <value>Huỷ đăng ký</value>
+  </data>
+  <data name="Tray_AgentStatus" xml:space="preserve">
+    <value>Trạng thái agent</value>
+  </data>
+  <data name="Tray_Exit" xml:space="preserve">
+    <value>Thoát</value>
+  </data>
+  <data name="Tray_Open" xml:space="preserve">
+    <value>Mở FrameLedger</value>
+  </data>
+  <data name="Tray_Pause" xml:space="preserve">
+    <value>Tạm dừng thu thập</value>
+  </data>
+  <data name="Tray_Resume" xml:space="preserve">
+    <value>Tiếp tục thu thập</value>
+  </data>
+  <data name="Tray_SessionSaved_Body_Format" xml:space="preserve">
+    <value>{0} — nhấn để xem</value>
+  </data>
+  <data name="Tray_SessionSaved_Title" xml:space="preserve">
+    <value>Đã lưu phiên</value>
+  </data>
+  <data name="Tray_State_Capturing_Format" xml:space="preserve">
+    <value>FrameLedger — đang đo {0}</value>
+  </data>
+  <data name="Tray_State_Idle" xml:space="preserve">
+    <value>FrameLedger — đang chờ</value>
+  </data>
+  <data name="Tray_State_Paused" xml:space="preserve">
+    <value>FrameLedger — đã tạm dừng thu thập</value>
+  </data>
+  <data name="Tray_State_RecordingOnly_Format" xml:space="preserve">
+    <value>FrameLedger — đang ghi {0} mà không đo</value>
   </data>
 </root>

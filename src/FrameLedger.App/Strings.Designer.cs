@@ -296,8 +296,14 @@ public static class Strings
         nameof(Settings_Agent_Elevation_Label),
         nameof(Settings_Agent_Header),
         nameof(Settings_Agent_NotElevated),
+        nameof(Settings_Agent_Task_Installed),
         nameof(Settings_Agent_Task_Label),
-        nameof(Settings_Agent_Task_Later),
+        nameof(Settings_Agent_Task_NotInstalled),
+        nameof(Settings_Agent_Task_Register),
+        nameof(Settings_Agent_Task_Remove),
+        nameof(Settings_Agent_Task_Repair),
+        nameof(Settings_Agent_Task_Stale),
+        nameof(Settings_Agent_Task_Unknown),
         nameof(Settings_Appearance_Header),
         nameof(Settings_Applied),
         nameof(Settings_Background_Body),
@@ -323,8 +329,8 @@ public static class Strings
         nameof(Settings_LogDebug_Body),
         nameof(Settings_LogDebug_Label),
         nameof(Settings_Logging_Header),
+        nameof(Settings_MinimizeToTray_Body),
         nameof(Settings_MinimizeToTray_Label),
-        nameof(Settings_MinimizeToTray_Later),
         nameof(Settings_MinSession_Body),
         nameof(Settings_MinSession_Label),
         nameof(Settings_OnlineMetadata_Body),
@@ -340,13 +346,19 @@ public static class Strings
         nameof(Settings_Theme_Label),
         nameof(Settings_Theme_Light),
         nameof(Settings_Theme_System),
+        nameof(Settings_Tool_Done_Format),
+        nameof(Settings_Tool_Failed_Format),
         nameof(Settings_UpdateChannel_Body),
         nameof(Settings_UpdateChannel_Label),
         nameof(Settings_Updates_Header),
         nameof(Settings_VkLayer_Label),
+        nameof(Settings_VkLayer_Note),
         nameof(Settings_VkLayer_NotRegistered),
+        nameof(Settings_VkLayer_NotStaged),
+        nameof(Settings_VkLayer_Register),
         nameof(Settings_VkLayer_Registered),
         nameof(Settings_VkLayer_Unknown),
+        nameof(Settings_VkLayer_Unregister),
         nameof(Settings_Window_Header),
         nameof(Summary_Annotations_Header),
         nameof(Summary_Crash_Body),
@@ -393,6 +405,17 @@ public static class Strings
         nameof(Tier_NA_Tooltip),
         nameof(Tier_NotHooked),
         nameof(Tier_NotHooked_Tooltip),
+        nameof(Tray_AgentStatus),
+        nameof(Tray_Exit),
+        nameof(Tray_Open),
+        nameof(Tray_Pause),
+        nameof(Tray_Resume),
+        nameof(Tray_SessionSaved_Body_Format),
+        nameof(Tray_SessionSaved_Title),
+        nameof(Tray_State_Capturing_Format),
+        nameof(Tray_State_Idle),
+        nameof(Tray_State_Paused),
+        nameof(Tray_State_RecordingOnly_Format),
         nameof(Trend_Average_Note),
         nameof(Trend_Axis_Date),
         nameof(Trend_Change_Cpu),
@@ -954,9 +977,21 @@ public static class Strings
 
     public static string Settings_Agent_NotElevated => ResourceManager.GetString(nameof(Settings_Agent_NotElevated), Culture) ?? nameof(Settings_Agent_NotElevated);
 
+    public static string Settings_Agent_Task_Installed => ResourceManager.GetString(nameof(Settings_Agent_Task_Installed), Culture) ?? nameof(Settings_Agent_Task_Installed);
+
     public static string Settings_Agent_Task_Label => ResourceManager.GetString(nameof(Settings_Agent_Task_Label), Culture) ?? nameof(Settings_Agent_Task_Label);
 
-    public static string Settings_Agent_Task_Later => ResourceManager.GetString(nameof(Settings_Agent_Task_Later), Culture) ?? nameof(Settings_Agent_Task_Later);
+    public static string Settings_Agent_Task_NotInstalled => ResourceManager.GetString(nameof(Settings_Agent_Task_NotInstalled), Culture) ?? nameof(Settings_Agent_Task_NotInstalled);
+
+    public static string Settings_Agent_Task_Register => ResourceManager.GetString(nameof(Settings_Agent_Task_Register), Culture) ?? nameof(Settings_Agent_Task_Register);
+
+    public static string Settings_Agent_Task_Remove => ResourceManager.GetString(nameof(Settings_Agent_Task_Remove), Culture) ?? nameof(Settings_Agent_Task_Remove);
+
+    public static string Settings_Agent_Task_Repair => ResourceManager.GetString(nameof(Settings_Agent_Task_Repair), Culture) ?? nameof(Settings_Agent_Task_Repair);
+
+    public static string Settings_Agent_Task_Stale => ResourceManager.GetString(nameof(Settings_Agent_Task_Stale), Culture) ?? nameof(Settings_Agent_Task_Stale);
+
+    public static string Settings_Agent_Task_Unknown => ResourceManager.GetString(nameof(Settings_Agent_Task_Unknown), Culture) ?? nameof(Settings_Agent_Task_Unknown);
 
     public static string Settings_Appearance_Header => ResourceManager.GetString(nameof(Settings_Appearance_Header), Culture) ?? nameof(Settings_Appearance_Header);
 
@@ -1008,9 +1043,9 @@ public static class Strings
 
     public static string Settings_Logging_Header => ResourceManager.GetString(nameof(Settings_Logging_Header), Culture) ?? nameof(Settings_Logging_Header);
 
-    public static string Settings_MinimizeToTray_Label => ResourceManager.GetString(nameof(Settings_MinimizeToTray_Label), Culture) ?? nameof(Settings_MinimizeToTray_Label);
+    public static string Settings_MinimizeToTray_Body => ResourceManager.GetString(nameof(Settings_MinimizeToTray_Body), Culture) ?? nameof(Settings_MinimizeToTray_Body);
 
-    public static string Settings_MinimizeToTray_Later => ResourceManager.GetString(nameof(Settings_MinimizeToTray_Later), Culture) ?? nameof(Settings_MinimizeToTray_Later);
+    public static string Settings_MinimizeToTray_Label => ResourceManager.GetString(nameof(Settings_MinimizeToTray_Label), Culture) ?? nameof(Settings_MinimizeToTray_Label);
 
     public static string Settings_MinSession_Body => ResourceManager.GetString(nameof(Settings_MinSession_Body), Culture) ?? nameof(Settings_MinSession_Body);
 
@@ -1042,6 +1077,10 @@ public static class Strings
 
     public static string Settings_Theme_System => ResourceManager.GetString(nameof(Settings_Theme_System), Culture) ?? nameof(Settings_Theme_System);
 
+    public static string Settings_Tool_Done_Format => ResourceManager.GetString(nameof(Settings_Tool_Done_Format), Culture) ?? nameof(Settings_Tool_Done_Format);
+
+    public static string Settings_Tool_Failed_Format => ResourceManager.GetString(nameof(Settings_Tool_Failed_Format), Culture) ?? nameof(Settings_Tool_Failed_Format);
+
     public static string Settings_UpdateChannel_Body => ResourceManager.GetString(nameof(Settings_UpdateChannel_Body), Culture) ?? nameof(Settings_UpdateChannel_Body);
 
     public static string Settings_UpdateChannel_Label => ResourceManager.GetString(nameof(Settings_UpdateChannel_Label), Culture) ?? nameof(Settings_UpdateChannel_Label);
@@ -1050,11 +1089,19 @@ public static class Strings
 
     public static string Settings_VkLayer_Label => ResourceManager.GetString(nameof(Settings_VkLayer_Label), Culture) ?? nameof(Settings_VkLayer_Label);
 
+    public static string Settings_VkLayer_Note => ResourceManager.GetString(nameof(Settings_VkLayer_Note), Culture) ?? nameof(Settings_VkLayer_Note);
+
     public static string Settings_VkLayer_NotRegistered => ResourceManager.GetString(nameof(Settings_VkLayer_NotRegistered), Culture) ?? nameof(Settings_VkLayer_NotRegistered);
+
+    public static string Settings_VkLayer_NotStaged => ResourceManager.GetString(nameof(Settings_VkLayer_NotStaged), Culture) ?? nameof(Settings_VkLayer_NotStaged);
+
+    public static string Settings_VkLayer_Register => ResourceManager.GetString(nameof(Settings_VkLayer_Register), Culture) ?? nameof(Settings_VkLayer_Register);
 
     public static string Settings_VkLayer_Registered => ResourceManager.GetString(nameof(Settings_VkLayer_Registered), Culture) ?? nameof(Settings_VkLayer_Registered);
 
     public static string Settings_VkLayer_Unknown => ResourceManager.GetString(nameof(Settings_VkLayer_Unknown), Culture) ?? nameof(Settings_VkLayer_Unknown);
+
+    public static string Settings_VkLayer_Unregister => ResourceManager.GetString(nameof(Settings_VkLayer_Unregister), Culture) ?? nameof(Settings_VkLayer_Unregister);
 
     public static string Settings_Window_Header => ResourceManager.GetString(nameof(Settings_Window_Header), Culture) ?? nameof(Settings_Window_Header);
 
@@ -1147,6 +1194,28 @@ public static class Strings
     public static string Tier_NotHooked => ResourceManager.GetString(nameof(Tier_NotHooked), Culture) ?? nameof(Tier_NotHooked);
 
     public static string Tier_NotHooked_Tooltip => ResourceManager.GetString(nameof(Tier_NotHooked_Tooltip), Culture) ?? nameof(Tier_NotHooked_Tooltip);
+
+    public static string Tray_AgentStatus => ResourceManager.GetString(nameof(Tray_AgentStatus), Culture) ?? nameof(Tray_AgentStatus);
+
+    public static string Tray_Exit => ResourceManager.GetString(nameof(Tray_Exit), Culture) ?? nameof(Tray_Exit);
+
+    public static string Tray_Open => ResourceManager.GetString(nameof(Tray_Open), Culture) ?? nameof(Tray_Open);
+
+    public static string Tray_Pause => ResourceManager.GetString(nameof(Tray_Pause), Culture) ?? nameof(Tray_Pause);
+
+    public static string Tray_Resume => ResourceManager.GetString(nameof(Tray_Resume), Culture) ?? nameof(Tray_Resume);
+
+    public static string Tray_SessionSaved_Body_Format => ResourceManager.GetString(nameof(Tray_SessionSaved_Body_Format), Culture) ?? nameof(Tray_SessionSaved_Body_Format);
+
+    public static string Tray_SessionSaved_Title => ResourceManager.GetString(nameof(Tray_SessionSaved_Title), Culture) ?? nameof(Tray_SessionSaved_Title);
+
+    public static string Tray_State_Capturing_Format => ResourceManager.GetString(nameof(Tray_State_Capturing_Format), Culture) ?? nameof(Tray_State_Capturing_Format);
+
+    public static string Tray_State_Idle => ResourceManager.GetString(nameof(Tray_State_Idle), Culture) ?? nameof(Tray_State_Idle);
+
+    public static string Tray_State_Paused => ResourceManager.GetString(nameof(Tray_State_Paused), Culture) ?? nameof(Tray_State_Paused);
+
+    public static string Tray_State_RecordingOnly_Format => ResourceManager.GetString(nameof(Tray_State_RecordingOnly_Format), Culture) ?? nameof(Tray_State_RecordingOnly_Format);
 
     public static string Trend_Average_Note => ResourceManager.GetString(nameof(Trend_Average_Note), Culture) ?? nameof(Trend_Average_Note);
 

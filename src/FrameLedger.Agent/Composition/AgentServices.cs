@@ -125,7 +125,7 @@ internal static class AgentServices
             SafetyDisclosure.Version,
             TimeProvider.System));
         services.AddSingleton<IIpcRequestHandler>(static sp => new AgentRequestHandler(
-            AgentIdentityFactory.OfThisProcess(),
+            AgentIdentityFactory.OfThisProcess(sp.GetRequiredService<AgentPaths>().VkLayerDirectory),
             TelemetryDescriptor(),
             () => sp.GetRequiredService<SessionEventPublisher>().Status,
             () => sp.GetRequiredService<AgentCommandHandler>()));
