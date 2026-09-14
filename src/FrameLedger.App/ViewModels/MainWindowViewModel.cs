@@ -33,8 +33,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
     private readonly AddGameFlow _addGame;
 
-    public MainWindowViewModel(AgentConnection agent, ISnackbarService snackbar, IHostApplicationLifetime lifetime, AddGameFlow addGame)
+    public MainWindowViewModel(AgentConnection agent, ISnackbarService snackbar, IHostApplicationLifetime lifetime, AddGameFlow addGame, SafetyNotices notices)
     {
+        Notices = notices ?? throw new ArgumentNullException(nameof(notices));
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _snackbar = snackbar ?? throw new ArgumentNullException(nameof(snackbar));
         _lifetime = lifetime ?? throw new ArgumentNullException(nameof(lifetime));
@@ -44,6 +45,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     }
 
     public static string Title => Strings.App_Title;
+
+    /// <summary>08_UI §Notifications policy: the safety events, as persistent InfoBars above every page — never toasts.</summary>
+    public SafetyNotices Notices { get; }
 
     public void Dispose() => _agent.Changed -= OnAgentChanged;
 
@@ -61,6 +65,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
     [RelayCommand]
     private void RetryAgent() => _agent.RetryNow();
+
+    /// <summary>The user read it (on a refusal: acknowledged that the session is recorded without measuring). Nothing else changes — the Agent already did what the notice says.</summary>
+    [RelayCommand]
+    private void DismissNotice(SafetyNotice notice) => Notices.Dismiss(notice);
 
     /// <summary>File ▸ Add game… (FR-1.1): the same flow as the Games page's button.</summary>
     [RelayCommand]

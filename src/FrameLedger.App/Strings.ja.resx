@@ -146,7 +146,7 @@
     <comment>review</comment>
   </data>
   <data name="Logs_Empty" xml:space="preserve">
-    <value>ログビューアーは後のビルドで提供されます。ファイルはデータフォルダーの logs にあります。</value>
+    <value>このソースのログファイルはまだありません。</value>
     <comment>review</comment>
   </data>
   <data name="Logs_Header" xml:space="preserve">
@@ -1283,6 +1283,282 @@
   </data>
   <data name="Trend_Metric_P1Low" xml:space="preserve">
     <value>1% Low</value>
+    <comment>review</comment>
+  </data>
+  <data name="Diag_Written_Format" xml:space="preserve">
+    <value>診断情報を {0} に書き出しました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Logs_Bundle_Exported_Format" xml:space="preserve">
+    <value>バグバンドルを書き出しました: {0} ({1} ファイル)。どこにも送信されていません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Logs_Bundle_Failed_Format" xml:space="preserve">
+    <value>バグバンドルの書き出しに失敗しました: {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Logs_ExportBundle" xml:space="preserve">
+    <value>バグバンドルを書き出す</value>
+    <comment>review</comment>
+  </data>
+  <data name="Logs_Level_All" xml:space="preserve">
+    <value>すべてのレベル</value>
+    <comment>review</comment>
+  </data>
+  <data name="Logs_Level_Error" xml:space="preserve">
+    <value>エラーのみ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Logs_Level_Warning" xml:space="preserve">
+    <value>警告とエラー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Logs_OpenFolder" xml:space="preserve">
+    <value>ログフォルダーを開く</value>
+    <comment>review</comment>
+  </data>
+  <data name="Logs_Pause" xml:space="preserve">
+    <value>一時停止</value>
+    <comment>review</comment>
+  </data>
+  <data name="Logs_Search_Placeholder" xml:space="preserve">
+    <value>検索</value>
+    <comment>review</comment>
+  </data>
+  <data name="Logs_Showing_Format" xml:space="preserve">
+    <value>{1} の {0} 行 ({2})</value>
+    <comment>review</comment>
+  </data>
+  <data name="Logs_Source_Agent" xml:space="preserve">
+    <value>エージェント</value>
+    <comment>review</comment>
+  </data>
+  <data name="Logs_Source_Ui" xml:space="preserve">
+    <value>アプリ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Notice_Degraded_Body_Format" xml:space="preserve">
+    <value>フックが停止しました ({0})。セッションは実測なしで続行します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Notice_Degraded_Title" xml:space="preserve">
+    <value>実測を停止しました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Notice_Dismiss" xml:space="preserve">
+    <value>閉じる</value>
+    <comment>review</comment>
+  </data>
+  <data name="Notice_Error_Title" xml:space="preserve">
+    <value>キャプチャエラー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Notice_Refused_Recording" xml:space="preserve">
+    <value>セッションは引き続き記録されます (時間とハードウェアテレメトリ) が、フレーム由来の値はすべて N/A です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Notice_Refused_Title_Format" xml:space="preserve">
+    <value>{0}: フック拒否</value>
+    <comment>review</comment>
+  </data>
+  <data name="Notice_Unhooked_Title" xml:space="preserve">
+    <value>実測を停止しました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_Elevated" xml:space="preserve">
+    <value>昇格して実行中です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_Elevation_Body" xml:space="preserve">
+    <value>昇格はどのキャプチャティアにも必須ではありません。CPU 温度 (PawnIO 経由) と、昇格して動作するゲームへのアタッチを任意で有効にするだけです。フック・実測・記録はすべて昇格なしで動作します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_Elevation_Label" xml:space="preserve">
+    <value>昇格</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_Header" xml:space="preserve">
+    <value>キャプチャエージェント</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_NotElevated" xml:space="preserve">
+    <value>標準ユーザーとして実行中です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_Task_Label" xml:space="preserve">
+    <value>ログオン時にエージェントを起動</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_Task_Later" xml:space="preserve">
+    <value>スケジュールタスクはトレイビルドで追加されます。それまではアプリが起動時に隣のエージェントを開始します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Applied" xml:space="preserve">
+    <value>適用しました。キャプチャエージェントは次回のセッション開始時に読み込みます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Background_Body" xml:space="preserve">
+    <value>キャプチャエージェントは追跡中のゲームを監視します。自身が起動していないゲームも記録され、フックが有効で Vulkan タイトルでない場合のみ実測されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Background_Label" xml:space="preserve">
+    <value>FrameLedger 外から起動したゲームを記録</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Capture_Header" xml:space="preserve">
+    <value>キャプチャ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Channel_Beta" xml:space="preserve">
+    <value>ベータ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Channel_Stable" xml:space="preserve">
+    <value>安定版</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_HookedGames_Empty" xml:space="preserve">
+    <value>フックが有効なゲームはありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_HookedGames_Label" xml:space="preserve">
+    <value>フック有効なゲーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_HookedGames_Revoke" xml:space="preserve">
+    <value>無効にする</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Interval_Body" xml:space="preserve">
+    <value>セッション中にハードウェアテレメトリを取得する間隔 (500〜2000)。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Interval_Label" xml:space="preserve">
+    <value>センサー間隔 (ms)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Invalid_Format" xml:space="preserve">
+    <value>{0} は {1}〜{2} の範囲外です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_KillSwitch_Body" xml:space="preserve">
+    <value>オンにすると、各ゲームの設定に関係なくどのゲームにもインジェクトせず、Vulkan レイヤーも有効になりません。実測中のセッションは次回の安全スキャンで停止します。セッションは実測なしで記録されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_KillSwitch_Label" xml:space="preserve">
+    <value>すべてのフックを無効化</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_KillSwitch_Off" xml:space="preserve">
+    <value>ゲームごとの設定に従う</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_KillSwitch_On" xml:space="preserve">
+    <value>すべてのフックが無効</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Legal_Header" xml:space="preserve">
+    <value>法的情報</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Legal_Reopen" xml:space="preserve">
+    <value>法的文書を再度開く</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_LogDebug_Body" xml:space="preserve">
+    <value>このアプリには直ちに適用されます。キャプチャエージェントは独自のレベルを保持します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_LogDebug_Label" xml:space="preserve">
+    <value>デバッグログ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Logging_Header" xml:space="preserve">
+    <value>ログ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_MinSession_Body" xml:space="preserve">
+    <value>これより短いセッションは破棄されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_MinSession_Label" xml:space="preserve">
+    <value>最小セッション長 (秒)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_MinimizeToTray_Label" xml:space="preserve">
+    <value>閉じるときにトレイに最小化</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_MinimizeToTray_Later" xml:space="preserve">
+    <value>トレイは次のビルドで追加されます。スイッチは今から保存されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_OnlineMetadata_Body" xml:space="preserve">
+    <value>既定ではオフです。FrameLedger はテレメトリを送信せず、更新確認、検出ルールの取得、そして (これがオンの場合のみ) ゲームのストアメタデータ以外にネットワーク通信を行いません。セッションに関する情報がこのマシンから出ることはありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_OnlineMetadata_Label" xml:space="preserve">
+    <value>ストアのメタデータをオンラインで取得</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Policy_Header" xml:space="preserve">
+    <value>記録</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Privacy_Header" xml:space="preserve">
+    <value>プライバシー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Retention_Body" xml:space="preserve">
+    <value>最新セッションのフレーム単位データを保持し、古いセッションは集計値のみ残ります。0 はすべて保持します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Retention_Label" xml:space="preserve">
+    <value>ゲームごとに保持する生データ数</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_SafetyDocs" xml:space="preserve">
+    <value>フックが行うこと・行わないことを読む</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_StartWithWindows_Body" xml:space="preserve">
+    <value>このユーザーのみの Run エントリで、マシン全体には影響しません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_StartWithWindows_Label" xml:space="preserve">
+    <value>Windows 起動時に FrameLedger を開始</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_UpdateChannel_Body" xml:space="preserve">
+    <value>今すぐ保存されます。アップデーターは後のビルドで追加されます。ゲームがフックされている間は更新されません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_UpdateChannel_Label" xml:space="preserve">
+    <value>チャネル</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Updates_Header" xml:space="preserve">
+    <value>更新</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_VkLayer_Label" xml:space="preserve">
+    <value>Vulkan レイヤー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_VkLayer_NotRegistered" xml:space="preserve">
+    <value>未登録です。Vulkan ゲームは起動モードでのみ、起動ごとのマニフェストで実測されます。マシン全体への登録はトレイビルドで追加されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_VkLayer_Registered" xml:space="preserve">
+    <value>このユーザーに登録済み (HKCU)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_VkLayer_Unknown" xml:space="preserve">
+    <value>キャプチャエージェントが応答するまで不明です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Window_Header" xml:space="preserve">
+    <value>ウィンドウ</value>
     <comment>review</comment>
   </data>
 </root>

@@ -115,7 +115,7 @@
     <value>Games</value>
   </data>
   <data name="Logs_Empty" xml:space="preserve">
-    <value>The log viewer arrives with a later build; the files are in the data folder under logs.</value>
+    <value>No log file yet for this source.</value>
   </data>
   <data name="Logs_Header" xml:space="preserve">
     <value>Logs</value>
@@ -968,5 +968,212 @@
   </data>
   <data name="Trend_Metric_P1Low" xml:space="preserve">
     <value>1% Low</value>
+  </data>
+  <data name="Diag_Written_Format" xml:space="preserve">
+    <value>Diagnostics written to {0}</value>
+  </data>
+  <data name="Logs_Bundle_Exported_Format" xml:space="preserve">
+    <value>Bug bundle written: {0} ({1} files). Nothing was sent anywhere.</value>
+  </data>
+  <data name="Logs_Bundle_Failed_Format" xml:space="preserve">
+    <value>Bug bundle failed: {0}</value>
+  </data>
+  <data name="Logs_ExportBundle" xml:space="preserve">
+    <value>Export bug bundle</value>
+  </data>
+  <data name="Logs_Level_All" xml:space="preserve">
+    <value>All levels</value>
+  </data>
+  <data name="Logs_Level_Error" xml:space="preserve">
+    <value>Errors only</value>
+  </data>
+  <data name="Logs_Level_Warning" xml:space="preserve">
+    <value>Warnings and errors</value>
+  </data>
+  <data name="Logs_OpenFolder" xml:space="preserve">
+    <value>Open logs folder</value>
+  </data>
+  <data name="Logs_Pause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="Logs_Search_Placeholder" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="Logs_Showing_Format" xml:space="preserve">
+    <value>{0} lines of {1} ({2})</value>
+  </data>
+  <data name="Logs_Source_Agent" xml:space="preserve">
+    <value>Agent</value>
+  </data>
+  <data name="Logs_Source_Ui" xml:space="preserve">
+    <value>App</value>
+  </data>
+  <data name="Notice_Degraded_Body_Format" xml:space="preserve">
+    <value>The hook stopped ({0}); the session continues without measuring.</value>
+  </data>
+  <data name="Notice_Degraded_Title" xml:space="preserve">
+    <value>Measurement stopped</value>
+  </data>
+  <data name="Notice_Dismiss" xml:space="preserve">
+    <value>Dismiss</value>
+  </data>
+  <data name="Notice_Error_Title" xml:space="preserve">
+    <value>Capture error</value>
+  </data>
+  <data name="Notice_Refused_Recording" xml:space="preserve">
+    <value>The session is still recorded — duration and hardware telemetry — with every frame-derived value at N/A.</value>
+  </data>
+  <data name="Notice_Refused_Title_Format" xml:space="preserve">
+    <value>{0}: hooking refused</value>
+  </data>
+  <data name="Notice_Unhooked_Title" xml:space="preserve">
+    <value>Measurement stopped</value>
+  </data>
+  <data name="Settings_Agent_Elevated" xml:space="preserve">
+    <value>Running elevated.</value>
+  </data>
+  <data name="Settings_Agent_Elevation_Body" xml:space="preserve">
+    <value>Elevation is not required by any capture tier. It optionally unlocks CPU temperature (through PawnIO) and attaching to games that run elevated themselves. Everything else — hooking, measuring, recording — works without it.</value>
+  </data>
+  <data name="Settings_Agent_Elevation_Label" xml:space="preserve">
+    <value>Elevation</value>
+  </data>
+  <data name="Settings_Agent_Header" xml:space="preserve">
+    <value>Capture agent</value>
+  </data>
+  <data name="Settings_Agent_NotElevated" xml:space="preserve">
+    <value>Running as a standard user.</value>
+  </data>
+  <data name="Settings_Agent_Task_Label" xml:space="preserve">
+    <value>Start the agent at logon</value>
+  </data>
+  <data name="Settings_Agent_Task_Later" xml:space="preserve">
+    <value>The scheduled task arrives with the tray build; until then the app starts the agent beside itself when it opens.</value>
+  </data>
+  <data name="Settings_Applied" xml:space="preserve">
+    <value>Applied. The capture agent reads it at the next session start.</value>
+  </data>
+  <data name="Settings_Background_Body" xml:space="preserve">
+    <value>The capture agent watches for tracked games; a game it did not launch is recorded, and measured only if hooking is on for it and it is not a Vulkan title.</value>
+  </data>
+  <data name="Settings_Background_Label" xml:space="preserve">
+    <value>Record games launched outside FrameLedger</value>
+  </data>
+  <data name="Settings_Capture_Header" xml:space="preserve">
+    <value>Capture</value>
+  </data>
+  <data name="Settings_Channel_Beta" xml:space="preserve">
+    <value>Beta</value>
+  </data>
+  <data name="Settings_Channel_Stable" xml:space="preserve">
+    <value>Stable</value>
+  </data>
+  <data name="Settings_HookedGames_Empty" xml:space="preserve">
+    <value>No game has hooking on.</value>
+  </data>
+  <data name="Settings_HookedGames_Label" xml:space="preserve">
+    <value>Games with hooking on</value>
+  </data>
+  <data name="Settings_HookedGames_Revoke" xml:space="preserve">
+    <value>Turn off</value>
+  </data>
+  <data name="Settings_Interval_Body" xml:space="preserve">
+    <value>How often hardware telemetry is sampled during a session (500–2000).</value>
+  </data>
+  <data name="Settings_Interval_Label" xml:space="preserve">
+    <value>Sensor interval (ms)</value>
+  </data>
+  <data name="Settings_Invalid_Format" xml:space="preserve">
+    <value>{0} is outside {1}–{2}.</value>
+  </data>
+  <data name="Settings_KillSwitch_Body" xml:space="preserve">
+    <value>When on, nothing is injected into any game and no Vulkan layer is enabled, whatever each game's setting says; a running measured session stops at its next safety scan. Sessions are still recorded without measuring.</value>
+  </data>
+  <data name="Settings_KillSwitch_Label" xml:space="preserve">
+    <value>Disable all hooking</value>
+  </data>
+  <data name="Settings_KillSwitch_Off" xml:space="preserve">
+    <value>Per-game settings decide</value>
+  </data>
+  <data name="Settings_KillSwitch_On" xml:space="preserve">
+    <value>All hooking is off</value>
+  </data>
+  <data name="Settings_Legal_Header" xml:space="preserve">
+    <value>Legal</value>
+  </data>
+  <data name="Settings_Legal_Reopen" xml:space="preserve">
+    <value>Reopen the legal documents</value>
+  </data>
+  <data name="Settings_LogDebug_Body" xml:space="preserve">
+    <value>Applies to this app at once. The capture agent keeps its own level.</value>
+  </data>
+  <data name="Settings_LogDebug_Label" xml:space="preserve">
+    <value>Debug logging</value>
+  </data>
+  <data name="Settings_Logging_Header" xml:space="preserve">
+    <value>Logging</value>
+  </data>
+  <data name="Settings_MinSession_Body" xml:space="preserve">
+    <value>Shorter sessions are discarded.</value>
+  </data>
+  <data name="Settings_MinSession_Label" xml:space="preserve">
+    <value>Minimum session length (s)</value>
+  </data>
+  <data name="Settings_MinimizeToTray_Label" xml:space="preserve">
+    <value>Minimize to tray on close</value>
+  </data>
+  <data name="Settings_MinimizeToTray_Later" xml:space="preserve">
+    <value>The tray arrives with the next build; the switch is stored now.</value>
+  </data>
+  <data name="Settings_OnlineMetadata_Body" xml:space="preserve">
+    <value>Off by default. FrameLedger sends no telemetry and makes no network call except the update check, the detection-rules fetch, and — only with this on — store metadata for your games. Nothing about your sessions ever leaves this machine.</value>
+  </data>
+  <data name="Settings_OnlineMetadata_Label" xml:space="preserve">
+    <value>Fetch store metadata online</value>
+  </data>
+  <data name="Settings_Policy_Header" xml:space="preserve">
+    <value>Recording</value>
+  </data>
+  <data name="Settings_Privacy_Header" xml:space="preserve">
+    <value>Privacy</value>
+  </data>
+  <data name="Settings_Retention_Body" xml:space="preserve">
+    <value>Per-frame data of the newest sessions is kept; older sessions keep their aggregates. 0 keeps everything.</value>
+  </data>
+  <data name="Settings_Retention_Label" xml:space="preserve">
+    <value>Raw series kept per game</value>
+  </data>
+  <data name="Settings_SafetyDocs" xml:space="preserve">
+    <value>Read what the hook does and does not do</value>
+  </data>
+  <data name="Settings_StartWithWindows_Body" xml:space="preserve">
+    <value>A Run entry for this user only; nothing machine-wide.</value>
+  </data>
+  <data name="Settings_StartWithWindows_Label" xml:space="preserve">
+    <value>Start FrameLedger with Windows</value>
+  </data>
+  <data name="Settings_UpdateChannel_Body" xml:space="preserve">
+    <value>Stored now; the updater arrives in a later build. Updates never apply while a game is hooked.</value>
+  </data>
+  <data name="Settings_UpdateChannel_Label" xml:space="preserve">
+    <value>Channel</value>
+  </data>
+  <data name="Settings_Updates_Header" xml:space="preserve">
+    <value>Updates</value>
+  </data>
+  <data name="Settings_VkLayer_Label" xml:space="preserve">
+    <value>Vulkan layer</value>
+  </data>
+  <data name="Settings_VkLayer_NotRegistered" xml:space="preserve">
+    <value>Not registered. Vulkan games are measured in launch mode only, through a per-launch manifest; machine-wide registration arrives with the tray build.</value>
+  </data>
+  <data name="Settings_VkLayer_Registered" xml:space="preserve">
+    <value>Registered for this user (HKCU)</value>
+  </data>
+  <data name="Settings_VkLayer_Unknown" xml:space="preserve">
+    <value>Unknown until the capture agent answers.</value>
+  </data>
+  <data name="Settings_Window_Header" xml:space="preserve">
+    <value>Window</value>
   </data>
 </root>

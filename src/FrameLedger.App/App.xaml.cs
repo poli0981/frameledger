@@ -6,6 +6,7 @@ using FrameLedger.App.Pages;
 using FrameLedger.App.Services;
 using FrameLedger.App.ViewModels;
 using FrameLedger.Application.Persistence;
+using FrameLedger.Application.Settings;
 using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Infrastructure.Persistence;
 using Microsoft.Extensions.DependencyInjection;
@@ -44,11 +45,12 @@ public partial class App : System.Windows.Application
     /// </summary>
     protected override void OnStartup(StartupEventArgs e)
     {
+        ArgumentNullException.ThrowIfNull(e);
         base.OnStartup(e);
         UiPaths.EnsureDirectories();
         ConfigureLogging();
         HookCrashHandlers();
-        _run = RunAsync();
+        _run = DiagReport.Requested(e.Args) ? DiagAsync() : RunAsync();
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -65,11 +67,14 @@ public partial class App : System.Windows.Application
         try
         {
             _db = await LedgerDatabase.OpenAsync(UiPaths.Database).ConfigureAwait(true);
-            var appearance = new AppearanceSettings(new SqliteSettingsStore(_db));
+            var store = new SqliteSettingsStore(_db);
+            var appearance = new AppearanceSettings(store);
             await appearance.LoadAsync().ConfigureAwait(true);
             ApplyCulture(appearance.Language);
+            var registered = new RegisteredSettings(store);
+            LoggingLevel.SetDebug(await registered.GetBooleanAsync(SettingsRegistry.LogDebug).ConfigureAwait(true));
 
-            _host = BuildHost(_db, appearance);
+            _host = BuildHost(_db, appearance, registered);
             await _host.StartAsync().ConfigureAwait(true);
             Log.Information("ui: started ({Version}), ledger {Ledger}", UiIdentity.Version, UiPaths.Database);
             await _host.WaitForShutdownAsync().ConfigureAwait(true);
@@ -84,6 +89,52 @@ public partial class App : System.Windows.Application
             await TearDownAsync().ConfigureAwait(true);
             Shutdown(exitCode);
         }
+    }
+
+    /// <summary>
+    /// <c>10_LOGGING</c> §Diagnostics extras: <c>--diag</c> writes the environment and capability report under
+    /// <c>logs/</c> and to stdout (when a console or a pipe is attached — a WinExe has none of its own), then exits.
+    /// No host, no window, no Agent: the report is this install as seen from outside.
+    /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format string is a resource that follows the UI culture")]
+    private async Task DiagAsync()
+    {
+        int exitCode = 0;
+        try
+        {
+            DateTimeOffset now = DateTimeOffset.UtcNow;
+            long? schema = null;
+            var values = new Dictionary<string, string>(StringComparer.Ordinal);
+            try
+            {
+                LedgerDatabase db = await LedgerDatabase.OpenAsync(UiPaths.Database).ConfigureAwait(true);
+                await using (db.ConfigureAwait(true))
+                {
+                    schema = db.SchemaVersion;
+                    var settings = new RegisteredSettings(new SqliteSettingsStore(db));
+                    foreach (SettingDefinition definition in SettingsRegistry.All)
+                    {
+                        values[definition.Key] = await settings.GetAsync(definition).ConfigureAwait(true);
+                    }
+                }
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                Log.Warning(ex, "diag: the ledger could not be opened; settings are reported at their defaults");
+            }
+
+            string report = DiagReport.Build(UiIdentity.Version, UiPaths.DataDirectory, UiPaths.Logs, schema, values, new AgentLauncher().CanLaunch, now);
+            string path = DiagReport.Write(UiPaths.Logs, report, now);
+            await Console.Out.WriteLineAsync(string.Format(CultureInfo.CurrentCulture, Strings.Diag_Written_Format, path)).ConfigureAwait(true);
+            Log.Information("ui: --diag written to {Path}", path);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            Log.Fatal(ex, "ui: --diag failed");
+            exitCode = 1;
+        }
+
+        Shutdown(exitCode);
     }
 
     private async Task TearDownAsync()
@@ -118,7 +169,7 @@ public partial class App : System.Windows.Application
         Strings.Culture = culture;
     }
 
-    private static IHost BuildHost(LedgerDatabase db, AppearanceSettings appearance)
+    private static IHost BuildHost(LedgerDatabase db, AppearanceSettings appearance, RegisteredSettings registered)
     {
         HostApplicationBuilder builder = Host.CreateApplicationBuilder();
         builder.Services.AddSerilog();
@@ -133,6 +184,7 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton(db);
         builder.Services.AddSingleton<ISettingsStore, SqliteSettingsStore>();
         builder.Services.AddSingleton(appearance);
+        builder.Services.AddSingleton(registered);
         builder.Services.AddSingleton<IThemeApplier, WpfThemeApplier>();
 
         // The Agent over the pipe (07_IPC §Client behavior): connect, start it when it is not there, tell the shell.
@@ -197,12 +249,19 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IFileSaver, FileSaver>();
         services.AddSingleton<ISessionSummaryOpener, SessionSummaryOpener>();
         services.AddSingleton<IMixedTierPrompt, MixedTierPrompt>();
+
+        // Settings, the safety notices and the Logs page (P3 PR-8a): the Run entry, the notices over the pipe's
+        // events, the tail and the bundle over the logs directory.
+        services.AddSingleton<IRunAtLogon, RunAtLogonRegistry>();
+        services.AddSingleton<SafetyNotices>();
+        services.AddSingleton(static _ => new LogTail(UiPaths.Logs));
+        services.AddSingleton(static sp => new BugBundleBuilder(UiPaths.Logs, sp.GetRequiredService<RegisteredSettings>()));
     }
 
-    /// <summary><c>10_LOGGING</c> §Serilog configuration: <c>logs/ui-.log</c>, daily, 7 kept, 10 MB, the one template.</summary>
+    /// <summary><c>10_LOGGING</c> §Serilog configuration: <c>logs/ui-.log</c>, daily, 7 kept, 10 MB, the one template; the level follows <c>log.debug</c> at runtime.</summary>
     private static void ConfigureLogging() =>
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Information()
+            .MinimumLevel.ControlledBy(LoggingLevel.Switch)
             .Enrich.WithProperty("Process", "ui")
             .WriteTo.File(
                 Path.Combine(UiPaths.Logs, "ui-.log"),

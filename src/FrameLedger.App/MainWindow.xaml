@@ -59,17 +59,40 @@
         </Menu>
 
         <!-- 08_UI §Notifications policy: "Agent offline" is in-app and PERSISTENT — an InfoBar with an action, never a toast. -->
-        <ui:InfoBar Grid.Row="2"
-                    Margin="12,4,12,0"
-                    IsClosable="False"
-                    IsOpen="{Binding ViewModel.IsAgentBannerVisible}"
-                    Message="{Binding ViewModel.AgentBannerBody}"
-                    Severity="Warning"
-                    Title="{x:Static res:Strings.Agent_Banner_Offline_Title}">
-            <ui:Button Appearance="Secondary"
-                       Command="{Binding ViewModel.RetryAgentCommand}"
-                       Content="{x:Static res:Strings.Agent_Banner_Retry}" />
-        </ui:InfoBar>
+        <StackPanel Grid.Row="2">
+            <ui:InfoBar Margin="12,4,12,0"
+                        IsClosable="False"
+                        IsOpen="{Binding ViewModel.IsAgentBannerVisible}"
+                        Message="{Binding ViewModel.AgentBannerBody}"
+                        Severity="Warning"
+                        Title="{x:Static res:Strings.Agent_Banner_Offline_Title}">
+                <ui:Button Appearance="Secondary"
+                           Command="{Binding ViewModel.RetryAgentCommand}"
+                           Content="{x:Static res:Strings.Agent_Banner_Retry}" />
+            </ui:InfoBar>
+
+            <!--
+                The safety events (CaptureRefused, SafetyUnhook, CaptureDegraded): persistent, the signal named, never
+                dismissed by a timeout — the one button is the user's acknowledgement (08_UI §Notifications policy, FR-14).
+            -->
+            <ItemsControl ItemsSource="{Binding ViewModel.Notices.Items}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ui:InfoBar Margin="12,4,12,0"
+                                    IsClosable="False"
+                                    IsOpen="True"
+                                    Message="{Binding Body}"
+                                    Severity="{Binding Severity}"
+                                    Title="{Binding Title}">
+                            <ui:Button Appearance="Secondary"
+                                       Command="{Binding DataContext.ViewModel.DismissNoticeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                       CommandParameter="{Binding}"
+                                       Content="{Binding ActionText}" />
+                        </ui:InfoBar>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
 
         <ui:NavigationView x:Name="RootNavigation"
                            Grid.Row="3"

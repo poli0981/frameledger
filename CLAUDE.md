@@ -93,7 +93,10 @@ src/
                                #   FluentWindow + TitleBar/Menu/NavigationView, theme + language
                                #   persisted in `settings`, the Agent pill over the pipe (starts
                                #   `FrameLedger.Agent.exe --serve` beside itself when absent),
-                               #   five pages of which four are empty states; Strings.resx en/vi/ja
+                               #   ~~five pages of which four are empty states~~ — every 08_UI screen
+                               #   but first-run/Legal Gate and the tray is built as of 2026-09-14
+                               #   (PR-5 Games/Dashboard, PR-6 summary + charts, PR-7 trend/compare,
+                               #   PR-8a Settings/safety notices/Logs/--diag); Strings.resx en/vi/ja
   FrameLedger.CaptureHost/     # UNSHIPPED, and since P2 PR-C (2026-09-09) a THIN SHELL: verbs,
                                #   the operator disclosure, the report consumer, and the composition
                                #   of Application.Capture.CaptureSession over Infrastructure's
