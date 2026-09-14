@@ -75,9 +75,11 @@ public sealed class GameFileProbe : IGameFileProbe
             uncollected.Add(DetectionSignalType.PeProductContains);
         }
 
+        // One bounded read serves both the rules' strings questions and the Vulkan fact below.
+        string? text = TryReadBounded(exePath);
         HashSet<string> needles = [];
         Dictionary<string, string> captures = new(StringComparer.Ordinal);
-        if (!TryScanStrings(exePath, rules, needles, captures))
+        if (!TryScanStrings(text, rules, needles, captures))
         {
             uncollected.Add(DetectionSignalType.StringsContains);
         }
@@ -99,6 +101,7 @@ public sealed class GameFileProbe : IGameFileProbe
             StringsRegexCaptures = captures,
             ManifestFields = new Dictionary<string, string>(StringComparer.Ordinal),
             UncollectedFacts = uncollected,
+            VulkanLoaderReferenced = ReferencesVulkanLoader(exePath, text),
         });
     }
 
@@ -256,7 +259,7 @@ public sealed class GameFileProbe : IGameFileProbe
     /// is rules-dependent and the evaluator is not quite the pure function it
     /// would be nicer to have.
     /// </remarks>
-    private static bool TryScanStrings(string exePath, DetectionRuleSet rules,
+    private static bool TryScanStrings(string? text, DetectionRuleSet rules,
         HashSet<string> foundNeedles, Dictionary<string, string> captures)
     {
         List<string> needles = [.. rules.Engines
@@ -277,7 +280,6 @@ public sealed class GameFileProbe : IGameFileProbe
             return true;    // nothing asked, nothing to fail at
         }
 
-        string? text = TryReadBounded(exePath);
         if (text is null)
         {
             return false;
@@ -301,6 +303,40 @@ public sealed class GameFileProbe : IGameFileProbe
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// The "is Vulkan" fact (<c>17_HOOK_ENGINE</c> §Vulkan, P4 PR-2): the loader named in the import or delay-load
+    /// table (a link-time import), or as an ASCII / UTF-16 string in the bounded scan (a <c>LoadLibrary</c> at run
+    /// time — <c>hook-harness --vulkan</c>'s shape, and many titles'). Null when neither the PE nor the bytes could
+    /// be read: the fact is then unknown, never "no".
+    /// </summary>
+    private static bool? ReferencesVulkanLoader(string exePath, string? text)
+    {
+        const string loader = "vulkan-1.dll";
+        IReadOnlySet<string>? imports = PeImports.Read(exePath);
+        if (imports is not null && imports.Contains(loader))
+        {
+            return true;
+        }
+
+        if (text is not null)
+        {
+            if (text.Contains(loader, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            // The Latin1 view of UTF-16LE text interleaves NULs: "v\0u\0l\0..." — a wide literal such as
+            // LoadLibraryW(L"vulkan-1.dll"), which the ASCII search above cannot see.
+            string wide = string.Join('\0', loader.ToCharArray());
+            if (text.Contains(wide, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return imports is null && text is null ? null : false;
     }
 
     private static string? TryReadBounded(string exePath)

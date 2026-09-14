@@ -1674,7 +1674,7 @@
     <comment>review</comment>
   </data>
   <data name="Settings_VkLayer_Note" xml:space="preserve">
-    <value>登録すると、このユーザーのすべての Vulkan プロセスにレイヤーが読み込まれますが、FrameLedger が起動したプロセス以外では何もしません。FrameLedger からの起動には登録は不要です。ボタンは状態を修復するもので、フックが有効なゲームがある間のみ使用できます。</value>
+    <value>登録すると、このユーザーのすべての Vulkan プロセスにレイヤーが読み込まれますが、FrameLedger が起動したプロセス以外では無効のままです。FrameLedger からの起動に登録は不要です。フック有効なゲームが Vulkan ローダーを参照している間はキャプチャエージェントが自動で登録し、最後の 1 本が無効化されると解除します。ボタンはその状態を修復するもので、同じ規則の下でのみ使えます。</value>
     <comment>review</comment>
   </data>
   <data name="Settings_VkLayer_Register" xml:space="preserve">

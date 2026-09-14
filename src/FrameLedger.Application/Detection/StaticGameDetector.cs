@@ -45,6 +45,7 @@ public sealed class StaticGameDetector(IDetectionRulesSource rulesSource, IGameF
             PlatformUndetermined = platformUndetermined,
             CapabilityIds = [.. evaluator.MatchCapabilities(snapshot).Select(c => c.Id)],
             RulesVersion = rules.RulesVersion,
+            UsesVulkan = snapshot.VulkanLoaderReferenced,
         };
     }
 }

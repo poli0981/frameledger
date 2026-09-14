@@ -399,9 +399,25 @@ is not something this loader supports.
   > (`%LOCALAPPDATA%\FrameLedger\vklayer\VkLayer_FRAMELEDGER_overlay.json`, written by the same code the launch
   > path uses); the Agent's `--register-vklayer` refuses unless a game has hooking enabled, `--unregister-vklayer`
   > also removes a stale value naming our manifest elsewhere, and `HelloAck.vulkanLayerRegistered` reads the key
-  > at the Agent's start. Two things this build does **not** do, stated rather than implied: (1) the automatic
+  > at the Agent's start. Two things this build does **not** do, stated rather than implied: ~~(1) the automatic
   > register-on-first-enable / unregister-on-last-disable needs to know which enabled game is a *Vulkan* title,
-  > and the ledger does not hold that fact until P4's capability flags — so the check is "any enabled game"; (2)
+  > and the ledger does not hold that fact until P4's capability flags — so the check is "any enabled game"~~
+  > **— closed 2026-09-14 (P4 PR-2).** The fact is static and lives in `capability_flags` under the id `vulkan`:
+  > `GameFileProbe` reads the executable's import and delay-load tables (`Infrastructure.Detection.PeImports`, bounded,
+  > read-only) and looks for `vulkan-1.dll` as an ASCII or UTF-16 string in the bounded scan (a `LoadLibraryW`
+  > loader — the harness's shape and many titles'); null when the file could not be read, never "no". A static
+  > fact was chosen over the runtime one on purpose: the NVIDIA ICD maps `dxgi.dll` + `d3d12.dll` itself (the
+  > 2026-09-06 note above), so runtime module presence is the weaker discriminator, and the automation has to act
+  > at consent time, before the title ever runs. `Application.Vulkan.VkLayerReconciler` computes the desired
+  > registration from the ledger — hook-enabled games whose flags carry `vulkan` — and moves the HKCU value to it,
+  > called after every consent change the pipe handler and the console verbs make and after every detection
+  > sweep (so a guard block, the crash policy's auto-disable, and a Vulkan fact that arrives after the consent all
+  > converge within one 15 s interval). `--register-vklayer` runs the same reconciler and refuses when it finds no
+  > such game; the Settings button follows the same rule (`HookedGameViewModel.UsesVulkan`). Not staged = nothing
+  > to do — and **an Agent off the profile ledger (`--data-dir`) gets an inert registrar**, so the e2e suites'
+  > consent for `hook-harness` (which `LoadLibraryW`s the loader and therefore reads as Vulkan) never reaches the
+  > developer's HKCU (D17's shape). `VkLayerReconcilerTests`, `PeImportsTests` (a synthetic PE32+, both directories, the wide
+  > literal, a malformed file). (2)
   > a registration buys nothing today: the layer gates on `FRAMELEDGER_ENABLE_VK_LAYER=1`, which only a launch
   > sets, and a launch already reaches the layer through `VK_ADD_IMPLICIT_LAYER_PATH`. Registration becomes
   > useful the day background capture sets the variable for a tracked Vulkan title started elsewhere, and not

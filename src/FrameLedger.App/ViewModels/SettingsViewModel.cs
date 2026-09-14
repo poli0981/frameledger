@@ -6,6 +6,7 @@ using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FrameLedger.App.Services;
+using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Settings;
 using FrameLedger.Infrastructure.Startup;
 
@@ -171,8 +172,8 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public string KillSwitchState => KillSwitch ? Strings.Settings_KillSwitch_On : Strings.Settings_KillSwitch_Off;
 
-    /// <summary>12_BUILD: the registration exists only while a game has hooking on — the button follows the same rule as the Agent's flag.</summary>
-    public bool CanRegisterLayer => MaintenanceSnapshot.LayerStaged && !MaintenanceSnapshot.LayerRegistered && HookedGames.Count > 0;
+    /// <summary>12_BUILD: the registration exists only while a hook-enabled game references the Vulkan loader (P4 PR-2) — the button follows the same rule as the Agent's reconciler.</summary>
+    public bool CanRegisterLayer => MaintenanceSnapshot.LayerStaged && !MaintenanceSnapshot.LayerRegistered && HookedGames.Any(static g => g.UsesVulkan);
 
     public bool CanUnregisterLayer => MaintenanceSnapshot.LayerRegistered;
 
@@ -346,7 +347,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         HookedGames.Clear();
         foreach (GameCard card in cards.Where(static c => c.Row.HookEnabled && c.Row.InLibrary).OrderBy(static c => c.Row.Name, StringComparer.CurrentCultureIgnoreCase))
         {
-            HookedGames.Add(new HookedGameViewModel(card.Row.Id, card.Row.Name, RevokeAsync));
+            HookedGames.Add(new HookedGameViewModel(card.Row.Id, card.Row.Name, RevokeAsync, CapabilityFlags.Contains(card.Row.CapabilityFlagsJson, "vulkan")));
         }
 
         Shared.Ipc.HelloAck? hello = _agent.Hello;

@@ -276,6 +276,37 @@ public sealed class SettingsViewModelTests
         h.Strip.Shown.Should().ContainSingle().Which.Kind.Should().Be("success");
     }
 
+    /// <summary>P4 PR-2: the Register button follows the reconciler's rule — a hook-enabled game must reference the Vulkan loader.</summary>
+    [Fact]
+    public async Task RegisterIsOfferedOnlyWhenAHookEnabledGameReferencesTheVulkanLoader()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow d3d = await s.GameAsync("Direct");
+        GameRow vk = await s.GameAsync("Vulkanic");
+        var consent = new SqliteGameConsentStore(s.Db);
+        foreach (GameRow g in new[] { d3d, vk })
+        {
+            await consent.RecordOperatorAcknowledgementAsync(new OperatorAcknowledgement
+            {
+                Fingerprint = g.Fingerprint,
+                DisclosureVersion = SafetyDisclosure.Version,
+                AcknowledgedAt = DateTimeOffset.UtcNow,
+                Provenance = ConsentProvenance.ConsentDialog,
+            }, Ct);
+        }
+
+        await s.Games.ApplyDetectionAsync(d3d.Id, new DetectionWrite { CapabilityIds = ["dlss"], RulesVersion = "r", ExeSizeBytes = 1, ExeMtimeMs = 1 }, Ct);
+        var maintenance = new FakeMaintenance { Snapshot = new MaintenanceSnapshot(true, false, LogonTaskState.NotInstalled) };
+        Harness before = await OpenAsync(s, maintenance: maintenance);
+        before.Vm.HookedGames.Should().HaveCount(2);
+        before.Vm.CanRegisterLayer.Should().BeFalse("two hook-enabled games, neither references the Vulkan loader");
+
+        await s.Games.ApplyDetectionAsync(vk.Id, new DetectionWrite { CapabilityIds = ["vulkan"], RulesVersion = "r", ExeSizeBytes = 1, ExeMtimeMs = 1 }, Ct);
+        Harness after = await OpenAsync(s, maintenance: maintenance);
+        after.Vm.HookedGames.Should().ContainSingle(static g => g.UsesVulkan).Which.Name.Should().Be("Vulkanic");
+        after.Vm.CanRegisterLayer.Should().BeTrue();
+    }
+
     [Fact]
     public async Task TheTaskButtonsFollowTaskSchedulersAnswerAndAFailureIsSaid()
     {

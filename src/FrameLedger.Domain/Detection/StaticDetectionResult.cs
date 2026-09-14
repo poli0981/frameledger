@@ -41,6 +41,16 @@ public sealed record StaticDetectionResult
     public required string RulesVersion { get; init; }
 
     /// <summary>
+    /// The executable references the Vulkan loader (<see cref="GameFileSnapshot.VulkanLoaderReferenced"/>): true,
+    /// false, or null when the file could not be read for it. A static fact about the binary, never a claim
+    /// about what it presented — the API a session ran on is <c>sessions.api</c>, measured (P4 PR-2).
+    /// </summary>
+    public bool? UsesVulkan { get; init; }
+
+    /// <summary>The capability id the sweep stores for <see cref="UsesVulkan"/>; not a rule id, and not in the rules file.</summary>
+    public const string VulkanCapabilityId = "vulkan";
+
+    /// <summary>
     /// Whether a re-run may write <paramref name="detected"/> over a field whose
     /// current provenance is <paramref name="existing"/>.
     /// </summary>

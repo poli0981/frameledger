@@ -1,4 +1,5 @@
 using FrameLedger.Application.Detection;
+using FrameLedger.Application.Vulkan;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 
@@ -16,7 +17,7 @@ namespace FrameLedger.Agent.Hosting;
 /// A sweep that throws is logged and retried on the next tick rather than ending the service — a game's
 /// directory going away mid-walk is ordinary, and one bad game must not stop the scan of the rest.
 /// </remarks>
-internal sealed class DetectionHostedService(DetectionSweep sweep) : BackgroundService
+internal sealed class DetectionHostedService(DetectionSweep sweep, VkLayerReconciler layer) : BackgroundService
 {
     /// <summary>The idle cadence. A game the App just added is seen within this; a rules update wakes the loop at once.</summary>
     public static readonly TimeSpan Interval = TimeSpan.FromSeconds(15);
@@ -34,6 +35,10 @@ internal sealed class DetectionHostedService(DetectionSweep sweep) : BackgroundS
                     Log.Information("detect: sweep scanned {Scanned}, current {Current}, unreadable {Unreadable}{Rules}",
                         r.Scanned, r.Current, r.Unreadable, r.RulesUnusable ? ", rules unusable" : string.Empty);
                 }
+
+                // The layer follows the ledger after every sweep (P4 PR-2): a Vulkan fact that arrived after the
+                // consent, and the crash policy's auto-disable, both converge here within one interval.
+                _ = await layer.ReconcileAsync(stoppingToken).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {

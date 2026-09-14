@@ -100,12 +100,17 @@ public sealed class DetectionSweep : IDisposable
             }
 
             StaticDetectionResult r = await _detector.DetectAsync(game.Fingerprint.ExePath, ct).ConfigureAwait(false);
+            // The Vulkan fact rides in capability_flags under its own id (P4 PR-2): not a rule id, stored beside them
+            // so one column says what the game ships AND whether the layer is its capture side.
+            IReadOnlyList<string> capabilities = r.UsesVulkan == true
+                ? [.. r.CapabilityIds, StaticDetectionResult.VulkanCapabilityId]
+                : r.CapabilityIds;
             var write = new DetectionWrite
             {
                 EngineId = r.EngineId,
                 EngineVersion = r.EngineVersion,
                 PlatformId = r.PlatformId,
-                CapabilityIds = r.CapabilityIds,
+                CapabilityIds = capabilities,
                 RulesVersion = r.RulesVersion,
                 ExeSizeBytes = onDisk.SizeBytes,
                 ExeMtimeMs = onDisk.MtimeUnixMs,
@@ -115,7 +120,7 @@ public sealed class DetectionSweep : IDisposable
                 scanned++;
                 _log($"detect: {game.Name} — engine={r.EngineId ?? (r.EngineUndetermined ? "undetermined" : "none")}"
                      + $"{(r.EngineVersion is null ? string.Empty : " " + r.EngineVersion)} platform={r.PlatformId ?? (r.PlatformUndetermined ? "undetermined" : "none")}"
-                     + $" capabilities=[{string.Join(",", r.CapabilityIds)}] rules={r.RulesVersion}");
+                     + $" capabilities=[{string.Join(",", capabilities)}] vulkan={(r.UsesVulkan is { } v ? (v ? "yes" : "no") : "unknown")} rules={r.RulesVersion}");
             }
         }
 

@@ -1256,7 +1256,7 @@
     <value>Không có DLL lớp bên cạnh capture agent; không có gì để đăng ký.</value>
   </data>
   <data name="Settings_VkLayer_Note" xml:space="preserve">
-    <value>Đăng ký đưa lớp vào mọi tiến trình Vulkan của người dùng này, ở đó nó bất hoạt trừ khi FrameLedger khởi chạy tiến trình đó. Khởi chạy từ FrameLedger không cần đăng ký; các nút chỉ sửa trạng thái và chỉ được phép khi có game đang bật hooking.</value>
+    <value>Đăng ký đưa lớp vào mọi tiến trình Vulkan của người dùng này, ở đó nó bất hoạt trừ khi FrameLedger khởi chạy tiến trình đó. Khởi chạy từ FrameLedger không cần đăng ký. Agent ghi tự đăng ký lớp khi có game bật hooking tham chiếu bộ nạp Vulkan và gỡ khi game cuối cùng bị tắt; các nút chỉ sửa lại trạng thái đó và chỉ được phép theo cùng quy tắc.</value>
   </data>
   <data name="Settings_VkLayer_Register" xml:space="preserve">
     <value>Đăng ký</value>

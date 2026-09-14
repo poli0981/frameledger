@@ -59,6 +59,18 @@ public sealed class StaticGameDetectorTests
         ],
     };
 
+    /// <summary>The Vulkan fact passes through untouched (P4 PR-2): true, false, or null — the detector claims nothing the probe did not see.</summary>
+    [Fact]
+    public async Task TheVulkanFactIsTheProbesThreeValuedAnswer()
+    {
+        foreach (bool? seen in new bool?[] { true, false, null })
+        {
+            var detector = new StaticGameDetector(new ScriptedRules(Rules()), new ScriptedProbe(Snapshot("UnityPlayer.dll") with { VulkanLoaderReferenced = seen }));
+            StaticDetectionResult r = await detector.DetectAsync(@"C:\Games\Example\Game.exe", TestContext.Current.CancellationToken);
+            r.UsesVulkan.Should().Be(seen);
+        }
+    }
+
     private static GameFileSnapshot Snapshot(params string[] files) => new()
     {
         ExePath = "C:/Games/Example/Game.exe",
