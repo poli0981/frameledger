@@ -1669,6 +1669,11 @@ diagnosis*.
   `SafetyNoticesTests` was green throughout: it asserted the model, and nothing instantiated the template.
   When a control's affordance matters, render it (`PagesLoadTests` has the STA harness) and walk the visual
   tree for the element — `16_WPFUI_SYNTAX` §Gotchas carries the fix and the test that retires it.
+- **A test that finds a file by pid finds the wrong one on a machine that has run the tests before.** The native
+  log test looked up `overlay-<pid>-*.log` in the real `%LOCALAPPDATA%\FrameLedger\logs`, which keeps every run's
+  log (2130 on the dev box by 2026-09-14). A reused pid read a stale log and failed on the STOP line; the re-run
+  drew a new pid and passed, so it was called a flake four times while the failure output printed the September 6
+  path. **Read the path in a failure before calling it a flake**, and select by creation time, not by name.
 
 ---
 
