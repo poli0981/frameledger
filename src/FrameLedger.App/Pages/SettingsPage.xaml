@@ -129,7 +129,7 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_Background_Label}" />
-                        <ui:TextBlock MaxWidth="560" Appearance="Secondary" Text="{x:Static res:Strings.Settings_Background_Body}" TextWrapping="Wrap" />
+                        <ui:TextBlock MaxWidth="560" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Settings_Background_Body}" TextWrapping="Wrap" />
                     </StackPanel>
                 </ui:CardControl.Header>
                 <ui:ToggleSwitch IsChecked="{Binding ViewModel.BackgroundCapture, Mode=TwoWay}" />
@@ -215,7 +215,7 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_OnlineMetadata_Label}" />
-                        <ui:TextBlock MaxWidth="560" Appearance="Secondary" Text="{x:Static res:Strings.Settings_OnlineMetadata_Body}" TextWrapping="Wrap" />
+                        <ui:TextBlock MaxWidth="560" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Settings_OnlineMetadata_Body}" TextWrapping="Wrap" />
                     </StackPanel>
                 </ui:CardControl.Header>
                 <ui:ToggleSwitch IsChecked="{Binding ViewModel.OnlineMetadata, Mode=TwoWay}" />
