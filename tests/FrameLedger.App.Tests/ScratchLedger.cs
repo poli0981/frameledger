@@ -39,7 +39,7 @@ internal sealed class ScratchLedger : IAsyncDisposable
         return await Games.EnsureAsync(new ExecutableFingerprint { ExePath = exe, SizeBytes = 1, MtimeUnixMs = 1 }, name, TestContext.Current.CancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<long> SessionAsync(long gameId, DateTimeOffset startedAt, int seconds = 600, bool hooked = true, string fgMode = "none", double? native = 60, double? displayed = null, double? factor = null, ExitStatus exit = ExitStatus.Normal)
+    public async Task<long> SessionAsync(long gameId, DateTimeOffset startedAt, int seconds = 600, bool hooked = true, string fgMode = "none", double? native = 60, double? displayed = null, double? factor = null, ExitStatus exit = ExitStatus.Normal, string? fgRefusal = null, double? presented = null, string? qualifier = null)
     {
         long snapshotId = await new SqliteHardwareSnapshotRepository(Db).EnsureAsync(new HardwareSnapshot { GpuName = "G" }, startedAt, TestContext.Current.CancellationToken).ConfigureAwait(false);
         var row = new SessionRow
@@ -59,6 +59,9 @@ internal sealed class ScratchLedger : IAsyncDisposable
             NativeFps = hooked ? native : null,
             DisplayedFps = displayed,
             FgFactor = factor,
+            FgRefusal = fgRefusal,
+            PresentedFps = presented,
+            PresentedQualifier = qualifier,
             Api = hooked ? "d3d12" : null,
             Upscaler = hooked ? "dlss" : null,
             RenderW = hooked ? 1485 : null,

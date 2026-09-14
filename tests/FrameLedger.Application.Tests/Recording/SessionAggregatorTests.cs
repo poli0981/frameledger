@@ -48,6 +48,42 @@ public sealed class SessionAggregatorTests
         r.Segments.Should().ContainSingle().Which.DisplayedFps.Should().BeApproximately(100, 0.01);
     }
 
+    /// <summary>
+    /// The owner's rows 8 and 10 (2026-09-14): the Streamline identity named DLSS-G and the count refused. The row
+    /// keeps the identity (<c>fg_mode = dlssg</c>, <c>fg_source = api</c>), publishes no number, and — since schema
+    /// 0003 — says WHY in <c>fg_refusal</c>, so the UI can show "DLSS-G active — factor not counted" instead of N/A.
+    /// </summary>
+    [Fact]
+    public void AnIdentityWithoutACountKeepsTheNameAndRecordsTheRefusal()
+    {
+        var writer = new FlWriterState { Status = 1, HooksInstalledMask = 0xB, RuntimeCensus = (uint)(FlRuntimeCensus.Ran | FlRuntimeCensus.SlInterposer | FlRuntimeCensus.SlDlssG) };
+
+        // Identity claimed, the count never claimed: FgWindow refuses NotCounted.
+        List<FlFrameRecord> identityOnly = [.. SessionFixtures.Stream(2_000, _presentOnly | FlMeasured.Fg).Select(static r => r with { FgMode = (byte)FlFgMode.DlssG })];
+        AggregationResult a = SessionAggregator.Aggregate(SessionFixtures.Skeleton(), SessionFixtures.Hooked(identityOnly, writer));
+        a.FgVerdict.Should().Be(FgVerdict.Named);
+        a.Row.FgMode.Should().Be("dlssg");
+        a.Row.FgSource.Should().Be("api");
+        a.Row.FgFactor.Should().BeNull("nothing counted, so no factor — never 1.0 (03_METRICS §Rung 0)");
+        a.Row.NativeFps.Should().BeNull();
+        a.Row.DisplayedFps.Should().BeNull();
+        a.Row.FgRefusal.Should().Be("not_counted");
+        a.Row.PresentedFps.Should().BeApproximately(100, 0.01, "the presented rate stands alone");
+        a.Row.PresentedQualifier.Should().Be("fg_runtime_loaded");
+
+        // The count claimed on every present and zero on every present: the token hook never fired — the owner's shape.
+        List<FlFrameRecord> zeroTokens = [.. SessionFixtures.Stream(2_000, _presentOnly | FlMeasured.Fg | FlMeasured.FgCounts).Select(static r => r with { FgMode = (byte)FlFgMode.DlssG, FgEvaluations = 0 })];
+        SessionRow b = SessionAggregator.Aggregate(SessionFixtures.Skeleton(), SessionFixtures.Hooked(zeroTokens, writer)).Row;
+        b.FgMode.Should().Be("dlssg");
+        b.FgFactor.Should().BeNull();
+        b.FgRefusal.Should().Be("no_evaluations");
+
+        // A counted factor carries no refusal.
+        SessionRow counted = SessionAggregator.Aggregate(SessionFixtures.Skeleton(), SessionFixtures.Hooked(SessionFixtures.Stream(2_000, _presentOnly | FlMeasured.Fg | FlMeasured.FgCounts, fgPerBatch: 2), writer)).Row;
+        counted.FgFactor.Should().BeApproximately(2, 0.01);
+        counted.FgRefusal.Should().BeNull();
+    }
+
     [Fact]
     public void ACountedNoneAndACountedFactorLandAsTheRowSpellsThem()
     {

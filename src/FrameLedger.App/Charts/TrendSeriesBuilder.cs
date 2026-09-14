@@ -52,7 +52,7 @@ public static class TrendSeriesBuilder
             TrendMetric.Average => readout.Kind switch
             {
                 FpsReadoutKind.Generated or FpsReadoutKind.None => readout.Native,
-                FpsReadoutKind.Presented => readout.Presented,
+                FpsReadoutKind.Presented or FpsReadoutKind.IdentifiedUncounted => readout.Presented,
                 _ => null,
             },
             TrendMetric.Displayed => readout.Kind == FpsReadoutKind.Generated ? readout.Displayed : null,

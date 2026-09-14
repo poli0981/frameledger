@@ -31,6 +31,19 @@ public sealed class LedgerDatabaseTests
         tables.Should().Contain(_tables);
     }
 
+    /// <summary>Schema 0003 (2026-09-14): <c>sessions.fg_refusal</c>, the reason an identified frame generation has no factor.</summary>
+    [Fact]
+    public async Task ScriptThreeAddsTheFgRefusalColumn()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(3);
+        IReadOnlyList<string> columns = await f.Db.ReadAsync(async (c, ct) =>
+            (IReadOnlyList<string>)[.. await c.QueryAsync<string>(new CommandDefinition(
+                "SELECT name FROM pragma_table_info('sessions')", cancellationToken: ct)).ConfigureAwait(false)], Ct);
+        columns.Should().Contain("fg_refusal").And.Contain("fg_none_withheld_reason", "0003 appends beside 0001's columns, it edits nothing");
+    }
+
     [Fact]
     public async Task ReopeningIsANoOp()
     {

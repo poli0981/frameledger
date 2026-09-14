@@ -105,6 +105,39 @@ public sealed class GameDetailViewModelTests
         return (vm, agent, prompt, nav, strip);
     }
 
+    /// <summary>
+    /// The owner's rows 8 and 10 (2026-09-14): DLSS-G identified, the count refused, no factor. The measured row must
+    /// name the technology and say the factor was not counted — not "N/A", and not "DLSS-G " with a trailing space —
+    /// and the grid's FG× stays N/A because no factor exists.
+    /// </summary>
+    [Fact]
+    public async Task AnIdentifiedButUncountedSessionNamesTheTechnologyInsteadOfNa()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow game = await s.GameAsync("Wukong");
+            DateTimeOffset t0 = DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_000_000);
+            await s.SessionAsync(game.Id, t0, hooked: true, fgMode: "dlssg", native: null, displayed: null, factor: null, fgRefusal: "no_evaluations", presented: 304.35, qualifier: "fg_runtime_loaded");
+
+            (GameDetailViewModel vm, _, _, _, _) = await BuildAsync(s, game.Id);
+
+            vm.Lifetime.Kind.Should().Be(FpsReadoutKind.IdentifiedUncounted);
+            vm.Lifetime.Line.Should().Be("304 FPS");
+            vm.Measured.Should().Contain("DLSS-G · factor not counted").And.NotContain(static m => m.EndsWith(' '));
+            SessionItemViewModel row = vm.Sessions.Single();
+            row.NativeText.Should().Be("304", "the Presented figure carries the Native column");
+            row.DisplayedText.Should().Be("N/A");
+            row.FgText.Should().Be("N/A", "no factor was counted, so none is shown");
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
+
     [Fact]
     public async Task TheHeaderTheTwoRowsAndTheSessionsTabReadFromTheLedger()
     {

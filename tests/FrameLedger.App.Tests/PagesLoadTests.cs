@@ -148,10 +148,36 @@ public sealed class PagesLoadTests
         public Task ShowDocumentsAsync(CancellationToken ct = default) => Task.CompletedTask;
     }
 
+    /// <summary>
+    /// ONE STA thread with a running dispatcher for the whole class. The <c>Application</c> and its merged
+    /// dictionaries are created on it once; every render is queued to it. A thread per test used to work only
+    /// while a single test touched a given style: a Setter's <c>SolidColorBrush</c> with a <c>DynamicResource</c>
+    /// colour cannot be frozen, so the first thread to instantiate it owns it and the second thread's
+    /// <c>Measure</c> throws "Cannot access Freezable across threads" (measured 2026-09-14 when a second test
+    /// rendered a <c>ui:Button</c>).
+    /// </summary>
+    private static readonly System.Collections.Concurrent.BlockingCollection<Action> _staQueue = StartSta();
+
+    private static System.Collections.Concurrent.BlockingCollection<Action> StartSta()
+    {
+        var queue = new System.Collections.Concurrent.BlockingCollection<Action>();
+        var thread = new Thread(() =>
+        {
+            foreach (Action job in queue.GetConsumingEnumerable())
+            {
+                job();
+            }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.IsBackground = true;
+        thread.Start();
+        return queue;
+    }
+
     private static Task<T> OnStaAsync<T>(Func<T> work)
     {
         var tcs = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var thread = new Thread(() =>
+        _staQueue.Add(() =>
         {
             try
             {
@@ -170,9 +196,6 @@ public sealed class PagesLoadTests
                 tcs.SetException(ex);
             }
         });
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.IsBackground = true;
-        thread.Start();
         return tcs.Task;
     }
 
@@ -214,6 +237,62 @@ public sealed class PagesLoadTests
         element.Measure(new Size(1200, 900));
         element.Arrange(new Rect(0, 0, 1200, 900));
         element.UpdateLayout();
+    }
+
+    /// <summary>
+    /// WPF UI 4.3.0's <c>InfoBar</c> template has no <c>ContentPresenter</c>, so the action button 08_UI
+    /// §Notifications policy puts on every persistent banner — the one dismissal of a safety notice, since the X is
+    /// off by design — was never rendered: a refusal was a red bar nobody could close. <c>Styles/FrameLedger.xaml</c>
+    /// re-templates the control with the presenter. Both halves are asserted: the app's template renders the
+    /// Content, the library's does not — so this turns red the day upstream renders it, which is the day the
+    /// override comes out rather than staying by habit.
+    /// </summary>
+    [Fact]
+    public async Task TheInfoBarTemplateRendersItsContent()
+    {
+        (bool ours, bool library) = await OnStaAsync(() =>
+        {
+            Wpf.Ui.Controls.InfoBar ours = NoticeWithAction();
+            Render(ours);
+
+            Wpf.Ui.Controls.InfoBar library = NoticeWithAction();
+            library.Style = (Style)new ControlsDictionary()[typeof(Wpf.Ui.Controls.InfoBar)];
+            Render(library);
+
+            return (HasRenderedActionButton(ours), HasRenderedActionButton(library));
+        });
+
+        ours.Should().BeTrue("the app's InfoBar template must render the action button, or a safety notice cannot be dismissed");
+        library.Should().BeFalse("WPF UI 4.3.0 drops InfoBar.Content; when this turns true the override in Styles/FrameLedger.xaml is no longer needed");
+    }
+
+    private static Wpf.Ui.Controls.InfoBar NoticeWithAction() => new()
+    {
+        IsOpen = true,
+        IsClosable = false,
+        Severity = Wpf.Ui.Controls.InfoBarSeverity.Error,
+        Title = "Game: hooking refused",
+        Message = "Easy Anti-Cheat was detected in this game.",
+        Content = new Wpf.Ui.Controls.Button { Content = "Record this session without measuring it" },
+    };
+
+    private static bool HasRenderedActionButton(DependencyObject root)
+    {
+        if (root is Wpf.Ui.Controls.Button { Content: string, Visibility: Visibility.Visible, ActualWidth: > 0 })
+        {
+            return true;
+        }
+
+        int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(root);
+        for (int i = 0; i < count; i++)
+        {
+            if (HasRenderedActionButton(System.Windows.Media.VisualTreeHelper.GetChild(root, i)))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     [Fact]

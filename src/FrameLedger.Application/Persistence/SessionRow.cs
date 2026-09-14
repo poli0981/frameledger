@@ -106,6 +106,13 @@ public sealed record SessionRow
 
     public string? FgNoneWithheldReason { get; init; }
 
+    /// <summary>
+    /// Why no <see cref="FgFactor"/> was published — <c>FgRefusalKind</c> as <c>Vocabulary.FgRefusal</c> spells it
+    /// (schema 0003). Null when a factor stands or the writer predates the column. A reason for the UI to show
+    /// beside an identified-but-uncounted <see cref="FgMode"/>, never an input to any number.
+    /// </summary>
+    public string? FgRefusal { get; init; }
+
     public double? PresentedFps { get; init; }
 
     public string? PresentedQualifier { get; init; }

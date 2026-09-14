@@ -9,8 +9,10 @@ namespace FrameLedger.App.Tests;
 /// <summary>FR-6.3 / FR-6.4: points per hooked session oldest first, mid-session-change sessions out by default, Displayed only where measured, markers where consecutive snapshots differ.</summary>
 public sealed class TrendSeriesBuilderTests
 {
-    private static SessionRow Row(int day, long snapshotId, bool hooked = true, bool midSession = false, string fgMode = "none", double? native = 60, double? displayed = null, double? presented = null, double? p1 = 48, double? gpu = 70) => new()
+    private static SessionRow Row(int day, long snapshotId, bool hooked = true, bool midSession = false, string fgMode = "none", double? native = 60, double? displayed = null, double? presented = null, double? p1 = 48, double? gpu = 70, double? factor = null, string? refusal = null) => new()
     {
+        FgFactor = factor,
+        FgRefusal = refusal,
         Id = day,
         SessionGuid = Guid.NewGuid(),
         GameId = 1,
@@ -56,11 +58,14 @@ public sealed class TrendSeriesBuilderTests
     [Fact]
     public void TheAverageIsPresentedWhereFgWasNotMeasuredAndDisplayedOnlyWhereItWas()
     {
-        SessionRow generated = Row(1, 1, fgMode: "dlssg", native: 62, displayed: 118);
+        SessionRow generated = Row(1, 1, fgMode: "dlssg", native: 62, displayed: 118, factor: 1.9);
         SessionRow none = Row(2, 1, fgMode: "none", native: 90);
         SessionRow presented = Row(3, 1, fgMode: "na", native: null, presented: 144);
+        SessionRow identified = Row(4, 1, fgMode: "dlssg", native: null, displayed: null, presented: 304, refusal: "no_evaluations");
 
         TrendSeriesBuilder.ValueOf(generated, TrendMetric.Average).Should().Be(62);
+        TrendSeriesBuilder.ValueOf(identified, TrendMetric.Average).Should().Be(304, "identified but uncounted: the Presented figure is the headline, never a Native");
+        TrendSeriesBuilder.ValueOf(identified, TrendMetric.Displayed).Should().BeNull("no factor was counted, so no displayed rate exists");
         TrendSeriesBuilder.ValueOf(none, TrendMetric.Average).Should().Be(90);
         TrendSeriesBuilder.ValueOf(presented, TrendMetric.Average).Should().Be(144, "Presented FPS is the headline when FG is not measured");
         TrendSeriesBuilder.ValueOf(generated, TrendMetric.Displayed).Should().Be(118);

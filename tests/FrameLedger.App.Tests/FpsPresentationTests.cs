@@ -16,8 +16,10 @@ public sealed class FpsPresentationTests
 {
     private static readonly CultureInfo _en = CultureInfo.GetCultureInfo("en");
 
-    private static SessionRow Hooked(string fgMode, double? native = 62, double? displayed = null, double? factor = null, double? presented = null, string? qualifier = null) => new()
+    private static SessionRow Hooked(string fgMode, double? native = 62, double? displayed = null, double? factor = null, double? presented = null, string? qualifier = null, string? refusal = null, long? census = null) => new()
     {
+        FgRefusal = refusal,
+        FgRuntimeCensus = census,
         SessionGuid = Guid.NewGuid(),
         GameId = 1,
         SnapshotId = 1,
@@ -136,5 +138,72 @@ public sealed class FpsPresentationTests
         InEnglish(() => m.QualifierText).Should().Be("FG not observed");
 
         FpsPresentation.FromProgress(generated with { Presents5s = 0 }).Kind.Should().Be(FpsReadoutKind.Unavailable, "no frames yet");
+    }
+
+    /// <summary>
+    /// The owner's rows 8 and 10 (2026-09-14): <c>fg_mode = dlssg</c>, <c>fg_source = api</c>, <c>fg_factor</c> NULL —
+    /// the tags named DLSS-G and the count refused. Every FG surface said N/A and the headline printed
+    /// <c>N/A → N/A FPS (×0.0 FG)</c>: a factor nobody counted. The shape is Presented FPS with a warning chip naming
+    /// the technology and the refusal as its tooltip; the table's Displayed and FG× say N/A; "Native" never appears.
+    /// </summary>
+    [Fact]
+    public void AnIdentifiedButUncountedRowIsPresentedFpsNamingTheTechnologyAndNeverAFactor()
+    {
+        SessionRow row = Hooked("dlssg", native: null, displayed: null, factor: null, presented: 304.35, qualifier: "fg_runtime_loaded", refusal: "no_evaluations");
+        FpsReadoutModel m = InEnglish(() => FpsPresentation.FromRow(row));
+
+        m.Kind.Should().Be(FpsReadoutKind.IdentifiedUncounted);
+        InEnglish(() => m.Line).Should().Be("304 FPS").And.NotContain("Native").And.NotContain("×");
+        InEnglish(() => m.QualifierText).Should().Be("DLSS-G active — factor not counted");
+        m.QualifierIsWarning.Should().BeTrue("the number may include generated frames");
+        InEnglish(() => m.QualifierTooltip).Should().Contain("no application-frame token was counted").And.Contain("Displayed, not Native");
+        m.FactorChip.Should().BeNull();
+        InEnglish(() => FpsPresentation.NativeColumn(row)).Should().Be("304");
+        InEnglish(() => FpsPresentation.DisplayedColumn(row)).Should().Be("N/A");
+        InEnglish(() => FpsPresentation.FactorColumn(row)).Should().Be("N/A");
+        InEnglish(() => FpsPresentation.ColumnTooltip(row)).Should().Be(InEnglish(() => m.QualifierTooltip));
+        InEnglish(() => FpsPresentation.FrameGenerationLabel(m, row.FgMode)).Should().Be("DLSS-G · factor not counted");
+
+        var live = new SessionProgressEvent
+        {
+            SessionGuid = Guid.NewGuid(),
+            ElapsedS = 30,
+            Presents5s = 1500,
+            PresentedFps5s = 300,
+            PresentedQualifier = "fg_runtime_loaded",
+            FgMode = "dlssg",
+            FgRefusal = "non_uniform",
+        };
+        FpsReadoutModel lm = InEnglish(() => FpsPresentation.FromProgress(live));
+        lm.Kind.Should().Be(FpsReadoutKind.IdentifiedUncounted);
+        InEnglish(() => lm.Line).Should().Be("300 FPS");
+        InEnglish(() => lm.QualifierTooltip).Should().Contain("changed mid-session");
+        InEnglish(() => FpsPresentation.RefusalText("something_new")).Should().Be("the count did not resolve", "an unknown token is the honest unknown");
+    }
+
+    /// <summary>A counted factor keeps the generated shape; the label carries the chip, without a trailing space.</summary>
+    [Fact]
+    public void ACountedFactorKeepsTheGeneratedLabelWithItsChip()
+    {
+        SessionRow row = Hooked("dlssg", native: 99.6, displayed: 399.9, factor: 4.01);
+        FpsReadoutModel m = InEnglish(() => FpsPresentation.FromRow(row));
+        m.Kind.Should().Be(FpsReadoutKind.Generated);
+        InEnglish(() => FpsPresentation.FrameGenerationLabel(m, row.FgMode)).Should().Be("DLSS-G ×4.0 FG");
+        InEnglish(() => FpsPresentation.FrameGenerationLabel(FpsPresentation.FromRow(Hooked("na", native: null, presented: 144)), "na")).Should().Be("N/A");
+    }
+
+    /// <summary><c>08_UI</c> §FPS display rule: the warning chip names the module when the census says which one was loaded.</summary>
+    [Fact]
+    public void TheRuntimeLoadedChipNamesTheModuleWhenTheCensusCarriesOne()
+    {
+        long census = (long)(Shared.FlRuntimeCensus.Ran | Shared.FlRuntimeCensus.SlInterposer | Shared.FlRuntimeCensus.SlDlssG | Shared.FlRuntimeCensus.NvngxDlssG);
+        SessionRow named = Hooked("na", native: null, presented: 144, qualifier: "fg_runtime_loaded", census: census);
+        InEnglish(() => FpsPresentation.FromRow(named).QualifierText).Should().Be("FG runtime loaded (sl.dlss_g.dll) — may include generated frames");
+
+        SessionRow unnamed = Hooked("na", native: null, presented: 144, qualifier: "fg_runtime_loaded", census: (long)(Shared.FlRuntimeCensus.Ran | Shared.FlRuntimeCensus.SlInterposer));
+        InEnglish(() => FpsPresentation.FromRow(unnamed).QualifierText).Should().Be("FG runtime loaded — may include generated frames", "the qualifier said loaded and the census names no FG family: the words stay, the name does not");
+
+        FpsPresentation.FrameGenerationModule(null).Should().BeNull();
+        FpsPresentation.FrameGenerationModule((long)Shared.FlRuntimeCensus.AmdFfxDx12).Should().Be("amd_fidelityfx_dx12.dll", "the FSR 3.1 facade MAY generate frames (03_METRICS §Rung 0's qualifier)");
     }
 }
