@@ -2238,7 +2238,20 @@ TEST_CASE("launch mode against the real harness through the real module seam: in
 namespace {
 
 // The newest logs\overlay-<pid>-*.log under %LOCALAPPDATA%\FrameLedger, if any.
-bool FindOverlayLog(DWORD pid, std::wstring& out) {
+// The log of THIS child, not the first file carrying its pid. Pids are reused and the logs directory outlives
+// every run: measured 2026-09-14, the dev box held 2130 overlay logs and pid 6840 twice, and FindFirstFileW
+// enumerated the 2026-09-06 file first -- so the test read a finished log from an unrelated earlier process and
+// failed on the STOP line, then "passed on a re-run" with a fresh pid. Four gate runs were lost to that before the
+// log path in the failure output gave it away. Only a file created at or after the child started can be its log,
+// and of those the newest is taken.
+bool FindOverlayLog(DWORD pid, HANDLE process, std::wstring& out) {
+    FILETIME started{};
+    FILETIME exited{};
+    FILETIME kernel{};
+    FILETIME user{};
+    if (!GetProcessTimes(process, &started, &exited, &kernel, &user)) {
+        return false;
+    }
     wchar_t base[fl::guard::kMaxRulesPathLen]{};
     if (!fl::guard::LocalAppDataDir(base, fl::guard::kMaxRulesPathLen)) {
         return false;
@@ -2250,11 +2263,70 @@ bool FindOverlayLog(DWORD pid, std::wstring& out) {
     if (h == INVALID_HANDLE_VALUE) {
         return false;
     }
+    bool         found = false;
+    FILETIME     newest{};
+    std::wstring name;
+    do {
+        if (CompareFileTime(&fd.ftCreationTime, &started) >= 0 &&
+            (!found || CompareFileTime(&fd.ftCreationTime, &newest) > 0)) {
+            newest = fd.ftCreationTime;
+            name = fd.cFileName;
+            found = true;
+        }
+    } while (FindNextFileW(h, &fd));
+    FindClose(h);
+    if (!found) {
+        return false;
+    }
     std::wstring dir = pattern;
     dir = dir.substr(0, dir.find_last_of(L'\\'));
-    out = dir + L"\\" + fd.cFileName;
-    FindClose(h);
+    out = dir + L"\\" + name;
     return true;
+}
+
+// A finished log under a pid, dated long before the process that holds the pid now: what a reused pid meets on a
+// machine that has run these tests before. The file is removed when the guard leaves scope, pass or fail.
+struct StaleOverlayLog {
+    std::wstring path;
+    StaleOverlayLog() = default;
+    StaleOverlayLog(const StaleOverlayLog&) = delete;
+    StaleOverlayLog& operator=(const StaleOverlayLog&) = delete;
+    ~StaleOverlayLog() {
+        if (!path.empty()) {
+            static_cast<void>(DeleteFileW(path.c_str()));
+        }
+    }
+};
+
+bool PlantStaleOverlayLog(DWORD pid, StaleOverlayLog& out) {
+    wchar_t base[fl::guard::kMaxRulesPathLen]{};
+    if (!fl::guard::LocalAppDataDir(base, fl::guard::kMaxRulesPathLen)) {
+        return false;
+    }
+    wchar_t dir[fl::guard::kMaxRulesPathLen]{};
+    _snwprintf_s(dir, _TRUNCATE, L"%s\\FrameLedger", base);
+    static_cast<void>(CreateDirectoryW(dir, nullptr));
+    _snwprintf_s(dir, _TRUNCATE, L"%s\\FrameLedger\\logs", base);
+    static_cast<void>(CreateDirectoryW(dir, nullptr));
+    // 19990101 sorts before every real log's date, so a lookup that takes the first match by name reads this file.
+    wchar_t path[fl::guard::kMaxRulesPathLen]{};
+    _snwprintf_s(path, _TRUNCATE, L"%s\\overlay-%lu-19990101-000000.log", dir, pid);
+    HANDLE h = CreateFileW(path, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (h == INVALID_HANDLE_VALUE) {
+        return false;
+    }
+    out.path = path;
+    static const char kText[] = "# a stale log planted by guard_test: an earlier process that had this pid\r\n";
+    SYSTEMTIME        then{};
+    then.wYear = 1999;
+    then.wMonth = 1;
+    then.wDay = 1;
+    FILETIME   old{};
+    DWORD      written = 0;
+    const bool ok = WriteFile(h, kText, static_cast<DWORD>(sizeof(kText) - 1), &written, nullptr) != FALSE &&
+                    SystemTimeToFileTime(&then, &old) != FALSE && SetFileTime(h, &old, &old, &old) != FALSE;
+    CloseHandle(h);
+    return ok;
 }
 
 std::string ReadWholeFile(const std::wstring& path) {
@@ -2330,6 +2402,12 @@ TEST_CASE("the native log: written at init, on the Agent's request, and on the s
     Child child;
     REQUIRE(StartHarness(child, L"--real --hold-presenting 14"));
 
+    // A finished log already under this child's pid, dated 1999. The lookup must skip it -- it predates the child --
+    // or everything below reads an unrelated process's log: the defect that was filed as a flake four times, made
+    // deterministic here instead of left to pid reuse.
+    StaleOverlayLog stale;
+    REQUIRE(PlantStaleOverlayLog(child.pi.dwProcessId, stale));
+
     ResetFake();
     g.modules = {"kernel32.dll"};
     g.scanSet = {child.pi.dwProcessId};
@@ -2342,7 +2420,7 @@ TEST_CASE("the native log: written at init, on the Agent's request, and on the s
     std::wstring log;
     bool         found = false;
     for (int i = 0; i < 40 && !found; ++i) {
-        found = FindOverlayLog(child.pi.dwProcessId, log);
+        found = FindOverlayLog(child.pi.dwProcessId, child.pi.hProcess, log);
         if (!found) {
             Sleep(50);
         }
