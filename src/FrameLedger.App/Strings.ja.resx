@@ -277,4 +277,524 @@
     <value>システムに従う</value>
     <comment>review</comment>
   </data>
+  <data name="AddGame_Added_Format" xml:space="preserve">
+    <value>{0} を追加しました。有効にするまでフックは無効です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="AddGame_Dialog_Title" xml:space="preserve">
+    <value>ゲームの実行ファイルを選択</value>
+    <comment>review</comment>
+  </data>
+  <data name="AddGame_Failed_Format" xml:space="preserve">
+    <value>{0} を読み取れなかったため、ゲームは追加されませんでした。</value>
+    <comment>review</comment>
+  </data>
+  <data name="AddGame_Filter" xml:space="preserve">
+    <value>プログラム (*.exe)|*.exe</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chip_NA" xml:space="preserve">
+    <value>N/A</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chip_No" xml:space="preserve">
+    <value>なし</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chip_Pt" xml:space="preserve">
+    <value>パストレーシング</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chip_Rr" xml:space="preserve">
+    <value>レイ再構成</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chip_Rt" xml:space="preserve">
+    <value>レイトレーシング</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chip_Source_Inherited" xml:space="preserve">
+    <value>ゲームの既定から継承</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chip_Source_Manual" xml:space="preserve">
+    <value>手動上書き</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chip_Source_Measured" xml:space="preserve">
+    <value>実測</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chip_Source_NA" xml:space="preserve">
+    <value>未実測</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chip_Yes" xml:space="preserve">
+    <value>あり</value>
+    <comment>review</comment>
+  </data>
+  <data name="Common_Close" xml:space="preserve">
+    <value>閉じる</value>
+    <comment>review</comment>
+  </data>
+  <data name="Common_Dash" xml:space="preserve">
+    <value>—</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Live_CpuTemp_Format" xml:space="preserve">
+    <value>CPU {0} °C</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Live_Elapsed_Format" xml:space="preserve">
+    <value>経過 {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Live_GpuTemp_Format" xml:space="preserve">
+    <value>GPU {0} °C</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Live_Header" xml:space="preserve">
+    <value>ライブキャプチャ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Live_Idle" xml:space="preserve">
+    <value>現在キャプチャ中のものはありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Live_Rt_On" xml:space="preserve">
+    <value>RT 有効</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Live_Vram_Format" xml:space="preserve">
+    <value>{0} MB VRAM (プロセス)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Live_Waiting" xml:space="preserve">
+    <value>接続済み — 最初のフレームを待機中…</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Recent_Header" xml:space="preserve">
+    <value>最近のセッション</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Totals_Games" xml:space="preserve">
+    <value>追跡中のゲーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Totals_Playtime" xml:space="preserve">
+    <value>合計プレイ時間</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Totals_ThisWeek" xml:space="preserve">
+    <value>今週のセッション</value>
+    <comment>review</comment>
+  </data>
+  <data name="EditGame_Detected" xml:space="preserve">
+    <value>自動検出</value>
+    <comment>review</comment>
+  </data>
+  <data name="EditGame_Name" xml:space="preserve">
+    <value>名前</value>
+    <comment>review</comment>
+  </data>
+  <data name="EditGame_Notes" xml:space="preserve">
+    <value>メモ</value>
+    <comment>review</comment>
+  </data>
+  <data name="EditGame_Publisher" xml:space="preserve">
+    <value>パブリッシャー</value>
+    <comment>review</comment>
+  </data>
+  <data name="EditGame_Save" xml:space="preserve">
+    <value>保存</value>
+    <comment>review</comment>
+  </data>
+  <data name="EditGame_Saved" xml:space="preserve">
+    <value>保存しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="EditGame_Title" xml:space="preserve">
+    <value>ゲームを編集</value>
+    <comment>review</comment>
+  </data>
+  <data name="EditGame_Version" xml:space="preserve">
+    <value>バージョン</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Crashed" xml:space="preserve">
+    <value>クラッシュ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Degraded" xml:space="preserve">
+    <value>低下</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Interrupted" xml:space="preserve">
+    <value>中断</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Normal" xml:space="preserve">
+    <value>正常</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_UnhookedSafety" xml:space="preserve">
+    <value>フック解除 (安全)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_Active" xml:space="preserve">
+    <value>FG 有効 (技術未特定)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_None" xml:space="preserve">
+    <value>フレーム生成なし</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_Unknown" xml:space="preserve">
+    <value>FG (不明)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Format_Duration_HoursMinutes_Format" xml:space="preserve">
+    <value>{0}時間{1:00}分</value>
+    <comment>review</comment>
+  </data>
+  <data name="Format_Duration_MinutesSeconds_Format" xml:space="preserve">
+    <value>{0}分{1:00}秒</value>
+    <comment>review</comment>
+  </data>
+  <data name="Format_Playtime_Hours_Format" xml:space="preserve">
+    <value>{0:0.#} 時間</value>
+    <comment>review</comment>
+  </data>
+  <data name="Format_Playtime_Minutes_Format" xml:space="preserve">
+    <value>{0} 分</value>
+    <comment>review</comment>
+  </data>
+  <data name="Format_Resolution_Format" xml:space="preserve">
+    <value>{0}×{1} → {2}×{3}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Format_Resolution_Single_Format" xml:space="preserve">
+    <value>{0}×{1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Format_Temperature_Format" xml:space="preserve">
+    <value>{0:0} °C</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Census_NoRuntime" xml:space="preserve">
+    <value>FG 未検出</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Census_NoRuntime_Tooltip" xml:space="preserve">
+    <value>フレーム生成ランタイムは読み込まれていません。この数値にプロセス内生成フレームは含まれません — 静的リンクの FSR3-FG とドライバー側 AFMF を除く。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Census_NotRun" xml:space="preserve">
+    <value>FG 調査未実行</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Census_NotRun_Tooltip" xml:space="preserve">
+    <value>このセッションではランタイム調査が実行されておらず、生成フレームが含まれるかは不明です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Census_RuntimeLoaded" xml:space="preserve">
+    <value>FG ランタイム読込済み — 生成フレームを含む可能性</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Census_RuntimeLoaded_Tooltip" xml:space="preserve">
+    <value>フレーム生成ランタイムが読み込まれており、何も観測されていません。この数値には生成フレームが含まれる可能性があります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Census_Withheld" xml:space="preserve">
+    <value>アプリケーションフレーム数</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Census_Withheld_Tooltip" xml:space="preserve">
+    <value>この数値はアプリケーションフレームを数えたもので、表示レートは不明です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Fg_Chip_Format" xml:space="preserve">
+    <value>×{0:0.0} FG</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Fg_Format" xml:space="preserve">
+    <value>{0} → {1} FPS (×{2:0.0} FG)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Native_Tooltip" xml:space="preserve">
+    <value>ネイティブ: ゲームがレンダリングしたフレーム・表示: 生成フレームを含む画面表示フレーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_None_Tooltip" xml:space="preserve">
+    <value>フレーム生成は「なし」と実測されました。表示はネイティブと同じです。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Presented_Format" xml:space="preserve">
+    <value>{0} FPS</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Back" xml:space="preserve">
+    <value>すべてのゲーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Edit" xml:space="preserve">
+    <value>編集…</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Hooking_Body" xml:space="preserve">
+    <value>既定では無効です。有効にすると同意ダイアログが開きます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Hooking_Busy" xml:space="preserve">
+    <value>キャプチャエージェントに問い合わせ中…</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Hooking_Header" xml:space="preserve">
+    <value>フック</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Hooking_Off" xml:space="preserve">
+    <value>フック無効</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Hooking_On" xml:space="preserve">
+    <value>フック有効</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Hooking_ReEnable" xml:space="preserve">
+    <value>フックを再度有効にする</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Hooking_Unverified" xml:space="preserve">
+    <value>FrameLedger はこのゲームのファイルのアンチチート検査を完了できませんでした。切り替えは引き続き使用でき、ファイルまたはルールの変更時に再スキャンされます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_LastSession_Format" xml:space="preserve">
+    <value>最後のセッション: {0} · {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_LifetimeAvg" xml:space="preserve">
+    <value>全期間平均</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Measured_Empty" xml:space="preserve">
+    <value>実測されたセッションはまだありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Measured_Header" xml:space="preserve">
+    <value>最後のセッションで実測</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Measured_NotHooked" xml:space="preserve">
+    <value>最後のセッションはフックされておらず、何も実測されていません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_NotFound" xml:space="preserve">
+    <value>このゲームはライブラリにありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Remove" xml:space="preserve">
+    <value>削除…</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Sessions_Empty" xml:space="preserve">
+    <value>セッションはまだありません。ゲームを起動すれば FrameLedger が残りを行います。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Supports_Empty" xml:space="preserve">
+    <value>未スキャン — 機能スキャンは後のビルドで追加されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Supports_Format" xml:space="preserve">
+    <value>{0} 対応</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Supports_Header" xml:space="preserve">
+    <value>対応</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Tab_Distribution" xml:space="preserve">
+    <value>分布</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Tab_Frametime" xml:space="preserve">
+    <value>フレームタイム</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Tab_Latency" xml:space="preserve">
+    <value>レイテンシ</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Tab_Later_Format" xml:space="preserve">
+    <value>{0} は後のビルドで追加されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Tab_Sensors" xml:space="preserve">
+    <value>センサー</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Tab_Sessions" xml:space="preserve">
+    <value>セッション</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Tab_Trend" xml:space="preserve">
+    <value>傾向</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Add" xml:space="preserve">
+    <value>ゲームを追加…</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Card_HookOff" xml:space="preserve">
+    <value>フック無効</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Card_HookOn" xml:space="preserve">
+    <value>フック有効</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Card_LastPlayed_Format" xml:space="preserve">
+    <value>最終プレイ {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Card_NeverPlayed" xml:space="preserve">
+    <value>未プレイ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Card_Playtime_Format" xml:space="preserve">
+    <value>プレイ時間 {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Card_Sessions_Format" xml:space="preserve">
+    <value>{0} セッション</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_NoMatch" xml:space="preserve">
+    <value>検索に一致するゲームはありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Search_Placeholder" xml:space="preserve">
+    <value>ゲームを検索</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Sort_Label" xml:space="preserve">
+    <value>並べ替え</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Sort_LastPlayed" xml:space="preserve">
+    <value>最後にプレイ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Sort_Name" xml:space="preserve">
+    <value>名前</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Sort_Playtime" xml:space="preserve">
+    <value>プレイ時間</value>
+    <comment>review</comment>
+  </data>
+  <data name="RemoveGame_Body" xml:space="preserve">
+    <value>セッションを残す（ゲームはライブラリから外れ、再度起動すると戻ります）か、ゲームと一緒に削除できます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="RemoveGame_Delete" xml:space="preserve">
+    <value>セッションも削除</value>
+    <comment>review</comment>
+  </data>
+  <data name="RemoveGame_Keep" xml:space="preserve">
+    <value>セッションを残す</value>
+    <comment>review</comment>
+  </data>
+  <data name="RemoveGame_Removed_Format" xml:space="preserve">
+    <value>{0} を削除しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="RemoveGame_Title_Format" xml:space="preserve">
+    <value>{0} を削除しますか?</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_Col_Api" xml:space="preserve">
+    <value>API</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_Col_Date" xml:space="preserve">
+    <value>日付</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_Col_Displayed" xml:space="preserve">
+    <value>表示</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_Col_Duration" xml:space="preserve">
+    <value>時間</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_Col_Exit" xml:space="preserve">
+    <value>終了</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_Col_Fg" xml:space="preserve">
+    <value>FG×</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_Col_GpuTemp" xml:space="preserve">
+    <value>GPU 最高 °C</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_Col_Native" xml:space="preserve">
+    <value>ネイティブ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_Col_P01Low" xml:space="preserve">
+    <value>0.1% Low</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_Col_P1Low" xml:space="preserve">
+    <value>1% Low</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_Col_Resolution" xml:space="preserve">
+    <value>解像度・アップスケーラー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_Col_Tags" xml:space="preserve">
+    <value>タグ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_Col_Tier" xml:space="preserve">
+    <value>ティア</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tier_Dash_Tooltip" xml:space="preserve">
+    <value>—: フレーム生成は「なし」と実測されたため、ネイティブと異なる表示レートはありません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tier_Hooked" xml:space="preserve">
+    <value>T1</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tier_Hooked_Tooltip" xml:space="preserve">
+    <value>ティア 1: フック済み、実測</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tier_NA_Tooltip" xml:space="preserve">
+    <value>N/A: このセッションのティアでは実測されていません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tier_NotHooked" xml:space="preserve">
+    <value>T2</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tier_NotHooked_Tooltip" xml:space="preserve">
+    <value>ティア 2: フックなし — 時間とセンサーのみ。フレーム由来の値はすべて N/A</value>
+    <comment>review</comment>
+  </data>
+  <data name="Upscaler_None" xml:space="preserve">
+    <value>アップスケーラーなし</value>
+    <comment>review</comment>
+  </data>
+  <data name="Upscaler_Unknown" xml:space="preserve">
+    <value>不明なアップスケーラー</value>
+    <comment>review</comment>
+  </data>
 </root>

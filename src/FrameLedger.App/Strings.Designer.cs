@@ -28,6 +28,10 @@ public static class Strings
     [
         nameof(About_Body_Format),
         nameof(About_Title),
+        nameof(AddGame_Added_Format),
+        nameof(AddGame_Dialog_Title),
+        nameof(AddGame_Failed_Format),
+        nameof(AddGame_Filter),
         nameof(Agent_Banner_Missing_Body),
         nameof(Agent_Banner_Offline_Body),
         nameof(Agent_Banner_Offline_Title),
@@ -38,7 +42,19 @@ public static class Strings
         nameof(Agent_State_Offline),
         nameof(Agent_State_Starting),
         nameof(App_Title),
+        nameof(Chip_NA),
+        nameof(Chip_No),
+        nameof(Chip_Pt),
+        nameof(Chip_Rr),
+        nameof(Chip_Rt),
+        nameof(Chip_Source_Inherited),
+        nameof(Chip_Source_Manual),
+        nameof(Chip_Source_Measured),
+        nameof(Chip_Source_NA),
+        nameof(Chip_Yes),
         nameof(Common_Cancel),
+        nameof(Common_Close),
+        nameof(Common_Dash),
         nameof(Common_No),
         nameof(Common_NotAvailable),
         nameof(Common_Ok),
@@ -56,8 +72,96 @@ public static class Strings
         nameof(Dashboard_Agent_Version),
         nameof(Dashboard_Empty),
         nameof(Dashboard_Header),
+        nameof(Dashboard_Live_CpuTemp_Format),
+        nameof(Dashboard_Live_Elapsed_Format),
+        nameof(Dashboard_Live_GpuTemp_Format),
+        nameof(Dashboard_Live_Header),
+        nameof(Dashboard_Live_Idle),
+        nameof(Dashboard_Live_Rt_On),
+        nameof(Dashboard_Live_Vram_Format),
+        nameof(Dashboard_Live_Waiting),
+        nameof(Dashboard_Recent_Header),
+        nameof(Dashboard_Totals_Games),
+        nameof(Dashboard_Totals_Playtime),
+        nameof(Dashboard_Totals_ThisWeek),
+        nameof(EditGame_Detected),
+        nameof(EditGame_Name),
+        nameof(EditGame_Notes),
+        nameof(EditGame_Publisher),
+        nameof(EditGame_Save),
+        nameof(EditGame_Saved),
+        nameof(EditGame_Title),
+        nameof(EditGame_Version),
+        nameof(Exit_Crashed),
+        nameof(Exit_Degraded),
+        nameof(Exit_Interrupted),
+        nameof(Exit_Normal),
+        nameof(Exit_UnhookedSafety),
+        nameof(Fg_Active),
+        nameof(Fg_None),
+        nameof(Fg_Unknown),
+        nameof(Format_Duration_HoursMinutes_Format),
+        nameof(Format_Duration_MinutesSeconds_Format),
+        nameof(Format_Playtime_Hours_Format),
+        nameof(Format_Playtime_Minutes_Format),
+        nameof(Format_Resolution_Format),
+        nameof(Format_Resolution_Single_Format),
+        nameof(Format_Temperature_Format),
+        nameof(Fps_Census_NoRuntime),
+        nameof(Fps_Census_NoRuntime_Tooltip),
+        nameof(Fps_Census_NotRun),
+        nameof(Fps_Census_NotRun_Tooltip),
+        nameof(Fps_Census_RuntimeLoaded),
+        nameof(Fps_Census_RuntimeLoaded_Tooltip),
+        nameof(Fps_Census_Withheld),
+        nameof(Fps_Census_Withheld_Tooltip),
+        nameof(Fps_Fg_Chip_Format),
+        nameof(Fps_Fg_Format),
+        nameof(Fps_Native_Tooltip),
+        nameof(Fps_None_Tooltip),
+        nameof(Fps_Presented_Format),
+        nameof(GameDetail_Back),
+        nameof(GameDetail_Edit),
+        nameof(GameDetail_Hooking_Body),
+        nameof(GameDetail_Hooking_Busy),
+        nameof(GameDetail_Hooking_Header),
+        nameof(GameDetail_Hooking_Off),
+        nameof(GameDetail_Hooking_On),
+        nameof(GameDetail_Hooking_ReEnable),
+        nameof(GameDetail_Hooking_Unverified),
+        nameof(GameDetail_LastSession_Format),
+        nameof(GameDetail_LifetimeAvg),
+        nameof(GameDetail_Measured_Empty),
+        nameof(GameDetail_Measured_Header),
+        nameof(GameDetail_Measured_NotHooked),
+        nameof(GameDetail_NotFound),
+        nameof(GameDetail_Remove),
+        nameof(GameDetail_Sessions_Empty),
+        nameof(GameDetail_Supports_Empty),
+        nameof(GameDetail_Supports_Format),
+        nameof(GameDetail_Supports_Header),
+        nameof(GameDetail_Tab_Distribution),
+        nameof(GameDetail_Tab_Frametime),
+        nameof(GameDetail_Tab_Latency),
+        nameof(GameDetail_Tab_Later_Format),
+        nameof(GameDetail_Tab_Sensors),
+        nameof(GameDetail_Tab_Sessions),
+        nameof(GameDetail_Tab_Trend),
+        nameof(Games_Add),
+        nameof(Games_Card_HookOff),
+        nameof(Games_Card_HookOn),
+        nameof(Games_Card_LastPlayed_Format),
+        nameof(Games_Card_NeverPlayed),
+        nameof(Games_Card_Playtime_Format),
+        nameof(Games_Card_Sessions_Format),
         nameof(Games_Empty),
         nameof(Games_Header),
+        nameof(Games_NoMatch),
+        nameof(Games_Search_Placeholder),
+        nameof(Games_Sort_Label),
+        nameof(Games_Sort_LastPlayed),
+        nameof(Games_Sort_Name),
+        nameof(Games_Sort_Playtime),
         nameof(Logs_Empty),
         nameof(Logs_Header),
         nameof(Menu_File),
@@ -83,6 +187,24 @@ public static class Strings
         nameof(Nav_Settings),
         nameof(NotYet_Body),
         nameof(NotYet_Title),
+        nameof(RemoveGame_Body),
+        nameof(RemoveGame_Delete),
+        nameof(RemoveGame_Keep),
+        nameof(RemoveGame_Removed_Format),
+        nameof(RemoveGame_Title_Format),
+        nameof(Sessions_Col_Api),
+        nameof(Sessions_Col_Date),
+        nameof(Sessions_Col_Displayed),
+        nameof(Sessions_Col_Duration),
+        nameof(Sessions_Col_Exit),
+        nameof(Sessions_Col_Fg),
+        nameof(Sessions_Col_GpuTemp),
+        nameof(Sessions_Col_Native),
+        nameof(Sessions_Col_P01Low),
+        nameof(Sessions_Col_P1Low),
+        nameof(Sessions_Col_Resolution),
+        nameof(Sessions_Col_Tags),
+        nameof(Sessions_Col_Tier),
         nameof(Settings_Appearance_Header),
         nameof(Settings_Header),
         nameof(Settings_Language_Label),
@@ -91,11 +213,27 @@ public static class Strings
         nameof(Settings_Theme_Label),
         nameof(Settings_Theme_Light),
         nameof(Settings_Theme_System),
+        nameof(Tier_Dash_Tooltip),
+        nameof(Tier_Hooked),
+        nameof(Tier_Hooked_Tooltip),
+        nameof(Tier_NA_Tooltip),
+        nameof(Tier_NotHooked),
+        nameof(Tier_NotHooked_Tooltip),
+        nameof(Upscaler_None),
+        nameof(Upscaler_Unknown),
     ];
 
     public static string About_Body_Format => ResourceManager.GetString(nameof(About_Body_Format), Culture) ?? nameof(About_Body_Format);
 
     public static string About_Title => ResourceManager.GetString(nameof(About_Title), Culture) ?? nameof(About_Title);
+
+    public static string AddGame_Added_Format => ResourceManager.GetString(nameof(AddGame_Added_Format), Culture) ?? nameof(AddGame_Added_Format);
+
+    public static string AddGame_Dialog_Title => ResourceManager.GetString(nameof(AddGame_Dialog_Title), Culture) ?? nameof(AddGame_Dialog_Title);
+
+    public static string AddGame_Failed_Format => ResourceManager.GetString(nameof(AddGame_Failed_Format), Culture) ?? nameof(AddGame_Failed_Format);
+
+    public static string AddGame_Filter => ResourceManager.GetString(nameof(AddGame_Filter), Culture) ?? nameof(AddGame_Filter);
 
     public static string Agent_Banner_Missing_Body => ResourceManager.GetString(nameof(Agent_Banner_Missing_Body), Culture) ?? nameof(Agent_Banner_Missing_Body);
 
@@ -117,7 +255,31 @@ public static class Strings
 
     public static string App_Title => ResourceManager.GetString(nameof(App_Title), Culture) ?? nameof(App_Title);
 
+    public static string Chip_NA => ResourceManager.GetString(nameof(Chip_NA), Culture) ?? nameof(Chip_NA);
+
+    public static string Chip_No => ResourceManager.GetString(nameof(Chip_No), Culture) ?? nameof(Chip_No);
+
+    public static string Chip_Pt => ResourceManager.GetString(nameof(Chip_Pt), Culture) ?? nameof(Chip_Pt);
+
+    public static string Chip_Rr => ResourceManager.GetString(nameof(Chip_Rr), Culture) ?? nameof(Chip_Rr);
+
+    public static string Chip_Rt => ResourceManager.GetString(nameof(Chip_Rt), Culture) ?? nameof(Chip_Rt);
+
+    public static string Chip_Source_Inherited => ResourceManager.GetString(nameof(Chip_Source_Inherited), Culture) ?? nameof(Chip_Source_Inherited);
+
+    public static string Chip_Source_Manual => ResourceManager.GetString(nameof(Chip_Source_Manual), Culture) ?? nameof(Chip_Source_Manual);
+
+    public static string Chip_Source_Measured => ResourceManager.GetString(nameof(Chip_Source_Measured), Culture) ?? nameof(Chip_Source_Measured);
+
+    public static string Chip_Source_NA => ResourceManager.GetString(nameof(Chip_Source_NA), Culture) ?? nameof(Chip_Source_NA);
+
+    public static string Chip_Yes => ResourceManager.GetString(nameof(Chip_Yes), Culture) ?? nameof(Chip_Yes);
+
     public static string Common_Cancel => ResourceManager.GetString(nameof(Common_Cancel), Culture) ?? nameof(Common_Cancel);
+
+    public static string Common_Close => ResourceManager.GetString(nameof(Common_Close), Culture) ?? nameof(Common_Close);
+
+    public static string Common_Dash => ResourceManager.GetString(nameof(Common_Dash), Culture) ?? nameof(Common_Dash);
 
     public static string Common_No => ResourceManager.GetString(nameof(Common_No), Culture) ?? nameof(Common_No);
 
@@ -153,9 +315,185 @@ public static class Strings
 
     public static string Dashboard_Header => ResourceManager.GetString(nameof(Dashboard_Header), Culture) ?? nameof(Dashboard_Header);
 
+    public static string Dashboard_Live_CpuTemp_Format => ResourceManager.GetString(nameof(Dashboard_Live_CpuTemp_Format), Culture) ?? nameof(Dashboard_Live_CpuTemp_Format);
+
+    public static string Dashboard_Live_Elapsed_Format => ResourceManager.GetString(nameof(Dashboard_Live_Elapsed_Format), Culture) ?? nameof(Dashboard_Live_Elapsed_Format);
+
+    public static string Dashboard_Live_GpuTemp_Format => ResourceManager.GetString(nameof(Dashboard_Live_GpuTemp_Format), Culture) ?? nameof(Dashboard_Live_GpuTemp_Format);
+
+    public static string Dashboard_Live_Header => ResourceManager.GetString(nameof(Dashboard_Live_Header), Culture) ?? nameof(Dashboard_Live_Header);
+
+    public static string Dashboard_Live_Idle => ResourceManager.GetString(nameof(Dashboard_Live_Idle), Culture) ?? nameof(Dashboard_Live_Idle);
+
+    public static string Dashboard_Live_Rt_On => ResourceManager.GetString(nameof(Dashboard_Live_Rt_On), Culture) ?? nameof(Dashboard_Live_Rt_On);
+
+    public static string Dashboard_Live_Vram_Format => ResourceManager.GetString(nameof(Dashboard_Live_Vram_Format), Culture) ?? nameof(Dashboard_Live_Vram_Format);
+
+    public static string Dashboard_Live_Waiting => ResourceManager.GetString(nameof(Dashboard_Live_Waiting), Culture) ?? nameof(Dashboard_Live_Waiting);
+
+    public static string Dashboard_Recent_Header => ResourceManager.GetString(nameof(Dashboard_Recent_Header), Culture) ?? nameof(Dashboard_Recent_Header);
+
+    public static string Dashboard_Totals_Games => ResourceManager.GetString(nameof(Dashboard_Totals_Games), Culture) ?? nameof(Dashboard_Totals_Games);
+
+    public static string Dashboard_Totals_Playtime => ResourceManager.GetString(nameof(Dashboard_Totals_Playtime), Culture) ?? nameof(Dashboard_Totals_Playtime);
+
+    public static string Dashboard_Totals_ThisWeek => ResourceManager.GetString(nameof(Dashboard_Totals_ThisWeek), Culture) ?? nameof(Dashboard_Totals_ThisWeek);
+
+    public static string EditGame_Detected => ResourceManager.GetString(nameof(EditGame_Detected), Culture) ?? nameof(EditGame_Detected);
+
+    public static string EditGame_Name => ResourceManager.GetString(nameof(EditGame_Name), Culture) ?? nameof(EditGame_Name);
+
+    public static string EditGame_Notes => ResourceManager.GetString(nameof(EditGame_Notes), Culture) ?? nameof(EditGame_Notes);
+
+    public static string EditGame_Publisher => ResourceManager.GetString(nameof(EditGame_Publisher), Culture) ?? nameof(EditGame_Publisher);
+
+    public static string EditGame_Save => ResourceManager.GetString(nameof(EditGame_Save), Culture) ?? nameof(EditGame_Save);
+
+    public static string EditGame_Saved => ResourceManager.GetString(nameof(EditGame_Saved), Culture) ?? nameof(EditGame_Saved);
+
+    public static string EditGame_Title => ResourceManager.GetString(nameof(EditGame_Title), Culture) ?? nameof(EditGame_Title);
+
+    public static string EditGame_Version => ResourceManager.GetString(nameof(EditGame_Version), Culture) ?? nameof(EditGame_Version);
+
+    public static string Exit_Crashed => ResourceManager.GetString(nameof(Exit_Crashed), Culture) ?? nameof(Exit_Crashed);
+
+    public static string Exit_Degraded => ResourceManager.GetString(nameof(Exit_Degraded), Culture) ?? nameof(Exit_Degraded);
+
+    public static string Exit_Interrupted => ResourceManager.GetString(nameof(Exit_Interrupted), Culture) ?? nameof(Exit_Interrupted);
+
+    public static string Exit_Normal => ResourceManager.GetString(nameof(Exit_Normal), Culture) ?? nameof(Exit_Normal);
+
+    public static string Exit_UnhookedSafety => ResourceManager.GetString(nameof(Exit_UnhookedSafety), Culture) ?? nameof(Exit_UnhookedSafety);
+
+    public static string Fg_Active => ResourceManager.GetString(nameof(Fg_Active), Culture) ?? nameof(Fg_Active);
+
+    public static string Fg_None => ResourceManager.GetString(nameof(Fg_None), Culture) ?? nameof(Fg_None);
+
+    public static string Fg_Unknown => ResourceManager.GetString(nameof(Fg_Unknown), Culture) ?? nameof(Fg_Unknown);
+
+    public static string Format_Duration_HoursMinutes_Format => ResourceManager.GetString(nameof(Format_Duration_HoursMinutes_Format), Culture) ?? nameof(Format_Duration_HoursMinutes_Format);
+
+    public static string Format_Duration_MinutesSeconds_Format => ResourceManager.GetString(nameof(Format_Duration_MinutesSeconds_Format), Culture) ?? nameof(Format_Duration_MinutesSeconds_Format);
+
+    public static string Format_Playtime_Hours_Format => ResourceManager.GetString(nameof(Format_Playtime_Hours_Format), Culture) ?? nameof(Format_Playtime_Hours_Format);
+
+    public static string Format_Playtime_Minutes_Format => ResourceManager.GetString(nameof(Format_Playtime_Minutes_Format), Culture) ?? nameof(Format_Playtime_Minutes_Format);
+
+    public static string Format_Resolution_Format => ResourceManager.GetString(nameof(Format_Resolution_Format), Culture) ?? nameof(Format_Resolution_Format);
+
+    public static string Format_Resolution_Single_Format => ResourceManager.GetString(nameof(Format_Resolution_Single_Format), Culture) ?? nameof(Format_Resolution_Single_Format);
+
+    public static string Format_Temperature_Format => ResourceManager.GetString(nameof(Format_Temperature_Format), Culture) ?? nameof(Format_Temperature_Format);
+
+    public static string Fps_Census_NoRuntime => ResourceManager.GetString(nameof(Fps_Census_NoRuntime), Culture) ?? nameof(Fps_Census_NoRuntime);
+
+    public static string Fps_Census_NoRuntime_Tooltip => ResourceManager.GetString(nameof(Fps_Census_NoRuntime_Tooltip), Culture) ?? nameof(Fps_Census_NoRuntime_Tooltip);
+
+    public static string Fps_Census_NotRun => ResourceManager.GetString(nameof(Fps_Census_NotRun), Culture) ?? nameof(Fps_Census_NotRun);
+
+    public static string Fps_Census_NotRun_Tooltip => ResourceManager.GetString(nameof(Fps_Census_NotRun_Tooltip), Culture) ?? nameof(Fps_Census_NotRun_Tooltip);
+
+    public static string Fps_Census_RuntimeLoaded => ResourceManager.GetString(nameof(Fps_Census_RuntimeLoaded), Culture) ?? nameof(Fps_Census_RuntimeLoaded);
+
+    public static string Fps_Census_RuntimeLoaded_Tooltip => ResourceManager.GetString(nameof(Fps_Census_RuntimeLoaded_Tooltip), Culture) ?? nameof(Fps_Census_RuntimeLoaded_Tooltip);
+
+    public static string Fps_Census_Withheld => ResourceManager.GetString(nameof(Fps_Census_Withheld), Culture) ?? nameof(Fps_Census_Withheld);
+
+    public static string Fps_Census_Withheld_Tooltip => ResourceManager.GetString(nameof(Fps_Census_Withheld_Tooltip), Culture) ?? nameof(Fps_Census_Withheld_Tooltip);
+
+    public static string Fps_Fg_Chip_Format => ResourceManager.GetString(nameof(Fps_Fg_Chip_Format), Culture) ?? nameof(Fps_Fg_Chip_Format);
+
+    public static string Fps_Fg_Format => ResourceManager.GetString(nameof(Fps_Fg_Format), Culture) ?? nameof(Fps_Fg_Format);
+
+    public static string Fps_Native_Tooltip => ResourceManager.GetString(nameof(Fps_Native_Tooltip), Culture) ?? nameof(Fps_Native_Tooltip);
+
+    public static string Fps_None_Tooltip => ResourceManager.GetString(nameof(Fps_None_Tooltip), Culture) ?? nameof(Fps_None_Tooltip);
+
+    public static string Fps_Presented_Format => ResourceManager.GetString(nameof(Fps_Presented_Format), Culture) ?? nameof(Fps_Presented_Format);
+
+    public static string GameDetail_Back => ResourceManager.GetString(nameof(GameDetail_Back), Culture) ?? nameof(GameDetail_Back);
+
+    public static string GameDetail_Edit => ResourceManager.GetString(nameof(GameDetail_Edit), Culture) ?? nameof(GameDetail_Edit);
+
+    public static string GameDetail_Hooking_Body => ResourceManager.GetString(nameof(GameDetail_Hooking_Body), Culture) ?? nameof(GameDetail_Hooking_Body);
+
+    public static string GameDetail_Hooking_Busy => ResourceManager.GetString(nameof(GameDetail_Hooking_Busy), Culture) ?? nameof(GameDetail_Hooking_Busy);
+
+    public static string GameDetail_Hooking_Header => ResourceManager.GetString(nameof(GameDetail_Hooking_Header), Culture) ?? nameof(GameDetail_Hooking_Header);
+
+    public static string GameDetail_Hooking_Off => ResourceManager.GetString(nameof(GameDetail_Hooking_Off), Culture) ?? nameof(GameDetail_Hooking_Off);
+
+    public static string GameDetail_Hooking_On => ResourceManager.GetString(nameof(GameDetail_Hooking_On), Culture) ?? nameof(GameDetail_Hooking_On);
+
+    public static string GameDetail_Hooking_ReEnable => ResourceManager.GetString(nameof(GameDetail_Hooking_ReEnable), Culture) ?? nameof(GameDetail_Hooking_ReEnable);
+
+    public static string GameDetail_Hooking_Unverified => ResourceManager.GetString(nameof(GameDetail_Hooking_Unverified), Culture) ?? nameof(GameDetail_Hooking_Unverified);
+
+    public static string GameDetail_LastSession_Format => ResourceManager.GetString(nameof(GameDetail_LastSession_Format), Culture) ?? nameof(GameDetail_LastSession_Format);
+
+    public static string GameDetail_LifetimeAvg => ResourceManager.GetString(nameof(GameDetail_LifetimeAvg), Culture) ?? nameof(GameDetail_LifetimeAvg);
+
+    public static string GameDetail_Measured_Empty => ResourceManager.GetString(nameof(GameDetail_Measured_Empty), Culture) ?? nameof(GameDetail_Measured_Empty);
+
+    public static string GameDetail_Measured_Header => ResourceManager.GetString(nameof(GameDetail_Measured_Header), Culture) ?? nameof(GameDetail_Measured_Header);
+
+    public static string GameDetail_Measured_NotHooked => ResourceManager.GetString(nameof(GameDetail_Measured_NotHooked), Culture) ?? nameof(GameDetail_Measured_NotHooked);
+
+    public static string GameDetail_NotFound => ResourceManager.GetString(nameof(GameDetail_NotFound), Culture) ?? nameof(GameDetail_NotFound);
+
+    public static string GameDetail_Remove => ResourceManager.GetString(nameof(GameDetail_Remove), Culture) ?? nameof(GameDetail_Remove);
+
+    public static string GameDetail_Sessions_Empty => ResourceManager.GetString(nameof(GameDetail_Sessions_Empty), Culture) ?? nameof(GameDetail_Sessions_Empty);
+
+    public static string GameDetail_Supports_Empty => ResourceManager.GetString(nameof(GameDetail_Supports_Empty), Culture) ?? nameof(GameDetail_Supports_Empty);
+
+    public static string GameDetail_Supports_Format => ResourceManager.GetString(nameof(GameDetail_Supports_Format), Culture) ?? nameof(GameDetail_Supports_Format);
+
+    public static string GameDetail_Supports_Header => ResourceManager.GetString(nameof(GameDetail_Supports_Header), Culture) ?? nameof(GameDetail_Supports_Header);
+
+    public static string GameDetail_Tab_Distribution => ResourceManager.GetString(nameof(GameDetail_Tab_Distribution), Culture) ?? nameof(GameDetail_Tab_Distribution);
+
+    public static string GameDetail_Tab_Frametime => ResourceManager.GetString(nameof(GameDetail_Tab_Frametime), Culture) ?? nameof(GameDetail_Tab_Frametime);
+
+    public static string GameDetail_Tab_Latency => ResourceManager.GetString(nameof(GameDetail_Tab_Latency), Culture) ?? nameof(GameDetail_Tab_Latency);
+
+    public static string GameDetail_Tab_Later_Format => ResourceManager.GetString(nameof(GameDetail_Tab_Later_Format), Culture) ?? nameof(GameDetail_Tab_Later_Format);
+
+    public static string GameDetail_Tab_Sensors => ResourceManager.GetString(nameof(GameDetail_Tab_Sensors), Culture) ?? nameof(GameDetail_Tab_Sensors);
+
+    public static string GameDetail_Tab_Sessions => ResourceManager.GetString(nameof(GameDetail_Tab_Sessions), Culture) ?? nameof(GameDetail_Tab_Sessions);
+
+    public static string GameDetail_Tab_Trend => ResourceManager.GetString(nameof(GameDetail_Tab_Trend), Culture) ?? nameof(GameDetail_Tab_Trend);
+
+    public static string Games_Add => ResourceManager.GetString(nameof(Games_Add), Culture) ?? nameof(Games_Add);
+
+    public static string Games_Card_HookOff => ResourceManager.GetString(nameof(Games_Card_HookOff), Culture) ?? nameof(Games_Card_HookOff);
+
+    public static string Games_Card_HookOn => ResourceManager.GetString(nameof(Games_Card_HookOn), Culture) ?? nameof(Games_Card_HookOn);
+
+    public static string Games_Card_LastPlayed_Format => ResourceManager.GetString(nameof(Games_Card_LastPlayed_Format), Culture) ?? nameof(Games_Card_LastPlayed_Format);
+
+    public static string Games_Card_NeverPlayed => ResourceManager.GetString(nameof(Games_Card_NeverPlayed), Culture) ?? nameof(Games_Card_NeverPlayed);
+
+    public static string Games_Card_Playtime_Format => ResourceManager.GetString(nameof(Games_Card_Playtime_Format), Culture) ?? nameof(Games_Card_Playtime_Format);
+
+    public static string Games_Card_Sessions_Format => ResourceManager.GetString(nameof(Games_Card_Sessions_Format), Culture) ?? nameof(Games_Card_Sessions_Format);
+
     public static string Games_Empty => ResourceManager.GetString(nameof(Games_Empty), Culture) ?? nameof(Games_Empty);
 
     public static string Games_Header => ResourceManager.GetString(nameof(Games_Header), Culture) ?? nameof(Games_Header);
+
+    public static string Games_NoMatch => ResourceManager.GetString(nameof(Games_NoMatch), Culture) ?? nameof(Games_NoMatch);
+
+    public static string Games_Search_Placeholder => ResourceManager.GetString(nameof(Games_Search_Placeholder), Culture) ?? nameof(Games_Search_Placeholder);
+
+    public static string Games_Sort_Label => ResourceManager.GetString(nameof(Games_Sort_Label), Culture) ?? nameof(Games_Sort_Label);
+
+    public static string Games_Sort_LastPlayed => ResourceManager.GetString(nameof(Games_Sort_LastPlayed), Culture) ?? nameof(Games_Sort_LastPlayed);
+
+    public static string Games_Sort_Name => ResourceManager.GetString(nameof(Games_Sort_Name), Culture) ?? nameof(Games_Sort_Name);
+
+    public static string Games_Sort_Playtime => ResourceManager.GetString(nameof(Games_Sort_Playtime), Culture) ?? nameof(Games_Sort_Playtime);
 
     public static string Logs_Empty => ResourceManager.GetString(nameof(Logs_Empty), Culture) ?? nameof(Logs_Empty);
 
@@ -207,6 +545,42 @@ public static class Strings
 
     public static string NotYet_Title => ResourceManager.GetString(nameof(NotYet_Title), Culture) ?? nameof(NotYet_Title);
 
+    public static string RemoveGame_Body => ResourceManager.GetString(nameof(RemoveGame_Body), Culture) ?? nameof(RemoveGame_Body);
+
+    public static string RemoveGame_Delete => ResourceManager.GetString(nameof(RemoveGame_Delete), Culture) ?? nameof(RemoveGame_Delete);
+
+    public static string RemoveGame_Keep => ResourceManager.GetString(nameof(RemoveGame_Keep), Culture) ?? nameof(RemoveGame_Keep);
+
+    public static string RemoveGame_Removed_Format => ResourceManager.GetString(nameof(RemoveGame_Removed_Format), Culture) ?? nameof(RemoveGame_Removed_Format);
+
+    public static string RemoveGame_Title_Format => ResourceManager.GetString(nameof(RemoveGame_Title_Format), Culture) ?? nameof(RemoveGame_Title_Format);
+
+    public static string Sessions_Col_Api => ResourceManager.GetString(nameof(Sessions_Col_Api), Culture) ?? nameof(Sessions_Col_Api);
+
+    public static string Sessions_Col_Date => ResourceManager.GetString(nameof(Sessions_Col_Date), Culture) ?? nameof(Sessions_Col_Date);
+
+    public static string Sessions_Col_Displayed => ResourceManager.GetString(nameof(Sessions_Col_Displayed), Culture) ?? nameof(Sessions_Col_Displayed);
+
+    public static string Sessions_Col_Duration => ResourceManager.GetString(nameof(Sessions_Col_Duration), Culture) ?? nameof(Sessions_Col_Duration);
+
+    public static string Sessions_Col_Exit => ResourceManager.GetString(nameof(Sessions_Col_Exit), Culture) ?? nameof(Sessions_Col_Exit);
+
+    public static string Sessions_Col_Fg => ResourceManager.GetString(nameof(Sessions_Col_Fg), Culture) ?? nameof(Sessions_Col_Fg);
+
+    public static string Sessions_Col_GpuTemp => ResourceManager.GetString(nameof(Sessions_Col_GpuTemp), Culture) ?? nameof(Sessions_Col_GpuTemp);
+
+    public static string Sessions_Col_Native => ResourceManager.GetString(nameof(Sessions_Col_Native), Culture) ?? nameof(Sessions_Col_Native);
+
+    public static string Sessions_Col_P01Low => ResourceManager.GetString(nameof(Sessions_Col_P01Low), Culture) ?? nameof(Sessions_Col_P01Low);
+
+    public static string Sessions_Col_P1Low => ResourceManager.GetString(nameof(Sessions_Col_P1Low), Culture) ?? nameof(Sessions_Col_P1Low);
+
+    public static string Sessions_Col_Resolution => ResourceManager.GetString(nameof(Sessions_Col_Resolution), Culture) ?? nameof(Sessions_Col_Resolution);
+
+    public static string Sessions_Col_Tags => ResourceManager.GetString(nameof(Sessions_Col_Tags), Culture) ?? nameof(Sessions_Col_Tags);
+
+    public static string Sessions_Col_Tier => ResourceManager.GetString(nameof(Sessions_Col_Tier), Culture) ?? nameof(Sessions_Col_Tier);
+
     public static string Settings_Appearance_Header => ResourceManager.GetString(nameof(Settings_Appearance_Header), Culture) ?? nameof(Settings_Appearance_Header);
 
     public static string Settings_Header => ResourceManager.GetString(nameof(Settings_Header), Culture) ?? nameof(Settings_Header);
@@ -222,4 +596,20 @@ public static class Strings
     public static string Settings_Theme_Light => ResourceManager.GetString(nameof(Settings_Theme_Light), Culture) ?? nameof(Settings_Theme_Light);
 
     public static string Settings_Theme_System => ResourceManager.GetString(nameof(Settings_Theme_System), Culture) ?? nameof(Settings_Theme_System);
+
+    public static string Tier_Dash_Tooltip => ResourceManager.GetString(nameof(Tier_Dash_Tooltip), Culture) ?? nameof(Tier_Dash_Tooltip);
+
+    public static string Tier_Hooked => ResourceManager.GetString(nameof(Tier_Hooked), Culture) ?? nameof(Tier_Hooked);
+
+    public static string Tier_Hooked_Tooltip => ResourceManager.GetString(nameof(Tier_Hooked_Tooltip), Culture) ?? nameof(Tier_Hooked_Tooltip);
+
+    public static string Tier_NA_Tooltip => ResourceManager.GetString(nameof(Tier_NA_Tooltip), Culture) ?? nameof(Tier_NA_Tooltip);
+
+    public static string Tier_NotHooked => ResourceManager.GetString(nameof(Tier_NotHooked), Culture) ?? nameof(Tier_NotHooked);
+
+    public static string Tier_NotHooked_Tooltip => ResourceManager.GetString(nameof(Tier_NotHooked_Tooltip), Culture) ?? nameof(Tier_NotHooked_Tooltip);
+
+    public static string Upscaler_None => ResourceManager.GetString(nameof(Upscaler_None), Culture) ?? nameof(Upscaler_None);
+
+    public static string Upscaler_Unknown => ResourceManager.GetString(nameof(Upscaler_Unknown), Culture) ?? nameof(Upscaler_Unknown);
 }

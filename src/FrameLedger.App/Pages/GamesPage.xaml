@@ -4,9 +4,71 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:res="clr-namespace:FrameLedger.App"
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
-      Title="{x:Static res:Strings.Games_Header}">
-    <StackPanel Style="{StaticResource PageRoot}">
-        <ui:TextBlock FontTypography="Title" Text="{x:Static vm:GamesViewModel.Header}" />
-        <ui:TextBlock Margin="0,16,0,0" Appearance="Secondary" Text="{x:Static vm:GamesViewModel.EmptyText}" TextWrapping="Wrap" />
-    </StackPanel>
+      Title="{x:Static res:Strings.Games_Header}"
+      AllowDrop="True"
+      Drop="OnDrop">
+    <!-- 08_UI §Games: cards (ui:CardAction), search, sort; FR-1.1 add by pick or by dropping an .exe here. -->
+    <ScrollViewer>
+        <StackPanel Style="{StaticResource PageRoot}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ui:TextBlock Grid.Column="0" FontTypography="Title" Text="{x:Static vm:GamesViewModel.Header}" />
+                <ui:TextBox Grid.Column="1" MinWidth="220" Margin="0,0,12,0" VerticalAlignment="Center"
+                            Icon="{ui:SymbolIcon Search24}"
+                            PlaceholderText="{x:Static vm:GamesViewModel.SearchPlaceholder}"
+                            Text="{Binding ViewModel.Search, UpdateSourceTrigger=PropertyChanged}" />
+                <ComboBox Grid.Column="2" MinWidth="150" Margin="0,0,12,0" VerticalAlignment="Center"
+                          DisplayMemberPath="Label"
+                          ItemsSource="{x:Static vm:GamesViewModel.Sorts}"
+                          SelectedValue="{Binding ViewModel.Sort, Mode=TwoWay}"
+                          SelectedValuePath="Value" />
+                <ui:Button Grid.Column="3" Appearance="Primary" VerticalAlignment="Center"
+                           Command="{Binding ViewModel.AddGameCommand}"
+                           Content="{x:Static vm:GamesViewModel.AddText}"
+                           Icon="{ui:SymbolIcon Add24}" />
+            </Grid>
+
+            <ui:TextBlock Margin="0,16,0,0" Appearance="Secondary" TextWrapping="Wrap"
+                          Text="{x:Static vm:GamesViewModel.EmptyText}"
+                          Visibility="{Binding ViewModel.IsEmpty, Converter={StaticResource BoolToVis}}" />
+            <ui:TextBlock Margin="0,16,0,0" Appearance="Secondary" TextWrapping="Wrap"
+                          Text="{x:Static vm:GamesViewModel.NoMatchText}"
+                          Visibility="{Binding ViewModel.NoMatch, Converter={StaticResource BoolToVis}}" />
+
+            <ItemsControl Margin="0,16,0,0" ItemsSource="{Binding ViewModel.Games}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:GameCardViewModel}">
+                        <ui:CardAction Width="300" Margin="0,0,12,12" IsChevronVisible="False"
+                                       Command="{Binding DataContext.ViewModel.OpenCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                       CommandParameter="{Binding}"
+                                       Icon="{ui:SymbolIcon Games24}">
+                            <StackPanel>
+                                <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                                    <ui:Badge Appearance="Secondary" Margin="0,0,6,0" Content="{Binding PlatformText}"
+                                              Visibility="{Binding HasPlatform, Converter={StaticResource BoolToVis}}" />
+                                    <ui:Badge Appearance="Secondary" Margin="0,0,6,0" Content="{Binding EngineText}"
+                                              Visibility="{Binding HasEngine, Converter={StaticResource BoolToVis}}" />
+                                    <ui:Badge Appearance="Info" Content="{Binding HookText}" />
+                                </StackPanel>
+                                <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" Text="{Binding SessionsText}" />
+                                <ui:TextBlock Appearance="Secondary" Text="{Binding PlaytimeText}" />
+                                <ui:TextBlock Appearance="Secondary" Text="{Binding LastPlayedText}" />
+                            </StackPanel>
+                        </ui:CardAction>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
 </Page>

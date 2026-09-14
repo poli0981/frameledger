@@ -19,6 +19,29 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Added
 
+- **P3 PR-5 — Games and Dashboard: the grid, the game page, the hooking control, the Sessions tab, the live
+  card, `FpsReadout` and `TriStateChip` (2026-09-14).** `Services.FpsPresentation` decides CLAUDE.md rule 6 in ONE
+  place for rows and for 1 Hz progress events — generated (`62 → 118 FPS (×1.9 FG)`, Native first, the factor a
+  chip), measured none (`144 FPS` alone), not measured (Presented FPS with the census qualifier chip, muted or a
+  warning) — and the table's two negatives, `—` (measured none) and `N/A` (not measured), that must not collapse;
+  `FpsPresentationTests` pins all three shapes and both negatives. `Controls/FpsReadout` and `Controls/TriStateChip`
+  render a model and decide nothing. Games: `GamesViewModel` (cards from `GameLibrary.ListCardsAsync`, search and
+  sort in memory), FR-1.1 by pick, menu or a dropped `.exe` (`AddGameFlow`, one flow), FR-1.4 with
+  **Keep sessions / Delete sessions too** revoking consent over the pipe first; `GameDetailViewModel` (header,
+  **Supports** beside **Last session measured**, FR-1.3's edit dialog badging detected fields, the hooking toggle
+  through `HookingConsent` with a refusal / mismatch / failure as a persistent `InfoBar` and FR-2.2's disabled
+  switch with the reason inline, FR-2.5's InfoBar with re-enable, the Sessions `DataGrid` of FR-6.1 with the
+  chips resolved through `TriStateResolution`). Dashboard: `LiveCaptureViewModel` over `SessionStarted` /
+  `SessionProgress` / `SessionCompleted`, the recent list with game names, the totals strip
+  (`ISessionRepository.CountSinceAsync` is new). Pages are navigated by type; `GameSelection` carries the game;
+  `IPageNavigator`, `IGamePicker`, `IConfirmations`, `IEditGamePrompt`, `IMessageStrip`, `IAgentLink` are the
+  seams the tests use. Tests (App, 54): the presentation rule, formats, `GameLibrary` over a scratch ledger, the
+  game page end to end with a scripted Agent (toggle on → dialog → `SetHookEnabled` → reload; refusal → notice
+  and a blocked row disables the switch; remove revokes first), the Dashboard's events, and **`PagesLoadTests`
+  — every page and both templates load under the real theme dictionaries on an STA thread**, so a binding typo
+  is red in CI. 130 new App strings in en/vi/ja. Docs: `08_UI` §Dashboard and §Games built notes, `16_WPFUI`
+  §Custom controls as built, HANDOFF row 5 struck. **Deferred on purpose:** the card sparkline and the chip
+  override flyout (PR-6), the Agent card's capability badges and Repair (PR-8), a dropped `.lnk`.
 - **P3 PR-4 — FR-2.1's consent dialog: the reviewed `Safety_*` family in `Shared`, `ConsentProvenance.ConsentDialog`,
   and the Agent's stamp (2026-09-13).** `src/FrameLedger.Shared/Strings.resx` + `.vi` + `.ja` — 20 `Safety_*` keys:
   the dialog (intro that recommends neither choice, what is injected and why, **Tier 1 and Tier 2 as two

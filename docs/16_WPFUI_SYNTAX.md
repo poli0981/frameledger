@@ -151,6 +151,7 @@ Native `Menu`, `TabControl`, `ComboBox`, `Slider`, `ListView` are fine — the `
 
 - Derive from `Control` with `ControlTemplate` in `Styles/FrameLedger.xaml`; template uses only theme brushes above → they re-theme for free.
 - `TriStateChip`: `Border` CornerRadius 12, states — Yes: `AccentFillColorDefaultBrush` bg + on-accent text; No: transparent bg + `ControlStrokeColorDefaultBrush` 1px border; N/A: dashed `StrokeDashArray="2 2"` border + `TextFillColorTertiaryBrush` text.
+- **Built 2026-09-14 (P3 PR-5):** both derive from `Control` with one dependency property, `Model` (`FpsReadoutModel` / `TriStateChipModel`, decided by `Services.FpsPresentation` and the view models — the control renders, it never decides), templates in `Styles/FrameLedger.xaml` with `DataTrigger`s on the model's flags; the dashed N/A outline is a `Rectangle` behind the `Border` (a `Border` cannot dash). The source suffix icon became the tooltip: the Fluent System Icons names for 🔍/✎/↧ are not certain in this pinned version and a wrong `SymbolRegular` is a build error. The override flyout is PR-6's.
 - No `SystemColors.*` anywhere.
 
 ## Dialogs & notifications
