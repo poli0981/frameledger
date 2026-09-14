@@ -177,6 +177,51 @@
   <data name="Menu_File_ImportLibrary" xml:space="preserve">
     <value>Import library…</value>
   </data>
+  <data name="Import_Title" xml:space="preserve">
+    <value>Import library</value>
+  </data>
+  <data name="Import_Intro" xml:space="preserve">
+    <value>These are the games your stores say are installed. Tick what to add; every one starts with hooking off, exactly as a game you add by hand. Nothing is launched and nothing is sent.</value>
+  </data>
+  <data name="Import_Column_Platform" xml:space="preserve">
+    <value>Store</value>
+  </data>
+  <data name="Import_Column_Name" xml:space="preserve">
+    <value>Game</value>
+  </data>
+  <data name="Import_Column_Exe" xml:space="preserve">
+    <value>Executable to add</value>
+  </data>
+  <data name="Import_Column_Note" xml:space="preserve">
+    <value>Note</value>
+  </data>
+  <data name="Import_Note_Already" xml:space="preserve">
+    <value>Already in the library</value>
+  </data>
+  <data name="Import_Note_NoExe" xml:space="preserve">
+    <value>No executable found</value>
+  </data>
+  <data name="Import_Note_Guessed" xml:space="preserve">
+    <value>Guessed — check it</value>
+  </data>
+  <data name="Import_Selected_Format" xml:space="preserve">
+    <value>{0} of {1} selected</value>
+  </data>
+  <data name="Import_SelectAll" xml:space="preserve">
+    <value>Select all</value>
+  </data>
+  <data name="Import_SelectNone" xml:space="preserve">
+    <value>Select none</value>
+  </data>
+  <data name="Import_Add" xml:space="preserve">
+    <value>Add selected</value>
+  </data>
+  <data name="Import_NothingFound" xml:space="preserve">
+    <value>No installed games were found in Steam, GOG Galaxy, Epic or itch.io on this machine.</value>
+  </data>
+  <data name="Import_Done_Format" xml:space="preserve">
+    <value>{0} game(s) added with hooking off; {1} left as they were.</value>
+  </data>
   <data name="Menu_Help" xml:space="preserve">
     <value>_Help</value>
   </data>
@@ -1402,7 +1447,7 @@
     <value>Finish</value>
   </data>
   <data name="FirstRun_Import_Body" xml:space="preserve">
-    <value>Importing a Steam, GOG, Epic or itch.io library arrives with a later build. For now, add games one at a time from the Games page — each one starts with hooking off.</value>
+    <value>FrameLedger can read what Steam, GOG Galaxy, Epic and itch.io have installed and add them from a checklist — File ▸ Import library… on the Games page, once you are in. Every imported game starts with hooking off, exactly like one you add by hand.</value>
   </data>
   <data name="FirstRun_Import_Header" xml:space="preserve">
     <value>Your library</value>

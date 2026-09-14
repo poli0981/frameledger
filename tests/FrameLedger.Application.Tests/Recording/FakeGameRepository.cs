@@ -67,6 +67,26 @@ internal sealed class FakeGameRepository : IGameRepository
 
     public ValueTask<bool> RemoveAsync(long gameId, bool keepSessions, CancellationToken ct = default) => throw new NotSupportedException();
 
+    /// <summary>Every store write, in order (P4 PR-4); the row takes the store's platform, id and version whole (the SQLite adapter's provenance rule has its own tests).</summary>
+    public List<(long GameId, StoreMetadata Store)> Stores { get; } = [];
+
+    public ValueTask<bool> ApplyStoreMetadataAsync(long gameId, StoreMetadata store, CancellationToken ct = default)
+    {
+        Stores.Add((gameId, store));
+        foreach ((string key, GameRow row) in Rows)
+        {
+            if (row.Id != gameId)
+            {
+                continue;
+            }
+
+            Rows[key] = row with { Platform = store.Platform, StoreId = store.StoreId ?? row.StoreId, GameVersion = store.GameVersion ?? row.GameVersion };
+            return ValueTask.FromResult(true);
+        }
+
+        return ValueTask.FromResult(false);
+    }
+
     /// <summary>Every detection write, in order (P4 PR-1); the row gains the cache key and the flags so a second sweep sees it as current.</summary>
     public List<(long GameId, DetectionWrite Write)> Detections { get; } = [];
 

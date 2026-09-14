@@ -48,4 +48,12 @@ public interface IGameRepository
     /// are always written. False when the game does not exist.
     /// </summary>
     ValueTask<bool> ApplyDetectionAsync(long gameId, DetectionWrite detection, CancellationToken ct = default);
+
+    /// <summary>
+    /// The library import (FR-1.2, P4 PR-4): a store's <c>platform</c>, <c>store_id</c> and version for a game, under
+    /// the same per-field provenance rule as <see cref="ApplyDetectionAsync"/> — the user's value stays, a badged one
+    /// is refreshed, an empty one is filled and badged <c>detected</c>. Never a hook column. False when the game
+    /// does not exist.
+    /// </summary>
+    ValueTask<bool> ApplyStoreMetadataAsync(long gameId, StoreMetadata store, CancellationToken ct = default);
 }

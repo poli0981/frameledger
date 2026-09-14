@@ -5,10 +5,14 @@ using System.Windows.Threading;
 using FrameLedger.App.Pages;
 using FrameLedger.App.Services;
 using FrameLedger.App.ViewModels;
+using FrameLedger.Application.Import;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Settings;
+using FrameLedger.Application.Watch;
+using FrameLedger.Infrastructure.Import;
 using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Infrastructure.Persistence;
+using FrameLedger.Infrastructure.Watch;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -271,6 +275,8 @@ public partial class App : System.Windows.Application
         services.AddSingleton<SessionSelection>();
         services.AddSingleton<SessionExportService>();
 
+        AddImport(services);
+
         // The layer registration and the logon task (P3 PR-8b): read from the machine, written by the Agent's flags.
         services.AddSingleton<IMaintenanceState, MaintenanceState>();
         services.AddSingleton<IAgentTool, AgentTool>();
@@ -279,6 +285,27 @@ public partial class App : System.Windows.Application
         services.AddSingleton<ILegalAcceptanceStore, SqliteLegalAcceptanceStore>();
         services.AddSingleton(static sp => new LegalGate(sp.GetRequiredService<ILegalAcceptanceStore>(), LegalDocuments.Load()));
         services.AddSingleton<IFirstRunFlow, FirstRunFlow>();
+    }
+
+    /// <summary>FR-1.2's library import (P4 PR-4): the stores, the executable guess, the importer over the games port, the review checklist behind a port.</summary>
+    private static void AddImport(IServiceCollection services)
+    {
+        // FR-1.2's library import (P4 PR-4): the four stores read from their own local files and keys, the executable
+        // guess for the two that name none, the importer over the games port, the review checklist behind a port.
+        services.AddSingleton<IStoreLibrarySource>(static _ => new SteamLibrarySource());
+        services.AddSingleton<IStoreLibrarySource>(static _ => new GogLibrarySource());
+        services.AddSingleton<IStoreLibrarySource>(static _ => new EpicLibrarySource());
+        services.AddSingleton<IStoreLibrarySource>(static _ => new ItchLibrarySource());
+        services.AddSingleton<IExecutableLocator, ExecutableLocator>();
+        services.AddSingleton<IExecutableIdentitySource, ExecutableIdentitySource>();
+        services.AddSingleton(static sp => new LibraryImporter(
+            sp.GetServices<IStoreLibrarySource>(),
+            sp.GetRequiredService<IGameRepository>(),
+            sp.GetRequiredService<IExecutableIdentitySource>(),
+            sp.GetRequiredService<IExecutableLocator>(),
+            static line => Serilog.Log.Information("{Line}", line)));
+        services.AddSingleton<IImportReview, ImportReviewPrompt>();
+        services.AddSingleton<ImportLibraryFlow>();
     }
 
     /// <summary><c>10_LOGGING</c> §Serilog configuration: <c>logs/ui-.log</c>, daily, 7 kept, 10 MB, the one template; the level follows <c>log.debug</c> at runtime.</summary>

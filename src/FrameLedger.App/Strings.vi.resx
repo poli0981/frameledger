@@ -172,6 +172,51 @@
   <data name="Menu_File_ImportLibrary" xml:space="preserve">
     <value>Nhập thư viện…</value>
   </data>
+  <data name="Import_Title" xml:space="preserve">
+    <value>Nhập thư viện</value>
+  </data>
+  <data name="Import_Intro" xml:space="preserve">
+    <value>Đây là các game mà các store cho biết đã cài. Tích những gì muốn thêm; mọi game đều bắt đầu với hooking tắt, đúng như game bạn thêm thủ công. Không khởi chạy gì và không gửi gì.</value>
+  </data>
+  <data name="Import_Column_Platform" xml:space="preserve">
+    <value>Store</value>
+  </data>
+  <data name="Import_Column_Name" xml:space="preserve">
+    <value>Game</value>
+  </data>
+  <data name="Import_Column_Exe" xml:space="preserve">
+    <value>Tệp thực thi sẽ thêm</value>
+  </data>
+  <data name="Import_Column_Note" xml:space="preserve">
+    <value>Ghi chú</value>
+  </data>
+  <data name="Import_Note_Already" xml:space="preserve">
+    <value>Đã có trong thư viện</value>
+  </data>
+  <data name="Import_Note_NoExe" xml:space="preserve">
+    <value>Không tìm thấy tệp thực thi</value>
+  </data>
+  <data name="Import_Note_Guessed" xml:space="preserve">
+    <value>Đoán — hãy kiểm tra</value>
+  </data>
+  <data name="Import_Selected_Format" xml:space="preserve">
+    <value>Đã chọn {0}/{1}</value>
+  </data>
+  <data name="Import_SelectAll" xml:space="preserve">
+    <value>Chọn tất cả</value>
+  </data>
+  <data name="Import_SelectNone" xml:space="preserve">
+    <value>Bỏ chọn tất cả</value>
+  </data>
+  <data name="Import_Add" xml:space="preserve">
+    <value>Thêm mục đã chọn</value>
+  </data>
+  <data name="Import_NothingFound" xml:space="preserve">
+    <value>Không tìm thấy game nào đã cài trong Steam, GOG Galaxy, Epic hay itch.io trên máy này.</value>
+  </data>
+  <data name="Import_Done_Format" xml:space="preserve">
+    <value>Đã thêm {0} game với hooking tắt; {1} giữ nguyên.</value>
+  </data>
   <data name="Menu_Help" xml:space="preserve">
     <value>Trợ _giúp</value>
   </data>
@@ -1397,7 +1442,7 @@
     <value>Hoàn tất</value>
   </data>
   <data name="FirstRun_Import_Body" xml:space="preserve">
-    <value>Nhập thư viện Steam, GOG, Epic hay itch.io sẽ có ở bản sau. Hiện tại, thêm từng game từ trang Game — mỗi game bắt đầu với hooking tắt.</value>
+    <value>FrameLedger có thể đọc những gì Steam, GOG Galaxy, Epic và itch.io đã cài và thêm chúng từ một danh sách chọn — File ▸ Nhập thư viện… ở trang Game, khi bạn đã vào trong. Mọi game nhập vào đều bắt đầu với hooking tắt, đúng như game bạn thêm thủ công.</value>
   </data>
   <data name="FirstRun_Import_Header" xml:space="preserve">
     <value>Thư viện của bạn</value>

@@ -19,6 +19,30 @@ GitHub release body, so a missing section will mean an empty release note.
 
 ### Added
 
+- **P4 PR-4 — the library import: Steam, GOG Galaxy, Epic and itch.io through a review checklist, hooking off for
+  every row (FR-1.2, 2026-09-14).** `Application.Import.LibraryImporter` over four `IStoreLibrarySource` adapters in
+  `Infrastructure.Import`: `SteamLibrarySource` (`libraryfolders.vdf` + `appmanifest_*.acf` through a new
+  `ValveKeyValues` reader, the root from `HKCU\Software\Valve\Steam\SteamPath`), `GogLibrarySource` (the
+  `HKLM\SOFTWARE\WOW6432Node\GOG.com\Games` keys, read-only, whichever hive and key a caller names so a test uses
+  its own), `EpicLibrarySource` (`Manifests\*.item`: `DisplayName`, `InstallLocation`, `LaunchExecutable`,
+  `AppName`, `AppVersionString`), `ItchLibrarySource` (`apps\*\.itch\receipt.json.gz`). Steam and itch do not name
+  the game's executable: `ExecutableLocator` walks the install three levels deep, drops helpers by name fragment
+  (crash handlers, installers, redistributables, anti-cheat services, updaters) and takes the largest — a guess the
+  review marks "guessed — check it". Discovery joins every title to the ledger: the store's executable or the
+  guess, "already in the library", "no executable found" (a store record that outlived the install). File ▸ Import
+  library… (`ImportLibraryFlow`) shows the checklist (`ImportReviewPrompt` / `Dialogs/ImportReviewContent`, a
+  `DataGrid` with a tick column, select all / none, the count), adds what was ticked exactly as File ▸ Add game…
+  would — **hooking off** — writes the store's platform, id and version through the new
+  `IGameRepository.ApplyStoreMetadataAsync` under the same provenance rule as a detection write (the user's
+  value is never overwritten), and shows the Games page. Nothing is launched, nothing is fetched. The first-run
+  step 4 now points at the menu rather than saying "later build". Tests: `ValveKeyValuesTests`,
+  `StoreLibrarySourcesTests` (fixtures the tests write: two Steam library folders, GOG under a test HKCU key,
+  Epic `.item`, an itch receipt gzipped in the test, the locator), `LibraryImporterTests` (the join, the ticked
+  subset, a store that throws, one executable under two stores), `ImportLibraryFlowTests` (end to end over real
+  files and a scratch ledger; nothing found; cancel; the review's counting), `SqliteGameRepositoryTests` (the
+  store write's provenance). 15 App strings en/vi/ja. Docs: `05_DETECTION` §Platform signatures built note (with
+  the privacy line), `06_DATA_MODEL` §Writer ownership, `08_UI` §Shell menu note + §First-run step 4,
+  `14_TESTING`, HANDOFF §P4, `15_ROADMAP` §P4.
 - **P4 PR-3 — the bug report's steps 3–4, Help ▸ Documentation, and File ▸ Export as the submenu it was specified
   as (2026-09-14).** `App/Services/BugReportFlow` is the one flow behind Help ▸ Report a bug… and the Logs page's
   button: step 2's zip where the user says, then step 3's `ContentDialog` (`BugReportPreviewPrompt` /

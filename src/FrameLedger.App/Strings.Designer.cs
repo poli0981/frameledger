@@ -259,6 +259,21 @@ public static class Strings
         nameof(Games_Sort_LastPlayed),
         nameof(Games_Sort_Name),
         nameof(Games_Sort_Playtime),
+        nameof(Import_Add),
+        nameof(Import_Column_Exe),
+        nameof(Import_Column_Name),
+        nameof(Import_Column_Note),
+        nameof(Import_Column_Platform),
+        nameof(Import_Done_Format),
+        nameof(Import_Intro),
+        nameof(Import_Note_Already),
+        nameof(Import_Note_Guessed),
+        nameof(Import_Note_NoExe),
+        nameof(Import_NothingFound),
+        nameof(Import_SelectAll),
+        nameof(Import_Selected_Format),
+        nameof(Import_SelectNone),
+        nameof(Import_Title),
         nameof(Latency_Avg),
         nameof(Latency_Axis),
         nameof(Latency_Empty),
@@ -961,6 +976,36 @@ public static class Strings
     public static string Games_Sort_Name => ResourceManager.GetString(nameof(Games_Sort_Name), Culture) ?? nameof(Games_Sort_Name);
 
     public static string Games_Sort_Playtime => ResourceManager.GetString(nameof(Games_Sort_Playtime), Culture) ?? nameof(Games_Sort_Playtime);
+
+    public static string Import_Add => ResourceManager.GetString(nameof(Import_Add), Culture) ?? nameof(Import_Add);
+
+    public static string Import_Column_Exe => ResourceManager.GetString(nameof(Import_Column_Exe), Culture) ?? nameof(Import_Column_Exe);
+
+    public static string Import_Column_Name => ResourceManager.GetString(nameof(Import_Column_Name), Culture) ?? nameof(Import_Column_Name);
+
+    public static string Import_Column_Note => ResourceManager.GetString(nameof(Import_Column_Note), Culture) ?? nameof(Import_Column_Note);
+
+    public static string Import_Column_Platform => ResourceManager.GetString(nameof(Import_Column_Platform), Culture) ?? nameof(Import_Column_Platform);
+
+    public static string Import_Done_Format => ResourceManager.GetString(nameof(Import_Done_Format), Culture) ?? nameof(Import_Done_Format);
+
+    public static string Import_Intro => ResourceManager.GetString(nameof(Import_Intro), Culture) ?? nameof(Import_Intro);
+
+    public static string Import_Note_Already => ResourceManager.GetString(nameof(Import_Note_Already), Culture) ?? nameof(Import_Note_Already);
+
+    public static string Import_Note_Guessed => ResourceManager.GetString(nameof(Import_Note_Guessed), Culture) ?? nameof(Import_Note_Guessed);
+
+    public static string Import_Note_NoExe => ResourceManager.GetString(nameof(Import_Note_NoExe), Culture) ?? nameof(Import_Note_NoExe);
+
+    public static string Import_NothingFound => ResourceManager.GetString(nameof(Import_NothingFound), Culture) ?? nameof(Import_NothingFound);
+
+    public static string Import_SelectAll => ResourceManager.GetString(nameof(Import_SelectAll), Culture) ?? nameof(Import_SelectAll);
+
+    public static string Import_Selected_Format => ResourceManager.GetString(nameof(Import_Selected_Format), Culture) ?? nameof(Import_Selected_Format);
+
+    public static string Import_SelectNone => ResourceManager.GetString(nameof(Import_SelectNone), Culture) ?? nameof(Import_SelectNone);
+
+    public static string Import_Title => ResourceManager.GetString(nameof(Import_Title), Culture) ?? nameof(Import_Title);
 
     public static string Latency_Avg => ResourceManager.GetString(nameof(Latency_Avg), Culture) ?? nameof(Latency_Avg);
 
