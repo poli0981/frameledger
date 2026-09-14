@@ -208,4 +208,394 @@
   <data name="Settings_Theme_System" xml:space="preserve">
     <value>Theo hệ thống</value>
   </data>
+  <data name="AddGame_Added_Format" xml:space="preserve">
+    <value>Đã thêm {0}. Hooking tắt cho đến khi bạn bật.</value>
+  </data>
+  <data name="AddGame_Dialog_Title" xml:space="preserve">
+    <value>Chọn tệp thực thi của game</value>
+  </data>
+  <data name="AddGame_Failed_Format" xml:space="preserve">
+    <value>Không đọc được {0}; game chưa được thêm.</value>
+  </data>
+  <data name="AddGame_Filter" xml:space="preserve">
+    <value>Chương trình (*.exe)|*.exe</value>
+  </data>
+  <data name="Chip_NA" xml:space="preserve">
+    <value>N/A</value>
+  </data>
+  <data name="Chip_No" xml:space="preserve">
+    <value>Không</value>
+  </data>
+  <data name="Chip_Pt" xml:space="preserve">
+    <value>Path Tracing</value>
+  </data>
+  <data name="Chip_Rr" xml:space="preserve">
+    <value>Ray Reconstruction</value>
+  </data>
+  <data name="Chip_Rt" xml:space="preserve">
+    <value>Ray Tracing</value>
+  </data>
+  <data name="Chip_Source_Inherited" xml:space="preserve">
+    <value>kế thừa từ mặc định của game</value>
+  </data>
+  <data name="Chip_Source_Manual" xml:space="preserve">
+    <value>ghi đè thủ công</value>
+  </data>
+  <data name="Chip_Source_Measured" xml:space="preserve">
+    <value>đo được</value>
+  </data>
+  <data name="Chip_Source_NA" xml:space="preserve">
+    <value>chưa đo</value>
+  </data>
+  <data name="Chip_Yes" xml:space="preserve">
+    <value>Có</value>
+  </data>
+  <data name="Common_Close" xml:space="preserve">
+    <value>Đóng</value>
+  </data>
+  <data name="Common_Dash" xml:space="preserve">
+    <value>—</value>
+  </data>
+  <data name="Dashboard_Live_CpuTemp_Format" xml:space="preserve">
+    <value>CPU {0} °C</value>
+  </data>
+  <data name="Dashboard_Live_Elapsed_Format" xml:space="preserve">
+    <value>Đã {0}</value>
+  </data>
+  <data name="Dashboard_Live_GpuTemp_Format" xml:space="preserve">
+    <value>GPU {0} °C</value>
+  </data>
+  <data name="Dashboard_Live_Header" xml:space="preserve">
+    <value>Đang thu thập</value>
+  </data>
+  <data name="Dashboard_Live_Idle" xml:space="preserve">
+    <value>Không có gì đang được thu thập.</value>
+  </data>
+  <data name="Dashboard_Live_Rt_On" xml:space="preserve">
+    <value>RT đang bật</value>
+  </data>
+  <data name="Dashboard_Live_Vram_Format" xml:space="preserve">
+    <value>{0} MB VRAM (tiến trình)</value>
+  </data>
+  <data name="Dashboard_Live_Waiting" xml:space="preserve">
+    <value>Đã gắn — chờ các khung hình đầu tiên…</value>
+  </data>
+  <data name="Dashboard_Recent_Header" xml:space="preserve">
+    <value>Phiên gần đây</value>
+  </data>
+  <data name="Dashboard_Totals_Games" xml:space="preserve">
+    <value>Game đang theo dõi</value>
+  </data>
+  <data name="Dashboard_Totals_Playtime" xml:space="preserve">
+    <value>Tổng thời gian chơi</value>
+  </data>
+  <data name="Dashboard_Totals_ThisWeek" xml:space="preserve">
+    <value>Phiên tuần này</value>
+  </data>
+  <data name="EditGame_Detected" xml:space="preserve">
+    <value>tự phát hiện</value>
+  </data>
+  <data name="EditGame_Name" xml:space="preserve">
+    <value>Tên</value>
+  </data>
+  <data name="EditGame_Notes" xml:space="preserve">
+    <value>Ghi chú</value>
+  </data>
+  <data name="EditGame_Publisher" xml:space="preserve">
+    <value>Nhà phát hành</value>
+  </data>
+  <data name="EditGame_Save" xml:space="preserve">
+    <value>Lưu</value>
+  </data>
+  <data name="EditGame_Saved" xml:space="preserve">
+    <value>Đã lưu.</value>
+  </data>
+  <data name="EditGame_Title" xml:space="preserve">
+    <value>Sửa game</value>
+  </data>
+  <data name="EditGame_Version" xml:space="preserve">
+    <value>Phiên bản</value>
+  </data>
+  <data name="Exit_Crashed" xml:space="preserve">
+    <value>crash</value>
+  </data>
+  <data name="Exit_Degraded" xml:space="preserve">
+    <value>suy giảm</value>
+  </data>
+  <data name="Exit_Interrupted" xml:space="preserve">
+    <value>gián đoạn</value>
+  </data>
+  <data name="Exit_Normal" xml:space="preserve">
+    <value>bình thường</value>
+  </data>
+  <data name="Exit_UnhookedSafety" xml:space="preserve">
+    <value>đã gỡ hook (an toàn)</value>
+  </data>
+  <data name="Fg_Active" xml:space="preserve">
+    <value>FG hoạt động (chưa xác định công nghệ)</value>
+  </data>
+  <data name="Fg_None" xml:space="preserve">
+    <value>Không có frame generation</value>
+  </data>
+  <data name="Fg_Unknown" xml:space="preserve">
+    <value>FG (không rõ)</value>
+  </data>
+  <data name="Format_Duration_HoursMinutes_Format" xml:space="preserve">
+    <value>{0}g {1:00}p</value>
+  </data>
+  <data name="Format_Duration_MinutesSeconds_Format" xml:space="preserve">
+    <value>{0}p {1:00}g</value>
+  </data>
+  <data name="Format_Playtime_Hours_Format" xml:space="preserve">
+    <value>{0:0.#} giờ</value>
+  </data>
+  <data name="Format_Playtime_Minutes_Format" xml:space="preserve">
+    <value>{0} phút</value>
+  </data>
+  <data name="Format_Resolution_Format" xml:space="preserve">
+    <value>{0}×{1} → {2}×{3}</value>
+  </data>
+  <data name="Format_Resolution_Single_Format" xml:space="preserve">
+    <value>{0}×{1}</value>
+  </data>
+  <data name="Format_Temperature_Format" xml:space="preserve">
+    <value>{0:0} °C</value>
+  </data>
+  <data name="Fps_Census_NoRuntime" xml:space="preserve">
+    <value>Không thấy FG</value>
+  </data>
+  <data name="Fps_Census_NoRuntime_Tooltip" xml:space="preserve">
+    <value>Không có runtime frame generation nào được nạp; con số này không thể gồm khung sinh thêm trong tiến trình — ngoại trừ FSR3-FG liên kết tĩnh và AFMF ở mức driver.</value>
+  </data>
+  <data name="Fps_Census_NotRun" xml:space="preserve">
+    <value>Chưa kiểm kê FG</value>
+  </data>
+  <data name="Fps_Census_NotRun_Tooltip" xml:space="preserve">
+    <value>Kiểm kê runtime chưa chạy cho phiên này; không rõ có gồm khung sinh thêm hay không.</value>
+  </data>
+  <data name="Fps_Census_RuntimeLoaded" xml:space="preserve">
+    <value>Đã nạp runtime FG — có thể gồm khung sinh thêm</value>
+  </data>
+  <data name="Fps_Census_RuntimeLoaded_Tooltip" xml:space="preserve">
+    <value>Một runtime frame generation đang được nạp và không quan sát được gì; con số này CÓ THỂ gồm khung sinh thêm.</value>
+  </data>
+  <data name="Fps_Census_Withheld" xml:space="preserve">
+    <value>Đếm khung của ứng dụng</value>
+  </data>
+  <data name="Fps_Census_Withheld_Tooltip" xml:space="preserve">
+    <value>Con số này đếm khung hình của ứng dụng; tốc độ hiển thị không rõ.</value>
+  </data>
+  <data name="Fps_Fg_Chip_Format" xml:space="preserve">
+    <value>×{0:0.0} FG</value>
+  </data>
+  <data name="Fps_Fg_Format" xml:space="preserve">
+    <value>{0} → {1} FPS (×{2:0.0} FG)</value>
+  </data>
+  <data name="Fps_Native_Tooltip" xml:space="preserve">
+    <value>Native: khung hình game render · Hiển thị: khung hình lên màn hình kể cả khung sinh thêm</value>
+  </data>
+  <data name="Fps_None_Tooltip" xml:space="preserve">
+    <value>Đã đo là không có frame generation: hiển thị bằng gốc.</value>
+  </data>
+  <data name="Fps_Presented_Format" xml:space="preserve">
+    <value>{0} FPS</value>
+  </data>
+  <data name="GameDetail_Back" xml:space="preserve">
+    <value>Tất cả game</value>
+  </data>
+  <data name="GameDetail_Edit" xml:space="preserve">
+    <value>Sửa…</value>
+  </data>
+  <data name="GameDetail_Hooking_Body" xml:space="preserve">
+    <value>Mặc định tắt. Bật sẽ mở hộp thoại đồng ý.</value>
+  </data>
+  <data name="GameDetail_Hooking_Busy" xml:space="preserve">
+    <value>Đang hỏi capture agent…</value>
+  </data>
+  <data name="GameDetail_Hooking_Header" xml:space="preserve">
+    <value>Hooking</value>
+  </data>
+  <data name="GameDetail_Hooking_Off" xml:space="preserve">
+    <value>Hooking tắt</value>
+  </data>
+  <data name="GameDetail_Hooking_On" xml:space="preserve">
+    <value>Hooking bật</value>
+  </data>
+  <data name="GameDetail_Hooking_ReEnable" xml:space="preserve">
+    <value>Bật lại hooking</value>
+  </data>
+  <data name="GameDetail_Hooking_Unverified" xml:space="preserve">
+    <value>FrameLedger chưa kiểm tra được các tệp của game này về anti-cheat. Công tắc vẫn dùng được; quét lại khi tệp hoặc quy tắc thay đổi.</value>
+  </data>
+  <data name="GameDetail_LastSession_Format" xml:space="preserve">
+    <value>Phiên gần nhất: {0} · {1}</value>
+  </data>
+  <data name="GameDetail_LifetimeAvg" xml:space="preserve">
+    <value>Trung bình toàn bộ</value>
+  </data>
+  <data name="GameDetail_Measured_Empty" xml:space="preserve">
+    <value>Chưa có phiên nào được đo.</value>
+  </data>
+  <data name="GameDetail_Measured_Header" xml:space="preserve">
+    <value>Phiên gần nhất đo được</value>
+  </data>
+  <data name="GameDetail_Measured_NotHooked" xml:space="preserve">
+    <value>Phiên gần nhất không hook; không đo được gì.</value>
+  </data>
+  <data name="GameDetail_NotFound" xml:space="preserve">
+    <value>Game này không còn trong thư viện.</value>
+  </data>
+  <data name="GameDetail_Remove" xml:space="preserve">
+    <value>Xoá…</value>
+  </data>
+  <data name="GameDetail_Sessions_Empty" xml:space="preserve">
+    <value>Chưa có phiên nào — hãy chạy game, FrameLedger lo phần còn lại.</value>
+  </data>
+  <data name="GameDetail_Supports_Empty" xml:space="preserve">
+    <value>Chưa quét — tính năng quét khả năng sẽ có ở bản sau.</value>
+  </data>
+  <data name="GameDetail_Supports_Format" xml:space="preserve">
+    <value>Hỗ trợ {0}</value>
+  </data>
+  <data name="GameDetail_Supports_Header" xml:space="preserve">
+    <value>Hỗ trợ</value>
+  </data>
+  <data name="GameDetail_Tab_Distribution" xml:space="preserve">
+    <value>Phân bố</value>
+  </data>
+  <data name="GameDetail_Tab_Frametime" xml:space="preserve">
+    <value>Frametime</value>
+  </data>
+  <data name="GameDetail_Tab_Latency" xml:space="preserve">
+    <value>Độ trễ</value>
+  </data>
+  <data name="GameDetail_Tab_Later_Format" xml:space="preserve">
+    <value>{0} sẽ có ở bản sau.</value>
+  </data>
+  <data name="GameDetail_Tab_Sensors" xml:space="preserve">
+    <value>Cảm biến</value>
+  </data>
+  <data name="GameDetail_Tab_Sessions" xml:space="preserve">
+    <value>Phiên chơi</value>
+  </data>
+  <data name="GameDetail_Tab_Trend" xml:space="preserve">
+    <value>Xu hướng</value>
+  </data>
+  <data name="Games_Add" xml:space="preserve">
+    <value>Thêm game…</value>
+  </data>
+  <data name="Games_Card_HookOff" xml:space="preserve">
+    <value>Hooking tắt</value>
+  </data>
+  <data name="Games_Card_HookOn" xml:space="preserve">
+    <value>Hooking bật</value>
+  </data>
+  <data name="Games_Card_LastPlayed_Format" xml:space="preserve">
+    <value>Chơi gần nhất {0}</value>
+  </data>
+  <data name="Games_Card_NeverPlayed" xml:space="preserve">
+    <value>Chưa chơi</value>
+  </data>
+  <data name="Games_Card_Playtime_Format" xml:space="preserve">
+    <value>Đã chơi {0}</value>
+  </data>
+  <data name="Games_Card_Sessions_Format" xml:space="preserve">
+    <value>{0} phiên</value>
+  </data>
+  <data name="Games_NoMatch" xml:space="preserve">
+    <value>Không có game nào khớp.</value>
+  </data>
+  <data name="Games_Search_Placeholder" xml:space="preserve">
+    <value>Tìm game</value>
+  </data>
+  <data name="Games_Sort_Label" xml:space="preserve">
+    <value>Sắp xếp theo</value>
+  </data>
+  <data name="Games_Sort_LastPlayed" xml:space="preserve">
+    <value>Chơi gần nhất</value>
+  </data>
+  <data name="Games_Sort_Name" xml:space="preserve">
+    <value>Tên</value>
+  </data>
+  <data name="Games_Sort_Playtime" xml:space="preserve">
+    <value>Thời gian chơi</value>
+  </data>
+  <data name="RemoveGame_Body" xml:space="preserve">
+    <value>Các phiên của game có thể giữ lại để xem — game rời thư viện và quay lại nếu chạy tiếp — hoặc bị xoá cùng game.</value>
+  </data>
+  <data name="RemoveGame_Delete" xml:space="preserve">
+    <value>Xoá cả phiên</value>
+  </data>
+  <data name="RemoveGame_Keep" xml:space="preserve">
+    <value>Giữ phiên</value>
+  </data>
+  <data name="RemoveGame_Removed_Format" xml:space="preserve">
+    <value>Đã xoá {0}.</value>
+  </data>
+  <data name="RemoveGame_Title_Format" xml:space="preserve">
+    <value>Xoá {0}?</value>
+  </data>
+  <data name="Sessions_Col_Api" xml:space="preserve">
+    <value>API</value>
+  </data>
+  <data name="Sessions_Col_Date" xml:space="preserve">
+    <value>Ngày</value>
+  </data>
+  <data name="Sessions_Col_Displayed" xml:space="preserve">
+    <value>Hiển thị</value>
+  </data>
+  <data name="Sessions_Col_Duration" xml:space="preserve">
+    <value>Thời lượng</value>
+  </data>
+  <data name="Sessions_Col_Exit" xml:space="preserve">
+    <value>Kết thúc</value>
+  </data>
+  <data name="Sessions_Col_Fg" xml:space="preserve">
+    <value>FG×</value>
+  </data>
+  <data name="Sessions_Col_GpuTemp" xml:space="preserve">
+    <value>GPU tối đa °C</value>
+  </data>
+  <data name="Sessions_Col_Native" xml:space="preserve">
+    <value>Native</value>
+  </data>
+  <data name="Sessions_Col_P01Low" xml:space="preserve">
+    <value>0.1% Low</value>
+  </data>
+  <data name="Sessions_Col_P1Low" xml:space="preserve">
+    <value>1% Low</value>
+  </data>
+  <data name="Sessions_Col_Resolution" xml:space="preserve">
+    <value>Độ phân giải · upscaler</value>
+  </data>
+  <data name="Sessions_Col_Tags" xml:space="preserve">
+    <value>Thẻ</value>
+  </data>
+  <data name="Sessions_Col_Tier" xml:space="preserve">
+    <value>Tier</value>
+  </data>
+  <data name="Tier_Dash_Tooltip" xml:space="preserve">
+    <value>—: đã đo là không có frame generation, nên không có FPS hiển thị khác với FPS gốc</value>
+  </data>
+  <data name="Tier_Hooked" xml:space="preserve">
+    <value>T1</value>
+  </data>
+  <data name="Tier_Hooked_Tooltip" xml:space="preserve">
+    <value>Tier 1: đã hook, đo được</value>
+  </data>
+  <data name="Tier_NA_Tooltip" xml:space="preserve">
+    <value>N/A: không đo ở tier của phiên này</value>
+  </data>
+  <data name="Tier_NotHooked" xml:space="preserve">
+    <value>T2</value>
+  </data>
+  <data name="Tier_NotHooked_Tooltip" xml:space="preserve">
+    <value>Tier 2: không hook — chỉ thời lượng và cảm biến; mọi giá trị từ khung hình là N/A</value>
+  </data>
+  <data name="Upscaler_None" xml:space="preserve">
+    <value>Không upscaler</value>
+  </data>
+  <data name="Upscaler_Unknown" xml:space="preserve">
+    <value>Upscaler không rõ</value>
+  </data>
 </root>

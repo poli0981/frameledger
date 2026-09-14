@@ -57,6 +57,9 @@ internal sealed class FakeSessionRepository : ISessionRepository
             LastPlayedAt = g.Max(s => s.Row.EndedAt),
         })]);
 
+    public ValueTask<long> CountSinceAsync(DateTimeOffset since, CancellationToken ct = default) =>
+        ValueTask.FromResult((long)Stored.Count(s => s.Row.StartedAt >= since));
+
     public ValueTask<IReadOnlyList<SegmentRow>> FindSegmentsAsync(long sessionId, CancellationToken ct = default) =>
         ValueTask.FromResult(sessionId >= 1 && sessionId <= Stored.Count ? Stored[(int)sessionId - 1].Segments : []);
 

@@ -4,13 +4,69 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:res="clr-namespace:FrameLedger.App"
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
+      xmlns:controls="clr-namespace:FrameLedger.App.Controls"
       Title="{x:Static res:Strings.Dashboard_Header}">
     <ScrollViewer>
         <StackPanel Style="{StaticResource PageRoot}">
             <ui:TextBlock FontTypography="Title" Text="{x:Static vm:DashboardViewModel.Header}" />
 
-            <!-- 08_UI §Dashboard: the Agent status card. Every value reads N/A until the Agent answered. -->
+            <!-- 08_UI §Dashboard: the live capture card, fed by SessionStarted / SessionProgress / SessionCompleted. -->
             <ui:Card Margin="0,16,0,0" HorizontalAlignment="Stretch">
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <ui:TextBlock FontTypography="Subtitle" Text="{x:Static vm:LiveCaptureViewModel.Header}" />
+                        <Border Style="{StaticResource Pill}" Visibility="{Binding ViewModel.Live.IsActive, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding ViewModel.Live.TierText}" />
+                        </Border>
+                    </StackPanel>
+                    <ui:TextBlock Margin="0,8,0,0" Appearance="Secondary" Text="{x:Static vm:LiveCaptureViewModel.IdleText}"
+                                  Visibility="{Binding ViewModel.Live.IsActive, Converter={StaticResource InverseBoolToVis}}" />
+                    <StackPanel Margin="0,8,0,0" Visibility="{Binding ViewModel.Live.IsActive, Converter={StaticResource BoolToVis}}">
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{Binding ViewModel.Live.GameName}" />
+                        <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.Live.ElapsedText}" />
+                        <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:LiveCaptureViewModel.WaitingText}"
+                                      Visibility="{Binding ViewModel.Live.WaitingForFrames, Converter={StaticResource BoolToVis}}" />
+                        <controls:FpsReadout Margin="0,8,0,0" Model="{Binding ViewModel.Live.Readout}" />
+                        <WrapPanel Margin="0,8,0,0">
+                            <ui:TextBlock Margin="0,0,16,0" Text="{Binding ViewModel.Live.ResolutionText}" />
+                            <ui:TextBlock Margin="0,0,16,0" Text="{Binding ViewModel.Live.UpscalerText}" />
+                            <ui:TextBlock Margin="0,0,16,0" Text="{Binding ViewModel.Live.FgText}" />
+                            <Border Style="{StaticResource Pill}" Margin="0,0,16,0" Background="{DynamicResource AccentFillColorDefaultBrush}" BorderThickness="0"
+                                    Visibility="{Binding ViewModel.Live.RtActive, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" Text="{x:Static vm:LiveCaptureViewModel.RtOnText}" />
+                            </Border>
+                            <ui:TextBlock Margin="0,0,16,0" Appearance="Secondary" Text="{Binding ViewModel.Live.GpuTempText}" />
+                            <ui:TextBlock Margin="0,0,16,0" Appearance="Secondary" Text="{Binding ViewModel.Live.CpuTempText}" />
+                            <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.Live.VramText}" />
+                        </WrapPanel>
+                    </StackPanel>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- totals strip -->
+            <UniformGrid Margin="0,12,0,0" Columns="3">
+                <ui:Card Margin="0,0,6,0">
+                    <StackPanel>
+                        <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:DashboardViewModel.TotalsGames}" />
+                        <ui:TextBlock FontTypography="Subtitle" Text="{Binding ViewModel.GamesTrackedText}" />
+                    </StackPanel>
+                </ui:Card>
+                <ui:Card Margin="6,0,6,0">
+                    <StackPanel>
+                        <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:DashboardViewModel.TotalsPlaytime}" />
+                        <ui:TextBlock FontTypography="Subtitle" Text="{Binding ViewModel.PlaytimeText}" />
+                    </StackPanel>
+                </ui:Card>
+                <ui:Card Margin="6,0,0,0">
+                    <StackPanel>
+                        <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:DashboardViewModel.TotalsThisWeek}" />
+                        <ui:TextBlock FontTypography="Subtitle" Text="{Binding ViewModel.ThisWeekText}" />
+                    </StackPanel>
+                </ui:Card>
+            </UniformGrid>
+
+            <!-- 08_UI §Dashboard: the Agent status card. Every value reads N/A until the Agent answered. -->
+            <ui:Card Margin="0,12,0,0" HorizontalAlignment="Stretch">
                 <StackPanel>
                     <ui:TextBlock FontTypography="Subtitle" Margin="0,0,0,12" Text="{x:Static vm:DashboardViewModel.AgentHeader}" />
                     <Grid>
@@ -42,10 +98,37 @@
                 </StackPanel>
             </ui:Card>
 
-            <ui:TextBlock Margin="0,24,0,0"
-                          Appearance="Secondary"
+            <!-- recent sessions -->
+            <ui:TextBlock Margin="0,20,0,0" FontTypography="Subtitle" Text="{x:Static vm:DashboardViewModel.RecentHeader}" />
+            <ui:TextBlock Margin="0,8,0,0" Appearance="Secondary" TextWrapping="Wrap"
                           Text="{x:Static vm:DashboardViewModel.EmptyText}"
-                          TextWrapping="Wrap" />
+                          Visibility="{Binding ViewModel.RecentEmpty, Converter={StaticResource BoolToVis}}" />
+            <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding ViewModel.Recent}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:RecentSessionViewModel}">
+                        <ui:CardAction Margin="0,0,0,6" IsChevronVisible="True"
+                                       Command="{Binding DataContext.ViewModel.OpenGameCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                       CommandParameter="{Binding}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="2*" />
+                                </Grid.ColumnDefinitions>
+                                <ui:TextBlock Grid.Column="0" FontTypography="BodyStrong" Text="{Binding GameName}" TextTrimming="CharacterEllipsis" />
+                                <Border Grid.Column="1" Style="{StaticResource Pill}" Margin="8,0">
+                                    <TextBlock Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding TierText}" />
+                                </Border>
+                                <ui:TextBlock Grid.Column="2" Appearance="Secondary" VerticalAlignment="Center" Text="{Binding DateText}" />
+                                <ui:TextBlock Grid.Column="3" Appearance="Secondary" VerticalAlignment="Center" Margin="12,0" Text="{Binding DurationText}" />
+                                <controls:FpsReadout Grid.Column="4" HorizontalAlignment="Right" Model="{Binding Readout}" />
+                            </Grid>
+                        </ui:CardAction>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </StackPanel>
     </ScrollViewer>
 </Page>

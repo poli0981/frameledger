@@ -23,6 +23,9 @@ public interface ISessionRepository
     /// <summary>Every game's sessions in aggregate (count, hooked count, playtime, last played), for the library grid and the Dashboard totals.</summary>
     ValueTask<IReadOnlyList<GameSessionSummary>> SummariseByGameAsync(CancellationToken ct = default);
 
+    /// <summary>Sessions that started at or after <paramref name="since"/> (the Dashboard's "this week").</summary>
+    ValueTask<long> CountSinceAsync(DateTimeOffset since, CancellationToken ct = default);
+
     ValueTask<int> SweepRetentionAsync(long gameId, int keep, CancellationToken ct = default);
 
     ValueTask<FrameBlobs?> FindFramesAsync(long sessionId, CancellationToken ct = default);

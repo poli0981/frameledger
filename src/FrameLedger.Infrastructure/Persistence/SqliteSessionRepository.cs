@@ -115,6 +115,10 @@ public sealed class SqliteSessionRepository : ISessionRepository
                 LastPlayedAt = SqliteReaders.Int64(r, 4) is { } ended ? DateTimeOffset.FromUnixTimeMilliseconds(ended) : null,
             }), ct);
 
+    public ValueTask<long> CountSinceAsync(DateTimeOffset since, CancellationToken ct = default) =>
+        _db.ReadAsync((c, token) => c.ExecuteScalarAsync<long>(new CommandDefinition(
+            "SELECT COUNT(*) FROM sessions WHERE started_at >= @since", new { since = since.ToUnixTimeMilliseconds() }, cancellationToken: token)), ct);
+
     public ValueTask<IReadOnlyList<SegmentRow>> FindSegmentsAsync(long sessionId, CancellationToken ct = default) =>
         _db.ReadAsync((c, token) => SqliteReaders.ReadAllAsync(
             c, new CommandDefinition(_selectSegments, new { sessionId }, cancellationToken: token), ReadSegment), ct);

@@ -1,0 +1,224 @@
+<Page x:Class="FrameLedger.App.Pages.GameDetailPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:res="clr-namespace:FrameLedger.App"
+      xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
+      xmlns:controls="clr-namespace:FrameLedger.App.Controls"
+      Title="{x:Static res:Strings.Games_Header}">
+    <!--
+        08_UI §Games › Game detail. The two rows — Supports (files on disk) and Last session measured (the
+        hooks) — are two cards and never mixed. The hooking control opens FR-2.1's dialog; a blocked pre-scan
+        disables it with the reason inline; a refusal is a persistent InfoBar on this page, never a toast.
+    -->
+    <ScrollViewer>
+        <StackPanel Style="{StaticResource PageRoot}">
+            <ui:HyperlinkButton Padding="0" Command="{Binding ViewModel.BackCommand}" Content="{x:Static vm:GameDetailViewModel.BackText}" Icon="{ui:SymbolIcon ArrowLeft24}" />
+
+            <ui:TextBlock Margin="0,12,0,0" Appearance="Secondary" TextWrapping="Wrap"
+                          Text="{x:Static vm:GameDetailViewModel.NotFoundText}"
+                          Visibility="{Binding ViewModel.NotFound, Converter={StaticResource BoolToVis}}" />
+
+            <!-- header -->
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <ui:TextBlock FontTypography="Title" Text="{Binding ViewModel.Name}" />
+                    <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.Subtitle}" />
+                    <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.LastSessionText}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <ui:TextBlock Appearance="Secondary" VerticalAlignment="Center" Margin="0,0,12,0" Text="{x:Static vm:GameDetailViewModel.LifetimeLabel}" />
+                        <controls:FpsReadout Model="{Binding ViewModel.Lifetime}" />
+                    </StackPanel>
+                    <ItemsControl Margin="0,10,0,0" ItemsSource="{Binding ViewModel.Chips}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:TriStateChipModel}">
+                                <controls:TriStateChip Model="{Binding}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                    <ui:Button Margin="0,0,8,0" Command="{Binding ViewModel.EditCommand}" Content="{x:Static vm:GameDetailViewModel.EditText}" Icon="{ui:SymbolIcon Edit24}" />
+                    <ui:Button Appearance="Danger" Command="{Binding ViewModel.RemoveCommand}" Content="{x:Static vm:GameDetailViewModel.RemoveText}" Icon="{ui:SymbolIcon Delete24}" />
+                </StackPanel>
+            </Grid>
+
+            <!-- the two rows, clearly separated (05_DETECTION §Capability hints) -->
+            <Grid Margin="0,20,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <ui:Card Grid.Column="0" VerticalAlignment="Stretch">
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static vm:GameDetailViewModel.SupportsHeader}" />
+                        <ui:TextBlock Margin="0,6,0,0" Appearance="Tertiary" TextWrapping="Wrap"
+                                      Text="{x:Static vm:GameDetailViewModel.SupportsEmptyText}"
+                                      Visibility="{Binding ViewModel.SupportsEmpty, Converter={StaticResource BoolToVis}}" />
+                        <ItemsControl Margin="0,6,0,0" ItemsSource="{Binding ViewModel.Supports}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource Pill}" Margin="0,0,8,6">
+                                        <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{Binding}" />
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ui:Card>
+                <ui:Card Grid.Column="2" VerticalAlignment="Stretch">
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static vm:GameDetailViewModel.MeasuredHeader}" />
+                        <ui:TextBlock Margin="0,6,0,0" Appearance="Tertiary" TextWrapping="Wrap" Text="{Binding ViewModel.MeasuredEmptyText}" />
+                        <ItemsControl Margin="0,6,0,0" ItemsSource="{Binding ViewModel.Measured}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource Pill}" Margin="0,0,8,6" BorderThickness="0" Background="{DynamicResource AccentFillColorDefaultBrush}">
+                                        <TextBlock Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" Text="{Binding}" />
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ui:Card>
+            </Grid>
+
+            <!-- hooking control (FR-2.1 / FR-2.2 / FR-2.5) -->
+            <ui:CardControl Margin="0,12,0,0" Header="{x:Static vm:GameDetailViewModel.HookingHeader}" Icon="{ui:SymbolIcon ShieldTask24}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:TextBlock Appearance="Secondary" VerticalAlignment="Center" Margin="0,0,12,0" Text="{Binding ViewModel.HookStatusText}" />
+                    <ui:ToggleSwitch IsChecked="{Binding ViewModel.HookEnabled, Mode=OneWay}"
+                                     IsEnabled="{Binding ViewModel.HookToggleEnabled}"
+                                     Command="{Binding ViewModel.ToggleHookingCommand}" />
+                </StackPanel>
+            </ui:CardControl>
+            <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.HookingBody}" />
+            <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.BlockedText}"
+                          Visibility="{Binding ViewModel.BlockedText, Converter={StaticResource NullToCollapsed}}" />
+            <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.UnverifiedText}"
+                          Visibility="{Binding ViewModel.UnverifiedText, Converter={StaticResource NullToCollapsed}}" />
+            <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" Text="{x:Static vm:GameDetailViewModel.BusyText}"
+                          Visibility="{Binding ViewModel.Busy, Converter={StaticResource BoolToVis}}" />
+            <ui:InfoBar Margin="0,8,0,0" IsClosable="False" Severity="Warning"
+                        IsOpen="{Binding ViewModel.AutoDisabledText, Converter={StaticResource NotNull}}"
+                        Message="{Binding ViewModel.AutoDisabledText}">
+                <ui:Button Command="{Binding ViewModel.ReEnableHookingCommand}" Content="{x:Static vm:GameDetailViewModel.ReEnableText}" />
+            </ui:InfoBar>
+            <ui:InfoBar Margin="0,8,0,0" IsClosable="True"
+                        IsOpen="{Binding ViewModel.NoticeVisible, Mode=OneWay}"
+                        Message="{Binding ViewModel.NoticeText}"
+                        Severity="{Binding ViewModel.NoticeSeverity}" />
+
+            <!-- tabs -->
+            <TabControl Margin="0,20,0,0">
+                <TabItem Header="{x:Static vm:GameDetailViewModel.TabSessions}">
+                    <StackPanel Margin="0,12,0,0">
+                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap"
+                                      Text="{x:Static vm:GameDetailViewModel.SessionsEmptyText}"
+                                      Visibility="{Binding ViewModel.SessionsEmpty, Converter={StaticResource BoolToVis}}" />
+                        <DataGrid AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column"
+                                  ItemsSource="{Binding ViewModel.Sessions}" SelectionMode="Extended">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Date}" Binding="{Binding DateText}" />
+                                <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Duration}" Binding="{Binding DurationText}" />
+                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Tier}">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
+                                            <Border Style="{StaticResource Pill}" Margin="0" ToolTip="{Binding TierTooltip}">
+                                                <TextBlock Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding TierText}" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Native}">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
+                                            <TextBlock Text="{Binding NativeText}" ToolTip="{Binding FpsTooltip}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Displayed}">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
+                                            <TextBlock Text="{Binding DisplayedText}" ToolTip="{Binding FpsTooltip}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Fg}">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
+                                            <TextBlock Text="{Binding FgText}" ToolTip="{Binding FpsTooltip}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_P1Low}" Binding="{Binding P1LowText}" />
+                                <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_P01Low}" Binding="{Binding P01LowText}" />
+                                <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Resolution}" Binding="{Binding ResolutionText}" />
+                                <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_GpuTemp}" Binding="{Binding GpuTempText}" />
+                                <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Api}" Binding="{Binding ApiText}" />
+                                <DataGridTemplateColumn>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <controls:TriStateChip Model="{Binding Rt}" />
+                                                <controls:TriStateChip Model="{Binding Pt}" />
+                                                <controls:TriStateChip Model="{Binding Rr}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Exit}">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon Symbol="Warning24" Margin="0,0,4,0" Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                                                               Visibility="{Binding IsCrashed, Converter={StaticResource BoolToVis}}" />
+                                                <TextBlock Text="{Binding ExitText}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Tags}" Binding="{Binding TagsText}" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </TabItem>
+                <TabItem Header="{x:Static vm:GameDetailViewModel.TabFrametime}">
+                    <ui:TextBlock Margin="0,12,0,0" Appearance="Secondary" Text="{x:Static vm:GameDetailViewModel.LaterText}" />
+                </TabItem>
+                <TabItem Header="{x:Static vm:GameDetailViewModel.TabDistribution}">
+                    <ui:TextBlock Margin="0,12,0,0" Appearance="Secondary" Text="{x:Static vm:GameDetailViewModel.LaterText}" />
+                </TabItem>
+                <TabItem Header="{x:Static vm:GameDetailViewModel.TabTrend}">
+                    <ui:TextBlock Margin="0,12,0,0" Appearance="Secondary" Text="{x:Static vm:GameDetailViewModel.LaterText}" />
+                </TabItem>
+                <TabItem Header="{x:Static vm:GameDetailViewModel.TabSensors}">
+                    <ui:TextBlock Margin="0,12,0,0" Appearance="Secondary" Text="{x:Static vm:GameDetailViewModel.LaterText}" />
+                </TabItem>
+                <TabItem Header="{x:Static vm:GameDetailViewModel.TabLatency}">
+                    <ui:TextBlock Margin="0,12,0,0" Appearance="Secondary" Text="{x:Static vm:GameDetailViewModel.LaterText}" />
+                </TabItem>
+            </TabControl>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

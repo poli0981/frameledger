@@ -31,11 +31,14 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _agentBannerBody = string.Empty;
 
-    public MainWindowViewModel(AgentConnection agent, ISnackbarService snackbar, IHostApplicationLifetime lifetime)
+    private readonly AddGameFlow _addGame;
+
+    public MainWindowViewModel(AgentConnection agent, ISnackbarService snackbar, IHostApplicationLifetime lifetime, AddGameFlow addGame)
     {
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _snackbar = snackbar ?? throw new ArgumentNullException(nameof(snackbar));
         _lifetime = lifetime ?? throw new ArgumentNullException(nameof(lifetime));
+        _addGame = addGame ?? throw new ArgumentNullException(nameof(addGame));
         _agent.Changed += OnAgentChanged;
         Refresh();
     }
@@ -58,6 +61,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
     [RelayCommand]
     private void RetryAgent() => _agent.RetryNow();
+
+    /// <summary>File ▸ Add game… (FR-1.1): the same flow as the Games page's button.</summary>
+    [RelayCommand]
+    private async Task AddGameAsync() => _ = await _addGame.RunAsync().ConfigureAwait(true);
 
     /// <summary>Exit is a host shutdown (App.RunAsync tears down and then ends the process), not a bare <c>Application.Shutdown</c>.</summary>
     [RelayCommand]

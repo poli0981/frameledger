@@ -213,4 +213,394 @@
   <data name="Settings_Theme_System" xml:space="preserve">
     <value>Follow system</value>
   </data>
+  <data name="AddGame_Added_Format" xml:space="preserve">
+    <value>{0} added. Hooking is off until you enable it.</value>
+  </data>
+  <data name="AddGame_Dialog_Title" xml:space="preserve">
+    <value>Pick the game's executable</value>
+  </data>
+  <data name="AddGame_Failed_Format" xml:space="preserve">
+    <value>{0} could not be read; the game was not added.</value>
+  </data>
+  <data name="AddGame_Filter" xml:space="preserve">
+    <value>Programs (*.exe)|*.exe</value>
+  </data>
+  <data name="Chip_NA" xml:space="preserve">
+    <value>N/A</value>
+  </data>
+  <data name="Chip_No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="Chip_Pt" xml:space="preserve">
+    <value>Path Tracing</value>
+  </data>
+  <data name="Chip_Rr" xml:space="preserve">
+    <value>Ray Reconstruction</value>
+  </data>
+  <data name="Chip_Rt" xml:space="preserve">
+    <value>Ray Tracing</value>
+  </data>
+  <data name="Chip_Source_Inherited" xml:space="preserve">
+    <value>inherited from the game default</value>
+  </data>
+  <data name="Chip_Source_Manual" xml:space="preserve">
+    <value>manual override</value>
+  </data>
+  <data name="Chip_Source_Measured" xml:space="preserve">
+    <value>measured</value>
+  </data>
+  <data name="Chip_Source_NA" xml:space="preserve">
+    <value>not measured</value>
+  </data>
+  <data name="Chip_Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="Common_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Common_Dash" xml:space="preserve">
+    <value>—</value>
+  </data>
+  <data name="Dashboard_Live_CpuTemp_Format" xml:space="preserve">
+    <value>CPU {0} °C</value>
+  </data>
+  <data name="Dashboard_Live_Elapsed_Format" xml:space="preserve">
+    <value>{0} elapsed</value>
+  </data>
+  <data name="Dashboard_Live_GpuTemp_Format" xml:space="preserve">
+    <value>GPU {0} °C</value>
+  </data>
+  <data name="Dashboard_Live_Header" xml:space="preserve">
+    <value>Live capture</value>
+  </data>
+  <data name="Dashboard_Live_Idle" xml:space="preserve">
+    <value>Nothing is being captured.</value>
+  </data>
+  <data name="Dashboard_Live_Rt_On" xml:space="preserve">
+    <value>RT active</value>
+  </data>
+  <data name="Dashboard_Live_Vram_Format" xml:space="preserve">
+    <value>{0} MB VRAM (process)</value>
+  </data>
+  <data name="Dashboard_Live_Waiting" xml:space="preserve">
+    <value>Attached — waiting for the first frames…</value>
+  </data>
+  <data name="Dashboard_Recent_Header" xml:space="preserve">
+    <value>Recent sessions</value>
+  </data>
+  <data name="Dashboard_Totals_Games" xml:space="preserve">
+    <value>Games tracked</value>
+  </data>
+  <data name="Dashboard_Totals_Playtime" xml:space="preserve">
+    <value>Total playtime</value>
+  </data>
+  <data name="Dashboard_Totals_ThisWeek" xml:space="preserve">
+    <value>Sessions this week</value>
+  </data>
+  <data name="EditGame_Detected" xml:space="preserve">
+    <value>detected</value>
+  </data>
+  <data name="EditGame_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="EditGame_Notes" xml:space="preserve">
+    <value>Notes</value>
+  </data>
+  <data name="EditGame_Publisher" xml:space="preserve">
+    <value>Publisher</value>
+  </data>
+  <data name="EditGame_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="EditGame_Saved" xml:space="preserve">
+    <value>Saved.</value>
+  </data>
+  <data name="EditGame_Title" xml:space="preserve">
+    <value>Edit game</value>
+  </data>
+  <data name="EditGame_Version" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="Exit_Crashed" xml:space="preserve">
+    <value>crashed</value>
+  </data>
+  <data name="Exit_Degraded" xml:space="preserve">
+    <value>degraded</value>
+  </data>
+  <data name="Exit_Interrupted" xml:space="preserve">
+    <value>interrupted</value>
+  </data>
+  <data name="Exit_Normal" xml:space="preserve">
+    <value>normal</value>
+  </data>
+  <data name="Exit_UnhookedSafety" xml:space="preserve">
+    <value>unhooked (safety)</value>
+  </data>
+  <data name="Fg_Active" xml:space="preserve">
+    <value>FG active (technology not identified)</value>
+  </data>
+  <data name="Fg_None" xml:space="preserve">
+    <value>No frame generation</value>
+  </data>
+  <data name="Fg_Unknown" xml:space="preserve">
+    <value>FG (unknown)</value>
+  </data>
+  <data name="Format_Duration_HoursMinutes_Format" xml:space="preserve">
+    <value>{0}h {1:00}m</value>
+  </data>
+  <data name="Format_Duration_MinutesSeconds_Format" xml:space="preserve">
+    <value>{0}m {1:00}s</value>
+  </data>
+  <data name="Format_Playtime_Hours_Format" xml:space="preserve">
+    <value>{0:0.#} h</value>
+  </data>
+  <data name="Format_Playtime_Minutes_Format" xml:space="preserve">
+    <value>{0} min</value>
+  </data>
+  <data name="Format_Resolution_Format" xml:space="preserve">
+    <value>{0}×{1} → {2}×{3}</value>
+  </data>
+  <data name="Format_Resolution_Single_Format" xml:space="preserve">
+    <value>{0}×{1}</value>
+  </data>
+  <data name="Format_Temperature_Format" xml:space="preserve">
+    <value>{0:0} °C</value>
+  </data>
+  <data name="Fps_Census_NoRuntime" xml:space="preserve">
+    <value>FG not observed</value>
+  </data>
+  <data name="Fps_Census_NoRuntime_Tooltip" xml:space="preserve">
+    <value>No frame-generation runtime was loaded; this number cannot include in-process generated frames — statically linked FSR3-FG and driver-level AFMF excepted.</value>
+  </data>
+  <data name="Fps_Census_NotRun" xml:space="preserve">
+    <value>FG census not run</value>
+  </data>
+  <data name="Fps_Census_NotRun_Tooltip" xml:space="preserve">
+    <value>The runtime census did not run for this session; whether generated frames are included is unknown.</value>
+  </data>
+  <data name="Fps_Census_RuntimeLoaded" xml:space="preserve">
+    <value>FG runtime loaded — may include generated frames</value>
+  </data>
+  <data name="Fps_Census_RuntimeLoaded_Tooltip" xml:space="preserve">
+    <value>A frame-generation runtime is loaded and nothing was observed; this number MAY include generated frames.</value>
+  </data>
+  <data name="Fps_Census_Withheld" xml:space="preserve">
+    <value>Counts application frames</value>
+  </data>
+  <data name="Fps_Census_Withheld_Tooltip" xml:space="preserve">
+    <value>This number counts application frames; the displayed rate is unknown.</value>
+  </data>
+  <data name="Fps_Fg_Chip_Format" xml:space="preserve">
+    <value>×{0:0.0} FG</value>
+  </data>
+  <data name="Fps_Fg_Format" xml:space="preserve">
+    <value>{0} → {1} FPS (×{2:0.0} FG)</value>
+  </data>
+  <data name="Fps_Native_Tooltip" xml:space="preserve">
+    <value>Native: frames rendered by the game · Displayed: frames shown on screen incl. generated frames</value>
+  </data>
+  <data name="Fps_None_Tooltip" xml:space="preserve">
+    <value>Frame generation was measured as none: displayed equals native.</value>
+  </data>
+  <data name="Fps_Presented_Format" xml:space="preserve">
+    <value>{0} FPS</value>
+  </data>
+  <data name="GameDetail_Back" xml:space="preserve">
+    <value>All games</value>
+  </data>
+  <data name="GameDetail_Edit" xml:space="preserve">
+    <value>Edit…</value>
+  </data>
+  <data name="GameDetail_Hooking_Body" xml:space="preserve">
+    <value>Off by default. Turning it on opens the consent dialog.</value>
+  </data>
+  <data name="GameDetail_Hooking_Busy" xml:space="preserve">
+    <value>Asking the capture agent…</value>
+  </data>
+  <data name="GameDetail_Hooking_Header" xml:space="preserve">
+    <value>Hooking</value>
+  </data>
+  <data name="GameDetail_Hooking_Off" xml:space="preserve">
+    <value>Hooking off</value>
+  </data>
+  <data name="GameDetail_Hooking_On" xml:space="preserve">
+    <value>Hooking on</value>
+  </data>
+  <data name="GameDetail_Hooking_ReEnable" xml:space="preserve">
+    <value>Turn hooking on again</value>
+  </data>
+  <data name="GameDetail_Hooking_Unverified" xml:space="preserve">
+    <value>FrameLedger could not verify this game's files for anti-cheat. The toggle stays available; the scan runs again when the files or the rules change.</value>
+  </data>
+  <data name="GameDetail_LastSession_Format" xml:space="preserve">
+    <value>Last session: {0} · {1}</value>
+  </data>
+  <data name="GameDetail_LifetimeAvg" xml:space="preserve">
+    <value>Lifetime average</value>
+  </data>
+  <data name="GameDetail_Measured_Empty" xml:space="preserve">
+    <value>No measured session yet.</value>
+  </data>
+  <data name="GameDetail_Measured_Header" xml:space="preserve">
+    <value>Last session measured</value>
+  </data>
+  <data name="GameDetail_Measured_NotHooked" xml:space="preserve">
+    <value>The last session was not hooked; nothing was measured.</value>
+  </data>
+  <data name="GameDetail_NotFound" xml:space="preserve">
+    <value>This game is no longer in the library.</value>
+  </data>
+  <data name="GameDetail_Remove" xml:space="preserve">
+    <value>Remove…</value>
+  </data>
+  <data name="GameDetail_Sessions_Empty" xml:space="preserve">
+    <value>No sessions yet — launch the game and FrameLedger will do the rest.</value>
+  </data>
+  <data name="GameDetail_Supports_Empty" xml:space="preserve">
+    <value>Not scanned yet — the capability scan arrives with a later build.</value>
+  </data>
+  <data name="GameDetail_Supports_Format" xml:space="preserve">
+    <value>Supports {0}</value>
+  </data>
+  <data name="GameDetail_Supports_Header" xml:space="preserve">
+    <value>Supports</value>
+  </data>
+  <data name="GameDetail_Tab_Distribution" xml:space="preserve">
+    <value>Distribution</value>
+  </data>
+  <data name="GameDetail_Tab_Frametime" xml:space="preserve">
+    <value>Frametime</value>
+  </data>
+  <data name="GameDetail_Tab_Latency" xml:space="preserve">
+    <value>Latency</value>
+  </data>
+  <data name="GameDetail_Tab_Later_Format" xml:space="preserve">
+    <value>{0} arrives with a later build.</value>
+  </data>
+  <data name="GameDetail_Tab_Sensors" xml:space="preserve">
+    <value>Sensors</value>
+  </data>
+  <data name="GameDetail_Tab_Sessions" xml:space="preserve">
+    <value>Sessions</value>
+  </data>
+  <data name="GameDetail_Tab_Trend" xml:space="preserve">
+    <value>Trend</value>
+  </data>
+  <data name="Games_Add" xml:space="preserve">
+    <value>Add game…</value>
+  </data>
+  <data name="Games_Card_HookOff" xml:space="preserve">
+    <value>Hooking off</value>
+  </data>
+  <data name="Games_Card_HookOn" xml:space="preserve">
+    <value>Hooking on</value>
+  </data>
+  <data name="Games_Card_LastPlayed_Format" xml:space="preserve">
+    <value>Last played {0}</value>
+  </data>
+  <data name="Games_Card_NeverPlayed" xml:space="preserve">
+    <value>Not played yet</value>
+  </data>
+  <data name="Games_Card_Playtime_Format" xml:space="preserve">
+    <value>{0} played</value>
+  </data>
+  <data name="Games_Card_Sessions_Format" xml:space="preserve">
+    <value>{0} sessions</value>
+  </data>
+  <data name="Games_NoMatch" xml:space="preserve">
+    <value>No game matches the search.</value>
+  </data>
+  <data name="Games_Search_Placeholder" xml:space="preserve">
+    <value>Search games</value>
+  </data>
+  <data name="Games_Sort_Label" xml:space="preserve">
+    <value>Sort by</value>
+  </data>
+  <data name="Games_Sort_LastPlayed" xml:space="preserve">
+    <value>Last played</value>
+  </data>
+  <data name="Games_Sort_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Games_Sort_Playtime" xml:space="preserve">
+    <value>Playtime</value>
+  </data>
+  <data name="RemoveGame_Body" xml:space="preserve">
+    <value>Its sessions can stay readable — the game leaves the library and comes back if it runs again — or be deleted with it.</value>
+  </data>
+  <data name="RemoveGame_Delete" xml:space="preserve">
+    <value>Delete sessions too</value>
+  </data>
+  <data name="RemoveGame_Keep" xml:space="preserve">
+    <value>Keep sessions</value>
+  </data>
+  <data name="RemoveGame_Removed_Format" xml:space="preserve">
+    <value>{0} removed.</value>
+  </data>
+  <data name="RemoveGame_Title_Format" xml:space="preserve">
+    <value>Remove {0}?</value>
+  </data>
+  <data name="Sessions_Col_Api" xml:space="preserve">
+    <value>API</value>
+  </data>
+  <data name="Sessions_Col_Date" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="Sessions_Col_Displayed" xml:space="preserve">
+    <value>Displayed</value>
+  </data>
+  <data name="Sessions_Col_Duration" xml:space="preserve">
+    <value>Duration</value>
+  </data>
+  <data name="Sessions_Col_Exit" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="Sessions_Col_Fg" xml:space="preserve">
+    <value>FG×</value>
+  </data>
+  <data name="Sessions_Col_GpuTemp" xml:space="preserve">
+    <value>Max GPU °C</value>
+  </data>
+  <data name="Sessions_Col_Native" xml:space="preserve">
+    <value>Native</value>
+  </data>
+  <data name="Sessions_Col_P01Low" xml:space="preserve">
+    <value>0.1% Low</value>
+  </data>
+  <data name="Sessions_Col_P1Low" xml:space="preserve">
+    <value>1% Low</value>
+  </data>
+  <data name="Sessions_Col_Resolution" xml:space="preserve">
+    <value>Resolution · upscaler</value>
+  </data>
+  <data name="Sessions_Col_Tags" xml:space="preserve">
+    <value>Tags</value>
+  </data>
+  <data name="Sessions_Col_Tier" xml:space="preserve">
+    <value>Tier</value>
+  </data>
+  <data name="Tier_Dash_Tooltip" xml:space="preserve">
+    <value>—: frame generation was measured as none, so there is no displayed rate distinct from the native one</value>
+  </data>
+  <data name="Tier_Hooked" xml:space="preserve">
+    <value>T1</value>
+  </data>
+  <data name="Tier_Hooked_Tooltip" xml:space="preserve">
+    <value>Tier 1: hooked, measured</value>
+  </data>
+  <data name="Tier_NA_Tooltip" xml:space="preserve">
+    <value>N/A: not measured at this session's tier</value>
+  </data>
+  <data name="Tier_NotHooked" xml:space="preserve">
+    <value>T2</value>
+  </data>
+  <data name="Tier_NotHooked_Tooltip" xml:space="preserve">
+    <value>Tier 2: not hooked — duration and sensors only; every frame-derived value is N/A</value>
+  </data>
+  <data name="Upscaler_None" xml:space="preserve">
+    <value>No upscaler</value>
+  </data>
+  <data name="Upscaler_Unknown" xml:space="preserve">
+    <value>Unknown upscaler</value>
+  </data>
 </root>

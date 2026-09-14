@@ -144,10 +144,13 @@ public partial class App : System.Windows.Application
             UiIdentity.Version));
         builder.Services.AddHostedService<AgentConnectionHostedService>();
         builder.Services.AddSingleton<IAgentRequests>(static sp => sp.GetRequiredService<AgentConnection>());
+        builder.Services.AddSingleton<IAgentLink>(static sp => sp.GetRequiredService<AgentConnection>());
 
         // FR-2.1 (P3 PR-4): the consent dialog and the request it ends in; the toggle that opens it is the game page's (PR-5).
         builder.Services.AddSingleton<IConsentPrompt, ConsentPrompt>();
         builder.Services.AddSingleton<HookingConsent>();
+
+        AddLibrary(builder.Services);
 
         // The shell: the window is TRANSIENT because a language change rebuilds it (09_I18N §Mechanics); the
         // shell host tracks the live one. Pages and their view models are transient (16 §Navigation).
@@ -158,6 +161,8 @@ public partial class App : System.Windows.Application
         builder.Services.AddTransient<DashboardViewModel>();
         builder.Services.AddTransient<GamesPage>();
         builder.Services.AddTransient<GamesViewModel>();
+        builder.Services.AddTransient<GameDetailPage>();
+        builder.Services.AddTransient<GameDetailViewModel>();
         builder.Services.AddTransient<ComparePage>();
         builder.Services.AddTransient<CompareViewModel>();
         builder.Services.AddTransient<LogsPage>();
@@ -166,6 +171,25 @@ public partial class App : System.Windows.Application
         builder.Services.AddTransient<SettingsViewModel>();
         builder.Services.AddHostedService<ApplicationHostService>();
         return builder.Build();
+    }
+
+    /// <summary>
+    /// The library (P3 PR-5): the ports the pages read and write, the selection that travels between pages, and the
+    /// pickers, prompts and confirmations behind interfaces so the view models are testable without a window.
+    /// </summary>
+    private static void AddLibrary(IServiceCollection services)
+    {
+        services.AddSingleton<IGameRepository, SqliteGameRepository>();
+        services.AddSingleton<ISessionRepository, SqliteSessionRepository>();
+        services.AddSingleton<ISessionAnnotationRepository, SqliteSessionAnnotationRepository>();
+        services.AddSingleton<GameLibrary>();
+        services.AddSingleton<GameSelection>();
+        services.AddSingleton<IPageNavigator, PageNavigator>();
+        services.AddSingleton<IGamePicker, GamePicker>();
+        services.AddSingleton<IConfirmations, Confirmations>();
+        services.AddSingleton<AddGameFlow>();
+        services.AddSingleton<IMessageStrip, SnackbarStrip>();
+        services.AddSingleton<IEditGamePrompt, EditGamePrompt>();
     }
 
     /// <summary><c>10_LOGGING</c> §Serilog configuration: <c>logs/ui-.log</c>, daily, 7 kept, 10 MB, the one template.</summary>

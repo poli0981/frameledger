@@ -36,7 +36,7 @@
 
         <Menu Grid.Row="1">
             <MenuItem Header="{x:Static res:Strings.Menu_File}">
-                <MenuItem Header="{x:Static res:Strings.Menu_File_AddGame}" Command="{Binding ViewModel.NotYetCommand}" />
+                <MenuItem Header="{x:Static res:Strings.Menu_File_AddGame}" Command="{Binding ViewModel.AddGameCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_File_ImportLibrary}" Command="{Binding ViewModel.NotYetCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_File_Export}" Command="{Binding ViewModel.NotYetCommand}" />
                 <Separator />

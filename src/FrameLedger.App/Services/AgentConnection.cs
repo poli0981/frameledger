@@ -16,7 +16,7 @@ namespace FrameLedger.App.Services;
 /// Runs on the thread pool; <see cref="Changed"/> and <see cref="EventReceived"/> fire there, and a view model
 /// marshals to the dispatcher. Nothing here touches WPF.
 /// </remarks>
-public sealed class AgentConnection : IAgentRequests, IAsyncDisposable
+public sealed class AgentConnection : IAgentLink, IAsyncDisposable
 {
     private readonly IAgentLauncher _launcher;
     private readonly Func<PipeClient> _pipes;
