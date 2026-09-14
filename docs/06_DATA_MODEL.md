@@ -2,7 +2,7 @@
 
 `%LOCALAPPDATA%\FrameLedger\ledger.db`. Pragmas: `journal_mode=WAL`, `synchronous=NORMAL`, `foreign_keys=ON`, `busy_timeout=5000`. `Microsoft.Data.Sqlite` + Dapper; all writes in explicit transactions.
 
-**Writer ownership:** Agent writes `sessions`, `session_segments`, `frame_blobs`, `sensor_blobs`, `hardware_snapshots`, and the hook-state columns on `games`. UI writes `games` (user-editable fields), `session_annotations`, `settings`, `legal_acceptance`. Both read everything.
+**Writer ownership:** Agent writes `sessions`, `session_segments`, `frame_blobs`, `sensor_blobs`, `hardware_snapshots`, and the hook-state columns on `games`. UI writes `games` (user-editable fields — since P3 PR-3 that is the FR-1.3 metadata, the `*_default` tri-states, and `removed_at`; never a `hook_*` column), `session_annotations` (tags, notes, and since schema 0002 the FR-8.3 overrides — which is WHY they are on this table and not on `sessions`), `settings`, `legal_acceptance`. Both read everything. The ports say the same in their names: `IGameRepository.UpdateMetadataAsync` / `SetTriStateDefaultAsync` / `RemoveAsync`, `ISessionAnnotationRepository`, `RegisteredSettings`, `ILegalAcceptanceStore.RecordAsync` (all P3 PR-3).
 
 ## Schema (v2 — hook architecture)
 
@@ -46,6 +46,9 @@ CREATE TABLE games (
   engine TEXT, engine_version TEXT,
   publisher TEXT, game_version TEXT,
   cover_path TEXT, notes TEXT,
+  removed_at INTEGER,                          -- schema 0002 (P3 PR-3): FR-1.4 "remove, keep sessions" — the row stays
+                                               -- (sessions.game_id is NOT NULL, ON DELETE CASCADE) but leaves the
+                                               -- library; a later launch of the same exe restores it (removed_at = NULL)
 
   -- hooking state (19_SAFETY)
   hook_enabled INTEGER NOT NULL DEFAULT 0,     -- 0 = Tier 2, i.e. nothing measured; default for every new game
@@ -278,13 +281,48 @@ CREATE TABLE sensor_blobs (
 
 CREATE TABLE session_annotations (
   session_id INTEGER PRIMARY KEY REFERENCES sessions(id) ON DELETE CASCADE,
-  tags TEXT, notes TEXT
+  tags TEXT, notes TEXT,                       -- tags: a JSON string array (P3 PR-3); a row that would be all NULL is deleted
+  -- schema 0002 (P3 PR-3): FR-8.3's per-session overrides live HERE, on the UI's table, beside the
+  -- measurement on sessions and never over it — clearing an override restores what was measured.
+  -- NULL = no override. sessions.rt_source stays the measurement's word.
+  rt_override TEXT CHECK (rt_override IS NULL OR rt_override IN ('yes', 'no', 'na')),
+  pt_override TEXT CHECK (pt_override IS NULL OR pt_override IN ('yes', 'no', 'na')),
+  rr_override TEXT CHECK (rr_override IS NULL OR rr_override IN ('yes', 'no', 'na'))
 );
 
 CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 -- keys in use: hooking.kill_switch = '1' (FR-2.4, P2 PR-F; anything else, or no row, is off)
+-- the full key list is §Settings registry below (P3 PR-3)
 CREATE TABLE legal_acceptance (doc TEXT PRIMARY KEY, version TEXT NOT NULL, accepted_at INTEGER NOT NULL);
 ```
+
+## Settings registry
+
+HANDOFF §P3 decision D16, built as `Application.Settings.SettingsRegistry` (P3 PR-3, 2026-09-13) and
+closing `20_OPEN_QUESTIONS` §G's row. `settings` is key/value TEXT; the registry is the only key list, and
+`RegisteredSettings` over `ISettingsStore` **validates writes and tolerates reads** — a hand-edited or
+out-of-range row reads as the default, never as an exception. Booleans are exactly `1`/`0` (the kill
+switch's rule); integers are invariant-culture within an inclusive range; choices are compared ordinally.
+**No "setting changed" message exists:** the Agent re-reads its keys at each session start
+(`SettingsRecorderPolicy` → `RecorderOptions`), and the UI owns the rest.
+
+| Key | Kind | Default | Range / choices | Read by |
+|---|---|---|---|---|
+| `ui.language` | choice | `en` | `en` · `vi` · `ja` | UI |
+| `ui.theme` | choice | `system` | `system` · `light` · `dark` | UI |
+| `ui.start_with_windows` | bool | `0` | | UI (P4) |
+| `ui.minimize_to_tray` | bool | `0` | | UI (PR-8) |
+| `capture.background` | bool | `1` | | Agent |
+| `hooking.kill_switch` | bool | `0` | | Agent (FR-2.4, since P2 PR-F) |
+| `capture.min_session_s` | int | `30` | 5–600 | Agent, per session (FR-3.6) |
+| `telemetry.interval_ms` | int | `1000` | 500–2000 | Agent, per session (FR-3.5) |
+| `retention.raw_sessions_per_game` | int | `20` | 0–10000; **0 = unlimited** | Agent, per session (§Retention) |
+| `update.channel` | choice | `stable` | `stable` · `beta` | UI (P4) |
+| `privacy.online_metadata` | bool | `0` | | UI (P4; CLAUDE.md rule 8) |
+| `log.debug` | bool | `0` | | UI |
+
+An operator's bounded capture (`--console … --seconds N`, which lowers the discard threshold to N) keeps
+its bound under any `capture.min_session_s`: the setting moves the product's rule, not the operator's.
 
 ## Comparison safety
 
@@ -331,11 +369,21 @@ Because Tier-1 and Tier-2 sessions carry different fields, every query that comp
 
 ## Retention
 
-Default: raw blobs for the **last 20 sessions per game** (configurable N or unlimited). Aggregates and segments kept forever. Sweep at finalize + on demand (Tools → DB maintenance, which also offers `PRAGMA integrity_check`, `VACUUM`, backup).
+Default: raw blobs for the **last 20 sessions per game** (configurable N or unlimited — `retention.raw_sessions_per_game`, 0 = unlimited, §Settings registry). Aggregates and segments kept forever. Sweep at finalize + on demand (Tools → DB maintenance, which also offers `PRAGMA integrity_check`, `VACUUM`, backup).
 
 ## Migrations
 
 Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied at startup by whichever process opens the DB first, guarded by `schema_migrations` + a named mutex. Never edit an applied script; only append.
+
+> **`0002_annotation_overrides_and_removal.sql` (P3 PR-3, 2026-09-13) — the first append**, and the first
+> time the runner ran two scripts on a real file: `ALTER TABLE ADD COLUMN` only — the three override
+> columns on `session_annotations` and `games.removed_at`. `LedgerDatabaseTests` asserts one
+> `schema_migrations` row per script, so `LatestVersion` is 2.
+
+> **`0002_annotation_overrides_and_removal.sql` (P3 PR-3, 2026-09-13) — the first append**, and the first
+> time the runner ran two scripts on a real file: `ALTER TABLE ADD COLUMN` only — the three override
+> columns on `session_annotations` and `games.removed_at`. `LedgerDatabaseTests` asserts one
+> `schema_migrations` row per script, so `LatestVersion` is 2.
 
 > **Built 2026-09-09 (P2 PR-B):** `Infrastructure.Persistence.MigrationRunner` over scripts embedded in
 > the assembly (so the schema a build applies is the one it was tested against), one transaction per

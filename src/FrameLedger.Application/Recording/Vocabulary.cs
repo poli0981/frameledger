@@ -62,6 +62,14 @@ public static class Vocabulary
         _ => NotApplicable,
     };
 
+    /// <summary>The inverse of <see cref="Tri(Domain.Metrics.Tri)"/>: anything but <c>yes</c>/<c>no</c> (a NULL, a hand edit) is <c>N/A</c>.</summary>
+    public static Tri ParseTri(string? text) => text switch
+    {
+        "yes" => Domain.Metrics.Tri.Yes,
+        "no" => Domain.Metrics.Tri.No,
+        _ => Domain.Metrics.Tri.NotApplicable,
+    };
+
     public static string? Api(FrameApi api) => api switch
     {
         FrameApi.D3D11 => "d3d11",

@@ -40,4 +40,26 @@ internal sealed class FakeSessionRepository : ISessionRepository
 
     public ValueTask<FrameBlobs?> FindFramesAsync(long sessionId, CancellationToken ct = default) =>
         ValueTask.FromResult(sessionId >= 1 && sessionId <= Stored.Count ? Stored[(int)sessionId - 1].Frames : null);
+
+    public ValueTask<SessionRow?> FindByIdAsync(long sessionId, CancellationToken ct = default) =>
+        ValueTask.FromResult(sessionId >= 1 && sessionId <= Stored.Count ? Stored[(int)sessionId - 1].Row with { Id = sessionId } : null);
+
+    public ValueTask<IReadOnlyList<SessionRow>> ListByGameAsync(long gameId, int limit, CancellationToken ct = default) =>
+        ValueTask.FromResult<IReadOnlyList<SessionRow>>([.. Stored.Select(s => s.Row).Where(r => r.GameId == gameId).OrderByDescending(r => r.StartedAt).Take(limit)]);
+
+    public ValueTask<IReadOnlyList<GameSessionSummary>> SummariseByGameAsync(CancellationToken ct = default) =>
+        ValueTask.FromResult<IReadOnlyList<GameSessionSummary>>([.. Stored.GroupBy(s => s.Row.GameId).Select(g => new GameSessionSummary
+        {
+            GameId = g.Key,
+            SessionCount = g.Count(),
+            HookedCount = g.Count(s => s.Row.Tier == Domain.Sessions.CaptureTier.Hooked),
+            TotalSeconds = g.Sum(s => s.Row.DurationSeconds),
+            LastPlayedAt = g.Max(s => s.Row.EndedAt),
+        })]);
+
+    public ValueTask<IReadOnlyList<SegmentRow>> FindSegmentsAsync(long sessionId, CancellationToken ct = default) =>
+        ValueTask.FromResult(sessionId >= 1 && sessionId <= Stored.Count ? Stored[(int)sessionId - 1].Segments : []);
+
+    public ValueTask<IReadOnlyList<SensorBlob>> FindSensorsAsync(long sessionId, CancellationToken ct = default) =>
+        ValueTask.FromResult(sessionId >= 1 && sessionId <= Stored.Count ? Stored[(int)sessionId - 1].Sensors : []);
 }

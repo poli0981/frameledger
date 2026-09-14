@@ -33,6 +33,7 @@ internal sealed class AgentRecording
     private readonly ICrashEventSource _crashes;
     private readonly ISessionObserver _observer;
     private readonly CapturePause _pause;
+    private readonly IRecorderPolicy _policy;
 
     public AgentRecording(
         IGameConsentStore store,
@@ -51,7 +52,8 @@ internal sealed class AgentRecording
         SessionFinalizer finalizer,
         ICrashEventSource crashes,
         ISessionObserver observer,
-        CapturePause pause)
+        CapturePause pause,
+        IRecorderPolicy policy)
     {
         _store = store;
         _gate = gate;
@@ -70,6 +72,7 @@ internal sealed class AgentRecording
         _crashes = crashes;
         _observer = observer;
         _pause = pause;
+        _policy = policy;
     }
 
     /// <summary>
@@ -97,14 +100,15 @@ internal sealed class AgentRecording
             _partials,
             _finalizer,
             _crashes,
-            Poller,
+            static options => Poller(options.TelemetryInterval),
             TimeProvider.System,
             new RecorderOptions { MinimumSessionLength = minimum, PartialFlushInterval = flush },
-            _observer);
+            _observer,
+            _policy);
     }
 
-    /// <summary>L1 + L2 + L3 under the composite, one poller per session; the poller owns and disposes the layers.</summary>
-    public static TelemetryPoller Poller()
+    /// <summary>L1 + L2 + L3 under the composite, one poller per session; the poller owns and disposes the layers. The interval is the session's (<c>telemetry.interval_ms</c>, D16).</summary>
+    public static TelemetryPoller Poller(TimeSpan interval)
     {
         // Ownership walks up one step at a time and each local is nulled at its hand-off, so a throw
         // anywhere below disposes exactly what nobody owns yet.
@@ -127,7 +131,7 @@ internal sealed class AgentRecording
             l1 = null;
             l2 = null;
             l3 = null;
-            var poller = new TelemetryPoller(composite, new TelemetryPollerOptions(), TimeProvider.System, ownsSource: true);
+            var poller = new TelemetryPoller(composite, new TelemetryPollerOptions { Interval = interval }, TimeProvider.System, ownsSource: true);
             composite = null;
             return poller;
         }

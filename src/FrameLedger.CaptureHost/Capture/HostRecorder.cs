@@ -37,7 +37,7 @@ internal static class HostRecorder
             new PartialSessionStore(PartialDirectory),
             Finalizer(db),
             new EventLogCrashSource(),
-            Poller,
+            static _ => Poller(),
             TimeProvider.System,
             new RecorderOptions { MinimumSessionLength = HostMinimumSessionLength, PartialFlushInterval = HostPartialFlushInterval });
 

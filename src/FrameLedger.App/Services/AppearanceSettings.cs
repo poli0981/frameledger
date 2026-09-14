@@ -1,4 +1,5 @@
 using FrameLedger.Application.Persistence;
+using FrameLedger.Application.Settings;
 
 namespace FrameLedger.App.Services;
 
@@ -10,8 +11,8 @@ namespace FrameLedger.App.Services;
 /// </summary>
 public sealed class AppearanceSettings(ISettingsStore settings)
 {
-    public const string ThemeKey = "ui.theme";
-    public const string LanguageKey = "ui.language";
+    public static readonly string ThemeKey = SettingsRegistry.UiTheme.Key;
+    public static readonly string LanguageKey = SettingsRegistry.UiLanguage.Key;
 
     public static IReadOnlyList<string> Languages { get; } = ["en", "vi", "ja"];
 
