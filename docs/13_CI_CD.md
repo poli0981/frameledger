@@ -71,7 +71,8 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 
 > This heading said **PLANNED, NOT PRESENT** from 2026-08-06 until the workflow existed, with the note that
 > "nothing in this repository has ever run `dotnet publish`". Still true of the *repository's history*: the
-> workflow has not been exercised by a tag yet. The first tag is the measurement; until then every claim below is
+> workflow has not been exercised by a tag yet — its publish, tree assertion and `vpk pack` steps were run by hand on
+> 2026-09-14 (`12_BUILD` §Publish & package has the sizes), the release upload was not. The first tag is the rest of the measurement; until then every other claim below is
 > what the file says, not what a run showed.
 
 - `runs-on: windows-latest`, the same .NET / MSVC / clang-format pins as `ci.yml`, `permissions: contents: write`

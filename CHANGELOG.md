@@ -53,7 +53,7 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   uninstall, deletes `%LOCALAPPDATA%\<packId>`, and `%LOCALAPPDATA%\FrameLedger` is the data folder — the id the docs
   named would have removed every user's ledger without asking (`UninstallHook.AreSeparate` now refuses the data delete
   if the two ever overlap). Published locally before the PR: 250 MB in 362 files, every assertion of the workflow's
-  tree step green; `vpk pack` and the release itself are unexercised until a tag. `legal/PRIVACY_POLICY.md` is now **2.1-draft**: the update check and download
+  tree step green; `vpk pack` 1.2.0 over it produced `FrameLedger.App-win-Setup.exe` (104 MB) and verified `VelopackApp.Run()` in `Program.Main`. The GitHub release itself is unexercised until a tag. `legal/PRIVACY_POLICY.md` is now **2.1-draft**: the update check and download
   rows describe requests the software makes, which is a material change the policy's own rule says re-shows the Legal
   Gate. `legal/licenses/velopack-MIT.txt`. Tests: `UpdateServiceTests` (the skips, the channels, Deferred ↔ Ready,
   the dialogs and rows, the apply's three endings), `UpdateFailureMapperTests`, `UninstallHookTests`, the

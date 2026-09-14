@@ -1,9 +1,11 @@
 Velopack — https://github.com/velopack/velopack
-NuGet package Velopack 1.2.0, licence expression MIT (the package ships no licence file).
+NuGet package Velopack 1.2.0. The package declares the licence expression MIT and ships no licence file, so
+this copy is ours to distribute. The copyright line below is the package's own <copyright> field, verbatim
+(its <authors> field: Velopack Ltd, Caelan Sayler, Kevin Bost); the licence text is the standard MIT text.
 
 MIT License
 
-Copyright (c) 2021 Caelan Sayler
+Copyright © Velopack Ltd. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

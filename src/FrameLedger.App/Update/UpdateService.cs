@@ -20,7 +20,7 @@ namespace FrameLedger.App.Update;
 public sealed partial class UpdateService : ObservableObject, IDisposable
 {
     /// <summary><c>StatusAck.State</c> when no session runs.</summary>
-    private const string IdleState = "idle";
+    private const string _idleState = "idle";
 
     private static readonly TimeSpan _defaultAgentStopTimeout = TimeSpan.FromSeconds(10);
 
@@ -75,7 +75,7 @@ public sealed partial class UpdateService : ObservableObject, IDisposable
             }
 
             StatusAck? status = _agent.Status;
-            return status is not null && (!string.Equals(status.State, IdleState, StringComparison.Ordinal) || status.ActiveSessions.Count > 0);
+            return status is not null && (!string.Equals(status.State, _idleState, StringComparison.Ordinal) || status.ActiveSessions.Count > 0);
         }
     }
 

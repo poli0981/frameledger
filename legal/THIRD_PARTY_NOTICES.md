@@ -37,7 +37,7 @@ FrameLedger is licensed under **GPL-3.0-only**. It includes or depends on the th
 | CommunityToolkit.Mvvm | MVVM framework | MIT | |
 | ScottPlot 5 | Charts | MIT | |
 | Serilog (+ file sink) | Logging | Apache-2.0 | |
-| Velopack | Installer/updater | MIT | © Caelan Sayler. Referenced by the App since 2026-09-14 (P4 PR-5); the package ships no licence file, so the copy is `legal/licenses/velopack-MIT.txt` |
+| Velopack | Installer/updater | MIT | © Velopack Ltd. (the package's copyright field). Referenced by the App since 2026-09-14 (P4 PR-5); the package ships no licence file, so the copy is `legal/licenses/velopack-MIT.txt` |
 | Microsoft.Data.Sqlite / SQLitePCLraw | Database | MIT / Apache-2.0 | SQLite itself: public domain |
 | Dapper | Data access | Apache-2.0 | |
 | CsWin32 (build-time) | Win32 interop source generator | MIT | Build-time only |
