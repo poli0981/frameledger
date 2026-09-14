@@ -98,7 +98,8 @@ public sealed class GameDetailViewModelTests
         var nav = new FakeNavigator();
         var strip = new FakeStrip();
         var vm = new GameDetailViewModel(s.Library, new GameSelection { GameId = gameId }, new HookingConsent(agent, prompt), nav,
-            new FakeConfirmations(remove), new FakeEdit(edit), strip, new NoSummaries());
+            new FakeConfirmations(remove), new FakeEdit(edit), strip, new NoSummaries(),
+            new Charts.SessionSeriesLoader(s.Sessions), new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db));
         Task pending = vm.Pending;
         await pending.ConfigureAwait(false);
         return (vm, agent, prompt, nav, strip);
@@ -251,6 +252,37 @@ public sealed class GameDetailViewModelTests
 
         (GameDetailViewModel missing, _, _, _, _) = await BuildAsync(s, game.Id + 99);
         missing.NotFound.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SelectingASessionLoadsItsSeriesAndTheTrendFollowsTheToggle()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Alpha");
+        await s.SessionWithFramesAsync(game.Id, DateTimeOffset.UtcNow.AddDays(-2), frames: 300, spikeEvery: 0);
+        await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddDays(-1), hooked: false);
+        (GameDetailViewModel vm, _, _, _, _) = await BuildAsync(s, game.Id);
+
+        vm.TrendPoints.Should().ContainSingle("one hooked session");
+        vm.TrendEmpty.Should().BeFalse();
+        vm.HardwareChanges.Should().BeEmpty("one snapshot");
+        vm.TrendMetric = Charts.TrendMetric.Displayed;
+        vm.TrendPoints.Should().BeEmpty("frame generation was measured as none: no displayed rate");
+        vm.TrendMetric = Charts.TrendMetric.MaxGpuTemp;
+        vm.TrendPoints.Single().Value.Should().Be(71);
+
+        vm.SelectedSession = vm.Sessions[0];   // newest first: the Tier-2 one
+        Task pending = vm.Pending;
+        await pending;
+        vm.SelectedHasSeries.Should().BeFalse();
+        vm.SelectedNote.Should().Be(Strings.Tabs_SelectedNotHooked);
+
+        vm.SelectedSession = vm.Sessions[1];
+        Task pending2 = vm.Pending;
+        await pending2;
+        vm.SelectedHasSeries.Should().BeTrue();
+        vm.SelectedSeries!.Presents.Should().Be(300);
+        vm.HasLatency.Should().BeFalse("no Reflex on this session");
     }
 
     [Fact]

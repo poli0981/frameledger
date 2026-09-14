@@ -73,8 +73,36 @@ public static class Strings
         nameof(Common_NotAvailable),
         nameof(Common_Ok),
         nameof(Common_Yes),
+        nameof(Compare_Col_Date),
+        nameof(Compare_Col_Fps),
+        nameof(Compare_Col_Game),
+        nameof(Compare_Col_MidSession),
+        nameof(Compare_Col_Tier),
+        nameof(Compare_Curves_Header),
         nameof(Compare_Empty),
+        nameof(Compare_Export_Png),
         nameof(Compare_Header),
+        nameof(Compare_Legend_Format),
+        nameof(Compare_Metric_Displayed),
+        nameof(Compare_Metric_Duration),
+        nameof(Compare_Metric_MaxGpuTemp),
+        nameof(Compare_Metric_Median),
+        nameof(Compare_Metric_Native),
+        nameof(Compare_Metric_P01Low),
+        nameof(Compare_Metric_P1Low),
+        nameof(Compare_Metric_Presented),
+        nameof(Compare_Metric_StutterPct),
+        nameof(Compare_Mixed_Body),
+        nameof(Compare_Mixed_Legend),
+        nameof(Compare_Mixed_Proceed),
+        nameof(Compare_Mixed_Title),
+        nameof(Compare_NoCandidates),
+        nameof(Compare_Pick_Header),
+        nameof(Compare_Run),
+        nameof(Compare_Selected_Format),
+        nameof(Compare_Table_Header),
+        nameof(Compare_Table_Metric),
+        nameof(Compare_TooMany),
         nameof(Crash_Body),
         nameof(Crash_Title),
         nameof(Dashboard_Agent_Elevated),
@@ -178,6 +206,13 @@ public static class Strings
         nameof(Games_Sort_LastPlayed),
         nameof(Games_Sort_Name),
         nameof(Games_Sort_Playtime),
+        nameof(Latency_Avg),
+        nameof(Latency_Axis),
+        nameof(Latency_Empty),
+        nameof(Latency_Header),
+        nameof(Latency_P95),
+        nameof(Latency_Series),
+        nameof(Latency_Stats_Format),
         nameof(Logs_Empty),
         nameof(Logs_Header),
         nameof(Menu_File),
@@ -213,6 +248,16 @@ public static class Strings
         nameof(RemoveGame_Keep),
         nameof(RemoveGame_Removed_Format),
         nameof(RemoveGame_Title_Format),
+        nameof(Sensors_Axis_Mb),
+        nameof(Sensors_Empty),
+        nameof(Sensors_Series_GpuHotspot),
+        nameof(Sensors_Series_GpuLoad),
+        nameof(Sensors_Series_GpuPower),
+        nameof(Sensors_Series_GpuTemp),
+        nameof(Sensors_Series_VramAdapter),
+        nameof(Sensors_Series_VramProcess),
+        nameof(Sensors_Temps_Header),
+        nameof(Sensors_Vram_Header),
         nameof(Sessions_Col_Api),
         nameof(Sessions_Col_Date),
         nameof(Sessions_Col_Displayed),
@@ -270,12 +315,32 @@ public static class Strings
         nameof(Summary_Title_Format),
         nameof(Summary_Unhooked_Body),
         nameof(Summary_Unhooked_Title),
+        nameof(Tabs_SelectASession),
+        nameof(Tabs_SelectedNoFrames),
+        nameof(Tabs_SelectedNotHooked),
         nameof(Tier_Dash_Tooltip),
         nameof(Tier_Hooked),
         nameof(Tier_Hooked_Tooltip),
         nameof(Tier_NA_Tooltip),
         nameof(Tier_NotHooked),
         nameof(Tier_NotHooked_Tooltip),
+        nameof(Trend_Average_Note),
+        nameof(Trend_Axis_Date),
+        nameof(Trend_Change_Cpu),
+        nameof(Trend_Change_Display),
+        nameof(Trend_Change_Format),
+        nameof(Trend_Change_Gpu),
+        nameof(Trend_Change_GpuDriver),
+        nameof(Trend_Change_Os),
+        nameof(Trend_Empty),
+        nameof(Trend_Excluded_Format),
+        nameof(Trend_IncludeMidSession),
+        nameof(Trend_Metric_Average),
+        nameof(Trend_Metric_Displayed),
+        nameof(Trend_Metric_Label),
+        nameof(Trend_Metric_MaxGpuTemp),
+        nameof(Trend_Metric_P01Low),
+        nameof(Trend_Metric_P1Low),
         nameof(Upscaler_None),
         nameof(Upscaler_Unknown),
     ];
@@ -374,9 +439,65 @@ public static class Strings
 
     public static string Common_Yes => ResourceManager.GetString(nameof(Common_Yes), Culture) ?? nameof(Common_Yes);
 
+    public static string Compare_Col_Date => ResourceManager.GetString(nameof(Compare_Col_Date), Culture) ?? nameof(Compare_Col_Date);
+
+    public static string Compare_Col_Fps => ResourceManager.GetString(nameof(Compare_Col_Fps), Culture) ?? nameof(Compare_Col_Fps);
+
+    public static string Compare_Col_Game => ResourceManager.GetString(nameof(Compare_Col_Game), Culture) ?? nameof(Compare_Col_Game);
+
+    public static string Compare_Col_MidSession => ResourceManager.GetString(nameof(Compare_Col_MidSession), Culture) ?? nameof(Compare_Col_MidSession);
+
+    public static string Compare_Col_Tier => ResourceManager.GetString(nameof(Compare_Col_Tier), Culture) ?? nameof(Compare_Col_Tier);
+
+    public static string Compare_Curves_Header => ResourceManager.GetString(nameof(Compare_Curves_Header), Culture) ?? nameof(Compare_Curves_Header);
+
     public static string Compare_Empty => ResourceManager.GetString(nameof(Compare_Empty), Culture) ?? nameof(Compare_Empty);
 
+    public static string Compare_Export_Png => ResourceManager.GetString(nameof(Compare_Export_Png), Culture) ?? nameof(Compare_Export_Png);
+
     public static string Compare_Header => ResourceManager.GetString(nameof(Compare_Header), Culture) ?? nameof(Compare_Header);
+
+    public static string Compare_Legend_Format => ResourceManager.GetString(nameof(Compare_Legend_Format), Culture) ?? nameof(Compare_Legend_Format);
+
+    public static string Compare_Metric_Displayed => ResourceManager.GetString(nameof(Compare_Metric_Displayed), Culture) ?? nameof(Compare_Metric_Displayed);
+
+    public static string Compare_Metric_Duration => ResourceManager.GetString(nameof(Compare_Metric_Duration), Culture) ?? nameof(Compare_Metric_Duration);
+
+    public static string Compare_Metric_MaxGpuTemp => ResourceManager.GetString(nameof(Compare_Metric_MaxGpuTemp), Culture) ?? nameof(Compare_Metric_MaxGpuTemp);
+
+    public static string Compare_Metric_Median => ResourceManager.GetString(nameof(Compare_Metric_Median), Culture) ?? nameof(Compare_Metric_Median);
+
+    public static string Compare_Metric_Native => ResourceManager.GetString(nameof(Compare_Metric_Native), Culture) ?? nameof(Compare_Metric_Native);
+
+    public static string Compare_Metric_P01Low => ResourceManager.GetString(nameof(Compare_Metric_P01Low), Culture) ?? nameof(Compare_Metric_P01Low);
+
+    public static string Compare_Metric_P1Low => ResourceManager.GetString(nameof(Compare_Metric_P1Low), Culture) ?? nameof(Compare_Metric_P1Low);
+
+    public static string Compare_Metric_Presented => ResourceManager.GetString(nameof(Compare_Metric_Presented), Culture) ?? nameof(Compare_Metric_Presented);
+
+    public static string Compare_Metric_StutterPct => ResourceManager.GetString(nameof(Compare_Metric_StutterPct), Culture) ?? nameof(Compare_Metric_StutterPct);
+
+    public static string Compare_Mixed_Body => ResourceManager.GetString(nameof(Compare_Mixed_Body), Culture) ?? nameof(Compare_Mixed_Body);
+
+    public static string Compare_Mixed_Legend => ResourceManager.GetString(nameof(Compare_Mixed_Legend), Culture) ?? nameof(Compare_Mixed_Legend);
+
+    public static string Compare_Mixed_Proceed => ResourceManager.GetString(nameof(Compare_Mixed_Proceed), Culture) ?? nameof(Compare_Mixed_Proceed);
+
+    public static string Compare_Mixed_Title => ResourceManager.GetString(nameof(Compare_Mixed_Title), Culture) ?? nameof(Compare_Mixed_Title);
+
+    public static string Compare_NoCandidates => ResourceManager.GetString(nameof(Compare_NoCandidates), Culture) ?? nameof(Compare_NoCandidates);
+
+    public static string Compare_Pick_Header => ResourceManager.GetString(nameof(Compare_Pick_Header), Culture) ?? nameof(Compare_Pick_Header);
+
+    public static string Compare_Run => ResourceManager.GetString(nameof(Compare_Run), Culture) ?? nameof(Compare_Run);
+
+    public static string Compare_Selected_Format => ResourceManager.GetString(nameof(Compare_Selected_Format), Culture) ?? nameof(Compare_Selected_Format);
+
+    public static string Compare_Table_Header => ResourceManager.GetString(nameof(Compare_Table_Header), Culture) ?? nameof(Compare_Table_Header);
+
+    public static string Compare_Table_Metric => ResourceManager.GetString(nameof(Compare_Table_Metric), Culture) ?? nameof(Compare_Table_Metric);
+
+    public static string Compare_TooMany => ResourceManager.GetString(nameof(Compare_TooMany), Culture) ?? nameof(Compare_TooMany);
 
     public static string Crash_Body => ResourceManager.GetString(nameof(Crash_Body), Culture) ?? nameof(Crash_Body);
 
@@ -584,6 +705,20 @@ public static class Strings
 
     public static string Games_Sort_Playtime => ResourceManager.GetString(nameof(Games_Sort_Playtime), Culture) ?? nameof(Games_Sort_Playtime);
 
+    public static string Latency_Avg => ResourceManager.GetString(nameof(Latency_Avg), Culture) ?? nameof(Latency_Avg);
+
+    public static string Latency_Axis => ResourceManager.GetString(nameof(Latency_Axis), Culture) ?? nameof(Latency_Axis);
+
+    public static string Latency_Empty => ResourceManager.GetString(nameof(Latency_Empty), Culture) ?? nameof(Latency_Empty);
+
+    public static string Latency_Header => ResourceManager.GetString(nameof(Latency_Header), Culture) ?? nameof(Latency_Header);
+
+    public static string Latency_P95 => ResourceManager.GetString(nameof(Latency_P95), Culture) ?? nameof(Latency_P95);
+
+    public static string Latency_Series => ResourceManager.GetString(nameof(Latency_Series), Culture) ?? nameof(Latency_Series);
+
+    public static string Latency_Stats_Format => ResourceManager.GetString(nameof(Latency_Stats_Format), Culture) ?? nameof(Latency_Stats_Format);
+
     public static string Logs_Empty => ResourceManager.GetString(nameof(Logs_Empty), Culture) ?? nameof(Logs_Empty);
 
     public static string Logs_Header => ResourceManager.GetString(nameof(Logs_Header), Culture) ?? nameof(Logs_Header);
@@ -653,6 +788,26 @@ public static class Strings
     public static string RemoveGame_Removed_Format => ResourceManager.GetString(nameof(RemoveGame_Removed_Format), Culture) ?? nameof(RemoveGame_Removed_Format);
 
     public static string RemoveGame_Title_Format => ResourceManager.GetString(nameof(RemoveGame_Title_Format), Culture) ?? nameof(RemoveGame_Title_Format);
+
+    public static string Sensors_Axis_Mb => ResourceManager.GetString(nameof(Sensors_Axis_Mb), Culture) ?? nameof(Sensors_Axis_Mb);
+
+    public static string Sensors_Empty => ResourceManager.GetString(nameof(Sensors_Empty), Culture) ?? nameof(Sensors_Empty);
+
+    public static string Sensors_Series_GpuHotspot => ResourceManager.GetString(nameof(Sensors_Series_GpuHotspot), Culture) ?? nameof(Sensors_Series_GpuHotspot);
+
+    public static string Sensors_Series_GpuLoad => ResourceManager.GetString(nameof(Sensors_Series_GpuLoad), Culture) ?? nameof(Sensors_Series_GpuLoad);
+
+    public static string Sensors_Series_GpuPower => ResourceManager.GetString(nameof(Sensors_Series_GpuPower), Culture) ?? nameof(Sensors_Series_GpuPower);
+
+    public static string Sensors_Series_GpuTemp => ResourceManager.GetString(nameof(Sensors_Series_GpuTemp), Culture) ?? nameof(Sensors_Series_GpuTemp);
+
+    public static string Sensors_Series_VramAdapter => ResourceManager.GetString(nameof(Sensors_Series_VramAdapter), Culture) ?? nameof(Sensors_Series_VramAdapter);
+
+    public static string Sensors_Series_VramProcess => ResourceManager.GetString(nameof(Sensors_Series_VramProcess), Culture) ?? nameof(Sensors_Series_VramProcess);
+
+    public static string Sensors_Temps_Header => ResourceManager.GetString(nameof(Sensors_Temps_Header), Culture) ?? nameof(Sensors_Temps_Header);
+
+    public static string Sensors_Vram_Header => ResourceManager.GetString(nameof(Sensors_Vram_Header), Culture) ?? nameof(Sensors_Vram_Header);
 
     public static string Sessions_Col_Api => ResourceManager.GetString(nameof(Sessions_Col_Api), Culture) ?? nameof(Sessions_Col_Api);
 
@@ -768,6 +923,12 @@ public static class Strings
 
     public static string Summary_Unhooked_Title => ResourceManager.GetString(nameof(Summary_Unhooked_Title), Culture) ?? nameof(Summary_Unhooked_Title);
 
+    public static string Tabs_SelectASession => ResourceManager.GetString(nameof(Tabs_SelectASession), Culture) ?? nameof(Tabs_SelectASession);
+
+    public static string Tabs_SelectedNoFrames => ResourceManager.GetString(nameof(Tabs_SelectedNoFrames), Culture) ?? nameof(Tabs_SelectedNoFrames);
+
+    public static string Tabs_SelectedNotHooked => ResourceManager.GetString(nameof(Tabs_SelectedNotHooked), Culture) ?? nameof(Tabs_SelectedNotHooked);
+
     public static string Tier_Dash_Tooltip => ResourceManager.GetString(nameof(Tier_Dash_Tooltip), Culture) ?? nameof(Tier_Dash_Tooltip);
 
     public static string Tier_Hooked => ResourceManager.GetString(nameof(Tier_Hooked), Culture) ?? nameof(Tier_Hooked);
@@ -779,6 +940,40 @@ public static class Strings
     public static string Tier_NotHooked => ResourceManager.GetString(nameof(Tier_NotHooked), Culture) ?? nameof(Tier_NotHooked);
 
     public static string Tier_NotHooked_Tooltip => ResourceManager.GetString(nameof(Tier_NotHooked_Tooltip), Culture) ?? nameof(Tier_NotHooked_Tooltip);
+
+    public static string Trend_Average_Note => ResourceManager.GetString(nameof(Trend_Average_Note), Culture) ?? nameof(Trend_Average_Note);
+
+    public static string Trend_Axis_Date => ResourceManager.GetString(nameof(Trend_Axis_Date), Culture) ?? nameof(Trend_Axis_Date);
+
+    public static string Trend_Change_Cpu => ResourceManager.GetString(nameof(Trend_Change_Cpu), Culture) ?? nameof(Trend_Change_Cpu);
+
+    public static string Trend_Change_Display => ResourceManager.GetString(nameof(Trend_Change_Display), Culture) ?? nameof(Trend_Change_Display);
+
+    public static string Trend_Change_Format => ResourceManager.GetString(nameof(Trend_Change_Format), Culture) ?? nameof(Trend_Change_Format);
+
+    public static string Trend_Change_Gpu => ResourceManager.GetString(nameof(Trend_Change_Gpu), Culture) ?? nameof(Trend_Change_Gpu);
+
+    public static string Trend_Change_GpuDriver => ResourceManager.GetString(nameof(Trend_Change_GpuDriver), Culture) ?? nameof(Trend_Change_GpuDriver);
+
+    public static string Trend_Change_Os => ResourceManager.GetString(nameof(Trend_Change_Os), Culture) ?? nameof(Trend_Change_Os);
+
+    public static string Trend_Empty => ResourceManager.GetString(nameof(Trend_Empty), Culture) ?? nameof(Trend_Empty);
+
+    public static string Trend_Excluded_Format => ResourceManager.GetString(nameof(Trend_Excluded_Format), Culture) ?? nameof(Trend_Excluded_Format);
+
+    public static string Trend_IncludeMidSession => ResourceManager.GetString(nameof(Trend_IncludeMidSession), Culture) ?? nameof(Trend_IncludeMidSession);
+
+    public static string Trend_Metric_Average => ResourceManager.GetString(nameof(Trend_Metric_Average), Culture) ?? nameof(Trend_Metric_Average);
+
+    public static string Trend_Metric_Displayed => ResourceManager.GetString(nameof(Trend_Metric_Displayed), Culture) ?? nameof(Trend_Metric_Displayed);
+
+    public static string Trend_Metric_Label => ResourceManager.GetString(nameof(Trend_Metric_Label), Culture) ?? nameof(Trend_Metric_Label);
+
+    public static string Trend_Metric_MaxGpuTemp => ResourceManager.GetString(nameof(Trend_Metric_MaxGpuTemp), Culture) ?? nameof(Trend_Metric_MaxGpuTemp);
+
+    public static string Trend_Metric_P01Low => ResourceManager.GetString(nameof(Trend_Metric_P01Low), Culture) ?? nameof(Trend_Metric_P01Low);
+
+    public static string Trend_Metric_P1Low => ResourceManager.GetString(nameof(Trend_Metric_P1Low), Culture) ?? nameof(Trend_Metric_P1Low);
 
     public static string Upscaler_None => ResourceManager.GetString(nameof(Upscaler_None), Culture) ?? nameof(Upscaler_None);
 

@@ -774,4 +774,199 @@
   <data name="Summary_Unhooked_Title" xml:space="preserve">
     <value>Measurement stopped early</value>
   </data>
+  <data name="Compare_Col_Date" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="Compare_Col_Fps" xml:space="preserve">
+    <value>FPS</value>
+  </data>
+  <data name="Compare_Col_Game" xml:space="preserve">
+    <value>Game</value>
+  </data>
+  <data name="Compare_Col_MidSession" xml:space="preserve">
+    <value>Settings changed</value>
+  </data>
+  <data name="Compare_Col_Tier" xml:space="preserve">
+    <value>Tier</value>
+  </data>
+  <data name="Compare_Curves_Header" xml:space="preserve">
+    <value>Percentile curves</value>
+  </data>
+  <data name="Compare_Export_Png" xml:space="preserve">
+    <value>Export PNG</value>
+  </data>
+  <data name="Compare_Legend_Format" xml:space="preserve">
+    <value>{0} · {1} ({2})</value>
+  </data>
+  <data name="Compare_Metric_Displayed" xml:space="preserve">
+    <value>Displayed FPS</value>
+  </data>
+  <data name="Compare_Metric_Duration" xml:space="preserve">
+    <value>Duration</value>
+  </data>
+  <data name="Compare_Metric_MaxGpuTemp" xml:space="preserve">
+    <value>Max GPU °C</value>
+  </data>
+  <data name="Compare_Metric_Median" xml:space="preserve">
+    <value>Median</value>
+  </data>
+  <data name="Compare_Metric_Native" xml:space="preserve">
+    <value>Native FPS</value>
+  </data>
+  <data name="Compare_Metric_P01Low" xml:space="preserve">
+    <value>0.1% Low</value>
+  </data>
+  <data name="Compare_Metric_P1Low" xml:space="preserve">
+    <value>1% Low</value>
+  </data>
+  <data name="Compare_Metric_Presented" xml:space="preserve">
+    <value>Presented FPS</value>
+  </data>
+  <data name="Compare_Metric_StutterPct" xml:space="preserve">
+    <value>Stutter time %</value>
+  </data>
+  <data name="Compare_Mixed_Body" xml:space="preserve">
+    <value>At least one selected session was not hooked: it recorded duration and hardware telemetry, and every frame-derived value on it is N/A. Comparing it with a hooked session is a comparison with nothing on one side. The chart will carry a tier legend and the unavailable metrics stay N/A.</value>
+  </data>
+  <data name="Compare_Mixed_Legend" xml:space="preserve">
+    <value>Mixed tiers: T1 sessions are measured; T2 sessions have no frame data and no curve.</value>
+  </data>
+  <data name="Compare_Mixed_Proceed" xml:space="preserve">
+    <value>Compare across tiers anyway</value>
+  </data>
+  <data name="Compare_Mixed_Title" xml:space="preserve">
+    <value>These sessions measured different things</value>
+  </data>
+  <data name="Compare_NoCandidates" xml:space="preserve">
+    <value>No sessions yet — there is nothing to compare.</value>
+  </data>
+  <data name="Compare_Pick_Header" xml:space="preserve">
+    <value>Pick 2 to 5 sessions</value>
+  </data>
+  <data name="Compare_Run" xml:space="preserve">
+    <value>Compare</value>
+  </data>
+  <data name="Compare_Selected_Format" xml:space="preserve">
+    <value>{0} selected</value>
+  </data>
+  <data name="Compare_Table_Header" xml:space="preserve">
+    <value>Statistics</value>
+  </data>
+  <data name="Compare_Table_Metric" xml:space="preserve">
+    <value>Metric</value>
+  </data>
+  <data name="Compare_TooMany" xml:space="preserve">
+    <value>Pick at most 5 sessions.</value>
+  </data>
+  <data name="Latency_Avg" xml:space="preserve">
+    <value>avg</value>
+  </data>
+  <data name="Latency_Axis" xml:space="preserve">
+    <value>Latency (ms)</value>
+  </data>
+  <data name="Latency_Empty" xml:space="preserve">
+    <value>Reflex did not report latency for this session. This tab has data only for hooked sessions where the game's Reflex integration reports it.</value>
+  </data>
+  <data name="Latency_Header" xml:space="preserve">
+    <value>PC latency (Reflex)</value>
+  </data>
+  <data name="Latency_P95" xml:space="preserve">
+    <value>p95</value>
+  </data>
+  <data name="Latency_Series" xml:space="preserve">
+    <value>PC latency</value>
+  </data>
+  <data name="Latency_Stats_Format" xml:space="preserve">
+    <value>avg {0:0.0} ms · p95 {1:0.0} ms</value>
+  </data>
+  <data name="Sensors_Axis_Mb" xml:space="preserve">
+    <value>MB</value>
+  </data>
+  <data name="Sensors_Empty" xml:space="preserve">
+    <value>No sensor series were recorded for this session.</value>
+  </data>
+  <data name="Sensors_Series_GpuHotspot" xml:space="preserve">
+    <value>GPU hotspot °C</value>
+  </data>
+  <data name="Sensors_Series_GpuLoad" xml:space="preserve">
+    <value>GPU load %</value>
+  </data>
+  <data name="Sensors_Series_GpuPower" xml:space="preserve">
+    <value>GPU power W</value>
+  </data>
+  <data name="Sensors_Series_GpuTemp" xml:space="preserve">
+    <value>GPU core °C</value>
+  </data>
+  <data name="Sensors_Series_VramAdapter" xml:space="preserve">
+    <value>VRAM used on the adapter (MB)</value>
+  </data>
+  <data name="Sensors_Series_VramProcess" xml:space="preserve">
+    <value>VRAM used by this game (MB)</value>
+  </data>
+  <data name="Sensors_Temps_Header" xml:space="preserve">
+    <value>Temperatures and load</value>
+  </data>
+  <data name="Sensors_Vram_Header" xml:space="preserve">
+    <value>VRAM</value>
+  </data>
+  <data name="Tabs_SelectASession" xml:space="preserve">
+    <value>Select a session in the Sessions tab to see it here.</value>
+  </data>
+  <data name="Tabs_SelectedNoFrames" xml:space="preserve">
+    <value>The selected session's raw series were swept by retention; only its aggregates remain.</value>
+  </data>
+  <data name="Tabs_SelectedNotHooked" xml:space="preserve">
+    <value>The selected session was not hooked; there are no frames to chart.</value>
+  </data>
+  <data name="Trend_Average_Note" xml:space="preserve">
+    <value>Average is Native FPS where frame generation was measured and Presented FPS where it was not.</value>
+  </data>
+  <data name="Trend_Axis_Date" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="Trend_Change_Cpu" xml:space="preserve">
+    <value>CPU</value>
+  </data>
+  <data name="Trend_Change_Display" xml:space="preserve">
+    <value>Display</value>
+  </data>
+  <data name="Trend_Change_Format" xml:space="preserve">
+    <value>{0}: {1} → {2}</value>
+  </data>
+  <data name="Trend_Change_Gpu" xml:space="preserve">
+    <value>GPU</value>
+  </data>
+  <data name="Trend_Change_GpuDriver" xml:space="preserve">
+    <value>GPU driver</value>
+  </data>
+  <data name="Trend_Change_Os" xml:space="preserve">
+    <value>OS</value>
+  </data>
+  <data name="Trend_Empty" xml:space="preserve">
+    <value>No hooked session yet — the trend needs measured sessions.</value>
+  </data>
+  <data name="Trend_Excluded_Format" xml:space="preserve">
+    <value>{0} sessions excluded (settings changed mid-session)</value>
+  </data>
+  <data name="Trend_IncludeMidSession" xml:space="preserve">
+    <value>Include sessions with mid-session settings changes</value>
+  </data>
+  <data name="Trend_Metric_Average" xml:space="preserve">
+    <value>Average FPS</value>
+  </data>
+  <data name="Trend_Metric_Displayed" xml:space="preserve">
+    <value>Displayed FPS</value>
+  </data>
+  <data name="Trend_Metric_Label" xml:space="preserve">
+    <value>Metric</value>
+  </data>
+  <data name="Trend_Metric_MaxGpuTemp" xml:space="preserve">
+    <value>Max GPU °C</value>
+  </data>
+  <data name="Trend_Metric_P01Low" xml:space="preserve">
+    <value>0.1% Low</value>
+  </data>
+  <data name="Trend_Metric_P1Low" xml:space="preserve">
+    <value>1% Low</value>
+  </data>
 </root>
