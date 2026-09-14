@@ -181,7 +181,7 @@ public sealed partial class CompareViewModel : ObservableObject
         SessionRow[] rows = [.. picked.Select(static c => c.Row)];
         Rows.Add(Row(Strings.Compare_Metric_Native, rows, static r => FpsPresentation.FromRow(r) is { Kind: FpsReadoutKind.Generated or FpsReadoutKind.None } m ? m.Native : null, Formats.Fps, higherIsBetter: true));
         Rows.Add(Row(Strings.Compare_Metric_Displayed, rows, static r => FpsPresentation.FromRow(r) is { Kind: FpsReadoutKind.Generated } m ? m.Displayed : null, Formats.Fps, higherIsBetter: true));
-        Rows.Add(Row(Strings.Compare_Metric_Presented, rows, static r => FpsPresentation.FromRow(r) is { Kind: FpsReadoutKind.Presented } m ? m.Presented : null, Formats.Fps, higherIsBetter: true));
+        Rows.Add(Row(Strings.Compare_Metric_Presented, rows, static r => FpsPresentation.FromRow(r) is { Kind: FpsReadoutKind.Presented or FpsReadoutKind.IdentifiedUncounted } m ? m.Presented : null, Formats.Fps, higherIsBetter: true));
         Rows.Add(Row(Strings.Compare_Metric_Median, rows, static r => r.Tier == Domain.Sessions.CaptureTier.Hooked ? r.MedianFps : null, Formats.Fps, higherIsBetter: true));
         Rows.Add(Row(Strings.Compare_Metric_P1Low, rows, static r => r.Tier == Domain.Sessions.CaptureTier.Hooked ? r.P1LowFps : null, Formats.Fps, higherIsBetter: true));
         Rows.Add(Row(Strings.Compare_Metric_P01Low, rows, static r => r.Tier == Domain.Sessions.CaptureTier.Hooked ? r.P01LowFps : null, Formats.Fps, higherIsBetter: true));

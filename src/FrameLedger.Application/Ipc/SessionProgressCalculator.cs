@@ -57,6 +57,8 @@ public static class SessionProgressCalculator
             DisplayedFps5s = usable ? fg!.DisplayedFps : null,
             FgFactor = usable ? fg!.Factor : null,
             FgMode = Vocabulary.FgMode(verdict, identity),
+            FgRefusal = usable ? null : fg?.Refusal is { } refusal ? Vocabulary.FgRefusal(refusal.Kind) : null,
+            FgRuntimeCensus = progress.WriterState.RuntimeCensus,
             Upscaler = upscaler is { } u ? Vocabulary.Upscaler(u) : FgLadder.UpscalerHookRan(progress.Records) ? "unknown" : null,
             UpscalerQuality = Modal(withParams)?.ToString(CultureInfo.InvariantCulture),
             RenderW = extent?.RenderW,

@@ -494,10 +494,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         }
 
         Measured.Add(upscaler + " · " + Formats.Resolution(lastHooked.RenderW, lastHooked.RenderH, lastHooked.OutputW, lastHooked.OutputH));
-        FpsReadoutModel readout = FpsPresentation.FromRow(lastHooked);
-        Measured.Add(readout.Kind == FpsReadoutKind.Generated
-            ? Formats.FrameGeneration(lastHooked.FgMode) + " " + (readout.FactorChip ?? string.Empty)
-            : Formats.FrameGeneration(lastHooked.FgMode));
+        Measured.Add(FpsPresentation.FrameGenerationLabel(FpsPresentation.FromRow(lastHooked), lastHooked.FgMode));
         foreach (TriStateChipModel chip in Chips.Where(static c => !c.IsNotApplicable))
         {
             Measured.Add(chip.Text);

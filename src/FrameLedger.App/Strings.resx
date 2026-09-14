@@ -339,6 +339,42 @@
   <data name="Fg_Active" xml:space="preserve">
     <value>FG active (technology not identified)</value>
   </data>
+  <data name="Fg_Factor_NotCounted" xml:space="preserve">
+    <value>factor not counted</value>
+  </data>
+  <data name="Fg_Refusal_AmbiguousBand" xml:space="preserve">
+    <value>the ratio sits between none and any shipped factor</value>
+  </data>
+  <data name="Fg_Refusal_CountSaturated" xml:space="preserve">
+    <value>the per-frame count hit its ceiling</value>
+  </data>
+  <data name="Fg_Refusal_DxgiSaturated" xml:space="preserve">
+    <value>the DXGI present counter hit its ceiling</value>
+  </data>
+  <data name="Fg_Refusal_MultipleStreams" xml:space="preserve">
+    <value>more than one swapchain presented</value>
+  </data>
+  <data name="Fg_Refusal_NoBatches" xml:space="preserve">
+    <value>no present drained a Streamline batch</value>
+  </data>
+  <data name="Fg_Refusal_NoEvaluations" xml:space="preserve">
+    <value>no application-frame token was counted</value>
+  </data>
+  <data name="Fg_Refusal_NonUniform" xml:space="preserve">
+    <value>the frame-generation state changed mid-session</value>
+  </data>
+  <data name="Fg_Refusal_NotCounted" xml:space="preserve">
+    <value>no record counted application frames</value>
+  </data>
+  <data name="Fg_Refusal_TooShort" xml:space="preserve">
+    <value>too few frames to check</value>
+  </data>
+  <data name="Fg_Refusal_Unattributed" xml:space="preserve">
+    <value>presents could not be attributed to a swapchain</value>
+  </data>
+  <data name="Fg_Refusal_Unknown" xml:space="preserve">
+    <value>the count did not resolve</value>
+  </data>
   <data name="Fg_None" xml:space="preserve">
     <value>No frame generation</value>
   </data>
@@ -395,6 +431,15 @@
   </data>
   <data name="Fps_Fg_Format" xml:space="preserve">
     <value>{0} → {1} FPS (×{2:0.0} FG)</value>
+  </data>
+  <data name="Fps_Census_RuntimeLoaded_Named_Format" xml:space="preserve">
+    <value>FG runtime loaded ({0}) — may include generated frames</value>
+  </data>
+  <data name="Fps_Fg_Identified_Format" xml:space="preserve">
+    <value>{0} active — factor not counted</value>
+  </data>
+  <data name="Fps_Fg_Identified_Tooltip_Format" xml:space="preserve">
+    <value>{0} was identified in this process, but the frame count did not resolve ({1}). This number counts presented frames and may include generated frames — read it as Displayed, not Native.</value>
   </data>
   <data name="Fps_Native_Tooltip" xml:space="preserve">
     <value>Native: frames rendered by the game · Displayed: frames shown on screen incl. generated frames</value>

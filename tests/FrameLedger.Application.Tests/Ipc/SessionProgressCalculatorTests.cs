@@ -47,6 +47,8 @@ public sealed class SessionProgressCalculatorTests
         e.DisplayedFps5s.Should().BeNull();
         e.FgFactor.Should().BeNull();
         e.FgMode.Should().Be("na");
+        e.FgRefusal.Should().Be("not_counted", "nothing claimed the count, and the wire says why the way the row does (schema 0003)");
+        e.FgRuntimeCensus.Should().Be(Progress(records).WriterState.RuntimeCensus, "the live card names the loaded module from the raw census");
         e.Upscaler.Should().BeNull("no upscaler hook ran");
         e.RtActive.Should().BeNull("no record claimed a ray-tracing measurement");
         e.VramProcMb.Should().BeNull();
