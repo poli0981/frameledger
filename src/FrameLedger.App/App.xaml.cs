@@ -103,6 +103,13 @@ public partial class App : System.Windows.Application
         {
             Log.Fatal(ex, "ui: the run ended in an exception");
             exitCode = 1;
+
+            // 10_LOGGING §Crash handling: a start that fails is said on screen, not only in the log. A crash the dispatcher
+            // already reported has had its dialog.
+            if (!_crashes.Crashed)
+            {
+                StartupFailureDialog.Show(ex, UiPaths.Logs);
+            }
         }
         finally
         {
