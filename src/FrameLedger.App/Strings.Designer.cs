@@ -477,6 +477,8 @@ public static class Strings
         nameof(Settings_VkLayer_Unknown),
         nameof(Settings_VkLayer_Unregister),
         nameof(Settings_Window_Header),
+        nameof(StartupFailed_Body_Format),
+        nameof(StartupFailed_Title),
         nameof(Summary_Annotations_Header),
         nameof(Summary_Crash_Body),
         nameof(Summary_Crash_Title),
@@ -1483,6 +1485,10 @@ public static class Strings
     public static string Settings_VkLayer_Unregister => ResourceManager.GetString(nameof(Settings_VkLayer_Unregister), Culture) ?? nameof(Settings_VkLayer_Unregister);
 
     public static string Settings_Window_Header => ResourceManager.GetString(nameof(Settings_Window_Header), Culture) ?? nameof(Settings_Window_Header);
+
+    public static string StartupFailed_Body_Format => ResourceManager.GetString(nameof(StartupFailed_Body_Format), Culture) ?? nameof(StartupFailed_Body_Format);
+
+    public static string StartupFailed_Title => ResourceManager.GetString(nameof(StartupFailed_Title), Culture) ?? nameof(StartupFailed_Title);
 
     public static string Summary_Annotations_Header => ResourceManager.GetString(nameof(Summary_Annotations_Header), Culture) ?? nameof(Summary_Annotations_Header);
 

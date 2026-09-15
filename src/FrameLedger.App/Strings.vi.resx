@@ -1680,4 +1680,17 @@ Mở báo cáo lỗi ngay bây giờ? Báo cáo cho bạn xem mọi tệp trong 
   <data name="BugReport_Options_Continue" xml:space="preserve">
     <value>Tiếp tục</value>
   </data>
+  <data name="StartupFailed_Title" xml:space="preserve">
+    <value>FrameLedger không khởi động được</value>
+  </data>
+  <data name="StartupFailed_Body_Format" xml:space="preserve">
+    <value>FrameLedger gặp lỗi khi khởi động và sẽ đóng lại:
+
+{0}
+
+Chi tiết nằm trong thư mục log:
+{1}
+
+Mở thư mục log?</value>
+  </data>
 </root>
