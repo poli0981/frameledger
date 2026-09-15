@@ -21,6 +21,16 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Added
 
+- **The bug report's last optional item: the last session's summary, when ticked (2026-09-15).** `10_LOGGING` §Bug
+  report flow step 2 listed "last session metadata + aggregates JSON (never raw blobs by default)" beside the crash
+  dump, and `legal/PRIVACY_POLICY.md` §3 promises both only when ticked. The Optional items dialog PR-9 added now shows
+  a box for each item that exists: the crash dump, and the newest session in the ledger (`LastSessionSummary`) labelled
+  with its game and start time. Ticked, the zip gains `session.json`, File ▸ Export's own JSON (metadata, aggregates,
+  segments, hardware) without the user's notes and tags, passed through `LogRedactor` because it names the executable;
+  no frame or sensor series. With neither item there is no question. `CrashDumpChoice` became `BugBundleOptions`, and
+  `IBugReportPreview.AskCrashDumpAsync` became `AskOptionsAsync(BugBundleOffer)`. Two strings (en/vi/ja). Tests:
+  `LastSessionSummaryTests`, `BugReportFlowTests`, `BugBundleOptionsViewModelTests`, `PagesLoadTests`. Docs:
+  `10_LOGGING` §Bug report flow step 2.
 - **P4 PR-9 — the crash dialog, the minidump in both processes, and the crash dump as the bug report's opt-in
   (2026-09-15).** `10_LOGGING` §Crash handling specified Fatal → `MiniDumpWriteDump` → a dialog offering the bug report
   → exit code 1; only the Fatal line existed, and `Crash_Title` / `Crash_Body` were translated for a dialog nothing

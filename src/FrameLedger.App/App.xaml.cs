@@ -294,6 +294,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IUrlOpener, ShellUrlOpener>();
         services.AddSingleton<IClipboard, WpfClipboard>();
         services.AddSingleton<IBugReportPreview, BugReportPreviewPrompt>();
+        services.AddSingleton<LastSessionSummary>();
         services.AddSingleton<BugReportFlow>();
         services.AddSingleton<SessionSelection>();
         services.AddSingleton<SessionExportService>();

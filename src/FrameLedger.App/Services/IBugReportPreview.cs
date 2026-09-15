@@ -7,8 +7,8 @@ public interface IBugReportPreview
     Task<BugReportChoice> ShowAsync(BugReportPreviewModel model, CancellationToken ct = default);
 
     /// <summary>
-    /// Step 2's optional item (P4 PR-9): the crash dump's checkbox, clear until the user ticks it
-    /// (<c>legal/PRIVACY_POLICY.md</c> §3). Closing the dialog is <see cref="CrashDumpChoice.Cancel"/>.
+    /// Step 2's optional items: a checkbox for each item <paramref name="offer"/> has, clear until the user ticks it
+    /// (<c>legal/PRIVACY_POLICY.md</c> §3). Closing the dialog is <see cref="BugBundleOptions.Cancel"/>.
     /// </summary>
-    Task<CrashDumpChoice> AskCrashDumpAsync(CrashDumpInfo dump, CancellationToken ct = default);
+    Task<BugBundleOptions> AskOptionsAsync(BugBundleOffer offer, CancellationToken ct = default);
 }

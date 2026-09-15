@@ -267,11 +267,11 @@ public sealed class PagesLoadTests
         public Task<bool> ConfirmSweepAsync(int keep, CancellationToken ct = default) => Task.FromResult(false);
     }
 
-    /// <summary>The bug report's optional crash dump (P4 PR-9) under the real dictionaries: the checkbox and both texts bind.</summary>
+    /// <summary>The bug report's optional items under the real dictionaries: both checkboxes, their texts, the visibility converter.</summary>
     [Fact]
     public async Task TheBundleOptionsDialogLoads()
     {
-        var vm = new BugBundleOptionsViewModel(new CrashDumpInfo(@"C:\data\crashdumps\ui-20260915-010203-42.dmp", DateTimeOffset.UtcNow, 2 * 1024 * 1024));
+        var vm = new BugBundleOptionsViewModel(new BugBundleOffer(new CrashDumpInfo(@"C:\data\crashdumps\ui-20260915-010203-42.dmp", DateTimeOffset.UtcNow, 2 * 1024 * 1024), new LastSessionInfo(1, "Title", DateTimeOffset.UtcNow)));
 
         double width = await OnStaAsync(() =>
         {

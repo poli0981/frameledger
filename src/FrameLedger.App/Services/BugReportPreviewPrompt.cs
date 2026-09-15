@@ -7,7 +7,7 @@ namespace FrameLedger.App.Services;
 
 /// <summary>
 /// The bug report's dialogs in WPF UI: step 3's <c>ContentDialog</c> listing the zip's entries, whose primary button is
-/// step 4 and whose secondary is the clipboard fallback; and step 2's optional crash dump, a checkbox (P4 PR-9).
+/// step 4 and whose secondary is the clipboard fallback; and step 2's optional items, a checkbox each.
 /// </summary>
 public sealed class BugReportPreviewPrompt : IBugReportPreview
 {
@@ -38,10 +38,10 @@ public sealed class BugReportPreviewPrompt : IBugReportPreview
         };
     }
 
-    public async Task<CrashDumpChoice> AskCrashDumpAsync(CrashDumpInfo dump, CancellationToken ct = default)
+    public async Task<BugBundleOptions> AskOptionsAsync(BugBundleOffer offer, CancellationToken ct = default)
     {
-        ArgumentNullException.ThrowIfNull(dump);
-        var viewModel = new BugBundleOptionsViewModel(dump);
+        ArgumentNullException.ThrowIfNull(offer);
+        var viewModel = new BugBundleOptionsViewModel(offer);
         var dialog = new ContentDialog
         {
             Title = BugBundleOptionsViewModel.Title,
@@ -53,6 +53,6 @@ public sealed class BugReportPreviewPrompt : IBugReportPreview
         };
 
         ContentDialogResult result = await _dialogs.ShowAsync(dialog, ct).ConfigureAwait(true);
-        return viewModel.Choice(result == ContentDialogResult.Primary);
+        return viewModel.Options(result == ContentDialogResult.Primary);
     }
 }

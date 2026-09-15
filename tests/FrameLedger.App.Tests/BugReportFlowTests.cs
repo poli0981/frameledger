@@ -2,6 +2,7 @@ using System.IO;
 using System.IO.Compression;
 using FluentAssertions;
 using FrameLedger.App.Services;
+using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Settings;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Shared.Ipc;
@@ -41,17 +42,18 @@ public sealed class BugReportFlowTests : IDisposable
 
     private sealed record Harness(BugReportFlow Flow, ClosePreview Preview, NoUrlOpener Urls, NoClipboard Clipboard, RecordingStrip Strip, string Zip);
 
-    private async Task<Harness> BuildAsync(ScratchLedger s, BugReportChoice choice, bool cancel = false, CrashDumpChoice dumpChoice = CrashDumpChoice.LeaveOut)
+    private async Task<Harness> BuildAsync(ScratchLedger s, BugReportChoice choice, bool cancel = false, BugBundleOptions? options = null)
     {
         await File.WriteAllTextAsync(Path.Combine(_dir, "ui-20260914.log"), "[12:00:00.000 INF] hello\n", Ct).ConfigureAwait(false);
         var builder = new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db)), crashDumpDirectory: Path.Combine(_dir, "crashdumps"));
         string zip = Path.Combine(_dir, "bundle.zip");
-        var preview = new ClosePreview(choice, dumpChoice);
+        var preview = new ClosePreview(choice, options);
         var urls = new NoUrlOpener();
         var clipboard = new NoClipboard();
         var strip = new RecordingStrip();
         var agent = new FakeAgentLink { Hello = new HelloAck("9.9.9", IpcProtocol.Version, 4, false, "build-z", false, "l1", false, "consent-dialog/1") };
-        return new Harness(new BugReportFlow(builder, new PathSaver(cancel ? null : zip), agent, preview, urls, clipboard, strip), preview, urls, clipboard, strip, zip);
+        var lastSession = new LastSessionSummary(s.Sessions, s.Games, new SqliteHardwareSnapshotRepository(s.Db));
+        return new Harness(new BugReportFlow(builder, new PathSaver(cancel ? null : zip), agent, preview, urls, clipboard, strip, lastSession: lastSession), preview, urls, clipboard, strip, zip);
     }
 
     [Fact]
@@ -77,22 +79,22 @@ public sealed class BugReportFlowTests : IDisposable
             .And.Contain("&os=Windows%20", "the form's field ids are app-version and os, hyphenated");
         h.Clipboard.Texts.Should().BeEmpty();
         h.Strip.Shown.Should().BeEmpty("the browser opened; there is nothing to say");
-        h.Preview.DumpsOffered.Should().BeEmpty("no crash dump, no question");
+        h.Preview.Offers.Should().BeEmpty("no crash dump and no session: no question");
     }
 
     [Theory]
-    [InlineData(CrashDumpChoice.LeaveOut, false)]
-    [InlineData(CrashDumpChoice.Include, true)]
-    public async Task ARecentCrashDumpIsOfferedAndGoesInOnlyWhenTicked(CrashDumpChoice answer, bool included)
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ARecentCrashDumpIsOfferedAndGoesInOnlyWhenTicked(bool included)
     {
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
         string dump = WriteDump();
-        Harness h = await BuildAsync(s, BugReportChoice.Close, dumpChoice: answer);
+        Harness h = await BuildAsync(s, BugReportChoice.Close, options: new BugBundleOptions(Cancelled: false, IncludeCrashDump: included, IncludeLastSession: false));
 
         BugReportOutcome o = await h.Flow.RunAsync(Ct);
 
         o.Written.Should().BeTrue();
-        h.Preview.DumpsOffered.Should().ContainSingle().Which.Path.Should().Be(dump);
+        h.Preview.Offers.Should().ContainSingle().Which.CrashDump!.Path.Should().Be(dump);
         IReadOnlyList<string> entries = h.Preview.Shown.Should().ContainSingle().Subject.Entries;
         string entry = "crashdumps/" + Path.GetFileName(dump);
         if (included)
@@ -110,7 +112,7 @@ public sealed class BugReportFlowTests : IDisposable
     {
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
         WriteDump();
-        Harness h = await BuildAsync(s, BugReportChoice.OpenIssue, dumpChoice: CrashDumpChoice.Cancel);
+        Harness h = await BuildAsync(s, BugReportChoice.OpenIssue, options: BugBundleOptions.Cancel);
 
         BugReportOutcome o = await h.Flow.RunAsync(Ct);
 
@@ -119,6 +121,36 @@ public sealed class BugReportFlowTests : IDisposable
         File.Exists(h.Zip).Should().BeFalse("the question comes before the save dialog");
         h.Preview.Shown.Should().BeEmpty();
         h.Urls.Opened.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task TheLastSessionIsOfferedAndGoesInOnlyWhenTickedWithItsPathsRedacted(bool included)
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Title", @"C:\Users\tester\Games\Title\title.exe");
+        long id = await s.SessionAsync(game.Id, new DateTimeOffset(2026, 9, 14, 10, 0, 0, TimeSpan.Zero));
+        Harness h = await BuildAsync(s, BugReportChoice.Close, options: new BugBundleOptions(Cancelled: false, IncludeCrashDump: false, IncludeLastSession: included));
+
+        BugReportOutcome o = await h.Flow.RunAsync(Ct);
+
+        o.Written.Should().BeTrue();
+        BugBundleOffer offer = h.Preview.Offers.Should().ContainSingle().Subject;
+        offer.CrashDump.Should().BeNull();
+        offer.LastSession.Should().Be(new LastSessionInfo(id, "Title", new DateTimeOffset(2026, 9, 14, 10, 0, 0, TimeSpan.Zero)));
+        IReadOnlyList<string> entries = h.Preview.Shown.Should().ContainSingle().Subject.Entries;
+        if (!included)
+        {
+            entries.Should().NotContain("session.json", "the box starts clear and was left so");
+            return;
+        }
+
+        entries.Should().Contain("session.json");
+        using ZipArchive archive = await ZipFile.OpenReadAsync(h.Zip, Ct);
+        using var reader = new StreamReader(await archive.GetEntry("session.json")!.OpenAsync(Ct));
+        string json = await reader.ReadToEndAsync(Ct);
+        json.Should().Contain("Title").And.NotContain("tester", "a path in the summary is redacted like a log");
     }
 
     private string WriteDump()

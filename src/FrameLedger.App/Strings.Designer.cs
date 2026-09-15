@@ -56,6 +56,8 @@ public static class Strings
         nameof(BugReport_Options_Dump_Detail),
         nameof(BugReport_Options_Dump_Format),
         nameof(BugReport_Options_Intro),
+        nameof(BugReport_Options_Session_Detail),
+        nameof(BugReport_Options_Session_Format),
         nameof(BugReport_Options_Title),
         nameof(BugReport_Preview_Drag),
         nameof(BugReport_Preview_Intro_Format),
@@ -643,6 +645,10 @@ public static class Strings
     public static string BugReport_Options_Dump_Format => ResourceManager.GetString(nameof(BugReport_Options_Dump_Format), Culture) ?? nameof(BugReport_Options_Dump_Format);
 
     public static string BugReport_Options_Intro => ResourceManager.GetString(nameof(BugReport_Options_Intro), Culture) ?? nameof(BugReport_Options_Intro);
+
+    public static string BugReport_Options_Session_Detail => ResourceManager.GetString(nameof(BugReport_Options_Session_Detail), Culture) ?? nameof(BugReport_Options_Session_Detail);
+
+    public static string BugReport_Options_Session_Format => ResourceManager.GetString(nameof(BugReport_Options_Session_Format), Culture) ?? nameof(BugReport_Options_Session_Format);
 
     public static string BugReport_Options_Title => ResourceManager.GetString(nameof(BugReport_Options_Title), Culture) ?? nameof(BugReport_Options_Title);
 
