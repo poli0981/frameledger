@@ -4,6 +4,7 @@ using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
 using FrameLedger.Application.Settings;
+using FrameLedger.Infrastructure.Diagnostics;
 using FrameLedger.Shared.Ipc;
 
 namespace FrameLedger.App.Services;
@@ -11,9 +12,9 @@ namespace FrameLedger.App.Services;
 /// <summary>
 /// <c>10_LOGGING</c> §Bug report flow, step 2 — the bundle: <c>logs/</c> (this app's and the Agent's files of the
 /// last seven days), the last <c>overlay-*.log</c> files, <c>sysinfo.json</c> (app, agent, overlay build id, OS,
-/// locale, telemetry source, Vulkan layer state, elevation), and <c>settings.json</c> (the registry's keys and values —
-/// no paths). We ship our logs only, never a game's; nothing is sent anywhere (step 3's preview dialog and step
-/// 4's GitHub link arrive with P4's bug-report flow).
+/// locale, telemetry source, Vulkan layer state, elevation), <c>settings.json</c> (the registry's keys and values —
+/// no paths), and <c>crashdumps/</c> with one minidump only when the user ticked it (P4 PR-9). We ship our files only,
+/// never a game's; nothing is sent anywhere (<see cref="BugReportFlow"/> is steps 3 and 4).
 /// </summary>
 public sealed class BugBundleBuilder
 {
@@ -22,18 +23,52 @@ public sealed class BugBundleBuilder
     private readonly string _logs;
     private readonly RegisteredSettings _settings;
     private readonly TimeProvider _clock;
+    private readonly string? _crashDumps;
 
-    public BugBundleBuilder(string logsDirectory, RegisteredSettings settings, TimeProvider? clock = null)
+    /// <summary>A builder over the logs directory, the settings registry and, when given, the crash dump directory.</summary>
+    /// <param name="logsDirectory">The logs directory: ours and the Overlay's.</param>
+    /// <param name="settings">The registry the bundle's <c>settings.json</c> reads.</param>
+    /// <param name="clock">The seven-day cut's clock.</param>
+    /// <param name="crashDumpDirectory">The minidumps' directory (P4 PR-9); null offers none.</param>
+    public BugBundleBuilder(string logsDirectory, RegisteredSettings settings, TimeProvider? clock = null, string? crashDumpDirectory = null)
     {
         _logs = logsDirectory ?? throw new ArgumentNullException(nameof(logsDirectory));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _clock = clock ?? TimeProvider.System;
+        _crashDumps = crashDumpDirectory;
     }
 
-    /// <summary>Writes the zip at <paramref name="path"/>; returns the entry names written.</summary>
-    public async Task<IReadOnlyList<string>> WriteAsync(string path, HelloAck? agent, CancellationToken ct = default)
+    /// <summary>
+    /// The newest minidump written in the last seven days, or null: what the bug report offers to include (P4 PR-9). Either
+    /// process's dump qualifies; both write to the same directory.
+    /// </summary>
+    public CrashDumpInfo? LatestCrashDump()
+    {
+        if (_crashDumps is null || !Directory.Exists(_crashDumps))
+        {
+            return null;
+        }
+
+        DateTime cutoff = _clock.GetUtcNow().UtcDateTime.AddDays(-7);
+        FileInfo? newest = new DirectoryInfo(_crashDumps).EnumerateFiles(CrashDumpWriter.Pattern)
+            .Where(f => f.LastWriteTimeUtc >= cutoff)
+            .OrderByDescending(static f => f.LastWriteTimeUtc)
+            .FirstOrDefault();
+        return newest is null ? null : new CrashDumpInfo(newest.FullName, new DateTimeOffset(newest.LastWriteTimeUtc, TimeSpan.Zero), newest.Length);
+    }
+
+    /// <summary>
+    /// Writes the zip at <paramref name="path"/>; returns the entry names written. <paramref name="crashDump"/> goes in only
+    /// when the caller passes one, which is the user's tick (P4 PR-9), and only from the crash dump directory.
+    /// </summary>
+    public async Task<IReadOnlyList<string>> WriteAsync(string path, HelloAck? agent, CrashDumpInfo? crashDump = null, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        if (crashDump is not null && !IsOurDump(crashDump.Path))
+        {
+            throw new ArgumentException("a crash dump is taken from the crash dump directory only", nameof(crashDump));
+        }
+
         var written = new List<string>();
         DateTime cutoff = _clock.GetUtcNow().UtcDateTime.AddDays(-7);
         using FileStream file = File.Create(path);
@@ -51,12 +86,24 @@ public sealed class BugBundleBuilder
             }
         }
 
+        // Step 2's optional item: the one dump the user ticked, nothing else from that directory.
+        if (crashDump is not null)
+        {
+            AddFile(zip, crashDump.Path, "crashdumps/" + Path.GetFileName(crashDump.Path), written);
+        }
+
         AddText(zip, "sysinfo.json", SysInfo(agent), written);
         AddText(zip, "settings.json", await SettingsJsonAsync(ct).ConfigureAwait(false), written);
         return written;
     }
 
     public static string SuggestedName(DateTimeOffset now) => "FrameLedger-bugreport-" + now.ToLocalTime().ToString("yyyyMMdd-HHmm", CultureInfo.InvariantCulture) + ".zip";
+
+    /// <summary>A <c>.dmp</c> directly under the crash dump directory: no other file reaches the zip under that entry.</summary>
+    private bool IsOurDump(string dumpPath) =>
+        _crashDumps is not null
+        && string.Equals(Path.GetExtension(dumpPath), ".dmp", StringComparison.OrdinalIgnoreCase)
+        && string.Equals(Path.GetDirectoryName(Path.GetFullPath(dumpPath)), Path.TrimEndingDirectorySeparator(Path.GetFullPath(_crashDumps)), StringComparison.OrdinalIgnoreCase);
 
     private static bool IsOurs(string path)
     {

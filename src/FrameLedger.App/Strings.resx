@@ -75,9 +75,6 @@
   <data name="Compare_Header" xml:space="preserve">
     <value>Compare</value>
   </data>
-  <data name="Crash_Body" xml:space="preserve">
-    <value>FrameLedger hit an error it could not recover from. The details are in the log folder; the capture agent keeps running.</value>
-  </data>
   <data name="Crash_Title" xml:space="preserve">
     <value>FrameLedger stopped unexpectedly</value>
   </data>
@@ -1658,5 +1655,34 @@
   </data>
   <data name="A11y_Logs_Tail" xml:space="preserve">
     <value>Log lines</value>
+  </data>
+  <data name="Crash_Body_Format" xml:space="preserve">
+    <value>FrameLedger hit an error it could not recover from and will close. The capture agent keeps running.
+
+{0}
+
+Open the bug report now? It shows you every file in the zip, sends nothing by itself, and includes the crash dump only if you tick it.</value>
+  </data>
+  <data name="Crash_Dump_Format" xml:space="preserve">
+    <value>A crash dump was saved on this PC:
+{0}</value>
+  </data>
+  <data name="Crash_NoDump" xml:space="preserve">
+    <value>No crash dump could be written.</value>
+  </data>
+  <data name="BugReport_Options_Title" xml:space="preserve">
+    <value>Optional items</value>
+  </data>
+  <data name="BugReport_Options_Intro" xml:space="preserve">
+    <value>The zip always holds FrameLedger's own logs, sysinfo.json and settings.json. What follows goes in only if you tick it.</value>
+  </data>
+  <data name="BugReport_Options_Dump_Format" xml:space="preserve">
+    <value>The crash dump of {0} ({1:0.0} MB)</value>
+  </data>
+  <data name="BugReport_Options_Dump_Detail" xml:space="preserve">
+    <value>A snapshot of FrameLedger's own memory when it crashed. It helps find the cause, and it can contain file paths, game names and settings from this PC.</value>
+  </data>
+  <data name="BugReport_Options_Continue" xml:space="preserve">
+    <value>Continue</value>
   </data>
 </root>

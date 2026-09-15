@@ -243,14 +243,6 @@ public sealed class PagesLoadTests
         element.UpdateLayout();
     }
 
-    /// <summary>
-    /// WPF UI 4.3.0's <c>InfoBar</c> template has no <c>ContentPresenter</c>, so the action button 08_UI
-    /// §Notifications policy puts on every persistent banner — the one dismissal of a safety notice, since the X is
-    /// off by design — was never rendered: a refusal was a red bar nobody could close. <c>Styles/FrameLedger.xaml</c>
-    /// re-templates the control with the presenter. Both halves are asserted: the app's template renders the
-    /// Content, the library's does not — so this turns red the day upstream renders it, which is the day the
-    /// override comes out rather than staying by habit.
-    /// </summary>
     /// <summary>Tools ▸ Database maintenance's dialog body (P4 PR-7) under the real dictionaries: its icons, the converter key, every binding.</summary>
     [Fact]
     public async Task TheDatabaseMaintenanceDialogLoads()
@@ -275,6 +267,30 @@ public sealed class PagesLoadTests
         public Task<bool> ConfirmSweepAsync(int keep, CancellationToken ct = default) => Task.FromResult(false);
     }
 
+    /// <summary>The bug report's optional crash dump (P4 PR-9) under the real dictionaries: the checkbox and both texts bind.</summary>
+    [Fact]
+    public async Task TheBundleOptionsDialogLoads()
+    {
+        var vm = new BugBundleOptionsViewModel(new CrashDumpInfo(@"C:\data\crashdumps\ui-20260915-010203-42.dmp", DateTimeOffset.UtcNow, 2 * 1024 * 1024));
+
+        double width = await OnStaAsync(() =>
+        {
+            var content = new Dialogs.BugBundleOptionsContent(vm);
+            Render(content);
+            return content.ActualWidth;
+        });
+
+        width.Should().BeGreaterThan(0);
+    }
+
+    /// <summary>
+    /// WPF UI 4.3.0's <c>InfoBar</c> template has no <c>ContentPresenter</c>, so the action button 08_UI
+    /// §Notifications policy puts on every persistent banner — the one dismissal of a safety notice, since the X is
+    /// off by design — was never rendered: a refusal was a red bar nobody could close. <c>Styles/FrameLedger.xaml</c>
+    /// re-templates the control with the presenter. Both halves are asserted: the app's template renders the
+    /// Content, the library's does not — so this turns red the day upstream renders it, which is the day the
+    /// override comes out rather than staying by habit.
+    /// </summary>
     [Fact]
     public async Task TheInfoBarTemplateRendersItsContent()
     {

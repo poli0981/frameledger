@@ -47,7 +47,7 @@ public sealed class BugBundleBuilderTests : IDisposable
         await settings.SetAsync(SettingsRegistry.HookingKillSwitch, true, Ct);
         string zip = Path.Combine(_dir, "bundle.zip");
 
-        IReadOnlyList<string> written = await new BugBundleBuilder(_dir, settings, clock).WriteAsync(zip, agent: null, Ct);
+        IReadOnlyList<string> written = await new BugBundleBuilder(_dir, settings, clock).WriteAsync(zip, agent: null, ct: Ct);
 
         written.Should().Contain(["logs/ui-20260914.log", "logs/agent-20260914.log", "sysinfo.json", "settings.json"]);
         written.Should().NotContain("logs/ui-20260901.log", "older than seven days");
@@ -71,7 +71,7 @@ public sealed class BugBundleBuilderTests : IDisposable
         string zip = Path.Combine(_dir, "bundle.zip");
         var hello = new HelloAck("1.2.3", IpcProtocol.Version, 4, true, "build-x", true, "l3", true, "consent-dialog/1");
 
-        await new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))).WriteAsync(zip, hello, Ct);
+        await new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))).WriteAsync(zip, hello, ct: Ct);
 
         Dictionary<string, string> sysinfo = ReadJson(zip, "sysinfo.json");
         sysinfo["agent_version"].Should().Be("1.2.3");
@@ -84,6 +84,63 @@ public sealed class BugBundleBuilderTests : IDisposable
     public void TheSuggestedNameIsTheDocsFormat()
     {
         BugBundleBuilder.SuggestedName(new DateTimeOffset(2026, 9, 14, 12, 34, 0, TimeSpan.Zero).ToLocalTime()).Should().MatchRegex(@"^FrameLedger-bugreport-\d{8}-\d{4}\.zip$");
+    }
+
+    [Fact]
+    public async Task TheCrashDumpGoesInOnlyWhenPassedAndOnlyFromTheDumpDirectory()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        var clock = new FixedClock(new DateTimeOffset(2026, 9, 15, 12, 0, 0, TimeSpan.Zero));
+        string dumps = Path.Combine(_dir, "crashdumps");
+        string dump = WriteDump(dumps, "ui-20260915-100000-42.dmp", clock.GetUtcNow().UtcDateTime.AddHours(-2), bytes: 3000);
+        var builder = new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db)), clock, dumps);
+        CrashDumpInfo latest = builder.LatestCrashDump()!;
+        latest.Path.Should().Be(dump);
+        latest.Bytes.Should().Be(3000);
+
+        IReadOnlyList<string> without = await builder.WriteAsync(Path.Combine(_dir, "without.zip"), agent: null, ct: Ct);
+        IReadOnlyList<string> with = await builder.WriteAsync(Path.Combine(_dir, "with.zip"), agent: null, latest, Ct);
+
+        without.Should().NotContain(static e => e.StartsWith("crashdumps/", StringComparison.Ordinal), "a dump goes in only when the user ticked it");
+        with.Should().Contain("crashdumps/ui-20260915-100000-42.dmp");
+        string foreign = Path.Combine(_dir, "game.dmp");
+        await File.WriteAllTextAsync(foreign, "MDMP", Ct);
+        Func<Task> outside = () => builder.WriteAsync(Path.Combine(_dir, "foreign.zip"), agent: null, latest with { Path = foreign }, Ct);
+        await outside.Should().ThrowAsync<ArgumentException>("the bundle never carries a file from outside the dump directory");
+        File.Exists(Path.Combine(_dir, "foreign.zip")).Should().BeFalse("refused before the zip is created");
+    }
+
+    [Fact]
+    public async Task TheOfferedDumpIsTheNewestOfTheLastSevenDays()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        var settings = new RegisteredSettings(new SqliteSettingsStore(s.Db));
+        var clock = new FixedClock(new DateTimeOffset(2026, 9, 15, 12, 0, 0, TimeSpan.Zero));
+        DateTime now = clock.GetUtcNow().UtcDateTime;
+        string dumps = Path.Combine(_dir, "crashdumps");
+        new BugBundleBuilder(_dir, settings, clock).LatestCrashDump().Should().BeNull("no dump directory was given");
+        new BugBundleBuilder(_dir, settings, clock, dumps).LatestCrashDump().Should().BeNull("the directory does not exist yet");
+        WriteDump(dumps, "ui-old.dmp", now.AddDays(-8), bytes: 10);
+        new BugBundleBuilder(_dir, settings, clock, dumps).LatestCrashDump().Should().BeNull("older than seven days");
+
+        WriteDump(dumps, "agent-older.dmp", now.AddDays(-2), bytes: 20);
+        WriteDump(dumps, "ui-newest.dmp", now.AddHours(-1), bytes: 30);
+        WriteDump(dumps, "ui-notes.txt", now, bytes: 40);
+        CrashDumpInfo? latest = new BugBundleBuilder(_dir, settings, clock, dumps).LatestCrashDump();
+
+        latest.Should().NotBeNull();
+        Path.GetFileName(latest!.Path).Should().Be("ui-newest.dmp", "the newest dump of either process; a .txt is not a dump");
+        latest.WrittenAt.Should().Be(new DateTimeOffset(now.AddHours(-1), TimeSpan.Zero));
+        latest.Bytes.Should().Be(30);
+    }
+
+    private static string WriteDump(string directory, string name, DateTime mtimeUtc, int bytes)
+    {
+        Directory.CreateDirectory(directory);
+        string path = Path.Combine(directory, name);
+        File.WriteAllBytes(path, new byte[bytes]);
+        File.SetLastWriteTimeUtc(path, mtimeUtc);
+        return path;
     }
 
     private static Dictionary<string, string> ReadJson(string zip, string entry)

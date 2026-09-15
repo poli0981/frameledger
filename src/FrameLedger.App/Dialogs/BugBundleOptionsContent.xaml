@@ -1,0 +1,21 @@
+<UserControl x:Class="FrameLedger.App.Dialogs.BugBundleOptionsContent"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             d:DataContext="{d:DesignInstance Type=vm:BugBundleOptionsViewModel}"
+             mc:Ignorable="d"
+             MinWidth="480">
+    <!--
+        10_LOGGING §Bug report flow step 2's optional item (P4 PR-9): the crash dump goes in only when it is ticked
+        (legal/PRIVACY_POLICY.md §3). The box starts clear, and its label and the line under it say how large the dump is
+        and what it can hold before anyone ticks it.
+    -->
+    <StackPanel>
+        <ui:TextBlock TextWrapping="Wrap" Text="{x:Static vm:BugBundleOptionsViewModel.Intro}" />
+        <CheckBox Margin="0,12,0,0" IsChecked="{Binding IncludeCrashDump}" Content="{Binding DumpLabel}" />
+        <ui:TextBlock Margin="28,4,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:BugBundleOptionsViewModel.DumpDetail}" />
+    </StackPanel>
+</UserControl>

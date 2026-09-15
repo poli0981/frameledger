@@ -2,7 +2,7 @@
 
 ## Serilog configuration
 
-- Sinks: rolling file per process — `logs/ui-.log`, `logs/agent-.log` (`rollingInterval: Day`, `retainedFileCountLimit: 7`, `fileSizeLimitBytes: 10 MB`, `rollOnFileSizeLimit: true`). Console sink in DEBUG builds. *(`ui-.log` is written since 2026-09-13, P3 PR-2, with `Process=ui` enriched and every unhandled path — Dispatcher, AppDomain, unobserved task — logged as Fatal/Error; the crash dialog and minidump of §Crash handling are still P4's.)*
+- Sinks: rolling file per process — `logs/ui-.log`, `logs/agent-.log` (`rollingInterval: Day`, `retainedFileCountLimit: 7`, `fileSizeLimitBytes: 10 MB`, `rollOnFileSizeLimit: true`). Console sink in DEBUG builds. *(`ui-.log` is written since 2026-09-13, P3 PR-2, with `Process=ui` enriched and every unhandled path — Dispatcher, AppDomain, unobserved task — logged as Fatal/Error; ~~the crash dialog and minidump of §Crash handling are still P4's~~ — built 2026-09-15, P4 PR-9, §Crash handling's note.)*
 - Minimum level `Information` (`Debug` toggle in Settings → applies live via `LoggingLevelSwitch`).
 - Enrichers: process name, version, `SessionGuid` and `GamePid` scoped properties during capture (`LogContext.PushProperty`).
 - Template: `[{Timestamp:HH:mm:ss.fff} {Level:u3}] {SourceContext} {Message:lj} {Properties:j}{NewLine}{Exception}`.
@@ -14,6 +14,36 @@
 - Hook `AppDomain.CurrentDomain.UnhandledException`, `DispatcherUnhandledException`, `TaskScheduler.UnobservedTaskException` (both processes).
 - On fatal: Serilog `Fatal` with full exception → write minidump via `MiniDumpWriteDump` (CsWin32, `MiniDumpWithIndirectlyReferencedMemory | WithThreadInfo`) to `crashdumps/` (keep last 5) → UI shows crash dialog offering the bug-report flow → exit code 1.
 - Agent crash mid-session → `.partial` recovery path (04_CAPTURE) on next start finalizes an `interrupted` session.
+
+> **Built 2026-09-15 (P4 PR-9).** `Infrastructure/Diagnostics/CrashDumpWriter` writes
+> `crashdumps\<ui|agent>-<yyyyMMdd-HHmmss, UTC>-<pid>.dmp` through CsWin32's `MiniDumpWriteDump` with exactly the two
+> flags above, keeps the five newest `*.dmp` of either process after each write, and never throws: a failure is a null
+> path and a Warning line, and the partial file is removed.
+>
+> **The App.** A `DispatcherUnhandledException` is marked handled, so the process lives long enough to ask; then
+> `Services/CrashReporter` runs Fatal → dump → `Services/CrashDialog` → on Yes, the shell window revealed (a window
+> hidden in the tray would hold the report's dialogs where nobody sees them) and `BugReportFlow` → the host's
+> `StopApplication`, and `RunAsync` exits with code 1 after the normal teardown (with no host yet, `Shutdown(1)`
+> directly). The dialog is a **Win32 `MessageBox`**, not a WPF UI one: the shell's dialog host, theme and dispatcher are
+> what a crash cannot vouch for. It says where the dump is (or that none could be written), that the capture agent keeps
+> running, and that the report shows every file and includes the dump only when ticked. **One report per process**: a
+> further exception while the dialog is up shows nothing; the first of those is logged whole and the rest are counted,
+> because a fault in a layout pass repeats on every pass the dialog's own message loop runs and would flood
+> `ui-*.log`. A failed dump still asks; a failed report is an Error line, not a second crash. An
+> `AppDomain.UnhandledException` (any other thread) is Fatal + dump only: the runtime is already ending the process and
+> no dialog can be relied on to appear, so the next bug report offers that dump instead. An unobserved task stays an
+> Error line. A startup failure `RunAsync` catches itself (the ledger will not open, the host will not start) is not an
+> unhandled exception: it is still a Fatal line and exit code 1 with no dialog.
+>
+> **The Agent** (no window, so no dialog): the same Fatal + dump from `AppDomain.UnhandledException` and from `Main`'s
+> own catch, once per process whichever sees it first, then the exception stays unhandled, so the exit is the runtime's
+> and never the Agent's usage code 1. The catch exists because an exception escaping `Main` runs `Main`'s `finally`
+> first, which closes the logger; the AppDomain handler alone would dump with no Fatal line.
+>
+> Tests: `CrashDumpWriterTests` (a real dump of the test process starts `MDMP` and carries the UTC time in its name; the
+> prune keeps five and touches no other file; an unusable directory is null and one line), `CrashReporterTests` (the
+> order, no report on No, three further exceptions show nothing and are counted, a failed dump still asks, a failed
+> report does not throw, the dialog's text with and without a dump).
 
 ## In-app log viewer (Logs screen)
 
@@ -45,7 +75,7 @@ Tails the active files (shared read), level filter, text search, pause autoscrol
    > PawnIO question) and the disclosure version, plus OS version, bitness, locale and the write time — **no
    > CPU/GPU name or driver version**, which live in the ledger's hardware snapshots and are the session
    > metadata option this list already has; `settings.json` = every registry key's effective value (there is no
-   > path-valued key). No session JSON and no dumps. ~~The bundle is written and nothing else happens: no preview
+   > path-valued key). No session JSON ~~and no dumps~~ (PR-9 below). ~~The bundle is written and nothing else happens: no preview
    > dialog yet, no browser, no clipboard.~~ Tests: `BugBundleBuilderTests` (the seven-day cut, the overlay cap, a
    > `game-crash.log` beside ours is not shipped, both JSON files), `LogsViewModelTests` (the cancelled save writes
    > nothing).
@@ -59,8 +89,21 @@ Tails the active files (shared read), level filter, text search, pause autoscrol
    > above spelled; the OS is the form's own spelling (`Windows 11 26100.2314`, `IssueLink.OsText`) — and **Copy
    > summary as Markdown** puts `sysinfo.json`'s twelve keys on the clipboard as a table. Both behind ports
    > (`IBugReportPreview`, `IUrlOpener`, `IClipboard`) so `BugReportFlowTests` pins the exact URL without a browser.
-   > Still open from this list: the **crash dialog and the minidump** (§Crash handling, step 1's third entry point)
-   > and the optional session-metadata / dump checkboxes of step 2.
+   > ~~Still open from this list: the **crash dialog and the minidump** (§Crash handling, step 1's third entry point)
+   > and the optional session-metadata / dump checkboxes of step 2.~~ PR-9 below; the session-metadata checkbox is open.
+   >
+   > **The crash dump's checkbox and step 1's third entry point built 2026-09-15 (P4 PR-9).** When
+   > `BugBundleBuilder.LatestCrashDump` finds a `*.dmp` written in the last seven days under `crashdumps\` (either
+   > process's), the flow shows **Optional items** before the save dialog (`BugReportPreviewPrompt.AskCrashDumpAsync` →
+   > `Dialogs/BugBundleOptionsContent`): one checkbox, **clear**, labelled with the dump's local time and its size in MB
+   > (the size warning), and a line saying a dump is FrameLedger's own memory and can hold file paths, game names and
+   > settings. Continue with the box clear writes the bundle without it; ticked, `crashdumps/<name>.dmp` goes in;
+   > Cancel writes nothing. `WriteAsync` refuses a dump from anywhere but that directory, before the zip is created. It
+   > is a dialog before the save rather than a box on step 3's preview because the preview lists a zip that is already
+   > written. The crash dialog (§Crash handling) is step 1's third entry point. Still open: the session-metadata
+   > checkbox. Tests: `BugBundleBuilderTests` (only when passed, only from the directory, the newest of the week),
+   > `BugReportFlowTests` (no dump no question; left clear, ticked, cancelled), `BugBundleOptionsViewModelTests`,
+   > `PagesLoadTests`.
 3. **Preview step:** the dialog lists every file included and lets the user open the zip before continuing. Nothing is ever sent automatically.
 4. "Open GitHub issue" → launches browser to
    `https://github.com/poli0981/frameledger/issues/new?template=bug_report.yml&title=[Bug]%20&labels=bug&app_version=…&os=…`

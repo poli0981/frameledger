@@ -10,6 +10,7 @@ using FrameLedger.Application.Import;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Settings;
 using FrameLedger.Application.Watch;
+using FrameLedger.Infrastructure.Diagnostics;
 using FrameLedger.Infrastructure.Import;
 using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Infrastructure.Persistence;
@@ -35,6 +36,17 @@ namespace FrameLedger.App;
 /// </remarks>
 public partial class App : System.Windows.Application
 {
+    /// <summary><c>10_LOGGING</c> §Crash handling (P4 PR-9): Fatal, the minidump, the crash dialog offering the bug report.</summary>
+    private readonly CrashReporter _crashes = new(
+        static () => CrashDumpWriter.TryWrite(UiPaths.CrashDumps, "ui", DateTimeOffset.UtcNow, static line => Log.Warning("{Line}", line)),
+        CrashDialog.AskToReport,
+        static () =>
+        {
+            // The report's dialogs live in the shell window; one hidden in the tray would wait for a click nobody can give.
+            Services.GetRequiredService<IShellPresence>().Reveal();
+            return Services.GetRequiredService<BugReportFlow>().RunAsync();
+        });
+
     private IHost? _host;
     private LedgerDatabase? _db;
     private Task? _run;
@@ -95,7 +107,8 @@ public partial class App : System.Windows.Application
         finally
         {
             await TearDownAsync().ConfigureAwait(true);
-            Shutdown(exitCode);
+            // 10_LOGGING §Crash handling: a reported crash still ends in exit code 1, after the normal teardown.
+            Shutdown(_crashes.Crashed ? 1 : exitCode);
         }
     }
 
@@ -267,7 +280,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IRunAtLogon, RunAtLogonRegistry>();
         services.AddSingleton<SafetyNotices>();
         services.AddSingleton(static _ => new LogTail(UiPaths.Logs));
-        services.AddSingleton(static sp => new BugBundleBuilder(UiPaths.Logs, sp.GetRequiredService<RegisteredSettings>()));
+        services.AddSingleton(static sp => new BugBundleBuilder(UiPaths.Logs, sp.GetRequiredService<RegisteredSettings>(), crashDumpDirectory: UiPaths.CrashDumps));
 
         // The bug report's steps 3-4 and the shell's Export (P4 PR-3): the preview dialog, the browser, the clipboard,
         // the flow over them, the session the shell exports, and the CSV/JSON service the summary window's writers serve.
@@ -343,14 +356,54 @@ public partial class App : System.Windows.Application
                 outputTemplate: "[{Timestamp:HH:mm:ss.fff} {Level:u3}] {SourceContext} {Message:lj} {Properties:j}{NewLine}{Exception}")
             .CreateLogger();
 
-    /// <summary><c>10_LOGGING</c> §Crash handling: every unhandled path is logged as Fatal. The dialog and the minidump are P4's.</summary>
+    /// <summary>
+    /// <c>10_LOGGING</c> §Crash handling (P4 PR-9). An exception on the dispatcher is reported: Fatal, the minidump, the
+    /// crash dialog offering the bug report; the App then closes with exit code 1 through the host's own teardown. One on
+    /// any other thread is logged and dumped only, because the runtime is already ending the process and no dialog can be
+    /// relied on to appear; the bug report offers that dump the next time it runs. An unobserved task is not fatal and
+    /// stays an Error line.
+    /// </summary>
     private void HookCrashHandlers()
     {
         DispatcherUnhandledException += OnDispatcherUnhandledException;
-        AppDomain.CurrentDomain.UnhandledException += static (_, args) => Log.Fatal(args.ExceptionObject as Exception, "ui: unhandled exception (AppDomain)");
+        AppDomain.CurrentDomain.UnhandledException += static (_, args) =>
+        {
+            Log.Fatal(args.ExceptionObject as Exception, "ui: unhandled exception (AppDomain, terminating {Terminating})", args.IsTerminating);
+            string? dump = CrashDumpWriter.TryWrite(UiPaths.CrashDumps, "ui", DateTimeOffset.UtcNow, static line => Log.Warning("{Line}", line));
+            Log.Information("ui: crash dump {Dump}", dump ?? "not written");
+            Log.CloseAndFlush();
+        };
         TaskScheduler.UnobservedTaskException += static (_, args) => Log.Error(args.Exception, "ui: unobserved task exception");
     }
 
-    private static void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e) =>
-        Log.Fatal(e.Exception, "ui: unhandled exception (Dispatcher)");
+    private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+    {
+        // Handled, so the process lives long enough to ask; the exit code is still 1.
+        e.Handled = true;
+        _ = ReportCrashAsync(e.Exception);
+    }
+
+    /// <summary>The report, then the host's stop (<see cref="RunAsync"/> tears down and exits with 1); with no host, straight to the exit.</summary>
+    private async Task ReportCrashAsync(Exception exception)
+    {
+        try
+        {
+            if (!await _crashes.HandleAsync(exception, "Dispatcher").ConfigureAwait(true))
+            {
+                return;
+            }
+
+            if (_host is not null)
+            {
+                _host.Services.GetRequiredService<IHostApplicationLifetime>().StopApplication();
+                return;
+            }
+        }
+        catch (Exception ex) when (ex is ObjectDisposedException or InvalidOperationException)
+        {
+            Log.Warning(ex, "ui: the host could not be stopped after the crash report");
+        }
+
+        Shutdown(1);
+    }
 }

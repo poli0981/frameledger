@@ -16,6 +16,9 @@ internal static class UiPaths
 
     public static string Logs => Path.Combine(DataDirectory, "logs");
 
+    /// <summary><c>10_LOGGING</c> §Crash handling: the minidumps of both processes' crashes (P4 PR-9), the newest five kept.</summary>
+    public static string CrashDumps => Path.Combine(DataDirectory, "crashdumps");
+
     public static void EnsureDirectories()
     {
         Directory.CreateDirectory(DataDirectory);
