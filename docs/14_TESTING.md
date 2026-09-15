@@ -56,6 +56,11 @@ The anti-cheat guard is the one component where a bug can cost someone an accoun
   into an `interrupted` row whose `frame_count` IS the prefix, deletes the file, and finds nothing on a
   second pass. `PartialSessionFileTests` already kills at every byte offset; what this adds is that the
   Agent wrote a recoverable prefix *on its own* before it died.
+- **Test hygiene: the harness's overlay logs leave with the run.** The Overlay logs to the real
+  `%LOCALAPPDATA%\FrameLedger\logs` by design, so every test binary that starts hook-harness removes the logs it
+  caused when its run ends, and `tools/test-artifacts-check.ps1` fails the gate for one left behind
+  (`17_HOOK_ENGINE` §Native logging, 2026-09-15). A new native test binary that starts the harness needs the listener;
+  a managed test project that stages it gets the sweep from `FrameLedger.DrainFixtures.targets`.
 - Guard integration: harness loads a **dummy DLL named like an anti-cheat module** → injection refused pre-launch; loaded late → safety unhook. (A renamed harmless DLL, not real anti-cheat software.)
 
 ## Hook overhead measurement (NFR-1, per release)

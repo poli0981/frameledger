@@ -688,6 +688,20 @@ No logging in hook bodies. A small fixed-size in-memory ring of structured event
 > `UNHOOK_*` / `SYMBOL_MISSING` / `SUPERVISION_LOST` lines at the end of every session
 > (`Consume/OverlayLog.cs`).
 
+> **Tests and the real logs folder (2026-09-15).** The injection tests use the shipped Overlay, so their harness
+> logs land in the user's real `logs\` too: measured that day, 2506 overlay logs, **2492 of them hook-harness's**,
+> left by test runs since 2026-09-06, beside the owner's 14 from real titles. **The path stays not-a-parameter**: an
+> environment variable or any other switch in the injected DLL would reopen the per-launch vector §S21 closed, and a
+> test build of the Overlay would stop testing the binary that ships. Instead **each test binary removes what it
+> caused** when its run ends: an `overlay-*.log` created after the run started whose first line names a hook-harness
+> image that binary owns. Natively a Catch2 listener in `guard_test.cpp` over `src/native/tests/overlay_log_sweep.h` (the image
+> must be this build's `FL_HARNESS_EXE`); in managed code `tests/Shared/HarnessOverlayLogSweep.cs`, an xUnit assembly
+> fixture that `FrameLedger.DrainFixtures.targets` compiles into every test project staging the harness (the copy
+> beside the test binary, plus directories a test registers — `PipeEndToEndTests` runs a renamed copy from its
+> scratch directory). Test assemblies run in parallel with their own copies, so none removes a log another is about
+> to read; a game's log names the game. **`tools/test-artifacts-check.ps1` makes a missing sweep red**: a harness log
+> created during the gate and still there fails it. The logs from before this change are the owner's to delete.
+
 ## Test harness
 
 `src/native/tools/hook-harness` — a minimal D3D11 app that presents at a controlled rate. It lets CI and local dev exercise hook paths with **no game and no anti-cheat surface at all** (`14_TESTING`).

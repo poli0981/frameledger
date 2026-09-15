@@ -40,6 +40,18 @@
   </ItemGroup>
 
   <!--
+    THE HARNESS'S LOGS LEAVE WITH THE ASSEMBLY THAT CAUSED THEM. The Overlay logs to the real
+    %LOCALAPPDATA%\FrameLedger\logs by design (§S21), so every TEST project that stages hook-harness
+    compiles tests/Shared/HarnessOverlayLogSweep.cs, an xUnit assembly fixture that removes, when the
+    assembly finishes, the overlay logs of the harness copies it owns (17_HOOK_ENGINE §Native logging).
+    The CaptureHost imports this file too and is not a test project, so it does not get the sweep.
+    tools/test-artifacts-check.ps1 is what makes a missing sweep red.
+  -->
+  <ItemGroup Condition="'$(IsTestProject)' == 'true'">
+    <Compile Include="$(MSBuildThisFileDirectory)tests\Shared\HarnessOverlayLogSweep.cs" Link="Shared\HarnessOverlayLogSweep.cs" />
+  </ItemGroup>
+
+  <!--
     Warn at build, fail at test. build.ps1 runs the native build first, so by the
     time this evaluates both exist; a hard error here would break `dotnet build` on
     a fresh clone for a reason unrelated to managed code. The test itself refuses to
