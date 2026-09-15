@@ -38,7 +38,7 @@ public sealed class SessionAggregatorTests
         row.RtFlag.Should().Be("na");
         row.HdrFlag.Should().Be("na");
         row.VramProcAvgMb.Should().BeNull();
-        row.ReflexActive.Should().BeFalse();
+        row.ReflexActive.Should().BeNull("no latency sample was measured: not measured, not 'off'");
         row.LatencyAvgUs.Should().BeNull();
         row.StutterCount.Should().Be(0);
         row.AvgGpuTemp.Should().BeNull("no sensors");
@@ -127,6 +127,30 @@ public sealed class SessionAggregatorTests
         r.Segments.Should().ContainSingle().Which.Upscaler.Should().Be("dlss");
         r.Segments[0].RenderW.Should().Be(1707);
         r.Segments[0].OutputW.Should().Be(2560);
+    }
+
+    /// <summary>
+    /// <c>0xFF</c> is the Overlay's "a hook ran and could not tell" for the quality byte, and every AMD dispatch carries it.
+    /// Aggregated as a number it became the text "255", which the game page appends to the upscaler's name ("FSR 255").
+    /// </summary>
+    [Fact]
+    public void AQualityTheHookCouldNotTellIsNoValueWhileAToldOneStillIs()
+    {
+        FlMeasured claims = _presentOnly | FlMeasured.Upscaler | FlMeasured.UpscalerParams;
+        var writer = new FlWriterState { Status = 1, HooksInstalledMask = 0x7 };
+        List<FlFrameRecord> notTold = [.. SessionFixtures.Stream(500, claims, upscaler: FlUpscaler.Dlss).Select(static r => r with { UpscalerQuality = 0xFF })];
+
+        AggregationResult r = SessionAggregator.Aggregate(SessionFixtures.Skeleton(), SessionFixtures.Hooked(notTold, writer));
+
+        r.Row.Upscaler.Should().Be("dlss");
+        r.Row.UpscalerQuality.Should().BeNull("0xFF is not a preset");
+        r.Segments.Should().ContainSingle().Which.UpscalerQuality.Should().BeNull();
+
+        List<FlFrameRecord> mixed = [.. SessionFixtures.Stream(500, claims, upscaler: FlUpscaler.Dlss).Select(static (r, i) => r with { UpscalerQuality = (byte)(i % 5 == 0 ? 3 : 0xFF) })];
+        AggregationResult m = SessionAggregator.Aggregate(SessionFixtures.Skeleton(), SessionFixtures.Hooked(mixed, writer));
+
+        m.Row.UpscalerQuality.Should().Be("3", "the frames that told are the only ones that count");
+        m.Segments[0].UpscalerQuality.Should().Be("3");
     }
 
     [Fact]
