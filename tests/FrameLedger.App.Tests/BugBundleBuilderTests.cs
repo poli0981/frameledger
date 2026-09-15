@@ -122,13 +122,13 @@ public sealed class BugBundleBuilderTests : IDisposable
         latest.Bytes.Should().Be(3000);
 
         IReadOnlyList<string> without = await builder.WriteAsync(Path.Combine(_dir, "without.zip"), agent: null, ct: Ct);
-        IReadOnlyList<string> with = await builder.WriteAsync(Path.Combine(_dir, "with.zip"), agent: null, latest, Ct);
+        IReadOnlyList<string> with = await builder.WriteAsync(Path.Combine(_dir, "with.zip"), agent: null, latest, ct: Ct);
 
         without.Should().NotContain(static e => e.StartsWith("crashdumps/", StringComparison.Ordinal), "a dump goes in only when the user ticked it");
         with.Should().Contain("crashdumps/ui-20260915-100000-42.dmp");
         string foreign = Path.Combine(_dir, "game.dmp");
         await File.WriteAllTextAsync(foreign, "MDMP", Ct);
-        Func<Task> outside = () => builder.WriteAsync(Path.Combine(_dir, "foreign.zip"), agent: null, latest with { Path = foreign }, Ct);
+        Func<Task> outside = () => builder.WriteAsync(Path.Combine(_dir, "foreign.zip"), agent: null, latest with { Path = foreign }, ct: Ct);
         await outside.Should().ThrowAsync<ArgumentException>("the bundle never carries a file from outside the dump directory");
         File.Exists(Path.Combine(_dir, "foreign.zip")).Should().BeFalse("refused before the zip is created");
     }

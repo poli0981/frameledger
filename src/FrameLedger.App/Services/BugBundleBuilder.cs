@@ -63,9 +63,10 @@ public sealed class BugBundleBuilder
 
     /// <summary>
     /// Writes the zip at <paramref name="path"/>; returns the entry names written. <paramref name="crashDump"/> goes in only
-    /// when the caller passes one, which is the user's tick (P4 PR-9), and only from the crash dump directory.
+    /// when the caller passes one, which is the user's tick (P4 PR-9), and only from the crash dump directory;
+    /// <paramref name="lastSessionJson"/> likewise, as <c>session.json</c> with the user names in its paths replaced.
     /// </summary>
-    public async Task<IReadOnlyList<string>> WriteAsync(string path, HelloAck? agent, CrashDumpInfo? crashDump = null, CancellationToken ct = default)
+    public async Task<IReadOnlyList<string>> WriteAsync(string path, HelloAck? agent, CrashDumpInfo? crashDump = null, byte[]? lastSessionJson = null, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         if (crashDump is not null && !IsOurDump(crashDump.Path))
@@ -94,6 +95,12 @@ public sealed class BugBundleBuilder
         if (crashDump is not null)
         {
             AddFile(zip, crashDump.Path, "crashdumps/" + Path.GetFileName(crashDump.Path), written);
+        }
+
+        // The other optional item: the last session's summary the user ticked, redacted like a log (it names the executable).
+        if (lastSessionJson is not null)
+        {
+            AddBytes(zip, "session.json", _redactor.Redact(lastSessionJson), written);
         }
 
         AddText(zip, "sysinfo.json", SysInfo(agent), written);
@@ -137,10 +144,14 @@ public sealed class BugBundleBuilder
             bytes = buffer.ToArray();
         }
 
-        byte[] redacted = _redactor.Redact(bytes);
+        AddBytes(zip, entryName, _redactor.Redact(bytes), written);
+    }
+
+    private static void AddBytes(ZipArchive zip, string entryName, byte[] bytes, List<string> written)
+    {
         ZipArchiveEntry entry = zip.CreateEntry(entryName, CompressionLevel.Optimal);
         using Stream target = entry.Open();
-        target.Write(redacted, 0, redacted.Length);
+        target.Write(bytes, 0, bytes.Length);
         written.Add(entryName);
     }
 

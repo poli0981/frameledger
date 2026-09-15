@@ -1677,6 +1677,12 @@ Mở báo cáo lỗi ngay bây giờ? Báo cáo cho bạn xem mọi tệp trong 
   <data name="BugReport_Options_Dump_Detail" xml:space="preserve">
     <value>Ảnh chụp bộ nhớ của chính FrameLedger lúc bị lỗi. Nó giúp tìm nguyên nhân, và có thể chứa đường dẫn tệp, tên game và cài đặt trên máy này.</value>
   </data>
+  <data name="BugReport_Options_Session_Format" xml:space="preserve">
+    <value>Phiên gần nhất: {0}, {1}</value>
+  </data>
+  <data name="BugReport_Options_Session_Detail" xml:space="preserve">
+    <value>session.json: tên game và đường dẫn tệp chạy, cách ghi, các thiết lập và thống kê, cùng CPU và GPU của máy này. Không có dữ liệu từng khung hình, không có ghi chú hay thẻ của bạn. Tên người dùng trong đường dẫn được thay thế.</value>
+  </data>
   <data name="BugReport_Options_Continue" xml:space="preserve">
     <value>Tiếp tục</value>
   </data>

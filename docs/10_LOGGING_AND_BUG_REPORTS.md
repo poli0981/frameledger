@@ -91,7 +91,7 @@ Tails the active files (shared read), level filter, text search, pause autoscrol
    > summary as Markdown** puts `sysinfo.json`'s twelve keys on the clipboard as a table. Both behind ports
    > (`IBugReportPreview`, `IUrlOpener`, `IClipboard`) so `BugReportFlowTests` pins the exact URL without a browser.
    > ~~Still open from this list: the **crash dialog and the minidump** (§Crash handling, step 1's third entry point)
-   > and the optional session-metadata / dump checkboxes of step 2.~~ PR-9 below; the session-metadata checkbox is open.
+   > and the optional session-metadata / dump checkboxes of step 2.~~ PR-9 below, and the session-metadata checkbox after it (2026-09-15).
    >
    > **The log copies are redacted since 2026-09-15.** `App/Services/LogRedactor` is what the list's "redacted copies"
    > and `legal/PRIVACY_POLICY.md` §3 promised: in every `logs/` and `overlay/` entry the name in each
@@ -114,10 +114,21 @@ Tails the active files (shared read), level filter, text search, pause autoscrol
    > settings. Continue with the box clear writes the bundle without it; ticked, `crashdumps/<name>.dmp` goes in;
    > Cancel writes nothing. `WriteAsync` refuses a dump from anywhere but that directory, before the zip is created. It
    > is a dialog before the save rather than a box on step 3's preview because the preview lists a zip that is already
-   > written. The crash dialog (§Crash handling) is step 1's third entry point. Still open: the session-metadata
-   > checkbox. Tests: `BugBundleBuilderTests` (only when passed, only from the directory, the newest of the week),
-   > `BugReportFlowTests` (no dump no question; left clear, ticked, cancelled), `BugBundleOptionsViewModelTests`,
-   > `PagesLoadTests`.
+   > written. The crash dialog (§Crash handling) is step 1's third entry point. ~~Still open: the session-metadata
+   > checkbox.~~ Built the same day, below. Tests: `BugBundleBuilderTests` (only when passed, only from the directory,
+   > the newest of the week), `BugReportFlowTests` (no dump no question; left clear, ticked, cancelled),
+   > `BugBundleOptionsViewModelTests`, `PagesLoadTests`.
+   >
+   > **The last session's checkbox built 2026-09-15**, which completes this list's optional items. The same **Optional
+   > items** dialog carries a second box when the ledger holds a session: the newest one (`App/Services/LastSessionSummary`),
+   > labelled with its game and local start time, with a line saying what the file holds. Ticked, the bundle gains
+   > `session.json`: File ▸ Export's own JSON (`SessionExporter.Document` — metadata, aggregates, segments, hardware)
+   > **without the user's notes and tags**, and passed through `LogRedactor` like a log because it names the executable.
+   > No frame or sensor series, which is the list's "never raw blobs". The dialog now appears when either item exists and
+   > not at all when neither does; the port's answer is `BugBundleOptions` (closed, or which boxes were ticked) where
+   > PR-9's was `CrashDumpChoice`. Tests: `LastSessionSummaryTests` (the newest session, no notes or tags, nothing for an
+   > empty ledger), `BugReportFlowTests` (left clear, and ticked with a profile path redacted in the zip),
+   > `BugBundleOptionsViewModelTests` (every box clear, an absent item cannot be included), `PagesLoadTests`.
 3. **Preview step:** the dialog lists every file included and lets the user open the zip before continuing. Nothing is ever sent automatically.
 4. "Open GitHub issue" → launches browser to
    `https://github.com/poli0981/frameledger/issues/new?template=bug_report.yml&title=[Bug]%20&labels=bug&app_version=…&os=…`

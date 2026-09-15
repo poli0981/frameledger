@@ -2233,6 +2233,14 @@
     <value>クラッシュ時の FrameLedger 自身のメモリのスナップショットです。原因の特定に役立ちますが、この PC のファイルパス、ゲーム名、設定が含まれる場合があります。</value>
     <comment>review</comment>
   </data>
+  <data name="BugReport_Options_Session_Format" xml:space="preserve">
+    <value>直近のセッション: {0}、{1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="BugReport_Options_Session_Detail" xml:space="preserve">
+    <value>session.json: ゲームの名前と実行ファイルのパス、キャプチャ方法、設定と統計、この PC の CPU と GPU。フレームごとのデータ、メモやタグは含まれません。パス内のユーザー名は置き換えられます。</value>
+    <comment>review</comment>
+  </data>
   <data name="BugReport_Options_Continue" xml:space="preserve">
     <value>続行</value>
     <comment>review</comment>
