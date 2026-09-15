@@ -6,10 +6,11 @@ using FrameLedger.Shared.Ipc;
 namespace FrameLedger.App.Services;
 
 /// <summary>
-/// <c>10_LOGGING</c> §Bug report flow, steps 2–4 in one place (P4 PR-3), reached from Help ▸ Report a bug and the
-/// Logs page's button: the zip where the user says (step 2, <see cref="BugBundleBuilder"/>), the preview listing
-/// every entry (step 3), then either the GitHub issue form with the two short fields prefilled or the environment
-/// summary on the clipboard as Markdown (step 4). Nothing is ever sent automatically; the zip is dragged in by hand.
+/// <c>10_LOGGING</c> §Bug report flow, steps 2–4 in one place (P4 PR-3), reached from Help ▸ Report a bug, the Logs
+/// page's button and the crash dialog (P4 PR-9): a recent crash dump offered as a checkbox that starts clear, the zip
+/// where the user says (step 2, <see cref="BugBundleBuilder"/>), the preview listing every entry (step 3), then either
+/// the GitHub issue form with the two short fields prefilled or the environment summary on the clipboard as Markdown
+/// (step 4). Nothing is ever sent automatically; the zip is dragged in by hand.
 /// </summary>
 [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime; a cached CompositeFormat would pin the first culture")]
 public sealed class BugReportFlow
@@ -39,6 +40,12 @@ public sealed class BugReportFlow
     public async Task<BugReportOutcome> RunAsync(CancellationToken ct = default)
     {
         DateTimeOffset now = _clock.GetUtcNow();
+        (bool cancelled, CrashDumpInfo? dump) = await ChooseCrashDumpAsync(ct).ConfigureAwait(true);
+        if (cancelled)
+        {
+            return new BugReportOutcome(null, BugReportChoice.Close, Written: false);
+        }
+
         string? path = _saver.PickSavePath("Zip archive (*.zip)|*.zip", BugBundleBuilder.SuggestedName(now));
         if (path is null)
         {
@@ -49,7 +56,7 @@ public sealed class BugReportFlow
         IReadOnlyList<string> entries;
         try
         {
-            entries = await _bundles.WriteAsync(path, hello, ct).ConfigureAwait(true);
+            entries = await _bundles.WriteAsync(path, hello, dump, ct).ConfigureAwait(true);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -81,5 +88,21 @@ public sealed class BugReportFlow
         }
 
         return new BugReportOutcome(path, choice, Written: true);
+    }
+
+    /// <summary>
+    /// Step 2's optional item (P4 PR-9): a crash dump of the last seven days is offered before the save dialog, in a
+    /// checkbox that starts clear. No dump, no question; the dump comes back only when it was ticked.
+    /// </summary>
+    private async Task<(bool Cancelled, CrashDumpInfo? Dump)> ChooseCrashDumpAsync(CancellationToken ct)
+    {
+        CrashDumpInfo? dump = _bundles.LatestCrashDump();
+        if (dump is null)
+        {
+            return (false, null);
+        }
+
+        CrashDumpChoice answer = await _preview.AskCrashDumpAsync(dump, ct).ConfigureAwait(true);
+        return (answer == CrashDumpChoice.Cancel, answer == CrashDumpChoice.Include ? dump : null);
     }
 }

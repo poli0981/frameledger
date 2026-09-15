@@ -26,6 +26,9 @@ internal sealed record AgentPaths(string DataDirectory)
 
     public string Logs => Path.Combine(DataDirectory, "logs");
 
+    /// <summary><c>10_LOGGING</c> §Crash handling: the minidumps of both processes' crashes (P4 PR-9), the newest five kept.</summary>
+    public string CrashDumps => Path.Combine(DataDirectory, "crashdumps");
+
     public string VkLayerDirectory => Path.Combine(DataDirectory, "vklayer");
 
     /// <summary>§S22: the payload must resolve into the guard's own directory, so it is beside this binary and nowhere else.</summary>

@@ -5,7 +5,10 @@ using Wpf.Ui.Controls;
 
 namespace FrameLedger.App.Services;
 
-/// <summary>Step 3's preview in WPF UI: a <c>ContentDialog</c> listing the zip's entries, whose primary button is step 4 and whose secondary is the clipboard fallback.</summary>
+/// <summary>
+/// The bug report's dialogs in WPF UI: step 3's <c>ContentDialog</c> listing the zip's entries, whose primary button is
+/// step 4 and whose secondary is the clipboard fallback; and step 2's optional crash dump, a checkbox (P4 PR-9).
+/// </summary>
 public sealed class BugReportPreviewPrompt : IBugReportPreview
 {
     private readonly IContentDialogService _dialogs;
@@ -33,5 +36,23 @@ public sealed class BugReportPreviewPrompt : IBugReportPreview
             ContentDialogResult.Secondary => BugReportChoice.CopyMarkdown,
             _ => BugReportChoice.Close,
         };
+    }
+
+    public async Task<CrashDumpChoice> AskCrashDumpAsync(CrashDumpInfo dump, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(dump);
+        var viewModel = new BugBundleOptionsViewModel(dump);
+        var dialog = new ContentDialog
+        {
+            Title = BugBundleOptionsViewModel.Title,
+            Content = new BugBundleOptionsContent(viewModel),
+            PrimaryButtonText = Strings.BugReport_Options_Continue,
+            CloseButtonText = Strings.Common_Cancel,
+            DefaultButton = ContentDialogButton.Primary,
+            DialogMaxWidth = 640,
+        };
+
+        ContentDialogResult result = await _dialogs.ShowAsync(dialog, ct).ConfigureAwait(true);
+        return viewModel.Choice(result == ContentDialogResult.Primary);
     }
 }

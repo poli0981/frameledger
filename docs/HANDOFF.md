@@ -1212,7 +1212,7 @@ election are **F** and **G**; the ⏳ feature rows in `17_HOOK_ENGINE` §Hook in
 their columns (`hdr_flag`, `pt_confidence`, `pso_stutter_pct`, `vram_proc*`, `latency_*`) are an
 honest NULL in P2's schema, never a 0.
 
-## P4 — **START HERE** (2026-09-14: P3 is code-complete; the stack awaits the owner's merges)
+## P4 — **START HERE** (2026-09-14: P3 is code-complete; the stack awaits the owner's merges) — **code-complete 2026-09-15 with PR-9**: every item below is struck; what follows is `15_ROADMAP` §P5 and §Owner-only
 
 P3's slices are all struck below. What is left of P3 is not code: the owner merges #154 → #155 → #156 → #158 →
 #159 → #160 → #161 → #162 → #163 → PR-9 in order (squash; after each merge the next branch is rebased
@@ -1233,7 +1233,7 @@ capability-vs-measured separation in the UI (the game page's Supports row is emp
 the updater (`11_UPDATER`; the Settings channel row is stored and unused)~~ **LANDED 2026-09-14 (P4 PR-5: `App/Update/` — `VelopackUpdateClient` behind `IUpdateClient`, `UpdateService` with FR-12 as its shape, the banner, the install/uninstall hooks in `Program.Main`, `release.yml`, one `VERSION` source — `11_UPDATER` built note)**, ~~the bug-report flow's steps 3–5
 (`10_LOGGING`: the preview dialog, the GitHub issue link — step 2's bundle exists)~~ **LANDED 2026-09-14 (P4 PR-3:
 `BugReportFlow`, the preview dialog, the issue link with the form's real field ids, the Markdown clipboard fallback;
-the crash dialog + minidump stay open — `10_LOGGING` built note)**, ~~the "is Vulkan" fact the
+~~the crash dialog + minidump stay open~~ — they landed 2026-09-15 with PR-9, and the dump is the bundle's opt-in — `10_LOGGING` built notes)**, ~~the "is Vulkan" fact the
 layer's register/unregister-on-consent automation needs (`17_HOOK_ENGINE` §Vulkan built note)~~ **LANDED
 2026-09-14 (P4 PR-2): a static PE fact (`PeImports` + the bounded scan) stored as `vulkan` in `capability_flags`,
 and `VkLayerReconciler` moving the HKCU registration after every consent change and sweep — the built note

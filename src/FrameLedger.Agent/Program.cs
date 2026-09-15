@@ -17,6 +17,7 @@ using FrameLedger.Agent.Composition;
 using FrameLedger.Agent.Hosting;
 using FrameLedger.Application.Ipc;
 using FrameLedger.Application.Rules;
+using FrameLedger.Infrastructure.Diagnostics;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Infrastructure.Rules;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +32,8 @@ internal static class Program
     private const int _exitUsage = 1;
     private const int _exitNotImplemented = 2;
     private const int _exitRulesFailed = 3;
+
+    private static int _crashReported;
 
     private static async Task<int> Main(string[] args)
     {
@@ -50,12 +53,8 @@ internal static class Program
         }
 
         AgentPaths paths = cmd.DataDirectory is { } dir ? new AgentPaths(Path.GetFullPath(dir)) : AgentPaths.Default;
-        Directory.CreateDirectory(paths.Logs);
-        Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Information()
-            .WriteTo.File(Path.Combine(paths.Logs, "agent-.log"), formatProvider: System.Globalization.CultureInfo.InvariantCulture,
-                rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14)
-            .CreateLogger();
+        ConfigureLogging(paths);
+        HookCrashHandlers(paths);
 
         try
         {
@@ -83,10 +82,54 @@ internal static class Program
                 };
             }
         }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            // The same report as another thread's, while the logger is still open; the exception stays unhandled, so the
+            // exit is the runtime's, never one of this binary's own codes.
+            ReportCrash(ex, paths, "Main");
+            throw;
+        }
         finally
         {
             await Log.CloseAndFlushAsync().ConfigureAwait(false);
         }
+    }
+
+    private static void ConfigureLogging(AgentPaths paths)
+    {
+        Directory.CreateDirectory(paths.Logs);
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Information()
+            .WriteTo.File(Path.Combine(paths.Logs, "agent-.log"), formatProvider: System.Globalization.CultureInfo.InvariantCulture,
+                rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14)
+            .CreateLogger();
+    }
+
+    /// <summary>
+    /// <c>10_LOGGING</c> §Crash handling, in both processes (P4 PR-9): Fatal with the whole exception, then a minidump under
+    /// <c>crashdumps\</c>. The Agent has no window, so there is no dialog; the App's bug report offers the dump.
+    /// </summary>
+    private static void HookCrashHandlers(AgentPaths paths)
+    {
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+        {
+            ReportCrash(e.ExceptionObject as Exception, paths, "AppDomain");
+            Log.CloseAndFlush();
+        };
+        TaskScheduler.UnobservedTaskException += static (_, e) => Log.Error(e.Exception, "agent: unobserved task exception");
+    }
+
+    /// <summary><c>10_LOGGING</c> §Crash handling: Fatal, then the minidump; once per process, whichever path sees the exception first.</summary>
+    private static void ReportCrash(Exception? exception, AgentPaths paths, string source)
+    {
+        if (Interlocked.Exchange(ref _crashReported, 1) == 1)
+        {
+            return;
+        }
+
+        Log.Fatal(exception, "agent: unhandled exception ({Source}); the Agent exits", source);
+        string? dump = CrashDumpWriter.TryWrite(paths.CrashDumps, "agent", DateTimeOffset.UtcNow, static line => Log.Warning("{Line}", line));
+        Log.Information("agent: crash dump {Dump}", dump ?? "not written");
     }
 
     /// <summary>The product's mode: a Generic Host around the watcher, stopped by Ctrl+C or the service manager.</summary>

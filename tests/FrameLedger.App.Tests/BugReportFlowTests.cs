@@ -41,12 +41,12 @@ public sealed class BugReportFlowTests : IDisposable
 
     private sealed record Harness(BugReportFlow Flow, ClosePreview Preview, NoUrlOpener Urls, NoClipboard Clipboard, RecordingStrip Strip, string Zip);
 
-    private async Task<Harness> BuildAsync(ScratchLedger s, BugReportChoice choice, bool cancel = false)
+    private async Task<Harness> BuildAsync(ScratchLedger s, BugReportChoice choice, bool cancel = false, CrashDumpChoice dumpChoice = CrashDumpChoice.LeaveOut)
     {
         await File.WriteAllTextAsync(Path.Combine(_dir, "ui-20260914.log"), "[12:00:00.000 INF] hello\n", Ct).ConfigureAwait(false);
-        var builder = new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db)));
+        var builder = new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db)), crashDumpDirectory: Path.Combine(_dir, "crashdumps"));
         string zip = Path.Combine(_dir, "bundle.zip");
-        var preview = new ClosePreview(choice);
+        var preview = new ClosePreview(choice, dumpChoice);
         var urls = new NoUrlOpener();
         var clipboard = new NoClipboard();
         var strip = new RecordingStrip();
@@ -77,6 +77,57 @@ public sealed class BugReportFlowTests : IDisposable
             .And.Contain("&os=Windows%20", "the form's field ids are app-version and os, hyphenated");
         h.Clipboard.Texts.Should().BeEmpty();
         h.Strip.Shown.Should().BeEmpty("the browser opened; there is nothing to say");
+        h.Preview.DumpsOffered.Should().BeEmpty("no crash dump, no question");
+    }
+
+    [Theory]
+    [InlineData(CrashDumpChoice.LeaveOut, false)]
+    [InlineData(CrashDumpChoice.Include, true)]
+    public async Task ARecentCrashDumpIsOfferedAndGoesInOnlyWhenTicked(CrashDumpChoice answer, bool included)
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        string dump = WriteDump();
+        Harness h = await BuildAsync(s, BugReportChoice.Close, dumpChoice: answer);
+
+        BugReportOutcome o = await h.Flow.RunAsync(Ct);
+
+        o.Written.Should().BeTrue();
+        h.Preview.DumpsOffered.Should().ContainSingle().Which.Path.Should().Be(dump);
+        IReadOnlyList<string> entries = h.Preview.Shown.Should().ContainSingle().Subject.Entries;
+        string entry = "crashdumps/" + Path.GetFileName(dump);
+        if (included)
+        {
+            entries.Should().Contain(entry);
+        }
+        else
+        {
+            entries.Should().NotContain(entry, "the box starts clear and was left so");
+        }
+    }
+
+    [Fact]
+    public async Task ClosingTheCrashDumpQuestionWritesNothing()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        WriteDump();
+        Harness h = await BuildAsync(s, BugReportChoice.OpenIssue, dumpChoice: CrashDumpChoice.Cancel);
+
+        BugReportOutcome o = await h.Flow.RunAsync(Ct);
+
+        o.Written.Should().BeFalse();
+        o.ZipPath.Should().BeNull();
+        File.Exists(h.Zip).Should().BeFalse("the question comes before the save dialog");
+        h.Preview.Shown.Should().BeEmpty();
+        h.Urls.Opened.Should().BeEmpty();
+    }
+
+    private string WriteDump()
+    {
+        string dumps = Path.Combine(_dir, "crashdumps");
+        Directory.CreateDirectory(dumps);
+        string path = Path.Combine(dumps, "ui-20260915-010203-42.dmp");
+        File.WriteAllBytes(path, "MDMP"u8.ToArray());
+        return path;
     }
 
     [Fact]

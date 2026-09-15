@@ -28,3 +28,7 @@ NAMED_PIPE_MODE
 EnumDisplaySettings
 DEVMODEW
 ENUM_DISPLAY_SETTINGS_MODE
+// The crash path's minidump (10_LOGGING §Crash handling, P4 PR-9, Diagnostics.CrashDumpWriter): the process's own
+// memory into a file under crashdumps\, never another process's.
+MiniDumpWriteDump
+MINIDUMP_TYPE

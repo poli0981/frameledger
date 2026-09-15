@@ -21,6 +21,28 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Added
 
+- **P4 PR-9 — the crash dialog, the minidump in both processes, and the crash dump as the bug report's opt-in
+  (2026-09-15).** `10_LOGGING` §Crash handling specified Fatal → `MiniDumpWriteDump` → a dialog offering the bug report
+  → exit code 1; only the Fatal line existed, and `Crash_Title` / `Crash_Body` were translated for a dialog nothing
+  showed. `Infrastructure/Diagnostics/CrashDumpWriter` writes `crashdumps\<ui|agent>-<UTC time>-<pid>.dmp` through
+  CsWin32 with `MiniDumpWithIndirectlyReferencedMemory | MiniDumpWithThreadInfo`, keeps the five newest and never
+  throws. **The App** marks a dispatcher exception handled; `CrashReporter` logs it, writes the dump and shows
+  `CrashDialog` — a Win32 message box, because a crash cannot vouch for the shell's dialog host — whose Yes reveals the
+  shell window (one hidden in the tray would hold the report's dialogs unseen) and runs `BugReportFlow`; the host then stops and `RunAsync` exits with code 1 after the normal teardown. One dialog per
+  process: a further exception while it is up is logged once and counted, since a layout fault repeats on every pass
+  the dialog's message loop runs. An exception on any other thread is Fatal + dump only. **The Agent** logs and dumps
+  from `AppDomain.UnhandledException` and from `Main`'s own catch (whose `finally` would otherwise close the logger
+  first), once, and leaves the exception unhandled. **The bug report** offers the newest dump of the last seven days
+  before the save dialog, as a checkbox that starts clear, labelled with its time and size, with a line saying a dump
+  can hold file paths, game names and settings (`Dialogs/BugBundleOptionsContent`) — what `legal/PRIVACY_POLICY.md` §3
+  already promised; Cancel writes nothing, and `BugBundleBuilder.WriteAsync` refuses a dump from anywhere but
+  `crashdumps\`. `Crash_Body` becomes `Crash_Body_Format` and keeps its one fact (the capture agent keeps running);
+  seven more strings (en/vi/ja). Tests: `CrashDumpWriterTests` (a real dump of the test process starts `MDMP`; the
+  prune keeps five and touches nothing else; an unusable directory is null and a line), `CrashReporterTests` (the order,
+  no report on No, three further exceptions show nothing, a failed dump still asks, a failed report is not a second
+  crash), `BugBundleBuilderTests`, `BugReportFlowTests` (no dump no question; left clear, ticked, cancelled),
+  `BugBundleOptionsViewModelTests`, `PagesLoadTests`. Docs: `10_LOGGING` §Crash handling and §Bug report flow,
+  `15_ROADMAP`, HANDOFF §P4.
 - **P4 PR-8 — the accessibility pass, with the section it passes against written first (NFR-9, 2026-09-15).**
   NFR-9 was one sentence and `08_UI` one bullet ("Ctrl+1…5; grids fully navigable; Esc closes flyouts/dialogs"), none
   of it built. `08_UI` §Accessibility now says what each clause means here and names the check: **Ctrl+1 … Ctrl+5**

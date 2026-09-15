@@ -52,6 +52,11 @@ public static class Strings
         nameof(BugReport_CopyMarkdown),
         nameof(BugReport_OpenIssue),
         nameof(BugReport_OpenZipFolder),
+        nameof(BugReport_Options_Continue),
+        nameof(BugReport_Options_Dump_Detail),
+        nameof(BugReport_Options_Dump_Format),
+        nameof(BugReport_Options_Intro),
+        nameof(BugReport_Options_Title),
         nameof(BugReport_Preview_Drag),
         nameof(BugReport_Preview_Intro_Format),
         nameof(BugReport_Title),
@@ -116,7 +121,9 @@ public static class Strings
         nameof(Compare_Table_Header),
         nameof(Compare_Table_Metric),
         nameof(Compare_TooMany),
-        nameof(Crash_Body),
+        nameof(Crash_Body_Format),
+        nameof(Crash_Dump_Format),
+        nameof(Crash_NoDump),
         nameof(Crash_Title),
         nameof(Dashboard_Agent_Elevated),
         nameof(Dashboard_Agent_Header),
@@ -627,6 +634,16 @@ public static class Strings
 
     public static string BugReport_OpenZipFolder => ResourceManager.GetString(nameof(BugReport_OpenZipFolder), Culture) ?? nameof(BugReport_OpenZipFolder);
 
+    public static string BugReport_Options_Continue => ResourceManager.GetString(nameof(BugReport_Options_Continue), Culture) ?? nameof(BugReport_Options_Continue);
+
+    public static string BugReport_Options_Dump_Detail => ResourceManager.GetString(nameof(BugReport_Options_Dump_Detail), Culture) ?? nameof(BugReport_Options_Dump_Detail);
+
+    public static string BugReport_Options_Dump_Format => ResourceManager.GetString(nameof(BugReport_Options_Dump_Format), Culture) ?? nameof(BugReport_Options_Dump_Format);
+
+    public static string BugReport_Options_Intro => ResourceManager.GetString(nameof(BugReport_Options_Intro), Culture) ?? nameof(BugReport_Options_Intro);
+
+    public static string BugReport_Options_Title => ResourceManager.GetString(nameof(BugReport_Options_Title), Culture) ?? nameof(BugReport_Options_Title);
+
     public static string BugReport_Preview_Drag => ResourceManager.GetString(nameof(BugReport_Preview_Drag), Culture) ?? nameof(BugReport_Preview_Drag);
 
     public static string BugReport_Preview_Intro_Format => ResourceManager.GetString(nameof(BugReport_Preview_Intro_Format), Culture) ?? nameof(BugReport_Preview_Intro_Format);
@@ -755,7 +772,11 @@ public static class Strings
 
     public static string Compare_TooMany => ResourceManager.GetString(nameof(Compare_TooMany), Culture) ?? nameof(Compare_TooMany);
 
-    public static string Crash_Body => ResourceManager.GetString(nameof(Crash_Body), Culture) ?? nameof(Crash_Body);
+    public static string Crash_Body_Format => ResourceManager.GetString(nameof(Crash_Body_Format), Culture) ?? nameof(Crash_Body_Format);
+
+    public static string Crash_Dump_Format => ResourceManager.GetString(nameof(Crash_Dump_Format), Culture) ?? nameof(Crash_Dump_Format);
+
+    public static string Crash_NoDump => ResourceManager.GetString(nameof(Crash_NoDump), Culture) ?? nameof(Crash_NoDump);
 
     public static string Crash_Title => ResourceManager.GetString(nameof(Crash_Title), Culture) ?? nameof(Crash_Title);
 

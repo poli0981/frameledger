@@ -93,10 +93,6 @@
     <value>比較</value>
     <comment>review</comment>
   </data>
-  <data name="Crash_Body" xml:space="preserve">
-    <value>FrameLedger は回復できないエラーに遭遇しました。詳細はログフォルダーにあります。キャプチャエージェントは動作を続けます。</value>
-    <comment>review</comment>
-  </data>
   <data name="Crash_Title" xml:space="preserve">
     <value>FrameLedger が予期せず停止しました</value>
     <comment>review</comment>
@@ -2202,6 +2198,43 @@
   </data>
   <data name="A11y_Logs_Tail" xml:space="preserve">
     <value>ログの行</value>
+    <comment>review</comment>
+  </data>
+  <data name="Crash_Body_Format" xml:space="preserve">
+    <value>FrameLedger は回復できないエラーに遭遇したため、終了します。キャプチャエージェントは動作を続けます。
+
+{0}
+
+今すぐバグを報告しますか？ zip に含まれるすべてのファイルが表示され、自動では何も送信されません。クラッシュダンプはチェックを入れた場合にのみ含まれます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Crash_Dump_Format" xml:space="preserve">
+    <value>クラッシュダンプをこの PC に保存しました:
+{0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Crash_NoDump" xml:space="preserve">
+    <value>クラッシュダンプを書き込めませんでした。</value>
+    <comment>review</comment>
+  </data>
+  <data name="BugReport_Options_Title" xml:space="preserve">
+    <value>オプション項目</value>
+    <comment>review</comment>
+  </data>
+  <data name="BugReport_Options_Intro" xml:space="preserve">
+    <value>zip には常に FrameLedger 自身のログ、sysinfo.json、settings.json が含まれます。以下の項目はチェックを入れた場合にのみ含まれます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="BugReport_Options_Dump_Format" xml:space="preserve">
+    <value>{0} のクラッシュダンプ ({1:0.0} MB)</value>
+    <comment>review</comment>
+  </data>
+  <data name="BugReport_Options_Dump_Detail" xml:space="preserve">
+    <value>クラッシュ時の FrameLedger 自身のメモリのスナップショットです。原因の特定に役立ちますが、この PC のファイルパス、ゲーム名、設定が含まれる場合があります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="BugReport_Options_Continue" xml:space="preserve">
+    <value>続行</value>
     <comment>review</comment>
   </data>
 </root>
