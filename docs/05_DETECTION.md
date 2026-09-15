@@ -27,6 +27,11 @@ Derived in the Agent from the record stream; the mapping is in `03_METRICS`. Sum
 | Per-process VRAM | `QueryVideoMemoryInfo` |
 | PSO compilation events | pipeline-creation hooks |
 
+> **Not built, 2026-09-15:** four rows above have no writer yet — HDR output, Reflex and PC latency, per-process
+> VRAM, and PSO compilation events. The Overlay never sets their measured bits, so every calculator over them
+> returns nothing and the columns stay null; `legal/ACCURACY.md` lists them as not measured. This table is the
+> design; the block is the state.
+
 > **"present-count delta" is removed from the FG row, and it was not merely unreliable —
 > it was structurally zero.** `03_METRICS` §Frame Generation retired that rung on
 > 2026-08-05: `IDXGISwapChain::GetFrameStatistics().PresentCount` counts presents *the

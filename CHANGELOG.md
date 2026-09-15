@@ -284,6 +284,23 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   created during the gate and still there, which is red on the unswept tree. Tests: `[sweep]` in `fl_guard_test`,
   `HarnessOverlayLogSweepTests`. The logs from before this change are left for the owner. Docs: `17_HOOK_ENGINE`
   §Native logging, `12_BUILD` gate list, `14_TESTING`, HANDOFF §Traps. No Overlay change, so no hook-path overhead.
+- **The accuracy block says what the code measures on 2026-09-15 (`legal/ACCURACY.md`, embedded in `README.md` and
+  `legal/DISCLAIMER.md`).** Dated 2026-09-06, it still said there was no Agent loop, storage, charts, library import
+  or UI, that OpenGL intercepted nothing, that no shipped component drove the 30 s re-scan and that video memory was
+  not measured — all false since. Every sentence was re-checked against the code: OpenGL is measured; Vulkan only
+  when FrameLedger starts the game (a running Vulkan title gets the Direct3D component, unverified); FSR is named FSR 3
+  or unversioned, never FSR 2 or 4; the preset is not reported anywhere; frame generation is Direct3D-only and falls
+  back to a qualified Presented FPS; whole-card video memory is recorded while per-game VRAM, shader-stutter
+  attribution, Reflex, HDR and CPU temperature are not; the shipped Agent runs the re-scan and the kill switch can
+  only refuse. Nothing has been released. `README.md` outside the block: the safety row's "re-scan does not run at
+  all", the XeSS and "always shown" promises, the Vulkan requirement, CPU temperature, NVAPI's Reflex, and a note that
+  no release exists. `legal/DISCLAIMER.md` is 2.1-draft (the first-run gate shows it again): two history bullets the
+  software caught up with are struck, and the path-tracing "confidence-scored suggestion" it never computes is
+  corrected. Docs that contradicted the code: `04_CAPTURE` (attach mode on a running Vulkan title is not Tier 2 — an
+  open decision for the owner), `05_DETECTION` (four runtime facts have no writer), `17_HOOK_ENGINE` (`wglSwapBuffers`
+  is built), `15_ROADMAP` and HANDOFF (`StaticGameDetector` runs in `DetectionSweep`). Stale comments in `dllmain.cpp`
+  (OpenGL "NOT HERE"), `layer.cpp` (`vkQueuePresentKHR` "NOT hooked") and `fl_guard.cpp` (the signer lookup "not wired
+  yet") now say what the code does; comments only, no behaviour change.
 - **The native log test read another process's log, and was filed as a flake four times (2026-09-14).**
   `guard_test.cpp`'s `FindOverlayLog` took the first `overlay-<pid>-*.log` by name in the real
   `%LOCALAPPDATA%\FrameLedger\logs`, which keeps every run's log — 2130 on the dev box. A harness that drew a

@@ -12,12 +12,11 @@
 // both, and `api` is resolved per swapchain by asking the swapchain which device
 // created it -- FL_API_UNKNOWN when it will not say, never a guess.
 //
-// NOT HERE: OpenGL (wglSwapBuffers is a flat export in opengl32.dll and needs no
-// vtable, but hook-harness has no OpenGL mode, and shipping an untested hook into
-// a game process is not something this project does), Vulkan (the layer, P1), and
-// the upscaler / FG / RT feature hooks. The record's measuredMask says so on
-// every frame rather than letting the zero-defaults assert a measurement nobody
-// made.
+// NOT HERE: Vulkan (the layer, FrameLedger.VkLayer) and the pipeline, memory and
+// latency hooks. OpenGL IS here since P1 item 4 (2026-09-06): opengl32!wglSwapBuffers,
+// once hook-harness gained its --opengl mode; so are the upscaler, FG and RT feature
+// hooks. The record's measuredMask says what each frame measured rather than letting
+// the zero-defaults assert a measurement nobody made.
 //
 // docs/17_HOOK_ENGINE.md is the specification. The constraints that shape every
 // line:

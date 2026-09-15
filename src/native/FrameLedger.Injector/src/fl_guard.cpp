@@ -404,9 +404,11 @@ Verdict CheckModules(const Sources& s, const Rules& rules, std::uint32_t targetP
         }
         if (st.sawSuspicious) {
             // 19_SAFETY: fragment AND not signed by a known vendor. The signer
-            // lookup is not wired yet, and an unchecked signature is UNTRUSTED
-            // by definition — so this refuses today. That is the correct
-            // direction, and it is why the fragment list must stay narrow.
+            // half runs before this latch (ModuleIsTrustedSigned): a match whose
+            // signer both the rules file and the compiled-in list trust is never
+            // latched, and a signature that cannot be read is untrusted, so it
+            // refuses. That is the safe direction, and it is why the fragment
+            // list must stay narrow.
             //
             // `sawSuspicious` is already the post-exemption answer: ModuleSinkFn
             // never latches a module that is ours. Asking a second question here
