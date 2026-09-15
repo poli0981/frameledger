@@ -1685,4 +1685,17 @@ Open the bug report now? It shows you every file in the zip, sends nothing by it
   <data name="BugReport_Options_Continue" xml:space="preserve">
     <value>Continue</value>
   </data>
+  <data name="StartupFailed_Title" xml:space="preserve">
+    <value>FrameLedger could not start</value>
+  </data>
+  <data name="StartupFailed_Body_Format" xml:space="preserve">
+    <value>FrameLedger hit an error while starting and will close:
+
+{0}
+
+The details are in the log folder:
+{1}
+
+Open the log folder?</value>
+  </data>
 </root>

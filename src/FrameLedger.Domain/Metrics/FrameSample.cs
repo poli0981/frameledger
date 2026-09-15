@@ -48,7 +48,13 @@ public readonly record struct FrameSample
 
     public UpscalerKind Upscaler { get; init; }
 
-    /// <summary>Vendor enum; <c>0xFF</c> unknown.</summary>
+    /// <summary>
+    /// <see cref="UpscalerQuality"/>'s "a hook ran and could not tell" (<c>fl_shm.h</c> <c>upscalerQuality</c>): not a preset,
+    /// so it is never a value in a row. Every AMD dispatch carries it, because that call has no preset.
+    /// </summary>
+    public const byte QualityNotTold = 0xFF;
+
+    /// <summary>Vendor enum; <see cref="QualityNotTold"/> when the hook could not tell.</summary>
     public byte UpscalerQuality { get; init; }
 
     /// <summary>Percent, 0-100; <c>0xFF</c> means the API reports no sharpness.</summary>

@@ -241,6 +241,13 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **A start that fails says so on screen (2026-09-15).** When `App.RunAsync` caught its own exception — a ledger
+  that would not open (a newer schema, a locked file), a host that would not start — FrameLedger wrote a Fatal line to
+  `ui-*.log` and exited with code 1 with nothing on screen, so a user saw a click do nothing. It now shows
+  `StartupFailureDialog`, a Win32 message box like the crash dialog (the shell is what failed): the exception's message,
+  the log folder, and Yes to open that folder; the exit code is still 1, and a crash the dispatcher already reported
+  shows no second dialog. Two strings (en/vi/ja). Tests: `StartupFailureDialogTests`. Docs: `10_LOGGING` §Crash
+  handling.
 - **Bug bundles no longer carry the user's name in log paths, which the privacy policy already promised
   (2026-09-15).** `legal/PRIVACY_POLICY.md` §3 says "logs are redacted (user directory paths removed) before
   bundling" and `10_LOGGING` named a `RedactingEnricher`; neither existed, and `BugBundleBuilder` copied `ui-*.log`,
@@ -253,6 +260,16 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   sentence is now true without a word of it changing. Tests: `LogRedactorTests`, `BugBundleBuilderTests`. Docs:
   `10_LOGGING` §Serilog configuration (the enricher claim struck, with where the rule is enforced) and §Bug report
   flow step 2.
+- **Two unmeasured facts were stored as values (2026-09-15).** The quality byte's `0xFF`, the Overlay's "a hook ran
+  and could not tell" (`fl_shm.h` `upscalerQuality`), was aggregated as a number, so a session and the live card
+  carried the text `255`, which the game page and the Dashboard append to the upscaler's name: every AMD dispatch
+  carries `0xFF`, so an FSR title would read "FSR 255". `SessionAggregator` (row and segments) and
+  `SessionProgressCalculator` now leave those frames out, and a quality nobody told is null (`FrameSample.QualityNotTold`).
+  And `reflex_active` was written `false` on every hooked row with no latency sample, although nothing measures Reflex
+  today; it is null there now, so an export no longer says "off" for a thing never measured. Tests:
+  `SessionAggregatorTests` (not told is null, told frames still count; Reflex null), `SessionProgressCalculatorTests`.
+  Found while checking `legal/ACCURACY.md` against the code. Not done: naming a preset the hook did read, which
+  `03_METRICS` assigns to a `Domain.UpscalerNames` that does not exist; no measured title has produced one.
 - **Test runs stop filling the real data folder with hook-harness logs (2026-09-15).** The injection tests inject the
   shipped Overlay, whose log goes to `%LOCALAPPDATA%\FrameLedger\logs` by design (§S21: not the environment, and no
   switch in the injected DLL), so the owner's folder held 2506 overlay logs, 2492 of them hook-harness's from test

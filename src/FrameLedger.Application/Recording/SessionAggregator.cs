@@ -66,7 +66,8 @@ public static class SessionAggregator
             StutterCount = stutter?.Count,
             StutterTimePct = stutter?.TimePct,
             PsoStutterPct = stutter is null || c.Series is null ? null : StutterDetector.PsoStutterPct(stutter, c.Series, c.Dominant),
-            ReflexActive = latency.Count > 0,
+            // Null, not false, when no latency sample exists: nothing measures Reflex today, and a false is an answer nobody gave.
+            ReflexActive = latency.Count > 0 ? true : null,
             LatencyAvgUs = latency.AverageUs is { } a ? (long)Math.Round(a) : null,
             LatencyP95Us = latency.P95Us is { } p ? (long)Math.Round(p) : null,
             GapCount = c.Input.TotalGaps,
@@ -109,10 +110,11 @@ public static class SessionAggregator
         FlUpscaler? identity = FgLadder.UpscalerIdentity(c.Input.Records);
         bool hookRan = FgLadder.UpscalerHookRan(c.Input.Records);
         IReadOnlyList<FrameSample> withParams = [.. c.Dominant.Where(static s => s.Claims(MeasuredFields.UpscalerParams))];
+        IReadOnlyList<FrameSample> withQuality = [.. withParams.Where(static s => s.UpscalerQuality != FrameSample.QualityNotTold)];
         return row with
         {
             Upscaler = identity is { } u ? Vocabulary.Upscaler(u) : hookRan ? "unknown" : null,
-            UpscalerQuality = Modal(withParams, static s => s.UpscalerQuality)?.ToString(CultureInfo.InvariantCulture),
+            UpscalerQuality = Modal(withQuality, static s => s.UpscalerQuality)?.ToString(CultureInfo.InvariantCulture),
             UpscalerSharpness = Modal(withParams, static s => s.UpscalerSharpness),
             UpscalerDriverReported = c.Input.Ngx.SrCreatedAndEvaluated ? "dlss" : null,
             RenderW = extent?.RenderW,
@@ -238,7 +240,7 @@ public static class SessionAggregator
                 OutputW = seg.OutputW == 0 ? null : seg.OutputW,
                 OutputH = seg.OutputH == 0 ? null : seg.OutputH,
                 Upscaler = upscaler is { } u && u != UpscalerKind.NotReported ? Vocabulary.Upscaler(u) : null,
-                UpscalerQuality = Modal([.. seg.Samples.Where(static s => s.Claims(MeasuredFields.UpscalerParams))], static s => s.UpscalerQuality)
+                UpscalerQuality = Modal([.. seg.Samples.Where(static s => s.Claims(MeasuredFields.UpscalerParams) && s.UpscalerQuality != FrameSample.QualityNotTold)], static s => s.UpscalerQuality)
                     ?.ToString(CultureInfo.InvariantCulture),
                 FgMode = null,
                 NativeFps = null,
