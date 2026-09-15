@@ -133,7 +133,7 @@ Every hook must be listed here with a purpose. Anything not on this list is not 
 > Reset is load-bearing — and no vendor symbol is resolved by name, so `FL_HOOK_INVENTORY`
 > and `hookinventory-check` do not cover them at all.
 > **Every other row below is unwritten**, including
-> `SetFullscreenState`, `SetColorSpace1`, `CreateSwapChain*`, `wglSwapBuffers`,
+> `SetFullscreenState`, `SetColorSpace1`, `CreateSwapChain*`, ~~`wglSwapBuffers`~~ (built 2026-09-06, #141, its row below),
 > `ID3D12Device5::CreateStateObject`, §Pipeline and §Memory/latency.
 >
 > Stated here because the distinction is invisible from the table. What a writer may then

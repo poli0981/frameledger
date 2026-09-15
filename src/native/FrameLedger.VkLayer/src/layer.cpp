@@ -37,9 +37,9 @@
 // blocklist would be a second matcher that can disagree with the first, which
 // is the defect the managed facade was built to avoid.
 //
-// vkQueuePresentKHR is still deliberately NOT hooked: presentation
-// interception is P1. Passthrough remains the correct state, not an unfinished
-// one — but the gate that will protect it is in place and tested first.
+// vkQueuePresentKHR IS intercepted since 2026-09-06 (P1 item 3, QueuePresentKHR
+// below). The gate that protects it was in place and tested first, and
+// passthrough is still the state the layer returns to on any refusal.
 
 #include <windows.h>
 

@@ -249,8 +249,8 @@ Findings written to `docs/spike-notes.md`. Nothing in P1 starts until the exit c
    > **Two things keep this ◐ rather than ✅:**
    >
    > - **The baseline side cannot be run.** This item's text says *"compare against what the
-   >   item-3 baseline reports"*, and `StaticGameDetector` has **no runnable vehicle** — every
-   >   construction of it is in `tests/`. So the comparison has one arm. `HANDOFF` item 5
+   >   item-3 baseline reports"*, and `StaticGameDetector` ~~has **no runnable vehicle** — every
+   >   construction of it is in `tests/`~~ *(has had one since P4 PR-1, 2026-09-14: the Agent's `DetectionSweep`)*. So the comparison has one arm. `HANDOFF` item 5
    >   records this as uncosted; this file had never said it at all.
    > - **The README sentence does not exist**, and it is the artifact this item is for. It is
    >   **not a percentage** — item 3 and `spike-notes` §8 already record that the baseline
