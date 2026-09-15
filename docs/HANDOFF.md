@@ -1410,6 +1410,13 @@ deferred with a written rationale.
 The mechanical ones live in the toolchain notes; these are the ones that cost a *wrong
 diagnosis*.
 
+- **THE TESTS WRITE INTO THE REAL DATA FOLDER, AND THAT IS NOT A SWITCH TO ADD.** The Overlay's log path is
+  `SHGetKnownFolderPath`, never the environment (§S21), and the tests inject the shipped DLL, so 2492 hook-harness
+  logs had piled up in the owner's `%LOCALAPPDATA%\FrameLedger\logs` by 2026-09-15. Each test binary now sweeps the
+  harness logs it caused (`17_HOOK_ENGINE` §Native logging) and the `test-artifacts` gate is red for one left behind.
+  A new native test executable that starts hook-harness needs the Catch2 listener from `guard_test.cpp`; do not "fix"
+  a red `test-artifacts` by pointing the Overlay somewhere else.
+
 - **A CHROMIUM-BASED TITLE IS SEVERAL PROCESSES WITH ONE IMAGE PATH.** *Flower in Us* (NW.js /
   RPG Maker) returned `TargetAmbiguous`, exit 6, on 2026-09-03: three processes match the
   consented path. The presenting one is the GPU process, which owns no window — so do not "fix"

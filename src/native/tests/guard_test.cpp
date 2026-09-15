@@ -14,6 +14,9 @@
 
 #include <algorithm>
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/reporters/catch_reporter_event_listener.hpp>
+#include <catch2/reporters/catch_reporter_registrars.hpp>
+#include <cstdio>
 #include <cstring>
 #include <cwchar>
 #include <fl_ac_rules.h>
@@ -24,6 +27,8 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "overlay_log_sweep.h"
 
 using namespace fl::guard;
 
@@ -4821,4 +4826,156 @@ TEST_CASE("the injected Overlay records ray-tracing work, and an AS-build-only t
     // writer that sets both bits from either detour.
     CHECK(rayquery.withDispatch == 0u);
     CHECK(rayquery.volume == 0u);
+}
+
+// ===========================================================================
+// Test hygiene: the harness's overlay logs leave with the run that wrote them.
+// ===========================================================================
+namespace {
+
+// Every run of this binary -- the full fl_guard run and the [prescan] selection alike -- removes, when it ends, the
+// hook-harness overlay logs it created under the real data folder. overlay_log_sweep.h says why a sweep and not a
+// redirect: the shipped Overlay is the one under test, and its log path is not a parameter by design (§S21).
+class HarnessLogSweepListener final : public Catch::EventListenerBase {
+public:
+    using Catch::EventListenerBase::EventListenerBase;
+
+    void testRunStarting(const Catch::TestRunInfo& /*info*/) override { GetSystemTimeAsFileTime(&started_); }
+
+    void testRunEnded(const Catch::TestRunStats& /*stats*/) override {
+        std::wstring logs;
+        if (!fl::testing::RealOverlayLogsDir(logs)) {
+            return;
+        }
+        const fl::testing::SweepCount count = fl::testing::SweepHarnessLogs(logs, started_, FL_HARNESS_EXE);
+        std::printf("harness log sweep: removed %d hook-harness overlay log(s) this run created; left %d other(s)\n",
+                    count.removed, count.kept);
+    }
+
+private:
+    FILETIME started_{};
+};
+
+std::string NarrowAnsi(const std::wstring& text) {
+    const int n =
+        WideCharToMultiByte(CP_ACP, 0, text.c_str(), static_cast<int>(text.size()), nullptr, 0, nullptr, nullptr);
+    std::string out(static_cast<std::size_t>(n > 0 ? n : 0), '\0');
+    if (n > 0) {
+        WideCharToMultiByte(CP_ACP, 0, text.c_str(), static_cast<int>(text.size()), out.data(), n, nullptr, nullptr);
+    }
+    return out;
+}
+
+void WriteText(const std::wstring& path, const std::string& text) {
+    HANDLE h = CreateFileW(path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    REQUIRE(h != INVALID_HANDLE_VALUE);
+    DWORD      written = 0;
+    const BOOL ok = WriteFile(h, text.data(), static_cast<DWORD>(text.size()), &written, nullptr);
+    CloseHandle(h);
+    REQUIRE(ok);
+}
+
+// A creation time in 1999: a log an earlier run left behind.
+void Backdate(const std::wstring& path) {
+    HANDLE h =
+        CreateFileW(path.c_str(), FILE_WRITE_ATTRIBUTES, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    REQUIRE(h != INVALID_HANDLE_VALUE);
+    SYSTEMTIME then{};
+    then.wYear = 1999;
+    then.wMonth = 1;
+    then.wDay = 1;
+    FILETIME   old{};
+    const bool ok = SystemTimeToFileTime(&then, &old) != FALSE && SetFileTime(h, &old, &old, &old) != FALSE;
+    CloseHandle(h);
+    REQUIRE(ok);
+}
+
+bool FileExists(const std::wstring& path) {
+    return GetFileAttributesW(path.c_str()) != INVALID_FILE_ATTRIBUTES;
+}
+
+struct ScratchLogsDir {
+    std::wstring              path;
+    std::vector<std::wstring> files;
+    ScratchLogsDir() {
+        wchar_t temp[MAX_PATH]{};
+        REQUIRE(GetTempPathW(MAX_PATH, temp) != 0);
+        path = std::wstring(temp) + L"fl-sweep-" + std::to_wstring(GetCurrentProcessId()) + L"-" +
+               std::to_wstring(GetTickCount64());
+        REQUIRE(CreateDirectoryW(path.c_str(), nullptr));
+    }
+    ScratchLogsDir(const ScratchLogsDir&) = delete;
+    ScratchLogsDir& operator=(const ScratchLogsDir&) = delete;
+    ~ScratchLogsDir() {
+        for (const std::wstring& file : files) {
+            static_cast<void>(DeleteFileW(file.c_str()));
+        }
+        static_cast<void>(RemoveDirectoryW(path.c_str()));
+    }
+    std::wstring Add(const wchar_t* name) {
+        files.push_back(path + L"\\" + name);
+        return files.back();
+    }
+};
+
+}    // namespace
+
+CATCH_REGISTER_LISTENER(HarnessLogSweepListener)
+
+TEST_CASE("the harness log sweep removes this run's harness logs and nothing else", "[sweep]") {
+    ScratchLogsDir dir;
+
+    // One second before now: the files below are created within the same clock tick as the start.
+    FILETIME since{};
+    GetSystemTimeAsFileTime(&since);
+    ULARGE_INTEGER t{};
+    t.LowPart = since.dwLowDateTime;
+    t.HighPart = since.dwHighDateTime;
+    t.QuadPart -= 10000000ULL;
+    since.dwLowDateTime = t.LowPart;
+    since.dwHighDateTime = t.HighPart;
+
+    // The image as the Overlay spells it: GetModuleFileNameA, backslashes, while CMake names the harness with '/'.
+    std::wstring harness = FL_HARNESS_EXE;
+    for (wchar_t& ch : harness) {
+        if (ch == L'/') {
+            ch = L'\\';
+        }
+    }
+    const std::string image = NarrowAnsi(harness);
+    std::string       shouted = image;
+    CharUpperBuffA(shouted.data(), static_cast<DWORD>(shouted.size()));
+    const auto header = [](const std::string& path) {
+        return "# FrameLedger.Overlay build test pid 101 layout v9 image " + path + "\r\n";
+    };
+
+    const std::wstring ours = dir.Add(L"overlay-101-20260915-010101.log");
+    const std::wstring oursShouted = dir.Add(L"overlay-102-20260915-010101.log");
+    const std::wstring game = dir.Add(L"overlay-103-20260915-010101.log");
+    const std::wstring earlier = dir.Add(L"overlay-104-19990101-000000.log");
+    const std::wstring stranger = dir.Add(L"overlay-105-20260915-010101.log");
+    const std::wstring agent = dir.Add(L"agent-20260915.log");
+    WriteText(ours, header(image) + "RING_CREATED\n");
+    WriteText(oursShouted, header(shouted));
+    WriteText(game, header("C:\\Games\\Title\\title.exe"));
+    WriteText(earlier, header(image));
+    Backdate(earlier);
+    WriteText(stranger, "# a file that is not an overlay log\n");
+    WriteText(agent, header(image));
+
+    const fl::testing::SweepCount count = fl::testing::SweepHarnessLogs(dir.path, since, FL_HARNESS_EXE);
+
+    CHECK(count.removed == 2);
+    CHECK(count.kept == 2);    // the game's and the stranger; the 1999 log predates the run, agent-* is not overlay-*
+    CHECK_FALSE(FileExists(ours));
+    CHECK_FALSE(FileExists(oursShouted));
+    CHECK(FileExists(game));
+    CHECK(FileExists(earlier));
+    CHECK(FileExists(stranger));
+    CHECK(FileExists(agent));
+
+    std::string parsed;
+    CHECK(fl::testing::OverlayLogImage(header("C:\\x\\hook-harness.exe"), parsed));
+    CHECK(parsed == "C:\\x\\hook-harness.exe");
+    CHECK_FALSE(fl::testing::OverlayLogImage("# a stale log planted by guard_test\r\n", parsed));
 }

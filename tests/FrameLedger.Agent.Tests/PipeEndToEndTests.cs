@@ -10,6 +10,7 @@ using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Shared.Ipc;
 using FrameLedger.Shared.Safety;
+using FrameLedger.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 
@@ -121,6 +122,8 @@ public sealed class PipeEndToEndTests : IDisposable
     {
         File.Exists(Harness).Should().BeTrue("hook-harness.exe must be staged beside the test binary (FrameLedger.DrainFixtures.targets)");
         Directory.CreateDirectory(_dataDir);
+        // The copy's overlay logs are this assembly's to remove when it finishes (17_HOOK_ENGINE §Native logging).
+        HarnessOverlayLogSweep.Own(_dataDir);
         File.Copy(Harness, ConsentedExecutable, overwrite: true);
         // The composition logs through Serilog's static logger; in this process nothing configures it, so the
         // orchestrator's and the pipe's lines would vanish. A file in the scratch directory is what a hang leaves behind.

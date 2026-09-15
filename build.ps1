@@ -488,6 +488,15 @@ function Invoke-ProjectGates {
     }
     Write-Host "  $($mirrorResults.Count) mirror assertion(s) executed and passed (fl_shm.h vs FrameLedger.Shared)" -ForegroundColor DarkGray
 
+    # Test hygiene (17_HOOK_ENGINE §Native logging). The injection tests use the shipped Overlay, whose log goes to the
+    # real data folder by design (§S21), and 2492 hook-harness logs had piled up there by 2026-09-15. Each test binary
+    # that starts the harness now removes the logs it caused; this is what makes a missing sweep red: a hook-harness
+    # overlay log created since this gate started and still there after the tests fails it. A game's log never counts.
+    Write-Step 'test-artifacts'
+    $artifactsTool = Join-Path $repo 'tools/test-artifacts-check.ps1'
+    Invoke-Checked 'test-artifacts (self-test)' { & $artifactsTool -SelfTest }
+    Invoke-Checked 'test-artifacts' { & $artifactsTool -SinceUtc $script:GateStartedUtc }
+
     Write-Step 'placeholder guard'
     # {{RELEASE_DATE}} is substituted at release time and is the only token
     # allowed to survive. Anything else in a document FR-11 displays for
@@ -503,6 +512,8 @@ function Invoke-ProjectGates {
 
 # --- Entry point ------------------------------------------------------------
 $sw = [Diagnostics.Stopwatch]::StartNew()
+# The test-artifacts gate counts only what this run could have written.
+$script:GateStartedUtc = [DateTime]::UtcNow
 switch ($Task) {
     'native' { Invoke-Native $false }
     'managed' { Invoke-Managed $false }

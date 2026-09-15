@@ -241,6 +241,20 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **Test runs stop filling the real data folder with hook-harness logs (2026-09-15).** The injection tests inject the
+  shipped Overlay, whose log goes to `%LOCALAPPDATA%\FrameLedger\logs` by design (§S21: not the environment, and no
+  switch in the injected DLL), so the owner's folder held 2506 overlay logs, 2492 of them hook-harness's from test
+  runs since 2026-09-06, beside 14 from real titles. Each test binary now removes, when its run ends, exactly the logs
+  it caused: an `overlay-*.log` created after the run started whose first line names a hook-harness image it owns. A
+  Catch2 listener in `guard_test.cpp` does it natively (`src/native/tests/overlay_log_sweep.h`, the image must be this build's
+  `FL_HARNESS_EXE`), and `tests/Shared/HarnessOverlayLogSweep.cs`, an xUnit assembly fixture that
+  `FrameLedger.DrainFixtures.targets` compiles into every test project staging the harness, does it for the managed
+  suites (the copy beside the test binary, plus the renamed copy `PipeEndToEndTests` registers). Assemblies run in
+  parallel with their own copies, so none removes a log another is about to read, and a game's log is never touched.
+  The new `test-artifacts` gate (`tools/test-artifacts-check.ps1`, seven self-test cases) fails for a harness log
+  created during the gate and still there, which is red on the unswept tree. Tests: `[sweep]` in `fl_guard_test`,
+  `HarnessOverlayLogSweepTests`. The logs from before this change are left for the owner. Docs: `17_HOOK_ENGINE`
+  §Native logging, `12_BUILD` gate list, `14_TESTING`, HANDOFF §Traps. No Overlay change, so no hook-path overhead.
 - **The native log test read another process's log, and was filed as a flake four times (2026-09-14).**
   `guard_test.cpp`'s `FindOverlayLog` took the first `overlay-<pid>-*.log` by name in the real
   `%LOCALAPPDATA%\FrameLedger\logs`, which keeps every run's log — 2130 on the dev box. A harness that drew a
