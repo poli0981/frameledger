@@ -57,6 +57,18 @@ public sealed class SessionProgressCalculatorTests
     }
 
     [Fact]
+    public void TheLiveCardNeverShowsAQualityTheHookCouldNotTell()
+    {
+        FlMeasured claims = FlMeasured.OutputRes | FlMeasured.PresentArgs | FlMeasured.Upscaler | FlMeasured.UpscalerParams;
+        List<FlFrameRecord> records = [.. SessionFixtures.Stream(1000, claims, upscaler: FlUpscaler.Dlss).Select(static r => r with { UpscalerQuality = 0xFF })];
+
+        SessionProgressEvent e = SessionProgressCalculator.Compute(_guid, Progress(records), SessionFixtures.QpcFrequency, 12.5, gpu: null);
+
+        e.Upscaler.Should().Be("dlss");
+        e.UpscalerQuality.Should().BeNull("0xFF is the hook's 'could not tell', which the card would print as 'DLSS 255'");
+    }
+
+    [Fact]
     public void AMeasuredFrameGenerationFactorSplitsNativeFromDisplayed()
     {
         List<FlFrameRecord> records = SessionFixtures.Stream(800, FlMeasured.OutputRes | FlMeasured.Fg | FlMeasured.FgCounts, fgPerBatch: 2);
