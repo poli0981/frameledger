@@ -241,6 +241,13 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **A start that fails says so on screen (2026-09-15).** When `App.RunAsync` caught its own exception — a ledger
+  that would not open (a newer schema, a locked file), a host that would not start — FrameLedger wrote a Fatal line to
+  `ui-*.log` and exited with code 1 with nothing on screen, so a user saw a click do nothing. It now shows
+  `StartupFailureDialog`, a Win32 message box like the crash dialog (the shell is what failed): the exception's message,
+  the log folder, and Yes to open that folder; the exit code is still 1, and a crash the dispatcher already reported
+  shows no second dialog. Two strings (en/vi/ja). Tests: `StartupFailureDialogTests`. Docs: `10_LOGGING` §Crash
+  handling.
 - **Bug bundles no longer carry the user's name in log paths, which the privacy policy already promised
   (2026-09-15).** `legal/PRIVACY_POLICY.md` §3 says "logs are redacted (user directory paths removed) before
   bundling" and `10_LOGGING` named a `RedactingEnricher`; neither existed, and `BugBundleBuilder` copied `ui-*.log`,

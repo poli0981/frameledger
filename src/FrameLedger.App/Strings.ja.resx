@@ -2237,4 +2237,19 @@
     <value>続行</value>
     <comment>review</comment>
   </data>
+  <data name="StartupFailed_Title" xml:space="preserve">
+    <value>FrameLedger を起動できませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="StartupFailed_Body_Format" xml:space="preserve">
+    <value>FrameLedger は起動中にエラーが発生したため、終了します:
+
+{0}
+
+詳細はログフォルダーにあります:
+{1}
+
+ログフォルダーを開きますか？</value>
+    <comment>review</comment>
+  </data>
 </root>
