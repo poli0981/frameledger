@@ -280,7 +280,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IRunAtLogon, RunAtLogonRegistry>();
         services.AddSingleton<SafetyNotices>();
         services.AddSingleton(static _ => new LogTail(UiPaths.Logs));
-        services.AddSingleton(static sp => new BugBundleBuilder(UiPaths.Logs, sp.GetRequiredService<RegisteredSettings>(), crashDumpDirectory: UiPaths.CrashDumps));
+        services.AddSingleton(static sp => new BugBundleBuilder(UiPaths.Logs, sp.GetRequiredService<RegisteredSettings>(), crashDumpDirectory: UiPaths.CrashDumps, redactor: LogRedactor.ForCurrentUser()));
 
         // The bug report's steps 3-4 and the shell's Export (P4 PR-3): the preview dialog, the browser, the clipboard,
         // the flow over them, the session the shell exports, and the CSV/JSON service the summary window's writers serve.

@@ -81,6 +81,29 @@ public sealed class BugBundleBuilderTests : IDisposable
     }
 
     [Fact]
+    public async Task TheLogCopiesCarryNoUserNameAndTheFilesOnDiskAreUntouched()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        var clock = new FixedClock(new DateTimeOffset(2026, 9, 15, 12, 0, 0, TimeSpan.Zero));
+        DateTime now = clock.GetUtcNow().UtcDateTime;
+        string ui = Path.Combine(_dir, "ui-20260915.log");
+        await File.WriteAllTextAsync(ui, "[12:00:00.000 INF]  ui: started (0.1.0), ledger C:\\Users\\tester\\AppData\\Local\\FrameLedger\\ledger.db {\"Path\":\"C:\\\\Users\\\\tester\\\\AppData\"}\r\n", Ct);
+        File.SetLastWriteTimeUtc(ui, now);
+        string overlay = Path.Combine(_dir, "overlay-4242-20260915-120000.log");
+        await File.WriteAllTextAsync(overlay, "# FrameLedger.Overlay build x pid 4242 layout v9 image C:\\Users\\tester\\Games\\title.exe\nSTOP\n", Ct);
+        File.SetLastWriteTimeUtc(overlay, now);
+        string zip = Path.Combine(_dir, "bundle.zip");
+
+        await new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db)), clock, redactor: new LogRedactor(@"C:\Users\tester")).WriteAsync(zip, agent: null, ct: Ct);
+
+        string uiCopy = ReadEntry(zip, "logs/ui-20260915.log");
+        string overlayCopy = ReadEntry(zip, "overlay/overlay-4242-20260915-120000.log");
+        uiCopy.Should().NotContain("tester").And.Contain(@"C:\Users\<user>\AppData\Local\FrameLedger\ledger.db").And.Contain(@"C:\\Users\\<user>\\AppData");
+        overlayCopy.Should().NotContain("tester").And.StartWith(@"# FrameLedger.Overlay build x pid 4242 layout v9 image C:\Users\<user>\Games\title.exe");
+        (await File.ReadAllTextAsync(ui, Ct)).Should().Contain("tester", "the redaction is the bundle's copy, never the log on disk");
+    }
+
+    [Fact]
     public void TheSuggestedNameIsTheDocsFormat()
     {
         BugBundleBuilder.SuggestedName(new DateTimeOffset(2026, 9, 14, 12, 34, 0, TimeSpan.Zero).ToLocalTime()).Should().MatchRegex(@"^FrameLedger-bugreport-\d{8}-\d{4}\.zip$");
@@ -141,6 +164,13 @@ public sealed class BugBundleBuilderTests : IDisposable
         File.WriteAllBytes(path, new byte[bytes]);
         File.SetLastWriteTimeUtc(path, mtimeUtc);
         return path;
+    }
+
+    private static string ReadEntry(string zip, string entry)
+    {
+        using ZipArchive archive = ZipFile.OpenRead(zip);
+        using var reader = new StreamReader(archive.GetEntry(entry)!.Open());
+        return reader.ReadToEnd();
     }
 
     private static Dictionary<string, string> ReadJson(string zip, string entry)

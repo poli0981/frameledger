@@ -6,7 +6,7 @@
 - Minimum level `Information` (`Debug` toggle in Settings → applies live via `LoggingLevelSwitch`).
 - Enrichers: process name, version, `SessionGuid` and `GamePid` scoped properties during capture (`LogContext.PushProperty`).
 - Template: `[{Timestamp:HH:mm:ss.fff} {Level:u3}] {SourceContext} {Message:lj} {Properties:j}{NewLine}{Exception}`.
-- **Never log:** full user paths outside `%LOCALAPPDATA%\FrameLedger` (redact to `<user>`), machine name, any exe arguments of games. A `RedactingEnricher` enforces the path rule.
+- **Never log:** full user paths outside `%LOCALAPPDATA%\FrameLedger` (redact to `<user>`), machine name, any exe arguments of games. ~~A `RedactingEnricher` enforces the path rule.~~ *(No such enricher was ever written: found 2026-09-15, checking `legal/PRIVACY_POLICY.md` §3's "logs are redacted (user directory paths removed) before bundling" against the bundle, which copied the logs verbatim. An enricher could not have kept the rule anyway: exception text and the Overlay's native log never pass through one, and the data directory itself sits under the user's profile, so every run logs a user name. The rule is enforced where a log leaves the machine instead: `App/Services/LogRedactor` over every log copy in the bug bundle, §Bug report flow step 2. The files in `logs\` keep their full paths; they leave the PC only if the user copies them.)*
 - Capture hot path logs nothing per-frame; counters summarized at finalize.
 
 ## Crash handling (the app's own crashes)
@@ -67,8 +67,9 @@ Tails the active files (shared read), level filter, text search, pause autoscrol
    > **Step 2 built 2026-09-14 (P3 PR-8a), narrower than this list; steps 1 (Help menu, crash dialog), 3, 4 and 5
    > are P4's.** `App/Services/BugBundleBuilder` writes the zip where the Logs page's save dialog says
    > (`FrameLedger-bugreport-YYYYMMDD-HHmm.zip`): `logs/` = every `ui-*.log` and `agent-*.log` modified in the last
-   > seven days, **copied verbatim, not redacted** — the files carry no paths beyond the data directory and no
-   > game data, and a redaction pass that nobody has specified would be a claim; `overlay/` = the five newest
+   > seven days, ~~**copied verbatim, not redacted** — the files carry no paths beyond the data directory and no
+   > game data, and a redaction pass that nobody has specified would be a claim~~ **redacted since 2026-09-15, note
+   > below** (the data directory is under the user's profile, so the claim was false on every machine); `overlay/` = the five newest
    > `overlay-<pid>-*.log` (the ring's counters and the `FAULT`/`UNHOOK_*` lines are in those files, not
    > separately); `sysinfo.json` = app version, and from the Agent's `HelloAck` when connected its version, the
    > overlay build id, telemetry source, Vulkan layer state, elevation, CPU-temperature availability (the
@@ -91,6 +92,19 @@ Tails the active files (shared read), level filter, text search, pause autoscrol
    > (`IBugReportPreview`, `IUrlOpener`, `IClipboard`) so `BugReportFlowTests` pins the exact URL without a browser.
    > ~~Still open from this list: the **crash dialog and the minidump** (§Crash handling, step 1's third entry point)
    > and the optional session-metadata / dump checkboxes of step 2.~~ PR-9 below; the session-metadata checkbox is open.
+   >
+   > **The log copies are redacted since 2026-09-15.** `App/Services/LogRedactor` is what the list's "redacted copies"
+   > and `legal/PRIVACY_POLICY.md` §3 promised: in every `logs/` and `overlay/` entry the name in each
+   > `X:\Users\<name>` path becomes `<user>`, and so does the last segment of this user's profile directory when it
+   > lives elsewhere (`D:\Profiles\<name>`). Every spelling a log carries is covered: backslashes, the doubled
+   > backslashes of Serilog's JSON properties, forward slashes, any case, a name with spaces, and the `?` the Overlay's
+   > ANSI image path writes for a letter its code page lacks. The file is read as bytes through Latin-1, so a UTF-8
+   > log and an ANSI one both come out byte for byte except the names. Over-redaction is the chosen failure:
+   > `C:\Users\Public` reads `<user>` too. The measured need on the dev box: the profile path appeared 8 times in
+   > `ui-*.log`, 7 in `agent-*.log` and in 175 overlay headers; no machine name or bare user name did. A crash dump is
+   > memory and cannot be redacted, which its checkbox says. Tests: `LogRedactorTests` (fifteen cases, both
+   > directions, UTF-8 and ANSI bytes), `BugBundleBuilderTests` (the copies carry no user name, the file on disk is
+   > untouched).
    >
    > **The crash dump's checkbox and step 1's third entry point built 2026-09-15 (P4 PR-9).** When
    > `BugBundleBuilder.LatestCrashDump` finds a `*.dmp` written in the last seven days under `crashdumps\` (either

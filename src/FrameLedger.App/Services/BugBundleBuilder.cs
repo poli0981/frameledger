@@ -11,7 +11,8 @@ namespace FrameLedger.App.Services;
 
 /// <summary>
 /// <c>10_LOGGING</c> §Bug report flow, step 2 — the bundle: <c>logs/</c> (this app's and the Agent's files of the
-/// last seven days), the last <c>overlay-*.log</c> files, <c>sysinfo.json</c> (app, agent, overlay build id, OS,
+/// last seven days) and the last <c>overlay-*.log</c> files, both as copies with every user name in a path replaced
+/// (<see cref="LogRedactor"/>), <c>sysinfo.json</c> (app, agent, overlay build id, OS,
 /// locale, telemetry source, Vulkan layer state, elevation), <c>settings.json</c> (the registry's keys and values —
 /// no paths), and <c>crashdumps/</c> with one minidump only when the user ticked it (P4 PR-9). We ship our files only,
 /// never a game's; nothing is sent anywhere (<see cref="BugReportFlow"/> is steps 3 and 4).
@@ -24,18 +25,21 @@ public sealed class BugBundleBuilder
     private readonly RegisteredSettings _settings;
     private readonly TimeProvider _clock;
     private readonly string? _crashDumps;
+    private readonly LogRedactor _redactor;
 
     /// <summary>A builder over the logs directory, the settings registry and, when given, the crash dump directory.</summary>
     /// <param name="logsDirectory">The logs directory: ours and the Overlay's.</param>
     /// <param name="settings">The registry the bundle's <c>settings.json</c> reads.</param>
     /// <param name="clock">The seven-day cut's clock.</param>
     /// <param name="crashDumpDirectory">The minidumps' directory (P4 PR-9); null offers none.</param>
-    public BugBundleBuilder(string logsDirectory, RegisteredSettings settings, TimeProvider? clock = null, string? crashDumpDirectory = null)
+    /// <param name="redactor">What the log copies pass through; the current user's by default.</param>
+    public BugBundleBuilder(string logsDirectory, RegisteredSettings settings, TimeProvider? clock = null, string? crashDumpDirectory = null, LogRedactor? redactor = null)
     {
         _logs = logsDirectory ?? throw new ArgumentNullException(nameof(logsDirectory));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _clock = clock ?? TimeProvider.System;
         _crashDumps = crashDumpDirectory;
+        _redactor = redactor ?? LogRedactor.ForCurrentUser();
     }
 
     /// <summary>
@@ -77,12 +81,12 @@ public sealed class BugBundleBuilder
         {
             foreach (string log in Directory.EnumerateFiles(_logs, "*.log").Where(f => IsOurs(f) && File.GetLastWriteTimeUtc(f) >= cutoff))
             {
-                AddFile(zip, log, "logs/" + Path.GetFileName(log), written);
+                AddRedactedFile(zip, log, "logs/" + Path.GetFileName(log), written);
             }
 
             foreach (string overlay in Directory.EnumerateFiles(_logs, "overlay-*.log").OrderByDescending(File.GetLastWriteTimeUtc).Take(OverlayLogsKept))
             {
-                AddFile(zip, overlay, "overlay/" + Path.GetFileName(overlay), written);
+                AddRedactedFile(zip, overlay, "overlay/" + Path.GetFileName(overlay), written);
             }
         }
 
@@ -118,6 +122,25 @@ public sealed class BugBundleBuilder
         // Shared read: Serilog and the Overlay keep their files open.
         using var stream = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         stream.CopyTo(target);
+        written.Add(entryName);
+    }
+
+    // legal/PRIVACY_POLICY.md §3: a log leaves this machine only as a copy with the user names in its paths replaced. A log is
+    // at most 10 MB (Serilog's roll size), so it is read whole; a crash dump is memory and goes in as it is, behind its box.
+    private void AddRedactedFile(ZipArchive zip, string source, string entryName, List<string> written)
+    {
+        byte[] bytes;
+        using (var stream = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+        using (var buffer = new MemoryStream())
+        {
+            stream.CopyTo(buffer);
+            bytes = buffer.ToArray();
+        }
+
+        byte[] redacted = _redactor.Redact(bytes);
+        ZipArchiveEntry entry = zip.CreateEntry(entryName, CompressionLevel.Optimal);
+        using Stream target = entry.Open();
+        target.Write(redacted, 0, redacted.Length);
         written.Add(entryName);
     }
 

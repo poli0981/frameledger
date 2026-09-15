@@ -241,6 +241,18 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **Bug bundles no longer carry the user's name in log paths, which the privacy policy already promised
+  (2026-09-15).** `legal/PRIVACY_POLICY.md` §3 says "logs are redacted (user directory paths removed) before
+  bundling" and `10_LOGGING` named a `RedactingEnricher`; neither existed, and `BugBundleBuilder` copied `ui-*.log`,
+  `agent-*.log` and `overlay-*.log` verbatim on the stated ground that they carry no paths beyond the data directory,
+  which is itself under the user's profile. On the dev box the profile path appeared 8 times in the UI log, 7 in the
+  Agent's and in 175 overlay headers. `App/Services/LogRedactor` now rewrites every log copy in the zip: the name in
+  each `X:\Users\<name>` path becomes `<user>`, and so does a profile directory's last segment elsewhere, in
+  backslash, doubled-backslash (Serilog's JSON), forward-slash, any-case and ANSI-`?` spellings, byte for byte
+  otherwise (Latin-1 round trip, so UTF-8 and ANSI logs both survive). The files on disk keep their paths; the policy's
+  sentence is now true without a word of it changing. Tests: `LogRedactorTests`, `BugBundleBuilderTests`. Docs:
+  `10_LOGGING` §Serilog configuration (the enricher claim struck, with where the rule is enforced) and §Bug report
+  flow step 2.
 - **Test runs stop filling the real data folder with hook-harness logs (2026-09-15).** The injection tests inject the
   shipped Overlay, whose log goes to `%LOCALAPPDATA%\FrameLedger\logs` by design (§S21: not the environment, and no
   switch in the injected DLL), so the owner's folder held 2506 overlay logs, 2492 of them hook-harness's from test
