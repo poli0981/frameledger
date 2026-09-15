@@ -1,12 +1,14 @@
 # FrameLedger — Disclaimer
 
-**Version:** 2.0-draft · **Effective:** {{RELEASE_DATE}}
+**Version:** 2.1-draft · **Effective:** {{RELEASE_DATE}}
 
 > ⚠ Draft for review. Not legal advice. Review before first public release — this version covers code injection and should be read carefully.
 
 > ⚠ **Accuracy audit — re-checked 2026-08-14, a FOURTH time, after PR #64. SIX statements below describe behaviour the software does not yet fully have**, and they are flagged here rather than quietly reworded because a document the user accepts must not over-promise.
 >
 > **A FIFTH time, 2026-09-06, and the mechanism changed rather than the count.** Every drift this block records came from the same cause: the sentence about what the software measures lived in three places and was re-read in none of them. It now lives in **one** — `legal/ACCURACY.md`, embedded verbatim in §4 below and in `README.md`, and `tools/accuracy-check.ps1` fails the build when a copy differs from the source (`20_OPEN_QUESTIONS` §S23-6). The bullets below are the history of the four drifts and are kept as history; the block in §4 is the current statement, dated.
+>
+> **A SIXTH time, 2026-09-15, and the drift ran the safe way again.** The block in §4 is re-dated and rewritten against the code: OpenGL is measured, the shipped Agent runs the in-session re-scan, the whole-card video memory is recorded, and the Vulkan, preset, FSR-version and frame-generation sentences say exactly what the code does. Two bullets below became false because the software caught up with them, and they are struck where they sit. Version 2.1-draft, so the first-run gate shows this document again.
 >
 > **The fourth drift is the first one that ran the other way, and that is the finding.** Every previous re-count found this document claiming *more* than the software did. #64 landed the upscaler identity hook and this block went on saying "there is no upscaler hook anywhere in the software" — an under-claim, in the one file whose failure mode everybody was watching for in the opposite direction. It went unnoticed for five days for exactly that reason: a reviewer checking whether `legal/` over-promises reads a sentence like that and moves on. **Re-reading this block means checking both directions.**
 >
@@ -17,9 +19,9 @@
 > **Two bullets changed substance and neither could be struck.** The capture side that *receives* a stop now exists and now runs whether or not the game is presenting; the side that would *send* one still does not. That is the pattern to watch for when re-counting: half a mechanism reads as a whole one, and the half that is missing is usually the one nobody was looking at.
 >
 > - ~~§1's *"what it observes: … presentation, upscaling, ray tracing, pipeline creation"* and §4's *"upscaling, frame-generation and ray-tracing state are read from the parameters the game passes to those APIs"* — **only the presentation path is intercepted.** There is no upscaler hook, no frame-generation hook, no ray-tracing hook and no pipeline hook anywhere in the software.~~ **FALSE SINCE #64, corrected 2026-08-14 — the fourth drift, and this one is the block's own subject.** An **upscaler hook exists**: one detour on `sl.interposer.dll!slEvaluateFeature`, module-scoped, reading one argument. It measures **which upscaler is running** (DLSS, NIS, or `unknown` — never "none") and, for Streamline titles, **whether Ray Reconstruction is active**, which is a `Yes`/`No` the software now publishes. What still does not exist: quality preset, render resolution, frame generation, ray tracing, pipeline. The capture side states all of that in its own data on every frame rather than defaulting to "none", so nothing false is *recorded*; what over-promised was this document, in the direction of under-claiming rather than over-claiming — which is the safer direction and is still wrong. Both sentences are qualified where they sit.
-> - §2's *"and every 30 seconds afterwards … it stops at the next scan"* — the pre-injection guard is real and refuses. The **receiving half is implemented**: an injected D3D title removes its hooks within one frame of the stop flag being set. The **sending half is still missing, and the missing part is narrower than this block used to say.** Both the write path (`ShmRingReader.PublishGuardResult`, which maps the shared memory and advances the field) and the read path exist in shipped code and are tested; what does not exist is a production caller that runs the loop between them. A missing loop, not a missing subsystem — and the user-facing consequence is identical: **no re-scan runs and no stop is ever sent.**
+> - ~~§2's *"and every 30 seconds afterwards … it stops at the next scan"* — the pre-injection guard is real and refuses. The **receiving half is implemented**: an injected D3D title removes its hooks within one frame of the stop flag being set. The **sending half is still missing, and the missing part is narrower than this block used to say.** Both the write path (`ShmRingReader.PublishGuardResult`, which maps the shared memory and advances the field) and the read path exist in shipped code and are tested; what does not exist is a production caller that runs the loop between them. A missing loop, not a missing subsystem — and the user-facing consequence is identical: **no re-scan runs and no stop is ever sent.**~~ **FALSE SINCE 2026-09-10 (P2 PR-F), struck 2026-09-15:** the shipped Agent drives the loop — during every capture it re-runs the checks every 30 s and sends the stop on a refusal (`legal/ACCURACY.md`, embedded in §4).
 > - §2's *"waits **65 seconds** before concluding that contact is lost"* — **the deadline now has a reader, and since 2026-08-05 it runs whether or not the game is presenting.** For one day it was evaluated only on a present, so a title that had hung or been alt-tabbed never reached it — the exact case the mechanism was specified for. A watchdog inside the injected component now checks once a second regardless. Two qualifications remain: for **Vulkan titles the check runs on each present rather than once a second** — the layer may not own a thread, so a Vulkan title that has stopped presenting is not stopped by the deadline (and presents nothing to be observed) — and **the 65-second value itself is not covered by a test** — the stop is proven to fire, but a suite that runs on every build cannot wait 65 seconds, so what is verified is the mechanism, not the number.
-> - §3's *"automatically stops injecting into a game that crashes shortly after injection twice"* — the only trace of this anywhere is a `hook_crash_count` column in a schema for which no `.sql` file exists. There is no design for it.
+> - ~~§3's *"automatically stops injecting into a game that crashes shortly after injection twice"* — the only trace of this anywhere is a `hook_crash_count` column in a schema for which no `.sql` file exists. There is no design for it.~~ **BUILT 2026-09-10 (P2 PR-D), struck 2026-09-15:** two crashes of the same game within 60 s of injection disable hooking for that game, with the reason on its row (`CrashAutoDisablePolicy`).
 > - §1's *"Only FrameLedger's own component is ever loaded"* — **narrower than it sounds, and the qualification is now in §1 itself.** The check is a directory test: the payload must resolve into FrameLedger's own install directory. It does not compare a filename, a version or any content, deliberately — a name check would be defeated by any DLL that borrowed the name. A published self-contained build puts several hundred files in that directory.
 >
 > **None of this may ship as-is.** Either the behaviour exists at first release or these sentences change. Tracked in `docs/20_OPEN_QUESTIONS.md`.
@@ -92,43 +94,61 @@ Software running inside another process can, in principle, destabilize it. Frame
 Frame timing is derived from high-resolution timestamps taken at the moment the game presents each frame; upscaling, frame-generation and ray-tracing state are read from the parameters the game passes to those APIs. This is substantially more accurate than inferring settings from files on disk, but **no measurement is guaranteed to be exact**:
 
 <!-- accuracy-block:begin -->
-> ⚠ **What FrameLedger actually measures today — 2026-09-06.** The software is pre-alpha: the
-> measurement path exists as an injected Direct3D 11/12 component and an **unshipped** capture
-> host that drives the guard loop and prints a report; there is no Agent loop, no storage, no
-> charts, no library import, no UI and no installer yet.
+> ⚠ **What FrameLedger actually measures today — 2026-09-15.** The software is pre-alpha and
+> **unreleased**: no tagged build or installer has been published. The source holds the desktop app
+> (library, store import, charts, settings) and the background Agent, which records a session when a
+> game in the library runs, injects only into games you enabled and only past the safety guard, and
+> stores sessions in a local database. What that path measures:
 >
-> - **Frame times and output resolution:** measured, from the present hook, for injected D3D11/12
->   titles, and for Vulkan titles **launched through FrameLedger** (the layer intercepts
->   `vkQueuePresentKHR` since 2026-09-06; a Vulkan title already running when FrameLedger attaches is
->   not observed). OpenGL/D3D9 intercept nothing yet.
-> - **Which upscaler is running:** measured from the API the game calls — DLSS (with Ray
->   Reconstruction Yes/No) through NVIDIA Streamline; FSR 2/3.x/4 through AMD's shipped DLLs; DLSS on
->   titles that bypass Streamline is reported from the NVIDIA driver's own per-process record,
->   labelled *driver-reported*. Intel XeSS is **not** read (its SDK licence forbids it) and reads
->   `N/A` by policy; an upscaler compiled into the game executable reads `N/A`.
-> - **Quality preset:** `N/A` everywhere. No route this software may use exposes it.
-> - **Render → output resolution:** measured where the vendor's own call carries the size (AMD
->   dispatches, some Streamline titles); `N/A` where it does not (NVIDIA-direct titles, most
->   Direct3D 12 Streamline titles).
-> - **Frame generation:** the Displayed rate is counted from presents — including, on one title,
->   presents DXGI counted that the hook could not — and the Native rate from the vendor's own
->   per-frame calls where the title makes them. Identity: DLSS-G and FSR-FG named from the calls
->   the game makes; anything else (XeSS-FG, a generator compiled into the game) is reported *by
->   elimination* and never named. Where no per-frame call exists the Native rate is `N/A`.
-> - **Ray tracing:** Yes/No measured from DXR dispatches and acceleration-structure builds on
->   Direct3D 12; the technique and path tracing are `N/A`.
-> - **Not measured at all:** video memory, shader-compilation stutter, PC latency (Reflex), HDR.
-> - **Safety:** every pre-injection check runs before injection, including the signed-by-a-known-
->   vendor half of the suspicious-module rule (since 2026-09-06), and the unshipped capture host
->   re-runs them every 30 s and stops the capture on refusal. No shipped component drives that loop
->   yet. There is no override anywhere.
+> - **Frame times and output resolution:** measured from the present call for Direct3D 11/12 and
+>   OpenGL titles FrameLedger injects into. Vulkan titles are measured only when FrameLedger itself
+>   starts the game with its Vulkan layer enabled, which today only the Agent's command-line launch
+>   does. A Vulkan title started any other way is not observed by the layer; FrameLedger injects its
+>   Direct3D component into it instead, and what that records on a Vulkan title has not been
+>   verified. Direct3D 9 and every 32-bit title are not measured.
+> - **Which upscaler is running:** measured from the API a Direct3D title calls — DLSS or NIS through
+>   NVIDIA Streamline (with Ray Reconstruction Yes/No), and FSR through AMD's shipped FidelityFX DLLs:
+>   named FSR 3 from the older DLLs, and FSR without a version from the newer ones, which host both
+>   FSR 3.1 and FSR 4. FSR 2, and FSR shipped any other way, is not identified. For DLSS titles that
+>   bypass Streamline, the NVIDIA driver's own per-process record is stored with the session, labelled
+>   *driver-reported*; the app does not display it yet. Intel XeSS is **not** read (its SDK licence
+>   forbids it), and neither is an upscaler compiled into the game: those read `N/A`, or "Unknown
+>   upscaler" when another vendor's hook ran in the game. Vulkan and OpenGL titles read `N/A`.
+> - **Quality preset:** not reported on any title measured. The one route this software may use — the
+>   DLSS options a Streamline title passes with its per-frame call — has not been seen on a real
+>   title, and AMD's per-frame call carries no preset.
+> - **Render → output resolution:** measured where the vendor's own per-frame call carries the render
+>   size (AMD FidelityFX dispatches, and Streamline titles whose resource tags state it); `N/A` where it
+>   does not: DLSS titles that bypass Streamline, Streamline titles whose tags carry no size, and Vulkan
+>   and OpenGL titles.
+> - **Frame generation (Direct3D titles only):** the Displayed rate is counted from presents, plus the
+>   presents DXGI's own counter saw on the same swap chain that the hook did not; the Native rate from
+>   the vendor's own per-frame calls (NVIDIA Streamline, AMD FidelityFX) where the title makes them, and
+>   `N/A` where it does not. DLSS-G and FSR FG are named from the calls the game makes; any other
+>   generator (XeSS-FG, one compiled into the game) is shown only as active with the technology not
+>   identified, and is never named. Where a technology is named but its frames could not be counted, or
+>   frame generation is not measured, the software shows **Presented FPS** with a note on what it may
+>   include — never a Native figure.
+> - **Ray tracing:** Yes/No measured on Direct3D 12 from ray-dispatch and acceleration-structure-build
+>   calls; the technique and path tracing are `N/A`, and so is ray tracing on other APIs.
+> - **Video memory:** in use on the whole graphics card, recorded from Windows and GPU-driver telemetry
+>   and charted. **Not measured at all:** each game's own video-memory use and budget, which frame
+>   spikes were shader compilation, PC latency (Reflex), HDR, and CPU temperature. Stutter count and
+>   stutter time are measured from frame times.
+> - **Safety:** every pre-injection check runs before injection, including the signed-by-a-known-vendor
+>   half of the suspicious-module rule. During every capture the Agent re-runs the checks every 30 s and
+>   stops capturing on a refusal: a Direct3D or OpenGL game's hooks are removed, and the Vulkan layer
+>   goes passthrough. A global switch in Settings turns all hooking off, and a running capture stops at
+>   its next check; it can only refuse, never permit. There is no override anywhere.
 >
-> Where a value is not measured it reads `N/A`; the software never substitutes an estimate.
+> Where a value is not measured it reads `N/A`, with two exceptions: FPS then shows Presented FPS with a
+> note on what it may include, and ray-tracing flags may show a value you set yourself, labelled as
+> yours. The software never substitutes an estimate.
 <!-- accuracy-block:end -->
 
 - Frame timing: typically better than 0.05% error; hardware sensors carry their own accuracy limits (±1–2 °C is normal).
 - 1% Low and 0.1% Low are statistical and are hidden when the sample size is insufficient.
-- Path tracing has no reliable technical signature; FrameLedger reports it as a confidence-scored suggestion only and never asserts it.
+- Path tracing has no reliable technical signature; FrameLedger reports it as `N/A` and never asserts it. *(This line promised a confidence-scored suggestion; none is computed. Corrected 2026-09-15.)*
 - When measurement is unavailable (no-injection mode, unsupported API, missing vendor support), fields read `N/A`. FrameLedger does not substitute estimates for measurements.
 
 Do not use FrameLedger's output as the sole basis for purchasing, warranty, overclocking, or safety decisions.

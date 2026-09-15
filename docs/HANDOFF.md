@@ -690,7 +690,7 @@ The README sentence is **not a percentage** — the recorded decision is that th
 cannot answer four of the five questions at all.
 
 **Two things nobody has costed** (found by the completeness critic, 2026-08-05):
-`StaticGameDetector` has **no runnable vehicle** — every construction is in tests — so
+`StaticGameDetector` ~~has **no runnable vehicle** — every construction is in tests~~ *(runs in the Agent's `DetectionSweep` since P4 PR-1, 2026-09-14)* — so
 item 4's mandated comparison cannot be re-run on the *baseline* side either; and the
 only candidate title exercising all five required values is a **Streamline** title,
 i.e. the one class where the hook premise is recorded INCONCLUSIVE.

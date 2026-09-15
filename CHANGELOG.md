@@ -251,6 +251,13 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **A start that fails says so on screen (2026-09-15).** When `App.RunAsync` caught its own exception — a ledger
+  that would not open (a newer schema, a locked file), a host that would not start — FrameLedger wrote a Fatal line to
+  `ui-*.log` and exited with code 1 with nothing on screen, so a user saw a click do nothing. It now shows
+  `StartupFailureDialog`, a Win32 message box like the crash dialog (the shell is what failed): the exception's message,
+  the log folder, and Yes to open that folder; the exit code is still 1, and a crash the dispatcher already reported
+  shows no second dialog. Two strings (en/vi/ja). Tests: `StartupFailureDialogTests`. Docs: `10_LOGGING` §Crash
+  handling.
 - **Bug bundles no longer carry the user's name in log paths, which the privacy policy already promised
   (2026-09-15).** `legal/PRIVACY_POLICY.md` §3 says "logs are redacted (user directory paths removed) before
   bundling" and `10_LOGGING` named a `RedactingEnricher`; neither existed, and `BugBundleBuilder` copied `ui-*.log`,
@@ -263,6 +270,16 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   sentence is now true without a word of it changing. Tests: `LogRedactorTests`, `BugBundleBuilderTests`. Docs:
   `10_LOGGING` §Serilog configuration (the enricher claim struck, with where the rule is enforced) and §Bug report
   flow step 2.
+- **Two unmeasured facts were stored as values (2026-09-15).** The quality byte's `0xFF`, the Overlay's "a hook ran
+  and could not tell" (`fl_shm.h` `upscalerQuality`), was aggregated as a number, so a session and the live card
+  carried the text `255`, which the game page and the Dashboard append to the upscaler's name: every AMD dispatch
+  carries `0xFF`, so an FSR title would read "FSR 255". `SessionAggregator` (row and segments) and
+  `SessionProgressCalculator` now leave those frames out, and a quality nobody told is null (`FrameSample.QualityNotTold`).
+  And `reflex_active` was written `false` on every hooked row with no latency sample, although nothing measures Reflex
+  today; it is null there now, so an export no longer says "off" for a thing never measured. Tests:
+  `SessionAggregatorTests` (not told is null, told frames still count; Reflex null), `SessionProgressCalculatorTests`.
+  Found while checking `legal/ACCURACY.md` against the code. Not done: naming a preset the hook did read, which
+  `03_METRICS` assigns to a `Domain.UpscalerNames` that does not exist; no measured title has produced one.
 - **Test runs stop filling the real data folder with hook-harness logs (2026-09-15).** The injection tests inject the
   shipped Overlay, whose log goes to `%LOCALAPPDATA%\FrameLedger\logs` by design (§S21: not the environment, and no
   switch in the injected DLL), so the owner's folder held 2506 overlay logs, 2492 of them hook-harness's from test
@@ -277,6 +294,23 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   created during the gate and still there, which is red on the unswept tree. Tests: `[sweep]` in `fl_guard_test`,
   `HarnessOverlayLogSweepTests`. The logs from before this change are left for the owner. Docs: `17_HOOK_ENGINE`
   §Native logging, `12_BUILD` gate list, `14_TESTING`, HANDOFF §Traps. No Overlay change, so no hook-path overhead.
+- **The accuracy block says what the code measures on 2026-09-15 (`legal/ACCURACY.md`, embedded in `README.md` and
+  `legal/DISCLAIMER.md`).** Dated 2026-09-06, it still said there was no Agent loop, storage, charts, library import
+  or UI, that OpenGL intercepted nothing, that no shipped component drove the 30 s re-scan and that video memory was
+  not measured — all false since. Every sentence was re-checked against the code: OpenGL is measured; Vulkan only
+  when FrameLedger starts the game (a running Vulkan title gets the Direct3D component, unverified); FSR is named FSR 3
+  or unversioned, never FSR 2 or 4; the preset is not reported anywhere; frame generation is Direct3D-only and falls
+  back to a qualified Presented FPS; whole-card video memory is recorded while per-game VRAM, shader-stutter
+  attribution, Reflex, HDR and CPU temperature are not; the shipped Agent runs the re-scan and the kill switch can
+  only refuse. Nothing has been released. `README.md` outside the block: the safety row's "re-scan does not run at
+  all", the XeSS and "always shown" promises, the Vulkan requirement, CPU temperature, NVAPI's Reflex, and a note that
+  no release exists. `legal/DISCLAIMER.md` is 2.1-draft (the first-run gate shows it again): two history bullets the
+  software caught up with are struck, and the path-tracing "confidence-scored suggestion" it never computes is
+  corrected. Docs that contradicted the code: `04_CAPTURE` (attach mode on a running Vulkan title is not Tier 2 — an
+  open decision for the owner), `05_DETECTION` (four runtime facts have no writer), `17_HOOK_ENGINE` (`wglSwapBuffers`
+  is built), `15_ROADMAP` and HANDOFF (`StaticGameDetector` runs in `DetectionSweep`). Stale comments in `dllmain.cpp`
+  (OpenGL "NOT HERE"), `layer.cpp` (`vkQueuePresentKHR` "NOT hooked") and `fl_guard.cpp` (the signer lookup "not wired
+  yet") now say what the code does; comments only, no behaviour change.
 - **The native log test read another process's log, and was filed as a flake four times (2026-09-14).**
   `guard_test.cpp`'s `FindOverlayLog` took the first `overlay-<pid>-*.log` by name in the real
   `%LOCALAPPDATA%\FrameLedger\logs`, which keeps every run's log — 2130 on the dev box. A harness that drew a

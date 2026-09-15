@@ -60,7 +60,7 @@ public static class SessionProgressCalculator
             FgRefusal = usable ? null : fg?.Refusal is { } refusal ? Vocabulary.FgRefusal(refusal.Kind) : null,
             FgRuntimeCensus = progress.WriterState.RuntimeCensus,
             Upscaler = upscaler is { } u ? Vocabulary.Upscaler(u) : FgLadder.UpscalerHookRan(progress.Records) ? "unknown" : null,
-            UpscalerQuality = Modal(withParams)?.ToString(CultureInfo.InvariantCulture),
+            UpscalerQuality = Modal([.. withParams.Where(static s => s.UpscalerQuality != FrameSample.QualityNotTold)])?.ToString(CultureInfo.InvariantCulture),
             RenderW = extent?.RenderW,
             RenderH = extent?.RenderH,
             OutputW = extent?.OutputW,

@@ -301,8 +301,13 @@ Vulkan loader when the Agent launches an opted-in game, so the path is
 > layer's ring" with launch mode's budget (the ring appears at the title's first `vkCreateDevice`). The
 > CaptureHost's `launch` gives the process the layer's environment (`VkLayerLaunchEnvironment`:
 > `VK_ADD_IMPLICIT_LAYER_PATH`, the enable variable, the enable-list line for the session); a D3D title
-> ignores all of it. One ring per process, the first creator owns it (`fl_shm_host.h`). Attach mode on a
-> running Vulkan title stays Tier 2: only a launch can set the loader's environment. This is
+> ignores all of it. One ring per process, the first creator owns it (`fl_shm_host.h`). ~~Attach mode on a
+> running Vulkan title stays Tier 2~~ **— not what the code does, found 2026-09-15 while checking `legal/ACCURACY.md`:
+> attach mode calls `FlGuardedInject`, which has no presentation-runtime branch (only launch mode's
+> `GuardedInjectWhenReady` refuses a Vulkan title with `TargetIsVulkanLayered`), so a running Vulkan title that
+> passes the guard gets the Direct3D Overlay injected. What it records there is unverified and nothing tests it;
+> whether attach mode should refuse a Vulkan title instead is the owner's open decision.** Only a launch can set
+> the loader's environment. This is
 stated because the state machine above, read literally, meant the 30 s guard
 re-scan — which `19_SAFETY` calls the most important runtime behaviour in the
 capture layer — was not specified to run for Vulkan at all. It runs for **every

@@ -33,7 +33,10 @@
 > `AppDomain.UnhandledException` (any other thread) is Fatal + dump only: the runtime is already ending the process and
 > no dialog can be relied on to appear, so the next bug report offers that dump instead. An unobserved task stays an
 > Error line. A startup failure `RunAsync` catches itself (the ledger will not open, the host will not start) is not an
-> unhandled exception: it is still a Fatal line and exit code 1 with no dialog.
+> unhandled exception: ~~it is still a Fatal line and exit code 1 with no dialog~~ **since 2026-09-15 it is the Fatal
+> line and `Services/StartupFailureDialog`**, a Win32 message box with the exception's message and the log folder, whose
+> Yes opens that folder; exit code 1 either way. Until then nothing on screen said FrameLedger had even tried to start.
+> Tests: `StartupFailureDialogTests`.
 >
 > **The Agent** (no window, so no dialog): the same Fatal + dump from `AppDomain.UnhandledException` and from `Main`'s
 > own catch, once per process whichever sees it first, then the exception stays unhandled, so the exit is the runtime's
