@@ -144,6 +144,10 @@ Native `Menu`, `TabControl`, `ComboBox`, `Slider`, `ListView` are fine — the `
 ## Theming & brushes
 
 - Colors **only** via `{DynamicResource …}` theme keys, e.g. `TextFillColorPrimaryBrush`, `TextFillColorSecondaryBrush`, `ControlFillColorDefaultBrush`, `CardBackgroundFillColorDefaultBrush`, `ApplicationBackgroundBrush`, `AccentTextFillColorPrimaryBrush`, `SystemFillColorCriticalBrush`. `DynamicResource` always (theme can change at runtime); `StaticResource` for theme brushes is a review-blocking bug.
+- **`ui:Badge` `Appearance="Info"` / `Caution` / `Danger` / `Success` are NOT theme colours.** Their backgrounds are
+  `Palette*Brush` from WPF UI's `Palette.xaml` — one fixed Material palette shared by both themes — under the theme's
+  text: Info is white on `#03A9F4` in dark (2.6:1), measured 2026-09-16 on the Games card. Use `Secondary` (theme fill)
+  or the `Pill` style with a `SystemFillColor*BackgroundBrush`; `ContrastTests` refuses the four (`08_UI` §Contrast).
 - Do **not** set `Background` on `FluentWindow` (kills Mica). Page backgrounds transparent by default.
 - Exception to the no-hex rule: the chart palette — defined once per theme in `Styles/ChartPalette.xaml` (two dictionaries), never inline.
 

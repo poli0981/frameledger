@@ -41,6 +41,32 @@
     </Style>
 
     <!--
+        The Games card's hooking state (08_UI §Games). Two states, both from the theme dictionaries: ON is the accent
+        pair the ×FG chip uses, OFF is the Pill's own muted fill with secondary text. It WAS `ui:Badge Appearance="Info"`
+        until 2026-09-16, whose background is WPF UI's PaletteLightBlueBrush — a fixed Material colour outside the
+        theme dictionaries, white-on-#03A9F4 in dark, 2.6:1 — which is the one way to break contrast that
+        AccessibilityTests.NoXamlHardCodesAColour cannot see (08_UI §Contrast). ContrastTests holds both pairs now.
+    -->
+    <Style x:Key="HookStatePill" TargetType="Border" BasedOn="{StaticResource Pill}">
+        <Setter Property="Margin" Value="0" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding HookOn}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="0" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="HookStatePillText" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding HookOn}" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--
         ui:InfoBar, re-templated (16_WPFUI_SYNTAX §Gotchas). WPF UI 4.3.0's own template has no ContentPresenter,
         so an InfoBar's Content (the action button 08_UI §Notifications policy puts on every persistent banner)
         was never rendered: a refusal showed as a red bar with neither the "record this session without measuring
@@ -181,8 +207,14 @@
                                 Visibility="Collapsed">
                             <TextBlock Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" Text="{Binding Model.FactorChip, RelativeSource={RelativeSource TemplatedParent}}" />
                         </Border>
+                        <!--
+                            The qualifier can be a sentence ("FG runtime loaded (sl.dlss_g.dll) — may include generated
+                            frames"); the pill trims it with an ellipsis rather than growing past its host, and the whole
+                            readout's ToolTip carries the full text (2026-09-16: the Dashboard's recent-sessions row clipped it).
+                        -->
                         <Border x:Name="Qualifier" Style="{StaticResource Pill}" Visibility="Collapsed">
                             <TextBlock x:Name="QualifierText" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       MaxWidth="260" TextTrimming="CharacterEllipsis"
                                        Text="{Binding Model.QualifierText, RelativeSource={RelativeSource TemplatedParent}}" />
                         </Border>
                     </StackPanel>
