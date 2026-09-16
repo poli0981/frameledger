@@ -1,3 +1,6 @@
+using System.Globalization;
+using Microsoft.Data.Sqlite;
+using Dapper;
 using System.IO.Compression;
 using System.Text;
 using FluentAssertions;
@@ -110,7 +113,7 @@ public sealed class StoreLibrarySourcesTests : IDisposable
         aw.ExePath.Should().Be(@"D:\Epic Games\AlanWake2\AlanWake2.exe");
         aw.Version.Should().Be("1.2.3");
 
-        string apps = Sub("itch", "apps");
+        string itch = Sub("itch");
         string install = Sub("itch", "apps", "celeste");
         Directory.CreateDirectory(Path.Combine(install, ".itch"));
         using (FileStream f = File.Create(Path.Combine(install, ".itch", "receipt.json.gz")))
@@ -121,8 +124,8 @@ public sealed class StoreLibrarySourcesTests : IDisposable
         }
 
         Sub("itch", "apps", "empty");
-        IReadOnlyList<StoreGame> itch = await new ItchLibrarySource(apps).ListAsync(Ct);
-        StoreGame c = itch.Should().ContainSingle().Subject;
+        IReadOnlyList<StoreGame> receipts = await new ItchLibrarySource(itch).ListAsync(Ct);
+        StoreGame c = receipts.Should().ContainSingle().Subject;
         c.Platform.Should().Be("itch");
         c.StoreId.Should().Be("36776");
         c.Name.Should().Be("Celeste");
@@ -131,6 +134,117 @@ public sealed class StoreLibrarySourcesTests : IDisposable
 
         (await new EpicLibrarySource(Path.Combine(_dir, "nowhere")).ListAsync(Ct)).Should().BeEmpty();
         (await new ItchLibrarySource(Path.Combine(_dir, "nowhere")).ListAsync(Ct)).Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// 2026-09-16: the itch app records its installs in butler.db — install locations the user chose (which need not be
+    /// under %APPDATA%), one cave per install, and butler's own verdict naming the executable. The adapter read only
+    /// the default apps\ folder and found nothing on a machine whose one location was elsewhere.
+    /// </summary>
+    [Fact]
+    public async Task ItchReadsButlersDatabaseFirstAndReceiptsSecond()
+    {
+        string itch = Sub("itch");
+        string location = Sub("elsewhere");
+        string pob = Sub("elsewhere", "plethora-of-bullets-2");
+        await File.WriteAllBytesAsync(Path.Combine(pob, "POB2.exe"), new byte[10], Ct);
+        string dontGo = Sub("elsewhere", "dont-go");
+        Directory.CreateDirectory(Path.Combine(dontGo, "DONT GO"));
+        await File.WriteAllBytesAsync(Path.Combine(dontGo, "DONT GO", "PIZZA MAN.exe"), new byte[10], Ct);
+        string custom = Sub("custom", "web-game");
+        await WriteReceiptAsync(Path.Combine(custom, ".itch", "receipt.json.gz"), 777, "Web Game", Ct);
+        string receiptOnly = Sub("itch", "apps", "celeste");
+        await WriteReceiptAsync(Path.Combine(receiptOnly, ".itch", "receipt.json.gz"), 36776, "Celeste", Ct);
+        Directory.CreateDirectory(Path.Combine(dontGo, ".itch"));
+        await WriteReceiptAsync(Path.Combine(dontGo, ".itch", "receipt.json.gz"), 3212881, "DONT GO (receipt)", Ct);
+        await WriteButlerAsync(Path.Combine(itch, "db", "butler.db"), location, [
+            (1659887, "plethora-of-bullets-2", "", "Plethora of Bullets 2", "{\"basePath\":\"x\",\"candidates\":[{\"path\":\"POB2.exe\",\"flavor\":\"windows\",\"arch\":\"amd64\"}]}"),
+            (3212881, "dont-go", "", "DONT GO", "{\"candidates\":[{\"path\":\"DONT GO/PIZZA MAN.exe\",\"flavor\":\"windows\"}]}"),
+            (777, "", custom, "Web Game", "{\"candidates\":[{\"path\":\"index.html\",\"flavor\":\"html\"}]}"),
+            (999, "gone", "", null, "not json"),
+        ]);
+        List<string> log = [];
+
+        IReadOnlyList<StoreGame> games = await new ItchLibrarySource(itch, log.Add).ListAsync(Ct);
+
+        games.Should().HaveCount(5, "four caves and one receipt-only install; the receipt beside a cave is the same row");
+        StoreGame p = games.Single(g => string.Equals(g.StoreId, "1659887", StringComparison.Ordinal));
+        p.Name.Should().Be("Plethora of Bullets 2");
+        p.InstallDirectory.Should().Be(pob);
+        p.ExePath.Should().Be(Path.Combine(pob, "POB2.exe"), "butler's verdict names the executable");
+        StoreGame d = games.Single(g => string.Equals(g.StoreId, "3212881", StringComparison.Ordinal));
+        d.Name.Should().Be("DONT GO", "the database's title wins over the receipt's");
+        d.ExePath.Should().Be(Path.Combine(dontGo, "DONT GO", "PIZZA MAN.exe"), "a verdict path is relative to the install and uses forward slashes");
+        games.Single(g => string.Equals(g.StoreId, "777", StringComparison.Ordinal)).Should().BeEquivalentTo(new { InstallDirectory = custom, ExePath = (string?)null }, "a custom install folder is the install; an html flavor is not an executable");
+        games.Single(g => string.Equals(g.StoreId, "999", StringComparison.Ordinal)).Should().BeEquivalentTo(new { Name = "gone", ExePath = (string?)null }, "no title anywhere falls back to the folder name; a verdict that will not parse leaves the guess to the locator");
+        games.Single(g => string.Equals(g.StoreId, "36776", StringComparison.Ordinal)).InstallDirectory.Should().Be(receiptOnly, "apps\\ is still scanned for what the database does not list");
+        log.Should().ContainSingle().Which.Should().Contain("butler.db read: 1 location(s), 4 cave(s), 4 title(s)").And.Contain("1 receipt(s), 1 new", "only the apps folder is scanned for receipts; the one beside a cave elsewhere is read for its title, not counted here");
+    }
+
+    [Fact]
+    public async Task ItchWithoutADatabaseOrWithAnUnreadableOneStillReadsReceipts()
+    {
+        string itch = Sub("itch");
+        await WriteReceiptAsync(Path.Combine(Sub("itch", "apps", "celeste"), ".itch", "receipt.json.gz"), 36776, "Celeste", Ct);
+        List<string> log = [];
+
+        (await new ItchLibrarySource(itch, log.Add).ListAsync(Ct)).Should().ContainSingle().Which.StoreId.Should().Be("36776");
+        log.Should().ContainSingle().Which.Should().Contain("no ").And.Contain("butler.db");
+
+        Directory.CreateDirectory(Path.Combine(itch, "db"));
+        await File.WriteAllTextAsync(Path.Combine(itch, "db", "butler.db"), "this is not a database", Ct);
+        log.Clear();
+        (await new ItchLibrarySource(itch, log.Add).ListAsync(Ct)).Should().ContainSingle();
+        log.Should().ContainSingle().Which.Should().Contain("butler.db unreadable");
+
+        log.Clear();
+        (await new ItchLibrarySource(Path.Combine(_dir, "nowhere"), log.Add).ListAsync(Ct)).Should().BeEmpty();
+        log.Should().ContainSingle().Which.Should().Contain("not installed");
+    }
+
+    private static async Task WriteReceiptAsync(string path, long id, string title, CancellationToken ct)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        FileStream f = File.Create(path);
+        await using (f.ConfigureAwait(false))
+        {
+            var gz = new GZipStream(f, CompressionLevel.Fastest);
+            await using (gz.ConfigureAwait(false))
+            {
+                byte[] json = Encoding.UTF8.GetBytes("{\"game\":{\"id\":" + id.ToString(CultureInfo.InvariantCulture) + ",\"title\":\"" + title + "\"}}");
+                await gz.WriteAsync(json, ct).ConfigureAwait(false);
+            }
+        }
+    }
+
+    /// <summary>The three butler tables the adapter reads, with the columns it names (the real ones carry more).</summary>
+    private static async Task WriteButlerAsync(string path, string locationPath,
+        IReadOnlyList<(long GameId, string Folder, string Custom, string? Title, string Verdict)> caves)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        var c = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        await using (c.ConfigureAwait(false))
+        {
+            await c.OpenAsync(Ct).ConfigureAwait(false);
+            await c.ExecuteAsync(new CommandDefinition(
+                """
+                CREATE TABLE install_locations (id TEXT PRIMARY KEY, path TEXT);
+                CREATE TABLE games (id INTEGER PRIMARY KEY, title TEXT, classification TEXT);
+                CREATE TABLE caves (id TEXT PRIMARY KEY, game_id INTEGER, install_location_id TEXT, install_folder_name TEXT, custom_install_folder TEXT, verdict TEXT);
+                INSERT INTO install_locations VALUES ('loc-1', @location);
+                """, new { location = locationPath }, cancellationToken: Ct)).ConfigureAwait(false);
+            foreach ((long gameId, string folder, string custom, string? title, string verdict) in caves)
+            {
+                if (title is not null)
+                {
+                    await c.ExecuteAsync(new CommandDefinition("INSERT INTO games VALUES (@id, @title, 'game')", new { id = gameId, title }, cancellationToken: Ct)).ConfigureAwait(false);
+                }
+
+                await c.ExecuteAsync(new CommandDefinition(
+                    "INSERT INTO caves VALUES (@id, @gameId, 'loc-1', @folder, @custom, @verdict)",
+                    new { id = Guid.NewGuid().ToString("N"), gameId, folder, custom, verdict }, cancellationToken: Ct)).ConfigureAwait(false);
+            }
+        }
     }
 
     [Fact]

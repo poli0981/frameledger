@@ -337,7 +337,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IStoreLibrarySource>(static _ => new SteamLibrarySource());
         services.AddSingleton<IStoreLibrarySource>(static _ => new GogLibrarySource());
         services.AddSingleton<IStoreLibrarySource>(static _ => new EpicLibrarySource());
-        services.AddSingleton<IStoreLibrarySource>(static _ => new ItchLibrarySource());
+        services.AddSingleton<IStoreLibrarySource>(static _ => new ItchLibrarySource(log: static line => Serilog.Log.Information("{Line}", line)));
         services.AddSingleton<IExecutableLocator, ExecutableLocator>();
         services.AddSingleton<IExecutableIdentitySource, ExecutableIdentitySource>();
         services.AddSingleton(static sp => new LibraryImporter(

@@ -251,6 +251,21 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **itch.io import reads butler's database, so an install location outside `%APPDATA%` is found (2026-09-16).**
+  `ItchLibrarySource` scanned `%APPDATA%\itch\apps\*\.itch\receipt.json.gz` and nothing else; on the owner's machine
+  the itch app's one install location is `D:\another\it`, `apps\` is empty, and the import logged `itch — 0 title(s)`
+  with no reason — every itch title had to be added by hand. The app records its installs in
+  `%APPDATA%\itch\db\butler.db`: `install_locations` (the folders the user chose), `caves` (one per install, with the
+  folder name or a custom folder) and its own `verdict` JSON naming the executable butler launches. The adapter now
+  copies that database to a temporary directory (the running app holds it in WAL mode), opens the copy read-only,
+  joins the three tables, takes the first Windows candidate of the verdict as the executable (an HTML or Love2D game
+  leaves the locator's guess), and still scans `apps\` receipts for anything the database does not list; an install
+  found both ways is one row, the database's. It logs one line per run — what was consulted and what each source
+  yielded — through the importer's sink, so `0 title(s)` has a reason beside it. `ItchLibrarySource`'s constructor
+  now takes the itch directory (`%APPDATA%\itch`), not `apps\`. Tests: `StoreLibrarySourcesTests` (a butler.db built
+  in the test with a location elsewhere, a custom folder, a verdict path with forward slashes, an HTML-only verdict,
+  a verdict that will not parse, a receipt beside a cave and a receipt-only install; no database and a garbage
+  database both fall back to receipts and say so). Docs: `05_DETECTION` §Platform signatures.
 - **The Games card's hooking chip reads at 2.6:1 no more, and the Dashboard's FG qualifier no longer clips
   (2026-09-16).** "Hooking on/off" was `ui:Badge Appearance="Info"`: WPF UI paints that with `PaletteLightBlueBrush`,
   a fixed Material colour outside both theme dictionaries, under the theme's white text — `#03A9F4` in dark, below
