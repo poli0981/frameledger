@@ -26,6 +26,14 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
   wrong by the end of the same evening; it is corrected rather than quietly deleted, because a frequency
   claim made from one observation is exactly the shape this file keeps catching.
   **Re-run before investigating**; if it reproduces, read the module list and the scan-set reason, not the test.
+  - **Two more shapes had one cause, found and fixed 2026-09-16** after four failures in one evening's merge train:
+    `AKilledHostLeavesAPartialThatRecoverTurnsIntoAnInterruptedSession` ("the process cannot access the file …
+    `.partial`") and `WithNoConsentRecordTheHostRefusesAndNothingIsEverInjected` (a leftover consent record). The
+    suite's `Kill` helper returned before the killed host had released its files, so the next line read a `.partial`
+    the dead process still held, and the ledger delete in `Dispose` silently failed and left the record for the next
+    case. `Kill` now waits for exit (bounded, asserted) and the delete retries. Not §S19(b) either — a test-harness
+    race, and the third flake shape of the day (the registry-subtree race between `VkLayerRegistrationTests` and the
+    GOG reader's test, fixed in #188) was the same kind.
 - **A re-run ERASES the evidence, which is why the count above had to be kept by hand.**
   `gh run rerun --failed` updates the original run's conclusion, so `gh run list` showed **18 success, 1
   cancelled, 0 failed** across the twenty runs that contained all three failures above. Anyone measuring

@@ -89,16 +89,26 @@ public sealed class CaptureHostEndToEndTests : IDisposable
     }
 
     /// <summary>The ledger and WAL's two sidecars; a guarded delete of each.</summary>
+    /// <summary>
+    /// Deletes the host's ledger, retrying for a few seconds: a host this suite just killed may still hold the file
+    /// while Windows tears the process down, and a delete that silently failed is how the refusal case found a
+    /// leftover consent record on CI (2026-09-16, three runs in one evening).
+    /// </summary>
     private static void DeleteHostLedger()
     {
         foreach (string suffix in new[] { "", "-wal", "-shm" })
         {
-            try
+            string path = HostLedger + suffix;
+            for (int attempt = 0; attempt < 20 && File.Exists(path); attempt++)
             {
-                File.Delete(HostLedger + suffix);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
+                try
+                {
+                    File.Delete(path);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                {
+                    Thread.Sleep(250);
+                }
             }
         }
     }
@@ -158,6 +168,12 @@ public sealed class CaptureHostEndToEndTests : IDisposable
         return Process.Start(psi)!;
     }
 
+    /// <summary>
+    /// Kills the process tree AND waits for it to be gone. `Kill` returns before the process has released its
+    /// files; the kill-and-recover case then opened the `.partial` the dead host still held ("being used by another
+    /// process"), and the refusal case's ledger delete failed the same way — the two CaptureHost flakes CI kept
+    /// producing (13_CI_CD's tally). A wait bounded at 15 s: a process that will not die is a failure to report.
+    /// </summary>
     private static void Kill(Process p)
     {
         try
@@ -165,6 +181,7 @@ public sealed class CaptureHostEndToEndTests : IDisposable
             if (!p.HasExited)
             {
                 p.Kill(entireProcessTree: true);
+                p.WaitForExit(15_000).Should().BeTrue("a killed process must be gone before its files are read or deleted");
             }
         }
         catch (InvalidOperationException)
