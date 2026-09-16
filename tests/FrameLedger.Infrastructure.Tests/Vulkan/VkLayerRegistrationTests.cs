@@ -10,7 +10,11 @@ public sealed class VkLayerRegistrationTests
     [Fact]
     public void RegistersReadsBackAndUnregistersIncludingAStaleEntry()
     {
-        string key = @"SOFTWARE\FrameLedger.Test\" + Guid.NewGuid().ToString("N") + @"\ImplicitLayers";
+        // Its OWN subtree, and only that is deleted in the finally: SOFTWARE\FrameLedger.Test is shared with
+        // StoreLibrarySourcesTests (the GOG reader), and deleting the whole tree while that test runs emptied its
+        // keys under it — measured on CI 2026-09-16 (#188 round 2: "expected a single item, collection empty").
+        string own = @"SOFTWARE\FrameLedger.Test\" + Guid.NewGuid().ToString("N");
+        string key = own + @"\ImplicitLayers";
         var registration = new VkLayerRegistration(key);
         string manifest = @"C:\Users\x\AppData\Local\FrameLedger\vklayer\" + VkLayerLaunchEnvironment.ManifestFileName;
         string stale = @"D:\old\vklayer\" + VkLayerLaunchEnvironment.ManifestFileName;
@@ -33,7 +37,7 @@ public sealed class VkLayerRegistrationTests
         }
         finally
         {
-            Registry.CurrentUser.DeleteSubKeyTree(@"SOFTWARE\FrameLedger.Test", throwOnMissingSubKey: false);
+            Registry.CurrentUser.DeleteSubKeyTree(own, throwOnMissingSubKey: false);
         }
     }
 
