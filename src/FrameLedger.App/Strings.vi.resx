@@ -460,6 +460,24 @@
   <data name="Fg_Refusal_Unknown" xml:space="preserve">
     <value>phép đếm không cho kết quả</value>
   </data>
+  <data name="Fg_RefusalDetail_NonUniform_Format" xml:space="preserve">
+    <value>Bucket {0}/{1} đo được {2} so với {3} của cả phiên, trên {4} mẫu.</value>
+  </data>
+  <data name="Fg_RefusalDetail_NoTokens" xml:space="preserve">
+    <value>không có token</value>
+  </data>
+  <data name="Fg_RefusalDetail_MultipleStreams_Format" xml:space="preserve">
+    <value>{0} swapchain đã present trong phiên.</value>
+  </data>
+  <data name="Fg_RefusalDetail_TooShort_Format" xml:space="preserve">
+    <value>{0} mẫu; cần ít nhất {1} mẫu để kiểm tra.</value>
+  </data>
+  <data name="Fg_RefusalDetail_AmbiguousBand_Format" xml:space="preserve">
+    <value>presents ÷ tokens = {0}, nằm giữa {1} (không FG) và {2} (có FG).</value>
+  </data>
+  <data name="Fg_RefusalDetail_Records_Format" xml:space="preserve">
+    <value>{0} bản ghi.</value>
+  </data>
   <data name="Fg_None" xml:space="preserve">
     <value>Không có frame generation</value>
   </data>

@@ -24,6 +24,9 @@ public sealed record FpsReadoutModel
     /// <summary>The row's <c>fg_refusal</c> token when the count refused; the chip's tooltip names it.</summary>
     public string? Refusal { get; init; }
 
+    /// <summary>The row's <c>fg_refusal_detail</c> JSON (schema 0005) when stored; the tooltip's numbers. Null on the live card.</summary>
+    public string? RefusalDetail { get; init; }
+
     /// <summary>The raw runtime census, so a <c>fg_runtime_loaded</c> chip can name the module (<c>08_UI</c> §FPS display rule).</summary>
     public long? RuntimeCensus { get; init; }
 
@@ -56,7 +59,7 @@ public sealed record FpsReadoutModel
     public string? QualifierTooltip => Kind switch
     {
         FpsReadoutKind.Presented when Qualifier is FpsQualifier q => FpsPresentation.QualifierTooltip(q),
-        FpsReadoutKind.IdentifiedUncounted => FpsPresentation.IdentifiedTooltip(Technology, Refusal),
+        FpsReadoutKind.IdentifiedUncounted => FpsPresentation.IdentifiedTooltip(Technology, Refusal, RefusalDetail),
         _ => null,
     };
 

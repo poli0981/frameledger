@@ -7,6 +7,7 @@ namespace FrameLedger.Application.Recording;
 [JsonSerializable(typeof(Dictionary<string, string?>))]
 [JsonSerializable(typeof(Dictionary<string, int>))]
 [JsonSerializable(typeof(NgxDriverWords))]
+[JsonSerializable(typeof(FgRefusalDetail))]
 public sealed partial class RecordingJsonContext : JsonSerializerContext
 {
 }

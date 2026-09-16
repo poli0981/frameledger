@@ -181,6 +181,32 @@ public sealed class FpsPresentationTests
         InEnglish(() => FpsPresentation.RefusalText("something_new")).Should().Be("the count did not resolve", "an unknown token is the honest unknown");
     }
 
+    /// <summary>
+    /// 2026-09-16: the owner's Hell Is Us, Black Myth: Wukong and Cronos rows refused <c>non_uniform</c> and Onimusha
+    /// <c>multiple_streams</c>, and the tooltip could only repeat the kind. With <c>fg_refusal_detail</c> (schema 0005)
+    /// it says which bucket, its ratio and the window's — the numbers the aggregator had and threw away.
+    /// </summary>
+    [Fact]
+    public void TheIdentifiedTooltipCarriesTheRefusalsNumbersWhenTheRowStoredThem()
+    {
+        string detail = "{\"Kind\":\"non_uniform\",\"Subject\":\"factor\",\"Count\":53,\"BucketIndex\":2,\"BucketCount\":8,\"BucketValue\":2.25,\"Overall\":3.65}";
+        SessionRow row = Hooked("dlssg", native: null, displayed: null, factor: null, presented: 304.35, qualifier: "fg_runtime_loaded", refusal: "non_uniform") with { FgRefusalDetail = detail };
+
+        FpsReadoutModel m = InEnglish(() => FpsPresentation.FromRow(row));
+
+        m.Kind.Should().Be(FpsReadoutKind.IdentifiedUncounted);
+        InEnglish(() => m.QualifierTooltip).Should().Contain("changed mid-session").And.Contain("Bucket 3 of 8 measured 2.25 against 3.65 for the whole session, over 53 samples.");
+        InEnglish(() => m.QualifierText).Should().Be("DLSS-G active — factor not counted", "the chip does not grow; the numbers are the tooltip's");
+
+        string empty = "{\"Kind\":\"non_uniform\",\"Subject\":\"factor\",\"Count\":40,\"BucketIndex\":7,\"BucketCount\":8,\"BucketValue\":null,\"Overall\":3.9}";
+        InEnglish(() => FpsPresentation.IdentifiedTooltip("DLSS-G", "non_uniform", empty)).Should().Contain("Bucket 8 of 8 measured no tokens against 3.90", "a bucket with no tokens is the loading-screen shape, not infinity");
+        InEnglish(() => FpsPresentation.IdentifiedTooltip("DLSS-G", "multiple_streams", "{\"Kind\":\"multiple_streams\",\"Subject\":\"factor\",\"Count\":2,\"BucketIndex\":0,\"BucketCount\":0,\"BucketValue\":null,\"Overall\":0}"))
+            .Should().Contain("2 swapchains presented during the session.");
+        InEnglish(() => FpsPresentation.IdentifiedTooltip("DLSS-G", "no_evaluations", "{\"Kind\":\"no_evaluations\",\"Subject\":\"factor\",\"Count\":0,\"BucketIndex\":0,\"BucketCount\":0,\"BucketValue\":null,\"Overall\":0}"))
+            .Should().Be(InEnglish(() => FpsPresentation.IdentifiedTooltip("DLSS-G", "no_evaluations")), "a kind with no numbers worth a sentence adds nothing");
+        InEnglish(() => FpsPresentation.IdentifiedTooltip("DLSS-G", "non_uniform", "not json")).Should().Be(InEnglish(() => FpsPresentation.IdentifiedTooltip("DLSS-G", "non_uniform")), "an unparsable detail is the old tooltip, never an exception");
+    }
+
     /// <summary>A counted factor keeps the generated shape; the label carries the chip, without a trailing space.</summary>
     [Fact]
     public void ACountedFactorKeepsTheGeneratedLabelWithItsChip()
