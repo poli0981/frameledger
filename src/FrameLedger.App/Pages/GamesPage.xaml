@@ -61,7 +61,9 @@
                                               Visibility="{Binding HasPlatform, Converter={StaticResource BoolToVis}}" />
                                     <ui:Badge Appearance="Secondary" Margin="0,0,6,0" Content="{Binding EngineText}"
                                               Visibility="{Binding HasEngine, Converter={StaticResource BoolToVis}}" />
-                                    <ui:Badge Appearance="Info" Content="{Binding HookText}" />
+                                    <Border Style="{StaticResource HookStatePill}">
+                                        <TextBlock Style="{StaticResource HookStatePillText}" Text="{Binding HookText}" />
+                                    </Border>
                                 </StackPanel>
                                 <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" Text="{Binding SessionsText}" />
                                 <ui:TextBlock Appearance="Secondary" Text="{Binding PlaytimeText}" />

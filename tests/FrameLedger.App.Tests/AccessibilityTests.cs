@@ -43,7 +43,7 @@ public sealed class AccessibilityTests
         throw new InvalidOperationException("the repository root (FrameLedger.slnx) is not above " + AppContext.BaseDirectory);
     }
 
-    private static IEnumerable<(string File, XDocument Xaml)> AppXaml()
+    internal static IEnumerable<(string File, XDocument Xaml)> AppXaml()
     {
         string app = Path.Combine(RepoRoot(), "src", "FrameLedger.App");
         foreach (string file in Directory.EnumerateFiles(app, "*.xaml", SearchOption.AllDirectories)
