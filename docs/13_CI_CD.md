@@ -82,6 +82,15 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 > workflow has not been exercised by a tag yet — its publish, tree assertion and `vpk pack` steps were run by hand on
 > 2026-09-14 (`12_BUILD` §Publish & package has the sizes), the release upload was not. The first tag is the rest of the measurement; until then every other claim below is
 > what the file says, not what a run showed.
+>
+> **A dry run exists since 2026-09-16 (P5 prep).** `workflow_dispatch` with a `version` input runs the identical
+> job — gate, publish, runtime licences, tree assertion, `vpk pack`, checksums, the artifact upload — and skips only
+> `gh release create`; no tag is made. Two things differ from a tag run, both deliberate: the version comes from the
+> input (its numeric core must still equal `VERSION`), and a missing `## [x.y.z]` section is a printed warning with
+> placeholder notes rather than a stop, because that section is written in the tag commit and a rehearsal precedes
+> it. The artifact is `release-<version>-dry-run`. Run it with `gh workflow run release.yml -f version=0.1.0-beta.1`
+> (on the branch that carries the file, `--ref <branch>`); the result is what the first tag will do, minus the
+> upload. The rehearsal's outcome is recorded in `CHANGELOG.md` when it has run.
 
 - `runs-on: windows-latest`, the same .NET / MSVC / clang-format pins as `ci.yml`, `permissions: contents: write`
   (the Release API) and nothing else.
@@ -160,10 +169,24 @@ Central package management makes Dependabot PRs single-file diffs.
 - Release: in ONE commit, bump `VERSION` and move the `[Unreleased]` entries of `CHANGELOG.md` under `## [X.Y.Z] - date` (Keep a Changelog format) → tag `vX.Y.Z` → `release.yml` does the rest (and refuses a tag that disagrees with either file) → smoke-test the produced installer on a clean Win 10 VM + Win 11 (manual checklist in 14_TESTING §Release smoke).
 - Pre-releases: `vX.Y.Z-beta.N` tags mark the GitHub release as pre-release; the App's `stable` channel ignores them and its `beta` channel (Settings ▸ Updates, `update.channel`) includes them — built with P4 PR-5, so ~~explicit beta channel is v2 backlog~~ is struck. The managed assemblies carry the full tag version; the native VERSIONINFO blocks carry the numeric core (`12_BUILD` §Version).
 
-## Repo hygiene checklist (one-time setup)
+## Repo hygiene checklist
 
-- [ ] Add repo-local `ci.yml`; add caller stubs for CodeQL + release pointing at `poli0981/.github` with the explicit permissions above
-- [ ] Enable Dependabot alerts + security updates
-- [ ] Add `bug_report.yml`, `feature_request.yml` issue forms; PR template referencing CLAUDE.md definition-of-done
-- [ ] Branch protection as above
-- [ ] Repo topics: `windows`, `wpf`, `benchmark`, `fps`, `presentmon`, `game-performance`
+> Rewritten 2026-09-16 (P5 prep). The list below had every box unticked while three of them were done in the
+> tree, and its first box asked for caller stubs this file's own opening paragraph says were never the design.
+> In-tree items are stated as done with their location; the rest are GitHub settings only the owner can set,
+> listed as such rather than as work a PR could close.
+
+**In the tree — done:**
+
+- [x] Repo-local `ci.yml`, `codeql.yml`, `release.yml`, `rules-publish.yml` (all four repo-local by decision, §Workflows); ~~caller stubs pointing at `poli0981/.github`~~ — never the design, see the first paragraph
+- [x] Issue forms `bug_report.yml`, `feature_request.yml`, `safety_gap.yml`; `ISSUE_TEMPLATE/config.yml` pointing a vulnerability at private reporting; PR template referencing CLAUDE.md's definition of done
+- [x] `.github/dependabot.yml` (nuget + github-actions, weekly)
+- [x] `SECURITY.md` — the private route for a vulnerability, the public route for a safety gap, and the honest response intent (2026-09-16)
+- [x] A release rehearsal: `release.yml` `workflow_dispatch` runs every step but the Release itself (§release.yml)
+
+**GitHub settings — the owner's (`HANDOFF` §Owner-only):**
+
+- [ ] Branch protection as §Branch & release policy states; `Rules / validate` as a required check (§S23-2, after its skip-shim)
+- [ ] Dependabot alerts + security updates (the manifest is in the tree; the alerts are a setting)
+- [ ] Private vulnerability reporting enabled (Settings ▸ Security), so `config.yml`'s link resolves
+- [ ] Repo topics: `windows`, `wpf`, `benchmark`, `fps`, `game-performance` (~~`presentmon`~~ — dropped 2026-08-27, §G)
