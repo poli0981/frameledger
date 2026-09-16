@@ -60,6 +60,19 @@ public sealed class LedgerDatabaseTests
             .And.Contain("exe_size_bytes", "the consent fingerprint keeps its own columns; the sweep never writes them");
     }
 
+    /// <summary>Schema 0005 (2026-09-16): <c>sessions.fg_refusal_detail</c>, the numbers behind the refusal.</summary>
+    [Fact]
+    public async Task ScriptFiveAddsTheFgRefusalDetailColumn()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(5);
+        IReadOnlyList<string> columns = await f.Db.ReadAsync(async (c, ct) =>
+            (IReadOnlyList<string>)[.. await c.QueryAsync<string>(new CommandDefinition(
+                "SELECT name FROM pragma_table_info('sessions')", cancellationToken: ct)).ConfigureAwait(false)], Ct);
+        columns.Should().Contain("fg_refusal_detail").And.Contain("fg_refusal", "0005 appends beside 0003's column, it edits nothing");
+    }
+
     [Fact]
     public async Task ReopeningIsANoOp()
     {

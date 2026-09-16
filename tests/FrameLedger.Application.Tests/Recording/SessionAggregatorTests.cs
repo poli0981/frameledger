@@ -77,11 +77,13 @@ public sealed class SessionAggregatorTests
         b.FgMode.Should().Be("dlssg");
         b.FgFactor.Should().BeNull();
         b.FgRefusal.Should().Be("no_evaluations");
+        FgRefusalDetail.Parse(b.FgRefusalDetail).Should().BeEquivalentTo(new { Kind = "no_evaluations", Subject = "factor" }, "schema 0005 keeps the refusal's numbers beside its kind");
 
         // A counted factor carries no refusal.
         SessionRow counted = SessionAggregator.Aggregate(SessionFixtures.Skeleton(), SessionFixtures.Hooked(SessionFixtures.Stream(2_000, _presentOnly | FlMeasured.Fg | FlMeasured.FgCounts, fgPerBatch: 2), writer)).Row;
         counted.FgFactor.Should().BeApproximately(2, 0.01);
         counted.FgRefusal.Should().BeNull();
+        counted.FgRefusalDetail.Should().BeNull("a published factor has nothing to explain");
     }
 
     [Fact]

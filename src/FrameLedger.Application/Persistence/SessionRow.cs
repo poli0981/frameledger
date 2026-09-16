@@ -113,6 +113,13 @@ public sealed record SessionRow
     /// </summary>
     public string? FgRefusal { get; init; }
 
+    /// <summary>
+    /// The numbers behind <see cref="FgRefusal"/> — <c>Application.Recording.FgRefusalDetail</c> as JSON (schema 0005):
+    /// the bucket that departed, its ratio and the window's, the stream or record count. Null when a factor stands or
+    /// the writer predates the column. The tooltip's material, never an input to any number.
+    /// </summary>
+    public string? FgRefusalDetail { get; init; }
+
     public double? PresentedFps { get; init; }
 
     public string? PresentedQualifier { get; init; }

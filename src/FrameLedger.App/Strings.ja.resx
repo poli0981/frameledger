@@ -613,6 +613,30 @@
     <value>計数が確定しませんでした</value>
     <comment>review</comment>
   </data>
+  <data name="Fg_RefusalDetail_NonUniform_Format" xml:space="preserve">
+    <value>セッション全体の {3} に対し、バケット {0}/{1} は {2} でした（{4} サンプル）。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_RefusalDetail_NoTokens" xml:space="preserve">
+    <value>トークンなし</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_RefusalDetail_MultipleStreams_Format" xml:space="preserve">
+    <value>セッション中に {0} 個のスワップチェーンが present しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_RefusalDetail_TooShort_Format" xml:space="preserve">
+    <value>{0} サンプル。確認には少なくとも {1} 必要です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_RefusalDetail_AmbiguousBand_Format" xml:space="preserve">
+    <value>presents ÷ tokens = {0}。{1}（なし）と {2}（生成）の間です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_RefusalDetail_Records_Format" xml:space="preserve">
+    <value>{0} 件のレコード。</value>
+    <comment>review</comment>
+  </data>
   <data name="Fg_None" xml:space="preserve">
     <value>フレーム生成なし</value>
     <comment>review</comment>
