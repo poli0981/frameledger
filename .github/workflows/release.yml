@@ -107,6 +107,9 @@ jobs:
             if (-not $dry) { throw 'release notes' }
             Write-Host "::warning::CHANGELOG.md has no '## [$full]' section yet - a dry run continues with placeholder notes; a real tag stops here"
             [System.IO.File]::WriteAllText('out/notes.md', "DRY RUN of $full - CHANGELOG.md has no ``## [$full]`` section yet.`n", [System.Text.UTF8Encoding]::new($false))
+            # The runner's pwsh wrapper ends the step with `exit $LASTEXITCODE`, so a handled failure must clear it
+            # (measured 2026-09-16: the first rehearsal printed the warning and then failed with the script's exit 1).
+            $global:LASTEXITCODE = 0
           }
           "version=$full" >> $env:GITHUB_OUTPUT
           "prerelease=$pre" >> $env:GITHUB_OUTPUT
