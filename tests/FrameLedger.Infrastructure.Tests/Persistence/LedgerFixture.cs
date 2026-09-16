@@ -17,13 +17,13 @@ internal sealed class LedgerFixture : IAsyncDisposable
     public static async Task<LedgerFixture> OpenAsync(int busyTimeoutMs = LedgerDatabase.DefaultBusyTimeoutMs)
     {
         var f = new LedgerFixture();
-        f.Db = await LedgerDatabase.OpenAsync(f.Path, busyTimeoutMs, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        f.Db = await LedgerDatabase.OpenAsync(f.Path, busyTimeoutMs, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         return f;
     }
 
     /// <summary>A second, independent connection to the same file — another process, as far as SQLite is concerned.</summary>
     public Task<LedgerDatabase> OpenAnotherAsync(CancellationToken ct, int busyTimeoutMs = LedgerDatabase.DefaultBusyTimeoutMs) =>
-        LedgerDatabase.OpenAsync(Path, busyTimeoutMs, ct);
+        LedgerDatabase.OpenAsync(Path, busyTimeoutMs, ct: ct);
 
     public async ValueTask DisposeAsync()
     {

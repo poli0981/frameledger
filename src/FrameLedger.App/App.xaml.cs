@@ -85,7 +85,7 @@ public partial class App : System.Windows.Application
         int exitCode = 0;
         try
         {
-            _db = await LedgerDatabase.OpenAsync(UiPaths.Database).ConfigureAwait(true);
+            _db = await LedgerDatabase.OpenAsync(UiPaths.Database, diagnostics: static line => Log.Information("{Line}", line)).ConfigureAwait(true);
             var store = new SqliteSettingsStore(_db);
             var appearance = new AppearanceSettings(store);
             await appearance.LoadAsync().ConfigureAwait(true);
@@ -135,7 +135,8 @@ public partial class App : System.Windows.Application
             var values = new Dictionary<string, string>(StringComparer.Ordinal);
             try
             {
-                LedgerDatabase db = await LedgerDatabase.OpenAsync(UiPaths.Database).ConfigureAwait(true);
+                // Read-only: a diagnostic run against a ledger at another schema must report it, not migrate it (2026-09-16).
+                LedgerDatabase db = await LedgerDatabase.OpenReadOnlyAsync(UiPaths.Database).ConfigureAwait(true);
                 await using (db.ConfigureAwait(true))
                 {
                     schema = db.SchemaVersion;

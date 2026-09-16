@@ -1410,6 +1410,14 @@ deferred with a written rationale.
 The mechanical ones live in the toolchain notes; these are the ones that cost a *wrong
 diagnosis*.
 
+- **A VERB THAT PRINTS WAS A WRITER UNTIL 2026-09-16, AND THE OWNER'S LEDGER IS NOT A FIXTURE.** `--console
+  sessions` against `%LOCALAPPDATA%\FrameLedger\ledger.db` applied two migration scripts, because every verb opened
+  through the one migrating path. The print verbs open read-only now (`Program.PrintsOnly`; a schema older than the
+  build is refused, exit 7) — but the rule that outlives the fix is: **nothing from a session is run against the
+  owner's data directory unless the owner asks for exactly that**; `--data-dir` exists for everything else. The same
+  day's ledger held a whole day of rows only in a WAL a fresh connection discarded (`06_DATA_MODEL` §Migrations
+  carries the shape); if `ledger: wal at open` in `agent-*.log` or `ui-*.log` reports frames that a passive checkpoint
+  did not move while no other FrameLedger process is running, stop and read that note before touching the file.
 - **THE TESTS WRITE INTO THE REAL DATA FOLDER, AND THAT IS NOT A SWITCH TO ADD.** The Overlay's log path is
   `SHGetKnownFolderPath`, never the environment (§S21), and the tests inject the shipped DLL, so 2492 hook-harness
   logs had piled up in the owner's `%LOCALAPPDATA%\FrameLedger\logs` by 2026-09-15. Each test binary now sweeps the
