@@ -2462,7 +2462,8 @@ produced no false refusal on any real install.
 
 ## 14 · The P2 milestone and the FPS-impact run *(slots — the owner's runs)*
 
-**Nothing below has been run.** The section exists because P2's code is finished and its two
+**Nothing below has been run** *(written 2026-09-10; §14.1's row half is read 2026-09-16 — see there — and §14.2–14.4 are
+still unrun)*. The section exists because P2's code is finished and its two
 remaining obligations are measurements a script cannot take: a real title, read against its own
 settings menu, and a benchmark whose number only the operator can see. Written as empty slots with
 the exact commands rather than left absent, so the next session cannot mistake "not measured" for
@@ -2487,14 +2488,32 @@ FrameLedger.Agent --console launch         --exe "<title>.exe" --seconds 600
 FrameLedger.Agent --console sessions --last 1
 ```
 
+**The row half is read — 2026-09-16, the shipped Agent, not the console.** The owner ran the App with its `--serve`
+Agent for an afternoon (18 hooked sessions, attach mode, `late_attach = 1`, every one watcher-driven from a Steam
+launch rather than the `launch` verb above — a Steam title started from its Shipping executable relaunches through
+Steam, so the console recipe is the wrong vehicle for a Steam library and the product's own path is the right one).
+`sessions.id = 10`, **Lies of P**, 16:11, 147 s, `d3d12`, 16,221 frames, `guard_ticks_published = 5`, Overlay
+`dcf5796bf2a6-dirty`, read from the ledger (rebuilt that evening from its WAL — `06_DATA_MODEL` §Migrations carries
+that incident; the row is the row):
+
 | Field | Read from the row | The game's own menu | Agree? |
 |---|---|---|---|
-| `upscaler` | | | |
-| `upscaler_quality` | | | *(`N/A` is the measured answer on every title so far — §9, P0 exit criterion 1)* |
-| `render_w` × `render_h` → `output_w` × `output_h` | | | |
-| `fg_mode` / `fg_factor` | | | |
-| `rt_flag` | | | |
-| `telemetry_source` | | *(expect `l1+lhm+nvapi` on this box since PR-E2)* | |
+| `upscaler` | `fsr3` (`fg_source = api`) | *owner to read* | |
+| `upscaler_quality` | `NULL` (0xFF → not stored, #183) | | *(`N/A` is the measured answer on every title so far — §9, P0 exit criterion 1; FSR 3 carries no Streamline `DLSSOptions` to chain, so it is the expected answer here too)* |
+| `render_w` × `render_h` → `output_w` × `output_h` | **1506 × 848 → 2560 × 1440** (`upscale_ratio` 1.70 — FSR "Balanced" is 1.7×; "Quality" would be 1.5×, "Performance" 2.0×) | *owner to read* | |
+| `fg_mode` / `fg_factor` | `fsrfg` / **2.04** (`native_fps` 57.1 → `displayed_fps` 116.4, `displayed_counted_by = hook`, no refusal) | *owner to read* | |
+| `rt_flag` | `no` (`rt_source = measured`, `rt_frame_pct` 0.0) | *owner to read* | |
+| `telemetry_source` | `l1+lhm+nvapi` | *(expect `l1+lhm+nvapi` on this box since PR-E2)* | ✅ |
+
+**What this row does and does not settle.** It is the first hooked session the *shipped* Agent persisted with a
+measured upscaler, a counted frame-generation factor and a measured RT state — the milestone's row half. The
+"against its menus" column is empty because only the owner can read the game's settings screen, and the row is
+kept here with that column blank rather than filled from memory. The same afternoon's DLSS-G rows (Onimusha ×2,
+Hell Is Us, Black Myth: Wukong) are the *refused* shape — identity `dlssg` from the tags, `fg_factor` NULL,
+`fg_refusal` = `multiple_streams` (RE Engine's second swapchain) or `non_uniform` (a bucket that departed: menus,
+loading, alt-tab in a whole play session) — which is the guard working on real play rather than on a 40-second leg,
+and the reason `fg_refusal_detail` (schema 0005) now stores the bucket's numbers. Onimusha's `rt_flag = yes` with
+`rt_frame_pct` 25.0 / 17.8 and Wukong's `yes` at 16.2 are measured against nothing yet either.
 
 **One launch per capture** (HANDOFF §Traps): a title measured off / ×2 / ×4 is three launches.
 
