@@ -253,17 +253,26 @@ function Invoke-Managed([bool]$FixFormat) {
         Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
     # --logger trx so downstream gates can assert that a NAMED test executed,
     # not merely that the run was green. The struct-mirror gate below reads it.
+    #
+    # --blame-hang: a test that never returns names itself and fails the run after
+    # 15 minutes, instead of eating the job's timeout. The first tag run
+    # (v0.1.0-beta.1, 2026-09-16, run 35111939019) sat in Infrastructure.Tests for
+    # 58 minutes — every other suite green, the whole suite 42 s the run before —
+    # until the 60-minute job limit cancelled it, and the log named nothing. The
+    # timeout is per test host, well above the slowest suite (Agent, ~1.5 min on
+    # the hosted runner); the mini dump goes to TestResults beside the trx.
+    $hang = @('--blame-hang', '--blame-hang-timeout', '15m', '--blame-hang-dump-type', 'mini')
     if ($SkipIntegration) {
         Skip-Gate 'integration tests' 'the guard refuses a .NET test host that loads a `protect`-matching module (20_OPEN_QUESTIONS §S19(b)) — run ./build.ps1 check with no switches to include them'
         Invoke-Checked 'dotnet test' {
             dotnet test $solution -c $Configuration --no-build --collect:"XPlat Code Coverage" `
-                --logger 'trx;LogFileName=results.trx' --filter 'Category!=Integration'
+                --logger 'trx;LogFileName=results.trx' --filter 'Category!=Integration' @hang
         }
     }
     else {
         Invoke-Checked 'dotnet test' {
             dotnet test $solution -c $Configuration --no-build --collect:"XPlat Code Coverage" `
-                --logger 'trx;LogFileName=results.trx'
+                --logger 'trx;LogFileName=results.trx' @hang
         }
     }
 
