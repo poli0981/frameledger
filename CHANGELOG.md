@@ -27,7 +27,17 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
-_Nothing yet — entries continue here after `0.1.0-beta.1`._
+### Changed
+
+- **The first tag ran (2026-09-16).** `v0.1.0-beta.1` on `becc208`; `release.yml` run 35111939019. The first attempt
+  passed the version gate and the substitution and then sat in `Infrastructure.Tests` for 58 minutes — every other
+  suite green, the same suite 42 s in the rehearsal — until the job's 60-minute limit cancelled it with no test named;
+  `gh run rerun --failed` on the same tag went green in 11 minutes and created the pre-release with the section's notes
+  and the checksums appended. `build.ps1` now runs `dotnet test` with `--blame-hang --blame-hang-timeout 15m` (#196) so
+  the next hang is a named failure; the capture-host suite's `Kill` waits for exit (#194) and the layer-registration
+  test deletes only its own registry subtree (#188), the two harness races the same evening's merge train kept hitting.
+  Docs: `13_CI_CD` §release.yml and §ci.yml's tally, `12_BUILD` §Publish & package (the runner's sizes),
+  `15_ROADMAP` §P5.
 
 ## [0.1.0-beta.1] - 2026-09-16
 
