@@ -332,7 +332,7 @@ switch's rule); integers are invariant-culture within an inclusive range; choice
 | `retention.raw_sessions_per_game` | int | `20` | 0–10000; **0 = unlimited** | Agent, per session (§Retention) |
 | `update.channel` | choice | `stable` | `stable` · `beta` | UI (P4 PR-5 reads it: `beta` = GitHub pre-releases too) |
 | `update.auto_check` | bool | `1` | | UI (P4 PR-5: the startup silent check, `11_UPDATER` §Flow "if enabled") |
-| `privacy.online_metadata` | bool | `0` | | UI (P4; CLAUDE.md rule 8) |
+| `privacy.online_metadata` | bool | `0` | | *reserved* — no consumer and, since 2026-09-16, no toggle on Settings either: the store request it would enable has no code (CLAUDE.md rule 8), and PRIVACY_POLICY 2.2 removed the row that described it |
 | `log.debug` | bool | `0` | | UI |
 
 An operator's bounded capture (`--console … --seconds N`, which lowers the discard threshold to N) keeps

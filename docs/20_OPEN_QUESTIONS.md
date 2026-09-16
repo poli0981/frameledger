@@ -2620,8 +2620,9 @@ disproved:
   > **🅓 Deferred to P4, rationale written 2026-09-06.** The feed is the product's one
   > permitted outbound request after the release check (CLAUDE.md rule 8), and it needs
   > three things P0 does not have: a shipped Agent to run it in, the signing §S4 defers to
-  > the same phase, and the privacy policy's rows that describe it (`legal/PRIVACY_POLICY.md`
-  > already flags them as describing a request the software does not make). Until then a
+  > the same phase, and the privacy policy's rows that describe it (~~`legal/PRIVACY_POLICY.md`
+  > already flags them as describing a request the software does not make~~ — **removed in version 2.2, 2026-09-16**:
+  > the feed lands as a new policy version the Legal Gate shows again, not as rows kept in advance). Until then a
   > rules edit reaches a machine with the next release, whose checksum attests it — a slower
   > delivery, not a weaker gate. FR-7.3 stays unmet and stays written as unmet.
 - **No binary/data handshake inside the guard.** `ParseRules` still walks only the

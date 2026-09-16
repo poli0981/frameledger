@@ -1,8 +1,6 @@
 # FrameLedger — End User License Agreement (EULA)
 
-**Version:** 1.0-draft · **Effective:** {{RELEASE_DATE}}
-
-> ⚠ Draft for review. Not legal advice. The developer should review before first public release.
+**Version:** 1.0 · **Effective:** {{RELEASE_DATE}}
 
 This End User License Agreement ("Agreement") applies to **FrameLedger** ("the Software"), developed and published by **poli0981** ("the Developer"), contactable at <contact@poli0981.dev> — see <https://poli0981.dev/> for other contact channels.
 
