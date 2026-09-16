@@ -135,8 +135,8 @@ Recorded as a residual risk, not as a solved problem.
 | Unreal 4/5 | exe matches `*-Win64-Shipping.exe` **or** `*/Content/Paks/*.pak` | ProductVersion regex `\+\+UE(4\|5)\+Release-(\d+\.\d+)` |
 | Godot | `.pck` sibling **or** `strings_contains("Godot Engine v")` | strings regex `Godot Engine v(\d+\.\d+[\.\d]*)` |
 | GameMaker | `data.win` | `N/A` |
-| RPG Maker MV/MZ ⛔ | `nw.dll` + `www/` or `package.json` | `rpg_core.js` / `rmmz_core.js` header |
-| RPG Maker XP/VX/VXAce ⛔ | `RGSS10*`/`RGSS20*`/`RGSS30*.dll` | dll name → XP/VX/VXAce |
+| RPG Maker MV/MZ | `nw.dll` **and** `package.json` siblings (since 2026-09-16) | `N/A` — the `.js` header needs a `from` that `strings_regex` lacks |
+| RPG Maker XP/VX/VX Ace | `RGSS1*`/`RGSS2*`/`RGSS3*.dll` sibling **or** a `*.rgssad`/`*.rgss2a`/`*.rgss3a` archive (since 2026-09-16) | `N/A` — one rule, the variant unnamed |
 | Ren'Py | `renpy/` dir **or** `*.rpa` | `renpy/__init__` strings / `log.txt` first line |
 | CryEngine | `CrySystem.dll` | FileVersion |
 | Source | `gameinfo.txt` + `bin/engine.dll` | `N/A` |
@@ -146,10 +146,24 @@ Order matters (first match wins). Engine is user-overridable.
 
 **The array order in `detection-rules.json` *is* that precedence**, and the only thing in the repository that notices a reorder is `tests/fixtures/rules/ordering/unity_markers_with_ue_structure` — a directory carrying Unity markers *and* Unreal structure, which is the case `14_TESTING` names.
 
-⛔ **Two rows cannot be expressed in schemaVersion 2**, and are documented rather than half-implemented — a rule that exists but never fires is worse than one that is absent, because it reads as coverage:
+> **Both RPG Maker rows were ⛔ "cannot be expressed in schemaVersion 2" until 2026-09-16, and the reasoning was
+> half right.** It said MV/MZ needs `nw.dll` **and** (`www/` **or** `package.json`), a nested group v2 refuses. But
+> MV and MZ both ship `package.json` beside `nw.dll` unconditionally — `www/` is only where MV keeps its data — so
+> `all: [nw.dll, package.json]` is the whole signal and needs no nesting. Measured on the owner's *Flower in Us*
+> (Steam) and a hand-extracted MV title, both `Game.exe` + `nw.dll` + `package.json` (+ `www/`), both `engine=none`
+> until this rule. The RGSS family is one rule, `rpgmaker_rgss` "RPG Maker XP/VX/VX Ace", `any` over the three DLL
+> prefixes and the three archive extensions, `version: null` — the variant is not named, which is the product
+> decision the old note deferred, taken as "one engine, no version" rather than three rules. **What still cannot be
+> expressed** is a version for either: MV/MZ's lives in a sibling `.js` header and `strings_regex` has no `from`;
+> RGSS's is which DLL matched. Both rules sit after `unity` and `unreal` and before `godot` (an MV game has no
+> `.pck`; a Godot game has no `nw.dll`), with fixtures `engines/rpgmaker_mv` and `engines/rpgmaker_rgss`, and the
+> `every_engine_marker` canary carries both engines' markers and still expects `unity`. `rulesVersion` is
+> `2026.09.1`, so the sweep's cache key changes and every game is re-detected on the next pass.
 
-- **RPG Maker MV/MZ.** The signal is `nw.dll` **and** (`www/` **or** `package.json`) — a nested group, and `signalGroup` sets `maxProperties: 1` with its own `$comment` saying nesting is unsupported in v2. Its version is a header inside a sibling `.js`, and `strings_regex` carries no `from`, so it cannot be aimed at a file other than the executable.
-- **RPG Maker XP/VX/VXAce.** The signals *are* expressible (`any` over the three `RGSS*` prefixes), but the version is "which of them matched" — an answer no extractor produces. Splitting it into three engine rules with `version: null` and the variant in the display name would work and is a product decision about how the engine reads in the UI, not a mechanical fill-in.
+⛔ *(kept for the record — the two rows above were the ones this note described)* **Two rows cannot be expressed in schemaVersion 2**, and are documented rather than half-implemented — a rule that exists but never fires is worse than one that is absent, because it reads as coverage:
+
+- ~~**RPG Maker MV/MZ.** The signal is `nw.dll` **and** (`www/` **or** `package.json`) — a nested group, and `signalGroup` sets `maxProperties: 1` with its own `$comment` saying nesting is unsupported in v2.~~ Its version is a header inside a sibling `.js`, and `strings_regex` carries no `from`, so it cannot be aimed at a file other than the executable.
+- ~~**RPG Maker XP/VX/VXAce.** The signals *are* expressible (`any` over the three `RGSS*` prefixes), but the version is "which of them matched" — an answer no extractor produces. Splitting it into three engine rules with `version: null` and the variant in the display name would work and is a product decision about how the engine reads in the UI, not a mechanical fill-in.~~
 
 Everything else in the table is in the data and has a fixture; `rules-validate.ps1` fails if a rule id has no fixture directory, or a fixture no rule.
 
