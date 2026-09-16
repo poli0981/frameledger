@@ -5,8 +5,9 @@
 > No telemetry. No accounts. All data stays on your machine.
 
 <!-- accuracy-block:begin -->
-> ⚠ **What FrameLedger actually measures today — 2026-09-15.** The software is pre-alpha and
-> **unreleased**: no tagged build or installer has been published. The source holds the desktop app
+> ⚠ **What FrameLedger actually measures today — 2026-09-16.** The software is pre-alpha; its first
+> **pre-release is `0.1.0-beta.1`** (2026-09-16), an unsigned installer built from that tag with its
+> checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
 > game in the library runs, injects only into games you enabled and only past the safety guard, and
 > stores sessions in a local database. What that path measures:
@@ -123,7 +124,7 @@ Elevation is **optional — for everything.** Hooked capture is the normal path 
 
 ## Install
 
-> **No release has been published yet.** The steps below are for the first tagged release; until then FrameLedger runs only from a source build (`docs/12_BUILD.md`).
+> **The first pre-release is `v0.1.0-beta.1` (2026-09-16).** It is a pre-release: read `CHANGELOG.md`'s section for it — what it measures, what it does not yet — before installing. A source build is `docs/12_BUILD.md`.
 
 1. Download the latest `FrameLedger.App-win-Setup.exe` from [Releases](https://github.com/poli0981/frameledger/releases). It installs into `%LOCALAPPDATA%\FrameLedger.App`; your data stays in `%LOCALAPPDATA%\FrameLedger`, and uninstalling asks before touching it.
 2. SmartScreen may warn — releases are not code-signed (free, open-source project). Verify the SHA-256 checksum published with each release, then **More info → Run anyway**.
@@ -151,4 +152,4 @@ If you find a game with anti-cheat that FrameLedger fails to detect, please open
 
 ---
 
-**Status:** pre-alpha, under active development. Roadmap: [`docs/15_ROADMAP.md`](docs/15_ROADMAP.md).
+**Status:** pre-alpha, under active development; first pre-release `v0.1.0-beta.1` (2026-09-16). Roadmap: [`docs/15_ROADMAP.md`](docs/15_ROADMAP.md).
