@@ -174,7 +174,7 @@ Everything else in the table is in the data and has a fixture; `rules-validate.p
 | Steam | `steam_api64.dll`/`steam_api.dll` sibling, or path contains `steamapps\common` | nearest `steamapps/appmanifest_<id>.acf` (walk up): `appid`, `name`, `buildid` → version |
 | GOG | `goggame-<id>.info` sibling, or `Galaxy64.dll` | `.info` JSON: `gameId`, `name`, `version` |
 | Epic | `EOSSDK-Win64-Shipping.dll`, or path under an Epic install | `%ProgramData%\Epic\EpicGamesLauncher\Data\Manifests\*.item` matched by `InstallLocation` |
-| itch.io | `.itch\receipt.json.gz` | receipt JSON: title, id |
+| itch.io | `.itch\receipt.json.gz` | **`%APPDATA%\itch\db\butler.db`** (`install_locations` + `caves`, butler's `verdict` names the executable) since 2026-09-16, then the receipt JSON: title, id |
 | None/Manual | fallback | PE VersionInfo |
 
 **Auto-import (FR-1.2):** Steam via `libraryfolders.vdf` → all `appmanifest_*.acf`; GOG via `HKLM\SOFTWARE\WOW6432Node\GOG.com\Games\*`; Epic via `Manifests\*.item`; itch by receipt scan. Import presents a review checklist; nothing is launched, nothing is hooked on import.
@@ -184,8 +184,15 @@ Everything else in the table is in the data and has a fixture; `rules-validate.p
 > `ValveKeyValues`, the Steam root from `HKCU\Software\Valve\Steam\SteamPath`), `GogLibrarySource` (the HKLM
 > keys, read-only, the first HKLM read in the tree), `EpicLibrarySource` (`*.item` JSON: `DisplayName`,
 > `InstallLocation`, `LaunchExecutable`, `AppName`, `AppVersionString`), `ItchLibrarySource`
-> (`%APPDATA%\itch\apps\*\.itch\receipt.json.gz`). **Two stores do not name the game's executable** (Steam,
-> itch): `ExecutableLocator` walks the install three levels deep, drops the helpers by name fragment and takes
+> (~~`%APPDATA%\itch\apps\*\.itch\receipt.json.gz`~~ — **since 2026-09-16 butler's database first**: the itch app
+> records the install locations the user chose in `%APPDATA%\itch\db\butler.db`, and they need not be under
+> `%APPDATA%` at all — on the owner's machine the one location was `D:\another\it` and `apps\` was empty, so the
+> receipt scan returned nothing, silently; `install_locations` + `caves` give every install, butler's own `verdict`
+> names the executable it launches, and `apps\` receipts are still scanned for what the database does not list. The
+> database is copied to a temporary directory and the copy opened read-only, because the running app holds it in
+> WAL mode. One log line says what was consulted: `import: itch — butler.db read: 1 location(s), 2 cave(s), …`).
+> **Two stores do not name the game's executable** (Steam,
+> itch-by-receipt): `ExecutableLocator` walks the install three levels deep, drops the helpers by name fragment and takes
 > the largest — a *guess the review list marks as such*; GOG's `exe` and Epic's `LaunchExecutable` are the store's
 > own. The review (`ImportReviewPrompt`) ticks only what can be imported: a row already in the library or with no
 > executable on disk cannot be. Every added row lands exactly as File ▸ Add game… lands it — hooking off — and
