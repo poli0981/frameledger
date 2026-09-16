@@ -83,9 +83,20 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 
 ### `release.yml` — on tag `v*` · **repo-local, built 2026-09-14 (P4 PR-5)**
 
+> **Exercised by a tag on 2026-09-16 — `v0.1.0-beta.1`, run 35111939019 — and the first attempt did not finish.**
+> The version gate, the substitution and the quality gate ran; the quality gate then sat in `Infrastructure.Tests` for
+> 58 minutes (every other suite green; the same suite 42 s in the rehearsal an hour before) until the job's 60-minute
+> limit cancelled it, with no test named. `gh run rerun --failed` on the same tag: the gate in 11 minutes
+> (Infrastructure 305 in 17 s), publish (252 MB tree), licences, the tree assertion, `vpk pack` (`Setup.exe` 110 MB,
+> portable zip and full nupkg 105 MB), `SHA256SUMS.txt`, and the pre-release created with the section's notes and the
+> checksums appended — <https://github.com/poli0981/frameledger/releases/tag/v0.1.0-beta.1>. Two things the tag taught:
+> a tag run can be re-run in place after a flake (the Release step is idempotent up to the release existing — it did
+> not, so nothing had to be deleted), and a hang eats the whole job budget silently, which is why #196 added
+> `--blame-hang` to the gate. The paragraph below is the history as it stood.
+>
 > This heading said **PLANNED, NOT PRESENT** from 2026-08-06 until the workflow existed, with the note that
-> "nothing in this repository has ever run `dotnet publish`". Still true of the *repository's history*: the
-> workflow has not been exercised by a tag yet — its publish, tree assertion and `vpk pack` steps were run by hand on
+> "nothing in this repository has ever run `dotnet publish`". ~~Still true of the *repository's history*: the
+> workflow has not been exercised by a tag yet~~ (struck 2026-09-16, above) — its publish, tree assertion and `vpk pack` steps were run by hand on
 > 2026-09-14 (`12_BUILD` §Publish & package has the sizes), the release upload was not. The first tag is the rest of the measurement; until then every other claim below is
 > what the file says, not what a run showed.
 >
