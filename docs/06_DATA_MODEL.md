@@ -422,6 +422,15 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > which are the consent fingerprint the gate reads and which a background scan must never refresh.
 > `LatestVersion` is 4; `LedgerDatabaseTests` asserts the columns.
 
+> **`0005_fg_refusal_detail.sql` (2026-09-16) — `sessions.fg_refusal_detail`.** 0003 recorded WHICH refusal took the
+> factor; the owner's Dashboard then showed "DLSS-G active — factor not counted" on four titles with a tooltip that
+> could only say "the frame-generation state changed mid-session", while `FgWindow` had computed which of the eight
+> buckets departed, its ratio and the window's, and `SessionAggregator` kept only the kind. The column is
+> `Application.Recording.FgRefusalDetail` as JSON (`RecordingJsonContext`): kind, subject, count, bucket index/count,
+> the bucket's ratio (null when it held no tokens — infinity is not JSON) and the window's. Written by the Agent
+> beside `fg_refusal`, read by the UI's tooltip (`FpsPresentation.RefusalDetailText`), never an input to a number.
+> Existing rows keep NULL. `LatestVersion` is 5; `LedgerDatabaseTests` asserts the column.
+
 > **Every open used to migrate, and one that should not have did — 2026-09-16.** The Agent's `--console sessions`,
 > a verb that prints, was run against the owner's ledger while the file on disk was at schema 2 and applied 0003 and
 > 0004 to it. `LedgerDatabase.OpenReadOnlyAsync` exists since that day: an existing file, `PRAGMA query_only`, no

@@ -21,6 +21,21 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Added
 
+- **The "factor not counted" tooltip says which bucket, and by how much — `sessions.fg_refusal_detail`, schema
+  0005 (2026-09-16).** The owner's Dashboard showed "DLSS-G active — factor not counted" on Hell Is Us, Black Myth:
+  Wukong, Cronos and Onimusha; three refused `non_uniform` (one of eight equal-sample buckets departed more than
+  25 % from the whole, or held no tokens — a menu, a loading screen, an alt-tab inside a whole play session) and
+  one `multiple_streams` (a second swapchain), and the tooltip could only repeat the kind. `FgWindow` had computed
+  the bucket, its ratio and the window's all along; `SessionAggregator` kept only the kind. Now
+  `Application.Recording.FgRefusalDetail` — kind, subject, count, bucket index/count, the bucket's ratio (null when it
+  held no tokens) and the window's — is stored as JSON beside `fg_refusal`, and `FpsPresentation.IdentifiedTooltip`
+  appends its sentence: "Bucket 3 of 8 measured 2.25 against 3.65 for the whole session, over 53 samples." /
+  "2 swapchains presented during the session." / "40 samples; at least 64 are needed to check." A kind with no
+  numbers worth a sentence adds nothing; an unparsable column is the old tooltip. The producer is unchanged and
+  no number is decided by it (owner's decision 2026-09-16: store and show the reason; no steady-state factor, no
+  change to `multiple_streams`). Six strings (en/vi/ja). Tests: `SessionAggregatorTests`, `LedgerDatabaseTests`
+  (script five), `FpsPresentationTests`. Docs: `06_DATA_MODEL` §Migrations, `03_METRICS` §FG factor, `08_UI` §FPS
+  display rule.
 - **RPG Maker is detected — MV/MZ and XP/VX/VX Ace — and `rulesVersion` is `2026.09.1` (2026-09-16).** Two engine
   rows `05_DETECTION` marked ⛔ "cannot be expressed in schemaVersion 2": the MV/MZ reasoning wanted a nested group
   for `nw.dll` **and** (`www/` **or** `package.json`), but MV and MZ both ship `package.json` beside `nw.dll`
