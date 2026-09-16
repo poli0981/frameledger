@@ -1,6 +1,8 @@
 using Dapper;
 using FluentAssertions;
+using FluentAssertions.Specialized;
 using FrameLedger.Infrastructure.Persistence;
+using Microsoft.Data.Sqlite;
 
 namespace FrameLedger.Infrastructure.Tests.Persistence;
 
@@ -126,6 +128,147 @@ public sealed class LedgerDatabaseTests
 
         string? value = await f.Db.ReadAsync((c, ct) => c.ExecuteScalarAsync<string?>(new CommandDefinition("SELECT value FROM settings WHERE key = 'k'", cancellationToken: ct)), Ct);
         value.Should().Be("two", "WAL lets a second opener write once the first's transaction has committed");
+    }
+
+    /// <summary>
+    /// 2026-09-16: a "read-only" verb run against the owner's ledger applied two migration scripts to it, because every
+    /// open went through <see cref="LedgerDatabase.OpenAsync"/>. A read-only open of an OLDER schema refuses and leaves
+    /// the file byte-identical.
+    /// </summary>
+    [Fact]
+    public async Task AReadOnlyOpenOfAnOlderSchemaRefusesAndChangesNothing()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        string path = f.Path;
+        await InsertAsync(f.Db).ConfigureAwait(true);
+        await f.Db.DisposeAsync().ConfigureAwait(true);
+        await RewindSchemaAsync(path, 2).ConfigureAwait(true);
+        byte[] before = await File.ReadAllBytesAsync(path, Ct).ConfigureAwait(true);
+
+        Func<Task> open = async () => await LedgerDatabase.OpenReadOnlyAsync(path, ct: Ct).ConfigureAwait(false);
+
+        ExceptionAssertions<LedgerSchemaException> refused = await open.Should().ThrowAsync<LedgerSchemaException>().ConfigureAwait(true);
+        refused.WithMessage("*older than this build*");
+        byte[] after = await File.ReadAllBytesAsync(path, Ct).ConfigureAwait(true);
+        after.Should().Equal(before, "a read-only open migrates nothing");
+        WalIsEmpty(path).Should().BeTrue("a read-only open of a checkpointed file writes no frame");
+    }
+
+    [Fact]
+    public async Task AReadOnlyOpenReadsAndRefusesToWrite()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        string path = f.Path;
+        await InsertAsync(f.Db).ConfigureAwait(true);
+        await f.Db.DisposeAsync().ConfigureAwait(true);
+        byte[] before = await File.ReadAllBytesAsync(path, Ct).ConfigureAwait(true);
+
+        LedgerDatabase ro = await LedgerDatabase.OpenReadOnlyAsync(path, ct: Ct).ConfigureAwait(true);
+        await using (ro.ConfigureAwait(true))
+        {
+            ro.IsReadOnly.Should().BeTrue();
+            ro.Migration.Should().Be(MigrationOutcome.AlreadyCurrent);
+            ro.SchemaVersion.Should().Be(MigrationRunner.LatestVersion);
+            ro.OpenDiagnostics.Should().BeNull("a read-only open checkpoints nothing");
+            string? value = await ro.ReadAsync((c, ct) => c.ExecuteScalarAsync<string?>(new CommandDefinition("SELECT value FROM settings WHERE key = 'k'", cancellationToken: ct)), Ct).ConfigureAwait(true);
+            value.Should().Be("v");
+
+            Func<Task> write = async () => await ro.WriteAsync((c, tx, ct) => c.ExecuteAsync(new CommandDefinition("DELETE FROM settings", transaction: tx, cancellationToken: ct)), Ct).ConfigureAwait(false);
+            await write.Should().ThrowAsync<InvalidOperationException>().ConfigureAwait(true);
+            Func<Task> maintain = async () => await ro.MaintainAsync((c, ct) => c.ExecuteAsync(new CommandDefinition("VACUUM", cancellationToken: ct)), Ct).ConfigureAwait(false);
+            await maintain.Should().ThrowAsync<InvalidOperationException>().ConfigureAwait(true);
+            Func<Task> raw = async () => await ro.ReadAsync((c, ct) => c.ExecuteAsync(new CommandDefinition("DELETE FROM settings", cancellationToken: ct)), Ct).ConfigureAwait(false);
+            await raw.Should().ThrowAsync<SqliteException>("query_only refuses a statement that slipped past the gate").ConfigureAwait(true);
+        }
+
+        byte[] after = await File.ReadAllBytesAsync(path, Ct).ConfigureAwait(true);
+        after.Should().Equal(before);
+    }
+
+    [Fact]
+    public async Task AReadOnlyOpenOfAMissingFileCreatesNothing()
+    {
+        string dir = Path.Combine(Path.GetTempPath(), "fl-ledger-ro-" + Guid.NewGuid().ToString("N"));
+        string path = Path.Combine(dir, LedgerPaths.DatabaseFileName);
+
+        Func<Task> open = async () => await LedgerDatabase.OpenReadOnlyAsync(path, ct: Ct).ConfigureAwait(false);
+
+        await open.Should().ThrowAsync<FileNotFoundException>().ConfigureAwait(true);
+        File.Exists(path).Should().BeFalse();
+        Directory.Exists(dir).Should().BeFalse("not even the directory");
+    }
+
+    /// <summary>
+    /// 2026-09-16: the owner's ledger held a day's rows only in a WAL whose frames a fresh connection discarded, over
+    /// a main file no checkpoint had reached. A read-write close now checkpoints explicitly and reports it, and the
+    /// main file alone must hold every row afterwards.
+    /// </summary>
+    [Fact]
+    public async Task AReadWriteCloseLeavesTheMainFileCompleteAndSaysSo()
+    {
+        string dir = Path.Combine(Path.GetTempPath(), "fl-ledger-ckpt-" + Guid.NewGuid().ToString("N"));
+        string path = Path.Combine(dir, LedgerPaths.DatabaseFileName);
+        List<string> lines = [];
+        try
+        {
+            LedgerDatabase db = await LedgerDatabase.OpenAsync(path, diagnostics: lines.Add, ct: Ct).ConfigureAwait(true);
+            await using (db.ConfigureAwait(true))
+            {
+                db.OpenDiagnostics.Should().NotBeNull();
+                db.OpenDiagnostics!.Mode.Should().Be("passive");
+                await InsertAsync(db).ConfigureAwait(true);
+            }
+
+            lines.Should().HaveCount(2).And.SatisfyRespectively(
+                open => open.Should().StartWith("ledger: wal at open — passive:"),
+                close => close.Should().StartWith("ledger: wal at close — truncate:").And.NotContain("busy"));
+            WalIsEmpty(path).Should().BeTrue("TRUNCATE leaves nothing in the wal");
+            string? value = await ReadMainFileOnlyAsync(path).ConfigureAwait(true);
+            value.Should().Be("v", "the main file alone holds the row");
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+            catch (IOException)
+            {
+            }
+        }
+    }
+
+    private static Task<int> InsertAsync(LedgerDatabase db) =>
+        db.WriteAsync((c, tx, ct) => c.ExecuteAsync(new CommandDefinition("INSERT INTO settings (key, value) VALUES ('k', 'v')", transaction: tx, cancellationToken: ct)), Ct).AsTask();
+
+    private static bool WalIsEmpty(string path) => !File.Exists(path + "-wal") || new FileInfo(path + "-wal").Length == 0;
+
+    /// <summary>Reads through a connection that ignores any wal (<c>immutable=1</c>): the main file is the only thing consulted.</summary>
+    private static async Task<string?> ReadMainFileOnlyAsync(string path)
+    {
+        var main = new SqliteConnection(new SqliteConnectionStringBuilder
+        {
+            DataSource = "file:" + path.Replace('\\', '/') + "?immutable=1",
+            Mode = SqliteOpenMode.ReadOnly,
+            Pooling = false,
+        }.ToString());
+        await using (main.ConfigureAwait(false))
+        {
+            await main.OpenAsync(Ct).ConfigureAwait(false);
+            return await main.ExecuteScalarAsync<string?>(new CommandDefinition("SELECT value FROM settings WHERE key = 'k'", cancellationToken: Ct)).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>Makes a current ledger look like one written by an older build: the rows above <paramref name="version"/> go, the columns stay.</summary>
+    private static async Task RewindSchemaAsync(string path, int version)
+    {
+        var c = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        await using (c.ConfigureAwait(false))
+        {
+            await c.OpenAsync(Ct).ConfigureAwait(false);
+            await c.ExecuteAsync(new CommandDefinition("DELETE FROM schema_migrations WHERE version > @version", new { version }, cancellationToken: Ct)).ConfigureAwait(false);
+            await c.ExecuteAsync(new CommandDefinition("PRAGMA wal_checkpoint(TRUNCATE)", cancellationToken: Ct)).ConfigureAwait(false);
+        }
     }
 
     [Fact]

@@ -32,6 +32,7 @@ internal static class Program
     private const int _exitUsage = 1;
     private const int _exitNotImplemented = 2;
     private const int _exitRulesFailed = 3;
+    private const int _exitLedgerRefused = 7;
 
     private static int _crashReported;
 
@@ -40,16 +41,9 @@ internal static class Program
         ArgumentNullException.ThrowIfNull(args);
 
         AgentCommandLine cmd = AgentCommandLine.Parse(args);
-        if (cmd.Error is not null)
+        if (AnswerWithoutLogging(cmd) is { } answered)
         {
-            AgentConsole.Problem(cmd.Error);
-            return _exitUsage;
-        }
-
-        if (cmd.Verb == AgentVerb.NotImplemented)
-        {
-            AgentConsole.Problem($"{cmd.Flag}: not this binary's — FrameLedger.exe --diag writes the report (10_LOGGING §Diagnostics extras)");
-            return _exitNotImplemented;
+            return answered;
         }
 
         AgentPaths paths = cmd.DataDirectory is { } dir ? new AgentPaths(Path.GetFullPath(dir)) : AgentPaths.Default;
@@ -69,10 +63,14 @@ internal static class Program
                 return _exitRulesFailed;
             }
 
-            LedgerDatabase db = await LedgerDatabase.OpenAsync(paths.Database).ConfigureAwait(false);
+            LedgerDatabase? db = await OpenLedgerOrSayWhyAsync(cmd.Verb, paths).ConfigureAwait(false);
+            if (db is null)
+            {
+                return cmd.Verb == AgentVerb.DbPath ? _exitOk : _exitLedgerRefused;
+            }
+
             await using (db.ConfigureAwait(false))
             {
-                Log.Information("ledger: {Path} (schema {Schema}, migration {Migration})", db.Path, db.SchemaVersion, db.Migration);
                 return cmd.Verb switch
                 {
                     AgentVerb.Serve => await ServeAsync(db, paths).ConfigureAwait(false),
@@ -92,6 +90,63 @@ internal static class Program
         finally
         {
             await Log.CloseAndFlushAsync().ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>A usage error or a flag this binary does not implement is answered before any file is touched.</summary>
+    private static int? AnswerWithoutLogging(AgentCommandLine cmd)
+    {
+        if (cmd.Error is not null)
+        {
+            AgentConsole.Problem(cmd.Error);
+            return _exitUsage;
+        }
+
+        if (cmd.Verb == AgentVerb.NotImplemented)
+        {
+            AgentConsole.Problem($"{cmd.Flag}: not this binary's — FrameLedger.exe --diag writes the report (10_LOGGING §Diagnostics extras)");
+            return _exitNotImplemented;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The verbs that only print open the ledger read-only — no migration, no write — so that running one against a
+    /// ledger at another schema changes nothing on disk (2026-09-16: <c>sessions</c> against the owner's own ledger
+    /// applied two scripts to it). Every other verb is a writer and opens read-write, migrating as before.
+    /// </summary>
+    internal static bool PrintsOnly(AgentVerb verb) =>
+        verb is AgentVerb.Sessions or AgentVerb.ConsentList or AgentVerb.KillSwitchStatus or AgentVerb.DbPath;
+
+    /// <summary>
+    /// Null when a print verb refuses the ledger — at another schema, or not there — said on the console and in the log
+    /// rather than as a crash: nothing about this machine is broken.
+    /// </summary>
+    private static async Task<LedgerDatabase?> OpenLedgerOrSayWhyAsync(AgentVerb verb, AgentPaths paths)
+    {
+        if (verb == AgentVerb.DbPath)
+        {
+            // Prints a path; opens nothing. A machine with no ledger yet still has an answer, and the verb never reaches
+            // ConsoleVerbs because the answer is complete here.
+            AgentConsole.Line(paths.Database);
+            return null;
+        }
+
+        try
+        {
+            LedgerDatabase db = PrintsOnly(verb)
+                ? await LedgerDatabase.OpenReadOnlyAsync(paths.Database).ConfigureAwait(false)
+                : await LedgerDatabase.OpenAsync(paths.Database, diagnostics: static line => Log.Information("{Line}", line)).ConfigureAwait(false);
+            Log.Information("ledger: {Path} (schema {Schema}, migration {Migration}{ReadOnly})", db.Path, db.SchemaVersion, db.Migration,
+                db.IsReadOnly ? ", read-only" : string.Empty);
+            return db;
+        }
+        catch (Exception ex) when (ex is LedgerSchemaException or FileNotFoundException)
+        {
+            AgentConsole.Problem(ex.Message);
+            Log.Warning("ledger: {Message}", ex.Message);
+            return null;
         }
     }
 

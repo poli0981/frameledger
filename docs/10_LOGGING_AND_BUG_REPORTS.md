@@ -144,6 +144,10 @@ Tails the active files (shared read), level filter, text search, pause autoscrol
 - **Never include a game's own logs, saves, or config files** in a bug bundle, even when a crash looks game-related. We ship our logs only.
 - `--diag` CLI flag on the App prints environment + capability report to stdout (support requests).
 
+  > **Read-only since 2026-09-16:** `DiagAsync` opens the ledger through `LedgerDatabase.OpenReadOnlyAsync`, so a
+  > diagnostic run against a ledger at another schema reports that fact (the schema line reads the refusal) rather
+  > than migrating the file it was asked to describe.
+  >
   > **Built 2026-09-14 (P3 PR-8a).** `App.OnStartup` sees `--diag` and runs `DiagAsync` instead of the host: no
   > window, no Agent, the ledger opened read-only for its schema version and the settings, then
   > `Services/DiagReport.Build` (app version, OS and bitness, runtime, locale, elevation, data and logs
