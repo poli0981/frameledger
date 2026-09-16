@@ -422,6 +422,32 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > which are the consent fingerprint the gate reads and which a background scan must never refresh.
 > `LatestVersion` is 4; `LedgerDatabaseTests` asserts the columns.
 
+> **Every open used to migrate, and one that should not have did — 2026-09-16.** The Agent's `--console sessions`,
+> a verb that prints, was run against the owner's ledger while the file on disk was at schema 2 and applied 0003 and
+> 0004 to it. `LedgerDatabase.OpenReadOnlyAsync` exists since that day: an existing file, `PRAGMA query_only`, no
+> `MigrationRunner`, and a refusal (`LedgerSchemaException`) for a schema **older** than the build as well as newer —
+> the older file needs the App or `--serve` to bring it forward, not a verb whose name says it reads. The Agent's
+> `sessions`, `consent list` and `killswitch status` open that way (`Program.PrintsOnly` is the list, pinned by
+> `AgentReadOnlyVerbsTests`), `db path` opens nothing, and the App's `--diag` does the same.
+>
+> **What that run found, recorded because the mechanism is not known.** The on-disk `ledger.db` was 94 KB, 23 pages,
+> dated 14 September, at schema 2 with three test games and no sessions; the day's 41 imported games and 18 sessions
+> were in `ledger.db-wal` — 4 MB, 1006 frames — and every one of those frames carried salt-1 one **lower** than the
+> WAL header's, with a checkpoint sequence of 1 and a single frame under the new salt. That is the shape SQLite leaves
+> after a checkpoint has moved every frame into the main file and the next writer restarts the log; but no checkpoint
+> had reached this main file (645 pages of data, 23 on disk, and the file's own time stamp two days old). A fresh
+> connection therefore recovered one frame and saw the 14 September state, while the App and Agent that were running
+> saw the whole day through the wal-index they shared. Neither process closed cleanly enough to fix it: the Agent's
+> stop at 17:57 and the console's exit at 17:58 both left the WAL in place, and `-wal`/`-shm` then vanished between
+> 18:00 and 18:04 with no FrameLedger process alive. The data was rebuilt by applying the old-salt chain to the main
+> file (176 commits, `integrity_check` ok) and the broken set kept beside it. **Nothing in this repository writes the
+> main file behind SQLite's back, replaces it, or restarts the WAL by hand**; what the code can do about an unknown
+> mechanism is make the next occurrence visible, and it does: `OpenAsync` runs `wal_checkpoint(PASSIVE)` after
+> migrating and logs the frame count it found and moved (`LedgerDatabase.OpenDiagnostics`), and `DisposeAsync` runs
+> `wal_checkpoint(TRUNCATE)` and logs that, so a clean close leaves the main file complete and a WAL that will not
+> checkpoint is a logged number rather than a silent one. A WAL at open holding frames a passive checkpoint cannot
+> move, with no other FrameLedger process running, is the signature to look for.
+
 > **Built 2026-09-09 (P2 PR-B):** `Infrastructure.Persistence.MigrationRunner` over scripts embedded in
 > the assembly (so the schema a build applies is the one it was tested against), one transaction per
 > script, under `Local\FrameLedger.Ledger.Migrate` — session-local rather than `Global\`, because the

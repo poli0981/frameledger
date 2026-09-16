@@ -251,6 +251,25 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **A print verb no longer migrates the ledger it prints, and a close checkpoints the WAL it wrote (2026-09-16).**
+  `FrameLedger.Agent --console sessions`, run against the owner's own ledger while its on-disk file was at schema 2,
+  applied scripts 0003 and 0004 to it: every verb opened through the one migrating `LedgerDatabase.OpenAsync`. Found
+  while investigating a ledger whose day of rows lived only in a 4 MB WAL whose 1006 frames carried a salt one
+  generation older than the WAL header, over a main file no checkpoint had reached — a fresh connection (the console,
+  a next launch) saw the 14 September state, while the running App and Agent saw the day through the shared WAL
+  index. The mechanism is unrecorded (`06_DATA_MODEL` §Migrations carries what was observed and what is not known);
+  the data was rebuilt from the old-salt chain by hand. What changed: `LedgerDatabase.OpenReadOnlyAsync` — an
+  existing file, `query_only`, no pragma that writes, no `MigrationRunner`; a schema newer OR older than the build is
+  refused with the reason, and `WriteAsync`/`MaintainAsync` throw. The Agent's `sessions`, `consent list`,
+  `killswitch status` use it (`Program.PrintsOnly`), `db path` opens nothing at all, and a refusal is a console line
+  with exit 7, never a crash dump; the App's `--diag` uses it too. `OpenAsync` now runs a passive checkpoint after
+  migrating and reports it (`LedgerDatabase.OpenDiagnostics`, one `ledger: wal at open` log line), and
+  `DisposeAsync` runs `wal_checkpoint(TRUNCATE)` and reports that, so a clean close leaves the main file complete
+  whether or not SQLite's own close-time checkpoint runs. Tests: `LedgerDatabaseTests` (an older schema is refused
+  byte-for-byte unchanged; a read-only open reads and refuses to write; a missing file creates nothing; a close leaves
+  the row readable through `immutable=1`), `AgentReadOnlyVerbsTests` (the print-verb set, the refusal's exit code and
+  the untouched file, `db path` without a ledger). Docs: `06_DATA_MODEL` §Migrations, `12_BUILD` §Debugging,
+  `10_LOGGING` §Diagnostics, HANDOFF §Traps.
 - **A start that fails says so on screen (2026-09-15).** When `App.RunAsync` caught its own exception — a ledger
   that would not open (a newer schema, a locked file), a host that would not start — FrameLedger wrote a Fatal line to
   `ui-*.log` and exited with code 1 with nothing on screen, so a user saw a click do nothing. It now shows

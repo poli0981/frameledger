@@ -100,6 +100,11 @@ Agent flags: `--serve`, `--console`, ~~`--diag`~~ (the App's — `FrameLedger.ex
 > shipped `FrameLedger.Agent.exe` against `hook-harness` with a scratch `--data-dir` and reads the one
 > `sessions` row back — the milestone's technical half, in the merge gate.
 
+> **The print verbs open the ledger read-only (2026-09-16).** `sessions`, `consent list` and `killswitch status`
+> migrate nothing and refuse — exit 7, the reason on stderr — a ledger at a schema older or newer than the build;
+> `db path` opens no file at all. Until then every verb went through the migrating open, and `sessions` run against
+> the owner's ledger applied two scripts to it (`06_DATA_MODEL` §Migrations). `AgentReadOnlyVerbsTests` pins the set.
+
 ## Bundled assets
 
 - ~~`assets/native/PresentMon.exe` (pinned, SHA-256 verified at build) for the Tier-2 fallback~~ — **DROPPED 2026-08-27, and there are no bundled native assets at all.** §S31 measured PresentMon classifying every frame of a ×4 capture as an application frame (row P2); the owner then dropped it outright. It is not bundled, not fetched, not used, and `tools/frametype-oracle.ps1` — the parser that consumed its output — is deleted with it. `assets/` does not exist and now has no reason to. **And since 2026-08-28 Tier 2 is not a measurement at all**: the ladder is two rungs, `EtwFrameSource` is deleted from the design, and whether a shipped build ever regains a no-injection measurement is `20_OPEN_QUESTIONS` §G.
