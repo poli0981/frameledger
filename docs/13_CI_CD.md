@@ -26,6 +26,12 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
   wrong by the end of the same evening; it is corrected rather than quietly deleted, because a frequency
   claim made from one observation is exactly the shape this file keeps catching.
   **Re-run before investigating**; if it reproduces, read the module list and the scan-set reason, not the test.
+  - **A hang, not a refusal — the first tag run (2026-09-16, run 35111939019).** Every suite green except
+    `Infrastructure.Tests`, which printed its "test run for …" line and nothing else for 58 minutes until the job's
+    60-minute limit cancelled the run; the same suite took 42 s in the rehearsal an hour earlier. The log named no
+    test. `build.ps1` now passes `--blame-hang --blame-hang-timeout 15m --blame-hang-dump-type mini` to `dotnet test`,
+    so the next hang fails the run in 15 minutes with the test's name in `TestResults\…\Sequence.xml` and a mini
+    dump beside it — the diagnostic this run lacked. Which test hung is **unmeasured**; the re-run is the measurement.
   - **Two more shapes had one cause, found and fixed 2026-09-16** after four failures in one evening's merge train:
     `AKilledHostLeavesAPartialThatRecoverTurnsIntoAnInterruptedSession` ("the process cannot access the file …
     `.partial`") and `WithNoConsentRecordTheHostRefusesAndNothingIsEverInjected` (a leftover consent record). The
