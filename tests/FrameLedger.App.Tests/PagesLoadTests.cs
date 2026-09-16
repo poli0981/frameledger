@@ -178,7 +178,7 @@ public sealed class PagesLoadTests
         return queue;
     }
 
-    private static Task<T> OnStaAsync<T>(Func<T> work)
+    internal static Task<T> OnStaAsync<T>(Func<T> work)
     {
         var tcs = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
         _staQueue.Add(() =>

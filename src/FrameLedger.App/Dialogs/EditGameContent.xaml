@@ -8,24 +8,27 @@
              d:DataContext="{d:DesignInstance Type=vm:EditGameViewModel}"
              mc:Ignorable="d"
              MinWidth="420">
-    <!-- FR-1.3: a detected field is badged (05_DETECTION §Caching), and saving marks what changed as the user's. -->
+    <!--
+        FR-1.3: a detected field is badged (05_DETECTION §Caching), and saving marks what changed as the user's.
+        Secondary, not Info: Info's background is a fixed Material colour outside the theme dictionaries (08_UI §Contrast).
+    -->
     <StackPanel>
         <DockPanel>
-            <ui:Badge DockPanel.Dock="Right" Margin="8,0,0,0" Appearance="Info" Content="{x:Static vm:EditGameViewModel.DetectedBadge}"
+            <ui:Badge DockPanel.Dock="Right" Margin="8,0,0,0" Appearance="Secondary" Content="{x:Static vm:EditGameViewModel.DetectedBadge}"
                       Visibility="{Binding NameDetected, Converter={StaticResource BoolToVis}}" />
             <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:EditGameViewModel.NameLabel}" />
         </DockPanel>
         <ui:TextBox Margin="0,4,0,12" AutomationProperties.Name="{x:Static vm:EditGameViewModel.NameLabel}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 
         <DockPanel>
-            <ui:Badge DockPanel.Dock="Right" Margin="8,0,0,0" Appearance="Info" Content="{x:Static vm:EditGameViewModel.DetectedBadge}"
+            <ui:Badge DockPanel.Dock="Right" Margin="8,0,0,0" Appearance="Secondary" Content="{x:Static vm:EditGameViewModel.DetectedBadge}"
                       Visibility="{Binding PublisherDetected, Converter={StaticResource BoolToVis}}" />
             <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:EditGameViewModel.PublisherLabel}" />
         </DockPanel>
         <ui:TextBox Margin="0,4,0,12" AutomationProperties.Name="{x:Static vm:EditGameViewModel.PublisherLabel}" Text="{Binding Publisher, UpdateSourceTrigger=PropertyChanged}" />
 
         <DockPanel>
-            <ui:Badge DockPanel.Dock="Right" Margin="8,0,0,0" Appearance="Info" Content="{x:Static vm:EditGameViewModel.DetectedBadge}"
+            <ui:Badge DockPanel.Dock="Right" Margin="8,0,0,0" Appearance="Secondary" Content="{x:Static vm:EditGameViewModel.DetectedBadge}"
                       Visibility="{Binding VersionDetected, Converter={StaticResource BoolToVis}}" />
             <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:EditGameViewModel.VersionLabel}" />
         </DockPanel>

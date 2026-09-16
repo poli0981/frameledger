@@ -251,6 +251,18 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **The Games card's hooking chip reads at 2.6:1 no more, and the Dashboard's FG qualifier no longer clips
+  (2026-09-16).** "Hooking on/off" was `ui:Badge Appearance="Info"`: WPF UI paints that with `PaletteLightBlueBrush`,
+  a fixed Material colour outside both theme dictionaries, under the theme's white text — `#03A9F4` in dark, below
+  AA-large — and no `#` in our XAML for `NoXamlHardCodesAColour` to catch. It is a `Border` in the new `HookStatePill`
+  style now (ON: the accent pair the ×FG chip uses; OFF: the Pill's muted fill with secondary text), the edit
+  dialog's "Detected" badge is `Secondary`, and `ContrastTests` holds it: no App XAML uses the four palette
+  appearances, and every pill's (text, fill) pair composited over the card and window backgrounds is ≥ 4.5:1 in both
+  theme dictionaries, with the old pair asserted below it so the check is known to bite. The FG qualifier chip on the
+  Dashboard's recent-sessions row was reported with it and had a different defect — a sentence-length qualifier in a
+  star column with no trimming overflowed the row — so the qualifier text trims with an ellipsis at 260 px (the
+  readout's tooltip carries the full sentence) and the row's readout column is sized to content with the game's name
+  trimming first. Docs: `08_UI` §Contrast, `16_WPFUI_SYNTAX` §Theming.
 - **A print verb no longer migrates the ledger it prints, and a close checkpoints the WAL it wrote (2026-09-16).**
   `FrameLedger.Agent --console sessions`, run against the owner's own ledger while its on-disk file was at schema 2,
   applied scripts 0003 and 0004 to it: every verb opened through the one migrating `LedgerDatabase.OpenAsync`. Found
