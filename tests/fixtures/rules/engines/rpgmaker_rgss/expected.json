@@ -1,0 +1,1 @@
+{ "engine": "rpgmaker_rgss", "platform": null, "capabilities": [], "$why": "RGSS3*.dll beside the exe (VX Ace); the archive alone would do for a title that relies on the installed RTP. One rule for XP/VX/VX Ace with no version: which prefix matched is not a value any extractor produces (05_DETECTION)." }

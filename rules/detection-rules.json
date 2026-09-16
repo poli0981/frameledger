@@ -41,7 +41,7 @@
     "level, which made it a check that could not fire."
   ],
   "schemaVersion": 2,
-  "rulesVersion": "2026.08.2",
+  "rulesVersion": "2026.09.1",
 
   "engines": [
     {
@@ -61,6 +61,28 @@
         { "type": "sibling_glob", "value": "*/Content/Paks/*.pak" }
       ] },
       "version": { "type": "pe_product_version_regex", "value": "\\+\\+UE(4|5)\\+Release-(\\d+\\.\\d+)" }
+    },
+    {
+      "id": "rpgmaker_mv",
+      "name": "RPG Maker MV/MZ",
+      "signals": { "all": [
+        { "type": "sibling_glob", "value": "nw.dll" },
+        { "type": "sibling_glob", "value": "package.json" }
+      ] },
+      "version": null
+    },
+    {
+      "id": "rpgmaker_rgss",
+      "name": "RPG Maker XP/VX/VX Ace",
+      "signals": { "any": [
+        { "type": "sibling_glob", "value": "RGSS1*.dll" },
+        { "type": "sibling_glob", "value": "RGSS2*.dll" },
+        { "type": "sibling_glob", "value": "RGSS3*.dll" },
+        { "type": "sibling_glob", "value": "*.rgssad" },
+        { "type": "sibling_glob", "value": "*.rgss2a" },
+        { "type": "sibling_glob", "value": "*.rgss3a" }
+      ] },
+      "version": null
     },
     {
       "id": "godot",
