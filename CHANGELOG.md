@@ -14,10 +14,82 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 > **Built 2026-09-14 (P4 PR-5).** From 2026-08-06 until then this paragraph said the workflow
 > "will" exist and that a missing section "will mean an empty release note"; the second half
-> was the wrong design and is replaced rather than implemented. This file still has no
-> `## [x.y.z]` heading: the first one is the owner's, in the commit that cuts the first tag.
+> was the wrong design and is replaced rather than implemented. ~~This file still has no
+> `## [x.y.z]` heading: the first one is the owner's, in the commit that cuts the first tag.~~
+>
+> **The first heading is `## [0.1.0-beta.1]` (2026-09-16), and it is a summary rather than the moved
+> entries.** The instruction above says "move the `[Unreleased]` entries under the heading"; by the first
+> tag those entries were 370 KB — every PR since 2026-08-04 — and a GitHub release body holds 125,000
+> characters. So the versioned section is a written summary of what the pre-release is and is not, and
+> the entries it summarises stay below it, verbatim, under a heading that is not a version
+> (`## Ledger before 0.1.0-beta.1`), where `release-notes.ps1` stops reading. From the second tag on,
+> the entries under `[Unreleased]` are short enough to move as written.
 
 ## [Unreleased]
+
+_Nothing yet — entries continue here after `0.1.0-beta.1`._
+
+## [0.1.0-beta.1] - 2026-09-16
+
+**The first pre-release.** An unsigned installer, `FrameLedger.App-win-Setup.exe`, built by `release.yml` from
+this tag; `SHA256SUMS.txt` is published beside it and printed below. SmartScreen will warn (no code signing —
+`docs/11_UPDATER.md`); verify the hash, then *More info → Run anyway*. It installs into `%LOCALAPPDATA%\FrameLedger.App`
+and keeps its data in `%LOCALAPPDATA%\FrameLedger`; uninstalling asks before touching the data. Windows 10 22H2 is
+the supported floor and is **unmeasured** — every measurement below was taken on one Windows 11 machine with an NVIDIA
+GPU (`docs/spike-notes.md`).
+
+### What it is
+
+- **A desktop app and a background Agent.** The App (WPF) holds the library, imports it from Steam, GOG, Epic and
+  itch.io, shows the Dashboard, session summaries, charts, trends and comparisons, Settings, Logs, the tray, the
+  first-run Legal Gate and the bug report. The Agent watches the library at 1 Hz, records a session whenever a
+  library game runs, and stores it in a local SQLite ledger. Nothing leaves the machine except the update check
+  (`legal/PRIVACY_POLICY.md` 2.2).
+- **Measurement by hooking, opt-in per game, behind a hard anti-cheat gate.** For a game you enabled — and only
+  after the consent dialog — the Agent loads `FrameLedger.Overlay.dll` into the game and reads what the game passes
+  to the graphics APIs: frame times and output resolution from the present call (Direct3D 11/12, OpenGL; Vulkan
+  through an implicit layer, today only when the Agent itself launches the title); upscaler identity and
+  render→output resolution from Streamline and FidelityFX calls; the frame-generation factor from Streamline's frame
+  token and FidelityFX's dispatches, **counted, never assumed**; ray tracing from DXR dispatch and
+  acceleration-structure hooks. Before injecting, and every 30 s during a session, the guard scans the process
+  tree for anti-cheat and anti-tamper modules, services and drivers and **refuses** — there is no override — and a
+  refusal mid-session unhooks within a frame. A game that is not enabled, or is refused, is recorded as duration
+  and hardware sensors with the reason, and every measured field reads N/A.
+- **Honest numbers by rule.** Where frame generation is active the readout is *Native → Displayed (×N FG)*;
+  where it was identified but the count refused — a session whose frame-generation state changed (menus,
+  loading screens, alt-tab), or a title with two swapchains — the chip says "factor not counted" and its tooltip
+  says which bucket and by how much. Ray tracing, path tracing and Ray Reconstruction are Yes / No / N/A, measured
+  or not at all. The one number that stands alone carries a qualifier saying whether a frame-generation runtime
+  was loaded.
+- **Telemetry** from DXGI and PDH (every vendor), LibreHardwareMonitor (GPU sensors unelevated), and NVAPI on
+  NVIDIA. CPU and board sensors need PawnIO and elevation and are off by default.
+- **Safety and legal surface:** the consent dialog with the disclosure text in en/vi/ja (ja machine-drafted,
+  marked for review), the kill switch, a crash within 60 s of injection twice auto-disabling hooking for that game,
+  the Legal Gate (EULA 1.0, Disclaimer 2.2, Privacy Policy 2.2), the bug bundle built locally and redacted,
+  crash dumps offered only when ticked.
+
+### What it is not, yet
+
+- **No rules feed.** The anti-cheat blocklist and the detection rules ship with the build and update only with the
+  next release (`docs/20_OPEN_QUESTIONS.md` §S20). A missed anti-cheat is a safety report (`SECURITY.md`).
+- **Vulkan in attach mode is unmeasured**, and the layer is registered only when you ask (Settings).
+- **The DLSS quality preset reads N/A** on every title measured: no title chains the structure that carries it.
+- **AMD and Intel GPUs are unmeasured** for telemetry and for their frame-generation runtimes; XeSS and the newer
+  FidelityFX frame generation are identified by module, not counted.
+- **The frame-generation factor is refused rather than guessed** on whole play sessions that changed state; a
+  steady-state figure over the uniform part of a session is a decision not yet taken.
+- **The ≤ 0.5 % FPS-impact run and the "against the game's own menu" readings** in `docs/spike-notes.md` §14 are
+  still the owner's to take.
+
+### The record
+
+Everything that landed before this tag — every PR from 2026-08-04 to 2026-09-16, with its reasoning — is the
+section *Ledger before 0.1.0-beta.1* below, kept verbatim.
+
+## Ledger before 0.1.0-beta.1 (2026-08-04 → 2026-09-16)
+
+_The `[Unreleased]` entries as they stood when the first tag was cut; `release-notes.ps1` stops before this
+heading. Newest first._
 
 ### Added
 

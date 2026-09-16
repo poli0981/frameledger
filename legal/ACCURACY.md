@@ -11,8 +11,9 @@
   that changes what FrameLedger.Overlay or the capture host does; date the change.
   HTML comments are not part of the block.
 -->
-> ⚠ **What FrameLedger actually measures today — 2026-09-15.** The software is pre-alpha and
-> **unreleased**: no tagged build or installer has been published. The source holds the desktop app
+> ⚠ **What FrameLedger actually measures today — 2026-09-16.** The software is pre-alpha; its first
+> **pre-release is `0.1.0-beta.1`** (2026-09-16), an unsigned installer built from that tag with its
+> checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
 > game in the library runs, injects only into games you enabled and only past the safety guard, and
 > stores sessions in a local database. What that path measures:
