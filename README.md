@@ -147,7 +147,7 @@ Developer/AI-facing docs in [`docs/`](docs/). Start with `CLAUDE.md`, then `docs
 
 ## Reporting a safety gap
 
-If you find a game with anti-cheat that FrameLedger fails to detect, please open an issue — **that is a safety bug and is treated with the same priority as a security report.**
+If you find a game with anti-cheat that FrameLedger fails to detect, please open an issue with the *Safety gap* form — **that is a safety bug and is treated with the same priority as a security report.** A vulnerability in FrameLedger itself takes the private route in [`SECURITY.md`](SECURITY.md).
 
 **How fast a fix can reach you, stated accurately.** Blocklist entries are data rather than code, so a fix is a one-line change here. But the software has **no rules-update path yet**: it installs the blocklist that shipped with your build and never fetches another (`docs/20_OPEN_QUESTIONS.md` §S20, feed half). Until that exists, a blocklist fix reaches you **only when you install a new release**. This paragraph previously said the opposite, and the sentence it said it in was a response-time promise attached to a security-priority commitment.
 

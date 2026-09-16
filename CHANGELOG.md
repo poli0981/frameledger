@@ -21,6 +21,17 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Added
 
+- **P5 prep: a release rehearsal, `SECURITY.md`, and an honest hygiene checklist (2026-09-16).** `release.yml` gains
+  `workflow_dispatch` with a `version` input: the identical job — the gate, publish, runtime licences, the
+  published-tree assertion, `vpk pack`, checksums, the artifact — with no tag and no Release, so the steps that had
+  only ever run by hand on one machine run on the hosted runner before the first tag; a missing `## [x.y.z]` section
+  is a warning with placeholder notes in a rehearsal and stays a stop on a tag. `SECURITY.md`: the private route for
+  a vulnerability (GitHub's private reporting when enabled, else e-mail), the public *Safety gap* form for an
+  undetected anti-cheat, what not to include, and the response *intent* stated as an intent; `ISSUE_TEMPLATE/config.yml`
+  points a vulnerability at the private route; README's safety-gap paragraph links both. `13_CI_CD` §Repo hygiene
+  checklist rewritten: the in-tree items were done and unticked, the first box asked for caller stubs the file's own
+  opening paragraph rejects, and the rest are GitHub settings only the owner can set — listed as such. `14_TESTING`'s
+  Velopack-delta row says it is reachable from the second release.
 - **The "factor not counted" tooltip says which bucket, and by how much — `sessions.fg_refusal_detail`, schema
   0005 (2026-09-16).** The owner's Dashboard showed "DLSS-G active — factor not counted" on Hell Is Us, Black Myth:
   Wukong, Cronos and Onimusha; three refused `non_uniform` (one of eight equal-sample buckets departed more than

@@ -21,12 +21,28 @@
 # channel sees it. The managed assemblies take the tag's full version through
 # -p:Version; the native blocks keep the numeric core (CMake's project() accepts
 # nothing else).
+#
+# A DRY RUN (2026-09-16, P5 prep): `workflow_dispatch` with a version runs every
+# step below — the gate, the publish, the tree assertion, vpk, the checksums — and
+# uploads the result as a workflow artifact, but creates no tag and no Release.
+# It is the first-tag measurement without the tag: 13_CI_CD §release.yml said the
+# workflow "has not been exercised by a tag yet", and everything after the version
+# gate had only ever run by hand on one machine. In a dry run a missing
+# `## [x.y.z]` CHANGELOG section is a printed warning with placeholder notes rather
+# than a stop, because the section is written in the tag commit and a dry run
+# precedes it; on a real tag it stays a hard stop.
 
 name: Release
 
 on:
   push:
     tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to rehearse (e.g. 0.1.0-beta.1): numeric core must equal VERSION; no tag, no Release'
+        required: true
+        type: string
 
 # The Release API is contents: write; nothing else is needed and nothing else is granted.
 permissions:
@@ -71,9 +87,13 @@ jobs:
       - name: Version gate (tag vs VERSION, CHANGELOG section)
         id: version
         shell: pwsh
+        env:
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' }}
+          DISPATCHED_VERSION: ${{ inputs.version }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $tag = $env:GITHUB_REF_NAME
+          $dry = $env:DRY_RUN -eq 'true'
+          $tag = if ($dry) { 'v' + $env:DISPATCHED_VERSION.TrimStart('v') } else { $env:GITHUB_REF_NAME }
           $m = [regex]::Match($tag, '^v(\d+\.\d+\.\d+)(-[0-9A-Za-z.]+)?$')
           if (-not $m.Success) { throw "tag '$tag' is not vMAJOR.MINOR.PATCH[-prerelease]" }
           $full = $tag.Substring(1)
@@ -83,10 +103,18 @@ jobs:
           if ($core -ne $file) { throw "tag $tag has numeric core $core but VERSION says $file — bump VERSION in the same commit as the changelog section, then tag" }
           New-Item -ItemType Directory -Force out | Out-Null
           ./tools/release-notes.ps1 -Version $full -OutFile out/notes.md
-          if ($LASTEXITCODE -ne 0) { throw 'release notes' }
+          if ($LASTEXITCODE -ne 0) {
+            if (-not $dry) { throw 'release notes' }
+            Write-Host "::warning::CHANGELOG.md has no '## [$full]' section yet - a dry run continues with placeholder notes; a real tag stops here"
+            [System.IO.File]::WriteAllText('out/notes.md', "DRY RUN of $full - CHANGELOG.md has no ``## [$full]`` section yet.`n", [System.Text.UTF8Encoding]::new($false))
+            # The runner's pwsh wrapper ends the step with `exit $LASTEXITCODE`, so a handled failure must clear it
+            # (measured 2026-09-16: the first rehearsal printed the warning and then failed with the script's exit 1).
+            $global:LASTEXITCODE = 0
+          }
           "version=$full" >> $env:GITHUB_OUTPUT
           "prerelease=$pre" >> $env:GITHUB_OUTPUT
-          Write-Host "releasing $full (pre-release: $pre)"
+          "dry_run=$($dry.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          Write-Host "$(if ($dry) { 'DRY RUN of' } else { 'releasing' }) $full (pre-release: $pre)"
 
       # 12_BUILD §Release-time token substitution: the effective date of a legal
       # document is the date it ships. The only placeholder that survives into the
@@ -205,6 +233,7 @@ jobs:
           Get-Content out/release/SHA256SUMS.txt
 
       - name: Create the GitHub Release
+        if: steps.version.outputs.dry_run != 'true'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -221,7 +250,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: release-${{ github.ref_name }}
+          name: release-${{ steps.version.outputs.version || github.ref_name }}${{ steps.version.outputs.dry_run == 'true' && '-dry-run' || '' }}
           path: |
             out/release/**
             out/notes.md
