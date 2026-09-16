@@ -91,6 +91,7 @@ public static class SessionAggregator
             DisplayedCountedBy = usable ? (fg!.DxgiCounted ? "dxgi" : "hook") : null,
             FgNoneWithheldReason = c.Withheld,
             FgRefusal = usable ? null : fg?.Refusal is { } refusal ? Vocabulary.FgRefusal(refusal.Kind) : null,
+            FgRefusalDetail = usable ? null : fg?.Refusal is { } detail ? FgRefusalDetail.ToJson(detail) : null,
             PresentedQualifier = PresentedQualifier(c),
             FgDriverReported = c.Input.Ngx.FgCreatedAndEvaluated ? "dlssg" : null,
             FgRuntimeCensus = c.Input.Writer.RuntimeCensus,

@@ -180,6 +180,12 @@ public static class Strings
         nameof(Fg_Refusal_TooShort),
         nameof(Fg_Refusal_Unattributed),
         nameof(Fg_Refusal_Unknown),
+        nameof(Fg_RefusalDetail_AmbiguousBand_Format),
+        nameof(Fg_RefusalDetail_MultipleStreams_Format),
+        nameof(Fg_RefusalDetail_NonUniform_Format),
+        nameof(Fg_RefusalDetail_NoTokens),
+        nameof(Fg_RefusalDetail_Records_Format),
+        nameof(Fg_RefusalDetail_TooShort_Format),
         nameof(Fg_Unknown),
         nameof(FirstRun_Accept),
         nameof(FirstRun_Agent_Body),
@@ -893,6 +899,18 @@ public static class Strings
     public static string Fg_Refusal_Unattributed => ResourceManager.GetString(nameof(Fg_Refusal_Unattributed), Culture) ?? nameof(Fg_Refusal_Unattributed);
 
     public static string Fg_Refusal_Unknown => ResourceManager.GetString(nameof(Fg_Refusal_Unknown), Culture) ?? nameof(Fg_Refusal_Unknown);
+
+    public static string Fg_RefusalDetail_AmbiguousBand_Format => ResourceManager.GetString(nameof(Fg_RefusalDetail_AmbiguousBand_Format), Culture) ?? nameof(Fg_RefusalDetail_AmbiguousBand_Format);
+
+    public static string Fg_RefusalDetail_MultipleStreams_Format => ResourceManager.GetString(nameof(Fg_RefusalDetail_MultipleStreams_Format), Culture) ?? nameof(Fg_RefusalDetail_MultipleStreams_Format);
+
+    public static string Fg_RefusalDetail_NonUniform_Format => ResourceManager.GetString(nameof(Fg_RefusalDetail_NonUniform_Format), Culture) ?? nameof(Fg_RefusalDetail_NonUniform_Format);
+
+    public static string Fg_RefusalDetail_NoTokens => ResourceManager.GetString(nameof(Fg_RefusalDetail_NoTokens), Culture) ?? nameof(Fg_RefusalDetail_NoTokens);
+
+    public static string Fg_RefusalDetail_Records_Format => ResourceManager.GetString(nameof(Fg_RefusalDetail_Records_Format), Culture) ?? nameof(Fg_RefusalDetail_Records_Format);
+
+    public static string Fg_RefusalDetail_TooShort_Format => ResourceManager.GetString(nameof(Fg_RefusalDetail_TooShort_Format), Culture) ?? nameof(Fg_RefusalDetail_TooShort_Format);
 
     public static string Fg_Unknown => ResourceManager.GetString(nameof(Fg_Unknown), Culture) ?? nameof(Fg_Unknown);
 

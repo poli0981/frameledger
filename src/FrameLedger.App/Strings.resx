@@ -465,6 +465,24 @@
   <data name="Fg_Refusal_Unknown" xml:space="preserve">
     <value>the count did not resolve</value>
   </data>
+  <data name="Fg_RefusalDetail_NonUniform_Format" xml:space="preserve">
+    <value>Bucket {0} of {1} measured {2} against {3} for the whole session, over {4} samples.</value>
+  </data>
+  <data name="Fg_RefusalDetail_NoTokens" xml:space="preserve">
+    <value>no tokens</value>
+  </data>
+  <data name="Fg_RefusalDetail_MultipleStreams_Format" xml:space="preserve">
+    <value>{0} swapchains presented during the session.</value>
+  </data>
+  <data name="Fg_RefusalDetail_TooShort_Format" xml:space="preserve">
+    <value>{0} samples; at least {1} are needed to check.</value>
+  </data>
+  <data name="Fg_RefusalDetail_AmbiguousBand_Format" xml:space="preserve">
+    <value>presents ÷ tokens = {0}, between {1} (none) and {2} (generation).</value>
+  </data>
+  <data name="Fg_RefusalDetail_Records_Format" xml:space="preserve">
+    <value>{0} record(s).</value>
+  </data>
   <data name="Fg_None" xml:space="preserve">
     <value>No frame generation</value>
   </data>

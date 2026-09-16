@@ -1,6 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using FrameLedger.Application.Persistence;
+using FrameLedger.Application.Recording;
+using FrameLedger.Domain.Metrics;
 using FrameLedger.Shared;
 using FrameLedger.Shared.Ipc;
 
@@ -32,7 +34,7 @@ public static class FpsPresentation
             return FpsReadoutModel.Unavailable;
         }
 
-        return Shape(row.FgMode, row.NativeFps, row.DisplayedFps, row.FgFactor, row.PresentedFps ?? row.NativeFps, ParseQualifier(row.PresentedQualifier), row.FgRefusal, row.FgRuntimeCensus);
+        return Shape(row.FgMode, row.NativeFps, row.DisplayedFps, row.FgFactor, row.PresentedFps ?? row.NativeFps, ParseQualifier(row.PresentedQualifier), row.FgRefusal, row.FgRuntimeCensus, row.FgRefusalDetail);
     }
 
     /// <summary>The live card's shape from a 1 Hz progress event (<c>07_IPC</c>: the FG fields are set only when measured).</summary>
@@ -133,8 +135,40 @@ public static class FpsPresentation
         string.Format(CultureInfo.CurrentCulture, Strings.Fps_Fg_Identified_Format, technology ?? Strings.Fg_Unknown);
 
     /// <summary>Its tooltip: the technology, the refusal in plain words, and why the number reads as Displayed.</summary>
-    public static string IdentifiedTooltip(string? technology, string? refusal) =>
-        string.Format(CultureInfo.CurrentCulture, Strings.Fps_Fg_Identified_Tooltip_Format, technology ?? Strings.Fg_Unknown, RefusalText(refusal));
+    public static string IdentifiedTooltip(string? technology, string? refusal) => IdentifiedTooltip(technology, refusal, detail: null);
+
+    /// <summary>
+    /// The same tooltip with the refusal's numbers when the row stored them (<c>fg_refusal_detail</c>, schema 0005):
+    /// "bucket 3 of 8 measured 2.25 against 3.65 for the whole session" says what "changed mid-session" cannot.
+    /// </summary>
+    public static string IdentifiedTooltip(string? technology, string? refusal, string? detail)
+    {
+        string text = string.Format(CultureInfo.CurrentCulture, Strings.Fps_Fg_Identified_Tooltip_Format, technology ?? Strings.Fg_Unknown, RefusalText(refusal));
+        return RefusalDetailText(FgRefusalDetail.Parse(detail)) is { } numbers ? text + " " + numbers : text;
+    }
+
+    /// <summary>The sentence for a refusal's numbers, or null when the kind carries none worth a sentence (not counted, no evaluations, no batches).</summary>
+    public static string? RefusalDetailText(FgRefusalDetail? detail)
+    {
+        if (detail is null)
+        {
+            return null;
+        }
+
+        CultureInfo culture = CultureInfo.CurrentCulture;
+        return detail.Kind switch
+        {
+            "non_uniform" => string.Format(culture, Strings.Fg_RefusalDetail_NonUniform_Format,
+                detail.BucketIndex + 1, detail.BucketCount, detail.BucketValue is double v ? Ratio(v) : Strings.Fg_RefusalDetail_NoTokens, Ratio(detail.Overall), detail.Count),
+            "multiple_streams" => string.Format(culture, Strings.Fg_RefusalDetail_MultipleStreams_Format, detail.Count),
+            "too_short" => string.Format(culture, Strings.Fg_RefusalDetail_TooShort_Format, detail.Count, FgWindow.MinSamplesToCheck),
+            "ambiguous_band" => string.Format(culture, Strings.Fg_RefusalDetail_AmbiguousBand_Format, Ratio(detail.Overall), Ratio(FgWindow.NoneCeiling), Ratio(FgWindow.ActiveThreshold)),
+            "unattributed" or "count_saturated" or "dxgi_saturated" => string.Format(culture, Strings.Fg_RefusalDetail_Records_Format, detail.Count),
+            _ => null,
+        };
+    }
+
+    private static string Ratio(double value) => value.ToString("0.00", CultureInfo.CurrentCulture);
 
     /// <summary>The row's <c>fg_refusal</c> token in the user's words; an unknown token is the honest "did not resolve".</summary>
     public static string RefusalText(string? refusal) => refusal switch
@@ -211,7 +245,7 @@ public static class FpsPresentation
         _ => FpsQualifier.CensusNotRun,
     };
 
-    private static FpsReadoutModel Shape(string? fgMode, double? native, double? displayed, double? factor, double? presented, FpsQualifier qualifier, string? refusal, long? runtimeCensus)
+    private static FpsReadoutModel Shape(string? fgMode, double? native, double? displayed, double? factor, double? presented, FpsQualifier qualifier, string? refusal, long? runtimeCensus, string? refusalDetail = null)
     {
         // fg_mode: 'na' = not measured; 'none' = measured none; a technology with a factor = counted generation;
         // a technology WITHOUT a factor = identified, and the count refused (fg_refusal says why).
@@ -234,6 +268,7 @@ public static class FpsPresentation
                 Qualifier = qualifier,
                 Technology = Formats.FrameGeneration(fgMode),
                 Refusal = refusal,
+                RefusalDetail = refusalDetail,
                 RuntimeCensus = runtimeCensus,
             };
         }
