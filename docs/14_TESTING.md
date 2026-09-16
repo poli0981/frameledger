@@ -130,7 +130,7 @@ that it was checked against anything.
 | Mode | launch mode · attach mode · mid-session settings change |
 | Safety | game with anti-cheat → toggle disabled · simulated late AC load → unhook · double-crash → auto-disable |
 | Tier | forced Tier 2 (records duration, available sensors and the reason — and nothing else) · Tier 1 → Tier 2 degradation notice |
-| Update | Velopack delta; update deferred while a game is hooked (FR-12) |
+| Update | Velopack delta; update deferred while a game is hooked (FR-12) — *a delta needs a previous release, so this row is reachable from the second release, not the first* |
 
 ## Release smoke
 

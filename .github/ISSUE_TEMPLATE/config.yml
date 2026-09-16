@@ -1,0 +1,6 @@
+# Where a report goes when it is not a bug, a feature or a safety gap (SECURITY.md).
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability (private)
+    url: https://github.com/poli0981/frameledger/security/advisories/new
+    about: A way past the guard, an injection the user did not enable, a privacy leak — report it privately, per SECURITY.md.
