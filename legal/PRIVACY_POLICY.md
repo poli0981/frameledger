@@ -1,6 +1,6 @@
 # FrameLedger — Privacy Policy
 
-**Version:** 2.1-draft · **Effective:** {{RELEASE_DATE}}
+**Version:** 2.2 · **Effective:** {{RELEASE_DATE}}
 
 **Short version: everything stays on your PC. FrameLedger has no accounts, no telemetry, no analytics, and never uploads your data anywhere.**
 
@@ -8,29 +8,28 @@
 
 Stored in `%LOCALAPPDATA%\FrameLedger` on your device:
 
-- Your game library entries (names, executable paths, cover art, metadata you or the app filled in).
+- Your game library entries (names, executable paths, metadata you or the app filled in).
 - Performance sessions: frame timing series, computed statistics, hardware sensor series (temperatures, load, memory usage), session duration, crash flags, tags and notes you write.
 - A hardware snapshot per session (CPU/GPU model, driver version, RAM size, OS build, display mode) used for the "what changed between sessions" feature.
-- App settings, logs (7-day rotation, including logs written by the component loaded into games), and, after a crash of the app itself, crash dump files.
+- App settings, logs (rotated daily — the app keeps 7 days, the capture agent 14 — including the logs written by the component loaded into games), and, after a crash of the app itself, crash dump files.
 - Which games you enabled code injection for, and when you consented.
 
 This data never leaves your device unless **you** export it or attach it to a bug report yourself. Deleting the app offers deletion of this folder; you can also delete it manually at any time.
 
 ## 2. Network connections the app can make
 
-FrameLedger makes **no network connections except the following**, each visible in settings:
+FrameLedger makes **no network connections except the following two**, both from an installed copy only, and the first can be switched off in Settings ▸ Updates:
 
 | Purpose | Endpoint | When | Data sent |
 |---|---|---|---|
-| Update check | GitHub Releases API for `poli0981/frameledger` | At startup (can be disabled) and on manual check | Standard HTTP request metadata only (no identifiers beyond your IP as seen by GitHub) |
-| Safety list update | Raw file on the project repository | Weekly, and **regardless of your other rules-update settings** | Same as above — this list is what stops FrameLedger injecting into newly-protected games, so it is not optional |
-| Update download | GitHub release assets | Only after an update is found | Same as above |
-| Detection-rules update | Raw file on the project repository | Weekly check (can be disabled) and manual | Same as above |
-| Store metadata lookup | Steam public store API | **Off by default — opt-in** | The Steam AppID of a game you added |
+| Update check | GitHub Releases API for `poli0981/frameledger` | A few seconds after startup (can be disabled) and when you choose Help ▸ Check for updates | Standard HTTP request metadata only — the request carries `User-Agent: FrameLedger/<version>` and nothing else of ours; no identifiers beyond your IP as seen by GitHub |
+| Update download | GitHub release assets | Only after an update is found, and applied only after you restart (never while a game is being measured) | Same as above |
 
-> ⚠ **Accuracy audit, 2026-08-04, amended 2026-09-14: the "Safety list update" and "Detection-rules update" rows describe outbound requests the software does not make.** The "Update check" and "Update download" rows are real since 2026-09-14 (version 2.1 of this document — a new outbound request is a material change): Velopack, against GitHub's release API and release assets, from an installed copy only, the startup check off with one switch in Settings ▸ Updates, and the request carries `User-Agent: FrameLedger/<version>` and nothing else of ours. The rules rows are not real: there is no rules HTTP client anywhere in the product; the anti-cheat blocklist currently ships with the build and is installed locally on first run (`docs/20_OPEN_QUESTIONS.md` §S20 — the seed half is done, the feed half is not). **Over-disclosure is a defect in this document too**: a privacy policy that lists a transmission which never happens is as wrong as one that omits a transmission which does. Either the fetch exists at first release or these rows change.
+There is no other request. In particular, the anti-cheat safety list and the detection rules ship **with the build** and are installed locally on first run; the software fetches no rules from anywhere, and it looks nothing up on any store. When a rules feed exists it will be a new version of this document, which the app shows you again before continuing (§6).
 
-GitHub's own privacy practices apply to requests it receives: <https://docs.github.com/privacy>. The Steam lookup, if enabled, is governed by Valve's policies.
+> **History.** Versions 2.0 and 2.1 of this document listed three further rows — a weekly safety-list update, a weekly detection-rules update, and an opt-in Steam store lookup — describing requests the software did not make; from 2026-08-04 they carried an audit note saying so. Version 2.2 (2026-09-16) removes them. A privacy policy that lists a transmission which never happens is as wrong as one that omits a transmission which does.
+
+GitHub's own privacy practices apply to requests it receives: <https://docs.github.com/privacy>.
 
 ## 3. Bug reports — always manual
 

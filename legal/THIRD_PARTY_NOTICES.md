@@ -93,16 +93,16 @@ Any proposal to add a vendor SDK must first pass the checklist in `docs/18_GPU_V
 
 ## Trademarks
 
-All product names, logos, and brands are property of their respective owners and are used for identification purposes only (see `DISCLAIMER.md` §4).
+All product names, logos, and brands are property of their respective owners and are used for identification purposes only (see `DISCLAIMER.md` §6).
 
 ## Attribution requirements checklist (release gate)
 
 - [x] `legal/licenses/` contains full texts: MIT (per-project copies, **including `nvapi-MIT.txt`**), BSD-2-Clause (MinHook), MPL-2.0, Apache-2.0 — **2026-09-15 (P4 PR-6):** the vendored natives' copies as before, plus one generated text per shipped NuGet package in `legal/licenses/nuget/` (77), gated by `license-check` §3; the .NET runtime's licence and notices are added to the package by `release.yml`. The copies ship: the App's publish carries `legal/licenses/` as `licenses/`
-- [ ] About → Third-party tab lists this table with versions filled from `Directory.Packages.props`
+- [ ] About → Third-party tab lists this table with versions filled from `Directory.Packages.props` — **not built as of 2026-09-16 and not a gate for the first pre-release**: the texts ship as files (`licenses/` beside the App, `licenses/nuget/INDEX.md` lists every package with its version), and Help ▸ Documentation opens this file; the tab is an open UI item
 - ~~PresentMon license + copyright shipped beside the bundled binary~~ — **removed 2026-08-27 with the dependency.** Nothing Intel-authored is distributed by this project
 - [x] MPL-2.0 source-availability note points to upstream LibreHardwareMonitor repository — every MPL-2.0 package text in `legal/licenses/nuget/` names its Source Code Form (MPL-2.0 §3.2), LHM's `https://github.com/LibreHardwareMonitor/LibreHardwareMonitor` included (2026-09-15)
 - [x] LHM checked for MPL-2.0 Exhibit B on any depended-upon file — clear as of 0.9.6 / commit `3d331e33`, 2026-08-02
 - [x] **AMD FidelityFX headers are vendored** (2026-09-04) — five headers, MIT **by exception**: `license-check.ps1` §2d asserts each vendored path against the exception list inside the vendored `license.md` and each header's own banner, file by file. No binary, no source
 - [x] **AMD FidelityFX SDK 3.0 host headers are vendored** (2026-09-05) — ten headers at tag `fsr3-v3.0.4`, MIT at the root **and** inline: `license-check.ps1` §2e asserts the root grant and every header's banner, file by file, in a directory of its own because the licence shape differs from the row above. No binary, no source, no shaders
 - [x] **NVAPI is vendored** (2026-08-05) and all nine headers carry their `SPDX-License-Identifier: MIT` blocks unmodified — asserted file by file, not sampled. `license-check.ps1` enforces that this line and the table agree with the filesystem, **in both directions**: vendoring the material while the table still said "Not yet" failed the build, which is how this row came to be flipped
-- [ ] No Intel IGCL or AMD ADLX material anywhere in the tree (CI grep, see `docs/13_CI_CD.md`)
+- [x] No Intel IGCL or AMD ADLX material anywhere in the tree — `tools/license-check.ps1` §1 greps for both SDKs' identifiers on every `build.ps1 check` and therefore in CI (`docs/13_CI_CD.md` §Licence guard); ticked 2026-09-16, the check had existed since P0
