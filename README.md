@@ -131,9 +131,7 @@ Elevation is **optional — for everything.** Hooked capture is the normal path 
 
 ## Privacy
 
-Everything lives locally in `%LOCALAPPDATA%\FrameLedger`. The only network calls FrameLedger will ever make: update checks against GitHub Releases, detection-rules updates from this repository, and *optional, opt-in* store metadata lookups. Bug reports are always built locally, shown to you, and submitted by you. Full policy: [`legal/PRIVACY_POLICY.md`](legal/PRIVACY_POLICY.md).
-
-**Today it makes one of them: the update check** — at startup, a few seconds after launch, unless you turn it off in Settings ▸ Updates, and when you choose Help ▸ Check for updates — plus the download of an update you accepted; both go to GitHub Releases, from an installed copy only, and nothing is applied until you restart (never while a game is hooked). The rules feed does not exist — the blocklist ships with the build and updates only when you install a new one (`docs/20_OPEN_QUESTIONS.md` §S20). Listing a fetch that has no code is over-disclosure, and this document was already corrected once for describing a weekly outbound request the software never made.
+Everything lives locally in `%LOCALAPPDATA%\FrameLedger`. The only network calls FrameLedger makes are **the update check** — a few seconds after launch unless you turn it off in Settings ▸ Updates, and when you choose Help ▸ Check for updates — and **the download of an update you accepted**; both go to GitHub Releases, from an installed copy only, and nothing is applied until you restart (never while a game is hooked). There is no other request: the anti-cheat blocklist and the detection rules ship with the build and update only when you install a new one (`docs/20_OPEN_QUESTIONS.md` §S20), and nothing is looked up on any store. Bug reports are always built locally, shown to you, and submitted by you. Full policy: [`legal/PRIVACY_POLICY.md`](legal/PRIVACY_POLICY.md) — version 2.2 removed the three rows (a rules feed twice over, a Steam lookup) that earlier versions listed for requests the software never made.
 
 ## License
 

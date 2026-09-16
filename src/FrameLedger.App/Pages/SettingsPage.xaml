@@ -214,18 +214,12 @@
                 <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_MinimizeToTray_Label}" IsChecked="{Binding ViewModel.MinimizeToTray, Mode=TwoWay}" />
             </ui:CardControl>
 
-            <!-- Privacy, updates, logging, legal. -->
-            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Privacy_Header}" />
-            <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Globe24}">
-                <ui:CardControl.Header>
-                    <StackPanel>
-                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_OnlineMetadata_Label}" />
-                        <ui:TextBlock MaxWidth="560" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Settings_OnlineMetadata_Body}" TextWrapping="Wrap" />
-                    </StackPanel>
-                </ui:CardControl.Header>
-                <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_OnlineMetadata_Label}" IsChecked="{Binding ViewModel.OnlineMetadata, Mode=TwoWay}" />
-            </ui:CardControl>
-
+            <!--
+                Updates, logging, legal. The Privacy card — the `privacy.online_metadata` toggle — is not shown
+                (2026-09-16): no code makes the store request it would enable, and a switch for a request that does
+                not exist is the same over-disclosure the privacy policy's version 2.2 removed from its table. The
+                setting stays in the registry, off, for the day a consumer exists (06_DATA_MODEL §Settings registry).
+            -->
             <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Updates_Header}" />
             <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon ArrowSync24}">
                 <ui:CardControl.Header>

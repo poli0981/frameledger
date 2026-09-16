@@ -260,6 +260,23 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **The legal documents say what the software does, in release form (2026-09-16).** EULA 1.0, Disclaimer 2.2,
+  Privacy Policy 2.2 — the `-draft` suffix (which `legal_acceptance.version` recorded) and the "Draft for review"
+  banners are gone, so the Legal Gate shows all three again. **Privacy Policy §2** listed three requests the software
+  has never made — a weekly safety-list update, a weekly detection-rules update, an opt-in Steam store lookup —
+  under an audit note saying so since 2026-08-04; version 2.2 keeps the two real rows (Velopack's update check and
+  download) and says there is no other request, with the removal recorded as history in the document itself. §1 no
+  longer mentions cover art (no such feature) and states the log retention the code has (7 days App, 14 Agent).
+  **Disclaimer:** the 25-line accuracy-audit block that sat inside the accepted text moved, unchanged, to
+  `docs/legal-drift-history.md`; a five-line pointer explains how §4 is kept true (`legal/ACCURACY.md` +
+  `accuracy-check`); the contact footer the other two documents carry is added. **Third-party notices:** the IGCL/ADLX
+  box is ticked with its check named (`license-check` §1, in the gate since P0); the About-tab box says it is not
+  built and not a gate for the first pre-release; the trademarks pointer reads §6. **README** §Privacy collapsed to
+  one accurate paragraph. **Settings:** the `privacy.online_metadata` toggle is no longer shown — a switch for a request
+  that has no code is the same over-disclosure — and the setting stays reserved (`06_DATA_MODEL` §Settings registry,
+  `08_UI`). `20_OPEN_QUESTIONS` §S20: the feed lands as a new policy version, not as rows kept in advance. The
+  accuracy block's "unreleased" sentence is deliberately untouched: it becomes false with the tag and is rewritten in
+  the tag commit.
 - **itch.io import reads butler's database, so an install location outside `%APPDATA%` is found (2026-09-16).**
   `ItchLibrarySource` scanned `%APPDATA%\itch\apps\*\.itch\receipt.json.gz` and nothing else; on the owner's machine
   the itch app's one install location is `D:\another\it`, `apps\` is empty, and the import logged `itch — 0 title(s)`
