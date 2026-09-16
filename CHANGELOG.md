@@ -21,6 +21,15 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Added
 
+- **RPG Maker is detected — MV/MZ and XP/VX/VX Ace — and `rulesVersion` is `2026.09.1` (2026-09-16).** Two engine
+  rows `05_DETECTION` marked ⛔ "cannot be expressed in schemaVersion 2": the MV/MZ reasoning wanted a nested group
+  for `nw.dll` **and** (`www/` **or** `package.json`), but MV and MZ both ship `package.json` beside `nw.dll`
+  unconditionally, so `all: [nw.dll, package.json]` is the signal — measured on the owner's *Flower in Us* and a
+  hand-extracted MV title, both `engine=none` until now. The RGSS family is one rule over the three DLL prefixes and
+  the three archive extensions, no version (which DLL matched is not a value any extractor produces). Both sit
+  after `unity`/`unreal` and before `godot`. Fixtures `engines/rpgmaker_mv`, `engines/rpgmaker_rgss`; the
+  `every_engine_marker` canary carries both engines' markers and still expects `unity`. The version bump changes the
+  sweep's cache key, so every game is re-detected on the Agent's next pass. Docs: `05_DETECTION` §Engine signatures.
 - **The bug report's last optional item: the last session's summary, when ticked (2026-09-15).** `10_LOGGING` §Bug
   report flow step 2 listed "last session metadata + aggregates JSON (never raw blobs by default)" beside the crash
   dump, and `legal/PRIVACY_POLICY.md` §3 promises both only when ticked. The Optional items dialog PR-9 added now shows

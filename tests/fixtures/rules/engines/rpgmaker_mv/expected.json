@@ -1,0 +1,1 @@
+{ "engine": "rpgmaker_mv", "platform": null, "capabilities": [], "$why": "nw.dll AND package.json beside the exe: MV and MZ both ship both (MV keeps its data under www/, MZ at the root), so the nested group 05_DETECTION once said this needed is not needed. No .pck, so Godot does not fire." }
