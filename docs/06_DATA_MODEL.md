@@ -468,7 +468,9 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > the assembly (so the schema a build applies is the one it was tested against), one transaction per
 > script, under `Local\FrameLedger.Ledger.Migrate` — session-local rather than `Global\`, because the
 > Agent and the UI share a session and the global namespace asks for a privilege a standard user need
-> not hold. **A ledger at a version newer than the build's scripts is refused, not read**
+> not hold. *(One name per ledger FILE since 2026-09-17 — `Migrate.<hash of the path>`,
+> `MigrationRunner.LockNameFor`: with one name for every ledger, a test process frozen mid-migration held
+> every other process's scratch ledger, and seven App and Agent tests failed after 30 s on #199's run.)* **A ledger at a version newer than the build's scripts is refused, not read**
 > (`LedgerSchemaException`): guessing at a schema we do not understand is the one option that could
 > turn a newer file into wrong answers. `LedgerDatabase` opens with the four pragmas above, one
 > connection per process behind a gate, and every write in an explicit transaction — a failing blob

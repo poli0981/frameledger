@@ -44,6 +44,12 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   `ParentDumpTests` (a real minidump of another process; which parent is ours), `CrashDumpWriterTests` (a failing and a
   missing dumper), `CrashDumpHelperTests` (the shipped Agent dumps the test process from outside; it refuses a parent
   from System32; the flag's surface). Docs: `10_LOGGING` §Crash handling, `12_BUILD` Agent flags, `13_CI_CD` tally.
+  **A hang in one test process no longer fails the others.** The migration mutex was one name for every ledger
+  (`Local\FrameLedger.Ledger.Migrate`), so a suite frozen mid-migration held every other process's scratch ledger: on
+  #199's run `Infrastructure.Tests` hung and seven App and Agent tests failed after 30 s with "another process has been
+  migrating the ledger". It is the file's now (`MigrationRunner.LockNameFor`; `MigrationLockTests`; `06_DATA_MODEL`
+  §Migrations). And a failed dump names dbghelp's error instead of 0: CsWin32 declares `MiniDumpWriteDump` without
+  `SetLastError`, so the code is read with `GetLastSystemError` (`ParentDumpTests`: an exited process).
 
 ### Added
 
