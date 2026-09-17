@@ -31,6 +31,7 @@ internal sealed record AgentCommandLine
     private const string _usage =
         "usage: FrameLedger.Agent --serve\n"
         + "       FrameLedger.Agent --register-vklayer | --unregister-vklayer | --install-task | --uninstall-task\n"
+        + "       FrameLedger.Agent --write-crash-dump <file>   (started by a crashing App or Agent; dumps that parent)\n"
         + "       FrameLedger.Agent --console [--data-dir <dir>] consent list | consent grant --exe <path> | consent revoke --exe <path>\n"
         + "                                                     | capture --exe <path> [--seconds <n>] | launch --exe <path> [--args \"<string>\"] [--seconds <n>]\n"
         + "                                                     | recover | sessions [--last <n>] | db path | games add --exe <path>\n"
@@ -58,6 +59,9 @@ internal sealed record AgentCommandLine
 
     public string? DataDirectory { get; init; }
 
+    /// <summary>The file <see cref="AgentVerb.WriteCrashDump"/> writes — a path, never a pid.</summary>
+    public string? CrashDumpFile { get; init; }
+
     /// <summary>The flag behind <see cref="AgentVerb.NotImplemented"/>.</summary>
     public string? Flag { get; init; }
 
@@ -82,6 +86,13 @@ internal sealed record AgentCommandLine
             return args.Length == 1
                 ? new AgentCommandLine { Verb = maintenance, Flag = args[0] }
                 : new AgentCommandLine { Error = $"{args[0]} takes no options" };
+        }
+
+        if (string.Equals(args[0], "--write-crash-dump", StringComparison.Ordinal))
+        {
+            return args.Length == 2 && !string.IsNullOrWhiteSpace(args[1])
+                ? new AgentCommandLine { Verb = AgentVerb.WriteCrashDump, CrashDumpFile = args[1] }
+                : new AgentCommandLine { Error = "--write-crash-dump takes exactly one argument, the dump's file" };
         }
 
         if (string.Equals(args[0], "--serve", StringComparison.Ordinal))

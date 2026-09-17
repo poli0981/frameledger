@@ -27,6 +27,24 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
+### Fixed
+
+- **A crash dump can no longer hang the process it describes, and the test suite no longer freezes (2026-09-17).**
+  `FrameLedger.Infrastructure.Tests` hung about one run in eight — it cancelled the first tag's release run after 58
+  minutes — and the verbose reporter of a hung run showed thirteen tests started and none finished, one of them
+  `CrashDumpWriterTests.WritesAMinidumpOfThisProcess…`. That test, and the product's crash path in the App and the Agent,
+  called `MiniDumpWriteDump` on the calling process, which suspends every other thread of it; one holding the heap or
+  loader lock deadlocks the dumper, and the whole process freezes with it. Forty runs without the test: no hang. The dump
+  is written by a child now: `CrashDumpWriter.TryWrite` starts `FrameLedger.Agent.exe --write-crash-dump <file>` and waits
+  up to 30 s, and the helper (`Infrastructure.Diagnostics.ParentDump`) dumps its parent with the same flags — it takes no
+  pid and refuses unless the parent is still running, started before it and sits in the helper's own directory, so it can
+  only ever read the App or the Agent (CLAUDE.md rule 4). Forty runs of the suite with the new tests: no hang.
+  `--blame-hang` (#196) did not stop the hung xUnit v3 executable, so `build.ps1` runs `dotnet test` under a 25-minute
+  wall-clock limit, kills the tree on expiry and names the test projects that wrote no `results.trx`. Tests:
+  `ParentDumpTests` (a real minidump of another process; which parent is ours), `CrashDumpWriterTests` (a failing and a
+  missing dumper), `CrashDumpHelperTests` (the shipped Agent dumps the test process from outside; it refuses a parent
+  from System32; the flag's surface). Docs: `10_LOGGING` §Crash handling, `12_BUILD` Agent flags, `13_CI_CD` tally.
+
 ### Added
 
 - **A session whose frame-generation state changed publishes its steady state, with its share (2026-09-17, owner

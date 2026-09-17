@@ -69,6 +69,25 @@ function Invoke-Checked([string]$What, [scriptblock]$Body) {
 }
 
 <#
+`dotnet test` under a wall-clock limit (2026-09-17). `--blame-hang` does not stop a deadlocked xUnit v3 test
+executable — measured: the hung process was still alive four minutes after a 60 s hang timeout — so a hang spent the
+CI job's whole 60-minute budget and named nothing (the first tag's release run, 2026-09-16). This kills the process
+tree after $Minutes and names the test projects that wrote no results.trx: the ones that did not finish.
+#>
+function Invoke-TestsWithin([int]$Minutes, [string[]]$Arguments) {
+    $p = Start-Process -FilePath 'dotnet' -ArgumentList $Arguments -NoNewWindow -PassThru
+    $null = $p.Handle   # Start-Process quirk: without a cached handle ExitCode reads empty after exit
+    if (-not $p.WaitForExit($Minutes * 60 * 1000)) {
+        & taskkill /T /F /PID $p.Id 2>&1 | Out-Null
+        $unfinished = @(Get-ChildItem (Join-Path $repo 'tests') -Directory -Filter '*.Tests' |
+            Where-Object { -not (Test-Path (Join-Path $_.FullName 'TestResults/results.trx')) } |
+            ForEach-Object { $_.Name })
+        throw "dotnet test did not finish within $Minutes minutes — a test hung, and the process tree was killed. No results.trx from: $($unfinished -join ', ')"
+    }
+    if ($p.ExitCode -ne 0) { throw "dotnet test failed (exit $($p.ExitCode))" }
+}
+
+<#
 Clear an ambient Platform variable before any MSBuild invocation.
 
 Anything that sets up MSVC exports Platform=x64 for .vcxproj builds — vcvars64
@@ -261,19 +280,16 @@ function Invoke-Managed([bool]$FixFormat) {
     # until the 60-minute job limit cancelled it, and the log named nothing. The
     # timeout is per test host, well above the slowest suite (Agent, ~1.5 min on
     # the hosted runner); the mini dump goes to TestResults beside the trx.
-    $hang = @('--blame-hang', '--blame-hang-timeout', '15m', '--blame-hang-dump-type', 'mini')
+    # --blame-hang did NOT stop the deadlocked xUnit v3 executable it was added for (measured 2026-09-17); the
+    # wall-clock limit of Invoke-TestsWithin is what bounds a hang now. The suite takes 4-5 minutes on the runner.
+    $testArgs = @('test', "`"$solution`"", '-c', $Configuration, '--no-build', '--collect:"XPlat Code Coverage"',
+        '--logger', 'trx;LogFileName=results.trx')
     if ($SkipIntegration) {
         Skip-Gate 'integration tests' 'the guard refuses a .NET test host that loads a `protect`-matching module (20_OPEN_QUESTIONS §S19(b)) — run ./build.ps1 check with no switches to include them'
-        Invoke-Checked 'dotnet test' {
-            dotnet test $solution -c $Configuration --no-build --collect:"XPlat Code Coverage" `
-                --logger 'trx;LogFileName=results.trx' --filter 'Category!=Integration' @hang
-        }
+        Invoke-TestsWithin 25 ($testArgs + @('--filter', 'Category!=Integration'))
     }
     else {
-        Invoke-Checked 'dotnet test' {
-            dotnet test $solution -c $Configuration --no-build --collect:"XPlat Code Coverage" `
-                --logger 'trx;LogFileName=results.trx' @hang
-        }
+        Invoke-TestsWithin 25 $testArgs
     }
 
     # The cobertura reports above were produced and ignored from the day the

@@ -29,9 +29,19 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
   - **A hang, not a refusal — the first tag run (2026-09-16, run 35111939019).** Every suite green except
     `Infrastructure.Tests`, which printed its "test run for …" line and nothing else for 58 minutes until the job's
     60-minute limit cancelled the run; the same suite took 42 s in the rehearsal an hour earlier. The log named no
-    test. `build.ps1` now passes `--blame-hang --blame-hang-timeout 15m --blame-hang-dump-type mini` to `dotnet test`,
+    test. ~~`build.ps1` now passes `--blame-hang --blame-hang-timeout 15m --blame-hang-dump-type mini` to `dotnet test`,
     so the next hang fails the run in 15 minutes with the test's name in `TestResults\…\Sequence.xml` and a mini
-    dump beside it — the diagnostic this run lacked. Which test hung is **unmeasured**; the re-run is the measurement.
+    dump beside it — the diagnostic this run lacked. Which test hung is **unmeasured**; the re-run is the measurement.~~
+    **Found and fixed 2026-09-17.** Reproduced locally one run in eight; the xUnit verbose reporter of a hung run showed
+    thirteen tests started and none finished, one of them `CrashDumpWriterTests.WritesAMinidumpOfThisProcess…` — which
+    called `MiniDumpWriteDump` on its OWN process. That call suspends every other thread of the caller, and one holding
+    the heap or loader lock deadlocks the dumper: the whole test process froze, including xUnit's long-running-test
+    timer, which is why nothing was ever named. 40 runs without that test: no hang. **The same call was the product's
+    crash path**, in the App and the Agent — a real crash could have hung instead of dumping. Dumps are written by a
+    child process now (`Infrastructure.Diagnostics.ParentDump`, `FrameLedger.Agent.exe --write-crash-dump`; `10_LOGGING`
+    §Crash handling). And **`--blame-hang` did not stop the hung xUnit v3 executable** — still alive four minutes after
+    a 60 s hang timeout — so `build.ps1` runs `dotnet test` under a 25-minute wall-clock limit instead, kills the tree on
+    expiry, and names the test projects that wrote no `results.trx`.
   - **Two more shapes had one cause, found and fixed 2026-09-16** after four failures in one evening's merge train:
     `AKilledHostLeavesAPartialThatRecoverTurnsIntoAnInterruptedSession` ("the process cannot access the file …
     `.partial`") and `WithNoConsentRecordTheHostRefusesAndNothingIsEverInjected` (a leftover consent record). The

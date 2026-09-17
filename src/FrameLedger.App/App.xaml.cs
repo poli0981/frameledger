@@ -38,7 +38,7 @@ public partial class App : System.Windows.Application
 {
     /// <summary><c>10_LOGGING</c> §Crash handling (P4 PR-9): Fatal, the minidump, the crash dialog offering the bug report.</summary>
     private readonly CrashReporter _crashes = new(
-        static () => CrashDumpWriter.TryWrite(UiPaths.CrashDumps, "ui", DateTimeOffset.UtcNow, static line => Log.Warning("{Line}", line)),
+        static () => CrashDumpWriter.TryWrite(UiPaths.CrashDumps, "ui", DateTimeOffset.UtcNow, CrashDumper, static line => Log.Warning("{Line}", line)),
         CrashDialog.AskToReport,
         static () =>
         {
@@ -46,6 +46,9 @@ public partial class App : System.Windows.Application
             Services.GetRequiredService<IShellPresence>().Reveal();
             return Services.GetRequiredService<BugReportFlow>().RunAsync();
         });
+
+    /// <summary>The crash-dump helper: the Agent binary beside the App dumps this process from outside (<c>10_LOGGING</c> §Crash handling).</summary>
+    private static string CrashDumper => Path.Combine(AppContext.BaseDirectory, "FrameLedger.Agent.exe");
 
     private IHost? _host;
     private LedgerDatabase? _db;
@@ -378,7 +381,7 @@ public partial class App : System.Windows.Application
         AppDomain.CurrentDomain.UnhandledException += static (_, args) =>
         {
             Log.Fatal(args.ExceptionObject as Exception, "ui: unhandled exception (AppDomain, terminating {Terminating})", args.IsTerminating);
-            string? dump = CrashDumpWriter.TryWrite(UiPaths.CrashDumps, "ui", DateTimeOffset.UtcNow, static line => Log.Warning("{Line}", line));
+            string? dump = CrashDumpWriter.TryWrite(UiPaths.CrashDumps, "ui", DateTimeOffset.UtcNow, CrashDumper, static line => Log.Warning("{Line}", line));
             Log.Information("ui: crash dump {Dump}", dump ?? "not written");
             Log.CloseAndFlush();
         };

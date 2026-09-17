@@ -96,6 +96,13 @@ internal static class Program
     /// <summary>A usage error or a flag this binary does not implement is answered before any file is touched.</summary>
     private static int? AnswerWithoutLogging(AgentCommandLine cmd)
     {
+        if (cmd.Verb == AgentVerb.WriteCrashDump)
+        {
+            // Before logging, rules and the ledger: the crashed parent still holds the day's log file, and a helper that
+            // waited on anything the parent holds would be the deadlock it exists to avoid.
+            return ParentDump.Run(cmd.CrashDumpFile!, AgentConsole.Problem);
+        }
+
         if (cmd.Error is not null)
         {
             AgentConsole.Problem(cmd.Error);
@@ -183,7 +190,7 @@ internal static class Program
         }
 
         Log.Fatal(exception, "agent: unhandled exception ({Source}); the Agent exits", source);
-        string? dump = CrashDumpWriter.TryWrite(paths.CrashDumps, "agent", DateTimeOffset.UtcNow, static line => Log.Warning("{Line}", line));
+        string? dump = CrashDumpWriter.TryWrite(paths.CrashDumps, "agent", DateTimeOffset.UtcNow, Environment.ProcessPath, static line => Log.Warning("{Line}", line));
         Log.Information("agent: crash dump {Dump}", dump ?? "not written");
     }
 
