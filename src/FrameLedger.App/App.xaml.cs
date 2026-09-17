@@ -100,7 +100,7 @@ public partial class App : System.Windows.Application
             _host = BuildHost(_db, appearance, registered, closePolicy);
             await _host.StartAsync().ConfigureAwait(true);
             Log.Information("ui: started ({Version}), ledger {Ledger}", UiIdentity.Version, UiPaths.Database);
-            await _host.WaitForShutdownAsync().ConfigureAwait(true);
+            await WaitForStopRequestAsync(_host).ConfigureAwait(true);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
@@ -167,6 +167,22 @@ public partial class App : System.Windows.Application
         }
 
         Shutdown(exitCode);
+    }
+
+    /// <summary>
+    /// Waits for a stop request ON the dispatcher, and stops nothing: <see cref="TearDownAsync"/> stops the host once,
+    /// from the UI thread. <c>WaitForShutdownAsync</c> resumed on the thread pool (it awaits with
+    /// <c>ConfigureAwait(false)</c>) and stopped the hosted services there, which is how the tray was disposed off its
+    /// thread on 0.1.0-beta.1 — and TearDownAsync then stopped every service a second time.
+    /// </summary>
+    private static async Task WaitForStopRequestAsync(IHost host)
+    {
+        IHostApplicationLifetime lifetime = host.Services.GetRequiredService<IHostApplicationLifetime>();
+        using var stopping = new SemaphoreSlim(0, 1);
+        using (lifetime.ApplicationStopping.Register(static state => ((SemaphoreSlim)state!).Release(), stopping))
+        {
+            await stopping.WaitAsync().ConfigureAwait(true);
+        }
     }
 
     private async Task TearDownAsync()
