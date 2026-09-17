@@ -22,25 +22,25 @@ public sealed class CrashDumpWriterTests : IDisposable
         }
     }
 
+    /// <summary>
+    /// 2026-09-17: this class used to dump ITS OWN process, and MiniDumpWriteDump on the calling process suspends every other
+    /// thread of it — one run in eight, a suspended test thread held a lock the dumper needed and the whole suite froze
+    /// (it cancelled the first tag's release run). The dump is written by a child process now; this is the writer's side of
+    /// that contract with a dumper that fails, and <see cref="ParentDumpTests"/> dumps a real child process.
+    /// </summary>
     [Fact]
-    public void WritesAMinidumpOfThisProcessNamedByProcessUtcTimeAndPid()
+    public void ADumperThatFailsOrIsMissingLeavesNoFileAndOneLine()
     {
         var lines = new List<string>();
-        var now = new DateTimeOffset(2026, 9, 15, 1, 2, 3, TimeSpan.FromHours(7));
+        string where = Path.Combine(Environment.SystemDirectory, "where.exe");
 
-        string? path = CrashDumpWriter.TryWrite(_dir, "test", now, lines.Add);
+        CrashDumpWriter.TryWrite(_dir, "test", DateTimeOffset.UtcNow, where, lines.Add).Should().BeNull("where.exe does not know the flag and exits non-zero");
+        lines.Should().ContainSingle().Which.Should().StartWith("crash dump: not written — the dumper exited");
+        Directory.EnumerateFiles(_dir, "*.dmp").Should().BeEmpty();
 
-        path.Should().NotBeNull("MiniDumpWriteDump of our own process succeeds: {0}", string.Join(" | ", lines));
-        Path.GetFileName(path).Should().Be($"test-20260914-180203-{Environment.ProcessId}.dmp", "the name carries the UTC time");
-        Path.GetDirectoryName(path).Should().Be(_dir);
-        byte[] head = new byte[4];
-        using (var file = new FileStream(path!, FileMode.Open, FileAccess.Read, FileShare.Read))
-        {
-            file.ReadExactly(head);
-        }
-
-        head.Should().Equal("MDMP"u8.ToArray(), "a minidump starts with its signature");
-        lines.Should().BeEmpty();
+        lines.Clear();
+        CrashDumpWriter.TryWrite(_dir, "test", DateTimeOffset.UtcNow, Path.Combine(_dir, "absent.exe"), lines.Add).Should().BeNull();
+        lines.Should().ContainSingle().Which.Should().Contain("no dumper");
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public sealed class CrashDumpWriterTests : IDisposable
         File.WriteAllText(occupied, "a file where the directory should be");
         var lines = new List<string>();
 
-        string? path = CrashDumpWriter.TryWrite(occupied, "ui", DateTimeOffset.UtcNow, lines.Add);
+        string? path = CrashDumpWriter.TryWrite(occupied, "ui", DateTimeOffset.UtcNow, dumper: null, lines.Add);
 
         path.Should().BeNull();
         lines.Should().ContainSingle().Which.Should().StartWith("crash dump: not written");

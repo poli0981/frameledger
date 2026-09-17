@@ -35,4 +35,11 @@ internal enum AgentVerb
 
     /// <summary><c>--uninstall-task</c>.</summary>
     UninstallTask,
+
+    /// <summary>
+    /// <c>--write-crash-dump &lt;file&gt;</c> (2026-09-17): the crash-dump helper. Dumps this process's PARENT — the App or
+    /// Agent that crashed and started it — when that parent's image is in this binary's directory; takes no pid
+    /// (<c>Infrastructure.Diagnostics.ParentDump</c>).
+    /// </summary>
+    WriteCrashDump,
 }

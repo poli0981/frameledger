@@ -15,6 +15,17 @@
 - On fatal: Serilog `Fatal` with full exception → write minidump via `MiniDumpWriteDump` (CsWin32, `MiniDumpWithIndirectlyReferencedMemory | WithThreadInfo`) to `crashdumps/` (keep last 5) → UI shows crash dialog offering the bug-report flow → exit code 1.
 - Agent crash mid-session → `.partial` recovery path (04_CAPTURE) on next start finalizes an `interrupted` session.
 
+> **Written by a child process since 2026-09-17.** `MiniDumpWriteDump` on the calling process suspends every other
+> thread of it, and a suspended thread holding the process heap or loader lock deadlocks the dumper — Microsoft's
+> documentation says to dump "from a separate process if at all possible". The in-process writer below froze the
+> Infrastructure test suite one run in eight, and a crashing App or Agent is the unstable process the warning is about.
+> `CrashDumpWriter.TryWrite` now starts `FrameLedger.Agent.exe --write-crash-dump <file>` (the Agent beside the App;
+> the Agent's own binary for the Agent) and waits up to 30 s; the helper (`ParentDump`) dumps **its parent** with the
+> same two flags, and nothing else: it takes no pid, and refuses unless the parent is still running, started before it,
+> and has its image in the helper's own directory — the App or the Agent, never a game (CLAUDE.md rule 4). A missing,
+> failed or slow helper is a null path and one Warning line, as before. The runtime's `createdump.exe` would have done
+> the job, but a self-contained install does not ship it (measured on 0.1.0-beta.1).
+>
 > **Built 2026-09-15 (P4 PR-9).** `Infrastructure/Diagnostics/CrashDumpWriter` writes
 > `crashdumps\<ui|agent>-<yyyyMMdd-HHmmss, UTC>-<pid>.dmp` through CsWin32's `MiniDumpWriteDump` with exactly the two
 > flags above, keeps the five newest `*.dmp` of either process after each write, and never throws: a failure is a null

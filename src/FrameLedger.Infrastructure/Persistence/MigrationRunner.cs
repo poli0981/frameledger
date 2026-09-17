@@ -1,5 +1,7 @@
 using System.Globalization;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using Dapper;
 using Microsoft.Data.Sqlite;
 
@@ -14,11 +16,22 @@ public static class MigrationRunner
 {
     private const string _resourcePrefix = "FrameLedger.Infrastructure.Persistence.Migrations.";
 
+    private const string _mutexPrefix = @"Local\FrameLedger.Ledger.Migrate.";
+
     /// <summary>
-    /// One per session (<c>Local\</c>), because the Agent and the UI run in the same session and the
-    /// <c>Global\</c> namespace asks for a privilege a standard user need not hold.
+    /// The mutex that serialises migrations of the ledger at <paramref name="databasePath"/>: in this session's namespace
+    /// (<c>Local\</c>, because the Agent and the UI run in the same session and <c>Global\</c> asks for a privilege a
+    /// standard user need not hold), and one per FILE since 2026-09-17. One name for every ledger let a test process that
+    /// froze mid-migration hold every other process's scratch ledger: seven App and Agent tests failed after 30 s on #199's
+    /// run while <c>Infrastructure.Tests</c> hung.
     /// </summary>
-    private const string _mutexName = @"Local\FrameLedger.Ledger.Migrate";
+    public static string LockNameFor(string? databasePath)
+    {
+        string key = databasePath is { Length: > 0 } path && !path.StartsWith(':')
+            ? Path.GetFullPath(path).ToUpperInvariant()
+            : databasePath ?? string.Empty;
+        return _mutexPrefix + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(key)), 0, 16);
+    }
 
     /// <summary>The highest script version this build carries.</summary>
     public static int LatestVersion => Scripts().Keys.Max();
@@ -54,7 +67,7 @@ public static class MigrationRunner
 
         // The mutex serialises two processes opening the same file at once; the transaction below and
         // schema_migrations' primary key serialise the rest. Taken synchronously: this runs once, at open.
-        using var mutex = new Mutex(initiallyOwned: false, _mutexName);
+        using var mutex = new Mutex(initiallyOwned: false, LockNameFor(connection.DataSource));
         bool held = false;
         try
         {
