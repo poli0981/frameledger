@@ -29,6 +29,16 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **Closing the App no longer ends in a Fatal error and exit code 1 (2026-09-17).** Measured on the installed
+  0.1.0-beta.1: `ui-*.log` recorded `ui: the run ended in an exception` — "the calling thread cannot access this object
+  because a different thread owns it" — from `TrayHost.Dispose` on every close after an update check. The App waited
+  with `WaitForShutdownAsync`, which resumes on the thread pool and stops the hosted services there, so the tray icon (a
+  WPF object whose disposal unsubscribes `Application.Exit`) was removed off its thread; `TearDownAsync` then stopped every
+  service a second time. The App now waits for the stop request on the dispatcher and stops the host once, from the UI
+  thread, and `TrayHost.Dispose` marshals to the icon's own dispatcher from any thread (bounded at 5 s; skipped when the
+  dispatcher has already shut down). Test: `TrayHostTests` disposes a real tray icon from a pool thread while the UI
+  thread pumps — red on the old code with that exception, green now; skipped where the session has no notification area.
+
 - **A crash dump can no longer hang the process it describes, and the test suite no longer freezes (2026-09-17).**
   `FrameLedger.Infrastructure.Tests` hung about one run in eight — it cancelled the first tag's release run after 58
   minutes — and the verbose reporter of a hung run showed thirteen tests started and none finished, one of them
