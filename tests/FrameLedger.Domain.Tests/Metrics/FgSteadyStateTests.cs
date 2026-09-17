@@ -107,6 +107,22 @@ public sealed class FgSteadyStateTests
     }
 
     [Fact]
+    public void CalledDirectlyItChecksItsArgumentsAndFindsNoStateWhereNothingGenerated()
+    {
+        List<FrameSample> none = Play(30, 1);
+
+        FgSteadyState.From(none, 0, Frequency).Should().BeNull("no window reaches the active threshold");
+        Action nullSamples = () => FgSteadyState.From(null!, 0, Frequency);
+        nullSamples.Should().Throw<ArgumentNullException>();
+        Action pastTheEnd = () => FgSteadyState.From(none, none.Count, Frequency);
+        pastTheEnd.Should().Throw<ArgumentOutOfRangeException>();
+        Action negative = () => FgSteadyState.From(none, -1, Frequency);
+        negative.Should().Throw<ArgumentOutOfRangeException>();
+        Action noClock = () => FgSteadyState.From(none, 0, 0);
+        noClock.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    [Fact]
     public void ARefusalThatIsNotAboutUniformityGetsNoSteadyState()
     {
         List<FrameSample> interleaved = Concat(Play(20, 1), Play(60, 4));

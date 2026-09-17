@@ -53,25 +53,23 @@ public sealed record FgSteadyState(double Factor, double NativeFps, double Displ
     [StructLayout(LayoutKind.Auto)]
     private readonly record struct Slice(long Displayed, long Tokens, int Samples, double Seconds)
     {
-        public double Factor => Tokens > 0 ? Displayed / (double)Tokens : double.PositiveInfinity;
+        /// <summary>Read only on active slices, which have tokens.</summary>
+        public double Factor => Displayed / (double)Tokens;
 
-        public bool IsActive => Samples >= FgWindow.MinPerBucket && Tokens > 0 && Factor >= FgWindow.ActiveThreshold;
+        public bool IsActive => Samples >= FgWindow.MinPerBucket && Tokens > 0 && Displayed >= Tokens * FgWindow.ActiveThreshold;
     }
 
     /// <summary>The dominant active state over <paramref name="all"/> from <paramref name="start"/>, or null when none qualifies.</summary>
     public static FgSteadyState? From(IReadOnlyList<FrameSample> all, int start, long qpcFrequency)
     {
         ArgumentNullException.ThrowIfNull(all);
+        ArgumentOutOfRangeException.ThrowIfNegative(start);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(start, all.Count);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(qpcFrequency);
-        if (start < 0 || start >= all.Count)
-        {
-            return null;
-        }
 
         List<Slice> slices = Cut(all, start, qpcFrequency);
-        double presenting = slices.Sum(static s => s.Seconds);
         List<Slice> active = [.. slices.Where(static s => s.IsActive)];
-        if (active.Count == 0 || presenting <= 0)
+        if (active.Count == 0)
         {
             return null;
         }
@@ -91,16 +89,13 @@ public sealed record FgSteadyState(double Factor, double NativeFps, double Displ
             }
         }
 
+        // Never empty: the pooled factor is a weighted mean of members within 10 % of the centre, and a mean always has a
+        // member within 10 % of itself (a member below it and one above it cannot both be further than that).
         List<Slice> state = [.. Within(active, Pooled([.. Within(active, centre)]))];
-        if (state.Count == 0)
-        {
-            return null;
-        }
-
         long displayed = state.Sum(static s => s.Displayed);
         long tokens = state.Sum(static s => s.Tokens);
         double stateSeconds = state.Sum(static s => s.Seconds);
-        double share = stateSeconds / presenting;
+        double share = stateSeconds / slices.Sum(static s => s.Seconds);
         return stateSeconds < MinSeconds || share < MinShare
             ? null
             : new FgSteadyState(displayed / (double)tokens, tokens / stateSeconds, displayed / stateSeconds, stateSeconds, share, state.Count);
@@ -134,15 +129,15 @@ public sealed record FgSteadyState(double Factor, double NativeFps, double Displ
                 return;
             }
 
+            // A window's length is nominal, except the last, which ends at the last sample (and may be zero long).
             double windowStart = origin + (index * ticksPerWindow);
-            double seconds = Math.Min(WindowSeconds, Math.Max(0, (last - windowStart) / qpcFrequency));
-            slices.Add(new Slice(displayed, tokens, samples, seconds > 0 ? seconds : WindowSeconds));
+            slices.Add(new Slice(displayed, tokens, samples, Math.Clamp((last - windowStart) / qpcFrequency, 0, WindowSeconds)));
         }
 
         for (int i = start; i < all.Count; i++)
         {
             FrameSample s = all[i];
-            long at = s.Qpc >= origin ? (long)((s.Qpc - origin) / ticksPerWindow) : 0;
+            long at = (long)(Math.Max(0d, (double)s.Qpc - origin) / ticksPerWindow);
             if (at != index)
             {
                 Close();
