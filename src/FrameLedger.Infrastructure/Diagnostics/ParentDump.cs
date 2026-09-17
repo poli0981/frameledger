@@ -98,14 +98,19 @@ public static class ParentDump
         ArgumentNullException.ThrowIfNull(problem);
 
         bool written;
+        int error;
         using (var stream = new FileStream(file, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
         {
             written = PInvoke.MiniDumpWriteDump(new HANDLE(target.Handle), (uint)target.Id, new HANDLE(stream.SafeFileHandle.DangerousGetHandle()), _kind, null, null, null);
+            // At once, and the SYSTEM error: CsWin32 0.3.298 declares MiniDumpWriteDump without SetLastError, so
+            // GetLastPInvokeError() is whatever an earlier call left (0 when measured on CreateNamedPipeW, 2026-09-17). The
+            // value is an HRESULT, which is how dbghelp reports this function's failures.
+            error = Marshal.GetLastSystemError();
         }
 
         if (!written)
         {
-            problem($"crash dump: MiniDumpWriteDump failed (Win32 error {Marshal.GetLastPInvokeError()})");
+            problem($"crash dump: MiniDumpWriteDump failed (0x{error:X8})");
             File.Delete(file);
         }
 

@@ -56,6 +56,22 @@ public sealed class ParentDumpTests : IDisposable
     }
 
     [Fact]
+    public void AFailedDumpLeavesNoFileAndNamesTheErrorDbghelpReturned()
+    {
+        // A process that has exited has nothing to read, so the dump fails. The line must carry dbghelp's code: CsWin32
+        // declares MiniDumpWriteDump without SetLastError, and GetLastPInvokeError read 0.
+        using Process child = Process.Start(new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "cmd.exe"), "/c exit 0") { UseShellExecute = false, CreateNoWindow = true })!;
+        child.WaitForExit(10_000).Should().BeTrue();
+        string file = Path.Combine(_dir, "exited.dmp");
+        var problems = new List<string>();
+
+        ParentDump.WriteDump(child, file, problems.Add).Should().BeFalse("an exited process cannot be dumped");
+
+        File.Exists(file).Should().BeFalse();
+        problems.Should().ContainSingle().Which.Should().StartWith("crash dump: MiniDumpWriteDump failed (0x").And.NotContain("0x00000000");
+    }
+
+    [Fact]
     public void OnlyAParentFromTheHelpersOwnDirectoryThatStartedFirstIsOurs()
     {
         string ours = Path.Combine(_dir, "app");
