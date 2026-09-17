@@ -1,3 +1,5 @@
+using System.IO.Pipes;
+using System.Security.AccessControl;
 using System.Security.Principal;
 using System.Text;
 using FluentAssertions;
@@ -75,9 +77,98 @@ public sealed class PipeServerClientTests : IAsyncDisposable
         PipeServer server = Start();
         SecurityIdentifier me = PipeAccessControl.CurrentUser();
 
-        server.SecurityDescriptor.Should().Be($"D:P(A;;GA;;;{me.Value})(A;;GA;;;BA)");
+        server.SecurityDescriptor.Should().Be($"O:{me.Value}D:P(A;;GA;;;{me.Value})(A;;GA;;;BA)");
         PipeAccessControl.DescriptorBytes(server.SecurityDescriptor).Should().NotBeEmpty("the SDDL must parse into a binary descriptor");
         server.PipeName.Should().Be(_pipeName);
+    }
+
+    [Fact]
+    public async Task ThePipeIsOwnedByThisUserWhateverTheTokensDefaultOwner()
+    {
+        // 2026-09-17: left to default, the owner of an elevated Agent's pipe is Administrators (on CI's elevated runner,
+        // this test's), and a client checking the owner refuses the same user's Agent across elevation.
+        Start();
+        await using var raw = new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
+        await raw.ConnectAsync(_timeout, Ct).ConfigureAwait(true);
+
+        PipeAccessControl.OwnerOf(raw).Should().Be(PipeAccessControl.CurrentUser());
+        (await ConnectAsync().ConfigureAwait(true)).IsConnected.Should().BeTrue("the client's own owner check passes");
+    }
+
+    [Fact]
+    public async Task ATokenThatOwnsAsAdministratorsTrustsItsUsersPipeAndRefusesAnAdministratorsOne()
+    {
+        // The morning of 2026-09-17, as a test: an App started as administrator, whose token's default owner is
+        // Administrators, and the user's Agent, whose pipe the user owns. PipeOptions.CurrentUserOnly compared the two and
+        // refused; the check is the token USER. Only such a token can build the second pipe, which is why this needs one —
+        // CI's runner is elevated; an unelevated run has nothing to show here.
+        using WindowsIdentity identity = WindowsIdentity.GetCurrent();
+        var administrators = new SecurityIdentifier(WellKnownSidType.BuiltinAdministratorsSid, null);
+        Assert.SkipUnless(identity.Owner == administrators, "this token's default owner is its user, not Administrators (an unelevated run)");
+
+        (await ConnectToAPipeOwnedByAsync(PipeAccessControl.CurrentUser()).ConfigureAwait(true))
+            .Should().BeNull("the user's own Agent, reached from an elevated App");
+        UnauthorizedAccessException? refused = await ConnectToAPipeOwnedByAsync(administrators).ConfigureAwait(true);
+        refused.Should().NotBeNull("a pipe the user does not own is not the user's Agent, elevated or not");
+        refused!.Message.Should().Contain(administrators.Value);
+    }
+
+    [Fact]
+    public async Task AnInstanceThatCannotBeCreatedIsRetriedWithBackoffAndLoggedOnceWithItsError()
+    {
+        // 2026-09-17: three extra Agents could not create an instance of a name whose limit a fourth had reached, and each
+        // logged "accept failed" every 260 ms for four hours, without the error. Here the first server takes the only instance.
+        Start(maxClients: 1);
+        var lines = new List<string>();
+        using var stop = CancellationTokenSource.CreateLinkedTokenSource(Ct);
+        using var second = new PipeServer(new PipeServerOptions { PipeName = _pipeName, MaxClients = 1 },
+            new AgentRequestHandler(_identity, static () => "l1", () => _status), lines.Add);
+        Task running = second.RunAsync(stop.Token);
+
+        await Task.Delay(TimeSpan.FromSeconds(3), Ct).ConfigureAwait(true);
+        await stop.CancelAsync().ConfigureAwait(true);
+        try
+        {
+            await running.ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+        }
+
+        lines.Should().ContainSingle("250 ms doubling is four attempts in three seconds, and only the first is logged; the fixed 250 ms loop wrote twelve")
+            .Which.Should().Contain("(error 231)", "ERROR_PIPE_BUSY: the name's instances are all taken");
+    }
+
+    /// <summary>A <see cref="PipeClient"/> against a bare pipe owned by <paramref name="owner"/>: its refusal, or null when it connected.</summary>
+    private async Task<UnauthorizedAccessException?> ConnectToAPipeOwnedByAsync(SecurityIdentifier owner)
+    {
+        string name = _pipeName + ".owned";
+        var security = new PipeSecurity();
+        security.SetOwner(owner);
+        security.AddAccessRule(new PipeAccessRule(PipeAccessControl.CurrentUser(), PipeAccessRights.FullControl, AccessControlType.Allow));
+        NamedPipeServerStream server = NamedPipeServerStreamAcl.Create(
+            name, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 0, 0, security);
+        await using (server.ConfigureAwait(false))
+        {
+            Task accepted = server.WaitForConnectionAsync(Ct);
+            var client = new PipeClient(name);
+            await using (client.ConfigureAwait(false))
+            {
+                try
+                {
+                    await client.ConnectAsync(_timeout, Ct).ConfigureAwait(false);
+                    return null;
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    return ex;
+                }
+                finally
+                {
+                    await accepted.ConfigureAwait(false);
+                }
+            }
+        }
     }
 
     [Fact]

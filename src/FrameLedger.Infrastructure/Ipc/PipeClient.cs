@@ -9,8 +9,9 @@ namespace FrameLedger.Infrastructure.Ipc;
 
 /// <summary>
 /// The UI's end of channel C (<c>07_IPC</c> §Client behavior): connect, correlate acks by id, hand events to a
-/// reader. <c>PipeOptions.CurrentUserOnly</c> makes the client refuse a server that is not owned by its own user,
-/// the mirror of the server's check on it.
+/// reader. The client refuses a pipe that is not owned by its own token user — the mirror of the server's check on it —
+/// through <see cref="PipeAccessControl.RequireOwnedByCurrentUser"/>, not <c>PipeOptions.CurrentUserOnly</c>, whose
+/// comparison with the token's default owner refused the same user's Agent from an elevated App (2026-09-17).
 /// </summary>
 /// <remarks>
 /// Backoff and "start the Agent, retry" are the App's (P3 PR-2); this class connects once and reports.
@@ -18,6 +19,7 @@ namespace FrameLedger.Infrastructure.Ipc;
 public sealed class PipeClient : IAsyncDisposable
 {
     private readonly NamedPipeClientStream _pipe;
+    private readonly string _pipeName;
     private readonly Channel<IpcEnvelope> _events = Channel.CreateUnbounded<IpcEnvelope>(new UnboundedChannelOptions { SingleReader = true, SingleWriter = true });
     private readonly ConcurrentDictionary<string, TaskCompletionSource<IpcEnvelope>> _pending = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim _writeLock = new(1, 1);
@@ -29,7 +31,8 @@ public sealed class PipeClient : IAsyncDisposable
     public PipeClient(string pipeName = IpcProtocol.PipeName)
     {
         ArgumentException.ThrowIfNullOrEmpty(pipeName);
-        _pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+        _pipeName = pipeName;
+        _pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous);
     }
 
     /// <summary>Everything the Agent sent without an id, in order. Completes when the pipe closes.</summary>
@@ -39,9 +42,11 @@ public sealed class PipeClient : IAsyncDisposable
 
     /// <summary>Connect once and start reading; the App's backoff and "start the Agent" live above this.</summary>
     /// <exception cref="TimeoutException">No server, or both instances busy, within <paramref name="timeout"/>.</exception>
+    /// <exception cref="UnauthorizedAccessException">The pipe is not owned by this process's user; nothing was written to it.</exception>
     public async Task ConnectAsync(TimeSpan timeout, CancellationToken ct = default)
     {
         await _pipe.ConnectAsync((int)timeout.TotalMilliseconds, ct).ConfigureAwait(false);
+        PipeAccessControl.RequireOwnedByCurrentUser(PipeAccessControl.OwnerOf(_pipe), PipeAccessControl.CurrentUser(), _pipeName);
         _reader = ReadLoopAsync(_lifetime.Token);
     }
 

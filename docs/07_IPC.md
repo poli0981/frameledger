@@ -291,7 +291,24 @@ Unchanged in spirit from v1, bumped to `v2` for the new message set.
   SDDL `D:P(A;;GA;;;<user SID>)(A;;GA;;;BA)` on the instance — `PipeAccessControl.Sddl`, what `20_OPEN_QUESTIONS`
   §G asked for — and the token check by impersonation on the client's FIRST frame, because the kernel refuses
   `ImpersonateNamedPipeClient` before the client has written; a stranger is disconnected without an answer and
-  counted. The client side uses `PipeOptions.CurrentUserOnly`, the mirror check on the server's owner.)*
+  counted. ~~The client side uses `PipeOptions.CurrentUserOnly`, the mirror check on the server's owner.~~)*
+
+  > **Amended 2026-09-17: the owner is stated, and the client compares it with its token USER.** The SDDL is now
+  > `O:<user SID>D:P(A;;GA;;;<user SID>)(A;;GA;;;BA)`. Left to default, a pipe's owner is its creator token's default
+  > owner, and an elevated token's is `BUILTIN\Administrators` — measured on the owner's machine that morning: the log
+  > files the elevated Agents created are owned by Administrators, the unelevated ones' by the user.
+  > `PipeOptions.CurrentUserOnly` compares the pipe's owner with the client token's default OWNER
+  > (`NamedPipeClientStream.ValidateRemotePipeUser` in dotnet/runtime), so an App started as administrator refused the
+  > user's own unelevated Agent, silently, as though none were there, and started another on every connect round
+  > (`01_ARCHITECTURE` §Lifecycle). The client connects without that option and calls
+  > `PipeAccessControl.RequireOwnedByCurrentUser` before it writes a byte; `PipeServerClientTests` pins the owner and
+  > drives both directions on a token that owns as Administrators (CI's elevated runner — an unelevated run skips it).
+  >
+  > **Accept failures back off.** An instance that cannot be created is retried 250 ms doubling to 10 s and logged on
+  > the first failure, on a change of error and at 10, 100, 1000… in a row, with the Win32 error. The three extra
+  > Agents of that morning logged the bare "accept failed" every 260 ms for four hours, 2 MB each. The error is read
+  > with `GetLastSystemError`: CsWin32 0.3.298 declares `CreateNamedPipeW` without `SetLastError`, so
+  > `GetLastPInvokeError` read 0.
 - Framing: 4-byte LE length + UTF-8 JSON, max 1 MB. `System.Text.Json` source-generated contexts in `FrameLedger.Shared`.
   *(Header and body go out in one write, so on the message-mode pipe one frame is one message; the reader
   reassembles by length alone. Over the cap, or a stream ending inside a frame, is `IpcFramingException`.)*
@@ -364,6 +381,14 @@ message, and that message always re-scans.
 ## Client behavior (UI)
 
 - Connect with 250 ms × 8 backoff; on failure start the Agent, retry; then show an Agent status banner with Repair.
+
+  > **Amended 2026-09-17: never a second Agent.** A round that ends without a connection starts one only when no
+  > process holds the user's data folder (`AgentInstanceLock`, probed through `IAgentLauncher.RunningAgent`) and the
+  > Agent this App started last has exited. Otherwise it starts nothing and logs why the connect failed and that it
+  > is not starting another — once per distinct reason, not once per round (`AgentConnection.LastConnectFailure`;
+  > before this the reason was swallowed, and a refusal looked exactly like an absent Agent). The Agent it does start
+  > is watched until it exits and its exit code logged, so exit 10 — the folder was already claimed — is visible in
+  > the App's log. `AgentConnectionTests` pins both.
 - Treat the pipe as unreliable: library, history and charts must all work with the Agent offline. Only live status degrades.
 - SQLite is the source of truth for anything persisted; pipe events are refresh signals (except `SessionProgress`, which is live-only by design).
 - `CaptureRefused` and `SafetyUnhook` are **never** collapsed into a generic error toast — they get dedicated, explanatory UI (`08_UI` §Notifications).

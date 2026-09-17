@@ -61,6 +61,30 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   §Migrations). And a failed dump names dbghelp's error instead of 0: CsWin32 declares `MiniDumpWriteDump` without
   `SetLastError`, so the code is read with `GetLastSystemError` (`ParentDumpTests`: an exited process).
 
+- **One Agent per data folder: an App started as administrator no longer starts an Agent per connect round
+  (2026-09-17).** On the owner's machine the installed 0.1.0-beta.1 ran four `FrameLedger.Agent.exe --serve`: the App
+  opened at 10:04 was elevated, the pipe of the Agent already serving refused it, and it took the refusal for an absent
+  Agent and started three more, elevated like itself, 17 seconds apart. Nothing in the Agent noticed the first — the
+  single instance `01_ARCHITECTURE` §Lifecycle specified was never built — so every game launched in the next hour was
+  injected, read and recorded by all four (four copies of each session, equal frame counts), and the three extras
+  logged "accept failed" every 260 ms for four hours. The cause of the refusal: `PipeOptions.CurrentUserOnly` compares
+  the pipe's owner with the client token's default *owner*, which an elevated token sets to Administrators (the elevated
+  Agents' log files are owned by Administrators, measured), not with its *user*.
+  - `Infrastructure.Startup.AgentInstanceLock`: a named mutex per data folder, claimed by `--serve` and the console's
+    `capture` / `launch` / `recover` before logging, rules and the ledger; a second process exits **10** with one line.
+  - The App starts an Agent only when no process holds the folder and the one it started last has exited; it logs why a
+    connect failed, once per reason, and the exit code of the Agent it started.
+  - The pipe states its owner (`O:<user>` in the SDDL) and the client checks the owner against its token user
+    (`PipeAccessControl.RequireOwnedByCurrentUser`), so an elevated App and an unelevated Agent reach each other in both
+    directions.
+  - A pipe instance that cannot be created backs off 250 ms → 10 s and is logged with its Win32 error, once per streak
+    (CsWin32 declares `CreateNamedPipeW` without `SetLastError`; the error is read with `GetLastSystemError`).
+  - Tests: `AgentInstanceLockTests`, `OneAgentPerDataFolderTests` (the shipped binary against a claimed scratch folder),
+    `AgentConnectionTests` (an Agent that is up and does not answer is never started again; the real launcher sees the
+    claim), `PipeServerClientTests` (the owner; an Administrators-owning token trusts its user's pipe and refuses an
+    Administrators one — on CI's elevated runner; the backoff logs once with error 231). Docs: `01_ARCHITECTURE`
+    §Lifecycle, `07_IPC` §C and §Client behavior, `08_UI`, `12_BUILD`, `20_OPEN_QUESTIONS` §G.
+
 ### Added
 
 - **A session whose frame-generation state changed publishes its steady state, with its share (2026-09-17, owner

@@ -89,6 +89,7 @@ public sealed class PipeServer : IIpcEventPublisher, IDisposable
     /// <summary>Accept until cancelled; every client's tasks end with the token too.</summary>
     public async Task RunAsync(CancellationToken ct)
     {
+        var failures = new AcceptFailures(_log);
         while (true)
         {
             await _slots.WaitAsync(ct).ConfigureAwait(false);
@@ -96,6 +97,7 @@ public sealed class PipeServer : IIpcEventPublisher, IDisposable
             try
             {
                 stream = CreateInstance();
+                failures.Recovered();
                 await stream.WaitForConnectionAsync(ct).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
@@ -106,10 +108,10 @@ public sealed class PipeServer : IIpcEventPublisher, IDisposable
             }
             catch (Exception ex) when (ex is IOException or Win32Exception)
             {
-                _log($"pipe: accept failed: {ex.Message}");
+                TimeSpan wait = failures.Failed(ex);
                 await DisposeQuietlyAsync(stream).ConfigureAwait(false);
                 _slots.Release();
-                await Task.Delay(250, ct).ConfigureAwait(false);
+                await Task.Delay(wait, ct).ConfigureAwait(false);
                 continue;
             }
 
@@ -178,9 +180,13 @@ public sealed class PipeServer : IIpcEventPublisher, IDisposable
                 _bufferBytes,
                 0,
                 &attributes);
+            // The system error, read at once: CsWin32 0.3.298 declares CreateNamedPipeW without SetLastError, so
+            // GetLastPInvokeError() is whatever an earlier call left there — 0 when measured (2026-09-17). Its own
+            // SetLastError wrappers read GetLastSystemError() at this same point.
+            int error = Marshal.GetLastSystemError();
             if (handle.IsNull || (nint)handle.Value == -1)
             {
-                throw new Win32Exception(Marshal.GetLastPInvokeError(), $"CreateNamedPipe({_fullName})");
+                throw new Win32Exception(error, $"CreateNamedPipe({_fullName}): {Marshal.GetPInvokeErrorMessage(error)} (error {error})");
             }
 
             var safe = new SafePipeHandle((nint)handle.Value, ownsHandle: true);
@@ -252,6 +258,60 @@ public sealed class PipeServer : IIpcEventPublisher, IDisposable
         if (_clients.TryRemove(id, out _))
         {
             _slots.Release();
+        }
+    }
+
+    /// <summary>
+    /// Failed accepts in a row and the wait before the next: 250 ms doubling to 10 s, logged on the first failure, when the
+    /// error changes, and at 10, 100, 1000… in a row. 2026-09-17: three extra Agents that could not create an instance — the
+    /// name's two were taken — logged "accept failed" every 260 ms for four hours, 2 MB of log each, without the error.
+    /// </summary>
+    private sealed class AcceptFailures(Action<string> log)
+    {
+        private static readonly TimeSpan _floor = TimeSpan.FromMilliseconds(250);
+        private static readonly TimeSpan _ceiling = TimeSpan.FromSeconds(10);
+
+        private long _count;
+        private int _lastError;
+        private TimeSpan _next = _floor;
+
+        /// <summary>Count <paramref name="ex"/>; the result is how long to wait before the next attempt.</summary>
+        public TimeSpan Failed(Exception ex)
+        {
+            _count++;
+            int error = ex is Win32Exception win32 ? win32.NativeErrorCode : ex.HResult & 0xFFFF;
+            if (_count == 1 || error != _lastError || IsPowerOfTen(_count))
+            {
+                log($"pipe: accept failed ({_count} in a row): {ex.Message}; retrying, at most {_ceiling.TotalSeconds:0} s apart");
+            }
+
+            _lastError = error;
+            TimeSpan wait = _next;
+            _next = TimeSpan.FromTicks(Math.Min(_next.Ticks * 2, _ceiling.Ticks));
+            return wait;
+        }
+
+        /// <summary>An instance was created: the streak, if there was one, is over.</summary>
+        public void Recovered()
+        {
+            if (_count > 0)
+            {
+                log($"pipe: accepting again after {_count} failed attempt(s)");
+            }
+
+            _count = 0;
+            _lastError = 0;
+            _next = _floor;
+        }
+
+        private static bool IsPowerOfTen(long n)
+        {
+            while (n >= 10 && n % 10 == 0)
+            {
+                n /= 10;
+            }
+
+            return n == 1;
         }
     }
 

@@ -8,9 +8,9 @@ namespace FrameLedger.App.Services;
 /// <summary>
 /// The App's end of the pipe as a long-running state machine (<c>07_IPC</c> §Client behavior): a connect
 /// round of <see cref="AgentConnectionOptions.ConnectAttempts"/> × backoff; on failure start the Agent beside
-/// this executable and try again; then <c>Hello</c>, <c>GetStatus</c>, keepalive pings, and the event stream
-/// until the pipe drops — then the next round. "Treat the pipe as unreliable": everything persisted comes from
-/// SQLite, and this class only ever degrades the live status.
+/// this executable — unless one is already up (<see cref="IAgentLauncher.RunningAgent"/>) — and try again; then
+/// <c>Hello</c>, <c>GetStatus</c>, keepalive pings, and the event stream until the pipe drops — then the next round.
+/// "Treat the pipe as unreliable": everything persisted comes from SQLite, and this class only ever degrades the live status.
 /// </summary>
 /// <remarks>
 /// Runs on the thread pool; <see cref="Changed"/> and <see cref="EventReceived"/> fire there, and a view model
@@ -28,6 +28,8 @@ public sealed class AgentConnection : IAgentLink, IAsyncDisposable
     private long _rounds;
     private long _launches;
     private volatile bool _holdLaunches;
+    private volatile string? _lastFailure;
+    private string? _reported;
 
     public AgentConnection(IAgentLauncher launcher, Func<PipeClient> pipes, AgentConnectionOptions options, string appVersion)
     {
@@ -53,6 +55,12 @@ public sealed class AgentConnection : IAgentLink, IAsyncDisposable
 
     /// <summary>How many times the Agent was started from beside this executable.</summary>
     public long Launches => Interlocked.Read(ref _launches);
+
+    /// <summary>
+    /// Why the last connect attempt failed (<c>TimeoutException: …</c>, <c>UnauthorizedAccessException: …</c>), or null once
+    /// connected. Before 2026-09-17 this was swallowed, and an App refused by the pipe looked exactly like an App with no Agent.
+    /// </summary>
+    public string? LastConnectFailure => _lastFailure;
 
     /// <summary>Skip the wait before the next round (the banner's Retry).</summary>
     public void RetryNow() => _retryNow.Release();
@@ -136,22 +144,32 @@ public sealed class AgentConnection : IAgentLink, IAsyncDisposable
     {
         Set(AgentConnectionState.Connecting, null, null);
         PipeClient? client = await TryConnectAsync(ct).ConfigureAwait(false);
+        string? running = null;
         if (client is null && _launcher.CanLaunch && !_holdLaunches)
         {
-            Set(AgentConnectionState.Starting, null, null);
-            if (_launcher.TryStart())
+            // Never a second Agent (2026-09-17): one that is up and does not answer this App is reported, not duplicated.
+            running = _launcher.RunningAgent;
+            if (running is null)
             {
-                Interlocked.Increment(ref _launches);
-                client = await TryConnectAsync(ct).ConfigureAwait(false);
+                Set(AgentConnectionState.Starting, null, null);
+                if (_launcher.TryStart())
+                {
+                    Interlocked.Increment(ref _launches);
+                    client = await TryConnectAsync(ct).ConfigureAwait(false);
+                }
             }
         }
 
         if (client is null)
         {
+            ReportOnce(running is null
+                ? $"agent: no connection ({_lastFailure})"
+                : $"agent: no connection ({_lastFailure}); not starting another — {running}");
             Set(_launcher.CanLaunch ? AgentConnectionState.Offline : AgentConnectionState.Missing, null, null);
             return;
         }
 
+        _reported = null;
         _client = client;
         try
         {
@@ -181,10 +199,12 @@ public sealed class AgentConnection : IAgentLink, IAsyncDisposable
             try
             {
                 await client.ConnectAsync(_options.ConnectTimeout, ct).ConfigureAwait(false);
+                _lastFailure = null;
                 return client;
             }
             catch (Exception ex) when (ex is TimeoutException or IOException or UnauthorizedAccessException)
             {
+                _lastFailure = $"{ex.GetType().Name}: {ex.Message}";
                 await client.DisposeAsync().ConfigureAwait(false);
             }
 
@@ -231,6 +251,18 @@ public sealed class AgentConnection : IAgentLink, IAsyncDisposable
         catch (ObjectDisposedException)
         {
         }
+    }
+
+    /// <summary>A round's failure, logged when it differs from the last one logged: a refusal every 7 s is one line, not 500 an hour.</summary>
+    private void ReportOnce(string line)
+    {
+        if (string.Equals(line, _reported, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _reported = line;
+        Log.Warning("{Line}", line);
     }
 
     private void Set(AgentConnectionState state, HelloAck? hello, StatusAck? status)
