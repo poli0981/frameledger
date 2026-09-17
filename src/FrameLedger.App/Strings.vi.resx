@@ -532,6 +532,12 @@
   <data name="Fps_Fg_Chip_Format" xml:space="preserve">
     <value>×{0:0.0} FG</value>
   </data>
+  <data name="Fps_Fg_Chip_Steady_Format" xml:space="preserve">
+    <value>×{0:0.0} FG · {1:0}%</value>
+  </data>
+  <data name="Fps_Fg_Steady_Tooltip_Format" xml:space="preserve">
+    <value>Frame generation không ở một trạng thái trong suốt phiên (menu, màn hình tải hoặc đổi thiết lập), nên không công bố hệ số cho cả phiên. ×{0:0.0} là trạng thái ổn định, đo trên {1:0}% thời gian game present; Native và Displayed là tốc độ của riêng trạng thái đó.</value>
+  </data>
   <data name="Fps_Fg_Format" xml:space="preserve">
     <value>{0} → {1} FPS (×{2:0.0} FG)</value>
   </data>

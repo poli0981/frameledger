@@ -80,15 +80,21 @@ public static class SessionAggregator
     {
         FgWindow? fg = c.Fg;
         bool usable = fg is { Refusal: null } && c.Verdict is FgVerdict.Named or FgVerdict.ActiveUnidentified or FgVerdict.None or FgVerdict.NoneInputsTagged;
+
+        // 03_METRICS §Frame Generation (2026-09-17): a session refused as non-uniform still publishes the state it
+        // spent most of its generating time in, scoped and with its share -- never the session average.
+        FgSteadyState? steady = !usable && c.Verdict is FgVerdict.Named or FgVerdict.ActiveUnidentified ? fg?.Steady : null;
         return row with
         {
             FgMode = Vocabulary.FgMode(c.Verdict, c.FgIdentity),
             FgSource = Vocabulary.FgSource(c.Verdict),
-            FgFactor = usable ? fg!.Factor : null,
-            NativeFps = usable ? fg!.NativeFps : null,
-            DisplayedFps = usable ? fg!.DisplayedFps : null,
+            FgFactor = usable ? fg!.Factor : steady?.Factor,
+            NativeFps = usable ? fg!.NativeFps : steady?.NativeFps,
+            DisplayedFps = usable ? fg!.DisplayedFps : steady?.DisplayedFps,
+            FgFactorScope = usable && fg!.Factor is not null ? "session" : steady is not null ? "steady" : null,
+            FgSteadyShare = steady?.Share,
             DisplayedP1LowFps = usable && c.Verdict is FgVerdict.Named or FgVerdict.ActiveUnidentified ? c.Stats.P1LowFps : null,
-            DisplayedCountedBy = usable ? (fg!.DxgiCounted ? "dxgi" : "hook") : null,
+            DisplayedCountedBy = usable || steady is not null ? (fg!.DxgiCounted ? "dxgi" : "hook") : null,
             FgNoneWithheldReason = c.Withheld,
             FgRefusal = usable ? null : fg?.Refusal is { } refusal ? Vocabulary.FgRefusal(refusal.Kind) : null,
             FgRefusalDetail = usable ? null : fg?.Refusal is { } detail ? FgRefusalDetail.ToJson(detail) : null,

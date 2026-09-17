@@ -207,6 +207,34 @@ public sealed class FpsPresentationTests
         InEnglish(() => FpsPresentation.IdentifiedTooltip("DLSS-G", "non_uniform", "not json")).Should().Be(InEnglish(() => FpsPresentation.IdentifiedTooltip("DLSS-G", "non_uniform")), "an unparsable detail is the old tooltip, never an exception");
     }
 
+    /// <summary>
+    /// 2026-09-17: a steady-state factor (<c>fg_factor_scope = steady</c>) is the generated shape — Native, Displayed and
+    /// the factor together, as rule 6 asks — and its chip ALWAYS says how much of the session it describes; the tooltip
+    /// says why there is no session-wide number. A session-wide factor keeps the plain chip.
+    /// </summary>
+    [Fact]
+    public void ASteadyStateFactorIsTheGeneratedShapeWithItsShareOnTheChip()
+    {
+        string detail = "{\"Kind\":\"non_uniform\",\"Subject\":\"factor\",\"Count\":8000,\"BucketIndex\":0,\"BucketCount\":8,\"BucketValue\":1.0,\"Overall\":1.6}";
+        SessionRow row = Hooked("dlssg", native: 58.2, displayed: 116.4, factor: 2.0, presented: 101, qualifier: "fg_runtime_loaded", refusal: "non_uniform")
+            with
+        { FgFactorScope = "steady", FgSteadyShare = 0.75, FgRefusalDetail = detail };
+
+        FpsReadoutModel m = InEnglish(() => FpsPresentation.FromRow(row));
+
+        m.Kind.Should().Be(FpsReadoutKind.Generated);
+        InEnglish(() => m.Line).Should().Be("58 → 116 FPS (×2.0 FG)");
+        InEnglish(() => m.FactorChip).Should().Be("×2.0 FG · 75%");
+        InEnglish(() => m.QualifierTooltip).Should().Contain("steady state").And.Contain("75%").And.Contain("Bucket 1 of 8 measured 1.00 against 1.60");
+        InEnglish(() => FpsPresentation.ColumnTooltip(row)).Should().Be(InEnglish(() => m.QualifierTooltip));
+        InEnglish(() => FpsPresentation.FactorColumn(row)).Should().Be("×2.0");
+
+        SessionRow session = Hooked("dlssg", native: 58.2, displayed: 116.4, factor: 2.0) with { FgFactorScope = "session" };
+        FpsReadoutModel s = InEnglish(() => FpsPresentation.FromRow(session));
+        InEnglish(() => s.FactorChip).Should().Be("×2.0 FG", "a session-wide factor needs no share");
+        s.QualifierTooltip.Should().BeNull();
+    }
+
     /// <summary>A counted factor keeps the generated shape; the label carries the chip, without a trailing space.</summary>
     [Fact]
     public void ACountedFactorKeepsTheGeneratedLabelWithItsChip()

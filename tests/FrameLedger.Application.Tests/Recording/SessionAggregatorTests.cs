@@ -86,6 +86,42 @@ public sealed class SessionAggregatorTests
         counted.FgRefusalDetail.Should().BeNull("a published factor has nothing to explain");
     }
 
+    /// <summary>
+    /// 2026-09-17 (03_METRICS §Frame Generation): a real play session opens with a menu, the session-level factor is
+    /// refused as non-uniform, and until now the gameplay's own number went with it — one hooked session in nine
+    /// published a factor on the owner's machine. The row now carries the STEADY state, scoped and with its share,
+    /// and keeps the refusal that says why it is not session-wide.
+    /// </summary>
+    [Fact]
+    public void AMenuThenGameplayPublishesTheSteadyStateScopedAndWithItsShare()
+    {
+        var writer = new FlWriterState { Status = 1, HooksInstalledMask = 0xB, RuntimeCensus = (uint)(FlRuntimeCensus.Ran | FlRuntimeCensus.SlInterposer | FlRuntimeCensus.SlDlssG) };
+        FlMeasured claims = _presentOnly | FlMeasured.Fg | FlMeasured.FgCounts;
+
+        // 100 presents per second in these fixtures: 20 s of menu at x1, then 60 s of gameplay at x2.
+        List<FlFrameRecord> menu = SessionFixtures.Stream(2_000, claims, fgPerBatch: 1);
+        List<FlFrameRecord> play = [.. SessionFixtures.Stream(6_000, claims, fgPerBatch: 2)
+            .Select((r, i) => r with { Qpc = menu[^1].Qpc + ((ulong)(i + 1) * 100_000), FrameIndex = (uint)(2_000 + i), FgMode = (byte)FlFgMode.DlssG })];
+
+        SessionRow row = SessionAggregator.Aggregate(SessionFixtures.Skeleton(seconds: 80), SessionFixtures.Hooked([.. menu, .. play], writer)).Row;
+
+        row.FgMode.Should().Be("dlssg");
+        row.FgFactorScope.Should().Be("steady");
+        row.FgFactor.Should().BeApproximately(2.0, 0.01, "the gameplay's own factor, never the 1.6 the whole session averages to");
+        row.FgSteadyShare.Should().BeApproximately(0.75, 0.03);
+        row.NativeFps.Should().BeApproximately(50, 1);
+        row.DisplayedFps.Should().BeApproximately(100, 1);
+        row.FgRefusal.Should().Be("non_uniform", "the refusal stays: it is why the number is not session-wide");
+        row.FgRefusalDetail.Should().NotBeNull();
+        row.DisplayedCountedBy.Should().Be("hook");
+
+        // A uniform session is scoped 'session' and carries no share.
+        SessionRow uniform = SessionAggregator.Aggregate(SessionFixtures.Skeleton(), SessionFixtures.Hooked(SessionFixtures.Stream(2_000, claims, fgPerBatch: 2), writer)).Row;
+        uniform.FgFactorScope.Should().Be("session");
+        uniform.FgSteadyShare.Should().BeNull();
+        uniform.FgRefusal.Should().BeNull();
+    }
+
     [Fact]
     public void ACountedNoneAndACountedFactorLandAsTheRowSpellsThem()
     {

@@ -27,6 +27,30 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
+### Added
+
+- **A session whose frame-generation state changed publishes its steady state, with its share (2026-09-17, owner
+  decision — `03_METRICS` §The steady state).** The owner saw the live card show the FG factor all session and the
+  finished session show "factor not counted" most of the time, and suspected the path from the hook to the UI. The
+  path is whole: the stored per-frame counts of all nine hooked sessions of 2026-09-16 read 2.00 / 3.00 / 4.00 inside
+  gameplay. The live card looks at five seconds; the stored row looked at the whole session, split it in eight and
+  refused it when one bucket departed — and every real session opens with a splash, a menu or a loading screen, so
+  one session in nine published. The refusal is right (Wukong's session averages to 2.22; its gameplay ran ×4.1) and
+  stays; what changes is that the gameplay's number is no longer thrown away with the average.
+  `Domain.Metrics.FgSteadyState`: five-second windows (the live card's own), the ACTIVE windows agreeing within 10 %
+  that hold the most time, published at ≥ 10 s and ≥ 10 % of the presenting time — `fg_factor` / `native_fps` /
+  `displayed_fps` from that state's own windows, `fg_factor_scope = 'steady'`, `fg_steady_share` (schema **0006**),
+  the refusal and its detail kept beside it. The readout is the generated shape with the chip **`×2.0 FG · 75%`** —
+  the share is never omitted — and a tooltip saying why there is no session-wide factor. Replayed over the nine
+  sessions through the real `FgWindow`: eight publish (Onimusha ×4.00 60 → 240, Lies of P ×2.00, Hell Is Us ×3.03,
+  Cronos ×2.00 225 → 451, Wukong ×4.11); the ninth had nine seconds of gameplay. **Two constants moved with it:**
+  `BucketTolerance` 25 % → 10 % (at 25 % a ×3-then-×4 session published 3.69, and the one published session read
+  ×2.04 for a gameplay of 2.00), and `MultipleStreams` refuses only when the chains' samples interleave — Onimusha
+  recreates its swapchain on entering gameplay, one stream at a time, and had been refused as two on every session.
+  CLAUDE.md rule 6 amended. Two strings (en/vi/ja). Tests: `FgSteadyStateTests`, `FgWindowTests` (interleaved vs
+  sequential), `SessionAggregatorTests`, `FpsPresentationTests`, `LedgerDatabaseTests` (script six), the repository
+  round trip. Existing rows are not re-aggregated.
+
 ### Changed
 
 - **The first tag ran (2026-09-16).** `v0.1.0-beta.1` on `becc208`; `release.yml` run 35111939019. The first attempt

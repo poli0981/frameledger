@@ -34,7 +34,7 @@ public static class FpsPresentation
             return FpsReadoutModel.Unavailable;
         }
 
-        return Shape(row.FgMode, row.NativeFps, row.DisplayedFps, row.FgFactor, row.PresentedFps ?? row.NativeFps, ParseQualifier(row.PresentedQualifier), row.FgRefusal, row.FgRuntimeCensus, row.FgRefusalDetail);
+        return Shape(row.FgMode, row.NativeFps, row.DisplayedFps, row.FgFactor, row.PresentedFps ?? row.NativeFps, ParseQualifier(row.PresentedQualifier), row.FgRefusal, row.FgRuntimeCensus, row.FgRefusalDetail, IsSteady(row) ? row.FgSteadyShare : null);
     }
 
     /// <summary>The live card's shape from a 1 Hz progress event (<c>07_IPC</c>: the FG fields are set only when measured).</summary>
@@ -82,7 +82,7 @@ public static class FpsPresentation
         FpsReadoutModel m = FromRow(row);
         return m.Kind switch
         {
-            FpsReadoutKind.Generated => Strings.Fps_Native_Tooltip,
+            FpsReadoutKind.Generated => m.QualifierTooltip ?? Strings.Fps_Native_Tooltip,
             FpsReadoutKind.None => Strings.Fps_None_Tooltip,
             FpsReadoutKind.Presented or FpsReadoutKind.IdentifiedUncounted => m.QualifierTooltip,
             _ => Strings.Tier_NA_Tooltip,
@@ -109,7 +109,24 @@ public static class FpsPresentation
 
     public static string PresentedLine(double? presented) => string.Format(CultureInfo.CurrentCulture, Strings.Fps_Presented_Format, Formats.Fps(presented));
 
-    public static string FactorChip(double factor) => string.Format(CultureInfo.CurrentCulture, Strings.Fps_Fg_Chip_Format, factor);
+    public static string FactorChip(double factor) => FactorChip(factor, steadyShare: null);
+
+    /// <summary>The factor chip; a steady-state factor always carries the share of the session it describes: <c>×2.0 FG · 75%</c>.</summary>
+    public static string FactorChip(double factor, double? steadyShare) => steadyShare is double share
+        ? string.Format(CultureInfo.CurrentCulture, Strings.Fps_Fg_Chip_Steady_Format, factor, share * 100)
+        : string.Format(CultureInfo.CurrentCulture, Strings.Fps_Fg_Chip_Format, factor);
+
+    /// <summary>
+    /// The tooltip of a steady-state readout: why there is no session-wide factor, what the number is and over how much
+    /// of the session, and the refusal's own numbers when the row stored them.
+    /// </summary>
+    public static string SteadyTooltip(double factor, double share, string? refusalDetail)
+    {
+        string text = string.Format(CultureInfo.CurrentCulture, Strings.Fps_Fg_Steady_Tooltip_Format, factor, share * 100);
+        return RefusalDetailText(FgRefusalDetail.Parse(refusalDetail)) is { } numbers ? text + " " + numbers : text;
+    }
+
+    private static bool IsSteady(SessionRow row) => string.Equals(row.FgFactorScope, "steady", StringComparison.Ordinal);
 
     /// <summary>The census chip; a loaded frame-generation runtime is named when the census says which (<c>08_UI</c> §FPS display rule).</summary>
     public static string QualifierText(FpsQualifier qualifier, long? runtimeCensus = null) => qualifier switch
@@ -245,7 +262,7 @@ public static class FpsPresentation
         _ => FpsQualifier.CensusNotRun,
     };
 
-    private static FpsReadoutModel Shape(string? fgMode, double? native, double? displayed, double? factor, double? presented, FpsQualifier qualifier, string? refusal, long? runtimeCensus, string? refusalDetail = null)
+    private static FpsReadoutModel Shape(string? fgMode, double? native, double? displayed, double? factor, double? presented, FpsQualifier qualifier, string? refusal, long? runtimeCensus, string? refusalDetail = null, double? steadyShare = null)
     {
         // fg_mode: 'na' = not measured; 'none' = measured none; a technology with a factor = counted generation;
         // a technology WITHOUT a factor = identified, and the count refused (fg_refusal says why).
@@ -273,6 +290,6 @@ public static class FpsPresentation
             };
         }
 
-        return new FpsReadoutModel { Kind = FpsReadoutKind.Generated, Native = native, Displayed = displayed, Factor = factor };
+        return new FpsReadoutModel { Kind = FpsReadoutKind.Generated, Native = native, Displayed = displayed, Factor = factor, SteadyShare = steadyShare, Refusal = refusal, RefusalDetail = refusalDetail };
     }
 }

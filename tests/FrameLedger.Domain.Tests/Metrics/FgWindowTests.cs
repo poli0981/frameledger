@@ -159,8 +159,9 @@ public sealed class FgWindowTests
     [Fact]
     public void ASecondStreamInTheSpanRefusesBecauseTheDrainWordIsProcessWide()
     {
+        // INTERLEAVED: chain 2 presents in the middle of chain 1's run, so the two were presenting at once.
         List<FrameSample> stream = [.. FgStream(appFrames: 40, k: 4)];
-        stream.Add(stream[^1] with { SwapchainId = 2, Qpc = stream[^1].Qpc + (ulong)Step });
+        stream.Insert(80, stream[80] with { SwapchainId = 2, Qpc = stream[80].Qpc - 1 });
 
         FgWindow w = FgWindow.From(stream, Frequency);
 
@@ -251,7 +252,7 @@ public sealed class FgWindowTests
     public void TheProxyRefusesOnTheSameAttributionFactsTheFactorDoes()
     {
         List<FrameSample> stream = [.. FgStream(appFrames: 40, k: 4, evalsPerFrame: 0)];
-        stream.Add(stream[^1] with { SwapchainId = 2, Qpc = stream[^1].Qpc + (ulong)Step });
+        stream.Insert(80, stream[80] with { SwapchainId = 2, Qpc = stream[80].Qpc - 1 });
 
         FgWindow w = FgWindow.From(stream, Frequency);
 

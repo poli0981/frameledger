@@ -230,9 +230,11 @@ public static class Strings
         nameof(Fps_Census_Withheld),
         nameof(Fps_Census_Withheld_Tooltip),
         nameof(Fps_Fg_Chip_Format),
+        nameof(Fps_Fg_Chip_Steady_Format),
         nameof(Fps_Fg_Format),
         nameof(Fps_Fg_Identified_Format),
         nameof(Fps_Fg_Identified_Tooltip_Format),
+        nameof(Fps_Fg_Steady_Tooltip_Format),
         nameof(Fps_Native_Tooltip),
         nameof(Fps_None_Tooltip),
         nameof(Fps_Presented_Format),
@@ -1000,11 +1002,15 @@ public static class Strings
 
     public static string Fps_Fg_Chip_Format => ResourceManager.GetString(nameof(Fps_Fg_Chip_Format), Culture) ?? nameof(Fps_Fg_Chip_Format);
 
+    public static string Fps_Fg_Chip_Steady_Format => ResourceManager.GetString(nameof(Fps_Fg_Chip_Steady_Format), Culture) ?? nameof(Fps_Fg_Chip_Steady_Format);
+
     public static string Fps_Fg_Format => ResourceManager.GetString(nameof(Fps_Fg_Format), Culture) ?? nameof(Fps_Fg_Format);
 
     public static string Fps_Fg_Identified_Format => ResourceManager.GetString(nameof(Fps_Fg_Identified_Format), Culture) ?? nameof(Fps_Fg_Identified_Format);
 
     public static string Fps_Fg_Identified_Tooltip_Format => ResourceManager.GetString(nameof(Fps_Fg_Identified_Tooltip_Format), Culture) ?? nameof(Fps_Fg_Identified_Tooltip_Format);
+
+    public static string Fps_Fg_Steady_Tooltip_Format => ResourceManager.GetString(nameof(Fps_Fg_Steady_Tooltip_Format), Culture) ?? nameof(Fps_Fg_Steady_Tooltip_Format);
 
     public static string Fps_Native_Tooltip => ResourceManager.GetString(nameof(Fps_Native_Tooltip), Culture) ?? nameof(Fps_Native_Tooltip);
 

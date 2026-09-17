@@ -120,6 +120,17 @@ public sealed record SessionRow
     /// </summary>
     public string? FgRefusalDetail { get; init; }
 
+    /// <summary>
+    /// Which part of the session <see cref="FgFactor"/>, <see cref="NativeFps"/> and <see cref="DisplayedFps"/> describe
+    /// (schema 0006): <c>session</c> — one frame-generation state for the whole claimed span; <c>steady</c> — the state
+    /// the session spent most of its generating time in, published because the session as a whole was refused as
+    /// non-uniform (<c>Domain.Metrics.FgSteadyState</c>); null when no factor is published.
+    /// </summary>
+    public string? FgFactorScope { get; init; }
+
+    /// <summary>The fraction (0..1) of the presenting time the steady state covers; null unless <see cref="FgFactorScope"/> is <c>steady</c>.</summary>
+    public double? FgSteadyShare { get; init; }
+
     public double? PresentedFps { get; init; }
 
     public string? PresentedQualifier { get; init; }

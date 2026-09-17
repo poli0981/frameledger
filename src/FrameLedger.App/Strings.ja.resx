@@ -709,6 +709,14 @@
     <value>×{0:0.0} FG</value>
     <comment>review</comment>
   </data>
+  <data name="Fps_Fg_Chip_Steady_Format" xml:space="preserve">
+    <value>×{0:0.0} FG · {1:0}%</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Fg_Steady_Tooltip_Format" xml:space="preserve">
+    <value>セッション全体でフレーム生成が一つの状態ではなかったため（メニュー、ロード画面、設定変更）、セッション全体の倍率は公開されません。×{0:0.0} は定常状態で、ゲームが present していた時間の {1:0}% で測定されました。Native と Displayed はその状態自体のレートです。</value>
+    <comment>review</comment>
+  </data>
   <data name="Fps_Fg_Format" xml:space="preserve">
     <value>{0} → {1} FPS (×{2:0.0} FG)</value>
     <comment>review</comment>

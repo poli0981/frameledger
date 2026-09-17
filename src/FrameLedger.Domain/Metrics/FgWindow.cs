@@ -45,6 +45,16 @@ public sealed record FgWindow
     /// <summary>Distinct identified swapchains presenting inside the span.</summary>
     public required int Streams { get; init; }
 
+    /// <summary>
+    /// True when those swapchains presented CONCURRENTLY — their samples interleave — rather than one after another.
+    /// Only the concurrent case is the hazard <see cref="FgRefusalKind.MultipleStreams"/> names: the drain word is
+    /// process-wide, so with two chains presenting at once one's present can drain the other's evaluation. A title
+    /// that RECREATES its swapchain — Onimusha: Way of the Sword, 2026-09-16: chain 1 for the menus, chain 2 from
+    /// the first gameplay frame, not one sample interleaved across three sessions — has one stream at a time, and
+    /// refusing it for having had two was a misdiagnosis that cost every session of that title its factor.
+    /// </summary>
+    public required bool StreamsInterleaved { get; init; }
+
     /// <summary>Samples whose count hit the byte's ceiling.</summary>
     public required int Saturated { get; init; }
 
@@ -89,6 +99,14 @@ public sealed record FgWindow
     /// <summary>Why no factor may be published, or null when one may.</summary>
     public required FgRefusal? Refusal { get; init; }
 
+    /// <summary>
+    /// When the session-level factor is refused as <see cref="FgRefusalKind.NonUniform"/>: the frame-generation state
+    /// the session spent most of its generating time in, with its share — or null when no state qualifies. Never
+    /// set beside a published <see cref="Factor"/>, and never for any other refusal: an unattributed or saturated
+    /// record set is not made trustworthy by slicing it.
+    /// </summary>
+    public FgSteadyState? Steady { get; init; }
+
     /// <summary><c>presents / Σ evaluations</c>, or null.</summary>
     public double? Factor =>
         Refusal is null && Evaluations > 0 ? DisplayedPresents / (double)Evaluations : null;
@@ -131,7 +149,15 @@ public sealed record FgWindow
     public const int MinSamplesToCheck = Buckets * MinPerBucket;
 
     /// <summary>How far a bucket's factor may sit from the window's before this refuses.</summary>
-    public const double BucketTolerance = 0.25;
+    /// <remarks>
+    /// 0.25 until 2026-09-17, and that let two things through: a session that ran x3 and then x4 published 3.69 —
+    /// a multiplier no title offers, since the two are exactly 25 % apart — and the owner's one published session
+    /// (Lies of P, 2026-09-16) read x2.04 because a bucket at 2.35, its opening, sat inside the tolerance, while its
+    /// gameplay read 2.00 in every five-second window. It could not be tightened while a refusal meant no number at
+    /// all; with <see cref="FgSteadyState"/> behind it a refusal now costs the average and keeps the measurement, so
+    /// the tolerance is the one the steady state uses for the same question.
+    /// </remarks>
+    public const double BucketTolerance = FgSteadyState.StateTolerance;
 
     /// <summary>
     /// At or above this, frame generation is ACTIVE: <c>03_METRICS</c>' cadence threshold, and the value below
@@ -163,7 +189,9 @@ public sealed record FgWindow
         }
 
         FgWindow tallied = Tally(all, start, qpcFrequency);
-        return tallied with { Refusal = RefusalFor(tallied) };
+        FgRefusal? refusal = RefusalFor(tallied);
+        bool mixedStates = refusal is { Kind: FgRefusalKind.NonUniform, Subject: FgRefusalSubject.Factor };
+        return tallied with { Refusal = refusal, Steady = mixedStates ? FgSteadyState.From(all, start, qpcFrequency) : null };
     }
 
     private static FgWindow Nothing(FgRefusal refusal) => new()
@@ -174,6 +202,7 @@ public sealed record FgWindow
         Seconds = 0,
         Unidentified = 0,
         Streams = 0,
+        StreamsInterleaved = false,
         Saturated = 0,
         DxgiUnseen = 0,
         DxgiClaiming = 0,
@@ -232,6 +261,7 @@ public sealed record FgWindow
             Seconds = RecordWindow.SecondsOf(all, start, qpcFrequency),
             Unidentified = unidentified,
             Streams = streams.Count,
+            StreamsInterleaved = Interleaved(all, start, streams.Count),
             Saturated = saturated,
             DxgiUnseen = dxgiUnseen,
             DxgiClaiming = dxgiClaiming,
@@ -241,6 +271,33 @@ public sealed record FgWindow
             BatchFactors = BucketsOf(all, start, static s => DrainedBatch(s) ? 1L : 0L),
             Refusal = null,
         };
+    }
+
+    /// <summary>
+    /// Did the identified chains present at once? N chains one after another change hands N−1 times; any more and
+    /// two of them were presenting concurrently. Its own pass, as the DXGI tally is: it is its own question.
+    /// </summary>
+    private static bool Interleaved(IReadOnlyList<FrameSample> all, int start, int streams)
+    {
+        uint previous = 0;
+        int changes = 0;
+        for (int i = start; i < all.Count; i++)
+        {
+            uint id = all[i].SwapchainId;
+            if (id == 0)
+            {
+                continue;
+            }
+
+            if (previous != 0 && id != previous)
+            {
+                changes++;
+            }
+
+            previous = id;
+        }
+
+        return changes > Math.Max(0, streams - 1);
     }
 
     /// <summary>
@@ -342,7 +399,7 @@ public sealed record FgWindow
             return new FgRefusal(FgRefusalKind.Unattributed, subject, Count: w.Unidentified);
         }
 
-        if (w.Streams > 1)
+        if (w.Streams > 1 && w.StreamsInterleaved)
         {
             return new FgRefusal(FgRefusalKind.MultipleStreams, subject, Count: w.Streams);
         }

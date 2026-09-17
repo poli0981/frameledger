@@ -24,6 +24,13 @@ public sealed record FpsReadoutModel
     /// <summary>The row's <c>fg_refusal</c> token when the count refused; the chip's tooltip names it.</summary>
     public string? Refusal { get; init; }
 
+    /// <summary>
+    /// Set when the factor is the session's STEADY STATE rather than a session-wide one (<c>fg_factor_scope = steady</c>,
+    /// schema 0006): the fraction of the presenting time it covers. The chip prints it, always — a steady factor is
+    /// never shown without saying which part of the session it describes (<c>08_UI</c> §FPS display rule).
+    /// </summary>
+    public double? SteadyShare { get; init; }
+
     /// <summary>The row's <c>fg_refusal_detail</c> JSON (schema 0005) when stored; the tooltip's numbers. Null on the live card.</summary>
     public string? RefusalDetail { get; init; }
 
@@ -60,11 +67,12 @@ public sealed record FpsReadoutModel
     {
         FpsReadoutKind.Presented when Qualifier is FpsQualifier q => FpsPresentation.QualifierTooltip(q),
         FpsReadoutKind.IdentifiedUncounted => FpsPresentation.IdentifiedTooltip(Technology, Refusal, RefusalDetail),
+        FpsReadoutKind.Generated when Factor is double f && SteadyShare is double share => FpsPresentation.SteadyTooltip(f, share, RefusalDetail),
         _ => null,
     };
 
     /// <summary>True when the stand-alone number may include generated frames and the chip must warn.</summary>
     public bool QualifierIsWarning => Kind == FpsReadoutKind.IdentifiedUncounted || Qualifier is FpsQualifier.RuntimeLoaded or FpsQualifier.Withheld;
 
-    public string? FactorChip => Kind == FpsReadoutKind.Generated && Factor is double f ? FpsPresentation.FactorChip(f) : null;
+    public string? FactorChip => Kind == FpsReadoutKind.Generated && Factor is double f ? FpsPresentation.FactorChip(f, SteadyShare) : null;
 }
