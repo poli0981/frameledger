@@ -27,7 +27,7 @@ Let `D` = session duration (first → last present), `F_app` = frames the *game*
 | **Native FPS (avg)** | `count(F_app) / D` | 1 |
 | **Displayed FPS (avg)** | `count(F_disp) / D` | 1 |
 | **Presented FPS (avg)** | `presents / D` — **numerically Displayed FPS; the name for the one number that stands alone.** "Native" and "Displayed" are printed only *together* (rule 6); when frame generation is not measured, this is the headline, with a mandatory qualifier (§Frame Generation, rung 0's qualifier) | 1 |
-| **FG factor** | `DisplayedFPS / NativeFPS`, shown `×N.N`; `—` when FG inactive; **`N/A` when FG is not measured** — and **`N/A` when FG was *identified* but the count refused** (`fg_mode` a technology, `fg_factor` NULL, `fg_refusal` the reason — schema 0003, 2026-09-14 — and `fg_refusal_detail` its numbers: the bucket that departed, its ratio and the window's — schema 0005, 2026-09-16): the one number is then Presented FPS with a warning chip naming the technology, exactly rung 0's third row, because the identity says generated frames may be in the presents and the count cannot say how many. Never `×0.0`, never "Native" | 1 |
+| **FG factor** | `DisplayedFPS / NativeFPS`, shown `×N.N`; `—` when FG inactive; **`N/A` when FG is not measured** — and **`N/A` when FG was *identified* but the count refused** (`fg_mode` a technology, `fg_factor` NULL, `fg_refusal` the reason — schema 0003, 2026-09-14 — and `fg_refusal_detail` its numbers: the bucket that departed, its ratio and the window's — schema 0005, 2026-09-16): the one number is then Presented FPS with a warning chip naming the technology, exactly rung 0's third row, because the identity says generated frames may be in the presents and the count cannot say how many. Never `×0.0`, never "Native". **Since 2026-09-17 a session refused as `non_uniform` publishes its STEADY STATE instead** — `fg_factor_scope = steady`, the share beside it (§The steady state, below) | 1 |
 | **Avg FPS** (headline) | = Native FPS when `fg_mode` is measured (`api` rung) or `none`; **= Presented FPS, labelled, when `fg_mode` is `N/A`**. Time-based, **not** the mean of instantaneous FPS values | 1 |
 | **Median FPS** | `1000 / p50(ft_app)` | 1 |
 | **1% Low** | `1000 / p99(ft_app)` | 1 |
@@ -368,6 +368,36 @@ F_app   = Σ fgEvaluations                  (APPLICATION frames, counted at the 
 > per-bucket `presents / batch` check §S30 named as a prerequisite, and `SessionReport` prints
 > its verdict on the line under the ratio so the number cannot be read without it. A guard keyed
 > on a quantity that is zero on the route that runs is not a guard.
+>
+> ### The steady state — owner decision 2026-09-17
+>
+> **The refusal was right and its consequence was wrong.** A session that ran its menus at ×1 and its gameplay at
+> ×4 averages to a number no configuration had (Black Myth: Wukong, 2026-09-16: 2.22 over a session whose gameplay
+> read ×4.1 for two thirds of it), so the session-level factor is refused — and until this date the gameplay's own
+> number was thrown away with the average. Every real play session opens with a splash, a menu or a loading screen,
+> so on the owner's machine the shipped Agent published a factor on **one hooked session in nine** while the live
+> card, which looks at five seconds at a time, showed it throughout; the owner read that as a broken data path. It
+> was not: the nine sessions' stored per-frame counts read **2.00 / 3.00 / 4.00 to two decimals** inside gameplay.
+>
+> **The rule.** When — and only when — the session-level factor is refused as `NonUniform`, `FgSteadyState` cuts the
+> claimed span into **five-second windows (the live card's own)**, classifies each by its own `presents ÷ tokens`,
+> and takes the set of ACTIVE windows (≥ 1.5) agreeing within **10 %** that holds the most time. It is published when
+> it covers **≥ 10 s and ≥ 10 % of the presenting time**: `fg_factor`, `native_fps` and `displayed_fps` are that
+> state's own (counted over its windows, independently), `fg_factor_scope = 'steady'`, `fg_steady_share` the fraction,
+> and `fg_refusal` / `fg_refusal_detail` stay set as the reason the number is not session-wide. ×3 and ×4 are 25 %
+> apart and never pool; a factor that wanders forms no state and the refusal stands alone; any other refusal
+> (unattributed, saturated, interleaved streams) gets no steady state — slicing does not make a record set
+> trustworthy. **Never a session average, and never shown without its share.** Replayed over the nine sessions:
+> eight publish (Onimusha ×4.00 60 → 240, Lies of P ×2.00, Hell Is Us ×3.03, Cronos ×2.00 225 → 451, Wukong ×4.11),
+> the ninth had nine seconds of gameplay.
+>
+> **Two constants moved with it.** `BucketTolerance` is **10 %**, the steady state's own, down from 25 %: at 25 % a
+> session that ran ×3 then ×4 published 3.69, and the owner's one published session read ×2.04 because its opening
+> bucket (2.35) sat inside the tolerance while its gameplay read 2.00 — tightening was unaffordable while a refusal
+> meant no number, and is free now. And **`MultipleStreams` refuses only when the chains' samples INTERLEAVE**:
+> the hazard is a process-wide drain word with two chains presenting at once, and Onimusha recreates its swapchain
+> on entering gameplay — chain 1 for the menus, chain 2 after, not one sample interleaved in three sessions — which
+> is one stream at a time and was refused as two.
 >
 > **This also leaves §RT/PT/RR without a settled denominator.** `rt_frame_pct`,
 > `rays_per_pixel` and the `≥ 5% of frames` gate are per-APPLICATION-frame quantities, and

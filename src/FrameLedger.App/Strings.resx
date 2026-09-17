@@ -537,6 +537,12 @@
   <data name="Fps_Fg_Chip_Format" xml:space="preserve">
     <value>×{0:0.0} FG</value>
   </data>
+  <data name="Fps_Fg_Chip_Steady_Format" xml:space="preserve">
+    <value>×{0:0.0} FG · {1:0}%</value>
+  </data>
+  <data name="Fps_Fg_Steady_Tooltip_Format" xml:space="preserve">
+    <value>Frame generation was not in one state for the whole session (menus, loading screens or a settings change), so no session-wide factor is published. ×{0:0.0} is the steady state, measured over {1:0}% of the time the game was presenting; Native and Displayed are that state's own rates.</value>
+  </data>
   <data name="Fps_Fg_Format" xml:space="preserve">
     <value>{0} → {1} FPS (×{2:0.0} FG)</value>
   </data>

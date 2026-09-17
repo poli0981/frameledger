@@ -431,6 +431,13 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > beside `fg_refusal`, read by the UI's tooltip (`FpsPresentation.RefusalDetailText`), never an input to a number.
 > Existing rows keep NULL. `LatestVersion` is 5; `LedgerDatabaseTests` asserts the column.
 
+> **`0006_fg_steady_state.sql` (2026-09-17) — `sessions.fg_factor_scope` / `fg_steady_share`.** `fg_factor` was
+> session-wide or NULL, and on real play it was almost always NULL (`03_METRICS` §The steady state). `session` = one
+> state for the whole claimed span; `steady` = `fg_factor` / `native_fps` / `displayed_fps` describe the state the
+> session spent most of its generating time in, `fg_steady_share` of the presenting time, with `fg_refusal` and its
+> detail still set beside it. A reader that ignores the scope reads a steady factor as a session one, which is why
+> every surface prints the share. Existing rows keep NULL. `LatestVersion` is 6.
+
 > **Every open used to migrate, and one that should not have did — 2026-09-16.** The Agent's `--console sessions`,
 > a verb that prints, was run against the owner's ledger while the file on disk was at schema 2 and applied 0003 and
 > 0004 to it. `LedgerDatabase.OpenReadOnlyAsync` exists since that day: an existing file, `PRAGMA query_only`, no

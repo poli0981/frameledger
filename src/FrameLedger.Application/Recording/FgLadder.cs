@@ -196,6 +196,7 @@ public static class FgLadder
             return FgVerdict.Named;
         }
 
-        return fg?.IsActive == true ? FgVerdict.ActiveUnidentified : FgVerdict.NotMeasured;
+        // A steady state (2026-09-17) is an ACTIVE state by construction: counted generation, identity unknown.
+        return fg?.IsActive == true || fg?.Steady is not null ? FgVerdict.ActiveUnidentified : FgVerdict.NotMeasured;
     }
 }

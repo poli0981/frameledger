@@ -73,6 +73,19 @@ public sealed class LedgerDatabaseTests
         columns.Should().Contain("fg_refusal_detail").And.Contain("fg_refusal", "0005 appends beside 0003's column, it edits nothing");
     }
 
+    /// <summary>Schema 0006 (2026-09-17): which part of the session <c>fg_factor</c> describes, and how much of it.</summary>
+    [Fact]
+    public async Task ScriptSixAddsTheFgScopeColumns()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(6);
+        IReadOnlyList<string> columns = await f.Db.ReadAsync(async (c, ct) =>
+            (IReadOnlyList<string>)[.. await c.QueryAsync<string>(new CommandDefinition(
+                "SELECT name FROM pragma_table_info('sessions')", cancellationToken: ct)).ConfigureAwait(false)], Ct);
+        columns.Should().Contain("fg_factor_scope").And.Contain("fg_steady_share").And.Contain("fg_refusal_detail", "0006 appends beside 0005's column, it edits nothing");
+    }
+
     [Fact]
     public async Task ReopeningIsANoOp()
     {
