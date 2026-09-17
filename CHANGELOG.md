@@ -27,6 +27,26 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
+_Nothing yet — entries continue here after `0.1.0-beta.2`._
+
+## [0.1.0-beta.2] - 2026-09-17
+
+**The second pre-release.** The same unsigned installer as `0.1.0-beta.1`: verify its hash against
+`SHA256SUMS.txt`, then *More info → Run anyway*. What changed for a user: a finished session whose frame generation
+did not stay in one state — a menu, a loading screen — now shows the factor of its steady state with the share of
+the session it covers, where `0.1.0-beta.1` showed "factor not counted" for most real sessions; and three faults from
+the first day of use are fixed: an App started as administrator started another Agent every few seconds, and each of
+them recorded every game; closing the App ended in an error; and a crash dump could hang the process it described.
+
+**Updating from `0.1.0-beta.1`:**
+
+- **Quit the App (tray icon → Exit), then end every `FrameLedger.Agent.exe` in Task Manager before installing.** If the
+  App was ever started as administrator, some Agents run elevated, and Task Manager can end those only when it runs
+  as administrator itself.
+- On its first start the ledger migrates to schema 6. Sessions recorded before keep the frame-generation result they
+  were stored with; the steady state applies to sessions recorded from this version on.
+- Sessions recorded while more than one Agent was running appear once per Agent. Nothing removes them automatically.
+
 ### Fixed
 
 - **Closing the App no longer ends in a Fatal error and exit code 1 (2026-09-17).** Measured on the installed

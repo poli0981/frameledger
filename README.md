@@ -5,8 +5,8 @@
 > No telemetry. No accounts. All data stays on your machine.
 
 <!-- accuracy-block:begin -->
-> ⚠ **What FrameLedger actually measures today — 2026-09-16.** The software is pre-alpha; its first
-> **pre-release is `0.1.0-beta.1`** (2026-09-16), an unsigned installer built from that tag with its
+> ⚠ **What FrameLedger actually measures today — 2026-09-17.** The software is pre-alpha; its latest
+> **pre-release is `0.1.0-beta.2`** (2026-09-17), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
 > game in the library runs, injects only into games you enabled and only past the safety guard, and
@@ -36,11 +36,15 @@
 > - **Frame generation (Direct3D titles only):** the Displayed rate is counted from presents, plus the
 >   presents DXGI's own counter saw on the same swap chain that the hook did not; the Native rate from
 >   the vendor's own per-frame calls (NVIDIA Streamline, AMD FidelityFX) where the title makes them, and
->   `N/A` where it does not. DLSS-G and FSR FG are named from the calls the game makes; any other
->   generator (XeSS-FG, one compiled into the game) is shown only as active with the technology not
->   identified, and is never named. Where a technology is named but its frames could not be counted, or
->   frame generation is not measured, the software shows **Presented FPS** with a note on what it may
->   include — never a Native figure.
+>   `N/A` where it does not. When frame generation did not stay in one state for the whole session
+>   (menus, loading screens, a settings change), no session-wide factor is shown: the factor, Native and
+>   Displayed are those of the state that held longest — five-second windows whose ratios agree within
+>   10 %, covering at least 10 s and 10 % of the time the game was presenting — and are always shown with
+>   the share of the session they cover; with no such state, the reason is shown instead. DLSS-G and FSR
+>   FG are named from the calls the game makes; any other generator (XeSS-FG, one compiled into the game)
+>   is shown only as active with the technology not identified, and is never named. Where a technology is
+>   named but its frames could not be counted, or frame generation is not measured, the software shows
+>   **Presented FPS** with a note on what it may include — never a Native figure.
 > - **Ray tracing:** Yes/No measured on Direct3D 12 from ray-dispatch and acceleration-structure-build
 >   calls; the technique and path tracing are `N/A`, and so is ray tracing on other APIs.
 > - **Video memory:** in use on the whole graphics card, recorded from Windows and GPU-driver telemetry
@@ -124,7 +128,7 @@ Elevation is **optional — for everything.** Hooked capture is the normal path 
 
 ## Install
 
-> **The first pre-release is `v0.1.0-beta.1` (2026-09-16).** It is a pre-release: read `CHANGELOG.md`'s section for it — what it measures, what it does not yet — before installing. A source build is `docs/12_BUILD.md`.
+> **The latest pre-release is `v0.1.0-beta.2` (2026-09-17); the first was `v0.1.0-beta.1` (2026-09-16).** They are pre-releases: read `CHANGELOG.md`'s section for the one you install — what it measures, what it does not yet, and how to update — before installing. A source build is `docs/12_BUILD.md`.
 
 1. Download the latest `FrameLedger.App-win-Setup.exe` from [Releases](https://github.com/poli0981/frameledger/releases). It installs into `%LOCALAPPDATA%\FrameLedger.App`; your data stays in `%LOCALAPPDATA%\FrameLedger`, and uninstalling asks before touching it.
 2. SmartScreen may warn — releases are not code-signed (free, open-source project). Verify the SHA-256 checksum published with each release, then **More info → Run anyway**.
@@ -152,4 +156,4 @@ If you find a game with anti-cheat that FrameLedger fails to detect, please open
 
 ---
 
-**Status:** pre-alpha, under active development; first pre-release `v0.1.0-beta.1` (2026-09-16). Roadmap: [`docs/15_ROADMAP.md`](docs/15_ROADMAP.md).
+**Status:** pre-alpha, under active development; latest pre-release `v0.1.0-beta.2` (2026-09-17). Roadmap: [`docs/15_ROADMAP.md`](docs/15_ROADMAP.md).

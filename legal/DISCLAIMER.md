@@ -72,8 +72,8 @@ Software running inside another process can, in principle, destabilize it. Frame
 Frame timing is derived from high-resolution timestamps taken at the moment the game presents each frame; upscaling, frame-generation and ray-tracing state are read from the parameters the game passes to those APIs. This is substantially more accurate than inferring settings from files on disk, but **no measurement is guaranteed to be exact**:
 
 <!-- accuracy-block:begin -->
-> ⚠ **What FrameLedger actually measures today — 2026-09-16.** The software is pre-alpha; its first
-> **pre-release is `0.1.0-beta.1`** (2026-09-16), an unsigned installer built from that tag with its
+> ⚠ **What FrameLedger actually measures today — 2026-09-17.** The software is pre-alpha; its latest
+> **pre-release is `0.1.0-beta.2`** (2026-09-17), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
 > game in the library runs, injects only into games you enabled and only past the safety guard, and
@@ -103,11 +103,15 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 > - **Frame generation (Direct3D titles only):** the Displayed rate is counted from presents, plus the
 >   presents DXGI's own counter saw on the same swap chain that the hook did not; the Native rate from
 >   the vendor's own per-frame calls (NVIDIA Streamline, AMD FidelityFX) where the title makes them, and
->   `N/A` where it does not. DLSS-G and FSR FG are named from the calls the game makes; any other
->   generator (XeSS-FG, one compiled into the game) is shown only as active with the technology not
->   identified, and is never named. Where a technology is named but its frames could not be counted, or
->   frame generation is not measured, the software shows **Presented FPS** with a note on what it may
->   include — never a Native figure.
+>   `N/A` where it does not. When frame generation did not stay in one state for the whole session
+>   (menus, loading screens, a settings change), no session-wide factor is shown: the factor, Native and
+>   Displayed are those of the state that held longest — five-second windows whose ratios agree within
+>   10 %, covering at least 10 s and 10 % of the time the game was presenting — and are always shown with
+>   the share of the session they cover; with no such state, the reason is shown instead. DLSS-G and FSR
+>   FG are named from the calls the game makes; any other generator (XeSS-FG, one compiled into the game)
+>   is shown only as active with the technology not identified, and is never named. Where a technology is
+>   named but its frames could not be counted, or frame generation is not measured, the software shows
+>   **Presented FPS** with a note on what it may include — never a Native figure.
 > - **Ray tracing:** Yes/No measured on Direct3D 12 from ray-dispatch and acceleration-structure-build
 >   calls; the technique and path tracing are `N/A`, and so is ray tracing on other APIs.
 > - **Video memory:** in use on the whole graphics card, recorded from Windows and GPU-driver telemetry
