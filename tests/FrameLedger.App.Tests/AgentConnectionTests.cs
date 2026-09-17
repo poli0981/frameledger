@@ -1,7 +1,9 @@
+using System.IO;
 using FluentAssertions;
 using FrameLedger.App.Services;
 using FrameLedger.Application.Ipc;
 using FrameLedger.Infrastructure.Ipc;
+using FrameLedger.Infrastructure.Startup;
 using FrameLedger.Shared.Ipc;
 
 namespace FrameLedger.App.Tests;
@@ -40,6 +42,11 @@ public sealed class AgentConnectionTests : IAsyncDisposable
     private sealed class FakeLauncher(Func<bool> start) : IAgentLauncher
     {
         public bool CanLaunch { get; set; }
+
+        /// <summary>What <see cref="IAgentLauncher.RunningAgent"/> answers: an Agent that is up, whether or not it answers.</summary>
+        public string? Running { get; set; }
+
+        public string? RunningAgent => Running;
 
         public int Starts { get; private set; }
 
@@ -213,6 +220,53 @@ public sealed class AgentConnectionTests : IAsyncDisposable
         {
             _seen.Should().Contain(AgentConnectionState.Starting, "the pill said so on the way");
         }
+    }
+
+    [Fact]
+    public async Task AnAgentThatIsUpButDoesNotAnswerIsReportedAndNeverStartedAgain()
+    {
+        // 2026-09-17: an elevated App was refused by the pipe of the Agent already serving, took the refusal for an absent
+        // Agent, and started one per round; four Agents recorded every session four times. Here nothing answers, the launcher
+        // knows an Agent holds the data folder, and a start would bring a server up — so it must never be called.
+        FakeLauncher? launcher = null;
+        launcher = new FakeLauncher(() =>
+        {
+            StartServer();
+            return true;
+        })
+        { CanLaunch = true, Running = "an Agent already holds the test folder" };
+        AgentConnection c = Start(launcher);
+
+        await WaitForAsync(() => c.Rounds >= 3, "three rounds found no pipe").ConfigureAwait(true);
+        launcher.Starts.Should().Be(0, "one Agent per data folder, however many rounds fail");
+        c.Launches.Should().Be(0);
+        c.LastConnectFailure.Should().StartWith(nameof(TimeoutException), "why the round failed is kept, not swallowed");
+        lock (_seen)
+        {
+            _seen.Should().NotContain(AgentConnectionState.Starting);
+        }
+
+        launcher.Running = null;
+        c.RetryNow();
+        await WaitForAsync(() => c.State == AgentConnectionState.Connected, "that Agent is gone: this App starts one and connects").ConfigureAwait(true);
+        launcher.Starts.Should().Be(1);
+        c.LastConnectFailure.Should().BeNull();
+    }
+
+    [Fact]
+    public void TheLauncherSeesAnAgentHoldingItsDataFolderWhoeverStartedIt()
+    {
+        string folder = Path.Combine(Path.GetTempPath(), "fl-launcher-" + Guid.NewGuid().ToString("N"));
+        var launcher = new AgentLauncher(folder);
+        launcher.RunningAgent.Should().BeNull("nothing holds a folder named for this test, and this launcher started nothing");
+
+        using (AgentInstanceLock? held = AgentInstanceLock.TryAcquire(folder))
+        {
+            held.Should().NotBeNull();
+            launcher.RunningAgent.Should().Contain(folder, "the logon task's Agent, a console's or another App's — the claim is the same");
+        }
+
+        launcher.RunningAgent.Should().BeNull("the claim went with its handle");
     }
 
     [Fact]

@@ -93,6 +93,16 @@ Guard re-runs every 30 s for the life of the session; anti-cheat appearing late 
 - UI exit does not stop the Agent when background capture is enabled; otherwise UI sends `Shutdown`.
 - Single instance via named mutexes; the ring name is per-PID so multiple games can be captured simultaneously (rare but supported).
 
+  > **The single instance was specified here and not built until 2026-09-17**, and 0.1.0-beta.1 ran four Agents: an
+  > App started as administrator was refused by the pipe of the Agent already serving (`07_IPC` §C, amended the same
+  > day), took the refusal for an absent Agent, and started another on each connect round — and every game launched in
+  > the next hour was injected, read and recorded by all four. **Built:** `Infrastructure.Startup.AgentInstanceLock`,
+  > one named mutex per data folder (`Local\FrameLedger.Agent.<hash of the folder>`), claimed by `--serve` and the
+  > console's capturing verbs (`capture`, `launch`, `recover`) before logging, rules or the ledger; a second process
+  > exits **10** with one line on stderr. The App probes the same claim before it starts an Agent (`07_IPC` §Client
+  > behavior). What it does not cover: two Agents on two data folders (a developer's `--console --data-dir` beside the
+  > installed Agent) can still both attach to one game's ring — `20_OPEN_QUESTIONS` §G, Agent lifecycle.
+
 ## Failure domains
 
 | Failure | Behavior |

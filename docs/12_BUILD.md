@@ -105,6 +105,12 @@ Agent flags: `--serve`, `--console`, `--write-crash-dump <file>` (2026-09-17: th
 > `db path` opens no file at all. Until then every verb went through the migrating open, and `sessions` run against
 > the owner's ledger applied two scripts to it (`06_DATA_MODEL` §Migrations). `AgentReadOnlyVerbsTests` pins the set.
 
+> **One capturing process per data folder (2026-09-17).** `--serve`, `capture`, `launch` and `recover` claim the data
+> folder (`AgentInstanceLock`) before logging, rules or the ledger, and exit **10** — one line on stderr, nothing
+> written — when another process holds it; the other verbs run beside a serving Agent, as the App's `--install-task`
+> does. `OneAgentPerDataFolderTests` runs the shipped binary against a claimed scratch folder
+> (`01_ARCHITECTURE` §Lifecycle).
+
 ## Bundled assets
 
 - ~~`assets/native/PresentMon.exe` (pinned, SHA-256 verified at build) for the Tier-2 fallback~~ — **DROPPED 2026-08-27, and there are no bundled native assets at all.** §S31 measured PresentMon classifying every frame of a ×4 capture as an application frame (row P2); the owner then dropped it outright. It is not bundled, not fetched, not used, and `tools/frametype-oracle.ps1` — the parser that consumed its output — is deleted with it. `assets/` does not exist and now has no reason to. **And since 2026-08-28 Tier 2 is not a measurement at all**: the ladder is two rungs, `EtwFrameSource` is deleted from the design, and whether a shipped build ever regains a no-injection measurement is `20_OPEN_QUESTIONS` §G.

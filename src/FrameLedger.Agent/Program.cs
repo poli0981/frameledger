@@ -9,6 +9,9 @@
 // The Agent is the sole owner of %LOCALAPPDATA%\FrameLedger (§S18 blocker 3, ratified) and the only
 // thing that may write there; `--data-dir` exists only under `--console` (HANDOFF §P2 decision D6).
 //
+// One process per data folder runs the capturing verbs (--serve, capture, launch, recover): Infrastructure.Startup's
+// AgentInstanceLock, claimed before logging, and a second exits 10 (2026-09-17 — beta.1 ran four Agents at once).
+//
 // The maintenance flags (P3 PR-8b) — --register-vklayer, --unregister-vklayer, --install-task, --uninstall-task —
 // run over the product directory and exit; --diag is the App's (10_LOGGING) and answers "not implemented", exit 2.
 
@@ -20,6 +23,7 @@ using FrameLedger.Application.Rules;
 using FrameLedger.Infrastructure.Diagnostics;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Infrastructure.Rules;
+using FrameLedger.Infrastructure.Startup;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -47,6 +51,12 @@ internal static class Program
         }
 
         AgentPaths paths = cmd.DataDirectory is { } dir ? new AgentPaths(Path.GetFullPath(dir)) : AgentPaths.Default;
+        using AgentInstanceLock? claim = ClaimDataDirectory(cmd.Verb, paths, out bool heldElsewhere);
+        if (heldElsewhere)
+        {
+            return AgentInstanceLock.ExitHeldElsewhere;
+        }
+
         ConfigureLogging(paths);
         HookCrashHandlers(paths);
 
@@ -125,6 +135,34 @@ internal static class Program
     /// </summary>
     internal static bool PrintsOnly(AgentVerb verb) =>
         verb is AgentVerb.Sessions or AgentVerb.ConsentList or AgentVerb.KillSwitchStatus or AgentVerb.DbPath;
+
+    /// <summary>
+    /// The verbs that inject, read a ring or finalize sessions: one process per data folder may run them (2026-09-17). The
+    /// others (consent, games, the kill switch, the maintenance flags, the read-only verbs) run beside a serving Agent, as
+    /// the App's own <c>--install-task</c> does.
+    /// </summary>
+    internal static bool Captures(AgentVerb verb) =>
+        verb is AgentVerb.Serve or AgentVerb.Capture or AgentVerb.Launch or AgentVerb.Recover;
+
+    private static AgentInstanceLock? ClaimDataDirectory(AgentVerb verb, AgentPaths paths, out bool heldElsewhere)
+    {
+        heldElsewhere = false;
+        if (!Captures(verb))
+        {
+            return null;
+        }
+
+        AgentInstanceLock? claim = AgentInstanceLock.TryAcquire(paths.DataDirectory);
+        if (claim is null)
+        {
+            // Before logging, rules and the ledger: the Agent holding the folder holds the day's log file too, so a second one
+            // leaves nothing behind but this line and its exit code, which the App's log records when the App started it.
+            heldElsewhere = true;
+            AgentConsole.Problem($"another FrameLedger Agent is already capturing for {paths.DataDirectory}; this one exits (exit {AgentInstanceLock.ExitHeldElsewhere})");
+        }
+
+        return claim;
+    }
 
     /// <summary>
     /// Null when a print verb refuses the ledger — at another schema, or not there — said on the console and in the log

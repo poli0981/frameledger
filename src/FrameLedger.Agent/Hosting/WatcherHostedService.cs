@@ -26,7 +26,8 @@ internal sealed class WatcherHostedService(PartialRecovery recovery, CaptureOrch
             Log.Information("recover: {Guid} {Status} {Detail}", o.SessionGuid.ToString("N"), o.Status, o.Detail);
         }
 
-        Log.Information("serve: watching the games table at 1 Hz; hooking only where a game is enabled and consented");
+        Log.Information("serve: watching the games table at 1 Hz; hooking only where a game is enabled and consented ({Elevation}, pid {Pid})",
+            Environment.IsPrivilegedProcess ? "elevated" : "not elevated", Environment.ProcessId);
         await orchestrator.RunAsync(stoppingToken).ConfigureAwait(false);
         Log.Information("serve: stopped");
     }
