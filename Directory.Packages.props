@@ -69,7 +69,7 @@
 
   <ItemGroup Label="Analyzers (build-time only)">
     <PackageVersion Include="Roslynator.Analyzers" Version="4.16.1" />
-    <PackageVersion Include="Meziantou.Analyzer" Version="3.0.257" />
+    <PackageVersion Include="Meziantou.Analyzer" Version="3.0.264" />
     <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.7.23" />
   </ItemGroup>
 
