@@ -27,7 +27,18 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
-_Nothing yet — entries continue here after `0.1.0-beta.4`._
+### Changed
+
+- **`0.1.0-beta.4`'s notes named a cause they had no evidence for, and are corrected in place** (see its *Updating*
+  section). The owner reported afterwards that the external USB drive holding the Steam library had a loose cable that
+  evening. Windows' System and Application logs for 2026-09-21 agree and re-date the day's symptoms: disk resets and
+  paging errors on that drive from 20:42; `start_protected_game.exe` (20:56) and `GF2_Exilium.exe` (21:45) both
+  ended with `0xc0000006`, an in-page I/O error — the drive, not FrameLedger, and **FrameLedger had injected nothing
+  into ELDEN RING in any run**; the Agent's "executable unreadable" for all 46 titles and the two pipe timeouts at
+  21:12–21:13 sit inside a burst of 30 disk errors. **What the drive does NOT explain, and beta.4's fixes stand on:**
+  Easy Anti-Cheat's own log says "successfully loaded in-game" for ELDEN RING at 21:29:28, the second the resolver
+  found a process it could not open (`TargetUnreadable`); the two App instances started 360 ms apart at 21:07; the
+  English safety texts and the contradictory line are in the screenshot itself.
 
 ## [0.1.0-beta.4] - 2026-09-21
 
@@ -46,9 +57,13 @@ its hash against `SHA256SUMS.txt`, then *More info → Run anyway*. What changed
 
 **Updating from `0.1.0-beta.3`:**
 
-- Quit the App (tray icon → Exit) and end `FrameLedger.Agent.exe` before running the installer. On 2026-09-21 an
-  install over a running Agent left a half-replaced folder and the App failed to start three times
-  (`Could not load … Microsoft.Data.Sqlite`) until it was installed again.
+- Quit the App (tray icon → Exit) and end `FrameLedger.Agent.exe` before running the installer.
+  > **Corrected the same evening.** This bullet went on to say that on 2026-09-21 "an install over a running Agent left
+  > a half-replaced folder and the App failed to start three times". **That cause was a guess and the logs do not
+  > support it**: nothing was installed between the three failed starts (20:59–21:01, `Could not load …
+  > Microsoft.Data.Sqlite`) and the start that worked at 21:02. What Windows' own event log shows for that hour is a
+  > failing external USB drive (the owner's report: a loose cable) and two restarts of the PC at 20:57 and 21:02. The
+  > three failed starts are **unexplained**; the advice to stop the Agent before installing stands on its own.
 - The Disclaimer moved to 2.4 (one paragraph about the bypass), so the Legal Gate opens once.
 - No schema change. A bypass you already accepted stays on; the new warning text is shown the next time you turn one on.
 
