@@ -86,7 +86,12 @@ public sealed class TrendSeriesBuilderTests
     {
         SessionRow measured = Row(1, 1, fgMode: "dlssg", native: 62, displayed: 118, factor: 1.9) with
         {
-            AvgGpuLoad = 97, AvgGpuPowerW = 310, VramProcMaxMb = 9000, AvgCpuLoad = 41.5, MaxCpuTemp = 78, AvgRamMb = 18000,
+            AvgGpuLoad = 97,
+            AvgGpuPowerW = 310,
+            VramProcMaxMb = 9000,
+            AvgCpuLoad = 41.5,
+            MaxCpuTemp = 78,
+            AvgRamMb = 18000,
         };
         SessionRow steady = Row(2, 1, fgMode: "dlssg", native: 70, displayed: 280, factor: 4) with { FgFactorScope = "steady", FgSteadyShare = 0.75, AvgCpuLoad = 50 };
         SessionRow before = Row(3, 1);
