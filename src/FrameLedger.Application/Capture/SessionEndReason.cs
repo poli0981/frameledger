@@ -145,7 +145,7 @@ public enum SessionEndReason
 
     /// <summary>
     /// The game IS running and its process cannot be opened: every candidate of that name refused to be read, and none
-    /// could be identified (2026-09-22). Two ordinary causes: an anti-cheat's kernel driver protects the process
+    /// could be identified (2026-09-21). Two ordinary causes: an anti-cheat's kernel driver protects the process
     /// (ELDEN RING under Easy Anti-Cheat, the owner's log of 2026-09-21), or the game runs as administrator and the
     /// Agent does not. Nothing was injected, and nothing can be.
     /// </summary>

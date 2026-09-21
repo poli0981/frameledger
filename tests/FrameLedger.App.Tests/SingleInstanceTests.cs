@@ -4,7 +4,7 @@ using FrameLedger.App.Services;
 namespace FrameLedger.App.Tests;
 
 /// <summary>
-/// One App per data folder (2026-09-22): the owner's log showed two started 360 ms apart, each with a shell and a tray
+/// One App per data folder (2026-09-21): the owner's log showed two started 360 ms apart, each with a shell and a tray
 /// icon. The first claim wins; a later one is told so, asks the first to show itself, and must not start; and the
 /// claim ends with the process that holds it.
 /// </summary>

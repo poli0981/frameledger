@@ -100,7 +100,7 @@ public sealed class TargetResolverTests : IDisposable
     }
 
     /// <summary>
-    /// 2026-09-22, against a real process Windows will not let anybody open: <c>csrss.exe</c> is a protected process, which
+    /// 2026-09-21, against a real process Windows will not let anybody open: <c>csrss.exe</c> is a protected process, which
     /// is what a game under a kernel anti-cheat looks like from here (ELDEN RING under Easy Anti-Cheat, the owner's log).
     /// Every candidate of the name exists and none can be read. That is NOT "more than one process is running it" - the
     /// answer this gave until now - and no pid comes back, so nothing is ever injected on a guess.

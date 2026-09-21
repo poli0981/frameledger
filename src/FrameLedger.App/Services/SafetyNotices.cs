@@ -46,7 +46,7 @@ public sealed class SafetyNotices : IDisposable
                 return new SafetyNotice(SafetyNoticeKind.Refused,
                     string.Format(CultureInfo.CurrentCulture, Strings.Notice_Refused_Title_Format, refused.GameName ?? Strings.Common_NotAvailable),
                     // "The session is still recorded" is not said about a process that could not be opened: that run ends at once
-                    // and is discarded for being short, so the sentence would be false there (2026-09-22).
+                    // and is discarded for being short, so the sentence would be false there (2026-09-21).
                     string.Equals(refused.Reason, "TargetUnreadable", StringComparison.Ordinal)
                         ? RefusalText(refused.Reason, refused.Family, refused.Signal)
                         : RefusalText(refused.Reason, refused.Family, refused.Signal) + " " + Strings.Notice_Refused_Recording, now);

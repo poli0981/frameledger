@@ -378,7 +378,7 @@ The list exists twice — `fl::guard::IsGuardJudgement` and `AntiCheatVerdict.Is
 kernel anti-cheat does not only detect a loaded DLL; its driver strips other processes' handles to the game. From the
 Agent that looks like this: the watcher sees the process (its image path is readable with limited rights), and
 `TargetResolver` cannot read its main module — every candidate exists and none can be opened. That is
-`SessionEndReason.TargetUnreadable` since 2026-09-22 (it was reported as `TargetAmbiguous`, "more than one process is
+`SessionEndReason.TargetUnreadable` since 2026-09-21 (it was reported as `TargetAmbiguous`, "more than one process is
 running it", about one process; reached the user as a toast reading `InjectFailed: TargetAmbiguous`; and the one-second
 session was discarded for being short — so with the bypass ON the whole visible result was nothing). **The bypass does
 not change this and nothing will be built that does**: it overrules FrameLedger's own refusal, and a process another

@@ -281,7 +281,7 @@ public sealed class CaptureOrchestrator
         _log($"session {r.SessionGuid:N}: {r.Outcome.Reason}; {r.Finalize.Status} (tier {(int)r.Row.Tier}, exit={r.ExitStatus}, frames={r.Row.FrameCount}){GuardDetail(r.Outcome)}");
 
     /// <summary>
-    /// What the guard said, when it said anything but a plain allow (2026-09-22). A SafetyUnhook on the owner's machine
+    /// What the guard said, when it said anything but a plain allow (2026-09-21). A SafetyUnhook on the owner's machine
     /// left "SafetyUnhook; Saved" in this log and nothing about WHICH finding fired; the pipe event carried it and the
     /// log is what survives.
     /// </summary>

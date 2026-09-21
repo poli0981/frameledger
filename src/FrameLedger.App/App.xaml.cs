@@ -242,7 +242,7 @@ public partial class App : System.Windows.Application
         CultureInfo.CurrentUICulture = culture;
         Strings.Culture = culture;
 
-        // THE SAFETY FAMILY TOO (2026-09-22). FrameLedger.Shared's Strings had no culture of its own and fell back to the
+        // THE SAFETY FAMILY TOO (2026-09-21). FrameLedger.Shared's Strings had no culture of its own and fell back to the
         // thread's - and CurrentUICulture set inside this async start does not reach the dispatcher's later operations,
         // so on an English Windows a Vietnamese UI showed the consent dialog, the refusal notices and the guard-bypass
         // card in English (the owner's screenshot, beta.3). An explicit culture does not depend on which thread asks.
