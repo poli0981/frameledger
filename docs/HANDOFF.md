@@ -1407,10 +1407,22 @@ Any proposal to "make the bypass work on EAC titles" is rule 3, not rule 2 — r
 - **A released Overlay logs its build as `v0.1.0-beta.3-dirty`**: the CI checkout is dirty by the time CMake runs
   `git describe`. Both sides of the handshake compile the same string, so nothing breaks; it is a release that calls
   itself dirty.
-- **An install over a running Agent half-replaces the folder** (three failed starts, `Microsoft.Data.Sqlite` not found).
-  The in-app updater stops the Agent first; `Setup.exe` run by hand does not, and only the CHANGELOG says to.
-- **A GF2 session ended `SafetyUnhook` 35 s in (2026-09-21 21:45) and nothing recorded which finding fired.** The
-  Agent's log line names it from this release on; read it the next time it happens before guessing.
+- ~~**An install over a running Agent half-replaces the folder** (three failed starts, `Microsoft.Data.Sqlite` not
+  found).~~ **A GUESS, WITHDRAWN the same evening, and it had already been published in beta.4's notes.** Nothing was
+  installed between the failures (20:59–21:01) and the start that worked (21:02); the PC had been restarted at 20:57
+  and was again at 21:02 (System log 1074), and the owner's external USB drive was failing all evening. The three
+  failed starts are UNEXPLAINED. What is still true and still unbuilt: `Setup.exe` run by hand does not stop the Agent,
+  and only the CHANGELOG says to.
+- **A GF2 session ended `SafetyUnhook` 35 s in (2026-09-21 21:45) and nothing recorded which finding fired.** ~~read it
+  the next time it happens before guessing~~ **Mostly explained by the owner's report:** the game is on the failing
+  drive, `GF2_Exilium.exe` crashed at 21:45:50 with `0xc0000006` (in-page I/O error, Application log 1000/1005, eleven
+  Ntfs errors in that minute), and the Agent saved the session at 21:45:52. The 30 s re-scan reads the game's directory
+  (check 4) and the process; either failing is a refusal by design, so a dying drive reads as a safety unhook. **Open:**
+  that row says `UnhookedSafety` about a game Windows says crashed — whether a crash witness should outrank the unhook
+  in `ExitStatusMapper` is a decision, not a bug fix. The log line's new `guard=` detail will say which check it was.
+- **Read Windows' event logs before attributing a symptom** (`Get-WinEvent` System: disk 51/153, UASPStor 129, Ntfs;
+  Application: 1000/1005). On 2026-09-21 the first pass published one cause that was wrong and left one 'unknown' that
+  those two logs answered in a minute.
 
 **Traps.**
 - **`CultureInfo.CurrentUICulture` set inside an `async` start does not reach later dispatcher operations.** A resource
