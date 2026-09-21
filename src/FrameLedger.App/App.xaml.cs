@@ -51,6 +51,9 @@ public partial class App : System.Windows.Application
     private static string CrashDumper => Path.Combine(AppContext.BaseDirectory, "FrameLedger.Agent.exe");
 
     private IHost? _host;
+
+    /// <summary>This process's claim on the data folder (<see cref="SingleInstance"/>); null under <c>--diag</c> and in tests.</summary>
+    internal SingleInstance? Instance { get; init; }
     private LedgerDatabase? _db;
     private Task? _run;
 
@@ -100,6 +103,19 @@ public partial class App : System.Windows.Application
             _host = BuildHost(_db, appearance, registered, closePolicy);
             await _host.StartAsync().ConfigureAwait(true);
             Log.Information("ui: started ({Version}), ledger {Ledger}", UiIdentity.Version, UiPaths.Database);
+
+            // A second start of the App hands over to this one: bring the window forward, from the tray too.
+            if (Instance is not null)
+            {
+                // Captured HERE, on the dispatcher: the event arrives on a thread-pool thread and is posted back.
+                IHost host = _host;
+                var ui = new UiThread();
+                Instance.RevealRequested += (_, _) => ui.Post(() =>
+                {
+                    Log.Information("ui: another start handed over to this instance; revealing the window");
+                    host.Services.GetRequiredService<ShellHost>().Reveal();
+                });
+            }
             await WaitForStopRequestAsync(_host).ConfigureAwait(true);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
@@ -225,6 +241,12 @@ public partial class App : System.Windows.Application
         CultureInfo.DefaultThreadCurrentUICulture = culture;
         CultureInfo.CurrentUICulture = culture;
         Strings.Culture = culture;
+
+        // THE SAFETY FAMILY TOO (2026-09-22). FrameLedger.Shared's Strings had no culture of its own and fell back to the
+        // thread's - and CurrentUICulture set inside this async start does not reach the dispatcher's later operations,
+        // so on an English Windows a Vietnamese UI showed the consent dialog, the refusal notices and the guard-bypass
+        // card in English (the owner's screenshot, beta.3). An explicit culture does not depend on which thread asks.
+        Shared.Strings.Culture = culture;
     }
 
     private static IHost BuildHost(LedgerDatabase db, AppearanceSettings appearance, RegisteredSettings registered, WindowClosePolicy closePolicy)

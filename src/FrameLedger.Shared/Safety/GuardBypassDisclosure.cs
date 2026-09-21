@@ -13,7 +13,9 @@ namespace FrameLedger.Shared.Safety;
 /// </remarks>
 public static class GuardBypassDisclosure
 {
-    public const string Version = "guard-bypass-dialog/1";
+    // /2 (2026-09-22): the text now says what the bypass CANNOT do - a process an anti-cheat driver protects stays
+    // closed to FrameLedger, and nothing will be built to open it. A row stamped /1 keeps its bypass: that text was accepted.
+    public const string Version = "guard-bypass-dialog/2";
 
     /// <summary>
     /// What the user must type, exactly, before the dialog's primary button enables. Not localised on purpose: it is

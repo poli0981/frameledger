@@ -99,6 +99,23 @@ public sealed class TargetResolverTests : IDisposable
         return new TargetResolver().Resolve(ExecutableIdentity.Normalise(_exe), out reason);
     }
 
+    /// <summary>
+    /// 2026-09-22, against a real process Windows will not let anybody open: <c>csrss.exe</c> is a protected process, which
+    /// is what a game under a kernel anti-cheat looks like from here (ELDEN RING under Easy Anti-Cheat, the owner's log).
+    /// Every candidate of the name exists and none can be read. That is NOT "more than one process is running it" - the
+    /// answer this gave until now - and no pid comes back, so nothing is ever injected on a guess.
+    /// </summary>
+    [Fact]
+    public void AProcessThatCannotBeOpenedIsUnreadableNotAmbiguousAndIsNeverPicked()
+    {
+        string csrss = Path.Combine(Environment.SystemDirectory, "csrss.exe");
+
+        int? pid = new TargetResolver().Resolve(ExecutableIdentity.Normalise(csrss), out SessionEndReason reason);
+
+        pid.Should().BeNull();
+        reason.Should().Be(SessionEndReason.TargetUnreadable);
+    }
+
     [Fact]
     public void OneInstanceResolves()
     {

@@ -37,7 +37,10 @@ public static class RecordedSessionEvents
     public static Kind Classify(SessionEndReason reason) => reason switch
     {
         SessionEndReason.RefusedByGuard or SessionEndReason.RefusedPreviouslyBlocked
-            or SessionEndReason.PreScanCouldNotVerify or SessionEndReason.RefusedKillSwitch => Kind.Refused,
+            or SessionEndReason.PreScanCouldNotVerify or SessionEndReason.RefusedKillSwitch
+            // A persistent notice that says why, not a toast with a code: the user enabled hooking (perhaps the bypass
+            // too), started the game and would otherwise see nothing at all.
+            or SessionEndReason.TargetUnreadable => Kind.Refused,
         SessionEndReason.SafetyUnhook => Kind.SafetyUnhook,
         SessionEndReason.SupervisionLost or SessionEndReason.WriterSelfDisabled or SessionEndReason.WriterStoppedBlocklisted
             or SessionEndReason.WriterNeverInstalledHooks or SessionEndReason.SupervisionFaulted

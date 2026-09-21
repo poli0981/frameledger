@@ -447,6 +447,10 @@ public sealed class GameDetailViewModelTests
         vm.GuardBypassOn.Should().BeTrue();
         vm.HookToggleEnabled.Should().BeTrue("under the bypass enabling is no longer refused, so the toggle works");
         vm.BlockedText.Should().NotBeNull("the block stays on the page: the finding is still true");
+        vm.BlockedText.Should().Contain("Easy Anti-Cheat");
+        vm.BlockedText.Should().NotStartWith(Shared.Strings.Safety_Blocked_Toggle_Format.Split('{')[0],
+            "beta.3 said 'Hooking is disabled for this game' beside a hooking switch that was ON");
+        vm.BlockedText.Should().StartWith(Shared.Strings.Safety_Bypass_Found_Overruled_Format.Split('{')[0]);
 
         vm.ToggleGuardBypassCommand.Execute(null);
         Task pending = vm.Pending;

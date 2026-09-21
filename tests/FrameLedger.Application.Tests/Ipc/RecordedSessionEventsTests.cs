@@ -33,6 +33,7 @@ public sealed class RecordedSessionEventsTests
     [InlineData(SessionEndReason.AttachRefused, RecordedSessionEvents.Kind.AttachError)]
     [InlineData(SessionEndReason.LaunchCannotStart, RecordedSessionEvents.Kind.TargetError)]
     [InlineData(SessionEndReason.TargetAmbiguous, RecordedSessionEvents.Kind.TargetError)]
+    [InlineData(SessionEndReason.TargetUnreadable, RecordedSessionEvents.Kind.Refused)]
     [InlineData(SessionEndReason.TargetNotRunning, RecordedSessionEvents.Kind.TargetError)]
     [InlineData(SessionEndReason.TargetExited, RecordedSessionEvents.Kind.None)]
     [InlineData(SessionEndReason.RefusedHookNotEnabled, RecordedSessionEvents.Kind.None)]

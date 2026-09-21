@@ -1,3 +1,4 @@
+using FrameLedger.App.Services;
 using FrameLedger.App.Update;
 using Velopack;
 
@@ -16,8 +17,25 @@ internal static class Program
     private static int Main()
     {
         VelopackHooks.Configure(VelopackApp.Build()).Run();
-        var app = new App();
-        app.InitializeComponent();
-        return app.Run();
+
+        // One App per data folder (2026-09-22): a second start hands over to the first and exits. --diag opens no window
+        // and must work beside a running App, so it never claims.
+        SingleInstance? single = null;
+        try
+        {
+            if (!DiagReport.Requested(Environment.GetCommandLineArgs())
+                && SingleInstance.TryClaim(SingleInstance.KeyOf(UiPaths.DataDirectory), out single) == SingleInstance.Claim.AnotherInstanceIsRunning)
+            {
+                return 0;
+            }
+
+            var app = new App { Instance = single };
+            app.InitializeComponent();
+            return app.Run();
+        }
+        finally
+        {
+            single?.Dispose();
+        }
     }
 }

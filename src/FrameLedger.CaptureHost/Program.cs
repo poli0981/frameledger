@@ -253,7 +253,7 @@ internal static class Program
         {
             SessionEndReason.TargetExited => _exitOk,
             SessionEndReason.Running => _exitOk,
-            SessionEndReason.TargetNotRunning or SessionEndReason.TargetAmbiguous
+            SessionEndReason.TargetNotRunning or SessionEndReason.TargetAmbiguous or SessionEndReason.TargetUnreadable
                 or SessionEndReason.TargetCannotBePinned or SessionEndReason.LaunchCannotStart => _exitTargetNotResolved,
             SessionEndReason.AttachRefused => _exitAttachRefused,
             SessionEndReason.SafetyUnhook or SessionEndReason.SupervisionLost

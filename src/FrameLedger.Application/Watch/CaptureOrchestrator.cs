@@ -278,7 +278,24 @@ public sealed class CaptureOrchestrator
     }
 
     private void Report(RecordedSession r) =>
-        _log($"session {r.SessionGuid:N}: {r.Outcome.Reason}; {r.Finalize.Status} (tier {(int)r.Row.Tier}, exit={r.ExitStatus}, frames={r.Row.FrameCount})");
+        _log($"session {r.SessionGuid:N}: {r.Outcome.Reason}; {r.Finalize.Status} (tier {(int)r.Row.Tier}, exit={r.ExitStatus}, frames={r.Row.FrameCount}){GuardDetail(r.Outcome)}");
+
+    /// <summary>
+    /// What the guard said, when it said anything but a plain allow (2026-09-22). A SafetyUnhook on the owner's machine
+    /// left "SafetyUnhook; Saved" in this log and nothing about WHICH finding fired; the pipe event carried it and the
+    /// log is what survives.
+    /// </summary>
+    private static string GuardDetail(CaptureOutcome o)
+    {
+        Domain.AntiCheat.AntiCheatVerdict v = o.Verdict;
+        if (v.Reason == Domain.AntiCheat.AntiCheatRefusalReason.Allow && o.StartedUnderBypass is null)
+        {
+            return string.Empty;
+        }
+
+        string text = $"; guard={v.Reason}" + (v.Family.Length > 0 ? "/" + v.Family : string.Empty) + (v.Signal.Length > 0 ? "/" + v.Signal : string.Empty);
+        return o.StartedUnderBypass is { } under ? text + $"; started-under-bypass={under.Family}/{under.Signal}" : text;
+    }
 
     private RecordRequest Attach(string normalisedExePath, string? gameName, Guid? sessionGuid, CancellationToken stop)
     {

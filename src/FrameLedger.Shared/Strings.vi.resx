@@ -26,14 +26,14 @@
   <data name="Safety_Consent_VersionMismatch" xml:space="preserve"><value>Ứng dụng này và capture agent mang hai phiên bản khác nhau của văn bản đồng ý này. Chưa bật gì cả. Hãy khởi động lại cả hai rồi thử lại.</value></data>
   <data name="Safety_RecordWithoutMeasuring" xml:space="preserve"><value>Ghi phiên này mà không đo</value></data>
   <data name="Safety_Refused_CouldNotVerify" xml:space="preserve"><value>FrameLedger không thể kiểm tra các tệp của game này về anti-cheat, nên hooking vẫn tắt. Nó sẽ kiểm tra lại khi tệp của game hoặc bộ quy tắc phát hiện thay đổi.</value></data>
-  <data name="Safety_Refused_Named_Format" xml:space="preserve"><value>Đã phát hiện {0} trong game này ({1}). FrameLedger sẽ không inject vào game này, và không có cách nào để bỏ qua điều đó.</value></data>
-  <data name="Safety_Refused_Unnamed" xml:space="preserve"><value>Đã phát hiện một mô-đun anti-cheat hoặc anti-tamper trong game này. FrameLedger sẽ không inject vào game này, và không có cách nào để bỏ qua điều đó.</value></data>
+  <data name="Safety_Refused_Named_Format" xml:space="preserve"><value>Đã phát hiện {0} trong game này ({1}). FrameLedger sẽ không inject vào game này. Cách duy nhất để vượt qua là công tắc "Bỏ qua Guard" của riêng game đó, mặc định tắt và bạn hoàn toàn tự chịu rủi ro.</value></data>
+  <data name="Safety_Refused_Unnamed" xml:space="preserve"><value>Đã phát hiện một mô-đun anti-cheat hoặc anti-tamper trong game này. FrameLedger sẽ không inject vào game này. Cách duy nhất để vượt qua là công tắc "Bỏ qua Guard" của riêng game đó, mặc định tắt và bạn hoàn toàn tự chịu rủi ro.</value></data>
   <data name="Safety_Unhooked_Format" xml:space="preserve"><value>Đã dừng thu thập: phát hiện {0} khi game đang chạy. FrameLedger đã gỡ hook và sẽ không inject vào game này nữa cho đến khi bạn bật lại.</value></data>
   <data name="Safety_Bypass_Title_Format" xml:space="preserve">
     <value>Bỏ qua Guard chống gian lận cho {0}?</value>
   </data>
   <data name="Safety_Bypass_Intro" xml:space="preserve">
-    <value>FrameLedger từ chối inject vào game mà nó phát hiện có phần mềm chống gian lận (anti-cheat) hoặc chống can thiệp (anti-tamper). Công tắc này bỏ qua sự từ chối đó cho riêng game này. Mặc định là TẮT, không áp dụng cho game nào khác, và bạn có thể tắt lại bất cứ lúc nào.</value>
+    <value>FrameLedger từ chối inject vào game mà nó phát hiện có phần mềm chống gian lận (anti-cheat) hoặc chống can thiệp (anti-tamper). Công tắc này bỏ qua sự từ chối đó cho riêng game này. Mặc định là TẮT, không áp dụng cho game nào khác, và bạn có thể tắt lại bất cứ lúc nào. Nó không thể khiến FrameLedger hoạt động ở nơi anti-cheat bảo vệ tiến trình game không cho mở: game như vậy vẫn không đo được, FrameLedger sẽ không tìm cách vượt qua cơ chế bảo vệ đó, và bạn sẽ chịu rủi ro bị khoá tài khoản mà không được gì.</value>
   </data>
   <data name="Safety_Bypass_Found_Format" xml:space="preserve">
     <value>Guard đã phát hiện ở game này: {0}</value>
@@ -80,4 +80,6 @@
   <data name="Safety_Bypass_Failed_Format" xml:space="preserve">
     <value>Chế độ bỏ qua không thay đổi: {0}</value>
   </data>
+  <data name="Safety_Bypass_Found_Overruled_Format" xml:space="preserve"><value>Guard đã phát hiện: {0}. Bạn đã chọn bỏ qua cho game này, nên hooking được phép ở đây và bạn tự chịu rủi ro.</value></data>
+  <data name="Safety_Refused_TargetUnreadable" xml:space="preserve"><value>Game đang chạy, nhưng Windows không cho FrameLedger mở tiến trình của nó: tiến trình được driver anti-cheat bảo vệ, hoặc game chạy với quyền quản trị còn FrameLedger thì không. Không có gì được inject và lần chạy này không được đo. Chế độ bỏ qua Guard không thay đổi điều này, và FrameLedger sẽ không tìm cách vượt qua cơ chế bảo vệ của sản phẩm khác.</value></data>
 </root>
