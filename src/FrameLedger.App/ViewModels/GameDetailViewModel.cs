@@ -548,12 +548,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         }
 
         MeasuredEmptyText = string.Empty;
-        string upscaler = Formats.Upscaler(lastHooked.Upscaler);
-        if (lastHooked.UpscalerQuality is { Length: > 0 } quality)
-        {
-            upscaler += " " + quality;
-        }
-
+        string upscaler = Formats.Upscaler(lastHooked.Upscaler, lastHooked.UpscalerQuality, lastHooked.UpscalerDriverReported);
         Measured.Add(upscaler + " · " + Formats.Resolution(lastHooked.RenderW, lastHooked.RenderH, lastHooked.OutputW, lastHooked.OutputH));
         Measured.Add(FpsPresentation.FrameGenerationLabel(FpsPresentation.FromRow(lastHooked), lastHooked.FgMode));
         foreach (TriStateChipModel chip in Chips.Where(static c => !c.IsNotApplicable))

@@ -490,6 +490,12 @@ From the upscaler hooks we get, per frame:
   > the conflation the record had already removed.
 - `renderW × renderH` vs `outputW × outputH` → **exact upscale ratio**: `sqrt((outW×outH)/(renW×renH))`, reported both as a ratio (`1.50×`) and a percentage (`67% render scale`).
 - `upscalerQuality`: the vendor's own quality enum (DLSS Performance/Balanced/Quality/DLAA, XeSS quality setting, FSR preset), mapped to a display name per vendor in `Domain.UpscalerNames`.
+  > **`Domain.Metrics.UpscalerNames` exists since 2026-09-21; this line promised it from the start and the UI printed the
+  > raw integer until then.** It holds ONE table because one producer exists: `sl::DLSSMode` as the title chained it
+  > into `slEvaluateFeature` (1 Performance · 2 Balanced · 3 Quality · 4 Ultra Performance · 5 Ultra Quality · 6 DLAA;
+  > `eOff` and anything past `eCount` never reach a row). The ffx-api dispatch carries no quality and XeSS has no hook,
+  > so there is nothing of theirs to name. A value the table does not know is shown as stored. It names the MEASURED
+  > byte only — a label derived from the render/output ratio is `HANDOFF` §7a's owner decision, still not taken.
 - Resolution changes mid-session (user changed settings, or dynamic resolution scaling) produce **segments**: the session stores a segment list `(startFrame, renderW/H, outputW/H, upscaler, quality)`. Aggregates report the dominant segment plus a "settings changed during session" flag — averaging across a settings change is the classic way benchmark numbers become meaningless.
 
   > **Two segmentation axes exist, they compose in ONE order, and neither document said so until
@@ -545,6 +551,18 @@ Tier 2 has none of this: `upscaler = unknown`, ratio `N/A`.
 > than resolved*. Beside an `N/A` with the bit clear it prints the driver's negative, attributed, which
 > says nothing about FSR or XeSS. **The negative is owed** (§H5): a title with DLSS switched off should
 > read the bit clear; if it does not, the rung is withdrawn.
+>
+> **The App states the rung since 2026-09-21; until then only the capture host's console did.** The Agent has written
+> `sessions.upscaler_driver_reported` since P2, and nothing under `FrameLedger.App` read it, so every NGX-direct DLSS
+> title read "Unknown upscaler" in the library while FSR — whose dispatch the hook does see — was named (the owner's
+> report). `Formats.Upscaler(token, quality, driverReported)` is the ladder in one place: a hook's name outranks
+> everything and takes its measured preset; where no hook named one (`unknown`, or no claim) and the driver reports the
+> feature, the text is **`DLSS (driver-reported)`** — attributed, identity only, never a quality even when a byte is
+> on the row; otherwise the token's own text, and `unknown` now reads "Upscaler not identified" (a hook ran and saw
+> nothing — which is what it means — rather than "Unknown upscaler", which read as a product). The live card gets the
+> same word through `SessionProgress.upscalerDriverReported` (`07_IPC`). Segments carry no driver word: the driver's
+> bookkeeping is per process, not per settings change. **Nothing native changed and no NGX hook was added**: the
+> licence bar in `20_OPEN_QUESTIONS` stands.
 
 ## RT / PT / RR — evidence-based tri-state
 

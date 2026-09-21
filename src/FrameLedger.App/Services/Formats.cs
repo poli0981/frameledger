@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using FrameLedger.Domain.Metrics;
 using FrameLedger.Domain.Sessions;
 
 namespace FrameLedger.App.Services;
@@ -69,6 +70,30 @@ public static class Formats
         "none" => Strings.Upscaler_None,
         _ => Strings.Upscaler_Unknown,
     };
+
+    /// <summary>
+    /// The upscaler as the UI states it, down <c>03_METRICS</c> §Upscaling's ladder: a name a HOOK produced outranks
+    /// everything and takes its measured preset; where no hook named one (<c>unknown</c>: a hook ran and saw nothing —
+    /// every NGX-direct DLSS title, since no NGX hook may exist — or no claim at all) and the NVIDIA driver reports the
+    /// feature created and evaluated in the process, the name is the driver's and SAYS so; otherwise what the token
+    /// says. The driver's word is identity only: it never takes a quality, even when a byte is on the row.
+    /// </summary>
+    /// <remarks>
+    /// The row has stored <c>upscaler_driver_reported</c> since P2 and the capture host has printed it since 2026-09-06;
+    /// the App never read it, which is why DLSS read "Unknown upscaler" on most titles while FSR, whose dispatch the
+    /// hook does see, was named (owner's report, 2026-09-21).
+    /// </remarks>
+    public static string Upscaler(string? token, string? quality, string? driverReported)
+    {
+        bool hookNamed = token is { Length: > 0 } and not "unknown";
+        if (!hookNamed && driverReported is { Length: > 0 })
+        {
+            return string.Format(CultureInfo.CurrentCulture, Strings.Upscaler_DriverReported_Format, Upscaler(driverReported));
+        }
+
+        string name = Upscaler(token);
+        return hookNamed && UpscalerNames.Quality(token, quality) is { } preset ? name + " " + preset : name;
+    }
 
     /// <summary>The row's fg_mode token as its product name.</summary>
     public static string FrameGeneration(string? token) => token switch

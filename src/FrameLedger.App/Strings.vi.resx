@@ -755,7 +755,7 @@
     <value>Không upscaler</value>
   </data>
   <data name="Upscaler_Unknown" xml:space="preserve">
-    <value>Upscaler không rõ</value>
+    <value>Không xác định được upscaler</value>
   </data>
   <data name="Chart_Axis_Count" xml:space="preserve">
     <value>Khung hình</value>
@@ -1734,5 +1734,8 @@ Mở thư mục log?</value>
   </data>
   <data name="ChangeExe_Taken_Format" xml:space="preserve">
     <value>{0} đã thuộc về một game khác trong thư viện (hoặc một game đã xoá nhưng giữ phiên); file thực thi không thay đổi.</value>
+  </data>
+  <data name="Upscaler_DriverReported_Format" xml:space="preserve">
+    <value>{0} (driver báo cáo)</value>
   </data>
 </root>

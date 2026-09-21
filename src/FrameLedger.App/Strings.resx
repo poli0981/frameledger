@@ -760,7 +760,7 @@
     <value>No upscaler</value>
   </data>
   <data name="Upscaler_Unknown" xml:space="preserve">
-    <value>Unknown upscaler</value>
+    <value>Upscaler not identified</value>
   </data>
   <data name="Chart_Axis_Count" xml:space="preserve">
     <value>Frames</value>
@@ -1739,5 +1739,8 @@ Open the log folder?</value>
   </data>
   <data name="ChangeExe_Taken_Format" xml:space="preserve">
     <value>{0} already belongs to another game in the library (or to one removed with its sessions kept); the executable was not changed.</value>
+  </data>
+  <data name="Upscaler_DriverReported_Format" xml:space="preserve">
+    <value>{0} (driver-reported)</value>
   </data>
 </root>

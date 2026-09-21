@@ -277,7 +277,7 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         Readout = FpsPresentation.FromRow(row);
         Line = string.Format(CultureInfo.CurrentCulture, Strings.Summary_Line_Format,
             IsHooked ? Formats.Api(row.Api) : Strings.Tier_NotHooked, row.PresentMode ?? Strings.Common_NotAvailable,
-            IsHooked ? Formats.Upscaler(row.Upscaler) : Strings.Common_NotAvailable, Formats.Resolution(row.RenderW, row.RenderH, row.OutputW, row.OutputH));
+            IsHooked ? Formats.Upscaler(row.Upscaler, row.UpscalerQuality, row.UpscalerDriverReported) : Strings.Common_NotAvailable, Formats.Resolution(row.RenderW, row.RenderH, row.OutputW, row.OutputH));
         Tags = _annotation is null ? string.Empty : string.Join(", ", _annotation.Tags);
         Notes = _annotation?.Notes ?? string.Empty;
         HasDisplayed = Series?.HasGenerated == true;
