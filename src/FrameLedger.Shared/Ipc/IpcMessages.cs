@@ -184,6 +184,13 @@ public sealed record SessionProgressEvent
     /// <summary>The vendor's own preset value, as the row stores it; null when no record carried params.</summary>
     public string? UpscalerQuality { get; init; }
 
+    /// <summary>
+    /// <c>dlss</c> when the NVIDIA driver reports an NGX super-resolution feature created and evaluated in the target
+    /// (<c>03_METRICS</c> §The driver-reported rung), else null. The row has carried it since P2; the live card did not
+    /// until 2026-09-21, so an NGX-direct title read "Unknown upscaler" for the whole session. Identity only.
+    /// </summary>
+    public string? UpscalerDriverReported { get; init; }
+
     public int? RenderW { get; init; }
 
     public int? RenderH { get; init; }

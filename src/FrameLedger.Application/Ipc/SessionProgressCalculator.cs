@@ -61,6 +61,7 @@ public static class SessionProgressCalculator
             FgRuntimeCensus = progress.WriterState.RuntimeCensus,
             Upscaler = upscaler is { } u ? Vocabulary.Upscaler(u) : FgLadder.UpscalerHookRan(progress.Records) ? "unknown" : null,
             UpscalerQuality = Modal([.. withParams.Where(static s => s.UpscalerQuality != FrameSample.QualityNotTold)])?.ToString(CultureInfo.InvariantCulture),
+            UpscalerDriverReported = progress.NgxDriver.SrCreatedAndEvaluated ? "dlss" : null,
             RenderW = extent?.RenderW,
             RenderH = extent?.RenderH,
             OutputW = extent?.OutputW,

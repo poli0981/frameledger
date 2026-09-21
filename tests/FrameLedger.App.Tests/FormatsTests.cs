@@ -36,6 +36,26 @@ public sealed class FormatsTests
         InEnglish(() => Formats.Duration(-3)).Should().Be("0m 00s");
     }
 
+    /// <summary>
+    /// 03_METRICS §Upscaling's ladder as the UI states it (2026-09-21): a hook's name outranks the driver's, the driver's
+    /// name says it is the driver's and never takes a quality, and a DLSS quality byte is the preset's name.
+    /// </summary>
+    [Fact]
+    public void TheUpscalerLadderNamesTheDriverOnlyWhereNoHookDid()
+    {
+        InEnglish(() => Formats.Upscaler("unknown", null, "dlss")).Should().Be("DLSS (driver-reported)", "an NGX-direct title: the hook ran and saw nothing, the driver saw the feature evaluated");
+        InEnglish(() => Formats.Upscaler(null, null, "dlss")).Should().Be("DLSS (driver-reported)");
+        InEnglish(() => Formats.Upscaler("unknown", "2", "dlss")).Should().Be("DLSS (driver-reported)", "the driver's word is identity only");
+        InEnglish(() => Formats.Upscaler("fsr3", null, "dlss")).Should().Be("FSR 3", "a hook's name always outranks the driver's");
+        InEnglish(() => Formats.Upscaler("dlss", "2", "dlss")).Should().Be("DLSS Balanced");
+        InEnglish(() => Formats.Upscaler("dlss", "6", null)).Should().Be("DLSS DLAA");
+        InEnglish(() => Formats.Upscaler("dlss", "9", null)).Should().Be("DLSS 9", "a value with no name is shown as stored");
+        InEnglish(() => Formats.Upscaler("unknown", null, null)).Should().Be("Upscaler not identified");
+        InEnglish(() => Formats.Upscaler("unknown", "2", null)).Should().Be("Upscaler not identified", "a quality without a name to hang it on is not printed");
+        InEnglish(() => Formats.Upscaler("none", null, null)).Should().Be("No upscaler");
+        InEnglish(() => Formats.Upscaler(null, null, null)).Should().Be("N/A");
+    }
+
     [Fact]
     public void ResolutionsUpscalersAndFrameGeneration()
     {

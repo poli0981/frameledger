@@ -29,7 +29,7 @@ public sealed class SessionItemViewModel
         FpsTooltip = FpsPresentation.ColumnTooltip(row);
         P1LowText = IsHooked ? Formats.Fps(row.P1LowFps) : Strings.Common_NotAvailable;
         P01LowText = IsHooked ? Formats.Fps(row.P01LowFps) : Strings.Common_NotAvailable;
-        ResolutionText = IsHooked ? Formats.Resolution(row.RenderW, row.RenderH, row.OutputW, row.OutputH) + " · " + Formats.Upscaler(row.Upscaler) : Strings.Common_NotAvailable;
+        ResolutionText = IsHooked ? Formats.Resolution(row.RenderW, row.RenderH, row.OutputW, row.OutputH) + " · " + Formats.Upscaler(row.Upscaler, row.UpscalerQuality, row.UpscalerDriverReported) : Strings.Common_NotAvailable;
         GpuTempText = Formats.Temperature(row.MaxGpuTemp);
         ApiText = IsHooked ? Formats.Api(row.Api) : Strings.Common_NotAvailable;
         ExitText = Formats.ExitStatusText(row.ExitStatus);
