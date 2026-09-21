@@ -30,7 +30,7 @@ public sealed class SafetyNoticesTests
     }
 
     /// <summary>
-    /// 2026-09-22: a game whose process an anti-cheat driver protects (ELDEN RING under EAC, with the guard bypass on)
+    /// 2026-09-21: a game whose process an anti-cheat driver protects (ELDEN RING under EAC, with the guard bypass on)
     /// reached the user as a toast reading "InjectFailed: TargetAmbiguous" and no session. It is a persistent notice that
     /// says why and that the bypass does not change it - and it does NOT claim the session is still recorded, because
     /// that run ends at once and is discarded.

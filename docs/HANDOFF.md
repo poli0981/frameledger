@@ -1390,6 +1390,36 @@ review of `Safety_Bypass_*`, which ships as English until signed.
 - **`guard_test.cpp`'s native-log test slept a fixed 1500 ms** and was read between two lines on a loaded runner; it
   polls now. Record a flake on the PR BEFORE `gh run rerun --failed` erases it.
 
+## 0.1.0-beta.4 (2026-09-21) — four faults from beta.3's first day
+
+*Status is `CHANGELOG.md` `[0.1.0-beta.4]`; this is what no other file carries.*
+
+**Decision (D21).** A process an anti-cheat driver protects is `TargetUnreadable`, and **the bypass stops there**: D18's
+override overrules FrameLedger's own guard; it is not, and may not become, a way past another product's protection.
+Any proposal to "make the bypass work on EAC titles" is rule 3, not rule 2 — refuse it.
+
+**Found and NOT fixed — each needs its own PR.**
+- **A refused session is not recorded, though the notice says it is.** `Notice_Refused_Recording` ("the session is still
+  recorded — duration and hardware telemetry") is appended to every refusal, and `CaptureSession` returns at the
+  refusal: the run lasts about a second and `SessionFinalizer` discards it as under the minimum length. CLAUDE.md's
+  Tier 2 ("duration + sensors + the reason") has no producer for a refusal. The new `TargetUnreadable` notice does not
+  make the claim; the older refusals still do.
+- **A released Overlay logs its build as `v0.1.0-beta.3-dirty`**: the CI checkout is dirty by the time CMake runs
+  `git describe`. Both sides of the handshake compile the same string, so nothing breaks; it is a release that calls
+  itself dirty.
+- **An install over a running Agent half-replaces the folder** (three failed starts, `Microsoft.Data.Sqlite` not found).
+  The in-app updater stops the Agent first; `Setup.exe` run by hand does not, and only the CHANGELOG says to.
+- **A GF2 session ended `SafetyUnhook` 35 s in (2026-09-21 21:45) and nothing recorded which finding fired.** The
+  Agent's log line names it from this release on; read it the next time it happens before guessing.
+
+**Traps.**
+- **`CultureInfo.CurrentUICulture` set inside an `async` start does not reach later dispatcher operations.** A resource
+  accessor with no explicit `Culture` follows whichever thread asks. Give every string family its culture explicitly.
+- **`TargetResolver` counts a process it cannot read, and zero readable + some unreadable is not "ambiguous".** A test
+  against a real protected process exists (`csrss.exe`); it needs no fixture and runs elevated or not.
+- **`Mutex` is thread-affine**: `SingleInstance` is claimed and disposed on `Main`'s thread; its tests are synchronous
+  on purpose.
+
 ## Owner-only — no PR can close these
 
 1. **§S23-2 — branch protection.** `Rules / validate` is not a required status check on

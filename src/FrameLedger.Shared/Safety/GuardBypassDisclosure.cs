@@ -13,7 +13,7 @@ namespace FrameLedger.Shared.Safety;
 /// </remarks>
 public static class GuardBypassDisclosure
 {
-    // /2 (2026-09-22): the text now says what the bypass CANNOT do - a process an anti-cheat driver protects stays
+    // /2 (2026-09-21): the text now says what the bypass CANNOT do - a process an anti-cheat driver protects stays
     // closed to FrameLedger, and nothing will be built to open it. A row stamped /1 keeps its bypass: that text was accepted.
     public const string Version = "guard-bypass-dialog/2";
 

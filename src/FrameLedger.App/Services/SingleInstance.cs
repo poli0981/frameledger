@@ -5,7 +5,7 @@ using System.Text;
 namespace FrameLedger.App.Services;
 
 /// <summary>
-/// One App per data folder per Windows session (2026-09-22). Until this existed nothing stopped a second App: the
+/// One App per data folder per Windows session (2026-09-21). Until this existed nothing stopped a second App: the
 /// owner's log of 2026-09-21 shows two started 360 ms apart from one double-click — two shells, two tray icons, a
 /// second log file (<c>ui-…_001.log</c>, because the first held the day's), both writing one ledger — and with
 /// "minimize to tray" on, every click on the shortcut of an App that was already running made another.

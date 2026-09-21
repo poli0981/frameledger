@@ -18,7 +18,7 @@ internal static class Program
     {
         VelopackHooks.Configure(VelopackApp.Build()).Run();
 
-        // One App per data folder (2026-09-22): a second start hands over to the first and exits. --diag opens no window
+        // One App per data folder (2026-09-21): a second start hands over to the first and exits. --diag opens no window
         // and must work beside a running App, so it never claims.
         SingleInstance? single = null;
         try

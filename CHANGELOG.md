@@ -27,6 +27,31 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
+_Nothing yet — entries continue here after `0.1.0-beta.4`._
+
+## [0.1.0-beta.4] - 2026-09-21
+
+**The fourth pre-release: four faults found in the first day of `0.1.0-beta.3`.** The same unsigned installer: verify
+its hash against `SHA256SUMS.txt`, then *More info → Run anyway*. What changed for a user:
+
+- **Only one FrameLedger window now.** Starting the App while it is already running (a double-click, or the shortcut
+  while it sits in the tray) brings the running one forward instead of opening a second one with a second tray icon.
+- **The safety texts follow your language.** In a Vietnamese UI the consent dialog, the refusal notices and the
+  guard-bypass card were English.
+- **The guard bypass is honest about what it cannot do.** A game whose anti-cheat protects its process (ELDEN RING
+  under Easy Anti-Cheat is one) cannot be opened by any other program, so FrameLedger cannot measure it with or without
+  the bypass, and it will not try to get around that protection. beta.3 showed nothing at all in that case; this build
+  shows a notice that says so, the bypass warning says it before you accept, and the game page no longer says
+  "Hooking is disabled" beside a hooking switch that is on.
+
+**Updating from `0.1.0-beta.3`:**
+
+- Quit the App (tray icon → Exit) and end `FrameLedger.Agent.exe` before running the installer. On 2026-09-21 an
+  install over a running Agent left a half-replaced folder and the App failed to start three times
+  (`Could not load … Microsoft.Data.Sqlite`) until it was installed again.
+- The Disclaimer moved to 2.4 (one paragraph about the bypass), so the Legal Gate opens once.
+- No schema change. A bypass you already accepted stays on; the new warning text is shown the next time you turn one on.
+
 ### Fixed
 
 - **A second App could be started beside the first.** Nothing enforced one instance: the owner's log of 2026-09-21
