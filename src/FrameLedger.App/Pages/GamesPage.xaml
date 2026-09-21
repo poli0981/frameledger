@@ -57,10 +57,14 @@
                             <StackPanel>
                                 <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
                                 <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                    <ui:Badge Appearance="Secondary" Margin="0,0,6,0" Content="{Binding PlatformText}"
-                                              Visibility="{Binding HasPlatform, Converter={StaticResource BoolToVis}}" />
-                                    <ui:Badge Appearance="Secondary" Margin="0,0,6,0" Content="{Binding EngineText}"
-                                              Visibility="{Binding HasEngine, Converter={StaticResource BoolToVis}}" />
+                                    <Border Style="{StaticResource TagPill}" Margin="0,0,6,0"
+                                            Visibility="{Binding HasPlatform, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Style="{StaticResource TagPillText}" Text="{Binding PlatformText}" />
+                                    </Border>
+                                    <Border Style="{StaticResource TagPill}" Margin="0,0,6,0"
+                                            Visibility="{Binding HasEngine, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Style="{StaticResource TagPillText}" Text="{Binding EngineText}" />
+                                    </Border>
                                     <Border Style="{StaticResource HookStatePill}">
                                         <TextBlock Style="{StaticResource HookStatePillText}" Text="{Binding HookText}" />
                                     </Border>

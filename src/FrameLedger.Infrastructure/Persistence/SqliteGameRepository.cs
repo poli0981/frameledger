@@ -40,6 +40,14 @@ public sealed class SqliteGameRepository : IGameRepository
     private const string _autoDisable =
         "UPDATE games SET hook_enabled = 0, hook_autodisabled_reason = @reason, hook_autodisabled_at = @at, updated_at = @at WHERE id = @id";
 
+    // A downgrade by construction: the consent columns go to their "nothing happened" defaults, never to a grant, and
+    // hook_blocked_reason is not named (IGameRepository.ChangeExecutableAsync). NOT EXISTS is the UNIQUE index's answer
+    // as a false instead of a constraint exception.
+    private const string _changeExecutable =
+        "UPDATE games SET exe_path = @path, exe_size_bytes = @size, exe_mtime_ms = @mtime, hook_enabled = 0, hook_consent_at = NULL, "
+        + "hook_consent_provenance = 'NotRecorded', hook_consent_disclosure_version = '', hook_prescan_state = 'not_run', updated_at = @at "
+        + "WHERE id = @id AND removed_at IS NULL AND NOT EXISTS (SELECT 1 FROM games other WHERE other.exe_path = @path AND other.id <> @id)";
+
     private const string _crash =
         "UPDATE games SET hook_crash_count = hook_crash_count + 1, updated_at = @now WHERE id = @id RETURNING hook_crash_count";
 
@@ -111,6 +119,14 @@ public sealed class SqliteGameRepository : IGameRepository
         ArgumentException.ThrowIfNullOrWhiteSpace(reason);
         return _db.WriteAsync(async (c, tx, token) => await c.ExecuteAsync(new CommandDefinition(
             _autoDisable, new { id = gameId, reason, at = at.ToUnixTimeMilliseconds() }, tx, cancellationToken: token)).ConfigureAwait(false) == 1, ct);
+    }
+
+    public ValueTask<bool> ChangeExecutableAsync(long gameId, ExecutableFingerprint fingerprint, DateTimeOffset at, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(fingerprint.ExePath, nameof(fingerprint));
+        var p = new { id = gameId, path = fingerprint.ExePath, size = fingerprint.SizeBytes, mtime = fingerprint.MtimeUnixMs, at = at.ToUnixTimeMilliseconds() };
+        return _db.WriteAsync(async (c, tx, token) => await c.ExecuteAsync(new CommandDefinition(
+            _changeExecutable, p, tx, cancellationToken: token)).ConfigureAwait(false) == 1, ct);
     }
 
     public ValueTask<int> RecordCrashAsync(long gameId, CancellationToken ct = default) =>

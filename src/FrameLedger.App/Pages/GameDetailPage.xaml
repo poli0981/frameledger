@@ -29,6 +29,7 @@
                 <StackPanel Grid.Column="0">
                     <ui:TextBlock FontTypography="Title" Text="{Binding ViewModel.Name}" />
                     <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.Subtitle}" />
+                    <ui:TextBlock Appearance="Tertiary" TextTrimming="CharacterEllipsis" Text="{Binding ViewModel.ExecutableText}" ToolTip="{Binding ViewModel.ExecutableText}" />
                     <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.LastSessionText}" />
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                         <ui:TextBlock Appearance="Secondary" VerticalAlignment="Center" Margin="0,0,12,0" Text="{x:Static vm:GameDetailViewModel.LifetimeLabel}" />
@@ -49,6 +50,7 @@
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
                     <ui:Button Margin="0,0,8,0" Command="{Binding ViewModel.EditCommand}" Content="{x:Static vm:GameDetailViewModel.EditText}" Icon="{ui:SymbolIcon Edit24}" />
+                    <ui:Button Margin="0,0,8,0" Command="{Binding ViewModel.ChangeExecutableCommand}" Content="{x:Static vm:GameDetailViewModel.ChangeExecutableText}" Icon="{ui:SymbolIcon DocumentArrowRight24}" />
                     <ui:Button Appearance="Danger" Command="{Binding ViewModel.RemoveCommand}" Content="{x:Static vm:GameDetailViewModel.RemoveText}" Icon="{ui:SymbolIcon Delete24}" />
                 </StackPanel>
             </Grid>

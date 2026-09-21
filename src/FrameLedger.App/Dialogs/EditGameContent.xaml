@@ -10,26 +10,33 @@
              MinWidth="420">
     <!--
         FR-1.3: a detected field is badged (05_DETECTION §Caching), and saving marks what changed as the user's.
-        Secondary, not Info: Info's background is a fixed Material colour outside the theme dictionaries (08_UI §Contrast).
+        A TagPill, not ui:Badge: Info's background is a fixed Material colour outside the theme dictionaries, and Secondary keeps the
+        default badge's on-accent foreground over a near-white fill in the light theme (08_UI §Contrast, 2026-09-21).
     -->
     <StackPanel>
         <DockPanel>
-            <ui:Badge DockPanel.Dock="Right" Margin="8,0,0,0" Appearance="Secondary" Content="{x:Static vm:EditGameViewModel.DetectedBadge}"
-                      Visibility="{Binding NameDetected, Converter={StaticResource BoolToVis}}" />
+            <Border DockPanel.Dock="Right" Style="{StaticResource TagPill}"
+                    Visibility="{Binding NameDetected, Converter={StaticResource BoolToVis}}">
+                <TextBlock Style="{StaticResource TagPillText}" Text="{x:Static vm:EditGameViewModel.DetectedBadge}" />
+            </Border>
             <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:EditGameViewModel.NameLabel}" />
         </DockPanel>
         <ui:TextBox Margin="0,4,0,12" AutomationProperties.Name="{x:Static vm:EditGameViewModel.NameLabel}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 
         <DockPanel>
-            <ui:Badge DockPanel.Dock="Right" Margin="8,0,0,0" Appearance="Secondary" Content="{x:Static vm:EditGameViewModel.DetectedBadge}"
-                      Visibility="{Binding PublisherDetected, Converter={StaticResource BoolToVis}}" />
+            <Border DockPanel.Dock="Right" Style="{StaticResource TagPill}"
+                    Visibility="{Binding PublisherDetected, Converter={StaticResource BoolToVis}}">
+                <TextBlock Style="{StaticResource TagPillText}" Text="{x:Static vm:EditGameViewModel.DetectedBadge}" />
+            </Border>
             <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:EditGameViewModel.PublisherLabel}" />
         </DockPanel>
         <ui:TextBox Margin="0,4,0,12" AutomationProperties.Name="{x:Static vm:EditGameViewModel.PublisherLabel}" Text="{Binding Publisher, UpdateSourceTrigger=PropertyChanged}" />
 
         <DockPanel>
-            <ui:Badge DockPanel.Dock="Right" Margin="8,0,0,0" Appearance="Secondary" Content="{x:Static vm:EditGameViewModel.DetectedBadge}"
-                      Visibility="{Binding VersionDetected, Converter={StaticResource BoolToVis}}" />
+            <Border DockPanel.Dock="Right" Style="{StaticResource TagPill}"
+                    Visibility="{Binding VersionDetected, Converter={StaticResource BoolToVis}}">
+                <TextBlock Style="{StaticResource TagPillText}" Text="{x:Static vm:EditGameViewModel.DetectedBadge}" />
+            </Border>
             <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:EditGameViewModel.VersionLabel}" />
         </DockPanel>
         <ui:TextBox Margin="0,4,0,12" AutomationProperties.Name="{x:Static vm:EditGameViewModel.VersionLabel}" Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}" />

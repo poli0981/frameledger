@@ -163,6 +163,48 @@ public sealed class SqliteGameRepositoryTests
     }
 
     [Fact]
+    public async Task ChangingTheExecutableLeavesARowAsANewGameWouldBeAndNeverClearsABlock()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        var repo = new SqliteGameRepository(f.Db);
+        GameRow row = await repo.EnsureAsync(_exe, "T", Ct);
+        // The state a wrong import guess ends in once the user enabled hooking on it, plus a block to prove it survives.
+        await f.Db.WriteAsync((c, tx, ct) => c.ExecuteAsync(new CommandDefinition(
+            "UPDATE games SET hook_enabled = 1, hook_consent_at = 5, hook_consent_provenance = 'ConsentDialog', hook_consent_disclosure_version = 'v', "
+            + "hook_prescan_state = 'clean', hook_blocked_reason = 'a block' WHERE id = @id",
+            new { id = row.Id }, tx, cancellationToken: ct)), Ct);
+        var real = new ExecutableFingerprint { ExePath = @"C:\Games\T\GF2_Exilium.exe", SizeBytes = 675_392, MtimeUnixMs = 30 };
+
+        (await repo.ChangeExecutableAsync(row.Id, real, DateTimeOffset.FromUnixTimeMilliseconds(99), Ct)).Should().BeTrue();
+
+        GameRow after = (await repo.FindByIdAsync(row.Id, Ct))!;
+        after.Fingerprint.Should().Be(real);
+        after.HookEnabled.Should().BeFalse("everything downstream is keyed on the executable; a consent is about the one it was given for");
+        after.HookConsentAt.Should().BeNull();
+        after.HookPrescanState.Should().Be("not_run");
+        after.HookBlockedReason.Should().Be("a block", "nothing clears a block, and pointing the row elsewhere is not a way round that");
+        (await repo.FindAsync(_exe.ExePath, Ct)).Should().BeNull("the row moved; it was not copied");
+    }
+
+    [Fact]
+    public async Task ChangingTheExecutableToOneAnotherRowOwnsIsRefused()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        var repo = new SqliteGameRepository(f.Db);
+        GameRow wrong = await repo.EnsureAsync(_exe, "T", Ct);
+        var real = new ExecutableFingerprint { ExePath = @"C:\Games\T\real.exe", SizeBytes = 1, MtimeUnixMs = 2 };
+        GameRow other = await repo.EnsureAsync(real, "T (added by hand)", Ct);
+
+        (await repo.ChangeExecutableAsync(wrong.Id, real, DateTimeOffset.UtcNow, Ct)).Should().BeFalse("exe_path is UNIQUE: one executable, one row");
+        (await repo.FindByIdAsync(wrong.Id, Ct))!.Fingerprint.Should().Be(_exe);
+
+        // A row removed with its sessions kept still owns its path, and a removed row cannot be re-pointed.
+        await repo.RemoveAsync(other.Id, keepSessions: true, Ct);
+        (await repo.ChangeExecutableAsync(wrong.Id, real, DateTimeOffset.UtcNow, Ct)).Should().BeFalse();
+        (await repo.ChangeExecutableAsync(other.Id, new ExecutableFingerprint { ExePath = @"C:\x.exe", SizeBytes = 1, MtimeUnixMs = 1 }, DateTimeOffset.UtcNow, Ct)).Should().BeFalse();
+    }
+
+    [Fact]
     public async Task AUserEditMarksOnlyTheChangedFieldsAsUserAndTouchesNoHookColumn()
     {
         await using LedgerFixture f = await LedgerFixture.OpenAsync();

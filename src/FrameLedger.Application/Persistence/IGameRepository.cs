@@ -24,6 +24,16 @@ public interface IGameRepository
 
     ValueTask<bool> AutoDisableHookAsync(long gameId, string reason, DateTimeOffset at, CancellationToken ct = default);
 
+    /// <summary>
+    /// Points a library row at another executable (2026-09-21): the remedy for a store import that guessed the wrong one,
+    /// which used to be "remove the game and add it again". Everything downstream is keyed on the executable, so the row
+    /// comes out exactly as a new game would: hooking OFF, no consent, the pre-scan not run. It can only downgrade — it
+    /// never enables anything and it leaves <c>hook_blocked_reason</c> alone, because nothing clears a block. False when
+    /// the row is absent or removed, or when another row (in the library or kept for its sessions) already owns that
+    /// path: two rows for one executable is what <c>exe_path UNIQUE</c> exists to refuse.
+    /// </summary>
+    ValueTask<bool> ChangeExecutableAsync(long gameId, ExecutableFingerprint fingerprint, DateTimeOffset at, CancellationToken ct = default);
+
     ValueTask<int> RecordCrashAsync(long gameId, CancellationToken ct = default);
 
     ValueTask<bool> RecordInjectionAsync(long gameId, DateTimeOffset at, CancellationToken ct = default);
