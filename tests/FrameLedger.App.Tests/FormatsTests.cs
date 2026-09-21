@@ -6,6 +6,7 @@ using FrameLedger.Domain.Sessions;
 namespace FrameLedger.App.Tests;
 
 /// <summary>The page numbers as text, in English: durations, playtime, resolutions, the token → product-name maps, and N/A where a value is missing.</summary>
+[Collection(StringsCultureCollection.Name)]
 public sealed class FormatsTests
 {
     private static T InEnglish<T>(Func<T> f)

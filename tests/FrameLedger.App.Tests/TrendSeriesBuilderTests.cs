@@ -7,6 +7,7 @@ using FrameLedger.Domain.Sessions;
 namespace FrameLedger.App.Tests;
 
 /// <summary>FR-6.3 / FR-6.4: points per hooked session oldest first, mid-session-change sessions out by default, Displayed only where measured, markers where consecutive snapshots differ.</summary>
+[Collection(StringsCultureCollection.Name)]
 public sealed class TrendSeriesBuilderTests
 {
     private static SessionRow Row(int day, long snapshotId, bool hooked = true, bool midSession = false, string fgMode = "none", double? native = 60, double? displayed = null, double? presented = null, double? p1 = 48, double? gpu = 70, double? factor = null, string? refusal = null) => new()

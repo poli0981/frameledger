@@ -1,6 +1,6 @@
 # 14 — Testing
 
-Managed: xUnit + FluentAssertions + NSubstitute. Native: Catch2. Coverage goal ≥ 80% on `Domain` + `Application`; **Domain metric calculators ≥ 95% or the PR fails**.
+Managed: xUnit.net v3 4.x (the `xunit.v3.mtp-off` variant since 2026-09-21 — `build.ps1` runs the suites under VSTest for the coverage collector and `results.trx`; `Directory.Packages.props` says why) + FluentAssertions 7.x + NSubstitute. Native: Catch2. Coverage goal ≥ 80% on `Domain` + `Application`; **Domain metric calculators ≥ 95% or the PR fails**.
 
 ## Safety-guard tests (highest priority — these protect users, not code quality)
 

@@ -12,6 +12,7 @@ namespace FrameLedger.App.Tests;
 /// none is <c>—</c>, not measured is <c>N/A</c>, and they never collapse; Presented FPS never says "Native" and
 /// always carries its qualifier; a generated row shows Native first and the factor as a chip.
 /// </summary>
+[Collection(StringsCultureCollection.Name)]
 public sealed class FpsPresentationTests
 {
     private static readonly CultureInfo _en = CultureInfo.GetCultureInfo("en");

@@ -16,6 +16,7 @@ namespace FrameLedger.App.Tests;
 /// page, a stamp reloads the row), FR-2.2's disabled toggle with the reason inline, FR-1.4's removal revoking
 /// consent over the pipe first.
 /// </summary>
+[Collection(StringsCultureCollection.Name)]
 public sealed class GameDetailViewModelTests
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
