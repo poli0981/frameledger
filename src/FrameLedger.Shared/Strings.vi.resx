@@ -29,4 +29,55 @@
   <data name="Safety_Refused_Named_Format" xml:space="preserve"><value>Đã phát hiện {0} trong game này ({1}). FrameLedger sẽ không inject vào game này, và không có cách nào để bỏ qua điều đó.</value></data>
   <data name="Safety_Refused_Unnamed" xml:space="preserve"><value>Đã phát hiện một mô-đun anti-cheat hoặc anti-tamper trong game này. FrameLedger sẽ không inject vào game này, và không có cách nào để bỏ qua điều đó.</value></data>
   <data name="Safety_Unhooked_Format" xml:space="preserve"><value>Đã dừng thu thập: phát hiện {0} khi game đang chạy. FrameLedger đã gỡ hook và sẽ không inject vào game này nữa cho đến khi bạn bật lại.</value></data>
+  <data name="Safety_Bypass_Title_Format" xml:space="preserve">
+    <value>Bỏ qua Guard chống gian lận cho {0}?</value>
+  </data>
+  <data name="Safety_Bypass_Intro" xml:space="preserve">
+    <value>FrameLedger từ chối inject vào game mà nó phát hiện có phần mềm chống gian lận (anti-cheat) hoặc chống can thiệp (anti-tamper). Công tắc này bỏ qua sự từ chối đó cho riêng game này. Mặc định là TẮT, không áp dụng cho game nào khác, và bạn có thể tắt lại bất cứ lúc nào.</value>
+  </data>
+  <data name="Safety_Bypass_Found_Format" xml:space="preserve">
+    <value>Guard đã phát hiện ở game này: {0}</value>
+  </data>
+  <data name="Safety_Bypass_Found_Nothing" xml:space="preserve">
+    <value>Guard chưa ghi nhận phát hiện nào cho game này. Khi bật bỏ qua, một phát hiện về sau sẽ không còn chặn hooking nữa.</value>
+  </data>
+  <data name="Safety_Bypass_Risk" xml:space="preserve">
+    <value>ĐIỀU CÓ THỂ XẢY RA. Hệ thống chống gian lận coi một DLL được nạp vào game là hành vi can thiệp, bất kể nó làm gì. Tài khoản của bạn có thể bị gắn cờ, bị kick, bị đình chỉ hoặc BỊ KHOÁ VĨNH VIỄN, ở game này và có thể ở cả các game khác cùng nhà phát hành hay nền tảng, không báo trước và không thể khiếu nại. FrameLedger không ẩn mình trước anti-cheat và sẽ không bao giờ làm vậy: overlay được nạp dưới tên thật và anti-cheat nhìn thấy hoàn toàn. Game cũng có thể crash, không khởi động được, hoặc mất tiến trình chưa lưu.</value>
+  </data>
+  <data name="Safety_Bypass_Liability" xml:space="preserve">
+    <value>BẰNG VIỆC BẬT CHẾ ĐỘ NÀY, BẠN TỰ CHỊU TOÀN BỘ RỦI RO. Nhà phát triển và những người đóng góp cho FrameLedger KHÔNG chịu bất kỳ trách nhiệm nào đối với mọi việc phát sinh ở phía bạn do hành động này: không với tài khoản bị khoá hay đình chỉ, không với giao dịch mua, tiến trình hay dữ liệu bị mất, không với bất kỳ thiệt hại nào khác. Nếu bạn chưa chắc chắn, hãy giữ Guard bật.</value>
+  </data>
+  <data name="Safety_Bypass_Recorded" xml:space="preserve">
+    <value>Mọi phiên bắt đầu dưới chế độ bỏ qua đều được đánh dấu vĩnh viễn trong thư viện, trong các file xuất và trong báo cáo lỗi, kèm theo những gì Guard đã phát hiện. Tắt hooking, hoặc file thực thi của game thay đổi, sẽ tắt luôn chế độ bỏ qua.</value>
+  </data>
+  <data name="Safety_Bypass_Checkbox" xml:space="preserve">
+    <value>Tôi đã đọc nội dung trên. Tôi hiểu tài khoản của mình có thể bị khoá vĩnh viễn, và tôi tự chịu toàn bộ rủi ro.</value>
+  </data>
+  <data name="Safety_Bypass_TypeToConfirm_Format" xml:space="preserve">
+    <value>Để xác nhận, hãy gõ {0} vào ô bên dưới.</value>
+  </data>
+  <data name="Safety_Bypass_Confirm" xml:space="preserve">
+    <value>Bỏ qua Guard cho game này</value>
+  </data>
+  <data name="Safety_Bypass_KeepGuard" xml:space="preserve">
+    <value>Giữ Guard bật</value>
+  </data>
+  <data name="Safety_Bypass_Toggle_Label" xml:space="preserve">
+    <value>Bỏ qua Guard chống gian lận (tự chịu rủi ro)</value>
+  </data>
+  <data name="Safety_Bypass_Toggle_Body" xml:space="preserve">
+    <value>Mặc định tắt. Khi bật, FrameLedger sẽ inject vào game này kể cả khi Guard phát hiện anti-cheat. Tài khoản của bạn có thể bị khoá vĩnh viễn; bạn tự chịu toàn bộ rủi ro.</value>
+  </data>
+  <data name="Safety_Bypass_On_Notice" xml:space="preserve">
+    <value>Guard chống gian lận đang BỊ BỎ QUA cho game này. FrameLedger sẽ inject kể cả khi Guard phát hiện anti-cheat, và tài khoản của bạn có thể bị khoá. Bạn đã chấp nhận rủi ro này; tắt công tắc để khôi phục Guard.</value>
+  </data>
+  <data name="Safety_Bypass_Session_Format" xml:space="preserve">
+    <value>Đã bỏ qua Guard: {0}</value>
+  </data>
+  <data name="Safety_Bypass_Session_Unnamed" xml:space="preserve">
+    <value>một phát hiện mà Guard không gọi được tên</value>
+  </data>
+  <data name="Safety_Bypass_Failed_Format" xml:space="preserve">
+    <value>Chế độ bỏ qua không thay đổi: {0}</value>
+  </data>
 </root>

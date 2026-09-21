@@ -69,6 +69,27 @@ public sealed class HookRequestFromConsentTests
         return (verdict, guard.InjectCalls);
     }
 
+    /// <summary>
+    /// The fifth input (owner decision 2026-09-21) is built where the other four are and by the same rules: from a STORED
+    /// record, only when it names the disclosure it answered, and only for the executable it was given for.
+    /// </summary>
+    [Fact]
+    public void TheBypassIsReadFromAStoredRecordThatNamesItsDisclosureAndOnlyForTheSameExecutable()
+    {
+        GameConsentRecord on = Consented().WithGuardBypass(DateTimeOffset.UnixEpoch, "guard-bypass-dialog/1");
+
+        HookRequest.FromConsent(on, OnDisk, 4242, _payload).GuardBypassAcknowledged.Should().BeTrue();
+        HookRequest.FromConsent(Consented(), OnDisk, 4242, _payload).GuardBypassAcknowledged.Should().BeFalse("off is the default");
+        HookRequest.FromConsent(Consented().WithGuardBypass(DateTimeOffset.UnixEpoch, string.Empty), OnDisk, 4242, _payload)
+            .GuardBypassAcknowledged.Should().BeFalse("a timestamp that names no disclosure is a column somebody set");
+        HookRequest.FromConsent(default, OnDisk, 4242, _payload).GuardBypassAcknowledged.Should().BeFalse("a record nobody stored has acknowledged nothing");
+
+        ExecutableFingerprint patched = OnDisk with { SizeBytes = OnDisk.SizeBytes + 1 };
+        HookRequest other = HookRequest.FromConsent(on, patched, 4242, _payload);
+        other.GuardBypassAcknowledged.Should().BeFalse("the user overruled a judgement about THAT file; a patched binary is another");
+        other.ConsentedAt.Should().BeNull();
+    }
+
     [Fact]
     public void SynthesisingTheGatesInputsDoesNotCompileAndTheSurfaceIsPinned()
     {

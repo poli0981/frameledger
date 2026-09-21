@@ -54,6 +54,32 @@ public interface IAntiCheatGuard
         CancellationToken ct = default);
 
     /// <summary>
+    /// <see cref="GuardedInjectAsync"/> for a game whose owner accepted the guard-bypass disclosure (owner decision
+    /// 2026-09-21, <c>19_SAFETY</c> §The user's bypass): every check still runs, and where one refuses on the guard's
+    /// own judgement the injection proceeds and the verdict is
+    /// <see cref="AntiCheatRefusalReason.AllowedUnderUserBypass"/>, still naming what was found.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The default implementation is the hard gate.</b> An implementation that does not know the bypass answers
+    /// exactly as <see cref="GuardedInjectAsync"/> does, so a fake, an older adapter or a forgotten override fails
+    /// towards refusing. Only <c>NativeAntiCheatGuard</c> overrides it.
+    /// </para>
+    /// <para>
+    /// On this port, and counted by <c>NoSecondMatcherTests</c>, for the reason
+    /// <see cref="PreScanGameDirectoryAsync"/> is: a second way into a game process that lived on another interface
+    /// would be a surface that test never saw.
+    /// </para>
+    /// </remarks>
+    ValueTask<AntiCheatVerdict> GuardedInjectAcknowledgedAsync(int targetPid, string payloadPath, CancellationToken ct = default) =>
+        GuardedInjectAsync(targetPid, payloadPath, ct);
+
+    /// <summary>Launch mode's <see cref="GuardedInjectAcknowledgedAsync"/>; the same default, the same reasons.</summary>
+    ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAcknowledgedAsync(int targetPid, string payloadPath, int timeoutMs,
+        CancellationToken ct = default) =>
+        GuardedInjectWhenReadyAsync(targetPid, payloadPath, timeoutMs, ct);
+
+    /// <summary>
     /// Check 4 asked before anything is launched: does this game directory ship
     /// anti-cheat? Answers FR-2.2's question — whether the hooking toggle may be
     /// offered for this title at all.

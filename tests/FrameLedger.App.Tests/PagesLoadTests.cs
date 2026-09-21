@@ -122,6 +122,11 @@ public sealed class PagesLoadTests
         public bool SetText(string text) => true;
     }
 
+    private sealed class NoBypassPrompt : IGuardBypassPrompt
+    {
+        public Task<bool> ShowAsync(string gameName, string? finding, CancellationToken ct = default) => Task.FromResult(false);
+    }
+
     private sealed class NoPicker : IGamePicker
     {
         public string? PickExecutable() => null;
@@ -370,7 +375,7 @@ public sealed class PagesLoadTests
         Task pending2 = games.Pending;
         await pending2;
         var detail = new GameDetailViewModel(s.Library, selection, consent, nav, new NoConfirm(), new NoEdit(), strip, new NoSummaries(),
-            new SessionSeriesLoader(s.Sessions), new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(), new NoPicker());
+            new SessionSeriesLoader(s.Sessions), new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(), new NoPicker(), new GuardBypass(new NoAgent(), new NoBypassPrompt()));
         var compare = new CompareViewModel(s.Library, new SessionSeriesLoader(s.Sessions), new NoMixed(), new NoSaver(), strip);
         Task pending3 = detail.Pending;
         await pending3;

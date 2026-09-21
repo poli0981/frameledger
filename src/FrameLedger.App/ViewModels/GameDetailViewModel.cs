@@ -30,6 +30,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private readonly IConfirmations _confirmations;
     private readonly IEditGamePrompt _edit;
     private readonly IGamePicker _picker;
+    private readonly GuardBypass _bypass;
     private readonly IMessageStrip _strip;
     private readonly ISessionSummaryOpener _summaries;
     private readonly SessionSeriesLoader _loader;
@@ -43,6 +44,13 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
     [ObservableProperty]
     private string _subtitle = string.Empty;
+
+    /// <summary>
+    /// The per-game guard bypass as the row states it (owner decision 2026-09-21). <c>OneWay</c> on the page: the switch
+    /// moves only when the Agent has recorded or withdrawn the acknowledgement and the row was re-read.
+    /// </summary>
+    [ObservableProperty]
+    private bool _guardBypassOn;
 
     /// <summary>The executable the row is about: what the watcher matches and what consent is keyed on, so a wrong import guess is visible.</summary>
     [ObservableProperty]
@@ -122,9 +130,10 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
     public GameDetailViewModel(GameLibrary library, GameSelection selection, HookingConsent consent, IPageNavigator navigator,
         IConfirmations confirmations, IEditGamePrompt edit, IMessageStrip strip, ISessionSummaryOpener summaries,
-        SessionSeriesLoader loader, IHardwareSnapshotRepository hardware, SessionSelection sessionSelection, IGamePicker picker)
+        SessionSeriesLoader loader, IHardwareSnapshotRepository hardware, SessionSelection sessionSelection, IGamePicker picker, GuardBypass bypass)
     {
         _picker = picker ?? throw new ArgumentNullException(nameof(picker));
+        _bypass = bypass ?? throw new ArgumentNullException(nameof(bypass));
         _selection = sessionSelection ?? throw new ArgumentNullException(nameof(sessionSelection));
         _library = library ?? throw new ArgumentNullException(nameof(library));
         ArgumentNullException.ThrowIfNull(selection);
@@ -147,6 +156,12 @@ public sealed partial class GameDetailViewModel : ObservableObject
     public static string RemoveText => Strings.GameDetail_Remove;
 
     public static string ChangeExecutableText => Strings.GameDetail_ChangeExe;
+
+    public static string BypassLabel => Shared.Strings.Safety_Bypass_Toggle_Label;
+
+    public static string BypassBody => Shared.Strings.Safety_Bypass_Toggle_Body;
+
+    public static string BypassOnNotice => Shared.Strings.Safety_Bypass_On_Notice;
 
     public static string LifetimeLabel => Strings.GameDetail_LifetimeAvg;
 
@@ -355,6 +370,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
     [RelayCommand]
     private Task ChangeExecutableAsync() => RunAsync(ChangeExecutableCoreAsync);
 
+    [RelayCommand]
+    private Task ToggleGuardBypassAsync() => RunAsync(ToggleGuardBypassCoreAsync);
+
     /// <summary>One action at a time, and the one in flight is <see cref="Pending"/> for a test to await.</summary>
     private async Task RunAsync(Func<Task> work)
     {
@@ -396,6 +414,39 @@ public sealed partial class GameDetailViewModel : ObservableObject
         {
             HookingConsentResult result = await _consent.DisableAsync(Game.Id).ConfigureAwait(true);
             Notice(result);
+        }
+        finally
+        {
+            Busy = false;
+        }
+
+        await LoadAsync().ConfigureAwait(true);
+    }
+
+    /// <summary>
+    /// Turning it ON is the disclosure, both of its acts, then the Agent's stamp; turning it OFF needs no dialog. Either
+    /// way the row is re-read, so the switch shows what is recorded and never what was clicked.
+    /// </summary>
+    private async Task ToggleGuardBypassCoreAsync()
+    {
+        if (Game is null)
+        {
+            return;
+        }
+
+        Busy = true;
+        try
+        {
+            GuardBypassResult result = GuardBypassOn
+                ? await _bypass.DisableAsync(Game.Id).ConfigureAwait(true)
+                : await _bypass.EnableAsync(Game.Id, Game.Name, Game.HookBlockedReason).ConfigureAwait(true);
+            (NoticeText, NoticeSeverity) = result.Outcome switch
+            {
+                GuardBypassOutcome.AgentUnavailable => (Shared.Strings.Safety_Consent_AgentUnavailable, InfoBarSeverity.Warning),
+                GuardBypassOutcome.Failed => (string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_Bypass_Failed_Format, result.Detail ?? Strings.Common_NotAvailable), InfoBarSeverity.Warning),
+                _ => (null, InfoBarSeverity.Informational),
+            };
+            OnPropertyChanged(nameof(NoticeVisible));
         }
         finally
         {
@@ -567,8 +618,12 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private void PresentHooking(GameRow row)
     {
         HookEnabled = row.HookEnabled;
+        GuardBypassOn = row.GuardBypassAt is not null;
         bool blocked = row.HookBlockedReason is not null || string.Equals(row.HookPrescanState, "blocked", StringComparison.Ordinal);
-        HookToggleEnabled = !blocked && !Busy;
+
+        // A blocked row's toggle is disabled because enabling it could only be refused; under the user's bypass it is
+        // not refused, so the toggle works and the block's text stays on the page beside it.
+        HookToggleEnabled = (!blocked || GuardBypassOn) && !Busy;
         HookStatusText = row.HookEnabled ? Strings.GameDetail_Hooking_On : Strings.GameDetail_Hooking_Off;
         BlockedText = blocked ? string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_Blocked_Toggle_Format, row.HookBlockedReason ?? row.HookPrescanState) : null;
         AutoDisabledText = row.HookAutoDisabledReason is { Length: > 0 } reason && !row.HookEnabled

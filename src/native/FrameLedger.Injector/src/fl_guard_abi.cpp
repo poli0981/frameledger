@@ -48,6 +48,28 @@ void FlGuardedInjectWhenReady(std::uint32_t targetPid, const wchar_t* dllPath, s
     Fill(out, fl::guard::GuardedInjectWhenReady(targetPid, dllPath, timeoutMs));
 }
 
+void FlGuardedInjectAcknowledged(std::uint32_t targetPid, const wchar_t* dllPath, FlGuardResult* out) {
+    if (!Usable(out)) {
+        return;
+    }
+    Fill(out, fl::guard::GuardedInjectAcknowledged(targetPid, dllPath));
+}
+
+std::int32_t FlGuardIsJudgement(std::int32_t reason) {
+    if (reason < 0 || reason >= static_cast<std::int32_t>(fl::guard::Reason::kCount)) {
+        return 0;
+    }
+    return fl::guard::IsGuardJudgement(static_cast<fl::guard::Reason>(reason)) ? 1 : 0;
+}
+
+void FlGuardedInjectWhenReadyAcknowledged(std::uint32_t targetPid, const wchar_t* dllPath, std::uint32_t timeoutMs,
+                                          FlGuardResult* out) {
+    if (!Usable(out)) {
+        return;
+    }
+    Fill(out, fl::guard::GuardedInjectWhenReadyAcknowledged(targetPid, dllPath, timeoutMs));
+}
+
 void FlStaticPreScan(const wchar_t* gameDirectory, FlGuardResult* out) {
     if (!Usable(out)) {
         return;

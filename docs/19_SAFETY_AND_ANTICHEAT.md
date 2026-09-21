@@ -18,7 +18,7 @@ These are permanently out of scope. A PR implementing any of them is rejected re
 - Hiding, renaming, or randomizing the DLL, its exports, or its shared-memory object names
 - Thread hiding (`NtSetInformationThread`/`ThreadHideFromDebugger`) or debugger-evasion tricks
 - Signature-breaking obfuscation/packing of our own binaries
-- Any "stealth mode", "bypass" setting, or documentation explaining how to defeat the guard below
+- Any "stealth mode", or documentation explaining how to defeat the guard below. *(This line also read "'bypass' setting" until 2026-09-21. The owner decided that day that one bypass exists — §The user's bypass, under the guard — and what stays on THIS list is everything that would make FrameLedger harder to see: that bypass changes whether we inject, never how.)*
 - Reading or writing game memory outside the arguments of APIs we hooked
 - Kernel drivers of our own
 
@@ -348,7 +348,41 @@ the injection primitive, not a fifth question about the title.
 - **Absent** is still `kInjectionFailed`, not `kPayloadNotOurs`. A damaged install
   and a misuse of the ABI are different problems and must not share a reason.
 
-> There is no override. No hidden setting, no config-file flag, no CLI switch, no "advanced users" escape hatch. If a user disagrees with a specific entry, the path is a GitHub issue against the rules file, reviewed in public — not a local bypass.
+> ~~There is no override.~~ **There is one, since 2026-09-21, and it is none of the things this paragraph named**: still no hidden setting, no config-file flag, no CLI switch, no "advanced users" escape hatch, no global form. If a user disagrees with a specific entry, the path is still a GitHub issue against the rules file, reviewed in public. What exists is below.
+
+### The user's bypass — owner decision 2026-09-21
+
+The owner asked for a mode that skips the guard at the user's own risk, behind a warning the user MUST accept first. This section is that mode's whole specification; CLAUDE.md rule 2 carries the same constraints as a rule.
+
+**What it is.** A per-game switch on the game's page, **off by default**, that lets a user overrule the guard's *judgement* for that one game. With it on, the Agent reaches the guard through `FlGuardedInjectAcknowledged` / `FlGuardedInjectWhenReadyAcknowledged` instead of the plain entries. The guard still runs **every** check in the same order. Where the evaluation refuses with a reason `fl::guard::IsGuardJudgement` accepts, the injection proceeds and the verdict is **`AllowedUnderUserBypass` (28)** — `family` and `signal` still name what was found. It is not `Allow`: `Verdict::Allowed()` and `AntiCheatVerdict.IsAllowed` stay false for it, so every caller written before it existed keeps refusing, and `CaptureSession` — the one caller that may proceed — asks `IsAllowedUnderBypass` by name.
+
+**What it overrules: a judgement. What it never overrules: a fact.**
+
+| Overruled (the guard's judgement) | Never overruled |
+|---|---|
+| `BlockedModule`, `BlockedDriver`, `BlockedService`, `BlockedExecutable`, `BlockedStoreId`, `AntiCheatDirectory`, `AntiCheatFile`, `SuspiciousUnsigned` | `KillSwitchEngaged` (FR-2.4 outranks everything) |
+| the scans that could not look, which the guard treats as findings: `ModuleScanFailed`, `ProcessUnreadable`, `ProcessTreeUnavailable`, `DriverScanFailed`, `ServiceQueryFailed`, `PreScanFailed` | `HookNotEnabled`, `ConsentMissing` — the bypass is not a second way to enable or to consent |
+| unusable rules: `RulesUnreadable`, `RulesMalformed`, `RulesIncomplete` | `PayloadNotOurs` — no acknowledgement loads a foreign DLL (§S22 stands) |
+| the latch a past judgement left on the row: `PreviouslyBlocked`, and the pre-scan's "could not verify" | `TargetIsWow64`, `InjectionFailed`, `LaunchTargetExited`, `LaunchNoPresentationRuntime` |
+| | **a Vulkan title the guard refuses**: the layer has its own in-process guard, and this path does not talk past it |
+
+The list exists twice — `fl::guard::IsGuardJudgement` and `AntiCheatVerdict.IsGuardJudgement` — and `GuardMirrorTests` holds them against each other for every reason through the exported `FlGuardIsJudgement`. `PreviouslyBlocked` is the one deliberate difference: managed-only, because the native guard never produces it.
+
+**How it is turned on — a recorded human act, the shape consent has.**
+1. The App shows its own disclosure (`GuardBypassPrompt`, text in `FrameLedger.Shared` `Safety_Bypass_*`, reviewed as the safety text it is; `ja` ships the English until a reviewer signs, `09_I18N`). It states what the guard found for THIS game, that anti-cheat treats a loaded DLL as tampering whatever it does, that the account can be flagged, suspended or **permanently banned** without warning or appeal, that FrameLedger does not hide and never will, and — in the owner's words — that **by turning it on the user accepts the entire risk and the developers accept no responsibility or liability** for anything that follows.
+2. The primary button is the Danger one and is enabled only while **both** acts are performed: a ticked acknowledgement **and** the typed phrase `BYPASS` (`GuardBypassDisclosure.ConfirmationPhrase`, the same five letters in every language). Enter keeps the guard on.
+3. The App writes nothing. It sends `SetGuardBypass` (`07_IPC`); the Agent refuses any disclosure version but its own (`GuardBypassDisclosure.Version`), re-reads the executable, and stamps `games.guard_bypass_at` + `guard_bypass_disclosure_version` (schema 0007) through `IGuardBypassStore` — a port of its own, so nothing that can grant consent can by the same call overrule the guard.
+4. It enables nothing. Hooking is still its own switch and its own FR-2.1 dialog; with the bypass recorded, `SetHookEnabled` still runs the pre-scan and **still writes the finding** (`hook_blocked_reason` stays on the row and stays true) and then stamps the consent beside it, answering `prescan: "bypassed"`.
+
+**How it ends.** Turning the switch off (no dialog needed to restore the guard); turning hooking off (`RevokeAsync` clears it — the row returns to its safest state); the executable changing (`HookRequest.FromConsent` drops it on a fingerprint mismatch exactly as it drops consent, and *Change executable…* clears the columns).
+
+**During a session.** `GuardSupervisor` still scans every 30 s and the tick still counts — the Overlay's own stop is fed by it. A scan that refuses on a *judgement* is kept (`LastVerdict`), counted (`JudgementsOverruled`) and does not unhook: it is the refusal the user overruled, re-discovered. A refusal that is not a judgement still unhooks.
+
+**Afterwards.** `CaptureOutcome.StartedUnderBypass` carries the start verdict; the row gets `guard_bypassed = 1`, `guard_bypass_family`, `guard_bypass_signal`, and `capture_notes` gains `guard-bypass=<family>/<signal>`. The sessions list, the session summary (an Error `InfoBar`), the CSV header and the JSON export all say so. **Recorded limit:** a session recovered from a `.partial` after an Agent crash does not carry the mark — the verdict is known only to the live loop.
+
+**What did NOT change, and may not.** `InjectViaLoadLibrary` still has internal linkage in `fl_guard.cpp` and `tools/chokepoint-check.ps1` still finds the injection primitives in exactly that file and the evasion primitives nowhere. `FloorFamilies` is untouched: the bypass does not shrink what the guard looks for, so §S21 stays closed — that was a bypass a crafted *data file* performed silently; this is one a *person* performs through a disclosure, and the difference is the whole design. The rules schema still rejects any `enabled` / `severity` / `warnOnly` field. There is no global form, and none may be added.
+
+**Withdrawing it.** Pre-committed: if a report shows a user reached an injection under this path without having seen the disclosure, or the mark failing to appear on a session that ran under it, the switch is removed from the App in the next release and re-enters only with the defect's test.
 
 ### The floor data cannot remove
 

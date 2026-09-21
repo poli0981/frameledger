@@ -107,6 +107,25 @@ public sealed class SqliteSessionRepositoryTests
         rt.Should().Be("yes");
     }
 
+    /// <summary>Schema 0007: a session that started under the user's guard bypass keeps the mark and what the guard found; every other row reads 0 and nulls.</summary>
+    [Fact]
+    public async Task TheGuardBypassMarkRoundTripsAndIsOffByDefault()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        (long gameId, long snapshotId) = await SeedAsync(f);
+        var repo = new SqliteSessionRepository(f.Db);
+        SessionRow plain = Row(gameId, snapshotId);
+        SessionRow bypassed = Row(gameId, snapshotId, Guid.NewGuid()) with { GuardBypassed = true, GuardBypassFamily = "Easy Anti-Cheat", GuardBypassSignal = "EasyAntiCheat_EOS.dll" };
+
+        await repo.InsertFinalizedAsync(new FinalizedSession { Row = plain, Segments = [], Frames = Frames(10), Sensors = [] }, Ct);
+        await repo.InsertFinalizedAsync(new FinalizedSession { Row = bypassed, Segments = [], Frames = Frames(10), Sensors = [] }, Ct);
+
+        SessionRow a = (await repo.FindAsync(plain.SessionGuid, Ct))!;
+        (a.GuardBypassed, a.GuardBypassFamily, a.GuardBypassSignal).Should().Be((false, null, null));
+        SessionRow b = (await repo.FindAsync(bypassed.SessionGuid, Ct))!;
+        (b.GuardBypassed, b.GuardBypassFamily, b.GuardBypassSignal).Should().Be((true, "Easy Anti-Cheat", "EasyAntiCheat_EOS.dll"));
+    }
+
     [Fact]
     public async Task ATierTwoSessionStoresTheHeaderAndNullEverywhereElse()
     {

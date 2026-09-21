@@ -528,6 +528,8 @@ const char* ReasonName(Reason r) noexcept {
         return "TargetIsVulkanLayered";
     case Reason::kKillSwitchEngaged:
         return "KillSwitchEngaged";
+    case Reason::kAllowedUnderUserBypass:
+        return "AllowedUnderUserBypass";
     case Reason::kCount:
         break;    // not a reason; falls through to the guard below
     }
@@ -635,9 +637,15 @@ Verdict EvaluateImpl(std::uint32_t targetPid, const Sources& sources) noexcept {
     return Allow();
 }
 
-Verdict GuardedInjectImpl(std::uint32_t targetPid, const wchar_t* dllPath, const Sources& sources) noexcept {
+// `acknowledged` is the ONLY thing the user's bypass changes (owner decision 2026-09-21): a refusal that is the
+// guard's judgement no longer returns here. Everything below -- the payload's existence, the payload's identity, the
+// primitive, the bitness answer -- runs exactly as it does for a clean target, and the evaluation above it is never
+// skipped or shortened, so the finding is always known before anything is injected.
+Verdict GuardedInjectImpl(std::uint32_t targetPid, const wchar_t* dllPath, const Sources& sources,
+                          bool acknowledged) noexcept {
     const Verdict v = EvaluateImpl(targetPid, sources);
-    if (!v.Allowed()) {
+    const bool    bypassed = !v.Allowed() && acknowledged && IsGuardJudgement(v.reason);
+    if (!v.Allowed() && !bypassed) {
         return v;
     }
     if (dllPath == nullptr) {
@@ -695,6 +703,12 @@ Verdict GuardedInjectImpl(std::uint32_t targetPid, const wchar_t* dllPath, const
     }
     if (injected != Reason::kAllow) {
         return Refuse(injected, nullptr, "the guard passed but the injection did not take");
+    }
+    if (bypassed) {
+        // What the guard FOUND travels with the verdict: the reason changes, the family and the signal do not.
+        Verdict under = v;
+        under.reason = Reason::kAllowedUnderUserBypass;
+        return under;
     }
     return v;
 }
@@ -761,7 +775,7 @@ PresentationRuntime FindPresentationRuntime(const Sources& s, std::uint32_t pid)
 }
 
 Verdict GuardedInjectWhenReadyImpl(std::uint32_t targetPid, const wchar_t* dllPath, std::uint32_t timeoutMs,
-                                   const Sources& sources) noexcept {
+                                   const Sources& sources, bool acknowledged) noexcept {
     // SYNCHRONIZE only: this handle exists to notice an exit and for nothing else.
     HANDLE proc = OpenProcess(SYNCHRONIZE, FALSE, targetPid);
     if (proc == nullptr) {
@@ -793,7 +807,7 @@ Verdict GuardedInjectWhenReadyImpl(std::uint32_t targetPid, const wchar_t* dllPa
             }
         }
         if (runtime == PresentationRuntime::kD3dOrOpenGl) {
-            v = GuardedInjectImpl(targetPid, dllPath, sources);
+            v = GuardedInjectImpl(targetPid, dllPath, sources, acknowledged);
             break;
         }
         if (runtime == PresentationRuntime::kVulkan) {
@@ -819,7 +833,10 @@ Verdict GuardedInjectWhenReadyImpl(std::uint32_t targetPid, const wchar_t* dllPa
     // the reason it could not be named is that it had gone (measured on CI, a
     // harness exiting 77 within 100 ms of mapping vulkan-1). The exit is the fact
     // the caller can act on; the unreadable scan is its consequence.
-    if (!v.Allowed() && v.reason != Reason::kTargetIsVulkanLayered && WaitForSingleObject(proc, 0) == WAIT_OBJECT_0) {
+    // kAllowedUnderUserBypass is an injection that HAPPENED: a target that exits a moment later is a session that
+    // ended, not a launch that never started, so it is left alone here exactly as kAllow is.
+    if (!v.Allowed() && v.reason != Reason::kTargetIsVulkanLayered && v.reason != Reason::kAllowedUnderUserBypass &&
+        WaitForSingleObject(proc, 0) == WAIT_OBJECT_0) {
         v = Refuse(Reason::kLaunchTargetExited, nullptr,
                    "the target exited while the guard was still looking at it; nothing was injected");
     }
@@ -834,11 +851,45 @@ Verdict Evaluate(std::uint32_t targetPid) noexcept {
 }
 
 Verdict GuardedInjectWhenReady(std::uint32_t targetPid, const wchar_t* dllPath, std::uint32_t timeoutMs) noexcept {
-    return GuardedInjectWhenReadyImpl(targetPid, dllPath, timeoutMs, SystemSources());
+    return GuardedInjectWhenReadyImpl(targetPid, dllPath, timeoutMs, SystemSources(), false);
 }
 
 Verdict GuardedInject(std::uint32_t targetPid, const wchar_t* dllPath) noexcept {
-    return GuardedInjectImpl(targetPid, dllPath, SystemSources());
+    return GuardedInjectImpl(targetPid, dllPath, SystemSources(), false);
+}
+
+Verdict GuardedInjectAcknowledged(std::uint32_t targetPid, const wchar_t* dllPath) noexcept {
+    return GuardedInjectImpl(targetPid, dllPath, SystemSources(), true);
+}
+
+Verdict GuardedInjectWhenReadyAcknowledged(std::uint32_t targetPid, const wchar_t* dllPath,
+                                           std::uint32_t timeoutMs) noexcept {
+    return GuardedInjectWhenReadyImpl(targetPid, dllPath, timeoutMs, SystemSources(), true);
+}
+
+bool IsGuardJudgement(Reason r) noexcept {
+    switch (r) {
+    case Reason::kBlockedModule:
+    case Reason::kModuleScanFailed:
+    case Reason::kProcessUnreadable:
+    case Reason::kProcessTreeUnavailable:
+    case Reason::kBlockedDriver:
+    case Reason::kDriverScanFailed:
+    case Reason::kBlockedService:
+    case Reason::kServiceQueryFailed:
+    case Reason::kBlockedExecutable:
+    case Reason::kBlockedStoreId:
+    case Reason::kAntiCheatDirectory:
+    case Reason::kAntiCheatFile:
+    case Reason::kSuspiciousUnsigned:
+    case Reason::kRulesUnreadable:
+    case Reason::kRulesMalformed:
+    case Reason::kRulesIncomplete:
+    case Reason::kPreScanFailed:
+        return true;
+    default:
+        return false;
+    }
 }
 
 #ifdef FL_GUARD_TESTABLE
@@ -847,12 +898,22 @@ Verdict EvaluateWithSources(std::uint32_t targetPid, const Sources& sources) noe
 }
 
 Verdict GuardedInjectWithSources(std::uint32_t targetPid, const wchar_t* dllPath, const Sources& sources) noexcept {
-    return GuardedInjectImpl(targetPid, dllPath, sources);
+    return GuardedInjectImpl(targetPid, dllPath, sources, false);
 }
 
 Verdict GuardedInjectWhenReadyWithSources(std::uint32_t targetPid, const wchar_t* dllPath, std::uint32_t timeoutMs,
                                           const Sources& sources) noexcept {
-    return GuardedInjectWhenReadyImpl(targetPid, dllPath, timeoutMs, sources);
+    return GuardedInjectWhenReadyImpl(targetPid, dllPath, timeoutMs, sources, false);
+}
+
+Verdict GuardedInjectAcknowledgedWithSources(std::uint32_t targetPid, const wchar_t* dllPath,
+                                             const Sources& sources) noexcept {
+    return GuardedInjectImpl(targetPid, dllPath, sources, true);
+}
+
+Verdict GuardedInjectWhenReadyAcknowledgedWithSources(std::uint32_t targetPid, const wchar_t* dllPath,
+                                                      std::uint32_t timeoutMs, const Sources& sources) noexcept {
+    return GuardedInjectWhenReadyImpl(targetPid, dllPath, timeoutMs, sources, true);
 }
 #endif
 

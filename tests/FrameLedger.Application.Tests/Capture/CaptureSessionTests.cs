@@ -97,6 +97,18 @@ public sealed class CaptureSessionTests : IAsyncDisposable
             return ValueTask.FromResult(Verdict);
         }
 
+        /// <summary>The user's bypass (owner decision 2026-09-21): the acknowledged entry, counted apart from the plain one.</summary>
+        public int AcknowledgedCalls { get; private set; }
+
+        public AntiCheatVerdict AcknowledgedVerdict { get; set; } =
+            AntiCheatVerdict.FromNative((int)AntiCheatRefusalReason.AllowedUnderUserBypass, "BattlEye", "BEClient_x64.dll");
+
+        public ValueTask<AntiCheatVerdict> GuardedInjectAcknowledgedAsync(int targetPid, string payloadPath, CancellationToken ct = default)
+        {
+            AcknowledgedCalls++;
+            return ValueTask.FromResult(AcknowledgedVerdict);
+        }
+
         public ValueTask<AntiCheatVerdict> PreScanGameDirectoryAsync(string gameDirectory,
             CancellationToken ct = default) => ValueTask.FromResult(AntiCheatVerdict.Allowed());
     }
@@ -565,6 +577,74 @@ public sealed class CaptureSessionTests : IAsyncDisposable
             Enumerable.Range(1, sink.Published.Count).Select(i => (uint)i),
             options => options.WithStrictOrdering());
         sink.Published[^1].Ticks.Should().Be((uint)guard.EvaluateCalls);
+    }
+
+    /// <summary>
+    /// A session under the user's bypass (owner decision 2026-09-21): it STARTS although the guard refuses, through the
+    /// acknowledged entry only; the in-session scans keep running and keep refusing, and that judgement no longer
+    /// unhooks; and the outcome carries the verdict it started under, so the row can say which anti-cheat it ran beside.
+    /// </summary>
+    [Fact]
+    public async Task UnderTheBypassTheSessionStartsRunsToTheTargetsExitAndSaysWhatItRanBeside()
+    {
+        var guard = new CountingGuard
+        {
+            Verdict = AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedModule, "BattlEye", "BEClient_x64.dll"),
+            EvaluateVerdict = AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedModule, "BattlEye", "BEClient_x64.dll"),
+        };
+        using var sink = new FakeSink(recordsToServe: 3);
+        IGameConsentStore store = await StoreWithAsync();
+        (await new SqliteGuardBypassStore(_db!).RecordAsync(new GuardBypassAcknowledgement
+        {
+            Fingerprint = Fingerprint,
+            DisclosureVersion = "guard-bypass-dialog/1",
+            AcknowledgedAt = DateTimeOffset.UnixEpoch,
+        }, TestContext.Current.CancellationToken)).Should().Be(ConsentWriteOutcome.Written);
+        CaptureSession loop = Loop(store, guard, sink);
+
+        CaptureOutcome r = await loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        guard.AcknowledgedCalls.Should().Be(1);
+        guard.InjectCalls.Should().Be(0, "an acknowledged request never takes the plain entry");
+        r.Reason.Should().NotBe(SessionEndReason.RefusedByGuard).And.NotBe(SessionEndReason.SafetyUnhook, "the refusal is the one the user overruled");
+        r.StartedUnderBypass.Should().NotBeNull();
+        r.StartedUnderBypass!.Value.Family.Should().Be("BattlEye");
+        r.StartedUnderBypass!.Value.IsAllowed.Should().BeFalse();
+        sink.Published.Should().NotContain(static p => p.Unhook, "a judgement under the bypass does not unhook");
+        guard.EvaluateCalls.Should().BeGreaterThan(0, "the in-session scan still RUNS: the Overlay's own stop is fed by its tick");
+    }
+
+    [Fact]
+    public async Task WithoutTheBypassTheSameGuardIsTheHardGateAndTheOutcomeCarriesNoBypass()
+    {
+        var guard = new CountingGuard { Verdict = AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedModule, "BattlEye", "BEClient_x64.dll") };
+        using var sink = new FakeSink();
+        CaptureSession loop = Loop(await StoreWithAsync(), guard, sink);
+
+        CaptureOutcome r = await loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        r.Reason.Should().Be(SessionEndReason.RefusedByGuard);
+        r.StartedUnderBypass.Should().BeNull();
+        guard.AcknowledgedCalls.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task UnderTheBypassAPreScanThatCouldNotVerifyNoLongerRefusesBeforeTheGate()
+    {
+        var guard = new CountingGuard();
+        using var sink = new FakeSink(recordsToServe: 3);
+        IGameConsentStore store = await StoreWithAsync(preScanUnverified: true);
+        await new SqliteGuardBypassStore(_db!).RecordAsync(new GuardBypassAcknowledgement
+        {
+            Fingerprint = Fingerprint,
+            DisclosureVersion = "guard-bypass-dialog/1",
+            AcknowledgedAt = DateTimeOffset.UnixEpoch,
+        }, TestContext.Current.CancellationToken);
+
+        CaptureOutcome r = await Loop(store, guard, sink).RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        r.Reason.Should().NotBe(SessionEndReason.PreScanCouldNotVerify, "'could not verify' is the pre-scan's judgement, and the bypass overrules judgements");
+        guard.AcknowledgedCalls.Should().Be(1);
     }
 
     [Fact]

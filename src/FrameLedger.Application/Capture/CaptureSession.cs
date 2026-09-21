@@ -153,7 +153,9 @@ public sealed class CaptureSession(
     /// <summary>The two refusals the loop makes itself, before the gate (see <see cref="RunAsync"/>'s remarks).</summary>
     private static SessionEndReason? ConsentRefusal(GameConsentRecord record, ExecutableFingerprint? observed)
     {
-        if (record.PreScanUnverified)
+        // "Could not verify" is the pre-scan's judgement, and the user's bypass overrules the guard's judgements
+        // (owner decision 2026-09-21); an executable nobody can read is a fact, and stays a refusal below.
+        if (record.PreScanUnverified && !record.GuardBypassAcknowledged)
         {
             return SessionEndReason.PreScanCouldNotVerify;
         }
@@ -177,7 +179,12 @@ public sealed class CaptureSession(
         // to attach to is the layer's, and it appears at the title's first vkCreateDevice -- which is
         // why the attach budget is launch mode's, not the 5 s an already-injected Overlay gets.
         bool layered = verdict.Reason == AntiCheatRefusalReason.TargetIsVulkanLayered;
-        if (!verdict.IsAllowed && !layered)
+
+        // THE OTHER VERDICT THAT IS NEITHER (owner decision 2026-09-21): the Overlay IS in the target, beside the
+        // anti-cheat the verdict names, because the user overruled the guard for this game. Asked for by name —
+        // IsAllowed is false for it — so this is the only place a bypassed start becomes a session.
+        bool bypassed = verdict.IsAllowedUnderBypass;
+        if (!verdict.IsAllowed && !layered && !bypassed)
         {
             return new CaptureOutcome { Reason = RefusalOf(verdict.Reason), Verdict = verdict, LaunchWait = launchWait };
         }
@@ -199,7 +206,7 @@ public sealed class CaptureSession(
         {
             observer?.Attached(pid, sink.Handshake);
             CaptureOutcome result = await DrainAsync(pid, alive, sink, verdict, ct, stop).ConfigureAwait(false);
-            return result with { LaunchWait = launchWait, TargetPid = pid, ExitCode = alive.ExitCode };
+            return result with { LaunchWait = launchWait, TargetPid = pid, ExitCode = alive.ExitCode, StartedUnderBypass = bypassed ? verdict : null };
         }
     }
 
@@ -250,7 +257,7 @@ public sealed class CaptureSession(
     private async Task<CaptureOutcome> DrainAsync(int pid, ITargetLiveness alive, ICaptureSink sink,
         AntiCheatVerdict verdict, CancellationToken ct, CancellationToken stop)
     {
-        var supervisor = new GuardSupervisor(guard);
+        var supervisor = new GuardSupervisor(guard, guardBypassAcknowledged: verdict.IsAllowedUnderBypass);
         var state = new DrainState(new ModuleTally(modules, ngx));
         SessionEndReason end = await SuperviseAsync(pid, alive, sink, supervisor, state, ct, stop).ConfigureAwait(false);
 

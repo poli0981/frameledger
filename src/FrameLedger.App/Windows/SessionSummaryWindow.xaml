@@ -35,6 +35,10 @@
                             Title="{x:Static vm:SessionSummaryViewModel.UnhookedTitle}"
                             Message="{x:Static vm:SessionSummaryViewModel.UnhookedBody}" />
 
+                <ui:InfoBar IsClosable="False" Severity="Error" Margin="0,0,0,12"
+                            IsOpen="{Binding ViewModel.GuardBypassText, Mode=OneWay, Converter={StaticResource NotNull}}"
+                            Message="{Binding ViewModel.GuardBypassText}" />
+
                 <!-- header line + chips -->
                 <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.Line}" />
                 <ui:TextBlock Appearance="Tertiary" TextWrapping="Wrap" Text="{Binding ViewModel.HardwareLine}" />

@@ -60,6 +60,24 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Added
 
+- **A per-game "bypass the anti-cheat guard" switch, at your own risk (owner decision 2026-09-21).** Off by default,
+  never global: there is no setting, no command-line switch and no rules-file field for it. Turning it on opens its
+  own disclosure, which says what the guard found for that game, that anti-cheat treats a loaded DLL as tampering
+  whatever it does, that **your account can be permanently banned without warning or appeal**, that FrameLedger does
+  not hide and never will, and that **by turning it on you accept the entire risk yourself and the developers accept
+  no responsibility or liability**. It is accepted only by ticking the acknowledgement AND typing `BYPASS`; Enter keeps
+  the guard on. The Agent stamps it (the App writes nothing), keyed on the executable like consent; turning hooking
+  off or the executable changing turns it off again. **It overrules the guard's judgement and nothing else**: the kill
+  switch, a game that was merely added, a missing consent, a foreign payload, a 32-bit target, a failed injection and
+  a Vulkan title the guard refuses all still refuse. The guard still runs every check and still reports what it
+  found; the verdict is `AllowedUnderUserBypass`, never `Allow`. **How FrameLedger injects is unchanged** — the same
+  documented `LoadLibraryW`, the DLL's real name and version info, one chokepoint file (CLAUDE.md rule 3). Every
+  session started under it is marked, permanently, with what the guard found: in the sessions list, the session
+  summary, the CSV and JSON exports (schema 0007: `games.guard_bypass_*`, `sessions.guard_bypassed` /
+  `guard_bypass_family` / `guard_bypass_signal`). A session recovered after an Agent crash does not carry the mark.
+  CLAUDE.md rule 2, `19_SAFETY`, `02_SPEC` FR-2.7, `SECURITY.md` and `tools/chokepoint-check.ps1`'s own description
+  are amended with it. Japanese shows this dialog in English until a reviewer signs the translation.
+
 - **CPU load, memory in use and (elevated) CPU temperature are measured.** `sessions.avg_cpu_load`, `avg_cpu_temp`,
   `max_cpu_temp` and `avg_ram_mb`, and the `cpu_load` / `cpu_temp` / `ram_mb` sensor series, were in the schema from
   0001 with no producer. The telemetry poller now reads the machine beside the GPU on the same 1 Hz tick: CPU time

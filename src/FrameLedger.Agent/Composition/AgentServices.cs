@@ -61,6 +61,7 @@ internal static class AgentServices
 
         // Persistence: the one ledger, the Agent's own (%LOCALAPPDATA%\FrameLedger, §S18 blocker 3).
         services.AddSingleton<IGameConsentStore, SqliteGameConsentStore>();
+        services.AddSingleton<IGuardBypassStore, SqliteGuardBypassStore>();
         services.AddSingleton<IGameRepository, SqliteGameRepository>();
         services.AddSingleton<ISessionRepository, SqliteSessionRepository>();
         services.AddSingleton<IHardwareSnapshotRepository, SqliteHardwareSnapshotRepository>();
@@ -170,7 +171,9 @@ internal static class AgentServices
             TimeProvider.System,
             sp.GetRequiredService<VkLayerReconciler>(),
             // P4 PR-7: the on-demand retention sweep, over the Agent's own settings read and its own blob tables.
-            ct => new RetentionSweep(sp.GetRequiredService<ISessionRepository>(), sp.GetRequiredService<RegisteredSettings>()).RunAsync(ct)));
+            ct => new RetentionSweep(sp.GetRequiredService<ISessionRepository>(), sp.GetRequiredService<RegisteredSettings>()).RunAsync(ct),
+            // Owner decision 2026-09-21: the per-game guard bypass is written through its own port, never the consent one.
+            sp.GetRequiredService<IGuardBypassStore>()));
         services.AddSingleton<IIpcRequestHandler>(static sp => new AgentRequestHandler(
             AgentIdentityFactory.OfThisProcess(sp.GetRequiredService<AgentPaths>().VkLayerDirectory),
             TelemetryDescriptor(),

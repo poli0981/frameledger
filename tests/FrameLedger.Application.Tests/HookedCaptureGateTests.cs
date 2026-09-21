@@ -35,6 +35,27 @@ public sealed class HookedCaptureGateTests
             return ValueTask.FromResult(Next);
         }
 
+        /// <summary>The user's bypass (owner decision 2026-09-21): which entry the gate chose, and what it answers there.</summary>
+        public int AcknowledgedCalls { get; private set; }
+
+        public int AcknowledgedWhenReadyCalls { get; private set; }
+
+        public AntiCheatVerdict NextAcknowledged { get; set; } =
+            AntiCheatVerdict.FromNative((int)AntiCheatRefusalReason.AllowedUnderUserBypass, "Easy Anti-Cheat", "EasyAntiCheat_EOS.dll");
+
+        public ValueTask<AntiCheatVerdict> GuardedInjectAcknowledgedAsync(int targetPid, string payloadPath, CancellationToken ct = default)
+        {
+            AcknowledgedCalls++;
+            return ValueTask.FromResult(NextAcknowledged);
+        }
+
+        public ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAcknowledgedAsync(int targetPid, string payloadPath, int timeoutMs,
+            CancellationToken ct = default)
+        {
+            AcknowledgedWhenReadyCalls++;
+            return ValueTask.FromResult(NextAcknowledged);
+        }
+
         public int PreScanCalls { get; private set; }
 
         public ValueTask<AntiCheatVerdict> PreScanGameDirectoryAsync(string gameDirectory,
@@ -61,11 +82,13 @@ public sealed class HookedCaptureGateTests
         ConsentProvenance provenance = ConsentProvenance.UnshippedHostOperator,
         string? blocked = null,
         int waitMs = 0,
-        bool killSwitch = false) =>
+        bool killSwitch = false,
+        bool bypass = false) =>
         HookRequest.FromConsent(
             GameConsentRecord.Stored(
                 OnDisk, enabled, DateTimeOffset.UnixEpoch, provenance, "unshipped-host-operator/1",
-                blocked, preScanUnverified: false, updatedAt: DateTimeOffset.UnixEpoch),
+                blocked, preScanUnverified: false, updatedAt: DateTimeOffset.UnixEpoch)
+                .WithGuardBypass(bypass ? DateTimeOffset.UnixEpoch : null, bypass ? "guard-bypass-dialog/1" : null),
             OnDisk,
             targetPid: 1234,
             payloadPath: @"C:\FrameLedger\FrameLedger.Overlay.dll",
@@ -93,6 +116,82 @@ public sealed class HookedCaptureGateTests
         // Off again: the same record reaches the guard, so the switch decided and not the record.
         (await gate.StartAsync(Request(), ct)).IsAllowed.Should().BeTrue();
         guard.InjectCalls.Should().Be(1);
+    }
+
+    /// <summary>
+    /// THE FIFTH INPUT (owner decision 2026-09-21, 19_SAFETY §The user's bypass). It overrules the guard's judgement —
+    /// the latch of a past one, and the live one — and NOTHING above it: the kill switch, a game that was merely added
+    /// and a consent nobody gave each still refuse, with the guard never asked through either kind of entry.
+    /// </summary>
+    [Fact]
+    public async Task TheBypassOverrulesTheGuardsJudgementAndNothingAboveIt()
+    {
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        var guard = new RecordingGuard();
+        var gate = new HookedCaptureGate(guard);
+
+        (await gate.StartAsync(Request(bypass: true, killSwitch: true), ct)).Reason.Should().Be(AntiCheatRefusalReason.KillSwitchEngaged);
+        (await gate.StartAsync(Request(bypass: true, enabled: false), ct)).Reason.Should().Be(AntiCheatRefusalReason.HookNotEnabled);
+        (await gate.StartAsync(Request(bypass: true, provenance: ConsentProvenance.NotRecorded), ct)).Reason.Should().Be(AntiCheatRefusalReason.ConsentMissing);
+        (guard.InjectCalls + guard.WhenReadyCalls + guard.AcknowledgedCalls + guard.AcknowledgedWhenReadyCalls).Should().Be(0, "none of the three reached the guard, by any entry");
+
+        // A blocked row without the bypass: the latch, as always.
+        (await gate.StartAsync(Request(blocked: "BlockedModule: Easy Anti-Cheat"), ct)).Reason.Should().Be(AntiCheatRefusalReason.PreviouslyBlocked);
+        guard.AcknowledgedCalls.Should().Be(0);
+
+        // The same row with it: past the latch, through the ACKNOWLEDGED entry, and the answer is not an allow.
+        AntiCheatVerdict attach = await gate.StartAsync(Request(blocked: "BlockedModule: Easy Anti-Cheat", bypass: true), ct);
+        attach.Reason.Should().Be(AntiCheatRefusalReason.AllowedUnderUserBypass);
+        attach.IsAllowed.Should().BeFalse("a caller that only knows IsAllowed still does not proceed");
+        attach.IsAllowedUnderBypass.Should().BeTrue();
+        attach.Family.Should().Be("Easy Anti-Cheat", "the verdict still names what the guard found");
+        guard.AcknowledgedCalls.Should().Be(1);
+        guard.InjectCalls.Should().Be(0, "an acknowledged request never takes the unacknowledged entry, and the reverse");
+
+        AntiCheatVerdict launch = await gate.StartAsync(Request(waitMs: 60_000, bypass: true), ct);
+        launch.IsAllowedUnderBypass.Should().BeTrue();
+        guard.AcknowledgedWhenReadyCalls.Should().Be(1);
+        guard.WhenReadyCalls.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task UnderTheBypassAFactStillRefusesAndACleanTargetIsAPlainAllow()
+    {
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        var guard = new RecordingGuard { NextAcknowledged = AntiCheatVerdict.Refused(AntiCheatRefusalReason.PayloadNotOurs, string.Empty, "not ours") };
+        var gate = new HookedCaptureGate(guard);
+
+        AntiCheatVerdict foreign = await gate.StartAsync(Request(bypass: true), ct);
+        foreign.Reason.Should().Be(AntiCheatRefusalReason.PayloadNotOurs, "no acknowledgement loads a foreign DLL");
+        foreign.IsAllowedUnderBypass.Should().BeFalse();
+
+        guard.NextAcknowledged = AntiCheatVerdict.Allowed();
+        (await gate.StartAsync(Request(bypass: true), ct)).IsAllowed.Should().BeTrue("nothing to overrule: a clean target is a plain allow");
+    }
+
+    [Fact]
+    public async Task AGuardThatDoesNotKnowTheBypassIsTheHardGate()
+    {
+        // IAntiCheatGuard's acknowledged methods default to the unacknowledged ones: a fake, an older adapter or a
+        // forgotten override fails towards refusing.
+        var guard = new DefaultsOnlyGuard();
+        AntiCheatVerdict v = await new HookedCaptureGate(guard).StartAsync(Request(bypass: true), TestContext.Current.CancellationToken);
+
+        v.Reason.Should().Be(AntiCheatRefusalReason.BlockedModule);
+        v.IsAllowedUnderBypass.Should().BeFalse();
+    }
+
+    private sealed class DefaultsOnlyGuard : IAntiCheatGuard
+    {
+        private static readonly AntiCheatVerdict _refusal = AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedModule, "Easy Anti-Cheat", "x.dll");
+
+        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, CancellationToken ct = default) => ValueTask.FromResult(_refusal);
+
+        public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath, CancellationToken ct = default) => ValueTask.FromResult(_refusal);
+
+        public ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAsync(int targetPid, string payloadPath, int timeoutMs, CancellationToken ct = default) => ValueTask.FromResult(_refusal);
+
+        public ValueTask<AntiCheatVerdict> PreScanGameDirectoryAsync(string gameDirectory, CancellationToken ct = default) => ValueTask.FromResult(_refusal);
     }
 
     [Fact]

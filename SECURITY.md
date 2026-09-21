@@ -23,6 +23,14 @@ to refuse, never how to evade (`docs/19_SAFETY_AND_ANTICHEAT.md`).
 This is a one-person project. The intent is to acknowledge a private report within a week and to say
 plainly what will happen next; that is an intent, not a contractual response time.
 
+## The guard bypass is a feature, not a vulnerability
+
+Since 0.1.0-beta.3 a user can overrule the anti-cheat guard for one game through a disclosure they must accept by two
+separate acts (`docs/19_SAFETY_AND_ANTICHEAT.md` §The user's bypass). That is documented behaviour. What IS a security
+report: any way to reach an injection past the guard WITHOUT that disclosure having been accepted for that game — a
+flag, a setting, a crafted rules file, a pipe message, a database edit the Agent then honours without the stamp's
+version — or any session that ran under the bypass and is not marked as such.
+
 ## A safety gap — a game with anti-cheat that FrameLedger fails to detect
 
 This is treated with the same priority as a security report, and it takes the **public** route: open

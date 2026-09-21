@@ -1,11 +1,21 @@
 #Requires -Version 7.0
 <#
 .SYNOPSIS
-    Asserts that no code path can inject without passing the anti-cheat guard.
+    Asserts that no code path can inject except through the anti-cheat guard's own file.
 
 .DESCRIPTION
-    CLAUDE.md rule 2: "The anti-cheat guard is a hard gate, not a warning...
-    There is no override switch." docs/14_TESTING.md calls for a test that
+    AMENDED 2026-09-21. This header said "no code path can inject without PASSING the
+    guard", and since the owner's decision of that day that is no longer the claim: the
+    guard has one acknowledged entry (FlGuardedInjectAcknowledged, 19_SAFETY "The user's
+    bypass") that injects where the evaluation refused on the guard's own judgement. What
+    this script asserts is unchanged and is what makes that entry safe to have: the
+    primitive still lives in ONE file, so the acknowledged path is the guard's own code -
+    it still runs every check, still reports what it found, still verifies the payload -
+    and the evasion primitives still appear NOWHERE. A bypass that lived outside this
+    file, or that changed HOW the injection happens, is exactly what these checks refuse.
+
+    CLAUDE.md rule 2 (as first written): "The anti-cheat guard is a hard gate, not a
+    warning... There is no override switch." docs/14_TESTING.md calls for a test that
     asserts no code path reaches the injection primitive without a passing
     guard result, and 20_OPEN_QUESTIONS §S8 records that the mechanism
     originally proposed for it — a `sealed` token type only the guard can

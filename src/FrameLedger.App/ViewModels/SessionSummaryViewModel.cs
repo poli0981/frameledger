@@ -56,6 +56,10 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
     [ObservableProperty]
     private bool _isUnhooked;
 
+    /// <summary>"Guard bypassed: (family)" when the session started under the user's bypass (schema 0007), else null.</summary>
+    [ObservableProperty]
+    private string? _guardBypassText;
+
     [ObservableProperty]
     private bool _notFound;
 
@@ -278,6 +282,7 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         IsHooked = row.Tier == CaptureTier.Hooked;
         IsCrashed = row.ExitStatus == ExitStatus.Crashed;
         IsUnhooked = row.ExitStatus == ExitStatus.UnhookedSafety;
+        GuardBypassText = SessionMarks.GuardBypass(row);
         Readout = FpsPresentation.FromRow(row);
         Line = string.Format(CultureInfo.CurrentCulture, Strings.Summary_Line_Format,
             IsHooked ? Formats.Api(row.Api) : Strings.Tier_NotHooked, row.PresentMode ?? Strings.Common_NotAvailable,

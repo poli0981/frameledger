@@ -55,6 +55,36 @@ public readonly record struct AntiCheatVerdict
     /// if a code path ever forgets to assign one, what it leaves behind must
     /// not read as permission.
     /// </summary>
+    /// <summary>
+    /// True only for <see cref="AntiCheatRefusalReason.AllowedUnderUserBypass"/>: the Overlay IS in the target, beside
+    /// the anti-cheat <see cref="Family"/> names, because the user overruled the guard for this game. Separate from
+    /// <see cref="IsAllowed"/> on purpose — a caller has to ask for this by name, so none proceeds by accident.
+    /// </summary>
+    public bool IsAllowedUnderBypass => _evaluated && Reason == AntiCheatRefusalReason.AllowedUnderUserBypass;
+
+    /// <summary>
+    /// The refusals that are the guard's JUDGEMENT about anti-cheat — a blocklist match, a suspicious module, a scan
+    /// that could not look (which the guard treats as a finding), unusable rules — and the latch a past one left
+    /// (<see cref="AntiCheatRefusalReason.PreviouslyBlocked"/>). These are what a user's bypass overrules. Everything
+    /// else is a fact about consent, the kill switch, the payload, the target's bitness, the launch or the injection
+    /// itself, and no acknowledgement changes a fact.
+    /// </summary>
+    /// <remarks>
+    /// A mirror of the native <c>fl::guard::IsGuardJudgement</c> plus the one managed-only latch;
+    /// <c>GuardMirrorTests</c> reads the native answer back for every reason, so the two lists cannot drift.
+    /// </remarks>
+    public static bool IsGuardJudgement(AntiCheatRefusalReason reason) => reason is
+        AntiCheatRefusalReason.BlockedModule or AntiCheatRefusalReason.ModuleScanFailed
+        or AntiCheatRefusalReason.ProcessUnreadable or AntiCheatRefusalReason.ProcessTreeUnavailable
+        or AntiCheatRefusalReason.BlockedDriver or AntiCheatRefusalReason.DriverScanFailed
+        or AntiCheatRefusalReason.BlockedService or AntiCheatRefusalReason.ServiceQueryFailed
+        or AntiCheatRefusalReason.BlockedExecutable or AntiCheatRefusalReason.BlockedStoreId
+        or AntiCheatRefusalReason.AntiCheatDirectory or AntiCheatRefusalReason.AntiCheatFile
+        or AntiCheatRefusalReason.SuspiciousUnsigned
+        or AntiCheatRefusalReason.RulesUnreadable or AntiCheatRefusalReason.RulesMalformed
+        or AntiCheatRefusalReason.RulesIncomplete or AntiCheatRefusalReason.PreScanFailed
+        or AntiCheatRefusalReason.PreviouslyBlocked;
+
     public static AntiCheatVerdict Refused(AntiCheatRefusalReason reason, string family, string signal) =>
         reason == AntiCheatRefusalReason.Allow
             ? throw new ArgumentOutOfRangeException(nameof(reason), "Refused() cannot carry Allow.")

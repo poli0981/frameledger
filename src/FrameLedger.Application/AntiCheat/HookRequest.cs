@@ -31,8 +31,9 @@ namespace FrameLedger.Application.AntiCheat;
 public sealed class HookRequest
 {
     private HookRequest(int targetPid, string payloadPath, bool hookEnabled, DateTimeOffset? consentedAt,
-        string? blockedReason, int waitForPresentationRuntimeMs, bool killSwitchEngaged)
+        string? blockedReason, int waitForPresentationRuntimeMs, bool killSwitchEngaged, bool guardBypassAcknowledged)
     {
+        GuardBypassAcknowledged = guardBypassAcknowledged;
         TargetPid = targetPid;
         PayloadPath = payloadPath;
         HookEnabled = hookEnabled;
@@ -47,6 +48,15 @@ public sealed class HookRequest
     /// The gate's FOURTH input and the first one it checks: it can only downgrade, like every other field here.
     /// </summary>
     public bool KillSwitchEngaged { get; }
+
+    /// <summary>
+    /// The gate's FIFTH input (owner decision 2026-09-21): the user accepted the guard-bypass disclosure for this game,
+    /// for THIS executable. The only input that can turn a refusal into a start, which is why it is built where the
+    /// other four are and nowhere else: from a stored record that names the disclosure it answered, and only when the
+    /// observed binary is the one that record is about. It never outranks the kill switch, an un-enabled game or a
+    /// missing consent — it overrules the guard's judgement and nothing else.
+    /// </summary>
+    public bool GuardBypassAcknowledged { get; }
 
     /// <summary>
     /// Launch mode's budget: how long the guard may wait for the target to map a presentation runtime
@@ -108,7 +118,7 @@ public sealed class HookRequest
         if (!record.IsFromStore)
         {
             return new HookRequest(targetPid, payloadPath, hookEnabled: false, consentedAt: null,
-                blockedReason: null, waitForPresentationRuntimeMs, killSwitchEngaged);
+                blockedReason: null, waitForPresentationRuntimeMs, killSwitchEngaged, guardBypassAcknowledged: false);
         }
 
         // A TIMESTAMP IS NOT CONSENT. games.hook_consent_at is a bare DateTime, so a record could carry
@@ -124,12 +134,16 @@ public sealed class HookRequest
         // PRESERVED — "the user did consent; the block is not a withdrawal of consent" — so nothing here
         // writes to the store. The stored record is untouched and a later session against the matching
         // binary uses it unchanged.
+        // THE BYPASS IS ABOUT ONE EXECUTABLE TOO. An acknowledgement given for the binary that was on disk does not
+        // travel to the one a patch replaced it with: the user overruled a judgement about THAT file.
+        bool bypass = record.GuardBypassAcknowledged;
         if (!record.Fingerprint.Matches(observed))
         {
             consentedAt = null;
+            bypass = false;
         }
 
         return new HookRequest(targetPid, payloadPath, record.HookEnabled, consentedAt, record.BlockedReason,
-            waitForPresentationRuntimeMs, killSwitchEngaged);
+            waitForPresentationRuntimeMs, killSwitchEngaged, bypass);
     }
 }

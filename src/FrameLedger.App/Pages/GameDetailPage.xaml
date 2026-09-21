@@ -123,6 +123,16 @@
                           Visibility="{Binding ViewModel.UnverifiedText, Converter={StaticResource NullToCollapsed}}" />
             <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" Text="{x:Static vm:GameDetailViewModel.BusyText}"
                           Visibility="{Binding ViewModel.Busy, Converter={StaticResource BoolToVis}}" />
+            <!-- the user's guard bypass (owner decision 2026-09-21, 19_SAFETY §The user's bypass): per game, OFF by default -->
+            <ui:CardControl Margin="0,12,0,0" Header="{x:Static vm:GameDetailViewModel.BypassLabel}" Icon="{ui:SymbolIcon ShieldError24}">
+                <ui:ToggleSwitch AutomationProperties.Name="{x:Static vm:GameDetailViewModel.BypassLabel}"
+                                 IsChecked="{Binding ViewModel.GuardBypassOn, Mode=OneWay}"
+                                 Command="{Binding ViewModel.ToggleGuardBypassCommand}" />
+            </ui:CardControl>
+            <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.BypassBody}" />
+            <ui:InfoBar Margin="0,8,0,0" IsClosable="False" Severity="Error"
+                        IsOpen="{Binding ViewModel.GuardBypassOn, Mode=OneWay}"
+                        Message="{x:Static vm:GameDetailViewModel.BypassOnNotice}" />
             <ui:InfoBar Margin="0,8,0,0" IsClosable="False" Severity="Warning"
                         IsOpen="{Binding ViewModel.AutoDisabledText, Converter={StaticResource NotNull}}"
                         Message="{Binding ViewModel.AutoDisabledText}">

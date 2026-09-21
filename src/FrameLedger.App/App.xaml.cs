@@ -305,6 +305,10 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IMessageStrip, SnackbarStrip>();
         services.AddSingleton<IEditGamePrompt, EditGamePrompt>();
 
+        // The per-game guard bypass (owner decision 2026-09-21): its own disclosure, its own service, no global form.
+        services.AddSingleton<IGuardBypassPrompt, GuardBypassPrompt>();
+        services.AddSingleton<GuardBypass>();
+
         // The session summary (P3 PR-6): the series loader over the ports, the exports' file picker, the window opener.
         services.AddSingleton<IHardwareSnapshotRepository, SqliteHardwareSnapshotRepository>();
         // Settings > System (2026-09-21): the same source the Agent stamps every session with, read for this PC now.
