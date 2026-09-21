@@ -11,6 +11,7 @@ using FrameLedger.Infrastructure.Persistence;
 namespace FrameLedger.App.Tests;
 
 /// <summary>The summary over a scratch ledger: stat cards from the stored aggregates, the override writing the annotation (and the game default), tags/notes saved, exports through a scripted saver.</summary>
+[Collection(StringsCultureCollection.Name)]
 public sealed class SessionSummaryViewModelTests
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;

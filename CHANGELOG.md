@@ -27,7 +27,20 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
-_Nothing yet — entries continue here after `0.1.0-beta.2`._
+### Changed
+
+- **Dependencies, 2026-09-21.** The test framework moves from xUnit.net v3 3.2.2 to **4.0.1**, referenced as
+  `xunit.v3.mtp-off` with `xunit.runner.visualstudio` 4.0.0: 4.0 makes Microsoft Testing Platform v2 the default of the
+  plain `xunit.v3` package, and `build.ps1`'s gates are VSTest-shaped on purpose (the `XPlat Code Coverage` collector,
+  the `results.trx` the struct-mirror gate and the 25-minute wall clock read), so the projects take the same 4.x
+  framework through the variant xunit publishes for that. The tree carried no v2-era API; the one test change is a
+  race 4.0.1's scheduler found on its first gate run: eight `App.Tests` classes write the process-wide `Strings.Culture`
+  and ran in parallel, so `StringsTests` read "Settings" where it had just written `vi`. They share one collection now.
+  Also: Dapper 2.1.86, Microsoft.Data.Sqlite / Microsoft.Extensions.Hosting / System.Diagnostics.EventLog 10.0.12,
+  CsWin32 0.3.333, Roslynator 5.0.0, Meziantou.Analyzer 3.0.266, Microsoft.NET.Test.Sdk 18.10.1, NSubstitute 6.2.0.
+  **Deliberately not moved:** `WPF-UI [4.3.0]` and `FluentAssertions [7.2.2]` (8.x is not an OSI licence), both pinned
+  with their reasons in `Directory.Packages.props`. `legal/licenses/nuget/` is regenerated for the shipped packages
+  that moved.
 
 ## [0.1.0-beta.2] - 2026-09-17
 

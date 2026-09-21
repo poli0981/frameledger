@@ -12,6 +12,7 @@ namespace FrameLedger.App.Tests;
 /// an acknowledged one sends exactly <c>SetHookEnabled { enabled: true, disclosureVersion: ours }</c>, and the
 /// Agent's three answers (stamped, refused, error) come back as what they are.
 /// </summary>
+[Collection(StringsCultureCollection.Name)]
 public sealed class HookingConsentTests
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;

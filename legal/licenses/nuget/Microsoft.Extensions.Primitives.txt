@@ -1,4 +1,4 @@
-Microsoft.Extensions.Primitives 10.0.10
+Microsoft.Extensions.Primitives 10.0.12
 
 Licence declared: MIT
 Text below: the standard MIT text; the package ships no licence file

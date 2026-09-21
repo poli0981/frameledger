@@ -8,6 +8,7 @@ using FrameLedger.Application.Persistence;
 namespace FrameLedger.App.Tests;
 
 /// <summary>Compare over a scratch ledger: the picker's bounds, FR-6.2's guard gating a mixed selection, the curves for hooked sessions only, the table's best-value rule and its N/A cells.</summary>
+[Collection(StringsCultureCollection.Name)]
 public sealed class CompareViewModelTests
 {
     private sealed class ScriptedMixed(bool answer) : IMixedTierPrompt

@@ -3,7 +3,7 @@
   <!--
     Central package management (docs/12_BUILD.md). Every version is pinned here
     and nowhere else, which also makes Dependabot PRs single-file diffs.
-    All versions verified against nuget.org on 2026-08-02.
+    All versions verified against nuget.org on 2026-08-02; re-verified and bumped 2026-09-21.
   -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Hosting and logging">
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.Extensions.Hosting" Version="10.0.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
@@ -37,8 +37,8 @@
 
   <ItemGroup Label="Storage">
     <!-- No EF: Dapper over Microsoft.Data.Sqlite (CLAUDE.md pinned stack). -->
-    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.10" />
-    <PackageVersion Include="Dapper" Version="2.1.79" />
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.12" />
+    <PackageVersion Include="Dapper" Version="2.1.86" />
     <!--
       Transitive pin, not a direct dependency.
 
@@ -56,7 +56,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Interop, telemetry and packaging">
-    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.298" />
+    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.333" />
     <PackageVersion Include="Velopack" Version="1.2.0" />
     <!-- MPL-2.0. docs/18_GPU_VENDOR_APIS.md §L2 requires >= 0.9.6, and
          legal/THIRD_PARTY_NOTICES.md has a release-gate check that no
@@ -64,19 +64,26 @@
     <PackageVersion Include="LibreHardwareMonitorLib" Version="0.9.6" />
     <!-- The crash witness (04_CAPTURE §Crash & exit classification): Application log events 1000/1001. In-box
          for WPF apps, a package for a class library on the Windows TFM. Microsoft, MIT. -->
-    <PackageVersion Include="System.Diagnostics.EventLog" Version="10.0.10" />
+    <PackageVersion Include="System.Diagnostics.EventLog" Version="10.0.12" />
   </ItemGroup>
 
   <ItemGroup Label="Analyzers (build-time only)">
-    <PackageVersion Include="Roslynator.Analyzers" Version="4.16.1" />
-    <PackageVersion Include="Meziantou.Analyzer" Version="3.0.257" />
+    <PackageVersion Include="Roslynator.Analyzers" Version="5.0.0" />
+    <PackageVersion Include="Meziantou.Analyzer" Version="3.0.266" />
     <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.7.23" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
-    <PackageVersion Include="xunit.v3" Version="3.2.2" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <!--
+      xUnit.net v3, 4.x line (2026-09-21). 4.0 made Microsoft Testing Platform v2 the default of the plain
+      `xunit.v3` package and dropped MTP v1. build.ps1's gates are VSTest-shaped on purpose - the
+      `XPlat Code Coverage` collector, `results.trx` read by the struct-mirror gate and by Invoke-TestsWithin -
+      so the projects reference the SAME 4.x framework through its `mtp-off` variant, the one xunit publishes
+      for exactly this. Moving to MTP v2 is a build.ps1 change, not a version bump; do them together or not at all.
+    -->
+    <PackageVersion Include="xunit.v3.mtp-off" Version="4.0.1" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
     <!--
       FluentAssertions is pinned to the 7.x line ON PURPOSE, and must not be
       bumped to 8.x without redoing the licence analysis.
@@ -94,7 +101,7 @@
       Reviewed 2026-08-02. See docs/20_OPEN_QUESTIONS.md §G.
     -->
     <PackageVersion Include="FluentAssertions" Version="[7.2.2]" />
-    <PackageVersion Include="NSubstitute" Version="6.0.0" />
+    <PackageVersion Include="NSubstitute" Version="6.2.0" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
   </ItemGroup>
 

@@ -41,7 +41,9 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
     child process now (`Infrastructure.Diagnostics.ParentDump`, `FrameLedger.Agent.exe --write-crash-dump`; `10_LOGGING`
     §Crash handling). And **`--blame-hang` did not stop the hung xUnit v3 executable** — still alive four minutes after
     a 60 s hang timeout — so `build.ps1` runs `dotnet test` under a 25-minute wall-clock limit instead, kills the tree on
-    expiry, and names the test projects that wrote no `results.trx`.
+    expiry, and names the test projects that wrote no `results.trx`. *(Measured on xUnit v3 3.2.2. The suites moved to
+    4.0.1 on 2026-09-21 as `xunit.v3.mtp-off`, still under VSTest; whether `--blame-hang` stops a hung 4.x executable is
+    unmeasured, and the wall clock stays either way.)*
   - **Two more shapes had one cause, found and fixed 2026-09-16** after four failures in one evening's merge train:
     `AKilledHostLeavesAPartialThatRecoverTurnsIntoAnInterruptedSession` ("the process cannot access the file …
     `.partial`") and `WithNoConsentRecordTheHostRefusesAndNothingIsEverInjected` (a leftover consent record). The

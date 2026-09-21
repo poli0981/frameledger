@@ -10,6 +10,7 @@ namespace FrameLedger.App.Tests;
 /// (a missing satellite would fall back to English silently, and this is the one place that would show), and
 /// the accessor's key list is the resx's — the audit gate checks the same from the outside.
 /// </summary>
+[Collection(StringsCultureCollection.Name)]
 public sealed class StringsTests
 {
     private static readonly string[] _cultures = ["en", "vi", "ja"];
