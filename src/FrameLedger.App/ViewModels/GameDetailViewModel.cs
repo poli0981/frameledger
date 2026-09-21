@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.IO;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -10,6 +11,7 @@ using FrameLedger.App.Services;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.TriState;
 using FrameLedger.Domain.Sessions;
+using FrameLedger.Infrastructure.Io;
 using Wpf.Ui.Controls;
 
 namespace FrameLedger.App.ViewModels;
@@ -27,6 +29,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private readonly IPageNavigator _navigator;
     private readonly IConfirmations _confirmations;
     private readonly IEditGamePrompt _edit;
+    private readonly IGamePicker _picker;
     private readonly IMessageStrip _strip;
     private readonly ISessionSummaryOpener _summaries;
     private readonly SessionSeriesLoader _loader;
@@ -40,6 +43,10 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
     [ObservableProperty]
     private string _subtitle = string.Empty;
+
+    /// <summary>The executable the row is about: what the watcher matches and what consent is keyed on, so a wrong import guess is visible.</summary>
+    [ObservableProperty]
+    private string _executableText = string.Empty;
 
     [ObservableProperty]
     private string _lastSessionText = string.Empty;
@@ -115,8 +122,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
     public GameDetailViewModel(GameLibrary library, GameSelection selection, HookingConsent consent, IPageNavigator navigator,
         IConfirmations confirmations, IEditGamePrompt edit, IMessageStrip strip, ISessionSummaryOpener summaries,
-        SessionSeriesLoader loader, IHardwareSnapshotRepository hardware, SessionSelection sessionSelection)
+        SessionSeriesLoader loader, IHardwareSnapshotRepository hardware, SessionSelection sessionSelection, IGamePicker picker)
     {
+        _picker = picker ?? throw new ArgumentNullException(nameof(picker));
         _selection = sessionSelection ?? throw new ArgumentNullException(nameof(sessionSelection));
         _library = library ?? throw new ArgumentNullException(nameof(library));
         ArgumentNullException.ThrowIfNull(selection);
@@ -137,6 +145,8 @@ public sealed partial class GameDetailViewModel : ObservableObject
     public static string EditText => Strings.GameDetail_Edit;
 
     public static string RemoveText => Strings.GameDetail_Remove;
+
+    public static string ChangeExecutableText => Strings.GameDetail_ChangeExe;
 
     public static string LifetimeLabel => Strings.GameDetail_LifetimeAvg;
 
@@ -335,6 +345,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
     [RelayCommand]
     private Task RemoveAsync() => RunAsync(RemoveCoreAsync);
 
+    [RelayCommand]
+    private Task ChangeExecutableAsync() => RunAsync(ChangeExecutableCoreAsync);
+
     /// <summary>One action at a time, and the one in flight is <see cref="Pending"/> for a test to await.</summary>
     private async Task RunAsync(Func<Task> work)
     {
@@ -403,6 +416,47 @@ public sealed partial class GameDetailViewModel : ObservableObject
         await LoadAsync().ConfigureAwait(true);
     }
 
+    /// <summary>
+    /// A store import guesses the executable (Steam names none), and everything downstream is keyed on it: a wrong guess
+    /// is a game that can never be matched. The pick is the user's own; the row comes back hooking-off and unconsented,
+    /// exactly as a new game would, and consent is revoked over the pipe first, as removal does.
+    /// </summary>
+    private async Task ChangeExecutableCoreAsync()
+    {
+        if (Game is null)
+        {
+            return;
+        }
+
+        string? path = _picker.PickExecutable();
+        if (path is null || string.Equals(ExecutableIdentity.Normalise(path), Game.Fingerprint.ExePath, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        if (Game.HookEnabled)
+        {
+            await _consent.DisableAsync(Game.Id).ConfigureAwait(true);
+        }
+
+        bool? changed = await _library.ChangeExecutableAsync(Game.Id, path).ConfigureAwait(true);
+        string file = Path.GetFileName(path);
+        switch (changed)
+        {
+            case null:
+                _strip.Warn(Strings.GameDetail_ChangeExe, string.Format(CultureInfo.CurrentCulture, Strings.ChangeExe_Unreadable_Format, file));
+                break;
+            case false:
+                _strip.Warn(Strings.GameDetail_ChangeExe, string.Format(CultureInfo.CurrentCulture, Strings.ChangeExe_Taken_Format, file));
+                break;
+            default:
+                _strip.Success(Strings.GameDetail_ChangeExe, string.Format(CultureInfo.CurrentCulture, Strings.ChangeExe_Done_Format, Game.Name, file));
+                break;
+        }
+
+        await LoadAsync().ConfigureAwait(true);
+    }
+
     private async Task RemoveCoreAsync()
     {
         if (Game is null)
@@ -447,6 +501,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         GameRow row = detail.Row;
         Name = row.Name;
         Subtitle = string.Join(" · ", new[] { row.Publisher, row.GameVersion, Formats.Platform(row.Platform), EngineText(row) }.Where(static s => !string.IsNullOrWhiteSpace(s)));
+        ExecutableText = row.Fingerprint.ExePath;
 
         SessionRow? last = detail.Sessions.Count > 0 ? detail.Sessions[0] : null;
         SessionRow? lastHooked = detail.Sessions.FirstOrDefault(static s => s.Tier == CaptureTier.Hooked && s.FrameCount > 0);

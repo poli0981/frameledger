@@ -62,6 +62,9 @@ public static class Strings
         nameof(BugReport_Preview_Drag),
         nameof(BugReport_Preview_Intro_Format),
         nameof(BugReport_Title),
+        nameof(ChangeExe_Done_Format),
+        nameof(ChangeExe_Taken_Format),
+        nameof(ChangeExe_Unreadable_Format),
         nameof(Chart_Axis_Count),
         nameof(Chart_Axis_Fps),
         nameof(Chart_Axis_Frametime),
@@ -239,6 +242,7 @@ public static class Strings
         nameof(Fps_None_Tooltip),
         nameof(Fps_Presented_Format),
         nameof(GameDetail_Back),
+        nameof(GameDetail_ChangeExe),
         nameof(GameDetail_Edit),
         nameof(GameDetail_Hooking_Body),
         nameof(GameDetail_Hooking_Busy),
@@ -666,6 +670,12 @@ public static class Strings
 
     public static string BugReport_Title => ResourceManager.GetString(nameof(BugReport_Title), Culture) ?? nameof(BugReport_Title);
 
+    public static string ChangeExe_Done_Format => ResourceManager.GetString(nameof(ChangeExe_Done_Format), Culture) ?? nameof(ChangeExe_Done_Format);
+
+    public static string ChangeExe_Taken_Format => ResourceManager.GetString(nameof(ChangeExe_Taken_Format), Culture) ?? nameof(ChangeExe_Taken_Format);
+
+    public static string ChangeExe_Unreadable_Format => ResourceManager.GetString(nameof(ChangeExe_Unreadable_Format), Culture) ?? nameof(ChangeExe_Unreadable_Format);
+
     public static string Chart_Axis_Count => ResourceManager.GetString(nameof(Chart_Axis_Count), Culture) ?? nameof(Chart_Axis_Count);
 
     public static string Chart_Axis_Fps => ResourceManager.GetString(nameof(Chart_Axis_Fps), Culture) ?? nameof(Chart_Axis_Fps);
@@ -1019,6 +1029,8 @@ public static class Strings
     public static string Fps_Presented_Format => ResourceManager.GetString(nameof(Fps_Presented_Format), Culture) ?? nameof(Fps_Presented_Format);
 
     public static string GameDetail_Back => ResourceManager.GetString(nameof(GameDetail_Back), Culture) ?? nameof(GameDetail_Back);
+
+    public static string GameDetail_ChangeExe => ResourceManager.GetString(nameof(GameDetail_ChangeExe), Culture) ?? nameof(GameDetail_ChangeExe);
 
     public static string GameDetail_Edit => ResourceManager.GetString(nameof(GameDetail_Edit), Culture) ?? nameof(GameDetail_Edit);
 

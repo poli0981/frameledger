@@ -2292,4 +2292,20 @@
 ログフォルダーを開きますか？</value>
     <comment>review</comment>
   </data>
+  <data name="GameDetail_ChangeExe" xml:space="preserve">
+    <value>実行ファイルを変更…</value>
+    <comment>review</comment>
+  </data>
+  <data name="ChangeExe_Done_Format" xml:space="preserve">
+    <value>{0} は {1} を指すようになりました。再度有効にして同意ダイアログを承認するまで、フックはオフです。</value>
+    <comment>review</comment>
+  </data>
+  <data name="ChangeExe_Unreadable_Format" xml:space="preserve">
+    <value>{0} を読み取れませんでした。実行ファイルは変更されていません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="ChangeExe_Taken_Format" xml:space="preserve">
+    <value>{0} はライブラリ内の別のゲーム（またはセッションを残して削除されたゲーム）に既に属しています。実行ファイルは変更されていません。</value>
+    <comment>review</comment>
+  </data>
 </root>

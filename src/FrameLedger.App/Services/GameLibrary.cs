@@ -64,6 +64,23 @@ public sealed class GameLibrary
         return await _games.EnsureAsync(fingerprint.Value, name, ct).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Points the row at another executable; null when the file cannot be read, false when another row owns that path.
+    /// The caller revokes consent over the pipe FIRST, as removal does: the table write only downgrades.
+    /// </summary>
+    public async Task<bool?> ChangeExecutableAsync(long gameId, string exePath, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(exePath);
+        string normalised = ExecutableIdentity.Normalise(exePath);
+        ExecutableFingerprint? fingerprint = ExecutableIdentity.Read(normalised);
+        if (fingerprint is null)
+        {
+            return null;
+        }
+
+        return await _games.ChangeExecutableAsync(gameId, fingerprint.Value, _clock.GetUtcNow(), ct).ConfigureAwait(false);
+    }
+
     public Task<bool> RemoveAsync(long gameId, bool keepSessions, CancellationToken ct = default) => _games.RemoveAsync(gameId, keepSessions, ct).AsTask();
 
     public Task<bool> UpdateMetadataAsync(long gameId, GameMetadata metadata, CancellationToken ct = default) => _games.UpdateMetadataAsync(gameId, metadata, ct).AsTask();

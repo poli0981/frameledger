@@ -49,6 +49,9 @@ internal sealed class FakeGameRepository : IGameRepository
         return ValueTask.FromResult(true);
     }
 
+    public ValueTask<bool> ChangeExecutableAsync(long gameId, ExecutableFingerprint fingerprint, DateTimeOffset at, CancellationToken ct = default) =>
+        ValueTask.FromResult(true);
+
     public ValueTask<int> RecordCrashAsync(long gameId, CancellationToken ct = default) => ValueTask.FromResult(++CrashCount);
 
     public ValueTask<bool> RecordInjectionAsync(long gameId, DateTimeOffset at, CancellationToken ct = default)

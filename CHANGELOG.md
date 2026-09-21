@@ -27,6 +27,32 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
+### Fixed
+
+- **The Games card's platform and engine tags were empty white boxes in the light theme.** They were
+  `ui:Badge Appearance="Secondary"`, whose WPF UI 4.3.0 trigger repaints the background only and keeps the default
+  badge's on-accent foreground: near-white text on a near-white fill. They, and the edit dialog's "Detected" marker,
+  are the App's own `TagPill` now, with the theme's secondary text; `ContrastTests` refuses a Secondary badge in App
+  XAML beside the four palette appearances it already refused (`08_UI` §Contrast).
+- **A game imported from Steam could be a game that never hooks.** Steam names no executable, so the import guessed
+  "the largest non-helper", and on GIRLS' FRONTLINE 2: EXILIUM that was the embedded browser
+  `GF2_Exilium_Data\Plugins\ZFGameBrowser.exe`, not the 675 KB Unity player `GF2_Exilium.exe`. Everything downstream is
+  keyed on the executable path, so hooking enabled on that row could never match the running game, while the same
+  game added by its exe worked. The locator now ranks by the engines' own layouts (Unity `X.exe` beside `X_Data`,
+  Unreal `*-Win64-Shipping.exe`), then by a name matching the install folder, then by size; it skips `X_Data\Plugins`
+  and redistributables folders, knows `browser`/`webview`/`subprocess`/`analyzer`/`vconsole` as helpers, and walks four
+  levels instead of three. Verified read-only over the owner's Steam library: GF2, Red Dead Redemption 2 (was the
+  Rockstar launcher installer), Counter-Strike 2 (was `vconsole2.exe`), Rune Factory, Dying Light: The Beast (was
+  nothing at all). **A row an earlier import created for the wrong executable is not rewritten**: remove it, or use
+  the new button below.
+
+### Added
+
+- **Game page: the row's executable is shown, and "Change executable…" re-points it.** The remedy for a wrong import
+  guess used to be remove-and-add. The row comes back exactly as a new game would — hooking off, no consent, pre-scan
+  not run — with consent revoked over the pipe first, as removal does; a block is never cleared by it, and a path
+  another row owns (in the library, or removed with its sessions kept) is refused.
+
 ### Changed
 
 - **Dependencies, 2026-09-21.** The test framework moves from xUnit.net v3 3.2.2 to **4.0.1**, referenced as

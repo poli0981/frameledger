@@ -49,6 +49,31 @@ public sealed class ContrastTests
     }
 
     /// <summary>
+    /// <c>Appearance="Secondary"</c> is refused too (2026-09-21). WPF UI 4.3.0's Secondary trigger repaints the badge's
+    /// background only; Foreground stays <c>BadgeForeground</c>, the DEFAULT badge's on-accent colour, which over
+    /// <c>ControlFillColorDefault</c> in the light theme is near-white on near-white: the Games card showed two empty boxes
+    /// where the platform and the engine were. A literal attribute is what this can see; the Agent pill's bound
+    /// appearance is <c>MainWindowViewModel</c>'s, and it never binds Secondary.
+    /// </summary>
+    [Fact]
+    public void NoBadgeUsesTheSecondaryAppearance()
+    {
+        List<string> offenders = [];
+        foreach ((string file, XDocument xaml) in AccessibilityTests.AppXaml())
+        {
+            foreach (XElement badge in xaml.Descendants().Where(static e => string.Equals(e.Name.LocalName, "Badge", StringComparison.Ordinal)))
+            {
+                if (string.Equals(badge.Attribute("Appearance")?.Value, "Secondary", StringComparison.Ordinal))
+                {
+                    offenders.Add($"{file}: ui:Badge Appearance=\"Secondary\"");
+                }
+            }
+        }
+
+        offenders.Should().BeEmpty("a Secondary badge keeps the default badge's foreground over a fill it was not chosen for; use Styles/FrameLedger.xaml's TagPill + TagPillText");
+    }
+
+    /// <summary>
     /// The pairs the App's own styles compose (<c>Styles/FrameLedger.xaml</c>): the hooking pill OFF (secondary text on the
     /// Pill's fill), ON (on-accent text on the accent fill, the ×FG chip's pair), and the warning qualifier (primary text
     /// on the caution fill). Translucent fills are composited over the card and the window, as they are on screen.

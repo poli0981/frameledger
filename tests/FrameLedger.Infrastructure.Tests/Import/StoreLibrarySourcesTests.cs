@@ -248,7 +248,7 @@ public sealed class StoreLibrarySourcesTests : IDisposable
     }
 
     [Fact]
-    public async Task TheLocatorTakesTheLargestNonHelperExecutableWithinThreeLevels()
+    public async Task TheLocatorDropsHelpersAndStopsAtFourLevels()
     {
         string game = Sub("Game");
         string bin = Sub("Game", "Binaries", "Win64");
@@ -256,11 +256,11 @@ public sealed class StoreLibrarySourcesTests : IDisposable
         await File.WriteAllBytesAsync(Path.Combine(game, "UnityCrashHandler64.exe"), new byte[5000], Ct);
         await File.WriteAllBytesAsync(Path.Combine(bin, "Title-Win64-Shipping.exe"), new byte[4000], Ct);
         await File.WriteAllBytesAsync(Path.Combine(bin, "EasyAntiCheat_Setup.exe"), new byte[9000], Ct);
-        string deep = Sub("Game", "a", "b", "c", "d");
+        string deep = Sub("Game", "a", "b", "c", "d", "e");
         await File.WriteAllBytesAsync(Path.Combine(deep, "TooDeep.exe"), new byte[99999], Ct);
 
         var locator = new ExecutableLocator();
-        locator.PickPrimary(game).Should().Be(Path.Combine(bin, "Title-Win64-Shipping.exe"), "helpers are dropped by name, the fourth level is not walked, the largest survivor wins");
+        locator.PickPrimary(game).Should().Be(Path.Combine(bin, "Title-Win64-Shipping.exe"), "helpers are dropped by name, the fifth level is not walked, and the Unreal shipping binary outranks the root launcher (ExecutableLocatorTests holds the ranking)");
         locator.PickPrimary(Path.Combine(_dir, "nowhere")).Should().BeNull();
         ExecutableLocator.IsHelper("vc_redist.x64").Should().BeTrue();
         ExecutableLocator.IsHelper("Cyberpunk2077").Should().BeFalse();

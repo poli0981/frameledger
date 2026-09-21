@@ -192,8 +192,18 @@ Everything else in the table is in the data and has a fixture; `rules-validate.p
 > database is copied to a temporary directory and the copy opened read-only, because the running app holds it in
 > WAL mode. One log line says what was consulted: `import: itch — butler.db read: 1 location(s), 2 cave(s), …`).
 > **Two stores do not name the game's executable** (Steam,
-> itch-by-receipt): `ExecutableLocator` walks the install three levels deep, drops the helpers by name fragment and takes
-> the largest — a *guess the review list marks as such*; GOG's `exe` and Epic's `LaunchExecutable` are the store's
+> itch-by-receipt): `ExecutableLocator` walks the install ~~three~~ **four** levels deep, drops the helpers by name
+> fragment, everything under a Unity `X_Data\Plugins` folder and every redistributables/prerequisites folder, and then
+> **ranks** what is left — ~~takes the largest~~ an executable the engine's own layout names as the game (Unity: `X.exe`
+> beside `X_Data`; Unreal: `*-Win64-Shipping.exe`) beats one named after the install folder, which beats a stranger, and
+> size decides only between equals. "The largest wins" was measured wrong 2026-09-21 on GIRLS' FRONTLINE 2: EXILIUM:
+> the import chose `GF2_Exilium_Data\Plugins\ZFGameBrowser.exe` (1,082,944 bytes) over the 675,392-byte Unity player, and
+> because the watcher, consent and the gate are keyed on the executable path, hooking enabled on that row could never
+> match the game. The same pass fixed Red Dead Redemption 2 (the 140 MB launcher installer under `Redistributables`),
+> Counter-Strike 2 (`vconsole2.exe`), Rune Factory (root bootstrapper vs the shipping binary) and Dying Light: The
+> Beast (the game sits four levels down). Still a *guess the review list marks as such*, and since the same date the
+> game page shows the row's executable and **Change executable…** re-points it (hooking off and unconsented afterwards,
+> exactly as a new game; a block is never cleared by it). GOG's `exe` and Epic's `LaunchExecutable` are the store's
 > own. The review (`ImportReviewPrompt`) ticks only what can be imported: a row already in the library or with no
 > executable on disk cannot be. Every added row lands exactly as File ▸ Add game… lands it — hooking off — and
 > the store's platform, id and version go through `IGameRepository.ApplyStoreMetadataAsync` under the same

@@ -1723,4 +1723,16 @@ Chi tiết nằm trong thư mục log:
 
 Mở thư mục log?</value>
   </data>
+  <data name="GameDetail_ChangeExe" xml:space="preserve">
+    <value>Đổi file thực thi…</value>
+  </data>
+  <data name="ChangeExe_Done_Format" xml:space="preserve">
+    <value>{0} giờ trỏ tới {1}. Hooking đang tắt cho tới khi bạn bật lại và chấp nhận hộp thoại đồng ý.</value>
+  </data>
+  <data name="ChangeExe_Unreadable_Format" xml:space="preserve">
+    <value>Không đọc được {0}; file thực thi không thay đổi.</value>
+  </data>
+  <data name="ChangeExe_Taken_Format" xml:space="preserve">
+    <value>{0} đã thuộc về một game khác trong thư viện (hoặc một game đã xoá nhưng giữ phiên); file thực thi không thay đổi.</value>
+  </data>
 </root>

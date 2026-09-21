@@ -41,6 +41,22 @@
     </Style>
 
     <!--
+        A neutral tag: the Games card's platform and engine, the edit dialog's "detected" marker. It WAS
+        `ui:Badge Appearance="Secondary"` until 2026-09-21. WPF UI 4.3.0's Secondary trigger repaints only the badge's
+        background (ControlFillColorDefault) and leaves Foreground at BadgeForeground, the on-accent colour of the DEFAULT
+        badge: in the light theme that is near-white text on a near-white fill, and the owner's screenshot showed two empty
+        white boxes beside a readable hooking pill. The hooking pill was readable because it sets its own foreground; so
+        does this. ContrastTests measures the pair in both themes and refuses Secondary badges in App XAML.
+    -->
+    <Style x:Key="TagPill" TargetType="Border" BasedOn="{StaticResource Pill}">
+        <Setter Property="Margin" Value="8,0,0,0" />
+    </Style>
+
+    <Style x:Key="TagPillText" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+    </Style>
+
+    <!--
         The Games card's hooking state (08_UI §Games). Two states, both from the theme dictionaries: ON is the accent
         pair the ×FG chip uses, OFF is the Pill's own muted fill with secondary text. It WAS `ui:Badge Appearance="Info"`
         until 2026-09-16, whose background is WPF UI's PaletteLightBlueBrush — a fixed Material colour outside the

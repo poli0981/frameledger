@@ -1728,4 +1728,16 @@ The details are in the log folder:
 
 Open the log folder?</value>
   </data>
+  <data name="GameDetail_ChangeExe" xml:space="preserve">
+    <value>Change executable…</value>
+  </data>
+  <data name="ChangeExe_Done_Format" xml:space="preserve">
+    <value>{0} now points at {1}. Hooking is off for it until you enable it again and accept the consent dialog.</value>
+  </data>
+  <data name="ChangeExe_Unreadable_Format" xml:space="preserve">
+    <value>{0} could not be read; the executable was not changed.</value>
+  </data>
+  <data name="ChangeExe_Taken_Format" xml:space="preserve">
+    <value>{0} already belongs to another game in the library (or to one removed with its sessions kept); the executable was not changed.</value>
+  </data>
 </root>

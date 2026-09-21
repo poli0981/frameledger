@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO;
 using FluentAssertions;
 using FrameLedger.App.Pages;
 using FrameLedger.App.Services;
@@ -91,8 +92,13 @@ public sealed class GameDetailViewModelTests
         public void Warn(string title, string body) => Lines.Add("warn:" + body);
     }
 
+    private sealed class FakePicker(string? path) : IGamePicker
+    {
+        public string? PickExecutable() => path;
+    }
+
     private static async Task<(GameDetailViewModel Vm, FakeAgent Agent, FakePrompt Prompt, FakeNavigator Nav, FakeStrip Strip)> BuildAsync(
-        ScratchLedger s, long gameId, RemoveGameChoice remove = RemoveGameChoice.Cancel, GameMetadata? edit = null)
+        ScratchLedger s, long gameId, RemoveGameChoice remove = RemoveGameChoice.Cancel, GameMetadata? edit = null, string? pick = null)
     {
         var agent = new FakeAgent();
         var prompt = new FakePrompt();
@@ -100,7 +106,8 @@ public sealed class GameDetailViewModelTests
         var strip = new FakeStrip();
         var vm = new GameDetailViewModel(s.Library, new GameSelection { GameId = gameId }, new HookingConsent(agent, prompt), nav,
             new FakeConfirmations(remove), new FakeEdit(edit), strip, new NoSummaries(),
-            new Charts.SessionSeriesLoader(s.Sessions), new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db), new SessionSelection());
+            new Charts.SessionSeriesLoader(s.Sessions), new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(),
+            new FakePicker(pick));
         Task pending = vm.Pending;
         await pending.ConfigureAwait(false);
         return (vm, agent, prompt, nav, strip);
@@ -302,6 +309,64 @@ public sealed class GameDetailViewModelTests
         (await s.Games.FindByIdAsync(game.Id, Ct))!.InLibrary.Should().BeFalse();
         nav.Pages.Should().Equal(nameof(GamesPage));
         strip.Lines.Should().ContainSingle().Which.Should().StartWith("info:");
+    }
+
+    [Fact]
+    public async Task ChangingTheExecutableRevokesOverThePipeFirstAndLeavesTheRowHookingOff()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Alpha");
+        await new Infrastructure.Persistence.SqliteGameConsentStore(s.Db).RecordOperatorAcknowledgementAsync(new Application.Consent.OperatorAcknowledgement
+        {
+            Fingerprint = game.Fingerprint,
+            DisclosureVersion = SafetyDisclosure.Version,
+            AcknowledgedAt = DateTimeOffset.UtcNow,
+            Provenance = Domain.Consent.ConsentProvenance.ConsentDialog,
+        }, Ct);
+        // A real file: the fingerprint is read from disk, as it is when a game is added.
+        string real = Path.Combine(Path.GetTempPath(), "fl-change-exe-" + Guid.NewGuid().ToString("N") + ".exe");
+        await File.WriteAllBytesAsync(real, new byte[123], Ct);
+        try
+        {
+            (GameDetailViewModel vm, FakeAgent agent, _, _, FakeStrip strip) = await BuildAsync(s, game.Id, pick: real);
+            vm.HookEnabled.Should().BeTrue();
+
+            vm.ChangeExecutableCommand.Execute(null);
+            Task pending = vm.Pending;
+            await pending;
+
+            agent.Sent.Should().ContainSingle().Which.Enabled.Should().BeFalse("consent is withdrawn over the pipe, never by editing the table");
+            GameRow after = (await s.Games.FindByIdAsync(game.Id, Ct))!;
+            after.Fingerprint.ExePath.Should().Be(Infrastructure.Io.ExecutableIdentity.Normalise(real));
+            after.Fingerprint.SizeBytes.Should().Be(123);
+            after.HookEnabled.Should().BeFalse();
+            vm.ExecutableText.Should().Be(after.Fingerprint.ExePath);
+            strip.Lines.Should().ContainSingle().Which.Should().StartWith("success:");
+        }
+        finally
+        {
+            File.Delete(real);
+        }
+    }
+
+    [Fact]
+    public async Task ChangingTheExecutableToAnUnreadableFileOrCancellingChangesNothing()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Alpha");
+
+        (GameDetailViewModel cancelled, _, _, _, FakeStrip quiet) = await BuildAsync(s, game.Id, pick: null);
+        cancelled.ChangeExecutableCommand.Execute(null);
+        Task pending1 = cancelled.Pending;
+        await pending1;
+        quiet.Lines.Should().BeEmpty();
+
+        (GameDetailViewModel vm, _, _, _, FakeStrip strip) = await BuildAsync(s, game.Id, pick: Path.Combine(Path.GetTempPath(), "fl-no-such-" + Guid.NewGuid().ToString("N") + ".exe"));
+        vm.ChangeExecutableCommand.Execute(null);
+        Task pending2 = vm.Pending;
+        await pending2;
+        strip.Lines.Should().ContainSingle().Which.Should().StartWith("warn:");
+        (await s.Games.FindByIdAsync(game.Id, Ct))!.Fingerprint.Should().Be(game.Fingerprint);
     }
 
     [Fact]
