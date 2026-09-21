@@ -51,6 +51,20 @@ public sealed class SessionProgressCalculatorTests
     }
 
     [Fact]
+    public void TheMachinesLatestReadingIsOnTheLiveCardAndAbsentWhenNothingReadIt()
+    {
+        List<FlFrameRecord> records = SessionFixtures.Stream(1000, FlMeasured.OutputRes | FlMeasured.PresentArgs);
+
+        SessionProgressEvent e = SessionProgressCalculator.Compute(_guid, Progress(records), SessionFixtures.QpcFrequency, 12.5, gpu: null, new SystemReading(CpuLoadPct: 41.5, RamUsedMb: 9000, CpuTempC: 66));
+        e.CpuLoadPct.Should().Be(41.5);
+        e.CpuTempC.Should().Be(66);
+
+        SessionProgressEvent none = SessionProgressCalculator.Compute(_guid, Progress(records), SessionFixtures.QpcFrequency, 12.5, gpu: null);
+        none.CpuLoadPct.Should().BeNull();
+        none.CpuTempC.Should().BeNull();
+    }
+
+    [Fact]
     public void OnlyTheLastFiveSecondsCountAndThePresentedRateStandsAloneWithItsQualifier()
     {
         // 10 s of records; the window is the last 5 s.

@@ -23,11 +23,11 @@ public sealed class LhmComputerAdapter : ILhmComputer
 {
     private readonly Computer _computer;
 
-    public LhmComputerAdapter(bool enableCpuAndMemory)
+    public LhmComputerAdapter(bool enableCpuAndMemory, bool enableGpu = true)
     {
         _computer = new Computer
         {
-            IsGpuEnabled = true,
+            IsGpuEnabled = enableGpu,
             IsCpuEnabled = enableCpuAndMemory,
             IsMemoryEnabled = enableCpuAndMemory,
         };

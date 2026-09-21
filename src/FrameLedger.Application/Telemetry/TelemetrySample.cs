@@ -19,5 +19,8 @@ namespace FrameLedger.Application.Telemetry;
 /// last published — and the gap between them is the layer's own cadence, at most one interval.
 /// </para>
 /// </remarks>
+/// <param name="QpcTicks">The raw performance counter at the read.</param>
+/// <param name="Sample">The GPU layers' composed sample; a placeholder with <see cref="TelemetryLayer.None"/> and no field on a tick only the system source answered.</param>
+/// <param name="System">The machine beside the GPU on the same tick (2026-09-21): CPU busy %, memory in use, CPU temperature where readable. Empty when no system source is composed, which is every sample recorded before that date.</param>
 [StructLayout(LayoutKind.Auto)]
-public readonly record struct TelemetrySample(long QpcTicks, GpuSample Sample);
+public readonly record struct TelemetrySample(long QpcTicks, GpuSample Sample, SystemReading System = default);

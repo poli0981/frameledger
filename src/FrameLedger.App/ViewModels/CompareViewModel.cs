@@ -187,6 +187,9 @@ public sealed partial class CompareViewModel : ObservableObject
         Rows.Add(Row(Strings.Compare_Metric_P01Low, rows, static r => r.Tier == Domain.Sessions.CaptureTier.Hooked ? r.P01LowFps : null, Formats.Fps, higherIsBetter: true));
         Rows.Add(Row(Strings.Compare_Metric_StutterPct, rows, static r => r.Tier == Domain.Sessions.CaptureTier.Hooked ? r.StutterTimePct : null, static v => v is double d ? d.ToString("0.0", CultureInfo.CurrentCulture) + "%" : Strings.Common_NotAvailable, higherIsBetter: false));
         Rows.Add(Row(Strings.Compare_Metric_MaxGpuTemp, rows, static r => r.MaxGpuTemp, Formats.Temperature, higherIsBetter: false));
+        Rows.Add(Row(Strings.Compare_Metric_AvgGpuLoad, rows, static r => r.AvgGpuLoad, Formats.Percent, higherIsBetter: true));
+        Rows.Add(Row(Strings.Compare_Metric_AvgCpuLoad, rows, static r => r.AvgCpuLoad, Formats.Percent, higherIsBetter: false));
+        Rows.Add(Row(Strings.Compare_Metric_MaxCpuTemp, rows, static r => r.MaxCpuTemp, Formats.Temperature, higherIsBetter: false));
         Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Duration, [.. rows.Select(static r => new CompareCell(Formats.Duration(r.DurationSeconds), false))]));
     }
 

@@ -2312,4 +2312,116 @@
     <value>{0}（ドライバー報告）</value>
     <comment>review</comment>
   </data>
+  <data name="Trend_Metric_AvgGpuLoad" xml:space="preserve">
+    <value>平均GPU負荷 %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_AvgGpuPower" xml:space="preserve">
+    <value>平均GPU電力 W</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_MaxVramProcess" xml:space="preserve">
+    <value>最大VRAM（ゲーム）MB</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_AvgCpuLoad" xml:space="preserve">
+    <value>平均CPU負荷 %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_MaxCpuTemp" xml:space="preserve">
+    <value>最大CPU °C</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_AvgRam" xml:space="preserve">
+    <value>平均メモリ使用量 MB</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_FgFactor" xml:space="preserve">
+    <value>FG倍率 ×</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_CpuTemp" xml:space="preserve">
+    <value>CPU °C</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_CpuLoad" xml:space="preserve">
+    <value>CPU負荷 %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_Ram" xml:space="preserve">
+    <value>メモリ使用量（システム）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_AvgGpuLoad" xml:space="preserve">
+    <value>平均GPU負荷</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_AvgCpuLoad" xml:space="preserve">
+    <value>平均CPU負荷</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_MaxCpuTemp" xml:space="preserve">
+    <value>最大CPU温度</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Gpu" xml:space="preserve">
+    <value>GPU</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Cpu" xml:space="preserve">
+    <value>CPU</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_LoadTemp_Format" xml:space="preserve">
+    <value>平均 {0} · 最大 {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_System_Header" xml:space="preserve">
+    <value>システム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_System_Note" xml:space="preserve">
+    <value>FrameLedger が各セッションとともに記録するこの PC の情報です。このページを開いたときに読み取られ、どこにも送信されません。CPU 温度は、Agent を管理者として実行し PawnIO をインストールしている場合のみ取得でき、それ以外は N/A です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_System_Copy" xml:space="preserve">
+    <value>コピー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_System_Copied" xml:space="preserve">
+    <value>システム情報をクリップボードにコピーしました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="System_Cpu" xml:space="preserve">
+    <value>プロセッサ</value>
+    <comment>review</comment>
+  </data>
+  <data name="System_Gpu" xml:space="preserve">
+    <value>グラフィックスカード</value>
+    <comment>review</comment>
+  </data>
+  <data name="System_GpuDriver" xml:space="preserve">
+    <value>グラフィックスドライバー</value>
+    <comment>review</comment>
+  </data>
+  <data name="System_Ram" xml:space="preserve">
+    <value>メモリ</value>
+    <comment>review</comment>
+  </data>
+  <data name="System_Ram_Format" xml:space="preserve">
+    <value>{0:0.#} GB</value>
+    <comment>review</comment>
+  </data>
+  <data name="System_Os" xml:space="preserve">
+    <value>Windows ビルド</value>
+    <comment>review</comment>
+  </data>
+  <data name="System_Display" xml:space="preserve">
+    <value>プライマリディスプレイ</value>
+    <comment>review</comment>
+  </data>
+  <data name="System_Display_Format" xml:space="preserve">
+    <value>{0} @ {1:0.#} Hz</value>
+    <comment>review</comment>
+  </data>
 </root>

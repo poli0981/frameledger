@@ -76,6 +76,46 @@ public sealed class TrendSeriesBuilderTests
         TrendSeriesBuilder.Points([generated, none, presented], TrendMetric.Displayed, true).Should().ContainSingle();
     }
 
+    /// <summary>
+    /// 2026-09-21: one game's sessions over time beyond the frame rate — the machine, and the ×FG factor. A column nobody
+    /// measured is no point (never a zero on the chart), and a factor that is its session's STEADY STATE describes part of
+    /// the session (CLAUDE.md rule 6), so it is left out by default and drawn marked when the partial ones are included.
+    /// </summary>
+    [Fact]
+    public void TheMachineMetricsAreTheRowsColumnsAndASteadyStateFactorIsAPartialPoint()
+    {
+        SessionRow measured = Row(1, 1, fgMode: "dlssg", native: 62, displayed: 118, factor: 1.9) with
+        {
+            AvgGpuLoad = 97,
+            AvgGpuPowerW = 310,
+            VramProcMaxMb = 9000,
+            AvgCpuLoad = 41.5,
+            MaxCpuTemp = 78,
+            AvgRamMb = 18000,
+        };
+        SessionRow steady = Row(2, 1, fgMode: "dlssg", native: 70, displayed: 280, factor: 4) with { FgFactorScope = "steady", FgSteadyShare = 0.75, AvgCpuLoad = 50 };
+        SessionRow before = Row(3, 1);
+
+        TrendSeriesBuilder.ValueOf(measured, TrendMetric.AvgGpuLoad).Should().Be(97);
+        TrendSeriesBuilder.ValueOf(measured, TrendMetric.AvgGpuPower).Should().Be(310);
+        TrendSeriesBuilder.ValueOf(measured, TrendMetric.MaxVramProcess).Should().Be(9000);
+        TrendSeriesBuilder.ValueOf(measured, TrendMetric.AvgCpuLoad).Should().Be(41.5);
+        TrendSeriesBuilder.ValueOf(measured, TrendMetric.MaxCpuTemp).Should().Be(78);
+        TrendSeriesBuilder.ValueOf(measured, TrendMetric.AvgRam).Should().Be(18000);
+        TrendSeriesBuilder.ValueOf(measured, TrendMetric.FgFactor).Should().Be(1.9);
+        TrendSeriesBuilder.ValueOf(before, TrendMetric.AvgCpuLoad).Should().BeNull("recorded before anything read the CPU");
+        TrendSeriesBuilder.ValueOf(before, TrendMetric.FgFactor).Should().BeNull("a measured none has no factor to plot");
+
+        SessionRow[] rows = [measured, steady, before];
+        TrendSeriesBuilder.Points(rows, TrendMetric.AvgCpuLoad, includeMidSessionChanges: false).Select(static p => p.Value).Should().Equal([41.5, 50], "the steady state is about the FACTOR; the machine's averages are the whole session's");
+        TrendSeriesBuilder.Points(rows, TrendMetric.FgFactor, includeMidSessionChanges: false).Select(static p => p.Value).Should().Equal(1.9);
+        TrendSeriesBuilder.ExcludedCount(rows, TrendMetric.FgFactor).Should().Be(1);
+        TrendSeriesBuilder.ExcludedCount(rows, TrendMetric.AvgCpuLoad).Should().Be(0);
+        IReadOnlyList<TrendPoint> all = TrendSeriesBuilder.Points(rows, TrendMetric.FgFactor, includeMidSessionChanges: true);
+        all.Select(static p => p.Value).Should().Equal(1.9, 4);
+        all[1].SettingsChangedMidSession.Should().BeTrue("drawn marked: it covers a share of its session, never the session");
+    }
+
     [Fact]
     public void MarkersAppearWhereConsecutiveSnapshotsDiffer()
     {

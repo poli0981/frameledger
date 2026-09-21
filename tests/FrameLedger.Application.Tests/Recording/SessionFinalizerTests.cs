@@ -99,6 +99,21 @@ public sealed class SessionFinalizerTests
     }
 
     [Fact]
+    public void TheMachinesReadingsBecomeTheCpuAndMemorySeriesTheSchemaAlwaysAllowed()
+    {
+        (SessionFinalizer finalizer, _) = Make();
+
+        FinalizedSession built = finalizer.Build(new FinalizeInput { Skeleton = SessionFixtures.Skeleton(tier: CaptureTier.NotHooked), Sensors = SessionFixtures.SensorsWithSystem(3) });
+
+        built.Sensors.Select(s => s.Series).Should().Equal(["t_ms", "gpu_temp", "gpu_load", "vram_adapter", "cpu_load", "ram_mb"], "no tick carried a CPU temperature, so there is no cpu_temp series - absent, not a row of -1");
+        RawSeriesCodec.Floats(built.Sensors[4].Data).Should().Equal(SessionFinalizer.SensorMissing, 21f, 22f);
+        RawSeriesCodec.Floats(built.Sensors[5].Data).Should().Equal(16000f, 16000f, 16000f);
+
+        FinalizedSession hot = finalizer.Build(new FinalizeInput { Skeleton = SessionFixtures.Skeleton(tier: CaptureTier.NotHooked), Sensors = SessionFixtures.SensorsWithSystem(3, cpuTemp: 70) });
+        hot.Sensors.Select(s => s.Series).Should().Contain("cpu_temp");
+    }
+
+    [Fact]
     public async Task TooShortIsDiscardedAndNothingIsWritten()
     {
         (SessionFinalizer finalizer, FakeSessionRepository repo) = Make();

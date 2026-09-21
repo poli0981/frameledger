@@ -40,6 +40,10 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
     [ObservableProperty]
     private string _line = string.Empty;
 
+    /// <summary>The session's hardware snapshot in one line (2026-09-21): it was loaded for the export and shown nowhere.</summary>
+    [ObservableProperty]
+    private string _hardwareLine = string.Empty;
+
     [ObservableProperty]
     private FpsReadoutModel _readout = FpsReadoutModel.Unavailable;
 
@@ -278,6 +282,9 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         Line = string.Format(CultureInfo.CurrentCulture, Strings.Summary_Line_Format,
             IsHooked ? Formats.Api(row.Api) : Strings.Tier_NotHooked, row.PresentMode ?? Strings.Common_NotAvailable,
             IsHooked ? Formats.Upscaler(row.Upscaler, row.UpscalerQuality, row.UpscalerDriverReported) : Strings.Common_NotAvailable, Formats.Resolution(row.RenderW, row.RenderH, row.OutputW, row.OutputH));
+        HardwareLine = _snapshot is null
+            ? string.Empty
+            : string.Join(" · ", SystemInfoViewModel.Describe(_snapshot).Where(static l => !string.Equals(l.Value, Strings.Common_NotAvailable, StringComparison.Ordinal)).Select(static l => l.Value));
         Tags = _annotation is null ? string.Empty : string.Join(", ", _annotation.Tags);
         Notes = _annotation?.Notes ?? string.Empty;
         HasDisplayed = Series?.HasGenerated == true;
@@ -301,6 +308,10 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         Stats.Add(new StatCardModel(Strings.Summary_Stat_Stutter, IsHooked && row.StutterCount is long count && row.StutterTimePct is double pct
             ? string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_Stutter_Format, count, pct) : Strings.Common_NotAvailable));
         Stats.Add(new StatCardModel(Strings.Summary_Stat_Duration, Formats.Duration(row.DurationSeconds)));
+
+        // The machine, both tiers: telemetry is what a not-hooked session still has. Load is the average, temperature the peak.
+        Stats.Add(new StatCardModel(Strings.Summary_Stat_Gpu, string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_LoadTemp_Format, Formats.Percent(row.AvgGpuLoad), Formats.Temperature(row.MaxGpuTemp))));
+        Stats.Add(new StatCardModel(Strings.Summary_Stat_Cpu, string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_LoadTemp_Format, Formats.Percent(row.AvgCpuLoad), Formats.Temperature(row.MaxCpuTemp))));
     }
 
     private void PresentChips()

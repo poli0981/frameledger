@@ -155,7 +155,17 @@ public partial class App : System.Windows.Application
                 Log.Warning(ex, "diag: the ledger could not be opened; settings are reported at their defaults");
             }
 
-            string report = DiagReport.Build(UiIdentity.Version, UiPaths.DataDirectory, UiPaths.Logs, schema, values, new AgentLauncher().CanLaunch, now);
+            Application.Persistence.HardwareSnapshot? hardware = null;
+            try
+            {
+                hardware = new Infrastructure.Recording.HardwareSnapshotSource(new Infrastructure.Telemetry.DxgiAdapters()).Take();
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+                Log.Warning(ex, "diag: the hardware could not be read; its lines are n/a");
+            }
+
+            string report = DiagReport.Build(UiIdentity.Version, UiPaths.DataDirectory, UiPaths.Logs, schema, values, new AgentLauncher().CanLaunch, now, hardware);
             string path = DiagReport.Write(UiPaths.Logs, report, now);
             await Console.Out.WriteLineAsync(string.Format(CultureInfo.CurrentCulture, Strings.Diag_Written_Format, path)).ConfigureAwait(true);
             Log.Information("ui: --diag written to {Path}", path);
@@ -297,6 +307,9 @@ public partial class App : System.Windows.Application
 
         // The session summary (P3 PR-6): the series loader over the ports, the exports' file picker, the window opener.
         services.AddSingleton<IHardwareSnapshotRepository, SqliteHardwareSnapshotRepository>();
+        // Settings > System (2026-09-21): the same source the Agent stamps every session with, read for this PC now.
+        services.AddSingleton<Application.Recording.IHardwareSnapshotSource>(static _ => new Infrastructure.Recording.HardwareSnapshotSource(new Infrastructure.Telemetry.DxgiAdapters()));
+        services.AddTransient<SystemInfoViewModel>();
         services.AddSingleton<Charts.SessionSeriesLoader>();
         services.AddSingleton<IFileSaver, FileSaver>();
         services.AddSingleton<ISessionSummaryOpener, SessionSummaryOpener>();

@@ -183,8 +183,18 @@ public static class SessionAggregator
         SeriesAggregates power = SeriesAggregates.Of(s.Select(static x => x.PowerW));
         SeriesAggregates adapter = SeriesAggregates.Of(s.Select(static x => x.VramAdapterMb));
         int throttleSamples = s.Count(static x => x.ThrottleReasons is not null);
+
+        // The machine beside the GPU: these four columns are schema 0001's and had no producer until 2026-09-21. A
+        // session recorded before then, or one whose ticks never carried a reading, keeps its nulls.
+        SeriesAggregates cpuLoad = SeriesAggregates.Of(c.Input.Sensors.Select(static t => t.System.CpuLoadPct));
+        SeriesAggregates cpuTemp = SeriesAggregates.Of(c.Input.Sensors.Select(static t => t.System.CpuTempC));
+        SeriesAggregates ram = SeriesAggregates.Of(c.Input.Sensors.Select(static t => t.System.RamUsedMb));
         return row with
         {
+            AvgCpuLoad = cpuLoad.Average,
+            AvgCpuTemp = cpuTemp.Average,
+            MaxCpuTemp = cpuTemp.Max,
+            AvgRamMb = ram.Average,
             AvgGpuTemp = temp.Average,
             MaxGpuTemp = temp.Max,
             MaxGpuHotspot = hotspot.Max,

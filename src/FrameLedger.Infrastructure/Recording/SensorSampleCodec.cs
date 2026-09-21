@@ -10,10 +10,12 @@ namespace FrameLedger.Infrastructure.Recording;
 /// </summary>
 internal static class SensorSampleCodec
 {
-    private const int _fieldCount = 12;
+    // 12 GPU fields + 3 system fields (2026-09-21) in one 16-bit mask. A .partial written before that date has bits
+    // 12..14 clear and reads back with an empty SystemReading, which is what it recorded.
+    private const int _fieldCount = 15;
     private const int _fixedBytes = 8 + 8 + 1 + 2;
 
-    public static int SizeOf(in TelemetrySample sample) => _fixedBytes + 8 * PresentCount(sample.Sample);
+    public static int SizeOf(in TelemetrySample sample) => _fixedBytes + 8 * PresentCount(in sample);
 
     public static int Write(Span<byte> into, in TelemetrySample sample)
     {
@@ -23,7 +25,7 @@ internal static class SensorSampleCodec
         into[16] = (byte)s.Layer;
         ushort mask = 0;
         int at = _fixedBytes;
-        double?[] fields = Fields(s);
+        double?[] fields = Fields(in sample);
         for (int i = 0; i < _fieldCount; i++)
         {
             if (fields[i] is { } v)
@@ -84,15 +86,20 @@ internal static class SensorSampleCodec
             ThrottleReasons = fields[9] is { } t ? (uint)t : null,
             PcieGen = fields[10] is { } g ? (int)g : null,
             PcieWidth = fields[11] is { } w ? (int)w : null,
-        });
+        }, new SystemReading(fields[12], fields[13], fields[14]));
         return at;
     }
 
-    private static int PresentCount(GpuSample s) => Fields(s).Count(static f => f is not null);
+    private static int PresentCount(in TelemetrySample sample) => Fields(in sample).Count(static f => f is not null);
 
-    private static double?[] Fields(GpuSample s) =>
-    [
-        s.TempCoreC, s.TempHotspotC, s.TempMemoryC, s.LoadPct, s.VramAdapterMb, s.CoreClockMhz, s.MemClockMhz,
-        s.PowerW, s.FanRpm, s.ThrottleReasons, s.PcieGen, s.PcieWidth,
-    ];
+    private static double?[] Fields(in TelemetrySample sample)
+    {
+        GpuSample s = sample.Sample;
+        return
+        [
+            s.TempCoreC, s.TempHotspotC, s.TempMemoryC, s.LoadPct, s.VramAdapterMb, s.CoreClockMhz, s.MemClockMhz,
+            s.PowerW, s.FanRpm, s.ThrottleReasons, s.PcieGen, s.PcieWidth,
+            sample.System.CpuLoadPct, sample.System.RamUsedMb, sample.System.CpuTempC,
+        ];
+    }
 }

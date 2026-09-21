@@ -41,6 +41,61 @@ public sealed class TelemetryPollerTests
         poller.Drain(drained).Should().Be(0);
     }
 
+    private sealed class FakeSystem(SystemReading? reading) : ISystemTelemetrySource
+    {
+        public bool Disposed { get; private set; }
+
+        public bool CpuTemperatureAvailable => reading?.CpuTempC is not null;
+
+        public bool TryRead(out SystemReading read)
+        {
+            read = reading ?? default;
+            return reading is not null;
+        }
+
+        public void Dispose() => Disposed = true;
+    }
+
+    [Fact]
+    public void TheMachinesReadingRidesTheSameTickAndATickOnlyItAnsweredIsStillQueued()
+    {
+        var clock = new ManualTimeProvider { Ticks = 7 };
+        using var layer = new FakeLayer(TelemetryLayer.Lhm);
+        layer.Publish(layer.Sample(_t0, load: 50));
+        using var system = new FakeSystem(new SystemReading(CpuLoadPct: 37.5, RamUsedMb: 9000, CpuTempC: null));
+        var poller = new TelemetryPoller(layer, new TelemetryPollerOptions(), clock, ownsSource: true, system);
+
+        poller.PollOnce();
+        layer.Publish(null);
+        poller.PollOnce();
+
+        var drained = new List<TelemetrySample>();
+        poller.Drain(drained).Should().Be(2);
+        drained[0].Sample.LoadPct.Should().Be(50);
+        drained[0].System.CpuLoadPct.Should().Be(37.5);
+        drained[1].Sample.Layer.Should().Be(TelemetryLayer.None, "the GPU layers said nothing on this tick; the placeholder names no layer and no field");
+        drained[1].Sample.PresentFields.Should().Be(GpuCapabilities.None);
+        drained[1].System.RamUsedMb.Should().Be(9000);
+        poller.CpuTemperatureAvailable.Should().BeFalse();
+
+        poller.Dispose();
+        system.Disposed.Should().BeTrue("the poller owns the system source with the layers");
+    }
+
+    [Fact]
+    public void WithNoSystemSourceEverySampleCarriesAnEmptyReading()
+    {
+        using var layer = new FakeLayer(TelemetryLayer.Lhm);
+        layer.Publish(layer.Sample(_t0, load: 50));
+        using var poller = new TelemetryPoller(layer, new TelemetryPollerOptions(), new ManualTimeProvider());
+
+        poller.PollOnce();
+
+        var drained = new List<TelemetrySample>();
+        poller.Drain(drained);
+        drained.Should().ContainSingle().Which.System.IsEmpty.Should().BeTrue();
+    }
+
     [Fact]
     public void ALayerWithNothingToSayQueuesNothing()
     {

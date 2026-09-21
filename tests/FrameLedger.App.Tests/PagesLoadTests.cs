@@ -112,6 +112,16 @@ public sealed class PagesLoadTests
         public string? PickSavePath(string filter, string suggestedName) => null;
     }
 
+    private sealed class FixedHardware : Application.Recording.IHardwareSnapshotSource
+    {
+        public HardwareSnapshot Take() => new() { CpuName = "Test CPU", GpuName = "Test GPU", GpuDriver = "1.2.3", RamGb = 32, OsBuild = "26100", DisplayRes = "2560x1440", DisplayHz = 165 };
+    }
+
+    private sealed class NoClipboard : IClipboard
+    {
+        public bool SetText(string text) => true;
+    }
+
     private sealed class NoPicker : IGamePicker
     {
         public string? PickExecutable() => null;
@@ -375,7 +385,7 @@ public sealed class PagesLoadTests
             Render(new GamesPage(games));
             Render(new GameDetailPage(detail));
             Render(new ComparePage(compare));
-            Render(new SettingsPage(settings));
+            Render(new SettingsPage(settings, new SystemInfoViewModel(new FixedHardware(), new NoClipboard(), strip)));
             Render(new LogsPage(logs));
             RenderFirstRun(s);
             RenderControls(detail);

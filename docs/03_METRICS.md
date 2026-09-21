@@ -668,7 +668,9 @@ Per session over 1 Hz samples: `avg` (mean of non-null), `max`. Sensor timeline 
 | Per-process VRAM | exact | not available |
 | PC latency | as reported by Reflex | not available |
 | GPU temp / load / power | vendor API accuracy, ±1 s sampling | same |
-| CPU temperature | sensor-inherent ±1–2 °C, needs LHM + PawnIO + elevation | same |
+| CPU temperature | sensor-inherent ±1–2 °C, needs LHM + PawnIO + elevation. **Read since 2026-09-21** (`Telemetry.LhmCpuTemperatureReader`: the package sensor, else the hottest core) and **unmeasured on real hardware** — no elevated run with PawnIO has been taken (`20_OPEN_QUESTIONS` §CPU) | same |
+| CPU load | **time busy over elapsed, every logical processor** (`GetSystemTimes`, 1 Hz, unprivileged; since 2026-09-21). Not Task Manager's "utility", which is frequency-scaled and exceeds 100 under turbo — the two are different numbers and this one is stated as what it is. Null on a session's first tick (no interval yet), never 0 | same |
+| System memory in use | physical memory in use machine-wide, MiB (`GlobalMemoryStatusEx`, 1 Hz, unprivileged; since 2026-09-21). The machine's, not the game's | same |
 
 > **The Tier-2 column is now "not available" for everything except sensors, and that is the whole change.** It previously claimed frame times within 0.1% without injection. Nothing produces them.
 

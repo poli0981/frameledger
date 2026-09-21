@@ -231,6 +231,34 @@ public sealed class SessionAggregatorTests
         row.ThrottlePct.Should().BeNull("no sample carried throttle reasons (L3 only)");
     }
 
+    /// <summary>
+    /// <c>avg_cpu_load</c>, <c>avg_cpu_temp</c>, <c>max_cpu_temp</c> and <c>avg_ram_mb</c> are schema 0001's and had no
+    /// producer until 2026-09-21. A tick without a reading is left out of the average, never counted as zero; a session
+    /// with no system reading at all keeps four nulls.
+    /// </summary>
+    [Fact]
+    public void TheMachinesReadingsBecomeTheFourCpuAndMemoryColumnsAndAbsenceStaysNull()
+    {
+        List<FlFrameRecord> records = SessionFixtures.Stream(600, FlMeasured.OutputRes | FlMeasured.PresentArgs);
+
+        SessionRow unelevated = SessionAggregator.Aggregate(SessionFixtures.Skeleton(),
+            SessionFixtures.Hooked(records) with { Sensors = SessionFixtures.SensorsWithSystem(5) }).Row;
+        unelevated.AvgCpuLoad.Should().BeApproximately(22.5, 1e-9, "21..24 over the four ticks that had an interval; the first tick has none and is not a zero");
+        unelevated.AvgRamMb.Should().Be(16000);
+        unelevated.AvgCpuTemp.Should().BeNull("no unprivileged API reads a CPU's thermal sensor");
+        unelevated.MaxCpuTemp.Should().BeNull();
+        unelevated.AvgGpuLoad.Should().Be(50, "the GPU half is untouched");
+
+        SessionRow elevated = SessionAggregator.Aggregate(SessionFixtures.Skeleton(),
+            SessionFixtures.Hooked(records) with { Sensors = SessionFixtures.SensorsWithSystem(5, cpuTemp: 60) }).Row;
+        elevated.AvgCpuTemp.Should().Be(62);
+        elevated.MaxCpuTemp.Should().Be(64);
+
+        SessionRow before = SessionAggregator.Aggregate(SessionFixtures.Skeleton(),
+            SessionFixtures.Hooked(records) with { Sensors = SessionFixtures.Sensors(5) }).Row;
+        (before.AvgCpuLoad, before.AvgCpuTemp, before.MaxCpuTemp, before.AvgRamMb).Should().Be((null, null, null, null));
+    }
+
     [Fact]
     public void AGapExcludesTheIntervalIntoTheRecordFromTheStatistics()
     {

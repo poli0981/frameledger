@@ -117,6 +117,7 @@ internal sealed class AgentRecording
         LhmTelemetrySource? l2 = null;
         NvapiTelemetrySource? l3 = null;
         CompositeTelemetrySource? composite = null;
+        SystemTelemetrySource? system = null;
         try
         {
             pdh = new PdhAdapterMemoryCounter();
@@ -131,8 +132,12 @@ internal sealed class AgentRecording
             l1 = null;
             l2 = null;
             l3 = null;
-            var poller = new TelemetryPoller(composite, new TelemetryPollerOptions { Interval = interval }, TimeProvider.System, ownsSource: true);
+            // The machine beside the GPU (2026-09-21): CPU busy time and memory unprivileged, the CPU temperature only
+            // where this process is elevated and PawnIO is installed. The poller owns it with the layers.
+            system = SystemTelemetrySource.Create();
+            var poller = new TelemetryPoller(composite, new TelemetryPollerOptions { Interval = interval }, TimeProvider.System, ownsSource: true, system);
             composite = null;
+            system = null;
             return poller;
         }
         finally
@@ -142,6 +147,7 @@ internal sealed class AgentRecording
             l2?.Dispose();
             l3?.Dispose();
             composite?.Dispose();
+            system?.Dispose();
         }
     }
 

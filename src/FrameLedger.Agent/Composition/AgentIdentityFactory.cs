@@ -21,8 +21,9 @@ internal static class AgentIdentityFactory
             // The layer reaches a launched process through VK_ADD_IMPLICIT_LAYER_PATH; the HKCU registration is the
             // repair tool --register-vklayer writes (P3 PR-8b), read here as it stands at this process's start.
             VulkanLayerRegistered: new VkLayerRegistration().IsRegistered(Path.Combine(vkLayerDirectory, VkLayerLaunchEnvironment.ManifestFileName)),
-            // AgentRecording.Poller composes LhmComputerAdapter(enableCpuAndMemory: false): no CPU sensor unelevated.
-            CpuTempAvailable: false,
+            // The same two conditions SystemTelemetrySource.Create opens the CPU reader under (2026-09-21): elevated AND
+            // PawnIO installed. It was a constant false while nothing read a CPU sensor at all.
+            CpuTempAvailable: Infrastructure.Telemetry.LhmEnvironment.IsElevated && Infrastructure.Telemetry.LhmEnvironment.IsPawnIoInstalled == true,
             // D14: the FR-2.1 text this build stamps against; the App compares it with its own before showing the dialog.
             DisclosureVersion: SafetyDisclosure.Version);
     }

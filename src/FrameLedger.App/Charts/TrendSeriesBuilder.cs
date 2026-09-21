@@ -20,7 +20,8 @@ public static class TrendSeriesBuilder
         var points = new List<TrendPoint>();
         foreach (SessionRow row in rows.Where(static r => r.Tier == CaptureTier.Hooked).OrderBy(static r => r.StartedAt))
         {
-            if (row.SettingsChangedMidSession && !includeMidSessionChanges)
+            bool partial = IsPartial(row, metric);
+            if (partial && !includeMidSessionChanges)
             {
                 continue;
             }
@@ -28,7 +29,7 @@ public static class TrendSeriesBuilder
             double? value = ValueOf(row, metric);
             if (value is double v)
             {
-                points.Add(new TrendPoint(row.StartedAt, v, row.Id, row.SettingsChangedMidSession));
+                points.Add(new TrendPoint(row.StartedAt, v, row.Id, partial));
             }
         }
 
@@ -36,10 +37,23 @@ public static class TrendSeriesBuilder
     }
 
     /// <summary>How many sessions FR-6.4 leaves out at the default setting.</summary>
-    public static int ExcludedCount(IReadOnlyList<SessionRow> rows)
+    public static int ExcludedCount(IReadOnlyList<SessionRow> rows) => ExcludedCount(rows, TrendMetric.Average);
+
+    public static int ExcludedCount(IReadOnlyList<SessionRow> rows, TrendMetric metric)
     {
         ArgumentNullException.ThrowIfNull(rows);
-        return rows.Count(static r => r.Tier == CaptureTier.Hooked && r.SettingsChangedMidSession);
+        return rows.Count(r => r.Tier == CaptureTier.Hooked && IsPartial(r, metric));
+    }
+
+    /// <summary>
+    /// A point that describes only part of its session: the settings changed mid-session (FR-6.4), or — for the factor
+    /// — the number is the steady state's and covers a share of the session (rule 6: never shown as the session's).
+    /// </summary>
+    public static bool IsPartial(SessionRow row, TrendMetric metric)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        return row.SettingsChangedMidSession
+            || (metric == TrendMetric.FgFactor && string.Equals(row.FgFactorScope, "steady", StringComparison.Ordinal));
     }
 
     /// <summary>The metric's value on a row, or null when that row cannot have it (FR-4.9: never an estimate).</summary>
@@ -59,6 +73,13 @@ public static class TrendSeriesBuilder
             TrendMetric.P1Low => row.P1LowFps,
             TrendMetric.P01Low => row.P01LowFps,
             TrendMetric.MaxGpuTemp => row.MaxGpuTemp,
+            TrendMetric.AvgGpuLoad => row.AvgGpuLoad,
+            TrendMetric.AvgGpuPower => row.AvgGpuPowerW,
+            TrendMetric.MaxVramProcess => row.VramProcMaxMb,
+            TrendMetric.AvgCpuLoad => row.AvgCpuLoad,
+            TrendMetric.MaxCpuTemp => row.MaxCpuTemp,
+            TrendMetric.AvgRam => row.AvgRamMb,
+            TrendMetric.FgFactor => readout.Kind == FpsReadoutKind.Generated ? readout.Factor : null,
             _ => null,
         };
     }
