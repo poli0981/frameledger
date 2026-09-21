@@ -182,6 +182,20 @@ enum class Reason : std::uint8_t {
     // guard never produces it; it is here for the reason the consent refusals are.
     kKillSwitchEngaged,
 
+    // THE ONE VALUE THAT IS NEITHER AN ALLOW NOR A REFUSAL (owner decision 2026-09-21, 19_SAFETY §The user's bypass).
+    //
+    // The guard ran EVERY check, one of them refused on the guard's own JUDGEMENT (see IsGuardJudgement below), the
+    // caller had come through an *Acknowledged entry point -- which the Agent reaches only for a game whose owner
+    // accepted the bypass disclosure -- and the Overlay was then injected anyway, by the same LoadLibraryW primitive,
+    // under its real name. `family` and `signal` still carry what the guard FOUND, so the session records which
+    // anti-cheat it ran beside.
+    //
+    // It is deliberately not kAllow: Allowed() stays false, so every caller written before this value existed keeps
+    // treating it as "do not proceed", and the one caller that may proceed has to say so by name. Nothing about HOW
+    // the injection happens changes -- CLAUDE.md rule 3 is untouched, and tools/chokepoint-check.ps1 still finds the
+    // primitive in exactly one file.
+    kAllowedUnderUserBypass,
+
     // NOT A REASON. The count, so appending above it updates the exported
     // FlGuardReasonCount by construction.
     //
@@ -457,7 +471,33 @@ struct Sources {
 // only way to act on a pass is to call GuardedInject, which re-collects.
 [[nodiscard]] Verdict Evaluate(std::uint32_t targetPid) noexcept;
 
+// The user's bypass (owner decision 2026-09-21). Identical to the two entry points above in everything but one
+// branch: when the full evaluation refuses with a reason IsGuardJudgement() accepts, the injection proceeds and the
+// verdict comes back kAllowedUnderUserBypass carrying the refusal's family and signal. Every other outcome is
+// byte-for-byte the unacknowledged one: a clean target is kAllow, a foreign payload is still kPayloadNotOurs, a
+// 32-bit target is still kTargetIsWow64, a Vulkan target is still left to the layer (and a Vulkan target the guard
+// refuses STAYS refused -- the layer's own in-process guard is not something this path may talk past).
+//
+// "Acknowledged" is the caller's statement that a human accepted the bypass disclosure for THIS game; the guard
+// cannot verify that and does not pretend to. What it guarantees is narrower and checkable: the checks still ran,
+// the finding is still reported, and the payload and the primitive are the same.
+[[nodiscard]] Verdict GuardedInjectAcknowledged(std::uint32_t targetPid, const wchar_t* dllPath) noexcept;
+
+[[nodiscard]] Verdict GuardedInjectWhenReadyAcknowledged(std::uint32_t targetPid, const wchar_t* dllPath,
+                                                         std::uint32_t timeoutMs) noexcept;
+
+// True for the refusals that are the guard's JUDGEMENT about anti-cheat -- a blocklist match, a suspicious module, or
+// a scan that could not look (which the guard treats as a finding) -- and the rules data being unusable. False for
+// everything that is a fact about the payload, the target's bitness, the launch, or the injection itself: a bypass
+// is the user overruling a judgement, never a way to load a foreign DLL or to call a failed injection a success.
+[[nodiscard]] bool IsGuardJudgement(Reason r) noexcept;
+
 #ifdef FL_GUARD_TESTABLE
+[[nodiscard]] Verdict GuardedInjectAcknowledgedWithSources(std::uint32_t targetPid, const wchar_t* dllPath,
+                                                           const Sources& sources) noexcept;
+[[nodiscard]] Verdict GuardedInjectWhenReadyAcknowledgedWithSources(std::uint32_t targetPid, const wchar_t* dllPath,
+                                                                    std::uint32_t  timeoutMs,
+                                                                    const Sources& sources) noexcept;
 // ---------------------------------------------------------------------------
 // TEST-ONLY. Defined by exactly one target — src/native/tests — and by nothing
 // that ships. tools/chokepoint-check.ps1 fails the build if any other

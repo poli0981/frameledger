@@ -281,6 +281,12 @@ CREATE TABLE frame_blobs (
 
 CREATE TABLE sensor_blobs (
   session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+  -- (schema 0007, 2026-09-21 - 19_SAFETY §The user's bypass) lives on TWO tables and nowhere else:
+  --   games.guard_bypass_at INTEGER, games.guard_bypass_disclosure_version TEXT NOT NULL DEFAULT ''
+  --       NULL/'' = off, every row's default. Both or neither: a timestamp without its version is not an
+  --       acknowledgement. Written only through IGuardBypassStore; cleared by revoking consent and by Change executable.
+  --   sessions.guard_bypassed INTEGER NOT NULL DEFAULT 0, guard_bypass_family TEXT, guard_bypass_signal TEXT
+  --       1 when the session STARTED under the bypass. A session recovered from a .partial does not carry it.
   series TEXT NOT NULL,            -- cpu_temp|gpu_temp|gpu_hotspot|gpu_load|gpu_power|vram_proc|vram_adapter|cpu_load|ram_mb
                                    -- cpu_load / ram_mb / cpu_temp and sessions.avg_cpu_load, avg_cpu_temp, max_cpu_temp,
                                    -- avg_ram_mb were in schema 0001 with NO producer until 2026-09-21 (Telemetry.SystemTelemetrySource

@@ -10,6 +10,13 @@ public sealed record CaptureOutcome
 
     public AntiCheatVerdict Verdict { get; init; }
 
+    /// <summary>
+    /// The verdict the session STARTED under when that was the user's bypass (owner decision 2026-09-21), else null.
+    /// Its own field because <see cref="Verdict"/> is replaced by the one that fired on a safety unhook, and a session
+    /// that ran beside anti-cheat must say so on its row however it ended.
+    /// </summary>
+    public AntiCheatVerdict? StartedUnderBypass { get; init; }
+
     public ShmAttachRefusal AttachRefusal { get; init; }
 
     public IReadOnlyList<FlFrameRecord> Records { get; init; } = [];

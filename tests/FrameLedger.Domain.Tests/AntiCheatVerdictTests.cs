@@ -70,4 +70,46 @@ public sealed class AntiCheatVerdictTests
         v.Family.Should().BeEmpty();
         v.Signal.Should().BeEmpty();
     }
+
+    /// <summary>
+    /// The user's bypass (owner decision 2026-09-21) has a verdict of its own, and the point of it is what it is NOT:
+    /// not an allow, so every caller written before it keeps refusing; not a default, so nothing reads as one by
+    /// accident; and still carrying what the guard found.
+    /// </summary>
+    [Fact]
+    public void AllowedUnderUserBypassIsNeitherAnAllowNorTheDefaultAndKeepsWhatWasFound()
+    {
+        AntiCheatVerdict under = AntiCheatVerdict.FromNative((int)AntiCheatRefusalReason.AllowedUnderUserBypass, "Easy Anti-Cheat", "EasyAntiCheat_EOS.dll");
+
+        under.IsAllowed.Should().BeFalse();
+        under.IsAllowedUnderBypass.Should().BeTrue();
+        under.Family.Should().Be("Easy Anti-Cheat");
+        under.Signal.Should().Be("EasyAntiCheat_EOS.dll");
+
+        default(AntiCheatVerdict).IsAllowedUnderBypass.Should().BeFalse("a verdict nobody produced overruled nothing");
+        AntiCheatVerdict.Allowed().IsAllowedUnderBypass.Should().BeFalse();
+        AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedModule, "x", "y").IsAllowedUnderBypass.Should().BeFalse();
+        ((int)AntiCheatRefusalReason.AllowedUnderUserBypass).Should().Be(28, "the values cross a C ABI and are append-only");
+    }
+
+    [Theory]
+    [InlineData(AntiCheatRefusalReason.BlockedModule, true)]
+    [InlineData(AntiCheatRefusalReason.BlockedDriver, true)]
+    [InlineData(AntiCheatRefusalReason.SuspiciousUnsigned, true)]
+    [InlineData(AntiCheatRefusalReason.ModuleScanFailed, true)]
+    [InlineData(AntiCheatRefusalReason.RulesIncomplete, true)]
+    [InlineData(AntiCheatRefusalReason.PreScanFailed, true)]
+    [InlineData(AntiCheatRefusalReason.PreviouslyBlocked, true)]
+    [InlineData(AntiCheatRefusalReason.Allow, false)]
+    [InlineData(AntiCheatRefusalReason.InjectionFailed, false)]
+    [InlineData(AntiCheatRefusalReason.TargetIsWow64, false)]
+    [InlineData(AntiCheatRefusalReason.PayloadNotOurs, false)]
+    [InlineData(AntiCheatRefusalReason.HookNotEnabled, false)]
+    [InlineData(AntiCheatRefusalReason.ConsentMissing, false)]
+    [InlineData(AntiCheatRefusalReason.KillSwitchEngaged, false)]
+    [InlineData(AntiCheatRefusalReason.LaunchTargetExited, false)]
+    [InlineData(AntiCheatRefusalReason.TargetIsVulkanLayered, false)]
+    [InlineData(AntiCheatRefusalReason.AllowedUnderUserBypass, false)]
+    public void ABypassOverrulesAJudgementAndNeverAFact(AntiCheatRefusalReason reason, bool judgement) =>
+        AntiCheatVerdict.IsGuardJudgement(reason).Should().Be(judgement);
 }

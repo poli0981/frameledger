@@ -75,6 +75,12 @@ public sealed record GameRow
     /// <summary><c>not_run|clean|blocked|unverified</c> (<c>05_DETECTION</c>'s tri-state pre-scan plus "not run").</summary>
     public string HookPrescanState { get; init; } = "not_run";
 
+    /// <summary>
+    /// When the user accepted the guard-bypass disclosure for this game (schema 0007, owner decision 2026-09-21), or
+    /// null: the bypass is off. Display only — the gate reads it from the consent record, never from here.
+    /// </summary>
+    public DateTimeOffset? GuardBypassAt { get; init; }
+
     /// <summary>FR-1.4: set when the user removed the game but kept its sessions; such a row is not in the library.</summary>
     public DateTimeOffset? RemovedAt { get; init; }
 

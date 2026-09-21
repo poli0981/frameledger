@@ -7,6 +7,7 @@ using FrameLedger.Application.Watch;
 using FrameLedger.Domain.AntiCheat;
 using FrameLedger.Domain.Consent;
 using FrameLedger.Shared.Ipc;
+using FrameLedger.Shared.Safety;
 
 namespace FrameLedger.Application.Ipc;
 
@@ -24,6 +25,7 @@ public sealed class AgentCommandHandler
 {
     private readonly IGameRepository _games;
     private readonly IGameConsentStore _consent;
+    private readonly IGuardBypassStore? _bypass;
     private readonly IAntiCheatGuard _guard;
     private readonly IExecutableIdentitySource _identity;
     private readonly CaptureOrchestrator _orchestrator;
@@ -43,8 +45,11 @@ public sealed class AgentCommandHandler
     public AgentCommandHandler(IGameRepository games, IGameConsentStore consent, IAntiCheatGuard guard, IExecutableIdentitySource identity,
         CaptureOrchestrator orchestrator, CapturePause pause, IAgentLifetime lifetime, Func<CancellationToken, ValueTask<string>> updateRules,
         string? disclosureVersion = null, TimeProvider? clock = null, VkLayerReconciler? layer = null,
-        Func<CancellationToken, ValueTask<SweepRetentionAck>>? sweepRetention = null)
+        Func<CancellationToken, ValueTask<SweepRetentionAck>>? sweepRetention = null, IGuardBypassStore? bypass = null)
     {
+        // Owner decision 2026-09-21: the per-game guard bypass. Null where nothing composed it, and SetGuardBypass then
+        // answers DisclosureUnavailable - a handler that cannot record the acknowledgement must not pretend it did.
+        _bypass = bypass;
         // P4 PR-7: Tools ▸ Database maintenance's sweep — composed under --serve, absent (UnknownType) where nothing wired it.
         _sweepRetention = sweepRetention;
         _clock = clock ?? TimeProvider.System;
@@ -74,6 +79,7 @@ public sealed class AgentCommandHandler
             IpcMessageType.SetWatchlist => await SetWatchlistAsync(request, ct).ConfigureAwait(false),
             IpcMessageType.LaunchGame => await LaunchAsync(request, ct).ConfigureAwait(false),
             IpcMessageType.SetHookEnabled => await SetHookEnabledAsync(request, ct).ConfigureAwait(false),
+            IpcMessageType.SetGuardBypass => await SetGuardBypassAsync(request, ct).ConfigureAwait(false),
             IpcMessageType.PauseCapture => IpcCodec.Encode(IpcMessageType.PauseAck, request.Id, new PauseAck(_pause.Set(true))),
             IpcMessageType.ResumeCapture => IpcCodec.Encode(IpcMessageType.PauseAck, request.Id, new PauseAck(_pause.Set(false))),
             IpcMessageType.StopSession => Stop(request),
@@ -171,13 +177,79 @@ public sealed class AgentCommandHandler
             // A refusal, or a scan that reached no answer: the store records which (a default verdict is
             // "could not verify", never a block), and both are answered as a refusal to enable.
             await _consent.RecordGuardBlockAsync(fingerprint.Value, verdict, ct).ConfigureAwait(false);
+
+            // THE USER'S BYPASS (owner decision 2026-09-21). The finding above is still WRITTEN - the block stays on
+            // the row and stays true - and then, for a game whose owner accepted the bypass disclosure for this very
+            // executable, the consent is stamped anyway. Only the guard's judgement is overruled: a verdict that is a
+            // fact (none reaches this call today) still refuses.
+            GameConsentRecord recorded = await _consent.FindAsync(path, ct).ConfigureAwait(false);
+            bool judgement = verdict.Reason == AntiCheatRefusalReason.Allow || AntiCheatVerdict.IsGuardJudgement(verdict.Reason);
+            if (recorded.GuardBypassAcknowledged && recorded.Fingerprint.Matches(fingerprint.Value) && judgement)
+            {
+                return await StampAsync(request, game, fingerprint.Value, payload.DisclosureVersion, "bypassed", ct).ConfigureAwait(false);
+            }
+
             await ReconcileLayerAsync(ct).ConfigureAwait(false);
             string reason = verdict.Reason == AntiCheatRefusalReason.Allow ? "PreScanCouldNotVerify" : verdict.Reason.ToString();
             return IpcCodec.Encode(IpcMessageType.Refused, request.Id,
                 new RefusedAck(game.Id, reason, NullIfEmpty(verdict.Family), NullIfEmpty(verdict.Signal)));
         }
 
-        return await StampAsync(request, game, fingerprint.Value, payload.DisclosureVersion, ct).ConfigureAwait(false);
+        return await StampAsync(request, game, fingerprint.Value, payload.DisclosureVersion, "clean", ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Owner decision 2026-09-21: record, or withdraw, the user's acknowledgement of the guard-bypass disclosure for one
+    /// game. It writes two columns and enables nothing - hooking, consent and the block are untouched - and it is
+    /// refused for any disclosure version but this Agent's own, for an executable that cannot be read, and where no
+    /// store was composed. The pipe is not a trust boundary, so everything the App checked is checked again here.
+    /// </summary>
+    private async ValueTask<byte[]> SetGuardBypassAsync(IpcEnvelope request, CancellationToken ct)
+    {
+        SetGuardBypassRequest? payload = IpcCodec.Payload<SetGuardBypassRequest>(request);
+        if (payload is null)
+        {
+            return Malformed(request, "SetGuardBypass carries no payload");
+        }
+
+        GameRow? game = await FindGameAsync(payload.GameId, ct).ConfigureAwait(false);
+        if (game is null)
+        {
+            return Error(request, IpcErrorCode.UnknownGame, $"no games row has id {payload.GameId}");
+        }
+
+        if (_bypass is null)
+        {
+            return Error(request, IpcErrorCode.DisclosureUnavailable, "this Agent was composed without the guard-bypass store; nothing was recorded");
+        }
+
+        string path = game.Fingerprint.ExePath;
+        if (!payload.Enabled)
+        {
+            ConsentWriteOutcome revoked = await _bypass.RevokeAsync(path, ct).ConfigureAwait(false);
+            return IpcCodec.Encode(IpcMessageType.GuardBypassAck, request.Id, new GuardBypassAck(game.Id, Enabled: false, revoked.ToString()));
+        }
+
+        if (!string.Equals(payload.DisclosureVersion, GuardBypassDisclosure.Version, StringComparison.Ordinal))
+        {
+            return Error(request, IpcErrorCode.DisclosureVersionMismatch,
+                $"the client showed bypass disclosure '{payload.DisclosureVersion ?? "(none)"}' and this Agent records '{GuardBypassDisclosure.Version}': nothing was recorded - restart both");
+        }
+
+        ExecutableFingerprint? fingerprint = _identity.Read(path);
+        if (fingerprint is null)
+        {
+            return Error(request, IpcErrorCode.ExecutableUnreadable, $"{path} could not be read, so there is no executable to record the bypass for");
+        }
+
+        ConsentWriteOutcome outcome = await _bypass.RecordAsync(new GuardBypassAcknowledgement
+        {
+            Fingerprint = fingerprint.Value,
+            DisclosureVersion = GuardBypassDisclosure.Version,
+            AcknowledgedAt = _clock.GetUtcNow(),
+        }, ct).ConfigureAwait(false);
+        return IpcCodec.Encode(IpcMessageType.GuardBypassAck, request.Id,
+            new GuardBypassAck(game.Id, Enabled: outcome == ConsentWriteOutcome.Written, outcome.ToString()));
     }
 
     /// <summary>
@@ -187,7 +259,7 @@ public sealed class AgentCommandHandler
     /// <see cref="ConsentProvenance.ConsentDialog"/>; the store's own rules (a block is never cleared by a grant,
     /// a stale fingerprint under a block is refused) still apply and come back as the ack's <c>outcome</c>.
     /// </summary>
-    private async ValueTask<byte[]> StampAsync(IpcEnvelope request, GameRow game, ExecutableFingerprint fingerprint, string? clientVersion, CancellationToken ct)
+    private async ValueTask<byte[]> StampAsync(IpcEnvelope request, GameRow game, ExecutableFingerprint fingerprint, string? clientVersion, string prescan, CancellationToken ct)
     {
         if (_disclosureVersion is null)
         {
@@ -215,7 +287,7 @@ public sealed class AgentCommandHandler
         }
 
         return IpcCodec.Encode(IpcMessageType.HookEnabledAck, request.Id,
-            new HookEnabledAck(game.Id, Enabled: outcome == ConsentWriteOutcome.Written, outcome.ToString(), Prescan: "clean"));
+            new HookEnabledAck(game.Id, Enabled: outcome == ConsentWriteOutcome.Written, outcome.ToString(), Prescan: prescan));
     }
 
     private async ValueTask ReconcileLayerAsync(CancellationToken ct)

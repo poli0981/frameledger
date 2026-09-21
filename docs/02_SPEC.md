@@ -16,6 +16,7 @@ Requirement IDs (`FR-x`, `NFR-x`) are referenced by other docs, commits, and tes
 - FR-2.2 The static anti-cheat pre-scan disables the toggle outright for titles shipping anti-cheat; the reason is shown and the control is not clickable.
 - FR-2.3 The runtime guard refuses injection and refuses to continue a session when anti-cheat is detected. **No override exists anywhere in the UI, config, or CLI.**
 - FR-2.4 Global "disable all hooking" kill switch in Settings; also honored by the Vulkan layer.
+- FR-2.7 (owner decision 2026-09-21) A per-game **"bypass the anti-cheat guard"** switch, off by default, never global. Turning it on requires its own disclosure — naming the ban risk and that the user carries the entire risk and the developers none — accepted by a ticked acknowledgement AND a typed phrase, stamped by the Agent. It overrules the guard's judgement only (`19_SAFETY` §The user's bypass lists both sides), never changes how FrameLedger injects (CLAUDE.md rule 3), and every session started under it is marked as such permanently.
 - FR-2.5 Repeated crashes shortly after injection auto-disable hooking for that game, with an explanation and a manual re-enable path.
 - FR-2.6 Users can always see, per session, which tier produced the data.
 

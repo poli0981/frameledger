@@ -23,6 +23,18 @@ Rules for this document:
 
 ## Scope decisions already taken (recorded, not open)
 
+> **2026-09-21 — the guard gained one override, by owner decision, and it reverses a sentence this project wrote in
+> several places.** CLAUDE.md rule 2 said "There is no override switch ... Do not add one"; `19_SAFETY` said "There is no
+> override"; `HookingConsentOutcome` said so in a doc comment. The owner asked for a per-game "bypass the guard" mode at
+> the user's own risk, behind a warning the user must accept first, and chose the per-game form over a global switch and
+> over one that kept kernel anti-cheat refused. It is built as `19_SAFETY` §The user's bypass specifies: per game, off by
+> default, its own two-act disclosure, stamped by the Agent, overruling the guard's JUDGEMENT only, never changing HOW
+> FrameLedger injects (rule 3), and marking every session it starts. **What stays open, and is the owner's:** whether a
+> shipped build should offer it for the kernel-level families at all (the rules file has no severity and may not grow
+> one, so that would be a code list); and the ja text, which ships as English until a reviewer signs. **Pre-committed
+> withdrawal:** an injection reached under it without the disclosure having been shown, or a session under it that is
+> not marked, removes the switch from the App in the next release.
+
 | # | Decision | Consequence |
 |---|---|---|
 | — | **D3D9 is not a Tier-1 API in v1.** The Overlay is x64-only; an x64 DLL cannot load into a 32-bit process, and D3D9 titles are almost entirely 32-bit | **The consequence hardened on 2026-08-28 without a word of this row changing**, which is why it is called out: that catalogue used to be "Tier 2", meaning frame times without injection. Tier 2 now measures nothing, so those titles are **unmeasurable in v1**. The VN / JRPG / older-indie catalogue is Tier 2. Reversing this means a second 32-bit Overlay **and** injector, doubling the native build matrix and adding a second struct-mirror surface. Revisit only with evidence that users care more about those titles than about the maintenance cost |

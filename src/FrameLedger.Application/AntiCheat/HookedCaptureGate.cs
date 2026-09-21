@@ -78,7 +78,10 @@ public sealed class HookedCaptureGate(IAntiCheatGuard guard)
                 "the per-game consent dialog has not been accepted");
         }
 
-        if (request.BlockedReason is { Length: > 0 } blocked)
+        // THE FIFTH INPUT (owner decision 2026-09-21). Everything above has already refused what a bypass may never
+        // touch: the global switch, a game that was merely added, a consent nobody gave. What is left is the guard's
+        // judgement — this latch of a past one, and the live one below — and that is exactly what the user overruled.
+        if (request.BlockedReason is { Length: > 0 } blocked && !request.GuardBypassAcknowledged)
         {
             // 19_SAFETY §A game already enabled can become blocked later: a
             // patch adds anti-cheat, or updated rules newly match. hook_enabled
@@ -89,6 +92,16 @@ public sealed class HookedCaptureGate(IAntiCheatGuard guard)
 
         // Launch mode is the same gate reached through the guard's WAITING entry: the consent checks
         // above are identical, and what differs is only WHEN the guard's full scan runs (P1 item 2).
+        if (request.GuardBypassAcknowledged)
+        {
+            // The guard still runs every check and still reports what it found; the verdict that comes back is
+            // AllowedUnderUserBypass, never Allow, so a caller that only knows IsAllowed still does not proceed.
+            return request.WaitForPresentationRuntimeMs > 0
+                ? await _guard.GuardedInjectWhenReadyAcknowledgedAsync(request.TargetPid, request.PayloadPath,
+                    request.WaitForPresentationRuntimeMs, ct).ConfigureAwait(false)
+                : await _guard.GuardedInjectAcknowledgedAsync(request.TargetPid, request.PayloadPath, ct).ConfigureAwait(false);
+        }
+
         return request.WaitForPresentationRuntimeMs > 0
             ? await _guard.GuardedInjectWhenReadyAsync(request.TargetPid, request.PayloadPath,
                 request.WaitForPresentationRuntimeMs, ct).ConfigureAwait(false)

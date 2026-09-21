@@ -196,6 +196,14 @@ public sealed class SessionRecorder : ISessionRecorder
             }
         }
 
+        // A session that ran beside anti-cheat because the user overruled the guard says so in words too, whatever
+        // tier it ended at: the notes travel into every bug bundle, the columns into every export.
+        if (o.StartedUnderBypass is { } under)
+        {
+            notes += "; guard-bypass=" + (string.IsNullOrEmpty(under.Family) ? "unnamed" : under.Family)
+                     + (string.IsNullOrEmpty(under.Signal) ? "" : "/" + under.Signal);
+        }
+
         return new SessionRow
         {
             SessionGuid = h.SessionGuid,
@@ -216,6 +224,9 @@ public sealed class SessionRecorder : ISessionRecorder
             DrainTicks = hooked ? o.DrainTicks : null,
             ForegroundTicks = hooked ? o.ForegroundTicks : null,
             GuardTicksPublished = hooked ? o.GuardTicksPublished : null,
+            GuardBypassed = o.StartedUnderBypass is not null,
+            GuardBypassFamily = o.StartedUnderBypass is { Family.Length: > 0 } f ? f.Family : null,
+            GuardBypassSignal = o.StartedUnderBypass is { Signal.Length: > 0 } g ? g.Signal : null,
         };
     }
 
