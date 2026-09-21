@@ -299,12 +299,10 @@ function Invoke-Managed([bool]$FixFormat) {
     # so the number is never negotiated against code that already exists.
     Write-Step 'coverage-gate'
     $coverageTool = Join-Path $repo 'tools/coverage-gate.ps1'
-    if (Test-Path $coverageTool) {
-        Invoke-Checked 'coverage-gate' { & $coverageTool }
-    }
-    else {
-        Skip-Gate 'coverage-gate' 'tools/coverage-gate.ps1 not implemented yet'
-    }
+    # The tool has existed since P2. A missing file is a broken checkout, and this script's own header says why a gate
+    # must not read as "skipped" then: it would say "checked" in CI output when nothing was (corrected 2026-09-21).
+    if (-not (Test-Path $coverageTool)) { throw 'tools/coverage-gate.ps1 is missing; the coverage gate cannot be skipped' }
+    Invoke-Checked 'coverage-gate' { & $coverageTool }
 }
 
 # --- 7-9. Project-specific gates -------------------------------------------
@@ -313,12 +311,8 @@ function Invoke-ProjectGates {
     # failure (docs/13_CI_CD.md).
     Write-Step 'rules-validate'
     $rulesTool = Join-Path $repo 'tools/rules-validate.ps1'
-    if (Test-Path $rulesTool) {
-        Invoke-Checked 'rules-validate' { & $rulesTool }
-    }
-    else {
-        Skip-Gate 'rules-validate' 'tools/rules-validate.ps1 not implemented yet'
-    }
+    if (-not (Test-Path $rulesTool)) { throw 'tools/rules-validate.ps1 is missing; the rules gate cannot be skipped' }
+    Invoke-Checked 'rules-validate' { & $rulesTool }
 
     # Being plainly identifiable to anti-cheat is a requirement, not packaging
     # polish (docs/19_SAFETY_AND_ANTICHEAT.md). Reads the built binary, because

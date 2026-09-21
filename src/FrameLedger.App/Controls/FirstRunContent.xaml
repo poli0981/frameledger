@@ -24,7 +24,13 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <ui:TextBlock Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,12" Appearance="Secondary" Text="{x:Static vm:FirstRunViewModel.LegalBody}" TextWrapping="Wrap" />
+            <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,12">
+                <!-- The short version, in the user's language (2026-09-21). It summarises; the documents below are the terms. -->
+                <Border Padding="12" CornerRadius="6" Background="{DynamicResource SystemFillColorCautionBackgroundBrush}">
+                    <ui:TextBlock Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{x:Static vm:FirstRunViewModel.LegalSummary}" TextWrapping="Wrap" />
+                </Border>
+                <ui:TextBlock Margin="0,10,0,0" Appearance="Secondary" Text="{x:Static vm:FirstRunViewModel.LegalBody}" TextWrapping="Wrap" />
+            </StackPanel>
             <ListBox Grid.Row="1"
                      Grid.Column="0"
                      Margin="0,0,12,0"
