@@ -111,8 +111,8 @@ Software running inside another process can, in principle, destabilize it. Frame
 Frame timing is derived from high-resolution timestamps taken at the moment the game presents each frame; upscaling, frame-generation and ray-tracing state are read from the parameters the game passes to those APIs. This is substantially more accurate than inferring settings from files on disk, but **no measurement is guaranteed to be exact**:
 
 <!-- accuracy-block:begin -->
-> ⚠ **What FrameLedger actually measures today — 2026-09-17.** The software is pre-alpha; its latest
-> **pre-release is `0.1.0-beta.2`** (2026-09-17), an unsigned installer built from that tag with its
+> ⚠ **What FrameLedger actually measures today — 2026-09-21.** The software is a beta; its latest
+> **pre-release is `0.1.0-beta.3`** (2026-09-21), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
 > game in the library runs, injects only into games you enabled and only past the safety guard (or,

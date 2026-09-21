@@ -27,6 +27,34 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
+_Nothing yet — entries continue here after `0.1.0-beta.3`._
+
+## [0.1.0-beta.3] - 2026-09-21
+
+**The third pre-release.** The same unsigned installer as before: verify its hash against `SHA256SUMS.txt`, then
+*More info → Run anyway*. What changed for a user:
+
+- **The terms changed, so the Legal Gate opens once after the update.** They now say plainly that this is beta
+  software with bugs, that your PC must meet each game's own minimum requirements, and what the new guard bypass means.
+- **CPU load, system memory and (when the Agent runs as administrator with PawnIO) CPU temperature are recorded**, and a
+  game's Trend tab can chart them, the GPU's load and power, VRAM and the ×FG factor across that game's sessions.
+  Settings ▸ System shows this PC as FrameLedger records it.
+- **DLSS is named.** Titles that call DLSS directly read "Unknown upscaler"; they now read "DLSS (driver-reported)"
+  where the NVIDIA driver reports it — including sessions you already recorded.
+- **A game imported from Steam could never hook** when the import picked a helper executable instead of the game
+  (GIRLS' FRONTLINE 2 was one). The import picks the game now, and the game page shows the executable and can change it.
+- **The platform and engine tags were blank white boxes in the light theme.** Fixed.
+- **New, off by default, per game: "Bypass the anti-cheat guard (at your own risk)".** Read its warning. Your account
+  can be permanently banned, and the developers accept no responsibility if you turn it on.
+
+**Updating from `0.1.0-beta.2`:**
+
+- Quit the App (tray icon → Exit) before installing, as before.
+- On its first start the ledger migrates to schema 7 (the guard-bypass columns; nothing existing is rewritten).
+- **A game an earlier Steam import created for the wrong executable is not rewritten.** Open it, check the path under
+  its name, and use *Change executable…* (hooking is turned off for it and must be enabled again), or remove it.
+- Sessions recorded before this version keep N/A for CPU load, memory and CPU temperature: nothing measured them.
+
 ### Fixed
 
 - **DLSS read "Unknown upscaler" on most titles while FSR was named.** Most DLSS titles call NGX directly, and no NGX
