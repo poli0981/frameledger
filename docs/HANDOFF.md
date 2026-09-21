@@ -1356,6 +1356,40 @@ charts (6) after Games (5) because the summary opens from the Sessions tab; Sett
 - **D17 — `FL_MOCK`, if the owner wants it, is `--serve --mock` under `--data-dir` only** (D6's shape), so a
   synthetic session can never land in the profile's ledger.
 
+## 0.1.0-beta.3 (2026-09-21) — what it decided, and the traps it paid for
+
+*PRs #204-#210. Status is where status lives (`CHANGELOG.md` `[0.1.0-beta.3]`); this is only what no other file carries.*
+
+**Decisions (owner, 2026-09-21).**
+- **D18 — the guard has one override, and its shape is fixed.** Per game, off by default, never global, a two-act
+  disclosure stamped by the Agent, overruling the guard's JUDGEMENT only, never changing HOW FrameLedger injects.
+  `19_SAFETY` §The user's bypass is the specification and CLAUDE.md rule 2 carries it as a rule. The owner chose this
+  over a global switch and over a variant that kept kernel-level families refused. **Do not widen it**: no settings key,
+  no CLI verb (`--console` has none on purpose), no rules-file field. A Vulkan title the guard refuses stays refused.
+- **D19 — the DLSS preset derived from the render scale is STILL not shown.** `Domain.Metrics.UpscalerNames` names the
+  measured byte only; §7a's decision stands open. The driver-reported rung reached the App, identity only.
+- **D20 — the bug bundle does not get the machine's hardware.** `sysinfo.json`'s keys are the issue link's prefill;
+  `--diag` and Settings ▸ System (with Copy) carry it instead.
+
+**Owed by the owner after this release.** `20_OPEN_QUESTIONS` M10 (one elevated session with PawnIO beside a reference
+tool decides whether `cpu_temp` stays); a look at the light theme's pills, the bypass dialog and Settings ▸ System in the
+running App — no FrameLedger binary was run against the owner's data folder in the session that built them; the ja
+review of `Safety_Bypass_*`, which ships as English until signed.
+
+**Traps.**
+- **xUnit.net v3 4.x defaults to Microsoft Testing Platform v2.** `build.ps1` is VSTest-shaped (collector, `results.trx`);
+  the projects reference `xunit.v3.mtp-off`. Moving to MTP is a `build.ps1` change, never a version bump.
+- **4.0.1's scheduler found a race 3.2.2 never did**: test classes that WRITE the static `Strings.Culture` must share
+  `StringsCultureCollection`. A new App test that sets the culture and is not in it will fail one run in N.
+- **A bash heredoc mangles apostrophes and `\\`, even quoted.** Every patch script in this session that carried C#
+  verbatim strings, `\n` escapes or prose with `'` was written with the Write tool and run by path.
+- **A WPF page property named `System` does not compile** — the generated `.g.cs` resolves `System.` against it.
+- **NSubstitute: never build a substitute inside another's `Returns(...)`** (`CouldNotSetReturnDueToNoLastCall`).
+- **Branch protection requires an up-to-date branch.** A small PR merged in the middle of a train puts every open PR
+  `BEHIND`; `gh pr update-branch N` and a second CI cycle is the price. Merge the train in order and keep side PRs out.
+- **`guard_test.cpp`'s native-log test slept a fixed 1500 ms** and was read between two lines on a loaded runner; it
+  polls now. Record a flake on the PR BEFORE `gh run rerun --failed` erases it.
+
 ## Owner-only — no PR can close these
 
 1. **§S23-2 — branch protection.** `Rules / validate` is not a required status check on
