@@ -594,6 +594,7 @@ public static class Strings
         nameof(Update_Toast_Title),
         nameof(Update_Unsigned_Footer),
         nameof(Update_UpToDate_Format),
+        nameof(Upscaler_DriverReported_Format),
         nameof(Upscaler_None),
         nameof(Upscaler_Unknown),
     ];
@@ -1733,6 +1734,8 @@ public static class Strings
     public static string Update_Unsigned_Footer => ResourceManager.GetString(nameof(Update_Unsigned_Footer), Culture) ?? nameof(Update_Unsigned_Footer);
 
     public static string Update_UpToDate_Format => ResourceManager.GetString(nameof(Update_UpToDate_Format), Culture) ?? nameof(Update_UpToDate_Format);
+
+    public static string Upscaler_DriverReported_Format => ResourceManager.GetString(nameof(Upscaler_DriverReported_Format), Culture) ?? nameof(Upscaler_DriverReported_Format);
 
     public static string Upscaler_None => ResourceManager.GetString(nameof(Upscaler_None), Culture) ?? nameof(Upscaler_None);
 

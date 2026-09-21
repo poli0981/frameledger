@@ -117,11 +117,8 @@ public sealed class SessionSeriesLoader
 
     private static string SegmentLabel(SegmentRow s)
     {
-        string upscaler = Services.Formats.Upscaler(s.Upscaler);
-        if (s.UpscalerQuality is { Length: > 0 } q)
-        {
-            upscaler += " " + q;
-        }
+        // A segment carries no driver word: the driver's bookkeeping is per process, not per settings change.
+        string upscaler = Services.Formats.Upscaler(s.Upscaler, s.UpscalerQuality, driverReported: null);
 
         string resolution = Services.Formats.Resolution(s.RenderW, s.RenderH, s.OutputW, s.OutputH);
         string fg = Services.Formats.FrameGeneration(s.FgMode);

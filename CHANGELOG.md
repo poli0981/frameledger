@@ -29,6 +29,18 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **DLSS read "Unknown upscaler" on most titles while FSR was named.** Most DLSS titles call NGX directly, and no NGX
+  hook may exist (the SDK's licence; `20_OPEN_QUESTIONS`), so the hook runs and sees nothing. The NVIDIA driver does
+  report the feature per process, the Agent has stored that on every session since P2
+  (`sessions.upscaler_driver_reported`) and the capture host has printed it since 2026-09-06 — **the App never read
+  it.** It does now: where no hook named an upscaler and the driver reports NGX super resolution created and
+  evaluated, the library, the session summary, the game page and the live card say **DLSS (driver-reported)** —
+  attributed, identity only, never a quality. A hook's name still outranks it. Sessions already recorded show it too,
+  because the column was always written. `unknown` itself now reads "Upscaler not identified". Nothing native changed.
+- **A measured DLSS preset is its name, not its number**: `DLSS Balanced`, not `DLSS 2` (`Domain.Metrics.UpscalerNames`,
+  which `03_METRICS` had promised from the start). Only the Streamline route produces the byte; a value with no name
+  is shown as stored. A preset derived from the render scale is still not shown — that is an open owner decision.
+
 - **The Games card's platform and engine tags were empty white boxes in the light theme.** They were
   `ui:Badge Appearance="Secondary"`, whose WPF UI 4.3.0 trigger repaints the background only and keeps the default
   badge's on-accent foreground: near-white text on a near-white fill. They, and the edit dialog's "Detected" marker,

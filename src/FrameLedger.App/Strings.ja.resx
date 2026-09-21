@@ -1006,7 +1006,7 @@
     <comment>review</comment>
   </data>
   <data name="Upscaler_Unknown" xml:space="preserve">
-    <value>不明なアップスケーラー</value>
+    <value>アップスケーラーを特定できません</value>
     <comment>review</comment>
   </data>
   <data name="Chart_Axis_Count" xml:space="preserve">
@@ -2306,6 +2306,10 @@
   </data>
   <data name="ChangeExe_Taken_Format" xml:space="preserve">
     <value>{0} はライブラリ内の別のゲーム（またはセッションを残して削除されたゲーム）に既に属しています。実行ファイルは変更されていません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Upscaler_DriverReported_Format" xml:space="preserve">
+    <value>{0}（ドライバー報告）</value>
     <comment>review</comment>
   </data>
 </root>

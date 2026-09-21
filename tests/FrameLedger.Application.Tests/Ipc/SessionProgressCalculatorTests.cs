@@ -31,6 +31,25 @@ public sealed class SessionProgressCalculatorTests
         NgxDriver = NgxDriverState.NotRun,
     };
 
+    /// <summary>
+    /// 03_METRICS §The driver-reported rung on the wire (2026-09-21): an NGX-direct title has no hook that can name its
+    /// upscaler, so the live card read "unknown" for the whole session while the row that session became said DLSS.
+    /// </summary>
+    [Fact]
+    public void TheDriversWordTravelsToTheLiveCardAndOnlyWhenTheDriverAnswered()
+    {
+        List<FlFrameRecord> records = SessionFixtures.Stream(1000, FlMeasured.OutputRes | FlMeasured.PresentArgs);
+        NgxDriverState created = NgxDriverState.Parse("NGXSTATE status=ANSWERED sr=0x600 rr=0x1 fg=0x5 ratio=0.0000 mode=0 preset=0 fgcount=0 fgpreset=0 fgmode=0 driver=61664");
+        NgxDriverState idle = NgxDriverState.Parse("NGXSTATE status=ANSWERED sr=0x5 rr=0x1 fg=0x5 ratio=0.0000 mode=0 preset=0 fgcount=0 fgpreset=0 fgmode=0 driver=61664");
+
+        SessionProgressCalculator.Compute(_guid, Progress(records) with { NgxDriver = created }, SessionFixtures.QpcFrequency, 12.5, gpu: null)
+            .UpscalerDriverReported.Should().Be("dlss", "CREATED | EVALUATE on the super-resolution word");
+        SessionProgressCalculator.Compute(_guid, Progress(records) with { NgxDriver = idle }, SessionFixtures.QpcFrequency, 12.5, gpu: null)
+            .UpscalerDriverReported.Should().BeNull("the feature exists in the driver's bookkeeping and was never evaluated");
+        SessionProgressCalculator.Compute(_guid, Progress(records), SessionFixtures.QpcFrequency, 12.5, gpu: null)
+            .UpscalerDriverReported.Should().BeNull("no probe ran: AMD, Intel, or no bridge beside the Agent");
+    }
+
     [Fact]
     public void OnlyTheLastFiveSecondsCountAndThePresentedRateStandsAloneWithItsQualifier()
     {
