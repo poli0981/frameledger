@@ -73,6 +73,10 @@ internal static class SessionFixtures
         QpcFrequency = QpcFrequency,
     };
 
+    /// <summary>The same ticks with the machine's reading on each: CPU busy climbing from 20 %, memory flat, a CPU temperature only when asked for.</summary>
+    public static List<TelemetrySample> SensorsWithSystem(int seconds, double? cpuTemp = null) =>
+        [.. Sensors(seconds).Select((s, i) => s with { System = new SystemReading(CpuLoadPct: i == 0 ? null : 20 + i, RamUsedMb: 16000, CpuTempC: cpuTemp is { } t ? t + i : null) })];
+
     public static List<TelemetrySample> Sensors(int seconds, double? temp = 60, double? load = 50)
     {
         var list = new List<TelemetrySample>(seconds);

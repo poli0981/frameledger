@@ -1738,4 +1738,88 @@ Mở thư mục log?</value>
   <data name="Upscaler_DriverReported_Format" xml:space="preserve">
     <value>{0} (driver báo cáo)</value>
   </data>
+  <data name="Trend_Metric_AvgGpuLoad" xml:space="preserve">
+    <value>Tải GPU TB %</value>
+  </data>
+  <data name="Trend_Metric_AvgGpuPower" xml:space="preserve">
+    <value>Công suất GPU TB (W)</value>
+  </data>
+  <data name="Trend_Metric_MaxVramProcess" xml:space="preserve">
+    <value>VRAM tối đa (game) MB</value>
+  </data>
+  <data name="Trend_Metric_AvgCpuLoad" xml:space="preserve">
+    <value>Tải CPU TB %</value>
+  </data>
+  <data name="Trend_Metric_MaxCpuTemp" xml:space="preserve">
+    <value>CPU °C tối đa</value>
+  </data>
+  <data name="Trend_Metric_AvgRam" xml:space="preserve">
+    <value>RAM đang dùng TB (MB)</value>
+  </data>
+  <data name="Trend_Metric_FgFactor" xml:space="preserve">
+    <value>Hệ số FG ×</value>
+  </data>
+  <data name="Sensors_Series_CpuTemp" xml:space="preserve">
+    <value>CPU °C</value>
+  </data>
+  <data name="Sensors_Series_CpuLoad" xml:space="preserve">
+    <value>Tải CPU %</value>
+  </data>
+  <data name="Sensors_Series_Ram" xml:space="preserve">
+    <value>RAM đang dùng (hệ thống)</value>
+  </data>
+  <data name="Compare_Metric_AvgGpuLoad" xml:space="preserve">
+    <value>Tải GPU TB</value>
+  </data>
+  <data name="Compare_Metric_AvgCpuLoad" xml:space="preserve">
+    <value>Tải CPU TB</value>
+  </data>
+  <data name="Compare_Metric_MaxCpuTemp" xml:space="preserve">
+    <value>Nhiệt độ CPU tối đa</value>
+  </data>
+  <data name="Summary_Stat_Gpu" xml:space="preserve">
+    <value>GPU</value>
+  </data>
+  <data name="Summary_Stat_Cpu" xml:space="preserve">
+    <value>CPU</value>
+  </data>
+  <data name="Summary_Stat_LoadTemp_Format" xml:space="preserve">
+    <value>TB {0} · tối đa {1}</value>
+  </data>
+  <data name="Settings_System_Header" xml:space="preserve">
+    <value>Hệ thống</value>
+  </data>
+  <data name="Settings_System_Note" xml:space="preserve">
+    <value>Máy tính này, đúng như FrameLedger ghi lại cùng mỗi phiên. Được đọc khi mở trang này; không gửi đi đâu cả. Nhiệt độ CPU cần Agent chạy quyền quản trị và đã cài PawnIO, nếu không sẽ là N/A.</value>
+  </data>
+  <data name="Settings_System_Copy" xml:space="preserve">
+    <value>Sao chép</value>
+  </data>
+  <data name="Settings_System_Copied" xml:space="preserve">
+    <value>Đã sao chép thông tin hệ thống vào clipboard.</value>
+  </data>
+  <data name="System_Cpu" xml:space="preserve">
+    <value>Bộ xử lý</value>
+  </data>
+  <data name="System_Gpu" xml:space="preserve">
+    <value>Card đồ hoạ</value>
+  </data>
+  <data name="System_GpuDriver" xml:space="preserve">
+    <value>Driver đồ hoạ</value>
+  </data>
+  <data name="System_Ram" xml:space="preserve">
+    <value>Bộ nhớ</value>
+  </data>
+  <data name="System_Ram_Format" xml:space="preserve">
+    <value>{0:0.#} GB</value>
+  </data>
+  <data name="System_Os" xml:space="preserve">
+    <value>Bản dựng Windows</value>
+  </data>
+  <data name="System_Display" xml:space="preserve">
+    <value>Màn hình chính</value>
+  </data>
+  <data name="System_Display_Format" xml:space="preserve">
+    <value>{0} @ {1:0.#} Hz</value>
+  </data>
 </root>

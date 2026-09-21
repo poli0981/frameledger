@@ -282,6 +282,9 @@ CREATE TABLE frame_blobs (
 CREATE TABLE sensor_blobs (
   session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
   series TEXT NOT NULL,            -- cpu_temp|gpu_temp|gpu_hotspot|gpu_load|gpu_power|vram_proc|vram_adapter|cpu_load|ram_mb
+                                   -- cpu_load / ram_mb / cpu_temp and sessions.avg_cpu_load, avg_cpu_temp, max_cpu_temp,
+                                   -- avg_ram_mb were in schema 0001 with NO producer until 2026-09-21 (Telemetry.SystemTelemetrySource
+                                   -- on the poller's tick). Rows before that date hold NULL, which is what they measured; no migration.
   hz REAL NOT NULL, codec TEXT NOT NULL, data BLOB NOT NULL,
   PRIMARY KEY (session_id, series)
 );

@@ -58,7 +58,8 @@ public sealed class SessionSummaryViewModelTests
             vm.NotFound.Should().BeFalse();
             vm.IsHooked.Should().BeTrue();
             vm.Series.Should().NotBeNull();
-            vm.Stats.Should().HaveCount(8);
+            vm.Stats.Should().HaveCount(10, "eight frame statistics, then the machine: GPU and CPU (2026-09-21)");
+            vm.Stats.Single(c => string.Equals(c.Label, "CPU", StringComparison.Ordinal)).Value.Should().Be("N/A avg · N/A max", "this row carries no CPU reading: N/A, never 0%");
             vm.Stats.Single(c => string.Equals(c.Label, "Median", StringComparison.Ordinal)).Value.Should().Be("60");
             vm.Stats.Single(c => string.Equals(c.Label, "1% Low", StringComparison.Ordinal)).Value.Should().Be("48");
             vm.Stats.Single(c => string.Equals(c.Label, "Duration", StringComparison.Ordinal)).Value.Should().Be(Formats.Duration(vm.Row!.DurationSeconds));

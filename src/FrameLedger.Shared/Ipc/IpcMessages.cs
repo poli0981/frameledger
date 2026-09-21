@@ -204,8 +204,11 @@ public sealed record SessionProgressEvent
 
     public double? GpuTempC { get; init; }
 
-    /// <summary>Null until the Agent composes a CPU sensor (it does not, unelevated).</summary>
+    /// <summary>Null unless the Agent is elevated with PawnIO installed: no unprivileged API reads a CPU's thermal sensor.</summary>
     public double? CpuTempC { get; init; }
+
+    /// <summary>CPU time busy across every logical processor over the last telemetry tick, 0-100 (2026-09-21, optional). Null before the second tick.</summary>
+    public double? CpuLoadPct { get; init; }
 
     public int? VramProcMb { get; init; }
 

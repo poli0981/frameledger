@@ -1743,4 +1743,88 @@ Open the log folder?</value>
   <data name="Upscaler_DriverReported_Format" xml:space="preserve">
     <value>{0} (driver-reported)</value>
   </data>
+  <data name="Trend_Metric_AvgGpuLoad" xml:space="preserve">
+    <value>Avg GPU load %</value>
+  </data>
+  <data name="Trend_Metric_AvgGpuPower" xml:space="preserve">
+    <value>Avg GPU power W</value>
+  </data>
+  <data name="Trend_Metric_MaxVramProcess" xml:space="preserve">
+    <value>Max VRAM (game) MB</value>
+  </data>
+  <data name="Trend_Metric_AvgCpuLoad" xml:space="preserve">
+    <value>Avg CPU load %</value>
+  </data>
+  <data name="Trend_Metric_MaxCpuTemp" xml:space="preserve">
+    <value>Max CPU °C</value>
+  </data>
+  <data name="Trend_Metric_AvgRam" xml:space="preserve">
+    <value>Avg RAM in use MB</value>
+  </data>
+  <data name="Trend_Metric_FgFactor" xml:space="preserve">
+    <value>FG factor ×</value>
+  </data>
+  <data name="Sensors_Series_CpuTemp" xml:space="preserve">
+    <value>CPU °C</value>
+  </data>
+  <data name="Sensors_Series_CpuLoad" xml:space="preserve">
+    <value>CPU load %</value>
+  </data>
+  <data name="Sensors_Series_Ram" xml:space="preserve">
+    <value>RAM in use (system)</value>
+  </data>
+  <data name="Compare_Metric_AvgGpuLoad" xml:space="preserve">
+    <value>Avg GPU load</value>
+  </data>
+  <data name="Compare_Metric_AvgCpuLoad" xml:space="preserve">
+    <value>Avg CPU load</value>
+  </data>
+  <data name="Compare_Metric_MaxCpuTemp" xml:space="preserve">
+    <value>Max CPU temp</value>
+  </data>
+  <data name="Summary_Stat_Gpu" xml:space="preserve">
+    <value>GPU</value>
+  </data>
+  <data name="Summary_Stat_Cpu" xml:space="preserve">
+    <value>CPU</value>
+  </data>
+  <data name="Summary_Stat_LoadTemp_Format" xml:space="preserve">
+    <value>{0} avg · {1} max</value>
+  </data>
+  <data name="Settings_System_Header" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="Settings_System_Note" xml:space="preserve">
+    <value>This PC as FrameLedger records it with every session. Read when this page opens; nothing is sent anywhere. CPU temperature needs the Agent running as administrator with PawnIO installed, and is N/A otherwise.</value>
+  </data>
+  <data name="Settings_System_Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Settings_System_Copied" xml:space="preserve">
+    <value>System information copied to the clipboard.</value>
+  </data>
+  <data name="System_Cpu" xml:space="preserve">
+    <value>Processor</value>
+  </data>
+  <data name="System_Gpu" xml:space="preserve">
+    <value>Graphics card</value>
+  </data>
+  <data name="System_GpuDriver" xml:space="preserve">
+    <value>Graphics driver</value>
+  </data>
+  <data name="System_Ram" xml:space="preserve">
+    <value>Memory</value>
+  </data>
+  <data name="System_Ram_Format" xml:space="preserve">
+    <value>{0:0.#} GB</value>
+  </data>
+  <data name="System_Os" xml:space="preserve">
+    <value>Windows build</value>
+  </data>
+  <data name="System_Display" xml:space="preserve">
+    <value>Primary display</value>
+  </data>
+  <data name="System_Display_Format" xml:space="preserve">
+    <value>{0} @ {1:0.#} Hz</value>
+  </data>
 </root>

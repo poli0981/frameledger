@@ -201,6 +201,13 @@ public sealed partial class GameDetailViewModel : ObservableObject
         new(TrendMetric.P1Low, Strings.Trend_Metric_P1Low),
         new(TrendMetric.P01Low, Strings.Trend_Metric_P01Low),
         new(TrendMetric.MaxGpuTemp, Strings.Trend_Metric_MaxGpuTemp),
+        new(TrendMetric.AvgGpuLoad, Strings.Trend_Metric_AvgGpuLoad),
+        new(TrendMetric.AvgGpuPower, Strings.Trend_Metric_AvgGpuPower),
+        new(TrendMetric.MaxVramProcess, Strings.Trend_Metric_MaxVramProcess),
+        new(TrendMetric.AvgCpuLoad, Strings.Trend_Metric_AvgCpuLoad),
+        new(TrendMetric.MaxCpuTemp, Strings.Trend_Metric_MaxCpuTemp),
+        new(TrendMetric.AvgRam, Strings.Trend_Metric_AvgRam),
+        new(TrendMetric.FgFactor, Strings.Trend_Metric_FgFactor),
     ];
 
     /// <summary>The selected session's decoded series (null: none selected, Tier 2, or swept).</summary>
@@ -313,7 +320,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         }
 
         TrendPoints = TrendSeriesBuilder.Points(_detail.Sessions, TrendMetric, IncludeMidSession);
-        int excluded = IncludeMidSession ? 0 : TrendSeriesBuilder.ExcludedCount(_detail.Sessions);
+        int excluded = IncludeMidSession ? 0 : TrendSeriesBuilder.ExcludedCount(_detail.Sessions, TrendMetric);
         TrendExcludedText = excluded > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.Trend_Excluded_Format, excluded) : string.Empty;
         TrendEmpty = TrendPoints.Count == 0;
         OnPropertyChanged(nameof(TrendMetricText));

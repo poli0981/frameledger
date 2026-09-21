@@ -32,3 +32,8 @@ ENUM_DISPLAY_SETTINGS_MODE
 // memory into a file under crashdumps\, never another process's.
 MiniDumpWriteDump
 MINIDUMP_TYPE
+// The machine beside the GPU (Telemetry.SystemTelemetrySource, 2026-09-21): CPU busy time and physical memory in use,
+// two system-wide counters that open no process.
+GetSystemTimes
+GlobalMemoryStatusEx
+MEMORYSTATUSEX

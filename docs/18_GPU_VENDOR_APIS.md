@@ -112,6 +112,21 @@ L1 gives no temperatures on its own (unless the D3DKMT probe pans out). That is 
 
 CPU and motherboard sensors remain LHM-only, elevated-only, PawnIO-dependent, and optional.
 
+> **The machine beside the GPU — built 2026-09-21, and deliberately NOT a fourth layer.** `ISystemTelemetrySource`
+> (`Telemetry.SystemTelemetrySource`) is read by `TelemetryPoller` on the same tick as the composite and rides each
+> `TelemetrySample` as a `SystemReading` — outside `GpuSample`, because the per-field capability bits and layer
+> attribution above mean nothing for "how busy was the CPU". Two unprivileged Win32 calls, no process opened:
+> `GetSystemTimes` (busy = (kernel + user) − idle over the interval; kernel INCLUDES idle in that API; the first tick has
+> no interval and is null) and `GlobalMemoryStatusEx` (physical memory in use). **CPU temperature is the one privileged
+> reading**: `LhmCpuTemperatureReader.TryOpen` opens a SEPARATE `Computer` (CPU group only — L2's stays GPU-only and
+> unelevated by design, so the unprivileged layer's behaviour never depends on privilege) only when the process is
+> elevated AND `PawnIo.IsInstalled`; it takes the package sensor (`CPU Package`, `Core (Tctl/Tdie)`) and falls back to the
+> hottest core. **Unmeasured on real hardware**: exercised against a fake `ILhmComputer` only; the first elevated run
+> with PawnIO is the measurement. `HelloAck.cpuTempAvailable` reports those same two conditions (it was a constant
+> `false`). A tick only the machine answered is still queued, under a placeholder `GpuSample` with
+> `TelemetryLayer.None` and no field. The `.partial` sensor chunk carries the three values in bits 12–14 of the
+> existing 16-bit presence mask, so an older file reads back with an empty reading.
+
 ## L3 — NVAPI (MIT, NVIDIA only)
 
 **Integration: vendored headers + import library, linked normally. ✅ Vendored 2026-08-05** at `src/native/third_party/nvapi/` — nine headers (`nvapi.h`'s include closure plus `nvapi_interface.h`), `License.txt`, and `amd64/nvapi64.lib`; **x64 only**, `x86/nvapi.lib` deliberately not taken. Consumed through the `fl_nvapi` INTERFACE target. NVIDIA publishes the NVAPI SDK — headers, interface definitions, and `nvapi64.lib` — under the **MIT licence** (verified 2026-08-02 and re-verified on the vendored copy: `amd64/nvapi64.lib` is a tracked file in the MIT repo and `License.txt` names the import libraries as the subject of the grant, so the binary is covered and not only the headers), so the SDK material can live in our GPL-3.0 repository with only the usual MIT attribution obligation. The runtime implementation lives in `nvapi64.dll`, which ships with the installed NVIDIA driver.

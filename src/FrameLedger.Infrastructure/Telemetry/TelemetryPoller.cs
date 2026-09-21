@@ -29,6 +29,7 @@ namespace FrameLedger.Infrastructure.Telemetry;
 public sealed class TelemetryPoller : ITelemetryPoller
 {
     private readonly IGpuTelemetrySource _source;
+    private readonly ISystemTelemetrySource? _system;
     private readonly TelemetryPollerOptions _options;
     private readonly TimeProvider _clock;
     private readonly ConcurrentQueue<TelemetrySample> _queue = new();
@@ -49,9 +50,11 @@ public sealed class TelemetryPoller : ITelemetryPoller
     /// True when the poller is the source's only owner and should dispose it — a composition root that
     /// builds the layers for one session and hands them over. False (the default) when the container owns them.
     /// </param>
-    public TelemetryPoller(IGpuTelemetrySource source, TelemetryPollerOptions options, TimeProvider clock, bool ownsSource = false)
+    /// <param name="system">The machine beside the GPU, read on the same tick (2026-09-21); owned and disposed with <paramref name="source"/> when <paramref name="ownsSource"/> is set. Null composes none, and every sample's <see cref="TelemetrySample.System"/> is empty.</param>
+    public TelemetryPoller(IGpuTelemetrySource source, TelemetryPollerOptions options, TimeProvider clock, bool ownsSource = false, ISystemTelemetrySource? system = null)
     {
         _source = source ?? throw new ArgumentNullException(nameof(source));
+        _system = system;
         _ownsSource = ownsSource;
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
@@ -96,14 +99,22 @@ public sealed class TelemetryPoller : ITelemetryPoller
     /// One tick: read the source, stamp, queue. Public so a test can drive the poller without
     /// its thread; the thread calls exactly this.
     /// </summary>
+    /// <summary>True when the composed system source can produce a CPU temperature (elevated, PawnIO, a sensor).</summary>
+    public bool CpuTemperatureAvailable => _system?.CpuTemperatureAvailable == true;
+
     public void PollOnce()
     {
-        if (!_source.TryRead(out GpuSample? sample))
+        bool gpu = _source.TryRead(out GpuSample? sample);
+        SystemReading system = default;
+        bool machine = _system is not null && _system.TryRead(out system);
+        if (!gpu && !machine)
         {
             return;
         }
 
-        _queue.Enqueue(new TelemetrySample(_clock.GetTimestamp(), sample));
+        // A tick only the machine answered still carries its CPU and memory: the placeholder names no layer and no field.
+        sample ??= new GpuSample { TakenAt = _clock.GetUtcNow(), Layer = TelemetryLayer.None };
+        _queue.Enqueue(new TelemetrySample(_clock.GetTimestamp(), sample, system));
         if (Interlocked.Increment(ref _queued) > _options.QueueCapacity && _queue.TryDequeue(out _))
         {
             Interlocked.Decrement(ref _queued);
@@ -139,6 +150,7 @@ public sealed class TelemetryPoller : ITelemetryPoller
         if (_ownsSource)
         {
             _source.Dispose();
+            _system?.Dispose();
         }
     }
 

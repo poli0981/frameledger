@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.IO;
 using System.Text;
+using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Settings;
 
 namespace FrameLedger.App.Services;
@@ -22,7 +23,7 @@ public static class DiagReport
     }
 
     /// <summary>The report text. <paramref name="settings"/> is every registry key's effective value; <paramref name="schemaVersion"/> null when the ledger could not be opened.</summary>
-    public static string Build(string appVersion, string dataDirectory, string logsDirectory, long? schemaVersion, IReadOnlyDictionary<string, string> settings, bool agentBesideApp, DateTimeOffset now)
+    public static string Build(string appVersion, string dataDirectory, string logsDirectory, long? schemaVersion, IReadOnlyDictionary<string, string> settings, bool agentBesideApp, DateTimeOffset now, HardwareSnapshot? hardware = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         var sb = new StringBuilder();
@@ -36,6 +37,14 @@ public static class DiagReport
         sb.AppendLine(CultureInfo.InvariantCulture, $"logs_dir: {logsDirectory}");
         sb.AppendLine(CultureInfo.InvariantCulture, $"ledger_schema: {(schemaVersion is long v ? v.ToString(CultureInfo.InvariantCulture) : "could not open")}");
         sb.AppendLine(CultureInfo.InvariantCulture, $"agent_beside_app: {agentBesideApp}");
+
+        // The machine (2026-09-21), as a session's hardware snapshot records it. A local file the user reads and chooses to
+        // share; the bug bundle's sysinfo.json is deliberately NOT given these (its keys are the issue link's prefill).
+        sb.AppendLine(CultureInfo.InvariantCulture, $"cpu: {hardware?.CpuName ?? "n/a"}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"gpu: {hardware?.GpuName ?? "n/a"}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"gpu_driver: {hardware?.GpuDriver ?? "n/a"}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"ram_gb: {(hardware?.RamGb is double gb ? gb.ToString("0.#", CultureInfo.InvariantCulture) : "n/a")}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"display: {hardware?.DisplayRes ?? "n/a"}{(hardware?.DisplayHz is double hz ? " @ " + hz.ToString("0.#", CultureInfo.InvariantCulture) + " Hz" : string.Empty)}");
         sb.AppendLine("settings:");
         foreach (SettingDefinition definition in SettingsRegistry.All)
         {

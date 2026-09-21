@@ -102,6 +102,7 @@ public sealed class SessionEventPublisher : ISessionObserver
         if (drained.Count > 0)
         {
             t.LastGpu = drained[^1].Sample;
+            t.LastSystem = drained[^1].System;
         }
 
         if (t.AttachedAt is null || !_pipe.HasClients)
@@ -153,7 +154,7 @@ public sealed class SessionEventPublisher : ISessionObserver
         try
         {
             double elapsed = _clock.GetElapsedTime(t.AttachedTimestamp, now).TotalSeconds;
-            SessionProgressEvent e = SessionProgressCalculator.Compute(sessionGuid, progress, t.Info.QpcFrequency, elapsed, t.LastGpu);
+            SessionProgressEvent e = SessionProgressCalculator.Compute(sessionGuid, progress, t.Info.QpcFrequency, elapsed, t.LastGpu, t.LastSystem);
             _pipe.Publish(IpcMessageType.SessionProgress, e);
             Interlocked.Increment(ref _progressPublished);
         }
@@ -195,5 +196,7 @@ public sealed class SessionEventPublisher : ISessionObserver
         public long? LastProgress { get; set; }
 
         public GpuSample? LastGpu { get; set; }
+
+        public SystemReading LastSystem { get; set; }
     }
 }

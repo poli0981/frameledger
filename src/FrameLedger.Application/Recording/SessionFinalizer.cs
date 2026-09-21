@@ -212,6 +212,9 @@ public sealed class SessionFinalizer
         AddIfAny(blobs, "gpu_load", sensors, static s => s.Sample.LoadPct);
         AddIfAny(blobs, "gpu_power", sensors, static s => s.Sample.PowerW);
         AddIfAny(blobs, "vram_adapter", sensors, static s => s.Sample.VramAdapterMb);
+        AddIfAny(blobs, "cpu_load", sensors, static s => s.System.CpuLoadPct);
+        AddIfAny(blobs, "cpu_temp", sensors, static s => s.System.CpuTempC);
+        AddIfAny(blobs, "ram_mb", sensors, static s => s.System.RamUsedMb);
         return blobs;
     }
 

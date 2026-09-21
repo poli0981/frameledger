@@ -41,6 +41,11 @@ public sealed class DiagReportTests
         string report = DiagReport.Build("1", "d", "l", null, new Dictionary<string, string>(StringComparer.Ordinal), false, DateTimeOffset.UnixEpoch);
 
         report.Should().Contain("ledger_schema: could not open");
+        report.Should().Contain("cpu: n/a").And.Contain("ram_gb: n/a").And.Contain("display: n/a", "no snapshot: every hardware line says so");
+
+        string withHardware = DiagReport.Build("1", "d", "l", null, new Dictionary<string, string>(StringComparer.Ordinal), false, DateTimeOffset.UnixEpoch,
+            new Application.Persistence.HardwareSnapshot { CpuName = "Test CPU", GpuName = "Test GPU", GpuDriver = "1.2.3", RamGb = 31.9, DisplayRes = "2560x1440", DisplayHz = 240 });
+        withHardware.Should().Contain("cpu: Test CPU").And.Contain("gpu: Test GPU").And.Contain("gpu_driver: 1.2.3").And.Contain("ram_gb: 31.9").And.Contain("display: 2560x1440 @ 240 Hz");
         DiagReport.FileName(new DateTimeOffset(2026, 9, 14, 12, 0, 0, TimeSpan.Zero)).Should().MatchRegex(@"^diag-\d{8}-\d{6}\.txt$");
     }
 }

@@ -60,6 +60,24 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Added
 
+- **CPU load, memory in use and (elevated) CPU temperature are measured.** `sessions.avg_cpu_load`, `avg_cpu_temp`,
+  `max_cpu_temp` and `avg_ram_mb`, and the `cpu_load` / `cpu_temp` / `ram_mb` sensor series, were in the schema from
+  0001 with no producer. The telemetry poller now reads the machine beside the GPU on the same 1 Hz tick: CPU time
+  busy across every logical processor (`GetSystemTimes` — not Task Manager's frequency-scaled "utility") and physical
+  memory in use, both unprivileged and opening no process. **CPU temperature is read only when the Agent runs as
+  administrator with PawnIO installed, and has not been checked on real hardware yet**; everywhere else it is N/A,
+  never 0. Sessions recorded before this keep their nulls; no migration. The live card carries CPU load and
+  temperature (`SessionProgress.cpuLoadPct`, optional).
+- **One game's sessions over time, beyond the frame rate.** The game page's Trend tab gains average GPU load, average
+  GPU power, max VRAM (game), average CPU load, max CPU temperature, average memory in use, and the **×FG factor**. A
+  factor that is its session's steady state (rule 6) covers part of the session, so it is left out by default and
+  drawn marked when "include mid-session changes" is on — never as the session's. The Sensors chart draws CPU
+  temperature, CPU load and system memory; Compare gains average GPU load, average CPU load and max CPU temperature;
+  the session summary gains GPU and CPU cards (average load · peak temperature).
+- **Settings ▸ System shows this PC** — processor, graphics card and driver, memory, Windows build, primary display —
+  as FrameLedger records it with every session, with a Copy button; nothing is sent anywhere. The session summary
+  shows that session's snapshot under its header, and `--diag` prints the machine's. The bug bundle is unchanged.
+
 - **Game page: the row's executable is shown, and "Change executable…" re-points it.** The remedy for a wrong import
   guess used to be remove-and-add. The row comes back exactly as a new game would — hooking off, no consent, pre-scan
   not run — with consent revoked over the pipe first, as removal does; a block is never cleared by it, and a path

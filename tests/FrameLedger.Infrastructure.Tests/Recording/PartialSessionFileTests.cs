@@ -68,7 +68,7 @@ public sealed class PartialSessionFileTests : IDisposable
         w.AppendNote(_t0, "started Launch");
         w.AppendRecords(0, [Record(0), Record(1), Record(2)]);
         w.AppendGaps([2]);
-        w.AppendSensors([Sample(1_100_000, 61.5, 3000), Sample(1_200_000, null, 3001)]);
+        w.AppendSensors([Sample(1_100_000, 61.5, 3000) with { System = new SystemReading(CpuLoadPct: 42.5, RamUsedMb: 12000, CpuTempC: null) }, Sample(1_200_000, null, 3001)]);
         w.AppendTouches([1_050_000, 1_150_000]);
         w.AppendTick(new PartialTick(3, 2, 0, 1, 1, _t0.AddSeconds(1).ToUnixTimeMilliseconds(), state));
         w.AppendRecords(3, [Record(3), Record(4)]);
@@ -96,6 +96,8 @@ public sealed class PartialSessionFileTests : IDisposable
         p.Sensors[0].Sample.TempCoreC.Should().Be(61.5);
         p.Sensors[0].Sample.PcieGen.Should().Be(4);
         p.Sensors[1].Sample.TempCoreC.Should().BeNull("null stays null across the file: N/A is never 0");
+        p.Sensors[0].System.Should().Be(new SystemReading(42.5, 12000, null), "the machine's reading rides the same chunk, a missing CPU temperature stays missing");
+        p.Sensors[1].System.IsEmpty.Should().BeTrue("a sample with no system reading reads back with none - which is every .partial written before 2026-09-21");
         p.Sensors[1].Sample.VramAdapterMb.Should().Be(3001);
         p.Sensors[1].Sample.LoadPct.Should().BeNull();
         p.TouchQpc.Should().Equal(1_050_000, 1_150_000);

@@ -39,6 +39,9 @@ public static class Formats
 
     public static string Temperature(double? celsius) => celsius is double c ? string.Format(CultureInfo.CurrentCulture, Strings.Format_Temperature_Format, c) : Strings.Common_NotAvailable;
 
+    /// <summary>A 0–100 load as <c>42%</c>; null → N/A, never 0%.</summary>
+    public static string Percent(double? value) => value is double v ? v.ToString("0", CultureInfo.CurrentCulture) + "%" : Strings.Common_NotAvailable;
+
     /// <summary><c>1485×835 → 2560×1440</c>, or one pair when only one is known, or N/A.</summary>
     public static string Resolution(int? renderW, int? renderH, int? outputW, int? outputH)
     {

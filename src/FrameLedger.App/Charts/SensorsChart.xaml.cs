@@ -41,6 +41,8 @@ public partial class SensorsChart : UserControl
             Line(plot, series, "gpu_hotspot", Strings.Sensors_Series_GpuHotspot, p.Stutter, null);
             Line(plot, series, "gpu_load", Strings.Sensors_Series_GpuLoad, p.Native, null);
             Line(plot, series, "gpu_power", Strings.Sensors_Series_GpuPower, p.SensorSecondary, plot.Axes.Right);
+            Line(plot, series, "cpu_temp", Strings.Sensors_Series_CpuTemp, p.Percentile, null);
+            Line(plot, series, "cpu_load", Strings.Sensors_Series_CpuLoad, p.Displayed, null);
             plot.Axes.AutoScale();
             plot.ShowLegend(Alignment.UpperRight);
         }
@@ -69,6 +71,7 @@ public partial class SensorsChart : UserControl
             }
 
             Line(plot, series, "vram_adapter", Strings.Sensors_Series_VramAdapter, p.SensorSecondary, null);
+            Line(plot, series, "ram_mb", Strings.Sensors_Series_Ram, p.Percentile, null);
             plot.Axes.AutoScale();
             plot.ShowLegend(Alignment.UpperRight);
         }
