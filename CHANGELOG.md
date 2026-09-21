@@ -55,6 +55,11 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Changed
 
+- **A local native build no longer fails on an uncommitted change.** After the first tag `git describe --dirty`
+  produces `v0.1.0-beta.2-2-g<12 hex>-dirty`, 35 characters against `FlShmHandshake::buildId`'s 31, so every CMake
+  configure of a dirty tree was fatal and the workaround was "commit before you build". The id now falls back to an
+  8-digit abbreviation with `+` for dirty when the long form does not fit; a release is a clean checkout at a tag and
+  never takes the fallback. Still too long after that is still fatal.
 - **Dependencies, 2026-09-21.** The test framework moves from xUnit.net v3 3.2.2 to **4.0.1**, referenced as
   `xunit.v3.mtp-off` with `xunit.runner.visualstudio` 4.0.0: 4.0 makes Microsoft Testing Platform v2 the default of the
   plain `xunit.v3` package, and `build.ps1`'s gates are VSTest-shaped on purpose (the `XPlat Code Coverage` collector,

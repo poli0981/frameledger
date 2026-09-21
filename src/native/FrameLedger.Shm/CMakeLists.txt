@@ -41,6 +41,22 @@ endif()
 # that would be truncated must be caught here rather than becoming a permanent
 # mismatch nobody can explain.
 string(LENGTH "${FL_BUILD_ID_RAW}" FL_BUILD_ID_LEN)
+# AFTER THE FIRST TAG the long form stopped fitting on a developer's machine: `v0.1.0-beta.2-2-gd3e74988a7bc-dirty`
+# is 35 characters, so every local configure with an uncommitted change failed here and the documented workaround
+# was "commit before you build" (measured 2026-09-17, again 2026-09-21). The id is a version-skew signal, not a
+# provenance guarantee (above), so the fallback spends fewer characters on the same facts: an 8-digit abbreviation
+# and `+` for dirty. A released build is a clean checkout AT a tag and never reaches this branch. Still too long
+# after that is still fatal, for the reason the check exists.
+if(FL_BUILD_ID_LEN GREATER 31)
+    execute_process(
+        COMMAND git describe --always --dirty=+ --abbrev=8
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE FL_BUILD_ID_RAW
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    string(LENGTH "${FL_BUILD_ID_RAW}" FL_BUILD_ID_LEN)
+endif()
 if(FL_BUILD_ID_LEN GREATER 31)
     message(FATAL_ERROR
         "FL_BUILD_ID '${FL_BUILD_ID_RAW}' is ${FL_BUILD_ID_LEN} chars; FlShmHandshake::buildId holds 31 + NUL. "
