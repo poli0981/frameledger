@@ -37,7 +37,21 @@ public sealed class ParentDumpTests : IDisposable
         var problems = new List<string>();
         try
         {
-            ParentDump.WriteDump(child, file, problems.Add).Should().BeTrue(string.Join(" | ", problems));
+            // A process started microseconds ago is still being mapped by the loader, and MiniDumpWriteDump then fails
+            // with ERROR_PARTIAL_COPY (0x8007012B) - seen on CI 2026-09-21. The product never dumps a process that young
+            // (it dumps one that crashed), so the TEST waits for the child to finish loading: retry, bounded at 5 s.
+            bool written = false;
+            for (int attempt = 0; attempt < 50 && !written; attempt++)
+            {
+                problems.Clear();
+                written = ParentDump.WriteDump(child, file, problems.Add);
+                if (!written)
+                {
+                    Thread.Sleep(100);
+                }
+            }
+
+            written.Should().BeTrue(string.Join(" | ", problems));
         }
         finally
         {

@@ -93,6 +93,9 @@ public sealed partial class FirstRunViewModel : ObservableObject, IDisposable
 
     public static string Title => Strings.FirstRun_Title;
 
+    /// <summary>The plain-language summary above the documents (2026-09-21): beta, minimum requirements, the ban risk, your data. It summarises; it is not the terms.</summary>
+    public static string LegalSummary => Strings.FirstRun_Legal_Summary;
+
     public static string LegalBody => Strings.FirstRun_Legal_Body;
 
     public static string AgentBody => Strings.FirstRun_Agent_Body;

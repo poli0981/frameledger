@@ -9,7 +9,8 @@
 > **pre-release is `0.1.0-beta.2`** (2026-09-17), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
-> game in the library runs, injects only into games you enabled and only past the safety guard, and
+> game in the library runs, injects only into games you enabled and only past the safety guard (or,
+> for a game whose guard bypass you turned on yourself, past your own acceptance of that risk), and
 > stores sessions in a local database. What that path measures:
 >
 > - **Frame times and output resolution:** measured from the present call for Direct3D 11/12 and
@@ -60,7 +61,11 @@
 >   half of the suspicious-module rule. During every capture the Agent re-runs the checks every 30 s and
 >   stops capturing on a refusal: a Direct3D or OpenGL game's hooks are removed, and the Vulkan layer
 >   goes passthrough. A global switch in Settings turns all hooking off, and a running capture stops at
->   its next check; it can only refuse, never permit. There is no override anywhere.
+>   its next check; it can only refuse, never permit. **There is one override, and only one:** a per-game
+>   "bypass the anti-cheat guard" switch, off by default, that you can turn on only by accepting its own
+>   warning (a tick and a typed word). With it on, FrameLedger injects into that game even where the
+>   checks find anti-cheat, the 30 s re-check no longer stops the capture for that finding, and every
+>   session started that way is marked. It never changes HOW FrameLedger injects: nothing is hidden.
 >
 > Where a value is not measured it reads `N/A`, with two exceptions: FPS then shows Presented FPS with a
 > note on what it may include, and ray-tracing flags may show a value you set yourself, labelled as
@@ -161,4 +166,4 @@ If you find a game with anti-cheat that FrameLedger fails to detect, please open
 
 ---
 
-**Status:** pre-alpha, under active development; latest pre-release `v0.1.0-beta.2` (2026-09-17). Roadmap: [`docs/15_ROADMAP.md`](docs/15_ROADMAP.md).
+**Status:** pre-release (beta). Three tagged pre-releases so far; see `CHANGELOG.md` for what each one changed and the accuracy block at the top of this file for what is and is not measured. It is not feature-complete, it certainly still has bugs, and `legal/DISCLAIMER.md` §0 says what that means for you.

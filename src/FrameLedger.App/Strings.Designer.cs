@@ -217,6 +217,7 @@ public static class Strings
         nameof(FirstRun_Legal_Body),
         nameof(FirstRun_Legal_Header),
         nameof(FirstRun_Legal_Online),
+        nameof(FirstRun_Legal_Summary),
         nameof(FirstRun_Next),
         nameof(FirstRun_Title),
         nameof(Format_Duration_HoursMinutes_Format),
@@ -1008,6 +1009,8 @@ public static class Strings
     public static string FirstRun_Legal_Header => ResourceManager.GetString(nameof(FirstRun_Legal_Header), Culture) ?? nameof(FirstRun_Legal_Header);
 
     public static string FirstRun_Legal_Online => ResourceManager.GetString(nameof(FirstRun_Legal_Online), Culture) ?? nameof(FirstRun_Legal_Online);
+
+    public static string FirstRun_Legal_Summary => ResourceManager.GetString(nameof(FirstRun_Legal_Summary), Culture) ?? nameof(FirstRun_Legal_Summary);
 
     public static string FirstRun_Next => ResourceManager.GetString(nameof(FirstRun_Next), Culture) ?? nameof(FirstRun_Next);
 

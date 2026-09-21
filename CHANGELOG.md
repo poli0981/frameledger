@@ -103,6 +103,24 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Changed
 
+- **The terms say what an end user needs to hear, and must be accepted again.** `legal/DISCLAIMER.md` 2.2 -> **2.3**:
+  a new §0 (**this is pre-release software — it certainly still has bugs, and the developer is not responsible for
+  incidents that result**), §2A (the guard bypass, entirely at your own risk, no liability), §4A (**your PC must meet
+  at least the minimum requirements the game's developer or publisher states — read them first; problems on a machine
+  below them, or on unstable, overclocked or overheating hardware, are yours and not the developer's**) and §7A (back
+  up your own data; builds are unsigned, download only from the project's Releases page and verify the hash; no
+  affiliation with any game, platform or vendor; numbers are for your own information). `legal/EULA.md` 1.0 -> **1.1**
+  says the same in §2A/§2B. The first-run Legal step shows a short plain-language summary of those points in en/vi/ja
+  above the documents, which remain the terms. Because both versions moved, the Legal Gate opens once after the update.
+  The accuracy block's Safety bullet no longer says "There is no override anywhere".
+- **Docs that had gone stale.** `legal/THIRD_PARTY_NOTICES.md` gains the test-time row it never had (xUnit.net v3 4.x
+  under Apache-2.0, FluentAssertions 7.x and why it is pinned, NSubstitute, coverlet, Test.Sdk, Catch2);
+  `16_WPFUI_SYNTAX` named a TFM this repository never built; `14_TESTING` still called Catch2 and the blocked toggle
+  future work; README's status line said "pre-alpha" beside three pre-releases; `build.ps1` "skipped" the coverage and
+  rules gates when their tools were missing, which its own header calls worse than no gate — a missing tool fails now.
+- **Two flaky tests, seen on CI the same day.** The native-log test slept a fixed 1500 ms and read the Overlay's log
+  between two lines (it polls for the last one now); `ParentDumpTests` dumped a child process microseconds after starting
+  it and got `ERROR_PARTIAL_COPY` (it waits for the child to finish loading). Neither was a product defect.
 - **A local native build no longer fails on an uncommitted change.** After the first tag `git describe --dirty`
   produces `v0.1.0-beta.2-2-g<12 hex>-dirty`, 35 characters against `FlShmHandshake::buildId`'s 31, so every CMake
   configure of a dirty tree was fatal and the workaround was "commit before you build". The id now falls back to an

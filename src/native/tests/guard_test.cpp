@@ -2578,8 +2578,17 @@ TEST_CASE("the native log: written at init, on the Agent's request, and on the s
         Sleep(50);
     }
     REQUIRE(r.st->status == fl::FL_STATUS_UNHOOKED);
-    Sleep(1500);
-    text = ReadWholeFile(log);
+    // POLL for the LAST line the stop writes rather than sleeping a fixed 1500 ms. The watchdog flushes the ring-buffer
+    // log on its own cadence, so a fixed sleep read the file BETWEEN two UNHOOK_RESTORED lines on a loaded CI runner
+    // (2026-09-21, PR #209: the dxgi line was there, the kernelbase one was not yet). Bounded at 10 s; the checks below
+    // still fail, with the text, if the line never comes.
+    for (int i = 0; i < 100; ++i) {
+        text = ReadWholeFile(log);
+        if (text.find("UNHOOK_RESTORED  kernelbase!LoadLibraryExW") != std::string::npos) {
+            break;
+        }
+        Sleep(100);
+    }
     INFO("after the stop:\n" << text);
     CHECK(text.find("STOP") != std::string::npos);
     CHECK(text.find("UNHOOK_RESTORED  dxgi!IDXGISwapChain::Present") != std::string::npos);
