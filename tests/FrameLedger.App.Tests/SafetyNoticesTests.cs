@@ -29,6 +29,29 @@ public sealed class SafetyNoticesTests
         strip.Shown.Should().BeEmpty("never a toast, never a snackbar");
     }
 
+    /// <summary>
+    /// 2026-09-22: a game whose process an anti-cheat driver protects (ELDEN RING under EAC, with the guard bypass on)
+    /// reached the user as a toast reading "InjectFailed: TargetAmbiguous" and no session. It is a persistent notice that
+    /// says why and that the bypass does not change it - and it does NOT claim the session is still recorded, because
+    /// that run ends at once and is discarded.
+    /// </summary>
+    [Fact]
+    public void AProcessThatCannotBeOpenedIsAPersistentNoticeThatSaysWhyAndPromisesNoRecording()
+    {
+        var link = new FakeAgentLink();
+        var strip = new RecordingStrip();
+        using var notices = new SafetyNotices(link, strip);
+
+        link.Raise(IpcMessageType.CaptureRefused, new CaptureRefusedEvent(7, "ELDEN RING", "TargetUnreadable", null, null));
+
+        SafetyNotice notice = notices.Items.Should().ContainSingle().Subject;
+        notice.Kind.Should().Be(SafetyNoticeKind.Refused);
+        notice.Title.Should().Contain("ELDEN RING");
+        notice.Body.Should().Be(Shared.Strings.Safety_Refused_TargetUnreadable);
+        notice.Body.Should().NotContain(Strings.Notice_Refused_Recording);
+        strip.Shown.Should().BeEmpty("never a toast");
+    }
+
     [Fact]
     public void ACouldNotVerifyRefusalUsesItsOwnSentence()
     {

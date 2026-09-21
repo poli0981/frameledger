@@ -27,15 +27,15 @@
   <data name="Safety_Consent_VersionMismatch" xml:space="preserve"><value>This app and the capture agent carry different versions of this consent text. Nothing was enabled. Restart both, then try again.</value><comment>safety: human review required</comment></data>
   <data name="Safety_RecordWithoutMeasuring" xml:space="preserve"><value>Record this session without measuring it</value><comment>safety: human review required</comment></data>
   <data name="Safety_Refused_CouldNotVerify" xml:space="preserve"><value>FrameLedger could not verify this game's files for anti-cheat, so hooking stays off. It will check again when the game's files or the detection rules change.</value><comment>safety: human review required</comment></data>
-  <data name="Safety_Refused_Named_Format" xml:space="preserve"><value>{0} was detected in this game ({1}). FrameLedger will not inject into it, and there is no way to override this.</value><comment>safety: human review required</comment></data>
-  <data name="Safety_Refused_Unnamed" xml:space="preserve"><value>An anti-cheat or anti-tamper module was detected in this game. FrameLedger will not inject into it, and there is no way to override this.</value><comment>safety: human review required</comment></data>
+  <data name="Safety_Refused_Named_Format" xml:space="preserve"><value>{0} was detected in this game ({1}). FrameLedger will not inject into it. The only way past this is that game's own guard-bypass switch, which is off by default and entirely at your own risk.</value><comment>safety: human review required</comment></data>
+  <data name="Safety_Refused_Unnamed" xml:space="preserve"><value>An anti-cheat or anti-tamper module was detected in this game. FrameLedger will not inject into it. The only way past this is that game's own guard-bypass switch, which is off by default and entirely at your own risk.</value><comment>safety: human review required</comment></data>
   <data name="Safety_Unhooked_Format" xml:space="preserve"><value>Capture stopped: {0} was detected while the game was running. FrameLedger unhooked and will not inject into this game again until you enable it again.</value><comment>safety: human review required</comment></data>
   <data name="Safety_Bypass_Title_Format" xml:space="preserve">
     <value>Bypass the anti-cheat guard for {0}?</value>
     <comment>safety: human review required</comment>
   </data>
   <data name="Safety_Bypass_Intro" xml:space="preserve">
-    <value>FrameLedger refuses to inject into a game where it detects anti-cheat or anti-tamper software. This switch overrules that refusal for this one game. It is OFF by default, it applies to no other game, and you can turn it off again at any time.</value>
+    <value>FrameLedger refuses to inject into a game where it detects anti-cheat or anti-tamper software. This switch overrules that refusal for this one game. It is OFF by default, it applies to no other game, and you can turn it off again at any time. It cannot make FrameLedger work where an anti-cheat protects the game's process from being opened: such a game stays unmeasured, FrameLedger will not work around that protection, and you would carry the ban risk for nothing.</value>
     <comment>safety: human review required</comment>
   </data>
   <data name="Safety_Bypass_Found_Format" xml:space="preserve">
@@ -98,4 +98,6 @@
     <value>The bypass was not changed: {0}</value>
     <comment>safety: human review required</comment>
   </data>
+  <data name="Safety_Bypass_Found_Overruled_Format" xml:space="preserve"><value>The guard found: {0}. You chose to bypass it for this game, so hooking is allowed here at your own risk.</value><comment>safety: human review required</comment></data>
+  <data name="Safety_Refused_TargetUnreadable" xml:space="preserve"><value>The game is running, but Windows would not let FrameLedger open its process: it is protected by an anti-cheat driver, or it runs as administrator while FrameLedger does not. Nothing was injected and this run was not measured. The guard bypass does not change this, and FrameLedger will not work around another product's protection.</value><comment>safety: human review required</comment></data>
 </root>

@@ -625,7 +625,13 @@ public sealed partial class GameDetailViewModel : ObservableObject
         // not refused, so the toggle works and the block's text stays on the page beside it.
         HookToggleEnabled = (!blocked || GuardBypassOn) && !Busy;
         HookStatusText = row.HookEnabled ? Strings.GameDetail_Hooking_On : Strings.GameDetail_Hooking_Off;
-        BlockedText = blocked ? string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_Blocked_Toggle_Format, row.HookBlockedReason ?? row.HookPrescanState) : null;
+        // "Hooking is disabled for this game" beside a hooking switch that is ON was the beta.3 page under a bypass. The
+        // finding stays on the page - it is still true - and says what happened to it.
+        BlockedText = !blocked
+            ? null
+            : string.Format(CultureInfo.CurrentCulture,
+                GuardBypassOn ? Shared.Strings.Safety_Bypass_Found_Overruled_Format : Shared.Strings.Safety_Blocked_Toggle_Format,
+                row.HookBlockedReason ?? row.HookPrescanState);
         AutoDisabledText = row.HookAutoDisabledReason is { Length: > 0 } reason && !row.HookEnabled
             ? string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_AutoDisabled_Format, reason)
             : null;

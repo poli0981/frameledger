@@ -374,6 +374,19 @@ The list exists twice — `fl::guard::IsGuardJudgement` and `AntiCheatVerdict.Is
 3. The App writes nothing. It sends `SetGuardBypass` (`07_IPC`); the Agent refuses any disclosure version but its own (`GuardBypassDisclosure.Version`), re-reads the executable, and stamps `games.guard_bypass_at` + `guard_bypass_disclosure_version` (schema 0007) through `IGuardBypassStore` — a port of its own, so nothing that can grant consent can by the same call overrule the guard.
 4. It enables nothing. Hooking is still its own switch and its own FR-2.1 dialog; with the bypass recorded, `SetHookEnabled` still runs the pre-scan and **still writes the finding** (`hook_blocked_reason` stays on the row and stays true) and then stamps the consent beside it, answering `prescan: "bypassed"`.
 
+**What it cannot do, measured on its first real use (2026-09-21, the owner, ELDEN RING under Easy Anti-Cheat).** A
+kernel anti-cheat does not only detect a loaded DLL; its driver strips other processes' handles to the game. From the
+Agent that looks like this: the watcher sees the process (its image path is readable with limited rights), and
+`TargetResolver` cannot read its main module — every candidate exists and none can be opened. That is
+`SessionEndReason.TargetUnreadable` since 2026-09-22 (it was reported as `TargetAmbiguous`, "more than one process is
+running it", about one process; reached the user as a toast reading `InjectFailed: TargetAmbiguous`; and the one-second
+session was discarded for being short — so with the bypass ON the whole visible result was nothing). **The bypass does
+not change this and nothing will be built that does**: it overrules FrameLedger's own refusal, and a process another
+product's driver has closed to us stays closed — opening it anyway would be defeating that product, which is rule 3,
+not rule 2. The user now gets a persistent notice that says so (`Safety_Refused_TargetUnreadable`), the bypass
+disclosure says it before they accept (`GuardBypassDisclosure.Version` is `/2` for that sentence), and
+`legal/DISCLAIMER.md` §2A says it. The same reason covers a game that runs as administrator while the Agent does not.
+
 **How it ends.** Turning the switch off (no dialog needed to restore the guard); turning hooking off (`RevokeAsync` clears it — the row returns to its safest state); the executable changing (`HookRequest.FromConsent` drops it on a fingerprint mismatch exactly as it drops consent, and *Change executable…* clears the columns).
 
 **During a session.** `GuardSupervisor` still scans every 30 s and the tick still counts — the Overlay's own stop is fed by it. A scan that refuses on a *judgement* is kept (`LastVerdict`), counted (`JudgementsOverruled`) and does not unhook: it is the refusal the user overruled, re-discovered. A refusal that is not a judgement still unhooks.

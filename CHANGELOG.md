@@ -27,7 +27,35 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
-_Nothing yet — entries continue here after `0.1.0-beta.3`._
+### Fixed
+
+- **A second App could be started beside the first.** Nothing enforced one instance: the owner's log of 2026-09-21
+  shows two started 360 ms apart from one double-click — two windows, two tray icons, a second log file, both writing
+  one ledger — and with "minimize to tray" on, every click on the shortcut made another. The App now claims its data
+  folder at start (`Services.SingleInstance`, a named mutex and event keyed on the folder); a later start hands over to
+  the running one, which brings its window forward, and exits. `--diag` still runs beside a running App.
+- **A Vietnamese (or Japanese) UI showed the safety texts in English** — the consent dialog, the refusal notices, and
+  the whole guard-bypass card in beta.3's screenshot. `FrameLedger.Shared`'s string family was never given the UI
+  culture and fell back to the thread's, which the App's async start does not pass to later dispatcher work.
+  `App.ApplyCulture` sets both families now. (Japanese safety text is still the English by design, until reviewed.)
+- **Under the guard bypass the game page said "Hooking is disabled for this game: …" beside a hooking switch that was
+  on.** The finding stays on the page and now reads "The guard found: … You chose to bypass it for this game".
+- **With the bypass on, a game protected by a kernel anti-cheat produced nothing at all** — no session, and a toast
+  reading `InjectFailed: TargetAmbiguous`. Measured on the owner's ELDEN RING (Easy Anti-Cheat): the anti-cheat's
+  driver closes the game's process to other programs, the resolver could read no candidate, and it called that
+  "ambiguous". It is `TargetUnreadable` now, and it reaches the user as a persistent notice that says what happened,
+  that nothing was injected or measured, and that **the bypass does not change this and FrameLedger will not work
+  around another product's protection** (rule 3). The bypass disclosure says the same before it is accepted (its
+  version is `guard-bypass-dialog/2`), and so does `legal/DISCLAIMER.md` §2A (2.3 -> **2.4**, so the Legal Gate opens
+  once). The same reason covers a game running as administrator while the Agent does not.
+- The refusal notices said "there is no way to override this"; they name the per-game bypass switch and whose risk it is.
+
+### Changed
+
+- The Agent's session log line names what the guard said when it was not a plain allow
+  (`…; guard=BlockedService/Easy Anti-Cheat/EasyAntiCheat_EOS`), and `started-under-bypass=` for a bypassed start. A
+  `SafetyUnhook` on the owner's machine left no trace of WHICH finding fired; the pipe event carried it and the log,
+  which is what survives, did not.
 
 ## [0.1.0-beta.3] - 2026-09-21
 

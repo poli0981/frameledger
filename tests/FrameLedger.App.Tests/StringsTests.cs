@@ -64,6 +64,38 @@ public sealed class StringsTests
         }
     }
 
+    /// <summary>
+    /// The owner's beta.3 screenshot: a Vietnamese UI whose guard-bypass card, consent dialog and refusal notices were
+    /// English. FrameLedger.Shared's Strings had no culture of its own, and the thread culture set during the async
+    /// start does not reach the dispatcher's later operations. <c>ApplyCulture</c> sets BOTH families explicitly.
+    /// </summary>
+    [Fact]
+    public void ApplyingTheUiLanguageSetsTheSafetyFamilyToo()
+    {
+        CultureInfo? app = Strings.Culture;
+        CultureInfo? safety = Shared.Strings.Culture;
+        CultureInfo thread = CultureInfo.CurrentUICulture;
+        CultureInfo? threadDefault = CultureInfo.DefaultThreadCurrentUICulture;
+        try
+        {
+            App.ApplyCulture("vi");
+            // The thread's culture is put back to English ON PURPOSE: the explicit culture must not depend on it.
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("en");
+
+            Shared.Strings.Culture.Should().Be(CultureInfo.GetCultureInfo("vi"));
+            Shared.Strings.Safety_Bypass_Toggle_Label.Should().StartWith("Bỏ qua Guard");
+            Shared.Strings.Safety_Blocked_Toggle_Format.Should().StartWith("Hooking bị vô hiệu hoá");
+            Strings.Nav_Settings.Should().Be("Cài đặt");
+        }
+        finally
+        {
+            Strings.Culture = app;
+            Shared.Strings.Culture = safety;
+            CultureInfo.CurrentUICulture = thread;
+            CultureInfo.DefaultThreadCurrentUICulture = threadDefault;
+        }
+    }
+
     private static string RepoRoot()
     {
         string? dir = AppContext.BaseDirectory;

@@ -53,7 +53,9 @@ public sealed class TargetResolver : ITargetResolver
 
         if (matches.Count == 0)
         {
-            reason = unreadable > 0 ? SessionEndReason.TargetAmbiguous : SessionEndReason.TargetNotRunning;
+            // Candidates exist and NONE could be read: not an ambiguity between processes, a process closed to us
+            // (protected by an anti-cheat driver, or elevated). It used to be reported as TargetAmbiguous.
+            reason = unreadable > 0 ? SessionEndReason.TargetUnreadable : SessionEndReason.TargetNotRunning;
             return null;
         }
 

@@ -33,6 +33,7 @@ public static class Strings
         nameof(Safety_Bypass_Failed_Format),
         nameof(Safety_Bypass_Found_Format),
         nameof(Safety_Bypass_Found_Nothing),
+        nameof(Safety_Bypass_Found_Overruled_Format),
         nameof(Safety_Bypass_Intro),
         nameof(Safety_Bypass_KeepGuard),
         nameof(Safety_Bypass_Liability),
@@ -61,6 +62,7 @@ public static class Strings
         nameof(Safety_RecordWithoutMeasuring),
         nameof(Safety_Refused_CouldNotVerify),
         nameof(Safety_Refused_Named_Format),
+        nameof(Safety_Refused_TargetUnreadable),
         nameof(Safety_Refused_Unnamed),
         nameof(Safety_Unhooked_Format),
     ];
@@ -78,6 +80,8 @@ public static class Strings
     public static string Safety_Bypass_Found_Format => ResourceManager.GetString(nameof(Safety_Bypass_Found_Format), Culture) ?? nameof(Safety_Bypass_Found_Format);
 
     public static string Safety_Bypass_Found_Nothing => ResourceManager.GetString(nameof(Safety_Bypass_Found_Nothing), Culture) ?? nameof(Safety_Bypass_Found_Nothing);
+
+    public static string Safety_Bypass_Found_Overruled_Format => ResourceManager.GetString(nameof(Safety_Bypass_Found_Overruled_Format), Culture) ?? nameof(Safety_Bypass_Found_Overruled_Format);
 
     public static string Safety_Bypass_Intro => ResourceManager.GetString(nameof(Safety_Bypass_Intro), Culture) ?? nameof(Safety_Bypass_Intro);
 
@@ -134,6 +138,8 @@ public static class Strings
     public static string Safety_Refused_CouldNotVerify => ResourceManager.GetString(nameof(Safety_Refused_CouldNotVerify), Culture) ?? nameof(Safety_Refused_CouldNotVerify);
 
     public static string Safety_Refused_Named_Format => ResourceManager.GetString(nameof(Safety_Refused_Named_Format), Culture) ?? nameof(Safety_Refused_Named_Format);
+
+    public static string Safety_Refused_TargetUnreadable => ResourceManager.GetString(nameof(Safety_Refused_TargetUnreadable), Culture) ?? nameof(Safety_Refused_TargetUnreadable);
 
     public static string Safety_Refused_Unnamed => ResourceManager.GetString(nameof(Safety_Refused_Unnamed), Culture) ?? nameof(Safety_Refused_Unnamed);
 

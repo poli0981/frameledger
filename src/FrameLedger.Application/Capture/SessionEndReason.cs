@@ -142,4 +142,24 @@ public enum SessionEndReason
     /// unhooked from here — <c>exit_status</c> is <c>normal</c>, and the row is stored like any other.
     /// </summary>
     StoppedByUser,
+
+    /// <summary>
+    /// The game IS running and its process cannot be opened: every candidate of that name refused to be read, and none
+    /// could be identified (2026-09-22). Two ordinary causes: an anti-cheat's kernel driver protects the process
+    /// (ELDEN RING under Easy Anti-Cheat, the owner's log of 2026-09-21), or the game runs as administrator and the
+    /// Agent does not. Nothing was injected, and nothing can be.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// It was reported as <see cref="TargetAmbiguous"/> until this existed — "more than one process is running it" about
+    /// a single process — and reached the user as a toast reading <c>InjectFailed: TargetAmbiguous</c>, while the
+    /// one-second session was discarded for being short. With the guard bypass on, that was the whole visible result.
+    /// </para>
+    /// <para>
+    /// <b>The guard bypass does not change it, and nothing will be built that does.</b> The bypass overrules
+    /// FrameLedger's own refusal; a process another product's driver has closed to us stays closed, and opening it
+    /// anyway would be defeating that product — CLAUDE.md rule 3.
+    /// </para>
+    /// </remarks>
+    TargetUnreadable,
 }

@@ -276,7 +276,7 @@ internal sealed class ConsoleVerbs(IServiceProvider services, AgentPaths paths)
         return result.Reason switch
         {
             SessionEndReason.TargetExited or SessionEndReason.Running => _exitOk,
-            SessionEndReason.TargetNotRunning or SessionEndReason.TargetAmbiguous
+            SessionEndReason.TargetNotRunning or SessionEndReason.TargetAmbiguous or SessionEndReason.TargetUnreadable
                 or SessionEndReason.TargetCannotBePinned or SessionEndReason.LaunchCannotStart => _exitTargetNotResolved,
             SessionEndReason.AttachRefused => _exitAttachRefused,
             SessionEndReason.SafetyUnhook or SessionEndReason.SupervisionLost or SessionEndReason.KillSwitchEngaged

@@ -1,6 +1,6 @@
 # FrameLedger — Disclaimer
 
-**Version:** 2.3 · **Effective:** {{RELEASE_DATE}}
+**Version:** 2.4 · **Effective:** {{RELEASE_DATE}}
 
 > **How this document is kept true.** The statement of what FrameLedger measures (§4) is `legal/ACCURACY.md`,
 > embedded here and in `README.md` and bound to its source by `tools/accuracy-check.ps1`, which fails the build when a
@@ -88,6 +88,11 @@ Turning it on tells FrameLedger to inject into that game **even where its checks
 software** — that is, in exactly the situation §2 says can get an account banned. The checks still run and what they
 found is still recorded; they simply no longer stop the injection or the running session for that game. FrameLedger
 still does nothing to hide itself: it loads under its real name and is fully visible to the anti-cheat.
+
+**It does not make FrameLedger work everywhere.** Several anti-cheat systems protect the game's process so that no
+other program can open it. FrameLedger cannot measure such a game with or without the bypass, it says so when that
+happens, and it will never try to get around another product's protection. Turning the bypass on for such a game
+gains you nothing and still marks your intent to load software into it.
 
 You can turn it on only by accepting a warning inside the application, by **both** ticking a statement and typing a
 word. **BY TURNING IT ON YOU ACCEPT THE ENTIRE RISK YOURSELF.** The developer and the contributors accept **no
