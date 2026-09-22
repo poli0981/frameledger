@@ -80,9 +80,11 @@ it still holds.
 > frames=0)` for every refusal). Now the loop **holds** a refused session open — `HoldUnhookedAsync`, one tick
 > per `CaptureOptions.HoldInterval` (1 s), each tick draining the telemetry poller through the observer as a
 > hooked session's ticks do — until the target exits, the user stops it or `MaxDuration` runs out. The clock is
-> the pinned liveness when the loop holds a pin, and the executable's NAME (`ITargetResolver.IsRunning`, a
-> process list without a single `OpenProcess`) when it never opened the process. Nothing about the hold touches
-> the target. **And hooking-off is decided before the process is opened**: `RunAsync` reads the consent record
+> the pinned liveness when the loop holds a pin, and ~~the executable's NAME~~ **the executable's image path in the
+> watcher's own 1 Hz snapshot** (`ITargetResolver.IsRunning` over `LatestProcessSnapshot`, 2026-09-23; a process
+> whose path could not be read still counts by its name; the console verbs, where nothing polls, keep the name
+> list) when it never opened the process — by name, another game's `Game.exe` held an RPG Maker game's session
+> open. Nothing about the hold touches the target, and no process is opened for it. **And hooking-off is decided before the process is opened**: `RunAsync` reads the consent record
 > first, and a row whose hooking is off — merely added, blocked by a finding, auto-disabled — goes straight to
 > the hold with `RefusedHookNotEnabled` (its verdict is the row's block when it has one, `PreviouslyBlocked`).
 > The resolver used to run first, and a hooking-off utility that runs elevated (Borderless Gaming, imported from
@@ -123,7 +125,7 @@ which makes the notification more important than it was, not less.
 ## Process watcher
 
 - 1 Hz snapshot via `CreateToolhelp32Snapshot` (CsWin32): pid, ppid, exe path (`QueryFullProcessImageName`).
-- Watchlist match on normalized full path (`GetFinalPathNameByHandle` — junctions/symlinks), filename fallback with a stale-path warning badge.
+- Watchlist match on normalized full path (`GetFinalPathNameByHandle` — junctions/symlinks), ~~filename fallback with a stale-path warning badge~~ **and a file name alone never starts a session (2026-09-23, HANDOFF D25): it can only be the entry's own executable on a drive that changed its letter (the relocator's rule), or it is not in the library.**
 - Process tree assembled from ppid chains; the **capture target** is the descendant that actually presents. In launch mode we know it; in attach mode we wait for the first ring handshake. ~~or (Tier 2) elect the PID with the most presents in the first 10 s~~ — there is no Tier-2 present stream to elect from. Re-elect if the presenting PID dies while the tree lives (level-transition relaunches).
 
 > **Built 2026-09-10 (P2 PR-F), in `Application.Watch` with one adapter.** `ToolhelpProcessSnapshotSource`
@@ -136,7 +138,17 @@ which makes the notification more important than it was, not less.
 > old path does not follow the binary — **unless it IS the same binary on a drive that changed its letter**, 2026-09-22:
 > `CaptureOrchestrator.AdoptIfMovedAsync` asks `ExecutableRelocator` first, and when the row's file is gone and the
 > running one has the row's size and mtime, the row is moved and the session is the row's, consent and all;
-> `19_SAFETY` §A moved drive is the same executable). `ProcessTree` reads ppid chains with the one rule that defeats pid
+> `19_SAFETY` §A moved drive is the same executable). **Narrowed 2026-09-23 (D25): a `StalePath` match that is not
+> adopted records NOTHING.** The stranger session was keyed on the real path and named after the matched row, and
+> `SessionRecorder`'s `EnsureAsync` turned that into a new library entry with the other game's name: *HELLO, HELLO
+> WORLD!*'s `swiftshader\Game.exe` became a second "Flower in Us" (the only entry named `Game.exe`), and its NW.js
+> children, matching the new entry exactly, started a second session beside the first. Now the process is said once
+> in the log ("not in the library, so nothing is recorded") and its exit is silent; the adopt itself accepts only the
+> row's path with its drive letter changed (an RPG Maker `Game.exe` has the same bytes in every game); and the
+> running-session table is keyed by the executable's path, so a re-imported or merged entry's new id cannot start a
+> second session for the same executable. The launch election registers its session there too, and skips a child the
+> watcher already records. **Behaviour change:** a game whose folder moved (not its drive letter) records nothing until
+> *Change executable* points its entry at the new file. `ProcessTree` reads ppid chains with the one rule that defeats pid
 > reuse: a child that started before its parent is not its child. `DescendantElection` picks the newest-started
 > descendant whose image is tracked — a launcher's consent does not extend to what it spawns, so the elected image
 > needs its own record. `CaptureOrchestrator` is the `--serve` loop: one snapshot per second, ONE session per game

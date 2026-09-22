@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using FrameLedger.Application.Capture;
+using FrameLedger.Application.Watch;
 using FrameLedger.Infrastructure.Io;
 
 namespace FrameLedger.Infrastructure.Capture;
@@ -31,25 +32,35 @@ public sealed class TargetResolver : ITargetResolver
 {
     private readonly Func<int, string?> _commandLineOf;
     private readonly Action<string>? _note;
+    private readonly LatestProcessSnapshot? _latest;
 
     /// <summary>The real resolver, reading command lines through the kernel query.</summary>
-    /// <param name="note">Where the one line about a multi-process pick goes; null discards it.</param>
-    public TargetResolver(Action<string>? note = null) : this(ProcessCommandLine.TryRead, note)
+    /// <param name="note">Where the one line about a multi-process pick, or an unreadable candidate, goes; null discards it.</param>
+    /// <param name="latest">The watcher's snapshot, when a watcher runs: <see cref="IsRunning"/> reads it by image path.</param>
+    public TargetResolver(Action<string>? note = null, LatestProcessSnapshot? latest = null) : this(ProcessCommandLine.TryRead, note, latest)
     {
     }
 
     /// <summary>Test seam: how a candidate's command line is read.</summary>
-    public TargetResolver(Func<int, string?> commandLineOf, Action<string>? note = null)
+    public TargetResolver(Func<int, string?> commandLineOf, Action<string>? note = null, LatestProcessSnapshot? latest = null)
     {
         _commandLineOf = commandLineOf ?? throw new ArgumentNullException(nameof(commandLineOf));
         _note = note;
+        _latest = latest;
     }
 
     public int? Resolve(string normalisedExePath, out SessionEndReason reason)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(normalisedExePath);
 
-        List<int> matches = CollectMatches(normalisedExePath, out int unreadable);
+        List<int> matches = CollectMatches(normalisedExePath, out int unreadable, out List<string> why);
+        if (unreadable > 0)
+        {
+            // Said where the owner can read it (2026-09-23): HELLO, HELLO WORLD!'s launcher ended TargetUnreadable and the
+            // log could not say whether it ran elevated or had not finished loading.
+            _note?.Invoke($"target: {Path.GetFileName(normalisedExePath)}: {unreadable} process(es) with that name could not be read "
+                          + $"({string.Join("; ", why)}); {matches.Count} readable match(es)");
+        }
 
         if (matches.Count == 0)
         {
@@ -84,6 +95,15 @@ public sealed class TargetResolver : ITargetResolver
     public bool IsRunning(string normalisedExePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(normalisedExePath);
+
+        // The watcher's own 1 Hz snapshot when a watcher runs (2026-09-23): by the image path, so another game's Game.exe
+        // no longer keeps this game's hold open, and still not one process is opened for the hold. The name below is the
+        // console verbs' answer, where nothing polls.
+        if (_latest?.Contains(normalisedExePath) is { } seen)
+        {
+            return seen;
+        }
+
         Process[] named = Process.GetProcessesByName(Path.GetFileNameWithoutExtension(normalisedExePath));
         try
         {
@@ -98,11 +118,12 @@ public sealed class TargetResolver : ITargetResolver
         }
     }
 
-    /// <summary>Every readable process whose image is the path; unreadable candidates are counted, never dropped.</summary>
-    private static List<int> CollectMatches(string normalisedExePath, out int unreadable)
+    /// <summary>Every readable process whose image is the path; unreadable candidates are counted, never dropped, and <paramref name="why"/> says what stopped each.</summary>
+    private static List<int> CollectMatches(string normalisedExePath, out int unreadable, out List<string> why)
     {
         string name = Path.GetFileNameWithoutExtension(normalisedExePath);
         List<int> matches = [];
+        why = [];
 
         // COUNTED, NOT JUST SKIPPED, and the difference is the whole invariant. Skipping alone is what
         // NARROWS: unreadable candidates vanish, so `matches.Count == 1` could not tell "one candidate
@@ -128,6 +149,7 @@ public sealed class TargetResolver : ITargetResolver
                     // enumerated. "Could not look" must not narrow the set, and that includes this
                     // shape; it is counted like a process we lack the rights to read.
                     unreadable++;
+                    why.Add($"pid {p.Id}: no main module yet");
                     continue;
                 }
 
@@ -142,6 +164,7 @@ public sealed class TargetResolver : ITargetResolver
                 // Exited between enumeration and the read, or not ours to read. Either way we did not
                 // establish whether it is our target.
                 unreadable++;
+                why.Add($"pid {p.Id}: {ex.Message}");
             }
             finally
             {

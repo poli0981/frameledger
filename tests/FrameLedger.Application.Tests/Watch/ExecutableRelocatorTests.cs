@@ -92,12 +92,13 @@ public sealed class ExecutableRelocatorTests
         (ExecutableRelocator relocator, FakeGameRepository games, DiskByPath disk, _, GameRow row) = await BuildAsync(@"C:\", @"D:\");
         const string running = @"H:\SteamLibrary\steamapps\common\Title\game.exe";
 
-        // Both files present: a second copy, and the running one stays a stranger.
+        // Both files present: a second copy, and the running one is not the row's.
         disk.Put(_stored);
         disk.Put(running);
         (await relocator.TryAdoptAsync(row, running, Ct)).Should().BeFalse();
 
-        // The row's file is gone and the running one has its bytes: the row follows it, whatever the drive list says.
+        // The row's file is gone and the running one has its bytes under the same path on another letter: the row follows
+        // it, even though the drive list has not caught up with H: — the running file's own drive is mounted by definition.
         disk.Files.Remove(_stored);
         (await relocator.TryAdoptAsync(row, running, Ct)).Should().BeTrue();
         games.Rows.Should().ContainKey(running).And.NotContainKey(_stored);
@@ -106,5 +107,50 @@ public sealed class ExecutableRelocatorTests
         GameRow other = await games.EnsureAsync(new ExecutableFingerprint { ExePath = @"D:\Other\game.exe", SizeBytes = 7, MtimeUnixMs = 7 }, "Other", Ct);
         disk.Put(@"H:\Other\game.exe", size: 8);
         (await relocator.TryAdoptAsync(other, @"H:\Other\game.exe", Ct)).Should().BeFalse();
+    }
+
+    /// <summary>
+    /// 2026-09-23: every RPG Maker MV game ships the same NW.js <c>Game.exe</c>, byte for byte, and an unzip keeps its
+    /// mtime. The adopt used to accept ANY running path with the row's size and mtime, so an entry whose drive was
+    /// unplugged could have followed — consent and all — another game's <c>Game.exe</c>. Only the drive letter may differ.
+    /// </summary>
+    [Fact]
+    public async Task IdenticalBytesInAnotherFolderAreAnotherGameAndAreNotAdopted()
+    {
+        (ExecutableRelocator relocator, FakeGameRepository games, DiskByPath disk, _, GameRow row) = await BuildAsync(@"C:\", @"D:\", @"H:\");
+        const string anotherGame = @"D:\another\it\hello-hello-world\HELLO, HELLO WORLD!\swiftshader\game.exe";
+        disk.Put(anotherGame);
+
+        (await relocator.TryAdoptAsync(row, anotherGame, Ct)).Should().BeFalse("the same bytes in another folder are another game");
+        games.Rows.Should().ContainKey(_stored, "the row did not move");
+        games.Relocations.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task TwoDrivesHoldingTheFileAreAnAmbiguityForTheWatcherTooAndItIsSaidOnce()
+    {
+        (ExecutableRelocator relocator, FakeGameRepository games, DiskByPath disk, List<string> log, GameRow row) = await BuildAsync(@"C:\", @"D:\", @"G:\", @"H:\");
+        const string running = @"H:\SteamLibrary\steamapps\common\Title\game.exe";
+        disk.Put(running);
+        disk.Put(@"G:\SteamLibrary\steamapps\common\Title\game.exe");
+
+        (await relocator.TryAdoptAsync(row, running, Ct)).Should().BeFalse("two drives hold it; ambiguity refuses, as the sweep's does");
+        (await relocator.TryAdoptAsync(row, running, Ct)).Should().BeFalse();
+        (await relocator.TryRelocateAsync(row, Ct)).Should().BeNull();
+
+        games.Relocations.Should().BeEmpty();
+        log.Should().ContainSingle("the same refusal about the same row is said once, until it changes").Which.Should().Contain("2 drives hold");
+    }
+
+    [Theory]
+    [InlineData(@"D:\Games\T\game.exe", @"H:\Games\T\game.exe", true)]
+    [InlineData(@"D:\Games\T\game.exe", @"h:\games\t\GAME.EXE", true)]
+    [InlineData(@"D:\Games\T\game.exe", @"D:\Games\T\game.exe", false)]
+    [InlineData(@"D:\Games\T\game.exe", @"H:\Games\Other\game.exe", false)]
+    [InlineData(@"D:\Games\T\game.exe", @"\\nas\Games\T\game.exe", false)]
+    public void ADriveLetterTwinIsTheSamePathOnAnotherLetter(string a, string b, bool twin)
+    {
+        ExecutableRelocator.IsDriveLetterTwin(a, b).Should().Be(twin);
+        ExecutableRelocator.IsDriveLetterTwin(b, a).Should().Be(twin);
     }
 }

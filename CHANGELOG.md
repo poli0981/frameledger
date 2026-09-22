@@ -29,6 +29,20 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **Another game's `Game.exe` no longer runs under a library entry — no wrong name, no second session.** On
+  2026-09-23 00:16 *HELLO, HELLO WORLD!* (itch) started its RPG Maker runtime, `swiftshader\Game.exe`, and the Agent
+  matched it by FILE NAME to the only entry named `Game.exe`, *Flower in Us*: it recorded the session under that name,
+  which created a new "Flower in Us" entry at HHW's path, and an NW.js child process then matched the new entry and
+  started a second session beside the first (57 s and 56 s). A process that matches an entry by file name only now
+  starts nothing — unless it is that entry's own executable on a drive that changed its letter, in which case the entry
+  follows it as before — and the log says once that it is not in the library. The same match can no longer move an
+  entry onto another game whose `Game.exe` has identical bytes (every RPG Maker MV game ships the same one). One session
+  per executable, whatever id its entry has; a session that could not be hooked is timed by its own executable instead
+  of any process with its file name; the resolver says in the Agent's log why a process could not be read; an
+  unreadable entry is logged once instead of every 15 s. **Changed:** a game whose folder moved records nothing until
+  *Change executable* points its entry at the new file. The "Flower in Us" entry the old match created stays until you
+  rename it (it points at HHW's `swiftshader\Game.exe`, the file to measure HHW by) or remove it.
+
 - **A game removed from the library while it runs no longer loses its session — or stops the Agent at the next
   start.** On 2026-09-22 23:26 and 2026-09-23 00:25 a GIRLS' FRONTLINE 2 session ended `FAULTED` on the database's
   foreign key: its entry had been removed (and re-imported) while the game ran, and the session was written under the

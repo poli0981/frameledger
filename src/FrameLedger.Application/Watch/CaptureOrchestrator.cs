@@ -8,13 +8,27 @@ namespace FrameLedger.Application.Watch;
 
 /// <summary>
 /// The Agent's <c>--serve</c> loop (P2 PR-F): one process snapshot per second, the watcher's events, and
-/// <b>one session per game at a time</b> through <see cref="ISessionRecorder"/>. It decides nothing about
+/// <b>one session per executable at a time</b> through <see cref="ISessionRecorder"/>. It decides nothing about
 /// hooking — the recorder's loop reaches <c>HookedCaptureGate</c> with the row's consent, the kill switch and
 /// the guard exactly as a console verb does, and a game with hooking off lands as a Tier-2 row (or is
 /// discarded under the recorder's minimum length). What this class owns is <i>when</i> a session starts and
-/// that two never run for the same game.
+/// that two never run for the same executable.
 /// </summary>
 /// <remarks>
+/// <para>
+/// <b>A file name is not an identity (2026-09-23, HANDOFF D25).</b> A process that matches a library entry by its
+/// FILE NAME only starts nothing. It may only be that entry's executable on a drive that changed its letter — the
+/// relocator's rule — and then the entry moves and the session is the entry's; anything else is not in the library, is
+/// said once in the log, and records nothing. Until this date such a process got a session under the matched entry's
+/// NAME, keyed on its own path — and the recorder inserted a new entry with that name: *HELLO, HELLO WORLD!*'s
+/// <c>swiftshader\Game.exe</c> became a second "Flower in Us" (the only entry named <c>Game.exe</c>), and its NW.js
+/// children then matched the new entry exactly and started a second session beside the first.
+/// </para>
+/// <para>
+/// <b>The running table is keyed by the executable's path</b>, not the entry's id (2026-09-23): an entry removed and
+/// re-imported while its game runs, or two entries merged, get a new id for the same executable, and a second process of
+/// it must still find the first session.
+/// </para>
 /// <para>
 /// <b>The running-session table has one lock, and the sessions themselves never take it.</b> Until P3 PR-1b
 /// <see cref="PollOnceAsync"/> was the table's only writer; the pipe's <c>LaunchGame</c> and <c>StopSession</c>
@@ -45,15 +59,21 @@ public sealed class CaptureOrchestrator
     private readonly Action<string> _log;
     private readonly ILaunchRecorderFactory? _launches;
     private readonly ExecutableRelocator? _relocator;
+    private readonly LatestProcessSnapshot? _latest;
     private readonly ProcessWatcher _watcher = new();
     private readonly Lock _table = new();
-    private readonly Dictionary<long, Running> _running = [];
+    private readonly Dictionary<string, Running> _running = new(StringComparer.OrdinalIgnoreCase);
+
+    // Processes a file-name match declined (pid → the path they run from), touched only by the poll: their exit is
+    // not an entry's, and a launch that spawns five of them is said once.
+    private readonly Dictionary<int, string> _declined = [];
 
     public CaptureOrchestrator(ISessionRecorder recorder, IGameRepository games, IProcessSnapshotSource processes,
         IExecutableIdentitySource identity, OrchestratorOptions options, Action<string> log, ILaunchRecorderFactory? launches = null,
-        ExecutableRelocator? relocator = null)
+        ExecutableRelocator? relocator = null, LatestProcessSnapshot? latest = null)
     {
         _relocator = relocator;
+        _latest = latest;
         _recorder = recorder ?? throw new ArgumentNullException(nameof(recorder));
         _games = games ?? throw new ArgumentNullException(nameof(games));
         _processes = processes ?? throw new ArgumentNullException(nameof(processes));
@@ -72,6 +92,15 @@ public sealed class CaptureOrchestrator
             {
                 return _running.Values.Count(static r => !r.Task.IsCompleted);
             }
+        }
+    }
+
+    /// <summary>Whether a session started here for the entry <paramref name="gameId"/> is still running — what a merge of two entries waits for.</summary>
+    public bool IsRecording(long gameId)
+    {
+        lock (_table)
+        {
+            return _running.Values.Any(r => r.GameId == gameId && !r.Task.IsCompleted);
         }
     }
 
@@ -100,17 +129,33 @@ public sealed class CaptureOrchestrator
     {
         IReadOnlyList<GameRow> watchlist = await _games.ListAsync(ct).ConfigureAwait(false);
         IReadOnlyList<ProcessSnapshot> snapshot = _processes.Take();
+        _latest?.Publish(snapshot);
         IReadOnlyList<WatchEvent> events = _watcher.Poll(snapshot, watchlist);
 
         foreach (WatchEvent e in events)
         {
             switch (e)
             {
-                case TrackedProcessAppeared appeared:
-                    Start(await AdoptIfMovedAsync(appeared, ct).ConfigureAwait(false), ct);
+                case TrackedProcessAppeared { StalePath: false } appeared:
+                    Start(appeared, ct);
+                    break;
+                case TrackedProcessAppeared nameOnly:
+                    if (await AdoptIfMovedAsync(nameOnly, ct).ConfigureAwait(false) is { } adopted)
+                    {
+                        Start(adopted, ct);
+                    }
+                    else
+                    {
+                        Decline(nameOnly);
+                    }
+
                     break;
                 case TrackedProcessGone gone:
-                    _log($"watch: pid {gone.Pid} ({gone.Game.Name}) exited");
+                    if (!_declined.Remove(gone.Pid))
+                    {
+                        _log($"watch: pid {gone.Pid} ({gone.Game.Name}) exited");
+                    }
+
                     break;
                 default:
                     break;
@@ -163,16 +208,17 @@ public sealed class CaptureOrchestrator
             return LaunchResult.Of(LaunchOutcome.UnknownGame);
         }
 
+        string path = game.Fingerprint.ExePath;
         lock (_table)
         {
-            if (_running.TryGetValue(gameId, out Running? current) && !current.Task.IsCompleted)
+            if (_running.TryGetValue(path, out Running? current) && !current.Task.IsCompleted)
             {
                 return LaunchResult.Of(LaunchOutcome.SessionRunning);
             }
 
-            var running = new Running(Guid.NewGuid());
+            var running = new Running(Guid.NewGuid(), game.Id);
             running.Task = RunLaunchAsync(game, arguments, running.SessionGuid, running.Stop.Token, ct);
-            _running[gameId] = running;
+            _running[path] = running;
             return new LaunchResult(LaunchOutcome.Accepted, running.SessionGuid);
         }
     }
@@ -180,7 +226,8 @@ public sealed class CaptureOrchestrator
     /// <summary>
     /// After a launch-mode session ended with the launcher gone (<see cref="SessionEndReason.LaunchTargetExited"/>)
     /// or sitting on its window (<see cref="SessionEndReason.LaunchNoPresentationRuntime"/>): elect the newest
-    /// tracked descendant and run an attach-mode session against it. Null when nothing was elected.
+    /// tracked descendant and run an attach-mode session against it. Null when nothing was elected, or when the watcher
+    /// already records that executable — the child appeared while the launcher ran, and one session is its session.
     /// </summary>
     public async Task<RecordedSession?> ElectAfterLaunchAsync(RecordedSession launched, CancellationToken ct)
     {
@@ -200,43 +247,79 @@ public sealed class CaptureOrchestrator
             return null;
         }
 
-        _log($"election: pid {elected.Value.Pid} ({path}) is the newest tracked descendant; attaching");
-        return await _recorder.RecordAsync(Attach(path, null, null, default), ct).ConfigureAwait(false);
+        GameRow? row = watchlist.FirstOrDefault(g => string.Equals(g.Fingerprint.ExePath, path, StringComparison.OrdinalIgnoreCase));
+        Task<RecordedSession> session;
+        lock (_table)
+        {
+            // Registered under its executable like any session (2026-09-23), so the watcher does not start a second one for
+            // it; and when the watcher got there first, that session is the child's. The launch's own entry (the same
+            // executable relaunching itself) is the one exception: it is this very flow, still awaiting this election.
+            if (_running.TryGetValue(path, out Running? current) && !current.Task.IsCompleted && current.SessionGuid != launched.SessionGuid)
+            {
+                _log($"election: pid {elected.Value.Pid} ({path}) is already recorded by session {current.SessionGuid:N}; not a second one");
+                return null;
+            }
+
+            _log($"election: pid {elected.Value.Pid} ({path}) is the newest tracked descendant; attaching");
+            if (current is not null && current.SessionGuid == launched.SessionGuid)
+            {
+                session = _recorder.RecordAsync(Attach(path, row?.Name, null, default), ct);
+            }
+            else
+            {
+                var running = new Running(Guid.NewGuid(), row?.Id ?? 0);
+                session = _recorder.RecordAsync(Attach(path, row?.Name, running.SessionGuid, running.Stop.Token), ct);
+                running.Task = session;
+                _running[path] = running;
+            }
+        }
+
+        return await session.ConfigureAwait(false);
     }
 
     /// <summary>
-    /// A file-name match whose row points at a file that is gone, while the running file has the row's size and mtime,
-    /// is the row's executable on a drive that changed its letter (2026-09-22): the row is moved first, so the session
-    /// is keyed on the row's (now real) path and its consent applies. Anything else stays the stranger it was.
+    /// A file-name match is only ever the entry's own executable on a drive that changed its letter (2026-09-22, narrowed
+    /// 2026-09-23): the relocator moves the entry first, so the session is keyed on the entry's (now real) path and its
+    /// consent applies. Null otherwise — the process is not in the library.
     /// </summary>
-    private async ValueTask<TrackedProcessAppeared> AdoptIfMovedAsync(TrackedProcessAppeared appeared, CancellationToken ct)
+    private async ValueTask<TrackedProcessAppeared?> AdoptIfMovedAsync(TrackedProcessAppeared appeared, CancellationToken ct)
     {
-        if (!appeared.StalePath || _relocator is null || !await _relocator.TryAdoptAsync(appeared.Game, appeared.ImagePath, ct).ConfigureAwait(false))
+        if (_relocator is null || !await _relocator.TryAdoptAsync(appeared.Game, appeared.ImagePath, ct).ConfigureAwait(false))
         {
-            return appeared;
+            return null;
         }
 
         GameRow moved = await _games.FindByIdAsync(appeared.Game.Id, ct).ConfigureAwait(false) ?? appeared.Game;
         return appeared with { Game = moved, StalePath = false };
     }
 
+    /// <summary>A file-name match that is not the entry's executable: said once per executable while it runs, and nothing recorded.</summary>
+    private void Decline(TrackedProcessAppeared nameOnly)
+    {
+        bool said = _declined.ContainsValue(nameOnly.ImagePath);
+        _declined[nameOnly.Pid] = nameOnly.ImagePath;
+        if (!said)
+        {
+            _log($"watch: pid {nameOnly.Pid} runs {nameOnly.ImagePath} — its file name matches {nameOnly.Game.Name} ({nameOnly.Game.Fingerprint.ExePath}), "
+                 + "but it is not that entry's executable; it is not in the library, so nothing is recorded");
+        }
+    }
+
     private void Start(TrackedProcessAppeared appeared, CancellationToken ct)
     {
         lock (_table)
         {
-            if (_running.TryGetValue(appeared.Game.Id, out Running? current) && !current.Task.IsCompleted)
+            if (_running.TryGetValue(appeared.ImagePath, out Running? current) && !current.Task.IsCompleted)
             {
-                _log($"watch: pid {appeared.Pid} ({appeared.Game.Name}) appeared while a session for that game is running; one at a time");
+                _log($"watch: pid {appeared.Pid} ({appeared.Game.Name}) appeared while a session for that executable is running; one at a time");
                 return;
             }
 
-            _log(appeared.StalePath
-                ? $"watch: pid {appeared.Pid} matched {appeared.Game.Name} BY FILE NAME ONLY — it runs from {appeared.ImagePath}, not the path on record; the session is keyed on the real path"
-                : $"watch: pid {appeared.Pid} ({appeared.Game.Name}) appeared; starting a session");
-            var running = new Running(Guid.NewGuid());
+            _log($"watch: pid {appeared.Pid} ({appeared.Game.Name}) appeared; starting a session");
+            var running = new Running(Guid.NewGuid(), appeared.Game.Id);
             RecordRequest request = Attach(appeared.ImagePath, appeared.Game.Name, running.SessionGuid, running.Stop.Token);
             running.Task = RunAndReportAsync(_recorder, request, ct);
-            _running[appeared.Game.Id] = running;
+            _running[appeared.ImagePath] = running;
         }
     }
 
@@ -340,11 +423,11 @@ public sealed class CaptureOrchestrator
     {
         lock (_table)
         {
-            foreach ((long gameId, Running running) in _running.ToArray())
+            foreach ((string path, Running running) in _running.ToArray())
             {
                 if (running.Task.IsCompleted)
                 {
-                    _running.Remove(gameId);
+                    _running.Remove(path);
                     running.Dispose();
                 }
             }
@@ -367,10 +450,13 @@ public sealed class CaptureOrchestrator
         }
     }
 
-    /// <summary>One started session: its guid (chosen here, so the stop is addressable), its task, its stop token.</summary>
-    private sealed class Running(Guid sessionGuid) : IDisposable
+    /// <summary>One started session: its guid (chosen here, so the stop is addressable), its entry, its task, its stop token.</summary>
+    private sealed class Running(Guid sessionGuid, long gameId) : IDisposable
     {
         public Guid SessionGuid { get; } = sessionGuid;
+
+        /// <summary>The entry the session was started for (0 when an elected executable has none); what <see cref="IsRecording"/> answers from.</summary>
+        public long GameId { get; } = gameId;
 
         public CancellationTokenSource Stop { get; } = new();
 

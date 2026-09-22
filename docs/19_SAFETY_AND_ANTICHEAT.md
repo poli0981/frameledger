@@ -711,7 +711,7 @@ Consent is stored per game (`games.hook_consent_at`), **stamped by the Agent, ne
 > publishing `unhookRequested`, and keeps the Vulkan layer off by never setting `FRAMELEDGER_ENABLE_VK_LAYER`
 > on a launch.
 
-The default for every newly added game is **hooking off — Tier 2**. Nothing is ever injected because the user merely added a game — and since 2026-09-22 nothing is *opened* either: a hooking-off row's Tier-2 session is held by the executable's name, with no `OpenProcess`, no resolver and no gate (`04_CAPTURE` §Tier selection).
+The default for every newly added game is **hooking off — Tier 2**. Nothing is ever injected because the user merely added a game — and since 2026-09-22 nothing is *opened* either: a hooking-off row's Tier-2 session is held by ~~the executable's name~~ the executable's image path in the watcher's own snapshot (2026-09-23), with no `OpenProcess`, no resolver and no gate (`04_CAPTURE` §Tier selection).
 
 ### A moved drive is the same executable — owner ask 2026-09-22
 
@@ -730,6 +730,12 @@ detection. The conditions are the safety of it:
   a consent at a different binary through it;
 - no process is opened for any of this; the relocator reads files. It is asked by the 15 s sweep, by the watcher on
   a file-name match, and by the enable-hooking command before it says "unreadable".
+- **the candidate is the row's own path with only the drive letter changed — for every caller (2026-09-23).** The
+  watcher's adopt used to accept ANY running path with the row's size and mtime, and every RPG Maker MV game ships
+  the same NW.js `Game.exe`, byte for byte, with the mtime an unzip keeps: a hooking-on entry whose drive was unplugged
+  could have followed another game's executable, consent and all. The adopt now requires the drive-letter twin and the
+  same one-candidate rule as the sweep (over the drive list plus the running file's own drive). A file-name match that
+  is not adopted records nothing at all (`04_CAPTURE` §Process watcher, HANDOFF D25).
 
 *Change executable* is the other operation and stays what it was: a different binary, so hooking off, consent gone,
 pre-scan not run — it is the user saying "that file", not "that file moved".

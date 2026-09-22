@@ -25,16 +25,21 @@ internal sealed class DetectionHostedService(DetectionSweep sweep, VkLayerReconc
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         Log.Information("detect: sweeping the library every {Seconds} s, and on every rules update", Interval.TotalSeconds);
+        DetectionSweepReport? previous = null;
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
                 DetectionSweepReport r = await sweep.SweepOnceAsync(stoppingToken).ConfigureAwait(false);
-                if (r.Scanned > 0 || r.Unreadable > 0 || r.RulesUnusable)
+                // Said when something happened or changed (2026-09-23): an unreadable entry used to repeat this line every
+                // 15 s — 5,760 a day — with nothing new in it.
+                if (r.Scanned > 0 || r.Relocated > 0 || r.RulesUnusable || (r.Unreadable > 0 && r.Unreadable != previous?.Unreadable))
                 {
                     Log.Information("detect: sweep scanned {Scanned}, current {Current}, unreadable {Unreadable}{Rules}",
                         r.Scanned, r.Current, r.Unreadable, r.RulesUnusable ? ", rules unusable" : string.Empty);
                 }
+
+                previous = r;
 
                 // The layer follows the ledger after every sweep (P4 PR-2): a Vulkan fact that arrived after the
                 // consent, and the crash policy's auto-disable, both converge here within one interval.
