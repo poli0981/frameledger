@@ -924,6 +924,21 @@
   <data name="Summary_Tier2_Body" xml:space="preserve">
     <value>This session was not hooked: duration and hardware telemetry were recorded, nothing was measured, and there are no frames to chart.</value>
   </data>
+  <data name="Summary_Tier2_Why_Blocked_Format" xml:space="preserve">
+    <value>Why: hooking is off for this game — the guard found {0}.</value>
+  </data>
+  <data name="Summary_Tier2_Why_Guard_Format" xml:space="preserve">
+    <value>Why: the guard refused — {0} ({1}).</value>
+  </data>
+  <data name="Summary_Tier2_Why_HookOff" xml:space="preserve">
+    <value>Why: hooking was off for this game, so nothing was injected.</value>
+  </data>
+  <data name="Summary_Tier2_Why_Other_Format" xml:space="preserve">
+    <value>Why: {0}.</value>
+  </data>
+  <data name="Summary_Tier2_Why_Unreadable" xml:space="preserve">
+    <value>Why: Windows would not let FrameLedger open the process (an anti-cheat driver, or the game runs as administrator).</value>
+  </data>
   <data name="Summary_Title_Format" xml:space="preserve">
     <value>{0} — {1}</value>
   </data>

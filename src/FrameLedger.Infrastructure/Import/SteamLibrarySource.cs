@@ -12,6 +12,26 @@ namespace FrameLedger.Infrastructure.Import;
 /// </summary>
 public sealed class SteamLibrarySource(string? steamRoot = null) : IStoreLibrarySource
 {
+    /// <summary>
+    /// Steam app ids that are tools, runtimes or redistributables rather than games (2026-09-22). Steam's manifests do
+    /// not say which is which, and an imported tool becomes a row the watcher records Tier-2 sessions for — Borderless
+    /// Gaming (388080) on the owner's machine, a tray utility that runs elevated for hours. A user who wants one of
+    /// these tracked can still add its executable by hand; the import merely stops guessing that it is a game.
+    /// </summary>
+    public static readonly IReadOnlySet<string> KnownTools = new HashSet<string>(StringComparer.Ordinal)
+    {
+        "228980",   // Steamworks Common Redistributables
+        "250820",   // SteamVR
+        "365670",   // Blender
+        "388080",   // Borderless Gaming
+        "431960",   // Wallpaper Engine
+        "1070560",  // Steam Linux Runtime
+        "1391110",  // Steam Linux Runtime - Soldier
+        "1493710",  // Proton Experimental
+        "1628350",  // Steam Linux Runtime - Sniper
+        "2180100",  // Proton Hotfix
+    };
+
     public string Platform => "steam";
 
     public ValueTask<IReadOnlyList<StoreGame>> ListAsync(CancellationToken ct = default)
@@ -34,7 +54,7 @@ public sealed class SteamLibrarySource(string? steamRoot = null) : IStoreLibrary
 
             foreach (string manifest in Directory.EnumerateFiles(steamapps, "appmanifest_*.acf"))
             {
-                if (ReadManifest(manifest, steamapps) is { } game)
+                if (ReadManifest(manifest, steamapps) is { } game && !KnownTools.Contains(game.StoreId))
                 {
                     games.Add(game);
                 }

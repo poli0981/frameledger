@@ -38,6 +38,26 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   `guard-bypass=` in their notes. CLAUDE.md rule 2 reads "there is no override" again; Disclaimer 2.5 and EULA 1.2 say
   so, so the Legal Gate opens once.
 
+### Added
+
+- **Tier 2 exists now: a session that could not be hooked is recorded — duration, hardware telemetry and the
+  reason — instead of being thrown away.** Until 2026-09-22 every refusal returned within a second and the 30 s
+  minimum discarded it (`Discarded (tier 2, exit=Normal, frames=0)` for every one in the owner's log), so "the session
+  is still recorded" in the notice was false. The loop now holds a refused session open, ticking the telemetry poller,
+  until the game exits; the row lands as T2 with N/A everywhere a measurement would be, and its summary says why
+  ("Why: the guard refused — Easy Anti-Cheat (…)", "Why: hooking was off for this game", "Why: Windows would not let
+  FrameLedger open the process"). The unshipped operator host keeps returning at the refusal.
+- **Steam's tools are no longer imported as games**: Steamworks Common Redistributables, Borderless Gaming, Wallpaper
+  Engine, SteamVR, the Proton and Steam Linux Runtime entries and Blender are skipped by app id. A row you already have
+  for one of them stays until you remove it.
+
+### Fixed
+
+- **A hooking-off entry that runs as administrator no longer gets the "anti-cheat driver" notice.** Borderless Gaming,
+  imported from Steam with hooking off, produced a red "hooking refused" notice on every launch: the Agent tried to
+  open its process before it looked at whether hooking was on. Hooking-off is decided first now — no process is
+  opened, no resolver, no gate — and the row gets a quiet Tier-2 session like any other hooking-off game.
+
 ### Changed
 
 - **A finding turns the game's hooking off, wherever the guard makes it** (`19_SAFETY` §What a finding does to the game). The

@@ -55,9 +55,11 @@ public sealed class SessionFinalizer
         SessionRow row = input.Skeleton;
         if (input.Hooked is null)
         {
+            // A Tier-2 row has no frames and every sensor the machine provided (2026-09-22): the same averages a
+            // hooked row gets, so the sessions list can show its GPU temperature and the trend charts can use it.
             return new FinalizedSession
             {
-                Row = row with { Tier = CaptureTier.NotHooked },
+                Row = SessionAggregator.WithSensorAggregates(row with { Tier = CaptureTier.NotHooked }, input.Sensors),
                 Sensors = EncodeSensors(input.Sensors, row.QpcEpoch, row.QpcFrequency),
             };
         }

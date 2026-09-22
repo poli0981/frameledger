@@ -74,6 +74,26 @@ promises.** It is stated here, in `README` §Capture tiers and in `03_METRICS`
 frame times without injection and a reader who remembers that will otherwise assume
 it still holds.
 
+> **Built 2026-09-22 — until then Tier 2 did not exist in practice.** Every refusal returned from
+> `CaptureSession` within about a second and `SessionFinalizer`'s 30 s minimum discarded the row, so the
+> table above described a tier no session had ever reached (the owner's log: `Discarded (tier 2, exit=Normal,
+> frames=0)` for every refusal). Now the loop **holds** a refused session open — `HoldUnhookedAsync`, one tick
+> per `CaptureOptions.HoldInterval` (1 s), each tick draining the telemetry poller through the observer as a
+> hooked session's ticks do — until the target exits, the user stops it or `MaxDuration` runs out. The clock is
+> the pinned liveness when the loop holds a pin, and the executable's NAME (`ITargetResolver.IsRunning`, a
+> process list without a single `OpenProcess`) when it never opened the process. Nothing about the hold touches
+> the target. **And hooking-off is decided before the process is opened**: `RunAsync` reads the consent record
+> first, and a row whose hooking is off — merely added, blocked by a finding, auto-disabled — goes straight to
+> the hold with `RefusedHookNotEnabled` (its verdict is the row's block when it has one, `PreviouslyBlocked`).
+> The resolver used to run first, and a hooking-off utility that runs elevated (Borderless Gaming, imported from
+> Steam) was reported as a process an anti-cheat driver protects, with the notice that sentence deserves.
+> `TargetNotRunning` alone returns at once — there is nothing to hold. Launch mode's two guard refusals
+> (`LaunchTargetExited`, `LaunchNoPresentationRuntime`) return at once too, because the descendant election
+> is waiting on them. The unshipped operator host sets `HoldUnhooked = false`: to an operator a refusal is the
+> answer and the exit code. The discard rule is unchanged: a Tier-2 row under 30 s is still dropped, which is
+> now a game that ran under 30 s rather than every refusal. `PartialRecovery` no longer reads a tick as proof of
+> a hooked session — a held session flushes ticks with no records and no `attached` note.
+
 **The reason is the payload of Tier 2**, not a consolation attached to it. A session
 that records duration and sensors while saying nothing about *why* it measured
 nothing is indistinguishable from a broken capture. `sessions.capture_notes` and the

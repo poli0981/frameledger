@@ -37,6 +37,9 @@ internal sealed class HostSessionFactory(IGameConsentStore store, int seconds, I
                 // --seconds is an operator taking a bounded measurement, and CaptureSession
                 // already honoured MaxDuration -- nothing could set it.
                 MaxDuration = seconds > 0 ? TimeSpan.FromSeconds(seconds) : TimeSpan.Zero,
+                // To an operator a refusal is the answer and the exit code (CommandLineSurfaceTests); the Agent is
+                // where a refusal becomes a Tier-2 session that lasts as long as the game (2026-09-22).
+                HoldUnhooked = false,
             },
             new RuntimeModuleSnapshot(CensusNames.ModuleFileNames),
             _ngx,

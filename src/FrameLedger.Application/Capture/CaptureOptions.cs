@@ -27,4 +27,15 @@ public sealed record CaptureOptions
     /// watchdog acts within one 1 s tick, so a little more than that.
     /// </summary>
     public TimeSpan LogFlushGrace { get; init; } = TimeSpan.FromMilliseconds(1300);
+
+    /// <summary>
+    /// Tier 2 (2026-09-22): after a refusal, keep the session open — duration and telemetry accruing, nothing injected —
+    /// until the target exits. True is the product (<c>04_CAPTURE</c> §Tier selection: "duration, whatever telemetry
+    /// this machine can provide, and the REASON"); the unshipped operator host sets false because to an operator a
+    /// refusal is the answer and the exit code.
+    /// </summary>
+    public bool HoldUnhooked { get; init; } = true;
+
+    /// <summary>The hold's tick: the telemetry drain and the liveness check, at the poller's own cadence.</summary>
+    public TimeSpan HoldInterval { get; init; } = TimeSpan.FromSeconds(1);
 }

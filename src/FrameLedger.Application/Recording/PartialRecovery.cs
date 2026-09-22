@@ -71,7 +71,9 @@ public sealed class PartialRecovery
         PartialHeader h = partial.Header;
         DateTimeOffset endedAt = EndedAt(partial);
         PartialNote? attached = partial.Notes.Cast<PartialNote?>().FirstOrDefault(n => n!.Value.Text.StartsWith("attached ", StringComparison.Ordinal));
-        bool hooked = h.Tier == CaptureTier.Hooked || attached is not null || partial.LastTick is not null || partial.Records.Count > 0;
+        // A tick is no longer proof of a hooked session: a held Tier-2 session (2026-09-22) flushes ticks too, with no
+        // records and no attached note. The attach note and the records are the proof.
+        bool hooked = h.Tier == CaptureTier.Hooked || attached is not null || partial.Records.Count > 0;
         string? buildId = h.OverlayBuildId ?? BuildIdOf(attached?.Text);
         string notes = "end=Interrupted; recovered from .partial"
                        + (partial.Truncated ? " (tail truncated)" : "")

@@ -1399,11 +1399,8 @@ that: it is not, and may not become, a way past another product's protection (ru
 stops there"~~ — the override itself is gone since 2026-09-22 (D22).
 
 **Found and NOT fixed — each needs its own PR.**
-- **A refused session is not recorded, though the notice says it is.** `Notice_Refused_Recording` ("the session is still
-  recorded — duration and hardware telemetry") is appended to every refusal, and `CaptureSession` returns at the
-  refusal: the run lasts about a second and `SessionFinalizer` discards it as under the minimum length. CLAUDE.md's
-  Tier 2 ("duration + sensors + the reason") has no producer for a refusal. The new `TargetUnreadable` notice does not
-  make the claim; the older refusals still do.
+- ~~**A refused session is not recorded, though the notice says it is.**~~ **Fixed 2026-09-22 (D23):** the loop holds a
+  refused session open until the target exits, so Tier 2 has a producer and the sentence is true for every refusal.
 - **A released Overlay logs its build as `v0.1.0-beta.3-dirty`**: the CI checkout is dirty by the time CMake runs
   `git describe`. Both sides of the handshake compile the same string, so nothing breaks; it is a release that calls
   itself dirty.
@@ -1432,9 +1429,19 @@ stops there"~~ — the override itself is gone since 2026-09-22 (D22).
 - **`Mutex` is thread-affine**: `SingleInstance` is claimed and disposed on `Main`'s thread; its tests are synchronous
   on purpose.
 
-## 2026-09-22 — the override withdrawn; a finding turns hooking off
+## 2026-09-22 — the override withdrawn; a finding turns hooking off; Tier 2 exists
 
 *Status is `CHANGELOG.md` `[Unreleased]`; this is what no other file carries.*
+
+**Decision (D23, owner: "Tier 2 does not work — what does it record, and show it").** Tier 2 is now a held session
+(`04_CAPTURE` §Tier selection): duration, telemetry and the reason, saved under the same 30 s rule as Tier 1. **Two
+choices inside it that a later session may want to revisit:** (a) *every* library row is still watched, so a
+hooking-off game accumulates play-time rows — the documented behaviour (`06_DATA_MODEL` "0 = Tier 2"), kept; the
+alternative, watching only rows the user enabled or FrameLedger itself disabled, is one predicate in
+`CaptureOrchestrator` and a doc change; (b) a hooking-off row is decided BEFORE the process is opened, so an
+elevated utility in the library (the owner's Borderless Gaming) is a quiet Tier-2 row rather than a red notice — and
+`SteamLibrarySource.KnownTools` keeps the next import from adding one. The owner's existing Borderless Gaming row is
+theirs to remove.
 
 **Decision (D22, owner).** The per-game guard override (D18) is withdrawn entirely — the owner's words: a switch that
 can be turned on and still does nothing is meaningless. In its place a finding about the game turns that game's hooking

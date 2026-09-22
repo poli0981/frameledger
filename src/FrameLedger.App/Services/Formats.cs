@@ -138,4 +138,28 @@ public static class Formats
         "itch" => "itch.io",
         _ => string.Empty,
     };
+
+    /// <summary>
+    /// Why a Tier-2 session measured nothing, from <c>capture_notes</c> (2026-09-22): hooking off, a block on the row,
+    /// the guard's refusal by family, a process that could not be opened, or the end reason by name.
+    /// </summary>
+    public static string Tier2Reason(string? captureNotes)
+    {
+        Application.Recording.CaptureNotes n = Application.Recording.CaptureNotes.Parse(captureNotes);
+        switch (n.End)
+        {
+            case null:
+                return string.Empty;
+            case "RefusedHookNotEnabled" when string.Equals(n.GuardReason, "PreviouslyBlocked", StringComparison.Ordinal) && n.GuardSignal is { Length: > 0 } blocked:
+                return string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_Blocked_Format, blocked);
+            case "RefusedHookNotEnabled":
+                return Strings.Summary_Tier2_Why_HookOff;
+            case "RefusedByGuard" or "SafetyUnhook" when n.GuardFamily is { Length: > 0 } family:
+                return string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_Guard_Format, family, n.GuardSignal ?? Strings.Common_NotAvailable);
+            case "TargetUnreadable":
+                return Strings.Summary_Tier2_Why_Unreadable;
+            default:
+                return string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_Other_Format, n.End);
+        }
+    }
 }

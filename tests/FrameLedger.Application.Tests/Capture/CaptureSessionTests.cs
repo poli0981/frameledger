@@ -175,8 +175,17 @@ public sealed class CaptureSessionTests : IAsyncDisposable
     private sealed class FakeLiveness : ITargetLiveness
     {
         private int _foregroundSamples = int.MaxValue;
+        private bool _exited;
+        private int _exitChecks;
 
-        public bool HasExited { get; set; }
+        /// <summary>Exit after this many liveness checks — the Tier-2 hold's clock when the loop holds a pin (2026-09-22).</summary>
+        public int ExitAfterChecks { get; set; } = int.MaxValue;
+
+        public bool HasExited
+        {
+            get => _exited || ++_exitChecks > ExitAfterChecks;
+            set => _exited = value;
+        }
 
         public int? ExitCode { get; set; }
 
@@ -199,12 +208,35 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         }
     }
 
-    private sealed class FixedResolver(int? pid, SessionEndReason reason) : ITargetResolver
+    private sealed class FixedResolver(int? pid, SessionEndReason reason, int runningTicks = 0) : ITargetResolver
     {
+        private int _running = runningTicks;
+
+        public int ResolveCalls { get; private set; }
+
         public int? Resolve(string normalisedExePath, out SessionEndReason r)
         {
+            ResolveCalls++;
             r = reason;
             return pid;
+        }
+
+        /// <summary>The name clock of a hold that never opened the process: "running" for so many checks, then gone.</summary>
+        public bool IsRunning(string normalisedExePath) => _running-- > 0;
+    }
+
+    private sealed class TickCounter : ICaptureObserver
+    {
+        public int Ticks { get; private set; }
+
+        public void Attached(int pid, FlShmHandshake handshake)
+        {
+        }
+
+        public void Tick(CaptureProgress progress)
+        {
+            Ticks++;
+            progress.Records.Should().BeEmpty("a held session has no ring to drain");
         }
     }
 
@@ -248,6 +280,7 @@ public sealed class CaptureSessionTests : IAsyncDisposable
                 ScanInterval = TimeSpan.FromMilliseconds(5),
                 AttachBudget = TimeSpan.FromMilliseconds(50),
                 MaxDuration = TimeSpan.FromMilliseconds(120),
+                HoldInterval = TimeSpan.FromMilliseconds(1),
                 LogFlushGrace = TimeSpan.FromMilliseconds(1),
             },
             killSwitch: killSwitch,
@@ -375,6 +408,7 @@ public sealed class CaptureSessionTests : IAsyncDisposable
                 ScanInterval = TimeSpan.FromMilliseconds(5),
                 AttachBudget = TimeSpan.FromMilliseconds(50),
                 MaxDuration = TimeSpan.FromMilliseconds(120),
+                HoldInterval = TimeSpan.FromMilliseconds(1),
                 LogFlushGrace = TimeSpan.FromMilliseconds(1),
             },
             new DelegateModuleSnapshot(pid =>
@@ -437,6 +471,7 @@ public sealed class CaptureSessionTests : IAsyncDisposable
                 ScanInterval = TimeSpan.FromMilliseconds(5),
                 AttachBudget = TimeSpan.FromMilliseconds(50),
                 MaxDuration = TimeSpan.FromMilliseconds(120),
+                HoldInterval = TimeSpan.FromMilliseconds(1),
                 LogFlushGrace = TimeSpan.FromMilliseconds(1),
             },
             modules: null,
@@ -742,11 +777,13 @@ public sealed class CaptureSessionTests : IAsyncDisposable
                 attempts++;
                 return ((ICaptureSink?)null, ShmAttachRefusal.BuildIdMismatch);
             }),
-            new CaptureOptions { AttachBudget = TimeSpan.FromMilliseconds(500) });
+            // The refused attach is held as Tier 2 until the target exits (2026-09-22); the fake never exits, so bound it.
+            new CaptureOptions { AttachBudget = TimeSpan.FromMilliseconds(500), MaxDuration = TimeSpan.FromMilliseconds(50), HoldInterval = TimeSpan.FromMilliseconds(1) });
 
         CaptureOutcome r = await loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
 
         r.Reason.Should().Be(SessionEndReason.AttachRefused);
+        r.HeldUnhooked.Should().BeTrue("a refused attach is a Tier-2 session, not a return code");
         r.AttachRefusal.Should().Be(ShmAttachRefusal.BuildIdMismatch,
             "the cause must survive to the caller; a build-id mismatch tells the user to restart the game");
         attempts.Should().Be(1, "a terminal refusal is an answer, and retrying one turns it into a timeout");
@@ -861,5 +898,110 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         sink.Published[^1].Ticks.Should().Be(stopped.EvaluateCalls > 0 ? (uint)stopped.EvaluateCalls : 0u,
             "the tick stays the supervisor's own count; nothing here attests to a scan that did not run");
         result.Records.Should().HaveCount(3, "the last drain still runs on this path");
+    }
+
+    /// <summary>The loop with an explicit resolver and liveness: the Tier-2 hold's two clocks (2026-09-22).</summary>
+    private static CaptureSession With(IGameConsentStore store, CountingGuard guard, FixedResolver resolver, FakeLiveness? alive = null,
+        ICaptureObserver? observer = null, bool hold = true) =>
+        new(store, new HookedCaptureGate(guard), guard, resolver,
+            new DelegateLivenessSource(_ => alive ?? new FakeLiveness()),
+            new DelegateRingAttacher(_ => (null, ShmAttachRefusal.BuildIdMismatch)),
+            new CaptureOptions
+            {
+                HoldInterval = TimeSpan.FromMilliseconds(1),
+                HoldUnhooked = hold,
+                MaxDuration = TimeSpan.FromSeconds(5),
+                AttachBudget = TimeSpan.FromMilliseconds(20),
+            },
+            observer: observer);
+
+    /// <summary>
+    /// Tier 2 as a session (2026-09-22; <c>04_CAPTURE</c> §Tier selection): a row whose hooking is off is decided BEFORE the
+    /// process is opened — no resolver, no pin, no gate — and the session is held, ticking, until the executable's name
+    /// leaves the process list. Until then a hooking-off utility that ran elevated was reported as an anti-cheat-protected
+    /// process (Borderless Gaming on the owner's machine), because the resolver ran first.
+    /// </summary>
+    [Fact]
+    public async Task AHookingOffRowIsHeldAsTierTwoAndItsProcessIsNeverOpened()
+    {
+        var guard = new CountingGuard();
+        var resolver = new FixedResolver(_pid, SessionEndReason.Running, runningTicks: 3);
+        var ticks = new TickCounter();
+        CaptureSession loop = With(await StoreWithAsync(enabled: false), guard, resolver, observer: ticks);
+
+        CaptureOutcome r = await loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        r.Reason.Should().Be(SessionEndReason.RefusedHookNotEnabled);
+        r.Verdict.Reason.Should().Be(AntiCheatRefusalReason.HookNotEnabled);
+        r.HeldUnhooked.Should().BeTrue();
+        r.TargetPid.Should().Be(0, "nothing was opened, so there is no pid to report");
+        resolver.ResolveCalls.Should().Be(0, "a hooking-off row is never resolved, so its process is never opened");
+        guard.InjectCalls.Should().Be(0);
+        ticks.Ticks.Should().BeGreaterThanOrEqualTo(3, "duration and telemetry accrue on the hold's ticks");
+    }
+
+    [Fact]
+    public async Task ABlockedRowsTierTwoSessionCarriesTheBlockAsItsVerdict()
+    {
+        IGameConsentStore store = await StoreWithAsync();
+        await store.RecordGuardBlockAsync(Fingerprint, AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedModule, "BattlEye", "BEClient_x64.dll"),
+            TestContext.Current.CancellationToken);
+        var resolver = new FixedResolver(_pid, SessionEndReason.Running, runningTicks: 1);
+
+        CaptureOutcome r = await With(store, new CountingGuard(), resolver).RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        r.Reason.Should().Be(SessionEndReason.RefusedHookNotEnabled, "a block forces hooking off, and hooking off is decided first");
+        r.Verdict.Reason.Should().Be(AntiCheatRefusalReason.PreviouslyBlocked);
+        r.Verdict.Signal.Should().Contain("BattlEye");
+        resolver.ResolveCalls.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ATargetThatCannotBeReadIsHeldByItsNameAndOneThatIsNotRunningIsNot()
+    {
+        var guard = new CountingGuard();
+        IGameConsentStore store = await StoreWithAsync();
+
+        CaptureOutcome held = await With(store, guard, new FixedResolver(null, SessionEndReason.TargetUnreadable, runningTicks: 2))
+            .RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+        CaptureOutcome gone = await With(store, guard, new FixedResolver(null, SessionEndReason.TargetNotRunning, runningTicks: 5))
+            .RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        held.Reason.Should().Be(SessionEndReason.TargetUnreadable);
+        held.HeldUnhooked.Should().BeTrue("the process exists and cannot be opened; its name is the clock");
+        gone.Reason.Should().Be(SessionEndReason.TargetNotRunning);
+        gone.HeldUnhooked.Should().BeFalse("there is nothing to hold");
+        guard.InjectCalls.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ARefusedSessionHoldsUntilTheTargetExitsAndCarriesItsExitCode()
+    {
+        var guard = new CountingGuard { Verdict = AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedDriver, "Riot Vanguard", "vgk.sys") };
+        using var alive = new FakeLiveness { ExitAfterChecks = 3, ExitCode = 7 };
+        var ticks = new TickCounter();
+
+        CaptureOutcome r = await With(await StoreWithAsync(), guard, new FixedResolver(_pid, SessionEndReason.Running), alive, ticks)
+            .RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        r.Reason.Should().Be(SessionEndReason.RefusedByGuard);
+        r.HeldUnhooked.Should().BeTrue();
+        r.TargetPid.Should().Be(_pid);
+        r.ExitCode.Should().Be(7, "the game's own end is the session's end, crash and all");
+        ticks.Ticks.Should().BeGreaterThanOrEqualTo(3);
+        guard.InjectCalls.Should().Be(1, "the guard was asked once and refused; the hold asks nothing more");
+    }
+
+    [Fact]
+    public async Task TheOperatorHostTakesARefusalAsTheAnswer()
+    {
+        var guard = new CountingGuard { Verdict = AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedDriver, "Riot Vanguard", "vgk.sys") };
+        using var alive = new FakeLiveness();
+
+        CaptureOutcome r = await With(await StoreWithAsync(), guard, new FixedResolver(_pid, SessionEndReason.Running), alive, hold: false)
+            .RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        r.Reason.Should().Be(SessionEndReason.RefusedByGuard);
+        r.HeldUnhooked.Should().BeFalse("HoldUnhooked = false returns the refusal at once");
     }
 }

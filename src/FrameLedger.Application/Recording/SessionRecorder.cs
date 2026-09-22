@@ -144,7 +144,8 @@ public sealed class SessionRecorder : ISessionRecorder
         Run run, DateTimeOffset endedAt, PartialSessionWriter writer, RecorderOptions options, CancellationToken ct)
     {
         bool hooked = outcome.AttachRefusal == ShmAttachRefusal.Ok;
-        bool hadPid = hooked || outcome.TargetPid != 0;
+        // A held Tier-2 session's duration is the game's (2026-09-22), so the Application-log witness applies to it too.
+        bool hadPid = hooked || outcome.TargetPid != 0 || outcome.HeldUnhooked;
         bool crashEvent = hadPid && _crashes.FoundCrash(Path.GetFileName(request.NormalisedExePath), header.StartedAt, endedAt + ExitStatusMapper.CrashWitnessGrace);
         ExitStatus exit = ExitStatusMapper.Map(outcome.Reason, outcome.ExitCode, crashEvent);
 

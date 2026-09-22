@@ -149,9 +149,11 @@ public sealed class SessionRecorderTests : IAsyncDisposable
             reason = SessionEndReason.Running;
             return _pid;
         }
+
+        public bool IsRunning(string normalisedExePath) => false;
     }
 
-    private sealed class FakePoller : ITelemetryPoller
+    private sealed class FakePoller(SteppingClock? steps = null) : ITelemetryPoller
     {
         private int _served;
 
@@ -165,6 +167,12 @@ public sealed class SessionRecorderTests : IAsyncDisposable
 
         public int Drain(ICollection<TelemetrySample> into)
         {
+            // A held Tier-2 session's only clock is its ticks (2026-09-22): a poller told to step the clock makes each one 5 s.
+            if (steps is not null)
+            {
+                steps.Now += TimeSpan.FromSeconds(5);
+            }
+
             into.Add(new TelemetrySample(Stopwatch.GetTimestamp(), new GpuSample { TakenAt = DateTimeOffset.UtcNow, Layer = TelemetryLayer.Lhm, TempCoreC = 60 + _served++ }));
             return 1;
         }
@@ -187,6 +195,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
                 AttachBudget = TimeSpan.FromMilliseconds(50),
                 MaxDuration = TimeSpan.FromMilliseconds(150),
                 LogFlushGrace = TimeSpan.FromMilliseconds(1),
+                HoldInterval = TimeSpan.FromMilliseconds(1),
             },
             observer: observer);
     }
@@ -221,7 +230,8 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         public required SteppingClock Clock { get; init; }
     }
 
-    private async Task<Harness> MakeAsync(bool consented = true, AntiCheatVerdict? verdict = null, int records = 3_000, FakeLiveness? liveness = null, bool poller = true)
+    private async Task<Harness> MakeAsync(bool consented = true, AntiCheatVerdict? verdict = null, int records = 3_000, FakeLiveness? liveness = null, bool poller = true,
+        bool clockStepsOnDrain = false)
     {
         _db ??= await LedgerDatabase.OpenAsync(Path.Combine(_dir, LedgerPaths.DatabaseFileName), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         var store = new SqliteGameConsentStore(_db);
@@ -244,7 +254,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
             new Factory(store, guard, clock, records, liveness ?? _alive),
             games, new FakeSnapshots(), new FixedHardware(), partials,
             new SessionFinalizer(sessions, new RawSeriesCodec()), new NoCrashEvents(),
-            _ => poller ? new FakePoller() : null, clock,
+            _ => poller ? new FakePoller(clockStepsOnDrain ? clock : null) : null, clock,
             new RecorderOptions { PartialFlushInterval = TimeSpan.FromSeconds(10) });
         return new Harness { Recorder = recorder, Games = games, Sessions = sessions, Partials = partials, Clock = clock };
     }
@@ -321,9 +331,34 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         r.Row.Tier.Should().Be(CaptureTier.NotHooked);
         r.Row.CaptureNotes.Should().Contain("end=RefusedByGuard").And.Contain("tier2").And.Contain("guard=BlockedModule/BattlEye/BEClient_x64.dll");
         r.Row.FrameCount.Should().Be(0);
-        r.Finalize.Status.Should().Be(FinalizeStatus.Discarded, "nothing ran, so the clock never moved past the minimum");
+        r.Outcome.HeldUnhooked.Should().BeTrue("a refused session is held, unhooked, until the target exits (2026-09-22)");
+        r.Finalize.Status.Should().Be(FinalizeStatus.Discarded, "the fake clock does not move on the hold's ticks unless told to, so this one is under the minimum");
         h.Games.Injections.Should().BeEmpty();
         h.Partials.Files.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// Tier 2 as the product specifies it (2026-09-22; <c>04_CAPTURE</c> §Tier selection): a refused session that lasts is SAVED —
+    /// duration, the machine's telemetry and the reason — with every frame-derived value absent. Until this date every
+    /// refusal returned within a second and was discarded under the minimum length.
+    /// </summary>
+    [Fact]
+    public async Task ARefusedSessionThatLastsIsSavedAsTierTwoWithItsSensorsAndItsReason()
+    {
+        Harness h = await MakeAsync(verdict: AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedDriver, "Riot Vanguard", "vgk.sys"), clockStepsOnDrain: true);
+
+        RecordedSession r = await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        r.Outcome.Reason.Should().Be(SessionEndReason.RefusedByGuard);
+        r.Finalize.Status.Should().Be(FinalizeStatus.Saved, "the hold's ticks stepped the clock past the minimum");
+        FinalizedSession stored = h.Sessions.Stored.Single();
+        stored.Row.Tier.Should().Be(CaptureTier.NotHooked);
+        stored.Row.FrameCount.Should().Be(0);
+        stored.Frames.Should().BeNull("nothing was measured");
+        stored.Sensors.Should().NotBeEmpty("the poller was drained on the hold's ticks");
+        stored.Row.AvgGpuTemp.Should().NotBeNull();
+        stored.Row.CaptureNotes.Should().Contain("end=RefusedByGuard").And.Contain("guard=BlockedDriver/Riot Vanguard/vgk.sys");
+        h.Games.Injections.Should().BeEmpty();
     }
 
     [Fact]

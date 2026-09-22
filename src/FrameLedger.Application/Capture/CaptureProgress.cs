@@ -27,4 +27,20 @@ public sealed record CaptureProgress
     public required RuntimeModuleSet RuntimeModules { get; init; }
 
     public required NgxDriverState NgxDriver { get; init; }
+
+    /// <summary>The tick of a session that never attached (Tier 2, 2026-09-22): no records, no ring, nothing measured.</summary>
+    public static CaptureProgress Unhooked { get; } = new()
+    {
+        Records = [],
+        GapBefore = [],
+        WriterState = default,
+        TotalDropped = 0,
+        TotalGaps = 0,
+        DrainTicks = 0,
+        ForegroundTicks = 0,
+        GuardTicksPublished = 0,
+        TouchQpc = [],
+        RuntimeModules = RuntimeModuleSet.Empty,
+        NgxDriver = NgxDriverState.NotRun,
+    };
 }

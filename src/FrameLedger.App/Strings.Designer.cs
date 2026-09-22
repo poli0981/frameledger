@@ -540,6 +540,11 @@ public static class Strings
         nameof(Summary_Stat_Stutter_Format),
         nameof(Summary_Tags_Placeholder),
         nameof(Summary_Tier2_Body),
+        nameof(Summary_Tier2_Why_Blocked_Format),
+        nameof(Summary_Tier2_Why_Guard_Format),
+        nameof(Summary_Tier2_Why_HookOff),
+        nameof(Summary_Tier2_Why_Other_Format),
+        nameof(Summary_Tier2_Why_Unreadable),
         nameof(Summary_Title_Format),
         nameof(Summary_Unhooked_Body),
         nameof(Summary_Unhooked_Title),
@@ -1655,6 +1660,16 @@ public static class Strings
     public static string Summary_Tags_Placeholder => ResourceManager.GetString(nameof(Summary_Tags_Placeholder), Culture) ?? nameof(Summary_Tags_Placeholder);
 
     public static string Summary_Tier2_Body => ResourceManager.GetString(nameof(Summary_Tier2_Body), Culture) ?? nameof(Summary_Tier2_Body);
+
+    public static string Summary_Tier2_Why_Blocked_Format => ResourceManager.GetString(nameof(Summary_Tier2_Why_Blocked_Format), Culture) ?? nameof(Summary_Tier2_Why_Blocked_Format);
+
+    public static string Summary_Tier2_Why_Guard_Format => ResourceManager.GetString(nameof(Summary_Tier2_Why_Guard_Format), Culture) ?? nameof(Summary_Tier2_Why_Guard_Format);
+
+    public static string Summary_Tier2_Why_HookOff => ResourceManager.GetString(nameof(Summary_Tier2_Why_HookOff), Culture) ?? nameof(Summary_Tier2_Why_HookOff);
+
+    public static string Summary_Tier2_Why_Other_Format => ResourceManager.GetString(nameof(Summary_Tier2_Why_Other_Format), Culture) ?? nameof(Summary_Tier2_Why_Other_Format);
+
+    public static string Summary_Tier2_Why_Unreadable => ResourceManager.GetString(nameof(Summary_Tier2_Why_Unreadable), Culture) ?? nameof(Summary_Tier2_Why_Unreadable);
 
     public static string Summary_Title_Format => ResourceManager.GetString(nameof(Summary_Title_Format), Culture) ?? nameof(Summary_Title_Format);
 

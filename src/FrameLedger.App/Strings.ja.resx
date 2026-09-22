@@ -1225,6 +1225,26 @@
     <value>このセッションはフックされていません。時間とハードウェアテレメトリは記録されましたが、実測はなく、描画するフレームもありません。</value>
     <comment>review</comment>
   </data>
+  <data name="Summary_Tier2_Why_Blocked_Format" xml:space="preserve">
+    <value>理由: このゲームのフックはオフです — ガードが {0} を検出しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Tier2_Why_Guard_Format" xml:space="preserve">
+    <value>理由: ガードが拒否しました — {0}（{1}）。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Tier2_Why_HookOff" xml:space="preserve">
+    <value>理由: このゲームのフックはオフだったため、何も読み込まれていません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Tier2_Why_Other_Format" xml:space="preserve">
+    <value>理由: {0}。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Tier2_Why_Unreadable" xml:space="preserve">
+    <value>理由: Windows が FrameLedger にプロセスを開かせませんでした（アンチチートのドライバー、またはゲームが管理者として実行中）。</value>
+    <comment>review</comment>
+  </data>
   <data name="Summary_Title_Format" xml:space="preserve">
     <value>{0} — {1}</value>
     <comment>review</comment>

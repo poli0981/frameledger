@@ -94,6 +94,8 @@ public sealed class CaptureSessionLaunchTests : IAsyncDisposable
             reason = SessionEndReason.TargetNotRunning;
             return null;
         }
+
+        public bool IsRunning(string normalisedExePath) => false;
     }
 
     private async Task<IGameConsentStore> StoreAsync(bool consented)
