@@ -52,6 +52,32 @@ internal sealed class FakeGameRepository : IGameRepository
     public ValueTask<bool> ChangeExecutableAsync(long gameId, ExecutableFingerprint fingerprint, DateTimeOffset at, CancellationToken ct = default) =>
         ValueTask.FromResult(true);
 
+    public List<(long GameId, ExecutableFingerprint Moved)> Relocations { get; } = [];
+
+    /// <summary>The adapter's rule, kept here so the sweep and the watcher tests see it: same size and mtime, or nothing moves.</summary>
+    public ValueTask<bool> RelocateExecutableAsync(long gameId, ExecutableFingerprint moved, DateTimeOffset at, CancellationToken ct = default)
+    {
+        foreach ((string key, GameRow row) in Rows)
+        {
+            if (row.Id != gameId)
+            {
+                continue;
+            }
+
+            if (row.Fingerprint.SizeBytes != moved.SizeBytes || row.Fingerprint.MtimeUnixMs != moved.MtimeUnixMs || Rows.ContainsKey(moved.ExePath))
+            {
+                return ValueTask.FromResult(false);
+            }
+
+            Rows.Remove(key);
+            Rows[moved.ExePath] = row with { Fingerprint = moved, UpdatedAt = at };
+            Relocations.Add((gameId, moved));
+            return ValueTask.FromResult(true);
+        }
+
+        return ValueTask.FromResult(false);
+    }
+
     public ValueTask<int> RecordCrashAsync(long gameId, CancellationToken ct = default) => ValueTask.FromResult(++CrashCount);
 
     public ValueTask<bool> RecordInjectionAsync(long gameId, DateTimeOffset at, CancellationToken ct = default)

@@ -256,7 +256,10 @@ Three things this section previously implied that are not true, and are worth st
   > `DetectionHostedService` (`--serve` only) sweeps the library on its own task — every 15 s, and at once
   > when `UpdateRules` re-seeds the rules file — through `Application.Detection.DetectionSweep`, which runs
   > `StaticGameDetector` over the real `GameFileProbe` for every game whose key is stale and persists through
-  > `IGameRepository.ApplyDetectionAsync`. A game the App adds is scanned on the next tick (the App writes the
+  > `IGameRepository.ApplyDetectionAsync`. *A missing executable is asked one more question before it is skipped
+  > (2026-09-22): is the same file — same size, same mtime — under exactly one other drive letter? When it is, the row
+  > follows it (`ExecutableRelocator`, `19_SAFETY` §A moved drive is the same executable) and this very pass scans
+  > it there; `DetectionSweepReport.Relocated` counts them.* A game the App adds is scanned on the next tick (the App writes the
   > row, the Agent reads the table); no Agent running means no scan, and the game page says "not scanned yet".
   > *The key's exe half is NOT `exe_size_bytes` / `exe_mtime_ms`:* those are the consent fingerprint the gate
   > reads (`SqliteGameConsentStore` refuses a mismatch while a block stands), so schema 0004 gave the key its own

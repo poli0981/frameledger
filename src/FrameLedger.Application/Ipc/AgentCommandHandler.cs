@@ -35,6 +35,7 @@ public sealed class AgentCommandHandler
     private readonly TimeProvider _clock;
     private readonly VkLayerReconciler? _layer;
     private readonly Func<CancellationToken, ValueTask<SweepRetentionAck>>? _sweepRetention;
+    private readonly ExecutableRelocator? _relocator;
 
     /// <summary>
     /// <c>disclosureVersion</c> is the version of FR-2.1's reviewed disclosure this Agent carries
@@ -44,8 +45,11 @@ public sealed class AgentCommandHandler
     public AgentCommandHandler(IGameRepository games, IGameConsentStore consent, IAntiCheatGuard guard, IExecutableIdentitySource identity,
         CaptureOrchestrator orchestrator, CapturePause pause, IAgentLifetime lifetime, Func<CancellationToken, ValueTask<string>> updateRules,
         string? disclosureVersion = null, TimeProvider? clock = null, VkLayerReconciler? layer = null,
-        Func<CancellationToken, ValueTask<SweepRetentionAck>>? sweepRetention = null)
+        Func<CancellationToken, ValueTask<SweepRetentionAck>>? sweepRetention = null, ExecutableRelocator? relocator = null)
     {
+        // A drive that changed its letter (2026-09-22): the click that enables hooking looks for the file under another root
+        // before it says the executable cannot be read.
+        _relocator = relocator;
         // P4 PR-7: Tools ▸ Database maintenance's sweep — composed under --serve, absent (UnknownType) where nothing wired it.
         _sweepRetention = sweepRetention;
         _clock = clock ?? TimeProvider.System;
@@ -160,6 +164,12 @@ public sealed class AgentCommandHandler
         }
 
         ExecutableFingerprint? fingerprint = _identity.Read(path);
+        if (fingerprint is null && _relocator is not null && await _relocator.TryRelocateAsync(game, ct).ConfigureAwait(false) is { } moved)
+        {
+            path = moved.ExePath;
+            fingerprint = moved;
+        }
+
         if (fingerprint is null)
         {
             return Error(request, IpcErrorCode.ExecutableUnreadable, $"{path} could not be read, so nothing can be scanned or stamped");

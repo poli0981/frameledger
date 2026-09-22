@@ -713,6 +713,27 @@ Consent is stored per game (`games.hook_consent_at`), **stamped by the Agent, ne
 
 The default for every newly added game is **hooking off — Tier 2**. Nothing is ever injected because the user merely added a game — and since 2026-09-22 nothing is *opened* either: a hooking-off row's Tier-2 session is held by the executable's name, with no `OpenProcess`, no resolver and no gate (`04_CAPTURE` §Tier selection).
 
+### A moved drive is the same executable — owner ask 2026-09-22
+
+Every row is keyed on its executable's path, and consent is a record about one executable: path, size, mtime
+(`ExecutableFingerprint`). On 2026-09-21/22 the owner's external drive came back as `H:` instead of `D:`, and
+every one of 46 games read "executable unreadable" until the letter came back; a game launched from `H:` matched
+its row by file name only and ran as a stranger, keyed on the new path, with no consent. **The path is where the
+bytes live; the size and the mtime are what the consent is about.** So `ExecutableRelocator` may move a row to the
+same file under another drive-letter root — and only then — with everything kept: consent, block, pre-scan state,
+detection. The conditions are the safety of it:
+
+- the file is gone from the row's path (both files present is two copies, not a move; nothing happens);
+- exactly one other root holds a file with the same size and the same mtime (two is an ambiguity, and ambiguity
+  refuses, as it does in the resolver);
+- the repository's write requires the same size and mtime again (`RelocateExecutableAsync`), so no caller can point
+  a consent at a different binary through it;
+- no process is opened for any of this; the relocator reads files. It is asked by the 15 s sweep, by the watcher on
+  a file-name match, and by the enable-hooking command before it says "unreadable".
+
+*Change executable* is the other operation and stays what it was: a different binary, so hooking off, consent gone,
+pre-scan not run — it is the user saying "that file", not "that file moved".
+
 ### A game already enabled can become blocked later
 
 FR-2.2 disables the toggle for titles that ship anti-cheat, and FR-2.3 refuses at

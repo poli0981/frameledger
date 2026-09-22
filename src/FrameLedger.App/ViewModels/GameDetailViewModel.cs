@@ -48,6 +48,13 @@ public sealed partial class GameDetailViewModel : ObservableObject
     [ObservableProperty]
     private string _executableText = string.Empty;
 
+    /// <summary>
+    /// The row's executable is not where the row says (2026-09-22). Read when the page loads; the Agent moves the row
+    /// itself when the file is under another drive letter, so this clears on the next visit once it has.
+    /// </summary>
+    [ObservableProperty]
+    private bool _executableMissing;
+
     [ObservableProperty]
     private string _lastSessionText = string.Empty;
 
@@ -147,6 +154,8 @@ public sealed partial class GameDetailViewModel : ObservableObject
     public static string RemoveText => Strings.GameDetail_Remove;
 
     public static string ChangeExecutableText => Strings.GameDetail_ChangeExe;
+
+    public static string ExecutableMissingText => Strings.GameDetail_ExeMissing;
 
     public static string LifetimeLabel => Strings.GameDetail_LifetimeAvg;
 
@@ -509,6 +518,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         Name = row.Name;
         Subtitle = string.Join(" · ", new[] { row.Publisher, row.GameVersion, Formats.Platform(row.Platform), EngineText(row) }.Where(static s => !string.IsNullOrWhiteSpace(s)));
         ExecutableText = row.Fingerprint.ExePath;
+        ExecutableMissing = !GameLibrary.ExecutableExists(row.Fingerprint.ExePath);
 
         SessionRow? last = detail.Sessions.Count > 0 ? detail.Sessions[0] : null;
         SessionRow? lastHooked = detail.Sessions.FirstOrDefault(static s => s.Tier == CaptureTier.Hooked && s.FrameCount > 0);

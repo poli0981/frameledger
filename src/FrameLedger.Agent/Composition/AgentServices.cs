@@ -112,12 +112,20 @@ internal static class AgentServices
         // --serve only (DetectionHostedService); composed and inert under --console.
         services.AddSingleton<IDetectionRulesSource>(static _ => new DetectionRulesFile());
         services.AddSingleton<IGameFileProbe, GameFileProbe>();
+        // A drive that changed its letter (2026-09-22): one relocator, asked by the sweep, the watcher and the enable-hooking
+        // command, over the BCL's drive list.
+        services.AddSingleton(static sp => new ExecutableRelocator(
+            sp.GetRequiredService<IGameRepository>(),
+            sp.GetRequiredService<IExecutableIdentitySource>(),
+            VolumeRoots.Ready,
+            static line => Serilog.Log.Information("{Line}", line)));
         services.AddSingleton(static sp => new DetectionSweep(
             sp.GetRequiredService<IGameRepository>(),
             sp.GetRequiredService<IDetectionRulesSource>(),
             sp.GetRequiredService<IGameFileProbe>(),
             sp.GetRequiredService<IExecutableIdentitySource>(),
-            static line => Serilog.Log.Information("{Line}", line)));
+            static line => Serilog.Log.Information("{Line}", line),
+            sp.GetRequiredService<ExecutableRelocator>()));
 
         // The layer's registration follows the ledger (P4 PR-2, 12_BUILD §The Vulkan layer is not registered at
         // install time): the same manifest and key --register-vklayer writes, reconciled after every consent change
@@ -170,7 +178,8 @@ internal static class AgentServices
             TimeProvider.System,
             sp.GetRequiredService<VkLayerReconciler>(),
             // P4 PR-7: the on-demand retention sweep, over the Agent's own settings read and its own blob tables.
-            ct => new RetentionSweep(sp.GetRequiredService<ISessionRepository>(), sp.GetRequiredService<RegisteredSettings>()).RunAsync(ct)));
+            ct => new RetentionSweep(sp.GetRequiredService<ISessionRepository>(), sp.GetRequiredService<RegisteredSettings>()).RunAsync(ct),
+            sp.GetRequiredService<ExecutableRelocator>()));
         services.AddSingleton<IIpcRequestHandler>(static sp => new AgentRequestHandler(
             AgentIdentityFactory.OfThisProcess(sp.GetRequiredService<AgentPaths>().VkLayerDirectory),
             TelemetryDescriptor(),
@@ -190,7 +199,8 @@ internal static class AgentServices
             sp.GetRequiredService<IExecutableIdentitySource>(),
             new OrchestratorOptions { PayloadPath = AgentPaths.Payload },
             static line => Serilog.Log.Information("{Line}", line),
-            sp.GetRequiredService<ILaunchRecorderFactory>()));
+            sp.GetRequiredService<ILaunchRecorderFactory>(),
+            sp.GetRequiredService<ExecutableRelocator>()));
         services.AddSingleton<ILaunchRecorderFactory, AgentLaunches>();
 
     }

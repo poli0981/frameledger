@@ -1743,6 +1743,9 @@ The details are in the log folder:
 
 Open the log folder?</value>
   </data>
+  <data name="GameDetail_ExeMissing" xml:space="preserve">
+    <value>The executable was not found at this path. If a drive changed its letter, the Agent moves this entry to the file itself within about 15 seconds of the drive being back; otherwise use Change executable.</value>
+  </data>
   <data name="GameDetail_ChangeExe" xml:space="preserve">
     <value>Change executable…</value>
   </data>

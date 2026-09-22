@@ -133,7 +133,10 @@ which makes the notification more important than it was, not less.
 > both null so it can match nothing. `ProcessWatcher` diffs it against the watchlist — the `games` rows — on the
 > normalised full path first and on the file name only when exactly ONE row carries it (`StalePath`, the
 > "stale-path warning badge"; the session is keyed on the path the process actually runs from, so consent for the
-> old path does not follow the binary). `ProcessTree` reads ppid chains with the one rule that defeats pid
+> old path does not follow the binary — **unless it IS the same binary on a drive that changed its letter**, 2026-09-22:
+> `CaptureOrchestrator.AdoptIfMovedAsync` asks `ExecutableRelocator` first, and when the row's file is gone and the
+> running one has the row's size and mtime, the row is moved and the session is the row's, consent and all;
+> `19_SAFETY` §A moved drive is the same executable). `ProcessTree` reads ppid chains with the one rule that defeats pid
 > reuse: a child that started before its parent is not its child. `DescendantElection` picks the newest-started
 > descendant whose image is tracked — a launcher's consent does not extend to what it spawns, so the elected image
 > needs its own record. `CaptureOrchestrator` is the `--serve` loop: one snapshot per second, ONE session per game

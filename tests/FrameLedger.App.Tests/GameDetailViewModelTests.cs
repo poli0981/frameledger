@@ -313,6 +313,29 @@ public sealed class GameDetailViewModelTests
     }
 
     [Fact]
+    public async Task AMissingExecutableIsSaidOnThePageAndAPresentOneIsNot()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow missing = await s.GameAsync("Gone");
+        string real = Path.Combine(Path.GetTempPath(), "fl-present-exe-" + Guid.NewGuid().ToString("N") + ".exe");
+        await File.WriteAllBytesAsync(real, new byte[12], Ct);
+        try
+        {
+            GameRow present = await s.GameAsync("Here", real);
+            (GameDetailViewModel gone, _, _, _, _) = await BuildAsync(s, missing.Id);
+            (GameDetailViewModel here, _, _, _, _) = await BuildAsync(s, present.Id);
+
+            gone.ExecutableMissing.Should().BeTrue("the scratch row points at a file nobody wrote");
+            here.ExecutableMissing.Should().BeFalse();
+            GameDetailViewModel.ExecutableMissingText.Should().Be(Strings.GameDetail_ExeMissing);
+        }
+        finally
+        {
+            File.Delete(real);
+        }
+    }
+
+    [Fact]
     public async Task ChangingTheExecutableRevokesOverThePipeFirstAndLeavesTheRowHookingOff()
     {
         await using ScratchLedger s = await ScratchLedger.OpenAsync();

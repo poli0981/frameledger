@@ -1738,6 +1738,9 @@ Chi tiết nằm trong thư mục log:
 
 Mở thư mục log?</value>
   </data>
+  <data name="GameDetail_ExeMissing" xml:space="preserve">
+    <value>Không tìm thấy file thực thi ở đường dẫn này. Nếu ổ đĩa đổi ký tự, Agent sẽ tự chuyển mục này sang file đó trong khoảng 15 giây sau khi ổ có lại; nếu không, hãy dùng Đổi file thực thi.</value>
+  </data>
   <data name="GameDetail_ChangeExe" xml:space="preserve">
     <value>Đổi file thực thi…</value>
   </data>

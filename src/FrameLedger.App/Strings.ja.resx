@@ -2312,6 +2312,10 @@
 ログフォルダーを開きますか？</value>
     <comment>review</comment>
   </data>
+  <data name="GameDetail_ExeMissing" xml:space="preserve">
+    <value>このパスに実行ファイルが見つかりません。ドライブ文字が変わった場合、ドライブが戻ってから約 15 秒以内にエージェントがこの項目をそのファイルへ移します。そうでない場合は「実行ファイルを変更」を使ってください。</value>
+    <comment>review</comment>
+  </data>
   <data name="GameDetail_ChangeExe" xml:space="preserve">
     <value>実行ファイルを変更…</value>
     <comment>review</comment>

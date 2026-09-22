@@ -38,7 +38,10 @@ public sealed class CaptureOrchestratorTests
 
     private sealed class FakeIdentity : IExecutableIdentitySource
     {
-        public ExecutableFingerprint? Read(string normalisedExePath) => new() { ExePath = normalisedExePath, SizeBytes = 5, MtimeUnixMs = 5 };
+        public HashSet<string> Missing { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+        public ExecutableFingerprint? Read(string normalisedExePath) =>
+            Missing.Contains(normalisedExePath) ? null : new() { ExePath = normalisedExePath, SizeBytes = 5, MtimeUnixMs = 5 };
 
         public string Normalise(string exePath) => exePath;
     }
@@ -240,5 +243,36 @@ public sealed class CaptureOrchestratorTests
         {
             await Task.Delay(10, TestContext.Current.CancellationToken).ConfigureAwait(false);
         }
+    }
+
+    /// <summary>
+    /// A game launched from a drive that changed its letter (2026-09-22): the row's file is gone, the running one has the
+    /// row's bytes, so the row follows it and the session is the row's — keyed on the new path WITH its consent, rather
+    /// than "BY FILE NAME ONLY" as a stranger.
+    /// </summary>
+    [Fact]
+    public async Task AProcessFromAMovedDriveMovesTheRowAndTheSessionIsTheRows()
+    {
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        var games = new FakeGameRepository();
+        GameRow row = await games.EnsureAsync(new ExecutableFingerprint { ExePath = _game, SizeBytes = 5, MtimeUnixMs = 5 }, "Title", ct);
+        var identity = new FakeIdentity();
+        identity.Missing.Add(_game);
+        var recorder = new FakeRecorder();
+        var processes = new FakeSnapshots();
+        List<string> log = [];
+        var o = new CaptureOrchestrator(recorder, games, processes, identity, new OrchestratorOptions { PayloadPath = @"C:\FL\FrameLedger.Overlay.dll" }, log.Add,
+            relocator: new ExecutableRelocator(games, identity, () => [@"C:\", @"H:\"], log.Add));
+        const string moved = @"H:\Games\Title\game.exe";
+
+        processes.Processes.Add(new ProcessSnapshot(4242, 1, "game.exe", moved, DateTimeOffset.UnixEpoch));
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+        await WaitForRequestsAsync(recorder, 1).ConfigureAwait(true);
+
+        recorder.Requests.Should().ContainSingle().Which.NormalisedExePath.Should().Be(moved);
+        games.Rows.Should().ContainKey(moved).And.NotContainKey(_game);
+        games.Rows[moved].Id.Should().Be(row.Id);
+        log.Should().Contain(l => l.Contains("executable moved", StringComparison.Ordinal));
+        log.Should().NotContain(l => l.Contains("BY FILE NAME ONLY", StringComparison.Ordinal), "the row was moved before the session started, so the path is the row's");
     }
 }
