@@ -143,9 +143,17 @@ public static class Formats
     /// Why a Tier-2 session measured nothing, from <c>capture_notes</c> (2026-09-22): hooking off, a block on the row,
     /// the guard's refusal by family, a process that could not be opened, or the end reason by name.
     /// </summary>
-    public static string Tier2Reason(string? captureNotes)
+    public static string Tier2Reason(string? captureNotes) => Tier2Reason(Application.Recording.CaptureNotes.Parse(captureNotes));
+
+    /// <summary>The same words for a session still running (2026-09-23): the hold its <c>SessionStarted</c> carried.</summary>
+    public static string Tier2HoldReason(Shared.Ipc.SessionHold hold)
     {
-        Application.Recording.CaptureNotes n = Application.Recording.CaptureNotes.Parse(captureNotes);
+        ArgumentNullException.ThrowIfNull(hold);
+        return Tier2Reason(new Application.Recording.CaptureNotes(hold.Reason, hold.GuardReason, hold.Family, hold.Signal));
+    }
+
+    private static string Tier2Reason(Application.Recording.CaptureNotes n)
+    {
         switch (n.End)
         {
             case null:
@@ -158,6 +166,9 @@ public static class Formats
                 return string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_Guard_Format, family, n.GuardSignal ?? Strings.Common_NotAvailable);
             case "TargetUnreadable":
                 return Strings.Summary_Tier2_Why_Unreadable;
+            case "RefusedConsentMissing":
+                // Common after a store update (2026-09-23): the consent is about the executable that was enabled, and this is a newer one.
+                return Strings.Summary_Tier2_Why_ConsentChanged;
             default:
                 return string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_Other_Format, n.End);
         }

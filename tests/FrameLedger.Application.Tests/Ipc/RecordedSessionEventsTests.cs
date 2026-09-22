@@ -93,6 +93,53 @@ public sealed class RecordedSessionEventsTests
         done.Tier.Should().Be(2);
     }
 
+    /// <summary>A held session said its refusal when the hold began (2026-09-23); its end says only that it completed.</summary>
+    [Fact]
+    public void AReasonAlreadySaidIsNotSaidAgainAtTheEnd()
+    {
+        var pipe = new RecordingPublisher();
+        RecordedSession session = Session(SessionEndReason.RefusedByGuard, ExitStatus.Normal, new FinalizeOutcome(FinalizeStatus.Saved, 3, 0),
+            verdict: AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedModule, "eac", "EasyAntiCheat.dll"), tier: CaptureTier.NotHooked);
+
+        RecordedSessionEvents.PublishAll(pipe, session, _info, reasonAlreadyPublished: true);
+
+        pipe.Published.Select(static p => p.Type).Should().Equal(IpcMessageType.SessionCompleted);
+    }
+
+    /// <summary>
+    /// The completion names the entry the session was stored under (2026-09-23): the finalizer's owner when it re-keyed a
+    /// session whose entry was removed, else the one it started under — so the App's notice needs no name of its own.
+    /// </summary>
+    [Fact]
+    public void TheCompletionNamesTheEntryTheSessionWasStoredUnder()
+    {
+        var pipe = new RecordingPublisher();
+
+        RecordedSessionEvents.PublishAll(pipe, Session(SessionEndReason.TargetExited, ExitStatus.Normal, new FinalizeOutcome(FinalizeStatus.Saved, 1, 0, GameId: 9)), _info);
+        RecordedSessionEvents.PublishAll(pipe, Session(SessionEndReason.TargetExited, ExitStatus.Normal, new FinalizeOutcome(FinalizeStatus.Discarded, null, 0)), _info);
+
+        pipe.Of<SessionCompletedEvent>().Select(static e => e.GameId).Should().Equal(9L, 7L);
+        pipe.Of<SessionCompletedEvent>().Should().OnlyContain(static e => e.GameName == "Title");
+    }
+
+    [Fact]
+    public void AHoldCarriesTheGuardsWordsOnlyWhenTheGuardSpoke()
+    {
+        RecordedSessionEvents.HoldOf(new CaptureOutcome { Reason = SessionEndReason.RefusedHookNotEnabled, Verdict = AntiCheatVerdict.Allowed() })
+            .Should().Be(new SessionHold("RefusedHookNotEnabled"));
+        RecordedSessionEvents.HoldOf(new CaptureOutcome
+        {
+            Reason = SessionEndReason.TargetUnreadable,
+            Verdict = AntiCheatVerdict.Refused(AntiCheatRefusalReason.ProcessUnreadable, "", ""),
+        }).Should().Be(new SessionHold("TargetUnreadable", "ProcessUnreadable"), "an empty family or signal is no word at all");
+        RecordedSessionEvents.HoldOf(new CaptureOutcome
+        {
+            Reason = SessionEndReason.RefusedByGuard,
+            Verdict = AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedModule, "eac", "EasyAntiCheat.dll"),
+            HookingTurnedOff = true,
+        }).Should().Be(new SessionHold("RefusedByGuard", "BlockedModule", "eac", "EasyAntiCheat.dll", HookingTurnedOff: true));
+    }
+
     /// <summary>The finding turned the game's hooking off (2026-09-22): both safety events carry that, so the notice can say it.</summary>
     [Fact]
     public void WhenTheFindingTurnedHookingOffBothSafetyEventsSaySo()

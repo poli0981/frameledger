@@ -229,6 +229,9 @@ public sealed class CaptureSessionTests : IAsyncDisposable
     {
         public int Ticks { get; private set; }
 
+        /// <summary>What each tick said the session is held under (2026-09-23: the pipe announces a hold from its first tick).</summary>
+        public List<CaptureOutcome?> Holds { get; } = [];
+
         public void Attached(int pid, FlShmHandshake handshake)
         {
         }
@@ -236,6 +239,7 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         public void Tick(CaptureProgress progress)
         {
             Ticks++;
+            Holds.Add(progress.Hold);
             progress.Records.Should().BeEmpty("a held session has no ring to drain");
         }
     }
@@ -938,6 +942,13 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         resolver.ResolveCalls.Should().Be(0, "a hooking-off row is never resolved, so its process is never opened");
         guard.InjectCalls.Should().Be(0);
         ticks.Ticks.Should().BeGreaterThanOrEqualTo(3, "duration and telemetry accrue on the hold's ticks");
+        ticks.Holds.Should().AllSatisfy(static h =>
+        {
+            h.Should().NotBeNull("every held tick says why, so the pipe can say it while the game runs");
+            h!.Reason.Should().Be(SessionEndReason.RefusedHookNotEnabled);
+            h.Verdict.Reason.Should().Be(AntiCheatRefusalReason.HookNotEnabled);
+            h.TargetPid.Should().Be(0);
+        });
     }
 
     [Fact]
@@ -990,6 +1001,12 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         r.ExitCode.Should().Be(7, "the game's own end is the session's end, crash and all");
         ticks.Ticks.Should().BeGreaterThanOrEqualTo(3);
         guard.InjectCalls.Should().Be(1, "the guard was asked once and refused; the hold asks nothing more");
+        ticks.Holds.Should().AllSatisfy(h =>
+        {
+            h!.Reason.Should().Be(SessionEndReason.RefusedByGuard);
+            h.Verdict.Family.Should().Be("Riot Vanguard");
+            h.TargetPid.Should().Be(_pid, "the pipe's start names the process the loop holds");
+        });
     }
 
     [Fact]

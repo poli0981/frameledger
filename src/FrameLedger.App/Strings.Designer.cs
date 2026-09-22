@@ -147,6 +147,7 @@ public static class Strings
         nameof(Dashboard_Live_GpuTemp_Format),
         nameof(Dashboard_Live_Header),
         nameof(Dashboard_Live_Idle),
+        nameof(Dashboard_Live_RecordingOnly),
         nameof(Dashboard_Live_Rt_On),
         nameof(Dashboard_Live_Vram_Format),
         nameof(Dashboard_Live_Waiting),
@@ -542,6 +543,7 @@ public static class Strings
         nameof(Summary_Tags_Placeholder),
         nameof(Summary_Tier2_Body),
         nameof(Summary_Tier2_Why_Blocked_Format),
+        nameof(Summary_Tier2_Why_ConsentChanged),
         nameof(Summary_Tier2_Why_Guard_Format),
         nameof(Summary_Tier2_Why_HookOff),
         nameof(Summary_Tier2_Why_Other_Format),
@@ -875,6 +877,8 @@ public static class Strings
     public static string Dashboard_Live_Header => ResourceManager.GetString(nameof(Dashboard_Live_Header), Culture) ?? nameof(Dashboard_Live_Header);
 
     public static string Dashboard_Live_Idle => ResourceManager.GetString(nameof(Dashboard_Live_Idle), Culture) ?? nameof(Dashboard_Live_Idle);
+
+    public static string Dashboard_Live_RecordingOnly => ResourceManager.GetString(nameof(Dashboard_Live_RecordingOnly), Culture) ?? nameof(Dashboard_Live_RecordingOnly);
 
     public static string Dashboard_Live_Rt_On => ResourceManager.GetString(nameof(Dashboard_Live_Rt_On), Culture) ?? nameof(Dashboard_Live_Rt_On);
 
@@ -1665,6 +1669,8 @@ public static class Strings
     public static string Summary_Tier2_Body => ResourceManager.GetString(nameof(Summary_Tier2_Body), Culture) ?? nameof(Summary_Tier2_Body);
 
     public static string Summary_Tier2_Why_Blocked_Format => ResourceManager.GetString(nameof(Summary_Tier2_Why_Blocked_Format), Culture) ?? nameof(Summary_Tier2_Why_Blocked_Format);
+
+    public static string Summary_Tier2_Why_ConsentChanged => ResourceManager.GetString(nameof(Summary_Tier2_Why_ConsentChanged), Culture) ?? nameof(Summary_Tier2_Why_ConsentChanged);
 
     public static string Summary_Tier2_Why_Guard_Format => ResourceManager.GetString(nameof(Summary_Tier2_Why_Guard_Format), Culture) ?? nameof(Summary_Tier2_Why_Guard_Format);
 

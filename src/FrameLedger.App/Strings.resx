@@ -366,6 +366,9 @@
   <data name="Dashboard_Live_Idle" xml:space="preserve">
     <value>Nothing is being captured.</value>
   </data>
+  <data name="Dashboard_Live_RecordingOnly" xml:space="preserve">
+    <value>Recording duration and sensors only — nothing is measured.</value>
+  </data>
   <data name="Dashboard_Live_Rt_On" xml:space="preserve">
     <value>RT active</value>
   </data>
@@ -926,6 +929,9 @@
   </data>
   <data name="Summary_Tier2_Why_Blocked_Format" xml:space="preserve">
     <value>Why: hooking is off for this game — the guard found {0}.</value>
+  </data>
+  <data name="Summary_Tier2_Why_ConsentChanged" xml:space="preserve">
+    <value>Why: the game's executable changed since hooking was turned on (an update, usually), so that consent no longer applies — turn hooking on again for it.</value>
   </data>
   <data name="Summary_Tier2_Why_Guard_Format" xml:space="preserve">
     <value>Why: the guard refused — {0} ({1}).</value>

@@ -59,14 +59,46 @@ public static class RecordedSessionEvents
         _ => CaptureErrorCode.AttachRefused,
     };
 
-    public static void PublishAll(IIpcEventPublisher pipe, RecordedSession session, SessionStartedInfo info)
+    /// <summary>
+    /// A finished session's events: its reason's safety/error event — unless <paramref name="reasonAlreadyPublished"/>, because
+    /// a held session said it when its hold began (2026-09-23) — then always <c>SessionCompleted</c>, naming the entry the
+    /// session was stored under.
+    /// </summary>
+    public static void PublishAll(IIpcEventPublisher pipe, RecordedSession session, SessionStartedInfo info, bool reasonAlreadyPublished = false)
     {
         ArgumentNullException.ThrowIfNull(pipe);
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(info);
 
+        if (!reasonAlreadyPublished)
+        {
+            PublishReason(pipe, session.SessionGuid, session.Outcome, info);
+        }
+
         CaptureOutcome o = session.Outcome;
-        Guid guid = session.SessionGuid;
+        pipe.Publish(IpcMessageType.SessionCompleted, new SessionCompletedEvent(
+            session.SessionGuid,
+            session.Finalize.SessionId,
+            Vocabulary.ExitStatusText(session.ExitStatus),
+            (int)session.Row.Tier,
+            FinalizeText(session.Finalize.Status),
+            o.Reason.ToString(),
+            session.Finalize.GameId ?? info.GameId,
+            info.GameName));
+    }
+
+    /// <summary>
+    /// The one safety or error event <paramref name="outcome"/>'s reason warrants, or nothing. At the end of a session, or —
+    /// for a session held unhooked (2026-09-23) — the moment its hold begins, so a refusal is said while the game runs and
+    /// not when it exits.
+    /// </summary>
+    public static void PublishReason(IIpcEventPublisher pipe, Guid sessionGuid, CaptureOutcome outcome, SessionStartedInfo info)
+    {
+        ArgumentNullException.ThrowIfNull(pipe);
+        ArgumentNullException.ThrowIfNull(outcome);
+        ArgumentNullException.ThrowIfNull(info);
+
+        CaptureOutcome o = outcome;
         switch (Classify(o.Reason))
         {
             case Kind.Refused:
@@ -74,29 +106,41 @@ public static class RecordedSessionEvents
                     new CaptureRefusedEvent(info.GameId, info.GameName, o.Reason.ToString(), NullIfEmpty(o.Verdict.Family), NullIfEmpty(o.Verdict.Signal), o.HookingTurnedOff));
                 break;
             case Kind.SafetyUnhook:
-                pipe.Publish(IpcMessageType.SafetyUnhook, new SafetyUnhookEvent(guid, NullIfEmpty(o.Verdict.Family), NullIfEmpty(o.Verdict.Signal), o.HookingTurnedOff));
+                pipe.Publish(IpcMessageType.SafetyUnhook, new SafetyUnhookEvent(sessionGuid, NullIfEmpty(o.Verdict.Family), NullIfEmpty(o.Verdict.Signal), o.HookingTurnedOff));
                 break;
             case Kind.Degraded:
-                pipe.Publish(IpcMessageType.CaptureDegraded, new CaptureDegradedEvent(guid, From: 1, To: 2, o.Reason.ToString()));
+                pipe.Publish(IpcMessageType.CaptureDegraded, new CaptureDegradedEvent(sessionGuid, From: 1, To: 2, o.Reason.ToString()));
                 break;
             case Kind.AttachError:
                 pipe.Publish(IpcMessageType.CaptureError,
-                    new CaptureErrorEvent(guid, RingCode(o.AttachRefusal), $"the ring could not be attached: {o.AttachRefusal}"));
+                    new CaptureErrorEvent(sessionGuid, RingCode(o.AttachRefusal), $"the ring could not be attached: {o.AttachRefusal}"));
                 break;
             case Kind.TargetError:
-                pipe.Publish(IpcMessageType.CaptureError, new CaptureErrorEvent(guid, CaptureErrorCode.InjectFailed, o.Reason.ToString()));
+                pipe.Publish(IpcMessageType.CaptureError, new CaptureErrorEvent(sessionGuid, CaptureErrorCode.InjectFailed, o.Reason.ToString()));
                 break;
             default:
                 break;
         }
+    }
 
-        pipe.Publish(IpcMessageType.SessionCompleted, new SessionCompletedEvent(
-            guid,
-            session.Finalize.SessionId,
-            Vocabulary.ExitStatusText(session.ExitStatus),
-            (int)session.Row.Tier,
-            FinalizeText(session.Finalize.Status),
-            o.Reason.ToString()));
+    /// <summary><c>SessionCompleted.finalize</c> for a session whose task threw before it could finalize (2026-09-23).</summary>
+    public const string FaultedFinalize = "faulted";
+
+    /// <summary>
+    /// The words a held session's <c>capture_notes</c> will carry, for the wire (2026-09-23): the loop's reason and, when the
+    /// guard said anything but a plain allow, its reason, family and signal.
+    /// </summary>
+    public static SessionHold HoldOf(CaptureOutcome outcome)
+    {
+        ArgumentNullException.ThrowIfNull(outcome);
+        Domain.AntiCheat.AntiCheatVerdict v = outcome.Verdict;
+        bool guardSpoke = v.Reason != Domain.AntiCheat.AntiCheatRefusalReason.Allow;
+        return new SessionHold(
+            outcome.Reason.ToString(),
+            guardSpoke ? v.Reason.ToString() : null,
+            guardSpoke ? NullIfEmpty(v.Family) : null,
+            guardSpoke ? NullIfEmpty(v.Signal) : null,
+            outcome.HookingTurnedOff);
     }
 
     public static string FinalizeText(FinalizeStatus status) => status switch

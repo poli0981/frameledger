@@ -19,9 +19,6 @@ namespace FrameLedger.App.Update;
 /// </summary>
 public sealed partial class UpdateService : ObservableObject, IDisposable
 {
-    /// <summary><c>StatusAck.State</c> when no session runs.</summary>
-    private const string _idleState = "idle";
-
     private static readonly TimeSpan _defaultAgentStopTimeout = TimeSpan.FromSeconds(10);
 
     private readonly TimeSpan _agentStopTimeout;
@@ -64,20 +61,13 @@ public sealed partial class UpdateService : ObservableObject, IDisposable
     /// <summary>Raised once per release found, for the tray's toast; the banner follows <see cref="Stage"/>.</summary>
     public event EventHandler<UpdateAvailableEventArgs>? Available;
 
-    /// <summary>A session runs (hooked or recording): the Agent said so at connect, or a <c>SessionStarted</c> arrived without its <c>SessionCompleted</c>.</summary>
-    public bool IsSessionActive
-    {
-        get
-        {
-            if (_running.Count > 0)
-            {
-                return true;
-            }
-
-            StatusAck? status = _agent.Status;
-            return status is not null && (!string.Equals(status.State, _idleState, StringComparison.Ordinal) || status.ActiveSessions.Count > 0);
-        }
-    }
+    /// <summary>
+    /// A session runs (hooked or recording): one the Agent listed when this App (re)connected, or a <c>SessionStarted</c>
+    /// since, without its <c>SessionCompleted</c>. Until 2026-09-23 it also OR-ed the status read at connect, which is
+    /// never read again — so a session running when the App connected held every update at Deferred until the next
+    /// reconnect, hours after it ended. The connect-time list now seeds the set and the completions empty it.
+    /// </summary>
+    public bool IsSessionActive => _running.Count > 0;
 
     public void Dispose()
     {
@@ -311,6 +301,14 @@ public sealed partial class UpdateService : ObservableObject, IDisposable
     private void OnAgentChanged(object? sender, EventArgs e) => Post(() =>
     {
         _running.Clear();
+        if (_agent.State == AgentConnectionState.Connected && _agent.Status is { } status)
+        {
+            foreach (ActiveSession a in status.ActiveSessions)
+            {
+                _running.Add(a.SessionGuid);
+            }
+        }
+
         Settle();
     });
 

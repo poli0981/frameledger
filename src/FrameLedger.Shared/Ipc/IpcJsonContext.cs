@@ -23,6 +23,7 @@ namespace FrameLedger.Shared.Ipc;
 [JsonSerializable(typeof(ErrorAck))]
 [JsonSerializable(typeof(SessionStartedEvent))]
 [JsonSerializable(typeof(SessionProgressEvent))]
+[JsonSerializable(typeof(SessionHeldEvent))]
 [JsonSerializable(typeof(SessionCompletedEvent))]
 [JsonSerializable(typeof(CaptureRefusedEvent))]
 [JsonSerializable(typeof(CaptureDegradedEvent))]

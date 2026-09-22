@@ -58,10 +58,13 @@ flow, and the tests run the flow over a fake client because nothing here may tou
 - **FR-12 is the shape of the flow, not a check at the end.** A downloaded package is `Ready` only while the Agent
   reports no session (its `StatusAck` at connect, then `SessionStarted` / `SessionCompleted` on the pipe);
   otherwise it is `Deferred`, the button is disabled and the body says why, and it becomes `Ready` when the last
-  session ends. The apply is refused again inside if a session started meanwhile. A recording-only (Tier 2)
+  session ends. The apply is refused again inside if a session started meanwhile. ~~A recording-only (Tier 2)
   session that began before the App connected is covered by the status; one that begins afterwards raises no
   `SessionStarted` (that event is the ring's) and is not — a known gap, recorded rather than hidden: the Overlay
-  is not on disk under such a session, so the rule's reason does not apply to it.
+  is not on disk under such a session, so the rule's reason does not apply to it.~~ **Closed 2026-09-23:** a held
+  (Tier 2) session raises its own `SessionStarted`, so it defers an update like any other; and the status read at
+  connect SEEDS the running set rather than being OR-ed with it forever — before, a session running when the App
+  connected held every download at `Deferred` until the next reconnect, hours after it ended.
 - **Apply:** `Shutdown` to the Agent over the pipe, the connection's relaunch held (`IAgentLink.SetLaunchHold`),
   the pipe watched until it drops (10 s; an Agent that does not stop leaves everything as it was and says so),
   then `WaitExitThenApplyUpdates(asset, silent: false, restart: true)` and the host ends. The restarted App

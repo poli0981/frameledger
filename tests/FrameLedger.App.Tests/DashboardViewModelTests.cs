@@ -156,4 +156,71 @@ public sealed class DashboardViewModelTests
         vm.Live.IsActive.Should().BeFalse();
         vm.Recent.Should().ContainSingle();
     }
+
+    /// <summary>
+    /// A session already running is on the card when the Dashboard is built (2026-09-23) — it is rebuilt on every visit —
+    /// and a held one says why; its completion names its own game.
+    /// </summary>
+    [Fact]
+    public async Task ARunningHeldSessionIsOnTheCardAtOnceAndItsCompletionNamesIt()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Alpha");
+        var guid = Guid.NewGuid();
+        var link = new FakeLink
+        {
+            Status = new StatusAck("recording", null, null, [new ActiveSession(guid, game.Id, "Alpha", 42, 2, DateTimeOffset.UtcNow, new SessionHold("RefusedHookNotEnabled"))]),
+        };
+        using var sessions = new LiveSessions(link);
+        var strip = new RecordingStrip();
+        using var vm = new DashboardViewModel(link, s.Library, new GameSelection(), new FakeNavigator(), new NoSummaries(), strip, sessions: sessions);
+        Task loaded = vm.Pending;
+        await loaded;
+
+        vm.Live.IsActive.Should().BeTrue("until 2026-09-23 this read \"Nothing is being captured.\" for as long as the game ran");
+        vm.Live.IsHeld.Should().BeTrue();
+        vm.Live.GameName.Should().Be("Alpha");
+        vm.RunningSessions.Should().Be("1");
+
+        link.Raise(IpcMessageType.SessionHeld, new SessionHeldEvent(guid, 30));
+        vm.Live.ElapsedText.Should().NotBeEmpty();
+
+        long id = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddMinutes(-1), seconds: 30);
+        link.Raise(IpcMessageType.SessionCompleted, new SessionCompletedEvent(guid, id, "normal", 2, "saved", "RefusedHookNotEnabled", game.Id, "Alpha"));
+        Task reloaded = vm.Pending;
+        await reloaded;
+
+        vm.Live.IsActive.Should().BeFalse();
+        strip.Shown.Should().ContainSingle().Which.Body.Should().Contain("Alpha");
+        vm.RunningSessions.Should().Be("0");
+    }
+
+    [Fact]
+    public async Task TheNoticeNamesTheCompletedSessionAndAFaultIsNotANotice()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        var link = new FakeLink();
+        using var sessions = new LiveSessions(link);
+        var strip = new RecordingStrip();
+        using var vm = new DashboardViewModel(link, s.Library, new GameSelection(), new FakeNavigator(), new NoSummaries(), strip, sessions: sessions);
+        Task loaded = vm.Pending;
+        await loaded;
+        var hooked = Guid.NewGuid();
+        var held = Guid.NewGuid();
+        link.Raise(IpcMessageType.SessionStarted, new SessionStartedEvent(hooked, 1, "Hooked", 1, 1, DateTimeOffset.UtcNow));
+        link.Raise(IpcMessageType.SessionStarted, new SessionStartedEvent(held, 2, "Held", 2, 2, DateTimeOffset.UtcNow, new SessionHold("RefusedHookNotEnabled")));
+        vm.Live.GameName.Should().Be("Hooked", "a hooked session keeps the card");
+
+        link.Raise(IpcMessageType.SessionCompleted, new SessionCompletedEvent(held, null, "normal", 2, "discarded", "RefusedHookNotEnabled", 2, "Held"));
+        Task first = vm.Pending;
+        await first;
+        strip.Shown.Should().ContainSingle().Which.Body.Should().Contain("Held", "the completed session's own name, not the card's");
+        vm.Live.GameName.Should().Be("Hooked");
+
+        link.Raise(IpcMessageType.SessionCompleted, new SessionCompletedEvent(hooked, null, "interrupted", 1, "faulted", "SessionFaulted", 1, "Hooked"));
+        Task second = vm.Pending;
+        await second;
+        strip.Shown.Should().ContainSingle("a faulted session is the strip's CaptureError already; \"discarded\" would say what did not happen");
+        vm.Live.IsActive.Should().BeFalse();
+    }
 }
