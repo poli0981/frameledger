@@ -50,9 +50,10 @@ They are not extra cases; they are what stops the rest being decorative.
 
 - `canaries/no_engine` — **over-match.** If the evaluator ever matches
   everything, every positive fixture above still passes. Only this one goes red.
-- `canaries/every_engine_marker` — **under-match and ordering.** Four engines'
-  markers are present at once; exactly one engine must be reported, and it must
-  be the first in the array.
+- `canaries/every_engine_marker` — **under-match and ordering.** Eight engines'
+  markers are present at once (this line said "four" while the directory held
+  six; RE Engine's and FromSoftware's joined them 2026-09-23); exactly one
+  engine must be reported, and it must be the first in the array.
 
 Together they assert both directions, which is the rule the rest of this
 repository is held to.

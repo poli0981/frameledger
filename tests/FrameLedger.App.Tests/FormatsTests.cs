@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO;
 using FluentAssertions;
 using FrameLedger.App.Services;
 using FrameLedger.Domain.Sessions;
@@ -86,5 +87,40 @@ public sealed class FormatsTests
         InEnglish(() => Formats.ExitStatusText(ExitStatus.UnhookedSafety)).Should().Be("unhooked (safety)");
         Formats.Platform("steam").Should().Be("Steam");
         Formats.Platform("none").Should().BeEmpty();
+    }
+
+    /// <summary>The engine ids as names (2026-09-23): proper nouns in every language; an id this table does not know passes through.</summary>
+    [Fact]
+    public void EnginesAreNamedAndAnUnknownIdPassesThrough()
+    {
+        Formats.Engine("re_engine").Should().Be("RE Engine");
+        Formats.Engine("fromsoftware").Should().Be("FromSoftware");
+        Formats.Engine("rpgmaker_mv").Should().Be("RPG Maker MV/MZ");
+        Formats.Engine("unreal").Should().Be("Unreal Engine");
+        Formats.Engine("My Own Engine").Should().Be("My Own Engine", "an engine the user typed is shown as typed");
+        Formats.Engine(null).Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// Every engine the shipped rules can detect has a name here, and it is the rule's own <c>name</c> (2026-09-23): a rule
+    /// added without one would show its raw id on every card that engine lands on — which is what every engine did until
+    /// this date.
+    /// </summary>
+    [Fact]
+    public void EveryShippedEngineIdIsShownByItsRulesName()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "FrameLedger.slnx")))
+        {
+            dir = dir.Parent;
+        }
+
+        dir.Should().NotBeNull("the check needs the repository's rules file");
+        using System.Text.Json.JsonDocument rules = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(dir!.FullName, "rules", "detection-rules.json")));
+        List<(string Id, string Name)> engines = [.. rules.RootElement.GetProperty("engines").EnumerateArray()
+            .Select(static e => (e.GetProperty("id").GetString()!, e.GetProperty("name").GetString()!))];
+
+        engines.Should().NotBeEmpty();
+        engines.Should().AllSatisfy(static e => Formats.Engine(e.Id).Should().Be(e.Name, $"the rule '{e.Id}' names its engine"));
     }
 }

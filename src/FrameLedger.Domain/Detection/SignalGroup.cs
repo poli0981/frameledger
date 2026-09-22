@@ -7,8 +7,10 @@ namespace FrameLedger.Domain.Detection;
 /// It holds signals, never groups. The schema forbids nesting in v2
 /// (<c>maxProperties: 1</c> plus its own <c>$comment</c>), so that constraint is
 /// expressed as a type here rather than as a validation rule someone has to
-/// remember. It is also why two <c>05_DETECTION</c> engine rows — both RPG Maker
-/// variants — cannot be expressed at all in this schema version.
+/// remember. This remark used to say it is why both RPG Maker rows could not be
+/// expressed; since 2026-09-16 both are, without nesting (<c>05_DETECTION</c>
+/// §Engine signatures), and FromSoftware's two archive halves are one <c>all</c>
+/// group (2026-09-23).
 /// </remarks>
 public sealed record SignalGroup
 {

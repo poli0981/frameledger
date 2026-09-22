@@ -1,6 +1,8 @@
 using System.IO;
+using FrameLedger.Application.Import;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Domain.Consent;
+using FrameLedger.Infrastructure.Import;
 using FrameLedger.Infrastructure.Io;
 
 namespace FrameLedger.App.Services;
@@ -60,17 +62,18 @@ public sealed class GameLibrary
             return null;
         }
 
-        string name = Path.GetFileNameWithoutExtension(normalised);
+        // A generic executable (Game.exe) is named from the game's own title or its folder, not "Game" (2026-09-23).
+        string name = GameTitleGuess.Guess(normalised, () => RpgMakerTitle.TryRead(normalised));
         return await _games.EnsureAsync(fingerprint.Value, name, ct).ConfigureAwait(false);
     }
+
+    /// <summary>Whether the row's executable is where the row says (2026-09-22): the page's "not found" line, nothing else.</summary>
+    public static bool ExecutableExists(string normalisedExePath) => ExecutableIdentity.Read(normalisedExePath) is not null;
 
     /// <summary>
     /// Points the row at another executable; null when the file cannot be read, false when another row owns that path.
     /// The caller revokes consent over the pipe FIRST, as removal does: the table write only downgrades.
     /// </summary>
-    /// <summary>Whether the row's executable is where the row says (2026-09-22): the page's "not found" line, nothing else.</summary>
-    public static bool ExecutableExists(string normalisedExePath) => ExecutableIdentity.Read(normalisedExePath) is not null;
-
     public async Task<bool?> ChangeExecutableAsync(long gameId, string exePath, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(exePath);

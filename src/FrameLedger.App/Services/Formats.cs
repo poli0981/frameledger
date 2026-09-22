@@ -129,6 +129,28 @@ public static class Formats
         _ => Strings.Exit_Normal,
     };
 
+    /// <summary>
+    /// The engine id as the engine's name (2026-09-23): a proper noun, the same in every language (the glossary rule
+    /// above). The ids are the rules file's; one this table does not know — a newer rule, or an engine the user typed —
+    /// passes through as it is, never blank.
+    /// </summary>
+    public static string Engine(string? id) => id switch
+    {
+        null => string.Empty,
+        "unity" => "Unity",
+        "unreal" => "Unreal Engine",
+        "rpgmaker_mv" => "RPG Maker MV/MZ",
+        "rpgmaker_rgss" => "RPG Maker XP/VX/VX Ace",
+        "re_engine" => "RE Engine",
+        "fromsoftware" => "FromSoftware",
+        "godot" => "Godot",
+        "gamemaker" => "GameMaker",
+        "renpy" => "Ren'Py",
+        "cryengine" => "CryEngine",
+        "source" => "Source",
+        _ => id,
+    };
+
     /// <summary>The platform token as its store name.</summary>
     public static string Platform(string? token) => token switch
     {
