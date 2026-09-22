@@ -27,6 +27,42 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
+_Nothing yet — entries continue here after `0.1.0-beta.6`._
+
+## [0.1.0-beta.6] - 2026-09-23
+
+**The sixth pre-release: a game is recorded under its own entry, one entry per game after a drive changes its
+letter, a game that is not measured is shown while it runs, and RE Engine and FromSoftware games are detected.** The
+same unsigned installer: verify its hash against `SHA256SUMS.txt`, then *More info → Run anyway*. What changed for a
+user:
+
+- **Another game's `Game.exe` is no longer recorded under your entry.** A process that matches an entry by file name
+  only starts nothing — unless it is that entry's own executable on a drive that changed its letter — so an RPG Maker
+  game can no longer be recorded under another RPG Maker game's name, twice, as *HELLO, HELLO WORLD!* was under
+  *Flower in Us*.
+- **A game that is not measured is shown while it runs.** Hooking off, refused by the guard, or a process Windows
+  would not open: the Dashboard shows the game, the time and the temperatures, says why nothing is measured, and the
+  tray turns to recording-only — until now it said "Nothing is being captured." for as long as the game ran.
+- **One entry per game when a drive changes its letter.** Two entries for the same executable under two letters
+  merge on their own (the older one stays, with both histories); a game updated while its drive had another letter is
+  followed with hooking off; the library import no longer adds a game again under the new letter.
+- **A game removed while it runs keeps its session** (under the entry that holds its executable), and a session file
+  left behind can no longer stop the Agent at every start.
+- **RE Engine and FromSoftware games are detected**, engines are shown by name, and a game added by hand whose
+  executable is `Game.exe` is named after the game.
+
+**Updating from `0.1.0-beta.5`:**
+
+- Quit the App (tray icon → Exit) and end `FrameLedger.Agent.exe` before running the installer.
+- No schema change; the database opens in place. Every game is re-detected once (rules `2026.09.2`).
+- Session files in `%LOCALAPPDATA%\FrameLedger\tmp` that beta.5 could not store are stored at the Agent's first start —
+  under the entry that holds their executable — or dropped with a line in `agent-*.log`; the Agent keeps running either
+  way.
+- An entry that a beta.5 file-name match created for another game keeps its wrong name until you rename it (*Edit…*)
+  or remove it; its executable path says which game it is.
+- A game whose **folder** moved — not only its drive letter — now records nothing until *Change executable* points its
+  entry at the new file.
+
 ### Added
 
 - **RE Engine and FromSoftware games are detected.** Capcom's RE Engine titles (RESIDENT EVIL 2/3/4/7/Village, Devil
