@@ -248,6 +248,7 @@ public static class Strings
         nameof(GameDetail_Back),
         nameof(GameDetail_ChangeExe),
         nameof(GameDetail_Edit),
+        nameof(GameDetail_ExeMissing),
         nameof(GameDetail_Hooking_Body),
         nameof(GameDetail_Hooking_Busy),
         nameof(GameDetail_Hooking_Header),
@@ -1076,6 +1077,8 @@ public static class Strings
     public static string GameDetail_ChangeExe => ResourceManager.GetString(nameof(GameDetail_ChangeExe), Culture) ?? nameof(GameDetail_ChangeExe);
 
     public static string GameDetail_Edit => ResourceManager.GetString(nameof(GameDetail_Edit), Culture) ?? nameof(GameDetail_Edit);
+
+    public static string GameDetail_ExeMissing => ResourceManager.GetString(nameof(GameDetail_ExeMissing), Culture) ?? nameof(GameDetail_ExeMissing);
 
     public static string GameDetail_Hooking_Body => ResourceManager.GetString(nameof(GameDetail_Hooking_Body), Culture) ?? nameof(GameDetail_Hooking_Body);
 

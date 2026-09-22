@@ -68,6 +68,9 @@ public sealed class GameLibrary
     /// Points the row at another executable; null when the file cannot be read, false when another row owns that path.
     /// The caller revokes consent over the pipe FIRST, as removal does: the table write only downgrades.
     /// </summary>
+    /// <summary>Whether the row's executable is where the row says (2026-09-22): the page's "not found" line, nothing else.</summary>
+    public static bool ExecutableExists(string normalisedExePath) => ExecutableIdentity.Read(normalisedExePath) is not null;
+
     public async Task<bool?> ChangeExecutableAsync(long gameId, string exePath, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(exePath);

@@ -1429,7 +1429,7 @@ stops there"~~ — the override itself is gone since 2026-09-22 (D22).
 - **`Mutex` is thread-affine**: `SingleInstance` is claimed and disposed on `Main`'s thread; its tests are synchronous
   on purpose.
 
-## 2026-09-22 — the override withdrawn; a finding turns hooking off; Tier 2 exists
+## 2026-09-22 — the override withdrawn; a finding turns hooking off; Tier 2 exists; a moved drive is followed
 
 *Status is `CHANGELOG.md` `[Unreleased]`; this is what no other file carries.*
 
@@ -1442,6 +1442,18 @@ alternative, watching only rows the user enabled or FrameLedger itself disabled,
 elevated utility in the library (the owner's Borderless Gaming) is a quiet Tier-2 row rather than a red notice — and
 `SteamLibrarySource.KnownTools` keeps the next import from adding one. The owner's existing Borderless Gaming row is
 theirs to remove.
+
+**Decision (D24, owner: "handle the drive changing its letter while the data does not").** A row may follow its
+executable to another drive-letter root when the file is gone from the row's path and exactly one other root holds a
+file with the same size and mtime — with consent, block and detection kept (`19_SAFETY` §A moved drive is the same
+executable). Three callers: the 15 s sweep, the watcher's file-name match, the enable-hooking command. The owner's
+log of the same morning is the case: 46 rows unreadable on `D:` while the drive sat on `H:`, GF2 and ELDEN RING
+running from `H:` "BY FILE NAME ONLY". **Not done, on purpose:** re-import does not merge a duplicate row an earlier
+re-scan created at the new path (`LibraryImporter` still dedupes on path); the relocator refuses to move onto a path
+another row owns and says so in the log.
+
+**Trap.** `FakeIdentity` in three test classes answers the same fingerprint for ANY path; a relocation test needs one
+that answers per path, or the "exactly one candidate" rule reads every root as a match.
 
 **Decision (D22, owner).** The per-game guard override (D18) is withdrawn entirely — the owner's words: a switch that
 can be turned on and still does nothing is meaningless. In its place a finding about the game turns that game's hooking

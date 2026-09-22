@@ -44,13 +44,16 @@ public sealed class CaptureOrchestrator
     private readonly OrchestratorOptions _options;
     private readonly Action<string> _log;
     private readonly ILaunchRecorderFactory? _launches;
+    private readonly ExecutableRelocator? _relocator;
     private readonly ProcessWatcher _watcher = new();
     private readonly Lock _table = new();
     private readonly Dictionary<long, Running> _running = [];
 
     public CaptureOrchestrator(ISessionRecorder recorder, IGameRepository games, IProcessSnapshotSource processes,
-        IExecutableIdentitySource identity, OrchestratorOptions options, Action<string> log, ILaunchRecorderFactory? launches = null)
+        IExecutableIdentitySource identity, OrchestratorOptions options, Action<string> log, ILaunchRecorderFactory? launches = null,
+        ExecutableRelocator? relocator = null)
     {
+        _relocator = relocator;
         _recorder = recorder ?? throw new ArgumentNullException(nameof(recorder));
         _games = games ?? throw new ArgumentNullException(nameof(games));
         _processes = processes ?? throw new ArgumentNullException(nameof(processes));
@@ -104,7 +107,7 @@ public sealed class CaptureOrchestrator
             switch (e)
             {
                 case TrackedProcessAppeared appeared:
-                    Start(appeared, ct);
+                    Start(await AdoptIfMovedAsync(appeared, ct).ConfigureAwait(false), ct);
                     break;
                 case TrackedProcessGone gone:
                     _log($"watch: pid {gone.Pid} ({gone.Game.Name}) exited");
@@ -199,6 +202,22 @@ public sealed class CaptureOrchestrator
 
         _log($"election: pid {elected.Value.Pid} ({path}) is the newest tracked descendant; attaching");
         return await _recorder.RecordAsync(Attach(path, null, null, default), ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// A file-name match whose row points at a file that is gone, while the running file has the row's size and mtime,
+    /// is the row's executable on a drive that changed its letter (2026-09-22): the row is moved first, so the session
+    /// is keyed on the row's (now real) path and its consent applies. Anything else stays the stranger it was.
+    /// </summary>
+    private async ValueTask<TrackedProcessAppeared> AdoptIfMovedAsync(TrackedProcessAppeared appeared, CancellationToken ct)
+    {
+        if (!appeared.StalePath || _relocator is null || !await _relocator.TryAdoptAsync(appeared.Game, appeared.ImagePath, ct).ConfigureAwait(false))
+        {
+            return appeared;
+        }
+
+        GameRow moved = await _games.FindByIdAsync(appeared.Game.Id, ct).ConfigureAwait(false) ?? appeared.Game;
+        return appeared with { Game = moved, StalePath = false };
     }
 
     private void Start(TrackedProcessAppeared appeared, CancellationToken ct)

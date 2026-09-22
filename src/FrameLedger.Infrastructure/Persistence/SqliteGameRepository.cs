@@ -49,6 +49,13 @@ public sealed class SqliteGameRepository : IGameRepository
         + "updated_at = @at "
         + "WHERE id = @id AND removed_at IS NULL AND NOT EXISTS (SELECT 1 FROM games other WHERE other.exe_path = @path AND other.id <> @id)";
 
+    // The same bytes under another path: nothing but exe_path and updated_at move, and the size/mtime predicate is what
+    // makes "the same bytes" a condition of the write rather than a promise of the caller (IGameRepository.RelocateExecutableAsync).
+    private const string _relocateExecutable =
+        "UPDATE games SET exe_path = @path, updated_at = @at "
+        + "WHERE id = @id AND removed_at IS NULL AND exe_size_bytes = @size AND exe_mtime_ms = @mtime "
+        + "AND NOT EXISTS (SELECT 1 FROM games other WHERE other.exe_path = @path AND other.id <> @id)";
+
     private const string _crash =
         "UPDATE games SET hook_crash_count = hook_crash_count + 1, updated_at = @now WHERE id = @id RETURNING hook_crash_count";
 
@@ -128,6 +135,14 @@ public sealed class SqliteGameRepository : IGameRepository
         var p = new { id = gameId, path = fingerprint.ExePath, size = fingerprint.SizeBytes, mtime = fingerprint.MtimeUnixMs, at = at.ToUnixTimeMilliseconds() };
         return _db.WriteAsync(async (c, tx, token) => await c.ExecuteAsync(new CommandDefinition(
             _changeExecutable, p, tx, cancellationToken: token)).ConfigureAwait(false) == 1, ct);
+    }
+
+    public ValueTask<bool> RelocateExecutableAsync(long gameId, ExecutableFingerprint moved, DateTimeOffset at, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(moved.ExePath, nameof(moved));
+        var p = new { id = gameId, path = moved.ExePath, size = moved.SizeBytes, mtime = moved.MtimeUnixMs, at = at.ToUnixTimeMilliseconds() };
+        return _db.WriteAsync(async (c, tx, token) => await c.ExecuteAsync(new CommandDefinition(
+            _relocateExecutable, p, tx, cancellationToken: token)).ConfigureAwait(false) == 1, ct);
     }
 
     public ValueTask<int> RecordCrashAsync(long gameId, CancellationToken ct = default) =>

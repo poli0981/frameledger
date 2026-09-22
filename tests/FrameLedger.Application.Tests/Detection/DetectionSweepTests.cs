@@ -68,7 +68,10 @@ public sealed class DetectionSweepTests
     {
         public ExecutableFingerprint? OnDisk { get; set; } = new() { ExePath = _exe, SizeBytes = 5, MtimeUnixMs = 5 };
 
-        public ExecutableFingerprint? Read(string normalisedExePath) => OnDisk;
+        /// <summary>When set, the disk is THIS map and nothing else — a relocation test needs an answer per path.</summary>
+        public Dictionary<string, ExecutableFingerprint>? ByPath { get; set; }
+
+        public ExecutableFingerprint? Read(string normalisedExePath) => ByPath is null ? OnDisk : ByPath.TryGetValue(normalisedExePath, out ExecutableFingerprint f) ? f : null;
 
         public string Normalise(string exePath) => exePath;
     }
@@ -189,5 +192,44 @@ public sealed class DetectionSweepTests
         DetectionSweep.IsStale(current, onDisk, "w").Should().BeTrue("rules moved");
         DetectionSweep.IsStale(current with { DetectionExeSizeBytes = 4 }, onDisk, "v").Should().BeTrue("size changed");
         DetectionSweep.IsStale(current with { DetectionExeMtimeMs = 8 }, onDisk, "v").Should().BeTrue("mtime changed");
+    }
+
+    /// <summary>
+    /// A drive that changed its letter (2026-09-22): the sweep finds the same file under another root, moves the row and
+    /// scans it there in the same pass — the owner's 46 "unreadable" rows the morning the drive came back as H:.
+    /// </summary>
+    [Fact]
+    public async Task AMovedDriveIsRelocatedAndScannedInTheSamePass()
+    {
+        var games = new FakeGameRepository();
+        var stored = new ExecutableFingerprint { ExePath = @"D:\SteamLibrary\steamapps\common\Title\game.exe", SizeBytes = 5, MtimeUnixMs = 5 };
+        GameRow row = await games.EnsureAsync(stored, "Title", Ct);
+        const string moved = @"H:\SteamLibrary\steamapps\common\Title\game.exe";
+        var identity = new FakeIdentity
+        {
+            ByPath = new Dictionary<string, ExecutableFingerprint>(StringComparer.OrdinalIgnoreCase)
+            {
+                [moved] = new ExecutableFingerprint { ExePath = moved, SizeBytes = 5, MtimeUnixMs = 5 },
+            },
+        };
+        List<string> log = [];
+        using var sweep = new DetectionSweep(games, new ScriptedRules("2026.09.1"), new ScriptedProbe(), identity, log.Add,
+            new ExecutableRelocator(games, identity, () => [@"C:\", @"D:\", @"H:\"], log.Add));
+
+        DetectionSweepReport report = await sweep.SweepOnceAsync(Ct);
+
+        report.Relocated.Should().Be(1);
+        report.Unreadable.Should().Be(0, "the file was found under H:, so the row is not unreadable");
+        report.Scanned.Should().Be(1, "and it was scanned there in the same pass");
+        games.Rows.Should().ContainKey(moved).And.NotContainKey(stored.ExePath);
+        games.Rows[moved].Id.Should().Be(row.Id);
+        games.Detections.Should().ContainSingle().Which.GameId.Should().Be(row.Id);
+        log.Should().Contain(l => l.Contains("executable moved", StringComparison.Ordinal));
+
+        // The drive gone again: unreadable, as before, and nothing invented.
+        identity.ByPath.Clear();
+        DetectionSweepReport gone = await sweep.SweepOnceAsync(Ct);
+        gone.Unreadable.Should().Be(1);
+        gone.Relocated.Should().Be(0);
     }
 }

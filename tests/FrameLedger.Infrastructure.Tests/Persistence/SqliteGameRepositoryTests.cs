@@ -186,6 +186,45 @@ public sealed class SqliteGameRepositoryTests
         (await repo.FindAsync(_exe.ExePath, Ct)).Should().BeNull("the row moved; it was not copied");
     }
 
+    /// <summary>
+    /// A moved drive (2026-09-22): the row follows the same bytes with everything kept, and the write itself refuses a
+    /// different size or mtime, a removed row, and a path another row owns.
+    /// </summary>
+    [Fact]
+    public async Task RelocatingTheExecutableKeepsEverythingAndRequiresTheSameBytes()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        var repo = new SqliteGameRepository(f.Db);
+        GameRow row = await repo.EnsureAsync(_exe, "T", Ct);
+        await f.Db.WriteAsync((c, tx, ct) => c.ExecuteAsync(new CommandDefinition(
+            "UPDATE games SET hook_enabled = 1, hook_consent_at = 5, hook_consent_provenance = 'ConsentDialog', hook_consent_disclosure_version = 'v', "
+            + "hook_prescan_state = 'clean', hook_blocked_reason = 'a block', detection_rules_version = '2026.09.1' WHERE id = @id",
+            new { id = row.Id }, tx, cancellationToken: ct)), Ct);
+        var moved = _exe with { ExePath = @"H:\Games\T\t.exe" };
+
+        (await repo.RelocateExecutableAsync(row.Id, _exe with { ExePath = @"H:\Games\T\t.exe", SizeBytes = 11 }, DateTimeOffset.UtcNow, Ct))
+            .Should().BeFalse("a different size is a different binary, and the write says so itself");
+        (await repo.RelocateExecutableAsync(row.Id, moved, DateTimeOffset.FromUnixTimeMilliseconds(99), Ct)).Should().BeTrue();
+
+        GameRow after = (await repo.FindByIdAsync(row.Id, Ct))!;
+        after.Fingerprint.Should().Be(moved);
+        after.HookEnabled.Should().BeTrue("the same executable: the consent is about it, wherever it lives");
+        after.HookConsentAt.Should().NotBeNull();
+        after.HookPrescanState.Should().Be("clean");
+        after.HookBlockedReason.Should().Be("a block");
+        after.DetectionRulesVersion.Should().Be("2026.09.1");
+        (await repo.FindAsync(_exe.ExePath, Ct)).Should().BeNull("the row moved; it was not copied");
+        GameConsentRecord consent = await new SqliteGameConsentStore(f.Db).FindAsync(moved.ExePath, Ct);
+        consent.IsFromStore.Should().BeTrue("the consent store is keyed on the same row, so it follows");
+        consent.Fingerprint.Matches(moved).Should().BeTrue();
+
+        GameRow other = await repo.EnsureAsync(new ExecutableFingerprint { ExePath = @"C:\Games\O\o.exe", SizeBytes = 10, MtimeUnixMs = 20 }, "O", Ct);
+        (await repo.RelocateExecutableAsync(other.Id, moved, DateTimeOffset.UtcNow, Ct)).Should().BeFalse("exe_path is UNIQUE: one executable, one row");
+        await repo.RemoveAsync(other.Id, keepSessions: true, Ct);
+        (await repo.RelocateExecutableAsync(other.Id, new ExecutableFingerprint { ExePath = @"H:\Games\O\o.exe", SizeBytes = 10, MtimeUnixMs = 20 }, DateTimeOffset.UtcNow, Ct))
+            .Should().BeFalse("a removed row cannot be moved");
+    }
+
     [Fact]
     public async Task ChangingTheExecutableToOneAnotherRowOwnsIsRefused()
     {

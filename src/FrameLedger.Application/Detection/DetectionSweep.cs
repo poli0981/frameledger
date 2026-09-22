@@ -36,15 +36,25 @@ public sealed class DetectionSweep : IDisposable
     private readonly StaticGameDetector _detector;
     private readonly IExecutableIdentitySource _identity;
     private readonly Action<string> _log;
+    private readonly ExecutableRelocator? _relocator;
     private readonly SemaphoreSlim _wake = new(0, 1);
 
-    public DetectionSweep(IGameRepository games, IDetectionRulesSource rules, IGameFileProbe probe, IExecutableIdentitySource identity, Action<string> log)
+    /// <summary>The sweep over the library, with the detector it runs and the identity it reads executables with.</summary>
+    /// <param name="games">The library.</param>
+    /// <param name="rules">The detection rules the detector runs.</param>
+    /// <param name="probe">The file probe the detector runs over.</param>
+    /// <param name="identity">Reads each row's executable (its fingerprint), or null when it cannot.</param>
+    /// <param name="log">The Agent's log line.</param>
+    /// <param name="relocator">Follows an executable to a drive that changed its letter (2026-09-22); null sweeps without looking.</param>
+    public DetectionSweep(IGameRepository games, IDetectionRulesSource rules, IGameFileProbe probe, IExecutableIdentitySource identity, Action<string> log,
+        ExecutableRelocator? relocator = null)
     {
         _games = games ?? throw new ArgumentNullException(nameof(games));
         _rules = rules ?? throw new ArgumentNullException(nameof(rules));
         ArgumentNullException.ThrowIfNull(probe);
         _identity = identity ?? throw new ArgumentNullException(nameof(identity));
         _log = log ?? throw new ArgumentNullException(nameof(log));
+        _relocator = relocator;
         _detector = new StaticGameDetector(rules, probe);
     }
 
@@ -83,10 +93,17 @@ public sealed class DetectionSweep : IDisposable
         int scanned = 0;
         int current = 0;
         int unreadable = 0;
-        foreach (GameRow game in await _games.ListAsync(ct).ConfigureAwait(false))
+        int relocated = 0;
+        foreach (GameRow listed in await _games.ListAsync(ct).ConfigureAwait(false))
         {
             ct.ThrowIfCancellationRequested();
-            if (_identity.Read(game.Fingerprint.ExePath) is not { } onDisk)
+            (GameRow game, ExecutableFingerprint? read, bool moved) = await ReadOrRelocateAsync(listed, ct).ConfigureAwait(false);
+            if (moved)
+            {
+                relocated++;
+            }
+
+            if (read is not { } onDisk)
             {
                 unreadable++;
                 _log($"detect: {game.Name} — executable unreadable, skipped ({game.Fingerprint.ExePath})");
@@ -99,32 +116,59 @@ public sealed class DetectionSweep : IDisposable
                 continue;
             }
 
-            StaticDetectionResult r = await _detector.DetectAsync(game.Fingerprint.ExePath, ct).ConfigureAwait(false);
-            // The Vulkan fact rides in capability_flags under its own id (P4 PR-2): not a rule id, stored beside them
-            // so one column says what the game ships AND whether the layer is its capture side.
-            IReadOnlyList<string> capabilities = r.UsesVulkan == true
-                ? [.. r.CapabilityIds, StaticDetectionResult.VulkanCapabilityId]
-                : r.CapabilityIds;
-            var write = new DetectionWrite
-            {
-                EngineId = r.EngineId,
-                EngineVersion = r.EngineVersion,
-                PlatformId = r.PlatformId,
-                CapabilityIds = capabilities,
-                RulesVersion = r.RulesVersion,
-                ExeSizeBytes = onDisk.SizeBytes,
-                ExeMtimeMs = onDisk.MtimeUnixMs,
-            };
-            if (await _games.ApplyDetectionAsync(game.Id, write, ct).ConfigureAwait(false))
+            if (await ScanAsync(game, onDisk, ct).ConfigureAwait(false))
             {
                 scanned++;
-                _log($"detect: {game.Name} — engine={r.EngineId ?? (r.EngineUndetermined ? "undetermined" : "none")}"
-                     + $"{(r.EngineVersion is null ? string.Empty : " " + r.EngineVersion)} platform={r.PlatformId ?? (r.PlatformUndetermined ? "undetermined" : "none")}"
-                     + $" capabilities=[{string.Join(",", capabilities)}] vulkan={(r.UsesVulkan is { } v ? (v ? "yes" : "no") : "unknown")} rules={r.RulesVersion}");
             }
         }
 
-        return new DetectionSweepReport { Scanned = scanned, Current = current, Unreadable = unreadable };
+        return new DetectionSweepReport { Scanned = scanned, Current = current, Unreadable = unreadable, Relocated = relocated };
+    }
+
+    /// <summary>One game through the detector and into the row; true when the row took the write.</summary>
+    private async ValueTask<bool> ScanAsync(GameRow game, ExecutableFingerprint onDisk, CancellationToken ct)
+    {
+        StaticDetectionResult r = await _detector.DetectAsync(game.Fingerprint.ExePath, ct).ConfigureAwait(false);
+        // The Vulkan fact rides in capability_flags under its own id (P4 PR-2): not a rule id, stored beside them
+        // so one column says what the game ships AND whether the layer is its capture side.
+        IReadOnlyList<string> capabilities = r.UsesVulkan == true
+            ? [.. r.CapabilityIds, StaticDetectionResult.VulkanCapabilityId]
+            : r.CapabilityIds;
+        var write = new DetectionWrite
+        {
+            EngineId = r.EngineId,
+            EngineVersion = r.EngineVersion,
+            PlatformId = r.PlatformId,
+            CapabilityIds = capabilities,
+            RulesVersion = r.RulesVersion,
+            ExeSizeBytes = onDisk.SizeBytes,
+            ExeMtimeMs = onDisk.MtimeUnixMs,
+        };
+        if (!await _games.ApplyDetectionAsync(game.Id, write, ct).ConfigureAwait(false))
+        {
+            return false;
+        }
+
+        _log($"detect: {game.Name} — engine={r.EngineId ?? (r.EngineUndetermined ? "undetermined" : "none")}"
+             + $"{(r.EngineVersion is null ? string.Empty : " " + r.EngineVersion)} platform={r.PlatformId ?? (r.PlatformUndetermined ? "undetermined" : "none")}"
+             + $" capabilities=[{string.Join(",", capabilities)}] vulkan={(r.UsesVulkan is { } v ? (v ? "yes" : "no") : "unknown")} rules={r.RulesVersion}");
+        return true;
+    }
+
+    /// <summary>
+    /// The row's executable as read from disk — and, when it is missing, one more question before the row is skipped
+    /// (2026-09-22): is the same file under another drive letter? When it is, the row follows it and this very pass
+    /// scans it there.
+    /// </summary>
+    private async ValueTask<(GameRow Game, ExecutableFingerprint? Read, bool Moved)> ReadOrRelocateAsync(GameRow game, CancellationToken ct)
+    {
+        ExecutableFingerprint? read = _identity.Read(game.Fingerprint.ExePath);
+        if (read is not null || _relocator is null || await _relocator.TryRelocateAsync(game, ct).ConfigureAwait(false) is not { } moved)
+        {
+            return (game, read, false);
+        }
+
+        return (game with { Fingerprint = moved }, _identity.Read(moved.ExePath), true);
     }
 
     /// <summary><c>DetectionCacheKey</c> compared field by field against the row: any difference is a re-run.</summary>

@@ -47,6 +47,13 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   until the game exits; the row lands as T2 with N/A everywhere a measurement would be, and its summary says why
   ("Why: the guard refused — Easy Anti-Cheat (…)", "Why: hooking was off for this game", "Why: Windows would not let
   FrameLedger open the process"). The unshipped operator host keeps returning at the refusal.
+- **A drive that changes its letter no longer loses your games.** When the drive holding a library comes back as
+  another letter (the owner's external drive: `D:` one evening, `H:` the next morning), every game on it read
+  "executable unreadable" and a game launched from the new letter ran as a stranger with no consent. The Agent now
+  finds the same file — same size, same modified time, under exactly one other drive letter — and moves the entry to
+  it with consent, block and detection kept: within about 15 s in the background sweep, at once when such a game is
+  launched, and when you click the hooking switch. The game's page says when its executable is not where the entry
+  points. *Change executable* is still the way to point an entry at a different file.
 - **Steam's tools are no longer imported as games**: Steamworks Common Redistributables, Borderless Gaming, Wallpaper
   Engine, SteamVR, the Proton and Steam Linux Runtime entries and Blender are skipped by app id. A row you already have
   for one of them stays until you remove it.

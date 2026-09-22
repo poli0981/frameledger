@@ -34,6 +34,17 @@ public interface IGameRepository
     /// </summary>
     ValueTask<bool> ChangeExecutableAsync(long gameId, ExecutableFingerprint fingerprint, DateTimeOffset at, CancellationToken ct = default);
 
+    /// <summary>
+    /// Points a library row at the SAME executable under another path (2026-09-22; <c>19_SAFETY</c> §A moved drive is the
+    /// same executable): the drive changed its letter, the bytes did not. Unlike <see cref="ChangeExecutableAsync"/> it
+    /// keeps everything — consent, block, pre-scan state, detection — because the fingerprint's size and mtime are the
+    /// executable's identity and the path is only where it lives; the write itself requires them to match
+    /// (<c>WHERE exe_size_bytes = @size AND exe_mtime_ms = @mtime</c>), so a different binary cannot inherit a consent
+    /// through this call. False when the row is absent or removed, when the bytes differ, or when another row already
+    /// owns the new path.
+    /// </summary>
+    ValueTask<bool> RelocateExecutableAsync(long gameId, ExecutableFingerprint moved, DateTimeOffset at, CancellationToken ct = default);
+
     ValueTask<int> RecordCrashAsync(long gameId, CancellationToken ct = default);
 
     ValueTask<bool> RecordInjectionAsync(long gameId, DateTimeOffset at, CancellationToken ct = default);

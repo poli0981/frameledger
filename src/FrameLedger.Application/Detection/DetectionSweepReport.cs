@@ -12,6 +12,9 @@ public sealed record DetectionSweepReport
     /// <summary>Games whose executable could not be read, skipped.</summary>
     public int Unreadable { get; init; }
 
+    /// <summary>Rows whose executable was found under another drive letter and moved there this pass (2026-09-22).</summary>
+    public int Relocated { get; init; }
+
     /// <summary>The rules file could not be loaded; nothing was scanned.</summary>
     public bool RulesUnusable { get; init; }
 }
