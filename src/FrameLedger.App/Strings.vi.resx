@@ -196,6 +196,9 @@
   <data name="Import_Note_Guessed" xml:space="preserve">
     <value>Đoán — hãy kiểm tra</value>
   </data>
+  <data name="Import_Note_Moved" xml:space="preserve">
+    <value>Đã có trong thư viện dưới ký tự ổ đĩa khác — mục đó sẽ đi theo tệp này</value>
+  </data>
   <data name="Import_Selected_Format" xml:space="preserve">
     <value>Đã chọn {0}/{1}</value>
   </data>

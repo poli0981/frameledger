@@ -299,6 +299,7 @@ public static class Strings
         nameof(Import_Intro),
         nameof(Import_Note_Already),
         nameof(Import_Note_Guessed),
+        nameof(Import_Note_Moved),
         nameof(Import_Note_NoExe),
         nameof(Import_NothingFound),
         nameof(Import_SelectAll),
@@ -1181,6 +1182,8 @@ public static class Strings
     public static string Import_Note_Already => ResourceManager.GetString(nameof(Import_Note_Already), Culture) ?? nameof(Import_Note_Already);
 
     public static string Import_Note_Guessed => ResourceManager.GetString(nameof(Import_Note_Guessed), Culture) ?? nameof(Import_Note_Guessed);
+
+    public static string Import_Note_Moved => ResourceManager.GetString(nameof(Import_Note_Moved), Culture) ?? nameof(Import_Note_Moved);
 
     public static string Import_Note_NoExe => ResourceManager.GetString(nameof(Import_Note_NoExe), Culture) ?? nameof(Import_Note_NoExe);
 

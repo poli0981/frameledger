@@ -2,6 +2,7 @@ using FluentAssertions;
 using FrameLedger.Application.Detection;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Tests.Recording;
+using FrameLedger.Application.Tests.Watch;
 using FrameLedger.Application.Watch;
 using FrameLedger.Domain.Consent;
 using FrameLedger.Domain.Detection;
@@ -253,5 +254,36 @@ public sealed class DetectionSweepTests
         DetectionSweepReport gone = await sweep.SweepOnceAsync(Ct);
         gone.Unreadable.Should().Be(1);
         gone.Relocated.Should().Be(0);
+    }
+
+    /// <summary>
+    /// A twin merged away in the pass (2026-09-23, D26) is not an entry any more, so it is not reported unreadable: the
+    /// owner's log would otherwise say the entry it just merged could not be read.
+    /// </summary>
+    [Fact]
+    public async Task AnEntryMergedIntoItsTwinIsNotUnreadable()
+    {
+        var games = new FakeGameRepository();
+        const string live = @"H:\SteamLibrary\steamapps\common\Title\game.exe";
+        GameRow owner = await games.EnsureAsync(new ExecutableFingerprint { ExePath = live, SizeBytes = 5, MtimeUnixMs = 5 }, "Title", Ct);
+        GameRow stale = await games.EnsureAsync(new ExecutableFingerprint { ExePath = @"D:\SteamLibrary\steamapps\common\Title\game.exe", SizeBytes = 5, MtimeUnixMs = 5 }, "Title (D:)", Ct);
+        var identity = new FakeIdentity
+        {
+            ByPath = new Dictionary<string, ExecutableFingerprint>(StringComparer.OrdinalIgnoreCase)
+            {
+                [live] = new ExecutableFingerprint { ExePath = live, SizeBytes = 5, MtimeUnixMs = 5 },
+            },
+        };
+        List<string> log = [];
+        using var sweep = new DetectionSweep(games, new ScriptedRules("2026.09.1"), new ScriptedProbe(), identity, log.Add,
+            new ExecutableRelocator(games, identity, () => [@"C:\", @"D:\", @"H:\"], log.Add, merge: new FakeGameMerge(games)));
+
+        DetectionSweepReport report = await sweep.SweepOnceAsync(Ct);
+
+        report.Unreadable.Should().Be(0);
+        report.Relocated.Should().Be(1);
+        games.Rows.Should().ContainSingle().Which.Value.Id.Should().Be(owner.Id, "made first (a tie keeps the lower id), so it stays");
+        log.Should().Contain(l => l.Contains("merged", StringComparison.Ordinal))
+            .And.NotContain(l => l.Contains("unreadable", StringComparison.Ordinal) && l.Contains(stale.Name, StringComparison.Ordinal));
     }
 }

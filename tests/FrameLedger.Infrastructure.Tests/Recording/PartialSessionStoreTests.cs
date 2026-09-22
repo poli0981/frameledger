@@ -20,18 +20,35 @@ public sealed class PartialSessionStoreTests : IDisposable
         }
     }
 
-    private static PartialHeader Header(Guid guid) => new()
+    private static PartialHeader Header(Guid guid, long gameId = 1) => new()
     {
         SessionGuid = guid,
         StartedAt = DateTimeOffset.UnixEpoch,
         QpcEpoch = 1,
         QpcFrequency = 10_000_000,
-        GameId = 1,
+        GameId = gameId,
         SnapshotId = 1,
         ExePath = @"C:\g\game.exe",
         Tier = CaptureTier.NotHooked,
         Mode = CaptureMode.Attach,
     };
+
+    /// <summary>
+    /// The entries pending files name (2026-09-23): what a merge of two entries waits for. Read beside a running session's
+    /// writer, which shares its file for reading only — a plain read would fail on it — and a damaged file names nothing.
+    /// </summary>
+    [Fact]
+    public void PendingGameIdsAreReadBesideARunningSessionsWriter()
+    {
+        var store = new PartialSessionStore(_dir);
+        store.PendingGameIds().Should().BeEmpty("no directory yet is no sessions");
+
+        using IPartialSessionWriter running = store.Create(Header(Guid.NewGuid(), gameId: 7));
+        store.Create(Header(Guid.NewGuid(), gameId: 9)).Dispose();
+        File.WriteAllBytes(Path.Combine(_dir, Guid.NewGuid().ToString("N") + ".partial"), [1, 2, 3]);
+
+        store.PendingGameIds().Should().BeEquivalentTo([7L, 9L]);
+    }
 
     [Fact]
     public void CreatesUnderTheDirectoryListsOldestFirstReadsBackAndDeletes()

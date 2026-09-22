@@ -131,13 +131,17 @@ public sealed class ImportLibraryFlowTests : IDisposable
         var can = new ImportCandidate(new StoreGame("steam", "1", "A", @"C:\a", @"C:\a\a.exe", null), @"C:\a\a.exe", AlreadyInLibrary: false, ExecutableGuessed: true);
         var already = new ImportCandidate(new StoreGame("steam", "2", "B", @"C:\b", @"C:\b\b.exe", null), @"C:\b\b.exe", AlreadyInLibrary: true, ExecutableGuessed: false);
         var none = new ImportCandidate(new StoreGame("steam", "3", "C", @"C:\c", null, null), null, AlreadyInLibrary: false, ExecutableGuessed: true);
-        var vm = new ImportReviewViewModel([can, already, none]);
+        var moved = new ImportCandidate(new StoreGame("steam", "4", "D", @"D:\d", @"D:\d\d.exe", null), @"D:\d\d.exe", AlreadyInLibrary: false, ExecutableGuessed: false,
+            MovedFrom: @"H:\d\d.exe");
+        var vm = new ImportReviewViewModel([can, already, none, moved]);
 
         vm.SelectedCount.Should().Be(1, "only the importable row is ticked by default");
         vm.CanImport.Should().BeTrue();
         vm.Rows[1].Note.Should().Be(Strings.Import_Note_Already);
         vm.Rows[2].Note.Should().Be(Strings.Import_Note_NoExe);
         vm.Rows[0].Note.Should().Be(Strings.Import_Note_Guessed);
+        vm.Rows[3].Note.Should().Be(Strings.Import_Note_Moved, "in the library under another drive letter (2026-09-23): that entry follows the file");
+        vm.Rows[3].CanImport.Should().BeFalse();
 
         vm.SelectNoneCommand.Execute(null);
         vm.SelectedCount.Should().Be(0);

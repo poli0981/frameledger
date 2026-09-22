@@ -1,3 +1,4 @@
+using System.Data.Common;
 using FrameLedger.Application.Detection;
 using FrameLedger.Application.Vulkan;
 using Microsoft.Extensions.Hosting;
@@ -15,7 +16,9 @@ namespace FrameLedger.Agent.Hosting;
 /// Its own task because <c>GameFileProbe</c> blocks on file I/O (a bounded directory walk, an 8 MB strings pass):
 /// the orchestrator's 1 Hz poll must not wait on it, and a session's drain must never share a thread with it.
 /// A sweep that throws is logged and retried on the next tick rather than ending the service — a game's
-/// directory going away mid-walk is ordinary, and one bad game must not stop the scan of the rest.
+/// directory going away mid-walk is ordinary, and one bad game must not stop the scan of the rest. A database error
+/// is one of those since 2026-09-23: the sweep writes rows (a relocation, a merge), a service that throws stops the
+/// Agent's host (the Generic Host's default), and a busy or locked ledger is a retry, not a reason to stop capturing.
 /// </remarks>
 internal sealed class DetectionHostedService(DetectionSweep sweep, VkLayerReconciler layer) : BackgroundService
 {
@@ -49,7 +52,7 @@ internal sealed class DetectionHostedService(DetectionSweep sweep, VkLayerReconc
             {
                 break;
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or DbException)
             {
                 Log.Warning(ex, "detect: sweep did not complete; retrying on the next tick");
             }

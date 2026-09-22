@@ -21,6 +21,13 @@ public interface IPartialSessionStore
     void Delete(Guid sessionGuid);
 
     /// <summary>
+    /// The entries every pending file's header names (2026-09-23) — the sessions still running and those waiting to be
+    /// recovered. What a merge of two entries waits for: a session re-keyed under a deleted entry would be dropped. Read
+    /// beside a running session's writer; a file whose header cannot be read names nothing.
+    /// </summary>
+    IReadOnlySet<long> PendingGameIds();
+
+    /// <summary>
     /// Sets the file aside as <c>&lt;guid&gt;.partial.failed</c> (2026-09-23): out of <see cref="ListPending"/>, never
     /// retried, kept for a bug report. What recovery does with a file it could not finalize, so that one bad file cannot
     /// stop every later start. A missing file is not an error.

@@ -261,6 +261,10 @@
     <value>推定 — 確認してください</value>
     <comment>review</comment>
   </data>
+  <data name="Import_Note_Moved" xml:space="preserve">
+    <value>別のドライブ文字でライブラリに登録済み — そのエントリがこのファイルに追従します</value>
+    <comment>review</comment>
+  </data>
   <data name="Import_Selected_Format" xml:space="preserve">
     <value>{1} 件中 {0} 件を選択</value>
     <comment>review</comment>
