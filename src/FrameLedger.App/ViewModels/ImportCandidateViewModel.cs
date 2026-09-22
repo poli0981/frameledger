@@ -15,6 +15,7 @@ public sealed partial class ImportCandidateViewModel : ObservableObject
         Candidate = candidate ?? throw new ArgumentNullException(nameof(candidate));
         _isSelected = candidate.CanImport;
         Note = candidate.AlreadyInLibrary ? Strings.Import_Note_Already
+            : candidate.MovedFrom is not null ? Strings.Import_Note_Moved
             : candidate.ExePath is null || candidate.ExecutableMissing ? Strings.Import_Note_NoExe
             : candidate.ExecutableGuessed ? Strings.Import_Note_Guessed
             : string.Empty;
@@ -30,6 +31,6 @@ public sealed partial class ImportCandidateViewModel : ObservableObject
 
     public string ExeText => Candidate.ExePath ?? Strings.Common_Dash;
 
-    /// <summary>Already in the library, no executable found, or a guessed executable the user should check.</summary>
+    /// <summary>Already in the library (under this drive letter or, since 2026-09-23, another), no executable found, or a guessed executable the user should check.</summary>
     public string Note { get; }
 }

@@ -201,6 +201,9 @@
   <data name="Import_Note_Guessed" xml:space="preserve">
     <value>Guessed — check it</value>
   </data>
+  <data name="Import_Note_Moved" xml:space="preserve">
+    <value>In the library under another drive letter — that entry follows this file</value>
+  </data>
   <data name="Import_Selected_Format" xml:space="preserve">
     <value>{0} of {1} selected</value>
   </data>

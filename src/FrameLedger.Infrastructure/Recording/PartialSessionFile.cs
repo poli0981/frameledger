@@ -19,6 +19,9 @@ public static class PartialSessionFile
     private const int _chunkOverhead = 12;
     private const int _recordBytes = 64;
 
+    // A header is a few hundred bytes of JSON; a length past this is a damaged file, not a header to allocate for.
+    private const int _maxHeaderBytes = 1024 * 1024;
+
     /// <summary>Opens a new file and writes the header chunk. Never overwrites: a guid is one session.</summary>
     public static IPartialSessionWriter Create(string path, PartialHeader header)
     {
@@ -43,6 +46,43 @@ public static class PartialSessionFile
     {
         byte[] bytes = File.ReadAllBytes(path);
         return Parse(bytes);
+    }
+
+    /// <summary>
+    /// The header alone (2026-09-23), read beside the running session's writer — which holds the file for writing and
+    /// shares it for reading only, so this opens it sharing read, write and delete. Null when the file is gone, cannot
+    /// be opened, or its first chunk is not a whole header.
+    /// </summary>
+    public static PartialHeader? ReadHeader(string path)
+    {
+        try
+        {
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            Span<byte> head = stackalloc byte[8];
+            if (stream.ReadAtLeast(head, head.Length, throwOnEndOfStream: false) < head.Length)
+            {
+                return null;
+            }
+
+            int length = (int)BinaryPrimitives.ReadUInt32LittleEndian(head[4..]);
+            if (length < 0 || length > _maxHeaderBytes)
+            {
+                return null;
+            }
+
+            byte[] chunk = new byte[_chunkOverhead + length];
+            head.CopyTo(chunk);
+            if (stream.ReadAtLeast(chunk.AsSpan(head.Length), chunk.Length - head.Length, throwOnEndOfStream: false) < chunk.Length - head.Length)
+            {
+                return null;
+            }
+
+            return Parse(chunk)?.Header;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
     }
 
     /// <summary>The valid prefix of <paramref name="bytes"/>; null when the header itself is missing or unreadable.</summary>

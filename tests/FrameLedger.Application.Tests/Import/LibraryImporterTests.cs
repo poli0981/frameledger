@@ -44,6 +44,40 @@ public sealed class LibraryImporterTests
         public string? PickPrimary(string installDirectory) => Guesses.GetValueOrDefault(installDirectory);
     }
 
+    /// <summary>
+    /// A game whose entry was made while its drive had another letter (2026-09-23): the entry's file is gone and this is the
+    /// same path on the new letter. Importing it again made the second, side-by-side entry the owner's library showed for
+    /// every game on the re-lettered drive; the review says where it is, and the import adds nothing — the Agent's
+    /// relocator moves the entry to the file within one sweep.
+    /// </summary>
+    [Fact]
+    public async Task AGameInTheLibraryUnderAnotherDriveLetterIsNotImportedAgain()
+    {
+        var games = new FakeGameRepository();
+        var identity = new FakeIdentity();
+        List<string> log = [];
+        const string stale = @"H:\STEAM\STEAMAPPS\COMMON\TITLE\TITLE.EXE";
+        await games.EnsureAsync(new ExecutableFingerprint { ExePath = stale, SizeBytes = 7, MtimeUnixMs = 7 }, "Title", Ct);
+        identity.Existing.Add(@"D:\STEAM\STEAMAPPS\COMMON\TITLE\TITLE.EXE");
+        var steam = new ScriptedStore("steam", new StoreGame("steam", "1", "Title", @"D:\Steam\steamapps\common\Title", @"D:\Steam\steamapps\common\Title\Title.exe", null));
+        var importer = new LibraryImporter([steam], games, identity, new FakeLocator(), log.Add);
+
+        ImportCandidate found = (await importer.DiscoverAsync(Ct)).Should().ContainSingle().Subject;
+        found.MovedFrom.Should().Be(stale);
+        found.AlreadyInLibrary.Should().BeFalse("not at this path");
+        found.CanImport.Should().BeFalse("the entry follows the file; a second entry is the bug");
+
+        ImportReport report = await importer.ImportAsync([found], Ct);
+        report.Added.Should().Be(0);
+        report.Skipped.Should().Be(1);
+        games.Rows.Should().ContainSingle().Which.Key.Should().Be(stale, "nothing was added beside it");
+        log.Should().Contain(static l => l.Contains("drive whose letter changed", StringComparison.Ordinal));
+
+        // Both files there: two copies, not a move — the second is a game of its own.
+        identity.Existing.Add(stale);
+        (await importer.DiscoverAsync(Ct)).Single().MovedFrom.Should().BeNull();
+    }
+
     [Fact]
     public async Task DiscoveryJoinsTheStoresToTheLedgerAndImportAddsOnlyWhatWasTicked()
     {

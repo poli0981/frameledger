@@ -49,8 +49,35 @@ internal sealed class FakeGameRepository : IGameRepository
         return ValueTask.FromResult(true);
     }
 
-    public ValueTask<bool> ChangeExecutableAsync(long gameId, ExecutableFingerprint fingerprint, DateTimeOffset at, CancellationToken ct = default) =>
-        ValueTask.FromResult(true);
+    public List<(long GameId, ExecutableFingerprint Changed)> Changes { get; } = [];
+
+    /// <summary>
+    /// The adapter's rule (2026-09-23, kept here so the relocator's D27 tests see it): a downgrade by construction — the new
+    /// bytes, hooking off, consent cleared, the pre-scan not run, the block kept — refused for a removed row and for a
+    /// path another row holds.
+    /// </summary>
+    public ValueTask<bool> ChangeExecutableAsync(long gameId, ExecutableFingerprint fingerprint, DateTimeOffset at, CancellationToken ct = default)
+    {
+        foreach ((string key, GameRow row) in Rows)
+        {
+            if (row.Id != gameId)
+            {
+                continue;
+            }
+
+            if (!row.InLibrary || (Rows.TryGetValue(fingerprint.ExePath, out GameRow? holder) && holder.Id != gameId))
+            {
+                return ValueTask.FromResult(false);
+            }
+
+            Rows.Remove(key);
+            Rows[fingerprint.ExePath] = row with { Fingerprint = fingerprint, HookEnabled = false, HookConsentAt = null, HookPrescanState = "not_run", UpdatedAt = at };
+            Changes.Add((gameId, fingerprint));
+            return ValueTask.FromResult(true);
+        }
+
+        return ValueTask.FromResult(false);
+    }
 
     public List<(long GameId, ExecutableFingerprint Moved)> Relocations { get; } = [];
 

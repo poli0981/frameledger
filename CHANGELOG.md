@@ -53,6 +53,16 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   *Change executable* points its entry at the new file. The "Flower in Us" entry the old match created stays until you
   rename it (it points at HHW's `swiftshader\Game.exe`, the file to measure HHW by) or remove it.
 
+- **One entry per game after a drive letter changes — the two side by side become one.** When the owner's USB drive
+  came back as `H:` for a morning, a second entry was made for each game played from it, and once the letter was back
+  neither entry could move onto the other's path: two of each game, and "could not be moved" in the log every 15 s.
+  Now the Agent merges two entries for the same executable (same path on two letters, same size and modification
+  time): the entry made first stays, the other's sessions join it, a block on either is kept, and no consent moves
+  between them — it waits while either game runs. A game whose executable changed on the new letter (it was updated
+  meanwhile) is followed with hooking off, as *Change executable* does; turn hooking on again to measure it. The
+  library import no longer adds a game again when it is already in the library under another drive letter. And a
+  database error during the Agent's 15 s library pass no longer stops the Agent.
+
 - **A game removed from the library while it runs no longer loses its session — or stops the Agent at the next
   start.** On 2026-09-22 23:26 and 2026-09-23 00:25 a GIRLS' FRONTLINE 2 session ended `FAULTED` on the database's
   foreign key: its entry had been removed (and re-imported) while the game ran, and the session was written under the

@@ -101,10 +101,17 @@ public sealed class DetectionSweep : IDisposable
         foreach (GameRow listed in await _games.ListAsync(ct).ConfigureAwait(false))
         {
             ct.ThrowIfCancellationRequested();
-            (GameRow game, ExecutableFingerprint? read, bool moved) = await ReadOrRelocateAsync(listed, ct).ConfigureAwait(false);
+            (GameRow game, ExecutableFingerprint? read, bool moved, bool gone) = await ReadOrRelocateAsync(listed, ct).ConfigureAwait(false);
             if (moved)
             {
                 relocated++;
+            }
+
+            if (gone)
+            {
+                // Merged into its twin this pass (2026-09-23): not an entry any more, so not an unreadable one.
+                _unreadableSaid.Remove(game.Id);
+                continue;
             }
 
             if (read is not { } onDisk)
@@ -169,17 +176,24 @@ public sealed class DetectionSweep : IDisposable
     /// <summary>
     /// The row's executable as read from disk — and, when it is missing, one more question before the row is skipped
     /// (2026-09-22): is the same file under another drive letter? When it is, the row follows it and this very pass
-    /// scans it there.
+    /// scans it there. Since 2026-09-23 the relocator can also merge the row into the entry that already holds that
+    /// file; the row is then gone, which this says rather than calling it unreadable.
     /// </summary>
-    private async ValueTask<(GameRow Game, ExecutableFingerprint? Read, bool Moved)> ReadOrRelocateAsync(GameRow game, CancellationToken ct)
+    private async ValueTask<(GameRow Game, ExecutableFingerprint? Read, bool Moved, bool Gone)> ReadOrRelocateAsync(GameRow game, CancellationToken ct)
     {
         ExecutableFingerprint? read = _identity.Read(game.Fingerprint.ExePath);
-        if (read is not null || _relocator is null || await _relocator.TryRelocateAsync(game, ct).ConfigureAwait(false) is not { } moved)
+        if (read is not null || _relocator is null)
         {
-            return (game, read, false);
+            return (game, read, false, false);
         }
 
-        return (game with { Fingerprint = moved }, _identity.Read(moved.ExePath), true);
+        if (await _relocator.TryRelocateAsync(game, ct).ConfigureAwait(false) is { } moved)
+        {
+            return (game with { Fingerprint = moved }, _identity.Read(moved.ExePath), true, false);
+        }
+
+        bool gone = await _games.FindByIdAsync(game.Id, ct).ConfigureAwait(false) is null;
+        return (game, null, gone, gone);
     }
 
     /// <summary><c>DetectionCacheKey</c> compared field by field against the row: any difference is a re-run.</summary>

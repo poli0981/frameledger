@@ -38,6 +38,27 @@ public sealed class ExecutableRelocatorTests
         return (new ExecutableRelocator(games, disk, () => roots, log.Add), games, disk, log, row);
     }
 
+    /// <summary>The relocator with a merge (2026-09-23): the stale entry at <c>D:</c>, added first, and its twin at <c>H:</c>, added later.</summary>
+    private sealed record Twins(ExecutableRelocator Relocator, FakeGameRepository Games, FakeGameMerge Merge, DiskByPath Disk, List<string> Log, GameRow Stale, GameRow Owner);
+
+    private const string _twin = @"H:\SteamLibrary\steamapps\common\Title\game.exe";
+
+    private static async Task<Twins> TwinsAsync(bool staleFirst = true, Func<long, bool>? busy = null, long ownerSize = 500)
+    {
+        var games = new FakeGameRepository();
+        GameRow stale = await games.EnsureAsync(new ExecutableFingerprint { ExePath = _stored, SizeBytes = 500, MtimeUnixMs = 1_700_000_000_000 }, "Title", Ct).ConfigureAwait(false);
+        GameRow owner = await games.EnsureAsync(new ExecutableFingerprint { ExePath = _twin, SizeBytes = ownerSize, MtimeUnixMs = 1_700_000_000_000 }, "Title (H:)", Ct).ConfigureAwait(false);
+        DateTimeOffset early = DateTimeOffset.Parse("2026-09-01T00:00:00Z", System.Globalization.CultureInfo.InvariantCulture);
+        DateTimeOffset late = DateTimeOffset.Parse("2026-09-22T09:39:00Z", System.Globalization.CultureInfo.InvariantCulture);
+        games.Rows[_stored] = stale = stale with { AddedAt = staleFirst ? early : late, HookEnabled = true };
+        games.Rows[_twin] = owner = owner with { AddedAt = staleFirst ? late : early };
+        var disk = new DiskByPath();
+        disk.Put(_twin, size: ownerSize);
+        var merge = new FakeGameMerge(games);
+        List<string> log = [];
+        return new Twins(new ExecutableRelocator(games, disk, static () => [@"C:\", @"D:\", @"H:\"], log.Add, merge: merge, busy: busy), games, merge, disk, log, stale, owner);
+    }
+
     [Fact]
     public void TheCandidatesAreTheSamePathUnderEveryOtherDriveLetter()
     {
@@ -63,7 +84,7 @@ public sealed class ExecutableRelocatorTests
     }
 
     [Fact]
-    public async Task AFileStillAtTheRowsPathADifferentSizeOrTwoCandidatesMoveNothing()
+    public async Task AFileStillAtTheRowsPathOrTwoCandidatesMoveNothing()
     {
         (ExecutableRelocator relocator, FakeGameRepository games, DiskByPath disk, List<string> log, GameRow row) = await BuildAsync(@"C:\", @"D:\", @"H:\");
 
@@ -72,18 +93,146 @@ public sealed class ExecutableRelocatorTests
         disk.Put(@"H:\SteamLibrary\steamapps\common\Title\game.exe");
         (await relocator.TryRelocateAsync(row, Ct)).Should().BeNull();
 
-        // Gone from the row's path, and the candidate is a different binary: the size is the consent's, not the path's.
-        disk.Files.Remove(_stored);
-        disk.Put(@"H:\SteamLibrary\steamapps\common\Title\game.exe", size: 501);
-        (await relocator.TryRelocateAsync(row, Ct)).Should().BeNull();
-
         // Two drives hold the same bytes: an ambiguity, and ambiguity refuses.
-        disk.Put(@"H:\SteamLibrary\steamapps\common\Title\game.exe");
+        disk.Files.Remove(_stored);
         disk.Put(@"C:\SteamLibrary\steamapps\common\Title\game.exe");
         (await relocator.TryRelocateAsync(row, Ct)).Should().BeNull();
-        log.Should().ContainSingle().Which.Should().Contain("2 drives hold");
+
+        // Two drives hold other bytes: the same ambiguity — D27 follows one changed file, never a guess between two.
+        disk.Put(@"H:\SteamLibrary\steamapps\common\Title\game.exe", size: 501);
+        disk.Put(@"C:\SteamLibrary\steamapps\common\Title\game.exe", size: 502);
+        (await relocator.TryRelocateAsync(row, Ct)).Should().BeNull();
+
+        log.Should().HaveCount(2).And.AllSatisfy(static l => l.Should().Contain("2 drives hold"));
         games.Rows.Should().ContainKey(_stored, "nothing moved");
         games.Relocations.Should().BeEmpty();
+        games.Changes.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// D27 (owner, 2026-09-23): the row's file is gone and the only file at its path under another letter has other bytes —
+    /// the game was updated while the drive had another letter. The row follows it as <i>Change executable</i> does:
+    /// hooking off, consent cleared. Until this date it stayed "unreadable" for good.
+    /// </summary>
+    [Fact]
+    public async Task AnUpdatedExecutableOnTheOtherLetterIsFollowedWithHookingOff()
+    {
+        (ExecutableRelocator relocator, FakeGameRepository games, DiskByPath disk, List<string> log, GameRow row) = await BuildAsync(@"C:\", @"D:\", @"H:\");
+        games.Rows[_stored] = row = row with { HookEnabled = true, HookConsentAt = DateTimeOffset.UnixEpoch, HookPrescanState = "clean", HookBlockedReason = "a block" };
+        disk.Put(_twin, size: 501);
+
+        ExecutableFingerprint? followed = await relocator.TryRelocateAsync(row, Ct);
+
+        followed!.Value.ExePath.Should().Be(_twin);
+        GameRow after = games.Rows[_twin];
+        after.Id.Should().Be(row.Id, "the same entry, pointed at the file");
+        after.Fingerprint.SizeBytes.Should().Be(501);
+        after.HookEnabled.Should().BeFalse("other bytes are not the binary the consent was given for");
+        after.HookConsentAt.Should().BeNull();
+        after.HookBlockedReason.Should().Be("a block", "nothing clears a block");
+        games.Relocations.Should().BeEmpty("a move keeps consent; this is a change, which does not");
+        log.Should().ContainSingle().Which.Should().Contain("hooking OFF");
+    }
+
+    [Fact]
+    public async Task TheWatcherFollowsAnUpdatedExecutableWithHookingOffToo()
+    {
+        (ExecutableRelocator relocator, FakeGameRepository games, DiskByPath disk, _, GameRow row) = await BuildAsync(@"C:\", @"D:\");
+        games.Rows[_stored] = row = row with { HookEnabled = true };
+        disk.Put(_twin, size: 501);
+
+        (await relocator.TryAdoptAsync(row, _twin, Ct)).Should().BeTrue("the only file at the row's path, on the letter it runs from");
+
+        games.Rows[_twin].HookEnabled.Should().BeFalse();
+        games.Changes.Should().ContainSingle();
+    }
+
+    /// <summary>
+    /// D26 (owner, 2026-09-23): the owner's library showed an <c>H:</c> twin beside each game on the re-lettered drive, and
+    /// once the letter was back neither could move onto the other's path — "could not be moved", every 15 s. Two entries
+    /// for the same bytes under two letters become one: the entry made first stays, at the file.
+    /// </summary>
+    [Fact]
+    public async Task TwinsWithTheSameBytesAreMergedAndTheEntryMadeFirstStays()
+    {
+        Twins t = await TwinsAsync(staleFirst: true);
+
+        ExecutableFingerprint? now = await t.Relocator.TryRelocateAsync(t.Stale, Ct);
+
+        GameMergePlan plan = t.Merge.Plans.Should().ContainSingle().Subject;
+        plan.SurvivorId.Should().Be(t.Stale.Id, "added first");
+        plan.DroppedId.Should().Be(t.Owner.Id);
+        plan.SurvivorMoves.Should().BeTrue();
+        now!.Value.ExePath.Should().Be(_twin, "the surviving entry lives at the file now");
+        t.Games.Rows.Should().ContainSingle().Which.Value.Id.Should().Be(t.Stale.Id);
+        t.Log.Should().ContainSingle().Which.Should().Contain("merged").And.Contain("'Title' stays");
+    }
+
+    [Fact]
+    public async Task WhenTheTwinWasMadeFirstItStaysAndTheStaleEntryIsGone()
+    {
+        Twins t = await TwinsAsync(staleFirst: false);
+
+        (await t.Relocator.TryRelocateAsync(t.Stale, Ct)).Should().BeNull("the stale entry is not an entry any more");
+
+        t.Merge.Plans.Should().ContainSingle().Which.SurvivorId.Should().Be(t.Owner.Id);
+        t.Games.Rows.Should().ContainSingle().Which.Value.Id.Should().Be(t.Owner.Id);
+    }
+
+    [Fact]
+    public async Task AMergeWaitsWhileASessionOfEitherEntryRunsOrWaitsForRecoveryAndSaysSoOnce()
+    {
+        long busyId = 0;
+        Twins t = await TwinsAsync(busy: id => id == busyId);
+        busyId = t.Owner.Id;
+
+        (await t.Relocator.TryRelocateAsync(t.Stale, Ct)).Should().BeNull();
+        (await t.Relocator.TryRelocateAsync(t.Stale, Ct)).Should().BeNull();
+
+        t.Merge.Plans.Should().BeEmpty("a session re-keyed under a deleted entry would be dropped");
+        t.Log.Should().ContainSingle().Which.Should().Contain("merged once no session");
+
+        busyId = 0;
+        await t.Relocator.TryRelocateAsync(t.Stale, Ct);
+        t.Merge.Plans.Should().ContainSingle("the next pass merges once nothing runs");
+    }
+
+    [Fact]
+    public async Task TwinsWithDifferentBytesAreNotMergedAndTheLogSaysWhatToDo()
+    {
+        Twins t = await TwinsAsync(ownerSize: 501);
+
+        (await t.Relocator.TryRelocateAsync(t.Stale, Ct)).Should().BeNull();
+        (await t.Relocator.TryRelocateAsync(t.Stale, Ct)).Should().BeNull();
+
+        t.Merge.Plans.Should().BeEmpty("D26 merges the same bytes: other bytes do not prove the other entry is this game");
+        t.Games.Rows.Should().HaveCount(2);
+        t.Log.Should().ContainSingle().Which.Should().Contain("not merged").And.Contain("remove the entry you do not want");
+    }
+
+    [Fact]
+    public async Task AMergeThatFoundARowChangedIsSaidOnceAndTriedAgainNextPass()
+    {
+        Twins t = await TwinsAsync();
+        t.Merge.Refuse = true;
+
+        (await t.Relocator.TryRelocateAsync(t.Stale, Ct)).Should().BeNull();
+        (await t.Relocator.TryRelocateAsync(t.Stale, Ct)).Should().BeNull();
+
+        t.Merge.Plans.Should().HaveCount(2, "asked again on every pass");
+        t.Log.Should().ContainSingle().Which.Should().Contain("changed underneath");
+    }
+
+    [Fact]
+    public async Task AnEntryRemovedFromTheLibraryIsNotMergedWith()
+    {
+        Twins t = await TwinsAsync();
+        t.Games.Rows[_twin] = t.Owner with { RemovedAt = DateTimeOffset.UnixEpoch };
+
+        (await t.Relocator.TryRelocateAsync(t.Stale, Ct)).Should().BeNull();
+
+        t.Merge.Plans.Should().BeEmpty("the user removed it; a merge must not bring its sessions back");
+        t.Log.Should().ContainSingle().Which.Should().Contain("could not be moved");
     }
 
     [Fact]
@@ -103,10 +252,10 @@ public sealed class ExecutableRelocatorTests
         (await relocator.TryAdoptAsync(row, running, Ct)).Should().BeTrue();
         games.Rows.Should().ContainKey(running).And.NotContainKey(_stored);
 
-        // A different binary under the row's name is not adopted.
-        GameRow other = await games.EnsureAsync(new ExecutableFingerprint { ExePath = @"D:\Other\game.exe", SizeBytes = 7, MtimeUnixMs = 7 }, "Other", Ct);
-        disk.Put(@"H:\Other\game.exe", size: 8);
-        (await relocator.TryAdoptAsync(other, @"H:\Other\game.exe", Ct)).Should().BeFalse();
+        // A different binary at another folder's path is not adopted; the same path with other bytes is D27's (its own test).
+        GameRow other = await games.EnsureAsync(new ExecutableFingerprint { ExePath = @"D:\\Other\\game.exe", SizeBytes = 7, MtimeUnixMs = 7 }, "Other", Ct);
+        disk.Put(@"H:\Elsewhere\game.exe", size: 8);
+        (await relocator.TryAdoptAsync(other, @"H:\Elsewhere\game.exe", Ct)).Should().BeFalse();
     }
 
     /// <summary>

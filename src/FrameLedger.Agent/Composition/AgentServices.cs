@@ -121,12 +121,18 @@ internal static class AgentServices
         services.AddSingleton<IDetectionRulesSource>(static _ => new DetectionRulesFile());
         services.AddSingleton<IGameFileProbe, GameFileProbe>();
         // A drive that changed its letter (2026-09-22): one relocator, asked by the sweep, the watcher and the enable-hooking
-        // command, over the BCL's drive list.
+        // command, over the BCL's drive list. Since 2026-09-23 it also merges two entries for one executable (D26), and waits
+        // while a session of either runs — the orchestrator's table, read when asked (it holds the relocator itself) — or
+        // waits in a .partial to be recovered.
+        services.AddSingleton<IGameMerge>(static sp => new SqliteGameMerge(sp.GetRequiredService<LedgerDatabase>()));
         services.AddSingleton(static sp => new ExecutableRelocator(
             sp.GetRequiredService<IGameRepository>(),
             sp.GetRequiredService<IExecutableIdentitySource>(),
             VolumeRoots.Ready,
-            static line => Serilog.Log.Information("{Line}", line)));
+            static line => Serilog.Log.Information("{Line}", line),
+            merge: sp.GetRequiredService<IGameMerge>(),
+            busy: id => sp.GetRequiredService<CaptureOrchestrator>().IsRecording(id)
+                        || sp.GetRequiredService<IPartialSessionStore>().PendingGameIds().Contains(id)));
         services.AddSingleton(static sp => new DetectionSweep(
             sp.GetRequiredService<IGameRepository>(),
             sp.GetRequiredService<IDetectionRulesSource>(),

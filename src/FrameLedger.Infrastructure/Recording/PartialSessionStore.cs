@@ -52,6 +52,21 @@ public sealed class PartialSessionStore : IPartialSessionStore
     public void Delete(Guid sessionGuid) => File.Delete(PathOf(sessionGuid));
 
     /// <inheritdoc />
+    public IReadOnlySet<long> PendingGameIds()
+    {
+        HashSet<long> ids = [];
+        foreach (Guid guid in ListPending())
+        {
+            if (PartialSessionFile.ReadHeader(PathOf(guid)) is { } header)
+            {
+                ids.Add(header.GameId);
+            }
+        }
+
+        return ids;
+    }
+
+    /// <inheritdoc />
     public void Quarantine(Guid sessionGuid)
     {
         string path = PathOf(sessionGuid);

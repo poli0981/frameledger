@@ -1448,9 +1448,10 @@ executable to another drive-letter root when the file is gone from the row's pat
 file with the same size and mtime — with consent, block and detection kept (`19_SAFETY` §A moved drive is the same
 executable). Three callers: the 15 s sweep, the watcher's file-name match, the enable-hooking command. The owner's
 log of the same morning is the case: 46 rows unreadable on `D:` while the drive sat on `H:`, GF2 and ELDEN RING
-running from `H:` "BY FILE NAME ONLY". **Not done, on purpose:** re-import does not merge a duplicate row an earlier
+running from `H:` "BY FILE NAME ONLY". ~~**Not done, on purpose:** re-import does not merge a duplicate row an earlier
 re-scan created at the new path (`LibraryImporter` still dedupes on path); the relocator refuses to move onto a path
-another row owns and says so in the log.
+another row owns and says so in the log.~~ **Done 2026-09-23 (D26/D27, the beta.6 section below):** twins with the
+same bytes merge, a changed file is followed with hooking off, and the import no longer adds a twin.
 
 **Trap.** `FakeIdentity` in three test classes answers the same fingerprint for ANY path; a relocation test needs one
 that answers per path, or the "exactly one candidate" rule reads every root as a match.
@@ -1484,7 +1485,23 @@ nothing until *Change executable* — accepted, because the alternative is exact
 in Us. **D28 (owner, same day):** HHW itself is measured by pointing an entry at `swiftshader\Game.exe` (the NW.js
 runtime its .NET launcher starts); no launcher-following in beta.6.
 
+**Decision (D26, owner: "the library still shows two entries side by side after the drive letter changed, with the
+data unchanged").** The Agent merges two entries for one executable under two drive letters by itself: the stale
+entry's file is gone, the other entry holds the same path on another letter, and the file there has the bytes the
+stale entry recorded. The entry made first stays; the other's sessions join it; a block or a crash auto-disable in
+force is kept; no consent moves between them; it waits while a session of either runs or waits to be recovered
+(`CaptureOrchestrator.IsRecording`, `IPartialSessionStore.PendingGameIds`). `19_SAFETY` §A moved drive has the rules,
+`06_DATA_MODEL` the writer. The import no longer adds a twin: a store's executable that is a library entry's path on
+another letter, with that entry's file gone, is shown "in the library under another drive letter" and skipped.
+**D27 (owner, same day):** when the only file at the entry's path on another letter has other bytes, the entry follows
+it with hooking off (`ChangeExecutableAsync`, the *Change executable* write). Other bytes under a twin are NOT merged
+— the log says once which entry to remove.
+
 **Traps.**
+- **`IGameMerge` is a second writer that can delete a `games` row.** Only the relocator calls it; a test that removes
+  rows under a running session must expect the merge to wait (busy), not to race it.
+- **Python patch scripts: `\"` inside a normal triple-quoted string is an escaped quote**, so `@"C:\"` silently loses
+  its backslash and the replace finds nothing (or worse, writes the wrong text). Use raw strings (`r"""…"""`) for C#.
 - **`FakeIdentity` in `CaptureOrchestratorTests` answers every path with the same bytes — which is exactly the hazard
   D25 closed**, so it is the right fake for "identical bytes in another folder are another game" and the wrong one for
   any test that needs a relocation to succeed (use `ExecutableRelocatorTests.DiskByPath`).

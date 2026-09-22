@@ -32,6 +32,8 @@ internal sealed class FakePartialSessionStore : IPartialSessionStore
         Files.Remove(sessionGuid);
     }
 
+    public IReadOnlySet<long> PendingGameIds() => Files.Values.Select(static e => e.Header.GameId).ToHashSet();
+
     /// <summary>Files set aside by recovery, out of <see cref="ListPending"/> but not deleted.</summary>
     public List<Guid> Quarantined { get; } = [];
 

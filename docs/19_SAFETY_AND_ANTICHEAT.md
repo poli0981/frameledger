@@ -740,6 +740,27 @@ detection. The conditions are the safety of it:
 *Change executable* is the other operation and stays what it was: a different binary, so hooking off, consent gone,
 pre-scan not run — it is the user saying "that file", not "that file moved".
 
+**Two more answers, 2026-09-23 (owner decisions D26, D27).** Both are downgrades or neutral by construction; neither
+can move a consent onto a binary it was not given for.
+
+- **D27 — the file moved and changed.** When the row's file is gone and the only file at its path under another
+  letter has OTHER bytes (the game updated while the drive had another letter), the row follows it through *Change
+  executable*'s write (`ChangeExecutableAsync`): the new size and mtime, hooking off, consent cleared, the pre-scan
+  back to not run, the block kept. The user turns hooking on again for the new binary, through the disclosure, as
+  for any changed executable. Two such files (two drives) is an ambiguity and refuses. The same rule holds for the
+  watcher's adopt, whose session is then Tier 2 until the user does.
+- **D26 — two entries for one file.** When the move is refused because another entry already holds the target path
+  — a twin made while the letter was different, as the owner's `H:` entries were — and the file there has the bytes
+  the stale entry recorded, the two become one (`IGameMerge`, one transaction): the entry made first stays (its name,
+  notes, consent and history), the other's sessions are re-parented to it, a block either carried is kept (hooking
+  off; nothing clears a block, and a merge must not be how one disappears), a crash auto-disable still in force is
+  kept, the crash counts add, and the dropped row is deleted. **Nothing about consent moves between the rows:** the
+  survivor keeps its own record — which, when it is the entry that moves, is about these same bytes — and the dropped
+  row's goes with it. A merge waits while a session of either entry runs or waits in a `.partial` to be recovered (a
+  session finalized under a deleted entry would be dropped), and it is never done with an entry removed from the
+  library. Other bytes under the twin are not merged: they do not prove the other entry is this game, so the log says
+  so once and the user removes the entry they do not want.
+
 ### A game already enabled can become blocked later
 
 FR-2.2 disables the toggle for titles that ship anti-cheat, and FR-2.3 refuses at

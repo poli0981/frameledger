@@ -36,6 +36,7 @@ public sealed class LibraryImporter
     {
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         List<ImportCandidate> candidates = [];
+        IReadOnlyList<GameRow> library = await _games.ListAsync(ct).ConfigureAwait(false);
         foreach (IStoreLibrarySource source in _sources)
         {
             IReadOnlyList<StoreGame> games;
@@ -67,7 +68,8 @@ public sealed class LibraryImporter
                 // rather than the import failing later.
                 bool missing = exe is not null && _identity.Read(exe) is null;
                 bool already = exe is not null && await _games.FindAsync(exe, ct).ConfigureAwait(false) is { InLibrary: true };
-                candidates.Add(new ImportCandidate(game, exe, already, guessed, missing));
+                string? movedFrom = exe is null || already ? null : StaleTwinOf(exe, library)?.Fingerprint.ExePath;
+                candidates.Add(new ImportCandidate(game, exe, already, guessed, missing, movedFrom));
             }
 
             _log($"import: {source.Platform} — {games.Count} title(s)");
@@ -82,6 +84,7 @@ public sealed class LibraryImporter
         ArgumentNullException.ThrowIfNull(selected);
         int added = 0;
         int skipped = 0;
+        IReadOnlyList<GameRow> library = await _games.ListAsync(ct).ConfigureAwait(false);
         foreach (ImportCandidate c in selected)
         {
             ct.ThrowIfCancellationRequested();
@@ -93,6 +96,13 @@ public sealed class LibraryImporter
             }
 
             GameRow? before = await _games.FindAsync(c.ExePath, ct).ConfigureAwait(false);
+            if (before is null && StaleTwinOf(c.ExePath, library) is { } twin)
+            {
+                skipped++;
+                _log($"import: {c.Game.Name} not added — it is the library's '{twin.Name}' ({twin.Fingerprint.ExePath}) on a drive whose letter changed; that entry follows it");
+                continue;
+            }
+
             GameRow row = await _games.EnsureAsync(fingerprint, c.Game.Name, ct).ConfigureAwait(false);
             _ = await _games.ApplyStoreMetadataAsync(row.Id, new StoreMetadata { Platform = c.Game.Platform, StoreId = c.Game.StoreId, GameVersion = c.Game.Version }, ct).ConfigureAwait(false);
             if (before is { InLibrary: true })
@@ -108,4 +118,13 @@ public sealed class LibraryImporter
 
         return new ImportReport(added, skipped);
     }
+
+    /// <summary>
+    /// The library entry <paramref name="exe"/> already is on a drive that changed its letter (2026-09-23): its path with
+    /// only the letter different, and its own file gone — the relocator's rule (<see cref="ExecutableRelocator.IsDriveLetterTwin"/>).
+    /// The Agent's sweep moves that entry within one interval; a new entry beside it is how the owner's library came to
+    /// show two of every game on the re-lettered drive.
+    /// </summary>
+    private GameRow? StaleTwinOf(string exe, IReadOnlyList<GameRow> library) =>
+        library.FirstOrDefault(r => ExecutableRelocator.IsDriveLetterTwin(r.Fingerprint.ExePath, exe) && _identity.Read(r.Fingerprint.ExePath) is null);
 }
