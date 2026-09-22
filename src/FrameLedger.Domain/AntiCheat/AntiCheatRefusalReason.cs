@@ -207,22 +207,6 @@ public enum AntiCheatRefusalReason
     /// </summary>
     KillSwitchEngaged = 27,
 
-    /// <summary>
-    /// The guard ran every check, one refused on the guard's own judgement, and the Overlay was injected anyway because
-    /// the user accepted the bypass disclosure for THIS game (owner decision 2026-09-21, <c>19_SAFETY</c> §The user's
-    /// bypass). The verdict's family and signal still name what the guard found.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// <strong>Neither an allow nor a refusal.</strong> <see cref="AntiCheatVerdict.IsAllowed"/> stays false for it, so
-    /// every caller written before it existed keeps refusing; the one caller that may proceed asks
-    /// <see cref="AntiCheatVerdict.IsAllowedUnderBypass"/> by name. The native guard produces it only from its
-    /// <c>*Acknowledged</c> entry points.
-    /// </para>
-    /// <para>
-    /// What it does not change: HOW the injection happens. The same documented <c>LoadLibraryW</c> primitive, the DLL's
-    /// real name, exports and version info — CLAUDE.md rule 3 is untouched by the bypass.
-    /// </para>
-    /// </remarks>
-    AllowedUnderUserBypass = 28,
+    // Value 28 was AllowedUnderUserBypass for one day (2026-09-21) and was withdrawn with the bypass on 2026-09-22. It
+    // was the last value, so nothing is renumbered; the native enum dropped it in the same change (GuardMirrorTests).
 }

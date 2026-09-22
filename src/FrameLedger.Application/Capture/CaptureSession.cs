@@ -153,9 +153,7 @@ public sealed class CaptureSession(
     /// <summary>The two refusals the loop makes itself, before the gate (see <see cref="RunAsync"/>'s remarks).</summary>
     private static SessionEndReason? ConsentRefusal(GameConsentRecord record, ExecutableFingerprint? observed)
     {
-        // "Could not verify" is the pre-scan's judgement, and the user's bypass overrules the guard's judgements
-        // (owner decision 2026-09-21); an executable nobody can read is a fact, and stays a refusal below.
-        if (record.PreScanUnverified && !record.GuardBypassAcknowledged)
+        if (record.PreScanUnverified)
         {
             return SessionEndReason.PreScanCouldNotVerify;
         }
@@ -179,14 +177,12 @@ public sealed class CaptureSession(
         // to attach to is the layer's, and it appears at the title's first vkCreateDevice -- which is
         // why the attach budget is launch mode's, not the 5 s an already-injected Overlay gets.
         bool layered = verdict.Reason == AntiCheatRefusalReason.TargetIsVulkanLayered;
-
-        // THE OTHER VERDICT THAT IS NEITHER (owner decision 2026-09-21): the Overlay IS in the target, beside the
-        // anti-cheat the verdict names, because the user overruled the guard for this game. Asked for by name —
-        // IsAllowed is false for it — so this is the only place a bypassed start becomes a session.
-        bool bypassed = verdict.IsAllowedUnderBypass;
-        if (!verdict.IsAllowed && !layered && !bypassed)
+        if (!verdict.IsAllowed && !layered)
         {
-            return new CaptureOutcome { Reason = RefusalOf(verdict.Reason), Verdict = verdict, LaunchWait = launchWait };
+            // A finding about the game turns its hooking off here and now (owner decision 2026-09-22), not only at
+            // the pre-scan: the guard's start-time scan sees the process and the drivers the pre-scan cannot.
+            bool turnedOff = await TurnHookingOffAsync(observed, verdict, ct).ConfigureAwait(false);
+            return new CaptureOutcome { Reason = RefusalOf(verdict.Reason), Verdict = verdict, LaunchWait = launchWait, HookingTurnedOff = turnedOff };
         }
 
         TimeSpan attachBudget = layered ? options.LaunchWaitBudget : options.AttachBudget;
@@ -205,9 +201,26 @@ public sealed class CaptureSession(
         using (sink)
         {
             observer?.Attached(pid, sink.Handshake);
-            CaptureOutcome result = await DrainAsync(pid, alive, sink, verdict, ct, stop).ConfigureAwait(false);
-            return result with { LaunchWait = launchWait, TargetPid = pid, ExitCode = alive.ExitCode, StartedUnderBypass = bypassed ? verdict : null };
+            CaptureOutcome result = await DrainAsync(pid, alive, sink, verdict, observed, ct, stop).ConfigureAwait(false);
+            return result with { LaunchWait = launchWait, TargetPid = pid, ExitCode = alive.ExitCode };
         }
+    }
+
+    /// <summary>
+    /// What a finding does to the game (owner decision 2026-09-22, <c>19_SAFETY</c>): an anti-cheat named IN the game
+    /// — its process, its folder, its title lists — is written to the row as the pre-scan writes it
+    /// (<c>hook_blocked_reason</c>, <c>hook_enabled = 0</c>), so the next launch of that game is not a new refusal but a
+    /// game whose hooking is off, and its page says why. A machine-wide driver, a scan that could not look and every
+    /// fact about the payload or the launch refuse THIS session and write nothing.
+    /// </summary>
+    private async ValueTask<bool> TurnHookingOffAsync(ExecutableFingerprint observed, AntiCheatVerdict verdict, CancellationToken ct)
+    {
+        if (!verdict.IsFindingAboutTheGame)
+        {
+            return false;
+        }
+
+        return await store.RecordGuardBlockAsync(observed, verdict, ct).ConfigureAwait(false) == ConsentWriteOutcome.Written;
     }
 
     private static SessionEndReason RefusalOf(AntiCheatRefusalReason reason) => reason switch
@@ -255,11 +268,17 @@ public sealed class CaptureSession(
     }
 
     private async Task<CaptureOutcome> DrainAsync(int pid, ITargetLiveness alive, ICaptureSink sink,
-        AntiCheatVerdict verdict, CancellationToken ct, CancellationToken stop)
+        AntiCheatVerdict verdict, ExecutableFingerprint observed, CancellationToken ct, CancellationToken stop)
     {
-        var supervisor = new GuardSupervisor(guard, guardBypassAcknowledged: verdict.IsAllowedUnderBypass);
+        var supervisor = new GuardSupervisor(guard);
         var state = new DrainState(new ModuleTally(modules, ngx));
         SessionEndReason end = await SuperviseAsync(pid, alive, sink, supervisor, state, ct, stop).ConfigureAwait(false);
+
+        // On a safety unhook the verdict that matters is the one that FIRED mid-session, not the pass that
+        // let the session start: the pipe's SafetyUnhook names its family and signal (P3 PR-1). And a finding
+        // about the game at the 30 s re-scan turns its hooking off exactly as one at the start does (2026-09-22).
+        AntiCheatVerdict final = end == SessionEndReason.SafetyUnhook && supervisor.LastVerdict is { } fired ? fired : verdict;
+        bool turnedOff = end == SessionEndReason.SafetyUnhook && await TurnHookingOffAsync(observed, final, ct).ConfigureAwait(false);
 
         return new CaptureOutcome
         {
@@ -267,9 +286,8 @@ public sealed class CaptureSession(
             NgxDriver = state.Loaded.Ngx,
             TouchQpc = state.Loaded.TouchQpc,
             Reason = end,
-            // On a safety unhook the verdict that matters is the one that FIRED mid-session, not the pass that
-            // let the session start: the pipe's SafetyUnhook names its family and signal (P3 PR-1).
-            Verdict = end == SessionEndReason.SafetyUnhook && supervisor.LastVerdict is { } fired ? fired : verdict,
+            Verdict = final,
+            HookingTurnedOff = turnedOff,
             AttachRefusal = ShmAttachRefusal.Ok,
             Records = state.Records,
             GapBefore = state.GapBefore,

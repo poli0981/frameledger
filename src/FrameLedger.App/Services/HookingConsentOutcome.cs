@@ -12,7 +12,7 @@ public enum HookingConsentOutcome
     /// <summary>The user closed the dialog without the acknowledgement; nothing was sent.</summary>
     Declined,
 
-    /// <summary>The Agent's pre-scan refused (<c>Refused</c>): a block is on the row. This dialog offers no way past it; the one override is the per-game guard bypass, with its own disclosure (<c>19_SAFETY</c> §The user's bypass, 2026-09-21).</summary>
+    /// <summary>The Agent's pre-scan refused (<c>Refused</c>): a block is on the row, and there is no way past it (<c>19_SAFETY</c> §What a finding does to the game).</summary>
     Refused,
 
     /// <summary>The Agent stamps against another version of the disclosure than this app shows; the dialog was not opened (D14).</summary>

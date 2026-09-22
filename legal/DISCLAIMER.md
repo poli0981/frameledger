@@ -1,6 +1,6 @@
 # FrameLedger — Disclaimer
 
-**Version:** 2.4 · **Effective:** {{RELEASE_DATE}}
+**Version:** 2.5 · **Effective:** {{RELEASE_DATE}}
 
 > **How this document is kept true.** The statement of what FrameLedger measures (§4) is `legal/ACCURACY.md`,
 > embedded here and in `README.md` and bound to its source by `tools/accuracy-check.ps1`, which fails the build when a
@@ -53,7 +53,7 @@ Install it somewhere only you can write to, and verify the published SHA-256 che
 FrameLedger is designed to reduce that risk substantially:
 
 - Injection is **off by default** and must be enabled by you **per game**.
-- Before injecting, and every 30 seconds afterwards, FrameLedger scans for known anti-cheat and anti-tamper components. **If it finds one, it refuses to inject; if a session is already running, it stops at the next scan.** No setting turns this off globally; the one exception is the per-game bypass described in §2A, which only you can turn on, one game at a time. Because the scan runs every 30 seconds rather than continuously, anti-cheat that loads mid-session may be present for **up to 30 seconds** before FrameLedger detects it and stops.
+- Before injecting, and every 30 seconds afterwards, FrameLedger scans for known anti-cheat and anti-tamper components. **If it finds one, it refuses to inject; if a session is already running, it stops at the next scan.** No setting turns this off, globally or per game (§2A). Because the scan runs every 30 seconds rather than continuously, anti-cheat that loads mid-session may be present for **up to 30 seconds** before FrameLedger detects it and stops.
 
   **And there is a second, longer window you should know about.** The part of FrameLedger running inside the game also stops on its own if it loses contact with the part doing the scanning — because a scanner that has stopped cannot protect you. It waits **65 seconds** before concluding that contact is lost, so that one delayed scan on a busy machine does not end your session. In the worst case those windows combine: if the scanner stops at the moment anti-cheat appears, the component inside the game may keep running for up to **65 seconds** afterwards. That number is 65 and not 30, and this document says so rather than leaving the 30 above to imply it.
 
@@ -79,33 +79,14 @@ FrameLedger is designed to reduce that risk substantially:
 
 **FrameLedger is intended for offline and single-player play. If you enable injection for a game with any online or competitive component, you do so entirely at your own risk and are solely responsible for the consequences, including compliance with that game's terms of service.**
 
-## 2A. The guard bypass — entirely at your own risk
+## 2A. There is no way past the guard
 
-Since version 0.1.0-beta.3 each game's page has a switch labelled **"Bypass the anti-cheat guard (at your own risk)"**.
-It is **off by default**, it applies to that one game only, and there is no way to turn it on for all games at once.
+Versions 0.1.0-beta.3 and 0.1.0-beta.4 offered a per-game switch to overrule the guard. **It has been removed.** If
+FrameLedger finds anti-cheat or anti-tamper software in a game — before it injects, when a session starts, or during a
+session — it refuses, turns hooking off for that game, and says so on the game's page. There is no setting, per game or
+global, that turns that back on for that executable. Sessions recorded under the earlier switch stay in your database,
+marked as such in their notes.
 
-Turning it on tells FrameLedger to inject into that game **even where its checks find anti-cheat or anti-tamper
-software** — that is, in exactly the situation §2 says can get an account banned. The checks still run and what they
-found is still recorded; they simply no longer stop the injection or the running session for that game. FrameLedger
-still does nothing to hide itself: it loads under its real name and is fully visible to the anti-cheat.
-
-**It does not make FrameLedger work everywhere.** Several anti-cheat systems protect the game's process so that no
-other program can open it. FrameLedger cannot measure such a game with or without the bypass, it says so when that
-happens, and it will never try to get around another product's protection. Turning the bypass on for such a game
-gains you nothing and still marks your intent to load software into it.
-
-You can turn it on only by accepting a warning inside the application, by **both** ticking a statement and typing a
-word. **BY TURNING IT ON YOU ACCEPT THE ENTIRE RISK YOURSELF.** The developer and the contributors accept **no
-responsibility and no liability whatsoever** for anything that happens on your side as a result — including, without
-limitation, an account that is flagged, suspended or **permanently banned** (in that game or in others from the same
-publisher or platform), purchases, progress or data that are lost, a game that crashes or will not start, or any
-dispute with a publisher or platform under their terms of service. Nobody can undo a ban for you.
-
-Every session started with the bypass on is permanently marked as such in the application and in every export,
-together with what the checks found. The bypass turns itself off when you turn hooking off for the game or when the
-game's executable changes.
-
-**If you are not certain, leave it off.**
 
 ## 3. Stability
 
@@ -116,12 +97,11 @@ Software running inside another process can, in principle, destabilize it. Frame
 Frame timing is derived from high-resolution timestamps taken at the moment the game presents each frame; upscaling, frame-generation and ray-tracing state are read from the parameters the game passes to those APIs. This is substantially more accurate than inferring settings from files on disk, but **no measurement is guaranteed to be exact**:
 
 <!-- accuracy-block:begin -->
-> ⚠ **What FrameLedger actually measures today — 2026-09-21.** The software is a beta; its latest
+> ⚠ **What FrameLedger actually measures today — 2026-09-22.** The software is a beta; its latest
 > **pre-release is `0.1.0-beta.4`** (2026-09-21), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
-> game in the library runs, injects only into games you enabled and only past the safety guard (or,
-> for a game whose guard bypass you turned on yourself, past your own acceptance of that risk), and
+> game in the library runs, injects only into games you enabled and only past the safety guard, and
 > stores sessions in a local database. What that path measures:
 >
 > - **Frame times and output resolution:** measured from the present call for Direct3D 11/12 and
@@ -172,11 +152,10 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 >   half of the suspicious-module rule. During every capture the Agent re-runs the checks every 30 s and
 >   stops capturing on a refusal: a Direct3D or OpenGL game's hooks are removed, and the Vulkan layer
 >   goes passthrough. A global switch in Settings turns all hooking off, and a running capture stops at
->   its next check; it can only refuse, never permit. **There is one override, and only one:** a per-game
->   "bypass the anti-cheat guard" switch, off by default, that you can turn on only by accepting its own
->   warning (a tick and a typed word). With it on, FrameLedger injects into that game even where the
->   checks find anti-cheat, the 30 s re-check no longer stops the capture for that finding, and every
->   session started that way is marked. It never changes HOW FrameLedger injects: nothing is hidden.
+>   its next check; it can only refuse, never permit. **There is no override.** A finding about a game — anti-cheat
+>   named in its process, in its folder or on its title lists — turns hooking off for that game, whether found
+>   before injection, at a session's start or by the 30 s re-check; the game's page says so, and nothing turns it
+>   back on for that executable.
 >
 > Where a value is not measured it reads `N/A`, with two exceptions: FPS then shows Presented FPS with a
 > note on what it may include, and ray-tracing flags may show a value you set yourself, labelled as

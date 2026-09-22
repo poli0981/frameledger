@@ -30,10 +30,9 @@ public sealed class SafetyNoticesTests
     }
 
     /// <summary>
-    /// 2026-09-21: a game whose process an anti-cheat driver protects (ELDEN RING under EAC, with the guard bypass on)
-    /// reached the user as a toast reading "InjectFailed: TargetAmbiguous" and no session. It is a persistent notice that
-    /// says why and that the bypass does not change it - and it does NOT claim the session is still recorded, because
-    /// that run ends at once and is discarded.
+    /// 2026-09-21: a game whose process an anti-cheat driver protects (ELDEN RING under EAC) reached the user as a toast
+    /// reading "InjectFailed: TargetAmbiguous" and no session. It is a persistent notice that says why - and it does NOT
+    /// claim the session is still recorded, because that run ends at once and is discarded.
     /// </summary>
     [Fact]
     public void AProcessThatCannotBeOpenedIsAPersistentNoticeThatSaysWhyAndPromisesNoRecording()
@@ -61,6 +60,23 @@ public sealed class SafetyNoticesTests
         link.Raise(IpcMessageType.CaptureRefused, new CaptureRefusedEvent(7, null, "PreScanCouldNotVerify", null, null));
 
         notices.Items.Should().ContainSingle().Which.Body.Should().StartWith(Shared.Strings.Safety_Refused_CouldNotVerify);
+    }
+
+    /// <summary>The finding turned the game's hooking off (2026-09-22): the notice says so, on a refusal and on an unhook alike.</summary>
+    [Fact]
+    public void WhenTheFindingTurnedHookingOffTheNoticeSaysSo()
+    {
+        var link = new FakeAgentLink();
+        using var notices = new SafetyNotices(link, new RecordingStrip());
+
+        link.Raise(IpcMessageType.CaptureRefused, new CaptureRefusedEvent(7, "Title", "RefusedByGuard", "Easy Anti-Cheat", "EasyAntiCheat.sys", HookingTurnedOff: true));
+        link.Raise(IpcMessageType.SafetyUnhook, new SafetyUnhookEvent(Guid.NewGuid(), "BattlEye", "BEService.exe", HookingTurnedOff: true));
+        link.Raise(IpcMessageType.CaptureRefused, new CaptureRefusedEvent(7, "Title", "RefusedByGuard", "Riot Vanguard", "vgk.sys"));
+
+        notices.Items.Should().HaveCount(3);
+        notices.Items[2].Body.Should().EndWith(Shared.Strings.Safety_HookingTurnedOff);
+        notices.Items[1].Body.Should().EndWith(Shared.Strings.Safety_HookingTurnedOff);
+        notices.Items[0].Body.Should().NotContain(Shared.Strings.Safety_HookingTurnedOff, "a machine-wide driver turns nothing off");
     }
 
     [Fact]

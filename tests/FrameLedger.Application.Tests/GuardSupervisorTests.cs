@@ -104,36 +104,6 @@ public sealed class GuardSupervisorTests
         supervisor.LastVerdict!.Value.Reason.Should().Be(AntiCheatRefusalReason.BlockedDriver);
     }
 
-    /// <summary>
-    /// A session that started under the user's bypass (owner decision 2026-09-21) already knows the guard refuses its
-    /// target. The scan still runs, the tick still counts and the verdict is still kept — the Overlay's own stop is fed
-    /// by that tick — but a JUDGEMENT no longer unhooks. Anything that is not a judgement still does.
-    /// </summary>
-    [Fact]
-    public async Task UnderTheBypassAJudgementIsCountedKeptAndOverruledAndAFactStillUnhooks()
-    {
-        AntiCheatVerdict next = AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedDriver, "Riot Vanguard", "vgk.sys");
-        ScriptedGuard guard = new() { OnEvaluate = () => next };
-        GuardSupervisor supervisor = new(guard, guardBypassAcknowledged: true);
-        CancellationToken ct = TestContext.Current.CancellationToken;
-
-        (await supervisor.ScanOnceAsync(1234, ct)).Should().BeTrue("the refusal is the one the user overruled; re-discovering it is not news");
-        (await supervisor.ScanOnceAsync(1234, ct)).Should().BeTrue();
-        supervisor.CompletedEvaluations.Should().Be(2, "the scan RAN both times: the tick is a count of evaluations, not of passes");
-        supervisor.JudgementsOverruled.Should().Be(2);
-        supervisor.UnhookRequested.Should().BeFalse();
-        supervisor.LastVerdict!.Value.Family.Should().Be("Riot Vanguard", "what was found is kept, so the log can say it");
-
-        next = AntiCheatVerdict.Refused(AntiCheatRefusalReason.InjectionFailed, string.Empty, "not a judgement");
-        (await supervisor.ScanOnceAsync(1234, ct)).Should().BeFalse("the bypass overrules a judgement, never a fact");
-        supervisor.UnhookRequested.Should().BeTrue();
-
-        // And without the acknowledgement the same judgement is the hard stop it always was.
-        GuardSupervisor hard = new(new ScriptedGuard { OnEvaluate = () => AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedDriver, "Riot Vanguard", "vgk.sys") });
-        (await hard.ScanOnceAsync(1234, ct)).Should().BeFalse();
-        hard.JudgementsOverruled.Should().Be(0);
-    }
-
     [Fact]
     public async Task OnceRefused_ItLatchesAndStopsScanning()
     {

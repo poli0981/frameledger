@@ -83,13 +83,10 @@ public sealed class NoSecondMatcherTests
         // guards had moved. A number that has to be edited deliberately is the
         // point of it.
         //
-        // Raised from 4 to 6 on 2026-09-21, the owner's decision of that day (19_SAFETY §The user's bypass):
-        // GuardedInjectAcknowledgedAsync and its WhenReady twin. They are HERE, counted, for exactly the reason
-        // above - a way into a game process that overrules the guard's judgement is the last thing that should
-        // live on a port this test never sees. They take the same primitives (no flag a caller could pass to
-        // an ordinary call turns it into a bypass: it is a different method, named for what it is), they answer
-        // with a verdict like the rest, and their DEFAULT implementation is the unacknowledged hard gate.
-        methods.Should().HaveCount(6);
+        // 4 again since 2026-09-22. It was 6 for one day: the user's bypass of 2026-09-21 added
+        // GuardedInjectAcknowledgedAsync and its WhenReady twin, and the owner withdrew the bypass with them. A
+        // way into a game process that overrules the guard's judgement is exactly what this count exists to notice.
+        methods.Should().HaveCount(4);
 
         // Stronger than the count, and it survives the port growing: every
         // parameter must be a primitive the caller cannot smuggle evidence

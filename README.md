@@ -5,12 +5,11 @@
 > No telemetry. No accounts. All data stays on your machine.
 
 <!-- accuracy-block:begin -->
-> ⚠ **What FrameLedger actually measures today — 2026-09-21.** The software is a beta; its latest
+> ⚠ **What FrameLedger actually measures today — 2026-09-22.** The software is a beta; its latest
 > **pre-release is `0.1.0-beta.4`** (2026-09-21), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
-> game in the library runs, injects only into games you enabled and only past the safety guard (or,
-> for a game whose guard bypass you turned on yourself, past your own acceptance of that risk), and
+> game in the library runs, injects only into games you enabled and only past the safety guard, and
 > stores sessions in a local database. What that path measures:
 >
 > - **Frame times and output resolution:** measured from the present call for Direct3D 11/12 and
@@ -61,11 +60,10 @@
 >   half of the suspicious-module rule. During every capture the Agent re-runs the checks every 30 s and
 >   stops capturing on a refusal: a Direct3D or OpenGL game's hooks are removed, and the Vulkan layer
 >   goes passthrough. A global switch in Settings turns all hooking off, and a running capture stops at
->   its next check; it can only refuse, never permit. **There is one override, and only one:** a per-game
->   "bypass the anti-cheat guard" switch, off by default, that you can turn on only by accepting its own
->   warning (a tick and a typed word). With it on, FrameLedger injects into that game even where the
->   checks find anti-cheat, the 30 s re-check no longer stops the capture for that finding, and every
->   session started that way is marked. It never changes HOW FrameLedger injects: nothing is hidden.
+>   its next check; it can only refuse, never permit. **There is no override.** A finding about a game — anti-cheat
+>   named in its process, in its folder or on its title lists — turns hooking off for that game, whether found
+>   before injection, at a session's start or by the 30 s re-check; the game's page says so, and nothing turns it
+>   back on for that executable.
 >
 > Where a value is not measured it reads `N/A`, with two exceptions: FPS then shows Presented FPS with a
 > note on what it may include, and ray-tracing flags may show a value you set yourself, labelled as

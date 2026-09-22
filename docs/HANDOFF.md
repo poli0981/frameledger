@@ -1361,7 +1361,7 @@ charts (6) after Games (5) because the summary opens from the Sessions tab; Sett
 *PRs #204-#210. Status is where status lives (`CHANGELOG.md` `[0.1.0-beta.3]`); this is only what no other file carries.*
 
 **Decisions (owner, 2026-09-21).**
-- **D18 — the guard has one override, and its shape is fixed.** Per game, off by default, never global, a two-act
+- ~~**D18 — the guard has one override, and its shape is fixed.**~~ **Withdrawn 2026-09-22 (D22, below).** Per game, off by default, never global, a two-act
   disclosure stamped by the Agent, overruling the guard's JUDGEMENT only, never changing HOW FrameLedger injects.
   `19_SAFETY` §The user's bypass is the specification and CLAUDE.md rule 2 carries it as a rule. The owner chose this
   over a global switch and over a variant that kept kernel-level families refused. **Do not widen it**: no settings key,
@@ -1372,9 +1372,9 @@ charts (6) after Games (5) because the summary opens from the Sessions tab; Sett
   `--diag` and Settings ▸ System (with Copy) carry it instead.
 
 **Owed by the owner after this release.** `20_OPEN_QUESTIONS` M10 (one elevated session with PawnIO beside a reference
-tool decides whether `cpu_temp` stays); a look at the light theme's pills, the bypass dialog and Settings ▸ System in the
-running App — no FrameLedger binary was run against the owner's data folder in the session that built them; the ja
-review of `Safety_Bypass_*`, which ships as English until signed.
+tool decides whether `cpu_temp` stays); a look at the light theme's pills ~~, the bypass dialog~~ and Settings ▸ System in the
+running App — no FrameLedger binary was run against the owner's data folder in the session that built them ~~; the ja
+review of `Safety_Bypass_*`, which ships as English until signed~~ (moot since 2026-09-22: the strings are gone).
 
 **Traps.**
 - **xUnit.net v3 4.x defaults to Microsoft Testing Platform v2.** `build.ps1` is VSTest-shaped (collector, `results.trx`);
@@ -1394,9 +1394,9 @@ review of `Safety_Bypass_*`, which ships as English until signed.
 
 *Status is `CHANGELOG.md` `[0.1.0-beta.4]`; this is what no other file carries.*
 
-**Decision (D21).** A process an anti-cheat driver protects is `TargetUnreadable`, and **the bypass stops there**: D18's
-override overrules FrameLedger's own guard; it is not, and may not become, a way past another product's protection.
-Any proposal to "make the bypass work on EAC titles" is rule 3, not rule 2 — refuse it.
+**Decision (D21).** A process an anti-cheat driver protects is `TargetUnreadable`, and nothing FrameLedger offers changes
+that: it is not, and may not become, a way past another product's protection (rule 3, not rule 2). ~~"the bypass
+stops there"~~ — the override itself is gone since 2026-09-22 (D22).
 
 **Found and NOT fixed — each needs its own PR.**
 - **A refused session is not recorded, though the notice says it is.** `Notice_Refused_Recording` ("the session is still
@@ -1431,6 +1431,25 @@ Any proposal to "make the bypass work on EAC titles" is rule 3, not rule 2 — r
   against a real protected process exists (`csrss.exe`); it needs no fixture and runs elevated or not.
 - **`Mutex` is thread-affine**: `SingleInstance` is claimed and disposed on `Main`'s thread; its tests are synchronous
   on purpose.
+
+## 2026-09-22 — the override withdrawn; a finding turns hooking off
+
+*Status is `CHANGELOG.md` `[Unreleased]`; this is what no other file carries.*
+
+**Decision (D22, owner).** The per-game guard override (D18) is withdrawn entirely — the owner's words: a switch that
+can be turned on and still does nothing is meaningless. In its place a finding about the game turns that game's hooking
+off, at the pre-scan (as before), at a session's start and at the 30 s re-scan (new): `19_SAFETY` §What a finding does to the game.
+Machine-wide drivers and services refuse the session only. D18 and D21's "the bypass stops there" are history; D21's
+fact stands.
+
+**Traps.**
+- **Removing an enum value that is LAST on both sides of the ABI renumbers nothing**, and `GuardMirrorTests` fails until
+  the native DLL in the test output is rebuilt (`./build.ps1 native`) — it looks like a managed defect and is not.
+- **The first `DROP COLUMN` migration.** SQLite ≥ 3.35 is asserted in `LedgerDatabaseTests`. The test helper
+  `RewindSchemaAsync` deletes `schema_migrations` rows and leaves columns in place; a rewind to below 8 followed by a
+  re-migration would run 0008 against columns that are gone. Today it rewinds to 2 and never re-migrates.
+- **Meziantou MA0004 fires on the SECOND await of a test method** once a lambda inside it used `ConfigureAwait(false)`.
+- **A patch script must not carry `\r\n` inside a bash heredoc**; the helper module is written with the Write tool.
 
 ## Owner-only — no PR can close these
 

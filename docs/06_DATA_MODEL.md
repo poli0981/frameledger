@@ -281,12 +281,10 @@ CREATE TABLE frame_blobs (
 
 CREATE TABLE sensor_blobs (
   session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
-  -- (schema 0007, 2026-09-21 - 19_SAFETY §The user's bypass) lives on TWO tables and nowhere else:
-  --   games.guard_bypass_at INTEGER, games.guard_bypass_disclosure_version TEXT NOT NULL DEFAULT ''
-  --       NULL/'' = off, every row's default. Both or neither: a timestamp without its version is not an
-  --       acknowledgement. Written only through IGuardBypassStore; cleared by revoking consent and by Change executable.
-  --   sessions.guard_bypassed INTEGER NOT NULL DEFAULT 0, guard_bypass_family TEXT, guard_bypass_signal TEXT
-  --       1 when the session STARTED under the bypass. A session recovered from a .partial does not carry it.
+  -- schema 0007 (2026-09-21) added five guard-override columns (games.guard_bypass_at,
+  -- games.guard_bypass_disclosure_version; sessions.guard_bypassed, guard_bypass_family, guard_bypass_signal) and
+  -- schema 0008 (2026-09-22) DROPPED them with the feature (19_SAFETY §What a finding does to the game). Sessions that
+  -- ran under it keep "guard-bypass=" in capture_notes.
   series TEXT NOT NULL,            -- cpu_temp|gpu_temp|gpu_hotspot|gpu_load|gpu_power|vram_proc|vram_adapter|cpu_load|ram_mb
                                    -- cpu_load / ram_mb / cpu_temp and sessions.avg_cpu_load, avg_cpu_temp, max_cpu_temp,
                                    -- avg_ram_mb were in schema 0001 with NO producer until 2026-09-21 (Telemetry.SystemTelemetrySource
@@ -446,6 +444,12 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > session spent most of its generating time in, `fg_steady_share` of the presenting time, with `fg_refusal` and its
 > detail still set beside it. A reader that ignores the scope reads a steady factor as a session one, which is why
 > every surface prints the share. Existing rows keep NULL. `LatestVersion` is 6.
+
+> **`0007_guard_bypass.sql` (2026-09-21) and `0008_withdraw_guard_bypass.sql` (2026-09-22) — the first DROP.** 0007
+> added five columns for the per-game guard override; the owner withdrew the feature a day later and 0008 drops them
+> (`ALTER TABLE … DROP COLUMN`, SQLite ≥ 3.35 — `LedgerDatabaseTests` asserts the engine's version beside the columns'
+> absence). "Never edit an applied script; only append" holds: 0007 stays as applied and 0008 is the append. The
+> data dropped is the override acknowledgements themselves, which is the decision. `LatestVersion` is 8.
 
 > **Every open used to migrate, and one that should not have did — 2026-09-16.** The Agent's `--console sessions`,
 > a verb that prints, was run against the owner's ledger while the file on disk was at schema 2 and applied 0003 and

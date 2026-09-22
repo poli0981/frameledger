@@ -72,21 +72,6 @@ public sealed class NativeAntiCheatGuard : IAntiCheatGuard
     private static extern void FlGuardedInjectWhenReady(uint targetPid, string dllPath, uint timeoutMs,
         out FlGuardResult result);
 
-    // The user's bypass (owner decision 2026-09-21): the two entry points above with one branch different. Every check
-    // still runs and the result still names what was found; the reason is AllowedUnderUserBypass, never Allow.
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [DllImport(_guardDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-    private static extern void FlGuardedInjectAcknowledged(uint targetPid, string dllPath, out FlGuardResult result);
-
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [DllImport(_guardDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-    private static extern void FlGuardedInjectWhenReadyAcknowledged(uint targetPid, string dllPath, uint timeoutMs,
-        out FlGuardResult result);
-
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [DllImport(_guardDll, CallingConvention = CallingConvention.Cdecl)]
-    private static extern int FlGuardIsJudgement(int reason);
-
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [DllImport(_guardDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
     private static extern void FlStaticPreScan(string gameDirectory, out FlGuardResult result);
@@ -153,37 +138,6 @@ public sealed class NativeAntiCheatGuard : IAntiCheatGuard
             return AntiCheatVerdict.FromNative(r.Reason, r.Family, r.Signal);
         }, ct);
     }
-
-    /// <inheritdoc />
-    public ValueTask<AntiCheatVerdict> GuardedInjectAcknowledgedAsync(int targetPid, string payloadPath, CancellationToken ct = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(payloadPath);
-        return RunAsync(() =>
-        {
-            FlGuardedInjectAcknowledged(checked((uint)targetPid), payloadPath, out FlGuardResult r);
-            return AntiCheatVerdict.FromNative(r.Reason, r.Family, r.Signal);
-        }, ct);
-    }
-
-    /// <inheritdoc />
-    public ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAcknowledgedAsync(int targetPid, string payloadPath, int timeoutMs,
-        CancellationToken ct = default)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(payloadPath);
-        ArgumentOutOfRangeException.ThrowIfNegative(timeoutMs);
-        return RunAsync(() =>
-        {
-            FlGuardedInjectWhenReadyAcknowledged(checked((uint)targetPid), payloadPath, checked((uint)timeoutMs),
-                out FlGuardResult r);
-            return AntiCheatVerdict.FromNative(r.Reason, r.Family, r.Signal);
-        }, ct);
-    }
-
-    /// <summary>
-    /// The NATIVE answer to "is this refusal the guard's judgement" — for the mirror test, which holds
-    /// <c>AntiCheatVerdict.IsGuardJudgement</c> against it for every reason so the two lists cannot drift.
-    /// </summary>
-    public static bool NativeIsGuardJudgement(int reason) => FlGuardIsJudgement(reason) != 0;
 
     /// <inheritdoc />
     public ValueTask<AntiCheatVerdict> PreScanGameDirectoryAsync(string gameDirectory,

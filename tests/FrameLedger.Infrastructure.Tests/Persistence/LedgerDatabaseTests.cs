@@ -86,6 +86,29 @@ public sealed class LedgerDatabaseTests
         columns.Should().Contain("fg_factor_scope").And.Contain("fg_steady_share").And.Contain("fg_refusal_detail", "0006 appends beside 0005's column, it edits nothing");
     }
 
+    /// <summary>
+    /// Schema 0008 (2026-09-22): the bypass is withdrawn and its five columns go with it — the one DROP COLUMN in the
+    /// migration set, which is why the engine's version floor is asserted beside it (SQLite ≥ 3.35.0).
+    /// </summary>
+    [Fact]
+    public async Task ScriptEightDropsTheBypassColumns()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(8);
+        string? version = await f.Db.ReadAsync((c, ct) => c.ExecuteScalarAsync<string>(new CommandDefinition("SELECT sqlite_version()", cancellationToken: ct)), Ct);
+        Version.Parse(version ?? string.Empty).Should().BeGreaterThanOrEqualTo(new Version(3, 35, 0), "ALTER TABLE ... DROP COLUMN needs it");
+        IReadOnlyList<string> games = await f.Db.ReadAsync(async (c, ct) =>
+            (IReadOnlyList<string>)[.. await c.QueryAsync<string>(new CommandDefinition(
+                "SELECT name FROM pragma_table_info('games')", cancellationToken: ct)).ConfigureAwait(false)], Ct);
+        IReadOnlyList<string> sessions = await f.Db.ReadAsync(async (c, ct) =>
+            (IReadOnlyList<string>)[.. await c.QueryAsync<string>(new CommandDefinition(
+                "SELECT name FROM pragma_table_info('sessions')", cancellationToken: ct)).ConfigureAwait(false)], Ct).ConfigureAwait(true);
+        games.Should().NotContain("guard_bypass_at").And.NotContain("guard_bypass_disclosure_version")
+            .And.Contain("hook_blocked_reason", "the block is what a finding writes now");
+        sessions.Should().NotContain("guard_bypassed").And.NotContain("guard_bypass_family").And.NotContain("guard_bypass_signal");
+    }
+
     [Fact]
     public async Task ReopeningIsANoOp()
     {

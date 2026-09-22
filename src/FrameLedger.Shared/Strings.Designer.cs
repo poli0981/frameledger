@@ -28,24 +28,6 @@ public static class Strings
     [
         nameof(Safety_AutoDisabled_Format),
         nameof(Safety_Blocked_Toggle_Format),
-        nameof(Safety_Bypass_Checkbox),
-        nameof(Safety_Bypass_Confirm),
-        nameof(Safety_Bypass_Failed_Format),
-        nameof(Safety_Bypass_Found_Format),
-        nameof(Safety_Bypass_Found_Nothing),
-        nameof(Safety_Bypass_Found_Overruled_Format),
-        nameof(Safety_Bypass_Intro),
-        nameof(Safety_Bypass_KeepGuard),
-        nameof(Safety_Bypass_Liability),
-        nameof(Safety_Bypass_On_Notice),
-        nameof(Safety_Bypass_Recorded),
-        nameof(Safety_Bypass_Risk),
-        nameof(Safety_Bypass_Session_Format),
-        nameof(Safety_Bypass_Session_Unnamed),
-        nameof(Safety_Bypass_Title_Format),
-        nameof(Safety_Bypass_Toggle_Body),
-        nameof(Safety_Bypass_Toggle_Label),
-        nameof(Safety_Bypass_TypeToConfirm_Format),
         nameof(Safety_Consent_AgentUnavailable),
         nameof(Safety_Consent_AntiCheat),
         nameof(Safety_Consent_Enable),
@@ -59,6 +41,7 @@ public static class Strings
         nameof(Safety_Consent_Title_Format),
         nameof(Safety_Consent_TypeToConfirm_Format),
         nameof(Safety_Consent_VersionMismatch),
+        nameof(Safety_HookingTurnedOff),
         nameof(Safety_RecordWithoutMeasuring),
         nameof(Safety_Refused_CouldNotVerify),
         nameof(Safety_Refused_Named_Format),
@@ -70,42 +53,6 @@ public static class Strings
     public static string Safety_AutoDisabled_Format => ResourceManager.GetString(nameof(Safety_AutoDisabled_Format), Culture) ?? nameof(Safety_AutoDisabled_Format);
 
     public static string Safety_Blocked_Toggle_Format => ResourceManager.GetString(nameof(Safety_Blocked_Toggle_Format), Culture) ?? nameof(Safety_Blocked_Toggle_Format);
-
-    public static string Safety_Bypass_Checkbox => ResourceManager.GetString(nameof(Safety_Bypass_Checkbox), Culture) ?? nameof(Safety_Bypass_Checkbox);
-
-    public static string Safety_Bypass_Confirm => ResourceManager.GetString(nameof(Safety_Bypass_Confirm), Culture) ?? nameof(Safety_Bypass_Confirm);
-
-    public static string Safety_Bypass_Failed_Format => ResourceManager.GetString(nameof(Safety_Bypass_Failed_Format), Culture) ?? nameof(Safety_Bypass_Failed_Format);
-
-    public static string Safety_Bypass_Found_Format => ResourceManager.GetString(nameof(Safety_Bypass_Found_Format), Culture) ?? nameof(Safety_Bypass_Found_Format);
-
-    public static string Safety_Bypass_Found_Nothing => ResourceManager.GetString(nameof(Safety_Bypass_Found_Nothing), Culture) ?? nameof(Safety_Bypass_Found_Nothing);
-
-    public static string Safety_Bypass_Found_Overruled_Format => ResourceManager.GetString(nameof(Safety_Bypass_Found_Overruled_Format), Culture) ?? nameof(Safety_Bypass_Found_Overruled_Format);
-
-    public static string Safety_Bypass_Intro => ResourceManager.GetString(nameof(Safety_Bypass_Intro), Culture) ?? nameof(Safety_Bypass_Intro);
-
-    public static string Safety_Bypass_KeepGuard => ResourceManager.GetString(nameof(Safety_Bypass_KeepGuard), Culture) ?? nameof(Safety_Bypass_KeepGuard);
-
-    public static string Safety_Bypass_Liability => ResourceManager.GetString(nameof(Safety_Bypass_Liability), Culture) ?? nameof(Safety_Bypass_Liability);
-
-    public static string Safety_Bypass_On_Notice => ResourceManager.GetString(nameof(Safety_Bypass_On_Notice), Culture) ?? nameof(Safety_Bypass_On_Notice);
-
-    public static string Safety_Bypass_Recorded => ResourceManager.GetString(nameof(Safety_Bypass_Recorded), Culture) ?? nameof(Safety_Bypass_Recorded);
-
-    public static string Safety_Bypass_Risk => ResourceManager.GetString(nameof(Safety_Bypass_Risk), Culture) ?? nameof(Safety_Bypass_Risk);
-
-    public static string Safety_Bypass_Session_Format => ResourceManager.GetString(nameof(Safety_Bypass_Session_Format), Culture) ?? nameof(Safety_Bypass_Session_Format);
-
-    public static string Safety_Bypass_Session_Unnamed => ResourceManager.GetString(nameof(Safety_Bypass_Session_Unnamed), Culture) ?? nameof(Safety_Bypass_Session_Unnamed);
-
-    public static string Safety_Bypass_Title_Format => ResourceManager.GetString(nameof(Safety_Bypass_Title_Format), Culture) ?? nameof(Safety_Bypass_Title_Format);
-
-    public static string Safety_Bypass_Toggle_Body => ResourceManager.GetString(nameof(Safety_Bypass_Toggle_Body), Culture) ?? nameof(Safety_Bypass_Toggle_Body);
-
-    public static string Safety_Bypass_Toggle_Label => ResourceManager.GetString(nameof(Safety_Bypass_Toggle_Label), Culture) ?? nameof(Safety_Bypass_Toggle_Label);
-
-    public static string Safety_Bypass_TypeToConfirm_Format => ResourceManager.GetString(nameof(Safety_Bypass_TypeToConfirm_Format), Culture) ?? nameof(Safety_Bypass_TypeToConfirm_Format);
 
     public static string Safety_Consent_AgentUnavailable => ResourceManager.GetString(nameof(Safety_Consent_AgentUnavailable), Culture) ?? nameof(Safety_Consent_AgentUnavailable);
 
@@ -132,6 +79,8 @@ public static class Strings
     public static string Safety_Consent_TypeToConfirm_Format => ResourceManager.GetString(nameof(Safety_Consent_TypeToConfirm_Format), Culture) ?? nameof(Safety_Consent_TypeToConfirm_Format);
 
     public static string Safety_Consent_VersionMismatch => ResourceManager.GetString(nameof(Safety_Consent_VersionMismatch), Culture) ?? nameof(Safety_Consent_VersionMismatch);
+
+    public static string Safety_HookingTurnedOff => ResourceManager.GetString(nameof(Safety_HookingTurnedOff), Culture) ?? nameof(Safety_HookingTurnedOff);
 
     public static string Safety_RecordWithoutMeasuring => ResourceManager.GetString(nameof(Safety_RecordWithoutMeasuring), Culture) ?? nameof(Safety_RecordWithoutMeasuring);
 

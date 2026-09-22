@@ -288,13 +288,13 @@ public sealed class CaptureOrchestrator
     private static string GuardDetail(CaptureOutcome o)
     {
         Domain.AntiCheat.AntiCheatVerdict v = o.Verdict;
-        if (v.Reason == Domain.AntiCheat.AntiCheatRefusalReason.Allow && o.StartedUnderBypass is null)
+        if (v.Reason == Domain.AntiCheat.AntiCheatRefusalReason.Allow)
         {
             return string.Empty;
         }
 
         string text = $"; guard={v.Reason}" + (v.Family.Length > 0 ? "/" + v.Family : string.Empty) + (v.Signal.Length > 0 ? "/" + v.Signal : string.Empty);
-        return o.StartedUnderBypass is { } under ? text + $"; started-under-bypass={under.Family}/{under.Signal}" : text;
+        return o.HookingTurnedOff ? text + "; hooking-turned-off" : text;
     }
 
     private RecordRequest Attach(string normalisedExePath, string? gameName, Guid? sessionGuid, CancellationToken stop)

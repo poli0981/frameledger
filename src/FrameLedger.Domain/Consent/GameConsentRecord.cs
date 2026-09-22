@@ -149,27 +149,6 @@ public readonly record struct GameConsentRecord
     /// </remarks>
     public bool IsFromStore => _fromStore;
 
-    /// <summary>
-    /// When the user accepted the guard-bypass disclosure for this game, or null: the bypass is OFF, which is every
-    /// row's default and the only state before 2026-09-21 (<c>19_SAFETY</c> §The user's bypass). A record of a human act,
-    /// exactly as <see cref="ConsentedAt"/> is, and never meaningful without
-    /// <see cref="GuardBypassDisclosureVersion"/>.
-    /// </summary>
-    public DateTimeOffset? GuardBypassAt { get; private init; }
-
-    /// <summary>The version of the bypass disclosure that was shown; empty when none was.</summary>
-    public string GuardBypassDisclosureVersion { get => field ?? string.Empty; private init; }
-
-    /// <summary>
-    /// True when a bypass acknowledgement is on the row AND names the disclosure it answered. A timestamp alone is not
-    /// an acknowledgement, for the reason a consent timestamp alone is not consent.
-    /// </summary>
-    public bool GuardBypassAcknowledged => _fromStore && GuardBypassAt is not null && GuardBypassDisclosureVersion.Length > 0;
-
-    /// <summary>The same record carrying the row's bypass columns; the store is the only caller.</summary>
-    internal GameConsentRecord WithGuardBypass(DateTimeOffset? at, string? disclosureVersion) =>
-        this with { GuardBypassAt = at, GuardBypassDisclosureVersion = disclosureVersion ?? string.Empty };
-
     /// <summary>The only way to build a record that claims to have come from a store.</summary>
     /// <remarks>
     /// Internal on purpose — see the type remarks. Widening it to <c>public</c> puts a

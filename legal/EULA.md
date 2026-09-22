@@ -1,6 +1,6 @@
 # FrameLedger — End User License Agreement (EULA)
 
-**Version:** 1.1 · **Effective:** {{RELEASE_DATE}}
+**Version:** 1.2 · **Effective:** {{RELEASE_DATE}}
 
 This End User License Agreement ("Agreement") applies to **FrameLedger** ("the Software"), developed and published by **poli0981** ("the Developer"), contactable at <contact@poli0981.dev> — see <https://poli0981.dev/> for other contact channels.
 
@@ -14,7 +14,7 @@ The Software records game performance data, hardware telemetry (temperatures, lo
 
 ## 2A. Code injection — your responsibility
 
-To measure rendering settings accurately, the Software can load a component into a game process, **but only for games you have individually enabled**, after a consent prompt that explains the risk. The Software refuses to do so when it detects anti-cheat or anti-tamper software. It provides exactly one means to override that refusal: a per-game "bypass the anti-cheat guard" switch, off by default, which you can turn on only by accepting a separate in-application warning by two distinct acts (Disclaimer §2A). **If you turn it on, you do so entirely at your own risk, and the Developer accepts no responsibility or liability for any consequence**, including a suspended or permanently banned account.
+To measure rendering settings accurately, the Software can load a component into a game process, **but only for games you have individually enabled**, after a consent prompt that explains the risk. The Software refuses to do so when it detects anti-cheat or anti-tamper software, turns hooking off for that game, and provides no means to override that refusal (Disclaimer §2A).
 
 By enabling this feature for a game, you confirm that:
 

@@ -93,6 +93,24 @@ public sealed class RecordedSessionEventsTests
         done.Tier.Should().Be(2);
     }
 
+    /// <summary>The finding turned the game's hooking off (2026-09-22): both safety events carry that, so the notice can say it.</summary>
+    [Fact]
+    public void WhenTheFindingTurnedHookingOffBothSafetyEventsSaySo()
+    {
+        var pipe = new RecordingPublisher();
+        RecordedSession refused = Session(SessionEndReason.RefusedByGuard, ExitStatus.Normal, new FinalizeOutcome(FinalizeStatus.Discarded, null, 0),
+            verdict: AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedModule, "eac", "EasyAntiCheat.dll"), tier: CaptureTier.NotHooked);
+        RecordedSession unhooked = Session(SessionEndReason.SafetyUnhook, ExitStatus.UnhookedSafety, new FinalizeOutcome(FinalizeStatus.Saved, 9, 0),
+            verdict: AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedModule, "battleye", "BEClient_x64.dll"));
+
+        RecordedSessionEvents.PublishAll(pipe, refused with { Outcome = refused.Outcome with { HookingTurnedOff = true } }, _info);
+        RecordedSessionEvents.PublishAll(pipe, unhooked with { Outcome = unhooked.Outcome with { HookingTurnedOff = true } }, _info);
+        RecordedSessionEvents.PublishAll(pipe, refused, _info);
+
+        pipe.Of<CaptureRefusedEvent>().Select(static e => e.HookingTurnedOff).Should().Equal(true, false);
+        pipe.Of<SafetyUnhookEvent>().Single().HookingTurnedOff.Should().BeTrue();
+    }
+
     [Fact]
     public void ASafetyUnhookCarriesTheVerdictThatFired()
     {

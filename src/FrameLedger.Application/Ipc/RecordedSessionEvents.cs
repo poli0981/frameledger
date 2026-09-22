@@ -38,8 +38,8 @@ public static class RecordedSessionEvents
     {
         SessionEndReason.RefusedByGuard or SessionEndReason.RefusedPreviouslyBlocked
             or SessionEndReason.PreScanCouldNotVerify or SessionEndReason.RefusedKillSwitch
-            // A persistent notice that says why, not a toast with a code: the user enabled hooking (perhaps the bypass
-            // too), started the game and would otherwise see nothing at all.
+            // A persistent notice that says why, not a toast with a code: the user enabled hooking, started the game
+            // and would otherwise see nothing at all.
             or SessionEndReason.TargetUnreadable => Kind.Refused,
         SessionEndReason.SafetyUnhook => Kind.SafetyUnhook,
         SessionEndReason.SupervisionLost or SessionEndReason.WriterSelfDisabled or SessionEndReason.WriterStoppedBlocklisted
@@ -71,10 +71,10 @@ public static class RecordedSessionEvents
         {
             case Kind.Refused:
                 pipe.Publish(IpcMessageType.CaptureRefused,
-                    new CaptureRefusedEvent(info.GameId, info.GameName, o.Reason.ToString(), NullIfEmpty(o.Verdict.Family), NullIfEmpty(o.Verdict.Signal)));
+                    new CaptureRefusedEvent(info.GameId, info.GameName, o.Reason.ToString(), NullIfEmpty(o.Verdict.Family), NullIfEmpty(o.Verdict.Signal), o.HookingTurnedOff));
                 break;
             case Kind.SafetyUnhook:
-                pipe.Publish(IpcMessageType.SafetyUnhook, new SafetyUnhookEvent(guid, NullIfEmpty(o.Verdict.Family), NullIfEmpty(o.Verdict.Signal)));
+                pipe.Publish(IpcMessageType.SafetyUnhook, new SafetyUnhookEvent(guid, NullIfEmpty(o.Verdict.Family), NullIfEmpty(o.Verdict.Signal), o.HookingTurnedOff));
                 break;
             case Kind.Degraded:
                 pipe.Publish(IpcMessageType.CaptureDegraded, new CaptureDegradedEvent(guid, From: 1, To: 2, o.Reason.ToString()));

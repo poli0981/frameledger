@@ -1826,7 +1826,7 @@ Mở thư mục log?</value>
     <value>Tóm tắt — vui lòng đọc trước khi chấp nhận:
 • Đây là bản beta (pre-release). Chắc chắn vẫn còn lỗi, và nhà phát triển không chịu trách nhiệm về các sự cố phát sinh.
 • Máy của bạn phải đáp ứng ít nhất mức cấu hình tối thiểu mà nhà phát triển/nhà phát hành game công bố. Hãy đọc cấu hình tối thiểu trước. Sự cố trên máy dưới mức đó là trách nhiệm của bạn, không phải của FrameLedger.
-• Hooking nạp một thành phần vào game, từng game một, và chỉ sau khi bạn đồng ý. Hệ thống chống gian lận có thể khoá tài khoản vì việc này. FrameLedger từ chối ở nơi nó phát hiện anti-cheat; nếu bạn chọn bỏ qua sự từ chối đó cho một game, bạn tự chịu toàn bộ rủi ro và nhà phát triển không chịu bất kỳ trách nhiệm nào.
+• Hooking nạp một thành phần vào game, từng game một, và chỉ sau khi bạn đồng ý. Hệ thống chống gian lận có thể khoá tài khoản vì việc này. FrameLedger từ chối ở nơi nó phát hiện anti-cheat và tự tắt hooking cho game đó; không có cách nào vượt qua sự từ chối này.
 • Không có gì được gửi đi đâu cả. Dữ liệu ghi lại nằm trên máy này, và việc sao lưu là của bạn.
 Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắt này không thay thế chúng.</value>
   </data>

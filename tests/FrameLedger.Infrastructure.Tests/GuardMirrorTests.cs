@@ -44,37 +44,6 @@ public sealed class GuardMirrorTests
         }
     }
 
-    /// <summary>
-    /// The user's bypass (owner decision 2026-09-21) overrules "the guard's judgement", and that phrase is a LIST on each
-    /// side of the ABI. Held against each other for every reason, so neither can grow alone. The one deliberate
-    /// difference is managed-only: <see cref="AntiCheatRefusalReason.PreviouslyBlocked"/> is the latch a past judgement
-    /// left on the row, which the native guard never produces and therefore never classifies.
-    /// </summary>
-    [Fact]
-    public void WhatCountsAsTheGuardsJudgementIsTheSameListOnBothSides()
-    {
-        foreach (AntiCheatRefusalReason reason in Enum.GetValues<AntiCheatRefusalReason>())
-        {
-            bool native = NativeAntiCheatGuard.NativeIsGuardJudgement((int)reason);
-            bool managed = AntiCheatVerdict.IsGuardJudgement(reason);
-            if (reason == AntiCheatRefusalReason.PreviouslyBlocked)
-            {
-                native.Should().BeFalse("the native guard never produces the managed latch");
-                managed.Should().BeTrue("the latch IS a past judgement, and the bypass overrules it");
-                continue;
-            }
-
-            managed.Should().Be(native, $"{reason} must be a judgement on both sides or on neither");
-        }
-
-        AntiCheatVerdict.IsGuardJudgement(AntiCheatRefusalReason.Allow).Should().BeFalse();
-        AntiCheatVerdict.IsGuardJudgement(AntiCheatRefusalReason.AllowedUnderUserBypass).Should().BeFalse();
-        AntiCheatVerdict.IsGuardJudgement(AntiCheatRefusalReason.PayloadNotOurs).Should().BeFalse("a foreign payload is a fact, and no acknowledgement loads one");
-        AntiCheatVerdict.IsGuardJudgement(AntiCheatRefusalReason.KillSwitchEngaged).Should().BeFalse();
-        NativeAntiCheatGuard.NativeIsGuardJudgement(-1).Should().BeFalse();
-        NativeAntiCheatGuard.NativeIsGuardJudgement(9999).Should().BeFalse();
-    }
-
     [Fact]
     public void AnOutOfRangeCodeReturnsNothing_RatherThanAPlausibleName()
     {
