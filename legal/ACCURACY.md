@@ -11,8 +11,8 @@
   that changes what FrameLedger.Overlay or the capture host does; date the change.
   HTML comments are not part of the block.
 -->
-> ⚠ **What FrameLedger actually measures today — 2026-09-22.** The software is a beta; its latest
-> **pre-release is `0.1.0-beta.5`** (2026-09-22), an unsigned installer built from that tag with its
+> ⚠ **What FrameLedger actually measures today — 2026-09-23.** The software is a beta; its latest
+> **pre-release is `0.1.0-beta.6`** (2026-09-23), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
 > game in the library runs, injects only into games you enabled and only past the safety guard, and
@@ -28,8 +28,8 @@
 >   NVIDIA Streamline (with Ray Reconstruction Yes/No), and FSR through AMD's shipped FidelityFX DLLs:
 >   named FSR 3 from the older DLLs, and FSR without a version from the newer ones, which host both
 >   FSR 3.1 and FSR 4. FSR 2, and FSR shipped any other way, is not identified. For DLSS titles that
->   bypass Streamline, the NVIDIA driver's own per-process record is stored with the session, labelled
->   *driver-reported*; the app does not display it yet. Intel XeSS is **not** read (its SDK licence
+>   bypass Streamline, the NVIDIA driver's own per-process record is stored with the session and shown
+>   as *DLSS (driver-reported)*. Intel XeSS is **not** read (its SDK licence
 >   forbids it), and neither is an upscaler compiled into the game: those read `N/A`, or "Unknown
 >   upscaler" when another vendor's hook ran in the game. Vulkan and OpenGL titles read `N/A`.
 > - **Quality preset:** not reported on any title measured. The one route this software may use — the

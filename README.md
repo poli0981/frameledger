@@ -5,8 +5,8 @@
 > No telemetry. No accounts. All data stays on your machine.
 
 <!-- accuracy-block:begin -->
-> ⚠ **What FrameLedger actually measures today — 2026-09-22.** The software is a beta; its latest
-> **pre-release is `0.1.0-beta.5`** (2026-09-22), an unsigned installer built from that tag with its
+> ⚠ **What FrameLedger actually measures today — 2026-09-23.** The software is a beta; its latest
+> **pre-release is `0.1.0-beta.6`** (2026-09-23), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
 > game in the library runs, injects only into games you enabled and only past the safety guard, and
@@ -22,8 +22,8 @@
 >   NVIDIA Streamline (with Ray Reconstruction Yes/No), and FSR through AMD's shipped FidelityFX DLLs:
 >   named FSR 3 from the older DLLs, and FSR without a version from the newer ones, which host both
 >   FSR 3.1 and FSR 4. FSR 2, and FSR shipped any other way, is not identified. For DLSS titles that
->   bypass Streamline, the NVIDIA driver's own per-process record is stored with the session, labelled
->   *driver-reported*; the app does not display it yet. Intel XeSS is **not** read (its SDK licence
+>   bypass Streamline, the NVIDIA driver's own per-process record is stored with the session and shown
+>   as *DLSS (driver-reported)*. Intel XeSS is **not** read (its SDK licence
 >   forbids it), and neither is an upscaler compiled into the game: those read `N/A`, or "Unknown
 >   upscaler" when another vendor's hook ran in the game. Vulkan and OpenGL titles read `N/A`.
 > - **Quality preset:** not reported on any title measured. The one route this software may use — the
@@ -136,7 +136,7 @@ Elevation is **optional — for everything.** Hooked capture is the normal path 
 
 ## Install
 
-> **The latest pre-release is `v0.1.0-beta.5` (2026-09-22); before it `v0.1.0-beta.4` (2026-09-21), `v0.1.0-beta.3` (2026-09-21), `v0.1.0-beta.2` (2026-09-17) and `v0.1.0-beta.1` (2026-09-16).** They are pre-releases: read `CHANGELOG.md`'s section for the one you install — what it measures, what it does not yet, and how to update — before installing. A source build is `docs/12_BUILD.md`.
+> **The latest pre-release is `v0.1.0-beta.6` (2026-09-23); before it `v0.1.0-beta.5` (2026-09-22), `v0.1.0-beta.4` (2026-09-21), `v0.1.0-beta.3` (2026-09-21), `v0.1.0-beta.2` (2026-09-17) and `v0.1.0-beta.1` (2026-09-16).** They are pre-releases: read `CHANGELOG.md`'s section for the one you install — what it measures, what it does not yet, and how to update — before installing. A source build is `docs/12_BUILD.md`.
 
 1. Download the latest `FrameLedger.App-win-Setup.exe` from [Releases](https://github.com/poli0981/frameledger/releases). It installs into `%LOCALAPPDATA%\FrameLedger.App`; your data stays in `%LOCALAPPDATA%\FrameLedger`, and uninstalling asks before touching it.
 2. SmartScreen may warn — releases are not code-signed (free, open-source project). Verify the SHA-256 checksum published with each release, then **More info → Run anyway**.
@@ -164,4 +164,4 @@ If you find a game with anti-cheat that FrameLedger fails to detect, please open
 
 ---
 
-**Status:** pre-release (beta). Five tagged pre-releases so far; see `CHANGELOG.md` for what each one changed and the accuracy block at the top of this file for what is and is not measured. It is not feature-complete, it certainly still has bugs, and `legal/DISCLAIMER.md` §0 says what that means for you.
+**Status:** pre-release (beta). Six tagged pre-releases so far; see `CHANGELOG.md` for what each one changed and the accuracy block at the top of this file for what is and is not measured. It is not feature-complete, it certainly still has bugs, and `legal/DISCLAIMER.md` §0 says what that means for you.

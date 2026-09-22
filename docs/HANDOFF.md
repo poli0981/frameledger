@@ -1473,7 +1473,7 @@ fact stands.
 
 ## 2026-09-23 — the beta.6 train: a file name is not an identity, one entry per executable, Tier 2 shown live
 
-*Status is `CHANGELOG.md` `[Unreleased]` until the tag; this is what no other file carries. The owner's list and the
+*Status is `CHANGELOG.md` `[0.1.0-beta.6]`; this is what no other file carries. The owner's list and the
 evidence behind each item are in the approved plan the PRs cite; the decisions it took are D25–D28.*
 
 **Decision (D25, owner: "HELLO, HELLO WORLD! was recorded as Flower in Us, twice").** A file name is not an identity:
