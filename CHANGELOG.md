@@ -27,6 +27,35 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
+_Nothing yet — entries continue here after `0.1.0-beta.5`._
+
+## [0.1.0-beta.5] - 2026-09-22
+
+**The fifth pre-release: the guard override is gone, Tier 2 exists, and a drive that changes its letter is followed.**
+The same unsigned installer: verify its hash against `SHA256SUMS.txt`, then *More info → Run anyway*. What changed for
+a user:
+
+- **The "Bypass the anti-cheat guard" switch is removed.** Where FrameLedger finds anti-cheat in a game — before it
+  injects, when a session starts, or during one — it refuses and **turns hooking off for that game**, says so in the
+  notice and on the game's page, and offers no way to turn it back on for that executable. The terms say so
+  (Disclaimer 2.5, EULA 1.2), so the Legal Gate opens once after the update.
+- **Sessions that could not be hooked are recorded now.** A refused or hooking-off game gets a T2 row with its
+  duration, hardware telemetry and the reason — the summary says why ("the guard refused — …", "hooking was off for
+  this game", "Windows would not let FrameLedger open the process"). Until now every such session was thrown away
+  within a second.
+- **A hooking-off entry that runs as administrator (Borderless Gaming, imported from Steam) no longer gets the
+  "anti-cheat driver" notice**, and Steam's tools are no longer imported as games. An entry you already have for one
+  stays until you remove it.
+- **A drive that changes its letter no longer loses your games.** The Agent finds the same file under the new letter
+  and moves the entry to it with its consent kept — within about 15 s in the background, at once when you launch the
+  game, and when you click the hooking switch. The game's page says when its executable is not where the entry points.
+
+**Updating from `0.1.0-beta.4`:**
+
+- Quit the App (tray icon → Exit) and end `FrameLedger.Agent.exe` before running the installer.
+- Schema 0008 drops the five columns of the removed switch; the database opens in place, nothing else changes.
+- Entries whose switch was on lose it; if the guard blocked such a game, its hooking is off and its page says why.
+
 ### Removed
 
 - **The per-game guard override ("Bypass the anti-cheat guard") is gone** — owner decision 2026-09-22, two pre-releases
