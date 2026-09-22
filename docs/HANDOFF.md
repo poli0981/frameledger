@@ -1431,7 +1431,7 @@ stops there"~~ — the override itself is gone since 2026-09-22 (D22).
 
 ## 2026-09-22 — the override withdrawn; a finding turns hooking off; Tier 2 exists; a moved drive is followed
 
-*Status is `CHANGELOG.md` `[Unreleased]`; this is what no other file carries.*
+*Status is `CHANGELOG.md` `[0.1.0-beta.5]`; this is what no other file carries.*
 
 **Decision (D23, owner: "Tier 2 does not work — what does it record, and show it").** Tier 2 is now a held session
 (`04_CAPTURE` §Tier selection): duration, telemetry and the reason, saved under the same 30 s rule as Tier 1. **Two
