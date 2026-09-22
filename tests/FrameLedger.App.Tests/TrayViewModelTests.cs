@@ -203,6 +203,30 @@ public sealed class TrayViewModelTests
         shell.Exits.Should().Be(1);
     }
 
+    /// <summary>
+    /// A session running when the App (re)connects is in the tray at once (2026-09-23): the tray learned of a session only
+    /// from its start event, so one that began before the App connected — and every Tier-2 hold, which sent none — left it idle.
+    /// </summary>
+    [Fact]
+    public void ASessionRunningWhenTheAppConnectsIsInTheTrayAndItsCompletionNamesIt()
+    {
+        var link = new FakeAgentLink();
+        using UpdateService updates = Updates(link);
+        using var vm = new TrayViewModel(link, new FakeShell { IsShown = false }, new FakeSummaries(), new NoNavigation(), updates);
+        var toasts = new List<TrayToastEventArgs>();
+        vm.ToastRequested += (_, t) => toasts.Add(t);
+        var guid = Guid.NewGuid();
+
+        link.Status = new StatusAck("recording", null, null, [new ActiveSession(guid, 7, "Held Game", 42, 2, DateTimeOffset.UtcNow, new SessionHold("RefusedHookNotEnabled"))]);
+        link.RaiseChanged();
+        vm.State.Should().Be(TrayState.RecordingOnly);
+        vm.Tooltip.Should().Contain("Held Game");
+
+        link.Raise(IpcMessageType.SessionCompleted, new SessionCompletedEvent(guid, 12, "normal", 2, "saved", "RefusedHookNotEnabled", 7, "Held Game"));
+        vm.State.Should().Be(TrayState.Idle);
+        toasts.Should().ContainSingle().Which.Body.Should().Contain("Held Game");
+    }
+
     [Fact]
     public void ADisconnectClearsTheRunningSessions()
     {

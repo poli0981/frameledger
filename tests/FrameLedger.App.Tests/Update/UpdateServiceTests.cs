@@ -130,6 +130,7 @@ public sealed class UpdateServiceTests
     {
         var h = new Harness();
         h.Agent.Status = Status("capturing", 1);
+        h.Agent.RaiseChanged();
         h.Client.Next = Candidate();
 
         await h.Service.CheckSilentlyAsync(Ct);
@@ -144,6 +145,29 @@ public sealed class UpdateServiceTests
         h.Service.Stage.Should().Be(UpdateStage.Deferred, "a session that started after the download defers it again");
         h.Agent.Raise(IpcMessageType.SessionCompleted, new SessionCompletedEvent(guid, 5, "normal", 1, "saved", "exit"));
         h.Service.Stage.Should().Be(UpdateStage.Ready);
+    }
+
+    [Fact]
+    public async Task ASessionListedAtConnectEndsWithItsCompletionNotAtTheNextReconnect()
+    {
+        var h = new Harness();
+        StatusAck status = Status("capturing", 1);
+        h.Agent.Status = status;
+        h.Agent.RaiseChanged();
+        h.Client.Next = Candidate();
+
+        await h.Service.CheckSilentlyAsync(Ct);
+        h.Service.Stage.Should().Be(UpdateStage.Deferred);
+
+        Guid running = status.ActiveSessions[0].SessionGuid;
+        h.Agent.Raise(IpcMessageType.SessionCompleted, new SessionCompletedEvent(running, 5, "normal", 1, "saved", "exit"));
+
+        h.Service.Stage.Should().Be(UpdateStage.Ready, "until 2026-09-23 the connect-time status held this at Deferred until the App reconnected, hours later");
+        h.Service.IsSessionActive.Should().BeFalse();
+
+        h.Agent.State = AgentConnectionState.Offline;
+        h.Agent.RaiseChanged();
+        h.Service.IsSessionActive.Should().BeFalse("a lost Agent lists nothing; its sessions come back with the next connect's status");
     }
 
     [Fact]
@@ -304,6 +328,7 @@ public sealed class UpdateServiceTests
         await h.Service.CheckSilentlyAsync(Ct);
         h.Service.Stage.Should().Be(UpdateStage.Ready);
         h.Agent.Status = Status("capturing", 1);
+        h.Agent.RaiseChanged();
 
         await h.Service.RestartToUpdateAsync(Ct);
 

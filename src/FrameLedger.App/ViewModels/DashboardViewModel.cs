@@ -54,10 +54,13 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
     private bool _recentEmpty = true;
 
     private readonly IShellPresence? _presence;
+    private readonly LiveSessions? _sessions;
 
-    public DashboardViewModel(IAgentLink agent, GameLibrary library, GameSelection selection, IPageNavigator navigator, ISessionSummaryOpener summaries, IMessageStrip strip, IShellPresence? presence = null)
+    public DashboardViewModel(IAgentLink agent, GameLibrary library, GameSelection selection, IPageNavigator navigator, ISessionSummaryOpener summaries, IMessageStrip strip, IShellPresence? presence = null,
+        LiveSessions? sessions = null)
     {
         _presence = presence;
+        _sessions = sessions;
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _library = library ?? throw new ArgumentNullException(nameof(library));
         _selection = selection ?? throw new ArgumentNullException(nameof(selection));
@@ -66,7 +69,13 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
         _strip = strip ?? throw new ArgumentNullException(nameof(strip));
         _agent.Changed += OnAgentChanged;
         _agent.EventReceived += OnAgentEvent;
+        if (_sessions is not null)
+        {
+            _sessions.Changed += OnSessionsChanged;
+        }
+
         Refresh();
+        SeedLive();
         Pending = LoadAsync();
     }
 
@@ -95,6 +104,10 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
     {
         _agent.Changed -= OnAgentChanged;
         _agent.EventReceived -= OnAgentEvent;
+        if (_sessions is not null)
+        {
+            _sessions.Changed -= OnSessionsChanged;
+        }
     }
 
     public async Task LoadAsync(CancellationToken ct = default)
@@ -139,6 +152,27 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
 
     private void OnAgentEvent(object? sender, AgentEventArgs e) => _ui.Post(() => Dispatch(e.Envelope));
 
+    private void OnSessionsChanged(object? sender, EventArgs e) => _ui.Post(() =>
+    {
+        SeedLive();
+        Refresh();
+    });
+
+    /// <summary>
+    /// A session already running takes the idle card (2026-09-23): the Dashboard is rebuilt on every visit, so one that
+    /// started while another page was open had no start event here and read "Nothing is being captured.". A hooked
+    /// session is preferred over one recorded without measuring.
+    /// </summary>
+    private void SeedLive()
+    {
+        if (Live.IsActive || _sessions?.Current is not { Count: > 0 } running)
+        {
+            return;
+        }
+
+        Live.Seed(running.FirstOrDefault(static s => s.Tier == 1) ?? running[0]);
+    }
+
     /// <summary>The three session events drive the live card; a completed session reloads the lists (07_IPC §Client behavior: the row is in SQLite).</summary>
     private void Dispatch(IpcEnvelope envelope)
     {
@@ -150,9 +184,15 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
             case IpcMessageType.SessionProgress when IpcCodec.Payload<SessionProgressEvent>(envelope) is { } progress:
                 Live.Update(progress);
                 break;
+            case IpcMessageType.SessionHeld when IpcCodec.Payload<SessionHeldEvent>(envelope) is { } held:
+                Live.Hold(held);
+                break;
             case IpcMessageType.SessionCompleted when IpcCodec.Payload<SessionCompletedEvent>(envelope) is { } completed:
+                // The session's own name (2026-09-23): the card may show another session, and a Tier-2 one had none here.
+                string? name = completed.GameName ?? (Live.SessionGuid == completed.SessionGuid ? Live.GameName : null);
                 Live.Stop(completed);
-                Notice(completed);
+                Notice(completed, name);
+                SeedLive();
                 Pending = LoadAsync();
                 break;
             default:
@@ -162,14 +202,15 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
 
     /// <summary>FR-3.8's post-session notice, in-app while the window is on screen; the tray's balloon carries it otherwise (P3 PR-8b, one event → one channel). A safety stop is never a toast (08_UI §Notifications policy) — the shell's notices carry those.</summary>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format string is a resource that follows the UI culture, which changes at runtime")]
-    private void Notice(SessionCompletedEvent completed)
+    private void Notice(SessionCompletedEvent completed, string? name)
     {
-        if (_presence is { IsShown: false })
+        // A faulted session is the strip's CaptureError already; "discarded" would say something that did not happen.
+        if (_presence is { IsShown: false } || string.Equals(completed.Finalize, "faulted", StringComparison.Ordinal))
         {
             return;
         }
 
-        string game = Live.GameName.Length > 0 ? Live.GameName : Strings.Common_NotAvailable;
+        string game = name is { Length: > 0 } ? name : Strings.Common_NotAvailable;
         if (completed.SessionId is not null)
         {
             _strip.Success(Strings.Dashboard_Live_Header, string.Format(CultureInfo.CurrentCulture, Strings.Dashboard_SessionSaved_Format, game));
@@ -189,6 +230,8 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
         TelemetrySource = hello?.TelemetrySource ?? Strings.Common_NotAvailable;
         OverlayBuildId = hello?.OverlayBuildId ?? Strings.Common_NotAvailable;
         Elevated = hello is null ? Strings.Common_NotAvailable : hello.Elevated ? Strings.Common_Yes : Strings.Common_No;
-        RunningSessions = status?.ActiveSessions.Count.ToString(CultureInfo.CurrentCulture) ?? Strings.Common_NotAvailable;
+        RunningSessions = _sessions is not null && _agent.State == AgentConnectionState.Connected
+            ? _sessions.Current.Count.ToString(CultureInfo.CurrentCulture)
+            : status?.ActiveSessions.Count.ToString(CultureInfo.CurrentCulture) ?? Strings.Common_NotAvailable;
     }
 }

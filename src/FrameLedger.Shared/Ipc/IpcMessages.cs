@@ -51,6 +51,9 @@ public static class IpcMessageType
 
     public const string SessionStarted = "SessionStarted";
     public const string SessionProgress = "SessionProgress";
+
+    /// <summary>1 Hz while a session runs UNHOOKED (Tier 2) and a client listens (2026-09-23): elapsed and telemetry, nothing measured.</summary>
+    public const string SessionHeld = "SessionHeld";
     public const string SessionCompleted = "SessionCompleted";
     public const string CaptureRefused = "CaptureRefused";
     public const string CaptureDegraded = "CaptureDegraded";
@@ -114,8 +117,18 @@ public sealed record HelloAck(
 /// <summary><c>GetStatus</c>: no payload.</summary>
 public sealed record GetStatusRequest;
 
-/// <summary>One session the Agent is running right now. Tier 1 once the ring is attached, 2 until then or never.</summary>
-public sealed record ActiveSession(Guid SessionGuid, long GameId, string? GameName, int Pid, int Tier, DateTimeOffset StartedAt);
+/// <summary>
+/// Why a session runs without being measured (2026-09-23): the words its <c>capture_notes</c> will carry — the loop's end
+/// reason and, when the guard said it, the guard's reason, family and signal — so a live card can say what the summary
+/// will. Sent with a Tier-2 <see cref="SessionStartedEvent"/> and on its <see cref="ActiveSession"/>; absent for Tier 1.
+/// </summary>
+public sealed record SessionHold(string Reason, string? GuardReason = null, string? Family = null, string? Signal = null, bool HookingTurnedOff = false);
+
+/// <summary>
+/// One session the Agent is running right now. Tier 1 once the ring is attached, 2 until then or never; <see cref="Hold"/>
+/// says why a Tier-2 session measures nothing (2026-09-23, optional).
+/// </summary>
+public sealed record ActiveSession(Guid SessionGuid, long GameId, string? GameName, int Pid, int Tier, DateTimeOffset StartedAt, SessionHold? Hold = null);
 
 /// <summary>
 /// <c>StatusAck</c>. <see cref="State"/> is <c>idle</c>, <c>recording</c> (a session runs, nothing hooked) or
@@ -129,8 +142,19 @@ public sealed record PongAck;
 
 public sealed record ErrorAck(string Code, string Message);
 
-/// <summary>Published when the ring is attached — the moment a session becomes Tier 1 and the live card has something to show.</summary>
-public sealed record SessionStartedEvent(Guid SessionGuid, long GameId, string? GameName, int Pid, int Tier, DateTimeOffset StartedAt);
+/// <summary>
+/// Published ONCE per session: when the ring is attached (Tier 1), or — since 2026-09-23 — when a session that will not
+/// be hooked starts its hold (Tier 2, with <see cref="Hold"/>). Until then an unhooked session had no start event at all,
+/// and the live card read "Nothing is being captured." for the whole of a hooking-off game.
+/// </summary>
+public sealed record SessionStartedEvent(Guid SessionGuid, long GameId, string? GameName, int Pid, int Tier, DateTimeOffset StartedAt, SessionHold? Hold = null);
+
+/// <summary>
+/// 1 Hz while a Tier-2 session is held and a client is connected (2026-09-23): how long it has run and the machine's
+/// telemetry. Never a frame-derived value — there is none (CLAUDE.md rule 6 has nothing to show, and shows nothing).
+/// Its own type rather than <see cref="SessionProgressEvent"/>, whose required fields would put measured-looking zeros on the wire.
+/// </summary>
+public sealed record SessionHeldEvent(Guid SessionGuid, double ElapsedS, double? GpuTempC = null, double? CpuTempC = null, double? GpuLoadPct = null, double? CpuLoadPct = null);
 
 /// <summary>
 /// 1 Hz while a hooked session runs and a client is connected (<c>04_CAPTURE</c> §Live progress). A 5 s rolling
@@ -218,9 +242,11 @@ public sealed record SessionProgressEvent
 
 /// <summary>
 /// The session is over and, when <see cref="SessionId"/> is set, in SQLite; the UI loads the row from there
-/// (<c>07_IPC</c> §Client behavior). <see cref="Finalize"/> is <c>saved</c> or <c>discarded</c>.
+/// (<c>07_IPC</c> §Client behavior). <see cref="Finalize"/> is <c>saved</c>, <c>discarded</c>, <c>game_removed</c> or
+/// <c>faulted</c>. <see cref="GameId"/> and <see cref="GameName"/> (2026-09-23, optional) name the entry it belongs to, so a
+/// notice about it never borrows another session's name.
 /// </summary>
-public sealed record SessionCompletedEvent(Guid SessionGuid, long? SessionId, string ExitStatus, int Tier, string Finalize, string Reason);
+public sealed record SessionCompletedEvent(Guid SessionGuid, long? SessionId, string ExitStatus, int Tier, string Finalize, string Reason, long? GameId = null, string? GameName = null);
 
 /// <summary>The gate or the guard said no before anything was injected (<c>08_UI</c> §Safety events: never a toast).</summary>
 public sealed record CaptureRefusedEvent(long GameId, string? GameName, string Reason, string? Family, string? Signal, bool HookingTurnedOff = false);

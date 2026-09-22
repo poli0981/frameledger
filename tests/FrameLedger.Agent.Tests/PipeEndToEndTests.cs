@@ -118,6 +118,34 @@ public sealed class PipeEndToEndTests : IDisposable
         }
     }
 
+    /// <summary>
+    /// A game whose hooking is off is recorded without measuring (Tier 2), and since 2026-09-23 the pipe says so while it
+    /// runs: a tier-2 <c>SessionStarted</c> carrying why, <c>SessionHeld</c> ticks and never a <c>SessionProgress</c>, the
+    /// status listing it with its hold, and — when the harness exits — the completion under the entry's own name.
+    /// Nothing is injected: the row has no consent, and the loop never opens the process.
+    /// </summary>
+    [Fact]
+    public async Task AWatchedHarnessWithHookingOffIsHeldAndNarratedAtTierTwo()
+    {
+        StageTarget();
+        var paths = new AgentPaths(_dataDir);
+        Directory.CreateDirectory(paths.Logs);
+        Directory.CreateDirectory(paths.Tmp);
+
+        LedgerDatabase db = await LedgerDatabase.OpenAsync(paths.Database, ct: Ct).ConfigureAwait(true);
+        await using (db.ConfigureAwait(true))
+        {
+            ExecutableFingerprint fingerprint = FrameLedger.Infrastructure.Io.ExecutableIdentity.Read(ConsentedExecutable)!.Value;
+            GameRow row = await new SqliteGameRepository(db).EnsureAsync(fingerprint, "Held harness", Ct).ConfigureAwait(true);
+            row.HookEnabled.Should().BeFalse("a row that was merely added has hooking off");
+            ServiceProvider services = new ServiceCollection().AddFrameLedgerAgent(db, paths, _pipeName).BuildServiceProvider();
+            await using (services.ConfigureAwait(true))
+            {
+                await RunHeldScenarioAsync(services, row.Id).ConfigureAwait(true);
+            }
+        }
+    }
+
     private void StageTarget()
     {
         File.Exists(Harness).Should().BeTrue("hook-harness.exe must be staged beside the test binary (FrameLedger.DrainFixtures.targets)");
@@ -231,6 +259,53 @@ public sealed class PipeEndToEndTests : IDisposable
             }
 
             await TearDownAsync(client, null, stop).ConfigureAwait(false);
+            await JoinAsync(serving, watching).ConfigureAwait(false);
+        }
+    }
+
+    private async Task RunHeldScenarioAsync(ServiceProvider services, long gameId)
+    {
+        PipeServer server = services.GetRequiredService<PipeServer>();
+        CaptureOrchestrator orchestrator = services.GetRequiredService<CaptureOrchestrator>();
+        using var stop = new CancellationTokenSource();
+        Task serving = server.RunAsync(stop.Token);
+        Task watching = orchestrator.RunAsync(stop.Token);
+
+        Process? harness = null;
+        PipeClient? client = null;
+        try
+        {
+            client = NewClient();
+            await client.ConnectAsync(TimeSpan.FromSeconds(10), Ct).ConfigureAwait(false);
+            await HelloAsync(client).ConfigureAwait(false);
+
+            harness = Process.Start(new ProcessStartInfo(ConsentedExecutable, "--real --hold-presenting 40") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true })!;
+            Narration story = await ReadStoryAsync(client, s => s.GameId == gameId, static s => s.Held >= 2).ConfigureAwait(false);
+
+            story.Started.Should().NotBeNull("a held session is announced while it runs, not only when it ends");
+            story.Started!.Tier.Should().Be(2);
+            story.Started.Pid.Should().Be(0, "a hooking-off hold never opens the process");
+            story.Started.Hold.Should().NotBeNull();
+            story.Started.Hold!.Reason.Should().Be(nameof(Application.Capture.SessionEndReason.RefusedHookNotEnabled));
+            story.Held.Should().BeGreaterThanOrEqualTo(2);
+            story.Progress.Should().BeEmpty("nothing is measured, so nothing measured-looking goes on the wire");
+
+            StatusAck status = await client.GetStatusAsync(_ack, Ct).ConfigureAwait(false);
+            status.State.Should().Be("recording");
+            status.ActiveSessions.Should().ContainSingle().Which.Hold.Should().Be(story.Started.Hold, "an App that connects now learns why from the status");
+
+            harness.Kill(entireProcessTree: true);
+            Guid guid = story.Started.SessionGuid;
+            Narration ended = await ReadStoryAsync(client, s => s.SessionGuid == guid, static s => s.Completed is not null, guid).ConfigureAwait(false);
+            ended.Completed.Should().NotBeNull("the hold ends with the game");
+            ended.Completed!.Tier.Should().Be(2);
+            ended.Completed.GameId.Should().Be(gameId);
+            ended.Completed.GameName.Should().Be("Held harness");
+            server.RejectedClients.Should().Be(0);
+        }
+        finally
+        {
+            await TearDownAsync(client, harness, stop).ConfigureAwait(false);
             await JoinAsync(serving, watching).ConfigureAwait(false);
         }
     }
@@ -396,6 +471,9 @@ public sealed class PipeEndToEndTests : IDisposable
 
         public List<TimeSpan> ProgressSpacing { get; } = [];
 
+        /// <summary>The <c>SessionHeld</c> ticks a session held unhooked sent (2026-09-23).</summary>
+        public int Held { get; set; }
+
         public SessionCompletedEvent? Completed { get; set; }
     }
 
@@ -441,6 +519,13 @@ public sealed class PipeEndToEndTests : IDisposable
                     }
 
                     lastProgress = clock.Elapsed;
+                    break;
+                case IpcMessageType.SessionHeld when ours is { } g:
+                    if (IpcCodec.Payload<SessionHeldEvent>(e)!.SessionGuid == g)
+                    {
+                        story.Held++;
+                    }
+
                     break;
                 case IpcMessageType.SessionCompleted when ours is { } g:
                     SessionCompletedEvent completed = IpcCodec.Payload<SessionCompletedEvent>(e)!;

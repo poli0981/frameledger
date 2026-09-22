@@ -143,9 +143,15 @@ public sealed partial class TrayViewModel : ObservableObject, IDisposable
             IsPaused = status.Paused;
         }
 
-        if (!_agent.IsConnected)
+        // What the Agent runs is re-read on every (re)connect (2026-09-23): a session that started before this App
+        // connected — or while it was away — was missing from the tray until it ended.
+        _running.Clear();
+        if (_agent.IsConnected && _agent.Status is { } running)
         {
-            _running.Clear();
+            foreach (ActiveSession a in running.ActiveSessions)
+            {
+                _running[a.SessionGuid] = (a.Tier, a.GameName ?? Strings.Common_NotAvailable);
+            }
         }
 
         Recompute();
@@ -162,7 +168,8 @@ public sealed partial class TrayViewModel : ObservableObject, IDisposable
                 Recompute();
                 break;
             case IpcMessageType.SessionCompleted when IpcCodec.Payload<SessionCompletedEvent>(envelope) is { } completed:
-                string name = _running.TryGetValue(completed.SessionGuid, out (int Tier, string Name) run) ? run.Name : Strings.Common_NotAvailable;
+                string name = completed.GameName
+                    ?? (_running.TryGetValue(completed.SessionGuid, out (int Tier, string Name) run) ? run.Name : Strings.Common_NotAvailable);
                 _running.Remove(completed.SessionGuid);
                 Recompute();
                 if (completed.SessionId is long id)

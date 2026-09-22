@@ -28,6 +28,12 @@ public sealed record CaptureProgress
 
     public required NgxDriverState NgxDriver { get; init; }
 
+    /// <summary>
+    /// On a held session's tick (2026-09-23): the refusal it is held under — its reason, and the guard's verdict when the
+    /// guard spoke — so the pipe can say, while the game runs, why nothing is measured. Null on every hooked tick.
+    /// </summary>
+    public CaptureOutcome? Hold { get; init; }
+
     /// <summary>The tick of a session that never attached (Tier 2, 2026-09-22): no records, no ring, nothing measured.</summary>
     public static CaptureProgress Unhooked { get; } = new()
     {
@@ -43,4 +49,11 @@ public sealed record CaptureProgress
         RuntimeModules = RuntimeModuleSet.Empty,
         NgxDriver = NgxDriverState.NotRun,
     };
+
+    /// <summary>The tick of a session held unhooked under <paramref name="refusal"/> (2026-09-23): <see cref="Unhooked"/> with its reason.</summary>
+    public static CaptureProgress Held(CaptureOutcome refusal)
+    {
+        ArgumentNullException.ThrowIfNull(refusal);
+        return Unhooked with { Hold = refusal };
+    }
 }

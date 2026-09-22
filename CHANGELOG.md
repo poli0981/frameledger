@@ -64,6 +64,19 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   report, and the next file is recovered. The `FAULTED` and end-of-session log lines now name the session, the game and
   its executable, and the Agent's host logs its own warnings and errors into `agent-*.log`.
 
+- **A game that is recorded without measuring is shown while it runs.** A game with hooking off, one the guard
+  refused, or one whose process could not be read is recorded (duration, sensors, the reason) since beta.5 — but the
+  Agent announced only hooked sessions, so for as long as such a game ran the Dashboard said "Nothing is being
+  captured." and the tray stayed idle. Now the live card shows it with the T2 badge, the elapsed time, the
+  temperatures, "Recording duration and sensors only — nothing is measured." and why, in the sentence its summary will
+  use (no FPS readout: nothing is measured, so nothing is shown); the tray turns to recording-only; the refusal notice
+  appears when the game starts rather than when it exits. A Dashboard opened after a game started shows it at once
+  (it used to wait for the next start), a session running when the App connects is in the tray, the notice after a
+  session names that session's game (it could name the previous one), a session that fails is let go of instead of
+  staying on the card, and an update downloaded after a session ends is ready to install instead of waiting for the
+  App to reconnect. A game whose executable changed since hooking was turned on — after a store update, usually — now
+  says so in its summary instead of `RefusedConsentMissing`.
+
 ## [0.1.0-beta.5] - 2026-09-22
 
 **The fifth pre-release: the guard override is gone, Tier 2 exists, and a drive that changes its letter is followed.**

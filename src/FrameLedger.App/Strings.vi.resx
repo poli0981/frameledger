@@ -361,6 +361,9 @@
   <data name="Dashboard_Live_Idle" xml:space="preserve">
     <value>Không có gì đang được thu thập.</value>
   </data>
+  <data name="Dashboard_Live_RecordingOnly" xml:space="preserve">
+    <value>Chỉ ghi thời lượng và cảm biến — không đo gì.</value>
+  </data>
   <data name="Dashboard_Live_Rt_On" xml:space="preserve">
     <value>RT đang bật</value>
   </data>
@@ -921,6 +924,9 @@
   </data>
   <data name="Summary_Tier2_Why_Blocked_Format" xml:space="preserve">
     <value>Lý do: hooking đang tắt cho game này — guard đã phát hiện {0}.</value>
+  </data>
+  <data name="Summary_Tier2_Why_ConsentChanged" xml:space="preserve">
+    <value>Lý do: file thực thi của game đã đổi kể từ khi bật hooking (thường là do cập nhật), nên sự đồng ý đó không còn áp dụng — hãy bật lại hooking cho game.</value>
   </data>
   <data name="Summary_Tier2_Why_Guard_Format" xml:space="preserve">
     <value>Lý do: guard đã từ chối — {0} ({1}).</value>
