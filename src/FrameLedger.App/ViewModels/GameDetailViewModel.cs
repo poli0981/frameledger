@@ -604,7 +604,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
     }
 
     private static string EngineText(GameRow row) =>
-        row.Engine is null ? string.Empty : row.EngineVersion is null ? row.Engine : row.Engine + " " + row.EngineVersion;
+        row.Engine is null || row.EngineVersion is null ? Formats.Engine(row.Engine) : Formats.Engine(row.Engine) + " " + row.EngineVersion;
 
     private static Domain.Metrics.Tri DefaultOf(GameRow row, TriStateKind kind) => kind switch
     {

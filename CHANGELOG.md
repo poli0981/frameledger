@@ -27,6 +27,16 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
+### Added
+
+- **RE Engine and FromSoftware games are detected.** Capcom's RE Engine titles (RESIDENT EVIL 2/3/4/7/Village, Devil
+  May Cry 5, Monster Hunter Rise/Wilds, Street Fighter 6, Dragon's Dogma 2, Onimusha…) by their `re_chunk_000.pak`
+  archive; FromSoftware's (DARK SOULS II/III, ELDEN RING, Sekiro…) by their `.bhd` + `.bdt` archive pairs. Both are
+  relative signals — a file layout, not a proof — like every engine rule. Every game in the library is re-detected on
+  the next sweep. Engines are now shown by name ("RPG Maker MV/MZ", "Unreal Engine") instead of the rule's id
+  (`rpgmaker_mv`). A game added by hand whose executable says nothing (`Game.exe`) is named after the game — RPG
+  Maker's own title when the folder carries one, else its folder — instead of "Game".
+
 ### Fixed
 
 - **Another game's `Game.exe` no longer runs under a library entry — no wrong name, no second session.** On

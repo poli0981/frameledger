@@ -15,7 +15,7 @@ public sealed class GameCardViewModel
         Id = card.Row.Id;
         Name = card.Row.Name;
         PlatformText = Formats.Platform(card.Row.Platform);
-        EngineText = card.Row.Engine ?? string.Empty;
+        EngineText = Formats.Engine(card.Row.Engine);
         HookOn = card.Row.HookEnabled;
         HookText = HookOn ? Strings.Games_Card_HookOn : Strings.Games_Card_HookOff;
         SessionCount = card.Summary?.SessionCount ?? 0;

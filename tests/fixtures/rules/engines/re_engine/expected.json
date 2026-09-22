@@ -1,0 +1,1 @@
+{ "engine": "re_engine", "platform": null, "capabilities": [], "$why": "re_chunk_000.pak, the base archive every RE Engine title ships (RE2 and the Onimusha demo checked on disk 2026-09-23), beside a patch archive. The rule names the base file exactly: a patch archive alone is not it." }

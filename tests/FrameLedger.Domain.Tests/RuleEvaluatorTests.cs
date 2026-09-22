@@ -132,6 +132,38 @@ public sealed class RuleEvaluatorTests
         m.Rule.Should().BeNull("an undetermined walk must not report a later rule as the winner");
     }
 
+    /// <summary>
+    /// The shipped <c>fromsoftware</c> rule's shape (2026-09-23): an <c>all</c> group needs every signal, so a <c>.bhd</c>
+    /// archive header without its <c>.bdt</c> data is not the engine's archive pair.
+    /// </summary>
+    [Fact]
+    public void AllGroup_NeedsEverySignal_AsFromSoftwaresTwoArchiveHalvesDo()
+    {
+        DetectionRuleSet rules = Rules(engines:
+        [
+            Engine("fromsoftware", AllOf(Signal(DetectionSignalType.SiblingGlob, "*.bhd"), Signal(DetectionSignalType.SiblingGlob, "*.bdt"))),
+        ]);
+        var evaluator = new RuleEvaluator(rules);
+
+        evaluator.MatchEngine(Snapshot(files: ["eldenring.exe", "Data0.bhd"])).Rule.Should().BeNull("half an archive pair is not the pair");
+        evaluator.MatchEngine(Snapshot(files: ["eldenring.exe", "Data0.bhd", "Data0.bdt"])).Rule!.Id.Should().Be("fromsoftware");
+        evaluator.MatchEngine(Snapshot(files: ["DarkSoulsII.exe", "GameDataEbl.bhd", "GameDataEbl.bdt"])).Rule!.Id.Should().Be("fromsoftware");
+    }
+
+    /// <summary>
+    /// The shipped <c>re_engine</c> rule's shape (2026-09-23): a glob with no star is the whole leaf name, so
+    /// <c>re_chunk_000.pak</c> matches the base archive and not a patch archive named after it.
+    /// </summary>
+    [Fact]
+    public void SiblingGlob_WithoutAStar_IsTheWholeName()
+    {
+        DetectionRuleSet rules = Rules(engines: [Engine("re_engine", AnyOf(Signal(DetectionSignalType.SiblingGlob, "re_chunk_000.pak")))]);
+        var evaluator = new RuleEvaluator(rules);
+
+        evaluator.MatchEngine(Snapshot(files: ["re2.exe", "re_chunk_000.pak", "re_chunk_000.pak.patch_001.pak"])).Rule!.Id.Should().Be("re_engine");
+        evaluator.MatchEngine(Snapshot(files: ["re2.exe", "re_chunk_000.pak.patch_001.pak"])).Rule.Should().BeNull();
+    }
+
     [Fact]
     public void EngineWalk_EveryRuleCleanlyMissing_IsARealAnswer()
     {

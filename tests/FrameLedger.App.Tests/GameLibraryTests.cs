@@ -61,6 +61,34 @@ public sealed class GameLibraryTests
         (await s.Library.AddAsync(Path.Combine(Path.GetTempPath(), "does-not-exist-" + Guid.NewGuid().ToString("N") + ".exe"), Ct)).Should().BeNull();
     }
 
+    /// <summary>
+    /// A hand-added <c>Game.exe</c> is named after its game (2026-09-23): RPG Maker's own title when the folder carries one,
+    /// else the nearest folder that is not a runtime folder — never "Game". <i>HELLO, HELLO WORLD!</i>'s runtime lives in
+    /// <c>swiftshader\</c>, a folder below its title.
+    /// </summary>
+    [Fact]
+    public async Task AGenericExecutableIsNamedAfterItsGame()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        string root = Path.Combine(Path.GetTempPath(), "fl-app-name-" + Guid.NewGuid().ToString("N"));
+        string titled = Path.Combine(root, "hello-hello-world", "HELLO, HELLO WORLD!", "swiftshader", "Game.exe");
+        string untitled = Path.Combine(root, "Some Game", "Game.exe");
+        Directory.CreateDirectory(Path.Combine(Path.GetDirectoryName(titled)!, "www", "data"));
+        Directory.CreateDirectory(Path.GetDirectoryName(untitled)!);
+        await File.WriteAllBytesAsync(titled, [0x4D, 0x5A, 0, 0], Ct);
+        await File.WriteAllBytesAsync(untitled, [0x4D, 0x5A, 0, 0], Ct);
+        await File.WriteAllTextAsync(Path.Combine(Path.GetDirectoryName(titled)!, "www", "data", "System.json"), "{\"gameTitle\":\"HELLO, HELLO WORLD!\"}", Ct);
+        try
+        {
+            (await s.Library.AddAsync(titled, Ct))!.Name.Should().Be("HELLO, HELLO WORLD!", "the engine's own title");
+            (await s.Library.AddAsync(untitled, Ct))!.Name.Should().Be("Some Game", "the folder, when there is no title to read");
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
     [Fact]
     public async Task RecentAndTotalsAcrossGames()
     {

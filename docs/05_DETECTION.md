@@ -137,6 +137,8 @@ Recorded as a residual risk, not as a solved problem.
 | GameMaker | `data.win` | `N/A` |
 | RPG Maker MV/MZ | `nw.dll` **and** `package.json` siblings (since 2026-09-16) | `N/A` — the `.js` header needs a `from` that `strings_regex` lacks |
 | RPG Maker XP/VX/VX Ace | `RGSS1*`/`RGSS2*`/`RGSS3*.dll` sibling **or** a `*.rgssad`/`*.rgss2a`/`*.rgss3a` archive (since 2026-09-16) | `N/A` — one rule, the variant unnamed |
+| RE Engine (Capcom) | `re_chunk_000.pak` sibling, the exact name (since 2026-09-23) | `N/A` |
+| FromSoftware | a `*.bhd` **and** a `*.bdt` sibling (since 2026-09-23) | `N/A` |
 | Ren'Py | `renpy/` dir **or** `*.rpa` | `renpy/__init__` strings / `log.txt` first line |
 | CryEngine | `CrySystem.dll` | FileVersion |
 | Source | `gameinfo.txt` + `bin/engine.dll` | `N/A` |
@@ -159,6 +161,25 @@ Order matters (first match wins). Engine is user-overridable.
 > `.pck`; a Godot game has no `nw.dll`), with fixtures `engines/rpgmaker_mv` and `engines/rpgmaker_rgss`, and the
 > `every_engine_marker` canary carries both engines' markers and still expects `unity`. `rulesVersion` is
 > `2026.09.1`, so the sweep's cache key changes and every game is re-detected on the next pass.
+
+> **RE Engine and FromSoftware, 2026-09-23 (owner request, "mang tính tương đối" — a relative signal, not a proof).**
+> Both are file-layout signals, checked on the owner's disk before they were written. **RE Engine:** every Capcom RE
+> Engine title ships its content as `re_chunk_000.pak` beside the executable, with patches as
+> `re_chunk_000.pak.patch_00N.pak` (RESIDENT EVIL 2 and the Onimusha demo). The rule names the base archive exactly — a
+> glob without a star is the whole leaf name — so a patch archive alone is not it. **FromSoftware:** the studio's
+> titles keep their data as `.bhd` header + `.bdt` data pairs beside the executable — DARK SOULS II
+> (`GameDataEbl.bhd/.bdt`), DARK SOULS III (`Data0`–`Data5`), ELDEN RING (`Data0`–`Data3`, plus `DLC`) and Sekiro
+> (`Data1`–`Data5`). The request described the second extension as `.bht`; on disk it is **`.bdt`**. An `all` group
+> over the two globs — half a pair is not a pair. The request also described a `<Game>\Game\` layout; it is not a
+> signal here, because Sekiro has no `Game\` folder and "the parent folder is named X" is not a signal type anyway.
+> None of the owner's other 80 Steam titles carries either marker. Both rules sit after the RPG Maker rules and
+> before `godot`, whose `*.pck` would also match a loose Wwise sound bank (an `Unknown` there would stop the walk
+> before these rules). Fixtures `engines/re_engine` and `engines/fromsoftware`; the `every_engine_marker` canary
+> carries both engines' markers and still expects `unity`. `rulesVersion` is `2026.09.2`, so every stored game is
+> re-detected on the next sweep. Engine detection never feeds the guard: ELDEN RING stays refused by its anti-cheat
+> whatever engine it is shown as. **Engines are shown by name since the same date** (`Formats.Engine` in the App —
+> proper nouns, not resources; an unknown id, or one the user typed, passes through): the game card and page used
+> to show the raw id (`rpgmaker_mv`).
 
 ⛔ *(kept for the record — the two rows above were the ones this note described)* **Two rows cannot be expressed in schemaVersion 2**, and are documented rather than half-implemented — a rule that exists but never fires is worse than one that is absent, because it reads as coverage:
 
