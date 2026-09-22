@@ -12,7 +12,6 @@ using FrameLedger.Domain.AntiCheat;
 using FrameLedger.Domain.Consent;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Shared.Ipc;
-using FrameLedger.Shared.Safety;
 
 namespace FrameLedger.Application.Tests.Ipc;
 
@@ -129,7 +128,7 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         public int RulesUpdates { get; set; }
     }
 
-    private async Task<Harness> BuildAsync(bool consented = true, string? disclosureVersion = null, Func<CancellationToken, ValueTask<SweepRetentionAck>>? sweep = null, bool withBypassStore = true)
+    private async Task<Harness> BuildAsync(bool consented = true, string? disclosureVersion = null, Func<CancellationToken, ValueTask<SweepRetentionAck>>? sweep = null)
     {
         _db ??= await LedgerDatabase.OpenAsync(Path.Combine(_dir, LedgerPaths.DatabaseFileName), ct: Ct).ConfigureAwait(false);
         var consent = new SqliteGameConsentStore(_db);
@@ -154,7 +153,7 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         Harness h = null!;
         var handler = new AgentCommandHandler(games, consent, guard, identity, orchestrator, pause, lifetime,
             _ => { h.RulesUpdates++; return ValueTask.FromResult("AlreadyCurrent"); },
-            disclosureVersion, new FakeClock(), sweepRetention: sweep, bypass: withBypassStore ? new SqliteGuardBypassStore(_db) : null);
+            disclosureVersion, new FakeClock(), sweepRetention: sweep);
         h = new Harness
         {
             Handler = handler,
@@ -274,91 +273,6 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         record.HookEnabled.Should().BeFalse();
         record.BlockedReason.Should().NotBeNullOrEmpty("the block is on the row for FR-2.2's disabled toggle");
         record.ConsentedAt.Should().BeNull("nothing was stamped");
-    }
-
-    /// <summary>
-    /// <c>SetGuardBypass</c> (owner decision 2026-09-21). The pipe is not a trust boundary: whatever the App checked is
-    /// checked again here - the disclosure version is the Agent's own or nothing is recorded, the executable must be
-    /// readable, the game must exist - and what IS recorded is two columns: nothing is enabled and no block is cleared.
-    /// </summary>
-    [Fact]
-    public async Task SetGuardBypassRecordsTheAgentsOwnDisclosureVersionAndEnablesNothing()
-    {
-        Harness h = await BuildAsync(consented: true).ConfigureAwait(true);
-        long gameId = h.Games.Rows[_exe].Id;
-        await h.Consent.RevokeAsync(_exe, Ct).ConfigureAwait(true);
-
-        IpcEnvelope ack = await AskAsync(h.Handler, IpcMessageType.SetGuardBypass, new SetGuardBypassRequest(gameId, Enabled: true, GuardBypassDisclosure.Version)).ConfigureAwait(true);
-
-        ack.Type.Should().Be(IpcMessageType.GuardBypassAck);
-        IpcCodec.Payload<GuardBypassAck>(ack).Should().Be(new GuardBypassAck(gameId, Enabled: true, nameof(ConsentWriteOutcome.Written)));
-        GameConsentRecord record = await h.Consent.FindAsync(_exe, Ct).ConfigureAwait(true);
-        record.GuardBypassAcknowledged.Should().BeTrue();
-        record.GuardBypassDisclosureVersion.Should().Be(GuardBypassDisclosure.Version);
-        record.HookEnabled.Should().BeFalse("the bypass enables nothing; hooking is its own switch and its own dialog");
-        record.ConsentedAt.Should().BeNull();
-
-        IpcEnvelope off = await AskAsync(h.Handler, IpcMessageType.SetGuardBypass, new SetGuardBypassRequest(gameId, Enabled: false, null)).ConfigureAwait(true);
-        IpcCodec.Payload<GuardBypassAck>(off)!.Enabled.Should().BeFalse();
-        (await h.Consent.FindAsync(_exe, Ct).ConfigureAwait(true)).GuardBypassAcknowledged.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task SetGuardBypassRefusesAnotherDisclosureAnUnknownGameAndAnAgentWithNoStore()
-    {
-        Harness h = await BuildAsync(consented: true).ConfigureAwait(true);
-        long gameId = h.Games.Rows[_exe].Id;
-
-        IpcEnvelope other = await AskAsync(h.Handler, IpcMessageType.SetGuardBypass, new SetGuardBypassRequest(gameId, Enabled: true, "some-other-text/9")).ConfigureAwait(true);
-        other.Type.Should().Be(IpcMessageType.Error);
-        IpcCodec.Payload<ErrorAck>(other)!.Code.Should().Be(IpcErrorCode.DisclosureVersionMismatch);
-
-        IpcEnvelope none = await AskAsync(h.Handler, IpcMessageType.SetGuardBypass, new SetGuardBypassRequest(gameId, Enabled: true, null)).ConfigureAwait(true);
-        IpcCodec.Payload<ErrorAck>(none)!.Code.Should().Be(IpcErrorCode.DisclosureVersionMismatch, "an acknowledgement that names no text names none the Agent records");
-
-        IpcEnvelope unknown = await AskAsync(h.Handler, IpcMessageType.SetGuardBypass, new SetGuardBypassRequest(gameId + 99, Enabled: true, GuardBypassDisclosure.Version)).ConfigureAwait(true);
-        IpcCodec.Payload<ErrorAck>(unknown)!.Code.Should().Be(IpcErrorCode.UnknownGame);
-
-        (await h.Consent.FindAsync(_exe, Ct).ConfigureAwait(true)).GuardBypassAcknowledged.Should().BeFalse("none of the three recorded anything");
-
-        Harness bare = await BuildAsync(consented: true, withBypassStore: false).ConfigureAwait(true);
-        IpcEnvelope noStore = await AskAsync(bare.Handler, IpcMessageType.SetGuardBypass, new SetGuardBypassRequest(gameId, Enabled: true, GuardBypassDisclosure.Version)).ConfigureAwait(true);
-        IpcCodec.Payload<ErrorAck>(noStore)!.Code.Should().Be(IpcErrorCode.DisclosureUnavailable, "a handler that cannot record the acknowledgement must not pretend it did");
-    }
-
-    /// <summary>
-    /// With the bypass on the row, a refused pre-scan no longer refuses the enable - and the finding is STILL written:
-    /// the block stays on the row and stays true, and the consent is stamped beside it.
-    /// </summary>
-    [Fact]
-    public async Task UnderARecordedBypassARefusedPreScanIsStillWrittenAndTheConsentIsStampedBesideIt()
-    {
-        Harness h = await BuildAsync(consented: true, disclosureVersion: SafetyDisclosure.Version).ConfigureAwait(true);
-        long gameId = h.Games.Rows[_exe].Id;
-        await h.Consent.RevokeAsync(_exe, Ct).ConfigureAwait(true);
-        h.Guard.PreScan = AntiCheatVerdict.Refused(AntiCheatRefusalReason.AntiCheatDirectory, "Easy Anti-Cheat", "EasyAntiCheat");
-
-        // Without the bypass: the refusal FR-2.2 always was.
-        (await AskAsync(h.Handler, IpcMessageType.SetHookEnabled, new SetHookEnabledRequest(gameId, Enabled: true, SafetyDisclosure.Version)).ConfigureAwait(true))
-            .Type.Should().Be(IpcMessageType.Refused);
-
-        await AskAsync(h.Handler, IpcMessageType.SetGuardBypass, new SetGuardBypassRequest(gameId, Enabled: true, GuardBypassDisclosure.Version)).ConfigureAwait(true);
-        IpcEnvelope ack = await AskAsync(h.Handler, IpcMessageType.SetHookEnabled, new SetHookEnabledRequest(gameId, Enabled: true, SafetyDisclosure.Version)).ConfigureAwait(true);
-
-        ack.Type.Should().Be(IpcMessageType.HookEnabledAck);
-        HookEnabledAck enabled = IpcCodec.Payload<HookEnabledAck>(ack)!;
-        enabled.Enabled.Should().BeTrue();
-        enabled.Prescan.Should().Be("bypassed", "the ack says the scan did not pass; it was overruled");
-        GameConsentRecord record = await h.Consent.FindAsync(_exe, Ct).ConfigureAwait(true);
-        record.HookEnabled.Should().BeTrue();
-        record.ConsentedAt.Should().NotBeNull();
-        record.BlockedReason.Should().Contain("Easy Anti-Cheat", "the finding is still on the row: a bypass overrules it, it does not erase it");
-
-        // And the consent disclosure is still required: the bypass is not a second way to consent.
-        await h.Consent.RevokeAsync(_exe, Ct).ConfigureAwait(true);
-        await AskAsync(h.Handler, IpcMessageType.SetGuardBypass, new SetGuardBypassRequest(gameId, Enabled: true, GuardBypassDisclosure.Version)).ConfigureAwait(true);
-        IpcEnvelope wrongText = await AskAsync(h.Handler, IpcMessageType.SetHookEnabled, new SetHookEnabledRequest(gameId, Enabled: true, "not-the-agents/1")).ConfigureAwait(true);
-        IpcCodec.Payload<ErrorAck>(wrongText)!.Code.Should().Be(IpcErrorCode.DisclosureVersionMismatch);
     }
 
     [Fact]

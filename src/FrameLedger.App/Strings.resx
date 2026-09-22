@@ -1831,7 +1831,7 @@ Open the log folder?</value>
     <value>In short — please read before you accept:
 • This is a beta (pre-release). It certainly still has bugs, and the developer is not responsible for problems that result.
 • Your PC must meet at least the minimum requirements the game's developer or publisher states. Read them first. Problems on a PC below them are your responsibility, not FrameLedger's.
-• Hooking loads a component into a game, one game at a time, only after you agree. Anti-cheat systems can ban an account for that. FrameLedger refuses where it detects anti-cheat; if you choose to bypass that refusal for a game, you carry the entire risk and the developer carries none.
+• Hooking loads a component into a game, one game at a time, only after you agree. Anti-cheat systems can ban an account for that. FrameLedger refuses where it detects anti-cheat and turns hooking off for that game; there is no way to override that refusal.
 • Nothing is sent anywhere. Your recordings stay on this PC, and backing them up is up to you.
 The documents below are the full terms; this summary does not replace them.</value>
   </data>

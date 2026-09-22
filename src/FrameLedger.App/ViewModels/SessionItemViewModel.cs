@@ -32,8 +32,7 @@ public sealed class SessionItemViewModel
         ResolutionText = IsHooked ? Formats.Resolution(row.RenderW, row.RenderH, row.OutputW, row.OutputH) + " · " + Formats.Upscaler(row.Upscaler, row.UpscalerQuality, row.UpscalerDriverReported) : Strings.Common_NotAvailable;
         GpuTempText = Formats.Temperature(row.MaxGpuTemp);
         ApiText = IsHooked ? Formats.Api(row.Api) : Strings.Common_NotAvailable;
-        // A session that started under the user's guard bypass says so wherever it is listed (schema 0007).
-        ExitText = SessionMarks.GuardBypass(row) is { } mark ? Formats.ExitStatusText(row.ExitStatus) + " · " + mark : Formats.ExitStatusText(row.ExitStatus);
+        ExitText = Formats.ExitStatusText(row.ExitStatus);
         IsCrashed = row.ExitStatus == ExitStatus.Crashed;
         TagsText = annotation is null ? string.Empty : string.Join(", ", annotation.Tags);
         Rt = TriStateChipModel.Of(TriStateKind.RayTracing, TriStateResolution.Resolve(TriStateKind.RayTracing, row, annotation, game));

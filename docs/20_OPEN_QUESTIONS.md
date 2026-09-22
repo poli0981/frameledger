@@ -34,6 +34,12 @@ Rules for this document:
 > one, so that would be a code list); and the ja text, which ships as English until a reviewer signs. **Pre-committed
 > withdrawal:** an injection reached under it without the disclosure having been shown, or a session under it that is
 > not marked, removes the switch from the App in the next release.
+>
+> **2026-09-22 — withdrawn by the owner, for a reason the pre-commitment did not list.** Its first real use (ELDEN
+> RING under Easy Anti-Cheat) reached `TargetUnreadable`: the switch could not do anything where it was wanted, and
+> where it could inject it only exposed the user. The owner asked for the opposite: a finding turns the game's hooking
+> off, wherever the guard makes it. `19_SAFETY` §What a finding does to the game is the specification; CLAUDE.md rule 2 is
+> unstruck. The two open items above (kernel-level families, the ja text) are moot.
 
 | # | Decision | Consequence |
 |---|---|---|

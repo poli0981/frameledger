@@ -244,8 +244,8 @@ public partial class App : System.Windows.Application
 
         // THE SAFETY FAMILY TOO (2026-09-21). FrameLedger.Shared's Strings had no culture of its own and fell back to the
         // thread's - and CurrentUICulture set inside this async start does not reach the dispatcher's later operations,
-        // so on an English Windows a Vietnamese UI showed the consent dialog, the refusal notices and the guard-bypass
-        // card in English (the owner's screenshot, beta.3). An explicit culture does not depend on which thread asks.
+        // so on an English Windows a Vietnamese UI showed the consent dialog and the refusal notices in English (the
+        // owner's screenshot, beta.3). An explicit culture does not depend on which thread asks.
         Shared.Strings.Culture = culture;
     }
 
@@ -326,10 +326,6 @@ public partial class App : System.Windows.Application
         services.AddSingleton<AddGameFlow>();
         services.AddSingleton<IMessageStrip, SnackbarStrip>();
         services.AddSingleton<IEditGamePrompt, EditGamePrompt>();
-
-        // The per-game guard bypass (owner decision 2026-09-21): its own disclosure, its own service, no global form.
-        services.AddSingleton<IGuardBypassPrompt, GuardBypassPrompt>();
-        services.AddSingleton<GuardBypass>();
 
         // The session summary (P3 PR-6): the series loader over the ports, the exports' file picker, the window opener.
         services.AddSingleton<IHardwareSnapshotRepository, SqliteHardwareSnapshotRepository>();

@@ -115,7 +115,7 @@ public sealed class HookingConsentTests
         HookingConsentResult refused = await consent.EnableAsync(7, "Title", Ct);
         refused.Outcome.Should().Be(HookingConsentOutcome.Refused);
         refused.Refusal!.Signal.Should().Be("EasyAntiCheat_EOS.dll");
-        refused.RefusalText().Should().Contain("eac").And.Contain("EasyAntiCheat_EOS.dll").And.Contain("guard-bypass switch", "the refusal names the one way past it, and whose risk that is (2026-09-21; it said \"no way to override\" until the bypass existed)");
+        refused.RefusalText().Should().Contain("eac").And.Contain("EasyAntiCheat_EOS.dll").And.Contain("nothing overrides that", "there is no way past a refusal (the one-day bypass of 2026-09-21 was withdrawn on 2026-09-22)");
 
         agent.Answer = static _ => Ack(IpcMessageType.Refused, new RefusedAck(7, "PreScanCouldNotVerify", null, null));
         (await consent.EnableAsync(7, "Title", Ct)).RefusalText().Should().Be(Shared.Strings.Safety_Refused_CouldNotVerify);

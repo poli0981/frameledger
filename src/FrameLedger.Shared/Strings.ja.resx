@@ -27,77 +27,9 @@
   <data name="Safety_Consent_VersionMismatch" xml:space="preserve"><value>This app and the capture agent carry different versions of this consent text. Nothing was enabled. Restart both, then try again.</value><comment>safety: human review required</comment></data>
   <data name="Safety_RecordWithoutMeasuring" xml:space="preserve"><value>Record this session without measuring it</value><comment>safety: human review required</comment></data>
   <data name="Safety_Refused_CouldNotVerify" xml:space="preserve"><value>FrameLedger could not verify this game's files for anti-cheat, so hooking stays off. It will check again when the game's files or the detection rules change.</value><comment>safety: human review required</comment></data>
-  <data name="Safety_Refused_Named_Format" xml:space="preserve"><value>{0} was detected in this game ({1}). FrameLedger will not inject into it. The only way past this is that game's own guard-bypass switch, which is off by default and entirely at your own risk.</value><comment>safety: human review required</comment></data>
-  <data name="Safety_Refused_Unnamed" xml:space="preserve"><value>An anti-cheat or anti-tamper module was detected in this game. FrameLedger will not inject into it. The only way past this is that game's own guard-bypass switch, which is off by default and entirely at your own risk.</value><comment>safety: human review required</comment></data>
+  <data name="Safety_Refused_Named_Format" xml:space="preserve"><value>{0} was detected in this game ({1}). FrameLedger will not inject into it, and nothing overrides that.</value><comment>safety: human review required</comment></data>
+  <data name="Safety_Refused_Unnamed" xml:space="preserve"><value>An anti-cheat or anti-tamper module was detected in this game. FrameLedger will not inject into it, and nothing overrides that.</value><comment>safety: human review required</comment></data>
+  <data name="Safety_HookingTurnedOff" xml:space="preserve"><value>Hooking has been turned off for this game; its page says what was found.</value><comment>safety: human review required</comment></data>
   <data name="Safety_Unhooked_Format" xml:space="preserve"><value>Capture stopped: {0} was detected while the game was running. FrameLedger unhooked and will not inject into this game again until you enable it again.</value><comment>safety: human review required</comment></data>
-  <data name="Safety_Bypass_Title_Format" xml:space="preserve">
-    <value>Bypass the anti-cheat guard for {0}?</value>
-    <comment>safety: human review required</comment>
-  </data>
-  <data name="Safety_Bypass_Intro" xml:space="preserve">
-    <value>FrameLedger refuses to inject into a game where it detects anti-cheat or anti-tamper software. This switch overrules that refusal for this one game. It is OFF by default, it applies to no other game, and you can turn it off again at any time. It cannot make FrameLedger work where an anti-cheat protects the game's process from being opened: such a game stays unmeasured, FrameLedger will not work around that protection, and you would carry the ban risk for nothing.</value>
-    <comment>safety: human review required</comment>
-  </data>
-  <data name="Safety_Bypass_Found_Format" xml:space="preserve">
-    <value>What the guard found for this game: {0}</value>
-    <comment>safety: human review required</comment>
-  </data>
-  <data name="Safety_Bypass_Found_Nothing" xml:space="preserve">
-    <value>The guard has not recorded a finding for this game yet. With the bypass on, a finding it makes later will no longer stop hooking.</value>
-    <comment>safety: human review required</comment>
-  </data>
-  <data name="Safety_Bypass_Risk" xml:space="preserve">
-    <value>WHAT CAN HAPPEN. Anti-cheat systems treat a DLL loaded into the game as tampering, whatever it does. Your account can be flagged, kicked, suspended or PERMANENTLY BANNED, in this game and possibly in others from the same publisher or platform, without warning and without appeal. FrameLedger does not hide from anti-cheat and never will: the overlay loads under its real name and is fully visible to it. The game may also crash, refuse to start, or lose unsaved progress.</value>
-    <comment>safety: human review required</comment>
-  </data>
-  <data name="Safety_Bypass_Liability" xml:space="preserve">
-    <value>BY TURNING THIS ON, YOU ACCEPT THE ENTIRE RISK YOURSELF. The developers and contributors of FrameLedger accept NO responsibility and NO liability for anything that happens on your side as a result: not for a banned or suspended account, not for lost purchases, progress or data, not for any other loss. If you are not certain, keep the guard on.</value>
-    <comment>safety: human review required</comment>
-  </data>
-  <data name="Safety_Bypass_Recorded" xml:space="preserve">
-    <value>Every session started under the bypass is marked as such, permanently, in the library, in exports and in bug reports, together with what the guard found. Turning hooking off, or the game's executable changing, turns the bypass off again.</value>
-    <comment>safety: human review required</comment>
-  </data>
-  <data name="Safety_Bypass_Checkbox" xml:space="preserve">
-    <value>I have read this. I understand my account may be permanently banned, and I accept the entire risk myself.</value>
-    <comment>safety: human review required</comment>
-  </data>
-  <data name="Safety_Bypass_TypeToConfirm_Format" xml:space="preserve">
-    <value>To confirm, type {0} below.</value>
-    <comment>safety: human review required</comment>
-  </data>
-  <data name="Safety_Bypass_Confirm" xml:space="preserve">
-    <value>Bypass the guard for this game</value>
-    <comment>safety: human review required</comment>
-  </data>
-  <data name="Safety_Bypass_KeepGuard" xml:space="preserve">
-    <value>Keep the guard on</value>
-    <comment>safety: human review required</comment>
-  </data>
-  <data name="Safety_Bypass_Toggle_Label" xml:space="preserve">
-    <value>Bypass the anti-cheat guard (at your own risk)</value>
-    <comment>safety: human review required</comment>
-  </data>
-  <data name="Safety_Bypass_Toggle_Body" xml:space="preserve">
-    <value>Off by default. When on, FrameLedger injects into this game even where the guard detects anti-cheat. Your account can be permanently banned; you accept the entire risk.</value>
-    <comment>safety: human review required</comment>
-  </data>
-  <data name="Safety_Bypass_On_Notice" xml:space="preserve">
-    <value>The anti-cheat guard is BYPASSED for this game. FrameLedger will inject even where the guard detects anti-cheat, and your account can be banned. You accepted this risk; turn the switch off to restore the guard.</value>
-    <comment>safety: human review required</comment>
-  </data>
-  <data name="Safety_Bypass_Session_Format" xml:space="preserve">
-    <value>Guard bypassed: {0}</value>
-    <comment>safety: human review required</comment>
-  </data>
-  <data name="Safety_Bypass_Session_Unnamed" xml:space="preserve">
-    <value>a finding the guard could not name</value>
-    <comment>safety: human review required</comment>
-  </data>
-  <data name="Safety_Bypass_Failed_Format" xml:space="preserve">
-    <value>The bypass was not changed: {0}</value>
-    <comment>safety: human review required</comment>
-  </data>
-  <data name="Safety_Bypass_Found_Overruled_Format" xml:space="preserve"><value>The guard found: {0}. You chose to bypass it for this game, so hooking is allowed here at your own risk.</value><comment>safety: human review required</comment></data>
-  <data name="Safety_Refused_TargetUnreadable" xml:space="preserve"><value>The game is running, but Windows would not let FrameLedger open its process: it is protected by an anti-cheat driver, or it runs as administrator while FrameLedger does not. Nothing was injected and this run was not measured. The guard bypass does not change this, and FrameLedger will not work around another product's protection.</value><comment>safety: human review required</comment></data>
+  <data name="Safety_Refused_TargetUnreadable" xml:space="preserve"><value>The game is running, but Windows would not let FrameLedger open its process: it is protected by an anti-cheat driver, or it runs as administrator while FrameLedger does not. Nothing was injected and this run was not measured. FrameLedger will not work around another product's protection.</value><comment>safety: human review required</comment></data>
 </root>

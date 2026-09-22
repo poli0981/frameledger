@@ -32,38 +32,12 @@ public sealed class GameDetailViewModelTests
 
         public Func<SetHookEnabledRequest, IpcEnvelope> Answer { get; set; } = static r => IpcCodec.Decode(IpcCodec.Encode(IpcMessageType.HookEnabledAck, "1", new HookEnabledAck(r.GameId, r.Enabled, "Written", "clean")));
 
-        /// <summary>Every <c>SetGuardBypass</c> the view model sent (owner decision 2026-09-21), and what the Agent "recorded".</summary>
-        public List<SetGuardBypassRequest> Bypass { get; } = [];
-
-        public string BypassOutcome { get; set; } = "Written";
-
         public Task<IpcEnvelope> RequestAsync<TRequest>(string type, TRequest payload, CancellationToken ct = default)
             where TRequest : class
         {
-            if (payload is SetGuardBypassRequest bypass)
-            {
-                Bypass.Add(bypass);
-                bool written = string.Equals(BypassOutcome, "Written", StringComparison.Ordinal);
-                return Task.FromResult(IpcCodec.Decode(IpcCodec.Encode(IpcMessageType.GuardBypassAck, "1",
-                    new GuardBypassAck(bypass.GameId, written ? bypass.Enabled : !bypass.Enabled, BypassOutcome))));
-            }
-
             var request = (SetHookEnabledRequest)(object)payload;
             Sent.Add(request);
             return Task.FromResult(Answer(request));
-        }
-    }
-
-    private sealed class FakeBypassPrompt : IGuardBypassPrompt
-    {
-        public bool Accepts { get; set; }
-
-        public List<(string Game, string? Finding)> Shown { get; } = [];
-
-        public Task<bool> ShowAsync(string gameName, string? finding, CancellationToken ct = default)
-        {
-            Shown.Add((gameName, finding));
-            return Task.FromResult(Accepts);
         }
     }
 
@@ -125,7 +99,7 @@ public sealed class GameDetailViewModelTests
 
     private static async Task<(GameDetailViewModel Vm, FakeAgent Agent, FakePrompt Prompt, FakeNavigator Nav, FakeStrip Strip)> BuildAsync(
         ScratchLedger s, long gameId, RemoveGameChoice remove = RemoveGameChoice.Cancel, GameMetadata? edit = null, string? pick = null,
-        FakeBypassPrompt? bypassPrompt = null, FakeAgent? withAgent = null)
+        FakeAgent? withAgent = null)
     {
         FakeAgent agent = withAgent ?? new FakeAgent();
         var prompt = new FakePrompt();
@@ -134,7 +108,7 @@ public sealed class GameDetailViewModelTests
         var vm = new GameDetailViewModel(s.Library, new GameSelection { GameId = gameId }, new HookingConsent(agent, prompt), nav,
             new FakeConfirmations(remove), new FakeEdit(edit), strip, new NoSummaries(),
             new Charts.SessionSeriesLoader(s.Sessions), new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(),
-            new FakePicker(pick), new GuardBypass(agent, bypassPrompt ?? new FakeBypassPrompt()));
+            new FakePicker(pick));
         Task pending = vm.Pending;
         await pending.ConfigureAwait(false);
         return (vm, agent, prompt, nav, strip);
@@ -394,93 +368,6 @@ public sealed class GameDetailViewModelTests
         await pending2;
         strip.Lines.Should().ContainSingle().Which.Should().StartWith("warn:");
         (await s.Games.FindByIdAsync(game.Id, Ct))!.Fingerprint.Should().Be(game.Fingerprint);
-    }
-
-    /// <summary>
-    /// The user's guard bypass (owner decision 2026-09-21). The App writes nothing: ON is the disclosure and then the
-    /// Agent's stamp, a declined disclosure sends nothing at all, and the switch shows the ROW, never the click.
-    /// </summary>
-    [Fact]
-    public async Task TheGuardBypassIsTheDisclosureThenTheAgentsStampAndADeclinedDisclosureSendsNothing()
-    {
-        await using ScratchLedger s = await ScratchLedger.OpenAsync();
-        GameRow game = await s.GameAsync("Alpha");
-        await s.Db.WriteAsync((c, tx, ct) => Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(
-            "UPDATE games SET hook_blocked_reason = 'BlockedModule: Easy Anti-Cheat EasyAntiCheat_EOS.dll', hook_prescan_state = 'blocked' WHERE id = @id",
-            new { id = game.Id }, tx, cancellationToken: ct)), Ct);
-
-        var declines = new FakeBypassPrompt { Accepts = false };
-        (GameDetailViewModel vm, FakeAgent agent, _, _, _) = await BuildAsync(s, game.Id, bypassPrompt: declines);
-        vm.GuardBypassOn.Should().BeFalse("off is every row's default");
-        vm.HookToggleEnabled.Should().BeFalse("a blocked row's toggle is disabled while the guard is a hard gate");
-
-        vm.ToggleGuardBypassCommand.Execute(null);
-        Task pending1 = vm.Pending;
-        await pending1;
-        declines.Shown.Should().ContainSingle().Which.Finding.Should().Contain("Easy Anti-Cheat", "the dialog states what the guard found for THIS game");
-        agent.Bypass.Should().BeEmpty("a disclosure that was not accepted by both of its acts sends nothing");
-        vm.GuardBypassOn.Should().BeFalse();
-
-        var accepts = new FakeBypassPrompt { Accepts = true };
-        (GameDetailViewModel on, FakeAgent stamping, _, _, _) = await BuildAsync(s, game.Id, bypassPrompt: accepts);
-        on.ToggleGuardBypassCommand.Execute(null);
-        Task pending2 = on.Pending;
-        await pending2;
-        SetGuardBypassRequest sent = stamping.Bypass.Should().ContainSingle().Subject;
-        sent.Enabled.Should().BeTrue();
-        sent.GameId.Should().Be(game.Id);
-        sent.DisclosureVersion.Should().Be(GuardBypassDisclosure.Version, "the Agent refuses an acknowledgement of any other text");
-        on.GuardBypassOn.Should().BeFalse("the fake Agent wrote no row: the switch shows what is RECORDED, never what was clicked");
-    }
-
-    [Fact]
-    public async Task ARecordedBypassShowsOnTheRowEnablesABlockedRowsToggleAndTurnsOffWithoutADialog()
-    {
-        await using ScratchLedger s = await ScratchLedger.OpenAsync();
-        GameRow game = await s.GameAsync("Alpha");
-        await s.Db.WriteAsync((c, tx, ct) => Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(
-            "UPDATE games SET hook_blocked_reason = 'BlockedModule: Easy Anti-Cheat x', hook_prescan_state = 'blocked', guard_bypass_at = 5, guard_bypass_disclosure_version = @v WHERE id = @id",
-            new { id = game.Id, v = GuardBypassDisclosure.Version }, tx, cancellationToken: ct)), Ct);
-        var prompt = new FakeBypassPrompt { Accepts = true };
-
-        (GameDetailViewModel vm, FakeAgent agent, _, _, _) = await BuildAsync(s, game.Id, bypassPrompt: prompt);
-        vm.GuardBypassOn.Should().BeTrue();
-        vm.HookToggleEnabled.Should().BeTrue("under the bypass enabling is no longer refused, so the toggle works");
-        vm.BlockedText.Should().NotBeNull("the block stays on the page: the finding is still true");
-        vm.BlockedText.Should().Contain("Easy Anti-Cheat");
-        vm.BlockedText.Should().NotStartWith(Shared.Strings.Safety_Blocked_Toggle_Format.Split('{')[0],
-            "beta.3 said 'Hooking is disabled for this game' beside a hooking switch that was ON");
-        vm.BlockedText.Should().StartWith(Shared.Strings.Safety_Bypass_Found_Overruled_Format.Split('{')[0]);
-
-        vm.ToggleGuardBypassCommand.Execute(null);
-        Task pending = vm.Pending;
-        await pending;
-        prompt.Shown.Should().BeEmpty("restoring the guard needs no disclosure");
-        agent.Bypass.Should().ContainSingle().Which.Enabled.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task ABypassTheAgentDidNotRecordIsAPersistentNoticeAndNoAgentIsSaidSo()
-    {
-        await using ScratchLedger s = await ScratchLedger.OpenAsync();
-        GameRow game = await s.GameAsync("Alpha");
-
-        var refusing = new FakeAgent { BypassOutcome = "StaleFingerprint" };
-        (GameDetailViewModel vm, _, _, _, _) = await BuildAsync(s, game.Id, bypassPrompt: new FakeBypassPrompt { Accepts = true }, withAgent: refusing);
-        vm.ToggleGuardBypassCommand.Execute(null);
-        Task pending1 = vm.Pending;
-        await pending1;
-        vm.NoticeVisible.Should().BeTrue();
-        vm.NoticeText.Should().Contain("StaleFingerprint");
-
-        var offline = new FakeAgent { IsConnected = false };
-        var prompt = new FakeBypassPrompt { Accepts = true };
-        (GameDetailViewModel alone, _, _, _, _) = await BuildAsync(s, game.Id, bypassPrompt: prompt, withAgent: offline);
-        alone.ToggleGuardBypassCommand.Execute(null);
-        Task pending2 = alone.Pending;
-        await pending2;
-        prompt.Shown.Should().BeEmpty("with no Agent to record it, the disclosure is not even shown");
-        alone.NoticeVisible.Should().BeTrue();
     }
 
     [Fact]

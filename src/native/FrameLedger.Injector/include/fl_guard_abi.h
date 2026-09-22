@@ -66,21 +66,8 @@ FL_GUARD_ABI void FlGuardedInject(std::uint32_t targetPid, const wchar_t* dllPat
 FL_GUARD_ABI void FlGuardedInjectWhenReady(std::uint32_t targetPid, const wchar_t* dllPath, std::uint32_t timeoutMs,
                                            FlGuardResult* out);
 
-// THE USER'S BYPASS (owner decision 2026-09-21, 19_SAFETY §The user's bypass). The two entry points above, with one
-// branch different: where the full evaluation refuses on the guard's own JUDGEMENT about anti-cheat, the injection
-// proceeds and the result's reason is AllowedUnderUserBypass, with `family` and `signal` still naming what was found.
-// Every check still runs first; the payload must still be one of FrameLedger's own binaries; the primitive is the same
-// documented LoadLibraryW one; a Vulkan target the guard refuses stays refused. The caller -- the Agent, for a game
-// whose owner accepted the bypass disclosure -- is the one asserting that acknowledgement; the guard cannot see it and
-// says only what it can check. A caller that treats "reason != Allow" as "do not proceed" is still correct.
-FL_GUARD_ABI void FlGuardedInjectAcknowledged(std::uint32_t targetPid, const wchar_t* dllPath, FlGuardResult* out);
-
-FL_GUARD_ABI void FlGuardedInjectWhenReadyAcknowledged(std::uint32_t targetPid, const wchar_t* dllPath,
-                                                       std::uint32_t timeoutMs, FlGuardResult* out);
-
-// 1 when `reason` is one the user's bypass overrules (fl::guard::IsGuardJudgement), else 0 -- including for a value
-// that is no reason at all. Exported for the managed mirror test, so the C# list is held against this one.
-FL_GUARD_ABI std::int32_t FlGuardIsJudgement(std::int32_t reason);
+// FlGuardedInjectAcknowledged, FlGuardedInjectWhenReadyAcknowledged and FlGuardIsJudgement were exported for one day
+// (2026-09-21, the user's bypass) and withdrawn on 2026-09-22. The ABI has no entry that injects past a refusal.
 
 // Check 4 against a directory, before anything is launched (FR-2.2). ADVISORY:
 // it answers "may this game's hooking toggle be offered at all", and gates

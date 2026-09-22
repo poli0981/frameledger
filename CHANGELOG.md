@@ -27,8 +27,25 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
+### Removed
+
+- **The per-game guard override ("Bypass the anti-cheat guard") is gone** — owner decision 2026-09-22, two pre-releases
+  after it arrived. Its first real use could not reach a process an anti-cheat driver protects, and where it could
+  inject it only exposed the user to the risk its own warning described. Removed entirely: the native entries
+  (`FlGuardedInjectAcknowledged`, its WhenReady twin, `FlGuardIsJudgement`, reason 28), the `SetGuardBypass` message, the
+  App's card and dialog, the session mark and its export line, the `Safety_Bypass_*` strings, and schema 0007's five
+  columns (schema 0008 drops them — the first `DROP COLUMN` in the migration set). Sessions that ran under it keep
+  `guard-bypass=` in their notes. CLAUDE.md rule 2 reads "there is no override" again; Disclaimer 2.5 and EULA 1.2 say
+  so, so the Legal Gate opens once.
+
 ### Changed
 
+- **A finding turns the game's hooking off, wherever the guard makes it** (`19_SAFETY` §What a finding does to the game). The
+  pre-scan always did this; now a finding at a session's start or at the 30 s re-scan writes the same block — hooking
+  off, the reason on the row, the toggle disabled on the game's page — when it names an anti-cheat *in the game* (its
+  process, its folder, its title lists). A machine-wide driver or service refuses that session only. The notice says
+  "Hooking has been turned off for this game", the session's notes carry `hooking-turned-off=`, and `CaptureRefused` /
+  `SafetyUnhook` carry `hookingTurnedOff`.
 - **`0.1.0-beta.4`'s notes named a cause they had no evidence for, and are corrected in place** (see its *Updating*
   section). The owner reported afterwards that the external USB drive holding the Steam library had a loose cable that
   evening. Windows' System and Application logs for 2026-09-21 agree and re-date the day's symptoms: disk resets and

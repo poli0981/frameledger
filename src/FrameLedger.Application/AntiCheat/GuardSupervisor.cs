@@ -23,7 +23,7 @@ namespace FrameLedger.Application.AntiCheat;
 /// the far side of a returned verdict.
 /// </para>
 /// </remarks>
-public sealed class GuardSupervisor(IAntiCheatGuard guard, bool guardBypassAcknowledged = false)
+public sealed class GuardSupervisor(IAntiCheatGuard guard)
 {
     private readonly IAntiCheatGuard _guard = guard ?? throw new ArgumentNullException(nameof(guard));
 
@@ -45,9 +45,6 @@ public sealed class GuardSupervisor(IAntiCheatGuard guard, bool guardBypassAckno
 
     /// <summary>The verdict of the most recent completed evaluation, if any.</summary>
     public AntiCheatVerdict? LastVerdict { get; private set; }
-
-    /// <summary>How many in-session scans refused on the guard's judgement and were overruled by the user's bypass.</summary>
-    public uint JudgementsOverruled { get; private set; }
 
     /// <summary>
     /// Run one re-scan. Returns true if capture may continue.
@@ -78,17 +75,6 @@ public sealed class GuardSupervisor(IAntiCheatGuard guard, bool guardBypassAckno
 
         if (!verdict.IsAllowed)
         {
-            // A SESSION THAT STARTED UNDER THE USER'S BYPASS (owner decision 2026-09-21) already knows the guard
-            // refuses this target: that refusal is what the user overruled, and re-discovering it every 30 s is not
-            // news. The scan still RUNS and the tick still counts — the Overlay's own stop is fed by it — and the
-            // verdict is kept, so the log says what was found. Anything that is not the guard's judgement still stops
-            // the session: the bypass overrules a judgement, never a fact.
-            if (guardBypassAcknowledged && AntiCheatVerdict.IsGuardJudgement(verdict.Reason))
-            {
-                JudgementsOverruled++;
-                return true;
-            }
-
             UnhookRequested = true;
             return false;
         }

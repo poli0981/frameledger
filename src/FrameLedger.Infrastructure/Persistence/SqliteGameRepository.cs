@@ -23,7 +23,7 @@ public sealed class SqliteGameRepository : IGameRepository
         + "hook_crash_count, hook_last_injected_at, added_at, updated_at, "
         + "platform, store_id, engine, engine_version, publisher, game_version, cover_path, notes, field_provenance, capability_flags, "
         + "rt_default, pt_default, rr_default, hook_consent_at, hook_prescan_state, removed_at, "
-        + "detection_rules_version, detection_exe_size_bytes, detection_exe_mtime_ms, guard_bypass_at";
+        + "detection_rules_version, detection_exe_size_bytes, detection_exe_mtime_ms";
 
     private const string _selectByPath = $"SELECT {_columns} FROM games WHERE exe_path = @path";
 
@@ -46,7 +46,7 @@ public sealed class SqliteGameRepository : IGameRepository
     private const string _changeExecutable =
         "UPDATE games SET exe_path = @path, exe_size_bytes = @size, exe_mtime_ms = @mtime, hook_enabled = 0, hook_consent_at = NULL, "
         + "hook_consent_provenance = 'NotRecorded', hook_consent_disclosure_version = '', hook_prescan_state = 'not_run', "
-        + "guard_bypass_at = NULL, guard_bypass_disclosure_version = '', updated_at = @at "
+        + "updated_at = @at "
         + "WHERE id = @id AND removed_at IS NULL AND NOT EXISTS (SELECT 1 FROM games other WHERE other.exe_path = @path AND other.id <> @id)";
 
     private const string _crash =
@@ -312,7 +312,6 @@ public sealed class SqliteGameRepository : IGameRepository
         DetectionRulesVersion = SqliteReaders.String(r, 28),
         DetectionExeSizeBytes = SqliteReaders.Int64(r, 29),
         DetectionExeMtimeMs = SqliteReaders.Int64(r, 30),
-        GuardBypassAt = At(SqliteReaders.Int64(r, 31)),
     };
 
     private static DateTimeOffset? At(long? unixMs) => unixMs is { } ms ? DateTimeOffset.FromUnixTimeMilliseconds(ms) : null;

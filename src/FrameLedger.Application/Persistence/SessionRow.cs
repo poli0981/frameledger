@@ -258,18 +258,4 @@ public sealed record SessionRow
     public double? AvgGpuPowerW { get; init; }
 
     public double? ThrottlePct { get; init; }
-
-    /// <summary>
-    /// True when the session STARTED under the user's guard bypass (schema 0007, owner decision 2026-09-21): the guard
-    /// refused on its own judgement and the Overlay was injected anyway. False for every other session, every earlier
-    /// row, and a session recovered from a <c>.partial</c> (the verdict is known only to the live loop). Every surface
-    /// that shows the session, and every export, says so.
-    /// </summary>
-    public bool GuardBypassed { get; init; }
-
-    /// <summary>The anti-cheat family the guard named at that start, when it named one.</summary>
-    public string? GuardBypassFamily { get; init; }
-
-    /// <summary>The module, driver or file that produced the finding.</summary>
-    public string? GuardBypassSignal { get; init; }
 }

@@ -4,15 +4,11 @@
     Asserts that no code path can inject except through the anti-cheat guard's own file.
 
 .DESCRIPTION
-    AMENDED 2026-09-21. This header said "no code path can inject without PASSING the
-    guard", and since the owner's decision of that day that is no longer the claim: the
-    guard has one acknowledged entry (FlGuardedInjectAcknowledged, 19_SAFETY "The user's
-    bypass") that injects where the evaluation refused on the guard's own judgement. What
-    this script asserts is unchanged and is what makes that entry safe to have: the
-    primitive still lives in ONE file, so the acknowledged path is the guard's own code -
-    it still runs every check, still reports what it found, still verifies the payload -
-    and the evasion primitives still appear NOWHERE. A bypass that lived outside this
-    file, or that changed HOW the injection happens, is exactly what these checks refuse.
+    No code path can inject without PASSING the guard. (For one day, 2026-09-21, the guard
+    had an acknowledged entry that injected past its own refusal; the owner withdrew it on
+    2026-09-22 and this sentence is the claim again - 19_SAFETY "What a finding does to the game".)
+    What this script asserts never changed: the primitive lives in ONE file, so every path
+    to an injection is the guard's own code, and the evasion primitives appear NOWHERE.
 
     CLAUDE.md rule 2 (as first written): "The anti-cheat guard is a hard gate, not a
     warning... There is no override switch." docs/14_TESTING.md calls for a test that

@@ -34,8 +34,7 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
 {
     private const string _columns =
         "exe_path, exe_size_bytes, exe_mtime_ms, hook_enabled, hook_consent_at, hook_consent_provenance, "
-        + "hook_consent_disclosure_version, hook_blocked_reason, hook_prescan_state, updated_at, "
-        + "guard_bypass_at, guard_bypass_disclosure_version";
+        + "hook_consent_disclosure_version, hook_blocked_reason, hook_prescan_state, updated_at";
 
     private const string _selectOne = $"SELECT {_columns} FROM games WHERE exe_path = @path";
 
@@ -52,12 +51,9 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
         + "hook_consent_provenance = @provenance, hook_consent_disclosure_version = @disclosure, updated_at = @at "
         + "WHERE exe_path = @path";
 
-    // Withdrawing consent takes the guard bypass with it (schema 0007): turning hooking off returns the row to its
-    // safest state, and turning it on again under a bypass means reading that disclosure again.
     private const string _revoke =
         "UPDATE games SET hook_enabled = 0, hook_consent_at = NULL, hook_consent_provenance = @provenance, "
-        + "hook_consent_disclosure_version = '', guard_bypass_at = NULL, guard_bypass_disclosure_version = '', "
-        + "updated_at = @at WHERE exe_path = @path";
+        + "hook_consent_disclosure_version = '', updated_at = @at WHERE exe_path = @path";
 
     private const string _insertBlock =
         "INSERT INTO games (name, exe_path, exe_size_bytes, exe_mtime_ms, hook_enabled, hook_blocked_reason, "
@@ -239,9 +235,7 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
         string DisclosureVersion,
         string? BlockedReason,
         string PreScanState,
-        long UpdatedAtMs,
-        long? GuardBypassAtMs,
-        string GuardBypassDisclosureVersion)
+        long UpdatedAtMs)
     {
         public static Row From(DbDataReader r) => new(
             new ExecutableFingerprint
@@ -256,9 +250,7 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
             r.GetString(6),
             SqliteReaders.String(r, 7),
             r.GetString(8),
-            r.GetInt64(9),
-            SqliteReaders.Int64(r, 10),
-            SqliteReaders.String(r, 11) ?? string.Empty);
+            r.GetInt64(9));
 
         public GameConsentRecord ToRecord() => GameConsentRecord.Stored(
             Fingerprint,
@@ -268,8 +260,7 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
             DisclosureVersion,
             BlockedReason,
             string.Equals(PreScanState, "unverified", StringComparison.Ordinal),
-            DateTimeOffset.FromUnixTimeMilliseconds(UpdatedAtMs))
-            .WithGuardBypass(GuardBypassAtMs is { } at ? DateTimeOffset.FromUnixTimeMilliseconds(at) : null, GuardBypassDisclosureVersion);
+            DateTimeOffset.FromUnixTimeMilliseconds(UpdatedAtMs));
     }
 
     /// <summary>

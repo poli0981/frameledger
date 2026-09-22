@@ -153,12 +153,11 @@ public enum SessionEndReason
     /// <para>
     /// It was reported as <see cref="TargetAmbiguous"/> until this existed — "more than one process is running it" about
     /// a single process — and reached the user as a toast reading <c>InjectFailed: TargetAmbiguous</c>, while the
-    /// one-second session was discarded for being short. With the guard bypass on, that was the whole visible result.
+    /// one-second session was discarded for being short.
     /// </para>
     /// <para>
-    /// <b>The guard bypass does not change it, and nothing will be built that does.</b> The bypass overrules
-    /// FrameLedger's own refusal; a process another product's driver has closed to us stays closed, and opening it
-    /// anyway would be defeating that product — CLAUDE.md rule 3.
+    /// <b>Nothing will be built that changes it.</b> A process another product's driver has closed to us stays closed,
+    /// and opening it anyway would be defeating that product — CLAUDE.md rule 3.
     /// </para>
     /// </remarks>
     TargetUnreadable,

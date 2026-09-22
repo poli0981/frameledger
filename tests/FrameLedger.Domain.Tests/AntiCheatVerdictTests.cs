@@ -72,44 +72,35 @@ public sealed class AntiCheatVerdictTests
     }
 
     /// <summary>
-    /// The user's bypass (owner decision 2026-09-21) has a verdict of its own, and the point of it is what it is NOT:
-    /// not an allow, so every caller written before it keeps refusing; not a default, so nothing reads as one by
-    /// accident; and still carrying what the guard found.
+    /// What turns a game's hooking off (owner decision 2026-09-22, <c>19_SAFETY</c> §What a finding does to the game): an
+    /// anti-cheat named IN the game. A machine-wide driver or service, a heuristic, a scan that could not look, the
+    /// latch of a past finding and every fact about the payload or the launch are not that.
     /// </summary>
-    [Fact]
-    public void AllowedUnderUserBypassIsNeitherAnAllowNorTheDefaultAndKeepsWhatWasFound()
-    {
-        AntiCheatVerdict under = AntiCheatVerdict.FromNative((int)AntiCheatRefusalReason.AllowedUnderUserBypass, "Easy Anti-Cheat", "EasyAntiCheat_EOS.dll");
-
-        under.IsAllowed.Should().BeFalse();
-        under.IsAllowedUnderBypass.Should().BeTrue();
-        under.Family.Should().Be("Easy Anti-Cheat");
-        under.Signal.Should().Be("EasyAntiCheat_EOS.dll");
-
-        default(AntiCheatVerdict).IsAllowedUnderBypass.Should().BeFalse("a verdict nobody produced overruled nothing");
-        AntiCheatVerdict.Allowed().IsAllowedUnderBypass.Should().BeFalse();
-        AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedModule, "x", "y").IsAllowedUnderBypass.Should().BeFalse();
-        ((int)AntiCheatRefusalReason.AllowedUnderUserBypass).Should().Be(28, "the values cross a C ABI and are append-only");
-    }
-
     [Theory]
     [InlineData(AntiCheatRefusalReason.BlockedModule, true)]
-    [InlineData(AntiCheatRefusalReason.BlockedDriver, true)]
-    [InlineData(AntiCheatRefusalReason.SuspiciousUnsigned, true)]
-    [InlineData(AntiCheatRefusalReason.ModuleScanFailed, true)]
-    [InlineData(AntiCheatRefusalReason.RulesIncomplete, true)]
-    [InlineData(AntiCheatRefusalReason.PreScanFailed, true)]
-    [InlineData(AntiCheatRefusalReason.PreviouslyBlocked, true)]
-    [InlineData(AntiCheatRefusalReason.Allow, false)]
+    [InlineData(AntiCheatRefusalReason.BlockedExecutable, true)]
+    [InlineData(AntiCheatRefusalReason.BlockedStoreId, true)]
+    [InlineData(AntiCheatRefusalReason.AntiCheatDirectory, true)]
+    [InlineData(AntiCheatRefusalReason.AntiCheatFile, true)]
+    [InlineData(AntiCheatRefusalReason.BlockedDriver, false)]
+    [InlineData(AntiCheatRefusalReason.BlockedService, false)]
+    [InlineData(AntiCheatRefusalReason.SuspiciousUnsigned, false)]
+    [InlineData(AntiCheatRefusalReason.ModuleScanFailed, false)]
+    [InlineData(AntiCheatRefusalReason.PreScanFailed, false)]
+    [InlineData(AntiCheatRefusalReason.RulesIncomplete, false)]
+    [InlineData(AntiCheatRefusalReason.PreviouslyBlocked, false)]
     [InlineData(AntiCheatRefusalReason.InjectionFailed, false)]
-    [InlineData(AntiCheatRefusalReason.TargetIsWow64, false)]
     [InlineData(AntiCheatRefusalReason.PayloadNotOurs, false)]
-    [InlineData(AntiCheatRefusalReason.HookNotEnabled, false)]
-    [InlineData(AntiCheatRefusalReason.ConsentMissing, false)]
     [InlineData(AntiCheatRefusalReason.KillSwitchEngaged, false)]
-    [InlineData(AntiCheatRefusalReason.LaunchTargetExited, false)]
-    [InlineData(AntiCheatRefusalReason.TargetIsVulkanLayered, false)]
-    [InlineData(AntiCheatRefusalReason.AllowedUnderUserBypass, false)]
-    public void ABypassOverrulesAJudgementAndNeverAFact(AntiCheatRefusalReason reason, bool judgement) =>
-        AntiCheatVerdict.IsGuardJudgement(reason).Should().Be(judgement);
+    [InlineData(AntiCheatRefusalReason.HookNotEnabled, false)]
+    public void AFindingAboutTheGameIsWhatTurnsItsHookingOff(AntiCheatRefusalReason reason, bool finding) =>
+        AntiCheatVerdict.Refused(reason, "Easy Anti-Cheat", "EasyAntiCheat_EOS.dll").IsFindingAboutTheGame.Should().Be(finding);
+
+    [Fact]
+    public void AFindingNeedsAFamilyAndAnEvaluation()
+    {
+        AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedModule, string.Empty, "x.dll").IsFindingAboutTheGame.Should().BeFalse("a finding that names nothing cannot be written as a block");
+        default(AntiCheatVerdict).IsFindingAboutTheGame.Should().BeFalse();
+        AntiCheatVerdict.Allowed().IsFindingAboutTheGame.Should().BeFalse();
+    }
 }

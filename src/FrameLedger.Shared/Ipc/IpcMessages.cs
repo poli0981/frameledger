@@ -30,9 +30,6 @@ public static class IpcMessageType
     public const string LaunchAck = "LaunchAck";
     public const string SetHookEnabled = "SetHookEnabled";
 
-    /// <summary>UI → Agent (2026-09-21): record or withdraw the per-game guard bypass. Answered <c>GuardBypassAck</c>.</summary>
-    public const string SetGuardBypass = "SetGuardBypass";
-    public const string GuardBypassAck = "GuardBypassAck";
     public const string HookEnabledAck = "HookEnabledAck";
 
     /// <summary>The Agent's answer to <c>SetHookEnabled</c> when its own pre-scan said no (07_IPC: "may reply Refused").</summary>
@@ -226,13 +223,13 @@ public sealed record SessionProgressEvent
 public sealed record SessionCompletedEvent(Guid SessionGuid, long? SessionId, string ExitStatus, int Tier, string Finalize, string Reason);
 
 /// <summary>The gate or the guard said no before anything was injected (<c>08_UI</c> §Safety events: never a toast).</summary>
-public sealed record CaptureRefusedEvent(long GameId, string? GameName, string Reason, string? Family, string? Signal);
+public sealed record CaptureRefusedEvent(long GameId, string? GameName, string Reason, string? Family, string? Signal, bool HookingTurnedOff = false);
 
 /// <summary>Measurement STOPPED mid-session (two-rung ladder: there is no lower fidelity to continue at).</summary>
 public sealed record CaptureDegradedEvent(Guid SessionGuid, int From, int To, string Reason);
 
 /// <summary>Anti-cheat appeared mid-session and our own guard published the stop.</summary>
-public sealed record SafetyUnhookEvent(Guid SessionGuid, string? Family, string? Signal);
+public sealed record SafetyUnhookEvent(Guid SessionGuid, string? Family, string? Signal, bool HookingTurnedOff = false);
 
 public sealed record CaptureErrorEvent(Guid? SessionGuid, string Code, string Message);
 
@@ -265,16 +262,6 @@ public sealed record SetHookEnabledRequest(long GameId, bool Enabled, string? Di
 
 /// <summary><c>Outcome</c> is the store's word (<c>Written</c>, <c>NotFound</c>, …); <c>Prescan</c> is <c>clean</c> when one ran and passed.</summary>
 public sealed record HookEnabledAck(long GameId, bool Enabled, string Outcome, string? Prescan);
-
-/// <summary>
-/// <c>SetGuardBypass</c> (owner decision 2026-09-21). <c>Enabled true</c> records that the user accepted the bypass
-/// disclosure named by <c>DisclosureVersion</c> for this game's executable; the Agent refuses any version but its own
-/// (<c>GuardBypassDisclosure.Version</c>). <c>Enabled false</c> withdraws it. There is no global form of this message.
-/// </summary>
-public sealed record SetGuardBypassRequest(long GameId, bool Enabled, string? DisclosureVersion);
-
-/// <summary><c>Outcome</c> is the store's <c>ConsentWriteOutcome</c> by name.</summary>
-public sealed record GuardBypassAck(long GameId, bool Enabled, string Outcome);
 
 /// <summary>The Agent's pre-scan refused to enable: the reason, and the family/signal when it named one. The block is on the row.</summary>
 public sealed record RefusedAck(long GameId, string Reason, string? Family, string? Signal);

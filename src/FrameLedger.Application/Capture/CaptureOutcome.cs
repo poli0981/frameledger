@@ -11,11 +11,11 @@ public sealed record CaptureOutcome
     public AntiCheatVerdict Verdict { get; init; }
 
     /// <summary>
-    /// The verdict the session STARTED under when that was the user's bypass (owner decision 2026-09-21), else null.
-    /// Its own field because <see cref="Verdict"/> is replaced by the one that fired on a safety unhook, and a session
-    /// that ran beside anti-cheat must say so on its row however it ended.
+    /// True when this session's <see cref="Verdict"/> was a finding about the game and the loop turned the game's
+    /// hooking off for it (owner decision 2026-09-22, <c>19_SAFETY</c> §What a finding does to the game): the row now
+    /// carries <c>hook_blocked_reason</c>, and the user is told so with the refusal or the unhook.
     /// </summary>
-    public AntiCheatVerdict? StartedUnderBypass { get; init; }
+    public bool HookingTurnedOff { get; init; }
 
     public ShmAttachRefusal AttachRefusal { get; init; }
 
