@@ -46,10 +46,16 @@ public sealed class StoreLibrarySourcesTests : IDisposable
         await File.WriteAllTextAsync(Path.Combine(secondApps, "appmanifest_2358720.acf"),
             "\"AppState\"\n{\n\t\"appid\"\t\t\"2358720\"\n\t\"name\"\t\t\"Black Myth: Wukong\"\n\t\"installdir\"\t\t\"BlackMythWukong\"\n}\n", Ct);
         await File.WriteAllTextAsync(Path.Combine(secondApps, "appmanifest_bad.acf"), "not key values at all {", Ct);
+        // A tool sold on Steam is not a game (2026-09-22): Borderless Gaming became a library row on the owner's machine and
+        // the watcher recorded it. The import stops guessing; the user can still add its executable by hand.
+        await File.WriteAllTextAsync(Path.Combine(rootApps, "appmanifest_388080.acf"),
+            "\"AppState\"\n{\n\t\"appid\"\t\t\"388080\"\n\t\"name\"\t\t\"Borderless Gaming\"\n\t\"installdir\"\t\t\"Borderless Gaming\"\n}\n", Ct);
 
         IReadOnlyList<StoreGame> games = await new SteamLibrarySource(root).ListAsync(Ct);
 
-        games.Should().HaveCount(2, "the malformed manifest costs one entry, not the library");
+        games.Should().HaveCount(2, "the malformed manifest costs one entry, not the library, and a known tool is not listed");
+        games.Should().NotContain(static g => string.Equals(g.StoreId, "388080", StringComparison.Ordinal));
+        SteamLibrarySource.KnownTools.Should().Contain("388080").And.Contain("228980", "Steamworks Common Redistributables");
         StoreGame cp = games.Single(static g => string.Equals(g.StoreId, "1091500", StringComparison.Ordinal));
         cp.Platform.Should().Be("steam");
         cp.Name.Should().Be("Cyberpunk 2077");

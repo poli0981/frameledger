@@ -80,6 +80,24 @@ public sealed class TargetResolver : ITargetResolver
         return null;
     }
 
+    /// <inheritdoc />
+    public bool IsRunning(string normalisedExePath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(normalisedExePath);
+        Process[] named = Process.GetProcessesByName(Path.GetFileNameWithoutExtension(normalisedExePath));
+        try
+        {
+            return named.Length > 0;
+        }
+        finally
+        {
+            foreach (Process p in named)
+            {
+                p.Dispose();
+            }
+        }
+    }
+
     /// <summary>Every readable process whose image is the path; unreadable candidates are counted, never dropped.</summary>
     private static List<int> CollectMatches(string normalisedExePath, out int unreadable)
     {

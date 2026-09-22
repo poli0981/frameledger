@@ -90,4 +90,10 @@ public sealed record CaptureOutcome
 
     /// <summary>The target's exit code, when it had exited by the time the session let go; null otherwise.</summary>
     public int? ExitCode { get; init; }
+
+    /// <summary>
+    /// True when the loop held the session open unhooked until the target left (Tier 2, 2026-09-22): the duration is the
+    /// game's, so the crash witness applies even where no pid was ever held.
+    /// </summary>
+    public bool HeldUnhooked { get; init; }
 }

@@ -78,6 +78,8 @@
 
                 <ui:TextBlock Margin="0,8,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:SessionSummaryViewModel.Tier2Text}"
                               Visibility="{Binding ViewModel.IsHooked, Converter={StaticResource InverseBoolToVis}}" />
+                <ui:TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Text="{Binding ViewModel.Tier2Reason}"
+                              Visibility="{Binding ViewModel.IsHooked, Converter={StaticResource InverseBoolToVis}}" />
 
                 <!-- charts -->
                 <StackPanel Visibility="{Binding ViewModel.IsHooked, Converter={StaticResource BoolToVis}}">

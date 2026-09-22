@@ -1,0 +1,25 @@
+using System.Globalization;
+using FluentAssertions;
+using FrameLedger.App.Services;
+
+namespace FrameLedger.App.Tests;
+
+/// <summary>Tier 2's payload on the summary (2026-09-22): why the session measured nothing, from the row's notes.</summary>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the expected texts are resources that follow the UI culture")]
+public sealed class Tier2ReasonTests
+{
+    [Fact]
+    public void EachEndReasonHasItsSentence()
+    {
+        Formats.Tier2Reason("end=RefusedHookNotEnabled; tier2: attach=NotEvaluated; guard=HookNotEnabled/not enabled/hooking is off")
+            .Should().Be(Strings.Summary_Tier2_Why_HookOff);
+        Formats.Tier2Reason("end=RefusedHookNotEnabled; tier2: attach=NotEvaluated; guard=PreviouslyBlocked/previously blocked/BlockedModule: Easy Anti-Cheat EasyAntiCheat_EOS.dll")
+            .Should().Be(string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_Blocked_Format, "BlockedModule: Easy Anti-Cheat EasyAntiCheat_EOS.dll"));
+        Formats.Tier2Reason("end=RefusedByGuard; tier2: attach=NotEvaluated; guard=BlockedDriver/Riot Vanguard/vgk.sys")
+            .Should().Be(string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_Guard_Format, "Riot Vanguard", "vgk.sys"));
+        Formats.Tier2Reason("end=TargetUnreadable; tier2: attach=NotEvaluated").Should().Be(Strings.Summary_Tier2_Why_Unreadable);
+        Formats.Tier2Reason("end=AttachRefused; tier2: attach=BuildIdMismatch")
+            .Should().Be(string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_Other_Format, "AttachRefused"));
+        Formats.Tier2Reason(null).Should().BeEmpty();
+    }
+}

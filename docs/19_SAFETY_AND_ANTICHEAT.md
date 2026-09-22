@@ -711,7 +711,7 @@ Consent is stored per game (`games.hook_consent_at`), **stamped by the Agent, ne
 > publishing `unhookRequested`, and keeps the Vulkan layer off by never setting `FRAMELEDGER_ENABLE_VK_LAYER`
 > on a launch.
 
-The default for every newly added game is **hooking off — Tier 2**. Nothing is ever injected because the user merely added a game.
+The default for every newly added game is **hooking off — Tier 2**. Nothing is ever injected because the user merely added a game — and since 2026-09-22 nothing is *opened* either: a hooking-off row's Tier-2 session is held by the executable's name, with no `OpenProcess`, no resolver and no gate (`04_CAPTURE` §Tier selection).
 
 ### A game already enabled can become blocked later
 

@@ -56,6 +56,10 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
     [ObservableProperty]
     private bool _isUnhooked;
 
+    /// <summary>Tier 2's payload (2026-09-22): why this session measured nothing, from the row's notes; empty for a hooked row.</summary>
+    [ObservableProperty]
+    private string _tier2Reason = string.Empty;
+
     [ObservableProperty]
     private bool _notFound;
 
@@ -278,6 +282,7 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         IsHooked = row.Tier == CaptureTier.Hooked;
         IsCrashed = row.ExitStatus == ExitStatus.Crashed;
         IsUnhooked = row.ExitStatus == ExitStatus.UnhookedSafety;
+        Tier2Reason = IsHooked ? string.Empty : Formats.Tier2Reason(row.CaptureNotes);
         Readout = FpsPresentation.FromRow(row);
         Line = string.Format(CultureInfo.CurrentCulture, Strings.Summary_Line_Format,
             IsHooked ? Formats.Api(row.Api) : Strings.Tier_NotHooked, row.PresentMode ?? Strings.Common_NotAvailable,

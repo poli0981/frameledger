@@ -31,11 +31,12 @@ public sealed class SafetyNoticesTests
 
     /// <summary>
     /// 2026-09-21: a game whose process an anti-cheat driver protects (ELDEN RING under EAC) reached the user as a toast
-    /// reading "InjectFailed: TargetAmbiguous" and no session. It is a persistent notice that says why - and it does NOT
-    /// claim the session is still recorded, because that run ends at once and is discarded.
+    /// reading "InjectFailed: TargetAmbiguous" and no session. It is a persistent notice that says why. Since 2026-09-22 the
+    /// session IS recorded — the loop holds it, unhooked, by the executable's name until the game exits — so the
+    /// "still recorded" sentence is true here too and is said.
     /// </summary>
     [Fact]
-    public void AProcessThatCannotBeOpenedIsAPersistentNoticeThatSaysWhyAndPromisesNoRecording()
+    public void AProcessThatCannotBeOpenedIsAPersistentNoticeThatSaysWhyAndIsRecordedUnmeasured()
     {
         var link = new FakeAgentLink();
         var strip = new RecordingStrip();
@@ -46,8 +47,8 @@ public sealed class SafetyNoticesTests
         SafetyNotice notice = notices.Items.Should().ContainSingle().Subject;
         notice.Kind.Should().Be(SafetyNoticeKind.Refused);
         notice.Title.Should().Contain("ELDEN RING");
-        notice.Body.Should().Be(Shared.Strings.Safety_Refused_TargetUnreadable);
-        notice.Body.Should().NotContain(Strings.Notice_Refused_Recording);
+        notice.Body.Should().StartWith(Shared.Strings.Safety_Refused_TargetUnreadable);
+        notice.Body.Should().Contain(Strings.Notice_Refused_Recording);
         strip.Shown.Should().BeEmpty("never a toast");
     }
 

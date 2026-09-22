@@ -84,26 +84,79 @@ public sealed class CaptureSession(
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(normalisedExePath);
 
+        // HOOKING OFF IS DECIDED BEFORE THE PROCESS IS OPENED (2026-09-22). A row whose hooking is off — merely added,
+        // blocked by a finding, or auto-disabled — gets a Tier-2 session and nothing else: no OpenProcess, no resolver,
+        // no gate. Until this line existed the resolver ran first, and a hooking-off utility that runs elevated
+        // (Borderless Gaming, on the owner's machine) was reported as a process an anti-cheat driver protects.
+        GameConsentRecord record = await store.FindAsync(normalisedExePath, ct).ConfigureAwait(false);
+        if (!record.HookEnabled)
+        {
+            return await HoldUnhookedAsync(HookingOff(record), normalisedExePath, alive: null, pid: null, ct, stop).ConfigureAwait(false);
+        }
+
         int? pid = resolver.Resolve(normalisedExePath, out SessionEndReason resolveReason);
         if (pid is null)
         {
-            return new CaptureOutcome { Reason = resolveReason };
+            // Nothing to hold when nothing is running; a process that exists and cannot be read is held by its name.
+            var unresolved = new CaptureOutcome { Reason = resolveReason };
+            return resolveReason == SessionEndReason.TargetNotRunning
+                ? unresolved
+                : await HoldUnhookedAsync(unresolved, normalisedExePath, alive: null, pid: null, ct, stop).ConfigureAwait(false);
         }
 
         using ITargetLiveness? alive = liveness.TryPin(pid.Value);
         if (alive is null)
         {
-            return new CaptureOutcome { Reason = SessionEndReason.TargetCannotBePinned };
+            return await HoldUnhookedAsync(new CaptureOutcome { Reason = SessionEndReason.TargetCannotBePinned }, normalisedExePath, alive: null, pid, ct, stop).ConfigureAwait(false);
         }
 
-        GameConsentRecord record = await store.FindAsync(normalisedExePath, ct).ConfigureAwait(false);
         if (ConsentRefusal(record, observed) is SessionEndReason refused)
         {
-            return new CaptureOutcome { Reason = refused };
+            return await HoldUnhookedAsync(new CaptureOutcome { Reason = refused }, normalisedExePath, alive, pid, ct, stop).ConfigureAwait(false);
         }
 
         return await SessionAsync(pid.Value, alive, record, observed!.Value, payloadPath, started: null, ct, stop)
             .ConfigureAwait(false);
+    }
+
+    /// <summary>The verdict a hooking-off row's Tier-2 session carries: the row's block when it has one, else "not enabled".</summary>
+    private static CaptureOutcome HookingOff(GameConsentRecord record) => new()
+    {
+        Reason = SessionEndReason.RefusedHookNotEnabled,
+        Verdict = record.BlockedReason is { Length: > 0 } blocked
+            ? AntiCheatVerdict.Refused(AntiCheatRefusalReason.PreviouslyBlocked, "previously blocked", blocked)
+            : AntiCheatVerdict.Refused(AntiCheatRefusalReason.HookNotEnabled, "not enabled", "hooking is off for this game; nothing is injected because a game was merely added"),
+    };
+
+    /// <summary>
+    /// Tier 2 as a session rather than a return code (2026-09-22; <c>04_CAPTURE</c> §Tier selection). The refusal is the
+    /// outcome's reason and stays so; what this adds is the game's duration and the machine's telemetry, drained on
+    /// every tick through the observer exactly as a hooked session's are. The clock is the pinned liveness when the
+    /// loop holds one, and the executable's name when it never opened the process. Nothing here touches the target.
+    /// </summary>
+    private async Task<CaptureOutcome> HoldUnhookedAsync(CaptureOutcome refusal, string normalisedExePath, ITargetLiveness? alive,
+        int? pid, CancellationToken ct, CancellationToken stop)
+    {
+        if (!options.HoldUnhooked)
+        {
+            return refusal;
+        }
+
+        DateTimeOffset? hardStop = options.MaxDuration > TimeSpan.Zero ? DateTimeOffset.UtcNow + options.MaxDuration : null;
+        while (!stop.IsCancellationRequested)
+        {
+            bool running = alive is not null ? !alive.HasExited : resolver.IsRunning(normalisedExePath);
+            if (!running || (hardStop is not null && DateTimeOffset.UtcNow >= hardStop))
+            {
+                break;
+            }
+
+            observer?.Tick(CaptureProgress.Unhooked);
+            await Task.Delay(options.HoldInterval, ct).ConfigureAwait(false);
+        }
+
+        observer?.Tick(CaptureProgress.Unhooked);
+        return refusal with { HeldUnhooked = true, TargetPid = pid ?? 0, ExitCode = alive?.ExitCode };
     }
 
     /// <summary>Launch mode (P1 item 2): start the consented executable, then the same session.</summary>
@@ -143,7 +196,7 @@ public sealed class CaptureSession(
         GameConsentRecord record = await store.FindAsync(normalisedExePath, ct).ConfigureAwait(false);
         if (ConsentRefusal(record, observed) is SessionEndReason refused)
         {
-            return new CaptureOutcome { Reason = refused };
+            return await HoldUnhookedAsync(new CaptureOutcome { Reason = refused }, normalisedExePath, alive, launched.Value.Pid, ct, stop).ConfigureAwait(false);
         }
 
         return await SessionAsync(launched.Value.Pid, alive, record, observed!.Value, payloadPath, started, ct, stop)
@@ -166,6 +219,7 @@ public sealed class CaptureSession(
         ExecutableFingerprint observed, string payloadPath, Stopwatch? started, CancellationToken ct, CancellationToken stop)
     {
         int waitMs = started is null ? 0 : checked((int)options.LaunchWaitBudget.TotalMilliseconds);
+        string observedPath = observed.ExePath;
         // THE FOURTH INPUT (FR-2.4, decision D7) is read here and handed to the request, so the refusal is
         // the gate's — a check upstream of it would make the gate's own "ONLY managed logic" remark false.
         bool engaged = await IsKillSwitchEngagedAsync(ct).ConfigureAwait(false);
@@ -182,20 +236,25 @@ public sealed class CaptureSession(
             // A finding about the game turns its hooking off here and now (owner decision 2026-09-22), not only at
             // the pre-scan: the guard's start-time scan sees the process and the drivers the pre-scan cannot.
             bool turnedOff = await TurnHookingOffAsync(observed, verdict, ct).ConfigureAwait(false);
-            return new CaptureOutcome { Reason = RefusalOf(verdict.Reason), Verdict = verdict, LaunchWait = launchWait, HookingTurnedOff = turnedOff };
+            var refused = new CaptureOutcome { Reason = RefusalOf(verdict.Reason), Verdict = verdict, LaunchWait = launchWait, HookingTurnedOff = turnedOff };
+            // Launch mode's two guard refusals are the orchestrator's cue to elect a descendant (04_CAPTURE §Launch
+            // mode); holding the launcher's session open would delay that. Every other refusal is Tier 2 from here.
+            return refused.Reason is SessionEndReason.LaunchTargetExited or SessionEndReason.LaunchNoPresentationRuntime
+                ? refused
+                : await HoldUnhookedAsync(refused, observedPath, alive, pid, ct, stop).ConfigureAwait(false);
         }
 
         TimeSpan attachBudget = layered ? options.LaunchWaitBudget : options.AttachBudget;
         (ICaptureSink? sink, ShmAttachRefusal refusal) = await AttachAsync(pid, attachBudget, ct).ConfigureAwait(false);
         if (sink is null)
         {
-            return new CaptureOutcome
+            return await HoldUnhookedAsync(new CaptureOutcome
             {
                 Reason = SessionEndReason.AttachRefused,
                 Verdict = verdict,
                 AttachRefusal = refusal,
                 LaunchWait = launchWait,
-            };
+            }, observedPath, alive, pid, ct, stop).ConfigureAwait(false);
         }
 
         using (sink)

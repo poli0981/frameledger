@@ -30,7 +30,7 @@ public static class SessionAggregator
         row = ApplyUpscaler(row, ctx);
         row = ApplyRt(row, ctx);
         row = ApplyWriter(row, ctx);
-        row = ApplySensors(row, ctx);
+        row = WithSensorAggregates(row, input.Sensors);
         row = ApplyWitnesses(row, ctx);
 
         return new AggregationResult
@@ -174,9 +174,15 @@ public static class SessionAggregator
         };
     }
 
-    private static SessionRow ApplySensors(SessionRow row, Context c)
+    /// <summary>
+    /// The sensor columns from the session's telemetry samples — the one aggregation a Tier-2 row shares with a hooked
+    /// one (2026-09-22): a held session has no frames and every sensor the machine could provide.
+    /// </summary>
+    public static SessionRow WithSensorAggregates(SessionRow row, IReadOnlyList<TelemetrySample> sensors)
     {
-        IReadOnlyList<GpuSample> s = [.. c.Input.Sensors.Select(static t => t.Sample)];
+        ArgumentNullException.ThrowIfNull(row);
+        ArgumentNullException.ThrowIfNull(sensors);
+        IReadOnlyList<GpuSample> s = [.. sensors.Select(static t => t.Sample)];
         SeriesAggregates temp = SeriesAggregates.Of(s.Select(static x => x.TempCoreC));
         SeriesAggregates hotspot = SeriesAggregates.Of(s.Select(static x => x.TempHotspotC));
         SeriesAggregates load = SeriesAggregates.Of(s.Select(static x => x.LoadPct));
@@ -186,9 +192,9 @@ public static class SessionAggregator
 
         // The machine beside the GPU: these four columns are schema 0001's and had no producer until 2026-09-21. A
         // session recorded before then, or one whose ticks never carried a reading, keeps its nulls.
-        SeriesAggregates cpuLoad = SeriesAggregates.Of(c.Input.Sensors.Select(static t => t.System.CpuLoadPct));
-        SeriesAggregates cpuTemp = SeriesAggregates.Of(c.Input.Sensors.Select(static t => t.System.CpuTempC));
-        SeriesAggregates ram = SeriesAggregates.Of(c.Input.Sensors.Select(static t => t.System.RamUsedMb));
+        SeriesAggregates cpuLoad = SeriesAggregates.Of(sensors.Select(static t => t.System.CpuLoadPct));
+        SeriesAggregates cpuTemp = SeriesAggregates.Of(sensors.Select(static t => t.System.CpuTempC));
+        SeriesAggregates ram = SeriesAggregates.Of(sensors.Select(static t => t.System.RamUsedMb));
         return row with
         {
             AvgCpuLoad = cpuLoad.Average,

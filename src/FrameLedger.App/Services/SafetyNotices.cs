@@ -45,11 +45,9 @@ public sealed class SafetyNotices : IDisposable
             case IpcMessageType.CaptureRefused when IpcCodec.Payload<CaptureRefusedEvent>(envelope) is { } refused:
                 return new SafetyNotice(SafetyNoticeKind.Refused,
                     string.Format(CultureInfo.CurrentCulture, Strings.Notice_Refused_Title_Format, refused.GameName ?? Strings.Common_NotAvailable),
-                    // "The session is still recorded" is not said about a process that could not be opened: that run ends at once
-                    // and is discarded for being short, so the sentence would be false there (2026-09-21).
-                    TurnedOff(string.Equals(refused.Reason, "TargetUnreadable", StringComparison.Ordinal)
-                        ? RefusalText(refused.Reason, refused.Family, refused.Signal)
-                        : RefusalText(refused.Reason, refused.Family, refused.Signal) + " " + Strings.Notice_Refused_Recording, refused.HookingTurnedOff), now);
+                    // "The session is still recorded" is true for every refusal since 2026-09-22: the loop holds a refused session
+                    // open, unhooked, until the game exits (it was untrue for a process that could not be opened, 2026-09-21).
+                    TurnedOff(RefusalText(refused.Reason, refused.Family, refused.Signal) + " " + Strings.Notice_Refused_Recording, refused.HookingTurnedOff), now);
             case IpcMessageType.SafetyUnhook when IpcCodec.Payload<SafetyUnhookEvent>(envelope) is { } unhooked:
                 return new SafetyNotice(SafetyNoticeKind.Unhooked, Strings.Notice_Unhooked_Title,
                     TurnedOff(string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_Unhooked_Format, unhooked.Family ?? unhooked.Signal ?? Strings.Common_NotAvailable), unhooked.HookingTurnedOff), now);

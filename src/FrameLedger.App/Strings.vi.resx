@@ -919,6 +919,21 @@
   <data name="Summary_Tier2_Body" xml:space="preserve">
     <value>Phiên này không hook: đã ghi thời lượng và telemetry phần cứng, không đo gì, và không có khung hình để vẽ.</value>
   </data>
+  <data name="Summary_Tier2_Why_Blocked_Format" xml:space="preserve">
+    <value>Lý do: hooking đang tắt cho game này — guard đã phát hiện {0}.</value>
+  </data>
+  <data name="Summary_Tier2_Why_Guard_Format" xml:space="preserve">
+    <value>Lý do: guard đã từ chối — {0} ({1}).</value>
+  </data>
+  <data name="Summary_Tier2_Why_HookOff" xml:space="preserve">
+    <value>Lý do: hooking đang tắt cho game này, nên không có gì được inject.</value>
+  </data>
+  <data name="Summary_Tier2_Why_Other_Format" xml:space="preserve">
+    <value>Lý do: {0}.</value>
+  </data>
+  <data name="Summary_Tier2_Why_Unreadable" xml:space="preserve">
+    <value>Lý do: Windows không cho FrameLedger mở tiến trình (driver anti-cheat, hoặc game chạy với quyền quản trị).</value>
+  </data>
   <data name="Summary_Title_Format" xml:space="preserve">
     <value>{0} — {1}</value>
   </data>

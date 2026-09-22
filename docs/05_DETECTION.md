@@ -177,7 +177,7 @@ Everything else in the table is in the data and has a fixture; `rules-validate.p
 | itch.io | `.itch\receipt.json.gz` | **`%APPDATA%\itch\db\butler.db`** (`install_locations` + `caves`, butler's `verdict` names the executable) since 2026-09-16, then the receipt JSON: title, id |
 | None/Manual | fallback | PE VersionInfo |
 
-**Auto-import (FR-1.2):** Steam via `libraryfolders.vdf` → all `appmanifest_*.acf`; GOG via `HKLM\SOFTWARE\WOW6432Node\GOG.com\Games\*`; Epic via `Manifests\*.item`; itch by receipt scan. Import presents a review checklist; nothing is launched, nothing is hooked on import.
+**Auto-import (FR-1.2):** Steam via `libraryfolders.vdf` → all `appmanifest_*.acf` except `SteamLibrarySource.KnownTools` (2026-09-22: Steamworks Common Redistributables, Borderless Gaming, Wallpaper Engine, SteamVR, the Proton and Steam Linux Runtime entries, Blender — tools Steam's manifests do not distinguish from games, and which became library rows the watcher recorded); GOG via `HKLM\SOFTWARE\WOW6432Node\GOG.com\Games\*`; Epic via `Manifests\*.item`; itch by receipt scan. Import presents a review checklist; nothing is launched, nothing is hooked on import.
 
 > **Built 2026-09-14 (P4 PR-4).** `Application.Import.LibraryImporter` over four `IStoreLibrarySource` adapters in
 > `Infrastructure.Import` — `SteamLibrarySource` (`libraryfolders.vdf` + `appmanifest_*.acf` through
