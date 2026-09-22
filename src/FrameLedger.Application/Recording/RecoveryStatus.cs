@@ -13,4 +13,13 @@ public enum RecoveryStatus
 
     /// <summary>No readable header: nothing to recover, and the file is gone.</summary>
     Unreadable,
+
+    /// <summary>Its game is no longer in the ledger and no row holds its executable's path: nothing written, the file is gone.</summary>
+    GameRemoved,
+
+    /// <summary>
+    /// Recovering it threw. The file is set aside as <c>&lt;guid&gt;.partial.failed</c> — kept for a bug report, never
+    /// retried — and recovery goes on to the next file, so one bad file can never stop the watcher from starting.
+    /// </summary>
+    Failed,
 }

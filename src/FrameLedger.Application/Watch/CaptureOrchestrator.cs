@@ -246,17 +246,22 @@ public sealed class CaptureOrchestrator
         try
         {
             RecordedSession r = await Task.Run(() => recorder.RecordAsync(request, ct), ct).ConfigureAwait(false);
-            Report(r);
+            Report(r, Name(request));
         }
         catch (OperationCanceledException)
         {
-            _log("session: cancelled before it could finalize; the .partial stays for recovery");
+            _log($"session {SessionId(request)}: cancelled before it could finalize; the .partial stays for recovery — {Name(request)}");
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            _log($"session: FAULTED {ex.GetType().Name}: {ex.Message}");
+            _log($"session {SessionId(request)}: FAULTED {ex.GetType().Name}: {ex.Message} — {Name(request)} ({request.NormalisedExePath})");
         }
     }
+
+    /// <summary>The game a log line is about (2026-09-23: the owner's log said "FAULTED" twice and not which game or session).</summary>
+    private static string Name(RecordRequest request) => request.GameName ?? Path.GetFileName(request.NormalisedExePath);
+
+    private static string SessionId(RecordRequest request) => request.SessionGuid?.ToString("N") ?? "(unnamed)";
 
     /// <summary>Launch mode on its own task: the environment, the session, the election, each reported.</summary>
     private async Task RunLaunchAsync(GameRow game, string arguments, Guid sessionGuid, CancellationToken stop, CancellationToken ct)
@@ -278,26 +283,26 @@ public sealed class CaptureOrchestrator
                 StopToken = stop,
             };
             RecordedSession r = await Task.Run(() => launch.Recorder.RecordAsync(request, ct), ct).ConfigureAwait(false);
-            Report(r);
+            Report(r, game.Name);
 
             RecordedSession? elected = await ElectAfterLaunchAsync(r, ct).ConfigureAwait(false);
             if (elected is not null)
             {
-                Report(elected);
+                Report(elected, $"elected after {game.Name}");
             }
         }
         catch (OperationCanceledException)
         {
-            _log("session: cancelled before it could finalize; the .partial stays for recovery");
+            _log($"session {sessionGuid:N}: cancelled before it could finalize; the .partial stays for recovery — {game.Name}");
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            _log($"session: FAULTED {ex.GetType().Name}: {ex.Message}");
+            _log($"session {sessionGuid:N}: FAULTED {ex.GetType().Name}: {ex.Message} — {game.Name} ({game.Fingerprint.ExePath})");
         }
     }
 
-    private void Report(RecordedSession r) =>
-        _log($"session {r.SessionGuid:N}: {r.Outcome.Reason}; {r.Finalize.Status} (tier {(int)r.Row.Tier}, exit={r.ExitStatus}, frames={r.Row.FrameCount}){GuardDetail(r.Outcome)}");
+    private void Report(RecordedSession r, string game) =>
+        _log($"session {r.SessionGuid:N}: {r.Outcome.Reason}; {r.Finalize.Status} (tier {(int)r.Row.Tier}, exit={r.ExitStatus}, frames={r.Row.FrameCount}){GuardDetail(r.Outcome)} — {game}");
 
     /// <summary>
     /// What the guard said, when it said anything but a plain allow (2026-09-21). A SafetyUnhook on the owner's machine

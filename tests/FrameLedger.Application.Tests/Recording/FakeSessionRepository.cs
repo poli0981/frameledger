@@ -12,8 +12,16 @@ internal sealed class FakeSessionRepository : ISessionRepository
 
     public int SweptPerCall { get; set; }
 
+    /// <summary>When set, <see cref="InsertFinalizedAsync"/> throws it instead of storing (a write that fails).</summary>
+    public Exception? InsertFailure { get; set; }
+
     public ValueTask<long> InsertFinalizedAsync(FinalizedSession session, CancellationToken ct = default)
     {
+        if (InsertFailure is { } failure)
+        {
+            throw failure;
+        }
+
         if (PreExisting.Contains(session.Row.SessionGuid) || Stored.Any(s => s.Row.SessionGuid == session.Row.SessionGuid))
         {
             throw new InvalidOperationException("session_guid already stored");
@@ -25,6 +33,18 @@ internal sealed class FakeSessionRepository : ISessionRepository
 
     public ValueTask<bool> ExistsAsync(Guid sessionGuid, CancellationToken ct = default) =>
         ValueTask.FromResult(PreExisting.Contains(sessionGuid) || Stored.Any(s => s.Row.SessionGuid == sessionGuid));
+
+    /// <summary>Who owns a finishing session: by default the id it started under, as if nothing had been removed.</summary>
+    public Func<long, string?, DateTimeOffset, long?> Owner { get; set; } = static (gameId, _, _) => gameId;
+
+    /// <summary>Every owner lookup, in order.</summary>
+    public List<(long GameId, string? ExePath)> OwnerLookups { get; } = [];
+
+    public ValueTask<long?> ResolveOwnerAsync(long gameId, string? exePath, DateTimeOffset startedAt, CancellationToken ct = default)
+    {
+        OwnerLookups.Add((gameId, exePath));
+        return ValueTask.FromResult(Owner(gameId, exePath, startedAt));
+    }
 
     public ValueTask<SessionRow?> FindAsync(Guid sessionGuid, CancellationToken ct = default) =>
         ValueTask.FromResult(Stored.Select(s => s.Row).FirstOrDefault(r => r.SessionGuid == sessionGuid));

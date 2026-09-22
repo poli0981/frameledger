@@ -340,6 +340,22 @@ because a layer cannot leave a running game's loader chain.
 
 **Discard rule:** duration < min session length (default 30 s) → discard silently (log only).
 
+> **A session whose entry was removed while it ran (2026-09-23).** Step 5 wrote under the id the session *started*
+> with, and the owner's GIRLS' FRONTLINE 2 entry was removed — and re-imported — twice while the game ran: both
+> sessions died on the foreign key (`session: FAULTED SqliteException: … FOREIGN KEY constraint failed`, 2026-09-22
+> 23:26 and 2026-09-23 00:25), and each left a `.partial` whose recovery would have died the same way at the next
+> start — stopping the host, because recovery ran before the watcher with no guard. As built:
+> - **The owner is looked up, not assumed** (`ISessionRepository.ResolveOwnerAsync`, `FinalizeInput.ExePath`): the id
+>   the session started under when that row predates the session or holds its executable (an id SQLite reused for a
+>   later game is neither — `games.id` has no AUTOINCREMENT), else the row that holds the executable's path now (the
+>   re-imported entry), else **`GameRemoved`**: the user removed the game with its sessions and this was one of them.
+>   Nothing is written, the `.partial` is deleted, and the log says which. The write transaction re-checks the row, so a
+>   removal between the lookup and the insert is the same answer rather than the foreign key's exception.
+> - **Recovery never throws.** A file it cannot finalize is set aside as `<guid>.partial.failed` (never retried, kept for
+>   a bug report) and reported `Failed`; the next file is recovered, and the watcher starts either way.
+> - The Agent's host logs through Serilog since the same day: a background service that stops the host is now in
+>   `agent-*.log`, where before it was in no file at all.
+
 > **Built 2026-09-10 (P2 PR-D): `Application.Recording`.** The state machine above is the intent; what
 > runs is one class per box. `SessionRecorder` owns a session end to end — the row's identity and time
 > base (`session_guid`, `qpc_epoch`/`qpc_frequency` from `TimeProvider.GetTimestamp`, which is QPC), the

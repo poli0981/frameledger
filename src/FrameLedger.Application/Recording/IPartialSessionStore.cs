@@ -19,4 +19,11 @@ public interface IPartialSessionStore
 
     /// <summary>Removes the file; a missing file is not an error.</summary>
     void Delete(Guid sessionGuid);
+
+    /// <summary>
+    /// Sets the file aside as <c>&lt;guid&gt;.partial.failed</c> (2026-09-23): out of <see cref="ListPending"/>, never
+    /// retried, kept for a bug report. What recovery does with a file it could not finalize, so that one bad file cannot
+    /// stop every later start. A missing file is not an error.
+    /// </summary>
+    void Quarantine(Guid sessionGuid);
 }

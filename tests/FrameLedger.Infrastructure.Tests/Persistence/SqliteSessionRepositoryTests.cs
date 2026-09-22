@@ -174,6 +174,49 @@ public sealed class SqliteSessionRepositoryTests
         await again.Should().ThrowAsync<InvalidOperationException>("the recovery path asks ExistsAsync first, and the store refuses regardless");
     }
 
+    /// <summary>
+    /// 2026-09-22/23: two GIRLS' FRONTLINE 2 sessions died on the foreign key because their entry was removed (and then
+    /// re-imported) while they ran. The write now names that case instead of surfacing SQLite's constraint error.
+    /// </summary>
+    [Fact]
+    public async Task AWriteForAGameThatIsGoneSaysSoInsteadOfFailingTheForeignKey()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        (long gameId, long snapshotId) = await SeedAsync(f);
+        var repo = new SqliteSessionRepository(f.Db);
+        SessionRow row = Row(gameId + 1000, snapshotId);
+
+        Func<Task> insert = async () => await repo.InsertFinalizedAsync(new FinalizedSession { Row = row }, Ct).ConfigureAwait(false);
+
+        await insert.Should().ThrowAsync<SessionOwnerMissingException>();
+        (await repo.ExistsAsync(row.SessionGuid, Ct)).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task TheOwnerIsTheRowItStartedUnderElseTheRowHoldingItsExecutableElseNone()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        var games = new SqliteGameRepository(f.Db);
+        var repo = new SqliteSessionRepository(f.Db);
+        GameRow original = await games.EnsureAsync(_game, "T", Ct);
+        DateTimeOffset afterOriginal = original.AddedAt.AddSeconds(1);
+
+        // The row it started under, still there — or repointed while it ran (Change executable, a moved drive).
+        (await repo.ResolveOwnerAsync(original.Id, _game.ExePath, afterOriginal, Ct)).Should().Be(original.Id);
+        (await repo.ResolveOwnerAsync(original.Id, @"C:\Games\T\before-the-change.exe", afterOriginal, Ct)).Should().Be(original.Id);
+
+        // Gone, and its executable held by a re-imported row: that row, whatever the path's case.
+        (await repo.ResolveOwnerAsync(original.Id + 1000, _game.ExePath.ToUpperInvariant(), afterOriginal, Ct)).Should().Be(original.Id);
+
+        // An id SQLite handed to a LATER game with another executable is not the session's game (no AUTOINCREMENT).
+        GameRow later = await games.EnsureAsync(new ExecutableFingerprint { ExePath = @"C:\Games\Other\o.exe", SizeBytes = 3, MtimeUnixMs = 4 }, "O", Ct);
+        (await repo.ResolveOwnerAsync(later.Id, @"C:\Games\Removed\r.exe", later.AddedAt.AddSeconds(-1), Ct)).Should().BeNull();
+
+        // Gone with nothing at its path, and a caller that knows no path: no owner.
+        (await repo.ResolveOwnerAsync(original.Id + 1000, @"C:\Games\Removed\r.exe", afterOriginal, Ct)).Should().BeNull();
+        (await repo.ResolveOwnerAsync(original.Id + 1000, null, afterOriginal, Ct)).Should().BeNull();
+    }
+
     [Fact]
     public async Task RetentionKeepsTheLastNSessionsRawSeriesAndEveryAggregate()
     {

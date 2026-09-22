@@ -104,6 +104,7 @@ public static class RecordedSessionEvents
         FinalizeStatus.Saved => "saved",
         FinalizeStatus.Discarded => "discarded",
         FinalizeStatus.AlreadyStored => "already_stored",
+        FinalizeStatus.GameRemoved => "game_removed",
         _ => status.ToString(),
     };
 

@@ -34,6 +34,16 @@ public sealed class SqliteSessionRepository : ISessionRepository
 
     private const string _exists = "SELECT COUNT(*) FROM sessions WHERE session_guid = @guid";
 
+    // The row a finishing session belongs to (2026-09-23; ISessionRepository.ResolveOwnerAsync). The id it started under,
+    // when that row predates the session or holds its executable — an id SQLite handed to a LATER game (no AUTOINCREMENT)
+    // is neither — and otherwise the row that holds the executable now. exe_path is COLLATE NOCASE, so '=' is too.
+    private const string _ownerById =
+        "SELECT id FROM games WHERE id = @gameId AND (added_at <= @startedAt OR (@path IS NOT NULL AND exe_path = @path))";
+
+    private const string _ownerByPath = "SELECT id FROM games WHERE exe_path = @path";
+
+    private const string _ownerExists = "SELECT COUNT(*) FROM games WHERE id = @gameId";
+
     private const string _selectSegments =
         "SELECT swapchain_id, start_frame, end_frame, render_w, render_h, output_w, output_h, upscaler, upscaler_quality, fg_mode, "
         + "native_fps, displayed_fps, p1_low_fps FROM session_segments WHERE session_id = @sessionId ORDER BY start_frame, swapchain_id";
@@ -82,6 +92,13 @@ public sealed class SqliteSessionRepository : ISessionRepository
                 throw new InvalidOperationException($"session {session.Row.SessionGuid:D} is already stored");
             }
 
+            // Inside the write transaction, so a removal cannot slip between this and the insert (one writer): the entry
+            // removed while its session ran is a named outcome, not the foreign key's SqliteException (2026-09-23).
+            if (await c.ExecuteScalarAsync<long>(new CommandDefinition(_ownerExists, new { gameId = session.Row.GameId }, tx, cancellationToken: token)).ConfigureAwait(false) == 0)
+            {
+                throw new SessionOwnerMissingException($"session {session.Row.SessionGuid:D}: games row {session.Row.GameId} no longer exists");
+            }
+
             long id = await c.ExecuteScalarAsync<long>(new CommandDefinition(
                 SessionRowColumns.Insert, SessionRowColumns.Parameters(session.Row), tx, cancellationToken: token)).ConfigureAwait(false);
             await InsertSegmentsAsync(c, tx, id, session.Segments, token).ConfigureAwait(false);
@@ -97,6 +114,19 @@ public sealed class SqliteSessionRepository : ISessionRepository
 
     public ValueTask<bool> ExistsAsync(Guid sessionGuid, CancellationToken ct = default) =>
         _db.ReadAsync((c, token) => ExistsInAsync(c, null, sessionGuid, token), ct);
+
+    public ValueTask<long?> ResolveOwnerAsync(long gameId, string? exePath, DateTimeOffset startedAt, CancellationToken ct = default) =>
+        _db.ReadAsync(async (c, token) =>
+        {
+            var p = new { gameId, path = exePath, startedAt = startedAt.ToUnixTimeMilliseconds() };
+            long? byId = await c.ExecuteScalarAsync<long?>(new CommandDefinition(_ownerById, p, cancellationToken: token)).ConfigureAwait(false);
+            if (byId is not null || exePath is null)
+            {
+                return byId;
+            }
+
+            return await c.ExecuteScalarAsync<long?>(new CommandDefinition(_ownerByPath, p, cancellationToken: token)).ConfigureAwait(false);
+        }, ct);
 
     public ValueTask<SessionRow?> FindAsync(Guid sessionGuid, CancellationToken ct = default) =>
         _db.ReadAsync((c, token) => SqliteReaders.ReadOneAsync(

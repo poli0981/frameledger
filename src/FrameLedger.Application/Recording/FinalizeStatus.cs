@@ -10,4 +10,11 @@ public enum FinalizeStatus
 
     /// <summary>A session with this guid was already stored — recovery ran after a finalize that did land.</summary>
     AlreadyStored,
+
+    /// <summary>
+    /// No <c>games</c> row owns the session any more (2026-09-23): its entry was removed with its sessions while it ran,
+    /// and no row holds its executable's path either. Nothing is written; the caller deletes the <c>.partial</c> as it does
+    /// for <see cref="Discarded"/>. Until this value existed the insert died on the foreign key and the session FAULTED.
+    /// </summary>
+    GameRemoved,
 }

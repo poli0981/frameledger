@@ -148,4 +148,52 @@ public sealed class SessionFinalizerTests
         again.Status.Should().Be(FinalizeStatus.AlreadyStored, "recovery after a finalize that landed must not store the session twice");
         repo.Stored.Should().ContainSingle();
     }
+
+    /// <summary>
+    /// 2026-09-22 23:26 and 2026-09-23 00:25 on the owner's machine: a GIRLS' FRONTLINE 2 session's entry was removed
+    /// while it ran, and the insert died on the foreign key ("FAULTED SqliteException … FOREIGN KEY constraint failed").
+    /// With no row left for the session, that is an outcome with a name, and nothing is written.
+    /// </summary>
+    [Fact]
+    public async Task ASessionWhoseGameWasRemovedWhileItRanIsNotWrittenAndSaysSo()
+    {
+        (SessionFinalizer finalizer, FakeSessionRepository repo) = Make();
+        repo.Owner = static (_, _, _) => null;
+        var input = new FinalizeInput { Skeleton = SessionFixtures.Skeleton(), ExePath = @"D:\SteamLibrary\steamapps\common\GF2\GF2_Exilium.exe" };
+
+        FinalizeOutcome outcome = await finalizer.FinalizeAsync(input, TestContext.Current.CancellationToken);
+
+        outcome.Status.Should().Be(FinalizeStatus.GameRemoved);
+        outcome.SessionId.Should().BeNull();
+        repo.Stored.Should().BeEmpty();
+        repo.Sweeps.Should().BeEmpty();
+        repo.OwnerLookups.Should().Equal((7L, @"D:\SteamLibrary\steamapps\common\GF2\GF2_Exilium.exe"));
+    }
+
+    [Fact]
+    public async Task ASessionWhoseEntryWasReimportedIsStoredUnderTheRowThatHoldsItsExecutableNow()
+    {
+        (SessionFinalizer finalizer, FakeSessionRepository repo) = Make();
+        repo.Owner = static (_, path, _) => path is null ? null : 42;
+        var input = new FinalizeInput { Skeleton = SessionFixtures.Skeleton(), ExePath = @"D:\Games\Title\game.exe", RetentionKeep = 5 };
+
+        FinalizeOutcome outcome = await finalizer.FinalizeAsync(input, TestContext.Current.CancellationToken);
+
+        outcome.Status.Should().Be(FinalizeStatus.Saved);
+        outcome.GameId.Should().Be(42, "the row that holds the session's executable now");
+        repo.Stored.Should().ContainSingle().Which.Row.GameId.Should().Be(42);
+        repo.Sweeps.Should().Equal((42L, 5));
+    }
+
+    [Fact]
+    public async Task ARemovalBetweenTheLookupAndTheWriteIsTheSameAnswer()
+    {
+        (SessionFinalizer finalizer, FakeSessionRepository repo) = Make();
+        repo.InsertFailure = new SessionOwnerMissingException("games row 7 no longer exists");
+
+        FinalizeOutcome outcome = await finalizer.FinalizeAsync(new FinalizeInput { Skeleton = SessionFixtures.Skeleton() }, TestContext.Current.CancellationToken);
+
+        outcome.Status.Should().Be(FinalizeStatus.GameRemoved, "the write transaction's own check, not the foreign key");
+        repo.Sweeps.Should().BeEmpty();
+    }
 }

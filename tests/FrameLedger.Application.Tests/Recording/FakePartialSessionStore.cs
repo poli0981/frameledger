@@ -22,13 +22,25 @@ internal sealed class FakePartialSessionStore : IPartialSessionStore
         return entry;
     }
 
-    public IReadOnlyList<Guid> ListPending() => [.. Files.Keys];
+    public IReadOnlyList<Guid> ListPending() => ListFailure is { } failure ? throw failure : [.. Files.Keys];
 
     public PartialSession? Read(Guid sessionGuid) => Files.TryGetValue(sessionGuid, out Entry? e) ? e.ToSession() : null;
 
     public void Delete(Guid sessionGuid)
     {
         Deleted.Add(sessionGuid);
+        Files.Remove(sessionGuid);
+    }
+
+    /// <summary>Files set aside by recovery, out of <see cref="ListPending"/> but not deleted.</summary>
+    public List<Guid> Quarantined { get; } = [];
+
+    /// <summary>When set, <see cref="ListPending"/> throws it (a folder recovery cannot read).</summary>
+    public Exception? ListFailure { get; set; }
+
+    public void Quarantine(Guid sessionGuid)
+    {
+        Quarantined.Add(sessionGuid);
         Files.Remove(sessionGuid);
     }
 

@@ -389,6 +389,43 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         first.Row.CaptureNotes.Should().Contain("exit_code=-1073741819");
     }
 
+    /// <summary>
+    /// 2026-09-23 00:24–00:25 on the owner's machine: GIRLS' FRONTLINE 2's entry was removed and re-imported while its
+    /// session ran, and the finalize died on the foreign key ("session: FAULTED … FOREIGN KEY constraint failed"), leaving
+    /// a <c>.partial</c> that would have stopped the next start. The session lands on the row that holds its executable now,
+    /// and the injection stamp follows it there.
+    /// </summary>
+    [Fact]
+    public async Task AnEntryRemovedAndReimportedMidSessionGetsTheSessionAndTheInjectionStamp()
+    {
+        Harness h = await MakeAsync();
+        h.Sessions.Owner = static (_, path, _) => string.Equals(path, _exe, StringComparison.OrdinalIgnoreCase) ? 42 : null;
+
+        RecordedSession r = await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        r.Finalize.Status.Should().Be(FinalizeStatus.Saved);
+        r.Finalize.GameId.Should().Be(42);
+        r.Row.GameId.Should().Be(42);
+        h.Sessions.Stored.Single().Row.GameId.Should().Be(42);
+        h.Games.Injections.Should().ContainSingle().Which.GameId.Should().Be(42, "the stamp goes to the row that owns the session now");
+        h.Partials.Files.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task AnEntryRemovedWithItsSessionsMidSessionEndsAsGameRemovedAndLeavesNoPartial()
+    {
+        Harness h = await MakeAsync();
+        h.Sessions.Owner = static (_, _, _) => null;
+
+        RecordedSession r = await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        r.Finalize.Status.Should().Be(FinalizeStatus.GameRemoved, "the user removed the game and its sessions; this was one of them");
+        h.Sessions.Stored.Should().BeEmpty();
+        h.Games.Injections.Should().BeEmpty("there is no row to stamp");
+        h.Partials.Files.Should().BeEmpty("nothing is left for a recovery that would only reach the same answer");
+        h.Partials.Deleted.Should().Equal(r.SessionGuid);
+    }
+
     [Fact]
     public async Task WithoutAPollerTheSessionStillRecordsAndTheDescriptorIsNull()
     {

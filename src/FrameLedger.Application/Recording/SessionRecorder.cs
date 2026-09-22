@@ -157,6 +157,7 @@ public sealed class SessionRecorder : ISessionRecorder
             Sensors = writer.Sensors,
             RetentionKeep = options.RetentionKeep,
             MinimumSessionLength = options.MinimumSessionLength,
+            ExePath = request.NormalisedExePath,
         };
         FinalizedSession built = _finalizer.Build(input);
 
@@ -165,18 +166,22 @@ public sealed class SessionRecorder : ISessionRecorder
         writer.Dispose();
         _partials.Delete(header.SessionGuid);
 
+        // The row the session was stored under (2026-09-23): the one it started with, or — when that entry was removed
+        // and re-imported while the game ran — the one that holds its executable now. A removed game has none, and
+        // neither the injection stamp nor the crash policy has a row to write to.
+        long ownerId = saved.GameId ?? game.Id;
         CrashPolicyOutcome crash = CrashPolicyOutcome.NotAnEarlyCrash;
-        if (hooked)
+        if (hooked && saved.Status != FinalizeStatus.GameRemoved)
         {
-            await _games.RecordInjectionAsync(game.Id, run.AttachedAt ?? header.StartedAt, ct).ConfigureAwait(false);
-            crash = await _crashPolicy.ApplyAsync(game.Id, exit, run.AttachedAt, endedAt, ct).ConfigureAwait(false);
+            await _games.RecordInjectionAsync(ownerId, run.AttachedAt ?? header.StartedAt, ct).ConfigureAwait(false);
+            crash = await _crashPolicy.ApplyAsync(ownerId, exit, run.AttachedAt, endedAt, ct).ConfigureAwait(false);
         }
 
         return new RecordedSession
         {
             SessionGuid = header.SessionGuid,
             Outcome = outcome,
-            Row = built.Row with { Id = saved.SessionId ?? 0 },
+            Row = built.Row with { Id = saved.SessionId ?? 0, GameId = ownerId },
             ExitStatus = exit,
             Finalize = saved,
             CrashPolicy = crash,
