@@ -116,6 +116,49 @@ public sealed class TargetResolverTests : IDisposable
         reason.Should().Be(SessionEndReason.TargetUnreadable);
     }
 
+    /// <summary>The unreadable answer says what stopped each candidate, where the owner's log can show it (2026-09-23).</summary>
+    [Fact]
+    public void AnUnreadableCandidateIsExplainedInTheNote()
+    {
+        List<string> notes = [];
+        string csrss = Path.Combine(Environment.SystemDirectory, "csrss.exe");
+
+        _ = new TargetResolver(notes.Add).Resolve(ExecutableIdentity.Normalise(csrss), out _);
+
+        notes.Should().ContainSingle().Which.Should().Contain("csrss.exe").And.Contain("could not be read").And.Contain("pid ");
+    }
+
+    /// <summary>
+    /// The Tier-2 hold's clock (2026-09-23): where a watcher runs, its snapshot by image path. The owner's two "Flower in
+    /// Us" sessions were held by the name <c>Game</c>, so any <c>Game.exe</c> anywhere kept them open.
+    /// </summary>
+    [Fact]
+    public void WithTheWatchersSnapshotRunningMeansThisImagePathNotThisName()
+    {
+        const string flower = @"D:\SteamLibrary\steamapps\common\Flower in Us\Game.exe";
+        var latest = new Application.Watch.LatestProcessSnapshot();
+        var resolver = new TargetResolver(latest: latest);
+        latest.Publish([new Application.Watch.ProcessSnapshot(1, 0, "Game.exe", @"D:\another\it\HHW\swiftshader\Game.exe", DateTimeOffset.UnixEpoch)]);
+
+        resolver.IsRunning(flower).Should().BeFalse("another game's Game.exe");
+
+        latest.Publish([new Application.Watch.ProcessSnapshot(2, 0, "Game.exe", flower, DateTimeOffset.UnixEpoch)]);
+        resolver.IsRunning(flower).Should().BeTrue();
+
+        latest.Publish([new Application.Watch.ProcessSnapshot(3, 0, "Game.exe", null, DateTimeOffset.UnixEpoch)]);
+        resolver.IsRunning(flower).Should().BeTrue("a process whose path could not be read still counts by its name");
+    }
+
+    [Fact]
+    public void WithoutASnapshotRunningFallsBackToTheName()
+    {
+        Start("/c ping -n 30 127.0.0.1 > nul");
+        WaitUntilAllVisible();
+
+        new TargetResolver().IsRunning(ExecutableIdentity.Normalise(_exe)).Should().BeTrue("the console verbs, where nothing polls, keep the name");
+        new TargetResolver(latest: new Application.Watch.LatestProcessSnapshot()).IsRunning(ExecutableIdentity.Normalise(_exe)).Should().BeTrue("no snapshot published yet");
+    }
+
     [Fact]
     public void OneInstanceResolves()
     {

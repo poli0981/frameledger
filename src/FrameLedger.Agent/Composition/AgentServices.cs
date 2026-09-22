@@ -75,8 +75,16 @@ internal static class AgentServices
         services.AddSingleton<IAntiCheatGuard, NativeAntiCheatGuard>();
         services.AddSingleton<HookedCaptureGate>();
 
-        // The capture path's adapters (PR-C).
-        services.AddSingleton<ITargetResolver>(static _ => new TargetResolver(AgentConsole.Line));
+        // The capture path's adapters (PR-C). The resolver's notes reach the Agent's log too (2026-09-23: there were none in
+        // it), and its Tier-2 liveness reads the watcher's snapshot by image path, never a process of its own.
+        services.AddSingleton<LatestProcessSnapshot>();
+        services.AddSingleton<ITargetResolver>(static sp => new TargetResolver(
+            static line =>
+            {
+                AgentConsole.Line(line);
+                Serilog.Log.Information("{Line}", line);
+            },
+            sp.GetRequiredService<LatestProcessSnapshot>()));
         services.AddSingleton<ITargetLivenessSource, HeldProcessLivenessSource>();
         services.AddSingleton<IRingAttacher>(static _ => new ShmRingAttacher(NativeAntiCheatGuard.BuildId()));
         services.AddSingleton<IRuntimeModuleSnapshot>(static _ => new RuntimeModuleSnapshot(CensusNames.ModuleFileNames));
@@ -200,7 +208,8 @@ internal static class AgentServices
             new OrchestratorOptions { PayloadPath = AgentPaths.Payload },
             static line => Serilog.Log.Information("{Line}", line),
             sp.GetRequiredService<ILaunchRecorderFactory>(),
-            sp.GetRequiredService<ExecutableRelocator>()));
+            sp.GetRequiredService<ExecutableRelocator>(),
+            sp.GetRequiredService<LatestProcessSnapshot>()));
         services.AddSingleton<ILaunchRecorderFactory, AgentLaunches>();
 
     }

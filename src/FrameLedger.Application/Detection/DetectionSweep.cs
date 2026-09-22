@@ -39,6 +39,10 @@ public sealed class DetectionSweep : IDisposable
     private readonly ExecutableRelocator? _relocator;
     private readonly SemaphoreSlim _wake = new(0, 1);
 
+    // The path each unreadable entry was last reported at (2026-09-23): said once until it changes or reads again. The
+    // owner's log repeated the same "executable unreadable" line for the same entries every 15 s.
+    private readonly Dictionary<long, string> _unreadableSaid = [];
+
     /// <summary>The sweep over the library, with the detector it runs and the identity it reads executables with.</summary>
     /// <param name="games">The library.</param>
     /// <param name="rules">The detection rules the detector runs.</param>
@@ -106,9 +110,16 @@ public sealed class DetectionSweep : IDisposable
             if (read is not { } onDisk)
             {
                 unreadable++;
-                _log($"detect: {game.Name} — executable unreadable, skipped ({game.Fingerprint.ExePath})");
+                if (!_unreadableSaid.TryGetValue(game.Id, out string? said) || !string.Equals(said, game.Fingerprint.ExePath, StringComparison.OrdinalIgnoreCase))
+                {
+                    _unreadableSaid[game.Id] = game.Fingerprint.ExePath;
+                    _log($"detect: {game.Name} — executable unreadable, skipped ({game.Fingerprint.ExePath}); said once until that changes");
+                }
+
                 continue;
             }
+
+            _unreadableSaid.Remove(game.Id);
 
             if (!IsStale(game, onDisk, rules.RulesVersion))
             {

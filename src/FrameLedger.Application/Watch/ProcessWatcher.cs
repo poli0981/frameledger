@@ -13,10 +13,10 @@ namespace FrameLedger.Application.Watch;
 /// both normalised the same way (<c>ExecutableIdentity.Normalise</c>), compared case-insensitively because
 /// NTFS is. <b>Fall back to the file name only when it is unambiguous</b>: exactly one tracked row carries that
 /// file name. Two rows sharing <c>game.exe</c> in different directories are two games, and guessing which
-/// one moved is how a session lands on the wrong row. The fallback event says <c>StalePath</c>, and the
-/// session it starts is keyed on the path the process actually runs from — so consent for the old path
-/// does not follow the binary to a new one, which is <c>HookRequest.FromConsent</c>'s rule read from the
-/// other side.
+/// one moved is how a session lands on the wrong row. The fallback event says <c>StalePath</c>, and since
+/// 2026-09-23 it is a CANDIDATE, never a session (HANDOFF D25): the orchestrator asks the relocator whether the
+/// process is the row's own executable on a drive that changed its letter, and otherwise records nothing — a
+/// single row named <c>Game.exe</c> is every RPG Maker game's name.
 /// </para>
 /// <para>
 /// <b>A process that cannot be opened matches nothing.</b> Its image path is null and its name alone is

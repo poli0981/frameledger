@@ -149,6 +149,28 @@ public sealed class DetectionSweepTests
         games.Detections.Should().BeEmpty("an unusable rules file writes nothing rather than a wrong answer");
     }
 
+    /// <summary>
+    /// The owner's log repeated "executable unreadable" for the same entries every 15 s (2026-09-22/23): an unreadable
+    /// entry is said once, again only when its path changes or after it has read in between.
+    /// </summary>
+    [Fact]
+    public async Task AnUnreadableExeIsSaidOnceUntilItChanges()
+    {
+        (DetectionSweep sweep, _, _, _, FakeIdentity identity, List<string> log) = await BuildAsync();
+        identity.OnDisk = null;
+
+        await sweep.SweepOnceAsync(Ct);
+        await sweep.SweepOnceAsync(Ct);
+        await sweep.SweepOnceAsync(Ct);
+        log.Where(static l => l.Contains("unreadable", StringComparison.Ordinal)).Should().ContainSingle();
+
+        identity.OnDisk = new ExecutableFingerprint { ExePath = _exe, SizeBytes = 5, MtimeUnixMs = 5 };
+        await sweep.SweepOnceAsync(Ct);
+        identity.OnDisk = null;
+        (await sweep.SweepOnceAsync(Ct)).Unreadable.Should().Be(1, "the count stays honest; only the line is not repeated");
+        log.Where(static l => l.Contains("unreadable", StringComparison.Ordinal)).Should().HaveCount(2, "it read in between, so going unreadable again is news");
+    }
+
     [Fact]
     public async Task RequestNowWakesTheWaitBeforeTheIntervalAndIsIdempotent()
     {

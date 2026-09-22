@@ -1475,7 +1475,19 @@ fact stands.
 *Status is `CHANGELOG.md` `[Unreleased]` until the tag; this is what no other file carries. The owner's list and the
 evidence behind each item are in the approved plan the PRs cite; the decisions it took are D25–D28.*
 
+**Decision (D25, owner: "HELLO, HELLO WORLD! was recorded as Flower in Us, twice").** A file name is not an identity:
+a process that matches an entry by file name only starts nothing unless the relocator moves that entry to it, and the
+relocator accepts only the entry's own path with its drive letter changed. The stranger session is gone (it created a
+wrongly-named entry through `SessionRecorder`'s `EnsureAsync`); the running table is keyed by executable path; the
+launch election registers its session and defers to the watcher's. **What it costs:** a game whose FOLDER moved records
+nothing until *Change executable* — accepted, because the alternative is exactly what put HHW's sessions under Flower
+in Us. **D28 (owner, same day):** HHW itself is measured by pointing an entry at `swiftshader\Game.exe` (the NW.js
+runtime its .NET launcher starts); no launcher-following in beta.6.
+
 **Traps.**
+- **`FakeIdentity` in `CaptureOrchestratorTests` answers every path with the same bytes — which is exactly the hazard
+  D25 closed**, so it is the right fake for "identical bytes in another folder are another game" and the wrong one for
+  any test that needs a relocation to succeed (use `ExecutableRelocatorTests.DiskByPath`).
 - **A background service that throws stops the Agent's host, and until 2026-09-23 it said so nowhere.** The Generic
   Host's default `BackgroundServiceExceptionBehavior` is `StopHost`, and `ServeAsync` never routed
   Microsoft.Extensions.Logging into Serilog, so the reason reached no file. `WatcherHostedService` runs recovery before
