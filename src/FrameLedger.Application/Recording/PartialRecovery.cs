@@ -6,9 +6,16 @@ namespace FrameLedger.Application.Recording;
 /// <summary>
 /// The Agent's first act at startup (<c>04_CAPTURE</c> §Session recorder: <c>Interrupted → recovered from
 /// .partial</c>): every pending file becomes an <c>interrupted</c> session from its valid prefix, or is
-/// dropped for one of three stated reasons — already stored, too short, unreadable. Nothing is retried,
-/// nothing is left behind.
+/// dropped for one of four stated reasons — already stored, too short, unreadable, its game removed. Nothing is
+/// retried, nothing is left behind.
 /// </summary>
+/// <remarks>
+/// <b>Recovery never throws (2026-09-23).</b> It runs before the watcher on every start, and the host stops on a
+/// background service's exception: one file whose finalize failed — two GIRLS' FRONTLINE 2 sessions whose entry was
+/// removed mid-session left exactly that — would have stopped every start from then on, and with it every capture.
+/// A file that cannot be finalized is set aside (<see cref="IPartialSessionStore.Quarantine"/>) and reported as
+/// <see cref="RecoveryStatus.Failed"/>; the next file is recovered.
+/// </remarks>
 public sealed class PartialRecovery
 {
     private readonly IPartialSessionStore _store;
@@ -29,12 +36,46 @@ public sealed class PartialRecovery
     public async ValueTask<IReadOnlyList<RecoveryOutcome>> RecoverAsync(CancellationToken ct = default)
     {
         var outcomes = new List<RecoveryOutcome>();
-        foreach (Guid guid in _store.ListPending())
+        IReadOnlyList<Guid> pending;
+        try
         {
-            outcomes.Add(await RecoverOneAsync(guid, ct).ConfigureAwait(false));
+            pending = _store.ListPending();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            outcomes.Add(new RecoveryOutcome(Guid.Empty, RecoveryStatus.Failed, null, $"the pending files could not be listed — {ex.GetType().Name}: {ex.Message}"));
+            return outcomes;
+        }
+
+        foreach (Guid guid in pending)
+        {
+            outcomes.Add(await RecoverOrSetAsideAsync(guid, ct).ConfigureAwait(false));
         }
 
         return outcomes;
+    }
+
+    private async ValueTask<RecoveryOutcome> RecoverOrSetAsideAsync(Guid guid, CancellationToken ct)
+    {
+        try
+        {
+            return await RecoverOneAsync(guid, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException)
+        {
+            string aside;
+            try
+            {
+                _store.Quarantine(guid);
+                aside = "set aside as .partial.failed";
+            }
+            catch (Exception move) when (move is IOException or UnauthorizedAccessException)
+            {
+                aside = $"and could not be set aside ({move.GetType().Name}: {move.Message}); it will be tried again at the next start";
+            }
+
+            return new RecoveryOutcome(guid, RecoveryStatus.Failed, null, $"{ex.GetType().Name}: {ex.Message} — {aside}");
+        }
     }
 
     private async ValueTask<RecoveryOutcome> RecoverOneAsync(Guid guid, CancellationToken ct)
@@ -46,14 +87,17 @@ public sealed class PartialRecovery
             return new RecoveryOutcome(guid, RecoveryStatus.Unreadable, null, "no readable header");
         }
 
-        FinalizeInput input = ToInput(partial) with { MinimumSessionLength = _minimumSessionLength };
+        FinalizeInput input = ToInput(partial) with { MinimumSessionLength = _minimumSessionLength, ExePath = partial.Header.ExePath };
         FinalizeOutcome result = await _finalizer.FinalizeAsync(input, ct).ConfigureAwait(false);
         _store.Delete(guid);
         return result.Status switch
         {
             FinalizeStatus.Saved => new RecoveryOutcome(guid, RecoveryStatus.Recovered, result.SessionId,
-                $"{partial.Records.Count} record(s), {partial.Sensors.Count} sensor sample(s){(partial.Truncated ? ", tail truncated" : "")}"),
+                $"{partial.Records.Count} record(s), {partial.Sensors.Count} sensor sample(s){(partial.Truncated ? ", tail truncated" : "")}"
+                + (result.GameId is { } owner && owner != partial.Header.GameId ? $"; stored under games row {owner}, which holds {partial.Header.ExePath} now" : "")),
             FinalizeStatus.AlreadyStored => new RecoveryOutcome(guid, RecoveryStatus.AlreadyStored, null, "the finalize had landed"),
+            FinalizeStatus.GameRemoved => new RecoveryOutcome(guid, RecoveryStatus.GameRemoved, null,
+                $"games row {partial.Header.GameId} is gone and no row holds {partial.Header.ExePath}: its game was removed with its sessions"),
             _ => new RecoveryOutcome(guid, RecoveryStatus.Discarded, null,
                 $"{input.Skeleton.DurationSeconds:0.#} s is under the {input.MinimumSessionLength.TotalSeconds:0} s minimum"),
         };

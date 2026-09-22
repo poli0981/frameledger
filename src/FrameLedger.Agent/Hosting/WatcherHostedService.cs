@@ -14,16 +14,26 @@ namespace FrameLedger.Agent.Hosting;
 /// a session somebody lost, and it becomes an <c>interrupted</c> row before any new session can write beside
 /// it. Then the orchestrator polls until the host stops; its sessions finalize inside the host's shutdown
 /// grace, and one that does not make it leaves its <c>.partial</c> for the next start — the same rule.
+/// <b>Nothing recovery does can keep the watcher from starting (2026-09-23)</b>: the host's default for a background
+/// service that throws is to stop the whole Agent, so a file recovery could not finalize would have stopped every start
+/// after it. <see cref="PartialRecovery"/> no longer throws; the guard here is for what it cannot foresee.
 /// </remarks>
 internal sealed class WatcherHostedService(PartialRecovery recovery, CaptureOrchestrator orchestrator) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        IReadOnlyList<RecoveryOutcome> recovered = await recovery.RecoverAsync(stoppingToken).ConfigureAwait(false);
-        Log.Information("recover: {Count} pending .partial file(s)", recovered.Count);
-        foreach (RecoveryOutcome o in recovered)
+        try
         {
-            Log.Information("recover: {Guid} {Status} {Detail}", o.SessionGuid.ToString("N"), o.Status, o.Detail);
+            IReadOnlyList<RecoveryOutcome> recovered = await recovery.RecoverAsync(stoppingToken).ConfigureAwait(false);
+            Log.Information("recover: {Count} pending .partial file(s)", recovered.Count);
+            foreach (RecoveryOutcome o in recovered)
+            {
+                Log.Information("recover: {Guid} {Status} {Detail}", o.SessionGuid.ToString("N"), o.Status, o.Detail);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException)
+        {
+            Log.Warning(ex, "recover: did not complete; the watcher starts anyway and the files stay for the next start");
         }
 
         Log.Information("serve: watching the games table at 1 Hz; hooking only where a game is enabled and consented ({Elevation}, pid {Pid})",

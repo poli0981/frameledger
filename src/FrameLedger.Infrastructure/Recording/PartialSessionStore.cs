@@ -11,6 +11,8 @@ public sealed class PartialSessionStore : IPartialSessionStore
 {
     private const string _extension = ".partial";
 
+    private const string _quarantined = ".failed";
+
     public PartialSessionStore(string directory)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(directory);
@@ -48,6 +50,17 @@ public sealed class PartialSessionStore : IPartialSessionStore
     }
 
     public void Delete(Guid sessionGuid) => File.Delete(PathOf(sessionGuid));
+
+    /// <inheritdoc />
+    public void Quarantine(Guid sessionGuid)
+    {
+        string path = PathOf(sessionGuid);
+        if (File.Exists(path))
+        {
+            // "<guid>.partial.failed": its name has no Guid-shaped stem under "*.partial", so ListPending never lists it again.
+            File.Move(path, path + _quarantined, overwrite: true);
+        }
+    }
 
     private string PathOf(Guid guid) => Path.Combine(Directory, guid.ToString("N", CultureInfo.InvariantCulture) + _extension);
 }

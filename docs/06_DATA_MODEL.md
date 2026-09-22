@@ -389,6 +389,16 @@ Because Tier-1 and Tier-2 sessions carry different fields, every query that comp
 > column computed from the prefix exactly as a live finalize would. **Rejected:** a `sessions_in_progress`
 > table — a blob churn every minute, a lock fight with the UI in P3, and `04_CAPTURE` had already named a
 > file under `tmp\`.
+>
+> **The header's `game_id` is where the session started, not necessarily where it lands (2026-09-23).** A live
+> finalize and a recovery both ask `ISessionRepository.ResolveOwnerAsync`: that id when the row predates the session
+> or holds the header's exe path; else the row that holds the exe path now (an entry removed and re-imported while
+> the game ran); else nothing — `FinalizeStatus.GameRemoved` / `RecoveryStatus.GameRemoved`, file deleted, nothing
+> written. `games.id` is `INTEGER PRIMARY KEY` without AUTOINCREMENT, so a deleted id can be handed to the next row
+> added; `added_at` after the session's start and another path is how that row is told apart. A file recovery cannot
+> finalize for any other reason is renamed `<guid>.partial.failed` (`IPartialSessionStore.Quarantine`) — not listed
+> again, not retried, kept for a bug report — and recovery goes on to the next file: it runs before the watcher on
+> every start, and one file used to be able to stop them all.
 
 ## Retention
 

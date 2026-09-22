@@ -200,6 +200,9 @@ internal static class Program
         Directory.CreateDirectory(paths.Logs);
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
+            // The host's own lines reach this file since 2026-09-23 (ServeAsync's AddSerilog): its warnings and errors —
+            // a background service that stopped the host — not its start/stop chatter.
+            .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
             .WriteTo.File(Path.Combine(paths.Logs, "agent-.log"), formatProvider: System.Globalization.CultureInfo.InvariantCulture,
                 rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14)
             .CreateLogger();
@@ -236,6 +239,9 @@ internal static class Program
     private static async Task<int> ServeAsync(LedgerDatabase db, AgentPaths paths)
     {
         HostApplicationBuilder builder = Host.CreateApplicationBuilder();
+        // The host's log into agent-*.log (2026-09-23). A background service that threw stopped the host with nothing in
+        // the file: the Generic Host logs that through Microsoft.Extensions.Logging, which was never routed here.
+        builder.Services.AddSerilog();
         // Before the composition, so its TryAdd keeps this one: Shutdown over the pipe stops the host (PR-1b).
         builder.Services.AddSingleton<IAgentLifetime, HostAgentLifetime>();
         builder.Services.AddFrameLedgerAgent(db, paths);

@@ -54,4 +54,23 @@ public sealed class PartialSessionStoreTests : IDisposable
         store.Delete(a);
         store.ListPending().Should().Equal(b);
     }
+
+    /// <summary>A file recovery could not finalize is kept for a bug report and never listed again (2026-09-23).</summary>
+    [Fact]
+    public void AQuarantinedFileIsKeptBesideTheOthersAndNeverListedAgain()
+    {
+        var store = new PartialSessionStore(Path.Combine(_dir, "tmp"));
+        var bad = Guid.NewGuid();
+        var good = Guid.NewGuid();
+        store.Create(Header(bad)).Dispose();
+        store.Create(Header(good)).Dispose();
+
+        store.Quarantine(bad);
+        store.Quarantine(bad);
+        store.Quarantine(Guid.NewGuid());
+
+        store.ListPending().Should().Equal(good);
+        store.Read(bad).Should().BeNull("it is no longer a pending file");
+        File.Exists(Path.Combine(store.Directory, bad.ToString("N") + ".partial.failed")).Should().BeTrue("kept, for a bug report");
+    }
 }

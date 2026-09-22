@@ -15,7 +15,7 @@ namespace FrameLedger.Application.Recording;
 /// <b>Step 1 is the caller's</b>: the loop already asked the Overlay to stop and drained once more before
 /// it let go of the ring; what arrives here is final. <b>Step 5's delete of the <c>.partial</c> is the
 /// caller's too</b>, because only the caller holds the file, and it deletes only on
-/// <see cref="FinalizeStatus.Saved"/> or <see cref="FinalizeStatus.Discarded"/>.
+/// <see cref="FinalizeStatus.Saved"/>, <see cref="FinalizeStatus.Discarded"/> or <see cref="FinalizeStatus.GameRemoved"/>.
 /// </para>
 /// <para>
 /// <b>Every series in <c>06_DATA_MODEL</c> is written, or is null because nothing measured it</b> — never
@@ -75,7 +75,16 @@ public sealed class SessionFinalizer
         };
     }
 
-    /// <summary>The discard rule, then step 5: one transaction, then the retention sweep.</summary>
+    /// <summary>
+    /// The discard rule, the owner, then step 5: one transaction, then the retention sweep.
+    /// </summary>
+    /// <remarks>
+    /// <b>The owner is looked up, not assumed (2026-09-23).</b> The skeleton carries the id the session started under,
+    /// and the entry can be removed — or removed and re-imported — while the game runs: two GIRLS' FRONTLINE 2 sessions
+    /// died on the foreign key that way and left their <c>.partial</c> files for a recovery that would have died the same
+    /// way. The session lands on the row that owns it now (<see cref="ISessionRepository.ResolveOwnerAsync"/>), and with no
+    /// owner it is <see cref="FinalizeStatus.GameRemoved"/>: the user removed the game with its sessions, and this was one.
+    /// </remarks>
     public async ValueTask<FinalizeOutcome> FinalizeAsync(FinalizeInput input, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -89,10 +98,26 @@ public sealed class SessionFinalizer
             return new FinalizeOutcome(FinalizeStatus.AlreadyStored, null, 0);
         }
 
-        FinalizedSession session = Build(input);
-        long id = await _sessions.InsertFinalizedAsync(session, ct).ConfigureAwait(false);
-        int swept = await _sessions.SweepRetentionAsync(session.Row.GameId, input.RetentionKeep, ct).ConfigureAwait(false);
-        return new FinalizeOutcome(FinalizeStatus.Saved, id, swept);
+        long? owner = await _sessions.ResolveOwnerAsync(input.Skeleton.GameId, input.ExePath, input.Skeleton.StartedAt, ct).ConfigureAwait(false);
+        if (owner is not { } gameId)
+        {
+            return new FinalizeOutcome(FinalizeStatus.GameRemoved, null, 0);
+        }
+
+        FinalizedSession session = Build(gameId == input.Skeleton.GameId ? input : input with { Skeleton = input.Skeleton with { GameId = gameId } });
+        long id;
+        try
+        {
+            id = await _sessions.InsertFinalizedAsync(session, ct).ConfigureAwait(false);
+        }
+        catch (SessionOwnerMissingException)
+        {
+            // Removed between the lookup and the write: the same answer, reached one statement later.
+            return new FinalizeOutcome(FinalizeStatus.GameRemoved, null, 0);
+        }
+
+        int swept = await _sessions.SweepRetentionAsync(gameId, input.RetentionKeep, ct).ConfigureAwait(false);
+        return new FinalizeOutcome(FinalizeStatus.Saved, id, swept, gameId);
     }
 
     /// <summary>The full <c>frame_blobs</c> row over every record in drained order.</summary>

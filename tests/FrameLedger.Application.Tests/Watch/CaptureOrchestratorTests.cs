@@ -127,6 +127,25 @@ public sealed class CaptureOrchestratorTests
         o.RunningSessions.Should().Be(0);
     }
 
+    /// <summary>
+    /// The owner's log on 2026-09-22 23:26 and 2026-09-23 00:25 read "session: FAULTED SqliteException: …" and nothing
+    /// about which session or which game; it took the UI log's import line to find out it was GIRLS' FRONTLINE 2.
+    /// </summary>
+    [Fact]
+    public async Task AFaultedSessionIsLoggedWithItsGuidItsGameAndItsPath()
+    {
+        (CaptureOrchestrator o, FakeRecorder recorder, FakeSnapshots processes, List<string> log) = await BuildAsync().ConfigureAwait(true);
+        processes.Processes.Add(new ProcessSnapshot(7, 1, "game.exe", _game, DateTimeOffset.UnixEpoch));
+        await o.PollOnceAsync(TestContext.Current.CancellationToken).ConfigureAwait(true);
+        await WaitForRequestsAsync(recorder, 1).ConfigureAwait(true);
+
+        recorder.Pending[0].SetException(new InvalidOperationException("the ledger said no"));
+        await WaitUntilAsync(() => log.Exists(l => l.Contains("FAULTED", StringComparison.Ordinal))).ConfigureAwait(true);
+
+        string line = log.Single(l => l.Contains("FAULTED", StringComparison.Ordinal));
+        line.Should().Contain(recorder.Requests[0].SessionGuid!.Value.ToString("N")).And.Contain("Title").And.Contain(_game).And.Contain("the ledger said no");
+    }
+
     [Fact]
     public async Task StopSessionCancelsTheRequestsOwnStopTokenAndNothingElse()
     {

@@ -116,6 +116,86 @@ public sealed class PartialRecoveryTests
         repo.Stored.Single().Sensors.Should().NotBeEmpty();
     }
 
+    /// <summary>A file with a minute of Tier-2 sensors: long enough to be kept if it has an owner.</summary>
+    private static Guid TierTwoFile(FakePartialSessionStore store, string exePath = @"C:\Games\Title\game.exe")
+    {
+        var guid = Guid.NewGuid();
+        var entry = (FakePartialSessionStore.Entry)store.Create(Header(guid, CaptureTier.NotHooked) with { ExePath = exePath });
+        entry.AppendSensors(SessionFixtures.Sensors(60).ToArray());
+        return guid;
+    }
+
+    /// <summary>
+    /// The owner's two GIRLS' FRONTLINE 2 files (2026-09-22 23:26, 2026-09-23 00:25): the entry was removed while the game
+    /// ran. Its executable's path is now held by the re-imported entry, so the session is stored there.
+    /// </summary>
+    [Fact]
+    public async Task AFileWhoseEntryWasRemovedAndReimportedIsStoredUnderTheRowThatHoldsItsExecutable()
+    {
+        (PartialRecovery recovery, FakePartialSessionStore store, FakeSessionRepository repo) = Make();
+        repo.Owner = static (_, path, _) => path is not null ? 99 : null;
+        Guid guid = TierTwoFile(store);
+
+        RecoveryOutcome outcome = (await recovery.RecoverAsync(TestContext.Current.CancellationToken)).Single();
+
+        outcome.Status.Should().Be(RecoveryStatus.Recovered);
+        outcome.Detail.Should().Contain("games row 99").And.Contain(@"C:\Games\Title\game.exe");
+        repo.Stored.Single().Row.GameId.Should().Be(99);
+        repo.OwnerLookups.Should().Equal((7L, @"C:\Games\Title\game.exe"));
+        store.Deleted.Should().Equal(guid);
+    }
+
+    [Fact]
+    public async Task AFileWhoseGameWasRemovedWithItsSessionsIsDroppedAndSaysWhy()
+    {
+        (PartialRecovery recovery, FakePartialSessionStore store, FakeSessionRepository repo) = Make();
+        repo.Owner = static (_, _, _) => null;
+        Guid guid = TierTwoFile(store);
+
+        RecoveryOutcome outcome = (await recovery.RecoverAsync(TestContext.Current.CancellationToken)).Single();
+
+        outcome.Status.Should().Be(RecoveryStatus.GameRemoved);
+        outcome.Detail.Should().Contain("games row 7").And.Contain("removed");
+        repo.Stored.Should().BeEmpty();
+        store.Deleted.Should().Equal(guid);
+        store.Files.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// Recovery runs before the watcher on every start, and a background service that throws stops the Agent: one file
+    /// that cannot be finalized must be set aside, and the next one recovered, rather than stop every start after it.
+    /// </summary>
+    [Fact]
+    public async Task AFileThatCannotBeFinalizedIsSetAsideAndTheNextIsStillRecovered()
+    {
+        (PartialRecovery recovery, FakePartialSessionStore store, FakeSessionRepository repo) = Make();
+        const string poisoned = @"C:\Games\Broken\game.exe";
+        repo.Owner = static (gameId, path, _) => string.Equals(path, poisoned, StringComparison.Ordinal) ? throw new InvalidOperationException("the ledger said no") : gameId;
+        Guid bad = TierTwoFile(store, poisoned);
+        Guid good = TierTwoFile(store);
+
+        IReadOnlyList<RecoveryOutcome> outcomes = await recovery.RecoverAsync(TestContext.Current.CancellationToken);
+
+        outcomes.Single(o => o.SessionGuid == bad).Status.Should().Be(RecoveryStatus.Failed);
+        outcomes.Single(o => o.SessionGuid == bad).Detail.Should().Contain("the ledger said no").And.Contain(".partial.failed");
+        outcomes.Single(o => o.SessionGuid == good).Status.Should().Be(RecoveryStatus.Recovered);
+        store.Quarantined.Should().Equal(bad);
+        store.Files.Should().BeEmpty("the bad file is set aside and the good one is stored");
+        repo.Stored.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task AFolderThatCannotBeListedIsReportedNotThrown()
+    {
+        (PartialRecovery recovery, FakePartialSessionStore store, _) = Make();
+        store.ListFailure = new IOException("access denied");
+
+        IReadOnlyList<RecoveryOutcome> outcomes = await recovery.RecoverAsync(TestContext.Current.CancellationToken);
+
+        outcomes.Should().ContainSingle().Which.Status.Should().Be(RecoveryStatus.Failed);
+        outcomes[0].Detail.Should().Contain("access denied");
+    }
+
     [Fact]
     public async Task RecoveryIsIdempotentOnAnEmptyStore()
     {

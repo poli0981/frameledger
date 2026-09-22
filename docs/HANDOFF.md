@@ -1470,6 +1470,21 @@ fact stands.
 - **Meziantou MA0004 fires on the SECOND await of a test method** once a lambda inside it used `ConfigureAwait(false)`.
 - **A patch script must not carry `\r\n` inside a bash heredoc**; the helper module is written with the Write tool.
 
+## 2026-09-23 — the beta.6 train: a file name is not an identity, one entry per executable, Tier 2 shown live
+
+*Status is `CHANGELOG.md` `[Unreleased]` until the tag; this is what no other file carries. The owner's list and the
+evidence behind each item are in the approved plan the PRs cite; the decisions it took are D25–D28.*
+
+**Traps.**
+- **A background service that throws stops the Agent's host, and until 2026-09-23 it said so nowhere.** The Generic
+  Host's default `BackgroundServiceExceptionBehavior` is `StopHost`, and `ServeAsync` never routed
+  Microsoft.Extensions.Logging into Serilog, so the reason reached no file. `WatcherHostedService` runs recovery before
+  the watcher: one `.partial` whose finalize threw would have stopped every start, and the App would have started a new
+  Agent into the same failure each time. `PartialRecovery` never throws now, and the host logs through `AddSerilog`.
+- **Removing an entry while its game runs used to lose the session.** Both of the owner's GIRLS' FRONTLINE 2 faults
+  were a removal (to clean up an `H:` twin) under a running session. The finalize now resolves the owner; a test that
+  deletes a row mid-session must expect `GameRemoved` or a re-keyed row, never an exception.
+
 ## Owner-only — no PR can close these
 
 1. **§S23-2 — branch protection.** `Rules / validate` is not a required status check on

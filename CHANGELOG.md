@@ -27,7 +27,18 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
-_Nothing yet — entries continue here after `0.1.0-beta.5`._
+### Fixed
+
+- **A game removed from the library while it runs no longer loses its session — or stops the Agent at the next
+  start.** On 2026-09-22 23:26 and 2026-09-23 00:25 a GIRLS' FRONTLINE 2 session ended `FAULTED` on the database's
+  foreign key: its entry had been removed (and re-imported) while the game ran, and the session was written under the
+  id it started with. Each left a `.partial` file, and the recovery that runs at every start would have failed on it
+  the same way — with no guard, so the Agent's host would have stopped at every start and nothing would have been
+  captured. Now the session is stored under the entry that holds its executable when the one it started with is gone
+  (the re-imported entry); when no entry does — the game was removed with its sessions — it is dropped with a log line
+  that says so. Recovery never throws: a file it cannot finalize is set aside as `<guid>.partial.failed`, kept for a bug
+  report, and the next file is recovered. The `FAULTED` and end-of-session log lines now name the session, the game and
+  its executable, and the Agent's host logs its own warnings and errors into `agent-*.log`.
 
 ## [0.1.0-beta.5] - 2026-09-22
 

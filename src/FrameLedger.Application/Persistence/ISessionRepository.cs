@@ -7,7 +7,20 @@ namespace FrameLedger.Application.Persistence;
 /// </summary>
 public interface ISessionRepository
 {
+    /// <summary>
+    /// Writes the session under <c>session.Row.GameId</c>, in one transaction. Throws <see cref="SessionOwnerMissingException"/>
+    /// — never the foreign key's <c>SqliteException</c> — when that row no longer exists at the moment of the write.
+    /// </summary>
     ValueTask<long> InsertFinalizedAsync(FinalizedSession session, CancellationToken ct = default);
+
+    /// <summary>
+    /// The <c>games</c> row a finishing session belongs to (2026-09-23), or null when there is none any more:
+    /// <paramref name="gameId"/> when that row existed before the session started or holds its executable (an id SQLite
+    /// reused for a later game is neither), else the row that holds <paramref name="exePath"/> — the game re-imported
+    /// while the session ran. Two GIRLS' FRONTLINE 2 sessions on 2026-09-22/23 died on the foreign key because their
+    /// entry was removed and re-imported mid-session.
+    /// </summary>
+    ValueTask<long?> ResolveOwnerAsync(long gameId, string? exePath, DateTimeOffset startedAt, CancellationToken ct = default);
 
     ValueTask<bool> ExistsAsync(Guid sessionGuid, CancellationToken ct = default);
 

@@ -19,4 +19,11 @@ public sealed record FinalizeInput
 
     /// <summary><c>04_CAPTURE</c> §Discard rule: shorter than this is dropped. The Agent keeps the default; the unshipped host lowers it for bounded operator captures.</summary>
     public TimeSpan MinimumSessionLength { get; init; } = SessionFinalizer.MinimumSessionLength;
+
+    /// <summary>
+    /// The normalised executable the session ran (2026-09-23): how the finalizer finds the session's row when the one it
+    /// started under is gone — removed while it ran, or its id reused by another game (<c>games.id</c> has no
+    /// AUTOINCREMENT). Null keeps the old behaviour: the skeleton's <c>GameId</c>, or nothing when that row is gone.
+    /// </summary>
+    public string? ExePath { get; init; }
 }
