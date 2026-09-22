@@ -481,6 +481,10 @@
     <value>現在キャプチャ中のものはありません。</value>
     <comment>review</comment>
   </data>
+  <data name="Dashboard_Live_RecordingOnly" xml:space="preserve">
+    <value>時間とセンサーのみを記録中 — 計測は行っていません。</value>
+    <comment>review</comment>
+  </data>
   <data name="Dashboard_Live_Rt_On" xml:space="preserve">
     <value>RT 有効</value>
     <comment>review</comment>
@@ -1227,6 +1231,10 @@
   </data>
   <data name="Summary_Tier2_Why_Blocked_Format" xml:space="preserve">
     <value>理由: このゲームのフックはオフです — ガードが {0} を検出しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Tier2_Why_ConsentChanged" xml:space="preserve">
+    <value>理由: フックをオンにした後にゲームの実行ファイルが変わった（通常はアップデート）ため、その同意は適用されません — このゲームのフックをもう一度オンにしてください。</value>
     <comment>review</comment>
   </data>
   <data name="Summary_Tier2_Why_Guard_Format" xml:space="preserve">

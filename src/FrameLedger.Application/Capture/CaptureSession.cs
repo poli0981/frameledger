@@ -143,6 +143,10 @@ public sealed class CaptureSession(
         }
 
         DateTimeOffset? hardStop = options.MaxDuration > TimeSpan.Zero ? DateTimeOffset.UtcNow + options.MaxDuration : null;
+
+        // The ticks carry the refusal with the pid the loop holds, if any (2026-09-23: the pipe announces a held session from
+        // its first tick). A hooking-off hold never opened the process and says 0.
+        CaptureProgress held = CaptureProgress.Held(refusal with { TargetPid = pid ?? 0 });
         while (!stop.IsCancellationRequested)
         {
             bool running = alive is not null ? !alive.HasExited : resolver.IsRunning(normalisedExePath);
@@ -151,11 +155,11 @@ public sealed class CaptureSession(
                 break;
             }
 
-            observer?.Tick(CaptureProgress.Unhooked);
+            observer?.Tick(held);
             await Task.Delay(options.HoldInterval, ct).ConfigureAwait(false);
         }
 
-        observer?.Tick(CaptureProgress.Unhooked);
+        observer?.Tick(held);
         return refusal with { HeldUnhooked = true, TargetPid = pid ?? 0, ExitCode = alive?.ExitCode };
     }
 

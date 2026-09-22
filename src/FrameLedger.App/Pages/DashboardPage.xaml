@@ -10,7 +10,8 @@
         <StackPanel Style="{StaticResource PageRoot}">
             <ui:TextBlock FontTypography="Title" Text="{x:Static vm:DashboardViewModel.Header}" />
 
-            <!-- 08_UI §Dashboard: the live capture card, fed by SessionStarted / SessionProgress / SessionCompleted. -->
+            <!-- 08_UI §Dashboard: the live capture card, fed by SessionStarted / SessionProgress / SessionHeld / SessionCompleted.
+                 A session recorded without measuring (Tier 2) shows why, and no readout (2026-09-23). -->
             <ui:Card Margin="0,16,0,0" HorizontalAlignment="Stretch">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal">
@@ -26,7 +27,12 @@
                         <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.Live.ElapsedText}" />
                         <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:LiveCaptureViewModel.WaitingText}"
                                       Visibility="{Binding ViewModel.Live.WaitingForFrames, Converter={StaticResource BoolToVis}}" />
-                        <controls:FpsReadout Margin="0,8,0,0" Model="{Binding ViewModel.Live.Readout}" />
+                        <StackPanel Margin="0,8,0,0" Visibility="{Binding ViewModel.Live.IsHeld, Converter={StaticResource BoolToVis}}">
+                            <ui:TextBlock Text="{x:Static vm:LiveCaptureViewModel.HeldText}" TextWrapping="Wrap" />
+                            <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.Live.HeldReason}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <controls:FpsReadout Margin="0,8,0,0" Model="{Binding ViewModel.Live.Readout}"
+                                             Visibility="{Binding ViewModel.Live.IsHeld, Converter={StaticResource InverseBoolToVis}}" />
                         <WrapPanel Margin="0,8,0,0">
                             <ui:TextBlock Margin="0,0,16,0" Text="{Binding ViewModel.Live.ResolutionText}" />
                             <ui:TextBlock Margin="0,0,16,0" Text="{Binding ViewModel.Live.UpscalerText}" />

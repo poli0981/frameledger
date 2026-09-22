@@ -268,16 +268,7 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton(closePolicy);
         builder.Services.AddSingleton<IThemeApplier, WpfThemeApplier>();
 
-        // The Agent over the pipe (07_IPC §Client behavior): connect, start it when it is not there, tell the shell.
-        builder.Services.AddSingleton<IAgentLauncher, AgentLauncher>();
-        builder.Services.AddSingleton(static sp => new AgentConnection(
-            sp.GetRequiredService<IAgentLauncher>(),
-            static () => new PipeClient(),
-            new AgentConnectionOptions(),
-            UiIdentity.Version));
-        builder.Services.AddHostedService<AgentConnectionHostedService>();
-        builder.Services.AddSingleton<IAgentRequests>(static sp => sp.GetRequiredService<AgentConnection>());
-        builder.Services.AddSingleton<IAgentLink>(static sp => sp.GetRequiredService<AgentConnection>());
+        AddAgentLink(builder.Services);
 
         // FR-2.1 (P3 PR-4): the consent dialog and the request it ends in; the toggle that opens it is the game page's (PR-5).
         builder.Services.AddSingleton<IConsentPrompt, ConsentPrompt>();
@@ -307,6 +298,23 @@ public partial class App : System.Windows.Application
         builder.Services.AddTransient<SettingsViewModel>();
         builder.Services.AddHostedService<ApplicationHostService>();
         return builder.Build();
+    }
+
+    /// <summary>The Agent over the pipe (07_IPC §Client behavior): connect, start it when it is not there, tell the shell.</summary>
+    private static void AddAgentLink(IServiceCollection services)
+    {
+        services.AddSingleton<IAgentLauncher, AgentLauncher>();
+        services.AddSingleton(static sp => new AgentConnection(
+            sp.GetRequiredService<IAgentLauncher>(),
+            static () => new PipeClient(),
+            new AgentConnectionOptions(),
+            UiIdentity.Version));
+        services.AddHostedService<AgentConnectionHostedService>();
+        services.AddSingleton<IAgentRequests>(static sp => sp.GetRequiredService<AgentConnection>());
+        services.AddSingleton<IAgentLink>(static sp => sp.GetRequiredService<AgentConnection>());
+        // What the Agent runs right now (2026-09-23), for the pages rebuilt on every visit; built before the connection's
+        // first round by AgentConnectionHostedService, so it never misses a session.
+        services.AddSingleton(static sp => new LiveSessions(sp.GetRequiredService<IAgentLink>()));
     }
 
     /// <summary>

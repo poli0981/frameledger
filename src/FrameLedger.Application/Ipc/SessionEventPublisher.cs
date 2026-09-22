@@ -105,6 +105,12 @@ public sealed class SessionEventPublisher : ISessionObserver
             t.LastSystem = drained[^1].System;
         }
 
+        if (progress.Hold is { } hold && t.AttachedAt is null)
+        {
+            Held(sessionGuid, t, hold);
+            return;
+        }
+
         if (t.AttachedAt is null || !_pipe.HasClients)
         {
             return;
@@ -132,21 +138,72 @@ public sealed class SessionEventPublisher : ISessionObserver
 
         if (t is not null)
         {
-            RecordedSessionEvents.PublishAll(_pipe, session, t.Info);
+            RecordedSessionEvents.PublishAll(_pipe, session, t.Info, reasonAlreadyPublished: t.ReasonPublished);
         }
     }
 
     public void Faulted(Guid sessionGuid, Exception exception)
     {
         ArgumentNullException.ThrowIfNull(exception);
+        Tracked? t;
         lock (_lock)
         {
-            _sessions.Remove(sessionGuid);
+            _sessions.Remove(sessionGuid, out t);
             Republish();
         }
 
         _pipe.Publish(IpcMessageType.CaptureError,
             new CaptureErrorEvent(sessionGuid, CaptureErrorCode.SessionFaulted, $"{exception.GetType().Name}: {exception.Message}"));
+
+        // And the session is over (2026-09-23): without a completion the live card and the tray stayed on a session that no
+        // longer ran. Nothing was stored — the .partial stays for recovery — which is what "faulted" says.
+        _pipe.Publish(IpcMessageType.SessionCompleted, new SessionCompletedEvent(
+            sessionGuid, SessionId: null, Vocabulary.ExitStatusText(Domain.Sessions.ExitStatus.Interrupted), t?.AttachedAt is null ? 2 : 1,
+            RecordedSessionEvents.FaultedFinalize, CaptureErrorCode.SessionFaulted, t?.Info.GameId, t?.Info.GameName));
+    }
+
+    /// <summary>
+    /// A held (Tier-2) session's tick (2026-09-23). The first one announces it — <c>SessionStarted</c> at tier 2 with why,
+    /// and the refusal's own event now rather than when the game exits — and every one after feeds <c>SessionHeld</c> at the
+    /// progress interval while a client listens. Until this date a held session sent nothing until it ended.
+    /// </summary>
+    private void Held(Guid sessionGuid, Tracked t, CaptureOutcome hold)
+    {
+        if (t.Hold is null)
+        {
+            SessionHold why = RecordedSessionEvents.HoldOf(hold);
+            lock (_lock)
+            {
+                t.Hold = why;
+                t.Pid = hold.TargetPid;
+                Republish();
+            }
+
+            _pipe.Publish(IpcMessageType.SessionStarted,
+                new SessionStartedEvent(sessionGuid, t.Info.GameId, t.Info.GameName, hold.TargetPid, Tier: 2, t.Info.StartedAt, why));
+            RecordedSessionEvents.PublishReason(_pipe, sessionGuid, hold, t.Info);
+            t.ReasonPublished = true;
+        }
+
+        if (!_pipe.HasClients)
+        {
+            return;
+        }
+
+        long now = _clock.GetTimestamp();
+        if (t.LastProgress is { } last && _clock.GetElapsedTime(last, now) < _interval)
+        {
+            return;
+        }
+
+        t.LastProgress = now;
+        _pipe.Publish(IpcMessageType.SessionHeld, new SessionHeldEvent(
+            sessionGuid,
+            Math.Max(0, (_clock.GetUtcNow() - t.Info.StartedAt).TotalSeconds),
+            t.LastGpu?.TempCoreC,
+            t.LastSystem.CpuTempC,
+            t.LastGpu?.LoadPct,
+            t.LastSystem.CpuLoadPct));
     }
 
     private void PublishProgress(Guid sessionGuid, Tracked t, CaptureProgress progress, long now)
@@ -177,7 +234,8 @@ public sealed class SessionEventPublisher : ISessionObserver
                 t.Info.GameName,
                 t.Pid,
                 t.AttachedAt is null ? 2 : 1,
-                t.AttachedAt ?? t.Info.StartedAt);
+                t.AttachedAt ?? t.Info.StartedAt,
+                t.AttachedAt is null ? t.Hold : null);
         }
 
         Volatile.Write(ref _status, new AgentStatus(sessions));
@@ -198,5 +256,11 @@ public sealed class SessionEventPublisher : ISessionObserver
         public GpuSample? LastGpu { get; set; }
 
         public SystemReading LastSystem { get; set; }
+
+        /// <summary>Why a held session measures nothing; set by its first held tick (2026-09-23).</summary>
+        public SessionHold? Hold { get; set; }
+
+        /// <summary>The refusal's event went out when the hold began, so the end does not say it again.</summary>
+        public bool ReasonPublished { get; set; }
     }
 }

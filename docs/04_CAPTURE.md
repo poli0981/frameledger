@@ -424,6 +424,13 @@ Crash-within-60s-of-injection happening twice for the same game ⇒ **hooking au
 > stands alone with the census qualifier (`FgLadder.PresentedQualifier`, the row's). CPU temperature is null until the Agent composes a
 > CPU sensor, and every other unmeasured field is null, never 0. Rate-limited to 1 Hz inside the observer's `Tick`, computed only while
 > a client is connected, and a fault in the computation is counted rather than allowed to end the session.
+>
+> **A held session is live too (2026-09-23).** The hold's ticks carry the refusal (`CaptureProgress.Held`, with the pid the loop
+> holds, 0 for a hooking-off hold that never opened the process). The publisher's first held tick announces the session —
+> `SessionStarted` at tier 2 with its `hold`, and the refusal's own event at once rather than when the game exits — and every tick
+> after feeds `SessionHeld` (elapsed and sensors, nothing measured) at the same 1 Hz while a client listens. It is never run through
+> `SessionProgressCalculator`, whose window over no records would still emit a qualifier. A session whose task faults now also
+> completes on the pipe (`finalize: faulted`, `07_IPC`), so nothing is left shown as running.
 
 ## Overhead rules (NFR-1)
 

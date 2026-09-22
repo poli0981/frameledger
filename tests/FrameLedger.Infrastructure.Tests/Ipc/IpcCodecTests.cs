@@ -107,4 +107,36 @@ public sealed class IpcCodecTests
         json.Should().NotContain("nativeFps5s").And.NotContain("upscaler").And.NotContain("gpuTempC")
             .And.Contain("\"presentedQualifier\":\"census_not_run\"").And.Contain("\"fgMode\":\"na\"");
     }
+
+    /// <summary>
+    /// The held session's fields (2026-09-23) are additive, so the protocol stays 2: a held session's tick carries no
+    /// measured field at all, its <c>hold</c> rides only on a Tier-2 start, and a beta.5 payload without either still reads.
+    /// </summary>
+    [Fact]
+    public void TheHeldSessionsFieldsAreAdditiveAndCarryNothingMeasured()
+    {
+        var guid = Guid.NewGuid();
+        string held = Encoding.UTF8.GetString(IpcCodec.Encode(IpcMessageType.SessionHeld, null, new SessionHeldEvent(guid, 12.5, GpuTempC: 61)));
+        held.Should().Contain("\"elapsedS\":12.5").And.Contain("\"gpuTempC\":61")
+            .And.NotContain("cpuTempC").And.NotContain("fps", "a held session has nothing measured");
+
+        var started = new SessionStartedEvent(guid, 3, "Title", 42, 2, DateTimeOffset.UnixEpoch, new SessionHold("RefusedByGuard", "BlockedModule", "eac", "EasyAntiCheat.dll", HookingTurnedOff: true));
+        IpcCodec.Payload<SessionStartedEvent>(IpcCodec.Decode(IpcCodec.Encode(IpcMessageType.SessionStarted, null, started))).Should().Be(started);
+        string hooked = Encoding.UTF8.GetString(IpcCodec.Encode(IpcMessageType.SessionStarted, null, started with { Tier = 1, Hold = null }));
+        hooked.Should().NotContain("hold", "a hooked session has no hold and says nothing about one");
+
+        const string beta5Start = "{\"type\":\"SessionStarted\",\"payload\":{\"sessionGuid\":\"6ae6087f-0000-0000-0000-000000000000\",\"gameId\":3,"
+                                  + "\"gameName\":\"Title\",\"pid\":42,\"tier\":1,\"startedAt\":\"2026-09-22T00:00:00+00:00\"}}";
+        IpcCodec.Payload<SessionStartedEvent>(IpcCodec.Decode(Encoding.UTF8.GetBytes(beta5Start)))!.Hold.Should().BeNull();
+
+        const string beta5Done = "{\"type\":\"SessionCompleted\",\"payload\":{\"sessionGuid\":\"6ae6087f-0000-0000-0000-000000000000\",\"sessionId\":5,"
+                                 + "\"exitStatus\":\"normal\",\"tier\":1,\"finalize\":\"saved\",\"reason\":\"TargetExited\"}}";
+        SessionCompletedEvent done = IpcCodec.Payload<SessionCompletedEvent>(IpcCodec.Decode(Encoding.UTF8.GetBytes(beta5Done)))!;
+        done.GameId.Should().BeNull();
+        done.GameName.Should().BeNull();
+
+        var status = new StatusAck("recording", null, null, [new ActiveSession(guid, 3, "Title", 42, 2, DateTimeOffset.UnixEpoch, new SessionHold("RefusedHookNotEnabled"))]);
+        IpcCodec.Payload<StatusAck>(IpcCodec.Decode(IpcCodec.Encode(IpcMessageType.StatusAck, "1", status)))!.ActiveSessions.Single().Hold
+            .Should().Be(new SessionHold("RefusedHookNotEnabled"));
+    }
 }

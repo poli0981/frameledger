@@ -1497,6 +1497,24 @@ runtime its .NET launcher starts); no launcher-following in beta.6.
   were a removal (to clean up an `H:` twin) under a running session. The finalize now resolves the owner; a test that
   deletes a row mid-session must expect `GameRemoved` or a re-keyed row, never an exception.
 
+**Tier 2 on the wire (item 4a, owner: "capture still does not show when some titles are launched").** `SessionStarted`
+is published ONCE per session — at the attach, or at a held session's first tick carrying `hold` — so the card never
+flickers between tiers; a held session's 1 Hz is `SessionHeld`, never `SessionProgress` (its required fields would put
+zeros that look measured on the wire); the refusal's event goes out when the hold begins and is not repeated at the
+end; a faulted session completes with `finalize: faulted`. Every list of running sessions the App keeps is seeded from
+the status at each connect (`07_IPC` §Client behavior). All fields are additive: `IpcProtocol.Version` stays 2.
+
+**Traps.**
+- **Only `hold` means held.** The status lists every session that has not attached yet at tier 2 (beta.5's shape,
+  kept), so a tier-2 `ActiveSession` without `hold` is a session STARTING. The card shows its name and badge and
+  nothing else; "nothing is measured" and "Attached — waiting for the first frames…" would both be false there.
+- **`sed -i` in this machine's Git Bash writes a CRLF file back as LF.** Twice on 2026-09-23 a one-line `sed -i` turned
+  a test file into `w/lf` (`git ls-files --eol`), which `dotnet format` then fails on for no visible reason. Check
+  `git ls-files --eol -m -o --exclude-standard | grep -v w/crlf` after any shell edit; `unix2dos` repairs it.
+- **Heredocs that carry C# with nested quotes can fail to parse in the Bash tool** ("unexpected EOF while looking for
+  matching `'`") even when quoted `<<'EOF'` — write the script with the Write tool and run it by path, as the traps
+  above already say for patches.
+
 ## Owner-only — no PR can close these
 
 1. **§S23-2 — branch protection.** `Rules / validate` is not a required status check on
