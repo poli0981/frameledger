@@ -1534,7 +1534,7 @@ the status at each connect (`07_IPC` §Client behavior). All fields are additive
 
 ## 2026-09-23 (after 0.1.0-beta.6) — the recording switch
 
-*Status is `CHANGELOG.md` `[Unreleased]` until the next tag; this is what no other file carries.*
+*Status is `CHANGELOG.md` `[0.1.0-beta.7]`; this is what no other file carries.*
 
 **Decision (D29, owner: "the Agent records Borderless Gaming although hooking is off, and it starts with Windows —
 propose an ignore list, a disable, or something suitable").** Both, as one mechanism: a per-entry **Recording**

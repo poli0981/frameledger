@@ -6,7 +6,7 @@
 
 <!-- accuracy-block:begin -->
 > ⚠ **What FrameLedger actually measures today — 2026-09-23.** The software is a beta; its latest
-> **pre-release is `0.1.0-beta.6`** (2026-09-23), an unsigned installer built from that tag with its
+> **pre-release is `0.1.0-beta.7`** (2026-09-23), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
 > game in the library runs (unless you switched its recording off), injects only into games you enabled
@@ -137,7 +137,7 @@ Elevation is **optional — for everything.** Hooked capture is the normal path 
 
 ## Install
 
-> **The latest pre-release is `v0.1.0-beta.6` (2026-09-23); before it `v0.1.0-beta.5` (2026-09-22), `v0.1.0-beta.4` (2026-09-21), `v0.1.0-beta.3` (2026-09-21), `v0.1.0-beta.2` (2026-09-17) and `v0.1.0-beta.1` (2026-09-16).** They are pre-releases: read `CHANGELOG.md`'s section for the one you install — what it measures, what it does not yet, and how to update — before installing. A source build is `docs/12_BUILD.md`.
+> **The latest pre-release is `v0.1.0-beta.7` (2026-09-23); before it `v0.1.0-beta.6` (2026-09-23), `v0.1.0-beta.5` (2026-09-22), `v0.1.0-beta.4` (2026-09-21), `v0.1.0-beta.3` (2026-09-21), `v0.1.0-beta.2` (2026-09-17) and `v0.1.0-beta.1` (2026-09-16).** They are pre-releases: read `CHANGELOG.md`'s section for the one you install — what it measures, what it does not yet, and how to update — before installing. A source build is `docs/12_BUILD.md`.
 
 1. Download the latest `FrameLedger.App-win-Setup.exe` from [Releases](https://github.com/poli0981/frameledger/releases). It installs into `%LOCALAPPDATA%\FrameLedger.App`; your data stays in `%LOCALAPPDATA%\FrameLedger`, and uninstalling asks before touching it.
 2. SmartScreen may warn — releases are not code-signed (free, open-source project). Verify the SHA-256 checksum published with each release, then **More info → Run anyway**.
@@ -165,4 +165,4 @@ If you find a game with anti-cheat that FrameLedger fails to detect, please open
 
 ---
 
-**Status:** pre-release (beta). Six tagged pre-releases so far; see `CHANGELOG.md` for what each one changed and the accuracy block at the top of this file for what is and is not measured. It is not feature-complete, it certainly still has bugs, and `legal/DISCLAIMER.md` §0 says what that means for you.
+**Status:** pre-release (beta). Seven tagged pre-releases so far; see `CHANGELOG.md` for what each one changed and the accuracy block at the top of this file for what is and is not measured. It is not feature-complete, it certainly still has bugs, and `legal/DISCLAIMER.md` §0 says what that means for you.
