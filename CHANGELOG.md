@@ -27,6 +27,30 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
+_Nothing yet — entries continue here after `0.1.0-beta.7`._
+
+## [0.1.0-beta.7] - 2026-09-23
+
+**The seventh pre-release: a program in the library can be left unrecorded, and Steam's own tools already are.** The
+same unsigned installer: verify its hash against `SHA256SUMS.txt`, then *More info → Run anyway*. What changed for a
+user:
+
+- **The game page has a Recording switch.** Off, FrameLedger does not watch for that program at all — no session, no
+  measurement, no injection — and a session of it that is running stops; sessions already recorded stay. The library
+  card says **Not recorded**. Use it for a utility that starts with Windows: until now every program in the library was
+  recorded whenever it ran, at every boot.
+- **Steam's own tools already in your library start with it off** — Borderless Gaming, Wallpaper Engine, SteamVR,
+  Blender, the Steam runtimes and Proton — so a tool imported before 0.1.0-beta.5 stops being recorded without you
+  doing anything.
+- **The Privacy Policy (2.3) and the Disclaimer (2.6) are updated**, so the Legal Gate opens once after the update.
+
+**Updating from `0.1.0-beta.6`:**
+
+- Quit the App (tray icon → Exit) and end `FrameLedger.Agent.exe` before running the installer.
+- Schema 0009 adds one column; the database opens in place, and the Steam tools above are switched off once.
+- Sessions a tool recorded before stay in its history; to remove them, remove the entry with *Delete sessions too* —
+  the import will not add it again.
+
 ### Added
 
 - **A library entry can be left unrecorded.** Borderless Gaming starts with Windows, and every program in the library

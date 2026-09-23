@@ -12,7 +12,7 @@
   HTML comments are not part of the block.
 -->
 > ⚠ **What FrameLedger actually measures today — 2026-09-23.** The software is a beta; its latest
-> **pre-release is `0.1.0-beta.6`** (2026-09-23), an unsigned installer built from that tag with its
+> **pre-release is `0.1.0-beta.7`** (2026-09-23), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
 > game in the library runs (unless you switched its recording off), injects only into games you enabled
