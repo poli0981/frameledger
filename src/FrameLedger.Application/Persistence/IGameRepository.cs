@@ -63,6 +63,13 @@ public interface IGameRepository
     ValueTask<bool> RemoveAsync(long gameId, bool keepSessions, CancellationToken ct = default);
 
     /// <summary>
+    /// The user's recording switch (schema 0009, 2026-09-23): off, the Agent does not watch for the program — no session,
+    /// no measurement, no injection — and a session of it that is running stops at its next tick. The UI's write; false
+    /// when no row has that id.
+    /// </summary>
+    ValueTask<bool> SetRecordingAsync(long gameId, bool record, CancellationToken ct = default);
+
+    /// <summary>
     /// The Agent's detection sweep (P4 PR-1): persist one static detection run under the provenance rule of
     /// <c>05_DETECTION</c> §Caching — a <c>user</c> field is never overwritten, a <c>detected</c> one is refreshed, an
     /// empty field with no provenance is filled and badged <c>detected</c>; <c>capability_flags</c> and the cache key

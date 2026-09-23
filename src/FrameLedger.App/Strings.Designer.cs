@@ -263,6 +263,10 @@ public static class Strings
         nameof(GameDetail_Measured_Header),
         nameof(GameDetail_Measured_NotHooked),
         nameof(GameDetail_NotFound),
+        nameof(GameDetail_Recording_Body),
+        nameof(GameDetail_Recording_Header),
+        nameof(GameDetail_Recording_Off),
+        nameof(GameDetail_Recording_On),
         nameof(GameDetail_Remove),
         nameof(GameDetail_Sessions_Empty),
         nameof(GameDetail_Supports_Empty),
@@ -280,6 +284,7 @@ public static class Strings
         nameof(Games_Card_HookOn),
         nameof(Games_Card_LastPlayed_Format),
         nameof(Games_Card_NeverPlayed),
+        nameof(Games_Card_NotRecorded),
         nameof(Games_Card_Playtime_Format),
         nameof(Games_Card_Sessions_Format),
         nameof(Games_Empty),
@@ -1111,6 +1116,14 @@ public static class Strings
 
     public static string GameDetail_NotFound => ResourceManager.GetString(nameof(GameDetail_NotFound), Culture) ?? nameof(GameDetail_NotFound);
 
+    public static string GameDetail_Recording_Body => ResourceManager.GetString(nameof(GameDetail_Recording_Body), Culture) ?? nameof(GameDetail_Recording_Body);
+
+    public static string GameDetail_Recording_Header => ResourceManager.GetString(nameof(GameDetail_Recording_Header), Culture) ?? nameof(GameDetail_Recording_Header);
+
+    public static string GameDetail_Recording_Off => ResourceManager.GetString(nameof(GameDetail_Recording_Off), Culture) ?? nameof(GameDetail_Recording_Off);
+
+    public static string GameDetail_Recording_On => ResourceManager.GetString(nameof(GameDetail_Recording_On), Culture) ?? nameof(GameDetail_Recording_On);
+
     public static string GameDetail_Remove => ResourceManager.GetString(nameof(GameDetail_Remove), Culture) ?? nameof(GameDetail_Remove);
 
     public static string GameDetail_Sessions_Empty => ResourceManager.GetString(nameof(GameDetail_Sessions_Empty), Culture) ?? nameof(GameDetail_Sessions_Empty);
@@ -1144,6 +1157,8 @@ public static class Strings
     public static string Games_Card_LastPlayed_Format => ResourceManager.GetString(nameof(Games_Card_LastPlayed_Format), Culture) ?? nameof(Games_Card_LastPlayed_Format);
 
     public static string Games_Card_NeverPlayed => ResourceManager.GetString(nameof(Games_Card_NeverPlayed), Culture) ?? nameof(Games_Card_NeverPlayed);
+
+    public static string Games_Card_NotRecorded => ResourceManager.GetString(nameof(Games_Card_NotRecorded), Culture) ?? nameof(Games_Card_NotRecorded);
 
     public static string Games_Card_Playtime_Format => ResourceManager.GetString(nameof(Games_Card_Playtime_Format), Culture) ?? nameof(Games_Card_Playtime_Format);
 

@@ -61,6 +61,81 @@ public sealed class CaptureOrchestratorTests
         return (orchestrator, recorder, processes, log);
     }
 
+    /// <summary>The library itself as well, for the recording switch (2026-09-23); launch mode when the test brings one.</summary>
+    private static async Task<(CaptureOrchestrator Orchestrator, FakeRecorder Recorder, FakeSnapshots Processes, List<string> Log, FakeGameRepository Games, long GameId)> BuildWithLibraryAsync(
+        FakeLaunches? launches = null)
+    {
+        var games = new FakeGameRepository();
+        GameRow row = await games.EnsureAsync(new ExecutableFingerprint { ExePath = _game, SizeBytes = 1, MtimeUnixMs = 1 }, "Title", TestContext.Current.CancellationToken).ConfigureAwait(false);
+        var recorder = new FakeRecorder();
+        var processes = new FakeSnapshots();
+        List<string> log = [];
+        var orchestrator = new CaptureOrchestrator(recorder, games, processes, new FakeIdentity(),
+            new OrchestratorOptions { PayloadPath = @"C:\FL\FrameLedger.Overlay.dll" }, log.Add, launches);
+        return (orchestrator, recorder, processes, log, games, row.Id);
+    }
+
+    /// <summary>
+    /// The recording switch (schema 0009, 2026-09-23): Borderless Gaming starts with Windows on the owner's machine, and every
+    /// boot recorded a Tier-2 session of it for as long as it ran. An entry switched off is not watched at all — its
+    /// process appearing is no event, no session and no log line — and switched back on, it is watched again.
+    /// </summary>
+    [Fact]
+    public async Task AnEntryWhoseRecordingIsOffIsNotWatched()
+    {
+        (CaptureOrchestrator o, FakeRecorder recorder, FakeSnapshots processes, List<string> log, FakeGameRepository games, long id) = await BuildWithLibraryAsync().ConfigureAwait(true);
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        await games.SetRecordingAsync(id, record: false, ct).ConfigureAwait(true);
+
+        processes.Processes.Add(new ProcessSnapshot(4242, 1, "game.exe", _game, DateTimeOffset.UnixEpoch));
+        IReadOnlyList<WatchEvent> events = await o.PollOnceAsync(ct).ConfigureAwait(true);
+
+        events.Should().BeEmpty("a program whose recording is off is not observed");
+        recorder.Requests.Should().BeEmpty();
+        log.Should().BeEmpty();
+
+        await games.SetRecordingAsync(id, record: true, ct).ConfigureAwait(true);
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+        await WaitForRequestsAsync(recorder, 1).ConfigureAwait(true);
+        recorder.Requests.Should().ContainSingle("switched back on, the running program is watched from the next poll");
+    }
+
+    [Fact]
+    public async Task TurningRecordingOffStopsTheSessionThatIsRunning()
+    {
+        (CaptureOrchestrator o, FakeRecorder recorder, FakeSnapshots processes, List<string> log, FakeGameRepository games, long id) = await BuildWithLibraryAsync().ConfigureAwait(true);
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        processes.Processes.Add(new ProcessSnapshot(4242, 1, "game.exe", _game, DateTimeOffset.UnixEpoch));
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+        await WaitForRequestsAsync(recorder, 1).ConfigureAwait(true);
+        CancellationToken stop = recorder.Requests[0].StopToken;
+        stop.IsCancellationRequested.Should().BeFalse();
+
+        await games.SetRecordingAsync(id, record: false, ct).ConfigureAwait(true);
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+
+        stop.IsCancellationRequested.Should().BeTrue("off is about now: the loop ends at its next tick and saves what it had");
+        log.Should().ContainSingle(static l => l.Contains("recording was turned off", StringComparison.Ordinal), "asked once, not every poll");
+        recorder.Requests.Should().ContainSingle();
+    }
+
+    [Fact]
+    public async Task LaunchingAnEntryWhoseRecordingIsOffIsRefused()
+    {
+        var launchRecorder = new FakeRecorder();
+        using var launches = new FakeLaunches(launchRecorder);
+        (CaptureOrchestrator o, FakeRecorder recorder, _, _, FakeGameRepository games, long id) = await BuildWithLibraryAsync(launches).ConfigureAwait(true);
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        await games.SetRecordingAsync(id, record: false, ct).ConfigureAwait(true);
+
+        LaunchResult result = await o.LaunchAsync(id, string.Empty, ct).ConfigureAwait(true);
+
+        result.Outcome.Should().Be(LaunchOutcome.RecordingOff, "FrameLedger does not start what it will not record");
+        recorder.Requests.Should().BeEmpty();
+        launchRecorder.Requests.Should().BeEmpty();
+    }
+
     [Fact]
     public async Task ATrackedProcessStartsExactlyOneAttachSessionKeyedOnTheRealPath()
     {

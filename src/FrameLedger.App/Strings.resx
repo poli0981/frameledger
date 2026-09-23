@@ -582,6 +582,18 @@
   <data name="GameDetail_Hooking_Busy" xml:space="preserve">
     <value>Asking the capture agent…</value>
   </data>
+  <data name="GameDetail_Recording_Header" xml:space="preserve">
+    <value>Recording</value>
+  </data>
+  <data name="GameDetail_Recording_On" xml:space="preserve">
+    <value>Recorded when it runs</value>
+  </data>
+  <data name="GameDetail_Recording_Off" xml:space="preserve">
+    <value>Ignored — nothing is recorded</value>
+  </data>
+  <data name="GameDetail_Recording_Body" xml:space="preserve">
+    <value>Turn this off for a program that is not a game — a utility that starts with Windows, for example. While it is off, FrameLedger does not watch for the program: no session is recorded, nothing is measured or injected, and a session running now stops. Sessions already recorded stay.</value>
+  </data>
   <data name="GameDetail_Hooking_Header" xml:space="preserve">
     <value>Hooking</value>
   </data>
@@ -653,6 +665,9 @@
   </data>
   <data name="Games_Add" xml:space="preserve">
     <value>Add game…</value>
+  </data>
+  <data name="Games_Card_NotRecorded" xml:space="preserve">
+    <value>Not recorded</value>
   </data>
   <data name="Games_Card_HookOff" xml:space="preserve">
     <value>Hooking off</value>

@@ -1,6 +1,7 @@
 using Dapper;
 using FluentAssertions;
 using FluentAssertions.Specialized;
+using FrameLedger.Infrastructure.Import;
 using FrameLedger.Infrastructure.Persistence;
 using Microsoft.Data.Sqlite;
 
@@ -107,6 +108,58 @@ public sealed class LedgerDatabaseTests
         games.Should().NotContain("guard_bypass_at").And.NotContain("guard_bypass_disclosure_version")
             .And.Contain("hook_blocked_reason", "the block is what a finding writes now");
         sessions.Should().NotContain("guard_bypassed").And.NotContain("guard_bypass_family").And.NotContain("guard_bypass_signal");
+    }
+
+    /// <summary>
+    /// Schema 0009 (2026-09-23): the recording switch — on for every entry, and off once for the entries an old import made
+    /// for Steam's own tools (the owner's Borderless Gaming, recorded at every boot since it starts with Windows). Applied
+    /// here from schema 8 to a ledger holding a tool, a game, and a hand-added row that only shares the tool's id.
+    /// </summary>
+    [Fact]
+    public async Task ScriptNineAddsTheRecordingSwitchOffForSteamToolsOnly()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(9);
+        string path = f.Path;
+        await f.Db.WriteAsync((c, tx, ct) => c.ExecuteAsync(new CommandDefinition(
+            "INSERT INTO games (name, exe_path, platform, store_id, added_at, updated_at) VALUES "
+            + "('Borderless Gaming', 'D:\\bg\\BorderlessGaming.exe', 'steam', '388080', 1, 1), "
+            + "('A game', 'D:\\g\\game.exe', 'steam', '1091500', 1, 1), "
+            + "('Hand-added', 'D:\\h\\h.exe', 'none', '388080', 1, 1)", transaction: tx, cancellationToken: ct)), Ct).ConfigureAwait(true);
+        await f.Db.DisposeAsync().ConfigureAwait(true);
+        var c8 = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        await using (c8.ConfigureAwait(true))
+        {
+            await c8.OpenAsync(Ct).ConfigureAwait(true);
+            await c8.ExecuteAsync(new CommandDefinition(
+                "ALTER TABLE games DROP COLUMN record_sessions; DELETE FROM schema_migrations WHERE version > 8; PRAGMA wal_checkpoint(TRUNCATE);",
+                cancellationToken: Ct)).ConfigureAwait(true);
+        }
+
+        LedgerDatabase migrated = await LedgerDatabase.OpenAsync(path, ct: Ct).ConfigureAwait(true);
+        await using (migrated.ConfigureAwait(true))
+        {
+            migrated.SchemaVersion.Should().Be(MigrationRunner.LatestVersion);
+            IReadOnlyList<(string Name, long Record)> rows = await migrated.ReadAsync(async (c, ct) =>
+                (IReadOnlyList<(string, long)>)[.. await c.QueryAsync<(string, long)>(new CommandDefinition(
+                    "SELECT name, record_sessions FROM games ORDER BY name", cancellationToken: ct)).ConfigureAwait(false)], Ct).ConfigureAwait(true);
+            rows.Should().Equal(("A game", 1L), ("Borderless Gaming", 0L), ("Hand-added", 1L));
+        }
+    }
+
+    /// <summary>The ids script 0009 switches off are Steam tools the import already skips (<see cref="SteamLibrarySource.KnownTools"/>), never a guess of its own.</summary>
+    [Fact]
+    public void ScriptNineSwitchesOffOnlyKnownSteamTools()
+    {
+        using Stream script = typeof(MigrationRunner).Assembly.GetManifestResourceStream("FrameLedger.Infrastructure.Persistence.Migrations.0009_record_sessions.sql")!;
+        using var reader = new StreamReader(script);
+        string text = reader.ReadToEnd();
+        string list = text[text.IndexOf("store_id IN", StringComparison.Ordinal)..];
+        List<string> ids = [.. System.Text.RegularExpressions.Regex.Matches(list, @"'(?<id>\d+)'", System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(1))
+            .Select(static m => m.Groups["id"].Value)];
+
+        ids.Should().NotBeEmpty().And.OnlyHaveUniqueItems().And.Contain("388080", "Borderless Gaming, the owner's case");
+        ids.Should().BeSubsetOf(SteamLibrarySource.KnownTools);
     }
 
     [Fact]

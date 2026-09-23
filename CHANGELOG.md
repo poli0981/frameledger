@@ -27,7 +27,17 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
-_Nothing yet — entries continue here after `0.1.0-beta.6`._
+### Added
+
+- **A library entry can be left unrecorded.** Borderless Gaming starts with Windows, and every program in the library
+  was recorded whenever it ran — so each boot added a session of it, for as long as it ran, to the playtime totals. The
+  game page now has a **Recording** switch: off, FrameLedger does not watch for that program at all — no session, no
+  measurement, no injection — and a session of it that is running stops (sessions already recorded stay). The library
+  card says **Not recorded**. Entries an earlier import made for Steam's own tools (Borderless Gaming, Wallpaper Engine,
+  SteamVR, Blender, the Steam runtimes and Proton) start with it off; the import has skipped them since 0.1.0-beta.5.
+  The Privacy Policy (2.3) says so — a program whose recording is off is not watched — and the Disclaimer (2.6) carries
+  the updated accuracy statement, including the correction made in 0.1.0-beta.6; the Legal Gate shows both once after
+  the update. Schema 0009 adds one column; the database opens in place.
 
 ## [0.1.0-beta.6] - 2026-09-23
 

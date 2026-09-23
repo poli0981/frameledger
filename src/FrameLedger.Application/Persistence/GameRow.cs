@@ -78,5 +78,12 @@ public sealed record GameRow
     /// <summary>FR-1.4: set when the user removed the game but kept its sessions; such a row is not in the library.</summary>
     public DateTimeOffset? RemovedAt { get; init; }
 
+    /// <summary>
+    /// Whether FrameLedger watches for this program at all (schema 0009, 2026-09-23): off, it records no session, measures
+    /// nothing and injects nothing when the program runs — a utility that starts with Windows, say. The user's switch, on
+    /// by default; entries an old import made for Steam's own tools start with it off.
+    /// </summary>
+    public bool RecordSessions { get; init; } = true;
+
     public bool InLibrary => RemovedAt is null;
 }

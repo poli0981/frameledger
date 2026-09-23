@@ -769,6 +769,22 @@
     <value>キャプチャエージェントに問い合わせ中…</value>
     <comment>review</comment>
   </data>
+  <data name="GameDetail_Recording_Header" xml:space="preserve">
+    <value>記録</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Recording_On" xml:space="preserve">
+    <value>起動するたびに記録します</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Recording_Off" xml:space="preserve">
+    <value>無視 — 何も記録しません</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Recording_Body" xml:space="preserve">
+    <value>ゲームではないプログラム(Windows と同時に起動するユーティリティなど)ではオフにしてください。オフの間、FrameLedger はそのプログラムを監視しません。セッションは記録されず、計測も注入も行わず、実行中のセッションは停止します。記録済みのセッションは残ります。</value>
+    <comment>review</comment>
+  </data>
   <data name="GameDetail_Hooking_Header" xml:space="preserve">
     <value>フック</value>
     <comment>review</comment>
@@ -863,6 +879,10 @@
   </data>
   <data name="Games_Add" xml:space="preserve">
     <value>ゲームを追加…</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Card_NotRecorded" xml:space="preserve">
+    <value>記録しない</value>
     <comment>review</comment>
   </data>
   <data name="Games_Card_HookOff" xml:space="preserve">

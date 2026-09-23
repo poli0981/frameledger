@@ -142,6 +142,24 @@ public sealed class SqliteGameRepositoryTests
         }, Ct).ConfigureAwait(false);
     }
 
+    /// <summary>The recording switch (schema 0009, 2026-09-23): on for a new entry; the UI's write turns it; the entry stays in the library.</summary>
+    [Fact]
+    public async Task TheRecordingSwitchIsOnForANewEntryAndTheUiTurnsIt()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        var repo = new SqliteGameRepository(f.Db);
+        GameRow row = await repo.EnsureAsync(_exe, "T", Ct);
+        row.RecordSessions.Should().BeTrue();
+
+        (await repo.SetRecordingAsync(row.Id, record: false, Ct)).Should().BeTrue();
+
+        (await repo.FindByIdAsync(row.Id, Ct))!.RecordSessions.Should().BeFalse();
+        (await repo.ListAsync(Ct)).Should().ContainSingle("still in the library, just not watched").Which.RecordSessions.Should().BeFalse();
+        (await repo.SetRecordingAsync(row.Id, record: true, Ct)).Should().BeTrue();
+        (await repo.FindByIdAsync(row.Id, Ct))!.RecordSessions.Should().BeTrue();
+        (await repo.SetRecordingAsync(row.Id + 99, record: false, Ct)).Should().BeFalse("no such row");
+    }
+
     [Fact]
     public async Task ANewGameIsHookingOffWithEveryDefaultAndEnsureIsIdempotent()
     {

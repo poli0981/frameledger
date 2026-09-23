@@ -124,10 +124,15 @@ public sealed class CaptureOrchestrator
         await DrainRunningAsync().ConfigureAwait(false);
     }
 
-    /// <summary>One tick: snapshot, diff, start what appeared, report what finished.</summary>
+    /// <summary>
+    /// One tick: snapshot, diff, start what appeared, report what finished. An entry whose recording is off (schema 0009,
+    /// 2026-09-23) is not watched at all — its program runs unobserved — and a session of it still running stops.
+    /// </summary>
     public async Task<IReadOnlyList<WatchEvent>> PollOnceAsync(CancellationToken ct)
     {
-        IReadOnlyList<GameRow> watchlist = await _games.ListAsync(ct).ConfigureAwait(false);
+        IReadOnlyList<GameRow> library = await _games.ListAsync(ct).ConfigureAwait(false);
+        StopUnrecorded(library);
+        IReadOnlyList<GameRow> watchlist = Recorded(library);
         IReadOnlyList<ProcessSnapshot> snapshot = _processes.Take();
         _latest?.Publish(snapshot);
         IReadOnlyList<WatchEvent> events = _watcher.Poll(snapshot, watchlist);
@@ -164,6 +169,35 @@ public sealed class CaptureOrchestrator
 
         Reap();
         return events;
+    }
+
+    /// <summary>The entries FrameLedger watches for: the library minus those whose recording the user switched off.</summary>
+    private static List<GameRow> Recorded(IReadOnlyList<GameRow> library) => [.. library.Where(static g => g.RecordSessions)];
+
+    /// <summary>
+    /// A session whose entry's recording was switched off while it ran stops at its next tick (2026-09-23): "off" is about
+    /// now, not the next launch — Borderless Gaming starts with Windows and runs until shutdown. Asked once per session; the
+    /// loop's own stop path ends it as a user stop and saves what it had, as <c>StopSession</c> does.
+    /// </summary>
+    private void StopUnrecorded(IReadOnlyList<GameRow> library)
+    {
+        HashSet<long> off = [.. library.Where(static g => !g.RecordSessions).Select(static g => g.Id)];
+        if (off.Count == 0)
+        {
+            return;
+        }
+
+        lock (_table)
+        {
+            foreach (Running r in _running.Values)
+            {
+                if (off.Contains(r.GameId) && !r.Task.IsCompleted && !r.Stop.IsCancellationRequested)
+                {
+                    r.Stop.Cancel();
+                    _log($"session {r.SessionGuid:N}: recording was turned off for its entry; the loop ends at its next tick");
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -208,6 +242,11 @@ public sealed class CaptureOrchestrator
             return LaunchResult.Of(LaunchOutcome.UnknownGame);
         }
 
+        if (!game.RecordSessions)
+        {
+            return LaunchResult.Of(LaunchOutcome.RecordingOff);
+        }
+
         string path = game.Fingerprint.ExePath;
         lock (_table)
         {
@@ -238,7 +277,7 @@ public sealed class CaptureOrchestrator
             return null;
         }
 
-        IReadOnlyList<GameRow> watchlist = await _games.ListAsync(ct).ConfigureAwait(false);
+        IReadOnlyList<GameRow> watchlist = Recorded(await _games.ListAsync(ct).ConfigureAwait(false));
         HashSet<string> tracked = new(watchlist.Select(static g => g.Fingerprint.ExePath), StringComparer.OrdinalIgnoreCase);
         ProcessSnapshot? elected = DescendantElection.Elect(_processes.Take(), launched.Outcome.TargetPid, tracked.Contains);
         if (elected is not { ImagePath: { } path })

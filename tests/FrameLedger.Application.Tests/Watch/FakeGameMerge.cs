@@ -34,6 +34,7 @@ internal sealed class FakeGameMerge(FakeGameRepository games) : IGameMerge
             HookBlockedReason = keep.HookBlockedReason ?? drop.HookBlockedReason,
             HookEnabled = keep.HookEnabled && keep.HookBlockedReason is null && drop.HookBlockedReason is null,
             HookCrashCount = keep.HookCrashCount + drop.HookCrashCount,
+            RecordSessions = keep.RecordSessions && drop.RecordSessions,
         };
         return ValueTask.FromResult<int?>(0);
     }

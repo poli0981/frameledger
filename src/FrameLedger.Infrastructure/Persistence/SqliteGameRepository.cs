@@ -14,7 +14,8 @@ namespace FrameLedger.Infrastructure.Persistence;
 /// The <c>games</c> table minus its consent columns. Nothing here can set <c>hook_enabled</c> to 1, stamp
 /// <c>hook_consent_at</c>, or touch <c>hook_blocked_reason</c>: those are <see cref="SqliteGameConsentStore"/>'s,
 /// and a second writer of the same columns would be the "two views of one state" the port forbids. The UI's
-/// half (P3 PR-3) writes the metadata, the tri-state defaults and <c>removed_at</c> — and nothing else.
+/// half (P3 PR-3) writes the metadata, the tri-state defaults, <c>removed_at</c> and, since 2026-09-23,
+/// <c>record_sessions</c> — and nothing else.
 /// </summary>
 public sealed class SqliteGameRepository : IGameRepository
 {
@@ -23,7 +24,7 @@ public sealed class SqliteGameRepository : IGameRepository
         + "hook_crash_count, hook_last_injected_at, added_at, updated_at, "
         + "platform, store_id, engine, engine_version, publisher, game_version, cover_path, notes, field_provenance, capability_flags, "
         + "rt_default, pt_default, rr_default, hook_consent_at, hook_prescan_state, removed_at, "
-        + "detection_rules_version, detection_exe_size_bytes, detection_exe_mtime_ms";
+        + "detection_rules_version, detection_exe_size_bytes, detection_exe_mtime_ms, record_sessions";
 
     private const string _selectByPath = $"SELECT {_columns} FROM games WHERE exe_path = @path";
 
@@ -67,6 +68,8 @@ public sealed class SqliteGameRepository : IGameRepository
         + "updated_at = @now WHERE id = @id";
 
     private const string _remove = "UPDATE games SET removed_at = @now, updated_at = @now WHERE id = @id AND removed_at IS NULL";
+
+    private const string _setRecording = "UPDATE games SET record_sessions = @record, updated_at = @now WHERE id = @id";
 
     private const string _delete = "DELETE FROM games WHERE id = @id";
 
@@ -203,6 +206,10 @@ public sealed class SqliteGameRepository : IGameRepository
             sql, new { id = gameId, value = Vocabulary.Tri(value), now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }, tx, cancellationToken: token)).ConfigureAwait(false) == 1, ct);
     }
 
+    public ValueTask<bool> SetRecordingAsync(long gameId, bool record, CancellationToken ct = default) =>
+        _db.WriteAsync(async (c, tx, token) => await c.ExecuteAsync(new CommandDefinition(
+            _setRecording, new { id = gameId, record = record ? 1 : 0, now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }, tx, cancellationToken: token)).ConfigureAwait(false) == 1, ct);
+
     public ValueTask<bool> RemoveAsync(long gameId, bool keepSessions, CancellationToken ct = default) =>
         _db.WriteAsync(async (c, tx, token) =>
         {
@@ -327,6 +334,7 @@ public sealed class SqliteGameRepository : IGameRepository
         DetectionRulesVersion = SqliteReaders.String(r, 28),
         DetectionExeSizeBytes = SqliteReaders.Int64(r, 29),
         DetectionExeMtimeMs = SqliteReaders.Int64(r, 30),
+        RecordSessions = r.GetInt64(31) != 0,
     };
 
     private static DateTimeOffset? At(long? unixMs) => unixMs is { } ms ? DateTimeOffset.FromUnixTimeMilliseconds(ms) : null;

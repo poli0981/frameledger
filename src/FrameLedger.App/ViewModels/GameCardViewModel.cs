@@ -4,7 +4,10 @@ using FrameLedger.App.Services;
 
 namespace FrameLedger.App.ViewModels;
 
-/// <summary>One library card (<c>08_UI</c> §Games): name, platform and engine badges, playtime, last played, hooking state. The sparkline is PR-6's.</summary>
+/// <summary>
+/// One library card (<c>08_UI</c> §Games): name, platform and engine badges, playtime, last played, hooking state — or, since
+/// 2026-09-23, "Not recorded" in its place for an entry whose recording is off. The sparkline is PR-6's.
+/// </summary>
 [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime")]
 public sealed class GameCardViewModel
 {
@@ -16,8 +19,9 @@ public sealed class GameCardViewModel
         Name = card.Row.Name;
         PlatformText = Formats.Platform(card.Row.Platform);
         EngineText = Formats.Engine(card.Row.Engine);
-        HookOn = card.Row.HookEnabled;
-        HookText = HookOn ? Strings.Games_Card_HookOn : Strings.Games_Card_HookOff;
+        Recorded = card.Row.RecordSessions;
+        HookOn = Recorded && card.Row.HookEnabled;
+        HookText = !Recorded ? Strings.Games_Card_NotRecorded : HookOn ? Strings.Games_Card_HookOn : Strings.Games_Card_HookOff;
         SessionCount = card.Summary?.SessionCount ?? 0;
         TotalSeconds = card.Summary?.TotalSeconds ?? 0;
         LastPlayedAt = card.Summary?.LastPlayedAt;
@@ -41,6 +45,9 @@ public sealed class GameCardViewModel
     public string EngineText { get; }
 
     public bool HasEngine => EngineText.Length > 0;
+
+    /// <summary>Whether FrameLedger watches for this entry's program (schema 0009).</summary>
+    public bool Recorded { get; }
 
     public bool HookOn { get; }
 

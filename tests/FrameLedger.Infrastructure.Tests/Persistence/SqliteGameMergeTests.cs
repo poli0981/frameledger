@@ -132,6 +132,19 @@ public sealed class SqliteGameMergeTests
         lifted.HookAutoDisabledReason.Should().BeNull();
     }
 
+    /// <summary>The recording switch (schema 0009): off on either twin is off on the survivor — the user turned it off for this executable.</summary>
+    [Fact]
+    public async Task RecordingOffOnEitherTwinIsOffOnTheSurvivor()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        (SqliteGameRepository repo, GameRow stale, GameRow twin) = await TwinsAsync(f, staleAdded: 1_000, twinAdded: 2_000);
+        await SetAsync(f, twin.Id, "record_sessions = 0");
+
+        (await new SqliteGameMerge(f.Db).MergeAsync(await PlanAsync(repo, stale, twin), Ct)).Should().Be(0);
+
+        (await repo.FindByIdAsync(stale.Id, Ct))!.RecordSessions.Should().BeFalse();
+    }
+
     [Fact]
     public async Task ARowThatIsNotWhatThePlanSawIsNotMergedAndNothingIsWritten()
     {

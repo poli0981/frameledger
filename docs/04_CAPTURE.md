@@ -160,6 +160,16 @@ which makes the notification more important than it was, not less.
 > (`05_DETECTION` §Caching) on its own task, because `GameFileProbe` blocks on file I/O and the 1 Hz poll must
 > not wait on it. It reads game files and writes the detected columns of `games`; it never touches a process,
 > a hook, or a consent column.**
+>
+> **The watchlist is the entries whose recording is on (2026-09-23, FR-1.6, D29).** Borderless Gaming starts with
+> Windows on the owner's machine, and since Tier 2 exists every library entry that runs gets a session — one per boot,
+> for as long as the utility ran, in the playtime totals. `games.record_sessions = 0` (schema 0009, the user's switch on
+> the game page) takes an entry out of the watchlist `PollOnceAsync` hands the watcher, and out of the launch election's
+> tracked set: its process appearing is no event, no session and no log line. Switched off while a session of it runs,
+> the orchestrator cancels that session's stop token at its next poll — the loop ends as a user stop and saves what it
+> had — and `LaunchGame` answers `RecordingOff`. Switched back on, a process that is still running is picked up by
+> the next poll (a pid the watcher never matched is new to it). Detection and the drive-letter relocator still follow
+> the entry; they read files, not processes.
 
 ## Launch mode vs attach mode
 
