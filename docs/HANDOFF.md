@@ -1532,6 +1532,30 @@ the status at each connect (`07_IPC` §Client behavior). All fields are additive
   matching `'`") even when quoted `<<'EOF'` — write the script with the Write tool and run it by path, as the traps
   above already say for patches.
 
+## 2026-09-23 (after 0.1.0-beta.6) — the recording switch
+
+*Status is `CHANGELOG.md` `[Unreleased]` until the next tag; this is what no other file carries.*
+
+**Decision (D29, owner: "the Agent records Borderless Gaming although hooking is off, and it starts with Windows —
+propose an ignore list, a disable, or something suitable").** Both, as one mechanism: a per-entry **Recording**
+switch (`games.record_sessions`, schema 0009, FR-1.6) the user owns, and the import's known-tools list
+(`SteamLibrarySource.KnownTools`) applied once to the entries an earlier import made, which start with it off. Off
+means the program is not watched at all (the watchlist is the entries whose recording is on), a running session of it
+stops at the next poll, and `LaunchGame` answers `RecordingOff`. Not chosen: a hard-coded list the watcher consults
+(no user control, and a list is never complete), and D23's recorded alternative of recording Tier 2 only for entries
+hooking was once enabled for (it would take back the Tier-2 sessions the owner asked for). The Privacy Policy (2.3) and
+the Disclaimer (2.6, whose accuracy block also carries #224's correction) were bumped with the owner's leave ("sửa docs
+và legal"), so the Legal Gate shows both once.
+
+**Traps.**
+- **A pid the watcher matched stays matched.** Switching recording off stops the session but leaves the process in
+  `ProcessWatcher`'s table, so switching it back on while the same process still runs starts nothing until it restarts.
+  A process the watcher never matched (off from the start) is picked up by the next poll.
+- **A migration that changes data needs its own rewind in a test.** `RewindSchemaAsync` leaves columns in place, so
+  `ScriptNineAddsTheRecordingSwitchOffForSteamToolsOnly` drops the column itself before re-applying 0009.
+- **`SqliteGameRepository._columns` is read by ordinal** (`ReadMore`): a new column goes at the end of the list, and the
+  twin merge reads its own columns — both had to learn `record_sessions`.
+
 ## Owner-only — no PR can close these
 
 1. **§S23-2 — branch protection.** `Rules / validate` is not a required status check on

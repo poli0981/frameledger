@@ -89,6 +89,12 @@ public sealed class GameLibrary
 
     public Task<bool> RemoveAsync(long gameId, bool keepSessions, CancellationToken ct = default) => _games.RemoveAsync(gameId, keepSessions, ct).AsTask();
 
+    /// <summary>
+    /// The entry's recording switch (schema 0009, 2026-09-23). The Agent reads the same table each tick, so nothing is
+    /// sent over the pipe: off, it stops watching for the program and stops a session of it that is running.
+    /// </summary>
+    public Task<bool> SetRecordingAsync(long gameId, bool record, CancellationToken ct = default) => _games.SetRecordingAsync(gameId, record, ct).AsTask();
+
     public Task<bool> UpdateMetadataAsync(long gameId, GameMetadata metadata, CancellationToken ct = default) => _games.UpdateMetadataAsync(gameId, metadata, ct).AsTask();
 
     /// <summary>The Dashboard's recent list: the last <paramref name="count"/> sessions across games, with their game names.</summary>

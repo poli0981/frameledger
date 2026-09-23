@@ -67,6 +67,13 @@ public sealed partial class GameDetailViewModel : ObservableObject
     [ObservableProperty]
     private string _measuredEmptyText = string.Empty;
 
+    /// <summary>The entry's recording switch (schema 0009, 2026-09-23): off, FrameLedger does not watch for the program.</summary>
+    [ObservableProperty]
+    private bool _recordSessions = true;
+
+    [ObservableProperty]
+    private string _recordingStatusText = string.Empty;
+
     [ObservableProperty]
     private bool _hookEnabled;
 
@@ -164,6 +171,10 @@ public sealed partial class GameDetailViewModel : ObservableObject
     public static string SupportsEmptyText => Strings.GameDetail_Supports_Empty;
 
     public static string MeasuredHeader => Strings.GameDetail_Measured_Header;
+
+    public static string RecordingHeader => Strings.GameDetail_Recording_Header;
+
+    public static string RecordingBody => Strings.GameDetail_Recording_Body;
 
     public static string HookingHeader => Strings.GameDetail_Hooking_Header;
 
@@ -353,6 +364,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private Task ToggleHookingAsync() => RunAsync(HookEnabled ? DisableAsync : EnableAsync);
 
     [RelayCommand]
+    private Task ToggleRecordingAsync() => RunAsync(ToggleRecordingCoreAsync);
+
+    [RelayCommand]
     private Task ReEnableHookingAsync() => RunAsync(EnableAsync);
 
     [RelayCommand]
@@ -411,6 +425,21 @@ public sealed partial class GameDetailViewModel : ObservableObject
             Busy = false;
         }
 
+        await LoadAsync().ConfigureAwait(true);
+    }
+
+    /// <summary>
+    /// Flips the entry's recording switch (2026-09-23). No confirmation: it deletes nothing — sessions already recorded stay,
+    /// and turning it back on is the same click.
+    /// </summary>
+    private async Task ToggleRecordingCoreAsync()
+    {
+        if (Game is null)
+        {
+            return;
+        }
+
+        await _library.SetRecordingAsync(Game.Id, !Game.RecordSessions).ConfigureAwait(true);
         await LoadAsync().ConfigureAwait(true);
     }
 
@@ -528,8 +557,15 @@ public sealed partial class GameDetailViewModel : ObservableObject
         PresentChips(detail, lastHooked);
         PresentSupports(row);
         PresentMeasured(last, lastHooked);
+        PresentRecording(row);
         PresentHooking(row);
         PresentSessions(detail);
+    }
+
+    private void PresentRecording(GameRow row)
+    {
+        RecordSessions = row.RecordSessions;
+        RecordingStatusText = row.RecordSessions ? Strings.GameDetail_Recording_On : Strings.GameDetail_Recording_Off;
     }
 
     private void PresentChips(GameDetail detail, SessionRow? lastHooked)

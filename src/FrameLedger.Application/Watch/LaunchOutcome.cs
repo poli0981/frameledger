@@ -17,4 +17,7 @@ public enum LaunchOutcome
 
     /// <summary>This orchestrator was composed without launch mode (the console's election-only instance, or a test).</summary>
     Unavailable,
+
+    /// <summary>The entry's recording is switched off (schema 0009, 2026-09-23): FrameLedger does not start what it will not record.</summary>
+    RecordingOff,
 }

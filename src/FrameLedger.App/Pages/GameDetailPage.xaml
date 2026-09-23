@@ -109,6 +109,17 @@
                 </ui:Card>
             </Grid>
 
+            <!-- recording switch (schema 0009, 2026-09-23): off, FrameLedger does not watch for this program at all -->
+            <ui:CardControl Margin="0,12,0,0" Header="{x:Static vm:GameDetailViewModel.RecordingHeader}" Icon="{ui:SymbolIcon Record24}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:TextBlock Appearance="Secondary" VerticalAlignment="Center" Margin="0,0,12,0" Text="{Binding ViewModel.RecordingStatusText}" />
+                    <ui:ToggleSwitch AutomationProperties.Name="{x:Static vm:GameDetailViewModel.RecordingHeader}"
+                                     IsChecked="{Binding ViewModel.RecordSessions, Mode=OneWay}"
+                                     Command="{Binding ViewModel.ToggleRecordingCommand}" />
+                </StackPanel>
+            </ui:CardControl>
+            <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.RecordingBody}" />
+
             <!-- hooking control (FR-2.1 / FR-2.2 / FR-2.5) -->
             <ui:CardControl Margin="0,12,0,0" Header="{x:Static vm:GameDetailViewModel.HookingHeader}" Icon="{ui:SymbolIcon ShieldTask24}">
                 <StackPanel Orientation="Horizontal">

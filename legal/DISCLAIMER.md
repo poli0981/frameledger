@@ -1,6 +1,6 @@
 # FrameLedger — Disclaimer
 
-**Version:** 2.5 · **Effective:** {{RELEASE_DATE}}
+**Version:** 2.6 · **Effective:** {{RELEASE_DATE}}
 
 > **How this document is kept true.** The statement of what FrameLedger measures (§4) is `legal/ACCURACY.md`,
 > embedded here and in `README.md` and bound to its source by `tools/accuracy-check.ps1`, which fails the build when a
@@ -101,7 +101,8 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 > **pre-release is `0.1.0-beta.6`** (2026-09-23), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
-> game in the library runs, injects only into games you enabled and only past the safety guard, and
+> game in the library runs (unless you switched its recording off), injects only into games you enabled
+> and only past the safety guard, and
 > stores sessions in a local database. What that path measures:
 >
 > - **Frame times and output resolution:** measured from the present call for Direct3D 11/12 and

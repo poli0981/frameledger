@@ -123,6 +123,21 @@ internal sealed class FakeGameRepository : IGameRepository
 
     public ValueTask<bool> RemoveAsync(long gameId, bool keepSessions, CancellationToken ct = default) => throw new NotSupportedException();
 
+    /// <summary>The UI's recording switch (2026-09-23), applied to the row so the watcher tests see it.</summary>
+    public ValueTask<bool> SetRecordingAsync(long gameId, bool record, CancellationToken ct = default)
+    {
+        foreach ((string key, GameRow row) in Rows)
+        {
+            if (row.Id == gameId)
+            {
+                Rows[key] = row with { RecordSessions = record };
+                return ValueTask.FromResult(true);
+            }
+        }
+
+        return ValueTask.FromResult(false);
+    }
+
     /// <summary>Every store write, in order (P4 PR-4); the row takes the store's platform, id and version whole (the SQLite adapter's provenance rule has its own tests).</summary>
     public List<(long GameId, StoreMetadata Store)> Stores { get; } = [];
 

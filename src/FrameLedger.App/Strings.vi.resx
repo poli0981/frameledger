@@ -577,6 +577,18 @@
   <data name="GameDetail_Hooking_Busy" xml:space="preserve">
     <value>Đang hỏi capture agent…</value>
   </data>
+  <data name="GameDetail_Recording_Header" xml:space="preserve">
+    <value>Ghi phiên</value>
+  </data>
+  <data name="GameDetail_Recording_On" xml:space="preserve">
+    <value>Ghi phiên mỗi khi chạy</value>
+  </data>
+  <data name="GameDetail_Recording_Off" xml:space="preserve">
+    <value>Bỏ qua — không ghi gì</value>
+  </data>
+  <data name="GameDetail_Recording_Body" xml:space="preserve">
+    <value>Tắt mục này cho chương trình không phải game — ví dụ một tiện ích khởi động cùng Windows. Khi tắt, FrameLedger không theo dõi chương trình đó: không ghi phiên, không đo, không inject, và phiên đang chạy sẽ dừng. Các phiên đã ghi vẫn được giữ.</value>
+  </data>
   <data name="GameDetail_Hooking_Header" xml:space="preserve">
     <value>Hooking</value>
   </data>
@@ -648,6 +660,9 @@
   </data>
   <data name="Games_Add" xml:space="preserve">
     <value>Thêm game…</value>
+  </data>
+  <data name="Games_Card_NotRecorded" xml:space="preserve">
+    <value>Không ghi</value>
   </data>
   <data name="Games_Card_HookOff" xml:space="preserve">
     <value>Hooking tắt</value>

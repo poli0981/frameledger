@@ -10,6 +10,7 @@ Requirement IDs (`FR-x`, `NFR-x`) are referenced by other docs, commits, and tes
 - FR-1.3 Editable metadata (name, cover, publisher, version, notes); auto-detected fields badged and overridable.
 - FR-1.4 Remove game (asks whether to keep or delete its sessions).
 - FR-1.5 "Supports" row shows shipped-capability hints (DLSS/FSR/XeSS/FG) — visually distinct from measured per-session values (`05_DETECTION` §Capability hints).
+- FR-1.6 Recording switch per entry (2026-09-23, HANDOFF D29): off, the program is not watched at all — no session, no measurement, no injection — and a session of it that is running stops. On by default; entries an old import made for Steam's own tools start with it off. The library card says "Not recorded".
 
 ### FR-2 Hooking consent & control (new, safety-critical — see `19_SAFETY`)
 - FR-2.1 Hooking is **off by default for every game**. Enabling requires a per-game consent dialog stating what is injected, why, and the anti-cheat/ban risk.

@@ -225,6 +225,48 @@ public sealed class GameDetailViewModelTests
         }
     }
 
+    /// <summary>
+    /// The recording switch (schema 0009, 2026-09-23): one click writes the row — nothing is asked of the Agent, which reads
+    /// the table each tick — the page says the program is ignored, and the library card says "Not recorded" in place of the
+    /// hooking state.
+    /// </summary>
+    [Fact]
+    public async Task TheRecordingSwitchWritesTheRowAndTheCardSaysNotRecorded()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow game = await s.GameAsync("Borderless Gaming");
+            (GameDetailViewModel vm, FakeAgent agent, _, _, _) = await BuildAsync(s, game.Id);
+            vm.RecordSessions.Should().BeTrue();
+            vm.RecordingStatusText.Should().Be(Strings.GameDetail_Recording_On);
+
+            vm.ToggleRecordingCommand.Execute(null);
+            Task off = vm.Pending;
+            await off;
+
+            vm.RecordSessions.Should().BeFalse("reloaded from the row");
+            vm.RecordingStatusText.Should().Be(Strings.GameDetail_Recording_Off);
+            agent.Sent.Should().BeEmpty("the Agent reads the same table; nothing goes over the pipe");
+            GameRow row = (await s.Games.FindByIdAsync(game.Id, Ct))!;
+            row.RecordSessions.Should().BeFalse();
+            var card = new GameCardViewModel(new GameCard(row with { HookEnabled = true }, null));
+            card.HookText.Should().Be(Strings.Games_Card_NotRecorded, "an ignored program is not hooked, whatever its switch says");
+            card.HookOn.Should().BeFalse();
+
+            vm.ToggleRecordingCommand.Execute(null);
+            Task on = vm.Pending;
+            await on;
+            vm.RecordSessions.Should().BeTrue();
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
+
     [Fact]
     public async Task TogglingOnAsksTheAgentAndReloadsTogglingOffRevokes()
     {
