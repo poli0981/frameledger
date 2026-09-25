@@ -273,6 +273,7 @@ public static class Strings
         nameof(GameDetail_Details_LibraryNoVersion_Format),
         nameof(GameDetail_Details_NoLibraries),
         nameof(GameDetail_Details_NotRead),
+        nameof(GameDetail_Details_NvidiaOverride),
         nameof(GameDetail_Details_ProductVersion),
         nameof(GameDetail_Details_Store),
         nameof(GameDetail_Details_Version),
@@ -426,6 +427,35 @@ public static class Strings
         nameof(Notice_Refused_Recording),
         nameof(Notice_Refused_Title_Format),
         nameof(Notice_Unhooked_Title),
+        nameof(Nv_Details_Format),
+        nameof(Nv_Driver_DllSelected),
+        nameof(Nv_Driver_Format),
+        nameof(Nv_Driver_Ratio_Format),
+        nameof(Nv_DynamicTarget_Auto),
+        nameof(Nv_DynamicTarget_Format),
+        nameof(Nv_FgMode_Auto),
+        nameof(Nv_FgMode_Dynamic),
+        nameof(Nv_FgMode_Off),
+        nameof(Nv_FgMode_On),
+        nameof(Nv_Mfg_Format),
+        nameof(Nv_Mode_Balanced),
+        nameof(Nv_Mode_Custom),
+        nameof(Nv_Mode_Custom_Format),
+        nameof(Nv_Mode_Dlaa),
+        nameof(Nv_Mode_Performance),
+        nameof(Nv_Mode_Quality),
+        nameof(Nv_Mode_UltraPerformance),
+        nameof(Nv_Override_Fg),
+        nameof(Nv_Override_None),
+        nameof(Nv_Override_Rr),
+        nameof(Nv_Override_Sl),
+        nameof(Nv_Override_Sr),
+        nameof(Nv_Preset_Default),
+        nameof(Nv_Preset_Format),
+        nameof(Nv_Preset_Latest),
+        nameof(Nv_Profile_Format),
+        nameof(Nv_Profile_Global_Format),
+        nameof(Nv_SmoothMotion),
         nameof(Override_Apply),
         nameof(Override_Body),
         nameof(Override_Default),
@@ -1174,6 +1204,8 @@ public static class Strings
 
     public static string GameDetail_Details_NotRead => ResourceManager.GetString(nameof(GameDetail_Details_NotRead), Culture) ?? nameof(GameDetail_Details_NotRead);
 
+    public static string GameDetail_Details_NvidiaOverride => ResourceManager.GetString(nameof(GameDetail_Details_NvidiaOverride), Culture) ?? nameof(GameDetail_Details_NvidiaOverride);
+
     public static string GameDetail_Details_ProductVersion => ResourceManager.GetString(nameof(GameDetail_Details_ProductVersion), Culture) ?? nameof(GameDetail_Details_ProductVersion);
 
     public static string GameDetail_Details_Store => ResourceManager.GetString(nameof(GameDetail_Details_Store), Culture) ?? nameof(GameDetail_Details_Store);
@@ -1479,6 +1511,64 @@ public static class Strings
     public static string Notice_Refused_Title_Format => ResourceManager.GetString(nameof(Notice_Refused_Title_Format), Culture) ?? nameof(Notice_Refused_Title_Format);
 
     public static string Notice_Unhooked_Title => ResourceManager.GetString(nameof(Notice_Unhooked_Title), Culture) ?? nameof(Notice_Unhooked_Title);
+
+    public static string Nv_Details_Format => ResourceManager.GetString(nameof(Nv_Details_Format), Culture) ?? nameof(Nv_Details_Format);
+
+    public static string Nv_Driver_DllSelected => ResourceManager.GetString(nameof(Nv_Driver_DllSelected), Culture) ?? nameof(Nv_Driver_DllSelected);
+
+    public static string Nv_Driver_Format => ResourceManager.GetString(nameof(Nv_Driver_Format), Culture) ?? nameof(Nv_Driver_Format);
+
+    public static string Nv_Driver_Ratio_Format => ResourceManager.GetString(nameof(Nv_Driver_Ratio_Format), Culture) ?? nameof(Nv_Driver_Ratio_Format);
+
+    public static string Nv_DynamicTarget_Auto => ResourceManager.GetString(nameof(Nv_DynamicTarget_Auto), Culture) ?? nameof(Nv_DynamicTarget_Auto);
+
+    public static string Nv_DynamicTarget_Format => ResourceManager.GetString(nameof(Nv_DynamicTarget_Format), Culture) ?? nameof(Nv_DynamicTarget_Format);
+
+    public static string Nv_FgMode_Auto => ResourceManager.GetString(nameof(Nv_FgMode_Auto), Culture) ?? nameof(Nv_FgMode_Auto);
+
+    public static string Nv_FgMode_Dynamic => ResourceManager.GetString(nameof(Nv_FgMode_Dynamic), Culture) ?? nameof(Nv_FgMode_Dynamic);
+
+    public static string Nv_FgMode_Off => ResourceManager.GetString(nameof(Nv_FgMode_Off), Culture) ?? nameof(Nv_FgMode_Off);
+
+    public static string Nv_FgMode_On => ResourceManager.GetString(nameof(Nv_FgMode_On), Culture) ?? nameof(Nv_FgMode_On);
+
+    public static string Nv_Mfg_Format => ResourceManager.GetString(nameof(Nv_Mfg_Format), Culture) ?? nameof(Nv_Mfg_Format);
+
+    public static string Nv_Mode_Balanced => ResourceManager.GetString(nameof(Nv_Mode_Balanced), Culture) ?? nameof(Nv_Mode_Balanced);
+
+    public static string Nv_Mode_Custom => ResourceManager.GetString(nameof(Nv_Mode_Custom), Culture) ?? nameof(Nv_Mode_Custom);
+
+    public static string Nv_Mode_Custom_Format => ResourceManager.GetString(nameof(Nv_Mode_Custom_Format), Culture) ?? nameof(Nv_Mode_Custom_Format);
+
+    public static string Nv_Mode_Dlaa => ResourceManager.GetString(nameof(Nv_Mode_Dlaa), Culture) ?? nameof(Nv_Mode_Dlaa);
+
+    public static string Nv_Mode_Performance => ResourceManager.GetString(nameof(Nv_Mode_Performance), Culture) ?? nameof(Nv_Mode_Performance);
+
+    public static string Nv_Mode_Quality => ResourceManager.GetString(nameof(Nv_Mode_Quality), Culture) ?? nameof(Nv_Mode_Quality);
+
+    public static string Nv_Mode_UltraPerformance => ResourceManager.GetString(nameof(Nv_Mode_UltraPerformance), Culture) ?? nameof(Nv_Mode_UltraPerformance);
+
+    public static string Nv_Override_Fg => ResourceManager.GetString(nameof(Nv_Override_Fg), Culture) ?? nameof(Nv_Override_Fg);
+
+    public static string Nv_Override_None => ResourceManager.GetString(nameof(Nv_Override_None), Culture) ?? nameof(Nv_Override_None);
+
+    public static string Nv_Override_Rr => ResourceManager.GetString(nameof(Nv_Override_Rr), Culture) ?? nameof(Nv_Override_Rr);
+
+    public static string Nv_Override_Sl => ResourceManager.GetString(nameof(Nv_Override_Sl), Culture) ?? nameof(Nv_Override_Sl);
+
+    public static string Nv_Override_Sr => ResourceManager.GetString(nameof(Nv_Override_Sr), Culture) ?? nameof(Nv_Override_Sr);
+
+    public static string Nv_Preset_Default => ResourceManager.GetString(nameof(Nv_Preset_Default), Culture) ?? nameof(Nv_Preset_Default);
+
+    public static string Nv_Preset_Format => ResourceManager.GetString(nameof(Nv_Preset_Format), Culture) ?? nameof(Nv_Preset_Format);
+
+    public static string Nv_Preset_Latest => ResourceManager.GetString(nameof(Nv_Preset_Latest), Culture) ?? nameof(Nv_Preset_Latest);
+
+    public static string Nv_Profile_Format => ResourceManager.GetString(nameof(Nv_Profile_Format), Culture) ?? nameof(Nv_Profile_Format);
+
+    public static string Nv_Profile_Global_Format => ResourceManager.GetString(nameof(Nv_Profile_Global_Format), Culture) ?? nameof(Nv_Profile_Global_Format);
+
+    public static string Nv_SmoothMotion => ResourceManager.GetString(nameof(Nv_SmoothMotion), Culture) ?? nameof(Nv_SmoothMotion);
 
     public static string Override_Apply => ResourceManager.GetString(nameof(Override_Apply), Culture) ?? nameof(Override_Apply);
 

@@ -494,6 +494,16 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > provenance and no user override. Existing rows read NULL, and a NULL `exe_machine` makes the sweep read the row once
 > more on its first pass. `LatestVersion` is 11; `LedgerDatabaseTests.ScriptElevenAddsTheExecutableFactsEmptyForExistingRows`.
 
+> **`0012_driver_profile.sql` (2026-09-25) — `sessions.driver_profile`.** The NVIDIA driver profile the session's
+> executable ran under, read by the Agent's recorder beside every session (both tiers) through the NVAPI bridge's
+> read-only DRS entry point (`18_GPU_VENDOR_APIS` §L3, ABI 2): JSON (`Application.Recording.DriverProfileRecord`) —
+> `Outcome` (`Application` | `Global` | `Degraded`), `Profile`, and one entry per setting of
+> `Application.Capture.NvidiaDriverSettings` with its `Value` (null = set in no profile), `Location` and `Predefined`.
+> A driver configuration, never a measurement (`03_METRICS` §Upscaling). NULL for every row before, and where no
+> NVIDIA bridge was there to ask. The same day `ngx_driver_words` gained `Ratio`, `Mode`, `Preset`, `FgCount`,
+> `FgPreset`, `FgMode` beside its masks (additive JSON fields; older rows lack them). `LatestVersion` is 12;
+> `LedgerDatabaseTests.ScriptTwelveAddsTheDriverProfileColumn`.
+
 > **Every open used to migrate, and one that should not have did — 2026-09-16.** The Agent's `--console sessions`,
 > a verb that prints, was run against the owner's ledger while the file on disk was at schema 2 and applied 0003 and
 > 0004 to it. `LedgerDatabase.OpenReadOnlyAsync` exists since that day: an existing file, `PRAGMA query_only`, no

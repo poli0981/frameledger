@@ -88,8 +88,7 @@ internal static class AgentServices
         services.AddSingleton<ITargetLivenessSource, HeldProcessLivenessSource>();
         services.AddSingleton<IRingAttacher>(static _ => new ShmRingAttacher(NativeAntiCheatGuard.BuildId()));
         services.AddSingleton<IRuntimeModuleSnapshot>(static _ => new RuntimeModuleSnapshot(CensusNames.ModuleFileNames));
-        services.AddSingleton<NvapiNgxStateProbe>();
-        services.AddSingleton<INgxDriverProbe>(static sp => sp.GetRequiredService<NvapiNgxStateProbe>());
+        AddNvidia(services);
 
         // The recorder's adapters (PR-D).
         services.AddSingleton<IPartialSessionStore>(_ => new PartialSessionStore(paths.Tmp));
@@ -110,6 +109,19 @@ internal static class AgentServices
         AddPipe(services, pipeName);
 
         return services;
+    }
+
+    /// <summary>
+    /// What the NVIDIA driver says about a session, through the bridge (never into a game): the per-process NGX words (P2
+    /// PR-E2), and since beta.8 the driver profile each session's executable runs under — the NVIDIA App's DLSS and
+    /// frame-generation overrides — read from the driver's settings store through the bridge's read-only DRS entry point.
+    /// </summary>
+    private static void AddNvidia(IServiceCollection services)
+    {
+        services.AddSingleton<NvapiNgxStateProbe>();
+        services.AddSingleton<INgxDriverProbe>(static sp => sp.GetRequiredService<NvapiNgxStateProbe>());
+        services.AddSingleton<NvapiDriverProfileSource>();
+        services.AddSingleton<IDriverProfileSource>(static sp => sp.GetRequiredService<NvapiDriverProfileSource>());
     }
 
     /// <summary>The static detection sweep (P4 PR-1, <c>05_DETECTION</c> §Caching): hosted under <c>--serve</c> only, composed and inert under <c>--console</c>.</summary>

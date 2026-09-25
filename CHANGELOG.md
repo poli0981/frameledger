@@ -49,6 +49,14 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 - **A session's summary lists the libraries the game had loaded** — recorded since the first beta and shown nowhere
   until now — and says when one differs from the copy the game ships ("nvngx_dlss.dll 310.2.1.0 (the game ships
   3.7.10.0: another copy was loaded, for example by the driver or the NVIDIA App)").
+- **FrameLedger says when the NVIDIA App overrides a game's DLSS.** Each session now records the NVIDIA driver profile
+  the game ran under — read from the driver's own settings, never from the game — and its summary says what that
+  profile overrides: "NVIDIA profile “…”: DLSS override (preset K, Quality) · Frame Generation override (×4)", Ray
+  Reconstruction, Streamline's override, a forced frame-generation mode, Smooth Motion. It also says what the driver
+  reported applying inside the game ("DLSS DLL chosen by the driver · preset K · Quality"), and the game page's Details
+  card names the overrides from the newest session. These are the driver's settings, not measurements: what FrameLedger
+  measured is shown as before. FrameLedger only reads these settings; it never changes them. Schema 0012 adds one
+  column; the database opens in place.
 - **A 32-bit game's hooking switch cannot be turned on, and the page says why**: FrameLedger's hook runs in 64-bit
   games only. Until now the switch turned on and every launch was refused by the guard. A 32-bit game whose hooking
   was already on has it turned off the first time the capture agent reads it; its sessions are still recorded, with
@@ -92,6 +100,9 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **The NVIDIA bridge's native test could not fail on a machine with an NVIDIA GPU.** It was registered to pass on
+  its "which branch" line alone, which makes ctest ignore the exit code; its reference-counting check had been failing
+  on every GPU machine unseen. The check is corrected and a failed assertion now fails the test.
 - **Turning hooking on for an Unreal game now sees its `EasyAntiCheat` folder.** The scan that runs when hooking is
   enabled was given the executable's own folder — `<game>\<Project>\Binaries\Win64\` for Unreal titles — and scanned
   exactly that, while `EasyAntiCheat\` sits at the game's root. The session-time scan always looked at the root, so no

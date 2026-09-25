@@ -133,6 +133,31 @@ public sealed class LedgerDatabaseTests
             cancellationToken: Ct)).ConfigureAwait(false);
     }
 
+    /// <summary>Schema 0012 (2026-09-25): <c>sessions.driver_profile</c>, NULL for every row written before.</summary>
+    [Fact]
+    public async Task ScriptTwelveAddsTheDriverProfileColumn()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(12);
+        string path = f.Path;
+        await f.Db.DisposeAsync().ConfigureAwait(true);
+        var c11 = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        await using (c11.ConfigureAwait(true))
+        {
+            await c11.OpenAsync(Ct).ConfigureAwait(true);
+            await RewindToAsync(c11, 11).ConfigureAwait(true);
+        }
+
+        LedgerDatabase migrated = await LedgerDatabase.OpenAsync(path, ct: Ct).ConfigureAwait(true);
+        await using (migrated.ConfigureAwait(true))
+        {
+            migrated.SchemaVersion.Should().Be(MigrationRunner.LatestVersion);
+            long columns = await migrated.ReadAsync((c, ct) => c.ExecuteScalarAsync<long>(new CommandDefinition(
+                "SELECT COUNT(*) FROM pragma_table_info('sessions') WHERE name = 'driver_profile'", cancellationToken: ct)), Ct).ConfigureAwait(true);
+            columns.Should().Be(1);
+        }
+    }
+
     /// <summary>
     /// Schema 0011 (2026-09-25): what a game's files say about themselves — what the executable runs as, its two PE versions,
     /// the capability files it ships. Applied from schema 10 to a ledger holding a row: the four columns exist and read NULL,

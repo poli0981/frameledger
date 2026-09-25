@@ -161,6 +161,29 @@ Still resolve **entry points defensively at runtime**: `nvapi64.dll` may be abse
 > **Not in this build, stated so nobody infers it from the table below:** VRAM (`FlNvSample.vram` is
 > reserved and its bit is never set — see the Memory row), power, hotspot temperature, per-domain
 > utilisation beyond the GPU domain, and anything Reflex (§M8: a hook fact, not a poller field).
+>
+> **ABI 2 (2026-09-25, beta.8): the driver profile, read-only.** The owner asked whether the NVIDIA App overrides a
+> game's DLSS (frame generation, ray reconstruction, the model preset). The NVIDIA App writes those overrides into the
+> driver's own settings store (DRS), so `FlNvDriverProfile(exePath, ids, count, out)` reads them there: a DRS session
+> is created, the settings loaded, the profile the driver applies to that path found (`NvAPI_DRS_FindApplicationByName`
+> — a fully qualified path returns the profile the driver will apply on launch; none named → the current global
+> profile), each id read with `NvAPI_DRS_GetSetting` (value, where it comes from, whether someone set it), and the
+> session destroyed. **No DRS setter exists in the bridge** — not `SetSetting`, not `SaveSettings`, not
+> `RestoreProfileDefault`, not `NvAPI_NGX_SetNGXOverrideState`: the overrides are the user's, and this only reports
+> them. A path longer than NVAPI's string is refused, never truncated (a truncated path names another program).
+> The ids and their values' meanings are NVIDIA's `NvApiDriverSettings.h` (github.com/NVIDIA/nvapi, MIT), written into
+> `Application.Capture.NvidiaDriverSettings` as eighteen constants rather than vendored as a header; Smooth Motion
+> (`0xB0D384C0`) is not in NVIDIA's header and is documented by community profile tools only, which every surface
+> that shows it says. Managed: `NvapiDriverProfileSource` (`IDriverProfileSource`) — the Agent's recorder reads the
+> profile beside every session, both tiers, and stores it in `sessions.driver_profile` (schema 0012). Verified by
+> ctest `fl_nvapi_bridge` (argument refusals, DEGRADED before init, the global profile of the test's own executable on
+> a GPU machine) and `NvapiBridgeMirrorTests` (`FlNvDriverProfileSize`, ABI 2).
+>
+> **The ctest could not fail on a GPU machine until the same day.** `fl_nvapi_bridge` was registered with
+> `PASS_REGULAR_EXPRESSION` alone, which makes ctest ignore the exit code: the AVAILABLE branch's reference-counting
+> check (two references, two releases, then a read expected to work) failed on every machine with an NVIDIA GPU while
+> ctest reported Passed, and CI — no driver — never takes that branch. The check is corrected and the registration now
+> carries a `FAIL_REGULAR_EXPRESSION` on Catch2's failure lines.
 
 | Purpose | Function |
 |---|---|
@@ -282,7 +305,7 @@ on the NVIDIA dev box even though nothing in it may be hooked or declared.
 
 - Poll at 1 Hz on a dedicated Agent thread. Never from the game process, never from the Overlay.
 - Any layer that throws or hangs twice is disabled for the session and its fields report `N/A`, rather than being retried in a loop.
-- **Read-only, always.** These libraries can also set clocks, fan curves and power limits. FrameLedger never calls a setter — not in v1, not in the backlog. A measurement tool that can modify hardware state is a different product with a different risk profile.
+- **Read-only, always.** These libraries can also set clocks, fan curves and power limits. FrameLedger never calls a setter — not in v1, not in the backlog. A measurement tool that can modify hardware state is a different product with a different risk profile. *(Since beta.8 the same holds for the driver's settings store: the bridge reads DRS profiles and has no entry point that writes, saves or restores one — §L3, ABI 2.)*
 
 ## Capability matrix (fill during P0 on real hardware)
 

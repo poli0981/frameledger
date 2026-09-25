@@ -87,6 +87,20 @@ public sealed class NativeNvapiBridge : INvapiBridge
         return FlNvNgxState(pid, ref words);
     }
 
+    public int DriverProfile(string exePath, IReadOnlyList<uint> ids, out NvapiDriverProfile profile)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(exePath);
+        ArgumentNullException.ThrowIfNull(ids);
+        profile = new NvapiDriverProfile
+        {
+            Size = (uint)Marshal.SizeOf<NvapiDriverProfile>(),
+            ProfileName = string.Empty,
+            Settings = new NvapiProfileSetting[NvapiDriverProfile.MaxSettings],
+        };
+        uint[] asked = [.. ids];
+        return FlNvDriverProfile(exePath, asked, (uint)asked.Length, ref profile);
+    }
+
     public int DriverVersion(out uint version, out string branch)
     {
         var buffer = new byte[64];
@@ -120,6 +134,8 @@ public sealed class NativeNvapiBridge : INvapiBridge
     public static uint SampleSize() => FlNvSampleSize();
 
     public static uint NgxStateSize() => FlNvNgxStateSize();
+
+    public static uint DriverProfileSize() => FlNvDriverProfileSize();
 
     public static uint AbiVersion() => FlNvAbiVersion();
 
@@ -156,6 +172,14 @@ public sealed class NativeNvapiBridge : INvapiBridge
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [DllImport(_dll, CallingConvention = CallingConvention.Cdecl)]
     private static extern int FlNvDriverVersion(out uint version, [Out] byte[] branch, uint capacity);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [DllImport(_dll, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int FlNvDriverProfile([MarshalAs(UnmanagedType.LPWStr)] string exePath, uint[] ids, uint count, ref NvapiDriverProfile profile);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [DllImport(_dll, CallingConvention = CallingConvention.Cdecl)]
+    private static extern uint FlNvDriverProfileSize();
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [DllImport(_dll, CallingConvention = CallingConvention.Cdecl)]

@@ -1991,4 +1991,94 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="Summary_Library_Differs_Format" xml:space="preserve">
     <value>{0} {1} (the game ships {2}: another copy was loaded, for example by the driver or the NVIDIA App)</value>
   </data>
+  <data name="Nv_Profile_Format" xml:space="preserve">
+    <value>NVIDIA profile “{0}”: {1}</value>
+  </data>
+  <data name="Nv_Profile_Global_Format" xml:space="preserve">
+    <value>NVIDIA global profile (no profile names this game): {0}</value>
+  </data>
+  <data name="Nv_Override_None" xml:space="preserve">
+    <value>no DLSS or frame generation override</value>
+  </data>
+  <data name="Nv_Override_Sr" xml:space="preserve">
+    <value>DLSS override</value>
+  </data>
+  <data name="Nv_Override_Rr" xml:space="preserve">
+    <value>Ray Reconstruction override</value>
+  </data>
+  <data name="Nv_Override_Fg" xml:space="preserve">
+    <value>Frame Generation override</value>
+  </data>
+  <data name="Nv_Override_Sl" xml:space="preserve">
+    <value>Streamline DLSS override</value>
+  </data>
+  <data name="Nv_FgMode_Off" xml:space="preserve">
+    <value>frame generation forced off</value>
+  </data>
+  <data name="Nv_FgMode_On" xml:space="preserve">
+    <value>frame generation forced on</value>
+  </data>
+  <data name="Nv_FgMode_Auto" xml:space="preserve">
+    <value>frame generation automatic</value>
+  </data>
+  <data name="Nv_FgMode_Dynamic" xml:space="preserve">
+    <value>dynamic frame generation</value>
+  </data>
+  <data name="Nv_SmoothMotion" xml:space="preserve">
+    <value>Smooth Motion (a setting community tools document, not NVIDIA)</value>
+  </data>
+  <data name="Nv_Details_Format" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="Nv_Preset_Format" xml:space="preserve">
+    <value>preset {0}</value>
+  </data>
+  <data name="Nv_Preset_Latest" xml:space="preserve">
+    <value>latest preset</value>
+  </data>
+  <data name="Nv_Preset_Default" xml:space="preserve">
+    <value>default preset</value>
+  </data>
+  <data name="Nv_Mode_Performance" xml:space="preserve">
+    <value>Performance</value>
+  </data>
+  <data name="Nv_Mode_Balanced" xml:space="preserve">
+    <value>Balanced</value>
+  </data>
+  <data name="Nv_Mode_Quality" xml:space="preserve">
+    <value>Quality</value>
+  </data>
+  <data name="Nv_Mode_Dlaa" xml:space="preserve">
+    <value>DLAA</value>
+  </data>
+  <data name="Nv_Mode_UltraPerformance" xml:space="preserve">
+    <value>Ultra Performance</value>
+  </data>
+  <data name="Nv_Mode_Custom_Format" xml:space="preserve">
+    <value>custom {0}%</value>
+  </data>
+  <data name="Nv_Mode_Custom" xml:space="preserve">
+    <value>custom ratio</value>
+  </data>
+  <data name="Nv_Mfg_Format" xml:space="preserve">
+    <value>×{0}</value>
+  </data>
+  <data name="Nv_DynamicTarget_Format" xml:space="preserve">
+    <value>dynamic target {0} FPS</value>
+  </data>
+  <data name="Nv_DynamicTarget_Auto" xml:space="preserve">
+    <value>dynamic target automatic</value>
+  </data>
+  <data name="Nv_Driver_Format" xml:space="preserve">
+    <value>NVIDIA driver, for this game's process: {0}</value>
+  </data>
+  <data name="Nv_Driver_DllSelected" xml:space="preserve">
+    <value>DLSS DLL chosen by the driver</value>
+  </data>
+  <data name="Nv_Driver_Ratio_Format" xml:space="preserve">
+    <value>ratio {0}</value>
+  </data>
+  <data name="GameDetail_Details_NvidiaOverride" xml:space="preserve">
+    <value>NVIDIA App override</value>
+  </data>
 </root>

@@ -13,6 +13,11 @@ internal sealed class FakeNvapiBridge : INvapiBridge
 
     public uint Driver { get; set; } = 61664;
 
+    /// <summary>What <see cref="DriverProfile"/> answers for a path and the ids asked; null answers DEGRADED.</summary>
+    public Func<string, IReadOnlyList<uint>, NvapiDriverProfile>? Profile { get; set; }
+
+    public List<string> ProfilesRead { get; } = [];
+
     public int Inits { get; private set; }
 
     public int Shutdowns { get; private set; }
@@ -37,6 +42,15 @@ internal sealed class FakeNvapiBridge : INvapiBridge
     public int NgxState(uint pid, out NvapiNgxWords words)
     {
         words = Ngx is null ? new NvapiNgxWords { Status = NvapiNgxWords.Unanswered, NvapiStatus = -121 } : Ngx((int)pid);
+        return 0;
+    }
+
+    public int DriverProfile(string exePath, IReadOnlyList<uint> ids, out NvapiDriverProfile profile)
+    {
+        ProfilesRead.Add(exePath);
+        profile = Profile is null
+            ? new NvapiDriverProfile { Status = NvapiDriverProfile.Degraded, NvapiStatus = -1000, ProfileName = string.Empty, Settings = [] }
+            : Profile(exePath, ids);
         return 0;
     }
 

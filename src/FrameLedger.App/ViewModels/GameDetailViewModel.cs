@@ -599,7 +599,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
         PresentChips(detail, lastHooked);
         PresentSupports(row);
-        PresentDetails(row);
+        PresentDetails(detail);
         PresentMeasured(last, lastHooked);
         PresentRecording(row);
         PresentHooking(row);
@@ -635,8 +635,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
         SupportsEmpty = Supports.Count == 0;
     }
 
-    private void PresentDetails(GameRow row)
+    private void PresentDetails(GameDetail detail)
     {
+        GameRow row = detail.Row;
         Details.Clear();
         if (row.ExeMachine is null)
         {
@@ -658,6 +659,14 @@ public sealed partial class GameDetailViewModel : ObservableObject
             Details.Add(new GameDetailRow(Strings.GameDetail_Details_Libraries, row.Libraries.Count == 0
                 ? Strings.GameDetail_Details_NoLibraries
                 : string.Join(Environment.NewLine, row.Libraries.Select(LibraryText))));
+        }
+
+        // beta.8: the NVIDIA App's overrides, as the driver profile stood at the newest session that read one (sessions
+        // come newest first). Nothing is shown where no session could ask — a machine without an NVIDIA driver.
+        if (detail.Sessions.Select(static s => Application.Recording.DriverProfileRecord.Parse(s.DriverProfileJson))
+                .FirstOrDefault(static p => p is not null && NvidiaOverrides.IsRead(p)) is { } profile)
+        {
+            Details.Add(new GameDetailRow(Strings.GameDetail_Details_NvidiaOverride, NvidiaOverrides.OverridesText(profile)));
         }
     }
 

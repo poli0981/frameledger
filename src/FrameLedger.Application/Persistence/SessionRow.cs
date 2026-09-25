@@ -147,6 +147,13 @@ public sealed record SessionRow
 
     public string? RuntimeModulesJson { get; init; }
 
+    /// <summary>
+    /// <c>driver_profile</c> (schema 0012, beta.8): the NVIDIA driver profile the executable ran under and the values it gave
+    /// the NVIDIA App's DLSS / frame-generation override settings (<c>DriverProfileRecord</c>), read from the driver's
+    /// settings store at the session's start, both tiers; null when no NVIDIA bridge was there to ask.
+    /// </summary>
+    public string? DriverProfileJson { get; init; }
+
     public string? ExecutableMarkersJson { get; init; }
 
     public string? NgxDriverWordsJson { get; init; }
