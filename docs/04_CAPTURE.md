@@ -403,8 +403,8 @@ because a layer cannot leave a running game's loader chain.
 
 ## Crash & exit classification
 
-- Normal: presenting PID exit code 0.
-- `crashed`: nonzero exit code, **or** an Application Error (1000) / WER (1001) event log record naming the exe within `[start, end + 30 s]`.
+- Normal: presenting PID exit code 0 — **and since beta.8 any exit code that is not an exception's** (End task and taskkill leave 1; a program's own error exit; Ctrl+C's `0xC000013A`), kept in `capture_notes` and said as what it is.
+- `crashed`: ~~nonzero exit code~~ **an exception's exit code** (`ExitStatusMapper.IsExceptionCode`: NTSTATUS `0xC0000000–0xC0FFFFFF` but `0xC000013A`, `0xE06D7363` C++, `0xE0434352` .NET, `0x80000003` breakpoint), **or** an Application Error (1000) / WER (1001) event log record naming the exe within `[start, end + 30 s]`.
 - `unhooked_safety`: the guard fired mid-session.
 - `degraded`: Overlay self-disabled after faults, or ring layout mismatch mid-session.
 - `interrupted`: Agent died mid-session; recovered from `.partial` on next start.
@@ -422,6 +422,21 @@ Crash-within-60s-of-injection happening twice for the same game ⇒ **hooking au
 > exit code and the witness (`end=TargetExited; exit_code=-1073741819; crash_event=application_log`).
 > `CrashAutoDisablePolicy` counts only crashes inside the 60 s window after the attach — `hook_crash_count`
 > is that count and nothing else — and disables on the second; it never re-enables.
+>
+> **Corrected 2026-09-25 (beta.8, owner item 5): End task is not a crash.** The owner's sessions ended by Task Manager
+> read *Crashed* — every non-zero code was one, and `TerminateProcess` leaves 1. A crash is now an exception's code or
+> the event log's witness; any other code is `normal` with the code in the notes, and the session summary says it
+> ("ended with exit code 1 — what End task and taskkill leave…", "crashed (0xC0000005 access violation)", "0xC0000006
+> in-page I/O error: a disk or drive failed…"). **The safety policy did not get looser:** it takes the exit code beside
+> the status and still counts every non-zero exit inside its window — a game the hook hung that the user then ended is
+> the shape it exists for — and its row reason says "ended abnormally", not "crashed" (`19_SAFETY` §Crash & stability).
+>
+> **The notes' guard slot has three positions since the same day:** `guard=Reason|Family|Signal`, every slot present
+> and `;` never inside one (`CaptureNotes.GuardSlot`). It was `Reason/Family/Signal` with an empty family dropped, so
+> a refusal no family names put its signal where the family goes — and the notice read "Access is denied was detected
+> in this game" — and a signal with a `;` was cut there. Old rows are read by the one rule that separates them: findings
+> and the gate's own refusals carry a family, every other reason's second part was its signal. A launch that cannot
+> start keeps Windows' reason (`launch_error=740`; `IProcessLauncher.Start(…, out win32Error)`).
 
 ## Live progress
 

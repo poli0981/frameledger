@@ -2076,4 +2076,220 @@ Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắ
   <data name="GameDetail_Details_NvidiaOverride" xml:space="preserve">
     <value>Ghi đè của NVIDIA App</value>
   </data>
+  <data name="End_Running" xml:space="preserve">
+    <value>Phiên ghi có giới hạn thời gian và đã kết thúc khi game vẫn đang chạy.</value>
+  </data>
+  <data name="End_TargetExited" xml:space="preserve">
+    <value>Game đã thoát.</value>
+  </data>
+  <data name="End_SafetyUnhook" xml:space="preserve">
+    <value>Anti-cheat xuất hiện giữa phiên, nên việc đo đã dừng.</value>
+  </data>
+  <data name="End_SupervisionLost" xml:space="preserve">
+    <value>FrameLedger mất dấu tiến trình của game, nên việc đo đã dừng.</value>
+  </data>
+  <data name="End_WriterSelfDisabled" xml:space="preserve">
+    <value>Hook đo tự tắt sau nhiều lỗi liên tiếp, nên việc đo đã dừng.</value>
+  </data>
+  <data name="End_WriterStoppedBlocklisted" xml:space="preserve">
+    <value>Hook đo đã dừng vì một mô-đun trong danh sách chặn được nạp vào game.</value>
+  </data>
+  <data name="End_WriterNeverInstalledHooks" xml:space="preserve">
+    <value>Hook đo đã được nạp nhưng không tìm thấy API đồ hoạ nào để đo.</value>
+  </data>
+  <data name="End_RefusedHookNotEnabled" xml:space="preserve">
+    <value>Hooking đang tắt cho game này, nên không có gì được đo.</value>
+  </data>
+  <data name="End_RefusedConsentMissing" xml:space="preserve">
+    <value>Sự đồng ý hooking là cho một bản khác của file thực thi này, nên game không được hook.</value>
+  </data>
+  <data name="End_RefusedPreviouslyBlocked" xml:space="preserve">
+    <value>Anti-cheat đã được phát hiện trong game này trước đây, nên game không bao giờ được hook.</value>
+  </data>
+  <data name="End_RefusedByGuard" xml:space="preserve">
+    <value>Guard anti-cheat đã từ chối hook game này.</value>
+  </data>
+  <data name="End_PreScanCouldNotVerify" xml:space="preserve">
+    <value>FrameLedger không kiểm tra được các file của game để tìm anti-cheat, nên đã không hook.</value>
+  </data>
+  <data name="End_TargetNotRunning" xml:space="preserve">
+    <value>Game không chạy vào lúc phiên đáng lẽ bắt đầu.</value>
+  </data>
+  <data name="End_TargetCannotBePinned" xml:space="preserve">
+    <value>Không giữ được tiến trình của game, nên game không được đo.</value>
+  </data>
+  <data name="End_ExecutableUnreadable" xml:space="preserve">
+    <value>Không đọc được file thực thi của game: nó đã bị chuyển, bị xoá, hoặc ổ đĩa chứa nó chưa được kết nối.</value>
+  </data>
+  <data name="End_SupervisionFaulted" xml:space="preserve">
+    <value>Việc giám sát phiên bị lỗi, nên việc đo đã dừng.</value>
+  </data>
+  <data name="End_TargetAmbiguous" xml:space="preserve">
+    <value>Có nhiều hơn một tiến trình khớp với game này, nên không tiến trình nào được hook.</value>
+  </data>
+  <data name="End_AttachRefused" xml:space="preserve">
+    <value>Dữ liệu của hook đo không khớp với bản FrameLedger này, nên không có gì được đọc.</value>
+  </data>
+  <data name="End_LaunchCannotStart" xml:space="preserve">
+    <value>FrameLedger không khởi động được game.</value>
+  </data>
+  <data name="End_LaunchTargetExited" xml:space="preserve">
+    <value>Game đã thoát trước khi có thể đo.</value>
+  </data>
+  <data name="End_LaunchNoPresentationRuntime" xml:space="preserve">
+    <value>Game không nạp API đồ hoạ nào mà FrameLedger đo được (DirectX 9 trở về trước không được đo).</value>
+  </data>
+  <data name="End_RefusedKillSwitch" xml:space="preserve">
+    <value>Mọi hooking đang bị tắt trong Cài đặt, nên không có gì được đo.</value>
+  </data>
+  <data name="End_KillSwitchEngaged" xml:space="preserve">
+    <value>Mọi hooking đã bị tắt trong Cài đặt giữa phiên, nên việc đo đã dừng.</value>
+  </data>
+  <data name="End_StoppedByUser" xml:space="preserve">
+    <value>Bạn đã dừng phiên ghi.</value>
+  </data>
+  <data name="End_TargetUnreadable" xml:space="preserve">
+    <value>Không mở được tiến trình của game: một driver anti-cheat bảo vệ nó, hoặc nó chạy với quyền quản trị.</value>
+  </data>
+  <data name="Guard_Refused_Format" xml:space="preserve">
+    <value>Guard anti-cheat đã không hook game này: {0}.</value>
+  </data>
+  <data name="Guard_ModuleScanFailed" xml:space="preserve">
+    <value>không liệt kê đầy đủ được các mô-đun game đã nạp</value>
+  </data>
+  <data name="Guard_ProcessUnreadable" xml:space="preserve">
+    <value>không mở được tiến trình của game</value>
+  </data>
+  <data name="Guard_ProcessTreeUnavailable" xml:space="preserve">
+    <value>không xác định được cây tiến trình của game</value>
+  </data>
+  <data name="Guard_DriverScanFailed" xml:space="preserve">
+    <value>không liệt kê được các driver đã nạp</value>
+  </data>
+  <data name="Guard_ServiceQueryFailed" xml:space="preserve">
+    <value>không truy vấn được các dịch vụ anti-cheat</value>
+  </data>
+  <data name="Guard_RulesUnreadable" xml:space="preserve">
+    <value>không đọc được bộ luật anti-cheat</value>
+  </data>
+  <data name="Guard_RulesMalformed" xml:space="preserve">
+    <value>file luật anti-cheat bị hỏng</value>
+  </data>
+  <data name="Guard_RulesIncomplete" xml:space="preserve">
+    <value>file luật anti-cheat thiếu các mục bắt buộc</value>
+  </data>
+  <data name="Guard_PreScanFailed" xml:space="preserve">
+    <value>không quét được thư mục của game</value>
+  </data>
+  <data name="Guard_InjectionFailed" xml:space="preserve">
+    <value>mọi kiểm tra đều qua, nhưng không nạp được hook</value>
+  </data>
+  <data name="Guard_TargetIsWow64" xml:space="preserve">
+    <value>game là 32-bit, còn hook chỉ chạy trong game 64-bit</value>
+  </data>
+  <data name="Guard_PayloadNotOurs" xml:space="preserve">
+    <value>file hook không phải bản build của chính FrameLedger</value>
+  </data>
+  <data name="Guard_HookNotEnabled" xml:space="preserve">
+    <value>hooking đang tắt cho game này</value>
+  </data>
+  <data name="Guard_ConsentMissing" xml:space="preserve">
+    <value>chưa từng đồng ý hooking cho file thực thi này</value>
+  </data>
+  <data name="Guard_PreviouslyBlocked" xml:space="preserve">
+    <value>anti-cheat đã được phát hiện trong game này trước đây</value>
+  </data>
+  <data name="Guard_LaunchTargetExited" xml:space="preserve">
+    <value>game đã thoát trước khi kịp kiểm tra</value>
+  </data>
+  <data name="Guard_LaunchNoPresentationRuntime" xml:space="preserve">
+    <value>game không nạp API đồ hoạ nào mà FrameLedger đo được</value>
+  </data>
+  <data name="Guard_TargetIsVulkanLayered" xml:space="preserve">
+    <value>game kết xuất bằng Vulkan, thứ mà Vulkan layer đo thay</value>
+  </data>
+  <data name="Guard_SuspiciousUnsigned" xml:space="preserve">
+    <value>một mô-đun không ký số có tên giống anti-cheat đã được nạp</value>
+  </data>
+  <data name="Guard_Other_Format" xml:space="preserve">
+    <value>lý do {0}</value>
+  </data>
+  <data name="Exit_Line_Format" xml:space="preserve">
+    <value>Kết thúc: {0}</value>
+  </data>
+  <data name="Exit_Code_Format" xml:space="preserve">
+    <value>kết thúc với mã thoát {0}</value>
+  </data>
+  <data name="Exit_Code1" xml:space="preserve">
+    <value>kết thúc với mã thoát 1 — mã mà End task và taskkill để lại, cũng là mã lỗi thường gặp của nhiều chương trình</value>
+  </data>
+  <data name="Exit_Crashed_Format" xml:space="preserve">
+    <value>bị crash ({0})</value>
+  </data>
+  <data name="Exit_CrashEvent" xml:space="preserve">
+    <value>bị crash (Windows ghi nhận một lỗi ứng dụng)</value>
+  </data>
+  <data name="Exit_Ex_AccessViolation" xml:space="preserve">
+    <value>0xC0000005 truy cập bộ nhớ không hợp lệ</value>
+  </data>
+  <data name="Exit_Ex_InPageError" xml:space="preserve">
+    <value>0xC0000006 lỗi I/O khi nạp trang: một ổ đĩa bị lỗi khi game đọc file</value>
+  </data>
+  <data name="Exit_Ex_StackOverflow" xml:space="preserve">
+    <value>0xC00000FD tràn stack</value>
+  </data>
+  <data name="Exit_Ex_HeapCorruption" xml:space="preserve">
+    <value>0xC0000374 hỏng heap</value>
+  </data>
+  <data name="Exit_Ex_FailFast" xml:space="preserve">
+    <value>0xC0000409 fail-fast: game tự dừng khi phát hiện lỗi</value>
+  </data>
+  <data name="Exit_Ex_DllInit" xml:space="preserve">
+    <value>0xC0000142 một DLL khởi tạo thất bại</value>
+  </data>
+  <data name="Exit_Ex_DllNotFound" xml:space="preserve">
+    <value>0xC0000135 không tìm thấy một DLL cần thiết</value>
+  </data>
+  <data name="Exit_Ex_BadImage" xml:space="preserve">
+    <value>0xC000007B image không hợp lệ, thường do lẫn 32/64-bit</value>
+  </data>
+  <data name="Exit_Ex_Cpp" xml:space="preserve">
+    <value>0xE06D7363 ngoại lệ C++ không được xử lý</value>
+  </data>
+  <data name="Exit_Ex_Clr" xml:space="preserve">
+    <value>0xE0434352 ngoại lệ .NET không được xử lý</value>
+  </data>
+  <data name="Exit_Ex_Breakpoint" xml:space="preserve">
+    <value>0x80000003 breakpoint</value>
+  </data>
+  <data name="Launch_Error_Format" xml:space="preserve">
+    <value>lỗi Windows {0}</value>
+  </data>
+  <data name="Launch_Error_2" xml:space="preserve">
+    <value>không tìm thấy file</value>
+  </data>
+  <data name="Launch_Error_3" xml:space="preserve">
+    <value>không tìm thấy đường dẫn</value>
+  </data>
+  <data name="Launch_Error_5" xml:space="preserve">
+    <value>bị từ chối truy cập</value>
+  </data>
+  <data name="Launch_Error_193" xml:space="preserve">
+    <value>đây không phải chương trình Windows hợp lệ</value>
+  </data>
+  <data name="Launch_Error_740" xml:space="preserve">
+    <value>game yêu cầu quyền quản trị</value>
+  </data>
+  <data name="Launch_Failed_Format" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="Exe_DriveMissing_Format" xml:space="preserve">
+    <value>Ổ {0} chưa được kết nối. FrameLedger sẽ tìm lại game khi ổ được kết nối.</value>
+  </data>
+  <data name="Exe_FileMissing_Format" xml:space="preserve">
+    <value>File thực thi của game không còn ở {0}.</value>
+  </data>
+  <data name="Exit_EndedNormally" xml:space="preserve">
+    <value>kết thúc bình thường</value>
+  </data>
 </root>

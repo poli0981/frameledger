@@ -209,7 +209,7 @@ public sealed class SessionRecorder : ISessionRecorder
         if (hooked && saved.Status != FinalizeStatus.GameRemoved)
         {
             await _games.RecordInjectionAsync(ownerId, run.AttachedAt ?? header.StartedAt, ct).ConfigureAwait(false);
-            crash = await _crashPolicy.ApplyAsync(ownerId, exit, run.AttachedAt, endedAt, ct).ConfigureAwait(false);
+            crash = await _crashPolicy.ApplyAsync(ownerId, exit, outcome.ExitCode, run.AttachedAt, endedAt, ct).ConfigureAwait(false);
         }
 
         return new RecordedSession
@@ -227,13 +227,18 @@ public sealed class SessionRecorder : ISessionRecorder
     private static SessionRow Skeleton(PartialHeader h, CaptureOutcome o, DateTimeOffset endedAt, ExitStatus exit, bool crashEvent, bool hooked)
     {
         string notes = ExitStatusMapper.Describe(o.Reason, o.ExitCode, crashEvent);
+        if (o.LaunchError is { } launchError)
+        {
+            notes += "; launch_error=" + launchError.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
         if (!hooked)
         {
             notes += "; tier2: attach=" + o.AttachRefusal;
             if (o.Verdict.Reason != Domain.AntiCheat.AntiCheatRefusalReason.Allow)
             {
-                notes += "; guard=" + o.Verdict.Reason + (string.IsNullOrEmpty(o.Verdict.Family) ? "" : "/" + o.Verdict.Family)
-                         + (string.IsNullOrEmpty(o.Verdict.Signal) ? "" : "/" + o.Verdict.Signal);
+                // Three slots, every one present (beta.8): an empty family used to be dropped, and the signal then read as it.
+                notes += "; " + CaptureNotes.GuardSlot(o.Verdict.Reason.ToString(), o.Verdict.Family, o.Verdict.Signal);
             }
         }
 

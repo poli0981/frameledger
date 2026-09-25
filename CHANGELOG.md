@@ -100,6 +100,16 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **Ending a game with End task is no longer a "crash".** Every non-zero exit code was one, and Task Manager leaves 1.
+  A crash is now an exception's exit code or Windows' own crash record, and the session summary says how each session
+  ended: "crashed (0xC0000005 access violation)", "ended with exit code 1 — what End task and taskkill leave". The
+  crash safety still counts an early abnormal exit of either kind, so hooking still turns itself off after two in a row.
+- **Reasons read as what they are.** Every way a session can end has its own sentence, a refusal that names no
+  anti-cheat says what happened ("the game is 32-bit…", "the game's process could not be opened") instead of calling
+  its detail "detected in this game", a launch that could not start says why (for example "the game requires
+  administrator rights"), and a missing executable says whether its drive is disconnected or the file is gone. A
+  refusal's details were stored so that a detail could be read as an anti-cheat's name; they are stored in three fixed
+  places now, and older sessions are read correctly.
 - **The NVIDIA bridge's native test could not fail on a machine with an NVIDIA GPU.** It was registered to pass on
   its "which branch" line alone, which makes ctest ignore the exit code; its reference-counting check had been failing
   on every GPU machine unseen. The check is corrected and a failed assertion now fails the test.

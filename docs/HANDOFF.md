@@ -1613,6 +1613,13 @@ only be refused, never the finding (FR-2.2).
   struct): C puts typedefs and functions in one namespace, and MSVC's error names neither clearly.
 - **The driver profile is a configuration.** `sessions.driver_profile` says what the NVIDIA App set; it never feeds
   the upscaler ladder or the factor. The bridge has no DRS writer, and a PR that adds one is a different product.
+- **A status is not a policy input.** Splitting End task (exit 1) out of `crashed` would have loosened the crash
+  auto-disable had the policy kept reading the status alone; it takes the exit code too. Check every reader of a value
+  whose meaning you narrow.
+- **The gate's own refusals carry a label in the family slot** (`not enabled`, `no consent`, `kill switch`, `previously
+  blocked`, `HookedCaptureGate`), so "has a family" does not mean "is a finding" — `IsFindingAboutTheGame` is the test.
+- **`add_strings.py` replaced an existing key in place** (`Exit_Normal`, the Sessions grid's word) — it now refuses
+  without `--replace`; diff the resx for `-.*<value>` before committing new strings.
 - **A 32-bit refusal is not a block.** `ExecutableNotX64` writes nothing — no `hook_blocked_reason`, no stamp — so a
   64-bit build of the same game under *Change executable* can be hooked; the sweep's turn-off uses
   `hook_autodisabled_reason`, which the page does not offer to undo while the file is still 32-bit.

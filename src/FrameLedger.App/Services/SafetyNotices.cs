@@ -80,10 +80,14 @@ public sealed class SafetyNotices : IDisposable
             return Shared.Strings.Safety_Refused_TargetUnreadable;
         }
 
-        string? named = family ?? signal;
-        return named is null
-            ? Shared.Strings.Safety_Refused_Unnamed
-            : string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_Refused_Named_Format, named, signal ?? reason);
+        // A refusal no anti-cheat family names (beta.8) — the guard could not look, the game is 32-bit — is said as what it
+        // is. It used to name its SIGNAL as the family, and the notice read "Access is denied was detected in this game".
+        if (family is null)
+        {
+            return string.IsNullOrEmpty(reason) ? Shared.Strings.Safety_Refused_Unnamed : Formats.GuardSentence(reason);
+        }
+
+        return string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_Refused_Named_Format, family, signal ?? reason);
     }
 
     private void OnEvent(object? sender, AgentEventArgs e)

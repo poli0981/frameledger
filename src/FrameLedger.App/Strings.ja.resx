@@ -2761,4 +2761,292 @@
     <value>NVIDIA App の上書き</value>
     <comment>review</comment>
   </data>
+  <data name="End_Running" xml:space="preserve">
+    <value>キャプチャは時間指定で、ゲームの実行中に終了しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_TargetExited" xml:space="preserve">
+    <value>ゲームが終了しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_SafetyUnhook" xml:space="preserve">
+    <value>セッション中にアンチチートが現れたため、計測を停止しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_SupervisionLost" xml:space="preserve">
+    <value>ゲームのプロセスを見失ったため、計測を停止しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_WriterSelfDisabled" xml:space="preserve">
+    <value>計測フックがエラーの繰り返しにより自ら停止したため、計測を停止しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_WriterStoppedBlocklisted" xml:space="preserve">
+    <value>ブロックリストにあるモジュールがゲームに読み込まれたため、計測フックが停止しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_WriterNeverInstalledHooks" xml:space="preserve">
+    <value>計測フックは読み込まれましたが、計測できるグラフィックス API が見つかりませんでした。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_RefusedHookNotEnabled" xml:space="preserve">
+    <value>このゲームのフックはオフのため、何も計測されていません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_RefusedConsentMissing" xml:space="preserve">
+    <value>フックへの同意はこの実行ファイルの別のビルドに対するものだったため、フックしませんでした。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_RefusedPreviouslyBlocked" xml:space="preserve">
+    <value>このゲームでは以前にアンチチートが検出されたため、フックすることはありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_RefusedByGuard" xml:space="preserve">
+    <value>アンチチート ガードがこのゲームのフックを拒否しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_PreScanCouldNotVerify" xml:space="preserve">
+    <value>ゲームのファイルにアンチチートがないか確認できなかったため、フックしませんでした。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_TargetNotRunning" xml:space="preserve">
+    <value>セッション開始時にゲームが実行されていませんでした。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_TargetCannotBePinned" xml:space="preserve">
+    <value>ゲームのプロセスを保持できなかったため、計測しませんでした。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_ExecutableUnreadable" xml:space="preserve">
+    <value>ゲームの実行ファイルを読み取れませんでした。移動または削除されたか、ドライブが接続されていません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_SupervisionFaulted" xml:space="preserve">
+    <value>セッションの監視に失敗したため、計測を停止しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_TargetAmbiguous" xml:space="preserve">
+    <value>このゲームに一致するプロセスが複数あったため、どれもフックしませんでした。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_AttachRefused" xml:space="preserve">
+    <value>計測フックのデータがこのビルドの FrameLedger と一致しなかったため、何も読み取っていません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_LaunchCannotStart" xml:space="preserve">
+    <value>ゲームを起動できませんでした。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_LaunchTargetExited" xml:space="preserve">
+    <value>計測を始める前にゲームが終了しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_LaunchNoPresentationRuntime" xml:space="preserve">
+    <value>ゲームは FrameLedger が計測するグラフィックス API を読み込みませんでした（DirectX 9 以前は計測しません）。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_RefusedKillSwitch" xml:space="preserve">
+    <value>設定ですべてのフックがオフになっているため、何も計測されていません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_KillSwitchEngaged" xml:space="preserve">
+    <value>セッション中に設定ですべてのフックがオフにされたため、計測を停止しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_StoppedByUser" xml:space="preserve">
+    <value>キャプチャを手動で停止しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="End_TargetUnreadable" xml:space="preserve">
+    <value>ゲームのプロセスを開けませんでした。アンチチートのドライバーに保護されているか、管理者として実行されています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_Refused_Format" xml:space="preserve">
+    <value>アンチチート ガードはこのゲームをフックしませんでした: {0}。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_ModuleScanFailed" xml:space="preserve">
+    <value>ゲームが読み込んだモジュールをすべて列挙できませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_ProcessUnreadable" xml:space="preserve">
+    <value>ゲームのプロセスを開けませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_ProcessTreeUnavailable" xml:space="preserve">
+    <value>ゲームのプロセス ツリーを確定できませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_DriverScanFailed" xml:space="preserve">
+    <value>読み込まれているドライバーを列挙できませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_ServiceQueryFailed" xml:space="preserve">
+    <value>アンチチートのサービスを照会できませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_RulesUnreadable" xml:space="preserve">
+    <value>アンチチートのルールを読み取れませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_RulesMalformed" xml:space="preserve">
+    <value>アンチチートのルール ファイルが破損しています</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_RulesIncomplete" xml:space="preserve">
+    <value>アンチチートのルール ファイルに必要な項目がありません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_PreScanFailed" xml:space="preserve">
+    <value>ゲームのフォルダーをスキャンできませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_InjectionFailed" xml:space="preserve">
+    <value>すべてのチェックに合格しましたが、フックを読み込めませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_TargetIsWow64" xml:space="preserve">
+    <value>ゲームは 32 ビットで、フックは 64 ビットのゲームでのみ動作します</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_PayloadNotOurs" xml:space="preserve">
+    <value>フックのファイルが FrameLedger 自身のビルドではありません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_HookNotEnabled" xml:space="preserve">
+    <value>このゲームのフックはオフです</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_ConsentMissing" xml:space="preserve">
+    <value>この実行ファイルへのフックに同意していません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_PreviouslyBlocked" xml:space="preserve">
+    <value>このゲームでは以前にアンチチートが検出されています</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_LaunchTargetExited" xml:space="preserve">
+    <value>チェックの前にゲームが終了しました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_LaunchNoPresentationRuntime" xml:space="preserve">
+    <value>ゲームは FrameLedger が計測するグラフィックス API を読み込みませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_TargetIsVulkanLayered" xml:space="preserve">
+    <value>ゲームは Vulkan で描画しており、代わりに Vulkan レイヤーが計測します</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_SuspiciousUnsigned" xml:space="preserve">
+    <value>アンチチートに似た名前の署名のないモジュールが読み込まれていました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guard_Other_Format" xml:space="preserve">
+    <value>理由 {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Line_Format" xml:space="preserve">
+    <value>終了: {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Code_Format" xml:space="preserve">
+    <value>終了コード {0} で終了</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Code1" xml:space="preserve">
+    <value>終了コード 1 で終了 — タスクの終了や taskkill が残すコードで、多くのプログラムのエラー終了でもあります</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Crashed_Format" xml:space="preserve">
+    <value>クラッシュ（{0}）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_CrashEvent" xml:space="preserve">
+    <value>クラッシュ（Windows がアプリケーション エラーを記録）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Ex_AccessViolation" xml:space="preserve">
+    <value>0xC0000005 アクセス違反</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Ex_InPageError" xml:space="preserve">
+    <value>0xC0000006 ページ内 I/O エラー: ゲームがファイルを読む間にディスクまたはドライブが失敗しました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Ex_StackOverflow" xml:space="preserve">
+    <value>0xC00000FD スタック オーバーフロー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Ex_HeapCorruption" xml:space="preserve">
+    <value>0xC0000374 ヒープ破損</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Ex_FailFast" xml:space="preserve">
+    <value>0xC0000409 フェイル ファスト: ゲームが検出した障害で自ら停止しました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Ex_DllInit" xml:space="preserve">
+    <value>0xC0000142 DLL の初期化に失敗しました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Ex_DllNotFound" xml:space="preserve">
+    <value>0xC0000135 必要な DLL が見つかりませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Ex_BadImage" xml:space="preserve">
+    <value>0xC000007B 無効なイメージ（多くは 32/64 ビットの混在）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Ex_Cpp" xml:space="preserve">
+    <value>0xE06D7363 処理されない C++ 例外</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Ex_Clr" xml:space="preserve">
+    <value>0xE0434352 処理されない .NET 例外</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_Ex_Breakpoint" xml:space="preserve">
+    <value>0x80000003 ブレークポイント</value>
+    <comment>review</comment>
+  </data>
+  <data name="Launch_Error_Format" xml:space="preserve">
+    <value>Windows エラー {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Launch_Error_2" xml:space="preserve">
+    <value>ファイルが見つかりません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Launch_Error_3" xml:space="preserve">
+    <value>パスが見つかりません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Launch_Error_5" xml:space="preserve">
+    <value>アクセスが拒否されました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Launch_Error_193" xml:space="preserve">
+    <value>有効な Windows プログラムではありません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Launch_Error_740" xml:space="preserve">
+    <value>ゲームには管理者権限が必要です</value>
+    <comment>review</comment>
+  </data>
+  <data name="Launch_Failed_Format" xml:space="preserve">
+    <value>{0}（{1}）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exe_DriveMissing_Format" xml:space="preserve">
+    <value>ドライブ {0} が接続されていません。接続されると FrameLedger はゲームを再び見つけます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exe_FileMissing_Format" xml:space="preserve">
+    <value>ゲームの実行ファイルは {0} にありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exit_EndedNormally" xml:space="preserve">
+    <value>正常に終了</value>
+    <comment>review</comment>
+  </data>
 </root>

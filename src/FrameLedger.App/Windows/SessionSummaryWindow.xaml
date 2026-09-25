@@ -37,6 +37,7 @@
 
                 <!-- header line + chips -->
                 <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.Line}" />
+                <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.ExitLine}" />
                 <ui:TextBlock Appearance="Tertiary" TextWrapping="Wrap" Text="{Binding ViewModel.HardwareLine}" />
                 <ui:TextBlock Appearance="Tertiary" TextWrapping="Wrap" Text="{Binding ViewModel.LibrariesLine}"
                               Visibility="{Binding ViewModel.LibrariesLine, Converter={StaticResource NullToCollapsed}}" />

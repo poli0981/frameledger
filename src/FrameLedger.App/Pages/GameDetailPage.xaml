@@ -32,7 +32,7 @@
                     <ui:TextBlock Appearance="Tertiary" TextTrimming="CharacterEllipsis" Text="{Binding ViewModel.ExecutableText}" ToolTip="{Binding ViewModel.ExecutableText}" />
                     <ui:InfoBar Margin="0,6,0,0" IsClosable="False" Severity="Warning"
                                 IsOpen="{Binding ViewModel.ExecutableMissing, Mode=OneWay}"
-                                Message="{x:Static vm:GameDetailViewModel.ExecutableMissingText}" />
+                                Message="{Binding ViewModel.ExecutableMissingMessage}" />
                     <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.LastSessionText}" />
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                         <ui:TextBlock Appearance="Secondary" VerticalAlignment="Center" Margin="0,0,12,0" Text="{x:Static vm:GameDetailViewModel.LifetimeLabel}" />

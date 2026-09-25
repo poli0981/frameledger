@@ -168,8 +168,26 @@ public sealed class CaptureSessionLaunchTests : IAsyncDisposable
             TestContext.Current.CancellationToken);
 
         r.Reason.Should().Be(SessionEndReason.LaunchCannotStart);
+        r.LaunchError.Should().BeNull("a launcher that cannot tell says nothing");
         guard.WhenReadyCalls.Should().Be(0);
         guard.InjectCalls.Should().Be(0);
+
+        // beta.8: a launcher that can tell says why — Windows' own error, which the row keeps and the summary says.
+        CaptureOutcome elevated = await Loop(await StoreAsync(consented: true), guard, new ErrorLauncher(740)).RunLaunchedAsync(_exe, Fingerprint, "payload.dll",
+            string.Empty, TestContext.Current.CancellationToken);
+        (elevated.Reason, elevated.LaunchError).Should().Be((SessionEndReason.LaunchCannotStart, 740));
+    }
+
+    /// <summary>A launcher whose every start fails with <paramref name="error"/>.</summary>
+    private sealed class ErrorLauncher(int error) : IProcessLauncher
+    {
+        public (int Pid, ITargetLiveness Alive)? Start(string exePath, string arguments) => null;
+
+        public (int Pid, ITargetLiveness Alive)? Start(string exePath, string arguments, out int? win32Error)
+        {
+            win32Error = error;
+            return null;
+        }
     }
 
     [Fact]

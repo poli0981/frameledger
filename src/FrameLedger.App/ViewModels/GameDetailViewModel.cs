@@ -190,6 +190,14 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
     public static string ExecutableMissingText => Strings.GameDetail_ExeMissing;
 
+    /// <summary>
+    /// The missing executable's bar (beta.8): the page's sentence, then whether the DRIVE is not connected or the file is gone
+    /// from its path — the two need different things of the user.
+    /// </summary>
+    public string ExecutableMissingMessage => Game is null
+        ? ExecutableMissingText
+        : ExecutableMissingText + " " + Formats.ExecutableMissingText(Game.Fingerprint.ExePath);
+
     public static string LifetimeLabel => Strings.GameDetail_LifetimeAvg;
 
     public static string SupportsHeader => Strings.GameDetail_Supports_Header;
@@ -573,6 +581,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
             HookingConsentOutcome.Refused => (result.RefusalText(), InfoBarSeverity.Error),
             HookingConsentOutcome.VersionMismatch => (Shared.Strings.Safety_Consent_VersionMismatch, InfoBarSeverity.Warning),
             HookingConsentOutcome.AgentUnavailable => (Shared.Strings.Safety_Consent_AgentUnavailable, InfoBarSeverity.Warning),
+            // The Agent could not read the executable (beta.8): say whether its drive or the file is missing, not the IPC code.
+            HookingConsentOutcome.Failed when string.Equals(result.Detail, Shared.Ipc.IpcErrorCode.ExecutableUnreadable, StringComparison.Ordinal) && Game is not null
+                => (Formats.ExecutableMissingText(Game.Fingerprint.ExePath), InfoBarSeverity.Warning),
             HookingConsentOutcome.Failed => (result.Detail ?? Strings.Common_NotAvailable, InfoBarSeverity.Warning),
             _ => (null, InfoBarSeverity.Informational),
         };
@@ -591,6 +602,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         Subtitle = string.Join(" · ", subtitle.Where(static s => !string.IsNullOrWhiteSpace(s)));
         ExecutableText = row.Fingerprint.ExePath;
         ExecutableMissing = !GameLibrary.ExecutableExists(row.Fingerprint.ExePath);
+        OnPropertyChanged(nameof(ExecutableMissingMessage));
 
         SessionRow? last = detail.Sessions.Count > 0 ? detail.Sessions[0] : null;
         SessionRow? lastHooked = detail.Sessions.FirstOrDefault(static s => s.Tier == CaptureTier.Hooked && s.FrameCount > 0);

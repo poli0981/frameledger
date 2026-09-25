@@ -2081,4 +2081,220 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="GameDetail_Details_NvidiaOverride" xml:space="preserve">
     <value>NVIDIA App override</value>
   </data>
+  <data name="End_Running" xml:space="preserve">
+    <value>The capture was bounded and ended while the game still ran.</value>
+  </data>
+  <data name="End_TargetExited" xml:space="preserve">
+    <value>The game exited.</value>
+  </data>
+  <data name="End_SafetyUnhook" xml:space="preserve">
+    <value>Anti-cheat appeared during the session, so measuring stopped.</value>
+  </data>
+  <data name="End_SupervisionLost" xml:space="preserve">
+    <value>FrameLedger lost track of the game's process, so measuring stopped.</value>
+  </data>
+  <data name="End_WriterSelfDisabled" xml:space="preserve">
+    <value>The measuring hook turned itself off after repeated faults, so measuring stopped.</value>
+  </data>
+  <data name="End_WriterStoppedBlocklisted" xml:space="preserve">
+    <value>The measuring hook stopped because a blocklisted module loaded into the game.</value>
+  </data>
+  <data name="End_WriterNeverInstalledHooks" xml:space="preserve">
+    <value>The measuring hook loaded but found no graphics API it could measure.</value>
+  </data>
+  <data name="End_RefusedHookNotEnabled" xml:space="preserve">
+    <value>Hooking is off for this game, so nothing was measured.</value>
+  </data>
+  <data name="End_RefusedConsentMissing" xml:space="preserve">
+    <value>Hooking was consented to for another build of this executable, so it was not hooked.</value>
+  </data>
+  <data name="End_RefusedPreviouslyBlocked" xml:space="preserve">
+    <value>Anti-cheat was found in this game before, so it is never hooked.</value>
+  </data>
+  <data name="End_RefusedByGuard" xml:space="preserve">
+    <value>The anti-cheat guard refused to hook this game.</value>
+  </data>
+  <data name="End_PreScanCouldNotVerify" xml:space="preserve">
+    <value>FrameLedger could not check this game's files for anti-cheat, so it did not hook it.</value>
+  </data>
+  <data name="End_TargetNotRunning" xml:space="preserve">
+    <value>The game was not running when the session was to start.</value>
+  </data>
+  <data name="End_TargetCannotBePinned" xml:space="preserve">
+    <value>The game's process could not be held open, so it was not measured.</value>
+  </data>
+  <data name="End_ExecutableUnreadable" xml:space="preserve">
+    <value>The game's executable could not be read: it moved, was deleted, or its drive is not connected.</value>
+  </data>
+  <data name="End_SupervisionFaulted" xml:space="preserve">
+    <value>Supervising the session failed, so measuring stopped.</value>
+  </data>
+  <data name="End_TargetAmbiguous" xml:space="preserve">
+    <value>More than one process matched this game, so none was hooked.</value>
+  </data>
+  <data name="End_AttachRefused" xml:space="preserve">
+    <value>The measuring hook's data did not match this build of FrameLedger, so nothing was read.</value>
+  </data>
+  <data name="End_LaunchCannotStart" xml:space="preserve">
+    <value>FrameLedger could not start the game.</value>
+  </data>
+  <data name="End_LaunchTargetExited" xml:space="preserve">
+    <value>The game exited before it could be measured.</value>
+  </data>
+  <data name="End_LaunchNoPresentationRuntime" xml:space="preserve">
+    <value>The game never loaded a graphics API FrameLedger measures (DirectX 9 and older are not measured).</value>
+  </data>
+  <data name="End_RefusedKillSwitch" xml:space="preserve">
+    <value>All hooking is switched off in Settings, so nothing was measured.</value>
+  </data>
+  <data name="End_KillSwitchEngaged" xml:space="preserve">
+    <value>All hooking was switched off in Settings during the session, so measuring stopped.</value>
+  </data>
+  <data name="End_StoppedByUser" xml:space="preserve">
+    <value>You stopped the capture.</value>
+  </data>
+  <data name="End_TargetUnreadable" xml:space="preserve">
+    <value>The game's process could not be opened: an anti-cheat driver protects it, or it runs as administrator.</value>
+  </data>
+  <data name="Guard_Refused_Format" xml:space="preserve">
+    <value>The anti-cheat guard did not hook this game: {0}.</value>
+  </data>
+  <data name="Guard_ModuleScanFailed" xml:space="preserve">
+    <value>the game's loaded modules could not be listed completely</value>
+  </data>
+  <data name="Guard_ProcessUnreadable" xml:space="preserve">
+    <value>the game's process could not be opened</value>
+  </data>
+  <data name="Guard_ProcessTreeUnavailable" xml:space="preserve">
+    <value>the game's process tree could not be established</value>
+  </data>
+  <data name="Guard_DriverScanFailed" xml:space="preserve">
+    <value>the loaded drivers could not be listed</value>
+  </data>
+  <data name="Guard_ServiceQueryFailed" xml:space="preserve">
+    <value>the anti-cheat services could not be queried</value>
+  </data>
+  <data name="Guard_RulesUnreadable" xml:space="preserve">
+    <value>the anti-cheat rules could not be read</value>
+  </data>
+  <data name="Guard_RulesMalformed" xml:space="preserve">
+    <value>the anti-cheat rules file is damaged</value>
+  </data>
+  <data name="Guard_RulesIncomplete" xml:space="preserve">
+    <value>the anti-cheat rules file lacks required entries</value>
+  </data>
+  <data name="Guard_PreScanFailed" xml:space="preserve">
+    <value>the game's folder could not be scanned</value>
+  </data>
+  <data name="Guard_InjectionFailed" xml:space="preserve">
+    <value>every check passed, but the hook could not be loaded</value>
+  </data>
+  <data name="Guard_TargetIsWow64" xml:space="preserve">
+    <value>the game is 32-bit, and the hook runs in 64-bit games only</value>
+  </data>
+  <data name="Guard_PayloadNotOurs" xml:space="preserve">
+    <value>the hook file is not FrameLedger's own build</value>
+  </data>
+  <data name="Guard_HookNotEnabled" xml:space="preserve">
+    <value>hooking is off for this game</value>
+  </data>
+  <data name="Guard_ConsentMissing" xml:space="preserve">
+    <value>hooking was never consented to for this executable</value>
+  </data>
+  <data name="Guard_PreviouslyBlocked" xml:space="preserve">
+    <value>anti-cheat was found in this game before</value>
+  </data>
+  <data name="Guard_LaunchTargetExited" xml:space="preserve">
+    <value>the game exited before it could be checked</value>
+  </data>
+  <data name="Guard_LaunchNoPresentationRuntime" xml:space="preserve">
+    <value>the game loaded no graphics API FrameLedger measures</value>
+  </data>
+  <data name="Guard_TargetIsVulkanLayered" xml:space="preserve">
+    <value>the game renders with Vulkan, which the Vulkan layer measures instead</value>
+  </data>
+  <data name="Guard_SuspiciousUnsigned" xml:space="preserve">
+    <value>an unsigned module with an anti-cheat-like name was loaded</value>
+  </data>
+  <data name="Guard_Other_Format" xml:space="preserve">
+    <value>reason {0}</value>
+  </data>
+  <data name="Exit_Line_Format" xml:space="preserve">
+    <value>How it ended: {0}</value>
+  </data>
+  <data name="Exit_Code_Format" xml:space="preserve">
+    <value>ended with exit code {0}</value>
+  </data>
+  <data name="Exit_Code1" xml:space="preserve">
+    <value>ended with exit code 1 — what End task and taskkill leave, and many programs' own error exit</value>
+  </data>
+  <data name="Exit_Crashed_Format" xml:space="preserve">
+    <value>crashed ({0})</value>
+  </data>
+  <data name="Exit_CrashEvent" xml:space="preserve">
+    <value>crashed (Windows logged an application error)</value>
+  </data>
+  <data name="Exit_Ex_AccessViolation" xml:space="preserve">
+    <value>0xC0000005 access violation</value>
+  </data>
+  <data name="Exit_Ex_InPageError" xml:space="preserve">
+    <value>0xC0000006 in-page I/O error: a disk or drive failed while the game read its files</value>
+  </data>
+  <data name="Exit_Ex_StackOverflow" xml:space="preserve">
+    <value>0xC00000FD stack overflow</value>
+  </data>
+  <data name="Exit_Ex_HeapCorruption" xml:space="preserve">
+    <value>0xC0000374 heap corruption</value>
+  </data>
+  <data name="Exit_Ex_FailFast" xml:space="preserve">
+    <value>0xC0000409 fail-fast: the game stopped itself on a fault it detected</value>
+  </data>
+  <data name="Exit_Ex_DllInit" xml:space="preserve">
+    <value>0xC0000142 a DLL failed to initialise</value>
+  </data>
+  <data name="Exit_Ex_DllNotFound" xml:space="preserve">
+    <value>0xC0000135 a required DLL was not found</value>
+  </data>
+  <data name="Exit_Ex_BadImage" xml:space="preserve">
+    <value>0xC000007B an invalid image, often a 32/64-bit mix</value>
+  </data>
+  <data name="Exit_Ex_Cpp" xml:space="preserve">
+    <value>0xE06D7363 unhandled C++ exception</value>
+  </data>
+  <data name="Exit_Ex_Clr" xml:space="preserve">
+    <value>0xE0434352 unhandled .NET exception</value>
+  </data>
+  <data name="Exit_Ex_Breakpoint" xml:space="preserve">
+    <value>0x80000003 breakpoint</value>
+  </data>
+  <data name="Launch_Error_Format" xml:space="preserve">
+    <value>Windows error {0}</value>
+  </data>
+  <data name="Launch_Error_2" xml:space="preserve">
+    <value>the file was not found</value>
+  </data>
+  <data name="Launch_Error_3" xml:space="preserve">
+    <value>the path was not found</value>
+  </data>
+  <data name="Launch_Error_5" xml:space="preserve">
+    <value>access was denied</value>
+  </data>
+  <data name="Launch_Error_193" xml:space="preserve">
+    <value>it is not a valid Windows program</value>
+  </data>
+  <data name="Launch_Error_740" xml:space="preserve">
+    <value>the game requires administrator rights</value>
+  </data>
+  <data name="Launch_Failed_Format" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="Exe_DriveMissing_Format" xml:space="preserve">
+    <value>The drive {0} is not connected. FrameLedger finds the game again when it is.</value>
+  </data>
+  <data name="Exe_FileMissing_Format" xml:space="preserve">
+    <value>The game's executable is no longer at {0}.</value>
+  </data>
+  <data name="Exit_EndedNormally" xml:space="preserve">
+    <value>ended normally</value>
+  </data>
 </root>

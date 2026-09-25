@@ -91,6 +91,9 @@ public sealed record CaptureOutcome
     /// <summary>The target's exit code, when it had exited by the time the session let go; null otherwise.</summary>
     public int? ExitCode { get; init; }
 
+    /// <summary>The Win32 error a launch failed with (<see cref="SessionEndReason.LaunchCannotStart"/>, beta.8); null otherwise or when the launcher cannot tell.</summary>
+    public int? LaunchError { get; init; }
+
     /// <summary>
     /// True when the loop held the session open unhooked until the target left (Tier 2, 2026-09-22): the duration is the
     /// game's, so the crash witness applies even where no pid was ever held.

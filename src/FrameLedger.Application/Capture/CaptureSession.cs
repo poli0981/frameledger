@@ -190,10 +190,10 @@ public sealed class CaptureSession(
         }
 
         var started = Stopwatch.StartNew();
-        (int Pid, ITargetLiveness Alive)? launched = launcher.Start(normalisedExePath, arguments ?? string.Empty);
+        (int Pid, ITargetLiveness Alive)? launched = launcher.Start(normalisedExePath, arguments ?? string.Empty, out int? launchError);
         if (launched is null)
         {
-            return new CaptureOutcome { Reason = SessionEndReason.LaunchCannotStart };
+            return new CaptureOutcome { Reason = SessionEndReason.LaunchCannotStart, LaunchError = launchError };
         }
 
         using ITargetLiveness alive = launched.Value.Alive;
