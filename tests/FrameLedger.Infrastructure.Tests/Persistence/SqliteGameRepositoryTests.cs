@@ -189,7 +189,8 @@ public sealed class SqliteGameRepositoryTests
         // The state a wrong import guess ends in once the user enabled hooking on it, plus a block to prove it survives.
         await f.Db.WriteAsync((c, tx, ct) => c.ExecuteAsync(new CommandDefinition(
             "UPDATE games SET hook_enabled = 1, hook_consent_at = 5, hook_consent_provenance = 'ConsentDialog', hook_consent_disclosure_version = 'v', "
-            + "hook_prescan_state = 'clean', hook_blocked_reason = 'a block' WHERE id = @id",
+            + "hook_prescan_state = 'clean', hook_blocked_reason = 'a block', hook_prescan_rules_version = '2026.09.4', "
+            + "hook_prescan_exe_size_bytes = 675392, hook_prescan_exe_mtime_ms = 30 WHERE id = @id",
             new { id = row.Id }, tx, cancellationToken: ct)), Ct);
         var real = new ExecutableFingerprint { ExePath = @"C:\Games\T\GF2_Exilium.exe", SizeBytes = 675_392, MtimeUnixMs = 30 };
 
@@ -200,6 +201,8 @@ public sealed class SqliteGameRepositoryTests
         after.HookEnabled.Should().BeFalse("everything downstream is keyed on the executable; a consent is about the one it was given for");
         after.HookConsentAt.Should().BeNull();
         after.HookPrescanState.Should().Be("not_run");
+        (after.HookPrescanRulesVersion, after.HookPrescanExeSizeBytes, after.HookPrescanExeMtimeMs).Should().Be(((string?)null, (long?)null, (long?)null),
+            "the pre-scan's key goes with its state, so the new executable is scanned even with the old one's size and mtime");
         after.HookBlockedReason.Should().Be("a block", "nothing clears a block, and pointing the row elsewhere is not a way round that");
         (await repo.FindAsync(_exe.ExePath, Ct)).Should().BeNull("the row moved; it was not copied");
     }

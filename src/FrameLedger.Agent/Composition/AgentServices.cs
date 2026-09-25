@@ -141,6 +141,20 @@ internal static class AgentServices
             static line => Serilog.Log.Information("{Line}", line),
             sp.GetRequiredService<ExecutableRelocator>()));
 
+        // The anti-cheat pre-scan of the library (beta.8, 19_SAFETY §What a finding does to the game): every entry through
+        // the guard's advisory checks 3 and 4, again whenever the rules or the executable change. It waits while a session
+        // of the entry runs (the session's own checks are running then), and tells the App only when it turned hooking off
+        // for an entry the user had turned on. Hosted under --serve only, beside the detection sweep.
+        services.AddSingleton(static sp => new AntiCheatPreScanSweep(
+            sp.GetRequiredService<IGameRepository>(),
+            sp.GetRequiredService<IGameConsentStore>(),
+            sp.GetRequiredService<IAntiCheatGuard>(),
+            sp.GetRequiredService<IDetectionRulesSource>(),
+            sp.GetRequiredService<IExecutableIdentitySource>(),
+            static line => Serilog.Log.Information("{Line}", line),
+            sp.GetRequiredService<IIpcEventPublisher>(),
+            id => sp.GetRequiredService<CaptureOrchestrator>().IsRecording(id)));
+
         // The layer's registration follows the ledger (P4 PR-2, 12_BUILD §The Vulkan layer is not registered at
         // install time): the same manifest and key --register-vklayer writes, reconciled after every consent change
         // the handler makes and after every sweep.
@@ -185,6 +199,8 @@ internal static class AgentServices
             {
                 RulesSeedOutcome outcome = await new RulesSeeder(new FileSystemRulesStore()).EnsureSeededAsync(ct).ConfigureAwait(false);
                 sp.GetRequiredService<DetectionSweep>().RequestNow();
+                // And the anti-cheat pre-scan: new rules may name a game the library already holds (2026-09-25).
+                sp.GetRequiredService<AntiCheatPreScanSweep>().RequestNow();
                 return outcome.ToString();
             },
             // P3 PR-4 (D14): the reviewed disclosure this Agent stamps against, and its own clock for the stamp.

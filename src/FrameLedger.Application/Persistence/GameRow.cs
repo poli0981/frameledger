@@ -85,5 +85,24 @@ public sealed record GameRow
     /// </summary>
     public bool RecordSessions { get; init; } = true;
 
+    /// <summary>
+    /// The rules version the Agent's pre-scan of the library last scanned this entry under (schema 0010, 2026-09-25);
+    /// null when it never has. With the two below, the pre-scan's own key — a different value is a re-scan.
+    /// </summary>
+    public string? HookPrescanRulesVersion { get; init; }
+
+    /// <summary>The executable's size when the pre-scan last scanned it (schema 0010).</summary>
+    public long? HookPrescanExeSizeBytes { get; init; }
+
+    /// <summary>The executable's mtime (unix ms) when the pre-scan last scanned it (schema 0010).</summary>
+    public long? HookPrescanExeMtimeMs { get; init; }
+
     public bool InLibrary => RemovedAt is null;
+
+    /// <summary>
+    /// A guard finding about this game is on the row (<c>19_SAFETY</c> §What a finding does to the game): its hooking is
+    /// off and nothing clears it. Every block a guard wrote is a finding since 2026-09-22 — a scan that could not answer
+    /// is <c>'unverified'</c>, never <c>'blocked'</c>.
+    /// </summary>
+    public bool BlockedByGuard => HookBlockedReason is not null || string.Equals(HookPrescanState, "blocked", StringComparison.Ordinal);
 }

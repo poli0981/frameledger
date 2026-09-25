@@ -62,6 +62,8 @@
         until 2026-09-16, whose background is WPF UI's PaletteLightBlueBrush — a fixed Material colour outside the
         theme dictionaries, white-on-#03A9F4 in dark, 2.6:1 — which is the one way to break contrast that
         AccessibilityTests.NoXamlHardCodesAColour cannot see (08_UI §Contrast). ContrastTests holds both pairs now.
+        A third state since 2026-09-25 (beta.8): "Anti-cheat", a guard finding on the row, on the caution fill with
+        primary text — the warning qualifier's pair, which ContrastTests already measures in both themes.
     -->
     <Style x:Key="HookStatePill" TargetType="Border" BasedOn="{StaticResource Pill}">
         <Setter Property="Margin" Value="0" />
@@ -69,6 +71,9 @@
             <DataTrigger Binding="{Binding HookOn}" Value="True">
                 <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
                 <Setter Property="BorderThickness" Value="0" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding AntiCheat}" Value="True">
+                <Setter Property="Background" Value="{DynamicResource SystemFillColorCautionBackgroundBrush}" />
             </DataTrigger>
         </Style.Triggers>
     </Style>
@@ -78,6 +83,9 @@
         <Style.Triggers>
             <DataTrigger Binding="{Binding HookOn}" Value="True">
                 <Setter Property="Foreground" Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding AntiCheat}" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
             </DataTrigger>
         </Style.Triggers>
     </Style>

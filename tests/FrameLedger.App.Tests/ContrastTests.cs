@@ -76,7 +76,8 @@ public sealed class ContrastTests
     /// <summary>
     /// The pairs the App's own styles compose (<c>Styles/FrameLedger.xaml</c>): the hooking pill OFF (secondary text on the
     /// Pill's fill), ON (on-accent text on the accent fill, the ×FG chip's pair), and the warning qualifier (primary text
-    /// on the caution fill). Translucent fills are composited over the card and the window, as they are on screen.
+    /// on the caution fill) — also the hooking pill's "Anti-cheat" state since 2026-09-25. Translucent fills are composited
+    /// over the card and the window, as they are on screen.
     /// </summary>
     [Theory]
     [InlineData(ApplicationTheme.Dark)]

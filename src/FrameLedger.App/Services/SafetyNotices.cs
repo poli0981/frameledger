@@ -51,6 +51,12 @@ public sealed class SafetyNotices : IDisposable
             case IpcMessageType.SafetyUnhook when IpcCodec.Payload<SafetyUnhookEvent>(envelope) is { } unhooked:
                 return new SafetyNotice(SafetyNoticeKind.Unhooked, Strings.Notice_Unhooked_Title,
                     TurnedOff(string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_Unhooked_Format, unhooked.Family ?? unhooked.Signal ?? Strings.Common_NotAvailable), unhooked.HookingTurnedOff), now);
+            // The Agent's pre-scan of the library turned hooking off for a game the user had turned it on for (2026-09-25):
+            // not a session event, so none of a refusal's "this run is still recorded" — no run is going on.
+            case IpcMessageType.HookingTurnedOff when IpcCodec.Payload<HookingTurnedOffEvent>(envelope) is { } off:
+                return new SafetyNotice(SafetyNoticeKind.HookingOff,
+                    string.Format(CultureInfo.CurrentCulture, Strings.Notice_HookingOff_Title_Format, off.GameName ?? Strings.Common_NotAvailable),
+                    TurnedOff(RefusalText(off.Reason, off.Family, off.Signal), turnedOff: true), now);
             case IpcMessageType.CaptureDegraded when IpcCodec.Payload<CaptureDegradedEvent>(envelope) is { } degraded:
                 return new SafetyNotice(SafetyNoticeKind.Degraded, Strings.Notice_Degraded_Title,
                     string.Format(CultureInfo.CurrentCulture, Strings.Notice_Degraded_Body_Format, degraded.Reason), now);

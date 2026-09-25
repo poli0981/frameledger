@@ -24,7 +24,8 @@ public sealed class SqliteGameRepository : IGameRepository
         + "hook_crash_count, hook_last_injected_at, added_at, updated_at, "
         + "platform, store_id, engine, engine_version, publisher, game_version, cover_path, notes, field_provenance, capability_flags, "
         + "rt_default, pt_default, rr_default, hook_consent_at, hook_prescan_state, removed_at, "
-        + "detection_rules_version, detection_exe_size_bytes, detection_exe_mtime_ms, record_sessions";
+        + "detection_rules_version, detection_exe_size_bytes, detection_exe_mtime_ms, record_sessions, "
+        + "hook_prescan_rules_version, hook_prescan_exe_size_bytes, hook_prescan_exe_mtime_ms";
 
     private const string _selectByPath = $"SELECT {_columns} FROM games WHERE exe_path = @path";
 
@@ -43,10 +44,12 @@ public sealed class SqliteGameRepository : IGameRepository
 
     // A downgrade by construction: the consent columns go to their "nothing happened" defaults, never to a grant, and
     // hook_blocked_reason is not named (IGameRepository.ChangeExecutableAsync). NOT EXISTS is the UNIQUE index's answer
-    // as a false instead of a constraint exception.
+    // as a false instead of a constraint exception. The pre-scan's key goes with its state (schema 0010), so the Agent's
+    // sweep scans the new executable on its next pass whatever its size and mtime happen to be.
     private const string _changeExecutable =
         "UPDATE games SET exe_path = @path, exe_size_bytes = @size, exe_mtime_ms = @mtime, hook_enabled = 0, hook_consent_at = NULL, "
         + "hook_consent_provenance = 'NotRecorded', hook_consent_disclosure_version = '', hook_prescan_state = 'not_run', "
+        + "hook_prescan_rules_version = NULL, hook_prescan_exe_size_bytes = NULL, hook_prescan_exe_mtime_ms = NULL, "
         + "updated_at = @at "
         + "WHERE id = @id AND removed_at IS NULL AND NOT EXISTS (SELECT 1 FROM games other WHERE other.exe_path = @path AND other.id <> @id)";
 
@@ -335,6 +338,9 @@ public sealed class SqliteGameRepository : IGameRepository
         DetectionExeSizeBytes = SqliteReaders.Int64(r, 29),
         DetectionExeMtimeMs = SqliteReaders.Int64(r, 30),
         RecordSessions = r.GetInt64(31) != 0,
+        HookPrescanRulesVersion = SqliteReaders.String(r, 32),
+        HookPrescanExeSizeBytes = SqliteReaders.Int64(r, 33),
+        HookPrescanExeMtimeMs = SqliteReaders.Int64(r, 34),
     };
 
     private static DateTimeOffset? At(long? unixMs) => unixMs is { } ms ? DateTimeOffset.FromUnixTimeMilliseconds(ms) : null;

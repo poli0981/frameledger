@@ -1575,6 +1575,16 @@ install, a Steam folder no manifest names) → not applicable, recorded as nothi
 be read → refuse (`PreScanFailed`). §S14's "unknown must never read clean" is kept by the third row; the second is not
 an unknown — it is the answer "this is not a store title", and refusing it would be the gate that cannot pass.
 
+**Decision (D32, owner, item 2: "an option to hide the hook part for games with anti-cheat").** Hide **and** scan:
+the Agent pre-scans every library entry itself (`AntiCheatPreScanSweep`, checks 3 and 4, once per rules version and
+executable — schema 0010's key), a finding is the same block every other moment writes, and the game's page shows
+the finding in place of the Hooking card while `ui.hide_anticheat_hooking` is on (default on). Tier 2 is still
+recorded. **Why not the setting alone:** most entries sat at `hook_prescan_state = 'not_run'` — the pre-scan ran only
+when someone asked for hooking — so a hide keyed on a finding would have hidden nothing on most libraries. **What it
+must never become:** a gate. The chokepoint runs checks 1–4 at every session start whatever the sweep wrote; the sweep
+only answers early, writes through the consent store's block-preserving `UPDATE`, and hides a control that could
+only be refused, never the finding (FR-2.2).
+
 **Traps.**
 - **`Rules` is ~650 KB now** (256 families, 128 per-title rules). `x = Rules{}` builds that on the stack before
   copying — use `ResetRules`. The Vulkan layer parses on a game's own `vkCreateInstance` thread, and native tests hold
@@ -1584,6 +1594,13 @@ an unknown — it is the answer "this is not a store title", and refusing it wou
 - **`sed -i` and the Bash tool's heredocs strike again**: a heredoc halved `\\` in a Python patch (a C# verbatim path
   still matched by luck), and a one-line `sed -i` turned `layer.cpp` into LF. Scripts go through the Write tool and run
   by path; `git ls-files --eol -m` after any shell edit.
+- **`'clean'` is not new.** `AgentCommandHandler` has stamped it on every consented enable since P3; the sweep adds it
+  for entries nobody enabled. Nothing gates on it — a reader that treats `'clean'` as "may hook" is a second gate.
+- **The sweep's notice is not a refusal.** `HookingTurnedOff` is `SafetyNoticeKind.HookingOff` with Dismiss: a
+  `Refused` kind would offer "record this session without measuring it" with no session running.
+- **Analyzers on tests:** CA2000 flags a disposable passed into a record's constructor (construct it inside a class
+  that disposes it), MA0023 a regex with numbered groups (name them), CA1062 a `[Theory]` string parameter
+  dereferenced without a check.
 
 ## Owner-only — no PR can close these
 
@@ -1600,8 +1617,9 @@ an unknown — it is the answer "this is not a store title", and refusing it wou
    2026-09-03 (P4) and 2026-09-04 (P1); done.** What is still owed here is the **quality
    preset** on a title that chains `sl::DLSSOptions` — Alan Wake 2 is the candidate — and
    the DLSS-G identity on a title where `kFeatureDLSS_G` is evaluated, if one exists.
-3. **Which titles** go in `blockedExecutables` — a product decision with false-refusal
-   consequences. The list ships empty until it is taken.
+3. ~~**Which titles** go in `blockedExecutables` — a product decision with false-refusal
+   consequences. The list ships empty until it is taken.~~ **Taken 2026-09-25 (D30):** per-title
+   lists by Steam id and executable name, seeded and floored (§2026-09-25 — the beta.8 train).
 4. **§H7's confirmation against the overlays actually resident on the dev machine.** The
    compare-and-restore path is proven against a fixture (ctest `fl_unhook_inline`); §H7 still
    says the six real overlays are *"worth doing once the Overlay has real hooks"*, and it has

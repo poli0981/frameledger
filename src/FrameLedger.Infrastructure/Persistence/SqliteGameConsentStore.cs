@@ -65,9 +65,60 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
         "UPDATE games SET exe_size_bytes = @size, exe_mtime_ms = @mtime, hook_enabled = @enabled, "
         + "hook_blocked_reason = @reason, hook_prescan_state = @state, updated_at = @at WHERE exe_path = @path";
 
+    // The pre-scan of the library (schema 0010). Both forms leave a block alone in SQL, not only in the sweep that skips
+    // blocked rows: the WHERE is the guarantee, so a block written between the sweep's read and this write still stands.
+    private const string _preScanFinding =
+        "UPDATE games SET hook_enabled = 0, hook_blocked_reason = @reason, hook_prescan_state = 'blocked', "
+        + "hook_prescan_rules_version = @rules, hook_prescan_exe_size_bytes = @size, hook_prescan_exe_mtime_ms = @mtime, "
+        + "updated_at = @at WHERE exe_path = @path AND hook_blocked_reason IS NULL AND hook_prescan_state <> 'blocked'";
+
+    private const string _preScanOther =
+        "UPDATE games SET hook_prescan_state = @state, hook_prescan_rules_version = @rules, "
+        + "hook_prescan_exe_size_bytes = @size, hook_prescan_exe_mtime_ms = @mtime, updated_at = @at "
+        + "WHERE exe_path = @path AND hook_blocked_reason IS NULL AND hook_prescan_state <> 'blocked'";
+
     private readonly LedgerDatabase _db;
 
     public SqliteGameConsentStore(LedgerDatabase db) => _db = db ?? throw new ArgumentNullException(nameof(db));
+
+    /// <summary>
+    /// The words a block is stored in (<c>hook_blocked_reason</c>): <c>Reason|Family|Signal</c> since 2026-09-25, so the
+    /// App can say what was found in the user's language. It was <c>"Reason: Family Signal"</c>, which cannot be split
+    /// back apart — family names and file names both carry spaces — and rows written that way keep it. A family name
+    /// cannot contain '|' (the rules schema's pattern) and a Windows file name cannot either.
+    /// </summary>
+    public static string BlockText(AntiCheatVerdict verdict) => $"{verdict.Reason}|{verdict.Family}|{verdict.Signal}";
+
+    /// <inheritdoc />
+    public async ValueTask<ConsentWriteOutcome> RecordPreScanAsync(
+        ExecutableFingerprint scanned, AntiCheatVerdict verdict, string rulesVersion, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(rulesVersion);
+        bool finding = verdict.IsFindingAboutTheGame;
+        try
+        {
+            return await _db.WriteAsync(async (c, tx, token) =>
+            {
+                var p = new
+                {
+                    path = scanned.ExePath,
+                    reason = BlockText(verdict),
+                    state = verdict.IsAllowed ? "clean" : "unverified",
+                    rules = rulesVersion,
+                    size = scanned.SizeBytes,
+                    mtime = scanned.MtimeUnixMs,
+                    at = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                };
+                int rows = await c.ExecuteAsync(new CommandDefinition(finding ? _preScanFinding : _preScanOther, p, tx, cancellationToken: token))
+                    .ConfigureAwait(false);
+                return rows == 0 ? ConsentWriteOutcome.NotFound : ConsentWriteOutcome.Written;
+            }, ct).ConfigureAwait(false);
+        }
+        catch (SqliteException)
+        {
+            return ConsentWriteOutcome.Failed;
+        }
+    }
 
     /// <inheritdoc />
     public async ValueTask<GameConsentRecord> FindAsync(string normalisedExePath, CancellationToken ct = default)
@@ -208,7 +259,7 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
                     mtime = fingerprint.MtimeUnixMs,
                     // Forced to 0 on a real block (19_SAFETY); an unverified pre-scan does NOT disable the toggle.
                     enabled = unverified && existing?.HookEnabled == true ? 1 : 0,
-                    reason = unverified ? existing?.BlockedReason : $"{refusal.Reason}: {refusal.Family} {refusal.Signal}".Trim(),
+                    reason = unverified ? existing?.BlockedReason : BlockText(refusal),
                     state = unverified ? "unverified" : "blocked",
                     at = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 };

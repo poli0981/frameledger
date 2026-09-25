@@ -181,7 +181,7 @@ public static class Formats
             case null:
                 return string.Empty;
             case "RefusedHookNotEnabled" when string.Equals(n.GuardReason, "PreviouslyBlocked", StringComparison.Ordinal) && n.GuardSignal is { Length: > 0 } blocked:
-                return string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_Blocked_Format, blocked);
+                return string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_Blocked_Format, BlockedReasonText.Describe(blocked));
             case "RefusedHookNotEnabled":
                 return Strings.Summary_Tier2_Why_HookOff;
             case "RefusedByGuard" or "SafetyUnhook" when n.GuardFamily is { Length: > 0 } family:

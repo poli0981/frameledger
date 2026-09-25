@@ -9,6 +9,7 @@ using FrameLedger.App.Charts;
 using FrameLedger.App.Pages;
 using FrameLedger.App.Services;
 using FrameLedger.Application.Persistence;
+using FrameLedger.Application.Settings;
 using FrameLedger.Application.TriState;
 using FrameLedger.Domain.Sessions;
 using FrameLedger.Infrastructure.Io;
@@ -35,7 +36,11 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private readonly SessionSeriesLoader _loader;
     private readonly IHardwareSnapshotRepository _hardware;
     private readonly SessionSelection _selection;
+    private readonly RegisteredSettings? _settings;
     private readonly long? _gameId;
+
+    // ui.hide_anticheat_hooking (2026-09-25), read at each load; on until the settings say otherwise, as its default is.
+    private bool _hideAntiCheatHooking = true;
     private GameDetail? _detail;
 
     [ObservableProperty]
@@ -85,6 +90,17 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
     [ObservableProperty]
     private string? _blockedText;
+
+    /// <summary>
+    /// The compact finding shown IN PLACE of the Hooking card when anti-cheat was found and the user keeps such cards hidden
+    /// (beta.8); null otherwise. The finding itself is always on the page (FR-2.2) — here, or as the card's blocked text.
+    /// </summary>
+    [ObservableProperty]
+    private string? _antiCheatText;
+
+    /// <summary>Whether the Hooking card and its lines show: false only for an anti-cheat game while they are hidden.</summary>
+    [ObservableProperty]
+    private bool _hookingSectionVisible = true;
 
     [ObservableProperty]
     private string? _autoDisabledText;
@@ -136,8 +152,10 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
     public GameDetailViewModel(GameLibrary library, GameSelection selection, HookingConsent consent, IPageNavigator navigator,
         IConfirmations confirmations, IEditGamePrompt edit, IMessageStrip strip, ISessionSummaryOpener summaries,
-        SessionSeriesLoader loader, IHardwareSnapshotRepository hardware, SessionSelection sessionSelection, IGamePicker picker)
+        SessionSeriesLoader loader, IHardwareSnapshotRepository hardware, SessionSelection sessionSelection, IGamePicker picker,
+        RegisteredSettings? settings = null)
     {
+        _settings = settings;
         _picker = picker ?? throw new ArgumentNullException(nameof(picker));
         _selection = sessionSelection ?? throw new ArgumentNullException(nameof(sessionSelection));
         _library = library ?? throw new ArgumentNullException(nameof(library));
@@ -177,6 +195,8 @@ public sealed partial class GameDetailViewModel : ObservableObject
     public static string RecordingBody => Strings.GameDetail_Recording_Body;
 
     public static string HookingHeader => Strings.GameDetail_Hooking_Header;
+
+    public static string AntiCheatHeader => Strings.GameDetail_AntiCheat_Header;
 
     public static string HookingBody => Strings.GameDetail_Hooking_Body;
 
@@ -273,6 +293,11 @@ public sealed partial class GameDetailViewModel : ObservableObject
         Game = detail.Row;
         _detail = detail;
         NotFound = false;
+        if (_settings is not null)
+        {
+            _hideAntiCheatHooking = await _settings.GetBooleanAsync(SettingsRegistry.UiHideAntiCheatHooking, ct).ConfigureAwait(true);
+        }
+
         Present(detail);
         await RebuildTrendAsync(ct).ConfigureAwait(true);
     }
@@ -613,16 +638,25 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private void PresentHooking(GameRow row)
     {
         HookEnabled = row.HookEnabled;
-        bool blocked = row.HookBlockedReason is not null || string.Equals(row.HookPrescanState, "blocked", StringComparison.Ordinal);
+        bool blocked = row.BlockedByGuard;
 
         // A blocked row's toggle is disabled because enabling it could only be refused (19_SAFETY §What a finding does
         // to the game): the finding is on the page, and there is no switch that overrules it (2026-09-22).
         HookToggleEnabled = !blocked && !Busy;
         HookStatusText = row.HookEnabled ? Strings.GameDetail_Hooking_On : Strings.GameDetail_Hooking_Off;
-        BlockedText = !blocked
+        string? found = blocked ? BlockedReasonText.Describe(row.HookBlockedReason ?? row.HookPrescanState) : null;
+        BlockedText = found is null
             ? null
-            : string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_Blocked_Toggle_Format, row.HookBlockedReason ?? row.HookPrescanState);
-        AutoDisabledText = row.HookAutoDisabledReason is { Length: > 0 } reason && !row.HookEnabled
+            : string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_Blocked_Toggle_Format, found);
+
+        // beta.8 (owner request 2026-09-25): for an anti-cheat game the card is a switch that can never be turned on, so
+        // by default it gives way to the finding alone. The setting off keeps the card, with the finding under it.
+        HookingSectionVisible = !(blocked && _hideAntiCheatHooking);
+        AntiCheatText = found is not null && !HookingSectionVisible
+            ? string.Format(CultureInfo.CurrentCulture, Strings.GameDetail_AntiCheat_Format, found)
+            : null;
+        // Its "Turn hooking back on" could only be refused once anti-cheat was found, so a blocked row does not offer it.
+        AutoDisabledText = !blocked && row.HookAutoDisabledReason is { Length: > 0 } reason && !row.HookEnabled
             ? string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_AutoDisabled_Format, reason)
             : null;
         UnverifiedText = string.Equals(row.HookPrescanState, "unverified", StringComparison.Ordinal) ? Strings.GameDetail_Hooking_Unverified : null;

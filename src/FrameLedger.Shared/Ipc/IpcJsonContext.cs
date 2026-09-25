@@ -28,6 +28,7 @@ namespace FrameLedger.Shared.Ipc;
 [JsonSerializable(typeof(CaptureRefusedEvent))]
 [JsonSerializable(typeof(CaptureDegradedEvent))]
 [JsonSerializable(typeof(SafetyUnhookEvent))]
+[JsonSerializable(typeof(HookingTurnedOffEvent))]
 [JsonSerializable(typeof(CaptureErrorEvent))]
 [JsonSerializable(typeof(WatchlistEntry))]
 [JsonSerializable(typeof(SetWatchlistRequest))]

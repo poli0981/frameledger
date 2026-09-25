@@ -253,6 +253,61 @@ public sealed class PagesLoadTests
         element.UpdateLayout();
     }
 
+    /// <summary>
+    /// beta.8 (owner request 2026-09-25): an anti-cheat game's page under the real dictionaries — the finding's card is
+    /// rendered, and the Hooking card, whose switch could only be refused, is not while <c>ui.hide_anticheat_hooking</c> is
+    /// on (its default).
+    /// </summary>
+    [Fact]
+    public async Task AnAntiCheatGamesPageRendersTheFindingInPlaceOfTheHookingCard()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Alpha");
+        await s.Db.WriteAsync((c, tx, ct) => Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(
+            "UPDATE games SET hook_blocked_reason = 'BlockedModule|BattlEye|BEClient_x64.dll', hook_prescan_state = 'blocked' WHERE id = @id",
+            new { id = game.Id }, tx, cancellationToken: ct)), TestContext.Current.CancellationToken);
+        var detail = new GameDetailViewModel(s.Library, new GameSelection { GameId = game.Id }, new HookingConsent(new NoAgent(), new NoPrompt()),
+            new NoNavigation(), new NoConfirm(), new NoEdit(), new NoStrip(), new NoSummaries(), new SessionSeriesLoader(s.Sessions),
+            new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(), new NoPicker(),
+            new RegisteredSettings(new MemorySettings()));
+        Task pending = detail.Pending;
+        await pending;
+
+        List<string> shown = await OnStaAsync(() =>
+        {
+            var page = new GameDetailPage(detail);
+            Render(page);
+            List<string> texts = [];
+            CollectShownTexts(page, texts);
+            return texts;
+        });
+
+        detail.AntiCheatText.Should().NotBeNull();
+        shown.Should().Contain(detail.AntiCheatText).And.Contain(GameDetailViewModel.AntiCheatHeader);
+        shown.Should().NotContain(GameDetailViewModel.HookingHeader, "the Hooking card is hidden");
+        shown.Should().NotContain(GameDetailViewModel.HookingBody);
+    }
+
+    /// <summary>The text of every TextBlock under <paramref name="root"/> that no collapsed or hidden element hides.</summary>
+    private static void CollectShownTexts(DependencyObject root, List<string> texts)
+    {
+        if (root is UIElement { Visibility: not Visibility.Visible })
+        {
+            return;
+        }
+
+        if (root is System.Windows.Controls.TextBlock { Text: { Length: > 0 } text })
+        {
+            texts.Add(text);
+        }
+
+        int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(root);
+        for (int i = 0; i < count; i++)
+        {
+            CollectShownTexts(System.Windows.Media.VisualTreeHelper.GetChild(root, i), texts);
+        }
+    }
+
     /// <summary>Tools ▸ Database maintenance's dialog body (P4 PR-7) under the real dictionaries: its icons, the converter key, every binding.</summary>
     [Fact]
     public async Task TheDatabaseMaintenanceDialogLoads()

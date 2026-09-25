@@ -1872,4 +1872,40 @@ Mở thư mục log?</value>
 • Không có gì được gửi đi đâu cả. Dữ liệu ghi lại nằm trên máy này, và việc sao lưu là của bạn.
 Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắt này không thay thế chúng.</value>
   </data>
+  <data name="Blocked_Module_Format" xml:space="preserve">
+    <value>{0} — mô-đun {1} của nó đã được nạp trong game</value>
+  </data>
+  <data name="Blocked_Directory_Format" xml:space="preserve">
+    <value>{0} — thư mục {1} của nó đi kèm game</value>
+  </data>
+  <data name="Blocked_File_Format" xml:space="preserve">
+    <value>{0} — {1} đi kèm game</value>
+  </data>
+  <data name="Blocked_Executable_Format" xml:space="preserve">
+    <value>{0} — {1} nằm trong danh sách tựa game</value>
+  </data>
+  <data name="Blocked_StoreId_Format" xml:space="preserve">
+    <value>{0} — mã store {1} của game nằm trong danh sách</value>
+  </data>
+  <data name="Blocked_Other_Format" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="GameDetail_AntiCheat_Header" xml:space="preserve">
+    <value>Anti-cheat</value>
+  </data>
+  <data name="GameDetail_AntiCheat_Format" xml:space="preserve">
+    <value>Đã phát hiện: {0}. Hooking đã tắt cho game này và không thể bật; các phiên của nó chỉ ghi thời gian chơi và cảm biến.</value>
+  </data>
+  <data name="Games_Card_AntiCheat" xml:space="preserve">
+    <value>Anti-cheat</value>
+  </data>
+  <data name="Settings_HideAntiCheatHooking_Label" xml:space="preserve">
+    <value>Ẩn phần hooking ở game có anti-cheat</value>
+  </data>
+  <data name="Settings_HideAntiCheatHooking_Body" xml:space="preserve">
+    <value>Game được phát hiện có anti-cheat sẽ không bao giờ được hook. Bật: trang game chỉ hiện điều đã phát hiện; tắt: hiện thêm công tắc Hooking bị vô hiệu hoá. Dù bật hay tắt, game vẫn được ghi mà không hook.</value>
+  </data>
+  <data name="Notice_HookingOff_Title_Format" xml:space="preserve">
+    <value>{0}: đã tắt hooking</value>
+  </data>
 </root>

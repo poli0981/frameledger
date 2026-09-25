@@ -5,6 +5,7 @@ using FrameLedger.App.Pages;
 using FrameLedger.App.Services;
 using FrameLedger.App.ViewModels;
 using FrameLedger.Application.Persistence;
+using FrameLedger.Application.Settings;
 using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Shared.Ipc;
 using FrameLedger.Shared.Safety;
@@ -99,7 +100,7 @@ public sealed class GameDetailViewModelTests
 
     private static async Task<(GameDetailViewModel Vm, FakeAgent Agent, FakePrompt Prompt, FakeNavigator Nav, FakeStrip Strip)> BuildAsync(
         ScratchLedger s, long gameId, RemoveGameChoice remove = RemoveGameChoice.Cancel, GameMetadata? edit = null, string? pick = null,
-        FakeAgent? withAgent = null)
+        FakeAgent? withAgent = null, RegisteredSettings? settings = null)
     {
         FakeAgent agent = withAgent ?? new FakeAgent();
         var prompt = new FakePrompt();
@@ -108,7 +109,7 @@ public sealed class GameDetailViewModelTests
         var vm = new GameDetailViewModel(s.Library, new GameSelection { GameId = gameId }, new HookingConsent(agent, prompt), nav,
             new FakeConfirmations(remove), new FakeEdit(edit), strip, new NoSummaries(),
             new Charts.SessionSeriesLoader(s.Sessions), new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(),
-            new FakePicker(pick));
+            new FakePicker(pick), settings);
         Task pending = vm.Pending;
         await pending.ConfigureAwait(false);
         return (vm, agent, prompt, nav, strip);
@@ -327,6 +328,77 @@ public sealed class GameDetailViewModelTests
         await vm.LoadAsync(Ct);
         vm.HookToggleEnabled.Should().BeFalse("FR-2.2: the switch is disabled, not clickable");
         vm.BlockedText.Should().Contain("EasyAntiCheat_EOS.dll");
+    }
+
+    /// <summary>
+    /// beta.8 (owner request 2026-09-25): an anti-cheat game's Hooking card — a switch that can never be turned on — gives
+    /// way to the finding alone while <c>ui.hide_anticheat_hooking</c> is on, its default; off, the card is back with the
+    /// finding under its disabled switch. Either way the finding is on the page (FR-2.2), in words, and a game nothing was
+    /// found in keeps its card whatever the setting says.
+    /// </summary>
+    [Fact]
+    public async Task AnAntiCheatGameShowsTheFindingInPlaceOfItsHookingCardUnlessTheSettingIsOff()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow game = await s.GameAsync("Alpha");
+            GameRow clean = await s.GameAsync("Beta");
+            await s.Db.WriteAsync((c, tx, ct) => Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(
+                "UPDATE games SET hook_enabled = 0, hook_blocked_reason = 'AntiCheatDirectory|Easy Anti-Cheat|EasyAntiCheat', hook_prescan_state = 'blocked', "
+                + "hook_autodisabled_reason = 'crashed twice' "
+                + "WHERE id = @id", new { id = game.Id }, tx, cancellationToken: ct)), Ct);
+            var settings = new RegisteredSettings(new MemorySettings());
+            const string found = "Easy Anti-Cheat — its folder EasyAntiCheat ships with the game";
+
+            (GameDetailViewModel vm, _, _, _, _) = await BuildAsync(s, game.Id, settings: settings);
+            vm.HookingSectionVisible.Should().BeFalse("hidden by default");
+            vm.AntiCheatText.Should().Contain(found);
+            vm.HookToggleEnabled.Should().BeFalse();
+            vm.AutoDisabledText.Should().BeNull("its 'turn hooking back on' could only be refused");
+
+            await settings.SetAsync(SettingsRegistry.UiHideAntiCheatHooking, false, Ct);
+            await vm.LoadAsync(Ct);
+            vm.HookingSectionVisible.Should().BeTrue("read at each load");
+            vm.AntiCheatText.Should().BeNull("the card's own line says it now");
+            vm.BlockedText.Should().Contain(found);
+            vm.HookToggleEnabled.Should().BeFalse("FR-2.2: disabled, not clickable");
+
+            await settings.SetAsync(SettingsRegistry.UiHideAntiCheatHooking, true, Ct);
+            (GameDetailViewModel other, _, _, _, _) = await BuildAsync(s, clean.Id, settings: settings);
+            other.HookingSectionVisible.Should().BeTrue("nothing was found in it");
+            other.AntiCheatText.Should().BeNull();
+            other.HookToggleEnabled.Should().BeTrue();
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
+
+    /// <summary>The library card says "Anti-cheat" for such a game (beta.8) — after "Not recorded", which says more.</summary>
+    [Fact]
+    public async Task TheLibraryCardSaysAntiCheatForAGameTheGuardFoundItIn()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Alpha");
+        GameRow blocked = game with { HookEnabled = false, HookBlockedReason = "BlockedModule|BattlEye|BEClient_x64.dll", HookPrescanState = "blocked" };
+
+        var card = new GameCardViewModel(new GameCard(blocked, null));
+        card.AntiCheat.Should().BeTrue();
+        card.HookText.Should().Be(Strings.Games_Card_AntiCheat);
+        card.HookOn.Should().BeFalse();
+
+        var prescanOnly = new GameCardViewModel(new GameCard(game with { HookPrescanState = "blocked" }, null));
+        prescanOnly.AntiCheat.Should().BeTrue("a block written before the reason column existed is still a block");
+
+        var ignored = new GameCardViewModel(new GameCard(blocked with { RecordSessions = false }, null));
+        ignored.HookText.Should().Be(Strings.Games_Card_NotRecorded);
+        ignored.AntiCheat.Should().BeFalse("the pill says one thing");
+
+        new GameCardViewModel(new GameCard(game with { HookPrescanState = "clean" }, null)).AntiCheat.Should().BeFalse();
     }
 
     [Fact]

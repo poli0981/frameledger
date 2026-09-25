@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Dapper;
 using FluentAssertions;
 using FluentAssertions.Specialized;
@@ -111,6 +112,61 @@ public sealed class LedgerDatabaseTests
     }
 
     /// <summary>
+    /// Take a migrated ledger back to <paramref name="version"/>: every column a later script ADDED is dropped, newest first,
+    /// and those scripts' <c>schema_migrations</c> rows go. The runner applies what is above MAX(version), so a rewind that
+    /// left a later script's columns in place would fail on its ALTER the moment that script re-ran — which is what the
+    /// hand-written rewind this replaced (2026-09-25) would have done as soon as schema 0010 existed.
+    /// </summary>
+    private static async Task RewindToAsync(SqliteConnection c, int version)
+    {
+        foreach (string sql in MigrationRunner.Scripts().Where(p => p.Key > version).OrderByDescending(static p => p.Key).Select(static p => p.Value))
+        {
+            foreach (Match m in Regex.Matches(sql, @"ALTER\s+TABLE\s+(?<table>\w+)\s+ADD\s+COLUMN\s+(?<column>\w+)", RegexOptions.IgnoreCase,
+                         TimeSpan.FromSeconds(1)).Reverse())
+            {
+                await c.ExecuteAsync(new CommandDefinition($"ALTER TABLE {m.Groups["table"].Value} DROP COLUMN {m.Groups["column"].Value}",
+                    cancellationToken: Ct)).ConfigureAwait(false);
+            }
+        }
+
+        await c.ExecuteAsync(new CommandDefinition($"DELETE FROM schema_migrations WHERE version > {version}; PRAGMA wal_checkpoint(TRUNCATE);",
+            cancellationToken: Ct)).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Schema 0010 (2026-09-25): the Agent's pre-scan of the library keeps its own key — the rules version and the
+    /// executable's size and mtime it last scanned under. Applied from schema 9 to a ledger holding a row: the three
+    /// columns exist and read NULL for it, which the sweep reads as "never scanned".
+    /// </summary>
+    [Fact]
+    public async Task ScriptTenAddsThePreScanKeyEmptyForExistingRows()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(10);
+        string path = f.Path;
+        await f.Db.WriteAsync((c, tx, ct) => c.ExecuteAsync(new CommandDefinition(
+            "INSERT INTO games (name, exe_path, added_at, updated_at) VALUES ('A game', 'D:\\g\\game.exe', 1, 1)",
+            transaction: tx, cancellationToken: ct)), Ct).ConfigureAwait(true);
+        await f.Db.DisposeAsync().ConfigureAwait(true);
+        var c9 = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        await using (c9.ConfigureAwait(true))
+        {
+            await c9.OpenAsync(Ct).ConfigureAwait(true);
+            await RewindToAsync(c9, 9).ConfigureAwait(true);
+        }
+
+        LedgerDatabase migrated = await LedgerDatabase.OpenAsync(path, ct: Ct).ConfigureAwait(true);
+        await using (migrated.ConfigureAwait(true))
+        {
+            migrated.SchemaVersion.Should().Be(MigrationRunner.LatestVersion);
+            (string? Rules, long? Size, long? Mtime) key = await migrated.ReadAsync((c, ct) => c.QuerySingleAsync<(string?, long?, long?)>(
+                new CommandDefinition("SELECT hook_prescan_rules_version, hook_prescan_exe_size_bytes, hook_prescan_exe_mtime_ms FROM games",
+                    cancellationToken: ct)), Ct).ConfigureAwait(true);
+            key.Should().Be(((string?)null, (long?)null, (long?)null));
+        }
+    }
+
+    /// <summary>
     /// Schema 0009 (2026-09-23): the recording switch — on for every entry, and off once for the entries an old import made
     /// for Steam's own tools (the owner's Borderless Gaming, recorded at every boot since it starts with Windows). Applied
     /// here from schema 8 to a ledger holding a tool, a game, and a hand-added row that only shares the tool's id.
@@ -131,9 +187,7 @@ public sealed class LedgerDatabaseTests
         await using (c8.ConfigureAwait(true))
         {
             await c8.OpenAsync(Ct).ConfigureAwait(true);
-            await c8.ExecuteAsync(new CommandDefinition(
-                "ALTER TABLE games DROP COLUMN record_sessions; DELETE FROM schema_migrations WHERE version > 8; PRAGMA wal_checkpoint(TRUNCATE);",
-                cancellationToken: Ct)).ConfigureAwait(true);
+            await RewindToAsync(c8, 8).ConfigureAwait(true);
         }
 
         LedgerDatabase migrated = await LedgerDatabase.OpenAsync(path, ct: Ct).ConfigureAwait(true);

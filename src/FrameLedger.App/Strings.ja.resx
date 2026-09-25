@@ -2489,4 +2489,52 @@
 以下の文書が正式な条項であり、この要約はそれらに代わるものではありません。</value>
     <comment>review</comment>
   </data>
+  <data name="Blocked_Module_Format" xml:space="preserve">
+    <value>{0} — モジュール {1} がゲーム内で読み込まれました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Blocked_Directory_Format" xml:space="preserve">
+    <value>{0} — フォルダー {1} がゲームに同梱されています</value>
+    <comment>review</comment>
+  </data>
+  <data name="Blocked_File_Format" xml:space="preserve">
+    <value>{0} — {1} がゲームに同梱されています</value>
+    <comment>review</comment>
+  </data>
+  <data name="Blocked_Executable_Format" xml:space="preserve">
+    <value>{0} — {1} はリストに登録されたタイトルです</value>
+    <comment>review</comment>
+  </data>
+  <data name="Blocked_StoreId_Format" xml:space="preserve">
+    <value>{0} — ゲームのストアID {1} がリストに登録されています</value>
+    <comment>review</comment>
+  </data>
+  <data name="Blocked_Other_Format" xml:space="preserve">
+    <value>{0}（{1}）</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_AntiCheat_Header" xml:space="preserve">
+    <value>アンチチート</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_AntiCheat_Format" xml:space="preserve">
+    <value>検出: {0}。このゲームのフックはオフで、オンにすることはできません。セッションにはプレイ時間とセンサーの値だけが記録されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Card_AntiCheat" xml:space="preserve">
+    <value>アンチチート</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_HideAntiCheatHooking_Label" xml:space="preserve">
+    <value>アンチチート搭載ゲームのフック設定を隠す</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_HideAntiCheatHooking_Body" xml:space="preserve">
+    <value>アンチチートが検出されたゲームはフックできません。オンにするとゲームのページには検出内容だけが表示され、オフにすると無効化されたフックのスイッチも表示されます。どちらの場合も、フックなしで記録は続きます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Notice_HookingOff_Title_Format" xml:space="preserve">
+    <value>{0}: フックがオフになりました</value>
+    <comment>review</comment>
+  </data>
 </root>

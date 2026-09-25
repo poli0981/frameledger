@@ -11,4 +11,10 @@ public enum SafetyNoticeKind
 
     /// <summary><c>CaptureDegraded</c>: measurement stopped mid-session for another reason.</summary>
     Degraded,
+
+    /// <summary>
+    /// <c>HookingTurnedOff</c> (2026-09-25): the Agent's pre-scan of the library found anti-cheat in a game whose hooking
+    /// the user had turned on, and turned it off. No session is running, so there is nothing to record without measuring.
+    /// </summary>
+    HookingOff,
 }

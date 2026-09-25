@@ -113,4 +113,25 @@ public interface IGameConsentStore
     /// </remarks>
     ValueTask<ConsentWriteOutcome> RecordGuardBlockAsync(
         ExecutableFingerprint fingerprint, AntiCheatVerdict refusal, CancellationToken ct = default);
+
+    /// <summary>
+    /// What the Agent's pre-scan of the library (2026-09-25) found for an EXISTING entry, and the key it scanned under:
+    /// the rules version, and the executable's size and mtime in <paramref name="scanned"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// A finding about the game (<see cref="AntiCheatVerdict.IsFindingAboutTheGame"/>) is the block every other moment
+    /// writes — hooking off, the reason on the row, <c>'blocked'</c> — with the consent stamp preserved, as
+    /// <see cref="RecordGuardBlockAsync"/> preserves it. A pass is <c>'clean'</c>; anything else is <c>'unverified'</c>,
+    /// which does not disable the toggle.
+    /// </para>
+    /// <para>
+    /// It never adds a row (the library is the App's and the watcher's to add to: <see cref="ConsentWriteOutcome.NotFound"/>)
+    /// and never writes over a block (also <see cref="ConsentWriteOutcome.NotFound"/>, and nothing is written): nothing
+    /// clears a block, and a later "clean" must not read as one. It does not touch the consent fingerprint either — the
+    /// key is the pre-scan's own columns (schema 0010).
+    /// </para>
+    /// </remarks>
+    ValueTask<ConsentWriteOutcome> RecordPreScanAsync(
+        ExecutableFingerprint scanned, AntiCheatVerdict verdict, string rulesVersion, CancellationToken ct = default);
 }
