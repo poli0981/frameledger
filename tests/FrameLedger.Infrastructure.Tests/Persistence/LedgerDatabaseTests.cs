@@ -134,6 +134,39 @@ public sealed class LedgerDatabaseTests
     }
 
     /// <summary>
+    /// Schema 0011 (2026-09-25): what a game's files say about themselves — what the executable runs as, its two PE versions,
+    /// the capability files it ships. Applied from schema 10 to a ledger holding a row: the four columns exist and read NULL,
+    /// and a NULL <c>exe_machine</c> is what makes the detection sweep read the row once more.
+    /// </summary>
+    [Fact]
+    public async Task ScriptElevenAddsTheExecutableFactsEmptyForExistingRows()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(11);
+        string path = f.Path;
+        await f.Db.WriteAsync((c, tx, ct) => c.ExecuteAsync(new CommandDefinition(
+            "INSERT INTO games (name, exe_path, added_at, updated_at) VALUES ('A game', 'D:\\g\\game.exe', 1, 1)",
+            transaction: tx, cancellationToken: ct)), Ct).ConfigureAwait(true);
+        await f.Db.DisposeAsync().ConfigureAwait(true);
+        var c10 = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        await using (c10.ConfigureAwait(true))
+        {
+            await c10.OpenAsync(Ct).ConfigureAwait(true);
+            await RewindToAsync(c10, 10).ConfigureAwait(true);
+        }
+
+        LedgerDatabase migrated = await LedgerDatabase.OpenAsync(path, ct: Ct).ConfigureAwait(true);
+        await using (migrated.ConfigureAwait(true))
+        {
+            migrated.SchemaVersion.Should().Be(MigrationRunner.LatestVersion);
+            (string? Machine, string? File, string? Product, string? Libraries) facts = await migrated.ReadAsync((c, ct) =>
+                c.QuerySingleAsync<(string?, string?, string?, string?)>(new CommandDefinition(
+                    "SELECT exe_machine, exe_file_version, exe_product_version, library_versions FROM games", cancellationToken: ct)), Ct).ConfigureAwait(true);
+            facts.Should().Be(((string?)null, (string?)null, (string?)null, (string?)null));
+        }
+    }
+
+    /// <summary>
     /// Schema 0010 (2026-09-25): the Agent's pre-scan of the library keeps its own key — the rules version and the
     /// executable's size and mtime it last scanned under. Applied from schema 9 to a ledger holding a row: the three
     /// columns exist and read NULL for it, which the sweep reads as "never scanned".

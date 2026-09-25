@@ -2537,4 +2537,108 @@
     <value>{0}: フックがオフになりました</value>
     <comment>review</comment>
   </data>
+  <data name="Arch_X64" xml:space="preserve">
+    <value>64ビット (x64)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Arch_X86" xml:space="preserve">
+    <value>32ビット (x86)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Arch_Arm64" xml:space="preserve">
+    <value>ARM64</value>
+    <comment>review</comment>
+  </data>
+  <data name="Arch_Arm" xml:space="preserve">
+    <value>ARM (32ビット)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Arch_AnyCpu" xml:space="preserve">
+    <value>.NET、任意の CPU（64ビットで実行）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Arch_AnyCpu32" xml:space="preserve">
+    <value>.NET、任意の CPU、32ビット優先（32ビットで実行）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Arch_Other" xml:space="preserve">
+    <value>その他のアーキテクチャ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Arch_Unknown" xml:space="preserve">
+    <value>読み取れませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="Store_Steam_Format" xml:space="preserve">
+    <value>Steam ビルド {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Store_Gog_Format" xml:space="preserve">
+    <value>GOG バージョン {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Store_Epic_Format" xml:space="preserve">
+    <value>Epic バージョン {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Details_Header" xml:space="preserve">
+    <value>詳細</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Details_Architecture" xml:space="preserve">
+    <value>実行形式</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Details_FileVersion" xml:space="preserve">
+    <value>ファイル バージョン</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Details_ProductVersion" xml:space="preserve">
+    <value>製品バージョン</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Details_Store" xml:space="preserve">
+    <value>ストア</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Details_Version" xml:space="preserve">
+    <value>バージョン</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Details_Engine" xml:space="preserve">
+    <value>エンジン</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Details_Libraries" xml:space="preserve">
+    <value>同梱ライブラリ</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Details_Library_Format" xml:space="preserve">
+    <value>{0}: {1} {2}</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Details_LibraryNoVersion_Format" xml:space="preserve">
+    <value>{0}: {1}（バージョンなし）</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Details_NoLibraries" xml:space="preserve">
+    <value>ルールが挙げるファイルはありません</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Details_NotRead" xml:space="preserve">
+    <value>まだ読み取っていません。キャプチャ エージェントが起動後まもなくゲームのファイルを読み取ります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Hooking_NotX64_Format" xml:space="preserve">
+    <value>このゲームの実行ファイルは {0} です。FrameLedger のフックは 64ビット (x64) のゲームでのみ動作するため、フックをオンにすることはできません。セッションにはプレイ時間とセンサーの値が記録されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Libraries_Format" xml:space="preserve">
+    <value>読み込まれたライブラリ: {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Library_Differs_Format" xml:space="preserve">
+    <value>{0} {1}（ゲーム同梱は {2}。ドライバーや NVIDIA App などにより別のコピーが読み込まれました）</value>
+    <comment>review</comment>
+  </data>
 </root>

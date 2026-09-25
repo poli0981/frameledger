@@ -235,7 +235,7 @@ Everything else in the table is in the data and has a fixture; `rules-validate.p
 > is fetched (CLAUDE.md rule 8's "opt-in store metadata" is the online lookup, which does not exist). First-run
 > step 4 now points at File ▸ Import library… rather than saying "later build".
 
-**Publisher/version order:** store manifest → PE `CompanyName`/`ProductVersion` → *(opt-in)* Steam `appdetails` lookup, cached 7 days.
+**Publisher/version order:** store manifest → PE `CompanyName`/`ProductVersion` → *(opt-in)* Steam `appdetails` lookup, cached 7 days. *(Since beta.8 the PE versions are stored beside the store's rather than instead of it — §What the files say about themselves; the page labels a store's value with its store, "Steam build 20374416".)*
 
 ## Capability hints (explicitly labelled as such)
 
@@ -243,8 +243,8 @@ Files shipped with a game tell us what it *supports*. These populate a **"Suppor
 
 - DLSS SR `nvngx_dlss.dll` · DLSS-G `nvngx_dlssg.dll` · **Ray Reconstruction `nvngx_dlssd.dll`**
 - Streamline `sl.interposer.dll`, `sl.dlss_g.dll`, `sl.reflex.dll`
-- FSR `ffx_fsr2_*.dll`, `ffx_frameinterpolation_*.dll`, `amd_fidelityfx_*.dll`, `ffx_api*.dll` — a hint still, even though `amd_fidelityfx_dx12.dll` / `_upscaler_dx12.dll` / `_framegeneration_dx12.dll` are *hooked* since 2026-09-04: the measured chip comes from the dispatch, never from the file
-- XeSS `libxess.dll`, XeFG `libxess_fg.dll`
+- FSR `ffx_fsr2_*.dll`, `ffx_fsr3*.dll` (since rules 2026.09.5 — FSR 3's `ffx_fsr3_x64.dll` / `ffx_fsr3upscaler_x64.dll` matched nothing before), `ffx_frameinterpolation_*.dll`, `amd_fidelityfx_*.dll`, `ffx_api*.dll` — a hint still, even though `amd_fidelityfx_dx12.dll` / `_upscaler_dx12.dll` / `_framegeneration_dx12.dll` are *hooked* since 2026-09-04: the measured chip comes from the dispatch, never from the file
+- XeSS `libxess.dll`, `libxess_dx11.dll` (since rules 2026.09.5), XeFG `libxess_fg.dll`
 - DXR-capable: `d3d12.dll` usage + RT-capable GPU (capability only — says nothing about the game)
 - **Vulkan (since P4 PR-2, 2026-09-14) — a code-level fact, not a rule.** The rules can only ask about files
   beside the executable, and the Vulkan loader is not one of them (`vulkan-1.dll` lives in System32). So
@@ -256,6 +256,37 @@ Files shipped with a game tell us what it *supports*. These populate a **"Suppor
   presented — that is `sessions.api`, measured.
 
 The UI wording is deliberate: **"Supports DLSS-G"** (capability, from files) versus **"Frame Generation: DLSS-G ×1.9"** (measured, from this session). Users conflating these is exactly the confusion the old design created.
+
+### What the files say about themselves (beta.8, 2026-09-25, schema 0011)
+
+The owner asked for the game's version, the DLSS / FSR versions and whether a game is 32- or 64-bit. The sweep read
+most of it already and kept none of it; since beta.8 it keeps four more facts per game, written whole with each
+detection (`DetectionWrite`, `games.exe_machine` / `exe_file_version` / `exe_product_version` / `library_versions`):
+
+- **What the executable runs as** — `PeImports.ReadArchitecture`, from the same bounded header read as the imports:
+  the COFF machine and, for a .NET executable, the CLR header's flags (`Domain.Detection.ExecutableArchitecture`:
+  `x64 | x86 | arm64 | arm | anycpu | anycpu32 | other | unknown`). An "AnyCPU" assembly carries an I386 machine and
+  runs as a 64-bit process unless it prefers or requires 32-bit, which is why the machine alone is not the answer.
+  `x86`, `anycpu32`, `arm64` and `arm` are **known not hookable** — the hook is an x64 DLL loaded with `LoadLibraryW`
+  (CLAUDE.md rule 3) — so enabling hooking on one is refused before anything is scanned or stamped
+  (`Refused { reason: "ExecutableNotX64", signal: <id> }`, `07_IPC`), and a row enabled before this build read the file
+  has its hooking turned off by the sweep (`hook_autodisabled_reason` = `executable is x86: the hook runs in x64
+  processes only`). `unknown` and `other` are not: the guard's `TargetIsWow64` at a session's start stays the check.
+  A row whose `exe_machine` is NULL is stale once, so every library entry is read under this build.
+- **The executable's own versions** — the PE `FileVersion` and `ProductVersion` strings. The file's word, kept apart
+  from `game_version`, which is the store's (a Steam build id, a GOG or Epic version string) or the user's. For an
+  Unreal title the file version is often the *engine's*; the page labels both and does not pick one.
+- **What it ships, with versions** — every file a capability rule names among those the walk listed, with the
+  numeric version of its `VS_FIXEDFILEINFO` (the version *string* may carry text, and Streamline stamps `2,8,0,0`):
+  `nvngx_dlss.dll 3.7.10.0`, `sl.interposer.dll 2.8.0.0`, `ffx_fsr2_api_x64.dll …`. Bounded at 48 files. A file with
+  no version resource is listed with none — it is shipped either way. FSR is named by its file, never mapped to an
+  "FSR 2.2" number: the DLL's version is the SDK's, and no table of that mapping has been measured.
+
+**Shipped is not loaded.** `library_versions` is what the game folder holds. What the process loaded is
+`sessions.runtime_modules` (Tier 1), and the two differ exactly when something else supplied the DLL — the NVIDIA
+App's DLSS override loads the driver's `nvngx_dlss.dll` from the driver store under the same name. The session
+summary prints the loaded list and names such a difference ("the game ships 3.7.10.0: another copy was loaded");
+it does not claim who loaded it.
 
 ## Anti-cheat pre-scan (static)
 

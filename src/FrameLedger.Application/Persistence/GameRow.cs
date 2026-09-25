@@ -1,4 +1,5 @@
 using FrameLedger.Domain.Consent;
+using FrameLedger.Domain.Detection;
 using FrameLedger.Domain.Metrics;
 
 namespace FrameLedger.Application.Persistence;
@@ -96,6 +97,21 @@ public sealed record GameRow
 
     /// <summary>The executable's mtime (unix ms) when the pre-scan last scanned it (schema 0010).</summary>
     public long? HookPrescanExeMtimeMs { get; init; }
+
+    /// <summary>
+    /// What the executable runs as (schema 0011, 2026-09-25; <see cref="ExecutableArchitecture"/>): written by the detection
+    /// sweep from its PE headers. Null when this build has not looked yet; <c>unknown</c> when it looked and could not tell.
+    /// </summary>
+    public string? ExeMachine { get; init; }
+
+    /// <summary>The executable's PE <c>FileVersion</c> (schema 0011) — the file's word, not the store's (<see cref="GameVersion"/>).</summary>
+    public string? ExeFileVersion { get; init; }
+
+    /// <summary>The executable's PE <c>ProductVersion</c> (schema 0011).</summary>
+    public string? ExeProductVersion { get; init; }
+
+    /// <summary>The capability files the game ships, with their versions (schema 0011, <c>library_versions</c>); empty when none or never looked.</summary>
+    public IReadOnlyList<LibraryFile> Libraries { get; init; } = [];
 
     public bool InLibrary => RemovedAt is null;
 

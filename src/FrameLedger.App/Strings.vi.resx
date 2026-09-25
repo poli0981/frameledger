@@ -1908,4 +1908,82 @@ Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắ
   <data name="Notice_HookingOff_Title_Format" xml:space="preserve">
     <value>{0}: đã tắt hooking</value>
   </data>
+  <data name="Arch_X64" xml:space="preserve">
+    <value>64-bit (x64)</value>
+  </data>
+  <data name="Arch_X86" xml:space="preserve">
+    <value>32-bit (x86)</value>
+  </data>
+  <data name="Arch_Arm64" xml:space="preserve">
+    <value>ARM64</value>
+  </data>
+  <data name="Arch_Arm" xml:space="preserve">
+    <value>ARM (32-bit)</value>
+  </data>
+  <data name="Arch_AnyCpu" xml:space="preserve">
+    <value>.NET, mọi CPU (chạy ở 64-bit)</value>
+  </data>
+  <data name="Arch_AnyCpu32" xml:space="preserve">
+    <value>.NET, mọi CPU, ưu tiên 32-bit (chạy ở 32-bit)</value>
+  </data>
+  <data name="Arch_Other" xml:space="preserve">
+    <value>kiến trúc khác</value>
+  </data>
+  <data name="Arch_Unknown" xml:space="preserve">
+    <value>không đọc được</value>
+  </data>
+  <data name="Store_Steam_Format" xml:space="preserve">
+    <value>Steam build {0}</value>
+  </data>
+  <data name="Store_Gog_Format" xml:space="preserve">
+    <value>GOG phiên bản {0}</value>
+  </data>
+  <data name="Store_Epic_Format" xml:space="preserve">
+    <value>Epic phiên bản {0}</value>
+  </data>
+  <data name="GameDetail_Details_Header" xml:space="preserve">
+    <value>Chi tiết</value>
+  </data>
+  <data name="GameDetail_Details_Architecture" xml:space="preserve">
+    <value>Chạy ở dạng</value>
+  </data>
+  <data name="GameDetail_Details_FileVersion" xml:space="preserve">
+    <value>Phiên bản file</value>
+  </data>
+  <data name="GameDetail_Details_ProductVersion" xml:space="preserve">
+    <value>Phiên bản sản phẩm</value>
+  </data>
+  <data name="GameDetail_Details_Store" xml:space="preserve">
+    <value>Cửa hàng</value>
+  </data>
+  <data name="GameDetail_Details_Version" xml:space="preserve">
+    <value>Phiên bản</value>
+  </data>
+  <data name="GameDetail_Details_Engine" xml:space="preserve">
+    <value>Engine</value>
+  </data>
+  <data name="GameDetail_Details_Libraries" xml:space="preserve">
+    <value>Đi kèm</value>
+  </data>
+  <data name="GameDetail_Details_Library_Format" xml:space="preserve">
+    <value>{0}: {1} {2}</value>
+  </data>
+  <data name="GameDetail_Details_LibraryNoVersion_Format" xml:space="preserve">
+    <value>{0}: {1} (không có phiên bản)</value>
+  </data>
+  <data name="GameDetail_Details_NoLibraries" xml:space="preserve">
+    <value>không có file nào mà bộ luật nêu tên</value>
+  </data>
+  <data name="GameDetail_Details_NotRead" xml:space="preserve">
+    <value>Chưa đọc: capture agent sẽ đọc các file của game ngay sau khi nó khởi động.</value>
+  </data>
+  <data name="Hooking_NotX64_Format" xml:space="preserve">
+    <value>File thực thi của game này là {0}. Hook của FrameLedger chỉ chạy trong game 64-bit (x64), nên không thể bật hooking; các phiên của nó ghi thời gian chơi và cảm biến.</value>
+  </data>
+  <data name="Summary_Libraries_Format" xml:space="preserve">
+    <value>Đã nạp: {0}</value>
+  </data>
+  <data name="Summary_Library_Differs_Format" xml:space="preserve">
+    <value>{0} {1} (game kèm bản {2}: một bản khác đã được nạp, ví dụ bởi driver hoặc NVIDIA App)</value>
+  </data>
 </root>

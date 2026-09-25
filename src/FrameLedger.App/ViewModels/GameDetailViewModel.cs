@@ -11,6 +11,7 @@ using FrameLedger.App.Services;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Settings;
 using FrameLedger.Application.TriState;
+using FrameLedger.Domain.Detection;
 using FrameLedger.Domain.Sessions;
 using FrameLedger.Infrastructure.Io;
 using Wpf.Ui.Controls;
@@ -101,6 +102,13 @@ public sealed partial class GameDetailViewModel : ObservableObject
     /// <summary>Whether the Hooking card and its lines show: false only for an anti-cheat game while they are hidden.</summary>
     [ObservableProperty]
     private bool _hookingSectionVisible = true;
+
+    /// <summary>
+    /// Why the switch cannot be turned on when the executable cannot run as x64 (beta.8, <c>exe_machine</c>); null otherwise.
+    /// A switch that is on for such a game can still be turned off.
+    /// </summary>
+    [ObservableProperty]
+    private string? _notX64Text;
 
     [ObservableProperty]
     private string? _autoDisabledText;
@@ -197,6 +205,11 @@ public sealed partial class GameDetailViewModel : ObservableObject
     public static string HookingHeader => Strings.GameDetail_Hooking_Header;
 
     public static string AntiCheatHeader => Strings.GameDetail_AntiCheat_Header;
+
+    public static string DetailsHeader => Strings.GameDetail_Details_Header;
+
+    /// <summary>What the game's files and its store say about it (beta.8): what it runs as, its versions, what it ships.</summary>
+    public ObservableCollection<GameDetailRow> Details { get; } = [];
 
     public static string HookingBody => Strings.GameDetail_Hooking_Body;
 
@@ -570,7 +583,12 @@ public sealed partial class GameDetailViewModel : ObservableObject
     {
         GameRow row = detail.Row;
         Name = row.Name;
-        Subtitle = string.Join(" · ", new[] { row.Publisher, row.GameVersion, Formats.Platform(row.Platform), EngineText(row) }.Where(static s => !string.IsNullOrWhiteSpace(s)));
+        // A store's version is said as one ("Steam build 20374416", beta.8), and then names the store itself.
+        bool storeVersion = EditGameViewModel.IsDetectedField(row.FieldProvenanceJson, "game_version") && row.Platform is "steam" or "gog" or "epic";
+        string?[] subtitle = storeVersion
+            ? [row.Publisher, Formats.StoreVersion(row.Platform, row.GameVersion, detected: true) ?? Formats.Platform(row.Platform), EngineText(row)]
+            : [row.Publisher, row.GameVersion, Formats.Platform(row.Platform), EngineText(row)];
+        Subtitle = string.Join(" · ", subtitle.Where(static s => !string.IsNullOrWhiteSpace(s)));
         ExecutableText = row.Fingerprint.ExePath;
         ExecutableMissing = !GameLibrary.ExecutableExists(row.Fingerprint.ExePath);
 
@@ -581,6 +599,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
         PresentChips(detail, lastHooked);
         PresentSupports(row);
+        PresentDetails(row);
         PresentMeasured(last, lastHooked);
         PresentRecording(row);
         PresentHooking(row);
@@ -616,6 +635,49 @@ public sealed partial class GameDetailViewModel : ObservableObject
         SupportsEmpty = Supports.Count == 0;
     }
 
+    private void PresentDetails(GameRow row)
+    {
+        Details.Clear();
+        if (row.ExeMachine is null)
+        {
+            // Written by the Agent's detection sweep: a row it has not read under this build yet.
+            Details.Add(new GameDetailRow(Strings.GameDetail_Details_Architecture, Strings.GameDetail_Details_NotRead));
+        }
+        else
+        {
+            Details.Add(new GameDetailRow(Strings.GameDetail_Details_Architecture, Formats.Architecture(row.ExeMachine)));
+            AddDetail(Strings.GameDetail_Details_FileVersion, row.ExeFileVersion);
+            AddDetail(Strings.GameDetail_Details_ProductVersion, row.ExeProductVersion);
+        }
+
+        bool detected = EditGameViewModel.IsDetectedField(row.FieldProvenanceJson, "game_version");
+        AddDetail(detected ? Strings.GameDetail_Details_Store : Strings.GameDetail_Details_Version, Formats.StoreVersion(row.Platform, row.GameVersion, detected));
+        AddDetail(Strings.GameDetail_Details_Engine, EngineText(row));
+        if (row.ExeMachine is not null)
+        {
+            Details.Add(new GameDetailRow(Strings.GameDetail_Details_Libraries, row.Libraries.Count == 0
+                ? Strings.GameDetail_Details_NoLibraries
+                : string.Join(Environment.NewLine, row.Libraries.Select(LibraryText))));
+        }
+    }
+
+    private void AddDetail(string label, string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            Details.Add(new GameDetailRow(label, value));
+        }
+    }
+
+    /// <summary>"DLSS: nvngx_dlss.dll 3.7.10.0" — the product the rule names, the file, and what the file says it is.</summary>
+    private static string LibraryText(LibraryFile library)
+    {
+        string product = CapabilityName(library.CapabilityId) is { Length: > 0 } name ? name : library.CapabilityId;
+        return library.FileVersion is { } version
+            ? string.Format(CultureInfo.CurrentCulture, Strings.GameDetail_Details_Library_Format, product, library.FileName, version)
+            : string.Format(CultureInfo.CurrentCulture, Strings.GameDetail_Details_LibraryNoVersion_Format, product, library.FileName);
+    }
+
     private void PresentMeasured(SessionRow? last, SessionRow? lastHooked)
     {
         Measured.Clear();
@@ -642,7 +704,13 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
         // A blocked row's toggle is disabled because enabling it could only be refused (19_SAFETY §What a finding does
         // to the game): the finding is on the page, and there is no switch that overrules it (2026-09-22).
-        HookToggleEnabled = !blocked && !Busy;
+        // An executable that cannot run as x64 (beta.8): turning hooking ON could only be refused; a switch that is on
+        // (enabled before this build read the file) can still be turned off.
+        bool notX64 = ExecutableArchitecture.IsKnownNotHookable(row.ExeMachine);
+        HookToggleEnabled = !blocked && !Busy && (row.HookEnabled || !notX64);
+        NotX64Text = notX64 && !blocked
+            ? string.Format(CultureInfo.CurrentCulture, Strings.Hooking_NotX64_Format, Formats.Architecture(row.ExeMachine))
+            : null;
         HookStatusText = row.HookEnabled ? Strings.GameDetail_Hooking_On : Strings.GameDetail_Hooking_Off;
         string? found = blocked ? BlockedReasonText.Describe(row.HookBlockedReason ?? row.HookPrescanState) : null;
         BlockedText = found is null
@@ -655,8 +723,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
         AntiCheatText = found is not null && !HookingSectionVisible
             ? string.Format(CultureInfo.CurrentCulture, Strings.GameDetail_AntiCheat_Format, found)
             : null;
-        // Its "Turn hooking back on" could only be refused once anti-cheat was found, so a blocked row does not offer it.
-        AutoDisabledText = !blocked && row.HookAutoDisabledReason is { Length: > 0 } reason && !row.HookEnabled
+        // Its "Turn hooking back on" could only be refused once anti-cheat was found, or for an executable that cannot run
+        // as x64, so neither row offers it.
+        AutoDisabledText = !blocked && !notX64 && row.HookAutoDisabledReason is { Length: > 0 } reason && !row.HookEnabled
             ? string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_AutoDisabled_Format, reason)
             : null;
         UnverifiedText = string.Equals(row.HookPrescanState, "unverified", StringComparison.Ordinal) ? Strings.GameDetail_Hooking_Unverified : null;
@@ -708,7 +777,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         }
     }
 
-    private static string CapabilityName(string token) => token switch
+    internal static string CapabilityName(string token) => token switch
     {
         "dlss" => "DLSS",
         "dlssg" or "dlss_g" => "DLSS-G",

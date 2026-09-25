@@ -46,6 +46,14 @@ public static class Strings
         nameof(Agent_State_Offline),
         nameof(Agent_State_Starting),
         nameof(App_Title),
+        nameof(Arch_AnyCpu),
+        nameof(Arch_AnyCpu32),
+        nameof(Arch_Arm),
+        nameof(Arch_Arm64),
+        nameof(Arch_Other),
+        nameof(Arch_Unknown),
+        nameof(Arch_X64),
+        nameof(Arch_X86),
         nameof(Blocked_Directory_Format),
         nameof(Blocked_Executable_Format),
         nameof(Blocked_File_Format),
@@ -256,6 +264,18 @@ public static class Strings
         nameof(GameDetail_AntiCheat_Header),
         nameof(GameDetail_Back),
         nameof(GameDetail_ChangeExe),
+        nameof(GameDetail_Details_Architecture),
+        nameof(GameDetail_Details_Engine),
+        nameof(GameDetail_Details_FileVersion),
+        nameof(GameDetail_Details_Header),
+        nameof(GameDetail_Details_Libraries),
+        nameof(GameDetail_Details_Library_Format),
+        nameof(GameDetail_Details_LibraryNoVersion_Format),
+        nameof(GameDetail_Details_NoLibraries),
+        nameof(GameDetail_Details_NotRead),
+        nameof(GameDetail_Details_ProductVersion),
+        nameof(GameDetail_Details_Store),
+        nameof(GameDetail_Details_Version),
         nameof(GameDetail_Edit),
         nameof(GameDetail_ExeMissing),
         nameof(GameDetail_Hooking_Body),
@@ -304,6 +324,7 @@ public static class Strings
         nameof(Games_Sort_LastPlayed),
         nameof(Games_Sort_Name),
         nameof(Games_Sort_Playtime),
+        nameof(Hooking_NotX64_Format),
         nameof(Import_Add),
         nameof(Import_Column_Exe),
         nameof(Import_Column_Name),
@@ -524,6 +545,9 @@ public static class Strings
         nameof(Settings_Window_Header),
         nameof(StartupFailed_Body_Format),
         nameof(StartupFailed_Title),
+        nameof(Store_Epic_Format),
+        nameof(Store_Gog_Format),
+        nameof(Store_Steam_Format),
         nameof(Summary_Annotations_Header),
         nameof(Summary_Crash_Body),
         nameof(Summary_Crash_Title),
@@ -535,6 +559,8 @@ public static class Strings
         nameof(Summary_Export_Tier2),
         nameof(Summary_Exported_Format),
         nameof(Summary_Frametime_Header),
+        nameof(Summary_Libraries_Format),
+        nameof(Summary_Library_Differs_Format),
         nameof(Summary_Line_Format),
         nameof(Summary_Lows_Presented),
         nameof(Summary_Notes_Placeholder),
@@ -693,6 +719,22 @@ public static class Strings
     public static string Agent_State_Starting => ResourceManager.GetString(nameof(Agent_State_Starting), Culture) ?? nameof(Agent_State_Starting);
 
     public static string App_Title => ResourceManager.GetString(nameof(App_Title), Culture) ?? nameof(App_Title);
+
+    public static string Arch_AnyCpu => ResourceManager.GetString(nameof(Arch_AnyCpu), Culture) ?? nameof(Arch_AnyCpu);
+
+    public static string Arch_AnyCpu32 => ResourceManager.GetString(nameof(Arch_AnyCpu32), Culture) ?? nameof(Arch_AnyCpu32);
+
+    public static string Arch_Arm => ResourceManager.GetString(nameof(Arch_Arm), Culture) ?? nameof(Arch_Arm);
+
+    public static string Arch_Arm64 => ResourceManager.GetString(nameof(Arch_Arm64), Culture) ?? nameof(Arch_Arm64);
+
+    public static string Arch_Other => ResourceManager.GetString(nameof(Arch_Other), Culture) ?? nameof(Arch_Other);
+
+    public static string Arch_Unknown => ResourceManager.GetString(nameof(Arch_Unknown), Culture) ?? nameof(Arch_Unknown);
+
+    public static string Arch_X64 => ResourceManager.GetString(nameof(Arch_X64), Culture) ?? nameof(Arch_X64);
+
+    public static string Arch_X86 => ResourceManager.GetString(nameof(Arch_X86), Culture) ?? nameof(Arch_X86);
 
     public static string Blocked_Directory_Format => ResourceManager.GetString(nameof(Blocked_Directory_Format), Culture) ?? nameof(Blocked_Directory_Format);
 
@@ -1114,6 +1156,30 @@ public static class Strings
 
     public static string GameDetail_ChangeExe => ResourceManager.GetString(nameof(GameDetail_ChangeExe), Culture) ?? nameof(GameDetail_ChangeExe);
 
+    public static string GameDetail_Details_Architecture => ResourceManager.GetString(nameof(GameDetail_Details_Architecture), Culture) ?? nameof(GameDetail_Details_Architecture);
+
+    public static string GameDetail_Details_Engine => ResourceManager.GetString(nameof(GameDetail_Details_Engine), Culture) ?? nameof(GameDetail_Details_Engine);
+
+    public static string GameDetail_Details_FileVersion => ResourceManager.GetString(nameof(GameDetail_Details_FileVersion), Culture) ?? nameof(GameDetail_Details_FileVersion);
+
+    public static string GameDetail_Details_Header => ResourceManager.GetString(nameof(GameDetail_Details_Header), Culture) ?? nameof(GameDetail_Details_Header);
+
+    public static string GameDetail_Details_Libraries => ResourceManager.GetString(nameof(GameDetail_Details_Libraries), Culture) ?? nameof(GameDetail_Details_Libraries);
+
+    public static string GameDetail_Details_Library_Format => ResourceManager.GetString(nameof(GameDetail_Details_Library_Format), Culture) ?? nameof(GameDetail_Details_Library_Format);
+
+    public static string GameDetail_Details_LibraryNoVersion_Format => ResourceManager.GetString(nameof(GameDetail_Details_LibraryNoVersion_Format), Culture) ?? nameof(GameDetail_Details_LibraryNoVersion_Format);
+
+    public static string GameDetail_Details_NoLibraries => ResourceManager.GetString(nameof(GameDetail_Details_NoLibraries), Culture) ?? nameof(GameDetail_Details_NoLibraries);
+
+    public static string GameDetail_Details_NotRead => ResourceManager.GetString(nameof(GameDetail_Details_NotRead), Culture) ?? nameof(GameDetail_Details_NotRead);
+
+    public static string GameDetail_Details_ProductVersion => ResourceManager.GetString(nameof(GameDetail_Details_ProductVersion), Culture) ?? nameof(GameDetail_Details_ProductVersion);
+
+    public static string GameDetail_Details_Store => ResourceManager.GetString(nameof(GameDetail_Details_Store), Culture) ?? nameof(GameDetail_Details_Store);
+
+    public static string GameDetail_Details_Version => ResourceManager.GetString(nameof(GameDetail_Details_Version), Culture) ?? nameof(GameDetail_Details_Version);
+
     public static string GameDetail_Edit => ResourceManager.GetString(nameof(GameDetail_Edit), Culture) ?? nameof(GameDetail_Edit);
 
     public static string GameDetail_ExeMissing => ResourceManager.GetString(nameof(GameDetail_ExeMissing), Culture) ?? nameof(GameDetail_ExeMissing);
@@ -1209,6 +1275,8 @@ public static class Strings
     public static string Games_Sort_Name => ResourceManager.GetString(nameof(Games_Sort_Name), Culture) ?? nameof(Games_Sort_Name);
 
     public static string Games_Sort_Playtime => ResourceManager.GetString(nameof(Games_Sort_Playtime), Culture) ?? nameof(Games_Sort_Playtime);
+
+    public static string Hooking_NotX64_Format => ResourceManager.GetString(nameof(Hooking_NotX64_Format), Culture) ?? nameof(Hooking_NotX64_Format);
 
     public static string Import_Add => ResourceManager.GetString(nameof(Import_Add), Culture) ?? nameof(Import_Add);
 
@@ -1650,6 +1718,12 @@ public static class Strings
 
     public static string StartupFailed_Title => ResourceManager.GetString(nameof(StartupFailed_Title), Culture) ?? nameof(StartupFailed_Title);
 
+    public static string Store_Epic_Format => ResourceManager.GetString(nameof(Store_Epic_Format), Culture) ?? nameof(Store_Epic_Format);
+
+    public static string Store_Gog_Format => ResourceManager.GetString(nameof(Store_Gog_Format), Culture) ?? nameof(Store_Gog_Format);
+
+    public static string Store_Steam_Format => ResourceManager.GetString(nameof(Store_Steam_Format), Culture) ?? nameof(Store_Steam_Format);
+
     public static string Summary_Annotations_Header => ResourceManager.GetString(nameof(Summary_Annotations_Header), Culture) ?? nameof(Summary_Annotations_Header);
 
     public static string Summary_Crash_Body => ResourceManager.GetString(nameof(Summary_Crash_Body), Culture) ?? nameof(Summary_Crash_Body);
@@ -1671,6 +1745,10 @@ public static class Strings
     public static string Summary_Exported_Format => ResourceManager.GetString(nameof(Summary_Exported_Format), Culture) ?? nameof(Summary_Exported_Format);
 
     public static string Summary_Frametime_Header => ResourceManager.GetString(nameof(Summary_Frametime_Header), Culture) ?? nameof(Summary_Frametime_Header);
+
+    public static string Summary_Libraries_Format => ResourceManager.GetString(nameof(Summary_Libraries_Format), Culture) ?? nameof(Summary_Libraries_Format);
+
+    public static string Summary_Library_Differs_Format => ResourceManager.GetString(nameof(Summary_Library_Differs_Format), Culture) ?? nameof(Summary_Library_Differs_Format);
 
     public static string Summary_Line_Format => ResourceManager.GetString(nameof(Summary_Line_Format), Culture) ?? nameof(Summary_Line_Format);
 

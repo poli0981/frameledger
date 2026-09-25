@@ -401,6 +401,73 @@ public sealed class GameDetailViewModelTests
         new GameCardViewModel(new GameCard(game with { HookPrescanState = "clean" }, null)).AntiCheat.Should().BeFalse();
     }
 
+    /// <summary>
+    /// beta.8 (schema 0011): the Details card says what the files say — what the executable runs as, its versions, the
+    /// store's build labelled as one, the engine, and what it ships — and the subtitle labels the store's version too. An
+    /// x86 executable's switch cannot be turned on, and the page says why; one already on can still be turned off.
+    /// </summary>
+    [Fact]
+    public async Task TheDetailsCardSaysWhatTheFilesSayAndAnX86SwitchCannotBeTurnedOn()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow game = await s.GameAsync("Alpha");
+            GameRow fresh = await s.GameAsync("Beta");
+            await s.Db.WriteAsync((c, tx, ct) => Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(
+                "UPDATE games SET platform = 'steam', game_version = '20374416', field_provenance = '{\"game_version\":\"detected\",\"platform\":\"detected\"}', "
+                + "engine = 'unreal', engine_version = '5.3', exe_machine = 'x86', exe_file_version = '1.0.2.0', exe_product_version = '1.0.2', "
+                + "library_versions = '[{\"capability\":\"dlss\",\"path\":\"bin/nvngx_dlss.dll\",\"fileVersion\":\"3.7.10.0\"},{\"capability\":\"xess\",\"path\":\"libxess.dll\"}]' "
+                + "WHERE id = @id", new { id = game.Id }, tx, cancellationToken: ct)), Ct);
+
+            (GameDetailViewModel vm, _, _, _, _) = await BuildAsync(s, game.Id);
+
+            vm.Subtitle.Should().Be("Steam build 20374416 · Unreal Engine 5.3", "the store names itself in its version");
+            vm.Details.Should().Equal(
+                new GameDetailRow("Runs as", "32-bit (x86)"),
+                new GameDetailRow("File version", "1.0.2.0"),
+                new GameDetailRow("Product version", "1.0.2"),
+                new GameDetailRow("Store", "Steam build 20374416"),
+                new GameDetailRow("Engine", "Unreal Engine 5.3"),
+                new GameDetailRow("Ships with", "DLSS: nvngx_dlss.dll 3.7.10.0" + Environment.NewLine + "XeSS: libxess.dll (no version)"));
+            vm.HookToggleEnabled.Should().BeFalse("turning hooking on could only be refused");
+            vm.NotX64Text.Should().Contain("32-bit (x86)");
+
+            await s.Db.WriteAsync((c, tx, ct) => Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(
+                "UPDATE games SET hook_enabled = 1, hook_autodisabled_reason = 'crashed twice' WHERE id = @id", new { id = game.Id }, tx, cancellationToken: ct)), Ct);
+            await vm.LoadAsync(Ct);
+            vm.HookToggleEnabled.Should().BeTrue("a switch that is on can be turned off whatever the file is");
+
+            (GameDetailViewModel unread, _, _, _, _) = await BuildAsync(s, fresh.Id);
+            unread.Details.Should().ContainSingle().Which.Should().Be(new GameDetailRow("Runs as", Strings.GameDetail_Details_NotRead));
+            unread.NotX64Text.Should().BeNull("not read is not known 32-bit");
+            unread.HookToggleEnabled.Should().BeTrue();
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
+
+    /// <summary>The Agent's refusal for such an executable (beta.8, <c>ExecutableNotX64</c>) is said in words, with the architecture.</summary>
+    [Fact]
+    public void ANotX64RefusalNamesTheArchitecture()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            new HookingConsentResult(HookingConsentOutcome.Refused, Refusal: new RefusedAck(1, "ExecutableNotX64", null, "anycpu32")).RefusalText()
+                .Should().Contain(Formats.Architecture("anycpu32")).And.Contain("64-bit (x64) games only");
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
+
     [Fact]
     public async Task RemovingRevokesOverThePipeFirstAndGoesBackToTheGrid()
     {

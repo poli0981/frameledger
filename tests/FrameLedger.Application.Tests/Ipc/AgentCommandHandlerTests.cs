@@ -3,6 +3,7 @@ using FluentAssertions;
 using FrameLedger.Application.AntiCheat;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Consent;
+using FrameLedger.Application.Detection;
 using FrameLedger.Application.Ipc;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
@@ -10,6 +11,7 @@ using FrameLedger.Application.Tests.Recording;
 using FrameLedger.Application.Watch;
 using FrameLedger.Domain.AntiCheat;
 using FrameLedger.Domain.Consent;
+using FrameLedger.Domain.Detection;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Shared.Ipc;
 
@@ -128,7 +130,20 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         public int RulesUpdates { get; set; }
     }
 
-    private async Task<Harness> BuildAsync(bool consented = true, string? disclosureVersion = null, Func<CancellationToken, ValueTask<SweepRetentionAck>>? sweep = null)
+    /// <summary>What the executable runs as, scripted (beta.8).</summary>
+    private sealed class ScriptedArchitecture(string answer) : IExecutableArchitectureSource
+    {
+        public List<string> Read { get; } = [];
+
+        string IExecutableArchitectureSource.Read(string exePath)
+        {
+            Read.Add(exePath);
+            return answer;
+        }
+    }
+
+    private async Task<Harness> BuildAsync(bool consented = true, string? disclosureVersion = null, Func<CancellationToken, ValueTask<SweepRetentionAck>>? sweep = null,
+        IExecutableArchitectureSource? architecture = null)
     {
         _db ??= await LedgerDatabase.OpenAsync(Path.Combine(_dir, LedgerPaths.DatabaseFileName), ct: Ct).ConfigureAwait(false);
         var consent = new SqliteGameConsentStore(_db);
@@ -153,7 +168,7 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         Harness h = null!;
         var handler = new AgentCommandHandler(games, consent, guard, identity, orchestrator, pause, lifetime,
             _ => { h.RulesUpdates++; return ValueTask.FromResult("AlreadyCurrent"); },
-            disclosureVersion, new FakeClock(), sweepRetention: sweep);
+            disclosureVersion, new FakeClock(), sweepRetention: sweep, architecture: architecture);
         h = new Harness
         {
             Handler = handler,
@@ -273,6 +288,33 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         record.HookEnabled.Should().BeFalse();
         record.BlockedReason.Should().NotBeNullOrEmpty("the block is on the row for FR-2.2's disabled toggle");
         record.ConsentedAt.Should().BeNull("nothing was stamped");
+    }
+
+    /// <summary>
+    /// beta.8: an executable that cannot run as x64 is refused before anything is scanned or stamped — the dialog would
+    /// promise a measurement the hook cannot make — and the refusal names the architecture. An x64 one goes on as before.
+    /// </summary>
+    [Fact]
+    public async Task SetHookEnabledTrueForAnExecutableThatCannotRunAsX64IsRefusedBeforeTheScan()
+    {
+        var x86 = new ScriptedArchitecture(ExecutableArchitecture.X86);
+        Harness h = await BuildAsync(consented: false, disclosureVersion: "consent-dialog/1", architecture: x86).ConfigureAwait(true);
+        long gameId = h.Games.Rows[_exe].Id;
+
+        IpcEnvelope ack = await AskAsync(h.Handler, IpcMessageType.SetHookEnabled, new SetHookEnabledRequest(gameId, Enabled: true, "consent-dialog/1")).ConfigureAwait(true);
+
+        ack.Type.Should().Be(IpcMessageType.Refused);
+        RefusedAck refused = IpcCodec.Payload<RefusedAck>(ack)!;
+        (refused.Reason, refused.Family, refused.Signal).Should().Be((AgentCommandHandler.NotX64Reason, (string?)null, ExecutableArchitecture.X86));
+        x86.Read.Should().ContainSingle().Which.Should().Be(_exe);
+        h.Guard.Scanned.Should().BeEmpty("nothing is scanned for a process the hook can never enter");
+        GameConsentRecord record = await h.Consent.FindAsync(_exe, Ct).ConfigureAwait(true);
+        (record.HookEnabled, record.ConsentedAt, record.BlockedReason).Should().Be((false, (DateTimeOffset?)null, (string?)null),
+            "nothing is written: this is not a block, and a 64-bit build of the game could be hooked");
+
+        Harness x64 = await BuildAsync(consented: false, architecture: new ScriptedArchitecture(ExecutableArchitecture.X64)).ConfigureAwait(true);
+        _ = await AskAsync(x64.Handler, IpcMessageType.SetHookEnabled, new SetHookEnabledRequest(x64.Games.Rows[_exe].Id, Enabled: true, "v")).ConfigureAwait(true);
+        x64.Guard.Scanned.Should().ContainSingle("an x64 executable is scanned as before");
     }
 
     [Fact]

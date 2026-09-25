@@ -1,0 +1,1 @@
+{ "engine": null, "platform": null, "capabilities": ["fsr", "xess"], "$why": "FSR 3's upscaler DLL and XeSS's DX11 build (rules 2026.09.5): until then no rule named either, so a game shipping only these showed no Supports chip." }

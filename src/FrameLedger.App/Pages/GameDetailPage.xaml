@@ -109,6 +109,25 @@
                 </ui:Card>
             </Grid>
 
+            <!-- details (beta.8, schema 0011): what the game's files and its store say — what it runs as, its versions, what it ships -->
+            <ui:CardExpander Margin="0,12,0,0" IsExpanded="True" Icon="{ui:SymbolIcon Info24}"
+                             Header="{x:Static vm:GameDetailViewModel.DetailsHeader}">
+                <ItemsControl ItemsSource="{Binding ViewModel.Details}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type vm:GameDetailRow}">
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <ui:TextBlock Grid.Column="0" Appearance="Secondary" TextWrapping="Wrap" Text="{Binding Label}" />
+                                <ui:TextBlock Grid.Column="1" TextWrapping="Wrap" Text="{Binding Value}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ui:CardExpander>
+
             <!-- recording switch (schema 0009, 2026-09-23): off, FrameLedger does not watch for this program at all -->
             <ui:CardControl Margin="0,12,0,0" Header="{x:Static vm:GameDetailViewModel.RecordingHeader}" Icon="{ui:SymbolIcon Record24}">
                 <StackPanel Orientation="Horizontal">
@@ -145,6 +164,8 @@
                 <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.HookingBody}" />
                 <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.BlockedText}"
                               Visibility="{Binding ViewModel.BlockedText, Converter={StaticResource NullToCollapsed}}" />
+                <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.NotX64Text}"
+                              Visibility="{Binding ViewModel.NotX64Text, Converter={StaticResource NullToCollapsed}}" />
                 <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.UnverifiedText}"
                               Visibility="{Binding ViewModel.UnverifiedText, Converter={StaticResource NullToCollapsed}}" />
                 <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" Text="{x:Static vm:GameDetailViewModel.BusyText}"

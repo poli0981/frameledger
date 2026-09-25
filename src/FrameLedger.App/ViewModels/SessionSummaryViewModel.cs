@@ -44,6 +44,13 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
     [ObservableProperty]
     private string _hardwareLine = string.Empty;
 
+    /// <summary>
+    /// The runtime libraries the hooked game had loaded (<c>sessions.runtime_modules</c>, written since P2 and shown nowhere
+    /// until beta.8), each against the copy the game ships where they differ; null when the row has none.
+    /// </summary>
+    [ObservableProperty]
+    private string? _librariesLine;
+
     [ObservableProperty]
     private FpsReadoutModel _readout = FpsReadoutModel.Unavailable;
 
@@ -290,6 +297,7 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         HardwareLine = _snapshot is null
             ? string.Empty
             : string.Join(" · ", SystemInfoViewModel.Describe(_snapshot).Where(static l => !string.Equals(l.Value, Strings.Common_NotAvailable, StringComparison.Ordinal)).Select(static l => l.Value));
+        LibrariesLine = LoadedLibraries(row.RuntimeModulesJson, Game.Libraries);
         Tags = _annotation is null ? string.Empty : string.Join(", ", _annotation.Tags);
         Notes = _annotation?.Notes ?? string.Empty;
         HasDisplayed = Series?.HasGenerated == true;
@@ -317,6 +325,46 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         // The machine, both tiers: telemetry is what a not-hooked session still has. Load is the average, temperature the peak.
         Stats.Add(new StatCardModel(Strings.Summary_Stat_Gpu, string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_LoadTemp_Format, Formats.Percent(row.AvgGpuLoad), Formats.Temperature(row.MaxGpuTemp))));
         Stats.Add(new StatCardModel(Strings.Summary_Stat_Cpu, string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_LoadTemp_Format, Formats.Percent(row.AvgCpuLoad), Formats.Temperature(row.MaxCpuTemp))));
+    }
+
+    /// <summary>
+    /// <c>runtime_modules</c> ({file: version}) as one line, each module beside the version the game's own copy states when
+    /// the two differ: a DLSS the NVIDIA App or the driver substituted is loaded from elsewhere under the same name. Null
+    /// for a row with none — a Tier-2 session, or one written before the census existed.
+    /// </summary>
+    internal static string? LoadedLibraries(string? runtimeModulesJson, IReadOnlyList<Domain.Detection.LibraryFile> shipped)
+    {
+        if (string.IsNullOrWhiteSpace(runtimeModulesJson))
+        {
+            return null;
+        }
+
+        Dictionary<string, string>? modules;
+        try
+        {
+            modules = System.Text.Json.JsonSerializer.Deserialize(runtimeModulesJson, AppJsonContext.Default.DictionaryStringString);
+        }
+        catch (System.Text.Json.JsonException)
+        {
+            return null;
+        }
+
+        if (modules is null || modules.Count == 0)
+        {
+            return null;
+        }
+
+        IEnumerable<string> items = modules.OrderBy(static m => m.Key, StringComparer.OrdinalIgnoreCase).Select(m =>
+        {
+            // A module with no version resource is stored as null (RuntimeModuleSnapshot.Describe).
+            string? stated = m.Value;
+            string version = stated ?? Strings.Common_NotAvailable;
+            string? own = shipped.FirstOrDefault(l => string.Equals(l.FileName, m.Key, StringComparison.OrdinalIgnoreCase))?.FileVersion;
+            return Formats.SameVersion(stated, own) == false
+                ? string.Format(CultureInfo.CurrentCulture, Strings.Summary_Library_Differs_Format, m.Key, version, own)
+                : m.Key + " " + version;
+        });
+        return string.Format(CultureInfo.CurrentCulture, Strings.Summary_Libraries_Format, string.Join(" · ", items));
     }
 
     private void PresentChips()

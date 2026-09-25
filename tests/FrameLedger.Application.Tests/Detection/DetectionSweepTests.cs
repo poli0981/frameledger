@@ -44,6 +44,10 @@ public sealed class DetectionSweepTests
 
         public bool? VulkanLoaderReferenced { get; set; }
 
+        public string Architecture { get; set; } = ExecutableArchitecture.X64;
+
+        public IReadOnlyList<LibraryFile> Libraries { get; set; } = [];
+
         public ValueTask<GameFileSnapshot> SnapshotAsync(string exePath, DetectionRuleSet rules, CancellationToken ct = default)
         {
             Calls++;
@@ -61,6 +65,10 @@ public sealed class DetectionSweepTests
                 StringsRegexCaptures = new Dictionary<string, string>(StringComparer.Ordinal),
                 ManifestFields = new Dictionary<string, string>(StringComparer.Ordinal),
                 UncollectedFacts = new HashSet<DetectionSignalType>(),
+                ExeArchitecture = Architecture,
+                PeFileVersion = "1.0.2.0",
+                PeProductVersion = "1.0.2",
+                Libraries = Libraries,
             });
         }
     }
@@ -110,6 +118,80 @@ public sealed class DetectionSweepTests
         second.Scanned.Should().Be(0);
         second.Current.Should().Be(1, "the stored key matches the file and the rules");
         probe.Calls.Should().Be(1, "a current game is not walked again");
+    }
+
+    /// <summary>beta.8 (schema 0011): the executable's own facts ride the same write — what it runs as, its versions, what it ships.</summary>
+    [Fact]
+    public async Task TheExecutablesOwnFactsAreWrittenWithTheDetection()
+    {
+        (DetectionSweep sweep, FakeGameRepository games, _, ScriptedProbe probe, _, List<string> log) = await BuildAsync();
+        probe.Libraries = [new LibraryFile("dlss", "Engine/Plugins/DLSS/nvngx_dlss.dll", "3.7.10.0", "3.7.10")];
+
+        await sweep.SweepOnceAsync(Ct);
+
+        DetectionWrite w = games.Detections.Single().Write;
+        w.ExeArchitecture.Should().Be(ExecutableArchitecture.X64);
+        (w.ExeFileVersion, w.ExeProductVersion).Should().Be(("1.0.2.0", "1.0.2"));
+        w.Libraries.Should().ContainSingle().Which.FileName.Should().Be("nvngx_dlss.dll");
+        games.Rows[_exe].ExeMachine.Should().Be("x64");
+        log.Should().Contain(static l => l.Contains("arch=x64 libraries=1", StringComparison.Ordinal));
+        games.Disabled.Should().BeEmpty("nothing about an x64 executable turns hooking off");
+    }
+
+    /// <summary>A row this build has not read the executable's facts for is stale once, whatever its key says (schema 0011).</summary>
+    [Fact]
+    public void ARowWithoutTheExecutablesFactsIsStaleOnce()
+    {
+        var onDisk = new ExecutableFingerprint { ExePath = _exe, SizeBytes = 5, MtimeUnixMs = 5 };
+        var row = new GameRow
+        {
+            Id = 1,
+            Name = "T",
+            Fingerprint = onDisk,
+            DetectionRulesVersion = "2026.09.1",
+            DetectionExeSizeBytes = 5,
+            DetectionExeMtimeMs = 5,
+            HookEnabled = false,
+            HookCrashCount = 0,
+            AddedAt = DateTimeOffset.UnixEpoch,
+            UpdatedAt = DateTimeOffset.UnixEpoch,
+        };
+
+        DetectionSweep.IsStale(row, onDisk, "2026.09.1").Should().BeTrue("exe_machine is NULL: read under an older build");
+        DetectionSweep.IsStale(row with { ExeMachine = ExecutableArchitecture.Unknown }, onDisk, "2026.09.1").Should().BeFalse(
+            "looked at and unreadable is an answer, stored so the file is not read again every pass");
+    }
+
+    /// <summary>
+    /// beta.8: an executable the x64 hook cannot enter has its hooking turned off by the sweep when a row enabled before this
+    /// build still has it on — rather than a refusal at every launch — with the architecture in the row's reason.
+    /// </summary>
+    [Theory]
+    [InlineData(ExecutableArchitecture.X86)]
+    [InlineData(ExecutableArchitecture.AnyCpu32)]
+    [InlineData(ExecutableArchitecture.Arm64)]
+    public async Task AHookEnabledRowWhoseExecutableCannotRunAsX64IsTurnedOff(string architecture)
+    {
+        (DetectionSweep sweep, FakeGameRepository games, _, ScriptedProbe probe, _, List<string> log) = await BuildAsync();
+        games.Rows[_exe] = games.Rows[_exe] with { HookEnabled = true };
+        probe.Architecture = architecture;
+
+        await sweep.SweepOnceAsync(Ct);
+
+        games.Disabled.Should().ContainSingle().Which.Reason.Should().Be(DetectionSweep.NotX64Reason(architecture));
+        log.Should().Contain(l => l.Contains("hooking turned off", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task ARowWhoseHookingIsOffIsNotTouchedWhateverItsArchitecture()
+    {
+        (DetectionSweep sweep, FakeGameRepository games, _, ScriptedProbe probe, _, _) = await BuildAsync();
+        probe.Architecture = ExecutableArchitecture.X86;
+
+        await sweep.SweepOnceAsync(Ct);
+
+        games.Disabled.Should().BeEmpty("nothing to turn off; the page says why it cannot be turned on");
+        games.Rows[_exe].ExeMachine.Should().Be(ExecutableArchitecture.X86);
     }
 
     [Fact]
@@ -209,8 +291,9 @@ public sealed class DetectionSweepTests
     public void StalenessIsTheCacheKeyFieldByField()
     {
         var onDisk = new ExecutableFingerprint { ExePath = _exe, SizeBytes = 5, MtimeUnixMs = 7 };
-        GameRow current = new() { Id = 1, Name = "T", Fingerprint = onDisk, HookEnabled = false, HookCrashCount = 0, AddedAt = DateTimeOffset.UnixEpoch, UpdatedAt = DateTimeOffset.UnixEpoch, DetectionRulesVersion = "v", DetectionExeSizeBytes = 5, DetectionExeMtimeMs = 7 };
+        GameRow current = new() { Id = 1, Name = "T", Fingerprint = onDisk, HookEnabled = false, HookCrashCount = 0, AddedAt = DateTimeOffset.UnixEpoch, UpdatedAt = DateTimeOffset.UnixEpoch, DetectionRulesVersion = "v", DetectionExeSizeBytes = 5, DetectionExeMtimeMs = 7, ExeMachine = "x64" };
         DetectionSweep.IsStale(current, onDisk, "v").Should().BeFalse();
+        DetectionSweep.IsStale(current with { ExeMachine = null }, onDisk, "v").Should().BeTrue("the executable's facts were never read (schema 0011)");
         DetectionSweep.IsStale(current with { DetectionRulesVersion = null }, onDisk, "v").Should().BeTrue("never scanned");
         DetectionSweep.IsStale(current, onDisk, "w").Should().BeTrue("rules moved");
         DetectionSweep.IsStale(current with { DetectionExeSizeBytes = 4 }, onDisk, "v").Should().BeTrue("size changed");

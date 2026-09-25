@@ -2,6 +2,7 @@ using System.Globalization;
 using System.IO;
 using FluentAssertions;
 using FrameLedger.App.Services;
+using FrameLedger.Domain.Detection;
 using FrameLedger.Domain.Sessions;
 
 namespace FrameLedger.App.Tests;
@@ -90,6 +91,46 @@ public sealed class FormatsTests
     }
 
     /// <summary>The engine ids as names (2026-09-23): proper nouns in every language; an id this table does not know passes through.</summary>
+    /// <summary>beta.8: what an executable runs as, in words — an id this build does not know reads as "could not be read".</summary>
+    [Fact]
+    public void ArchitecturesAreSaidInWords() => InEnglish(() =>
+    {
+        Formats.Architecture(ExecutableArchitecture.X64).Should().Be("64-bit (x64)");
+        Formats.Architecture(ExecutableArchitecture.X86).Should().Be("32-bit (x86)");
+        Formats.Architecture(ExecutableArchitecture.AnyCpu).Should().Be(".NET, any CPU (runs as 64-bit)");
+        Formats.Architecture(ExecutableArchitecture.AnyCpu32).Should().Contain("runs as 32-bit");
+        Formats.Architecture(ExecutableArchitecture.Arm64).Should().Be("ARM64");
+        Formats.Architecture(ExecutableArchitecture.Other).Should().Be("another architecture");
+        Formats.Architecture(ExecutableArchitecture.Unknown).Should().Be("could not be read");
+        Formats.Architecture("mips").Should().Be("could not be read");
+        return 0;
+    });
+
+    /// <summary>beta.8: a store's version is said as one; a version the user typed is shown as typed; none is none.</summary>
+    [Fact]
+    public void AStoreVersionIsLabelledWithItsStore() => InEnglish(() =>
+    {
+        Formats.StoreVersion("steam", "20374416", detected: true).Should().Be("Steam build 20374416");
+        Formats.StoreVersion("gog", "1.2.3", detected: true).Should().Be("GOG version 1.2.3");
+        Formats.StoreVersion("epic", "++Fortnite+Release-31.10", detected: true).Should().Be("Epic version ++Fortnite+Release-31.10");
+        Formats.StoreVersion("itch", "0.9", detected: true).Should().Be("0.9", "itch has no store version to label");
+        Formats.StoreVersion("steam", "1.04 (my patch)", detected: false).Should().Be("1.04 (my patch)", "the user's words are theirs");
+        Formats.StoreVersion("steam", "  ", detected: true).Should().BeNull();
+        return 0;
+    });
+
+    [Theory]
+    [InlineData("3.7.10.0", "3.7.10.0", true)]
+    [InlineData("2,8,0,0", "2.8.0.0", true)]
+    [InlineData("3.7.10.0 built by: dlss-release", "3.7.10.0", true)]
+    [InlineData("3.7.10", "3.7.10.0", true)]
+    [InlineData("310.2.1.0", "3.7.10.0", false)]
+    [InlineData(null, "3.7.10.0", null)]
+    [InlineData("3.7.10.0", null, null)]
+    [InlineData("n/a", "3.7.10.0", null)]
+    public void TwoFileVersionsAreTheSameFourNumbers(string? a, string? b, bool? expected) =>
+        Formats.SameVersion(a, b).Should().Be(expected);
+
     [Fact]
     public void EnginesAreNamedAndAnUnknownIdPassesThrough()
     {

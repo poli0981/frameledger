@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using FrameLedger.Domain.Detection;
 using FrameLedger.Domain.Metrics;
 using FrameLedger.Domain.Sessions;
 
@@ -150,6 +151,93 @@ public static class Formats
         "source" => "Source",
         _ => id,
     };
+
+    /// <summary>What an executable runs as (<c>games.exe_machine</c>, beta.8), in the user's language.</summary>
+    public static string Architecture(string? id) => id switch
+    {
+        ExecutableArchitecture.X64 => Strings.Arch_X64,
+        ExecutableArchitecture.X86 => Strings.Arch_X86,
+        ExecutableArchitecture.Arm64 => Strings.Arch_Arm64,
+        ExecutableArchitecture.Arm => Strings.Arch_Arm,
+        ExecutableArchitecture.AnyCpu => Strings.Arch_AnyCpu,
+        ExecutableArchitecture.AnyCpu32 => Strings.Arch_AnyCpu32,
+        ExecutableArchitecture.Other => Strings.Arch_Other,
+        _ => Strings.Arch_Unknown,
+    };
+
+    /// <summary>
+    /// <c>games.game_version</c> said as what it is (beta.8): a store import writes a Steam build id or a GOG / Epic
+    /// version string, and a bare "20374416" in the subtitle said nothing. Labelled with the store when a store wrote it
+    /// (<paramref name="detected"/>); a version the user typed is shown as typed. Null when there is none.
+    /// </summary>
+    public static string? StoreVersion(string? platform, string? version, bool detected)
+    {
+        if (string.IsNullOrWhiteSpace(version))
+        {
+            return null;
+        }
+
+        string? format = !detected ? null : platform switch
+        {
+            "steam" => Strings.Store_Steam_Format,
+            "gog" => Strings.Store_Gog_Format,
+            "epic" => Strings.Store_Epic_Format,
+            _ => null,
+        };
+        return format is null ? version : string.Format(CultureInfo.CurrentCulture, format, version);
+    }
+
+    /// <summary>
+    /// Whether two file versions are the same four numbers — Streamline stamps its version STRING as <c>2,8,0,0</c> and
+    /// the fixed part reads <c>2.8.0.0</c>, which agree; a string with text after the numbers is read up to it. Null
+    /// when either has no number to compare (beta.8: the session summary's "another copy was loaded").
+    /// </summary>
+    public static bool? SameVersion(string? a, string? b)
+    {
+        int[]? x = VersionNumbers(a);
+        int[]? y = VersionNumbers(b);
+        if (x is null || y is null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < 4; i++)
+        {
+            if ((i < x.Length ? x[i] : 0) != (i < y.Length ? y[i] : 0))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static int[]? VersionNumbers(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return null;
+        }
+
+        List<int> parts = new(4);
+        foreach (string token in text.Split(['.', ','], StringSplitOptions.TrimEntries))
+        {
+            // "3.7.10.0 built by …": the numbers end at the first token that is not all digits.
+            string digits = new([.. token.TakeWhile(char.IsAsciiDigit)]);
+            if (digits.Length == 0 || !int.TryParse(digits, NumberStyles.None, CultureInfo.InvariantCulture, out int n))
+            {
+                break;
+            }
+
+            parts.Add(n);
+            if (parts.Count == 4 || digits.Length != token.Length)
+            {
+                break;
+            }
+        }
+
+        return parts.Count == 0 ? null : [.. parts];
+    }
 
     /// <summary>The platform token as its store name.</summary>
     public static string Platform(string? token) => token switch

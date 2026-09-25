@@ -72,6 +72,9 @@ public sealed partial class EditGameViewModel : ObservableObject
 
     private static string? Blank(string value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
+    /// <summary>Whether <paramref name="field"/> of <c>field_provenance</c> is badged <c>detected</c> (a store or the detection sweep wrote it).</summary>
+    internal static bool IsDetectedField(string? provenanceJson, string field) => IsDetected(ParseProvenance(provenanceJson), field);
+
     private static bool IsDetected(Dictionary<string, string> provenance, string field) =>
         provenance.TryGetValue(field, out string? p) && string.Equals(p, "detected", StringComparison.Ordinal);
 

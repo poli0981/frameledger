@@ -118,4 +118,16 @@ public sealed record GameFileSnapshot
     /// (<c>17_HOOK_ENGINE</c> §Vulkan).
     /// </summary>
     public bool? VulkanLoaderReferenced { get; init; }
+
+    /// <summary>
+    /// What the executable runs as (<see cref="ExecutableArchitecture"/>), from its PE headers; <see cref="ExecutableArchitecture.Unknown"/>
+    /// when they could not be read (beta.8). A fact about the file, not a rule signal.
+    /// </summary>
+    public string ExeArchitecture { get; init; } = ExecutableArchitecture.Unknown;
+
+    /// <summary>
+    /// The files a capability rule names that the walk listed, with the versions their PE resources state (beta.8): what
+    /// the game ships, never what it loaded. Empty when none matched or no rule names a file.
+    /// </summary>
+    public IReadOnlyList<LibraryFile> Libraries { get; init; } = [];
 }

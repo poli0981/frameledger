@@ -1913,4 +1913,82 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="Notice_HookingOff_Title_Format" xml:space="preserve">
     <value>{0}: hooking turned off</value>
   </data>
+  <data name="Arch_X64" xml:space="preserve">
+    <value>64-bit (x64)</value>
+  </data>
+  <data name="Arch_X86" xml:space="preserve">
+    <value>32-bit (x86)</value>
+  </data>
+  <data name="Arch_Arm64" xml:space="preserve">
+    <value>ARM64</value>
+  </data>
+  <data name="Arch_Arm" xml:space="preserve">
+    <value>ARM (32-bit)</value>
+  </data>
+  <data name="Arch_AnyCpu" xml:space="preserve">
+    <value>.NET, any CPU (runs as 64-bit)</value>
+  </data>
+  <data name="Arch_AnyCpu32" xml:space="preserve">
+    <value>.NET, any CPU, 32-bit preferred (runs as 32-bit)</value>
+  </data>
+  <data name="Arch_Other" xml:space="preserve">
+    <value>another architecture</value>
+  </data>
+  <data name="Arch_Unknown" xml:space="preserve">
+    <value>could not be read</value>
+  </data>
+  <data name="Store_Steam_Format" xml:space="preserve">
+    <value>Steam build {0}</value>
+  </data>
+  <data name="Store_Gog_Format" xml:space="preserve">
+    <value>GOG version {0}</value>
+  </data>
+  <data name="Store_Epic_Format" xml:space="preserve">
+    <value>Epic version {0}</value>
+  </data>
+  <data name="GameDetail_Details_Header" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="GameDetail_Details_Architecture" xml:space="preserve">
+    <value>Runs as</value>
+  </data>
+  <data name="GameDetail_Details_FileVersion" xml:space="preserve">
+    <value>File version</value>
+  </data>
+  <data name="GameDetail_Details_ProductVersion" xml:space="preserve">
+    <value>Product version</value>
+  </data>
+  <data name="GameDetail_Details_Store" xml:space="preserve">
+    <value>Store</value>
+  </data>
+  <data name="GameDetail_Details_Version" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="GameDetail_Details_Engine" xml:space="preserve">
+    <value>Engine</value>
+  </data>
+  <data name="GameDetail_Details_Libraries" xml:space="preserve">
+    <value>Ships with</value>
+  </data>
+  <data name="GameDetail_Details_Library_Format" xml:space="preserve">
+    <value>{0}: {1} {2}</value>
+  </data>
+  <data name="GameDetail_Details_LibraryNoVersion_Format" xml:space="preserve">
+    <value>{0}: {1} (no version)</value>
+  </data>
+  <data name="GameDetail_Details_NoLibraries" xml:space="preserve">
+    <value>none of the files the rules name</value>
+  </data>
+  <data name="GameDetail_Details_NotRead" xml:space="preserve">
+    <value>Not read yet: the capture agent reads the game's files shortly after it starts.</value>
+  </data>
+  <data name="Hooking_NotX64_Format" xml:space="preserve">
+    <value>This game's executable is {0}. FrameLedger's hook runs in 64-bit (x64) games only, so hooking cannot be turned on; its sessions record play time and sensors.</value>
+  </data>
+  <data name="Summary_Libraries_Format" xml:space="preserve">
+    <value>Loaded: {0}</value>
+  </data>
+  <data name="Summary_Library_Differs_Format" xml:space="preserve">
+    <value>{0} {1} (the game ships {2}: another copy was loaded, for example by the driver or the NVIDIA App)</value>
+  </data>
 </root>

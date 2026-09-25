@@ -50,6 +50,18 @@ public sealed record StaticDetectionResult
     /// <summary>The capability id the sweep stores for <see cref="UsesVulkan"/>; not a rule id, and not in the rules file.</summary>
     public const string VulkanCapabilityId = "vulkan";
 
+    /// <summary>What the executable runs as (<see cref="ExecutableArchitecture"/>) — a fact about the file (beta.8).</summary>
+    public string ExeArchitecture { get; init; } = ExecutableArchitecture.Unknown;
+
+    /// <summary>The executable's PE <c>FileVersion</c>, or null. For an Unreal title it is often the ENGINE's version.</summary>
+    public string? ExeFileVersion { get; init; }
+
+    /// <summary>The executable's PE <c>ProductVersion</c>, or null.</summary>
+    public string? ExeProductVersion { get; init; }
+
+    /// <summary>The capability files the game ships, with their versions (<see cref="GameFileSnapshot.Libraries"/>).</summary>
+    public IReadOnlyList<LibraryFile> Libraries { get; init; } = [];
+
     /// <summary>
     /// Whether a re-run may write <paramref name="detected"/> over a field whose
     /// current provenance is <paramref name="existing"/>.
