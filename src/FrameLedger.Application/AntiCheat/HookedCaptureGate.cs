@@ -78,7 +78,7 @@ public sealed class HookedCaptureGate(IAntiCheatGuard guard)
                 "the per-game consent dialog has not been accepted");
         }
 
-        if (request.BlockedReason is { Length: > 0 } blocked)
+        if (request.BlockedReason is { Length: > 0 } blocked && request.ToleratedFamily is null)
         {
             // 19_SAFETY §A game already enabled can become blocked later: a
             // patch adds anti-cheat, or updated rules newly match. hook_enabled
@@ -87,11 +87,15 @@ public sealed class HookedCaptureGate(IAntiCheatGuard guard)
             return AntiCheatVerdict.Refused(AntiCheatRefusalReason.PreviouslyBlocked, "previously blocked", blocked);
         }
 
+        // D33 (owner decision 2026-09-26): a blocked game reaches the guard only under its user-mode exception, and then
+        // with the family NAMED — the guard honours it only for a family that is user-mode throughout, runs every check
+        // and keeps scanning past what it lets through. Every other game names none, which is the strict guard of before.
+        //
         // Launch mode is the same gate reached through the guard's WAITING entry: the consent checks
         // above are identical, and what differs is only WHEN the guard's full scan runs (P1 item 2).
         return request.WaitForPresentationRuntimeMs > 0
             ? await _guard.GuardedInjectWhenReadyAsync(request.TargetPid, request.PayloadPath,
-                request.WaitForPresentationRuntimeMs, ct).ConfigureAwait(false)
-            : await _guard.GuardedInjectAsync(request.TargetPid, request.PayloadPath, ct).ConfigureAwait(false);
+                request.WaitForPresentationRuntimeMs, request.ToleratedFamily, ct).ConfigureAwait(false)
+            : await _guard.GuardedInjectAsync(request.TargetPid, request.PayloadPath, request.ToleratedFamily, ct).ConfigureAwait(false);
     }
 }

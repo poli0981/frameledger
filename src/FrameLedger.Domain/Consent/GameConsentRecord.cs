@@ -60,7 +60,8 @@ public readonly record struct GameConsentRecord
         string disclosureVersion,
         string? blockedReason,
         bool preScanUnverified,
-        DateTimeOffset updatedAt)
+        DateTimeOffset updatedAt,
+        AntiCheatExceptionGrant? exception)
     {
         Fingerprint = fingerprint;
         HookEnabled = hookEnabled;
@@ -70,6 +71,7 @@ public readonly record struct GameConsentRecord
         BlockedReason = blockedReason;
         PreScanUnverified = preScanUnverified;
         UpdatedAt = updatedAt;
+        Exception = exception;
         _fromStore = true;
     }
 
@@ -141,6 +143,14 @@ public readonly record struct GameConsentRecord
     public DateTimeOffset UpdatedAt { get; }
 
     /// <summary>
+    /// D33 (owner decision 2026-09-26): the user's grant of a user-mode anti-cheat exception for this game, when there is
+    /// one (<c>games.ac_exception_*</c>, schema 0014). It never clears <see cref="BlockedReason"/> — the exception is a
+    /// separate layer over the block, and only <c>HookRequest.FromConsent</c> reads it, together with the option, the block
+    /// and the executable on disk.
+    /// </summary>
+    public AntiCheatExceptionGrant? Exception { get; }
+
+    /// <summary>
     /// True only for a record an <c>IGameConsentStore</c> actually returned.
     /// </summary>
     /// <remarks>
@@ -162,7 +172,8 @@ public readonly record struct GameConsentRecord
         string? disclosureVersion,
         string? blockedReason,
         bool preScanUnverified,
-        DateTimeOffset updatedAt) =>
+        DateTimeOffset updatedAt,
+        AntiCheatExceptionGrant? exception = null) =>
         new(fingerprint, hookEnabled, consentedAt, provenance, disclosureVersion ?? string.Empty, blockedReason,
-            preScanUnverified, updatedAt);
+            preScanUnverified, updatedAt, exception);
 }

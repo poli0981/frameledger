@@ -39,6 +39,14 @@ public interface ISessionRepository
     /// <summary>Sessions that started at or after <paramref name="since"/> (the Dashboard's "this week").</summary>
     ValueTask<long> CountSinceAsync(DateTimeOffset since, CancellationToken ct = default);
 
+    /// <summary>
+    /// D33 (owner decision 2026-09-26): the game's successful Tier-1 sessions — hooked, frames recorded, <c>exit_status =
+    /// normal</c> — the evidence a user-mode exception needs <c>UserModeExceptionRules.RequiredSessions</c> of. Since beta.8
+    /// <c>normal</c> includes End task's exit code 1 and a user's stop; a crashed, unhooked-for-safety, degraded or
+    /// interrupted session never counts.
+    /// </summary>
+    ValueTask<int> CountSuccessfulHookedAsync(long gameId, CancellationToken ct = default);
+
     ValueTask<int> SweepRetentionAsync(long gameId, int keep, CancellationToken ct = default);
 
     /// <summary>

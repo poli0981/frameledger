@@ -1673,6 +1673,19 @@ invisible to every check.
   `byte[]`, the shape `FlGuardCheckRules` already used.
 - **The Vulkan branch evaluates strictly**: the layer's self-scan goes inert on any anti-cheat module, so an exception
   there could only buy a session that measures nothing.
+- **An elevated Agent's default DACL omits the user** (`PipeAccessControl`'s remarks): a tolerance mapping created with
+  it could not be opened by the Overlay in an unelevated game, and the exception would fail as the Overlay's own stop.
+  `OverlayToleranceChannel` states `O:<user>D:P(A;;GR;;;<user>)`; a test proves the user can read it and nobody can
+  open it to write.
+- **`hook_enabled` can be 1 on a blocked row now** — only because an exception once applied. `CaptureSession.RunAsync`
+  therefore treats a blocked row whose exception does not apply right now as hooking-off BEFORE the resolver opens
+  anything, or the option off would reopen the Borderless-Gaming problem of 2026-09-22.
+- **The store applies the eligibility rule itself** (`GrantAntiCheatExceptionAsync` answers `NotEligible`), and the
+  grant and the eligibility are bound in SQL to the block text they were reached about: a block rewritten between the
+  read and the write leaves the row alone. SQLite evaluates every `SET` from the old row, which is what lets
+  `ChangeExecutableAsync`'s `CASE WHEN ac_exception_at IS NOT NULL` record the end of the grant it clears.
+- **CA1711 rejects a type whose name ends in `Exception`**: the rules class is `UserModeExceptionRules`, the reasons
+  `UserModeExceptionLapse`.
 
 ## Owner-only — no PR can close these
 

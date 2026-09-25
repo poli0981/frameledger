@@ -39,12 +39,22 @@ public sealed class AgentCommandHandler
     private readonly Func<CancellationToken, ValueTask<SweepRetentionAck>>? _sweepRetention;
     private readonly ExecutableRelocator? _relocator;
     private readonly IExecutableArchitectureSource? _architecture;
+    private readonly AntiCheatExceptionCommands? _exceptions;
 
     /// <summary>
     /// <c>Refused.reason</c> for an executable that cannot run as x64 (beta.8); <c>signal</c> carries its
     /// <see cref="ExecutableArchitecture"/> id. Not a guard reason — nothing was scanned — so not one of its names.
     /// </summary>
     public const string NotX64Reason = "ExecutableNotX64";
+
+    /// <summary>
+    /// D33: <c>Refused.reason</c> for an exception asked over a block that is not a module, file or folder finding of one
+    /// family — a title list, or a block written before 2026-09-25 that cannot be read back.
+    /// </summary>
+    public const string BlockNotExceptionableReason = "BlockNotExceptionable";
+
+    /// <summary>D33: <c>Refused.reason</c> for an exception asked with fewer successful hooked sessions than the owner's threshold; <c>signal</c> carries the count.</summary>
+    public const string TooFewSessionsReason = "TooFewSessions";
 
     /// <summary>
     /// <c>disclosureVersion</c> is the version of FR-2.1's reviewed disclosure this Agent carries
@@ -55,8 +65,11 @@ public sealed class AgentCommandHandler
         CaptureOrchestrator orchestrator, CapturePause pause, IAgentLifetime lifetime, Func<CancellationToken, ValueTask<string>> updateRules,
         string? disclosureVersion = null, TimeProvider? clock = null, VkLayerReconciler? layer = null,
         Func<CancellationToken, ValueTask<SweepRetentionAck>>? sweepRetention = null, ExecutableRelocator? relocator = null,
-        IExecutableArchitectureSource? architecture = null)
+        IExecutableArchitectureSource? architecture = null, AntiCheatExceptionCommands? exceptions = null)
     {
+        // D33: the user-mode exception's collaborators — its option, its evidence, its disclosure version. Absent, no
+        // exception applies to SetHookEnabled and SetAntiCheatException is not answered (UnknownType).
+        _exceptions = exceptions;
         // beta.8: an executable that cannot run as x64 is refused before anything is scanned or stamped; null skips the
         // question (the guard's TargetIsWow64 at a session's start stays the check either way).
         _architecture = architecture;
@@ -97,6 +110,7 @@ public sealed class AgentCommandHandler
             IpcMessageType.StopSession => Stop(request),
             IpcMessageType.UpdateRules => IpcCodec.Encode(IpcMessageType.UpdateRulesAck, request.Id, new UpdateRulesAck(await _updateRules(ct).ConfigureAwait(false))),
             IpcMessageType.Shutdown => Shutdown(request),
+            IpcMessageType.SetAntiCheatException when _exceptions is not null => await SetAntiCheatExceptionAsync(request, _exceptions, ct).ConfigureAwait(false),
             IpcMessageType.SweepRetention when _sweepRetention is not null =>
                 IpcCodec.Encode(IpcMessageType.SweepRetentionAck, request.Id, await _sweepRetention(ct).ConfigureAwait(false)),
             _ => null,
@@ -196,20 +210,134 @@ public sealed class AgentCommandHandler
         }
 
         // The EXECUTABLE, not its folder (2026-09-25): the guard resolves the install root and runs check 3 on the
-        // name and the store identity as well as check 4 on the tree.
-        AntiCheatVerdict verdict = await _guard.PreScanGameAsync(path, ct).ConfigureAwait(false);
-        if (!verdict.IsAllowed)
+        // name and the store identity as well as check 4 on the tree. D33: a blocked game whose user-mode exception is in
+        // force for these bytes names the exception's family, and the guard decides whether to honour it.
+        string? tolerated = await CoveredFamilyAsync(path, fingerprint.Value, ct).ConfigureAwait(false);
+        AntiCheatVerdict verdict = await _guard.PreScanGameAsync(path, tolerated, ct).ConfigureAwait(false);
+        return verdict.IsAllowed
+            ? await StampAsync(request, game, fingerprint.Value, payload.DisclosureVersion, verdict.RanUnderException ? "exception" : "clean", ct)
+                .ConfigureAwait(false)
+            : await RefuseEnableAsync(request, game, fingerprint.Value, verdict, tolerated, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// A refusal, or a scan that reached no answer: the store records which (a default verdict is "could not verify", never
+    /// a block), and both are answered as a refusal to enable. A finding about the game under its user-mode exception also
+    /// ends the exception (D33).
+    /// </summary>
+    private async ValueTask<byte[]> RefuseEnableAsync(IpcEnvelope request, GameRow game, ExecutableFingerprint fingerprint,
+        AntiCheatVerdict verdict, string? tolerated, CancellationToken ct)
+    {
+        await _consent.RecordGuardBlockAsync(fingerprint, verdict, ct).ConfigureAwait(false);
+        if (tolerated is not null && verdict.IsFindingAboutTheGame)
         {
-            // A refusal, or a scan that reached no answer: the store records which (a default verdict is
-            // "could not verify", never a block), and both are answered as a refusal to enable.
-            await _consent.RecordGuardBlockAsync(fingerprint.Value, verdict, ct).ConfigureAwait(false);
-            await ReconcileLayerAsync(ct).ConfigureAwait(false);
-            string reason = verdict.Reason == AntiCheatRefusalReason.Allow ? "PreScanCouldNotVerify" : verdict.Reason.ToString();
-            return IpcCodec.Encode(IpcMessageType.Refused, request.Id,
-                new RefusedAck(game.Id, reason, NullIfEmpty(verdict.Family), NullIfEmpty(verdict.Signal)));
+            await _consent.RevokeAntiCheatExceptionAsync(fingerprint.ExePath, UserModeExceptionLapse.NewFinding, ct).ConfigureAwait(false);
         }
 
-        return await StampAsync(request, game, fingerprint.Value, payload.DisclosureVersion, "clean", ct).ConfigureAwait(false);
+        await ReconcileLayerAsync(ct).ConfigureAwait(false);
+        string reason = verdict.Reason == AntiCheatRefusalReason.Allow ? "PreScanCouldNotVerify" : verdict.Reason.ToString();
+        return IpcCodec.Encode(IpcMessageType.Refused, request.Id,
+            new RefusedAck(game.Id, reason, NullIfEmpty(verdict.Family), NullIfEmpty(verdict.Signal)));
+    }
+
+    /// <summary>
+    /// D33: the family the game's user-mode exception covers for <paramref name="observed"/> right now — the option on, a
+    /// grant on the row made on these bytes, the block naming that family — or null (<see cref="UserModeExceptionRules.CoveredFamily"/>).
+    /// </summary>
+    private async ValueTask<string?> CoveredFamilyAsync(string path, ExecutableFingerprint observed, CancellationToken ct)
+    {
+        if (_exceptions is null || !await _exceptions.Switch.IsOnAsync(ct).ConfigureAwait(false))
+        {
+            return null;
+        }
+
+        GameConsentRecord record = await _consent.FindAsync(path, ct).ConfigureAwait(false);
+        return UserModeExceptionRules.CoveredFamily(record, observed, optionOn: true);
+    }
+
+    /// <summary>
+    /// D33 (owner decision 2026-09-26): grant or withdraw a game's user-mode exception. A withdrawal is the user's and needs
+    /// nothing. A grant needs the client's disclosure version to be this Agent's and the option on, then the facts the
+    /// Agent gathers itself (<see cref="GrantExceptionAsync"/>). Granting never turns hooking on: that is FR-2.1's dialog,
+    /// afterwards, through <c>SetHookEnabled</c>.
+    /// </summary>
+    private async ValueTask<byte[]> SetAntiCheatExceptionAsync(IpcEnvelope request, AntiCheatExceptionCommands exceptions, CancellationToken ct)
+    {
+        SetAntiCheatExceptionRequest? payload = IpcCodec.Payload<SetAntiCheatExceptionRequest>(request);
+        if (payload is null)
+        {
+            return Malformed(request, "SetAntiCheatException carries no payload");
+        }
+
+        GameRow? game = await FindGameAsync(payload.GameId, ct).ConfigureAwait(false);
+        if (game is null)
+        {
+            return Error(request, IpcErrorCode.UnknownGame, $"no games row has id {payload.GameId}");
+        }
+
+        if (!payload.Enabled)
+        {
+            ConsentWriteOutcome withdrawn = await _consent.RevokeAntiCheatExceptionAsync(game.Fingerprint.ExePath, UserModeExceptionLapse.Withdrawn, ct)
+                .ConfigureAwait(false);
+            await ReconcileLayerAsync(ct).ConfigureAwait(false);
+            return IpcCodec.Encode(IpcMessageType.AntiCheatExceptionAck, request.Id,
+                new AntiCheatExceptionAck(game.Id, Granted: false, withdrawn.ToString(), game.AcException.Family));
+        }
+
+        if (!string.Equals(payload.DisclosureVersion, exceptions.DisclosureVersion, StringComparison.Ordinal))
+        {
+            return Error(request, IpcErrorCode.DisclosureVersionMismatch,
+                $"the client showed exception disclosure '{payload.DisclosureVersion ?? "(none)"}' and this Agent grants against '{exceptions.DisclosureVersion}': nothing was granted — restart both");
+        }
+
+        return await exceptions.Switch.IsOnAsync(ct).ConfigureAwait(false)
+            ? await GrantExceptionAsync(request, game, exceptions, ct).ConfigureAwait(false)
+            : Error(request, IpcErrorCode.ExceptionsOff, "the user-mode exception option is off, so nothing can be granted");
+    }
+
+    /// <summary>
+    /// D33: the facts a grant rests on, gathered here and now — the block on the row, a tolerant pre-scan of the executable on
+    /// disk naming the block's family, and the successful Tier-1 sessions — each refusal said as what it is; the store then
+    /// writes the grant only when they make the game eligible, and only while the row still carries that block.
+    /// </summary>
+    private async ValueTask<byte[]> GrantExceptionAsync(IpcEnvelope request, GameRow game, AntiCheatExceptionCommands exceptions, CancellationToken ct)
+    {
+        string path = game.Fingerprint.ExePath;
+        if (StoredBlock.Parse(game.HookBlockedReason) is not { IsExceptionable: true } block)
+        {
+            return IpcCodec.Encode(IpcMessageType.Refused, request.Id, new RefusedAck(game.Id, BlockNotExceptionableReason, Family: null, Signal: null));
+        }
+
+        if (_identity.Read(path) is not { } fingerprint)
+        {
+            return Error(request, IpcErrorCode.ExecutableUnreadable, $"{path} could not be read, so nothing can be scanned or granted");
+        }
+
+        AntiCheatVerdict verdict = await _guard.PreScanGameAsync(path, block.Family, ct).ConfigureAwait(false);
+        if (!verdict.RanUnderException || !string.Equals(verdict.Family, block.Family, StringComparison.Ordinal))
+        {
+            string reason = verdict.IsAllowed ? BlockNotExceptionableReason : verdict.Reason.ToString();
+            return IpcCodec.Encode(IpcMessageType.Refused, request.Id, new RefusedAck(game.Id, reason, NullIfEmpty(verdict.Family), NullIfEmpty(verdict.Signal)));
+        }
+
+        int sessions = await exceptions.Sessions.CountSuccessfulHookedAsync(game.Id, ct).ConfigureAwait(false);
+        if (sessions < UserModeExceptionRules.RequiredSessions)
+        {
+            return IpcCodec.Encode(IpcMessageType.Refused, request.Id, new RefusedAck(game.Id, TooFewSessionsReason, block.Family,
+                sessions.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+        }
+
+        ConsentWriteOutcome outcome = await _consent.GrantAntiCheatExceptionAsync(new AntiCheatExceptionGrantRequest
+        {
+            Fingerprint = fingerprint,
+            Block = game.HookBlockedReason!,
+            Verdict = verdict,
+            Sessions = sessions,
+            DisclosureVersion = exceptions.DisclosureVersion,
+            GrantedAt = _clock.GetUtcNow(),
+        }, ct).ConfigureAwait(false);
+        return IpcCodec.Encode(IpcMessageType.AntiCheatExceptionAck, request.Id,
+            new AntiCheatExceptionAck(game.Id, Granted: outcome == ConsentWriteOutcome.Written, outcome.ToString(), block.Family));
     }
 
     /// <summary>

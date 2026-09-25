@@ -43,12 +43,16 @@ public sealed class SessionRecorder : ISessionRecorder
     private readonly IRecorderPolicy? _policy;
     private readonly ISessionObserver? _observer;
     private readonly IDriverProfileSource? _profiles;
+    private readonly UserModeExceptionLapsePolicy? _exceptionLapse;
 
     public SessionRecorder(ICaptureSessionFactory sessions, IGameRepository games, IHardwareSnapshotRepository snapshots,
         IHardwareSnapshotSource hardware, IPartialSessionStore partials, SessionFinalizer finalizer, ICrashEventSource crashes,
         Func<RecorderOptions, ITelemetryPoller?> pollers, TimeProvider clock, RecorderOptions? options = null, ISessionObserver? observer = null,
-        IRecorderPolicy? policy = null, IDriverProfileSource? profiles = null)
+        IRecorderPolicy? policy = null, IDriverProfileSource? profiles = null, UserModeExceptionLapsePolicy? exceptionLapse = null)
     {
+        // D33: ends a game's user-mode exception when a session under it ends badly; null in every recorder that has no
+        // consent store to write to (the tests, the unshipped host), where no exception can be in force either.
+        _exceptionLapse = exceptionLapse;
         // beta.8: the NVIDIA driver profile the game runs under, read beside each session; null in every recorder that has
         // no NVIDIA bridge to ask (the tests, the unshipped host).
         _profiles = profiles;
@@ -212,6 +216,12 @@ public sealed class SessionRecorder : ISessionRecorder
             crash = await _crashPolicy.ApplyAsync(ownerId, exit, outcome.ExitCode, run.AttachedAt, endedAt, ct).ConfigureAwait(false);
         }
 
+        // D33: a session under the game's user-mode exception that ended badly ends the exception — after the row is
+        // stored, so the session that ended it is on the page the exception is gone from.
+        string? lapsed = _exceptionLapse is null
+            ? null
+            : await _exceptionLapse.ApplyAsync(request.NormalisedExePath, outcome, exit, ct).ConfigureAwait(false);
+
         return new RecordedSession
         {
             SessionGuid = header.SessionGuid,
@@ -221,6 +231,7 @@ public sealed class SessionRecorder : ISessionRecorder
             Finalize = saved,
             CrashPolicy = crash,
             CrashEventFound = crashEvent,
+            ExceptionLapse = lapsed,
         };
     }
 
@@ -240,6 +251,13 @@ public sealed class SessionRecorder : ISessionRecorder
                 // Three slots, every one present (beta.8): an empty family used to be dropped, and the signal then read as it.
                 notes += "; " + CaptureNotes.GuardSlot(o.Verdict.Reason.ToString(), o.Verdict.Family, o.Verdict.Signal);
             }
+        }
+
+        // A hooked session under the game's user-mode exception says so, and names the family (D33): the column is the
+        // App's, the notes travel into every bug bundle.
+        if (hooked && o.ExceptionFamily is { Length: > 0 } excepted)
+        {
+            notes += "; " + CaptureNotes.AcExceptionSlot(excepted);
         }
 
         // The session that turned the game's hooking off says so in its notes (2026-09-22): the row's block names
@@ -269,6 +287,7 @@ public sealed class SessionRecorder : ISessionRecorder
             DrainTicks = hooked ? o.DrainTicks : null,
             ForegroundTicks = hooked ? o.ForegroundTicks : null,
             GuardTicksPublished = hooked ? o.GuardTicksPublished : null,
+            AcExceptionFamily = hooked ? o.ExceptionFamily : null,
         };
     }
 

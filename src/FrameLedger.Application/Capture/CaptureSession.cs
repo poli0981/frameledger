@@ -44,7 +44,9 @@ public sealed class CaptureSession(
     IProcessLauncher? launcher = null,
     ICaptureObserver? observer = null,
     IKillSwitch? killSwitch = null,
-    ICapturePauseSource? pause = null)
+    ICapturePauseSource? pause = null,
+    IUserModeExceptionSwitch? exceptions = null,
+    IOverlayToleranceChannel? tolerance = null)
 {
     /// <summary>Start one session, or say why not.</summary>
     /// <remarks>
@@ -88,8 +90,12 @@ public sealed class CaptureSession(
         // blocked by a finding, or auto-disabled — gets a Tier-2 session and nothing else: no OpenProcess, no resolver,
         // no gate. Until this line existed the resolver ran first, and a hooking-off utility that runs elevated
         // (Borderless Gaming, on the owner's machine) was reported as a process an anti-cheat driver protects.
+        //
+        // A BLOCKED row is hooking-off too unless its user-mode exception applies to this executable with the option on
+        // (D33): hook_enabled can be 1 on a blocked row only because the exception once applied, and without it the gate
+        // would refuse the row anyway — after the resolver had opened the process for nothing.
         GameConsentRecord record = await store.FindAsync(normalisedExePath, ct).ConfigureAwait(false);
-        if (!record.HookEnabled)
+        if (!record.HookEnabled || await IsBlockedWithoutExceptionAsync(record, observed, ct).ConfigureAwait(false))
         {
             return await HoldUnhookedAsync(HookingOff(record), normalisedExePath, alive: null, pid: null, ct, stop).ConfigureAwait(false);
         }
@@ -118,6 +124,11 @@ public sealed class CaptureSession(
         return await SessionAsync(pid.Value, alive, record, observed!.Value, payloadPath, started: null, ct, stop)
             .ConfigureAwait(false);
     }
+
+    /// <summary>D33: a block on the row that no user-mode exception covers for <paramref name="observed"/> right now.</summary>
+    private async ValueTask<bool> IsBlockedWithoutExceptionAsync(GameConsentRecord record, ExecutableFingerprint? observed, CancellationToken ct) =>
+        record.BlockedReason is { Length: > 0 }
+        && (observed is not { } exe || UserModeExceptionRules.CoveredFamily(record, exe, await IsExceptionOptionOnAsync(ct).ConfigureAwait(false)) is null);
 
     /// <summary>The verdict a hooking-off row's Tier-2 session carries: the row's block when it has one, else "not enabled".</summary>
     private static CaptureOutcome HookingOff(GameConsentRecord record) => new()
@@ -227,7 +238,12 @@ public sealed class CaptureSession(
         // THE FOURTH INPUT (FR-2.4, decision D7) is read here and handed to the request, so the refusal is
         // the gate's — a check upstream of it would make the gate's own "ONLY managed logic" remark false.
         bool engaged = await IsKillSwitchEngagedAsync(ct).ConfigureAwait(false);
-        HookRequest request = HookRequest.FromConsent(record, observed, pid, payloadPath, waitMs, engaged);
+        // D33: the Overlay's channel is published BEFORE the request is built and the guard asked — the Overlay reads it
+        // once, before its loader detour exists — and a channel that could not be published is no exception at all: the
+        // request then names no family and the gate refuses the blocked game as before.
+        string? covered = UserModeExceptionRules.CoveredFamily(record, observed, await IsExceptionOptionOnAsync(ct).ConfigureAwait(false));
+        using IDisposable? channel = covered is null ? null : tolerance?.TryPublish(pid, covered);
+        HookRequest request = HookRequest.FromConsent(record, observed, pid, payloadPath, waitMs, engaged, exceptionInForce: channel is not null);
         AntiCheatVerdict verdict = await gate.StartAsync(request, ct).ConfigureAwait(false);
         TimeSpan? launchWait = started?.Elapsed;
         // THE ONE VERDICT THAT IS NEITHER: the guard passed and injected nothing because the target
@@ -240,7 +256,15 @@ public sealed class CaptureSession(
             // A finding about the game turns its hooking off here and now (owner decision 2026-09-22), not only at
             // the pre-scan: the guard's start-time scan sees the process and the drivers the pre-scan cannot.
             bool turnedOff = await TurnHookingOffAsync(observed, verdict, ct).ConfigureAwait(false);
-            var refused = new CaptureOutcome { Reason = RefusalOf(verdict.Reason), Verdict = verdict, LaunchWait = launchWait, HookingTurnedOff = turnedOff };
+            var refused = new CaptureOutcome
+            {
+                Reason = RefusalOf(verdict.Reason),
+                Verdict = verdict,
+                LaunchWait = launchWait,
+                HookingTurnedOff = turnedOff,
+                ExceptionFamily = request.ToleratedFamily,
+            };
+            channel?.Dispose();
             // Launch mode's two guard refusals are the orchestrator's cue to elect a descendant (04_CAPTURE §Launch
             // mode); holding the launcher's session open would delay that. Every other refusal is Tier 2 from here.
             return refused.Reason is SessionEndReason.LaunchTargetExited or SessionEndReason.LaunchNoPresentationRuntime
@@ -258,13 +282,14 @@ public sealed class CaptureSession(
                 Verdict = verdict,
                 AttachRefusal = refusal,
                 LaunchWait = launchWait,
+                ExceptionFamily = request.ToleratedFamily,
             }, observedPath, alive, pid, ct, stop).ConfigureAwait(false);
         }
 
         using (sink)
         {
             observer?.Attached(pid, sink.Handshake);
-            CaptureOutcome result = await DrainAsync(pid, alive, sink, verdict, observed, ct, stop).ConfigureAwait(false);
+            CaptureOutcome result = await DrainAsync(pid, alive, sink, verdict, observed, request.ToleratedFamily, ct, stop).ConfigureAwait(false);
             return result with { LaunchWait = launchWait, TargetPid = pid, ExitCode = alive.ExitCode };
         }
     }
@@ -296,6 +321,10 @@ public sealed class CaptureSession(
         AntiCheatRefusalReason.KillSwitchEngaged => SessionEndReason.RefusedKillSwitch,
         _ => SessionEndReason.RefusedByGuard,
     };
+
+    /// <summary>D33's option as this session reads it; a loop built without one reads "off", which applies no exception.</summary>
+    private async ValueTask<bool> IsExceptionOptionOnAsync(CancellationToken ct) =>
+        exceptions is not null && await exceptions.IsOnAsync(ct).ConfigureAwait(false);
 
     /// <summary>FR-2.4 as this session reads it; a loop built without a switch reads "off".</summary>
     private async ValueTask<bool> IsKillSwitchEngagedAsync(CancellationToken ct) =>
@@ -331,9 +360,10 @@ public sealed class CaptureSession(
     }
 
     private async Task<CaptureOutcome> DrainAsync(int pid, ITargetLiveness alive, ICaptureSink sink,
-        AntiCheatVerdict verdict, ExecutableFingerprint observed, CancellationToken ct, CancellationToken stop)
+        AntiCheatVerdict verdict, ExecutableFingerprint observed, string? toleratedFamily, CancellationToken ct, CancellationToken stop)
     {
-        var supervisor = new GuardSupervisor(guard);
+        // D33: every re-scan names the family the injection named, and nothing else.
+        var supervisor = new GuardSupervisor(guard, toleratedFamily);
         var state = new DrainState(new ModuleTally(modules, ngx));
         SessionEndReason end = await SuperviseAsync(pid, alive, sink, supervisor, state, ct, stop).ConfigureAwait(false);
 
@@ -351,6 +381,7 @@ public sealed class CaptureSession(
             Reason = end,
             Verdict = final,
             HookingTurnedOff = turnedOff,
+            ExceptionFamily = toleratedFamily,
             AttachRefusal = ShmAttachRefusal.Ok,
             Records = state.Records,
             GapBefore = state.GapBefore,

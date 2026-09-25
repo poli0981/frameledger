@@ -37,6 +37,12 @@ public sealed record SessionRow
 
     public string? CaptureNotes { get; init; }
 
+    /// <summary>
+    /// D33 (owner decision 2026-09-26, schema 0014): the anti-cheat family the game's user-mode exception let through while
+    /// this session was hooked, or null when it ran under none. A Tier-2 session never carries one: nothing was hooked.
+    /// </summary>
+    public string? AcExceptionFamily { get; init; }
+
     public bool LateAttach { get; init; }
 
     public string? TelemetrySource { get; init; }

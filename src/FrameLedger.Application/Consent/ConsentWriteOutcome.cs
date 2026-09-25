@@ -24,4 +24,11 @@ public enum ConsentWriteOutcome
 
     /// <summary>The write did not happen. Never treat this as "probably fine".</summary>
     Failed = 3,
+
+    /// <summary>
+    /// D33: a user-mode exception was asked for a game the facts do not make eligible — the block is not a module, file or
+    /// folder finding, the tolerant pre-scan did not let that family through, or there are too few successful sessions.
+    /// Nothing was written.
+    /// </summary>
+    NotEligible = 4,
 }

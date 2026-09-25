@@ -39,6 +39,8 @@ namespace FrameLedger.Shared.Ipc;
 [JsonSerializable(typeof(SetHookEnabledRequest))]
 [JsonSerializable(typeof(HookEnabledAck))]
 [JsonSerializable(typeof(RefusedAck))]
+[JsonSerializable(typeof(SetAntiCheatExceptionRequest))]
+[JsonSerializable(typeof(AntiCheatExceptionAck))]
 [JsonSerializable(typeof(PauseCaptureRequest))]
 [JsonSerializable(typeof(ResumeCaptureRequest))]
 [JsonSerializable(typeof(PauseAck))]

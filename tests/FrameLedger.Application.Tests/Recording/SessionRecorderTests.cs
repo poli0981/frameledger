@@ -6,6 +6,7 @@ using FrameLedger.Application.Consent;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
 using FrameLedger.Application.Telemetry;
+using FrameLedger.Application.Tests.AntiCheat;
 using FrameLedger.Application.Tests.Capture;
 using FrameLedger.Domain.AntiCheat;
 using FrameLedger.Domain.Consent;
@@ -69,14 +70,14 @@ public sealed class SessionRecorderTests : IAsyncDisposable
     {
         public AntiCheatVerdict Verdict { get; set; } = AntiCheatVerdict.Allowed();
 
-        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, CancellationToken ct = default) => ValueTask.FromResult(AntiCheatVerdict.Allowed());
+        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, string? toleratedFamily, CancellationToken ct = default) => ValueTask.FromResult(AntiCheatVerdict.Allowed());
 
-        public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath, CancellationToken ct = default) => ValueTask.FromResult(Verdict);
+        public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath, string? toleratedFamily, CancellationToken ct = default) => ValueTask.FromResult(Verdict);
 
-        public ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAsync(int targetPid, string payloadPath, int timeoutMs, CancellationToken ct = default) =>
+        public ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAsync(int targetPid, string payloadPath, int timeoutMs, string? toleratedFamily, CancellationToken ct = default) =>
             ValueTask.FromResult(Verdict);
 
-        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath, CancellationToken ct = default) =>
+        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath, string? toleratedFamily, CancellationToken ct = default) =>
             ValueTask.FromResult(AntiCheatVerdict.Allowed());
     }
 
@@ -182,7 +183,14 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         }
     }
 
-    private sealed class Factory(IGameConsentStore store, FakeGuard guard, SteppingClock clock, int records, FakeLiveness liveness) : ICaptureSessionFactory
+    /// <summary>D33: the Overlay's channel, always published.</summary>
+    private sealed class OpenChannel : IOverlayToleranceChannel
+    {
+        public IDisposable? TryPublish(int pid, string family) => new MemoryStream();
+    }
+
+    private sealed class Factory(IGameConsentStore store, FakeGuard guard, SteppingClock clock, int records, FakeLiveness liveness,
+        IUserModeExceptionSwitch? exceptions = null) : ICaptureSessionFactory
     {
         public CaptureSession Create(ICaptureObserver observer) => new(
             store, new HookedCaptureGate(guard), guard, new FixedResolver(),
@@ -197,7 +205,9 @@ public sealed class SessionRecorderTests : IAsyncDisposable
                 LogFlushGrace = TimeSpan.FromMilliseconds(1),
                 HoldInterval = TimeSpan.FromMilliseconds(1),
             },
-            observer: observer);
+            observer: observer,
+            exceptions: exceptions,
+            tolerance: exceptions is null ? null : new OpenChannel());
     }
 
     private sealed class NoCrashEvents : ICrashEventSource
@@ -228,6 +238,8 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         public required FakePartialSessionStore Partials { get; init; }
 
         public required SteppingClock Clock { get; init; }
+
+        public required SqliteGameConsentStore Store { get; init; }
     }
 
     /// <summary>What the driver-profile source answers (beta.8); a throwing one proves a failed read costs the column, not the session.</summary>
@@ -243,7 +255,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
     }
 
     private async Task<Harness> MakeAsync(bool consented = true, AntiCheatVerdict? verdict = null, int records = 3_000, FakeLiveness? liveness = null, bool poller = true,
-        bool clockStepsOnDrain = false, IDriverProfileSource? profiles = null)
+        bool clockStepsOnDrain = false, IDriverProfileSource? profiles = null, bool excepted = false)
     {
         _db ??= await LedgerDatabase.OpenAsync(Path.Combine(_dir, LedgerPaths.DatabaseFileName), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         var store = new SqliteGameConsentStore(_db);
@@ -257,18 +269,47 @@ public sealed class SessionRecorderTests : IAsyncDisposable
             }, TestContext.Current.CancellationToken).ConfigureAwait(false);
         }
 
+        if (excepted)
+        {
+            await ExceptAsync(store).ConfigureAwait(false);
+        }
+
         var clock = new SteppingClock();
         var guard = new FakeGuard { Verdict = verdict ?? AntiCheatVerdict.Allowed() };
         var games = new FakeGameRepository();
         var sessions = new FakeSessionRepository();
         var partials = new FakePartialSessionStore();
         var recorder = new SessionRecorder(
-            new Factory(store, guard, clock, records, liveness ?? _alive),
+            new Factory(store, guard, clock, records, liveness ?? _alive, excepted ? new FakeExceptionSwitch(on: true) : null),
             games, new FakeSnapshots(), new FixedHardware(), partials,
             new SessionFinalizer(sessions, new RawSeriesCodec()), new NoCrashEvents(),
             _ => poller ? new FakePoller(clockStepsOnDrain ? clock : null) : null, clock,
-            new RecorderOptions { PartialFlushInterval = TimeSpan.FromSeconds(10) }, profiles: profiles);
-        return new Harness { Recorder = recorder, Games = games, Sessions = sessions, Partials = partials, Clock = clock };
+            new RecorderOptions { PartialFlushInterval = TimeSpan.FromSeconds(10) }, profiles: profiles,
+            exceptionLapse: new UserModeExceptionLapsePolicy(store));
+        return new Harness { Recorder = recorder, Games = games, Sessions = sessions, Partials = partials, Clock = clock, Store = store };
+    }
+
+    /// <summary>D33: block the consented row for NetEase Yidun, grant its exception on these bytes, and turn hooking on again.</summary>
+    private static async Task ExceptAsync(SqliteGameConsentStore store)
+    {
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        await store.RecordGuardBlockAsync(Fingerprint, AntiCheatVerdict.Refused(AntiCheatRefusalReason.AntiCheatFile, "NetEase Yidun", "NEP2.dll"), ct)
+            .ConfigureAwait(false);
+        await store.GrantAntiCheatExceptionAsync(new AntiCheatExceptionGrantRequest
+        {
+            Fingerprint = Fingerprint,
+            Block = "AntiCheatFile|NetEase Yidun|NEP2.dll",
+            Verdict = AntiCheatVerdict.AllowedUnderException("NetEase Yidun", "NEP2.dll"),
+            Sessions = 2,
+            DisclosureVersion = "ac-exception-dialog/1",
+            GrantedAt = DateTimeOffset.UnixEpoch,
+        }, ct).ConfigureAwait(false);
+        await store.RecordOperatorAcknowledgementAsync(new OperatorAcknowledgement
+        {
+            Fingerprint = Fingerprint,
+            DisclosureVersion = "operator-disclosure/test",
+            AcknowledgedAt = DateTimeOffset.UnixEpoch,
+        }, ct).ConfigureAwait(false);
     }
 
     private static RecordRequest Request(CaptureMode mode = CaptureMode.Attach) => new()
@@ -278,6 +319,43 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         PayloadPath = "payload.dll",
         Mode = mode,
     };
+
+    /// <summary>
+    /// D33 (owner decision 2026-09-26): a hooked session under the game's user-mode exception is marked with the family —
+    /// the column the App reads, the notes a bug bundle carries — and an ordinary end leaves the exception in force.
+    /// </summary>
+    [Fact]
+    public async Task ASessionUnderTheExceptionIsMarkedAndAnOrdinaryEndKeepsTheException()
+    {
+        Harness h = await MakeAsync(verdict: AntiCheatVerdict.AllowedUnderException("NetEase Yidun", "NEP2.dll"), excepted: true);
+
+        RecordedSession r = await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        r.Row.Tier.Should().Be(CaptureTier.Hooked);
+        r.Row.AcExceptionFamily.Should().Be("NetEase Yidun");
+        r.Row.CaptureNotes.Should().Contain("ac-exception=NetEase Yidun");
+        CaptureNotes.Parse(r.Row.CaptureNotes).AcExceptionFamily.Should().Be("NetEase Yidun");
+        r.ExceptionLapse.Should().BeNull();
+        (await h.Store.FindAsync(_exe, TestContext.Current.CancellationToken)).Exception.Should().NotBeNull();
+    }
+
+    /// <summary>D33: a crash while hooked under the exception ends it — hooking off, the block standing, the reason recorded.</summary>
+    [Fact]
+    public async Task ACrashUnderTheExceptionEndsIt()
+    {
+        using var crashed = new FakeLiveness(exited: true, exitCode: unchecked((int)0xC0000005));
+        Harness h = await MakeAsync(verdict: AntiCheatVerdict.AllowedUnderException("NetEase Yidun", "NEP2.dll"), excepted: true, liveness: crashed);
+
+        RecordedSession r = await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        r.ExitStatus.Should().Be(ExitStatus.Crashed);
+        r.ExceptionLapse.Should().Be(UserModeExceptionLapse.SessionCrashed);
+        GameConsentRecord after = await h.Store.FindAsync(_exe, TestContext.Current.CancellationToken);
+        after.Exception.Should().BeNull();
+        after.HookEnabled.Should().BeFalse("the block stands, so hooking goes off with the exception");
+        after.BlockedReason.Should().Be("AntiCheatFile|NetEase Yidun|NEP2.dll", "nothing clears a block");
+        after.ConsentedAt.Should().NotBeNull("the end of an exception keeps the consent stamp, as a block does");
+    }
 
     [Fact]
     public async Task AHookedSessionIsRecordedEndToEnd()

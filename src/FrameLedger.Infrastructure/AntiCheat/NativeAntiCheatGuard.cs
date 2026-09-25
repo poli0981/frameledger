@@ -61,7 +61,7 @@ public sealed class NativeAntiCheatGuard : IAntiCheatGuard
     // the reason this comment exists.
     // `toleratedFamilies` (D33): newline-separated family NAMES as NUL-terminated UTF-8 bytes (the byte[] shape
     // FlGuardCheckRules takes, so no string crosses as ANSI), null for none — the one thing a caller may add, resolved
-    // and bounded by the guard itself (fl_guard_abi.h). Null until the Agent's exception passes one.
+    // and bounded by the guard itself (fl_guard_abi.h). Built by ToleranceBytes from the port's one family name.
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [DllImport(_guardDll, CallingConvention = CallingConvention.Cdecl)]
     private static extern void FlGuardEvaluate(uint targetPid, byte[]? toleratedFamilies,
@@ -112,48 +112,66 @@ public sealed class NativeAntiCheatGuard : IAntiCheatGuard
     }
 
     /// <inheritdoc />
-    public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, CancellationToken ct = default) =>
+    public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, string? toleratedFamily, CancellationToken ct = default) =>
         RunAsync(() =>
         {
-            FlGuardEvaluate(checked((uint)targetPid), null, out FlGuardResult r);
+            FlGuardEvaluate(checked((uint)targetPid), ToleranceBytes(toleratedFamily), out FlGuardResult r);
             return AntiCheatVerdict.FromNative(r.Reason, r.Family, r.Signal);
         }, ct);
 
     /// <inheritdoc />
-    public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath,
+    public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath, string? toleratedFamily,
         CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(payloadPath);
         return RunAsync(() =>
         {
-            FlGuardedInject(checked((uint)targetPid), payloadPath, null, out FlGuardResult r);
+            FlGuardedInject(checked((uint)targetPid), payloadPath, ToleranceBytes(toleratedFamily), out FlGuardResult r);
             return AntiCheatVerdict.FromNative(r.Reason, r.Family, r.Signal);
         }, ct);
     }
 
     /// <inheritdoc />
     public ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAsync(int targetPid, string payloadPath, int timeoutMs,
-        CancellationToken ct = default)
+        string? toleratedFamily, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(payloadPath);
         ArgumentOutOfRangeException.ThrowIfNegative(timeoutMs);
         return RunAsync(() =>
         {
-            FlGuardedInjectWhenReady(checked((uint)targetPid), payloadPath, checked((uint)timeoutMs), null,
-                out FlGuardResult r);
+            FlGuardedInjectWhenReady(checked((uint)targetPid), payloadPath, checked((uint)timeoutMs),
+                ToleranceBytes(toleratedFamily), out FlGuardResult r);
             return AntiCheatVerdict.FromNative(r.Reason, r.Family, r.Signal);
         }, ct);
     }
 
     /// <inheritdoc />
-    public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath, CancellationToken ct = default)
+    public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath, string? toleratedFamily, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(executablePath);
         return RunAsync(() =>
         {
-            FlStaticPreScanGame(executablePath, null, out FlGuardResult r);
+            FlStaticPreScanGame(executablePath, ToleranceBytes(toleratedFamily), out FlGuardResult r);
             return AntiCheatVerdict.FromNative(r.Reason, r.Family, r.Signal);
         }, ct);
+    }
+
+    /// <summary>
+    /// D33: the port's one family NAME as the ABI takes it — NUL-terminated UTF-8, or null for none. A name that could
+    /// not be one (a control character would split the ABI's newline-separated list into names nobody granted) crosses
+    /// as none: tolerating less is the safe direction, and the guard ignores an unknown or kernel-level name anyway.
+    /// </summary>
+    public static byte[]? ToleranceBytes(string? toleratedFamily)
+    {
+        if (string.IsNullOrWhiteSpace(toleratedFamily) || toleratedFamily.Any(char.IsControl))
+        {
+            return null;
+        }
+
+        byte[] name = System.Text.Encoding.UTF8.GetBytes(toleratedFamily);
+        byte[] terminated = new byte[name.Length + 1];
+        name.CopyTo(terminated, 0);
+        return terminated;
     }
 
     /// <summary>

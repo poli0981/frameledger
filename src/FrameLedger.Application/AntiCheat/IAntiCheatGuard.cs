@@ -19,6 +19,14 @@ namespace FrameLedger.Application.AntiCheat;
 /// then passes to an injector. <see cref="GuardedInjectAsync"/> injects, or
 /// refuses. The guard owns the chokepoint (§S13(b)).
 /// </para>
+/// <para>
+/// <b>Every method takes <c>toleratedFamily</c> since D33 (owner decision 2026-09-26)</b> — the NAME of the one anti-cheat
+/// family a game's user-mode exception covers, or null for none, and required rather than defaulted so every caller
+/// states which it means. It is a name and never evidence: the guard resolves it against its own rules, honours it only
+/// for a family whose every signal is user-mode, runs every check and keeps scanning past what it lets through
+/// (<c>19_SAFETY</c> §The user-mode exception). A pass that let something through is
+/// <see cref="AntiCheatRefusalReason.AllowedUnderUserModeException"/>.
+/// </para>
 /// </remarks>
 public interface IAntiCheatGuard
 {
@@ -27,14 +35,14 @@ public interface IAntiCheatGuard
     /// in-session re-scan of <c>19_SAFETY</c> §During a session, which must
     /// reach a verdict about a process we are already inside.
     /// </summary>
-    ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, CancellationToken ct = default);
+    ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, string? toleratedFamily, CancellationToken ct = default);
 
     /// <summary>
     /// Run every check and, only on a pass, inject. There is no overload that
     /// skips the checks and no way to supply evidence — the guard collects its
     /// own, so a caller can ask but only the guard answers.
     /// </summary>
-    ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath, CancellationToken ct = default);
+    ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath, string? toleratedFamily, CancellationToken ct = default);
 
     /// <summary>
     /// Launch mode (P1 item 2). Wait — up to <paramref name="timeoutMs"/> — until the target has mapped a
@@ -50,7 +58,7 @@ public interface IAntiCheatGuard
     /// <see cref="AntiCheatRefusalReason.LaunchNoPresentationRuntime"/>. The caller launched and holds
     /// the process; the guard creates and terminates nothing.
     /// </remarks>
-    ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAsync(int targetPid, string payloadPath, int timeoutMs,
+    ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAsync(int targetPid, string payloadPath, int timeoutMs, string? toleratedFamily,
         CancellationToken ct = default);
 
     /// <summary>
@@ -79,5 +87,5 @@ public interface IAntiCheatGuard
     /// on passing while the thing it guards grew somewhere else.
     /// </para>
     /// </remarks>
-    ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath, CancellationToken ct = default);
+    ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath, string? toleratedFamily, CancellationToken ct = default);
 }

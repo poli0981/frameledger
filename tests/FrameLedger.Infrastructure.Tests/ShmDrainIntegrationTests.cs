@@ -320,7 +320,7 @@ public sealed class ShmDrainIntegrationTests
 
             // The REAL guard with REAL sources — no test seam. The harness carries no anti-cheat, so a
             // refusal here is a genuine finding about this machine, not a fixture problem.
-            AntiCheatVerdict verdict = await guard.GuardedInjectAsync(harness.Id, Payload, TestContext.Current.CancellationToken);
+            AntiCheatVerdict verdict = await guard.GuardedInjectAsync(harness.Id, Payload, toleratedFamily: null, TestContext.Current.CancellationToken);
             verdict.IsAllowed.Should().BeTrue(
                 $"the guard refused our own harness: {verdict.Reason} {verdict.Family} {verdict.Signal}");
 
@@ -525,7 +525,7 @@ public sealed class ShmDrainIntegrationTests
         try
         {
             var guard = new NativeAntiCheatGuard();
-            (await guard.GuardedInjectAsync(harness.Id, Payload, TestContext.Current.CancellationToken))
+            (await guard.GuardedInjectAsync(harness.Id, Payload, toleratedFamily: null, TestContext.Current.CancellationToken))
                 .IsAllowed.Should().BeTrue();
 
             using ShmRingReader reader = await AttachAsync(harness.Id, NativeAntiCheatGuard.BuildId());
@@ -617,7 +617,7 @@ public sealed class ShmDrainIntegrationTests
         try
         {
             var guard = new NativeAntiCheatGuard();
-            (await guard.GuardedInjectAsync(harness.Id, Payload, TestContext.Current.CancellationToken))
+            (await guard.GuardedInjectAsync(harness.Id, Payload, toleratedFamily: null, TestContext.Current.CancellationToken))
                 .IsAllowed.Should().BeTrue();
 
             using ShmRingReader reader = await AttachAsync(harness.Id, NativeAntiCheatGuard.BuildId());
@@ -680,7 +680,7 @@ public sealed class ShmDrainIntegrationTests
         try
         {
             var guard = new NativeAntiCheatGuard();
-            (await guard.GuardedInjectAsync(harness.Id, Payload, TestContext.Current.CancellationToken)).IsAllowed.Should().BeTrue();
+            (await guard.GuardedInjectAsync(harness.Id, Payload, toleratedFamily: null, TestContext.Current.CancellationToken)).IsAllowed.Should().BeTrue();
 
             string ownBuildId = NativeAntiCheatGuard.BuildId();
             using (ShmRingReader reader = await AttachAsync(harness.Id, ownBuildId))

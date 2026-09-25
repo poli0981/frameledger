@@ -17,6 +17,13 @@ public sealed record CaptureOutcome
     /// </summary>
     public bool HookingTurnedOff { get; init; }
 
+    /// <summary>
+    /// D33 (owner decision 2026-09-26): the family the game's user-mode exception covered for this session — published to
+    /// the Overlay and named to the guard at the injection and at every re-scan — or null when none was in force. The
+    /// recorder marks a HOOKED session with it, and ends the exception when a session under it ends badly.
+    /// </summary>
+    public string? ExceptionFamily { get; init; }
+
     public ShmAttachRefusal AttachRefusal { get; init; }
 
     public IReadOnlyList<FlFrameRecord> Records { get; init; } = [];

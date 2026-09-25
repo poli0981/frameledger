@@ -22,24 +22,28 @@ public sealed class HookRequestFromConsentTests
     {
         public int InjectCalls { get; private set; }
 
-        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, CancellationToken ct = default) =>
+        /// <summary>D33: the family the last injection named.</summary>
+        public string? LastTolerated { get; private set; }
+
+        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, string? toleratedFamily, CancellationToken ct = default) =>
             ValueTask.FromResult(AntiCheatVerdict.Allowed());
 
-        public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath,
+        public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath, string? toleratedFamily,
             CancellationToken ct = default)
         {
             InjectCalls++;
+            LastTolerated = toleratedFamily;
             return ValueTask.FromResult(AntiCheatVerdict.Allowed());
         }
 
         public ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAsync(int targetPid, string payloadPath,
-            int timeoutMs, CancellationToken ct = default)
+            int timeoutMs, string? toleratedFamily, CancellationToken ct = default)
         {
             InjectCalls++;
             return ValueTask.FromResult(AntiCheatVerdict.Allowed());
         }
 
-        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath,
+        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath, string? toleratedFamily,
             CancellationToken ct = default) => ValueTask.FromResult(AntiCheatVerdict.Allowed());
     }
 
@@ -58,11 +62,30 @@ public sealed class HookRequestFromConsentTests
             "unshipped-host-operator/1", blockedReason, preScanUnverified: false,
             updatedAt: DateTimeOffset.UnixEpoch);
 
-    private static async Task<(AntiCheatVerdict Verdict, int InjectCalls)> ThroughTheGateAsync(
-        GameConsentRecord record)
+    private const string _yidunBlock = "AntiCheatFile|NetEase Yidun|NEP2.dll";
+
+    /// <summary>D33: a blocked record carrying the user's grant of its user-mode exception, made on <paramref name="grantedOn"/>.</summary>
+    private static GameConsentRecord Excepted(string family = "NetEase Yidun", string block = _yidunBlock, ExecutableFingerprint? grantedOn = null)
     {
-        RecordingGuard guard = new();
-        HookRequest request = HookRequest.FromConsent(record, OnDisk, targetPid: 4242, _payload);
+        ExecutableFingerprint bytes = grantedOn ?? OnDisk;
+        return GameConsentRecord.Stored(
+            OnDisk, hookEnabled: true, DateTimeOffset.UnixEpoch, ConsentProvenance.ConsentDialog, "consent-dialog/1", block,
+            preScanUnverified: false, updatedAt: DateTimeOffset.UnixEpoch,
+            exception: new AntiCheatExceptionGrant
+            {
+                Family = family,
+                GrantedAt = DateTimeOffset.UnixEpoch,
+                DisclosureVersion = "ac-exception-dialog/1",
+                ExeSizeBytes = bytes.SizeBytes,
+                ExeMtimeUnixMs = bytes.MtimeUnixMs,
+            });
+    }
+
+    private static async Task<(AntiCheatVerdict Verdict, int InjectCalls)> ThroughTheGateAsync(
+        GameConsentRecord record, bool exceptionInForce = false, RecordingGuard? recording = null)
+    {
+        RecordingGuard guard = recording ?? new();
+        HookRequest request = HookRequest.FromConsent(record, OnDisk, targetPid: 4242, _payload, exceptionInForce: exceptionInForce);
         AntiCheatVerdict verdict = await new HookedCaptureGate(guard)
             .StartAsync(request, TestContext.Current.CancellationToken)
             .ConfigureAwait(false);
@@ -161,6 +184,57 @@ public sealed class HookRequestFromConsentTests
 
         verdict.IsAllowed.Should().BeTrue();
         injectCalls.Should().Be(1);
+    }
+
+    /// <summary>
+    /// D33 (owner decision 2026-09-26): a blocked game whose user-mode exception is in force for these bytes reaches the
+    /// guard — naming the family, which the guard alone decides whether to honour — and nothing else about it changes.
+    /// </summary>
+    [Fact]
+    public async Task AnExceptionInForceTakesTheBlockedGameToTheGuardNamingItsFamily()
+    {
+        RecordingGuard guard = new();
+
+        (AntiCheatVerdict verdict, int injectCalls) = await ThroughTheGateAsync(Excepted(), exceptionInForce: true, guard);
+
+        verdict.IsAllowed.Should().BeTrue();
+        injectCalls.Should().Be(1);
+        guard.LastTolerated.Should().Be("NetEase Yidun");
+        HookRequest.FromConsent(Excepted(), OnDisk, 1, _payload, exceptionInForce: true).ToleratedFamily.Should().Be("NetEase Yidun");
+    }
+
+    /// <summary>Every condition narrows: without each one the blocked game is the blocked game of before D33.</summary>
+    [Fact]
+    public async Task AnExceptionThatDoesNotApplyIsTheBlockOfBefore()
+    {
+        GameConsentRecord[] notApplying =
+        [
+            Excepted(grantedOn: OnDisk with { SizeBytes = 1 }),
+            Excepted(family: "AhnLab HackShield"),
+            Excepted(block: "BlockedStoreId|NetEase Yidun|steam:1"),
+            Excepted(block: "AntiCheatFile: NetEase Yidun NEP2.dll"),
+        ];
+        foreach (GameConsentRecord record in notApplying)
+        {
+            (AntiCheatVerdict verdict, int injectCalls) = await ThroughTheGateAsync(record, exceptionInForce: true);
+            verdict.Reason.Should().Be(AntiCheatRefusalReason.PreviouslyBlocked);
+            injectCalls.Should().Be(0);
+        }
+
+        (AntiCheatVerdict off, int offCalls) = await ThroughTheGateAsync(Excepted(), exceptionInForce: false);
+        off.Reason.Should().Be(AntiCheatRefusalReason.PreviouslyBlocked, "the option off, or no channel to the Overlay");
+        offCalls.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task AnUnblockedGameNamesNoFamily()
+    {
+        RecordingGuard guard = new();
+        (AntiCheatVerdict verdict, int injectCalls) = await ThroughTheGateAsync(Consented(), exceptionInForce: true, guard);
+
+        verdict.IsAllowed.Should().BeTrue();
+        injectCalls.Should().Be(1);
+        guard.LastTolerated.Should().BeNull("an exception exists only over a block");
     }
 
     [Fact]

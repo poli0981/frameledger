@@ -22,26 +22,49 @@ public sealed class GuardSupervisorTests
         public Func<AntiCheatVerdict>? OnEvaluate { get; set; }
         public int Calls { get; private set; }
 
-        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, CancellationToken ct = default)
+        /// <summary>D33: the family each re-scan named.</summary>
+        public List<string?> Tolerated { get; } = [];
+
+        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, string? toleratedFamily, CancellationToken ct = default)
         {
             Calls++;
+            Tolerated.Add(toleratedFamily);
             ct.ThrowIfCancellationRequested();
             return ValueTask.FromResult(OnEvaluate is null ? AntiCheatVerdict.Allowed() : OnEvaluate());
         }
 
-        public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath,
+        public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath, string? toleratedFamily,
             CancellationToken ct = default) =>
             ValueTask.FromResult(AntiCheatVerdict.Allowed());
 
         public ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAsync(int targetPid, string payloadPath,
-            int timeoutMs, CancellationToken ct = default) =>
+            int timeoutMs, string? toleratedFamily, CancellationToken ct = default) =>
             throw new InvalidOperationException("the supervisor must not launch or inject");
 
         // The supervisor never asks check 4 anything: it re-evaluates a process
         // it is already inside, and the pre-scan is the pre-launch question.
-        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath,
+        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath, string? toleratedFamily,
             CancellationToken ct = default) =>
             throw new InvalidOperationException("the supervisor must not call the pre-scan");
+    }
+
+    /// <summary>
+    /// D33: a session under a user-mode exception names the same family to every re-scan, and the guard's answer is judged
+    /// as ever — an allow under the exception continues, anything else latches the unhook.
+    /// </summary>
+    [Fact]
+    public async Task EveryReScanNamesTheSessionsFamilyAndAnyRefusalStillUnhooks()
+    {
+        ScriptedGuard guard = new() { OnEvaluate = static () => AntiCheatVerdict.AllowedUnderException("NetEase Yidun", "NEP2.dll") };
+        GuardSupervisor supervisor = new(guard, "NetEase Yidun");
+
+        (await supervisor.ScanOnceAsync(1234, TestContext.Current.CancellationToken)).Should().BeTrue();
+        guard.OnEvaluate = static () => AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedModule, "BattlEye", "BEClient_x64.dll");
+        (await supervisor.ScanOnceAsync(1234, TestContext.Current.CancellationToken)).Should().BeFalse();
+
+        guard.Tolerated.Should().Equal("NetEase Yidun", "NetEase Yidun");
+        supervisor.UnhookRequested.Should().BeTrue();
+        new GuardSupervisor(guard).ToleratedFamily.Should().BeNull("every other session names none");
     }
 
     [Fact]

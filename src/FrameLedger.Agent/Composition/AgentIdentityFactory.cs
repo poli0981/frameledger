@@ -25,7 +25,9 @@ internal static class AgentIdentityFactory
             // PawnIO installed. It was a constant false while nothing read a CPU sensor at all.
             CpuTempAvailable: Infrastructure.Telemetry.LhmEnvironment.IsElevated && Infrastructure.Telemetry.LhmEnvironment.IsPawnIoInstalled == true,
             // D14: the FR-2.1 text this build stamps against; the App compares it with its own before showing the dialog.
-            DisclosureVersion: SafetyDisclosure.Version);
+            DisclosureVersion: SafetyDisclosure.Version,
+            // D33: the user-mode exception's disclosure, under the same rule.
+            ExceptionDisclosureVersion: AntiCheatExceptionDisclosure.Version);
     }
 
     private static string Version()

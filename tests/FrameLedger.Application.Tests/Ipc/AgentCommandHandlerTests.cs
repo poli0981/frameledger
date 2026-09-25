@@ -7,6 +7,7 @@ using FrameLedger.Application.Detection;
 using FrameLedger.Application.Ipc;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
+using FrameLedger.Application.Tests.AntiCheat;
 using FrameLedger.Application.Tests.Recording;
 using FrameLedger.Application.Watch;
 using FrameLedger.Domain.AntiCheat;
@@ -55,18 +56,24 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
 
         public List<string> Scanned { get; } = [];
 
-        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, CancellationToken ct = default) => ValueTask.FromResult(AntiCheatVerdict.Allowed());
+        /// <summary>D33: the family each pre-scan named (null for none), and the answer to one that names a family.</summary>
+        public List<string?> Tolerated { get; } = [];
 
-        public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath, CancellationToken ct = default) =>
+        public AntiCheatVerdict TolerantPreScan { get; set; } = AntiCheatVerdict.AllowedUnderException("NetEase Yidun", "NEP2.dll");
+
+        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, string? toleratedFamily, CancellationToken ct = default) => ValueTask.FromResult(AntiCheatVerdict.Allowed());
+
+        public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath, string? toleratedFamily, CancellationToken ct = default) =>
             throw new InvalidOperationException("a command never injects");
 
-        public ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAsync(int targetPid, string payloadPath, int timeoutMs, CancellationToken ct = default) =>
+        public ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAsync(int targetPid, string payloadPath, int timeoutMs, string? toleratedFamily, CancellationToken ct = default) =>
             throw new InvalidOperationException("a command never injects");
 
-        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath, CancellationToken ct = default)
+        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath, string? toleratedFamily, CancellationToken ct = default)
         {
             Scanned.Add(executablePath);
-            return ValueTask.FromResult(PreScan);
+            Tolerated.Add(toleratedFamily);
+            return ValueTask.FromResult(toleratedFamily is null ? PreScan : TolerantPreScan);
         }
     }
 
@@ -128,6 +135,11 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         public required FakeLifetime Lifetime { get; init; }
 
         public int RulesUpdates { get; set; }
+
+        /// <summary>D33: the exception's evidence and option, when the harness composes the exception.</summary>
+        public required FakeSessionRepository Sessions { get; init; }
+
+        public required FakeExceptionSwitch Option { get; init; }
     }
 
     /// <summary>What the executable runs as, scripted (beta.8).</summary>
@@ -143,7 +155,7 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
     }
 
     private async Task<Harness> BuildAsync(bool consented = true, string? disclosureVersion = null, Func<CancellationToken, ValueTask<SweepRetentionAck>>? sweep = null,
-        IExecutableArchitectureSource? architecture = null)
+        IExecutableArchitectureSource? architecture = null, bool exceptions = false)
     {
         _db ??= await LedgerDatabase.OpenAsync(Path.Combine(_dir, LedgerPaths.DatabaseFileName), ct: Ct).ConfigureAwait(false);
         var consent = new SqliteGameConsentStore(_db);
@@ -166,9 +178,12 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         var orchestrator = new CaptureOrchestrator(new FakeRecorder(), games, new FakeSnapshots(), identity,
             new OrchestratorOptions { PayloadPath = @"C:\FL\FrameLedger.Overlay.dll" }, static _ => { });
         Harness h = null!;
+        var sessions = new FakeSessionRepository();
+        var option = new FakeExceptionSwitch(on: true);
         var handler = new AgentCommandHandler(games, consent, guard, identity, orchestrator, pause, lifetime,
             _ => { h.RulesUpdates++; return ValueTask.FromResult("AlreadyCurrent"); },
-            disclosureVersion, new FakeClock(), sweepRetention: sweep, architecture: architecture);
+            disclosureVersion, new FakeClock(), sweepRetention: sweep, architecture: architecture,
+            exceptions: exceptions ? new AntiCheatExceptionCommands(option, sessions, _exceptionDisclosure) : null);
         h = new Harness
         {
             Handler = handler,
@@ -179,6 +194,8 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
             Orchestrator = orchestrator,
             Pause = pause,
             Lifetime = lifetime,
+            Sessions = sessions,
+            Option = option,
         };
         return h;
     }
@@ -467,5 +484,150 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         }
 
         Encoding.UTF8.GetString(IpcCodec.Encode(IpcMessageType.Ping, "9")).Should().NotContain("payload");
+    }
+
+    private const string _exceptionDisclosure = "ac-exception-dialog/1";
+
+    private const string _yidunBlock = "AntiCheatFile|NetEase Yidun|NEP2.dll";
+
+    /// <summary>D33: the owner's GIRLS' FRONTLINE 2 as beta.8 left it — consented, then blocked for NetEase Yidun — on both views of the row.</summary>
+    private async Task<Harness> BlockedAsync(int sessions = 3, string block = _yidunBlock, string? disclosureVersion = null)
+    {
+        Harness h = await BuildAsync(disclosureVersion: disclosureVersion, exceptions: true).ConfigureAwait(false);
+        StoredBlock parsed = StoredBlock.Parse(block)!.Value;
+        await h.Consent.RecordGuardBlockAsync(h.Identity.Read(_exe)!.Value, AntiCheatVerdict.Refused(parsed.Reason, parsed.Family, parsed.Signal), Ct)
+            .ConfigureAwait(false);
+        GameRow row = h.Games.Rows[_exe];
+        h.Games.Rows[_exe] = row with { HookBlockedReason = block, HookPrescanState = "blocked", HookEnabled = false };
+        h.Sessions.SuccessfulHooked[row.Id] = sessions;
+        return h;
+    }
+
+    private static SetAntiCheatExceptionRequest Grant(Harness h, string? version = _exceptionDisclosure) => new(h.Games.Rows[_exe].Id, true, version);
+
+    /// <summary>
+    /// D33 (owner decision 2026-09-26): the Agent grants against its own disclosure version and only while the option is on —
+    /// otherwise nothing is scanned and nothing is written.
+    /// </summary>
+    [Fact]
+    public async Task AGrantNeedsTheAgentsDisclosureAndTheOptionOn()
+    {
+        Harness h = await BlockedAsync().ConfigureAwait(true);
+
+        IpcEnvelope stale = await AskAsync(h.Handler, IpcMessageType.SetAntiCheatException, Grant(h, "ac-exception-dialog/0")).ConfigureAwait(true);
+        stale.Type.Should().Be(IpcMessageType.Error);
+        IpcCodec.Payload<ErrorAck>(stale)!.Code.Should().Be(IpcErrorCode.DisclosureVersionMismatch);
+
+        h.Option.On = false;
+        IpcEnvelope off = await AskAsync(h.Handler, IpcMessageType.SetAntiCheatException, Grant(h)).ConfigureAwait(true);
+        IpcCodec.Payload<ErrorAck>(off)!.Code.Should().Be(IpcErrorCode.ExceptionsOff);
+
+        h.Guard.Scanned.Should().BeEmpty();
+        (await h.Consent.FindAsync(_exe, Ct).ConfigureAwait(true)).Exception.Should().BeNull();
+    }
+
+    /// <summary>The facts are the Agent's own — a tolerant pre-scan of the file on disk, the session count — and a grant turns nothing on.</summary>
+    [Fact]
+    public async Task AGrantRestsOnFactsTheAgentGathersAndTurnsNothingOn()
+    {
+        Harness h = await BlockedAsync().ConfigureAwait(true);
+
+        IpcEnvelope ack = await AskAsync(h.Handler, IpcMessageType.SetAntiCheatException, Grant(h)).ConfigureAwait(true);
+
+        ack.Type.Should().Be(IpcMessageType.AntiCheatExceptionAck);
+        IpcCodec.Payload<AntiCheatExceptionAck>(ack).Should().Be(new AntiCheatExceptionAck(h.Games.Rows[_exe].Id, true, "Written", "NetEase Yidun"));
+        h.Guard.Tolerated.Should().Equal("NetEase Yidun");
+        GameConsentRecord after = await h.Consent.FindAsync(_exe, Ct).ConfigureAwait(true);
+        after.Exception.Should().NotBeNull();
+        after.Exception!.Value.Family.Should().Be("NetEase Yidun");
+        after.Exception.Value.DisclosureVersion.Should().Be(_exceptionDisclosure);
+        after.HookEnabled.Should().BeFalse("turning hooking on is FR-2.1's dialog, afterwards");
+        after.BlockedReason.Should().Be(_yidunBlock, "nothing clears a block");
+    }
+
+    [Fact]
+    public async Task TooFewSessionsATitleListOrAGuardThatLetsNothingThroughIsRefused()
+    {
+        Harness one = await BlockedAsync(sessions: 1).ConfigureAwait(true);
+        IpcEnvelope few = await AskAsync(one.Handler, IpcMessageType.SetAntiCheatException, Grant(one)).ConfigureAwait(true);
+        few.Type.Should().Be(IpcMessageType.Refused);
+        IpcCodec.Payload<RefusedAck>(few).Should().Be(new RefusedAck(one.Games.Rows[_exe].Id, AgentCommandHandler.TooFewSessionsReason, "NetEase Yidun", "1"));
+
+        one.Guard.TolerantPreScan = AntiCheatVerdict.Refused(AntiCheatRefusalReason.AntiCheatFile, "Kernel driver in the game folder", "NEPKernel.sys");
+        one.Sessions.SuccessfulHooked[one.Games.Rows[_exe].Id] = 3;
+        RefusedAck driver = IpcCodec.Payload<RefusedAck>(await AskAsync(one.Handler, IpcMessageType.SetAntiCheatException, Grant(one)).ConfigureAwait(true))!;
+        driver.Reason.Should().Be(nameof(AntiCheatRefusalReason.AntiCheatFile), "the Aniimo shape: D30 is never excepted");
+        driver.Signal.Should().Be("NEPKernel.sys");
+        (await one.Consent.FindAsync(_exe, Ct).ConfigureAwait(true)).Exception.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ATitleListIsNeverAsked()
+    {
+        Harness h = await BlockedAsync(block: "BlockedStoreId|Valve VAC|steam:730").ConfigureAwait(true);
+
+        IpcEnvelope ack = await AskAsync(h.Handler, IpcMessageType.SetAntiCheatException, Grant(h)).ConfigureAwait(true);
+
+        IpcCodec.Payload<RefusedAck>(ack)!.Reason.Should().Be(AgentCommandHandler.BlockNotExceptionableReason);
+        h.Guard.Scanned.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// Under an exception in force, turning hooking on is FR-2.1's stamp as ever — the pre-scan naming the family, the stamp
+    /// made on the Agent's clock — and the block stays on the row.
+    /// </summary>
+    [Fact]
+    public async Task UnderTheExceptionTurningHookingOnNamesTheFamilyAndStamps()
+    {
+        Harness h = await BlockedAsync(disclosureVersion: "consent-dialog/1").ConfigureAwait(true);
+        _ = await AskAsync(h.Handler, IpcMessageType.SetAntiCheatException, Grant(h)).ConfigureAwait(true);
+
+        IpcEnvelope ack = await AskAsync(h.Handler, IpcMessageType.SetHookEnabled,
+            new SetHookEnabledRequest(h.Games.Rows[_exe].Id, true, "consent-dialog/1")).ConfigureAwait(true);
+
+        ack.Type.Should().Be(IpcMessageType.HookEnabledAck);
+        HookEnabledAck payload = IpcCodec.Payload<HookEnabledAck>(ack)!;
+        payload.Enabled.Should().BeTrue();
+        payload.Prescan.Should().Be("exception");
+        h.Guard.Tolerated[^1].Should().Be("NetEase Yidun");
+        GameConsentRecord after = await h.Consent.FindAsync(_exe, Ct).ConfigureAwait(true);
+        after.HookEnabled.Should().BeTrue();
+        after.BlockedReason.Should().Be(_yidunBlock);
+
+        // With the option off the family is named to nobody, and the strict pre-scan finds it as it always did.
+        h.Option.On = false;
+        h.Guard.PreScan = AntiCheatVerdict.Refused(AntiCheatRefusalReason.AntiCheatFile, "NetEase Yidun", "NEP2.dll");
+        IpcEnvelope suspended = await AskAsync(h.Handler, IpcMessageType.SetHookEnabled,
+            new SetHookEnabledRequest(h.Games.Rows[_exe].Id, true, "consent-dialog/1")).ConfigureAwait(true);
+        suspended.Type.Should().Be(IpcMessageType.Refused);
+        h.Guard.Tolerated[^1].Should().BeNull();
+    }
+
+    [Fact]
+    public async Task WithdrawingEndsTheExceptionAndTurnsHookingOff()
+    {
+        Harness h = await BlockedAsync(disclosureVersion: "consent-dialog/1").ConfigureAwait(true);
+        _ = await AskAsync(h.Handler, IpcMessageType.SetAntiCheatException, Grant(h)).ConfigureAwait(true);
+        _ = await AskAsync(h.Handler, IpcMessageType.SetHookEnabled, new SetHookEnabledRequest(h.Games.Rows[_exe].Id, true, "consent-dialog/1")).ConfigureAwait(true);
+
+        IpcEnvelope ack = await AskAsync(h.Handler, IpcMessageType.SetAntiCheatException,
+            new SetAntiCheatExceptionRequest(h.Games.Rows[_exe].Id, false, null)).ConfigureAwait(true);
+
+        IpcCodec.Payload<AntiCheatExceptionAck>(ack)!.Granted.Should().BeFalse();
+        GameConsentRecord after = await h.Consent.FindAsync(_exe, Ct).ConfigureAwait(true);
+        after.Exception.Should().BeNull();
+        after.HookEnabled.Should().BeFalse("the block stands, so hooking goes off with the exception");
+        after.ConsentedAt.Should().NotBeNull("the consent stamp is kept, as a block keeps it");
+    }
+
+    [Fact]
+    public async Task WithoutTheExceptionComposedTheCommandIsNotAnswered()
+    {
+        Harness h = await BuildAsync().ConfigureAwait(true);
+
+        byte[]? ack = await h.Handler.HandleAsync(IpcCodec.Decode(IpcCodec.Encode(IpcMessageType.SetAntiCheatException, "1",
+            new SetAntiCheatExceptionRequest(h.Games.Rows[_exe].Id, true, _exceptionDisclosure))), Ct).ConfigureAwait(true);
+
+        ack.Should().BeNull("an Agent composed without the exception answers UnknownType");
     }
 }

@@ -86,6 +86,11 @@ public sealed class NoSecondMatcherTests
         // 4 again since 2026-09-22. It was 6 for one day: the user's bypass of 2026-09-21 added
         // GuardedInjectAcknowledgedAsync and its WhenReady twin, and the owner withdrew the bypass with them. A
         // way into a game process that overrules the guard's judgement is exactly what this count exists to notice.
+        //
+        // Still 4 under D33 (2026-09-26): the user-mode exception added no method. Each of the four gained
+        // `string? toleratedFamily` — a NAME, a string like every other parameter here, which the native guard
+        // resolves against its own rules and honours only for a family that is user-mode throughout. It adds no
+        // evidence and no rules; the loop below would refuse either.
         methods.Should().HaveCount(4);
 
         // Stronger than the count, and it survives the port growing: every

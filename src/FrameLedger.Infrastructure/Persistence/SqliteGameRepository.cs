@@ -26,7 +26,11 @@ public sealed class SqliteGameRepository : IGameRepository
         + "rt_default, pt_default, rr_default, hook_consent_at, hook_prescan_state, removed_at, "
         + "detection_rules_version, detection_exe_size_bytes, detection_exe_mtime_ms, record_sessions, "
         + "hook_prescan_rules_version, hook_prescan_exe_size_bytes, hook_prescan_exe_mtime_ms, "
-        + "exe_machine, exe_file_version, exe_product_version, library_versions";
+        + "exe_machine, exe_file_version, exe_product_version, library_versions, "
+        + "ac_exception_eligible, ac_exception_verdict, ac_exception_sessions, ac_exception_checked_rules_version, "
+        + "ac_exception_checked_exe_size_bytes, ac_exception_checked_exe_mtime_ms, ac_exception_checked_block, ac_exception_at, "
+        + "ac_exception_family, ac_exception_disclosure_version, ac_exception_exe_size_bytes, ac_exception_exe_mtime_ms, "
+        + "ac_exception_lapsed_at, ac_exception_lapsed_reason";
 
     private const string _selectByPath = $"SELECT {_columns} FROM games WHERE exe_path = @path";
 
@@ -46,11 +50,18 @@ public sealed class SqliteGameRepository : IGameRepository
     // A downgrade by construction: the consent columns go to their "nothing happened" defaults, never to a grant, and
     // hook_blocked_reason is not named (IGameRepository.ChangeExecutableAsync). NOT EXISTS is the UNIQUE index's answer
     // as a false instead of a constraint exception. The pre-scan's key goes with its state (schema 0010), so the Agent's
-    // sweep scans the new executable on its next pass whatever its size and mtime happen to be.
+    // sweep scans the new executable on its next pass whatever its size and mtime happen to be. A user-mode exception
+    // (D33, schema 0014) ends with the consent it shared an executable with — its end recorded, its eligibility unknown
+    // until the sweep has looked at the new file. SQLite reads every SET expression from the row as it was, so the
+    // CASEs see the grant this statement clears.
     private const string _changeExecutable =
         "UPDATE games SET exe_path = @path, exe_size_bytes = @size, exe_mtime_ms = @mtime, hook_enabled = 0, hook_consent_at = NULL, "
         + "hook_consent_provenance = 'NotRecorded', hook_consent_disclosure_version = '', hook_prescan_state = 'not_run', "
         + "hook_prescan_rules_version = NULL, hook_prescan_exe_size_bytes = NULL, hook_prescan_exe_mtime_ms = NULL, "
+        + "ac_exception_lapsed_reason = CASE WHEN ac_exception_at IS NOT NULL THEN 'ExecutableChanged' ELSE ac_exception_lapsed_reason END, "
+        + "ac_exception_lapsed_at = CASE WHEN ac_exception_at IS NOT NULL THEN @at ELSE ac_exception_lapsed_at END, "
+        + "ac_exception_at = NULL, ac_exception_eligible = 0, ac_exception_verdict = NULL, ac_exception_checked_rules_version = NULL, "
+        + "ac_exception_checked_exe_size_bytes = NULL, ac_exception_checked_exe_mtime_ms = NULL, ac_exception_checked_block = NULL, "
         + "updated_at = @at "
         + "WHERE id = @id AND removed_at IS NULL AND NOT EXISTS (SELECT 1 FROM games other WHERE other.exe_path = @path AND other.id <> @id)";
 
@@ -351,6 +362,26 @@ public sealed class SqliteGameRepository : IGameRepository
         ExeFileVersion = SqliteReaders.String(r, 36),
         ExeProductVersion = SqliteReaders.String(r, 37),
         Libraries = LibraryVersionsJson.Parse(SqliteReaders.String(r, 38)),
+        AcException = ReadException(r),
+    };
+
+    /// <summary>Schema 0014's columns, 39 onwards in <see cref="_columns"/>' order.</summary>
+    private static AntiCheatExceptionState ReadException(DbDataReader r) => new()
+    {
+        Eligible = r.GetInt64(39) != 0,
+        Verdict = SqliteReaders.String(r, 40),
+        Sessions = (int)r.GetInt64(41),
+        CheckedRulesVersion = SqliteReaders.String(r, 42),
+        CheckedExeSizeBytes = SqliteReaders.Int64(r, 43),
+        CheckedExeMtimeMs = SqliteReaders.Int64(r, 44),
+        CheckedBlock = SqliteReaders.String(r, 45),
+        GrantedAt = At(SqliteReaders.Int64(r, 46)),
+        Family = SqliteReaders.String(r, 47),
+        DisclosureVersion = SqliteReaders.String(r, 48),
+        ExeSizeBytes = SqliteReaders.Int64(r, 49),
+        ExeMtimeMs = SqliteReaders.Int64(r, 50),
+        LapsedAt = At(SqliteReaders.Int64(r, 51)),
+        LapsedReason = SqliteReaders.String(r, 52),
     };
 
     private static DateTimeOffset? At(long? unixMs) => unixMs is { } ms ? DateTimeOffset.FromUnixTimeMilliseconds(ms) : null;

@@ -45,6 +45,14 @@ public static class IpcMessageType
     public const string Shutdown = "Shutdown";
     public const string ShutdownAck = "ShutdownAck";
 
+    /// <summary>
+    /// D33 (owner decision 2026-09-26): grant or withdraw a game's user-mode anti-cheat exception. The Agent re-checks every
+    /// condition itself — the option, the disclosure version, the block, a tolerant pre-scan, the session count — and
+    /// answers <see cref="AntiCheatExceptionAck"/>, <see cref="Refused"/> or <see cref="Error"/>.
+    /// </summary>
+    public const string SetAntiCheatException = "SetAntiCheatException";
+    public const string AntiCheatExceptionAck = "AntiCheatExceptionAck";
+
     /// <summary>Tools ▸ Database maintenance (P4 PR-7): the on-demand retention sweep, which the Agent runs because the blob tables are its.</summary>
     public const string SweepRetention = "SweepRetention";
     public const string SweepRetentionAck = "SweepRetentionAck";
@@ -85,6 +93,9 @@ public static class IpcErrorCode
     public const string UnknownGame = "UnknownGame";
 
     public const string ExecutableUnreadable = "ExecutableUnreadable";
+
+    /// <summary>D33: <c>SetAntiCheatException true</c> while <c>hooking.usermode_ac_exceptions</c> is off — nothing is granted.</summary>
+    public const string ExceptionsOff = "ExceptionsOff";
 }
 
 /// <summary>Codes a <see cref="CaptureErrorEvent"/> carries (<c>07_IPC</c> §Messages, <c>CaptureError</c>).</summary>
@@ -108,7 +119,8 @@ public sealed record HelloRequest(string AppVersion, int Protocol);
 /// (2026-08-28); <c>VulkanLayerRegistered</c> is false by construction today — the layer is handed to a launched
 /// process through <c>VK_ADD_IMPLICIT_LAYER_PATH</c>, never registered machine-wide (P1 item 3).
 /// <c>DisclosureVersion</c> (P3 PR-4, D14) is the FR-2.1 text this Agent stamps against; the App refuses to open
-/// the consent dialog when it differs from its own <c>SafetyDisclosure.Version</c>.
+/// the consent dialog when it differs from its own <c>SafetyDisclosure.Version</c>. <c>ExceptionDisclosureVersion</c>
+/// (D33) is the same rule for the user-mode exception's disclosure (<c>AntiCheatExceptionDisclosure.Version</c>).
 /// </summary>
 public sealed record HelloAck(
     string AgentVersion,
@@ -119,7 +131,8 @@ public sealed record HelloAck(
     bool VulkanLayerRegistered,
     string? TelemetrySource,
     bool CpuTempAvailable,
-    string? DisclosureVersion = null);
+    string? DisclosureVersion = null,
+    string? ExceptionDisclosureVersion = null);
 
 /// <summary><c>GetStatus</c>: no payload.</summary>
 public sealed record GetStatusRequest;
@@ -301,6 +314,18 @@ public sealed record HookEnabledAck(long GameId, bool Enabled, string Outcome, s
 
 /// <summary>The Agent's pre-scan refused to enable: the reason, and the family/signal when it named one. The block is on the row.</summary>
 public sealed record RefusedAck(long GameId, string Reason, string? Family, string? Signal);
+
+/// <summary>
+/// <c>SetAntiCheatException</c> (D33). <c>DisclosureVersion</c> is the version of the exception's disclosure the client
+/// showed and the user accepted; a grant is written only when it is the Agent's own. A withdrawal needs none.
+/// </summary>
+public sealed record SetAntiCheatExceptionRequest(long GameId, bool Enabled, string? DisclosureVersion);
+
+/// <summary>
+/// The Agent's answer to <c>SetAntiCheatException</c>: <c>Granted</c> is whether an exception is in force now, <c>Outcome</c>
+/// the store's word, <c>Family</c> the anti-cheat family it covers.
+/// </summary>
+public sealed record AntiCheatExceptionAck(long GameId, bool Granted, string Outcome, string? Family);
 
 public sealed record PauseCaptureRequest;
 

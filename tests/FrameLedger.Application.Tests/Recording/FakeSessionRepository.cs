@@ -91,6 +91,12 @@ internal sealed class FakeSessionRepository : ISessionRepository
     public ValueTask<long> CountSinceAsync(DateTimeOffset since, CancellationToken ct = default) =>
         ValueTask.FromResult((long)Stored.Count(s => s.Row.StartedAt >= since));
 
+    /// <summary>D33: each game's successful Tier-1 sessions, as the tests say; a game not named has none.</summary>
+    public Dictionary<long, int> SuccessfulHooked { get; } = [];
+
+    public ValueTask<int> CountSuccessfulHookedAsync(long gameId, CancellationToken ct = default) =>
+        ValueTask.FromResult(SuccessfulHooked.GetValueOrDefault(gameId));
+
     public ValueTask<IReadOnlyList<SegmentRow>> FindSegmentsAsync(long sessionId, CancellationToken ct = default) =>
         ValueTask.FromResult(sessionId >= 1 && sessionId <= Stored.Count ? Stored[(int)sessionId - 1].Segments : []);
 
