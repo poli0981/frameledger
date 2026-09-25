@@ -40,6 +40,22 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   support pages, LOLDrivers, DRML — and none is measured on a real title yet; each entry's `note` says which. Three
   services are deliberately left out because they run outside play and would refuse every session on the machine:
   `EAAntiCheatService`, PunkBuster's `PnkBstrA`, and Denuvo's update service.
+- **Check 3 is live in both halves, and the per-title lists are seeded** (rules `2026.09.4`, owner decision
+  2026-09-25). The store half reads the store's own files through a seam the guard owns — `appmanifest_*.acf` in the
+  Steam library that holds the game, `goggame-<id>.info` for GOG — so nothing is handed in by a caller and nothing is
+  read from the game. 30 Steam app ids and 33 executable names across nine families are listed: Valve's VAC titles
+  (CS2, Dota 2, TF2, Deadlock and the older ones), VALORANT and League of Legends, Roblox, Blizzard's online titles,
+  Call of Duty, Marvel Rivals, NARAKA, FragPunk, Once Human, Delta Force, Arena Breakout: Infinite, HoYoverse's games,
+  Battlefield 2042/6 and EA SPORTS FC 25/26 — the titles whose anti-cheat leaves nothing of the game's own for the
+  other checks to find. A game no store names is not refused by this half; a Steam library whose manifests cannot be
+  read is. Both lists are floored like the families, so a rules file can add a title and never take one off, and the
+  validator refuses names engines share (`Game.exe`, `Client-Win64-Shipping.exe`…). The AreWeAntiCheatYet bulk list was
+  considered and declined: community data that outlives a game's anti-cheat would turn hooking off for good.
+- **Any kernel driver in a game's folder counts as anti-cheat** (owner decision 2026-09-25). A `*.sys` file in the
+  install tree that no rule names is reported as "Kernel driver in the game folder" and turns that game's hooking off,
+  like any finding. Every driver found in a game so far was an anti-cheat's; this catches the next one before anyone
+  names it. It is code, so no rules file can remove it — and a game that ships a driver for another reason loses
+  hooking with no way back, which is the trade the owner took.
 - **The guard holds 256 blocklist entries instead of 64** (2 × 74 no longer fitted the worst case of the compiled-in
   floor plus a drifted file). The parsed rules are ~530 KB, so they are now reset in place instead of being copied from
   a temporary: the Vulkan layer parses them on whichever of a game's threads creates its Vulkan instance, and a
@@ -47,6 +63,11 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **Turning hooking on for an Unreal game now sees its `EasyAntiCheat` folder.** The scan that runs when hooking is
+  enabled was given the executable's own folder — `<game>\<Project>\Binaries\Win64\` for Unreal titles — and scanned
+  exactly that, while `EasyAntiCheat\` sits at the game's root. The session-time scan always looked at the root, so no
+  injection was ever allowed by the gap, but the toggle could be switched on and the refusal came only at launch. The
+  guard now takes the executable and finds the root itself, and also checks the executable's name and its store id.
 - **19_SAFETY's fixture rule is enforced for every family, not eleven.** A generated test walks every value of the
   shipped seed and requires it to match its own family in its own group — which also catches a later row that an
   earlier prefix shadows. The rules file's note that called XIGNCODE3's `x3.xem` "not a loadable module" is corrected:

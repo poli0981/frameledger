@@ -39,7 +39,7 @@ public sealed class GuardSupervisorTests
 
         // The supervisor never asks check 4 anything: it re-evaluates a process
         // it is already inside, and the pre-scan is the pre-launch question.
-        public ValueTask<AntiCheatVerdict> PreScanGameDirectoryAsync(string gameDirectory,
+        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath,
             CancellationToken ct = default) =>
             throw new InvalidOperationException("the supervisor must not call the pre-scan");
     }

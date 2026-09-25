@@ -129,7 +129,7 @@ enum class Reason : std::uint8_t {
     // Consent and per-game enablement are records of something a human did;
     // they live in the Agent's database and the native guard never sees them.
     // They are nevertheless reasons a Tier-1 capture was refused, and they
-    // belong in THIS enum for the reason FlStaticPreScan already reports
+    // belong in THIS enum for the reason FlStaticPreScanGame already reports
     // through FlGuardResult: one reason table, one mirror surface, one place
     // the UI maps to a string.
     //
@@ -306,6 +306,15 @@ struct Sources {
     // name is matched against, so it is part of the evidence rather than
     // something the caller infers from the string.
     Collected (*EnumerateDirEntries)(const wchar_t* dir, DirEntrySink sink, void* ctx) = nullptr;
+
+    // Check 3's STORE half (2026-09-25): the store identity an install root carries, read from the store's own
+    // metadata on disk — never handed in by a caller (§S3) and never read out of the game's process (rule 4).
+    //
+    // kOk with a non-empty `out` is the joined form MatchesBlockedStoreId compares ("steam:730", "gog:1207658924").
+    // kOk with an EMPTY `out` is "this install carries no store identity": not a store layout we recognise, or a
+    // Steam library none of whose manifests names this folder. kFailed is a store layout whose metadata could not be
+    // read — cannot determine, which refuses. Three answers, so not a bool: the QueryService rule.
+    Collected (*StoreIdentity)(const wchar_t* installRoot, char* out, std::size_t cap) = nullptr;
 
     // §S18/§S22(b) — is this MODULE one of OUR OWN binaries?
     //

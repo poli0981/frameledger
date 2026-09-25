@@ -70,7 +70,7 @@ public sealed class CaptureSessionLaunchTests : IAsyncDisposable
             return ValueTask.FromResult(Verdict);
         }
 
-        public ValueTask<AntiCheatVerdict> PreScanGameDirectoryAsync(string gameDirectory,
+        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath,
             CancellationToken ct = default) => ValueTask.FromResult(AntiCheatVerdict.Allowed());
     }
 

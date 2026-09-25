@@ -220,6 +220,35 @@ Implemented in `FrameLedger.Injector` and reached from managed code through a th
    > never as *clean*. `20_OPEN_QUESTIONS` §S7 tracks the remaining work.
 3. **Rules blocklist** — `detection-rules.json` carries `anticheat.blockedExecutables` (exe names) and `anticheat.blockedStoreIds` (Steam appids etc.) for known competitive/online titles, updatable independently of app releases (`05_DETECTION` §Rules updates).
 
+   > **Both halves are wired and seeded since 2026-09-25** (owner: "as many and as strict as possible"; rules
+   > `2026.09.4`). The block below is the history it replaces, kept for the reasoning.
+   >
+   > **The store half reads the store's own files, through a seam the guard owns.** `Sources::StoreIdentity` takes the
+   > install root the guard already derives from the pid (check 4's `ImageDirectory`) and answers from disk: under
+   > `<library>\steamapps\common\<folder>`, the one `appmanifest_<id>.acf` whose `installdir` is `<folder>` →
+   > `steam:<id>`; a `goggame-<id>.info` in the root → `gog:<id>`. Nothing is handed in by a caller (§S3 is untouched —
+   > the ABI still takes a pid and nothing else) and nothing is read from the game's process (rule 4).
+   >
+   > **The matrix §S14 asked for:** a listed identity refuses (`BlockedStoreId`, naming the family); an install no store
+   > names — a loose folder, a GOG-less, manifest-less copy — is **not** refused, because "no store identity" is an
+   > answer, not an unknown, and refusing it would be the gate that cannot pass; a store layout whose metadata could not
+   > be read (a manifest that will not open, more than 4096 of them, a listing error) refuses as `PreScanFailed`. With
+   > nothing listed, nothing is read. Epic has no reader: an Epic install carries no identity to this check.
+   >
+   > **What is listed, and why a title list at all:** 30 Steam app ids and 33 executable names across nine families —
+   > Valve VAC (CS2, Dota 2, TF2, Deadlock and Valve's older VAC titles), Riot Vanguard, Roblox Hyperion, Blizzard's
+   > online titles ("Blizzard Warden"), Call of Duty (Activision Ricochet), NetEase (Marvel Rivals, NARAKA, FragPunk,
+   > Once Human), ACE (Delta Force, Arena Breakout: Infinite), HoYoverse and EA (Battlefield 2042/6, EA SPORTS FC 25/26).
+   > These are the titles whose anti-cheat leaves nothing of the game's own for checks 1, 2 and 4 to find — VAC runs
+   > inside Steam, Blizzard's scanner is built into the game — or whose kernel driver loads only after the checks run.
+   > Every app id was checked against its Steam store page; Call of Duty's changed when Activision split CoD HQ, so only
+   > ids with a live store page are listed. The per-title lists are **floored** like the families: a rules file can
+   > add a title and cannot take one off. `rules-validate` refuses a name engines and tools share (`Game.exe`,
+   > `Client-Win64-Shipping.exe`, `hl2.exe`…), an exact rule that names no `.exe`, and duplicates.
+   >
+   > **The owner declined the bulk list** (AreWeAntiCheatYet's ~250 Steam ids): community data that keeps listing a game
+   > after it drops its anti-cheat would turn hooking off for good on a title that no longer needs it.
+
    > ⚠ **◐ The EXECUTABLE half is wired as of 2026-08-05; the STORE-ID half is
    > blocked.** `CheckBlockedExecutable` runs inside `EvaluateImpl` between the
    > module scan and the pre-scan, and an unresolvable identity refuses with
@@ -249,6 +278,23 @@ Implemented in `FrameLedger.Injector` and reached from managed code through a th
    > strings, which meant the first entry ever added would have refused the whole
    > rules file — and therefore every title on the machine (§S17).
 4. **Multiplayer heuristic** — if the pre-launch file scan finds an anti-cheat SDK shipped alongside the game (e.g. EOS anti-cheat binaries, `EasyAntiCheat/` directory) even when not currently loaded → refuse and explain.
+
+   > **Any kernel driver in the install tree counts, since 2026-09-25 (owner decision).** A `*.sys` file that no
+   > `files` entry names is reported as `AntiCheatFile` under the family **"Kernel driver in the game folder"**. Every
+   > driver this project has found shipped inside a game — `PGameProtectDriver_X64.sys`, `randgrid.sys`,
+   > `NeacSafe64.sys`, `BlackCat64.sys`, `mhyprot*.sys` — was an anti-cheat's, and naming each one in data first is how
+   > the next one walks past, as ACE's did in August. The rule is **code, not data** (`fl_prescan.cpp`,
+   > `kKernelDriverInTreeFamily`): no rules file can remove it or rename its family. A named `files` entry still wins,
+   > so `randgrid.sys` reads as Activision Ricochet. **The cost the owner accepted:** a game that ships a driver for
+   > some other purpose (a wheel, a peripheral, an old disc check) has its hooking turned off like any finding, and
+   > nothing clears it.
+   >
+   > **The advisory pre-scan takes the executable and resolves the install root itself, since 2026-09-25.**
+   > `FlStaticPreScan(gameDirectory)` scanned the directory it was handed, and its one caller (`SetHookEnabled`) handed
+   > it the executable's own folder — so for an Unreal title, the scan that decides whether hooking may be turned on
+   > looked at `<root>\<Project>\Binaries\Win64\`, exactly where the Lies of P measurement below says `EasyAntiCheat/`
+   > is not. The chokepoint always resolved the root. `FlStaticPreScanGame(exePath)` replaces it: the same
+   > `ResolveInstallRoot`, plus check 3 on the executable's name and the install's store identity.
 
    > **Implemented, and stated narrowly.** `fl_prescan.cpp` walks the target's
    > own directory (derived from its pid, never from a caller-supplied path) to
@@ -541,7 +587,7 @@ normative documentation. Write tokens here exactly as the data must hold them.
 | Activision Ricochet | `services` | name | `atvi-randgrid_sr`, `atvi-randgrid_msstore` | 2026-09-25 |
 | Activision Ricochet | `files` | name | `randgrid.sys` | 2026-09-25 |
 | FredaikisAntiCheat | `directories` | name | `FredaikisAntiCheat` | 2026-09-25 |
-| **Valve VAC** | — | — | **No data yet** — needs `blockedStoreIds`, whose half of check 3 **cannot be called** (§S14; the executable half was wired in #52, but a renamed exe defeats it anyway, which is why this row reserves the store-id route). **Measured 2026-08-04: a real VAC title returns `Allow`** (`spike-notes.md` §13) | — |
+| **Valve VAC** | — | — | ~~**No data yet** — needs `blockedStoreIds`, whose half of check 3 **cannot be called**~~ **Per-title lists since 2026-09-25** (check 3): 13 Steam app ids and 8 executables, the store half wired. VAC runs inside Steam, so no module, driver or file of the game's own can name it — this row stays a dash on purpose. (**Measured 2026-08-04: a real VAC title returned `Allow`**, `spike-notes.md` §13 — the gap these lists close.) | 2026-09-25 |
 
 The "no data yet" rows are deliberately kept rather than deleted. An admitted
 gap is reviewable; a deleted row is invisible. ~~Activision Ricochet's was one of them~~ — it has data since

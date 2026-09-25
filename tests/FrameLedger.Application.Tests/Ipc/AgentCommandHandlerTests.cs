@@ -61,9 +61,9 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         public ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAsync(int targetPid, string payloadPath, int timeoutMs, CancellationToken ct = default) =>
             throw new InvalidOperationException("a command never injects");
 
-        public ValueTask<AntiCheatVerdict> PreScanGameDirectoryAsync(string gameDirectory, CancellationToken ct = default)
+        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath, CancellationToken ct = default)
         {
-            Scanned.Add(gameDirectory);
+            Scanned.Add(executablePath);
             return ValueTask.FromResult(PreScan);
         }
     }
@@ -268,7 +268,7 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         refused.Reason.Should().Be(nameof(AntiCheatRefusalReason.BlockedModule));
         refused.Family.Should().Be("eac");
         refused.Signal.Should().Be("EasyAntiCheat_EOS.dll");
-        h.Guard.Scanned.Should().ContainSingle().Which.Should().Be(@"C:\Games\Title");
+        h.Guard.Scanned.Should().ContainSingle().Which.Should().Be(_exe, "the guard is handed the executable and resolves the install root itself (2026-09-25)");
         GameConsentRecord record = await h.Consent.FindAsync(_exe, Ct).ConfigureAwait(true);
         record.HookEnabled.Should().BeFalse();
         record.BlockedReason.Should().NotBeNullOrEmpty("the block is on the row for FR-2.2's disabled toggle");

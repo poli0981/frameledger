@@ -33,7 +33,8 @@ enum class Group : std::uint8_t { kModules = 0, kDrivers, kDirectories, kService
 // Note the off-by-one: CopyToken reserves a byte for the NUL and rejects at
 // `len >= cap`, so kMaxValueLen 96 admits 95 characters, not 96.
 // 64 until 2026-09-25, when the seed grew from 19 entries to 74 (eleven families became twenty-two, and most
-// gained a driver, a service or a file) and 2 x 74 no longer fitted. Each slot is ~1.6 KB, so `Rules` is ~530 KB:
+// gained a driver, a service or a file) and 2 x 74 no longer fitted. Each slot is ~1.6 KB, so `Rules` is ~650 KB with
+// the per-title lists (kMaxTitleRules below):
 // every production instance is static or heap-allocated and reset with ResetRules, never a stack temporary.
 inline constexpr std::size_t kMaxFamilies = 256;
 inline constexpr std::size_t kMaxValuesPerFamily = 16;
@@ -59,9 +60,13 @@ inline constexpr std::size_t kMaxRulesPathLen = 1024;
 
 // Per-title rules (check 3). These are OBJECTS in the schema, not bare strings:
 // 19_SAFETY requires the UI to name the check that fired and why, and a bare exe
-// name carries neither. kMaxTitleRules x kMaxValuesPerTitleRule = 512 blockable
-// names per array, more than the 256 the previous flat cap allowed.
-inline constexpr std::size_t kMaxTitleRules = 64;
+// name carries neither. kMaxTitleRules x kMaxValuesPerTitleRule = 1024 blockable
+// names per array.
+//
+// 64 until 2026-09-25, when the lists were seeded AND floored: a store id is one entry per title, the floor doubles
+// the worst case, and the first seed of 30 store ids already needed 60 of 64. Each slot is ~1 KB (the values array
+// dominates), so `Rules` grew by ~125 KB with it.
+inline constexpr std::size_t kMaxTitleRules = 128;
 inline constexpr std::size_t kMaxValuesPerTitleRule = 8;
 inline constexpr std::size_t kMaxReasonLen = 128;
 
@@ -221,21 +226,28 @@ enum class ParseResult : std::uint8_t {
 //
 //   MatchesBlockedExecutable — WIRED. `CheckBlockedExecutable` calls it from
 //   inside `EvaluateImpl`, between the module scan and the static pre-scan. The
-//   shipped array is still empty, so it refuses nothing today; what changed is
-//   that filling it now does something.
+//   shipped array was empty until rules 2026.09.4 and is seeded since (owner
+//   decision 2026-09-25).
 //
-//   MatchesBlockedStoreId — UNCALLED, and it cannot be called, for three
-//   independent reasons rather than for want of effort (§S14): nothing produces
-//   a store id (the platform metadata extractors are unbuilt), `FlGuardEvaluate`
-//   takes a pid and nothing else BY DESIGN (§S3 forbids a caller asserting a
-//   safety fact), and "unknown refuses" applied to it would refuse every title
-//   on every machine — a gate that cannot pass. Do NOT "fix" the second by
-//   widening the ABI.
+//   MatchesBlockedStoreId — WIRED 2026-09-25. It was uncalled until then, for
+//   three reasons (§S14): nothing produced a store id, `FlGuardEvaluate` takes a
+//   pid and nothing else BY DESIGN, and "unknown refuses" would have refused every
+//   title. `CheckBlockedStoreId` (fl_prescan.cpp) now reads the identity from the
+//   store's own files through a seam the guard owns — the ABI is unchanged — and
+//   an install no store names is not refused, while one whose store metadata
+//   cannot be read is.
 //
 // `storeId` is the joined form ("steam:730"); an unresolvable identity must
 // reach the caller as unknown, never as a clean miss.
 [[nodiscard]] const TitleRule* MatchesBlockedExecutable(const Rules& rules, const char* exeName) noexcept;
 [[nodiscard]] const TitleRule* MatchesBlockedStoreId(const Rules& rules, const char* storeId) noexcept;
+
+// The per-title lists are floored too, since 2026-09-25 — the same §S21 mechanism as the families: generated from
+// the shipped seed, seeded before the file is read, never removable by data. A file entry identical to a floor entry
+// is deduplicated, so the worst case is again the floor plus a fully drifted file (2 x each array must fit
+// kMaxTitleRules; tools/rules-validate.ps1 checks it).
+[[nodiscard]] const TitleRule* FloorBlockedExecutables(std::size_t& count) noexcept;
+[[nodiscard]] const TitleRule* FloorBlockedStoreIds(std::size_t& count) noexcept;
 
 // True if `moduleName` contains a suspicious fragment. The caller pairs this
 // with a signer check; a fragment alone never refuses (19_SAFETY: "name

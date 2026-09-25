@@ -37,7 +37,7 @@ public sealed class HookedCaptureGateTests
 
         public int PreScanCalls { get; private set; }
 
-        public ValueTask<AntiCheatVerdict> PreScanGameDirectoryAsync(string gameDirectory,
+        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath,
             CancellationToken ct = default)
         {
             PreScanCalls++;

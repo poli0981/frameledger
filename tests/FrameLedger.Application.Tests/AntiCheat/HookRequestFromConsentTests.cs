@@ -39,7 +39,7 @@ public sealed class HookRequestFromConsentTests
             return ValueTask.FromResult(AntiCheatVerdict.Allowed());
         }
 
-        public ValueTask<AntiCheatVerdict> PreScanGameDirectoryAsync(string gameDirectory,
+        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath,
             CancellationToken ct = default) => ValueTask.FromResult(AntiCheatVerdict.Allowed());
     }
 

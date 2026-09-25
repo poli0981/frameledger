@@ -69,17 +69,20 @@ FL_GUARD_ABI void FlGuardedInjectWhenReady(std::uint32_t targetPid, const wchar_
 // FlGuardedInjectAcknowledged, FlGuardedInjectWhenReadyAcknowledged and FlGuardIsJudgement were exported for one day
 // (2026-09-21, the user's bypass) and withdrawn on 2026-09-22. The ABI has no entry that injects past a refusal.
 
-// Check 4 against a directory, before anything is launched (FR-2.2). ADVISORY:
-// it answers "may this game's hooking toggle be offered at all", and gates
-// nothing. The same scan runs inside FlGuardEvaluate and FlGuardedInject
-// against a directory derived from the target's own pid, so a caller who never
-// asks this — or ignores the answer — changes nothing about what is allowed.
+// Checks 3 and 4 against an EXECUTABLE, before anything is launched (FR-2.2, and the Agent's pre-scan of the
+// library). ADVISORY: it answers "may this game's hooking toggle be offered at all", and gates nothing. The same
+// checks run inside FlGuardEvaluate and FlGuardedInject against the target's own pid, so a caller who never asks this
+// — or ignores the answer — changes nothing about what is allowed.
 //
-// It reports through FlGuardResult rather than an outcome enum of its own, so
-// there is ONE reason table and ONE mirror surface: kAllow means clean,
-// AntiCheatDirectory/AntiCheatFile name what was found, and PreScanFailed or a
-// Rules* reason means the scan could not reach an answer.
-FL_GUARD_ABI void FlStaticPreScan(const wchar_t* gameDirectory, FlGuardResult* out);
+// It replaced FlStaticPreScan(gameDirectory) on 2026-09-25. That export scanned the directory it was given, and its
+// one caller gave the executable's own folder, so an Unreal title's root-level EasyAntiCheat/ was never seen by the
+// scan that decides whether hooking may be enabled. This one resolves the install root itself (ResolveInstallRoot, as
+// the chokepoint always did) and adds check 3: the executable's name and the install's store identity.
+//
+// It reports through FlGuardResult rather than an outcome enum of its own, so there is ONE reason table and ONE
+// mirror surface: kAllow means clean; BlockedExecutable, BlockedStoreId, AntiCheatDirectory and AntiCheatFile name
+// what was found; PreScanFailed or a Rules* reason means the scan could not reach an answer.
+FL_GUARD_ABI void FlStaticPreScanGame(const wchar_t* exePath, FlGuardResult* out);
 
 // Stable name for a reason code. The managed mirror test compares these against
 // its own enum, so this is a contract and not a debugging aid.

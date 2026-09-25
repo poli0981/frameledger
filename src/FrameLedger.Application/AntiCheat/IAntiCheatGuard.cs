@@ -54,17 +54,23 @@ public interface IAntiCheatGuard
         CancellationToken ct = default);
 
     /// <summary>
-    /// Check 4 asked before anything is launched: does this game directory ship
-    /// anti-cheat? Answers FR-2.2's question — whether the hooking toggle may be
-    /// offered for this title at all.
+    /// Checks 3 and 4 asked before anything is launched: is this executable a listed title, does its install carry a
+    /// listed store identity, does its install tree ship anti-cheat? Answers FR-2.2's question — whether the hooking
+    /// toggle may be offered for this title at all — and the Agent's pre-scan of the library.
     /// </summary>
     /// <remarks>
     /// <para>
     /// ADVISORY ONLY. This does not gate injection; <see cref="EvaluateAsync"/>
-    /// and <see cref="GuardedInjectAsync"/> run the same scan inside the guard,
+    /// and <see cref="GuardedInjectAsync"/> run the same checks inside the guard,
     /// against a directory derived from the target's own pid rather than one a
     /// caller named. A caller that skips this question, or lies about the
     /// answer, changes nothing about whether injection is allowed.
+    /// </para>
+    /// <para>
+    /// It takes the EXECUTABLE since 2026-09-25 (it was <c>PreScanGameDirectoryAsync</c>). The only caller passed the
+    /// executable's own folder and the guard scanned exactly that, so an Unreal title's root-level
+    /// <c>EasyAntiCheat</c> folder was never seen by the scan that decides whether hooking may be enabled. The guard
+    /// now resolves the install root from the path itself, as the chokepoint always did.
     /// </para>
     /// <para>
     /// It lives on this port rather than a second one deliberately. Splitting it
@@ -73,5 +79,5 @@ public interface IAntiCheatGuard
     /// on passing while the thing it guards grew somewhere else.
     /// </para>
     /// </remarks>
-    ValueTask<AntiCheatVerdict> PreScanGameDirectoryAsync(string gameDirectory, CancellationToken ct = default);
+    ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath, CancellationToken ct = default);
 }

@@ -443,15 +443,15 @@
         "heuristic": { "$ref": "#/$defs/heuristic" },
 
         "blockedExecutables": {
-          "$comment": "May legitimately be empty - a per-title list, not the family blocklist. minItems is deliberately absent here and deliberately present on modules/drivers. maxItems is fl::guard::kMaxTitleRules; at kMaxValuesPerTitleRule values each that is 512 blockable names, more than the 4096 this used to claim could ever have survived the parser.",
+          "$comment": "May legitimately be empty - a per-title list, not the family blocklist. minItems is deliberately absent here and deliberately present on modules/drivers. maxItems is fl::guard::kMaxTitleRules (128 since 2026-09-25); at kMaxValuesPerTitleRule values each that is 1024 blockable names, more than the 4096 this used to claim could ever have survived the parser.",
           "type": "array",
-          "maxItems": 64,
+          "maxItems": 128,
           "items": { "$ref": "#/$defs/acBlockedExecutable" }
         },
 
         "blockedStoreIds": {
           "type": "array",
-          "maxItems": 64,
+          "maxItems": 128,
           "items": { "$ref": "#/$defs/acBlockedStoreId" }
         }
       }

@@ -1556,6 +1556,35 @@ và legal"), so the Legal Gate shows both once.
 - **`SqliteGameRepository._columns` is read by ordinal** (`ReadMore`): a new column goes at the end of the list, and the
   twin merge reads its own columns — both had to learn `record_sessions`.
 
+## 2026-09-25 — the beta.8 train
+
+*Status is `CHANGELOG.md` `[Unreleased]` (then `[0.1.0-beta.8]`); this is what no other file carries. The owner's list
+(eight items: the anti-cheat set as large and strict as possible, hiding the hook part for anti-cheat games, more
+metadata, NVIDIA App overrides, clearer reasons, a working Trend, FPS decimals, chart fixes) is planned as nine PRs in
+one approved plan; each PR cites it.*
+
+**Decision (D30, owner, asked before any code: "which strict rules, beyond named tokens?").** Two of three: **any
+kernel driver (`*.sys`) inside a game's install tree** is a finding (code, not data — `kKernelDriverInTreeFamily`),
+and **per-title lists** (30 Steam ids, 33 executables across nine families, floored like the families). **Not** the
+AreWeAntiCheatYet bulk import (~250 Steam ids): community data that keeps listing a game after it drops its anti-cheat
+would turn hooking off for good, since nothing clears a block. Recorded because the next person to "expand the list"
+will find that import one search away.
+
+**Decision (D31, owner): the store half's matrix.** Listed → refuse; no store identity (a loose folder, an Epic
+install, a Steam folder no manifest names) → not applicable, recorded as nothing; a store layout whose metadata cannot
+be read → refuse (`PreScanFailed`). §S14's "unknown must never read clean" is kept by the third row; the second is not
+an unknown — it is the answer "this is not a store title", and refusing it would be the gate that cannot pass.
+
+**Traps.**
+- **`Rules` is ~650 KB now** (256 families, 128 per-title rules). `x = Rules{}` builds that on the stack before
+  copying — use `ResetRules`. The Vulkan layer parses on a game's own `vkCreateInstance` thread, and native tests hold
+  it on the heap (two in one test function overflowed the 1 MB default).
+- **New `anticheat.modules` rows go at the END.** The Overlay's early stop reports a 1-based index into that order, and
+  `sessions.early_stop_family` stores it.
+- **`sed -i` and the Bash tool's heredocs strike again**: a heredoc halved `\\` in a Python patch (a C# verbatim path
+  still matched by luck), and a one-line `sed -i` turned `layer.cpp` into LF. Scripts go through the Write tool and run
+  by path; `git ls-files --eol -m` after any shell edit.
+
 ## Owner-only — no PR can close these
 
 1. **§S23-2 — branch protection.** `Rules / validate` is not a required status check on

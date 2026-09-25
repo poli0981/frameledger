@@ -138,6 +138,13 @@ struct Fake {
     Collected                                 dirEntriesResult = Collected::kOk;
     std::wstring                              imageDirectory = L"C:\\Games\\Example";
     Collected                                 imageDirectoryResult = Collected::kOk;
+    std::wstring                              lastScannedDir;    // what check 4 was asked to walk
+
+    // Check 3's store half (2026-09-25). Defaults to "this install carries no store identity", so every
+    // pre-existing case keeps its meaning now that the floor lists store ids: check 3 asks, and allows.
+    std::string  storeIdentity;
+    Collected    storeIdentityResult = Collected::kOk;
+    std::wstring lastStoreRoot;    // what the store half was asked about
 
     // §S18/§S22(b) — which MODULES the seam reports as FrameLedger's own, by base
     // name, and whether it can answer at all. Empty by default, so no existing
@@ -271,13 +278,26 @@ Collected FakeImageFileName(std::uint32_t, char* out, std::size_t cap) {
     return Collected::kOk;
 }
 
-Collected FakeEnumDirEntries(const wchar_t*, DirEntrySink sink, void* ctx) {
+Collected FakeEnumDirEntries(const wchar_t* dir, DirEntrySink sink, void* ctx) {
+    g.lastScannedDir = dir != nullptr ? dir : L"";
     for (const auto& e : g.dirEntries) {
         if (!sink(ctx, e.first.c_str(), e.second)) {
             break;
         }
     }
     return g.dirEntriesResult;
+}
+
+Collected FakeStoreIdentity(const wchar_t* installRoot, char* out, std::size_t cap) {
+    g.lastStoreRoot = installRoot != nullptr ? installRoot : L"";
+    if (g.storeIdentityResult != Collected::kOk) {
+        return g.storeIdentityResult;
+    }
+    if (g.storeIdentity.size() + 1 > cap) {
+        return Collected::kFailed;
+    }
+    strcpy_s(out, cap, g.storeIdentity.c_str());
+    return Collected::kOk;
 }
 
 Collected FakeModuleIsOurOwn(const wchar_t* modulePath, bool* isOurs) {
@@ -379,6 +399,7 @@ Sources FakeSources() {
     s.ImageDirectory = &FakeImageDirectory;
     s.ImageFileName = &FakeImageFileName;
     s.EnumerateDirEntries = &FakeEnumDirEntries;
+    s.StoreIdentity = &FakeStoreIdentity;
     s.ModuleIsOurOwn = &FakeModuleIsOurOwn;
     s.PayloadIsOurOwn = &FakePayloadIsOurOwn;
     s.ModuleSignerOrganisation = &FakeModuleSignerOrganisation;
@@ -3473,19 +3494,228 @@ TEST_CASE("an unrecognised layout keeps the exe's own directory", "[guard][presc
 
 TEST_CASE("the advisory pre-scan reaches the same verdict as the one inside the guard", "[guard][prescan]") {
     // FR-2.2's UI question. Same matcher, same polarity — the only difference is
-    // that it takes a directory instead of a pid.
+    // that it takes the executable's path instead of a pid.
     ResetFake();
     g.dirEntries = {{"EasyAntiCheat", true}};
-    const Verdict v = StaticPreScanWithSources(L"C:\\Games\\Example", FakeSources());
+    const Verdict v = StaticPreScanGameWithSources(L"C:\\Games\\Example\\game.exe", FakeSources());
     CHECK(v.reason == Reason::kAntiCheatDirectory);
 
     ResetFake();
     g.dirEntries = {{"game.exe", false}};
-    CHECK(StaticPreScanWithSources(L"C:\\Games\\Example", FakeSources()).Allowed());
+    CHECK(StaticPreScanGameWithSources(L"C:\\Games\\Example\\game.exe", FakeSources()).Allowed());
 
-    // A null directory is not an empty one.
+    // A null path is not an empty one, and a path that names no file is not a game.
     ResetFake();
-    CHECK(StaticPreScanWithSources(nullptr, FakeSources()).reason == Reason::kPreScanFailed);
+    CHECK(StaticPreScanGameWithSources(nullptr, FakeSources()).reason == Reason::kPreScanFailed);
+    CHECK(StaticPreScanGameWithSources(L"game.exe", FakeSources()).reason == Reason::kPreScanFailed);
+    CHECK(StaticPreScanGameWithSources(L"C:\\Games\\Example\\", FakeSources()).reason == Reason::kPreScanFailed);
+}
+
+TEST_CASE("the advisory pre-scan walks the INSTALL ROOT, not the executable's folder", "[guard][prescan]") {
+    // Until 2026-09-25 the advisory pre-scan scanned the directory it was handed, and the Agent handed it the
+    // executable's own folder: for Lies of P's layout, a folder of seven files, with EasyAntiCheat/ three levels up.
+    // The chokepoint resolved the root all along; the scan that decides whether hooking may be enabled did not.
+    ResetFake();
+    g.dirEntries = {{"EasyAntiCheat", true}};
+    const Verdict v = StaticPreScanGameWithSources(
+        LR"(D:\SteamLibrary\steamapps\common\Lies of P\LiesofP\Binaries\Win64\LOP-Win64-Shipping.exe)", FakeSources());
+    CHECK(v.reason == Reason::kAntiCheatDirectory);
+    CHECK(g.lastScannedDir == LR"(D:\SteamLibrary\steamapps\common\Lies of P)");
+    CHECK(g.lastStoreRoot == LR"(D:\SteamLibrary\steamapps\common\Lies of P)");
+}
+
+TEST_CASE("the advisory pre-scan runs check 3 on the executable's own name", "[guard][prescan][check3]") {
+    ResetFake();
+    g.rulesJson = RulesWithBlockedExecutable();
+    g.dirEntries = {{"ranked.exe", false}};
+    const Verdict v = StaticPreScanGameWithSources(L"C:\\Games\\Ranked\\RANKED.EXE", FakeSources());
+    REQUIRE_FALSE(v.Allowed());
+    CHECK(v.reason == Reason::kBlockedExecutable);
+    CHECK(std::strcmp(v.family, "Example Online") == 0);
+}
+
+// ===========================================================================
+// The kernel-driver rule (owner decision 2026-09-25, fl_prescan.h): any `*.sys` in a game's install tree that no
+// `files` entry names is reported under a family the CODE carries.
+// ===========================================================================
+TEST_CASE("an unnamed kernel driver in the install tree is an anti-cheat file", "[guard][prescan][driverrule]") {
+    ResetFake();
+    g.dirEntries = {{"Binaries", true}, {"driver", true}, {"GameShield64.SYS", false}};
+    const Verdict v = EvaluateWithSources(1234, FakeSources());
+    REQUIRE_FALSE(v.Allowed());
+    CHECK(v.reason == Reason::kAntiCheatFile);
+    CHECK(std::strcmp(v.family, kKernelDriverInTreeFamily) == 0);
+    CHECK(std::strcmp(v.signal, "GameShield64.SYS") == 0);
+}
+
+TEST_CASE("a kernel driver the data names keeps its own family", "[guard][prescan][driverrule]") {
+    // randgrid.sys is in the seed's `files` group (Activision Ricochet), which the floor carries: the named entry wins
+    // over the code rule, so the page says RICOCHET rather than "a kernel driver".
+    ResetFake();
+    g.dirEntries = {{"randgrid.sys", false}};
+    const Verdict v = EvaluateWithSources(1234, FakeSources());
+    REQUIRE_FALSE(v.Allowed());
+    CHECK(v.reason == Reason::kAntiCheatFile);
+    CHECK(std::strcmp(v.family, "Activision Ricochet") == 0);
+}
+
+TEST_CASE("the kernel-driver rule is about FILES ending in .sys, nothing else", "[guard][prescan][driverrule]") {
+    // The directions that could pass by accident: a folder called `x.sys`, a name that merely contains `.sys`, and a
+    // bare `.sys`.
+    ResetFake();
+    g.dirEntries = {{"weird.sys", true}, {"notes.sys.txt", false}, {".sys", false}, {"sys", false}};
+    const Verdict v = EvaluateWithSources(1234, FakeSources());
+    INFO("reason was " << ReasonName(v.reason) << " family=" << v.family << " signal=" << v.signal);
+    CHECK(v.Allowed());
+}
+
+TEST_CASE("the kernel-driver rule survives a rules file that names nothing", "[guard][prescan][driverrule][floor]") {
+    // It is code, not data: no rules file can remove it, rename its family, or switch it off.
+    ResetFake();
+    g.rulesJson = R"({"anticheat": {
+        "modules": [
+          { "family": "Easy Anti-Cheat", "match": "exact", "values": ["zzzz-not-real.dll"] },
+          { "family": "BattlEye",        "match": "exact", "values": ["zzzz-also-not.dll"] }
+        ],
+        "drivers": [ { "family": "Riot Vanguard", "match": "exact", "values": ["zzzz-nothing.sys"] } ],
+        "directories": [], "services": [], "files": [],
+        "blockedExecutables": [], "blockedStoreIds": []
+    }})";
+    g.dirEntries = {{"someguard.sys", false}};
+    const Verdict v = EvaluateWithSources(1234, FakeSources());
+    REQUIRE_FALSE(v.Allowed());
+    CHECK(std::strcmp(v.family, kKernelDriverInTreeFamily) == 0);
+}
+
+// ===========================================================================
+// Check 3's store half (2026-09-25). The identity comes from the store's own files, through a seam the guard owns —
+// never from a caller (§S3). The matrix: listed -> refuse; no identity -> not applicable; unreadable -> refuse.
+// ===========================================================================
+TEST_CASE("a listed store id refuses as BlockedStoreId, naming its family", "[guard][check3][store]") {
+    ResetFake();
+    g.storeIdentity = "steam:730";    // the floor lists it (Valve VAC) since rules 2026.09.4
+    const Verdict v = EvaluateWithSources(1234, FakeSources());
+    REQUIRE_FALSE(v.Allowed());
+    CHECK(v.reason == Reason::kBlockedStoreId);
+    CHECK(std::strcmp(v.family, "Valve VAC") == 0);
+    CHECK(std::strcmp(v.signal, "steam:730") == 0);
+    CHECK(g.lastStoreRoot == L"C:\\Games\\Example");    // the install root check 4 walks, derived from the pid
+}
+
+TEST_CASE("an install no store names is not refused by the store half", "[guard][check3][store]") {
+    ResetFake();
+    g.storeIdentity = "";
+    CHECK(EvaluateWithSources(1234, FakeSources()).Allowed());
+
+    ResetFake();
+    g.storeIdentity = "steam:7300";    // identity, never a prefix: listing 730 must not take out 7300
+    CHECK(EvaluateWithSources(1234, FakeSources()).Allowed());
+}
+
+TEST_CASE("store metadata that cannot be read refuses, never reads as clean", "[guard][check3][store][failclosed]") {
+    ResetFake();
+    g.storeIdentityResult = Collected::kFailed;
+    const Verdict v = EvaluateWithSources(1234, FakeSources());
+    REQUIRE_FALSE(v.Allowed());
+    CHECK(v.reason == Reason::kPreScanFailed);
+
+    // A missing seam is the same answer, not a skipped check.
+    ResetFake();
+    Sources s = FakeSources();
+    s.StoreIdentity = nullptr;
+    CHECK(EvaluateWithSources(1234, s).reason == Reason::kPreScanFailed);
+}
+
+TEST_CASE("the advisory pre-scan applies the store half to the install root", "[guard][prescan][check3][store]") {
+    ResetFake();
+    g.storeIdentity = "steam:570";
+    const Verdict v = StaticPreScanGameWithSources(
+        LR"(E:\Steam\steamapps\common\dota 2 beta\game\bin\win64\dota2x.exe)", FakeSources());
+    REQUIRE_FALSE(v.Allowed());
+    CHECK(v.reason == Reason::kBlockedStoreId);
+    CHECK(g.lastStoreRoot == LR"(E:\Steam\steamapps\common\dota 2 beta)");
+}
+
+// ===========================================================================
+// The REAL store-identity seam, against Steam and GOG layouts built in a temp folder. The fakes cannot tell whether
+// the manifest parser reads what Steam writes; only a file on disk can.
+// ===========================================================================
+namespace {
+
+std::wstring MakeTempTree(const wchar_t* leaf) {
+    wchar_t base[MAX_PATH] = {};
+    REQUIRE(GetTempPathW(MAX_PATH, base) > 0);
+    const std::wstring root = std::wstring(base) + L"fl_store_" + std::to_wstring(GetCurrentProcessId()) + L"_" + leaf;
+    return root;
+}
+
+void WriteText(const std::wstring& path, const char* text) {
+    HANDLE h = CreateFileW(path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    REQUIRE(h != INVALID_HANDLE_VALUE);
+    DWORD written = 0;
+    REQUIRE(WriteFile(h, text, static_cast<DWORD>(std::strlen(text)), &written, nullptr));
+    CloseHandle(h);
+}
+
+}    // namespace
+
+TEST_CASE("the real seam reads a Steam library's manifest by installdir", "[guard][check3][store][real]") {
+    const std::wstring lib = MakeTempTree(L"steam");
+    const std::wstring steamapps = lib + L"\\steamapps";
+    const std::wstring common = steamapps + L"\\common";
+    CreateDirectoryW(lib.c_str(), nullptr);
+    CreateDirectoryW(steamapps.c_str(), nullptr);
+    CreateDirectoryW(common.c_str(), nullptr);
+    CreateDirectoryW((common + L"\\Counter-Strike Global Offensive").c_str(), nullptr);
+    CreateDirectoryW((common + L"\\Some Indie Game").c_str(), nullptr);
+    CreateDirectoryW((common + L"\\Not Managed").c_str(), nullptr);
+    // What Steam writes: tab-separated KeyValues, installdir long after appid, other blocks in between.
+    WriteText(steamapps + L"\\appmanifest_730.acf",
+              "\"AppState\"\n{\n\t\"appid\"\t\t\"730\"\n\t\"universe\"\t\t\"1\"\n\t\"name\"\t\t\"Counter-Strike 2\"\n"
+              "\t\"StateFlags\"\t\t\"4\"\n\t\"installdir\"\t\t\"Counter-Strike Global Offensive\"\n"
+              "\t\"InstalledDepots\"\n\t{\n\t\t\"2347771\"\n\t\t{\n\t\t\t\"manifest\"\t\t\"1\"\n\t\t}\n\t}\n}\n");
+    WriteText(steamapps + L"\\appmanifest_1234560.acf",
+              "\"AppState\"\n{\n\t\"appid\"\t\t\"1234560\"\n\t\"installdir\"\t\t\"Some Indie Game\"\n}\n");
+
+    const Sources s = SystemSources();
+    REQUIRE(s.StoreIdentity != nullptr);
+    char id[kMaxValueLen] = {};
+
+    REQUIRE(s.StoreIdentity((common + L"\\Counter-Strike Global Offensive").c_str(), id, sizeof(id)) == Collected::kOk);
+    CHECK(std::string(id) == "steam:730");
+
+    // Case-insensitive on the folder, as NTFS is.
+    REQUIRE(s.StoreIdentity((common + L"\\some indie game").c_str(), id, sizeof(id)) == Collected::kOk);
+    CHECK(std::string(id) == "steam:1234560");
+
+    // A folder under steamapps\common that no manifest names carries no identity — an answer, not a failure.
+    REQUIRE(s.StoreIdentity((common + L"\\Not Managed").c_str(), id, sizeof(id)) == Collected::kOk);
+    CHECK(std::string(id).empty());
+
+    DeleteFileW((steamapps + L"\\appmanifest_730.acf").c_str());
+    DeleteFileW((steamapps + L"\\appmanifest_1234560.acf").c_str());
+    RemoveDirectoryW((common + L"\\Counter-Strike Global Offensive").c_str());
+    RemoveDirectoryW((common + L"\\Some Indie Game").c_str());
+    RemoveDirectoryW((common + L"\\Not Managed").c_str());
+    RemoveDirectoryW(common.c_str());
+    RemoveDirectoryW(steamapps.c_str());
+    RemoveDirectoryW(lib.c_str());
+}
+
+TEST_CASE("the real seam reads a GOG product id, and a plain folder carries none", "[guard][check3][store][real]") {
+    const std::wstring root = MakeTempTree(L"gog");
+    CreateDirectoryW(root.c_str(), nullptr);
+    WriteText(root + L"\\goggame-1207658924.info", "{\"gameId\": \"1207658924\"}");
+
+    const Sources s = SystemSources();
+    char          id[kMaxValueLen] = {};
+    REQUIRE(s.StoreIdentity(root.c_str(), id, sizeof(id)) == Collected::kOk);
+    CHECK(std::string(id) == "gog:1207658924");
+
+    DeleteFileW((root + L"\\goggame-1207658924.info").c_str());
+    REQUIRE(s.StoreIdentity(root.c_str(), id, sizeof(id)) == Collected::kOk);
+    CHECK(std::string(id).empty());
+    RemoveDirectoryW(root.c_str());
 }
 
 // ===========================================================================

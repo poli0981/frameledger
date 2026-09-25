@@ -190,6 +190,18 @@ TEST_CASE("the generated floor reproduces the shipped seed exactly", "[rules][se
     INFO("the seed contributed " << (rules.nameFragmentCount - fragCount) << " name fragments beyond the floor");
     CHECK(rules.nameFragmentCount == fragCount);
 
+    // The per-title lists are floored since 2026-09-25: the same reproduction, entry for entry.
+    std::size_t execFloor = 0;
+    std::size_t storeFloor = 0;
+    (void)FloorBlockedExecutables(execFloor);
+    (void)FloorBlockedStoreIds(storeFloor);
+    REQUIRE(execFloor > 0);
+    REQUIRE(storeFloor > 0);
+    INFO("the seed contributed " << (rules.blockedExecutableCount - execFloor) << " executable rules and "
+                                 << (rules.blockedStoreIdCount - storeFloor) << " store ids beyond the floor");
+    CHECK(rules.blockedExecutableCount == execFloor);
+    CHECK(rules.blockedStoreIdCount == storeFloor);
+
     std::printf("[floor] %zu families, %zu fragments — generated from the seed\n", floorCount, fragCount);
 }
 
@@ -281,6 +293,14 @@ TEST_CASE("a minimal rules file cannot shrink the blocklist", "[rules][floor][fa
     CHECK(HasSuspiciousFragment(rules, "SomeAntiTamper64.dll"));
     CHECK(HasSuspiciousFragment(rules, "xprotect.dll"));
     CHECK_FALSE(HasSuspiciousFragment(rules, "d3d11.dll"));
+
+    // And the per-title lists (2026-09-25): this file lists no title, and the floor still does.
+    const TitleRule* exe = MatchesBlockedExecutable(rules, "cs2.exe");
+    REQUIRE(exe != nullptr);
+    CHECK(std::string(exe->family) == "Valve VAC");
+    const TitleRule* store = MatchesBlockedStoreId(rules, "steam:730");
+    REQUIRE(store != nullptr);
+    CHECK(std::string(store->family) == "Valve VAC");
 }
 
 TEST_CASE("the shipped seed is inside the guard's parse budget", "[rules][seed][budget]") {
@@ -458,7 +478,10 @@ TEST_CASE("blockedExecutables entries are objects, and carry family and reason",
     d.blockedExecutables =
         R"([{ "family": "Example Online", "match": "exact", "values": ["ranked.exe"], "reason": "competitive online title" }])";
     REQUIRE(ParseDoc(Build(d), rules) == ParseResult::kOk);
-    REQUIRE(rules.blockedExecutableCount == 1);
+    // The floored titles are already in the array (2026-09-25); this document adds one of its own.
+    std::size_t execFloor = 0;
+    (void)FloorBlockedExecutables(execFloor);
+    REQUIRE(rules.blockedExecutableCount == execFloor + 1);
 
     const TitleRule* hit = MatchesBlockedExecutable(rules, "RANKED.EXE");
     REQUIRE(hit != nullptr);
@@ -511,7 +534,11 @@ TEST_CASE("blockedStoreIds compose store and id into the joined form", "[rules][
     d.blockedStoreIds =
         R"([{ "store": "steam", "id": "730", "family": "Valve VAC", "reason": "VAC-protected online title" }])";
     REQUIRE(ParseDoc(Build(d), rules) == ParseResult::kOk);
-    REQUIRE(rules.blockedStoreIdCount == 1);
+    // One of its own beside the floored ids: the floor names steam:730 too, with other words, so both are kept
+    // (a file entry is dropped only when it repeats a floor entry field for field).
+    std::size_t storeFloor = 0;
+    (void)FloorBlockedStoreIds(storeFloor);
+    REQUIRE(rules.blockedStoreIdCount == storeFloor + 1);
 
     // fl_ac_rules.h promises the joined form; the schema keeps the parts apart
     // so it can constrain each. Exactly one place knows the separator.

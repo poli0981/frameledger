@@ -175,8 +175,9 @@ public sealed class AgentCommandHandler
             return Error(request, IpcErrorCode.ExecutableUnreadable, $"{path} could not be read, so nothing can be scanned or stamped");
         }
 
-        string directory = Path.GetDirectoryName(path) ?? path;
-        AntiCheatVerdict verdict = await _guard.PreScanGameDirectoryAsync(directory, ct).ConfigureAwait(false);
+        // The EXECUTABLE, not its folder (2026-09-25): the guard resolves the install root and runs check 3 on the
+        // name and the store identity as well as check 4 on the tree.
+        AntiCheatVerdict verdict = await _guard.PreScanGameAsync(path, ct).ConfigureAwait(false);
         if (!verdict.IsAllowed)
         {
             // A refusal, or a scan that reached no answer: the store records which (a default verdict is

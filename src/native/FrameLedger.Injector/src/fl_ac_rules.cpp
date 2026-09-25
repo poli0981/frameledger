@@ -341,23 +341,46 @@ bool ReadStoreRule(const char* json, const jsmntok_t* toks, int count, int objIn
 
 using TitleReader = bool (*)(const char*, const jsmntok_t*, int, int, TitleRule&) noexcept;
 
+// True when `candidate` repeats a floor entry field for field — SameFamily's rule, for the per-title lists.
+bool SameTitleRule(const TitleRule& a, const TitleRule& b) noexcept {
+    if (a.match != b.match || a.valueCount != b.valueCount || !IEquals(a.family, b.family) ||
+        !IEquals(a.reason, b.reason)) {
+        return false;
+    }
+    for (std::size_t i = 0; i < a.valueCount; ++i) {
+        if (!IEquals(a.values[i], b.values[i])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// APPENDS after the floor (2026-09-25), like the families: the first `floorCount` entries of `out` are the
+// compiled-in lists, an unmodified file repeats all of them, and a repeat is skipped rather than stored twice.
 bool ReadTitleArray(const char* json, const jsmntok_t* toks, int count, int arrayTok, TitleReader read, TitleRule* out,
-                    std::size_t& outCount) noexcept {
-    outCount = 0;
+                    std::size_t& outCount, std::size_t floorCount) noexcept {
     if (arrayTok < 0 || toks[arrayTok].type != JSMN_ARRAY) {
         return false;
     }
-    if (static_cast<std::size_t>(toks[arrayTok].size) > kMaxTitleRules) {
-        return false;
-    }
-    for (int i = arrayTok + 1; i < count && outCount < kMaxTitleRules; ++i) {
+    for (int i = arrayTok + 1; i < count; ++i) {
         if (toks[i].parent != arrayTok) {
             continue;
         }
-        if (!read(json, toks, count, i, out[outCount])) {
+        TitleRule rule;
+        if (!read(json, toks, count, i, rule)) {
             return false;
         }
-        ++outCount;
+        bool duplicate = false;
+        for (std::size_t f = 0; f < floorCount && !duplicate; ++f) {
+            duplicate = SameTitleRule(out[f], rule);
+        }
+        if (duplicate) {
+            continue;
+        }
+        if (outCount >= kMaxTitleRules) {
+            return false;    // more distinct entries than we can hold: refuse the file, never drop one
+        }
+        out[outCount++] = rule;
     }
     return true;
 }
@@ -435,6 +458,16 @@ const char* const* FloorFragments(std::size_t& count) noexcept {
     return generated::kFloorFragments;
 }
 
+const TitleRule* FloorBlockedExecutables(std::size_t& count) noexcept {
+    count = generated::kFloorBlockedExecutableCount;
+    return generated::kFloorBlockedExecutables;
+}
+
+const TitleRule* FloorBlockedStoreIds(std::size_t& count) noexcept {
+    count = generated::kFloorBlockedStoreIdCount;
+    return generated::kFloorBlockedStoreIds;
+}
+
 ParseResult ParseRules(const char* json, std::size_t length, Rules& out) noexcept {
     ResetRules(out);
 
@@ -466,6 +499,21 @@ ParseResult ParseRules(const char* json, std::size_t length, Rules& out) noexcep
             ++out.nameFragmentCount;
         }
     }
+
+    // And the per-title lists (2026-09-25), for the same reason and in the same position: a rules file that empties
+    // blockedExecutables or blockedStoreIds cannot take a floored title off either list.
+    std::size_t      execFloorCount = 0;
+    const TitleRule* execFloor = FloorBlockedExecutables(execFloorCount);
+    for (std::size_t i = 0; i < execFloorCount && out.blockedExecutableCount < kMaxTitleRules; ++i) {
+        out.blockedExecutables[out.blockedExecutableCount++] = execFloor[i];
+    }
+    const std::size_t execFirst = out.blockedExecutableCount;
+    std::size_t       storeFloorCount = 0;
+    const TitleRule*  storeFloor = FloorBlockedStoreIds(storeFloorCount);
+    for (std::size_t i = 0; i < storeFloorCount && out.blockedStoreIdCount < kMaxTitleRules; ++i) {
+        out.blockedStoreIds[out.blockedStoreIdCount++] = storeFloor[i];
+    }
+    const std::size_t storeFirst = out.blockedStoreIdCount;
     if (json == nullptr || length == 0) {
         return ParseResult::kMalformed;
     }
@@ -536,12 +584,12 @@ ParseResult ParseRules(const char* json, std::size_t length, Rules& out) noexcep
     // ReadTitleRule for what reading them as strings would have done.
     const int execTok = FindMember(json, toks, count, acTok, "blockedExecutables");
     if (execTok >= 0 && !ReadTitleArray(json, toks, count, execTok, &ReadTitleRule, out.blockedExecutables,
-                                        out.blockedExecutableCount)) {
+                                        out.blockedExecutableCount, execFirst)) {
         return ParseResult::kMalformed;
     }
     const int storeTok = FindMember(json, toks, count, acTok, "blockedStoreIds");
-    if (storeTok >= 0 &&
-        !ReadTitleArray(json, toks, count, storeTok, &ReadStoreRule, out.blockedStoreIds, out.blockedStoreIdCount)) {
+    if (storeTok >= 0 && !ReadTitleArray(json, toks, count, storeTok, &ReadStoreRule, out.blockedStoreIds,
+                                         out.blockedStoreIdCount, storeFirst)) {
         return ParseResult::kMalformed;
     }
 
