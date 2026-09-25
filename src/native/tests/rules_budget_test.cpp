@@ -24,6 +24,7 @@
 #include <cstdio>
 #include <fl_ac_rules.h>
 #include <jsmn.h>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -140,7 +141,8 @@ std::string FamilyWithValues(std::size_t n) {
 TEST_CASE("the rules file that SHIPS parses in the guard", "[rules][seed]") {
     const std::string seed = ReadSeed();
 
-    Rules             rules;
+    auto              rulesOwner = std::make_unique<Rules>();
+    Rules&            rules = *rulesOwner;
     const ParseResult r = ParseRules(seed.c_str(), seed.size(), rules);
 
     // Not just "not malformed": kIncomplete would mean the seed lost a required
@@ -149,7 +151,10 @@ TEST_CASE("the rules file that SHIPS parses in the guard", "[rules][seed]") {
     CHECK(rules.familyCount > 0);
     CHECK(rules.familyCount <= kMaxFamilies);
 
-    std::printf("[seed] %zu bytes, %zu families of %zu\n", seed.size(), rules.familyCount, kMaxFamilies);
+    // sizeof(Rules) is printed because the Vulkan layer heap-allocates one inside a game's process at init
+    // (layer.cpp RunSelfScan), and its comment quotes the figure.
+    std::printf("[seed] %zu bytes, %zu families of %zu, sizeof(Rules) %zu\n", seed.size(), rules.familyCount,
+                kMaxFamilies, sizeof(Rules));
 }
 
 // §S21. The floor is generated from rules/detection-rules.json, so it cannot be
@@ -165,7 +170,8 @@ TEST_CASE("the rules file that SHIPS parses in the guard", "[rules][seed]") {
 TEST_CASE("the generated floor reproduces the shipped seed exactly", "[rules][seed][floor]") {
     const std::string seed = ReadSeed();
 
-    Rules rules;
+    auto   rulesOwner = std::make_unique<Rules>();
+    Rules& rules = *rulesOwner;
     REQUIRE(ParseRules(seed.c_str(), seed.size(), rules) == ParseResult::kOk);
 
     std::size_t   floorCount = 0;
@@ -187,6 +193,40 @@ TEST_CASE("the generated floor reproduces the shipped seed exactly", "[rules][se
     std::printf("[floor] %zu families, %zu fragments — generated from the seed\n", floorCount, fragCount);
 }
 
+// 14_TESTING: "every family in 19_SAFETY §Blocklist seed has a fixture". Hand-written cases covered the first eleven
+// families; the seed has twenty-two since 2026-09-25, so the fixture is GENERATED from the seed itself: every entry's
+// every value must reach its own family through MatchName, in its own group. That also catches a row an earlier row
+// shadows — a prefix that swallows a later token reports the wrong family — which no hand-picked case would notice.
+TEST_CASE("every entry of the shipped seed matches its own family, in its own group", "[rules][seed][fixture]") {
+    const std::string seed = ReadSeed();
+    auto              rulesOwner = std::make_unique<Rules>();
+    Rules&            rules = *rulesOwner;
+    REQUIRE(ParseRules(seed.c_str(), seed.size(), rules) == ParseResult::kOk);
+
+    std::size_t checked = 0;
+    for (std::size_t i = 0; i < rules.familyCount; ++i) {
+        const Family& f = rules.families[i];
+        for (std::size_t v = 0; v < f.valueCount; ++v) {
+            // A prefix entry is exercised with a suffix, so the prefix semantics are what is tested; a driver arrives
+            // as a native path and is matched on its leaf.
+            std::string observed = f.values[v];
+            if (f.match == MatchKind::kPrefix) {
+                observed += "64.dll";
+            }
+            if (f.group == Group::kDrivers) {
+                observed = "\\SystemRoot\\System32\\drivers\\" + observed;
+            }
+            const Family* hit = MatchName(rules, f.group, observed.c_str());
+            INFO("'" << observed << "' in group " << static_cast<int>(f.group) << " should match " << f.name);
+            REQUIRE(hit != nullptr);
+            CHECK(std::string(hit->name) == f.name);
+            ++checked;
+        }
+    }
+    CHECK(checked > 100);
+    std::printf("[fixture] %zu seed values each matched their own family\n", checked);
+}
+
 // The property the floor exists for, asserted against the gate rather than
 // against the generator: a rules file that names the three required families and
 // nothing else must still block everything the shipped seed blocks.
@@ -206,7 +246,8 @@ TEST_CASE("a minimal rules file cannot shrink the blocklist", "[rules][floor][fa
         "blockedExecutables": [], "blockedStoreIds": []
     }})";
 
-    Rules rules;
+    auto   rulesOwner = std::make_unique<Rules>();
+    Rules& rules = *rulesOwner;
     REQUIRE(ParseRules(minimal.c_str(), minimal.size(), rules) == ParseResult::kOk);
 
     struct Case {
@@ -265,8 +306,9 @@ TEST_CASE("the shipped seed is inside the guard's parse budget", "[rules][seed][
 // would pass against a parser that rejects everything.
 // ===========================================================================
 TEST_CASE("a family holds exactly kMaxValuesPerFamily values, and not one more", "[rules][bounds]") {
-    Rules rules;
-    Doc   ok;
+    auto   rulesOwner = std::make_unique<Rules>();
+    Rules& rules = *rulesOwner;
+    Doc    ok;
     ok.extraModules = FamilyWithValues(kMaxValuesPerFamily);
     CHECK(ParseDoc(Build(ok), rules) == ParseResult::kOk);
 
@@ -279,7 +321,8 @@ TEST_CASE("a value holds kMaxValueLen-1 characters, and not kMaxValueLen", "[rul
     // CopyToken reserves a byte for the NUL and rejects at `len >= cap`, so the
     // schema's maxLength must be kMaxValueLen - 1. It said 128 against a cap of
     // 96, which is where this off-by-one was hiding.
-    Rules rules;
+    auto   rulesOwner = std::make_unique<Rules>();
+    Rules& rules = *rulesOwner;
 
     Doc ok;
     ok.extraModules = ",\n          { \"family\": \"Long\", \"match\": \"exact\", \"values\": [\"" +
@@ -293,7 +336,8 @@ TEST_CASE("a value holds kMaxValueLen-1 characters, and not kMaxValueLen", "[rul
 }
 
 TEST_CASE("a family name holds kMaxFamilyNameLen-1 characters, and not kMaxFamilyNameLen", "[rules][bounds]") {
-    Rules rules;
+    auto   rulesOwner = std::make_unique<Rules>();
+    Rules& rules = *rulesOwner;
 
     Doc ok;
     ok.extraModules = ",\n          { \"family\": \"" + Repeat('F', kMaxFamilyNameLen - 1) +
@@ -325,8 +369,9 @@ TEST_CASE("the file holds exactly kMaxFamilies families, and not one more", "[ru
     // deduplicated rather than stored. Arithmetic over kFixtureFamilies would
     // have to model both and would go stale the next time the seed changes — so
     // the baseline is taken from the parser itself.
-    Rules rules;
-    Doc   baseline;
+    auto   rulesOwner = std::make_unique<Rules>();
+    Rules& rules = *rulesOwner;
+    Doc    baseline;
     REQUIRE(ParseDoc(Build(baseline), rules) == ParseResult::kOk);
     const std::size_t used = rules.familyCount;
     REQUIRE(used < kMaxFamilies);
@@ -346,7 +391,8 @@ TEST_CASE("the file holds exactly kMaxFamilies families, and not one more", "[ru
 }
 
 TEST_CASE("a prefix holds kMinPrefixLen characters, and not one fewer", "[rules][bounds]") {
-    Rules rules;
+    auto   rulesOwner = std::make_unique<Rules>();
+    Rules& rules = *rulesOwner;
 
     Doc ok;
     ok.extraModules = ",\n          { \"family\": \"Short\", \"match\": \"prefix\", \"values\": [\"" +
@@ -362,7 +408,8 @@ TEST_CASE("a prefix holds kMinPrefixLen characters, and not one fewer", "[rules]
 }
 
 TEST_CASE("a heuristic array holds its cap, and not one more", "[rules][bounds]") {
-    Rules rules;
+    auto   rulesOwner = std::make_unique<Rules>();
+    Rules& rules = *rulesOwner;
 
     auto list = [](const char* stem, std::size_t n) {
         std::string s = "[";
@@ -405,8 +452,9 @@ TEST_CASE("a heuristic array holds its cap, and not one more", "[rules][bounds]"
 // because nothing ever put an entry in either array.
 // ===========================================================================
 TEST_CASE("blockedExecutables entries are objects, and carry family and reason", "[rules][shape]") {
-    Rules rules;
-    Doc   d;
+    auto   rulesOwner = std::make_unique<Rules>();
+    Rules& rules = *rulesOwner;
+    Doc    d;
     d.blockedExecutables =
         R"([{ "family": "Example Online", "match": "exact", "values": ["ranked.exe"], "reason": "competitive online title" }])";
     REQUIRE(ParseDoc(Build(d), rules) == ParseResult::kOk);
@@ -427,14 +475,16 @@ TEST_CASE("a bare string in blockedExecutables is REFUSED, not silently stored",
     // This is the shape the parser used to accept. It matched nothing, because
     // an exe name is not a rule — so had anyone ever populated the array, the
     // check would have looked configured and blocked nothing.
-    Rules rules;
-    Doc   d;
+    auto   rulesOwner = std::make_unique<Rules>();
+    Rules& rules = *rulesOwner;
+    Doc    d;
     d.blockedExecutables = R"(["ranked.exe"])";
     CHECK(ParseDoc(Build(d), rules) == ParseResult::kMalformed);
 }
 
 TEST_CASE("a blockedExecutables entry holds kMaxValuesPerTitleRule values, and not one more", "[rules][bounds]") {
-    Rules rules;
+    auto   rulesOwner = std::make_unique<Rules>();
+    Rules& rules = *rulesOwner;
 
     auto entry = [](std::size_t n) {
         std::string s = R"([{ "family": "Example", "match": "exact", "reason": "why", "values": [)";
@@ -455,8 +505,9 @@ TEST_CASE("a blockedExecutables entry holds kMaxValuesPerTitleRule values, and n
 }
 
 TEST_CASE("blockedStoreIds compose store and id into the joined form", "[rules][shape]") {
-    Rules rules;
-    Doc   d;
+    auto   rulesOwner = std::make_unique<Rules>();
+    Rules& rules = *rulesOwner;
+    Doc    d;
     d.blockedStoreIds =
         R"([{ "store": "steam", "id": "730", "family": "Valve VAC", "reason": "VAC-protected online title" }])";
     REQUIRE(ParseDoc(Build(d), rules) == ParseResult::kOk);
@@ -478,8 +529,9 @@ TEST_CASE("blockedStoreIds compose store and id into the joined form", "[rules][
 TEST_CASE("a per-title entry missing its reason is REFUSED", "[rules][shape][failclosed]") {
     // 19_SAFETY requires the refusal to name the check that fired and why, and
     // check 3's signal — an executable name — explains nothing on its own.
-    Rules rules;
-    Doc   d;
+    auto   rulesOwner = std::make_unique<Rules>();
+    Rules& rules = *rulesOwner;
+    Doc    d;
     d.blockedExecutables = R"([{ "family": "Example", "match": "exact", "values": ["ranked.exe"] }])";
     CHECK(ParseDoc(Build(d), rules) == ParseResult::kMalformed);
 }

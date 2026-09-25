@@ -1637,7 +1637,9 @@ a system DLL.
 
 **Two families remain unrepresented in the data** — Activision Ricochet (driver
 and service names unconfirmed) and Valve VAC (needs `blockedStoreIds`). Recorded
-in the seed's own `$comment`. The `heuristic.trustedSigners` list is a guess and
+in the seed's own `$comment`. ~~Ricochet~~ **has data since 2026-09-25** (`randgrid.sys`,
+`atvi-randgrid_sr`/`_msstore`, from Activision's support pages — documented, unmeasured; `19_SAFETY`
+§Blocklist seed). VAC still has none. The `heuristic.trustedSigners` list is a guess and
 is marked UNVERIFIED.
 
 ### S13(c) · Is launch-mode injection salvageable?

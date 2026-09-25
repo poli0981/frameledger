@@ -27,7 +27,30 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
-_Nothing yet — entries continue here after `0.1.0-beta.7`._
+### Changed
+
+- **The anti-cheat blocklist names twenty-two families, twice as many, most through more than one signal.** New:
+  EA AntiCheat, Activision Ricochet (`randgrid.sys` and its `atvi-randgrid_*` services — the family 19_SAFETY carried
+  as "no data yet" since August), NetEase Anti-Cheat, NetEase Yidun, Nexon Game Security (BlackCipher), TenProtect,
+  AhnLab HackShield, EQU8, Anybrain, FredaikisAntiCheat and Roblox Hyperion. Existing families gained the groups they
+  lacked: BattlEye's driver `BEDaisy.sys` and its services, FACEIT's and ESEA's drivers and services, HoYoverse's
+  `HoYoKProtect.sys` (which the `mhyprot` prefix never matched), Xigncode3's driver and service, Denuvo Anti-Cheat's
+  driver, GameGuard's folder, files and service, EAC's `start_protected_game.exe` launcher and setup files. 19 entries
+  became 74 (rules `2026.09.3`). Every new name is documented — SteamDB's file-detection rules (MIT), the vendors'
+  support pages, LOLDrivers, DRML — and none is measured on a real title yet; each entry's `note` says which. Three
+  services are deliberately left out because they run outside play and would refuse every session on the machine:
+  `EAAntiCheatService`, PunkBuster's `PnkBstrA`, and Denuvo's update service.
+- **The guard holds 256 blocklist entries instead of 64** (2 × 74 no longer fitted the worst case of the compiled-in
+  floor plus a drifted file). The parsed rules are ~530 KB, so they are now reset in place instead of being copied from
+  a temporary: the Vulkan layer parses them on whichever of a game's threads creates its Vulkan instance, and a
+  temporary that size on a small thread stack would crash the game. The native tests hold them on the heap.
+
+### Fixed
+
+- **19_SAFETY's fixture rule is enforced for every family, not eleven.** A generated test walks every value of the
+  shipped seed and requires it to match its own family in its own group — which also catches a later row that an
+  earlier prefix shadows. The rules file's note that called XIGNCODE3's `x3.xem` "not a loadable module" is corrected:
+  XIGNCODE3 loads it as its loader, so the modules group names it too.
 
 ## [0.1.0-beta.7] - 2026-09-23
 

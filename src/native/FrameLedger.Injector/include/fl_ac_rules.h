@@ -32,7 +32,10 @@ enum class Group : std::uint8_t { kModules = 0, kDrivers, kDirectories, kService
 //
 // Note the off-by-one: CopyToken reserves a byte for the NUL and rejects at
 // `len >= cap`, so kMaxValueLen 96 admits 95 characters, not 96.
-inline constexpr std::size_t kMaxFamilies = 64;
+// 64 until 2026-09-25, when the seed grew from 19 entries to 74 (eleven families became twenty-two, and most
+// gained a driver, a service or a file) and 2 x 74 no longer fitted. Each slot is ~1.6 KB, so `Rules` is ~530 KB:
+// every production instance is static or heap-allocated and reset with ResetRules, never a stack temporary.
+inline constexpr std::size_t kMaxFamilies = 256;
 inline constexpr std::size_t kMaxValuesPerFamily = 16;
 
 // The floor is GENERATED from rules/detection-rules.json and occupies family
@@ -130,6 +133,14 @@ struct Rules {
     char        trustedSigners[kMaxTrustedSigners][kMaxValueLen] = {};
     std::size_t trustedSignerCount = 0;
 };
+
+// Returns `r` to the state of a value-initialised `Rules{}` WITHOUT materialising one.
+//
+// `r = Rules{}` builds a ~530 KB temporary on the stack before copying it, and ParseRules runs inside the Vulkan
+// layer, on whatever thread of a game we do not own calls vkCreateInstance — a thread whose stack may be far smaller
+// than that. The default state is all zero bytes (every count 0, every buffer empty, MatchKind::kExact and
+// Group::kModules both 0; fl_ac_rules.cpp asserts it), so a memset over the object is the same value.
+void ResetRules(Rules& r) noexcept;
 
 enum class ParseResult : std::uint8_t {
     kOk = 0,

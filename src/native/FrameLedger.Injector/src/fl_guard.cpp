@@ -598,7 +598,7 @@ Verdict EvaluateImpl(std::uint32_t targetPid, const Sources& sources) noexcept {
     // on the stack. Cleared on every call: a stale blocklist from a previous
     // evaluation would be a gate answering about the wrong data.
     static Rules rules;
-    rules = Rules{};
+    ResetRules(rules);
 
     if (Verdict v = LoadRules(sources, rules); !v.Allowed()) {
         return v;

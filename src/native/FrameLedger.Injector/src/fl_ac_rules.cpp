@@ -12,6 +12,7 @@
 #include <knownfolders.h>
 #include <objbase.h>
 #include <shlobj_core.h>
+#include <type_traits>
 
 // Its own block, below the sorted one, because it needs Family/Group/MatchKind
 // from fl_ac_rules.h and clang-format sorts each block independently.
@@ -413,6 +414,17 @@ struct SuppliedFamilies {
 
 }    // namespace
 
+// ResetRules is a memset, which is only the value of `Rules{}` while every member's default is zero bytes. These
+// hold that premise to the types: a new member with a non-zero default, or an enum whose first value moves off 0,
+// fails the build here rather than leaving stale-looking defaults behind.
+static_assert(std::is_trivially_copyable_v<Rules>, "ResetRules zero-fills Rules in place");
+static_assert(static_cast<int>(MatchKind::kExact) == 0 && static_cast<int>(Group::kModules) == 0,
+              "a zero-filled Family must read as an exact module entry, as Family{} does");
+
+void ResetRules(Rules& r) noexcept {
+    std::memset(static_cast<void*>(&r), 0, sizeof(Rules));
+}
+
 const Family* FloorFamilies(std::size_t& count) noexcept {
     count = sizeof(generated::kFloorFamilies) / sizeof(generated::kFloorFamilies[0]);
     return generated::kFloorFamilies;
@@ -424,7 +436,7 @@ const char* const* FloorFragments(std::size_t& count) noexcept {
 }
 
 ParseResult ParseRules(const char* json, std::size_t length, Rules& out) noexcept {
-    out = Rules{};
+    ResetRules(out);
 
     // §S21. The floor goes in FIRST, before a byte of the file is read, and
     // nothing below ever rewrites or removes these entries — the file's families

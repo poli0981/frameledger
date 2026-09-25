@@ -404,7 +404,7 @@
           "$comment": "maxItems is fl::guard::kMaxFamilies, and it bounds the SUM of all five groups, not this one array - the parser fills a single families[kMaxFamilies] from all of them. A schema cannot express a cross-array total, so the per-array cap is set to the total (no single array can breach it alone) and tools/rules-validate.ps1 checks the sum imperatively. Exceeding it is ParseResult::kTooLarge for the whole file, i.e. the guard refuses every title.",
           "type": "array",
           "minItems": 1,
-          "maxItems": 64,
+          "maxItems": 256,
           "items": { "$ref": "#/$defs/acMatchGroup" },
           "allOf": [
             {
@@ -420,7 +420,7 @@
         "drivers": {
           "type": "array",
           "minItems": 1,
-          "maxItems": 64,
+          "maxItems": 256,
           "items": { "$ref": "#/$defs/acDriverGroup" },
           "allOf": [
             {
@@ -429,14 +429,14 @@
           ]
         },
 
-        "directories": { "type": "array", "minItems": 1, "maxItems": 64, "items": { "$ref": "#/$defs/acNameGroup" } },
-        "services":    { "type": "array", "minItems": 1, "maxItems": 64, "items": { "$ref": "#/$defs/acNameGroup" } },
+        "directories": { "type": "array", "minItems": 1, "maxItems": 256, "items": { "$ref": "#/$defs/acNameGroup" } },
+        "services":    { "type": "array", "minItems": 1, "maxItems": 256, "items": { "$ref": "#/$defs/acNameGroup" } },
 
         "files": {
-          "$comment": "NEW in this schema. 19_SAFETY lists Xigncode3's `x3.xem`, which is a data file shipped beside the game rather than a loadable module - the previous seed had nowhere to put it. Also the home for the anti-cheat SDK payloads that 19_SAFETY check 4 (multiplayer heuristic) looks for during the static pre-scan.",
+          "$comment": "NEW in this schema. 19_SAFETY lists Xigncode3's `x3.xem`, which is a data file shipped beside the game rather than a loadable module - the previous seed had nowhere to put it (2026-09-25: XIGNCODE3 also LoadLibrary's it as its loader, so modules names it too). Also the home for the anti-cheat SDK payloads that 19_SAFETY check 4 (multiplayer heuristic) looks for during the static pre-scan.",
           "type": "array",
           "minItems": 1,
-          "maxItems": 64,
+          "maxItems": 256,
           "items": { "$ref": "#/$defs/acNameGroup" }
         },
 

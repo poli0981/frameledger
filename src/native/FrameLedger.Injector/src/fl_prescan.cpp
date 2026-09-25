@@ -199,7 +199,7 @@ Verdict StaticPreScan(const wchar_t* gameDirectory) noexcept {
     }
 
     static Rules rules;
-    rules = Rules{};
+    ResetRules(rules);
     switch (ParseRules(buffer, n, rules)) {
     case ParseResult::kOk:
         break;
@@ -226,7 +226,7 @@ Verdict StaticPreScanWithSources(const wchar_t* gameDirectory, const Sources& so
     }
 
     static Rules rules;
-    rules = Rules{};
+    ResetRules(rules);
     switch (ParseRules(buffer, n, rules)) {
     case ParseResult::kOk:
         break;
