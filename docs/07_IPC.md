@@ -260,6 +260,28 @@ same class of bug as record drift.
   Agent is inert from the beginning rather than enjoying a grace window.
 - If `unhookRequested` is set, the Overlay disables hooks within one frame and sets `status = unhooked`. This path must be the fastest, most-tested code in the DLL: it is the safety stop.
 
+## D — the tolerance mapping (`Local\FrameLedger.Tolerate.<pid>`), D33 (2026-09-26)
+
+Agent → Overlay, once, BEFORE the injection it concerns: the anti-cheat family NAMES a game's user-mode exception
+covers (`19_SAFETY` §The user-mode exception). It cannot live in A + B: the Overlay creates that mapping on init and the
+Agent opens it afterwards, while the Overlay's loader detour must know the tolerance from the moment it exists.
+
+```cpp
+struct FlTolerance {            // fl_tolerance.h; 16 + 8 x 64 = 528 B, no padding
+    uint32_t magic;             // @0  FL_TOLERANCE_MAGIC ("FLTL")
+    uint32_t version;           // @4  FL_TOLERANCE_VERSION (1)
+    uint32_t count;             // @8  names used, <= 8
+    uint32_t reserved;          // @12 zero
+    char     families[8][64];   // @16 NUL-terminated ASCII family names
+};
+```
+
+Created by the Agent for the game's pid, current user only, held for the session; read once by the Overlay's
+`InitThread` before `InstallLoaderHook`, which resolves every name against its own compiled floor and honours only a
+user-mode family. Absent, malformed or naming anything else: nothing is tolerated. Mirrored as `FlTolerance` /
+`ToleranceLayout` in `FrameLedger.Shared` and held to the native layout by `ShmLayoutMirrorTests` through
+`fl-layout-dump`. *(Built in beta.9 PR-1: the Overlay reads it; the Agent writes it from PR-2.)*
+
 ## C — command pipe (`\\.\pipe\FrameLedger.v2`)
 
 Unchanged in spirit from v1, bumped to `v2` for the new message set.

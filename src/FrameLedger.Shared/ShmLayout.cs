@@ -755,3 +755,45 @@ public unsafe struct FlFrameRecord
     /// </summary>
     public uint SwapchainId;
 }
+
+/// <summary>
+/// D33 (owner decision 2026-09-26) — <c>fl_tolerance.h</c>: the families the injected Overlay may see load without
+/// stopping, under a game's user-mode exception. Written by the Agent into <c>Local\FrameLedger.Tolerate.&lt;pid&gt;</c>
+/// BEFORE it asks the guard to inject, read once by the Overlay's init thread before its loader detour exists. NAMES,
+/// never indices: the Overlay resolves them against its own compiled floor and honours only a user-mode family.
+/// </summary>
+[StructLayout(LayoutKind.Sequential)]
+public unsafe struct FlTolerance
+{
+    /// <summary><see cref="ToleranceLayout.Magic"/>.</summary>
+    public uint Magic;
+
+    /// <summary><see cref="ToleranceLayout.Version"/>.</summary>
+    public uint Version;
+
+    /// <summary>Names used, at most <see cref="ToleranceLayout.MaxFamilies"/>.</summary>
+    public uint Count;
+
+    /// <summary>Must be zero.</summary>
+    public uint Reserved;
+
+    /// <summary><see cref="ToleranceLayout.MaxFamilies"/> NUL-terminated ASCII names, <see cref="ToleranceLayout.NameLen"/> bytes each.</summary>
+    public fixed byte Families[512];
+}
+
+/// <summary>The constants of <c>fl_tolerance.h</c>. Drift is caught by the mirror test.</summary>
+public static class ToleranceLayout
+{
+    /// <summary>"FLTL", little-endian.</summary>
+    public const uint Magic = 0x4C544C46u;
+
+    public const uint Version = 1u;
+
+    public const int MaxFamilies = 8;
+
+    public const int NameLen = 64;
+
+    /// <summary>The mapping's name for a game process — <c>MakeToleranceName</c>.</summary>
+    public static string MappingName(int pid) =>
+        "Local\\FrameLedger.Tolerate." + pid.ToString(System.Globalization.CultureInfo.InvariantCulture);
+}

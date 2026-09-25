@@ -20,6 +20,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <fl_shm.h>
+#include <fl_tolerance.h>
 
 using namespace fl;
 
@@ -36,6 +37,9 @@ int main() {
     std::printf("  \"layoutVersion\": %u,\n", FL_SHM_LAYOUT_VERSION);
     std::printf("  \"regions\": { \"handshake\": %u, \"writer\": %u, \"control\": %u, \"ring\": %u },\n",
                 FL_SHM_HANDSHAKE_OFFSET, FL_SHM_WRITER_OFFSET, FL_SHM_CONTROL_OFFSET, FL_SHM_RING_OFFSET);
+    // D33: the tolerance mapping (fl_tolerance.h) the Agent writes before an injection under a user-mode exception.
+    std::printf("  \"tolerance\": { \"magic\": %u, \"version\": %u, \"maxFamilies\": %u, \"nameLen\": %u },\n",
+                FL_TOLERANCE_MAGIC, FL_TOLERANCE_VERSION, FL_TOLERANCE_MAX_FAMILIES, FL_TOLERANCE_NAME_LEN);
     std::printf("  \"structs\": {\n");
 
     std::printf("    \"FlShmHandshake\": { \"size\": %zu, \"fields\": [\n", sizeof(FlShmHandshake));
@@ -108,6 +112,14 @@ int main() {
     Field("reserved", offsetof(FlFrameRecord, reserved), sizeof(uint8_t) * 3);
     Field("seq", offsetof(FlFrameRecord, seq), sizeof(uint32_t));
     Field("swapchainId", offsetof(FlFrameRecord, swapchainId), sizeof(uint32_t), true);
+    std::printf("    ] },\n");
+
+    std::printf("    \"FlTolerance\": { \"size\": %zu, \"fields\": [\n", sizeof(FlTolerance));
+    Field("magic", offsetof(FlTolerance, magic), sizeof(uint32_t));
+    Field("version", offsetof(FlTolerance, version), sizeof(uint32_t));
+    Field("count", offsetof(FlTolerance, count), sizeof(uint32_t));
+    Field("reserved", offsetof(FlTolerance, reserved), sizeof(uint32_t));
+    Field("families", offsetof(FlTolerance, families), sizeof(FlTolerance::families), true);
     std::printf("    ] }\n");
 
     std::printf("  }\n}\n");

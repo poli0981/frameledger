@@ -46,14 +46,23 @@ struct FlGuardResult {
     char         signal[260];    // e.g. "EasyAntiCheat_EOS.dll"
 };
 
+// `toleratedFamilies` — D33 (owner decision 2026-09-26), on the four evaluating entries below. The user's exception
+// for ONE game, by NAME: newline-separated anti-cheat families (UTF-8), null or "" for none. It is not evidence and
+// it is not a switch: the guard still collects everything itself and runs every check, resolves the names against
+// its own rules, honours only a family whose whole footprint is user-mode (no driver, no service, no `.sys`), and
+// then lets that family's modules, files and folders through while every other finding refuses as before. A pass
+// that let something through answers AllowedUnderUserModeException with the family and the signal, never Allow.
+// It is not the withdrawn bypass either (below): nothing here injects past a refusal the guard made.
+
 // Run every pre-injection check against `targetPid`. No injection.
 // Used for the 30 s in-session re-scan (19_SAFETY §During a session).
-FL_GUARD_ABI void FlGuardEvaluate(std::uint32_t targetPid, FlGuardResult* out);
+FL_GUARD_ABI void FlGuardEvaluate(std::uint32_t targetPid, const char* toleratedFamilies, FlGuardResult* out);
 
 // Run every check and, only on a pass, inject `dllPath` via documented
 // LoadLibraryW. There is no variant that skips the checks, and no way to hand
 // in evidence — the guard collects its own.
-FL_GUARD_ABI void FlGuardedInject(std::uint32_t targetPid, const wchar_t* dllPath, FlGuardResult* out);
+FL_GUARD_ABI void FlGuardedInject(std::uint32_t targetPid, const wchar_t* dllPath, const char* toleratedFamilies,
+                                  FlGuardResult* out);
 
 // LAUNCH MODE (P1 item 2). Wait -- polling every 50 ms, up to `timeoutMs` -- until
 // `targetPid` has mapped a presentation runtime, then run every check and inject
@@ -63,8 +72,9 @@ FL_GUARD_ABI void FlGuardedInject(std::uint32_t targetPid, const wchar_t* dllPat
 // runtime inside the budget, answers LaunchTargetExited / LaunchNoPresentationRuntime
 // with nothing injected. The caller launches and holds the process; this never
 // creates or terminates one (04_CAPTURE §Launch mode, 20_OPEN_QUESTIONS §S1).
+// A Vulkan target is evaluated without `toleratedFamilies`: the layer's own self-scan would go inert anyway.
 FL_GUARD_ABI void FlGuardedInjectWhenReady(std::uint32_t targetPid, const wchar_t* dllPath, std::uint32_t timeoutMs,
-                                           FlGuardResult* out);
+                                           const char* toleratedFamilies, FlGuardResult* out);
 
 // FlGuardedInjectAcknowledged, FlGuardedInjectWhenReadyAcknowledged and FlGuardIsJudgement were exported for one day
 // (2026-09-21, the user's bypass) and withdrawn on 2026-09-22. The ABI has no entry that injects past a refusal.
@@ -82,7 +92,11 @@ FL_GUARD_ABI void FlGuardedInjectWhenReady(std::uint32_t targetPid, const wchar_
 // It reports through FlGuardResult rather than an outcome enum of its own, so there is ONE reason table and ONE
 // mirror surface: kAllow means clean; BlockedExecutable, BlockedStoreId, AntiCheatDirectory and AntiCheatFile name
 // what was found; PreScanFailed or a Rules* reason means the scan could not reach an answer.
-FL_GUARD_ABI void FlStaticPreScanGame(const wchar_t* exePath, FlGuardResult* out);
+//
+// With `toleratedFamilies`, AllowedUnderUserModeException means "this game passes checks 3 and 4 under its
+// exception" — the question the Agent asks before it offers or keeps one (a `.sys` in the tree, a title list or
+// another family still refuses).
+FL_GUARD_ABI void FlStaticPreScanGame(const wchar_t* exePath, const char* toleratedFamilies, FlGuardResult* out);
 
 // Stable name for a reason code. The managed mirror test compares these against
 // its own enum, so this is a contract and not a debugging aid.

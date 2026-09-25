@@ -1342,6 +1342,7 @@ TEST_CASE(
 // to, which is the only part of this suite that has a live Overlay to inspect.
 #include <fl_ring.h>
 #include <fl_shm.h>
+#include <fl_tolerance.h>
 // The compiled floor, so the early-stop case computes the family index the Overlay
 // publishes from the same table rather than asserting a literal.
 #include <fl_ac_floor.generated.h>
@@ -5235,4 +5236,267 @@ TEST_CASE("the harness log sweep removes this run's harness logs and nothing els
     CHECK(fl::testing::OverlayLogImage(header("C:\\x\\hook-harness.exe"), parsed));
     CHECK(parsed == "C:\\x\\hook-harness.exe");
     CHECK_FALSE(fl::testing::OverlayLogImage("# a stale log planted by guard_test\r\n", parsed));
+}
+
+// ===========================================================================
+// D33 (owner decision 2026-09-26) -- the user-mode exception. A caller may NAME a family; the guard decides whether
+// that family is user-mode, runs every check anyway, lets only that family's modules, files and folders through, and
+// refuses everything else exactly as before. 19_SAFETY §The user-mode exception.
+//
+// These cases lean on the compiled FLOOR, which every parse merges in: it carries NetEase Yidun as modules + files
+// `NEP2.dll` (user-mode only) and Easy Anti-Cheat with drivers and services (kernel-level), whatever the test's own
+// rules file says -- which is also the production shape, and the reason a file cannot make EAC tolerable.
+// ===========================================================================
+namespace {
+
+constexpr const char* kYidun = "NetEase Yidun";
+
+Rules& ParsedGoodRules() {
+    static Rules rules;
+    ResetRules(rules);
+    const std::string json = GoodRulesJson();
+    REQUIRE(ParseRules(json.data(), json.size(), rules) == ParseResult::kOk);
+    return rules;
+}
+
+std::string RulesWithExtra(const char* group, const char* entry) {
+    std::string       json = GoodRulesJson();
+    const std::string needle = std::string("\"") + group + "\": [";
+    const std::size_t at = json.find(needle);
+    REQUIRE(at != std::string::npos);
+    json.insert(at + needle.size(), std::string(entry) + ", ");
+    return json;
+}
+
+}    // namespace
+
+TEST_CASE("D33 -- a family is user-mode only when no driver, service or .sys names it anywhere", "[guard][D33]") {
+    const Rules& rules = ParsedGoodRules();
+
+    CHECK(FamilyIsUserModeOnly(rules, kYidun));
+    CHECK(FamilyIsUserModeOnly(rules, "netease YIDUN"));            // the comparison the guard uses everywhere
+    CHECK_FALSE(FamilyIsUserModeOnly(rules, "Easy Anti-Cheat"));    // drivers and services in the floor
+    CHECK_FALSE(FamilyIsUserModeOnly(rules, "Riot Vanguard"));      // a driver and a service
+    CHECK_FALSE(FamilyIsUserModeOnly(rules, "Valve VAC"));          // a title list, not a family entry
+    CHECK_FALSE(FamilyIsUserModeOnly(rules, kKernelDriverInTreeFamily));
+    CHECK_FALSE(FamilyIsUserModeOnly(rules, "No Such Family"));
+    CHECK_FALSE(FamilyIsUserModeOnly(rules, ""));
+    CHECK_FALSE(FamilyIsUserModeOnly(rules, nullptr));
+
+    // DATA CAN MAKE A FAMILY KERNEL-LEVEL, and never the reverse: the floor cannot be shrunk.
+    for (const auto& [group, entry] : std::vector<std::pair<const char*, const char*>>{
+             {"drivers", R"({ "family": "NetEase Yidun", "match": "exact", "values": ["NEPKernel.sys"] })"},
+             {"services", R"({ "family": "NetEase Yidun", "values": ["NEPService"] })"},
+             {"files", R"({ "family": "NetEase Yidun", "values": ["NEPKernel.sys"] })"},
+         }) {
+        static Rules rules2;
+        ResetRules(rules2);
+        const std::string json = RulesWithExtra(group, entry);
+        REQUIRE(ParseRules(json.data(), json.size(), rules2) == ParseResult::kOk);
+        INFO(group);
+        CHECK_FALSE(FamilyIsUserModeOnly(rules2, kYidun));
+    }
+}
+
+TEST_CASE("D33 -- ResolveTolerance honours only user-mode names, and at most kMaxToleratedFamilies of them",
+          "[guard][D33]") {
+    const Rules& rules = ParsedGoodRules();
+    Tolerance    t;
+
+    ResolveTolerance(rules, nullptr, t);
+    CHECK_FALSE(t.any);
+    ResolveTolerance(rules, "", t);
+    CHECK_FALSE(t.any);
+    ResolveTolerance(rules, "Easy Anti-Cheat", t);
+    CHECK_FALSE(t.any);    // kernel-level: tolerated nowhere, whoever asked
+    ResolveTolerance(rules, "No Such Family\r\nNetEase Yidun\n", t);
+    CHECK(t.any);
+
+    // Every entry of the family is covered, in both of its groups, and nothing else is.
+    std::size_t covered = 0;
+    for (std::size_t i = 0; i < rules.familyCount; ++i) {
+        if (t.family[i]) {
+            CHECK(AsciiIEquals(rules.families[i].name, kYidun));
+            ++covered;
+        }
+    }
+    CHECK(covered >= 2);
+
+    // A ninth name is not read: tolerating fewer is the safe direction.
+    std::string eight;
+    for (int i = 0; i < 8; ++i) {
+        eight += "No Such Family\n";
+    }
+    ResolveTolerance(rules, (eight + kYidun).c_str(), t);
+    CHECK_FALSE(t.any);
+}
+
+TEST_CASE("D33 -- a module of the excepted family is let through, and the verdict says so", "[guard][D33]") {
+    ResetFake();
+    g.modules = {"kernel32.dll", "NEP2.dll", "d3d12.dll"};
+
+    const Verdict strict = EvaluateWithSources(1234, FakeSources());
+    CHECK(strict.reason == Reason::kBlockedModule);
+    CHECK(std::string(strict.family) == kYidun);
+
+    const Verdict v = EvaluateWithSources(1234, FakeSources(), kYidun);
+    INFO(ReasonName(v.reason) << " " << v.family << " " << v.signal);
+    CHECK(v.reason == Reason::kAllowedUserModeException);
+    CHECK(v.Allowed());
+    CHECK(std::string(v.family) == kYidun);
+    CHECK(std::string(v.signal) == "NEP2.dll");
+    CHECK(std::string(ReasonName(v.reason)) == "AllowedUnderUserModeException");
+
+    // A game with nothing to except is an ordinary Allow, not an exception.
+    ResetFake();
+    g.modules = {"kernel32.dll"};
+    CHECK(EvaluateWithSources(1234, FakeSources(), kYidun).reason == Reason::kAllow);
+}
+
+TEST_CASE("D33 -- everything outside the excepted family still refuses", "[guard][D33][failclosed]") {
+    SECTION("a kernel-level family named as the exception is not tolerated") {
+        ResetFake();
+        g.modules = {"EasyAntiCheat_EOS.dll"};
+        CHECK(EvaluateWithSources(1234, FakeSources(), "Easy Anti-Cheat").reason == Reason::kBlockedModule);
+    }
+    SECTION("another family's module loaded AFTER the tolerated one refuses: the scan kept looking") {
+        ResetFake();
+        g.modules = {"NEP2.dll", "BEClient_x64.dll"};
+        const Verdict v = EvaluateWithSources(1234, FakeSources(), kYidun);
+        CHECK(v.reason == Reason::kBlockedModule);
+        CHECK(std::string(v.family) == "BattlEye");
+    }
+    SECTION("a suspicious module loaded after it still refuses") {
+        ResetFake();
+        g.modules = {"NEP2.dll", "SomeAntiCheatSdk.dll"};
+        CHECK(EvaluateWithSources(1234, FakeSources(), kYidun).reason == Reason::kSuspiciousUnsigned);
+    }
+    SECTION("a machine-wide driver refuses") {
+        ResetFake();
+        g.modules = {"NEP2.dll"};
+        g.drivers = {"\\SystemRoot\\system32\\drivers\\vgk.sys"};
+        CHECK(EvaluateWithSources(1234, FakeSources(), kYidun).reason == Reason::kBlockedDriver);
+    }
+    SECTION("a running service refuses") {
+        ResetFake();
+        g.modules = {"NEP2.dll"};
+        g.presentServices = {"vgc"};
+        CHECK(EvaluateWithSources(1234, FakeSources(), kYidun).reason == Reason::kBlockedService);
+    }
+    SECTION("a title list refuses") {
+        ResetFake();
+        g.rulesJson = RulesWithBlockedExecutable();
+        g.modules = {"NEP2.dll"};
+        g.imageFileName = "ranked.exe";
+        CHECK(EvaluateWithSources(1234, FakeSources(), kYidun).reason == Reason::kBlockedExecutable);
+    }
+    SECTION("a kernel driver anywhere in the install tree refuses -- the Aniimo shape") {
+        ResetFake();
+        g.modules = {"NEP2.dll"};
+        g.dirEntries = {{"NEP2.dll", false}, {"Aniimo_Data", true}, {"NEPKernel.sys", false}};
+        const Verdict v = EvaluateWithSources(1234, FakeSources(), kYidun);
+        CHECK(v.reason == Reason::kAntiCheatFile);
+        CHECK(std::string(v.family) == kKernelDriverInTreeFamily);
+        CHECK(std::string(v.signal) == "NEPKernel.sys");
+    }
+    SECTION("a walk that could not finish refuses, even after the tolerated file") {
+        ResetFake();
+        g.dirEntries = {{"NEP2.dll", false}};
+        g.dirEntriesResult = Collected::kIncomplete;
+        CHECK(EvaluateWithSources(1234, FakeSources(), kYidun).reason == Reason::kPreScanFailed);
+    }
+    SECTION("an unreadable process refuses") {
+        ResetFake();
+        g.modules = {"NEP2.dll"};
+        g.moduleResult = Collected::kFailed;
+        CHECK(EvaluateWithSources(1234, FakeSources(), kYidun).reason == Reason::kProcessUnreadable);
+    }
+}
+
+TEST_CASE("D33 -- the advisory pre-scan answers the same question the chokepoint does", "[guard][D33][prescan]") {
+    // The GF2 shape: the family's file beside the executable and nothing else.
+    ResetFake();
+    g.dirEntries = {{"GF2_Exilium.exe", false}, {"NEP2.dll", false}, {"GF2_Exilium_Data", true}};
+    const wchar_t* exe = LR"(D:\SteamLibrary\steamapps\common\GIRLS' FRONTLINE 2 EXILIUM\GF2_Exilium.exe)";
+
+    const Verdict strict = StaticPreScanGameWithSources(exe, FakeSources());
+    CHECK(strict.reason == Reason::kAntiCheatFile);
+    CHECK(std::string(strict.family) == kYidun);
+
+    const Verdict v = StaticPreScanGameWithSources(exe, FakeSources(), kYidun);
+    CHECK(v.reason == Reason::kAllowedUserModeException);
+    CHECK(std::string(v.signal) == "NEP2.dll");
+
+    // The Aniimo shape refuses under the same exception.
+    g.dirEntries.push_back({"NEPKernel.sys", false});
+    const Verdict aniimo = StaticPreScanGameWithSources(exe, FakeSources(), kYidun);
+    CHECK(aniimo.reason == Reason::kAntiCheatFile);
+    CHECK(std::string(aniimo.family) == kKernelDriverInTreeFamily);
+}
+
+TEST_CASE("D33 -- the excepted family's module loading late does not stop the Overlay; any other family still does",
+          "[guard][inject][shm][loader][D33]") {
+    // The Overlay's half. A decoy named `NEP2.dll` (NetEase Yidun's module, an exact floor match) loads 2.5 s after
+    // injection. With the Agent's tolerance mapping naming the family, the Overlay keeps recording; with it naming a
+    // kernel-level family instead, the Overlay's own FamilyIsUserModeOnly refuses the name and the decoy stops it.
+    wchar_t temp[MAX_PATH]{};
+    REQUIRE(GetTempPathW(MAX_PATH, temp) != 0);
+    const std::wstring dir = std::wstring(temp) + L"fl-d33-" + std::to_wstring(GetCurrentProcessId());
+    CreateDirectoryW(dir.c_str(), nullptr);
+    const std::wstring decoy = dir + L"\\NEP2.dll";
+    REQUIRE(CopyFileW(FL_STUB_SL_COMMON, decoy.c_str(), FALSE));
+
+    for (const char* named : {kYidun, "Easy Anti-Cheat"}) {
+        const bool tolerated = std::strcmp(named, kYidun) == 0;
+        INFO("tolerance names " << named);
+        Child        child;
+        std::wstring args = L"--real --hold-presenting 14 --load-after-ms 2500 \"" + decoy + L"\"";
+        REQUIRE(StartHarness(child, args));
+
+        // The mapping exists BEFORE the injection, as the Agent creates it.
+        wchar_t name[96]{};
+        REQUIRE(MakeToleranceName(name, 96, child.pi.dwProcessId));
+        HANDLE mapping =
+            CreateFileMappingW(INVALID_HANDLE_VALUE, nullptr, PAGE_READWRITE, 0, sizeof(FlTolerance), name);
+        REQUIRE(mapping != nullptr);
+        void* view = MapViewOfFile(mapping, FILE_MAP_WRITE, 0, 0, sizeof(FlTolerance));
+        REQUIRE(view != nullptr);
+        FlTolerance t{};
+        t.magic = FL_TOLERANCE_MAGIC;
+        t.version = FL_TOLERANCE_VERSION;
+        t.count = 1;
+        strcpy_s(t.families[0], named);
+        std::memcpy(view, &t, sizeof(t));
+        UnmapViewOfFile(view);
+
+        ResetFake();
+        g.modules = {"kernel32.dll"};
+        g.scanSet = {child.pi.dwProcessId};
+        REQUIRE(GuardedInjectWithSources(child.pi.dwProcessId, FL_OVERLAY_DLL, FakeSources()).Allowed());
+
+        MappedRing r;
+        REQUIRE(OpenRingFor(child.pi.dwProcessId, r));
+
+        // Past the late load (2.5 s), with the supervision clock kept alive throughout.
+        for (int i = 0; i < 50; ++i) {
+            ++r.ctl->guardTicks;
+            Sleep(100);
+        }
+        if (tolerated) {
+            const std::uint64_t mid = r.st->writeIndex;
+            for (int i = 0; i < 10; ++i) {
+                ++r.ctl->guardTicks;
+                Sleep(100);
+            }
+            CHECK(r.st->status == fl::FL_STATUS_READY);
+            CHECK(r.st->earlyStopFamily == 0u);
+            CHECK(r.st->writeIndex > mid);    // still recording after the family's module arrived
+        } else {
+            CHECK(r.st->status == fl::FL_STATUS_STOPPED_BLOCKLISTED);
+            CHECK(r.st->earlyStopFamily != 0u);
+        }
+        CloseHandle(mapping);
+    }    // each child is gone before its module file is deleted
+    DeleteFileW(decoy.c_str());
+    RemoveDirectoryW(dir.c_str());
 }

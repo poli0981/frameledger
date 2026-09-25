@@ -204,6 +204,11 @@ struct MatchState {
     // Null sources, or the target's own process, mean nothing is ever exempt.
     const Sources* sources = nullptr;
     bool           isTarget = false;
+
+    // D33 — the exception's families, and the first module of theirs this process let through.
+    const Tolerance* tolerance = nullptr;
+    const Family*    tolerated = nullptr;
+    char             toleratedSignal[260] = {};
 };
 
 // Drivers and any other flat name list. The module scan does NOT come through
@@ -280,10 +285,24 @@ bool ModuleSinkFn(void* ctx, const char* name, const wchar_t* modulePath) noexce
     if (st == nullptr || st->rules == nullptr || name == nullptr) {
         return false;
     }
-    if (const Family* f = MatchName(*st->rules, Group::kModules, name)) {
+    const Family* tolerated = nullptr;
+    const Family* f = st->tolerance != nullptr
+                          ? MatchNameTolerating(*st->rules, Group::kModules, name, *st->tolerance, &tolerated)
+                          : MatchName(*st->rules, Group::kModules, name);
+    if (f != nullptr) {
         st->hit = f;
         strncpy_s(st->signal, name, _TRUNCATE);
         return false;    // stop: one hit is enough to refuse
+    }
+    // D33: a module the exception's family names is identified, recorded and KEPT LOOKING PAST - the same keep-looking
+    // the exemption and the trusted signer below follow, for the same load-order reason: a module of another family, or
+    // a suspicious one, loaded after it must still refuse. An identified module is not judged by the fuzzy tier.
+    if (tolerated != nullptr) {
+        if (st->tolerated == nullptr) {
+            st->tolerated = tolerated;
+            strncpy_s(st->toleratedSignal, name, _TRUNCATE);
+        }
+        return true;
     }
     if (st->sawSuspicious || !HasSuspiciousFragment(*st->rules, name)) {
         return true;
@@ -366,8 +385,10 @@ Verdict LoadRules(const Sources& s, Rules& rules) noexcept {
     }
 }
 
-// Check 1 — modules, across the §S16 scan set.
-Verdict CheckModules(const Sources& s, const Rules& rules, std::uint32_t targetPid) noexcept {
+// Check 1 — modules, across the §S16 scan set. With a `tolerance` (D33), a module of a tolerated family is recorded in
+// `finding` rather than refused; everything else refuses exactly as without one.
+Verdict CheckModules(const Sources& s, const Rules& rules, std::uint32_t targetPid, const Tolerance* tolerance,
+                     ToleratedFinding& finding) noexcept {
     if (s.EnumerateScanSet == nullptr || s.EnumerateModules == nullptr) {
         return Refuse(Reason::kProcessTreeUnavailable, nullptr, "no process source");
     }
@@ -387,6 +408,7 @@ Verdict CheckModules(const Sources& s, const Rules& rules, std::uint32_t targetP
         // would read as configuration.
         st.sources = &s;
         st.isTarget = (set.pids[i] == targetPid);
+        st.tolerance = tolerance;
 
         const Collected c = s.EnumerateModules(set.pids[i], &ModuleSinkFn, &st);
         if (st.hit != nullptr) {
@@ -415,6 +437,12 @@ Verdict CheckModules(const Sources& s, const Rules& rules, std::uint32_t targetP
             // is what the process-form did, and it is what made the exemption
             // depend on where the HOST lived (§S22(b)).
             return Refuse(Reason::kSuspiciousUnsigned, "unknown", st.suspicious);
+        }
+        // This process was read whole and only the exception's family was in it (D33).
+        if (st.tolerated != nullptr && !finding.seen) {
+            finding.seen = true;
+            strncpy_s(finding.family, st.tolerated->name, _TRUNCATE);
+            strncpy_s(finding.signal, st.toleratedSignal, _TRUNCATE);
         }
     }
     return Allow();
@@ -528,6 +556,8 @@ const char* ReasonName(Reason r) noexcept {
         return "TargetIsVulkanLayered";
     case Reason::kKillSwitchEngaged:
         return "KillSwitchEngaged";
+    case Reason::kAllowedUserModeException:
+        return "AllowedUnderUserModeException";
     case Reason::kCount:
         break;    // not a reason; falls through to the guard below
     }
@@ -588,7 +618,7 @@ Verdict CheckBlockedExecutable(const Sources& s, const Rules& rules, std::uint32
     return Allow();
 }
 
-Verdict EvaluateImpl(std::uint32_t targetPid, const Sources& sources) noexcept {
+Verdict EvaluateImpl(std::uint32_t targetPid, const Sources& sources, const char* toleratedFamilies) noexcept {
     // Static so the 1 MiB of rules storage inside LoadRules is not duplicated
     // on the stack. Cleared on every call: a stale blocklist from a previous
     // evaluation would be a gate answering about the wrong data.
@@ -598,6 +628,14 @@ Verdict EvaluateImpl(std::uint32_t targetPid, const Sources& sources) noexcept {
     if (Verdict v = LoadRules(sources, rules); !v.Allowed()) {
         return v;
     }
+    // D33: the exception's families, resolved against THESE rules - only a family whose whole footprint is user-mode
+    // survives ResolveTolerance, whatever the caller named. It reaches check 1 and check 4, the only two whose findings
+    // can be user-mode; drivers, services and both title lists never see it.
+    Tolerance tolerance;
+    ResolveTolerance(rules, toleratedFamilies, tolerance);
+    const Tolerance* tolerating = tolerance.any ? &tolerance : nullptr;
+    ToleratedFinding finding;
+
     // Drivers first. It is machine-wide, it is the cheapest, and it is the one
     // that refuses for ALL titles rather than just this one (19_SAFETY item 2).
     if (Verdict v = CheckDrivers(sources, rules); !v.Allowed()) {
@@ -606,7 +644,7 @@ Verdict EvaluateImpl(std::uint32_t targetPid, const Sources& sources) noexcept {
     if (Verdict v = CheckServices(sources, rules); !v.Allowed()) {
         return v;
     }
-    if (Verdict v = CheckModules(sources, rules, targetPid); !v.Allowed()) {
+    if (Verdict v = CheckModules(sources, rules, targetPid, tolerating, finding); !v.Allowed()) {
         return v;
     }
     // Check 3, at last. Cheap -- one OpenProcess and a string compare -- and it
@@ -629,8 +667,13 @@ Verdict EvaluateImpl(std::uint32_t targetPid, const Sources& sources) noexcept {
     //
     // Last of the four because it is the only one that touches the filesystem;
     // the three cheaper checks have already had their say.
-    if (Verdict v = CheckStaticPreScan(sources, rules, targetPid); !v.Allowed()) {
+    if (Verdict v = CheckStaticPreScan(sources, rules, targetPid, tolerating, &finding); !v.Allowed()) {
         return v;
+    }
+    // Every check ran and passed. When the only findings were the exception's, say so, with what was let through: the
+    // session this starts is marked with it (19_SAFETY §The user-mode exception).
+    if (finding.seen) {
+        return Refuse(Reason::kAllowedUserModeException, finding.family, finding.signal);
     }
     return Allow();
 }
@@ -638,8 +681,9 @@ Verdict EvaluateImpl(std::uint32_t targetPid, const Sources& sources) noexcept {
 // A refusal returns here, and there is no argument that changes that (the `acknowledged` flag of 2026-09-21 was
 // withdrawn on 2026-09-22 with the bypass it served). Everything below -- the payload's existence, the payload's
 // identity, the primitive, the bitness answer -- runs only for a target the full evaluation allowed.
-Verdict GuardedInjectImpl(std::uint32_t targetPid, const wchar_t* dllPath, const Sources& sources) noexcept {
-    const Verdict v = EvaluateImpl(targetPid, sources);
+Verdict GuardedInjectImpl(std::uint32_t targetPid, const wchar_t* dllPath, const Sources& sources,
+                          const char* toleratedFamilies) noexcept {
+    const Verdict v = EvaluateImpl(targetPid, sources, toleratedFamilies);
     if (!v.Allowed()) {
         return v;
     }
@@ -764,7 +808,7 @@ PresentationRuntime FindPresentationRuntime(const Sources& s, std::uint32_t pid)
 }
 
 Verdict GuardedInjectWhenReadyImpl(std::uint32_t targetPid, const wchar_t* dllPath, std::uint32_t timeoutMs,
-                                   const Sources& sources) noexcept {
+                                   const Sources& sources, const char* toleratedFamilies) noexcept {
     // SYNCHRONIZE only: this handle exists to notice an exit and for nothing else.
     HANDLE proc = OpenProcess(SYNCHRONIZE, FALSE, targetPid);
     if (proc == nullptr) {
@@ -796,13 +840,15 @@ Verdict GuardedInjectWhenReadyImpl(std::uint32_t targetPid, const wchar_t* dllPa
             }
         }
         if (runtime == PresentationRuntime::kD3dOrOpenGl) {
-            v = GuardedInjectImpl(targetPid, dllPath, sources);
+            v = GuardedInjectImpl(targetPid, dllPath, sources, toleratedFamilies);
             break;
         }
         if (runtime == PresentationRuntime::kVulkan) {
             // The FULL guard still runs -- a Vulkan title with anti-cheat is refused
             // by name exactly as a D3D one is -- and on a pass nothing is injected.
-            v = EvaluateImpl(targetPid, sources);
+            // WITHOUT the exception (D33): the layer's own self-scan goes inert on any anti-cheat module, so a
+            // tolerated family could only buy a session that measures nothing.
+            v = EvaluateImpl(targetPid, sources, nullptr);
             if (v.Allowed()) {
                 v = Refuse(Reason::kTargetIsVulkanLayered, nullptr,
                            "the guard passed; the target presents through Vulkan, where the implicit layer is the "
@@ -832,30 +878,32 @@ Verdict GuardedInjectWhenReadyImpl(std::uint32_t targetPid, const wchar_t* dllPa
 
 }    // namespace
 
-Verdict Evaluate(std::uint32_t targetPid) noexcept {
-    return EvaluateImpl(targetPid, SystemSources());
+Verdict Evaluate(std::uint32_t targetPid, const char* toleratedFamilies) noexcept {
+    return EvaluateImpl(targetPid, SystemSources(), toleratedFamilies);
 }
 
-Verdict GuardedInjectWhenReady(std::uint32_t targetPid, const wchar_t* dllPath, std::uint32_t timeoutMs) noexcept {
-    return GuardedInjectWhenReadyImpl(targetPid, dllPath, timeoutMs, SystemSources());
+Verdict GuardedInjectWhenReady(std::uint32_t targetPid, const wchar_t* dllPath, std::uint32_t timeoutMs,
+                               const char* toleratedFamilies) noexcept {
+    return GuardedInjectWhenReadyImpl(targetPid, dllPath, timeoutMs, SystemSources(), toleratedFamilies);
 }
 
-Verdict GuardedInject(std::uint32_t targetPid, const wchar_t* dllPath) noexcept {
-    return GuardedInjectImpl(targetPid, dllPath, SystemSources());
+Verdict GuardedInject(std::uint32_t targetPid, const wchar_t* dllPath, const char* toleratedFamilies) noexcept {
+    return GuardedInjectImpl(targetPid, dllPath, SystemSources(), toleratedFamilies);
 }
 
 #ifdef FL_GUARD_TESTABLE
-Verdict EvaluateWithSources(std::uint32_t targetPid, const Sources& sources) noexcept {
-    return EvaluateImpl(targetPid, sources);
+Verdict EvaluateWithSources(std::uint32_t targetPid, const Sources& sources, const char* toleratedFamilies) noexcept {
+    return EvaluateImpl(targetPid, sources, toleratedFamilies);
 }
 
-Verdict GuardedInjectWithSources(std::uint32_t targetPid, const wchar_t* dllPath, const Sources& sources) noexcept {
-    return GuardedInjectImpl(targetPid, dllPath, sources);
+Verdict GuardedInjectWithSources(std::uint32_t targetPid, const wchar_t* dllPath, const Sources& sources,
+                                 const char* toleratedFamilies) noexcept {
+    return GuardedInjectImpl(targetPid, dllPath, sources, toleratedFamilies);
 }
 
 Verdict GuardedInjectWhenReadyWithSources(std::uint32_t targetPid, const wchar_t* dllPath, std::uint32_t timeoutMs,
-                                          const Sources& sources) noexcept {
-    return GuardedInjectWhenReadyImpl(targetPid, dllPath, timeoutMs, sources);
+                                          const Sources& sources, const char* toleratedFamilies) noexcept {
+    return GuardedInjectWhenReadyImpl(targetPid, dllPath, timeoutMs, sources, toleratedFamilies);
 }
 #endif
 

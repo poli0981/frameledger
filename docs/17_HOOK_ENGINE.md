@@ -57,6 +57,16 @@ The injected DLL. Its whole job: install hooks, write 64-byte records into a rin
    > them and the loader does not list them. Body under `FL_HOOK_GUARD`, no allocation, no lock, no
    > logging (rule 5). Exercised by `hook-harness --load-after-ms N PATH` (up to four), against the real
    > Overlay in a real target, both jobs.
+   >
+   > **D33 (2026-09-26): one family may be tolerated.** Before `InstallLoaderHook`, `InitThread` reads
+   > `Local\FrameLedger.Tolerate.<pid>` once (`fl_tolerance.h`; absent = nothing tolerated, the ordinary case),
+   > resolves each name against its OWN compiled floor, honours only a family whose whole footprint there is
+   > user-mode (`fl::guard::FamilyIsUserModeOnly`) and keeps a 64-bit mask over the floor's module families. The
+   > detour's only change is one bit test before (b): a tolerated family's module loading late is not an early stop.
+   > **Overhead:** one relaxed-acquire `uint64` load, a shift and a compare, on the floor-match branch alone — a branch
+   > that fires approximately never — and nothing on the present path; the tolerance is read on the init thread, not in
+   > a hook body (and logged there as `TOLERANCE`). ctest `fl_guard` `[D33]` loads a decoy `NEP2.dll` 2.5 s in: the
+   > Overlay keeps recording when the mapping names NetEase Yidun, and stops when it names Easy Anti-Cheat.
 4. Install present hooks for what exists (below).
 5. Install feature hooks (upscaler / RT / PSO) lazily — the first time their module appears.
 6. Publish `status = ready` in the handshake block.

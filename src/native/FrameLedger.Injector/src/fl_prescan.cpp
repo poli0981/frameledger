@@ -46,6 +46,11 @@ struct ScanState {
     const char*   driverRuleHit = nullptr;    // kKernelDriverInTreeFamily once the code rule fired
     bool          hitWasDirectory = false;
     char          signal[260] = {};
+
+    // D33: the exception's families, and the first entry of theirs the walk let through.
+    const Tolerance* tolerance = nullptr;
+    const Family*    tolerated = nullptr;
+    char             toleratedSignal[260] = {};
 };
 
 bool EntrySink(void* ctx, const char* name, bool isDirectory) noexcept {
@@ -62,7 +67,26 @@ bool EntrySink(void* ctx, const char* name, bool isDirectory) noexcept {
     // and `x3.xem` as a file are separate signals, and collapsing them would let
     // a data edit move one gate into the other without anything noticing.
     const Group   group = isDirectory ? Group::kDirectories : Group::kFiles;
-    const Family* f = MatchName(*st->rules, group, name);
+    const Family* tolerated = nullptr;
+    const Family* f = st->tolerance != nullptr
+                          ? MatchNameTolerating(*st->rules, group, name, *st->tolerance, &tolerated)
+                          : MatchName(*st->rules, group, name);
+
+    // D33. A KERNEL DRIVER IS NEVER TOLERATED, whichever family names it: FamilyIsUserModeOnly already refuses a family
+    // whose own values carry a `.sys`, and this closes the one way left - a prefix value of a user-mode family that
+    // happens to match a driver's file name. That driver refuses under the family, exactly as without an exception.
+    if (f == nullptr && tolerated != nullptr && !isDirectory && IsKernelDriverName(name)) {
+        f = tolerated;
+    }
+    if (f == nullptr && tolerated != nullptr) {
+        // Let through, recorded, and the walk goes ON: a kernel driver, another family or an unfinished listing
+        // further in must still refuse. The walk is bounded by kMaxPreScanEntries either way (a refusal).
+        if (st->tolerated == nullptr) {
+            st->tolerated = tolerated;
+            strncpy_s(st->toleratedSignal, sizeof(st->toleratedSignal), name, _TRUNCATE);
+        }
+        return true;
+    }
     if (f != nullptr) {
         st->hit = f;
         st->hitWasDirectory = isDirectory;
@@ -80,7 +104,8 @@ bool EntrySink(void* ctx, const char* name, bool isDirectory) noexcept {
     return true;
 }
 
-Verdict ScanWith(const Sources& s, const Rules& rules, const wchar_t* dir) noexcept {
+Verdict ScanWith(const Sources& s, const Rules& rules, const wchar_t* dir, const Tolerance* tolerance,
+                 ToleratedFinding* finding) noexcept {
     if (s.EnumerateDirEntries == nullptr) {
         return Refused(Reason::kPreScanFailed, nullptr, "no directory source");
     }
@@ -90,6 +115,7 @@ Verdict ScanWith(const Sources& s, const Rules& rules, const wchar_t* dir) noexc
 
     ScanState st;
     st.rules = &rules;
+    st.tolerance = tolerance;
 
     const Collected c = s.EnumerateDirEntries(dir, &EntrySink, &st);
 
@@ -113,6 +139,12 @@ Verdict ScanWith(const Sources& s, const Rules& rules, const wchar_t* dir) noexc
     if (c == Collected::kIncomplete) {
         return Refused(Reason::kPreScanFailed, nullptr,
                        "the game directory listing was truncated, unreadable, or crossed a reparse point");
+    }
+    // The whole tree was seen and only the exception's family was in it: the caller turns the record into the verdict.
+    if (st.tolerated != nullptr && finding != nullptr && !finding->seen) {
+        finding->seen = true;
+        strncpy_s(finding->family, sizeof(finding->family), st.tolerated->name, _TRUNCATE);
+        strncpy_s(finding->signal, sizeof(finding->signal), st.toleratedSignal, _TRUNCATE);
     }
     return Passed();
 }
@@ -148,8 +180,14 @@ Verdict LoadPreScanRules(const Sources& s, Rules& rules) noexcept {
     }
 }
 
+// D33's verdict: every check passed and the only findings were the exception's. Built here and in fl_guard.cpp from
+// the same record, and nowhere else.
+Verdict ToleratedVerdict(const ToleratedFinding& finding) noexcept {
+    return Refused(Reason::kAllowedUserModeException, finding.family, finding.signal);
+}
+
 // The advisory pre-scan over whichever Sources the caller may hold (production: SystemSources, and nothing else).
-Verdict PreScanGameWith(const wchar_t* exePath, const Sources& s) noexcept {
+Verdict PreScanGameWith(const wchar_t* exePath, const Sources& s, const char* toleratedFamilies) noexcept {
     if (exePath == nullptr || exePath[0] == L'\0') {
         return Refused(Reason::kPreScanFailed, nullptr, "no executable to scan");
     }
@@ -193,11 +231,18 @@ Verdict PreScanGameWith(const wchar_t* exePath, const Sources& s) noexcept {
         return Refused(Reason::kBlockedExecutable, hit->family, leaf);
     }
 
-    // Check 3's store half, then check 4 — both over the install root.
+    // Check 3's store half, then check 4 — both over the install root. Title lists are never tolerated (D33): only
+    // check 4 takes the exception, and only for a user-mode family.
     if (Verdict v = CheckStoreIdentity(s, rules, root); !v.Allowed()) {
         return v;
     }
-    return ScanWith(s, rules, root);
+    Tolerance tolerance;
+    ResolveTolerance(rules, toleratedFamilies, tolerance);
+    ToleratedFinding finding;
+    if (Verdict v = ScanWith(s, rules, root, tolerance.any ? &tolerance : nullptr, &finding); !v.Allowed()) {
+        return v;
+    }
+    return finding.seen ? ToleratedVerdict(finding) : Passed();
 }
 
 }    // namespace
@@ -269,7 +314,8 @@ bool ResolveInstallRoot(const wchar_t* exeDir, wchar_t* out, std::size_t cap) no
     return true;
 }
 
-Verdict CheckStaticPreScan(const Sources& s, const Rules& rules, std::uint32_t targetPid) noexcept {
+Verdict CheckStaticPreScan(const Sources& s, const Rules& rules, std::uint32_t targetPid, const Tolerance* tolerance,
+                           ToleratedFinding* finding) noexcept {
     if (s.ImageDirectory == nullptr) {
         return Refused(Reason::kPreScanFailed, nullptr, "no image-path source");
     }
@@ -280,7 +326,7 @@ Verdict CheckStaticPreScan(const Sources& s, const Rules& rules, std::uint32_t t
         // 19_SAFETY has no "three of four checks passed" state.
         return Refused(Reason::kPreScanFailed, nullptr, "could not establish the target's directory");
     }
-    return ScanWith(s, rules, dir);
+    return ScanWith(s, rules, dir, tolerance, finding);
 }
 
 Verdict CheckStoreIdentity(const Sources& s, const Rules& rules, const wchar_t* installRoot) noexcept {
@@ -322,13 +368,14 @@ Verdict CheckBlockedStoreId(const Sources& s, const Rules& rules, std::uint32_t 
     return CheckStoreIdentity(s, rules, root);
 }
 
-Verdict StaticPreScanGame(const wchar_t* exePath) noexcept {
-    return PreScanGameWith(exePath, SystemSources());
+Verdict StaticPreScanGame(const wchar_t* exePath, const char* toleratedFamilies) noexcept {
+    return PreScanGameWith(exePath, SystemSources(), toleratedFamilies);
 }
 
 #ifdef FL_GUARD_TESTABLE
-Verdict StaticPreScanGameWithSources(const wchar_t* exePath, const Sources& sources) noexcept {
-    return PreScanGameWith(exePath, sources);
+Verdict StaticPreScanGameWithSources(const wchar_t* exePath, const Sources& sources,
+                                     const char* toleratedFamilies) noexcept {
+    return PreScanGameWith(exePath, sources, toleratedFamilies);
 }
 #endif
 

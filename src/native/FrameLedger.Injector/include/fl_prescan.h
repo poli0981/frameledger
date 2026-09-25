@@ -101,7 +101,13 @@ inline constexpr const char* kKernelDriverInTreeFamily = "Kernel driver in the g
 // unverified (fl_guard.h rule 3). It grants nothing: it opens no process with
 // injection rights, reaches no injection primitive, and returns a Verdict its
 // only caller already had to reach anyway.
-[[nodiscard]] Verdict CheckStaticPreScan(const Sources& s, const Rules& rules, std::uint32_t targetPid) noexcept;
+//
+// D33: with a `tolerance`, a file or folder of a tolerated family is recorded in `finding` and the walk goes on, so a
+// kernel driver, another family or an unfinished walk further in still refuses. A `.sys` is never tolerated, whatever
+// family names it. Without one (null), the check is exactly what it was.
+[[nodiscard]] Verdict CheckStaticPreScan(const Sources& s, const Rules& rules, std::uint32_t targetPid,
+                                         const Tolerance*  tolerance = nullptr,
+                                         ToleratedFinding* finding = nullptr) noexcept;
 
 // Check 3's store half over an install root: the store identity it carries (Sources::StoreIdentity) against
 // `blockedStoreIds`. An install with no store identity is NOT refused — "not a store title" is an answer, and
@@ -125,12 +131,17 @@ inline constexpr const char* kKernelDriverInTreeFamily = "Kernel driver in the g
 //
 // Loads the rules itself and uses SystemSources(), so a caller cannot choose the evidence — the same reason Evaluate
 // and GuardedInject take no Sources.
-[[nodiscard]] Verdict StaticPreScanGame(const wchar_t* exePath) noexcept;
+//
+// `toleratedFamilies` (D33), exactly as GuardedInject takes it: the verdict is kAllowedUserModeException when the only
+// findings belonged to a tolerated user-mode family, which is how the Agent tells "this game would pass under its
+// exception" from "it would not" without a second matcher.
+[[nodiscard]] Verdict StaticPreScanGame(const wchar_t* exePath, const char* toleratedFamilies = nullptr) noexcept;
 
 #ifdef FL_GUARD_TESTABLE
 // TEST-ONLY, exactly as fl_guard.h defines the term: compiled out of everything
 // that ships, and only src/native/tests may define the macro.
-[[nodiscard]] Verdict StaticPreScanGameWithSources(const wchar_t* exePath, const Sources& sources) noexcept;
+[[nodiscard]] Verdict StaticPreScanGameWithSources(const wchar_t* exePath, const Sources& sources,
+                                                   const char* toleratedFamilies = nullptr) noexcept;
 #endif
 
 }    // namespace fl::guard

@@ -59,22 +59,28 @@ public sealed class NativeAntiCheatGuard : IAntiCheatGuard
     // resolver were ever removed the fallback would still not probe the
     // application directory. CA5393 rejects ApplicationDirectory for exactly
     // the reason this comment exists.
+    // `toleratedFamilies` (D33): newline-separated family NAMES as NUL-terminated UTF-8 bytes (the byte[] shape
+    // FlGuardCheckRules takes, so no string crosses as ANSI), null for none — the one thing a caller may add, resolved
+    // and bounded by the guard itself (fl_guard_abi.h). Null until the Agent's exception passes one.
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [DllImport(_guardDll, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void FlGuardEvaluate(uint targetPid, out FlGuardResult result);
-
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [DllImport(_guardDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-    private static extern void FlGuardedInject(uint targetPid, string dllPath, out FlGuardResult result);
-
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [DllImport(_guardDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-    private static extern void FlGuardedInjectWhenReady(uint targetPid, string dllPath, uint timeoutMs,
+    private static extern void FlGuardEvaluate(uint targetPid, byte[]? toleratedFamilies,
         out FlGuardResult result);
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [DllImport(_guardDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
-    private static extern void FlStaticPreScanGame(string exePath, out FlGuardResult result);
+    private static extern void FlGuardedInject(uint targetPid, string dllPath,
+        byte[]? toleratedFamilies, out FlGuardResult result);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [DllImport(_guardDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+    private static extern void FlGuardedInjectWhenReady(uint targetPid, string dllPath, uint timeoutMs,
+        byte[]? toleratedFamilies, out FlGuardResult result);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [DllImport(_guardDll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Unicode)]
+    private static extern void FlStaticPreScanGame(string exePath,
+        byte[]? toleratedFamilies, out FlGuardResult result);
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [DllImport(_guardDll, CallingConvention = CallingConvention.Cdecl)]
@@ -109,7 +115,7 @@ public sealed class NativeAntiCheatGuard : IAntiCheatGuard
     public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, CancellationToken ct = default) =>
         RunAsync(() =>
         {
-            FlGuardEvaluate(checked((uint)targetPid), out FlGuardResult r);
+            FlGuardEvaluate(checked((uint)targetPid), null, out FlGuardResult r);
             return AntiCheatVerdict.FromNative(r.Reason, r.Family, r.Signal);
         }, ct);
 
@@ -120,7 +126,7 @@ public sealed class NativeAntiCheatGuard : IAntiCheatGuard
         ArgumentException.ThrowIfNullOrWhiteSpace(payloadPath);
         return RunAsync(() =>
         {
-            FlGuardedInject(checked((uint)targetPid), payloadPath, out FlGuardResult r);
+            FlGuardedInject(checked((uint)targetPid), payloadPath, null, out FlGuardResult r);
             return AntiCheatVerdict.FromNative(r.Reason, r.Family, r.Signal);
         }, ct);
     }
@@ -133,7 +139,7 @@ public sealed class NativeAntiCheatGuard : IAntiCheatGuard
         ArgumentOutOfRangeException.ThrowIfNegative(timeoutMs);
         return RunAsync(() =>
         {
-            FlGuardedInjectWhenReady(checked((uint)targetPid), payloadPath, checked((uint)timeoutMs),
+            FlGuardedInjectWhenReady(checked((uint)targetPid), payloadPath, checked((uint)timeoutMs), null,
                 out FlGuardResult r);
             return AntiCheatVerdict.FromNative(r.Reason, r.Family, r.Signal);
         }, ct);
@@ -145,7 +151,7 @@ public sealed class NativeAntiCheatGuard : IAntiCheatGuard
         ArgumentException.ThrowIfNullOrWhiteSpace(executablePath);
         return RunAsync(() =>
         {
-            FlStaticPreScanGame(executablePath, out FlGuardResult r);
+            FlStaticPreScanGame(executablePath, null, out FlGuardResult r);
             return AntiCheatVerdict.FromNative(r.Reason, r.Family, r.Signal);
         }, ct);
     }
