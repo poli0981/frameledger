@@ -1642,7 +1642,7 @@ only be refused, never the finding (FR-2.2).
 
 ## 2026-09-26 — the beta.9 train: the user-mode exception (D33)
 
-*Status is `CHANGELOG.md` `[Unreleased]` (then `[0.1.0-beta.9]`); this is what no other file carries. The approved plan
+*Status is `CHANGELOG.md` `[0.1.0-beta.9]`; this is what no other file carries. The approved plan
 is four PRs: PR-1 the guard's tolerance and the Overlay's channel, PR-2 the Agent (eligibility, gate, records, schema
 0014, IPC), PR-3 the App, strings, docs and legal text, PR-4 the release.*
 
@@ -1712,6 +1712,11 @@ invisible to every check.
 5. **Re-ratify §S18 blocker 3 and §S27's basis** once P2's PR-C/PR-F make the Agent the shipped
    injecting entry point (§P2, decision D4). The PRs restate both entries; whether the
    restatement stands is the owner's.
+6. **D33's first real use (beta.9).** Turn the option on; GIRLS' FRONTLINE 2 should be listed eligible (NetEase
+   Yidun, `NEP2.dll`, three sessions); make the exception, turn hooking on and play one session: hooked, marked
+   *Hooked · exception*, not stopped by the 30 s re-scan or by the Overlay when `NEP2.dll` loads. Aniimo should read
+   *not eligible* with its `NEPKernel.sys`; the option off makes the next session Tier 2 with the exception kept. And
+   the `ja` text of `Safety_Exception_*`, which ships as English until a reviewer signs.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI

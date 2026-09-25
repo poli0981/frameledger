@@ -27,6 +27,29 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
+_Nothing yet — entries continue here after `0.1.0-beta.9`._
+
+## [0.1.0-beta.9] - 2026-09-26
+
+**The ninth pre-release: one narrow exception you can make yourself for a game whose only anti-cheat runs in user
+mode and that FrameLedger has measured before.** The same unsigned installer: verify its hash against
+`SHA256SUMS.txt`, then *More info → Run anyway*. What changed for a user:
+
+- **A user-mode anti-cheat exception, per game, off by default** (Settings ▸ Capture). It is offered only where the
+  only anti-cheat found runs entirely in user mode — no driver or service, no driver file in the game's folder — the
+  game is on no title list, and FrameLedger has measured it hooked successfully at least twice. You make it one game
+  at a time, after a disclosure that states the ban risk; the guard still runs every check under it and ends it on
+  anything new, a crash or safety stop under it, or a game update. Sessions under it are marked.
+- **The Disclaimer (2.7) and the EULA (1.3) say so**, so the Legal Gate opens once after the update. The Privacy
+  Policy is unchanged.
+
+**Updating from `0.1.0-beta.8`:**
+
+- Quit the App (tray icon → Exit) and end `FrameLedger.Agent.exe` before running the installer.
+- Schema 0014 adds columns; the database opens in place. Nothing changes for any game until you turn the option on.
+- With the option on, the Agent looks at each game whose hooking it turned off within a minute and lists the ones
+  that qualify; a game shipping a kernel driver (Aniimo's `NEPKernel.sys`, for one) never does.
+
 ### Added
 
 - **A user-mode anti-cheat exception you can make yourself, per game** (owner decision D33). Settings ▸ Capture ▸
