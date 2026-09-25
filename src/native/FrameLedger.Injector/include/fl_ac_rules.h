@@ -139,6 +139,108 @@ struct Rules {
     std::size_t trustedSignerCount = 0;
 };
 
+// ---------------------------------------------------------------------------
+// D33 (owner decision 2026-09-26) — the user-mode exception
+// ---------------------------------------------------------------------------
+//
+// A user may except ONE game from the findings of ONE anti-cheat family, and only a family whose whole known footprint
+// is user-mode (19_SAFETY §The user-mode exception). A caller can NAME a family (the ABI's `toleratedFamilies`) and
+// nothing more: which families a name reaches, and whether that family is user-mode, are the guard's own answers from
+// the rules it is evaluating with. A name that fails here is tolerated nowhere — fail closed.
+
+// ASCII case-insensitive equality. Inline so the Overlay, which compiles no fl_ac_rules.cpp, resolves its tolerance
+// against the compiled floor with the same comparison the guard uses.
+[[nodiscard]] inline bool AsciiIEquals(const char* a, const char* b) noexcept {
+    if (a == nullptr || b == nullptr) {
+        return false;
+    }
+    for (;; ++a, ++b) {
+        char ca = *a;
+        char cb = *b;
+        if (ca >= 'A' && ca <= 'Z') {
+            ca = static_cast<char>(ca - 'A' + 'a');
+        }
+        if (cb >= 'A' && cb <= 'Z') {
+            cb = static_cast<char>(cb - 'A' + 'a');
+        }
+        if (ca != cb) {
+            return false;
+        }
+        if (ca == '\0') {
+            return true;
+        }
+    }
+}
+
+// True for a value ending in ".sys", ASCII case-insensitively.
+[[nodiscard]] inline bool EndsWithSysSuffix(const char* value) noexcept {
+    if (value == nullptr) {
+        return false;
+    }
+    std::size_t n = 0;
+    while (value[n] != '\0') {
+        ++n;
+    }
+    return n > 4 && AsciiIEquals(value + n - 4, ".sys");
+}
+
+// True iff `familyName` names at least one of `families` and EVERY entry naming it sits in a user-mode group —
+// modules, directories, files — with no `*.sys` value. A family with a `drivers` or `services` entry anywhere (the
+// floor or the file), or a kernel driver among its files, is kernel-level and never tolerable. A name no family carries
+// — a title-list family such as Valve VAC, or the kernel-driver code rule's family — is false. The floor cannot be
+// shrunk by data, so a rules file can make a family kernel-level (add a driver) and never the reverse.
+[[nodiscard]] inline bool FamilyIsUserModeOnly(const Family* families, std::size_t count,
+                                               const char* familyName) noexcept {
+    if (families == nullptr || familyName == nullptr || familyName[0] == '\0') {
+        return false;
+    }
+    bool named = false;
+    for (std::size_t i = 0; i < count; ++i) {
+        const Family& f = families[i];
+        if (!AsciiIEquals(f.name, familyName)) {
+            continue;
+        }
+        named = true;
+        if (f.group == Group::kDrivers || f.group == Group::kServices) {
+            return false;
+        }
+        if (f.group == Group::kFiles) {
+            for (std::size_t v = 0; v < f.valueCount; ++v) {
+                if (EndsWithSysSuffix(f.values[v])) {
+                    return false;
+                }
+            }
+        }
+    }
+    return named;
+}
+
+[[nodiscard]] inline bool FamilyIsUserModeOnly(const Rules& rules, const char* familyName) noexcept {
+    return FamilyIsUserModeOnly(rules.families, rules.familyCount, familyName);
+}
+
+// How many names one exception list may carry. v1 grants one family per game; the room is for a later version, and a
+// longer list is read up to this many names — tolerating fewer is the safe direction.
+inline constexpr std::size_t kMaxToleratedFamilies = 8;
+
+// The families one evaluation tolerates, resolved against the rules it evaluates with: `family[i]` covers
+// `rules.families[i]`. Value-initialised, it tolerates nothing.
+struct Tolerance {
+    bool family[kMaxFamilies] = {};
+    bool any = false;
+};
+
+// `toleratedFamilies` is newline-separated family names; null or empty tolerates nothing. A name is honoured only when
+// FamilyIsUserModeOnly(rules, name) — and then for every entry of that family, in every user-mode group. Unknown and
+// kernel-level names, and a name longer than kMaxFamilyNameLen - 1, are ignored: they widen nothing.
+void ResolveTolerance(const Rules& rules, const char* toleratedFamilies, Tolerance& out) noexcept;
+
+// MatchName that never returns a family the tolerance covers. When `tolerated` is non-null it receives the first
+// covered family that matched `observed` (and is left untouched when none did), so a caller can record what it let
+// through while a non-covered family matching the same name still refuses.
+[[nodiscard]] const Family* MatchNameTolerating(const Rules& rules, Group group, const char* observed,
+                                                const Tolerance& tolerance, const Family** tolerated) noexcept;
+
 // Returns `r` to the state of a value-initialised `Rules{}` WITHOUT materialising one.
 //
 // `r = Rules{}` builds a ~530 KB temporary on the stack before copying it, and ParseRules runs inside the Vulkan

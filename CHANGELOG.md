@@ -27,7 +27,17 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
-_Nothing yet — entries continue here after `0.1.0-beta.8`._
+### Added
+
+- **Groundwork for the user-mode anti-cheat exception** (owner decision D33, 2026-09-26; the option, the list and the
+  disclosure arrive later in this train). The guard can now be asked to let ONE named anti-cheat family through, and
+  grants it only for a family whose every signal — in the built-in floor and in the rules file — is user-mode: no
+  driver, no service, no `.sys` (on today's rules NetEase Yidun, AhnLab HackShield, Anybrain and FredaikisAntiCheat).
+  It still runs every check and keeps scanning past what it let through, so a second anti-cheat, a kernel driver in
+  the game's folder, a title list, a driver or service on the machine, or a scan that could not finish still refuses;
+  a pass that let something through says so and names it. The injected Overlay learns the same family before it
+  starts watching the game's module loads, so a late-loading module of that family does not stop it and any other
+  anti-cheat still does. Nothing asks for any of this yet: every game is judged exactly as in beta.8.
 
 ## [0.1.0-beta.8] - 2026-09-25
 

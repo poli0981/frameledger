@@ -26,33 +26,34 @@ bool Usable(FlGuardResult* out) noexcept {
 
 extern "C" {
 
-void FlGuardEvaluate(std::uint32_t targetPid, FlGuardResult* out) {
+void FlGuardEvaluate(std::uint32_t targetPid, const char* toleratedFamilies, FlGuardResult* out) {
     if (!Usable(out)) {
         return;
     }
-    Fill(out, fl::guard::Evaluate(targetPid));
+    Fill(out, fl::guard::Evaluate(targetPid, toleratedFamilies));
 }
 
-void FlGuardedInject(std::uint32_t targetPid, const wchar_t* dllPath, FlGuardResult* out) {
+void FlGuardedInject(std::uint32_t targetPid, const wchar_t* dllPath, const char* toleratedFamilies,
+                     FlGuardResult* out) {
     if (!Usable(out)) {
         return;
     }
-    Fill(out, fl::guard::GuardedInject(targetPid, dllPath));
+    Fill(out, fl::guard::GuardedInject(targetPid, dllPath, toleratedFamilies));
 }
 
 void FlGuardedInjectWhenReady(std::uint32_t targetPid, const wchar_t* dllPath, std::uint32_t timeoutMs,
-                              FlGuardResult* out) {
+                              const char* toleratedFamilies, FlGuardResult* out) {
     if (!Usable(out)) {
         return;
     }
-    Fill(out, fl::guard::GuardedInjectWhenReady(targetPid, dllPath, timeoutMs));
+    Fill(out, fl::guard::GuardedInjectWhenReady(targetPid, dllPath, timeoutMs, toleratedFamilies));
 }
 
-void FlStaticPreScanGame(const wchar_t* exePath, FlGuardResult* out) {
+void FlStaticPreScanGame(const wchar_t* exePath, const char* toleratedFamilies, FlGuardResult* out) {
     if (!Usable(out)) {
         return;
     }
-    Fill(out, fl::guard::StaticPreScanGame(exePath));
+    Fill(out, fl::guard::StaticPreScanGame(exePath, toleratedFamilies));
 }
 
 const char* FlGuardReasonName(std::int32_t reason) {

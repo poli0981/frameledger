@@ -18,7 +18,7 @@ These are permanently out of scope. A PR implementing any of them is rejected re
 - Hiding, renaming, or randomizing the DLL, its exports, or its shared-memory object names
 - Thread hiding (`NtSetInformationThread`/`ThreadHideFromDebugger`) or debugger-evasion tricks
 - Signature-breaking obfuscation/packing of our own binaries
-- Any "bypass" setting, "stealth mode", or documentation explaining how to defeat the guard below. *(The first two words left this line on 2026-09-21 and returned on 2026-09-22 — §What a finding does to the game.)*
+- Any "bypass" setting, "stealth mode", or documentation explaining how to defeat the guard below. *(The first two words left this line on 2026-09-21 and returned on 2026-09-22 — §What a finding does to the game. The one exception the owner has granted since, D33 on 2026-09-26, is not a bypass: the guard still runs every check and decides itself which family is user-mode — §The user-mode exception.)*
 - Reading or writing game memory outside the arguments of APIs we hooked
 - Kernel drivers of our own
 
@@ -394,7 +394,7 @@ the injection primitive, not a fifth question about the title.
 - **Absent** is still `kInjectionFailed`, not `kPayloadNotOurs`. A damaged install
   and a misuse of the ABI are different problems and must not share a reason.
 
-> **There is no override.** ~~There is one, since 2026-09-21, and it is none of the things this paragraph named~~ *(one day; withdrawn 2026-09-22)*: still no hidden setting, no config-file flag, no CLI switch, no "advanced users" escape hatch, no global form. If a user disagrees with a specific entry, the path is still a GitHub issue against the rules file, reviewed in public. What exists is below.
+> **There is no override.** ~~There is one, since 2026-09-21, and it is none of the things this paragraph named~~ *(one day; withdrawn 2026-09-22)*: still no hidden setting, no config-file flag, no CLI switch, no "advanced users" escape hatch, no global form. If a user disagrees with a specific entry, the path is still a GitHub issue against the rules file, reviewed in public. What exists is below — and since 2026-09-26 (D33), one narrow, evidence-bound exception for anti-cheat that is user-mode throughout, which lets a named family through while every check still runs (§The user-mode exception).
 
 ### What a finding does to the game — owner decision 2026-09-22
 
@@ -455,7 +455,8 @@ card is back with the finding under its disabled switch. The finding itself is o
 
 **What clears it.** Nothing, as before: the block outlives *Change executable* and a re-import (§A game already enabled
 can become blocked later). The owner asked for hooking to be turned off when anti-cheat is detected, not for a second
-switch.
+switch. *(Still true under D33: an exception is a separate layer over the block, never a clearing of it — §The user-mode
+exception.)*
 
 **D21 stands as a fact.** A process an anti-cheat driver protects is `SessionEndReason.TargetUnreadable` (2026-09-21:
 every candidate of that name exists and none can be opened; ELDEN RING under Easy Anti-Cheat on the owner's machine).
@@ -465,6 +466,65 @@ reason covers a game that runs as administrator while the Agent does not.
 **What did not change.** `InjectViaLoadLibrary` keeps internal linkage in `fl_guard.cpp` and `tools/chokepoint-check.ps1`
 still finds the injection primitives in exactly that file and the evasion primitives nowhere. `IAntiCheatGuard` is back
 to four methods (`NoSecondMatcherTests`). `FloorFamilies` is untouched.
+
+
+### The user-mode exception — owner decision 2026-09-26 (D33)
+
+**Why it exists.** The beta.8 library sweep turned hooking off for *GIRLS' FRONTLINE 2: EXILIUM* on a documented,
+unmeasured rule — NetEase Yidun, `AntiCheatFile NEP2.dll` — after FrameLedger had measured that game hooked (three
+normal Tier-1 sessions in the owner's ledger, 474,143 frames). The owner asked for a way to keep measuring a game like
+that, and chose, against the rule this document had kept since 2026-09-22 and with that rule quoted back to them, **an
+exception the user grants per game, bound to evidence, and only for anti-cheat that is user-mode throughout.** The
+reasons D22 withdrew the override are answered one by one: it "did nothing where it was wanted" — an exception is only
+offered where FrameLedger has already measured the game hooked; it "only exposed the user to the risk its own disclosure
+described" — that risk stands, and the disclosure says so, including that a ban can arrive days later and that FrameLedger
+cannot know.
+
+**What may be excepted — all of it must hold:**
+
+- every finding about the game is `BlockedModule`, `AntiCheatFile` or `AntiCheatDirectory` of **one** family;
+- that family's whole footprint is user-mode — no `drivers` entry, no `services` entry and no `*.sys` among its `files`, in
+  the compiled floor or the rules file (`fl::guard::FamilyIsUserModeOnly`). The floor cannot be shrunk, so data can make a
+  family kernel-level and never the reverse. On today's data that leaves NetEase Yidun, AhnLab HackShield, Anybrain and
+  FredaikisAntiCheat; Easy Anti-Cheat, BattlEye, ACE, NetEase Anti-Cheat, mihoyo protect, Vanguard, Ricochet and every
+  other family carry a driver or a service and are never excepted;
+- no `*.sys` anywhere in the install tree — the kernel-driver rule (D30) is never excepted, whichever family a driver
+  belongs to (so *Aniimo*, which unpacks `NEPKernel.sys` beside `NEP2.dll` on its first run, stays blocked);
+- the game is on no title list (`BlockedExecutable`, `BlockedStoreId` — the notorious titles are there by design);
+- the ledger holds **at least two successful Tier-1 sessions** of the game: hooked, frames recorded, `exit_status = normal`
+  (which since beta.8 includes End task's exit code 1 and a user's stop), never crashed, never unhooked for safety.
+
+**Never excepted, whatever the user ticked:** a machine-wide `BlockedDriver` or `BlockedService`, the fuzzy tier
+(`SuspiciousUnsigned`), a scan that could not look or finish, unusable rules, `TargetUnreadable` (D21), a 32-bit target,
+the kill switch, and a Vulkan target (the implicit layer's own self-scan stays strict).
+
+**How the guard takes it.** The four evaluating ABI entries carry `toleratedFamilies` — a NAME, never evidence
+(`fl_guard_abi.h`). The guard resolves it against its own rules (`ResolveTolerance`), keeps only a user-mode family,
+runs every check, lets that family's modules, files and folders through **and keeps scanning past them**, so a second
+family, a suspicious module or a `.sys` further in still refuses. A pass that let something through is
+`kAllowedUserModeException` (reason 28, the slot the withdrawn bypass left) with the family and the signal; the session it
+starts is marked with them.
+
+**How the Overlay takes it.** The Overlay stops observing when a floor module loads after injection, so the Agent
+publishes the exception's family names in `Local\FrameLedger.Tolerate.<pid>` (`fl_tolerance.h`) before it asks the guard
+to inject, and the Overlay's init thread reads them once, before its loader detour exists — resolving each against its
+own compiled floor and honouring only a user-mode family. A mapping that names anything else tolerates nothing, and the
+Agent's 30 s re-scan keeps judging every other signal.
+
+**What ends it.** A new finding outside the excepted family at any of the four moments above writes the block as before
+and revokes the exception; a session under it that crashes, is unhooked for safety or is stopped by the Overlay's
+in-process floor stop revokes it; an executable change ends it with the consent it shared a fingerprint with; turning
+the option off suspends every exception. **The block itself is never cleared** — the exception is a separate layer over
+it, and the finding stays on the game's page (FR-2.2).
+
+**What it is not.** Not a bypass of a live refusal, not a global switch (a Settings option off by default enables the list,
+and the user ticks each game), not reachable from the command line, and not evasion: the DLL stays `LoadLibraryW`-loaded,
+named and visible (rule 3). `InjectViaLoadLibrary` still has internal linkage in `fl_guard.cpp`; `tools/chokepoint-check.ps1`
+is unchanged.
+
+*Built in beta.9 PR-1: the guard's tolerance and the Overlay's channel, with nothing yet asking for either
+(`NativeAntiCheatGuard` passes none). The Agent's eligibility, gate and records follow in PR-2; the option, the list,
+the disclosure and the legal text in PR-3.*
 
 
 ### The floor data cannot remove

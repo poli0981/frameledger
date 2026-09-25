@@ -45,10 +45,17 @@ public readonly record struct AntiCheatVerdict
     public string Signal { get; }
 
     /// <summary>
-    /// True only when a real evaluation happened AND every check passed.
-    /// A default-constructed verdict is never allowed.
+    /// True only when a real evaluation happened AND every check passed — plainly, or under the game's user-mode
+    /// exception (D33, <see cref="RanUnderException"/>). A default-constructed verdict is never allowed.
     /// </summary>
-    public bool IsAllowed => _evaluated && Reason == AntiCheatRefusalReason.Allow;
+    public bool IsAllowed => _evaluated
+        && Reason is AntiCheatRefusalReason.Allow or AntiCheatRefusalReason.AllowedUnderUserModeException;
+
+    /// <summary>
+    /// D33: allowed because the only findings were the excepted family's; <see cref="Family"/> and <see cref="Signal"/>
+    /// say what was let through. The session is marked with them.
+    /// </summary>
+    public bool RanUnderException => _evaluated && Reason == AntiCheatRefusalReason.AllowedUnderUserModeException;
 
     /// <summary>
     /// A refusal. The default-constructed value is deliberately a refusal too:
@@ -69,13 +76,20 @@ public readonly record struct AntiCheatVerdict
         or AntiCheatRefusalReason.AntiCheatFile;
 
     public static AntiCheatVerdict Refused(AntiCheatRefusalReason reason, string family, string signal) =>
-        reason == AntiCheatRefusalReason.Allow
-            ? throw new ArgumentOutOfRangeException(nameof(reason), "Refused() cannot carry Allow.")
+        reason is AntiCheatRefusalReason.Allow or AntiCheatRefusalReason.AllowedUnderUserModeException
+            ? throw new ArgumentOutOfRangeException(nameof(reason), "Refused() cannot carry an allow.")
             : new AntiCheatVerdict(reason, family, signal);
 
     /// <summary>Every check passed.</summary>
     public static AntiCheatVerdict Allowed() =>
         new(AntiCheatRefusalReason.Allow, string.Empty, string.Empty);
+
+    /// <summary>D33: every check passed, and the only findings were the excepted family's — this one, through this signal.</summary>
+    public static AntiCheatVerdict AllowedUnderException(string family, string signal)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(family);
+        return new(AntiCheatRefusalReason.AllowedUnderUserModeException, family, signal ?? string.Empty);
+    }
 
     /// <summary>
     /// Build from the native ABI's reason code. An unrecognised code refuses:

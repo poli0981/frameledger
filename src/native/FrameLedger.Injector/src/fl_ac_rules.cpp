@@ -617,13 +617,11 @@ ParseResult ParseRules(const char* json, std::size_t length, Rules& out) noexcep
     return ParseResult::kOk;
 }
 
-const Family* MatchName(const Rules& rules, Group group, const char* observed) noexcept {
-    if (observed == nullptr || observed[0] == '\0') {
-        return nullptr;
-    }
+namespace {
 
-    // Drivers arrive as native paths (\SystemRoot\system32\drivers\vgk.sys);
-    // match on the leaf.
+// Drivers arrive as native paths (\SystemRoot\system32\drivers\vgk.sys); every group matches on the leaf of that, and
+// the other groups' names are leaves already.
+const char* MatchLeaf(Group group, const char* observed) noexcept {
     const char* leaf = observed;
     if (group == Group::kDrivers) {
         for (const char* p = observed; *p != '\0'; ++p) {
@@ -632,18 +630,89 @@ const Family* MatchName(const Rules& rules, Group group, const char* observed) n
             }
         }
     }
+    return leaf;
+}
 
+bool FamilyMatches(const Family& f, const char* leaf) noexcept {
+    for (std::size_t v = 0; v < f.valueCount; ++v) {
+        const bool hit = (f.match == MatchKind::kPrefix) ? IStartsWith(leaf, f.values[v]) : IEquals(leaf, f.values[v]);
+        if (hit) {
+            return true;
+        }
+    }
+    return false;
+}
+
+}    // namespace
+
+const Family* MatchName(const Rules& rules, Group group, const char* observed) noexcept {
+    if (observed == nullptr || observed[0] == '\0') {
+        return nullptr;
+    }
+    const char* leaf = MatchLeaf(group, observed);
     for (std::size_t i = 0; i < rules.familyCount; ++i) {
         const Family& f = rules.families[i];
-        if (f.group != group) {
+        if (f.group == group && FamilyMatches(f, leaf)) {
+            return &f;
+        }
+    }
+    return nullptr;
+}
+
+void ResolveTolerance(const Rules& rules, const char* toleratedFamilies, Tolerance& out) noexcept {
+    // In place, like ResetRules: a Tolerance is small, but nothing here needs a temporary to be correct.
+    std::memset(&out, 0, sizeof(out));
+    if (toleratedFamilies == nullptr) {
+        return;
+    }
+    const char* p = toleratedFamilies;
+    std::size_t names = 0;
+    while (*p != '\0' && names < kMaxToleratedFamilies) {
+        char        name[kMaxFamilyNameLen] = {};
+        std::size_t n = 0;
+        bool        tooLong = false;
+        for (; *p != '\0' && *p != '\n' && *p != '\r'; ++p) {
+            if (n + 1 < sizeof(name)) {
+                name[n++] = *p;
+            } else {
+                tooLong = true;
+            }
+        }
+        while (*p == '\n' || *p == '\r') {
+            ++p;
+        }
+        if (n == 0 || tooLong) {
+            continue;    // a name we could not hold whole is not a name we may honour
+        }
+        ++names;
+        if (!FamilyIsUserModeOnly(rules, name)) {
+            continue;    // kernel-level or unknown: tolerated nowhere, whoever asked
+        }
+        for (std::size_t i = 0; i < rules.familyCount; ++i) {
+            if (IEquals(rules.families[i].name, name)) {
+                out.family[i] = true;
+                out.any = true;
+            }
+        }
+    }
+}
+
+const Family* MatchNameTolerating(const Rules& rules, Group group, const char* observed, const Tolerance& tolerance,
+                                  const Family** tolerated) noexcept {
+    if (observed == nullptr || observed[0] == '\0') {
+        return nullptr;
+    }
+    const char* leaf = MatchLeaf(group, observed);
+    for (std::size_t i = 0; i < rules.familyCount; ++i) {
+        const Family& f = rules.families[i];
+        if (f.group != group || !FamilyMatches(f, leaf)) {
             continue;
         }
-        for (std::size_t v = 0; v < f.valueCount; ++v) {
-            const bool hit =
-                (f.match == MatchKind::kPrefix) ? IStartsWith(leaf, f.values[v]) : IEquals(leaf, f.values[v]);
-            if (hit) {
-                return &f;
-            }
+        if (!tolerance.family[i]) {
+            return &f;    // a family the exception does not cover refuses, even when a covered one matched first
+        }
+        if (tolerated != nullptr && *tolerated == nullptr) {
+            *tolerated = &f;
         }
     }
     return nullptr;

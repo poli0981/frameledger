@@ -207,6 +207,19 @@ public enum AntiCheatRefusalReason
     /// </summary>
     KillSwitchEngaged = 27,
 
-    // Value 28 was AllowedUnderUserBypass for one day (2026-09-21) and was withdrawn with the bypass on 2026-09-22. It
-    // was the last value, so nothing is renumbered; the native enum dropped it in the same change (GuardMirrorTests).
+    // Value 28 was AllowedUnderUserBypass for one day (2026-09-21) and was withdrawn with the bypass on 2026-09-22.
+
+    /// <summary>
+    /// D33 (owner decision 2026-09-26): every check ran and passed, and the only findings belonged to the ONE anti-cheat
+    /// family the game's user-mode exception names — a family whose whole footprint, floor and file, is user-mode, which
+    /// the native guard decides itself. <see cref="AntiCheatVerdict.Family"/> and <see cref="AntiCheatVerdict.Signal"/>
+    /// carry what was let through, so the session it starts is marked with it.
+    /// </summary>
+    /// <remarks>
+    /// An allow — the Overlay is in the target — and never the withdrawn bypass that once held this value: nothing
+    /// here injected past a refusal. A driver or service on the machine, a title list, a <c>.sys</c> in the tree, the
+    /// fuzzy tier, a scan that could not finish and any other family all refuse under an exception exactly as without
+    /// one (<c>19_SAFETY</c> §The user-mode exception).
+    /// </remarks>
+    AllowedUnderUserModeException = 28,
 }

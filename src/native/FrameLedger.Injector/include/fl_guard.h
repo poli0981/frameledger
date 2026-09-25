@@ -183,9 +183,20 @@ enum class Reason : std::uint8_t {
     kKillSwitchEngaged,
 
     // Value 28 was kAllowedUnderUserBypass, the one day the guard had an override (2026-09-21, withdrawn by the owner
-    // on 2026-09-22 before any release carried it past beta.4). It was the LAST enumerator, so removing it renumbers
-    // nothing; the managed mirror dropped it in the same change and GuardMirrorTests holds the two counts equal. A
-    // refusal is a refusal again: there is no entry point that injects past one.
+    // on 2026-09-22 before any release carried it past beta.4). It was the LAST enumerator, so removing it renumbered
+    // nothing, and a refusal stayed a refusal: there is no entry point that injects past one.
+    //
+    // D33 (owner decision 2026-09-26) reuses the slot for something narrower, and it is not that override back. The
+    // guard ran EVERY check; the only findings it saw were of the one family the caller named, and that family's whole
+    // footprint — floor and file — is user-mode (FamilyIsUserModeOnly: no driver, no service, no `.sys`). Everything
+    // else still refused as it always does: a driver or service on the machine, a title list, a `.sys` anywhere in the
+    // tree, the fuzzy tier, a scan that could not finish, another family. The verdict carries the tolerated family and
+    // the signal, so the session it starts is marked with them (19_SAFETY §The user-mode exception).
+    //
+    // Allowed() is true for it — the DLL is loaded, which is what Allowed() has meant since kInjectionFailed existed —
+    // and it is produced ONLY as EvaluateImpl's final answer, never by a sub-check, so the `!Allowed()` chains between
+    // checks read exactly as before.
+    kAllowedUserModeException,
 
     // NOT A REASON. The count, so appending above it updates the exported
     // FlGuardReasonCount by construction.
@@ -207,7 +218,20 @@ struct Verdict {
     char   family[64] = {};                      // e.g. "Easy Anti-Cheat"
     char   signal[260] = {};                     // e.g. "EasyAntiCheat_EOS.dll"
 
-    [[nodiscard]] bool Allowed() const noexcept { return reason == Reason::kAllow; }
+    // kAllowedUserModeException too (D33): every check ran, and the only findings belonged to the one user-mode family
+    // the caller's exception names. See the enumerator.
+    [[nodiscard]] bool Allowed() const noexcept {
+        return reason == Reason::kAllow || reason == Reason::kAllowedUserModeException;
+    }
+};
+
+// D33 — the first finding a tolerated family produced during one evaluation (a module in the scan set, or a file or
+// folder in the install tree). When nothing else refuses, it becomes the kAllowedUserModeException verdict's family and
+// signal, so the session is marked with what was let through.
+struct ToleratedFinding {
+    bool seen = false;
+    char family[64] = {};
+    char signal[260] = {};
 };
 
 // The literal default must be a refusal, not an allow. Asserted rather than
@@ -450,7 +474,12 @@ struct Sources {
 // While the injection primitive was a stub, a caller passing all-clean fakes
 // was a theoretical hole; the moment injection became real it would have been
 // a way into a game process that never consulted a single genuine signal.
-[[nodiscard]] Verdict GuardedInject(std::uint32_t targetPid, const wchar_t* dllPath) noexcept;
+//
+// `toleratedFamilies` (D33) is the one thing a caller may add, and it is a NAME, not evidence: newline-separated
+// anti-cheat families the user's exception covers for this game, resolved against the rules by ResolveTolerance, which
+// honours only a family whose whole footprint is user-mode. Null or empty is the guard exactly as before.
+[[nodiscard]] Verdict GuardedInject(std::uint32_t targetPid, const wchar_t* dllPath,
+                                    const char* toleratedFamilies = nullptr) noexcept;
 
 // LAUNCH MODE. Poll `targetPid` -- every 50 ms, up to `timeoutMs` -- until it has
 // mapped a presentation runtime (dxgi.dll with d3d11.dll or d3d12.dll, or
@@ -461,19 +490,24 @@ struct Sources {
 // exits first, or never maps a runtime inside the budget, is refused with
 // kLaunchTargetExited / kLaunchNoPresentationRuntime and nothing is injected.
 // 04_CAPTURE §Launch mode; 20_OPEN_QUESTIONS §S1 / §S13(c).
-[[nodiscard]] Verdict GuardedInjectWhenReady(std::uint32_t targetPid, const wchar_t* dllPath,
-                                             std::uint32_t timeoutMs) noexcept;
+//
+// A Vulkan target is evaluated WITHOUT the tolerance (D33): the implicit layer runs its own module self-scan and goes
+// inert on any anti-cheat module, so an exception could not reach it and must not be spent on it.
+[[nodiscard]] Verdict GuardedInjectWhenReady(std::uint32_t targetPid, const wchar_t* dllPath, std::uint32_t timeoutMs,
+                                             const char* toleratedFamilies = nullptr) noexcept;
 
 // Evaluate the guard WITHOUT injecting. Exists for the 30 s in-session re-scan
 // (19_SAFETY §During a session), which must reach a verdict on a process it is
 // already inside and has nothing to inject. Deliberately cannot be used to
 // pre-authorise an injection: it takes no dll path and returns no token, so the
 // only way to act on a pass is to call GuardedInject, which re-collects.
-[[nodiscard]] Verdict Evaluate(std::uint32_t targetPid) noexcept;
+[[nodiscard]] Verdict Evaluate(std::uint32_t targetPid, const char* toleratedFamilies = nullptr) noexcept;
 
 // There were two more entry points here for one day (GuardedInjectAcknowledged and its WhenReady twin, the user's
 // bypass of 2026-09-21). Withdrawn 2026-09-22: the guard has no entry that injects past its own refusal, and a
-// finding about the game turns that game's hooking off instead (19_SAFETY §What a finding does to the game).
+// finding about the game turns that game's hooking off instead (19_SAFETY §What a finding does to the game). D33's
+// `toleratedFamilies` is not that entry: it narrows what counts as a finding for one user-mode family, and the guard
+// still runs, and refuses on, everything else.
 
 #ifdef FL_GUARD_TESTABLE
 // ---------------------------------------------------------------------------
@@ -487,11 +521,13 @@ struct Sources {
 // cannot be exercised is an input whose failure path is unverified. So the seam
 // exists — and is unavailable to anything a user runs.
 // ---------------------------------------------------------------------------
-[[nodiscard]] Verdict EvaluateWithSources(std::uint32_t targetPid, const Sources& sources) noexcept;
-[[nodiscard]] Verdict GuardedInjectWithSources(std::uint32_t targetPid, const wchar_t* dllPath,
-                                               const Sources& sources) noexcept;
+[[nodiscard]] Verdict EvaluateWithSources(std::uint32_t targetPid, const Sources& sources,
+                                          const char* toleratedFamilies = nullptr) noexcept;
+[[nodiscard]] Verdict GuardedInjectWithSources(std::uint32_t targetPid, const wchar_t* dllPath, const Sources& sources,
+                                               const char* toleratedFamilies = nullptr) noexcept;
 [[nodiscard]] Verdict GuardedInjectWhenReadyWithSources(std::uint32_t targetPid, const wchar_t* dllPath,
-                                                        std::uint32_t timeoutMs, const Sources& sources) noexcept;
+                                                        std::uint32_t timeoutMs, const Sources& sources,
+                                                        const char* toleratedFamilies = nullptr) noexcept;
 #endif
 
 // Human-readable reason, for logs and for mapping to resx keys.

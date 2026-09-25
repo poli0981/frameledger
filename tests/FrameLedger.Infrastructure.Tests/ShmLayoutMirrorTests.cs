@@ -65,7 +65,7 @@ public sealed class ShmLayoutMirrorTests
         return element;
     }
 
-    private static void AssertMirror<T>(string nativeName)
+    private static void AssertMirror<T>(string nativeName, int size = 64, string shape = "one cache line in fl_shm.h")
         where T : struct
     {
         JsonElement native = StructOf(nativeName);
@@ -74,7 +74,7 @@ public sealed class ShmLayoutMirrorTests
         // actually lays out and therefore what a memory-mapped read sees. They can differ, and only the
         // second one is the property the reader depends on.
         int nativeSize = native.GetProperty("size").GetInt32();
-        nativeSize.Should().Be(64, $"{nativeName} is one cache line in fl_shm.h");
+        nativeSize.Should().Be(size, $"{nativeName} is {shape}");
         Marshal.SizeOf<T>().Should().Be(nativeSize, $"{typeof(T).Name} marshalled size must match {nativeName}");
         Unsafe.SizeOf<T>().Should().Be(nativeSize, $"{typeof(T).Name} runtime size must match {nativeName}");
 
@@ -198,6 +198,22 @@ public sealed class ShmLayoutMirrorTests
     [Fact]
     public void TheFrameRecordMirrorMatches() => AssertMirror<FlFrameRecord>("FlFrameRecord");
 
+    /// <summary>D33: the tolerance mapping the Agent writes before an injection under a user-mode exception.</summary>
+    [Fact]
+    public void TheToleranceMirrorMatches() =>
+        AssertMirror<FlTolerance>("FlTolerance", 528, "a 16-byte header and eight 64-byte names in fl_tolerance.h");
+
+    [Fact]
+    public void TheToleranceConstantsMatch()
+    {
+        JsonElement tolerance = _nativeLayout.Value.GetProperty("tolerance");
+        tolerance.GetProperty("magic").GetUInt32().Should().Be(ToleranceLayout.Magic);
+        tolerance.GetProperty("version").GetUInt32().Should().Be(ToleranceLayout.Version);
+        tolerance.GetProperty("maxFamilies").GetInt32().Should().Be(ToleranceLayout.MaxFamilies);
+        tolerance.GetProperty("nameLen").GetInt32().Should().Be(ToleranceLayout.NameLen);
+        (ToleranceLayout.MaxFamilies * ToleranceLayout.NameLen).Should().Be(512, "FlTolerance.Families is a fixed 512-byte buffer");
+    }
+
     [Fact]
     public void EveryNativeFieldIsMirrored()
     {
@@ -211,6 +227,7 @@ public sealed class ShmLayoutMirrorTests
             ("FlWriterState", typeof(FlWriterState)),
             ("FlControlBlock", typeof(FlControlBlock)),
             ("FlFrameRecord", typeof(FlFrameRecord)),
+            ("FlTolerance", typeof(FlTolerance)),
         ];
 
         foreach ((string nativeName, Type managed) in pairs)

@@ -53,8 +53,10 @@ public sealed class ReasonTextTests
     {
         foreach (AntiCheatRefusalReason reason in Enum.GetValues<AntiCheatRefusalReason>())
         {
-            // The findings name their family, and the kill switch always carries its own label and end reason.
-            if (reason is AntiCheatRefusalReason.Allow or AntiCheatRefusalReason.BlockedModule or AntiCheatRefusalReason.BlockedDriver
+            // The findings name their family, the two allows are never said as a refusal (D33's names its family too), and
+            // the kill switch always carries its own label and end reason.
+            if (reason is AntiCheatRefusalReason.Allow or AntiCheatRefusalReason.AllowedUnderUserModeException
+                or AntiCheatRefusalReason.BlockedModule or AntiCheatRefusalReason.BlockedDriver
                 or AntiCheatRefusalReason.BlockedService or AntiCheatRefusalReason.BlockedExecutable or AntiCheatRefusalReason.BlockedStoreId
                 or AntiCheatRefusalReason.AntiCheatDirectory or AntiCheatRefusalReason.AntiCheatFile or AntiCheatRefusalReason.KillSwitchEngaged)
             {

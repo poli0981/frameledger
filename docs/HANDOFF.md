@@ -1640,6 +1640,40 @@ only be refused, never the finding (FR-2.2).
   64-bit build of the same game under *Change executable* can be hooked; the sweep's turn-off uses
   `hook_autodisabled_reason`, which the page does not offer to undo while the file is still 32-bit.
 
+## 2026-09-26 — the beta.9 train: the user-mode exception (D33)
+
+*Status is `CHANGELOG.md` `[Unreleased]` (then `[0.1.0-beta.9]`); this is what no other file carries. The approved plan
+is four PRs: PR-1 the guard's tolerance and the Overlay's channel, PR-2 the Agent (eligibility, gate, records, schema
+0014, IPC), PR-3 the App, strings, docs and legal text, PR-4 the release.*
+
+**Decision (D33, owner, 2026-09-26, asked with rule 2 and D22 quoted back).** The beta.8 sweep turned hooking off for
+GIRLS' FRONTLINE 2: EXILIUM (NetEase Yidun, `AntiCheatFile NEP2.dll`, a documented and unmeasured rule) after it had
+been measured hooked; the owner asked for an exception list for user-mode anti-cheat games measured at Tier 1 before.
+Chosen, all four options as recommended: **evidence-bound, per game** (a Settings option off by default, then the user
+ticks each eligible game); **≥ 2 successful Tier-1 sessions**; **Aniimo stays blocked** (it unpacks `NEPKernel.sys` beside
+`NEP2.dll` — the D30 `.sys` rule is never excepted); **the legal text changes** (Disclaimer §2A 2.7, EULA 1.3, the
+accuracy block, SECURITY.md, FR-2.3; Privacy stays 2.4). Eligibility, what is never excepted and every lapse are in
+`19_SAFETY` §The user-mode exception; the rule-2 amendment is in CLAUDE.md.
+
+**Evidence it rests on (read from a COPY of the owner's ledger and their logs, 2026-09-26).** GF2: three normal Tier-1
+sessions under the current entry (474,143 frames; three more from 2026-09-21 went with a removed entry), no `.sys` in
+its tree. Aniimo: one Tier-1 session stored `crashed` (End task before beta.8, no exit code kept). A randomly named
+kernel driver (`lyoxztfx.sys`) was installed on 2026-09-21 at 15:38 and is gone now, service and file, by something
+the logs cannot name — the residual the disclosure states: a driver outside the game folder that no rule names is
+invisible to every check.
+
+**Traps met on the way:**
+- **The ring cannot carry anything the Overlay needs before its detour is armed** — the Overlay creates it. Hence the
+  separate `Local\FrameLedger.Tolerate.<pid>` mapping the Agent creates BEFORE the injection (`fl_tolerance.h`).
+- **A tolerant scan must keep scanning.** Every sink that used to stop at the first hit returns `true` on a tolerated
+  one, or a second family / a `.sys` further in would pass: the same load-order fail-open §S22(b) closed for the
+  exemption.
+- **A prefix value of a user-mode family can match a `.sys`**; the tolerant file sink refuses any `.sys` itself.
+- **CA2101 rejects `[MarshalAs(LPUTF8Str)] string`** on a P/Invoke; the tolerance crosses as NUL-terminated UTF-8
+  `byte[]`, the shape `FlGuardCheckRules` already used.
+- **The Vulkan branch evaluates strictly**: the layer's self-scan goes inert on any anti-cheat module, so an exception
+  there could only buy a session that measures nothing.
+
 ## Owner-only — no PR can close these
 
 1. **§S23-2 — branch protection.** `Rules / validate` is not a required status check on

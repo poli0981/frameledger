@@ -53,6 +53,7 @@
 #include <fl_shm_host.h>
 #include <fl_sl_inputs.h>
 #include <fl_sl_seen.h>
+#include <fl_tolerance.h>
 #include <knownfolders.h>
 #include <MinHook.h>
 #include <shlobj_core.h>
@@ -139,6 +140,7 @@ enum FlLogCode : uint32_t {
     kLogUnhookDeclined,
     kLogLoaderDetour,
     kLogSupervisionLost,
+    kLogTolerance,
 };
 
 const char* LogCodeName(uint32_t code) noexcept {
@@ -163,6 +165,8 @@ const char* LogCodeName(uint32_t code) noexcept {
         return "LOADER_DETOUR";
     case kLogSupervisionLost:
         return "SUPERVISION_LOST";
+    case kLogTolerance:
+        return "TOLERANCE";
     default:
         return "?";
     }
@@ -735,6 +739,10 @@ void StopObserving(uint32_t reason) noexcept {
 // path reads it first): 0 = none; else 1-based index among the floor's MODULE
 // families in rules order.
 std::atomic<uint32_t> g_earlyStopFamily{0};
+// D33: floor MODULE families (bit index-1, the same 1-based index as g_earlyStopFamily) whose late load does NOT stop
+// observing, because the user's exception for this game covers them and the guard let them through. Written once by
+// ReadTolerance on the init thread BEFORE the detour exists; read by the detour. Zero without an exception.
+std::atomic<uint64_t> g_toleratedFloorModules{0};
 void                  PublishLoaderWords() noexcept;
 // Defined with the OpenGL hook below; the watchdog installs it lazily.
 bool InstallOpenGlHook() noexcept;
@@ -1163,6 +1171,73 @@ uint32_t MatchesFloorModule(const wchar_t* base) noexcept {
     return 0;
 }
 
+// How many MODULE families the compiled floor carries: the tolerance mask has one bit per family, so it must fit.
+constexpr uint32_t FloorModuleFamilyCount() noexcept {
+    uint32_t n = 0;
+    for (const fl::guard::Family& f : fl::guard::generated::kFloorFamilies) {
+        if (f.group == fl::guard::Group::kModules) {
+            ++n;
+        }
+    }
+    return n;
+}
+static_assert(FloorModuleFamilyCount() <= 64, "g_toleratedFloorModules has one bit per floor module family");
+
+bool IsToleratedFloorModule(uint32_t family) noexcept {
+    return family != 0u && family <= 64u &&
+           (g_toleratedFloorModules.load(std::memory_order_acquire) & (uint64_t{1} << (family - 1u))) != 0u;
+}
+
+// D33 — the Agent's tolerance for this process, read ONCE from Local\FrameLedger.Tolerate.<pid> (fl_tolerance.h) on
+// the init thread, before InstallLoaderHook. Every name is checked against THIS binary's compiled floor: it must name
+// a floor family whose whole footprint is user-mode, or it tolerates nothing — the Overlay never takes the mapping's
+// word for what is safe. Anything unexpected (no mapping, a bad magic or version, a count out of range, a name with
+// no terminator) leaves the mask at zero, which is the Overlay exactly as it was before D33.
+void ReadTolerance() noexcept {
+    wchar_t name[96]{};
+    if (!MakeToleranceName(name, 96, GetCurrentProcessId())) {
+        return;
+    }
+    HANDLE mapping = OpenFileMappingW(FILE_MAP_READ, FALSE, name);
+    if (mapping == nullptr) {
+        return;    // no exception for this game: the ordinary case
+    }
+    const void* view = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, sizeof(FlTolerance));
+    uint64_t    mask = 0;
+    uint32_t    names = 0;
+    if (view != nullptr) {
+        FlTolerance t{};
+        std::memcpy(&t, view, sizeof(t));    // one copy, then nothing of the mapping is read again
+        UnmapViewOfFile(view);
+        if (t.magic == FL_TOLERANCE_MAGIC && t.version == FL_TOLERANCE_VERSION &&
+            t.count <= FL_TOLERANCE_MAX_FAMILIES) {
+            for (uint32_t i = 0; i < t.count; ++i) {
+                char* family = t.families[i];
+                if (std::memchr(family, '\0', FL_TOLERANCE_NAME_LEN) == nullptr ||
+                    !fl::guard::FamilyIsUserModeOnly(
+                        fl::guard::generated::kFloorFamilies,
+                        sizeof(fl::guard::generated::kFloorFamilies) / sizeof(fl::guard::Family), family)) {
+                    continue;
+                }
+                ++names;
+                uint32_t index = 0;
+                for (const fl::guard::Family& f : fl::guard::generated::kFloorFamilies) {
+                    if (f.group != fl::guard::Group::kModules) {
+                        continue;
+                    }
+                    ++index;
+                    if (fl::guard::AsciiIEquals(f.name, family)) {
+                        mask |= uint64_t{1} << (index - 1u);
+                    }
+                }
+            }
+        }
+    }
+    CloseHandle(mapping);
+    g_toleratedFloorModules.store(mask, std::memory_order_release);
+    LogNote(kLogTolerance, "Local\\FrameLedger.Tolerate.<pid>", names, mask);
+}
+
 // Does the inventory or the census name this module? A load of one of these is
 // what the watchdog installs or counts on its next tick, so it is what wakes it.
 bool ModuleIsInventoried(const wchar_t* base) noexcept {
@@ -1199,10 +1274,13 @@ HMODULE WINAPI Hook_LoadLibraryExW(LPCWSTR name, HANDLE file, DWORD flags) noexc
             if (GetModuleFileNameW(h, path, MAX_PATH) != 0) {
                 const wchar_t* base = BaseNameOf(path);
                 const uint32_t family = MatchesFloorModule(base);
-                if (family != 0u) {
+                if (family != 0u && !IsToleratedFloorModule(family)) {
                     uint32_t none = 0;
                     g_earlyStopFamily.compare_exchange_strong(none, family, std::memory_order_acq_rel);
                     WakeWatchdog();
+                } else if (family != 0u) {
+                    // D33: the family the user's exception covers loaded late. The guard let it through at injection
+                    // and the Agent's 30 s re-scan keeps judging everything else; nothing to stop here.
                 } else if (ModuleIsInventoried(base) || _wcsicmp(base, L"opengl32.dll") == 0) {
                     uint32_t cur = g_loaderSignals.load(std::memory_order_relaxed);
                     while ((cur & kLoaderCountMask) < kLoaderCountMask &&
@@ -3100,6 +3178,8 @@ DWORD WINAPI InitThread(LPVOID) noexcept {
     // the thread that waits on it. Then the LoadLibrary detour -- non-fatal: without
     // it the 1 Hz tick and the host's scan are the backstops, and bit 15 says so.
     g_watchdogWake = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+    // D33: the exception's families, if the Agent published any for this pid, BEFORE the detour can see a load.
+    ReadTolerance();
     InstallLoaderHook();
     PublishLoaderWords();
     // An OpenGL title has opengl32 mapped before we arrive; the watchdog retries

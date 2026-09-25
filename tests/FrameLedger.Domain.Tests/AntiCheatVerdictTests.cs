@@ -14,14 +14,19 @@ public sealed class AntiCheatVerdictTests
         default(AntiCheatVerdict).IsAllowed.Should().BeFalse();
     }
 
+    /// <summary>
+    /// The two allows are the only permitting values: a plain pass, and since D33 (2026-09-26) a pass whose only findings
+    /// were the excepted user-mode family's. Every other reason refuses.
+    /// </summary>
     [Fact]
-    public void Allowed_IsTheOnlyPermittingValue()
+    public void OnlyTheTwoAllowsPermit()
     {
         AntiCheatVerdict.Allowed().IsAllowed.Should().BeTrue();
+        AntiCheatVerdict.AllowedUnderException("NetEase Yidun", "NEP2.dll").IsAllowed.Should().BeTrue();
 
         foreach (AntiCheatRefusalReason reason in Enum.GetValues<AntiCheatRefusalReason>())
         {
-            if (reason == AntiCheatRefusalReason.Allow)
+            if (reason is AntiCheatRefusalReason.Allow or AntiCheatRefusalReason.AllowedUnderUserModeException)
             {
                 continue;
             }
@@ -30,12 +35,39 @@ public sealed class AntiCheatVerdictTests
         }
     }
 
-    [Fact]
-    public void Refused_CannotCarryAllow()
+    [Theory]
+    [InlineData(AntiCheatRefusalReason.Allow)]
+    [InlineData(AntiCheatRefusalReason.AllowedUnderUserModeException)]
+    public void Refused_CannotCarryAnAllow(AntiCheatRefusalReason allow)
     {
         // Making the contradiction unrepresentable rather than merely untested.
-        Action act = () => AntiCheatVerdict.Refused(AntiCheatRefusalReason.Allow, "fam", "sig");
+        Action act = () => AntiCheatVerdict.Refused(allow, "fam", "sig");
         act.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    /// <summary>
+    /// D33: an allow under the user-mode exception names what it let through, so the session it starts can be marked
+    /// with it, and is never a finding that turns the game's hooking off.
+    /// </summary>
+    [Fact]
+    public void AnExceptionAllowNamesWhatItLetThrough()
+    {
+        AntiCheatVerdict v = AntiCheatVerdict.AllowedUnderException("NetEase Yidun", "NEP2.dll");
+        v.RanUnderException.Should().BeTrue();
+        v.Family.Should().Be("NetEase Yidun");
+        v.Signal.Should().Be("NEP2.dll");
+        v.IsFindingAboutTheGame.Should().BeFalse("what an exception let through is not a finding that turns hooking off");
+
+        AntiCheatVerdict native = AntiCheatVerdict.FromNative((int)AntiCheatRefusalReason.AllowedUnderUserModeException, "NetEase Yidun", "NEP2.dll");
+        native.IsAllowed.Should().BeTrue();
+        native.RanUnderException.Should().BeTrue();
+        native.Family.Should().Be("NetEase Yidun", "the native answer keeps the family, unlike a plain allow");
+
+        AntiCheatVerdict.Allowed().RanUnderException.Should().BeFalse();
+        default(AntiCheatVerdict).RanUnderException.Should().BeFalse();
+
+        Action nameless = () => AntiCheatVerdict.AllowedUnderException(" ", "NEP2.dll");
+        nameless.Should().Throw<ArgumentException>("an exception that names no family let nothing through that anyone can see");
     }
 
     [Fact]
