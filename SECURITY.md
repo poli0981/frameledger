@@ -31,6 +31,15 @@ now turns the game's hooking off. What IS a security report: any way to reach an
 setting, a crafted rules file, a pipe message, a database edit the Agent honours — or a finding about a game that
 does not turn its hooking off.
 
+Since 0.1.0-beta.9 one narrow exception exists (owner decision D33, `docs/19_SAFETY_AND_ANTICHEAT.md` §The user-mode
+exception): per game, only for one anti-cheat family that is user-mode throughout, with the guard still running every
+check. The grant is a record in your own database, like the consent stamp; what keeps it narrow is the guard, which
+decides itself which family it may let through. So these are security reports too: the guard letting through a family
+that has a driver, a service or a `.sys` in the floor or the rules; an exception applying to a game with a kernel
+driver in its folder, on a title list, or with a second anti-cheat; the Agent writing a grant on a pipe message
+without its own tolerant pre-scan and session count; an exception that survives a new finding, a crash or safety stop
+under it, or a changed executable; and the Overlay tolerating a family the guard did not.
+
 ## A safety gap — a game with anti-cheat that FrameLedger fails to detect
 
 This is treated with the same priority as a security report, and it takes the **public** route: open

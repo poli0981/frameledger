@@ -1,6 +1,6 @@
 # FrameLedger — Disclaimer
 
-**Version:** 2.6 · **Effective:** {{RELEASE_DATE}}
+**Version:** 2.7 · **Effective:** {{RELEASE_DATE}}
 
 > **How this document is kept true.** The statement of what FrameLedger measures (§4) is `legal/ACCURACY.md`,
 > embedded here and in `README.md` and bound to its source by `tools/accuracy-check.ps1`, which fails the build when a
@@ -53,7 +53,7 @@ Install it somewhere only you can write to, and verify the published SHA-256 che
 FrameLedger is designed to reduce that risk substantially:
 
 - Injection is **off by default** and must be enabled by you **per game**.
-- Before injecting, and every 30 seconds afterwards, FrameLedger scans for known anti-cheat and anti-tamper components. **If it finds one, it refuses to inject; if a session is already running, it stops at the next scan.** No setting turns this off, globally or per game (§2A). Because the scan runs every 30 seconds rather than continuously, anti-cheat that loads mid-session may be present for **up to 30 seconds** before FrameLedger detects it and stops.
+- Before injecting, and every 30 seconds afterwards, FrameLedger scans for known anti-cheat and anti-tamper components. **If it finds one, it refuses to inject; if a session is already running, it stops at the next scan.** No setting turns this off, globally or per game; the one exception you can make yourself, per game, still runs every check and is described in §2A. Because the scan runs every 30 seconds rather than continuously, anti-cheat that loads mid-session may be present for **up to 30 seconds** before FrameLedger detects it and stops.
 
   **And there is a second, longer window you should know about.** The part of FrameLedger running inside the game also stops on its own if it loses contact with the part doing the scanning — because a scanner that has stopped cannot protect you. It waits **65 seconds** before concluding that contact is lost, so that one delayed scan on a busy machine does not end your session. In the worst case those windows combine: if the scanner stops at the moment anti-cheat appears, the component inside the game may keep running for up to **65 seconds** afterwards. That number is 65 and not 30, and this document says so rather than leaving the 30 above to imply it.
 
@@ -79,13 +79,28 @@ FrameLedger is designed to reduce that risk substantially:
 
 **FrameLedger is intended for offline and single-player play. If you enable injection for a game with any online or competitive component, you do so entirely at your own risk and are solely responsible for the consequences, including compliance with that game's terms of service.**
 
-## 2A. There is no way past the guard
+## 2A. There is no way past the guard — and one narrow exception you can make yourself
 
 Versions 0.1.0-beta.3 and 0.1.0-beta.4 offered a per-game switch to overrule the guard. **It has been removed.** If
 FrameLedger finds anti-cheat or anti-tamper software in a game — before it injects, when a session starts, or during a
 session — it refuses, turns hooking off for that game, and says so on the game's page. There is no setting, per game or
-global, that turns that back on for that executable. Sessions recorded under the earlier switch stay in your database,
-marked as such in their notes.
+global, that overrules that. Sessions recorded under the earlier switch stay in your database, marked as such in their
+notes.
+
+**Since 0.1.0-beta.9 there is one exception, and it is not a way past the guard.** A Settings option, off unless you
+turn it on, lets you make an exception — one game at a time, after a disclosure you must accept — for a game whose only
+finding is a single anti-cheat that works entirely in user mode (no kernel driver, no service, and no driver file
+anywhere in the game's folder), that is on no list of titles FrameLedger refuses, and that FrameLedger has already
+measured successfully at least twice. Under it the guard still runs every check, before injecting and every 30
+seconds, and still refuses anything else it finds; the exception ends by itself when something new is found, when a
+session under it crashes or is stopped for safety, or when the game is updated, and turning the option off suspends
+it. Sessions recorded under it are marked with the anti-cheat they ran beside.
+
+**It exists because users asked for it, and it carries exactly the risk this document describes.** That anti-cheat
+may still detect FrameLedger in the game and warn, block or permanently ban your account — possibly days later — and
+FrameLedger cannot know whether it did. Earlier sessions that went well are no promise about the next one. **Do not
+use it with a game you play online or competitively unless you accept losing that account;** the developer cannot
+reverse a ban.
 
 
 ## 3. Stability
@@ -97,7 +112,7 @@ Software running inside another process can, in principle, destabilize it. Frame
 Frame timing is derived from high-resolution timestamps taken at the moment the game presents each frame; upscaling, frame-generation and ray-tracing state are read from the parameters the game passes to those APIs. This is substantially more accurate than inferring settings from files on disk, but **no measurement is guaranteed to be exact**:
 
 <!-- accuracy-block:begin -->
-> ⚠ **What FrameLedger actually measures today — 2026-09-25.** The software is a beta; its latest
+> ⚠ **What FrameLedger actually measures today — 2026-09-26.** The software is a beta; its latest
 > **pre-release is `0.1.0-beta.8`** (2026-09-25), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
@@ -160,7 +175,10 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 >   named in its process or in its folder (any kernel driver there counts), or the game on a title list by its
 >   store id or executable name — turns hooking off for that game, whether found by the Agent's own check of every
 >   game in the library, before injection, at a session's start or by the 30 s re-check; the game's page says so,
->   and nothing turns it back on for that executable.
+>   and nothing turns it back on for that executable — except a user-mode exception you make yourself, per game,
+>   in Settings (off by default): only where the only finding is one anti-cheat that runs entirely in user mode, with
+>   no driver file in the game's folder, on a game already measured successfully at least twice. The guard still
+>   runs every check under it and ends it on anything new; a ban remains possible.
 >
 > Where a value is not measured it reads `N/A`, with two exceptions: FPS then shows Presented FPS with a
 > note on what it may include, and ray-tracing flags may show a value you set yourself, labelled as

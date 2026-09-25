@@ -1,3 +1,4 @@
+using System.Globalization;
 using FrameLedger.App.Services;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.TriState;
@@ -10,6 +11,7 @@ namespace FrameLedger.App.ViewModels;
 /// <see cref="FpsPresentation"/> (<c>—</c> for a measured none, <c>N/A</c> for not measured, never blank, never
 /// zero — FR-4.9), the lows, resolution · upscaler, the chips resolved with the annotation and the game default.
 /// </summary>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime")]
 public sealed class SessionItemViewModel
 {
     public SessionItemViewModel(SessionRow row, SessionAnnotation? annotation, GameRow game)
@@ -21,8 +23,12 @@ public sealed class SessionItemViewModel
         DateText = Formats.Date(row.StartedAt);
         DurationText = Formats.Duration(row.DurationSeconds);
         IsHooked = row.Tier == CaptureTier.Hooked;
-        TierText = IsHooked ? Strings.Tier_Hooked : Strings.Tier_NotHooked;
-        TierTooltip = IsHooked ? Strings.Tier_Hooked_Tooltip : Strings.Tier_NotHooked_Tooltip;
+        // D33: a hooked session under the game's user-mode exception is marked with it wherever its tier is said.
+        TierText = !IsHooked ? Strings.Tier_NotHooked : row.AcExceptionFamily is null ? Strings.Tier_Hooked : Strings.Tier_HookedException;
+        TierTooltip = !IsHooked ? Strings.Tier_NotHooked_Tooltip
+            : row.AcExceptionFamily is { } family
+                ? Strings.Tier_Hooked_Tooltip + Environment.NewLine + string.Format(CultureInfo.CurrentCulture, Strings.Session_UnderException_Format, family)
+                : Strings.Tier_Hooked_Tooltip;
         NativeText = FpsPresentation.NativeColumn(row);
         DisplayedText = FpsPresentation.DisplayedColumn(row);
         FgText = FpsPresentation.FactorColumn(row);

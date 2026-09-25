@@ -39,6 +39,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly IAgentTool _tool;
     private readonly WindowClosePolicy _closePolicy;
     private readonly IFirstRunFlow _firstRun;
+    private readonly AntiCheatExceptions? _exceptions;
     private bool _loading = true;
 
     [ObservableProperty]
@@ -72,6 +73,18 @@ public sealed partial class SettingsViewModel : ObservableObject
     /// <summary><c>ui.hide_anticheat_hooking</c> (beta.8): an anti-cheat game's page shows the finding instead of its Hooking card.</summary>
     [ObservableProperty]
     private bool _hideAntiCheatHooking = true;
+
+    /// <summary>
+    /// <c>hooking.usermode_ac_exceptions</c> (D33, owner decision 2026-09-26): whether a game's user-mode anti-cheat exception
+    /// may apply at all. Off by default; off suspends every exception below without deleting any.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ExceptionsSuspended))]
+    private bool _userModeExceptions;
+
+    /// <summary>D33: the Agent has not answered about every blocked game yet (the option was just turned on).</summary>
+    [ObservableProperty]
+    private bool _exceptionsChecking;
 
     /// <summary><c>ui.fps_decimals</c> (beta.8): every FPS figure with two decimals ("62.40") instead of a whole number.</summary>
     [ObservableProperty]
@@ -120,8 +133,11 @@ public sealed partial class SettingsViewModel : ObservableObject
         IMaintenanceState maintenance,
         IAgentTool tool,
         WindowClosePolicy closePolicy,
-        IFirstRunFlow firstRun)
+        IFirstRunFlow firstRun,
+        AntiCheatExceptions? exceptions = null)
     {
+        // D33: the user-mode exception's requests; a composition without it (a test) answers that the Agent is unavailable.
+        _exceptions = exceptions;
         _firstRun = firstRun ?? throw new ArgumentNullException(nameof(firstRun));
         _maintenance = maintenance ?? throw new ArgumentNullException(nameof(maintenance));
         _tool = tool ?? throw new ArgumentNullException(nameof(tool));
@@ -182,6 +198,15 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public ObservableCollection<HookedGameViewModel> HookedGames { get; } = [];
 
+    /// <summary>
+    /// D33: the games the user-mode exception concerns — in force, eligible, or held back only by the session count. The rest
+    /// of the blocked games say why not on their own pages.
+    /// </summary>
+    public ObservableCollection<ExceptionGameViewModel> ExceptionGames { get; } = [];
+
+    /// <summary>D33: the option is off and exceptions are kept below that do not apply.</summary>
+    public bool ExceptionsSuspended => !UserModeExceptions && ExceptionGames.Any(static g => g.CanWithdraw);
+
     public string KillSwitchState => KillSwitch ? Strings.Settings_KillSwitch_On : Strings.Settings_KillSwitch_Off;
 
     /// <summary>12_BUILD: the registration exists only while a hook-enabled game references the Vulkan loader (P4 PR-2) — the button follows the same rule as the Agent's reconciler.</summary>
@@ -233,6 +258,21 @@ public sealed partial class SettingsViewModel : ObservableObject
     partial void OnBackgroundCaptureChanged(bool value) => Persist(SettingsRegistry.CaptureBackground, value);
 
     partial void OnHideAntiCheatHookingChanged(bool value) => Persist(SettingsRegistry.UiHideAntiCheatHooking, value);
+
+    /// <summary>D33: the option is one settings row the Agent reads at every session start and command; the list follows it.</summary>
+    partial void OnUserModeExceptionsChanged(bool value)
+    {
+        if (!_loading)
+        {
+            Pending = WriteThenRefreshAsync(SettingsRegistry.HookingUserModeExceptions, value ? "1" : "0");
+        }
+    }
+
+    private async Task WriteThenRefreshAsync(SettingDefinition definition, string value)
+    {
+        await WriteAsync(definition, value).ConfigureAwait(true);
+        await RefreshCoreAsync().ConfigureAwait(true);
+    }
 
     partial void OnFpsTwoDecimalsChanged(bool value)
     {
@@ -356,6 +396,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             BackgroundCapture = await _settings.GetBooleanAsync(SettingsRegistry.CaptureBackground).ConfigureAwait(true);
             MinimizeToTray = await _settings.GetBooleanAsync(SettingsRegistry.UiMinimizeToTray).ConfigureAwait(true);
             HideAntiCheatHooking = await _settings.GetBooleanAsync(SettingsRegistry.UiHideAntiCheatHooking).ConfigureAwait(true);
+            UserModeExceptions = await _settings.GetBooleanAsync(SettingsRegistry.HookingUserModeExceptions).ConfigureAwait(true);
             FpsTwoDecimals = await _settings.GetBooleanAsync(SettingsRegistry.UiFpsDecimals).ConfigureAwait(true);
             OnlineMetadata = await _settings.GetBooleanAsync(SettingsRegistry.PrivacyOnlineMetadata).ConfigureAwait(true);
             UpdateChannel = await _settings.GetAsync(SettingsRegistry.UpdateChannel).ConfigureAwait(true);
@@ -380,6 +421,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             HookedGames.Add(new HookedGameViewModel(card.Row.Id, card.Row.Name, RevokeAsync, CapabilityFlags.Contains(card.Row.CapabilityFlagsJson, "vulkan")));
         }
+
+        PresentExceptions(cards);
 
         Shared.Ipc.HelloAck? hello = _agent.Hello;
         ElevationText = hello is null ? Strings.Settings_VkLayer_Unknown : hello.Elevated ? Strings.Settings_Agent_Elevated : Strings.Settings_Agent_NotElevated;
@@ -409,6 +452,71 @@ public sealed partial class SettingsViewModel : ObservableObject
             IsToolRunning = false;
         }
     }
+
+    /// <summary>D33: the exception list from the Agent's columns — the App reads them and never writes one.</summary>
+    private void PresentExceptions(IReadOnlyList<GameCard> cards)
+    {
+        ExceptionGames.Clear();
+        bool checking = false;
+        foreach (GameCard card in cards.Where(static c => c.Row.InLibrary).OrderBy(static c => c.Row.Name, StringComparer.CurrentCultureIgnoreCase))
+        {
+            if (ExceptionView.Of(card.Row) is not { } view)
+            {
+                continue;
+            }
+
+            checking |= view.Kind == ExceptionViewKind.Checking;
+            // With the option off only a kept grant is listed (suspended): nothing may be made while it is off.
+            bool listed = UserModeExceptions
+                ? view.Kind is ExceptionViewKind.Granted or ExceptionViewKind.Eligible or ExceptionViewKind.TooFewSessions
+                : view.Kind == ExceptionViewKind.Granted;
+            if (listed)
+            {
+                ExceptionGames.Add(new ExceptionGameViewModel(card.Row.Id, card.Row.Name, view, GrantExceptionAsync, WithdrawExceptionAsync));
+            }
+        }
+
+        ExceptionsChecking = UserModeExceptions && checking;
+        OnPropertyChanged(nameof(ExceptionsSuspended));
+    }
+
+    /// <summary>D33: the disclosure, then the request; the Agent gathers the facts and grants or refuses.</summary>
+    private async Task GrantExceptionAsync(ExceptionGameViewModel game)
+    {
+        AntiCheatExceptionResult result = _exceptions is null
+            ? AntiCheatExceptionResult.Of(AntiCheatExceptionOutcome.AgentUnavailable)
+            : await _exceptions.GrantAsync(game.GameId, new AntiCheatExceptionFacts(game.Name, game.View.Family ?? string.Empty,
+                game.View.Signal ?? string.Empty, game.View.Sessions)).ConfigureAwait(true);
+        await ReportExceptionAsync(game.Name, result).ConfigureAwait(true);
+    }
+
+    private async Task WithdrawExceptionAsync(ExceptionGameViewModel game)
+    {
+        AntiCheatExceptionResult result = _exceptions is null
+            ? AntiCheatExceptionResult.Of(AntiCheatExceptionOutcome.AgentUnavailable)
+            : await _exceptions.WithdrawAsync(game.GameId).ConfigureAwait(true);
+        await ReportExceptionAsync(game.Name, result).ConfigureAwait(true);
+    }
+
+    private async Task ReportExceptionAsync(string name, AntiCheatExceptionResult result)
+    {
+        if (result.MessageFor(name) is { } message)
+        {
+            if (result.Succeeded)
+            {
+                _strip.Success(name, message);
+            }
+            else
+            {
+                _strip.Warn(name, message);
+            }
+        }
+
+        await RefreshCoreAsync().ConfigureAwait(true);
+    }
+
+    [RelayCommand]
+    private Task RefreshExceptionsAsync() => RefreshAsync();
 
     private async Task RevokeAsync(HookedGameViewModel game)
     {

@@ -1,0 +1,37 @@
+<UserControl x:Class="FrameLedger.App.Dialogs.AntiCheatExceptionDialogContent"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
+             d:DataContext="{d:DesignInstance Type=vm:AntiCheatExceptionDialogViewModel}"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             MaxWidth="640">
+    <!--
+        D33's disclosure (19_SAFETY §The user-mode exception), text from FrameLedger.Shared's Safety_Exception_* only,
+        versioned by AntiCheatExceptionDisclosure.Version. It states why the exception is offered, the risk, what is still
+        refused, how it ends, and that it turns nothing on; it recommends neither choice. Every colour is a theme brush.
+    -->
+    <ScrollViewer MaxHeight="520" VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <ui:TextBlock Text="{Binding Intro}" TextWrapping="Wrap" />
+            <ui:TextBlock Margin="0,14,0,0" Text="{Binding Why}" TextWrapping="Wrap" />
+
+            <Border Margin="0,14,0,0" Padding="12" CornerRadius="6" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <ui:TextBlock FontWeight="SemiBold" Text="{Binding Risk}" TextWrapping="Wrap" />
+            </Border>
+
+            <ui:TextBlock Margin="0,14,0,0" Text="{Binding Still}" TextWrapping="Wrap" />
+            <ui:TextBlock Margin="0,8,0,0" Text="{x:Static vm:AntiCheatExceptionDialogViewModel.Ends}" TextWrapping="Wrap" />
+            <ui:TextBlock Margin="0,8,0,0" Text="{x:Static vm:AntiCheatExceptionDialogViewModel.Next}" TextWrapping="Wrap" />
+            <ui:TextBlock Margin="0,8,0,0" FontWeight="SemiBold" Text="{x:Static vm:AntiCheatExceptionDialogViewModel.Online}" TextWrapping="Wrap" />
+
+            <CheckBox x:Name="Acceptance"
+                      Margin="0,18,0,0"
+                      AutomationProperties.Name="{x:Static vm:AntiCheatExceptionDialogViewModel.AcceptText}"
+                      Content="{x:Static vm:AntiCheatExceptionDialogViewModel.AcceptText}"
+                      IsChecked="{Binding Accepted, Mode=TwoWay}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

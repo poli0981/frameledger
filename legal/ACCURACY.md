@@ -11,7 +11,7 @@
   that changes what FrameLedger.Overlay or the capture host does; date the change.
   HTML comments are not part of the block.
 -->
-> ⚠ **What FrameLedger actually measures today — 2026-09-25.** The software is a beta; its latest
+> ⚠ **What FrameLedger actually measures today — 2026-09-26.** The software is a beta; its latest
 > **pre-release is `0.1.0-beta.8`** (2026-09-25), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
@@ -74,7 +74,10 @@
 >   named in its process or in its folder (any kernel driver there counts), or the game on a title list by its
 >   store id or executable name — turns hooking off for that game, whether found by the Agent's own check of every
 >   game in the library, before injection, at a session's start or by the 30 s re-check; the game's page says so,
->   and nothing turns it back on for that executable.
+>   and nothing turns it back on for that executable — except a user-mode exception you make yourself, per game,
+>   in Settings (off by default): only where the only finding is one anti-cheat that runs entirely in user mode, with
+>   no driver file in the game's folder, on a game already measured successfully at least twice. The guard still
+>   runs every check under it and ends it on anything new; a ban remains possible.
 >
 > Where a value is not measured it reads `N/A`, with two exceptions: FPS then shows Presented FPS with a
 > note on what it may include, and ray-tracing flags may show a value you set yourself, labelled as

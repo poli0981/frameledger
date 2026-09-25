@@ -66,6 +66,68 @@
                                  IsChecked="{Binding ViewModel.HideAntiCheatHooking, Mode=TwoWay}" />
             </ui:CardControl>
 
+            <!-- D33 (owner decision 2026-09-26): the user-mode anti-cheat exception — the option, off by default, and the games it concerns. -->
+            <ui:CardExpander Margin="0,8,0,0" IsExpanded="{Binding ViewModel.UserModeExceptions, Mode=OneWay}" Icon="{ui:SymbolIcon ShieldTask24}">
+                <ui:CardExpander.Header>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_Exceptions_Label}" TextWrapping="Wrap" />
+                            <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Appearance="Secondary" TextWrapping="Wrap"
+                                          Text="{x:Static res:Strings.Settings_Exceptions_Body}" />
+                        </StackPanel>
+                        <ui:ToggleSwitch Grid.Column="1" Margin="12,0" AutomationProperties.Name="{x:Static res:Strings.Settings_Exceptions_Label}"
+                                         IsChecked="{Binding ViewModel.UserModeExceptions, Mode=TwoWay}" />
+                    </Grid>
+                </ui:CardExpander.Header>
+                <StackPanel>
+                    <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_Exceptions_Header}" />
+                    <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static res:Strings.Settings_Exceptions_Suspended}"
+                                  Visibility="{Binding ViewModel.ExceptionsSuspended, Converter={StaticResource BoolToVis}}" />
+                    <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static res:Strings.Settings_Exceptions_Checking}"
+                                  Visibility="{Binding ViewModel.ExceptionsChecking, Converter={StaticResource BoolToVis}}" />
+                    <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_Exceptions_Empty}"
+                                  Visibility="{Binding ViewModel.ExceptionGames.Count, Converter={StaticResource ZeroToVisible}}" />
+                    <ItemsControl ItemsSource="{Binding ViewModel.ExceptionGames}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Name}" />
+                                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding FindingText}" />
+                                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding SessionsText}" />
+                                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding StateText}" />
+                                        <ui:TextBlock Appearance="Tertiary" TextWrapping="Wrap" Text="{Binding LapseText}"
+                                                      Visibility="{Binding LapseText, Converter={StaticResource NullToCollapsed}}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Orientation="Horizontal">
+                                        <ui:Button Appearance="Secondary"
+                                                   Command="{Binding GrantCommand}"
+                                                   Content="{x:Static res:Strings.Settings_Exceptions_Grant}"
+                                                   Visibility="{Binding CanGrant, Converter={StaticResource BoolToVis}}" />
+                                        <ui:Button Appearance="Secondary"
+                                                   Command="{Binding WithdrawCommand}"
+                                                   Content="{x:Static res:Strings.Settings_Exceptions_Withdraw}"
+                                                   Visibility="{Binding CanWithdraw, Converter={StaticResource BoolToVis}}" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <ui:Button Margin="0,8,0,0"
+                               Appearance="Secondary"
+                               Command="{Binding ViewModel.RefreshExceptionsCommand}"
+                               Content="{x:Static res:Strings.Settings_Exceptions_Refresh}" />
+                </StackPanel>
+            </ui:CardExpander>
+
             <ui:CardExpander Margin="0,8,0,0" Icon="{ui:SymbolIcon Layer24}">
                 <ui:CardExpander.Header>
                     <Grid>

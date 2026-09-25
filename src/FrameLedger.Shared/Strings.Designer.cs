@@ -41,6 +41,19 @@ public static class Strings
         nameof(Safety_Consent_Title_Format),
         nameof(Safety_Consent_TypeToConfirm_Format),
         nameof(Safety_Consent_VersionMismatch),
+        nameof(Safety_Exception_Accept),
+        nameof(Safety_Exception_Cancel),
+        nameof(Safety_Exception_Ends),
+        nameof(Safety_Exception_Grant),
+        nameof(Safety_Exception_Intro_Format),
+        nameof(Safety_Exception_Next),
+        nameof(Safety_Exception_Online),
+        nameof(Safety_Exception_OptionOff),
+        nameof(Safety_Exception_Risk_Format),
+        nameof(Safety_Exception_Still_Format),
+        nameof(Safety_Exception_Title_Format),
+        nameof(Safety_Exception_VersionMismatch),
+        nameof(Safety_Exception_Why_Format),
         nameof(Safety_HookingTurnedOff),
         nameof(Safety_RecordWithoutMeasuring),
         nameof(Safety_Refused_CouldNotVerify),
@@ -79,6 +92,32 @@ public static class Strings
     public static string Safety_Consent_TypeToConfirm_Format => ResourceManager.GetString(nameof(Safety_Consent_TypeToConfirm_Format), Culture) ?? nameof(Safety_Consent_TypeToConfirm_Format);
 
     public static string Safety_Consent_VersionMismatch => ResourceManager.GetString(nameof(Safety_Consent_VersionMismatch), Culture) ?? nameof(Safety_Consent_VersionMismatch);
+
+    public static string Safety_Exception_Accept => ResourceManager.GetString(nameof(Safety_Exception_Accept), Culture) ?? nameof(Safety_Exception_Accept);
+
+    public static string Safety_Exception_Cancel => ResourceManager.GetString(nameof(Safety_Exception_Cancel), Culture) ?? nameof(Safety_Exception_Cancel);
+
+    public static string Safety_Exception_Ends => ResourceManager.GetString(nameof(Safety_Exception_Ends), Culture) ?? nameof(Safety_Exception_Ends);
+
+    public static string Safety_Exception_Grant => ResourceManager.GetString(nameof(Safety_Exception_Grant), Culture) ?? nameof(Safety_Exception_Grant);
+
+    public static string Safety_Exception_Intro_Format => ResourceManager.GetString(nameof(Safety_Exception_Intro_Format), Culture) ?? nameof(Safety_Exception_Intro_Format);
+
+    public static string Safety_Exception_Next => ResourceManager.GetString(nameof(Safety_Exception_Next), Culture) ?? nameof(Safety_Exception_Next);
+
+    public static string Safety_Exception_Online => ResourceManager.GetString(nameof(Safety_Exception_Online), Culture) ?? nameof(Safety_Exception_Online);
+
+    public static string Safety_Exception_OptionOff => ResourceManager.GetString(nameof(Safety_Exception_OptionOff), Culture) ?? nameof(Safety_Exception_OptionOff);
+
+    public static string Safety_Exception_Risk_Format => ResourceManager.GetString(nameof(Safety_Exception_Risk_Format), Culture) ?? nameof(Safety_Exception_Risk_Format);
+
+    public static string Safety_Exception_Still_Format => ResourceManager.GetString(nameof(Safety_Exception_Still_Format), Culture) ?? nameof(Safety_Exception_Still_Format);
+
+    public static string Safety_Exception_Title_Format => ResourceManager.GetString(nameof(Safety_Exception_Title_Format), Culture) ?? nameof(Safety_Exception_Title_Format);
+
+    public static string Safety_Exception_VersionMismatch => ResourceManager.GetString(nameof(Safety_Exception_VersionMismatch), Culture) ?? nameof(Safety_Exception_VersionMismatch);
+
+    public static string Safety_Exception_Why_Format => ResourceManager.GetString(nameof(Safety_Exception_Why_Format), Culture) ?? nameof(Safety_Exception_Why_Format);
 
     public static string Safety_HookingTurnedOff => ResourceManager.GetString(nameof(Safety_HookingTurnedOff), Culture) ?? nameof(Safety_HookingTurnedOff);
 

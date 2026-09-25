@@ -155,6 +155,73 @@ public sealed class SettingsViewModelTests
         (await new SqliteSettingsStore(s.Db).GetAsync(SettingsRegistry.HookingKillSwitch.Key, Ct)).Should().BeNull("nothing was written by the load");
     }
 
+    /// <summary>
+    /// D33 (owner decision 2026-09-26): the option is one Agent-read settings row, off by default; on, the list names the
+    /// games the exception concerns — eligible, held back only by the session count, in force — and off, only a kept
+    /// exception, said to be suspended. The App reads the Agent's columns and writes none.
+    /// </summary>
+    [Fact]
+    public async Task TheExceptionOptionIsOffByDefaultAndItsListFollowsTheAgentsColumns()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow eligible = await s.GameAsync("GF2");
+        GameRow few = await s.GameAsync("Few");
+        GameRow kernel = await s.GameAsync("Aniimo");
+        await s.Db.WriteAsync(async (c, tx, ct) =>
+        {
+            const string sql = "UPDATE games SET hook_blocked_reason = @block, hook_prescan_state = 'blocked', ac_exception_eligible = @eligible, "
+                               + "ac_exception_verdict = @verdict, ac_exception_sessions = @sessions, ac_exception_checked_block = @block WHERE id = @id";
+            const string yidun = "AntiCheatFile|NetEase Yidun|NEP2.dll";
+            await Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(sql, new
+            {
+                id = eligible.Id,
+                block = yidun,
+                eligible = 1,
+                verdict = "AllowedUnderUserModeException|NetEase Yidun|NEP2.dll",
+                sessions = 3
+            }, tx, cancellationToken: ct)).ConfigureAwait(false);
+            await Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(sql, new
+            {
+                id = few.Id,
+                block = yidun,
+                eligible = 0,
+                verdict = "AllowedUnderUserModeException|NetEase Yidun|NEP2.dll",
+                sessions = 1
+            }, tx, cancellationToken: ct)).ConfigureAwait(false);
+            await Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(sql, new
+            {
+                id = kernel.Id,
+                block = yidun,
+                eligible = 0,
+                verdict = "AntiCheatFile|Kernel driver in the game folder|NEPKernel.sys",
+                sessions = 1
+            }, tx, cancellationToken: ct)).ConfigureAwait(false);
+            return 0;
+        }, Ct);
+        Harness h = await OpenAsync(s);
+
+        h.Vm.UserModeExceptions.Should().BeFalse("off by default");
+        h.Vm.ExceptionGames.Should().BeEmpty("with the option off only a kept exception is listed");
+
+        h.Vm.UserModeExceptions = true;
+        Task pending = h.Vm.Pending;
+        await pending;
+
+        (await h.Settings.GetBooleanAsync(SettingsRegistry.HookingUserModeExceptions, Ct)).Should().BeTrue();
+        h.Vm.ExceptionGames.Select(static g => g.Name).Should().Equal("Few", "GF2");
+        h.Vm.ExceptionGames.Single(static g => string.Equals(g.Name, "GF2", StringComparison.Ordinal)).CanGrant.Should().BeTrue();
+        h.Vm.ExceptionGames.Single(static g => string.Equals(g.Name, "Few", StringComparison.Ordinal)).CanGrant.Should().BeFalse("one session is not the owner's two");
+        h.Vm.ExceptionsChecking.Should().BeFalse("the Agent answered about every blocked game");
+
+        await s.Db.WriteAsync((c, tx, ct) => Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(
+            "UPDATE games SET ac_exception_at = 1000, ac_exception_family = 'NetEase Yidun' WHERE id = @id", new { id = eligible.Id }, tx, cancellationToken: ct)), Ct);
+        h.Vm.UserModeExceptions = false;
+        pending = h.Vm.Pending;
+        await pending;
+        h.Vm.ExceptionGames.Should().ContainSingle().Which.CanWithdraw.Should().BeTrue();
+        h.Vm.ExceptionsSuspended.Should().BeTrue();
+    }
+
     [Fact]
     public async Task TheKillSwitchIsOneSettingsRowAndTheAgentIsToldWhenItReadsIt()
     {

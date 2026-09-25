@@ -1903,7 +1903,7 @@ Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắ
     <value>Ẩn phần hooking ở game có anti-cheat</value>
   </data>
   <data name="Settings_HideAntiCheatHooking_Body" xml:space="preserve">
-    <value>Game được phát hiện có anti-cheat sẽ không bao giờ được hook. Bật: trang game chỉ hiện điều đã phát hiện; tắt: hiện thêm công tắc Hooking bị vô hiệu hoá. Dù bật hay tắt, game vẫn được ghi mà không hook.</value>
+    <value>Game được phát hiện có anti-cheat sẽ không được hook, trừ khi bạn tạo ngoại lệ user-mode cho nó (bên dưới). Bật: trang game chỉ hiện điều đã phát hiện; tắt: hiện thêm công tắc Hooking bị vô hiệu hoá. Dù bật hay tắt, game vẫn được ghi mà không hook.</value>
   </data>
   <data name="Notice_HookingOff_Title_Format" xml:space="preserve">
     <value>{0}: đã tắt hooking</value>
@@ -2339,5 +2339,119 @@ Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắ
   </data>
   <data name="Sensors_Axis_Watts" xml:space="preserve">
     <value>W</value>
+  </data>
+  <data name="Settings_Exceptions_Label" xml:space="preserve">
+    <value>Cho phép hooking ở game có anti-cheat user-mode đã từng đo thành công</value>
+  </data>
+  <data name="Settings_Exceptions_Body" xml:space="preserve">
+    <value>Mặc định tắt. Khi bật, game có anti-cheat duy nhất chạy ở user mode — không có kernel driver, không phát hiện gì khác — và đã được đo ở chế độ hook ít nhất hai lần có thể được cấp ngoại lệ bên dưới, từng game một, sau một bản công bố rủi ro. Bộ bảo vệ vẫn chạy mọi bước kiểm tra, và vẫn có thể bị khoá tài khoản.</value>
+  </data>
+  <data name="Settings_Exceptions_Header" xml:space="preserve">
+    <value>Ngoại lệ user-mode</value>
+  </data>
+  <data name="Settings_Exceptions_Empty" xml:space="preserve">
+    <value>Không có game nào trong thư viện đủ điều kiện.</value>
+  </data>
+  <data name="Settings_Exceptions_Suspended" xml:space="preserve">
+    <value>Tuỳ chọn đang tắt: các ngoại lệ bên dưới được giữ lại nhưng không có hiệu lực.</value>
+  </data>
+  <data name="Settings_Exceptions_Grant" xml:space="preserve">
+    <value>Tạo ngoại lệ…</value>
+  </data>
+  <data name="Settings_Exceptions_Withdraw" xml:space="preserve">
+    <value>Rút lại</value>
+  </data>
+  <data name="Exception_Finding_Format" xml:space="preserve">
+    <value>{0} — {1}</value>
+  </data>
+  <data name="Exception_Sessions_Format" xml:space="preserve">
+    <value>{0} phiên hook thành công</value>
+  </data>
+  <data name="Exception_State_Granted_Format" xml:space="preserve">
+    <value>Ngoại lệ có hiệu lực từ {0}</value>
+  </data>
+  <data name="Exception_State_Eligible" xml:space="preserve">
+    <value>Đủ điều kiện — chưa tạo ngoại lệ</value>
+  </data>
+  <data name="Exception_State_Checking" xml:space="preserve">
+    <value>Đang kiểm tra…</value>
+  </data>
+  <data name="Exception_State_TooFew_Format" xml:space="preserve">
+    <value>Chưa đủ điều kiện: {0} phiên hook thành công, cần hai</value>
+  </data>
+  <data name="Exception_State_Refused_Format" xml:space="preserve">
+    <value>Không đủ điều kiện: bộ bảo vệ còn phát hiện {0} ({1})</value>
+  </data>
+  <data name="Exception_State_NotUserMode_Format" xml:space="preserve">
+    <value>Không đủ điều kiện: {0} không chạy hoàn toàn ở user mode (có driver hoặc service), nên FrameLedger không bao giờ cấp ngoại lệ</value>
+  </data>
+  <data name="Exception_State_NotAsked" xml:space="preserve">
+    <value>Không đủ điều kiện: phát hiện này không phải module, tệp hay thư mục của một anti-cheat</value>
+  </data>
+  <data name="Exception_State_CouldNotVerify" xml:space="preserve">
+    <value>Hiện chưa đủ điều kiện: lần kiểm tra không hoàn tất; nó sẽ tự chạy lại</value>
+  </data>
+  <data name="Exception_Lapsed_Format" xml:space="preserve">
+    <value>Ngoại lệ gần nhất đã kết thúc ngày {0}: {1}</value>
+  </data>
+  <data name="Exception_Lapse_Withdrawn" xml:space="preserve">
+    <value>bạn đã rút lại</value>
+  </data>
+  <data name="Exception_Lapse_ExecutableChanged" xml:space="preserve">
+    <value>game đã được cập nhật</value>
+  </data>
+  <data name="Exception_Lapse_NoLongerEligible" xml:space="preserve">
+    <value>game không còn đủ điều kiện</value>
+  </data>
+  <data name="Exception_Lapse_NewFinding" xml:space="preserve">
+    <value>phát hiện anti-cheat mới trong game</value>
+  </data>
+  <data name="Exception_Lapse_SafetyUnhook" xml:space="preserve">
+    <value>một phiên dưới ngoại lệ bị dừng vì an toàn</value>
+  </data>
+  <data name="Exception_Lapse_OverlayStopped" xml:space="preserve">
+    <value>FrameLedger ngừng quan sát vì một anti-cheat khác được nạp</value>
+  </data>
+  <data name="Exception_Lapse_SessionCrashed" xml:space="preserve">
+    <value>một phiên dưới ngoại lệ bị crash</value>
+  </data>
+  <data name="Exception_Result_Granted_Format" xml:space="preserve">
+    <value>Đã tạo ngoại lệ cho {0}. Khi muốn đo, hãy bật hooking cho game trên trang của nó.</value>
+  </data>
+  <data name="Exception_Result_Withdrawn_Format" xml:space="preserve">
+    <value>Đã rút ngoại lệ cho {0}; hooking của nó đã tắt.</value>
+  </data>
+  <data name="Exception_Result_Refused_Format" xml:space="preserve">
+    <value>Không tạo ngoại lệ cho {0}: {1}</value>
+  </data>
+  <data name="GameDetail_Exception_Header" xml:space="preserve">
+    <value>Ngoại lệ user-mode</value>
+  </data>
+  <data name="GameDetail_Exception_Granted_Format" xml:space="preserve">
+    <value>Hooking có thể chạy dưới ngoại lệ user-mode cho {0}. Bộ bảo vệ vẫn chạy mọi bước kiểm tra; vẫn có thể bị khoá tài khoản.</value>
+  </data>
+  <data name="GameDetail_Exception_Suspended" xml:space="preserve">
+    <value>Game này có ngoại lệ được giữ lại, nhưng tuỳ chọn đang tắt trong Cài đặt nên nó không có hiệu lực.</value>
+  </data>
+  <data name="GameDetail_Exception_Grant" xml:space="preserve">
+    <value>Tạo ngoại lệ…</value>
+  </data>
+  <data name="GameDetail_Exception_Withdraw" xml:space="preserve">
+    <value>Rút ngoại lệ</value>
+  </data>
+  <data name="Settings_Exceptions_Refresh" xml:space="preserve">
+    <value>Làm mới</value>
+  </data>
+  <data name="Settings_Exceptions_Checking" xml:space="preserve">
+    <value>Capture agent đang kiểm tra thư viện; các game đủ điều kiện sẽ hiện ở đây trong vòng một phút. Bấm Làm mới để xem.</value>
+  </data>
+  <data name="Tier_HookedException" xml:space="preserve">
+    <value>Hook · ngoại lệ</value>
+  </data>
+  <data name="Games_Card_Exception" xml:space="preserve">
+    <value>Ngoại lệ</value>
+  </data>
+  <data name="Session_UnderException_Format" xml:space="preserve">
+    <value>Được hook dưới ngoại lệ user-mode cho {0}</value>
   </data>
 </root>

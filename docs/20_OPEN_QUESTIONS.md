@@ -40,6 +40,16 @@ Rules for this document:
 > where it could inject it only exposed the user. The owner asked for the opposite: a finding turns the game's hooking
 > off, wherever the guard makes it. `19_SAFETY` §What a finding does to the game is the specification; CLAUDE.md rule 2 is
 > unstruck. The two open items above (kernel-level families, the ja text) are moot.
+>
+> **2026-09-26 — one narrow exception, by owner decision D33, with the 2026-09-22 withdrawal quoted back.** Beta.8's
+> library sweep blocked a game FrameLedger had measured hooked (GIRLS' FRONTLINE 2: EXILIUM, NetEase Yidun `NEP2.dll`),
+> and the owner chose an evidence-bound, per-game exception for anti-cheat that is user-mode throughout (`19_SAFETY`
+> §The user-mode exception; CLAUDE.md rule 2's amendment). The two reasons D22 gave are answered: it is offered only
+> where FrameLedger has already measured the game hooked, and its risk is stated in its own disclosure. **What stays
+> open, and is the owner's:** the `ja` text of `Safety_Exception_*`, which ships as English until a reviewer signs;
+> whether a family the rules file makes kernel-level later should end existing exceptions at once (today it does, at
+> the sweep's next pass and at every session start); and a real-hardware check that NEP2.dll's load time relative to
+> the injection is covered on the owner's machine (the ctest decoy covers the late load).
 
 | # | Decision | Consequence |
 |---|---|---|

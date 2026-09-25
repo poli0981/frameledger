@@ -527,7 +527,9 @@ is unchanged.
 executable and the block; the session count every pass), the `SetAntiCheatException` command (the Agent gathers the
 facts itself; the store applies the rule), the gate's one branch with the channel published before the request, the
 re-scans naming the family, the session's mark, and every end (`UserModeExceptionLapse`) — schema 0014. PR-3: the
-option and the list in Settings, the disclosure, the game page and the legal text.*
+option and the list in Settings, the versioned disclosure (`Safety_Exception_*`, `AntiCheatExceptionDisclosure`), the
+game page's exception card and its usable switch under an exception in force, the marks, and the legal text
+(Disclaimer §2A 2.7, EULA 1.3, the accuracy block, SECURITY.md) — `08_UI` §Games.*
 
 
 ### The floor data cannot remove
