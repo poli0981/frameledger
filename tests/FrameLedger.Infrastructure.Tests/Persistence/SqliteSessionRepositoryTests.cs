@@ -64,6 +64,7 @@ public sealed class SqliteSessionRepositoryTests
         FrameTimes = SeriesCodec.EncodeFloat32([.. Enumerable.Repeat(16.6f, n)]),
         FrameFlags = SeriesCodec.EncodeBytes(new byte[n]),
         LatencyUs = SeriesCodec.EncodeUInt32([.. Enumerable.Repeat(12_000u, n)]),
+        FirstPresentMs = 18_250.5,
     };
 
     [Fact]
@@ -96,6 +97,7 @@ public sealed class SqliteSessionRepositoryTests
         kinds.Should().Be("null/blob/null", "an optional series that was not measured is stored as NULL");
         frames.RenderRes.HasValue.Should().BeFalse("nothing varied, so the column stayed NULL");
         frames.LatencyUs.HasValue.Should().BeTrue();
+        frames.FirstPresentMs.Should().Be(18_250.5, "schema 0013: where the charted stream starts on the sensors' clock");
 
         // unix-ms on the row itself, and the tri-state text is what 06_DATA_MODEL says.
         (long startedAt, string? fg, string? rt) = await f.Db.ReadAsync(async (c, ct) => (

@@ -1102,10 +1102,10 @@
     <value>VRAM used by this game (MB)</value>
   </data>
   <data name="Sensors_Temps_Header" xml:space="preserve">
-    <value>Temperatures and load</value>
+    <value>Temperatures, load and power</value>
   </data>
   <data name="Sensors_Vram_Header" xml:space="preserve">
-    <value>VRAM</value>
+    <value>Memory</value>
   </data>
   <data name="Tabs_SelectASession" xml:space="preserve">
     <value>Select a session in the Sessions tab to see it here.</value>
@@ -2317,5 +2317,32 @@ The documents below are the full terms; this summary does not replace them.</val
   </data>
   <data name="Trend_Empty_Format" xml:space="preserve">
     <value>No session of this game has a value for {0} yet.</value>
+  </data>
+  <data name="Chart_Series_AppFrames" xml:space="preserve">
+    <value>Application frames</value>
+  </data>
+  <data name="Chart_Series_Presents" xml:space="preserve">
+    <value>Presents</value>
+  </data>
+  <data name="Chart_Note_NoApplicationFrames" xml:space="preserve">
+    <value>Frame generation counted no application frame in this session, so the chart shows every present.</value>
+  </data>
+  <data name="Chart_Note_PresentsTiming" xml:space="preserve">
+    <value>Presents are timed when the game submits them. Generated frames are often submitted in a burst and shown later at an even pace, so the Displayed line is not the display's cadence.</value>
+  </data>
+  <data name="Chart_Note_GapsClosed_Format" xml:space="preserve">
+    <value>The time axis closes up {0} gap(s) — a pause, or records that were lost — so the sensor lines run ahead of the frames after each.</value>
+  </data>
+  <data name="Chart_Note_OutsideRange_Format" xml:space="preserve">
+    <value>{0} frame(s) outside the 0.5–99.5 percentile range are not drawn in the histogram.</value>
+  </data>
+  <data name="Chart_Axis_TimeFromFirstFrame" xml:space="preserve">
+    <value>Time from the first frame (s)</value>
+  </data>
+  <data name="Chart_Axis_TimeFromStart" xml:space="preserve">
+    <value>Time from the session's start (s)</value>
+  </data>
+  <data name="Sensors_Axis_Watts" xml:space="preserve">
+    <value>W</value>
   </data>
 </root>

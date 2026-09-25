@@ -567,6 +567,14 @@ public sealed class CaptureSession(
         bool paused = pause?.IsPaused ?? false;
         if (paused != state.Paused)
         {
+            // The resume's instant is read BEFORE the ring is told (beta.8): the Overlay records nothing until it reads the
+            // cleared flag, so a record stamped at or after this QPC was presented after the pause — and the first of them
+            // follows a gap (MarkResume). The clock is the Overlay's own: Stopwatch is QueryPerformanceCounter.
+            if (!paused)
+            {
+                state.ResumedAtQpc = Stopwatch.GetTimestamp();
+            }
+
             sink.SetPaused(paused);
             state.Paused = paused;
         }
@@ -580,6 +588,9 @@ public sealed class CaptureSession(
 
         /// <summary>What the ring was last told about FR-3.9's pause (P3 PR-1b).</summary>
         public bool Paused { get; set; }
+
+        /// <summary>The QPC read as the ring was told to resume, until the first record presented after it is marked (beta.8).</summary>
+        public long? ResumedAtQpc { get; set; }
 
         public List<FlFrameRecord> Records { get; } = [];
 
@@ -647,11 +658,43 @@ public sealed class CaptureSession(
         do
         {
             int gapsBefore = state.Gaps.Count;
+            int recordsBefore = state.Records.Count;
             r = sink.Drain(buffer, state.Gaps);
             MarkGaps(state, r, gapsBefore);
             state.Records.AddRange(buffer.AsSpan(0, r.Copied).ToArray());
+            MarkResume(state, recordsBefore);
         }
         while (r.Copied == buffer.Length);
+    }
+
+    /// <summary>
+    /// FR-3.9's pause as a gap (beta.8): the Overlay records nothing while paused, so the first record presented after the
+    /// resume is QPC-apart from the last one before the pause by the whole pause. Counted, that interval is a fabricated
+    /// long frame in every statistic and paused time in every average; it follows a gap instead, as a torn slot's survivor
+    /// does. A record drained after the resume but stamped before it is a straggler the pause had not reached yet.
+    /// </summary>
+    private static void MarkResume(DrainState state, int from)
+    {
+        if (state.ResumedAtQpc is not long resumed)
+        {
+            return;
+        }
+
+        for (int i = from; i < state.Records.Count; i++)
+        {
+            if ((long)state.Records[i].Qpc < resumed)
+            {
+                continue;
+            }
+
+            if (!state.GapBefore.Contains(i))
+            {
+                state.GapBefore.Add(i);
+            }
+
+            state.ResumedAtQpc = null;
+            return;
+        }
     }
 
     /// <summary>

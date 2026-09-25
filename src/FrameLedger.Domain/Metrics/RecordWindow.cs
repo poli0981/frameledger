@@ -55,11 +55,18 @@ public static class RecordWindow
 
     /// <summary>Seconds spanned by the intervals of <c>[start, stream.Count)</c>.</summary>
     /// <remarks>
+    /// <para>
     /// Non-positive intervals are skipped rather than summed. A drain that laps the ring can return an
     /// older record after a newer one — legitimately, because it resumes at the oldest survivor — and
     /// a negative delta is not a frame time in either direction.
+    /// </para>
+    /// <para>
+    /// The interval into every index of <paramref name="gapBefore"/> is skipped as well (beta.8): a pause (FR-3.9) and
+    /// lost records are time nothing was measured in, and a rate over them would count frames that were never seen.
+    /// </para>
     /// </remarks>
-    public static double SecondsOf<T>(IReadOnlyList<T> stream, int start, long qpcFrequency, Func<T, ulong> qpcOf)
+    public static double SecondsOf<T>(IReadOnlyList<T> stream, int start, long qpcFrequency, Func<T, ulong> qpcOf,
+        IReadOnlySet<int>? gapBefore = null)
     {
         ArgumentNullException.ThrowIfNull(stream);
         ArgumentNullException.ThrowIfNull(qpcOf);
@@ -69,7 +76,7 @@ public static class RecordWindow
         for (int i = start + 1; i < stream.Count; i++)
         {
             long delta = (long)qpcOf(stream[i]) - (long)qpcOf(stream[i - 1]);
-            if (delta > 0)
+            if (delta > 0 && gapBefore?.Contains(i) != true)
             {
                 seconds += (double)delta / qpcFrequency;
             }
@@ -78,7 +85,7 @@ public static class RecordWindow
         return seconds;
     }
 
-    /// <summary>Seconds spanned by the intervals of <c>[start, stream.Count)</c> over samples.</summary>
-    public static double SecondsOf(IReadOnlyList<FrameSample> stream, int start, long qpcFrequency) =>
-        SecondsOf(stream, start, qpcFrequency, static s => s.Qpc);
+    /// <summary>Seconds spanned by the intervals of <c>[start, stream.Count)</c> over samples, the gaps' left out.</summary>
+    public static double SecondsOf(IReadOnlyList<FrameSample> stream, int start, long qpcFrequency, IReadOnlySet<int>? gapBefore = null) =>
+        SecondsOf(stream, start, qpcFrequency, static s => s.Qpc, gapBefore);
 }

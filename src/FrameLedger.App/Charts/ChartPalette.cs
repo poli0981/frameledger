@@ -57,6 +57,25 @@ public sealed record ChartPalette(
         return new ChartPalette(c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8], c[9], c[10], c[11], c[12]);
     }
 
+    /// <summary>The colour a key names — how a chart that assigns palette entries to series by name reads them (<c>SensorsChart</c>).</summary>
+    public Color ByKey(string key) => key switch
+    {
+        "Chart_Figure" => Figure,
+        "Chart_Data" => Data,
+        "Chart_Axis" => Axis,
+        "Chart_Grid" => Grid,
+        "Chart_Native" => Native,
+        "Chart_Displayed" => Displayed,
+        "Chart_Stutter" => Stutter,
+        "Chart_StutterPso" => StutterPso,
+        "Chart_Sensor" => Sensor,
+        "Chart_SensorSecondary" => SensorSecondary,
+        "Chart_Segment" => Segment,
+        "Chart_Histogram" => Histogram,
+        "Chart_Percentile" => Percentile,
+        _ => throw new ArgumentOutOfRangeException(nameof(key), key, "not a chart palette key"),
+    };
+
     private static ChartPalette Load(ApplicationTheme theme)
     {
         string file = theme == ApplicationTheme.Light ? "ChartPalette.Light.xaml" : "ChartPalette.Dark.xaml";

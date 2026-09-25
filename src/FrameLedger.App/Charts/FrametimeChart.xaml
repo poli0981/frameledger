@@ -1,8 +1,17 @@
 <UserControl x:Class="FrameLedger.App.Charts.FrametimeChart"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
              MinHeight="260">
-    <!-- 08_UI §Session summary / FR-5.1: the frametime timeline, min/max decimated (FR-5.3); zoom and pan are ScottPlot's. -->
-    <sp:WpfPlot x:Name="Plot" />
+    <!-- 08_UI §Session summary / FR-5.1: the frametime timeline, min/max decimated (FR-5.3); zoom and pan are ScottPlot's.
+         The note above it says what the lines are not, when that is not obvious (beta.8). -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <ui:TextBlock x:Name="Note" Grid.Row="0" Margin="0,0,0,4" Appearance="Tertiary" TextWrapping="Wrap" Visibility="Collapsed" />
+        <sp:WpfPlot x:Name="Plot" Grid.Row="1" />
+    </Grid>
 </UserControl>

@@ -148,6 +148,59 @@ public sealed class SessionAggregatorTests
         x2.DisplayedP1LowFps.Should().NotBeNull();
     }
 
+    /// <summary>
+    /// beta.8 (03_METRICS §Core definitions, "Lows use application frames only"): a session that counted generated frames
+    /// takes its median, lows, min / max, σ and stutter over application frames. The shape is the owner's Onimusha capture —
+    /// each generated frame submitted half a millisecond after its application frame — where the statistics over presents
+    /// put the 1% low above the native average and the median at a generated frame's half millisecond.
+    /// </summary>
+    [Fact]
+    public void AGeneratingSessionsFrameStatisticsAreOverApplicationFrames()
+    {
+        var writer = new FlWriterState { Status = 1, HooksInstalledMask = 0xB, RuntimeCensus = (uint)(FlRuntimeCensus.Ran | FlRuntimeCensus.SlInterposer | FlRuntimeCensus.SlDlssG) };
+        FlMeasured claims = _presentOnly | FlMeasured.Fg | FlMeasured.FgCounts;
+        var records = new List<FlFrameRecord>();
+        for (int f = 0; f < 1_500; f++)
+        {
+            // 20 ms per application frame on the fixtures' 10 MHz clock; its generated frame 0.5 ms behind it.
+            ulong app = SessionFixtures.QpcEpoch + 10_000_000 + ((ulong)f * 200_000);
+            records.Add(new FlFrameRecord { FrameIndex = (uint)(2 * f), Qpc = app, SwapchainId = 1, Api = (byte)FlApi.D3D12, MeasuredMask = (ushort)claims, FgEvaluations = 1, FgMode = (byte)FlFgMode.DlssG });
+            records.Add(new FlFrameRecord { FrameIndex = (uint)((2 * f) + 1), Qpc = app + 5_000, SwapchainId = 1, Api = (byte)FlApi.D3D12, MeasuredMask = (ushort)claims, FgMode = (byte)FlFgMode.DlssG });
+        }
+
+        AggregationResult r = SessionAggregator.Aggregate(SessionFixtures.Skeleton(), SessionFixtures.Hooked(records, writer));
+        SessionRow row = r.Row;
+
+        r.FgVerdict.Should().Be(FgVerdict.Named);
+        row.FgFactor.Should().BeApproximately(2, 0.01);
+        row.NativeFps.Should().BeApproximately(50, 0.1);
+        row.MedianFps.Should().BeApproximately(50, 0.01, "application frame to application frame, not the half millisecond to a generated one");
+        row.P1LowFps.Should().BeApproximately(50, 0.01).And.BeLessThanOrEqualTo(row.NativeFps!.Value + 0.01, "a low is never above the average it is a low of");
+        row.MinFps.Should().BeApproximately(50, 0.01);
+        row.MaxFps.Should().BeApproximately(50, 0.01);
+        row.FrametimeStdDevMs.Should().BeApproximately(0, 1e-6);
+        row.StutterCount.Should().Be(0);
+        row.DisplayedP1LowFps.Should().BeApproximately(1000 / 19.5, 0.01, "the Displayed low stays over every present");
+        r.Segments.Should().ContainSingle().Which.P1LowFps.Should().BeApproximately(50, 0.01, "the segment's low is over the frames the session's is");
+    }
+
+    /// <summary>A technology named and no application frame counted: no frame statistic, rather than one over presents that include generated frames.</summary>
+    [Fact]
+    public void ANamedSessionThatCountedNoApplicationFrameHasNoFrameStatistics()
+    {
+        var writer = new FlWriterState { Status = 1, HooksInstalledMask = 0xB, RuntimeCensus = (uint)(FlRuntimeCensus.Ran | FlRuntimeCensus.SlInterposer | FlRuntimeCensus.SlDlssG) };
+        List<FlFrameRecord> zeroTokens = [.. SessionFixtures.Stream(2_000, _presentOnly | FlMeasured.Fg | FlMeasured.FgCounts).Select(static r => r with { FgMode = (byte)FlFgMode.DlssG, FgEvaluations = 0 })];
+
+        SessionRow row = SessionAggregator.Aggregate(SessionFixtures.Skeleton(), SessionFixtures.Hooked(zeroTokens, writer)).Row;
+
+        row.FgRefusal.Should().Be("no_evaluations");
+        row.MedianFps.Should().BeNull();
+        row.P1LowFps.Should().BeNull();
+        row.MinFps.Should().BeNull();
+        row.StutterCount.Should().BeNull();
+        row.PresentedFps.Should().BeApproximately(100, 0.01, "the presented rate stands alone, with its qualifier");
+    }
+
     [Fact]
     public void ANamedUpscalerWithParametersFillsTheExtentAndTheSegment()
     {

@@ -55,7 +55,31 @@ entirely rather than counted as one long frame. Including it would fabricate a
 stutter — the exact artifact these metrics exist to detect honestly. Gaps count
 toward the session's data-quality warnings.
 
+> **Since beta.8 a pause is a gap, and a gap is not time either.** The Overlay records nothing while FR-3.9's pause
+> holds, so the first record after the resume is QPC-apart from the last one before it by the whole pause: counted, a
+> fabricated minutes-long frame in every statistic — the Overlay's own comment on its pause check (`MayObserve`) names that
+> artefact — and paused minutes in every average. `CaptureSession` reads the QPC as it tells the ring to resume and marks
+> a gap before the first record stamped at or after it (`CaptureSessionTests.TheFirstRecordPresentedAfterAResumeFollowsAGap`,
+> red before the fix). And **`D`, the time base of every average, is the time the kept intervals span** — first to last
+> present less every interval a gap sat in (`FrameTimeSeries.MeasuredSeconds`, `FgWindow.Seconds`): Presented FPS is
+> the kept intervals over the seconds they span, and Native / Displayed leave the gaps out of their seconds too. For
+> lost records this reads the survivors' rate (a drop is the Agent falling behind, not the game) where it read the
+> survivors spread over the lost time — a rate nobody measured; with no gap nothing changes.
+
 **Lows use application frames only.** Generated frames smooth display cadence but do not represent simulation stalls; mixing them hides real stutter. A secondary "Displayed 1% Low" is stored for the Displayed chart series but never replaces the headline.
+
+> **And since beta.8 (2026-09-25) they are computed that way — until then they were not.** Where generated frames were
+> counted (`fg_mode` a technology, or `active`), `SessionAggregator` took the median, the lows, min / max, σ and the stutter
+> rule over every present of the dominant stream: the 1% low of a ×2 session sat above its native average, and on the
+> owner's Onimusha demo capture (DLSS FG ×3, which submits each generated frame half a millisecond after its application
+> frame) the stored median read **2,073 FPS on a 60 FPS game**. `ft_app` is now `Domain.Metrics.FrameTimeSeries.ApplicationFrames`:
+> the interval between two consecutive presents that carried an application frame's token, the generated presents between
+> them adding no interval of their own; a gap or a present that does not claim the count breaks the chain. The segments'
+> lows follow; the Displayed 1% low stays over every present. **A technology named and no application frame counted**
+> (`no_evaluations`, `not_counted`) has no frame statistic at all — N/A rather than a low over presents that include
+> generated frames. Per-present attribution is accurate to one present (§Frame Generation); it was measured regular —
+> application, generated, generated, repeating — on that capture. **Rows written before beta.8 keep their stored
+> numbers**, as with the steady state (#198); their charts are drawn from the blob with the new rule.
 
 > **When frame generation is NOT measured, the lows are taken over presents and labelled
 > `(presented)`** — added 2026-09-03 with Presented FPS. On a title with no in-process frame

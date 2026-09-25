@@ -66,6 +66,8 @@ public sealed class SessionSummaryViewModelTests
             vm.Chips.Should().HaveCount(3);
             vm.Chips[0].IsYes.Should().BeTrue();
             vm.DecimationNote.Should().Contain("300");
+            vm.HasSensors.Should().BeTrue("the blob says where the first present is, so the overlay is drawn in step");
+            vm.HasSensorCharts.Should().BeTrue();
 
             SessionSummaryViewModel two = Build(s);
             await two.LoadAsync(tier2, Ct);
@@ -73,6 +75,16 @@ public sealed class SessionSummaryViewModelTests
             two.Series.Should().BeNull();
             two.Stats.Single(c => string.Equals(c.Label, "Median", StringComparison.Ordinal)).Value.Should().Be("N/A");
             two.Stats.Single(c => string.Equals(c.Label, "Average", StringComparison.Ordinal)).Value.Should().Be("N/A");
+            two.HasSensorCharts.Should().BeFalse("this Tier-2 row recorded no sensor");
+
+            // beta.8: a Tier-2 session with sensors charts them — no overlay, there are no frames to lay them over.
+            long sensed = await s.NotHookedWithSensorsAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-2));
+            SessionSummaryViewModel three = Build(s);
+            await three.LoadAsync(sensed, Ct);
+            three.Series.Should().BeNull();
+            three.HasSensors.Should().BeFalse();
+            three.HasSensorCharts.Should().BeTrue();
+            three.SensorSeries!.Sensors.Should().HaveCount(2);
 
             SessionSummaryViewModel missing = Build(s);
             await missing.LoadAsync(tier2 + 99, Ct);

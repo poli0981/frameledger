@@ -14,6 +14,7 @@ using FrameLedger.Application.TriState;
 using FrameLedger.Domain.Detection;
 using FrameLedger.Domain.Sessions;
 using FrameLedger.Infrastructure.Io;
+using FrameLedger.Shared.Ipc;
 using Wpf.Ui.Controls;
 
 namespace FrameLedger.App.ViewModels;
@@ -35,6 +36,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private readonly IMessageStrip _strip;
     private readonly ISessionSummaryOpener _summaries;
     private readonly SessionSeriesLoader _loader;
+    private readonly IAgentLink? _agent;
+    private readonly UiThread _ui = new();
+    private bool _attached;
     private readonly IHardwareSnapshotRepository _hardware;
     private readonly SessionSelection _selection;
     private readonly RegisteredSettings? _settings;
@@ -140,6 +144,13 @@ public sealed partial class GameDetailViewModel : ObservableObject
     [ObservableProperty]
     private bool _selectedHasSeries;
 
+    /// <summary>The Sensors tab's note: why nothing is drawn there, or empty.</summary>
+    [ObservableProperty]
+    private string _sensorsNote = Strings.Tabs_SelectASession;
+
+    [ObservableProperty]
+    private bool _selectedHasSensors;
+
     [ObservableProperty]
     private string _latencyText = string.Empty;
 
@@ -161,9 +172,10 @@ public sealed partial class GameDetailViewModel : ObservableObject
     public GameDetailViewModel(GameLibrary library, GameSelection selection, HookingConsent consent, IPageNavigator navigator,
         IConfirmations confirmations, IEditGamePrompt edit, IMessageStrip strip, ISessionSummaryOpener summaries,
         SessionSeriesLoader loader, IHardwareSnapshotRepository hardware, SessionSelection sessionSelection, IGamePicker picker,
-        RegisteredSettings? settings = null)
+        RegisteredSettings? settings = null, IAgentLink? agent = null)
     {
         _settings = settings;
+        _agent = agent;
         _picker = picker ?? throw new ArgumentNullException(nameof(picker));
         _selection = sessionSelection ?? throw new ArgumentNullException(nameof(sessionSelection));
         _library = library ?? throw new ArgumentNullException(nameof(library));
@@ -285,6 +297,12 @@ public sealed partial class GameDetailViewModel : ObservableObject
     /// <summary>The selected session's decoded series (null: none selected, Tier 2, or swept).</summary>
     public SessionSeries? SelectedSeries { get; private set; }
 
+    /// <summary>
+    /// What the Sensors tab draws: the selected session's series, or — for a session that was not hooked — its sensors alone
+    /// (beta.8: a Tier-2 row has kept them since 2026-09-22, and the tab said "not hooked" over them).
+    /// </summary>
+    public SessionSeries? SelectedSensors { get; private set; }
+
     public IReadOnlyList<TrendPoint> TrendPoints { get; private set; } = [];
 
     public IReadOnlyList<HardwareChange> HardwareChanges { get; private set; } = [];
@@ -370,9 +388,43 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
     partial void OnIncludeMidSessionChanged(bool value) => RebuildTrendPoints();
 
+    /// <summary>
+    /// Listens to the Agent while the page is on screen (beta.8): a session of this game that finishes reloads the page, so
+    /// its sessions, trend and header include it — they were the ones the page opened with until it was left and reopened.
+    /// The page calls it on Loaded and <see cref="Detach"/> on Unloaded; the link is a singleton and must not hold the page.
+    /// </summary>
+    public void Attach()
+    {
+        if (_agent is not null && !_attached)
+        {
+            _agent.EventReceived += OnAgentEvent;
+            _attached = true;
+        }
+    }
+
+    public void Detach()
+    {
+        if (_agent is not null && _attached)
+        {
+            _agent.EventReceived -= OnAgentEvent;
+            _attached = false;
+        }
+    }
+
+    private void OnAgentEvent(object? sender, AgentEventArgs e) => _ui.Post(() =>
+    {
+        if (string.Equals(e.Envelope.Type, IpcMessageType.SessionCompleted, StringComparison.Ordinal)
+            && IpcCodec.Payload<SessionCompletedEvent>(e.Envelope) is { SessionId: not null } completed
+            && completed.GameId is long game && game == _gameId)
+        {
+            Pending = LoadAsync();
+        }
+    });
+
     private async Task LoadSelectedAsync(SessionItemViewModel? session)
     {
         SelectedSeries = null;
+        SelectedSensors = null;
         HasLatency = false;
         LatencyText = string.Empty;
         if (session is null)
@@ -382,11 +434,14 @@ public sealed partial class GameDetailViewModel : ObservableObject
         else if (!session.IsHooked)
         {
             SelectedNote = Strings.Tabs_SelectedNotHooked;
+            IReadOnlyList<SensorSeries> sensors = await _loader.LoadSensorsAsync(session.Id).ConfigureAwait(true);
+            SelectedSensors = sensors.Count > 0 ? SessionSeries.SensorsOnly(sensors) : null;
         }
         else
         {
             SelectedSeries = await _loader.LoadAsync(session.Id).ConfigureAwait(true);
             SelectedNote = SelectedSeries is null ? Strings.Tabs_SelectedNoFrames : string.Empty;
+            SelectedSensors = SelectedSeries;
             HasLatency = SelectedSeries?.LatencyUs is { Length: > 0 } && session.Row.ReflexActive == true;
             LatencyText = HasLatency && session.Row.LatencyAvgUs is long avg && session.Row.LatencyP95Us is long p95
                 ? string.Format(CultureInfo.CurrentCulture, Strings.Latency_Stats_Format, avg / 1000.0, p95 / 1000.0)
@@ -394,6 +449,11 @@ public sealed partial class GameDetailViewModel : ObservableObject
         }
 
         SelectedHasSeries = SelectedSeries is not null;
+        SelectedHasSensors = SelectedSensors is { } shown && (shown.Sensors.Count > 0 || shown.VramProcMb is { Length: > 0 });
+        SensorsNote = session is null ? Strings.Tabs_SelectASession
+            : SelectedHasSensors ? string.Empty
+            : session.IsHooked && SelectedSeries is null ? Strings.Tabs_SelectedNoFrames
+            : Strings.Sensors_Empty;
         SelectionPresented?.Invoke(this, EventArgs.Empty);
     }
 

@@ -91,8 +91,16 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
     [ObservableProperty]
     private bool _showDisplayed;
 
+    /// <summary>
+    /// The frametime chart can draw the sensors over the frames: they were recorded and the blob says where the first present
+    /// sits on their clock (schema 0013). A session recorded before keeps the overlay off rather than drawn out of step.
+    /// </summary>
     [ObservableProperty]
     private bool _hasSensors;
+
+    /// <summary>The Sensors section has something to draw — in either tier (beta.8).</summary>
+    [ObservableProperty]
+    private bool _hasSensorCharts;
 
     [ObservableProperty]
     private bool _showSensors;
@@ -135,6 +143,8 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
 
     public static string DistributionHeader => Strings.Summary_Distribution_Header;
 
+    public static string SensorsHeader => Strings.GameDetail_Tab_Sensors;
+
     public static string ShowDisplayedText => Strings.Summary_Show_Displayed;
 
     public static string ShowSensorsText => Strings.Summary_Show_Sensors;
@@ -158,6 +168,9 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
     public GameRow? Game { get; private set; }
 
     public SessionSeries? Series { get; private set; }
+
+    /// <summary>What the Sensors section draws: <see cref="Series"/> for a hooked session, the sensors alone for one that was not.</summary>
+    public SessionSeries? SensorSeries { get; private set; }
 
     public ObservableCollection<StatCardModel> Stats { get; } = [];
 
@@ -184,6 +197,7 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         _segments = await _sessions.FindSegmentsAsync(sessionId, ct).ConfigureAwait(true);
         _snapshot = await _hardware.FindAsync(Row.SnapshotId, ct).ConfigureAwait(true);
         Series = Row.Tier == CaptureTier.Hooked ? await _loader.LoadAsync(sessionId, ct).ConfigureAwait(true) : null;
+        SensorSeries = Series ?? (await _loader.LoadSensorsAsync(sessionId, ct).ConfigureAwait(true) is { Count: > 0 } sensors ? SessionSeries.SensorsOnly(sensors) : null);
         Present();
     }
 
@@ -320,7 +334,8 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         Tags = _annotation is null ? string.Empty : string.Join(", ", _annotation.Tags);
         Notes = _annotation?.Notes ?? string.Empty;
         HasDisplayed = Series?.HasGenerated == true;
-        HasSensors = Series?.Sensors.Count > 0;
+        HasSensors = Series is { SensorsAligned: true, Sensors.Count: > 0 };
+        HasSensorCharts = SensorSeries is { } shown && (shown.Sensors.Count > 0 || shown.VramProcMb is { Length: > 0 });
         DecimationNote = Series is null ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.Chart_Decimated_Format, Series.Presents, Math.Min(Series.Presents, Decimator.DefaultBuckets * 2));
         PresentStats(row);
         PresentChips();

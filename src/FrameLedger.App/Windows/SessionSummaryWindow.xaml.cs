@@ -60,6 +60,7 @@ public partial class SessionSummaryWindow : FluentWindow
     {
         Frametime.Show(ViewModel.Series, ViewModel.ShowDisplayed, ViewModel.ShowSensors);
         Distribution.Show(ViewModel.Series);
+        Sensors.Show(ViewModel.SensorSeries);
     }
 
     private void OnExportPng(object sender, RoutedEventArgs e) => _ = ViewModel.ExportPngAsync(Frametime.ScottPlot);

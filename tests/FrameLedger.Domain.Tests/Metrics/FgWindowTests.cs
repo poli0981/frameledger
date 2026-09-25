@@ -80,6 +80,22 @@ public sealed class FgWindowTests
             "Native x Factor must reconstruct Displayed, or the trio does not describe one window");
     }
 
+    /// <summary>beta.8: a pause is a gap, and the rates are over the time that was measured — not spread over the paused minute.</summary>
+    [Fact]
+    public void ThePausedMinuteIsNotInTheRatesTimeBase()
+    {
+        List<FrameSample> before = FgStream(appFrames: 40, k: 2);
+        List<FrameSample> after = FgStream(appFrames: 40, k: 2, startQpc: before[^1].Qpc + (60 * (ulong)Frequency));
+        List<FrameSample> stream = [.. before, .. after];
+        FgWindow unpaused = FgWindow.From(FgStream(appFrames: 80, k: 2), Frequency);
+
+        FgWindow w = FgWindow.From(stream, Frequency, new HashSet<int> { before.Count });
+
+        w.Factor.Should().BeApproximately(2, 0.01);
+        w.NativeFps.Should().BeApproximately(unpaused.NativeFps!.Value, 1.0, "the minute paused measured nothing");
+        w.DisplayedFps.Should().BeApproximately(unpaused.DisplayedFps!.Value, 2.0);
+    }
+
     [Fact]
     public void AnFgStateChangeMidSessionRefusesRatherThanAveraging()
     {

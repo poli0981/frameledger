@@ -102,6 +102,28 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **A frame-generation session's lows, median, min / max, σ and stutter count are over application frames**, as
+  `03_METRICS` always said they were: they were computed over every present, generated ones included, so a ×2
+  session's 1% low could sit above its native average, and a game that submits its generated frames in a burst —
+  the owner's Onimusha demo capture, DLSS frame generation ×3 — read a median of 2,073 FPS at a native 60. Sessions
+  recorded before this release keep the numbers they were stored with; their charts use the corrected rule.
+- **Pausing capture no longer puts a pause-long frame and the paused minutes into the session.** The first frame
+  after a resume was measured from the last one before the pause; it follows a gap now, and every average is over
+  the time that was measured. Records lost when the capture agent fell behind are left out of that time the same way,
+  so an average reads the rate the game ran at rather than the survivors spread over the lost time.
+- **The charts are honest about what they draw.** The frametime chart's default line is application frame to
+  application frame (it was each frame's interval to the generated frame before it), of the one swapchain the
+  statistics are over (two swapchains' intervals were drawn interleaved); the every-present line no longer draws
+  0 ms frames after gaps and says that presents are timed at submission; segments are labelled with their settings;
+  the sensor overlay is in step with the frames (it was drawn from the session's start, tens of seconds early —
+  schema 0013 records where the first frame sits, so sessions recorded before keep the overlay off). The histogram
+  is binned over the 0.5th–99.5th percentile with its bars centred on their bins; the percentile curve and its
+  1% / 0.1% low markers are drawn only where the session has the frames for them, the rule the stat cards follow.
+  The Sensors charts put power on a watt axis, call the memory plot *Memory*, leave out VRAM readings of 0, give
+  every line its own colour in the light theme too, and chart **sessions that were not hooked** — their sensors
+  were recorded and shown nowhere.
+- **A game's page updates when one of its sessions finishes** — its sessions, trend and header kept what the page
+  opened with until it was left and reopened.
 - **The Trend tab was blank the first time a game's page opened.** It is drawn at once, on a date axis that keeps its
   label and the theme's colours. "Average" is two metrics now — Native FPS and Presented FPS — so a line never mixes
   the two, and never shows a presented rate that includes generated frames. Temperatures, loads, power and memory

@@ -315,6 +315,12 @@ than a tuning knob. ~~There is no UI thread in P2; the pipe reader (P3) joins as
 the pipe's tasks touches the ring or the recorder, and the session loop never waits on a client. The command half (PR-1b) is the
 `Channel` producer this sentence anticipated.
 
+> **The pause is a gap (beta.8).** FR-3.9's pause stops the Overlay recording; the loop reads the QPC as it tells the ring
+> to resume (`ApplyPause`, before `SetPaused(false)`, on the Overlay's own clock — `Stopwatch` is `QueryPerformanceCounter`)
+> and marks a gap before the first drained record stamped at or after it (`MarkResume`). A record drained after the
+> resume but stamped before it is a straggler the pause had not reached. `03_METRICS` §Data gaps says what a gap then
+> does to the statistics and to `D`.
+
 ## Telemetry poller
 
 1 Hz on its own thread: `CompositeTelemetrySource.TryRead` (`18_GPU_VENDOR_APIS` — DXGI/PDH baseline, LibreHardwareMonitor sensors, NVAPI extras on NVIDIA) + optional CPU sample when the Agent is elevated and PawnIO is present. Never called from the game process, never faster than 500 ms. Samples carry the session QPC epoch for timeline alignment.

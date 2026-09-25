@@ -1613,6 +1613,15 @@ only be refused, never the finding (FR-2.2).
   struct): C puts typedefs and functions in one namespace, and MSVC's error names neither clearly.
 - **The driver profile is a configuration.** `sessions.driver_profile` says what the NVIDIA App set; it never feeds
   the upscaler ladder or the factor. The bridge has no DRS writer, and a PR that adds one is a different product.
+- **Present-to-present is not a frame time on a frame-generation title.** DLSS FG submits its generated frames in a
+  burst (measured: half a millisecond apart on the owner's Onimusha capture); anything over `ft_app` — lows, median,
+  σ, stutter, the charts' default line — is application frame to application frame (`FrameTimeSeries.ApplicationFrames`,
+  `SessionSeriesLoader.ApplicationFrames`).
+- **A gap is neither a frame time nor time** (beta.8): `FrameTimeSeries.MeasuredSeconds` and `FgWindow.Seconds` leave
+  out every interval a gap sat in. A pause is a gap (`CaptureSession.MarkResume`); do not mark one any other way.
+- **Reading the owner's ledger for evidence: copy it (`ledger.db` + `-wal`) to the scratchpad and read the copy** with
+  plain SQLite — never a FrameLedger binary against the data folder. `capture_tier` is an integer (1 = hooked); the
+  frame flags are Generated = 1, Gap = 4.
 - **A view model that loads in its constructor raises its events to nobody** until the page subscribes; a page must
   draw what the view model already holds when it is made (the Trend tab was blank on every first open).
 - **`Axes.DateTimeTicksBottom()` replaces the bottom axis**: call it before the theme and the label, or both are lost.

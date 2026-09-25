@@ -109,6 +109,12 @@
                     <charts:DistributionChart x:Name="Distribution" Margin="0,6,0,0" Height="260" />
                 </StackPanel>
 
+                <!-- sensors, in either tier (beta.8): a session that was not hooked has nothing else to chart -->
+                <StackPanel Visibility="{Binding ViewModel.HasSensorCharts, Converter={StaticResource BoolToVis}}">
+                    <ui:TextBlock Margin="0,16,0,0" FontTypography="Subtitle" Text="{x:Static vm:SessionSummaryViewModel.SensorsHeader}" />
+                    <charts:SensorsChart x:Name="Sensors" Margin="0,6,0,0" />
+                </StackPanel>
+
                 <!-- annotations -->
                 <ui:TextBlock Margin="0,16,0,0" FontTypography="Subtitle" Text="{x:Static vm:SessionSummaryViewModel.AnnotationsHeader}" />
                 <ui:TextBox Margin="0,6,0,0" AutomationProperties.Name="{x:Static vm:SessionSummaryViewModel.TagsPlaceholder}" PlaceholderText="{x:Static vm:SessionSummaryViewModel.TagsPlaceholder}" Text="{Binding ViewModel.Tags, UpdateSourceTrigger=PropertyChanged}" />
