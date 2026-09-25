@@ -27,9 +27,12 @@ public sealed record HookingConsentResult(HookingConsentOutcome Outcome, string?
             return string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.Hooking_NotX64_Format, Formats.Architecture(Refusal.Signal));
         }
 
-        string? family = Refusal.Family ?? Refusal.Signal;
-        return family is null
-            ? Shared.Strings.Safety_Refused_Unnamed
-            : string.Format(System.Globalization.CultureInfo.CurrentCulture, Shared.Strings.Safety_Refused_Named_Format, family, Refusal.Signal ?? Refusal.Reason);
+        // A refusal no family names is said as what it is (beta.8), never as its signal "detected in this game".
+        if (Refusal.Family is null)
+        {
+            return string.IsNullOrEmpty(Refusal.Reason) ? Shared.Strings.Safety_Refused_Unnamed : Formats.GuardSentence(Refusal.Reason);
+        }
+
+        return string.Format(System.Globalization.CultureInfo.CurrentCulture, Shared.Strings.Safety_Refused_Named_Format, Refusal.Family, Refusal.Signal ?? Refusal.Reason);
     }
 }

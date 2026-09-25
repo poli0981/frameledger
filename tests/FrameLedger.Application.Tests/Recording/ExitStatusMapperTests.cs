@@ -5,13 +5,24 @@ using FrameLedger.Domain.Sessions;
 
 namespace FrameLedger.Application.Tests.Recording;
 
-/// <summary><c>04_CAPTURE</c> §Crash &amp; exit classification, case by case.</summary>
+/// <summary>
+/// <c>04_CAPTURE</c> §Crash &amp; exit classification, case by case. Since beta.8 an exit code is a crash only when it is an
+/// exception's — End task's 1, a program's -1 and Ctrl+C's 0xC000013A are ordinary ends with their code in the notes.
+/// </summary>
 public sealed class ExitStatusMapperTests
 {
     [Theory]
     [InlineData(SessionEndReason.TargetExited, 0, false, ExitStatus.Normal)]
     [InlineData(SessionEndReason.TargetExited, -1073741819, false, ExitStatus.Crashed)]
     [InlineData(SessionEndReason.TargetExited, 0, true, ExitStatus.Crashed)]
+    [InlineData(SessionEndReason.TargetExited, 1, false, ExitStatus.Normal)]
+    [InlineData(SessionEndReason.TargetExited, -1, false, ExitStatus.Normal)]
+    [InlineData(SessionEndReason.TargetExited, unchecked((int)0xC000013A), false, ExitStatus.Normal)]
+    [InlineData(SessionEndReason.TargetExited, unchecked((int)0xC0000409), false, ExitStatus.Crashed)]
+    [InlineData(SessionEndReason.TargetExited, unchecked((int)0xE06D7363), false, ExitStatus.Crashed)]
+    [InlineData(SessionEndReason.TargetExited, unchecked((int)0xE0434352), false, ExitStatus.Crashed)]
+    [InlineData(SessionEndReason.TargetExited, unchecked((int)0x80000003), false, ExitStatus.Crashed)]
+    [InlineData(SessionEndReason.TargetExited, 1, true, ExitStatus.Crashed)]
     [InlineData(SessionEndReason.TargetExited, null, true, ExitStatus.Crashed)]
     [InlineData(SessionEndReason.Running, null, false, ExitStatus.Normal)]
     [InlineData(SessionEndReason.SupervisionFaulted, null, false, ExitStatus.Normal)]

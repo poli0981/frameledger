@@ -180,9 +180,53 @@ public static class Strings
         nameof(EditGame_Saved),
         nameof(EditGame_Title),
         nameof(EditGame_Version),
+        nameof(End_AttachRefused),
+        nameof(End_ExecutableUnreadable),
+        nameof(End_KillSwitchEngaged),
+        nameof(End_LaunchCannotStart),
+        nameof(End_LaunchNoPresentationRuntime),
+        nameof(End_LaunchTargetExited),
+        nameof(End_PreScanCouldNotVerify),
+        nameof(End_RefusedByGuard),
+        nameof(End_RefusedConsentMissing),
+        nameof(End_RefusedHookNotEnabled),
+        nameof(End_RefusedKillSwitch),
+        nameof(End_RefusedPreviouslyBlocked),
+        nameof(End_Running),
+        nameof(End_SafetyUnhook),
+        nameof(End_StoppedByUser),
+        nameof(End_SupervisionFaulted),
+        nameof(End_SupervisionLost),
+        nameof(End_TargetAmbiguous),
+        nameof(End_TargetCannotBePinned),
+        nameof(End_TargetExited),
+        nameof(End_TargetNotRunning),
+        nameof(End_TargetUnreadable),
+        nameof(End_WriterNeverInstalledHooks),
+        nameof(End_WriterSelfDisabled),
+        nameof(End_WriterStoppedBlocklisted),
+        nameof(Exe_DriveMissing_Format),
+        nameof(Exe_FileMissing_Format),
+        nameof(Exit_Code_Format),
+        nameof(Exit_Code1),
         nameof(Exit_Crashed),
+        nameof(Exit_Crashed_Format),
+        nameof(Exit_CrashEvent),
         nameof(Exit_Degraded),
+        nameof(Exit_EndedNormally),
+        nameof(Exit_Ex_AccessViolation),
+        nameof(Exit_Ex_BadImage),
+        nameof(Exit_Ex_Breakpoint),
+        nameof(Exit_Ex_Clr),
+        nameof(Exit_Ex_Cpp),
+        nameof(Exit_Ex_DllInit),
+        nameof(Exit_Ex_DllNotFound),
+        nameof(Exit_Ex_FailFast),
+        nameof(Exit_Ex_HeapCorruption),
+        nameof(Exit_Ex_InPageError),
+        nameof(Exit_Ex_StackOverflow),
         nameof(Exit_Interrupted),
+        nameof(Exit_Line_Format),
         nameof(Exit_Normal),
         nameof(Exit_UnhookedSafety),
         nameof(Export_NoSelection_Body),
@@ -325,6 +369,27 @@ public static class Strings
         nameof(Games_Sort_LastPlayed),
         nameof(Games_Sort_Name),
         nameof(Games_Sort_Playtime),
+        nameof(Guard_ConsentMissing),
+        nameof(Guard_DriverScanFailed),
+        nameof(Guard_HookNotEnabled),
+        nameof(Guard_InjectionFailed),
+        nameof(Guard_LaunchNoPresentationRuntime),
+        nameof(Guard_LaunchTargetExited),
+        nameof(Guard_ModuleScanFailed),
+        nameof(Guard_Other_Format),
+        nameof(Guard_PayloadNotOurs),
+        nameof(Guard_PreScanFailed),
+        nameof(Guard_PreviouslyBlocked),
+        nameof(Guard_ProcessTreeUnavailable),
+        nameof(Guard_ProcessUnreadable),
+        nameof(Guard_Refused_Format),
+        nameof(Guard_RulesIncomplete),
+        nameof(Guard_RulesMalformed),
+        nameof(Guard_RulesUnreadable),
+        nameof(Guard_ServiceQueryFailed),
+        nameof(Guard_SuspiciousUnsigned),
+        nameof(Guard_TargetIsVulkanLayered),
+        nameof(Guard_TargetIsWow64),
         nameof(Hooking_NotX64_Format),
         nameof(Import_Add),
         nameof(Import_Column_Exe),
@@ -349,6 +414,13 @@ public static class Strings
         nameof(Latency_P95),
         nameof(Latency_Series),
         nameof(Latency_Stats_Format),
+        nameof(Launch_Error_193),
+        nameof(Launch_Error_2),
+        nameof(Launch_Error_3),
+        nameof(Launch_Error_5),
+        nameof(Launch_Error_740),
+        nameof(Launch_Error_Format),
+        nameof(Launch_Failed_Format),
         nameof(Logs_Bundle_Exported_Format),
         nameof(Logs_Bundle_Failed_Format),
         nameof(Logs_Empty),
@@ -1018,11 +1090,99 @@ public static class Strings
 
     public static string EditGame_Version => ResourceManager.GetString(nameof(EditGame_Version), Culture) ?? nameof(EditGame_Version);
 
+    public static string End_AttachRefused => ResourceManager.GetString(nameof(End_AttachRefused), Culture) ?? nameof(End_AttachRefused);
+
+    public static string End_ExecutableUnreadable => ResourceManager.GetString(nameof(End_ExecutableUnreadable), Culture) ?? nameof(End_ExecutableUnreadable);
+
+    public static string End_KillSwitchEngaged => ResourceManager.GetString(nameof(End_KillSwitchEngaged), Culture) ?? nameof(End_KillSwitchEngaged);
+
+    public static string End_LaunchCannotStart => ResourceManager.GetString(nameof(End_LaunchCannotStart), Culture) ?? nameof(End_LaunchCannotStart);
+
+    public static string End_LaunchNoPresentationRuntime => ResourceManager.GetString(nameof(End_LaunchNoPresentationRuntime), Culture) ?? nameof(End_LaunchNoPresentationRuntime);
+
+    public static string End_LaunchTargetExited => ResourceManager.GetString(nameof(End_LaunchTargetExited), Culture) ?? nameof(End_LaunchTargetExited);
+
+    public static string End_PreScanCouldNotVerify => ResourceManager.GetString(nameof(End_PreScanCouldNotVerify), Culture) ?? nameof(End_PreScanCouldNotVerify);
+
+    public static string End_RefusedByGuard => ResourceManager.GetString(nameof(End_RefusedByGuard), Culture) ?? nameof(End_RefusedByGuard);
+
+    public static string End_RefusedConsentMissing => ResourceManager.GetString(nameof(End_RefusedConsentMissing), Culture) ?? nameof(End_RefusedConsentMissing);
+
+    public static string End_RefusedHookNotEnabled => ResourceManager.GetString(nameof(End_RefusedHookNotEnabled), Culture) ?? nameof(End_RefusedHookNotEnabled);
+
+    public static string End_RefusedKillSwitch => ResourceManager.GetString(nameof(End_RefusedKillSwitch), Culture) ?? nameof(End_RefusedKillSwitch);
+
+    public static string End_RefusedPreviouslyBlocked => ResourceManager.GetString(nameof(End_RefusedPreviouslyBlocked), Culture) ?? nameof(End_RefusedPreviouslyBlocked);
+
+    public static string End_Running => ResourceManager.GetString(nameof(End_Running), Culture) ?? nameof(End_Running);
+
+    public static string End_SafetyUnhook => ResourceManager.GetString(nameof(End_SafetyUnhook), Culture) ?? nameof(End_SafetyUnhook);
+
+    public static string End_StoppedByUser => ResourceManager.GetString(nameof(End_StoppedByUser), Culture) ?? nameof(End_StoppedByUser);
+
+    public static string End_SupervisionFaulted => ResourceManager.GetString(nameof(End_SupervisionFaulted), Culture) ?? nameof(End_SupervisionFaulted);
+
+    public static string End_SupervisionLost => ResourceManager.GetString(nameof(End_SupervisionLost), Culture) ?? nameof(End_SupervisionLost);
+
+    public static string End_TargetAmbiguous => ResourceManager.GetString(nameof(End_TargetAmbiguous), Culture) ?? nameof(End_TargetAmbiguous);
+
+    public static string End_TargetCannotBePinned => ResourceManager.GetString(nameof(End_TargetCannotBePinned), Culture) ?? nameof(End_TargetCannotBePinned);
+
+    public static string End_TargetExited => ResourceManager.GetString(nameof(End_TargetExited), Culture) ?? nameof(End_TargetExited);
+
+    public static string End_TargetNotRunning => ResourceManager.GetString(nameof(End_TargetNotRunning), Culture) ?? nameof(End_TargetNotRunning);
+
+    public static string End_TargetUnreadable => ResourceManager.GetString(nameof(End_TargetUnreadable), Culture) ?? nameof(End_TargetUnreadable);
+
+    public static string End_WriterNeverInstalledHooks => ResourceManager.GetString(nameof(End_WriterNeverInstalledHooks), Culture) ?? nameof(End_WriterNeverInstalledHooks);
+
+    public static string End_WriterSelfDisabled => ResourceManager.GetString(nameof(End_WriterSelfDisabled), Culture) ?? nameof(End_WriterSelfDisabled);
+
+    public static string End_WriterStoppedBlocklisted => ResourceManager.GetString(nameof(End_WriterStoppedBlocklisted), Culture) ?? nameof(End_WriterStoppedBlocklisted);
+
+    public static string Exe_DriveMissing_Format => ResourceManager.GetString(nameof(Exe_DriveMissing_Format), Culture) ?? nameof(Exe_DriveMissing_Format);
+
+    public static string Exe_FileMissing_Format => ResourceManager.GetString(nameof(Exe_FileMissing_Format), Culture) ?? nameof(Exe_FileMissing_Format);
+
+    public static string Exit_Code_Format => ResourceManager.GetString(nameof(Exit_Code_Format), Culture) ?? nameof(Exit_Code_Format);
+
+    public static string Exit_Code1 => ResourceManager.GetString(nameof(Exit_Code1), Culture) ?? nameof(Exit_Code1);
+
     public static string Exit_Crashed => ResourceManager.GetString(nameof(Exit_Crashed), Culture) ?? nameof(Exit_Crashed);
+
+    public static string Exit_Crashed_Format => ResourceManager.GetString(nameof(Exit_Crashed_Format), Culture) ?? nameof(Exit_Crashed_Format);
+
+    public static string Exit_CrashEvent => ResourceManager.GetString(nameof(Exit_CrashEvent), Culture) ?? nameof(Exit_CrashEvent);
 
     public static string Exit_Degraded => ResourceManager.GetString(nameof(Exit_Degraded), Culture) ?? nameof(Exit_Degraded);
 
+    public static string Exit_EndedNormally => ResourceManager.GetString(nameof(Exit_EndedNormally), Culture) ?? nameof(Exit_EndedNormally);
+
+    public static string Exit_Ex_AccessViolation => ResourceManager.GetString(nameof(Exit_Ex_AccessViolation), Culture) ?? nameof(Exit_Ex_AccessViolation);
+
+    public static string Exit_Ex_BadImage => ResourceManager.GetString(nameof(Exit_Ex_BadImage), Culture) ?? nameof(Exit_Ex_BadImage);
+
+    public static string Exit_Ex_Breakpoint => ResourceManager.GetString(nameof(Exit_Ex_Breakpoint), Culture) ?? nameof(Exit_Ex_Breakpoint);
+
+    public static string Exit_Ex_Clr => ResourceManager.GetString(nameof(Exit_Ex_Clr), Culture) ?? nameof(Exit_Ex_Clr);
+
+    public static string Exit_Ex_Cpp => ResourceManager.GetString(nameof(Exit_Ex_Cpp), Culture) ?? nameof(Exit_Ex_Cpp);
+
+    public static string Exit_Ex_DllInit => ResourceManager.GetString(nameof(Exit_Ex_DllInit), Culture) ?? nameof(Exit_Ex_DllInit);
+
+    public static string Exit_Ex_DllNotFound => ResourceManager.GetString(nameof(Exit_Ex_DllNotFound), Culture) ?? nameof(Exit_Ex_DllNotFound);
+
+    public static string Exit_Ex_FailFast => ResourceManager.GetString(nameof(Exit_Ex_FailFast), Culture) ?? nameof(Exit_Ex_FailFast);
+
+    public static string Exit_Ex_HeapCorruption => ResourceManager.GetString(nameof(Exit_Ex_HeapCorruption), Culture) ?? nameof(Exit_Ex_HeapCorruption);
+
+    public static string Exit_Ex_InPageError => ResourceManager.GetString(nameof(Exit_Ex_InPageError), Culture) ?? nameof(Exit_Ex_InPageError);
+
+    public static string Exit_Ex_StackOverflow => ResourceManager.GetString(nameof(Exit_Ex_StackOverflow), Culture) ?? nameof(Exit_Ex_StackOverflow);
+
     public static string Exit_Interrupted => ResourceManager.GetString(nameof(Exit_Interrupted), Culture) ?? nameof(Exit_Interrupted);
+
+    public static string Exit_Line_Format => ResourceManager.GetString(nameof(Exit_Line_Format), Culture) ?? nameof(Exit_Line_Format);
 
     public static string Exit_Normal => ResourceManager.GetString(nameof(Exit_Normal), Culture) ?? nameof(Exit_Normal);
 
@@ -1308,6 +1468,48 @@ public static class Strings
 
     public static string Games_Sort_Playtime => ResourceManager.GetString(nameof(Games_Sort_Playtime), Culture) ?? nameof(Games_Sort_Playtime);
 
+    public static string Guard_ConsentMissing => ResourceManager.GetString(nameof(Guard_ConsentMissing), Culture) ?? nameof(Guard_ConsentMissing);
+
+    public static string Guard_DriverScanFailed => ResourceManager.GetString(nameof(Guard_DriverScanFailed), Culture) ?? nameof(Guard_DriverScanFailed);
+
+    public static string Guard_HookNotEnabled => ResourceManager.GetString(nameof(Guard_HookNotEnabled), Culture) ?? nameof(Guard_HookNotEnabled);
+
+    public static string Guard_InjectionFailed => ResourceManager.GetString(nameof(Guard_InjectionFailed), Culture) ?? nameof(Guard_InjectionFailed);
+
+    public static string Guard_LaunchNoPresentationRuntime => ResourceManager.GetString(nameof(Guard_LaunchNoPresentationRuntime), Culture) ?? nameof(Guard_LaunchNoPresentationRuntime);
+
+    public static string Guard_LaunchTargetExited => ResourceManager.GetString(nameof(Guard_LaunchTargetExited), Culture) ?? nameof(Guard_LaunchTargetExited);
+
+    public static string Guard_ModuleScanFailed => ResourceManager.GetString(nameof(Guard_ModuleScanFailed), Culture) ?? nameof(Guard_ModuleScanFailed);
+
+    public static string Guard_Other_Format => ResourceManager.GetString(nameof(Guard_Other_Format), Culture) ?? nameof(Guard_Other_Format);
+
+    public static string Guard_PayloadNotOurs => ResourceManager.GetString(nameof(Guard_PayloadNotOurs), Culture) ?? nameof(Guard_PayloadNotOurs);
+
+    public static string Guard_PreScanFailed => ResourceManager.GetString(nameof(Guard_PreScanFailed), Culture) ?? nameof(Guard_PreScanFailed);
+
+    public static string Guard_PreviouslyBlocked => ResourceManager.GetString(nameof(Guard_PreviouslyBlocked), Culture) ?? nameof(Guard_PreviouslyBlocked);
+
+    public static string Guard_ProcessTreeUnavailable => ResourceManager.GetString(nameof(Guard_ProcessTreeUnavailable), Culture) ?? nameof(Guard_ProcessTreeUnavailable);
+
+    public static string Guard_ProcessUnreadable => ResourceManager.GetString(nameof(Guard_ProcessUnreadable), Culture) ?? nameof(Guard_ProcessUnreadable);
+
+    public static string Guard_Refused_Format => ResourceManager.GetString(nameof(Guard_Refused_Format), Culture) ?? nameof(Guard_Refused_Format);
+
+    public static string Guard_RulesIncomplete => ResourceManager.GetString(nameof(Guard_RulesIncomplete), Culture) ?? nameof(Guard_RulesIncomplete);
+
+    public static string Guard_RulesMalformed => ResourceManager.GetString(nameof(Guard_RulesMalformed), Culture) ?? nameof(Guard_RulesMalformed);
+
+    public static string Guard_RulesUnreadable => ResourceManager.GetString(nameof(Guard_RulesUnreadable), Culture) ?? nameof(Guard_RulesUnreadable);
+
+    public static string Guard_ServiceQueryFailed => ResourceManager.GetString(nameof(Guard_ServiceQueryFailed), Culture) ?? nameof(Guard_ServiceQueryFailed);
+
+    public static string Guard_SuspiciousUnsigned => ResourceManager.GetString(nameof(Guard_SuspiciousUnsigned), Culture) ?? nameof(Guard_SuspiciousUnsigned);
+
+    public static string Guard_TargetIsVulkanLayered => ResourceManager.GetString(nameof(Guard_TargetIsVulkanLayered), Culture) ?? nameof(Guard_TargetIsVulkanLayered);
+
+    public static string Guard_TargetIsWow64 => ResourceManager.GetString(nameof(Guard_TargetIsWow64), Culture) ?? nameof(Guard_TargetIsWow64);
+
     public static string Hooking_NotX64_Format => ResourceManager.GetString(nameof(Hooking_NotX64_Format), Culture) ?? nameof(Hooking_NotX64_Format);
 
     public static string Import_Add => ResourceManager.GetString(nameof(Import_Add), Culture) ?? nameof(Import_Add);
@@ -1355,6 +1557,20 @@ public static class Strings
     public static string Latency_Series => ResourceManager.GetString(nameof(Latency_Series), Culture) ?? nameof(Latency_Series);
 
     public static string Latency_Stats_Format => ResourceManager.GetString(nameof(Latency_Stats_Format), Culture) ?? nameof(Latency_Stats_Format);
+
+    public static string Launch_Error_193 => ResourceManager.GetString(nameof(Launch_Error_193), Culture) ?? nameof(Launch_Error_193);
+
+    public static string Launch_Error_2 => ResourceManager.GetString(nameof(Launch_Error_2), Culture) ?? nameof(Launch_Error_2);
+
+    public static string Launch_Error_3 => ResourceManager.GetString(nameof(Launch_Error_3), Culture) ?? nameof(Launch_Error_3);
+
+    public static string Launch_Error_5 => ResourceManager.GetString(nameof(Launch_Error_5), Culture) ?? nameof(Launch_Error_5);
+
+    public static string Launch_Error_740 => ResourceManager.GetString(nameof(Launch_Error_740), Culture) ?? nameof(Launch_Error_740);
+
+    public static string Launch_Error_Format => ResourceManager.GetString(nameof(Launch_Error_Format), Culture) ?? nameof(Launch_Error_Format);
+
+    public static string Launch_Failed_Format => ResourceManager.GetString(nameof(Launch_Failed_Format), Culture) ?? nameof(Launch_Failed_Format);
 
     public static string Logs_Bundle_Exported_Format => ResourceManager.GetString(nameof(Logs_Bundle_Exported_Format), Culture) ?? nameof(Logs_Bundle_Exported_Format);
 

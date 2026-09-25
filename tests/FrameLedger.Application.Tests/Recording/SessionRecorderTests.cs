@@ -368,7 +368,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
 
         r.Outcome.Reason.Should().Be(SessionEndReason.RefusedByGuard);
         r.Row.Tier.Should().Be(CaptureTier.NotHooked);
-        r.Row.CaptureNotes.Should().Contain("end=RefusedByGuard").And.Contain("tier2").And.Contain("guard=BlockedModule/BattlEye/BEClient_x64.dll");
+        r.Row.CaptureNotes.Should().Contain("end=RefusedByGuard").And.Contain("tier2").And.Contain("guard=BlockedModule|BattlEye|BEClient_x64.dll");
         r.Row.FrameCount.Should().Be(0);
         r.Outcome.HeldUnhooked.Should().BeTrue("a refused session is held, unhooked, until the target exits (2026-09-22)");
         r.Finalize.Status.Should().Be(FinalizeStatus.Discarded, "the fake clock does not move on the hold's ticks unless told to, so this one is under the minimum");
@@ -396,7 +396,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         stored.Frames.Should().BeNull("nothing was measured");
         stored.Sensors.Should().NotBeEmpty("the poller was drained on the hold's ticks");
         stored.Row.AvgGpuTemp.Should().NotBeNull();
-        stored.Row.CaptureNotes.Should().Contain("end=RefusedByGuard").And.Contain("guard=BlockedDriver/Riot Vanguard/vgk.sys");
+        stored.Row.CaptureNotes.Should().Contain("end=RefusedByGuard").And.Contain("guard=BlockedDriver|Riot Vanguard|vgk.sys");
         h.Games.Injections.Should().BeEmpty();
     }
 

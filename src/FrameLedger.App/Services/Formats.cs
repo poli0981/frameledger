@@ -1,5 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.IO;
+using FrameLedger.Application.Capture;
+using FrameLedger.Application.Recording;
 using FrameLedger.Domain.Detection;
 using FrameLedger.Domain.Metrics;
 using FrameLedger.Domain.Sessions;
@@ -274,13 +277,151 @@ public static class Formats
                 return Strings.Summary_Tier2_Why_HookOff;
             case "RefusedByGuard" or "SafetyUnhook" when n.GuardFamily is { Length: > 0 } family:
                 return string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_Guard_Format, family, n.GuardSignal ?? Strings.Common_NotAvailable);
+            case "RefusedByGuard" when n.GuardReason is { Length: > 0 } reason:
+                // A refusal no family names (beta.8): the guard could not look, the game is 32-bit… — said as what it is,
+                // never "… was detected in this game", which read as a finding.
+                return GuardSentence(reason);
             case "TargetUnreadable":
                 return Strings.Summary_Tier2_Why_Unreadable;
             case "RefusedConsentMissing":
                 // Common after a store update (2026-09-23): the consent is about the executable that was enabled, and this is a newer one.
                 return Strings.Summary_Tier2_Why_ConsentChanged;
+            case "LaunchCannotStart" when n.LaunchError is { } error:
+                return string.Format(CultureInfo.CurrentCulture, Strings.Launch_Failed_Format, Strings.End_LaunchCannotStart, LaunchErrorText(error));
             default:
-                return string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_Other_Format, n.End);
+                return EndReasonText(n.End) ?? string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_Other_Format, n.End);
         }
+    }
+
+    /// <summary>
+    /// Why a session ended, in words, for every <see cref="SessionEndReason"/> (beta.8); null for a name this build does not
+    /// know. <c>Formats_EveryEndReasonHasItsOwnSentence</c> walks the enum so none falls through.
+    /// </summary>
+    public static string? EndReasonText(string? end) => end switch
+    {
+        nameof(SessionEndReason.Running) => Strings.End_Running,
+        nameof(SessionEndReason.TargetExited) => Strings.End_TargetExited,
+        nameof(SessionEndReason.SafetyUnhook) => Strings.End_SafetyUnhook,
+        nameof(SessionEndReason.SupervisionLost) => Strings.End_SupervisionLost,
+        nameof(SessionEndReason.WriterSelfDisabled) => Strings.End_WriterSelfDisabled,
+        nameof(SessionEndReason.WriterStoppedBlocklisted) => Strings.End_WriterStoppedBlocklisted,
+        nameof(SessionEndReason.WriterNeverInstalledHooks) => Strings.End_WriterNeverInstalledHooks,
+        nameof(SessionEndReason.RefusedHookNotEnabled) => Strings.End_RefusedHookNotEnabled,
+        nameof(SessionEndReason.RefusedConsentMissing) => Strings.End_RefusedConsentMissing,
+        nameof(SessionEndReason.RefusedPreviouslyBlocked) => Strings.End_RefusedPreviouslyBlocked,
+        nameof(SessionEndReason.RefusedByGuard) => Strings.End_RefusedByGuard,
+        nameof(SessionEndReason.PreScanCouldNotVerify) => Strings.End_PreScanCouldNotVerify,
+        nameof(SessionEndReason.TargetNotRunning) => Strings.End_TargetNotRunning,
+        nameof(SessionEndReason.TargetCannotBePinned) => Strings.End_TargetCannotBePinned,
+        nameof(SessionEndReason.ExecutableUnreadable) => Strings.End_ExecutableUnreadable,
+        nameof(SessionEndReason.SupervisionFaulted) => Strings.End_SupervisionFaulted,
+        nameof(SessionEndReason.TargetAmbiguous) => Strings.End_TargetAmbiguous,
+        nameof(SessionEndReason.AttachRefused) => Strings.End_AttachRefused,
+        nameof(SessionEndReason.LaunchCannotStart) => Strings.End_LaunchCannotStart,
+        nameof(SessionEndReason.LaunchTargetExited) => Strings.End_LaunchTargetExited,
+        nameof(SessionEndReason.LaunchNoPresentationRuntime) => Strings.End_LaunchNoPresentationRuntime,
+        nameof(SessionEndReason.RefusedKillSwitch) => Strings.End_RefusedKillSwitch,
+        nameof(SessionEndReason.KillSwitchEngaged) => Strings.End_KillSwitchEngaged,
+        nameof(SessionEndReason.StoppedByUser) => Strings.End_StoppedByUser,
+        nameof(SessionEndReason.TargetUnreadable) => Strings.End_TargetUnreadable,
+        _ => null,
+    };
+
+    /// <summary>
+    /// A guard refusal no anti-cheat family names, as a sentence (beta.8): "The anti-cheat guard did not hook this game: the
+    /// game is 32-bit…". Every refusal reason the native guard can give has its words; a name this build does not know is
+    /// named as it is.
+    /// </summary>
+    public static string GuardSentence(string reason) =>
+        string.Format(CultureInfo.CurrentCulture, Strings.Guard_Refused_Format, GuardReasonText(reason));
+
+    /// <summary>What a familyless guard reason means, as a clause.</summary>
+    public static string GuardReasonText(string reason) => reason switch
+    {
+        "ModuleScanFailed" => Strings.Guard_ModuleScanFailed,
+        "ProcessUnreadable" => Strings.Guard_ProcessUnreadable,
+        "ProcessTreeUnavailable" => Strings.Guard_ProcessTreeUnavailable,
+        "DriverScanFailed" => Strings.Guard_DriverScanFailed,
+        "ServiceQueryFailed" => Strings.Guard_ServiceQueryFailed,
+        "RulesUnreadable" => Strings.Guard_RulesUnreadable,
+        "RulesMalformed" => Strings.Guard_RulesMalformed,
+        "RulesIncomplete" => Strings.Guard_RulesIncomplete,
+        "PreScanFailed" => Strings.Guard_PreScanFailed,
+        "InjectionFailed" => Strings.Guard_InjectionFailed,
+        "TargetIsWow64" => Strings.Guard_TargetIsWow64,
+        "PayloadNotOurs" => Strings.Guard_PayloadNotOurs,
+        "HookNotEnabled" => Strings.Guard_HookNotEnabled,
+        "ConsentMissing" => Strings.Guard_ConsentMissing,
+        "PreviouslyBlocked" => Strings.Guard_PreviouslyBlocked,
+        "LaunchTargetExited" => Strings.Guard_LaunchTargetExited,
+        "LaunchNoPresentationRuntime" => Strings.Guard_LaunchNoPresentationRuntime,
+        "TargetIsVulkanLayered" => Strings.Guard_TargetIsVulkanLayered,
+        "SuspiciousUnsigned" => Strings.Guard_SuspiciousUnsigned,
+        _ => string.Format(CultureInfo.CurrentCulture, Strings.Guard_Other_Format, reason),
+    };
+
+    /// <summary>
+    /// How a session ended, in words (beta.8): a crash names its exception ("crashed (0xC0000005 access violation)"), an
+    /// exit code that is not one is an ordinary end with its code — End task's 1 said as what it is — and the other
+    /// statuses keep their words.
+    /// </summary>
+    public static string ExitText(ExitStatus status, CaptureNotes notes) => status switch
+    {
+        ExitStatus.Crashed => notes.ExitCode is { } code && ExitStatusMapper.IsExceptionCode(code)
+            ? string.Format(CultureInfo.CurrentCulture, Strings.Exit_Crashed_Format, ExceptionName(code))
+            : Strings.Exit_CrashEvent,
+        ExitStatus.Normal => notes.ExitCode switch
+        {
+            null or 0 => Strings.Exit_EndedNormally,
+            1 => Strings.Exit_Code1,
+            { } other => string.Format(CultureInfo.CurrentCulture, Strings.Exit_Code_Format, CodeText(other)),
+        },
+        _ => ExitStatusText(status),
+    };
+
+    /// <summary>The exception an exit code names, or the code in hex.</summary>
+    public static string ExceptionName(int code) => unchecked((uint)code) switch
+    {
+        0xC0000005 => Strings.Exit_Ex_AccessViolation,
+        0xC0000006 => Strings.Exit_Ex_InPageError,
+        0xC00000FD => Strings.Exit_Ex_StackOverflow,
+        0xC0000374 => Strings.Exit_Ex_HeapCorruption,
+        0xC0000409 => Strings.Exit_Ex_FailFast,
+        0xC0000142 => Strings.Exit_Ex_DllInit,
+        0xC0000135 => Strings.Exit_Ex_DllNotFound,
+        0xC000007B => Strings.Exit_Ex_BadImage,
+        0xE06D7363 => Strings.Exit_Ex_Cpp,
+        0xE0434352 => Strings.Exit_Ex_Clr,
+        0x80000003 => Strings.Exit_Ex_Breakpoint,
+        _ => CodeText(code),
+    };
+
+    /// <summary>An exit code as a person reads it: small ones in decimal, NTSTATUS-shaped ones in hex.</summary>
+    private static string CodeText(int code) =>
+        code is >= -255 and <= 65535 ? code.ToString(CultureInfo.CurrentCulture) : "0x" + unchecked((uint)code).ToString("X8", CultureInfo.InvariantCulture);
+
+    /// <summary>A launch's Win32 error in words (beta.8): the few a game launch meets, and the number otherwise.</summary>
+    public static string LaunchErrorText(int error) => error switch
+    {
+        2 => Strings.Launch_Error_2,
+        3 => Strings.Launch_Error_3,
+        5 => Strings.Launch_Error_5,
+        193 => Strings.Launch_Error_193,
+        740 => Strings.Launch_Error_740,
+        _ => string.Format(CultureInfo.CurrentCulture, Strings.Launch_Error_Format, error),
+    };
+
+    /// <summary>
+    /// Why an executable is not where the row says (beta.8): a drive that is not connected — the owner's external drive
+    /// changes letter, 2026-09-22 — is said as that, and FrameLedger finds the game again when it is back; otherwise the
+    /// file itself is gone from its path.
+    /// </summary>
+    public static string ExecutableMissingText(string exePath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(exePath);
+        string? root = Path.GetPathRoot(exePath);
+        return !string.IsNullOrEmpty(root) && !Directory.Exists(root)
+            ? string.Format(CultureInfo.CurrentCulture, Strings.Exe_DriveMissing_Format, root)
+            : string.Format(CultureInfo.CurrentCulture, Strings.Exe_FileMissing_Format, exePath);
     }
 }

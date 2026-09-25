@@ -26,23 +26,31 @@ public sealed class CrashAutoDisablePolicy
 
     public const int CrashesToDisable = 2;
 
-    public const string Reason = "crashed twice within 60 s of injection (19_SAFETY §Crash safety)";
+    /// <summary>
+    /// The row's reason. Since beta.8 a non-zero exit that is not an exception's is no longer a "crash" on the session, but
+    /// this policy still counts it inside its window — a game our hook hung that the user then ended is the shape it
+    /// exists for — so the words say "ended abnormally", not "crashed".
+    /// </summary>
+    public const string Reason = "ended abnormally twice within 60 s of injection: a crash, or an exit the game did not choose (19_SAFETY §Crash safety)";
 
     private readonly IGameRepository _games;
 
     public CrashAutoDisablePolicy(IGameRepository games) => _games = games ?? throw new ArgumentNullException(nameof(games));
 
-    /// <summary>Whether this session's end is a crash inside the window after <paramref name="injectedAt"/>.</summary>
-    public static bool IsEarlyCrash(ExitStatus status, DateTimeOffset? injectedAt, DateTimeOffset endedAt) =>
-        status == ExitStatus.Crashed && injectedAt is { } at && endedAt - at <= Window && endedAt >= at;
+    /// <summary>
+    /// Whether this session's end is an abnormal one inside the window after <paramref name="injectedAt"/>: a crash, or any
+    /// non-zero exit code (End task's 1 included), exactly as before beta.8 split the two on the session's status.
+    /// </summary>
+    public static bool IsEarlyCrash(ExitStatus status, int? exitCode, DateTimeOffset? injectedAt, DateTimeOffset endedAt) =>
+        (status == ExitStatus.Crashed || exitCode is { } code && code != 0) && injectedAt is { } at && endedAt - at <= Window && endedAt >= at;
 
     /// <summary>
     /// Records the crash when it is an early one, and disables hooking on the second. Returns what was done.
     /// </summary>
-    public async ValueTask<CrashPolicyOutcome> ApplyAsync(long gameId, ExitStatus status, DateTimeOffset? injectedAt,
+    public async ValueTask<CrashPolicyOutcome> ApplyAsync(long gameId, ExitStatus status, int? exitCode, DateTimeOffset? injectedAt,
         DateTimeOffset endedAt, CancellationToken ct = default)
     {
-        if (!IsEarlyCrash(status, injectedAt, endedAt))
+        if (!IsEarlyCrash(status, exitCode, injectedAt, endedAt))
         {
             return CrashPolicyOutcome.NotAnEarlyCrash;
         }

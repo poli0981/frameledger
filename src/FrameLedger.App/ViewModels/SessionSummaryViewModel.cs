@@ -74,6 +74,10 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
     [ObservableProperty]
     private bool _isUnhooked;
 
+    /// <summary>How the session ended (beta.8): a crash with its exception, End task's exit code said as what it is.</summary>
+    [ObservableProperty]
+    private string _exitLine = string.Empty;
+
     /// <summary>Tier 2's payload (2026-09-22): why this session measured nothing, from the row's notes; empty for a hooked row.</summary>
     [ObservableProperty]
     private string _tier2Reason = string.Empty;
@@ -301,6 +305,8 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         IsCrashed = row.ExitStatus == ExitStatus.Crashed;
         IsUnhooked = row.ExitStatus == ExitStatus.UnhookedSafety;
         Tier2Reason = IsHooked ? string.Empty : Formats.Tier2Reason(row.CaptureNotes);
+        ExitLine = string.Format(CultureInfo.CurrentCulture, Strings.Exit_Line_Format,
+            Formats.ExitText(row.ExitStatus, Application.Recording.CaptureNotes.Parse(row.CaptureNotes)));
         Readout = FpsPresentation.FromRow(row);
         Line = string.Format(CultureInfo.CurrentCulture, Strings.Summary_Line_Format,
             IsHooked ? Formats.Api(row.Api) : Strings.Tier_NotHooked, row.PresentMode ?? Strings.Common_NotAvailable,

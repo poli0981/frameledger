@@ -937,7 +937,7 @@ rules feed can switch injection on for a game without anyone looking.
 
 ## Crash & stability safety
 
-- Two crashes of the same game within 60 s of injection ⇒ hooking auto-disabled for that game, UI explains, Tier-2 takes over. Recorded in `games.hook_autodisabled_reason`.
+- Two crashes of the same game within 60 s of injection ⇒ hooking auto-disabled for that game, UI explains, Tier-2 takes over. Recorded in `games.hook_autodisabled_reason`. *"Crash" here is any abnormal end: since beta.8 a session whose exit code is not an exception's (End task's 1) is `normal` on its row, and this policy still counts it inside the window — a hang our hook caused, ended by the user, is the case it exists for. The row's reason says "ended abnormally twice within 60 s of injection" (`04_CAPTURE` §Crash & exit classification).*
 - The Overlay DLL self-disables after 3 faults in hook bodies (`17_HOOK_ENGINE` §Fault policy) and reports it.
 - Every hooked session writes a breadcrumb file before injection; if the game process dies before the first frame record arrives, the next run is recorded as suspect.
 
