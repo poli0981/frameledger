@@ -23,6 +23,7 @@
 #include <fl_guard.h>
 #include <fl_prescan.h>
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 #include <utility>
@@ -409,7 +410,8 @@ TEST_CASE("a clean process on a clean machine is allowed", "[guard]") {
 // each asserting a positive match, a case-flipped match, and a near miss.
 // ===========================================================================
 TEST_CASE("every seeded module family matches, case-insensitively", "[guard][blocklist]") {
-    Rules rules;
+    auto   rulesOwner = std::make_unique<Rules>();
+    Rules& rules = *rulesOwner;
     REQUIRE(ParseRules(GoodRulesJson(), std::strlen(GoodRulesJson()), rules) == ParseResult::kOk);
 
     struct Case {
@@ -444,7 +446,8 @@ TEST_CASE("every seeded module family matches, case-insensitively", "[guard][blo
 }
 
 TEST_CASE("Vanguard is matched as a DRIVER, on the path leaf", "[guard][blocklist]") {
-    Rules rules;
+    auto   rulesOwner = std::make_unique<Rules>();
+    Rules& rules = *rulesOwner;
     REQUIRE(ParseRules(GoodRulesJson(), std::strlen(GoodRulesJson()), rules) == ParseResult::kOk);
 
     // Drivers arrive as native paths.
@@ -458,16 +461,27 @@ TEST_CASE("Vanguard is matched as a DRIVER, on the path leaf", "[guard][blocklis
     CHECK(MatchName(rules, Group::kModules, "vgk.sys") == nullptr);
 }
 
-TEST_CASE("Ricochet and VAC have no data, and the fixture says so explicitly", "[guard][blocklist]") {
-    Rules rules;
+TEST_CASE("Ricochet has data in three groups, and VAC is not a family entry", "[guard][blocklist]") {
+    auto   rulesOwner = std::make_unique<Rules>();
+    Rules& rules = *rulesOwner;
     REQUIRE(ParseRules(GoodRulesJson(), std::strlen(GoodRulesJson()), rules) == ParseResult::kOk);
 
-    // 19_SAFETY lists both families with "no data yet". A fixture that quietly
-    // passed on an empty rule set would report coverage the gate does not have,
-    // so assert the ABSENCE deliberately — this test should start failing the
-    // day someone adds the data, which is exactly when it should be revisited.
+    // Until 2026-09-25 this asserted that NEITHER family had data, and said it should start failing the day someone
+    // added it. Ricochet's arrived from Activision's own support pages (19_SAFETY §Blocklist seed), through the floor
+    // — GoodRulesJson names none of it, so these matches prove the generated floor carries the seed's new rows.
+    const Family* driver = MatchName(rules, Group::kDrivers, "\\SystemRoot\\System32\\drivers\\randgrid.sys");
+    REQUIRE(driver != nullptr);
+    CHECK(std::strcmp(driver->name, "Activision Ricochet") == 0);
+    const Family* service = MatchName(rules, Group::kServices, "atvi-randgrid_sr");
+    REQUIRE(service != nullptr);
+    CHECK(std::strcmp(service->name, "Activision Ricochet") == 0);
+    const Family* file = MatchName(rules, Group::kFiles, "randgrid.sys");
+    REQUIRE(file != nullptr);
+    CHECK(std::strcmp(file->name, "Activision Ricochet") == 0);
+
+    // VAC runs inside Steam, not in the game's own tree, so there is no module, driver or file of the game's to name:
+    // it is expressed through the per-title lists (check 3) and must never be faked as a family entry here.
     for (std::size_t i = 0; i < rules.familyCount; ++i) {
-        CHECK(std::strcmp(rules.families[i].name, "Activision Ricochet") != 0);
         CHECK(std::strcmp(rules.families[i].name, "Valve VAC") != 0);
     }
 }
@@ -919,7 +933,8 @@ TEST_CASE("a rules file that names the required families but disarms their value
     SECTION("the document is still ACCEPTED — the refusal comes from the floor, not from ParseRules") {
         // If this ever became kRulesMalformed/kIncomplete the sections below
         // would pass for the wrong reason, and the floor would be untested.
-        Rules             parsed;
+        auto              parsedOwner = std::make_unique<Rules>();
+        Rules&            parsed = *parsedOwner;
         const std::string json = DisarmedRulesJson();
         CHECK(ParseRules(json.c_str(), json.size(), parsed) == ParseResult::kOk);
     }
@@ -1106,7 +1121,8 @@ TEST_CASE("a default-constructed Verdict is a refusal", "[guard][failclosed]") {
 // The heuristic. 19_SAFETY: fragment AND not signed by a known vendor.
 // ===========================================================================
 TEST_CASE("signer comparison is against O=, exact, and untrusted-by-default", "[guard][heuristic]") {
-    Rules rules;
+    auto   rulesOwner = std::make_unique<Rules>();
+    Rules& rules = *rulesOwner;
     REQUIRE(ParseRules(GoodRulesJson(), std::strlen(GoodRulesJson()), rules) == ParseResult::kOk);
 
     CHECK(IsTrustedSigner(rules, "Microsoft Corporation"));
@@ -1146,7 +1162,8 @@ TEST_CASE("a suspicious module name refuses when the signer seam cannot vouch fo
 // ===========================================================================
 TEST_CASE("§S19(b) — the compiled-in bound: the rules file may only INTERSECT it", "[guard][heuristic][S19]") {
     ResetFake();
-    Rules rules;
+    auto   rulesOwner = std::make_unique<Rules>();
+    Rules& rules = *rulesOwner;
     REQUIRE(ParseRules(g.rulesJson.data(), g.rulesJson.size(), rules) == ParseResult::kOk);
 
     // On both lists: trusted.
@@ -1165,7 +1182,8 @@ TEST_CASE("§S19(b) — the compiled-in bound: the rules file may only INTERSECT
     const std::size_t at = widened.find(needle);
     REQUIRE(at != std::string::npos);
     widened.replace(at, needle.size(), "\"Valve Corp.\", \"Evil Corp\"");
-    Rules wide;
+    auto   wideOwner = std::make_unique<Rules>();
+    Rules& wide = *wideOwner;
     REQUIRE(ParseRules(widened.data(), widened.size(), wide) == ParseResult::kOk);
     CHECK_FALSE(IsCompiledTrustedSigner("Evil Corp"));
     CHECK_FALSE(IsTrustedSigner(wide, "Evil Corp"));

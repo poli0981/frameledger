@@ -465,32 +465,107 @@ earlier version of this table produced an entry that was matched *literally* and
 therefore never fired. A silent hole in the blocklist, created by its own
 normative documentation. Write tokens here exactly as the data must hold them.
 
-| Family | Group | Match | Tokens |
-|---|---|---|---|
-| Easy Anti-Cheat | `modules` | prefix | `EasyAntiCheat`, `EasyAntiCheat_EOS` |
-| Easy Anti-Cheat | `directories` | name | `EasyAntiCheat` |
-| Easy Anti-Cheat | `services` | name | `EasyAntiCheat`, `EasyAntiCheat_EOS`, `EasyAntiCheat_EOSSys` |
-| Easy Anti-Cheat | `drivers` | prefix | `EasyAntiCheat` — **machine-wide refusal** (check 2) |
-| BattlEye | `modules` | prefix | `BEClient`, `BEService` |
-| BattlEye | `directories` | name | `BattlEye` |
-| Riot Vanguard | `drivers` | exact | `vgk.sys` — **machine-wide refusal** (check 2) |
-| Riot Vanguard | `services` | name | `vgc` |
-| Denuvo Anti-Cheat | `modules` | prefix | `denuvo` |
-| nProtect GameGuard | `modules` | prefix | `GameGuard`, `npgg`, `GameMon` |
-| Xigncode3 | `modules` | prefix | `xhunter` |
-| Xigncode3 | `files` | name | `x3.xem` |
-| mihoyo protect | `drivers` | prefix | `mhyprot` |
-| FACEIT | `modules` | prefix | `faceit` |
-| ESEA | `modules` | prefix | `esea` |
-| PunkBuster | `modules` | prefix | `PnkBstr`, `pbcl`, `pbsv` |
-| Anti-Cheat Expert | `drivers` | exact | `ACE-BASE.sys`, `ACE-ADVT.sys`, `ACE-GAME.sys` — **machine-wide refusal** (check 2) |
-| Anti-Cheat Expert | `services` | name | `AntiCheatExpert Protection`, `AntiCheatExpert Service` |
-| Anti-Cheat Expert | `files` | name | `PGameProtectDriver_X64.sys` |
-| **Activision Ricochet** | — | — | **No data yet** — driver and service names unconfirmed (`20_OPEN_QUESTIONS` §S5) |
-| **Valve VAC** | — | — | **No data yet** — needs `blockedStoreIds`, whose half of check 3 **cannot be called** (§S14; the executable half was wired in #52, but a renamed exe defeats it anyway, which is why this row reserves the store-id route). **Measured 2026-08-04: a real VAC title returns `Allow`** (`spike-notes.md` §13) |
+| Family | Group | Match | Tokens | Added |
+|---|---|---|---|---|
+| Easy Anti-Cheat | `modules` | prefix | `EasyAntiCheat`, `EasyAntiCheat_EOS` | seed |
+| Easy Anti-Cheat | `drivers` | prefix | `EasyAntiCheat` — **machine-wide refusal** (check 2) | seed |
+| Easy Anti-Cheat | `directories` | name | `EasyAntiCheat`, `EasyAntiCheat_EOS` | seed; `EasyAntiCheat_EOS` 2026-09-25 |
+| Easy Anti-Cheat | `services` | name | `EasyAntiCheat`, `EasyAntiCheat_EOS`, `EasyAntiCheat_EOSSys` | seed |
+| Easy Anti-Cheat | `files` | name | `EasyAntiCheat_EOS_Setup.exe`, `EasyAntiCheat_Setup.exe`, `EasyAntiCheat_x64.dll`, `EasyAntiCheat_x86.dll`, `EasyAntiCheat_EOS.sys`, `start_protected_game.exe`, `eac_server64.dll` | 2026-09-25 |
+| BattlEye | `modules` | prefix | `BEClient`, `BEService` | seed |
+| BattlEye | `drivers` | exact | `BEDaisy.sys` — **machine-wide refusal** (check 2) | 2026-09-25 |
+| BattlEye | `directories` | name | `BattlEye` | seed |
+| BattlEye | `services` | name | `BEService`, `BEDaisy` | 2026-09-25 |
+| BattlEye | `files` | name | `BEService.exe`, `BEService_x64.exe`, `BEClient.dll`, `BEClient_x64.dll`, `BEDaisy.sys` | 2026-09-25 |
+| Denuvo Anti-Cheat | `modules` | prefix | `denuvo` | seed |
+| Denuvo Anti-Cheat | `drivers` | exact | `denuvo-anti-cheat.sys` — **machine-wide refusal** (check 2) | 2026-09-25 |
+| Denuvo Anti-Cheat | `services` | name | `denuvo-anti-cheat` | 2026-09-25 |
+| Denuvo Anti-Cheat | `files` | name | `denuvo-anti-cheat.sys`, `denuvo-anti-cheat-runtime.dll`, `denuvo-anti-cheat-update-service.exe` | 2026-09-25 |
+| nProtect GameGuard | `modules` | prefix | `GameGuard`, `npgg`, `GameMon` | seed |
+| nProtect GameGuard | `directories` | name | `GameGuard` | 2026-09-25 |
+| nProtect GameGuard | `services` | name | `npggsvc` | 2026-09-25 |
+| nProtect GameGuard | `files` | name | `GameGuard.des`, `GameMon.des`, `GameMon64.des`, `npggNT.des`, `npggNT64.des`, `npsc.des` | 2026-09-25 |
+| Xigncode3 | `modules` | prefix | `xhunter` | seed |
+| Xigncode3 | `modules` | exact | `x3.xem` | 2026-09-25 |
+| Xigncode3 | `drivers` | prefix | `xhunter` — **machine-wide refusal** (check 2) | 2026-09-25 |
+| Xigncode3 | `directories` | name | `XIGNCODE`, `XIGNCODE3` | 2026-09-25 |
+| Xigncode3 | `services` | name | `xhunter1` | 2026-09-25 |
+| Xigncode3 | `files` | name | `x3.xem`, `xhunter1.sys` | seed; `xhunter1.sys` 2026-09-25 |
+| PunkBuster | `modules` | prefix | `PnkBstr`, `pbcl`, `pbsv` | seed |
+| PunkBuster | `drivers` | prefix | `PnkBstrK` — **machine-wide refusal** (check 2) | 2026-09-25 |
+| PunkBuster | `directories` | name | `PunkBuster` | 2026-09-25 |
+| PunkBuster | `files` | name | `pbsvc.exe`, `PnkBstrA.exe`, `PnkBstrB.exe`, `pbsv.dll`, `pbcl.dll`, `pbag.dll` | 2026-09-25 |
+| FACEIT | `modules` | prefix | `faceit` | seed |
+| FACEIT | `drivers` | exact | `FACEIT.sys` — **machine-wide refusal** (check 2) | 2026-09-25 |
+| FACEIT | `services` | name | `FACEIT`, `FACEITService` | 2026-09-25 |
+| ESEA | `modules` | prefix | `esea` | seed |
+| ESEA | `drivers` | prefix | `ESEADriver` — **machine-wide refusal** (check 2) | 2026-09-25 |
+| ESEA | `services` | name | `ESEADriver2` | 2026-09-25 |
+| Riot Vanguard | `drivers` | exact | `vgk.sys` — **machine-wide refusal** (check 2) | seed |
+| Riot Vanguard | `services` | name | `vgc`, `vgk` | seed; `vgk` 2026-09-25 |
+| mihoyo protect | `modules` | prefix | `mhypbase` | 2026-09-25 |
+| mihoyo protect | `drivers` | prefix | `mhyprot`, `HoYoKProtect` — **machine-wide refusal** (check 2) | seed; `HoYoKProtect` 2026-09-25 |
+| mihoyo protect | `services` | name | `mhyprot2`, `mhyprot3`, `HoYoKProtect` | 2026-09-25 |
+| mihoyo protect | `files` | name | `mhypbase.dll`, `mhyprot2.sys`, `mhyprot3.sys`, `HoYoKProtect.sys` | 2026-09-25 |
+| Anti-Cheat Expert | `modules` | prefix | `SGuard`, `AntiCheatExpert` | 2026-09-25 |
+| Anti-Cheat Expert | `drivers` | exact | `ACE-BASE.sys`, `ACE-ADVT.sys`, `ACE-GAME.sys` — **machine-wide refusal** (check 2) | seed |
+| Anti-Cheat Expert | `directories` | name | `AntiCheatExpert`, `AceAntibotClient` | 2026-09-25 |
+| Anti-Cheat Expert | `services` | name | `AntiCheatExpert Protection`, `AntiCheatExpert Service` | seed |
+| Anti-Cheat Expert | `files` | name | `PGameProtectDriver_X64.sys`, `SGuard64.exe`, `SGuardSvc64.exe` | seed; `SGuard64.exe`, `SGuardSvc64.exe` 2026-09-25 |
+| EA AntiCheat | `modules` | prefix | `EAAntiCheat` | 2026-09-25 |
+| EA AntiCheat | `drivers` | exact | `EAAntiCheat.sys` — **machine-wide refusal** (check 2) | 2026-09-25 |
+| EA AntiCheat | `files` | name | `EAAntiCheat.Installer.exe`, `EAAntiCheat.GameServiceLauncher.exe`, `EAAntiCheat.GameServiceLauncher.dll` | 2026-09-25 |
+| NetEase Anti-Cheat | `modules` | prefix | `NeacSafe`, `NeacClient` | 2026-09-25 |
+| NetEase Anti-Cheat | `drivers` | prefix | `NeacSafe` — **machine-wide refusal** (check 2) | 2026-09-25 |
+| NetEase Anti-Cheat | `files` | name | `NeacSafe64.sys`, `NeacSafe64_ex.sys` | 2026-09-25 |
+| NetEase Yidun | `modules` | exact | `NEP2.dll` | 2026-09-25 |
+| NetEase Yidun | `files` | name | `NEP2.dll` | 2026-09-25 |
+| Nexon Game Security | `modules` | prefix | `BlackCipher`, `BlackCall`, `BlackXchg` | 2026-09-25 |
+| Nexon Game Security | `drivers` | exact | `BlackCat64.sys` — **machine-wide refusal** (check 2) | 2026-09-25 |
+| Nexon Game Security | `directories` | name | `BlackCipher` | 2026-09-25 |
+| Nexon Game Security | `files` | name | `BlackCipher.aes`, `BlackCipher64.aes`, `BlackCall.aes`, `BlackCall64.aes`, `BlackCat64.sys` | 2026-09-25 |
+| TenProtect | `modules` | prefix | `TP3Helper`, `TenSafe` | 2026-09-25 |
+| TenProtect | `drivers` | exact | `TesSafe.sys` — **machine-wide refusal** (check 2) | 2026-09-25 |
+| TenProtect | `files` | name | `TP3Helper.exe` | 2026-09-25 |
+| AhnLab HackShield | `modules` | prefix | `EhSvc`, `HShield`, `HSInst` | 2026-09-25 |
+| AhnLab HackShield | `directories` | name | `HShield` | 2026-09-25 |
+| AhnLab HackShield | `files` | name | `HSInst.dll`, `EhSvc.dll` | 2026-09-25 |
+| Anybrain | `modules` | exact | `anybrainSDK.dll`, `Cerebro.dll` | 2026-09-25 |
+| Anybrain | `files` | name | `anybrainSDK.dll`, `Cerebro.dll` | 2026-09-25 |
+| Roblox Hyperion | `modules` | exact | `RobloxPlayerBeta.dll` | 2026-09-25 |
+| Roblox Hyperion | `files` | name | `RobloxPlayerBeta.dll` | 2026-09-25 |
+| EQU8 | `modules` | prefix | `equ8` | 2026-09-25 |
+| EQU8 | `drivers` | prefix | `EQU8_HELPER` — **machine-wide refusal** (check 2) | 2026-09-25 |
+| EQU8 | `files` | name | `equ8_conf.json` | 2026-09-25 |
+| Activision Ricochet | `drivers` | exact | `randgrid.sys`, `brynhildr.sys`, `atvi-brynhildr.sys` — **machine-wide refusal** (check 2) | 2026-09-25 |
+| Activision Ricochet | `services` | name | `atvi-randgrid_sr`, `atvi-randgrid_msstore` | 2026-09-25 |
+| Activision Ricochet | `files` | name | `randgrid.sys` | 2026-09-25 |
+| FredaikisAntiCheat | `directories` | name | `FredaikisAntiCheat` | 2026-09-25 |
+| **Valve VAC** | — | — | **No data yet** — needs `blockedStoreIds`, whose half of check 3 **cannot be called** (§S14; the executable half was wired in #52, but a renamed exe defeats it anyway, which is why this row reserves the store-id route). **Measured 2026-08-04: a real VAC title returns `Allow`** (`spike-notes.md` §13) | — |
 
 The "no data yet" rows are deliberately kept rather than deleted. An admitted
-gap is reviewable; a deleted row is invisible.
+gap is reviewable; a deleted row is invisible. ~~Activision Ricochet's was one of them~~ — it has data since
+2026-09-25 (below); VAC's stays until its per-title route exists.
+
+> **Expanded 2026-09-25 (owner: "as many anti-cheats and as strict as possible").** Eleven families became
+> twenty-two and 19 entries became 74: EA AntiCheat, Activision Ricochet, NetEase Anti-Cheat, NetEase Yidun, Nexon
+> Game Security, TenProtect, AhnLab HackShield, EQU8, Anybrain, FredaikisAntiCheat and Roblox Hyperion are new, and
+> most existing families gained the groups they lacked — BattlEye's `BEDaisy.sys`, FACEIT's and ESEA's drivers,
+> `HoYoKProtect.sys` (which the `mhyprot` prefix never matched), Xigncode3's driver and service, Denuvo's driver.
+> **Every new token is DOCUMENTED, not measured**: the sources are SteamDB's `FileDetectionRuleSets` (MIT), the
+> vendors' own support pages (Activision RICOCHET, EA, FACEIT, BattlEye), LOLDrivers and DRML, named per entry in
+> the data's `note`. The ACE rule above still holds — a blocklist may over-cover and must never under-cover, and a
+> wrong token fails closed by never firing — so an unmeasured token is admitted, labelled, and left for a real title
+> to confirm. `kMaxFamilies` went 64 → 256 with it (2 × 74 no longer fitted).
+>
+> **Three services are deliberately absent**, and the reason is the RUNNING rule above: a service counts while it
+> runs, and a service that runs outside play refuses every session on the machine. `EAAntiCheatService` can be set
+> to start automatically; PunkBuster's `PnkBstrA` runs at every boot once installed; Denuvo's update service runs
+> apart from the game. Each family is caught through its driver, its modules or its files instead.
+>
+> **New `modules` rows are appended, never inserted.** The Overlay's `LoadLibrary` detour reports a 1-based index
+> into this group's order (`FlWriterState.earlyStopFamily` → `sessions.early_stop_family`), so a row inserted above
+> an existing one would change what indexes already stored mean.
 
 > **Anti-Cheat Expert was added 2026-08-04 from measurement, not from reading.**
 > `ACE-BASE.sys` and `ACE-ADVT.sys` were found installed under `System32\drivers`

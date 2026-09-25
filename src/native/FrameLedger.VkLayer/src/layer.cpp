@@ -206,10 +206,14 @@ bool RunSelfScan() noexcept {
 
     // Heap, not static. This runs once at init inside a process we do not own,
     // and 17_HOOK_ENGINE budgets 8 MB resident for everything of ours in a
-    // game — so the ~1 MiB of rules text and ~155 KB of parsed rules are
-    // released the moment the verdict is known. Init is not a hook path, so
-    // allocating here breaks no rule; keeping it resident would waste budget
-    // on data we never look at again.
+    // game — so the ~1 MiB of rules text and the parsed rules are released the
+    // moment the verdict is known. Init is not a hook path, so allocating here
+    // breaks no rule; keeping it resident would waste budget on data we never
+    // look at again. The parsed rules were ~226 KB (this comment said ~155 KB,
+    // a figure from before the per-title lists were objects) and are 541,736
+    // bytes since kMaxFamilies became 256 on 2026-09-25 — ctest fl_rules_budget
+    // prints sizeof(Rules) on every run. ParseRules resets them in place
+    // (ResetRules), so no copy of that size ever lands on this thread's stack.
     auto* text = static_cast<char*>(HeapAlloc(GetProcessHeap(), 0, kMaxRulesBytes));
     if (text == nullptr) {
         return true;
