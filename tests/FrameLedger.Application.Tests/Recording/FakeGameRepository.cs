@@ -180,6 +180,10 @@ internal sealed class FakeGameRepository : IGameRepository
                 DetectionRulesVersion = detection.RulesVersion,
                 DetectionExeSizeBytes = detection.ExeSizeBytes,
                 DetectionExeMtimeMs = detection.ExeMtimeMs,
+                ExeMachine = detection.ExeArchitecture,
+                ExeFileVersion = detection.ExeFileVersion,
+                ExeProductVersion = detection.ExeProductVersion,
+                Libraries = detection.Libraries,
             };
             return ValueTask.FromResult(true);
         }

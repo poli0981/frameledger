@@ -25,7 +25,8 @@ public sealed class SqliteGameRepository : IGameRepository
         + "platform, store_id, engine, engine_version, publisher, game_version, cover_path, notes, field_provenance, capability_flags, "
         + "rt_default, pt_default, rr_default, hook_consent_at, hook_prescan_state, removed_at, "
         + "detection_rules_version, detection_exe_size_bytes, detection_exe_mtime_ms, record_sessions, "
-        + "hook_prescan_rules_version, hook_prescan_exe_size_bytes, hook_prescan_exe_mtime_ms";
+        + "hook_prescan_rules_version, hook_prescan_exe_size_bytes, hook_prescan_exe_mtime_ms, "
+        + "exe_machine, exe_file_version, exe_product_version, library_versions";
 
     private const string _selectByPath = $"SELECT {_columns} FROM games WHERE exe_path = @path";
 
@@ -83,6 +84,7 @@ public sealed class SqliteGameRepository : IGameRepository
     private const string _applyDetection =
         "UPDATE games SET engine = @engine, engine_version = @engineVersion, platform = @platform, capability_flags = @flags, "
         + "field_provenance = @provenance, detection_rules_version = @rules, detection_exe_size_bytes = @size, detection_exe_mtime_ms = @mtime, "
+        + "exe_machine = @machine, exe_file_version = @fileVersion, exe_product_version = @productVersion, library_versions = @libraries, "
         + "updated_at = @now WHERE id = @id";
 
     private readonly LedgerDatabase _db;
@@ -253,6 +255,10 @@ public sealed class SqliteGameRepository : IGameRepository
                 rules = detection.RulesVersion,
                 size = detection.ExeSizeBytes,
                 mtime = detection.ExeMtimeMs,
+                machine = detection.ExeArchitecture,
+                fileVersion = detection.ExeFileVersion,
+                productVersion = detection.ExeProductVersion,
+                libraries = LibraryVersionsJson.Serialize(detection.Libraries),
                 now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
             };
             return await c.ExecuteAsync(new CommandDefinition(_applyDetection, p, tx, cancellationToken: token)).ConfigureAwait(false) == 1;
@@ -341,6 +347,10 @@ public sealed class SqliteGameRepository : IGameRepository
         HookPrescanRulesVersion = SqliteReaders.String(r, 32),
         HookPrescanExeSizeBytes = SqliteReaders.Int64(r, 33),
         HookPrescanExeMtimeMs = SqliteReaders.Int64(r, 34),
+        ExeMachine = SqliteReaders.String(r, 35),
+        ExeFileVersion = SqliteReaders.String(r, 36),
+        ExeProductVersion = SqliteReaders.String(r, 37),
+        Libraries = LibraryVersionsJson.Parse(SqliteReaders.String(r, 38)),
     };
 
     private static DateTimeOffset? At(long? unixMs) => unixMs is { } ms ? DateTimeOffset.FromUnixTimeMilliseconds(ms) : null;

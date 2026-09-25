@@ -21,6 +21,12 @@ public sealed record HookingConsentResult(HookingConsentOutcome Outcome, string?
             return Shared.Strings.Safety_Refused_CouldNotVerify;
         }
 
+        // beta.8: the Agent refused because the executable cannot run as x64 — nothing was scanned (AgentCommandHandler.NotX64Reason).
+        if (string.Equals(Refusal.Reason, "ExecutableNotX64", StringComparison.Ordinal))
+        {
+            return string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.Hooking_NotX64_Format, Formats.Architecture(Refusal.Signal));
+        }
+
         string? family = Refusal.Family ?? Refusal.Signal;
         return family is null
             ? Shared.Strings.Safety_Refused_Unnamed

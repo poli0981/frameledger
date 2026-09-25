@@ -40,7 +40,7 @@
     "level, which made it a check that could not fire."
   ],
   "schemaVersion": 2,
-  "rulesVersion": "2026.09.4",
+  "rulesVersion": "2026.09.5",
 
   "engines": [
     {
@@ -182,8 +182,8 @@
     { "id": "dlss_g",  "name": "DLSS Frame Gen",    "signals": [ "nvngx_dlssg.dll", "sl.dlss_g.dll" ] },
     { "id": "dlss_rr", "name": "Ray Reconstruction","signals": [ "nvngx_dlssd.dll" ] },
     { "id": "streamline", "name": "Streamline",     "signals": [ "sl.interposer.dll", "sl.reflex.dll" ] },
-    { "id": "fsr",     "name": "FSR",               "signals": [ "ffx_fsr2_*.dll", "ffx_frameinterpolation_*.dll", "amd_fidelityfx_*.dll", "ffx_api*.dll" ] },
-    { "id": "xess",    "name": "XeSS",              "signals": [ "libxess.dll" ] },
+    { "id": "fsr",     "name": "FSR",               "signals": [ "ffx_fsr2_*.dll", "ffx_fsr3*.dll", "ffx_frameinterpolation_*.dll", "amd_fidelityfx_*.dll", "ffx_api*.dll" ] },
+    { "id": "xess",    "name": "XeSS",              "signals": [ "libxess.dll", "libxess_dx11.dll" ] },
     { "id": "xefg",    "name": "XeSS Frame Gen",    "signals": [ "libxess_fg.dll" ] }
   ],
 

@@ -42,6 +42,12 @@ public sealed class GameFileProbe : IGameFileProbe
     /// </remarks>
     public const int MaxEntries = 200_000;
 
+    /// <summary>
+    /// How many capability files have their versions read (beta.8). A title ships a handful — DLSS, Streamline's plugins,
+    /// the FidelityFX DLLs — and each read opens a file; a tree that matches more is named up to here, in walk order.
+    /// </summary>
+    public const int MaxLibraryFiles = 48;
+
     private static readonly TimeSpan _regexBudget = TimeSpan.FromMilliseconds(250);
 
     /// <inheritdoc />
@@ -102,7 +108,46 @@ public sealed class GameFileProbe : IGameFileProbe
             ManifestFields = new Dictionary<string, string>(StringComparer.Ordinal),
             UncollectedFacts = uncollected,
             VulkanLoaderReferenced = ReferencesVulkanLoader(exePath, text),
+            ExeArchitecture = PeImports.ReadArchitecture(exePath),
+            Libraries = ReadLibraries(dir, files, rules),
         });
+    }
+
+    /// <summary>
+    /// The files the capability rules name, among those the walk listed, with the versions their PE resources state
+    /// (beta.8): <c>nvngx_dlss.dll 3.7.10.0</c>, <c>sl.interposer.dll 2.4.0.0</c>. A file the rules name twice is listed
+    /// once, under the first rule; a file whose version cannot be read is listed with none — it is shipped either way.
+    /// </summary>
+    private static List<LibraryFile> ReadLibraries(string dir, List<string> files, DetectionRuleSet rules)
+    {
+        List<LibraryFile> found = [];
+        if (string.IsNullOrEmpty(dir) || files.Count == 0)
+        {
+            return found;
+        }
+
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (CapabilityRule rule in rules.Capabilities)
+        {
+            foreach (string pattern in rule.Signals.Signals.Select(static sig => sig.Value))
+            {
+                foreach (string file in files.Where(f => RuleEvaluator.NamesFile(pattern, f)))
+                {
+                    if (found.Count >= MaxLibraryFiles)
+                    {
+                        return found;
+                    }
+
+                    if (seen.Add(file))
+                    {
+                        VersionInfo v = ReadVersionInfo(Path.Combine(dir, file));
+                        found.Add(new LibraryFile(rule.Id, file, v.NumericFileVersion, string.IsNullOrWhiteSpace(v.ProductVersion) ? null : v.ProductVersion.Trim()));
+                    }
+                }
+            }
+        }
+
+        return found;
     }
 
     /// <summary>Breadth-first, bounded. Returns false if the walk did not complete.</summary>
@@ -239,14 +284,18 @@ public sealed class GameFileProbe : IGameFileProbe
         try
         {
             FileVersionInfo v = FileVersionInfo.GetVersionInfo(exePath);
-            return new VersionInfo(v.CompanyName, v.ProductName, v.FileVersion, v.ProductVersion);
+            // The numeric form from VS_FIXEDFILEINFO: the FileVersion STRING may carry text ("3.7.10.0 built by …").
+            string? numeric = v.FileMajorPart == 0 && v.FileMinorPart == 0 && v.FileBuildPart == 0 && v.FilePrivatePart == 0
+                ? null
+                : string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{v.FileMajorPart}.{v.FileMinorPart}.{v.FileBuildPart}.{v.FilePrivatePart}");
+            return new VersionInfo(v.CompanyName, v.ProductName, v.FileVersion, v.ProductVersion, numeric);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
         {
             // Null everywhere, so every pe_* signal evaluates Unknown. A PE we
             // could not read must not make "does the company contain Valve"
             // answer no.
-            return new VersionInfo(null, null, null, null);
+            return new VersionInfo(null, null, null, null, null);
         }
     }
 
@@ -379,7 +428,7 @@ public sealed class GameFileProbe : IGameFileProbe
     }
 
     private readonly record struct VersionInfo(string? Company, string? Product, string? FileVersion,
-        string? ProductVersion)
+        string? ProductVersion, string? NumericFileVersion)
     {
         public bool IsEmpty => Company is null && Product is null && FileVersion is null && ProductVersion is null;
     }

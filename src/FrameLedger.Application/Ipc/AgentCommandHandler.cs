@@ -1,11 +1,13 @@
 using FrameLedger.Application.AntiCheat;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Consent;
+using FrameLedger.Application.Detection;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Vulkan;
 using FrameLedger.Application.Watch;
 using FrameLedger.Domain.AntiCheat;
 using FrameLedger.Domain.Consent;
+using FrameLedger.Domain.Detection;
 using FrameLedger.Shared.Ipc;
 using FrameLedger.Shared.Safety;
 
@@ -36,6 +38,13 @@ public sealed class AgentCommandHandler
     private readonly VkLayerReconciler? _layer;
     private readonly Func<CancellationToken, ValueTask<SweepRetentionAck>>? _sweepRetention;
     private readonly ExecutableRelocator? _relocator;
+    private readonly IExecutableArchitectureSource? _architecture;
+
+    /// <summary>
+    /// <c>Refused.reason</c> for an executable that cannot run as x64 (beta.8); <c>signal</c> carries its
+    /// <see cref="ExecutableArchitecture"/> id. Not a guard reason — nothing was scanned — so not one of its names.
+    /// </summary>
+    public const string NotX64Reason = "ExecutableNotX64";
 
     /// <summary>
     /// <c>disclosureVersion</c> is the version of FR-2.1's reviewed disclosure this Agent carries
@@ -45,8 +54,12 @@ public sealed class AgentCommandHandler
     public AgentCommandHandler(IGameRepository games, IGameConsentStore consent, IAntiCheatGuard guard, IExecutableIdentitySource identity,
         CaptureOrchestrator orchestrator, CapturePause pause, IAgentLifetime lifetime, Func<CancellationToken, ValueTask<string>> updateRules,
         string? disclosureVersion = null, TimeProvider? clock = null, VkLayerReconciler? layer = null,
-        Func<CancellationToken, ValueTask<SweepRetentionAck>>? sweepRetention = null, ExecutableRelocator? relocator = null)
+        Func<CancellationToken, ValueTask<SweepRetentionAck>>? sweepRetention = null, ExecutableRelocator? relocator = null,
+        IExecutableArchitectureSource? architecture = null)
     {
+        // beta.8: an executable that cannot run as x64 is refused before anything is scanned or stamped; null skips the
+        // question (the guard's TargetIsWow64 at a session's start stays the check either way).
+        _architecture = architecture;
         // A drive that changed its letter (2026-09-22): the click that enables hooking looks for the file under another root
         // before it says the executable cannot be read.
         _relocator = relocator;
@@ -173,6 +186,13 @@ public sealed class AgentCommandHandler
         if (fingerprint is null)
         {
             return Error(request, IpcErrorCode.ExecutableUnreadable, $"{path} could not be read, so nothing can be scanned or stamped");
+        }
+
+        // An executable known not to run as x64 (beta.8): the hook can never enter its process, so nothing is scanned or
+        // stamped and nothing is written — the consent dialog would promise a measurement the capture cannot make.
+        if (_architecture?.Read(path) is { } architecture && ExecutableArchitecture.IsKnownNotHookable(architecture))
+        {
+            return IpcCodec.Encode(IpcMessageType.Refused, request.Id, new RefusedAck(game.Id, NotX64Reason, Family: null, Signal: architecture));
         }
 
         // The EXECUTABLE, not its folder (2026-09-25): the guard resolves the install root and runs check 3 on the

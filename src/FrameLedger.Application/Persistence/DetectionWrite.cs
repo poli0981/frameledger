@@ -34,4 +34,16 @@ public sealed record DetectionWrite
 
     /// <summary>The exe mtime, unix ms, the run saw.</summary>
     public required long ExeMtimeMs { get; init; }
+
+    /// <summary>What the executable runs as (schema 0011); written whole, like the capability flags — a fact about a file has no user override.</summary>
+    public string ExeArchitecture { get; init; } = Domain.Detection.ExecutableArchitecture.Unknown;
+
+    /// <summary>The executable's PE <c>FileVersion</c>, or null (written as read: a file that lost its version clears the column).</summary>
+    public string? ExeFileVersion { get; init; }
+
+    /// <summary>The executable's PE <c>ProductVersion</c>, or null.</summary>
+    public string? ExeProductVersion { get; init; }
+
+    /// <summary>The capability files the game ships, with their versions; written whole.</summary>
+    public IReadOnlyList<Domain.Detection.LibraryFile> Libraries { get; init; } = [];
 }

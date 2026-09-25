@@ -4,6 +4,7 @@ using FluentAssertions;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.TriState;
 using FrameLedger.Domain.Consent;
+using FrameLedger.Domain.Detection;
 using FrameLedger.Domain.Metrics;
 using FrameLedger.Domain.Sessions;
 using FrameLedger.Infrastructure.Persistence;
@@ -87,6 +88,61 @@ public sealed class SqliteGameRepositoryTests
 
         (await repo.ApplyDetectionAsync(row.Id + 99, new DetectionWrite { CapabilityIds = [], RulesVersion = "v", ExeSizeBytes = 0, ExeMtimeMs = 0 }, Ct)).Should().BeFalse();
     }
+
+    /// <summary>
+    /// Schema 0011 (beta.8): the executable's own facts ride the detection write, whole — what it runs as, its two
+    /// versions, the capability files it ships — and read back as written; a later write that found no version clears it.
+    /// </summary>
+    [Fact]
+    public async Task TheExecutablesFactsRoundTripAndAreWrittenWhole()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        var repo = new SqliteGameRepository(f.Db);
+        GameRow row = await repo.EnsureAsync(_exe, "Title", Ct);
+        row.ExeMachine.Should().BeNull("never read: the sweep reads that as stale");
+        row.Libraries.Should().BeEmpty();
+
+        await repo.ApplyDetectionAsync(row.Id, new DetectionWrite
+        {
+            CapabilityIds = ["dlss", "xess"],
+            RulesVersion = "2026.09.5",
+            ExeSizeBytes = 1,
+            ExeMtimeMs = 2,
+            ExeArchitecture = ExecutableArchitecture.X64,
+            ExeFileVersion = "4.27.2.0",
+            ExeProductVersion = "++UE4+Release-4.27",
+            Libraries =
+            [
+                new LibraryFile("dlss", "Engine/Plugins/DLSS/nvngx_dlss.dll", "3.7.10.0", "3.7.10"),
+                new LibraryFile("xess", "libxess.dll", null, null),
+            ],
+        }, Ct);
+
+        GameRow read = (await repo.FindByIdAsync(row.Id, Ct))!;
+        read.ExeMachine.Should().Be("x64");
+        (read.ExeFileVersion, read.ExeProductVersion).Should().Be(("4.27.2.0", "++UE4+Release-4.27"));
+        read.Libraries.Should().Equal(
+            new LibraryFile("dlss", "Engine/Plugins/DLSS/nvngx_dlss.dll", "3.7.10.0", "3.7.10"),
+            new LibraryFile("xess", "libxess.dll", null, null));
+        string? stored = await f.Db.ReadAsync((c, ct) => c.ExecuteScalarAsync<string?>(new CommandDefinition(
+            "SELECT library_versions FROM games WHERE id = @id", new { id = row.Id }, cancellationToken: ct)), Ct);
+        stored.Should().Contain("\"capability\":\"dlss\"").And.Contain("\"fileVersion\":\"3.7.10.0\"", "the column's names, not the record's");
+
+        await repo.ApplyDetectionAsync(row.Id, new DetectionWrite { CapabilityIds = [], RulesVersion = "2026.09.6", ExeSizeBytes = 1, ExeMtimeMs = 2 }, Ct);
+        GameRow again = (await repo.FindByIdAsync(row.Id, Ct))!;
+        again.ExeMachine.Should().Be(ExecutableArchitecture.Unknown, "a write says what it found, and it found nothing");
+        again.ExeFileVersion.Should().BeNull();
+        again.Libraries.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("not json")]
+    [InlineData("{\"capability\":\"dlss\"}")]
+    [InlineData("[{\"capability\":\"dlss\"}]")]
+    public void ALibraryColumnThisBuildCannotReadIsEmptyNeverAnException(string? json) =>
+        LibraryVersionsJson.Parse(json).Should().BeEmpty();
 
     /// <summary>The import's write (P4 PR-4) under the same provenance rule: a store fills empty fields and badges them; a user's platform stays; a null store value erases nothing; the hook columns are untouched.</summary>
     [Fact]

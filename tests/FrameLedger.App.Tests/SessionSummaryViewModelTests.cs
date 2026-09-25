@@ -151,4 +151,39 @@ public sealed class SessionSummaryViewModelTests
             System.IO.Directory.Delete(dir, recursive: true);
         }
     }
+
+    /// <summary>
+    /// beta.8: the runtime libraries a hooked session loaded (<c>runtime_modules</c>, written since P2 and shown nowhere) as
+    /// one line, sorted — each beside the copy the game ships when the two differ, the shape a DLSS the NVIDIA App or the
+    /// driver substituted has. A row with none has no line.
+    /// </summary>
+    [Fact]
+    public void TheLoadedLibrariesNameAnotherCopyWhereTheGameShipsADifferentOne()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            IReadOnlyList<Domain.Detection.LibraryFile> shipped =
+            [
+                new("dlss", "Engine/Plugins/nvngx_dlss.dll", "3.7.10.0", null),
+                new("streamline", "sl.interposer.dll", "2.8.0.0", null),
+            ];
+            string? line = SessionSummaryViewModel.LoadedLibraries(
+                "{\"sl.interposer.dll\":\"2,8,0,0\",\"nvngx_dlss.dll\":\"310.2.1.0\",\"ffx_fsr3_x64.dll\":null}", shipped);
+
+            line.Should().StartWith("Loaded: ");
+            line.Should().Contain("nvngx_dlss.dll 310.2.1.0 (the game ships 3.7.10.0: another copy was loaded");
+            line.Should().Contain("sl.interposer.dll 2,8,0,0").And.NotContain("sl.interposer.dll 2,8,0,0 (", "the same four numbers");
+            line.Should().Contain("ffx_fsr3_x64.dll " + Strings.Common_NotAvailable, "a module with no version resource");
+            line!.IndexOf("ffx_fsr3", StringComparison.Ordinal).Should().BeLessThan(line.IndexOf("nvngx", StringComparison.Ordinal), "sorted by name");
+            SessionSummaryViewModel.LoadedLibraries(null, shipped).Should().BeNull();
+            SessionSummaryViewModel.LoadedLibraries("{}", shipped).Should().BeNull();
+            SessionSummaryViewModel.LoadedLibraries("not json", shipped).Should().BeNull();
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
 }

@@ -1601,6 +1601,14 @@ only be refused, never the finding (FR-2.2).
 - **Analyzers on tests:** CA2000 flags a disposable passed into a record's constructor (construct it inside a class
   that disposes it), MA0023 a regex with numbered groups (name them), CA1062 a `[Theory]` string parameter
   dereferenced without a check.
+- **`exe_machine` NULL is stale (schema 0011).** The detection sweep re-reads any row whose executable facts this build
+  has not written — so a test double of `IGameRepository.ApplyDetectionAsync` that drops the new fields makes every
+  sweep test re-scan forever. `unknown` is the stored "looked, could not tell".
+- **`FileVersionInfo` on a System32 file reads its `.mui`.** `version.dll` read in place said 6.2.x, its copy in a temp
+  folder 10.0.x: compare a version against the file that was read, never against its source.
+- **A 32-bit refusal is not a block.** `ExecutableNotX64` writes nothing — no `hook_blocked_reason`, no stamp — so a
+  64-bit build of the same game under *Change executable* can be hooked; the sweep's turn-off uses
+  `hook_autodisabled_reason`, which the page does not offer to undo while the file is still 32-bit.
 
 ## Owner-only — no PR can close these
 

@@ -209,7 +209,9 @@ internal static class AgentServices
             sp.GetRequiredService<VkLayerReconciler>(),
             // P4 PR-7: the on-demand retention sweep, over the Agent's own settings read and its own blob tables.
             ct => new RetentionSweep(sp.GetRequiredService<ISessionRepository>(), sp.GetRequiredService<RegisteredSettings>()).RunAsync(ct),
-            sp.GetRequiredService<ExecutableRelocator>()));
+            sp.GetRequiredService<ExecutableRelocator>(),
+            // beta.8: an executable that cannot run as x64 is refused before anything is scanned or stamped.
+            new PeArchitectureSource()));
         services.AddSingleton<IIpcRequestHandler>(static sp => new AgentRequestHandler(
             AgentIdentityFactory.OfThisProcess(sp.GetRequiredService<AgentPaths>().VkLayerDirectory),
             TelemetryDescriptor(),

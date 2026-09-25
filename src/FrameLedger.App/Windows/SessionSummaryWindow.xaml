@@ -38,6 +38,8 @@
                 <!-- header line + chips -->
                 <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.Line}" />
                 <ui:TextBlock Appearance="Tertiary" TextWrapping="Wrap" Text="{Binding ViewModel.HardwareLine}" />
+                <ui:TextBlock Appearance="Tertiary" TextWrapping="Wrap" Text="{Binding ViewModel.LibrariesLine}"
+                              Visibility="{Binding ViewModel.LibrariesLine, Converter={StaticResource NullToCollapsed}}" />
                 <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding ViewModel.Chips}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>

@@ -272,7 +272,7 @@ public sealed class RuleEvaluator
     {
         foreach (string e in entries)
         {
-            if (GlobMatch(pattern, e) || GlobMatch(pattern, LeafOf(e)))
+            if (NamesFile(pattern, e))
             {
                 return SignalOutcome.Match;
             }
@@ -281,6 +281,18 @@ public sealed class RuleEvaluator
         // Not found. Whether that means "it is not there" depends entirely on
         // whether we finished looking.
         return listingComplete ? SignalOutcome.NoMatch : SignalOutcome.Unknown;
+    }
+
+    /// <summary>
+    /// Whether a file signal's glob names <paramref name="relativeFile"/> — its whole relative path or its file name, as
+    /// a <c>file_exists</c> signal matches. The probe asks it which shipped files a capability rule names, to read their
+    /// versions (beta.8, <see cref="LibraryFile"/>).
+    /// </summary>
+    public static bool NamesFile(string pattern, string relativeFile)
+    {
+        ArgumentNullException.ThrowIfNull(pattern);
+        ArgumentNullException.ThrowIfNull(relativeFile);
+        return GlobMatch(pattern, relativeFile) || GlobMatch(pattern, LeafOf(relativeFile));
     }
 
     private static string LeafOf(string path)

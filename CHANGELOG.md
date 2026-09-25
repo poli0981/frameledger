@@ -40,6 +40,19 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   such a game are still recorded, with play time and sensors. The scan reads the game's files only: it opens no process
   and decides nothing on its own — every session start still runs the full check. Schema 0010 adds three columns; the
   database opens in place, and the first scan of the library runs when the Agent starts.
+- **The game page has a Details card: what the game's files say about it.** Whether the executable is 64-bit (x64),
+  32-bit (x86), ARM or .NET "any CPU"; its file and product versions; the store's build ("Steam build 20374416" — the
+  subtitle labels it that way too, instead of a bare number); the engine; and the upscaler and frame-generation files
+  it ships with their versions — "DLSS: nvngx_dlss.dll 3.7.10.0", Streamline, FSR, XeSS. FSR is named by its file: its
+  DLL's version is the SDK's, and FrameLedger does not guess which FSR that is. The capture agent reads every game in
+  the library once after the update. Schema 0011 adds four columns; the database opens in place.
+- **A session's summary lists the libraries the game had loaded** — recorded since the first beta and shown nowhere
+  until now — and says when one differs from the copy the game ships ("nvngx_dlss.dll 310.2.1.0 (the game ships
+  3.7.10.0: another copy was loaded, for example by the driver or the NVIDIA App)").
+- **A 32-bit game's hooking switch cannot be turned on, and the page says why**: FrameLedger's hook runs in 64-bit
+  games only. Until now the switch turned on and every launch was refused by the guard. A 32-bit game whose hooking
+  was already on has it turned off the first time the capture agent reads it; its sessions are still recorded, with
+  play time and sensors.
 
 ### Changed
 
@@ -70,6 +83,8 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   like any finding. Every driver found in a game so far was an anti-cheat's; this catches the next one before anyone
   names it. It is code, so no rules file can remove it — and a game that ships a driver for another reason loses
   hooking with no way back, which is the trade the owner took.
+- **FSR 3's and XeSS's DX11 libraries count as "Supports FSR" / "Supports XeSS"** (rules `2026.09.5`):
+  `ffx_fsr3_x64.dll` / `ffx_fsr3upscaler_x64.dll` and `libxess_dx11.dll` matched no rule before.
 - **The guard holds 256 blocklist entries instead of 64** (2 × 74 no longer fitted the worst case of the compiled-in
   floor plus a drifted file). The parsed rules are ~530 KB, so they are now reset in place instead of being copied from
   a temporary: the Vulkan layer parses them on whichever of a game's threads creates its Vulkan instance, and a

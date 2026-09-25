@@ -143,6 +143,12 @@ public sealed class DetectionSweep : IDisposable
         return new DetectionSweepReport { Scanned = scanned, Current = current, Unreadable = unreadable, Relocated = relocated };
     }
 
+    /// <summary>
+    /// What <c>hook_autodisabled_reason</c> says when the sweep turns off hooking on an executable that cannot run as x64
+    /// (beta.8). The page says it in the user's language from <c>exe_machine</c>; this is the row's and the log's record.
+    /// </summary>
+    public static string NotX64Reason(string architecture) => $"executable is {architecture}: the hook runs in x64 processes only";
+
     /// <summary>One game through the detector and into the row; true when the row took the write.</summary>
     private async ValueTask<bool> ScanAsync(GameRow game, ExecutableFingerprint onDisk, CancellationToken ct)
     {
@@ -161,15 +167,30 @@ public sealed class DetectionSweep : IDisposable
             RulesVersion = r.RulesVersion,
             ExeSizeBytes = onDisk.SizeBytes,
             ExeMtimeMs = onDisk.MtimeUnixMs,
+            ExeArchitecture = r.ExeArchitecture,
+            ExeFileVersion = r.ExeFileVersion,
+            ExeProductVersion = r.ExeProductVersion,
+            Libraries = r.Libraries,
         };
         if (!await _games.ApplyDetectionAsync(game.Id, write, ct).ConfigureAwait(false))
         {
             return false;
         }
 
+        // A hooking switch that can never work (beta.8): an x86, ARM or 32-bit-preferring executable is a process the x64
+        // hook cannot enter. Enabling it is refused up front since this build; a row enabled before it is turned off here
+        // rather than refused at every launch. The consent stays: the same row with a 64-bit executable can be re-enabled.
+        if (game.HookEnabled && ExecutableArchitecture.IsKnownNotHookable(r.ExeArchitecture))
+        {
+            string reason = NotX64Reason(r.ExeArchitecture);
+            _ = await _games.AutoDisableHookAsync(game.Id, reason, DateTimeOffset.UtcNow, ct).ConfigureAwait(false);
+            _log($"detect: {game.Name} — {reason}; hooking turned off");
+        }
+
         _log($"detect: {game.Name} — engine={r.EngineId ?? (r.EngineUndetermined ? "undetermined" : "none")}"
              + $"{(r.EngineVersion is null ? string.Empty : " " + r.EngineVersion)} platform={r.PlatformId ?? (r.PlatformUndetermined ? "undetermined" : "none")}"
-             + $" capabilities=[{string.Join(",", capabilities)}] vulkan={(r.UsesVulkan is { } v ? (v ? "yes" : "no") : "unknown")} rules={r.RulesVersion}");
+             + $" capabilities=[{string.Join(",", capabilities)}] vulkan={(r.UsesVulkan is { } v ? (v ? "yes" : "no") : "unknown")} rules={r.RulesVersion}"
+             + $" arch={r.ExeArchitecture} libraries={r.Libraries.Count}");
         return true;
     }
 
@@ -196,11 +217,15 @@ public sealed class DetectionSweep : IDisposable
         return (game, null, gone, gone);
     }
 
-    /// <summary><c>DetectionCacheKey</c> compared field by field against the row: any difference is a re-run.</summary>
+    /// <summary>
+    /// <c>DetectionCacheKey</c> compared field by field against the row: any difference is a re-run — and a row this build
+    /// has not read the executable's facts for (schema 0011, <c>exe_machine</c> NULL) is one too, once.
+    /// </summary>
     public static bool IsStale(GameRow game, ExecutableFingerprint onDisk, string rulesVersion)
     {
         ArgumentNullException.ThrowIfNull(game);
-        return !string.Equals(game.DetectionRulesVersion, rulesVersion, StringComparison.Ordinal)
+        return game.ExeMachine is null
+            || !string.Equals(game.DetectionRulesVersion, rulesVersion, StringComparison.Ordinal)
             || game.DetectionExeSizeBytes != onDisk.SizeBytes
             || game.DetectionExeMtimeMs != onDisk.MtimeUnixMs;
     }
