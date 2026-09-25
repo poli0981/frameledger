@@ -39,6 +39,15 @@ public sealed class VkLayerReconcilerTests
         public ValueTask<ConsentWriteOutcome> RecordGuardBlockAsync(ExecutableFingerprint fingerprint, AntiCheatVerdict verdict, CancellationToken ct = default) => throw new NotSupportedException();
 
         public ValueTask<ConsentWriteOutcome> RecordPreScanAsync(ExecutableFingerprint scanned, AntiCheatVerdict verdict, string rulesVersion, CancellationToken ct = default) => throw new NotSupportedException();
+
+        public ValueTask<ConsentWriteOutcome> RecordExceptionEligibilityAsync(ExecutableFingerprint scanned, string block, AntiCheatVerdict? verdict, int sessions,
+            string rulesVersion, CancellationToken ct = default) => throw new NotSupportedException();
+
+        public ValueTask<ConsentWriteOutcome> GrantAntiCheatExceptionAsync(AntiCheatExceptionGrantRequest grant, CancellationToken ct = default) =>
+            throw new NotSupportedException();
+
+        public ValueTask<ConsentWriteOutcome> RevokeAntiCheatExceptionAsync(string normalisedExePath, string reason, CancellationToken ct = default) =>
+            throw new NotSupportedException();
     }
 
     private sealed class FakeRegistrar : IVkLayerRegistrar

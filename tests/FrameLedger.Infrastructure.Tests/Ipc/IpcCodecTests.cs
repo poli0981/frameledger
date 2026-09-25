@@ -139,4 +139,20 @@ public sealed class IpcCodecTests
         IpcCodec.Payload<StatusAck>(IpcCodec.Decode(IpcCodec.Encode(IpcMessageType.StatusAck, "1", status)))!.ActiveSessions.Single().Hold
             .Should().Be(new SessionHold("RefusedHookNotEnabled"));
     }
+
+    /// <summary>D33: the exception's command and answer, and HelloAck's second disclosure version, on the wire in camelCase.</summary>
+    [Fact]
+    public void TheUserModeExceptionMessagesRoundTrip()
+    {
+        byte[] request = IpcCodec.Encode(IpcMessageType.SetAntiCheatException, "7", new SetAntiCheatExceptionRequest(56, true, "ac-exception-dialog/1"));
+        Encoding.UTF8.GetString(request).Should().Contain("\"disclosureVersion\":\"ac-exception-dialog/1\"");
+        IpcCodec.Payload<SetAntiCheatExceptionRequest>(IpcCodec.Decode(request)).Should().Be(new SetAntiCheatExceptionRequest(56, true, "ac-exception-dialog/1"));
+
+        byte[] ack = IpcCodec.Encode(IpcMessageType.AntiCheatExceptionAck, "7", new AntiCheatExceptionAck(56, true, "Written", "NetEase Yidun"));
+        IpcCodec.Payload<AntiCheatExceptionAck>(IpcCodec.Decode(ack)).Should().Be(new AntiCheatExceptionAck(56, true, "Written", "NetEase Yidun"));
+
+        byte[] hello = IpcCodec.Encode(IpcMessageType.HelloAck, "1",
+            new HelloAck("0.1.0-beta.9", IpcProtocol.Version, 1, false, null, false, null, false, "consent-dialog/1", "ac-exception-dialog/1"));
+        IpcCodec.Payload<HelloAck>(IpcCodec.Decode(hello))!.ExceptionDisclosureVersion.Should().Be("ac-exception-dialog/1");
+    }
 }

@@ -23,9 +23,15 @@ namespace FrameLedger.Application.AntiCheat;
 /// the far side of a returned verdict.
 /// </para>
 /// </remarks>
-public sealed class GuardSupervisor(IAntiCheatGuard guard)
+public sealed class GuardSupervisor(IAntiCheatGuard guard, string? toleratedFamily = null)
 {
     private readonly IAntiCheatGuard _guard = guard ?? throw new ArgumentNullException(nameof(guard));
+
+    /// <summary>
+    /// D33: the family the session's user-mode exception covers, named to every re-scan exactly as it was to the injection
+    /// — the guard still honours it only for a user-mode family and refuses on anything else. Null for every other session.
+    /// </summary>
+    public string? ToleratedFamily { get; } = toleratedFamily;
 
     /// <summary>
     /// Completed guard evaluations. Published to <c>FlControlBlock.guardTicks</c>.
@@ -66,7 +72,7 @@ public sealed class GuardSupervisor(IAntiCheatGuard guard)
             return false;
         }
 
-        AntiCheatVerdict verdict = await _guard.EvaluateAsync(targetPid, ct).ConfigureAwait(false);
+        AntiCheatVerdict verdict = await _guard.EvaluateAsync(targetPid, ToleratedFamily, ct).ConfigureAwait(false);
 
         // THE ONE SITE. Everything above can fail, throw or cancel; nothing
         // below runs unless a verdict actually came back.

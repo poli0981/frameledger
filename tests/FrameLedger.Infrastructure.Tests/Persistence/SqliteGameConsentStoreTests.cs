@@ -1,6 +1,7 @@
 using Dapper;
 using FluentAssertions;
 using FrameLedger.Application.Consent;
+using FrameLedger.Application.Persistence;
 using FrameLedger.Domain.AntiCheat;
 using FrameLedger.Domain.Consent;
 using FrameLedger.Infrastructure.Persistence;
@@ -367,5 +368,147 @@ public sealed class SqliteGameConsentStoreTests
         (await store.RecordPreScanAsync(Fingerprint(@"C:\Games\Other\other.exe"), AntiCheatVerdict.Allowed(), "2026.09.9", Ct))
             .Should().Be(ConsentWriteOutcome.NotFound, "the library is the App's and the watcher's to add to");
         (await store.FindAsync(@"C:\Games\Other\other.exe", Ct)).IsFromStore.Should().BeFalse();
+    }
+
+    // --- The user-mode exception (D33, owner decision 2026-09-26; schema 0014) ----------------------------------------------
+
+    private const string _yidun = "AntiCheatFile|NetEase Yidun|NEP2.dll";
+
+    private static readonly AntiCheatVerdict _letThrough = AntiCheatVerdict.AllowedUnderException("NetEase Yidun", "NEP2.dll");
+
+    private static AntiCheatExceptionGrantRequest GrantOf(ExecutableFingerprint? fp = null, string block = _yidun, AntiCheatVerdict? verdict = null, int sessions = 3) => new()
+    {
+        Fingerprint = fp ?? Fingerprint(),
+        Block = block,
+        Verdict = verdict ?? _letThrough,
+        Sessions = sessions,
+        DisclosureVersion = "ac-exception-dialog/1",
+        GrantedAt = DateTimeOffset.FromUnixTimeMilliseconds(1_000),
+    };
+
+    /// <summary>A consented row, blocked for NetEase Yidun: GIRLS' FRONTLINE 2 as beta.8 left it.</summary>
+    private static async Task<SqliteGameConsentStore> BlockedAsync(LedgerFixture f)
+    {
+        var store = new SqliteGameConsentStore(f.Db);
+        await store.RecordOperatorAcknowledgementAsync(Ack(), Ct).ConfigureAwait(false);
+        await store.RecordGuardBlockAsync(Fingerprint(), AntiCheatVerdict.Refused(AntiCheatRefusalReason.AntiCheatFile, "NetEase Yidun", "NEP2.dll"), Ct)
+            .ConfigureAwait(false);
+        return store;
+    }
+
+    [Fact]
+    public async Task AGrantIsWrittenOnlyOverFactsThatMakeTheGameEligibleAndClearsNothing()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        SqliteGameConsentStore store = await BlockedAsync(f);
+
+        (await store.GrantAntiCheatExceptionAsync(GrantOf(sessions: 1), Ct)).Should().Be(ConsentWriteOutcome.NotEligible, "the owner's threshold is two");
+        (await store.GrantAntiCheatExceptionAsync(GrantOf(verdict: AntiCheatVerdict.Allowed()), Ct)).Should().Be(ConsentWriteOutcome.NotEligible,
+            "a pass that let nothing through confirmed nothing");
+        (await store.GrantAntiCheatExceptionAsync(GrantOf(block: "BlockedStoreId|Valve VAC|steam:730"), Ct)).Should().Be(ConsentWriteOutcome.NotEligible);
+        (await store.GrantAntiCheatExceptionAsync(GrantOf(block: "BlockedModule|NetEase Yidun|NEP2.dll"), Ct)).Should().Be(ConsentWriteOutcome.NotFound,
+            "the facts are about a block the row does not carry");
+        (await store.FindAsync(Fingerprint().ExePath, Ct)).Exception.Should().BeNull();
+
+        (await store.GrantAntiCheatExceptionAsync(GrantOf(), Ct)).Should().Be(ConsentWriteOutcome.Written);
+
+        GameConsentRecord r = await store.FindAsync(Fingerprint().ExePath, Ct);
+        r.Exception.Should().Be(new AntiCheatExceptionGrant
+        {
+            Family = "NetEase Yidun",
+            GrantedAt = DateTimeOffset.FromUnixTimeMilliseconds(1_000),
+            DisclosureVersion = "ac-exception-dialog/1",
+            ExeSizeBytes = 90_000,
+            ExeMtimeUnixMs = 1_700_000_000_000,
+        });
+        r.BlockedReason.Should().Be(_yidun, "the exception is a layer over the block, never its clearing");
+        r.HookEnabled.Should().BeFalse("a grant turns nothing on");
+        r.ConsentedAt.Should().NotBeNull();
+    }
+
+    /// <summary>
+    /// FR-2.1 under the exception: the stamp may re-point a blocked row at the bytes the exception was granted on — the user
+    /// accepted both disclosures for that file — and at no other bytes.
+    /// </summary>
+    [Fact]
+    public async Task UnderAGrantTheConsentStampMayMoveToTheGrantedBytesAndNoOthers()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        SqliteGameConsentStore store = await BlockedAsync(f);
+        ExecutableFingerprint patched = Fingerprint() with { SizeBytes = 91_000 };
+        (await store.GrantAntiCheatExceptionAsync(GrantOf(patched), Ct)).Should().Be(ConsentWriteOutcome.Written);
+
+        (await store.RecordOperatorAcknowledgementAsync(Ack(Fingerprint() with { SizeBytes = 92_000 }), Ct)).Should().Be(ConsentWriteOutcome.StaleFingerprint);
+        (await store.RecordOperatorAcknowledgementAsync(Ack(patched), Ct)).Should().Be(ConsentWriteOutcome.Written);
+
+        GameConsentRecord r = await store.FindAsync(Fingerprint().ExePath, Ct);
+        r.HookEnabled.Should().BeTrue();
+        r.Fingerprint.SizeBytes.Should().Be(91_000);
+        r.BlockedReason.Should().Be(_yidun);
+    }
+
+    [Fact]
+    public async Task TheEndOfAnExceptionTurnsHookingOffKeepsTheStampAndTheHistory()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        SqliteGameConsentStore store = await BlockedAsync(f);
+        (await store.RevokeAntiCheatExceptionAsync(Fingerprint().ExePath, "SessionCrashed", Ct)).Should().Be(ConsentWriteOutcome.NotFound, "nothing in force");
+        await store.GrantAntiCheatExceptionAsync(GrantOf(), Ct);
+        await store.RecordOperatorAcknowledgementAsync(Ack(), Ct);
+
+        (await store.RevokeAntiCheatExceptionAsync(Fingerprint().ExePath, "SessionCrashed", Ct)).Should().Be(ConsentWriteOutcome.Written);
+
+        GameConsentRecord r = await store.FindAsync(Fingerprint().ExePath, Ct);
+        r.Exception.Should().BeNull();
+        r.HookEnabled.Should().BeFalse("the block stands");
+        r.ConsentedAt.Should().NotBeNull("an ended exception is not a withdrawn consent");
+        GameRow row = (await new SqliteGameRepository(f.Db).FindAsync(Fingerprint().ExePath, Ct))!;
+        row.AcException.LapsedReason.Should().Be("SessionCrashed");
+        row.AcException.LapsedAt.Should().NotBeNull();
+        row.AcException.Family.Should().Be("NetEase Yidun", "the family stays as history");
+        row.AcException.IsGranted.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task EligibilityIsWrittenWithItsKeyOnlyOverTheBlockItWasReachedAbout()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        SqliteGameConsentStore store = await BlockedAsync(f);
+        ExecutableFingerprint onDisk = Fingerprint() with { MtimeUnixMs = 1_800_000_000_000 };
+
+        (await store.RecordExceptionEligibilityAsync(onDisk, "BlockedModule|X|y.dll", _letThrough, 3, "2026.09.5", Ct)).Should().Be(ConsentWriteOutcome.NotFound);
+        (await store.RecordExceptionEligibilityAsync(onDisk, _yidun, _letThrough, 3, "2026.09.5", Ct)).Should().Be(ConsentWriteOutcome.Written);
+
+        AntiCheatExceptionState x = (await new SqliteGameRepository(f.Db).FindAsync(onDisk.ExePath, Ct))!.AcException;
+        x.Eligible.Should().BeTrue();
+        x.Verdict.Should().Be("AllowedUnderUserModeException|NetEase Yidun|NEP2.dll");
+        x.Sessions.Should().Be(3);
+        x.IsCheckedFor(onDisk, "2026.09.5", _yidun).Should().BeTrue();
+        x.IsGranted.Should().BeFalse("eligibility grants nothing");
+
+        (await store.RecordExceptionEligibilityAsync(onDisk, _yidun, null, 3, "2026.09.5", Ct)).Should().Be(ConsentWriteOutcome.Written);
+        x = (await new SqliteGameRepository(f.Db).FindAsync(onDisk.ExePath, Ct))!.AcException;
+        x.Eligible.Should().BeFalse("nothing was asked");
+        x.Verdict.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ChangingTheExecutableEndsTheExceptionAndForgetsItsEligibility()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        SqliteGameConsentStore store = await BlockedAsync(f);
+        await store.RecordExceptionEligibilityAsync(Fingerprint(), _yidun, _letThrough, 3, "2026.09.5", Ct);
+        await store.GrantAntiCheatExceptionAsync(GrantOf(), Ct);
+        var games = new SqliteGameRepository(f.Db);
+        long id = (await games.FindAsync(Fingerprint().ExePath, Ct))!.Id;
+
+        (await games.ChangeExecutableAsync(id, Fingerprint(@"C:\Games\Title\other.exe"), DateTimeOffset.UnixEpoch, Ct)).Should().BeTrue();
+
+        GameRow row = (await games.FindByIdAsync(id, Ct))!;
+        row.AcException.IsGranted.Should().BeFalse();
+        row.AcException.LapsedReason.Should().Be("ExecutableChanged");
+        row.AcException.Eligible.Should().BeFalse("the new file has not been looked at");
+        row.AcException.CheckedRulesVersion.Should().BeNull();
+        row.HookBlockedReason.Should().Be(_yidun, "the block outlives Change executable, as before");
     }
 }

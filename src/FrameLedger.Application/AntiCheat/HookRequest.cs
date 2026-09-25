@@ -31,8 +31,9 @@ namespace FrameLedger.Application.AntiCheat;
 public sealed class HookRequest
 {
     private HookRequest(int targetPid, string payloadPath, bool hookEnabled, DateTimeOffset? consentedAt,
-        string? blockedReason, int waitForPresentationRuntimeMs, bool killSwitchEngaged)
+        string? blockedReason, int waitForPresentationRuntimeMs, bool killSwitchEngaged, string? toleratedFamily = null)
     {
+        ToleratedFamily = toleratedFamily;
         TargetPid = targetPid;
         PayloadPath = payloadPath;
         HookEnabled = hookEnabled;
@@ -87,6 +88,17 @@ public sealed class HookRequest
     public string? BlockedReason { get; }
 
     /// <summary>
+    /// D33 (owner decision 2026-09-26): the anti-cheat family the game's user-mode exception covers for THIS session, or
+    /// null — the NAME the gate hands the guard, which decides itself whether to honour it.
+    /// </summary>
+    /// <remarks>
+    /// Set only by <see cref="FromConsent"/>, from the stored grant, and only when the caller says the exception is in force
+    /// for this session — the option is on and the Overlay's channel exists (<see cref="UserModeExceptionRules.CoveredFamily"/>).
+    /// Without it a blocked game is refused before the guard is asked, exactly as before D33.
+    /// </remarks>
+    public string? ToleratedFamily { get; }
+
+    /// <summary>
     /// Build the request the gate evaluates, from a stored record and the executable
     /// as it is on disk right now.
     /// </summary>
@@ -96,9 +108,13 @@ public sealed class HookRequest
     /// <param name="payloadPath">The Overlay, resolved beside the guard (§S22).</param>
     /// <param name="waitForPresentationRuntimeMs">Launch mode's budget; zero is attach mode.</param>
     /// <param name="killSwitchEngaged">FR-2.4's global switch as read from the settings store just now (decision D7).</param>
+    /// <param name="exceptionInForce">
+    /// D33: <c>hooking.usermode_ac_exceptions</c> is on AND the Overlay's tolerance channel was published for this pid. False
+    /// — the default, and every caller before D33 — asks the guard to tolerate nothing.
+    /// </param>
     public static HookRequest FromConsent(
         GameConsentRecord record, ExecutableFingerprint observed, int targetPid, string payloadPath,
-        int waitForPresentationRuntimeMs = 0, bool killSwitchEngaged = false)
+        int waitForPresentationRuntimeMs = 0, bool killSwitchEngaged = false, bool exceptionInForce = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(payloadPath);
         ArgumentOutOfRangeException.ThrowIfNegative(waitForPresentationRuntimeMs);
@@ -129,7 +145,9 @@ public sealed class HookRequest
             consentedAt = null;
         }
 
+        // THE FAMILY COMES FROM THE STORED GRANT, never from a caller: the caller can only say whether the exception is in
+        // force this session, which can only turn it off.
         return new HookRequest(targetPid, payloadPath, record.HookEnabled, consentedAt, record.BlockedReason,
-            waitForPresentationRuntimeMs, killSwitchEngaged);
+            waitForPresentationRuntimeMs, killSwitchEngaged, UserModeExceptionRules.CoveredFamily(record, observed, exceptionInForce));
     }
 }

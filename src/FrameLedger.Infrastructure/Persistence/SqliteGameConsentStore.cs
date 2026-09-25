@@ -1,5 +1,6 @@
 using System.Data.Common;
 using Dapper;
+using FrameLedger.Application.AntiCheat;
 using FrameLedger.Application.Consent;
 using FrameLedger.Domain.AntiCheat;
 using FrameLedger.Domain.Consent;
@@ -34,7 +35,8 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
 {
     private const string _columns =
         "exe_path, exe_size_bytes, exe_mtime_ms, hook_enabled, hook_consent_at, hook_consent_provenance, "
-        + "hook_consent_disclosure_version, hook_blocked_reason, hook_prescan_state, updated_at";
+        + "hook_consent_disclosure_version, hook_blocked_reason, hook_prescan_state, updated_at, "
+        + "ac_exception_at, ac_exception_family, ac_exception_disclosure_version, ac_exception_exe_size_bytes, ac_exception_exe_mtime_ms";
 
     private const string _selectOne = $"SELECT {_columns} FROM games WHERE exe_path = @path";
 
@@ -76,6 +78,27 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
         "UPDATE games SET hook_prescan_state = @state, hook_prescan_rules_version = @rules, "
         + "hook_prescan_exe_size_bytes = @size, hook_prescan_exe_mtime_ms = @mtime, updated_at = @at "
         + "WHERE exe_path = @path AND hook_blocked_reason IS NULL AND hook_prescan_state <> 'blocked'";
+
+    // D33 (schema 0014). The eligibility and the grant are each bound to the block they were reached about — the WHERE is
+    // the guarantee, so a block rewritten between the caller's read and this write leaves the row alone. Neither names
+    // hook_blocked_reason, hook_enabled or the consent columns in its SET list.
+    private const string _exceptionEligibility =
+        "UPDATE games SET ac_exception_eligible = @eligible, ac_exception_verdict = @verdict, ac_exception_sessions = @sessions, "
+        + "ac_exception_checked_rules_version = @rules, ac_exception_checked_exe_size_bytes = @size, ac_exception_checked_exe_mtime_ms = @mtime, "
+        + "ac_exception_checked_block = @block, updated_at = @at WHERE exe_path = @path AND hook_blocked_reason = @block";
+
+    private const string _exceptionGrant =
+        "UPDATE games SET ac_exception_at = @at, ac_exception_family = @family, ac_exception_disclosure_version = @disclosure, "
+        + "ac_exception_exe_size_bytes = @size, ac_exception_exe_mtime_ms = @mtime, ac_exception_lapsed_at = NULL, ac_exception_lapsed_reason = NULL, "
+        + "ac_exception_eligible = 1, ac_exception_verdict = @verdict, ac_exception_sessions = @sessions, updated_at = @at "
+        + "WHERE exe_path = @path AND hook_blocked_reason = @block";
+
+    // The end of an exception keeps the consent stamp, as a block does, and turns hooking off while the block stands. The
+    // grant's family, disclosure and bytes stay as history; ac_exception_at going NULL is what ends it.
+    private const string _exceptionRevoke =
+        "UPDATE games SET ac_exception_at = NULL, ac_exception_lapsed_at = @at, ac_exception_lapsed_reason = @reason, "
+        + "hook_enabled = CASE WHEN hook_blocked_reason IS NOT NULL THEN 0 ELSE hook_enabled END, updated_at = @at "
+        + "WHERE exe_path = @path AND ac_exception_at IS NOT NULL";
 
     private readonly LedgerDatabase _db;
 
@@ -173,8 +196,11 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
                 Row? existing = await ReadRowAsync(c, tx, fp.ExePath, token).ConfigureAwait(false);
 
                 // A FINGERPRINT THAT DOES NOT MATCH THE STORED ONE IS REFUSED when a BLOCK is at stake — never
-                // silently re-pointed at a different binary. An ordinary re-grant after a patch keeps working.
-                if (existing is not null && existing.BlockedReason is not null && !existing.Fingerprint.Matches(fp))
+                // silently re-pointed at a different binary. An ordinary re-grant after a patch keeps working, and
+                // so does one under a user-mode exception granted on exactly these bytes (D33): the user accepted the
+                // exception's disclosure for this file, and is now accepting FR-2.1's for it.
+                if (existing is not null && existing.BlockedReason is not null && !existing.Fingerprint.Matches(fp)
+                    && existing.Grant?.Covers(fp) != true)
                 {
                     return ConsentWriteOutcome.StaleFingerprint;
                 }
@@ -274,6 +300,99 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
         }
     }
 
+    /// <inheritdoc />
+    public async ValueTask<ConsentWriteOutcome> RecordExceptionEligibilityAsync(
+        ExecutableFingerprint scanned, string block, AntiCheatVerdict? verdict, int sessions, string rulesVersion, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(block);
+        ArgumentException.ThrowIfNullOrWhiteSpace(rulesVersion);
+        bool eligible = verdict is { } v && UserModeExceptionRules.IsEligible(StoredBlock.Parse(block), v, sessions);
+        try
+        {
+            return await _db.WriteAsync(async (c, tx, token) =>
+            {
+                var p = new
+                {
+                    path = scanned.ExePath,
+                    eligible = eligible ? 1 : 0,
+                    verdict = verdict is { } answered ? BlockText(answered) : null,
+                    sessions,
+                    rules = rulesVersion,
+                    size = scanned.SizeBytes,
+                    mtime = scanned.MtimeUnixMs,
+                    block,
+                    at = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                };
+                int rows = await c.ExecuteAsync(new CommandDefinition(_exceptionEligibility, p, tx, cancellationToken: token)).ConfigureAwait(false);
+                return rows == 0 ? ConsentWriteOutcome.NotFound : ConsentWriteOutcome.Written;
+            }, ct).ConfigureAwait(false);
+        }
+        catch (SqliteException)
+        {
+            return ConsentWriteOutcome.Failed;
+        }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<ConsentWriteOutcome> GrantAntiCheatExceptionAsync(AntiCheatExceptionGrantRequest grant, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(grant);
+        ArgumentException.ThrowIfNullOrWhiteSpace(grant.DisclosureVersion, nameof(grant));
+
+        // THE STORE APPLIES THE RULE ITSELF: a grant over facts that do not make the game eligible is refused here, not
+        // only by the caller that gathered them.
+        StoredBlock? block = StoredBlock.Parse(grant.Block);
+        if (!UserModeExceptionRules.IsEligible(block, grant.Verdict, grant.Sessions))
+        {
+            return ConsentWriteOutcome.NotEligible;
+        }
+
+        try
+        {
+            return await _db.WriteAsync(async (c, tx, token) =>
+            {
+                var p = new
+                {
+                    path = grant.Fingerprint.ExePath,
+                    block = grant.Block,
+                    family = block!.Value.Family,
+                    disclosure = grant.DisclosureVersion,
+                    size = grant.Fingerprint.SizeBytes,
+                    mtime = grant.Fingerprint.MtimeUnixMs,
+                    verdict = BlockText(grant.Verdict),
+                    sessions = grant.Sessions,
+                    at = grant.GrantedAt.ToUnixTimeMilliseconds(),
+                };
+                int rows = await c.ExecuteAsync(new CommandDefinition(_exceptionGrant, p, tx, cancellationToken: token)).ConfigureAwait(false);
+                return rows == 0 ? ConsentWriteOutcome.NotFound : ConsentWriteOutcome.Written;
+            }, ct).ConfigureAwait(false);
+        }
+        catch (SqliteException)
+        {
+            return ConsentWriteOutcome.Failed;
+        }
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<ConsentWriteOutcome> RevokeAntiCheatExceptionAsync(string normalisedExePath, string reason, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(normalisedExePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
+        try
+        {
+            return await _db.WriteAsync(async (c, tx, token) =>
+            {
+                var p = new { path = normalisedExePath, reason, at = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() };
+                int rows = await c.ExecuteAsync(new CommandDefinition(_exceptionRevoke, p, tx, cancellationToken: token)).ConfigureAwait(false);
+                return rows == 0 ? ConsentWriteOutcome.NotFound : ConsentWriteOutcome.Written;
+            }, ct).ConfigureAwait(false);
+        }
+        catch (SqliteException)
+        {
+            return ConsentWriteOutcome.Failed;
+        }
+    }
+
     private static Task<Row?> ReadRowAsync(SqliteConnection c, SqliteTransaction? tx, string path, CancellationToken ct) =>
         SqliteReaders.ReadOneAsync(c, new CommandDefinition(_selectOne, new { path }, tx, cancellationToken: ct), Row.From);
 
@@ -286,7 +405,8 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
         string DisclosureVersion,
         string? BlockedReason,
         string PreScanState,
-        long UpdatedAtMs)
+        long UpdatedAtMs,
+        AntiCheatExceptionGrant? Grant)
     {
         public static Row From(DbDataReader r) => new(
             new ExecutableFingerprint
@@ -301,7 +421,21 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
             r.GetString(6),
             SqliteReaders.String(r, 7),
             r.GetString(8),
-            r.GetInt64(9));
+            r.GetInt64(9),
+            ReadGrant(r));
+
+        /// <summary>D33: the grant in force (schema 0014, ordinals 10–14), or null when <c>ac_exception_at</c> is.</summary>
+        private static AntiCheatExceptionGrant? ReadGrant(DbDataReader r) =>
+            SqliteReaders.Int64(r, 10) is { } at && SqliteReaders.String(r, 11) is { Length: > 0 } family
+                ? new AntiCheatExceptionGrant
+                {
+                    GrantedAt = DateTimeOffset.FromUnixTimeMilliseconds(at),
+                    Family = family,
+                    DisclosureVersion = SqliteReaders.String(r, 12) ?? string.Empty,
+                    ExeSizeBytes = SqliteReaders.Int64(r, 13) ?? -1,
+                    ExeMtimeUnixMs = SqliteReaders.Int64(r, 14) ?? -1,
+                }
+                : null;
 
         public GameConsentRecord ToRecord() => GameConsentRecord.Stored(
             Fingerprint,
@@ -311,7 +445,8 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
             DisclosureVersion,
             BlockedReason,
             string.Equals(PreScanState, "unverified", StringComparison.Ordinal),
-            DateTimeOffset.FromUnixTimeMilliseconds(UpdatedAtMs));
+            DateTimeOffset.FromUnixTimeMilliseconds(UpdatedAtMs),
+            Grant);
     }
 
     /// <summary>

@@ -113,6 +113,12 @@ public sealed record GameRow
     /// <summary>The capability files the game ships, with their versions (schema 0011, <c>library_versions</c>); empty when none or never looked.</summary>
     public IReadOnlyList<LibraryFile> Libraries { get; init; } = [];
 
+    /// <summary>
+    /// D33 (owner decision 2026-09-26, schema 0014): the user-mode anti-cheat exception's columns — the Agent's eligibility
+    /// answer, the user's grant, and how the last one ended. Meaningful only on a blocked row.
+    /// </summary>
+    public AntiCheatExceptionState AcException { get; init; } = AntiCheatExceptionState.None;
+
     public bool InLibrary => RemovedAt is null;
 
     /// <summary>

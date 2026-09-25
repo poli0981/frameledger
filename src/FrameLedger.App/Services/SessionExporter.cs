@@ -100,6 +100,13 @@ public sealed class SessionExporter
         w.WriteLine("# started_at: " + row.StartedAt.ToString("O", _inv));
         w.WriteLine("# ended_at: " + row.EndedAt.ToString("O", _inv));
         w.WriteLine("# capture_tier: " + ((int)row.Tier).ToString(_inv) + (row.Tier == CaptureTier.Hooked ? " (hooked, measured)" : " (not hooked: duration and sensors only; no per-frame rows)"));
+        if (row.AcExceptionFamily is { Length: > 0 } excepted)
+        {
+            // D33: a session hooked under the game's user-mode anti-cheat exception says so wherever it goes (the JSON carries
+            // the column in its aggregates).
+            w.WriteLine("# ac_exception: " + excepted + " (hooked under the game's user-mode anti-cheat exception)");
+        }
+
         w.WriteLine("# api: " + (row.Api ?? "N/A") + "; present_mode: " + (row.PresentMode ?? "N/A") + "; swap_effect: " + (row.SwapEffect ?? "N/A"));
         w.WriteLine("# hardware: " + (hardware is null ? "N/A" : string.Join("; ", new[] { hardware.CpuName, hardware.GpuName, hardware.GpuDriver, hardware.OsBuild, hardware.DisplayRes }.Where(static s => !string.IsNullOrEmpty(s)))));
         w.WriteLine("# rt: " + row.RtFlag + " (" + (row.RtSource ?? "n/a") + "); pt: " + row.PtFlag + " (" + (row.PtSource ?? "n/a") + "); rr: " + row.RrFlag + " (" + (row.RrSource ?? "n/a") + ")");

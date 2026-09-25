@@ -11,6 +11,7 @@ namespace FrameLedger.Application.Ipc;
 /// <param name="VulkanLayerRegistered">Whether the HKCU implicit-layer registration named our manifest at this process's start (P3 PR-8b; a launch never needs it).</param>
 /// <param name="CpuTempAvailable">False until the Agent composes a CPU sensor (LHM's CPU half is off unelevated).</param>
 /// <param name="DisclosureVersion">The FR-2.1 disclosure this Agent stamps against (<c>Shared.Safety.SafetyDisclosure.Version</c> under <c>--serve</c>; null on a composition that carries none) — D14, P3 PR-4.</param>
+/// <param name="ExceptionDisclosureVersion">D33: the user-mode exception's disclosure this Agent grants against (<c>Shared.Safety.AntiCheatExceptionDisclosure.Version</c> under <c>--serve</c>; null where none is carried).</param>
 public sealed record AgentIdentity(
     string AgentVersion,
     int Pid,
@@ -18,4 +19,5 @@ public sealed record AgentIdentity(
     string? OverlayBuildId,
     bool VulkanLayerRegistered,
     bool CpuTempAvailable,
-    string? DisclosureVersion = null);
+    string? DisclosureVersion = null,
+    string? ExceptionDisclosureVersion = null);

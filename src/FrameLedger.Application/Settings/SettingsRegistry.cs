@@ -81,6 +81,19 @@ public static class SettingsRegistry
         AgentReads = true,
     };
 
+    /// <summary>
+    /// D33 (owner decision 2026-09-26): whether a game's user-mode anti-cheat exception may apply at all. Off by default;
+    /// on, the user still grants each eligible game through its disclosure, and off suspends every grant without deleting
+    /// any (<c>19_SAFETY</c> §The user-mode exception). Exactly "1" is on.
+    /// </summary>
+    public static readonly SettingDefinition HookingUserModeExceptions = new()
+    {
+        Key = "hooking.usermode_ac_exceptions",
+        Kind = SettingKind.Boolean,
+        Default = "0",
+        AgentReads = true,
+    };
+
     /// <summary>FR-3.6: sessions shorter than this are discarded. Seconds.</summary>
     public static readonly SettingDefinition CaptureMinSessionSeconds = new()
     {
@@ -151,7 +164,7 @@ public static class SettingsRegistry
     public static IReadOnlyList<SettingDefinition> All { get; } =
     [
         UiLanguage, UiTheme, UiStartWithWindows, UiMinimizeToTray, UiHideAntiCheatHooking, UiFpsDecimals,
-        CaptureBackground, HookingKillSwitch, CaptureMinSessionSeconds, TelemetryIntervalMs, RetentionRawSessionsPerGame,
+        CaptureBackground, HookingKillSwitch, HookingUserModeExceptions, CaptureMinSessionSeconds, TelemetryIntervalMs, RetentionRawSessionsPerGame,
         UpdateChannel, UpdateAutoCheck, PrivacyOnlineMetadata, LogDebug,
     ];
 

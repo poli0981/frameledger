@@ -22,4 +22,7 @@ public sealed record RecordedSession
 
     /// <summary>Whether the event log named the executable in the crash window.</summary>
     public required bool CrashEventFound { get; init; }
+
+    /// <summary>D33: why this session ended the game's user-mode exception (<c>UserModeExceptionLapse</c>), or null when it did not.</summary>
+    public string? ExceptionLapse { get; init; }
 }

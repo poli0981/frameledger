@@ -20,11 +20,24 @@ public sealed class SettingsRegistryTests
         SettingsRegistry.Find("nobody.knows").Should().BeNull();
     }
 
+    /// <summary>D33: the exception option is off unless the user turns it on — and exactly "1" is on.</summary>
+    [Fact]
+    public void TheUserModeExceptionOptionIsOffByDefault()
+    {
+        SettingDefinition d = SettingsRegistry.HookingUserModeExceptions;
+        d.Key.Should().Be("hooking.usermode_ac_exceptions");
+        d.Default.Should().Be("0");
+        d.Kind.Should().Be(SettingKind.Boolean);
+        d.AgentReads.Should().BeTrue("the Agent reads it at every session start and command");
+    }
+
     [Fact]
     public void TheAgentReadsExactlyTheFourPrefixesD16Names()
     {
         string[] agent = [.. SettingsRegistry.All.Where(static d => d.AgentReads).Select(static d => d.Key)];
-        agent.Should().BeEquivalentTo(["capture.background", "hooking.kill_switch", "capture.min_session_s", "telemetry.interval_ms", "retention.raw_sessions_per_game"]);
+        // hooking.usermode_ac_exceptions joined on 2026-09-26 (D33): the user-mode exception's option, off by default.
+        agent.Should().BeEquivalentTo(["capture.background", "hooking.kill_switch", "hooking.usermode_ac_exceptions", "capture.min_session_s",
+            "telemetry.interval_ms", "retention.raw_sessions_per_game"]);
         agent.Should().OnlyContain(static k => k.StartsWith("hooking.", StringComparison.Ordinal) || k.StartsWith("capture.", StringComparison.Ordinal)
             || k.StartsWith("telemetry.", StringComparison.Ordinal) || k.StartsWith("retention.", StringComparison.Ordinal));
     }

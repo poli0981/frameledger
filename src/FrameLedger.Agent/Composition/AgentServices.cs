@@ -70,6 +70,7 @@ internal static class AgentServices
         services.AddSingleton<IRecorderPolicy, SettingsRecorderPolicy>();
         services.AddSingleton<SettingsKillSwitch>();
         services.AddSingleton<IKillSwitch>(static sp => sp.GetRequiredService<SettingsKillSwitch>());
+        AddUserModeException(services);
 
         // The gate and the guard: one native facade, one managed gate in front of it.
         services.AddSingleton<IAntiCheatGuard, NativeAntiCheatGuard>();
@@ -109,6 +110,18 @@ internal static class AgentServices
         AddPipe(services, pipeName);
 
         return services;
+    }
+
+    /// <summary>
+    /// D33 (owner decision 2026-09-26): the user-mode exception's option (one row in <c>settings</c>), its channel to the
+    /// Overlay (<c>Local\FrameLedger.Tolerate.&lt;pid&gt;</c>, created before an injection under it), and the policy that ends
+    /// it when a session under it ends badly.
+    /// </summary>
+    private static void AddUserModeException(IServiceCollection services)
+    {
+        services.AddSingleton<IUserModeExceptionSwitch, SettingsUserModeExceptionSwitch>();
+        services.AddSingleton<IOverlayToleranceChannel>(static _ => new OverlayToleranceChannel(static line => Serilog.Log.Information("{Line}", line)));
+        services.AddSingleton(static sp => new UserModeExceptionLapsePolicy(sp.GetRequiredService<IGameConsentStore>()));
     }
 
     /// <summary>
@@ -165,7 +178,10 @@ internal static class AgentServices
             sp.GetRequiredService<IExecutableIdentitySource>(),
             static line => Serilog.Log.Information("{Line}", line),
             sp.GetRequiredService<IIpcEventPublisher>(),
-            id => sp.GetRequiredService<CaptureOrchestrator>().IsRecording(id)));
+            id => sp.GetRequiredService<CaptureOrchestrator>().IsRecording(id),
+            // D33: the evidence and the option the user-mode exception's eligibility needs.
+            sp.GetRequiredService<ISessionRepository>(),
+            sp.GetRequiredService<IUserModeExceptionSwitch>()));
 
         // The layer's registration follows the ledger (P4 PR-2, 12_BUILD §The Vulkan layer is not registered at
         // install time): the same manifest and key --register-vklayer writes, reconciled after every consent change
@@ -197,33 +213,7 @@ internal static class AgentServices
         // host's under --serve and a logged no-op under --console (TryAdd: --serve registers its own first).
         services.AddSingleton<CapturePause>();
         services.TryAddSingleton<IAgentLifetime, NoAgentLifetime>();
-        services.AddSingleton(static sp => new AgentCommandHandler(
-            sp.GetRequiredService<IGameRepository>(),
-            sp.GetRequiredService<IGameConsentStore>(),
-            sp.GetRequiredService<IAntiCheatGuard>(),
-            sp.GetRequiredService<IExecutableIdentitySource>(),
-            sp.GetRequiredService<CaptureOrchestrator>(),
-            sp.GetRequiredService<CapturePause>(),
-            sp.GetRequiredService<IAgentLifetime>(),
-            // UpdateRules: re-seed the rules file, then wake the detection sweep (P4 PR-1) — a rules change is the
-            // re-run trigger 05_DETECTION §Caching names, so the games table follows within the same second.
-            async ct =>
-            {
-                RulesSeedOutcome outcome = await new RulesSeeder(new FileSystemRulesStore()).EnsureSeededAsync(ct).ConfigureAwait(false);
-                sp.GetRequiredService<DetectionSweep>().RequestNow();
-                // And the anti-cheat pre-scan: new rules may name a game the library already holds (2026-09-25).
-                sp.GetRequiredService<AntiCheatPreScanSweep>().RequestNow();
-                return outcome.ToString();
-            },
-            // P3 PR-4 (D14): the reviewed disclosure this Agent stamps against, and its own clock for the stamp.
-            SafetyDisclosure.Version,
-            TimeProvider.System,
-            sp.GetRequiredService<VkLayerReconciler>(),
-            // P4 PR-7: the on-demand retention sweep, over the Agent's own settings read and its own blob tables.
-            ct => new RetentionSweep(sp.GetRequiredService<ISessionRepository>(), sp.GetRequiredService<RegisteredSettings>()).RunAsync(ct),
-            sp.GetRequiredService<ExecutableRelocator>(),
-            // beta.8: an executable that cannot run as x64 is refused before anything is scanned or stamped.
-            new PeArchitectureSource()));
+        services.AddSingleton(static sp => CommandHandler(sp));
         services.AddSingleton<IIpcRequestHandler>(static sp => new AgentRequestHandler(
             AgentIdentityFactory.OfThisProcess(sp.GetRequiredService<AgentPaths>().VkLayerDirectory),
             TelemetryDescriptor(),
@@ -249,6 +239,41 @@ internal static class AgentServices
         services.AddSingleton<ILaunchRecorderFactory, AgentLaunches>();
 
     }
+
+    /// <summary>The command half of the pipe (P3 PR-1b) over the Agent's own adapters — every command it answers, D33's included.</summary>
+    private static AgentCommandHandler CommandHandler(IServiceProvider sp) =>
+        new AgentCommandHandler(
+            sp.GetRequiredService<IGameRepository>(),
+            sp.GetRequiredService<IGameConsentStore>(),
+            sp.GetRequiredService<IAntiCheatGuard>(),
+            sp.GetRequiredService<IExecutableIdentitySource>(),
+            sp.GetRequiredService<CaptureOrchestrator>(),
+            sp.GetRequiredService<CapturePause>(),
+            sp.GetRequiredService<IAgentLifetime>(),
+            // UpdateRules: re-seed the rules file, then wake the detection sweep (P4 PR-1) — a rules change is the
+            // re-run trigger 05_DETECTION §Caching names, so the games table follows within the same second.
+            async ct =>
+            {
+                RulesSeedOutcome outcome = await new RulesSeeder(new FileSystemRulesStore()).EnsureSeededAsync(ct).ConfigureAwait(false);
+                sp.GetRequiredService<DetectionSweep>().RequestNow();
+                // And the anti-cheat pre-scan: new rules may name a game the library already holds (2026-09-25).
+                sp.GetRequiredService<AntiCheatPreScanSweep>().RequestNow();
+                return outcome.ToString();
+            },
+            // P3 PR-4 (D14): the reviewed disclosure this Agent stamps against, and its own clock for the stamp.
+            SafetyDisclosure.Version,
+            TimeProvider.System,
+            sp.GetRequiredService<VkLayerReconciler>(),
+            // P4 PR-7: the on-demand retention sweep, over the Agent's own settings read and its own blob tables.
+            ct => new RetentionSweep(sp.GetRequiredService<ISessionRepository>(), sp.GetRequiredService<RegisteredSettings>()).RunAsync(ct),
+            sp.GetRequiredService<ExecutableRelocator>(),
+            // beta.8: an executable that cannot run as x64 is refused before anything is scanned or stamped.
+            new PeArchitectureSource(),
+            // D33: the user-mode exception's option, evidence and disclosure version.
+            new AntiCheatExceptionCommands(
+                sp.GetRequiredService<IUserModeExceptionSwitch>(),
+                sp.GetRequiredService<ISessionRepository>(),
+                AntiCheatExceptionDisclosure.Version));
 
     /// <summary>
     /// <c>HelloAck.telemetrySource</c>: the layers this machine composes, read once on the first <c>Hello</c> by

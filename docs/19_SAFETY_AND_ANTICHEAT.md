@@ -522,9 +522,12 @@ and the user ticks each game), not reachable from the command line, and not evas
 named and visible (rule 3). `InjectViaLoadLibrary` still has internal linkage in `fl_guard.cpp`; `tools/chokepoint-check.ps1`
 is unchanged.
 
-*Built in beta.9 PR-1: the guard's tolerance and the Overlay's channel, with nothing yet asking for either
-(`NativeAntiCheatGuard` passes none). The Agent's eligibility, gate and records follow in PR-2; the option, the list,
-the disclosure and the legal text in PR-3.*
+*Built in beta.9. PR-1: the guard's tolerance and the Overlay's channel. PR-2: the Agent — the option
+(`hooking.usermode_ac_exceptions`, off), the sweep's eligibility pass (a tolerant pre-scan keyed on the rules, the
+executable and the block; the session count every pass), the `SetAntiCheatException` command (the Agent gathers the
+facts itself; the store applies the rule), the gate's one branch with the channel published before the request, the
+re-scans naming the family, the session's mark, and every end (`UserModeExceptionLapse`) — schema 0014. PR-3: the
+option and the list in Settings, the disclosure, the game page and the legal text.*
 
 
 ### The floor data cannot remove

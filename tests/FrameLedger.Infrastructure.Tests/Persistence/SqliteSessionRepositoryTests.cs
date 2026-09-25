@@ -38,6 +38,7 @@ public sealed class SqliteSessionRepositoryTests
         Tier = CaptureTier.Hooked,
         Mode = CaptureMode.Launch,
         ExitStatus = ExitStatus.Normal,
+        AcExceptionFamily = "NetEase Yidun",
         FrameCount = 5400,
         AppFrameCount = 5400,
         DisplayedFrameCount = 5400,
@@ -361,5 +362,34 @@ public sealed class SqliteSessionRepositoryTests
         LegalAcceptance accepted = (await legal.FindAsync("EULA", Ct))!;
         accepted.Version.Should().Be("2026-09");
         accepted.AcceptedAt.Should().Be(DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_000_000));
+    }
+
+    /// <summary>
+    /// D33 (owner decision 2026-09-26): the evidence a user-mode exception needs — hooked, frames recorded, <c>normal</c> —
+    /// and nothing else: a crash, a safety unhook, a Tier-2 session and a hooked session that recorded no frame do not count.
+    /// </summary>
+    [Fact]
+    public async Task OnlyHookedNormalSessionsWithFramesAreSuccessful()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        (long gameId, long snapshotId) = await SeedAsync(f);
+        var repo = new SqliteSessionRepository(f.Db);
+        SessionRow[] rows =
+        [
+            Row(gameId, snapshotId),
+            Row(gameId, snapshotId) with { ExitStatus = ExitStatus.Crashed },
+            Row(gameId, snapshotId) with { ExitStatus = ExitStatus.UnhookedSafety },
+            Row(gameId, snapshotId) with { ExitStatus = ExitStatus.Degraded },
+            Row(gameId, snapshotId) with { Tier = CaptureTier.NotHooked },
+            Row(gameId, snapshotId) with { FrameCount = 0, AppFrameCount = 0, DisplayedFrameCount = 0 },
+            Row(gameId, snapshotId),
+        ];
+        foreach (SessionRow row in rows)
+        {
+            await repo.InsertFinalizedAsync(new FinalizedSession { Row = row }, Ct);
+        }
+
+        (await repo.CountSuccessfulHookedAsync(gameId, Ct)).Should().Be(2);
+        (await repo.CountSuccessfulHookedAsync(gameId + 1, Ct)).Should().Be(0);
     }
 }

@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using Dapper;
 using FluentAssertions;
 using FluentAssertions.Specialized;
+using FrameLedger.Application.Persistence;
 using FrameLedger.Infrastructure.Import;
 using FrameLedger.Infrastructure.Persistence;
 using Microsoft.Data.Sqlite;
@@ -131,6 +132,45 @@ public sealed class LedgerDatabaseTests
 
         await c.ExecuteAsync(new CommandDefinition($"DELETE FROM schema_migrations WHERE version > {version}; PRAGMA wal_checkpoint(TRUNCATE);",
             cancellationToken: Ct)).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Schema 0014 (2026-09-26, D33): the user-mode exception's columns, ADD COLUMN only — a row blocked before it keeps its
+    /// block, is not eligible and carries no grant; a session written before it ran under no exception.
+    /// </summary>
+    [Fact]
+    public async Task ScriptFourteenAddsTheExceptionColumnsAndChangesNoRow()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(14);
+        string path = f.Path;
+        await f.Db.DisposeAsync().ConfigureAwait(true);
+        var c13 = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        await using (c13.ConfigureAwait(true))
+        {
+            await c13.OpenAsync(Ct).ConfigureAwait(true);
+            await RewindToAsync(c13, 13).ConfigureAwait(true);
+            await c13.ExecuteAsync(new CommandDefinition(
+                "INSERT INTO games (name, exe_path, hook_blocked_reason, hook_prescan_state, added_at, updated_at) "
+                + "VALUES ('GF2', 'C:\\GF2\\GF2_Exilium.exe', 'AntiCheatFile|NetEase Yidun|NEP2.dll', 'blocked', 0, 0)", cancellationToken: Ct)).ConfigureAwait(true);
+        }
+
+        LedgerDatabase migrated = await LedgerDatabase.OpenAsync(path, ct: Ct).ConfigureAwait(true);
+        await using (migrated.ConfigureAwait(true))
+        {
+            migrated.SchemaVersion.Should().Be(MigrationRunner.LatestVersion);
+            IReadOnlyList<string> games = await migrated.ReadAsync(async (c, ct) =>
+                (IReadOnlyList<string>)[.. await c.QueryAsync<string>(new CommandDefinition(
+                    "SELECT name FROM pragma_table_info('games') WHERE name LIKE 'ac_exception_%'", cancellationToken: ct)).ConfigureAwait(false)], Ct).ConfigureAwait(true);
+            games.Should().HaveCount(14);
+            long sessions = await migrated.ReadAsync((c, ct) => c.ExecuteScalarAsync<long>(new CommandDefinition(
+                "SELECT COUNT(*) FROM pragma_table_info('sessions') WHERE name = 'ac_exception_family'", cancellationToken: ct)), Ct).ConfigureAwait(true);
+            sessions.Should().Be(1);
+
+            GameRow row = (await new SqliteGameRepository(migrated).FindAsync(@"C:\GF2\GF2_Exilium.exe", Ct).ConfigureAwait(true))!;
+            row.HookBlockedReason.Should().Be("AntiCheatFile|NetEase Yidun|NEP2.dll", "0014 edits no row");
+            row.AcException.Should().BeEquivalentTo(AntiCheatExceptionState.None, "no eligibility and no grant until the Agent and the user say so");
+        }
     }
 
     /// <summary>Schema 0013 (2026-09-25): <c>frame_blobs.first_present_ms</c>, NULL for every row written before.</summary>

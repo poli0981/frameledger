@@ -227,6 +227,18 @@ Its result is authoritative: no code path may inject without a passing check, an
 
 What the Agent checks **before** asking the guard is the thing the native side structurally cannot see: **per-game consent** (CLAUDE.md rule 1). Consent is a record of something a human did, so `HookedCaptureGate` refuses an unconsented or un-enabled game without the guard ever being called.
 
+> **The user-mode exception (D33, 2026-09-26) — one branch, and it only narrows.** A blocked game is refused
+> `PreviouslyBlocked` before the guard is asked, as ever, UNLESS `HookRequest.FromConsent` found its exception in
+> force: `hooking.usermode_ac_exceptions` on, a grant on the row made on the executable on disk, the block naming that
+> family (`UserModeExceptionRules.CoveredFamily`) — and the session could publish the Overlay's channel
+> (`IOverlayToleranceChannel`, `07_IPC` §D) BEFORE building the request. Then the gate hands the guard the family's
+> NAME through the same entry (`GuardedInjectAsync` / `…WhenReadyAsync`), the guard decides whether to honour it and
+> runs every check, and every 30 s re-scan names it again (`GuardSupervisor(guard, toleratedFamily)`). A blocked row
+> whose exception does not apply is hooking-off before the process is opened, like any other. A hooked session under
+> it is marked (`sessions.ac_exception_family`, `; ac-exception=<family>` in the notes), and a finding about the game,
+> a safety unhook, the Overlay's own stop or a crash while hooked ends the exception (`UserModeExceptionLapsePolicy`,
+> after the row is stored). `19_SAFETY` §The user-mode exception is the rule; this is where the loop applies it.
+
 > **Where it lives, corrected 2026-08-06.** This sentence said "lives in SQLite", and was the
 > only line in the tree that said where consent lives — while no database, no `games` table
 > and no consent writer existed in any `.cs` file (§S27). The port is

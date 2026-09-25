@@ -38,6 +38,17 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   a pass that let something through says so and names it. The injected Overlay learns the same family before it
   starts watching the game's module loads, so a late-loading module of that family does not stop it and any other
   anti-cheat still does. Nothing asks for any of this yet: every game is judged exactly as in beta.8.
+- **The Agent can grant, keep and end a user-mode anti-cheat exception** (D33; the Settings option, the list and the
+  disclosure arrive in the next PR, so nothing in the App asks for one yet). With the option on
+  (`hooking.usermode_ac_exceptions`, off by default), the Agent's library scan asks each blocked game one question —
+  would the guard let exactly its blocking family through, with no kernel driver and nothing else found — and counts
+  its successful hooked sessions; a game with both and at least two sessions is eligible. A grant rests on facts the
+  Agent gathers itself when asked, is bound to the executable's bytes and turns nothing on: hooking is the usual
+  consent dialog afterwards. Under it the Agent tells the Overlay the family before injecting, names it to the guard at
+  the start and at every 30 s re-scan, and marks the session with it. It ends — hooking off, the block standing, the
+  reason kept — on a new finding, a safety unhook, the Overlay stopping for another anti-cheat, a crash while hooked, a
+  game update, or when the user withdraws it; turning the option off suspends every exception without deleting any.
+  Schema 0014 adds the columns; the database opens in place.
 
 ## [0.1.0-beta.8] - 2026-09-25
 

@@ -50,19 +50,26 @@ public sealed class AntiCheatPreScanSweepTests
 
         public List<string> Scanned { get; } = [];
 
-        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, CancellationToken ct = default) =>
+        /// <summary>D33: the family each scan named, in order (null for none).</summary>
+        public List<string?> Tolerated { get; } = [];
+
+        /// <summary>D33: the answer to a scan that names a family; <see cref="Answer"/> when unset.</summary>
+        public AntiCheatVerdict? TolerantAnswer { get; set; }
+
+        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, string? toleratedFamily, CancellationToken ct = default) =>
             throw new InvalidOperationException("the pre-scan never evaluates a process");
 
-        public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath, CancellationToken ct = default) =>
+        public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath, string? toleratedFamily, CancellationToken ct = default) =>
             throw new InvalidOperationException("the pre-scan never injects");
 
-        public ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAsync(int targetPid, string payloadPath, int timeoutMs, CancellationToken ct = default) =>
+        public ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAsync(int targetPid, string payloadPath, int timeoutMs, string? toleratedFamily, CancellationToken ct = default) =>
             throw new InvalidOperationException("the pre-scan never injects");
 
-        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath, CancellationToken ct = default)
+        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath, string? toleratedFamily, CancellationToken ct = default)
         {
             Scanned.Add(executablePath);
-            return ValueTask.FromResult(Answer);
+            Tolerated.Add(toleratedFamily);
+            return ValueTask.FromResult(toleratedFamily is not null && TolerantAnswer is { } tolerant ? tolerant : Answer);
         }
     }
 
@@ -103,16 +110,77 @@ public sealed class AntiCheatPreScanSweepTests
 
         public ValueTask<ConsentWriteOutcome> RecordGuardBlockAsync(ExecutableFingerprint fingerprint, AntiCheatVerdict refusal, CancellationToken ct = default) =>
             throw new NotSupportedException("the pre-scan writes through RecordPreScanAsync");
+
+        /// <summary>D33: every eligibility write, in order.</summary>
+        public List<(bool Eligible, string? Verdict, int Sessions)> Eligibility { get; } = [];
+
+        /// <summary>D33: every exception ended, in order.</summary>
+        public List<string> Revoked { get; } = [];
+
+        public ValueTask<ConsentWriteOutcome> RecordExceptionEligibilityAsync(ExecutableFingerprint scanned, string block, AntiCheatVerdict? verdict, int sessions,
+            string rulesVersion, CancellationToken ct = default)
+        {
+            GameRow row = games.Rows[scanned.ExePath];
+            if (!string.Equals(row.HookBlockedReason, block, StringComparison.Ordinal))
+            {
+                return ValueTask.FromResult(ConsentWriteOutcome.NotFound);
+            }
+
+            bool eligible = verdict is { } v && UserModeExceptionRules.IsEligible(StoredBlock.Parse(block), v, sessions);
+            string? text = verdict is { } said ? $"{said.Reason}|{said.Family}|{said.Signal}" : null;
+            Eligibility.Add((eligible, text, sessions));
+            games.Rows[scanned.ExePath] = row with
+            {
+                AcException = row.AcException with
+                {
+                    Eligible = eligible,
+                    Verdict = text,
+                    Sessions = sessions,
+                    CheckedRulesVersion = rulesVersion,
+                    CheckedExeSizeBytes = scanned.SizeBytes,
+                    CheckedExeMtimeMs = scanned.MtimeUnixMs,
+                    CheckedBlock = block,
+                },
+            };
+            return ValueTask.FromResult(ConsentWriteOutcome.Written);
+        }
+
+        public ValueTask<ConsentWriteOutcome> GrantAntiCheatExceptionAsync(AntiCheatExceptionGrantRequest grant, CancellationToken ct = default) =>
+            throw new NotSupportedException("the sweep never grants");
+
+        public ValueTask<ConsentWriteOutcome> RevokeAntiCheatExceptionAsync(string normalisedExePath, string reason, CancellationToken ct = default)
+        {
+            GameRow row = games.Rows[normalisedExePath];
+            if (!row.AcException.IsGranted)
+            {
+                return ValueTask.FromResult(ConsentWriteOutcome.NotFound);
+            }
+
+            Revoked.Add(reason);
+            games.Rows[normalisedExePath] = row with
+            {
+                HookEnabled = row.HookBlockedReason is null && row.HookEnabled,
+                AcException = row.AcException with { GrantedAt = null, LapsedReason = reason, LapsedAt = DateTimeOffset.UnixEpoch },
+            };
+            return ValueTask.FromResult(ConsentWriteOutcome.Written);
+        }
     }
 
     private sealed class Rig : IDisposable
     {
-        public Rig(FakeGameRepository games)
+        public Rig(FakeGameRepository games, bool exceptions = false)
         {
             Games = games;
             Consent = new LibraryConsent(games);
-            Sweep = new AntiCheatPreScanSweep(games, Consent, Guard, Rules, Identity, static _ => { }, Pipe, Recording.Contains);
+            // D33: the exception's evidence and option are composed only where a test is about them.
+            Sweep = exceptions
+                ? new AntiCheatPreScanSweep(games, Consent, Guard, Rules, Identity, static _ => { }, Pipe, Recording.Contains, Sessions, Option)
+                : new AntiCheatPreScanSweep(games, Consent, Guard, Rules, Identity, static _ => { }, Pipe, Recording.Contains);
         }
+
+        public FakeSessionRepository Sessions { get; } = new();
+
+        public FakeExceptionSwitch Option { get; } = new();
 
         public AntiCheatPreScanSweep Sweep { get; }
 
@@ -259,5 +327,160 @@ public sealed class AntiCheatPreScanSweepTests
         r.Sweep.RequestNow();    // idempotent: one wake is one wake
         (await r.Sweep.WaitAsync(TimeSpan.FromMinutes(5), Ct)).Should().BeTrue();
         r.Sweep.Dispose();
+    }
+
+    private const string _yidun = "AntiCheatFile|NetEase Yidun|NEP2.dll";
+
+    private static readonly AntiCheatVerdict _letThrough = AntiCheatVerdict.AllowedUnderException("NetEase Yidun", "NEP2.dll");
+
+    /// <summary>D33: a blocked entry, with the exception's evidence and option composed; optionally granted on the bytes on disk.</summary>
+    private static async Task<Rig> BlockedAsync(string block = _yidun, int sessions = 3, bool granted = false, bool optionOn = true)
+    {
+        var games = new FakeGameRepository();
+        GameRow row = await games.EnsureAsync(new ExecutableFingerprint { ExePath = _exe, SizeBytes = 5, MtimeUnixMs = 5 }, "Title", Ct).ConfigureAwait(false);
+        games.Rows[_exe] = row with
+        {
+            HookBlockedReason = block,
+            HookPrescanState = "blocked",
+            HookEnabled = granted,
+            AcException = granted
+                ? new AntiCheatExceptionState { GrantedAt = DateTimeOffset.UnixEpoch, Family = "NetEase Yidun", ExeSizeBytes = 5, ExeMtimeMs = 5 }
+                : AntiCheatExceptionState.None,
+        };
+        var rig = new Rig(games, exceptions: true);
+        rig.Sessions.SuccessfulHooked[row.Id] = sessions;
+        rig.Option.On = optionOn;
+        rig.Guard.TolerantAnswer = _letThrough;
+        return rig;
+    }
+
+    /// <summary>
+    /// D33 (owner decision 2026-09-26): with the option on, a blocked entry is asked one question — a pre-scan NAMING its
+    /// block's family — and eligible when the guard let exactly that family through and the evidence reaches two sessions.
+    /// It is never scanned for a new block, and nothing is granted.
+    /// </summary>
+    [Fact]
+    public async Task WithTheOptionOnABlockedEntryIsAskedAboutItsExceptionAndNothingElse()
+    {
+        using Rig r = await BlockedAsync();
+
+        AntiCheatPreScanReport report = await r.Sweep.SweepOnceAsync(Ct);
+
+        report.Blocked.Should().Be(1);
+        report.Scanned.Should().Be(0, "a block is never scanned for a new one");
+        report.ExceptionsChecked.Should().Be(1);
+        r.Guard.Tolerated.Should().Equal("NetEase Yidun");
+        r.Consent.Writes.Should().BeEmpty("the pre-scan's own columns are not written over a block");
+        r.Consent.Eligibility.Should().ContainSingle().Which.Should().Be((true, "AllowedUnderUserModeException|NetEase Yidun|NEP2.dll", 3));
+        r.Games.Rows[_exe].AcException.IsGranted.Should().BeFalse("eligibility grants nothing; the user does, through the disclosure");
+        r.Games.Rows[_exe].HookBlockedReason.Should().Be(_yidun, "nothing clears a block");
+    }
+
+    [Fact]
+    public async Task WithTheOptionOffNothingIsAsked()
+    {
+        using Rig r = await BlockedAsync(optionOn: false);
+
+        (await r.Sweep.SweepOnceAsync(Ct)).ExceptionsChecked.Should().Be(0);
+        r.Guard.Scanned.Should().BeEmpty("off by default means no exception question is asked of any game");
+        r.Consent.Eligibility.Should().BeEmpty();
+    }
+
+    /// <summary>The answer is keyed like the pre-scan: rules, executable and the block itself; the count is re-read every pass.</summary>
+    [Fact]
+    public async Task TheExceptionQuestionIsKeyedAndTheCountIsLive()
+    {
+        using Rig r = await BlockedAsync(sessions: 1);
+        _ = await r.Sweep.SweepOnceAsync(Ct);
+        r.Consent.Eligibility.Should().ContainSingle().Which.Eligible.Should().BeFalse("one session is not the owner's two");
+
+        _ = await r.Sweep.SweepOnceAsync(Ct);
+        r.Guard.Scanned.Should().ContainSingle("nothing in the key changed");
+        r.Consent.Eligibility.Should().ContainSingle("and neither did the answer");
+
+        r.Sessions.SuccessfulHooked[r.Games.Rows[_exe].Id] = 2;
+        _ = await r.Sweep.SweepOnceAsync(Ct);
+        r.Guard.Scanned.Should().ContainSingle("a new session is counted, not scanned for");
+        r.Consent.Eligibility[^1].Should().Be((true, "AllowedUnderUserModeException|NetEase Yidun|NEP2.dll", 2));
+
+        r.Rules.Version = "2026.09.6";
+        _ = await r.Sweep.SweepOnceAsync(Ct);
+        r.Guard.Scanned.Should().HaveCount(2, "new rules may have turned the family kernel-level");
+    }
+
+    [Fact]
+    public async Task ATitleListBlockIsNeverAskedAndNeverEligible()
+    {
+        using Rig r = await BlockedAsync(block: "BlockedStoreId|Valve VAC|steam:730");
+
+        _ = await r.Sweep.SweepOnceAsync(Ct);
+
+        r.Guard.Scanned.Should().BeEmpty("the notorious titles are on the lists by design");
+        r.Consent.Eligibility.Should().ContainSingle().Which.Should().Be((false, (string?)null, 3));
+    }
+
+    [Fact]
+    public async Task AKernelDriverInTheTreeIsNotEligible()
+    {
+        using Rig r = await BlockedAsync();
+        r.Guard.TolerantAnswer = AntiCheatVerdict.Refused(AntiCheatRefusalReason.AntiCheatFile, "Kernel driver in the game folder", "NEPKernel.sys");
+
+        _ = await r.Sweep.SweepOnceAsync(Ct);
+
+        r.Consent.Eligibility.Should().ContainSingle().Which.Eligible.Should().BeFalse("the Aniimo shape: D30 is never excepted");
+    }
+
+    /// <summary>A grant made on bytes no longer on disk ends — with the option off too: a game update is not the file the user accepted the risk for.</summary>
+    [Fact]
+    public async Task AGrantOnOtherBytesEndsWhateverTheOption()
+    {
+        using Rig r = await BlockedAsync(granted: true, optionOn: false);
+        r.Identity.OnDisk = new ExecutableFingerprint { ExePath = _exe, SizeBytes = 6, MtimeUnixMs = 6 };
+
+        AntiCheatPreScanReport report = await r.Sweep.SweepOnceAsync(Ct);
+
+        report.ExceptionsEnded.Should().Be(1);
+        r.Consent.Revoked.Should().Equal(UserModeExceptionLapse.ExecutableChanged);
+        r.Games.Rows[_exe].HookEnabled.Should().BeFalse("the block stands, so hooking goes off with the exception");
+        r.Guard.Scanned.Should().BeEmpty("with the option off nothing is asked");
+    }
+
+    [Fact]
+    public async Task AGrantTheFactsNoLongerSupportEnds()
+    {
+        using Rig r = await BlockedAsync(granted: true);
+        r.Guard.TolerantAnswer = AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedModule, "BattlEye", "BEClient_x64.dll");
+
+        (await r.Sweep.SweepOnceAsync(Ct)).ExceptionsEnded.Should().Be(1);
+
+        r.Consent.Revoked.Should().Equal(UserModeExceptionLapse.NoLongerEligible);
+        r.Games.Rows[_exe].AcException.LapsedReason.Should().Be(UserModeExceptionLapse.NoLongerEligible);
+    }
+
+    /// <summary>A scan that could not look ends nothing: the session start runs the full check anyway, and a folder busy for one pass is not a finding.</summary>
+    [Fact]
+    public async Task AScanThatCouldNotAnswerEndsNoGrant()
+    {
+        using Rig r = await BlockedAsync(granted: true);
+        r.Guard.TolerantAnswer = AntiCheatVerdict.Refused(AntiCheatRefusalReason.PreScanFailed, string.Empty, "the game directory could not be listed");
+
+        (await r.Sweep.SweepOnceAsync(Ct)).ExceptionsEnded.Should().Be(0);
+
+        r.Consent.Revoked.Should().BeEmpty();
+        r.Consent.Eligibility.Should().ContainSingle().Which.Eligible.Should().BeFalse();
+        r.Games.Rows[_exe].AcException.IsGranted.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task NoExceptionQuestionWhileItsSessionRuns()
+    {
+        using Rig r = await BlockedAsync(granted: true);
+        r.Recording.Add(r.Games.Rows[_exe].Id);
+        r.Identity.OnDisk = new ExecutableFingerprint { ExePath = _exe, SizeBytes = 6, MtimeUnixMs = 6 };
+
+        _ = await r.Sweep.SweepOnceAsync(Ct);
+
+        r.Guard.Scanned.Should().BeEmpty();
+        r.Consent.Revoked.Should().BeEmpty("the session's own checks are running; the next pass after it ends looks");
     }
 }

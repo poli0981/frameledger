@@ -35,6 +35,9 @@ internal sealed class AgentRecording
     private readonly CapturePause _pause;
     private readonly IRecorderPolicy _policy;
     private readonly IDriverProfileSource _profiles;
+    private readonly IUserModeExceptionSwitch _exceptions;
+    private readonly IOverlayToleranceChannel _tolerance;
+    private readonly UserModeExceptionLapsePolicy _exceptionLapse;
 
     public AgentRecording(
         IGameConsentStore store,
@@ -55,9 +58,15 @@ internal sealed class AgentRecording
         ISessionObserver observer,
         CapturePause pause,
         IRecorderPolicy policy,
-        IDriverProfileSource profiles)
+        IDriverProfileSource profiles,
+        IUserModeExceptionSwitch exceptions,
+        IOverlayToleranceChannel tolerance,
+        UserModeExceptionLapsePolicy exceptionLapse)
     {
         _profiles = profiles;
+        _exceptions = exceptions;
+        _tolerance = tolerance;
+        _exceptionLapse = exceptionLapse;
         _store = store;
         _gate = gate;
         _guard = guard;
@@ -108,7 +117,8 @@ internal sealed class AgentRecording
             new RecorderOptions { MinimumSessionLength = minimum, PartialFlushInterval = flush },
             _observer,
             _policy,
-            _profiles);
+            _profiles,
+            _exceptionLapse);
     }
 
     /// <summary>L1 + L2 + L3 under the composite, one poller per session; the poller owns and disposes the layers. The interval is the session's (<c>telemetry.interval_ms</c>, D16).</summary>
@@ -174,7 +184,9 @@ internal sealed class AgentRecording
             launcher,
             observer,
             _killSwitch,
-            _pause);
+            _pause,
+            _exceptions,
+            _tolerance);
 
     /// <summary>The session and its collaborators, wired the only way the Agent allows; the recorder supplies the observer.</summary>
     private sealed class Factory(AgentRecording owner, int seconds, IProcessLauncher? launcher) : ICaptureSessionFactory

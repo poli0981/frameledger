@@ -34,6 +34,9 @@ public readonly record struct CaptureNotes(string? End, string? GuardReason, str
     /// <summary>The Win32 error a launch failed with (<c>launch_error=</c>, beta.8).</summary>
     public int? LaunchError { get; init; }
 
+    /// <summary>D33: the family the game's user-mode exception let through while the session was hooked (<c>ac-exception=</c>).</summary>
+    public string? AcExceptionFamily { get; init; }
+
     public static CaptureNotes Parse(string? notes)
     {
         if (string.IsNullOrWhiteSpace(notes))
@@ -41,7 +44,7 @@ public readonly record struct CaptureNotes(string? End, string? GuardReason, str
             return default;
         }
 
-        string? end = null, reason = null, family = null, signal = null;
+        string? end = null, reason = null, family = null, signal = null, acException = null;
         int? exitCode = null, launchError = null;
         bool crashEvent = false;
         foreach (string raw in notes.Split(';'))
@@ -67,9 +70,26 @@ public readonly record struct CaptureNotes(string? End, string? GuardReason, str
             {
                 (reason, family, signal) = Guard(part[6..]);
             }
+            else if (part.StartsWith(_acExceptionPrefix, StringComparison.Ordinal))
+            {
+                acException = Blank(part[_acExceptionPrefix.Length..]);
+            }
         }
 
-        return new CaptureNotes(end, reason, family, signal) { ExitCode = exitCode, CrashEvent = crashEvent, LaunchError = launchError };
+        return new CaptureNotes(end, reason, family, signal)
+        {
+            ExitCode = exitCode,
+            CrashEvent = crashEvent,
+            LaunchError = launchError,
+            AcExceptionFamily = acException,
+        };
+    }
+
+    /// <summary>D33: the slot that says a hooked session ran under the game's user-mode exception, and for which family.</summary>
+    public static string AcExceptionSlot(string family)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(family);
+        return _acExceptionPrefix + Clean(family);
     }
 
     /// <summary>The guard slot as the recorder writes it (beta.8): three positions, a <c>;</c> never inside one.</summary>
@@ -106,6 +126,8 @@ public readonly record struct CaptureNotes(string? End, string? GuardReason, str
             _ => (reason, Blank(words[1]), Blank(words[2])),
         };
     }
+
+    private const string _acExceptionPrefix = "ac-exception=";
 
     private static string Clean(string? s) => string.IsNullOrEmpty(s) ? string.Empty : s.Replace(';', ',');
 

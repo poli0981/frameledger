@@ -3,8 +3,11 @@ using FluentAssertions;
 using FrameLedger.Application.AntiCheat;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Consent;
+using FrameLedger.Application.Recording;
+using FrameLedger.Application.Tests.AntiCheat;
 using FrameLedger.Domain.AntiCheat;
 using FrameLedger.Domain.Consent;
+using FrameLedger.Domain.Sessions;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Shared;
 
@@ -72,9 +75,18 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         /// <summary>Throw only from the Nth evaluation onward, so the first scan can succeed.</summary>
         public int EvaluateThrowsAfter { get; set; } = int.MaxValue;
 
-        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, CancellationToken ct = default)
+        /// <summary>D33: the family each injection and each re-scan named, in order.</summary>
+        public List<string?> InjectTolerated { get; } = [];
+
+        public List<string?> EvaluateTolerated { get; } = [];
+
+        /// <summary>D33: where "inject" is written, beside the tolerance channel's "publish-tolerance", so their order is observable.</summary>
+        public List<string>? Events { get; init; }
+
+        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, string? toleratedFamily, CancellationToken ct = default)
         {
             EvaluateCalls++;
+            EvaluateTolerated.Add(toleratedFamily);
             if (EvaluateThrows is not null || EvaluateCalls > EvaluateThrowsAfter)
             {
                 return ValueTask.FromException<AntiCheatVerdict>(
@@ -84,21 +96,23 @@ public sealed class CaptureSessionTests : IAsyncDisposable
             return ValueTask.FromResult(EvaluateVerdict);
         }
 
-        public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath,
+        public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath, string? toleratedFamily,
             CancellationToken ct = default)
         {
             InjectCalls++;
+            InjectTolerated.Add(toleratedFamily);
+            Events?.Add("inject");
             return ValueTask.FromResult(Verdict);
         }
 
         public ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAsync(int targetPid, string payloadPath,
-            int timeoutMs, CancellationToken ct = default)
+            int timeoutMs, string? toleratedFamily, CancellationToken ct = default)
         {
             InjectCalls++;
             return ValueTask.FromResult(Verdict);
         }
 
-        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath,
+        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath, string? toleratedFamily,
             CancellationToken ct = default) => ValueTask.FromResult(AntiCheatVerdict.Allowed());
     }
 
@@ -170,6 +184,26 @@ public sealed class CaptureSessionTests : IAsyncDisposable
 
         public void Dispose()
         {
+        }
+    }
+
+    /// <summary>D33: the Overlay's channel, recording what was published, in the order <see cref="CountingGuard.Events"/> keeps.</summary>
+    private sealed class FakeToleranceChannel(List<string> events, bool works = true) : IOverlayToleranceChannel
+    {
+        public List<(int Pid, string Family)> Published { get; } = [];
+
+        public int Disposed { get; private set; }
+
+        public IDisposable? TryPublish(int pid, string family)
+        {
+            events.Add("publish-tolerance");
+            Published.Add((pid, family));
+            return works ? new Held(this) : null;
+        }
+
+        private sealed class Held(FakeToleranceChannel owner) : IDisposable
+        {
+            public void Dispose() => owner.Disposed++;
         }
     }
 
@@ -272,7 +306,8 @@ public sealed class CaptureSessionTests : IAsyncDisposable
 
     private static CaptureSession Loop(IGameConsentStore store, CountingGuard guard, FakeSink? sink,
         FakeLiveness? alive = null, int? pid = _pid, SessionEndReason resolveReason = SessionEndReason.Running,
-        CaptureOptions? options = null, IKillSwitch? killSwitch = null, ICapturePauseSource? pause = null) =>
+        CaptureOptions? options = null, IKillSwitch? killSwitch = null, ICapturePauseSource? pause = null,
+        IUserModeExceptionSwitch? exceptions = null, IOverlayToleranceChannel? tolerance = null) =>
         new(store,
             new HookedCaptureGate(guard),
             guard,
@@ -289,7 +324,9 @@ public sealed class CaptureSessionTests : IAsyncDisposable
                 LogFlushGrace = TimeSpan.FromMilliseconds(1),
             },
             killSwitch: killSwitch,
-            pause: pause);
+            pause: pause,
+            exceptions: exceptions,
+            tolerance: tolerance);
 
     private static readonly bool[] _pauseThenResume = [true, false];
 
@@ -987,7 +1024,7 @@ public sealed class CaptureSessionTests : IAsyncDisposable
 
     /// <summary>The loop with an explicit resolver and liveness: the Tier-2 hold's two clocks (2026-09-22).</summary>
     private static CaptureSession With(IGameConsentStore store, CountingGuard guard, FixedResolver resolver, FakeLiveness? alive = null,
-        ICaptureObserver? observer = null, bool hold = true) =>
+        ICaptureObserver? observer = null, bool hold = true, IUserModeExceptionSwitch? exceptions = null, IOverlayToleranceChannel? tolerance = null) =>
         new(store, new HookedCaptureGate(guard), guard, resolver,
             new DelegateLivenessSource(_ => alive ?? new FakeLiveness()),
             new DelegateRingAttacher(_ => (null, ShmAttachRefusal.BuildIdMismatch)),
@@ -998,7 +1035,9 @@ public sealed class CaptureSessionTests : IAsyncDisposable
                 MaxDuration = TimeSpan.FromSeconds(5),
                 AttachBudget = TimeSpan.FromMilliseconds(20),
             },
-            observer: observer);
+            observer: observer,
+            exceptions: exceptions,
+            tolerance: tolerance);
 
     /// <summary>
     /// Tier 2 as a session (2026-09-22; <c>04_CAPTURE</c> §Tier selection): a row whose hooking is off is decided BEFORE the
@@ -1101,5 +1140,139 @@ public sealed class CaptureSessionTests : IAsyncDisposable
 
         r.Reason.Should().Be(SessionEndReason.RefusedByGuard);
         r.HeldUnhooked.Should().BeFalse("HoldUnhooked = false returns the refusal at once");
+    }
+
+    private const string _yidunBlock = "AntiCheatFile|NetEase Yidun|NEP2.dll";
+
+    /// <summary>
+    /// D33: the row as the owner's GIRLS' FRONTLINE 2 would be under its exception — consented, blocked for NetEase Yidun,
+    /// the exception granted on these bytes, and hooking turned on again through FR-2.1 — written through the real store.
+    /// </summary>
+    private async Task<IGameConsentStore> ExceptedStoreAsync()
+    {
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        IGameConsentStore store = await StoreWithAsync().ConfigureAwait(false);
+        await store.RecordGuardBlockAsync(Fingerprint, AntiCheatVerdict.Refused(AntiCheatRefusalReason.AntiCheatFile, "NetEase Yidun", "NEP2.dll"), ct)
+            .ConfigureAwait(false);
+        (await store.GrantAntiCheatExceptionAsync(new AntiCheatExceptionGrantRequest
+        {
+            Fingerprint = Fingerprint,
+            Block = _yidunBlock,
+            Verdict = AntiCheatVerdict.AllowedUnderException("NetEase Yidun", "NEP2.dll"),
+            Sessions = 3,
+            DisclosureVersion = "ac-exception-dialog/1",
+            GrantedAt = DateTimeOffset.UnixEpoch,
+        }, ct).ConfigureAwait(false)).Should().Be(ConsentWriteOutcome.Written);
+        (await store.RecordOperatorAcknowledgementAsync(new OperatorAcknowledgement
+        {
+            Fingerprint = Fingerprint,
+            DisclosureVersion = _disclosure,
+            AcknowledgedAt = DateTimeOffset.UnixEpoch,
+        }, ct).ConfigureAwait(false)).Should().Be(ConsentWriteOutcome.Written);
+        GameConsentRecord record = await store.FindAsync(_exe, ct).ConfigureAwait(false);
+        record.HookEnabled.Should().BeTrue();
+        record.BlockedReason.Should().Be(_yidunBlock, "the exception is a layer over the block, never its clearing");
+        return store;
+    }
+
+    /// <summary>
+    /// D33 (owner decision 2026-09-26): under its exception the Overlay's channel is published BEFORE the injection — the
+    /// Overlay reads it before its loader detour exists — the injection and every re-scan name the family, and the channel
+    /// is let go with the session.
+    /// </summary>
+    [Fact]
+    public async Task UnderItsExceptionTheOverlayIsToldFirstAndEveryScanNamesTheFamily()
+    {
+        var events = new List<string>();
+        var guard = new CountingGuard
+        {
+            Verdict = AntiCheatVerdict.AllowedUnderException("NetEase Yidun", "NEP2.dll"),
+            EvaluateVerdict = AntiCheatVerdict.AllowedUnderException("NetEase Yidun", "NEP2.dll"),
+            Events = events,
+        };
+        using var sink = new FakeSink();
+        var channel = new FakeToleranceChannel(events);
+        CaptureSession loop = Loop(await ExceptedStoreAsync(), guard, sink, exceptions: new FakeExceptionSwitch(on: true), tolerance: channel);
+
+        CaptureOutcome r = await loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        r.ExceptionFamily.Should().Be("NetEase Yidun");
+        r.AttachRefusal.Should().Be(ShmAttachRefusal.Ok);
+        channel.Published.Should().Equal((_pid, "NetEase Yidun"));
+        events.IndexOf("publish-tolerance").Should().BeLessThan(events.IndexOf("inject"), "a channel published after the injection is read by nobody");
+        guard.InjectTolerated.Should().Equal("NetEase Yidun");
+        guard.EvaluateTolerated.Should().NotBeEmpty().And.OnlyContain(static f => f == "NetEase Yidun");
+        channel.Disposed.Should().BeGreaterThan(0, "the channel is held for the session and let go with it");
+    }
+
+    [Fact]
+    public async Task WithTheOptionOffTheBlockedGameIsHookingOffAndItsProcessIsNeverOpened()
+    {
+        var guard = new CountingGuard();
+        var resolver = new FixedResolver(_pid, SessionEndReason.Running, runningTicks: 1);
+        var channel = new FakeToleranceChannel([]);
+        CaptureSession loop = With(await ExceptedStoreAsync(), guard, resolver, exceptions: new FakeExceptionSwitch(on: false), tolerance: channel);
+
+        CaptureOutcome r = await loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        r.Verdict.Reason.Should().Be(AntiCheatRefusalReason.PreviouslyBlocked, "off suspends the exception, and the block is what is left");
+        resolver.ResolveCalls.Should().Be(0, "hook_enabled is 1 only because the exception once applied; without it this is a hooking-off row");
+        guard.InjectCalls.Should().Be(0);
+        channel.Published.Should().BeEmpty();
+        r.ExceptionFamily.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ABlockedGameOnOtherBytesIsHookingOff()
+    {
+        var guard = new CountingGuard();
+        var resolver = new FixedResolver(_pid, SessionEndReason.Running, runningTicks: 1);
+        CaptureSession loop = With(await ExceptedStoreAsync(), guard, resolver, exceptions: new FakeExceptionSwitch(on: true), tolerance: new FakeToleranceChannel([]));
+
+        CaptureOutcome r = await loop.RunAsync(_exe, Fingerprint with { SizeBytes = 1 }, "payload.dll", TestContext.Current.CancellationToken);
+
+        r.Verdict.Reason.Should().Be(AntiCheatRefusalReason.PreviouslyBlocked, "a game update is not the file the user accepted the risk for");
+        guard.InjectCalls.Should().Be(0);
+        resolver.ResolveCalls.Should().Be(0);
+    }
+
+    /// <summary>A channel that could not be published is no exception: the guard is asked nothing, and the game is refused as blocked.</summary>
+    [Fact]
+    public async Task AChannelThatCannotBePublishedIsNoException()
+    {
+        var guard = new CountingGuard();
+        using var sink = new FakeSink();
+        var channel = new FakeToleranceChannel([], works: false);
+        CaptureSession loop = Loop(await ExceptedStoreAsync(), guard, sink, exceptions: new FakeExceptionSwitch(on: true), tolerance: channel);
+
+        CaptureOutcome r = await loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        channel.Published.Should().ContainSingle("it was tried");
+        r.Reason.Should().Be(SessionEndReason.RefusedPreviouslyBlocked);
+        guard.InjectCalls.Should().Be(0, "injecting while the Overlay would stop on the family's module would read as the exception failing");
+        r.ExceptionFamily.Should().BeNull();
+    }
+
+    /// <summary>
+    /// A finding about the game at the start of a session under the exception is written as the block, as every finding is,
+    /// and the outcome names the exception it ran under — the recorder's policy ends the exception on it.
+    /// </summary>
+    [Fact]
+    public async Task AStartTimeFindingUnderTheExceptionIsTheBlockAndEndsTheException()
+    {
+        var guard = new CountingGuard { Verdict = AntiCheatVerdict.Refused(AntiCheatRefusalReason.AntiCheatFile, "Kernel driver in the game folder", "NEPKernel.sys") };
+        using var sink = new FakeSink();
+        var channel = new FakeToleranceChannel([]);
+        IGameConsentStore store = await ExceptedStoreAsync();
+
+        CaptureOutcome r = await Loop(store, guard, sink, exceptions: new FakeExceptionSwitch(on: true), tolerance: channel)
+            .RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        r.Reason.Should().Be(SessionEndReason.RefusedByGuard);
+        r.HookingTurnedOff.Should().BeTrue();
+        r.ExceptionFamily.Should().Be("NetEase Yidun");
+        UserModeExceptionLapsePolicy.LapseOf(r, ExitStatus.Normal).Should().Be(UserModeExceptionLapse.NewFinding);
+        channel.Disposed.Should().BeGreaterThan(0);
+        (await store.FindAsync(_exe, TestContext.Current.CancellationToken)).BlockedReason.Should().Contain("NEPKernel.sys");
     }
 }

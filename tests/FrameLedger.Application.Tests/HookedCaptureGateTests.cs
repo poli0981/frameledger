@@ -13,13 +13,14 @@ public sealed class HookedCaptureGateTests
         public int InjectCalls { get; private set; }
         public AntiCheatVerdict Next { get; set; } = AntiCheatVerdict.Allowed();
 
-        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, CancellationToken ct = default) =>
+        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, string? toleratedFamily, CancellationToken ct = default) =>
             ValueTask.FromResult(Next);
 
-        public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath,
+        public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath, string? toleratedFamily,
             CancellationToken ct = default)
         {
             InjectCalls++;
+            Tolerated.Add(toleratedFamily);
             return ValueTask.FromResult(Next);
         }
 
@@ -27,17 +28,21 @@ public sealed class HookedCaptureGateTests
 
         public int WhenReadyWaitMs { get; private set; }
 
+        /// <summary>D33: the family each injecting entry was asked to tolerate, in order.</summary>
+        public List<string?> Tolerated { get; } = [];
+
         public ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAsync(int targetPid, string payloadPath,
-            int timeoutMs, CancellationToken ct = default)
+            int timeoutMs, string? toleratedFamily, CancellationToken ct = default)
         {
             WhenReadyCalls++;
             WhenReadyWaitMs = timeoutMs;
+            Tolerated.Add(toleratedFamily);
             return ValueTask.FromResult(Next);
         }
 
         public int PreScanCalls { get; private set; }
 
-        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath,
+        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath, string? toleratedFamily,
             CancellationToken ct = default)
         {
             PreScanCalls++;
@@ -93,6 +98,45 @@ public sealed class HookedCaptureGateTests
         // Off again: the same record reaches the guard, so the switch decided and not the record.
         (await gate.StartAsync(Request(), ct)).IsAllowed.Should().BeTrue();
         guard.InjectCalls.Should().Be(1);
+    }
+
+    /// <summary>
+    /// D33 (owner decision 2026-09-26): a blocked game under its user-mode exception reaches the guard through BOTH entries
+    /// with the family named, and the guard's answer is the gate's — the gate adds no judgement of its own.
+    /// </summary>
+    [Fact]
+    public async Task ABlockedGameUnderItsExceptionReachesTheGuardThroughBothEntriesNamingTheFamily()
+    {
+        var guard = new RecordingGuard { Next = AntiCheatVerdict.AllowedUnderException("NetEase Yidun", "NEP2.dll") };
+        var gate = new HookedCaptureGate(guard);
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        GameConsentRecord record = GameConsentRecord.Stored(
+            OnDisk, hookEnabled: true, DateTimeOffset.UnixEpoch, ConsentProvenance.ConsentDialog, "consent-dialog/1",
+            "AntiCheatFile|NetEase Yidun|NEP2.dll", preScanUnverified: false, updatedAt: DateTimeOffset.UnixEpoch,
+            exception: new AntiCheatExceptionGrant
+            {
+                Family = "NetEase Yidun",
+                GrantedAt = DateTimeOffset.UnixEpoch,
+                DisclosureVersion = "ac-exception-dialog/1",
+                ExeSizeBytes = OnDisk.SizeBytes,
+                ExeMtimeUnixMs = OnDisk.MtimeUnixMs,
+            });
+
+        AntiCheatVerdict attach = await gate.StartAsync(HookRequest.FromConsent(record, OnDisk, 1234, @"C:\FrameLedger\FrameLedger.Overlay.dll",
+            exceptionInForce: true), ct);
+        AntiCheatVerdict launch = await gate.StartAsync(HookRequest.FromConsent(record, OnDisk, 1234, @"C:\FrameLedger\FrameLedger.Overlay.dll",
+            waitForPresentationRuntimeMs: 60_000, exceptionInForce: true), ct);
+
+        attach.RanUnderException.Should().BeTrue();
+        launch.RanUnderException.Should().BeTrue();
+        guard.Tolerated.Should().Equal("NetEase Yidun", "NetEase Yidun");
+
+        guard.Next = AntiCheatVerdict.Refused(AntiCheatRefusalReason.AntiCheatFile, "Kernel driver in the game folder", "NEPKernel.sys");
+        (await gate.StartAsync(HookRequest.FromConsent(record, OnDisk, 1234, @"C:\FrameLedger\FrameLedger.Overlay.dll", exceptionInForce: true), ct))
+            .Reason.Should().Be(AntiCheatRefusalReason.AntiCheatFile, "the guard's refusal is the gate's answer, exception or not");
+
+        (await gate.StartAsync(Request(), ct)).IsAllowed.Should().BeFalse("Next is still the refusal");
+        guard.Tolerated[^1].Should().BeNull("an unblocked game names no family");
     }
 
     [Fact]

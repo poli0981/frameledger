@@ -52,10 +52,10 @@ public sealed class CaptureSessionLaunchTests : IAsyncDisposable
 
         public AntiCheatVerdict Verdict { get; set; } = AntiCheatVerdict.Allowed();
 
-        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, CancellationToken ct = default) =>
+        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, string? toleratedFamily, CancellationToken ct = default) =>
             ValueTask.FromResult(AntiCheatVerdict.Allowed());
 
-        public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath,
+        public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath, string? toleratedFamily,
             CancellationToken ct = default)
         {
             InjectCalls++;
@@ -63,14 +63,14 @@ public sealed class CaptureSessionLaunchTests : IAsyncDisposable
         }
 
         public ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAsync(int targetPid, string payloadPath,
-            int timeoutMs, CancellationToken ct = default)
+            int timeoutMs, string? toleratedFamily, CancellationToken ct = default)
         {
             WhenReadyCalls++;
             WhenReadyWaitMs = timeoutMs;
             return ValueTask.FromResult(Verdict);
         }
 
-        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath,
+        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath, string? toleratedFamily,
             CancellationToken ct = default) => ValueTask.FromResult(AntiCheatVerdict.Allowed());
     }
 
