@@ -18,10 +18,12 @@ public partial class GameDetailPage : INavigableView<GameDetailViewModel>
         // nobody: the Trend tab was blank on every first open (beta.8). Draw what it holds now; a later load redraws.
         OnTrendPresented(this, EventArgs.Empty);
         OnSelectionPresented(this, EventArgs.Empty);
+        Loaded += (_, _) => ViewModel.Attach();
         Unloaded += (_, _) =>
         {
             ViewModel.SelectionPresented -= OnSelectionPresented;
             ViewModel.TrendPresented -= OnTrendPresented;
+            ViewModel.Detach();
         };
     }
 
@@ -31,7 +33,7 @@ public partial class GameDetailPage : INavigableView<GameDetailViewModel>
     {
         Frametime.Show(ViewModel.SelectedSeries, displayed: false, sensors: false);
         Distribution.Show(ViewModel.SelectedSeries);
-        Sensors.Show(ViewModel.SelectedSeries);
+        Sensors.Show(ViewModel.SelectedSensors);
         Latency.Show(ViewModel.SelectedSeries, ViewModel.SelectedSession?.Row.LatencyAvgUs, ViewModel.SelectedSession?.Row.LatencyP95Us);
     }
 

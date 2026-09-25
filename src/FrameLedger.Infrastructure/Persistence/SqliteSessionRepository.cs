@@ -22,15 +22,15 @@ public sealed class SqliteSessionRepository : ISessionRepository
 
     private const string _insertFrames =
         "INSERT INTO frame_blobs (session_id, codec, sample_count, frametimes, frame_flags, frame_index, swapchain_ids, rt_flags, "
-        + "render_res, dispatch_rays, pso_created, vram_proc, latency_us) VALUES (@id, @Codec, @SampleCount, @FrameTimes, @FrameFlags, "
-        + "@FrameIndex, @SwapchainIds, @RtFlags, @RenderRes, @DispatchRays, @PsoCreated, @VramProc, @LatencyUs)";
+        + "render_res, dispatch_rays, pso_created, vram_proc, latency_us, first_present_ms) VALUES (@id, @Codec, @SampleCount, @FrameTimes, "
+        + "@FrameFlags, @FrameIndex, @SwapchainIds, @RtFlags, @RenderRes, @DispatchRays, @PsoCreated, @VramProc, @LatencyUs, @FirstPresentMs)";
 
     private const string _insertSensor =
         "INSERT INTO sensor_blobs (session_id, series, hz, codec, data) VALUES (@id, @Series, @Hz, @Codec, @Data)";
 
     private const string _selectFrames =
         "SELECT codec, sample_count, frametimes, frame_flags, frame_index, swapchain_ids, rt_flags, render_res, "
-        + "dispatch_rays, pso_created, vram_proc, latency_us FROM frame_blobs WHERE session_id = @sessionId";
+        + "dispatch_rays, pso_created, vram_proc, latency_us, first_present_ms FROM frame_blobs WHERE session_id = @sessionId";
 
     private const string _exists = "SELECT COUNT(*) FROM sessions WHERE session_guid = @guid";
 
@@ -243,6 +243,7 @@ public sealed class SqliteSessionRepository : ISessionRepository
         PsoCreated = SqliteReaders.Blob(r, 9),
         VramProc = SqliteReaders.Blob(r, 10),
         LatencyUs = SqliteReaders.Blob(r, 11),
+        FirstPresentMs = SqliteReaders.Double(r, 12),
     };
 
     private static async Task<bool> ExistsInAsync(SqliteConnection c, SqliteTransaction? tx, Guid guid, CancellationToken ct) =>
@@ -296,6 +297,7 @@ public sealed class SqliteSessionRepository : ISessionRepository
             cmd.Parameters.AddWithValue("@PsoCreated", Optional(f.PsoCreated));
             cmd.Parameters.AddWithValue("@VramProc", Optional(f.VramProc));
             cmd.Parameters.AddWithValue("@LatencyUs", Optional(f.LatencyUs));
+            cmd.Parameters.AddWithValue("@FirstPresentMs", f.FirstPresentMs is double first ? first : (object)DBNull.Value);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
         }
     }

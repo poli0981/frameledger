@@ -6,10 +6,11 @@ using FrameLedger.Infrastructure.Blobs;
 namespace FrameLedger.App.Charts;
 
 /// <summary>
-/// Decodes one session's blobs into a <see cref="SessionSeries"/>: the frametime series with the gap and
-/// generated bits, the application-frame view with <c>StutterDetector</c> over it (the same rule the stored
-/// <c>stutter_count</c> came from), the segments mapped from frame index to seconds, and the sensors aligned to
-/// their <c>t_ms</c>. Null when the session has no frame blob (Tier 2, or swept by retention).
+/// Decodes one session's blobs into a <see cref="SessionSeries"/>: the charted stream's frametime series with the gap
+/// and generated bits, the application-frame view with <c>StutterDetector</c> over it (the rule the stored
+/// <c>stutter_count</c> came from), the segments mapped from frame index to seconds, and the sensors. Null when the
+/// session has no frame blob (Tier 2, or swept by retention); <see cref="LoadSensorsAsync"/> reads a Tier-2 session's
+/// sensors on their own.
 /// </summary>
 public sealed class SessionSeriesLoader
 {
@@ -30,61 +31,165 @@ public sealed class SessionSeriesLoader
         return Decode(frames, segments, sensors);
     }
 
+    /// <summary>
+    /// The sensor series alone, timed from the session's start — what a session that was not hooked has to chart (beta.8: the
+    /// Tier-2 row has kept its sensors since 2026-09-22, and no chart read them). Empty when none were recorded.
+    /// </summary>
+    public async Task<IReadOnlyList<SensorSeries>> LoadSensorsAsync(long sessionId, CancellationToken ct = default) =>
+        DecodeSensors(await _sessions.FindSensorsAsync(sessionId, ct).ConfigureAwait(false), offsetS: 0);
+
     public static SessionSeries Decode(FrameBlobs frames, IReadOnlyList<SegmentRow> segments, IReadOnlyList<SensorBlob> sensors)
     {
         ArgumentNullException.ThrowIfNull(frames);
         ArgumentNullException.ThrowIfNull(segments);
         ArgumentNullException.ThrowIfNull(sensors);
-        float[] frametimes = SeriesCodec.DecodeFloat32(frames.FrameTimes.ToArray());
-        byte[] flags = SeriesCodec.DecodeBytes(frames.FrameFlags.ToArray());
-        int n = Math.Min(frametimes.Length, flags.Length);
+        float[] allFrametimes = SeriesCodec.DecodeFloat32(frames.FrameTimes.ToArray());
+        byte[] allFlags = SeriesCodec.DecodeBytes(frames.FrameFlags.ToArray());
+        int total = Math.Min(allFrametimes.Length, allFlags.Length);
+        uint[]? swapchains = frames.SwapchainIds is { } ids ? SeriesCodec.DecodeUInt32(ids.ToArray()) : null;
+        (int[] keep, uint? swapchain) = ChartedStream(total, swapchains);
+
+        float[] frametimes = Pick(allFrametimes, keep);
+        byte[] flags = Pick(allFlags, keep);
+        int n = keep.Length;
         var times = new double[n];
         var generated = new bool[n];
         var gap = new bool[n];
         double t = 0;
-        var appTimes = new List<double>(n);
-        var appFrametimes = new List<double>(n);
-        var appIndex = new List<int>(n);
         for (int i = 0; i < n; i++)
         {
             t += frametimes[i] / 1000.0;
             times[i] = t;
             generated[i] = (flags[i] & (byte)FrameFlagBits.Generated) != 0;
             gap[i] = (flags[i] & (byte)FrameFlagBits.Gap) != 0;
-            if (i > 0 && !generated[i] && !gap[i] && frametimes[i] > 0)
-            {
-                appTimes.Add(t);
-                appFrametimes.Add(frametimes[i]);
-                appIndex.Add(i);
-            }
         }
 
+        (List<int> appIndex, List<double> appFrametimes, bool noApplicationFrames) = ApplicationFrames(frametimes, generated, gap);
         StutterResult? stutter = StutterDetector.Detect(appFrametimes);
-        uint[]? frameIndex = frames.FrameIndex is { } fi ? SeriesCodec.DecodeUInt32(fi.ToArray()) : null;
+        uint[]? frameIndex = frames.FrameIndex is { } fi ? PickOptional(SeriesCodec.DecodeUInt32(fi.ToArray()), keep) : null;
+        double? offsetS = frames.FirstPresentMs / 1000.0;
         return new SessionSeries
         {
             TimesS = times,
-            FrameTimesMs = frametimes.Length == n ? frametimes : frametimes[..n],
+            FrameTimesMs = frametimes,
             Generated = generated,
             Gap = gap,
             FrameIndex = frameIndex,
-            RtFlags = frames.RtFlags is { } rt ? SeriesCodec.DecodeBytes(rt.ToArray()) : null,
-            DispatchRays = frames.DispatchRays is { } dr ? SeriesCodec.DecodeUInt32(dr.ToArray()) : null,
-            PsoCreated = frames.PsoCreated is { } pso ? SeriesCodec.DecodeUInt16(pso.ToArray()) : null,
-            VramProcMb = frames.VramProc is { } vram ? SeriesCodec.DecodeUInt32(vram.ToArray()) : null,
-            LatencyUs = frames.LatencyUs is { } lat ? SeriesCodec.DecodeUInt32(lat.ToArray()) : null,
-            RenderRes = frames.RenderRes is { } rr ? SeriesCodec.DecodeUInt16(rr.ToArray()) : null,
-            AppTimesS = [.. appTimes],
+            RtFlags = frames.RtFlags is { } rt ? PickOptional(SeriesCodec.DecodeBytes(rt.ToArray()), keep) : null,
+            DispatchRays = frames.DispatchRays is { } dr ? PickOptional(SeriesCodec.DecodeUInt32(dr.ToArray()), keep) : null,
+            PsoCreated = frames.PsoCreated is { } pso ? PickOptional(SeriesCodec.DecodeUInt16(pso.ToArray()), keep) : null,
+            VramProcMb = frames.VramProc is { } vram ? PickOptional(SeriesCodec.DecodeUInt32(vram.ToArray()), keep) : null,
+            LatencyUs = frames.LatencyUs is { } lat ? PickOptional(SeriesCodec.DecodeUInt32(lat.ToArray()), keep) : null,
+            RenderRes = frames.RenderRes is { } rr ? PickQuads(SeriesCodec.DecodeUInt16(rr.ToArray()), keep) : null,
+            AppTimesS = [.. appIndex.Select(i => times[i])],
             AppFrameTimesMs = [.. appFrametimes],
             AppPresentIndex = [.. appIndex],
+            NoApplicationFrames = noApplicationFrames,
             Stutter = stutter is null ? null : [.. stutter.IsStutter],
-            Segments = MapSegments(segments, times, frameIndex),
-            Sensors = DecodeSensors(sensors),
+            Segments = MapSegments([.. segments.Where(s => swapchain is null || s.SwapchainId == swapchain.Value)], times, frameIndex),
+            Sensors = DecodeSensors(sensors, offsetS ?? 0),
+            SensorsAligned = offsetS is not null,
         };
     }
 
+    /// <summary>
+    /// The presents of the stream the charts draw — the one the session's statistics are over (<c>SegmentBuilder.DominantStream</c>:
+    /// identified first, then the most presents) — as indices into the blob, and that stream's id; every present, and no id,
+    /// when the blob held one stream.
+    /// </summary>
+    internal static (int[] Keep, uint? Swapchain) ChartedStream(int count, uint[]? swapchains)
+    {
+        if (swapchains is null || swapchains.Length < count)
+        {
+            return ([.. Enumerable.Range(0, count)], null);
+        }
+
+        IReadOnlyList<int> keep = SegmentBuilder.DominantStream([.. Enumerable.Range(0, count)], i => swapchains[i]);
+        return ([.. keep], keep.Count > 0 ? swapchains[keep[0]] : null);
+    }
+
+    /// <summary>
+    /// The application-frame view: each application frame's time is from the previous application frame's present to its own —
+    /// the generated presents between them add their intervals to it, never an interval of their own — and a gap breaks the
+    /// chain. Where every present was generated, every present's interval, and the flag that says so.
+    /// </summary>
+    internal static (List<int> Index, List<double> FrametimesMs, bool NoApplicationFrames) ApplicationFrames(float[] frametimes, bool[] generated, bool[] gap)
+    {
+        ArgumentNullException.ThrowIfNull(frametimes);
+        ArgumentNullException.ThrowIfNull(generated);
+        ArgumentNullException.ThrowIfNull(gap);
+        bool noApplicationFrames = generated.Length > 0 && generated.All(static g => g);
+        var index = new List<int>(frametimes.Length);
+        var ms = new List<double>(frametimes.Length);
+        bool chain = false;
+        double sinceApplicationFrame = 0;
+        for (int i = 0; i < frametimes.Length; i++)
+        {
+            if (gap[i])
+            {
+                chain = false;
+                sinceApplicationFrame = 0;
+            }
+            else
+            {
+                sinceApplicationFrame += frametimes[i];
+            }
+
+            if (generated[i] && !noApplicationFrames)
+            {
+                continue;
+            }
+
+            if (chain && sinceApplicationFrame > 0)
+            {
+                index.Add(i);
+                ms.Add(sinceApplicationFrame);
+            }
+
+            chain = true;
+            sinceApplicationFrame = 0;
+        }
+
+        return (index, ms, noApplicationFrames);
+    }
+
+    private static T[] Pick<T>(T[] values, int[] keep)
+    {
+        if (keep.Length == values.Length)
+        {
+            return values;
+        }
+
+        var picked = new T[keep.Length];
+        for (int i = 0; i < keep.Length; i++)
+        {
+            picked[i] = values[keep[i]];
+        }
+
+        return picked;
+    }
+
+    /// <summary>A per-present series the blob may have written shorter than the frames: only the kept presents it covers.</summary>
+    private static T[] PickOptional<T>(T[] values, int[] keep) => keep.Length == values.Length ? values : [.. keep.Where(i => i < values.Length).Select(i => values[i])];
+
+    private static ushort[] PickQuads(ushort[] values, int[] keep)
+    {
+        if (keep.Length * 4 == values.Length)
+        {
+            return values;
+        }
+
+        var picked = new List<ushort>(keep.Length * 4);
+        foreach (int i in keep.Where(i => (i * 4) + 3 < values.Length))
+        {
+            picked.AddRange(values.AsSpan(i * 4, 4).ToArray());
+        }
+
+        return [.. picked];
+    }
+
     /// <summary>A segment's <c>start_frame</c>/<c>end_frame</c> are frame indices; the present at that index (or the nearest) gives the seconds.</summary>
-    private static IReadOnlyList<SegmentSpan> MapSegments(IReadOnlyList<SegmentRow> segments, double[] times, uint[]? frameIndex)
+    private static List<SegmentSpan> MapSegments(IReadOnlyList<SegmentRow> segments, double[] times, uint[]? frameIndex)
     {
         if (times.Length == 0)
         {
@@ -125,7 +230,11 @@ public sealed class SessionSeriesLoader
         return string.Join(" · ", new[] { upscaler, resolution, fg }.Where(static x => x.Length > 0));
     }
 
-    private static List<SensorSeries> DecodeSensors(IReadOnlyList<SensorBlob> sensors)
+    /// <summary>
+    /// Every sensor series against <c>t_ms</c> less <paramref name="offsetS"/> — the first present's place on the sensors'
+    /// clock, so they share the frames' axis (schema 0013) — and −1 dropped: a tick with no reading, never a zero.
+    /// </summary>
+    private static List<SensorSeries> DecodeSensors(IReadOnlyList<SensorBlob> sensors, double offsetS)
     {
         SensorBlob? clock = sensors.FirstOrDefault(static s => string.Equals(s.Series, "t_ms", StringComparison.Ordinal));
         float[]? tMs = clock is null ? null : SeriesCodec.DecodeFloat32(clock.Data.ToArray());
@@ -147,7 +256,7 @@ public sealed class SessionSeriesLoader
                     continue;   // SessionFinalizer.SensorMissing: a tick with no reading, never a zero
                 }
 
-                xs.Add(tMs is not null && i < tMs.Length ? tMs[i] / 1000.0 : i / Math.Max(blob.Hz, 0.001));
+                xs.Add((tMs is not null && i < tMs.Length ? tMs[i] / 1000.0 : i / Math.Max(blob.Hz, 0.001)) - offsetS);
                 ys.Add(values[i]);
             }
 

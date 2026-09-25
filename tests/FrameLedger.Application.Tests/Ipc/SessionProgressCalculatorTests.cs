@@ -162,16 +162,18 @@ public sealed class SessionProgressCalculatorTests
     }
 
     [Fact]
-    public void AGapInsideTheWindowReadsAsPresentsThatAreNotThereNotAsAFasterRate()
+    public void AGapInsideTheWindowIsTimeNothingWasMeasuredIn()
     {
-        // 50 records dropped from the middle of the last 5 s, with the gap marked at the record that follows:
-        // the presented rate is the presents that exist over the window (the row's PresentedFps rule), so it
-        // reads 90, and the window says so with its count rather than stretching the survivors to 100.
+        // 50 records dropped from the middle of the last 5 s, with the gap marked at the record that follows. Until beta.8
+        // the rate was the presents that survived over the whole window — 90, a rate nobody measured: the game presented
+        // the lost 50 at the same 100, and a drop is the Agent falling behind, not the game. The rate is now over the time the
+        // kept intervals span (the row's PresentedFps rule, FrameTimeSeries.MeasuredSeconds), which a pause (FR-3.9) needs as
+        // well: its minutes are a gap since beta.8, and they held no frame anyone saw. The count still says 450.
         List<FlFrameRecord> records = SessionFixtures.Stream(1000, FlMeasured.OutputRes);
         records.RemoveRange(700, 50);
         SessionProgressEvent e = SessionProgressCalculator.Compute(_guid, Progress(records, gaps: [700]), SessionFixtures.QpcFrequency, 10, gpu: null);
 
         e.Presents5s.Should().BeInRange(445, 455);
-        e.PresentedFps5s.Should().BeApproximately(90, 1.5, "450 presents over 5 s — the missing frames are missing, not invented");
+        e.PresentedFps5s.Should().BeApproximately(100, 1.5, "450 presents over the 4.5 s they span — the survivors' rate, and no frame invented");
     }
 }

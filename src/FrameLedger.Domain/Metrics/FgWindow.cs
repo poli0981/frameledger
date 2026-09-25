@@ -36,7 +36,7 @@ public sealed record FgWindow
     /// <summary>Presents that drained a non-empty Streamline word (<see cref="FeatureBits.RayReconstructionObserved"/>).</summary>
     public required int Batches { get; init; }
 
-    /// <summary>Seconds spanned by the window's intervals.</summary>
+    /// <summary>Seconds spanned by the window's intervals, less every interval a gap sat in (beta.8: a pause, lost records).</summary>
     public required double Seconds { get; init; }
 
     /// <summary>Samples the writer could not attribute to a swapchain.</summary>
@@ -177,8 +177,11 @@ public sealed record FgWindow
     /// <summary>Frame generation is active: a published factor at or above <see cref="ActiveThreshold"/>.</summary>
     public bool IsActive => Factor is double f && f >= ActiveThreshold;
 
-    /// <summary>Builds the window over EVERY drained sample, or the reason there is none.</summary>
-    public static FgWindow From(IReadOnlyList<FrameSample> all, long qpcFrequency)
+    /// <summary>
+    /// Builds the window over EVERY drained sample, or the reason there is none. <paramref name="gapBefore"/> indexes the
+    /// samples that follow a gap — a pause (FR-3.9), lost records — whose intervals the rates' time base leaves out.
+    /// </summary>
+    public static FgWindow From(IReadOnlyList<FrameSample> all, long qpcFrequency, IReadOnlySet<int>? gapBefore = null)
     {
         ArgumentNullException.ThrowIfNull(all);
 
@@ -188,7 +191,7 @@ public sealed record FgWindow
             return Nothing(new FgRefusal(FgRefusalKind.NotCounted, FgRefusalSubject.Factor));
         }
 
-        FgWindow tallied = Tally(all, start, qpcFrequency);
+        FgWindow tallied = Tally(all, start, qpcFrequency, gapBefore);
         FgRefusal? refusal = RefusalFor(tallied);
         bool mixedStates = refusal is { Kind: FgRefusalKind.NonUniform, Subject: FgRefusalSubject.Factor };
         return tallied with { Refusal = refusal, Steady = mixedStates ? FgSteadyState.From(all, start, qpcFrequency) : null };
@@ -215,7 +218,7 @@ public sealed record FgWindow
 
     private static bool DrainedBatch(in FrameSample s) => s.Features.HasFlag(FeatureBits.RayReconstructionObserved);
 
-    private static FgWindow Tally(IReadOnlyList<FrameSample> all, int start, long qpcFrequency)
+    private static FgWindow Tally(IReadOnlyList<FrameSample> all, int start, long qpcFrequency, IReadOnlySet<int>? gapBefore)
     {
         // Index is the value; the last slot lumps everything at or above it, which is where a saturated 255
         // lands. `Saturated` counts those separately, because 255 is a sentinel as much as a value and must
@@ -258,7 +261,7 @@ public sealed record FgWindow
             Presents = all.Count - start,
             Evaluations = sigma,
             Batches = batches,
-            Seconds = RecordWindow.SecondsOf(all, start, qpcFrequency),
+            Seconds = RecordWindow.SecondsOf(all, start, qpcFrequency, gapBefore),
             Unidentified = unidentified,
             Streams = streams.Count,
             StreamsInterleaved = Interleaved(all, start, streams.Count),

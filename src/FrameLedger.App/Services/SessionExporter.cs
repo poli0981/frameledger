@@ -110,6 +110,7 @@ public sealed class SessionExporter
         }
 
         w.WriteLine("# note: vram_mb is a held 1 Hz sample, not a per-frame measurement; qpc_ms is relative to the first present");
+        w.WriteLine("# note: one swapchain's presents, the stream the statistics are over; qpc_ms closes up every gap (frametime_ms 0)");
     }
 
     private static SegmentRow? SegmentAt(SegmentRow[] byFrame, uint frameIndex)

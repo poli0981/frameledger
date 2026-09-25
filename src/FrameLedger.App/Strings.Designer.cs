@@ -85,12 +85,20 @@ public static class Strings
         nameof(Chart_Axis_Percentile),
         nameof(Chart_Axis_Sensor),
         nameof(Chart_Axis_Time),
+        nameof(Chart_Axis_TimeFromFirstFrame),
+        nameof(Chart_Axis_TimeFromStart),
         nameof(Chart_Decimated_Format),
+        nameof(Chart_Note_GapsClosed_Format),
+        nameof(Chart_Note_NoApplicationFrames),
+        nameof(Chart_Note_OutsideRange_Format),
+        nameof(Chart_Note_PresentsTiming),
+        nameof(Chart_Series_AppFrames),
         nameof(Chart_Series_Displayed),
         nameof(Chart_Series_GpuLoad),
         nameof(Chart_Series_GpuTemp),
         nameof(Chart_Series_Native),
         nameof(Chart_Series_Percentile),
+        nameof(Chart_Series_Presents),
         nameof(Chart_Series_Stutter),
         nameof(Chart_Series_StutterPso),
         nameof(Chip_NA),
@@ -544,6 +552,7 @@ public static class Strings
         nameof(Rules_Update_NoAgent),
         nameof(Rules_Update_Title),
         nameof(Sensors_Axis_Mb),
+        nameof(Sensors_Axis_Watts),
         nameof(Sensors_Empty),
         nameof(Sensors_Series_CpuLoad),
         nameof(Sensors_Series_CpuTemp),
@@ -907,7 +916,21 @@ public static class Strings
 
     public static string Chart_Axis_Time => ResourceManager.GetString(nameof(Chart_Axis_Time), Culture) ?? nameof(Chart_Axis_Time);
 
+    public static string Chart_Axis_TimeFromFirstFrame => ResourceManager.GetString(nameof(Chart_Axis_TimeFromFirstFrame), Culture) ?? nameof(Chart_Axis_TimeFromFirstFrame);
+
+    public static string Chart_Axis_TimeFromStart => ResourceManager.GetString(nameof(Chart_Axis_TimeFromStart), Culture) ?? nameof(Chart_Axis_TimeFromStart);
+
     public static string Chart_Decimated_Format => ResourceManager.GetString(nameof(Chart_Decimated_Format), Culture) ?? nameof(Chart_Decimated_Format);
+
+    public static string Chart_Note_GapsClosed_Format => ResourceManager.GetString(nameof(Chart_Note_GapsClosed_Format), Culture) ?? nameof(Chart_Note_GapsClosed_Format);
+
+    public static string Chart_Note_NoApplicationFrames => ResourceManager.GetString(nameof(Chart_Note_NoApplicationFrames), Culture) ?? nameof(Chart_Note_NoApplicationFrames);
+
+    public static string Chart_Note_OutsideRange_Format => ResourceManager.GetString(nameof(Chart_Note_OutsideRange_Format), Culture) ?? nameof(Chart_Note_OutsideRange_Format);
+
+    public static string Chart_Note_PresentsTiming => ResourceManager.GetString(nameof(Chart_Note_PresentsTiming), Culture) ?? nameof(Chart_Note_PresentsTiming);
+
+    public static string Chart_Series_AppFrames => ResourceManager.GetString(nameof(Chart_Series_AppFrames), Culture) ?? nameof(Chart_Series_AppFrames);
 
     public static string Chart_Series_Displayed => ResourceManager.GetString(nameof(Chart_Series_Displayed), Culture) ?? nameof(Chart_Series_Displayed);
 
@@ -918,6 +941,8 @@ public static class Strings
     public static string Chart_Series_Native => ResourceManager.GetString(nameof(Chart_Series_Native), Culture) ?? nameof(Chart_Series_Native);
 
     public static string Chart_Series_Percentile => ResourceManager.GetString(nameof(Chart_Series_Percentile), Culture) ?? nameof(Chart_Series_Percentile);
+
+    public static string Chart_Series_Presents => ResourceManager.GetString(nameof(Chart_Series_Presents), Culture) ?? nameof(Chart_Series_Presents);
 
     public static string Chart_Series_Stutter => ResourceManager.GetString(nameof(Chart_Series_Stutter), Culture) ?? nameof(Chart_Series_Stutter);
 
@@ -1824,6 +1849,8 @@ public static class Strings
     public static string Rules_Update_Title => ResourceManager.GetString(nameof(Rules_Update_Title), Culture) ?? nameof(Rules_Update_Title);
 
     public static string Sensors_Axis_Mb => ResourceManager.GetString(nameof(Sensors_Axis_Mb), Culture) ?? nameof(Sensors_Axis_Mb);
+
+    public static string Sensors_Axis_Watts => ResourceManager.GetString(nameof(Sensors_Axis_Watts), Culture) ?? nameof(Sensors_Axis_Watts);
 
     public static string Sensors_Empty => ResourceManager.GetString(nameof(Sensors_Empty), Culture) ?? nameof(Sensors_Empty);
 

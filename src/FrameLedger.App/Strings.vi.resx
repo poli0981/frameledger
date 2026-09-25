@@ -1097,10 +1097,10 @@
     <value>VRAM game này dùng (MB)</value>
   </data>
   <data name="Sensors_Temps_Header" xml:space="preserve">
-    <value>Nhiệt độ và tải</value>
+    <value>Nhiệt độ, tải và công suất</value>
   </data>
   <data name="Sensors_Vram_Header" xml:space="preserve">
-    <value>VRAM</value>
+    <value>Bộ nhớ</value>
   </data>
   <data name="Tabs_SelectASession" xml:space="preserve">
     <value>Chọn một phiên ở thẻ Phiên chơi để xem tại đây.</value>
@@ -2312,5 +2312,32 @@ Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắ
   </data>
   <data name="Trend_Empty_Format" xml:space="preserve">
     <value>Chưa có phiên nào của game này có giá trị cho {0}.</value>
+  </data>
+  <data name="Chart_Series_AppFrames" xml:space="preserve">
+    <value>Khung hình ứng dụng</value>
+  </data>
+  <data name="Chart_Series_Presents" xml:space="preserve">
+    <value>Lần xuất khung</value>
+  </data>
+  <data name="Chart_Note_NoApplicationFrames" xml:space="preserve">
+    <value>Phiên này đếm frame generation nhưng không có khung hình ứng dụng nào, nên biểu đồ vẽ mọi lần xuất khung.</value>
+  </data>
+  <data name="Chart_Note_PresentsTiming" xml:space="preserve">
+    <value>Mỗi lần xuất khung được đo lúc game gửi đi. Khung hình sinh thường được gửi dồn một lúc rồi mới hiển thị đều, nên đường Hiển thị không phải nhịp của màn hình.</value>
+  </data>
+  <data name="Chart_Note_GapsClosed_Format" xml:space="preserve">
+    <value>Trục thời gian bỏ qua {0} khoảng trống (tạm dừng, hoặc bản ghi bị mất), nên đường cảm biến chạy trước khung hình sau mỗi khoảng.</value>
+  </data>
+  <data name="Chart_Note_OutsideRange_Format" xml:space="preserve">
+    <value>{0} khung hình nằm ngoài khoảng phân vị 0,5–99,5 không được vẽ trong biểu đồ tần suất.</value>
+  </data>
+  <data name="Chart_Axis_TimeFromFirstFrame" xml:space="preserve">
+    <value>Thời gian từ khung hình đầu (s)</value>
+  </data>
+  <data name="Chart_Axis_TimeFromStart" xml:space="preserve">
+    <value>Thời gian từ lúc bắt đầu phiên (s)</value>
+  </data>
+  <data name="Sensors_Axis_Watts" xml:space="preserve">
+    <value>W</value>
   </data>
 </root>

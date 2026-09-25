@@ -70,6 +70,23 @@ public sealed class SessionFinalizerTests
         frames.FrameIndex.Should().NotBeNull("the writer's counter is always there");
     }
 
+    /// <summary>
+    /// Schema 0013 (beta.8): the charted stream's first present on the sensors' clock, so the frametime chart can draw them in
+    /// step. The charts draw the dominant stream, so a smaller stream that presented first (a launcher window) is not the zero.
+    /// </summary>
+    [Fact]
+    public void TheChartedStreamsFirstPresentIsPlacedOnTheSensorsClock()
+    {
+        (SessionFinalizer finalizer, _) = Make();
+        List<FlFrameRecord> records = SessionFixtures.Stream(100, FlMeasured.OutputRes | FlMeasured.PresentArgs);
+        records.Insert(0, records[0] with { SwapchainId = 2, Qpc = SessionFixtures.QpcEpoch + 2_000_000 });
+
+        FrameBlobs frames = finalizer.Build(new FinalizeInput { Skeleton = SessionFixtures.Skeleton(), Hooked = SessionFixtures.Hooked(records) }).Frames!;
+
+        frames.FirstPresentMs.Should().BeApproximately(1_000, 1e-9, "the dominant stream's first present, 10,000,000 ticks at 10 MHz after the epoch");
+        SessionFinalizer.FirstPresentMs([], SessionFixtures.QpcEpoch, SessionFixtures.QpcFrequency).Should().BeNull();
+    }
+
     [Fact]
     public void AConstantRenderResolutionIsNotStoredPerFrame()
     {

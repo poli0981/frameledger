@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using FluentAssertions;
 using FrameLedger.Application.AntiCheat;
 using FrameLedger.Application.Capture;
@@ -391,6 +392,86 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         r.Reason.Should().Be(SessionEndReason.StoppedByUser);
         sink.PauseCalls.Should().Equal(_pauseThenResume, "told once per transition, never per tick");
         guard.EvaluateCalls.Should().BeGreaterThan(scansBeforePause, "supervision keeps scanning while the recording is paused");
+    }
+
+    /// <summary>
+    /// beta.8: the Overlay records nothing while paused, so the first record after a resume is QPC-apart from the last one
+    /// before the pause by the whole pause — a fabricated long frame in every statistic, and time the averages counted.
+    /// It follows a gap now, like a torn slot's survivor.
+    /// </summary>
+    [Fact]
+    public async Task TheFirstRecordPresentedAfterAResumeFollowsAGap()
+    {
+        IGameConsentStore store = await StoreWithAsync().ConfigureAwait(true);
+        var guard = new CountingGuard();
+        var pause = new SwitchablePause();
+        using var sink = new PresentingSink();
+        using var alive = new FakeLiveness();
+        using var stop = new CancellationTokenSource();
+        var loop = new CaptureSession(store, new HookedCaptureGate(guard), guard, new FixedResolver(_pid, SessionEndReason.Running),
+            new DelegateLivenessSource(_ => alive), new DelegateRingAttacher(_ => (sink, ShmAttachRefusal.Ok)),
+            new CaptureOptions
+            {
+                DrainInterval = TimeSpan.FromMilliseconds(1),
+                ScanInterval = TimeSpan.FromSeconds(30),
+                AttachBudget = TimeSpan.FromSeconds(5),
+                MaxDuration = TimeSpan.FromSeconds(30),
+                LogFlushGrace = TimeSpan.FromMilliseconds(1),
+            }, pause: pause);
+
+        Task<CaptureOutcome> running = loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken, stop.Token);
+        await Task.Delay(30, TestContext.Current.CancellationToken).ConfigureAwait(true);
+        pause.IsPaused = true;
+        await Task.Delay(120, TestContext.Current.CancellationToken).ConfigureAwait(true);
+        pause.IsPaused = false;
+        await Task.Delay(30, TestContext.Current.CancellationToken).ConfigureAwait(true);
+        await stop.CancelAsync().ConfigureAwait(true);
+        CaptureOutcome r = await running.ConfigureAwait(true);
+
+        // The pause is the one long interval in the stream; the record that ends it is the one after the resume.
+        int afterResume = Enumerable.Range(1, r.Records.Count - 1).MaxBy(i => r.Records[i].Qpc - r.Records[i - 1].Qpc);
+        (r.Records[afterResume].Qpc - r.Records[afterResume - 1].Qpc).Should().BeGreaterThan((ulong)(Stopwatch.Frequency / 20), "the pause lasted 120 ms");
+        r.GapBefore.Should().ContainSingle().Which.Should().Be(afterResume, "the interval that spans the pause is not a frame time");
+    }
+
+    /// <summary>A ring the Overlay writes one record into per drain while it is not paused, stamped with the QPC as the Overlay's present is.</summary>
+    private sealed class PresentingSink : ICaptureSink
+    {
+        private bool _paused;
+        private uint _frame;
+
+        public FlWriterState WriterState => new() { Status = (uint)FlStatus.Ready };
+
+        public FlShmHandshake Handshake => default;
+
+        public long TotalDropped => 0;
+
+        public long TotalGaps => 0;
+
+        public DrainResult Drain(Span<FlFrameRecord> into, IList<ulong> gapIndices)
+        {
+            if (Volatile.Read(ref _paused))
+            {
+                return new DrainResult(0, 0, 0);
+            }
+
+            into[0] = new FlFrameRecord { FrameIndex = _frame++, Qpc = (ulong)Stopwatch.GetTimestamp(), SwapchainId = 1 };
+            return new DrainResult(1, 0, 0);
+        }
+
+        public void PublishGuardResult(uint completedEvaluations, bool unhookRequested)
+        {
+        }
+
+        public void SetPaused(bool paused) => Volatile.Write(ref _paused, paused);
+
+        public void RequestLogFlush()
+        {
+        }
+
+        public void Dispose()
+        {
+        }
     }
 
     [Fact]

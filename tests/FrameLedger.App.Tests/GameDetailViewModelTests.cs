@@ -655,13 +655,74 @@ public sealed class GameDetailViewModelTests
         await pending;
         vm.SelectedHasSeries.Should().BeFalse();
         vm.SelectedNote.Should().Be(Strings.Tabs_SelectedNotHooked);
+        vm.SelectedHasSensors.Should().BeFalse("this Tier-2 row recorded no sensor");
+        vm.SensorsNote.Should().Be(Strings.Sensors_Empty);
 
         vm.SelectedSession = vm.Sessions[1];
         Task pending2 = vm.Pending;
         await pending2;
         vm.SelectedHasSeries.Should().BeTrue();
         vm.SelectedSeries!.Presents.Should().Be(300);
+        vm.SelectedHasSensors.Should().BeTrue();
+        vm.SensorsNote.Should().BeEmpty();
         vm.HasLatency.Should().BeFalse("no Reflex on this session");
+    }
+
+    /// <summary>beta.8: a session of this game that finishes while its page is shown reloads the page; another game's does not, nor one after the page left.</summary>
+    [Fact]
+    public async Task ASessionOfThisGameThatFinishesReloadsThePage()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Alpha");
+        await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddDays(-1));
+        var link = new FakeAgentLink();
+        var vm = new GameDetailViewModel(s.Library, new GameSelection { GameId = game.Id }, new HookingConsent(new FakeAgent(), new FakePrompt()), new FakeNavigator(),
+            new FakeConfirmations(RemoveGameChoice.Cancel), new FakeEdit(null), new FakeStrip(), new NoSummaries(),
+            new Charts.SessionSeriesLoader(s.Sessions), new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(),
+            new FakePicker(null), agent: link);
+        Task loaded = vm.Pending;
+        await loaded;
+        vm.Attach();
+        vm.Attach();    // a second Loaded does not subscribe twice
+
+        long second = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow);
+        link.Raise(IpcMessageType.SessionCompleted, new SessionCompletedEvent(Guid.NewGuid(), second, "normal", 1, "saved", "exited", game.Id + 1, "Other"));
+        Task other = vm.Pending;
+        await other;
+        vm.Sessions.Should().ContainSingle("another game's session is not this page's");
+
+        link.Raise(IpcMessageType.SessionCompleted, new SessionCompletedEvent(Guid.NewGuid(), second, "normal", 1, "saved", "exited", game.Id, "Alpha"));
+        Task reloaded = vm.Pending;
+        await reloaded;
+        vm.Sessions.Should().HaveCount(2);
+
+        vm.Detach();
+        await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddMinutes(5));
+        link.Raise(IpcMessageType.SessionCompleted, new SessionCompletedEvent(Guid.NewGuid(), second + 1, "normal", 1, "saved", "exited", game.Id, "Alpha"));
+        Task after = vm.Pending;
+        await after;
+        vm.Sessions.Should().HaveCount(2, "the page left: nothing listens");
+    }
+
+    /// <summary>beta.8: a session that was not hooked has its sensors, and the Sensors tab draws them instead of saying "not hooked".</summary>
+    [Fact]
+    public async Task ATierTwoSessionsSensorsAreTheSensorsTabs()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Alpha");
+        await s.NotHookedWithSensorsAsync(game.Id, DateTimeOffset.UtcNow.AddDays(-1));
+        (GameDetailViewModel vm, _, _, _, _) = await BuildAsync(s, game.Id);
+
+        vm.SelectedSession = vm.Sessions[0];
+        Task pending = vm.Pending;
+        await pending;
+
+        vm.SelectedHasSeries.Should().BeFalse("no frames");
+        vm.SelectedNote.Should().Be(Strings.Tabs_SelectedNotHooked);
+        vm.SelectedHasSensors.Should().BeTrue();
+        vm.SensorsNote.Should().BeEmpty();
+        vm.SelectedSensors!.Sensors.Select(static x => x.Name).Should().BeEquivalentTo("gpu_temp", "gpu_power");
+        vm.SelectedSensors.SensorsAligned.Should().BeFalse("timed from the session's start: there is no first frame");
     }
 
     [Fact]

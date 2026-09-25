@@ -70,7 +70,10 @@ public sealed class SessionFinalizer
         {
             Row = r.Row,
             Segments = r.Segments,
-            Frames = r.Samples.Count == 0 ? null : EncodeFrames(r.Samples, input.Hooked.GapBefore, row.QpcFrequency),
+            Frames = r.Samples.Count == 0 ? null : EncodeFrames(r.Samples, input.Hooked.GapBefore, row.QpcFrequency) with
+            {
+                FirstPresentMs = FirstPresentMs(r.Dominant, row.QpcEpoch, row.QpcFrequency),
+            },
             Sensors = EncodeSensors(input.Sensors, row.QpcEpoch, row.QpcFrequency),
         };
     }
@@ -118,6 +121,19 @@ public sealed class SessionFinalizer
 
         int swept = await _sessions.SweepRetentionAsync(gameId, input.RetentionKeep, ct).ConfigureAwait(false);
         return new FinalizeOutcome(FinalizeStatus.Saved, id, swept, gameId);
+    }
+
+    /// <summary>
+    /// Schema 0013 (beta.8): the charted stream's first present on the sensors' clock — ms from <c>qpc_epoch</c>, the zero
+    /// <c>t_ms</c> counts from. Null when the stream is empty or its first present predates the epoch (a clock nobody can
+    /// place the sensors on).
+    /// </summary>
+    public static double? FirstPresentMs(IReadOnlyList<FrameSample> dominant, ulong qpcEpoch, long qpcFrequency)
+    {
+        ArgumentNullException.ThrowIfNull(dominant);
+        return dominant.Count == 0 || dominant[0].Qpc < qpcEpoch || qpcFrequency <= 0
+            ? null
+            : (dominant[0].Qpc - qpcEpoch) * 1000.0 / qpcFrequency;
     }
 
     /// <summary>The full <c>frame_blobs</c> row over every record in drained order.</summary>

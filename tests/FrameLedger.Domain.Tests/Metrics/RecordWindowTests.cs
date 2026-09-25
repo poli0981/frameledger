@@ -53,6 +53,18 @@ public sealed class RecordWindowTests
     }
 
     [Fact]
+    public void SecondsLeaveOutTheIntervalIntoAGap()
+    {
+        // beta.8: a pause (FR-3.9) is a gap before the first record after the resume, and its minute measured nothing.
+        List<FrameSample> stream = Stream(4, step: Frequency / 100);
+        stream.Add(Present(stream[^1].Qpc + (60 * Frequency)));
+        stream.Add(Present(stream[^1].Qpc + (Frequency / 100)));
+
+        RecordWindow.SecondsOf(stream, 0, Frequency, new HashSet<int> { 4 }).Should().BeApproximately(0.04, 1e-9);
+        RecordWindow.SecondsOf(stream, 0, Frequency).Should().BeApproximately(60.04, 1e-9, "without the gap set, the pause is time");
+    }
+
+    [Fact]
     public void AZeroFrequencyIsRefused() =>
         FluentActions.Invoking(() => RecordWindow.SecondsOf(Stream(2), 0, 0)).Should().Throw<ArgumentOutOfRangeException>();
 }

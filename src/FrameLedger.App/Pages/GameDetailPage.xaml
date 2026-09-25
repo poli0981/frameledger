@@ -299,9 +299,10 @@
                 </TabItem>
                 <TabItem Header="{x:Static vm:GameDetailViewModel.TabSensors}">
                     <StackPanel Margin="0,12,0,0">
-                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.SelectedNote}"
-                                      Visibility="{Binding ViewModel.SelectedNote, Converter={StaticResource NullToCollapsed}}" />
-                        <charts:SensorsChart x:Name="Sensors" Visibility="{Binding ViewModel.SelectedHasSeries, Converter={StaticResource BoolToVis}}" />
+                        <!-- A session that was not hooked has its sensors (beta.8): the tab's own note and visibility, not the frames'. -->
+                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.SensorsNote}"
+                                      Visibility="{Binding ViewModel.SensorsNote, Converter={StaticResource NullToCollapsed}}" />
+                        <charts:SensorsChart x:Name="Sensors" Visibility="{Binding ViewModel.SelectedHasSensors, Converter={StaticResource BoolToVis}}" />
                     </StackPanel>
                 </TabItem>
                 <TabItem Header="{x:Static vm:GameDetailViewModel.TabLatency}">

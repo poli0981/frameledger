@@ -1,10 +1,15 @@
 <UserControl x:Class="FrameLedger.App.Charts.DistributionChart"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
              MinHeight="240">
-    <!-- FR-5.1: the FPS histogram and the percentile curve, side by side. -->
+    <!-- FR-5.1: the FPS histogram and the percentile curve, side by side; the note says what the histogram's range left out (beta.8). -->
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="12" />
@@ -12,5 +17,6 @@
         </Grid.ColumnDefinitions>
         <sp:WpfPlot x:Name="Histogram" Grid.Column="0" />
         <sp:WpfPlot x:Name="Percentiles" Grid.Column="2" />
+        <ui:TextBlock x:Name="Note" Grid.Row="1" Grid.ColumnSpan="3" Margin="0,4,0,0" Appearance="Tertiary" TextWrapping="Wrap" Visibility="Collapsed" />
     </Grid>
 </UserControl>

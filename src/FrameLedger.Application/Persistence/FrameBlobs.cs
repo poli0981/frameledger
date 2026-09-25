@@ -29,4 +29,11 @@ public sealed record FrameBlobs
     public ReadOnlyMemory<byte>? VramProc { get; init; }
 
     public ReadOnlyMemory<byte>? LatencyUs { get; init; }
+
+    /// <summary>
+    /// Schema 0013 (beta.8): the first present of the stream the charts draw (<c>SegmentBuilder.DominantStream</c>), in ms from
+    /// the session's <c>qpc_epoch</c> — the distance between the frame series' zero and the sensor series' (<c>t_ms</c>). Null
+    /// for a row written before, whose sensors cannot be placed on its frames.
+    /// </summary>
+    public double? FirstPresentMs { get; init; }
 }

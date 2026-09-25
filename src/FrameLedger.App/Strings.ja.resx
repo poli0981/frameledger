@@ -1462,11 +1462,11 @@
     <comment>review</comment>
   </data>
   <data name="Sensors_Temps_Header" xml:space="preserve">
-    <value>温度と負荷</value>
+    <value>温度・負荷・電力</value>
     <comment>review</comment>
   </data>
   <data name="Sensors_Vram_Header" xml:space="preserve">
-    <value>VRAM</value>
+    <value>メモリ</value>
     <comment>review</comment>
   </data>
   <data name="Tabs_SelectASession" xml:space="preserve">
@@ -3075,6 +3075,42 @@
   </data>
   <data name="Trend_Empty_Format" xml:space="preserve">
     <value>このゲームのセッションには、まだ {0} の値がありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Series_AppFrames" xml:space="preserve">
+    <value>アプリケーションフレーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Series_Presents" xml:space="preserve">
+    <value>提示</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Note_NoApplicationFrames" xml:space="preserve">
+    <value>このセッションではフレーム生成がアプリケーションフレームを一つも数えなかったため、グラフはすべての提示を表示しています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Note_PresentsTiming" xml:space="preserve">
+    <value>提示はゲームが送信した時点で計時されます。生成フレームはまとめて送信され、後で均等な間隔で表示されることが多いため、「表示」の線は画面の表示間隔ではありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Note_GapsClosed_Format" xml:space="preserve">
+    <value>時間軸は {0} 個の欠落(一時停止、または失われた記録)を詰めて表示するため、その後のセンサーの線はフレームより先行します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Note_OutsideRange_Format" xml:space="preserve">
+    <value>0.5〜99.5 パーセンタイルの範囲外にある {0} フレームはヒストグラムに描画されていません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Axis_TimeFromFirstFrame" xml:space="preserve">
+    <value>最初のフレームからの時間 (秒)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Axis_TimeFromStart" xml:space="preserve">
+    <value>セッション開始からの時間 (秒)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Axis_Watts" xml:space="preserve">
+    <value>W</value>
     <comment>review</comment>
   </data>
 </root>

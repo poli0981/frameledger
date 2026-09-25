@@ -47,7 +47,8 @@ public static class SessionAggregator
     private static SessionRow ApplyFrames(SessionRow row, Context c)
     {
         FrameStatistics stats = c.Stats;
-        StutterResult? stutter = c.Series is null ? null : StutterDetector.Detect(c.Series.FrameTimesMs);
+        FrameTimeSeries? frames = c.Frames;
+        StutterResult? stutter = frames is null ? null : StutterDetector.Detect(frames.FrameTimesMs);
         LatencyAggregates latency = LatencyAggregates.From(c.Dominant);
         return row with
         {
@@ -65,7 +66,7 @@ public static class SessionAggregator
             FrametimeStdDevMs = stats.StdDevMs,
             StutterCount = stutter?.Count,
             StutterTimePct = stutter?.TimePct,
-            PsoStutterPct = stutter is null || c.Series is null ? null : StutterDetector.PsoStutterPct(stutter, c.Series, c.Dominant),
+            PsoStutterPct = stutter is null || frames is null ? null : StutterDetector.PsoStutterPct(stutter, frames, c.Dominant),
             // Null, not false, when no latency sample exists: nothing measures Reflex today, and a false is an answer nobody gave.
             ReflexActive = latency.Count > 0 ? true : null,
             LatencyAvgUs = latency.AverageUs is { } a ? (long)Math.Round(a) : null,
@@ -93,7 +94,7 @@ public static class SessionAggregator
             DisplayedFps = usable ? fg!.DisplayedFps : steady?.DisplayedFps,
             FgFactorScope = usable && fg!.Factor is not null ? "session" : steady is not null ? "steady" : null,
             FgSteadyShare = steady?.Share,
-            DisplayedP1LowFps = usable && c.Verdict is FgVerdict.Named or FgVerdict.ActiveUnidentified ? c.Stats.P1LowFps : null,
+            DisplayedP1LowFps = usable && c.Verdict is FgVerdict.Named or FgVerdict.ActiveUnidentified ? c.PresentStats.P1LowFps : null,
             DisplayedCountedBy = usable || steady is not null ? (fg!.DxgiCounted ? "dxgi" : "hook") : null,
             FgNoneWithheldReason = c.Withheld,
             FgRefusal = usable ? null : fg?.Refusal is { } refusal ? Vocabulary.FgRefusal(refusal.Kind) : null,
@@ -254,7 +255,11 @@ public static class SessionAggregator
             }
 
             FrameTimeSeries series = FrameTimeSeries.From(seg.Samples, null, c.Input.QpcFrequency);
-            FrameStatistics stats = FrameStatistics.From(series.FrameTimesMs, presented: true);
+
+            // The segment's low is over the frames the session's is (beta.8): application frames where generated ones were counted.
+            FrameStatistics stats = c.Generating
+                ? FrameStatistics.From(FrameTimeSeries.ApplicationFrames(seg.Samples, null, c.Input.QpcFrequency).FrameTimesMs, presented: false)
+                : FrameStatistics.From(series.FrameTimesMs, presented: true);
             UpscaleExtent? extent = UpscaleExtent.From(seg.Samples);
             UpscalerKind? upscaler = seg.Samples.Where(static s => s.Claims(MeasuredFields.Upscaler))
                 .Select(static s => s.Upscaler)
@@ -299,15 +304,25 @@ public static class SessionAggregator
             HashSet<int> gapBefore = DominantGaps(input, dominantRecords);
             Series = Dominant.Count > 0 ? FrameTimeSeries.From(Dominant, gapBefore, input.QpcFrequency) : null;
 
-            Fg = All.Count > 0 ? FgWindow.From(All, input.QpcFrequency) : null;
+            Fg = All.Count > 0 ? FgWindow.From(All, input.QpcFrequency, new HashSet<int>(input.GapBefore)) : null;
             FgCounted = FgLadder.FgHookRan(input.Records);
             var census = (FlRuntimeCensus)input.Writer.RuntimeCensus;
             Withheld = Fg?.IsNone == true ? FgLadder.WithholdNone(census, input.Modules, input.Writer) : null;
             FgIdentity = FgLadder.Identity(dominantRecords);
             Verdict = FgLadder.Resolve(FgIdentity, Fg, Withheld);
-            Stats = Series is null
+
+            // 03_METRICS §Core definitions: the median, the lows, min / max, σ and the stutter rule are over ft_app. Where
+            // generated frames were counted (beta.8) that is application frame to application frame, never present to
+            // present: generated presents sit between them, and on a title that submits them in a burst the present-to-
+            // present median was a generated frame's half millisecond. The presents keep the Displayed 1% low.
+            Generating = Verdict is FgVerdict.Named or FgVerdict.ActiveUnidentified;
+            PresentStats = Series is null
                 ? FrameStatistics.Empty(presented: true)
-                : FrameStatistics.From(Series.FrameTimesMs, presented: Verdict is not (FgVerdict.Named or FgVerdict.ActiveUnidentified));
+                : FrameStatistics.From(Series.FrameTimesMs, presented: true);
+            Frames = Generating && Dominant.Count > 0 ? FrameTimeSeries.ApplicationFrames(Dominant, gapBefore, input.QpcFrequency) : Series;
+            Stats = Generating
+                ? FrameStatistics.From(Frames?.FrameTimesMs ?? [], presented: false)
+                : PresentStats;
             Hdr = HdrVerdict.Of(Dominant);
         }
 
@@ -333,7 +348,20 @@ public static class SessionAggregator
 
         public FgVerdict Verdict { get; }
 
+        /// <summary>Generated frames were counted, or a technology named: the frame statistics are over application frames.</summary>
+        public bool Generating { get; }
+
+        /// <summary>
+        /// The series the frame statistics and the stutter rule are over: application frames where generated frames were
+        /// counted, the dominant stream's presents otherwise.
+        /// </summary>
+        public FrameTimeSeries? Frames { get; }
+
+        /// <summary>The statistics over <see cref="Frames"/>.</summary>
         public FrameStatistics Stats { get; }
+
+        /// <summary>The statistics over every present of the dominant stream — the Displayed 1% low's.</summary>
+        public FrameStatistics PresentStats { get; }
 
         public Tri Hdr { get; }
 

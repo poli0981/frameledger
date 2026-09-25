@@ -133,6 +133,31 @@ public sealed class LedgerDatabaseTests
             cancellationToken: Ct)).ConfigureAwait(false);
     }
 
+    /// <summary>Schema 0013 (2026-09-25): <c>frame_blobs.first_present_ms</c>, NULL for every row written before.</summary>
+    [Fact]
+    public async Task ScriptThirteenAddsTheFirstPresentColumn()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(13);
+        string path = f.Path;
+        await f.Db.DisposeAsync().ConfigureAwait(true);
+        var c12 = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        await using (c12.ConfigureAwait(true))
+        {
+            await c12.OpenAsync(Ct).ConfigureAwait(true);
+            await RewindToAsync(c12, 12).ConfigureAwait(true);
+        }
+
+        LedgerDatabase migrated = await LedgerDatabase.OpenAsync(path, ct: Ct).ConfigureAwait(true);
+        await using (migrated.ConfigureAwait(true))
+        {
+            migrated.SchemaVersion.Should().Be(MigrationRunner.LatestVersion);
+            long columns = await migrated.ReadAsync((c, ct) => c.ExecuteScalarAsync<long>(new CommandDefinition(
+                "SELECT COUNT(*) FROM pragma_table_info('frame_blobs') WHERE name = 'first_present_ms'", cancellationToken: ct)), Ct).ConfigureAwait(true);
+            columns.Should().Be(1);
+        }
+    }
+
     /// <summary>Schema 0012 (2026-09-25): <c>sessions.driver_profile</c>, NULL for every row written before.</summary>
     [Fact]
     public async Task ScriptTwelveAddsTheDriverProfileColumn()

@@ -293,7 +293,10 @@ CREATE TABLE frame_blobs (
   dispatch_rays BLOB,              -- uint32[] : ray volume per frame, tier 1 only
   pso_created BLOB,                -- uint16[] : compile COUNT per frame, not a flag
   vram_proc BLOB,                  -- uint32[] MB per frame; held 1 Hz sample, see 03_METRICS
-  latency_us BLOB                  -- uint32[], tier 1 + Reflex only
+  latency_us BLOB,                 -- uint32[], tier 1 + Reflex only
+  first_present_ms REAL            -- schema 0013 (beta.8): the dominant stream's first present, ms from qpc_epoch —
+                                   -- the sensors' zero (t_ms) against the frames'. NULL before; the charts then
+                                   -- keep the sensor overlay off rather than draw it out of step
 );
 
 CREATE TABLE sensor_blobs (
@@ -376,6 +379,9 @@ Because Tier-1 and Tier-2 sessions carry different fields, every query that comp
 > record ON THE SAME SWAPCHAIN; the first record of a stream, and any record after a torn slot or an
 > overwrite skip, carries 0 with the `frame_flags` gap bit set, so the statistics exclude it and the export
 > still reconstructs `qpc_ms`. `swapchain_ids` is present only when the session held more than one stream.
+> **Schema 0013 (beta.8)** adds `frame_blobs.first_present_ms`: the charts draw the dominant stream from its first present
+> and the sensors from `qpc_epoch`, and nothing said how far apart the two zeros were. Gaps stay closed up on the frame
+> axis (a gap's interval is stored as 0), so a series still drifts ahead of its sensors past each gap.
 > Sensor series are aligned to `t_ms` (milliseconds from `qpc_epoch`) and a tick with no reading is stored as
 > **−1** — never 0, which would be a reading — because temperatures, loads, power and memory are never negative.s (NaN forbidden — assert).
 

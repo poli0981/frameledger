@@ -17,5 +17,6 @@
     <Color x:Key="Chart_SensorSecondary">#FFE0C060</Color>
     <Color x:Key="Chart_Segment">#2260CDFF</Color>
     <Color x:Key="Chart_Histogram">#CC4CC2FF</Color>
-    <Color x:Key="Chart_Percentile">#FFFFC857</Color>
+    <!-- Not a second gold beside Chart_SensorSecondary (beta.8): the Sensors tab draws both. -->
+    <Color x:Key="Chart_Percentile">#FFFF79C6</Color>
 </ResourceDictionary>
