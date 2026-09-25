@@ -52,6 +52,17 @@ public static class SettingsRegistry
         Default = "1",
     };
 
+    /// <summary>
+    /// Whether every FPS figure the App shows has two decimals ("62.40") or is a whole number ("62") — beta.8, owner request
+    /// 2026-09-25. Off by default: the whole number is what every page showed until then.
+    /// </summary>
+    public static readonly SettingDefinition UiFpsDecimals = new()
+    {
+        Key = "ui.fps_decimals",
+        Kind = SettingKind.Boolean,
+        Default = "0",
+    };
+
     /// <summary>Whether the Agent's watcher records tracked games that the App did not launch (FR-3.1/FR-3.3).</summary>
     public static readonly SettingDefinition CaptureBackground = new()
     {
@@ -139,7 +150,7 @@ public static class SettingsRegistry
     /// <summary>Every definition, in the order <c>06_DATA_MODEL</c> lists them.</summary>
     public static IReadOnlyList<SettingDefinition> All { get; } =
     [
-        UiLanguage, UiTheme, UiStartWithWindows, UiMinimizeToTray, UiHideAntiCheatHooking,
+        UiLanguage, UiTheme, UiStartWithWindows, UiMinimizeToTray, UiHideAntiCheatHooking, UiFpsDecimals,
         CaptureBackground, HookingKillSwitch, CaptureMinSessionSeconds, TelemetryIntervalMs, RetentionRawSessionsPerGame,
         UpdateChannel, UpdateAutoCheck, PrivacyOnlineMetadata, LogDebug,
     ];

@@ -203,7 +203,7 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
     public Task ExportPngAsync(Plot plot)
     {
         ArgumentNullException.ThrowIfNull(plot);
-        return Run(() => ExportAsync("png", "PNG|*.png", path => plot.SavePng(path, 1600, 700)));
+        return Run(() => ExportAsync("png", "PNG|*.png", path => ChartTheme.SavePng(plot, path, 1600, 700)));
     }
 
     private async Task Run(Func<Task> work)

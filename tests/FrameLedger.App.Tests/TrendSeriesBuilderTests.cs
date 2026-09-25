@@ -46,29 +46,38 @@ public sealed class TrendSeriesBuilderTests
             Row(4, 1, midSession: true, native: 80),
         ];
 
-        IReadOnlyList<TrendPoint> points = TrendSeriesBuilder.Points(rows, TrendMetric.Average, includeMidSessionChanges: false);
+        IReadOnlyList<TrendPoint> points = TrendSeriesBuilder.Points(rows, TrendMetric.PresentedFps, includeMidSessionChanges: false);
         points.Select(static p => p.Value).Should().Equal(60, 70);
         points.Should().BeInAscendingOrder(static p => p.At);
         TrendSeriesBuilder.ExcludedCount(rows).Should().Be(1);
 
-        IReadOnlyList<TrendPoint> all = TrendSeriesBuilder.Points(rows, TrendMetric.Average, includeMidSessionChanges: true);
+        IReadOnlyList<TrendPoint> all = TrendSeriesBuilder.Points(rows, TrendMetric.PresentedFps, includeMidSessionChanges: true);
         all.Select(static p => p.Value).Should().Equal(60, 70, 80);
         all[2].SettingsChangedMidSession.Should().BeTrue();
     }
 
+    /// <summary>
+    /// beta.8: "Average" mixed two rates in one line. Native FPS is the game's own frames where frame generation was measured;
+    /// Presented FPS is on the sessions that counted no generated frame — never on one that did, whose presented rate
+    /// includes them (CLAUDE.md rule 6).
+    /// </summary>
     [Fact]
-    public void TheAverageIsPresentedWhereFgWasNotMeasuredAndDisplayedOnlyWhereItWas()
+    public void NativeAndPresentedAreTwoMetricsAndNeitherIsAnInflatedNumber()
     {
         SessionRow generated = Row(1, 1, fgMode: "dlssg", native: 62, displayed: 118, factor: 1.9);
         SessionRow none = Row(2, 1, fgMode: "none", native: 90);
         SessionRow presented = Row(3, 1, fgMode: "na", native: null, presented: 144);
         SessionRow identified = Row(4, 1, fgMode: "dlssg", native: null, displayed: null, presented: 304, refusal: "no_evaluations");
 
-        TrendSeriesBuilder.ValueOf(generated, TrendMetric.Average).Should().Be(62);
-        TrendSeriesBuilder.ValueOf(identified, TrendMetric.Average).Should().Be(304, "identified but uncounted: the Presented figure is the headline, never a Native");
+        TrendSeriesBuilder.ValueOf(generated, TrendMetric.NativeFps).Should().Be(62);
+        TrendSeriesBuilder.ValueOf(generated, TrendMetric.PresentedFps).Should().BeNull("its presented rate counts generated frames: the inflated number");
+        TrendSeriesBuilder.ValueOf(identified, TrendMetric.PresentedFps).Should().Be(304, "identified but uncounted: the Presented figure is the headline, never a Native");
+        TrendSeriesBuilder.ValueOf(identified, TrendMetric.NativeFps).Should().BeNull();
         TrendSeriesBuilder.ValueOf(identified, TrendMetric.Displayed).Should().BeNull("no factor was counted, so no displayed rate exists");
-        TrendSeriesBuilder.ValueOf(none, TrendMetric.Average).Should().Be(90);
-        TrendSeriesBuilder.ValueOf(presented, TrendMetric.Average).Should().Be(144, "Presented FPS is the headline when FG is not measured");
+        TrendSeriesBuilder.ValueOf(none, TrendMetric.NativeFps).Should().Be(90);
+        TrendSeriesBuilder.ValueOf(none, TrendMetric.PresentedFps).Should().Be(90, "a measured none: the presents are the application's frames");
+        TrendSeriesBuilder.ValueOf(presented, TrendMetric.PresentedFps).Should().Be(144, "Presented FPS is the headline when FG is not measured");
+        TrendSeriesBuilder.ValueOf(presented, TrendMetric.NativeFps).Should().BeNull();
         TrendSeriesBuilder.ValueOf(generated, TrendMetric.Displayed).Should().Be(118);
         TrendSeriesBuilder.ValueOf(none, TrendMetric.Displayed).Should().BeNull("a measured none has no displayed rate distinct from native");
         TrendSeriesBuilder.ValueOf(presented, TrendMetric.Displayed).Should().BeNull();
@@ -114,6 +123,42 @@ public sealed class TrendSeriesBuilderTests
         IReadOnlyList<TrendPoint> all = TrendSeriesBuilder.Points(rows, TrendMetric.FgFactor, includeMidSessionChanges: true);
         all.Select(static p => p.Value).Should().Equal(1.9, 4);
         all[1].SettingsChangedMidSession.Should().BeTrue("drawn marked: it covers a share of its session, never the session");
+    }
+
+    /// <summary>
+    /// beta.8: a machine metric is every session's telemetry, Tier 2 included — a game never hooked had no trend at all;
+    /// a frame-rate metric stays the hooks'. A steady state is partial for the rates beside the factor too.
+    /// </summary>
+    [Fact]
+    public void MachineMetricsCountEverySessionAndASteadyStatesRatesArePartial()
+    {
+        SessionRow hooked = Row(1, 1, gpu: 70);
+        SessionRow tier2 = Row(2, 1, hooked: false, native: null, gpu: 64);
+        SessionRow steady = Row(3, 1, fgMode: "dlssg", native: 70, displayed: 280, factor: 4) with { FgFactorScope = "steady", FgSteadyShare = 0.75 };
+
+        TrendSeriesBuilder.Points([hooked, tier2], TrendMetric.MaxGpuTemp, includeMidSessionChanges: false).Select(static p => p.Value).Should().Equal(70, 64);
+        TrendSeriesBuilder.Points([hooked, tier2], TrendMetric.PresentedFps, includeMidSessionChanges: false).Should().ContainSingle("the hooks' rate");
+        TrendSeriesBuilder.IsPartial(steady, TrendMetric.NativeFps).Should().BeTrue();
+        TrendSeriesBuilder.IsPartial(steady, TrendMetric.Displayed).Should().BeTrue();
+        TrendSeriesBuilder.IsPartial(steady, TrendMetric.MaxGpuTemp).Should().BeFalse("the machine's numbers are the whole session's");
+        TrendSeriesBuilder.ExcludedCount([hooked, steady], TrendMetric.NativeFps).Should().Be(1);
+        TrendSeriesBuilder.ExcludedCount([hooked, steady], TrendMetric.PresentedFps).Should().Be(0, "a steady session has no presented point to exclude");
+    }
+
+    /// <summary>beta.8: two differences on one day are one marker with both lines; two labels at one place were drawn over each other.</summary>
+    [Fact]
+    public void ChangesOnOneDayAreOneMarker()
+    {
+        DateTimeOffset day = new(2026, 9, 20, 18, 0, 0, TimeSpan.Zero);
+        IReadOnlyList<HardwareChange> merged = TrendSeriesBuilder.MergedByDay(
+        [
+            new HardwareChange(day, "GPU driver: 572.16 → 576.02"),
+            new HardwareChange(day.AddMinutes(1), "OS: 26100 → 26200"),
+            new HardwareChange(day.AddDays(3), "GPU: A → B"),
+        ]);
+
+        merged.Should().HaveCount(2);
+        merged[0].Text.Should().Be("GPU driver: 572.16 → 576.02" + Environment.NewLine + "OS: 26100 → 26200");
     }
 
     [Fact]

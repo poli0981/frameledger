@@ -73,6 +73,10 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _hideAntiCheatHooking = true;
 
+    /// <summary><c>ui.fps_decimals</c> (beta.8): every FPS figure with two decimals ("62.40") instead of a whole number.</summary>
+    [ObservableProperty]
+    private bool _fpsTwoDecimals;
+
     [ObservableProperty]
     private bool _onlineMetadata;
 
@@ -230,6 +234,18 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     partial void OnHideAntiCheatHookingChanged(bool value) => Persist(SettingsRegistry.UiHideAntiCheatHooking, value);
 
+    partial void OnFpsTwoDecimalsChanged(bool value)
+    {
+        if (_loading)
+        {
+            return;
+        }
+
+        // Every formatter reads it from now on; a page shows it the next time it formats a number.
+        FpsDecimals.Two = value;
+        Persist(SettingsRegistry.UiFpsDecimals, value);
+    }
+
     partial void OnMinimizeToTrayChanged(bool value)
     {
         if (!_loading)
@@ -340,6 +356,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             BackgroundCapture = await _settings.GetBooleanAsync(SettingsRegistry.CaptureBackground).ConfigureAwait(true);
             MinimizeToTray = await _settings.GetBooleanAsync(SettingsRegistry.UiMinimizeToTray).ConfigureAwait(true);
             HideAntiCheatHooking = await _settings.GetBooleanAsync(SettingsRegistry.UiHideAntiCheatHooking).ConfigureAwait(true);
+            FpsTwoDecimals = await _settings.GetBooleanAsync(SettingsRegistry.UiFpsDecimals).ConfigureAwait(true);
             OnlineMetadata = await _settings.GetBooleanAsync(SettingsRegistry.PrivacyOnlineMetadata).ConfigureAwait(true);
             UpdateChannel = await _settings.GetAsync(SettingsRegistry.UpdateChannel).ConfigureAwait(true);
             AutoCheckUpdates = await _settings.GetBooleanAsync(SettingsRegistry.UpdateAutoCheck).ConfigureAwait(true);

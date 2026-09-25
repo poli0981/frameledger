@@ -124,7 +124,7 @@ public sealed partial class CompareViewModel : ObservableObject
                 return;
             }
 
-            await Task.Run(() => plot.SavePng(path, 1600, 800)).ConfigureAwait(true);
+            await Task.Run(() => Charts.ChartTheme.SavePng(plot, path, 1600, 800)).ConfigureAwait(true);
             _strip.Success(Strings.Compare_Header, string.Format(CultureInfo.CurrentCulture, Strings.Summary_Exported_Format, path));
         });
     }
@@ -187,18 +187,30 @@ public sealed partial class CompareViewModel : ObservableObject
         Rows.Add(Row(Strings.Compare_Metric_P01Low, rows, static r => r.Tier == Domain.Sessions.CaptureTier.Hooked ? r.P01LowFps : null, Formats.Fps, higherIsBetter: true));
         Rows.Add(Row(Strings.Compare_Metric_StutterPct, rows, static r => r.Tier == Domain.Sessions.CaptureTier.Hooked ? r.StutterTimePct : null, static v => v is double d ? d.ToString("0.0", CultureInfo.CurrentCulture) + "%" : Strings.Common_NotAvailable, higherIsBetter: false));
         Rows.Add(Row(Strings.Compare_Metric_MaxGpuTemp, rows, static r => r.MaxGpuTemp, Formats.Temperature, higherIsBetter: false));
-        Rows.Add(Row(Strings.Compare_Metric_AvgGpuLoad, rows, static r => r.AvgGpuLoad, Formats.Percent, higherIsBetter: true));
-        Rows.Add(Row(Strings.Compare_Metric_AvgCpuLoad, rows, static r => r.AvgCpuLoad, Formats.Percent, higherIsBetter: false));
+        // A load is neither better high nor low (beta.8): a GPU at 99 % may be the bottleneck or simply busy, so neither row
+        // names a best.
+        Rows.Add(Row(Strings.Compare_Metric_AvgGpuLoad, rows, static r => r.AvgGpuLoad, Formats.Percent, higherIsBetter: null));
+        Rows.Add(Row(Strings.Compare_Metric_AvgCpuLoad, rows, static r => r.AvgCpuLoad, Formats.Percent, higherIsBetter: null));
         Rows.Add(Row(Strings.Compare_Metric_MaxCpuTemp, rows, static r => r.MaxCpuTemp, Formats.Temperature, higherIsBetter: false));
         Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Duration, [.. rows.Select(static r => new CompareCell(Formats.Duration(r.DurationSeconds), false))]));
     }
 
-    /// <summary>One row: the value per session, the best (never an N/A) flagged; a row where nothing has a value is all N/A and nothing is best.</summary>
-    internal static CompareRowViewModel Row(string metric, IReadOnlyList<SessionRow> rows, Func<SessionRow, double?> value, Func<double?, string> text, bool higherIsBetter)
+    /// <summary>
+    /// One row: the value per session, the best (never an N/A) flagged; a row where nothing has a value is all N/A and nothing
+    /// is best, and a row that ranks nothing (<paramref name="higherIsBetter"/> null) flags none. Since beta.8 the best is the
+    /// best as SHOWN: two sessions that both read "62" are both best — 62.4 against 62.3 is not a difference the reader sees.
+    /// </summary>
+    internal static CompareRowViewModel Row(string metric, IReadOnlyList<SessionRow> rows, Func<SessionRow, double?> value, Func<double?, string> text, bool? higherIsBetter)
     {
         double?[] values = [.. rows.Select(value)];
-        double? best = higherIsBetter ? values.Where(static v => v.HasValue).Max() : values.Where(static v => v.HasValue).Min();
-        return new CompareRowViewModel(metric, [.. values.Select(v => new CompareCell(text(v), best.HasValue && v.HasValue && v.Value == best.Value))]);
+        double? best = higherIsBetter switch
+        {
+            true => values.Where(static v => v.HasValue).Max(),
+            false => values.Where(static v => v.HasValue).Min(),
+            null => null,
+        };
+        string? bestText = best.HasValue ? text(best) : null;
+        return new CompareRowViewModel(metric, [.. values.Select(v => new CompareCell(text(v), bestText is not null && v.HasValue && string.Equals(text(v), bestText, StringComparison.Ordinal)))]);
     }
 
     private void OnCandidateChanged(object? sender, PropertyChangedEventArgs e)

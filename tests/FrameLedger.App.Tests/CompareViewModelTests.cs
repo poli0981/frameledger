@@ -143,5 +143,11 @@ public sealed class CompareViewModelTests
         higher.Cells.Select(static c => c.IsBest).Should().Equal(true, false, false);
         CompareRowViewModel none = CompareViewModel.Row("t", rows, static _ => null, Formats.Temperature, higherIsBetter: true);
         none.Cells.Should().OnlyContain(static c => !c.IsBest);
+
+        // beta.8: a load ranks nothing, and the best is the best as shown — 62.4 and 62.3 both read "62".
+        CompareViewModel.Row("t", rows, static r => r.MaxGpuTemp, Formats.Temperature, higherIsBetter: null).Cells.Should().OnlyContain(static c => !c.IsBest);
+        SessionRow[] close = [rows[0] with { MedianFps = 62.4 }, rows[1] with { MedianFps = 62.3 }, rows[2] with { MedianFps = 55 }];
+        CompareViewModel.Row("t", close, static r => r.MedianFps, static v => Formats.FpsNumber(v!.Value, twoDecimals: false), higherIsBetter: true)
+            .Cells.Select(static c => c.IsBest).Should().Equal([true, true, false], "both are shown as 62");
     }
 }

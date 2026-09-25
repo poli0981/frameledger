@@ -308,6 +308,34 @@ public sealed class PagesLoadTests
         }
     }
 
+    /// <summary>
+    /// beta.8: the Trend tab is drawn when the page is made — the view model's load finished before the page subscribed, so
+    /// every first open was blank — and on a date axis that keeps its label (the axis was replaced after the label was set).
+    /// </summary>
+    [Fact]
+    public async Task TheTrendIsDrawnWhenThePageIsMadeOnADateAxisThatKeepsItsLabel()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Alpha");
+        await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddDays(-2), native: 60);
+        await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddDays(-1), native: 64);
+        var detail = new GameDetailViewModel(s.Library, new GameSelection { GameId = game.Id }, new HookingConsent(new NoAgent(), new NoPrompt()),
+            new NoNavigation(), new NoConfirm(), new NoEdit(), new NoStrip(), new NoSummaries(), new SessionSeriesLoader(s.Sessions),
+            new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(), new NoPicker());
+        Task pending = detail.Pending;
+        await pending;
+
+        (int Drawn, string? Label) chart = await OnStaAsync(() =>
+        {
+            var page = new GameDetailPage(detail);
+            Render(page);
+            return (page.Trend.DrawnPoints, page.Trend.ScottPlot.Axes.Bottom.Label.Text);
+        });
+
+        chart.Drawn.Should().Be(2, "drawn on the first open, not only after a later load");
+        chart.Label.Should().Be(Strings.Trend_Axis_Date);
+    }
+
     /// <summary>Tools ▸ Database maintenance's dialog body (P4 PR-7) under the real dictionaries: its icons, the converter key, every binding.</summary>
     [Fact]
     public async Task TheDatabaseMaintenanceDialogLoads()

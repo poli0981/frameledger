@@ -14,6 +14,10 @@ public partial class GameDetailPage : INavigableView<GameDetailViewModel>
         InitializeComponent();
         ViewModel.SelectionPresented += OnSelectionPresented;
         ViewModel.TrendPresented += OnTrendPresented;
+        // The view model starts loading before this page exists, and a load that finished first raised its events to
+        // nobody: the Trend tab was blank on every first open (beta.8). Draw what it holds now; a later load redraws.
+        OnTrendPresented(this, EventArgs.Empty);
+        OnSelectionPresented(this, EventArgs.Empty);
         Unloaded += (_, _) =>
         {
             ViewModel.SelectionPresented -= OnSelectionPresented;

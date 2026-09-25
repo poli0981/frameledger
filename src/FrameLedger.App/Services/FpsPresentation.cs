@@ -70,6 +70,8 @@ public static class FpsPresentation
         FpsReadoutModel m = FromRow(row);
         return m.Kind switch
         {
+            // A steady-state factor carries its share in the grid too (rule 6; beta.8 — the column was the one place it did not).
+            FpsReadoutKind.Generated when m.Factor is double f && m.SteadyShare is double share => string.Format(CultureInfo.CurrentCulture, "×{0:0.0} · {1:0}%", f, share * 100),
             FpsReadoutKind.Generated when m.Factor is double f => string.Format(CultureInfo.CurrentCulture, "×{0:0.0}", f),
             FpsReadoutKind.None => Strings.Common_Dash,
             _ => Strings.Common_NotAvailable,
@@ -104,8 +106,15 @@ public static class FpsPresentation
         };
     }
 
-    public static string GeneratedLine(double? native, double? displayed, double factor) =>
-        string.Format(CultureInfo.CurrentCulture, Strings.Fps_Fg_Format, Formats.Fps(native), Formats.Fps(displayed), factor);
+    public static string GeneratedLine(double? native, double? displayed, double factor) => GeneratedLine(native, displayed, factor, steadyShare: null);
+
+    /// <summary>
+    /// <c>62 → 118 FPS (×1.9 FG)</c> — and a steady-state factor (CLAUDE.md rule 6, 2026-09-17) always with the share of the
+    /// session it covers, <c>(×1.9 FG · 75%)</c>, wherever the line appears (beta.8: the Average card and Compare dropped it).
+    /// </summary>
+    public static string GeneratedLine(double? native, double? displayed, double factor, double? steadyShare) => steadyShare is double share
+        ? string.Format(CultureInfo.CurrentCulture, Strings.Fps_Fg_Steady_Format, Formats.Fps(native), Formats.Fps(displayed), factor, share * 100)
+        : string.Format(CultureInfo.CurrentCulture, Strings.Fps_Fg_Format, Formats.Fps(native), Formats.Fps(displayed), factor);
 
     public static string PresentedLine(double? presented) => string.Format(CultureInfo.CurrentCulture, Strings.Fps_Presented_Format, Formats.Fps(presented));
 

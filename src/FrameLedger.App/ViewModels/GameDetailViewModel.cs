@@ -147,7 +147,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private bool _hasLatency;
 
     [ObservableProperty]
-    private TrendMetric _trendMetric = TrendMetric.Average;
+    private TrendMetric _trendMetric = TrendMetric.PresentedFps;
 
     [ObservableProperty]
     private bool _includeMidSession;
@@ -249,15 +249,26 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
     public static string TrendAverageNote => Strings.Trend_Average_Note;
 
+    public static string TrendPartialNote => Strings.Trend_Partial_Note;
+
+    /// <summary>Why the trend is empty FOR THIS METRIC (beta.8): "no hooked session yet" was wrong for a game whose sessions simply lack it.</summary>
+    [ObservableProperty]
+    private string _trendEmptyMessage = Strings.Trend_Empty;
+
     public static string LatencyHeader => Strings.Latency_Header;
 
     public static string LatencyEmptyText => Strings.Latency_Empty;
 
     public static string SensorsEmptyText => Strings.Sensors_Empty;
 
-    public static IReadOnlyList<Choice<TrendMetric>> TrendMetrics { get; } =
+    /// <summary>
+    /// The selector's entries, built for each page in the language it opens in (beta.8: a static list kept the language the
+    /// App started in).
+    /// </summary>
+    public IReadOnlyList<Choice<TrendMetric>> TrendMetrics { get; } =
     [
-        new(TrendMetric.Average, Strings.Trend_Metric_Average),
+        new(TrendMetric.PresentedFps, Strings.Trend_Metric_PresentedFps),
+        new(TrendMetric.NativeFps, Strings.Trend_Metric_NativeFps),
         new(TrendMetric.Displayed, Strings.Trend_Metric_Displayed),
         new(TrendMetric.P1Low, Strings.Trend_Metric_P1Low),
         new(TrendMetric.P01Low, Strings.Trend_Metric_P01Low),
@@ -320,6 +331,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         }
 
         Present(detail);
+        ChooseDefaultMetric(detail);
         await RebuildTrendAsync(ct).ConfigureAwait(true);
     }
 
@@ -329,7 +341,32 @@ public sealed partial class GameDetailViewModel : ObservableObject
         Pending = LoadSelectedAsync(value);
     }
 
-    partial void OnTrendMetricChanged(TrendMetric value) => RebuildTrendPoints();
+    partial void OnTrendMetricChanged(TrendMetric value)
+    {
+        _trendMetricChosen |= !_choosingDefaultMetric;
+        RebuildTrendPoints();
+    }
+
+    private bool _trendMetricChosen;
+
+    private bool _choosingDefaultMetric;
+
+    /// <summary>
+    /// The first metric a game's trend opens on (beta.8): Presented FPS, unless the game's newest measured session counted
+    /// generated frames — then Native FPS, the rate such sessions have. Kept once the user picks one.
+    /// </summary>
+    private void ChooseDefaultMetric(GameDetail detail)
+    {
+        if (_trendMetricChosen)
+        {
+            return;
+        }
+
+        SessionRow? newest = detail.Sessions.FirstOrDefault(static s => s.Tier == CaptureTier.Hooked && s.FrameCount > 0);
+        _choosingDefaultMetric = true;
+        TrendMetric = newest is not null && FpsPresentation.FromRow(newest).Kind == FpsReadoutKind.Generated ? TrendMetric.NativeFps : TrendMetric.PresentedFps;
+        _choosingDefaultMetric = false;
+    }
 
     partial void OnIncludeMidSessionChanged(bool value) => RebuildTrendPoints();
 
@@ -389,6 +426,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         int excluded = IncludeMidSession ? 0 : TrendSeriesBuilder.ExcludedCount(_detail.Sessions, TrendMetric);
         TrendExcludedText = excluded > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.Trend_Excluded_Format, excluded) : string.Empty;
         TrendEmpty = TrendPoints.Count == 0;
+        TrendEmptyMessage = string.Format(CultureInfo.CurrentCulture, Strings.Trend_Empty_Format, TrendMetricText);
         OnPropertyChanged(nameof(TrendMetricText));
         TrendPresented?.Invoke(this, EventArgs.Empty);
     }

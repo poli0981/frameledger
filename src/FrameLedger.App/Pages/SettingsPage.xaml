@@ -226,6 +226,17 @@
                 </ui:CardControl.Header>
                 <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_MinimizeToTray_Label}" IsChecked="{Binding ViewModel.MinimizeToTray, Mode=TwoWay}" />
             </ui:CardControl>
+            <!-- beta.8 (owner request 2026-09-25): two decimals on every FPS figure. -->
+            <ui:CardControl Margin="0,8,0,0" Icon="{ui:SymbolIcon NumberSymbol24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_FpsDecimals_Label}" />
+                        <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Appearance="Secondary" TextWrapping="Wrap"
+                                      Text="{x:Static res:Strings.Settings_FpsDecimals_Body}" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_FpsDecimals_Label}" IsChecked="{Binding ViewModel.FpsTwoDecimals, Mode=TwoWay}" />
+            </ui:CardControl>
 
             <!--
                 Updates, logging, legal. The Privacy card — the `privacy.online_metadata` toggle — is not shown

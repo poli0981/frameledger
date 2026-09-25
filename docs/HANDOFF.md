@@ -1613,6 +1613,13 @@ only be refused, never the finding (FR-2.2).
   struct): C puts typedefs and functions in one namespace, and MSVC's error names neither clearly.
 - **The driver profile is a configuration.** `sessions.driver_profile` says what the NVIDIA App set; it never feeds
   the upscaler ladder or the factor. The bridge has no DRS writer, and a PR that adds one is a different product.
+- **A view model that loads in its constructor raises its events to nobody** until the page subscribes; a page must
+  draw what the view model already holds when it is made (the Trend tab was blank on every first open).
+- **`Axes.DateTimeTicksBottom()` replaces the bottom axis**: call it before the theme and the label, or both are lost.
+- **A local property value outranks a style trigger** (Compare's best cell was never accent-coloured): defaults a
+  trigger may change go in the Style as Setters.
+- **`ui.fps_decimals` is process-wide state** (`FpsDecimals`): a test that moves it belongs to `StringsCultureCollection`
+  with every test that reads FPS text, and restores it.
 - **A status is not a policy input.** Splitting End task (exit 1) out of `crashed` would have loosened the crash
   auto-disable had the policy kept reading the status alone; it takes the exit code too. Check every reader of a value
   whose meaning you narrow.

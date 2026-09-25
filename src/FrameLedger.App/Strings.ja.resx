@@ -810,7 +810,7 @@
     <comment>review</comment>
   </data>
   <data name="GameDetail_LifetimeAvg" xml:space="preserve">
-    <value>全期間平均</value>
+    <value>最後に計測したセッション</value>
     <comment>review</comment>
   </data>
   <data name="GameDetail_Measured_Empty" xml:space="preserve">
@@ -1482,7 +1482,7 @@
     <comment>review</comment>
   </data>
   <data name="Trend_Average_Note" xml:space="preserve">
-    <value>平均は、フレーム生成が実測された場合はネイティブ FPS、未実測の場合は提示 FPS です。</value>
+    <value>ネイティブ FPS はゲーム自身のフレームだけを数え、フレーム生成を計測できたセッションにだけあります。表示された FPS は、生成フレームを数えなかったセッションで表示されたすべてのフレームを数えます。</value>
     <comment>review</comment>
   </data>
   <data name="Trend_Axis_Date" xml:space="preserve">
@@ -3047,6 +3047,34 @@
   </data>
   <data name="Exit_EndedNormally" xml:space="preserve">
     <value>正常に終了</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_FpsDecimals_Label" xml:space="preserve">
+    <value>FPS を小数点以下 2 桁で表示</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_FpsDecimals_Body" xml:space="preserve">
+    <value>平均、ロー、トレンドなどすべての FPS の値を、整数（62）ではなく小数点以下 2 桁（62.40）で表示します。各ページには次に読み込んだときに反映されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Fg_Steady_Format" xml:space="preserve">
+    <value>{0} → {1} FPS (×{2:0.0} FG · {3:0}%)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_NativeFps" xml:space="preserve">
+    <value>ネイティブ FPS</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_PresentedFps" xml:space="preserve">
+    <value>表示された FPS（Presented）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Partial_Note" xml:space="preserve">
+    <value>白抜きの点はセッションの一部だけを表します。途中で設定が変わったか、値が定常状態のものです。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Empty_Format" xml:space="preserve">
+    <value>このゲームのセッションには、まだ {0} の値がありません。</value>
     <comment>review</comment>
   </data>
 </root>

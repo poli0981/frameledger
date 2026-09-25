@@ -608,7 +608,7 @@
     <value>Phiên gần nhất: {0} · {1}</value>
   </data>
   <data name="GameDetail_LifetimeAvg" xml:space="preserve">
-    <value>Trung bình toàn bộ</value>
+    <value>Phiên đo gần nhất</value>
   </data>
   <data name="GameDetail_Measured_Empty" xml:space="preserve">
     <value>Chưa có phiên nào được đo.</value>
@@ -1112,7 +1112,7 @@
     <value>Phiên đã chọn không hook; không có khung hình để vẽ.</value>
   </data>
   <data name="Trend_Average_Note" xml:space="preserve">
-    <value>Trung bình là FPS gốc khi đã đo frame generation và FPS xuất khung khi chưa đo.</value>
+    <value>FPS gốc chỉ đếm khung hình của chính game và chỉ có ở các phiên đã đo được tạo khung hình. FPS được trình chiếu đếm mọi khung hình được trình chiếu, ở các phiên không đếm được khung hình tạo thêm.</value>
   </data>
   <data name="Trend_Axis_Date" xml:space="preserve">
     <value>Ngày</value>
@@ -2291,5 +2291,26 @@ Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắ
   </data>
   <data name="Exit_EndedNormally" xml:space="preserve">
     <value>kết thúc bình thường</value>
+  </data>
+  <data name="Settings_FpsDecimals_Label" xml:space="preserve">
+    <value>Hiển thị FPS với hai chữ số thập phân</value>
+  </data>
+  <data name="Settings_FpsDecimals_Body" xml:space="preserve">
+    <value>Mọi con số FPS — trung bình, low, xu hướng — hiển thị hai chữ số thập phân (62,40) thay vì số nguyên (62). Các trang áp dụng ở lần tải tiếp theo.</value>
+  </data>
+  <data name="Fps_Fg_Steady_Format" xml:space="preserve">
+    <value>{0} → {1} FPS (×{2:0.0} FG · {3:0}%)</value>
+  </data>
+  <data name="Trend_Metric_NativeFps" xml:space="preserve">
+    <value>FPS gốc (Native)</value>
+  </data>
+  <data name="Trend_Metric_PresentedFps" xml:space="preserve">
+    <value>FPS được trình chiếu (Presented)</value>
+  </data>
+  <data name="Trend_Partial_Note" xml:space="preserve">
+    <value>Điểm rỗng chỉ mô tả một phần phiên của nó: cài đặt đã đổi giữa phiên, hoặc giá trị là của trạng thái ổn định.</value>
+  </data>
+  <data name="Trend_Empty_Format" xml:space="preserve">
+    <value>Chưa có phiên nào của game này có giá trị cho {0}.</value>
   </data>
 </root>
