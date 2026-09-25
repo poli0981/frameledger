@@ -27,6 +27,41 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
+_Nothing yet — entries continue here after `0.1.0-beta.8`._
+
+## [0.1.0-beta.8] - 2026-09-25
+
+**The eighth pre-release: anti-cheat is found before you ask, a session says what the game and the driver were, and
+a frame-generation session's numbers and charts are the application's.** The same unsigned installer: verify its
+hash against `SHA256SUMS.txt`, then *More info → Run anyway*. What changed for a user:
+
+- **Anti-cheat is looked for harder, and before you ask.** Twenty-two families (74 entries), any kernel driver in a
+  game's folder, and per-title lists by Steam app id and executable name. The Agent checks every game in your library
+  on its own, turns hooking off for those with anti-cheat, and their pages show what was found instead of the hooking
+  switch. Their sessions are still recorded, with play time and sensors.
+- **A game's page says what its files say** — 64-bit or 32-bit, the file and store versions, the DLSS / FSR / XeSS
+  libraries it ships — and a 32-bit game's hooking cannot be turned on.
+- **NVIDIA App overrides are shown**: each session records the driver profile the game ran under (DLSS preset and
+  mode, frame generation, Smooth Motion), read from the driver and never changed.
+- **Reasons read as what they are**: End task is not a crash, a refusal says what happened, a launch that could not
+  start says why, a missing executable says whether its drive is disconnected.
+- **Trend works on first open**, with Native and Presented FPS as two metrics, and FPS can show two decimals
+  (Settings ▸ Window).
+- **A frame-generation session's lows, median and stutter are over application frames**, a pause no longer counts as
+  one long frame, and the charts draw what they say — including the sensors of a session that was not hooked.
+- **The Privacy Policy (2.4) is updated**, so the Legal Gate opens once after the update: it now names what the
+  software reads to check every library game for anti-cheat, the version information of the game's files, and the
+  NVIDIA driver's settings for your games — all on your PC, none of it sent anywhere.
+
+**Updating from `0.1.0-beta.7`:**
+
+- Quit the App (tray icon → Exit) and end `FrameLedger.Agent.exe` before running the installer.
+- Schemas 0010–0013 add columns; the database opens in place.
+- Shortly after the Agent starts it checks every game in your library for anti-cheat, once; a game where it finds
+  some has its hooking turned off for good, with a notice if hooking was on.
+- Sessions recorded before keep the numbers they were stored with; the corrected lows and the in-step sensor overlay
+  apply to sessions recorded from now on.
+
 ### Added
 
 - **FrameLedger finds the anti-cheat games in your library on its own, and hides their hooking switch** (owner decision
