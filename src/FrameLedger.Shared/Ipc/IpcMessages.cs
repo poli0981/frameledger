@@ -59,6 +59,13 @@ public static class IpcMessageType
     public const string CaptureDegraded = "CaptureDegraded";
     public const string SafetyUnhook = "SafetyUnhook";
     public const string CaptureError = "CaptureError";
+
+    /// <summary>
+    /// The Agent's pre-scan of the library turned an entry's hooking OFF (2026-09-25): the user had turned it on, and a rules
+    /// update or a game update since has put anti-cheat in its folder or on its title lists. Not a session event — no game
+    /// need be running.
+    /// </summary>
+    public const string HookingTurnedOff = "HookingTurnedOff";
 }
 
 /// <summary>Codes an <see cref="ErrorAck"/> carries.</summary>
@@ -258,6 +265,9 @@ public sealed record CaptureDegradedEvent(Guid SessionGuid, int From, int To, st
 public sealed record SafetyUnhookEvent(Guid SessionGuid, string? Family, string? Signal, bool HookingTurnedOff = false);
 
 public sealed record CaptureErrorEvent(Guid? SessionGuid, string Code, string Message);
+
+/// <summary><see cref="IpcMessageType.HookingTurnedOff"/>: which entry, and what the guard found (its reason, family and signal).</summary>
+public sealed record HookingTurnedOffEvent(long GameId, string? GameName, string Reason, string? Family, string? Signal);
 
 // ----------------------------------------------------------------------------------------------------------------
 // The command half (P3 PR-1b). 07_IPC §The pipe is not a trust boundary: none of these carries a verdict, a

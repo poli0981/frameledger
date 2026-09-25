@@ -69,6 +69,10 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _minimizeToTray;
 
+    /// <summary><c>ui.hide_anticheat_hooking</c> (beta.8): an anti-cheat game's page shows the finding instead of its Hooking card.</summary>
+    [ObservableProperty]
+    private bool _hideAntiCheatHooking = true;
+
     [ObservableProperty]
     private bool _onlineMetadata;
 
@@ -224,6 +228,8 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     partial void OnBackgroundCaptureChanged(bool value) => Persist(SettingsRegistry.CaptureBackground, value);
 
+    partial void OnHideAntiCheatHookingChanged(bool value) => Persist(SettingsRegistry.UiHideAntiCheatHooking, value);
+
     partial void OnMinimizeToTrayChanged(bool value)
     {
         if (!_loading)
@@ -333,6 +339,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             RetentionRawSessions = await _settings.GetIntegerAsync(SettingsRegistry.RetentionRawSessionsPerGame).ConfigureAwait(true);
             BackgroundCapture = await _settings.GetBooleanAsync(SettingsRegistry.CaptureBackground).ConfigureAwait(true);
             MinimizeToTray = await _settings.GetBooleanAsync(SettingsRegistry.UiMinimizeToTray).ConfigureAwait(true);
+            HideAntiCheatHooking = await _settings.GetBooleanAsync(SettingsRegistry.UiHideAntiCheatHooking).ConfigureAwait(true);
             OnlineMetadata = await _settings.GetBooleanAsync(SettingsRegistry.PrivacyOnlineMetadata).ConfigureAwait(true);
             UpdateChannel = await _settings.GetAsync(SettingsRegistry.UpdateChannel).ConfigureAwait(true);
             AutoCheckUpdates = await _settings.GetBooleanAsync(SettingsRegistry.UpdateAutoCheck).ConfigureAwait(true);

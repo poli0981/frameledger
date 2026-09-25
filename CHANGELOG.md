@@ -27,6 +27,20 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
+### Added
+
+- **FrameLedger finds the anti-cheat games in your library on its own, and hides their hooking switch** (owner decision
+  2026-09-25). The Agent now scans every game in the library for anti-cheat — once, and again whenever the rules or the
+  game's executable change — where until now it scanned only a game someone asked to hook, so most games had never
+  been scanned at all. A game it finds anti-cheat in has its hooking turned off for good, as any finding does, and a
+  notice says so when hooking had been on. The library card says **Anti-cheat**; the game's page says what was found —
+  "BattlEye — its module BEClient_x64.dll was loaded in the game", "Easy Anti-Cheat — its folder EasyAntiCheat ships
+  with the game", in your language — in place of the Hooking switch, which could only be refused. Settings ▸ Capture ▸
+  *Hide hooking on anti-cheat games* (on by default) brings the disabled switch back beside the finding. Sessions of
+  such a game are still recorded, with play time and sensors. The scan reads the game's files only: it opens no process
+  and decides nothing on its own — every session start still runs the full check. Schema 0010 adds three columns; the
+  database opens in place, and the first scan of the library runs when the Agent starts.
+
 ### Changed
 
 - **The anti-cheat blocklist names twenty-two families, twice as many, most through more than one signal.** New:
@@ -68,6 +82,8 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   exactly that, while `EasyAntiCheat\` sits at the game's root. The session-time scan always looked at the root, so no
   injection was ever allowed by the gap, but the toggle could be switched on and the refusal came only at launch. The
   guard now takes the executable and finds the root itself, and also checks the executable's name and its store id.
+- **A game blocked for anti-cheat no longer offers "Turn hooking back on" after a crash auto-disable.** The button
+  could only be refused.
 - **19_SAFETY's fixture rule is enforced for every family, not eleven.** A generated test walks every value of the
   shipped seed and requires it to match its own family in its own group — which also catches a later row that an
   earlier prefix shadows. The rules file's note that called XIGNCODE3's `x3.xem` "not a loadable module" is corrected:

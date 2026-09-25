@@ -46,6 +46,12 @@ public static class Strings
         nameof(Agent_State_Offline),
         nameof(Agent_State_Starting),
         nameof(App_Title),
+        nameof(Blocked_Directory_Format),
+        nameof(Blocked_Executable_Format),
+        nameof(Blocked_File_Format),
+        nameof(Blocked_Module_Format),
+        nameof(Blocked_Other_Format),
+        nameof(Blocked_StoreId_Format),
         nameof(BugReport_BrowserRefused),
         nameof(BugReport_ClipboardRefused),
         nameof(BugReport_Copied),
@@ -246,6 +252,8 @@ public static class Strings
         nameof(Fps_Native_Tooltip),
         nameof(Fps_None_Tooltip),
         nameof(Fps_Presented_Format),
+        nameof(GameDetail_AntiCheat_Format),
+        nameof(GameDetail_AntiCheat_Header),
         nameof(GameDetail_Back),
         nameof(GameDetail_ChangeExe),
         nameof(GameDetail_Edit),
@@ -280,6 +288,7 @@ public static class Strings
         nameof(GameDetail_Tab_Sessions),
         nameof(GameDetail_Tab_Trend),
         nameof(Games_Add),
+        nameof(Games_Card_AntiCheat),
         nameof(Games_Card_HookOff),
         nameof(Games_Card_HookOn),
         nameof(Games_Card_LastPlayed_Format),
@@ -392,6 +401,7 @@ public static class Strings
         nameof(Notice_Degraded_Title),
         nameof(Notice_Dismiss),
         nameof(Notice_Error_Title),
+        nameof(Notice_HookingOff_Title_Format),
         nameof(Notice_Refused_Recording),
         nameof(Notice_Refused_Title_Format),
         nameof(Notice_Unhooked_Title),
@@ -458,6 +468,8 @@ public static class Strings
         nameof(Settings_Channel_Beta),
         nameof(Settings_Channel_Stable),
         nameof(Settings_Header),
+        nameof(Settings_HideAntiCheatHooking_Body),
+        nameof(Settings_HideAntiCheatHooking_Label),
         nameof(Settings_HookedGames_Empty),
         nameof(Settings_HookedGames_Label),
         nameof(Settings_HookedGames_Revoke),
@@ -681,6 +693,18 @@ public static class Strings
     public static string Agent_State_Starting => ResourceManager.GetString(nameof(Agent_State_Starting), Culture) ?? nameof(Agent_State_Starting);
 
     public static string App_Title => ResourceManager.GetString(nameof(App_Title), Culture) ?? nameof(App_Title);
+
+    public static string Blocked_Directory_Format => ResourceManager.GetString(nameof(Blocked_Directory_Format), Culture) ?? nameof(Blocked_Directory_Format);
+
+    public static string Blocked_Executable_Format => ResourceManager.GetString(nameof(Blocked_Executable_Format), Culture) ?? nameof(Blocked_Executable_Format);
+
+    public static string Blocked_File_Format => ResourceManager.GetString(nameof(Blocked_File_Format), Culture) ?? nameof(Blocked_File_Format);
+
+    public static string Blocked_Module_Format => ResourceManager.GetString(nameof(Blocked_Module_Format), Culture) ?? nameof(Blocked_Module_Format);
+
+    public static string Blocked_Other_Format => ResourceManager.GetString(nameof(Blocked_Other_Format), Culture) ?? nameof(Blocked_Other_Format);
+
+    public static string Blocked_StoreId_Format => ResourceManager.GetString(nameof(Blocked_StoreId_Format), Culture) ?? nameof(Blocked_StoreId_Format);
 
     public static string BugReport_BrowserRefused => ResourceManager.GetString(nameof(BugReport_BrowserRefused), Culture) ?? nameof(BugReport_BrowserRefused);
 
@@ -1082,6 +1106,10 @@ public static class Strings
 
     public static string Fps_Presented_Format => ResourceManager.GetString(nameof(Fps_Presented_Format), Culture) ?? nameof(Fps_Presented_Format);
 
+    public static string GameDetail_AntiCheat_Format => ResourceManager.GetString(nameof(GameDetail_AntiCheat_Format), Culture) ?? nameof(GameDetail_AntiCheat_Format);
+
+    public static string GameDetail_AntiCheat_Header => ResourceManager.GetString(nameof(GameDetail_AntiCheat_Header), Culture) ?? nameof(GameDetail_AntiCheat_Header);
+
     public static string GameDetail_Back => ResourceManager.GetString(nameof(GameDetail_Back), Culture) ?? nameof(GameDetail_Back);
 
     public static string GameDetail_ChangeExe => ResourceManager.GetString(nameof(GameDetail_ChangeExe), Culture) ?? nameof(GameDetail_ChangeExe);
@@ -1149,6 +1177,8 @@ public static class Strings
     public static string GameDetail_Tab_Trend => ResourceManager.GetString(nameof(GameDetail_Tab_Trend), Culture) ?? nameof(GameDetail_Tab_Trend);
 
     public static string Games_Add => ResourceManager.GetString(nameof(Games_Add), Culture) ?? nameof(Games_Add);
+
+    public static string Games_Card_AntiCheat => ResourceManager.GetString(nameof(Games_Card_AntiCheat), Culture) ?? nameof(Games_Card_AntiCheat);
 
     public static string Games_Card_HookOff => ResourceManager.GetString(nameof(Games_Card_HookOff), Culture) ?? nameof(Games_Card_HookOff);
 
@@ -1374,6 +1404,8 @@ public static class Strings
 
     public static string Notice_Error_Title => ResourceManager.GetString(nameof(Notice_Error_Title), Culture) ?? nameof(Notice_Error_Title);
 
+    public static string Notice_HookingOff_Title_Format => ResourceManager.GetString(nameof(Notice_HookingOff_Title_Format), Culture) ?? nameof(Notice_HookingOff_Title_Format);
+
     public static string Notice_Refused_Recording => ResourceManager.GetString(nameof(Notice_Refused_Recording), Culture) ?? nameof(Notice_Refused_Recording);
 
     public static string Notice_Refused_Title_Format => ResourceManager.GetString(nameof(Notice_Refused_Title_Format), Culture) ?? nameof(Notice_Refused_Title_Format);
@@ -1505,6 +1537,10 @@ public static class Strings
     public static string Settings_Channel_Stable => ResourceManager.GetString(nameof(Settings_Channel_Stable), Culture) ?? nameof(Settings_Channel_Stable);
 
     public static string Settings_Header => ResourceManager.GetString(nameof(Settings_Header), Culture) ?? nameof(Settings_Header);
+
+    public static string Settings_HideAntiCheatHooking_Body => ResourceManager.GetString(nameof(Settings_HideAntiCheatHooking_Body), Culture) ?? nameof(Settings_HideAntiCheatHooking_Body);
+
+    public static string Settings_HideAntiCheatHooking_Label => ResourceManager.GetString(nameof(Settings_HideAntiCheatHooking_Label), Culture) ?? nameof(Settings_HideAntiCheatHooking_Label);
 
     public static string Settings_HookedGames_Empty => ResourceManager.GetString(nameof(Settings_HookedGames_Empty), Culture) ?? nameof(Settings_HookedGames_Empty);
 

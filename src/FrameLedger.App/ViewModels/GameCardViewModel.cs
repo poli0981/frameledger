@@ -6,7 +6,8 @@ namespace FrameLedger.App.ViewModels;
 
 /// <summary>
 /// One library card (<c>08_UI</c> §Games): name, platform and engine badges, playtime, last played, hooking state — or, since
-/// 2026-09-23, "Not recorded" in its place for an entry whose recording is off. The sparkline is PR-6's.
+/// 2026-09-23, "Not recorded" in its place for an entry whose recording is off, and since 2026-09-25 "Anti-cheat" for one
+/// the guard found anti-cheat in. The sparkline is PR-6's.
 /// </summary>
 [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime")]
 public sealed class GameCardViewModel
@@ -21,7 +22,12 @@ public sealed class GameCardViewModel
         EngineText = Formats.Engine(card.Row.Engine);
         Recorded = card.Row.RecordSessions;
         HookOn = Recorded && card.Row.HookEnabled;
-        HookText = !Recorded ? Strings.Games_Card_NotRecorded : HookOn ? Strings.Games_Card_HookOn : Strings.Games_Card_HookOff;
+        // An entry the guard found anti-cheat in says so (beta.8): its hooking is off for good, and "Hooking off" read as
+        // a switch the user could still flip. Not recorded still comes first — nothing runs for it at all.
+        AntiCheat = Recorded && card.Row.BlockedByGuard;
+        HookText = !Recorded ? Strings.Games_Card_NotRecorded
+            : AntiCheat ? Strings.Games_Card_AntiCheat
+            : HookOn ? Strings.Games_Card_HookOn : Strings.Games_Card_HookOff;
         SessionCount = card.Summary?.SessionCount ?? 0;
         TotalSeconds = card.Summary?.TotalSeconds ?? 0;
         LastPlayedAt = card.Summary?.LastPlayedAt;
@@ -50,6 +56,12 @@ public sealed class GameCardViewModel
     public bool Recorded { get; }
 
     public bool HookOn { get; }
+
+    /// <summary>
+    /// The pill says "Anti-cheat" (caution fill, <c>Styles/FrameLedger.xaml</c>): a guard finding about this game is on its row
+    /// (<c>19_SAFETY</c> §What a finding does to the game) and the entry is recorded — "Not recorded" says more.
+    /// </summary>
+    public bool AntiCheat { get; }
 
     public string HookText { get; }
 

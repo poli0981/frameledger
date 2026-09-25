@@ -40,6 +40,18 @@ public static class SettingsRegistry
         Default = "0",
     };
 
+    /// <summary>
+    /// Whether a game the guard found anti-cheat in shows its Hooking card, or only the finding (beta.8, owner request
+    /// 2026-09-25). On by default: the card's switch can never be turned on for such a game, so hiding it leaves the
+    /// finding — which is always shown (FR-2.2) — and nothing that looks usable.
+    /// </summary>
+    public static readonly SettingDefinition UiHideAntiCheatHooking = new()
+    {
+        Key = "ui.hide_anticheat_hooking",
+        Kind = SettingKind.Boolean,
+        Default = "1",
+    };
+
     /// <summary>Whether the Agent's watcher records tracked games that the App did not launch (FR-3.1/FR-3.3).</summary>
     public static readonly SettingDefinition CaptureBackground = new()
     {
@@ -127,7 +139,7 @@ public static class SettingsRegistry
     /// <summary>Every definition, in the order <c>06_DATA_MODEL</c> lists them.</summary>
     public static IReadOnlyList<SettingDefinition> All { get; } =
     [
-        UiLanguage, UiTheme, UiStartWithWindows, UiMinimizeToTray,
+        UiLanguage, UiTheme, UiStartWithWindows, UiMinimizeToTray, UiHideAntiCheatHooking,
         CaptureBackground, HookingKillSwitch, CaptureMinSessionSeconds, TelemetryIntervalMs, RetentionRawSessionsPerGame,
         UpdateChannel, UpdateAutoCheck, PrivacyOnlineMetadata, LogDebug,
     ];

@@ -406,13 +406,36 @@ them). Sessions that ran under it keep `guard-bypass=` in `capture_notes`; nothi
 
 **What replaced it is the opposite of an override: a finding turns the game's hooking off.** The pre-scan has done
 this since P2 (`RecordGuardBlockAsync`: `hook_enabled = 0`, `hook_blocked_reason`, `hook_prescan_state = 'blocked'`).
-The two later moments the guard can find something now write the same block:
+Every later moment the guard can find something writes the same block — a fourth since 2026-09-25:
 
 | Moment | Where | What it sees |
 |---|---|---|
-| hooking is turned on | `AgentCommandHandler.SetHookEnabledAsync` | check 4 over the game's folder |
+| hooking is turned on | `AgentCommandHandler.SetHookEnabledAsync` | checks 3 and 4 over the executable and its install root (`PreScanGameAsync`; check 4 over the executable's own folder until 2026-09-25) |
 | a session starts | `CaptureSession.SessionAsync`, after the gate | checks 1–4 over the live process, its tree, the drivers, the folder |
 | the 30 s re-scan | `CaptureSession.DrainAsync`, on a `SafetyUnhook` | the same, for an anti-cheat that loaded late |
+| the Agent's pre-scan of the library | `AntiCheatPreScanSweep`, under `--serve` | checks 3 and 4 over every entry, whether or not its hooking was ever on |
+
+**The Agent's pre-scan of the library — owner decision 2026-09-25 (beta.8).** Until then the first three moments were
+the only ones, and each needs the user to have asked for hooking: a game nobody enabled stayed
+`hook_prescan_state = 'not_run'`, so the App could not tell an anti-cheat game from any other. The owner asked for the
+hooking part of anti-cheat games to be hidden, which needs to know which they are, so the Agent now asks the advisory
+question itself (`AntiCheatPreScanHostedService`: at start, every 15 s, and at once after `UpdateRules`):
+
+- **Which entries.** Every library row not removed, once per rules version and executable — the key is its own
+  (schema 0010: `hook_prescan_rules_version`, `hook_prescan_exe_size_bytes`, `hook_prescan_exe_mtime_ms`), so a rules
+  update that names a game already in the library, or a game update that adds anti-cheat, is a re-scan. Skipped: a
+  blocked row (it is never asked again), an executable that cannot be read, an entry whose session is running (that
+  session's own checks are). *Change executable* clears the key with the state, so the new binary is scanned.
+- **What it writes** (`IGameConsentStore.RecordPreScanAsync`): a finding about the game is the block above, the
+  consent stamp kept; a pass is `'clean'`; a scan that could not answer is `'unverified'`, which leaves the toggle
+  alone. It never writes over a block and never adds a row — the `UPDATE` itself requires both, so a block written
+  between the sweep's read and its write still stands.
+- **What it tells.** A `HookingTurnedOff` event (`07_IPC`) only when the entry's hooking was on: the one case where
+  something the user switched on changed. Every other finding changes only the game's page and card.
+- **What it is not.** It gates nothing: every session start still runs checks 1–4 against the live process, whatever
+  the sweep wrote. It opens no process — the scan reads the executable's path, its install folder and the stores'
+  files. It holds the guard's lock for one walk at a time (`NativeAntiCheatGuard` serialises every native call), so a
+  session start waits for at most the one walk in flight.
 
 **Which findings** — `AntiCheatVerdict.IsFindingAboutTheGame`: an anti-cheat *named* (family non-empty) in the game's
 own process (`BlockedModule`), on its title lists (`BlockedExecutable`, `BlockedStoreId`) or in its folder
@@ -424,6 +447,11 @@ scan that could not look, not unusable rules, not the unsigned-module heuristic,
 block (`Safety_Blocked_Toggle_Format`) with the toggle disabled; `capture_notes` carry
 `hooking-turned-off=<reason>/<family>`; the Agent's session line carries `; hooking-turned-off`; `CaptureRefused` and
 `SafetyUnhook` carry `hookingTurnedOff` (`07_IPC`). `CaptureOutcome.HookingTurnedOff` is the loop's word for it.
+Since 2026-09-25 (beta.8): the block is stored as `Reason|Family|Signal` so the App says what was found in the user's
+language (rows written before keep `"Reason: Family Signal"` and are shown as stored); the library card says
+*Anti-cheat* instead of *Hooking off*; and the game's page shows the finding **in place of** the Hooking card, whose
+switch could only be refused, while `ui.hide_anticheat_hooking` is on — its default (`08_UI` §Game detail). Off, the
+card is back with the finding under its disabled switch. The finding itself is on the page either way (FR-2.2).
 
 **What clears it.** Nothing, as before: the block outlives *Change executable* and a re-import (§A game already enabled
 can become blocked later). The owner asked for hooking to be turned off when anti-cheat is detected, not for a second

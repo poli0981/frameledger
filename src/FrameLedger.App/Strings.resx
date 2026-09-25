@@ -1877,4 +1877,40 @@ Open the log folder?</value>
 • Nothing is sent anywhere. Your recordings stay on this PC, and backing them up is up to you.
 The documents below are the full terms; this summary does not replace them.</value>
   </data>
+  <data name="Blocked_Module_Format" xml:space="preserve">
+    <value>{0} — its module {1} was loaded in the game</value>
+  </data>
+  <data name="Blocked_Directory_Format" xml:space="preserve">
+    <value>{0} — its folder {1} ships with the game</value>
+  </data>
+  <data name="Blocked_File_Format" xml:space="preserve">
+    <value>{0} — {1} ships with the game</value>
+  </data>
+  <data name="Blocked_Executable_Format" xml:space="preserve">
+    <value>{0} — {1} is a listed title</value>
+  </data>
+  <data name="Blocked_StoreId_Format" xml:space="preserve">
+    <value>{0} — the game's store id {1} is listed</value>
+  </data>
+  <data name="Blocked_Other_Format" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="GameDetail_AntiCheat_Header" xml:space="preserve">
+    <value>Anti-cheat</value>
+  </data>
+  <data name="GameDetail_AntiCheat_Format" xml:space="preserve">
+    <value>Found: {0}. Hooking is off for this game and cannot be turned on; its sessions record play time and sensors only.</value>
+  </data>
+  <data name="Games_Card_AntiCheat" xml:space="preserve">
+    <value>Anti-cheat</value>
+  </data>
+  <data name="Settings_HideAntiCheatHooking_Label" xml:space="preserve">
+    <value>Hide hooking on anti-cheat games</value>
+  </data>
+  <data name="Settings_HideAntiCheatHooking_Body" xml:space="preserve">
+    <value>A game in which anti-cheat was found can never be hooked. On, its page shows only what was found; off, it also shows the disabled Hooking switch. Either way it is still recorded without hooking.</value>
+  </data>
+  <data name="Notice_HookingOff_Title_Format" xml:space="preserve">
+    <value>{0}: hooking turned off</value>
+  </data>
 </root>

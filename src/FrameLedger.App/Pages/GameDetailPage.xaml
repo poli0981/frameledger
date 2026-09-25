@@ -120,23 +120,36 @@
             </ui:CardControl>
             <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.RecordingBody}" />
 
-            <!-- hooking control (FR-2.1 / FR-2.2 / FR-2.5) -->
-            <ui:CardControl Margin="0,12,0,0" Header="{x:Static vm:GameDetailViewModel.HookingHeader}" Icon="{ui:SymbolIcon ShieldTask24}">
-                <StackPanel Orientation="Horizontal">
-                    <ui:TextBlock Appearance="Secondary" VerticalAlignment="Center" Margin="0,0,12,0" Text="{Binding ViewModel.HookStatusText}" />
-                    <ui:ToggleSwitch AutomationProperties.Name="{x:Static vm:GameDetailViewModel.HookingHeader}"
-                                     IsChecked="{Binding ViewModel.HookEnabled, Mode=OneWay}"
-                                     IsEnabled="{Binding ViewModel.HookToggleEnabled}"
-                                     Command="{Binding ViewModel.ToggleHookingCommand}" />
-                </StackPanel>
+            <!-- anti-cheat found, shown IN PLACE of the hooking card while such cards are hidden (beta.8, ui.hide_anticheat_hooking) -->
+            <ui:CardControl Margin="0,12,0,0" Icon="{ui:SymbolIcon ShieldError24}"
+                            Visibility="{Binding ViewModel.AntiCheatText, Converter={StaticResource NullToCollapsed}}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static vm:GameDetailViewModel.AntiCheatHeader}" />
+                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.AntiCheatText}" />
+                    </StackPanel>
+                </ui:CardControl.Header>
             </ui:CardControl>
-            <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.HookingBody}" />
-            <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.BlockedText}"
-                          Visibility="{Binding ViewModel.BlockedText, Converter={StaticResource NullToCollapsed}}" />
-            <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.UnverifiedText}"
-                          Visibility="{Binding ViewModel.UnverifiedText, Converter={StaticResource NullToCollapsed}}" />
-            <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" Text="{x:Static vm:GameDetailViewModel.BusyText}"
-                          Visibility="{Binding ViewModel.Busy, Converter={StaticResource BoolToVis}}" />
+
+            <!-- hooking control (FR-2.1 / FR-2.2 / FR-2.5) -->
+            <StackPanel Visibility="{Binding ViewModel.HookingSectionVisible, Converter={StaticResource BoolToVis}}">
+                <ui:CardControl Margin="0,12,0,0" Header="{x:Static vm:GameDetailViewModel.HookingHeader}" Icon="{ui:SymbolIcon ShieldTask24}">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:TextBlock Appearance="Secondary" VerticalAlignment="Center" Margin="0,0,12,0" Text="{Binding ViewModel.HookStatusText}" />
+                        <ui:ToggleSwitch AutomationProperties.Name="{x:Static vm:GameDetailViewModel.HookingHeader}"
+                                         IsChecked="{Binding ViewModel.HookEnabled, Mode=OneWay}"
+                                         IsEnabled="{Binding ViewModel.HookToggleEnabled}"
+                                         Command="{Binding ViewModel.ToggleHookingCommand}" />
+                    </StackPanel>
+                </ui:CardControl>
+                <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.HookingBody}" />
+                <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.BlockedText}"
+                              Visibility="{Binding ViewModel.BlockedText, Converter={StaticResource NullToCollapsed}}" />
+                <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.UnverifiedText}"
+                              Visibility="{Binding ViewModel.UnverifiedText, Converter={StaticResource NullToCollapsed}}" />
+                <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" Text="{x:Static vm:GameDetailViewModel.BusyText}"
+                              Visibility="{Binding ViewModel.Busy, Converter={StaticResource BoolToVis}}" />
+            </StackPanel>
             <ui:InfoBar Margin="0,8,0,0" IsClosable="False" Severity="Warning"
                         IsOpen="{Binding ViewModel.AutoDisabledText, Converter={StaticResource NotNull}}"
                         Message="{Binding ViewModel.AutoDisabledText}">

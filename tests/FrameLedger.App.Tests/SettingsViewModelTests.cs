@@ -235,6 +235,23 @@ public sealed class SettingsViewModelTests
     }
 
     [Fact]
+    public async Task HidingTheHookingCardOfAntiCheatGamesIsOnByDefaultAndItsToggleIsPersisted()
+    {
+        // beta.8 (owner request 2026-09-25): ui.hide_anticheat_hooking, default 1, the row the game page reads at each load.
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        Harness h = await OpenAsync(s);
+
+        h.Vm.HideAntiCheatHooking.Should().BeTrue();
+        (await new SqliteSettingsStore(s.Db).GetAsync(SettingsRegistry.UiHideAntiCheatHooking.Key, Ct)).Should().BeNull("nothing was written by the load");
+
+        h.Vm.HideAntiCheatHooking = false;
+        Task pending = h.Vm.Pending;
+        await pending;
+
+        (await h.Settings.GetBooleanAsync(SettingsRegistry.UiHideAntiCheatHooking, Ct)).Should().BeFalse();
+    }
+
+    [Fact]
     public async Task ARevokeTheAgentCannotTakeStaysInTheListAndSaysWhy()
     {
         await using ScratchLedger s = await ScratchLedger.OpenAsync();

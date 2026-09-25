@@ -80,6 +80,30 @@ public sealed class SafetyNoticesTests
         notices.Items[0].Body.Should().NotContain(Shared.Strings.Safety_HookingTurnedOff, "a machine-wide driver turns nothing off");
     }
 
+    /// <summary>
+    /// The Agent's pre-scan of the library turned hooking off for a game the user had turned it on for (beta.8): a
+    /// persistent notice naming what was found and saying hooking is off — and none of a refusal's session sentence or
+    /// its "record without measuring" action, because no session is running.
+    /// </summary>
+    [Fact]
+    public void APreScanThatTurnedHookingOffIsAPersistentNoticeWithNoSessionInIt()
+    {
+        var link = new FakeAgentLink();
+        var strip = new RecordingStrip();
+        using var notices = new SafetyNotices(link, strip);
+
+        link.Raise(IpcMessageType.HookingTurnedOff, new HookingTurnedOffEvent(7, "Title", "AntiCheatDirectory", "Easy Anti-Cheat", "EasyAntiCheat"));
+
+        SafetyNotice notice = notices.Items.Should().ContainSingle().Subject;
+        notice.Kind.Should().Be(SafetyNoticeKind.HookingOff);
+        notice.IsError.Should().BeTrue();
+        notice.Title.Should().Contain("Title");
+        notice.Body.Should().Contain("Easy Anti-Cheat").And.EndWith(Shared.Strings.Safety_HookingTurnedOff);
+        notice.Body.Should().NotContain(Strings.Notice_Refused_Recording, "no session is running");
+        notice.ActionText.Should().Be(Strings.Notice_Dismiss);
+        strip.Shown.Should().BeEmpty("never a toast");
+    }
+
     [Fact]
     public void AnUnhookAndADegradeArePersistentToo()
     {

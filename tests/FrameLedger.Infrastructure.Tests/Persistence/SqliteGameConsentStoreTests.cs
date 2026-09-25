@@ -287,4 +287,85 @@ public sealed class SqliteGameConsentStoreTests
         }, Ct).ConfigureAwait(false);
         await nameless.Should().ThrowAsync<ArgumentException>().ConfigureAwait(true);
     }
+
+    // --- The Agent's pre-scan of the library (beta.8, schema 0010) ------------------------------------------------------
+
+    private static async Task<(string State, string? Reason, long Enabled, string? Rules, long? Size, long? Mtime, long? ConsentedAt)> RowAsync(
+        LedgerFixture f, string path)
+    {
+        return await f.Db.ReadAsync((c, ct) => c.QuerySingleAsync<(string, string?, long, string?, long?, long?, long?)>(new CommandDefinition(
+            "SELECT hook_prescan_state, hook_blocked_reason, hook_enabled, hook_prescan_rules_version, hook_prescan_exe_size_bytes, "
+            + "hook_prescan_exe_mtime_ms, hook_consent_at FROM games WHERE exe_path = @p", new { p = path }, cancellationToken: ct)), Ct).ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task APreScanPassIsCleanUnderItsKeyAndLeavesTheConsentAlone()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        var store = new SqliteGameConsentStore(f.Db);
+        await store.RecordOperatorAcknowledgementAsync(Ack(), Ct);
+        ExecutableFingerprint scanned = Fingerprint() with { SizeBytes = 91_000, MtimeUnixMs = 1_800_000_000_000 };
+
+        (await store.RecordPreScanAsync(scanned, AntiCheatVerdict.Allowed(), "2026.09.4", Ct)).Should().Be(ConsentWriteOutcome.Written);
+
+        var row = await RowAsync(f, scanned.ExePath);
+        row.State.Should().Be("clean", "a game the user never enabled can be known clean now, not only one they did");
+        row.Reason.Should().BeNull();
+        row.Enabled.Should().Be(1, "a pass changes nothing the user switched on");
+        (row.Rules, row.Size, row.Mtime).Should().Be(("2026.09.4", 91_000L, 1_800_000_000_000L));
+        row.ConsentedAt.Should().NotBeNull();
+        GameConsentRecord r = await store.FindAsync(scanned.ExePath, Ct);
+        r.Fingerprint.SizeBytes.Should().Be(90_000, "the consent fingerprint is not the pre-scan's key");
+    }
+
+    [Fact]
+    public async Task APreScanFindingIsTheBlockInTheStructuredFormAndTheConsentStampSurvives()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        var store = new SqliteGameConsentStore(f.Db);
+        await store.RecordOperatorAcknowledgementAsync(Ack(), Ct);
+
+        (await store.RecordPreScanAsync(Fingerprint(), AntiCheatVerdict.Refused(AntiCheatRefusalReason.AntiCheatDirectory, "Easy Anti-Cheat", "EasyAntiCheat"),
+            "2026.09.4", Ct)).Should().Be(ConsentWriteOutcome.Written);
+
+        var row = await RowAsync(f, Fingerprint().ExePath);
+        row.State.Should().Be("blocked");
+        row.Reason.Should().Be("AntiCheatDirectory|Easy Anti-Cheat|EasyAntiCheat", "Reason|Family|Signal, so the App can say it in the user's language");
+        row.Enabled.Should().Be(0);
+        row.ConsentedAt.Should().NotBeNull("a block is not a withdrawal of consent");
+        row.Rules.Should().Be("2026.09.4");
+    }
+
+    [Fact]
+    public async Task APreScanThatCouldNotAnswerIsUnverifiedAndDoesNotDisableTheToggle()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        var store = new SqliteGameConsentStore(f.Db);
+        await store.RecordOperatorAcknowledgementAsync(Ack(), Ct);
+
+        await store.RecordPreScanAsync(Fingerprint(), AntiCheatVerdict.Refused(AntiCheatRefusalReason.PreScanFailed, string.Empty, "could not be listed"), "2026.09.4", Ct);
+
+        var row = await RowAsync(f, Fingerprint().ExePath);
+        (row.State, row.Reason, row.Enabled).Should().Be(("unverified", (string?)null, 1L));
+    }
+
+    [Fact]
+    public async Task NothingThePreScanWritesClearsABlockOrAddsARow()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        var store = new SqliteGameConsentStore(f.Db);
+        await store.RecordGuardBlockAsync(Fingerprint(), AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedModule, "BattlEye", "BEClient_x64.dll"), Ct);
+
+        (await store.RecordPreScanAsync(Fingerprint(), AntiCheatVerdict.Allowed(), "2026.09.9", Ct)).Should().Be(ConsentWriteOutcome.NotFound);
+        (await store.RecordPreScanAsync(Fingerprint(), AntiCheatVerdict.Refused(AntiCheatRefusalReason.AntiCheatFile, "Other", "o.sys"), "2026.09.9", Ct))
+            .Should().Be(ConsentWriteOutcome.NotFound, "the first finding stands");
+        var row = await RowAsync(f, Fingerprint().ExePath);
+        row.State.Should().Be("blocked");
+        row.Reason.Should().Be("BlockedModule|BattlEye|BEClient_x64.dll");
+        row.Rules.Should().BeNull("a blocked row is not re-keyed either: nothing about it changes");
+
+        (await store.RecordPreScanAsync(Fingerprint(@"C:\Games\Other\other.exe"), AntiCheatVerdict.Allowed(), "2026.09.9", Ct))
+            .Should().Be(ConsentWriteOutcome.NotFound, "the library is the App's and the watcher's to add to");
+        (await store.FindAsync(@"C:\Games\Other\other.exe", Ct)).IsFromStore.Should().BeFalse();
+    }
 }

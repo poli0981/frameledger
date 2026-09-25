@@ -14,10 +14,10 @@ Requirement IDs (`FR-x`, `NFR-x`) are referenced by other docs, commits, and tes
 
 ### FR-2 Hooking consent & control (new, safety-critical — see `19_SAFETY`)
 - FR-2.1 Hooking is **off by default for every game**. Enabling requires a per-game consent dialog stating what is injected, why, and the anti-cheat/ban risk.
-- FR-2.2 The static anti-cheat pre-scan disables the toggle outright for titles shipping anti-cheat; the reason is shown and the control is not clickable.
+- FR-2.2 The static anti-cheat pre-scan disables the toggle outright for titles shipping anti-cheat; the reason is shown and the control is not clickable. Since 2026-09-25 (beta.8, owner decision) the Agent runs that pre-scan over every library entry itself — once per rules version and executable, whether or not hooking was ever asked for — and by default the game's page shows only the finding in place of the Hooking card (Settings: *Hide hooking on anti-cheat games*, `ui.hide_anticheat_hooking`); the library card says "Anti-cheat". The reason is always on the page (`19_SAFETY` §What a finding does to the game).
 - FR-2.3 The runtime guard refuses injection and refuses to continue a session when anti-cheat is detected. **No override exists anywhere in the UI, config, or CLI.**
 - FR-2.4 Global "disable all hooking" kill switch in Settings; also honored by the Vulkan layer.
-- FR-2.7 (owner decision 2026-09-22; it was a per-game override for one day, withdrawn) A finding about a game — anti-cheat named in its process, on its title lists or in its folder — turns hooking off for that game wherever the guard makes it: at the pre-scan, at a session's start, or at the 30 s re-scan. The row carries the reason, the game's page and the notice say so, and nothing overrides it (`19_SAFETY` §What a finding does to the game).
+- FR-2.7 (owner decision 2026-09-22; it was a per-game override for one day, withdrawn) A finding about a game — anti-cheat named in its process, on its title lists or in its folder — turns hooking off for that game wherever the guard makes it: at the pre-scan, at a session's start, at the 30 s re-scan, or (since 2026-09-25) at the Agent's pre-scan of the library. The row carries the reason, the game's page and the notice say so, and nothing overrides it (`19_SAFETY` §What a finding does to the game).
 - FR-2.5 Repeated crashes shortly after injection auto-disable hooking for that game, with an explanation and a manual re-enable path.
 - FR-2.6 Users can always see, per session, which tier produced the data.
 

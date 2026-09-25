@@ -53,6 +53,19 @@
                 </StackPanel>
             </ui:CardExpander>
 
+            <!-- beta.8 (owner request 2026-09-25): an anti-cheat game's page shows the finding instead of its Hooking card. -->
+            <ui:CardControl Margin="0,8,0,0" Icon="{ui:SymbolIcon ShieldError24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_HideAntiCheatHooking_Label}" />
+                        <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Appearance="Secondary" TextWrapping="Wrap"
+                                      Text="{x:Static res:Strings.Settings_HideAntiCheatHooking_Body}" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_HideAntiCheatHooking_Label}"
+                                 IsChecked="{Binding ViewModel.HideAntiCheatHooking, Mode=TwoWay}" />
+            </ui:CardControl>
+
             <ui:CardExpander Margin="0,8,0,0" Icon="{ui:SymbolIcon Layer24}">
                 <ui:CardExpander.Header>
                     <Grid>
