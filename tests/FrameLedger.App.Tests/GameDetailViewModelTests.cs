@@ -451,6 +451,47 @@ public sealed class GameDetailViewModelTests
         }
     }
 
+    /// <summary>
+    /// beta.8: the Details card names the NVIDIA App's overrides as the driver profile stood at the newest session that read
+    /// one; a game no session read a profile for has no such row.
+    /// </summary>
+    [Fact]
+    public async Task TheDetailsCardNamesTheNvidiaAppsOverridesFromTheNewestSessionThatReadThem()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow game = await s.GameAsync("Alpha");
+            long older = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-3));
+            _ = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-1));
+            string profile = Application.Recording.DriverProfileRecord.Serialize(new Application.Capture.DriverProfileReading
+            {
+                Outcome = Application.Capture.DriverProfileOutcome.Application,
+                ProfileName = "Alpha",
+                Settings =
+                [
+                    new(Application.Capture.NvidiaDriverSettings.DlssSrOverride, 1, Application.Capture.DriverSettingLocation.Profile, false),
+                    new(Application.Capture.NvidiaDriverSettings.DlssSrPreset, 11, Application.Capture.DriverSettingLocation.Profile, false),
+                ],
+            })!;
+            (GameDetailViewModel before, _, _, _, _) = await BuildAsync(s, game.Id);
+            before.Details.Should().NotContain(static r => r.Label == "NVIDIA App override", "no session read a profile");
+
+            await s.Db.WriteAsync((c, tx, ct) => Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(
+                "UPDATE sessions SET driver_profile = @p WHERE id = @id", new { p = profile, id = older }, tx, cancellationToken: ct)), Ct);
+            (GameDetailViewModel vm, _, _, _, _) = await BuildAsync(s, game.Id);
+
+            vm.Details.Should().ContainSingle(static r => r.Label == "NVIDIA App override")
+                .Which.Value.Should().Be("DLSS override (preset K)", "the newest session that read one; the newest read none");
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
+
     /// <summary>The Agent's refusal for such an executable (beta.8, <c>ExecutableNotX64</c>) is said in words, with the architecture.</summary>
     [Fact]
     public void ANotX64RefusalNamesTheArchitecture()

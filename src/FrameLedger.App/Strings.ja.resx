@@ -2641,4 +2641,124 @@
     <value>{0} {1}（ゲーム同梱は {2}。ドライバーや NVIDIA App などにより別のコピーが読み込まれました）</value>
     <comment>review</comment>
   </data>
+  <data name="Nv_Profile_Format" xml:space="preserve">
+    <value>NVIDIA プロファイル「{0}」: {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Profile_Global_Format" xml:space="preserve">
+    <value>NVIDIA グローバル プロファイル（このゲーム用のプロファイルはありません）: {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Override_None" xml:space="preserve">
+    <value>DLSS やフレーム生成の上書きはありません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Override_Sr" xml:space="preserve">
+    <value>DLSS の上書き</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Override_Rr" xml:space="preserve">
+    <value>レイ再構成の上書き</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Override_Fg" xml:space="preserve">
+    <value>フレーム生成の上書き</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Override_Sl" xml:space="preserve">
+    <value>Streamline 経由の DLSS の上書き</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_FgMode_Off" xml:space="preserve">
+    <value>フレーム生成を強制オフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_FgMode_On" xml:space="preserve">
+    <value>フレーム生成を強制オン</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_FgMode_Auto" xml:space="preserve">
+    <value>フレーム生成は自動</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_FgMode_Dynamic" xml:space="preserve">
+    <value>動的フレーム生成</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_SmoothMotion" xml:space="preserve">
+    <value>Smooth Motion（NVIDIA ではなくコミュニティのツールが記載している設定）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Details_Format" xml:space="preserve">
+    <value>{0}（{1}）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Preset_Format" xml:space="preserve">
+    <value>プリセット {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Preset_Latest" xml:space="preserve">
+    <value>最新のプリセット</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Preset_Default" xml:space="preserve">
+    <value>既定のプリセット</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Mode_Performance" xml:space="preserve">
+    <value>パフォーマンス</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Mode_Balanced" xml:space="preserve">
+    <value>バランス</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Mode_Quality" xml:space="preserve">
+    <value>クオリティ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Mode_Dlaa" xml:space="preserve">
+    <value>DLAA</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Mode_UltraPerformance" xml:space="preserve">
+    <value>ウルトラ パフォーマンス</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Mode_Custom_Format" xml:space="preserve">
+    <value>カスタム {0}%</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Mode_Custom" xml:space="preserve">
+    <value>カスタム比率</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Mfg_Format" xml:space="preserve">
+    <value>×{0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_DynamicTarget_Format" xml:space="preserve">
+    <value>動的ターゲット {0} FPS</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_DynamicTarget_Auto" xml:space="preserve">
+    <value>動的ターゲットは自動</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Driver_Format" xml:space="preserve">
+    <value>NVIDIA ドライバー（このゲームのプロセス）: {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Driver_DllSelected" xml:space="preserve">
+    <value>ドライバーが選んだ DLSS DLL</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Driver_Ratio_Format" xml:space="preserve">
+    <value>比率 {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Details_NvidiaOverride" xml:space="preserve">
+    <value>NVIDIA App の上書き</value>
+    <comment>review</comment>
+  </data>
 </root>

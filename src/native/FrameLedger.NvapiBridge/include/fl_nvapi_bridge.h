@@ -28,7 +28,9 @@ extern "C" {
 #define FL_NV_API __declspec(dllimport)
 #endif
 
-#define FL_NV_ABI_VERSION 1u
+// 2 since 2026-09-25 (beta.8): FlNvDriverProfile and FlNvDriverProfileSize. Additive — the version exists so the
+// managed side refuses a DLL that predates the entry point rather than failing on a missing export at the first read.
+#define FL_NV_ABI_VERSION 2u
 
 // Status codes. Zero is success; negatives are ours; an NvAPI_Status is passed through where the
 // caller can act on it (it is negative too, and never one of ours).
@@ -89,6 +91,34 @@ typedef struct FlNvNgxWords {
     uint32_t reserved[2];
 } FlNvNgxWords;
 
+// NvAPI_DRS: the driver profile the NVIDIA driver applies to an executable, and the values it gives the settings the
+// caller names (beta.8, 2026-09-25) — which is where the NVIDIA App writes its per-game DLSS / frame-generation
+// overrides. READ-ONLY like everything here: a DRS session is created, the settings database loaded, the profile
+// found, its values read, and the session destroyed. Nothing is set, saved, restored or deleted — NvAPI_DRS_SetSetting,
+// NvAPI_DRS_SaveSettings and every other DRS writer are never called (18_GPU_VENDOR_APIS §Runtime policy).
+#define FL_NV_PROFILE_MAX_SETTINGS 24u
+#define FL_NV_PROFILE_APPLICATION 0    // an application profile names this executable; the values are what it gives it
+#define FL_NV_PROFILE_GLOBAL 1         // no application profile names it: the values the current global profile gives
+#define FL_NV_PROFILE_DEGRADED 2       // no usable NVIDIA driver, or DRS refused — nvapiStatus says which
+
+typedef struct FlNvProfileSetting {
+    uint32_t id;            // the setting id asked for
+    int32_t  status;        // NvAPI_DRS_GetSetting's NvAPI_Status, verbatim (NVAPI_SETTING_NOT_FOUND: set nowhere)
+    uint32_t value;         // u32CurrentValue, when status is NVAPI_OK and the setting is a DWORD
+    uint32_t location;      // NVDRS_SETTING_LOCATION: 0 this profile, 1 the global profile, 2 base, 3 the default
+    uint32_t predefined;    // isCurrentPredefined: nonzero = the driver's shipped value, 0 = a value someone set
+    uint32_t dword;         // 1 when the setting is a DWORD (NVDRS_DWORD_TYPE); value is 0 otherwise
+} FlNvProfileSetting;
+
+typedef struct FlNvDriverProfileRead {
+    uint32_t           size;                // sizeof(FlNvDriverProfileRead), set by the caller
+    int32_t            status;              // FL_NV_PROFILE_*
+    int32_t            nvapiStatus;         // the NvAPI_Status behind status (FindApplicationByName's for GLOBAL)
+    uint32_t           count;               // settings[] filled: the count asked for, 0 when DEGRADED
+    uint16_t           profileName[128];    // UTF-16, NUL-terminated, truncated
+    FlNvProfileSetting settings[FL_NV_PROFILE_MAX_SETTINGS];
+} FlNvDriverProfileRead;
+
 // Reference-counted: every FlNvInit is matched by an FlNvShutdown, and NvAPI_Unload runs at zero.
 // Returns FL_NV_OK, or the NvAPI_Status NvAPI_Initialize answered (a normal condition on a machine
 // with no NVIDIA driver — L3 disables cleanly, never throws). A machine whose driver initialises
@@ -104,6 +134,13 @@ FL_NV_API int32_t FlNvReadSample(FlNvSample* out);
 // which branch was taken, and `nvapiStatus` says why.
 FL_NV_API int32_t FlNvNgxState(uint32_t pid, FlNvNgxWords* out);
 
+// The profile the driver applies to `exePath` (a fully qualified path — the one the driver will match on launch) and
+// the values it gives the `count` settings in `ids`. Never fails for a reason the caller cannot read: `status` says
+// which branch was taken. FL_NV_BAD_ARGUMENT for a null pointer, more than FL_NV_PROFILE_MAX_SETTINGS ids, or a
+// path too long for NVAPI's string — refused, never truncated, since a truncated path matches another program.
+FL_NV_API int32_t FlNvDriverProfile(const uint16_t* exePath, const uint32_t* ids, uint32_t count,
+                                    FlNvDriverProfileRead* out);
+
 // Driver version (e.g. 61664) and branch string; FL_NV_NOT_INITIALISED before FlNvInit.
 FL_NV_API int32_t FlNvDriverVersion(uint32_t* version, char* branch, uint32_t branchCapacity);
 
@@ -111,6 +148,7 @@ FL_NV_API int32_t FlNvDriverVersion(uint32_t* version, char* branch, uint32_t br
 FL_NV_API uint32_t    FlNvAbiVersion(void);
 FL_NV_API uint32_t    FlNvSampleSize(void);
 FL_NV_API uint32_t    FlNvNgxStateSize(void);
+FL_NV_API uint32_t    FlNvDriverProfileSize(void);
 FL_NV_API const char* FlNvBuildId(void);
 
 #ifdef __cplusplus

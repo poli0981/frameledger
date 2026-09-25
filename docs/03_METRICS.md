@@ -477,6 +477,15 @@ carries the three shapes.
 
 ## Upscaling — measured, not guessed (Tier 1)
 
+> **The NVIDIA driver's overrides are a configuration, not a measurement (beta.8, 2026-09-25).** A session now also
+> stores the driver profile its executable ran under (`sessions.driver_profile`: the NVIDIA App's DLSS, Ray
+> Reconstruction and frame-generation overrides, read from the driver's settings store — never from the game's process
+> or memory, CLAUDE.md rule 4) and the driver's own per-process override report in full (`ngx_driver_words`: preset,
+> mode, ratio beside the masks). Both are shown as what the driver was set to do and what it says it did — "NVIDIA
+> profile …: DLSS override (preset K, Quality)" — and neither changes a measured value, a rung of the upscaler ladder or
+> the frame-generation factor: those stay what the hooks saw. A profile override the hooks contradict is two true
+> statements about different things, and the page shows both.
+
 From the upscaler hooks we get, per frame:
 
 - `upscaler`: the technology **actually executing** (`dlss`, `fsr2`, `fsr3`, `fsr4`, `xess`, `nis`, `none`) — from the API that was called, not from a DLL sitting on disk.

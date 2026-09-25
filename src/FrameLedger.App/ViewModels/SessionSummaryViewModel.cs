@@ -51,6 +51,17 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
     [ObservableProperty]
     private string? _librariesLine;
 
+    /// <summary>
+    /// The NVIDIA driver profile the game ran under and what it overrides (<c>sessions.driver_profile</c>, beta.8) — the
+    /// NVIDIA App's DLSS and frame-generation overrides; null where no NVIDIA driver was there to ask.
+    /// </summary>
+    [ObservableProperty]
+    private string? _driverProfileLine;
+
+    /// <summary>What the driver reported applying in the game's process (<c>sessions.ngx_driver_words</c>); null when it reported no override.</summary>
+    [ObservableProperty]
+    private string? _driverStateLine;
+
     [ObservableProperty]
     private FpsReadoutModel _readout = FpsReadoutModel.Unavailable;
 
@@ -298,6 +309,8 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
             ? string.Empty
             : string.Join(" · ", SystemInfoViewModel.Describe(_snapshot).Where(static l => !string.Equals(l.Value, Strings.Common_NotAvailable, StringComparison.Ordinal)).Select(static l => l.Value));
         LibrariesLine = LoadedLibraries(row.RuntimeModulesJson, Game.Libraries);
+        DriverProfileLine = NvidiaOverrides.ProfileLine(row.DriverProfileJson);
+        DriverStateLine = NvidiaOverrides.DriverLine(row.NgxDriverWordsJson);
         Tags = _annotation is null ? string.Empty : string.Join(", ", _annotation.Tags);
         Notes = _annotation?.Notes ?? string.Empty;
         HasDisplayed = Series?.HasGenerated == true;

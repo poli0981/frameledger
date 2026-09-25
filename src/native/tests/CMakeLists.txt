@@ -20,7 +20,12 @@ add_custom_command(TARGET fl_nvapi_bridge_test POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         $<TARGET_FILE:FrameLedger.NvapiBridge> $<TARGET_FILE_DIR:fl_nvapi_bridge_test>)
 add_test(NAME fl_nvapi_bridge COMMAND fl_nvapi_bridge_test)
-set_tests_properties(fl_nvapi_bridge PROPERTIES PASS_REGULAR_EXPRESSION "BRANCH: (AVAILABLE|DEGRADED)")
+# The branch line is required AND a failed assertion fails the test (2026-09-25). PASS_REGULAR_EXPRESSION alone makes
+# ctest ignore the exit code, and for as long as it stood alone the AVAILABLE branch's reference-counting check failed
+# on every machine with an NVIDIA GPU while ctest reported Passed; CI, which has no driver, never takes that branch.
+set_tests_properties(fl_nvapi_bridge PROPERTIES
+    PASS_REGULAR_EXPRESSION "BRANCH: (AVAILABLE|DEGRADED)"
+    FAIL_REGULAR_EXPRESSION "FAILED:;[0-9]+ failed")
 
 # The safety-guard matrix. 20_OPEN_QUESTIONS §S13(a) put the guard in C++, which
 # made Catch2 a PREREQUISITE of the guard rather than a later nicety: 14_TESTING

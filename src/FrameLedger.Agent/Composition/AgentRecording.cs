@@ -34,6 +34,7 @@ internal sealed class AgentRecording
     private readonly ISessionObserver _observer;
     private readonly CapturePause _pause;
     private readonly IRecorderPolicy _policy;
+    private readonly IDriverProfileSource _profiles;
 
     public AgentRecording(
         IGameConsentStore store,
@@ -53,8 +54,10 @@ internal sealed class AgentRecording
         ICrashEventSource crashes,
         ISessionObserver observer,
         CapturePause pause,
-        IRecorderPolicy policy)
+        IRecorderPolicy policy,
+        IDriverProfileSource profiles)
     {
+        _profiles = profiles;
         _store = store;
         _gate = gate;
         _guard = guard;
@@ -104,7 +107,8 @@ internal sealed class AgentRecording
             TimeProvider.System,
             new RecorderOptions { MinimumSessionLength = minimum, PartialFlushInterval = flush },
             _observer,
-            _policy);
+            _policy,
+            _profiles);
     }
 
     /// <summary>L1 + L2 + L3 under the composite, one poller per session; the poller owns and disposes the layers. The interval is the session's (<c>telemetry.interval_ms</c>, D16).</summary>

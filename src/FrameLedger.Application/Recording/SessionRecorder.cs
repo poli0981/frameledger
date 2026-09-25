@@ -42,12 +42,16 @@ public sealed class SessionRecorder : ISessionRecorder
     private readonly RecorderOptions _options;
     private readonly IRecorderPolicy? _policy;
     private readonly ISessionObserver? _observer;
+    private readonly IDriverProfileSource? _profiles;
 
     public SessionRecorder(ICaptureSessionFactory sessions, IGameRepository games, IHardwareSnapshotRepository snapshots,
         IHardwareSnapshotSource hardware, IPartialSessionStore partials, SessionFinalizer finalizer, ICrashEventSource crashes,
         Func<RecorderOptions, ITelemetryPoller?> pollers, TimeProvider clock, RecorderOptions? options = null, ISessionObserver? observer = null,
-        IRecorderPolicy? policy = null)
+        IRecorderPolicy? policy = null, IDriverProfileSource? profiles = null)
     {
+        // beta.8: the NVIDIA driver profile the game runs under, read beside each session; null in every recorder that has
+        // no NVIDIA bridge to ask (the tests, the unshipped host).
+        _profiles = profiles;
         _sessions = sessions ?? throw new ArgumentNullException(nameof(sessions));
         _games = games ?? throw new ArgumentNullException(nameof(games));
         _snapshots = snapshots ?? throw new ArgumentNullException(nameof(snapshots));
@@ -66,6 +70,9 @@ public sealed class SessionRecorder : ISessionRecorder
         // a recorder without one (the tests, the unshipped host) runs under its baseline options unchanged.
         _policy = policy;
     }
+
+    /// <summary>How long finalising waits for the driver-profile read before storing none: a stuck driver must not hold a session.</summary>
+    public static TimeSpan DriverProfileBudget { get; } = TimeSpan.FromSeconds(5);
 
     public async Task<RecordedSession> RecordAsync(RecordRequest request, CancellationToken ct = default)
     {
@@ -97,6 +104,10 @@ public sealed class SessionRecorder : ISessionRecorder
         long qpcEpoch, long snapshotId, RecorderOptions options, CancellationToken ct)
     {
         ITelemetryPoller? poller = _pollers(options);
+        // The driver profile, read BESIDE the session rather than before it (beta.8): a DRS load takes tens of milliseconds
+        // and a launch must not wait on it. The profile the driver applies is fixed when the process starts, so a read that
+        // starts here and is awaited at the end describes the run.
+        Task<DriverProfileReading>? profile = _profiles is null ? null : Task.Run(() => _profiles.Read(request.NormalisedExePath), CancellationToken.None);
         try
         {
             poller?.Start();
@@ -122,7 +133,8 @@ public sealed class SessionRecorder : ISessionRecorder
             run.FinalFlush();
             writer.Note("ended " + outcome.Reason);
 
-            RecordedSession recorded = await FinalizeAsync(request, game, header, outcome, run, endedAt, writer, options, ct).ConfigureAwait(false);
+            string? driverProfile = await DriverProfileJsonAsync(profile).ConfigureAwait(false);
+            RecordedSession recorded = await FinalizeAsync(request, game, header, outcome, run, endedAt, writer, options, driverProfile, ct).ConfigureAwait(false);
             _observer?.Ended(recorded);
             return recorded;
         }
@@ -140,8 +152,31 @@ public sealed class SessionRecorder : ISessionRecorder
             : await session.RunAsync(request.NormalisedExePath, request.Observed, request.PayloadPath, ct, request.StopToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// The driver-profile read's column, or null — never a failed session: a read that faults, or takes longer than
+    /// <see cref="DriverProfileBudget"/>, stores no profile and the session is finalised as it would have been.
+    /// </summary>
+    private static async Task<string?> DriverProfileJsonAsync(Task<DriverProfileReading>? read)
+    {
+        if (read is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return DriverProfileRecord.Serialize(await read.WaitAsync(DriverProfileBudget).ConfigureAwait(false));
+        }
+        catch (Exception ex) when (ex is TimeoutException or InvalidOperationException or ArgumentException
+                                       or System.Runtime.InteropServices.ExternalException or DllNotFoundException or EntryPointNotFoundException
+                                       or BadImageFormatException or System.Runtime.InteropServices.MarshalDirectiveException)
+        {
+            return null;
+        }
+    }
+
     private async Task<RecordedSession> FinalizeAsync(RecordRequest request, GameRow game, PartialHeader header, CaptureOutcome outcome,
-        Run run, DateTimeOffset endedAt, PartialSessionWriter writer, RecorderOptions options, CancellationToken ct)
+        Run run, DateTimeOffset endedAt, PartialSessionWriter writer, RecorderOptions options, string? driverProfile, CancellationToken ct)
     {
         bool hooked = outcome.AttachRefusal == ShmAttachRefusal.Ok;
         // A held Tier-2 session's duration is the game's (2026-09-22), so the Application-log witness applies to it too.
@@ -149,7 +184,7 @@ public sealed class SessionRecorder : ISessionRecorder
         bool crashEvent = hadPid && _crashes.FoundCrash(Path.GetFileName(request.NormalisedExePath), header.StartedAt, endedAt + ExitStatusMapper.CrashWitnessGrace);
         ExitStatus exit = ExitStatusMapper.Map(outcome.Reason, outcome.ExitCode, crashEvent);
 
-        SessionRow skeleton = Skeleton(header, outcome, endedAt, exit, crashEvent, hooked);
+        SessionRow skeleton = Skeleton(header, outcome, endedAt, exit, crashEvent, hooked) with { DriverProfileJson = driverProfile };
         var input = new FinalizeInput
         {
             Skeleton = skeleton,

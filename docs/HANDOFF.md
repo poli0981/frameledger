@@ -1606,6 +1606,13 @@ only be refused, never the finding (FR-2.2).
   sweep test re-scan forever. `unknown` is the stored "looked, could not tell".
 - **`FileVersionInfo` on a System32 file reads its `.mui`.** `version.dll` read in place said 6.2.x, its copy in a temp
   folder 10.0.x: compare a version against the file that was read, never against its source.
+- **`PASS_REGULAR_EXPRESSION` alone makes ctest ignore the exit code.** `fl_nvapi_bridge` passed for weeks with a failing
+  assertion on every GPU machine (CI has no driver, so never took the branch). Any test that must print a line AND
+  pass needs a `FAIL_REGULAR_EXPRESSION` beside it; running the test binary directly is the check.
+- **A C ABI cannot give a function and a struct one name** (`FlNvDriverProfile` the export, `FlNvDriverProfileRead` the
+  struct): C puts typedefs and functions in one namespace, and MSVC's error names neither clearly.
+- **The driver profile is a configuration.** `sessions.driver_profile` says what the NVIDIA App set; it never feeds
+  the upscaler ladder or the factor. The bridge has no DRS writer, and a PR that adds one is a different product.
 - **A 32-bit refusal is not a block.** `ExecutableNotX64` writes nothing — no `hook_blocked_reason`, no stamp — so a
   64-bit build of the same game under *Change executable* can be hooked; the sweep's turn-off uses
   `hook_autodisabled_reason`, which the page does not offer to undo while the file is still 32-bit.

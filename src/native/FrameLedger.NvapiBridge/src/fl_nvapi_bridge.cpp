@@ -223,6 +223,90 @@ FL_NV_API int32_t FlNvNgxState(uint32_t pid, FlNvNgxWords* out) {
     return FL_NV_OK;
 }
 
+FL_NV_API int32_t FlNvDriverProfile(const uint16_t* exePath, const uint32_t* ids, uint32_t count,
+                                    FlNvDriverProfileRead* out) {
+    if (out == nullptr || exePath == nullptr || (ids == nullptr && count != 0u) || count > FL_NV_PROFILE_MAX_SETTINGS) {
+        return FL_NV_BAD_ARGUMENT;
+    }
+    if (out->size != sizeof(FlNvDriverProfileRead)) {
+        return FL_NV_BAD_SIZE;
+    }
+    // NVAPI's fixed Unicode string: a path that does not fit is refused, never truncated — a truncated path would
+    // find the profile of whatever program it now names.
+    NvAPI_UnicodeString app{};
+    size_t              length = 0;
+    while (exePath[length] != 0u) {
+        if (++length >= NVAPI_UNICODE_STRING_MAX) {
+            return FL_NV_BAD_ARGUMENT;
+        }
+    }
+    std::memcpy(app, exePath, length * sizeof(NvU16));
+
+    FlNvDriverProfileRead r{};
+    r.size = sizeof(FlNvDriverProfileRead);
+    r.status = FL_NV_PROFILE_DEGRADED;
+    if (!g_ready.load(std::memory_order_acquire)) {
+        r.nvapiStatus = FL_NV_NOT_INITIALISED;
+        *out = r;
+        return FL_NV_OK;
+    }
+    Locked             lock;
+    NvDRSSessionHandle session = nullptr;
+    NvAPI_Status       status = NvAPI_DRS_CreateSession(&session);
+    if (status != NVAPI_OK) {
+        r.nvapiStatus = static_cast<int32_t>(status);
+        *out = r;
+        return FL_NV_OK;
+    }
+    status = NvAPI_DRS_LoadSettings(session);
+    NvDRSProfileHandle profile = nullptr;
+    if (status == NVAPI_OK) {
+        NVDRS_APPLICATION application{};
+        application.version = NVDRS_APPLICATION_VER;
+        status = NvAPI_DRS_FindApplicationByName(session, app, &profile, &application);
+        if (status == NVAPI_OK) {
+            r.status = FL_NV_PROFILE_APPLICATION;
+        } else if (status == NVAPI_EXECUTABLE_NOT_FOUND) {
+            // No profile names this executable: the global profile is what the driver gives it.
+            const NvAPI_Status global = NvAPI_DRS_GetCurrentGlobalProfile(session, &profile);
+            r.status = global == NVAPI_OK ? FL_NV_PROFILE_GLOBAL : FL_NV_PROFILE_DEGRADED;
+            if (global != NVAPI_OK) {
+                status = global;
+            }
+        }
+    }
+    r.nvapiStatus = static_cast<int32_t>(status);
+    if (r.status != FL_NV_PROFILE_DEGRADED) {
+        NVDRS_PROFILE info{};
+        info.version = NVDRS_PROFILE_VER;
+        if (NvAPI_DRS_GetProfileInfo(session, profile, &info) == NVAPI_OK) {
+            constexpr size_t kName = sizeof(r.profileName) / sizeof(r.profileName[0]);
+            for (size_t i = 0; i + 1u < kName && info.profileName[i] != 0u; ++i) {
+                r.profileName[i] = info.profileName[i];
+            }
+        }
+        for (uint32_t i = 0; i < count; ++i) {
+            // NVDRS_SETTING carries two unions sized for a binary value: ~8 KB, on the Agent's stack, never a game's.
+            NVDRS_SETTING setting{};
+            setting.version = NVDRS_SETTING_VER;
+            const NvAPI_Status  read = NvAPI_DRS_GetSetting(session, profile, ids[i], &setting);
+            FlNvProfileSetting& s = r.settings[i];
+            s.id = ids[i];
+            s.status = static_cast<int32_t>(read);
+            if (read == NVAPI_OK) {
+                s.dword = setting.settingType == NVDRS_DWORD_TYPE ? 1u : 0u;
+                s.value = s.dword != 0u ? setting.u32CurrentValue : 0u;
+                s.location = static_cast<uint32_t>(setting.settingLocation);
+                s.predefined = setting.isCurrentPredefined != 0u ? 1u : 0u;
+            }
+        }
+        r.count = count;
+    }
+    NvAPI_DRS_DestroySession(session);
+    *out = r;
+    return FL_NV_OK;
+}
+
 FL_NV_API int32_t FlNvDriverVersion(uint32_t* version, char* branch, uint32_t branchCapacity) {
     if (version == nullptr) {
         return FL_NV_BAD_ARGUMENT;
@@ -257,6 +341,10 @@ FL_NV_API uint32_t FlNvSampleSize(void) {
 
 FL_NV_API uint32_t FlNvNgxStateSize(void) {
     return sizeof(FlNvNgxWords);
+}
+
+FL_NV_API uint32_t FlNvDriverProfileSize(void) {
+    return sizeof(FlNvDriverProfileRead);
 }
 
 FL_NV_API const char* FlNvBuildId(void) {

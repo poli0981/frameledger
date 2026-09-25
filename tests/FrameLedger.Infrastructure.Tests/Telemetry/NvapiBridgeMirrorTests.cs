@@ -16,9 +16,11 @@ public sealed class NvapiBridgeMirrorTests
     {
         NativeNvapiBridge.IsPresent.Should().BeTrue("FrameLedger.NvapiBridge.dll must be staged beside the test binary (FrameLedger.NvapiBridge.targets)");
 
-        NativeNvapiBridge.AbiVersion().Should().Be(1u);
+        NativeNvapiBridge.AbiVersion().Should().Be(2u, "ABI 2 added FlNvDriverProfile (beta.8)");
         ((uint)Marshal.SizeOf<NvapiSample>()).Should().Be(NativeNvapiBridge.SampleSize());
         ((uint)Marshal.SizeOf<NvapiNgxWords>()).Should().Be(NativeNvapiBridge.NgxStateSize());
+        ((uint)Marshal.SizeOf<NvapiDriverProfile>()).Should().Be(NativeNvapiBridge.DriverProfileSize());
+        Marshal.SizeOf<NvapiProfileSetting>().Should().Be(24);
         NativeNvapiBridge.BuildId().Should().NotBeNullOrEmpty();
     }
 

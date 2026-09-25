@@ -19,6 +19,13 @@ public interface INvapiBridge : IDisposable
     /// <summary><c>FlNvDriverVersion</c>: 0 with the version (e.g. 61664) and branch, or a status.</summary>
     int DriverVersion(out uint version, out string branch);
 
+    /// <summary>
+    /// <c>FlNvDriverProfile</c> (ABI 2, beta.8): the DRS profile the driver applies to <paramref name="exePath"/> and the
+    /// values it gives <paramref name="ids"/> — 0 with the profile filled (its <c>Status</c> says which branch), or a
+    /// status. Read-only: the bridge never calls a DRS setter.
+    /// </summary>
+    int DriverProfile(string exePath, IReadOnlyList<uint> ids, out NvapiDriverProfile profile);
+
     /// <summary><c>FlNvShutdown</c>.</summary>
     void Shutdown();
 }

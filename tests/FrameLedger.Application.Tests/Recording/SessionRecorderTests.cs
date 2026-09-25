@@ -230,8 +230,20 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         public required SteppingClock Clock { get; init; }
     }
 
+    /// <summary>What the driver-profile source answers (beta.8); a throwing one proves a failed read costs the column, not the session.</summary>
+    private sealed class ScriptedProfiles(Func<string, DriverProfileReading> answer) : IDriverProfileSource
+    {
+        public List<string> Read { get; } = [];
+
+        DriverProfileReading IDriverProfileSource.Read(string exePath)
+        {
+            Read.Add(exePath);
+            return answer(exePath);
+        }
+    }
+
     private async Task<Harness> MakeAsync(bool consented = true, AntiCheatVerdict? verdict = null, int records = 3_000, FakeLiveness? liveness = null, bool poller = true,
-        bool clockStepsOnDrain = false)
+        bool clockStepsOnDrain = false, IDriverProfileSource? profiles = null)
     {
         _db ??= await LedgerDatabase.OpenAsync(Path.Combine(_dir, LedgerPaths.DatabaseFileName), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         var store = new SqliteGameConsentStore(_db);
@@ -255,7 +267,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
             games, new FakeSnapshots(), new FixedHardware(), partials,
             new SessionFinalizer(sessions, new RawSeriesCodec()), new NoCrashEvents(),
             _ => poller ? new FakePoller(clockStepsOnDrain ? clock : null) : null, clock,
-            new RecorderOptions { PartialFlushInterval = TimeSpan.FromSeconds(10) });
+            new RecorderOptions { PartialFlushInterval = TimeSpan.FromSeconds(10) }, profiles: profiles);
         return new Harness { Recorder = recorder, Games = games, Sessions = sessions, Partials = partials, Clock = clock };
     }
 
@@ -296,6 +308,33 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         h.Partials.Files.Should().BeEmpty("the .partial is deleted once the row is in");
         h.Partials.Deleted.Should().Equal(r.SessionGuid);
         r.Row.FrameCount.Should().Be(3_000, "the row comes back to the caller as finalized");
+    }
+
+    /// <summary>
+    /// beta.8: the NVIDIA driver profile the executable runs under is read beside the session and stored on its row; a
+    /// source that throws costs the column and nothing else.
+    /// </summary>
+    [Fact]
+    public async Task TheDriverProfileIsStoredOnTheRowAndAFailedReadCostsOnlyTheColumn()
+    {
+        var profiles = new ScriptedProfiles(static _ => new DriverProfileReading
+        {
+            Outcome = DriverProfileOutcome.Global,
+            ProfileName = "Base Profile",
+            Settings = [new DriverSettingReading(NvidiaDriverSettings.DlssSrOverride, null, DriverSettingLocation.NotSet, false)],
+        });
+        Harness h = await MakeAsync(profiles: profiles);
+
+        await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        profiles.Read.Should().Equal(_exe);
+        DriverProfileRecord stored = DriverProfileRecord.Parse(h.Sessions.Stored.Single().Row.DriverProfileJson)!;
+        (stored.Outcome, stored.Profile).Should().Be(("Global", "Base Profile"));
+
+        Harness failing = await MakeAsync(profiles: new ScriptedProfiles(static _ => throw new InvalidOperationException("the driver refused")));
+        RecordedSession r = await failing.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+        r.Row.DriverProfileJson.Should().BeNull();
+        r.Finalize.Status.Should().Be(FinalizeStatus.Saved, "the session is recorded as it would have been");
     }
 
     [Fact]

@@ -1986,4 +1986,94 @@ Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắ
   <data name="Summary_Library_Differs_Format" xml:space="preserve">
     <value>{0} {1} (game kèm bản {2}: một bản khác đã được nạp, ví dụ bởi driver hoặc NVIDIA App)</value>
   </data>
+  <data name="Nv_Profile_Format" xml:space="preserve">
+    <value>Profile NVIDIA “{0}”: {1}</value>
+  </data>
+  <data name="Nv_Profile_Global_Format" xml:space="preserve">
+    <value>Profile toàn cục của NVIDIA (không có profile riêng cho game này): {0}</value>
+  </data>
+  <data name="Nv_Override_None" xml:space="preserve">
+    <value>không ghi đè DLSS hay tạo khung hình</value>
+  </data>
+  <data name="Nv_Override_Sr" xml:space="preserve">
+    <value>Ghi đè DLSS</value>
+  </data>
+  <data name="Nv_Override_Rr" xml:space="preserve">
+    <value>Ghi đè Ray Reconstruction</value>
+  </data>
+  <data name="Nv_Override_Fg" xml:space="preserve">
+    <value>Ghi đè Frame Generation</value>
+  </data>
+  <data name="Nv_Override_Sl" xml:space="preserve">
+    <value>Ghi đè DLSS qua Streamline</value>
+  </data>
+  <data name="Nv_FgMode_Off" xml:space="preserve">
+    <value>tạo khung hình bị ép tắt</value>
+  </data>
+  <data name="Nv_FgMode_On" xml:space="preserve">
+    <value>tạo khung hình bị ép bật</value>
+  </data>
+  <data name="Nv_FgMode_Auto" xml:space="preserve">
+    <value>tạo khung hình tự động</value>
+  </data>
+  <data name="Nv_FgMode_Dynamic" xml:space="preserve">
+    <value>tạo khung hình động</value>
+  </data>
+  <data name="Nv_SmoothMotion" xml:space="preserve">
+    <value>Smooth Motion (setting do công cụ cộng đồng ghi nhận, không phải NVIDIA)</value>
+  </data>
+  <data name="Nv_Details_Format" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="Nv_Preset_Format" xml:space="preserve">
+    <value>preset {0}</value>
+  </data>
+  <data name="Nv_Preset_Latest" xml:space="preserve">
+    <value>preset mới nhất</value>
+  </data>
+  <data name="Nv_Preset_Default" xml:space="preserve">
+    <value>preset mặc định</value>
+  </data>
+  <data name="Nv_Mode_Performance" xml:space="preserve">
+    <value>Performance</value>
+  </data>
+  <data name="Nv_Mode_Balanced" xml:space="preserve">
+    <value>Balanced</value>
+  </data>
+  <data name="Nv_Mode_Quality" xml:space="preserve">
+    <value>Quality</value>
+  </data>
+  <data name="Nv_Mode_Dlaa" xml:space="preserve">
+    <value>DLAA</value>
+  </data>
+  <data name="Nv_Mode_UltraPerformance" xml:space="preserve">
+    <value>Ultra Performance</value>
+  </data>
+  <data name="Nv_Mode_Custom_Format" xml:space="preserve">
+    <value>tùy chỉnh {0}%</value>
+  </data>
+  <data name="Nv_Mode_Custom" xml:space="preserve">
+    <value>tỷ lệ tùy chỉnh</value>
+  </data>
+  <data name="Nv_Mfg_Format" xml:space="preserve">
+    <value>×{0}</value>
+  </data>
+  <data name="Nv_DynamicTarget_Format" xml:space="preserve">
+    <value>mục tiêu động {0} FPS</value>
+  </data>
+  <data name="Nv_DynamicTarget_Auto" xml:space="preserve">
+    <value>mục tiêu động tự động</value>
+  </data>
+  <data name="Nv_Driver_Format" xml:space="preserve">
+    <value>Driver NVIDIA, cho tiến trình của game này: {0}</value>
+  </data>
+  <data name="Nv_Driver_DllSelected" xml:space="preserve">
+    <value>DLL DLSS do driver chọn</value>
+  </data>
+  <data name="Nv_Driver_Ratio_Format" xml:space="preserve">
+    <value>tỷ lệ {0}</value>
+  </data>
+  <data name="GameDetail_Details_NvidiaOverride" xml:space="preserve">
+    <value>Ghi đè của NVIDIA App</value>
+  </data>
 </root>
