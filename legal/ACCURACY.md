@@ -11,8 +11,8 @@
   that changes what FrameLedger.Overlay or the capture host does; date the change.
   HTML comments are not part of the block.
 -->
-> ⚠ **What FrameLedger actually measures today — 2026-09-23.** The software is a beta; its latest
-> **pre-release is `0.1.0-beta.7`** (2026-09-23), an unsigned installer built from that tag with its
+> ⚠ **What FrameLedger actually measures today — 2026-09-25.** The software is a beta; its latest
+> **pre-release is `0.1.0-beta.8`** (2026-09-25), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
 > game in the library runs (unless you switched its recording off), injects only into games you enabled
@@ -30,7 +30,9 @@
 >   named FSR 3 from the older DLLs, and FSR without a version from the newer ones, which host both
 >   FSR 3.1 and FSR 4. FSR 2, and FSR shipped any other way, is not identified. For DLSS titles that
 >   bypass Streamline, the NVIDIA driver's own per-process record is stored with the session and shown
->   as *DLSS (driver-reported)*. Intel XeSS is **not** read (its SDK licence
+>   as *DLSS (driver-reported)*. The NVIDIA driver's profile for the game — the DLSS and frame-generation
+>   overrides the NVIDIA App sets — is read, never changed, and shown as the driver's settings beside what
+>   was measured. Intel XeSS is **not** read (its SDK licence
 >   forbids it), and neither is an upscaler compiled into the game: those read `N/A`, or "Unknown
 >   upscaler" when another vendor's hook ran in the game. Vulkan and OpenGL titles read `N/A`.
 > - **Quality preset:** not reported on any title measured. The one route this software may use — the
@@ -51,7 +53,8 @@
 >   FG are named from the calls the game makes; any other generator (XeSS-FG, one compiled into the game)
 >   is shown only as active with the technology not identified, and is never named. Where a technology is
 >   named but its frames could not be counted, or frame generation is not measured, the software shows
->   **Presented FPS** with a note on what it may include — never a Native figure.
+>   **Presented FPS** with a note on what it may include — never a Native figure. Where generated frames
+>   were counted, the lows, median and stutter are taken over application frames only.
 > - **Ray tracing:** Yes/No measured on Direct3D 12 from ray-dispatch and acceleration-structure-build
 >   calls; the technique and path tracing are `N/A`, and so is ray tracing on other APIs.
 > - **Video memory:** in use on the whole graphics card, recorded from Windows and GPU-driver telemetry
@@ -68,9 +71,10 @@
 >   stops capturing on a refusal: a Direct3D or OpenGL game's hooks are removed, and the Vulkan layer
 >   goes passthrough. A global switch in Settings turns all hooking off, and a running capture stops at
 >   its next check; it can only refuse, never permit. **There is no override.** A finding about a game — anti-cheat
->   named in its process, in its folder or on its title lists — turns hooking off for that game, whether found
->   before injection, at a session's start or by the 30 s re-check; the game's page says so, and nothing turns it
->   back on for that executable.
+>   named in its process or in its folder (any kernel driver there counts), or the game on a title list by its
+>   store id or executable name — turns hooking off for that game, whether found by the Agent's own check of every
+>   game in the library, before injection, at a session's start or by the 30 s re-check; the game's page says so,
+>   and nothing turns it back on for that executable.
 >
 > Where a value is not measured it reads `N/A`, with two exceptions: FPS then shows Presented FPS with a
 > note on what it may include, and ray-tracing flags may show a value you set yourself, labelled as

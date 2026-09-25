@@ -1558,7 +1558,7 @@ và legal"), so the Legal Gate shows both once.
 
 ## 2026-09-25 — the beta.8 train
 
-*Status is `CHANGELOG.md` `[Unreleased]` (then `[0.1.0-beta.8]`); this is what no other file carries. The owner's list
+*Status is `CHANGELOG.md` `[0.1.0-beta.8]`; this is what no other file carries. The owner's list
 (eight items: the anti-cheat set as large and strict as possible, hiding the hook part for anti-cheat games, more
 metadata, NVIDIA App overrides, clearer reasons, a working Trend, FPS decimals, chart fixes) is planned as nine PRs in
 one approved plan; each PR cites it.*

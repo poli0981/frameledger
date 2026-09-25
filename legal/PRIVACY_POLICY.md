@@ -1,6 +1,6 @@
 # FrameLedger — Privacy Policy
 
-**Version:** 2.3 · **Effective:** {{RELEASE_DATE}}
+**Version:** 2.4 · **Effective:** {{RELEASE_DATE}}
 
 **Short version: everything stays on your PC. FrameLedger has no accounts, no telemetry, no analytics, and never uploads your data anywhere.**
 
@@ -9,7 +9,7 @@
 Stored in `%LOCALAPPDATA%\FrameLedger` on your device:
 
 - Your game library entries (names, executable paths, metadata you or the app filled in, and whether each one is recorded).
-- Performance sessions: frame timing series, computed statistics, hardware sensor series (temperatures, load, memory usage), session duration, crash flags, tags and notes you write.
+- Performance sessions: frame timing series, computed statistics, hardware sensor series (temperatures, load, memory usage), session duration, crash flags, the graphics driver's settings the game ran under (NVIDIA only), tags and notes you write.
 - A hardware snapshot per session (CPU/GPU model, driver version, RAM size, OS build, display mode) used for the "what changed between sessions" feature.
 - App settings, logs (rotated daily — the app keeps 7 days, the capture agent 14 — including the logs written by the component loaded into games), and, after a crash of the app itself, crash dump files.
 - Which games you enabled code injection for, and when you consented.
@@ -37,11 +37,13 @@ The "Report a bug" feature builds a zip file **on your device**, shows you exact
 
 ## 4. What the app can technically observe
 
-To do its job, FrameLedger observes: which of *your tracked* executables — the entries in your library whose recording is on — are running, and their process trees; the parameters your games pass to the graphics APIs it intercepts (presentation, upscaling, ray tracing, pipeline creation); video-memory usage reported by the graphics runtime; loaded module names of a game being captured (for detection and for the anti-cheat safety check); and hardware sensor values from your graphics driver's own libraries.
+To do its job, FrameLedger observes: which of *your tracked* executables — the entries in your library whose recording is on — are running, and their process trees; the parameters your games pass to the graphics APIs it intercepts (presentation, upscaling, ray tracing, pipeline creation); video-memory usage reported by the graphics runtime; loaded module names of a game being captured (for detection and for the anti-cheat safety check); the names of the files in each library game's install folder, the version information of its executable and of the upscaling libraries it ships, and the store files that name it (Steam's and GOG's, on your disk) — to detect its engine and features and to check it for anti-cheat before any injection is possible; the NVIDIA driver's settings for your tracked executables (read only: the DLSS and frame-generation overrides the NVIDIA App set); and hardware sensor values from your graphics driver's own libraries.
 
 It does **not** read game memory outside those API parameters, and does not read game saves, chat, input content, network traffic, or anything unrelated to performance measurement. It records only for programs you added to your library and did not switch recording off for — a program whose recording is off is not watched at all — and injects only into games you individually enabled.
 
 > **History.** Version 2.3 (2026-09-23) adds the per-entry recording switch. Before it, every program in your library was recorded whenever it ran, which recorded a utility that starts with Windows at every boot.
+>
+> Version 2.4 (2026-09-25, 0.1.0-beta.8) names what the software reads to check every game in your library for anti-cheat — until then it checked only a game you asked to hook — and to name the versions of its files, and the NVIDIA driver's settings for your games. The files of a library game's folder were already read to detect its engine and features; this version is the first to say so.
 
 All of this stays on your device. None of it is transmitted anywhere.
 
