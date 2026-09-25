@@ -261,7 +261,7 @@ The UI wording is deliberate: **"Supports DLSS-G"** (capability, from files) ver
 
 Before a game is ever launched with hooking enabled, the static scan checks for anti-cheat SDKs shipped alongside it (`EasyAntiCheat/` directory, BattlEye binaries, EOS anti-cheat components, etc.). A hit **disables the hooking toggle for that game entirely** in the UI, with an explanation — the user cannot enable it, so the guard never even has to fire at launch. Prevention beats interception.
 
-**Implemented in the native guard, not here** (`fl_prescan.cpp`, exposed as `FlStaticPreScan`). It uses the same `MatchName` and the same rules file as the injection guard, matching directory names against the `anticheat.directories` group and file names against `anticheat.files`. Nothing managed matches a blocklist (§S15 item 1).
+**Implemented in the native guard, not here** (`fl_prescan.cpp`, exposed as ~~`FlStaticPreScan`~~ `FlStaticPreScanGame` since 2026-09-25, which takes the executable, resolves the install root itself and runs check 3 as well). It uses the same `MatchName` and the same rules file as the injection guard, matching directory names against the `anticheat.directories` group and file names against `anticheat.files`. Nothing managed matches a blocklist (§S15 item 1).
 
 Three things this section previously implied that are not true, and are worth stating:
 

@@ -210,10 +210,11 @@ bool RunSelfScan() noexcept {
     // moment the verdict is known. Init is not a hook path, so allocating here
     // breaks no rule; keeping it resident would waste budget on data we never
     // look at again. The parsed rules were ~226 KB (this comment said ~155 KB,
-    // a figure from before the per-title lists were objects) and are 541,736
-    // bytes since kMaxFamilies became 256 on 2026-09-25 — ctest fl_rules_budget
-    // prints sizeof(Rules) on every run. ParseRules resets them in place
-    // (ResetRules), so no copy of that size ever lands on this thread's stack.
+    // a figure from before the per-title lists were objects) and are 666,664
+    // bytes since kMaxFamilies became 256 and kMaxTitleRules 128 on 2026-09-25 —
+    // ctest fl_rules_budget prints sizeof(Rules) on every run. ParseRules resets
+    // them in place (ResetRules), so no copy of that size ever lands on this
+    // thread's stack.
     auto* text = static_cast<char*>(HeapAlloc(GetProcessHeap(), 0, kMaxRulesBytes));
     if (text == nullptr) {
         return true;

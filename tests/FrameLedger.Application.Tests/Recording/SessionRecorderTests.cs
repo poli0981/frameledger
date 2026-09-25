@@ -76,7 +76,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         public ValueTask<AntiCheatVerdict> GuardedInjectWhenReadyAsync(int targetPid, string payloadPath, int timeoutMs, CancellationToken ct = default) =>
             ValueTask.FromResult(Verdict);
 
-        public ValueTask<AntiCheatVerdict> PreScanGameDirectoryAsync(string gameDirectory, CancellationToken ct = default) =>
+        public ValueTask<AntiCheatVerdict> PreScanGameAsync(string executablePath, CancellationToken ct = default) =>
             ValueTask.FromResult(AntiCheatVerdict.Allowed());
     }
 

@@ -378,6 +378,53 @@ if (Test-Member $rules 'anticheat') {
         }
     }
 
+    # --- Per-title lists (check 3), since they are seeded (2026-09-25) ---------
+    # A title rule refuses a game by its executable's NAME, and a finding turns that game's hooking off for good
+    # (19_SAFETY §What a finding does to the game). So a name every engine or tool uses is not a title: `Game.exe`
+    # would take out every RPG Maker and Unity game on the machine. Checked against a fixed list rather than data, for
+    # the system-module list's reason above. And an exact executable rule names an EXECUTABLE — a token without
+    # `.exe` is a family name or a folder that landed in the wrong array, and matches nothing.
+    $genericExecutables = @(
+        'game.exe', 'launcher.exe', 'client.exe', 'client-win64-shipping.exe', 'game-win64-shipping.exe',
+        'ue4game.exe', 'ue4game-win64-shipping.exe', 'unrealgame.exe', 'unrealgame-win64-shipping.exe',
+        'start.exe', 'setup.exe', 'main.exe', 'app.exe', 'play.exe', 'run.exe', 'bootstrapper.exe', 'updater.exe',
+        'gamelauncher.exe', 'crashreporter.exe', 'crashreportclient.exe', 'unitycrashhandler64.exe',
+        'java.exe', 'javaw.exe', 'python.exe', 'pythonw.exe', 'nw.exe', 'electron.exe', 'dotnet.exe', 'hl2.exe',
+        'steam.exe', 'explorer.exe'
+    )
+    $seenExecutables = @{}
+    if (Test-Member $ac 'blockedExecutables') {
+        foreach ($rule in @($ac.blockedExecutables)) {
+            if ($null -eq $rule -or -not (Test-Member $rule 'values')) { continue }
+            $fam = if (Test-Member $rule 'family') { $rule.family } else { '<no family>' }
+            foreach ($v in @($rule.values)) {
+                if ([string]::IsNullOrWhiteSpace($v)) { continue }
+                $k = $v.ToLowerInvariant()
+                if ($k -in $genericExecutables) {
+                    $errors.Add("anticheat.blockedExecutables '$v' ($fam) is a name engines and tools share — it would turn hooking off for every game that uses it")
+                }
+                if ((Test-Member $rule 'match') -and $rule.match -eq 'exact' -and -not $k.EndsWith('.exe')) {
+                    $errors.Add("anticheat.blockedExecutables '$v' ($fam) is an exact rule that names no .exe — it can never match a process image")
+                }
+                if ($seenExecutables.ContainsKey($k)) {
+                    $errors.Add("anticheat.blockedExecutables '$v' ($fam) duplicates '$($seenExecutables[$k])' case-insensitively")
+                }
+                else { $seenExecutables[$k] = "$v ($fam)" }
+            }
+        }
+    }
+    $seenStoreIds = @{}
+    if (Test-Member $ac 'blockedStoreIds') {
+        foreach ($rule in @($ac.blockedStoreIds)) {
+            if ($null -eq $rule -or -not (Test-Member $rule 'store') -or -not (Test-Member $rule 'id')) { continue }
+            $k = "$($rule.store):$($rule.id)".ToLowerInvariant()
+            if ($seenStoreIds.ContainsKey($k)) {
+                $errors.Add("anticheat.blockedStoreIds '$k' ($($rule.family)) is listed twice (also $($seenStoreIds[$k]))")
+            }
+            else { $seenStoreIds[$k] = $rule.family }
+        }
+    }
+
     # --- Required families, IN THE RIGHT GROUP (S5, imperative) --------------
     # Family AND group, not family alone. Riot Vanguard is the machine-wide
     # driver gate (19_SAFETY §Pre-injection checks item 2): moving it into
@@ -570,8 +617,9 @@ function Get-HeaderConstant([string]$Name) {
 $maxFamilies = Get-HeaderConstant 'kMaxFamilies'
 $tokenBudget = Get-HeaderConstant 'kRulesTokenBudget'
 $maxFragments = Get-HeaderConstant 'kMaxNameFragments'
+$maxTitleRules = Get-HeaderConstant 'kMaxTitleRules'
 foreach ($c in @(@{ n = 'kMaxFamilies'; v = $maxFamilies }, @{ n = 'kRulesTokenBudget'; v = $tokenBudget },
-        @{ n = 'kMaxNameFragments'; v = $maxFragments })) {
+        @{ n = 'kMaxNameFragments'; v = $maxFragments }, @{ n = 'kMaxTitleRules'; v = $maxTitleRules })) {
     if ($null -eq $c.v) {
         Write-Host "RULES VALIDATION FAILED: could not read $($c.n) from fl_ac_rules.h" -ForegroundColor Red
         Write-Host '  Either the constant was renamed or its form changed. Refusing rather than' -ForegroundColor Red
@@ -602,6 +650,15 @@ if (Test-Member $rules 'anticheat') {
     }
     if (($fragmentCount * 2) -gt $maxFragments) {
         $errors.Add("$fragmentCount nameFragments needs $($fragmentCount * 2) slots in the worst case and fl::guard::kMaxNameFragments is $maxFragments — same failure mode as the family cap")
+    }
+    # The per-title lists are floored since 2026-09-25, so the same 2x worst case applies to each array.
+    $titleCounts = @{}
+    foreach ($list in 'blockedExecutables', 'blockedStoreIds') {
+        $n = if (Test-Member $rules.anticheat $list) { @($rules.anticheat.$list | Where-Object { $null -ne $_ }).Count } else { 0 }
+        $titleCounts[$list] = $n
+        if (($n * 2) -gt $maxTitleRules) {
+            $errors.Add("$n $list entries need $($n * 2) slots in the worst case (the floor plus a fully-drifted file) and fl::guard::kMaxTitleRules is $maxTitleRules — ParseRules refuses the file and the guard refuses EVERY title")
+        }
     }
 }
 
@@ -654,6 +711,6 @@ Write-Host "rules OK — schema v$($rules.schemaVersion), rules $($rules.rulesVe
 # Printed as the WORST case (floor + a fully-drifted file), not as the raw count.
 # The raw count against kMaxFamilies would overstate the headroom by exactly the
 # size of the floor, and this line exists to be read rather than to reassure.
-Write-Host "  capacity — $($totalFamilies * 2)/$maxFamilies family slots worst case, $($fragmentCount * 2)/$maxFragments fragment slots, $tokenCount/$tokenBudget parse tokens" -ForegroundColor DarkGray
+Write-Host "  capacity — $($totalFamilies * 2)/$maxFamilies family slots worst case, $($fragmentCount * 2)/$maxFragments fragment slots, $($titleCounts['blockedExecutables'] * 2)/$maxTitleRules executable-rule slots, $($titleCounts['blockedStoreIds'] * 2)/$maxTitleRules store-id slots, $tokenCount/$tokenBudget parse tokens" -ForegroundColor DarkGray
 Write-Host "  fixtures — $($fixtureDirs.Count) corpus directories cover every engine and platform id" -ForegroundColor DarkGray
 exit 0

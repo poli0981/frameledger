@@ -559,23 +559,18 @@ namespace {
 // both refuse with kProcessUnreadable -- the same reason CheckModules already
 // uses for the same underlying inability.
 //
-// THE STORE-ID HALF IS NOT HERE, and that is a limitation rather than an
-// omission. MatchesBlockedStoreId exists and is tested; it cannot be called,
-// for three independent reasons (§S14):
+// THE STORE-ID HALF was not here until 2026-09-25, and this comment gave three independent reasons (§S14):
 //
-//   1. NO PRODUCER. Nothing in the tree parses Steam .acf, GOG .info or Epic
-//      .item -- the platform metadata extractors were never built, so `store_id`
-//      is null for every title.
-//   2. NO CHANNEL, BY DESIGN. FlGuardEvaluate takes a pid and nothing else, and
-//      fl_guard_abi.h says so deliberately: "no way to hand in evidence -- the
-//      guard collects its own". A store id passed in by the caller is a caller
+//   1. NO PRODUCER. Nothing in the tree parsed Steam .acf, GOG .info or Epic .item.
+//   2. NO CHANNEL, BY DESIGN. FlGuardEvaluate takes a pid and nothing else, and fl_guard_abi.h says so deliberately:
+//      "no way to hand in evidence -- the guard collects its own". A store id passed in by the caller is a caller
 //      asserting a safety fact, which §S3's rule forbids in as many words.
-//   3. APPLYING "unknown refuses" TO IT WOULD BE A GATE THAT CANNOT PASS. If the
-//      guard can never resolve a store id and an unresolved store id refuses,
-//      every title on every machine refuses.
+//   3. APPLYING "unknown refuses" TO IT WOULD BE A GATE THAT CANNOT PASS.
 //
-// So the exe-name half runs and the store-id half is named as blocked. Do not
-// "fix" (2) by widening the ABI.
+// It is wired now without touching (2): Sources::StoreIdentity reads the store's OWN metadata from disk, from the
+// install root the guard derives itself (CheckBlockedStoreId, fl_prescan.cpp). (3) is answered by the matrix there:
+// an install no store names is not refused — that is an answer, not an unknown — while a store layout whose
+// metadata cannot be read is. Do not "fix" anything here by widening the ABI.
 Verdict CheckBlockedExecutable(const Sources& s, const Rules& rules, std::uint32_t targetPid) noexcept {
     if (s.ImageFileName == nullptr) {
         return Refuse(Reason::kProcessUnreadable, nullptr, "no image-name source");
@@ -617,6 +612,11 @@ Verdict EvaluateImpl(std::uint32_t targetPid, const Sources& sources) noexcept {
     // Check 3, at last. Cheap -- one OpenProcess and a string compare -- and it
     // runs before check 4 because it needs no filesystem walk.
     if (Verdict v = CheckBlockedExecutable(sources, rules, targetPid); !v.Allowed()) {
+        return v;
+    }
+    // Check 3's store half (2026-09-25): the install root's store identity against blockedStoreIds. It touches the
+    // filesystem only when something is listed, and it comes before check 4's walk because it reads one folder.
+    if (Verdict v = CheckBlockedStoreId(sources, rules, targetPid); !v.Allowed()) {
         return v;
     }
     // Check 4, INSIDE the chokepoint rather than beside it.

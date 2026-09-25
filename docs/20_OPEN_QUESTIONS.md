@@ -94,7 +94,7 @@ or it becomes the next stale status claim this file exists to record.
 | **S1** | ◐ **launch mode built as "inject late" 2026-09-06 (P1 item 2); the cost is now measured per title** | `FlGuardedInjectWhenReady` polls until a presentation runtime is mapped, then runs the full guard; `dxgiPresentsBeforeHook` and the reported wait are the input the 2026-08-05 deferral lacked. The ruling "inject late vs. no launch mode" is answered by construction — inject late exists — and whether it is *preferred* per title is what the numbers decide |
 | **S13(c)** | ✅ **salvageable, and salvaged 2026-09-06** | The externally observable proxy the entry proposed is what was built; the missing input is produced by every launched session |
 | **S19(b)** | 🅓 **deferred, rationale written — and MEASURED** | CI 2026-08-05: the fragment fires on `System.Security.Cryptography.ProtectedData.dll` loaded by a .NET **test host**, i.e. inside a real scan set in the launch-mode arrangement — refusing our own injection. The entry's "plausible and unmeasured" is superseded; the deferral rationale (a `CryptCATAdmin*` PR doing network I/O inside the hard gate, NFR-10) still stands. *(Marked 🔴 until 2026-08-27. The measurement belongs in this cell, not in the marker — a glyph that means "deferred" and a glyph that means "open defect" cannot be the same one in a table audited by counting.)* |
-| **S14** | 🅓 **exe half wired 2026-08-05; store-id half deferred to P4, rationale written 2026-09-06** | The store-id half's only in-policy route is P4's platform metadata extractors feeding a guard-side resolver; a resolver with no extractor would refuse every title. No title is blocked by store id today because none is listed |
+| **S14** | ✅ **both halves wired and seeded 2026-09-25** (exe half 2026-08-05) | ~~The store-id half's only in-policy route is P4's platform metadata extractors feeding a guard-side resolver~~ — built as a guard-side seam that reads Steam's `appmanifest_*.acf` and GOG's `goggame-<id>.info` itself; an install no store names is not refused, unreadable store metadata is. 30 Steam ids and 33 executables listed (rules 2026.09.4), floored. Epic has no reader |
 | **S23-1** | ✅ **resolved 2026-08-05** | `FlGuardBuildId` gives the Agent a build id of its own, and `ShmHandshakeValidator` performs the comparison `07_IPC` and `04_CAPTURE` both specify. Every refusal path is driven, including **both ids empty** — the shape the feature shipped in, where `"" == ""` reported `Ok` for every process on the machine |
 | **S23-4** | ✅ **resolved 2026-08-05** | `19_SAFETY` §During a session said "the module scan and the driver scan"; `EvaluateImpl` runs four. Reworded to "every pre-injection check" so it cannot go stale when a check is added, with the two omissions named — `services` is the only tier measured firing on real anti-cheat, and the pre-scan is the only one touching the filesystem |
 | **S2 part three** | ✅ **built 2026-09-06 (P1 item 3)** | In-layer supervision on the present path, landed with `vkQueuePresentKHR`; `unhookRequested` and the tick deadline both stop the layer (passthrough with the reason on the mapping), proven by a fake loader chain and a 1.5 s test-only flavour of the DLL |
@@ -170,6 +170,10 @@ the recount becomes the next thing that needs recounting.
 > table records about itself (*"a count that is correct while its own list is wrong"*). Kept
 > as ◐ two here rather than re-glyphing the rows: the rows were right and the paragraph was
 > wrong, and the residue of each is a run, not a rationale. P2's sequencing is `HANDOFF` §P2.
+>
+> **2026-09-25: S14 ✅.** The store-id half, one of the six deferrals of 2026-09-06 (to P4), is built and seeded
+> in the beta.8 train: a guard-side seam reads the store's own metadata, and the lists carry 30 Steam ids and 33
+> executables. The deferred set is five; ◐ stays two (S1, H11); nothing else in this count moved.
 >
 > **STILL TEN on 2026-08-27, for the third consecutive movement.** S31 moved from ❓ to ◐,
 > so ❓ goes four to three and ◐ goes two to three. **The number has now stayed at ten across
@@ -3160,7 +3164,14 @@ gate.
 > and the block's own comment says so. The block was rewritten to 2026-09-06 truth in the same
 > PR (the previous §4 note still said frame generation and ray tracing had no hook).
 
-### S14 ◐ · Pre-injection check 3 is **unwired**, and has no "cannot determine" state
+### S14 ✅ · Pre-injection check 3 ~~is **unwired**, and has no "cannot determine" state~~ — both halves wired and seeded 2026-09-25
+
+> **Closed 2026-09-25 (beta.8, owner decision: title lists yes, the AreWeAntiCheatYet bulk list no).** The store
+> half reads the store's own metadata through `Sources::StoreIdentity`, from the install root the guard derives
+> from the pid — the ABI is unchanged, which was reason (2). Reason (3) is answered by the matrix in `19_SAFETY`
+> check 3: listed refuses, no store identity is not applicable, unreadable store metadata refuses. Both lists are
+> seeded (30 Steam ids, 33 executables) and floored. What stays open is Epic, which has no reader and so carries no
+> identity to this check. The body below is the history.
 
 Found 2026-08-02 while hardening the rules toolchain. `19_SAFETY` §Pre-injection
 checks lists a per-title blocklist as check 3, but `anticheat.blockedExecutables`

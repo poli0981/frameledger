@@ -85,6 +85,14 @@ inline constexpr std::size_t kMaxPreScanPathLen = 1024;
 // "cannot determine".
 [[nodiscard]] bool ResolveInstallRoot(const wchar_t* exeDir, wchar_t* out, std::size_t cap) noexcept;
 
+// THE KERNEL-DRIVER RULE (owner decision 2026-09-25). Any `*.sys` file inside a game's install tree that no
+// `files` entry names is reported as an anti-cheat file under this family, because a kernel driver shipped with a
+// game is, measured on every case this project has met (PGameProtectDriver_X64.sys, randgrid.sys, NeacSafe64.sys,
+// BlackCat64.sys, mhyprot*.sys), an anti-cheat driver — and naming each one in data first is how a new one walks
+// past. It is CODE, not data: a rules file can neither remove it nor rename the family. A false positive turns the
+// game's hooking off like any finding (19_SAFETY §What a finding does to the game); the owner took that trade.
+inline constexpr const char* kKernelDriverInTreeFamily = "Kernel driver in the game folder";
+
 // Check 4, as EvaluateImpl runs it: derive the target's directory from its pid,
 // then scan it.
 //
@@ -95,17 +103,34 @@ inline constexpr std::size_t kMaxPreScanPathLen = 1024;
 // only caller already had to reach anyway.
 [[nodiscard]] Verdict CheckStaticPreScan(const Sources& s, const Rules& rules, std::uint32_t targetPid) noexcept;
 
-// The advisory form, for the UI's pre-launch question "can this game be
-// enabled at all?" (FR-2.2). Same matcher, same polarity, no pid.
+// Check 3's store half over an install root: the store identity it carries (Sources::StoreIdentity) against
+// `blockedStoreIds`. An install with no store identity is NOT refused — "not a store title" is an answer, and
+// refusing every title that no store names would be a gate that cannot pass (§S14's matrix) — but a store layout
+// whose metadata cannot be read is (kPreScanFailed): that one is "cannot determine". With nothing listed, nothing is
+// read.
+[[nodiscard]] Verdict CheckStoreIdentity(const Sources& s, const Rules& rules, const wchar_t* installRoot) noexcept;
+
+// The same, as EvaluateImpl runs it: the install root derived from the pid, exactly as check 4 derives it.
+[[nodiscard]] Verdict CheckBlockedStoreId(const Sources& s, const Rules& rules, std::uint32_t targetPid) noexcept;
+
+// The advisory form, for the question "can this game be enabled at all?" (FR-2.2) and for the Agent's pre-scan of
+// the library (19_SAFETY §What a finding does to the game). Same matcher, same polarity, no pid: check 3 (the
+// executable's own name, and the store identity of its install root) and check 4 (the install root's tree), from the
+// EXECUTABLE's path.
 //
-// Loads the rules itself and uses SystemSources(), so a caller cannot choose the
-// evidence — the same reason Evaluate and GuardedInject take no Sources.
-[[nodiscard]] Verdict StaticPreScan(const wchar_t* gameDirectory) noexcept;
+// It takes the executable, not a directory, since 2026-09-25. It took a directory, and its one caller passed the
+// executable's own folder while nothing resolved the install root — so the pre-scan that decides whether hooking may
+// be turned on looked where 19_SAFETY's Lies of P measurement says an Unreal title's EasyAntiCheat/ never is. The
+// chokepoint always resolved the root; now this does too, from the same function.
+//
+// Loads the rules itself and uses SystemSources(), so a caller cannot choose the evidence — the same reason Evaluate
+// and GuardedInject take no Sources.
+[[nodiscard]] Verdict StaticPreScanGame(const wchar_t* exePath) noexcept;
 
 #ifdef FL_GUARD_TESTABLE
 // TEST-ONLY, exactly as fl_guard.h defines the term: compiled out of everything
 // that ships, and only src/native/tests may define the macro.
-[[nodiscard]] Verdict StaticPreScanWithSources(const wchar_t* gameDirectory, const Sources& sources) noexcept;
+[[nodiscard]] Verdict StaticPreScanGameWithSources(const wchar_t* exePath, const Sources& sources) noexcept;
 #endif
 
 }    // namespace fl::guard

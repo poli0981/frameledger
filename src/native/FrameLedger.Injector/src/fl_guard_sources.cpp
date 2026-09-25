@@ -18,6 +18,7 @@
 
 #include <cstdio>
 #include <cstring>
+#include <cwchar>
 #include <fl_ac_rules.h>
 #include <fl_guard.h>
 #include <fl_prescan.h>
@@ -616,6 +617,218 @@ Collected EnumerateDirEntriesImpl(const wchar_t* dir, DirEntrySink sink, void* c
     return truncated ? Collected::kIncomplete : Collected::kOk;
 }
 
+// --- Check 3's store half (2026-09-25): the install root's store identity, from the store's own files -------------
+//
+// Bounds, all REFUSALS rather than truncations, like check 4's: a Steam library whose manifests we could not all read
+// is a library whose answer we do not know.
+constexpr std::size_t kMaxSteamManifests = 4096;
+constexpr std::size_t kMaxManifestBytes = 256 * 1024;
+
+// The quoted value that follows `"key"` in Valve's KeyValues text, ASCII case-insensitive on the key, with the
+// format's two escapes (\" and \\) undone. False when the key is absent or its value does not fit.
+bool VdfValue(const char* text, std::size_t len, const char* key, char* out, std::size_t cap) noexcept {
+    const std::size_t keyLen = std::strlen(key);
+    for (std::size_t i = 0; i + keyLen + 2 <= len; ++i) {
+        if (text[i] != '"' || _strnicmp(text + i + 1, key, keyLen) != 0 || text[i + 1 + keyLen] != '"') {
+            continue;
+        }
+        std::size_t j = i + keyLen + 2;
+        while (j < len && (text[j] == ' ' || text[j] == '\t')) {
+            ++j;
+        }
+        if (j >= len || text[j] != '"') {
+            continue;    // a key followed by a block, not a value: keep looking
+        }
+        ++j;
+        std::size_t n = 0;
+        while (j < len && text[j] != '"') {
+            char c = text[j];
+            if (c == '\\' && j + 1 < len && (text[j + 1] == '"' || text[j + 1] == '\\')) {
+                c = text[++j];
+            }
+            if (c == '\r' || c == '\n' || n + 1 >= cap) {
+                return false;    // an unterminated value, or one longer than we hold
+            }
+            out[n++] = c;
+            ++j;
+        }
+        if (j >= len) {
+            return false;
+        }
+        out[n] = '\0';
+        return true;
+    }
+    return false;
+}
+
+bool AllDigits(const char* s, std::size_t maxLen) noexcept {
+    const std::size_t n = std::strlen(s);
+    if (n == 0 || n > maxLen) {
+        return false;
+    }
+    for (std::size_t i = 0; i < n; ++i) {
+        if (s[i] < '0' || s[i] > '9') {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Steam: `<library>\steamapps\common\<folder>` is named by exactly one `<library>\steamapps\appmanifest_<id>.acf`,
+// whose "installdir" is <folder>. kOk + "" when no manifest names it; kFailed when the manifests cannot be read.
+Collected SteamIdentity(const wchar_t* steamapps, const wchar_t* folder, std::size_t folderLen, char* out,
+                        std::size_t cap) noexcept {
+    wchar_t folderZ[kMaxPreScanPathLen] = {};
+    if (folderLen + 1 > kMaxPreScanPathLen) {
+        return Collected::kFailed;
+    }
+    std::wmemcpy(folderZ, folder, folderLen);
+    char      wanted[kMaxPreScanPathLen] = {};
+    const int wn =
+        WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, folderZ, -1, wanted, sizeof(wanted), nullptr, nullptr);
+    if (wn <= 0) {
+        return Collected::kFailed;    // a folder name we cannot spell exactly is one we cannot compare
+    }
+
+    wchar_t pattern[kMaxPreScanPathLen] = {};
+    if (_snwprintf_s(pattern, kMaxPreScanPathLen, _TRUNCATE, L"%s\\appmanifest_*.acf", steamapps) < 0) {
+        return Collected::kFailed;
+    }
+    WIN32_FIND_DATAW fd{};
+    HANDLE           find = FindFirstFileW(pattern, &fd);
+    if (find == INVALID_HANDLE_VALUE) {
+        const DWORD err = GetLastError();
+        // No manifest at all is an answer (a folder under steamapps\common that Steam does not manage); anything else
+        // is a library we could not read.
+        return (err == ERROR_FILE_NOT_FOUND) ? Collected::kOk : Collected::kFailed;
+    }
+
+    static char text[kMaxManifestBytes];
+    std::size_t seen = 0;
+    Collected   result = Collected::kOk;
+    do {
+        if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) {
+            continue;
+        }
+        if (++seen > kMaxSteamManifests) {
+            result = Collected::kFailed;
+            break;
+        }
+        wchar_t path[kMaxPreScanPathLen] = {};
+        if (_snwprintf_s(path, kMaxPreScanPathLen, _TRUNCATE, L"%s\\%s", steamapps, fd.cFileName) < 0) {
+            result = Collected::kFailed;
+            break;
+        }
+        HANDLE file = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
+                                  OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if (file == INVALID_HANDLE_VALUE) {
+            result = Collected::kFailed;
+            break;
+        }
+        DWORD      got = 0;
+        const BOOL read = ReadFile(file, text, static_cast<DWORD>(sizeof(text)), &got, nullptr);
+        CloseHandle(file);
+        if (!read || got >= sizeof(text)) {
+            result = Collected::kFailed;    // unreadable, or larger than any manifest Steam writes
+            break;
+        }
+
+        char installDir[kMaxPreScanPathLen] = {};
+        if (!VdfValue(text, got, "installdir", installDir, sizeof(installDir)) || _stricmp(installDir, wanted) != 0) {
+            continue;
+        }
+        char appId[32] = {};
+        if (!VdfValue(text, got, "appid", appId, sizeof(appId)) || !AllDigits(appId, 10) ||
+            _snprintf_s(out, cap, _TRUNCATE, "steam:%s", appId) < 0) {
+            result = Collected::kFailed;    // the manifest that names this folder does not say which app it is
+            break;
+        }
+        FindClose(find);
+        return Collected::kOk;
+    } while (FindNextFileW(find, &fd) != 0);
+
+    const DWORD err = GetLastError();
+    FindClose(find);
+    if (result == Collected::kOk && err != ERROR_NO_MORE_FILES) {
+        result = Collected::kFailed;
+    }
+    if (result != Collected::kOk) {
+        out[0] = '\0';
+    }
+    return result;
+}
+
+// GOG: a `goggame-<id>.info` in the install root names the product. kOk + "" when there is none.
+Collected GogIdentity(const wchar_t* installRoot, char* out, std::size_t cap) noexcept {
+    wchar_t pattern[kMaxPreScanPathLen] = {};
+    if (_snwprintf_s(pattern, kMaxPreScanPathLen, _TRUNCATE, L"%s\\goggame-*.info", installRoot) < 0) {
+        return Collected::kFailed;
+    }
+    WIN32_FIND_DATAW fd{};
+    HANDLE           find = FindFirstFileW(pattern, &fd);
+    if (find == INVALID_HANDLE_VALUE) {
+        const DWORD err = GetLastError();
+        return (err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND) ? Collected::kOk : Collected::kFailed;
+    }
+    FindClose(find);
+
+    // goggame-<digits>.info: the digits are the product id.
+    const wchar_t* name = fd.cFileName;
+    const wchar_t* digits = name + 8;    // past "goggame-"
+    const wchar_t* dot = wcschr(digits, L'.');
+    char           id[32] = {};
+    std::size_t    n = 0;
+    for (const wchar_t* p = digits; dot != nullptr && p < dot; ++p) {
+        if (*p < L'0' || *p > L'9' || n + 1 >= sizeof(id)) {
+            return Collected::kOk;    // not the shape GOG writes: no identity, rather than a guessed one
+        }
+        id[n++] = static_cast<char>(*p);
+    }
+    if (n == 0 || _snprintf_s(out, cap, _TRUNCATE, "gog:%s", id) < 0) {
+        out[0] = '\0';
+        return Collected::kOk;
+    }
+    return Collected::kOk;
+}
+
+Collected StoreIdentityImpl(const wchar_t* installRoot, char* out, std::size_t cap) noexcept {
+    if (installRoot == nullptr || out == nullptr || cap == 0) {
+        return Collected::kFailed;
+    }
+    out[0] = '\0';
+
+    // The last three segments decide the layout: `...\steamapps\common\<folder>` is a Steam library.
+    const std::size_t len = wcslen(installRoot);
+    std::size_t       end = len;
+    while (end > 0 && (installRoot[end - 1] == L'\\' || installRoot[end - 1] == L'/')) {
+        --end;
+    }
+    std::size_t seps[3] = {};    // positions of the three separators before the last three segments' ends
+    std::size_t found = 0;
+    for (std::size_t i = end; i > 0 && found < 3; --i) {
+        if (installRoot[i - 1] == L'\\' || installRoot[i - 1] == L'/') {
+            seps[found++] = i - 1;
+        }
+    }
+    if (found == 3) {
+        const wchar_t* folder = installRoot + seps[0] + 1;
+        const wchar_t* common = installRoot + seps[1] + 1;
+        const wchar_t* steamappsSeg = installRoot + seps[2] + 1;
+        const bool     isCommon = (seps[0] - seps[1] - 1) == 6 && _wcsnicmp(common, L"common", 6) == 0;
+        const bool     isSteamapps = (seps[1] - seps[2] - 1) == 9 && _wcsnicmp(steamappsSeg, L"steamapps", 9) == 0;
+        if (isCommon && isSteamapps) {
+            wchar_t           steamappsDir[kMaxPreScanPathLen] = {};
+            const std::size_t dirLen = seps[1];    // "...\steamapps": up to the separator before "common"
+            if (dirLen + 1 > kMaxPreScanPathLen) {
+                return Collected::kFailed;
+            }
+            std::wmemcpy(steamappsDir, installRoot, dirLen);
+            return SteamIdentity(steamappsDir, folder, end - seps[0] - 1, out, cap);
+        }
+    }
+    return GogIdentity(installRoot, out, cap);
+}
+
 // §S22 — does this file live in the directory the guard's own code came from?
 //
 // ONE implementation behind TWO seams (fl_guard.h): the payload we are about to
@@ -785,6 +998,7 @@ Sources SystemSources() noexcept {
     s.ImageDirectory = &ImageDirectoryImpl;
     s.ImageFileName = &ImageFileNameImpl;
     s.EnumerateDirEntries = &EnumerateDirEntriesImpl;
+    s.StoreIdentity = &StoreIdentityImpl;
     // Both identity seams, one implementation — see fl_guard.h §TWO SEAMS.
     s.ModuleIsOurOwn = &FileIsOurOwnImpl;
     s.PayloadIsOurOwn = &FileIsOurOwnImpl;

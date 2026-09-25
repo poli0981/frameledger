@@ -1,3 +1,7 @@
+// windows.h stays in its own block above the sorted group, as fl_ac_rules.cpp does: WideCharToMultiByte (the one
+// Win32 call here, for the executable's leaf name) needs it.
+#include <windows.h>
+
 #include <cstring>
 #include <cwchar>
 #include <fl_prescan.h>
@@ -27,11 +31,19 @@ Verdict Passed() noexcept {
     return v;
 }
 
+// True for a name ending in ".sys", ASCII case-insensitively. Names reach the sink as UTF-8 and the suffix is ASCII,
+// so a byte comparison of the last four characters is exact.
+bool IsKernelDriverName(const char* name) noexcept {
+    const std::size_t n = std::strlen(name);
+    return n > 4 && _stricmp(name + n - 4, ".sys") == 0;
+}
+
 // What the sink accumulates. No allocation: the walk reports names one at a
 // time and we keep only the first hit.
 struct ScanState {
     const Rules*  rules = nullptr;
     const Family* hit = nullptr;
+    const char*   driverRuleHit = nullptr;    // kKernelDriverInTreeFamily once the code rule fired
     bool          hitWasDirectory = false;
     char          signal[260] = {};
 };
@@ -51,14 +63,21 @@ bool EntrySink(void* ctx, const char* name, bool isDirectory) noexcept {
     // a data edit move one gate into the other without anything noticing.
     const Group   group = isDirectory ? Group::kDirectories : Group::kFiles;
     const Family* f = MatchName(*st->rules, group, name);
-    if (f == nullptr) {
-        return true;
+    if (f != nullptr) {
+        st->hit = f;
+        st->hitWasDirectory = isDirectory;
+        strncpy_s(st->signal, sizeof(st->signal), name, _TRUNCATE);
+        return false;    // stop: we have the answer
     }
 
-    st->hit = f;
-    st->hitWasDirectory = isDirectory;
-    strncpy_s(st->signal, sizeof(st->signal), name, _TRUNCATE);
-    return false;    // stop: we have the answer
+    // The kernel-driver rule (fl_prescan.h). A `files` entry that names the driver wins above, so a driver the data
+    // knows keeps its own family; any other `*.sys` in the tree is reported under the code rule's family.
+    if (!isDirectory && IsKernelDriverName(name)) {
+        st->driverRuleHit = kKernelDriverInTreeFamily;
+        strncpy_s(st->signal, sizeof(st->signal), name, _TRUNCATE);
+        return false;
+    }
+    return true;
 }
 
 Verdict ScanWith(const Sources& s, const Rules& rules, const wchar_t* dir) noexcept {
@@ -81,6 +100,9 @@ Verdict ScanWith(const Sources& s, const Rules& rules, const wchar_t* dir) noexc
         return Refused(st.hitWasDirectory ? Reason::kAntiCheatDirectory : Reason::kAntiCheatFile, st.hit->name,
                        st.signal);
     }
+    if (st.driverRuleHit != nullptr) {
+        return Refused(Reason::kAntiCheatFile, st.driverRuleHit, st.signal);
+    }
 
     // EVERY uncertainty is a refusal, and each has its own text because "the
     // directory is gone" and "there were more entries than we will look at" are
@@ -99,6 +121,83 @@ Verdict ScanWith(const Sources& s, const Rules& rules, const wchar_t* dir) noexc
 bool SegmentIs(const wchar_t* begin, const wchar_t* end, const wchar_t* literal) noexcept {
     const std::size_t n = static_cast<std::size_t>(end - begin);
     return wcslen(literal) == n && _wcsnicmp(begin, literal, n) == 0;
+}
+
+// The rules the advisory pre-scan reads, loaded as LoadRules loads them for the chokepoint: the one rules location,
+// the one parser, every failure a refusal with its own reason. Static rather than stack for LoadRules' reason too:
+// ~1 MiB of text and ~530 KB of parsed rules, and the guard is not re-entrant.
+Verdict LoadPreScanRules(const Sources& s, Rules& rules) noexcept {
+    if (s.ReadRulesFile == nullptr) {
+        return Refused(Reason::kRulesUnreadable, nullptr, "no rules source");
+    }
+    static char       buffer[kMaxRulesBytes];
+    const std::size_t n = s.ReadRulesFile(buffer, sizeof(buffer));
+    if (n == static_cast<std::size_t>(-1) || n == 0) {
+        return Refused(Reason::kRulesUnreadable, nullptr, "rules file could not be read");
+    }
+    switch (ParseRules(buffer, n, rules)) {
+    case ParseResult::kOk:
+        return Passed();
+    case ParseResult::kIncomplete:
+        return Refused(Reason::kRulesIncomplete, nullptr, "a required anti-cheat family is missing");
+    case ParseResult::kTooLarge:
+        return Refused(Reason::kRulesMalformed, nullptr, "rules file exceeds the parser's bounds");
+    case ParseResult::kMalformed:
+    default:
+        return Refused(Reason::kRulesMalformed, nullptr, "rules file is not the shape the guard requires");
+    }
+}
+
+// The advisory pre-scan over whichever Sources the caller may hold (production: SystemSources, and nothing else).
+Verdict PreScanGameWith(const wchar_t* exePath, const Sources& s) noexcept {
+    if (exePath == nullptr || exePath[0] == L'\0') {
+        return Refused(Reason::kPreScanFailed, nullptr, "no executable to scan");
+    }
+
+    // Split the path into its directory and its leaf. A path with no separator is not a path we understand.
+    wchar_t dir[kMaxPreScanPathLen] = {};
+    if (wcscpy_s(dir, kMaxPreScanPathLen, exePath) != 0) {
+        return Refused(Reason::kPreScanFailed, nullptr, "the executable's path is longer than the scan will hold");
+    }
+    wchar_t* lastSep = nullptr;
+    for (wchar_t* p = dir; *p != L'\0'; ++p) {
+        if (*p == L'\\' || *p == L'/') {
+            lastSep = p;
+        }
+    }
+    if (lastSep == nullptr || lastSep == dir || lastSep[1] == L'\0') {
+        return Refused(Reason::kPreScanFailed, nullptr, "the executable's path names no file in a directory");
+    }
+    const wchar_t* leafWide = exePath + (lastSep - dir) + 1;
+    *lastSep = L'\0';
+
+    wchar_t root[kMaxPreScanPathLen] = {};
+    if (!ResolveInstallRoot(dir, root, kMaxPreScanPathLen)) {
+        return Refused(Reason::kPreScanFailed, nullptr, "could not establish the game's install root");
+    }
+
+    static Rules rules;
+    if (Verdict v = LoadPreScanRules(s, rules); !v.Allowed()) {
+        return v;
+    }
+
+    // Check 3, the executable half. The exact-conversion rule ImageFileNameImpl follows: a name we cannot represent
+    // exactly is a name we could not compare, never a clean miss.
+    char      leaf[kMaxValueLen] = {};
+    const int written = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, leafWide, -1, leaf,
+                                            static_cast<int>(sizeof(leaf)), nullptr, nullptr);
+    if (written <= 0) {
+        return Refused(Reason::kPreScanFailed, nullptr, "the executable's name could not be read exactly");
+    }
+    if (const TitleRule* hit = MatchesBlockedExecutable(rules, leaf); hit != nullptr) {
+        return Refused(Reason::kBlockedExecutable, hit->family, leaf);
+    }
+
+    // Check 3's store half, then check 4 — both over the install root.
+    if (Verdict v = CheckStoreIdentity(s, rules, root); !v.Allowed()) {
+        return v;
+    }
+    return ScanWith(s, rules, root);
 }
 
 }    // namespace
@@ -184,61 +283,52 @@ Verdict CheckStaticPreScan(const Sources& s, const Rules& rules, std::uint32_t t
     return ScanWith(s, rules, dir);
 }
 
-Verdict StaticPreScan(const wchar_t* gameDirectory) noexcept {
-    const Sources s = SystemSources();
-    if (s.ReadRulesFile == nullptr) {
-        return Refused(Reason::kRulesUnreadable, nullptr, "no rules source");
+Verdict CheckStoreIdentity(const Sources& s, const Rules& rules, const wchar_t* installRoot) noexcept {
+    // Nothing listed, nothing to compare: the store's files are not opened at all.
+    if (rules.blockedStoreIdCount == 0) {
+        return Passed();
+    }
+    if (s.StoreIdentity == nullptr) {
+        return Refused(Reason::kPreScanFailed, nullptr, "no store-identity source");
+    }
+    if (installRoot == nullptr || installRoot[0] == L'\0') {
+        return Refused(Reason::kPreScanFailed, nullptr, "no install root to read a store identity from");
     }
 
-    // Static rather than stack for the same reason LoadRules does it: this is
-    // ~1 MiB of text and the guard is not re-entrant.
-    static char       buffer[kMaxRulesBytes];
-    const std::size_t n = s.ReadRulesFile(buffer, sizeof(buffer));
-    if (n == static_cast<std::size_t>(-1) || n == 0) {
-        return Refused(Reason::kRulesUnreadable, nullptr, "rules file could not be read");
+    char id[kMaxValueLen] = {};
+    if (s.StoreIdentity(installRoot, id, sizeof(id)) != Collected::kOk) {
+        return Refused(Reason::kPreScanFailed, nullptr, "the store's metadata for this install could not be read");
     }
+    if (id[0] == '\0') {
+        return Passed();    // no store names this install: check 3's store half does not apply (§S14's matrix)
+    }
+    if (const TitleRule* hit = MatchesBlockedStoreId(rules, id); hit != nullptr) {
+        return Refused(Reason::kBlockedStoreId, hit->family, id);
+    }
+    return Passed();
+}
 
-    static Rules rules;
-    ResetRules(rules);
-    switch (ParseRules(buffer, n, rules)) {
-    case ParseResult::kOk:
-        break;
-    case ParseResult::kIncomplete:
-        return Refused(Reason::kRulesIncomplete, nullptr, "a required anti-cheat family is missing");
-    case ParseResult::kTooLarge:
-        return Refused(Reason::kRulesMalformed, nullptr, "rules file exceeds the parser's bounds");
-    case ParseResult::kMalformed:
-    default:
-        return Refused(Reason::kRulesMalformed, nullptr, "rules file is not the shape the guard requires");
+Verdict CheckBlockedStoreId(const Sources& s, const Rules& rules, std::uint32_t targetPid) noexcept {
+    if (rules.blockedStoreIdCount == 0) {
+        return Passed();
     }
-    return ScanWith(s, rules, gameDirectory);
+    if (s.ImageDirectory == nullptr) {
+        return Refused(Reason::kPreScanFailed, nullptr, "no image-path source");
+    }
+    wchar_t root[kMaxPreScanPathLen] = {};
+    if (s.ImageDirectory(targetPid, root, kMaxPreScanPathLen) != Collected::kOk || root[0] == L'\0') {
+        return Refused(Reason::kPreScanFailed, nullptr, "could not establish the target's directory");
+    }
+    return CheckStoreIdentity(s, rules, root);
+}
+
+Verdict StaticPreScanGame(const wchar_t* exePath) noexcept {
+    return PreScanGameWith(exePath, SystemSources());
 }
 
 #ifdef FL_GUARD_TESTABLE
-Verdict StaticPreScanWithSources(const wchar_t* gameDirectory, const Sources& sources) noexcept {
-    if (sources.ReadRulesFile == nullptr) {
-        return Refused(Reason::kRulesUnreadable, nullptr, "no rules source");
-    }
-    static char       buffer[kMaxRulesBytes];
-    const std::size_t n = sources.ReadRulesFile(buffer, sizeof(buffer));
-    if (n == static_cast<std::size_t>(-1) || n == 0) {
-        return Refused(Reason::kRulesUnreadable, nullptr, "rules file could not be read");
-    }
-
-    static Rules rules;
-    ResetRules(rules);
-    switch (ParseRules(buffer, n, rules)) {
-    case ParseResult::kOk:
-        break;
-    case ParseResult::kIncomplete:
-        return Refused(Reason::kRulesIncomplete, nullptr, "a required anti-cheat family is missing");
-    case ParseResult::kTooLarge:
-        return Refused(Reason::kRulesMalformed, nullptr, "rules file exceeds the parser's bounds");
-    case ParseResult::kMalformed:
-    default:
-        return Refused(Reason::kRulesMalformed, nullptr, "rules file is not the shape the guard requires");
-    }
-    return ScanWith(sources, rules, gameDirectory);
+Verdict StaticPreScanGameWithSources(const wchar_t* exePath, const Sources& sources) noexcept {
+    return PreScanGameWith(exePath, sources);
 }
 #endif
 
