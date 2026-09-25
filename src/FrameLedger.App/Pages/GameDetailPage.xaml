@@ -283,7 +283,7 @@
                     <StackPanel Margin="0,12,0,0">
                         <StackPanel Orientation="Horizontal">
                             <ui:TextBlock Appearance="Secondary" VerticalAlignment="Center" Margin="0,0,8,0" Text="{x:Static vm:GameDetailViewModel.TrendMetricLabel}" />
-                            <ComboBox MinWidth="180" AutomationProperties.Name="{x:Static vm:GameDetailViewModel.TrendMetricLabel}" DisplayMemberPath="Label" ItemsSource="{x:Static vm:GameDetailViewModel.TrendMetrics}"
+                            <ComboBox MinWidth="180" AutomationProperties.Name="{x:Static vm:GameDetailViewModel.TrendMetricLabel}" DisplayMemberPath="Label" ItemsSource="{Binding ViewModel.TrendMetrics}"
                                       SelectedValue="{Binding ViewModel.TrendMetric, Mode=TwoWay}" SelectedValuePath="Value" />
                             <CheckBox Margin="16,0,0,0" VerticalAlignment="Center" Content="{x:Static vm:GameDetailViewModel.IncludeMidSessionText}"
                                       IsChecked="{Binding ViewModel.IncludeMidSession}" />
@@ -291,7 +291,8 @@
                         <ui:TextBlock Margin="0,6,0,0" Appearance="Tertiary" Text="{Binding ViewModel.TrendExcludedText}"
                                       Visibility="{Binding ViewModel.TrendExcludedText, Converter={StaticResource NullToCollapsed}}" />
                         <ui:TextBlock Margin="0,6,0,0" Appearance="Tertiary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.TrendAverageNote}" />
-                        <ui:TextBlock Margin="0,12,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.TrendEmptyText}"
+                        <ui:TextBlock Margin="0,6,0,0" Appearance="Tertiary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.TrendPartialNote}" />
+                        <ui:TextBlock Margin="0,12,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.TrendEmptyMessage}"
                                       Visibility="{Binding ViewModel.TrendEmpty, Converter={StaticResource BoolToVis}}" />
                         <charts:TrendChart x:Name="Trend" Height="320" Visibility="{Binding ViewModel.TrendEmpty, Converter={StaticResource InverseBoolToVis}}" />
                     </StackPanel>

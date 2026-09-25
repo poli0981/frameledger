@@ -350,6 +350,7 @@ switch's rule); integers are invariant-culture within an inclusive range; choice
 | `ui.start_with_windows` | bool | `0` | | UI (P4) |
 | `ui.minimize_to_tray` | bool | `0` | | UI (PR-8) |
 | `ui.hide_anticheat_hooking` | bool | `1` | | UI (beta.8, 2026-09-25): the game page of an entry the guard found anti-cheat in shows the finding in place of its Hooking card (`08_UI` §Game detail) |
+| `ui.fps_decimals` | bool | `0` | | UI (beta.8, 2026-09-25): every FPS figure with two decimals ("62.40") instead of a whole number |
 | `capture.background` | bool | `1` | | Agent |
 | `hooking.kill_switch` | bool | `0` | | Agent (FR-2.4, since P2 PR-F) |
 | `capture.min_session_s` | int | `30` | 5–600 | Agent, per session (FR-3.6) |

@@ -7,6 +7,7 @@ using FrameLedger.Shared.Ipc;
 namespace FrameLedger.App.Tests;
 
 /// <summary>The Dashboard over a scratch ledger and a fake link: totals and recent from the tables; the live card driven by the three session events; a completed session reloads.</summary>
+[Collection(StringsCultureCollection.Name)]
 public sealed class DashboardViewModelTests
 {
     private sealed class FakeLink : IAgentLink

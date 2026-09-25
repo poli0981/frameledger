@@ -20,6 +20,7 @@ namespace FrameLedger.App.Tests;
 /// through the pipe (never a column write), "start with Windows" follows the Run entry, and <c>log.debug</c>
 /// moves the level switch at once.
 /// </summary>
+[Collection(StringsCultureCollection.Name)]
 public sealed class SettingsViewModelTests
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
@@ -249,6 +250,28 @@ public sealed class SettingsViewModelTests
         await pending;
 
         (await h.Settings.GetBooleanAsync(SettingsRegistry.UiHideAntiCheatHooking, Ct)).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task FpsDecimalsIsOffByDefaultAndItsToggleIsPersistedAndAppliedAtOnce()
+    {
+        // beta.8 (owner request 2026-09-25): ui.fps_decimals, default 0; the formatters read it from the moment it moves.
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        Harness h = await OpenAsync(s);
+        h.Vm.FpsTwoDecimals.Should().BeFalse();
+        try
+        {
+            h.Vm.FpsTwoDecimals = true;
+            Task pending = h.Vm.Pending;
+            await pending;
+
+            (await h.Settings.GetBooleanAsync(SettingsRegistry.UiFpsDecimals, Ct)).Should().BeTrue();
+            FpsDecimals.Two.Should().BeTrue();
+        }
+        finally
+        {
+            FpsDecimals.Two = false;
+        }
     }
 
     [Fact]

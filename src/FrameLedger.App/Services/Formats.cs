@@ -17,9 +17,20 @@ namespace FrameLedger.App.Services;
 [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime; a cached CompositeFormat would pin the first culture")]
 public static class Formats
 {
-    public static string Fps(double? value) => value is double v ? Math.Round(v).ToString("0", CultureInfo.CurrentCulture) : Strings.Common_NotAvailable;
+    public static string Fps(double? value) => value is double v ? FpsNumber(v) : Strings.Common_NotAvailable;
 
-    public static string FpsOrDash(double? value) => value is double v ? Math.Round(v).ToString("0", CultureInfo.CurrentCulture) : Strings.Common_Dash;
+    public static string FpsOrDash(double? value) => value is double v ? FpsNumber(v) : Strings.Common_Dash;
+
+    /// <summary>
+    /// An FPS figure as <c>ui.fps_decimals</c> asks (beta.8): two decimals always ("62.40"), or a whole number. Rounded half
+    /// away from zero — 62.5 is 63, as a reader expects; <see cref="Math.Round(double)"/> alone rounds half to even (62).
+    /// </summary>
+    public static string FpsNumber(double value) => FpsNumber(value, FpsDecimals.Two);
+
+    /// <summary>The same with the choice given (tests, and anything that must not read the process-wide setting).</summary>
+    public static string FpsNumber(double value, bool twoDecimals) => twoDecimals
+        ? Math.Round(value, 2, MidpointRounding.AwayFromZero).ToString("0.00", CultureInfo.CurrentCulture)
+        : Math.Round(value, MidpointRounding.AwayFromZero).ToString("0", CultureInfo.CurrentCulture);
 
     /// <summary><c>1h 23m</c> above an hour, <c>4m 05s</c> below.</summary>
     public static string Duration(double seconds)

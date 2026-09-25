@@ -44,8 +44,10 @@ public partial class CompareChart : UserControl
 
         if (DrawnCurves > 0)
         {
-            plot.Axes.SetLimitsX(0, 100);
+            // The percentile axis is 0–100 whatever the data: AutoScale first, then the X limits (beta.8 — the other way
+            // round, AutoScale undid them).
             plot.Axes.AutoScale();
+            plot.Axes.SetLimitsX(0, 100);
             plot.ShowLegend(Alignment.UpperRight);
         }
 

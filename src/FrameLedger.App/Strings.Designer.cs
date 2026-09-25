@@ -300,6 +300,7 @@ public static class Strings
         nameof(Fps_Fg_Format),
         nameof(Fps_Fg_Identified_Format),
         nameof(Fps_Fg_Identified_Tooltip_Format),
+        nameof(Fps_Fg_Steady_Format),
         nameof(Fps_Fg_Steady_Tooltip_Format),
         nameof(Fps_Native_Tooltip),
         nameof(Fps_None_Tooltip),
@@ -590,6 +591,8 @@ public static class Strings
         nameof(Settings_Capture_Header),
         nameof(Settings_Channel_Beta),
         nameof(Settings_Channel_Stable),
+        nameof(Settings_FpsDecimals_Body),
+        nameof(Settings_FpsDecimals_Label),
         nameof(Settings_Header),
         nameof(Settings_HideAntiCheatHooking_Body),
         nameof(Settings_HideAntiCheatHooking_Label),
@@ -734,6 +737,7 @@ public static class Strings
         nameof(Trend_Change_GpuDriver),
         nameof(Trend_Change_Os),
         nameof(Trend_Empty),
+        nameof(Trend_Empty_Format),
         nameof(Trend_Excluded_Format),
         nameof(Trend_IncludeMidSession),
         nameof(Trend_Metric_Average),
@@ -747,8 +751,11 @@ public static class Strings
         nameof(Trend_Metric_MaxCpuTemp),
         nameof(Trend_Metric_MaxGpuTemp),
         nameof(Trend_Metric_MaxVramProcess),
+        nameof(Trend_Metric_NativeFps),
         nameof(Trend_Metric_P01Low),
         nameof(Trend_Metric_P1Low),
+        nameof(Trend_Metric_PresentedFps),
+        nameof(Trend_Partial_Note),
         nameof(Uninstall_DataFolder_Body),
         nameof(Uninstall_DataFolder_Title),
         nameof(Update_AgentStillRunning),
@@ -1330,6 +1337,8 @@ public static class Strings
 
     public static string Fps_Fg_Identified_Tooltip_Format => ResourceManager.GetString(nameof(Fps_Fg_Identified_Tooltip_Format), Culture) ?? nameof(Fps_Fg_Identified_Tooltip_Format);
 
+    public static string Fps_Fg_Steady_Format => ResourceManager.GetString(nameof(Fps_Fg_Steady_Format), Culture) ?? nameof(Fps_Fg_Steady_Format);
+
     public static string Fps_Fg_Steady_Tooltip_Format => ResourceManager.GetString(nameof(Fps_Fg_Steady_Tooltip_Format), Culture) ?? nameof(Fps_Fg_Steady_Tooltip_Format);
 
     public static string Fps_Native_Tooltip => ResourceManager.GetString(nameof(Fps_Native_Tooltip), Culture) ?? nameof(Fps_Native_Tooltip);
@@ -1910,6 +1919,10 @@ public static class Strings
 
     public static string Settings_Channel_Stable => ResourceManager.GetString(nameof(Settings_Channel_Stable), Culture) ?? nameof(Settings_Channel_Stable);
 
+    public static string Settings_FpsDecimals_Body => ResourceManager.GetString(nameof(Settings_FpsDecimals_Body), Culture) ?? nameof(Settings_FpsDecimals_Body);
+
+    public static string Settings_FpsDecimals_Label => ResourceManager.GetString(nameof(Settings_FpsDecimals_Label), Culture) ?? nameof(Settings_FpsDecimals_Label);
+
     public static string Settings_Header => ResourceManager.GetString(nameof(Settings_Header), Culture) ?? nameof(Settings_Header);
 
     public static string Settings_HideAntiCheatHooking_Body => ResourceManager.GetString(nameof(Settings_HideAntiCheatHooking_Body), Culture) ?? nameof(Settings_HideAntiCheatHooking_Body);
@@ -2198,6 +2211,8 @@ public static class Strings
 
     public static string Trend_Empty => ResourceManager.GetString(nameof(Trend_Empty), Culture) ?? nameof(Trend_Empty);
 
+    public static string Trend_Empty_Format => ResourceManager.GetString(nameof(Trend_Empty_Format), Culture) ?? nameof(Trend_Empty_Format);
+
     public static string Trend_Excluded_Format => ResourceManager.GetString(nameof(Trend_Excluded_Format), Culture) ?? nameof(Trend_Excluded_Format);
 
     public static string Trend_IncludeMidSession => ResourceManager.GetString(nameof(Trend_IncludeMidSession), Culture) ?? nameof(Trend_IncludeMidSession);
@@ -2224,9 +2239,15 @@ public static class Strings
 
     public static string Trend_Metric_MaxVramProcess => ResourceManager.GetString(nameof(Trend_Metric_MaxVramProcess), Culture) ?? nameof(Trend_Metric_MaxVramProcess);
 
+    public static string Trend_Metric_NativeFps => ResourceManager.GetString(nameof(Trend_Metric_NativeFps), Culture) ?? nameof(Trend_Metric_NativeFps);
+
     public static string Trend_Metric_P01Low => ResourceManager.GetString(nameof(Trend_Metric_P01Low), Culture) ?? nameof(Trend_Metric_P01Low);
 
     public static string Trend_Metric_P1Low => ResourceManager.GetString(nameof(Trend_Metric_P1Low), Culture) ?? nameof(Trend_Metric_P1Low);
+
+    public static string Trend_Metric_PresentedFps => ResourceManager.GetString(nameof(Trend_Metric_PresentedFps), Culture) ?? nameof(Trend_Metric_PresentedFps);
+
+    public static string Trend_Partial_Note => ResourceManager.GetString(nameof(Trend_Partial_Note), Culture) ?? nameof(Trend_Partial_Note);
 
     public static string Uninstall_DataFolder_Body => ResourceManager.GetString(nameof(Uninstall_DataFolder_Body), Culture) ?? nameof(Uninstall_DataFolder_Body);
 

@@ -88,9 +88,12 @@
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate DataType="{x:Type vm:CompareCell}">
-                                                <TextBlock Margin="4,0" Text="{Binding Text}" Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+                                                <!-- The default foreground is the Style's, not a local value (beta.8): a local value outranks every
+                                                     trigger, and the best cell was bold but never in the accent colour. -->
+                                                <TextBlock Margin="4,0" Text="{Binding Text}">
                                                     <TextBlock.Style>
                                                         <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding IsBest}" Value="True">
                                                                     <Setter Property="FontWeight" Value="Bold" />

@@ -49,7 +49,7 @@ public sealed record FpsReadoutModel
     /// <summary>The one line, per the rule: <c>62 → 118 FPS (×1.9 FG)</c>, or <c>144 FPS</c>. Never a factor that was not counted.</summary>
     public string Line => Kind switch
     {
-        FpsReadoutKind.Generated when Factor is double f => FpsPresentation.GeneratedLine(Native, Displayed, f),
+        FpsReadoutKind.Generated when Factor is double f => FpsPresentation.GeneratedLine(Native, Displayed, f, SteadyShare),
         FpsReadoutKind.None => FpsPresentation.PresentedLine(Native),
         FpsReadoutKind.Presented or FpsReadoutKind.IdentifiedUncounted => FpsPresentation.PresentedLine(Presented),
         _ => Strings.Common_NotAvailable,

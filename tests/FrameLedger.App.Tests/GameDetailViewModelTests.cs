@@ -647,7 +647,8 @@ public sealed class GameDetailViewModelTests
         vm.TrendMetric = Charts.TrendMetric.Displayed;
         vm.TrendPoints.Should().BeEmpty("frame generation was measured as none: no displayed rate");
         vm.TrendMetric = Charts.TrendMetric.MaxGpuTemp;
-        vm.TrendPoints.Single().Value.Should().Be(71);
+        vm.TrendPoints.Should().HaveCount(2, "the machine's metrics are every session's, Tier 2 included (beta.8)");
+        vm.TrendPoints[0].Value.Should().Be(71, "oldest first: the hooked one");
 
         vm.SelectedSession = vm.Sessions[0];   // newest first: the Tier-2 one
         Task pending = vm.Pending;

@@ -98,6 +98,7 @@ public partial class App : System.Windows.Application
             ApplyCulture(appearance.Language);
             var registered = new RegisteredSettings(store);
             LoggingLevel.SetDebug(await registered.GetBooleanAsync(SettingsRegistry.LogDebug).ConfigureAwait(true));
+            FpsDecimals.Two = await registered.GetBooleanAsync(SettingsRegistry.UiFpsDecimals).ConfigureAwait(true);
             var closePolicy = new WindowClosePolicy { MinimizeToTray = await registered.GetBooleanAsync(SettingsRegistry.UiMinimizeToTray).ConfigureAwait(true) };
 
             _host = BuildHost(_db, appearance, registered, closePolicy);

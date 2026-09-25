@@ -224,11 +224,11 @@ public sealed class FpsPresentationTests
         FpsReadoutModel m = InEnglish(() => FpsPresentation.FromRow(row));
 
         m.Kind.Should().Be(FpsReadoutKind.Generated);
-        InEnglish(() => m.Line).Should().Be("58 → 116 FPS (×2.0 FG)");
+        InEnglish(() => m.Line).Should().Be("58 → 116 FPS (×2.0 FG · 75%)", "rule 6: a steady factor is never shown without its share, the Average card included (beta.8)");
         InEnglish(() => m.FactorChip).Should().Be("×2.0 FG · 75%");
         InEnglish(() => m.QualifierTooltip).Should().Contain("steady state").And.Contain("75%").And.Contain("Bucket 1 of 8 measured 1.00 against 1.60");
         InEnglish(() => FpsPresentation.ColumnTooltip(row)).Should().Be(InEnglish(() => m.QualifierTooltip));
-        InEnglish(() => FpsPresentation.FactorColumn(row)).Should().Be("×2.0");
+        InEnglish(() => FpsPresentation.FactorColumn(row)).Should().Be("×2.0 · 75%", "the grid carries the share too");
 
         SessionRow session = Hooked("dlssg", native: 58.2, displayed: 116.4, factor: 2.0) with { FgFactorScope = "session" };
         FpsReadoutModel s = InEnglish(() => FpsPresentation.FromRow(session));

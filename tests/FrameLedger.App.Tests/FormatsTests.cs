@@ -131,6 +131,22 @@ public sealed class FormatsTests
     public void TwoFileVersionsAreTheSameFourNumbers(string? a, string? b, bool? expected) =>
         Formats.SameVersion(a, b).Should().Be(expected);
 
+    /// <summary>
+    /// beta.8 (owner request): two decimals, always, when <c>ui.fps_decimals</c> is on; a whole number otherwise. Half away
+    /// from zero both ways — 62.125 is exactly representable, and rounding half to even would say 62.12.
+    /// </summary>
+    [Fact]
+    public void FpsHasTwoDecimalsWhenAskedAndRoundsHalfAwayFromZero() => InEnglish(() =>
+    {
+        Formats.FpsNumber(62.4, twoDecimals: true).Should().Be("62.40");
+        Formats.FpsNumber(62, twoDecimals: true).Should().Be("62.00");
+        Formats.FpsNumber(62.125, twoDecimals: true).Should().Be("62.13");
+        Formats.FpsNumber(62.5, twoDecimals: false).Should().Be("63");
+        Formats.FpsNumber(61.5, twoDecimals: false).Should().Be("62");
+        Formats.FpsNumber(62.4, twoDecimals: false).Should().Be("62");
+        return 0;
+    });
+
     [Fact]
     public void EnginesAreNamedAndAnUnknownIdPassesThrough()
     {

@@ -49,6 +49,8 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 - **A session's summary lists the libraries the game had loaded** — recorded since the first beta and shown nowhere
   until now — and says when one differs from the copy the game ships ("nvngx_dlss.dll 310.2.1.0 (the game ships
   3.7.10.0: another copy was loaded, for example by the driver or the NVIDIA App)").
+- **FPS with two decimals** (Settings ▸ Window ▸ *Show FPS with two decimals*, off by default): every FPS figure reads
+  "62.40" instead of "62". Whole numbers now round half up (62.5 is 63); they rounded half to even.
 - **FrameLedger says when the NVIDIA App overrides a game's DLSS.** Each session now records the NVIDIA driver profile
   the game ran under — read from the driver's own settings, never from the game — and its summary says what that
   profile overrides: "NVIDIA profile “…”: DLSS override (preset K, Quality) · Frame Generation override (×4)", Ray
@@ -100,6 +102,17 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **The Trend tab was blank the first time a game's page opened.** It is drawn at once, on a date axis that keeps its
+  label and the theme's colours. "Average" is two metrics now — Native FPS and Presented FPS — so a line never mixes
+  the two, and never shows a presented rate that includes generated frames. Temperatures, loads, power and memory
+  include sessions recorded without hooking; points that describe only part of their session are drawn hollow; several
+  hardware changes on one day are one marker.
+- **A steady-state frame-generation factor always shows the share of the session it covers** — the average card,
+  Compare and the Sessions grid's FG× column dropped it. The game header's "Lifetime average" was the last measured
+  session and is labelled so.
+- **Compare**: the best value is highlighted in the accent colour (it was only bold), two values that read the same are
+  both best, CPU and GPU load are not ranked, the percentile chart spans 0–100 again, and exported PNGs have a solid
+  background.
 - **Ending a game with End task is no longer a "crash".** Every non-zero exit code was one, and Task Manager leaves 1.
   A crash is now an exception's exit code or Windows' own crash record, and the session summary says how each session
   ended: "crashed (0xC0000005 access violation)", "ended with exit code 1 — what End task and taskkill leave". The
