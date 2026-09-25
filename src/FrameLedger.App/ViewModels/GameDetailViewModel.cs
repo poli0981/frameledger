@@ -42,10 +42,14 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private readonly IHardwareSnapshotRepository _hardware;
     private readonly SessionSelection _selection;
     private readonly RegisteredSettings? _settings;
+    private readonly AntiCheatExceptions? _exceptions;
     private readonly long? _gameId;
 
     // ui.hide_anticheat_hooking (2026-09-25), read at each load; on until the settings say otherwise, as its default is.
     private bool _hideAntiCheatHooking = true;
+
+    // hooking.usermode_ac_exceptions (D33, 2026-09-26), read at each load; off until the settings say otherwise.
+    private bool _exceptionsOn;
     private GameDetail? _detail;
 
     [ObservableProperty]
@@ -106,6 +110,32 @@ public sealed partial class GameDetailViewModel : ObservableObject
     /// <summary>Whether the Hooking card and its lines show: false only for an anti-cheat game while they are hidden.</summary>
     [ObservableProperty]
     private bool _hookingSectionVisible = true;
+
+    /// <summary>
+    /// D33: the user-mode exception's card on a blocked game — shown while the option is on, and for an exception kept while
+    /// it is off; its state is the Agent's (<see cref="ExceptionView"/>).
+    /// </summary>
+    [ObservableProperty]
+    private bool _exceptionCardVisible;
+
+    [ObservableProperty]
+    private string? _exceptionText;
+
+    /// <summary>D33: what an exception in force means, on the page it applies to; null otherwise.</summary>
+    [ObservableProperty]
+    private string? _exceptionInForceText;
+
+    [ObservableProperty]
+    private string? _exceptionSuspendedText;
+
+    [ObservableProperty]
+    private string? _exceptionLapseText;
+
+    [ObservableProperty]
+    private bool _canGrantException;
+
+    [ObservableProperty]
+    private bool _canWithdrawException;
 
     /// <summary>
     /// Why the switch cannot be turned on when the executable cannot run as x64 (beta.8, <c>exe_machine</c>); null otherwise.
@@ -172,8 +202,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
     public GameDetailViewModel(GameLibrary library, GameSelection selection, HookingConsent consent, IPageNavigator navigator,
         IConfirmations confirmations, IEditGamePrompt edit, IMessageStrip strip, ISessionSummaryOpener summaries,
         SessionSeriesLoader loader, IHardwareSnapshotRepository hardware, SessionSelection sessionSelection, IGamePicker picker,
-        RegisteredSettings? settings = null, IAgentLink? agent = null)
+        RegisteredSettings? settings = null, IAgentLink? agent = null, AntiCheatExceptions? exceptions = null)
     {
+        _exceptions = exceptions;
         _settings = settings;
         _agent = agent;
         _picker = picker ?? throw new ArgumentNullException(nameof(picker));
@@ -193,6 +224,12 @@ public sealed partial class GameDetailViewModel : ObservableObject
     }
 
     public static string BackText => Strings.GameDetail_Back;
+
+    public static string ExceptionHeader => Strings.GameDetail_Exception_Header;
+
+    public static string GrantExceptionText => Strings.GameDetail_Exception_Grant;
+
+    public static string WithdrawExceptionText => Strings.GameDetail_Exception_Withdraw;
 
     public static string EditText => Strings.GameDetail_Edit;
 
@@ -346,6 +383,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         if (_settings is not null)
         {
             _hideAntiCheatHooking = await _settings.GetBooleanAsync(SettingsRegistry.UiHideAntiCheatHooking, ct).ConfigureAwait(true);
+            _exceptionsOn = await _settings.GetBooleanAsync(SettingsRegistry.HookingUserModeExceptions, ct).ConfigureAwait(true);
         }
 
         Present(detail);
@@ -510,6 +548,13 @@ public sealed partial class GameDetailViewModel : ObservableObject
     [RelayCommand]
     private Task ToggleRecordingAsync() => RunAsync(ToggleRecordingCoreAsync);
 
+    /// <summary>D33: the exception's disclosure, then the request; the Agent gathers the facts and grants or refuses.</summary>
+    [RelayCommand]
+    private Task GrantExceptionAsync() => RunAsync(GrantExceptionCoreAsync);
+
+    [RelayCommand]
+    private Task WithdrawExceptionAsync() => RunAsync(WithdrawExceptionCoreAsync);
+
     [RelayCommand]
     private Task ReEnableHookingAsync() => RunAsync(EnableAsync);
 
@@ -671,6 +716,61 @@ public sealed partial class GameDetailViewModel : ObservableObject
         _navigator.Navigate<GamesPage>();
     }
 
+    private async Task GrantExceptionCoreAsync()
+    {
+        if (Game is null || ExceptionView.Of(Game) is not { CanGrant: true } view)
+        {
+            return;
+        }
+
+        Busy = true;
+        try
+        {
+            AntiCheatExceptionResult result = _exceptions is null
+                ? AntiCheatExceptionResult.Of(AntiCheatExceptionOutcome.AgentUnavailable)
+                : await _exceptions.GrantAsync(Game.Id, new AntiCheatExceptionFacts(Game.Name, view.Family ?? string.Empty, view.Signal ?? string.Empty,
+                    view.Sessions)).ConfigureAwait(true);
+            Notice(result, Game.Name);
+        }
+        finally
+        {
+            Busy = false;
+        }
+
+        await LoadAsync().ConfigureAwait(true);
+    }
+
+    private async Task WithdrawExceptionCoreAsync()
+    {
+        if (Game is null)
+        {
+            return;
+        }
+
+        Busy = true;
+        try
+        {
+            AntiCheatExceptionResult result = _exceptions is null
+                ? AntiCheatExceptionResult.Of(AntiCheatExceptionOutcome.AgentUnavailable)
+                : await _exceptions.WithdrawAsync(Game.Id).ConfigureAwait(true);
+            Notice(result, Game.Name);
+        }
+        finally
+        {
+            Busy = false;
+        }
+
+        await LoadAsync().ConfigureAwait(true);
+    }
+
+    /// <summary>D33: an exception's outcome as this page's notice — a success is said, not only shown by the card changing.</summary>
+    private void Notice(AntiCheatExceptionResult result, string gameName)
+    {
+        NoticeText = result.MessageFor(gameName);
+        NoticeSeverity = result.Succeeded ? InfoBarSeverity.Success : InfoBarSeverity.Warning;
+        OnPropertyChanged(nameof(NoticeVisible));
+    }
+
     /// <summary>A refusal, a mismatch or a failure is a persistent notice on the page; a success clears it.</summary>
     private void Notice(HookingConsentResult result)
     {
@@ -826,7 +926,11 @@ public sealed partial class GameDetailViewModel : ObservableObject
         // An executable that cannot run as x64 (beta.8): turning hooking ON could only be refused; a switch that is on
         // (enabled before this build read the file) can still be turned off.
         bool notX64 = ExecutableArchitecture.IsKnownNotHookable(row.ExeMachine);
-        HookToggleEnabled = !blocked && !Busy && (row.HookEnabled || !notX64);
+        // D33: a blocked game whose user-mode exception is in force (the option on, a grant on the row) may be switched on —
+        // through FR-2.1's dialog as ever, and the Agent's pre-scan names the family; the finding stays on the page.
+        ExceptionView? exception = ExceptionView.Of(row);
+        bool exceptionInForce = _exceptionsOn && exception is { Kind: ExceptionViewKind.Granted };
+        HookToggleEnabled = (!blocked || exceptionInForce) && !Busy && (row.HookEnabled || !notX64);
         NotX64Text = notX64 && !blocked
             ? string.Format(CultureInfo.CurrentCulture, Strings.Hooking_NotX64_Format, Formats.Architecture(row.ExeMachine))
             : null;
@@ -838,7 +942,8 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
         // beta.8 (owner request 2026-09-25): for an anti-cheat game the card is a switch that can never be turned on, so
         // by default it gives way to the finding alone. The setting off keeps the card, with the finding under it.
-        HookingSectionVisible = !(blocked && _hideAntiCheatHooking);
+        HookingSectionVisible = !(blocked && _hideAntiCheatHooking) || exceptionInForce;
+        PresentException(exception, exceptionInForce);
         AntiCheatText = found is not null && !HookingSectionVisible
             ? string.Format(CultureInfo.CurrentCulture, Strings.GameDetail_AntiCheat_Format, found)
             : null;
@@ -848,6 +953,20 @@ public sealed partial class GameDetailViewModel : ObservableObject
             ? string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_AutoDisabled_Format, reason)
             : null;
         UnverifiedText = string.Equals(row.HookPrescanState, "unverified", StringComparison.Ordinal) ? Strings.GameDetail_Hooking_Unverified : null;
+    }
+
+    /// <summary>D33: the exception card — its state from the Agent's columns, and the one action that state allows.</summary>
+    private void PresentException(ExceptionView? view, bool inForce)
+    {
+        ExceptionCardVisible = view is not null && (_exceptionsOn || view.Kind == ExceptionViewKind.Granted);
+        ExceptionText = view?.Text;
+        ExceptionLapseText = view?.LapseText;
+        ExceptionInForceText = inForce && view?.Family is { } family
+            ? string.Format(CultureInfo.CurrentCulture, Strings.GameDetail_Exception_Granted_Format, family)
+            : null;
+        ExceptionSuspendedText = view is { Kind: ExceptionViewKind.Granted } && !_exceptionsOn ? Strings.GameDetail_Exception_Suspended : null;
+        CanGrantException = _exceptionsOn && view is { CanGrant: true } && !Busy;
+        CanWithdrawException = view is { CanWithdraw: true } && !Busy;
     }
 
     private void PresentSessions(GameDetail detail)

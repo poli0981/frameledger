@@ -2530,7 +2530,7 @@
     <comment>review</comment>
   </data>
   <data name="Settings_HideAntiCheatHooking_Body" xml:space="preserve">
-    <value>アンチチートが検出されたゲームはフックできません。オンにするとゲームのページには検出内容だけが表示され、オフにすると無効化されたフックのスイッチも表示されます。どちらの場合も、フックなしで記録は続きます。</value>
+    <value>アンチチートが検出されたゲームは、ユーザーモード例外（下記）を作成しない限りフックできません。オンにするとゲームのページには検出内容だけが表示され、オフにすると無効化されたフックのスイッチも表示されます。どちらの場合も、フックなしで記録は続きます。</value>
     <comment>review</comment>
   </data>
   <data name="Notice_HookingOff_Title_Format" xml:space="preserve">
@@ -3111,6 +3111,158 @@
   </data>
   <data name="Sensors_Axis_Watts" xml:space="preserve">
     <value>W</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Exceptions_Label" xml:space="preserve">
+    <value>以前に計測できたユーザーモードのアンチチート搭載ゲームでフックを許可する</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Exceptions_Body" xml:space="preserve">
+    <value>既定ではオフです。オンにすると、アンチチートがユーザーモードのみで動作し（カーネルドライバーがなく、ほかに何も検出されない）、フックで2回以上計測できたゲームに、開示を確認したうえでゲームごとに例外を与えられます。ガードはすべてのチェックを続け、アカウント停止の可能性は残ります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Exceptions_Header" xml:space="preserve">
+    <value>ユーザーモード例外</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Exceptions_Empty" xml:space="preserve">
+    <value>ライブラリに対象のゲームはありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Exceptions_Suspended" xml:space="preserve">
+    <value>オプションがオフです。下の例外は保持されますが適用されません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Exceptions_Grant" xml:space="preserve">
+    <value>例外を作成…</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Exceptions_Withdraw" xml:space="preserve">
+    <value>取り消す</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_Finding_Format" xml:space="preserve">
+    <value>{0} — {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_Sessions_Format" xml:space="preserve">
+    <value>フック計測の成功 {0} 回</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_State_Granted_Format" xml:space="preserve">
+    <value>{0} から例外が有効</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_State_Eligible" xml:space="preserve">
+    <value>対象 — 例外は未作成</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_State_Checking" xml:space="preserve">
+    <value>確認中…</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_State_TooFew_Format" xml:space="preserve">
+    <value>対象外: フック計測の成功は {0} 回で、2 回必要です</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_State_Refused_Format" xml:space="preserve">
+    <value>対象外: ガードは {0}（{1}）も検出しました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_State_NotUserMode_Format" xml:space="preserve">
+    <value>対象外: {0} は完全なユーザーモードではない（ドライバーまたはサービスがある）ため、FrameLedger は例外にしません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_State_NotAsked" xml:space="preserve">
+    <value>対象外: この検出は単一のアンチチートのモジュール・ファイル・フォルダーではありません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_State_CouldNotVerify" xml:space="preserve">
+    <value>現在は対象外: 確認を完了できませんでした。自動で再実行されます</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_Lapsed_Format" xml:space="preserve">
+    <value>直近の例外は {0} に終了しました: {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_Lapse_Withdrawn" xml:space="preserve">
+    <value>取り消されました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_Lapse_ExecutableChanged" xml:space="preserve">
+    <value>ゲームが更新されました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_Lapse_NoLongerEligible" xml:space="preserve">
+    <value>ゲームが条件を満たさなくなりました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_Lapse_NewFinding" xml:space="preserve">
+    <value>ゲームで新たなアンチチートが検出されました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_Lapse_SafetyUnhook" xml:space="preserve">
+    <value>例外下のセッションが安全のため停止されました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_Lapse_OverlayStopped" xml:space="preserve">
+    <value>別のアンチチートが読み込まれたため FrameLedger が観測を停止しました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_Lapse_SessionCrashed" xml:space="preserve">
+    <value>例外下のセッションがクラッシュしました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_Result_Granted_Format" xml:space="preserve">
+    <value>{0} の例外を作成しました。計測するときは、ゲームのページでフックをオンにしてください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_Result_Withdrawn_Format" xml:space="preserve">
+    <value>{0} の例外を取り消しました。フックはオフです。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_Result_Refused_Format" xml:space="preserve">
+    <value>{0} の例外は作成されませんでした: {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Exception_Header" xml:space="preserve">
+    <value>ユーザーモード例外</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Exception_Granted_Format" xml:space="preserve">
+    <value>{0} に対するユーザーモード例外のもとでフックできます。ガードはすべてのチェックを続け、アカウント停止の可能性は残ります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Exception_Suspended" xml:space="preserve">
+    <value>このゲームの例外は保持されていますが、設定でオプションがオフのため適用されません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Exception_Grant" xml:space="preserve">
+    <value>例外を作成…</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Exception_Withdraw" xml:space="preserve">
+    <value>例外を取り消す</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Exceptions_Refresh" xml:space="preserve">
+    <value>更新</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Exceptions_Checking" xml:space="preserve">
+    <value>キャプチャエージェントがライブラリを確認しています。対象のゲームは1分以内にここに表示されます。更新して確認してください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Tier_HookedException" xml:space="preserve">
+    <value>フック・例外</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Card_Exception" xml:space="preserve">
+    <value>例外</value>
+    <comment>review</comment>
+  </data>
+  <data name="Session_UnderException_Format" xml:space="preserve">
+    <value>{0} のユーザーモード例外のもとでフック</value>
     <comment>review</comment>
   </data>
 </root>

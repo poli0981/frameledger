@@ -274,6 +274,10 @@ public partial class App : System.Windows.Application
         // FR-2.1 (P3 PR-4): the consent dialog and the request it ends in; the toggle that opens it is the game page's (PR-5).
         builder.Services.AddSingleton<IConsentPrompt, ConsentPrompt>();
         builder.Services.AddSingleton<HookingConsent>();
+        // D33 (owner decision 2026-09-26): the user-mode exception's disclosure and the request it ends in; the list is
+        // Settings', the button on a blocked game's page.
+        builder.Services.AddSingleton<IAntiCheatExceptionPrompt, AntiCheatExceptionPrompt>();
+        builder.Services.AddSingleton<AntiCheatExceptions>();
 
         AddLibrary(builder.Services);
 

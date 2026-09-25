@@ -78,6 +78,10 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
     [ObservableProperty]
     private string _exitLine = string.Empty;
 
+    /// <summary>D33: the session was hooked under the game's user-mode exception, and for which anti-cheat; null otherwise.</summary>
+    [ObservableProperty]
+    private string? _exceptionLine;
+
     /// <summary>Tier 2's payload (2026-09-22): why this session measured nothing, from the row's notes; empty for a hooked row.</summary>
     [ObservableProperty]
     private string _tier2Reason = string.Empty;
@@ -321,6 +325,9 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         Tier2Reason = IsHooked ? string.Empty : Formats.Tier2Reason(row.CaptureNotes);
         ExitLine = string.Format(CultureInfo.CurrentCulture, Strings.Exit_Line_Format,
             Formats.ExitText(row.ExitStatus, Application.Recording.CaptureNotes.Parse(row.CaptureNotes)));
+        ExceptionLine = row.AcExceptionFamily is { } family
+            ? string.Format(CultureInfo.CurrentCulture, Strings.Session_UnderException_Format, family)
+            : null;
         Readout = FpsPresentation.FromRow(row);
         Line = string.Format(CultureInfo.CurrentCulture, Strings.Summary_Line_Format,
             IsHooked ? Formats.Api(row.Api) : Strings.Tier_NotHooked, row.PresentMode ?? Strings.Common_NotAvailable,

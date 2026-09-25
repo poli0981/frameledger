@@ -213,6 +213,27 @@ public static class Strings
         nameof(End_WriterNeverInstalledHooks),
         nameof(End_WriterSelfDisabled),
         nameof(End_WriterStoppedBlocklisted),
+        nameof(Exception_Finding_Format),
+        nameof(Exception_Lapse_ExecutableChanged),
+        nameof(Exception_Lapse_NewFinding),
+        nameof(Exception_Lapse_NoLongerEligible),
+        nameof(Exception_Lapse_OverlayStopped),
+        nameof(Exception_Lapse_SafetyUnhook),
+        nameof(Exception_Lapse_SessionCrashed),
+        nameof(Exception_Lapse_Withdrawn),
+        nameof(Exception_Lapsed_Format),
+        nameof(Exception_Result_Granted_Format),
+        nameof(Exception_Result_Refused_Format),
+        nameof(Exception_Result_Withdrawn_Format),
+        nameof(Exception_Sessions_Format),
+        nameof(Exception_State_Checking),
+        nameof(Exception_State_CouldNotVerify),
+        nameof(Exception_State_Eligible),
+        nameof(Exception_State_Granted_Format),
+        nameof(Exception_State_NotAsked),
+        nameof(Exception_State_NotUserMode_Format),
+        nameof(Exception_State_Refused_Format),
+        nameof(Exception_State_TooFew_Format),
         nameof(Exe_DriveMissing_Format),
         nameof(Exe_FileMissing_Format),
         nameof(Exit_Code_Format),
@@ -331,6 +352,11 @@ public static class Strings
         nameof(GameDetail_Details_Store),
         nameof(GameDetail_Details_Version),
         nameof(GameDetail_Edit),
+        nameof(GameDetail_Exception_Grant),
+        nameof(GameDetail_Exception_Granted_Format),
+        nameof(GameDetail_Exception_Header),
+        nameof(GameDetail_Exception_Suspended),
+        nameof(GameDetail_Exception_Withdraw),
         nameof(GameDetail_ExeMissing),
         nameof(GameDetail_Hooking_Body),
         nameof(GameDetail_Hooking_Busy),
@@ -363,6 +389,7 @@ public static class Strings
         nameof(GameDetail_Tab_Trend),
         nameof(Games_Add),
         nameof(Games_Card_AntiCheat),
+        nameof(Games_Card_Exception),
         nameof(Games_Card_HookOff),
         nameof(Games_Card_HookOn),
         nameof(Games_Card_LastPlayed_Format),
@@ -565,6 +592,7 @@ public static class Strings
         nameof(Sensors_Series_VramProcess),
         nameof(Sensors_Temps_Header),
         nameof(Sensors_Vram_Header),
+        nameof(Session_UnderException_Format),
         nameof(Sessions_Col_Api),
         nameof(Sessions_Col_Date),
         nameof(Sessions_Col_Displayed),
@@ -600,6 +628,15 @@ public static class Strings
         nameof(Settings_Capture_Header),
         nameof(Settings_Channel_Beta),
         nameof(Settings_Channel_Stable),
+        nameof(Settings_Exceptions_Body),
+        nameof(Settings_Exceptions_Checking),
+        nameof(Settings_Exceptions_Empty),
+        nameof(Settings_Exceptions_Grant),
+        nameof(Settings_Exceptions_Header),
+        nameof(Settings_Exceptions_Label),
+        nameof(Settings_Exceptions_Refresh),
+        nameof(Settings_Exceptions_Suspended),
+        nameof(Settings_Exceptions_Withdraw),
         nameof(Settings_FpsDecimals_Body),
         nameof(Settings_FpsDecimals_Label),
         nameof(Settings_Header),
@@ -723,6 +760,7 @@ public static class Strings
         nameof(Tier_Dash_Tooltip),
         nameof(Tier_Hooked),
         nameof(Tier_Hooked_Tooltip),
+        nameof(Tier_HookedException),
         nameof(Tier_NA_Tooltip),
         nameof(Tier_NotHooked),
         nameof(Tier_NotHooked_Tooltip),
@@ -1172,6 +1210,48 @@ public static class Strings
 
     public static string End_WriterStoppedBlocklisted => ResourceManager.GetString(nameof(End_WriterStoppedBlocklisted), Culture) ?? nameof(End_WriterStoppedBlocklisted);
 
+    public static string Exception_Finding_Format => ResourceManager.GetString(nameof(Exception_Finding_Format), Culture) ?? nameof(Exception_Finding_Format);
+
+    public static string Exception_Lapse_ExecutableChanged => ResourceManager.GetString(nameof(Exception_Lapse_ExecutableChanged), Culture) ?? nameof(Exception_Lapse_ExecutableChanged);
+
+    public static string Exception_Lapse_NewFinding => ResourceManager.GetString(nameof(Exception_Lapse_NewFinding), Culture) ?? nameof(Exception_Lapse_NewFinding);
+
+    public static string Exception_Lapse_NoLongerEligible => ResourceManager.GetString(nameof(Exception_Lapse_NoLongerEligible), Culture) ?? nameof(Exception_Lapse_NoLongerEligible);
+
+    public static string Exception_Lapse_OverlayStopped => ResourceManager.GetString(nameof(Exception_Lapse_OverlayStopped), Culture) ?? nameof(Exception_Lapse_OverlayStopped);
+
+    public static string Exception_Lapse_SafetyUnhook => ResourceManager.GetString(nameof(Exception_Lapse_SafetyUnhook), Culture) ?? nameof(Exception_Lapse_SafetyUnhook);
+
+    public static string Exception_Lapse_SessionCrashed => ResourceManager.GetString(nameof(Exception_Lapse_SessionCrashed), Culture) ?? nameof(Exception_Lapse_SessionCrashed);
+
+    public static string Exception_Lapse_Withdrawn => ResourceManager.GetString(nameof(Exception_Lapse_Withdrawn), Culture) ?? nameof(Exception_Lapse_Withdrawn);
+
+    public static string Exception_Lapsed_Format => ResourceManager.GetString(nameof(Exception_Lapsed_Format), Culture) ?? nameof(Exception_Lapsed_Format);
+
+    public static string Exception_Result_Granted_Format => ResourceManager.GetString(nameof(Exception_Result_Granted_Format), Culture) ?? nameof(Exception_Result_Granted_Format);
+
+    public static string Exception_Result_Refused_Format => ResourceManager.GetString(nameof(Exception_Result_Refused_Format), Culture) ?? nameof(Exception_Result_Refused_Format);
+
+    public static string Exception_Result_Withdrawn_Format => ResourceManager.GetString(nameof(Exception_Result_Withdrawn_Format), Culture) ?? nameof(Exception_Result_Withdrawn_Format);
+
+    public static string Exception_Sessions_Format => ResourceManager.GetString(nameof(Exception_Sessions_Format), Culture) ?? nameof(Exception_Sessions_Format);
+
+    public static string Exception_State_Checking => ResourceManager.GetString(nameof(Exception_State_Checking), Culture) ?? nameof(Exception_State_Checking);
+
+    public static string Exception_State_CouldNotVerify => ResourceManager.GetString(nameof(Exception_State_CouldNotVerify), Culture) ?? nameof(Exception_State_CouldNotVerify);
+
+    public static string Exception_State_Eligible => ResourceManager.GetString(nameof(Exception_State_Eligible), Culture) ?? nameof(Exception_State_Eligible);
+
+    public static string Exception_State_Granted_Format => ResourceManager.GetString(nameof(Exception_State_Granted_Format), Culture) ?? nameof(Exception_State_Granted_Format);
+
+    public static string Exception_State_NotAsked => ResourceManager.GetString(nameof(Exception_State_NotAsked), Culture) ?? nameof(Exception_State_NotAsked);
+
+    public static string Exception_State_NotUserMode_Format => ResourceManager.GetString(nameof(Exception_State_NotUserMode_Format), Culture) ?? nameof(Exception_State_NotUserMode_Format);
+
+    public static string Exception_State_Refused_Format => ResourceManager.GetString(nameof(Exception_State_Refused_Format), Culture) ?? nameof(Exception_State_Refused_Format);
+
+    public static string Exception_State_TooFew_Format => ResourceManager.GetString(nameof(Exception_State_TooFew_Format), Culture) ?? nameof(Exception_State_TooFew_Format);
+
     public static string Exe_DriveMissing_Format => ResourceManager.GetString(nameof(Exe_DriveMissing_Format), Culture) ?? nameof(Exe_DriveMissing_Format);
 
     public static string Exe_FileMissing_Format => ResourceManager.GetString(nameof(Exe_FileMissing_Format), Culture) ?? nameof(Exe_FileMissing_Format);
@@ -1408,6 +1488,16 @@ public static class Strings
 
     public static string GameDetail_Edit => ResourceManager.GetString(nameof(GameDetail_Edit), Culture) ?? nameof(GameDetail_Edit);
 
+    public static string GameDetail_Exception_Grant => ResourceManager.GetString(nameof(GameDetail_Exception_Grant), Culture) ?? nameof(GameDetail_Exception_Grant);
+
+    public static string GameDetail_Exception_Granted_Format => ResourceManager.GetString(nameof(GameDetail_Exception_Granted_Format), Culture) ?? nameof(GameDetail_Exception_Granted_Format);
+
+    public static string GameDetail_Exception_Header => ResourceManager.GetString(nameof(GameDetail_Exception_Header), Culture) ?? nameof(GameDetail_Exception_Header);
+
+    public static string GameDetail_Exception_Suspended => ResourceManager.GetString(nameof(GameDetail_Exception_Suspended), Culture) ?? nameof(GameDetail_Exception_Suspended);
+
+    public static string GameDetail_Exception_Withdraw => ResourceManager.GetString(nameof(GameDetail_Exception_Withdraw), Culture) ?? nameof(GameDetail_Exception_Withdraw);
+
     public static string GameDetail_ExeMissing => ResourceManager.GetString(nameof(GameDetail_ExeMissing), Culture) ?? nameof(GameDetail_ExeMissing);
 
     public static string GameDetail_Hooking_Body => ResourceManager.GetString(nameof(GameDetail_Hooking_Body), Culture) ?? nameof(GameDetail_Hooking_Body);
@@ -1471,6 +1561,8 @@ public static class Strings
     public static string Games_Add => ResourceManager.GetString(nameof(Games_Add), Culture) ?? nameof(Games_Add);
 
     public static string Games_Card_AntiCheat => ResourceManager.GetString(nameof(Games_Card_AntiCheat), Culture) ?? nameof(Games_Card_AntiCheat);
+
+    public static string Games_Card_Exception => ResourceManager.GetString(nameof(Games_Card_Exception), Culture) ?? nameof(Games_Card_Exception);
 
     public static string Games_Card_HookOff => ResourceManager.GetString(nameof(Games_Card_HookOff), Culture) ?? nameof(Games_Card_HookOff);
 
@@ -1876,6 +1968,8 @@ public static class Strings
 
     public static string Sensors_Vram_Header => ResourceManager.GetString(nameof(Sensors_Vram_Header), Culture) ?? nameof(Sensors_Vram_Header);
 
+    public static string Session_UnderException_Format => ResourceManager.GetString(nameof(Session_UnderException_Format), Culture) ?? nameof(Session_UnderException_Format);
+
     public static string Sessions_Col_Api => ResourceManager.GetString(nameof(Sessions_Col_Api), Culture) ?? nameof(Sessions_Col_Api);
 
     public static string Sessions_Col_Date => ResourceManager.GetString(nameof(Sessions_Col_Date), Culture) ?? nameof(Sessions_Col_Date);
@@ -1945,6 +2039,24 @@ public static class Strings
     public static string Settings_Channel_Beta => ResourceManager.GetString(nameof(Settings_Channel_Beta), Culture) ?? nameof(Settings_Channel_Beta);
 
     public static string Settings_Channel_Stable => ResourceManager.GetString(nameof(Settings_Channel_Stable), Culture) ?? nameof(Settings_Channel_Stable);
+
+    public static string Settings_Exceptions_Body => ResourceManager.GetString(nameof(Settings_Exceptions_Body), Culture) ?? nameof(Settings_Exceptions_Body);
+
+    public static string Settings_Exceptions_Checking => ResourceManager.GetString(nameof(Settings_Exceptions_Checking), Culture) ?? nameof(Settings_Exceptions_Checking);
+
+    public static string Settings_Exceptions_Empty => ResourceManager.GetString(nameof(Settings_Exceptions_Empty), Culture) ?? nameof(Settings_Exceptions_Empty);
+
+    public static string Settings_Exceptions_Grant => ResourceManager.GetString(nameof(Settings_Exceptions_Grant), Culture) ?? nameof(Settings_Exceptions_Grant);
+
+    public static string Settings_Exceptions_Header => ResourceManager.GetString(nameof(Settings_Exceptions_Header), Culture) ?? nameof(Settings_Exceptions_Header);
+
+    public static string Settings_Exceptions_Label => ResourceManager.GetString(nameof(Settings_Exceptions_Label), Culture) ?? nameof(Settings_Exceptions_Label);
+
+    public static string Settings_Exceptions_Refresh => ResourceManager.GetString(nameof(Settings_Exceptions_Refresh), Culture) ?? nameof(Settings_Exceptions_Refresh);
+
+    public static string Settings_Exceptions_Suspended => ResourceManager.GetString(nameof(Settings_Exceptions_Suspended), Culture) ?? nameof(Settings_Exceptions_Suspended);
+
+    public static string Settings_Exceptions_Withdraw => ResourceManager.GetString(nameof(Settings_Exceptions_Withdraw), Culture) ?? nameof(Settings_Exceptions_Withdraw);
 
     public static string Settings_FpsDecimals_Body => ResourceManager.GetString(nameof(Settings_FpsDecimals_Body), Culture) ?? nameof(Settings_FpsDecimals_Body);
 
@@ -2191,6 +2303,8 @@ public static class Strings
     public static string Tier_Hooked => ResourceManager.GetString(nameof(Tier_Hooked), Culture) ?? nameof(Tier_Hooked);
 
     public static string Tier_Hooked_Tooltip => ResourceManager.GetString(nameof(Tier_Hooked_Tooltip), Culture) ?? nameof(Tier_Hooked_Tooltip);
+
+    public static string Tier_HookedException => ResourceManager.GetString(nameof(Tier_HookedException), Culture) ?? nameof(Tier_HookedException);
 
     public static string Tier_NA_Tooltip => ResourceManager.GetString(nameof(Tier_NA_Tooltip), Culture) ?? nameof(Tier_NA_Tooltip);
 

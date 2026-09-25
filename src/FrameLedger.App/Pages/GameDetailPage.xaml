@@ -150,6 +150,33 @@
                 </ui:CardControl.Header>
             </ui:CardControl>
 
+            <!-- D33 (owner decision 2026-09-26): the user-mode exception on a blocked game, its state the Agent's (19_SAFETY §The user-mode exception) -->
+            <ui:CardControl Margin="0,12,0,0" Icon="{ui:SymbolIcon ShieldTask24}"
+                            Visibility="{Binding ViewModel.ExceptionCardVisible, Converter={StaticResource BoolToVis}}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static vm:GameDetailViewModel.ExceptionHeader}" />
+                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.ExceptionText}" />
+                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.ExceptionInForceText}"
+                                      Visibility="{Binding ViewModel.ExceptionInForceText, Converter={StaticResource NullToCollapsed}}" />
+                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.ExceptionSuspendedText}"
+                                      Visibility="{Binding ViewModel.ExceptionSuspendedText, Converter={StaticResource NullToCollapsed}}" />
+                        <ui:TextBlock Appearance="Tertiary" TextWrapping="Wrap" Text="{Binding ViewModel.ExceptionLapseText}"
+                                      Visibility="{Binding ViewModel.ExceptionLapseText, Converter={StaticResource NullToCollapsed}}" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <StackPanel Orientation="Horizontal">
+                    <ui:Button Appearance="Secondary"
+                               Command="{Binding ViewModel.GrantExceptionCommand}"
+                               Content="{x:Static vm:GameDetailViewModel.GrantExceptionText}"
+                               Visibility="{Binding ViewModel.CanGrantException, Converter={StaticResource BoolToVis}}" />
+                    <ui:Button Appearance="Secondary"
+                               Command="{Binding ViewModel.WithdrawExceptionCommand}"
+                               Content="{x:Static vm:GameDetailViewModel.WithdrawExceptionText}"
+                               Visibility="{Binding ViewModel.CanWithdrawException, Converter={StaticResource BoolToVis}}" />
+                </StackPanel>
+            </ui:CardControl>
+
             <!-- hooking control (FR-2.1 / FR-2.2 / FR-2.5) -->
             <StackPanel Visibility="{Binding ViewModel.HookingSectionVisible, Converter={StaticResource BoolToVis}}">
                 <ui:CardControl Margin="0,12,0,0" Header="{x:Static vm:GameDetailViewModel.HookingHeader}" Icon="{ui:SymbolIcon ShieldTask24}">

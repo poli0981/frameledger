@@ -25,7 +25,11 @@ public sealed class GameCardViewModel
         // An entry the guard found anti-cheat in says so (beta.8): its hooking is off for good, and "Hooking off" read as
         // a switch the user could still flip. Not recorded still comes first — nothing runs for it at all.
         AntiCheat = Recorded && card.Row.BlockedByGuard;
+        // D33: a blocked game with a user-mode exception on its row says so; whether Settings' option lets it apply is the
+        // game page's to say.
+        Excepted = AntiCheat && card.Row.AcException.IsGranted;
         HookText = !Recorded ? Strings.Games_Card_NotRecorded
+            : Excepted ? Strings.Games_Card_Exception
             : AntiCheat ? Strings.Games_Card_AntiCheat
             : HookOn ? Strings.Games_Card_HookOn : Strings.Games_Card_HookOff;
         SessionCount = card.Summary?.SessionCount ?? 0;
@@ -62,6 +66,9 @@ public sealed class GameCardViewModel
     /// (<c>19_SAFETY</c> §What a finding does to the game) and the entry is recorded — "Not recorded" says more.
     /// </summary>
     public bool AntiCheat { get; }
+
+    /// <summary>D33: the anti-cheat game carries a user-mode exception (<c>games.ac_exception_at</c>); the pill says "Exception".</summary>
+    public bool Excepted { get; }
 
     public string HookText { get; }
 

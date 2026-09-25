@@ -29,6 +29,19 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Added
 
+- **A user-mode anti-cheat exception you can make yourself, per game** (owner decision D33). Settings ▸ Capture ▸
+  *Allow hooking in games with user-mode anti-cheat that were measured before* — off by default. On, it lists the games
+  FrameLedger found eligible: the only anti-cheat in the game runs entirely in user mode (no driver or service, no
+  driver file anywhere in the game's folder), the game is on no title list, and FrameLedger has measured it hooked
+  successfully at least twice. **Make exception…** shows a disclosure — the ban risk, possibly days later and invisible
+  to FrameLedger; what is still refused; how the exception ends — and asks you to accept the risk for that game. The
+  exception turns nothing on: you then turn hooking on for the game on its page, through the usual consent dialog, and
+  the guard still runs every check and refuses anything else it finds. The game's page shows the exception's state
+  (eligible; not eligible and why; in force; suspended; ended and why), the library card says **Exception**, and a
+  session hooked under it is marked in the Sessions tab and its summary. It ends by itself on a new finding, a crash or
+  safety stop under it, FrameLedger stopping because another anti-cheat loaded, or a game update; turning the option
+  off suspends every exception. Aniimo stays blocked: it ships a kernel driver (`NEPKernel.sys`).
+
 - **Groundwork for the user-mode anti-cheat exception** (owner decision D33, 2026-09-26; the option, the list and the
   disclosure arrive later in this train). The guard can now be asked to let ONE named anti-cheat family through, and
   grants it only for a family whose every signal — in the built-in floor and in the rules file — is user-mode: no
@@ -49,6 +62,12 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   reason kept — on a new finding, a safety unhook, the Overlay stopping for another anti-cheat, a crash while hooked, a
   game update, or when the user withdraws it; turning the option off suspends every exception without deleting any.
   Schema 0014 adds the columns; the database opens in place.
+
+### Changed
+
+- **Legal: Disclaimer 2.7 and EULA 1.3.** Disclaimer §2A describes the user-mode exception and its risk; the EULA's
+  code-injection clause names it and what making one means. The accuracy block and SECURITY.md say it too. The Legal
+  Gate shows the two changed documents once more; the Privacy Policy is unchanged (2.4).
 
 ## [0.1.0-beta.8] - 2026-09-25
 

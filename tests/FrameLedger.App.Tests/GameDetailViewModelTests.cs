@@ -378,6 +378,121 @@ public sealed class GameDetailViewModelTests
         }
     }
 
+    /// <summary>
+    /// D33 (owner decision 2026-09-26): with the option on, a blocked game the Agent found eligible offers the exception;
+    /// one in force brings the Hooking card back with its switch usable, the finding still under it; with the option off
+    /// the kept exception says it is suspended and the switch is disabled again.
+    /// </summary>
+    [Fact]
+    public async Task AnEligibleGameOffersTheExceptionAndOneInForceMakesTheSwitchUsable()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow game = await s.GameAsync("GF2");
+            const string block = "AntiCheatFile|NetEase Yidun|NEP2.dll";
+            await s.Db.WriteAsync((c, tx, ct) => Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(
+                "UPDATE games SET hook_enabled = 0, hook_blocked_reason = @block, hook_prescan_state = 'blocked', ac_exception_eligible = 1, "
+                + "ac_exception_verdict = 'AllowedUnderUserModeException|NetEase Yidun|NEP2.dll', ac_exception_sessions = 3, "
+                + "ac_exception_checked_block = @block WHERE id = @id", new { id = game.Id, block }, tx, cancellationToken: ct)), Ct);
+            var settings = new RegisteredSettings(new MemorySettings());
+
+            (GameDetailViewModel off, _, _, _, _) = await BuildAsync(s, game.Id, settings: settings);
+            off.ExceptionCardVisible.Should().BeFalse("off by default: nothing about exceptions shows");
+            off.CanGrantException.Should().BeFalse();
+
+            await settings.SetAsync(SettingsRegistry.HookingUserModeExceptions, true, Ct);
+            await off.LoadAsync(Ct);
+            off.ExceptionCardVisible.Should().BeTrue();
+            off.ExceptionText.Should().Be(Strings.Exception_State_Eligible);
+            off.CanGrantException.Should().BeTrue();
+            off.HookToggleEnabled.Should().BeFalse("eligible is not granted: the block still decides");
+
+            await s.Db.WriteAsync((c, tx, ct) => Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(
+                "UPDATE games SET ac_exception_at = 1000, ac_exception_family = 'NetEase Yidun', ac_exception_disclosure_version = 'ac-exception-dialog/1', "
+                + "ac_exception_exe_size_bytes = exe_size_bytes, ac_exception_exe_mtime_ms = exe_mtime_ms WHERE id = @id", new { id = game.Id }, tx, cancellationToken: ct)), Ct);
+            await off.LoadAsync(Ct);
+            off.CanWithdrawException.Should().BeTrue();
+            off.CanGrantException.Should().BeFalse();
+            off.ExceptionInForceText.Should().Contain("NetEase Yidun");
+            off.HookingSectionVisible.Should().BeTrue("an exception in force brings the Hooking card back even while such cards are hidden");
+            off.HookToggleEnabled.Should().BeTrue("hooking is turned on through FR-2.1's dialog, as ever");
+            off.BlockedText.Should().Contain("NetEase Yidun", "the finding is always on the page (FR-2.2)");
+
+            await settings.SetAsync(SettingsRegistry.HookingUserModeExceptions, false, Ct);
+            await off.LoadAsync(Ct);
+            off.ExceptionCardVisible.Should().BeTrue("a kept exception is shown, suspended");
+            off.ExceptionSuspendedText.Should().Be(Strings.GameDetail_Exception_Suspended);
+            off.HookToggleEnabled.Should().BeFalse();
+            off.HookingSectionVisible.Should().BeFalse();
+            new GameCardViewModel(new GameCard(off.Game!, null)).HookText.Should().Be(Strings.Games_Card_Exception);
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
+
+    /// <summary>D33: a game the guard would let through but with one hooked session says so; a kernel-level family says why not.</summary>
+    [Fact]
+    public async Task WhyAGameIsNotEligibleIsSaidOnItsPage()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow few = await s.GameAsync("Few");
+            GameRow aniimo = await s.GameAsync("Aniimo");
+            GameRow eac = await s.GameAsync("Eac");
+            await s.Db.WriteAsync(async (c, tx, ct) =>
+            {
+                const string sql = "UPDATE games SET hook_blocked_reason = @block, hook_prescan_state = 'blocked', ac_exception_verdict = @verdict, "
+                                   + "ac_exception_sessions = @sessions, ac_exception_checked_block = @block WHERE id = @id";
+                await Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(sql, new
+                {
+                    id = few.Id,
+                    block = "AntiCheatFile|NetEase Yidun|NEP2.dll",
+                    verdict = "AllowedUnderUserModeException|NetEase Yidun|NEP2.dll",
+                    sessions = 1
+                }, tx, cancellationToken: ct)).ConfigureAwait(false);
+                await Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(sql, new
+                {
+                    id = aniimo.Id,
+                    block = "AntiCheatFile|NetEase Yidun|NEP2.dll",
+                    verdict = "AntiCheatFile|Kernel driver in the game folder|NEPKernel.sys",
+                    sessions = 1
+                }, tx, cancellationToken: ct)).ConfigureAwait(false);
+                await Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(sql, new
+                {
+                    id = eac.Id,
+                    block = "AntiCheatDirectory|Easy Anti-Cheat|EasyAntiCheat",
+                    verdict = "AntiCheatDirectory|Easy Anti-Cheat|EasyAntiCheat",
+                    sessions = 4
+                }, tx, cancellationToken: ct)).ConfigureAwait(false);
+                return 0;
+            }, Ct);
+            var settings = new RegisteredSettings(new MemorySettings());
+            await settings.SetAsync(SettingsRegistry.HookingUserModeExceptions, true, Ct);
+
+            (GameDetailViewModel vm, _, _, _, _) = await BuildAsync(s, few.Id, settings: settings);
+            vm.ExceptionText.Should().Contain("1").And.Contain("two");
+            vm.CanGrantException.Should().BeFalse();
+
+            (vm, _, _, _, _) = await BuildAsync(s, aniimo.Id, settings: settings);
+            vm.ExceptionText.Should().Contain("Kernel driver in the game folder").And.Contain("NEPKernel.sys");
+
+            (vm, _, _, _, _) = await BuildAsync(s, eac.Id, settings: settings);
+            vm.ExceptionText.Should().Contain("Easy Anti-Cheat").And.Contain("not user-mode");
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
+
     /// <summary>The library card says "Anti-cheat" for such a game (beta.8) — after "Not recorded", which says more.</summary>
     [Fact]
     public async Task TheLibraryCardSaysAntiCheatForAGameTheGuardFoundItIn()

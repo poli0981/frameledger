@@ -1908,7 +1908,7 @@ The documents below are the full terms; this summary does not replace them.</val
     <value>Hide hooking on anti-cheat games</value>
   </data>
   <data name="Settings_HideAntiCheatHooking_Body" xml:space="preserve">
-    <value>A game in which anti-cheat was found can never be hooked. On, its page shows only what was found; off, it also shows the disabled Hooking switch. Either way it is still recorded without hooking.</value>
+    <value>A game in which anti-cheat was found cannot be hooked, unless you make a user-mode exception for it (below). On, its page shows only what was found; off, it also shows the disabled Hooking switch. Either way it is still recorded without hooking.</value>
   </data>
   <data name="Notice_HookingOff_Title_Format" xml:space="preserve">
     <value>{0}: hooking turned off</value>
@@ -2344,5 +2344,119 @@ The documents below are the full terms; this summary does not replace them.</val
   </data>
   <data name="Sensors_Axis_Watts" xml:space="preserve">
     <value>W</value>
+  </data>
+  <data name="Settings_Exceptions_Label" xml:space="preserve">
+    <value>Allow hooking in games with user-mode anti-cheat that were measured before</value>
+  </data>
+  <data name="Settings_Exceptions_Body" xml:space="preserve">
+    <value>Off by default. On, a game whose only anti-cheat runs in user mode — no kernel driver, nothing else found — and that was measured hooked at least twice can be given an exception below, one game at a time, after a disclosure. The guard still runs every check, and a ban remains possible.</value>
+  </data>
+  <data name="Settings_Exceptions_Header" xml:space="preserve">
+    <value>User-mode exceptions</value>
+  </data>
+  <data name="Settings_Exceptions_Empty" xml:space="preserve">
+    <value>No game in your library qualifies.</value>
+  </data>
+  <data name="Settings_Exceptions_Suspended" xml:space="preserve">
+    <value>The option is off: the exceptions below are kept but do not apply.</value>
+  </data>
+  <data name="Settings_Exceptions_Grant" xml:space="preserve">
+    <value>Make exception…</value>
+  </data>
+  <data name="Settings_Exceptions_Withdraw" xml:space="preserve">
+    <value>Withdraw</value>
+  </data>
+  <data name="Exception_Finding_Format" xml:space="preserve">
+    <value>{0} — {1}</value>
+  </data>
+  <data name="Exception_Sessions_Format" xml:space="preserve">
+    <value>{0} successful hooked sessions</value>
+  </data>
+  <data name="Exception_State_Granted_Format" xml:space="preserve">
+    <value>Exception in force since {0}</value>
+  </data>
+  <data name="Exception_State_Eligible" xml:space="preserve">
+    <value>Eligible — no exception made</value>
+  </data>
+  <data name="Exception_State_Checking" xml:space="preserve">
+    <value>Checking…</value>
+  </data>
+  <data name="Exception_State_TooFew_Format" xml:space="preserve">
+    <value>Not eligible: {0} successful hooked session(s), two are needed</value>
+  </data>
+  <data name="Exception_State_Refused_Format" xml:space="preserve">
+    <value>Not eligible: the guard also found {0} ({1})</value>
+  </data>
+  <data name="Exception_State_NotUserMode_Format" xml:space="preserve">
+    <value>Not eligible: {0} is not user-mode throughout (it has a driver or a service), so FrameLedger never excepts it</value>
+  </data>
+  <data name="Exception_State_NotAsked" xml:space="preserve">
+    <value>Not eligible: this finding is not a module, file or folder of one anti-cheat</value>
+  </data>
+  <data name="Exception_State_CouldNotVerify" xml:space="preserve">
+    <value>Not eligible now: the check could not finish; it runs again by itself</value>
+  </data>
+  <data name="Exception_Lapsed_Format" xml:space="preserve">
+    <value>The last exception ended on {0}: {1}</value>
+  </data>
+  <data name="Exception_Lapse_Withdrawn" xml:space="preserve">
+    <value>you withdrew it</value>
+  </data>
+  <data name="Exception_Lapse_ExecutableChanged" xml:space="preserve">
+    <value>the game was updated</value>
+  </data>
+  <data name="Exception_Lapse_NoLongerEligible" xml:space="preserve">
+    <value>the game no longer qualifies</value>
+  </data>
+  <data name="Exception_Lapse_NewFinding" xml:space="preserve">
+    <value>new anti-cheat was found in the game</value>
+  </data>
+  <data name="Exception_Lapse_SafetyUnhook" xml:space="preserve">
+    <value>a session under it was stopped for safety</value>
+  </data>
+  <data name="Exception_Lapse_OverlayStopped" xml:space="preserve">
+    <value>FrameLedger stopped observing because another anti-cheat loaded</value>
+  </data>
+  <data name="Exception_Lapse_SessionCrashed" xml:space="preserve">
+    <value>a session under it crashed</value>
+  </data>
+  <data name="Exception_Result_Granted_Format" xml:space="preserve">
+    <value>Exception made for {0}. Turn hooking on for the game on its page when you want to measure it.</value>
+  </data>
+  <data name="Exception_Result_Withdrawn_Format" xml:space="preserve">
+    <value>Exception withdrawn for {0}; its hooking is off.</value>
+  </data>
+  <data name="Exception_Result_Refused_Format" xml:space="preserve">
+    <value>No exception was made for {0}: {1}</value>
+  </data>
+  <data name="GameDetail_Exception_Header" xml:space="preserve">
+    <value>User-mode exception</value>
+  </data>
+  <data name="GameDetail_Exception_Granted_Format" xml:space="preserve">
+    <value>Hooking may run under a user-mode exception for {0}. The guard still runs every check; a ban remains possible.</value>
+  </data>
+  <data name="GameDetail_Exception_Suspended" xml:space="preserve">
+    <value>An exception is kept for this game, but the option is off in Settings, so it does not apply.</value>
+  </data>
+  <data name="GameDetail_Exception_Grant" xml:space="preserve">
+    <value>Make exception…</value>
+  </data>
+  <data name="GameDetail_Exception_Withdraw" xml:space="preserve">
+    <value>Withdraw exception</value>
+  </data>
+  <data name="Settings_Exceptions_Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Settings_Exceptions_Checking" xml:space="preserve">
+    <value>The capture agent is checking your library; the games that qualify appear here within a minute. Refresh to see them.</value>
+  </data>
+  <data name="Tier_HookedException" xml:space="preserve">
+    <value>Hooked · exception</value>
+  </data>
+  <data name="Games_Card_Exception" xml:space="preserve">
+    <value>Exception</value>
+  </data>
+  <data name="Session_UnderException_Format" xml:space="preserve">
+    <value>Hooked under the user-mode exception for {0}</value>
   </data>
 </root>
