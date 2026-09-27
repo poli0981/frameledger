@@ -224,6 +224,36 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>
+    /// Help ▸ Limitations (beta.10, D36): <c>LIMITATIONS.md</c> as this build embeds it, read-only and scrollable, with the
+    /// repository's copy one button away. Information, not terms — nothing is recorded.
+    /// </summary>
+    [RelayCommand]
+    private async Task LimitationsAsync()
+    {
+        var text = new System.Windows.Controls.TextBox
+        {
+            Text = LimitationsDocument.Load(),
+            IsReadOnly = true,
+            TextWrapping = System.Windows.TextWrapping.Wrap,
+            VerticalScrollBarVisibility = System.Windows.Controls.ScrollBarVisibility.Auto,
+            MaxHeight = 520,
+            Width = 680,
+        };
+        System.Windows.Automation.AutomationProperties.SetName(text, Strings.Limitations_Title);
+        var box = new MessageBox
+        {
+            Title = Strings.Limitations_Title,
+            Content = text,
+            PrimaryButtonText = Strings.Limitations_OnGitHub,
+            CloseButtonText = Strings.Common_Close,
+        };
+        if (await box.ShowDialogAsync().ConfigureAwait(true) == MessageBoxResult.Primary && !_urls.Open(LimitationsDocument.OnGitHub))
+        {
+            _snackbar.Show(Strings.Limitations_Title, Strings.BugReport_BrowserRefused, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.Warning24), TimeSpan.FromSeconds(4));
+        }
+    }
+
     /// <summary>Help ▸ Report a bug… (P4 PR-3): <c>10_LOGGING</c> §Bug report flow steps 2–4, the same flow the Logs page's button runs.</summary>
     [RelayCommand]
     private async Task ReportBugAsync() => _ = await _bugReports.RunAsync().ConfigureAwait(true);

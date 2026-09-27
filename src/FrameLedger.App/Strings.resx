@@ -237,6 +237,15 @@
   <data name="Menu_Help_Documentation" xml:space="preserve">
     <value>Documentation</value>
   </data>
+  <data name="Menu_Help_Limitations" xml:space="preserve">
+    <value>Limitations</value>
+  </data>
+  <data name="Limitations_Title" xml:space="preserve">
+    <value>What FrameLedger cannot do</value>
+  </data>
+  <data name="Limitations_OnGitHub" xml:space="preserve">
+    <value>Open on GitHub</value>
+  </data>
   <data name="Menu_Help_ReportBug" xml:space="preserve">
     <value>Report a bug…</value>
   </data>

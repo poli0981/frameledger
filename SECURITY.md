@@ -40,6 +40,18 @@ driver in its folder, on a title list, or with a second anti-cheat; the Agent wr
 without its own tolerant pre-scan and session count; an exception that survives a new finding, a crash or safety stop
 under it, or a changed executable; and the Overlay tolerating a family the guard did not.
 
+## Running the agent as administrator
+
+Since 0.1.0-beta.10 the capture agent can run as administrator — an option, off by default (owner decision D34,
+`docs/01_ARCHITECTURE.md` ADR-9) — and Windows asks at every start of the agent. The residual risk is stated to the user
+rather than solved: FrameLedger installs per user and unsigned, so a program running under the same account could replace
+its files and be run as administrator when the user next accepts the prompt. What IS a security report: any way the
+agent becomes administrator WITHOUT that prompt (a task, a service, an inherited token the option did not choose); a game
+or any other program that an elevated agent starts with its own token instead of the desktop shell's; any privilege the
+agent enables (none is — `tools/chokepoint-check.ps1` forbids the enablers under `src/`); an elevated agent that runs for
+another account than the one that asked; and a named object an elevated agent creates that the same user's unelevated
+processes can no longer open, or that another user can.
+
 ## A safety gap — a game with anti-cheat that FrameLedger fails to detect
 
 This is treated with the same priority as a security report, and it takes the **public** route: open

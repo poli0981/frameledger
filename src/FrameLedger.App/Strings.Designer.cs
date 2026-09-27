@@ -487,6 +487,8 @@ public static class Strings
         nameof(Launch_Error_740),
         nameof(Launch_Error_Format),
         nameof(Launch_Failed_Format),
+        nameof(Limitations_OnGitHub),
+        nameof(Limitations_Title),
         nameof(Logs_Bundle_Exported_Format),
         nameof(Logs_Bundle_Failed_Format),
         nameof(Logs_Empty),
@@ -545,6 +547,7 @@ public static class Strings
         nameof(Menu_Help_About),
         nameof(Menu_Help_CheckUpdates),
         nameof(Menu_Help_Documentation),
+        nameof(Menu_Help_Limitations),
         nameof(Menu_Help_ReportBug),
         nameof(Menu_Tools),
         nameof(Menu_Tools_AgentStatus),
@@ -1801,6 +1804,10 @@ public static class Strings
 
     public static string Launch_Failed_Format => ResourceManager.GetString(nameof(Launch_Failed_Format), Culture) ?? nameof(Launch_Failed_Format);
 
+    public static string Limitations_OnGitHub => ResourceManager.GetString(nameof(Limitations_OnGitHub), Culture) ?? nameof(Limitations_OnGitHub);
+
+    public static string Limitations_Title => ResourceManager.GetString(nameof(Limitations_Title), Culture) ?? nameof(Limitations_Title);
+
     public static string Logs_Bundle_Exported_Format => ResourceManager.GetString(nameof(Logs_Bundle_Exported_Format), Culture) ?? nameof(Logs_Bundle_Exported_Format);
 
     public static string Logs_Bundle_Failed_Format => ResourceManager.GetString(nameof(Logs_Bundle_Failed_Format), Culture) ?? nameof(Logs_Bundle_Failed_Format);
@@ -1916,6 +1923,8 @@ public static class Strings
     public static string Menu_Help_CheckUpdates => ResourceManager.GetString(nameof(Menu_Help_CheckUpdates), Culture) ?? nameof(Menu_Help_CheckUpdates);
 
     public static string Menu_Help_Documentation => ResourceManager.GetString(nameof(Menu_Help_Documentation), Culture) ?? nameof(Menu_Help_Documentation);
+
+    public static string Menu_Help_Limitations => ResourceManager.GetString(nameof(Menu_Help_Limitations), Culture) ?? nameof(Menu_Help_Limitations);
 
     public static string Menu_Help_ReportBug => ResourceManager.GetString(nameof(Menu_Help_ReportBug), Culture) ?? nameof(Menu_Help_ReportBug);
 

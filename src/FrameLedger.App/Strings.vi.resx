@@ -232,6 +232,15 @@
   <data name="Menu_Help_Documentation" xml:space="preserve">
     <value>Tài liệu</value>
   </data>
+  <data name="Menu_Help_Limitations" xml:space="preserve">
+    <value>Giới hạn</value>
+  </data>
+  <data name="Limitations_Title" xml:space="preserve">
+    <value>Những điều FrameLedger không làm được</value>
+  </data>
+  <data name="Limitations_OnGitHub" xml:space="preserve">
+    <value>Mở trên GitHub</value>
+  </data>
   <data name="Menu_Help_ReportBug" xml:space="preserve">
     <value>Báo lỗi…</value>
   </data>

@@ -309,6 +309,18 @@
     <value>ドキュメント</value>
     <comment>review</comment>
   </data>
+  <data name="Menu_Help_Limitations" xml:space="preserve">
+    <value>制限事項</value>
+    <comment>review</comment>
+  </data>
+  <data name="Limitations_Title" xml:space="preserve">
+    <value>FrameLedger にできないこと</value>
+    <comment>review</comment>
+  </data>
+  <data name="Limitations_OnGitHub" xml:space="preserve">
+    <value>GitHub で開く</value>
+    <comment>review</comment>
+  </data>
   <data name="Menu_Help_ReportBug" xml:space="preserve">
     <value>不具合を報告…</value>
     <comment>review</comment>

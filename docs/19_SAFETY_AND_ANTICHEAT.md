@@ -357,7 +357,7 @@ Implemented in `FrameLedger.Injector` and reached from managed code through a th
    > That needs a real game library, and it is a false-refusal path, so it is
    > recorded rather than assumed benign.
 
-Any check failing ⇒ **injection is refused**. The UI shows which check fired and offers Tier-2 (ETW) capture instead, which requires no injection — but does require an elevated Agent, so the offer must state that plainly and fall through to Tier 3 rather than appearing to succeed and recording nothing (`04_CAPTURE` §Frame source abstraction).
+Any check failing ⇒ **injection is refused**. The UI shows which check fired and ~~offers Tier-2 (ETW) capture instead, which requires no injection — but does require an elevated Agent, so the offer must state that plainly and fall through to Tier 3 rather than appearing to succeed and recording nothing (`04_CAPTURE` §Frame source abstraction)~~ **records the session unmeasured — Tier 2: its duration, the machine's sensors and the reason — which needs no injection and no elevation; there is no ETW rung and no Tier 3 since 2026-08-28** (corrected 2026-09-27: this sentence outlived the ladder it described by a month).
 
 ### The payload is checked too, and for a long time it was not
 
