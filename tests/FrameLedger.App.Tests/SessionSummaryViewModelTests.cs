@@ -58,7 +58,7 @@ public sealed class SessionSummaryViewModelTests
             vm.NotFound.Should().BeFalse();
             vm.IsHooked.Should().BeTrue();
             vm.Series.Should().NotBeNull();
-            vm.Stats.Should().HaveCount(10, "eight frame statistics, then the machine: GPU and CPU (2026-09-21)");
+            vm.Stats.Should().HaveCount(11, "eight frame statistics, the display mode (beta.10), then the machine: GPU and CPU (2026-09-21)");
             vm.Stats.Single(c => string.Equals(c.Label, "CPU", StringComparison.Ordinal)).Value.Should().Be("N/A avg · N/A max", "this row carries no CPU reading: N/A, never 0%");
             vm.Stats.Single(c => string.Equals(c.Label, "Median", StringComparison.Ordinal)).Value.Should().Be("60");
             vm.Stats.Single(c => string.Equals(c.Label, "1% Low", StringComparison.Ordinal)).Value.Should().Be("48");
@@ -192,6 +192,53 @@ public sealed class SessionSummaryViewModelTests
             SessionSummaryViewModel.LoadedLibraries(null, shipped).Should().BeNull();
             SessionSummaryViewModel.LoadedLibraries("{}", shipped).Should().BeNull();
             SessionSummaryViewModel.LoadedLibraries("not json", shipped).Should().BeNull();
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
+
+    /// <summary>
+    /// beta.10 (<c>03_METRICS</c> §Display mode): the Display card and line, in either tier — the mode shown longest with its
+    /// share, every share, the window on its monitor and what it rested on. A window nothing could ask about is "Fullscreen or
+    /// borderless", never either.
+    /// </summary>
+    [Fact]
+    public async Task TheDisplayCardAndLineSayHowTheGameWasShownInEitherTier()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow game = await s.GameAsync("Alpha");
+            long tier2 = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow, hooked: false, display: new FrameLedger.Domain.Display.DisplaySummary
+            {
+                CoversMs = 90_000,
+                MinimizedMs = 10_000,
+                NoWindowMs = 5_000,
+                Changes = 1,
+                Source = FrameLedger.Domain.Display.DisplaySource.Window,
+                WindowWidth = 1920,
+                WindowHeight = 1080,
+                MonitorWidth = 1920,
+                MonitorHeight = 1080,
+                MonitorHz = 144,
+            });
+
+            SessionSummaryViewModel vm = Build(s);
+            await vm.LoadAsync(tier2, Ct);
+
+            StatCardModel card = vm.Stats.Single(c => string.Equals(c.Label, "Display", StringComparison.Ordinal));
+            card.Value.Should().Be("Fullscreen or borderless 90%", "time without a window is outside every share");
+            card.Suffix.Should().Be("1920×1080");
+            vm.DisplayLine.Should().Be("Display: Fullscreen or borderless 90% · Minimized 10% · changed once · window 1920×1080 on a 1920×1080 monitor at 144 Hz"
+                + " · from the window alone: exclusive fullscreen cannot be told from borderless");
+            SessionSummaryViewModel before = Build(s);
+            await before.LoadAsync(await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-1)), Ct);
+            before.Stats.Single(c => string.Equals(c.Label, "Display", StringComparison.Ordinal)).Value.Should().Be("N/A", "a row without display facts reads N/A");
+            before.DisplayLine.Should().BeNull();
         }
         finally
         {

@@ -189,4 +189,46 @@ public sealed class TrendSeriesBuilderTests
             Strings.Culture = previous;
         }
     }
+
+    private static SessionRow Shown(int day, bool hooked, Domain.Display.DisplaySummary? display, bool midSession = false) =>
+        Application.Recording.SessionDisplayColumns.WithDisplay(Row(day, 1, hooked: hooked, midSession: midSession), display);
+
+    /// <summary>
+    /// beta.10 (<c>03_METRICS</c> §Display mode): the display shares are every session's — the window is read out of process
+    /// whether or not anything was hooked — and a session whose settings changed is NOT left out: switching between fullscreen
+    /// and a window resizes the swap chain, which is exactly what marks it, and the share is the whole session's by construction.
+    /// </summary>
+    [Fact]
+    public void DisplaySharesAreEverySessionsAndAModeSwitchIsNotAMidSessionChange()
+    {
+        SessionRow[] rows =
+        [
+            Shown(1, hooked: true, new() { ExclusiveMs = 25_000, BorderlessMs = 75_000, Source = "swapchain" }, midSession: true),
+            Shown(2, hooked: false, new() { CoversMs = 80_000, WindowedMs = 20_000, Source = "window" }),
+            Shown(3, hooked: true, display: null),
+        ];
+
+        TrendSeriesBuilder.Points(rows, TrendMetric.DisplayExclusiveShare, includeMidSessionChanges: false).Select(static p => p.Value).Should().Equal(25.0);
+        TrendSeriesBuilder.Points(rows, TrendMetric.DisplayBorderlessShare, includeMidSessionChanges: false).Select(static p => p.Value).Should().Equal(75.0);
+        TrendSeriesBuilder.Points(rows, TrendMetric.DisplayWindowedShare, includeMidSessionChanges: false).Select(static p => p.Value).Should().Equal(0.0, 20.0);
+        TrendSeriesBuilder.ExcludedCount(rows, TrendMetric.DisplayExclusiveShare).Should().Be(0);
+        TrendSeriesBuilder.Points(rows, TrendMetric.DisplayExclusiveShare, includeMidSessionChanges: false).Single().SettingsChangedMidSession.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ExclusiveAndBorderlessHaveNoPointWhereTheyCouldNotBeToldApart()
+    {
+        SessionRow covered = Shown(1, hooked: false, new() { CoversMs = 60_000, Source = "window" });
+        SessionRow partly = Shown(2, hooked: true, new() { BorderlessMs = 50_000, CoversMs = 10_000, Source = "swapchain" });
+
+        foreach (SessionRow row in new[] { covered, partly })
+        {
+            TrendSeriesBuilder.ValueOf(row, TrendMetric.DisplayExclusiveShare).Should().BeNull("a share of time that could have been either would be a guess");
+            TrendSeriesBuilder.ValueOf(row, TrendMetric.DisplayBorderlessShare).Should().BeNull();
+            TrendSeriesBuilder.ValueOf(row, TrendMetric.DisplayWindowedShare).Should().Be(0.0, "windowed is told from the window alone");
+        }
+
+        TrendSeriesBuilder.ValueOf(Shown(3, hooked: true, new() { NoWindowMs = 9_000 }), TrendMetric.DisplayWindowedShare)
+            .Should().BeNull("no window was ever read, so there is no share of anything");
+    }
 }

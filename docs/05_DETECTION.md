@@ -26,11 +26,16 @@ Derived in the Agent from the record stream; the mapping is in `03_METRICS`. Sum
 | Reflex on + PC latency | NVAPI Reflex hooks |
 | Per-process VRAM | `QueryVideoMemoryInfo` |
 | PSO compilation events | pipeline-creation hooks |
+| Display mode — exclusive fullscreen / borderless / windowed / minimised, with the window, back buffer and monitor (beta.10) | `GetFullscreenState` + `GetDesc` polled on the presenting chain (≤ 2 Hz, shared-memory region 4), and the window's geometry read by the Agent **out of process** — so this row is **both tiers**: a Tier-2 session has the window alone, and never splits exclusive from borderless (`03_METRICS` §Display mode) |
 
 > **Not built, 2026-09-15:** four rows above have no writer yet — HDR output, Reflex and PC latency, per-process
 > VRAM, and PSO compilation events. The Overlay never sets their measured bits, so every calculator over them
 > returns nothing and the columns stay null; `legal/ACCURACY.md` lists them as not measured. This table is the
 > design; the block is the state.
+>
+> **2026-09-27 (beta.10):** the first row's *swap effect* has a writer since schema 0016 — region 4's `GetDesc`, stored
+> in `sessions.swap_effect` as a name (`flip_discard`, …) — and the display-mode row is new. **Present mode has none**,
+> and the block above did not list it: `sessions.present_mode` is null on every row, and the pages say N/A.
 
 > **"present-count delta" is removed from the FG row, and it was not merely unreliable —
 > it was structurally zero.** `03_METRICS` §Frame Generation retired that rung on
@@ -42,7 +47,7 @@ Derived in the Agent from the record stream; the mapping is in `03_METRICS`. Sum
 > stale-by-not-being-touched failure this project keeps recording; `06_DATA_MODEL`'s
 > `fg_source` enum carried the same value and is corrected in the same pass.
 
-~~Tier-2 sessions have `upscaler = unknown`, resolutions `N/A`, RT `N/A`, and an FG mode only if cadence resolves it.~~ **Simpler since 2026-08-28: a Tier-2 session detects NOTHING.** It has no frames, so cadence has nothing to run over. `upscaler`, resolutions, RT and FG all read `N/A`, and the static-hint tier (below) is the only thing that says anything about such a title — which it labels *inference*, never measurement.
+~~Tier-2 sessions have `upscaler = unknown`, resolutions `N/A`, RT `N/A`, and an FG mode only if cadence resolves it.~~ **Simpler since 2026-08-28: a Tier-2 session detects NOTHING.** It has no frames, so cadence has nothing to run over. `upscaler`, resolutions, RT and FG all read `N/A`, and the static-hint tier (below) is the only thing that says anything about such a title — which it labels *inference*, never measurement. **The one exception since beta.10 is how its window was shown** (the display-mode row), which the Agent reads from outside the game in either tier.
 
 ## Static hints — rules engine
 

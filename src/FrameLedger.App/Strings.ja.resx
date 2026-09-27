@@ -677,6 +677,86 @@
     <value>{0}×{1}</value>
     <comment>review</comment>
   </data>
+  <data name="Display_Mode_Exclusive" xml:space="preserve">
+    <value>排他的フルスクリーン</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_Mode_Borderless" xml:space="preserve">
+    <value>ボーダーレス</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_Mode_CoversScreen" xml:space="preserve">
+    <value>フルスクリーンまたはボーダーレス</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_Mode_Windowed" xml:space="preserve">
+    <value>ウィンドウ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_Mode_Minimized" xml:space="preserve">
+    <value>最小化</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_Mode_NoWindow" xml:space="preserve">
+    <value>ウィンドウを読み取れず</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_Share_Format" xml:space="preserve">
+    <value>{0} {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_Size_Format" xml:space="preserve">
+    <value>{0}×{1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_SizeHz_Format" xml:space="preserve">
+    <value>{0}×{1} @ {2} Hz</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_Changes_One" xml:space="preserve">
+    <value>1 回切り替え</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_Changes_Format" xml:space="preserve">
+    <value>{0} 回切り替え</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_Window_Format" xml:space="preserve">
+    <value>ウィンドウ {0}×{1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_WindowOnMonitor_Format" xml:space="preserve">
+    <value>{2}×{3} のモニター上のウィンドウ {0}×{1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_WindowOnMonitorHz_Format" xml:space="preserve">
+    <value>{2}×{3}・{4} Hz のモニター上のウィンドウ {0}×{1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_Buffer_Format" xml:space="preserve">
+    <value>バックバッファー {0}×{1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_BufferEffect_Format" xml:space="preserve">
+    <value>バックバッファー {0}×{1}（{2}）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_Source_SwapChain" xml:space="preserve">
+    <value>排他かどうかはスワップチェーンが報告</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_Source_OpenGl" xml:space="preserve">
+    <value>OpenGL：排他的フルスクリーンとボーダーレスは区別できません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_Source_Window" xml:space="preserve">
+    <value>ウィンドウのみから：排他的フルスクリーンとボーダーレスは区別できません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Display_Line_Format" xml:space="preserve">
+    <value>表示：{0}</value>
+    <comment>review</comment>
+  </data>
   <data name="Format_Temperature_Format" xml:space="preserve">
     <value>{0:0} °C</value>
     <comment>review</comment>
@@ -955,6 +1035,10 @@
   </data>
   <data name="Sessions_Col_Api" xml:space="preserve">
     <value>API</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_Col_Display" xml:space="preserve">
+    <value>表示</value>
     <comment>review</comment>
   </data>
   <data name="Sessions_Col_Date" xml:space="preserve">
@@ -1327,6 +1411,18 @@
   </data>
   <data name="Compare_Metric_Duration" xml:space="preserve">
     <value>時間</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_Display" xml:space="preserve">
+    <value>表示モード</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_Window" xml:space="preserve">
+    <value>ウィンドウ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_Monitor" xml:space="preserve">
+    <value>モニター</value>
     <comment>review</comment>
   </data>
   <data name="Compare_Metric_MaxGpuTemp" xml:space="preserve">
@@ -2396,6 +2492,18 @@
     <value>FG倍率 ×</value>
     <comment>review</comment>
   </data>
+  <data name="Trend_Metric_DisplayExclusive" xml:space="preserve">
+    <value>排他的フルスクリーンの割合 %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_DisplayBorderless" xml:space="preserve">
+    <value>ボーダーレスの割合 %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_DisplayWindowed" xml:space="preserve">
+    <value>ウィンドウの割合 %</value>
+    <comment>review</comment>
+  </data>
   <data name="Sensors_Series_CpuTemp" xml:space="preserve">
     <value>CPU °C</value>
     <comment>review</comment>
@@ -2426,6 +2534,10 @@
   </data>
   <data name="Summary_Stat_Cpu" xml:space="preserve">
     <value>CPU</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Display" xml:space="preserve">
+    <value>表示</value>
     <comment>review</comment>
   </data>
   <data name="Summary_Stat_LoadTemp_Format" xml:space="preserve">

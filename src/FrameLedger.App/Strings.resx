@@ -513,6 +513,66 @@
   <data name="Format_Resolution_Single_Format" xml:space="preserve">
     <value>{0}×{1}</value>
   </data>
+  <data name="Display_Mode_Exclusive" xml:space="preserve">
+    <value>Exclusive fullscreen</value>
+  </data>
+  <data name="Display_Mode_Borderless" xml:space="preserve">
+    <value>Borderless</value>
+  </data>
+  <data name="Display_Mode_CoversScreen" xml:space="preserve">
+    <value>Fullscreen or borderless</value>
+  </data>
+  <data name="Display_Mode_Windowed" xml:space="preserve">
+    <value>Windowed</value>
+  </data>
+  <data name="Display_Mode_Minimized" xml:space="preserve">
+    <value>Minimized</value>
+  </data>
+  <data name="Display_Mode_NoWindow" xml:space="preserve">
+    <value>No window read</value>
+  </data>
+  <data name="Display_Share_Format" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="Display_Size_Format" xml:space="preserve">
+    <value>{0}×{1}</value>
+  </data>
+  <data name="Display_SizeHz_Format" xml:space="preserve">
+    <value>{0}×{1} @ {2} Hz</value>
+  </data>
+  <data name="Display_Changes_One" xml:space="preserve">
+    <value>changed once</value>
+  </data>
+  <data name="Display_Changes_Format" xml:space="preserve">
+    <value>changed {0} times</value>
+  </data>
+  <data name="Display_Window_Format" xml:space="preserve">
+    <value>window {0}×{1}</value>
+  </data>
+  <data name="Display_WindowOnMonitor_Format" xml:space="preserve">
+    <value>window {0}×{1} on a {2}×{3} monitor</value>
+  </data>
+  <data name="Display_WindowOnMonitorHz_Format" xml:space="preserve">
+    <value>window {0}×{1} on a {2}×{3} monitor at {4} Hz</value>
+  </data>
+  <data name="Display_Buffer_Format" xml:space="preserve">
+    <value>back buffer {0}×{1}</value>
+  </data>
+  <data name="Display_BufferEffect_Format" xml:space="preserve">
+    <value>back buffer {0}×{1} ({2})</value>
+  </data>
+  <data name="Display_Source_SwapChain" xml:space="preserve">
+    <value>the swap chain said whether it was exclusive</value>
+  </data>
+  <data name="Display_Source_OpenGl" xml:space="preserve">
+    <value>OpenGL: exclusive fullscreen cannot be told from borderless</value>
+  </data>
+  <data name="Display_Source_Window" xml:space="preserve">
+    <value>from the window alone: exclusive fullscreen cannot be told from borderless</value>
+  </data>
+  <data name="Display_Line_Format" xml:space="preserve">
+    <value>Display: {0}</value>
+  </data>
   <data name="Format_Temperature_Format" xml:space="preserve">
     <value>{0:0} °C</value>
   </data>
@@ -722,6 +782,9 @@
   </data>
   <data name="Sessions_Col_Api" xml:space="preserve">
     <value>API</value>
+  </data>
+  <data name="Sessions_Col_Display" xml:space="preserve">
+    <value>Display</value>
   </data>
   <data name="Sessions_Col_Date" xml:space="preserve">
     <value>Date</value>
@@ -1001,6 +1064,15 @@
   </data>
   <data name="Compare_Metric_Duration" xml:space="preserve">
     <value>Duration</value>
+  </data>
+  <data name="Compare_Metric_Display" xml:space="preserve">
+    <value>Display mode</value>
+  </data>
+  <data name="Compare_Metric_Window" xml:space="preserve">
+    <value>Window</value>
+  </data>
+  <data name="Compare_Metric_Monitor" xml:space="preserve">
+    <value>Monitor</value>
   </data>
   <data name="Compare_Metric_MaxGpuTemp" xml:space="preserve">
     <value>Max GPU °C</value>
@@ -1806,6 +1878,15 @@ Open the log folder?</value>
   <data name="Trend_Metric_FgFactor" xml:space="preserve">
     <value>FG factor ×</value>
   </data>
+  <data name="Trend_Metric_DisplayExclusive" xml:space="preserve">
+    <value>Exclusive fullscreen share %</value>
+  </data>
+  <data name="Trend_Metric_DisplayBorderless" xml:space="preserve">
+    <value>Borderless share %</value>
+  </data>
+  <data name="Trend_Metric_DisplayWindowed" xml:space="preserve">
+    <value>Windowed share %</value>
+  </data>
   <data name="Sensors_Series_CpuTemp" xml:space="preserve">
     <value>CPU °C</value>
   </data>
@@ -1829,6 +1910,9 @@ Open the log folder?</value>
   </data>
   <data name="Summary_Stat_Cpu" xml:space="preserve">
     <value>CPU</value>
+  </data>
+  <data name="Summary_Stat_Display" xml:space="preserve">
+    <value>Display</value>
   </data>
   <data name="Summary_Stat_LoadTemp_Format" xml:space="preserve">
     <value>{0} avg · {1} max</value>

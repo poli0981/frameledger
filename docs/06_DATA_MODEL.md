@@ -274,7 +274,23 @@ CREATE TABLE sessions (
   avg_cpu_temp REAL, max_cpu_temp REAL,
   avg_gpu_temp REAL, max_gpu_temp REAL, max_gpu_hotspot REAL,
   avg_gpu_load REAL, avg_cpu_load REAL, avg_ram_mb REAL,
-  avg_gpu_power_w REAL, throttle_pct REAL
+  avg_gpu_power_w REAL, throttle_pct REAL,
+
+  -- schema 0016 (2026-09-27, beta.10): the display mode, both tiers (03_METRICS §Display mode). Milliseconds per mode,
+  -- each sample standing for the time until the next (100 ms hooked, 1 s at Tier 2), a pause not counted; nowindow is
+  -- outside every share. NULL before, on a session recovered from its .partial file, and where the loop never sampled —
+  -- N/A, never 0. Written on the recorder's SKELETON: a Tier-2 session never reaches the aggregator.
+  display_exclusive_ms INTEGER,                -- the swap chain SAID exclusive (DXGI only)
+  display_borderless_ms INTEGER,               -- covers its monitor, the chain said not exclusive
+  display_windowed_ms INTEGER,
+  display_covers_ms INTEGER,                   -- covers its monitor and nothing could say which ("fullscreen or borderless")
+  display_minimized_ms INTEGER,
+  display_nowindow_ms INTEGER,                 -- no window could be read
+  display_changes INTEGER,                     -- mode changes between samples
+  display_source TEXT,                         -- swapchain | opengl | window: the strongest witness any sample had
+  display_window_w INTEGER, display_window_h INTEGER,     -- client area, in the mode that lasted longest
+  display_buffer_w INTEGER, display_buffer_h INTEGER,     -- the swap chain's back buffer, same mode
+  display_monitor_w INTEGER, display_monitor_h INTEGER, display_monitor_hz INTEGER
 );
 CREATE INDEX ix_sessions_game_started ON sessions(game_id, started_at DESC);
 
@@ -550,6 +566,15 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > value the user typed, one with no badge (which reads as the user's) and one whose provenance does not parse stay as they
 > were, and the last does not fail the migration (`CASE WHEN json_valid(…)`, since SQLite promises no order for `AND`).
 > `LatestVersion` is 15; `LedgerDatabaseTests.ScriptFifteenAddsTheWitnessAndRemovesOnlyTheOldRulesDetectedDigit`.
+
+> **`0016_display_mode.sql` (beta.10, 2026-09-27) — how the game was shown.** Fifteen `sessions.display_*` columns
+> (`03_METRICS` §Display mode): milliseconds in each mode, the changes, the witness, and the window / back buffer / monitor
+> sizes in the mode that lasted longest. ADD COLUMN only, no data change: a session recorded before reads N/A. Written by
+> the recorder on the row's skeleton (`Recording.SessionDisplayColumns.WithDisplay`), so a Tier-2 session — which never
+> reaches the aggregator — has them too; `sessions.swap_effect`, a column since 0001, gets its first writer from the same
+> facts. `SessionRowColumns` is hand-edited (its generator is not in the repository) and reads by name. `LatestVersion` is
+> 16; `LedgerDatabaseTests.ScriptSixteenAddsTheDisplayColumnsAndAnEarlierSessionHasNone`,
+> `SqliteSessionRepositoryTests.ASessionRoundTripsColumnForColumn`.
 
 > **Every open used to migrate, and one that should not have did — 2026-09-16.** The Agent's `--console sessions`,
 > a verb that prints, was run against the owner's ledger while the file on disk was at schema 2 and applied 0003 and

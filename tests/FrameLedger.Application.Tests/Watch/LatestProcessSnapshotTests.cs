@@ -40,4 +40,20 @@ public sealed class LatestProcessSnapshotTests
         latest.Contains(_game).Should().BeTrue("a process we cannot identify must not end a hold early");
         latest.Contains(@"C:\Games\Other\other.exe").Should().BeFalse();
     }
+
+    /// <summary>
+    /// beta.10: the Tier-2 hold's display sample looks at the windows of the processes running THIS executable — by image
+    /// path only. Unlike the clock, a process whose path could not be read is not claimed: its window could be another
+    /// program's, and a wrong window is a wrong mode, where a missing one is "no window".
+    /// </summary>
+    [Fact]
+    public void ThePidsAreThoseRunningThisExecutableByPathAndNeverAnUnreadableOne()
+    {
+        var latest = new LatestProcessSnapshot();
+        latest.PidsOf(_game).Should().BeEmpty("no snapshot yet");
+
+        latest.Publish([Proc(1, @"D:\another\Game.exe"), Proc(2, _game.ToUpperInvariant()), Proc(3, null), Proc(4, _game)]);
+
+        latest.PidsOf(_game).Should().Equal(2, 4);
+    }
 }

@@ -68,6 +68,7 @@ public sealed class SessionExporterTests
         string[] lines = writer.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
         lines.Should().Contain(static l => l.StartsWith("# capture_tier: 2", StringComparison.Ordinal) && l.Contains("no per-frame rows", StringComparison.Ordinal));
         lines[^1].Should().Be(SessionExporter.CsvColumns, "the column line is the last line: nothing was measured");
+        lines.Should().Contain("# display: N/A (not recorded: a session recorded before beta.10, or recovered from its crash file)");
 
         SessionExportDocument doc = SessionExporter.Document(row, game, null, [], await s.Annotations.FindAsync(id, Ct));
         using var stream = new MemoryStream();
@@ -81,5 +82,46 @@ public sealed class SessionExporterTests
         json.RootElement.GetProperty("aggregates").TryGetProperty("native_fps", out _).Should().BeFalse("N/A is omitted, never written as 0");
         json.RootElement.GetProperty("game").GetString().Should().Be("Alpha");
         _ = CaptureTier.NotHooked;
+    }
+
+    /// <summary>beta.10: the CSV's <c># display:</c> line is the stored milliseconds by name, invariant in every UI language.</summary>
+    [Fact]
+    public async Task TheDisplayHeaderLineIsTheStoredMillisecondsByName()
+    {
+        CultureInfo? previous = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("vi-VN");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow game = await s.GameAsync("Alpha");
+            long id = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow, display: new FrameLedger.Domain.Display.DisplaySummary
+            {
+                ExclusiveMs = 1_500,
+                BorderlessMs = 60_000,
+                Changes = 2,
+                Source = FrameLedger.Domain.Display.DisplaySource.SwapChain,
+                WindowWidth = 2560,
+                WindowHeight = 1440,
+                BufferWidth = 2560,
+                BufferHeight = 1440,
+                MonitorWidth = 2560,
+                MonitorHeight = 1440,
+                MonitorHz = 165,
+                SwapEffect = "flip_discard",
+            });
+            SessionRow row = (await s.Sessions.FindByIdAsync(id, Ct))!;
+
+            using var writer = new StringWriter(CultureInfo.InvariantCulture);
+            SessionExporter.WriteCsv(writer, row, game, null, [], null);
+
+            writer.ToString().Split(Environment.NewLine).Should().Contain(
+                "# display: exclusive_ms=1500; borderless_ms=60000; covers_ms=0; windowed_ms=0; minimized_ms=0; nowindow_ms=0; changes=2; source=swapchain;"
+                + " window=2560x1440; buffer=2560x1440; monitor=2560x1440@165");
+            writer.ToString().Should().Contain("swap_effect: flip_discard", "the swap chain's own description is sessions.swap_effect's first writer");
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previous;
+        }
     }
 }

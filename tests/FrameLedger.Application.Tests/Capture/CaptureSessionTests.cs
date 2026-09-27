@@ -7,6 +7,7 @@ using FrameLedger.Application.Recording;
 using FrameLedger.Application.Tests.AntiCheat;
 using FrameLedger.Domain.AntiCheat;
 using FrameLedger.Domain.Consent;
+using FrameLedger.Domain.Display;
 using FrameLedger.Domain.Sessions;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Shared;
@@ -145,7 +146,10 @@ public sealed class CaptureSessionTests : IAsyncDisposable
 
         public FlShmHandshake Handshake => default;
 
-        public FlDisplayState? DisplayState => null;
+        /// <summary>Region 4 as the Overlay would publish it (beta.10); null reads as a writer that described nothing.</summary>
+        public FlDisplayState? Display { get; set; }
+
+        public FlDisplayState? DisplayState => Display;
 
         public long TotalDropped { get; set; }
 
@@ -245,7 +249,7 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         }
     }
 
-    private sealed class FixedResolver(int? pid, SessionEndReason reason, int runningTicks = 0) : ITargetResolver
+    private sealed class FixedResolver(int? pid, SessionEndReason reason, int runningTicks = 0, IReadOnlyList<int>? pids = null) : ITargetResolver
     {
         private int _running = runningTicks;
 
@@ -260,6 +264,20 @@ public sealed class CaptureSessionTests : IAsyncDisposable
 
         /// <summary>The name clock of a hold that never opened the process: "running" for so many checks, then gone.</summary>
         public bool IsRunning(string normalisedExePath) => _running-- > 0;
+
+        public IReadOnlyList<int> PidsOf(string normalisedExePath) => pids ?? [];
+    }
+
+    /// <summary>The window reader (beta.10): what each tick asked it, and one fixed answer.</summary>
+    private sealed class RecordingProbe(WindowView? answer) : IDisplayProbe
+    {
+        public List<(int[] Pids, ulong Hwnd)> Calls { get; } = [];
+
+        public WindowView? Observe(IReadOnlyCollection<int> pids, ulong hwnd)
+        {
+            Calls.Add(([.. pids], hwnd));
+            return answer;
+        }
     }
 
     private sealed class TickCounter : ICaptureObserver
@@ -309,7 +327,7 @@ public sealed class CaptureSessionTests : IAsyncDisposable
     private static CaptureSession Loop(IGameConsentStore store, CountingGuard guard, FakeSink? sink,
         FakeLiveness? alive = null, int? pid = _pid, SessionEndReason resolveReason = SessionEndReason.Running,
         CaptureOptions? options = null, IKillSwitch? killSwitch = null, ICapturePauseSource? pause = null,
-        IUserModeExceptionSwitch? exceptions = null, IOverlayToleranceChannel? tolerance = null) =>
+        IUserModeExceptionSwitch? exceptions = null, IOverlayToleranceChannel? tolerance = null, IDisplayProbe? display = null) =>
         new(store,
             new HookedCaptureGate(guard),
             guard,
@@ -328,7 +346,8 @@ public sealed class CaptureSessionTests : IAsyncDisposable
             killSwitch: killSwitch,
             pause: pause,
             exceptions: exceptions,
-            tolerance: tolerance);
+            tolerance: tolerance,
+            display: display);
 
     private static readonly bool[] _pauseThenResume = [true, false];
 
@@ -1030,7 +1049,8 @@ public sealed class CaptureSessionTests : IAsyncDisposable
 
     /// <summary>The loop with an explicit resolver and liveness: the Tier-2 hold's two clocks (2026-09-22).</summary>
     private static CaptureSession With(IGameConsentStore store, CountingGuard guard, FixedResolver resolver, FakeLiveness? alive = null,
-        ICaptureObserver? observer = null, bool hold = true, IUserModeExceptionSwitch? exceptions = null, IOverlayToleranceChannel? tolerance = null) =>
+        ICaptureObserver? observer = null, bool hold = true, IUserModeExceptionSwitch? exceptions = null, IOverlayToleranceChannel? tolerance = null,
+        IDisplayProbe? display = null) =>
         new(store, new HookedCaptureGate(guard), guard, resolver,
             new DelegateLivenessSource(_ => alive ?? new FakeLiveness()),
             new DelegateRingAttacher(_ => (null, ShmAttachRefusal.BuildIdMismatch)),
@@ -1043,7 +1063,8 @@ public sealed class CaptureSessionTests : IAsyncDisposable
             },
             observer: observer,
             exceptions: exceptions,
-            tolerance: tolerance);
+            tolerance: tolerance,
+            display: display);
 
     /// <summary>
     /// Tier 2 as a session (2026-09-22; <c>04_CAPTURE</c> §Tier selection): a row whose hooking is off is decided BEFORE the
@@ -1280,5 +1301,81 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         UserModeExceptionLapsePolicy.LapseOf(r, ExitStatus.Normal).Should().Be(UserModeExceptionLapse.NewFinding);
         channel.Disposed.Should().BeGreaterThan(0);
         (await store.FindAsync(_exe, TestContext.Current.CancellationToken)).BlockedReason.Should().Contain("NEPKernel.sys");
+    }
+
+    private static readonly ScreenRect _monitor = new(0, 0, 2560, 1440);
+
+    /// <summary>
+    /// beta.10 (<c>03_METRICS</c> §Display mode): a hooked session samples the display on every drain tick — region 4 for the
+    /// swap chain's own answer, the window by the handle region 4 names and the pid the loop holds — and the outcome carries
+    /// the tally the recorder writes.
+    /// </summary>
+    [Fact]
+    public async Task AHookedSessionTalliesTheDisplayFromRegionFourAndTheWindow()
+    {
+        IGameConsentStore store = await StoreWithAsync();
+        using var sink = new FakeSink
+        {
+            Display = new FlDisplayState
+            {
+                Flags = FlDisplayFlags.Sampled | FlDisplayFlags.ExclusiveKnown,
+                Hwnd = 0x1234,
+                BufferWidth = 2560,
+                BufferHeight = 1440,
+                SwapEffect = 4, // FLIP_SEQUENTIAL (3), stored plus one
+                SampleQpc = (ulong)Stopwatch.GetTimestamp(),
+            },
+        };
+        var probe = new RecordingProbe(new WindowView(false, _monitor, _monitor, 165));
+
+        CaptureOutcome r = await Loop(store, new CountingGuard(), sink, display: probe)
+            .RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        probe.Calls.Should().NotBeEmpty().And.OnlyContain(static c => c.Hwnd == 0x1234 && c.Pids.Length == 1 && c.Pids[0] == _pid,
+            "the window is the one the swap chain presents to, checked against the process the loop holds");
+        r.Display.Should().NotBeNull();
+        r.Display!.BorderlessMs.Should().BeGreaterThan(0, "covering the monitor while the chain said not exclusive is borderless");
+        r.Display.ExclusiveMs.Should().Be(0);
+        r.Display.CoversMs.Should().Be(0, "the chain was asked, so the mode is not left undecided");
+        r.Display.Source.Should().Be(DisplaySource.SwapChain);
+        r.Display.SwapEffect.Should().Be("flip_sequential");
+        (r.Display.WindowWidth, r.Display.BufferWidth, r.Display.MonitorHz).Should().Be((2560, 2560u, 165));
+    }
+
+    /// <summary>
+    /// beta.10: a Tier-2 session has its display mode too — the window only, found by the executable's image path in the
+    /// watcher's snapshot for a hold that never opened the process, and never said to be exclusive or borderless.
+    /// </summary>
+    [Fact]
+    public async Task ATierTwoHoldTalliesTheWindowOfEveryProcessRunningTheExecutable()
+    {
+        var resolver = new FixedResolver(_pid, SessionEndReason.Running, runningTicks: 3, pids: [777, 778]);
+        var probe = new RecordingProbe(new WindowView(false, _monitor, _monitor, 60));
+
+        CaptureOutcome r = await With(await StoreWithAsync(enabled: false), new CountingGuard(), resolver, display: probe)
+            .RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        r.HeldUnhooked.Should().BeTrue();
+        probe.Calls.Should().HaveCount(3).And.OnlyContain(static c => c.Hwnd == 0 && c.Pids.SequenceEqual(new[] { 777, 778 }),
+            "nothing was injected to name a window, so every process running the executable is looked at, once per held tick");
+        r.Display.Should().NotBeNull();
+        r.Display!.ExclusiveMs.Should().Be(0, "exclusive fullscreen is the swap chain's answer, and nothing asked it");
+        r.Display.BorderlessMs.Should().Be(0);
+        r.Display.WindowedMs.Should().Be(0);
+        r.Display.Source.Should().Be(DisplaySource.Window);
+        r.Display.ExclusivityKnown.Should().BeFalse();
+        r.Display.Dominant.Should().Be(DisplayMode.CoversScreen, "a window covering its monitor that nothing could ask about is fullscreen OR borderless");
+        r.Display.MonitorHz.Should().Be(60);
+    }
+
+    [Fact]
+    public async Task WithoutAProbeNoDisplayIsRecorded()
+    {
+        using var sink = new FakeSink();
+
+        CaptureOutcome r = await Loop(await StoreWithAsync(), new CountingGuard(), sink)
+            .RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        r.Display.Should().BeNull("the operator host composes no window reader, and an absent reader is not a session without a window");
     }
 }

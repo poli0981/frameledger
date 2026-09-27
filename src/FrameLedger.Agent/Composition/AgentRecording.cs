@@ -4,6 +4,7 @@ using FrameLedger.Application.Consent;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
 using FrameLedger.Application.Telemetry;
+using FrameLedger.Infrastructure.Display;
 using FrameLedger.Infrastructure.Telemetry;
 
 namespace FrameLedger.Agent.Composition;
@@ -37,6 +38,7 @@ internal sealed class AgentRecording
     private readonly IDriverProfileSource _profiles;
     private readonly IUserModeExceptionSwitch _exceptions;
     private readonly IOverlayToleranceChannel _tolerance;
+    private readonly WindowGeometryProbe _display = new();
     private readonly UserModeExceptionLapsePolicy _exceptionLapse;
 
     public AgentRecording(
@@ -186,7 +188,9 @@ internal sealed class AgentRecording
             _killSwitch,
             _pause,
             _exceptions,
-            _tolerance);
+            _tolerance,
+            // beta.10: the game's window, read out of process on the loop's ticks (03_METRICS §Display mode).
+            _display);
 
     /// <summary>The session and its collaborators, wired the only way the Agent allows; the recorder supplies the observer.</summary>
     private sealed class Factory(AgentRecording owner, int seconds, IProcessLauncher? launcher) : ICaptureSessionFactory

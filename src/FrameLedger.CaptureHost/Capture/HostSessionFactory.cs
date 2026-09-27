@@ -4,6 +4,7 @@ using FrameLedger.Application.Consent;
 using FrameLedger.Application.Recording;
 using FrameLedger.Infrastructure.AntiCheat;
 using FrameLedger.Infrastructure.Capture;
+using FrameLedger.Infrastructure.Display;
 using FrameLedger.Infrastructure.Telemetry;
 
 namespace FrameLedger.CaptureHost.Capture;
@@ -44,6 +45,7 @@ internal sealed class HostSessionFactory(IGameConsentStore store, int seconds, I
             new RuntimeModuleSnapshot(CensusNames.ModuleFileNames),
             _ngx,
             launcher ?? new ProcessLauncher(),
-            observer);
+            observer,
+            display: new WindowGeometryProbe());
     }
 }

@@ -37,3 +37,24 @@ MINIDUMP_TYPE
 GetSystemTimes
 GlobalMemoryStatusEx
 MEMORYSTATUSEX
+// The game's window, read OUT of its process for the display mode (beta.10, Display.WindowGeometryProbe; 03_METRICS
+// Display mode): documented questions about a top-level window, the focus sample's class of call, never the game's memory.
+IsWindow
+IsWindowVisible
+IsIconic
+GetWindowThreadProcessId
+GetAncestor
+GET_ANCESTOR_FLAGS
+GetClientRect
+ClientToScreen
+GetWindowLongPtr
+WINDOW_LONG_PTR_INDEX
+WINDOW_EX_STYLE
+EnumWindows
+MonitorFromWindow
+MONITOR_FROM_FLAGS
+GetMonitorInfo
+MONITORINFOEXW
+DwmGetWindowAttribute
+DWMWINDOWATTRIBUTE
+SetThreadDpiAwarenessContext

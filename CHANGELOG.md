@@ -38,6 +38,18 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   whole, once per version of the file (up to 7.5 s on a USB drive for Black Myth: Wukong), and the scan stops if the Agent
   is asked to. Rules `2026.09.6`: every game is re-detected once. Schema 0015 adds `games.engine_version_source`.
 
+- **How each game was shown, and for how much of the session** (owner request, beta.10): exclusive fullscreen, borderless,
+  windowed or minimised, with the window's size, the monitor it was on and its refresh rate, and the swap chain's back
+  buffer. On the session summary (a *Display* card and a line with every share), the game page (the last measured session,
+  and a *Display* column in Sessions), the Trend (three new metrics: the share of each session in exclusive fullscreen,
+  borderless and windowed), Compare (three rows, never ranked) and both exports (the CSV's `# display:` line, the JSON's
+  aggregates). **Both tiers:** a game that was not hooked has its window read from outside, which can say windowed or
+  *fullscreen or borderless* but never which of those two — only the swap chain of a hooked DirectX game can say
+  exclusive. What Windows does with an exclusive game behind the scenes ("fullscreen optimizations") is not visible to
+  FrameLedger, and a game's menu may call a borderless window "Fullscreen": the swap chain's answer is the one shown.
+  Sessions recorded before, and one recovered after a crash, read N/A. Schema 0016 adds fifteen `sessions.display_*`
+  columns, and `sessions.swap_effect` — a column with no writer since the first schema — is now filled.
+
 ### Changed
 
 - **Groundwork for the display mode (beta.10): the injected component reports how the game presents** — whether its swap
@@ -45,8 +57,7 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   from two getters on the swap chain the game passed (measured at 13–15 ns each on the test fixture: nothing a frame rate
   can see). The shared-memory layout moves to version 4 (a new region; the frame ring moved behind it): **a game that is
   running while FrameLedger is updated must be restarted before it can be measured**, which the app already says when it
-  meets an old layout. Nothing is shown yet — the window's size, the mode and its share of a session arrive in the next
-  change of this train.
+  meets an old layout. What the app shows from it is the display mode under *Added*.
 
 ### Fixed
 

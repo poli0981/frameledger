@@ -60,7 +60,8 @@ Requirement IDs (`FR-x`, `NFR-x`) are referenced by other docs, commits, and tes
 
 ### FR-7 Detection
 - FR-7.1 Static: engine, engine version, store platform, store id, publisher, game version (`05_DETECTION`; the Unreal Engine version since 2026-09-27, §Engine version).
-- FR-7.2 Runtime: API, present mode, swap effect, HDR, upscaler, FG, RT — all Tier 1, all measured.
+- FR-7.2 Runtime: API, present mode, swap effect, HDR, upscaler, FG, RT — all Tier 1, all measured. (Present mode and HDR have no writer yet, `05_DETECTION` §Runtime facts; swap effect is written since beta.10 from the display-mode sample.)
+- FR-7.4 Display mode (beta.10, owner request 2026-09-27): how each session's game was shown — exclusive fullscreen, borderless, windowed, minimised, or *fullscreen or borderless* where nothing could tell the two apart — as a share of the session's time, with the window, back buffer and monitor sizes; both tiers (Tier 2 from the window alone); shown on the session summary, the game page, the Trend (three share metrics) and Compare, and exported (`03_METRICS` §Display mode).
 - FR-7.3 Rules ship as `detection-rules.json`, updatable independently of releases; **anticheat-block updates apply regardless of the user's rules auto-update preference.**
 
 ### FR-8 Tri-state flags

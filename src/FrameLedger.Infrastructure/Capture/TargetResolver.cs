@@ -92,6 +92,9 @@ public sealed class TargetResolver : ITargetResolver
     }
 
     /// <inheritdoc />
+    public IReadOnlyList<int> PidsOf(string normalisedExePath) => _latest?.PidsOf(normalisedExePath) ?? [];
+
+    /// <inheritdoc />
     public bool IsRunning(string normalisedExePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(normalisedExePath);

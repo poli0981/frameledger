@@ -46,7 +46,8 @@ public sealed class CaptureSession(
     IKillSwitch? killSwitch = null,
     ICapturePauseSource? pause = null,
     IUserModeExceptionSwitch? exceptions = null,
-    IOverlayToleranceChannel? tolerance = null)
+    IOverlayToleranceChannel? tolerance = null,
+    IDisplayProbe? display = null)
 {
     /// <summary>Start one session, or say why not.</summary>
     /// <remarks>
@@ -158,6 +159,10 @@ public sealed class CaptureSession(
         // The ticks carry the refusal with the pid the loop holds, if any (2026-09-23: the pipe announces a held session from
         // its first tick). A hooking-off hold never opened the process and says 0.
         CaptureProgress held = CaptureProgress.Held(refusal with { TargetPid = pid ?? 0 });
+        // The display mode at Tier 2 too (beta.10): the window only — nothing was injected, so nothing can say whether the
+        // game was exclusive. A hold that never opened the process finds the game by its image path in the watcher's
+        // snapshot, and still opens nothing.
+        var sampler = new DisplaySampler(display);
         while (!stop.IsCancellationRequested)
         {
             bool running = alive is not null ? !alive.HasExited : resolver.IsRunning(normalisedExePath);
@@ -166,12 +171,14 @@ public sealed class CaptureSession(
                 break;
             }
 
+            sampler.Sample(pid is { } p ? [p] : resolver.PidsOf(normalisedExePath), region: null, paused: false);
             observer?.Tick(held);
             await Task.Delay(options.HoldInterval, ct).ConfigureAwait(false);
         }
 
+        sampler.Finish(paused: false);
         observer?.Tick(held);
-        return refusal with { HeldUnhooked = true, TargetPid = pid ?? 0, ExitCode = alive?.ExitCode };
+        return refusal with { HeldUnhooked = true, TargetPid = pid ?? 0, ExitCode = alive?.ExitCode, Display = sampler.Summary() };
     }
 
     /// <summary>Launch mode (P1 item 2): start the consented executable, then the same session.</summary>
@@ -364,7 +371,7 @@ public sealed class CaptureSession(
     {
         // D33: every re-scan names the family the injection named, and nothing else.
         var supervisor = new GuardSupervisor(guard, toleratedFamily);
-        var state = new DrainState(new ModuleTally(modules, ngx));
+        var state = new DrainState(new ModuleTally(modules, ngx), new DisplaySampler(display));
         SessionEndReason end = await SuperviseAsync(pid, alive, sink, supervisor, state, ct, stop).ConfigureAwait(false);
 
         // On a safety unhook the verdict that matters is the one that FIRED mid-session, not the pass that
@@ -392,6 +399,7 @@ public sealed class CaptureSession(
             TotalGaps = sink.TotalGaps,
             DrainTicks = state.Focus.Ticks,
             ForegroundTicks = state.Focus.Foreground,
+            Display = state.Display.Summary(),
         };
     }
 
@@ -452,7 +460,7 @@ public sealed class CaptureSession(
         while (mayContinue)
         {
             ApplyPause(sink, state);
-            state.Focus.Sample(alive.IsForeground);
+            SampleWindow(pid, alive, sink, state);
             DrainInto(sink, buffer, state);
             observer?.Tick(state.Progress(sink, supervisor));
 
@@ -481,8 +489,10 @@ public sealed class CaptureSession(
         }
 
         // ONE LAST SNAPSHOT before the last drain, so a module that loaded after the final scan is
-        // still named; on TargetExited it reads nothing, which the tally counts rather than hides.
+        // still named; on TargetExited it reads nothing, which the tally counts rather than hides. The last
+        // display sample stands until here (beta.10).
         state.Loaded.Take(pid);
+        state.Display.Finish(state.Paused);
 
         // ONE LAST DRAIN ON EVERY PATH, including the faulted one — that is the whole point of catching
         // the mid-loop throw rather than letting it leave the method. Then let go promptly: holding the
@@ -494,6 +504,16 @@ public sealed class CaptureSession(
         // The switch's stop is the user's, not the guard's: it ends the session as its own reason rather
         // than as the safety refusal a false mayContinue would otherwise read as.
         return state.KillSwitchStopped ? SessionEndReason.KillSwitchEngaged : Conclude(end, faulted, mayContinue);
+    }
+
+    /// <summary>
+    /// The two out-of-process questions each tick asks about the game's window: whether it owns the foreground (the focus
+    /// pair) and how it is shown (beta.10, the display mode — region 4 plus the window's geometry).
+    /// </summary>
+    private static void SampleWindow(int pid, ITargetLiveness alive, ICaptureSink sink, DrainState state)
+    {
+        state.Focus.Sample(alive.IsForeground);
+        state.Display.Sample([pid], sink.DisplayState, state.Paused);
     }
 
     /// <summary>
@@ -612,7 +632,7 @@ public sealed class CaptureSession(
     }
 
     /// <summary>Everything one session accumulates, owned by the loop; the observer reads it between ticks.</summary>
-    private sealed class DrainState(ModuleTally loaded)
+    private sealed class DrainState(ModuleTally loaded, DisplaySampler display)
     {
         /// <summary>Set when a scan boundary found FR-2.4's switch on and published the stop (P2 PR-F).</summary>
         public bool KillSwitchStopped { get; set; }
@@ -634,6 +654,9 @@ public sealed class CaptureSession(
         public bool PendingGap { get; set; }
 
         public FocusTally Focus { get; } = new();
+
+        /// <summary>The display mode, sampled every tick beside the focus (beta.10).</summary>
+        public DisplaySampler Display { get; } = display;
 
         public ModuleTally Loaded { get; } = loaded;
 

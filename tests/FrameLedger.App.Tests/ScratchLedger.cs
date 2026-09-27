@@ -40,7 +40,7 @@ internal sealed class ScratchLedger : IAsyncDisposable
     }
 
     public async Task<long> SessionAsync(long gameId, DateTimeOffset startedAt, int seconds = 600, bool hooked = true, string fgMode = "none", double? native = 60, double? displayed = null, double? factor = null, ExitStatus exit = ExitStatus.Normal, string? fgRefusal = null, double? presented = null, string? qualifier = null,
-        IReadOnlyList<SensorBlob>? sensors = null)
+        IReadOnlyList<SensorBlob>? sensors = null, FrameLedger.Domain.Display.DisplaySummary? display = null, bool settingsChanged = false)
     {
         long snapshotId = await new SqliteHardwareSnapshotRepository(Db).EnsureAsync(new HardwareSnapshot { GpuName = "G" }, startedAt, TestContext.Current.CancellationToken).ConfigureAwait(false);
         var row = new SessionRow
@@ -73,7 +73,9 @@ internal sealed class ScratchLedger : IAsyncDisposable
             RtSource = hooked ? "measured" : null,
             P1LowFps = hooked ? 48 : null,
             MaxGpuTemp = 71,
+            SettingsChangedMidSession = settingsChanged,
         };
+        row = FrameLedger.Application.Recording.SessionDisplayColumns.WithDisplay(row, display);
         return await Sessions.InsertFinalizedAsync(new FinalizedSession { Row = row, Sensors = sensors ?? [] }, TestContext.Current.CancellationToken).ConfigureAwait(false);
     }
 

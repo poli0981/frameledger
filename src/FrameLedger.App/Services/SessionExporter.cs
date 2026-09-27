@@ -108,6 +108,9 @@ public sealed class SessionExporter
         }
 
         w.WriteLine("# api: " + (row.Api ?? "N/A") + "; present_mode: " + (row.PresentMode ?? "N/A") + "; swap_effect: " + (row.SwapEffect ?? "N/A"));
+        // beta.10 (03_METRICS §Display mode): milliseconds per mode, both tiers — a header line, because the per-frame columns
+        // are 03_METRICS' fixed list and a mode is the session's, not a frame's.
+        w.WriteLine("# display: " + DisplayText.ExportLine(DisplayText.Of(row)));
         w.WriteLine("# hardware: " + (hardware is null ? "N/A" : string.Join("; ", new[] { hardware.CpuName, hardware.GpuName, hardware.GpuDriver, hardware.OsBuild, hardware.DisplayRes }.Where(static s => !string.IsNullOrEmpty(s)))));
         w.WriteLine("# rt: " + row.RtFlag + " (" + (row.RtSource ?? "n/a") + "); pt: " + row.PtFlag + " (" + (row.PtSource ?? "n/a") + "); rr: " + row.RrFlag + " (" + (row.RrSource ?? "n/a") + ")");
         w.WriteLine("# fg_mode: " + row.FgMode + "; fg_source: " + (row.FgSource ?? "n/a") + "; presented_qualifier: " + (row.PresentedQualifier ?? "n/a"));

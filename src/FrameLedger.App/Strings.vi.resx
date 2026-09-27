@@ -508,6 +508,66 @@
   <data name="Format_Resolution_Single_Format" xml:space="preserve">
     <value>{0}×{1}</value>
   </data>
+  <data name="Display_Mode_Exclusive" xml:space="preserve">
+    <value>Toàn màn hình độc quyền</value>
+  </data>
+  <data name="Display_Mode_Borderless" xml:space="preserve">
+    <value>Không viền</value>
+  </data>
+  <data name="Display_Mode_CoversScreen" xml:space="preserve">
+    <value>Toàn màn hình hoặc không viền</value>
+  </data>
+  <data name="Display_Mode_Windowed" xml:space="preserve">
+    <value>Cửa sổ</value>
+  </data>
+  <data name="Display_Mode_Minimized" xml:space="preserve">
+    <value>Thu nhỏ</value>
+  </data>
+  <data name="Display_Mode_NoWindow" xml:space="preserve">
+    <value>Không đọc được cửa sổ</value>
+  </data>
+  <data name="Display_Share_Format" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="Display_Size_Format" xml:space="preserve">
+    <value>{0}×{1}</value>
+  </data>
+  <data name="Display_SizeHz_Format" xml:space="preserve">
+    <value>{0}×{1} @ {2} Hz</value>
+  </data>
+  <data name="Display_Changes_One" xml:space="preserve">
+    <value>đổi 1 lần</value>
+  </data>
+  <data name="Display_Changes_Format" xml:space="preserve">
+    <value>đổi {0} lần</value>
+  </data>
+  <data name="Display_Window_Format" xml:space="preserve">
+    <value>cửa sổ {0}×{1}</value>
+  </data>
+  <data name="Display_WindowOnMonitor_Format" xml:space="preserve">
+    <value>cửa sổ {0}×{1} trên màn hình {2}×{3}</value>
+  </data>
+  <data name="Display_WindowOnMonitorHz_Format" xml:space="preserve">
+    <value>cửa sổ {0}×{1} trên màn hình {2}×{3} ở {4} Hz</value>
+  </data>
+  <data name="Display_Buffer_Format" xml:space="preserve">
+    <value>back buffer {0}×{1}</value>
+  </data>
+  <data name="Display_BufferEffect_Format" xml:space="preserve">
+    <value>back buffer {0}×{1} ({2})</value>
+  </data>
+  <data name="Display_Source_SwapChain" xml:space="preserve">
+    <value>swap chain cho biết có độc quyền hay không</value>
+  </data>
+  <data name="Display_Source_OpenGl" xml:space="preserve">
+    <value>OpenGL: không phân biệt được toàn màn hình độc quyền với không viền</value>
+  </data>
+  <data name="Display_Source_Window" xml:space="preserve">
+    <value>chỉ từ cửa sổ: không phân biệt được toàn màn hình độc quyền với không viền</value>
+  </data>
+  <data name="Display_Line_Format" xml:space="preserve">
+    <value>Hiển thị: {0}</value>
+  </data>
   <data name="Format_Temperature_Format" xml:space="preserve">
     <value>{0:0} °C</value>
   </data>
@@ -717,6 +777,9 @@
   </data>
   <data name="Sessions_Col_Api" xml:space="preserve">
     <value>API</value>
+  </data>
+  <data name="Sessions_Col_Display" xml:space="preserve">
+    <value>Hiển thị</value>
   </data>
   <data name="Sessions_Col_Date" xml:space="preserve">
     <value>Ngày</value>
@@ -996,6 +1059,15 @@
   </data>
   <data name="Compare_Metric_Duration" xml:space="preserve">
     <value>Thời lượng</value>
+  </data>
+  <data name="Compare_Metric_Display" xml:space="preserve">
+    <value>Chế độ hiển thị</value>
+  </data>
+  <data name="Compare_Metric_Window" xml:space="preserve">
+    <value>Cửa sổ</value>
+  </data>
+  <data name="Compare_Metric_Monitor" xml:space="preserve">
+    <value>Màn hình</value>
   </data>
   <data name="Compare_Metric_MaxGpuTemp" xml:space="preserve">
     <value>GPU tối đa °C</value>
@@ -1801,6 +1873,15 @@ Mở thư mục log?</value>
   <data name="Trend_Metric_FgFactor" xml:space="preserve">
     <value>Hệ số FG ×</value>
   </data>
+  <data name="Trend_Metric_DisplayExclusive" xml:space="preserve">
+    <value>Tỉ lệ toàn màn hình độc quyền %</value>
+  </data>
+  <data name="Trend_Metric_DisplayBorderless" xml:space="preserve">
+    <value>Tỉ lệ không viền %</value>
+  </data>
+  <data name="Trend_Metric_DisplayWindowed" xml:space="preserve">
+    <value>Tỉ lệ cửa sổ %</value>
+  </data>
   <data name="Sensors_Series_CpuTemp" xml:space="preserve">
     <value>CPU °C</value>
   </data>
@@ -1824,6 +1905,9 @@ Mở thư mục log?</value>
   </data>
   <data name="Summary_Stat_Cpu" xml:space="preserve">
     <value>CPU</value>
+  </data>
+  <data name="Summary_Stat_Display" xml:space="preserve">
+    <value>Hiển thị</value>
   </data>
   <data name="Summary_Stat_LoadTemp_Format" xml:space="preserve">
     <value>TB {0} · tối đa {1}</value>
