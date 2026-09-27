@@ -392,6 +392,7 @@ switch's rule); integers are invariant-culture within an inclusive range; choice
 | `capture.background` | bool | `1` | | Agent |
 | `hooking.kill_switch` | bool | `0` | | Agent (FR-2.4, since P2 PR-F) |
 | `hooking.usermode_ac_exceptions` | bool | `0` | | Agent, at every session start and command (FR-2.8, D33, 2026-09-26): off suspends every user-mode exception without deleting any; on, the user still grants each eligible game |
+| `capture.run_elevated` | bool | `0` | | The App when it starts the Agent, and an Agent the logon task started — both BEFORE the Agent exists, through `Infrastructure.Startup.RunElevatedSetting` (one row, `PRAGMA query_only`, no version gate, anything but `1` is off) (D34, beta.10): on, Windows is asked for administrator rights at every Agent start (`01_ARCHITECTURE` ADR-9) |
 | `capture.min_session_s` | int | `30` | 5–600 | Agent, per session (FR-3.6) |
 | `telemetry.interval_ms` | int | `1000` | 500–2000 | Agent, per session (FR-3.5) |
 | `retention.raw_sessions_per_game` | int | `20` | 0–10000; **0 = unlimited** | Agent, per session (§Retention) |

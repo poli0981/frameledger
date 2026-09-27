@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Security.Principal;
+using FrameLedger.Infrastructure.Startup;
 
 namespace FrameLedger.Agent.Cli;
 
@@ -11,6 +13,13 @@ namespace FrameLedger.Agent.Cli;
 /// <b><c>--data-dir</c> exists only under <c>--console</c></b> (HANDOFF §P2 decision D6): an integration test
 /// needs a scratch ledger, and CI must never touch the profile. <c>--serve</c> with it is an error rather than an
 /// ignored option, because an ignored option is how the product directory becomes selectable by accident.
+/// <para>
+/// <b><c>--serve</c> takes two options since beta.10, and only these</b> (the Agent's admin mode, owner decision D34):
+/// <c>--for-user &lt;SID&gt;</c>, which the starter passes to the Agent it asked Windows to elevate — the Agent refuses to run
+/// as any other account (<c>AgentElevation.ExitOtherAccount</c>) — and <c>--elevation &lt;outcome&gt;</c>, which says the
+/// starter asked and was not granted, so this Agent does not ask again. Neither names a directory, a target or a check; the
+/// data folder is still the profile's and nothing else.
+/// </para>
 /// </remarks>
 internal sealed record AgentCommandLine
 {
@@ -29,7 +38,7 @@ internal sealed record AgentCommandLine
     };
 
     private const string _usage =
-        "usage: FrameLedger.Agent --serve\n"
+        "usage: FrameLedger.Agent --serve [--for-user <SID> | --elevation declined|other-account|failed]\n"
         + "       FrameLedger.Agent --register-vklayer | --unregister-vklayer | --install-task | --uninstall-task\n"
         + "       FrameLedger.Agent --write-crash-dump <file>   (started by a crashing App or Agent; dumps that parent)\n"
         + "       FrameLedger.Agent --console [--data-dir <dir>] consent list | consent grant --exe <path> | consent revoke --exe <path>\n"
@@ -58,6 +67,12 @@ internal sealed record AgentCommandLine
     public int PartialFlushSeconds { get; init; }
 
     public string? DataDirectory { get; init; }
+
+    /// <summary><c>--serve --for-user</c>: the account whose Agent this elevated process must be (beta.10, D34).</summary>
+    public string? ForUser { get; init; }
+
+    /// <summary><c>--serve --elevation</c>: the starter asked for elevation and got this instead (<c>AgentElevation.Refusals</c>).</summary>
+    public string? ElevationRefusal { get; init; }
 
     /// <summary>The file <see cref="AgentVerb.WriteCrashDump"/> writes — a path, never a pid.</summary>
     public string? CrashDumpFile { get; init; }
@@ -97,9 +112,7 @@ internal sealed record AgentCommandLine
 
         if (string.Equals(args[0], "--serve", StringComparison.Ordinal))
         {
-            return args.Length == 1
-                ? new AgentCommandLine { Verb = AgentVerb.Serve }
-                : new AgentCommandLine { Error = "--serve takes no options; --data-dir exists only under --console (the product directory is not selectable)" };
+            return ParseServe(args[1..]);
         }
 
         if (!string.Equals(args[0], "--console", StringComparison.Ordinal))
@@ -108,6 +121,41 @@ internal sealed record AgentCommandLine
         }
 
         return ParseConsole(args[1..]);
+    }
+
+    /// <summary><c>--serve</c>, alone or with ONE of its two admin-mode options (beta.10).</summary>
+    private static AgentCommandLine ParseServe(string[] rest)
+    {
+        const string onlyThese = "--serve takes only --for-user <SID> or --elevation declined|other-account|failed (the agent's admin mode); "
+            + "--data-dir exists only under --console (the product directory is not selectable)";
+        if (rest.Length == 0)
+        {
+            return new AgentCommandLine { Verb = AgentVerb.Serve };
+        }
+
+        if (rest.Length != 2)
+        {
+            return new AgentCommandLine { Error = onlyThese };
+        }
+
+        switch (rest[0])
+        {
+            case "--for-user":
+                try
+                {
+                    // A SID in its string form, validated as one: the Agent compares it with its own token's user.
+                    return new AgentCommandLine { Verb = AgentVerb.Serve, ForUser = new SecurityIdentifier(rest[1]).Value };
+                }
+                catch (ArgumentException)
+                {
+                    return new AgentCommandLine { Error = $"--for-user needs a SID, not '{rest[1]}'" };
+                }
+
+            case "--elevation" when AgentElevation.Refusals.Contains(rest[1], StringComparer.Ordinal):
+                return new AgentCommandLine { Verb = AgentVerb.Serve, ElevationRefusal = rest[1] };
+            default:
+                return new AgentCommandLine { Error = onlyThese };
+        }
     }
 
     private static AgentCommandLine ParseConsole(string[] rest)

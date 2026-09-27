@@ -30,7 +30,7 @@
   <data name="Safety_Refused_Unnamed" xml:space="preserve"><value>Đã phát hiện một mô-đun anti-cheat hoặc anti-tamper trong game này. FrameLedger sẽ không inject vào game này, và không có cách nào vượt qua điều đó.</value></data>
   <data name="Safety_HookingTurnedOff" xml:space="preserve"><value>Hooking đã được tắt cho game này; trang của game ghi rõ đã phát hiện gì.</value></data>
   <data name="Safety_Unhooked_Format" xml:space="preserve"><value>Đã dừng thu thập: phát hiện {0} khi game đang chạy. FrameLedger đã gỡ hook và sẽ không inject vào game này nữa cho đến khi bạn bật lại.</value></data>
-  <data name="Safety_Refused_TargetUnreadable" xml:space="preserve"><value>Game đang chạy, nhưng Windows không cho FrameLedger mở tiến trình của nó: tiến trình được driver anti-cheat bảo vệ, hoặc game chạy với quyền quản trị còn FrameLedger thì không. Không có gì được inject và lần chạy này không được đo. FrameLedger sẽ không tìm cách vượt qua cơ chế bảo vệ của sản phẩm khác.</value></data>
+  <data name="Safety_Refused_TargetUnreadable" xml:space="preserve"><value>Game đang chạy, nhưng Windows không cho FrameLedger mở tiến trình của nó: tiến trình được driver anti-cheat bảo vệ, hoặc game chạy với quyền quản trị còn FrameLedger thì không. Không có gì được inject và lần chạy này không được đo. FrameLedger sẽ không tìm cách vượt qua cơ chế bảo vệ của sản phẩm khác. Nếu chính game chạy với quyền quản trị, chế độ quản trị của agent trong Cài đặt cho phép FrameLedger mở nó; tiến trình được bảo vệ vẫn đóng.</value></data>
   <data name="Safety_Exception_Title_Format" xml:space="preserve"><value>Tạo ngoại lệ user-mode cho {0}?</value></data>
   <data name="Safety_Exception_Intro_Format" xml:space="preserve"><value>FrameLedger đã phát hiện {0} trong game này ({1}) và đã tắt hooking cho nó. Hộp thoại này hỏi bạn có muốn tạo ngoại lệ cho riêng game này không. Nó không khuyến nghị lựa chọn nào.</value></data>
   <data name="Safety_Exception_Why_Format" xml:space="preserve"><value>Ngoại lệ được đề xuất vì {0} chạy hoàn toàn ở user mode — không có kernel driver, không có service và không có tệp driver nào trong thư mục game — và FrameLedger đã đo game này ở chế độ hook thành công {1} lần.</value></data>
@@ -42,6 +42,33 @@
   <data name="Safety_Exception_Accept" xml:space="preserve"><value>Tôi chấp nhận rủi ro bị khoá tài khoản cho game này</value></data>
   <data name="Safety_Exception_Grant" xml:space="preserve"><value>Tạo ngoại lệ</value></data>
   <data name="Safety_Exception_Cancel" xml:space="preserve"><value>Giữ chặn</value></data>
+  <data name="Safety_AdminMode_Title" xml:space="preserve">
+    <value>Chạy capture agent với quyền quản trị?</value>
+  </data>
+  <data name="Safety_AdminMode_Intro" xml:space="preserve">
+    <value>Capture agent bình thường chạy với quyền người dùng thường của bạn, và mọi tier ghi nhận đều hoạt động như vậy. Tuỳ chọn này yêu cầu Windows khởi động nó với quyền quản trị thay vào đó.</value>
+  </data>
+  <data name="Safety_AdminMode_Adds" xml:space="preserve">
+    <value>Điều nó thêm vào: FrameLedger có thể mở và đo một game tự chạy với quyền quản trị, và có thể đọc nhiệt độ CPU ở máy đã cài PawnIO.</value>
+  </data>
+  <data name="Safety_AdminMode_Unchanged" xml:space="preserve">
+    <value>Điều nó không thay đổi: game có anti-cheat vẫn bị từ chối, và tiến trình được Windows bảo vệ vẫn không đọc được. Game Vulkan chạy với quyền quản trị vẫn không được đo, vì Windows không nạp Vulkan layer của FrameLedger vào nó. Game bạn khởi động từ FrameLedger vẫn chạy với quyền người dùng thường.</value>
+  </data>
+  <data name="Safety_AdminMode_Prompt" xml:space="preserve">
+    <value>Windows sẽ hỏi bạn mỗi lần agent khởi động — cả lúc đăng nhập, khi hộp thoại có thể nằm chờ trên thanh tác vụ — và ghi nhà phát hành là không xác định, vì FrameLedger không được ký số. Nếu bạn chọn Không, agent chạy với quyền người dùng thường và nói rõ điều đó. Nếu một tài khoản quản trị khác trả lời, agent đó sẽ không chạy, vì dữ liệu của nó không phải của bạn.</value>
+  </data>
+  <data name="Safety_AdminMode_Risk" xml:space="preserve">
+    <value>Rủi ro là của bạn: FrameLedger được cài trong thư mục người dùng của bạn, nơi mọi chương trình chạy dưới tài khoản của bạn đều có thể sửa đổi. Một chương trình đã thay thế các file của FrameLedger sẽ chạy với quyền quản trị vào lần tiếp theo bạn chấp nhận hộp thoại này. Chỉ bật khi bạn tin tưởng mọi thứ chạy dưới tài khoản của mình.</value>
+  </data>
+  <data name="Safety_AdminMode_Accept" xml:space="preserve">
+    <value>Tôi đã hiểu, và muốn Windows hỏi mỗi lần agent khởi động</value>
+  </data>
+  <data name="Safety_AdminMode_TurnOn" xml:space="preserve">
+    <value>Bật</value>
+  </data>
+  <data name="Safety_AdminMode_Cancel" xml:space="preserve">
+    <value>Giữ quyền người dùng thường</value>
+  </data>
   <data name="Safety_Exception_VersionMismatch" xml:space="preserve"><value>Ứng dụng và capture agent đang mang hai phiên bản khác nhau của văn bản này. Không có gì được cấp. Hãy khởi động lại cả hai rồi thử lại.</value></data>
   <data name="Safety_Exception_OptionOff" xml:space="preserve"><value>Tuỳ chọn ngoại lệ user-mode đang tắt trong Cài đặt, nên không có gì được cấp.</value></data>
 </root>

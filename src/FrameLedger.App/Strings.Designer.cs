@@ -42,6 +42,7 @@ public static class Strings
         nameof(Agent_Banner_Retry),
         nameof(Agent_State_Connected),
         nameof(Agent_State_Connecting),
+        nameof(Agent_State_Elevating),
         nameof(Agent_State_Missing),
         nameof(Agent_State_Offline),
         nameof(Agent_State_Starting),
@@ -478,6 +479,7 @@ public static class Strings
         nameof(Latency_P95),
         nameof(Latency_Series),
         nameof(Latency_Stats_Format),
+        nameof(Launch_Error_1400),
         nameof(Launch_Error_193),
         nameof(Launch_Error_2),
         nameof(Launch_Error_3),
@@ -638,8 +640,16 @@ public static class Strings
         nameof(Settings_Agent_Elevated),
         nameof(Settings_Agent_Elevation_Body),
         nameof(Settings_Agent_Elevation_Label),
+        nameof(Settings_Agent_ElevationDeclined),
+        nameof(Settings_Agent_ElevationFailed),
+        nameof(Settings_Agent_ElevationOtherAccount),
         nameof(Settings_Agent_Header),
         nameof(Settings_Agent_NotElevated),
+        nameof(Settings_Agent_RunElevated_AfterSession),
+        nameof(Settings_Agent_RunElevated_Body),
+        nameof(Settings_Agent_RunElevated_Label),
+        nameof(Settings_Agent_RunElevated_NotStopped),
+        nameof(Settings_Agent_RunElevated_Restarting),
         nameof(Settings_Agent_Task_Installed),
         nameof(Settings_Agent_Task_Label),
         nameof(Settings_Agent_Task_NotInstalled),
@@ -900,6 +910,8 @@ public static class Strings
     public static string Agent_State_Connected => ResourceManager.GetString(nameof(Agent_State_Connected), Culture) ?? nameof(Agent_State_Connected);
 
     public static string Agent_State_Connecting => ResourceManager.GetString(nameof(Agent_State_Connecting), Culture) ?? nameof(Agent_State_Connecting);
+
+    public static string Agent_State_Elevating => ResourceManager.GetString(nameof(Agent_State_Elevating), Culture) ?? nameof(Agent_State_Elevating);
 
     public static string Agent_State_Missing => ResourceManager.GetString(nameof(Agent_State_Missing), Culture) ?? nameof(Agent_State_Missing);
 
@@ -1773,6 +1785,8 @@ public static class Strings
 
     public static string Latency_Stats_Format => ResourceManager.GetString(nameof(Latency_Stats_Format), Culture) ?? nameof(Latency_Stats_Format);
 
+    public static string Launch_Error_1400 => ResourceManager.GetString(nameof(Launch_Error_1400), Culture) ?? nameof(Launch_Error_1400);
+
     public static string Launch_Error_193 => ResourceManager.GetString(nameof(Launch_Error_193), Culture) ?? nameof(Launch_Error_193);
 
     public static string Launch_Error_2 => ResourceManager.GetString(nameof(Launch_Error_2), Culture) ?? nameof(Launch_Error_2);
@@ -2093,9 +2107,25 @@ public static class Strings
 
     public static string Settings_Agent_Elevation_Label => ResourceManager.GetString(nameof(Settings_Agent_Elevation_Label), Culture) ?? nameof(Settings_Agent_Elevation_Label);
 
+    public static string Settings_Agent_ElevationDeclined => ResourceManager.GetString(nameof(Settings_Agent_ElevationDeclined), Culture) ?? nameof(Settings_Agent_ElevationDeclined);
+
+    public static string Settings_Agent_ElevationFailed => ResourceManager.GetString(nameof(Settings_Agent_ElevationFailed), Culture) ?? nameof(Settings_Agent_ElevationFailed);
+
+    public static string Settings_Agent_ElevationOtherAccount => ResourceManager.GetString(nameof(Settings_Agent_ElevationOtherAccount), Culture) ?? nameof(Settings_Agent_ElevationOtherAccount);
+
     public static string Settings_Agent_Header => ResourceManager.GetString(nameof(Settings_Agent_Header), Culture) ?? nameof(Settings_Agent_Header);
 
     public static string Settings_Agent_NotElevated => ResourceManager.GetString(nameof(Settings_Agent_NotElevated), Culture) ?? nameof(Settings_Agent_NotElevated);
+
+    public static string Settings_Agent_RunElevated_AfterSession => ResourceManager.GetString(nameof(Settings_Agent_RunElevated_AfterSession), Culture) ?? nameof(Settings_Agent_RunElevated_AfterSession);
+
+    public static string Settings_Agent_RunElevated_Body => ResourceManager.GetString(nameof(Settings_Agent_RunElevated_Body), Culture) ?? nameof(Settings_Agent_RunElevated_Body);
+
+    public static string Settings_Agent_RunElevated_Label => ResourceManager.GetString(nameof(Settings_Agent_RunElevated_Label), Culture) ?? nameof(Settings_Agent_RunElevated_Label);
+
+    public static string Settings_Agent_RunElevated_NotStopped => ResourceManager.GetString(nameof(Settings_Agent_RunElevated_NotStopped), Culture) ?? nameof(Settings_Agent_RunElevated_NotStopped);
+
+    public static string Settings_Agent_RunElevated_Restarting => ResourceManager.GetString(nameof(Settings_Agent_RunElevated_Restarting), Culture) ?? nameof(Settings_Agent_RunElevated_Restarting);
 
     public static string Settings_Agent_Task_Installed => ResourceManager.GetString(nameof(Settings_Agent_Task_Installed), Culture) ?? nameof(Settings_Agent_Task_Installed);
 

@@ -96,13 +96,25 @@ $forbiddenEverywhere = @(
     @{ Pattern = 'ZwSetInformationThread'; Why = 'thread hiding — evasion, permanently out of scope' }
 )
 
+# Enabling a privilege is not this project's either (beta.10, the Agent's admin mode, owner decision D34). An elevated
+# Agent's token HOLDS the debug and load-driver privileges disabled, and nothing FrameLedger does needs one enabled: the
+# guard's driver scan asks NtQuerySystemInformation, a target is opened with ordinary rights. A privilege enabled "for a
+# moment" is how an elevated tool becomes a way to read any process on the machine. src/ only: a test may NAME a privilege
+# to assert that it stays disabled (tests/FrameLedger.Infrastructure.Tests/Startup/PrivilegeFootprintTests.cs).
+$forbiddenInSrc = @(
+    @{ Pattern = 'AdjustTokenPrivileges'; Why = 'enabling a token privilege — the admin mode enables none' },
+    @{ Pattern = 'RtlAdjustPrivilege'; Why = 'enabling a token privilege (undocumented) — the admin mode enables none' },
+    @{ Pattern = 'EnterDebugMode'; Why = 'Process.EnterDebugMode enables SeDebugPrivilege' },
+    @{ Pattern = 'SeDebugPrivilege'; Why = 'the debug privilege — reading any process; nothing under src/ may name it' }
+)
+
 $checkedFile = $false
 foreach ($src in $sources) {
     $rel = [IO.Path]::GetRelativePath($nativeRoot, $src.FullName) -replace '\\', '/'
     $isChokepoint = $rel -eq $chokepoint
     if ($isChokepoint) { $checkedFile = $true }
 
-    foreach ($rule in ($chokepointOnly + $forbiddenEverywhere)) {
+    foreach ($rule in ($chokepointOnly + $forbiddenEverywhere + $forbiddenInSrc)) {
         # Skip comments: this file, and the guard, describe these APIs at length
         # on purpose. A rule that fired on prose would be turned off within a week.
         $hits = @(Select-String -Path $src.FullName -Pattern $rule.Pattern -SimpleMatch |
@@ -142,7 +154,8 @@ if ($managedSources.Count -eq 0) {
 
 foreach ($src in $managedSources) {
     $rel = [IO.Path]::GetRelativePath($Root, $src.FullName) -replace '\\', '/'
-    foreach ($rule in ($chokepointOnly + $forbiddenEverywhere)) {
+    $rules = if ($rel.StartsWith('src/', [StringComparison]::Ordinal)) { $chokepointOnly + $forbiddenEverywhere + $forbiddenInSrc } else { $chokepointOnly + $forbiddenEverywhere }
+    foreach ($rule in $rules) {
         $hits = @(Select-String -Path $src.FullName -Pattern $rule.Pattern -SimpleMatch |
                 Where-Object { $_.Line.TrimStart() -notmatch '^(//|///|\*|/\*)' })
         foreach ($h in $hits) {

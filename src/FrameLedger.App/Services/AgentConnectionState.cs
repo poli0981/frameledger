@@ -17,4 +17,10 @@ public enum AgentConnectionState
 
     /// <summary>No Agent executable is beside this one; nothing to start, rounds continue in case one appears.</summary>
     Missing,
+
+    /// <summary>
+    /// The Agent is being started as administrator (beta.10, the admin mode): Windows' prompt is up, owned by this window or
+    /// flashing on the taskbar, and the round waits for its answer.
+    /// </summary>
+    Elevating,
 }

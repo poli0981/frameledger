@@ -12,6 +12,10 @@ namespace FrameLedger.Application.Ipc;
 /// <param name="CpuTempAvailable">False until the Agent composes a CPU sensor (LHM's CPU half is off unelevated).</param>
 /// <param name="DisclosureVersion">The FR-2.1 disclosure this Agent stamps against (<c>Shared.Safety.SafetyDisclosure.Version</c> under <c>--serve</c>; null on a composition that carries none) — D14, P3 PR-4.</param>
 /// <param name="ExceptionDisclosureVersion">D33: the user-mode exception's disclosure this Agent grants against (<c>Shared.Safety.AntiCheatExceptionDisclosure.Version</c> under <c>--serve</c>; null where none is carried).</param>
+/// <param name="ElevationOutcome">
+/// The admin mode's answer at this Agent's start (beta.10, D34; <c>Infrastructure.Startup.AgentElevation</c>): <c>granted</c>,
+/// <c>declined</c>, <c>other-account</c> or <c>failed</c>; null when nobody asked — the option off, or elevation inherited.
+/// </param>
 public sealed record AgentIdentity(
     string AgentVersion,
     int Pid,
@@ -20,4 +24,5 @@ public sealed record AgentIdentity(
     bool VulkanLayerRegistered,
     bool CpuTempAvailable,
     string? DisclosureVersion = null,
-    string? ExceptionDisclosureVersion = null);
+    string? ExceptionDisclosureVersion = null,
+    string? ElevationOutcome = null);

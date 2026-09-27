@@ -58,3 +58,24 @@ MONITORINFOEXW
 DwmGetWindowAttribute
 DWMWINDOWATTRIBUTE
 SetThreadDpiAwarenessContext
+// The Agent's admin mode (beta.10, owner decision D34; 01_ARCHITECTURE ADR-9). A game an elevated Agent starts gets the
+// token the desktop shell runs with, never the Agent's (Startup.UnelevatedProcess); a lock an elevated process creates
+// states a DACL the same user's unelevated processes can open (Startup.SharedMutex); and the token's enabled privileges
+// are read, never changed (Startup.TokenPrivileges) - nothing here adjusts a privilege (tools/chokepoint-check.ps1).
+GetShellWindow
+GetCurrentProcess
+OpenProcess
+OpenProcessToken
+DuplicateTokenEx
+CreateProcessWithTokenW
+STARTUPINFOW
+PROCESS_INFORMATION
+PROCESS_CREATION_FLAGS
+GetTokenInformation
+TOKEN_PRIVILEGES
+TOKEN_ELEVATION
+LookupPrivilegeName
+CreateMutex
+WaitForSingleObject
+ReleaseMutex
+CloseHandle

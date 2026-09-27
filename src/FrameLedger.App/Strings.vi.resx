@@ -46,6 +46,9 @@
   <data name="Agent_State_Starting" xml:space="preserve">
     <value>Đang khởi động agent…</value>
   </data>
+  <data name="Agent_State_Elevating" xml:space="preserve">
+    <value>Đang chờ quyền quản trị…</value>
+  </data>
   <data name="App_Title" xml:space="preserve">
     <value>FrameLedger</value>
   </data>
@@ -1309,6 +1312,30 @@
   <data name="Settings_Agent_NotElevated" xml:space="preserve">
     <value>Đang chạy với quyền người dùng thường.</value>
   </data>
+  <data name="Settings_Agent_RunElevated_Label" xml:space="preserve">
+    <value>Chạy agent với quyền quản trị</value>
+  </data>
+  <data name="Settings_Agent_RunElevated_Body" xml:space="preserve">
+    <value>Mặc định tắt. Khi bật, Windows sẽ hỏi mỗi lần agent khởi động, kể cả lúc đăng nhập. Game bạn khởi động từ FrameLedger vẫn chạy với quyền người dùng thường.</value>
+  </data>
+  <data name="Settings_Agent_ElevationDeclined" xml:space="preserve">
+    <value>Đang chạy với quyền người dùng thường: hộp thoại quyền quản trị đã bị từ chối.</value>
+  </data>
+  <data name="Settings_Agent_ElevationOtherAccount" xml:space="preserve">
+    <value>Đang chạy với quyền người dùng thường: hộp thoại được trả lời bằng một tài khoản khác, và agent của tài khoản đó không dùng dữ liệu của bạn.</value>
+  </data>
+  <data name="Settings_Agent_ElevationFailed" xml:space="preserve">
+    <value>Đang chạy với quyền người dùng thường: Windows không thể khởi động agent với quyền quản trị.</value>
+  </data>
+  <data name="Settings_Agent_RunElevated_Restarting" xml:space="preserve">
+    <value>Đã lưu. Agent đang khởi động lại; khi tuỳ chọn bật, Windows sẽ hỏi quyền.</value>
+  </data>
+  <data name="Settings_Agent_RunElevated_AfterSession" xml:space="preserve">
+    <value>Đã lưu. Một phiên đang chạy, nên agent giữ quyền hiện tại cho đến lần khởi động sau.</value>
+  </data>
+  <data name="Settings_Agent_RunElevated_NotStopped" xml:space="preserve">
+    <value>Đã lưu, nhưng agent không dừng; nó giữ quyền hiện tại cho đến lần khởi động sau.</value>
+  </data>
   <data name="Settings_Agent_Task_Label" xml:space="preserve">
     <value>Khởi động agent khi đăng nhập</value>
   </data>
@@ -2378,6 +2405,9 @@ Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắ
   </data>
   <data name="Launch_Error_740" xml:space="preserve">
     <value>game yêu cầu quyền quản trị</value>
+  </data>
+  <data name="Launch_Error_1400" xml:space="preserve">
+    <value>không có desktop shell để khởi động game với quyền người dùng thường (agent đang chạy với quyền quản trị, và không bao giờ khởi động game theo cách đó)</value>
   </data>
   <data name="Launch_Failed_Format" xml:space="preserve">
     <value>{0} ({1})</value>

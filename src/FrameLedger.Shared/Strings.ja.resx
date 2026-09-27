@@ -31,7 +31,7 @@
   <data name="Safety_Refused_Unnamed" xml:space="preserve"><value>An anti-cheat or anti-tamper module was detected in this game. FrameLedger will not inject into it, and nothing overrides that.</value><comment>safety: human review required</comment></data>
   <data name="Safety_HookingTurnedOff" xml:space="preserve"><value>Hooking has been turned off for this game; its page says what was found.</value><comment>safety: human review required</comment></data>
   <data name="Safety_Unhooked_Format" xml:space="preserve"><value>Capture stopped: {0} was detected while the game was running. FrameLedger unhooked and will not inject into this game again until you enable it again.</value><comment>safety: human review required</comment></data>
-  <data name="Safety_Refused_TargetUnreadable" xml:space="preserve"><value>The game is running, but Windows would not let FrameLedger open its process: it is protected by an anti-cheat driver, or it runs as administrator while FrameLedger does not. Nothing was injected and this run was not measured. FrameLedger will not work around another product's protection.</value><comment>safety: human review required</comment></data>
+  <data name="Safety_Refused_TargetUnreadable" xml:space="preserve"><value>The game is running, but Windows would not let FrameLedger open its process: it is protected by an anti-cheat driver, or it runs as administrator while FrameLedger does not. Nothing was injected and this run was not measured. FrameLedger will not work around another product's protection. If the game itself runs as administrator, the agent's admin mode in Settings lets FrameLedger open it; a protected process stays closed.</value><comment>safety: human review required</comment></data>
   <data name="Safety_Exception_Title_Format" xml:space="preserve"><value>Make a user-mode exception for {0}?</value><comment>safety: human review required</comment></data>
   <data name="Safety_Exception_Intro_Format" xml:space="preserve"><value>FrameLedger found {0} in this game ({1}) and turned its hooking off. This dialog asks whether to make an exception for this game only. It recommends neither choice.</value><comment>safety: human review required</comment></data>
   <data name="Safety_Exception_Why_Format" xml:space="preserve"><value>The exception is offered because {0} runs entirely in user mode — no kernel driver, no service and no driver file in the game's folder — and FrameLedger has already measured this game hooked, successfully, {1} times.</value><comment>safety: human review required</comment></data>
@@ -43,6 +43,42 @@
   <data name="Safety_Exception_Accept" xml:space="preserve"><value>I accept the risk of a ban for this game</value><comment>safety: human review required</comment></data>
   <data name="Safety_Exception_Grant" xml:space="preserve"><value>Make the exception</value><comment>safety: human review required</comment></data>
   <data name="Safety_Exception_Cancel" xml:space="preserve"><value>Keep it blocked</value><comment>safety: human review required</comment></data>
+  <data name="Safety_AdminMode_Title" xml:space="preserve">
+    <value>Run the capture agent as administrator?</value>
+    <comment>safety: human review required</comment>
+  </data>
+  <data name="Safety_AdminMode_Intro" xml:space="preserve">
+    <value>The capture agent normally runs with your standard rights, and every capture tier works that way. This option asks Windows to start it as administrator instead.</value>
+    <comment>safety: human review required</comment>
+  </data>
+  <data name="Safety_AdminMode_Adds" xml:space="preserve">
+    <value>What it adds: FrameLedger can open and measure a game that itself runs as administrator, and it can read the CPU temperature where PawnIO is installed.</value>
+    <comment>safety: human review required</comment>
+  </data>
+  <data name="Safety_AdminMode_Unchanged" xml:space="preserve">
+    <value>What it does not change: a game with anti-cheat is still refused, and a process Windows protects stays unreadable. A Vulkan game that runs as administrator is still not measured, because Windows does not load FrameLedger's Vulkan layer into it. Games you start from FrameLedger still run with your standard rights.</value>
+    <comment>safety: human review required</comment>
+  </data>
+  <data name="Safety_AdminMode_Prompt" xml:space="preserve">
+    <value>Windows asks you every time the agent starts — at logon too, when its prompt may wait on the taskbar — and it names an unknown publisher, because FrameLedger is not signed. If you answer No, the agent runs with your standard rights and says so. If another administrator account answers, that agent refuses to run, because its data would not be yours.</value>
+    <comment>safety: human review required</comment>
+  </data>
+  <data name="Safety_AdminMode_Risk" xml:space="preserve">
+    <value>The risk is yours: FrameLedger is installed in your user folder, which any program running under your account can change. A program that replaced FrameLedger's files would run as administrator the next time you accept this prompt. Turn this on only if you trust everything that runs under your account.</value>
+    <comment>safety: human review required</comment>
+  </data>
+  <data name="Safety_AdminMode_Accept" xml:space="preserve">
+    <value>I understand, and I want Windows to ask each time the agent starts</value>
+    <comment>safety: human review required</comment>
+  </data>
+  <data name="Safety_AdminMode_TurnOn" xml:space="preserve">
+    <value>Turn on</value>
+    <comment>safety: human review required</comment>
+  </data>
+  <data name="Safety_AdminMode_Cancel" xml:space="preserve">
+    <value>Keep standard rights</value>
+    <comment>safety: human review required</comment>
+  </data>
   <data name="Safety_Exception_VersionMismatch" xml:space="preserve"><value>This app and the capture agent carry different versions of this text. Nothing was granted. Restart both, then try again.</value><comment>safety: human review required</comment></data>
   <data name="Safety_Exception_OptionOff" xml:space="preserve"><value>The user-mode exception option is off in Settings, so nothing was granted.</value><comment>safety: human review required</comment></data>
 </root>

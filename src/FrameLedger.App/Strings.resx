@@ -51,6 +51,9 @@
   <data name="Agent_State_Starting" xml:space="preserve">
     <value>Starting agent…</value>
   </data>
+  <data name="Agent_State_Elevating" xml:space="preserve">
+    <value>Waiting for administrator permission…</value>
+  </data>
   <data name="App_Title" xml:space="preserve">
     <value>FrameLedger</value>
   </data>
@@ -1314,6 +1317,30 @@
   <data name="Settings_Agent_NotElevated" xml:space="preserve">
     <value>Running as a standard user.</value>
   </data>
+  <data name="Settings_Agent_RunElevated_Label" xml:space="preserve">
+    <value>Run the agent as administrator</value>
+  </data>
+  <data name="Settings_Agent_RunElevated_Body" xml:space="preserve">
+    <value>Off by default. When on, Windows asks every time the agent starts, at logon too. Games you start from FrameLedger still run with your standard rights.</value>
+  </data>
+  <data name="Settings_Agent_ElevationDeclined" xml:space="preserve">
+    <value>Running as a standard user: the administrator prompt was declined.</value>
+  </data>
+  <data name="Settings_Agent_ElevationOtherAccount" xml:space="preserve">
+    <value>Running as a standard user: the prompt was answered with another account, and that account's agent does not use your data.</value>
+  </data>
+  <data name="Settings_Agent_ElevationFailed" xml:space="preserve">
+    <value>Running as a standard user: Windows could not start the agent as administrator.</value>
+  </data>
+  <data name="Settings_Agent_RunElevated_Restarting" xml:space="preserve">
+    <value>Saved. The agent restarts now; with the option on, Windows asks for permission.</value>
+  </data>
+  <data name="Settings_Agent_RunElevated_AfterSession" xml:space="preserve">
+    <value>Saved. A session is running, so the agent keeps its current rights until it next starts.</value>
+  </data>
+  <data name="Settings_Agent_RunElevated_NotStopped" xml:space="preserve">
+    <value>Saved, but the agent did not stop; it keeps its current rights until it next starts.</value>
+  </data>
   <data name="Settings_Agent_Task_Label" xml:space="preserve">
     <value>Start the agent at logon</value>
   </data>
@@ -2383,6 +2410,9 @@ The documents below are the full terms; this summary does not replace them.</val
   </data>
   <data name="Launch_Error_740" xml:space="preserve">
     <value>the game requires administrator rights</value>
+  </data>
+  <data name="Launch_Error_1400" xml:space="preserve">
+    <value>there is no desktop shell to start the game with a standard user's rights (the agent runs as administrator, and never starts a game that way)</value>
   </data>
   <data name="Launch_Failed_Format" xml:space="preserve">
     <value>{0} ({1})</value>

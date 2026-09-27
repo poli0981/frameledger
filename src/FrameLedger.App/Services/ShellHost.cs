@@ -19,6 +19,13 @@ public sealed class ShellHost(IServiceProvider services, INavigationService navi
     private MainWindow? _current;
     private Type _page = typeof(DashboardPage);
     private bool _exiting;
+    private long _handle;
+
+    /// <summary>
+    /// The live window's handle, for Windows' administrator prompt to belong to (beta.10, the admin mode); 0 before the first
+    /// window. Written on the UI thread when a window is shown, read from the Agent connection's thread.
+    /// </summary>
+    public nint Handle => (nint)Interlocked.Read(ref _handle);
 
     public void Show()
     {
@@ -27,6 +34,7 @@ public sealed class ShellHost(IServiceProvider services, INavigationService navi
         window.Closed += OnClosed;
         _current = window;
         window.Show();
+        Interlocked.Exchange(ref _handle, new System.Windows.Interop.WindowInteropHelper(window).Handle);
         navigation.Navigate(_page);
         // NFR-4 "cold start ≤ 2 s": measured from the process's own start, printed every run so a regression is a log line.
         Serilog.Log.Information("ui: shell shown {Ms} ms after process start", (long)(DateTime.Now - System.Diagnostics.Process.GetCurrentProcess().StartTime).TotalMilliseconds);

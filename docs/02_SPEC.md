@@ -75,6 +75,10 @@ Requirement IDs (`FR-x`, `NFR-x`) are referenced by other docs, commits, and tes
 - FR-9.3 Chart PNG.
 
 ### FR-10 Settings
+
+> **beta.10 (D34):** "Agent elevation (optional — explains what it unlocks)" is the admin mode — *Run the agent as
+> administrator*, off by default, a disclosure before it turns on, Windows' prompt at every Agent start (`01_ARCHITECTURE`
+> ADR-9, `08_UI` §Settings).
 Language (en/vi/ja), theme, start with Windows, minimize to tray, background capture, **global hooking kill switch**, min session length, telemetry interval, retention, Agent elevation (optional — explains what it unlocks), Vulkan layer registration state, update channel, online metadata opt-in, reopen legal documents.
 
 ### FR-11 Legal Gate

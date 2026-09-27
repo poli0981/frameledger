@@ -8,7 +8,9 @@ using CommunityToolkit.Mvvm.Input;
 using FrameLedger.App.Services;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Settings;
+using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Infrastructure.Startup;
+using FrameLedger.Shared.Ipc;
 
 namespace FrameLedger.App.ViewModels;
 
@@ -40,7 +42,16 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly WindowClosePolicy _closePolicy;
     private readonly IFirstRunFlow _firstRun;
     private readonly AntiCheatExceptions? _exceptions;
+    private readonly IAgentAdminPrompt? _adminPrompt;
+    private readonly Func<bool> _agentHeld;
     private bool _loading = true;
+
+    /// <summary>
+    /// <c>capture.run_elevated</c> (beta.10, owner decision D34): the Agent is started as administrator — Windows asks at every
+    /// start. Turning it on shows the disclosure first; either way the Agent restarts when no session is running.
+    /// </summary>
+    [ObservableProperty]
+    private bool _runElevated;
 
     [ObservableProperty]
     private AppTheme _selectedTheme;
@@ -134,8 +145,14 @@ public sealed partial class SettingsViewModel : ObservableObject
         IAgentTool tool,
         WindowClosePolicy closePolicy,
         IFirstRunFlow firstRun,
-        AntiCheatExceptions? exceptions = null)
+        AntiCheatExceptions? exceptions = null,
+        IAgentAdminPrompt? adminPrompt = null,
+        Func<bool>? agentHeld = null)
     {
+        // The admin mode's disclosure (a composition without it — a test — cannot turn the mode on), and the probe of the
+        // data folder's instance lock the restart waits on (a test's own).
+        _adminPrompt = adminPrompt;
+        _agentHeld = agentHeld ?? (static () => AgentInstanceLock.IsHeld(UiPaths.DataDirectory));
         // D33: the user-mode exception's requests; a composition without it (a test) answers that the Agent is unavailable.
         _exceptions = exceptions;
         _firstRun = firstRun ?? throw new ArgumentNullException(nameof(firstRun));
@@ -248,6 +265,78 @@ public sealed partial class SettingsViewModel : ObservableObject
     }
 
     partial void OnKillSwitchChanged(bool value) => Persist(SettingsRegistry.HookingKillSwitch, value);
+
+    partial void OnRunElevatedChanged(bool value)
+    {
+        if (!_loading)
+        {
+            Pending = ApplyRunElevatedAsync(value);
+        }
+    }
+
+    /// <summary>On: the disclosure, and nothing is written unless it is accepted. Then the row, then the Agent's restart.</summary>
+    private async Task ApplyRunElevatedAsync(bool value)
+    {
+        if (value && (_adminPrompt is null || !await _adminPrompt.ShowAsync().ConfigureAwait(true)))
+        {
+            _loading = true;
+            try
+            {
+                RunElevated = false;
+            }
+            finally
+            {
+                _loading = false;
+            }
+
+            return;
+        }
+
+        await _settings.SetAsync(SettingsRegistry.CaptureRunElevated, value ? "1" : "0").ConfigureAwait(true);
+        await RestartAgentAsync().ConfigureAwait(true);
+    }
+
+    /// <summary>
+    /// The mode is decided when the Agent starts, so it restarts — never under a running session, which the Shutdown would
+    /// end. It is asked to stop over the pipe, its folder's instance lock is waited out (the process has gone), and the
+    /// connection's next round starts it the new way.
+    /// </summary>
+    private async Task RestartAgentAsync()
+    {
+        string label = Strings.Settings_Agent_RunElevated_Label;
+        if (_agent.Status?.ActiveSessions is { Count: > 0 })
+        {
+            _strip.Info(label, Strings.Settings_Agent_RunElevated_AfterSession);
+            return;
+        }
+
+        if (_agent.IsConnected)
+        {
+            try
+            {
+                await _agent.RequestAsync(IpcMessageType.Shutdown, new ShutdownRequest()).ConfigureAwait(true);
+            }
+            catch (Exception ex) when (ex is IpcRequestException or TimeoutException or IOException or InvalidOperationException)
+            {
+                Serilog.Log.Warning(ex, "settings: the Agent did not acknowledge Shutdown for the admin mode's restart");
+            }
+        }
+
+        DateTimeOffset deadline = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(20);
+        while (_agentHeld() && DateTimeOffset.UtcNow < deadline)
+        {
+            await Task.Delay(200).ConfigureAwait(true);
+        }
+
+        if (_agentHeld())
+        {
+            _strip.Warn(label, Strings.Settings_Agent_RunElevated_NotStopped);
+            return;
+        }
+
+        _agent.RetryNow();
+        _strip.Info(label, Strings.Settings_Agent_RunElevated_Restarting);
+    }
 
     partial void OnMinSessionSecondsChanged(int oldValue, int newValue) => PersistNumber(SettingsRegistry.CaptureMinSessionSeconds, Strings.Settings_MinSession_Label, oldValue, newValue, v => MinSessionSeconds = v);
 
@@ -397,6 +486,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             MinimizeToTray = await _settings.GetBooleanAsync(SettingsRegistry.UiMinimizeToTray).ConfigureAwait(true);
             HideAntiCheatHooking = await _settings.GetBooleanAsync(SettingsRegistry.UiHideAntiCheatHooking).ConfigureAwait(true);
             UserModeExceptions = await _settings.GetBooleanAsync(SettingsRegistry.HookingUserModeExceptions).ConfigureAwait(true);
+            RunElevated = await _settings.GetBooleanAsync(SettingsRegistry.CaptureRunElevated).ConfigureAwait(true);
             FpsTwoDecimals = await _settings.GetBooleanAsync(SettingsRegistry.UiFpsDecimals).ConfigureAwait(true);
             OnlineMetadata = await _settings.GetBooleanAsync(SettingsRegistry.PrivacyOnlineMetadata).ConfigureAwait(true);
             UpdateChannel = await _settings.GetAsync(SettingsRegistry.UpdateChannel).ConfigureAwait(true);
@@ -425,10 +515,24 @@ public sealed partial class SettingsViewModel : ObservableObject
         PresentExceptions(cards);
 
         Shared.Ipc.HelloAck? hello = _agent.Hello;
-        ElevationText = hello is null ? Strings.Settings_VkLayer_Unknown : hello.Elevated ? Strings.Settings_Agent_Elevated : Strings.Settings_Agent_NotElevated;
+        ElevationText = ElevationTextOf(_agent.State, hello);
         MaintenanceSnapshot = await _maintenance.ReadAsync().ConfigureAwait(true);
         OnPropertyChanged(nameof(CanRegisterLayer));
     }
+
+    /// <summary>
+    /// What the Agent's rights are, and — beta.10 — why a standard user's Agent is one when the admin mode asked Windows and
+    /// was not granted (<c>HelloAck.ElevationOutcome</c>).
+    /// </summary>
+    internal static string ElevationTextOf(AgentConnectionState state, HelloAck? hello) => hello switch
+    {
+        null => state == AgentConnectionState.Elevating ? Strings.Agent_State_Elevating : Strings.Settings_VkLayer_Unknown,
+        { Elevated: true } => Strings.Settings_Agent_Elevated,
+        { ElevationOutcome: AgentElevation.Declined } => Strings.Settings_Agent_ElevationDeclined,
+        { ElevationOutcome: AgentElevation.OtherAccount } => Strings.Settings_Agent_ElevationOtherAccount,
+        { ElevationOutcome: AgentElevation.Failed } => Strings.Settings_Agent_ElevationFailed,
+        _ => Strings.Settings_Agent_NotElevated,
+    };
 
     private async Task RunToolAsync(string flag, string label)
     {

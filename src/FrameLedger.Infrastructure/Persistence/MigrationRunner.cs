@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using Dapper;
+using FrameLedger.Infrastructure.Startup;
 using Microsoft.Data.Sqlite;
 
 namespace FrameLedger.Infrastructure.Persistence;
@@ -67,19 +68,13 @@ public static class MigrationRunner
 
         // The mutex serialises two processes opening the same file at once; the transaction below and
         // schema_migrations' primary key serialise the rest. Taken synchronously: this runs once, at open.
-        using var mutex = new Mutex(initiallyOwned: false, LockNameFor(connection.DataSource));
-        bool held = false;
+        // Its DACL is stated (beta.10, the Agent's admin mode): an elevated Agent's default one would have locked the same
+        // user's unelevated App out of it (Startup.SharedMutex).
+        using SharedMutex mutex = SharedMutex.CreateOrOpen(LockNameFor(connection.DataSource));
+        // An abandoned wait is the lock taken: the previous holder died mid-migration, and its transaction rolled back.
+        bool held = mutex.Wait(TimeSpan.FromSeconds(30), out _);
         try
         {
-            try
-            {
-                held = mutex.WaitOne(TimeSpan.FromSeconds(30));
-            }
-            catch (AbandonedMutexException)
-            {
-                held = true;    // the previous holder died mid-migration; its transaction rolled back
-            }
-
             if (!held)
             {
                 throw new TimeoutException("another process has been migrating the ledger for over 30 s");
@@ -91,7 +86,7 @@ public static class MigrationRunner
         {
             if (held)
             {
-                mutex.ReleaseMutex();
+                mutex.Release();
             }
         }
     }

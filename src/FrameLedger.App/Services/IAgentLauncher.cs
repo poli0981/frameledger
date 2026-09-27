@@ -17,6 +17,12 @@ public interface IAgentLauncher
     /// </summary>
     string? RunningAgent { get; }
 
+    /// <summary>
+    /// Whether <see cref="TryStart"/> would show Windows' administrator prompt (beta.10, the admin mode on and this App a
+    /// standard user's) — the pill says so while the round waits for the answer. A launcher that never asks answers false.
+    /// </summary>
+    bool WillAskForElevation => false;
+
     /// <summary>Start <c>FrameLedger.Agent.exe --serve</c>, detached; false when it could not be started.</summary>
     bool TryStart();
 }

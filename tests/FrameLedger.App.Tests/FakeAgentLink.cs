@@ -21,6 +21,11 @@ internal sealed class FakeAgentLink : IAgentLink
 
     public void SetLaunchHold(bool hold) => Holds.Add(hold);
 
+    /// <summary>How many times a round was asked to run now (beta.10: the admin mode's restart).</summary>
+    public int Retries { get; private set; }
+
+    public void RetryNow() => Retries++;
+
     public Func<string, object, IpcEnvelope> Answer { get; set; } = static (_, _) => throw new InvalidOperationException("no answer scripted");
 
     public event EventHandler? Changed;

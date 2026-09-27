@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using FrameLedger.Application.Capture;
 using FrameLedger.Infrastructure.Io;
+using FrameLedger.Infrastructure.Startup;
 using FrameLedger.Infrastructure.Vulkan;
 
 namespace FrameLedger.Infrastructure.Capture;
@@ -26,6 +27,12 @@ namespace FrameLedger.Infrastructure.Capture;
 /// anti-cheat hit, no runtime inside the budget — leaves the title running unhooked, exactly as the
 /// product's Tier 2 does (duration and the reason, no measurement). The operator asked for the game to
 /// start; the guard decides only whether FrameLedger goes into it.
+/// </para>
+/// <para>
+/// <b>An elevated Agent never starts a game elevated</b> (beta.10, the Agent's admin mode, D34): the game gets the token the
+/// desktop shell runs with (<see cref="UnelevatedProcess"/>), which is what a double-click would give it — otherwise
+/// <c>LaunchGame</c>, which any process of the same user can send, would be an elevation without a prompt. When no shell
+/// token can be had the launch is refused with that reason, never made elevated instead.
 /// </para>
 /// </remarks>
 public sealed class ProcessLauncher : IProcessLauncher
@@ -75,17 +82,29 @@ public sealed class ProcessLauncher : IProcessLauncher
         ArgumentException.ThrowIfNullOrWhiteSpace(exePath);
         error = null;
 
-        var psi = new ProcessStartInfo(exePath, arguments ?? string.Empty)
-        {
-            UseShellExecute = false,
-            WorkingDirectory = Path.GetDirectoryName(exePath) ?? string.Empty,
-        };
+        var variables = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         if (enableVulkanLayer)
         {
-            psi.Environment[VkLayerLaunchEnvironment.EnableVariable] = "1";
+            variables[VkLayerLaunchEnvironment.EnableVariable] = "1";
         }
 
         foreach ((string name, string value) in environment ?? new Dictionary<string, string>(StringComparer.Ordinal))
+        {
+            variables[name] = value;
+        }
+
+        string workingDirectory = Path.GetDirectoryName(exePath) ?? string.Empty;
+        if (Environment.IsPrivilegedProcess)
+        {
+            return StartUnelevated(exePath, arguments ?? string.Empty, workingDirectory, variables, out error);
+        }
+
+        var psi = new ProcessStartInfo(exePath, arguments ?? string.Empty)
+        {
+            UseShellExecute = false,
+            WorkingDirectory = workingDirectory,
+        };
+        foreach ((string name, string value) in variables)
         {
             psi.Environment[name] = value;
         }
@@ -108,26 +127,50 @@ public sealed class ProcessLauncher : IProcessLauncher
 
         using (process)
         {
-            // The same pin attach mode takes, taken here before anything else looks at the pid. The
-            // liveness OWNS the handle from here; the caller disposes it with the session (CA2000 is
-            // satisfied by that transfer, stated rather than suppressed).
-            HeldProcessHandle? held = null;
-            try
-            {
-                held = HeldProcessHandle.TryOpen(process.Id);
-                if (held is null)
-                {
-                    return null;
-                }
+            return Pin(process.Id);
+        }
+    }
 
-                ITargetLiveness alive = new ProcessTargetLiveness(held, process.Id);
-                held = null;
-                return (process.Id, alive);
-            }
-            finally
+    /// <summary>The start an elevated Agent makes: the shell's token, and the same pin, taken while the start's own handle still holds the id.</summary>
+    private static (int Pid, ITargetLiveness Alive)? StartUnelevated(string exePath, string arguments, string workingDirectory,
+        IReadOnlyDictionary<string, string> variables, out int? error)
+    {
+        error = null;
+        (int Pid, IDisposable Process)? started = UnelevatedProcess.Start(exePath, arguments, workingDirectory, variables, out int failure);
+        if (started is not { } s)
+        {
+            error = failure;
+            return null;
+        }
+
+        using (s.Process)
+        {
+            return Pin(s.Pid);
+        }
+    }
+
+    /// <summary>
+    /// The same pin attach mode takes, taken before anything else looks at the pid. The liveness OWNS the handle from here; the
+    /// caller disposes it with the session (CA2000 is satisfied by that transfer, stated rather than suppressed).
+    /// </summary>
+    private static (int Pid, ITargetLiveness Alive)? Pin(int pid)
+    {
+        HeldProcessHandle? held = null;
+        try
+        {
+            held = HeldProcessHandle.TryOpen(pid);
+            if (held is null)
             {
-                held?.Dispose();
+                return null;
             }
+
+            ITargetLiveness alive = new ProcessTargetLiveness(held, pid);
+            held = null;
+            return (pid, alive);
+        }
+        finally
+        {
+            held?.Dispose();
         }
     }
 }

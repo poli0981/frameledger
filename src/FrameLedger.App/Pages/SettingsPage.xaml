@@ -224,6 +224,16 @@
                 </ui:CardExpander.Header>
                 <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_Agent_Elevation_Body}" TextWrapping="Wrap" />
             </ui:CardExpander>
+            <!-- beta.10, the admin mode (D34): off by default; on shows the disclosure, and Windows asks at every Agent start. -->
+            <ui:CardControl Margin="0,8,0,0" Icon="{ui:SymbolIcon Shield24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_Agent_RunElevated_Label}" />
+                        <ui:TextBlock MaxWidth="560" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Settings_Agent_RunElevated_Body}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_Agent_RunElevated_Label}" IsChecked="{Binding ViewModel.RunElevated, Mode=TwoWay}" />
+            </ui:CardControl>
             <ui:CardControl Margin="0,8,0,0" Icon="{ui:SymbolIcon CalendarClock24}">
                 <ui:CardControl.Header>
                     <StackPanel>

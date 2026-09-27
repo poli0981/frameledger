@@ -94,6 +94,21 @@ public static class SettingsRegistry
         AgentReads = true,
     };
 
+    /// <summary>
+    /// The Agent's admin mode (beta.10, owner decision D34; ADR-9): whether the Agent is started as administrator — Windows
+    /// asks, a UAC prompt, every time it starts, whoever starts it. Off by default. Read before the Agent exists, by the App
+    /// and by an Agent the logon task started (<c>Infrastructure.Startup.RunElevatedSetting</c>, which names the same key);
+    /// exactly "1" is on. It unlocks attaching to games that run as administrator and the CPU temperature (with PawnIO); it
+    /// never lets a game started from FrameLedger run elevated.
+    /// </summary>
+    public static readonly SettingDefinition CaptureRunElevated = new()
+    {
+        Key = "capture.run_elevated",
+        Kind = SettingKind.Boolean,
+        Default = "0",
+        AgentReads = true,
+    };
+
     /// <summary>FR-3.6: sessions shorter than this are discarded. Seconds.</summary>
     public static readonly SettingDefinition CaptureMinSessionSeconds = new()
     {
@@ -164,7 +179,7 @@ public static class SettingsRegistry
     public static IReadOnlyList<SettingDefinition> All { get; } =
     [
         UiLanguage, UiTheme, UiStartWithWindows, UiMinimizeToTray, UiHideAntiCheatHooking, UiFpsDecimals,
-        CaptureBackground, HookingKillSwitch, HookingUserModeExceptions, CaptureMinSessionSeconds, TelemetryIntervalMs, RetentionRawSessionsPerGame,
+        CaptureBackground, HookingKillSwitch, HookingUserModeExceptions, CaptureRunElevated, CaptureMinSessionSeconds, TelemetryIntervalMs, RetentionRawSessionsPerGame,
         UpdateChannel, UpdateAutoCheck, PrivacyOnlineMetadata, LogDebug,
     ];
 

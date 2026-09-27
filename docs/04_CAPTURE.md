@@ -175,6 +175,13 @@ which makes the notification more important than it was, not less.
 
 **Launch mode (preferred).** User starts the game from FrameLedger (or FrameLedger is set as the launch wrapper): `CreateProcess(CREATE_SUSPENDED)` → guard → inject → `ResumeThread`. Catches swapchain creation and upscaler init, which attach mode can miss entirely — a game that creates its DLSS feature during startup will otherwise report `upscaler = unknown` for the whole session.
 
+> **An elevated Agent starts the game as a standard user (beta.10, the admin mode, D34).** `ProcessLauncher` checks its
+> own token: elevated, it starts the game with the desktop shell's token (`Infrastructure.Startup.UnelevatedProcess` —
+> `GetShellWindow`'s process, its token duplicated, `CreateProcessWithTokenW`, the same explicit environment the kill
+> switch decides), pins it from the start's own handle, and never falls back to its own token: with no shell the launch
+> fails with `Launch_Error_1400`. `LaunchGame` is a pipe command any process of the user can send; an elevated launch would
+> be an elevation without a prompt.
+
 > **Built 2026-09-06 (P1 item 2) as "inject late", which is the only shape §S1 left possible, and the
 > sentence above is kept as the intent it does not quite describe.** A `CREATE_SUSPENDED` target has
 > loaded nothing and the module scan *fails* against it (`ERROR_PARTIAL_COPY`, §S1 measured), so the guard

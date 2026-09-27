@@ -71,7 +71,11 @@ flow, and the tests run the flow over a fake client because nothing here may tou
   connect SEEDS the running set rather than being OR-ed with it forever — before, a session running when the App
   connected held every download at `Deferred` until the next reconnect, hours after it ended.
 - **Apply:** `Shutdown` to the Agent over the pipe, the connection's relaunch held (`IAgentLink.SetLaunchHold`),
-  the pipe watched until it drops (10 s; an Agent that does not stop leaves everything as it was and says so),
+  the pipe watched until it drops (10 s; an Agent that does not stop leaves everything as it was and says so) —
+  **and since beta.10 the data folder's instance lock watched until it is let go, within the same 10 s**: an Agent run as
+  administrator (the admin mode) holds the install directory's files exactly as long as its process lives, and one that
+  holds the folder without answering this App (still starting, another version) is never updated under — the apply is
+  refused with `Update_AgentStillRunning` instead,
   then `WaitExitThenApplyUpdates(asset, silent: false, restart: true)` and the host ends. The restarted App
   starts the Agent beside itself as always, and when Velopack reports the restart (`OnRestarted`) the host reads
   the logon task: `Stale` (the action path moved) runs `--install-task`, this user's own task, and says so in the

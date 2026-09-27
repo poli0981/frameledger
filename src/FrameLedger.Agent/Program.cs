@@ -14,7 +14,12 @@
 //
 // The maintenance flags (P3 PR-8b) — --register-vklayer, --unregister-vklayer, --install-task, --uninstall-task —
 // run over the product directory and exit; --diag is the App's (10_LOGGING) and answers "not implemented", exit 2.
+//
+// The admin mode (beta.10, owner decision D34): with capture.run_elevated on, a plain --serve that is not elevated — the
+// logon task's — asks Windows once (a UAC prompt on the taskbar) to start an elevated Agent for this user and hands over to
+// it; declined, it serves as before and says so. Decided before the folder is claimed or anything is written.
 
+using System.Diagnostics;
 using FrameLedger.Agent.Cli;
 using FrameLedger.Agent.Composition;
 using FrameLedger.Agent.Hosting;
@@ -51,6 +56,12 @@ internal static class Program
         }
 
         AgentPaths paths = cmd.DataDirectory is { } dir ? new AgentPaths(Path.GetFullPath(dir)) : AgentPaths.Default;
+        ElevationDecision elevation = cmd.Verb == AgentVerb.Serve ? await DecideElevationAsync(cmd, paths).ConfigureAwait(false) : ElevationDecision.NotAsked;
+        if (elevation.Exit is { } decided)
+        {
+            return decided;
+        }
+
         using AgentInstanceLock? claim = ClaimDataDirectory(cmd.Verb, paths, out bool heldElsewhere);
         if (heldElsewhere)
         {
@@ -59,36 +70,11 @@ internal static class Program
 
         ConfigureLogging(paths);
         HookCrashHandlers(paths);
+        LogElevation(elevation);
 
         try
         {
-            // Before anything else. The guard reads this file on every evaluation and refuses every title
-            // when it is absent, so a capture started before the seed lands would fail for a reason that
-            // has nothing to do with the game (§S20).
-            RulesSeedOutcome seeded = await new RulesSeeder(new FileSystemRulesStore()).EnsureSeededAsync().ConfigureAwait(false);
-            AgentConsole.Line($"rules: {Describe(seeded)}");
-            Log.Information("rules: {Outcome}", seeded);
-            if (seeded is RulesSeedOutcome.WriteFailed or RulesSeedOutcome.PackagedSeedUnusable)
-            {
-                return _exitRulesFailed;
-            }
-
-            LedgerDatabase? db = await OpenLedgerOrSayWhyAsync(cmd.Verb, paths).ConfigureAwait(false);
-            if (db is null)
-            {
-                return cmd.Verb == AgentVerb.DbPath ? _exitOk : _exitLedgerRefused;
-            }
-
-            await using (db.ConfigureAwait(false))
-            {
-                return cmd.Verb switch
-                {
-                    AgentVerb.Serve => await ServeAsync(db, paths).ConfigureAwait(false),
-                    AgentVerb.RegisterVkLayer or AgentVerb.UnregisterVkLayer or AgentVerb.InstallTask or AgentVerb.UninstallTask =>
-                        await new MaintenanceVerbs(db, paths).RunAsync(cmd).ConfigureAwait(false),
-                    _ => await ConsoleAsync(cmd, db, paths).ConfigureAwait(false),
-                };
-            }
+            return await RunAsync(cmd, paths, elevation.Outcome).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
@@ -100,6 +86,38 @@ internal static class Program
         finally
         {
             await Log.CloseAndFlushAsync().ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>The rules, the ledger and the verb, once the folder is claimed and the log is open.</summary>
+    private static async Task<int> RunAsync(AgentCommandLine cmd, AgentPaths paths, string? elevationOutcome)
+    {
+        // Before anything else. The guard reads this file on every evaluation and refuses every title
+        // when it is absent, so a capture started before the seed lands would fail for a reason that
+        // has nothing to do with the game (§S20).
+        RulesSeedOutcome seeded = await new RulesSeeder(new FileSystemRulesStore()).EnsureSeededAsync().ConfigureAwait(false);
+        AgentConsole.Line($"rules: {Describe(seeded)}");
+        Log.Information("rules: {Outcome}", seeded);
+        if (seeded is RulesSeedOutcome.WriteFailed or RulesSeedOutcome.PackagedSeedUnusable)
+        {
+            return _exitRulesFailed;
+        }
+
+        LedgerDatabase? db = await OpenLedgerOrSayWhyAsync(cmd.Verb, paths).ConfigureAwait(false);
+        if (db is null)
+        {
+            return cmd.Verb == AgentVerb.DbPath ? _exitOk : _exitLedgerRefused;
+        }
+
+        await using (db.ConfigureAwait(false))
+        {
+            return cmd.Verb switch
+            {
+                AgentVerb.Serve => await ServeAsync(db, paths, elevationOutcome).ConfigureAwait(false),
+                AgentVerb.RegisterVkLayer or AgentVerb.UnregisterVkLayer or AgentVerb.InstallTask or AgentVerb.UninstallTask =>
+                    await new MaintenanceVerbs(db, paths).RunAsync(cmd).ConfigureAwait(false),
+                _ => await ConsoleAsync(cmd, db, paths).ConfigureAwait(false),
+            };
         }
     }
 
@@ -162,6 +180,83 @@ internal static class Program
         }
 
         return claim;
+    }
+
+    /// <summary>What the admin mode decided at this start: the outcome <c>HelloAck</c> reports, and an exit code when this process stops here.</summary>
+    private sealed record ElevationDecision(string? Outcome, int? Exit, string? Detail)
+    {
+        public static readonly ElevationDecision NotAsked = new(null, null, null);
+    }
+
+    /// <summary>
+    /// The admin mode (beta.10, D34), before anything is claimed or written: an elevated Agent started for another account
+    /// stops (exit 11); an Agent told the answer was no says so; a plain <c>--serve</c> with the option on and no elevation —
+    /// the logon task's — asks Windows once and hands over to the elevated Agent, or carries on as a standard user's.
+    /// </summary>
+    private static async Task<ElevationDecision> DecideElevationAsync(AgentCommandLine cmd, AgentPaths paths)
+    {
+        if (cmd.ForUser is { } sid)
+        {
+            if (!AgentElevation.IsCurrentUser(sid))
+            {
+                // The prompt was answered with another account's credentials: its %LOCALAPPDATA% is not this user's ledger.
+                AgentConsole.Problem($"this elevated Agent runs as another account than the one that asked ({sid}); it exits (exit {AgentElevation.ExitOtherAccount})");
+                return new ElevationDecision(null, AgentElevation.ExitOtherAccount, null);
+            }
+
+            return new ElevationDecision(Environment.IsPrivilegedProcess ? AgentElevation.Granted : null, null, "started for this user by a UAC prompt");
+        }
+
+        if (cmd.ElevationRefusal is { } refusal)
+        {
+            return new ElevationDecision(refusal, null, "the process that started this Agent asked Windows and got: " + refusal);
+        }
+
+        if (Environment.IsPrivilegedProcess || !RunElevatedSetting.Read(paths.Database) || AgentInstanceLock.IsHeld(paths.DataDirectory))
+        {
+            // Elevated already (inherited), the option off, or an Agent already serves: nothing to ask; the claim decides the rest.
+            return ElevationDecision.NotAsked;
+        }
+
+        using ElevationMarker? marker = ElevationMarker.TryAcquire(paths.DataDirectory);
+        if (marker is null)
+        {
+            AgentConsole.Problem($"another FrameLedger Agent is being started as administrator for {paths.DataDirectory}; this one exits (exit {AgentInstanceLock.ExitHeldElsewhere})");
+            return new ElevationDecision(null, AgentInstanceLock.ExitHeldElsewhere, null);
+        }
+
+        string arguments = "--serve --for-user " + AgentElevation.CurrentUserSid();
+        using Process? elevated = AgentElevation.Start(Environment.ProcessPath ?? Path.Combine(AppContext.BaseDirectory, "FrameLedger.Agent.exe"),
+            arguments, ownerWindow: 0, out string? refused, out int? error);
+        if (elevated is null)
+        {
+            return new ElevationDecision(refused, null, $"the UAC prompt was {(string.Equals(refused, AgentElevation.Declined, StringComparison.Ordinal) ? "declined" : "not shown")} (error {error?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "none"})");
+        }
+
+        (bool claimed, int? code) = await AgentElevation.WaitForClaimAsync(elevated, paths.DataDirectory, TimeSpan.FromMinutes(2)).ConfigureAwait(false);
+        if (claimed)
+        {
+            // Handed over: the elevated Agent logs its own start; this one writes nothing and leaves.
+            return new ElevationDecision(null, _exitOk, null);
+        }
+
+        return code == AgentElevation.ExitOtherAccount
+            ? new ElevationDecision(AgentElevation.OtherAccount, null, "the UAC prompt was answered with another account, whose Agent refused to run")
+            : new ElevationDecision(AgentElevation.Failed, null, $"the elevated Agent did not start serving (exit {code?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "none"})");
+    }
+
+    /// <summary>The decision in the log, and what an elevated Agent's token has enabled (read, never changed: TokenPrivileges).</summary>
+    private static void LogElevation(ElevationDecision elevation)
+    {
+        if (elevation.Outcome is { } outcome)
+        {
+            Log.Information("elevation: {Outcome} — {Detail}", outcome, elevation.Detail);
+        }
+
+        if (Environment.IsPrivilegedProcess)
+        {
+            Log.Information("elevation: this Agent runs as administrator; enabled privileges: {Privileges}", string.Join(", ", TokenPrivileges.Enabled()));
+        }
     }
 
     /// <summary>
@@ -236,9 +331,11 @@ internal static class Program
     }
 
     /// <summary>The product's mode: a Generic Host around the watcher, stopped by Ctrl+C or the service manager.</summary>
-    private static async Task<int> ServeAsync(LedgerDatabase db, AgentPaths paths)
+    private static async Task<int> ServeAsync(LedgerDatabase db, AgentPaths paths, string? elevationOutcome)
     {
         HostApplicationBuilder builder = Host.CreateApplicationBuilder();
+        // The admin mode's answer at this start (beta.10), for HelloAck.
+        builder.Services.AddSingleton(new AgentElevationState(elevationOutcome));
         // The host's log into agent-*.log (2026-09-23). A background service that threw stopped the host with nothing in
         // the file: the Generic Host logs that through Microsoft.Extensions.Logging, which was never routed here.
         builder.Services.AddSerilog();

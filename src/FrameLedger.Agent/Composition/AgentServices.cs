@@ -215,7 +215,7 @@ internal static class AgentServices
         services.TryAddSingleton<IAgentLifetime, NoAgentLifetime>();
         services.AddSingleton(static sp => CommandHandler(sp));
         services.AddSingleton<IIpcRequestHandler>(static sp => new AgentRequestHandler(
-            AgentIdentityFactory.OfThisProcess(sp.GetRequiredService<AgentPaths>().VkLayerDirectory),
+            AgentIdentityFactory.OfThisProcess(sp.GetRequiredService<AgentPaths>().VkLayerDirectory, sp.GetService<AgentElevationState>()?.Outcome),
             TelemetryDescriptor(),
             () => sp.GetRequiredService<SessionEventPublisher>().Status,
             () => sp.GetRequiredService<AgentCommandHandler>()));

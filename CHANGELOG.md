@@ -50,6 +50,18 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   Sessions recorded before, and one recovered after a crash, read N/A. Schema 0016 adds fifteen `sessions.display_*`
   columns, and `sessions.swap_effect` — a column with no writer since the first schema — is now filled.
 
+- **Run the capture agent as administrator — your choice, off by default** (owner request, beta.10). Settings ▸ Capture
+  agent ▸ *Run the agent as administrator* shows what it adds (measuring a game that itself runs as administrator; the CPU
+  temperature where PawnIO is installed), what it does not change (a game with anti-cheat is still refused; a Vulkan game
+  run as administrator is still not measured) and the risk of a per-user, unsigned install, before it turns on. Then
+  **Windows asks every time the agent starts** — also at logon, when its prompt may wait on the taskbar; there is no
+  silent way. Answer No and the agent runs with your standard rights and says so; answer with another administrator
+  account and that agent refuses to run, because its data would not be yours. **Games you start from FrameLedger always
+  run with your standard rights**, and nothing FrameLedger does enables a privilege (a CI test on an elevated runner and a
+  source check hold both). While the prompt waits, the status pill says so. With the option off, an App started as
+  administrator no longer makes the agent an administrator's too. Updating now also waits for an administrator agent's
+  process to let go of its files.
+
 ### Changed
 
 - **Groundwork for the display mode (beta.10): the injected component reports how the game presents** — whether its swap
