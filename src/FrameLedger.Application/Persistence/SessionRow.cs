@@ -271,4 +271,45 @@ public sealed record SessionRow
     public double? AvgGpuPowerW { get; init; }
 
     public double? ThrottlePct { get; init; }
+
+    // --- Schema 0016 (beta.10): the display mode (03_METRICS §Display mode), both tiers. Null on a row written before it,
+    // on one recovered from a .partial file (the tally is not in the crash file), and where the loop never sampled.
+
+    /// <summary>Milliseconds the swap chain said exclusive fullscreen.</summary>
+    public long? DisplayExclusiveMs { get; init; }
+
+    /// <summary>Milliseconds the window covered its monitor and the swap chain said not exclusive.</summary>
+    public long? DisplayBorderlessMs { get; init; }
+
+    public long? DisplayWindowedMs { get; init; }
+
+    /// <summary>Milliseconds the window covered its monitor and nothing could say whether it was exclusive.</summary>
+    public long? DisplayCoversMs { get; init; }
+
+    public long? DisplayMinimizedMs { get; init; }
+
+    /// <summary>Milliseconds no window of the game could be read — outside every share.</summary>
+    public long? DisplayNoWindowMs { get; init; }
+
+    public long? DisplayChanges { get; init; }
+
+    /// <summary>A <c>Domain.Display.DisplaySource</c> id: <c>swapchain</c>, <c>opengl</c> or <c>window</c>.</summary>
+    public string? DisplaySource { get; init; }
+
+    /// <summary>The window's client size in the longest-lasting shown mode.</summary>
+    public int? DisplayWindowW { get; init; }
+
+    public int? DisplayWindowH { get; init; }
+
+    /// <summary>The swap chain's back buffer in that mode.</summary>
+    public int? DisplayBufferW { get; init; }
+
+    public int? DisplayBufferH { get; init; }
+
+    /// <summary>The monitor the window was on in that mode, and its refresh rate.</summary>
+    public int? DisplayMonitorW { get; init; }
+
+    public int? DisplayMonitorH { get; init; }
+
+    public int? DisplayMonitorHz { get; init; }
 }

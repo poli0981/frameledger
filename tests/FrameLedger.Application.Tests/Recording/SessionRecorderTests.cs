@@ -10,6 +10,7 @@ using FrameLedger.Application.Tests.AntiCheat;
 using FrameLedger.Application.Tests.Capture;
 using FrameLedger.Domain.AntiCheat;
 using FrameLedger.Domain.Consent;
+using FrameLedger.Domain.Display;
 using FrameLedger.Domain.Sessions;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Shared;
@@ -154,6 +155,8 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         }
 
         public bool IsRunning(string normalisedExePath) => false;
+
+        public IReadOnlyList<int> PidsOf(string normalisedExePath) => [];
     }
 
     private sealed class FakePoller(SteppingClock? steps = null) : ITelemetryPoller
@@ -191,8 +194,14 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         public IDisposable? TryPublish(int pid, string family) => new MemoryStream();
     }
 
+    /// <summary>The window reader (beta.10), answering the same window on every tick.</summary>
+    private sealed class FixedWindow(WindowView? answer) : IDisplayProbe
+    {
+        public WindowView? Observe(IReadOnlyCollection<int> pids, ulong hwnd) => answer;
+    }
+
     private sealed class Factory(IGameConsentStore store, FakeGuard guard, SteppingClock clock, int records, FakeLiveness liveness,
-        IUserModeExceptionSwitch? exceptions = null) : ICaptureSessionFactory
+        IUserModeExceptionSwitch? exceptions = null, IDisplayProbe? display = null) : ICaptureSessionFactory
     {
         public CaptureSession Create(ICaptureObserver observer) => new(
             store, new HookedCaptureGate(guard), guard, new FixedResolver(),
@@ -209,7 +218,8 @@ public sealed class SessionRecorderTests : IAsyncDisposable
             },
             observer: observer,
             exceptions: exceptions,
-            tolerance: exceptions is null ? null : new OpenChannel());
+            tolerance: exceptions is null ? null : new OpenChannel(),
+            display: display);
     }
 
     private sealed class NoCrashEvents : ICrashEventSource
@@ -257,7 +267,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
     }
 
     private async Task<Harness> MakeAsync(bool consented = true, AntiCheatVerdict? verdict = null, int records = 3_000, FakeLiveness? liveness = null, bool poller = true,
-        bool clockStepsOnDrain = false, IDriverProfileSource? profiles = null, bool excepted = false)
+        bool clockStepsOnDrain = false, IDriverProfileSource? profiles = null, bool excepted = false, IDisplayProbe? display = null)
     {
         _db ??= await LedgerDatabase.OpenAsync(Path.Combine(_dir, LedgerPaths.DatabaseFileName), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         var store = new SqliteGameConsentStore(_db);
@@ -282,7 +292,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         var sessions = new FakeSessionRepository();
         var partials = new FakePartialSessionStore();
         var recorder = new SessionRecorder(
-            new Factory(store, guard, clock, records, liveness ?? _alive, excepted ? new FakeExceptionSwitch(on: true) : null),
+            new Factory(store, guard, clock, records, liveness ?? _alive, excepted ? new FakeExceptionSwitch(on: true) : null, display),
             games, new FakeSnapshots(), new FixedHardware(), partials,
             new SessionFinalizer(sessions, new RawSeriesCodec()), new NoCrashEvents(),
             _ => poller ? new FakePoller(clockStepsOnDrain ? clock : null) : null, clock,
@@ -555,5 +565,50 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         r.Finalize.Status.Should().Be(FinalizeStatus.Saved);
         h.Sessions.Stored.Single().Row.TelemetrySource.Should().BeNull();
         h.Sessions.Stored.Single().Sensors.Should().BeEmpty();
+    }
+
+    private static readonly ScreenRect _screen = new(0, 0, 1920, 1080);
+
+    /// <summary>
+    /// beta.10 (<c>03_METRICS</c> §Display mode): a Tier-2 row carries the window it was shown in. The columns are on the
+    /// recorder's skeleton, not the aggregator's — a Tier-2 session never reaches the aggregator, and the window is exactly
+    /// what it still has to say.
+    /// </summary>
+    [Fact]
+    public async Task ATierTwoRowCarriesTheWindowItWasShownIn()
+    {
+        Harness h = await MakeAsync(verdict: AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedDriver, "Riot Vanguard", "vgk.sys"), clockStepsOnDrain: true,
+            display: new FixedWindow(new WindowView(false, _screen, _screen, 144)));
+
+        RecordedSession r = await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        r.Finalize.Status.Should().Be(FinalizeStatus.Saved);
+        SessionRow row = h.Sessions.Stored.Single().Row;
+        row.Tier.Should().Be(CaptureTier.NotHooked);
+        row.DisplayCoversMs.Should().BeGreaterThan(0, "a window covering its monitor that nothing could ask about");
+        row.DisplayExclusiveMs.Should().Be(0);
+        row.DisplayBorderlessMs.Should().Be(0);
+        row.DisplaySource.Should().Be(DisplaySource.Window);
+        (row.DisplayWindowW, row.DisplayWindowH, row.DisplayMonitorHz).Should().Be((1920, 1080, 144));
+        row.DisplayBufferW.Should().BeNull("nothing was injected to describe a swap chain");
+        SessionDisplayColumns.DisplayOf(row)!.Dominant.Should().Be(DisplayMode.CoversScreen);
+    }
+
+    [Fact]
+    public async Task AHookedRowKeepsItsDisplayThroughTheAggregatorAndARowWithoutAReaderHasNone()
+    {
+        Harness withReader = await MakeAsync(display: new FixedWindow(new WindowView(false, new ScreenRect(10, 10, 1290, 730), _screen, 60)));
+        Harness without = await MakeAsync();
+
+        await withReader.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+        await without.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        SessionRow hooked = withReader.Sessions.Stored.Single().Row;
+        hooked.Tier.Should().Be(CaptureTier.Hooked);
+        hooked.DisplayWindowedMs.Should().BeGreaterThan(0);
+        (hooked.DisplayWindowW, hooked.DisplayWindowH).Should().Be((1280, 720));
+        SessionRow plain = without.Sessions.Stored.Single().Row;
+        plain.DisplayWindowedMs.Should().BeNull("no reader, no display facts — N/A, never a zero");
+        SessionDisplayColumns.DisplayOf(plain).Should().BeNull();
     }
 }

@@ -47,4 +47,17 @@ public sealed class LatestProcessSnapshot
 
         return false;
     }
+
+    /// <summary>
+    /// The pids whose image path is <paramref name="normalisedExePath"/> in the latest snapshot (beta.10, the display
+    /// sample of a Tier-2 hold) — by path only: a process whose path could not be read is not claimed, since its window
+    /// could be another program's. Empty when there is no snapshot yet.
+    /// </summary>
+    public IReadOnlyList<int> PidsOf(string normalisedExePath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(normalisedExePath);
+        return Current is { } snapshot
+            ? [.. snapshot.Where(p => p.ImagePath is { } image && string.Equals(image, normalisedExePath, StringComparison.OrdinalIgnoreCase)).Select(static p => p.Pid)]
+            : [];
+    }
 }

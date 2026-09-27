@@ -37,6 +37,10 @@ public sealed class SessionItemViewModel
         P01LowText = IsHooked ? Formats.Fps(row.P01LowFps) : Strings.Common_NotAvailable;
         ResolutionText = IsHooked ? Formats.Resolution(row.RenderW, row.RenderH, row.OutputW, row.OutputH) + " · " + Formats.Upscaler(row.Upscaler, row.UpscalerQuality, row.UpscalerDriverReported) : Strings.Common_NotAvailable;
         GpuTempText = Formats.Temperature(row.MaxGpuTemp);
+        // beta.10: both tiers — the window is read out of process whether or not the game was hooked.
+        Domain.Display.DisplaySummary? display = DisplayText.Of(row);
+        DisplayModeText = DisplayText.Headline(display);
+        DisplayModeTooltip = DisplayText.Line(display);
         ApiText = IsHooked ? Formats.Api(row.Api) : Strings.Common_NotAvailable;
         ExitText = Formats.ExitStatusText(row.ExitStatus);
         IsCrashed = row.ExitStatus == ExitStatus.Crashed;
@@ -75,6 +79,12 @@ public sealed class SessionItemViewModel
     public string ResolutionText { get; }
 
     public string GpuTempText { get; }
+
+    /// <summary>The mode the session was shown in longest, with its share; N/A for a row recorded before beta.10.</summary>
+    public string DisplayModeText { get; }
+
+    /// <summary>Every share, the window on its monitor, the back buffer and the source; null for a row without display facts.</summary>
+    public string? DisplayModeTooltip { get; }
 
     public string ApiText { get; }
 

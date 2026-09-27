@@ -681,6 +681,70 @@ Derived extras (Tier 1): `rays_per_pixel` (mean dispatch volume ÷ output pixels
 > 2026-08-20 `maxTraceRecursionDepth` has no producer: `CreateStateObject` is a separate PR,
 > and `pt_confidence` reads it, which is one of the reasons Path Tracing is still `N/A`.
 
+## Display mode — both tiers (beta.10)
+
+**Owner request, 2026-09-27:** "detect the game's window size and whether it runs full-screen, borderless or windowed,
+and how much of the time". Schema 0016 (`06_DATA_MODEL`), shared-memory region 4 (`07_IPC`, layout 4), the Agent's
+`Application.Capture.DisplaySampler`, Domain's `Display.DisplayModeClassifier` and `Display.DisplayTally`.
+
+**Two witnesses, and neither reads the game.**
+
+1. *The swap chain's own answer* — Tier 1, DXGI only. The Overlay asks `IDXGISwapChain::GetFullscreenState` and `GetDesc`
+   on the chain the game passed to `Present`, at most twice a second per chain, and publishes the chain with the largest
+   back buffer in region 4: its window, back buffer, swap effect, and whether it is exclusive (`17_HOOK_ENGINE` §Hook
+   inventory — polled, not a `SetFullscreenState` hook). OpenGL publishes its window and client area with no exclusive
+   answer; the Vulkan layer publishes nothing yet.
+2. *The window from outside* — both tiers. The Agent asks user32 about the game's top-level window: minimised or not, the
+   client area in screen coordinates, the monitor it is on and that monitor's refresh rate — per-monitor DPI aware while it
+   asks, because the Agent runs DPI-unaware and Windows would otherwise scale another process's coordinates
+   (`Infrastructure.Display.WindowGeometryProbe`). The window is the one region 4 names when it still belongs to the game
+   (a handle is reused once its window is gone), else the largest visible, uncloaked, non-tool top-level window of any
+   process running the game's executable — found by image path in the watcher's snapshot for a Tier-2 session that never
+   opened the process. This is the focus sample's class of question: CLAUDE.md rule 4 is about game memory, and no handle
+   to the game's process is opened for it.
+
+**The ladder, per sample** (`DisplayModeClassifier`):
+
+| Mode | When | Column (ms) |
+|---|---|---|
+| No window | no window could be read and the chain did not say exclusive | `display_nowindow_ms` — outside every share |
+| Minimized | the window is minimised | `display_minimized_ms` |
+| Exclusive fullscreen | a region-4 sample under 2 s old in which the swap chain SAID exclusive | `display_exclusive_ms` |
+| Borderless | the client area covers its monitor (±1 px each edge) and the chain said not exclusive | `display_borderless_ms` |
+| Fullscreen or borderless | the client area covers its monitor and nothing could say which — OpenGL, Vulkan, every Tier-2 session | `display_covers_ms` |
+| Windowed | anything else | `display_windowed_ms` |
+
+**Time, not ticks.** A sample stands for the wall time until the next: every drain tick (100 ms) hooked, every hold tick
+(1 s) at Tier 2 — so the two add up in one unit, milliseconds. An interval that ends on a paused tick is dropped, which
+excludes a pause to within one tick at each edge, as the frame series' gap does. A mode's **share** is its milliseconds
+over the observed time (every mode but *No window*). `display_changes` counts samples whose mode differs from the one
+before, no-window samples skipped. The sizes — `display_window_*` (client area), `display_buffer_*` (back buffer),
+`display_monitor_*` and `display_monitor_hz` — are the ones seen in the mode that lasted longest; `display_source` is the
+strongest witness any sample had (`swapchain` > `opengl` > `window`). `sessions.swap_effect`, a column since 0001 with no
+writer, is written from region 4.
+
+**What it cannot say** (the user-facing list is `LIMITATIONS.md`):
+
+- *Exclusive* is what the game asked DXGI for. Windows may still present such a game through the compositor ("fullscreen
+  optimizations"), and a flip-model borderless window may be promoted to independent flip; neither is visible without a
+  trace session, which FrameLedger does not have (`20_OPEN_QUESTIONS` §G).
+- A game's menu may call a borderless window "Fullscreen"; the swap chain's answer is what is reported.
+- A minimised game issues only occlusion probes, which the hook drops before sampling: a region-4 sample older than 2 s
+  keeps its window and loses its exclusive bits.
+- Tier 2, OpenGL and Vulkan can never tell exclusive from borderless. Their covering time is *Fullscreen or borderless*,
+  and the trend draws no exclusive or borderless point for a session with any of it.
+- A session recovered from its `.partial` file has no display facts — the tally is not in the crash file — and reads
+  N/A. The focus pair, which the partial carries, is the precedent this does not follow.
+
+**A side effect of region 4's poll (layout 4).** `GetDesc` every 500 ms also refreshes the chain's output size, which
+catches a `ResizeBuffers1` the hook inventory does not have: a title that resizes through it now splits its segments at the
+change and reads "settings changed mid-session" (FR-6.4), which is what it was.
+
+**Where it is shown** (`08_UI`): the session summary's Display card and line, the game page's last measured session and
+its Sessions column, three Trend metrics — *Exclusive fullscreen share %*, *Borderless share %*, *Windowed share %*, every
+tier, and a mode switch is not a mid-session change for them (switching resizes the swap chain; the share is what that
+switch was) — three Compare rows, never ranked, and the CSV's `# display:` line (§Export schema) and the JSON's aggregates.
+
 ## Per-process VRAM (Tier 1)
 
 `vramUsedMb` from `IDXGIAdapter3::QueryVideoMemoryInfo(LOCAL)` inside the game = **this game's** usage and budget. **MiB, truncating, and it must use the same divisor as `vramBudgetMb`** — the two are compared, and mismatched rounding would put a systematic bias into `budget_exceeded_pct`. Residual: a flip within 1 MiB of the budget, 0.004% of a 24 GiB card. Stored as its own series and clearly labelled apart from the adapter-wide figure from `18_GPU_VENDOR_APIS`. Aggregates: avg, max, and `budget_exceeded_pct` (share of samples where `CurrentUsage > Budget`, i.e. the driver was likely evicting — a genuinely useful stutter explanation).
@@ -700,6 +764,7 @@ Per session over 1 Hz samples: `avg` (mean of non-null), `max`. Sensor timeline 
 | Path tracing | heuristic, confidence-scored, never asserted | not available |
 | Per-process VRAM | exact | not available |
 | PC latency | as reported by Reflex | not available |
+| Display mode (beta.10) | per 100 ms sample: exclusive fullscreen as the swap chain answers it (DXGI; OpenGL and Vulkan cannot say), borderless, windowed, minimised; the window's size from user32 | per 1 s sample, from the window alone: windowed, minimised, or *fullscreen or borderless* — never split |
 | GPU temp / load / power | vendor API accuracy, ±1 s sampling | same |
 | CPU temperature | sensor-inherent ±1–2 °C, needs LHM + PawnIO + elevation. **Read since 2026-09-21** (`Telemetry.LhmCpuTemperatureReader`: the package sensor, else the hottest core) and **unmeasured on real hardware** — no elevated run with PawnIO has been taken (`20_OPEN_QUESTIONS` §CPU) | same |
 | CPU load | **time busy over elapsed, every logical processor** (`GetSystemTimes`, 1 Hz, unprivileged; since 2026-09-21). Not Task Manager's "utility", which is frequency-scaled and exceeds 100 under turbo — the two are different numbers and this one is stated as what it is. Null on a session's first tick (no interval yet), never 0 | same |
@@ -732,4 +797,4 @@ Per-column sources, and what a *Tier-2* export does instead:
 | `vram_mb` | `vram_proc` per-frame blob. Note the value is refreshed at 1 Hz (`17_HOOK_ENGINE` §Memory) so it is a held sample, not a per-frame measurement — the header block says so | `N/A` |
 | `reflex_latency_us` | `latency_us` blob; **finalize must write it** | `N/A` |
 
-Plus a `#`-prefixed header block: game, date, **capture tier**, api, present mode, hardware snapshot, segment list, the tri-state flags with their sources, and the note that `vram_mb` is 1 Hz-sampled. The tier belongs in the header because a Tier-2 export is missing whole columns and anyone reading it later must know why.
+Plus a `#`-prefixed header block: game, date, **capture tier**, api, present mode, swap effect, **the display line** (beta.10: `# display:` with each mode's milliseconds, the changes, the source and the window / back buffer / monitor sizes, or `N/A` for a session recorded before — §Display mode; a mode is the session's, not a frame's, so it is not a column), hardware snapshot, segment list, the tri-state flags with their sources, and the note that `vram_mb` is 1 Hz-sampled. The tier belongs in the header because a Tier-2 export is missing whole columns and anyone reading it later must know why.

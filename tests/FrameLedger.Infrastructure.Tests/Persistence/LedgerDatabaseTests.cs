@@ -135,6 +135,46 @@ public sealed class LedgerDatabaseTests
     }
 
     /// <summary>
+    /// Schema 0016 (2026-09-27, beta.10): the display mode's fifteen columns, ADD COLUMN only — a session written before it
+    /// has none of them (N/A, never a zero), and a new one writes and reads each.
+    /// </summary>
+    [Fact]
+    public async Task ScriptSixteenAddsTheDisplayColumnsAndAnEarlierSessionHasNone()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(16);
+        long gameId = (await new SqliteGameRepository(f.Db).EnsureAsync(
+            new() { ExePath = @"C:\Games\D\d.exe", SizeBytes = 1, MtimeUnixMs = 2 }, "D", Ct).ConfigureAwait(true)).Id;
+        long snapshotId = await new SqliteHardwareSnapshotRepository(f.Db).EnsureAsync(new HardwareSnapshot { GpuName = "g" }, DateTimeOffset.UnixEpoch, Ct)
+            .ConfigureAwait(true);
+        string path = f.Path;
+        await f.Db.DisposeAsync().ConfigureAwait(true);
+        var c15 = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        await using (c15.ConfigureAwait(true))
+        {
+            await c15.OpenAsync(Ct).ConfigureAwait(true);
+            await RewindToAsync(c15, 15).ConfigureAwait(true);
+            await c15.ExecuteAsync(new CommandDefinition(
+                "INSERT INTO sessions (session_guid, game_id, snapshot_id, started_at, ended_at, duration_s, qpc_epoch, qpc_frequency, capture_tier, capture_mode, exit_status, frame_count, app_frame_count, displayed_frame_count, dropped_frames) "
+                + "VALUES ('00000000-0000-0000-0000-000000000016', @gameId, @snapshotId, 0, 60000, 60, 0, 10000000, 2, 'attach', 'normal', 0, 0, 0, 0)",
+                new { gameId, snapshotId }, cancellationToken: Ct)).ConfigureAwait(true);
+        }
+
+        LedgerDatabase migrated = await LedgerDatabase.OpenAsync(path, ct: Ct).ConfigureAwait(true);
+        await using (migrated.ConfigureAwait(true))
+        {
+            migrated.SchemaVersion.Should().Be(MigrationRunner.LatestVersion);
+            long columns = await migrated.ReadAsync((c, ct) => c.ExecuteScalarAsync<long>(new CommandDefinition(
+                "SELECT COUNT(*) FROM pragma_table_info('sessions') WHERE substr(name, 1, 8) = 'display_'", cancellationToken: ct)), Ct).ConfigureAwait(true);
+            columns.Should().Be(15);
+            SessionRow before = (await new SqliteSessionRepository(migrated).FindAsync(Guid.Parse("00000000-0000-0000-0000-000000000016"), Ct).ConfigureAwait(true))!;
+            before.DisplayExclusiveMs.Should().BeNull("a session recorded before beta.10 has no display facts, and reads N/A");
+            before.DisplaySource.Should().BeNull();
+            before.DisplayMonitorHz.Should().BeNull();
+        }
+    }
+
+    /// <summary>
     /// Schema 0015 (2026-09-27, beta.10): <c>games.engine_version_source</c>, and the bare "4"/"5" the old Unreal rule wrote
     /// removed — only where detection wrote it. A value the user typed, one with no provenance badge, another engine's, and a
     /// row whose provenance cannot even be parsed are left exactly as they were, and the last does not fail the migration.

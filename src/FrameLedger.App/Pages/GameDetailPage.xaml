@@ -256,6 +256,14 @@
                                 <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Resolution}" Binding="{Binding ResolutionText}" />
                                 <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_GpuTemp}" Binding="{Binding GpuTempText}" />
                                 <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Api}" Binding="{Binding ApiText}" />
+                                <!-- beta.10: both tiers; the tooltip carries every share, the window, the back buffer and the source -->
+                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Display}">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
+                                            <TextBlock Text="{Binding DisplayModeText}" ToolTip="{Binding DisplayModeTooltip}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridTemplateColumn>
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">

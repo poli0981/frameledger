@@ -96,6 +96,8 @@ public sealed class CaptureSessionLaunchTests : IAsyncDisposable
         }
 
         public bool IsRunning(string normalisedExePath) => false;
+
+        public IReadOnlyList<int> PidsOf(string normalisedExePath) => [];
     }
 
     private async Task<IGameConsentStore> StoreAsync(bool consented)

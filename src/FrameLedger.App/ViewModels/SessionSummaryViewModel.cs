@@ -82,6 +82,13 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
     [ObservableProperty]
     private string? _exceptionLine;
 
+    /// <summary>
+    /// How the game was shown (beta.10, schema 0016): every mode's share, the window on its monitor, the back buffer and what
+    /// the facts rested on — in either tier; null for a row recorded before, or recovered from its crash file.
+    /// </summary>
+    [ObservableProperty]
+    private string? _displayLine;
+
     /// <summary>Tier 2's payload (2026-09-22): why this session measured nothing, from the row's notes; empty for a hooked row.</summary>
     [ObservableProperty]
     private string _tier2Reason = string.Empty;
@@ -338,6 +345,7 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         LibrariesLine = LoadedLibraries(row.RuntimeModulesJson, Game.Libraries);
         DriverProfileLine = NvidiaOverrides.ProfileLine(row.DriverProfileJson);
         DriverStateLine = NvidiaOverrides.DriverLine(row.NgxDriverWordsJson);
+        DisplayLine = DisplayText.Line(DisplayText.Of(row));
         Tags = _annotation is null ? string.Empty : string.Join(", ", _annotation.Tags);
         Notes = _annotation?.Notes ?? string.Empty;
         HasDisplayed = Series?.HasGenerated == true;
@@ -362,6 +370,12 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         Stats.Add(new StatCardModel(Strings.Summary_Stat_Stutter, IsHooked && row.StutterCount is long count && row.StutterTimePct is double pct
             ? string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_Stutter_Format, count, pct) : Strings.Common_NotAvailable));
         Stats.Add(new StatCardModel(Strings.Summary_Stat_Duration, Formats.Duration(row.DurationSeconds)));
+
+        // beta.10, both tiers: the mode the game was shown in longest, and the window's size in it.
+        Domain.Display.DisplaySummary? display = DisplayText.Of(row);
+        string window = DisplayText.Window(display);
+        Stats.Add(new StatCardModel(Strings.Summary_Stat_Display, DisplayText.Headline(display),
+            string.Equals(window, Strings.Common_NotAvailable, StringComparison.Ordinal) ? null : window));
 
         // The machine, both tiers: telemetry is what a not-hooked session still has. Load is the average, temperature the peak.
         Stats.Add(new StatCardModel(Strings.Summary_Stat_Gpu, string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_LoadTemp_Format, Formats.Percent(row.AvgGpuLoad), Formats.Temperature(row.MaxGpuTemp))));

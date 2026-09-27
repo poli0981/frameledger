@@ -120,6 +120,13 @@ public sealed class CompareViewModelTests
             presented.Cells.Should().OnlyContain(static c => c.Text == "N/A", "these sessions measured FG as none, so the Native row has them and this one does not");
             CompareRowViewModel native = vm.Rows.Single(r => string.Equals(r.Metric, "Native FPS", StringComparison.Ordinal));
             native.Cells.Skip(1).Should().OnlyContain(static c => c.Text == "60");
+
+            // beta.10: the display rows are facts, not scores — none is best, and a row recorded before says N/A.
+            foreach (string metric in new[] { "Display mode", "Window", "Monitor" })
+            {
+                CompareRowViewModel display = vm.Rows.Single(r => string.Equals(r.Metric, metric, StringComparison.Ordinal));
+                display.Cells.Should().OnlyContain(static c => c.Text == "N/A" && !c.IsBest);
+            }
         }
         finally
         {

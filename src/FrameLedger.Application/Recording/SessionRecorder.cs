@@ -288,7 +288,7 @@ public sealed class SessionRecorder : ISessionRecorder
             ForegroundTicks = hooked ? o.ForegroundTicks : null,
             GuardTicksPublished = hooked ? o.GuardTicksPublished : null,
             AcExceptionFamily = hooked ? o.ExceptionFamily : null,
-        };
+        }.WithDisplay(o.Display);
     }
 
     private static AggregationInput Hooked(CaptureOutcome o, long qpcFrequency) => new()

@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using FrameLedger.App.Services;
 using FrameLedger.Application.Persistence;
+using FrameLedger.Domain.Display;
 using FrameLedger.Domain.Sessions;
 
 namespace FrameLedger.App.Charts;
@@ -44,12 +45,19 @@ public static class TrendSeriesBuilder
     /// <summary>How many sessions FR-6.4 leaves out at the default setting.</summary>
     public static int ExcludedCount(IReadOnlyList<SessionRow> rows) => ExcludedCount(rows, TrendMetric.PresentedFps);
 
-    /// <summary>Whether a session can have a point for <paramref name="metric"/>: a frame rate needs the hooks; the machine is every session's.</summary>
+    /// <summary>
+    /// Whether a session can have a point for <paramref name="metric"/>: a frame rate needs the hooks; the machine is every
+    /// session's, and so is the display mode (beta.10) — the window is read out of process whether or not anything was hooked.
+    /// </summary>
     public static bool Counts(SessionRow row, TrendMetric metric)
     {
         ArgumentNullException.ThrowIfNull(row);
-        return row.Tier == CaptureTier.Hooked || IsMachineMetric(metric);
+        return row.Tier == CaptureTier.Hooked || IsMachineMetric(metric) || IsDisplayMetric(metric);
     }
+
+    /// <summary>The display-mode shares (beta.10).</summary>
+    public static bool IsDisplayMetric(TrendMetric metric) =>
+        metric is TrendMetric.DisplayExclusiveShare or TrendMetric.DisplayBorderlessShare or TrendMetric.DisplayWindowedShare;
 
     /// <summary>The metrics that are telemetry, recorded by every session whatever its tier.</summary>
     public static bool IsMachineMetric(TrendMetric metric) => metric is TrendMetric.MaxGpuTemp or TrendMetric.AvgGpuLoad or TrendMetric.AvgGpuPower
@@ -68,6 +76,13 @@ public static class TrendSeriesBuilder
     public static bool IsPartial(SessionRow row, TrendMetric metric)
     {
         ArgumentNullException.ThrowIfNull(row);
+        // A display share is the whole session's by construction (beta.10): switching between fullscreen and a window resizes
+        // the swap chain, which is exactly what marks a session "settings changed" — the share is what that change was.
+        if (IsDisplayMetric(metric))
+        {
+            return false;
+        }
+
         // A steady state (CLAUDE.md rule 6, 2026-09-17) is the factor's AND the Native / Displayed rates beside it: all three
         // describe the state the session spent most of its generating time in, never the whole session (beta.8).
         return row.SettingsChangedMidSession
@@ -101,8 +116,25 @@ public static class TrendSeriesBuilder
             TrendMetric.MaxCpuTemp => row.MaxCpuTemp,
             TrendMetric.AvgRam => row.AvgRamMb,
             TrendMetric.FgFactor => readout.Kind == FpsReadoutKind.Generated ? readout.Factor : null,
+            TrendMetric.DisplayExclusiveShare => DisplayShare(row, DisplayMode.ExclusiveFullscreen),
+            TrendMetric.DisplayBorderlessShare => DisplayShare(row, DisplayMode.Borderless),
+            TrendMetric.DisplayWindowedShare => DisplayShare(row, DisplayMode.Windowed),
             _ => null,
         };
+    }
+
+    /// <summary>
+    /// A mode's share of the session's observed time (0–100), or null: no display facts on the row, no window ever read, or —
+    /// for exclusive fullscreen and borderless — time the two could not be told apart, which would make either share a guess.
+    /// </summary>
+    private static double? DisplayShare(SessionRow row, DisplayMode mode)
+    {
+        if (DisplayText.Of(row) is not { ObservedMs: > 0 } display)
+        {
+            return null;
+        }
+
+        return mode is DisplayMode.ExclusiveFullscreen or DisplayMode.Borderless && !display.ExclusivityKnown ? null : display.SharePercent(mode);
     }
 
     /// <summary>

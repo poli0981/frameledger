@@ -149,6 +149,44 @@ public sealed class GameDetailViewModelTests
         }
     }
 
+    /// <summary>
+    /// beta.10 (<c>03_METRICS</c> §Display mode): the last measured session says how it was shown, and every session row —
+    /// Tier 2 included — has its display column, N/A for one recorded before.
+    /// </summary>
+    [Fact]
+    public async Task TheLastSessionAndEverySessionRowSayHowTheGameWasShown()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow game = await s.GameAsync("Expedition");
+            DateTimeOffset t0 = DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_000_000);
+            await s.SessionAsync(game.Id, t0, hooked: false, display: new FrameLedger.Domain.Display.DisplaySummary { WindowedMs = 60_000, WindowWidth = 1280, WindowHeight = 720 });
+            await s.SessionAsync(game.Id, t0.AddHours(1), display: new FrameLedger.Domain.Display.DisplaySummary
+            {
+                BorderlessMs = 92_000,
+                ExclusiveMs = 8_000,
+                Source = "swapchain",
+                WindowWidth = 2560,
+                WindowHeight = 1440,
+            });
+            await s.SessionAsync(game.Id, t0.AddHours(-1));
+
+            (GameDetailViewModel vm, _, _, _, _) = await BuildAsync(s, game.Id);
+
+            vm.Measured.Should().Contain("Display: Borderless 92% · 2560×1440");
+            vm.Sessions.Select(static r => r.DisplayModeText).Should().Equal("Borderless 92%", "Windowed 100%", "N/A");
+            vm.Sessions[0].DisplayModeTooltip.Should().StartWith("Display: Exclusive fullscreen 8% · Borderless 92%");
+            vm.Sessions[2].DisplayModeTooltip.Should().BeNull();
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
+
     /// <summary>The Supports row (P4 PR-1): what the Agent's detection sweep wrote, as product names, and nothing measured.</summary>
     [Fact]
     public async Task TheSupportsRowReadsWhatTheDetectionSweepWrote()

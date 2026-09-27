@@ -40,4 +40,16 @@ public enum TrendMetric
     /// of the session, so it is treated as a mid-session change: left out by default, drawn marked when those are included.
     /// </summary>
     FgFactor,
+
+    /// <summary>
+    /// The three below are beta.10's (<c>03_METRICS</c> §Display mode): the share of the session's observed time in a mode,
+    /// every session whatever its tier — the window is read out of process. Exclusive fullscreen and borderless have a point
+    /// only where the whole observed time could be told apart; a window that covered its monitor while nothing could ask the
+    /// swap chain counts as neither.
+    /// </summary>
+    DisplayExclusiveShare,
+
+    DisplayBorderlessShare,
+
+    DisplayWindowedShare,
 }

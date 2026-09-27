@@ -130,16 +130,19 @@ public static class Strings
         nameof(Compare_Legend_Format),
         nameof(Compare_Metric_AvgCpuLoad),
         nameof(Compare_Metric_AvgGpuLoad),
+        nameof(Compare_Metric_Display),
         nameof(Compare_Metric_Displayed),
         nameof(Compare_Metric_Duration),
         nameof(Compare_Metric_MaxCpuTemp),
         nameof(Compare_Metric_MaxGpuTemp),
         nameof(Compare_Metric_Median),
+        nameof(Compare_Metric_Monitor),
         nameof(Compare_Metric_Native),
         nameof(Compare_Metric_P01Low),
         nameof(Compare_Metric_P1Low),
         nameof(Compare_Metric_Presented),
         nameof(Compare_Metric_StutterPct),
+        nameof(Compare_Metric_Window),
         nameof(Compare_Mixed_Body),
         nameof(Compare_Mixed_Legend),
         nameof(Compare_Mixed_Proceed),
@@ -180,6 +183,26 @@ public static class Strings
         nameof(Dashboard_Totals_Playtime),
         nameof(Dashboard_Totals_ThisWeek),
         nameof(Diag_Written_Format),
+        nameof(Display_Buffer_Format),
+        nameof(Display_BufferEffect_Format),
+        nameof(Display_Changes_Format),
+        nameof(Display_Changes_One),
+        nameof(Display_Line_Format),
+        nameof(Display_Mode_Borderless),
+        nameof(Display_Mode_CoversScreen),
+        nameof(Display_Mode_Exclusive),
+        nameof(Display_Mode_Minimized),
+        nameof(Display_Mode_NoWindow),
+        nameof(Display_Mode_Windowed),
+        nameof(Display_Share_Format),
+        nameof(Display_Size_Format),
+        nameof(Display_SizeHz_Format),
+        nameof(Display_Source_OpenGl),
+        nameof(Display_Source_SwapChain),
+        nameof(Display_Source_Window),
+        nameof(Display_Window_Format),
+        nameof(Display_WindowOnMonitor_Format),
+        nameof(Display_WindowOnMonitorHz_Format),
         nameof(EditGame_Detected),
         nameof(EditGame_Name),
         nameof(EditGame_Notes),
@@ -600,6 +623,7 @@ public static class Strings
         nameof(Session_UnderException_Format),
         nameof(Sessions_Col_Api),
         nameof(Sessions_Col_Date),
+        nameof(Sessions_Col_Display),
         nameof(Sessions_Col_Displayed),
         nameof(Sessions_Col_Duration),
         nameof(Sessions_Col_Exit),
@@ -728,6 +752,7 @@ public static class Strings
         nameof(Summary_Show_Sensors),
         nameof(Summary_Stat_Avg),
         nameof(Summary_Stat_Cpu),
+        nameof(Summary_Stat_Display),
         nameof(Summary_Stat_Duration),
         nameof(Summary_Stat_Gpu),
         nameof(Summary_Stat_LoadTemp_Format),
@@ -797,7 +822,10 @@ public static class Strings
         nameof(Trend_Metric_AvgGpuLoad),
         nameof(Trend_Metric_AvgGpuPower),
         nameof(Trend_Metric_AvgRam),
+        nameof(Trend_Metric_DisplayBorderless),
         nameof(Trend_Metric_Displayed),
+        nameof(Trend_Metric_DisplayExclusive),
+        nameof(Trend_Metric_DisplayWindowed),
         nameof(Trend_Metric_FgFactor),
         nameof(Trend_Metric_Label),
         nameof(Trend_Metric_MaxCpuTemp),
@@ -1049,6 +1077,8 @@ public static class Strings
 
     public static string Compare_Metric_AvgGpuLoad => ResourceManager.GetString(nameof(Compare_Metric_AvgGpuLoad), Culture) ?? nameof(Compare_Metric_AvgGpuLoad);
 
+    public static string Compare_Metric_Display => ResourceManager.GetString(nameof(Compare_Metric_Display), Culture) ?? nameof(Compare_Metric_Display);
+
     public static string Compare_Metric_Displayed => ResourceManager.GetString(nameof(Compare_Metric_Displayed), Culture) ?? nameof(Compare_Metric_Displayed);
 
     public static string Compare_Metric_Duration => ResourceManager.GetString(nameof(Compare_Metric_Duration), Culture) ?? nameof(Compare_Metric_Duration);
@@ -1059,6 +1089,8 @@ public static class Strings
 
     public static string Compare_Metric_Median => ResourceManager.GetString(nameof(Compare_Metric_Median), Culture) ?? nameof(Compare_Metric_Median);
 
+    public static string Compare_Metric_Monitor => ResourceManager.GetString(nameof(Compare_Metric_Monitor), Culture) ?? nameof(Compare_Metric_Monitor);
+
     public static string Compare_Metric_Native => ResourceManager.GetString(nameof(Compare_Metric_Native), Culture) ?? nameof(Compare_Metric_Native);
 
     public static string Compare_Metric_P01Low => ResourceManager.GetString(nameof(Compare_Metric_P01Low), Culture) ?? nameof(Compare_Metric_P01Low);
@@ -1068,6 +1100,8 @@ public static class Strings
     public static string Compare_Metric_Presented => ResourceManager.GetString(nameof(Compare_Metric_Presented), Culture) ?? nameof(Compare_Metric_Presented);
 
     public static string Compare_Metric_StutterPct => ResourceManager.GetString(nameof(Compare_Metric_StutterPct), Culture) ?? nameof(Compare_Metric_StutterPct);
+
+    public static string Compare_Metric_Window => ResourceManager.GetString(nameof(Compare_Metric_Window), Culture) ?? nameof(Compare_Metric_Window);
 
     public static string Compare_Mixed_Body => ResourceManager.GetString(nameof(Compare_Mixed_Body), Culture) ?? nameof(Compare_Mixed_Body);
 
@@ -1148,6 +1182,46 @@ public static class Strings
     public static string Dashboard_Totals_ThisWeek => ResourceManager.GetString(nameof(Dashboard_Totals_ThisWeek), Culture) ?? nameof(Dashboard_Totals_ThisWeek);
 
     public static string Diag_Written_Format => ResourceManager.GetString(nameof(Diag_Written_Format), Culture) ?? nameof(Diag_Written_Format);
+
+    public static string Display_Buffer_Format => ResourceManager.GetString(nameof(Display_Buffer_Format), Culture) ?? nameof(Display_Buffer_Format);
+
+    public static string Display_BufferEffect_Format => ResourceManager.GetString(nameof(Display_BufferEffect_Format), Culture) ?? nameof(Display_BufferEffect_Format);
+
+    public static string Display_Changes_Format => ResourceManager.GetString(nameof(Display_Changes_Format), Culture) ?? nameof(Display_Changes_Format);
+
+    public static string Display_Changes_One => ResourceManager.GetString(nameof(Display_Changes_One), Culture) ?? nameof(Display_Changes_One);
+
+    public static string Display_Line_Format => ResourceManager.GetString(nameof(Display_Line_Format), Culture) ?? nameof(Display_Line_Format);
+
+    public static string Display_Mode_Borderless => ResourceManager.GetString(nameof(Display_Mode_Borderless), Culture) ?? nameof(Display_Mode_Borderless);
+
+    public static string Display_Mode_CoversScreen => ResourceManager.GetString(nameof(Display_Mode_CoversScreen), Culture) ?? nameof(Display_Mode_CoversScreen);
+
+    public static string Display_Mode_Exclusive => ResourceManager.GetString(nameof(Display_Mode_Exclusive), Culture) ?? nameof(Display_Mode_Exclusive);
+
+    public static string Display_Mode_Minimized => ResourceManager.GetString(nameof(Display_Mode_Minimized), Culture) ?? nameof(Display_Mode_Minimized);
+
+    public static string Display_Mode_NoWindow => ResourceManager.GetString(nameof(Display_Mode_NoWindow), Culture) ?? nameof(Display_Mode_NoWindow);
+
+    public static string Display_Mode_Windowed => ResourceManager.GetString(nameof(Display_Mode_Windowed), Culture) ?? nameof(Display_Mode_Windowed);
+
+    public static string Display_Share_Format => ResourceManager.GetString(nameof(Display_Share_Format), Culture) ?? nameof(Display_Share_Format);
+
+    public static string Display_Size_Format => ResourceManager.GetString(nameof(Display_Size_Format), Culture) ?? nameof(Display_Size_Format);
+
+    public static string Display_SizeHz_Format => ResourceManager.GetString(nameof(Display_SizeHz_Format), Culture) ?? nameof(Display_SizeHz_Format);
+
+    public static string Display_Source_OpenGl => ResourceManager.GetString(nameof(Display_Source_OpenGl), Culture) ?? nameof(Display_Source_OpenGl);
+
+    public static string Display_Source_SwapChain => ResourceManager.GetString(nameof(Display_Source_SwapChain), Culture) ?? nameof(Display_Source_SwapChain);
+
+    public static string Display_Source_Window => ResourceManager.GetString(nameof(Display_Source_Window), Culture) ?? nameof(Display_Source_Window);
+
+    public static string Display_Window_Format => ResourceManager.GetString(nameof(Display_Window_Format), Culture) ?? nameof(Display_Window_Format);
+
+    public static string Display_WindowOnMonitor_Format => ResourceManager.GetString(nameof(Display_WindowOnMonitor_Format), Culture) ?? nameof(Display_WindowOnMonitor_Format);
+
+    public static string Display_WindowOnMonitorHz_Format => ResourceManager.GetString(nameof(Display_WindowOnMonitorHz_Format), Culture) ?? nameof(Display_WindowOnMonitorHz_Format);
 
     public static string EditGame_Detected => ResourceManager.GetString(nameof(EditGame_Detected), Culture) ?? nameof(EditGame_Detected);
 
@@ -1989,6 +2063,8 @@ public static class Strings
 
     public static string Sessions_Col_Date => ResourceManager.GetString(nameof(Sessions_Col_Date), Culture) ?? nameof(Sessions_Col_Date);
 
+    public static string Sessions_Col_Display => ResourceManager.GetString(nameof(Sessions_Col_Display), Culture) ?? nameof(Sessions_Col_Display);
+
     public static string Sessions_Col_Displayed => ResourceManager.GetString(nameof(Sessions_Col_Displayed), Culture) ?? nameof(Sessions_Col_Displayed);
 
     public static string Sessions_Col_Duration => ResourceManager.GetString(nameof(Sessions_Col_Duration), Culture) ?? nameof(Sessions_Col_Duration);
@@ -2245,6 +2321,8 @@ public static class Strings
 
     public static string Summary_Stat_Cpu => ResourceManager.GetString(nameof(Summary_Stat_Cpu), Culture) ?? nameof(Summary_Stat_Cpu);
 
+    public static string Summary_Stat_Display => ResourceManager.GetString(nameof(Summary_Stat_Display), Culture) ?? nameof(Summary_Stat_Display);
+
     public static string Summary_Stat_Duration => ResourceManager.GetString(nameof(Summary_Stat_Duration), Culture) ?? nameof(Summary_Stat_Duration);
 
     public static string Summary_Stat_Gpu => ResourceManager.GetString(nameof(Summary_Stat_Gpu), Culture) ?? nameof(Summary_Stat_Gpu);
@@ -2383,7 +2461,13 @@ public static class Strings
 
     public static string Trend_Metric_AvgRam => ResourceManager.GetString(nameof(Trend_Metric_AvgRam), Culture) ?? nameof(Trend_Metric_AvgRam);
 
+    public static string Trend_Metric_DisplayBorderless => ResourceManager.GetString(nameof(Trend_Metric_DisplayBorderless), Culture) ?? nameof(Trend_Metric_DisplayBorderless);
+
     public static string Trend_Metric_Displayed => ResourceManager.GetString(nameof(Trend_Metric_Displayed), Culture) ?? nameof(Trend_Metric_Displayed);
+
+    public static string Trend_Metric_DisplayExclusive => ResourceManager.GetString(nameof(Trend_Metric_DisplayExclusive), Culture) ?? nameof(Trend_Metric_DisplayExclusive);
+
+    public static string Trend_Metric_DisplayWindowed => ResourceManager.GetString(nameof(Trend_Metric_DisplayWindowed), Culture) ?? nameof(Trend_Metric_DisplayWindowed);
 
     public static string Trend_Metric_FgFactor => ResourceManager.GetString(nameof(Trend_Metric_FgFactor), Culture) ?? nameof(Trend_Metric_FgFactor);
 

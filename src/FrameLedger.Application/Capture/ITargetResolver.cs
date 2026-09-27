@@ -18,4 +18,12 @@ public interface ITargetResolver
     /// it only decides how long duration and telemetry accrue.
     /// </summary>
     bool IsRunning(string normalisedExePath);
+
+    /// <summary>
+    /// The processes running <paramref name="normalisedExePath"/> by their IMAGE PATH in the watcher's snapshot (beta.10) —
+    /// never by file name, the mistake 2026-09-23 fixed for the hold's clock — so a Tier-2 hold can find the game's window
+    /// without opening a process. Empty where no watcher runs, none matched, or every match's path was unreadable: the
+    /// display sample then says "no window", never another program's.
+    /// </summary>
+    IReadOnlyList<int> PidsOf(string normalisedExePath);
 }

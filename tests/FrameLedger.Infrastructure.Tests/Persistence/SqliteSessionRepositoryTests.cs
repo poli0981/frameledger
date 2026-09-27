@@ -56,6 +56,23 @@ public sealed class SqliteSessionRepositoryTests
         MedianFps = 60.5,
         P1LowFps = 48.2,
         ReflexActive = true,
+        SwapEffect = "flip_discard",
+        // Schema 0016 (beta.10): the display mode, every column set so the round trip covers each.
+        DisplayExclusiveMs = 1_000,
+        DisplayBorderlessMs = 80_000,
+        DisplayWindowedMs = 7_000,
+        DisplayCoversMs = 0,
+        DisplayMinimizedMs = 2_000,
+        DisplayNoWindowMs = 500,
+        DisplayChanges = 3,
+        DisplaySource = "swapchain",
+        DisplayWindowW = 2560,
+        DisplayWindowH = 1440,
+        DisplayBufferW = 2560,
+        DisplayBufferH = 1440,
+        DisplayMonitorW = 2560,
+        DisplayMonitorH = 1440,
+        DisplayMonitorHz = 165,
     };
 
     private static FrameBlobs Frames(int n) => new()
@@ -129,6 +146,17 @@ public sealed class SqliteSessionRepositoryTests
             Mode = CaptureMode.Attach,
             ExitStatus = ExitStatus.Normal,
             CaptureNotes = "RefusedHookNotEnabled",
+            // beta.10: a Tier-2 session still has its window (schema 0016), and nothing to say about a swap chain.
+            DisplayCoversMs = 118_000,
+            DisplayMinimizedMs = 2_000,
+            DisplayExclusiveMs = 0,
+            DisplayBorderlessMs = 0,
+            DisplayWindowedMs = 0,
+            DisplayNoWindowMs = 0,
+            DisplayChanges = 2,
+            DisplaySource = "window",
+            DisplayWindowW = 1920,
+            DisplayWindowH = 1080,
         };
 
         await repo.InsertFinalizedAsync(new FinalizedSession { Row = row }, Ct);
@@ -141,6 +169,8 @@ public sealed class SqliteSessionRepositoryTests
         back.RtFlag.Should().Be("na");
         back.Upscaler.Should().BeNull();
         back.CaptureNotes.Should().Be("RefusedHookNotEnabled");
+        (back.DisplayCoversMs, back.DisplayMinimizedMs, back.DisplayChanges, back.DisplaySource).Should().Be((118_000L, 2_000L, 2L, "window"));
+        (back.DisplayWindowW, back.DisplayBufferW, back.DisplayMonitorHz).Should().Be((1920, (int?)null, (int?)null));
         (await repo.FindFramesAsync(back.Id, Ct)).Should().BeNull();
     }
 

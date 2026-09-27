@@ -13,10 +13,10 @@ namespace FrameLedger.Infrastructure.Persistence;
 internal static class SessionRowColumns
 {
     public const string Insert =
-        "INSERT INTO sessions (session_guid, game_id, snapshot_id, started_at, ended_at, duration_s, qpc_epoch, qpc_frequency, capture_tier, capture_mode, capture_notes, ac_exception_family, late_attach, telemetry_source, overlay_build_id, exit_status, drain_ticks, foreground_ticks, records_before_attach, dxgi_presents_before_hook, gap_count, guard_ticks_published, launch_wait_ms, api, present_mode, swap_effect, hdr_flag, hdr_source, sync_interval_mode, upscaler, upscaler_quality, upscaler_sharpness, upscaler_driver_reported, render_w, render_h, output_w, output_h, upscale_ratio, settings_changed_midsession, fg_mode, fg_source, fg_factor, fg_driver_reported, fg_runtime_census, fg_none_withheld_reason, fg_refusal, fg_refusal_detail, fg_factor_scope, fg_steady_share, presented_fps, presented_qualifier, dxgi_unseen_total, dxgi_present_samples, displayed_counted_by, sl_tag_census, sl_interposer_version, runtime_modules, driver_profile, executable_markers, ngx_driver_words, rt_flag, rt_source, pt_flag, pt_source, pt_confidence, rr_flag, rr_source, rt_frame_pct, rays_per_pixel, rt_pso_count, rt_tier, hooks_installed_mask, raster_pso_count, frame_count, app_frame_count, displayed_frame_count, dropped_frames, native_fps, displayed_fps, median_fps, p1_low_fps, p01_low_fps, displayed_p1_low_fps, min_fps, max_fps, frametime_stddev_ms, stutter_count, stutter_time_pct, pso_stutter_pct, reflex_active, latency_avg_us, latency_p95_us, dropped_records, fault_count, data_quality_warnings, writer_status_at_end, early_stop_family, loader_signals, vram_proc_avg_mb, vram_proc_max_mb, vram_budget_exceeded_pct, vram_adapter_max_mb, avg_cpu_temp, max_cpu_temp, avg_gpu_temp, max_gpu_temp, max_gpu_hotspot, avg_gpu_load, avg_cpu_load, avg_ram_mb, avg_gpu_power_w, throttle_pct) "
-        + "VALUES (@session_guid, @game_id, @snapshot_id, @started_at, @ended_at, @duration_s, @qpc_epoch, @qpc_frequency, @capture_tier, @capture_mode, @capture_notes, @ac_exception_family, @late_attach, @telemetry_source, @overlay_build_id, @exit_status, @drain_ticks, @foreground_ticks, @records_before_attach, @dxgi_presents_before_hook, @gap_count, @guard_ticks_published, @launch_wait_ms, @api, @present_mode, @swap_effect, @hdr_flag, @hdr_source, @sync_interval_mode, @upscaler, @upscaler_quality, @upscaler_sharpness, @upscaler_driver_reported, @render_w, @render_h, @output_w, @output_h, @upscale_ratio, @settings_changed_midsession, @fg_mode, @fg_source, @fg_factor, @fg_driver_reported, @fg_runtime_census, @fg_none_withheld_reason, @fg_refusal, @fg_refusal_detail, @fg_factor_scope, @fg_steady_share, @presented_fps, @presented_qualifier, @dxgi_unseen_total, @dxgi_present_samples, @displayed_counted_by, @sl_tag_census, @sl_interposer_version, @runtime_modules, @driver_profile, @executable_markers, @ngx_driver_words, @rt_flag, @rt_source, @pt_flag, @pt_source, @pt_confidence, @rr_flag, @rr_source, @rt_frame_pct, @rays_per_pixel, @rt_pso_count, @rt_tier, @hooks_installed_mask, @raster_pso_count, @frame_count, @app_frame_count, @displayed_frame_count, @dropped_frames, @native_fps, @displayed_fps, @median_fps, @p1_low_fps, @p01_low_fps, @displayed_p1_low_fps, @min_fps, @max_fps, @frametime_stddev_ms, @stutter_count, @stutter_time_pct, @pso_stutter_pct, @reflex_active, @latency_avg_us, @latency_p95_us, @dropped_records, @fault_count, @data_quality_warnings, @writer_status_at_end, @early_stop_family, @loader_signals, @vram_proc_avg_mb, @vram_proc_max_mb, @vram_budget_exceeded_pct, @vram_adapter_max_mb, @avg_cpu_temp, @max_cpu_temp, @avg_gpu_temp, @max_gpu_temp, @max_gpu_hotspot, @avg_gpu_load, @avg_cpu_load, @avg_ram_mb, @avg_gpu_power_w, @throttle_pct) RETURNING id";
+        "INSERT INTO sessions (session_guid, game_id, snapshot_id, started_at, ended_at, duration_s, qpc_epoch, qpc_frequency, capture_tier, capture_mode, capture_notes, ac_exception_family, late_attach, telemetry_source, overlay_build_id, exit_status, drain_ticks, foreground_ticks, records_before_attach, dxgi_presents_before_hook, gap_count, guard_ticks_published, launch_wait_ms, api, present_mode, swap_effect, hdr_flag, hdr_source, sync_interval_mode, upscaler, upscaler_quality, upscaler_sharpness, upscaler_driver_reported, render_w, render_h, output_w, output_h, upscale_ratio, settings_changed_midsession, fg_mode, fg_source, fg_factor, fg_driver_reported, fg_runtime_census, fg_none_withheld_reason, fg_refusal, fg_refusal_detail, fg_factor_scope, fg_steady_share, presented_fps, presented_qualifier, dxgi_unseen_total, dxgi_present_samples, displayed_counted_by, sl_tag_census, sl_interposer_version, runtime_modules, driver_profile, executable_markers, ngx_driver_words, rt_flag, rt_source, pt_flag, pt_source, pt_confidence, rr_flag, rr_source, rt_frame_pct, rays_per_pixel, rt_pso_count, rt_tier, hooks_installed_mask, raster_pso_count, frame_count, app_frame_count, displayed_frame_count, dropped_frames, native_fps, displayed_fps, median_fps, p1_low_fps, p01_low_fps, displayed_p1_low_fps, min_fps, max_fps, frametime_stddev_ms, stutter_count, stutter_time_pct, pso_stutter_pct, reflex_active, latency_avg_us, latency_p95_us, dropped_records, fault_count, data_quality_warnings, writer_status_at_end, early_stop_family, loader_signals, vram_proc_avg_mb, vram_proc_max_mb, vram_budget_exceeded_pct, vram_adapter_max_mb, avg_cpu_temp, max_cpu_temp, avg_gpu_temp, max_gpu_temp, max_gpu_hotspot, avg_gpu_load, avg_cpu_load, avg_ram_mb, avg_gpu_power_w, throttle_pct, display_exclusive_ms, display_borderless_ms, display_windowed_ms, display_covers_ms, display_minimized_ms, display_nowindow_ms, display_changes, display_source, display_window_w, display_window_h, display_buffer_w, display_buffer_h, display_monitor_w, display_monitor_h, display_monitor_hz) "
+        + "VALUES (@session_guid, @game_id, @snapshot_id, @started_at, @ended_at, @duration_s, @qpc_epoch, @qpc_frequency, @capture_tier, @capture_mode, @capture_notes, @ac_exception_family, @late_attach, @telemetry_source, @overlay_build_id, @exit_status, @drain_ticks, @foreground_ticks, @records_before_attach, @dxgi_presents_before_hook, @gap_count, @guard_ticks_published, @launch_wait_ms, @api, @present_mode, @swap_effect, @hdr_flag, @hdr_source, @sync_interval_mode, @upscaler, @upscaler_quality, @upscaler_sharpness, @upscaler_driver_reported, @render_w, @render_h, @output_w, @output_h, @upscale_ratio, @settings_changed_midsession, @fg_mode, @fg_source, @fg_factor, @fg_driver_reported, @fg_runtime_census, @fg_none_withheld_reason, @fg_refusal, @fg_refusal_detail, @fg_factor_scope, @fg_steady_share, @presented_fps, @presented_qualifier, @dxgi_unseen_total, @dxgi_present_samples, @displayed_counted_by, @sl_tag_census, @sl_interposer_version, @runtime_modules, @driver_profile, @executable_markers, @ngx_driver_words, @rt_flag, @rt_source, @pt_flag, @pt_source, @pt_confidence, @rr_flag, @rr_source, @rt_frame_pct, @rays_per_pixel, @rt_pso_count, @rt_tier, @hooks_installed_mask, @raster_pso_count, @frame_count, @app_frame_count, @displayed_frame_count, @dropped_frames, @native_fps, @displayed_fps, @median_fps, @p1_low_fps, @p01_low_fps, @displayed_p1_low_fps, @min_fps, @max_fps, @frametime_stddev_ms, @stutter_count, @stutter_time_pct, @pso_stutter_pct, @reflex_active, @latency_avg_us, @latency_p95_us, @dropped_records, @fault_count, @data_quality_warnings, @writer_status_at_end, @early_stop_family, @loader_signals, @vram_proc_avg_mb, @vram_proc_max_mb, @vram_budget_exceeded_pct, @vram_adapter_max_mb, @avg_cpu_temp, @max_cpu_temp, @avg_gpu_temp, @max_gpu_temp, @max_gpu_hotspot, @avg_gpu_load, @avg_cpu_load, @avg_ram_mb, @avg_gpu_power_w, @throttle_pct, @display_exclusive_ms, @display_borderless_ms, @display_windowed_ms, @display_covers_ms, @display_minimized_ms, @display_nowindow_ms, @display_changes, @display_source, @display_window_w, @display_window_h, @display_buffer_w, @display_buffer_h, @display_monitor_w, @display_monitor_h, @display_monitor_hz) RETURNING id";
 
-    public const string Select = "SELECT id, session_guid, game_id, snapshot_id, started_at, ended_at, duration_s, qpc_epoch, qpc_frequency, capture_tier, capture_mode, capture_notes, ac_exception_family, late_attach, telemetry_source, overlay_build_id, exit_status, drain_ticks, foreground_ticks, records_before_attach, dxgi_presents_before_hook, gap_count, guard_ticks_published, launch_wait_ms, api, present_mode, swap_effect, hdr_flag, hdr_source, sync_interval_mode, upscaler, upscaler_quality, upscaler_sharpness, upscaler_driver_reported, render_w, render_h, output_w, output_h, upscale_ratio, settings_changed_midsession, fg_mode, fg_source, fg_factor, fg_driver_reported, fg_runtime_census, fg_none_withheld_reason, fg_refusal, fg_refusal_detail, fg_factor_scope, fg_steady_share, presented_fps, presented_qualifier, dxgi_unseen_total, dxgi_present_samples, displayed_counted_by, sl_tag_census, sl_interposer_version, runtime_modules, driver_profile, executable_markers, ngx_driver_words, rt_flag, rt_source, pt_flag, pt_source, pt_confidence, rr_flag, rr_source, rt_frame_pct, rays_per_pixel, rt_pso_count, rt_tier, hooks_installed_mask, raster_pso_count, frame_count, app_frame_count, displayed_frame_count, dropped_frames, native_fps, displayed_fps, median_fps, p1_low_fps, p01_low_fps, displayed_p1_low_fps, min_fps, max_fps, frametime_stddev_ms, stutter_count, stutter_time_pct, pso_stutter_pct, reflex_active, latency_avg_us, latency_p95_us, dropped_records, fault_count, data_quality_warnings, writer_status_at_end, early_stop_family, loader_signals, vram_proc_avg_mb, vram_proc_max_mb, vram_budget_exceeded_pct, vram_adapter_max_mb, avg_cpu_temp, max_cpu_temp, avg_gpu_temp, max_gpu_temp, max_gpu_hotspot, avg_gpu_load, avg_cpu_load, avg_ram_mb, avg_gpu_power_w, throttle_pct FROM sessions";
+    public const string Select = "SELECT id, session_guid, game_id, snapshot_id, started_at, ended_at, duration_s, qpc_epoch, qpc_frequency, capture_tier, capture_mode, capture_notes, ac_exception_family, late_attach, telemetry_source, overlay_build_id, exit_status, drain_ticks, foreground_ticks, records_before_attach, dxgi_presents_before_hook, gap_count, guard_ticks_published, launch_wait_ms, api, present_mode, swap_effect, hdr_flag, hdr_source, sync_interval_mode, upscaler, upscaler_quality, upscaler_sharpness, upscaler_driver_reported, render_w, render_h, output_w, output_h, upscale_ratio, settings_changed_midsession, fg_mode, fg_source, fg_factor, fg_driver_reported, fg_runtime_census, fg_none_withheld_reason, fg_refusal, fg_refusal_detail, fg_factor_scope, fg_steady_share, presented_fps, presented_qualifier, dxgi_unseen_total, dxgi_present_samples, displayed_counted_by, sl_tag_census, sl_interposer_version, runtime_modules, driver_profile, executable_markers, ngx_driver_words, rt_flag, rt_source, pt_flag, pt_source, pt_confidence, rr_flag, rr_source, rt_frame_pct, rays_per_pixel, rt_pso_count, rt_tier, hooks_installed_mask, raster_pso_count, frame_count, app_frame_count, displayed_frame_count, dropped_frames, native_fps, displayed_fps, median_fps, p1_low_fps, p01_low_fps, displayed_p1_low_fps, min_fps, max_fps, frametime_stddev_ms, stutter_count, stutter_time_pct, pso_stutter_pct, reflex_active, latency_avg_us, latency_p95_us, dropped_records, fault_count, data_quality_warnings, writer_status_at_end, early_stop_family, loader_signals, vram_proc_avg_mb, vram_proc_max_mb, vram_budget_exceeded_pct, vram_adapter_max_mb, avg_cpu_temp, max_cpu_temp, avg_gpu_temp, max_gpu_temp, max_gpu_hotspot, avg_gpu_load, avg_cpu_load, avg_ram_mb, avg_gpu_power_w, throttle_pct, display_exclusive_ms, display_borderless_ms, display_windowed_ms, display_covers_ms, display_minimized_ms, display_nowindow_ms, display_changes, display_source, display_window_w, display_window_h, display_buffer_w, display_buffer_h, display_monitor_w, display_monitor_h, display_monitor_hz FROM sessions";
 
     public static Dictionary<string, object?> Parameters(SessionRow s)
     {
@@ -25,10 +25,11 @@ internal static class SessionRowColumns
         Parameters1(d, s);
         Parameters2(d, s);
         Parameters3(d, s);
+        Parameters4(d, s);
         return d;
     }
 
-    public static SessionRow Read(DbDataReader r) => Read3(Read2(Read1(Read0(r), r), r), r);
+    public static SessionRow Read(DbDataReader r) => Read4(Read3(Read2(Read1(Read0(r), r), r), r), r);
 
 
     private static void Parameters0(Dictionary<string, object?> d, SessionRow s)
@@ -259,6 +260,26 @@ internal static class SessionRowColumns
         StutterCount = L(r, "stutter_count"),
     };
 
+    // Schema 0016 (beta.10): the display mode (03_METRICS §Display mode).
+    private static void Parameters4(Dictionary<string, object?> d, SessionRow s)
+    {
+        d["display_exclusive_ms"] = s.DisplayExclusiveMs;
+        d["display_borderless_ms"] = s.DisplayBorderlessMs;
+        d["display_windowed_ms"] = s.DisplayWindowedMs;
+        d["display_covers_ms"] = s.DisplayCoversMs;
+        d["display_minimized_ms"] = s.DisplayMinimizedMs;
+        d["display_nowindow_ms"] = s.DisplayNoWindowMs;
+        d["display_changes"] = s.DisplayChanges;
+        d["display_source"] = s.DisplaySource;
+        d["display_window_w"] = s.DisplayWindowW;
+        d["display_window_h"] = s.DisplayWindowH;
+        d["display_buffer_w"] = s.DisplayBufferW;
+        d["display_buffer_h"] = s.DisplayBufferH;
+        d["display_monitor_w"] = s.DisplayMonitorW;
+        d["display_monitor_h"] = s.DisplayMonitorH;
+        d["display_monitor_hz"] = s.DisplayMonitorHz;
+    }
+
     private static SessionRow Read3(SessionRow row, DbDataReader r) => row with
     {
         StutterTimePct = D(r, "stutter_time_pct"),
@@ -286,6 +307,26 @@ internal static class SessionRowColumns
         AvgRamMb = D(r, "avg_ram_mb"),
         AvgGpuPowerW = D(r, "avg_gpu_power_w"),
         ThrottlePct = D(r, "throttle_pct"),
+    };
+
+    // Schema 0016 (beta.10): the display mode.
+    private static SessionRow Read4(SessionRow row, DbDataReader r) => row with
+    {
+        DisplayExclusiveMs = L(r, "display_exclusive_ms"),
+        DisplayBorderlessMs = L(r, "display_borderless_ms"),
+        DisplayWindowedMs = L(r, "display_windowed_ms"),
+        DisplayCoversMs = L(r, "display_covers_ms"),
+        DisplayMinimizedMs = L(r, "display_minimized_ms"),
+        DisplayNoWindowMs = L(r, "display_nowindow_ms"),
+        DisplayChanges = L(r, "display_changes"),
+        DisplaySource = S(r, "display_source"),
+        DisplayWindowW = I(r, "display_window_w"),
+        DisplayWindowH = I(r, "display_window_h"),
+        DisplayBufferW = I(r, "display_buffer_w"),
+        DisplayBufferH = I(r, "display_buffer_h"),
+        DisplayMonitorW = I(r, "display_monitor_w"),
+        DisplayMonitorH = I(r, "display_monitor_h"),
+        DisplayMonitorHz = I(r, "display_monitor_hz"),
     };
 
     public static string ExitStatusText(ExitStatus status) => Vocabulary.ExitStatusText(status);

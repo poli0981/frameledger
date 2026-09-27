@@ -193,6 +193,11 @@ public sealed partial class CompareViewModel : ObservableObject
         Rows.Add(Row(Strings.Compare_Metric_AvgCpuLoad, rows, static r => r.AvgCpuLoad, Formats.Percent, higherIsBetter: null));
         Rows.Add(Row(Strings.Compare_Metric_MaxCpuTemp, rows, static r => r.MaxCpuTemp, Formats.Temperature, higherIsBetter: false));
         Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Duration, [.. rows.Select(static r => new CompareCell(Formats.Duration(r.DurationSeconds), false))]));
+
+        // beta.10: how each session was shown, both tiers. Facts, not scores: no mode is better than another, so none is best.
+        Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Display, [.. rows.Select(static r => new CompareCell(DisplayText.Shares(DisplayText.Of(r)), false))]));
+        Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Window, [.. rows.Select(static r => new CompareCell(DisplayText.Window(DisplayText.Of(r)), false))]));
+        Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Monitor, [.. rows.Select(static r => new CompareCell(DisplayText.Monitor(DisplayText.Of(r)), false))]));
     }
 
     /// <summary>

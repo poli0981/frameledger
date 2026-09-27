@@ -329,6 +329,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
         new(TrendMetric.MaxCpuTemp, Strings.Trend_Metric_MaxCpuTemp),
         new(TrendMetric.AvgRam, Strings.Trend_Metric_AvgRam),
         new(TrendMetric.FgFactor, Strings.Trend_Metric_FgFactor),
+        new(TrendMetric.DisplayExclusiveShare, Strings.Trend_Metric_DisplayExclusive),
+        new(TrendMetric.DisplayBorderlessShare, Strings.Trend_Metric_DisplayBorderless),
+        new(TrendMetric.DisplayWindowedShare, Strings.Trend_Metric_DisplayWindowed),
     ];
 
     /// <summary>The selected session's decoded series (null: none selected, Tier 2, or swept).</summary>
@@ -914,6 +917,15 @@ public sealed partial class GameDetailViewModel : ObservableObject
         foreach (TriStateChipModel chip in Chips.Where(static c => !c.IsNotApplicable))
         {
             Measured.Add(chip.Text);
+        }
+
+        // beta.10: how that session was shown — the mode that lasted longest and the window's size.
+        if (DisplayText.Of(lastHooked) is { } display)
+        {
+            string window = DisplayText.Window(display);
+            string headline = DisplayText.Headline(display);
+            Measured.Add(string.Format(CultureInfo.CurrentCulture, Strings.Display_Line_Format,
+                string.Equals(window, Strings.Common_NotAvailable, StringComparison.Ordinal) ? headline : headline + " · " + window));
         }
     }
 

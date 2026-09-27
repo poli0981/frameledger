@@ -106,4 +106,10 @@ public sealed record CaptureOutcome
     /// game's, so the crash witness applies even where no pid was ever held.
     /// </summary>
     public bool HeldUnhooked { get; init; }
+
+    /// <summary>
+    /// How the game was shown and for how long (beta.10, <c>03_METRICS</c> §Display mode), sampled on the loop's own ticks —
+    /// hooked and held alike. Null when the loop never sampled (no probe composed, or it ended before its first tick).
+    /// </summary>
+    public Domain.Display.DisplaySummary? Display { get; init; }
 }
