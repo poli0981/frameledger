@@ -27,7 +27,23 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
-_Nothing yet — entries continue here after `0.1.0-beta.9`._
+### Added
+
+- **The exact Unreal Engine version on a game's page** (owner request, beta.10). The Agent reads it from the game's
+  shipping executable on disk — its version number and the engine's build name compiled into it (`++UE5+Release-5.1`)
+  — and the page says which of the two it rests on: *Unreal Engine 4.27.2* for Lies of P, *5.4.4* for Clair Obscur:
+  Expedition 33, *5.1* for SILENT HILL 2 (whose studio replaced the version number with its own), and "not found in the
+  executable" where neither says anything (Cronos, Rune Factory). Measured on ten installed Unreal titles before it was
+  written: eight read, two honestly none. The file is read, never the game's process; a protected executable is scanned
+  whole, once per version of the file (up to 7.5 s on a USB drive for Black Myth: Wukong), and the scan stops if the Agent
+  is asked to. Rules `2026.09.6`: every game is re-detected once. Schema 0015 adds `games.engine_version_source`.
+
+### Fixed
+
+- **An Unreal game's engine version was a bare "4" or "5"** — and for most titles nothing at all. The rule's pattern had two
+  capture groups and the evaluator keeps the first, and it read only a version string most executables leave empty.
+  Schema 0015 removes the digits the old rule wrote (only where detection wrote them — a version you typed stays), and the
+  rules validator now refuses any version pattern that does not compile or that captures anything but exactly one group.
 
 ## [0.1.0-beta.9] - 2026-09-26
 

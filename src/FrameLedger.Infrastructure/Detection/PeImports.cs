@@ -127,6 +127,39 @@ public static class PeImports
         return ExecutableArchitecture.Of(machine, clrFlags);
     }
 
+    /// <summary>
+    /// Where the section named <paramref name="name"/> (<c>.rdata</c>) lies in the file (beta.10): its raw offset and length,
+    /// clamped to the file. Null when the file is not a PE this reader understands, has no such section, or holds none of
+    /// its bytes on disk — a protected executable can carry an empty <c>.rdata</c> and its constants somewhere else.
+    /// </summary>
+    public static (long Offset, long Length)? SectionRange(Stream file, string name)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+        ArgumentException.ThrowIfNullOrEmpty(name);
+        if (!file.CanSeek || !file.CanRead)
+        {
+            return null;
+        }
+
+        byte[] directories = new byte[16 * 8];
+        if (ReadHeaders(file, directories, out _) is not { } sections)
+        {
+            return null;
+        }
+
+        foreach (Section s in sections)
+        {
+            if (!string.Equals(s.Name, name, StringComparison.Ordinal) || s.RawSize == 0 || s.RawPointer >= file.Length)
+            {
+                continue;
+            }
+
+            return (s.RawPointer, Math.Min((long)s.RawSize, file.Length - s.RawPointer));
+        }
+
+        return null;
+    }
+
     /// <summary>DOS header → PE signature → optional header (PE32 or PE32+) → the 16 data directories and the section table. Null when any step does not read as a PE.</summary>
     private static List<Section>? ReadHeaders(Stream file, Span<byte> directories, out ushort machine)
     {
@@ -228,7 +261,14 @@ public static class PeImports
                 return null;
             }
 
+            int nameLength = header[..8].IndexOf((byte)0);
+            if (nameLength < 0)
+            {
+                nameLength = 8;    // an eight-character name has no terminator
+            }
+
             sections.Add(new Section(
+                Name: Encoding.ASCII.GetString(header[..nameLength]),
                 VirtualAddress: BinaryPrimitives.ReadUInt32LittleEndian(header[12..]),
                 VirtualSize: BinaryPrimitives.ReadUInt32LittleEndian(header[8..]),
                 RawPointer: BinaryPrimitives.ReadUInt32LittleEndian(header[20..]),
@@ -290,5 +330,5 @@ public static class PeImports
     }
 
     [StructLayout(LayoutKind.Auto)]
-    private readonly record struct Section(uint VirtualAddress, uint VirtualSize, uint RawPointer, uint RawSize);
+    private readonly record struct Section(string Name, uint VirtualAddress, uint VirtualSize, uint RawPointer, uint RawSize);
 }

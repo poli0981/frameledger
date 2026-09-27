@@ -40,6 +40,12 @@ public sealed record GameRow
 
     public string? EngineVersion { get; init; }
 
+    /// <summary>
+    /// Where <see cref="EngineVersion"/> came from (schema 0015, beta.10; <c>Domain.Detection.EngineVersionSource</c>): null
+    /// when the user typed it, when no build wrote one yet, or when nothing established a version.
+    /// </summary>
+    public string? EngineVersionSource { get; init; }
+
     public string? Publisher { get; init; }
 
     public string? GameVersion { get; init; }

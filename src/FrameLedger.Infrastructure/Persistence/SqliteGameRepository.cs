@@ -30,7 +30,7 @@ public sealed class SqliteGameRepository : IGameRepository
         + "ac_exception_eligible, ac_exception_verdict, ac_exception_sessions, ac_exception_checked_rules_version, "
         + "ac_exception_checked_exe_size_bytes, ac_exception_checked_exe_mtime_ms, ac_exception_checked_block, ac_exception_at, "
         + "ac_exception_family, ac_exception_disclosure_version, ac_exception_exe_size_bytes, ac_exception_exe_mtime_ms, "
-        + "ac_exception_lapsed_at, ac_exception_lapsed_reason";
+        + "ac_exception_lapsed_at, ac_exception_lapsed_reason, engine_version_source";
 
     private const string _selectByPath = $"SELECT {_columns} FROM games WHERE exe_path = @path";
 
@@ -77,8 +77,10 @@ public sealed class SqliteGameRepository : IGameRepository
 
     private const string _injected = "UPDATE games SET hook_last_injected_at = @at, updated_at = @at WHERE id = @id";
 
+    // A version the user changed keeps no detected witness beside it (schema 0015): engine_version_source goes with it.
     private const string _updateMetadata =
         "UPDATE games SET name = @Name, platform = @Platform, store_id = @StoreId, engine = @Engine, engine_version = @EngineVersion, "
+        + "engine_version_source = @engineVersionSource, "
         + "publisher = @Publisher, game_version = @GameVersion, cover_path = @CoverPath, notes = @Notes, field_provenance = @provenance, "
         + "updated_at = @now WHERE id = @id";
 
@@ -93,7 +95,8 @@ public sealed class SqliteGameRepository : IGameRepository
         + "updated_at = @now WHERE id = @id";
 
     private const string _applyDetection =
-        "UPDATE games SET engine = @engine, engine_version = @engineVersion, platform = @platform, capability_flags = @flags, "
+        "UPDATE games SET engine = @engine, engine_version = @engineVersion, engine_version_source = @engineVersionSource, "
+        + "platform = @platform, capability_flags = @flags, "
         + "field_provenance = @provenance, detection_rules_version = @rules, detection_exe_size_bytes = @size, detection_exe_mtime_ms = @mtime, "
         + "exe_machine = @machine, exe_file_version = @fileVersion, exe_product_version = @productVersion, library_versions = @libraries, "
         + "updated_at = @now WHERE id = @id";
@@ -197,6 +200,7 @@ public sealed class SqliteGameRepository : IGameRepository
                 metadata.StoreId,
                 metadata.Engine,
                 metadata.EngineVersion,
+                engineVersionSource = string.Equals(before.EngineVersion, metadata.EngineVersion, StringComparison.Ordinal) ? before.EngineVersionSource : null,
                 metadata.Publisher,
                 metadata.GameVersion,
                 metadata.CoverPath,
@@ -254,12 +258,19 @@ public sealed class SqliteGameRepository : IGameRepository
             Dictionary<string, string> map = FieldProvenance.Parse(before.FieldProvenanceJson);
             string? engine = FieldProvenance.Resolve(map, "engine", before.Engine, detection.EngineId);
             string? engineVersion = FieldProvenance.Resolve(map, "engine_version", before.EngineVersion, detection.EngineVersion);
+            // The witness goes where the version went (schema 0015): written only when this run's version was taken, so a
+            // version the user typed never gains a detected source, and a run that established nothing leaves both alone.
+            bool versionTaken = detection.EngineVersion is not null
+                && string.Equals(engineVersion, detection.EngineVersion, StringComparison.Ordinal)
+                && map.TryGetValue("engine_version", out string? badge) && string.Equals(badge, FieldProvenance.Detected, StringComparison.Ordinal);
+            string? engineVersionSource = versionTaken ? detection.EngineVersionSource : before.EngineVersionSource;
             string platform = FieldProvenance.Resolve(map, "platform", string.Equals(before.Platform, "none", StringComparison.Ordinal) ? null : before.Platform, detection.PlatformId) ?? "none";
             var p = new
             {
                 id = gameId,
                 engine,
                 engineVersion,
+                engineVersionSource,
                 platform,
                 flags = JsonSerializer.Serialize(detection.CapabilityIds.ToArray(), LedgerJsonContext.Default.StringArray),
                 provenance = map.Count == 0 ? before.FieldProvenanceJson : JsonSerializer.Serialize(map, LedgerJsonContext.Default.DictionaryStringString),
@@ -363,6 +374,7 @@ public sealed class SqliteGameRepository : IGameRepository
         ExeProductVersion = SqliteReaders.String(r, 37),
         Libraries = LibraryVersionsJson.Parse(SqliteReaders.String(r, 38)),
         AcException = ReadException(r),
+        EngineVersionSource = SqliteReaders.String(r, 53),    // schema 0015, the last column in _columns
     };
 
     /// <summary>Schema 0014's columns, 39 onwards in <see cref="_columns"/>' order.</summary>

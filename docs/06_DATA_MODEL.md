@@ -46,6 +46,9 @@ CREATE TABLE games (
   platform TEXT NOT NULL DEFAULT 'none',       -- steam|gog|epic|itch|none
   store_id TEXT,
   engine TEXT, engine_version TEXT,
+  -- (schema 0015, ALTERed last) engine_version_source TEXT: where engine_version came from — a
+  --   Domain.Detection.EngineVersionSource id (unreal_branch_file | unreal_branch | unreal_file_version, or the rule's
+  --   extractor type); NULL for a version the user typed. Written with the version only (05_DETECTION §Engine version)
   publisher TEXT, game_version TEXT,
   cover_path TEXT, notes TEXT,
   removed_at INTEGER,                          -- schema 0002 (P3 PR-3): FR-1.4 "remove, keep sessions" — the row stays
@@ -538,6 +541,15 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > (every end) — plus one downgrade in `ChangeExecutableAsync`, which ends a grant (`ExecutableChanged`) and forgets
 > the eligibility. The grant and the eligibility are each bound in SQL to the block they were reached about. `LatestVersion`
 > is 14; `LedgerDatabaseTests.ScriptFourteenAddsTheExceptionColumnsAndChangesNoRow`.
+
+> **`0015_engine_version_source.sql` (beta.10, 2026-09-27) — where an engine version came from.** `games.engine_version_source`
+> (`05_DETECTION` §Engine version): the witness an Unreal version rests on, or the rule's extractor type for every other
+> engine; written by `ApplyDetectionAsync` only where the run's version was taken (a `user` field keeps none), cleared by a
+> user's edit of the version (`UpdateMetadataAsync`). The script's one data change removes the bare `4` / `5` the old
+> Unreal rule wrote (a two-group regex returning its first group) — **only where `field_provenance` says `detected`**: a
+> value the user typed, one with no badge (which reads as the user's) and one whose provenance does not parse stay as they
+> were, and the last does not fail the migration (`CASE WHEN json_valid(…)`, since SQLite promises no order for `AND`).
+> `LatestVersion` is 15; `LedgerDatabaseTests.ScriptFifteenAddsTheWitnessAndRemovesOnlyTheOldRulesDetectedDigit`.
 
 > **Every open used to migrate, and one that should not have did — 2026-09-16.** The Agent's `--console sessions`,
 > a verb that prints, was run against the owner's ledger while the file on disk was at schema 2 and applied 0003 and

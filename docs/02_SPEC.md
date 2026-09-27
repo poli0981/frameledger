@@ -59,7 +59,7 @@ Requirement IDs (`FR-x`, `NFR-x`) are referenced by other docs, commits, and tes
 - FR-6.5 Session tags and notes.
 
 ### FR-7 Detection
-- FR-7.1 Static: engine, engine version, store platform, store id, publisher, game version (`05_DETECTION`).
+- FR-7.1 Static: engine, engine version, store platform, store id, publisher, game version (`05_DETECTION`; the Unreal Engine version since 2026-09-27, §Engine version).
 - FR-7.2 Runtime: API, present mode, swap effect, HDR, upscaler, FG, RT — all Tier 1, all measured.
 - FR-7.3 Rules ship as `detection-rules.json`, updatable independently of releases; **anticheat-block updates apply regardless of the user's rules auto-update preference.**
 

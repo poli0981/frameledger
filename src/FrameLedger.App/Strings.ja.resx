@@ -2609,6 +2609,26 @@
     <value>エンジン</value>
     <comment>review</comment>
   </data>
+  <data name="GameDetail_Details_EngineVersion" xml:space="preserve">
+    <value>エンジンのバージョン</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_EngineVersion_BranchAndFile" xml:space="preserve">
+    <value>ゲームの実行ファイル内にあるエンジンのビルド名とバージョン番号から。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_EngineVersion_Branch" xml:space="preserve">
+    <value>ゲームの実行ファイル内にあるエンジンのビルド名から。パッチ番号はそこに記録されていません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_EngineVersion_FileVersion" xml:space="preserve">
+    <value>実行ファイルのバージョン番号のみから。スタジオが独自の番号に置き換えることがあるため、確実ではなく可能性が高い値として扱ってください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_EngineVersion_NotFound" xml:space="preserve">
+    <value>ゲームの実行ファイル内に見つかりません。実行ファイルが圧縮・保護されているか、スタジオがエンジンのビルド名を変更している可能性があります。</value>
+    <comment>review</comment>
+  </data>
   <data name="GameDetail_Details_Libraries" xml:space="preserve">
     <value>同梱ライブラリ</value>
     <comment>review</comment>

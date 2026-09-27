@@ -25,6 +25,9 @@ public sealed record StaticDetectionResult
     /// <summary>Engine version, or null.</summary>
     public string? EngineVersion { get; init; }
 
+    /// <summary>The witness <see cref="EngineVersion"/> rests on (<see cref="Detection.EngineVersionSource"/>), or null with a null version.</summary>
+    public string? EngineVersionSource { get; init; }
+
     /// <summary>Platform id, or null.</summary>
     public string? PlatformId { get; init; }
 

@@ -71,6 +71,10 @@ public sealed class DetectionSweepTests
                 Libraries = Libraries,
             });
         }
+
+        // Unity rules only here: the sweep's second read is StaticGameDetector's, pinned in StaticGameDetectorTests.
+        public ValueTask<UnrealBuildFacts?> ReadUnrealBuildAsync(GameFileSnapshot snapshot, CancellationToken ct = default) =>
+            ValueTask.FromResult<UnrealBuildFacts?>(null);
     }
 
     private sealed class FakeIdentity : IExecutableIdentitySource

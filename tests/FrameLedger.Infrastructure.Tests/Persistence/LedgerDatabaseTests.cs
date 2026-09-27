@@ -135,6 +135,55 @@ public sealed class LedgerDatabaseTests
     }
 
     /// <summary>
+    /// Schema 0015 (2026-09-27, beta.10): <c>games.engine_version_source</c>, and the bare "4"/"5" the old Unreal rule wrote
+    /// removed — only where detection wrote it. A value the user typed, one with no provenance badge, another engine's, and a
+    /// row whose provenance cannot even be parsed are left exactly as they were, and the last does not fail the migration.
+    /// </summary>
+    [Fact]
+    public async Task ScriptFifteenAddsTheWitnessAndRemovesOnlyTheOldRulesDetectedDigit()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(15);
+        string path = f.Path;
+        await f.Db.DisposeAsync().ConfigureAwait(true);
+        var c14 = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        await using (c14.ConfigureAwait(true))
+        {
+            await c14.OpenAsync(Ct).ConfigureAwait(true);
+            await RewindToAsync(c14, 14).ConfigureAwait(true);
+            foreach ((string exe, string engine, string version, string? provenance) in new (string, string, string, string?)[]
+            {
+                (@"C:\a\A-Win64-Shipping.exe", "unreal", "5", "{\"engine\":\"detected\",\"engine_version\":\"detected\"}"),
+                (@"C:\b\B-Win64-Shipping.exe", "unreal", "4", "{\"engine_version\":\"user\"}"),
+                (@"C:\c\C-Win64-Shipping.exe", "unreal", "5", null),
+                (@"C:\d\D.exe", "unity", "5", "{\"engine_version\":\"detected\"}"),
+                (@"C:\e\E-Win64-Shipping.exe", "unreal", "4", "{not json"),
+                (@"C:\f\F-Win64-Shipping.exe", "unreal", "4.27", "{\"engine_version\":\"detected\"}"),
+            })
+            {
+                await c14.ExecuteAsync(new CommandDefinition(
+                    "INSERT INTO games (name, exe_path, engine, engine_version, field_provenance, added_at, updated_at) VALUES (@exe, @exe, @engine, @version, @provenance, 0, 0)",
+                    new { exe, engine, version, provenance }, cancellationToken: Ct)).ConfigureAwait(true);
+            }
+        }
+
+        LedgerDatabase migrated = await LedgerDatabase.OpenAsync(path, ct: Ct).ConfigureAwait(true);
+        await using (migrated.ConfigureAwait(true))
+        {
+            migrated.SchemaVersion.Should().Be(MigrationRunner.LatestVersion);
+            var repo = new SqliteGameRepository(migrated);
+            (await repo.FindAsync(@"C:\a\A-Win64-Shipping.exe", Ct).ConfigureAwait(true))!.EngineVersion.Should().BeNull("the old rule's digit, detected");
+            (await repo.FindAsync(@"C:\b\B-Win64-Shipping.exe", Ct).ConfigureAwait(true))!.EngineVersion.Should().Be("4", "the user typed it");
+            (await repo.FindAsync(@"C:\c\C-Win64-Shipping.exe", Ct).ConfigureAwait(true))!.EngineVersion.Should().Be("5", "no badge reads as the user's");
+            (await repo.FindAsync(@"C:\d\D.exe", Ct).ConfigureAwait(true))!.EngineVersion.Should().Be("5", "another engine's version is not the old Unreal rule's");
+            (await repo.FindAsync(@"C:\e\E-Win64-Shipping.exe", Ct).ConfigureAwait(true))!.EngineVersion.Should().Be("4", "unreadable provenance is the user's");
+            GameRow full = (await repo.FindAsync(@"C:\f\F-Win64-Shipping.exe", Ct).ConfigureAwait(true))!;
+            full.EngineVersion.Should().Be("4.27", "only the bare digit is the old rule's signature");
+            full.EngineVersionSource.Should().BeNull("no row has a witness until the sweep reads it again");
+        }
+    }
+
+    /// <summary>
     /// Schema 0014 (2026-09-26, D33): the user-mode exception's columns, ADD COLUMN only — a row blocked before it keeps its
     /// block, is not eligible and carries no grant; a session written before it ran under no exception.
     /// </summary>

@@ -340,6 +340,7 @@ public static class Strings
         nameof(GameDetail_ChangeExe),
         nameof(GameDetail_Details_Architecture),
         nameof(GameDetail_Details_Engine),
+        nameof(GameDetail_Details_EngineVersion),
         nameof(GameDetail_Details_FileVersion),
         nameof(GameDetail_Details_Header),
         nameof(GameDetail_Details_Libraries),
@@ -352,6 +353,10 @@ public static class Strings
         nameof(GameDetail_Details_Store),
         nameof(GameDetail_Details_Version),
         nameof(GameDetail_Edit),
+        nameof(GameDetail_EngineVersion_Branch),
+        nameof(GameDetail_EngineVersion_BranchAndFile),
+        nameof(GameDetail_EngineVersion_FileVersion),
+        nameof(GameDetail_EngineVersion_NotFound),
         nameof(GameDetail_Exception_Grant),
         nameof(GameDetail_Exception_Granted_Format),
         nameof(GameDetail_Exception_Header),
@@ -1464,6 +1469,8 @@ public static class Strings
 
     public static string GameDetail_Details_Engine => ResourceManager.GetString(nameof(GameDetail_Details_Engine), Culture) ?? nameof(GameDetail_Details_Engine);
 
+    public static string GameDetail_Details_EngineVersion => ResourceManager.GetString(nameof(GameDetail_Details_EngineVersion), Culture) ?? nameof(GameDetail_Details_EngineVersion);
+
     public static string GameDetail_Details_FileVersion => ResourceManager.GetString(nameof(GameDetail_Details_FileVersion), Culture) ?? nameof(GameDetail_Details_FileVersion);
 
     public static string GameDetail_Details_Header => ResourceManager.GetString(nameof(GameDetail_Details_Header), Culture) ?? nameof(GameDetail_Details_Header);
@@ -1487,6 +1494,14 @@ public static class Strings
     public static string GameDetail_Details_Version => ResourceManager.GetString(nameof(GameDetail_Details_Version), Culture) ?? nameof(GameDetail_Details_Version);
 
     public static string GameDetail_Edit => ResourceManager.GetString(nameof(GameDetail_Edit), Culture) ?? nameof(GameDetail_Edit);
+
+    public static string GameDetail_EngineVersion_Branch => ResourceManager.GetString(nameof(GameDetail_EngineVersion_Branch), Culture) ?? nameof(GameDetail_EngineVersion_Branch);
+
+    public static string GameDetail_EngineVersion_BranchAndFile => ResourceManager.GetString(nameof(GameDetail_EngineVersion_BranchAndFile), Culture) ?? nameof(GameDetail_EngineVersion_BranchAndFile);
+
+    public static string GameDetail_EngineVersion_FileVersion => ResourceManager.GetString(nameof(GameDetail_EngineVersion_FileVersion), Culture) ?? nameof(GameDetail_EngineVersion_FileVersion);
+
+    public static string GameDetail_EngineVersion_NotFound => ResourceManager.GetString(nameof(GameDetail_EngineVersion_NotFound), Culture) ?? nameof(GameDetail_EngineVersion_NotFound);
 
     public static string GameDetail_Exception_Grant => ResourceManager.GetString(nameof(GameDetail_Exception_Grant), Culture) ?? nameof(GameDetail_Exception_Grant);
 

@@ -6,6 +6,7 @@ using FrameLedger.App.Services;
 using FrameLedger.App.ViewModels;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Settings;
+using FrameLedger.Domain.Detection;
 using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Shared.Ipc;
 using FrameLedger.Shared.Safety;
@@ -514,6 +515,45 @@ public sealed class GameDetailViewModelTests
         ignored.AntiCheat.Should().BeFalse("the pill says one thing");
 
         new GameCardViewModel(new GameCard(game with { HookPrescanState = "clean" }, null)).AntiCheat.Should().BeFalse();
+    }
+
+    /// <summary>
+    /// beta.10 (schema 0015): an Unreal version says which witness it rests on, and an Unreal title whose executable named
+    /// none says so; other engines add no line.
+    /// </summary>
+    [Fact]
+    public async Task TheDetailsCardSaysWhichWitnessAnUnrealVersionRestsOn()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow fileOnly = await s.GameAsync("Lies of P");
+            GameRow notFound = await s.GameAsync("Cronos");
+            GameRow unity = await s.GameAsync("GF2");
+            ValueTask<int> SetAsync(long id, string engine, string? version, string? source) => s.Db.WriteAsync((c, tx, ct) => Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(
+                "UPDATE games SET engine = @engine, engine_version = @version, engine_version_source = @source, exe_machine = 'x64' WHERE id = @id",
+                new { id, engine, version, source }, tx, cancellationToken: ct)), Ct);
+            await SetAsync(fileOnly.Id, "unreal", "4.27.2", EngineVersionSource.UnrealFileVersion);
+            await SetAsync(notFound.Id, "unreal", null, null);
+            await SetAsync(unity.Id, "unity", "2022.3.32.1", "pe_file_version");
+
+            (GameDetailViewModel lies, _, _, _, _) = await BuildAsync(s, fileOnly.Id);
+            lies.Subtitle.Should().EndWith("Unreal Engine 4.27.2");
+            lies.Details.Should().Contain(new GameDetailRow("Engine version", Strings.GameDetail_EngineVersion_FileVersion));
+
+            (GameDetailViewModel cronos, _, _, _, _) = await BuildAsync(s, notFound.Id);
+            cronos.Details.Should().Contain(new GameDetailRow("Engine", "Unreal Engine"))
+                .And.Contain(new GameDetailRow("Engine version", Strings.GameDetail_EngineVersion_NotFound), "an Unreal title says its version was not found rather than nothing");
+
+            (GameDetailViewModel gf2, _, _, _, _) = await BuildAsync(s, unity.Id);
+            gf2.Details.Should().NotContain(r => r.Label == "Engine version", "other engines add no line");
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
     }
 
     /// <summary>

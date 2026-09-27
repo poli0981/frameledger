@@ -864,6 +864,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         bool detected = EditGameViewModel.IsDetectedField(row.FieldProvenanceJson, "game_version");
         AddDetail(detected ? Strings.GameDetail_Details_Store : Strings.GameDetail_Details_Version, Formats.StoreVersion(row.Platform, row.GameVersion, detected));
         AddDetail(Strings.GameDetail_Details_Engine, EngineText(row));
+        AddDetail(Strings.GameDetail_Details_EngineVersion, EngineVersionSourceText(row));
         if (row.ExeMachine is not null)
         {
             Details.Add(new GameDetailRow(Strings.GameDetail_Details_Libraries, row.Libraries.Count == 0
@@ -982,6 +983,25 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
     private static string EngineText(GameRow row) =>
         row.Engine is null || row.EngineVersion is null ? Formats.Engine(row.Engine) : Formats.Engine(row.Engine) + " " + row.EngineVersion;
+
+    /// <summary>
+    /// Which witness an Unreal Engine version rests on (beta.10, schema 0015) — said, because the executable's version
+    /// number and the engine's build name can each be wrong in their own way (<c>05_DETECTION</c> §Engine version). An
+    /// Unreal title whose executable names no version says so once the sweep has read it; other engines add no line.
+    /// </summary>
+    internal static string? EngineVersionSourceText(GameRow row)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        return row.EngineVersionSource switch
+        {
+            EngineVersionSource.UnrealBranchAndFile => Strings.GameDetail_EngineVersion_BranchAndFile,
+            EngineVersionSource.UnrealBranch => Strings.GameDetail_EngineVersion_Branch,
+            EngineVersionSource.UnrealFileVersion => Strings.GameDetail_EngineVersion_FileVersion,
+            null when string.Equals(row.Engine, "unreal", StringComparison.Ordinal) && row.EngineVersion is null && row.ExeMachine is not null
+                => Strings.GameDetail_EngineVersion_NotFound,
+            _ => null,
+        };
+    }
 
     private static Domain.Metrics.Tri DefaultOf(GameRow row, TriStateKind kind) => kind switch
     {

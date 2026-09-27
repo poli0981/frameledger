@@ -1967,6 +1967,21 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="GameDetail_Details_Engine" xml:space="preserve">
     <value>Engine</value>
   </data>
+  <data name="GameDetail_Details_EngineVersion" xml:space="preserve">
+    <value>Engine version</value>
+  </data>
+  <data name="GameDetail_EngineVersion_BranchAndFile" xml:space="preserve">
+    <value>From the engine's build name and the version number in the game's executable.</value>
+  </data>
+  <data name="GameDetail_EngineVersion_Branch" xml:space="preserve">
+    <value>From the engine's build name in the game's executable. The patch number is not recorded there.</value>
+  </data>
+  <data name="GameDetail_EngineVersion_FileVersion" xml:space="preserve">
+    <value>From the executable's version number only. A studio can replace that number with its own, so treat it as likely rather than certain.</value>
+  </data>
+  <data name="GameDetail_EngineVersion_NotFound" xml:space="preserve">
+    <value>Not found in the game's executable. It may be packed or protected, or the studio renamed the engine's build.</value>
+  </data>
   <data name="GameDetail_Details_Libraries" xml:space="preserve">
     <value>Ships with</value>
   </data>

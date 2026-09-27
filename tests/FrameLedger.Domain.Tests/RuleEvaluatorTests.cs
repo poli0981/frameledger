@@ -256,6 +256,26 @@ public sealed class RuleEvaluatorTests
         new RuleEvaluator(rules).MatchEngine(s).Version.Should().Be("5.3");
     }
 
+    /// <summary>
+    /// beta.10: the Unreal extractor is not the evaluator's to answer — StaticGameDetector reads the build facts for the one
+    /// engine that matched. The evaluator matches the rule and leaves the version null, whatever the snapshot's strings say.
+    /// </summary>
+    [Fact]
+    public void Version_UnrealBuild_IsLeftToTheDetectorsSecondRead()
+    {
+        DetectionRuleSet rules = Rules(engines:
+        [
+            Engine("unreal", AnyOf(Signal(DetectionSignalType.SiblingGlob, "*-Win64-Shipping.exe")),
+                new VersionExtractor { Type = VersionExtractorType.UnrealBuild }),
+        ]);
+        GameFileSnapshot s = Snapshot(files: ["Game-Win64-Shipping.exe"], productVersion: "++UE5+Release-5.3");
+
+        EngineMatch m = new RuleEvaluator(rules).MatchEngine(s);
+
+        m.Rule!.Id.Should().Be("unreal");
+        m.Version.Should().BeNull();
+    }
+
     [Fact]
     public void Version_AnUnparseableOrRunawayPattern_YieldsNoVersionRatherThanThrowing()
     {
