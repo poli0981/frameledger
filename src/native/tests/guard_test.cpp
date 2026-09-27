@@ -1335,6 +1335,8 @@ TEST_CASE(
 
 #include <windows.h>
 
+#include <dxgi.h>    // DXGI_SWAP_EFFECT, for region 4's swapEffect (layout 4, beta.10)
+
 #include <psapi.h>
 
 // The shared-memory contract the injected Overlay publishes. Included here rather
@@ -1901,6 +1903,7 @@ struct MappedRing {
     void*               base = nullptr;
     fl::FlWriterState*  st = nullptr;
     fl::FlControlBlock* ctl = nullptr;
+    fl::FlDisplayState* display = nullptr;    // region 4 (layout 4, beta.10)
     ~MappedRing() {
         if (base != nullptr) {
             UnmapViewOfFile(base);
@@ -1931,10 +1934,32 @@ bool OpenRingFor(DWORD pid, MappedRing& r) {
     }
     r.st = reinterpret_cast<fl::FlWriterState*>(static_cast<unsigned char*>(r.base) + FL_SHM_WRITER_OFFSET);
     r.ctl = reinterpret_cast<fl::FlControlBlock*>(static_cast<unsigned char*>(r.base) + FL_SHM_CONTROL_OFFSET);
+    r.display = reinterpret_cast<fl::FlDisplayState*>(static_cast<unsigned char*>(r.base) + FL_SHM_DISPLAY_OFFSET);
     for (int i = 0; i < 100 && r.st->status != fl::FL_STATUS_READY; ++i) {
         Sleep(50);
     }
     return r.st->status == fl::FL_STATUS_READY;
+}
+
+// A consistent copy of region 4 (fl_shm.h §Region 4), the way the Agent takes one: between two reads of an even,
+// unchanged seq. Waits (bounded) for a sample newer than `afterSamples` -- the present hook samples twice a second, so
+// a test that read once would race the writer the same way a test reading writer state once races InitThread.
+bool ReadDisplay(const MappedRing& r, fl::FlDisplayState& out, uint32_t afterSamples = 0u) {
+    for (int i = 0; i < 100; ++i) {
+        std::atomic_ref<uint32_t> seq{r.display->seq};
+        const uint32_t            before = seq.load(std::memory_order_acquire);
+        if ((before & 1u) == 0u) {
+            fl::FlDisplayState copy{};
+            std::memcpy(&copy, r.display, sizeof(copy));
+            std::atomic_thread_fence(std::memory_order_seq_cst);
+            if (seq.load(std::memory_order_acquire) == before && copy.samples > afterSamples) {
+                out = copy;
+                return true;
+            }
+        }
+        Sleep(50);
+    }
+    return false;
 }
 
 bool StartHarness(Child& child, const std::wstring& args) {
@@ -2439,6 +2464,82 @@ TEST_CASE("OpenGL: the injected Overlay hooks opengl32!wglSwapBuffers and record
     CHECK(ring[5].qpc > ring[0].qpc);
     CHECK(r.st->faultCount == 0u);
     CHECK(r.st->status == fl::FL_STATUS_READY);
+
+    // Region 4 (layout 4, beta.10): the stream's window and client size, and NO exclusive bits -- OpenGL has no state
+    // to ask, and a reader must see "unknown", never "windowed".
+    fl::FlDisplayState d{};
+    REQUIRE(ReadDisplay(r, d));
+    CHECK((d.flags & fl::FL_DISPLAY_SAMPLED) != 0u);
+    CHECK((d.flags & fl::FL_DISPLAY_OPENGL) != 0u);
+    CHECK((d.flags & (fl::FL_DISPLAY_EXCLUSIVE_KNOWN | fl::FL_DISPLAY_EXCLUSIVE)) == 0u);
+    CHECK(d.hwnd != 0u);
+    CHECK(d.bufferWidth == ring[0].outputW);
+    CHECK(d.chainId == ring[0].swapchainId);
+    CHECK(d.swapEffect == 0u);
+}
+
+TEST_CASE("region 4 describes a swap chain on a real window: its window, its back buffer, windowed",
+          "[guard][inject][shm][display]") {
+    // Layout 4 (beta.10). Every other DXGI fixture presents to a composition chain, which has no window to describe;
+    // this one binds a D3D11 chain to a real (hidden, windowed) window. Exclusive fullscreen needs a real output and is
+    // the owner's measurement on real hardware -- here the claim is the one a runner can check: the swap chain SAID
+    // windowed.
+    Child child;
+    if (!StartHarness(child, L"--hold-presenting-hwnd 8")) {
+        DWORD code = 0;
+        GetExitCodeProcess(child.pi.hProcess, &code);
+        if (code == 77u) {
+            SKIP("the harness could not make a swap chain for a window on this machine (exit 77)");
+        }
+        FAIL("the harness died (exit " << code << ")");
+    }
+
+    ResetFake();
+    g.modules = {"kernel32.dll"};
+    g.scanSet = {child.pi.dwProcessId};
+    REQUIRE(GuardedInjectWithSources(child.pi.dwProcessId, FL_OVERLAY_DLL, FakeSources()).Allowed());
+
+    MappedRing r;
+    REQUIRE(OpenRingFor(child.pi.dwProcessId, r));
+    for (int i = 0; i < 80 && r.st->writeIndex < 20; ++i) {
+        ++r.ctl->guardTicks;
+        Sleep(50);
+    }
+    REQUIRE(r.st->writeIndex >= 20u);
+    const auto* ring =
+        reinterpret_cast<const fl::FlFrameRecord*>(static_cast<unsigned char*>(r.base) + FL_SHM_RING_OFFSET);
+
+    fl::FlDisplayState first{};
+    REQUIRE(ReadDisplay(r, first));
+    ++r.ctl->guardTicks;
+    fl::FlDisplayState d{};
+    REQUIRE(ReadDisplay(r, d, first.samples));    // a SECOND sample: the hook keeps asking, twice a second
+    INFO("flags 0x" << std::hex << d.flags << std::dec << " hwnd " << d.hwnd << " " << d.bufferWidth << "x"
+                    << d.bufferHeight << " effect " << d.swapEffect << " samples " << d.samples);
+    CHECK((d.flags & fl::FL_DISPLAY_SAMPLED) != 0u);
+    CHECK((d.flags & fl::FL_DISPLAY_EXCLUSIVE_KNOWN) != 0u);    // GetFullscreenState answered...
+    CHECK((d.flags & fl::FL_DISPLAY_EXCLUSIVE) == 0u);          // ...and said windowed
+    CHECK((d.flags & fl::FL_DISPLAY_OPENGL) == 0u);
+    CHECK(d.sampleQpc > first.sampleQpc);
+
+    // The window is the harness's own, which is the Agent's check before it reads any geometry (a HWND is reused).
+    REQUIRE(d.hwnd != 0u);
+    const HWND wnd = reinterpret_cast<HWND>(static_cast<uintptr_t>(d.hwnd));
+    DWORD      owner = 0;
+    CHECK(IsWindow(wnd) != FALSE);
+    CHECK(GetWindowThreadProcessId(wnd, &owner) != 0u);
+    CHECK(owner == child.pi.dwProcessId);
+
+    // The back buffer is the one every record carries, and the chain is the one the records name.
+    CHECK(d.bufferWidth != 0u);
+    CHECK(d.bufferWidth == ring[0].outputW);
+    CHECK(d.bufferHeight == ring[0].outputH);
+    CHECK(d.chainId == ring[0].swapchainId);
+    // DXGI_SWAP_EFFECT + 1: FLIP_DISCARD (4) or, where flip is unavailable, DISCARD (0) -- never the vendor's bare 0.
+    CHECK((d.swapEffect == static_cast<uint32_t>(DXGI_SWAP_EFFECT_FLIP_DISCARD) + 1u ||
+           d.swapEffect == static_cast<uint32_t>(DXGI_SWAP_EFFECT_DISCARD) + 1u));
+    CHECK((d.seq & 1u) == 0u);
+    CHECK(r.st->faultCount == 0u);
 }
 
 TEST_CASE("the native log: written at init, on the Agent's request, and on the stop -- and the stop restores each "

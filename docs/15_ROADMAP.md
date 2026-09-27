@@ -298,7 +298,7 @@ Findings written to `docs/spike-notes.md`. Nothing in P1 starts until the exit c
 > `logs\overlay-<pid>-*.log` (init / Agent request / stop), `opengl32!wglSwapBuffers` with the harness's
 > `--opengl` mode. **D3D9 is not built and will not be**: `20_OPEN_QUESTIONS` §Scope decisions rules it out
 > of v1 (the Overlay is x64-only and those titles are 32-bit); listing it here was the roadmap's, not the
-> scope's. What P1 still leaves ⏳ in `17_HOOK_ENGINE` §Hook inventory: `SetFullscreenState`,
+> scope's. What P1 still leaves ⏳ in `17_HOOK_ENGINE` §Hook inventory: ~~`SetFullscreenState`~~ (polled instead, 2026-09-27),
 > `SetColorSpace1`, `CreateSwapChain*`, `ID3D12Device5::CreateStateObject`, the Vulkan RT / pipeline entries,
 > §Pipeline and §Memory/latency — feature rows, each with its own measurement question, not P1's core. P2
 > (the Agent, the recorder, SQLite) is next per this file.

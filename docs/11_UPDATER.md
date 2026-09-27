@@ -36,6 +36,11 @@ Binaries are not code-signed (project policy). Consequences and mitigations, doc
 
 SemVer `MAJOR.MINOR.PATCH`. Tag `vX.Y.Z` triggers the release workflow (13_CI_CD). `MAJOR` bumps for DB schema or IPC protocol breaks; migrations must cover every released `MAJOR-1` version.
 
+> **Under `0.x` this rule is not applied, and every pre-release says so by shipping one anyway** (SemVer §4: a major version
+> zero is initial development). Schemas 0008–0015 and the shared-memory layout 4 (2026-09-27, beta.10) each shipped in a
+> `0.1.0-beta.N`. What protects a user is not the number: the ledger migrates in place (`06_DATA_MODEL` §Migrations), and a
+> layout mismatch is refused at attach with "restart the game" (`07_IPC` §Protocol rules). The rule applies from `1.0.0`.
+
 ## Built 2026-09-14 (P4 PR-5) — what exists, and where it deviates from the above
 
 `src/FrameLedger.App/Update/`. Velopack 1.2.0 (`Directory.Packages.props`, pinned since P0, referenced since

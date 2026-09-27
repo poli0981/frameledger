@@ -38,12 +38,25 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   whole, once per version of the file (up to 7.5 s on a USB drive for Black Myth: Wukong), and the scan stops if the Agent
   is asked to. Rules `2026.09.6`: every game is re-detected once. Schema 0015 adds `games.engine_version_source`.
 
+### Changed
+
+- **Groundwork for the display mode (beta.10): the injected component reports how the game presents** — whether its swap
+  chain is in exclusive fullscreen, which window it presents to, its back buffer and swap effect — at most twice a second,
+  from two getters on the swap chain the game passed (measured at 13–15 ns each on the test fixture: nothing a frame rate
+  can see). The shared-memory layout moves to version 4 (a new region; the frame ring moved behind it): **a game that is
+  running while FrameLedger is updated must be restarted before it can be measured**, which the app already says when it
+  meets an old layout. Nothing is shown yet — the window's size, the mode and its share of a session arrive in the next
+  change of this train.
+
 ### Fixed
 
 - **An Unreal game's engine version was a bare "4" or "5"** — and for most titles nothing at all. The rule's pattern had two
   capture groups and the evaluator keeps the first, and it read only a version string most executables leave empty.
   Schema 0015 removes the digits the old rule wrote (only where detection wrote them — a version you typed stays), and the
   rules validator now refuses any version pattern that does not compile or that captures anything but exactly one group.
+
+- **A Direct3D 12 game that resized through `ResizeBuffers1` kept its old output size in every later frame.** That call is
+  not hooked; the swap chain's size is now re-read twice a second, so a resize by either route is seen.
 
 ## [0.1.0-beta.9] - 2026-09-26
 

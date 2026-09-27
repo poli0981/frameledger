@@ -188,6 +188,40 @@ public sealed unsafe class ShmRingReader : IDisposable
     /// <summary>Region 1, read fresh.</summary>
     public FlShmHandshake Handshake => *(FlShmHandshake*)(_base + ShmLayout.HandshakeOffset);
 
+    /// <summary>How many times <see cref="DisplayState"/> re-reads a region a writer was inside before giving up for this tick.</summary>
+    public const int DisplayStateAttempts = 8;
+
+    /// <summary>
+    /// Region 4 (layout 4, beta.10), a consistent copy — or null when the Overlay was inside it on every one of
+    /// <see cref="DisplayStateAttempts"/> reads (the next tick asks again). A copy is taken between two reads of an even,
+    /// unchanged <see cref="FlDisplayState.Seq"/>; the full fence between the copy and the second read keeps the copy's loads
+    /// from moving past it, which acquire alone would not.
+    /// </summary>
+    public FlDisplayState? DisplayState
+    {
+        get
+        {
+            var region = (FlDisplayState*)(_base + ShmLayout.DisplayOffset);
+            for (int attempt = 0; attempt < DisplayStateAttempts; attempt++)
+            {
+                uint before = Volatile.Read(ref region->Seq);
+                if ((before & 1u) != 0u)
+                {
+                    continue;
+                }
+
+                FlDisplayState copy = *region;
+                Interlocked.MemoryBarrier();
+                if (Volatile.Read(ref region->Seq) == before)
+                {
+                    return copy;
+                }
+            }
+
+            return null;
+        }
+    }
+
     /// <summary>
     /// Copies up to <paramref name="into"/>.Length records. <paramref name="gapIndices"/> receives the
     /// ring index of each torn slot, so the caller can record a gap rather than a missing frame.

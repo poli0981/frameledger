@@ -89,6 +89,8 @@ public sealed class SessionRecorderTests : IAsyncDisposable
 
         public FlShmHandshake Handshake => default;
 
+        public FlDisplayState? DisplayState => null;
+
         public long TotalDropped => 0;
 
         public long TotalGaps => 0;
