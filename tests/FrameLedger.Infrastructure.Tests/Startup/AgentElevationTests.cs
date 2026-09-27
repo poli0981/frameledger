@@ -130,7 +130,11 @@ public sealed class AgentElevationTests : IDisposable
 
         block.Should().EndWith("\0\0");
         string[] entries = block.TrimEnd('\0').Split('\0');
-        entries.Should().Contain("FL_TEST_VARIABLE=yes").And.Contain("PATH=C:\\only").And.NotContain(static e => e.StartsWith("PATH=", StringComparison.OrdinalIgnoreCase) && e != "PATH=C:\\only");
+        entries.Should().Contain("FL_TEST_VARIABLE=yes");
+        // A variable the process already has keeps ITS name's casing ("Path" on the hosted runner, measured 2026-09-27):
+        // Windows compares names without case, so the caller's value replaces it rather than standing beside it.
+        entries.Where(static e => e.StartsWith("PATH=", StringComparison.OrdinalIgnoreCase)).Should()
+            .ContainSingle().Which.Should().EndWith("=C:\\only");
         entries.Select(static e => e[..e.IndexOf('=', StringComparison.Ordinal)]).Should().BeInAscendingOrder(StringComparer.OrdinalIgnoreCase);
     }
 
