@@ -2819,6 +2819,29 @@ bool ProbeFrameIdentity(Gfx& g) {
         std::printf("    GetLastPresentCount costs %.1f ns/call (%d calls, WARP; the Overlay pays this once per hooked "
                     "present)\n",
                     ns, kCalls);
+
+        // Region 4's two getters (layout 4, beta.10). The Overlay asks them at most every 500 ms per chain, so their
+        // per-present share is (these / presents in 500 ms) plus one QPC comparison on every present -- the figure the
+        // PR states under 14_TESTING §Hook overhead.
+        BOOL                 fs = FALSE;
+        DXGI_SWAP_CHAIN_DESC desc{};
+        QueryPerformanceCounter(&t0);
+        for (int i = 0; i < kCalls; ++i) {
+            g.swapChain1->GetFullscreenState(&fs, nullptr);
+        }
+        QueryPerformanceCounter(&t1);
+        const double fsNs =
+            static_cast<double>(t1.QuadPart - t0.QuadPart) * 1e9 / static_cast<double>(f.QuadPart) / kCalls;
+        QueryPerformanceCounter(&t0);
+        for (int i = 0; i < kCalls; ++i) {
+            g.swapChain1->GetDesc(&desc);
+        }
+        QueryPerformanceCounter(&t1);
+        const double descNs =
+            static_cast<double>(t1.QuadPart - t0.QuadPart) * 1e9 / static_cast<double>(f.QuadPart) / kCalls;
+        std::printf("    GetFullscreenState costs %.1f ns/call, GetDesc %.1f ns/call (%d calls each, WARP; the Overlay "
+                    "pays both at most twice a second per chain)\n",
+                    fsNs, descNs, kCalls);
     }
 
     // The two together are the contract. Separately, each passes against a
@@ -2833,6 +2856,8 @@ bool ProbeFrameIdentity(Gfx& g) {
 int HoldPresentingVulkan(int seconds, int presentIntervalMs);
 // gl_hold.cpp -- the OpenGL mode (P1 item 4).
 int HoldPresentingOpenGl(int seconds, int presentIntervalMs);
+// hwnd_hold.cpp -- a D3D11 swap chain on a real window (layout 4, beta.10).
+int HoldPresentingHwnd(int seconds, int presentIntervalMs);
 
 int main(int argc, char** argv) {
     std::printf("FrameLedger hook-harness (WARP, headless — no GPU or window required)\n");
@@ -3142,6 +3167,14 @@ int main(int argc, char** argv) {
             }
             if (f != nullptr) {
                 f->Release();
+            }
+            ranSomething = true;
+        } else if (std::strcmp(argv[i], "--hold-presenting-hwnd") == 0 && i + 1 < argc) {
+            // Region 4 (layout 4, beta.10): a chain with a real OutputWindow. Its own file and exit codes (77 = cannot
+            // run here).
+            const int code = HoldPresentingHwnd(std::atoi(argv[++i]), presentIntervalMs);
+            if (code != 0) {
+                return code;
             }
             ranSomething = true;
         } else if (std::strcmp(argv[i], "--hold-presenting") == 0 && i + 1 < argc && opengl) {

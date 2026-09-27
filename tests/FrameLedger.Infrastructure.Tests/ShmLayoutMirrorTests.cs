@@ -183,6 +183,7 @@ public sealed class ShmLayoutMirrorTests
         regions.GetProperty("handshake").GetUInt32().Should().Be(ShmLayout.HandshakeOffset);
         regions.GetProperty("writer").GetUInt32().Should().Be(ShmLayout.WriterOffset);
         regions.GetProperty("control").GetUInt32().Should().Be(ShmLayout.ControlOffset);
+        regions.GetProperty("display").GetUInt32().Should().Be(ShmLayout.DisplayOffset);
         regions.GetProperty("ring").GetUInt32().Should().Be(ShmLayout.RingOffset);
     }
 
@@ -194,6 +195,10 @@ public sealed class ShmLayoutMirrorTests
 
     [Fact]
     public void TheControlBlockMirrorMatches() => AssertMirror<FlControlBlock>("FlControlBlock");
+
+    /// <summary>Layout 4 (beta.10): region 4, the presenting swap chain's display facts.</summary>
+    [Fact]
+    public void TheDisplayStateMirrorMatches() => AssertMirror<FlDisplayState>("FlDisplayState");
 
     [Fact]
     public void TheFrameRecordMirrorMatches() => AssertMirror<FlFrameRecord>("FlFrameRecord");
@@ -226,6 +231,7 @@ public sealed class ShmLayoutMirrorTests
             ("FlShmHandshake", typeof(FlShmHandshake)),
             ("FlWriterState", typeof(FlWriterState)),
             ("FlControlBlock", typeof(FlControlBlock)),
+            ("FlDisplayState", typeof(FlDisplayState)),
             ("FlFrameRecord", typeof(FlFrameRecord)),
             ("FlTolerance", typeof(FlTolerance)),
         ];
@@ -253,6 +259,22 @@ public sealed class ShmLayoutMirrorTests
                     + "here, or fl-layout-dump stopped emitting it and the offset walk silently shrank");
             }
         }
+    }
+
+    /// <summary>
+    /// The third direction (beta.10): every struct the dump EMITS has a mirror here. The field walks above start from a
+    /// list of pairs this file names, so a struct added to <c>fl_shm.h</c> and the dump but never to that list was reported
+    /// by the native side and checked by nobody — which is how layout 4's region would have gone unchecked had the pair
+    /// been forgotten.
+    /// </summary>
+    [Fact]
+    public void EveryDumpedStructHasAMirror()
+    {
+        string[] mirrored = ["FlShmHandshake", "FlWriterState", "FlControlBlock", "FlDisplayState", "FlFrameRecord", "FlTolerance"];
+
+        IEnumerable<string> dumped = _nativeLayout.Value.GetProperty("structs").EnumerateObject().Select(static p => p.Name);
+
+        dumped.Should().BeEquivalentTo(mirrored, "a struct fl-layout-dump reports must be asserted, and one it stopped reporting is a check that shrank");
     }
 
     [Fact]

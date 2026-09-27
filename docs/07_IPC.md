@@ -12,13 +12,15 @@ Three channels, each chosen for its constraints:
 
 Created by the Overlay on init, opened by the Agent. Name is deliberately plain and identifiable (`19_SAFETY` — no obfuscated object names).
 
-Layout — **four regions, each exactly one 64-byte cache line before the ring**:
+Layout — **~~four~~ five regions, each exactly one 64-byte cache line before the ring** (layout 4 since
+2026-09-27, beta.10: region 4 is new and the ring moved from `0xC0` to `0x100`):
 
 ```
 [0x0000] FlShmHandshake  64 B  write-once by the Overlay at init
 [0x0040] FlWriterState   64 B  Overlay-written (writeIndex touched every present)
 [0x0080] FlControlBlock  64 B  Agent-written
-[0x00C0] FlFrameRecord[capacity]   (64 B each, power-of-two capacity)
+[0x00C0] FlDisplayState  64 B  Overlay-written, at most every 500 ms per chain (layout 4)
+[0x0100] FlFrameRecord[capacity]   (64 B each, power-of-two capacity)
 ```
 
 The header is split in two on purpose. The immutable handshake and the
@@ -49,8 +51,18 @@ struct alignas(64) FlWriterState {   // Overlay-written
     uint32_t rtStateObjectsCreated; // @32 session count, published at 1 Hz
     uint32_t rasterPsoCreated;   // @36 session count, published at 1 Hz
     uint32_t runtimeCensus;      // @40 FlRuntimeCensus bits; watchdog-published, OR-only (2026-09-03, took reserved[0])
-    uint32_t reserved[5];        // @44..63 must be zero; reserved for additive fields
+    uint32_t slTagCensus;        // @44 FlSlTagType bits per route (2026-09-05)
+    uint32_t dxgiPresentsUnseen; // @48 presents DXGI counted beyond the hooked ones (2026-09-05, saturating)
+    uint32_t dxgiPresentSamples; // @52 hooked presents on which that counter was read
+    uint16_t loaderSignals;      // @56 the LoadLibrary detour's installed bit + wake count (2026-09-06)
+    uint16_t earlyStopFamily;    // @58 1-based floor family index of an early stop; 0 = none (2026-09-06)
+    uint32_t dxgiPresentsBeforeHook; // @60 presents before the first hooked one (2026-09-06) -- the LAST word:
+                                 //     no slack left, so layout 4 added a region rather than a field
 };
+
+> **This block showed `reserved[5]` at @44 until 2026-09-27** — five words the header had spent by 2026-09-06
+> (`slTagCensus`, the two DXGI counters, the loader words, `dxgiPresentsBeforeHook`). `fl_shm.h` is normative and the
+> mirror test reads the header, so nothing broke; a reader of this page was told there was room where there was none.
 
 struct alignas(64) FlControlBlock {  // Agent-written
     uint32_t pauseRequested;     // @0
@@ -61,11 +73,40 @@ struct alignas(64) FlControlBlock {  // Agent-written
     uint32_t reserved[11];       // @20..63 must be zero
 };
 
+struct alignas(64) FlDisplayState {  // Overlay-written (layout 4, 2026-09-27, beta.10)
+    uint32_t seq;                // @0  seqlock: odd while a writer is inside; the writer CASes and SKIPS if taken
+    uint32_t flags;              // @4  FlDisplayFlags: SAMPLED | EXCLUSIVE_KNOWN | EXCLUSIVE | OPENGL
+    uint64_t hwnd;               // @8  OutputWindow (DXGI) or WindowFromDC (OpenGL); 0 = a composition chain
+    uint32_t bufferWidth;        // @16 the back buffer (DXGI) / client area (OpenGL)
+    uint32_t bufferHeight;       // @20
+    uint32_t swapEffect;         // @24 DXGI_SWAP_EFFECT + 1 (DISCARD is 0); 0 = not read
+    uint32_t swapFlags;          // @28 DXGI_SWAP_CHAIN_DESC.Flags
+    uint32_t chainId;            // @32 the FlFrameRecord.swapchainId described
+    uint32_t samples;            // @36 samples published (wraps)
+    uint64_t sampleQpc;          // @40 QPC of the last sample
+    uint32_t reserved[4];        // @48..63 must be zero
+};
+
 static_assert(sizeof(FlShmHandshake) == 64);
 static_assert(sizeof(FlWriterState)  == 64);
 static_assert(sizeof(FlControlBlock) == 64);
-static_assert(FL_SHM_RING_OFFSET == 0xC0 && FL_SHM_RING_OFFSET % 64 == 0);
+static_assert(sizeof(FlDisplayState) == 64);
+static_assert(FL_SHM_DISPLAY_OFFSET == 0xC0 && FL_SHM_RING_OFFSET == 0x100 && FL_SHM_RING_OFFSET % 64 == 0);
 ```
+
+**Region 4 — the presenting swap chain's display facts (layout 4, 2026-09-27, beta.10).** The owner asked for the game's
+window size and display mode (exclusive fullscreen / borderless / windowed) and the share of a session each took. The two
+facts only the process knows — whether the chain is in exclusive fullscreen, and which window it presents to — are
+getters on the chain the title passed to the hooked Present (`GetFullscreenState`, `GetDesc`), asked at most every 500 ms
+per chain; everything else — the window's rectangle and style, its monitor, the classification — is the Agent's, read
+out of process with user32 at the drain tick, exactly as the foreground sample is (`03_METRICS` §Display mode). The
+region describes ONE chain: the largest back buffer, and a chain silent for 2 s gives way; `chainId` names it. It is a
+seqlock the writer never waits on — a writer that finds `seq` odd (another presenting thread inside) skips the sample and
+the next present retries — and `ShmRingReader.DisplayState` takes a copy between two reads of an even, unchanged `seq`
+(eight attempts, then null for that tick). The Vulkan layer never writes it (all zeros: nothing sampled); an OpenGL stream
+writes the window and client size with no exclusive bits, which a reader treats as *unknown*, never as *windowed*. A
+minimised game presents only `DXGI_PRESENT_TEST`, which the hook drops before sampling, so a `sampleQpc` older than 2 s
+leaves the exclusive bits unknown.
 
 The cross-process fields are declared as plain integers and accessed through
 `std::atomic_ref` rather than as `std::atomic<T>` members. `std::atomic<T>` has

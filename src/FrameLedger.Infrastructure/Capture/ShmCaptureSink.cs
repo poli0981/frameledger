@@ -13,6 +13,8 @@ public sealed class ShmCaptureSink(ShmRingReader reader) : ICaptureSink
 
     public FlShmHandshake Handshake => _reader.Handshake;
 
+    public FlDisplayState? DisplayState => _reader.DisplayState;
+
     public long TotalDropped => _reader.TotalDropped;
 
     public long TotalGaps => _reader.TotalGaps;

@@ -406,7 +406,76 @@ struct SwapChainSlot {
     bool     haveDxgiCount = false;
     uint32_t lastDxgiCount = 0;
     uint32_t dxgiEpoch = 0;    // g_dxgiEpoch when lastDxgiCount was read; a mismatch means presents went by unrecorded
+    // Layout 4 (beta.10): what region 4 says about this chain, from the same GetDesc as outW/outH.
+    uint64_t hwnd = 0;          // DXGI_SWAP_CHAIN_DESC.OutputWindow; 0 for a composition chain
+    uint32_t swapEffect = 0;    // DXGI_SWAP_EFFECT + 1 (fl_shm.h §Region 4: DISCARD is 0); 0 = not read
+    uint32_t swapFlags = 0;     // DXGI_SWAP_CHAIN_DESC.Flags
+    uint64_t displayQpc = 0;    // the QPC of this chain's last display sample
 };
+
+// Region 4 (fl_shm.h, layout 4, beta.10): set in InitThread beside g_state, written only through PublishDisplay.
+FlDisplayState* g_display = nullptr;
+
+// Which chain region 4 describes: the largest back buffer, and one silent for 2 s gives way (fl_shm.h §Region 4).
+std::atomic<uint32_t> g_displayChain{0};
+std::atomic<uint64_t> g_displayArea{0};
+std::atomic<uint64_t> g_displayChainQpc{0};
+
+// The seqlock writer (fl_shm.h §Region 4). It takes the lock by compare-exchange from an even `seq` and, when another
+// presenting thread holds it, gives up this sample -- the next present retries -- so nothing here ever waits. Every
+// field goes through std::atomic_ref, so a reader's torn copy is defined behaviour that the second `seq` read throws
+// away.
+void PublishDisplay(uint32_t flags, uint64_t hwnd, uint32_t width, uint32_t height, uint32_t swapEffect,
+                    uint32_t swapFlags, uint32_t chainId, uint64_t qpc) noexcept {
+    if (g_display == nullptr) {
+        return;
+    }
+    std::atomic_ref<uint32_t> seq{g_display->seq};
+    uint32_t                  even = seq.load(std::memory_order_relaxed);
+    if ((even & 1u) != 0u ||
+        !seq.compare_exchange_strong(even, even + 1u, std::memory_order_acquire, std::memory_order_relaxed)) {
+        return;
+    }
+    std::atomic_ref<uint32_t>{g_display->flags}.store(flags, std::memory_order_relaxed);
+    std::atomic_ref<uint64_t>{g_display->hwnd}.store(hwnd, std::memory_order_relaxed);
+    std::atomic_ref<uint32_t>{g_display->bufferWidth}.store(width, std::memory_order_relaxed);
+    std::atomic_ref<uint32_t>{g_display->bufferHeight}.store(height, std::memory_order_relaxed);
+    std::atomic_ref<uint32_t>{g_display->swapEffect}.store(swapEffect, std::memory_order_relaxed);
+    std::atomic_ref<uint32_t>{g_display->swapFlags}.store(swapFlags, std::memory_order_relaxed);
+    std::atomic_ref<uint32_t>{g_display->chainId}.store(chainId, std::memory_order_relaxed);
+    std::atomic_ref<uint64_t>{g_display->sampleQpc}.store(qpc, std::memory_order_relaxed);
+    std::atomic_ref<uint32_t> samples{g_display->samples};
+    samples.store(samples.load(std::memory_order_relaxed) + 1u, std::memory_order_relaxed);
+    seq.store(even + 2u, std::memory_order_release);
+}
+
+// Whether chain `chainId` is the one region 4 describes, claiming it when it is larger than the current one or the
+// current one has not been sampled for 2 s. A race between two presenting threads can flip the claim once; the region
+// always names the chain it describes, so a reader is never told one chain's facts under another's id.
+bool DescribesDisplay(uint32_t chainId, uint64_t area, uint64_t now) noexcept {
+    const uint32_t current = g_displayChain.load(std::memory_order_relaxed);
+    if (current != chainId) {
+        const uint64_t last = g_displayChainQpc.load(std::memory_order_relaxed);
+        const uint64_t silence = 2u * g_logQpcFreq;
+        const bool     silent = current == 0u || (now > last && now - last > silence);
+        if (!silent && area <= g_displayArea.load(std::memory_order_relaxed)) {
+            return false;
+        }
+        g_displayChain.store(chainId, std::memory_order_relaxed);
+    }
+    g_displayArea.store(area, std::memory_order_relaxed);
+    g_displayChainQpc.store(now, std::memory_order_relaxed);
+    return true;
+}
+
+// What FindOrAdd and ForgetChainSize keep from one GetDesc: the size every record carries, and region 4's facts.
+void RememberDesc(SwapChainSlot& s, const DXGI_SWAP_CHAIN_DESC& desc) noexcept {
+    s.outW = static_cast<uint16_t>(desc.BufferDesc.Width);
+    s.outH = static_cast<uint16_t>(desc.BufferDesc.Height);
+    s.hwnd = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(desc.OutputWindow));
+    s.swapEffect = static_cast<uint32_t>(desc.SwapEffect) + 1u;
+    s.swapFlags = desc.Flags;
+}
 
 // Ask the device whether it can ray-trace, once, and publish it as FlRtTier.
 //
@@ -557,8 +626,7 @@ SwapChainSlot* FindOrAdd(IDXGISwapChain* sc) noexcept {
             s.id = g_nextChainId++;
             DXGI_SWAP_CHAIN_DESC desc{};
             if (SUCCEEDED(sc->GetDesc(&desc))) {
-                s.outW = static_cast<uint16_t>(desc.BufferDesc.Width);
-                s.outH = static_cast<uint16_t>(desc.BufferDesc.Height);
+                RememberDesc(s, desc);
             }
             s.api = ResolveApi(sc);
             // apiMask records what we have ACTUALLY seen present, not what the
@@ -581,12 +649,49 @@ void ForgetChainSize(IDXGISwapChain* sc) noexcept {
             s.outH = 0;
             DXGI_SWAP_CHAIN_DESC desc{};
             if (SUCCEEDED(sc->GetDesc(&desc))) {
-                s.outW = static_cast<uint16_t>(desc.BufferDesc.Width);
-                s.outH = static_cast<uint16_t>(desc.BufferDesc.Height);
+                RememberDesc(s, desc);
             }
             return;
         }
     }
+}
+
+// REGION 4 FROM THE PRESENT PATH (fl_shm.h §Region 4, layout 4, beta.10), at most every 500 ms per chain: two getters
+// on the swap chain the title just passed to Present -- the same object FindOrAdd calls GetDesc on and the counter
+// above reads, CLAUDE.md rule 4 -- and no other read. Amortised, it is two virtual calls a second on a hook that makes
+// one QPC comparison per present (costed in the PR per 14_TESTING §Hook overhead).
+//
+// GetDesc AGAIN, and not only for region 4: it refreshes the size every record carries, which closes the hole the
+// unhooked IDXGISwapChain3::ResizeBuffers1 left -- a D3D12 title resizing through it kept its old size until now. The
+// output size can therefore change between two records of one chain, which is what a resize IS; SegmentBuilder splits
+// there like after any other resize (03_METRICS §Display mode).
+//
+// GetFullscreenState with a null output: the IDXGIOutput it would hand back is AddRef'd, and we have no use for it.
+void SampleDisplay(IDXGISwapChain* sc, SwapChainSlot& slot, uint64_t now) noexcept {
+    const uint64_t half = g_logQpcFreq / 2u;
+    if (g_display == nullptr || half == 0u || (slot.displayQpc != 0u && now - slot.displayQpc < half)) {
+        return;
+    }
+    slot.displayQpc = now;
+
+    DXGI_SWAP_CHAIN_DESC desc{};
+    if (SUCCEEDED(sc->GetDesc(&desc))) {
+        RememberDesc(slot, desc);
+    }
+    BOOL       fullscreen = FALSE;
+    const bool known = SUCCEEDED(sc->GetFullscreenState(&fullscreen, nullptr));
+    if (!DescribesDisplay(slot.id, static_cast<uint64_t>(slot.outW) * slot.outH, now)) {
+        return;
+    }
+
+    uint32_t flags = FL_DISPLAY_SAMPLED;
+    if (known) {
+        flags |= FL_DISPLAY_EXCLUSIVE_KNOWN;
+        if (fullscreen != FALSE) {
+            flags |= FL_DISPLAY_EXCLUSIVE;
+        }
+    }
+    PublishDisplay(flags, slot.hwnd, slot.outW, slot.outH, slot.swapEffect, slot.swapFlags, slot.id, now);
 }
 
 // adapterLuid is published at FIRST PRESENT, not at init: at init we are two
@@ -2374,6 +2479,7 @@ DWORD WINAPI WatchdogThread(LPVOID) noexcept {
 // The hot path. One QPC read, a few cached-state reads, one 60-byte store in two
 // spans, two relaxed atomic stores, two fences. No syscall, no allocation, no
 // lock, no logging (NFR-1, target <= 1 us; a bare vtable detour measured 8.4 ns).
+// Twice a second per chain, two getters more (SampleDisplay, layout 4, beta.10).
 void RecordPresent(IDXGISwapChain* sc, UINT syncInterval, UINT flags) noexcept {
     if (!MayObserve()) {
         if ((flags & DXGI_PRESENT_TEST) == 0u) {
@@ -2412,6 +2518,9 @@ void RecordPresent(IDXGISwapChain* sc, UINT syncInterval, UINT flags) noexcept {
 
     SwapChainSlot* slot = FindOrAdd(sc);
     PublishAdapterOnce(sc);
+    if (slot != nullptr) {
+        SampleDisplay(sc, *slot, static_cast<uint64_t>(qpc.QuadPart));
+    }
 
     // DXGI'S OWN COUNT OF THIS CHAIN'S PRESENTS, read here on the object the title passed
     // (the same class of read as GetDesc above), BEFORE this present is forwarded: the
@@ -2946,6 +3055,8 @@ struct GlSlot {
     uint16_t w = 0;
     uint16_t h = 0;
     uint32_t presents = 0;
+    HWND     wnd = nullptr;     // the window the HDC belongs to, as ReadGlSize last found it (layout 4, beta.10)
+    uint64_t displayQpc = 0;    // the QPC of this stream's last display sample
 };
 constexpr size_t kMaxGlSlots = 8;
 GlSlot           g_gl[kMaxGlSlots]{};
@@ -2953,10 +3064,27 @@ GlSlot           g_gl[kMaxGlSlots]{};
 void ReadGlSize(GlSlot& s) noexcept {
     const HWND wnd = WindowFromDC(s.hdc);
     RECT       r{};
+    s.wnd = wnd;
     if (wnd != nullptr && GetClientRect(wnd, &r) && r.right > 0 && r.bottom > 0) {
         s.w = static_cast<uint16_t>(r.right > 0xFFFF ? 0 : r.right);
         s.h = static_cast<uint16_t>(r.bottom > 0xFFFF ? 0 : r.bottom);
     }
+}
+
+// Region 4 for an OpenGL stream (fl_shm.h §Region 4): the window and client size ReadGlSize already holds, and no
+// exclusive bits -- OpenGL has no state to ask, which the Agent reads as "exclusivity unknown", never as "windowed".
+// Nothing new is called here: the window came from WindowFromDC on the HDC the title passed.
+void SampleGlDisplay(GlSlot& s, uint64_t now) noexcept {
+    const uint64_t half = g_logQpcFreq / 2u;
+    if (g_display == nullptr || half == 0u || (s.displayQpc != 0u && now - s.displayQpc < half)) {
+        return;
+    }
+    s.displayQpc = now;
+    if (!DescribesDisplay(s.id, static_cast<uint64_t>(s.w) * s.h, now)) {
+        return;
+    }
+    PublishDisplay(FL_DISPLAY_SAMPLED | FL_DISPLAY_OPENGL, static_cast<uint64_t>(reinterpret_cast<uintptr_t>(s.wnd)),
+                   s.w, s.h, 0u, 0u, s.id, now);
 }
 
 GlSlot* FindOrAddGl(HDC hdc) noexcept {
@@ -2987,6 +3115,9 @@ void RecordGlPresent(HDC hdc) noexcept {
     LARGE_INTEGER qpc{};
     QueryPerformanceCounter(&qpc);
     GlSlot* slot = FindOrAddGl(hdc);
+    if (slot != nullptr) {
+        SampleGlDisplay(*slot, static_cast<uint64_t>(qpc.QuadPart));
+    }
 
     FlFrameRecord rec{};
     rec.qpc = static_cast<uint64_t>(qpc.QuadPart);
@@ -3122,6 +3253,7 @@ DWORD WINAPI InitThread(LPVOID) noexcept {
 
     g_state = reinterpret_cast<FlWriterState*>(static_cast<unsigned char*>(g_base) + FL_SHM_WRITER_OFFSET);
     g_control = reinterpret_cast<FlControlBlock*>(static_cast<unsigned char*>(g_base) + FL_SHM_CONTROL_OFFSET);
+    g_display = reinterpret_cast<FlDisplayState*>(static_cast<unsigned char*>(g_base) + FL_SHM_DISPLAY_OFFSET);
     // The supervision clock starts HERE, when the mapping is published -- not at
     // first present. 07_IPC is explicit that a capture side no Agent ever adopts
     // is inert from the beginning rather than enjoying a grace window.

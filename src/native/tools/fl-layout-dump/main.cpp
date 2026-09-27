@@ -35,8 +35,10 @@ void Field(const char* name, size_t offset, size_t size, bool last = false) {
 int main() {
     std::printf("{\n");
     std::printf("  \"layoutVersion\": %u,\n", FL_SHM_LAYOUT_VERSION);
-    std::printf("  \"regions\": { \"handshake\": %u, \"writer\": %u, \"control\": %u, \"ring\": %u },\n",
-                FL_SHM_HANDSHAKE_OFFSET, FL_SHM_WRITER_OFFSET, FL_SHM_CONTROL_OFFSET, FL_SHM_RING_OFFSET);
+    std::printf(
+        "  \"regions\": { \"handshake\": %u, \"writer\": %u, \"control\": %u, \"display\": %u, \"ring\": %u },\n",
+        FL_SHM_HANDSHAKE_OFFSET, FL_SHM_WRITER_OFFSET, FL_SHM_CONTROL_OFFSET, FL_SHM_DISPLAY_OFFSET,
+        FL_SHM_RING_OFFSET);
     // D33: the tolerance mapping (fl_tolerance.h) the Agent writes before an injection under a user-mode exception.
     std::printf("  \"tolerance\": { \"magic\": %u, \"version\": %u, \"maxFamilies\": %u, \"nameLen\": %u },\n",
                 FL_TOLERANCE_MAGIC, FL_TOLERANCE_VERSION, FL_TOLERANCE_MAX_FAMILIES, FL_TOLERANCE_NAME_LEN);
@@ -82,6 +84,21 @@ int main() {
     Field("guardTicks", offsetof(FlControlBlock, guardTicks), sizeof(uint32_t));
     Field("logFlushRequested", offsetof(FlControlBlock, logFlushRequested), sizeof(uint32_t));
     Field("reserved", offsetof(FlControlBlock, reserved), sizeof(uint32_t) * 11, true);
+    std::printf("    ] },\n");
+
+    // Layout 4 (beta.10): region 4, the presenting swap chain's display facts.
+    std::printf("    \"FlDisplayState\": { \"size\": %zu, \"fields\": [\n", sizeof(FlDisplayState));
+    Field("seq", offsetof(FlDisplayState, seq), sizeof(uint32_t));
+    Field("flags", offsetof(FlDisplayState, flags), sizeof(uint32_t));
+    Field("hwnd", offsetof(FlDisplayState, hwnd), sizeof(uint64_t));
+    Field("bufferWidth", offsetof(FlDisplayState, bufferWidth), sizeof(uint32_t));
+    Field("bufferHeight", offsetof(FlDisplayState, bufferHeight), sizeof(uint32_t));
+    Field("swapEffect", offsetof(FlDisplayState, swapEffect), sizeof(uint32_t));
+    Field("swapFlags", offsetof(FlDisplayState, swapFlags), sizeof(uint32_t));
+    Field("chainId", offsetof(FlDisplayState, chainId), sizeof(uint32_t));
+    Field("samples", offsetof(FlDisplayState, samples), sizeof(uint32_t));
+    Field("sampleQpc", offsetof(FlDisplayState, sampleQpc), sizeof(uint64_t));
+    Field("reserved", offsetof(FlDisplayState, reserved), sizeof(uint32_t) * 4, true);
     std::printf("    ] },\n");
 
     std::printf("    \"FlFrameRecord\": { \"size\": %zu, \"fields\": [\n", sizeof(FlFrameRecord));

@@ -145,6 +145,8 @@ public sealed class CaptureSessionTests : IAsyncDisposable
 
         public FlShmHandshake Handshake => default;
 
+        public FlDisplayState? DisplayState => null;
+
         public long TotalDropped { get; set; }
 
         public long TotalGaps { get; set; }
@@ -343,6 +345,8 @@ public sealed class CaptureSessionTests : IAsyncDisposable
 
         public FlShmHandshake Handshake => default;
 
+        public FlDisplayState? DisplayState => null;
+
         public long TotalDropped => 0;
 
         public long TotalGaps => 0;
@@ -480,6 +484,8 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         public FlWriterState WriterState => new() { Status = (uint)FlStatus.Ready };
 
         public FlShmHandshake Handshake => default;
+
+        public FlDisplayState? DisplayState => null;
 
         public long TotalDropped => 0;
 

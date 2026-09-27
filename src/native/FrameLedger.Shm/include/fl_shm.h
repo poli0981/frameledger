@@ -25,11 +25,14 @@
 //   [0x0000] FlShmHandshake  64 B  write-once by the Overlay at init
 //   [0x0040] FlWriterState   64 B  Overlay-written (writeIndex every present)
 //   [0x0080] FlControlBlock  64 B  Agent-written
-//   [0x00C0] FlFrameRecord[capacity]
+//   [0x00C0] FlDisplayState  64 B  Overlay-written, at most every 500 ms (layout 4, beta.10)
+//   [0x0100] FlFrameRecord[capacity]
 //
-// The three header regions are separate cache lines on purpose. The Overlay
+// The header regions are separate cache lines on purpose. The Overlay
 // writes region 2 every frame while the Agent writes region 3 every second;
 // sharing a line would put a cross-process cache-line bounce on the hot path.
+// Region 4 is its own line for the same reason: it is rewritten twice a second
+// by whichever thread presents, and the Agent reads it at 10 Hz.
 //
 // A previous revision of the design declared a single 88-byte header while
 // mapping the control block to 0x0040. In code, unhookRequested would have
@@ -51,12 +54,18 @@
 // Bump whenever ANY struct below changes. The Agent refuses to attach on
 // mismatch and tells the user to restart the game — the DLL lives inside a
 // running process, so the two sides cannot be assumed to update in lockstep.
-#define FL_SHM_LAYOUT_VERSION 3u
+//
+// 4 (2026-09-27, beta.10): region 4, FlDisplayState, and the ring moved from
+// 0xC0 to 0x100 to make room for it. FlWriterState had no slack left
+// (dxgiPresentsBeforeHook took its last word), and the display facts are not
+// frame facts, so neither the writer state nor the record was the place.
+#define FL_SHM_LAYOUT_VERSION 4u
 
 #define FL_SHM_HANDSHAKE_OFFSET 0x00u
 #define FL_SHM_WRITER_OFFSET 0x40u
 #define FL_SHM_CONTROL_OFFSET 0x80u
-#define FL_SHM_RING_OFFSET 0xC0u
+#define FL_SHM_DISPLAY_OFFSET 0xC0u
+#define FL_SHM_RING_OFFSET 0x100u
 
 #define FL_SHM_DEFAULT_CAPACITY 8192u    // 8192 * 64 B = 512 KiB, ~16 s at 500 fps
 
@@ -785,7 +794,61 @@ struct alignas(64) FlControlBlock {
 };
 
 // ---------------------------------------------------------------------------
-// Region 4 — the ring. 64 bytes exactly, no implicit padding.
+// Region 4 — Overlay-written: the presenting swap chain as DXGI describes it (layout 4, 2026-09-27, beta.10).
+// ---------------------------------------------------------------------------
+// The owner asked for the game's window size and display mode — exclusive fullscreen, borderless, windowed — and for
+// how much of a session each took. Two of the three facts that decide it are only knowable INSIDE the process: whether
+// the swap chain is in exclusive fullscreen (IDXGISwapChain::GetFullscreenState) and which window it presents to
+// (DXGI_SWAP_CHAIN_DESC.OutputWindow). Both are getters on the object the title passed to the hooked Present -- the
+// same class of read as GetDesc in FindOrAdd and GetLastPresentCount (CLAUDE.md rule 4) -- and nothing else is read
+// here. The window's geometry, its monitor and the classification are the Agent's, OUT of process, with user32
+// (04_CAPTURE §Ring draining), exactly as the foreground sample is.
+//
+// WHY NOT SetFullscreenState. 17_HOOK_ENGINE had it as a ⏳ row. DXGI leaves exclusive fullscreen on its own -- focus
+// lost, Alt+Enter handled inside DXGI's window hook -- without the title calling it, so a hook would miss exactly the
+// transitions a mode share has to count. A poll does not: the present hook asks at most every 500 ms per chain (QPC,
+// already read there), which amortises to nothing and needs no new hook.
+//
+// WHICH CHAIN. One title can present several (a launcher window, a video player, a second stream -- the FG ladder's
+// multiple_streams). The region describes ONE: the chain with the largest back buffer, and a chain that has not
+// presented for 2 s gives way to whoever does. `chainId` says which, in FlFrameRecord.swapchainId's id space.
+//
+// A SEQLOCK THAT NEVER WAITS. `seq` is odd while a writer is inside. A writer takes it by compare-exchange from an even
+// value and, if another presenting thread holds it, SKIPS this sample -- the next present retries -- so nothing on the
+// present path ever blocks or spins. A reader takes a copy between two reads of an even, unchanged `seq`, and retries a
+// bounded number of times. The fields are written through std::atomic_ref so a torn read is defined behaviour.
+//
+// A MINIMISED OR FULLY OCCLUDED GAME ISSUES ONLY DXGI_PRESENT_TEST, which RecordPresent drops before it samples
+// anything, so a stale `sampleQpc` is not "still exclusive": the Agent treats the exclusive bits as unknown once the
+// sample is older than 2 s (03_METRICS §Display mode).
+
+// FlDisplayState.flags. Additive: a reader ignores a bit it does not know.
+enum FlDisplayFlags : uint32_t {
+    FL_DISPLAY_SAMPLED = 1u << 0,            // at least one chain has been described
+    FL_DISPLAY_EXCLUSIVE_KNOWN = 1u << 1,    // GetFullscreenState answered on the described chain (DXGI only)
+    FL_DISPLAY_EXCLUSIVE = 1u << 2,          // ...and said exclusive fullscreen. Meaningless without the bit above
+    FL_DISPLAY_OPENGL = 1u << 3,             // described from wglSwapBuffers' HDC: OpenGL has no exclusive state to ask
+};
+
+struct alignas(64) FlDisplayState {
+    uint32_t seq;             // @0   seqlock: odd while a writer is inside, +2 per sample
+    uint32_t flags;           // @4   FlDisplayFlags
+    uint64_t hwnd;            // @8   OutputWindow (DXGI) or WindowFromDC (OpenGL); 0 = none (a composition chain)
+    uint32_t bufferWidth;     // @16  the back buffer (DXGI) or the client area (OpenGL)
+    uint32_t bufferHeight;    // @20
+    // DXGI_SWAP_EFFECT PLUS ONE. DXGI_SWAP_EFFECT_DISCARD is 0, and storing the vendor value verbatim would say
+    // "discard" about every chain nobody described -- the vendor-zero trap HANDOFF records twice (rtTier,
+    // upscalerQuality).
+    uint32_t swapEffect;     // @24  0 = not read
+    uint32_t swapFlags;      // @28  DXGI_SWAP_CHAIN_DESC.Flags (ALLOW_TEARING, ...)
+    uint32_t chainId;        // @32  the FlFrameRecord.swapchainId of the chain described
+    uint32_t samples;        // @36  samples published (wraps); a reader tells "no new sample" from "same value"
+    uint64_t sampleQpc;      // @40  QueryPerformanceCounter at the last sample
+    uint32_t reserved[4];    // @48..63  must be zero
+};
+
+// ---------------------------------------------------------------------------
+// Region 5 — the ring. 64 bytes exactly, no implicit padding.
 // ---------------------------------------------------------------------------
 struct alignas(64) FlFrameRecord {
     uint64_t qpc;                // @0   present entry timestamp
@@ -1014,10 +1077,27 @@ static_assert(offsetof(FlFrameRecord, measuredMask) % 2 == 0);
 static_assert(offsetof(FlFrameRecord, vramUsedMb) % 4 == 0);
 static_assert(offsetof(FlFrameRecord, seq) % 4 == 0);
 
+// Region 4 (layout 4): 64 bytes, every field where 07_IPC says, each naturally aligned for std::atomic_ref.
+static_assert(sizeof(FlDisplayState) == 64);
+static_assert(offsetof(FlDisplayState, seq) == 0);
+static_assert(offsetof(FlDisplayState, flags) == 4);
+static_assert(offsetof(FlDisplayState, hwnd) == 8);
+static_assert(offsetof(FlDisplayState, bufferWidth) == 16);
+static_assert(offsetof(FlDisplayState, bufferHeight) == 20);
+static_assert(offsetof(FlDisplayState, swapEffect) == 24);
+static_assert(offsetof(FlDisplayState, swapFlags) == 28);
+static_assert(offsetof(FlDisplayState, chainId) == 32);
+static_assert(offsetof(FlDisplayState, samples) == 36);
+static_assert(offsetof(FlDisplayState, sampleQpc) == 40);
+static_assert(offsetof(FlDisplayState, reserved) == 48);
+static_assert(offsetof(FlDisplayState, hwnd) % 8 == 0 && offsetof(FlDisplayState, sampleQpc) % 8 == 0);
+
 // The regions must not overlap, and the ring must stay 64-aligned.
 static_assert(FL_SHM_HANDSHAKE_OFFSET + sizeof(FlShmHandshake) <= FL_SHM_WRITER_OFFSET);
 static_assert(FL_SHM_WRITER_OFFSET + sizeof(FlWriterState) <= FL_SHM_CONTROL_OFFSET);
-static_assert(FL_SHM_CONTROL_OFFSET + sizeof(FlControlBlock) <= FL_SHM_RING_OFFSET);
+static_assert(FL_SHM_CONTROL_OFFSET + sizeof(FlControlBlock) <= FL_SHM_DISPLAY_OFFSET);
+static_assert(FL_SHM_DISPLAY_OFFSET + sizeof(FlDisplayState) <= FL_SHM_RING_OFFSET);
+static_assert(FL_SHM_DISPLAY_OFFSET % 64 == 0);
 static_assert(FL_SHM_RING_OFFSET % 64 == 0);
 
 constexpr size_t FlShmSizeForCapacity(uint32_t capacity) noexcept {

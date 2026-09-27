@@ -10,7 +10,9 @@
 # gl_hold.cpp is the OpenGL mode (P1 item 4): a real context on a hidden window,
 # SwapBuffers'd through gdi32 the way a title does it; Microsoft's generic
 # renderer answers everywhere, so this one runs on CI too.
-add_executable(hook-harness main.cpp vk_hold.cpp gl_hold.cpp proxy_swapchain.h)
+# hwnd_hold.cpp is the one DXGI mode with a WINDOW (layout 4, beta.10): every other mode presents to a
+# composition swap chain, which region 4 (the display facts) has nothing to describe about.
+add_executable(hook-harness main.cpp vk_hold.cpp gl_hold.cpp hwnd_hold.cpp proxy_swapchain.h)
 # fl_dxgi_vtable, not a local copy of the slot numbers: this harness proves the
 # indices by behaviour, and it must prove the SHIPPED ones (§S29(b)). The same
 # reasoning brings in fl_hook_inventory.h from the Overlay's include directory:

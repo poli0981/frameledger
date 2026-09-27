@@ -20,6 +20,12 @@ public interface ICaptureSink : IDisposable
 
     FlShmHandshake Handshake { get; }
 
+    /// <summary>
+    /// Region 4 (layout 4, beta.10): the presenting swap chain as DXGI describes it, a consistent copy — or null when the
+    /// Overlay was writing it on every attempt this tick. A Vulkan title's ring (the layer never writes it) reads all zeros.
+    /// </summary>
+    FlDisplayState? DisplayState { get; }
+
     long TotalDropped { get; }
 
     long TotalGaps { get; }

@@ -34,12 +34,16 @@ public static class ShmLayout
     /// user to restart the game — the DLL lives inside a running process, so the two sides cannot be
     /// assumed to update in lockstep.
     /// </summary>
-    public const uint LayoutVersion = 3u;
+    public const uint LayoutVersion = 4u;
 
     public const uint HandshakeOffset = 0x00u;
     public const uint WriterOffset = 0x40u;
     public const uint ControlOffset = 0x80u;
-    public const uint RingOffset = 0xC0u;
+
+    /// <summary>Region 4, <see cref="FlDisplayState"/> (layout 4, beta.10): the ring moved from 0xC0 to make room for it.</summary>
+    public const uint DisplayOffset = 0xC0u;
+
+    public const uint RingOffset = 0x100u;
 
     /// <summary>8192 × 64 B = 512 KiB, ≈16 s at 500 fps.</summary>
     public const uint DefaultCapacity = 8192u;
@@ -635,7 +639,71 @@ public unsafe struct FlControlBlock
     public fixed uint Reserved[11];
 }
 
-/// <summary>Region 4 — the ring. Exactly 64 bytes, no implicit padding.</summary>
+/// <summary><see cref="FlDisplayState.Flags"/> bits (layout 4, beta.10). A reader ignores a bit it does not know.</summary>
+[Flags]
+public enum FlDisplayFlags : uint
+{
+    None = 0,
+
+    /// <summary>At least one chain has been described.</summary>
+    Sampled = 1u << 0,
+
+    /// <summary><c>GetFullscreenState</c> answered on the described chain (DXGI only).</summary>
+    ExclusiveKnown = 1u << 1,
+
+    /// <summary>...and said exclusive fullscreen. Meaningless without <see cref="ExclusiveKnown"/>.</summary>
+    Exclusive = 1u << 2,
+
+    /// <summary>Described from <c>wglSwapBuffers</c>' HDC: OpenGL has no exclusive state to ask.</summary>
+    OpenGl = 1u << 3,
+}
+
+/// <summary>
+/// Region 4 — Overlay-written, at most every 500 ms per chain (layout 4, 2026-09-27, beta.10): the presenting swap chain as
+/// DXGI describes it — whether it is in exclusive fullscreen, the window it presents to, its back buffer and swap effect.
+/// The window's geometry and the display mode are the Agent's, read out of process (<c>03_METRICS</c> §Display mode).
+/// </summary>
+/// <remarks>
+/// <b>A seqlock the writer never waits on.</b> <see cref="Seq"/> is odd while a writer is inside; a copy taken between two
+/// reads of an even, unchanged value is consistent (<c>ShmRingReader.DisplayState</c>). A stale <see cref="SampleQpc"/> is not
+/// "still exclusive": a minimised game issues only <c>DXGI_PRESENT_TEST</c>, which the hook drops before it samples.
+/// </remarks>
+[StructLayout(LayoutKind.Sequential, Size = 64)]
+public unsafe struct FlDisplayState
+{
+    /// <summary>Odd while a writer is inside; +2 per sample.</summary>
+    public uint Seq;
+
+    public FlDisplayFlags Flags;
+
+    /// <summary><c>OutputWindow</c> (DXGI) or <c>WindowFromDC</c> (OpenGL); 0 = none (a composition chain).</summary>
+    public ulong Hwnd;
+
+    /// <summary>The back buffer (DXGI) or the client area (OpenGL).</summary>
+    public uint BufferWidth;
+
+    public uint BufferHeight;
+
+    /// <summary><c>DXGI_SWAP_EFFECT</c> PLUS ONE — <c>DISCARD</c> is 0, the vendor-zero trap; 0 = not read.</summary>
+    public uint SwapEffect;
+
+    /// <summary><c>DXGI_SWAP_CHAIN_DESC.Flags</c>.</summary>
+    public uint SwapFlags;
+
+    /// <summary>The <see cref="FlFrameRecord.SwapchainId"/> of the chain described.</summary>
+    public uint ChainId;
+
+    /// <summary>Samples published (wraps).</summary>
+    public uint Samples;
+
+    /// <summary>QueryPerformanceCounter at the last sample.</summary>
+    public ulong SampleQpc;
+
+    /// <summary>Must be zero.</summary>
+    public fixed uint Reserved[4];
+}
+
+/// <summary>Region 5 — the ring. Exactly 64 bytes, no implicit padding.</summary>
 [StructLayout(LayoutKind.Sequential, Size = 64)]
 public unsafe struct FlFrameRecord
 {
