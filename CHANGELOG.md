@@ -27,6 +27,32 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
+## [0.1.0-beta.10] - 2026-09-28
+
+**The tenth pre-release: how each game was shown, the agent as administrator if you choose it, and the exact Unreal
+Engine version.** The same unsigned installer: verify its hash against `SHA256SUMS.txt`, then *More info → Run anyway*.
+What changed for a user:
+
+- **The display mode** — exclusive full-screen, borderless, windowed or minimised, as a share of each session, with the
+  window's size and the monitor's — on the session summary, the game page, the Trend (three new metrics) and Compare,
+  for measured and unmeasured sessions alike. Only a measured Direct3D game can say *exclusive*; others read
+  *full-screen or borderless* when the window covers the screen.
+- **Run the agent as administrator** — a Settings option, off by default. Windows asks every time the agent starts;
+  games you start from FrameLedger still run with your standard rights; it changes nothing in the anti-cheat guard.
+- **The exact Unreal Engine version** on a game's page, read from its executable, with what it rests on.
+- **What FrameLedger cannot do** is one page — Help ▸ Limitations, and `LIMITATIONS.md` — and the games it has been run
+  with are listed in `docs/LIST_GAME_TESTED.md`.
+- **The Privacy Policy (2.5) and the Disclaimer (2.8) say so**, so the Legal Gate opens once after the update. The EULA
+  is unchanged.
+
+**Updating from `0.1.0-beta.9`:**
+
+- Quit the App (tray icon → Exit) and end `FrameLedger.Agent.exe` before running the installer.
+- Schemas 0015 and 0016 add columns; the database opens in place. Sessions recorded before show the display mode as N/A.
+- The shared-memory layout between the agent and a measured game changed (version 4): **a game that was running while
+  you updated must be restarted before it can be measured** — the app says so when it meets the old layout.
+- Every game is re-detected once (rules `2026.09.6`), which fills in the Unreal Engine versions.
+
 ### Added
 
 - **The exact Unreal Engine version on a game's page** (owner request, beta.10). The Agent reads it from the game's
