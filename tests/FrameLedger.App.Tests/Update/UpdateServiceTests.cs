@@ -47,9 +47,12 @@ public sealed class UpdateServiceTests
 
         public UpdateService Service { get; }
 
+        /// <summary>Whether an Agent process still holds the data folder (beta.10) — this test's, never the real folder's lock.</summary>
+        public bool AgentHeld { get; set; }
+
         public Harness(TimeSpan? agentStop = null)
         {
-            Service = new UpdateService(Client, Agent, new RegisteredSettings(Store), Prompts, Shell, Strip, agentStop);
+            Service = new UpdateService(Client, Agent, new RegisteredSettings(Store), Prompts, Shell, Strip, agentStop, () => AgentHeld);
             Service.Available += (_, e) => Available.Add(e.Version);
         }
     }
@@ -295,7 +298,7 @@ public sealed class UpdateServiceTests
     {
         var h = new Harness();
         h.Store.Rows[SettingsRegistry.UpdateChannel.Key] = "stable";
-        using var faulting = new UpdateService(new ThrowingClient(), h.Agent, new RegisteredSettings(h.Store), h.Prompts, h.Shell, h.Strip);
+        using var faulting = new UpdateService(new ThrowingClient(), h.Agent, new RegisteredSettings(h.Store), h.Prompts, h.Shell, h.Strip, agentHeld: static () => false);
 
         await faulting.CheckInteractivelyAsync(Ct);
 
@@ -403,5 +406,44 @@ public sealed class UpdateServiceTests
         h.Client.Applied.Should().BeEmpty();
         h.Shell.Quits.Should().Be(0);
         h.Agent.Holds.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// beta.10 (the admin mode): an Agent can hold the data folder — and the install directory's files — without answering
+    /// this App (an elevated one still starting, one of another version). Nothing is applied under it.
+    /// </summary>
+    [Fact]
+    public async Task AnAgentThatHoldsTheFolderWithoutAnsweringIsNeverUpdatedUnder()
+    {
+        var h = new Harness(TimeSpan.FromMilliseconds(300)) { AgentHeld = true };
+        h.Agent.IsConnected = false;
+        h.Client.Next = Candidate();
+        await h.Service.CheckSilentlyAsync(Ct);
+
+        await h.Service.RestartToUpdateAsync(Ct);
+
+        h.Client.Applied.Should().BeEmpty("the files are still in use by an Agent process");
+        h.Shell.Quits.Should().Be(0);
+        h.Strip.Shown.Should().ContainSingle().Which.Body.Should().Be(Strings.Update_AgentStillRunning);
+    }
+
+    [Fact]
+    public async Task TheApplyWaitsUntilTheStoppedAgentsProcessHasLetGo()
+    {
+        var h = new Harness(TimeSpan.FromSeconds(5)) { AgentHeld = true };
+        h.Client.Next = Candidate();
+        await h.Service.CheckSilentlyAsync(Ct);
+        h.Agent.Answer = (_, _) =>
+        {
+            // The pipe drops at once; the process lets go of the folder a little later, as an exiting Agent does.
+            h.Agent.IsConnected = false;
+            _ = Task.Delay(300, Ct).ContinueWith(_ => h.AgentHeld = false, Ct, TaskContinuationOptions.None, TaskScheduler.Default);
+            return FakeAgentLink.Envelope(IpcMessageType.ShutdownAck, new ShutdownAck());
+        };
+
+        await h.Service.RestartToUpdateAsync(Ct);
+
+        h.Client.Applied.Should().Equal("0.2.0");
+        h.AgentHeld.Should().BeFalse("the apply ran only after the folder was let go");
     }
 }

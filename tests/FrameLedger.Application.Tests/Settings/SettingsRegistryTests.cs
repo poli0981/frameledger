@@ -31,13 +31,28 @@ public sealed class SettingsRegistryTests
         d.AgentReads.Should().BeTrue("the Agent reads it at every session start and command");
     }
 
+    /// <summary>
+    /// D34: the admin mode is off unless the user turns it on — and the reader that runs before the Agent exists
+    /// (<c>Infrastructure.Startup.RunElevatedSetting</c>, which cannot reference this project's registry) names the same key.
+    /// </summary>
+    [Fact]
+    public void TheAdminModeIsOffByDefaultAndItsEarlyReaderNamesTheSameKey()
+    {
+        SettingDefinition d = SettingsRegistry.CaptureRunElevated;
+        d.Key.Should().Be("capture.run_elevated");
+        d.Default.Should().Be("0");
+        d.Kind.Should().Be(SettingKind.Boolean);
+        FrameLedger.Infrastructure.Startup.RunElevatedSetting.Key.Should().Be(d.Key);
+    }
+
     [Fact]
     public void TheAgentReadsExactlyTheFourPrefixesD16Names()
     {
         string[] agent = [.. SettingsRegistry.All.Where(static d => d.AgentReads).Select(static d => d.Key)];
         // hooking.usermode_ac_exceptions joined on 2026-09-26 (D33): the user-mode exception's option, off by default.
-        agent.Should().BeEquivalentTo(["capture.background", "hooking.kill_switch", "hooking.usermode_ac_exceptions", "capture.min_session_s",
-            "telemetry.interval_ms", "retention.raw_sessions_per_game"]);
+        // capture.run_elevated joined on 2026-09-27 (D34): the admin mode, read before the Agent exists.
+        agent.Should().BeEquivalentTo(["capture.background", "hooking.kill_switch", "hooking.usermode_ac_exceptions", "capture.run_elevated",
+            "capture.min_session_s", "telemetry.interval_ms", "retention.raw_sessions_per_game"]);
         agent.Should().OnlyContain(static k => k.StartsWith("hooking.", StringComparison.Ordinal) || k.StartsWith("capture.", StringComparison.Ordinal)
             || k.StartsWith("telemetry.", StringComparison.Ordinal) || k.StartsWith("retention.", StringComparison.Ordinal));
     }

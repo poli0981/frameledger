@@ -61,6 +61,10 @@
     <value>エージェントを起動中…</value>
     <comment>review</comment>
   </data>
+  <data name="Agent_State_Elevating" xml:space="preserve">
+    <value>管理者の許可を待っています…</value>
+    <comment>review</comment>
+  </data>
   <data name="App_Title" xml:space="preserve">
     <value>FrameLedger</value>
     <comment>review</comment>
@@ -1745,6 +1749,38 @@
     <value>標準ユーザーとして実行中です。</value>
     <comment>review</comment>
   </data>
+  <data name="Settings_Agent_RunElevated_Label" xml:space="preserve">
+    <value>エージェントを管理者として実行</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_RunElevated_Body" xml:space="preserve">
+    <value>既定ではオフです。オンにすると、ログオン時を含め、エージェントが起動するたびに Windows が確認します。FrameLedger から起動したゲームは引き続き標準ユーザーの権限で実行されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_ElevationDeclined" xml:space="preserve">
+    <value>標準ユーザーとして実行中です: 管理者の確認が拒否されました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_ElevationOtherAccount" xml:space="preserve">
+    <value>標準ユーザーとして実行中です: 別のアカウントで確認に応答されました。そのアカウントのエージェントはあなたのデータを使いません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_ElevationFailed" xml:space="preserve">
+    <value>標準ユーザーとして実行中です: Windows はエージェントを管理者として起動できませんでした。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_RunElevated_Restarting" xml:space="preserve">
+    <value>保存しました。エージェントを再起動します。オプションがオンの場合は Windows が許可を求めます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_RunElevated_AfterSession" xml:space="preserve">
+    <value>保存しました。セッションが実行中のため、次に起動するまでエージェントは現在の権限のままです。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Agent_RunElevated_NotStopped" xml:space="preserve">
+    <value>保存しましたが、エージェントが停止しませんでした。次に起動するまで現在の権限のままです。</value>
+    <comment>review</comment>
+  </data>
   <data name="Settings_Agent_Task_Label" xml:space="preserve">
     <value>ログオン時にエージェントを起動</value>
     <comment>review</comment>
@@ -3163,6 +3199,10 @@
   </data>
   <data name="Launch_Error_740" xml:space="preserve">
     <value>ゲームには管理者権限が必要です</value>
+    <comment>review</comment>
+  </data>
+  <data name="Launch_Error_1400" xml:space="preserve">
+    <value>標準ユーザーの権限でゲームを起動するためのデスクトップ シェルがありません (エージェントは管理者として実行されており、その方法でゲームを起動することはありません)</value>
     <comment>review</comment>
   </data>
   <data name="Launch_Failed_Format" xml:space="preserve">

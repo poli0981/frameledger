@@ -26,6 +26,15 @@ public static class Strings
     /// <summary>Every key, for an audit that walks them.</summary>
     public static IReadOnlyList<string> Keys { get; } =
     [
+        nameof(Safety_AdminMode_Accept),
+        nameof(Safety_AdminMode_Adds),
+        nameof(Safety_AdminMode_Cancel),
+        nameof(Safety_AdminMode_Intro),
+        nameof(Safety_AdminMode_Prompt),
+        nameof(Safety_AdminMode_Risk),
+        nameof(Safety_AdminMode_Title),
+        nameof(Safety_AdminMode_TurnOn),
+        nameof(Safety_AdminMode_Unchanged),
         nameof(Safety_AutoDisabled_Format),
         nameof(Safety_Blocked_Toggle_Format),
         nameof(Safety_Consent_AgentUnavailable),
@@ -62,6 +71,24 @@ public static class Strings
         nameof(Safety_Refused_Unnamed),
         nameof(Safety_Unhooked_Format),
     ];
+
+    public static string Safety_AdminMode_Accept => ResourceManager.GetString(nameof(Safety_AdminMode_Accept), Culture) ?? nameof(Safety_AdminMode_Accept);
+
+    public static string Safety_AdminMode_Adds => ResourceManager.GetString(nameof(Safety_AdminMode_Adds), Culture) ?? nameof(Safety_AdminMode_Adds);
+
+    public static string Safety_AdminMode_Cancel => ResourceManager.GetString(nameof(Safety_AdminMode_Cancel), Culture) ?? nameof(Safety_AdminMode_Cancel);
+
+    public static string Safety_AdminMode_Intro => ResourceManager.GetString(nameof(Safety_AdminMode_Intro), Culture) ?? nameof(Safety_AdminMode_Intro);
+
+    public static string Safety_AdminMode_Prompt => ResourceManager.GetString(nameof(Safety_AdminMode_Prompt), Culture) ?? nameof(Safety_AdminMode_Prompt);
+
+    public static string Safety_AdminMode_Risk => ResourceManager.GetString(nameof(Safety_AdminMode_Risk), Culture) ?? nameof(Safety_AdminMode_Risk);
+
+    public static string Safety_AdminMode_Title => ResourceManager.GetString(nameof(Safety_AdminMode_Title), Culture) ?? nameof(Safety_AdminMode_Title);
+
+    public static string Safety_AdminMode_TurnOn => ResourceManager.GetString(nameof(Safety_AdminMode_TurnOn), Culture) ?? nameof(Safety_AdminMode_TurnOn);
+
+    public static string Safety_AdminMode_Unchanged => ResourceManager.GetString(nameof(Safety_AdminMode_Unchanged), Culture) ?? nameof(Safety_AdminMode_Unchanged);
 
     public static string Safety_AutoDisabled_Format => ResourceManager.GetString(nameof(Safety_AutoDisabled_Format), Culture) ?? nameof(Safety_AutoDisabled_Format);
 

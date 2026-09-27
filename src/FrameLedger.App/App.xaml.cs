@@ -277,6 +277,8 @@ public partial class App : System.Windows.Application
         // D33 (owner decision 2026-09-26): the user-mode exception's disclosure and the request it ends in; the list is
         // Settings', the button on a blocked game's page.
         builder.Services.AddSingleton<IAntiCheatExceptionPrompt, AntiCheatExceptionPrompt>();
+        // The admin mode's disclosure (beta.10, D34), shown before capture.run_elevated is turned on.
+        builder.Services.AddSingleton<IAgentAdminPrompt, AgentAdminPrompt>();
         builder.Services.AddSingleton<AntiCheatExceptions>();
 
         AddLibrary(builder.Services);
@@ -308,7 +310,8 @@ public partial class App : System.Windows.Application
     /// <summary>The Agent over the pipe (07_IPC §Client behavior): connect, start it when it is not there, tell the shell.</summary>
     private static void AddAgentLink(IServiceCollection services)
     {
-        services.AddSingleton<IAgentLauncher, AgentLauncher>();
+        // The admin mode's prompt (beta.10) belongs to the main window; the handle is read when a start asks, never earlier.
+        services.AddSingleton<IAgentLauncher>(static sp => AgentLauncher.ForApp(() => sp.GetRequiredService<ShellHost>().Handle));
         services.AddSingleton(static sp => new AgentConnection(
             sp.GetRequiredService<IAgentLauncher>(),
             static () => new PipeClient(),

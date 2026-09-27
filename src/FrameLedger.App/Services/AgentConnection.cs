@@ -151,7 +151,8 @@ public sealed class AgentConnection : IAgentLink, IAsyncDisposable
             running = _launcher.RunningAgent;
             if (running is null)
             {
-                Set(AgentConnectionState.Starting, null, null);
+                // The admin mode (beta.10): the start blocks while Windows' prompt waits for its answer, and the pill says why.
+                Set(_launcher.WillAskForElevation ? AgentConnectionState.Elevating : AgentConnectionState.Starting, null, null);
                 if (_launcher.TryStart())
                 {
                     Interlocked.Increment(ref _launches);

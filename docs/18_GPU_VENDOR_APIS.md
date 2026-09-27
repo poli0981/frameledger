@@ -122,7 +122,10 @@ CPU and motherboard sensors remain LHM-only, elevated-only, PawnIO-dependent, an
 > unelevated by design, so the unprivileged layer's behaviour never depends on privilege) only when the process is
 > elevated AND `PawnIo.IsInstalled`; it takes the package sensor (`CPU Package`, `Core (Tctl/Tdie)`) and falls back to the
 > hottest core. **Unmeasured on real hardware**: exercised against a fake `ILhmComputer` only; the first elevated run
-> with PawnIO is the measurement. `HelloAck.cpuTempAvailable` reports those same two conditions (it was a constant
+> with PawnIO is the measurement — **which the user can now choose to make (beta.10, the admin mode: Settings ▸ Capture
+> agent ▸ Run the agent as administrator, `01_ARCHITECTURE` ADR-9)**; until beta.10 an elevated Agent existed only when an
+> App started as administrator happened to start it, and `PrivilegeFootprintTests` now asserts on the elevated CI runner
+> that opening this CPU group enables no privilege. `HelloAck.cpuTempAvailable` reports those same two conditions (it was a constant
 > `false`). A tick only the machine answered is still queued, under a placeholder `GpuSample` with
 > `TelemetryLayer.None` and no field. The `.partial` sensor chunk carries the three values in bits 12–14 of the
 > existing 16-bit presence mask, so an older file reads back with an empty reading.

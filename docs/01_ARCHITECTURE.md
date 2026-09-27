@@ -142,3 +142,17 @@ covers\*.jpg
 - **ADR-7 (2026-07, core change):** **Capture moves to in-process graphics-API hooking**, C++20 DLL + MinHook, with a Vulkan implicit layer for Vulkan. Rationale: passive detection of DLSS/upscaling/frame-generation/RT state showed large errors against real games; those states are only knowable at the API boundary. Trade-offs accepted: anti-cheat exposure (mitigated by the hard guard in `19_SAFETY`, offline titles only), crash risk in the host process (mitigated by SEH guards + fault policy + auto-disable), a second toolchain in the build, and per-API maintenance as vendors change SDKs. Scope limited to titles the user explicitly opts in.
 - **ADR-8:** **No evasion, ever** (`19_SAFETY` §What we will never build). This is an architectural constraint, not a preference — it defines what "correct" means for this codebase.
 - **ADR-9:** Elevation demoted from required to optional; the Agent runs as a standard user by default.
+  **Chosen, not inherited, since beta.10 (owner decision D34, 2026-09-27):** Settings ▸ Capture agent ▸ *Run the agent as
+  administrator* (`capture.run_elevated`, off by default, a versioned disclosure — `agent-admin-dialog/1` — before it turns
+  on). With it on, **Windows is asked every time the Agent starts** — a UAC prompt owned by the App's window when the App
+  starts it, flashing on the taskbar when the logon task does — and there is no silent path: no "highest privileges" task,
+  no service. The elevated Agent is started for one user (`--serve --for-user <SID>`) and refuses to run as another
+  account (exit 11: a standard user answered with an administrator's password, and that account's `%LOCALAPPDATA%` is not
+  this user's ledger); a declined prompt leaves a standard user's Agent that says so (`--elevation declined`,
+  `HelloAck.ElevationOutcome`). With it off, an App started as administrator starts the Agent with the desktop shell's
+  token. **A game an elevated Agent starts gets the shell's token too** (`Infrastructure.Startup.UnelevatedProcess`) —
+  `LaunchGame` reaches the Agent over a pipe any process of the user may open, so an elevated launch would be a silent
+  elevation — and nothing enables a privilege (`TokenPrivileges` reads them; `tools/chokepoint-check.ps1` forbids the
+  enablers under `src/`). It buys what it always did: attaching to a game that runs as administrator, and the CPU
+  temperature with PawnIO. It does not open a process an anti-cheat driver protects (D21), and a Vulkan game that runs as
+  administrator stays unmeasured — the Khronos loader ignores the HKCU implicit layers for an elevated process.

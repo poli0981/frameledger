@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Windows;
 using FluentAssertions;
 using FrameLedger.App.Services;
@@ -114,7 +115,20 @@ public sealed class SettingsViewModelTests
         public required FakeFirstRun FirstRun { get; init; }
     }
 
-    private static async Task<Harness> OpenAsync(ScratchLedger s, FakeAgentLink? agent = null, FakeRun? run = null, FakeMaintenance? maintenance = null, FakeTool? tool = null)
+    /// <summary>The admin mode's disclosure, answering as told and counting how often it was shown.</summary>
+    private sealed class ScriptedAdminPrompt(bool answer) : IAgentAdminPrompt
+    {
+        public int Shown { get; private set; }
+
+        public Task<bool> ShowAsync(CancellationToken ct = default)
+        {
+            Shown++;
+            return Task.FromResult(answer);
+        }
+    }
+
+    private static async Task<Harness> OpenAsync(ScratchLedger s, FakeAgentLink? agent = null, FakeRun? run = null, FakeMaintenance? maintenance = null, FakeTool? tool = null,
+        IAgentAdminPrompt? adminPrompt = null)
     {
         maintenance ??= new FakeMaintenance();
         tool ??= new FakeTool();
@@ -128,7 +142,9 @@ public sealed class SettingsViewModelTests
         run ??= new FakeRun();
         var strip = new RecordingStrip();
         var shell = new ShellHost(new ServiceCollection().BuildServiceProvider(), null!, null!, closePolicy);
-        var vm = new SettingsViewModel(appearance, new NoTheme(), shell, settings, s.Library, new HookingConsent(agent, new NoPrompt()), agent, run, strip, maintenance, tool, closePolicy, firstRun);
+        // The instance-lock probe is the test's (never the real folder's): no Agent holds it, so a restart never waits.
+        var vm = new SettingsViewModel(appearance, new NoTheme(), shell, settings, s.Library, new HookingConsent(agent, new NoPrompt()), agent, run, strip, maintenance, tool, closePolicy, firstRun,
+            adminPrompt: adminPrompt, agentHeld: static () => false);
         Task pending = vm.Pending;
         await pending.ConfigureAwait(false);
         return new Harness { Ledger = s, Settings = settings, Agent = agent, Run = run, Strip = strip, Vm = vm, Maintenance = maintenance, Tool = tool, ClosePolicy = closePolicy, FirstRun = firstRun };
@@ -495,6 +511,91 @@ public sealed class SettingsViewModelTests
         finally
         {
             LoggingLevel.SetDebug(false);
+        }
+    }
+
+    /// <summary>
+    /// beta.10 (the admin mode, owner decision D34): off by default; turning it on shows the disclosure first and writes
+    /// nothing when it is not accepted; accepted, the row is written and the Agent is asked to stop, then started the new way.
+    /// </summary>
+    [Fact]
+    public async Task TheAdminModeAsksFirstAndRestartsTheAgent()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        var declined = new ScriptedAdminPrompt(answer: false);
+        Harness h = await OpenAsync(s, adminPrompt: declined);
+        h.Vm.RunElevated.Should().BeFalse("off by default");
+
+        h.Vm.RunElevated = true;
+        Task pending101 = h.Vm.Pending;
+        await pending101.ConfigureAwait(true);
+
+        declined.Shown.Should().Be(1);
+        h.Vm.RunElevated.Should().BeFalse("not accepted, so it stays off");
+        (await new SqliteSettingsStore(s.Db).GetAsync(SettingsRegistry.CaptureRunElevated.Key, Ct).ConfigureAwait(true)).Should().BeNull("nothing was written");
+        h.Agent.Sent.Should().BeEmpty();
+
+        var accepted = new ScriptedAdminPrompt(answer: true);
+        Harness on = await OpenAsync(s, adminPrompt: accepted).ConfigureAwait(true);
+        on.Agent.Answer = static (_, _) => FakeAgentLink.Envelope(IpcMessageType.ShutdownAck, new ShutdownAck());
+        on.Vm.RunElevated = true;
+        Task pending103 = on.Vm.Pending;
+        await pending103.ConfigureAwait(true);
+
+        (await on.Settings.GetBooleanAsync(SettingsRegistry.CaptureRunElevated, Ct).ConfigureAwait(true)).Should().BeTrue();
+        on.Agent.Sent.Select(static m => m.Type).Should().Equal(IpcMessageType.Shutdown);
+        on.Agent.Retries.Should().Be(1, "the next round starts the Agent, asking Windows");
+        on.Strip.Shown.Should().Contain(static m => m.Body == Strings.Settings_Agent_RunElevated_Restarting);
+
+        on.Vm.RunElevated = false;
+        Task pending104 = on.Vm.Pending;
+        await pending104.ConfigureAwait(true);
+        accepted.Shown.Should().Be(1, "turning it off asks nothing");
+        (await on.Settings.GetBooleanAsync(SettingsRegistry.CaptureRunElevated, Ct).ConfigureAwait(true)).Should().BeFalse();
+        on.Agent.Retries.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task TheAdminModeNeverRestartsTheAgentUnderARunningSession()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        var agent = new FakeAgentLink
+        {
+            Status = new StatusAck("recording", null, 2, [new ActiveSession(Guid.NewGuid(), 1, "Title", 100, 2, DateTimeOffset.UtcNow)]),
+        };
+        Harness h = await OpenAsync(s, agent, adminPrompt: new ScriptedAdminPrompt(answer: true));
+
+        h.Vm.RunElevated = true;
+        Task pending102 = h.Vm.Pending;
+        await pending102.ConfigureAwait(true);
+
+        (await h.Settings.GetBooleanAsync(SettingsRegistry.CaptureRunElevated, Ct).ConfigureAwait(true)).Should().BeTrue("saved; it applies at the next start");
+        h.Agent.Sent.Should().BeEmpty("a Shutdown would end the session");
+        h.Agent.Retries.Should().Be(0);
+        h.Strip.Shown.Should().Contain(static m => m.Body == Strings.Settings_Agent_RunElevated_AfterSession);
+    }
+
+    [Fact]
+    public void TheAgentsRightsAreSaidWithWhyAStandardUsersAgentIsOne()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            static HelloAck Hello(bool elevated, string? outcome) => new("a", IpcProtocol.Version, 1, elevated, null, false, null, false, ElevationOutcome: outcome);
+
+            SettingsViewModel.ElevationTextOf(AgentConnectionState.Elevating, null).Should().Be(Strings.Agent_State_Elevating);
+            SettingsViewModel.ElevationTextOf(AgentConnectionState.Offline, null).Should().Be(Strings.Settings_VkLayer_Unknown);
+            SettingsViewModel.ElevationTextOf(AgentConnectionState.Connected, Hello(true, "granted")).Should().Be(Strings.Settings_Agent_Elevated);
+            SettingsViewModel.ElevationTextOf(AgentConnectionState.Connected, Hello(true, null)).Should().Be(Strings.Settings_Agent_Elevated, "inherited is elevated too");
+            SettingsViewModel.ElevationTextOf(AgentConnectionState.Connected, Hello(false, "declined")).Should().Be(Strings.Settings_Agent_ElevationDeclined);
+            SettingsViewModel.ElevationTextOf(AgentConnectionState.Connected, Hello(false, "other-account")).Should().Be(Strings.Settings_Agent_ElevationOtherAccount);
+            SettingsViewModel.ElevationTextOf(AgentConnectionState.Connected, Hello(false, "failed")).Should().Be(Strings.Settings_Agent_ElevationFailed);
+            SettingsViewModel.ElevationTextOf(AgentConnectionState.Connected, Hello(false, null)).Should().Be(Strings.Settings_Agent_NotElevated);
+        }
+        finally
+        {
+            Strings.Culture = previous;
         }
     }
 }

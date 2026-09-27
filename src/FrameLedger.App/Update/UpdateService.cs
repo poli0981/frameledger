@@ -22,6 +22,7 @@ public sealed partial class UpdateService : ObservableObject, IDisposable
     private static readonly TimeSpan _defaultAgentStopTimeout = TimeSpan.FromSeconds(10);
 
     private readonly TimeSpan _agentStopTimeout;
+    private readonly Func<bool> _agentHeld;
     private readonly IUpdateClient _client;
     private readonly IAgentLink _agent;
     private readonly RegisteredSettings _settings;
@@ -42,12 +43,15 @@ public sealed partial class UpdateService : ObservableObject, IDisposable
     private int _percent;
 
     /// <summary>
-    /// The flow over its ports; subscribes to the Agent link for the session facts FR-12 needs. The last parameter is
-    /// how long the apply waits for the pipe to drop after <c>Shutdown</c> (10 s), overridable as a test's clock.
+    /// The flow over its ports; subscribes to the Agent link for the session facts FR-12 needs. <paramref name="agentStopTimeout"/>
+    /// is how long the apply waits for the Agent to stop after <c>Shutdown</c> (10 s), overridable as a test's clock;
+    /// <paramref name="agentHeld"/> is whether an Agent process still holds the data folder (the instance lock), a test's own.
     /// </summary>
-    public UpdateService(IUpdateClient client, IAgentLink agent, RegisteredSettings settings, IUpdatePrompts prompts, IShellPresence shell, IMessageStrip strip, TimeSpan? agentStopTimeout = null)
+    public UpdateService(IUpdateClient client, IAgentLink agent, RegisteredSettings settings, IUpdatePrompts prompts, IShellPresence shell, IMessageStrip strip,
+        TimeSpan? agentStopTimeout = null, Func<bool>? agentHeld = null)
     {
         _agentStopTimeout = agentStopTimeout ?? _defaultAgentStopTimeout;
+        _agentHeld = agentHeld ?? (static () => Infrastructure.Startup.AgentInstanceLock.IsHeld(Services.UiPaths.DataDirectory));
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -268,11 +272,17 @@ public sealed partial class UpdateService : ObservableObject, IDisposable
         Stage = IsSessionActive ? UpdateStage.Deferred : UpdateStage.Ready;
     }
 
+    /// <summary>
+    /// The Agent stopped, or none was running: the pipe has dropped AND no process holds the data folder any more. Since
+    /// beta.10 the second half matters — an Agent run as administrator (the admin mode) holds the install directory's files
+    /// exactly as long as its process lives, and one that holds the folder without answering this App (still starting,
+    /// another version) must not have the files replaced under it.
+    /// </summary>
     private async Task<bool> StopAgentAsync(CancellationToken ct)
     {
         if (!_agent.IsConnected)
         {
-            return true;
+            return !_agentHeld();
         }
 
         try
@@ -285,7 +295,7 @@ public sealed partial class UpdateService : ObservableObject, IDisposable
         }
 
         DateTimeOffset deadline = DateTimeOffset.UtcNow + _agentStopTimeout;
-        while (_agent.IsConnected)
+        while (_agent.IsConnected || _agentHeld())
         {
             if (DateTimeOffset.UtcNow >= deadline)
             {

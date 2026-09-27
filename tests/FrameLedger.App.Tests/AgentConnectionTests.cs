@@ -50,6 +50,11 @@ public sealed class AgentConnectionTests : IAsyncDisposable
 
         public int Starts { get; private set; }
 
+        /// <summary>beta.10: whether the start would show Windows' administrator prompt.</summary>
+        public bool Asks { get; set; }
+
+        public bool WillAskForElevation => Asks;
+
         public bool TryStart()
         {
             Starts++;
@@ -269,6 +274,27 @@ public sealed class AgentConnectionTests : IAsyncDisposable
         launcher.RunningAgent.Should().BeNull("the claim went with its handle");
     }
 
+    /// <summary>
+    /// beta.10 (the admin mode): a start that is waiting for Windows' administrator prompt counts as an Agent on its way, so
+    /// the App never shows a second prompt beside the logon task's; and the launcher asks only when the option is on and this
+    /// App is a standard user's.
+    /// </summary>
+    [Fact]
+    public void TheLauncherSeesAPendingElevationAndAsksOnlyWhenTheOptionIsOn()
+    {
+        string folder = Path.Combine(Path.GetTempPath(), "fl-launcher-" + Guid.NewGuid().ToString("N"));
+        var launcher = new AgentLauncher(folder, runElevated: static () => true);
+        using (ElevationMarker? pending = ElevationMarker.TryAcquire(folder))
+        {
+            pending.Should().NotBeNull();
+            launcher.RunningAgent.Should().Contain("administrator");
+        }
+
+        launcher.RunningAgent.Should().BeNull();
+        launcher.WillAskForElevation.Should().Be(!Environment.IsPrivilegedProcess, "an elevated App's Agent inherits its rights, and is never prompted for");
+        new AgentLauncher(folder).WillAskForElevation.Should().BeFalse("no ledger in the folder: the option reads off");
+    }
+
     [Fact]
     public async Task ALostAgentIsOfflineAndAReturningOneIsConnectedAgain()
     {
@@ -284,5 +310,25 @@ public sealed class AgentConnectionTests : IAsyncDisposable
         StartServer();
         c.RetryNow();
         await WaitForAsync(() => c.State == AgentConnectionState.Connected && c.Hello is not null, "back").ConfigureAwait(true);
+    }
+
+    /// <summary>beta.10 (the admin mode): a start that asks Windows for administrator rights says so on the pill while it waits.</summary>
+    [Fact]
+    public async Task AStartThatAsksForAdministratorRightsSaysSoOnThePill()
+    {
+        FakeLauncher? launcher = null;
+        launcher = new FakeLauncher(() =>
+        {
+            StartServer();
+            return true;
+        })
+        { CanLaunch = true, Asks = true };
+        AgentConnection c = Start(launcher);
+
+        await WaitForAsync(() => c.State == AgentConnectionState.Connected, "started, then connected").ConfigureAwait(true);
+        lock (_seen)
+        {
+            _seen.Should().Contain(AgentConnectionState.Elevating).And.NotContain(AgentConnectionState.Starting);
+        }
     }
 }

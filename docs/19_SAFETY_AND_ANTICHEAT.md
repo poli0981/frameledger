@@ -862,6 +862,26 @@ injected or layered**.
 
 If `OpenProcess` with the needed rights fails (protected process, higher integrity), do **not** escalate creatively. Report "cannot attach" and offer Tier-2. Never attempt to acquire privileges beyond running the Agent elevated at the user's explicit request.
 
+> **The explicit request exists since beta.10 (owner decision D34, 2026-09-27): the admin mode.** An option off by default,
+> turned on through a versioned disclosure (`Safety_AdminMode_*`, `agent-admin-dialog/1`) that states what it adds, what it
+> does not change, how Windows asks and the risk of a per-user install; then **Windows asks at every start of the Agent**
+> (`01_ARCHITECTURE` ADR-9). What it does NOT do, each held by code rather than by this paragraph:
+>
+> - **It clears no finding and opens no protected process.** The guard runs exactly as unelevated: the driver scan asks
+>   `NtQuerySystemInformation`, and a process an anti-cheat driver protects stays `TargetUnreadable` (D21) — elevation turns
+>   "could not look" into an answer only where Windows would give any administrator one.
+> - **It enables no privilege.** An elevated token holds `SeDebugPrivilege` and `SeLoadDriverPrivilege` disabled and they
+>   stay so: `AdjustTokenPrivileges`, `RtlAdjustPrivilege`, `EnterDebugMode` and the debug privilege's name may not appear
+>   under `src/` (`tools/chokepoint-check.ps1`), and `PrivilegeFootprintTests` asserts on the elevated CI runner that opening
+>   targets and LibreHardwareMonitor's CPU group enabled none.
+> - **It elevates no game.** A game started from FrameLedger gets the desktop shell's token (`UnelevatedProcess`); with no
+>   shell to take one from, the launch is refused with that reason (`Launch_Error_1400`), never made elevated instead.
+> - **It is not silent.** Every start asks; a start that was declined serves as a standard user and says so; the prompt
+>   answered by another account ends that Agent before it touches anything (exit 11).
+>
+> The residual risk is stated to the user, not solved: FrameLedger installs per user and unsigned, so a program running
+> under the account could replace its files and be run as administrator the next time the user accepts the prompt.
+
 ## User-facing consent
 
 Enabling hooking is a **per-game** action, gated by a one-time dialog per game that states, in plain language:

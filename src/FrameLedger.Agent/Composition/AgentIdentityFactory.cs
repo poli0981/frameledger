@@ -9,7 +9,7 @@ namespace FrameLedger.Agent.Composition;
 /// <summary>What <c>HelloAck</c> says about this process, read once at composition.</summary>
 internal static class AgentIdentityFactory
 {
-    public static AgentIdentity OfThisProcess(string vkLayerDirectory)
+    public static AgentIdentity OfThisProcess(string vkLayerDirectory, string? elevationOutcome = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(vkLayerDirectory);
         string buildId = NativeAntiCheatGuard.BuildId();
@@ -27,7 +27,9 @@ internal static class AgentIdentityFactory
             // D14: the FR-2.1 text this build stamps against; the App compares it with its own before showing the dialog.
             DisclosureVersion: SafetyDisclosure.Version,
             // D33: the user-mode exception's disclosure, under the same rule.
-            ExceptionDisclosureVersion: AntiCheatExceptionDisclosure.Version);
+            ExceptionDisclosureVersion: AntiCheatExceptionDisclosure.Version,
+            // beta.10 (D34): what the admin mode's prompt answered at this start; null when nobody asked.
+            ElevationOutcome: elevationOutcome);
     }
 
     private static string Version()

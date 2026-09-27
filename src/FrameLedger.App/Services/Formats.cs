@@ -419,6 +419,7 @@ public static class Formats
         5 => Strings.Launch_Error_5,
         193 => Strings.Launch_Error_193,
         740 => Strings.Launch_Error_740,
+        1400 => Strings.Launch_Error_1400,
         _ => string.Format(CultureInfo.CurrentCulture, Strings.Launch_Error_Format, error),
     };
 

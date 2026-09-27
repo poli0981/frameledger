@@ -69,7 +69,8 @@ public sealed class AgentRequestHandler : IIpcRequestHandler
             Descriptor(),
             _identity.CpuTempAvailable,
             _identity.DisclosureVersion,
-            _identity.ExceptionDisclosureVersion));
+            _identity.ExceptionDisclosureVersion,
+            _identity.ElevationOutcome));
     }
 
     /// <summary>Null when the layers cannot be composed at all — an absent descriptor, never an invented one.</summary>

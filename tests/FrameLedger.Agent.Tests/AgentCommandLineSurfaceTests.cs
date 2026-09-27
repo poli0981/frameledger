@@ -137,4 +137,32 @@ public sealed class AgentCommandLineSurfaceTests
         AgentCommandLine.Parse(["--console", "capture", "--exe", "g.exe"]).PartialFlushSeconds.Should().Be(0, "absent is the product's interval");
         AgentCommandLine.Parse(["--console", "capture", "--exe", "g.exe", "--partial-flush-seconds", "2"]).PartialFlushSeconds.Should().Be(2);
     }
+
+    /// <summary>
+    /// beta.10 (the admin mode, owner decision D34): <c>--serve</c> takes exactly one of two options, each about the Agent's
+    /// own rights and neither about a directory, a target or a check — the account an elevated Agent must be, or the answer
+    /// its starter already got.
+    /// </summary>
+    [Fact]
+    public void ServeTakesOnlyTheAdminModesTwoOptions()
+    {
+        string sid = FrameLedger.Infrastructure.Startup.AgentElevation.CurrentUserSid();
+        AgentCommandLine forUser = AgentCommandLine.Parse(["--serve", "--for-user", sid]);
+        forUser.Error.Should().BeNull();
+        forUser.Verb.Should().Be(AgentVerb.Serve);
+        forUser.ForUser.Should().Be(sid);
+        forUser.DataDirectory.Should().BeNull("the profile's folder, and nothing else");
+
+        AgentCommandLine declined = AgentCommandLine.Parse(["--serve", "--elevation", "declined"]);
+        declined.Error.Should().BeNull();
+        declined.ElevationRefusal.Should().Be("declined");
+        AgentCommandLine.Parse(["--serve", "--elevation", "other-account"]).ElevationRefusal.Should().Be("other-account");
+        AgentCommandLine.Parse(["--serve", "--elevation", "failed"]).ElevationRefusal.Should().Be("failed");
+
+        AgentCommandLine.Parse(["--serve", "--for-user", "not-a-sid"]).Error.Should().Contain("needs a SID");
+        AgentCommandLine.Parse(["--serve", "--elevation", "granted"]).Error.Should().NotBeNull("an elevated Agent is started with --for-user, never told it was granted");
+        AgentCommandLine.Parse(["--serve", "--for-user", sid, "--elevation", "declined"]).Error.Should().NotBeNull("one or the other");
+        AgentCommandLine.Parse(["--serve", "--for-user"]).Error.Should().NotBeNull();
+        AgentCommandLine.Parse(["--serve", "--exe", "g.exe"]).Error.Should().Contain("only under --console");
+    }
 }

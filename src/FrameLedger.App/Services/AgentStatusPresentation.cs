@@ -13,6 +13,7 @@ public static class AgentStatusPresentation
         AgentConnectionState.Starting => (Strings.Agent_State_Starting, ControlAppearance.Info),
         AgentConnectionState.Offline => (Strings.Agent_State_Offline, ControlAppearance.Caution),
         AgentConnectionState.Missing => (Strings.Agent_State_Missing, ControlAppearance.Danger),
+        AgentConnectionState.Elevating => (Strings.Agent_State_Elevating, ControlAppearance.Info),
         _ => throw new ArgumentOutOfRangeException(nameof(state), state, "not a connection state"),
     };
 

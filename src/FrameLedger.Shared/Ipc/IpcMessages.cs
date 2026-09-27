@@ -121,6 +121,8 @@ public sealed record HelloRequest(string AppVersion, int Protocol);
 /// <c>DisclosureVersion</c> (P3 PR-4, D14) is the FR-2.1 text this Agent stamps against; the App refuses to open
 /// the consent dialog when it differs from its own <c>SafetyDisclosure.Version</c>. <c>ExceptionDisclosureVersion</c>
 /// (D33) is the same rule for the user-mode exception's disclosure (<c>AntiCheatExceptionDisclosure.Version</c>).
+/// <c>ElevationOutcome</c> (beta.10, D34) is the admin mode's answer at this Agent's start — <c>granted</c>, <c>declined</c>,
+/// <c>other-account</c>, <c>failed</c> — or null when nobody asked; an older Agent sends none, which reads as not asked.
 /// </summary>
 public sealed record HelloAck(
     string AgentVersion,
@@ -132,7 +134,8 @@ public sealed record HelloAck(
     string? TelemetrySource,
     bool CpuTempAvailable,
     string? DisclosureVersion = null,
-    string? ExceptionDisclosureVersion = null);
+    string? ExceptionDisclosureVersion = null,
+    string? ElevationOutcome = null);
 
 /// <summary><c>GetStatus</c>: no payload.</summary>
 public sealed record GetStatusRequest;

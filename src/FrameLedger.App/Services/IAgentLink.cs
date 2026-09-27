@@ -22,4 +22,9 @@ public interface IAgentLink : IAgentRequests
     /// apply asks the Agent to stop and must not have it restarted under the updater). Released on a failed apply.
     /// </summary>
     void SetLaunchHold(bool hold);
+
+    /// <summary>Skip the wait before the next connect round (the banner's Retry; the admin mode's restart, beta.10).</summary>
+    void RetryNow()
+    {
+    }
 }

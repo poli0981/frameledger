@@ -1,0 +1,35 @@
+<UserControl x:Class="FrameLedger.App.Dialogs.AgentAdminDialogContent"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
+             d:DataContext="{d:DesignInstance Type=vm:AgentAdminDialogViewModel}"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             MaxWidth="640">
+    <!--
+        The admin mode's disclosure (beta.10, D34; 19_SAFETY §Elevated targets), text from FrameLedger.Shared's
+        Safety_AdminMode_* only, versioned by AgentAdminDisclosure.Version. It states what the option adds, what it does not
+        change, how Windows asks, and the risk; every colour is a theme brush.
+    -->
+    <ScrollViewer MaxHeight="520" VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <ui:TextBlock Text="{x:Static vm:AgentAdminDialogViewModel.Intro}" TextWrapping="Wrap" />
+            <ui:TextBlock Margin="0,14,0,0" Text="{x:Static vm:AgentAdminDialogViewModel.Adds}" TextWrapping="Wrap" />
+            <ui:TextBlock Margin="0,8,0,0" Text="{x:Static vm:AgentAdminDialogViewModel.Unchanged}" TextWrapping="Wrap" />
+            <ui:TextBlock Margin="0,8,0,0" Text="{x:Static vm:AgentAdminDialogViewModel.Prompt}" TextWrapping="Wrap" />
+
+            <Border Margin="0,14,0,0" Padding="12" CornerRadius="6" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
+                <ui:TextBlock FontWeight="SemiBold" Text="{x:Static vm:AgentAdminDialogViewModel.Risk}" TextWrapping="Wrap" />
+            </Border>
+
+            <CheckBox x:Name="Acceptance"
+                      Margin="0,18,0,0"
+                      AutomationProperties.Name="{x:Static vm:AgentAdminDialogViewModel.AcceptText}"
+                      Content="{x:Static vm:AgentAdminDialogViewModel.AcceptText}"
+                      IsChecked="{Binding Accepted, Mode=TwoWay}" />
+            <ui:TextBlock Margin="0,12,0,0" HorizontalAlignment="Right" Appearance="Tertiary" Text="{x:Static vm:AgentAdminDialogViewModel.Version}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
