@@ -746,8 +746,11 @@ Cyberpunk 2077 never chains `sl::DLSSOptions`, so 0xFF there is the title's trut
   call, and if built, the byte stays 0xFF and the report says *derived*.
 - **Do not** reach for `slDLSSSetOptions` via `slGetFeatureFunction`: §2b refused it on five
   grounds that have not changed, and NGX-direct `NVSDK_NGX_Parameter_GetUI` is licence-blocked.
-- **Alan Wake 2 did not run on 2026-09-04** (the owner tried every workaround; the title is
-  broken on this machine), so the measurement moved to **Dying Light: The Beast at DLSS**, the
+- ~~**Alan Wake 2 did not run on 2026-09-04** (the owner tried every workaround; the title is
+  broken on this machine)~~ **Corrected 2026-09-27 (owner):** it did run late that evening — the run reports
+  `alanwake2-224851` and `alanwake2-230707` hold two captures (DLSS + RR, ray tracing *Yes*, 92.52 FPS; then ray
+  tracing off, Presented 114.52), neither with the quality preset, which is what this item needed. The earlier
+  attempts that day failed, so the measurement moved to **Dying Light: The Beast at DLSS**, the
   first Streamline title measured whose batches carry `kFeatureDLSS` — identity `Dlss` on 4,575
   of 4,575 batches. It read `UpscalerParams = 0` on three captures, because DL:TB ships
   **Streamline 2.8.0, which deprecates `slSetTag` for `slSetTagForFrame`**, and only the
@@ -1310,9 +1313,13 @@ charts (6) after Games (5) because the summary opens from the Sessions tab; Sett
   (`PipeTransmissionMode.Message`, `PipeOptions.Asynchronous | CurrentUserOnly`, remote clients rejected,
   two instances), the ACL a `PipeSecurity` of the current user's SID plus Administrators~~ **`CreateNamedPipe`
   itself (CsWin32), so the flags and the DACL are stated in code rather than left to a library default:**
-  message mode, overlapped, `PIPE_REJECT_REMOTE_CLIENTS`, two instances, the SDDL `D:P(A;;GA;;;<user>)(A;;GA;;;BA)`
-  on every instance, and the client's token user compared to the server's by impersonation on the client's
-  first frame (the kernel refuses it earlier). The CLIENT uses `PipeOptions.CurrentUserOnly`. *(As built
+  message mode, overlapped, `PIPE_REJECT_REMOTE_CLIENTS`, two instances, the SDDL ~~`D:P(A;;GA;;;<user>)(A;;GA;;;BA)`~~
+  `O:<user>D:P(A;;GA;;;<user>)(A;;GA;;;BA)` (the owner stated since 2026-09-17) on every instance, and the client's
+  token user compared to the server's by impersonation on the client's first frame (the kernel refuses it earlier).
+  The CLIENT ~~uses `PipeOptions.CurrentUserOnly`~~ checks the pipe's owner against its own token USER
+  (`PipeAccessControl.RequireOwnedByCurrentUser`, 2026-09-17) — `CurrentUserOnly` compares the token's default owner,
+  which an elevated token sets to Administrators, and refused the same user's Agent across elevation (corrected
+  2026-09-27). *(As built
   2026-09-13; the wording above was the plan's, kept struck because it named a library path the build did not
   take.)* Framing is
   `07_IPC` §C as written: 4-byte LE length + UTF-8 JSON ≤ 1 MB, `Shared.Ipc.IpcEnvelope { type, id?, payload }`,
@@ -1687,6 +1694,63 @@ invisible to every check.
 - **CA1711 rejects a type whose name ends in `Exception`**: the rules class is `UserModeExceptionRules`, the reasons
   `UserModeExceptionLapse`.
 
+## 2026-09-27 — the beta.10 train: the display mode, the admin mode, the Unreal Engine version
+
+*Status is `CHANGELOG.md` `[0.1.0-beta.10]`; this is what no other file carries. The approved plan was six PRs:
+PR-1 the Unreal version (schema 0015), PR-2 the Overlay's display region (shared-memory layout 4), PR-3 the display mode
+in the Agent and the App (schema 0016), PR-4 the admin mode, PR-5 docs, legal text and the tested-games list, PR-6 the
+release.*
+
+**Decisions (owner, 2026-09-27, asked before the plan — do not re-ask):**
+
+- **D34 — the admin mode asks Windows at EVERY Agent start.** The UAC prompt appears whenever the Agent starts with
+  `capture.run_elevated` on — owned by the App's window when the App starts it, flashing on the taskbar when the logon
+  task does. No "highest privileges" task, no service, no silent path. Games an elevated Agent starts get the desktop
+  shell's token. The elevated Agent is started for one user (`--for-user <SID>`) and exits 11 as any other account.
+- **D35 — the tested-games list comes from a COPY of the owner's ledger** (scratchpad, Python `sqlite3`; never a
+  FrameLedger binary against the data folder) plus the repository's own evidence, and **the owner reviews it before it
+  is committed** — the repository is public.
+- **D36 — legal text changes where it would become false** (Privacy 2.5, Disclaimer 2.8; EULA stays 1.3), **and
+  `LIMITATIONS.md` exists**: a user-facing list of what the WHOLE software cannot do, at the repository root and in the
+  App under Help ▸ Limitations — not one of FR-11's accepted documents (the Legal Gate records an acceptance per
+  document, and this is information, not terms).
+- **D37 — each PR merges when its CI is green**, then the release PR and the GPG-signed tag.
+
+**What was measured before it was written:**
+
+- **Unreal versions, ten installed titles, read-only** (`spike-notes` §15): eight read (4.26.1 … 5.5.4), two honestly
+  none (Cronos demo, Rune Factory). Black Myth: Wukong's executable is protected (`.rdata` empty) and its build name sits
+  in `.code` — the whole-file fallback read it in 7.5 s from the owner's USB drive.
+- **The display region's cost** (hook-harness `--probe-frames`, WARP): `GetFullscreenState` 12.6–13.1 ns, `GetDesc`
+  13.6–14.5 ns per call, at most twice a second per swap chain.
+
+**Traps met on the way:**
+
+- **A test run reseeds the rules file in the REAL data folder** (`RulesSeeder` in the integration tests writes
+  `%LOCALAPPDATA%\FrameLedger\rules`). PR-1's rules `2026.09.6` carry an extractor type (`unreal_build`) the installed
+  beta.9 cannot parse: its detection sweep says "rules unusable" until that Agent restarts — its seeder sees a file it
+  wrote itself (the marker's hash) and puts its own back — or beta.10 is installed. The guard reads the same file and is
+  unaffected (it ignores version extractors). Worth a scratch rules folder for the tests one day.
+- **`DXGI_SWAP_EFFECT_DISCARD` is 0** — region 4 stores the effect plus one, the vendor-zero trap.
+- **A minimised game presents only what the hook drops** (occlusion probes): a region-4 sample older than 2 s says
+  nothing about exclusivity now; the Agent keeps its window and drops its exclusive bits.
+- **The Agent is DPI-unaware**: Windows scales another process's window coordinates for it. The window reader switches
+  its thread to per-monitor-aware (V2) for the calls and back.
+- **A Tier-2 session never reaches the aggregator** — display columns live on the recorder's skeleton, or a Tier-2 row
+  would carry none.
+- **`SessionRowColumns` is generated by a script that is not in the repository** — edit it by hand, by name.
+- **`CreateProcessWithTokenW` needs `SeImpersonatePrivilege`**, which an unelevated (filtered) token does not hold: the
+  shell-token start is testable only on the elevated CI runner, and a runner with UAC off has an elevated shell — so the
+  test compares the child's elevation with the SHELL's, never with "unelevated".
+- **An elevated token's default DACL omits the user** (again): the ledger's migration lock is now a `SharedMutex` with a
+  stated descriptor; the instance lock and the elevation marker are only probed, and a refused probe reads as held.
+- **`CA2025` flags a disposable handed to an un-awaited task** even when ownership moves to it; the launcher says so in
+  a suppression with its reason, or splits the method so the analyzer can see it.
+- **Heredocs mangle backslashes and `\a`** (`D:\another` became `D:<BEL>nother` in a test). Patch scripts are written
+  with the Write tool and run by path; a scan for control characters before the gate catches the rest.
+
+**Owner-only, added to the list below:** item 7.
+
 ## Owner-only — no PR can close these
 
 1. **§S23-2 — branch protection.** `Rules / validate` is not a required status check on
@@ -1712,11 +1776,23 @@ invisible to every check.
 5. **Re-ratify §S18 blocker 3 and §S27's basis** once P2's PR-C/PR-F make the Agent the shipped
    injecting entry point (§P2, decision D4). The PRs restate both entries; whether the
    restatement stands is the owner's.
-6. **D33's first real use (beta.9).** Turn the option on; GIRLS' FRONTLINE 2 should be listed eligible (NetEase
+6. ~~**D33's first real use (beta.9).**~~ **Done by 2026-09-27, read from a copy of the owner's ledger:** three normal
+   hooked sessions of GIRLS' FRONTLINE 2 under the exception (NetEase Yidun) on 2026-09-26 and 09-27, the longest
+   3 h 9 min; the `ja` review below is still owed. *(The item as written:)* Turn the option on; GIRLS' FRONTLINE 2 should be listed eligible (NetEase
    Yidun, `NEP2.dll`, three sessions); make the exception, turn hooking on and play one session: hooked, marked
    *Hooked · exception*, not stopped by the 30 s re-scan or by the Overlay when `NEP2.dll` loads. Aniimo should read
    *not eligible* with its `NEPKernel.sys`; the option off makes the next session Tier 2 with the exception kept. And
    the `ja` text of `Safety_Exception_*`, which ships as English until a reviewer signs.
+7. **beta.10 on real hardware.** (a) **The display mode:** one DXGI game taken through exclusive full-screen →
+   borderless → windowed in one session — the summary's shares, the Sessions column, the Trend's three share metrics —
+   with a note of what the game's own menu called each mode. (b) **The admin mode:** turn it on → the disclosure → the
+   UAC prompt → Settings says *Running elevated*; decline it → *the administrator prompt was declined*; sign out and in
+   with the logon task → the prompt waits on the taskbar and one Agent results; start a game from FrameLedger while
+   elevated → Task Manager's *Elevated* column says *No*; a game that runs as administrator → hooked; the CPU temperature
+   with PawnIO (closes §M10 if it reads). (c) **The Unreal Engine version** on each Unreal game's page. (d) The Legal
+   Gate shows Privacy 2.5 and Disclaimer 2.8 once. (e) The `ja` text of `Safety_AdminMode_*`, English until reviewed.
+   (f) `docs/LIST_GAME_TESTED.md` — reviewed and approved by the owner before it was committed (D35, 2026-09-27);
+   keep it current as games are run.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI

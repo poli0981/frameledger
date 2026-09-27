@@ -176,6 +176,10 @@ The version handshake is wired end to end as of 2026-08-05: `FlGuardBuildId` giv
 8. `docs/18_GPU_VENDOR_APIS.md` — layered GPU telemetry (DXGI/PDH · LHM · NVAPI) + vendor-SDK licence rules
 9. `docs/06_DATA_MODEL.md` · `docs/07_IPC.md` · `docs/08_UI.md` · `docs/16_WPFUI_SYNTAX.md`
 10. Remaining (`09`–`15`).
+11. **`LIMITATIONS.md`** (repository root; shown in the App under Help ▸ Limitations) — what the WHOLE software cannot
+    do, in the user's words, each item linked to its details. When a change moves a limit, the page changes in the same
+    PR (D36, 2026-09-27). **`docs/LIST_GAME_TESTED.md`** — the real games FrameLedger has been run with and what each
+    session measured, from a copy of the owner's ledger and the repository's own evidence (D35).
 
 **Before writing native or capture code, read `docs/20_OPEN_QUESTIONS.md`.** It
 lists the defects and gaps that survived the doc audit — things the other

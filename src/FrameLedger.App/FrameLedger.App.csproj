@@ -45,6 +45,8 @@
     <EmbeddedResource Include="..\..\legal\DISCLAIMER.md" LogicalName="legal/DISCLAIMER.md" />
     <EmbeddedResource Include="..\..\legal\PRIVACY_POLICY.md" LogicalName="legal/PRIVACY_POLICY.md" />
     <EmbeddedResource Include="..\..\LICENSE" LogicalName="LICENSE" />
+    <!-- beta.10 (D36): what the whole software cannot do, shown under Help > Limitations; information, not one of FR-11's accepted documents. -->
+    <EmbeddedResource Include="..\..\LIMITATIONS.md" LogicalName="LIMITATIONS.md" />
   </ItemGroup>
 
   <ItemGroup>

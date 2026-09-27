@@ -38,7 +38,9 @@ public interface IFrameSource : IAsyncDisposable
 > with `FlGuardBuildId`), `ITargetLivenessSource` (`HeldProcessLivenessSource`, §S29(e)),
 > `ITargetResolver` (`TargetResolver`, path only — never a pid), `IProcessLauncher`
 > (`ProcessLauncher`, launch mode), `IRuntimeModuleSnapshot`, `INgxDriverProbe`,
-> `IExecutableMarkerScan`. `ShmRingReader` itself gains no interface and no second consumer
+> ~~`IExecutableMarkerScan`~~ — **corrected 2026-09-27:** the marker scan is the recorder's, not the loop's; the loop's
+> later ports are `IKillSwitch` (FR-2.4), `ICapturePauseSource`, `IUserModeExceptionSwitch` and
+> `IOverlayToleranceChannel` (D33) and `IDisplayProbe` (beta.10). `ShmRingReader` itself gains no interface and no second consumer
 > (`NoSecondRingReaderTests`). A **pure move**: the loop's ordering rules, its tests and the
 > capture host's report are byte-for-byte what they were; the host is now a thin shell that
 > composes the same objects. What the table below used to call `HookedFrameSource` is this.

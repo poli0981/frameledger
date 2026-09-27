@@ -624,7 +624,7 @@ Every hook body is wrapped:
 ```
 
 - Any SEH exception inside our code ⇒ increment `faultCount`, record which hook, **return control to the original function** so the game continues.
-- 3 faults total ⇒ set `status = self_disabled`, uninstall all hooks (`MH_DisableHook(MH_ALL_HOOKS)`), stop writing, stay dormant. The Agent sees the flag and finalizes the session as `degraded`.
+- 3 faults total ⇒ set `status = self_disabled`, ~~uninstall all hooks (`MH_DisableHook(MH_ALL_HOOKS)`)~~ restore each patch's prologue only while its bytes are still our jump (compare-and-restore per patch through `StopObserving`, §Unhooking, §H7 — `MH_ALL_HOOKS` would have removed an overlay chained after us; corrected 2026-09-27), stop writing, stay dormant. The Agent sees the flag and finalizes the session as `degraded`.
 - Never `__try` around the call to the original function — only around *our* code, so we never mask a game bug as ours or vice versa.
 - The trampoline call to the original is always executed exactly once, on every path, including error paths.
 

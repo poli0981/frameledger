@@ -2489,7 +2489,9 @@ FrameLedger.Agent --console sessions --last 1
 ```
 
 **The row half is read — 2026-09-16, the shipped Agent, not the console.** The owner ran the App with its `--serve`
-Agent for an afternoon (18 hooked sessions, attach mode, `late_attach = 1`, every one watcher-driven from a Steam
+Agent for an afternoon (18 hooked sessions — **count note, 2026-09-27:** `CHANGELOG` 2026-09-17 says *all nine hooked
+sessions of 2026-09-16*; neither count was re-made when the other was written, and the ledger as it stands today holds no
+session from that day, so the discrepancy is recorded rather than resolved — attach mode, `late_attach = 1`, every one watcher-driven from a Steam
 launch rather than the `launch` verb above — a Steam title started from its Shipping executable relaunches through
 Steam, so the console recipe is the wrong vehicle for a Steam library and the product's own path is the right one).
 `sessions.id = 10`, **Lies of P**, 16:11, 147 s, `d3d12`, 16,221 frames, `guard_ticks_published = 5`, Overlay

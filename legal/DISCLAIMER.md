@@ -1,6 +1,6 @@
 # FrameLedger — Disclaimer
 
-**Version:** 2.7 · **Effective:** {{RELEASE_DATE}}
+**Version:** 2.8 · **Effective:** {{RELEASE_DATE}}
 
 > **How this document is kept true.** The statement of what FrameLedger measures (§4) is `legal/ACCURACY.md`,
 > embedded here and in `README.md` and bound to its source by `tools/accuracy-check.ps1`, which fails the build when a
@@ -11,7 +11,9 @@
 ## 0. This is pre-release (beta) software
 
 **FrameLedger is a beta.** Every build published so far is a pre-release. It has been tested on a small number of
-machines and games, and **it certainly still contains bugs — some of them not yet known to anyone.** Features can
+machines and games — the games are listed in `docs/LIST_GAME_TESTED.md` in the project's repository, and what the software
+cannot do is listed in `LIMITATIONS.md` there and in the app under Help ▸ Limitations — and **it certainly still contains
+bugs — some of them not yet known to anyone.** Features can
 change or disappear between builds, recorded data can turn out to be wrong, and an update can require your data to be
 migrated.
 
@@ -112,7 +114,7 @@ Software running inside another process can, in principle, destabilize it. Frame
 Frame timing is derived from high-resolution timestamps taken at the moment the game presents each frame; upscaling, frame-generation and ray-tracing state are read from the parameters the game passes to those APIs. This is substantially more accurate than inferring settings from files on disk, but **no measurement is guaranteed to be exact**:
 
 <!-- accuracy-block:begin -->
-> ⚠ **What FrameLedger actually measures today — 2026-09-26.** The software is a beta; its latest
+> ⚠ **What FrameLedger actually measures today — 2026-09-27.** The software is a beta; its latest
 > **pre-release is `0.1.0-beta.9`** (2026-09-26), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
@@ -158,6 +160,14 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 >   were counted, the lows, median and stutter are taken over application frames only.
 > - **Ray tracing:** Yes/No measured on Direct3D 12 from ray-dispatch and acceleration-structure-build
 >   calls; the technique and path tracing are `N/A`, and so is ray tracing on other APIs.
+> - **Display mode:** how each game's window was shown — exclusive full-screen, borderless, windowed or
+>   minimised — as a share of the session, with the window's size and the monitor's, in every session.
+>   Exclusive full-screen is known only for Direct3D titles FrameLedger injects into, from the game's own
+>   swap chain; for every other session the window alone is read, and a window covering its monitor reads
+>   *full-screen or borderless*. What Windows does behind the game (fullscreen optimizations) is not visible.
+> - **Engine version:** the exact Unreal Engine 4 or 5 version, read from the game's executable on disk and
+>   labelled with what it rests on; `N/A` where the executable names none. Other engines show what their own
+>   files state.
 > - **Video memory:** in use on the whole graphics card, recorded from Windows and GPU-driver telemetry
 >   and charted. **Not measured at all:** each game's own video-memory use and budget, which frame
 >   spikes were shader compilation, PC latency (Reflex), and HDR. Stutter count and stutter time are
@@ -165,8 +175,8 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 > - **Processor and memory:** how busy the processor was (time busy, all cores together — not the
 >   frequency-scaled figure Task Manager draws) and how much system memory was in use, read from
 >   Windows once a second and charted. Processor temperature is read only when the Agent runs as
->   administrator with PawnIO installed, and that reading has not yet been checked on real hardware;
->   everywhere else it is `N/A`.
+>   administrator — an option, off by default, for which Windows asks at every start of the Agent — with
+>   PawnIO installed, and that reading has not yet been checked on real hardware; everywhere else it is `N/A`.
 > - **Safety:** every pre-injection check runs before injection, including the signed-by-a-known-vendor
 >   half of the suspicious-module rule. During every capture the Agent re-runs the checks every 30 s and
 >   stops capturing on a refusal: a Direct3D or OpenGL game's hooks are removed, and the Vulkan layer
@@ -209,6 +219,21 @@ be the difference between a game that runs and one that does not. Turn hooking o
 ## 5. Hardware and drivers
 
 FrameLedger reads GPU telemetry through vendor libraries that ship with your graphics driver. It **only reads** — it never changes clocks, fan curves, power limits, or any other hardware setting. Optional CPU-temperature support relies on the separate third-party **PawnIO** driver, which you install at your own discretion under its own license; some anti-cheat systems object to third-party kernel drivers regardless of what they are used for.
+
+## 5A. Running the capture agent as administrator — optional, and your decision
+
+Since 0.1.0-beta.10 a Settings option, off unless you turn it on, starts FrameLedger's capture agent as administrator.
+**Windows asks you every time the agent starts** — also when you sign in — and the prompt names an unknown publisher,
+because FrameLedger is not code-signed. It lets FrameLedger open and measure a game that itself runs as administrator,
+and read the CPU temperature where PawnIO is installed. It changes nothing in the anti-cheat guard (§2, §2A), opens no
+process that Windows or an anti-cheat driver protects, and never starts a game as administrator: games you start from
+FrameLedger run with your standard rights.
+
+**The risk is yours.** FrameLedger is installed in your user folder, which any program running under your Windows
+account can change (§1). If such a program replaced FrameLedger's files, it would run with administrator rights the next
+time you accept the prompt. Accept it only for a copy you installed from the project's GitHub Releases, and turn the
+option on only if you trust everything that runs under your account. The developer is not responsible for what runs
+under an administrator prompt you accept.
 
 ## 6. Third-party names
 

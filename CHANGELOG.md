@@ -62,7 +62,20 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   administrator no longer makes the agent an administrator's too. Updating now also waits for an administrator agent's
   process to let go of its files.
 
+- **What FrameLedger cannot do, in one place** (beta.10). `LIMITATIONS.md` lists the limits of the whole software in
+  plain words — the games it will not measure, what an unmeasured session holds, frame generation, upscaling and ray
+  tracing, the display mode, the engine version, sensors, the admin mode, the platform and your data — each linked to its
+  details; the app shows it under **Help ▸ Limitations**. `docs/LIST_GAME_TESTED.md` lists the real games FrameLedger has
+  been run with and what was measured on each.
+
 ### Changed
+
+- **The legal documents say what beta.10 does** — you will be shown two of them again once. **Privacy Policy 2.5** adds
+  how a tracked game's window is shown (read from Windows) and the engine version read from an Unreal Engine game's
+  executable, and says for the first time two things the software already did: it reads the content of a library game's
+  executable (engine and library markers, its import table) and the processor load and memory in use. **Disclaimer 2.8**
+  adds §5A — running the capture agent as administrator, what it does and does not do, and its risk — and points at the
+  new limitations page and the tested-games list. The End-User License Agreement is unchanged (1.3).
 
 - **Groundwork for the display mode (beta.10): the injected component reports how the game presents** — whether its swap
   chain is in exclusive fullscreen, which window it presents to, its back buffer and swap effect — at most twice a second,
