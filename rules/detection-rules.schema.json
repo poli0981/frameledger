@@ -196,6 +196,15 @@
               "type": { "const": "manifest_field" },
               "field": { "$ref": "#/$defs/manifestFieldPath" }
             }
+          },
+          {
+            "$comment": "beta.10: Unreal Engine's build facts (the shipping executable's numeric file version and the engine's branch name inside it), decided in code (Domain.Detection.UnrealVersion) rather than by a pattern - which is why it takes no parameter.",
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type"],
+            "properties": {
+              "type": { "const": "unreal_build" }
+            }
           }
         ]
       }

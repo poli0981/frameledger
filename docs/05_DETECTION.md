@@ -61,7 +61,7 @@ Rules are **data, not code**: `rules/detection-rules.json`, bundled and updatabl
 
 The `anticheat` block is the same file that feeds the hard guard in `19_SAFETY` — shipping it as updatable data is what lets a newly-protected game be blocked without waiting for an app release. **Rules updates that touch the `anticheat` block are treated as security updates:** applied on next check regardless of the user's auto-update preference for other rules.
 
-Signal types evaluated by `RuleEvaluator` (Domain): `file_exists`, `dir_exists`, `sibling_glob`, **`path_contains`**, `pe_company_contains`, `pe_product_contains`, `strings_contains` (bounded 8 MB scan), `manifest_field`. Combine with `all` / `any` — **not nested**, which schemaVersion 2 forbids. Version extractors: `pe_file_version` (of the sibling its `from` names, not of the executable), `pe_product_version_regex`, **`strings_regex`**, `manifest_field`.
+Signal types evaluated by `RuleEvaluator` (Domain): `file_exists`, `dir_exists`, `sibling_glob`, **`path_contains`**, `pe_company_contains`, `pe_product_contains`, `strings_contains` (bounded 8 MB scan), `manifest_field`. Combine with `all` / `any` — **not nested**, which schemaVersion 2 forbids. Version extractors: `pe_file_version` (of the sibling its `from` names, not of the executable), `pe_product_version_regex`, **`strings_regex`**, `manifest_field`, and since 2026-09-27 **`unreal_build`** (no parameter; decided in code, §Engine version). A regex extractor must capture exactly **one** group — the evaluator returns the first — and `rules-validate.ps1` refuses any other count and any pattern that does not compile (both promised by the rules file's `$comment` and enforced by nothing until beta.10).
 
 > `path_contains` and `strings_regex` were in the shipped data and the schema
 > and missing from this list; the schema's own `$comment` said so and nobody had
@@ -132,7 +132,7 @@ Recorded as a residual risk, not as a solved problem.
 | Engine | Signals | Version |
 |---|---|---|
 | Unity | `UnityPlayer.dll` sibling **or** `<Exe>_Data/` dir | FileVersion of `UnityPlayer.dll` |
-| Unreal 4/5 | exe matches `*-Win64-Shipping.exe` **or** `*/Content/Paks/*.pak` | ProductVersion regex `\+\+UE(4\|5)\+Release-(\d+\.\d+)` |
+| Unreal 4/5 | exe matches `*-Win64-Shipping.exe` **or** `*/Content/Paks/*.pak` | `unreal_build` (since 2026-09-27, §Engine version): the shipping executable's numeric file version and the engine's branch name inside it. ~~ProductVersion regex `\+\+UE(4\|5)\+Release-(\d+\.\d+)`~~ — two capture groups, of which the evaluator returns the first, so every Unreal version it ever stored was a bare `4` or `5` |
 | Godot | `.pck` sibling **or** `strings_contains("Godot Engine v")` | strings regex `Godot Engine v(\d+\.\d+[\.\d]*)` |
 | GameMaker | `data.win` | `N/A` |
 | RPG Maker MV/MZ | `nw.dll` **and** `package.json` siblings (since 2026-09-16) | `N/A` — the `.js` header needs a `from` that `strings_regex` lacks |
@@ -187,6 +187,52 @@ Order matters (first match wins). Engine is user-overridable.
 - ~~**RPG Maker XP/VX/VXAce.** The signals *are* expressible (`any` over the three `RGSS*` prefixes), but the version is "which of them matched" — an answer no extractor produces. Splitting it into three engine rules with `version: null` and the variant in the display name would work and is a product decision about how the engine reads in the UI, not a mechanical fill-in.~~
 
 Everything else in the table is in the data and has a fixture; `rules-validate.ps1` fails if a rule id has no fixture directory, or a fixture no rule.
+
+### Engine version — Unreal Engine (beta.10, 2026-09-27, schema 0015)
+
+The owner asked for "the exact Unreal Engine version (3.0, 4.5, 5.1 …) on the game's page". What was shipped could not
+give one: the rule read only the executable's `ProductVersion` string, which most shipping executables leave empty, and
+its regex had two capture groups, so the one answer it could give was `4` or `5`. **Measured before anything was written,
+read-only, on the owner's ten Unreal titles** (`spike-notes` §Unreal Engine versions):
+
+| Title | Numeric file version | Version strings / company | Branch name in the bytes | Read as |
+|---|---|---|---|---|
+| Black Myth: Wukong | 5.0.0.0 | none | `++UE5+Release-5.0` (290 MB into `.code`; `.rdata` 8 KB) | 5.0.0 |
+| Cronos: The New Dawn (demo) | 1.2.0.0 | the studio's | none | — |
+| Clair Obscur: Expedition 33 | 5.4.4.0 | none | none | 5.4.4 (file version) |
+| Hell Is Us | 5.5.4.0 | `UE5-CL-0` / Nacon | none (the studio's own branch) | 5.5.4 (file version) |
+| Lies of P | 4.27.2.0 | none | none | 4.27.2 (file version) |
+| Martha Is Dead | 4.27.0.0 | none | `++UE4+Release-4.27` (`.rdata`) | 4.27.0 |
+| Rune Factory: Guardians of Azuma | 1.0.3.0 | none | none | — |
+| SILENT HILL 2 | 1.0.0.5 | the studio's | `++UE5+Release-5.1` (`.rdata`) | 5.1 |
+| UMIGARI | 5.5.4.0 | `++UE5+Release-5.5-CL-40574608` / Epic Games, Inc. | (in the strings) | 5.5.4 |
+| AbyssMemory | 4.26.1.0 | none | `++UE4+Release-4.26` (`.rdata`) | 4.26.1 |
+
+**Two witnesses, each wrong in its own way.** The numeric file version (`VS_FIXEDFILEINFO`) is the engine's
+MAJOR.MINOR.PATCH unless the studio replaced it (Cronos, SILENT HILL 2, Rune Factory); the branch name the engine compiles
+in (a UTF-16 string) names the release line and no patch, and is missing wherever a studio renamed its branch or the
+executable is packed. `Domain.Detection.UnrealVersion.Decide` takes them in order: **(1)** both, agreeing on MAJOR.MINOR →
+the file's MAJOR.MINOR.PATCH (`unreal_branch_file`); **(2)** a branch name alone → MAJOR.MINOR (`unreal_branch`); **(3)**
+no branch name, and a file version that reads as an engine's (4.0–4.27, 5.0–5.9, patch ≤ 20) where nothing says the studio
+replaced it — no version strings, a string naming the same `UE4`/`UE5`, or Epic's company name → MAJOR.MINOR.PATCH
+(`unreal_file_version`); **(4)** anything else → no version. The third rung is the weakest (a studio could number its own
+game 4.2 and ship no strings), which is why `games.engine_version_source` keeps the rung and the game page says it.
+
+**Where it is read.** `StaticGameDetector` makes a second read for the one engine that matched — never the probe for every
+game in the library: `GameFileProbe.ReadUnrealBuildAsync` picks the row's own executable when it is the shipping build
+(`*-Win64-Shipping.exe`, `*-WinGDK-Shipping.exe`), else the largest shipping executable the walk listed (a row pointing at
+the launcher stub at the install root), and `UnrealBuildReader` reads its version resource and — unless the version strings
+already name the branch — scans its `.rdata` section for the branch name: 15–39 MB in nine of the ten titles. An `.rdata`
+under 1 MiB (Black Myth's protector merged its constants elsewhere) sends the scan over the whole file, bounded at 1 GiB and
+stopping at the first chunk that names a release line. Chunks are 4 MB with an overlap, so a name cut by a chunk's edge is
+read whole and never as the digits that fitted; cancellation is observed between chunks. Measured through the shipped
+reader on the same ten files: every row above as tabled, 16 ms to 1.1 s each and 7.5 s for Black Myth, on the owner's USB
+drive — once per executable, because the detection key (rules version + size + mtime) changes only when the file does.
+
+**What it is not.** UE3 titles are not detected as Unreal at all (the rule's signals are UE4/5's layout) and have no
+numbered release lines to report. A version the user typed is never overwritten and carries no witness. Rules
+`2026.09.6` change the key, so every library entry is read again once; schema 0015 removes the bare `4`/`5` the old rule
+wrote, where detection wrote it.
 
 ### Platform signatures & metadata
 

@@ -20,6 +20,12 @@ public sealed record DetectionWrite
 
     public string? EngineVersion { get; init; }
 
+    /// <summary>
+    /// The witness <see cref="EngineVersion"/> rests on (beta.10, <c>Domain.Detection.EngineVersionSource</c>). Written only
+    /// where the version itself is written — a version the user typed keeps no detected source beside it.
+    /// </summary>
+    public string? EngineVersionSource { get; init; }
+
     /// <summary>The platform rule id (<c>steam</c>, <c>gog</c>, <c>epic</c>, <c>itch</c>), or null.</summary>
     public string? PlatformId { get; init; }
 

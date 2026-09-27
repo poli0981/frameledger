@@ -113,6 +113,61 @@ public sealed class GameFileProbe : IGameFileProbe
         });
     }
 
+    /// <inheritdoc />
+    public ValueTask<UnrealBuildFacts?> ReadUnrealBuildAsync(GameFileSnapshot snapshot, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ct.ThrowIfCancellationRequested();
+        return ValueTask.FromResult(ShippingExecutable(snapshot) is { } exe ? UnrealBuildReader.Read(exe.FullPath, exe.RelativePath, ct) : null);
+    }
+
+    /// <summary>
+    /// The executable an Unreal title's engine version is read from (beta.10): the row's own when it is the shipping build
+    /// (<c>*-Win64-Shipping.exe</c>, <c>*-WinGDK-Shipping.exe</c> — what <c>ExecutableLocator</c> prefers), else the largest
+    /// shipping executable the walk listed under the install root (a row that points at the small launcher stub the
+    /// packager puts at the root). Null when there is none. Public for the tests.
+    /// </summary>
+    public static (string FullPath, string RelativePath)? ShippingExecutable(GameFileSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        string own = Path.GetFileName(snapshot.ExePath);
+        if (IsShipping(own))
+        {
+            string prefix = snapshot.GameDirectory.TrimEnd('/') + "/";
+            return (snapshot.ExePath, snapshot.ExePath.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ? snapshot.ExePath[prefix.Length..] : own);
+        }
+
+        (string FullPath, string RelativePath)? best = null;
+        long bestSize = -1;
+        foreach (string relative in snapshot.RelativeFiles.Where(static f => IsShipping(f[(f.LastIndexOf('/') + 1)..])))
+        {
+            string full = snapshot.GameDirectory.TrimEnd('/') + "/" + relative;
+            long size = SizeOf(full);
+            if (size > bestSize)
+            {
+                (best, bestSize) = ((full, relative), size);
+            }
+        }
+
+        return best;
+    }
+
+    private static bool IsShipping(string fileName) =>
+        fileName.EndsWith("-Win64-Shipping.exe", StringComparison.OrdinalIgnoreCase)
+        || fileName.EndsWith("-WinGDK-Shipping.exe", StringComparison.OrdinalIgnoreCase);
+
+    private static long SizeOf(string path)
+    {
+        try
+        {
+            return new FileInfo(path).Length;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return -1;
+        }
+    }
+
     /// <summary>
     /// The files the capability rules name, among those the walk listed, with the versions their PE resources state
     /// (beta.8): <c>nvngx_dlss.dll 3.7.10.0</c>, <c>sl.interposer.dll 2.4.0.0</c>. A file the rules name twice is listed

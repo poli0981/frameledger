@@ -228,6 +228,9 @@ public sealed class RuleEvaluator
                                                   snapshot.ManifestFields.TryGetValue(extractor.Field, out string? v)
                 ? v
                 : null,
+            // Not answerable from the snapshot: StaticGameDetector reads the engine's build facts for the one engine
+            // that matched (beta.10) — a scan the probe must not make for every game in the library.
+            VersionExtractorType.UnrealBuild => null,
             _ => null,
         };
     }

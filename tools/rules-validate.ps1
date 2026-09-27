@@ -193,6 +193,38 @@ foreach ($section in 'engines', 'platforms', 'capabilities') {
     }
 }
 
+# --- Version-extractor patterns: they compile, and they capture ONE group ------
+#
+# The evaluator returns the FIRST capture group (RuleEvaluator.FirstGroup, GameFileProbe.FirstGroup). Until beta.10 the
+# unreal rule's pattern was `\+\+UE(4|5)\+Release-(\d+\.\d+)` — two groups — so every Unreal version the app ever stored
+# was a bare "4" or "5", and a unit test written with a non-capturing group could not see it. The schema calls a pattern
+# `format: regex`, which is annotation-only; this file's own `$comment` promised the compile check and nothing made it.
+# Both halves are imperative here now. A group count other than one is refused, because a second group is a second answer
+# the evaluator throws away.
+function Get-CaptureGroupCount([string]$Pattern) {
+    $re = [System.Text.RegularExpressions.Regex]::new($Pattern, [System.Text.RegularExpressions.RegexOptions]::None, [TimeSpan]::FromSeconds(1))
+    return $re.GetGroupNumbers().Count - 1    # group 0 is the whole match
+}
+if ((Get-CaptureGroupCount '\+\+UE(4|5)\+Release-(\d+\.\d+)') -ne 2 -or (Get-CaptureGroupCount 'v(\d+)') -ne 1) {
+    Write-Host 'RULES VALIDATION FAILED: the capture-group counter itself is wrong (canary).' -ForegroundColor Red
+    exit 1
+}
+if (Test-Member $rules 'engines') {
+    foreach ($engine in @($rules.engines)) {
+        if (-not (Test-Member $engine 'version') -or $null -eq $engine.version) { continue }
+        if ($engine.version.type -notin 'pe_product_version_regex', 'strings_regex') { continue }
+        try {
+            $groups = Get-CaptureGroupCount $engine.version.value
+            if ($groups -ne 1) {
+                $errors.Add("engine '$($engine.id)': version pattern has $groups capture groups; the evaluator returns the first, so it must have exactly one (use (?:...) for the rest)")
+            }
+        }
+        catch {
+            $errors.Add("engine '$($engine.id)': version pattern does not compile — $($_.Exception.Message)")
+        }
+    }
+}
+
 # --- §S23-5: no `$comment` anywhere may enumerate the gate's composition -----
 #
 # The composition of the pre-injection gate is stated in

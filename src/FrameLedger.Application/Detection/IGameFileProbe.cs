@@ -14,4 +14,11 @@ public interface IGameFileProbe
 {
     /// <summary>Walks the game directory once and returns what it found.</summary>
     ValueTask<GameFileSnapshot> SnapshotAsync(string exePath, DetectionRuleSet rules, CancellationToken ct = default);
+
+    /// <summary>
+    /// Unreal Engine's build facts from the title's shipping executable (beta.10) — asked only after the rules matched an
+    /// engine whose extractor is <see cref="VersionExtractorType.UnrealBuild"/>, because answering can mean reading a large
+    /// file. Null when no shipping executable is in the snapshot's listing or it could not be read: no facts, never a guess.
+    /// </summary>
+    ValueTask<UnrealBuildFacts?> ReadUnrealBuildAsync(GameFileSnapshot snapshot, CancellationToken ct = default);
 }

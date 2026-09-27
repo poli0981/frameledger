@@ -162,6 +162,7 @@ public sealed class DetectionSweep : IDisposable
         {
             EngineId = r.EngineId,
             EngineVersion = r.EngineVersion,
+            EngineVersionSource = r.EngineVersionSource,
             PlatformId = r.PlatformId,
             CapabilityIds = capabilities,
             RulesVersion = r.RulesVersion,
@@ -188,7 +189,7 @@ public sealed class DetectionSweep : IDisposable
         }
 
         _log($"detect: {game.Name} — engine={r.EngineId ?? (r.EngineUndetermined ? "undetermined" : "none")}"
-             + $"{(r.EngineVersion is null ? string.Empty : " " + r.EngineVersion)} platform={r.PlatformId ?? (r.PlatformUndetermined ? "undetermined" : "none")}"
+             + $"{(r.EngineVersion is null ? string.Empty : " " + r.EngineVersion + " (" + r.EngineVersionSource + ")")} platform={r.PlatformId ?? (r.PlatformUndetermined ? "undetermined" : "none")}"
              + $" capabilities=[{string.Join(",", capabilities)}] vulkan={(r.UsesVulkan is { } v ? (v ? "yes" : "no") : "unknown")} rules={r.RulesVersion}"
              + $" arch={r.ExeArchitecture} libraries={r.Libraries.Count}");
         return true;

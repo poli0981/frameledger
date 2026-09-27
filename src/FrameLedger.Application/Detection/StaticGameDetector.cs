@@ -35,11 +35,13 @@ public sealed class StaticGameDetector(IDetectionRulesSource rulesSource, IGameF
         var evaluator = new RuleEvaluator(rules);
         EngineMatch engine = evaluator.MatchEngine(snapshot);
         PlatformRule? platform = evaluator.MatchPlatform(snapshot, out bool platformUndetermined);
+        EngineVersionReading version = await VersionAsync(engine, snapshot, ct).ConfigureAwait(false);
 
         return new StaticDetectionResult
         {
             EngineId = engine.Rule?.Id,
-            EngineVersion = engine.Version,
+            EngineVersion = version.Version,
+            EngineVersionSource = version.Source,
             EngineUndetermined = engine.IsUndetermined,
             PlatformId = platform?.Id,
             PlatformUndetermined = platformUndetermined,
@@ -51,5 +53,25 @@ public sealed class StaticGameDetector(IDetectionRulesSource rulesSource, IGameF
             ExeProductVersion = snapshot.PeProductVersion,
             Libraries = snapshot.Libraries,
         };
+    }
+
+    /// <summary>
+    /// The matched engine's version and its witness. Every extractor but one answers from the snapshot; Unreal's is the
+    /// second read (beta.10), made here for the one engine that matched rather than by the probe for every game.
+    /// </summary>
+    private async ValueTask<EngineVersionReading> VersionAsync(EngineMatch engine, GameFileSnapshot snapshot, CancellationToken ct)
+    {
+        if (engine.Rule?.Version is not { } extractor)
+        {
+            return EngineVersionReading.None;
+        }
+
+        if (extractor.Type != VersionExtractorType.UnrealBuild)
+        {
+            return engine.Version is null ? EngineVersionReading.None : new EngineVersionReading(engine.Version, EngineVersionSource.Of(extractor.Type));
+        }
+
+        UnrealBuildFacts? facts = await _probe.ReadUnrealBuildAsync(snapshot, ct).ConfigureAwait(false);
+        return facts is null ? EngineVersionReading.None : UnrealVersion.Decide(facts);
     }
 }

@@ -221,6 +221,7 @@ public sealed class DetectionRulesFile : IDetectionRulesSource
             "pe_product_version_regex" => VersionExtractorType.PeProductVersionRegex,
             "strings_regex" => VersionExtractorType.StringsRegex,
             "manifest_field" => VersionExtractorType.ManifestField,
+            "unreal_build" => VersionExtractorType.UnrealBuild,
             _ => throw new InvalidOperationException($"'{owner}' has unknown version extractor '{d.Type}'"),
         },
         Value = d.Value,

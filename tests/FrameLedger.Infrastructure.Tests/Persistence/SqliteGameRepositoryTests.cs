@@ -90,6 +90,52 @@ public sealed class SqliteGameRepositoryTests
     }
 
     /// <summary>
+    /// Schema 0015 (beta.10): the version's witness goes where the version goes — written with a version the row took, left
+    /// alone by a run that established nothing, never written beside a version the user typed, and cleared by the user's edit
+    /// of the version.
+    /// </summary>
+    [Fact]
+    public async Task TheEngineVersionsWitnessFollowsTheVersionAndNeverTheUsers()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        var repo = new SqliteGameRepository(f.Db);
+        GameRow row = await repo.EnsureAsync(_exe, "Lies of P", Ct);
+        DetectionWrite Write(string? version, string? source) => new()
+        {
+            EngineId = "unreal",
+            EngineVersion = version,
+            EngineVersionSource = source,
+            CapabilityIds = [],
+            RulesVersion = "2026.09.6",
+            ExeSizeBytes = 1,
+            ExeMtimeMs = 2,
+        };
+
+        await repo.ApplyDetectionAsync(row.Id, Write("4.27.2", EngineVersionSource.UnrealFileVersion), Ct);
+        GameRow taken = (await repo.FindByIdAsync(row.Id, Ct))!;
+        taken.EngineVersion.Should().Be("4.27.2");
+        taken.EngineVersionSource.Should().Be(EngineVersionSource.UnrealFileVersion);
+
+        await repo.ApplyDetectionAsync(row.Id, Write(null, null), Ct);
+        GameRow nothing = (await repo.FindByIdAsync(row.Id, Ct))!;
+        nothing.EngineVersion.Should().Be("4.27.2", "a run that established nothing erases nothing");
+        nothing.EngineVersionSource.Should().Be(EngineVersionSource.UnrealFileVersion, "and leaves the witness beside it");
+
+        await repo.ApplyDetectionAsync(row.Id, Write("4.27", EngineVersionSource.UnrealBranch), Ct);
+        (await repo.FindByIdAsync(row.Id, Ct))!.EngineVersionSource.Should().Be(EngineVersionSource.UnrealBranch, "a refreshed version brings its own witness");
+
+        (await repo.UpdateMetadataAsync(row.Id, new GameMetadata { Name = "Lies of P", Engine = "unreal", EngineVersion = "4.27.2" }, Ct)).Should().BeTrue();
+        GameRow typed = (await repo.FindByIdAsync(row.Id, Ct))!;
+        typed.EngineVersion.Should().Be("4.27.2");
+        typed.EngineVersionSource.Should().BeNull("a version the user typed rests on no detected witness");
+
+        await repo.ApplyDetectionAsync(row.Id, Write("5.1", EngineVersionSource.UnrealBranch), Ct);
+        GameRow kept = (await repo.FindByIdAsync(row.Id, Ct))!;
+        kept.EngineVersion.Should().Be("4.27.2", "the user's value is never overwritten");
+        kept.EngineVersionSource.Should().BeNull("and gains no witness from a run it did not take");
+    }
+
+    /// <summary>
     /// Schema 0011 (beta.8): the executable's own facts ride the detection write, whole — what it runs as, its two
     /// versions, the capability files it ships — and read back as written; a later write that found no version clears it.
     /// </summary>

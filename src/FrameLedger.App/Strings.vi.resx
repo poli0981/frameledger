@@ -1962,6 +1962,21 @@ Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắ
   <data name="GameDetail_Details_Engine" xml:space="preserve">
     <value>Engine</value>
   </data>
+  <data name="GameDetail_Details_EngineVersion" xml:space="preserve">
+    <value>Phiên bản engine</value>
+  </data>
+  <data name="GameDetail_EngineVersion_BranchAndFile" xml:space="preserve">
+    <value>Lấy từ tên bản dựng của engine và số phiên bản trong file thực thi của game.</value>
+  </data>
+  <data name="GameDetail_EngineVersion_Branch" xml:space="preserve">
+    <value>Lấy từ tên bản dựng của engine trong file thực thi của game. Số bản vá không được ghi ở đó.</value>
+  </data>
+  <data name="GameDetail_EngineVersion_FileVersion" xml:space="preserve">
+    <value>Chỉ lấy từ số phiên bản của file thực thi. Studio có thể thay số đó bằng số của riêng họ, nên đây là khả năng cao chứ không chắc chắn.</value>
+  </data>
+  <data name="GameDetail_EngineVersion_NotFound" xml:space="preserve">
+    <value>Không tìm thấy trong file thực thi của game. File có thể đã bị nén hoặc bảo vệ, hoặc studio đã đổi tên bản dựng của engine.</value>
+  </data>
   <data name="GameDetail_Details_Libraries" xml:space="preserve">
     <value>Đi kèm</value>
   </data>
