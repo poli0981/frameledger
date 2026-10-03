@@ -27,6 +27,34 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
+## [0.1.0-beta.11] - 2026-10-03
+
+**The eleventh pre-release: a user-mode anti-cheat exception that can be reached, a library that fills the window, and
+charts and clean-up across a game's sessions.** The same unsigned installer: verify its hash against `SHA256SUMS.txt`,
+then *More info → Run anyway*. What changed for a user:
+
+- **The user-mode anti-cheat exception no longer needs earlier sessions.** A game blocked the moment it was added could
+  never qualify; now its first two sessions under the exception are a trial, and one that does not go well ends the
+  exception for good. Everything else it requires is unchanged, and a ban remains possible.
+- **The Games library** fills the window at any width, can be shown as a list, counts its games and has **Refresh**: it
+  reads the library again, offers the games your stores installed since, and marks games whose executable is gone.
+- **Import** hides the games already in the library — you can show them, dimmed.
+- **Delete all sessions** — of one game on its page, or of every game in Settings ▸ Data.
+- **Charts across a game's sessions**: *Sessions at a glance* on the Sessions tab, and the Trend draws more metrics at once.
+- **Settings** has no row without a control.
+- **Three CrackProof games** are on the anti-cheat list (Umamusume: Pretty Derby, Heaven Burns Red, Madoka Magica Magia
+  Exedra).
+- **The Disclaimer (2.9) and the EULA (1.4) say how the exception works now**, so the Legal Gate opens once after the
+  update. The Privacy Policy is unchanged.
+
+**Updating from `0.1.0-beta.10`:**
+
+- Quit the App (tray icon → Exit) and end `FrameLedger.Agent.exe` before running the installer.
+- Schema 0017 adds one column; the database opens in place, and an older version cannot open it again.
+- Every game is re-checked once for anti-cheat (rules `2026.10.1`).
+- An exception made under beta.9 or beta.10 stays in force; if fewer than two sessions were played under it, the rest of
+  its trial applies.
+
 ### Added
 
 - **The Games library fills the window, switches to a list, counts its games and refreshes** (owner requests, beta.11).
@@ -38,6 +66,7 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   new games* when there are none), and marks every entry whose executable is gone **Not installed** — the tooltip says
   when it is the drive that is not connected; nothing is removed. The page also reloads by itself when a session ends or
   an import adds games while it is open (an import made from the menu used to show only after leaving the page).
+
 - **Import hides the games already in the library** (owner request, beta.11): on a re-import they were most of the list
   and pushed the new ones out of sight. *Show the N games already in the library* brings them back, dimmed, and a row
   that cannot be imported has its box disabled (a tick on it was taken and ignored).
@@ -47,6 +76,7 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   many. The library, the settings and every game's hooking consent stay. The capture agent deletes them (the rows are its)
   and refuses while a session is being recorded; an older agent is told to restart. A summary window still open on a
   deleted session closes. A new pipe request, `DeleteSessions`.
+
 - **Charts across a game's sessions** (owner decision D39, beta.11): the Sessions tab opens with *Sessions at a glance* —
   every hooked session's frame rate (Presented FPS, or Native and Displayed where frame generation was measured, never one
   inflated line) and its 1% and 0.1% lows, oldest first; click a point to select that session. The Trend keeps its metric
