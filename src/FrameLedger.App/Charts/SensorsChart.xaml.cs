@@ -2,17 +2,25 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.Windows.Controls;
+using FrameLedger.App.Services;
+using FrameLedger.Application.Recording;
 using ScottPlot;
 using ScottPlot.Plottables;
+using ScottPlot.WPF;
 
 namespace FrameLedger.App.Charts;
 
 /// <summary>
 /// The Sensors tab: GPU core / hotspot temperature, load, CPU temperature and load on one plot (°C and % left) with the GPU's
-/// power on a watt axis at the right, and memory on another — the game's own VRAM (the per-present <c>vram_proc</c> blob, a
-/// held 1 Hz sample), the adapter-wide VRAM (the <c>vram_adapter</c> sensor) and the system's RAM as differently-labelled
-/// series. Since beta.8 it draws a session that was not hooked too: its sensors are all it has.
+/// power on a watt axis at the right; then video memory and memory, each with THIS GAME's own figure beside the whole
+/// graphics card's or the whole PC's as differently-labelled series, in GB (beta.12, D43: the game's figures are read from
+/// outside the game once a second, in either tier). Since beta.8 it draws a session that was not hooked too: its sensors are
+/// all it has.
 /// </summary>
+/// <remarks>
+/// Corrected 2026-10-03: the memory plot drew "the game's own VRAM" from the per-present <c>vram_proc</c> blob, which the
+/// Overlay never produced — that line was never drawn on any session (<c>20_OPEN_QUESTIONS</c> §H10).
+/// </remarks>
 public partial class SensorsChart : UserControl
 {
     /// <summary>The temperatures-and-load plot's series, each with the palette key it is drawn in and whether it is on the watt axis.</summary>
@@ -26,19 +34,32 @@ public partial class SensorsChart : UserControl
         ("cpu_load", "Chart_Displayed", false),
     ];
 
-    /// <summary>The memory plot's series and their palette keys; <c>vram_proc</c> is the per-present blob, the others sensors.</summary>
-    internal static readonly IReadOnlyList<(string Series, string PaletteKey)> MemoryPlot =
+    /// <summary>The video-memory plot's series and their palette keys: this game is in the same colour on both memory plots.</summary>
+    internal static readonly IReadOnlyList<(string Series, string PaletteKey)> VideoMemoryPlot =
     [
-        ("vram_proc", "Chart_Displayed"),
-        ("vram_adapter", "Chart_SensorSecondary"),
-        ("ram_mb", "Chart_Percentile"),
+        (SensorSeriesCatalog.GameVramDedicated, "Chart_Displayed"),
+        (SensorSeriesCatalog.GameVramShared, "Chart_Native"),
+        (SensorSeriesCatalog.VramAdapter, "Chart_SensorSecondary"),
     ];
+
+    /// <summary>
+    /// The memory plot's series: the game's private working set — or, where this Windows does not report it, its working set,
+    /// labelled as such (<see cref="SystemMemorySeries"/>) — and the whole PC's memory in use.
+    /// </summary>
+    internal static readonly IReadOnlyList<(string Series, string PaletteKey)> SystemMemoryPlot =
+    [
+        (SensorSeriesCatalog.GameRamPrivate, "Chart_Displayed"),
+        (SensorSeriesCatalog.RamSystem, "Chart_Percentile"),
+    ];
+
+    private const double _mibPerGb = 1024.0;
 
     public SensorsChart()
     {
         InitializeComponent();
         ChartTheme.Attach(Temps);
         ChartTheme.Attach(Vram);
+        ChartTheme.Attach(Ram);
     }
 
     public int DrawnSeries { get; private set; }
@@ -50,7 +71,8 @@ public partial class SensorsChart : UserControl
     {
         DrawnSeries = 0;
         DrawTemps(series);
-        DrawMemory(series);
+        DrawMemory(Vram, series, VideoMemoryPlot);
+        DrawMemory(Ram, series, SystemMemoryPlot);
     }
 
     /// <summary>The time axis says where its zero is: the first frame when the sensors sit on the frames' axis, the session's start otherwise.</summary>
@@ -82,64 +104,49 @@ public partial class SensorsChart : UserControl
         Temps.Refresh();
     }
 
-    private void DrawMemory(SessionSeries? series)
+    /// <summary>One memory plot in GB (MiB stored, 1 GB = 1024 MiB as Task Manager counts it), every line labelled with whose memory it is.</summary>
+    private void DrawMemory(WpfPlot view, SessionSeries? series, IReadOnlyList<(string Series, string PaletteKey)> lines)
     {
-        ScottPlot.Plot plot = Vram.Plot;
+        ScottPlot.Plot plot = view.Plot;
         plot.Clear();
         ChartTheme.Apply(plot);
         plot.XLabel(TimeAxisLabel(series));
-        plot.YLabel(Strings.Sensors_Axis_Mb);
+        plot.YLabel(Strings.Sensors_Axis_Gb);
         if (series is not null)
         {
             ChartPalette p = ChartTheme.Current;
-            DrawProcessVram(plot, series, p.ByKey(MemoryPlot[0].PaletteKey));
-            Line(plot, series, "vram_adapter", Strings.Sensors_Series_VramAdapter, p.ByKey(MemoryPlot[1].PaletteKey), null);
-            Line(plot, series, "ram_mb", Strings.Sensors_Series_Ram, p.ByKey(MemoryPlot[2].PaletteKey), null);
+            foreach ((string name, string key) in lines)
+            {
+                string shown = SystemMemorySeries(series, name);
+                Line(plot, series, shown, Label(shown), p.ByKey(key), null, 1.0 / _mibPerGb);
+            }
+
             plot.Axes.AutoScale();
             plot.ShowLegend(Alignment.UpperRight);
         }
 
-        Vram.Refresh();
+        view.Refresh();
     }
 
     /// <summary>
-    /// The game's own VRAM, per present on the frames' axis — a 0 is a present the sample did not reach (the record's zero,
-    /// SessionFinalizer.Series), never a reading, and is left out (beta.8).
+    /// The game's private working set where it was read, else its working set — labelled as the working set, never as the
+    /// private one (a Windows before the September 2023 update does not report it). Every other series is itself.
     /// </summary>
-    private void DrawProcessVram(ScottPlot.Plot plot, SessionSeries series, Color color)
+    internal static string SystemMemorySeries(SessionSeries series, string name)
     {
-        if (series.VramProcMb is not { Length: > 0 } proc)
-        {
-            return;
-        }
-
-        int n = Math.Min(proc.Length, series.TimesS.Length);
-        int[] read = [.. Enumerable.Range(0, n).Where(i => proc[i] > 0)];
-        if (read.Length == 0)
-        {
-            return;
-        }
-
-        (double[] xs, double[] ys) = Decimator.MinMax([.. read.Select(i => series.TimesS[i])], [.. read.Select(i => (double)proc[i])], 1000);
-        Scatter line = plot.Add.ScatterLine(xs, ys, color);
-        line.LineWidth = 1;
-        line.LegendText = Strings.Sensors_Series_VramProcess;
-        DrawnSeries++;
+        ArgumentNullException.ThrowIfNull(series);
+        return string.Equals(name, SensorSeriesCatalog.GameRamPrivate, StringComparison.Ordinal) && !Has(series, name) && Has(series, SensorSeriesCatalog.GameRamWorkingSet)
+            ? SensorSeriesCatalog.GameRamWorkingSet
+            : name;
     }
 
-    private static string Label(string series) => series switch
-    {
-        "gpu_temp" => Strings.Sensors_Series_GpuTemp,
-        "gpu_hotspot" => Strings.Sensors_Series_GpuHotspot,
-        "gpu_load" => Strings.Sensors_Series_GpuLoad,
-        "gpu_power" => Strings.Sensors_Series_GpuPower,
-        "cpu_temp" => Strings.Sensors_Series_CpuTemp,
-        "cpu_load" => Strings.Sensors_Series_CpuLoad,
-        _ => series,
-    };
+    private static bool Has(SessionSeries series, string name) =>
+        series.Sensors.Any(s => string.Equals(s.Name, name, StringComparison.Ordinal) && s.TimesS.Length > 0);
 
-    /// <summary>Draws one sensor series if the session has it; whether it did.</summary>
-    private bool Line(ScottPlot.Plot plot, SessionSeries series, string name, string label, Color color, IYAxis? axis)
+    private static string Label(string series) => SensorStatsTable.Label(series);
+
+    /// <summary>Draws one sensor series if the session has it, its values times <paramref name="scale"/>; whether it did.</summary>
+    private bool Line(ScottPlot.Plot plot, SessionSeries series, string name, string label, Color color, IYAxis? axis, double scale = 1.0)
     {
         SensorSeries? sensor = series.Sensors.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.Ordinal));
         if (sensor is null || sensor.TimesS.Length == 0)
@@ -147,7 +154,8 @@ public partial class SensorsChart : UserControl
             return false;
         }
 
-        (double[] xs, double[] ys) = Decimator.MinMax(sensor.TimesS, sensor.Values, 1000);
+        double[] values = scale == 1.0 ? sensor.Values : [.. sensor.Values.Select(v => v * scale)];
+        (double[] xs, double[] ys) = Decimator.MinMax(sensor.TimesS, values, 1000);
         Scatter line = plot.Add.ScatterLine(xs, ys, color);
         line.LineWidth = 1;
         line.LegendText = label;

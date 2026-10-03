@@ -119,6 +119,17 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
     [ObservableProperty]
     private bool _showSensors;
 
+    /// <summary>beta.12: the session stored per-series statistics (<c>sensor_stats_json</c>), so the table is shown.</summary>
+    [ObservableProperty]
+    private bool _hasSensorStats;
+
+    /// <summary>
+    /// Why there is no table for a session that has sensors (beta.12): it was recorded before the statistics were stored. Null
+    /// when the table is shown, or when the session recorded no sensor at all — nothing is missing then.
+    /// </summary>
+    [ObservableProperty]
+    private string? _sensorStatsMissing;
+
     [ObservableProperty]
     private string _tags = string.Empty;
 
@@ -159,6 +170,22 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
 
     public static string SensorsHeader => Strings.GameDetail_Tab_Sensors;
 
+    public static string SensorStatsHeader => Strings.SensorStats_Header;
+
+    public static string SensorStatsNote => Strings.SensorStats_Note;
+
+    public static string SensorStatsSeriesHeader => Strings.SensorStats_Col_Series;
+
+    public static string SensorStatsMeanHeader => Strings.SensorStats_Col_Mean;
+
+    public static string SensorStatsMedianHeader => Strings.SensorStats_Col_Median;
+
+    public static string SensorStatsMinHeader => Strings.SensorStats_Col_Min;
+
+    public static string SensorStatsMaxHeader => Strings.SensorStats_Col_Max;
+
+    public static string SensorStatsReadingsHeader => Strings.SensorStats_Col_Samples;
+
     public static string ShowDisplayedText => Strings.Summary_Show_Displayed;
 
     public static string ShowSensorsText => Strings.Summary_Show_Sensors;
@@ -187,6 +214,9 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
     public SessionSeries? SensorSeries { get; private set; }
 
     public ObservableCollection<StatCardModel> Stats { get; } = [];
+
+    /// <summary>beta.12: every series' stored mean, median, minimum and peak (<see cref="SensorStatsTable"/>).</summary>
+    public ObservableCollection<SensorStatRowModel> SensorStats { get; } = [];
 
     public ObservableCollection<TriStateChipModel> Chips { get; } = [];
 
@@ -353,7 +383,7 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         Notes = _annotation?.Notes ?? string.Empty;
         HasDisplayed = Series?.HasGenerated == true;
         HasSensors = Series is { SensorsAligned: true, Sensors.Count: > 0 };
-        HasSensorCharts = SensorSeries is { } shown && (shown.Sensors.Count > 0 || shown.VramProcMb is { Length: > 0 });
+        HasSensorCharts = SensorSeries is { Sensors.Count: > 0 };
         DecimationNote = Series is null ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.Chart_Decimated_Format, Series.Presents, Math.Min(Series.Presents, Decimator.DefaultBuckets * 2));
         PresentStats(row);
         PresentChips();
@@ -362,6 +392,7 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
 
     private void PresentStats(SessionRow row)
     {
+        IReadOnlyDictionary<string, Application.Recording.SensorSeriesStats> stats = Application.Recording.SensorSeriesStats.Parse(row.SensorStatsJson);
         string? presented = IsHooked && FpsPresentation.FromRow(row).Kind == FpsReadoutKind.Presented ? Strings.Summary_Lows_Presented : null;
         Stats.Clear();
         Stats.Add(new StatCardModel(Strings.Summary_Stat_Avg, Readout.Line));
@@ -383,6 +414,20 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         // The machine, both tiers: telemetry is what a not-hooked session still has. Load is the average, temperature the peak.
         Stats.Add(new StatCardModel(Strings.Summary_Stat_Gpu, string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_LoadTemp_Format, Formats.Percent(row.AvgGpuLoad), Formats.Temperature(row.MaxGpuTemp))));
         Stats.Add(new StatCardModel(Strings.Summary_Stat_Cpu, string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_LoadTemp_Format, Formats.Percent(row.AvgCpuLoad), Formats.Temperature(row.MaxCpuTemp))));
+
+        // beta.12 (D43), both tiers: the game's own memory, read from outside it — the median, with the peak beneath.
+        Stats.Add(GameMemoryText.VramCard(row));
+        Stats.Add(GameMemoryText.RamCard(row, stats));
+
+        // The table reads what finalize stored; a session from before beta.12 says so rather than computing it here.
+        SensorStats.Clear();
+        foreach (SensorStatRowModel line in SensorStatsTable.Rows(stats))
+        {
+            SensorStats.Add(line);
+        }
+
+        HasSensorStats = SensorStats.Count > 0;
+        SensorStatsMissing = !HasSensorStats && (HasSensorCharts || row.AvgGpuLoad is not null || row.MaxGpuTemp is not null) ? Strings.SensorStats_NotStored : null;
     }
 
     /// <summary>

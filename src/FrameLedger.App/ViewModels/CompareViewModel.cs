@@ -195,6 +195,13 @@ public sealed partial class CompareViewModel : ObservableObject
         Rows.Add(Row(Strings.Compare_Metric_AvgGpuLoad, rows, static r => r.AvgGpuLoad, Formats.Percent, higherIsBetter: null));
         Rows.Add(Row(Strings.Compare_Metric_AvgCpuLoad, rows, static r => r.AvgCpuLoad, Formats.Percent, higherIsBetter: null));
         Rows.Add(Row(Strings.Compare_Metric_MaxCpuTemp, rows, static r => r.MaxCpuTemp, Formats.Temperature, higherIsBetter: false));
+
+        // beta.12 (D43), both tiers: the game's own memory. Facts, not scores — a game that uses more of a card it has is not
+        // worse — so no row names a best. The private working set only, as on the Trend.
+        Rows.Add(Row(Strings.Compare_Metric_GameVramMedian, rows, static r => r.GameVramDedicatedMedianMb, Formats.Memory, higherIsBetter: null));
+        Rows.Add(Row(Strings.Compare_Metric_GameVramPeak, rows, static r => r.GameVramDedicatedMaxMb, Formats.Memory, higherIsBetter: null));
+        Rows.Add(Row(Strings.Compare_Metric_GameRamMedian, rows, static r => r.GameRamPrivateMedianMb, Formats.Memory, higherIsBetter: null));
+        Rows.Add(Row(Strings.Compare_Metric_GameRamPeak, rows, static r => r.GameRamPrivateMaxMb, Formats.Memory, higherIsBetter: null));
         Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Duration, [.. rows.Select(static r => new CompareCell(Formats.Duration(r.DurationSeconds), false))]));
 
         // beta.10: how each session was shown, both tiers. Facts, not scores: no mode is better than another, so none is best.

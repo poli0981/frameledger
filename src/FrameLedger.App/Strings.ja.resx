@@ -517,10 +517,6 @@
     <value>RT 有効</value>
     <comment>review</comment>
   </data>
-  <data name="Dashboard_Live_Vram_Format" xml:space="preserve">
-    <value>{0} MB VRAM (プロセス)</value>
-    <comment>review</comment>
-  </data>
   <data name="Dashboard_Live_Waiting" xml:space="preserve">
     <value>接続済み — 最初のフレームを待機中…</value>
     <comment>review</comment>
@@ -1645,10 +1641,6 @@
     <value>平均 {0:0.0} ms · p95 {1:0.0} ms</value>
     <comment>review</comment>
   </data>
-  <data name="Sensors_Axis_Mb" xml:space="preserve">
-    <value>MB</value>
-    <comment>review</comment>
-  </data>
   <data name="Sensors_Empty" xml:space="preserve">
     <value>このセッションにはセンサー系列が記録されていません。</value>
     <comment>review</comment>
@@ -1670,11 +1662,7 @@
     <comment>review</comment>
   </data>
   <data name="Sensors_Series_VramAdapter" xml:space="preserve">
-    <value>アダプター全体の VRAM 使用量 (MB)</value>
-    <comment>review</comment>
-  </data>
-  <data name="Sensors_Series_VramProcess" xml:space="preserve">
-    <value>このゲームの VRAM 使用量 (MB)</value>
+    <value>VRAM・グラフィックス カード全体</value>
     <comment>review</comment>
   </data>
   <data name="Sensors_Temps_Header" xml:space="preserve">
@@ -1682,7 +1670,7 @@
     <comment>review</comment>
   </data>
   <data name="Sensors_Vram_Header" xml:space="preserve">
-    <value>メモリ</value>
+    <value>ビデオ メモリ（VRAM）</value>
     <comment>review</comment>
   </data>
   <data name="Tabs_SelectASession" xml:space="preserve">
@@ -1775,10 +1763,6 @@
   </data>
   <data name="Trend_Unit_Watts" xml:space="preserve">
     <value>W</value>
-    <comment>review</comment>
-  </data>
-  <data name="Trend_Unit_Megabytes" xml:space="preserve">
-    <value>MB</value>
     <comment>review</comment>
   </data>
   <data name="Trend_Unit_Factor" xml:space="preserve">
@@ -2668,10 +2652,6 @@
     <value>平均GPU電力 W</value>
     <comment>review</comment>
   </data>
-  <data name="Trend_Metric_MaxVramProcess" xml:space="preserve">
-    <value>最大VRAM（ゲーム）MB</value>
-    <comment>review</comment>
-  </data>
   <data name="Trend_Metric_AvgCpuLoad" xml:space="preserve">
     <value>平均CPU負荷 %</value>
     <comment>review</comment>
@@ -2681,7 +2661,7 @@
     <comment>review</comment>
   </data>
   <data name="Trend_Metric_AvgRam" xml:space="preserve">
-    <value>平均メモリ使用量 MB</value>
+    <value>平均 RAM 使用量（PC 全体）GB</value>
     <comment>review</comment>
   </data>
   <data name="Trend_Metric_FgFactor" xml:space="preserve">
@@ -2709,7 +2689,7 @@
     <comment>review</comment>
   </data>
   <data name="Sensors_Series_Ram" xml:space="preserve">
-    <value>メモリ使用量（システム）</value>
+    <value>使用中の RAM・PC 全体</value>
     <comment>review</comment>
   </data>
   <data name="Compare_Metric_AvgGpuLoad" xml:space="preserve">
@@ -3607,6 +3587,170 @@
   </data>
   <data name="Session_UnderException_Format" xml:space="preserve">
     <value>{0} のユーザーモード例外のもとでフック</value>
+    <comment>review</comment>
+  </data>
+  <data name="Format_Memory_Mb_Format" xml:space="preserve">
+    <value>{0:N0} MB</value>
+    <comment>review</comment>
+  </data>
+  <data name="Format_Memory_Gb_Format" xml:space="preserve">
+    <value>{0:N2} GB</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_GameVram" xml:space="preserve">
+    <value>VRAM（このゲーム）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_GameRam" xml:space="preserve">
+    <value>RAM（このゲーム）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_GameRamWs" xml:space="preserve">
+    <value>RAM（このゲーム・ワーキング セット）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_GameVram_Suffix_Format" xml:space="preserve">
+    <value>中央値 · ピーク {0} · 共有 {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_GameRam_Suffix_Format" xml:space="preserve">
+    <value>中央値 · ピーク {0} · コミット {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_GameRamWs_Suffix_Format" xml:space="preserve">
+    <value>中央値 · ピーク {0} · この Windows はプライベート ワーキング セットを報告しません</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameMemory_Processes_Format" xml:space="preserve">
+    <value>ゲームの実行ファイルを実行している {0} 個のプロセスの合計</value>
+    <comment>review</comment>
+  </data>
+  <data name="SensorStats_Header" xml:space="preserve">
+    <value>系列ごとの統計</value>
+    <comment>review</comment>
+  </data>
+  <data name="SensorStats_Note" xml:space="preserve">
+    <value>セッション中に 1 秒ごとに読み取り、終了時に保存した値です。「このゲーム」はゲーム自身のプロセスで、ゲームの外から読み取っています。「グラフィックス カード全体」と「PC 全体」には、そのとき実行中だった他のすべてが含まれます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="SensorStats_NotStored" xml:space="preserve">
+    <value>系列ごとの統計（平均・中央値・最小・ピーク）は、0.1.0-beta.12 以降で記録したセッションに保存されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="SensorStats_Col_Series" xml:space="preserve">
+    <value>系列</value>
+    <comment>review</comment>
+  </data>
+  <data name="SensorStats_Col_Mean" xml:space="preserve">
+    <value>平均</value>
+    <comment>review</comment>
+  </data>
+  <data name="SensorStats_Col_Median" xml:space="preserve">
+    <value>中央値</value>
+    <comment>review</comment>
+  </data>
+  <data name="SensorStats_Col_Min" xml:space="preserve">
+    <value>最小</value>
+    <comment>review</comment>
+  </data>
+  <data name="SensorStats_Col_Max" xml:space="preserve">
+    <value>ピーク</value>
+    <comment>review</comment>
+  </data>
+  <data name="SensorStats_Col_Samples" xml:space="preserve">
+    <value>読み取り回数</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GameVram" xml:space="preserve">
+    <value>VRAM・このゲーム（専用）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GameVramShared" xml:space="preserve">
+    <value>共有 GPU メモリ・このゲーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GameRam" xml:space="preserve">
+    <value>RAM・このゲーム（プライベート ワーキング セット）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GameRamWs" xml:space="preserve">
+    <value>ワーキング セット・このゲーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GameCommit" xml:space="preserve">
+    <value>コミット・このゲーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Ram_Header" xml:space="preserve">
+    <value>メモリ（RAM）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Axis_Gb" xml:space="preserve">
+    <value>GB</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_Col_GameVram" xml:space="preserve">
+    <value>VRAM（ゲーム）中央値 · ピーク</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_Col_GameRam" xml:space="preserve">
+    <value>RAM（ゲーム）中央値 · ピーク</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_GameRamWs_Cell_Format" xml:space="preserve">
+    <value>{0} · {1}（ワーキング セット）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_GameVram_Tooltip_Format" xml:space="preserve">
+    <value>専用 GPU メモリ（タスク マネージャーと同じ数え方）— 平均 {0} · 中央値 {1} · ピーク {2}。共有 GPU メモリのピーク {3}。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_GameRam_Tooltip_Format" xml:space="preserve">
+    <value>プライベート ワーキング セット（タスク マネージャーの「メモリ」）— 平均 {0} · 中央値 {1} · ピーク {2}。ワーキング セットのピーク {3} · コミットのピーク {4}。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sessions_GameRamWs_Tooltip_Format" xml:space="preserve">
+    <value>この Windows はプライベート ワーキング セットを報告しないため、ワーキング セット（共有ページを含む）を表示しています — 中央値 {0} · ピーク {1}。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_GameVramMedian" xml:space="preserve">
+    <value>VRAM（ゲーム）中央値 GB</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_GameVramPeak" xml:space="preserve">
+    <value>VRAM（ゲーム）ピーク GB</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_GameRamMedian" xml:space="preserve">
+    <value>RAM（ゲーム）中央値 GB</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_GameRamPeak" xml:space="preserve">
+    <value>RAM（ゲーム）ピーク GB</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Unit_Gigabytes" xml:space="preserve">
+    <value>GB</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_GameVramMedian" xml:space="preserve">
+    <value>VRAM（ゲーム）中央値</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_GameVramPeak" xml:space="preserve">
+    <value>VRAM（ゲーム）ピーク</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_GameRamMedian" xml:space="preserve">
+    <value>RAM（ゲーム）中央値</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_GameRamPeak" xml:space="preserve">
+    <value>RAM（ゲーム）ピーク</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dashboard_Live_GameMemory_Format" xml:space="preserve">
+    <value>このゲーム: VRAM {0} · RAM {1}</value>
     <comment>review</comment>
   </data>
 </root>

@@ -100,20 +100,29 @@ public sealed class TrendSeriesBuilderTests
         {
             AvgGpuLoad = 97,
             AvgGpuPowerW = 310,
-            VramProcMaxMb = 9000,
+            GameVramDedicatedMedianMb = 6144,
+            GameVramDedicatedMaxMb = 9216,
+            GameRamPrivateMedianMb = 3072,
+            GameRamPrivateMaxMb = 4096,
+            GameRamWorkingSetMaxMb = 5120,
             AvgCpuLoad = 41.5,
             MaxCpuTemp = 78,
-            AvgRamMb = 18000,
+            AvgRamMb = 18432,
         };
         SessionRow steady = Row(2, 1, fgMode: "dlssg", native: 70, displayed: 280, factor: 4) with { FgFactorScope = "steady", FgSteadyShare = 0.75, AvgCpuLoad = 50 };
         SessionRow before = Row(3, 1);
 
         TrendSeriesBuilder.ValueOf(measured, TrendMetric.AvgGpuLoad).Should().Be(97);
         TrendSeriesBuilder.ValueOf(measured, TrendMetric.AvgGpuPower).Should().Be(310);
-        TrendSeriesBuilder.ValueOf(measured, TrendMetric.MaxVramProcess).Should().Be(9000);
+        TrendSeriesBuilder.ValueOf(measured, TrendMetric.GameVramMedian).Should().Be(6, "GB, 1 GB = 1024 MiB");
+        TrendSeriesBuilder.ValueOf(measured, TrendMetric.GameVramPeak).Should().Be(9);
+        TrendSeriesBuilder.ValueOf(measured, TrendMetric.GameRamMedian).Should().Be(3);
+        TrendSeriesBuilder.ValueOf(measured, TrendMetric.GameRamPeak).Should().Be(4);
+        TrendSeriesBuilder.ValueOf(measured with { GameRamPrivateMaxMb = null }, TrendMetric.GameRamPeak).Should().BeNull("the working set is another quantity and never takes the private working set's place on a line");
         TrendSeriesBuilder.ValueOf(measured, TrendMetric.AvgCpuLoad).Should().Be(41.5);
         TrendSeriesBuilder.ValueOf(measured, TrendMetric.MaxCpuTemp).Should().Be(78);
-        TrendSeriesBuilder.ValueOf(measured, TrendMetric.AvgRam).Should().Be(18000);
+        TrendSeriesBuilder.ValueOf(measured, TrendMetric.AvgRam).Should().Be(18);
+        TrendSeriesBuilder.Counts(Row(5, 1, hooked: false), TrendMetric.GameVramPeak).Should().BeTrue("the game's memory is read from outside it: a session that was not hooked has it too");
         TrendSeriesBuilder.ValueOf(measured, TrendMetric.FgFactor).Should().Be(1.9);
         TrendSeriesBuilder.ValueOf(before, TrendMetric.AvgCpuLoad).Should().BeNull("recorded before anything read the CPU");
         TrendSeriesBuilder.ValueOf(before, TrendMetric.FgFactor).Should().BeNull("a measured none has no factor to plot");

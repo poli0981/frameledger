@@ -393,9 +393,6 @@
   <data name="Dashboard_Live_Rt_On" xml:space="preserve">
     <value>RT active</value>
   </data>
-  <data name="Dashboard_Live_Vram_Format" xml:space="preserve">
-    <value>{0} MB VRAM (process)</value>
-  </data>
   <data name="Dashboard_Live_Waiting" xml:space="preserve">
     <value>Attached — waiting for the first frames…</value>
   </data>
@@ -1239,9 +1236,6 @@
   <data name="Latency_Stats_Format" xml:space="preserve">
     <value>avg {0:0.0} ms · p95 {1:0.0} ms</value>
   </data>
-  <data name="Sensors_Axis_Mb" xml:space="preserve">
-    <value>MB</value>
-  </data>
   <data name="Sensors_Empty" xml:space="preserve">
     <value>No sensor series were recorded for this session.</value>
   </data>
@@ -1258,16 +1252,13 @@
     <value>GPU core °C</value>
   </data>
   <data name="Sensors_Series_VramAdapter" xml:space="preserve">
-    <value>VRAM used on the adapter (MB)</value>
-  </data>
-  <data name="Sensors_Series_VramProcess" xml:space="preserve">
-    <value>VRAM used by this game (MB)</value>
+    <value>VRAM, whole graphics card</value>
   </data>
   <data name="Sensors_Temps_Header" xml:space="preserve">
     <value>Temperatures, load and power</value>
   </data>
   <data name="Sensors_Vram_Header" xml:space="preserve">
-    <value>Memory</value>
+    <value>Video memory (VRAM)</value>
   </data>
   <data name="Tabs_SelectASession" xml:space="preserve">
     <value>Select a session in the Sessions tab to see it here.</value>
@@ -1337,9 +1328,6 @@
   </data>
   <data name="Trend_Unit_Watts" xml:space="preserve">
     <value>W</value>
-  </data>
-  <data name="Trend_Unit_Megabytes" xml:space="preserve">
-    <value>MB</value>
   </data>
   <data name="Trend_Unit_Factor" xml:space="preserve">
     <value>× (frame generation)</value>
@@ -2010,9 +1998,6 @@ Open the log folder?</value>
   <data name="Trend_Metric_AvgGpuPower" xml:space="preserve">
     <value>Avg GPU power W</value>
   </data>
-  <data name="Trend_Metric_MaxVramProcess" xml:space="preserve">
-    <value>Max VRAM (game) MB</value>
-  </data>
   <data name="Trend_Metric_AvgCpuLoad" xml:space="preserve">
     <value>Avg CPU load %</value>
   </data>
@@ -2020,7 +2005,7 @@ Open the log folder?</value>
     <value>Max CPU °C</value>
   </data>
   <data name="Trend_Metric_AvgRam" xml:space="preserve">
-    <value>Avg RAM in use MB</value>
+    <value>Avg RAM in use (whole PC) GB</value>
   </data>
   <data name="Trend_Metric_FgFactor" xml:space="preserve">
     <value>FG factor ×</value>
@@ -2041,7 +2026,7 @@ Open the log folder?</value>
     <value>CPU load %</value>
   </data>
   <data name="Sensors_Series_Ram" xml:space="preserve">
-    <value>RAM in use (system)</value>
+    <value>RAM in use, whole PC</value>
   </data>
   <data name="Compare_Metric_AvgGpuLoad" xml:space="preserve">
     <value>Avg GPU load</value>
@@ -2716,5 +2701,128 @@ The documents below are the full terms; this summary does not replace them.</val
   </data>
   <data name="Session_UnderException_Format" xml:space="preserve">
     <value>Hooked under the user-mode exception for {0}</value>
+  </data>
+  <data name="Format_Memory_Mb_Format" xml:space="preserve">
+    <value>{0:N0} MB</value>
+  </data>
+  <data name="Format_Memory_Gb_Format" xml:space="preserve">
+    <value>{0:N2} GB</value>
+  </data>
+  <data name="Summary_Stat_GameVram" xml:space="preserve">
+    <value>VRAM (this game)</value>
+  </data>
+  <data name="Summary_Stat_GameRam" xml:space="preserve">
+    <value>RAM (this game)</value>
+  </data>
+  <data name="Summary_Stat_GameRamWs" xml:space="preserve">
+    <value>RAM (this game, working set)</value>
+  </data>
+  <data name="Summary_Stat_GameVram_Suffix_Format" xml:space="preserve">
+    <value>median · peak {0} · shared {1}</value>
+  </data>
+  <data name="Summary_Stat_GameRam_Suffix_Format" xml:space="preserve">
+    <value>median · peak {0} · commit {1}</value>
+  </data>
+  <data name="Summary_Stat_GameRamWs_Suffix_Format" xml:space="preserve">
+    <value>median · peak {0} · this Windows does not report the private working set</value>
+  </data>
+  <data name="GameMemory_Processes_Format" xml:space="preserve">
+    <value>{0} processes running the game's executable, added together</value>
+  </data>
+  <data name="SensorStats_Header" xml:space="preserve">
+    <value>Statistics per series</value>
+  </data>
+  <data name="SensorStats_Note" xml:space="preserve">
+    <value>Read once a second during the session and stored when it ended. "This game" is the game's own process, read from outside it; "whole graphics card" and "whole PC" include everything else that was running.</value>
+  </data>
+  <data name="SensorStats_NotStored" xml:space="preserve">
+    <value>Statistics per series (mean, median, minimum, peak) are stored for sessions recorded with 0.1.0-beta.12 or later.</value>
+  </data>
+  <data name="SensorStats_Col_Series" xml:space="preserve">
+    <value>Series</value>
+  </data>
+  <data name="SensorStats_Col_Mean" xml:space="preserve">
+    <value>Mean</value>
+  </data>
+  <data name="SensorStats_Col_Median" xml:space="preserve">
+    <value>Median</value>
+  </data>
+  <data name="SensorStats_Col_Min" xml:space="preserve">
+    <value>Minimum</value>
+  </data>
+  <data name="SensorStats_Col_Max" xml:space="preserve">
+    <value>Peak</value>
+  </data>
+  <data name="SensorStats_Col_Samples" xml:space="preserve">
+    <value>Readings</value>
+  </data>
+  <data name="Sensors_Series_GameVram" xml:space="preserve">
+    <value>VRAM, this game (dedicated)</value>
+  </data>
+  <data name="Sensors_Series_GameVramShared" xml:space="preserve">
+    <value>Shared GPU memory, this game</value>
+  </data>
+  <data name="Sensors_Series_GameRam" xml:space="preserve">
+    <value>RAM, this game (private working set)</value>
+  </data>
+  <data name="Sensors_Series_GameRamWs" xml:space="preserve">
+    <value>Working set, this game</value>
+  </data>
+  <data name="Sensors_Series_GameCommit" xml:space="preserve">
+    <value>Commit, this game</value>
+  </data>
+  <data name="Sensors_Ram_Header" xml:space="preserve">
+    <value>Memory (RAM)</value>
+  </data>
+  <data name="Sensors_Axis_Gb" xml:space="preserve">
+    <value>GB</value>
+  </data>
+  <data name="Sessions_Col_GameVram" xml:space="preserve">
+    <value>VRAM (game) median · peak</value>
+  </data>
+  <data name="Sessions_Col_GameRam" xml:space="preserve">
+    <value>RAM (game) median · peak</value>
+  </data>
+  <data name="Sessions_GameRamWs_Cell_Format" xml:space="preserve">
+    <value>{0} · {1} (working set)</value>
+  </data>
+  <data name="Sessions_GameVram_Tooltip_Format" xml:space="preserve">
+    <value>Dedicated GPU memory, as Task Manager counts it — mean {0} · median {1} · peak {2}. Shared GPU memory, peak {3}.</value>
+  </data>
+  <data name="Sessions_GameRam_Tooltip_Format" xml:space="preserve">
+    <value>Private working set (Task Manager's "Memory") — mean {0} · median {1} · peak {2}. Working set, peak {3} · commit, peak {4}.</value>
+  </data>
+  <data name="Sessions_GameRamWs_Tooltip_Format" xml:space="preserve">
+    <value>This Windows does not report the private working set, so this is the working set (shared pages included) — median {0} · peak {1}.</value>
+  </data>
+  <data name="Trend_Metric_GameVramMedian" xml:space="preserve">
+    <value>Median VRAM (game) GB</value>
+  </data>
+  <data name="Trend_Metric_GameVramPeak" xml:space="preserve">
+    <value>Peak VRAM (game) GB</value>
+  </data>
+  <data name="Trend_Metric_GameRamMedian" xml:space="preserve">
+    <value>Median RAM (game) GB</value>
+  </data>
+  <data name="Trend_Metric_GameRamPeak" xml:space="preserve">
+    <value>Peak RAM (game) GB</value>
+  </data>
+  <data name="Trend_Unit_Gigabytes" xml:space="preserve">
+    <value>GB</value>
+  </data>
+  <data name="Compare_Metric_GameVramMedian" xml:space="preserve">
+    <value>Median VRAM (game)</value>
+  </data>
+  <data name="Compare_Metric_GameVramPeak" xml:space="preserve">
+    <value>Peak VRAM (game)</value>
+  </data>
+  <data name="Compare_Metric_GameRamMedian" xml:space="preserve">
+    <value>Median RAM (game)</value>
+  </data>
+  <data name="Compare_Metric_GameRamPeak" xml:space="preserve">
+    <value>Peak RAM (game)</value>
+  </data>
+  <data name="Dashboard_Live_GameMemory_Format" xml:space="preserve">
+    <value>This game: VRAM {0} · RAM {1}</value>
   </data>
 </root>

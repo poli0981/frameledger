@@ -40,6 +40,12 @@ public sealed class SessionItemViewModel
         P01LowText = IsHooked ? Formats.Fps(row.P01LowFps) : Strings.Common_NotAvailable;
         ResolutionText = IsHooked ? Formats.Resolution(row.RenderW, row.RenderH, row.OutputW, row.OutputH) + " · " + Formats.Upscaler(row.Upscaler, row.UpscalerQuality, row.UpscalerDriverReported) : Strings.Common_NotAvailable;
         GpuTempText = Formats.Temperature(row.MaxGpuTemp);
+        // beta.12 (D43), both tiers: the game's own memory, median · peak, the rest in the tooltip.
+        IReadOnlyDictionary<string, Application.Recording.SensorSeriesStats> stats = Application.Recording.SensorSeriesStats.Parse(row.SensorStatsJson);
+        GameVramText = GameMemoryText.VramCell(row);
+        GameVramTooltip = GameMemoryText.VramTooltip(row);
+        GameRamText = GameMemoryText.RamCell(row, stats);
+        GameRamTooltip = GameMemoryText.RamTooltip(row, stats);
         // beta.10: both tiers — the window is read out of process whether or not the game was hooked.
         Domain.Display.DisplaySummary? display = DisplayText.Of(row);
         DisplayModeText = DisplayText.Headline(display);
@@ -82,6 +88,16 @@ public sealed class SessionItemViewModel
     public string ResolutionText { get; }
 
     public string GpuTempText { get; }
+
+    /// <summary>The game's dedicated video memory, median · peak; N/A for a session recorded before beta.12.</summary>
+    public string GameVramText { get; }
+
+    public string? GameVramTooltip { get; }
+
+    /// <summary>The game's private working set, median · peak — or its working set, labelled; N/A before beta.12.</summary>
+    public string GameRamText { get; }
+
+    public string? GameRamTooltip { get; }
 
     /// <summary>The mode the session was shown in longest, with its share; N/A for a row recorded before beta.10.</summary>
     public string DisplayModeText { get; }

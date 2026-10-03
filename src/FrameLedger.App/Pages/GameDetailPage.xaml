@@ -270,6 +270,21 @@
                                 <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_P01Low}" Binding="{Binding P01LowText}" />
                                 <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Resolution}" Binding="{Binding ResolutionText}" />
                                 <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_GpuTemp}" Binding="{Binding GpuTempText}" />
+                                <!-- beta.12 (D43): the game's own memory, both tiers; mean, the shared / working-set / commit peaks in the tooltip -->
+                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_GameVram}">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
+                                            <TextBlock Text="{Binding GameVramText}" ToolTip="{Binding GameVramTooltip}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_GameRam}">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
+                                            <TextBlock Text="{Binding GameRamText}" ToolTip="{Binding GameRamTooltip}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Api}" Binding="{Binding ApiText}" />
                                 <!-- beta.10: both tiers; the tooltip carries every share, the window, the back buffer and the source -->
                                 <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Display}">

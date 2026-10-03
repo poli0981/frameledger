@@ -140,14 +140,15 @@ public sealed class DashboardViewModelTests
             OutputH = 1440,
             RtActive = true,
             GpuTempC = 70.6,
-            VramProcMb = 4100,
+            GameVramDedicatedMb = 4100,
+            GameRamPrivateMb = 2048,
         });
         vm.Live.WaitingForFrames.Should().BeFalse();
         vm.Live.Readout.Kind.Should().Be(FpsReadoutKind.Presented);
         vm.Live.UpscalerText.Should().Be("DLSS Quality");
         vm.Live.RtActive.Should().BeTrue();
         vm.Live.GpuTempText.Should().Contain("71");
-        vm.Live.VramText.Should().Contain("4100");
+        vm.Live.MemoryText.Should().Be(GameMemoryText.Live(4100, 2048), "the game's own memory from the newest tick (beta.12)");
 
         // A progress for another session is ignored; the completion of ours ends the card and reloads the lists.
         link.Raise(IpcMessageType.SessionProgress, new SessionProgressEvent { SessionGuid = Guid.NewGuid(), ElapsedS = 1, Presents5s = 10, PresentedQualifier = "census_not_run", FgMode = "na", RtActive = false });

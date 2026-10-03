@@ -60,6 +60,21 @@ public static class Formats
     /// <summary>A 0–100 load as <c>42%</c>; null → N/A, never 0%.</summary>
     public static string Percent(double? value) => value is double v ? v.ToString("0", CultureInfo.CurrentCulture) + "%" : Strings.Common_NotAvailable;
 
+    /// <summary>
+    /// A memory figure stored in MiB, the way Task Manager states it (beta.12): whole MB below 1 GB, GB to two decimals from
+    /// there, 1 GB = 1024 MB (Windows' own units); null → N/A, never 0. The switch is where the MB figure would round to
+    /// 1,024 — "1,024 MB" is a GB.
+    /// </summary>
+    public static string Memory(double? mib) => mib switch
+    {
+        null => Strings.Common_NotAvailable,
+        >= 1023.5 => string.Format(CultureInfo.CurrentCulture, Strings.Format_Memory_Gb_Format, mib.Value / 1024.0),
+        _ => string.Format(CultureInfo.CurrentCulture, Strings.Format_Memory_Mb_Format, mib.Value),
+    };
+
+    /// <summary>A GPU's power as <c>215 W</c>; null → N/A.</summary>
+    public static string Power(double? watts) => watts is double w ? w.ToString("0", CultureInfo.CurrentCulture) + " W" : Strings.Common_NotAvailable;
+
     /// <summary><c>1485×835 → 2560×1440</c>, or one pair when only one is known, or N/A.</summary>
     public static string Resolution(int? renderW, int? renderH, int? outputW, int? outputH)
     {

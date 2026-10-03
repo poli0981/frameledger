@@ -123,6 +123,56 @@
                     <charts:SensorsChart x:Name="Sensors" Margin="0,6,0,0" />
                 </StackPanel>
 
+                <!-- beta.12: every series' STORED mean / median / minimum / peak (sensor_stats_json), never recomputed. An
+                     ItemsControl over a shared-size grid rather than a DataGrid: a DataGrid's own scroller would take the
+                     window's wheel. -->
+                <StackPanel Visibility="{Binding ViewModel.HasSensorStats, Converter={StaticResource BoolToVis}}">
+                    <ui:TextBlock Margin="0,16,0,0" FontTypography="Subtitle" Text="{x:Static vm:SessionSummaryViewModel.SensorStatsHeader}" />
+                    <ui:TextBlock Appearance="Tertiary" TextWrapping="Wrap" Text="{x:Static vm:SessionSummaryViewModel.SensorStatsNote}" />
+                    <StackPanel Margin="0,6,0,0" Grid.IsSharedSizeScope="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="StatSeries" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="StatMean" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="StatMedian" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="StatMin" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="StatMax" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="StatReadings" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBlock Grid.Column="0" Margin="0,0,24,4" FontTypography="BodyStrong" Text="{x:Static vm:SessionSummaryViewModel.SensorStatsSeriesHeader}" />
+                            <ui:TextBlock Grid.Column="1" Margin="0,0,24,4" FontTypography="BodyStrong" TextAlignment="Right" Text="{x:Static vm:SessionSummaryViewModel.SensorStatsMeanHeader}" />
+                            <ui:TextBlock Grid.Column="2" Margin="0,0,24,4" FontTypography="BodyStrong" TextAlignment="Right" Text="{x:Static vm:SessionSummaryViewModel.SensorStatsMedianHeader}" />
+                            <ui:TextBlock Grid.Column="3" Margin="0,0,24,4" FontTypography="BodyStrong" TextAlignment="Right" Text="{x:Static vm:SessionSummaryViewModel.SensorStatsMinHeader}" />
+                            <ui:TextBlock Grid.Column="4" Margin="0,0,24,4" FontTypography="BodyStrong" TextAlignment="Right" Text="{x:Static vm:SessionSummaryViewModel.SensorStatsMaxHeader}" />
+                            <ui:TextBlock Grid.Column="5" Margin="0,0,0,4" FontTypography="BodyStrong" TextAlignment="Right" Text="{x:Static vm:SessionSummaryViewModel.SensorStatsReadingsHeader}" />
+                        </Grid>
+                        <ItemsControl ItemsSource="{Binding ViewModel.SensorStats}" Focusable="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:SensorStatRowModel}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="StatSeries" />
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="StatMean" />
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="StatMedian" />
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="StatMin" />
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="StatMax" />
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="StatReadings" />
+                                        </Grid.ColumnDefinitions>
+                                        <ui:TextBlock Grid.Column="0" Margin="0,2,24,2" Text="{Binding Series}" />
+                                        <ui:TextBlock Grid.Column="1" Margin="0,2,24,2" TextAlignment="Right" Text="{Binding Mean}" />
+                                        <ui:TextBlock Grid.Column="2" Margin="0,2,24,2" TextAlignment="Right" Text="{Binding Median}" />
+                                        <ui:TextBlock Grid.Column="3" Margin="0,2,24,2" TextAlignment="Right" Text="{Binding Min}" />
+                                        <ui:TextBlock Grid.Column="4" Margin="0,2,24,2" TextAlignment="Right" Text="{Binding Max}" />
+                                        <ui:TextBlock Grid.Column="5" Margin="0,2,0,2" Appearance="Secondary" TextAlignment="Right" Text="{Binding Readings}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </StackPanel>
+                <ui:TextBlock Margin="0,8,0,0" Appearance="Tertiary" TextWrapping="Wrap" Text="{Binding ViewModel.SensorStatsMissing}"
+                              Visibility="{Binding ViewModel.SensorStatsMissing, Converter={StaticResource NullToCollapsed}}" />
+
                 <!-- annotations -->
                 <ui:TextBlock Margin="0,16,0,0" FontTypography="Subtitle" Text="{x:Static vm:SessionSummaryViewModel.AnnotationsHeader}" />
                 <ui:TextBox Margin="0,6,0,0" AutomationProperties.Name="{x:Static vm:SessionSummaryViewModel.TagsPlaceholder}" PlaceholderText="{x:Static vm:SessionSummaryViewModel.TagsPlaceholder}" Text="{Binding ViewModel.Tags, UpdateSourceTrigger=PropertyChanged}" />

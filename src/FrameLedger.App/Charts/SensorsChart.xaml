@@ -7,11 +7,14 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:res="clr-namespace:FrameLedger.App"
              xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF">
-    <!-- 08_UI §Games › Sensors: temperatures / load / power, and VRAM with per-process and adapter-wide as SEPARATE, differently-labelled series. -->
+    <!-- 08_UI §Games › Sensors: temperatures / load / power; then video memory and memory, each with THIS GAME's own figure
+         and the whole graphics card's / whole PC's as SEPARATE, differently-labelled series (beta.12, D43). -->
     <StackPanel>
         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Sensors_Temps_Header}" />
         <sp:WpfPlot x:Name="Temps" Height="240" Margin="0,6,0,0" />
         <ui:TextBlock Margin="0,12,0,0" FontTypography="BodyStrong" Text="{x:Static res:Strings.Sensors_Vram_Header}" />
         <sp:WpfPlot x:Name="Vram" Height="220" Margin="0,6,0,0" />
+        <ui:TextBlock Margin="0,12,0,0" FontTypography="BodyStrong" Text="{x:Static res:Strings.Sensors_Ram_Header}" />
+        <sp:WpfPlot x:Name="Ram" Height="220" Margin="0,6,0,0" />
     </StackPanel>
 </UserControl>
