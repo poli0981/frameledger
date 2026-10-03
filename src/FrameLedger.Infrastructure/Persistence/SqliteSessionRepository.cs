@@ -217,6 +217,20 @@ public sealed class SqliteSessionRepository : ISessionRepository
         }, ct);
     }
 
+    /// <summary>
+    /// beta.11 (D40): one transaction — count what goes, then delete; <c>PRAGMA foreign_keys = ON</c> (LedgerDatabase) lets
+    /// segments, frame and sensor series and annotations go with their sessions.
+    /// </summary>
+    public ValueTask<RetentionSweepResult> DeleteSessionsAsync(long? gameId, CancellationToken ct = default) =>
+        _db.WriteAsync(async (c, tx, token) =>
+        {
+            const string scope = "FROM sessions WHERE (@gameId IS NULL OR game_id = @gameId)";
+            long games = await c.ExecuteScalarAsync<long>(new CommandDefinition("SELECT COUNT(DISTINCT game_id) " + scope, new { gameId }, tx,
+                cancellationToken: token)).ConfigureAwait(false);
+            int sessions = await c.ExecuteAsync(new CommandDefinition("DELETE " + scope, new { gameId }, tx, cancellationToken: token)).ConfigureAwait(false);
+            return new RetentionSweepResult(checked((int)games), sessions);
+        }, ct);
+
     public ValueTask<FrameBlobs?> FindFramesAsync(long sessionId, CancellationToken ct = default) =>
         _db.ReadAsync((c, token) => SqliteReaders.ReadOneAsync(
             c, new CommandDefinition(_selectFrames, new { sessionId }, cancellationToken: token), ReadFrames), ct);

@@ -28,11 +28,10 @@
                 <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_KillSwitch_Body}" TextWrapping="Wrap" />
             </ui:CardExpander>
 
-            <ui:CardExpander Margin="0,8,0,0" IsExpanded="True" Icon="{ui:SymbolIcon Games24}" Header="{x:Static res:Strings.Settings_HookedGames_Label}">
+            <!-- beta.11 (owner request 2026-10-03: no row without a control): shown only while a game has hooking on, each with its Turn off. -->
+            <ui:CardExpander Margin="0,8,0,0" IsExpanded="True" Icon="{ui:SymbolIcon Games24}" Header="{x:Static res:Strings.Settings_HookedGames_Label}"
+                             Visibility="{Binding ViewModel.HasHookedGames, Converter={StaticResource BoolToVis}}">
                 <StackPanel>
-                    <ui:TextBlock Appearance="Secondary"
-                                  Text="{x:Static res:Strings.Settings_HookedGames_Empty}"
-                                  Visibility="{Binding ViewModel.HookedGames.Count, Converter={StaticResource ZeroToVisible}}" />
                     <ItemsControl ItemsSource="{Binding ViewModel.HookedGames}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -214,23 +213,28 @@
                 <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_Background_Label}" IsChecked="{Binding ViewModel.BackgroundCapture, Mode=TwoWay}" />
             </ui:CardControl>
 
-            <!-- Agent: elevation is optional and no tier needs it; the logon task arrives with the tray build. -->
-            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Agent_Header}" />
-            <ui:CardExpander Margin="0,4,0,0" Icon="{ui:SymbolIcon Person24}">
-                <ui:CardExpander.Header>
+            <!-- beta.11 (owner request 2026-10-03: no row without a control): Data - Delete all sessions (D40). -->
+            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Data_Header}" />
+            <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Delete24}">
+                <ui:CardControl.Header>
                     <StackPanel>
-                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_Agent_Elevation_Label}" />
-                        <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.ElevationText}" />
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_DeleteSessions_Label}" />
+                        <ui:TextBlock MaxWidth="560" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Settings_DeleteSessions_Body}" TextWrapping="Wrap" />
                     </StackPanel>
-                </ui:CardExpander.Header>
-                <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_Agent_Elevation_Body}" TextWrapping="Wrap" />
-            </ui:CardExpander>
+                </ui:CardControl.Header>
+                <ui:Button Appearance="Secondary" Command="{Binding ViewModel.DeleteAllSessionsCommand}" Content="{x:Static res:Strings.Settings_DeleteSessions_Button}" />
+            </ui:CardControl>
+
+            <!-- Agent: elevation is optional and no tier needs it. beta.11: the elevation line is the admin mode's own status, not a row of its own. -->
+            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Agent_Header}" />
             <!-- beta.10, the admin mode (D34): off by default; on shows the disclosure, and Windows asks at every Agent start. -->
-            <ui:CardControl Margin="0,8,0,0" Icon="{ui:SymbolIcon Shield24}">
+            <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Shield24}">
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_Agent_RunElevated_Label}" />
                         <ui:TextBlock MaxWidth="560" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Settings_Agent_RunElevated_Body}" TextWrapping="Wrap" />
+                        <ui:TextBlock Margin="0,4,0,0" FontTypography="BodyStrong" Text="{Binding ViewModel.ElevationText}" TextWrapping="Wrap"
+                                      ToolTip="{x:Static res:Strings.Settings_Agent_Elevation_Body}" />
                     </StackPanel>
                 </ui:CardControl.Header>
                 <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_Agent_RunElevated_Label}" IsChecked="{Binding ViewModel.RunElevated, Mode=TwoWay}" />
@@ -278,7 +282,6 @@
                           SelectedValue="{Binding ViewModel.SelectedLanguage, Mode=TwoWay}"
                           SelectedValuePath="Value" />
             </ui:CardControl>
-            <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" Text="{x:Static vm:SettingsViewModel.LanguageNote}" TextWrapping="Wrap" />
 
             <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Window_Header}" />
             <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Power24}">

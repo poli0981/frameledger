@@ -280,6 +280,8 @@ public partial class App : System.Windows.Application
         // The admin mode's disclosure (beta.10, D34), shown before capture.run_elevated is turned on.
         builder.Services.AddSingleton<IAgentAdminPrompt, AgentAdminPrompt>();
         builder.Services.AddSingleton<AntiCheatExceptions>();
+        // beta.11 (D40): Delete all sessions, of one game (its page) or of every game (Settings ▸ Data), through the Agent.
+        builder.Services.AddSingleton<SessionDeletion>();
 
         AddLibrary(builder.Services);
 

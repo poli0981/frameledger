@@ -43,6 +43,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private readonly SessionSelection _selection;
     private readonly RegisteredSettings? _settings;
     private readonly AntiCheatExceptions? _exceptions;
+    private readonly SessionDeletion? _deletion;
     private readonly long? _gameId;
 
     // ui.hide_anticheat_hooking (2026-09-25), read at each load; on until the settings say otherwise, as its default is.
@@ -196,14 +197,19 @@ public sealed partial class GameDetailViewModel : ObservableObject
     [ObservableProperty]
     private bool _trendEmpty = true;
 
+    /// <summary>beta.11 (D39): whether the Sessions tab's overview has anything to draw.</summary>
+    [ObservableProperty]
+    private bool _overviewVisible;
+
     [ObservableProperty]
     private string _trendExcludedText = string.Empty;
 
     public GameDetailViewModel(GameLibrary library, GameSelection selection, HookingConsent consent, IPageNavigator navigator,
         IConfirmations confirmations, IEditGamePrompt edit, IMessageStrip strip, ISessionSummaryOpener summaries,
         SessionSeriesLoader loader, IHardwareSnapshotRepository hardware, SessionSelection sessionSelection, IGamePicker picker,
-        RegisteredSettings? settings = null, IAgentLink? agent = null, AntiCheatExceptions? exceptions = null)
+        RegisteredSettings? settings = null, IAgentLink? agent = null, AntiCheatExceptions? exceptions = null, SessionDeletion? deletion = null)
     {
+        _deletion = deletion;
         _exceptions = exceptions;
         _settings = settings;
         _agent = agent;
@@ -344,6 +350,28 @@ public sealed partial class GameDetailViewModel : ObservableObject
     public SessionSeries? SelectedSensors { get; private set; }
 
     public IReadOnlyList<TrendPoint> TrendPoints { get; private set; } = [];
+
+    /// <summary>
+    /// beta.11 (D39): what the Trend draws — the selected metric, then every metric ticked beside it. One line alone keeps
+    /// its own name on the axis, as before; several are labelled by unit, a second unit on the right.
+    /// </summary>
+    public IReadOnlyList<TrendLine> TrendLines { get; private set; } = [];
+
+    /// <summary>beta.11 (D39): the metrics that can be drawn beside the selected one, ticked by the user.</summary>
+    public ObservableCollection<TrendMetricOptionViewModel> TrendExtras { get; } = [];
+
+    /// <summary>beta.11 (D39): the Sessions tab's overview — every hooked session's rate and lows (<see cref="TrendSeriesBuilder.Overview"/>).</summary>
+    public IReadOnlyList<TrendLine> OverviewLines { get; private set; } = [];
+
+    public static string TrendExtrasLabel => Strings.Trend_Extras_Label;
+
+    public static string TrendExtrasNote => Strings.Trend_Extras_Note;
+
+    public static string OverviewHeader => Strings.GameDetail_Overview_Header;
+
+    public static string OverviewNote => Strings.GameDetail_Overview_Note;
+
+    public static string DeleteAllSessionsText => Strings.GameDetail_DeleteSessions;
 
     public IReadOnlyList<HardwareChange> HardwareChanges { get; private set; } = [];
 
@@ -526,10 +554,75 @@ public sealed partial class GameDetailViewModel : ObservableObject
         TrendPoints = TrendSeriesBuilder.Points(_detail.Sessions, TrendMetric, IncludeMidSession);
         int excluded = IncludeMidSession ? 0 : TrendSeriesBuilder.ExcludedCount(_detail.Sessions, TrendMetric);
         TrendExcludedText = excluded > 0 ? string.Format(CultureInfo.CurrentCulture, Strings.Trend_Excluded_Format, excluded) : string.Empty;
-        TrendEmpty = TrendPoints.Count == 0;
+        TrendLines = BuildTrendLines();
+        TrendEmpty = TrendLines.All(static l => l.Points.Count == 0);
         TrendEmptyMessage = string.Format(CultureInfo.CurrentCulture, Strings.Trend_Empty_Format, TrendMetricText);
+        OverviewLines = TrendSeriesBuilder.Overview(_detail.Sessions);
+        OverviewVisible = OverviewLines.Count > 0;
         OnPropertyChanged(nameof(TrendMetricText));
         TrendPresented?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
+    /// beta.11 (D39): the selected metric's line, then each ticked metric's — and the options' state: the selected metric
+    /// is not offered beside itself, and once two units are on the chart a metric in a third cannot be ticked.
+    /// </summary>
+    private List<TrendLine> BuildTrendLines()
+    {
+        if (TrendExtras.Count == 0)
+        {
+            foreach (Choice<TrendMetric> choice in TrendMetrics)
+            {
+                var option = new TrendMetricOptionViewModel(choice.Value, choice.Label, TrendSeriesBuilder.UnitOf(choice.Value));
+                option.PropertyChanged += OnTrendExtraChanged;
+                TrendExtras.Add(option);
+            }
+        }
+
+        _rebuildingExtras = true;
+        try
+        {
+            TrendMetricOptionViewModel[] ticked = [.. TrendExtras.Where(o => o.IsSelected && o.Metric != TrendMetric)];
+            string primaryUnit = TrendSeriesBuilder.UnitOf(TrendMetric);
+            HashSet<string> units = [primaryUnit, .. ticked.Select(static o => o.Unit)];
+            foreach (TrendMetricOptionViewModel option in TrendExtras)
+            {
+                option.IsSelected &= option.Metric != TrendMetric;
+                option.IsEnabled = option.Metric != TrendMetric && (option.IsSelected || units.Count < 2 || units.Contains(option.Unit));
+            }
+
+            if (ticked.Length == 0)
+            {
+                return [new TrendLine(TrendMetricText, TrendMetricText, TrendPoints)];
+            }
+
+            List<TrendLine> lines = [new TrendLine(TrendMetricText, primaryUnit, TrendPoints)];
+            lines.AddRange(ticked.Select(o => new TrendLine(o.Label, o.Unit, TrendSeriesBuilder.Points(_detail!.Sessions, o.Metric, IncludeMidSession))));
+            return lines;
+        }
+        finally
+        {
+            _rebuildingExtras = false;
+        }
+    }
+
+    private bool _rebuildingExtras;
+
+    private void OnTrendExtraChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (!_rebuildingExtras && string.Equals(e.PropertyName, nameof(TrendMetricOptionViewModel.IsSelected), StringComparison.Ordinal))
+        {
+            RebuildTrendPoints();
+        }
+    }
+
+    /// <summary>beta.11 (D39): a click on the Sessions tab's overview selects that session in the grid.</summary>
+    public void SelectSession(long sessionId)
+    {
+        if (Sessions.FirstOrDefault(s => s.Row.Id == sessionId) is { } session)
+        {
+            SelectedSession = session;
+        }
     }
 
     [RelayCommand]
@@ -566,6 +659,10 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
     [RelayCommand]
     private Task RemoveAsync() => RunAsync(RemoveCoreAsync);
+
+    /// <summary>beta.11 (D40): every session of this game, after the confirmation; the game, its settings and its consent stay.</summary>
+    [RelayCommand]
+    private Task DeleteAllSessionsAsync() => RunAsync(DeleteAllSessionsCoreAsync);
 
     [RelayCommand]
     private Task ChangeExecutableAsync() => RunAsync(ChangeExecutableCoreAsync);
@@ -691,6 +788,32 @@ public sealed partial class GameDetailViewModel : ObservableObject
                 break;
         }
 
+        await LoadAsync().ConfigureAwait(true);
+    }
+
+    private async Task DeleteAllSessionsCoreAsync()
+    {
+        if (Game is null || Sessions.Count == 0 || !await _confirmations.DeleteSessionsAsync(Game.Name, Sessions.Count).ConfigureAwait(true))
+        {
+            return;
+        }
+
+        SessionDeletionResult result = _deletion is null
+            ? new(SessionDeletionOutcome.AgentUnavailable)
+            : await _deletion.DeleteAsync(Game.Id).ConfigureAwait(true);
+        if (!result.Succeeded)
+        {
+            _strip.Warn(Game.Name, result.Message);
+            return;
+        }
+
+        // Session ids are reused once the newest is gone (no AUTOINCREMENT): File ▸ Export must not act on one of them.
+        if (_selection.SessionId is long selected && Sessions.Any(s => s.Row.Id == selected))
+        {
+            _selection.Set(null);
+        }
+
+        _strip.Success(Game.Name, result.Message);
         await LoadAsync().ConfigureAwait(true);
     }
 

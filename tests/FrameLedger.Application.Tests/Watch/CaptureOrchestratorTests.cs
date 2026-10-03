@@ -432,6 +432,7 @@ public sealed class CaptureOrchestratorTests
 
         recorder.Requests.Should().ContainSingle("one session per executable, whatever id its entry has now");
         o.IsRecording(original.Id).Should().BeTrue();
+        o.IsRecordingAny().Should().BeTrue("beta.11: what deleting every session waits for");
         log.Should().Contain(l => l.Contains("one at a time", StringComparison.Ordinal));
     }
 

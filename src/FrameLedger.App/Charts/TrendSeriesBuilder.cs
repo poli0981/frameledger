@@ -42,6 +42,40 @@ public static class TrendSeriesBuilder
         return points;
     }
 
+    /// <summary>
+    /// The axis a metric is drawn against (beta.11, D39): frame rates share one, temperatures, loads and shares, power,
+    /// memory and the factor each have their own — two of them at most on one chart.
+    /// </summary>
+    public static string UnitOf(TrendMetric metric) => metric switch
+    {
+        TrendMetric.PresentedFps or TrendMetric.NativeFps or TrendMetric.Displayed or TrendMetric.P1Low or TrendMetric.P01Low => Strings.Trend_Unit_Fps,
+        TrendMetric.MaxGpuTemp or TrendMetric.MaxCpuTemp => Strings.Trend_Unit_Celsius,
+        TrendMetric.AvgGpuPower => Strings.Trend_Unit_Watts,
+        TrendMetric.MaxVramProcess or TrendMetric.AvgRam => Strings.Trend_Unit_Megabytes,
+        TrendMetric.FgFactor => Strings.Trend_Unit_Factor,
+        _ => Strings.Trend_Unit_Percent,
+    };
+
+    /// <summary>
+    /// The Sessions tab's overview (beta.11, D39): every hooked session's rate and lows on one chart — Presented FPS where
+    /// no generated frame was counted, Native and Displayed where frame generation was measured (rule 6: never one inflated
+    /// number), and the 1% and 0.1% lows — partial sessions included and drawn hollow.
+    /// </summary>
+    public static IReadOnlyList<TrendLine> Overview(IReadOnlyList<SessionRow> rows)
+    {
+        ArgumentNullException.ThrowIfNull(rows);
+        (TrendMetric Metric, string Label)[] metrics =
+        [
+            (TrendMetric.PresentedFps, Strings.Trend_Metric_PresentedFps),
+            (TrendMetric.NativeFps, Strings.Trend_Metric_NativeFps),
+            (TrendMetric.Displayed, Strings.Trend_Metric_Displayed),
+            (TrendMetric.P1Low, Strings.Trend_Metric_P1Low),
+            (TrendMetric.P01Low, Strings.Trend_Metric_P01Low),
+        ];
+        return [.. metrics.Select(m => new TrendLine(m.Label, Strings.Trend_Unit_Fps, Points(rows, m.Metric, includeMidSessionChanges: true)))
+            .Where(static l => l.Points.Count > 0)];
+    }
+
     /// <summary>How many sessions FR-6.4 leaves out at the default setting.</summary>
     public static int ExcludedCount(IReadOnlyList<SessionRow> rows) => ExcludedCount(rows, TrendMetric.PresentedFps);
 

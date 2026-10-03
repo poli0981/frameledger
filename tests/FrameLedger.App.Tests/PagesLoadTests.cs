@@ -72,6 +72,8 @@ public sealed class PagesLoadTests
 
     private sealed class NoConfirm : IConfirmations
     {
+        public Task<bool> DeleteSessionsAsync(string? gameName, long sessions, CancellationToken ct = default) => Task.FromResult(false);
+
         public Task<RemoveGameChoice> RemoveGameAsync(string gameName, CancellationToken ct = default) => Task.FromResult(RemoveGameChoice.Cancel);
     }
 

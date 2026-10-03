@@ -37,6 +37,9 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly IAgentLink _agent;
     private readonly IRunAtLogon _runAtLogon;
     private readonly IMessageStrip _strip;
+    private readonly IConfirmations? _confirmations;
+    private readonly SessionDeletion? _deletion;
+    private long _sessionTotal;
     private readonly IMaintenanceState _maintenance;
     private readonly IAgentTool _tool;
     private readonly WindowClosePolicy _closePolicy;
@@ -147,8 +150,14 @@ public sealed partial class SettingsViewModel : ObservableObject
         IFirstRunFlow firstRun,
         AntiCheatExceptions? exceptions = null,
         IAgentAdminPrompt? adminPrompt = null,
-        Func<bool>? agentHeld = null)
+        Func<bool>? agentHeld = null,
+        IConfirmations? confirmations = null,
+        SessionDeletion? deletion = null)
     {
+        // beta.11 (D40): Settings ▸ Data's Delete all sessions — its confirmation and its request; a composition without them
+        // (a test) deletes nothing.
+        _confirmations = confirmations;
+        _deletion = deletion;
         // The admin mode's disclosure (a composition without it — a test — cannot turn the mode on), and the probe of the
         // data folder's instance lock the restart waits on (a test's own).
         _adminPrompt = adminPrompt;
@@ -181,7 +190,6 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public static string LanguageLabel => Strings.Settings_Language_Label;
 
-    public static string LanguageNote => Strings.Settings_Language_Note;
 
     public static IReadOnlyList<Choice<AppTheme>> Themes { get; } =
     [
@@ -214,6 +222,9 @@ public sealed partial class SettingsViewModel : ObservableObject
     public static double RetentionMaximum => SettingsRegistry.RetentionRawSessionsPerGame.Maximum;
 
     public ObservableCollection<HookedGameViewModel> HookedGames { get; } = [];
+
+    /// <summary>beta.11: the "Games with hooking on" card is shown only while it lists a game (a row with no control is not shown).</summary>
+    public bool HasHookedGames => HookedGames.Count > 0;
 
     /// <summary>
     /// D33: the games the user-mode exception concerns — in force, eligible, or held back only by the session count. The rest
@@ -513,6 +524,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         }
 
         PresentExceptions(cards);
+        OnPropertyChanged(nameof(HasHookedGames));
+        _sessionTotal = cards.Sum(static c => c.Summary?.SessionCount ?? 0);
 
         Shared.Ipc.HelloAck? hello = _agent.Hello;
         ElevationText = ElevationTextOf(_agent.State, hello);
@@ -623,6 +636,33 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     [RelayCommand]
     private Task RefreshExceptionsAsync() => RefreshAsync();
+
+    /// <summary>
+    /// beta.11 (D40): every session of every game, after the confirmation, through the Agent; the library, the settings and
+    /// every consent stay.
+    /// </summary>
+    [RelayCommand]
+    private async Task DeleteAllSessionsAsync()
+    {
+        if (_confirmations is null || !await _confirmations.DeleteSessionsAsync(null, _sessionTotal).ConfigureAwait(true))
+        {
+            return;
+        }
+
+        SessionDeletionResult result = _deletion is null
+            ? new(SessionDeletionOutcome.AgentUnavailable)
+            : await _deletion.DeleteAsync(null).ConfigureAwait(true);
+        if (result.Succeeded)
+        {
+            _strip.Success(Strings.Settings_DeleteSessions_Label, result.Message);
+        }
+        else
+        {
+            _strip.Warn(Strings.Settings_DeleteSessions_Label, result.Message);
+        }
+
+        await RefreshCoreAsync().ConfigureAwait(true);
+    }
 
     private async Task RevokeAsync(HookedGameViewModel game)
     {

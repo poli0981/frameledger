@@ -91,6 +91,19 @@ internal sealed class FakeSessionRepository : ISessionRepository
     public ValueTask<long> CountSinceAsync(DateTimeOffset since, CancellationToken ct = default) =>
         ValueTask.FromResult((long)Stored.Count(s => s.Row.StartedAt >= since));
 
+    /// <summary>beta.11 (D40): every session of the game, or of every game, leaves the store.</summary>
+    public ValueTask<RetentionSweepResult> DeleteSessionsAsync(long? gameId, CancellationToken ct = default)
+    {
+        List<FinalizedSession> gone = [.. Stored.Where(s => gameId is null || s.Row.GameId == gameId)];
+        int games = gone.Select(static s => s.Row.GameId).Distinct().Count();
+        foreach (FinalizedSession session in gone)
+        {
+            Stored.Remove(session);
+        }
+
+        return ValueTask.FromResult(new RetentionSweepResult(games, gone.Count));
+    }
+
     /// <summary>D38: each game's successful sessions under its grant in force, as the tests say; a game not named has none.</summary>
     public Dictionary<long, int> SuccessfulUnderGrant { get; } = [];
 

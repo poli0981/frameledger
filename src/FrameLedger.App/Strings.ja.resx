@@ -409,10 +409,6 @@
     <value>言語</value>
     <comment>review</comment>
   </data>
-  <data name="Settings_Language_Note" xml:space="preserve">
-    <value>すぐに適用されます。ウィンドウは新しい言語で再構築されます。</value>
-    <comment>review</comment>
-  </data>
   <data name="Settings_Theme_Dark" xml:space="preserve">
     <value>ダーク</value>
     <comment>review</comment>
@@ -979,6 +975,54 @@
   </data>
   <data name="GameDetail_Tab_Sessions" xml:space="preserve">
     <value>セッション</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_DeleteSessions" xml:space="preserve">
+    <value>すべてのセッションを削除…</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Overview_Header" xml:space="preserve">
+    <value>セッションの概要</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_Overview_Note" xml:space="preserve">
+    <value>フックした各セッションのフレームレートと Low 値（古い順）。フレーム生成が計測されたセッションでは Native と Displayed を描画します。白抜きの点はセッションの一部を表します。点をクリックすると下の一覧でそのセッションを選択します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="DeleteSessions_GameTitle_Format" xml:space="preserve">
+    <value>{0} のすべてのセッションを削除しますか?</value>
+    <comment>review</comment>
+  </data>
+  <data name="DeleteSessions_AllTitle" xml:space="preserve">
+    <value>すべてのゲームのすべてのセッションを削除しますか?</value>
+    <comment>review</comment>
+  </data>
+  <data name="DeleteSessions_GameBody_Format" xml:space="preserve">
+    <value>{0} 件のセッションを、フレームとセンサーのデータやメモとともに削除します。ゲーム、その設定、フックへの同意は残ります。元に戻すことはできません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="DeleteSessions_AllBody_Format" xml:space="preserve">
+    <value>すべてのゲームの {0} 件のセッションを、フレームとセンサーのデータやメモとともに削除します。ライブラリー、設定、フックへの同意はすべて残ります。元に戻すことはできません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="DeleteSessions_Delete" xml:space="preserve">
+    <value>セッションを削除</value>
+    <comment>review</comment>
+  </data>
+  <data name="DeleteSessions_Done_Format" xml:space="preserve">
+    <value>{1} 件のゲームの {0} 件のセッションを削除しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="DeleteSessions_Running" xml:space="preserve">
+    <value>セッションを記録中のため、何も削除していません。停止するか終了するのを待ってから、もう一度お試しください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="DeleteSessions_NoAgent" xml:space="preserve">
+    <value>キャプチャエージェントが接続されていないため、何も削除していません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="DeleteSessions_AgentTooOld" xml:space="preserve">
+    <value>キャプチャエージェントがこの要求にまだ対応していません。再起動してからもう一度お試しください。何も削除していません。</value>
     <comment>review</comment>
   </data>
   <data name="GameDetail_Tab_Trend" xml:space="preserve">
@@ -1709,6 +1753,38 @@
     <value>指標</value>
     <comment>review</comment>
   </data>
+  <data name="Trend_Extras_Label" xml:space="preserve">
+    <value>あわせて表示</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Extras_Note" xml:space="preserve">
+    <value>単位は同時に2つまでです。2つ目の単位は右側の軸に描画されます（凡例に ▸ で表示）。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Unit_Fps" xml:space="preserve">
+    <value>FPS</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Unit_Celsius" xml:space="preserve">
+    <value>°C</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Unit_Percent" xml:space="preserve">
+    <value>%</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Unit_Watts" xml:space="preserve">
+    <value>W</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Unit_Megabytes" xml:space="preserve">
+    <value>MB</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Unit_Factor" xml:space="preserve">
+    <value>×（フレーム生成）</value>
+    <comment>review</comment>
+  </data>
   <data name="Trend_Metric_MaxGpuTemp" xml:space="preserve">
     <value>GPU 最高 °C</value>
     <comment>review</comment>
@@ -1881,10 +1957,6 @@
     <value>安定版</value>
     <comment>review</comment>
   </data>
-  <data name="Settings_HookedGames_Empty" xml:space="preserve">
-    <value>フックが有効なゲームはありません。</value>
-    <comment>review</comment>
-  </data>
   <data name="Settings_HookedGames_Label" xml:space="preserve">
     <value>フック有効なゲーム</value>
     <comment>review</comment>
@@ -1963,6 +2035,22 @@
   </data>
   <data name="Settings_Policy_Header" xml:space="preserve">
     <value>記録</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Data_Header" xml:space="preserve">
+    <value>データ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_DeleteSessions_Label" xml:space="preserve">
+    <value>すべてのセッションを削除</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_DeleteSessions_Body" xml:space="preserve">
+    <value>すべてのゲームのすべてのセッションを、フレームとセンサーのデータやメモとともに削除します。ライブラリー、設定、各ゲームのフックへの同意は残ります。元に戻すことはできません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_DeleteSessions_Button" xml:space="preserve">
+    <value>すべてのセッションを削除…</value>
     <comment>review</comment>
   </data>
   <data name="Settings_Privacy_Header" xml:space="preserve">
@@ -2410,7 +2498,7 @@
     <comment>review</comment>
   </data>
   <data name="Maintenance_Sweep_Unlimited" xml:space="preserve">
-    <value>保持は無制限に設定されています (設定 ▸ キャプチャ)。整理するものはありません。</value>
+    <value>保持は無制限に設定されています (設定 ▸ 記録)。整理するものはありません。</value>
     <comment>review</comment>
   </data>
   <data name="Maintenance_Sweep_NoAgent" xml:space="preserve">

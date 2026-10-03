@@ -27,4 +27,21 @@ public sealed class Confirmations : IConfirmations
             _ => RemoveGameChoice.Cancel,
         };
     }
+
+    /// <summary>beta.11 (D40): the one destructive button, in the danger colour; closing the box or Cancel deletes nothing.</summary>
+    [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime")]
+    public async Task<bool> DeleteSessionsAsync(string? gameName, long sessions, CancellationToken ct = default)
+    {
+        var box = new MessageBox
+        {
+            Title = gameName is null
+                ? Strings.DeleteSessions_AllTitle
+                : string.Format(CultureInfo.CurrentCulture, Strings.DeleteSessions_GameTitle_Format, gameName),
+            Content = string.Format(CultureInfo.CurrentCulture, gameName is null ? Strings.DeleteSessions_AllBody_Format : Strings.DeleteSessions_GameBody_Format, sessions),
+            PrimaryButtonText = Strings.DeleteSessions_Delete,
+            PrimaryButtonAppearance = ControlAppearance.Danger,
+            CloseButtonText = Strings.Common_Cancel,
+        };
+        return await box.ShowDialogAsync(cancellationToken: ct).ConfigureAwait(true) == MessageBoxResult.Primary;
+    }
 }

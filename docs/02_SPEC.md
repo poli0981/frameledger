@@ -10,6 +10,7 @@ Requirement IDs (`FR-x`, `NFR-x`) are referenced by other docs, commits, and tes
 - FR-1.3 Editable metadata (name, cover, publisher, version, notes); auto-detected fields badged and overridable.
 - FR-1.4 Remove game (asks whether to keep or delete its sessions).
 - FR-1.5 "Supports" row shows shipped-capability hints (DLSS/FSR/XeSS/FG) — visually distinct from measured per-session values (`05_DETECTION` §Capability hints).
+- FR-1.7 Delete all sessions (beta.11, owner decision D40): of one game from its page, or of every game from Settings ▸ Data, after a confirmation that says how many — with their frame and sensor series and notes; the library, the settings and every consent stay. The Agent deletes them (the rows are its, `06_DATA_MODEL` §Writer ownership) and refuses while a session it would delete under is being recorded.
 - FR-1.6 Recording switch per entry (2026-09-23, HANDOFF D29): off, the program is not watched at all — no session, no measurement, no injection — and a session of it that is running stops. On by default; entries an old import made for Steam's own tools start with it off. The library card says "Not recorded".
 
 ### FR-2 Hooking consent & control (new, safety-critical — see `19_SAFETY`)
@@ -55,6 +56,7 @@ Requirement IDs (`FR-x`, `NFR-x`) are referenced by other docs, commits, and tes
 - FR-6.1 Sessions table per game: date, duration, tier badge, Native, Displayed, FG×, lows, resolution + upscaler, RT/PT/RR chips, crash badge, tags.
 - FR-6.2 Compare 2–5 sessions; **mixed-tier comparisons require explicit acknowledgement** and are marked on the chart.
 - FR-6.3 Hardware snapshot per session; trend charts mark changes ("GPU driver 572.16 → 576.02").
+- FR-6.6 Charts across a game's sessions (beta.11, owner decision D39): the Sessions tab opens with an overview of every hooked session's rate and lows (Presented FPS, or Native and Displayed where frame generation was measured; 1% and 0.1% lows), a click selecting the session; and the Trend draws more metrics beside the selected one, two units at most (the second against the right axis).
 - FR-6.4 Sessions with mid-session settings changes are excluded from trends by default, with a toggle.
 - FR-6.5 Session tags and notes.
 
@@ -79,7 +81,7 @@ Requirement IDs (`FR-x`, `NFR-x`) are referenced by other docs, commits, and tes
 > **beta.10 (D34):** "Agent elevation (optional — explains what it unlocks)" is the admin mode — *Run the agent as
 > administrator*, off by default, a disclosure before it turns on, Windows' prompt at every Agent start (`01_ARCHITECTURE`
 > ADR-9, `08_UI` §Settings).
-Language (en/vi/ja), theme, start with Windows, minimize to tray, background capture, **global hooking kill switch**, min session length, telemetry interval, retention, Agent elevation (optional — explains what it unlocks), Vulkan layer registration state, update channel, online metadata opt-in, reopen legal documents.
+Language (en/vi/ja), theme, start with Windows, minimize to tray, background capture, **global hooking kill switch**, min session length, telemetry interval, retention, Agent elevation (optional — explains what it unlocks), Vulkan layer registration state, update channel, online metadata opt-in, reopen legal documents. **beta.11 (owner request 2026-10-03: no row without a control):** Delete all sessions (FR-1.7, a *Data* section); the elevation state is a line of the admin mode's own row, not a row of its own; the hook-enabled list shows only while a game has hooking on; the language row carries no separate note.
 
 ### FR-11 Legal Gate
 First run blocks until the user accepts EULA, GPLv3 notice, Disclaimer, Privacy Policy. Re-shown when a document version increments. The injection risk is stated in the Disclaimer *and* repeated at per-game consent (FR-2.1) — once is not enough for something that can cost an account.

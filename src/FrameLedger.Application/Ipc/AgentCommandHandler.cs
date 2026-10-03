@@ -37,6 +37,7 @@ public sealed class AgentCommandHandler
     private readonly TimeProvider _clock;
     private readonly VkLayerReconciler? _layer;
     private readonly Func<CancellationToken, ValueTask<SweepRetentionAck>>? _sweepRetention;
+    private readonly ISessionRepository? _deleteSessions;
     private readonly ExecutableRelocator? _relocator;
     private readonly IExecutableArchitectureSource? _architecture;
     private readonly AntiCheatExceptionCommands? _exceptions;
@@ -69,8 +70,10 @@ public sealed class AgentCommandHandler
         CaptureOrchestrator orchestrator, CapturePause pause, IAgentLifetime lifetime, Func<CancellationToken, ValueTask<string>> updateRules,
         string? disclosureVersion = null, TimeProvider? clock = null, VkLayerReconciler? layer = null,
         Func<CancellationToken, ValueTask<SweepRetentionAck>>? sweepRetention = null, ExecutableRelocator? relocator = null,
-        IExecutableArchitectureSource? architecture = null, AntiCheatExceptionCommands? exceptions = null)
+        IExecutableArchitectureSource? architecture = null, AntiCheatExceptionCommands? exceptions = null, ISessionRepository? deleteSessions = null)
     {
+        // beta.11 (D40): DeleteSessions — composed under --serve over the Agent's own repository; absent, not answered (UnknownType).
+        _deleteSessions = deleteSessions;
         // D33: the user-mode exception's collaborators — its option, its evidence, its disclosure version. Absent, no
         // exception applies to SetHookEnabled and SetAntiCheatException is not answered (UnknownType).
         _exceptions = exceptions;
@@ -117,8 +120,32 @@ public sealed class AgentCommandHandler
             IpcMessageType.SetAntiCheatException when _exceptions is not null => await SetAntiCheatExceptionAsync(request, _exceptions, ct).ConfigureAwait(false),
             IpcMessageType.SweepRetention when _sweepRetention is not null =>
                 IpcCodec.Encode(IpcMessageType.SweepRetentionAck, request.Id, await _sweepRetention(ct).ConfigureAwait(false)),
+            IpcMessageType.DeleteSessions when _deleteSessions is not null => await DeleteSessionsAsync(request, _deleteSessions, ct).ConfigureAwait(false),
             _ => null,
         };
+    }
+
+    /// <summary>
+    /// beta.11 (owner decision D40): every session of one game, or of every game — never while a session it would delete
+    /// under is being recorded (that session would land after the delete, and a summary the App opened could point at a
+    /// reused id). The rows are the Agent's (<c>06_DATA_MODEL</c> §Writer ownership), so the Agent deletes them.
+    /// </summary>
+    private async ValueTask<byte[]> DeleteSessionsAsync(IpcEnvelope request, ISessionRepository sessions, CancellationToken ct)
+    {
+        DeleteSessionsRequest? payload = IpcCodec.Payload<DeleteSessionsRequest>(request);
+        if (payload is null)
+        {
+            return Malformed(request, "DeleteSessions carries no payload");
+        }
+
+        bool running = payload.GameId is { } one ? _orchestrator.IsRecording(one) : _orchestrator.IsRecordingAny();
+        if (running)
+        {
+            return Error(request, IpcErrorCode.SessionRunning, "a session is being recorded; nothing was deleted — stop it or let it end, then try again");
+        }
+
+        RetentionSweepResult deleted = await sessions.DeleteSessionsAsync(payload.GameId, ct).ConfigureAwait(false);
+        return IpcCodec.Encode(IpcMessageType.DeleteSessionsAck, request.Id, new DeleteSessionsAck(payload.GameId, deleted.Games, deleted.Sessions));
     }
 
     /// <summary>

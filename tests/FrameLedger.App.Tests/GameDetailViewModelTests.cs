@@ -66,9 +66,17 @@ public sealed class GameDetailViewModelTests
         public void GoBack() => Pages.Add("back");
     }
 
-    private sealed class FakeConfirmations(RemoveGameChoice choice) : IConfirmations
+    private sealed class FakeConfirmations(RemoveGameChoice choice, bool deleteSessions = false) : IConfirmations
     {
+        public List<(string? Game, long Sessions)> DeleteAsked { get; } = [];
+
         public Task<RemoveGameChoice> RemoveGameAsync(string gameName, CancellationToken ct = default) => Task.FromResult(choice);
+
+        public Task<bool> DeleteSessionsAsync(string? gameName, long sessions, CancellationToken ct = default)
+        {
+            DeleteAsked.Add((gameName, sessions));
+            return Task.FromResult(deleteSessions);
+        }
     }
 
     private sealed class FakeEdit(GameMetadata? answer) : IEditGamePrompt
