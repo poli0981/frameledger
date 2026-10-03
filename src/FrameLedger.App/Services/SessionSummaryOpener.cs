@@ -56,11 +56,12 @@ public sealed class SessionSummaryOpener : ISessionSummaryOpener, ISessionWindow
     public async Task CloseDeletedAsync(CancellationToken ct = default)
     {
         ISessionRepository sessions = _services.GetRequiredService<ISessionRepository>();
-        foreach ((long sessionId, SessionSummaryWindow window) in _open.ToArray())
+        foreach ((long SessionId, SessionSummaryWindow Window) open in _open.ToArray())
         {
-            if (await sessions.FindByIdAsync(sessionId, ct).ConfigureAwait(true) is null)
+            // Still open after the read: the user may have closed it meanwhile, and a closed window is not closed twice.
+            if (await sessions.FindByIdAsync(open.SessionId, ct).ConfigureAwait(true) is null && _open.Contains(open))
             {
-                window.Close();
+                open.Window.Close();
             }
         }
     }
