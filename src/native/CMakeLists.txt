@@ -74,7 +74,9 @@ set(FL_VER_MINOR ${PROJECT_VERSION_MINOR})
 set(FL_VER_PATCH ${PROJECT_VERSION_PATCH})
 set(FL_COMPANY_NAME  "FrameLedger")
 set(FL_PRODUCT_NAME  "FrameLedger")
-set(FL_COPYRIGHT     "GPL-3.0-or-later")
+# The VERSIONINFO LegalCopyright. Until beta.12 it read "GPL-3.0-or-later" while LICENSE, the EULA, README and
+# THIRD_PARTY_NOTICES all say GPL-3.0-only - the binaries claimed a licence the project never granted.
+set(FL_COPYRIGHT     "Copyright (C) 2026 poli0981. GPL-3.0-only with additional terms: see NOTICE")
 
 # Optional third argument: the REAL output filename, when it differs from the
 # CMake target name. The vendor-name stubs need it — a target called

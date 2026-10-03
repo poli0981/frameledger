@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 namespace FrameLedger.App.Update;
 
 /// <summary>An update step that did not complete, classified for the dialog (<see cref="UpdateFailure"/>); the cause is the inner exception.</summary>

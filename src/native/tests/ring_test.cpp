@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // The SPSC frame ring (docs/14_TESTING.md §Native unit tests, the suite
 // src/native/tests/CMakeLists.txt has carried as TODO(P1) since Catch2 landed).
 //

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // fl-probe-guard — measures the Windows APIs the anti-cheat guard is built on.
 //
 // This is NOT the guard. It installs nothing, injects nothing, and opens no

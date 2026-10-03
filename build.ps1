@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-only
+# Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 #Requires -Version 7.0
 <#
 .SYNOPSIS
@@ -438,6 +441,14 @@ function Invoke-ProjectGates {
     else {
         Skip-Gate 'accuracy-check' 'tools/accuracy-check.ps1 not implemented yet'
     }
+
+    # beta.12 (D45): GPLv3 section 7 wants additional terms named "in the relevant source files", so every
+    # first-party source file opens with the SPDX line and the NOTICE pointer. Self-test first (six cases, both
+    # directions), then the live pass over the tracked tree; ./tools/notice-check.ps1 -Fix writes a missing header.
+    Write-Step 'notice-check'
+    $noticeTool = Join-Path $repo 'tools/notice-check.ps1'
+    Invoke-Checked 'notice-check (self-test)' { & $noticeTool -SelfTest }
+    Invoke-Checked 'notice-check' { & $noticeTool -RepoRoot $repo }
 
     Write-Step 'changelog-check'
     $changelogTool = Join-Path $repo 'tools/changelog-check.ps1'

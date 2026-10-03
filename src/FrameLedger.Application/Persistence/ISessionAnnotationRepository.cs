@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 namespace FrameLedger.Application.Persistence;
 
 /// <summary>The UI's writes beside a session: tags, notes and the FR-8.3 overrides, one row per session.</summary>

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // D33 (owner decision 2026-09-26) — which anti-cheat families the injected Overlay may see load WITHOUT stopping.
 //
 // The Overlay stops observing when a module the compiled floor names loads after injection (its

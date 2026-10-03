@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // nvapi_bridge_test.cpp — the bridge's C ABI, green on both kinds of machine and saying which.
 //
 // A hosted runner has no NVIDIA driver: FlNvInit answers an NvAPI_Status and every read answers

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // fl-probe-nvapi — proves the vendored NVAPI material is usable, and that L3
 // degrades cleanly when it is not.
 //

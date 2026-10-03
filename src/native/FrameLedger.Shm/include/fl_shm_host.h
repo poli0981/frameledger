@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // The capture side's HOST half of the shared-memory contract: create the one
 // ring a process may carry, and publish the handshake a reader validates first.
 //

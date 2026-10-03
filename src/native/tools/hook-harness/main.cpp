@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // hook-harness — a dummy D3D11/D3D12 app for exercising hook paths with no game
 // and no anti-cheat surface at all (17_HOOK_ENGINE §Test harness, 14_TESTING).
 //

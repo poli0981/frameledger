@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // fl-probe-interposer — does a vtable-slot present hook see a Streamline title's
 // presents? (docs/20_OPEN_QUESTIONS.md §H5 case 3, docs/spike-notes.md §5.)
 //

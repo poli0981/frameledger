@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 namespace FrameLedger.Application.Recording;
 
 /// <summary>What <c>sessions.ngx_driver_words</c> stores: the driver's raw words as probed, plus how the probing went.</summary>

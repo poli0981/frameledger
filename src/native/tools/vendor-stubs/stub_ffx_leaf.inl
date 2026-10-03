@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // The shared body of the three AMD FidelityFX LEAF stubs -- a module that answers
 // to one of the three names in fl::inventory::kFfxLeafModules and exports the five
 // ffx-api entry points.

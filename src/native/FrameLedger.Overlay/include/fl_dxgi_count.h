@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // fl_dxgi_count.h -- the arithmetic behind dxgiUnseen (fl_shm.h @52) and
 // FlWriterState.dxgiPresentsUnseen (@48), kept out of the hook body so it can be
 // asserted at compile time and driven by hook-harness --probe-dxgi-count.

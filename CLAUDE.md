@@ -62,6 +62,8 @@ A C++ DLL (`FrameLedger.Overlay.dll`) is injected into games the user explicitly
 
 ```
 FrameLedger.slnx               # XML solution format (SDK default since .NET 10)
+NOTICE                         # copyright + the GPLv3 section 7 additional terms (beta.12, D45)
+CONTRIBUTING.md  FORKING.md  CODE_OF_CONDUCT.md   # for people who build, contribute or redistribute
 global.json                    # pins the SDK band — see 12_BUILD
 build.ps1                      # the quality gate; CI runs this identical script
 src/
@@ -142,6 +144,8 @@ Dependency direction: `App/Agent → Application → Domain`; **`Application →
 **C# —** `Nullable enable`, `TreatWarningsAsErrors`, `AnalysisLevel latest-all`, file-scoped namespaces, Roslynator + Meziantou + VS Threading analyzers, `dotnet format` clean. Async suffixed `Async`, `ConfigureAwait(false)` off the UI. All user-visible strings from `.resx`. Timestamps UTC (unix-ms in SQLite); QPC ticks only inside the capture pipeline.
 
 **C++ —** `clang-format` (LLVM base, 4-space, 120 col) enforced in CI. No STL containers that allocate in hook paths. No `std::mutex` in hook paths. `-D_HAS_EXCEPTIONS=0` in the Overlay target. Every hook entry point wrapped per the `FL_HOOK_GUARD` macro (`17_HOOK_ENGINE`). Static analysis: `/analyze` + clang-tidy (`bugprone-*`, `cert-*`, `concurrency-*`).
+
+**Licence header —** every first-party source file (`.cs .cpp .h .inl .ps1 .xaml`) opens with two comment lines, `SPDX-License-Identifier: GPL-3.0-only` and `Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE` (beta.12, owner decision D45). GPLv3 §7 requires additional terms to be named in the source files, and `NOTICE` holds them — (b) preserve the notices, (c) mark modified versions, (e) no trademark rights in the name. `tools/notice-check.ps1` is a `build.ps1` gate; `-Fix` writes a missing header. `src/native/third_party/` is excluded.
 
 **Struct mirroring —** `FlFrameRecord`, `FlShmHandshake`, `FlWriterState` and `FlControlBlock` each exist twice: `src/native/FrameLedger.Shm/include/fl_shm.h` (**normative**) and `src/FrameLedger.Shared/ShmLayout.cs` as `[StructLayout(LayoutKind.Sequential)]`. `ShmLayoutMirrorTests` asserts size and every field offset on both sides **against JSON emitted by `tools/fl-layout-dump`**, never a transcribed table, and walks the field list in both directions so a field added on either side alone fails.
 

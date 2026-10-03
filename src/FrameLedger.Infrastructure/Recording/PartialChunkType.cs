@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 namespace FrameLedger.Infrastructure.Recording;
 
 /// <summary>The chunk types of a <c>.partial</c> (<c>06_DATA_MODEL</c> §The <c>.partial</c> file). Numbers are on disk; never renumber.</summary>

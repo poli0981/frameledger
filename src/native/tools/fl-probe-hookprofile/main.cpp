@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // P0 build-profile probes — docs/20_OPEN_QUESTIONS.md §H1 and §H3.
 //
 // These answer questions that change the build configuration of the ENTIRE

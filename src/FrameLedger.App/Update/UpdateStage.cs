@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 namespace FrameLedger.App.Update;
 
 /// <summary>Where the updater is, as the shell's banner shows it (<c>08_UI</c> §Notifications policy: "update downloaded" is a persistent InfoBar).</summary>

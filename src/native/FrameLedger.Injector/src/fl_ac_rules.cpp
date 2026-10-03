@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // windows.h stays in its own block above the sorted group: clang-format orders
 // the rest alphabetically, and knownfolders/objbase/shlobj_core all require it
 // to have been seen first.

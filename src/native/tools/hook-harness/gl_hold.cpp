@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // hook-harness --opengl --hold-presenting N: a REAL OpenGL context on a hidden
 // window, SwapBuffers'd every few milliseconds for N seconds, so the Overlay's
 // wglSwapBuffers hook can be exercised with no game (17_HOOK_ENGINE §Test

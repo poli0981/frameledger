@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // windows.h stays in its own block above the sorted group, as fl_ac_rules.cpp does: WideCharToMultiByte (the one
 // Win32 call here, for the executable's leaf name) needs it.
 #include <windows.h>

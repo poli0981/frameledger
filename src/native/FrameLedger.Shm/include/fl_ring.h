@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // The SPSC frame ring — writer, and a reader for tests and probes.
 //
 // NORMATIVE SOURCE: docs/07_IPC.md §Protocol rules. This header implements that

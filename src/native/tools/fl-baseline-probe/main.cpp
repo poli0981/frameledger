@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // The measurement baseline P0 item 4 compares hooks against (15_ROADMAP item 3).
 //
 // WHY THIS EXISTS. §M9 established that the "old detection" this rewrite claims

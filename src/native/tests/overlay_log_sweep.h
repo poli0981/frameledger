@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // Test-only. The hook-harness's overlay logs, removed when a test binary's run ends.
 //
 // The Overlay writes %LOCALAPPDATA%\FrameLedger\logs\overlay-<pid>-<stamp>.log: the real per-user data folder,

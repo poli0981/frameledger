@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 namespace FrameLedger.Application.TriState;
 
 /// <summary>FR-8.1's <c>source</c>: where a resolved tri-state value came from, so the UI can draw it distinctly (FR-8.3).</summary>

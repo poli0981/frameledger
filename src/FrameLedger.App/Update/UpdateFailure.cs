@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 namespace FrameLedger.App.Update;
 
 /// <summary><c>11_UPDATER</c> §Error mapping, one member per row; the dialog text is the matching <c>Update_Err_*</c> string.</summary>

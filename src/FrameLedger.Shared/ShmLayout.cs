@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // The C# half of the shared-memory ABI. The C++ half is
 // src/native/FrameLedger.Shm/include/fl_shm.h and it is NORMATIVE: where the two
 // disagree, that header is right and this file is the bug.

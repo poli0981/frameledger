@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // A stub that answers to the name `amd_fidelityfx_framegeneration_dx12.dll` -- the
 // SDK 2.x FRAME-GENERATION effect DLL (FSR 3.1 FG 3.1.5 in Expedition 33 and Dying
 // Light: The Beast, FSR 4 FG 4.0.0 in Hell Is Us), which also owns the

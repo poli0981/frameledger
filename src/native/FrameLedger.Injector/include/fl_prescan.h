@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // Check 4 — the static, pre-launch anti-cheat scan (docs/19_SAFETY §Pre-injection
 // checks item 4, docs/05_DETECTION §Anti-cheat pre-scan).
 //
