@@ -109,6 +109,12 @@ public sealed class HeldProcessHandle : IDisposable
     public int? ExitCode =>
         HasExited && GetExitCodeProcess(_handle, out uint code) && code != _stillActive ? unchecked((int)code) : null;
 
+    /// <summary>
+    /// The held handle itself, for a read ABOUT the process through the same rights (beta.12, D43: the game's memory
+    /// counters). Borrowed for one call — the marshaller add-refs it — and never disposed or kept by the borrower.
+    /// </summary>
+    public SafeProcessHandle Handle => _handle;
+
     public void Dispose() => _handle.Dispose();
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]

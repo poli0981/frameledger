@@ -23,7 +23,8 @@
 │   ├ upscaler hooks: NGX · Streamline · FFX · XeSS                         │
 │   ├ RT hooks: CreateStateObject · DispatchRays · BuildRaytracingAS        │
 │   ├ PSO hooks: pipeline creation (stutter attribution)                    │
-│   ├ per-process VRAM: IDXGIAdapter3::QueryVideoMemoryInfo                 │
+│   ├ (per-process VRAM via QueryVideoMemoryInfo: never built — D43 reads  │
+│   │  the game's memory from outside, in the Agent's ProcessStats.dll)     │
 │   └ ring writer (allocation-free, lock-free, SEH-guarded)                 │
 └───────────────────────────────────────────────────────────────────────────┘
 ```

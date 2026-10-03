@@ -17,12 +17,32 @@ public sealed class AggregatesTests
 
         s.Count.Should().Be(3);
         s.Average.Should().Be(65);
+        s.Median.Should().Be(65, "the middle of 60, 65, 70");
+        s.Min.Should().Be(60);
         s.Max.Should().Be(70);
 
         SeriesAggregates none = SeriesAggregates.Of([null, null]);
         none.Count.Should().Be(0);
         none.Average.Should().BeNull();
+        none.Median.Should().BeNull("N/A, never 0");
+        none.Min.Should().BeNull();
         none.Max.Should().BeNull();
+    }
+
+    /// <summary>beta.12: the median of an even count is the mean of the two middle values, and it does not care about order.</summary>
+    [Fact]
+    public void TheMedianOfAnEvenCountIsTheMeanOfTheTwoMiddleValuesInAnyOrder()
+    {
+        SeriesAggregates s = SeriesAggregates.Of([9000.0, 1000.0, null, 3000.0, 5000.0]);
+
+        s.Count.Should().Be(4);
+        s.Median.Should().Be(4000, "(3000 + 5000) / 2 — the samples arrive unsorted");
+        s.Average.Should().Be(4500);
+        s.Min.Should().Be(1000);
+        s.Max.Should().Be(9000);
+
+        SeriesAggregates one = SeriesAggregates.Of([42.0]);
+        (one.Median, one.Min, one.Max, one.Average).Should().Be((42.0, 42.0, 42.0, 42.0));
     }
 
     [Fact]

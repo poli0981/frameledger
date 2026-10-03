@@ -4,6 +4,7 @@
 using System.Diagnostics;
 using FrameLedger.Application.AntiCheat;
 using FrameLedger.Application.Consent;
+using FrameLedger.Application.Telemetry;
 using FrameLedger.Domain.AntiCheat;
 using FrameLedger.Domain.Consent;
 using FrameLedger.Shared;
@@ -120,6 +121,9 @@ public sealed class CaptureSession(
             return await HoldUnhookedAsync(new CaptureOutcome { Reason = SessionEndReason.TargetCannotBePinned }, normalisedExePath, alive: null, pid, ct, stop).ConfigureAwait(false);
         }
 
+        // beta.12 (D43): the game's own memory is read through the pin from here on — declared after it, so it is let go
+        // of before the handle closes.
+        using MeasuringScope measuring = Measure(pid.Value, alive);
         if (ConsentRefusal(record, observed) is SessionEndReason refused)
         {
             return await HoldUnhookedAsync(new CaptureOutcome { Reason = refused }, normalisedExePath, alive, pid, ct, stop).ConfigureAwait(false);
@@ -166,6 +170,9 @@ public sealed class CaptureSession(
         // game was exclusive. A hold that never opened the process finds the game by its image path in the watcher's
         // snapshot, and still opens nothing.
         var sampler = new DisplaySampler(display);
+        // A hold with no pin reads the game's memory of every process running its executable (beta.12, D43), announced
+        // whenever that set changes; a pinned hold's process was announced by the caller, with the pin.
+        GameProcess? announced = null;
         while (!stop.IsCancellationRequested)
         {
             bool running = alive is not null ? !alive.HasExited : resolver.IsRunning(normalisedExePath);
@@ -174,6 +181,7 @@ public sealed class CaptureSession(
                 break;
             }
 
+            announced = alive is null ? AnnounceProcesses(normalisedExePath, announced) : announced;
             sampler.Sample(pid is { } p ? [p] : resolver.PidsOf(normalisedExePath), region: null, paused: false);
             observer?.Tick(held);
             await Task.Delay(options.HoldInterval, ct).ConfigureAwait(false);
@@ -181,6 +189,11 @@ public sealed class CaptureSession(
 
         sampler.Finish(paused: false);
         observer?.Tick(held);
+        if (announced is not null)
+        {
+            observer?.Measuring(GameProcess.None);
+        }
+
         return refusal with { HeldUnhooked = true, TargetPid = pid ?? 0, ExitCode = alive?.ExitCode, Display = sampler.Summary() };
     }
 
@@ -218,6 +231,7 @@ public sealed class CaptureSession(
         }
 
         using ITargetLiveness alive = launched.Value.Alive;
+        using MeasuringScope measuring = Measure(launched.Value.Pid, alive);
         GameConsentRecord record = await store.FindAsync(normalisedExePath, ct).ConfigureAwait(false);
         if (ConsentRefusal(record, observed) is SessionEndReason refused)
         {
@@ -226,6 +240,41 @@ public sealed class CaptureSession(
 
         return await SessionAsync(launched.Value.Pid, alive, record, observed!.Value, payloadPath, started, ct, stop)
             .ConfigureAwait(false);
+    }
+
+    /// <summary>Tells the observer the pinned process is the one to read the game's memory of, until the scope ends (beta.12, D43).</summary>
+    private MeasuringScope Measure(int pid, ITargetLiveness alive)
+    {
+        observer?.Measuring(GameProcess.Pinned(pid, alive));
+        return new MeasuringScope(observer);
+    }
+
+    /// <summary>
+    /// An unpinned hold's processes (beta.12, D43): announced when the set the watcher's snapshot names differs from the last
+    /// one announced, never on a tick that changed nothing; null until the first non-empty set.
+    /// </summary>
+    private GameProcess? AnnounceProcesses(string normalisedExePath, GameProcess? announced)
+    {
+        if (observer is null)
+        {
+            return announced;
+        }
+
+        IReadOnlyList<GameProcessId> now = resolver.ProcessesOf(normalisedExePath);
+        if ((announced is null && now.Count == 0) || (announced is not null && announced.SameProcessesAs(now)))
+        {
+            return announced;
+        }
+
+        GameProcess target = GameProcess.Unpinned(now);
+        observer.Measuring(target);
+        return target;
+    }
+
+    /// <summary>Lets go of the pinned process before its handle closes: the telemetry thread reads nothing after this.</summary>
+    private sealed class MeasuringScope(ICaptureObserver? observer) : IDisposable
+    {
+        public void Dispose() => observer?.Measuring(GameProcess.None);
     }
 
     /// <summary>The two refusals the loop makes itself, before the gate (see <see cref="RunAsync"/>'s remarks).</summary>

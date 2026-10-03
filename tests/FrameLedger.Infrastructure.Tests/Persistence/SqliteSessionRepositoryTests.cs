@@ -76,6 +76,19 @@ public sealed class SqliteSessionRepositoryTests
         DisplayMonitorW = 2560,
         DisplayMonitorH = 1440,
         DisplayMonitorHz = 165,
+        // Schema 0018 (beta.12, D43): every game-memory column non-null, or the round trip would pass without reading one.
+        GameVramDedicatedAvgMb = 8123.5,
+        GameVramDedicatedMedianMb = 8100,
+        GameVramDedicatedMaxMb = 9216,
+        GameVramSharedMaxMb = 512.25,
+        GameRamPrivateAvgMb = 6000.5,
+        GameRamPrivateMedianMb = 5990,
+        GameRamPrivateMaxMb = 7100,
+        GameRamWorkingSetMaxMb = 7600,
+        GameCommitMaxMb = 8800,
+        GameMemoryProcesses = 1,
+        GameMemorySource = "counters,ex2,held",
+        SensorStatsJson = "{\"gpu_temp\":{\"N\":3,\"Mean\":61,\"Median\":61,\"Min\":60,\"Max\":62}}",
     };
 
     private static FrameBlobs Frames(int n) => new()

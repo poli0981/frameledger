@@ -443,7 +443,7 @@ function Invoke-ProjectGates {
     }
 
     # beta.12 (D45): GPLv3 section 7 wants additional terms named "in the relevant source files", so every
-    # first-party source file opens with the SPDX line and the NOTICE pointer. Self-test first (six cases, both
+    # first-party source file opens with the SPDX line and the NOTICE pointer. Self-test first (seven cases, both
     # directions), then the live pass over the tracked tree; ./tools/notice-check.ps1 -Fix writes a missing header.
     Write-Step 'notice-check'
     $noticeTool = Join-Path $repo 'tools/notice-check.ps1'

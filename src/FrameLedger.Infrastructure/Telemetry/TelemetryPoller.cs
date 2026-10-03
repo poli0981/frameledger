@@ -33,6 +33,7 @@ public sealed class TelemetryPoller : ITelemetryPoller
 {
     private readonly IGpuTelemetrySource _source;
     private readonly ISystemTelemetrySource? _system;
+    private readonly IGameMemorySource? _game;
     private readonly TelemetryPollerOptions _options;
     private readonly TimeProvider _clock;
     private readonly ConcurrentQueue<TelemetrySample> _queue = new();
@@ -54,10 +55,13 @@ public sealed class TelemetryPoller : ITelemetryPoller
     /// builds the layers for one session and hands them over. False (the default) when the container owns them.
     /// </param>
     /// <param name="system">The machine beside the GPU, read on the same tick (2026-09-21); owned and disposed with <paramref name="source"/> when <paramref name="ownsSource"/> is set. Null composes none, and every sample's <see cref="TelemetrySample.System"/> is empty.</param>
-    public TelemetryPoller(IGpuTelemetrySource source, TelemetryPollerOptions options, TimeProvider clock, bool ownsSource = false, ISystemTelemetrySource? system = null)
+    /// <param name="game">The game process's own memory (beta.12, D43), read on the same tick for the process <see cref="Follow"/> named; owned and disposed with the others when <paramref name="ownsSource"/> is set. Null composes none, and every sample's <see cref="TelemetrySample.Game"/> is empty.</param>
+    public TelemetryPoller(IGpuTelemetrySource source, TelemetryPollerOptions options, TimeProvider clock, bool ownsSource = false,
+        ISystemTelemetrySource? system = null, IGameMemorySource? game = null)
     {
         _source = source ?? throw new ArgumentNullException(nameof(source));
         _system = system;
+        _game = game;
         _ownsSource = ownsSource;
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
@@ -110,19 +114,28 @@ public sealed class TelemetryPoller : ITelemetryPoller
         bool gpu = _source.TryRead(out GpuSample? sample);
         SystemReading system = default;
         bool machine = _system is not null && _system.TryRead(out system);
-        if (!gpu && !machine)
+        ProcessReading game = default;
+        bool measured = _game is not null && _game.TryRead(out game);
+        if (!gpu && !machine && !measured)
         {
             return;
         }
 
-        // A tick only the machine answered still carries its CPU and memory: the placeholder names no layer and no field.
+        // A tick only the machine or the game answered still carries them: the placeholder names no layer and no field.
         sample ??= new GpuSample { TakenAt = _clock.GetUtcNow(), Layer = TelemetryLayer.None };
-        _queue.Enqueue(new TelemetrySample(_clock.GetTimestamp(), sample, system));
+        _queue.Enqueue(new TelemetrySample(_clock.GetTimestamp(), sample, system, game));
         if (Interlocked.Increment(ref _queued) > _options.QueueCapacity && _queue.TryDequeue(out _))
         {
             Interlocked.Decrement(ref _queued);
             Interlocked.Increment(ref _dropped);
         }
+    }
+
+    /// <summary>The game process whose memory the next ticks read (beta.12, D43); ignored without a game source.</summary>
+    public void Follow(GameProcess target)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        _game?.Follow(target);
     }
 
     public int Drain(ICollection<TelemetrySample> into)
@@ -154,6 +167,7 @@ public sealed class TelemetryPoller : ITelemetryPoller
         {
             _source.Dispose();
             _system?.Dispose();
+            _game?.Dispose();
         }
     }
 

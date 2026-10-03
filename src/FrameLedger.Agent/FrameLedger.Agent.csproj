@@ -41,6 +41,7 @@
   -->
   <Import Project="$(MSBuildThisFileDirectory)..\..\FrameLedger.Guard.targets" />
   <Import Project="$(MSBuildThisFileDirectory)..\..\FrameLedger.NvapiBridge.targets" />
+  <Import Project="$(MSBuildThisFileDirectory)..\..\FrameLedger.ProcessStats.targets" />
 
   <!-- The seed the Agent installs to the product location on first run (§S20). -->
   <Import Project="$(MSBuildThisFileDirectory)..\..\FrameLedger.Rules.targets" />

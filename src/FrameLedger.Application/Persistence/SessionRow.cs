@@ -315,4 +315,32 @@ public sealed record SessionRow
     public int? DisplayMonitorH { get; init; }
 
     public int? DisplayMonitorHz { get; init; }
+
+    // --- Schema 0018 (beta.12, D43): the game process's own memory, read from outside it, both tiers (03_METRICS §Game
+    // process memory), MiB; and every sensor series' statistics as JSON. Null on a row written before beta.12, and where
+    // nothing answered (the DLL absent, the counters missing, the process refused).
+
+    public double? GameVramDedicatedAvgMb { get; init; }
+
+    public double? GameVramDedicatedMedianMb { get; init; }
+
+    public double? GameVramDedicatedMaxMb { get; init; }
+
+    public double? GameVramSharedMaxMb { get; init; }
+
+    public double? GameRamPrivateAvgMb { get; init; }
+
+    public double? GameRamPrivateMedianMb { get; init; }
+
+    public double? GameRamPrivateMaxMb { get; init; }
+
+    public double? GameRamWorkingSetMaxMb { get; init; }
+
+    public double? GameCommitMaxMb { get; init; }
+
+    public int? GameMemoryProcesses { get; init; }
+
+    public string? GameMemorySource { get; init; }
+
+    public string? SensorStatsJson { get; init; }
 }

@@ -106,6 +106,15 @@ public sealed class SessionEventPublisher : ISessionObserver
         {
             t.LastGpu = drained[^1].Sample;
             t.LastSystem = drained[^1].System;
+            // The newest tick that said anything about the game's memory (beta.12, D43): an empty one does not erase it.
+            for (int i = drained.Count - 1; i >= 0; i--)
+            {
+                if (!drained[i].Game.IsEmpty)
+                {
+                    t.LastGame = drained[i].Game;
+                    break;
+                }
+            }
         }
 
         if (progress.Hold is { } hold && t.AttachedAt is null)
@@ -206,7 +215,9 @@ public sealed class SessionEventPublisher : ISessionObserver
             t.LastGpu?.TempCoreC,
             t.LastSystem.CpuTempC,
             t.LastGpu?.LoadPct,
-            t.LastSystem.CpuLoadPct));
+            t.LastSystem.CpuLoadPct,
+            t.LastGame.VramDedicatedMb,
+            t.LastGame.RamPrivateMb));
     }
 
     private void PublishProgress(Guid sessionGuid, Tracked t, CaptureProgress progress, long now)
@@ -214,7 +225,7 @@ public sealed class SessionEventPublisher : ISessionObserver
         try
         {
             double elapsed = _clock.GetElapsedTime(t.AttachedTimestamp, now).TotalSeconds;
-            SessionProgressEvent e = SessionProgressCalculator.Compute(sessionGuid, progress, t.Info.QpcFrequency, elapsed, t.LastGpu, t.LastSystem);
+            SessionProgressEvent e = SessionProgressCalculator.Compute(sessionGuid, progress, t.Info.QpcFrequency, elapsed, t.LastGpu, t.LastSystem, t.LastGame);
             _pipe.Publish(IpcMessageType.SessionProgress, e);
             Interlocked.Increment(ref _progressPublished);
         }
@@ -259,6 +270,8 @@ public sealed class SessionEventPublisher : ISessionObserver
         public GpuSample? LastGpu { get; set; }
 
         public SystemReading LastSystem { get; set; }
+
+        public ProcessReading LastGame { get; set; }
 
         /// <summary>Why a held session measures nothing; set by its first held tick (2026-09-23).</summary>
         public SessionHold? Hold { get; set; }

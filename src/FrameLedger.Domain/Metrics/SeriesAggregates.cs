@@ -4,12 +4,18 @@
 namespace FrameLedger.Domain.Metrics;
 
 /// <summary>
-/// <c>03_METRICS</c> §Sensor aggregates: the mean of the non-null samples and their maximum, and
-/// <b>N/A — never 0 — when there are none</b>.
+/// <c>03_METRICS</c> §Sensor aggregates: the mean of the non-null samples, their median, minimum and maximum, and
+/// <b>N/A — never 0 — when there are none</b>. The median is the linear-interpolation 50th percentile
+/// (<see cref="Percentile.Linear"/>): the middle sample of an odd count, the mean of the two middle ones of an even count.
 /// </summary>
+/// <remarks>The median and the minimum were added in beta.12 (owner request: "median, mean" for the game's memory and the sensors).</remarks>
 public sealed record SeriesAggregates
 {
     public required double? Average { get; init; }
+
+    public required double? Median { get; init; }
+
+    public required double? Min { get; init; }
 
     public required double? Max { get; init; }
 
@@ -20,9 +26,8 @@ public sealed record SeriesAggregates
     {
         ArgumentNullException.ThrowIfNull(samples);
 
+        var values = new List<double>();
         double sum = 0;
-        double max = double.NegativeInfinity;
-        int count = 0;
         foreach (double? s in samples)
         {
             if (s is not double v)
@@ -30,16 +35,23 @@ public sealed record SeriesAggregates
                 continue;
             }
 
-            count++;
+            values.Add(v);
             sum += v;
-            max = Math.Max(max, v);
         }
 
+        if (values.Count == 0)
+        {
+            return new SeriesAggregates { Average = null, Median = null, Min = null, Max = null, Count = 0 };
+        }
+
+        values.Sort();
         return new SeriesAggregates
         {
-            Average = count > 0 ? sum / count : null,
-            Max = count > 0 ? max : null,
-            Count = count,
+            Average = sum / values.Count,
+            Median = Percentile.Linear(values, 0.5),
+            Min = values[0],
+            Max = values[^1],
+            Count = values.Count,
         };
     }
 }

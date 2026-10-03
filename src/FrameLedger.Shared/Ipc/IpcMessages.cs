@@ -190,7 +190,8 @@ public sealed record SessionStartedEvent(Guid SessionGuid, long GameId, string? 
 /// telemetry. Never a frame-derived value — there is none (CLAUDE.md rule 6 has nothing to show, and shows nothing).
 /// Its own type rather than <see cref="SessionProgressEvent"/>, whose required fields would put measured-looking zeros on the wire.
 /// </summary>
-public sealed record SessionHeldEvent(Guid SessionGuid, double ElapsedS, double? GpuTempC = null, double? CpuTempC = null, double? GpuLoadPct = null, double? CpuLoadPct = null);
+public sealed record SessionHeldEvent(Guid SessionGuid, double ElapsedS, double? GpuTempC = null, double? CpuTempC = null, double? GpuLoadPct = null, double? CpuLoadPct = null,
+    double? GameVramDedicatedMb = null, double? GameRamPrivateMb = null);
 
 /// <summary>
 /// 1 Hz while a hooked session runs and a client is connected (<c>04_CAPTURE</c> §Live progress). A 5 s rolling
@@ -272,6 +273,12 @@ public sealed record SessionProgressEvent
     public double? CpuLoadPct { get; init; }
 
     public int? VramProcMb { get; init; }
+
+    /// <summary>The game process's dedicated GPU memory, MiB, from the newest telemetry tick (beta.12, D43); read from outside the game.</summary>
+    public double? GameVramDedicatedMb { get; init; }
+
+    /// <summary>The game process's private working set, MiB, from the newest telemetry tick (beta.12, D43).</summary>
+    public double? GameRamPrivateMb { get; init; }
 
     public int? LatencyUs { get; init; }
 }

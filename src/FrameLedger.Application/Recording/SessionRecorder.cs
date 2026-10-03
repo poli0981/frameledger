@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using System.Globalization;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Telemetry;
@@ -330,6 +331,20 @@ public sealed class SessionRecorder : ISessionRecorder
             AttachedAt = clock.GetUtcNow();
             writer.Note($"attached pid={pid} layout={handshake.LayoutVersion} build={handshake.BuildIdString()}");
             observer?.Attached(guid, pid, handshake);
+        }
+
+        /// <summary>
+        /// The process the game's memory is read from (beta.12, D43): forwarded to the telemetry thread, and noted in the
+        /// <c>.partial</c> when it changes so a recovered session says what it was reading.
+        /// </summary>
+        public void Measuring(GameProcess target)
+        {
+            poller?.Follow(target);
+            writer.Note(target.IsNone
+                ? "memory: none"
+                : target.Pid is int pid
+                    ? $"memory: pid={pid} held"
+                    : "memory: " + string.Join(",", target.Processes.Select(static p => p.Pid.ToString(CultureInfo.InvariantCulture))));
         }
 
         public void Tick(CaptureProgress progress)

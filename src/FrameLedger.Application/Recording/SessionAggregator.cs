@@ -199,7 +199,7 @@ public static class SessionAggregator
         SeriesAggregates cpuLoad = SeriesAggregates.Of(sensors.Select(static t => t.System.CpuLoadPct));
         SeriesAggregates cpuTemp = SeriesAggregates.Of(sensors.Select(static t => t.System.CpuTempC));
         SeriesAggregates ram = SeriesAggregates.Of(sensors.Select(static t => t.System.RamUsedMb));
-        return row with
+        return (row with
         {
             AvgCpuLoad = cpuLoad.Average,
             AvgCpuTemp = cpuTemp.Average,
@@ -212,7 +212,67 @@ public static class SessionAggregator
             AvgGpuPowerW = power.Average,
             VramAdapterMaxMb = adapter.Max,
             ThrottlePct = throttleSamples == 0 ? null : 100.0 * s.Count(static x => x.ThrottleReasons is > 0) / throttleSamples,
+        }).WithGameMemory(sensors);
+    }
+
+    /// <summary>
+    /// The game process's own memory (beta.12, D43; <c>03_METRICS</c> §Game process memory) and every series' statistics —
+    /// both tiers, from the same 1 Hz samples. Null where no tick carried the field: a session before beta.12, the DLL
+    /// absent, the counters missing, the process refused.
+    /// </summary>
+    private static SessionRow WithGameMemory(this SessionRow row, IReadOnlyList<TelemetrySample> sensors)
+    {
+        SeriesAggregates dedicated = SeriesAggregates.Of(sensors.Select(static t => t.Game.VramDedicatedMb));
+        SeriesAggregates privateWs = SeriesAggregates.Of(sensors.Select(static t => t.Game.RamPrivateMb));
+        ProcessReadingSources sources = sensors.Aggregate(ProcessReadingSources.None, static (all, t) => all | t.Game.Sources);
+        int processes = sensors.Select(static t => t.Game.Processes).DefaultIfEmpty(0).Max();
+        return row with
+        {
+            GameVramDedicatedAvgMb = dedicated.Average,
+            GameVramDedicatedMedianMb = dedicated.Median,
+            GameVramDedicatedMaxMb = dedicated.Max,
+            GameVramSharedMaxMb = SeriesAggregates.Of(sensors.Select(static t => t.Game.VramSharedMb)).Max,
+            GameRamPrivateAvgMb = privateWs.Average,
+            GameRamPrivateMedianMb = privateWs.Median,
+            GameRamPrivateMaxMb = privateWs.Max,
+            GameRamWorkingSetMaxMb = SeriesAggregates.Of(sensors.Select(static t => t.Game.RamWorkingSetMb)).Max,
+            GameCommitMaxMb = SeriesAggregates.Of(sensors.Select(static t => t.Game.CommitMb)).Max,
+            GameMemoryProcesses = processes > 0 ? processes : null,
+            GameMemorySource = SourceText(sources),
+            SensorStatsJson = SensorSeriesStats.JsonOf(sensors),
         };
+    }
+
+    /// <summary><c>sessions.game_memory_source</c>: which reads answered during the session, comma-separated; null when none did.</summary>
+    private static string? SourceText(ProcessReadingSources sources)
+    {
+        var parts = new List<string>(5);
+        if (sources.HasFlag(ProcessReadingSources.Counters))
+        {
+            parts.Add("counters");
+        }
+
+        if (sources.HasFlag(ProcessReadingSources.PrivateWorkingSetRead))
+        {
+            parts.Add("ex2");
+        }
+
+        if (sources.HasFlag(ProcessReadingSources.WorkingSetReadOnly))
+        {
+            parts.Add("ex");
+        }
+
+        if (sources.HasFlag(ProcessReadingSources.HeldHandle))
+        {
+            parts.Add("held");
+        }
+
+        if (sources.HasFlag(ProcessReadingSources.TransientHandle))
+        {
+            parts.Add("opened");
+        }
+
+        return parts.Count == 0 ? null : string.Join(',', parts);
     }
 
     private static SessionRow ApplyWitnesses(SessionRow row, Context c)

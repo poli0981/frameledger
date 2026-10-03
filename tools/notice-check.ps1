@@ -18,7 +18,9 @@
         Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
     in its own comment syntax: `//` for C# and C++ (.cs .cpp .h .inl), `#` for PowerShell, `<!-- -->` for XAML
-    (after an XML declaration when the file has one). The set is the tracked files with those extensions, minus
+    (after an XML declaration when the file has one). The second line may name another copyright holder and year
+    (`Copyright (C) <year> <holder> - additional terms under GPLv3 section 7: see NOTICE`, beta.12): a file a
+    contributor wrote is theirs, under the same licence and the same additional terms (CONTRIBUTING.md). The set is the tracked files with those extensions, minus
     src/native/third_party/ (other people's code under their own licences). Generated files are generated WITH the
     header (tools/resx-gen.ps1), so a regenerated file passes as written.
 
@@ -38,6 +40,8 @@ $ErrorActionPreference = 'Stop'
 
 $script:SpdxLine = 'SPDX-License-Identifier: GPL-3.0-only'
 $script:NoticeLine = 'Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE'
+# Any holder and year in the same form: a contributor's own file names its own copyright (CONTRIBUTING.md).
+$script:NoticePattern = '^Copyright \(C\) \d{4}(-\d{4})? \S.* - additional terms under GPLv3 section 7: see NOTICE$'
 $script:Extensions = @('.cs', '.cpp', '.h', '.inl', '.ps1', '.xaml')
 $script:Excluded = @('src/native/third_party/')
 
@@ -84,11 +88,21 @@ function Split-Preamble([byte[]]$Bytes, [string]$Extension) {
     return [pscustomobject]@{ Bom = $bom; Declaration = $declaration; Body = $text }
 }
 
+# The second header line in its comment syntax, with any holder and year (the pattern above).
+function Test-NoticeLine([string]$Line, [string]$Extension) {
+    $inner = switch ($Extension) {
+        '.ps1' { if ($Line.StartsWith('# ', [StringComparison]::Ordinal)) { $Line.Substring(2) } else { $null } }
+        '.xaml' { if ($Line.StartsWith('<!-- ', [StringComparison]::Ordinal) -and $Line.EndsWith(' -->', [StringComparison]::Ordinal)) { $Line.Substring(5, $Line.Length - 9) } else { $null } }
+        default { if ($Line.StartsWith('// ', [StringComparison]::Ordinal)) { $Line.Substring(3) } else { $null } }
+    }
+    return $null -ne $inner -and $inner -cmatch $script:NoticePattern
+}
+
 function Test-File([string]$Path, [string]$Extension) {
     $parts = Split-Preamble ([IO.File]::ReadAllBytes($Path)) $Extension
     $lines = $parts.Body -split "`r?`n", 3
     $want = Get-HeaderLines $Extension
-    if ($lines.Count -ge 2 -and $lines[0] -ceq $want[0] -and $lines[1] -ceq $want[1]) { return $null }
+    if ($lines.Count -ge 2 -and $lines[0] -ceq $want[0] -and (Test-NoticeLine $lines[1] $Extension)) { return $null }
     if ($lines.Count -ge 1 -and $lines[0] -match 'SPDX-License-Identifier') { return 'differs' }
     return 'missing'
 }
@@ -193,6 +207,14 @@ if ($SelfTest) {
         $null = Invoke-Check $tmp $true
         $fixedStale = [IO.File]::ReadAllText((Join-Path $tmp 'src/App/Stale.cs'))
         if ($fixedStale -cne (((Get-HeaderLines '.cs') -join $crlf) + $crlf + $crlf + "namespace B;$crlf")) { throw 'self-test: a stale header must be replaced, not stacked' }
+        $cases++
+
+        # 7. A contributor's own copyright line in the same form passes; one that drops the NOTICE pointer does not.
+        [IO.File]::WriteAllText((Join-Path $tmp 'src/App/Theirs.cs'), "// $script:SpdxLine$crlf// Copyright (C) 2027 Jane Doe - additional terms under GPLv3 section 7: see NOTICE$crlf${crlf}namespace C;$crlf")
+        [IO.File]::WriteAllText((Join-Path $tmp 'src/App/NoPointer.cs'), "// $script:SpdxLine$crlf// Copyright (C) 2027 Jane Doe$crlf${crlf}namespace D;$crlf")
+        $r = Invoke-Check $tmp $false
+        if ($r.Problems.Count -ne 1 -or $r.Problems[0] -notmatch 'NoPointer\.cs - header') { throw "self-test: another holder's line should pass and a line without the NOTICE pointer fail, got: $($r.Problems -join '; ')" }
+        Remove-Item (Join-Path $tmp 'src/App/NoPointer.cs')
         $cases++
 
         Write-Host "notice-check self-test OK - $cases cases, both directions"

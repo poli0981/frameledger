@@ -22,6 +22,7 @@ namespace FrameLedger.Infrastructure.Tests.Startup;
 /// is that nothing here enables a powerful privilege that was not already on. If a library ever enables one, this goes
 /// red on CI — and that is a question for the owner, not a line to relax.
 /// </remarks>
+[Collection(LibreHardwareMonitorCollection.Name)]
 public sealed class PrivilegeFootprintTests
 {
     private static readonly string[] _powerful =

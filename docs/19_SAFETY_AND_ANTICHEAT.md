@@ -986,7 +986,12 @@ Consent is stored per game (`games.hook_consent_at`), **stamped by the Agent, ne
 > publishing `unhookRequested`, and keeps the Vulkan layer off by never setting `FRAMELEDGER_ENABLE_VK_LAYER`
 > on a launch.
 
-The default for every newly added game is **hooking off — Tier 2**. Nothing is ever injected because the user merely added a game — and since 2026-09-22 nothing is *opened* either: a hooking-off row's Tier-2 session is held by ~~the executable's name~~ the executable's image path in the watcher's own snapshot (2026-09-23), with no `OpenProcess`, no resolver and no gate (`04_CAPTURE` §Tier selection).
+The default for every newly added game is **hooking off — Tier 2**. Nothing is ever injected because the user merely added a game — and since 2026-09-22 nothing is *opened* either: a hooking-off row's Tier-2 session is held by ~~the executable's name~~ the executable's image path in the watcher's own snapshot (2026-09-23), with no `OpenProcess`, no resolver and no gate (`04_CAPTURE` §Tier selection). *(Corrected 2026-10-03, beta.12, owner
+decision D43: such a hold now reads the game process's own memory once a second — its video memory from performance
+counters that open nothing, its system memory through a handle opened with `PROCESS_QUERY_LIMITED_INFORMATION` for the
+read and closed after it, the same least right the watcher's snapshot already opens every process with, each second. No
+handle is held, nothing is injected, the guard is not involved, and what is read is the kernel's accounting about the
+process, never its memory — rule 4 is untouched. A process that refuses even that right reads N/A.)*
 
 ### A moved drive is the same executable — owner ask 2026-09-22
 

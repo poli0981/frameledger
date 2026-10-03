@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using System.Buffers.Binary;
 using FluentAssertions;
 using FrameLedger.Application.Recording;
 using FrameLedger.Application.Telemetry;
@@ -110,6 +111,72 @@ public sealed class PartialSessionFileTests : IDisposable
         p.LastTick.Value.WriterState.RuntimeCensus.Should().Be(state.RuntimeCensus);
         p.Notes.Select(n => n.Text).Should().Equal("started Launch", "ended TargetExited");
         p.Notes[1].At.Should().Be(_t0.AddSeconds(2));
+    }
+
+    /// <summary>
+    /// beta.12 (D43): the game process's memory rides the sensors chunk in its wide form, nulls kept null; and a beta.11
+    /// <c>.partial</c> — whose sensors are the narrow chunk type 4 — still recovers, with no game memory, which it never had.
+    /// </summary>
+    [Fact]
+    public void TheGameMemoryRoundTripsAndANarrowSensorsChunkFromBeta11StillReads()
+    {
+        string path = Path.Combine(_dir, "wide.partial");
+        using (IPartialSessionWriter w = PartialSessionFile.Create(path, Header(Guid.NewGuid())))
+        {
+            var game = new ProcessReading(VramDedicatedMb: 9216, VramSharedMb: 512, RamPrivateMb: null, RamWorkingSetMb: 7000, CommitMb: 8000,
+                Processes: 2, Sources: ProcessReadingSources.Counters | ProcessReadingSources.WorkingSetReadOnly | ProcessReadingSources.TransientHandle);
+            w.AppendSensors([Sample(1_100_000, 60, 3000) with { Game = game }, Sample(1_200_000, 61, 3001)]);
+        }
+
+        // A narrow (type 4) chunk as beta.11 wrote it: qpc, wall clock, layer, a 16-bit mask (core temperature, system RAM).
+        var narrow = new byte[8 + 8 + 1 + 2 + 16];
+        BinaryPrimitives.WriteInt64LittleEndian(narrow, 1_300_000);
+        BinaryPrimitives.WriteInt64LittleEndian(narrow.AsSpan(8), _t0.ToUnixTimeMilliseconds());
+        narrow[16] = (byte)TelemetryLayer.Lhm;
+        BinaryPrimitives.WriteUInt16LittleEndian(narrow.AsSpan(17), (ushort)((1 << 0) | (1 << 13)));
+        BinaryPrimitives.WriteDoubleLittleEndian(narrow.AsSpan(19), 55.0);
+        BinaryPrimitives.WriteDoubleLittleEndian(narrow.AsSpan(27), 8000.0);
+        AppendRawChunk(path, 4, narrow);
+
+        PartialSession p = PartialSessionFile.Read(path)!;
+
+        p.Sensors.Should().HaveCount(3);
+        p.Sensors[0].Game.VramDedicatedMb.Should().Be(9216);
+        p.Sensors[0].Game.VramSharedMb.Should().Be(512);
+        p.Sensors[0].Game.RamPrivateMb.Should().BeNull("no private working set on that OS: N/A stays N/A");
+        p.Sensors[0].Game.RamWorkingSetMb.Should().Be(7000);
+        p.Sensors[0].Game.CommitMb.Should().Be(8000);
+        p.Sensors[0].Game.Processes.Should().Be(2);
+        p.Sensors[0].Game.Sources.Should().Be(ProcessReadingSources.Counters | ProcessReadingSources.WorkingSetReadOnly | ProcessReadingSources.TransientHandle);
+        p.Sensors[1].Game.IsEmpty.Should().BeTrue("a tick that read nothing of the game reads back with nothing");
+        p.Sensors[2].QpcTicks.Should().Be(1_300_000);
+        p.Sensors[2].Sample.TempCoreC.Should().Be(55);
+        p.Sensors[2].System.RamUsedMb.Should().Be(8000);
+        p.Sensors[2].Game.IsEmpty.Should().BeTrue("a beta.11 chunk carries no game memory");
+    }
+
+    /// <summary>One chunk framed as the file frames it: type, length, payload, CRC-32 (IEEE) over the frame and payload.</summary>
+    private static void AppendRawChunk(string path, uint type, byte[] payload)
+    {
+        var frame = new byte[8];
+        BinaryPrimitives.WriteUInt32LittleEndian(frame, type);
+        BinaryPrimitives.WriteUInt32LittleEndian(frame.AsSpan(4), (uint)payload.Length);
+        uint crc = 0xFFFFFFFFu;
+        foreach (byte b in frame.Concat(payload))
+        {
+            crc ^= b;
+            for (int k = 0; k < 8; k++)
+            {
+                crc = (crc & 1) != 0 ? 0xEDB88320u ^ (crc >> 1) : crc >> 1;
+            }
+        }
+
+        var trailer = new byte[4];
+        BinaryPrimitives.WriteUInt32LittleEndian(trailer, crc ^ 0xFFFFFFFFu);
+        using var stream = new FileStream(path, FileMode.Append, FileAccess.Write);
+        stream.Write(frame);
+        stream.Write(payload);
+        stream.Write(trailer);
     }
 
     [Fact]

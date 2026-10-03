@@ -253,14 +253,13 @@ public sealed class SessionFinalizer
         {
             Blob("t_ms", sensors, s => (float)((s.QpcTicks - (long)qpcEpoch) * 1000.0 / qpcFrequency)),
         };
-        AddIfAny(blobs, "gpu_temp", sensors, static s => s.Sample.TempCoreC);
-        AddIfAny(blobs, "gpu_hotspot", sensors, static s => s.Sample.TempHotspotC);
-        AddIfAny(blobs, "gpu_load", sensors, static s => s.Sample.LoadPct);
-        AddIfAny(blobs, "gpu_power", sensors, static s => s.Sample.PowerW);
-        AddIfAny(blobs, "vram_adapter", sensors, static s => s.Sample.VramAdapterMb);
-        AddIfAny(blobs, "cpu_load", sensors, static s => s.System.CpuLoadPct);
-        AddIfAny(blobs, "cpu_temp", sensors, static s => s.System.CpuTempC);
-        AddIfAny(blobs, "ram_mb", sensors, static s => s.System.RamUsedMb);
+        // One list (SensorSeriesCatalog) for the blobs and for sensor_stats_json; the game process's memory joined it in
+        // beta.12 (D43) — five series, MiB, both tiers.
+        foreach ((string name, Func<TelemetrySample, double?> select) in SensorSeriesCatalog.All)
+        {
+            AddIfAny(blobs, name, sensors, select);
+        }
+
         return blobs;
     }
 

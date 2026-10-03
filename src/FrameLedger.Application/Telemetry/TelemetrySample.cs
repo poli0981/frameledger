@@ -25,5 +25,6 @@ namespace FrameLedger.Application.Telemetry;
 /// <param name="QpcTicks">The raw performance counter at the read.</param>
 /// <param name="Sample">The GPU layers' composed sample; a placeholder with <see cref="TelemetryLayer.None"/> and no field on a tick only the system source answered.</param>
 /// <param name="System">The machine beside the GPU on the same tick (2026-09-21): CPU busy %, memory in use, CPU temperature where readable. Empty when no system source is composed, which is every sample recorded before that date.</param>
+/// <param name="Game">The game process's own memory on the same tick (beta.12, D43): read from outside the game. Empty when no game source is composed or nothing was followed yet — every sample recorded before beta.12.</param>
 [StructLayout(LayoutKind.Auto)]
-public readonly record struct TelemetrySample(long QpcTicks, GpuSample Sample, SystemReading System = default);
+public readonly record struct TelemetrySample(long QpcTicks, GpuSample Sample, SystemReading System = default, ProcessReading Game = default);

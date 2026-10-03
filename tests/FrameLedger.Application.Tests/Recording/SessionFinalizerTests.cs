@@ -133,6 +133,65 @@ public sealed class SessionFinalizerTests
         hot.Sensors.Select(s => s.Series).Should().Contain("cpu_temp");
     }
 
+    /// <summary>
+    /// beta.12 (D43): the game process's memory becomes five series beside the sensors, its median / mean / peak columns
+    /// (both tiers — this row is Tier 2), the sources that answered, and every series' statistics in sensor_stats_json.
+    /// </summary>
+    [Fact]
+    public void TheGamesMemoryBecomesItsSeriesItsColumnsAndTheStatisticsOfEverySeries()
+    {
+        (SessionFinalizer finalizer, _) = Make();
+        List<Application.Telemetry.TelemetrySample> sensors = SessionFixtures.SensorsWithSystem(4);
+        double?[] dedicated = [8000, 9000, null, 7000];
+        for (int i = 0; i < sensors.Count; i++)
+        {
+            sensors[i] = sensors[i] with
+            {
+                Game = dedicated[i] is { } d
+                    ? new Application.Telemetry.ProcessReading(d, 512, 6000 + i, 6500 + i, 7000 + i, 2,
+                        Application.Telemetry.ProcessReadingSources.Counters | Application.Telemetry.ProcessReadingSources.PrivateWorkingSetRead | Application.Telemetry.ProcessReadingSources.TransientHandle)
+                    : default,
+            };
+        }
+
+        FinalizedSession built = finalizer.Build(new FinalizeInput { Skeleton = SessionFixtures.Skeleton(tier: CaptureTier.NotHooked), Sensors = sensors });
+
+        built.Sensors.Select(s => s.Series).Should().ContainInOrder("ram_mb", "game_vram_dedicated", "game_vram_shared", "game_ram_private", "game_ram_ws", "game_commit");
+        RawSeriesCodec.Floats(built.Sensors.Single(s => string.Equals(s.Series, SensorSeriesCatalog.GameVramDedicated, StringComparison.Ordinal)).Data).Should().Equal(8000f, 9000f, SessionFinalizer.SensorMissing, 7000f);
+        SessionRow row = built.Row;
+        row.GameVramDedicatedMedianMb.Should().Be(8000, "the middle of 7000, 8000, 9000 — the tick with no reading is not a zero");
+        row.GameVramDedicatedAvgMb.Should().Be(8000);
+        row.GameVramDedicatedMaxMb.Should().Be(9000);
+        row.GameVramSharedMaxMb.Should().Be(512);
+        row.GameRamPrivateMedianMb.Should().Be(6001);
+        row.GameRamPrivateMaxMb.Should().Be(6003);
+        row.GameRamWorkingSetMaxMb.Should().Be(6503);
+        row.GameCommitMaxMb.Should().Be(7003);
+        row.GameMemoryProcesses.Should().Be(2);
+        row.GameMemorySource.Should().Be("counters,ex2,opened");
+
+        IReadOnlyDictionary<string, SensorSeriesStats> stats = SensorSeriesStats.Parse(row.SensorStatsJson);
+        stats[SensorSeriesCatalog.GameVramDedicated].Should().Be(new SensorSeriesStats(3, 8000, 8000, 7000, 9000));
+        stats[SensorSeriesCatalog.RamSystem].N.Should().Be(4);
+        stats.Should().ContainKey(SensorSeriesCatalog.GpuTemp).And.NotContainKey(SensorSeriesCatalog.CpuTemp, "no tick carried a CPU temperature");
+    }
+
+    [Fact]
+    public void ASessionWithoutAnyGameReadingKeepsEveryGameColumnNull()
+    {
+        (SessionFinalizer finalizer, _) = Make();
+
+        SessionRow row = finalizer.Build(new FinalizeInput { Skeleton = SessionFixtures.Skeleton(tier: CaptureTier.NotHooked), Sensors = SessionFixtures.Sensors(3) }).Row;
+
+        row.GameVramDedicatedMaxMb.Should().BeNull("N/A, never 0");
+        row.GameRamPrivateMedianMb.Should().BeNull();
+        row.GameMemoryProcesses.Should().BeNull();
+        row.GameMemorySource.Should().BeNull();
+        SensorSeriesStats.Parse(row.SensorStatsJson).Should().ContainKey(SensorSeriesCatalog.GpuTemp, "the sensors still have their statistics");
+        SensorSeriesStats.Parse(null).Should().BeEmpty();
+        SensorSeriesStats.Parse("{not json").Should().BeEmpty("text this build cannot read is no statistics, never a throw into the UI");
+    }
+
     [Fact]
     public async Task TooShortIsDiscardedAndNothingIsWritten()
     {

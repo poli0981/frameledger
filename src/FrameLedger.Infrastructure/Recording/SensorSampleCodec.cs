@@ -11,43 +11,55 @@ namespace FrameLedger.Infrastructure.Recording;
 /// presence mask and only the fields that carry a value — null stays null across the round trip, which
 /// is the whole point (N/A is never 0).
 /// </summary>
+/// <remarks>
+/// Two forms. The NARROW one (chunk type <c>Sensors</c>, written until beta.11) has a 16-bit mask over 15 fields. The WIDE
+/// one (chunk type <c>SensorsWide</c>, written from beta.12) has a 32-bit mask over the same 15 fields plus the game
+/// process's memory (D43): five MiB figures, the process count and the sources. Both are read; only the wide one is
+/// written.
+/// </remarks>
 internal static class SensorSampleCodec
 {
-    // 12 GPU fields + 3 system fields (2026-09-21) in one 16-bit mask. A .partial written before that date has bits
+    // 12 GPU fields + 3 system fields (2026-09-21) in the narrow 16-bit mask. A .partial written before that date has bits
     // 12..14 clear and reads back with an empty SystemReading, which is what it recorded.
-    private const int _fieldCount = 15;
-    private const int _fixedBytes = 8 + 8 + 1 + 2;
+    private const int _narrowFields = 15;
 
-    public static int SizeOf(in TelemetrySample sample) => _fixedBytes + 8 * PresentCount(in sample);
+    // + 5 game-memory figures, the process count and the sources (beta.12, D43) in the wide 32-bit mask.
+    private const int _wideFields = 22;
+    private const int _narrowFixedBytes = 8 + 8 + 1 + 2;
+    private const int _wideFixedBytes = 8 + 8 + 1 + 4;
 
+    public static int SizeOf(in TelemetrySample sample) => _wideFixedBytes + 8 * Fields(in sample).Count(static f => f is not null);
+
+    /// <summary>Writes the wide form; returns the bytes written.</summary>
     public static int Write(Span<byte> into, in TelemetrySample sample)
     {
         GpuSample s = sample.Sample;
         BinaryPrimitives.WriteInt64LittleEndian(into, sample.QpcTicks);
         BinaryPrimitives.WriteInt64LittleEndian(into[8..], s.TakenAt.ToUnixTimeMilliseconds());
         into[16] = (byte)s.Layer;
-        ushort mask = 0;
-        int at = _fixedBytes;
+        uint mask = 0;
+        int at = _wideFixedBytes;
         double?[] fields = Fields(in sample);
-        for (int i = 0; i < _fieldCount; i++)
+        for (int i = 0; i < _wideFields; i++)
         {
             if (fields[i] is { } v)
             {
-                mask |= (ushort)(1 << i);
+                mask |= 1u << i;
                 BinaryPrimitives.WriteDoubleLittleEndian(into[at..], v);
                 at += 8;
             }
         }
 
-        BinaryPrimitives.WriteUInt16LittleEndian(into[17..], mask);
+        BinaryPrimitives.WriteUInt32LittleEndian(into[17..], mask);
         return at;
     }
 
-    /// <summary>Reads one sample; returns the bytes consumed, or 0 when the span is too short.</summary>
-    public static int Read(ReadOnlySpan<byte> from, out TelemetrySample sample)
+    /// <summary>Reads one sample in either form; returns the bytes consumed, or 0 when the span is too short.</summary>
+    public static int Read(ReadOnlySpan<byte> from, bool wide, out TelemetrySample sample)
     {
         sample = default;
-        if (from.Length < _fixedBytes)
+        int fixedBytes = wide ? _wideFixedBytes : _narrowFixedBytes;
+        if (from.Length < fixedBytes)
         {
             return 0;
         }
@@ -55,18 +67,19 @@ internal static class SensorSampleCodec
         long qpc = BinaryPrimitives.ReadInt64LittleEndian(from);
         long takenAt = BinaryPrimitives.ReadInt64LittleEndian(from[8..]);
         var layer = (TelemetryLayer)from[16];
-        ushort mask = BinaryPrimitives.ReadUInt16LittleEndian(from[17..]);
+        uint mask = wide ? BinaryPrimitives.ReadUInt32LittleEndian(from[17..]) : BinaryPrimitives.ReadUInt16LittleEndian(from[17..]);
+        int count = wide ? _wideFields : _narrowFields;
         int present = System.Numerics.BitOperations.PopCount(mask);
-        if (from.Length < _fixedBytes + 8 * present)
+        if (from.Length < fixedBytes + 8 * present)
         {
             return 0;
         }
 
-        var fields = new double?[_fieldCount];
-        int at = _fixedBytes;
-        for (int i = 0; i < _fieldCount; i++)
+        var fields = new double?[_wideFields];
+        int at = fixedBytes;
+        for (int i = 0; i < count; i++)
         {
-            if ((mask & (1 << i)) != 0)
+            if ((mask & (1u << i)) != 0)
             {
                 fields[i] = BinaryPrimitives.ReadDoubleLittleEndian(from[at..]);
                 at += 8;
@@ -89,20 +102,28 @@ internal static class SensorSampleCodec
             ThrottleReasons = fields[9] is { } t ? (uint)t : null,
             PcieGen = fields[10] is { } g ? (int)g : null,
             PcieWidth = fields[11] is { } w ? (int)w : null,
-        }, new SystemReading(fields[12], fields[13], fields[14]));
+        }, new SystemReading(fields[12], fields[13], fields[14]), new ProcessReading(
+            VramDedicatedMb: fields[15],
+            VramSharedMb: fields[16],
+            RamPrivateMb: fields[17],
+            RamWorkingSetMb: fields[18],
+            CommitMb: fields[19],
+            Processes: fields[20] is { } n ? (int)n : 0,
+            Sources: fields[21] is { } src ? (ProcessReadingSources)(int)src : ProcessReadingSources.None));
         return at;
     }
-
-    private static int PresentCount(in TelemetrySample sample) => Fields(in sample).Count(static f => f is not null);
 
     private static double?[] Fields(in TelemetrySample sample)
     {
         GpuSample s = sample.Sample;
+        ProcessReading game = sample.Game;
         return
         [
             s.TempCoreC, s.TempHotspotC, s.TempMemoryC, s.LoadPct, s.VramAdapterMb, s.CoreClockMhz, s.MemClockMhz,
             s.PowerW, s.FanRpm, s.ThrottleReasons, s.PcieGen, s.PcieWidth,
             sample.System.CpuLoadPct, sample.System.RamUsedMb, sample.System.CpuTempC,
+            game.VramDedicatedMb, game.VramSharedMb, game.RamPrivateMb, game.RamWorkingSetMb, game.CommitMb,
+            game.IsEmpty ? null : game.Processes, game.IsEmpty ? null : (int)game.Sources,
         ];
     }
 }

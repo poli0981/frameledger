@@ -16,10 +16,11 @@ namespace FrameLedger.Application.Telemetry;
 /// </para>
 /// <para>
 /// <see cref="Descriptor"/> is what <c>sessions.telemetry_source</c> stores: the layers still
-/// standing, lowest first, joined with <c>+</c> (<c>l1+lhm+nvapi</c>). It is read at finalize
+/// standing, lowest first, joined with <c>+</c> (<c>l1+lhm+nvapi</c>). ~~It is read at finalize
 /// time, so a layer disabled mid-session drops out of the descriptor the session is stored
-/// under — the descriptor names what the aggregates could have come from, not what was
-/// constructed.
+/// under.~~ **It is read when the session starts** (<c>SessionRecorder</c> puts it in the
+/// <c>.partial</c> header, and that is what is stored) — corrected 2026-10-03: the sentence said
+/// finalize, which the recorder never did, so a layer disabled mid-session stays in the descriptor.
 /// </para>
 /// </remarks>
 public interface ITelemetryPoller : IDisposable
@@ -34,4 +35,10 @@ public interface ITelemetryPoller : IDisposable
 
     /// <summary>Move every queued sample into <paramref name="into"/>, oldest first. Returns how many.</summary>
     int Drain(ICollection<TelemetrySample> into);
+
+    /// <summary>
+    /// The game process whose own memory the thread reads from now on (beta.12, D43) — told by the capture loop, which owns
+    /// what may be opened (<see cref="GameProcess"/>). A poller with no game source ignores it.
+    /// </summary>
+    void Follow(GameProcess target) { }
 }

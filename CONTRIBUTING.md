@@ -37,7 +37,9 @@ The definition of done is the one in `CLAUDE.md`:
 - every new user-visible string exists in `en`, `vi` and `ja` (`docs/09_I18N.md`);
 - a change that makes a document wrong updates that document in the same PR;
 - a change under `src/` adds an entry under `## [Unreleased]` in `CHANGELOG.md`;
-- every new source file carries the licence header — `./tools/notice-check.ps1 -Fix` writes it.
+- every new source file carries the licence header — `./tools/notice-check.ps1 -Fix` writes it. A file you wrote
+  yourself may name you in its second line instead, in the same form:
+  `Copyright (C) <year> <your name> - additional terms under GPLv3 section 7: see NOTICE`.
 
 The pull-request template lists the safety checks for changes to the capture layer.
 

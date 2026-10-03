@@ -137,6 +137,7 @@ internal sealed class AgentRecording
         NvapiTelemetrySource? l3 = null;
         CompositeTelemetrySource? composite = null;
         SystemTelemetrySource? system = null;
+        GameMemoryReader? game = null;
         try
         {
             pdh = new PdhAdapterMemoryCounter();
@@ -154,9 +155,13 @@ internal sealed class AgentRecording
             // The machine beside the GPU (2026-09-21): CPU busy time and memory unprivileged, the CPU temperature only
             // where this process is elevated and PawnIO is installed. The poller owns it with the layers.
             system = SystemTelemetrySource.Create();
-            var poller = new TelemetryPoller(composite, new TelemetryPollerOptions { Interval = interval }, TimeProvider.System, ownsSource: true, system);
+            // The game process's own memory (beta.12, D43): read from outside it through FrameLedger.ProcessStats.dll, for
+            // whichever process the capture loop tells the poller to follow. Absent DLL = N/A, never a fault.
+            game = new GameMemoryReader(new NativeProcessStats());
+            var poller = new TelemetryPoller(composite, new TelemetryPollerOptions { Interval = interval }, TimeProvider.System, ownsSource: true, system, game);
             composite = null;
             system = null;
+            game = null;
             return poller;
         }
         finally
@@ -167,6 +172,7 @@ internal sealed class AgentRecording
             l3?.Dispose();
             composite?.Dispose();
             system?.Dispose();
+            game?.Dispose();
         }
     }
 
