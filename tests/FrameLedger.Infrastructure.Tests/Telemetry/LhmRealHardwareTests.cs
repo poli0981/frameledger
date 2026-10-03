@@ -18,6 +18,7 @@ namespace FrameLedger.Infrastructure.Tests.Telemetry;
 /// <c>spike-notes</c> §10 — this case only proves the port behaves under the real library.
 /// </remarks>
 [Trait("Category", "Integration")]
+[Collection(LibreHardwareMonitorCollection.Name)]
 public sealed class LhmRealHardwareTests
 {
     [Fact]

@@ -39,9 +39,9 @@ Requirement IDs (`FR-x`, `NFR-x`) are referenced by other docs, commits, and tes
 - FR-4.2 **Native vs Displayed FPS + FG factor**, always shown together (`62 → 118 FPS (×1.9 FG)`).
 - FR-4.3 *(Tier 1)* Measured upscaler identity, quality preset, render resolution, output resolution, upscale ratio; mid-session changes captured as segments.
 - FR-4.4 *(Tier 1)* Measured RT activity (`rt_frame_pct`, `rays_per_pixel`, RT PSO count); RR from the NGX feature; PT as a confidence-scored suggestion only.
-- FR-4.5 *(Tier 1)* Per-process VRAM usage/budget and budget-exceeded percentage.
+- FR-4.5 *(Tier 1)* Per-process VRAM usage/budget and budget-exceeded percentage. *(beta.12, owner decision D43: the **usage** half is met for **both tiers** from outside the game — the game process's dedicated and shared GPU memory, Task Manager's columns — with its private working set, working set and commit beside it, mean / median / peak (`03_METRICS` §Game process memory). The budget and its exceeded percentage stay unmeasured, `20_OPEN_QUESTIONS` §M11.)*
 - FR-4.6 *(Tier 1)* PSO-compilation stutter attribution; *(Tier 1 + Reflex)* PC latency avg/p95.
-- FR-4.7 Telemetry aggregates: CPU/GPU temp, hotspot, loads, power, throttle %, RAM.
+- FR-4.7 Telemetry aggregates: CPU/GPU temp, hotspot, loads, power, throttle %, RAM. *(beta.12: every stored series also has its median and minimum, in `sensor_stats_json`.)*
 - FR-4.8 Sufficiency guards: 0.1% Low needs ≥ 10,000 app frames, 1% Low ≥ 1,000; else `N/A`.
 - FR-4.9 Any metric unavailable at the session's tier renders `N/A` — never an estimate presented as measurement.
 

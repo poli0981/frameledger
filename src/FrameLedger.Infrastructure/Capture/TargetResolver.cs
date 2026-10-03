@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using FrameLedger.Application.Capture;
+using FrameLedger.Application.Telemetry;
 using FrameLedger.Application.Watch;
 using FrameLedger.Infrastructure.Io;
 
@@ -96,6 +97,9 @@ public sealed class TargetResolver : ITargetResolver
 
     /// <inheritdoc />
     public IReadOnlyList<int> PidsOf(string normalisedExePath) => _latest?.PidsOf(normalisedExePath) ?? [];
+
+    /// <inheritdoc />
+    public IReadOnlyList<GameProcessId> ProcessesOf(string normalisedExePath) => _latest?.ProcessesOf(normalisedExePath) ?? [];
 
     /// <inheritdoc />
     public bool IsRunning(string normalisedExePath)

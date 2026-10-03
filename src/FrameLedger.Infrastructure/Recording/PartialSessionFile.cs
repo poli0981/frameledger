@@ -157,7 +157,8 @@ public static class PartialSessionFile
             {
                 PartialChunkType.Records => Records(payload),
                 PartialChunkType.Gaps => Int32s(payload, _gaps),
-                PartialChunkType.Sensors => Sensors(payload),
+                PartialChunkType.Sensors => Sensors(payload, wide: false),
+                PartialChunkType.SensorsWide => Sensors(payload, wide: true),
                 PartialChunkType.Tick => Tick(payload),
                 PartialChunkType.Note => Note(payload),
                 PartialChunkType.Touches => Int64s(payload, _touches),
@@ -244,12 +245,12 @@ public static class PartialSessionFile
             return true;
         }
 
-        private bool Sensors(ReadOnlySpan<byte> payload)
+        private bool Sensors(ReadOnlySpan<byte> payload, bool wide)
         {
             int at = 0;
             while (at < payload.Length)
             {
-                int used = SensorSampleCodec.Read(payload[at..], out TelemetrySample sample);
+                int used = SensorSampleCodec.Read(payload[at..], wide, out TelemetrySample sample);
                 if (used == 0)
                 {
                     return false;
@@ -351,7 +352,7 @@ public static class PartialSessionFile
                 at += SensorSampleCodec.Write(payload.AsSpan(at), in s);
             }
 
-            Append(PartialChunkType.Sensors, payload);
+            Append(PartialChunkType.SensorsWide, payload);
         }
 
         public void AppendTick(PartialTick tick)

@@ -328,7 +328,7 @@ So:
 ### Memory / latency
 | Hook / call | Yields |
 |---|---|
-| `IDXGIAdapter3::QueryVideoMemoryInfo` (we **call** it, not hook it, once per second from our own thread) | **Per-process VRAM** `CurrentUsage` + `Budget` — previously impossible; now exact |
+| ~~`IDXGIAdapter3::QueryVideoMemoryInfo` (we **call** it, not hook it, once per second from our own thread)~~ | ~~**Per-process VRAM** `CurrentUsage` + `Budget` — previously impossible; now exact~~ **Never built; superseded 2026-10-03 (D43):** the game's memory is read from OUTSIDE the game by the Agent (`18_GPU_VENDOR_APIS` §The game process's memory), so nothing in the Overlay calls it. Only the budget would need it, and that stays open (`20_OPEN_QUESTIONS` §M11) |
 | NVAPI Reflex: hook `NvAPI_D3D_SetSleepMode`, `NvAPI_D3D_SetLatencyMarker`; call `NvAPI_D3D_GetLatency` | Reflex on/off + PC latency breakdown. Declarations come from the vendored MIT NVAPI headers (`18_GPU_VENDOR_APIS` §L3); the Overlay links them like any other header. NVIDIA-only — the whole block compiles out to a no-op capability flag elsewhere |
 
 ### Explicitly not hooked

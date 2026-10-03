@@ -28,7 +28,7 @@ namespace FrameLedger.Infrastructure.Capture;
 /// loop must not proceed to inject into a pid whose identity it could not pin.
 /// </para>
 /// </remarks>
-public sealed class ProcessTargetLiveness(HeldProcessHandle handle, int pid) : ITargetLiveness
+public sealed class ProcessTargetLiveness(HeldProcessHandle handle, int pid) : ITargetLiveness, IHeldProcessHandle
 {
     private readonly HeldProcessHandle _handle = handle ?? throw new ArgumentNullException(nameof(handle));
 
@@ -48,6 +48,9 @@ public sealed class ProcessTargetLiveness(HeldProcessHandle handle, int pid) : I
     /// the report is required to treat as uninformative.
     /// </remarks>
     public bool IsForeground => ForegroundWindowProbe.IsForeground(pid);
+
+    /// <summary>The held handle, lent to <c>GameMemoryReader</c> for the game's memory counters (beta.12, D43).</summary>
+    public System.Runtime.InteropServices.SafeHandle ProcessHandle => _handle.Handle;
 
     public void Dispose() => _handle.Dispose();
 }

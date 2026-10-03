@@ -29,6 +29,22 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Added
 
+- **The game's own memory, measured from outside the game, in every session** (owner decision D43, beta.12). A new
+  C++ library loaded by the Agent — never into a game — `FrameLedger.ProcessStats.dll`, reads once a second the game
+  process's **dedicated and shared GPU memory** (the documented `GPU Process Memory` performance counters, which need no
+  handle to the game) and its **private working set, working set and commit** (`GetProcessMemoryInfo` with
+  `PROCESS_QUERY_LIMITED_INFORMATION` only) — the numbers Task Manager's Details tab shows. A hooked game is read through
+  the handle the session already holds; a game that is not measured (anti-cheat, hooking off) through a handle opened for
+  the read and closed after it, the same least right the watcher already uses on every process, every process running its
+  executable added up, a reused pid refused. Measured before it was written in (`spike-notes` §16): a 512 MiB allocation
+  read +512.0 MiB, the private working set equals Windows' own counter, one read costs 0.1 ms, 600 reads leak nothing.
+  Stored as five new sensor series and, in schema **0018**, the median / mean / peak columns
+  (`game_vram_dedicated_*`, `game_ram_private_*`, …), the process count, the sources, and every sensor series'
+  n / mean / median / min / max in `sensor_stats_json`; carried live to the Dashboard (`SessionProgress`, `SessionHeld`)
+  and through the crash-recovery file (a new chunk type; beta.11's files still recover). The video-memory **budget** is
+  still not measured (`20_OPEN_QUESTIONS` §M11). The App shows all of it in the next change.
+- **Sensor statistics have a median and a minimum** beside the mean and the maximum (`SeriesAggregates`).
+
 - **`NOTICE`, and the licence header in every source file** (owner decision D45, beta.12). FrameLedger's own material is
   GPL-3.0-only with three additional terms of the kinds GPLv3 §7 permits: keep the copyright line and the attribution in
   the program's legal notices (b), mark a modified version as different and do not call it "FrameLedger" alone (c), and
@@ -46,6 +62,15 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   the name FrameLedger may be used).
 
 ### Fixed
+
+- **A licence header written by a contributor no longer has to name poli0981**: `tools/notice-check.ps1` accepts any
+  holder and year in the same form (`Copyright (C) <year> <holder> - additional terms under GPLv3 section 7: see NOTICE`),
+  and `CONTRIBUTING.md` says so; seven self-test cases.
+- **Documents that described a per-process VRAM figure the Overlay never produced** are corrected in place
+  (`03_METRICS`, `17_HOOK_ENGINE`, `18_GPU_VENDOR_APIS`, `20_OPEN_QUESTIONS` §M7/§H10), and the two that said an unmeasured
+  session opens no process (`04_CAPTURE`, `19_SAFETY`) now say what it opens, with which right, and why. The accuracy block
+  and `LIMITATIONS.md` say what is measured now. `ITelemetryPoller`'s remark that the descriptor is read at finalize — it is
+  read at session start — is corrected.
 
 - **The native binaries' version block named the wrong licence.** Every DLL's `LegalCopyright` read
   `GPL-3.0-or-later` while `LICENSE`, the EULA, the README and the third-party notices all say GPL-3.0-only; it now reads

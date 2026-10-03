@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using FrameLedger.Application.Telemetry;
+
 namespace FrameLedger.Application.Watch;
 
 /// <summary>
@@ -61,6 +63,20 @@ public sealed class LatestProcessSnapshot
         ArgumentException.ThrowIfNullOrWhiteSpace(normalisedExePath);
         return Current is { } snapshot
             ? [.. snapshot.Where(p => p.ImagePath is { } image && string.Equals(image, normalisedExePath, StringComparison.OrdinalIgnoreCase)).Select(static p => p.Pid)]
+            : [];
+    }
+
+    /// <summary>
+    /// <see cref="PidsOf"/> with each process's creation time (beta.12, D43): what an unpinned hold reads the game's memory
+    /// of. A process whose creation time could not be read is left out — the read verifies against it, and an unverifiable
+    /// pid is not read at all.
+    /// </summary>
+    public IReadOnlyList<GameProcessId> ProcessesOf(string normalisedExePath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(normalisedExePath);
+        return Current is { } snapshot
+            ? [.. snapshot.Where(p => p.StartedAt is not null && p.ImagePath is { } image && string.Equals(image, normalisedExePath, StringComparison.OrdinalIgnoreCase))
+                .Select(static p => new GameProcessId(p.Pid, p.StartedAt!.Value))]
             : [];
     }
 }

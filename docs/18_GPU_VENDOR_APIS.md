@@ -57,7 +57,32 @@ Implementations compose rather than compete:
 > poller sample is stamped with QPC (`TelemetrySample.QpcTicks`), the ring's clock, and
 > `QpcClockTests` pins `Stopwatch` / `TimeProvider.GetTimestamp` to the real counter.
 
-> Per-process VRAM comes from the **Overlay** (`IDXGIAdapter3::QueryVideoMemoryInfo` inside the game), not from here. Adapter-wide VRAM is a separate series with a different label — they answer different questions and users will otherwise think one of them is broken.
+> ~~Per-process VRAM comes from the **Overlay** (`IDXGIAdapter3::QueryVideoMemoryInfo` inside the game), not from here.~~
+> **Corrected 2026-10-03 (beta.12, D43): the game process's memory is read from OUTSIDE the game** — §The game process's
+> memory below; the Overlay never called `QueryVideoMemoryInfo`. Adapter-wide VRAM is a separate series with a different
+> label — they answer different questions and users will otherwise think one of them is broken.
+
+### The game process's memory (beta.12, owner decision D43)
+
+`FrameLedger.ProcessStats.dll` — the third native facade the Agent loads beside itself (`NativeProcessStats`, after the
+guard's and the NVAPI bridge's), never into a game — reads one process's memory per call:
+
+- **Video memory:** the documented performance counters `\GPU Process Memory(pid_<pid>_luid_…_phys_<n>)\Dedicated
+  Usage` and `\Shared Usage` (`PdhAddEnglishCounterW` with a `*` instance, so a localised counter name does not matter;
+  `PdhGetFormattedCounterArrayW` after each collection), every instance naming the pid **summed** — each adapter and
+  physical index the process allocated on. This is the per-process figure, so the adapter-wide rule below ("filter to our
+  adapter, don't sum blindly") does not apply to it. **No handle to the game is needed.**
+- **System memory:** `GetProcessMemoryInfo` with `PROCESS_MEMORY_COUNTERS_EX2` (its `PrivateWorkingSetSize` is Task
+  Manager's "Memory"), retried with `PROCESS_MEMORY_COUNTERS_EX` where the OS refuses the larger structure; an EX2
+  answer whose private working set was left as written (a sentinel) or reads zero beside a nonzero working set is N/A,
+  never a measured zero. It needs `PROCESS_QUERY_LIMITED_INFORMATION` and
+  nothing more: the session's held handle when it has one, else a handle opened for the read and closed after it, whose
+  creation time must be the watcher's (a reused pid is refused, not read).
+- **Not `D3DKMTQueryStatistics`.** It answers the same per-process segment figures, but Microsoft documents it as
+  "Reserved for system use"; the counters are the documented face of the same accounting.
+- Measured on the dev box (`spike-notes` §16): one collect + read costs 0.1 ms (max 0.22 ms), a 512 MiB allocation reads
+  +512.0 MiB, the private working set equals `\Process V2(…)\Working Set - Private`, 600 collections leak nothing. One
+  `GameMemoryReader` per session, on the session's `fl-telemetry` thread (`TelemetryPoller`'s third source).
 
 ## L1 — baseline (no licence, all vendors)
 
@@ -65,7 +90,8 @@ Implementations compose rather than compete:
 - **PDH performance counters** — the same source Task Manager uses, fully documented, vendor-neutral:
   - `\GPU Engine(*)\Utilization Percentage` (sum per engine type: 3D, Compute, Copy, VideoDecode)
   - `\GPU Adapter Memory(*)\Dedicated Usage`
-  - `\GPU Process Memory(*)\Dedicated Usage` (cross-check against the Overlay's figure)
+  - `\GPU Process Memory(*)\Dedicated Usage` ~~(cross-check against the Overlay's figure)~~ — **read since 2026-10-03
+    as the game process's own figure** (§The game process's memory; the Overlay never produced one)
   - Instance names embed the LUID — parse and filter to our adapter, don't sum blindly across GPUs.
 
   > **Built 2026-09-09 (PR-E1), one counter of the three:** `PdhAdapterMemoryCounter` binds
@@ -75,8 +101,10 @@ Implementations compose rather than compete:
   > idle desktop, moving tick to tick. A machine without the counter set fails the open and the
   > field is N/A with the layer standing — not a fault. **`Utilization Percentage` is deliberately
   > not read** (`20_OPEN_QUESTIONS` §M10, decided): `LoadPct` is L2's vendor-reported load and is
-  > labelled as such. `GPU Process Memory` is not read either — the Overlay's in-process figure is
-  > the one the pipeline stores, and a cross-check is a diagnostic, not a field.
+  > labelled as such. ~~`GPU Process Memory` is not read either — the Overlay's in-process figure is
+  > the one the pipeline stores, and a cross-check is a diagnostic, not a field.~~ **Since 2026-10-03 (D43) `GPU Process
+  > Memory` IS read** — by `FrameLedger.ProcessStats.dll`, as the game process's dedicated and shared GPU memory; there was
+  > never an in-process figure to cross-check.
 - **Driver version:** ~~`SetupAPI` / registry adapter properties.~~ **`IDXGIAdapter::CheckInterfaceSupport(IDXGIDevice)`** — its documented second output is the user-mode driver version for that interface, four 16-bit fields of one 64-bit value (`32.0.16.1664` on the dev box, 2026-09-09; the WARP adapter answers with the OS build). Neither SetupAPI nor the registry is walked: both need a device-instance enumeration nothing else here has a reason to carry. Feeds the hardware snapshot and the trend-chart change markers (`06_DATA_MODEL`). This is the four-part form the vendor's own tooling shows, not the marketing number (`561.09`), which only L3 knows.
 - **Optional probe, P0 evaluation only:** `D3DKMTQueryAdapterInfo` with `KMTQAITYPE_ADAPTERPERFDATA` reportedly exposes temperature, power and fan for any vendor. The D3DKMT structures are **not fully documented and have changed across Windows builds**. Treat as an experiment: if it proves stable on both Win 10 22H2 and Win 11 during P0, keep it as an L1 extra behind a capability flag; if it looks fragile, drop it and let L2 handle temperatures. Never let it be load-bearing.
 
@@ -338,7 +366,7 @@ as the same thing.
 |---|---|---|---|
 | GPU utilisation | **deferred by decision** (§M10, 2026-09-09) — L2's vendor-reported load is what `LoadPct` carries, labelled as such; the engine counters are not read | untested | untested |
 | Adapter VRAM | ✓ **measured 2026-09-09** — PDH `GPU Adapter Memory … Dedicated Usage`, 1301 MB at an idle desktop, RTX 5080 (`QueryVideoMemoryInfo` measured **not** adapter-wide: 0 bytes from the Agent) | untested | untested |
-| Per-process VRAM | `arch` for L1 — the Overlay's in-process `QueryVideoMemoryInfo` is the figure stored; `GPU Process Memory` is not read | `arch` | `arch` |
+| Per-process VRAM | ~~`arch` for L1 — the Overlay's in-process `QueryVideoMemoryInfo` is the figure stored; `GPU Process Memory` is not read~~ ✓ **measured 2026-10-03** — `GPU Process Memory` Dedicated/Shared by pid from outside the game, +512.0 MiB for a 512 MiB buffer (`spike-notes` §16) | untested | untested |
 | Driver version | ✓ **measured 2026-09-09** — `CheckInterfaceSupport(IDXGIDevice)` → `32.0.16.1664` | untested | untested |
 | Core temp | ? (D3DKMT probe, Win 11 only — see below) | untested | untested |
 | Power | ? (D3DKMT probe) | untested | untested |

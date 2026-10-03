@@ -7,6 +7,7 @@ using FrameLedger.Application.AntiCheat;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Consent;
 using FrameLedger.Application.Recording;
+using FrameLedger.Application.Telemetry;
 using FrameLedger.Application.Tests.AntiCheat;
 using FrameLedger.Domain.AntiCheat;
 using FrameLedger.Domain.Consent;
@@ -1157,6 +1158,95 @@ public sealed class CaptureSessionTests : IAsyncDisposable
             h.Verdict.Family.Should().Be("Riot Vanguard");
             h.TargetPid.Should().Be(_pid, "the pipe's start names the process the loop holds");
         });
+    }
+
+    /// <summary>What the loop told the observer to read the game's memory of (beta.12, D43), in order.</summary>
+    private sealed class MeasuringRecorder : ICaptureObserver
+    {
+        public List<GameProcess> Targets { get; } = [];
+
+        public void Attached(int pid, FlShmHandshake handshake)
+        {
+        }
+
+        public void Tick(CaptureProgress progress)
+        {
+        }
+
+        public void Measuring(GameProcess target) => Targets.Add(target);
+    }
+
+    /// <summary>A resolver whose watcher snapshot names a different set of processes after a few hold ticks.</summary>
+    private sealed class ChangingProcesses(int runningTicks, IReadOnlyList<GameProcessId> first, IReadOnlyList<GameProcessId> then, int switchAfter) : ITargetResolver
+    {
+        private int _running = runningTicks;
+        private int _asked;
+
+        public int? Resolve(string normalisedExePath, out SessionEndReason reason)
+        {
+            reason = SessionEndReason.Running;
+            return _pid;
+        }
+
+        public bool IsRunning(string normalisedExePath) => _running-- > 0;
+
+        public IReadOnlyList<int> PidsOf(string normalisedExePath) => [];
+
+        public IReadOnlyList<GameProcessId> ProcessesOf(string normalisedExePath) => _asked++ < switchAfter ? first : then;
+    }
+
+    /// <summary>
+    /// beta.12 (D43): a session refused after the pin is held through that pin, and the game's memory is read through it —
+    /// the observer hears the pinned process first and "none" before the pin is released, nothing in between.
+    /// </summary>
+    [Fact]
+    public async Task ARefusalAfterThePinReadsTheGamesMemoryThroughThePinAndLetsGoBeforeItCloses()
+    {
+        var guard = new CountingGuard { Verdict = AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedDriver, "Riot Vanguard", "vgk.sys") };
+        using var alive = new FakeLiveness { ExitAfterChecks = 3 };
+        var measuring = new MeasuringRecorder();
+
+        await With(await StoreWithAsync(), guard, new FixedResolver(_pid, SessionEndReason.Running), alive, measuring)
+            .RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        measuring.Targets.Should().HaveCount(2);
+        measuring.Targets[0].Pid.Should().Be(_pid);
+        measuring.Targets[0].PinnedBy.Should().BeSameAs(alive, "the session's own pin, whose handle the read borrows");
+        measuring.Targets[1].IsNone.Should().BeTrue("let go of before the pin's handle closes");
+    }
+
+    /// <summary>
+    /// beta.12 (D43): a hooking-off hold never opens the game for itself; it names the processes the watcher's snapshot
+    /// lists for the executable, re-announces only when that set changes, and lets go at the end.
+    /// </summary>
+    [Fact]
+    public async Task AnUnpinnedHoldAnnouncesItsProcessesWhenTheSetChangesAndLetsGoAtTheEnd()
+    {
+        var t = DateTimeOffset.UnixEpoch;
+        GameProcessId[] one = [new(100, t)];
+        GameProcessId[] two = [new(100, t), new(200, t.AddSeconds(3))];
+        var resolver = new ChangingProcesses(runningTicks: 8, first: one, then: two, switchAfter: 3);
+        var measuring = new MeasuringRecorder();
+        var guard = new CountingGuard();
+
+        CaptureOutcome r = await With(await StoreWithAsync(enabled: false), guard, new FixedResolver(_pid, SessionEndReason.Running, runningTicks: 0), observer: measuring)
+            .RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+        r.HeldUnhooked.Should().BeTrue();
+        measuring.Targets.Should().BeEmpty("a hold whose snapshot names no process announces nothing");
+
+        var held = new MeasuringRecorder();
+        await new CaptureSession(await StoreWithAsync(enabled: false), new HookedCaptureGate(guard), guard, resolver,
+                new DelegateLivenessSource(_ => new FakeLiveness()), new DelegateRingAttacher(_ => (null, ShmAttachRefusal.BuildIdMismatch)),
+                new CaptureOptions { HoldInterval = TimeSpan.FromMilliseconds(1), HoldUnhooked = true, MaxDuration = TimeSpan.FromSeconds(5) },
+                observer: held)
+            .RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        held.Targets.Should().HaveCount(3, "the first set, the changed set, and none at the end — never a repeat of an unchanged set");
+        held.Targets[0].Processes.Should().Equal(one);
+        held.Targets[0].PinnedBy.Should().BeNull("nothing was pinned: each process is opened only for its read, by the reader");
+        held.Targets[1].Processes.Should().Equal(two);
+        held.Targets[2].IsNone.Should().BeTrue();
+        guard.InjectCalls.Should().Be(0);
     }
 
     [Fact]

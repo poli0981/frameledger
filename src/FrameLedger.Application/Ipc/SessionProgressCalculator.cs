@@ -31,7 +31,8 @@ public static class SessionProgressCalculator
 {
     public const double WindowSeconds = 5;
 
-    public static SessionProgressEvent Compute(Guid sessionGuid, CaptureProgress progress, long qpcFrequency, double elapsedSeconds, GpuSample? gpu, SystemReading system = default)
+    public static SessionProgressEvent Compute(Guid sessionGuid, CaptureProgress progress, long qpcFrequency, double elapsedSeconds, GpuSample? gpu,
+        SystemReading system = default, ProcessReading game = default)
     {
         ArgumentNullException.ThrowIfNull(progress);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(qpcFrequency);
@@ -75,6 +76,8 @@ public static class SessionProgressCalculator
             CpuLoadPct = system.CpuLoadPct,
             VramProcMb = Newest(w.All, MeasuredFields.Vram, static s => s.VramUsedMb > 0 ? (int)s.VramUsedMb : null),
             LatencyUs = Newest(w.All, MeasuredFields.Latency, static s => s.ReflexLatencyUs > 0 ? (int)s.ReflexLatencyUs : null),
+            GameVramDedicatedMb = game.VramDedicatedMb,
+            GameRamPrivateMb = game.RamPrivateMb,
         };
     }
 

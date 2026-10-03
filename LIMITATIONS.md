@@ -34,7 +34,8 @@ page lists them in plain words; each item links to the document that has the det
 ## What an unmeasured session contains
 
 When a game is not measured — any of the reasons above — its session still records **how long it ran, the
-machine's sensors (GPU temperature, load, power; CPU load; memory) and why nothing was measured.** Every
+machine's sensors (GPU temperature, load, power; CPU load; memory), how much memory the game itself used (read from
+Windows, outside the game) and why nothing was measured.** Every
 frame-rate, upscaler, frame-generation and ray-tracing value reads **N/A**, never 0. How the game's window was
 shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
 
@@ -63,9 +64,21 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
 - **Ray tracing** is *Yes*, *No* or *N/A* — measured from the game's ray-tracing calls on Direct3D 12, and
   N/A where FrameLedger could not look. **Path tracing is never stated as a fact**: there is no API signal
   for it. You can correct any of these by hand, and your correction is labelled as yours.
-- HDR output, NVIDIA Reflex latency, each game's own video-memory use and shader-compilation stutter are
-  **not measured yet** — they read N/A. Video memory in use on the whole graphics card is recorded.
-  ([Accuracy](legal/ACCURACY.md))
+- HDR output, NVIDIA Reflex latency, the video-memory budget Windows gives a game, and shader-compilation
+  stutter are **not measured yet** — they read N/A. ([Accuracy](legal/ACCURACY.md))
+
+## The game's memory
+
+- **What is shown is what Task Manager's Details tab shows** for the game's process — *Dedicated GPU memory*,
+  *Shared GPU memory* and *Memory* (the private working set) — read from Windows once a second, from outside
+  the game. FrameLedger never looks inside the game's memory to get it.
+- **One process.** A measured game is its own process; for a game that is not measured, every process running
+  the game's executable is added together. Launchers, crash reporters and other helper programs are not counted.
+- **The private working set needs a recent Windows**: Windows 10 22H2 or Windows 11 with the September 2023
+  update or later. Without it the working set is shown instead, labelled as such.
+- A game that has not created anything on the graphics card yet (its first second, a launcher screen) reads
+  N/A for video memory. AMD and Intel graphics cards have not been tested.
+  ([Metrics](docs/03_METRICS.md))
 
 ## Display mode (full-screen, borderless, windowed)
 

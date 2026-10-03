@@ -83,6 +83,7 @@
   -->
   <Import Project="$(MSBuildThisFileDirectory)..\..\FrameLedger.Guard.targets" />
   <Import Project="$(MSBuildThisFileDirectory)..\..\FrameLedger.NvapiBridge.targets" />
+  <Import Project="$(MSBuildThisFileDirectory)..\..\FrameLedger.ProcessStats.targets" />
   <Import Project="$(MSBuildThisFileDirectory)..\..\FrameLedger.Rules.targets" />
   <Import Project="$(MSBuildThisFileDirectory)..\..\FrameLedger.Overlay.targets" />
 

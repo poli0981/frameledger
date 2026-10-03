@@ -745,13 +745,53 @@ its Sessions column, three Trend metrics — *Exclusive fullscreen share %*, *Bo
 tier, and a mode switch is not a mid-session change for them (switching resizes the swap chain; the share is what that
 switch was) — three Compare rows, never ranked, and the CSV's `# display:` line (§Export schema) and the JSON's aggregates.
 
-## Per-process VRAM (Tier 1)
+## Game process memory — both tiers (beta.12, owner decision D43)
 
-`vramUsedMb` from `IDXGIAdapter3::QueryVideoMemoryInfo(LOCAL)` inside the game = **this game's** usage and budget. **MiB, truncating, and it must use the same divisor as `vramBudgetMb`** — the two are compared, and mismatched rounding would put a systematic bias into `budget_exceeded_pct`. Residual: a flip within 1 MiB of the budget, 0.004% of a 24 GiB card. Stored as its own series and clearly labelled apart from the adapter-wide figure from `18_GPU_VENDOR_APIS`. Aggregates: avg, max, and `budget_exceeded_pct` (share of samples where `CurrentUsage > Budget`, i.e. the driver was likely evicting — a genuinely useful stutter explanation).
+**What is measured since 2026-10-03:** the game process's own memory, read from OUTSIDE the game once a second by the
+Agent through `FrameLedger.ProcessStats.dll` (`18_GPU_VENDOR_APIS` §The game process's memory) — never from the game's
+memory (CLAUDE.md rule 4):
+
+| Figure | Source | What it is |
+|---|---|---|
+| **Dedicated GPU memory** (`game_vram_dedicated`) | PDH `\GPU Process Memory(pid_<pid>_luid_…_phys_<n>)\Dedicated Usage`, every instance naming the pid summed | the number Task Manager's Details tab shows under that name |
+| Shared GPU memory (`game_vram_shared`) | the same counter set's `Shared Usage` | system memory the GPU uses on the game's behalf |
+| **Memory — private working set** (`game_ram_private`) | `GetProcessMemoryInfo`, `PROCESS_MEMORY_COUNTERS_EX2.PrivateWorkingSetSize` | Task Manager's "Memory" column; N/A on a Windows that predates EX2 (Windows 10 22H2 / 11 22H2 without the September 2023 update) |
+| Working set (`game_ram_ws`) | `WorkingSetSize` | the whole working set, shared pages included; what the card falls back to where the private working set is N/A |
+| Commit (`game_commit`) | `PrivateUsage` | private memory committed, resident or not |
+
+**Which process.** A hooked session — and any session refused after the loop pinned the process — reads the pinned pid
+through the handle the session already holds (`SYNCHRONIZE | PROCESS_QUERY_LIMITED_INFORMATION`). An unpinned Tier-2 hold
+(hooking off, blocked, unresolved, cannot pin) reads **every process running the game's executable** in the watcher's
+snapshot, each opened for the read with `PROCESS_QUERY_LIMITED_INFORMATION` and closed after it, and SUMS them; a process
+whose creation time is not the snapshot's (a reused pid), or that refuses even that right, is left out of both halves.
+`game_memory_processes` says how many were summed. Child processes of another executable (a launcher, a crash handler, a
+web view) are not counted.
+
+**Dedicated is not the DXGI budget model's "local usage".** dwm.exe read 858 MB dedicated against 310 MB local at an idle
+desktop, and a test process holding a buffer read 4.5 MiB more dedicated than its own `QueryVideoMemoryInfo(LOCAL)` at
+both 8 MiB and 512 MiB (`spike-notes` §16, M3) — a constant per-device amount, not one that grows with the game's
+allocations. So dedicated is defined as Task Manager's column and is **never compared with a budget**: the budget and
+`budget_exceeded_pct` stay unmeasured (`20_OPEN_QUESTIONS` §M11), and `vram_proc_*` / `vram_budget_exceeded_pct` /
+`FlFrameRecord.vramUsedMb` stay reserved for that in-process figure.
+
+**Aggregates** (schema 0018): dedicated avg / median / max, shared max, private working set avg / median / max, working
+set max, commit max, the process count, the sources (`counters,ex2,held,opened`), and every series' n / mean / median /
+min / max in `sensor_stats_json` (§Sensor aggregates). MiB stored; shown in GB as Task Manager does (1 GB = 1024 MiB).
+
+> **The paragraph below is the design that was never built, kept as it stood** (struck 2026-10-03: the Overlay never
+> called `QueryVideoMemoryInfo` — `dllmain.cpp` lists `FL_MEASURED_VRAM` as unproduced, §H10 never settled where in the
+> game to call it — and D43 chose the outside read instead).
+
+~~`vramUsedMb` from `IDXGIAdapter3::QueryVideoMemoryInfo(LOCAL)` inside the game = **this game's** usage and budget. **MiB, truncating, and it must use the same divisor as `vramBudgetMb`** — the two are compared, and mismatched rounding would put a systematic bias into `budget_exceeded_pct`. Residual: a flip within 1 MiB of the budget, 0.004% of a 24 GiB card. Stored as its own series and clearly labelled apart from the adapter-wide figure from `18_GPU_VENDOR_APIS`. Aggregates: avg, max, and `budget_exceeded_pct` (share of samples where `CurrentUsage > Budget`, i.e. the driver was likely evicting — a genuinely useful stutter explanation).~~
 
 ## Sensor aggregates
 
-Per session over 1 Hz samples: `avg` (mean of non-null), `max`. Sensor timeline aligned to the frame timeline via the shared QPC epoch captured at session start. Fields with no data are `N/A`, never 0.
+Per session over 1 Hz samples: `avg` (mean of non-null), `max` — and since beta.12 the `median` (the linear-interpolation
+50th percentile: the middle sample of an odd count, the mean of the two middle ones of an even count) and the `min`
+(`Domain.Metrics.SeriesAggregates`). Every stored series' n / mean / median / min / max is written once at finalize to
+`sessions.sensor_stats_json`, so the summary's statistics read stored values and outlive a retention sweep of the raw
+series. Sensor timeline aligned to the frame timeline via the shared QPC epoch captured at session start. Fields with no
+data are `N/A`, never 0.
 
 ## Accuracy budget (shown in Help → About metrics)
 
@@ -762,7 +802,7 @@ Per session over 1 Hz samples: `avg` (mean of non-null), `max`. Sensor timeline 
 | Upscaler + render resolution | **exact** (vendor API arguments) | not available |
 | RT active | measured per frame | not available |
 | Path tracing | heuristic, confidence-scored, never asserted | not available |
-| Per-process VRAM | exact | not available |
+| ~~Per-process VRAM~~ Game process memory (beta.12) | ~~exact~~ dedicated / shared GPU memory as Task Manager counts it — a known 512 MiB allocation read +512.0 MiB (`spike-notes` §16); private working set equal to Windows' own counter; read from outside the game | ~~not available~~ the same, from outside; an unpinned hold sums the executable's processes |
 | PC latency | as reported by Reflex | not available |
 | Display mode (beta.10) | per 100 ms sample: exclusive fullscreen as the swap chain answers it (DXGI; OpenGL and Vulkan cannot say), borderless, windowed, minimised; the window's size from user32 | per 1 s sample, from the window alone: windowed, minimised, or *fullscreen or borderless* — never split |
 | GPU temp / load / power | vendor API accuracy, ±1 s sampling | same |

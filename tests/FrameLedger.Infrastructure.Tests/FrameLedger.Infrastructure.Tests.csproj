@@ -35,6 +35,7 @@
   -->
   <Import Project="$(MSBuildThisFileDirectory)..\..\FrameLedger.Guard.targets" />
   <Import Project="$(MSBuildThisFileDirectory)..\..\FrameLedger.NvapiBridge.targets" />
+  <Import Project="$(MSBuildThisFileDirectory)..\..\FrameLedger.ProcessStats.targets" />
 
   <!--
     The packaged seed, so the seeder tests run against the artifact that ships

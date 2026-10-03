@@ -1,0 +1,34 @@
+<Project>
+
+  <!--
+    Ships FrameLedger.ProcessStats.dll beside the importing project's output (beta.12, owner decision D43).
+
+    The third P/Invoke facade after the guard's and the NVAPI bridge's (docs/18_GPU_VENDOR_APIS.md §L1, the game
+    process's memory): NativeProcessStats loads it BY ABSOLUTE PATH from AppContext.BaseDirectory and never falls back
+    to a search, so it has to actually be there. Read-only, and NEVER loaded into a game — the Agent (and the unshipped
+    capture host) load it into their own process for the 1 Hz read of a game's dedicated/shared GPU memory (the
+    GPU Process Memory counters) and its working sets (GetProcessMemoryInfo).
+
+    Imported by the same three projects as the bridge: FrameLedger.Agent, FrameLedger.CaptureHost and
+    FrameLedger.Infrastructure.Tests (the mirror test and the real read P/Invoke into the real DLL).
+
+    Warn rather than fail when absent, as the bridge does: an absent reader is a missing measurement (every game-memory
+    field reads N/A), not a safety hole.
+  -->
+  <PropertyGroup>
+    <FlProcessStatsOutDir>$(MSBuildThisFileDirectory)build\native\x64-release\FrameLedger.ProcessStats\</FlProcessStatsOutDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="$(FlProcessStatsOutDir)FrameLedger.ProcessStats.dll" Condition="Exists('$(FlProcessStatsOutDir)FrameLedger.ProcessStats.dll')">
+      <Link>FrameLedger.ProcessStats.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <Target Name="FlWarnOnMissingProcessStats" AfterTargets="Build"
+          Condition="!Exists('$(FlProcessStatsOutDir)FrameLedger.ProcessStats.dll')">
+    <Warning Text="FrameLedger.ProcessStats.dll was not found at $(FlProcessStatsOutDir). Run build.ps1 native first; the game's memory will read N/A." />
+  </Target>
+
+</Project>

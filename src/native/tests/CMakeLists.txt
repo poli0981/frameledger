@@ -27,6 +27,21 @@ set_tests_properties(fl_nvapi_bridge PROPERTIES
     PASS_REGULAR_EXPRESSION "BRANCH: (AVAILABLE|DEGRADED)"
     FAIL_REGULAR_EXPRESSION "FAILED:;[0-9]+ failed")
 
+# The process-memory reader's C ABI (beta.12, D43). Same shape as the bridge above: the SHIPPED DLL, copied beside
+# the test, a branch line that says which machine this is (a CI runner has no hardware adapter, so the video half
+# takes NO_GPU_INSTANCE there), and a failed assertion fails the test whatever the branch.
+add_executable(fl_process_stats_test process_stats_test.cpp)
+target_link_libraries(fl_process_stats_test PRIVATE FrameLedger.ProcessStats fl_native_flags Catch2::Catch2WithMain)
+target_compile_options(fl_process_stats_test PRIVATE /EHsc)
+target_compile_definitions(fl_process_stats_test PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+add_custom_command(TARGET fl_process_stats_test POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        $<TARGET_FILE:FrameLedger.ProcessStats> $<TARGET_FILE_DIR:fl_process_stats_test>)
+add_test(NAME fl_process_stats COMMAND fl_process_stats_test)
+set_tests_properties(fl_process_stats PROPERTIES
+    PASS_REGULAR_EXPRESSION "BRANCH: (GPU_INSTANCE|NO_GPU_INSTANCE)"
+    FAIL_REGULAR_EXPRESSION "FAILED:;[0-9]+ failed")
+
 # The safety-guard matrix. 20_OPEN_QUESTIONS §S13(a) put the guard in C++, which
 # made Catch2 a PREREQUISITE of the guard rather than a later nicety: 14_TESTING
 # requires forcing EnumProcessModulesEx failures, partial module lists and

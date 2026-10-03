@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using FrameLedger.Application.Telemetry;
+
 namespace FrameLedger.Application.Capture;
 
 /// <summary>How the host finds the process to capture. There is no pid argument anywhere.</summary>
@@ -29,4 +31,11 @@ public interface ITargetResolver
     /// display sample then says "no window", never another program's.
     /// </summary>
     IReadOnlyList<int> PidsOf(string normalisedExePath);
+
+    /// <summary>
+    /// <see cref="PidsOf"/> with each process's creation time from the same snapshot (beta.12, D43): what an unpinned hold
+    /// reads the game's memory of, so a pid reused between the snapshot and the read is refused rather than read off a
+    /// stranger. A process whose creation time could not be read is left out. Empty where no watcher runs.
+    /// </summary>
+    IReadOnlyList<GameProcessId> ProcessesOf(string normalisedExePath) => [];
 }

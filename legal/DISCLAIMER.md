@@ -171,8 +171,14 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 > - **Engine version:** the exact Unreal Engine 4 or 5 version, read from the game's executable on disk and
 >   labelled with what it rests on; `N/A` where the executable names none. Other engines show what their own
 >   files state.
+> - **The game's own memory (since beta.12):** its dedicated and shared GPU memory and its private
+>   working set — the numbers Task Manager's Details tab shows — with its working set and commit, read
+>   once a second from Windows' own counters, from outside the game, in every session: a game
+>   FrameLedger injects into through the handle it already holds, any other by opening it briefly with
+>   the least access Windows offers (and adding up every process running its executable). Shown with
+>   mean, median and peak. The game's other processes (launchers, helpers) are not counted.
 > - **Video memory:** in use on the whole graphics card, recorded from Windows and GPU-driver telemetry
->   and charted. **Not measured at all:** each game's own video-memory use and budget, which frame
+>   and charted. **Not measured at all:** the video-memory budget Windows gives a game, which frame
 >   spikes were shader compilation, PC latency (Reflex), and HDR. Stutter count and stutter time are
 >   measured from frame times.
 > - **Processor and memory:** how busy the processor was (time busy, all cores together — not the

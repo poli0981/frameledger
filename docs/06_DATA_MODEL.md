@@ -278,6 +278,16 @@ CREATE TABLE sessions (
   avg_gpu_load REAL, avg_cpu_load REAL, avg_ram_mb REAL,
   avg_gpu_power_w REAL, throttle_pct REAL,
 
+  -- schema 0018 (2026-10-03, beta.12, D43): the game process's own memory, read from outside it, both tiers
+  -- (03_METRICS §Game process memory), MiB; and every sensor series' n/mean/median/min/max as JSON
+  game_vram_dedicated_avg_mb REAL, game_vram_dedicated_median_mb REAL, game_vram_dedicated_max_mb REAL,
+  game_vram_shared_max_mb REAL,
+  game_ram_private_avg_mb REAL, game_ram_private_median_mb REAL, game_ram_private_max_mb REAL,
+  game_ram_ws_max_mb REAL, game_commit_max_mb REAL,
+  game_memory_processes INTEGER,        -- processes summed: 1 pinned, every process of the executable for a held one
+  game_memory_source TEXT,              -- counters,ex2,ex,held,opened — the reads that answered
+  sensor_stats_json TEXT,               -- {"gpu_temp":{"N":…,"Mean":…,"Median":…,"Min":…,"Max":…}, …}
+
   -- schema 0016 (2026-09-27, beta.10): the display mode, both tiers (03_METRICS §Display mode). Milliseconds per mode,
   -- each sample standing for the time until the next (100 ms hooked, 1 s at Tier 2), a pause not counted; nowindow is
   -- outside every share. NULL before, on a session recovered from its .partial file, and where the loop never sampled —
@@ -343,6 +353,9 @@ CREATE TABLE sensor_blobs (
   -- schema 0008 (2026-09-22) DROPPED them with the feature (19_SAFETY §What a finding does to the game). Sessions that
   -- ran under it keep "guard-bypass=" in capture_notes.
   series TEXT NOT NULL,            -- cpu_temp|gpu_temp|gpu_hotspot|gpu_load|gpu_power|vram_proc|vram_adapter|cpu_load|ram_mb
+                                   -- (vram_proc was listed here from 0001 and never written); since schema 0018 (beta.12,
+                                   -- D43) also game_vram_dedicated|game_vram_shared|game_ram_private|game_ram_ws|game_commit,
+                                   -- MiB — the game process's own memory (Application.Recording.SensorSeriesCatalog)
                                    -- cpu_load / ram_mb / cpu_temp and sessions.avg_cpu_load, avg_cpu_temp, max_cpu_temp,
                                    -- avg_ram_mb were in schema 0001 with NO producer until 2026-09-21 (Telemetry.SystemTelemetrySource
                                    -- on the poller's tick). Rows before that date hold NULL, which is what they measured; no migration.
@@ -591,6 +604,17 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > `LedgerDatabaseTests.ScriptSeventeenAddsTheTrialMarkAndChangesNoRow`,
 > `SqliteGameConsentStoreTests.AnEndDuringTheTrialMarksTheGameAndNothingClearsIt`,
 > `SqliteGameMergeTests.AFailedExceptionTrialOnEitherTwinMarksTheSurvivor`.
+
+> **`0018_game_memory.sql` (beta.12, 2026-10-03, owner decision D43) — the game process's own memory.** Twelve
+> columns, ADD COLUMN only: `game_vram_dedicated_{avg,median,max}_mb`, `game_vram_shared_max_mb`,
+> `game_ram_private_{avg,median,max}_mb`, `game_ram_ws_max_mb`, `game_commit_max_mb`, `game_memory_processes`,
+> `game_memory_source` and `sensor_stats_json`. Written by the recorder's aggregation for both tiers
+> (`SessionAggregator.WithSensorAggregates`); a session before it reads N/A. **Not `vram_proc_*`**: those name the
+> in-process DXGI figure compared with a budget (a different quantity, `03_METRICS` §Game process memory) and stay
+> reserved. The `.partial` gains chunk type 8 (`SensorsWide`, a 32-bit mask with the game fields); type 4 is still read,
+> so a beta.11 crash file recovers. `LatestVersion` is 18; `LedgerDatabaseTests.ScriptEighteenAddsTheGameMemoryColumnsAndAnEarlierSessionHasNone`,
+> `SqliteSessionRepositoryTests.ASessionRoundTripsColumnForColumn`,
+> `PartialSessionFileTests.TheGameMemoryRoundTripsAndANarrowSensorsChunkFromBeta11StillReads`.
 
 > **Every open used to migrate, and one that should not have did — 2026-09-16.** The Agent's `--console sessions`,
 > a verb that prints, was run against the owner's ledger while the file on disk was at schema 2 and applied 0003 and

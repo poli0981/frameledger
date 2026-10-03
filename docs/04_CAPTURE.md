@@ -86,7 +86,11 @@ it still holds.
 > watcher's own 1 Hz snapshot** (`ITargetResolver.IsRunning` over `LatestProcessSnapshot`, 2026-09-23; a process
 > whose path could not be read still counts by its name; the console verbs, where nothing polls, keep the name
 > list) when it never opened the process — by name, another game's `Game.exe` held an RPG Maker game's session
-> open. Nothing about the hold touches the target, and no process is opened for it. **And hooking-off is decided before the process is opened**: `RunAsync` reads the consent record
+> open. Nothing about the hold touches the target, and no process is opened for it. *(Corrected 2026-10-03, beta.12, D43:
+the hold now reads the game's own memory, once a second, by opening each process running the executable with
+`PROCESS_QUERY_LIMITED_INFORMATION` for the read and closing it after — the right the watcher's own snapshot already uses
+on every process each second; nothing is held, nothing is injected, and the memory's contents are never read. Its video
+memory comes from performance counters that need no handle at all; `03_METRICS` §Game process memory.)* **And hooking-off is decided before the process is opened**: `RunAsync` reads the consent record
 > first, and a row whose hooking is off — merely added, blocked by a finding, auto-disabled — goes straight to
 > the hold with `RefusedHookNotEnabled` (its verdict is the row's block when it has one, `PreviouslyBlocked`).
 > The resolver used to run first, and a hooking-off utility that runs elevated (Borderless Gaming, imported from
@@ -468,7 +472,7 @@ Crash-within-60s-of-injection happening twice for the same game ⇒ **hooking au
 
 ## Live progress
 
-`SessionProgress` at 1 Hz to the UI (`07_IPC`): rolling 5 s Native FPS, Displayed FPS, FG factor, current render→output resolution, upscaler + quality, RT active flag, GPU/CPU temp, per-process VRAM, elapsed. Suppressed when no UI client is connected. This is what makes the Dashboard live card genuinely useful — it is showing *measured* settings, not guesses.
+`SessionProgress` at 1 Hz to the UI (`07_IPC`): rolling 5 s Native FPS, Displayed FPS, FG factor, current render→output resolution, upscaler + quality, RT active flag, GPU/CPU temp, ~~per-process VRAM~~ the game process's dedicated GPU memory and private working set (beta.12, from the newest telemetry tick — `SessionHeld` carries the same two for a held session), elapsed. Suppressed when no UI client is connected. This is what makes the Dashboard live card genuinely useful — it is showing *measured* settings, not guesses.
 
 > **Built 2026-09-13 (P3 PR-1, HANDOFF §P3 decision D13): `Application.Ipc.SessionProgressCalculator`**, over the last 5 s of the
 > ring's records through the same calculators the row uses — `FrameTimeSeries` for the presented rate, `FgWindow` + the FG ladder for

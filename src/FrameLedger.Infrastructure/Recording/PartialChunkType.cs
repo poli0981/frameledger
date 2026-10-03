@@ -28,4 +28,11 @@ internal enum PartialChunkType
 
     /// <summary>N × <c>i64</c> QPC ticks at which the host touched the target.</summary>
     Touches = 7,
+
+    /// <summary>
+    /// N × one telemetry sample in the wide form (beta.12): a 32-bit presence mask, so the game process's memory (D43)
+    /// travels with the sensors. Written instead of <see cref="Sensors"/> from beta.12 on; <see cref="Sensors"/> is still
+    /// read, so a beta.11 <c>.partial</c> recovers (without game memory, which it never had).
+    /// </summary>
+    SensorsWide = 8,
 }

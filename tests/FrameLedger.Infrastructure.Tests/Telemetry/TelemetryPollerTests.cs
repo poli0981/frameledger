@@ -85,6 +85,53 @@ public sealed class TelemetryPollerTests
         system.Disposed.Should().BeTrue("the poller owns the system source with the layers");
     }
 
+    private sealed class FakeGame : IGameMemorySource
+    {
+        public List<GameProcess> Followed { get; } = [];
+
+        public ProcessReading? Next { get; set; }
+
+        public bool Disposed { get; private set; }
+
+        public void Follow(GameProcess target) => Followed.Add(target);
+
+        public bool TryRead(out ProcessReading reading)
+        {
+            reading = Next ?? default;
+            return Next is not null;
+        }
+
+        public void Dispose() => Disposed = true;
+    }
+
+    /// <summary>
+    /// beta.12 (D43): the game process's memory rides the same tick, a tick only it answered is still queued, the target the
+    /// capture loop names reaches the game source, and the poller owns it with the layers.
+    /// </summary>
+    [Fact]
+    public void TheGamesMemoryRidesTheSameTickAndTheFollowedProcessReachesItsSource()
+    {
+        using var layer = new FakeLayer(TelemetryLayer.Lhm);
+        using var game = new FakeGame { Next = new ProcessReading(8192, 256, 6000, 6500, 7000, 1, ProcessReadingSources.Counters) };
+        var poller = new TelemetryPoller(layer, new TelemetryPollerOptions(), new ManualTimeProvider(), ownsSource: true, system: null, game: game);
+        GameProcess target = GameProcess.Unpinned([new GameProcessId(4242, DateTimeOffset.UnixEpoch)]);
+
+        poller.Follow(target);
+        layer.Publish(null);
+        poller.PollOnce();
+        game.Next = null;
+        poller.PollOnce();
+
+        var drained = new List<TelemetrySample>();
+        poller.Drain(drained).Should().Be(1, "the second tick: nothing answered at all, so nothing is queued");
+        drained[0].Game.VramDedicatedMb.Should().Be(8192);
+        drained[0].Sample.Layer.Should().Be(TelemetryLayer.None, "only the game answered; the placeholder names no GPU layer");
+        game.Followed.Should().Equal(target);
+
+        poller.Dispose();
+        game.Disposed.Should().BeTrue("the poller owns the game source with the layers");
+    }
+
     [Fact]
     public void WithNoSystemSourceEverySampleCarriesAnEmptyReading()
     {
