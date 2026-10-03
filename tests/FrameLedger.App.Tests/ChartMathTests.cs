@@ -107,7 +107,7 @@ public sealed class ChartMathTests
     {
         Dictionary<string, (int R, int G, int B)> palette = Palette(file);
 
-        foreach (string[] plot in new[] { SensorsChart.TempsPlot.Select(static s => s.PaletteKey).ToArray(), SensorsChart.MemoryPlot.Select(static s => s.PaletteKey).ToArray() })
+        foreach (string[] plot in new[] { SensorsChart.TempsPlot.Select(static s => s.PaletteKey).ToArray(), SensorsChart.VideoMemoryPlot.Select(static s => s.PaletteKey).ToArray(), SensorsChart.SystemMemoryPlot.Select(static s => s.PaletteKey).ToArray() })
         {
             for (int i = 0; i < plot.Length; i++)
             {
@@ -117,6 +117,23 @@ public sealed class ChartMathTests
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// beta.12: the memory plot draws the game's private working set, and where this Windows reported none, its working set —
+    /// under the working set's own label (the series name picks it), never as the private one.
+    /// </summary>
+    [Fact]
+    public void TheMemoryPlotFallsBackToTheWorkingSetUnderItsOwnName()
+    {
+        SessionSeries both = SessionSeries.SensorsOnly([new SensorSeries("game_ram_private", [0, 1], [3000, 3100]), new SensorSeries("game_ram_ws", [0, 1], [4000, 4100])]);
+        SessionSeries wsOnly = SessionSeries.SensorsOnly([new SensorSeries("game_ram_ws", [0, 1], [4000, 4100])]);
+        SessionSeries none = SessionSeries.SensorsOnly([new SensorSeries("ram_mb", [0, 1], [20000, 20100])]);
+
+        SensorsChart.SystemMemorySeries(both, "game_ram_private").Should().Be("game_ram_private");
+        SensorsChart.SystemMemorySeries(wsOnly, "game_ram_private").Should().Be("game_ram_ws");
+        SensorsChart.SystemMemorySeries(none, "game_ram_private").Should().Be("game_ram_private", "nothing to fall back to: the line is simply not drawn");
+        SensorsChart.SystemMemorySeries(wsOnly, "ram_mb").Should().Be("ram_mb");
     }
 
     private static readonly XNamespace _x = "http://schemas.microsoft.com/winfx/2006/xaml";

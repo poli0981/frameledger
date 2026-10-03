@@ -13,8 +13,11 @@ namespace FrameLedger.App.Tests;
 
 /// <summary>
 /// beta.11 (owner requests 2026-10-03): the library page counts its games, reloads itself while on screen when a session
-/// ends or an import adds games, lets go when it leaves, and its grid's columns fill the width.
+/// ends or an import adds games, lets go when it leaves, and its grid's columns fill the width. In the culture collection
+/// (2026-10-03): a card's tooltip is resource text compared with the resource read again, and a class flipping
+/// <c>Strings.Culture</c> in parallel between the two reads failed it once in a local run.
 /// </summary>
+[Collection(StringsCultureCollection.Name)]
 public sealed class GamesViewModelTests
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;

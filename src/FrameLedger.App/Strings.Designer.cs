@@ -137,6 +137,10 @@ public static class Strings
         nameof(Compare_Metric_Display),
         nameof(Compare_Metric_Displayed),
         nameof(Compare_Metric_Duration),
+        nameof(Compare_Metric_GameRamMedian),
+        nameof(Compare_Metric_GameRamPeak),
+        nameof(Compare_Metric_GameVramMedian),
+        nameof(Compare_Metric_GameVramPeak),
         nameof(Compare_Metric_MaxCpuTemp),
         nameof(Compare_Metric_MaxGpuTemp),
         nameof(Compare_Metric_Median),
@@ -173,12 +177,12 @@ public static class Strings
         nameof(Dashboard_Header),
         nameof(Dashboard_Live_CpuTemp_Format),
         nameof(Dashboard_Live_Elapsed_Format),
+        nameof(Dashboard_Live_GameMemory_Format),
         nameof(Dashboard_Live_GpuTemp_Format),
         nameof(Dashboard_Live_Header),
         nameof(Dashboard_Live_Idle),
         nameof(Dashboard_Live_RecordingOnly),
         nameof(Dashboard_Live_Rt_On),
-        nameof(Dashboard_Live_Vram_Format),
         nameof(Dashboard_Live_Waiting),
         nameof(Dashboard_Recent_Header),
         nameof(Dashboard_SessionDiscarded_Format),
@@ -348,6 +352,8 @@ public static class Strings
         nameof(FirstRun_Title),
         nameof(Format_Duration_HoursMinutes_Format),
         nameof(Format_Duration_MinutesSeconds_Format),
+        nameof(Format_Memory_Gb_Format),
+        nameof(Format_Memory_Mb_Format),
         nameof(Format_Playtime_Hours_Format),
         nameof(Format_Playtime_Minutes_Format),
         nameof(Format_Resolution_Format),
@@ -434,6 +440,7 @@ public static class Strings
         nameof(GameDetail_Tab_Sensors),
         nameof(GameDetail_Tab_Sessions),
         nameof(GameDetail_Tab_Trend),
+        nameof(GameMemory_Processes_Format),
         nameof(Games_Add),
         nameof(Games_Card_AntiCheat),
         nameof(Games_Card_Exception),
@@ -644,20 +651,34 @@ public static class Strings
         nameof(Rules_Update_Failed),
         nameof(Rules_Update_NoAgent),
         nameof(Rules_Update_Title),
-        nameof(Sensors_Axis_Mb),
+        nameof(Sensors_Axis_Gb),
         nameof(Sensors_Axis_Watts),
         nameof(Sensors_Empty),
+        nameof(Sensors_Ram_Header),
         nameof(Sensors_Series_CpuLoad),
         nameof(Sensors_Series_CpuTemp),
+        nameof(Sensors_Series_GameCommit),
+        nameof(Sensors_Series_GameRam),
+        nameof(Sensors_Series_GameRamWs),
+        nameof(Sensors_Series_GameVram),
+        nameof(Sensors_Series_GameVramShared),
         nameof(Sensors_Series_GpuHotspot),
         nameof(Sensors_Series_GpuLoad),
         nameof(Sensors_Series_GpuPower),
         nameof(Sensors_Series_GpuTemp),
         nameof(Sensors_Series_Ram),
         nameof(Sensors_Series_VramAdapter),
-        nameof(Sensors_Series_VramProcess),
         nameof(Sensors_Temps_Header),
         nameof(Sensors_Vram_Header),
+        nameof(SensorStats_Col_Max),
+        nameof(SensorStats_Col_Mean),
+        nameof(SensorStats_Col_Median),
+        nameof(SensorStats_Col_Min),
+        nameof(SensorStats_Col_Samples),
+        nameof(SensorStats_Col_Series),
+        nameof(SensorStats_Header),
+        nameof(SensorStats_Note),
+        nameof(SensorStats_NotStored),
         nameof(Session_UnderException_Format),
         nameof(Sessions_Col_Api),
         nameof(Sessions_Col_Date),
@@ -666,6 +687,8 @@ public static class Strings
         nameof(Sessions_Col_Duration),
         nameof(Sessions_Col_Exit),
         nameof(Sessions_Col_Fg),
+        nameof(Sessions_Col_GameRam),
+        nameof(Sessions_Col_GameVram),
         nameof(Sessions_Col_GpuTemp),
         nameof(Sessions_Col_Native),
         nameof(Sessions_Col_P01Low),
@@ -673,6 +696,10 @@ public static class Strings
         nameof(Sessions_Col_Resolution),
         nameof(Sessions_Col_Tags),
         nameof(Sessions_Col_Tier),
+        nameof(Sessions_GameRam_Tooltip_Format),
+        nameof(Sessions_GameRamWs_Cell_Format),
+        nameof(Sessions_GameRamWs_Tooltip_Format),
+        nameof(Sessions_GameVram_Tooltip_Format),
         nameof(Settings_Agent_Elevated),
         nameof(Settings_Agent_Elevation_Body),
         nameof(Settings_Agent_Elevation_Label),
@@ -802,6 +829,12 @@ public static class Strings
         nameof(Summary_Stat_Cpu),
         nameof(Summary_Stat_Display),
         nameof(Summary_Stat_Duration),
+        nameof(Summary_Stat_GameRam),
+        nameof(Summary_Stat_GameRam_Suffix_Format),
+        nameof(Summary_Stat_GameRamWs),
+        nameof(Summary_Stat_GameRamWs_Suffix_Format),
+        nameof(Summary_Stat_GameVram),
+        nameof(Summary_Stat_GameVram_Suffix_Format),
         nameof(Summary_Stat_Gpu),
         nameof(Summary_Stat_LoadTemp_Format),
         nameof(Summary_Stat_Median),
@@ -877,10 +910,13 @@ public static class Strings
         nameof(Trend_Metric_DisplayExclusive),
         nameof(Trend_Metric_DisplayWindowed),
         nameof(Trend_Metric_FgFactor),
+        nameof(Trend_Metric_GameRamMedian),
+        nameof(Trend_Metric_GameRamPeak),
+        nameof(Trend_Metric_GameVramMedian),
+        nameof(Trend_Metric_GameVramPeak),
         nameof(Trend_Metric_Label),
         nameof(Trend_Metric_MaxCpuTemp),
         nameof(Trend_Metric_MaxGpuTemp),
-        nameof(Trend_Metric_MaxVramProcess),
         nameof(Trend_Metric_NativeFps),
         nameof(Trend_Metric_P01Low),
         nameof(Trend_Metric_P1Low),
@@ -889,7 +925,7 @@ public static class Strings
         nameof(Trend_Unit_Celsius),
         nameof(Trend_Unit_Factor),
         nameof(Trend_Unit_Fps),
-        nameof(Trend_Unit_Megabytes),
+        nameof(Trend_Unit_Gigabytes),
         nameof(Trend_Unit_Percent),
         nameof(Trend_Unit_Watts),
         nameof(Uninstall_DataFolder_Body),
@@ -1141,6 +1177,14 @@ public static class Strings
 
     public static string Compare_Metric_Duration => ResourceManager.GetString(nameof(Compare_Metric_Duration), Culture) ?? nameof(Compare_Metric_Duration);
 
+    public static string Compare_Metric_GameRamMedian => ResourceManager.GetString(nameof(Compare_Metric_GameRamMedian), Culture) ?? nameof(Compare_Metric_GameRamMedian);
+
+    public static string Compare_Metric_GameRamPeak => ResourceManager.GetString(nameof(Compare_Metric_GameRamPeak), Culture) ?? nameof(Compare_Metric_GameRamPeak);
+
+    public static string Compare_Metric_GameVramMedian => ResourceManager.GetString(nameof(Compare_Metric_GameVramMedian), Culture) ?? nameof(Compare_Metric_GameVramMedian);
+
+    public static string Compare_Metric_GameVramPeak => ResourceManager.GetString(nameof(Compare_Metric_GameVramPeak), Culture) ?? nameof(Compare_Metric_GameVramPeak);
+
     public static string Compare_Metric_MaxCpuTemp => ResourceManager.GetString(nameof(Compare_Metric_MaxCpuTemp), Culture) ?? nameof(Compare_Metric_MaxCpuTemp);
 
     public static string Compare_Metric_MaxGpuTemp => ResourceManager.GetString(nameof(Compare_Metric_MaxGpuTemp), Culture) ?? nameof(Compare_Metric_MaxGpuTemp);
@@ -1213,6 +1257,8 @@ public static class Strings
 
     public static string Dashboard_Live_Elapsed_Format => ResourceManager.GetString(nameof(Dashboard_Live_Elapsed_Format), Culture) ?? nameof(Dashboard_Live_Elapsed_Format);
 
+    public static string Dashboard_Live_GameMemory_Format => ResourceManager.GetString(nameof(Dashboard_Live_GameMemory_Format), Culture) ?? nameof(Dashboard_Live_GameMemory_Format);
+
     public static string Dashboard_Live_GpuTemp_Format => ResourceManager.GetString(nameof(Dashboard_Live_GpuTemp_Format), Culture) ?? nameof(Dashboard_Live_GpuTemp_Format);
 
     public static string Dashboard_Live_Header => ResourceManager.GetString(nameof(Dashboard_Live_Header), Culture) ?? nameof(Dashboard_Live_Header);
@@ -1222,8 +1268,6 @@ public static class Strings
     public static string Dashboard_Live_RecordingOnly => ResourceManager.GetString(nameof(Dashboard_Live_RecordingOnly), Culture) ?? nameof(Dashboard_Live_RecordingOnly);
 
     public static string Dashboard_Live_Rt_On => ResourceManager.GetString(nameof(Dashboard_Live_Rt_On), Culture) ?? nameof(Dashboard_Live_Rt_On);
-
-    public static string Dashboard_Live_Vram_Format => ResourceManager.GetString(nameof(Dashboard_Live_Vram_Format), Culture) ?? nameof(Dashboard_Live_Vram_Format);
 
     public static string Dashboard_Live_Waiting => ResourceManager.GetString(nameof(Dashboard_Live_Waiting), Culture) ?? nameof(Dashboard_Live_Waiting);
 
@@ -1563,6 +1607,10 @@ public static class Strings
 
     public static string Format_Duration_MinutesSeconds_Format => ResourceManager.GetString(nameof(Format_Duration_MinutesSeconds_Format), Culture) ?? nameof(Format_Duration_MinutesSeconds_Format);
 
+    public static string Format_Memory_Gb_Format => ResourceManager.GetString(nameof(Format_Memory_Gb_Format), Culture) ?? nameof(Format_Memory_Gb_Format);
+
+    public static string Format_Memory_Mb_Format => ResourceManager.GetString(nameof(Format_Memory_Mb_Format), Culture) ?? nameof(Format_Memory_Mb_Format);
+
     public static string Format_Playtime_Hours_Format => ResourceManager.GetString(nameof(Format_Playtime_Hours_Format), Culture) ?? nameof(Format_Playtime_Hours_Format);
 
     public static string Format_Playtime_Minutes_Format => ResourceManager.GetString(nameof(Format_Playtime_Minutes_Format), Culture) ?? nameof(Format_Playtime_Minutes_Format);
@@ -1734,6 +1782,8 @@ public static class Strings
     public static string GameDetail_Tab_Sessions => ResourceManager.GetString(nameof(GameDetail_Tab_Sessions), Culture) ?? nameof(GameDetail_Tab_Sessions);
 
     public static string GameDetail_Tab_Trend => ResourceManager.GetString(nameof(GameDetail_Tab_Trend), Culture) ?? nameof(GameDetail_Tab_Trend);
+
+    public static string GameMemory_Processes_Format => ResourceManager.GetString(nameof(GameMemory_Processes_Format), Culture) ?? nameof(GameMemory_Processes_Format);
 
     public static string Games_Add => ResourceManager.GetString(nameof(Games_Add), Culture) ?? nameof(Games_Add);
 
@@ -2155,15 +2205,27 @@ public static class Strings
 
     public static string Rules_Update_Title => ResourceManager.GetString(nameof(Rules_Update_Title), Culture) ?? nameof(Rules_Update_Title);
 
-    public static string Sensors_Axis_Mb => ResourceManager.GetString(nameof(Sensors_Axis_Mb), Culture) ?? nameof(Sensors_Axis_Mb);
+    public static string Sensors_Axis_Gb => ResourceManager.GetString(nameof(Sensors_Axis_Gb), Culture) ?? nameof(Sensors_Axis_Gb);
 
     public static string Sensors_Axis_Watts => ResourceManager.GetString(nameof(Sensors_Axis_Watts), Culture) ?? nameof(Sensors_Axis_Watts);
 
     public static string Sensors_Empty => ResourceManager.GetString(nameof(Sensors_Empty), Culture) ?? nameof(Sensors_Empty);
 
+    public static string Sensors_Ram_Header => ResourceManager.GetString(nameof(Sensors_Ram_Header), Culture) ?? nameof(Sensors_Ram_Header);
+
     public static string Sensors_Series_CpuLoad => ResourceManager.GetString(nameof(Sensors_Series_CpuLoad), Culture) ?? nameof(Sensors_Series_CpuLoad);
 
     public static string Sensors_Series_CpuTemp => ResourceManager.GetString(nameof(Sensors_Series_CpuTemp), Culture) ?? nameof(Sensors_Series_CpuTemp);
+
+    public static string Sensors_Series_GameCommit => ResourceManager.GetString(nameof(Sensors_Series_GameCommit), Culture) ?? nameof(Sensors_Series_GameCommit);
+
+    public static string Sensors_Series_GameRam => ResourceManager.GetString(nameof(Sensors_Series_GameRam), Culture) ?? nameof(Sensors_Series_GameRam);
+
+    public static string Sensors_Series_GameRamWs => ResourceManager.GetString(nameof(Sensors_Series_GameRamWs), Culture) ?? nameof(Sensors_Series_GameRamWs);
+
+    public static string Sensors_Series_GameVram => ResourceManager.GetString(nameof(Sensors_Series_GameVram), Culture) ?? nameof(Sensors_Series_GameVram);
+
+    public static string Sensors_Series_GameVramShared => ResourceManager.GetString(nameof(Sensors_Series_GameVramShared), Culture) ?? nameof(Sensors_Series_GameVramShared);
 
     public static string Sensors_Series_GpuHotspot => ResourceManager.GetString(nameof(Sensors_Series_GpuHotspot), Culture) ?? nameof(Sensors_Series_GpuHotspot);
 
@@ -2177,11 +2239,27 @@ public static class Strings
 
     public static string Sensors_Series_VramAdapter => ResourceManager.GetString(nameof(Sensors_Series_VramAdapter), Culture) ?? nameof(Sensors_Series_VramAdapter);
 
-    public static string Sensors_Series_VramProcess => ResourceManager.GetString(nameof(Sensors_Series_VramProcess), Culture) ?? nameof(Sensors_Series_VramProcess);
-
     public static string Sensors_Temps_Header => ResourceManager.GetString(nameof(Sensors_Temps_Header), Culture) ?? nameof(Sensors_Temps_Header);
 
     public static string Sensors_Vram_Header => ResourceManager.GetString(nameof(Sensors_Vram_Header), Culture) ?? nameof(Sensors_Vram_Header);
+
+    public static string SensorStats_Col_Max => ResourceManager.GetString(nameof(SensorStats_Col_Max), Culture) ?? nameof(SensorStats_Col_Max);
+
+    public static string SensorStats_Col_Mean => ResourceManager.GetString(nameof(SensorStats_Col_Mean), Culture) ?? nameof(SensorStats_Col_Mean);
+
+    public static string SensorStats_Col_Median => ResourceManager.GetString(nameof(SensorStats_Col_Median), Culture) ?? nameof(SensorStats_Col_Median);
+
+    public static string SensorStats_Col_Min => ResourceManager.GetString(nameof(SensorStats_Col_Min), Culture) ?? nameof(SensorStats_Col_Min);
+
+    public static string SensorStats_Col_Samples => ResourceManager.GetString(nameof(SensorStats_Col_Samples), Culture) ?? nameof(SensorStats_Col_Samples);
+
+    public static string SensorStats_Col_Series => ResourceManager.GetString(nameof(SensorStats_Col_Series), Culture) ?? nameof(SensorStats_Col_Series);
+
+    public static string SensorStats_Header => ResourceManager.GetString(nameof(SensorStats_Header), Culture) ?? nameof(SensorStats_Header);
+
+    public static string SensorStats_Note => ResourceManager.GetString(nameof(SensorStats_Note), Culture) ?? nameof(SensorStats_Note);
+
+    public static string SensorStats_NotStored => ResourceManager.GetString(nameof(SensorStats_NotStored), Culture) ?? nameof(SensorStats_NotStored);
 
     public static string Session_UnderException_Format => ResourceManager.GetString(nameof(Session_UnderException_Format), Culture) ?? nameof(Session_UnderException_Format);
 
@@ -2199,6 +2277,10 @@ public static class Strings
 
     public static string Sessions_Col_Fg => ResourceManager.GetString(nameof(Sessions_Col_Fg), Culture) ?? nameof(Sessions_Col_Fg);
 
+    public static string Sessions_Col_GameRam => ResourceManager.GetString(nameof(Sessions_Col_GameRam), Culture) ?? nameof(Sessions_Col_GameRam);
+
+    public static string Sessions_Col_GameVram => ResourceManager.GetString(nameof(Sessions_Col_GameVram), Culture) ?? nameof(Sessions_Col_GameVram);
+
     public static string Sessions_Col_GpuTemp => ResourceManager.GetString(nameof(Sessions_Col_GpuTemp), Culture) ?? nameof(Sessions_Col_GpuTemp);
 
     public static string Sessions_Col_Native => ResourceManager.GetString(nameof(Sessions_Col_Native), Culture) ?? nameof(Sessions_Col_Native);
@@ -2212,6 +2294,14 @@ public static class Strings
     public static string Sessions_Col_Tags => ResourceManager.GetString(nameof(Sessions_Col_Tags), Culture) ?? nameof(Sessions_Col_Tags);
 
     public static string Sessions_Col_Tier => ResourceManager.GetString(nameof(Sessions_Col_Tier), Culture) ?? nameof(Sessions_Col_Tier);
+
+    public static string Sessions_GameRam_Tooltip_Format => ResourceManager.GetString(nameof(Sessions_GameRam_Tooltip_Format), Culture) ?? nameof(Sessions_GameRam_Tooltip_Format);
+
+    public static string Sessions_GameRamWs_Cell_Format => ResourceManager.GetString(nameof(Sessions_GameRamWs_Cell_Format), Culture) ?? nameof(Sessions_GameRamWs_Cell_Format);
+
+    public static string Sessions_GameRamWs_Tooltip_Format => ResourceManager.GetString(nameof(Sessions_GameRamWs_Tooltip_Format), Culture) ?? nameof(Sessions_GameRamWs_Tooltip_Format);
+
+    public static string Sessions_GameVram_Tooltip_Format => ResourceManager.GetString(nameof(Sessions_GameVram_Tooltip_Format), Culture) ?? nameof(Sessions_GameVram_Tooltip_Format);
 
     public static string Settings_Agent_Elevated => ResourceManager.GetString(nameof(Settings_Agent_Elevated), Culture) ?? nameof(Settings_Agent_Elevated);
 
@@ -2471,6 +2561,18 @@ public static class Strings
 
     public static string Summary_Stat_Duration => ResourceManager.GetString(nameof(Summary_Stat_Duration), Culture) ?? nameof(Summary_Stat_Duration);
 
+    public static string Summary_Stat_GameRam => ResourceManager.GetString(nameof(Summary_Stat_GameRam), Culture) ?? nameof(Summary_Stat_GameRam);
+
+    public static string Summary_Stat_GameRam_Suffix_Format => ResourceManager.GetString(nameof(Summary_Stat_GameRam_Suffix_Format), Culture) ?? nameof(Summary_Stat_GameRam_Suffix_Format);
+
+    public static string Summary_Stat_GameRamWs => ResourceManager.GetString(nameof(Summary_Stat_GameRamWs), Culture) ?? nameof(Summary_Stat_GameRamWs);
+
+    public static string Summary_Stat_GameRamWs_Suffix_Format => ResourceManager.GetString(nameof(Summary_Stat_GameRamWs_Suffix_Format), Culture) ?? nameof(Summary_Stat_GameRamWs_Suffix_Format);
+
+    public static string Summary_Stat_GameVram => ResourceManager.GetString(nameof(Summary_Stat_GameVram), Culture) ?? nameof(Summary_Stat_GameVram);
+
+    public static string Summary_Stat_GameVram_Suffix_Format => ResourceManager.GetString(nameof(Summary_Stat_GameVram_Suffix_Format), Culture) ?? nameof(Summary_Stat_GameVram_Suffix_Format);
+
     public static string Summary_Stat_Gpu => ResourceManager.GetString(nameof(Summary_Stat_Gpu), Culture) ?? nameof(Summary_Stat_Gpu);
 
     public static string Summary_Stat_LoadTemp_Format => ResourceManager.GetString(nameof(Summary_Stat_LoadTemp_Format), Culture) ?? nameof(Summary_Stat_LoadTemp_Format);
@@ -2621,13 +2723,19 @@ public static class Strings
 
     public static string Trend_Metric_FgFactor => ResourceManager.GetString(nameof(Trend_Metric_FgFactor), Culture) ?? nameof(Trend_Metric_FgFactor);
 
+    public static string Trend_Metric_GameRamMedian => ResourceManager.GetString(nameof(Trend_Metric_GameRamMedian), Culture) ?? nameof(Trend_Metric_GameRamMedian);
+
+    public static string Trend_Metric_GameRamPeak => ResourceManager.GetString(nameof(Trend_Metric_GameRamPeak), Culture) ?? nameof(Trend_Metric_GameRamPeak);
+
+    public static string Trend_Metric_GameVramMedian => ResourceManager.GetString(nameof(Trend_Metric_GameVramMedian), Culture) ?? nameof(Trend_Metric_GameVramMedian);
+
+    public static string Trend_Metric_GameVramPeak => ResourceManager.GetString(nameof(Trend_Metric_GameVramPeak), Culture) ?? nameof(Trend_Metric_GameVramPeak);
+
     public static string Trend_Metric_Label => ResourceManager.GetString(nameof(Trend_Metric_Label), Culture) ?? nameof(Trend_Metric_Label);
 
     public static string Trend_Metric_MaxCpuTemp => ResourceManager.GetString(nameof(Trend_Metric_MaxCpuTemp), Culture) ?? nameof(Trend_Metric_MaxCpuTemp);
 
     public static string Trend_Metric_MaxGpuTemp => ResourceManager.GetString(nameof(Trend_Metric_MaxGpuTemp), Culture) ?? nameof(Trend_Metric_MaxGpuTemp);
-
-    public static string Trend_Metric_MaxVramProcess => ResourceManager.GetString(nameof(Trend_Metric_MaxVramProcess), Culture) ?? nameof(Trend_Metric_MaxVramProcess);
 
     public static string Trend_Metric_NativeFps => ResourceManager.GetString(nameof(Trend_Metric_NativeFps), Culture) ?? nameof(Trend_Metric_NativeFps);
 
@@ -2645,7 +2753,7 @@ public static class Strings
 
     public static string Trend_Unit_Fps => ResourceManager.GetString(nameof(Trend_Unit_Fps), Culture) ?? nameof(Trend_Unit_Fps);
 
-    public static string Trend_Unit_Megabytes => ResourceManager.GetString(nameof(Trend_Unit_Megabytes), Culture) ?? nameof(Trend_Unit_Megabytes);
+    public static string Trend_Unit_Gigabytes => ResourceManager.GetString(nameof(Trend_Unit_Gigabytes), Culture) ?? nameof(Trend_Unit_Gigabytes);
 
     public static string Trend_Unit_Percent => ResourceManager.GetString(nameof(Trend_Unit_Percent), Culture) ?? nameof(Trend_Unit_Percent);
 

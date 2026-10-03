@@ -114,6 +114,9 @@ public sealed class SessionExporter
         // beta.10 (03_METRICS §Display mode): milliseconds per mode, both tiers — a header line, because the per-frame columns
         // are 03_METRICS' fixed list and a mode is the session's, not a frame's.
         w.WriteLine("# display: " + DisplayText.ExportLine(DisplayText.Of(row)));
+        // beta.12 (D43, 03_METRICS §Game process memory): the game's own memory, both tiers, MiB — a header line for the same
+        // reason as the display: it is the session's, read once a second, not a frame's.
+        w.WriteLine("# game_memory: " + GameMemoryText.ExportLine(row));
         w.WriteLine("# hardware: " + (hardware is null ? "N/A" : string.Join("; ", new[] { hardware.CpuName, hardware.GpuName, hardware.GpuDriver, hardware.OsBuild, hardware.DisplayRes }.Where(static s => !string.IsNullOrEmpty(s)))));
         w.WriteLine("# rt: " + row.RtFlag + " (" + (row.RtSource ?? "n/a") + "); pt: " + row.PtFlag + " (" + (row.PtSource ?? "n/a") + "); rr: " + row.RrFlag + " (" + (row.RrSource ?? "n/a") + ")");
         w.WriteLine("# fg_mode: " + row.FgMode + "; fg_source: " + (row.FgSource ?? "n/a") + "; presented_qualifier: " + (row.PresentedQualifier ?? "n/a"));
@@ -122,7 +125,7 @@ public sealed class SessionExporter
             w.WriteLine("# segment: frames " + s.StartFrame.ToString(_inv) + "-" + s.EndFrame.ToString(_inv) + "; " + (s.Upscaler ?? "n/a") + " " + (s.UpscalerQuality ?? string.Empty) + "; " + (s.RenderW?.ToString(_inv) ?? "?") + "x" + (s.RenderH?.ToString(_inv) ?? "?") + " -> " + (s.OutputW?.ToString(_inv) ?? "?") + "x" + (s.OutputH?.ToString(_inv) ?? "?") + "; fg " + (s.FgMode ?? "n/a"));
         }
 
-        w.WriteLine("# note: vram_mb is a held 1 Hz sample, not a per-frame measurement; qpc_ms is relative to the first present");
+        w.WriteLine("# note: vram_mb is the in-game per-present figure, which this build does not produce (empty); the game's memory is the game_memory line; qpc_ms is relative to the first present");
         w.WriteLine("# note: one swapchain's presents, the stream the statistics are over; qpc_ms closes up every gap (frametime_ms 0)");
     }
 

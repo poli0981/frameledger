@@ -44,6 +44,17 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   and through the crash-recovery file (a new chunk type; beta.11's files still recover). The video-memory **budget** is
   still not measured (`20_OPEN_QUESTIONS` §M11). The App shows all of it in the next change.
 - **Sensor statistics have a median and a minimum** beside the mean and the maximum (`SeriesAggregates`).
+- **The App shows the game's own memory everywhere a session is** (D43, beta.12), in Task Manager's units — MB below
+  1 GB, GB to two decimals, 1 GB = 1024 MB. The **session summary** has two new cards, *VRAM (this game)* and *RAM (this
+  game)*: the median, with the peak (and the shared GPU memory's or the commit's peak) beneath, and a new table,
+  **Statistics per series** — every series' mean, median, minimum, peak and number of readings, each in its own unit, as
+  stored when the session ended. The **Sessions** tab has *VRAM (game)* and *RAM (game)* columns (median · peak, the rest
+  in the tooltip); the **Trend** has *Median / Peak VRAM (game)* and *Median / Peak RAM (game)*; **Compare** has the same
+  four rows; the **Sensors** charts draw *Video memory* (this game's dedicated and shared beside the whole graphics card's)
+  and *Memory* (this game's private working set beside the whole PC's) in GB; the **live card** reads "This game: VRAM …
+  · RAM …", for a game that is not measured too; and the CSV export has a `# game_memory:` header line. Where Windows does
+  not report the private working set (before the September 2023 update) the working set is shown in its place and says
+  so. A session recorded before beta.12 reads N/A, and its summary says the statistics table did not exist yet.
 
 - **`NOTICE`, and the licence header in every source file** (owner decision D45, beta.12). FrameLedger's own material is
   GPL-3.0-only with three additional terms of the kinds GPLv3 §7 permits: keep the copyright line and the attribution in
@@ -63,6 +74,12 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **"Max VRAM (game)" on the Trend never had a point, the live card's VRAM was always empty, and the Sensors chart's
+  "VRAM used by this game" line was never drawn**: all three read the Overlay's in-game per-present figure, which nothing
+  ever produced. They read the game's memory measured from outside it now (above), and the CSV's note no longer calls
+  the always-empty `vram_mb` column "a held 1 Hz sample".
+- **"Avg RAM in use" on the Trend is labelled as the whole PC's**, in GB like every other memory figure, so it is not
+  read as the game's.
 - **A licence header written by a contributor no longer has to name poli0981**: `tools/notice-check.ps1` accepts any
   holder and year in the same form (`Copyright (C) <year> <holder> - additional terms under GPLv3 section 7: see NOTICE`),
   and `CONTRIBUTING.md` says so; seven self-test cases.

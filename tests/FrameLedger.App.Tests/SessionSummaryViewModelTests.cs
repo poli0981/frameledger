@@ -61,7 +61,7 @@ public sealed class SessionSummaryViewModelTests
             vm.NotFound.Should().BeFalse();
             vm.IsHooked.Should().BeTrue();
             vm.Series.Should().NotBeNull();
-            vm.Stats.Should().HaveCount(11, "eight frame statistics, the display mode (beta.10), then the machine: GPU and CPU (2026-09-21)");
+            vm.Stats.Should().HaveCount(13, "eight frame statistics, the display mode (beta.10), the machine: GPU and CPU (2026-09-21), then the game's own memory (beta.12)");
             vm.Stats.Single(c => string.Equals(c.Label, "CPU", StringComparison.Ordinal)).Value.Should().Be("N/A avg · N/A max", "this row carries no CPU reading: N/A, never 0%");
             vm.Stats.Single(c => string.Equals(c.Label, "Median", StringComparison.Ordinal)).Value.Should().Be("60");
             vm.Stats.Single(c => string.Equals(c.Label, "1% Low", StringComparison.Ordinal)).Value.Should().Be("48");
@@ -96,6 +96,82 @@ public sealed class SessionSummaryViewModelTests
         finally
         {
             Strings.Culture = previous;
+        }
+    }
+
+    /// <summary>A session recorded before beta.12 has its sensors and no stored statistics: N/A cards and one sentence, nothing computed here.</summary>
+    [Fact]
+    public async Task ASessionRecordedBeforeBetaTwelveSaysItsStatisticsWereNotStored()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow game = await s.GameAsync("Alpha");
+            long hooked = await s.SessionWithFramesAsync(game.Id, DateTimeOffset.UtcNow, frames: 300, spikeEvery: 0);
+
+            SessionSummaryViewModel vm = Build(s);
+            await vm.LoadAsync(hooked, Ct);
+
+            vm.Stats.Single(c => string.Equals(c.Label, "VRAM (this game)", StringComparison.Ordinal)).Value.Should().Be("N/A", "this row predates the game's memory: N/A, never 0");
+            vm.Stats.Single(c => string.Equals(c.Label, "RAM (this game)", StringComparison.Ordinal)).Value.Should().Be("N/A");
+            vm.HasSensorCharts.Should().BeTrue();
+            vm.HasSensorStats.Should().BeFalse();
+            vm.SensorStats.Should().BeEmpty();
+            vm.SensorStatsMissing.Should().Be(Strings.SensorStats_NotStored, "it has sensors and no stored statistics: recorded before beta.12");
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
+
+    /// <summary>
+    /// beta.12 (D43): a session that was NOT hooked has the game's memory too — read from outside the game — and the summary
+    /// shows it from the stored columns, with every series' stored statistics in the table, none recomputed.
+    /// </summary>
+    [Fact]
+    public async Task TheGamesMemoryAndTheStoredStatisticsAreShownForASessionThatWasNotHooked()
+    {
+        CultureInfo? previous = Strings.Culture;
+        CultureInfo previousCulture = CultureInfo.CurrentCulture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow game = await s.GameAsync("Alpha");
+            string json = "{\"gpu_temp\":{\"N\":3,\"Mean\":56,\"Median\":56,\"Min\":55,\"Max\":57},\"game_vram_dedicated\":{\"N\":3,\"Mean\":6000,\"Median\":6144,\"Min\":5120,\"Max\":7168}}";
+            long id = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow, hooked: false, shape: r => r with
+            {
+                GameVramDedicatedAvgMb = 6000,
+                GameVramDedicatedMedianMb = 6144,
+                GameVramDedicatedMaxMb = 7168,
+                GameVramSharedMaxMb = 256,
+                GameRamPrivateMedianMb = 2048,
+                GameRamPrivateMaxMb = 2560,
+                GameCommitMaxMb = 4096,
+                GameMemoryProcesses = 2,
+                SensorStatsJson = json,
+            });
+
+            SessionSummaryViewModel vm = Build(s);
+            await vm.LoadAsync(id, Ct);
+
+            vm.IsHooked.Should().BeFalse();
+            vm.Stats.Single(c => string.Equals(c.Label, "VRAM (this game)", StringComparison.Ordinal)).Should().Be(
+                new StatCardModel("VRAM (this game)", "6.00 GB", "median · peak 7.00 GB · shared 256 MB · 2 processes running the game's executable, added together"));
+            vm.Stats.Single(c => string.Equals(c.Label, "RAM (this game)", StringComparison.Ordinal)).Value.Should().Be("2.00 GB");
+            vm.HasSensorStats.Should().BeTrue();
+            vm.SensorStatsMissing.Should().BeNull();
+            vm.SensorStats.Select(static r => r.Series).Should().Equal("GPU core °C", "VRAM, this game (dedicated)");
+            vm.SensorStats[1].Should().Be(new SensorStatRowModel("VRAM, this game (dedicated)", "5.86 GB", "6.00 GB", "5.00 GB", "7.00 GB", "3"));
+        }
+        finally
+        {
+            Strings.Culture = previous;
+            CultureInfo.CurrentCulture = previousCulture;
         }
     }
 

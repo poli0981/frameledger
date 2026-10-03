@@ -271,6 +271,8 @@ public sealed class SessionDeletionAndOverviewTests
     [InlineData(TrendMetric.AvgGpuLoad, "%")]
     [InlineData(TrendMetric.DisplayBorderlessShare, "%")]
     [InlineData(TrendMetric.AvgGpuPower, "W")]
-    [InlineData(TrendMetric.AvgRam, "MB")]
+    [InlineData(TrendMetric.AvgRam, "GB")]
+    [InlineData(TrendMetric.GameVramPeak, "GB")]
+    [InlineData(TrendMetric.GameRamMedian, "GB")]
     public void EachMetricHasItsUnit(TrendMetric metric, string unit) => TrendSeriesBuilder.UnitOf(metric).Should().StartWith(unit);
 }

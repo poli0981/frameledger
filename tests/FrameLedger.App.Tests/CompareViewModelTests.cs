@@ -95,7 +95,8 @@ public sealed class CompareViewModelTests
             GameRow a = await s.GameAsync("Alpha");
             await s.SessionWithFramesAsync(a.Id, DateTimeOffset.UtcNow.AddHours(-3), frames: 300, spikeEvery: 0);
             await s.SessionWithFramesAsync(a.Id, DateTimeOffset.UtcNow.AddHours(-2), frames: 300, spikeEvery: 50);
-            await s.SessionAsync(a.Id, DateTimeOffset.UtcNow.AddHours(-1), hooked: false);
+            await s.SessionAsync(a.Id, DateTimeOffset.UtcNow.AddHours(-1), hooked: false,
+                shape: static r => r with { GameVramDedicatedMedianMb = 2048, GameVramDedicatedMaxMb = 3072, GameRamPrivateMedianMb = 1024, GameRamPrivateMaxMb = 1536 });
             var mixed = new ScriptedMixed(answer: true);
             CompareViewModel vm = await BuildAsync(s, mixed);
             foreach (CompareCandidateViewModel c in vm.Candidates)
@@ -123,6 +124,13 @@ public sealed class CompareViewModelTests
             presented.Cells.Should().OnlyContain(static c => c.Text == "N/A", "these sessions measured FG as none, so the Native row has them and this one does not");
             CompareRowViewModel native = vm.Rows.Single(r => string.Equals(r.Metric, "Native FPS", StringComparison.Ordinal));
             native.Cells.Skip(1).Should().OnlyContain(static c => c.Text == "60");
+
+            // beta.12: the game's memory is every session's — the Tier-2 one has it — and a fact, not a score: none is best.
+            CompareRowViewModel vramPeak = vm.Rows.Single(r => string.Equals(r.Metric, "Peak VRAM (game)", StringComparison.Ordinal));
+            vramPeak.Cells[0].Text.Should().Be(Formats.Memory(3072));
+            vramPeak.Cells.Skip(1).Should().OnlyContain(static c => c.Text == "N/A", "recorded without the game's memory");
+            vramPeak.Cells.Should().OnlyContain(static c => !c.IsBest);
+            vm.Rows.Single(r => string.Equals(r.Metric, "Median RAM (game)", StringComparison.Ordinal)).Cells[0].Text.Should().Be(Formats.Memory(1024));
 
             // beta.10: the display rows are facts, not scores — none is best, and a row recorded before says N/A.
             foreach (string metric in new[] { "Display mode", "Window", "Monitor" })

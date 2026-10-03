@@ -69,8 +69,12 @@ public sealed partial class LiveCaptureViewModel : ObservableObject
     [ObservableProperty]
     private string _cpuTempText = string.Empty;
 
+    /// <summary>
+    /// The game's own video memory and private working set from the newest tick (beta.12, D43) — both tiers, read from outside
+    /// the game. It read the Overlay's per-present VRAM, which nothing produced, so it was always empty.
+    /// </summary>
     [ObservableProperty]
-    private string _vramText = string.Empty;
+    private string _memoryText = string.Empty;
 
     public Guid? SessionGuid { get; private set; }
 
@@ -98,7 +102,7 @@ public sealed partial class LiveCaptureViewModel : ObservableObject
         Show(session.SessionGuid, session.GameName, session.Tier, session.Hold);
     }
 
-    /// <summary>A held session's 1 Hz tick: elapsed and the machine's temperatures.</summary>
+    /// <summary>A held session's 1 Hz tick: elapsed, the machine's temperatures and the game's own memory.</summary>
     public void Hold(SessionHeldEvent held)
     {
         ArgumentNullException.ThrowIfNull(held);
@@ -110,6 +114,7 @@ public sealed partial class LiveCaptureViewModel : ObservableObject
         ElapsedText = string.Format(CultureInfo.CurrentCulture, Strings.Dashboard_Live_Elapsed_Format, Formats.Duration(held.ElapsedS));
         GpuTempText = held.GpuTempC is double g ? string.Format(CultureInfo.CurrentCulture, Strings.Dashboard_Live_GpuTemp_Format, Math.Round(g)) : string.Empty;
         CpuTempText = held.CpuTempC is double c ? string.Format(CultureInfo.CurrentCulture, Strings.Dashboard_Live_CpuTemp_Format, Math.Round(c)) : string.Empty;
+        MemoryText = GameMemoryText.Live(held.GameVramDedicatedMb, held.GameRamPrivateMb);
     }
 
     private void Show(Guid sessionGuid, string? gameName, int tier, SessionHold? hold)
@@ -126,7 +131,7 @@ public sealed partial class LiveCaptureViewModel : ObservableObject
         TierText = tier == 1 ? Strings.Tier_Hooked : Strings.Tier_NotHooked;
         ElapsedText = string.Empty;
         Readout = FpsReadoutModel.Unavailable;
-        ResolutionText = UpscalerText = FgText = GpuTempText = CpuTempText = VramText = string.Empty;
+        ResolutionText = UpscalerText = FgText = GpuTempText = CpuTempText = MemoryText = string.Empty;
         RtActive = false;
 
         // Held means the Agent said why (a Tier-2 start carries its hold). A session the status lists at tier 2 with no hold
@@ -161,7 +166,7 @@ public sealed partial class LiveCaptureViewModel : ObservableObject
         RtActive = progress.RtActive == true;
         GpuTempText = progress.GpuTempC is double g ? string.Format(CultureInfo.CurrentCulture, Strings.Dashboard_Live_GpuTemp_Format, Math.Round(g)) : string.Empty;
         CpuTempText = progress.CpuTempC is double c ? string.Format(CultureInfo.CurrentCulture, Strings.Dashboard_Live_CpuTemp_Format, Math.Round(c)) : string.Empty;
-        VramText = progress.VramProcMb is int v ? string.Format(CultureInfo.CurrentCulture, Strings.Dashboard_Live_Vram_Format, v) : string.Empty;
+        MemoryText = GameMemoryText.Live(progress.GameVramDedicatedMb, progress.GameRamPrivateMb);
     }
 
     public void Stop(SessionCompletedEvent completed)
@@ -177,6 +182,6 @@ public sealed partial class LiveCaptureViewModel : ObservableObject
         IsActive = false;
         WaitingForFrames = false;
         IsHeld = false;
-        HeldReason = GameName = TierText = ElapsedText = GpuTempText = CpuTempText = VramText = string.Empty;
+        HeldReason = GameName = TierText = ElapsedText = GpuTempText = CpuTempText = MemoryText = string.Empty;
     }
 }

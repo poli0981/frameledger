@@ -388,9 +388,6 @@
   <data name="Dashboard_Live_Rt_On" xml:space="preserve">
     <value>RT đang bật</value>
   </data>
-  <data name="Dashboard_Live_Vram_Format" xml:space="preserve">
-    <value>{0} MB VRAM (tiến trình)</value>
-  </data>
   <data name="Dashboard_Live_Waiting" xml:space="preserve">
     <value>Đã gắn — chờ các khung hình đầu tiên…</value>
   </data>
@@ -1234,9 +1231,6 @@
   <data name="Latency_Stats_Format" xml:space="preserve">
     <value>TB {0:0.0} ms · p95 {1:0.0} ms</value>
   </data>
-  <data name="Sensors_Axis_Mb" xml:space="preserve">
-    <value>MB</value>
-  </data>
   <data name="Sensors_Empty" xml:space="preserve">
     <value>Phiên này không ghi chuỗi cảm biến nào.</value>
   </data>
@@ -1253,16 +1247,13 @@
     <value>GPU lõi °C</value>
   </data>
   <data name="Sensors_Series_VramAdapter" xml:space="preserve">
-    <value>VRAM toàn card (MB)</value>
-  </data>
-  <data name="Sensors_Series_VramProcess" xml:space="preserve">
-    <value>VRAM game này dùng (MB)</value>
+    <value>VRAM, cả card đồ họa</value>
   </data>
   <data name="Sensors_Temps_Header" xml:space="preserve">
     <value>Nhiệt độ, tải và công suất</value>
   </data>
   <data name="Sensors_Vram_Header" xml:space="preserve">
-    <value>Bộ nhớ</value>
+    <value>Bộ nhớ video (VRAM)</value>
   </data>
   <data name="Tabs_SelectASession" xml:space="preserve">
     <value>Chọn một phiên ở thẻ Phiên chơi để xem tại đây.</value>
@@ -1332,9 +1323,6 @@
   </data>
   <data name="Trend_Unit_Watts" xml:space="preserve">
     <value>W</value>
-  </data>
-  <data name="Trend_Unit_Megabytes" xml:space="preserve">
-    <value>MB</value>
   </data>
   <data name="Trend_Unit_Factor" xml:space="preserve">
     <value>× (frame generation)</value>
@@ -2005,9 +1993,6 @@ Mở thư mục log?</value>
   <data name="Trend_Metric_AvgGpuPower" xml:space="preserve">
     <value>Công suất GPU TB (W)</value>
   </data>
-  <data name="Trend_Metric_MaxVramProcess" xml:space="preserve">
-    <value>VRAM tối đa (game) MB</value>
-  </data>
   <data name="Trend_Metric_AvgCpuLoad" xml:space="preserve">
     <value>Tải CPU TB %</value>
   </data>
@@ -2015,7 +2000,7 @@ Mở thư mục log?</value>
     <value>CPU °C tối đa</value>
   </data>
   <data name="Trend_Metric_AvgRam" xml:space="preserve">
-    <value>RAM đang dùng TB (MB)</value>
+    <value>RAM đang dùng trung bình (cả máy) GB</value>
   </data>
   <data name="Trend_Metric_FgFactor" xml:space="preserve">
     <value>Hệ số FG ×</value>
@@ -2036,7 +2021,7 @@ Mở thư mục log?</value>
     <value>Tải CPU %</value>
   </data>
   <data name="Sensors_Series_Ram" xml:space="preserve">
-    <value>RAM đang dùng (hệ thống)</value>
+    <value>RAM đang dùng, cả máy</value>
   </data>
   <data name="Compare_Metric_AvgGpuLoad" xml:space="preserve">
     <value>Tải GPU TB</value>
@@ -2711,5 +2696,128 @@ Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắ
   </data>
   <data name="Session_UnderException_Format" xml:space="preserve">
     <value>Được hook dưới ngoại lệ user-mode cho {0}</value>
+  </data>
+  <data name="Format_Memory_Mb_Format" xml:space="preserve">
+    <value>{0:N0} MB</value>
+  </data>
+  <data name="Format_Memory_Gb_Format" xml:space="preserve">
+    <value>{0:N2} GB</value>
+  </data>
+  <data name="Summary_Stat_GameVram" xml:space="preserve">
+    <value>VRAM (game này)</value>
+  </data>
+  <data name="Summary_Stat_GameRam" xml:space="preserve">
+    <value>RAM (game này)</value>
+  </data>
+  <data name="Summary_Stat_GameRamWs" xml:space="preserve">
+    <value>RAM (game này, working set)</value>
+  </data>
+  <data name="Summary_Stat_GameVram_Suffix_Format" xml:space="preserve">
+    <value>trung vị · đỉnh {0} · dùng chung {1}</value>
+  </data>
+  <data name="Summary_Stat_GameRam_Suffix_Format" xml:space="preserve">
+    <value>trung vị · đỉnh {0} · commit {1}</value>
+  </data>
+  <data name="Summary_Stat_GameRamWs_Suffix_Format" xml:space="preserve">
+    <value>trung vị · đỉnh {0} · Windows này không báo private working set</value>
+  </data>
+  <data name="GameMemory_Processes_Format" xml:space="preserve">
+    <value>cộng {0} tiến trình đang chạy tệp exe của game</value>
+  </data>
+  <data name="SensorStats_Header" xml:space="preserve">
+    <value>Thống kê theo từng chuỗi số liệu</value>
+  </data>
+  <data name="SensorStats_Note" xml:space="preserve">
+    <value>Đọc mỗi giây một lần trong phiên chơi và lưu khi phiên kết thúc. "Game này" là tiến trình của chính game, đọc từ bên ngoài game; "cả card đồ họa" và "cả máy" gồm mọi thứ khác đang chạy lúc đó.</value>
+  </data>
+  <data name="SensorStats_NotStored" xml:space="preserve">
+    <value>Thống kê theo từng chuỗi (trung bình, trung vị, nhỏ nhất, đỉnh) được lưu cho các phiên ghi bằng 0.1.0-beta.12 trở lên.</value>
+  </data>
+  <data name="SensorStats_Col_Series" xml:space="preserve">
+    <value>Chuỗi số liệu</value>
+  </data>
+  <data name="SensorStats_Col_Mean" xml:space="preserve">
+    <value>Trung bình</value>
+  </data>
+  <data name="SensorStats_Col_Median" xml:space="preserve">
+    <value>Trung vị</value>
+  </data>
+  <data name="SensorStats_Col_Min" xml:space="preserve">
+    <value>Nhỏ nhất</value>
+  </data>
+  <data name="SensorStats_Col_Max" xml:space="preserve">
+    <value>Đỉnh</value>
+  </data>
+  <data name="SensorStats_Col_Samples" xml:space="preserve">
+    <value>Số lần đọc</value>
+  </data>
+  <data name="Sensors_Series_GameVram" xml:space="preserve">
+    <value>VRAM, game này (chuyên dụng)</value>
+  </data>
+  <data name="Sensors_Series_GameVramShared" xml:space="preserve">
+    <value>Bộ nhớ GPU dùng chung, game này</value>
+  </data>
+  <data name="Sensors_Series_GameRam" xml:space="preserve">
+    <value>RAM, game này (private working set)</value>
+  </data>
+  <data name="Sensors_Series_GameRamWs" xml:space="preserve">
+    <value>Working set, game này</value>
+  </data>
+  <data name="Sensors_Series_GameCommit" xml:space="preserve">
+    <value>Commit, game này</value>
+  </data>
+  <data name="Sensors_Ram_Header" xml:space="preserve">
+    <value>Bộ nhớ (RAM)</value>
+  </data>
+  <data name="Sensors_Axis_Gb" xml:space="preserve">
+    <value>GB</value>
+  </data>
+  <data name="Sessions_Col_GameVram" xml:space="preserve">
+    <value>VRAM (game) trung vị · đỉnh</value>
+  </data>
+  <data name="Sessions_Col_GameRam" xml:space="preserve">
+    <value>RAM (game) trung vị · đỉnh</value>
+  </data>
+  <data name="Sessions_GameRamWs_Cell_Format" xml:space="preserve">
+    <value>{0} · {1} (working set)</value>
+  </data>
+  <data name="Sessions_GameVram_Tooltip_Format" xml:space="preserve">
+    <value>Bộ nhớ GPU chuyên dụng, như Task Manager tính — trung bình {0} · trung vị {1} · đỉnh {2}. Bộ nhớ GPU dùng chung, đỉnh {3}.</value>
+  </data>
+  <data name="Sessions_GameRam_Tooltip_Format" xml:space="preserve">
+    <value>Private working set (cột "Bộ nhớ" của Task Manager) — trung bình {0} · trung vị {1} · đỉnh {2}. Working set, đỉnh {3} · commit, đỉnh {4}.</value>
+  </data>
+  <data name="Sessions_GameRamWs_Tooltip_Format" xml:space="preserve">
+    <value>Windows này không báo private working set, nên đây là working set (gồm cả các trang dùng chung) — trung vị {0} · đỉnh {1}.</value>
+  </data>
+  <data name="Trend_Metric_GameVramMedian" xml:space="preserve">
+    <value>VRAM (game) trung vị GB</value>
+  </data>
+  <data name="Trend_Metric_GameVramPeak" xml:space="preserve">
+    <value>VRAM (game) đỉnh GB</value>
+  </data>
+  <data name="Trend_Metric_GameRamMedian" xml:space="preserve">
+    <value>RAM (game) trung vị GB</value>
+  </data>
+  <data name="Trend_Metric_GameRamPeak" xml:space="preserve">
+    <value>RAM (game) đỉnh GB</value>
+  </data>
+  <data name="Trend_Unit_Gigabytes" xml:space="preserve">
+    <value>GB</value>
+  </data>
+  <data name="Compare_Metric_GameVramMedian" xml:space="preserve">
+    <value>VRAM (game) trung vị</value>
+  </data>
+  <data name="Compare_Metric_GameVramPeak" xml:space="preserve">
+    <value>VRAM (game) đỉnh</value>
+  </data>
+  <data name="Compare_Metric_GameRamMedian" xml:space="preserve">
+    <value>RAM (game) trung vị</value>
+  </data>
+  <data name="Compare_Metric_GameRamPeak" xml:space="preserve">
+    <value>RAM (game) đỉnh</value>
+  </data>
+  <data name="Dashboard_Live_GameMemory_Format" xml:space="preserve">
+    <value>Game này: VRAM {0} · RAM {1}</value>
   </data>
 </root>

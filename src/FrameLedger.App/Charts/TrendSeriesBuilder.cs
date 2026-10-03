@@ -54,7 +54,7 @@ public static class TrendSeriesBuilder
         TrendMetric.PresentedFps or TrendMetric.NativeFps or TrendMetric.Displayed or TrendMetric.P1Low or TrendMetric.P01Low => Strings.Trend_Unit_Fps,
         TrendMetric.MaxGpuTemp or TrendMetric.MaxCpuTemp => Strings.Trend_Unit_Celsius,
         TrendMetric.AvgGpuPower => Strings.Trend_Unit_Watts,
-        TrendMetric.MaxVramProcess or TrendMetric.AvgRam => Strings.Trend_Unit_Megabytes,
+        TrendMetric.AvgRam or TrendMetric.GameVramMedian or TrendMetric.GameVramPeak or TrendMetric.GameRamMedian or TrendMetric.GameRamPeak => Strings.Trend_Unit_Gigabytes,
         TrendMetric.FgFactor => Strings.Trend_Unit_Factor,
         _ => Strings.Trend_Unit_Percent,
     };
@@ -100,9 +100,13 @@ public static class TrendSeriesBuilder
     public static bool IsDisplayMetric(TrendMetric metric) =>
         metric is TrendMetric.DisplayExclusiveShare or TrendMetric.DisplayBorderlessShare or TrendMetric.DisplayWindowedShare;
 
-    /// <summary>The metrics that are telemetry, recorded by every session whatever its tier.</summary>
+    /// <summary>
+    /// The metrics that are telemetry, recorded by every session whatever its tier — the game's own memory among them since
+    /// beta.12: it is read from outside the game, hooked or not.
+    /// </summary>
     public static bool IsMachineMetric(TrendMetric metric) => metric is TrendMetric.MaxGpuTemp or TrendMetric.AvgGpuLoad or TrendMetric.AvgGpuPower
-        or TrendMetric.AvgCpuLoad or TrendMetric.MaxCpuTemp or TrendMetric.AvgRam;
+        or TrendMetric.AvgCpuLoad or TrendMetric.MaxCpuTemp or TrendMetric.AvgRam
+        or TrendMetric.GameVramMedian or TrendMetric.GameVramPeak or TrendMetric.GameRamMedian or TrendMetric.GameRamPeak;
 
     public static int ExcludedCount(IReadOnlyList<SessionRow> rows, TrendMetric metric)
     {
@@ -152,10 +156,16 @@ public static class TrendSeriesBuilder
             TrendMetric.MaxGpuTemp => row.MaxGpuTemp,
             TrendMetric.AvgGpuLoad => row.AvgGpuLoad,
             TrendMetric.AvgGpuPower => row.AvgGpuPowerW,
-            TrendMetric.MaxVramProcess => row.VramProcMaxMb,
             TrendMetric.AvgCpuLoad => row.AvgCpuLoad,
             TrendMetric.MaxCpuTemp => row.MaxCpuTemp,
-            TrendMetric.AvgRam => row.AvgRamMb,
+            TrendMetric.AvgRam => Gb(row.AvgRamMb),
+            TrendMetric.GameVramMedian => Gb(row.GameVramDedicatedMedianMb),
+            TrendMetric.GameVramPeak => Gb(row.GameVramDedicatedMaxMb),
+
+            // The private working set only: a session whose Windows reported just the working set has no point here rather
+            // than a different quantity on the same line (the summary and the Sessions grid show it, labelled).
+            TrendMetric.GameRamMedian => Gb(row.GameRamPrivateMedianMb),
+            TrendMetric.GameRamPeak => Gb(row.GameRamPrivateMaxMb),
             TrendMetric.FgFactor => readout.Kind == FpsReadoutKind.Generated ? readout.Factor : null,
             TrendMetric.DisplayExclusiveShare => DisplayShare(row, DisplayMode.ExclusiveFullscreen),
             TrendMetric.DisplayBorderlessShare => DisplayShare(row, DisplayMode.Borderless),
@@ -163,6 +173,9 @@ public static class TrendSeriesBuilder
             _ => null,
         };
     }
+
+    /// <summary>MiB as stored, in GB as Task Manager counts them (1 GB = 1024 MiB).</summary>
+    private static double? Gb(double? mib) => mib / 1024.0;
 
     /// <summary>
     /// A mode's share of the session's observed time (0–100), or null: no display facts on the row, no window ever read, or —

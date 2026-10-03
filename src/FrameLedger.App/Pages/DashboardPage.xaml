@@ -46,7 +46,7 @@
                             </Border>
                             <ui:TextBlock Margin="0,0,16,0" Appearance="Secondary" Text="{Binding ViewModel.Live.GpuTempText}" />
                             <ui:TextBlock Margin="0,0,16,0" Appearance="Secondary" Text="{Binding ViewModel.Live.CpuTempText}" />
-                            <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.Live.VramText}" />
+                            <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.Live.MemoryText}" />
                         </WrapPanel>
                     </StackPanel>
                 </StackPanel>

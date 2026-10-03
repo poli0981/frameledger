@@ -333,9 +333,12 @@ public sealed partial class GameDetailViewModel : ObservableObject
         new(TrendMetric.MaxGpuTemp, Strings.Trend_Metric_MaxGpuTemp),
         new(TrendMetric.AvgGpuLoad, Strings.Trend_Metric_AvgGpuLoad),
         new(TrendMetric.AvgGpuPower, Strings.Trend_Metric_AvgGpuPower),
-        new(TrendMetric.MaxVramProcess, Strings.Trend_Metric_MaxVramProcess),
         new(TrendMetric.AvgCpuLoad, Strings.Trend_Metric_AvgCpuLoad),
         new(TrendMetric.MaxCpuTemp, Strings.Trend_Metric_MaxCpuTemp),
+        new(TrendMetric.GameVramMedian, Strings.Trend_Metric_GameVramMedian),
+        new(TrendMetric.GameVramPeak, Strings.Trend_Metric_GameVramPeak),
+        new(TrendMetric.GameRamMedian, Strings.Trend_Metric_GameRamMedian),
+        new(TrendMetric.GameRamPeak, Strings.Trend_Metric_GameRamPeak),
         new(TrendMetric.AvgRam, Strings.Trend_Metric_AvgRam),
         new(TrendMetric.FgFactor, Strings.Trend_Metric_FgFactor),
         new(TrendMetric.DisplayExclusiveShare, Strings.Trend_Metric_DisplayExclusive),
@@ -521,7 +524,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         }
 
         SelectedHasSeries = SelectedSeries is not null;
-        SelectedHasSensors = SelectedSensors is { } shown && (shown.Sensors.Count > 0 || shown.VramProcMb is { Length: > 0 });
+        SelectedHasSensors = SelectedSensors is { Sensors.Count: > 0 };
         SensorsNote = session is null ? Strings.Tabs_SelectASession
             : SelectedHasSensors ? string.Empty
             : session.IsHooked && SelectedSeries is null ? Strings.Tabs_SelectedNoFrames

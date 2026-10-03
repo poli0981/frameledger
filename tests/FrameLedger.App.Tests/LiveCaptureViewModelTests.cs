@@ -35,10 +35,11 @@ public sealed class LiveCaptureViewModelTests
 
         card.Hold(new SessionHeldEvent(Guid.NewGuid(), 99, GpuTempC: 80));
         card.ElapsedText.Should().BeEmpty("another session's tick");
-        card.Hold(new SessionHeldEvent(guid, 65, GpuTempC: 61.4, CpuTempC: 55.2));
+        card.Hold(new SessionHeldEvent(guid, 65, GpuTempC: 61.4, CpuTempC: 55.2, GameVramDedicatedMb: 2048, GameRamPrivateMb: 1536));
         card.ElapsedText.Should().Contain(Formats.Duration(65));
         card.GpuTempText.Should().Contain("61");
         card.CpuTempText.Should().Contain("55");
+        card.MemoryText.Should().Be(GameMemoryText.Live(2048, 1536), "a held session has the game's memory too: it is read from outside the game (beta.12)");
 
         card.Stop(new SessionCompletedEvent(guid, 3, "normal", 2, "saved", "TargetUnreadable"));
 
@@ -47,6 +48,7 @@ public sealed class LiveCaptureViewModelTests
         card.GameName.Should().BeEmpty("until 2026-09-23 the name stayed, and the next notice could name the last game");
         card.HeldReason.Should().BeEmpty();
         card.ElapsedText.Should().BeEmpty();
+        card.MemoryText.Should().BeEmpty();
         card.Tier.Should().Be(0);
     }
 

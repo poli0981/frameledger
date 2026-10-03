@@ -62,7 +62,8 @@ public sealed class SessionExporterTests
     {
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
         GameRow game = await s.GameAsync("Alpha");
-        long id = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow, hooked: false);
+        long id = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow, hooked: false,
+            shape: static r => r with { GameVramDedicatedAvgMb = 1000, GameVramDedicatedMedianMb = 1024, GameVramDedicatedMaxMb = 2048, GameMemoryProcesses = 1, GameMemorySource = "counters" });
         SessionRow row = (await s.Sessions.FindByIdAsync(id, Ct))!;
         await s.Annotations.UpsertAsync(new SessionAnnotation { SessionId = id, Tags = ["bench"], Notes = "n" }, Ct);
 
@@ -72,6 +73,8 @@ public sealed class SessionExporterTests
         lines.Should().Contain(static l => l.StartsWith("# capture_tier: 2", StringComparison.Ordinal) && l.Contains("no per-frame rows", StringComparison.Ordinal));
         lines[^1].Should().Be(SessionExporter.CsvColumns, "the column line is the last line: nothing was measured");
         lines.Should().Contain("# display: N/A (not recorded: a session recorded before beta.10, or recovered from its crash file)");
+        lines.Should().Contain("# game_memory: vram_dedicated_mb avg=1000 median=1024 max=2048; vram_shared_mb max=N/A; ram_private_ws_mb avg=N/A median=N/A max=N/A; ram_ws_mb max=N/A; commit_mb max=N/A; processes=1; source=counters",
+            "a Tier-2 session has the game's memory too (beta.12): a header line, the session's figure, never a per-frame column");
 
         SessionExportDocument doc = SessionExporter.Document(row, game, null, [], await s.Annotations.FindAsync(id, Ct));
         using var stream = new MemoryStream();
