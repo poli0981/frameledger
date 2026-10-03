@@ -154,6 +154,21 @@ Native `Menu`, `TabControl`, `ComboBox`, `Slider`, `ListView` are fine — the `
 - Do **not** set `Background` on `FluentWindow` (kills Mica). Page backgrounds transparent by default.
 - Exception to the no-hex rule: the chart palette — defined once per theme in `Styles/ChartPalette.xaml` (two dictionaries), never inline.
 
+## FlowDocument (rendered documents, beta.12)
+
+- **WPF UI 4.3.0 styles no `FlowDocument`.** Its own defaults are black Georgia on white, so a document in the dark theme
+  is unreadable unless the document is themed in code: `Markdown/MarkdownRenderer` sets `TextElement.Foreground` to
+  `TextFillColorPrimaryBrush` and `TextElement.FontFamily` to `ContentControlThemeFontFamily` **by resource reference**
+  (`SetResourceReference`, the code form of `DynamicResource`), a transparent background, and resource references for
+  every other colour (`AccentTextFillColorPrimaryBrush` links, `SubtleFillColorSecondaryBrush` code and table headers,
+  `ControlStrokeColorDefaultBrush` rules, quote bars and table borders). Never a literal brush.
+- Host it in `Controls/MarkdownView` (a `FlowDocumentScrollViewer`, toolbar hidden) — not a `RichTextBox`, which is an
+  editor. A `Hyperlink` there does not navigate by itself: the view handles `RequestNavigate` and decides
+  (`Markdown/MarkdownLinks`).
+- `AccentTextFillColorPrimaryBrush` is the light accent in the dark theme only after `ApplicationThemeManager.Apply(…,
+  updateAccent: true)` — measured 2026-10-03 in the test host, which skips it: links drew #003E92 on #202020 there and
+  #73C2FF once the accent was applied as `WpfThemeApplier` applies it.
+
 ## Custom controls (`FpsReadout`, `TriStateChip`, sparklines)
 
 - Derive from `Control` with `ControlTemplate` in `Styles/FrameLedger.xaml`; template uses only theme brushes above → they re-theme for free.

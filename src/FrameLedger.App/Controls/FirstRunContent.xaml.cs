@@ -2,6 +2,7 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.Windows.Controls;
+using FrameLedger.App.Services;
 using FrameLedger.App.ViewModels;
 
 namespace FrameLedger.App.Controls;
@@ -14,7 +15,20 @@ public partial class FirstRunContent : UserControl
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         DataContext = this;
         InitializeComponent();
+        DocumentView.UrlOpener = viewModel.Urls;
+        DocumentView.RepositoryLinkRequested += OnRepositoryLink;
     }
 
     public FirstRunViewModel ViewModel { get; }
+
+    /// <summary>A link from one of the documents to another the gate shows opens it here, not on GitHub.</summary>
+    private void OnRepositoryLink(object? sender, RepositoryLinkEventArgs e)
+    {
+        LegalDocument? linked = ViewModel.Documents.FirstOrDefault(d => string.Equals(d.Path, e.Path, StringComparison.OrdinalIgnoreCase));
+        if (linked is not null)
+        {
+            ViewModel.SelectedDocument = linked;
+            e.Handled = true;
+        }
+    }
 }

@@ -47,6 +47,19 @@
     <EmbeddedResource Include="..\..\LICENSE" LogicalName="LICENSE" />
     <!-- beta.10 (D36): what the whole software cannot do, shown under Help > Limitations; information, not one of FR-11's accepted documents. -->
     <EmbeddedResource Include="..\..\LIMITATIONS.md" LogicalName="LIMITATIONS.md" />
+    <!-- beta.12: what Help > About shows, rendered from the text this build carries (D45: the copyright line and the GPLv3
+         section 7 terms, the trademark note, the third-party notices and the index of every shipped package's licence). -->
+    <EmbeddedResource Include="..\..\NOTICE" LogicalName="NOTICE" />
+    <EmbeddedResource Include="..\..\legal\TRADEMARKS.md" LogicalName="legal/TRADEMARKS.md" />
+    <EmbeddedResource Include="..\..\legal\THIRD_PARTY_NOTICES.md" LogicalName="legal/THIRD_PARTY_NOTICES.md" />
+    <EmbeddedResource Include="..\..\legal\licenses\nuget\INDEX.md" LogicalName="legal/licenses/nuget/INDEX.md" />
+  </ItemGroup>
+
+  <!-- beta.12: the source this build was made from, so the App's links into the repository open THIS version's documents
+       (Services/RepositoryLinks.cs). release.yml passes the tag (a rehearsal, its commit); a local build has none and links
+       to main. -->
+  <ItemGroup Condition="'$(FrameLedgerSourceRef)' != ''">
+    <AssemblyMetadata Include="FrameLedgerSourceRef" Value="$(FrameLedgerSourceRef)" />
   </ItemGroup>
 
   <ItemGroup>
@@ -68,6 +81,7 @@
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="ScottPlot.WPF" />
     <PackageReference Include="H.NotifyIcon.Wpf" />
+    <PackageReference Include="Markdig" />
     <PackageReference Include="Velopack" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Serilog" />

@@ -392,6 +392,9 @@ public partial class App : System.Windows.Application
         services.AddSingleton<ILegalAcceptanceStore, SqliteLegalAcceptanceStore>();
         services.AddSingleton(static sp => new LegalGate(sp.GetRequiredService<ILegalAcceptanceStore>(), LegalDocuments.Load()));
         services.AddSingleton<IFirstRunFlow, FirstRunFlow>();
+
+        // beta.12: Help ▸ Limitations and Help ▸ About, rendered from what this build embeds.
+        services.AddSingleton<IDocumentWindows, DocumentWindows>();
     }
 
     /// <summary>

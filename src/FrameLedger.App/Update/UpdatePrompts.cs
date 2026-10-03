@@ -30,12 +30,11 @@ public sealed class UpdatePrompts(IUrlOpener urls, BugReportFlow bugReports) : I
         if (!string.IsNullOrWhiteSpace(candidate.NotesMarkdown))
         {
             body.Children.Add(new System.Windows.Controls.TextBlock { Text = Strings.Update_Notes_Header, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 12, 0, 4) });
-            body.Children.Add(new ScrollViewer
-            {
-                MaxHeight = 260,
-                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-                Content = new System.Windows.Controls.TextBlock { Text = candidate.NotesMarkdown, TextWrapping = TextWrapping.Wrap },
-            });
+            // beta.12: the release's notes are the CHANGELOG section, rendered rather than shown as raw Markdown; its relative
+            // links resolve the way they do in the repository, against CHANGELOG.md at the root.
+            var notes = new Controls.MarkdownView { MaxHeight = 260, MinHeight = 80, UrlOpener = urls, DocumentPath = "CHANGELOG.md", MarkdownText = candidate.NotesMarkdown };
+            System.Windows.Automation.AutomationProperties.SetName(notes, Strings.Update_Notes_Header);
+            body.Children.Add(notes);
         }
 
         body.Children.Add(new System.Windows.Controls.TextBlock { Text = Strings.Update_Unsigned_Footer, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 12, 0, 0), Opacity = 0.7 });

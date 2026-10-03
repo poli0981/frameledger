@@ -149,7 +149,10 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $v = '${{ steps.version.outputs.version }}'
-          dotnet publish src/FrameLedger.App   -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -p:Version=$v -o out/app
+          # beta.12: the App's links into the repository open the documents of THIS release (Services/RepositoryLinks.cs):
+          # the tag, or for a rehearsal - which has no tag - the commit it was built from.
+          $ref = if ('${{ steps.version.outputs.dry_run }}' -eq 'true') { '${{ github.sha }}' } else { "v$v" }
+          dotnet publish src/FrameLedger.App   -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -p:Version=$v -p:FrameLedgerSourceRef=$ref -o out/app
           if ($LASTEXITCODE -ne 0) { throw 'App publish failed' }
           dotnet publish src/FrameLedger.Agent -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -p:Version=$v -o out/app
           if ($LASTEXITCODE -ne 0) { throw 'Agent publish failed' }

@@ -1,0 +1,47 @@
+Markdig 1.4.0
+
+Licence declared: BSD-2-Clause
+Text below: tools/license-overrides/Markdig.txt, a reviewed copy of the project's own licence file; the package ships none
+Copyright: Alexandre Mutel
+Authors: Alexandre Mutel
+Project: https://xoofx.github.io/markdig
+Ships in: App
+
+-------------------------------------------------------------------------------
+
+Reviewed override for Markdig 1.4.0 (tools/license-gather.ps1).
+
+The package declares <license type="expression">BSD-2-Clause</license> and ships no licence file. The text
+below is the project's own license.txt at the commit the package names (<repository commit=
+"56e9c238584a44a169f174c881855c049768634c">), fetched on 2026-10-03 from
+https://raw.githubusercontent.com/xoofx/markdig/56e9c238584a44a169f174c881855c049768634c/license.txt,
+verbatim. The package's <copyright> field is "Alexandre Mutel"; the file names the same holder.
+
+Used by the App since beta.12 to render the documents it shows (the Legal Gate, Help, About, the user guide);
+consumed unmodified.
+
+-------------------------------------------------------------------------------
+
+Copyright (c) 2016-2026, Alexandre Mutel
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification
+, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this 
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice, 
+   this list of conditions and the following disclaimer in the documentation 
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

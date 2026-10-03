@@ -19,8 +19,8 @@ public static class LimitationsDocument
     /// <summary>The embedded resource's name (<c>FrameLedger.App.csproj</c>).</summary>
     public const string ResourceName = "LIMITATIONS.md";
 
-    /// <summary>The same text in the repository, for the dialog's button.</summary>
-    public static readonly Uri OnGitHub = new(IssueLink.Repository + "/blob/main/LIMITATIONS.md");
+    /// <summary>The same text in the repository at this build's source (beta.12: it was <c>main</c>'s), for the window's button.</summary>
+    public static readonly Uri OnGitHub = RepositoryLinks.Blob(ResourceName);
 
     /// <summary>The document's text, authoring comments removed.</summary>
     /// <exception cref="InvalidOperationException">The build did not embed it.</exception>

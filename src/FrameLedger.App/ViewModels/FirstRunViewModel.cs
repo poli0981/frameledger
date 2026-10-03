@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
-using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FrameLedger.App.Services;
@@ -25,6 +24,7 @@ public sealed partial class FirstRunViewModel : ObservableObject, IDisposable
 
     private readonly LegalGate _gate;
     private readonly IAgentLink _agent;
+    private readonly IUrlOpener _urls;
     private readonly UiThread _ui = new();
     private readonly TaskCompletionSource<bool> _outcome = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -60,10 +60,11 @@ public sealed partial class FirstRunViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private bool _isBusy;
 
-    public FirstRunViewModel(LegalGate gate, IAgentLink agent, bool readOnly)
+    public FirstRunViewModel(LegalGate gate, IAgentLink agent, bool readOnly, IUrlOpener? urls = null)
     {
         _gate = gate ?? throw new ArgumentNullException(nameof(gate));
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
+        _urls = urls ?? new ShellUrlOpener();
         ReadOnly = readOnly;
         SelectedDocument = gate.Documents.Count > 0 ? gate.Documents[0] : null;
         _agent.Changed += OnAgentChanged;
@@ -74,6 +75,9 @@ public sealed partial class FirstRunViewModel : ObservableObject, IDisposable
     public bool ReadOnly { get; }
 
     public IReadOnlyList<LegalDocument> Documents => _gate.Documents;
+
+    /// <summary>The opener the rendered documents' links leave the App through (beta.12) — the same one View on GitHub uses.</summary>
+    public IUrlOpener Urls => _urls;
 
     /// <summary>True when the user accepted (and the rows are written), false when they declined or closed the window.</summary>
     public Task<bool> Outcome => _outcome.Task;
@@ -152,21 +156,13 @@ public sealed partial class FirstRunViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void Close() => _outcome.TrySetResult(true);
 
+    /// <summary>The document on GitHub at this build's source, through the App's opener (beta.12: it started a process itself).</summary>
     [RelayCommand]
     private void OpenOnline()
     {
-        if (SelectedDocument is null)
+        if (SelectedDocument is not null)
         {
-            return;
-        }
-
-        try
-        {
-            using Process? _ = Process.Start(new ProcessStartInfo(SelectedDocument.Url.ToString()) { UseShellExecute = true });
-        }
-        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
-        {
-            Serilog.Log.Warning(ex, "first run: could not open the document online");
+            _ = _urls.Open(SelectedDocument.Url);
         }
     }
 

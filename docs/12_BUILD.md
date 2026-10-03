@@ -172,7 +172,7 @@ assumed to.
 
 ```
 cmake --build --preset x64-release
-dotnet publish src/FrameLedger.App   -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -o out/app
+dotnet publish src/FrameLedger.App   -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -p:FrameLedgerSourceRef={tag} -o out/app
 dotnet publish src/FrameLedger.Agent -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -o out/app
 vpk pack --packId FrameLedger.App --packVersion {ver} --packDir out/app --mainExe FrameLedger.exe --packTitle FrameLedger --releaseNotes out/notes.md --outputDir out/release
 ```
@@ -180,7 +180,9 @@ vpk pack --packId FrameLedger.App --packVersion {ver} --packDir out/app --mainEx
 > **Run by `release.yml` since 2026-09-14 (P4 PR-5)** — `13_CI_CD` §release.yml carries the steps around it
 > (the version gate, `{{RELEASE_DATE}}`, the published-tree assertion, checksums, the release). Both publishes
 > take `-p:Version=<tag>` (§Version). No `--icon`: `assets/icon.ico` does not exist, and this line named it
-> for six weeks.
+> for six weeks. **Since beta.12 the App also takes `-p:FrameLedgerSourceRef`** — the tag, or for a rehearsal the
+> commit — stamped as assembly metadata so its links into the repository open THIS version's documents
+> (`Services/RepositoryLinks`); a build without it links to `main`.
 >
 > **The package id is `FrameLedger.App`, and this line said `FrameLedger` until 2026-09-14 — which would have
 > deleted every user's ledger on uninstall.** Velopack installs into `%LOCALAPPDATA%\<packId>` and removes that
@@ -249,7 +251,7 @@ document the app displays for acceptance (FR-11) is a defect, not a template.
 10. `tools/chokepoint-check.ps1` — injection and evasion primitives confined to one file, native **and** managed, plus the `FL_GUARD_TESTABLE` symbol check against the shipped artifacts
 11. **`tools/hookinventory-check.ps1`** — three passes: A resolves every vendor symbol the Overlay names against `docs/vendor-exports.json`, B sweeps for stray literals, C reads the BUILT Overlay's import table and asserts it imports no vendor module. C skips loudly under `-SkipNative`. **Missing from this list until 2026-08-28**, which is §R10 happening again
 12. **`tools/package-closure-check.ps1`** — both halves: the self-test (5 cases, 4 of which must go RED) **and** a live pass over this repository. It walks the transitive `ProjectReference` closure of the two publish roots below and fails on anything outside the allowlist, naming the reference edge. `FrameLedger.CaptureHost` is an injecting entry point kept out of the package by construction, and `20_OPEN_QUESTIONS` §S27 is closed on exactly that basis
-13. `tools/license-check.ps1` — asserts every vendored third-party has a licence copy in `legal/licenses/`, and that no Intel IGCL / AMD ADLX material has appeared in the tree; since P4 PR-6 (§3) also that `legal/licenses/nuget/` is exactly what `tools/license-gather.ps1` writes for this build's restore output — every NuGet package the App and the Agent ship (77), both directions. `license-gather.ps1 -SelfTest` runs first: fourteen fixture cases, five that must be RED (a hand edit, a package that no longer ships, a URL-only licence with no reviewed override, an applied MPL Exhibit B, a missing restore output), and one run under tr-TR in a child process, because the output must not depend on the machine's culture
+13. `tools/license-check.ps1` — asserts every vendored third-party has a licence copy in `legal/licenses/`, and that no Intel IGCL / AMD ADLX material has appeared in the tree; since P4 PR-6 (§3) also that `legal/licenses/nuget/` is exactly what `tools/license-gather.ps1` writes for this build's restore output — every NuGet package the App and the Agent ship (77), both directions. `license-gather.ps1 -SelfTest` runs first: ~~fourteen~~ sixteen fixture cases, ~~five~~ six that must be RED (a hand edit, a package that no longer ships, a URL-only licence with no reviewed override, an expression with no text in the script and no reviewed override, an applied MPL Exhibit B, a missing restore output), and one run under tr-TR in a child process, because the output must not depend on the machine's culture. **Since beta.12 (78 packages):** a reviewed override also answers for an expression the script has no text for — Markdig declares BSD-2-Clause and ships no file, and `tools/license-overrides/Markdig.txt` is the project's own `license.txt` at the packaged commit
 13b. `tools/accuracy-check.ps1 -SelfTest`, then live — the accuracy block is ONE text (`legal/ACCURACY.md`) embedded verbatim in `README.md` and `legal/DISCLAIMER.md` §4; a copy that drifted, a copy with no markers, or an empty source is red. Four self-test cases, both directions (§S23-6, 2026-09-06)
 13c. **`tools/notice-check.ps1 -SelfTest`, then live** (beta.12, owner decision D45, 2026-10-03) — every first-party source file (`.cs .cpp .h .inl .ps1 .xaml`, tracked or new, minus `src/native/third_party/`) opens with `SPDX-License-Identifier: GPL-3.0-only` and `Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE` in its own comment syntax, because GPLv3 §7 wants additional terms named "in the relevant source files" (`NOTICE` carries them); the second line may name another holder and year in the same form (a contributor's own file).
 Seven self-test cases, both directions; `./tools/notice-check.ps1 -Fix` writes a missing header, and `tools/resx-gen.ps1` generates the accessor with it

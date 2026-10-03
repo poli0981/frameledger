@@ -18,6 +18,7 @@ from the runtime packs the publish used.
 | HarfBuzzSharp.NativeAssets.Win32 | 8.3.1.1 | MIT | App | [HarfBuzzSharp.NativeAssets.Win32.txt](HarfBuzzSharp.NativeAssets.Win32.txt) |
 | HidSharp | 2.6.4 | the file LICENSE.txt in the package | Agent, App | [HidSharp.txt](HidSharp.txt) |
 | LibreHardwareMonitorLib | 0.9.6 | MPL-2.0 | Agent, App | [LibreHardwareMonitorLib.txt](LibreHardwareMonitorLib.txt) |
+| Markdig | 1.4.0 | BSD-2-Clause | App | [Markdig.txt](Markdig.txt) |
 | Microsoft.Data.Sqlite.Core | 10.0.12 | MIT | Agent, App | [Microsoft.Data.Sqlite.Core.txt](Microsoft.Data.Sqlite.Core.txt) |
 | Microsoft.Extensions.Configuration | 10.0.12 | MIT | Agent, App | [Microsoft.Extensions.Configuration.txt](Microsoft.Extensions.Configuration.txt) |
 | Microsoft.Extensions.Configuration.Abstractions | 10.0.12 | MIT | Agent, App | [Microsoft.Extensions.Configuration.Abstractions.txt](Microsoft.Extensions.Configuration.Abstractions.txt) |

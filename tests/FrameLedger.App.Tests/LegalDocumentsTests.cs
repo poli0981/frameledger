@@ -20,6 +20,12 @@ public sealed class LegalDocumentsTests
         docs.Single(static d => string.Equals(d.Key, LegalDocuments.Gpl, StringComparison.Ordinal)).Version.Should().Be(LegalDocuments.GplVersion);
         docs.Single(static d => string.Equals(d.Key, LegalDocuments.Eula, StringComparison.Ordinal)).Version.Should().MatchRegex(@"^\d+\.\d+");
         docs.Should().OnlyContain(static d => d.Url.Host == "github.com");
+
+        // beta.12: at this build's source (main for a test build), with the path the document's relative links resolve against;
+        // the GPL is a plain text shown as written.
+        docs.Select(static d => d.Path).Should().Equal("legal/EULA.md", "LICENSE", "legal/DISCLAIMER.md", "legal/PRIVACY_POLICY.md");
+        docs.Select(static d => d.Url.AbsoluteUri).Should().OnlyContain(static u => u.StartsWith("https://github.com/poli0981/frameledger/blob/main/", StringComparison.Ordinal));
+        docs.Where(static d => d.IsPlainText).Select(static d => d.Key).Should().Equal(LegalDocuments.Gpl);
     }
 
     [Fact]

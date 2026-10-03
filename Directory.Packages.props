@@ -25,6 +25,13 @@
     <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageVersion Include="ScottPlot.WPF" Version="5.1.59" />
     <PackageVersion Include="H.NotifyIcon.Wpf" Version="2.4.1" />
+    <!--
+      Markdig (Alexandre Mutel): Markdown rendered in the App (beta.12, owner request 4) - the Legal Gate, Help,
+      About and the user guide show their documents rendered, not as raw text. BSD-2-Clause, no dependency on
+      net10.0. The package ships no licence file, so its text is a reviewed override
+      (tools/license-overrides/Markdig.txt). HTML is disabled in the pipeline (App/Markdown/MarkdownRenderer.cs).
+    -->
+    <PackageVersion Include="Markdig" Version="1.4.0" />
   </ItemGroup>
 
   <ItemGroup Label="Hosting and logging">

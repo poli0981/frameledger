@@ -25,7 +25,9 @@
          declares an expression, a LICENSE / COPYING file at its root or under Notices/. Verbatim.
       2. A reviewed override, tools/license-overrides/<id>.txt, for a package that declares only a
          <licenseUrl>: the text behind that URL, fetched once by a person, with its provenance at the top.
-         A URL-only package with no override is RED -- this script never fetches anything.
+         A URL-only package with no override is RED -- this script never fetches anything. Since beta.12
+         an override also answers for an expression this script has no text for (Markdig: BSD-2-Clause,
+         no file in the package): the project's own licence file, fetched once by a person.
       3. An SPDX expression with no file: MIT's standard text under the package's own <copyright> field
          ("not stated" when the package states none -- this script never writes a copyright line), or,
          for Apache-2.0 and MPL-2.0, the statement that the full text is the shared copy beside it
@@ -286,7 +288,14 @@ function Build-PackageText($Package, [string]$Roots, [string]$Overrides) {
                     $(if ($p.Copyright) { $p.Copyright } else { "not stated by the package (authors: $($p.Authors))" })
                 }
                 default {
-                    throw "$($p.Id) $($p.Version) declares '$($p.Licence)' and ships no licence file; this script has no text for that expression -- add tools/license-overrides/$($p.Id).txt"
+                    # An expression with no standard text here (BSD-2-Clause names its holder inside the text, so a
+                    # template would be a guess): a reviewed copy of the project's own licence file, or RED.
+                    $override = Join-Path $Overrides "$($p.Id).txt"
+                    if (-not (Test-Path $override)) {
+                        throw "$($p.Id) $($p.Version) declares '$($p.Licence)' and ships no licence file; this script has no text for that expression -- add tools/license-overrides/$($p.Id).txt"
+                    }
+                    $source = "tools/license-overrides/$($p.Id).txt, a reviewed copy of the project's own licence file; the package ships none"
+                    $body = Read-Text $override
                 }
             }
         }
@@ -447,12 +456,13 @@ function Invoke-SelfTest {
         New-FakePackage 'Fake.Url' '1.0.0' '<licenseUrl>https://example.invalid/licence</licenseUrl>'
         New-FakePackage 'Fake.MplB' '1.0.0' '<license type="expression">MPL-2.0</license>' @{ 'readme.txt' = 'This Source Code Form is "Incompatible With Secondary Licenses", as defined by the MPL v2.0.' }
         New-FakePackage 'Fake.Upper' '1.0.0' '<license type="expression">MIT</license>' @{ 'LICENSE.TXT' = 'UPPER-CASE LICENCE FILE' }
+        New-FakePackage 'Fake.Bsd' '1.0.0' '<license type="expression">BSD-2-Clause</license>' @{} 'Fake Bsd Author'
         New-FakePackage 'Fake.MplText' '1.0.0' '<license type="expression">MPL-2.0</license>' @{ 'LICENSE.txt' = "Mozilla Public License Version 2.0`n...`nExhibit A - Source Code Form License Notice`n...`nExhibit B - `"Incompatible With Secondary Licenses`" Notice`n  This Source Code Form is `"Incompatible With Secondary Licenses`", as defined by the Mozilla Public License, v. 2.0." }
 
         function New-Assets([string]$Project, [string[]]$Ids) {
             $dir = Join-Path (Join-Path $base "src/$Project") 'obj'
             New-Item -ItemType Directory -Force $dir | Out-Null
-            $versions = @{ 'Fake.Mit' = '1.0.0'; 'Fake.MitNoHolder' = '1.0.0'; 'Fake.File' = '2.0.0'; 'Fake.Apache' = '3.0.0'; 'Fake.Analyzer' = '1.0.0'; 'Fake.Placeholder' = '1.0.0'; 'Fake.Url' = '1.0.0'; 'Fake.MplB' = '1.0.0'; 'Fake.MplText' = '1.0.0'; 'Fake.Upper' = '1.0.0' }
+            $versions = @{ 'Fake.Mit' = '1.0.0'; 'Fake.MitNoHolder' = '1.0.0'; 'Fake.File' = '2.0.0'; 'Fake.Apache' = '3.0.0'; 'Fake.Analyzer' = '1.0.0'; 'Fake.Placeholder' = '1.0.0'; 'Fake.Url' = '1.0.0'; 'Fake.MplB' = '1.0.0'; 'Fake.MplText' = '1.0.0'; 'Fake.Upper' = '1.0.0'; 'Fake.Bsd' = '1.0.0' }
             $target = [ordered]@{}
             foreach ($id in $Ids) {
                 $runtime = if ($id -eq 'Fake.Placeholder') { @{ 'lib/net10.0/_._' = @{} } } else { @{ "lib/net10.0/$id.dll" = @{} } }
@@ -547,6 +557,18 @@ function Invoke-SelfTest {
             $assets = @(New-Assets 'FrameLedger.App' @('Fake.Url'))
             $r = Invoke-Gather $assets $packages $overrides (Join-Path $base 'out-url') $false
             $r.Problems.Count -eq 0 -and (Get-Content (Join-Path $base 'out-url/Fake.Url.txt') -Raw) -match 'REVIEWED URL TEXT'
+        }
+        & $case 'an expression with no text here and no reviewed override is RED' {
+            $assets = @(New-Assets 'FrameLedger.App' @('Fake.Bsd'))
+            $r = Invoke-Gather $assets $packages $overrides (Join-Path $base 'out-bsd') $false
+            @($r.Problems | Where-Object { $_ -like "*Fake.Bsd*BSD-2-Clause*license-overrides*" }).Count -eq 1
+        }
+        & $case 'the same expression with a reviewed override is green and names the override' {
+            Set-Content (Join-Path $overrides 'Fake.Bsd.txt') 'REVIEWED BSD TEXT'
+            $assets = @(New-Assets 'FrameLedger.App' @('Fake.Bsd'))
+            $r = Invoke-Gather $assets $packages $overrides (Join-Path $base 'out-bsd') $false
+            $t = Get-Content (Join-Path $base 'out-bsd/Fake.Bsd.txt') -Raw
+            $r.Problems.Count -eq 0 -and $t -match 'REVIEWED BSD TEXT' -and $t -match 'Licence declared: BSD-2-Clause' -and $t -match "project's own licence file"
         }
         & $case 'an MPL-2.0 package carrying Exhibit B is RED' {
             $assets = @(New-Assets 'FrameLedger.App' @('Fake.MplB'))

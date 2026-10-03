@@ -15,9 +15,11 @@ public sealed class FirstRunFlow : IFirstRunFlow
     private readonly IThemeApplier _theme;
     private readonly AppearanceSettings _appearance;
     private readonly ShellHost _shell;
+    private readonly IUrlOpener? _urls;
 
-    public FirstRunFlow(LegalGate gate, IAgentLink agent, IThemeApplier theme, AppearanceSettings appearance, ShellHost shell)
+    public FirstRunFlow(LegalGate gate, IAgentLink agent, IThemeApplier theme, AppearanceSettings appearance, ShellHost shell, IUrlOpener? urls = null)
     {
+        _urls = urls;
         _gate = gate ?? throw new ArgumentNullException(nameof(gate));
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _theme = theme ?? throw new ArgumentNullException(nameof(theme));
@@ -33,7 +35,7 @@ public sealed class FirstRunFlow : IFirstRunFlow
 
     private async Task<bool> ShowAsync(bool readOnly)
     {
-        using var viewModel = new FirstRunViewModel(_gate, _agent, readOnly);
+        using var viewModel = new FirstRunViewModel(_gate, _agent, readOnly, _urls);
         var window = new FirstRunWindow(viewModel, _theme, _appearance) { Owner = readOnly ? _shell.Current : null };
         window.Show();
         Log.Information("ui: first-run window shown {Ms} ms after process start", (long)(DateTime.Now - System.Diagnostics.Process.GetCurrentProcess().StartTime).TotalMilliseconds);
