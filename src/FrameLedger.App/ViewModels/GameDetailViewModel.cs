@@ -565,7 +565,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
     /// <summary>
     /// beta.11 (D39): the selected metric's line, then each ticked metric's — and the options' state: the selected metric
-    /// is not offered beside itself, and once two units are on the chart a metric in a third cannot be ticked.
+    /// is not offered beside itself, and once two units are on the chart a metric in a third cannot be ticked. A metric
+    /// ticked in a third unit — the selected one changed to a unit neither ticked unit shares — is unticked: the chart
+    /// draws two units, and a box left ticked would name a line that is not there.
     /// </summary>
     private List<TrendLine> BuildTrendLines()
     {
@@ -582,12 +584,25 @@ public sealed partial class GameDetailViewModel : ObservableObject
         _rebuildingExtras = true;
         try
         {
-            TrendMetricOptionViewModel[] ticked = [.. TrendExtras.Where(o => o.IsSelected && o.Metric != TrendMetric)];
             string primaryUnit = TrendSeriesBuilder.UnitOf(TrendMetric);
+            string? secondUnit = null;
+            foreach (TrendMetricOptionViewModel option in TrendExtras.Where(o => o.IsSelected))
+            {
+                if (option.Metric == TrendMetric)
+                {
+                    option.IsSelected = false;
+                }
+                else if (!string.Equals(option.Unit, primaryUnit, StringComparison.Ordinal))
+                {
+                    secondUnit ??= option.Unit;
+                    option.IsSelected = string.Equals(option.Unit, secondUnit, StringComparison.Ordinal);
+                }
+            }
+
+            TrendMetricOptionViewModel[] ticked = [.. TrendExtras.Where(static o => o.IsSelected)];
             HashSet<string> units = [primaryUnit, .. ticked.Select(static o => o.Unit)];
             foreach (TrendMetricOptionViewModel option in TrendExtras)
             {
-                option.IsSelected &= option.Metric != TrendMetric;
                 option.IsEnabled = option.Metric != TrendMetric && (option.IsSelected || units.Count < 2 || units.Contains(option.Unit));
             }
 

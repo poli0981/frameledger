@@ -249,6 +249,16 @@ public sealed class SessionDeletionAndOverviewTests
 
         vm.TrendExtras.Single(static o => o.Metric == TrendMetric.MaxGpuTemp).IsSelected = false;
         vm.TrendExtras.Single(static o => o.Metric == TrendMetric.AvgGpuPower).IsEnabled.Should().BeTrue("back to one unit");
+
+        // °C and a frame rate ticked, then the selected metric changed to watts: one of the two ticked units goes, so the
+        // boxes name exactly the lines the chart draws.
+        vm.TrendExtras.Single(static o => o.Metric == TrendMetric.MaxGpuTemp).IsSelected = true;
+        vm.TrendExtras.Single(static o => o.Metric == TrendMetric.P1Low).IsSelected = true;
+        vm.TrendLines.Select(static l => l.Unit).Distinct(StringComparer.Ordinal).Should().HaveCount(2);
+        vm.TrendMetric = TrendMetric.AvgGpuPower;
+        vm.TrendLines.Select(static l => l.Unit).Distinct(StringComparer.Ordinal).Should().HaveCount(2, "the chart draws two units");
+        vm.TrendLines[0].Unit.Should().Be(TrendSeriesBuilder.UnitOf(TrendMetric.AvgGpuPower));
+        vm.TrendExtras.Count(static o => o.IsSelected).Should().Be(vm.TrendLines.Count - 1, "every ticked box has its line");
     }
 
     [Theory]
