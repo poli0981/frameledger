@@ -59,6 +59,13 @@ public interface ISessionRepository
     /// </summary>
     ValueTask<RetentionSweepResult> SweepRetentionAllAsync(int keep, CancellationToken ct = default);
 
+    /// <summary>
+    /// beta.11 (owner decision D40): delete every session of <paramref name="gameId"/>, or of every game when it is null, in
+    /// one transaction — segments, frame and sensor series and annotations cascade with them (schema 0001's foreign keys).
+    /// Nothing about the games, their consent or the settings is touched. The Agent's to call (§Writer ownership).
+    /// </summary>
+    ValueTask<RetentionSweepResult> DeleteSessionsAsync(long? gameId, CancellationToken ct = default);
+
     ValueTask<FrameBlobs?> FindFramesAsync(long sessionId, CancellationToken ct = default);
 
     /// <summary>The session's segments in frame order (the ribbon, <c>08_UI</c> §Session summary).</summary>

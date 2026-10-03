@@ -183,6 +183,15 @@ public static class Strings
         nameof(Dashboard_Totals_Games),
         nameof(Dashboard_Totals_Playtime),
         nameof(Dashboard_Totals_ThisWeek),
+        nameof(DeleteSessions_AgentTooOld),
+        nameof(DeleteSessions_AllBody_Format),
+        nameof(DeleteSessions_AllTitle),
+        nameof(DeleteSessions_Delete),
+        nameof(DeleteSessions_Done_Format),
+        nameof(DeleteSessions_GameBody_Format),
+        nameof(DeleteSessions_GameTitle_Format),
+        nameof(DeleteSessions_NoAgent),
+        nameof(DeleteSessions_Running),
         nameof(Diag_Written_Format),
         nameof(Display_Buffer_Format),
         nameof(Display_BufferEffect_Format),
@@ -365,6 +374,7 @@ public static class Strings
         nameof(GameDetail_AntiCheat_Header),
         nameof(GameDetail_Back),
         nameof(GameDetail_ChangeExe),
+        nameof(GameDetail_DeleteSessions),
         nameof(GameDetail_Details_Architecture),
         nameof(GameDetail_Details_Engine),
         nameof(GameDetail_Details_EngineVersion),
@@ -403,6 +413,8 @@ public static class Strings
         nameof(GameDetail_Measured_Header),
         nameof(GameDetail_Measured_NotHooked),
         nameof(GameDetail_NotFound),
+        nameof(GameDetail_Overview_Header),
+        nameof(GameDetail_Overview_Note),
         nameof(GameDetail_Recording_Body),
         nameof(GameDetail_Recording_Header),
         nameof(GameDetail_Recording_Off),
@@ -688,6 +700,10 @@ public static class Strings
         nameof(Settings_Capture_Header),
         nameof(Settings_Channel_Beta),
         nameof(Settings_Channel_Stable),
+        nameof(Settings_Data_Header),
+        nameof(Settings_DeleteSessions_Body),
+        nameof(Settings_DeleteSessions_Button),
+        nameof(Settings_DeleteSessions_Label),
         nameof(Settings_Exceptions_Body),
         nameof(Settings_Exceptions_Checking),
         nameof(Settings_Exceptions_Empty),
@@ -702,7 +718,6 @@ public static class Strings
         nameof(Settings_Header),
         nameof(Settings_HideAntiCheatHooking_Body),
         nameof(Settings_HideAntiCheatHooking_Label),
-        nameof(Settings_HookedGames_Empty),
         nameof(Settings_HookedGames_Label),
         nameof(Settings_HookedGames_Revoke),
         nameof(Settings_Interval_Body),
@@ -713,7 +728,6 @@ public static class Strings
         nameof(Settings_KillSwitch_Off),
         nameof(Settings_KillSwitch_On),
         nameof(Settings_Language_Label),
-        nameof(Settings_Language_Note),
         nameof(Settings_Legal_Header),
         nameof(Settings_Legal_Reopen),
         nameof(Settings_LogDebug_Body),
@@ -847,6 +861,8 @@ public static class Strings
         nameof(Trend_Empty),
         nameof(Trend_Empty_Format),
         nameof(Trend_Excluded_Format),
+        nameof(Trend_Extras_Label),
+        nameof(Trend_Extras_Note),
         nameof(Trend_IncludeMidSession),
         nameof(Trend_Metric_Average),
         nameof(Trend_Metric_AvgCpuLoad),
@@ -867,6 +883,12 @@ public static class Strings
         nameof(Trend_Metric_P1Low),
         nameof(Trend_Metric_PresentedFps),
         nameof(Trend_Partial_Note),
+        nameof(Trend_Unit_Celsius),
+        nameof(Trend_Unit_Factor),
+        nameof(Trend_Unit_Fps),
+        nameof(Trend_Unit_Megabytes),
+        nameof(Trend_Unit_Percent),
+        nameof(Trend_Unit_Watts),
         nameof(Uninstall_DataFolder_Body),
         nameof(Uninstall_DataFolder_Title),
         nameof(Update_AgentStillRunning),
@@ -1213,6 +1235,24 @@ public static class Strings
     public static string Dashboard_Totals_Playtime => ResourceManager.GetString(nameof(Dashboard_Totals_Playtime), Culture) ?? nameof(Dashboard_Totals_Playtime);
 
     public static string Dashboard_Totals_ThisWeek => ResourceManager.GetString(nameof(Dashboard_Totals_ThisWeek), Culture) ?? nameof(Dashboard_Totals_ThisWeek);
+
+    public static string DeleteSessions_AgentTooOld => ResourceManager.GetString(nameof(DeleteSessions_AgentTooOld), Culture) ?? nameof(DeleteSessions_AgentTooOld);
+
+    public static string DeleteSessions_AllBody_Format => ResourceManager.GetString(nameof(DeleteSessions_AllBody_Format), Culture) ?? nameof(DeleteSessions_AllBody_Format);
+
+    public static string DeleteSessions_AllTitle => ResourceManager.GetString(nameof(DeleteSessions_AllTitle), Culture) ?? nameof(DeleteSessions_AllTitle);
+
+    public static string DeleteSessions_Delete => ResourceManager.GetString(nameof(DeleteSessions_Delete), Culture) ?? nameof(DeleteSessions_Delete);
+
+    public static string DeleteSessions_Done_Format => ResourceManager.GetString(nameof(DeleteSessions_Done_Format), Culture) ?? nameof(DeleteSessions_Done_Format);
+
+    public static string DeleteSessions_GameBody_Format => ResourceManager.GetString(nameof(DeleteSessions_GameBody_Format), Culture) ?? nameof(DeleteSessions_GameBody_Format);
+
+    public static string DeleteSessions_GameTitle_Format => ResourceManager.GetString(nameof(DeleteSessions_GameTitle_Format), Culture) ?? nameof(DeleteSessions_GameTitle_Format);
+
+    public static string DeleteSessions_NoAgent => ResourceManager.GetString(nameof(DeleteSessions_NoAgent), Culture) ?? nameof(DeleteSessions_NoAgent);
+
+    public static string DeleteSessions_Running => ResourceManager.GetString(nameof(DeleteSessions_Running), Culture) ?? nameof(DeleteSessions_Running);
 
     public static string Diag_Written_Format => ResourceManager.GetString(nameof(Diag_Written_Format), Culture) ?? nameof(Diag_Written_Format);
 
@@ -1578,6 +1618,8 @@ public static class Strings
 
     public static string GameDetail_ChangeExe => ResourceManager.GetString(nameof(GameDetail_ChangeExe), Culture) ?? nameof(GameDetail_ChangeExe);
 
+    public static string GameDetail_DeleteSessions => ResourceManager.GetString(nameof(GameDetail_DeleteSessions), Culture) ?? nameof(GameDetail_DeleteSessions);
+
     public static string GameDetail_Details_Architecture => ResourceManager.GetString(nameof(GameDetail_Details_Architecture), Culture) ?? nameof(GameDetail_Details_Architecture);
 
     public static string GameDetail_Details_Engine => ResourceManager.GetString(nameof(GameDetail_Details_Engine), Culture) ?? nameof(GameDetail_Details_Engine);
@@ -1653,6 +1695,10 @@ public static class Strings
     public static string GameDetail_Measured_NotHooked => ResourceManager.GetString(nameof(GameDetail_Measured_NotHooked), Culture) ?? nameof(GameDetail_Measured_NotHooked);
 
     public static string GameDetail_NotFound => ResourceManager.GetString(nameof(GameDetail_NotFound), Culture) ?? nameof(GameDetail_NotFound);
+
+    public static string GameDetail_Overview_Header => ResourceManager.GetString(nameof(GameDetail_Overview_Header), Culture) ?? nameof(GameDetail_Overview_Header);
+
+    public static string GameDetail_Overview_Note => ResourceManager.GetString(nameof(GameDetail_Overview_Note), Culture) ?? nameof(GameDetail_Overview_Note);
 
     public static string GameDetail_Recording_Body => ResourceManager.GetString(nameof(GameDetail_Recording_Body), Culture) ?? nameof(GameDetail_Recording_Body);
 
@@ -2224,6 +2270,14 @@ public static class Strings
 
     public static string Settings_Channel_Stable => ResourceManager.GetString(nameof(Settings_Channel_Stable), Culture) ?? nameof(Settings_Channel_Stable);
 
+    public static string Settings_Data_Header => ResourceManager.GetString(nameof(Settings_Data_Header), Culture) ?? nameof(Settings_Data_Header);
+
+    public static string Settings_DeleteSessions_Body => ResourceManager.GetString(nameof(Settings_DeleteSessions_Body), Culture) ?? nameof(Settings_DeleteSessions_Body);
+
+    public static string Settings_DeleteSessions_Button => ResourceManager.GetString(nameof(Settings_DeleteSessions_Button), Culture) ?? nameof(Settings_DeleteSessions_Button);
+
+    public static string Settings_DeleteSessions_Label => ResourceManager.GetString(nameof(Settings_DeleteSessions_Label), Culture) ?? nameof(Settings_DeleteSessions_Label);
+
     public static string Settings_Exceptions_Body => ResourceManager.GetString(nameof(Settings_Exceptions_Body), Culture) ?? nameof(Settings_Exceptions_Body);
 
     public static string Settings_Exceptions_Checking => ResourceManager.GetString(nameof(Settings_Exceptions_Checking), Culture) ?? nameof(Settings_Exceptions_Checking);
@@ -2252,8 +2306,6 @@ public static class Strings
 
     public static string Settings_HideAntiCheatHooking_Label => ResourceManager.GetString(nameof(Settings_HideAntiCheatHooking_Label), Culture) ?? nameof(Settings_HideAntiCheatHooking_Label);
 
-    public static string Settings_HookedGames_Empty => ResourceManager.GetString(nameof(Settings_HookedGames_Empty), Culture) ?? nameof(Settings_HookedGames_Empty);
-
     public static string Settings_HookedGames_Label => ResourceManager.GetString(nameof(Settings_HookedGames_Label), Culture) ?? nameof(Settings_HookedGames_Label);
 
     public static string Settings_HookedGames_Revoke => ResourceManager.GetString(nameof(Settings_HookedGames_Revoke), Culture) ?? nameof(Settings_HookedGames_Revoke);
@@ -2273,8 +2325,6 @@ public static class Strings
     public static string Settings_KillSwitch_On => ResourceManager.GetString(nameof(Settings_KillSwitch_On), Culture) ?? nameof(Settings_KillSwitch_On);
 
     public static string Settings_Language_Label => ResourceManager.GetString(nameof(Settings_Language_Label), Culture) ?? nameof(Settings_Language_Label);
-
-    public static string Settings_Language_Note => ResourceManager.GetString(nameof(Settings_Language_Note), Culture) ?? nameof(Settings_Language_Note);
 
     public static string Settings_Legal_Header => ResourceManager.GetString(nameof(Settings_Legal_Header), Culture) ?? nameof(Settings_Legal_Header);
 
@@ -2542,6 +2592,10 @@ public static class Strings
 
     public static string Trend_Excluded_Format => ResourceManager.GetString(nameof(Trend_Excluded_Format), Culture) ?? nameof(Trend_Excluded_Format);
 
+    public static string Trend_Extras_Label => ResourceManager.GetString(nameof(Trend_Extras_Label), Culture) ?? nameof(Trend_Extras_Label);
+
+    public static string Trend_Extras_Note => ResourceManager.GetString(nameof(Trend_Extras_Note), Culture) ?? nameof(Trend_Extras_Note);
+
     public static string Trend_IncludeMidSession => ResourceManager.GetString(nameof(Trend_IncludeMidSession), Culture) ?? nameof(Trend_IncludeMidSession);
 
     public static string Trend_Metric_Average => ResourceManager.GetString(nameof(Trend_Metric_Average), Culture) ?? nameof(Trend_Metric_Average);
@@ -2581,6 +2635,18 @@ public static class Strings
     public static string Trend_Metric_PresentedFps => ResourceManager.GetString(nameof(Trend_Metric_PresentedFps), Culture) ?? nameof(Trend_Metric_PresentedFps);
 
     public static string Trend_Partial_Note => ResourceManager.GetString(nameof(Trend_Partial_Note), Culture) ?? nameof(Trend_Partial_Note);
+
+    public static string Trend_Unit_Celsius => ResourceManager.GetString(nameof(Trend_Unit_Celsius), Culture) ?? nameof(Trend_Unit_Celsius);
+
+    public static string Trend_Unit_Factor => ResourceManager.GetString(nameof(Trend_Unit_Factor), Culture) ?? nameof(Trend_Unit_Factor);
+
+    public static string Trend_Unit_Fps => ResourceManager.GetString(nameof(Trend_Unit_Fps), Culture) ?? nameof(Trend_Unit_Fps);
+
+    public static string Trend_Unit_Megabytes => ResourceManager.GetString(nameof(Trend_Unit_Megabytes), Culture) ?? nameof(Trend_Unit_Megabytes);
+
+    public static string Trend_Unit_Percent => ResourceManager.GetString(nameof(Trend_Unit_Percent), Culture) ?? nameof(Trend_Unit_Percent);
+
+    public static string Trend_Unit_Watts => ResourceManager.GetString(nameof(Trend_Unit_Watts), Culture) ?? nameof(Trend_Unit_Watts);
 
     public static string Uninstall_DataFolder_Body => ResourceManager.GetString(nameof(Uninstall_DataFolder_Body), Culture) ?? nameof(Uninstall_DataFolder_Body);
 

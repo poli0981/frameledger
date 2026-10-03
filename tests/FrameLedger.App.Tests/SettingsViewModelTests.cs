@@ -128,7 +128,7 @@ public sealed class SettingsViewModelTests
     }
 
     private static async Task<Harness> OpenAsync(ScratchLedger s, FakeAgentLink? agent = null, FakeRun? run = null, FakeMaintenance? maintenance = null, FakeTool? tool = null,
-        IAgentAdminPrompt? adminPrompt = null)
+        IAgentAdminPrompt? adminPrompt = null, IConfirmations? confirmations = null, SessionDeletion? deletion = null)
     {
         maintenance ??= new FakeMaintenance();
         tool ??= new FakeTool();
@@ -144,10 +144,69 @@ public sealed class SettingsViewModelTests
         var shell = new ShellHost(new ServiceCollection().BuildServiceProvider(), null!, null!, closePolicy);
         // The instance-lock probe is the test's (never the real folder's): no Agent holds it, so a restart never waits.
         var vm = new SettingsViewModel(appearance, new NoTheme(), shell, settings, s.Library, new HookingConsent(agent, new NoPrompt()), agent, run, strip, maintenance, tool, closePolicy, firstRun,
-            adminPrompt: adminPrompt, agentHeld: static () => false);
+            adminPrompt: adminPrompt, agentHeld: static () => false, confirmations: confirmations, deletion: deletion);
         Task pending = vm.Pending;
         await pending.ConfigureAwait(false);
         return new Harness { Ledger = s, Settings = settings, Agent = agent, Run = run, Strip = strip, Vm = vm, Maintenance = maintenance, Tool = tool, ClosePolicy = closePolicy, FirstRun = firstRun };
+    }
+
+    /// <summary>beta.11 (D40): Settings ▸ Data asks with the total, deletes nothing on a no, and deletes every game's through the Agent on a yes.</summary>
+    [Fact]
+    public async Task DeleteAllSessionsAsksWithTheTotalThenGoesThroughTheAgent()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow alpha = await s.GameAsync("Alpha");
+        GameRow bravo = await s.GameAsync("Bravo");
+        await s.SessionAsync(alpha.Id, DateTimeOffset.UtcNow.AddHours(-2));
+        await s.SessionAsync(bravo.Id, DateTimeOffset.UtcNow.AddHours(-1));
+        var confirm = new DeleteConfirm();
+        var agent = new DeletingAgent(s);
+        Harness h = await OpenAsync(s, confirmations: confirm, deletion: new SessionDeletion(agent));
+
+        await h.Vm.DeleteAllSessionsCommand.ExecuteAsync(null);
+        confirm.Asked.Should().Equal(((string?)null, 2L));
+        agent.Asked.Should().BeEmpty("a no deletes nothing");
+
+        confirm.Answer = true;
+        await h.Vm.DeleteAllSessionsCommand.ExecuteAsync(null);
+        agent.Asked.Should().Equal(new DeleteSessionsRequest(null));
+        (await s.Sessions.SummariseByGameAsync(Ct)).Should().BeEmpty();
+        (await s.Games.ListAsync(Ct)).Should().HaveCount(2, "the library stays");
+        h.Vm.HasHookedGames.Should().BeFalse("no game has hooking on, so that card is not shown");
+    }
+
+    private sealed class DeleteConfirm : IConfirmations
+    {
+        public bool Answer { get; set; }
+
+        public List<(string? Game, long Sessions)> Asked { get; } = [];
+
+        public Task<RemoveGameChoice> RemoveGameAsync(string gameName, CancellationToken ct = default) => Task.FromResult(RemoveGameChoice.Cancel);
+
+        public Task<bool> DeleteSessionsAsync(string? gameName, long sessions, CancellationToken ct = default)
+        {
+            Asked.Add((gameName, sessions));
+            return Task.FromResult(Answer);
+        }
+    }
+
+    /// <summary>An Agent that deletes in the scratch ledger as the real one does in its own.</summary>
+    private sealed class DeletingAgent(ScratchLedger s) : IAgentRequests
+    {
+        public HelloAck? Hello => null;
+
+        public bool IsConnected => true;
+
+        public List<DeleteSessionsRequest> Asked { get; } = [];
+
+        public async Task<IpcEnvelope> RequestAsync<TRequest>(string type, TRequest payload, CancellationToken ct = default)
+            where TRequest : class
+        {
+            var request = (DeleteSessionsRequest)(object)payload;
+            Asked.Add(request);
+            RetentionSweepResult gone = await s.Sessions.DeleteSessionsAsync(request.GameId, ct).ConfigureAwait(false);
+            return IpcCodec.Decode(IpcCodec.Encode(IpcMessageType.DeleteSessionsAck, "1", new DeleteSessionsAck(request.GameId, gone.Games, gone.Sessions)));
+        }
     }
 
     [Fact]

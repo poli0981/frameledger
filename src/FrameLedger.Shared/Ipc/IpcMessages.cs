@@ -57,6 +57,13 @@ public static class IpcMessageType
     public const string SweepRetention = "SweepRetention";
     public const string SweepRetentionAck = "SweepRetentionAck";
 
+    /// <summary>
+    /// beta.11 (owner decision D40): delete every session of one game, or of every game — the Agent's rows (§Writer
+    /// ownership), deleted by the Agent, refused while a session it would delete under is still being recorded.
+    /// </summary>
+    public const string DeleteSessions = "DeleteSessions";
+    public const string DeleteSessionsAck = "DeleteSessionsAck";
+
     public const string SessionStarted = "SessionStarted";
     public const string SessionProgress = "SessionProgress";
 
@@ -96,6 +103,9 @@ public static class IpcErrorCode
 
     /// <summary>D33: <c>SetAntiCheatException true</c> while <c>hooking.usermode_ac_exceptions</c> is off — nothing is granted.</summary>
     public const string ExceptionsOff = "ExceptionsOff";
+
+    /// <summary>beta.11: <c>DeleteSessions</c> while a session of that game (or of any game, for all) is being recorded — nothing is deleted.</summary>
+    public const string SessionRunning = "SessionRunning";
 }
 
 /// <summary>Codes a <see cref="CaptureErrorEvent"/> carries (<c>07_IPC</c> §Messages, <c>CaptureError</c>).</summary>
@@ -362,3 +372,13 @@ public sealed record SweepRetentionRequest;
 /// series were removed. Aggregates and segments are never touched.
 /// </summary>
 public sealed record SweepRetentionAck(int Keep, int Games, int Sessions);
+
+/// <summary>
+/// <c>DeleteSessions</c> (beta.11, D40): every session of <see cref="GameId"/>, or of every game when it is null — with
+/// their segments, frame and sensor series and annotations (they cascade). The library, the settings and every consent
+/// stay. Refused with <c>Error SessionRunning</c> while such a session is being recorded.
+/// </summary>
+public sealed record DeleteSessionsRequest(long? GameId);
+
+/// <summary>What was deleted: the sessions, and how many games they belonged to.</summary>
+public sealed record DeleteSessionsAck(long? GameId, int Games, int Sessions);

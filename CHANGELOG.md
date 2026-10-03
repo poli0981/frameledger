@@ -42,6 +42,16 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   and pushed the new ones out of sight. *Show the N games already in the library* brings them back, dimmed, and a row
   that cannot be imported has its box disabled (a tick on it was taken and ignored).
 
+- **Delete all sessions** (owner decision D40, beta.11): on a game's page, every session of that game; in Settings ▸
+  **Data**, every session of every game — with their frame and sensor data and notes, after a confirmation that says how
+  many. The library, the settings and every game's hooking consent stay. The capture agent deletes them (the rows are its)
+  and refuses while a session is being recorded; an older agent is told to restart. A summary window still open on a
+  deleted session closes. A new pipe request, `DeleteSessions`.
+- **Charts across a game's sessions** (owner decision D39, beta.11): the Sessions tab opens with *Sessions at a glance* —
+  every hooked session's frame rate (Presented FPS, or Native and Displayed where frame generation was measured, never one
+  inflated line) and its 1% and 0.1% lows, oldest first; click a point to select that session. The Trend keeps its metric
+  and can **draw more beside it** (*Also draw*), a second unit against the right axis, two units at most.
+
 - **Three CrackProof titles on the anti-cheat title list** (owner request, beta.11): Umamusume: Pretty Derby (Steam
   `3224770`), Heaven Burns Red (`1973710`) and Madoka Magica Magia Exedra (`2987800`). Each store page states *"Uses
   Kernel Level Anti-Cheat"* and names HyperTech's CrackProof; its driver loads from `System32` under a numbered name,
@@ -67,6 +77,10 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   `LIMITATIONS.md` say the same; CLAUDE.md rule 2 carries the amendment (`19_SAFETY` §The user-mode exception).
 
 ### Fixed
+
+- **Settings has no row without a control** (owner request, beta.11): *Games with hooking on* shows only while a game has
+  hooking on, the *Elevation* row became the admin mode row's status line, and the note under the language row is gone.
+  The retention message now names Settings ▸ Recording, where retention lives.
 
 - **The exception's card and list say what is true** (found with D38): an eligible game's *Anti-cheat* card said hooking
   "cannot be turned on" beside a usable *Make exception…* — it now says hooking is off unless you make one; the Settings

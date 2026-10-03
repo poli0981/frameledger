@@ -395,6 +395,45 @@ public sealed class SqliteSessionRepositoryTests
     }
 
     /// <summary>
+    /// beta.11 (owner decision D40): Delete all sessions — one game's, then every game's — takes their segments, frame and
+    /// sensor series with them (they cascade), leaves the other game's sessions until asked, and never a games row.
+    /// </summary>
+    [Fact]
+    public async Task DeletingSessionsTakesTheirSeriesAndLeavesTheGames()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        (long gameId, long snapshotId) = await SeedAsync(f);
+        long other = (await new SqliteGameRepository(f.Db).EnsureAsync(new() { ExePath = @"C:\Games\Other\other.exe", SizeBytes = 1, MtimeUnixMs = 1 }, "O", Ct)).Id;
+        var repo = new SqliteSessionRepository(f.Db);
+        foreach (long owner in new[] { gameId, gameId, other })
+        {
+            await repo.InsertFinalizedAsync(new FinalizedSession
+            {
+                Row = Row(owner, snapshotId),
+                Segments = [new SegmentRow { SwapchainId = 1, StartFrame = 0, EndFrame = 9 }],
+                Frames = Frames(10),
+                Sensors = [new SensorBlob { Series = "gpu_temp", Hz = 1, Codec = SeriesCodec.Tag, Data = SeriesCodec.EncodeFloat32([60f]) }],
+            }, Ct);
+        }
+
+        (await repo.DeleteSessionsAsync(gameId, Ct)).Should().Be(new RetentionSweepResult(1, 2));
+        (await repo.ListByGameAsync(gameId, 10, Ct)).Should().BeEmpty();
+        (await repo.ListByGameAsync(other, 10, Ct)).Should().ContainSingle("only the game asked for");
+        (await CountAsync(f, "frame_blobs")).Should().Be(1, "the series went with their sessions");
+        (await CountAsync(f, "sensor_blobs")).Should().Be(1);
+        (await CountAsync(f, "session_segments")).Should().Be(1);
+
+        (await repo.DeleteSessionsAsync(null, Ct)).Should().Be(new RetentionSweepResult(1, 1));
+        (await CountAsync(f, "sessions")).Should().Be(0);
+        (await CountAsync(f, "frame_blobs")).Should().Be(0);
+        (await CountAsync(f, "games")).Should().Be(2, "the library stays");
+        (await repo.DeleteSessionsAsync(null, Ct)).Should().Be(new RetentionSweepResult(0, 0));
+    }
+
+    private static Task<long> CountAsync(LedgerFixture f, string table) =>
+        f.Db.ReadAsync((c, ct) => c.ExecuteScalarAsync<long>(new CommandDefinition("SELECT COUNT(*) FROM " + table, cancellationToken: ct)), Ct).AsTask();
+
+    /// <summary>
     /// D38 (owner decision 2026-10-03): a grant's trial counts its own sessions — hooked under that family, from the grant on,
     /// frames recorded, <c>normal</c> — and nothing else: a crash, a safety unhook, a degraded or Tier-2 session, one that
     /// recorded no frame, one under no exception or another family, and one from before the grant do not count.

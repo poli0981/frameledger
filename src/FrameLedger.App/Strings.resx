@@ -312,9 +312,6 @@
   <data name="Settings_Language_Label" xml:space="preserve">
     <value>Language</value>
   </data>
-  <data name="Settings_Language_Note" xml:space="preserve">
-    <value>Applies at once; the window is rebuilt in the new language.</value>
-  </data>
   <data name="Settings_Theme_Dark" xml:space="preserve">
     <value>Dark</value>
   </data>
@@ -740,6 +737,42 @@
   </data>
   <data name="GameDetail_Tab_Sessions" xml:space="preserve">
     <value>Sessions</value>
+  </data>
+  <data name="GameDetail_DeleteSessions" xml:space="preserve">
+    <value>Delete all sessions…</value>
+  </data>
+  <data name="GameDetail_Overview_Header" xml:space="preserve">
+    <value>Sessions at a glance</value>
+  </data>
+  <data name="GameDetail_Overview_Note" xml:space="preserve">
+    <value>Each hooked session's frame rate and lows, oldest first. Native and Displayed are drawn where frame generation was measured; a hollow point describes part of its session. Click a point to select its session below.</value>
+  </data>
+  <data name="DeleteSessions_GameTitle_Format" xml:space="preserve">
+    <value>Delete every session of {0}?</value>
+  </data>
+  <data name="DeleteSessions_AllTitle" xml:space="preserve">
+    <value>Delete every session of every game?</value>
+  </data>
+  <data name="DeleteSessions_GameBody_Format" xml:space="preserve">
+    <value>{0} session(s), with their frame and sensor data and their notes, are deleted. The game, its settings and its hooking consent stay. This cannot be undone.</value>
+  </data>
+  <data name="DeleteSessions_AllBody_Format" xml:space="preserve">
+    <value>{0} session(s) of every game, with their frame and sensor data and their notes, are deleted. The library, your settings and every hooking consent stay. This cannot be undone.</value>
+  </data>
+  <data name="DeleteSessions_Delete" xml:space="preserve">
+    <value>Delete sessions</value>
+  </data>
+  <data name="DeleteSessions_Done_Format" xml:space="preserve">
+    <value>Deleted {0} session(s) of {1} game(s).</value>
+  </data>
+  <data name="DeleteSessions_Running" xml:space="preserve">
+    <value>A session is being recorded, so nothing was deleted. Stop it or let it end, then try again.</value>
+  </data>
+  <data name="DeleteSessions_NoAgent" xml:space="preserve">
+    <value>The capture agent is not connected, so nothing was deleted.</value>
+  </data>
+  <data name="DeleteSessions_AgentTooOld" xml:space="preserve">
+    <value>The capture agent does not know this request yet; restart it and try again. Nothing was deleted.</value>
   </data>
   <data name="GameDetail_Tab_Trend" xml:space="preserve">
     <value>Trend</value>
@@ -1287,6 +1320,30 @@
   <data name="Trend_Metric_Label" xml:space="preserve">
     <value>Metric</value>
   </data>
+  <data name="Trend_Extras_Label" xml:space="preserve">
+    <value>Also draw</value>
+  </data>
+  <data name="Trend_Extras_Note" xml:space="preserve">
+    <value>Up to two units at once: a second unit is drawn against the right axis (marked ▸ in the legend).</value>
+  </data>
+  <data name="Trend_Unit_Fps" xml:space="preserve">
+    <value>FPS</value>
+  </data>
+  <data name="Trend_Unit_Celsius" xml:space="preserve">
+    <value>°C</value>
+  </data>
+  <data name="Trend_Unit_Percent" xml:space="preserve">
+    <value>%</value>
+  </data>
+  <data name="Trend_Unit_Watts" xml:space="preserve">
+    <value>W</value>
+  </data>
+  <data name="Trend_Unit_Megabytes" xml:space="preserve">
+    <value>MB</value>
+  </data>
+  <data name="Trend_Unit_Factor" xml:space="preserve">
+    <value>× (frame generation)</value>
+  </data>
   <data name="Trend_Metric_MaxGpuTemp" xml:space="preserve">
     <value>Max GPU °C</value>
   </data>
@@ -1416,9 +1473,6 @@
   <data name="Settings_Channel_Stable" xml:space="preserve">
     <value>Stable</value>
   </data>
-  <data name="Settings_HookedGames_Empty" xml:space="preserve">
-    <value>No game has hooking on.</value>
-  </data>
   <data name="Settings_HookedGames_Label" xml:space="preserve">
     <value>Games with hooking on</value>
   </data>
@@ -1478,6 +1532,18 @@
   </data>
   <data name="Settings_Policy_Header" xml:space="preserve">
     <value>Recording</value>
+  </data>
+  <data name="Settings_Data_Header" xml:space="preserve">
+    <value>Data</value>
+  </data>
+  <data name="Settings_DeleteSessions_Label" xml:space="preserve">
+    <value>Delete all sessions</value>
+  </data>
+  <data name="Settings_DeleteSessions_Body" xml:space="preserve">
+    <value>Every session of every game, with its frame and sensor data and its notes. The library, your settings and each game's hooking consent stay. It cannot be undone.</value>
+  </data>
+  <data name="Settings_DeleteSessions_Button" xml:space="preserve">
+    <value>Delete all sessions…</value>
   </data>
   <data name="Settings_Privacy_Header" xml:space="preserve">
     <value>Privacy</value>
@@ -1813,7 +1879,7 @@
     <value>Sweep…</value>
   </data>
   <data name="Maintenance_Sweep_Unlimited" xml:space="preserve">
-    <value>Retention is unlimited (Settings ▸ Capture), so there is nothing to sweep.</value>
+    <value>Retention is unlimited (Settings ▸ Recording), so there is nothing to sweep.</value>
   </data>
   <data name="Maintenance_Sweep_NoAgent" xml:space="preserve">
     <value>The Agent is not connected. The raw data is the Agent's to remove; start it and try again.</value>

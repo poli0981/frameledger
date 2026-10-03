@@ -104,6 +104,15 @@ public sealed class CaptureOrchestrator
         }
     }
 
+    /// <summary>Whether any session started here is still running — what deleting every session waits for (beta.11).</summary>
+    public bool IsRecordingAny()
+    {
+        lock (_table)
+        {
+            return _running.Values.Any(static r => !r.Task.IsCompleted);
+        }
+    }
+
     /// <summary>Poll until cancelled, then wait for every running session to finalize.</summary>
     public async Task RunAsync(CancellationToken ct)
     {

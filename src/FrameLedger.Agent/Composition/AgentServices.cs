@@ -272,7 +272,9 @@ internal static class AgentServices
             // D33: the user-mode exception's option and disclosure version (D38: no session count any more).
             new AntiCheatExceptionCommands(
                 sp.GetRequiredService<IUserModeExceptionSwitch>(),
-                AntiCheatExceptionDisclosure.Version));
+                AntiCheatExceptionDisclosure.Version),
+            // beta.11 (D40): Delete all sessions, of one game or of every game — the Agent's rows, deleted by the Agent.
+            sp.GetRequiredService<ISessionRepository>());
 
     /// <summary>
     /// <c>HelloAck.telemetrySource</c>: the layers this machine composes, read once on the first <c>Hello</c> by

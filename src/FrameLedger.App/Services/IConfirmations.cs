@@ -4,4 +4,10 @@ namespace FrameLedger.App.Services;
 public interface IConfirmations
 {
     Task<RemoveGameChoice> RemoveGameAsync(string gameName, CancellationToken ct = default);
+
+    /// <summary>
+    /// beta.11 (D40): delete every session of <paramref name="gameName"/>'s game — or of every game when it is null —
+    /// <paramref name="sessions"/> of them; true only on the explicit delete button.
+    /// </summary>
+    Task<bool> DeleteSessionsAsync(string? gameName, long sessions, CancellationToken ct = default);
 }

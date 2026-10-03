@@ -183,7 +183,7 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         var handler = new AgentCommandHandler(games, consent, guard, identity, orchestrator, pause, lifetime,
             _ => { h.RulesUpdates++; return ValueTask.FromResult("AlreadyCurrent"); },
             disclosureVersion, new FakeClock(), sweepRetention: sweep, architecture: architecture,
-            exceptions: exceptions ? new AntiCheatExceptionCommands(option, _exceptionDisclosure) : null);
+            exceptions: exceptions ? new AntiCheatExceptionCommands(option, _exceptionDisclosure) : null, deleteSessions: sessions);
         h = new Harness
         {
             Handler = handler,
@@ -436,6 +436,47 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         payload.SessionGuid.Should().Be(guid);
         payload.Accepted.Should().BeFalse();
         payload.Reason.Should().NotBeNullOrEmpty();
+    }
+
+    /// <summary>
+    /// beta.11 (owner decision D40): DeleteSessions deletes the Agent's own rows — one game's, or every game's — and answers
+    /// the counts; a request with no payload is malformed; and nothing runs here, so nothing is refused for a recording.
+    /// </summary>
+    [Fact]
+    public async Task DeleteSessionsDeletesTheAgentsRowsAndAnswersTheCounts()
+    {
+        Harness h = await BuildAsync().ConfigureAwait(true);
+        long game = h.Games.Rows[_exe].Id;
+        foreach (long owner in new[] { game, game, game + 1 })
+        {
+            h.Sessions.Stored.Add(new FinalizedSession
+            {
+                Row = new SessionRow
+                {
+                    SessionGuid = Guid.NewGuid(),
+                    GameId = owner,
+                    SnapshotId = 1,
+                    StartedAt = DateTimeOffset.UnixEpoch,
+                    EndedAt = DateTimeOffset.UnixEpoch.AddMinutes(1),
+                    QpcEpoch = 0,
+                    QpcFrequency = 1,
+                    Tier = Domain.Sessions.CaptureTier.Hooked,
+                    Mode = Domain.Sessions.CaptureMode.Attach,
+                    ExitStatus = Domain.Sessions.ExitStatus.Normal,
+                }
+            });
+        }
+
+        IpcEnvelope one = await AskAsync(h.Handler, IpcMessageType.DeleteSessions, new DeleteSessionsRequest(game)).ConfigureAwait(true);
+        IpcCodec.Payload<DeleteSessionsAck>(one).Should().Be(new DeleteSessionsAck(game, 1, 2));
+        h.Sessions.Stored.Should().ContainSingle().Which.Row.GameId.Should().Be(game + 1);
+
+        IpcEnvelope all = await AskAsync(h.Handler, IpcMessageType.DeleteSessions, new DeleteSessionsRequest(null)).ConfigureAwait(true);
+        IpcCodec.Payload<DeleteSessionsAck>(all).Should().Be(new DeleteSessionsAck(null, 1, 1));
+        h.Sessions.Stored.Should().BeEmpty();
+
+        IpcEnvelope malformed = await AskAsync(h.Handler, IpcMessageType.DeleteSessions).ConfigureAwait(true);
+        IpcCodec.Payload<ErrorAck>(malformed)!.Code.Should().Be(IpcErrorCode.Malformed);
     }
 
     [Fact]
