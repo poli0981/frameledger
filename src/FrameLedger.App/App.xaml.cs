@@ -352,7 +352,9 @@ public partial class App : System.Windows.Application
         services.AddTransient<SystemInfoViewModel>();
         services.AddSingleton<Charts.SessionSeriesLoader>();
         services.AddSingleton<IFileSaver, FileSaver>();
-        services.AddSingleton<ISessionSummaryOpener, SessionSummaryOpener>();
+        services.AddSingleton<SessionSummaryOpener>();
+        services.AddSingleton<ISessionSummaryOpener>(static sp => sp.GetRequiredService<SessionSummaryOpener>());
+        services.AddSingleton<ISessionWindows>(static sp => sp.GetRequiredService<SessionSummaryOpener>());    // beta.11: Delete all sessions closes them
         services.AddSingleton<IMixedTierPrompt, MixedTierPrompt>();
 
         // Settings, the safety notices and the Logs page (P3 PR-8a): the Run entry, the notices over the pipe's

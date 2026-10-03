@@ -45,7 +45,8 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 - **Delete all sessions** (owner decision D40, beta.11): on a game's page, every session of that game; in Settings ▸
   **Data**, every session of every game — with their frame and sensor data and notes, after a confirmation that says how
   many. The library, the settings and every game's hooking consent stay. The capture agent deletes them (the rows are its)
-  and refuses while a session is being recorded; an older agent is told to restart. A new pipe request, `DeleteSessions`.
+  and refuses while a session is being recorded; an older agent is told to restart. A summary window still open on a
+  deleted session closes. A new pipe request, `DeleteSessions`.
 - **Charts across a game's sessions** (owner decision D39, beta.11): the Sessions tab opens with *Sessions at a glance* —
   every hooked session's frame rate (Presented FPS, or Native and Displayed where frame generation was measured, never one
   inflated line) and its 1% and 0.1% lows, oldest first; click a point to select that session. The Trend keeps its metric

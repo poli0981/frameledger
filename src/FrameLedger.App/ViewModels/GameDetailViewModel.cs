@@ -807,12 +807,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
             return;
         }
 
-        // Session ids are reused once the newest is gone (no AUTOINCREMENT): File ▸ Export must not act on one of them.
-        if (_selection.SessionId is long selected && Sessions.Any(s => s.Row.Id == selected))
-        {
-            _selection.Set(null);
-        }
-
+        // SessionDeletion has let go of File ▸ Export's selection and the summary windows of what is gone (ids are reused).
         _strip.Success(Game.Name, result.Message);
         await LoadAsync().ConfigureAwait(true);
     }

@@ -92,6 +92,25 @@ public sealed class SessionDeletionAndOverviewTests
         public string? PickExecutable() => null;
     }
 
+    /// <summary>The summary windows, counting how often they were asked to close the deleted sessions' ones.</summary>
+    private sealed class Windows : ISessionWindows
+    {
+        public int Asked { get; private set; }
+
+        public Task CloseDeletedAsync(CancellationToken ct = default)
+        {
+            Asked++;
+            return Task.CompletedTask;
+        }
+    }
+
+    /// <summary>The scripted Agent deletes for real, as the Agent's repository would.</summary>
+    private static Func<DeleteSessionsRequest, Task<IpcEnvelope>> DeletesFrom(ScratchLedger s) => async r =>
+    {
+        RetentionSweepResult gone = await s.Sessions.DeleteSessionsAsync(r.GameId, Ct).ConfigureAwait(false);
+        return IpcCodec.Decode(IpcCodec.Encode(IpcMessageType.DeleteSessionsAck, "1", new DeleteSessionsAck(r.GameId, gone.Games, gone.Sessions)));
+    };
+
     private sealed class NoPrompt : IConsentPrompt
     {
         public Task<bool> ShowAsync(string gameName, CancellationToken ct = default) => Task.FromResult(false);
@@ -149,16 +168,11 @@ public sealed class SessionDeletionAndOverviewTests
         agent.Asked.Should().BeEmpty("a no deletes nothing");
         no.Sessions.Should().HaveCount(2);
 
-        // The scripted Agent deletes for real, as the Agent's repository would.
-        agent.Answer = async r =>
-        {
-            RetentionSweepResult gone = await s.Sessions.DeleteSessionsAsync(r.GameId, Ct).ConfigureAwait(false);
-            return IpcCodec.Decode(IpcCodec.Encode(IpcMessageType.DeleteSessionsAck, "1", new DeleteSessionsAck(r.GameId, gone.Games, gone.Sessions)));
-        };
+        agent.Answer = DeletesFrom(s);
         var confirm = new Confirm(true);
         var selection = new SessionSelection();
         selection.Set(first);
-        GameDetailViewModel yes = await PageAsync(s, game.Id, confirm, new SessionDeletion(agent), strip, selection);
+        GameDetailViewModel yes = await PageAsync(s, game.Id, confirm, new SessionDeletion(agent, s.Sessions, selection), strip, selection);
         await yes.DeleteAllSessionsCommand.ExecuteAsync(null);
 
         confirm.Asked.Should().Equal(("Alpha", 2L));
@@ -167,6 +181,41 @@ public sealed class SessionDeletionAndOverviewTests
         yes.SessionsEmpty.Should().BeTrue();
         strip.Lines.Should().ContainSingle(static l => l.StartsWith("success:", StringComparison.Ordinal));
         selection.SessionId.Should().BeNull("an id that is gone can be reused by the next session");
+    }
+
+    /// <summary>
+    /// After a delete — from the game page or from Settings — SessionDeletion lets go of what still names a deleted session:
+    /// File ▸ Export's selection (a session that is still there stays selected) and the summary windows. A refused delete
+    /// touches neither.
+    /// </summary>
+    [Fact]
+    public async Task AfterADeleteWhatNamedADeletedSessionLetsGoOfIt()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow alpha = await s.GameAsync("Alpha");
+        GameRow beta = await s.GameAsync("Beta");
+        long gone = await s.SessionAsync(alpha.Id, DateTimeOffset.UtcNow.AddHours(-2));
+        long kept = await s.SessionAsync(beta.Id, DateTimeOffset.UtcNow.AddHours(-1));
+
+        var agent = new ScriptedAgent { Answer = DeletesFrom(s) };
+        var selection = new SessionSelection();
+        var windows = new Windows();
+        var deletion = new SessionDeletion(agent, s.Sessions, selection, windows);
+
+        selection.Set(gone);
+        (await deletion.DeleteAsync(alpha.Id, Ct)).Outcome.Should().Be(SessionDeletionOutcome.Deleted);
+        selection.SessionId.Should().BeNull("Export would otherwise name a session that is gone, or the next one to take its id");
+        windows.Asked.Should().Be(1, "the summary windows close the deleted sessions' ones");
+
+        selection.Set(kept);
+        (await deletion.DeleteAsync(alpha.Id, Ct)).Outcome.Should().Be(SessionDeletionOutcome.Deleted);
+        selection.SessionId.Should().Be(kept, "the other game's session is still there");
+        windows.Asked.Should().Be(2);
+
+        agent.Answer = static _ => throw new IpcRequestException(IpcErrorCode.SessionRunning, "running");
+        (await deletion.DeleteAsync(null, Ct)).Outcome.Should().Be(SessionDeletionOutcome.SessionRunning);
+        selection.SessionId.Should().Be(kept, "nothing was deleted");
+        windows.Asked.Should().Be(2, "nothing was deleted");
     }
 
     /// <summary>
