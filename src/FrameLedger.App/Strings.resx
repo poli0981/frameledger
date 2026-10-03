@@ -114,6 +114,9 @@
   <data name="Games_Header" xml:space="preserve">
     <value>Games</value>
   </data>
+  <data name="Games_Header_Count_Format" xml:space="preserve">
+    <value>Games · {0}</value>
+  </data>
   <data name="Logs_Empty" xml:space="preserve">
     <value>No log file yet for this source.</value>
   </data>
@@ -221,6 +224,12 @@
   </data>
   <data name="Import_NothingFound" xml:space="preserve">
     <value>No installed games were found in Steam, GOG Galaxy, Epic or itch.io on this machine.</value>
+  </data>
+  <data name="Import_NothingNew" xml:space="preserve">
+    <value>No new games: every game your stores have installed is already in the library.</value>
+  </data>
+  <data name="Import_ShowExisting_Format" xml:space="preserve">
+    <value>Show the {0} games already in the library</value>
   </data>
   <data name="Import_Done_Format" xml:space="preserve">
     <value>{0} game(s) added with hooking off; {1} left as they were.</value>
@@ -738,8 +747,50 @@
   <data name="Games_Add" xml:space="preserve">
     <value>Add game…</value>
   </data>
+  <data name="Games_Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="Games_Refresh_ToolTip" xml:space="preserve">
+    <value>Read the library again, look in your stores for games installed since, and mark games whose executable is gone</value>
+  </data>
+  <data name="Games_View_Grid" xml:space="preserve">
+    <value>Show as a grid</value>
+  </data>
+  <data name="Games_View_List" xml:space="preserve">
+    <value>Show as a list</value>
+  </data>
+  <data name="Games_List_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Games_List_Store" xml:space="preserve">
+    <value>Store</value>
+  </data>
+  <data name="Games_List_Engine" xml:space="preserve">
+    <value>Engine</value>
+  </data>
+  <data name="Games_List_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Games_List_Sessions" xml:space="preserve">
+    <value>Sessions</value>
+  </data>
+  <data name="Games_List_Played" xml:space="preserve">
+    <value>Played</value>
+  </data>
+  <data name="Games_List_LastPlayed" xml:space="preserve">
+    <value>Last played</value>
+  </data>
   <data name="Games_Card_NotRecorded" xml:space="preserve">
     <value>Not recorded</value>
+  </data>
+  <data name="Games_Card_NotInstalled" xml:space="preserve">
+    <value>Not installed</value>
+  </data>
+  <data name="Games_Card_FileMissing_Format" xml:space="preserve">
+    <value>{0} is not on disk: the game was uninstalled or moved. Its sessions stay; add the game again from its new place, or remove it.</value>
+  </data>
+  <data name="Games_Card_DriveMissing_Format" xml:space="preserve">
+    <value>{0} is not reachable: the drive {1} is not connected. Connect it and refresh.</value>
   </data>
   <data name="Games_Card_HookOff" xml:space="preserve">
     <value>Hooking off</value>

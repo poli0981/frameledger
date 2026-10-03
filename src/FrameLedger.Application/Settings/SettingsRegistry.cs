@@ -63,6 +63,18 @@ public static class SettingsRegistry
         Default = "0",
     };
 
+    /// <summary>
+    /// How the Games library is shown (beta.11, owner request 2026-10-03): a grid of cards that fills the width, or a list.
+    /// The page's own switch writes it; Settings has no row for it.
+    /// </summary>
+    public static readonly SettingDefinition UiLibraryView = new()
+    {
+        Key = "ui.library_view",
+        Kind = SettingKind.Choice,
+        Default = "grid",
+        Choices = ["grid", "list"],
+    };
+
     /// <summary>Whether the Agent's watcher records tracked games that the App did not launch (FR-3.1/FR-3.3).</summary>
     public static readonly SettingDefinition CaptureBackground = new()
     {
@@ -178,7 +190,7 @@ public static class SettingsRegistry
     /// <summary>Every definition, in the order <c>06_DATA_MODEL</c> lists them.</summary>
     public static IReadOnlyList<SettingDefinition> All { get; } =
     [
-        UiLanguage, UiTheme, UiStartWithWindows, UiMinimizeToTray, UiHideAntiCheatHooking, UiFpsDecimals,
+        UiLanguage, UiTheme, UiStartWithWindows, UiMinimizeToTray, UiHideAntiCheatHooking, UiFpsDecimals, UiLibraryView,
         CaptureBackground, HookingKillSwitch, HookingUserModeExceptions, CaptureRunElevated, CaptureMinSessionSeconds, TelemetryIntervalMs, RetentionRawSessionsPerGame,
         UpdateChannel, UpdateAutoCheck, PrivacyOnlineMetadata, LogDebug,
     ];

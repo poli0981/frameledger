@@ -391,6 +391,7 @@ switch's rule); integers are invariant-culture within an inclusive range; choice
 | `ui.minimize_to_tray` | bool | `0` | | UI (PR-8) |
 | `ui.hide_anticheat_hooking` | bool | `1` | | UI (beta.8, 2026-09-25): the game page of an entry the guard found anti-cheat in shows the finding in place of its Hooking card (`08_UI` §Game detail) |
 | `ui.fps_decimals` | bool | `0` | | UI (beta.8, 2026-09-25): every FPS figure with two decimals ("62.40") instead of a whole number |
+| `ui.library_view` | choice `grid`\|`list` | `grid` | | UI (beta.11, 2026-10-03): the Games library as a grid of cards that fills the width, or as a list; written by the page's own switch, no Settings row (`08_UI` §Games) |
 | `capture.background` | bool | `1` | | Agent |
 | `hooking.kill_switch` | bool | `0` | | Agent (FR-2.4, since P2 PR-F) |
 | `hooking.usermode_ac_exceptions` | bool | `0` | | Agent, at every session start and command (FR-2.8, D33, 2026-09-26): off suspends every user-mode exception without deleting any; on, the user still grants each eligible game |

@@ -145,6 +145,10 @@
     <value>ゲーム</value>
     <comment>review</comment>
   </data>
+  <data name="Games_Header_Count_Format" xml:space="preserve">
+    <value>ゲーム · {0}</value>
+    <comment>review</comment>
+  </data>
   <data name="Logs_Empty" xml:space="preserve">
     <value>このソースのログファイルはまだありません。</value>
     <comment>review</comment>
@@ -287,6 +291,14 @@
   </data>
   <data name="Import_NothingFound" xml:space="preserve">
     <value>このマシンの Steam、GOG Galaxy、Epic、itch.io にインストール済みのゲームは見つかりませんでした。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Import_NothingNew" xml:space="preserve">
+    <value>新しいゲームはありません。ストアにインストールされているゲームはすべてライブラリーにあります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Import_ShowExisting_Format" xml:space="preserve">
+    <value>ライブラリーにある {0} 件のゲームを表示する</value>
     <comment>review</comment>
   </data>
   <data name="Import_Done_Format" xml:space="preserve">
@@ -977,8 +989,64 @@
     <value>ゲームを追加…</value>
     <comment>review</comment>
   </data>
+  <data name="Games_Refresh" xml:space="preserve">
+    <value>更新</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Refresh_ToolTip" xml:space="preserve">
+    <value>ライブラリーを読み直し、その後にインストールされたゲームをストアから探し、実行ファイルがなくなったゲームに印を付けます</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_View_Grid" xml:space="preserve">
+    <value>グリッドで表示</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_View_List" xml:space="preserve">
+    <value>リストで表示</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_List_Name" xml:space="preserve">
+    <value>名前</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_List_Store" xml:space="preserve">
+    <value>ストア</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_List_Engine" xml:space="preserve">
+    <value>エンジン</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_List_Status" xml:space="preserve">
+    <value>状態</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_List_Sessions" xml:space="preserve">
+    <value>セッション</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_List_Played" xml:space="preserve">
+    <value>プレイ時間</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_List_LastPlayed" xml:space="preserve">
+    <value>最終プレイ</value>
+    <comment>review</comment>
+  </data>
   <data name="Games_Card_NotRecorded" xml:space="preserve">
     <value>記録しない</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Card_NotInstalled" xml:space="preserve">
+    <value>未インストール</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Card_FileMissing_Format" xml:space="preserve">
+    <value>{0} がディスクにありません。ゲームがアンインストールされたか移動されました。セッションは残ります。新しい場所からゲームを追加し直すか、削除してください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Card_DriveMissing_Format" xml:space="preserve">
+    <value>{0} にアクセスできません。ドライブ {1} が接続されていません。接続してから更新してください。</value>
     <comment>review</comment>
   </data>
   <data name="Games_Card_HookOff" xml:space="preserve">

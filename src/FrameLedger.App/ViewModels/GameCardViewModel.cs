@@ -5,17 +5,27 @@ using FrameLedger.App.Services;
 namespace FrameLedger.App.ViewModels;
 
 /// <summary>
-/// One library card (<c>08_UI</c> §Games): name, platform and engine badges, playtime, last played, hooking state — or, since
-/// 2026-09-23, "Not recorded" in its place for an entry whose recording is off, and since 2026-09-25 "Anti-cheat" for one
-/// the guard found anti-cheat in. The sparkline is PR-6's.
+/// One library entry (<c>08_UI</c> §Games), as a card in the grid or a row in the list: name, platform and engine badges,
+/// playtime, last played, hooking state — or, since 2026-09-23, "Not recorded" in its place for an entry whose recording is
+/// off, and since 2026-09-25 "Anti-cheat" for one the guard found anti-cheat in; since beta.11 "Not installed" beside it
+/// when its executable is not on disk (<see cref="ExecutablePresence"/>, read when the library is listed, never stored).
 /// </summary>
 [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime")]
 public sealed class GameCardViewModel
 {
-    public GameCardViewModel(GameCard card)
+    public GameCardViewModel(GameCard card, ExecutablePresence presence = ExecutablePresence.Present)
     {
         ArgumentNullException.ThrowIfNull(card);
         Card = card;
+        Presence = presence;
+        string exePath = card.Row.Fingerprint.ExePath;
+        NotInstalledToolTip = presence switch
+        {
+            ExecutablePresence.DriveMissing => string.Format(CultureInfo.CurrentCulture, Strings.Games_Card_DriveMissing_Format, exePath,
+                System.IO.Path.GetPathRoot(exePath) ?? exePath),
+            ExecutablePresence.Missing => string.Format(CultureInfo.CurrentCulture, Strings.Games_Card_FileMissing_Format, exePath),
+            _ => null,
+        };
         Id = card.Row.Id;
         Name = card.Row.Name;
         PlatformText = Formats.Platform(card.Row.Platform);
@@ -36,7 +46,9 @@ public sealed class GameCardViewModel
         TotalSeconds = card.Summary?.TotalSeconds ?? 0;
         LastPlayedAt = card.Summary?.LastPlayedAt;
         SessionsText = string.Format(CultureInfo.CurrentCulture, Strings.Games_Card_Sessions_Format, SessionCount);
-        PlaytimeText = string.Format(CultureInfo.CurrentCulture, Strings.Games_Card_Playtime_Format, Formats.Playtime(TotalSeconds));
+        PlaytimeValue = Formats.Playtime(TotalSeconds);
+        PlaytimeText = string.Format(CultureInfo.CurrentCulture, Strings.Games_Card_Playtime_Format, PlaytimeValue);
+        LastPlayedValue = LastPlayedAt is DateTimeOffset when ? Formats.Date(when) : Strings.Games_Card_NeverPlayed;
         LastPlayedText = LastPlayedAt is DateTimeOffset at
             ? string.Format(CultureInfo.CurrentCulture, Strings.Games_Card_LastPlayed_Format, Formats.Date(at))
             : Strings.Games_Card_NeverPlayed;
@@ -83,4 +95,22 @@ public sealed class GameCardViewModel
     public string PlaytimeText { get; }
 
     public string LastPlayedText { get; }
+
+    /// <summary>The list view's playtime cell: the duration alone.</summary>
+    public string PlaytimeValue { get; }
+
+    /// <summary>The list view's last-played cell: the date alone, or "not played yet".</summary>
+    public string LastPlayedValue { get; }
+
+    /// <summary>beta.11: whether the executable is on disk now.</summary>
+    public ExecutablePresence Presence { get; }
+
+    /// <summary>The "Not installed" pill shows: the file, or the drive it was on, is not there.</summary>
+    public bool NotInstalled => Presence != ExecutablePresence.Present;
+
+    /// <summary>What the pill means here — the path, and whether the drive itself is missing; null when installed.</summary>
+    public string? NotInstalledToolTip { get; }
+
+    /// <summary>The list view's status cell: what the hook pill says, and "Not installed" after it when that is so.</summary>
+    public string StatusText => NotInstalled ? HookText + " · " + Strings.Games_Card_NotInstalled : HookText;
 }

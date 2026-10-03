@@ -8,7 +8,12 @@ using FrameLedger.Application.Import;
 
 namespace FrameLedger.App.ViewModels;
 
-/// <summary>FR-1.2's review checklist: every candidate the stores found, ticked by default where it can be imported; the count follows the ticks.</summary>
+/// <summary>
+/// FR-1.2's review checklist: every candidate the stores found, ticked by default where it can be imported; the count
+/// follows the ticks. Since beta.11 (owner request 2026-10-03) the games already in the library are hidden by default —
+/// on a re-import they were most of the list and pushed the new ones out of sight — and <see cref="ShowExisting"/> brings
+/// them back, dimmed, their boxes disabled.
+/// </summary>
 [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime; a cached CompositeFormat would pin the first culture")]
 public sealed partial class ImportReviewViewModel : ObservableObject
 {
@@ -16,6 +21,9 @@ public sealed partial class ImportReviewViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(CanImport))]
     [NotifyPropertyChangedFor(nameof(SelectedText))]
     private int _selectedCount;
+
+    [ObservableProperty]
+    private bool _showExisting;
 
     public ImportReviewViewModel(IReadOnlyList<ImportCandidate> candidates)
     {
@@ -27,10 +35,24 @@ public sealed partial class ImportReviewViewModel : ObservableObject
             Rows.Add(row);
         }
 
+        ExistingCount = Rows.Count(static r => r.IsExisting);
+        ShowExistingText = string.Format(CultureInfo.CurrentCulture, Strings.Import_ShowExisting_Format, ExistingCount);
+        Refilter();
         Recount();
     }
 
+    /// <summary>Every candidate, shown or not.</summary>
     public ObservableCollection<ImportCandidateViewModel> Rows { get; } = [];
+
+    /// <summary>What the checklist shows: every row, less those already in the library unless <see cref="ShowExisting"/>.</summary>
+    public ObservableCollection<ImportCandidateViewModel> Shown { get; } = [];
+
+    /// <summary>Rows already in the library (at this path or another drive letter).</summary>
+    public int ExistingCount { get; }
+
+    public bool HasExisting => ExistingCount > 0;
+
+    public string ShowExistingText { get; }
 
     public static string Title => Strings.Import_Title;
 
@@ -77,4 +99,15 @@ public sealed partial class ImportReviewViewModel : ObservableObject
     }
 
     private void Recount() => SelectedCount = Rows.Count(static r => r.IsSelected && r.CanImport);
+
+    partial void OnShowExistingChanged(bool value) => Refilter();
+
+    private void Refilter()
+    {
+        Shown.Clear();
+        foreach (ImportCandidateViewModel r in Rows.Where(r => ShowExisting || !r.IsExisting))
+        {
+            Shown.Add(r);
+        }
+    }
 }

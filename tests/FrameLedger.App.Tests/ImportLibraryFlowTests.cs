@@ -90,7 +90,7 @@ public sealed class ImportLibraryFlowTests : IDisposable
         var importer = new LibraryImporter([store], s.Games, new ExecutableIdentitySource(), new ExecutableLocator(), static _ => { });
         var flow = new ImportLibraryFlow(importer, review, strip, nav);
 
-        ImportReport? report = await flow.RunAsync(Ct);
+        ImportReport? report = await flow.RunAsync(ct: Ct);
 
         report.Should().NotBeNull();
         report!.Added.Should().Be(1);
@@ -114,15 +114,53 @@ public sealed class ImportLibraryFlowTests : IDisposable
         var nav = new FakeNavigator();
         var review = new ScriptedReview(static _ => null);
         var empty = new ImportLibraryFlow(new LibraryImporter([new ScriptedStore()], s.Games, new ExecutableIdentitySource(), new ExecutableLocator(), static _ => { }), review, strip, nav);
-        (await empty.RunAsync(Ct)).Should().BeNull();
+        (await empty.RunAsync(ct: Ct)).Should().BeNull();
         strip.Kinds.Should().Equal("info");
         review.Shown.Should().BeEmpty("nothing to review");
 
         string exe = await ExeAsync("Game");
         var cancelled = new ImportLibraryFlow(new LibraryImporter([new ScriptedStore(new StoreGame("epic", "g", "Game", Path.GetDirectoryName(exe)!, exe, null))], s.Games, new ExecutableIdentitySource(), new ExecutableLocator(), static _ => { }), review, strip, nav);
-        (await cancelled.RunAsync(Ct)).Should().BeNull();
+        (await cancelled.RunAsync(ct: Ct)).Should().BeNull();
         (await s.Games.ListAsync(Ct)).Should().BeEmpty();
         nav.Pages.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// beta.11: the Games page's Refresh runs the import for new games only — every title already in the library means "no
+    /// new games" and no checklist; a new one opens it, and the page on screen is told the library changed.
+    /// </summary>
+    [Fact]
+    public async Task RefreshOffersOnlyNewGamesAndSaysWhenThereAreNone()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        string old = await ExeAsync("Old");
+        await s.Games.EnsureAsync(new ExecutableIdentitySource().Read(old)!.Value, "Old", Ct);
+        var oldStore = new ScriptedStore(new StoreGame("epic", "old", "Old", Path.GetDirectoryName(old)!, old, null));
+        var review = new ScriptedReview(static c => [.. c.Where(static x => x.CanImport)]);
+        var strip = new RecordingStrip();
+        var nav = new FakeNavigator();
+        var changes = new LibraryChanges();
+        int announced = 0;
+        changes.Changed += (_, _) => announced++;
+        var flow = new ImportLibraryFlow(new LibraryImporter([oldStore], s.Games, new ExecutableIdentitySource(), new ExecutableLocator(), static _ => { }),
+            review, strip, nav, changes);
+
+        (await flow.RunAsync(onlyNew: true, Ct)).Should().BeNull();
+        review.Shown.Should().BeEmpty("nothing new, so no checklist");
+        strip.Kinds.Should().Equal("info");
+        announced.Should().Be(0);
+
+        string fresh = await ExeAsync("Fresh");
+        var both = new ScriptedStore(new StoreGame("epic", "old", "Old", Path.GetDirectoryName(old)!, old, null),
+            new StoreGame("epic", "fresh", "Fresh", Path.GetDirectoryName(fresh)!, fresh, null));
+        flow = new ImportLibraryFlow(new LibraryImporter([both], s.Games, new ExecutableIdentitySource(), new ExecutableLocator(), static _ => { }),
+            review, strip, nav, changes);
+
+        ImportReport? report = await flow.RunAsync(onlyNew: true, Ct);
+
+        report!.Added.Should().Be(1);
+        announced.Should().Be(1, "the Games page on screen reloads");
+        nav.Pages.Should().Equal(nameof(GamesPage));
     }
 
     [Fact]
@@ -149,5 +187,34 @@ public sealed class ImportLibraryFlowTests : IDisposable
         vm.SelectAllCommand.Execute(null);
         vm.SelectedCount.Should().Be(1);
         vm.Selected.Should().ContainSingle().Which.Should().Be(can);
+    }
+
+    /// <summary>
+    /// beta.11 (owner request 2026-10-03): the games already in the library — at this path or under another drive letter —
+    /// are hidden by default and come back, still unimportable, when the user asks; the count names how many.
+    /// </summary>
+    [Fact]
+    public void GamesAlreadyInTheLibraryAreHiddenUntilAskedFor()
+    {
+        var can = new ImportCandidate(new StoreGame("steam", "1", "A", @"C:\a", @"C:\a\a.exe", null), @"C:\a\a.exe", AlreadyInLibrary: false, ExecutableGuessed: false);
+        var already = new ImportCandidate(new StoreGame("steam", "2", "B", @"C:\b", @"C:\b\b.exe", null), @"C:\b\b.exe", AlreadyInLibrary: true, ExecutableGuessed: false);
+        var none = new ImportCandidate(new StoreGame("steam", "3", "C", @"C:\c", null, null), null, AlreadyInLibrary: false, ExecutableGuessed: true);
+        var moved = new ImportCandidate(new StoreGame("steam", "4", "D", @"D:\d", @"D:\d\d.exe", null), @"D:\d\d.exe", AlreadyInLibrary: false, ExecutableGuessed: false,
+            MovedFrom: @"H:\d\d.exe");
+        var vm = new ImportReviewViewModel([can, already, none, moved]);
+
+        vm.ExistingCount.Should().Be(2);
+        vm.HasExisting.Should().BeTrue();
+        vm.ShowExistingText.Should().Contain("2");
+        vm.Shown.Select(static r => r.Name).Should().Equal(["A", "C"], "a title with no executable is new and says why it cannot be imported");
+
+        vm.ShowExisting = true;
+        vm.Shown.Select(static r => r.Name).Should().Equal(["A", "B", "C", "D"]);
+        vm.Shown.Where(static r => r.IsExisting).Should().OnlyContain(static r => !r.CanImport, "shown dimmed, never importable");
+
+        vm.SelectAllCommand.Execute(null);
+        vm.SelectedCount.Should().Be(1, "showing them makes them no more importable");
+        vm.ShowExisting = false;
+        vm.Shown.Should().HaveCount(2);
     }
 }

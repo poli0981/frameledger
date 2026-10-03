@@ -417,6 +417,8 @@ public partial class App : System.Windows.Application
             sp.GetRequiredService<IExecutableLocator>(),
             static line => Serilog.Log.Information("{Line}", line)));
         services.AddSingleton<IImportReview, ImportReviewPrompt>();
+        // beta.11: the Games page on screen reloads when an import adds games (navigating to itself does nothing).
+        services.AddSingleton<LibraryChanges>();
         services.AddSingleton<ImportLibraryFlow>();
     }
 
