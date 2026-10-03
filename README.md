@@ -78,8 +78,8 @@
 >   game in the library, before injection, at a session's start or by the 30 s re-check; the game's page says so,
 >   and nothing turns it back on for that executable — except a user-mode exception you make yourself, per game,
 >   in Settings (off by default): only where the only finding is one anti-cheat that runs entirely in user mode, with
->   no driver file in the game's folder, on a game already measured successfully at least twice. The guard still
->   runs every check under it and ends it on anything new; a ban remains possible.
+>   no driver file in the game's folder. Its first two sessions are a trial, and one that does not go well ends it
+>   for good. The guard still runs every check under it and ends it on anything new; a ban remains possible.
 >
 > Where a value is not measured it reads `N/A`, with two exceptions: FPS then shows Presented FPS with a
 > note on what it may include, and ray-tracing flags may show a value you set yourself, labelled as

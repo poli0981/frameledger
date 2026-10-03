@@ -17,6 +17,7 @@
         <StackPanel>
             <ui:TextBlock Text="{Binding Intro}" TextWrapping="Wrap" />
             <ui:TextBlock Margin="0,14,0,0" Text="{Binding Why}" TextWrapping="Wrap" />
+            <ui:TextBlock Margin="0,8,0,0" FontWeight="SemiBold" Text="{x:Static vm:AntiCheatExceptionDialogViewModel.Trial}" TextWrapping="Wrap" />
 
             <Border Margin="0,14,0,0" Padding="12" CornerRadius="6" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}">
                 <ui:TextBlock FontWeight="SemiBold" Text="{Binding Risk}" TextWrapping="Wrap" />

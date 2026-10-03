@@ -5,8 +5,9 @@ using FrameLedger.App.Services;
 namespace FrameLedger.App.ViewModels;
 
 /// <summary>
-/// One row of Settings ▸ Capture's user-mode exception list (D33): the game, what was found, the evidence, the state — and
-/// the one action the state allows, making the exception (through its disclosure) or withdrawing it.
+/// One row of Settings ▸ Capture's user-mode exception list (D33): the game, what was found, the state — which carries a
+/// grant's trial since D38, so no separate count line repeats it — and the one action the state allows, making the
+/// exception (through its disclosure) or withdrawing it.
 /// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime")]
 public sealed partial class ExceptionGameViewModel
@@ -23,7 +24,6 @@ public sealed partial class ExceptionGameViewModel
         _grant = grant ?? throw new ArgumentNullException(nameof(grant));
         _withdraw = withdraw ?? throw new ArgumentNullException(nameof(withdraw));
         FindingText = string.Format(CultureInfo.CurrentCulture, Strings.Exception_Finding_Format, view.Family ?? Strings.Common_NotAvailable, view.Signal ?? Strings.Common_NotAvailable);
-        SessionsText = string.Format(CultureInfo.CurrentCulture, Strings.Exception_Sessions_Format, view.Sessions);
     }
 
     public long GameId { get; }
@@ -33,8 +33,6 @@ public sealed partial class ExceptionGameViewModel
     public ExceptionView View { get; }
 
     public string FindingText { get; }
-
-    public string SessionsText { get; }
 
     public string StateText => View.Text;
 

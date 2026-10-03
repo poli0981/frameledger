@@ -165,10 +165,14 @@ public sealed class SqliteSessionRepository : ISessionRepository
         _db.ReadAsync((c, token) => c.ExecuteScalarAsync<long>(new CommandDefinition(
             "SELECT COUNT(*) FROM sessions WHERE started_at >= @since", new { since = since.ToUnixTimeMilliseconds() }, cancellationToken: token)), ct);
 
-    public ValueTask<int> CountSuccessfulHookedAsync(long gameId, CancellationToken ct = default) =>
-        _db.ReadAsync((c, token) => c.ExecuteScalarAsync<int>(new CommandDefinition(
-            "SELECT COUNT(*) FROM sessions WHERE game_id = @gameId AND capture_tier = 1 AND exit_status = 'normal' AND frame_count > 0",
-            new { gameId }, cancellationToken: token)), ct);
+    public ValueTask<int> CountSuccessfulUnderGrantAsync(long gameId, string family, DateTimeOffset grantedAt, CancellationToken ct = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(family);
+        return _db.ReadAsync((c, token) => c.ExecuteScalarAsync<int>(new CommandDefinition(
+            "SELECT COUNT(*) FROM sessions WHERE game_id = @gameId AND ac_exception_family = @family AND started_at >= @since "
+            + "AND capture_tier = 1 AND exit_status = 'normal' AND frame_count > 0",
+            new { gameId, family, since = grantedAt.ToUnixTimeMilliseconds() }, cancellationToken: token)), ct);
+    }
 
     public ValueTask<IReadOnlyList<SegmentRow>> FindSegmentsAsync(long sessionId, CancellationToken ct = default) =>
         _db.ReadAsync((c, token) => SqliteReaders.ReadAllAsync(

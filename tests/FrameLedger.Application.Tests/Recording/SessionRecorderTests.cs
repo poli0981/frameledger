@@ -297,7 +297,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
             new SessionFinalizer(sessions, new RawSeriesCodec()), new NoCrashEvents(),
             _ => poller ? new FakePoller(clockStepsOnDrain ? clock : null) : null, clock,
             new RecorderOptions { PartialFlushInterval = TimeSpan.FromSeconds(10) }, profiles: profiles,
-            exceptionLapse: new UserModeExceptionLapsePolicy(store));
+            exceptionLapse: new UserModeExceptionLapsePolicy(store, sessions));
         return new Harness { Recorder = recorder, Games = games, Sessions = sessions, Partials = partials, Clock = clock, Store = store };
     }
 
@@ -312,8 +312,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
             Fingerprint = Fingerprint,
             Block = "AntiCheatFile|NetEase Yidun|NEP2.dll",
             Verdict = AntiCheatVerdict.AllowedUnderException("NetEase Yidun", "NEP2.dll"),
-            Sessions = 2,
-            DisclosureVersion = "ac-exception-dialog/1",
+            DisclosureVersion = "ac-exception-dialog/2",
             GrantedAt = DateTimeOffset.UnixEpoch,
         }, ct).ConfigureAwait(false);
         await store.RecordOperatorAcknowledgementAsync(new OperatorAcknowledgement
@@ -367,6 +366,32 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         after.HookEnabled.Should().BeFalse("the block stands, so hooking goes off with the exception");
         after.BlockedReason.Should().Be("AntiCheatFile|NetEase Yidun|NEP2.dll", "nothing clears a block");
         after.ConsentedAt.Should().NotBeNull("the end of an exception keeps the consent stamp, as a block does");
+        GameRow row = (await new SqliteGameRepository(_db!).FindAsync(_exe, TestContext.Current.CancellationToken))!;
+        row.AcException.TrialFailed.Should().BeTrue("D38: the grant had no good session yet, so a crash ends it for good");
+    }
+
+    /// <summary>
+    /// D38 (owner decision 2026-10-03): during the trial a stored hooked session that recorded no frame ends the exception for
+    /// good; past the trial (two good sessions under the grant) the same session leaves it in force.
+    /// </summary>
+    [Theory]
+    [InlineData(0, true)]
+    [InlineData(1, true)]
+    [InlineData(2, false)]
+    public async Task ASessionThatRecordedNothingEndsTheExceptionOnlyDuringItsTrial(int goodSoFar, bool ends)
+    {
+        Harness h = await MakeAsync(verdict: AntiCheatVerdict.AllowedUnderException("NetEase Yidun", "NEP2.dll"), excepted: true, records: 0);
+        h.Sessions.UnderGrantDefault = goodSoFar;
+
+        RecordedSession r = await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        r.Row.Tier.Should().Be(CaptureTier.Hooked);
+        r.Row.FrameCount.Should().Be(0);
+        r.Finalize.Status.Should().Be(FinalizeStatus.Saved, "only a stored session is judged");
+        r.ExceptionLapse.Should().Be(ends ? UserModeExceptionLapse.TrialFailed : null);
+        GameRow after = (await new SqliteGameRepository(_db!).FindAsync(_exe, TestContext.Current.CancellationToken))!;
+        after.AcException.IsGranted.Should().Be(!ends);
+        after.AcException.TrialFailed.Should().Be(ends);
     }
 
     [Fact]

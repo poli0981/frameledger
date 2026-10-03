@@ -731,8 +731,8 @@ public sealed partial class GameDetailViewModel : ObservableObject
         {
             AntiCheatExceptionResult result = _exceptions is null
                 ? AntiCheatExceptionResult.Of(AntiCheatExceptionOutcome.AgentUnavailable)
-                : await _exceptions.GrantAsync(Game.Id, new AntiCheatExceptionFacts(Game.Name, view.Family ?? string.Empty, view.Signal ?? string.Empty,
-                    view.Sessions)).ConfigureAwait(true);
+                : await _exceptions.GrantAsync(Game.Id, new AntiCheatExceptionFacts(Game.Name, view.Family ?? string.Empty, view.Signal ?? string.Empty))
+                    .ConfigureAwait(true);
             Notice(result, Game.Name);
         }
         finally
@@ -957,8 +957,12 @@ public sealed partial class GameDetailViewModel : ObservableObject
         // by default it gives way to the finding alone. The setting off keeps the card, with the finding under it.
         HookingSectionVisible = !(blocked && _hideAntiCheatHooking) || exceptionInForce;
         PresentException(exception, exceptionInForce);
+        // 2026-10-03: "cannot be turned on" beside a usable "Make exception…" contradicted itself; an eligible game's card
+        // says what would turn it on.
         AntiCheatText = found is not null && !HookingSectionVisible
-            ? string.Format(CultureInfo.CurrentCulture, Strings.GameDetail_AntiCheat_Format, found)
+            ? string.Format(CultureInfo.CurrentCulture,
+                _exceptionsOn && exception is { Kind: ExceptionViewKind.Eligible } ? Strings.GameDetail_AntiCheat_Exceptionable_Format : Strings.GameDetail_AntiCheat_Format,
+                found)
             : null;
         // Its "Turn hooking back on" could only be refused once anti-cheat was found, or for an executable that cannot run
         // as x64, so neither row offers it.

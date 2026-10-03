@@ -46,7 +46,8 @@ public sealed class VkLayerReconcilerTests
         public ValueTask<ConsentWriteOutcome> GrantAntiCheatExceptionAsync(AntiCheatExceptionGrantRequest grant, CancellationToken ct = default) =>
             throw new NotSupportedException();
 
-        public ValueTask<ConsentWriteOutcome> RevokeAntiCheatExceptionAsync(string normalisedExePath, string reason, CancellationToken ct = default) =>
+        public ValueTask<ConsentWriteOutcome> RevokeAntiCheatExceptionAsync(string normalisedExePath, string reason, bool trialFailed = false,
+            CancellationToken ct = default) =>
             throw new NotSupportedException();
     }
 

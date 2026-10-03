@@ -45,7 +45,9 @@ Rules for this document:
 > library sweep blocked a game FrameLedger had measured hooked (GIRLS' FRONTLINE 2: EXILIUM, NetEase Yidun `NEP2.dll`),
 > and the owner chose an evidence-bound, per-game exception for anti-cheat that is user-mode throughout (`19_SAFETY`
 > §The user-mode exception; CLAUDE.md rule 2's amendment). The two reasons D22 gave are answered: it is offered only
-> where FrameLedger has already measured the game hooked, and its risk is stated in its own disclosure. **What stays
+> where FrameLedger has already measured the game hooked, and its risk is stated in its own disclosure. *(2026-10-03,
+> D38: the first of the two no longer holds as written — a game blocked at add time could never be measured, so the
+> measurement moved under the grant as a two-session trial whose failure is for good.)* **What stays
 > open, and is the owner's:** the `ja` text of `Safety_Exception_*`, which ships as English until a reviewer signs;
 > whether a family the rules file makes kernel-level later should end existing exceptions at once (today it does, at
 > the sweep's next pass and at every session start); and a real-hardware check that NEP2.dll's load time relative to

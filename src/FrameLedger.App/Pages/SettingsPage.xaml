@@ -102,7 +102,6 @@
                                     <StackPanel Grid.Column="0">
                                         <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Name}" />
                                         <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding FindingText}" />
-                                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding SessionsText}" />
                                         <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding StateText}" />
                                         <ui:TextBlock Appearance="Tertiary" TextWrapping="Wrap" Text="{Binding LapseText}"
                                                       Visibility="{Binding LapseText, Converter={StaticResource NullToCollapsed}}" />
@@ -121,10 +120,12 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                    <!-- Only while the Agent is still answering: the sweep publishes nothing, so this is how its answer arrives. -->
                     <ui:Button Margin="0,8,0,0"
                                Appearance="Secondary"
                                Command="{Binding ViewModel.RefreshExceptionsCommand}"
-                               Content="{x:Static res:Strings.Settings_Exceptions_Refresh}" />
+                               Content="{x:Static res:Strings.Settings_Exceptions_Refresh}"
+                               Visibility="{Binding ViewModel.ExceptionsChecking, Converter={StaticResource BoolToVis}}" />
                 </StackPanel>
             </ui:CardExpander>
 

@@ -474,7 +474,11 @@ public sealed class GameDetailViewModelTests
         }
     }
 
-    /// <summary>D33: a game the guard would let through but with one hooked session says so; a kernel-level family says why not.</summary>
+    /// <summary>
+    /// D33: why a game is not eligible is said on its page — a kernel-level family, a guard that also found something else.
+    /// D38 (2026-10-03): a failed trial says it is for good; a scan that found nothing of the family says so (it finished);
+    /// and an ELIGIBLE game's anti-cheat card no longer says hooking "cannot be turned on" beside its Make exception button.
+    /// </summary>
     [Fact]
     public async Task WhyAGameIsNotEligibleIsSaidOnItsPage()
     {
@@ -483,53 +487,50 @@ public sealed class GameDetailViewModelTests
         try
         {
             await using ScratchLedger s = await ScratchLedger.OpenAsync();
-            GameRow few = await s.GameAsync("Few");
-            GameRow aniimo = await s.GameAsync("Aniimo");
-            GameRow eac = await s.GameAsync("Eac");
-            await s.Db.WriteAsync(async (c, tx, ct) =>
-            {
-                const string sql = "UPDATE games SET hook_blocked_reason = @block, hook_prescan_state = 'blocked', ac_exception_verdict = @verdict, "
-                                   + "ac_exception_sessions = @sessions, ac_exception_checked_block = @block WHERE id = @id";
-                await Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(sql, new
-                {
-                    id = few.Id,
-                    block = "AntiCheatFile|NetEase Yidun|NEP2.dll",
-                    verdict = "AllowedUnderUserModeException|NetEase Yidun|NEP2.dll",
-                    sessions = 1
-                }, tx, cancellationToken: ct)).ConfigureAwait(false);
-                await Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(sql, new
-                {
-                    id = aniimo.Id,
-                    block = "AntiCheatFile|NetEase Yidun|NEP2.dll",
-                    verdict = "AntiCheatFile|Kernel driver in the game folder|NEPKernel.sys",
-                    sessions = 1
-                }, tx, cancellationToken: ct)).ConfigureAwait(false);
-                await Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(sql, new
-                {
-                    id = eac.Id,
-                    block = "AntiCheatDirectory|Easy Anti-Cheat|EasyAntiCheat",
-                    verdict = "AntiCheatDirectory|Easy Anti-Cheat|EasyAntiCheat",
-                    sessions = 4
-                }, tx, cancellationToken: ct)).ConfigureAwait(false);
-                return 0;
-            }, Ct);
+            const string yidun = "AntiCheatFile|NetEase Yidun|NEP2.dll";
+            const string through = "AllowedUnderUserModeException|NetEase Yidun|NEP2.dll";
+            long failed = await BlockedWithAnswerAsync(s, "Failed", yidun, through, eligible: false, trialFailedAt: 1_759_449_600_000);
+            long gone = await BlockedWithAnswerAsync(s, "Gone", yidun, "Allow||", eligible: false);
+            long eligible = await BlockedWithAnswerAsync(s, "GF2", yidun, through, eligible: true);
+            long aniimo = await BlockedWithAnswerAsync(s, "Aniimo", yidun, "AntiCheatFile|Kernel driver in the game folder|NEPKernel.sys", eligible: false);
+            long eac = await BlockedWithAnswerAsync(s, "Eac", "AntiCheatDirectory|Easy Anti-Cheat|EasyAntiCheat", "AntiCheatDirectory|Easy Anti-Cheat|EasyAntiCheat",
+                eligible: false);
             var settings = new RegisteredSettings(new MemorySettings());
             await settings.SetAsync(SettingsRegistry.HookingUserModeExceptions, true, Ct);
 
-            (GameDetailViewModel vm, _, _, _, _) = await BuildAsync(s, few.Id, settings: settings);
-            vm.ExceptionText.Should().Contain("1").And.Contain("two");
+            (GameDetailViewModel vm, _, _, _, _) = await BuildAsync(s, failed, settings: settings);
+            vm.ExceptionText.Should().Contain("trial").And.Contain("none can be made again");
             vm.CanGrantException.Should().BeFalse();
+            vm.AntiCheatText.Should().Contain("cannot be turned on", "nothing can be made for it");
 
-            (vm, _, _, _, _) = await BuildAsync(s, aniimo.Id, settings: settings);
+            (vm, _, _, _, _) = await BuildAsync(s, gone, settings: settings);
+            vm.ExceptionText.Should().Contain("NetEase Yidun").And.Contain("was not found", "the check finished and confirmed nothing");
+
+            (vm, _, _, _, _) = await BuildAsync(s, eligible, settings: settings);
+            vm.CanGrantException.Should().BeTrue("D38: no session is needed");
+            vm.AntiCheatText.Should().Contain("unless you make a user-mode exception").And.NotContain("cannot be turned on");
+
+            (vm, _, _, _, _) = await BuildAsync(s, aniimo, settings: settings);
             vm.ExceptionText.Should().Contain("Kernel driver in the game folder").And.Contain("NEPKernel.sys");
 
-            (vm, _, _, _, _) = await BuildAsync(s, eac.Id, settings: settings);
+            (vm, _, _, _, _) = await BuildAsync(s, eac, settings: settings);
             vm.ExceptionText.Should().Contain("Easy Anti-Cheat").And.Contain("not user-mode");
         }
         finally
         {
             Strings.Culture = previous;
         }
+    }
+
+    /// <summary>A blocked game the Agent has answered about: the block, the tolerant verdict, eligibility and a D38 trial mark.</summary>
+    private static async Task<long> BlockedWithAnswerAsync(ScratchLedger s, string name, string block, string verdict, bool eligible, long? trialFailedAt = null)
+    {
+        GameRow game = await s.GameAsync(name).ConfigureAwait(false);
+        const string sql = "UPDATE games SET hook_blocked_reason = @block, hook_prescan_state = 'blocked', ac_exception_verdict = @verdict, "
+                           + "ac_exception_eligible = @eligible, ac_exception_trial_failed_at = @failedAt, ac_exception_checked_block = @block WHERE id = @id";
+        await s.Db.WriteAsync((c, tx, ct) => Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(sql,
+            new { id = game.Id, block, verdict, eligible = eligible ? 1 : 0, failedAt = trialFailedAt }, tx, cancellationToken: ct)), Ct).ConfigureAwait(false);
+        return game.Id;
     }
 
     /// <summary>The library card says "Anti-cheat" for such a game (beta.8) — after "Not recorded", which says more.</summary>

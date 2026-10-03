@@ -135,6 +135,43 @@ public sealed class LedgerDatabaseTests
     }
 
     /// <summary>
+    /// Schema 0017 (2026-10-03, beta.11, D38): <c>games.ac_exception_trial_failed_at</c>, NULL on every row written before — a
+    /// grant made under D33 keeps everything it had and carries no failed trial.
+    /// </summary>
+    [Fact]
+    public async Task ScriptSeventeenAddsTheTrialMarkAndChangesNoRow()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(17);
+        string path = f.Path;
+        await f.Db.DisposeAsync().ConfigureAwait(true);
+        var c16 = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        await using (c16.ConfigureAwait(true))
+        {
+            await c16.OpenAsync(Ct).ConfigureAwait(true);
+            await RewindToAsync(c16, 16).ConfigureAwait(true);
+            await c16.ExecuteAsync(new CommandDefinition(
+                "INSERT INTO games (name, exe_path, hook_blocked_reason, hook_prescan_state, ac_exception_at, ac_exception_family, ac_exception_sessions, "
+                + "added_at, updated_at) VALUES ('GF2', 'C:\\GF2\\GF2_Exilium.exe', 'AntiCheatFile|NetEase Yidun|NEP2.dll', 'blocked', 1000, 'NetEase Yidun', 3, 0, 0)",
+                cancellationToken: Ct)).ConfigureAwait(true);
+        }
+
+        LedgerDatabase migrated = await LedgerDatabase.OpenAsync(path, ct: Ct).ConfigureAwait(true);
+        await using (migrated.ConfigureAwait(true))
+        {
+            migrated.SchemaVersion.Should().Be(MigrationRunner.LatestVersion);
+            long columns = await migrated.ReadAsync((c, ct) => c.ExecuteScalarAsync<long>(new CommandDefinition(
+                "SELECT COUNT(*) FROM pragma_table_info('games') WHERE name = 'ac_exception_trial_failed_at'", cancellationToken: ct)), Ct).ConfigureAwait(true);
+            columns.Should().Be(1);
+
+            GameRow row = (await new SqliteGameRepository(migrated).FindAsync(@"C:\GF2\GF2_Exilium.exe", Ct).ConfigureAwait(true))!;
+            row.AcException.IsGranted.Should().BeTrue("0017 edits no row: a D33 grant stays in force");
+            row.AcException.Sessions.Should().Be(3);
+            row.AcException.TrialFailedAt.Should().BeNull();
+        }
+    }
+
+    /// <summary>
     /// Schema 0016 (2026-09-27, beta.10): the display mode's fifteen columns, ADD COLUMN only — a session written before it
     /// has none of them (N/A, never a zero), and a new one writes and reads each.
     /// </summary>
@@ -251,7 +288,7 @@ public sealed class LedgerDatabaseTests
             IReadOnlyList<string> games = await migrated.ReadAsync(async (c, ct) =>
                 (IReadOnlyList<string>)[.. await c.QueryAsync<string>(new CommandDefinition(
                     "SELECT name FROM pragma_table_info('games') WHERE name LIKE 'ac_exception_%'", cancellationToken: ct)).ConfigureAwait(false)], Ct).ConfigureAwait(true);
-            games.Should().HaveCount(14);
+            games.Should().HaveCount(15, "0014's fourteen, and since 0017 the trial mark");
             long sessions = await migrated.ReadAsync((c, ct) => c.ExecuteScalarAsync<long>(new CommandDefinition(
                 "SELECT COUNT(*) FROM pragma_table_info('sessions') WHERE name = 'ac_exception_family'", cancellationToken: ct)), Ct).ConfigureAwait(true);
             sessions.Should().Be(1);

@@ -244,20 +244,22 @@ public static class Strings
         nameof(Exception_Lapse_OverlayStopped),
         nameof(Exception_Lapse_SafetyUnhook),
         nameof(Exception_Lapse_SessionCrashed),
+        nameof(Exception_Lapse_TrialFailed),
         nameof(Exception_Lapse_Withdrawn),
         nameof(Exception_Lapsed_Format),
         nameof(Exception_Result_Granted_Format),
         nameof(Exception_Result_Refused_Format),
         nameof(Exception_Result_Withdrawn_Format),
-        nameof(Exception_Sessions_Format),
         nameof(Exception_State_Checking),
         nameof(Exception_State_CouldNotVerify),
         nameof(Exception_State_Eligible),
         nameof(Exception_State_Granted_Format),
+        nameof(Exception_State_GrantedTrial_Format),
         nameof(Exception_State_NotAsked),
+        nameof(Exception_State_NotFound_Format),
         nameof(Exception_State_NotUserMode_Format),
         nameof(Exception_State_Refused_Format),
-        nameof(Exception_State_TooFew_Format),
+        nameof(Exception_State_TrialFailed_Format),
         nameof(Exe_DriveMissing_Format),
         nameof(Exe_FileMissing_Format),
         nameof(Exit_Code_Format),
@@ -358,6 +360,7 @@ public static class Strings
         nameof(Fps_Native_Tooltip),
         nameof(Fps_None_Tooltip),
         nameof(Fps_Presented_Format),
+        nameof(GameDetail_AntiCheat_Exceptionable_Format),
         nameof(GameDetail_AntiCheat_Format),
         nameof(GameDetail_AntiCheat_Header),
         nameof(GameDetail_Back),
@@ -1318,6 +1321,8 @@ public static class Strings
 
     public static string Exception_Lapse_SessionCrashed => ResourceManager.GetString(nameof(Exception_Lapse_SessionCrashed), Culture) ?? nameof(Exception_Lapse_SessionCrashed);
 
+    public static string Exception_Lapse_TrialFailed => ResourceManager.GetString(nameof(Exception_Lapse_TrialFailed), Culture) ?? nameof(Exception_Lapse_TrialFailed);
+
     public static string Exception_Lapse_Withdrawn => ResourceManager.GetString(nameof(Exception_Lapse_Withdrawn), Culture) ?? nameof(Exception_Lapse_Withdrawn);
 
     public static string Exception_Lapsed_Format => ResourceManager.GetString(nameof(Exception_Lapsed_Format), Culture) ?? nameof(Exception_Lapsed_Format);
@@ -1328,8 +1333,6 @@ public static class Strings
 
     public static string Exception_Result_Withdrawn_Format => ResourceManager.GetString(nameof(Exception_Result_Withdrawn_Format), Culture) ?? nameof(Exception_Result_Withdrawn_Format);
 
-    public static string Exception_Sessions_Format => ResourceManager.GetString(nameof(Exception_Sessions_Format), Culture) ?? nameof(Exception_Sessions_Format);
-
     public static string Exception_State_Checking => ResourceManager.GetString(nameof(Exception_State_Checking), Culture) ?? nameof(Exception_State_Checking);
 
     public static string Exception_State_CouldNotVerify => ResourceManager.GetString(nameof(Exception_State_CouldNotVerify), Culture) ?? nameof(Exception_State_CouldNotVerify);
@@ -1338,13 +1341,17 @@ public static class Strings
 
     public static string Exception_State_Granted_Format => ResourceManager.GetString(nameof(Exception_State_Granted_Format), Culture) ?? nameof(Exception_State_Granted_Format);
 
+    public static string Exception_State_GrantedTrial_Format => ResourceManager.GetString(nameof(Exception_State_GrantedTrial_Format), Culture) ?? nameof(Exception_State_GrantedTrial_Format);
+
     public static string Exception_State_NotAsked => ResourceManager.GetString(nameof(Exception_State_NotAsked), Culture) ?? nameof(Exception_State_NotAsked);
+
+    public static string Exception_State_NotFound_Format => ResourceManager.GetString(nameof(Exception_State_NotFound_Format), Culture) ?? nameof(Exception_State_NotFound_Format);
 
     public static string Exception_State_NotUserMode_Format => ResourceManager.GetString(nameof(Exception_State_NotUserMode_Format), Culture) ?? nameof(Exception_State_NotUserMode_Format);
 
     public static string Exception_State_Refused_Format => ResourceManager.GetString(nameof(Exception_State_Refused_Format), Culture) ?? nameof(Exception_State_Refused_Format);
 
-    public static string Exception_State_TooFew_Format => ResourceManager.GetString(nameof(Exception_State_TooFew_Format), Culture) ?? nameof(Exception_State_TooFew_Format);
+    public static string Exception_State_TrialFailed_Format => ResourceManager.GetString(nameof(Exception_State_TrialFailed_Format), Culture) ?? nameof(Exception_State_TrialFailed_Format);
 
     public static string Exe_DriveMissing_Format => ResourceManager.GetString(nameof(Exe_DriveMissing_Format), Culture) ?? nameof(Exe_DriveMissing_Format);
 
@@ -1545,6 +1552,8 @@ public static class Strings
     public static string Fps_None_Tooltip => ResourceManager.GetString(nameof(Fps_None_Tooltip), Culture) ?? nameof(Fps_None_Tooltip);
 
     public static string Fps_Presented_Format => ResourceManager.GetString(nameof(Fps_Presented_Format), Culture) ?? nameof(Fps_Presented_Format);
+
+    public static string GameDetail_AntiCheat_Exceptionable_Format => ResourceManager.GetString(nameof(GameDetail_AntiCheat_Exceptionable_Format), Culture) ?? nameof(GameDetail_AntiCheat_Exceptionable_Format);
 
     public static string GameDetail_AntiCheat_Format => ResourceManager.GetString(nameof(GameDetail_AntiCheat_Format), Culture) ?? nameof(GameDetail_AntiCheat_Format);
 

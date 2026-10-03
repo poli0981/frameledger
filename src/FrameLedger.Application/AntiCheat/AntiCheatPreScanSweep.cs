@@ -169,16 +169,21 @@ public sealed class AntiCheatPreScanSweep : IDisposable
     /// <summary>
     /// D33: the exception question about one BLOCKED entry. A grant made on bytes that are no longer on disk ends whether
     /// or not the option is on; the rest runs only while it is — a tolerant pre-scan naming the block's family when the
-    /// rules, the executable or the block changed since the last one, and the session count every pass — and ends a grant
-    /// the facts no longer support. A scan that could not answer ends nothing: the session start runs the full check anyway.
+    /// rules, the executable or the block changed since the last one, and (D38) the trial's progress under the grant in
+    /// force every pass — and ends a grant the facts no longer support. A scan that could not answer ends nothing: the
+    /// session start runs the full check anyway.
     /// </summary>
     private async ValueTask<AntiCheatPreScanReport> ExceptionPassAsync(GameRow game, string rulesVersion, AntiCheatPreScanReport report,
         CancellationToken ct)
     {
-        if (_sessions is null || game.HookBlockedReason is not { Length: > 0 } block || _isRecording(game.Id)
-            || _identity.Read(game.Fingerprint.ExePath) is not { } onDisk)
+        if (_sessions is null || game.HookBlockedReason is not { Length: > 0 } block || _isRecording(game.Id))
         {
             return report;
+        }
+
+        if (_identity.Read(game.Fingerprint.ExePath) is not { } onDisk)
+        {
+            return await UnreadableAsync(game, block, rulesVersion, report, ct).ConfigureAwait(false);
         }
 
         AntiCheatExceptionState state = game.AcException;
@@ -195,7 +200,10 @@ public sealed class AntiCheatPreScanSweep : IDisposable
         }
 
         StoredBlock? parsed = StoredBlock.Parse(block);
-        int sessions = await _sessions.CountSuccessfulHookedAsync(game.Id, ct).ConfigureAwait(false);
+        // D38: the trial's progress under the grant in force — what the App shows; eligibility no longer counts sessions.
+        int sessions = granted && state.Family is { Length: > 0 } family && state.GrantedAt is { } grantedAt
+            ? await _sessions.CountSuccessfulUnderGrantAsync(game.Id, family, grantedAt, ct).ConfigureAwait(false)
+            : 0;
         bool fresh = state.IsCheckedFor(onDisk, rulesVersion, block);
         AntiCheatVerdict? verdict = parsed is not { IsExceptionable: true } b
             ? null
@@ -203,7 +211,7 @@ public sealed class AntiCheatPreScanSweep : IDisposable
                 ? stored
                 : await _guard.PreScanGameAsync(onDisk.ExePath, b.Family, ct).ConfigureAwait(false);
 
-        bool eligible = verdict is { } v && UserModeExceptionRules.IsEligible(parsed, v, sessions);
+        bool eligible = verdict is { } v && UserModeExceptionRules.IsEligible(parsed, v, state.TrialFailed);
         if (!fresh || eligible != state.Eligible || sessions != state.Sessions)
         {
             if (await _consent.RecordExceptionEligibilityAsync(onDisk, block, verdict, sessions, rulesVersion, ct).ConfigureAwait(false)
@@ -211,7 +219,9 @@ public sealed class AntiCheatPreScanSweep : IDisposable
             {
                 report = report with { ExceptionsChecked = report.ExceptionsChecked + 1 };
                 _log($"prescan: {game.Name} — user-mode exception {(eligible ? "eligible" : "not eligible")} "
-                     + $"({(verdict is { } said ? Said(said) : "not a module, file or folder finding")}; {sessions} successful hooked sessions)");
+                     + $"({(verdict is { } said ? Said(said) : "not a module, file or folder finding")}"
+                     + (state.TrialFailed ? "; an earlier exception failed its trial" : string.Empty)
+                     + (granted ? $"; trial {sessions} of {UserModeExceptionRules.TrialSessions}" : string.Empty) + ")");
             }
         }
 
@@ -221,9 +231,40 @@ public sealed class AntiCheatPreScanSweep : IDisposable
             : report;
     }
 
+    /// <summary>
+    /// 2026-10-03: a blocked entry whose executable cannot be read is ANSWERED while the option is on — "the check could not
+    /// run" (<c>PreScanFailed</c>, no family), keyed on no bytes so the first readable pass scans again — rather than left
+    /// "checking" for ever, which is what returning early did. A grant is left alone: the session start runs the full check.
+    /// </summary>
+    private async ValueTask<AntiCheatPreScanReport> UnreadableAsync(GameRow game, string block, string rulesVersion, AntiCheatPreScanReport report,
+        CancellationToken ct)
+    {
+        AntiCheatExceptionState state = game.AcException;
+        if (_exceptions is null || state.IsGranted || !await _exceptions.IsOnAsync(ct).ConfigureAwait(false))
+        {
+            return report;
+        }
+
+        if (string.Equals(state.CheckedBlock, block, StringComparison.Ordinal)
+            && StoredBlock.Parse(state.Verdict) is { Reason: AntiCheatRefusalReason.PreScanFailed, Family.Length: 0 })
+        {
+            return report;    // already said, and nothing has changed that a pass could see
+        }
+
+        var nothingRead = new ExecutableFingerprint { ExePath = game.Fingerprint.ExePath, SizeBytes = 0, MtimeUnixMs = 0 };
+        AntiCheatVerdict couldNotRun = AntiCheatVerdict.Refused(AntiCheatRefusalReason.PreScanFailed, string.Empty, Path.GetFileName(game.Fingerprint.ExePath));
+        if (await _consent.RecordExceptionEligibilityAsync(nothingRead, block, couldNotRun, 0, rulesVersion, ct).ConfigureAwait(false) == ConsentWriteOutcome.Written)
+        {
+            _log($"prescan: {game.Name} — user-mode exception not checked: the executable could not be read");
+            report = report with { ExceptionsChecked = report.ExceptionsChecked + 1 };
+        }
+
+        return report;
+    }
+
     private async ValueTask<AntiCheatPreScanReport> EndAsync(GameRow game, string lapse, string why, AntiCheatPreScanReport report, CancellationToken ct)
     {
-        if (await _consent.RevokeAntiCheatExceptionAsync(game.Fingerprint.ExePath, lapse, ct).ConfigureAwait(false) != ConsentWriteOutcome.Written)
+        if (await _consent.RevokeAntiCheatExceptionAsync(game.Fingerprint.ExePath, lapse, ct: ct).ConfigureAwait(false) != ConsentWriteOutcome.Written)
         {
             return report;
         }

@@ -183,7 +183,7 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         var handler = new AgentCommandHandler(games, consent, guard, identity, orchestrator, pause, lifetime,
             _ => { h.RulesUpdates++; return ValueTask.FromResult("AlreadyCurrent"); },
             disclosureVersion, new FakeClock(), sweepRetention: sweep, architecture: architecture,
-            exceptions: exceptions ? new AntiCheatExceptionCommands(option, sessions, _exceptionDisclosure) : null);
+            exceptions: exceptions ? new AntiCheatExceptionCommands(option, _exceptionDisclosure) : null);
         h = new Harness
         {
             Handler = handler,
@@ -486,20 +486,28 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         Encoding.UTF8.GetString(IpcCodec.Encode(IpcMessageType.Ping, "9")).Should().NotContain("payload");
     }
 
-    private const string _exceptionDisclosure = "ac-exception-dialog/1";
+    private const string _exceptionDisclosure = "ac-exception-dialog/2";
 
     private const string _yidunBlock = "AntiCheatFile|NetEase Yidun|NEP2.dll";
 
-    /// <summary>D33: the owner's GIRLS' FRONTLINE 2 as beta.8 left it — consented, then blocked for NetEase Yidun — on both views of the row.</summary>
-    private async Task<Harness> BlockedAsync(int sessions = 3, string block = _yidunBlock, string? disclosureVersion = null)
+    /// <summary>
+    /// D33: the owner's GIRLS' FRONTLINE 2 as beta.8 left it — consented, then blocked for NetEase Yidun — on both views of the
+    /// row, with no session at all (D38: the shape a fresh ledger has); optionally marked as having failed an earlier trial.
+    /// </summary>
+    private async Task<Harness> BlockedAsync(string block = _yidunBlock, string? disclosureVersion = null, bool trialFailed = false)
     {
         Harness h = await BuildAsync(disclosureVersion: disclosureVersion, exceptions: true).ConfigureAwait(false);
         StoredBlock parsed = StoredBlock.Parse(block)!.Value;
         await h.Consent.RecordGuardBlockAsync(h.Identity.Read(_exe)!.Value, AntiCheatVerdict.Refused(parsed.Reason, parsed.Family, parsed.Signal), Ct)
             .ConfigureAwait(false);
         GameRow row = h.Games.Rows[_exe];
-        h.Games.Rows[_exe] = row with { HookBlockedReason = block, HookPrescanState = "blocked", HookEnabled = false };
-        h.Sessions.SuccessfulHooked[row.Id] = sessions;
+        h.Games.Rows[_exe] = row with
+        {
+            HookBlockedReason = block,
+            HookPrescanState = "blocked",
+            HookEnabled = false,
+            AcException = trialFailed ? row.AcException with { TrialFailedAt = DateTimeOffset.FromUnixTimeMilliseconds(1_759_449_600_000) } : row.AcException,
+        };
         return h;
     }
 
@@ -526,7 +534,10 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         (await h.Consent.FindAsync(_exe, Ct).ConfigureAwait(true)).Exception.Should().BeNull();
     }
 
-    /// <summary>The facts are the Agent's own — a tolerant pre-scan of the file on disk, the session count — and a grant turns nothing on.</summary>
+    /// <summary>
+    /// The facts are the Agent's own — a tolerant pre-scan of the file on disk — and a grant turns nothing on. D38: the row has
+    /// no session at all, and the grant is made: its first two sessions are its trial.
+    /// </summary>
     [Fact]
     public async Task AGrantRestsOnFactsTheAgentGathersAndTurnsNothingOn()
     {
@@ -546,15 +557,18 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
     }
 
     [Fact]
-    public async Task TooFewSessionsATitleListOrAGuardThatLetsNothingThroughIsRefused()
+    public async Task AFailedTrialOrAGuardThatLetsNothingThroughIsRefused()
     {
-        Harness one = await BlockedAsync(sessions: 1).ConfigureAwait(true);
-        IpcEnvelope few = await AskAsync(one.Handler, IpcMessageType.SetAntiCheatException, Grant(one)).ConfigureAwait(true);
-        few.Type.Should().Be(IpcMessageType.Refused);
-        IpcCodec.Payload<RefusedAck>(few).Should().Be(new RefusedAck(one.Games.Rows[_exe].Id, AgentCommandHandler.TooFewSessionsReason, "NetEase Yidun", "1"));
+        // D38: an exception of this game ended during its trial — for good, and before anything is scanned.
+        Harness failed = await BlockedAsync(trialFailed: true).ConfigureAwait(true);
+        IpcEnvelope again = await AskAsync(failed.Handler, IpcMessageType.SetAntiCheatException, Grant(failed)).ConfigureAwait(true);
+        again.Type.Should().Be(IpcMessageType.Refused);
+        IpcCodec.Payload<RefusedAck>(again).Should().Be(new RefusedAck(failed.Games.Rows[_exe].Id, AgentCommandHandler.TrialFailedReason, "NetEase Yidun",
+            "1759449600000"));
+        failed.Guard.Scanned.Should().BeEmpty();
 
+        Harness one = await BlockedAsync().ConfigureAwait(true);
         one.Guard.TolerantPreScan = AntiCheatVerdict.Refused(AntiCheatRefusalReason.AntiCheatFile, "Kernel driver in the game folder", "NEPKernel.sys");
-        one.Sessions.SuccessfulHooked[one.Games.Rows[_exe].Id] = 3;
         RefusedAck driver = IpcCodec.Payload<RefusedAck>(await AskAsync(one.Handler, IpcMessageType.SetAntiCheatException, Grant(one)).ConfigureAwait(true))!;
         driver.Reason.Should().Be(nameof(AntiCheatRefusalReason.AntiCheatFile), "the Aniimo shape: D30 is never excepted");
         driver.Signal.Should().Be("NEPKernel.sys");

@@ -2681,6 +2681,10 @@
     <value>検出: {0}。このゲームのフックはオフで、オンにすることはできません。セッションにはプレイ時間とセンサーの値だけが記録されます。</value>
     <comment>review</comment>
   </data>
+  <data name="GameDetail_AntiCheat_Exceptionable_Format" xml:space="preserve">
+    <value>検出: {0}。ユーザーモードの例外を作成しない限り（下記）、このゲームのフックはオフです。例外がなければ、セッションにはプレイ時間とセンサーの値だけが記録されます。</value>
+    <comment>review</comment>
+  </data>
   <data name="Games_Card_AntiCheat" xml:space="preserve">
     <value>アンチチート</value>
     <comment>review</comment>
@@ -3298,11 +3302,11 @@
     <comment>review</comment>
   </data>
   <data name="Settings_Exceptions_Label" xml:space="preserve">
-    <value>以前に計測できたユーザーモードのアンチチート搭載ゲームでフックを許可する</value>
+    <value>アンチチートがユーザーモードのみで動作するゲームでフックを許可する</value>
     <comment>review</comment>
   </data>
   <data name="Settings_Exceptions_Body" xml:space="preserve">
-    <value>既定ではオフです。オンにすると、アンチチートがユーザーモードのみで動作し（カーネルドライバーがなく、ほかに何も検出されない）、フックで2回以上計測できたゲームに、開示を確認したうえでゲームごとに例外を与えられます。ガードはすべてのチェックを続け、アカウント停止の可能性は残ります。</value>
+    <value>既定ではオフです。オンにすると、アンチチートがユーザーモードのみで動作する（カーネルドライバーがなく、ほかに何も検出されない）ゲームに、開示を確認したうえでゲームごとに例外を与えられます。最初の2回のフックセッションは試用期間で、うまくいかなかったセッションが1回でもあると例外は永久に終了します。ガードはすべてのチェックを続け、アカウント停止の可能性は残ります。</value>
     <comment>review</comment>
   </data>
   <data name="Settings_Exceptions_Header" xml:space="preserve">
@@ -3329,12 +3333,12 @@
     <value>{0} — {1}</value>
     <comment>review</comment>
   </data>
-  <data name="Exception_Sessions_Format" xml:space="preserve">
-    <value>フック計測の成功 {0} 回</value>
-    <comment>review</comment>
-  </data>
   <data name="Exception_State_Granted_Format" xml:space="preserve">
     <value>{0} から例外が有効</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_State_GrantedTrial_Format" xml:space="preserve">
+    <value>{0} から例外が有効 — 試用中: 良好なセッション {1}/{2} 回</value>
     <comment>review</comment>
   </data>
   <data name="Exception_State_Eligible" xml:space="preserve">
@@ -3343,10 +3347,6 @@
   </data>
   <data name="Exception_State_Checking" xml:space="preserve">
     <value>確認中…</value>
-    <comment>review</comment>
-  </data>
-  <data name="Exception_State_TooFew_Format" xml:space="preserve">
-    <value>対象外: フック計測の成功は {0} 回で、2 回必要です</value>
     <comment>review</comment>
   </data>
   <data name="Exception_State_Refused_Format" xml:space="preserve">
@@ -3363,6 +3363,14 @@
   </data>
   <data name="Exception_State_CouldNotVerify" xml:space="preserve">
     <value>現在は対象外: 確認を完了できませんでした。自動で再実行されます</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_State_TrialFailed_Format" xml:space="preserve">
+    <value>対象外: このゲームの例外は {0} に試用期間中に終了したため、再び作成することはできません</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_State_NotFound_Format" xml:space="preserve">
+    <value>現在は対象外: 確認時にゲームのフォルダーで {0} が見つかりませんでした。ブロックは維持されます</value>
     <comment>review</comment>
   </data>
   <data name="Exception_Lapsed_Format" xml:space="preserve">
@@ -3395,6 +3403,10 @@
   </data>
   <data name="Exception_Lapse_SessionCrashed" xml:space="preserve">
     <value>例外下のセッションがクラッシュしました</value>
+    <comment>review</comment>
+  </data>
+  <data name="Exception_Lapse_TrialFailed" xml:space="preserve">
+    <value>試用期間中のセッションがうまくいきませんでした（フレームが記録されなかったか、正常に終了しませんでした）</value>
     <comment>review</comment>
   </data>
   <data name="Exception_Result_Granted_Format" xml:space="preserve">

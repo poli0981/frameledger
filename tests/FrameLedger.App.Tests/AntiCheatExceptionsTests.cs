@@ -17,7 +17,7 @@ public sealed class AntiCheatExceptionsTests
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private static readonly AntiCheatExceptionFacts _gf2 = new("GIRLS' FRONTLINE 2: EXILIUM", "NetEase Yidun", "NEP2.dll", 3);
+    private static readonly AntiCheatExceptionFacts _gf2 = new("GIRLS' FRONTLINE 2: EXILIUM", "NetEase Yidun", "NEP2.dll");
 
     private static HelloAck Hello(string? exceptionDisclosure) =>
         new("agent", IpcProtocol.Version, 1, false, "b", false, "l1", false, SafetyDisclosure.Version, exceptionDisclosure);
@@ -102,13 +102,14 @@ public sealed class AntiCheatExceptionsTests
         var agent = new FakeAgent
         {
             Hello = Hello(AntiCheatExceptionDisclosure.Version),
-            Answer = static _ => Ack(IpcMessageType.Refused, new RefusedAck(56, "TooFewSessions", "NetEase Yidun", "1")),
+            // D38: a game whose exception once failed its trial is refused for good; the signal is when, in unix ms.
+            Answer = static _ => Ack(IpcMessageType.Refused, new RefusedAck(56, "TrialFailed", "NetEase Yidun", "1759449600000")),
         };
         var exceptions = new AntiCheatExceptions(agent, new FakePrompt { Accepts = true });
 
-        AntiCheatExceptionResult few = await exceptions.GrantAsync(56, _gf2, Ct);
-        few.Outcome.Should().Be(AntiCheatExceptionOutcome.Refused);
-        few.RefusalText().Should().Contain("1");
+        AntiCheatExceptionResult failed = await exceptions.GrantAsync(56, _gf2, Ct);
+        failed.Outcome.Should().Be(AntiCheatExceptionOutcome.Refused);
+        failed.RefusalText().Should().Contain("trial").And.Contain(Formats.Date(DateTimeOffset.FromUnixTimeMilliseconds(1759449600000)));
 
         agent.Answer = static _ => throw new IpcRequestException(IpcErrorCode.ExceptionsOff, "off");
         (await exceptions.GrantAsync(56, _gf2, Ct)).Outcome.Should().Be(AntiCheatExceptionOutcome.OptionOff);
@@ -140,7 +141,8 @@ public sealed class AntiCheatExceptionsTests
 
         viewModel.Accepted.Should().BeFalse("the dialog opens with the risk unaccepted");
         viewModel.Intro.Should().Contain("NetEase Yidun").And.Contain("NEP2.dll");
-        viewModel.Why.Should().Contain("3");
+        viewModel.Why.Should().Contain("NetEase Yidun").And.NotContain("{1}", "D38: the disclosure names no session count");
+        AntiCheatExceptionDialogViewModel.Trial.Should().Contain("trial", "D38: the grant's first two sessions are a trial, and the disclosure says so");
         viewModel.Risk.Should().Contain("NetEase Yidun");
         viewModel.Accepted = true;
         viewModel.Accepted.Should().BeTrue();

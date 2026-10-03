@@ -173,8 +173,9 @@ public sealed class SettingsViewModelTests
 
     /// <summary>
     /// D33 (owner decision 2026-09-26): the option is one Agent-read settings row, off by default; on, the list names the
-    /// games the exception concerns — eligible, held back only by the session count, in force — and off, only a kept
-    /// exception, said to be suspended. The App reads the Agent's columns and writes none.
+    /// games it can act on — eligible, in force — and off, only a kept exception, said to be suspended. A game that can
+    /// never qualify (here: D38's failed trial; or a kernel-level family) is not listed: its page says why. The App reads
+    /// the Agent's columns and writes none.
     /// </summary>
     [Fact]
     public async Task TheExceptionOptionIsOffByDefaultAndItsListFollowsTheAgentsColumns()
@@ -186,7 +187,8 @@ public sealed class SettingsViewModelTests
         await s.Db.WriteAsync(async (c, tx, ct) =>
         {
             const string sql = "UPDATE games SET hook_blocked_reason = @block, hook_prescan_state = 'blocked', ac_exception_eligible = @eligible, "
-                               + "ac_exception_verdict = @verdict, ac_exception_sessions = @sessions, ac_exception_checked_block = @block WHERE id = @id";
+                               + "ac_exception_verdict = @verdict, ac_exception_sessions = @sessions, ac_exception_checked_block = @block, "
+                               + "ac_exception_trial_failed_at = CASE WHEN @sessions = 1 THEN 1759449600000 END WHERE id = @id";
             const string yidun = "AntiCheatFile|NetEase Yidun|NEP2.dll";
             await Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(sql, new
             {
@@ -224,9 +226,8 @@ public sealed class SettingsViewModelTests
         await pending;
 
         (await h.Settings.GetBooleanAsync(SettingsRegistry.HookingUserModeExceptions, Ct)).Should().BeTrue();
-        h.Vm.ExceptionGames.Select(static g => g.Name).Should().Equal("Few", "GF2");
-        h.Vm.ExceptionGames.Single(static g => string.Equals(g.Name, "GF2", StringComparison.Ordinal)).CanGrant.Should().BeTrue();
-        h.Vm.ExceptionGames.Single(static g => string.Equals(g.Name, "Few", StringComparison.Ordinal)).CanGrant.Should().BeFalse("one session is not the owner's two");
+        h.Vm.ExceptionGames.Select(static g => g.Name).Should().Equal(["GF2"], "a row with no action is not listed");
+        h.Vm.ExceptionGames.Single().CanGrant.Should().BeTrue();
         h.Vm.ExceptionsChecking.Should().BeFalse("the Agent answered about every blocked game");
 
         await s.Db.WriteAsync((c, tx, ct) => Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(

@@ -61,6 +61,7 @@ public static class Strings
         nameof(Safety_Exception_Risk_Format),
         nameof(Safety_Exception_Still_Format),
         nameof(Safety_Exception_Title_Format),
+        nameof(Safety_Exception_Trial),
         nameof(Safety_Exception_VersionMismatch),
         nameof(Safety_Exception_Why_Format),
         nameof(Safety_HookingTurnedOff),
@@ -141,6 +142,8 @@ public static class Strings
     public static string Safety_Exception_Still_Format => ResourceManager.GetString(nameof(Safety_Exception_Still_Format), Culture) ?? nameof(Safety_Exception_Still_Format);
 
     public static string Safety_Exception_Title_Format => ResourceManager.GetString(nameof(Safety_Exception_Title_Format), Culture) ?? nameof(Safety_Exception_Title_Format);
+
+    public static string Safety_Exception_Trial => ResourceManager.GetString(nameof(Safety_Exception_Trial), Culture) ?? nameof(Safety_Exception_Trial);
 
     public static string Safety_Exception_VersionMismatch => ResourceManager.GetString(nameof(Safety_Exception_VersionMismatch), Culture) ?? nameof(Safety_Exception_VersionMismatch);
 

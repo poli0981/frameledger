@@ -3,9 +3,10 @@ using FrameLedger.Domain.Consent;
 namespace FrameLedger.Application.Persistence;
 
 /// <summary>
-/// D33 (owner decision 2026-09-26): <c>games.ac_exception_*</c> as read (schema 0014) — the Agent's eligibility answer
-/// about a blocked game, the user's grant of its user-mode exception, and how the last grant ended. Read-only here: every
-/// write is the consent store's (<c>IGameConsentStore</c>) or a downgrade in <c>ChangeExecutableAsync</c>.
+/// D33 (owner decision 2026-09-26): <c>games.ac_exception_*</c> as read (schema 0014, and 0017 for D38's trial) — the
+/// Agent's eligibility answer about a blocked game, the user's grant of its user-mode exception, how far its trial has come,
+/// and how the last grant ended. Read-only here: every write is the consent store's (<c>IGameConsentStore</c>) or a
+/// downgrade in <c>ChangeExecutableAsync</c>.
 /// </summary>
 public sealed record AntiCheatExceptionState
 {
@@ -18,7 +19,11 @@ public sealed record AntiCheatExceptionState
     /// <summary>The guard's tolerant pre-scan behind <see cref="Eligible"/>, as <c>Reason|Family|Signal</c>; null when nothing was asked.</summary>
     public string? Verdict { get; init; }
 
-    /// <summary>Successful Tier-1 sessions of the game when the sweep last counted.</summary>
+    /// <summary>
+    /// D38: successful hooked sessions under the grant in force when the sweep last counted — its trial's progress against
+    /// <c>UserModeExceptionRules.TrialSessions</c>; 0 with no grant. (D33 counted every successful Tier-1 session of the game
+    /// here, the evidence a grant needed before D38.)
+    /// </summary>
     public int Sessions { get; init; }
 
     /// <summary>The rules version <see cref="Verdict"/> was reached under.</summary>
@@ -53,6 +58,15 @@ public sealed record AntiCheatExceptionState
 
     /// <summary>Why the last grant ended (<c>UserModeExceptionLapse</c>).</summary>
     public string? LapsedReason { get; init; }
+
+    /// <summary>
+    /// D38 (schema 0017): when an exception of this game ended during its trial; null when none did. Never cleared — not by
+    /// a withdrawal, a game update or <i>Change executable</i> — and while it is set no exception can be made for the game.
+    /// </summary>
+    public DateTimeOffset? TrialFailedAt { get; init; }
+
+    /// <summary>D38: an exception of this game failed its trial, so none can be made again.</summary>
+    public bool TrialFailed => TrialFailedAt is not null;
 
     /// <summary>An exception is in force on the row (whether the option lets it apply is the capture path's question).</summary>
     public bool IsGranted => GrantedAt is not null && !string.IsNullOrEmpty(Family);

@@ -483,10 +483,19 @@ unmeasured rule — NetEase Yidun, `AntiCheatFile NEP2.dll` — after FrameLedge
 normal Tier-1 sessions in the owner's ledger, 474,143 frames). The owner asked for a way to keep measuring a game like
 that, and chose, against the rule this document had kept since 2026-09-22 and with that rule quoted back to them, **an
 exception the user grants per game, bound to evidence, and only for anti-cheat that is user-mode throughout.** The
-reasons D22 withdrew the override are answered one by one: it "did nothing where it was wanted" — an exception is only
-offered where FrameLedger has already measured the game hooked; it "only exposed the user to the risk its own disclosure
-described" — that risk stands, and the disclosure says so, including that a ban can arrive days later and that FrameLedger
-cannot know.
+reasons D22 withdrew the override are answered one by one: it "did nothing where it was wanted" — ~~an exception is only
+offered where FrameLedger has already measured the game hooked~~ *(D38 below: the measurement now comes under the grant,
+as its trial)*; it "only exposed the user to the risk its own disclosure described" — that risk stands, and the disclosure
+says so, including that a ban can arrive days later and that FrameLedger cannot know.
+
+> **Amended 2026-10-03 (owner decision D38): the evidence comes after the grant, as a trial.** The owner deleted their
+> ledger and found *GIRLS' FRONTLINE 2* "Not eligible: 0 successful hooked session(s), two are needed" — for good. The rule
+> below was a catch-22 for every game it could ever meet again: since beta.8 the library sweep blocks a game the moment
+> it is added, a blocked game is never hooked without a grant (`CaptureSession` sends it to Tier 2 before the resolver),
+> so it can never earn the two sessions, and a reset ledger loses the ones it had. D33's evidence was reachable only for a
+> game measured before its block, and only while those rows lasted. Asked with that, the owner chose: **a grant needs no
+> session; the first two hooked sessions under it are a trial; any of them that does not go well ends the exception for
+> good** (`games.ac_exception_trial_failed_at`, schema 0017, which nothing clears). Every other condition is unchanged.
 
 **What may be excepted — all of it must hold:**
 
@@ -499,8 +508,10 @@ cannot know.
 - no `*.sys` anywhere in the install tree — the kernel-driver rule (D30) is never excepted, whichever family a driver
   belongs to (so *Aniimo*, which unpacks `NEPKernel.sys` beside `NEP2.dll` on its first run, stays blocked);
 - the game is on no title list (`BlockedExecutable`, `BlockedStoreId` — the notorious titles are there by design);
-- the ledger holds **at least two successful Tier-1 sessions** of the game: hooked, frames recorded, `exit_status = normal`
-  (which since beta.8 includes End task's exit code 1 and a user's stop), never crashed, never unhooked for safety.
+- ~~the ledger holds **at least two successful Tier-1 sessions** of the game: hooked, frames recorded, `exit_status = normal`
+  (which since beta.8 includes End task's exit code 1 and a user's stop), never crashed, never unhooked for safety.~~
+  **Since D38 (2026-10-03): no session is needed** — and no exception of the game has ever ended during its trial
+  (`ac_exception_trial_failed_at` is NULL).
 
 **Never excepted, whatever the user ticked:** a machine-wide `BlockedDriver` or `BlockedService`, the fuzzy tier
 (`SuspiciousUnsigned`), a scan that could not look or finish, unusable rules, `TargetUnreadable` (D21), a 32-bit target,
@@ -525,6 +536,18 @@ in-process floor stop revokes it; an executable change ends it with the consent 
 the option off suspends every exception. **The block itself is never cleared** — the exception is a separate layer over
 it, and the finding stays on the game's page (FR-2.2).
 
+**The trial (D38).** Until two sessions under a grant have succeeded — hooked, stored, frames recorded, `normal`
+(`ISessionRepository.CountSuccessfulUnderGrantAsync`: under that family, started at or after the grant) — the grant is in
+its trial, and the App says so ("trial: 1 of 2"). During the trial **any** end of the list above ends the exception
+**for good**, and so does a stored hooked session that recorded no frame or did not end normally
+(`UserModeExceptionLapse.TrialFailed`, decided by `UserModeExceptionLapsePolicy` when the recorder stores the row): the
+end is recorded with its own reason and `ac_exception_trial_failed_at` is set. While it is set the sweep writes the game
+not eligible, the Agent refuses a grant (`Refused.reason = TrialFailed`, the signal is when) and the store refuses one in
+SQL; withdrawing, a game update, *Change executable* and a twin merge all keep it. A session too short to be stored, or
+one that was never hooked, proves nothing either way and is not judged. After the trial, an end is what it was under
+D33: the exception may be made again once the sweep finds the game eligible. Deleting sessions can only lengthen a trial
+— the count is read, never stored as a grant's own fact.
+
 **What it is not.** Not a bypass of a live refusal, not a global switch (a Settings option off by default enables the list,
 and the user ticks each game), not reachable from the command line, and not evasion: the DLL stays `LoadLibraryW`-loaded,
 named and visible (rule 3). `InjectViaLoadLibrary` still has internal linkage in `fl_guard.cpp`; `tools/chokepoint-check.ps1`
@@ -538,6 +561,13 @@ re-scans naming the family, the session's mark, and every end (`UserModeExceptio
 option and the list in Settings, the versioned disclosure (`Safety_Exception_*`, `AntiCheatExceptionDisclosure`), the
 game page's exception card and its usable switch under an exception in force, the marks, and the legal text
 (Disclaimer §2A 2.7, EULA 1.3, the accuracy block, SECURITY.md) — `08_UI` §Games.*
+
+*D38 in beta.11 (2026-10-03): `UserModeExceptionRules.TrialSessions` replaces `RequiredSessions`; eligibility is the
+guard's answer and the trial mark; `ac_exception_sessions` is the trial's progress; schema 0017
+(`ac_exception_trial_failed_at`); `Refused.reason` `TrialFailed` replaces `TooFewSessions`; the disclosure is
+`ac-exception-dialog/2` (its `Why` names no count, a new `Trial` paragraph); the Settings list shows only games it can act
+on; and a sweep that cannot read the executable answers "could not verify" instead of leaving the row "checking" for ever.
+Legal text: Disclaimer §2A 2.9, EULA 1.4, the accuracy block, SECURITY.md, LIMITATIONS.md.*
 
 
 ### The floor data cannot remove

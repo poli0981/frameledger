@@ -26,7 +26,7 @@ public sealed record AntiCheatExceptionResult(AntiCheatExceptionOutcome Outcome,
         _ => null,
     };
 
-    /// <summary>Why no exception was made, in the user's language: the session count, the finding, or the block's kind.</summary>
+    /// <summary>Why no exception was made, in the user's language: a failed trial (D38), the finding, or the block's kind.</summary>
     public string? RefusalText()
     {
         if (Refusal is null)
@@ -36,11 +36,17 @@ public sealed record AntiCheatExceptionResult(AntiCheatExceptionOutcome Outcome,
 
         return Refusal.Reason switch
         {
-            "TooFewSessions" => string.Format(CultureInfo.CurrentCulture, Strings.Exception_State_TooFew_Format, Refusal.Signal ?? "0"),
+            "TrialFailed" => string.Format(CultureInfo.CurrentCulture, Strings.Exception_State_TrialFailed_Format, TrialFailedDate(Refusal.Signal)),
             "BlockNotExceptionable" => Strings.Exception_State_NotAsked,
             "PreScanFailed" or "RulesUnreadable" or "RulesMalformed" or "RulesIncomplete" => Strings.Exception_State_CouldNotVerify,
             _ => string.Format(CultureInfo.CurrentCulture, Strings.Exception_State_Refused_Format,
                 Refusal.Family ?? Formats.GuardReasonText(Refusal.Reason), Refusal.Signal ?? Strings.Common_NotAvailable),
         };
     }
+
+    /// <summary>D38: the Agent sends when the trial failed as unix milliseconds; anything else reads as not available.</summary>
+    private static string TrialFailedDate(string? unixMs) =>
+        long.TryParse(unixMs, NumberStyles.Integer, CultureInfo.InvariantCulture, out long ms)
+            ? Formats.Date(DateTimeOffset.FromUnixTimeMilliseconds(ms))
+            : Strings.Common_NotAvailable;
 }

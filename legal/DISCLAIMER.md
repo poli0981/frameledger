@@ -1,6 +1,6 @@
 # FrameLedger — Disclaimer
 
-**Version:** 2.8 · **Effective:** {{RELEASE_DATE}}
+**Version:** 2.9 · **Effective:** {{RELEASE_DATE}}
 
 > **How this document is kept true.** The statement of what FrameLedger measures (§4) is `legal/ACCURACY.md`,
 > embedded here and in `README.md` and bound to its source by `tools/accuracy-check.ps1`, which fails the build when a
@@ -92,11 +92,14 @@ notes.
 **Since 0.1.0-beta.9 there is one exception, and it is not a way past the guard.** A Settings option, off unless you
 turn it on, lets you make an exception — one game at a time, after a disclosure you must accept — for a game whose only
 finding is a single anti-cheat that works entirely in user mode (no kernel driver, no service, and no driver file
-anywhere in the game's folder), that is on no list of titles FrameLedger refuses, and that FrameLedger has already
-measured successfully at least twice. Under it the guard still runs every check, before injecting and every 30
-seconds, and still refuses anything else it finds; the exception ends by itself when something new is found, when a
-session under it crashes or is stopped for safety, or when the game is updated, and turning the option off suspends
-it. Sessions recorded under it are marked with the anti-cheat they ran beside.
+anywhere in the game's folder) and that is on no list of titles FrameLedger refuses. Since 0.1.0-beta.11 the game does
+not need to have been measured before: **the first two sessions under the exception are a trial**, and if one of them
+does not go well — it crashes, records nothing, does not end normally, is stopped for safety, or something new is found
+— the exception ends and can never be made again for that game. Under it the guard still runs every check, before
+injecting and every 30 seconds, and still refuses anything else it finds; after the trial the exception ends by itself
+when something new is found, when a session under it crashes or is stopped for safety, or when the game is updated, and
+turning the option off suspends it. Sessions recorded under it are marked with the anti-cheat they ran beside. **Two
+good sessions are not evidence that the anti-cheat did not notice** — a ban may still come later.
 
 **It exists because users asked for it, and it carries exactly the risk this document describes.** That anti-cheat
 may still detect FrameLedger in the game and warn, block or permanently ban your account — possibly days later — and
@@ -187,8 +190,8 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 >   game in the library, before injection, at a session's start or by the 30 s re-check; the game's page says so,
 >   and nothing turns it back on for that executable — except a user-mode exception you make yourself, per game,
 >   in Settings (off by default): only where the only finding is one anti-cheat that runs entirely in user mode, with
->   no driver file in the game's folder, on a game already measured successfully at least twice. The guard still
->   runs every check under it and ends it on anything new; a ban remains possible.
+>   no driver file in the game's folder. Its first two sessions are a trial, and one that does not go well ends it
+>   for good. The guard still runs every check under it and ends it on anything new; a ban remains possible.
 >
 > Where a value is not measured it reads `N/A`, with two exceptions: FPS then shows Presented FPS with a
 > note on what it may include, and ray-tracing flags may show a value you set yourself, labelled as

@@ -53,8 +53,12 @@ public sealed class AgentCommandHandler
     /// </summary>
     public const string BlockNotExceptionableReason = "BlockNotExceptionable";
 
-    /// <summary>D33: <c>Refused.reason</c> for an exception asked with fewer successful hooked sessions than the owner's threshold; <c>signal</c> carries the count.</summary>
-    public const string TooFewSessionsReason = "TooFewSessions";
+    /// <summary>
+    /// D38 (owner decision 2026-10-03): <c>Refused.reason</c> for an exception asked for a game an earlier exception of which
+    /// ended during its trial — for good; <c>signal</c> carries when (unix ms). (D33's <c>TooFewSessions</c> is gone with the
+    /// session threshold it named.)
+    /// </summary>
+    public const string TrialFailedReason = "TrialFailed";
 
     /// <summary>
     /// <c>disclosureVersion</c> is the version of FR-2.1's reviewed disclosure this Agent carries
@@ -231,7 +235,7 @@ public sealed class AgentCommandHandler
         await _consent.RecordGuardBlockAsync(fingerprint, verdict, ct).ConfigureAwait(false);
         if (tolerated is not null && verdict.IsFindingAboutTheGame)
         {
-            await _consent.RevokeAntiCheatExceptionAsync(fingerprint.ExePath, UserModeExceptionLapse.NewFinding, ct).ConfigureAwait(false);
+            await _consent.RevokeAntiCheatExceptionAsync(fingerprint.ExePath, UserModeExceptionLapse.NewFinding, ct: ct).ConfigureAwait(false);
         }
 
         await ReconcileLayerAsync(ct).ConfigureAwait(false);
@@ -277,7 +281,7 @@ public sealed class AgentCommandHandler
 
         if (!payload.Enabled)
         {
-            ConsentWriteOutcome withdrawn = await _consent.RevokeAntiCheatExceptionAsync(game.Fingerprint.ExePath, UserModeExceptionLapse.Withdrawn, ct)
+            ConsentWriteOutcome withdrawn = await _consent.RevokeAntiCheatExceptionAsync(game.Fingerprint.ExePath, UserModeExceptionLapse.Withdrawn, ct: ct)
                 .ConfigureAwait(false);
             await ReconcileLayerAsync(ct).ConfigureAwait(false);
             return IpcCodec.Encode(IpcMessageType.AntiCheatExceptionAck, request.Id,
@@ -297,8 +301,9 @@ public sealed class AgentCommandHandler
 
     /// <summary>
     /// D33: the facts a grant rests on, gathered here and now — the block on the row, a tolerant pre-scan of the executable on
-    /// disk naming the block's family, and the successful Tier-1 sessions — each refusal said as what it is; the store then
-    /// writes the grant only when they make the game eligible, and only while the row still carries that block.
+    /// disk naming the block's family — each refusal said as what it is; the store then writes the grant only when they make
+    /// the game eligible, and only while the row still carries that block. D38: no session is needed any more — the grant's
+    /// first sessions are its trial — and a game whose exception once failed its trial is refused before anything is scanned.
     /// </summary>
     private async ValueTask<byte[]> GrantExceptionAsync(IpcEnvelope request, GameRow game, AntiCheatExceptionCommands exceptions, CancellationToken ct)
     {
@@ -306,6 +311,12 @@ public sealed class AgentCommandHandler
         if (StoredBlock.Parse(game.HookBlockedReason) is not { IsExceptionable: true } block)
         {
             return IpcCodec.Encode(IpcMessageType.Refused, request.Id, new RefusedAck(game.Id, BlockNotExceptionableReason, Family: null, Signal: null));
+        }
+
+        if (game.AcException.TrialFailedAt is { } failedAt)
+        {
+            return IpcCodec.Encode(IpcMessageType.Refused, request.Id, new RefusedAck(game.Id, TrialFailedReason, block.Family,
+                failedAt.ToUnixTimeMilliseconds().ToString(System.Globalization.CultureInfo.InvariantCulture)));
         }
 
         if (_identity.Read(path) is not { } fingerprint)
@@ -320,19 +331,11 @@ public sealed class AgentCommandHandler
             return IpcCodec.Encode(IpcMessageType.Refused, request.Id, new RefusedAck(game.Id, reason, NullIfEmpty(verdict.Family), NullIfEmpty(verdict.Signal)));
         }
 
-        int sessions = await exceptions.Sessions.CountSuccessfulHookedAsync(game.Id, ct).ConfigureAwait(false);
-        if (sessions < UserModeExceptionRules.RequiredSessions)
-        {
-            return IpcCodec.Encode(IpcMessageType.Refused, request.Id, new RefusedAck(game.Id, TooFewSessionsReason, block.Family,
-                sessions.ToString(System.Globalization.CultureInfo.InvariantCulture)));
-        }
-
         ConsentWriteOutcome outcome = await _consent.GrantAntiCheatExceptionAsync(new AntiCheatExceptionGrantRequest
         {
             Fingerprint = fingerprint,
             Block = game.HookBlockedReason!,
             Verdict = verdict,
-            Sessions = sessions,
             DisclosureVersion = exceptions.DisclosureVersion,
             GrantedAt = _clock.GetUtcNow(),
         }, ct).ConfigureAwait(false);

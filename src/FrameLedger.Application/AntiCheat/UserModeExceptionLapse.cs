@@ -12,7 +12,7 @@ public static class UserModeExceptionLapse
     /// <summary>The executable is not the one the grant was made on: a game update, or <i>Change executable</i>.</summary>
     public const string ExecutableChanged = "ExecutableChanged";
 
-    /// <summary>The guard no longer lets the game through under it: a new finding, a <c>.sys</c>, the family turned kernel-level, too few sessions.</summary>
+    /// <summary>The guard no longer lets the game through under it: a new finding, a <c>.sys</c>, the family turned kernel-level.</summary>
     public const string NoLongerEligible = "NoLongerEligible";
 
     /// <summary>A finding about the game at a session's start, at the 30 s re-scan or when hooking was turned on.</summary>
@@ -26,4 +26,11 @@ public static class UserModeExceptionLapse
 
     /// <summary>A session under it ended in a crash.</summary>
     public const string SessionCrashed = "SessionCrashed";
+
+    /// <summary>
+    /// D38: a session in its trial did not succeed — hooked and stored, but it recorded no frame or did not end normally —
+    /// and nothing more specific said why. Any end during the trial, this one or another, also marks the game so that no
+    /// exception can be made for it again (<c>games.ac_exception_trial_failed_at</c>).
+    /// </summary>
+    public const string TrialFailed = "TrialFailed";
 }

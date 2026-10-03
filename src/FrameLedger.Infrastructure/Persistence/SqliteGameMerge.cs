@@ -28,18 +28,22 @@ namespace FrameLedger.Infrastructure.Persistence;
 /// <b>The recording switch (schema 0009) follows the same direction:</b> off on either entry is off on the survivor. The
 /// user turned it off for this executable under one of its two names.
 /// </para>
+/// <para>
+/// <b>So does a failed exception trial (schema 0017, D38):</b> an exception of either entry that ended during its trial
+/// marks the survivor, the earlier of two — a merge must not be the way a game's "never again" disappears.
+/// </para>
 /// </remarks>
 public sealed class SqliteGameMerge : IGameMerge
 {
     private const string _read =
         "SELECT id, exe_path, exe_size_bytes, exe_mtime_ms, removed_at, hook_enabled, hook_blocked_reason, hook_autodisabled_reason, "
-        + "hook_autodisabled_at, hook_crash_count, hook_last_injected_at, record_sessions FROM games WHERE id = @id";
+        + "hook_autodisabled_at, hook_crash_count, hook_last_injected_at, record_sessions, ac_exception_trial_failed_at FROM games WHERE id = @id";
 
     private const string _reparent = "UPDATE sessions SET game_id = @keep WHERE game_id = @drop";
 
     private const string _carry =
         "UPDATE games SET hook_blocked_reason = @blocked, hook_autodisabled_reason = @autoReason, hook_autodisabled_at = @autoAt, "
-        + "hook_crash_count = @crashes, hook_last_injected_at = @injected, record_sessions = @record, "
+        + "hook_crash_count = @crashes, hook_last_injected_at = @injected, record_sessions = @record, ac_exception_trial_failed_at = @trialFailed, "
         + "hook_enabled = CASE WHEN @hookOff THEN 0 ELSE hook_enabled END, "
         + "hook_prescan_state = CASE WHEN @blockCarried THEN 'blocked' ELSE hook_prescan_state END, "
         + "updated_at = @now WHERE id = @keep";
@@ -81,6 +85,7 @@ public sealed class SqliteGameMerge : IGameMerge
                 crashes = keep.CrashCount + drop!.CrashCount,
                 injected = Later(keep.LastInjectedAt, drop.LastInjectedAt),
                 record = keep.RecordSessions && drop.RecordSessions ? 1 : 0,
+                trialFailed = Earlier(keep.TrialFailedAt, drop.TrialFailedAt),
                 hookOff = blockCarried || autoCarried,
                 blockCarried,
                 now,
@@ -112,6 +117,8 @@ public sealed class SqliteGameMerge : IGameMerge
 
     private static long? Later(long? a, long? b) => a is null ? b : b is null ? a : Math.Max(a.Value, b.Value);
 
+    private static long? Earlier(long? a, long? b) => a is null ? b : b is null ? a : Math.Min(a.Value, b.Value);
+
     private static Task<Twin?> ReadAsync(SqliteConnection c, SqliteTransaction tx, long id, CancellationToken ct) =>
         SqliteReaders.ReadOneAsync(c, new CommandDefinition(_read, new { id }, tx, cancellationToken: ct), Read);
 
@@ -127,7 +134,8 @@ public sealed class SqliteGameMerge : IGameMerge
         SqliteReaders.Int64(r, 8),
         r.GetInt32(9),
         SqliteReaders.Int64(r, 10),
-        r.GetInt64(11) != 0);
+        r.GetInt64(11) != 0,
+        SqliteReaders.Int64(r, 12));
 
     private sealed record Twin(
         long Id,
@@ -141,5 +149,6 @@ public sealed class SqliteGameMerge : IGameMerge
         long? AutoDisabledAt,
         int CrashCount,
         long? LastInjectedAt,
-        bool RecordSessions);
+        bool RecordSessions,
+        long? TrialFailedAt);
 }

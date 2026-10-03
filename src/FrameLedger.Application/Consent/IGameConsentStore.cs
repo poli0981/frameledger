@@ -138,8 +138,10 @@ public interface IGameConsentStore
     /// <summary>
     /// D33 (owner decision 2026-09-26): the sweep's answer about one BLOCKED game — whether its user-mode exception may be
     /// granted — from the facts it gathered: <paramref name="verdict"/>, a tolerant pre-scan asked about the block's family
-    /// (null when the block is not of a kind worth asking about), and <paramref name="sessions"/> successful Tier-1 sessions.
-    /// The rule is <c>UserModeExceptionRules.IsEligible</c>, applied here so the row cannot say "eligible" over facts that are not.
+    /// (null when the block is not of a kind worth asking about). The rule is <c>UserModeExceptionRules.IsEligible</c>,
+    /// applied here so the row cannot say "eligible" over facts that are not — and since D38 (2026-10-03) a row whose
+    /// exception once failed its trial is never written eligible, in SQL. <paramref name="sessions"/> is the trial's progress
+    /// under the grant in force (0 with none), stored for the App to show.
     /// </summary>
     /// <remarks>
     /// Written with the key it was reached under — <paramref name="rulesVersion"/>, the executable's size and mtime in
@@ -151,12 +153,13 @@ public interface IGameConsentStore
         ExecutableFingerprint scanned, string block, AntiCheatVerdict? verdict, int sessions, string rulesVersion, CancellationToken ct = default);
 
     /// <summary>
-    /// D33: grant a game's user-mode exception, on facts gathered just now — the tolerant pre-scan and the session count in
-    /// <paramref name="grant"/> — after the user accepted its disclosure.
+    /// D33: grant a game's user-mode exception, on facts gathered just now — the tolerant pre-scan in
+    /// <paramref name="grant"/> — after the user accepted its disclosure. D38: the grant starts its trial at zero sessions.
     /// </summary>
     /// <remarks>
     /// <see cref="ConsentWriteOutcome.NotEligible"/> and nothing written unless <c>UserModeExceptionRules.IsEligible</c> holds for
-    /// those facts; <see cref="ConsentWriteOutcome.NotFound"/> when the row no longer carries the block the facts are about.
+    /// those facts and no exception of the game failed its trial (read from the row in the same transaction);
+    /// <see cref="ConsentWriteOutcome.NotFound"/> when the row no longer carries the block the facts are about.
     /// It never clears the block, never enables hooking and never stamps consent: turning hooking on is FR-2.1's own
     /// dialog, afterwards.
     /// </remarks>
@@ -165,8 +168,11 @@ public interface IGameConsentStore
     /// <summary>
     /// D33: end a game's user-mode exception, for <paramref name="reason"/> (<c>UserModeExceptionLapse</c>), and turn its
     /// hooking off while the block stands. The consent stamp is preserved, as a block preserves it; the family, the
-    /// disclosure and the executable the grant was made on stay on the row as history.
+    /// disclosure and the executable the grant was made on stay on the row as history. D38: <paramref name="trialFailed"/>
+    /// — the end came during the grant's trial — also marks the game (<c>ac_exception_trial_failed_at</c>), and no exception
+    /// can be made for it again.
     /// </summary>
     /// <remarks><see cref="ConsentWriteOutcome.NotFound"/> when there was no exception in force.</remarks>
-    ValueTask<ConsentWriteOutcome> RevokeAntiCheatExceptionAsync(string normalisedExePath, string reason, CancellationToken ct = default);
+    ValueTask<ConsentWriteOutcome> RevokeAntiCheatExceptionAsync(string normalisedExePath, string reason, bool trialFailed = false,
+        CancellationToken ct = default);
 }

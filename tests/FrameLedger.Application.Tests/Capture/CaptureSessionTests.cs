@@ -1186,8 +1186,7 @@ public sealed class CaptureSessionTests : IAsyncDisposable
             Fingerprint = Fingerprint,
             Block = _yidunBlock,
             Verdict = AntiCheatVerdict.AllowedUnderException("NetEase Yidun", "NEP2.dll"),
-            Sessions = 3,
-            DisclosureVersion = "ac-exception-dialog/1",
+            DisclosureVersion = "ac-exception-dialog/2",
             GrantedAt = DateTimeOffset.UnixEpoch,
         }, ct).ConfigureAwait(false)).Should().Be(ConsentWriteOutcome.Written);
         (await store.RecordOperatorAcknowledgementAsync(new OperatorAcknowledgement

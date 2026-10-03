@@ -2016,6 +2016,9 @@ Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắ
   <data name="GameDetail_AntiCheat_Format" xml:space="preserve">
     <value>Đã phát hiện: {0}. Hooking đã tắt cho game này và không thể bật; các phiên của nó chỉ ghi thời gian chơi và cảm biến.</value>
   </data>
+  <data name="GameDetail_AntiCheat_Exceptionable_Format" xml:space="preserve">
+    <value>Đã phát hiện: {0}. Hooking đã tắt cho game này trừ khi bạn tạo ngoại lệ user-mode cho nó (bên dưới); nếu không, các phiên của nó chỉ ghi thời gian chơi và cảm biến.</value>
+  </data>
   <data name="Games_Card_AntiCheat" xml:space="preserve">
     <value>Anti-cheat</value>
   </data>
@@ -2479,10 +2482,10 @@ Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắ
     <value>W</value>
   </data>
   <data name="Settings_Exceptions_Label" xml:space="preserve">
-    <value>Cho phép hooking ở game có anti-cheat user-mode đã từng đo thành công</value>
+    <value>Cho phép hooking ở game chỉ có anti-cheat chạy ở user mode</value>
   </data>
   <data name="Settings_Exceptions_Body" xml:space="preserve">
-    <value>Mặc định tắt. Khi bật, game có anti-cheat duy nhất chạy ở user mode — không có kernel driver, không phát hiện gì khác — và đã được đo ở chế độ hook ít nhất hai lần có thể được cấp ngoại lệ bên dưới, từng game một, sau một bản công bố rủi ro. Bộ bảo vệ vẫn chạy mọi bước kiểm tra, và vẫn có thể bị khoá tài khoản.</value>
+    <value>Mặc định tắt. Khi bật, game có anti-cheat duy nhất chạy ở user mode — không có kernel driver, không phát hiện gì khác — có thể được cấp ngoại lệ bên dưới, từng game một, sau một bản công bố rủi ro. Hai phiên hook đầu tiên là phiên thử: một phiên không ổn sẽ kết thúc ngoại lệ vĩnh viễn. Bộ bảo vệ vẫn chạy mọi bước kiểm tra, và vẫn có thể bị khoá tài khoản.</value>
   </data>
   <data name="Settings_Exceptions_Header" xml:space="preserve">
     <value>Ngoại lệ user-mode</value>
@@ -2502,20 +2505,17 @@ Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắ
   <data name="Exception_Finding_Format" xml:space="preserve">
     <value>{0} — {1}</value>
   </data>
-  <data name="Exception_Sessions_Format" xml:space="preserve">
-    <value>{0} phiên hook thành công</value>
-  </data>
   <data name="Exception_State_Granted_Format" xml:space="preserve">
     <value>Ngoại lệ có hiệu lực từ {0}</value>
+  </data>
+  <data name="Exception_State_GrantedTrial_Format" xml:space="preserve">
+    <value>Ngoại lệ có hiệu lực từ {0} — đang thử: đã có {1}/{2} phiên tốt</value>
   </data>
   <data name="Exception_State_Eligible" xml:space="preserve">
     <value>Đủ điều kiện — chưa tạo ngoại lệ</value>
   </data>
   <data name="Exception_State_Checking" xml:space="preserve">
     <value>Đang kiểm tra…</value>
-  </data>
-  <data name="Exception_State_TooFew_Format" xml:space="preserve">
-    <value>Chưa đủ điều kiện: {0} phiên hook thành công, cần hai</value>
   </data>
   <data name="Exception_State_Refused_Format" xml:space="preserve">
     <value>Không đủ điều kiện: bộ bảo vệ còn phát hiện {0} ({1})</value>
@@ -2528,6 +2528,12 @@ Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắ
   </data>
   <data name="Exception_State_CouldNotVerify" xml:space="preserve">
     <value>Hiện chưa đủ điều kiện: lần kiểm tra không hoàn tất; nó sẽ tự chạy lại</value>
+  </data>
+  <data name="Exception_State_TrialFailed_Format" xml:space="preserve">
+    <value>Không đủ điều kiện: một ngoại lệ của game này đã kết thúc trong thời gian thử vào {0}, nên không thể tạo lại</value>
+  </data>
+  <data name="Exception_State_NotFound_Format" xml:space="preserve">
+    <value>Hiện không đủ điều kiện: lúc kiểm tra không thấy {0} trong thư mục game; lệnh chặn vẫn giữ nguyên</value>
   </data>
   <data name="Exception_Lapsed_Format" xml:space="preserve">
     <value>Ngoại lệ gần nhất đã kết thúc ngày {0}: {1}</value>
@@ -2552,6 +2558,9 @@ Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắ
   </data>
   <data name="Exception_Lapse_SessionCrashed" xml:space="preserve">
     <value>một phiên dưới ngoại lệ bị crash</value>
+  </data>
+  <data name="Exception_Lapse_TrialFailed" xml:space="preserve">
+    <value>một phiên trong thời gian thử không ổn (không ghi được frame nào, hoặc không kết thúc bình thường)</value>
   </data>
   <data name="Exception_Result_Granted_Format" xml:space="preserve">
     <value>Đã tạo ngoại lệ cho {0}. Khi muốn đo, hãy bật hooking cho game trên trang của nó.</value>

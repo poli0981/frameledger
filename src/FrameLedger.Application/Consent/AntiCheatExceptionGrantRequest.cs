@@ -18,9 +18,6 @@ public sealed record AntiCheatExceptionGrantRequest
     /// <summary>The guard's tolerant pre-scan, asked about the block's family just now.</summary>
     public required AntiCheatVerdict Verdict { get; init; }
 
-    /// <summary>Successful Tier-1 sessions of the game, counted just now.</summary>
-    public required int Sessions { get; init; }
-
     /// <summary>The disclosure the user accepted — the Agent's own version, checked before this request exists.</summary>
     public required string DisclosureVersion { get; init; }
 

@@ -6,8 +6,8 @@ using SafetyStrings = FrameLedger.Shared.Strings;
 namespace FrameLedger.App.ViewModels;
 
 /// <summary>
-/// D33's disclosure content (<c>19_SAFETY</c> §The user-mode exception): why the exception is offered, the risk at the same
-/// grain as FR-2.1's dialog, what is still refused, how it ends, and that it turns nothing on. <see cref="Accepted"/> — the
+/// D33's disclosure content (<c>19_SAFETY</c> §The user-mode exception): why the exception is offered, its trial (D38), the
+/// risk at the same grain as FR-2.1's dialog, what is still refused, how it ends, and that it turns nothing on. <see cref="Accepted"/> — the
 /// user ticking "I accept the risk of a ban for this game" — is the one thing that enables the dialog's primary button.
 /// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime; a cached CompositeFormat would pin the first culture")]
@@ -22,7 +22,7 @@ public sealed partial class AntiCheatExceptionDialogViewModel : ObservableObject
         Facts = facts;
         Title = string.Format(CultureInfo.CurrentCulture, SafetyStrings.Safety_Exception_Title_Format, facts.GameName);
         Intro = string.Format(CultureInfo.CurrentCulture, SafetyStrings.Safety_Exception_Intro_Format, facts.Family, facts.Signal);
-        Why = string.Format(CultureInfo.CurrentCulture, SafetyStrings.Safety_Exception_Why_Format, facts.Family, facts.Sessions);
+        Why = string.Format(CultureInfo.CurrentCulture, SafetyStrings.Safety_Exception_Why_Format, facts.Family);
         Risk = string.Format(CultureInfo.CurrentCulture, SafetyStrings.Safety_Exception_Risk_Format, facts.Family);
         Still = string.Format(CultureInfo.CurrentCulture, SafetyStrings.Safety_Exception_Still_Format, facts.Family);
     }
@@ -38,6 +38,9 @@ public sealed partial class AntiCheatExceptionDialogViewModel : ObservableObject
     public string Risk { get; }
 
     public string Still { get; }
+
+    /// <summary>D38: the grant's first two sessions are a trial, and one that does not go well ends it for good.</summary>
+    public static string Trial => SafetyStrings.Safety_Exception_Trial;
 
     public static string Ends => SafetyStrings.Safety_Exception_Ends;
 

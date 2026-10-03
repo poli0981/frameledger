@@ -12,5 +12,5 @@ namespace FrameLedger.Shared.Safety;
 /// </remarks>
 public static class AntiCheatExceptionDisclosure
 {
-    public const string Version = "ac-exception-dialog/1";
+    public const string Version = "ac-exception-dialog/2";
 }
