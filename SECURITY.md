@@ -37,8 +37,10 @@ check. The grant is a record in your own database, like the consent stamp; what 
 decides itself which family it may let through. So these are security reports too: the guard letting through a family
 that has a driver, a service or a `.sys` in the floor or the rules; an exception applying to a game with a kernel
 driver in its folder, on a title list, or with a second anti-cheat; the Agent writing a grant on a pipe message
-without its own tolerant pre-scan and session count; an exception that survives a new finding, a crash or safety stop
-under it, or a changed executable; and the Overlay tolerating a family the guard did not.
+without its own tolerant pre-scan; an exception that survives a new finding, a crash or safety stop under it, or a
+changed executable; since 0.1.0-beta.11 (D38), an exception that survives a session during its two-session trial that
+did not go well, and any grant written for a game whose earlier exception failed its trial; and the Overlay tolerating
+a family the guard did not.
 
 ## Running the agent as administrator
 

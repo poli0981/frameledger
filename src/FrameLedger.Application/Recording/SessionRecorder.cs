@@ -217,10 +217,12 @@ public sealed class SessionRecorder : ISessionRecorder
         }
 
         // D33: a session under the game's user-mode exception that ended badly ends the exception — after the row is
-        // stored, so the session that ended it is on the page the exception is gone from.
+        // stored, so the session that ended it is on the page the exception is gone from. D38: during the grant's trial a
+        // stored hooked session that did not succeed ends it too, and any end then is for good.
+        var trial = new SessionForTrial(ownerId, hooked && saved.Status == FinalizeStatus.Saved, built.Row.FrameCount);
         string? lapsed = _exceptionLapse is null
             ? null
-            : await _exceptionLapse.ApplyAsync(request.NormalisedExePath, outcome, exit, ct).ConfigureAwait(false);
+            : await _exceptionLapse.ApplyAsync(request.NormalisedExePath, outcome, exit, trial, ct).ConfigureAwait(false);
 
         return new RecordedSession
         {

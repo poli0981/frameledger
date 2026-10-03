@@ -30,7 +30,7 @@ public sealed class SqliteGameRepository : IGameRepository
         + "ac_exception_eligible, ac_exception_verdict, ac_exception_sessions, ac_exception_checked_rules_version, "
         + "ac_exception_checked_exe_size_bytes, ac_exception_checked_exe_mtime_ms, ac_exception_checked_block, ac_exception_at, "
         + "ac_exception_family, ac_exception_disclosure_version, ac_exception_exe_size_bytes, ac_exception_exe_mtime_ms, "
-        + "ac_exception_lapsed_at, ac_exception_lapsed_reason, engine_version_source";
+        + "ac_exception_lapsed_at, ac_exception_lapsed_reason, engine_version_source, ac_exception_trial_failed_at";
 
     private const string _selectByPath = $"SELECT {_columns} FROM games WHERE exe_path = @path";
 
@@ -373,8 +373,8 @@ public sealed class SqliteGameRepository : IGameRepository
         ExeFileVersion = SqliteReaders.String(r, 36),
         ExeProductVersion = SqliteReaders.String(r, 37),
         Libraries = LibraryVersionsJson.Parse(SqliteReaders.String(r, 38)),
-        AcException = ReadException(r),
-        EngineVersionSource = SqliteReaders.String(r, 53),    // schema 0015, the last column in _columns
+        AcException = ReadException(r) with { TrialFailedAt = At(SqliteReaders.Int64(r, 54)) },    // schema 0017, the last column
+        EngineVersionSource = SqliteReaders.String(r, 53),    // schema 0015
     };
 
     /// <summary>Schema 0014's columns, 39 onwards in <see cref="_columns"/>' order.</summary>

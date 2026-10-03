@@ -126,7 +126,7 @@ public sealed class AntiCheatPreScanSweepTests
                 return ValueTask.FromResult(ConsentWriteOutcome.NotFound);
             }
 
-            bool eligible = verdict is { } v && UserModeExceptionRules.IsEligible(StoredBlock.Parse(block), v, sessions);
+            bool eligible = verdict is { } v && UserModeExceptionRules.IsEligible(StoredBlock.Parse(block), v, row.AcException.TrialFailed);
             string? text = verdict is { } said ? $"{said.Reason}|{said.Family}|{said.Signal}" : null;
             Eligibility.Add((eligible, text, sessions));
             games.Rows[scanned.ExePath] = row with
@@ -148,7 +148,8 @@ public sealed class AntiCheatPreScanSweepTests
         public ValueTask<ConsentWriteOutcome> GrantAntiCheatExceptionAsync(AntiCheatExceptionGrantRequest grant, CancellationToken ct = default) =>
             throw new NotSupportedException("the sweep never grants");
 
-        public ValueTask<ConsentWriteOutcome> RevokeAntiCheatExceptionAsync(string normalisedExePath, string reason, CancellationToken ct = default)
+        public ValueTask<ConsentWriteOutcome> RevokeAntiCheatExceptionAsync(string normalisedExePath, string reason, bool trialFailed = false,
+            CancellationToken ct = default)
         {
             GameRow row = games.Rows[normalisedExePath];
             if (!row.AcException.IsGranted)
@@ -160,7 +161,13 @@ public sealed class AntiCheatPreScanSweepTests
             games.Rows[normalisedExePath] = row with
             {
                 HookEnabled = row.HookBlockedReason is null && row.HookEnabled,
-                AcException = row.AcException with { GrantedAt = null, LapsedReason = reason, LapsedAt = DateTimeOffset.UnixEpoch },
+                AcException = row.AcException with
+                {
+                    GrantedAt = null,
+                    LapsedReason = reason,
+                    LapsedAt = DateTimeOffset.UnixEpoch,
+                    TrialFailedAt = trialFailed ? row.AcException.TrialFailedAt ?? DateTimeOffset.UnixEpoch : row.AcException.TrialFailedAt,
+                },
             };
             return ValueTask.FromResult(ConsentWriteOutcome.Written);
         }
@@ -333,8 +340,11 @@ public sealed class AntiCheatPreScanSweepTests
 
     private static readonly AntiCheatVerdict _letThrough = AntiCheatVerdict.AllowedUnderException("NetEase Yidun", "NEP2.dll");
 
-    /// <summary>D33: a blocked entry, with the exception's evidence and option composed; optionally granted on the bytes on disk.</summary>
-    private static async Task<Rig> BlockedAsync(string block = _yidun, int sessions = 3, bool granted = false, bool optionOn = true)
+    /// <summary>
+    /// D33: a blocked entry, with the exception's option composed; optionally granted on the bytes on disk with
+    /// <paramref name="trial"/> successful sessions under the grant (D38), or marked as having failed a trial.
+    /// </summary>
+    private static async Task<Rig> BlockedAsync(string block = _yidun, int trial = 0, bool granted = false, bool optionOn = true, bool trialFailed = false)
     {
         var games = new FakeGameRepository();
         GameRow row = await games.EnsureAsync(new ExecutableFingerprint { ExePath = _exe, SizeBytes = 5, MtimeUnixMs = 5 }, "Title", Ct).ConfigureAwait(false);
@@ -345,10 +355,12 @@ public sealed class AntiCheatPreScanSweepTests
             HookEnabled = granted,
             AcException = granted
                 ? new AntiCheatExceptionState { GrantedAt = DateTimeOffset.UnixEpoch, Family = "NetEase Yidun", ExeSizeBytes = 5, ExeMtimeMs = 5 }
-                : AntiCheatExceptionState.None,
+                : trialFailed
+                    ? AntiCheatExceptionState.None with { TrialFailedAt = DateTimeOffset.UnixEpoch, LapsedReason = UserModeExceptionLapse.TrialFailed }
+                    : AntiCheatExceptionState.None,
         };
         var rig = new Rig(games, exceptions: true);
-        rig.Sessions.SuccessfulHooked[row.Id] = sessions;
+        rig.Sessions.SuccessfulUnderGrant[row.Id] = trial;
         rig.Option.On = optionOn;
         rig.Guard.TolerantAnswer = _letThrough;
         return rig;
@@ -356,8 +368,9 @@ public sealed class AntiCheatPreScanSweepTests
 
     /// <summary>
     /// D33 (owner decision 2026-09-26): with the option on, a blocked entry is asked one question — a pre-scan NAMING its
-    /// block's family — and eligible when the guard let exactly that family through and the evidence reaches two sessions.
-    /// It is never scanned for a new block, and nothing is granted.
+    /// block's family — and eligible when the guard let exactly that family through. D38 (2026-10-03): with no session at
+    /// all — the GIRLS' FRONTLINE 2 shape on a fresh ledger, which D33's two sessions made unreachable. It is never scanned
+    /// for a new block, and nothing is granted.
     /// </summary>
     [Fact]
     public async Task WithTheOptionOnABlockedEntryIsAskedAboutItsExceptionAndNothingElse()
@@ -371,7 +384,8 @@ public sealed class AntiCheatPreScanSweepTests
         report.ExceptionsChecked.Should().Be(1);
         r.Guard.Tolerated.Should().Equal("NetEase Yidun");
         r.Consent.Writes.Should().BeEmpty("the pre-scan's own columns are not written over a block");
-        r.Consent.Eligibility.Should().ContainSingle().Which.Should().Be((true, "AllowedUnderUserModeException|NetEase Yidun|NEP2.dll", 3));
+        r.Consent.Eligibility.Should().ContainSingle().Which.Should().Be((true, "AllowedUnderUserModeException|NetEase Yidun|NEP2.dll", 0));
+        r.Sessions.GrantCounts.Should().BeEmpty("no grant, no trial to count");
         r.Games.Rows[_exe].AcException.IsGranted.Should().BeFalse("eligibility grants nothing; the user does, through the disclosure");
         r.Games.Rows[_exe].HookBlockedReason.Should().Be(_yidun, "nothing clears a block");
     }
@@ -386,26 +400,66 @@ public sealed class AntiCheatPreScanSweepTests
         r.Consent.Eligibility.Should().BeEmpty();
     }
 
-    /// <summary>The answer is keyed like the pre-scan: rules, executable and the block itself; the count is re-read every pass.</summary>
+    /// <summary>
+    /// The answer is keyed like the pre-scan: rules, executable and the block itself; D38: the trial of a grant in force is
+    /// counted every pass, under that grant's family and time, and written when it moves.
+    /// </summary>
     [Fact]
-    public async Task TheExceptionQuestionIsKeyedAndTheCountIsLive()
+    public async Task TheExceptionQuestionIsKeyedAndTheTrialIsCountedLive()
     {
-        using Rig r = await BlockedAsync(sessions: 1);
+        using Rig r = await BlockedAsync(granted: true);
         _ = await r.Sweep.SweepOnceAsync(Ct);
-        r.Consent.Eligibility.Should().ContainSingle().Which.Eligible.Should().BeFalse("one session is not the owner's two");
+        r.Consent.Eligibility.Should().ContainSingle().Which.Should().Be((true, "AllowedUnderUserModeException|NetEase Yidun|NEP2.dll", 0));
+        r.Sessions.GrantCounts.Should().ContainSingle().Which.Should().Be((r.Games.Rows[_exe].Id, "NetEase Yidun", DateTimeOffset.UnixEpoch));
 
         _ = await r.Sweep.SweepOnceAsync(Ct);
         r.Guard.Scanned.Should().ContainSingle("nothing in the key changed");
         r.Consent.Eligibility.Should().ContainSingle("and neither did the answer");
 
-        r.Sessions.SuccessfulHooked[r.Games.Rows[_exe].Id] = 2;
+        r.Sessions.SuccessfulUnderGrant[r.Games.Rows[_exe].Id] = 1;
         _ = await r.Sweep.SweepOnceAsync(Ct);
-        r.Guard.Scanned.Should().ContainSingle("a new session is counted, not scanned for");
-        r.Consent.Eligibility[^1].Should().Be((true, "AllowedUnderUserModeException|NetEase Yidun|NEP2.dll", 2));
+        r.Guard.Scanned.Should().ContainSingle("a session under the grant is counted, not scanned for");
+        r.Consent.Eligibility[^1].Should().Be((true, "AllowedUnderUserModeException|NetEase Yidun|NEP2.dll", 1));
+        r.Games.Rows[_exe].AcException.IsGranted.Should().BeTrue("a count never ends a grant");
 
         r.Rules.Version = "2026.09.6";
         _ = await r.Sweep.SweepOnceAsync(Ct);
         r.Guard.Scanned.Should().HaveCount(2, "new rules may have turned the family kernel-level");
+    }
+
+    /// <summary>D38: a game an exception of which failed its trial is never eligible again, whatever the guard says.</summary>
+    [Fact]
+    public async Task AGameWhoseTrialFailedIsNeverEligibleAgain()
+    {
+        using Rig r = await BlockedAsync(trialFailed: true);
+
+        _ = await r.Sweep.SweepOnceAsync(Ct);
+
+        r.Guard.Tolerated.Should().Equal("NetEase Yidun");
+        r.Consent.Eligibility.Should().ContainSingle().Which.Eligible.Should().BeFalse("the trial's end was for good");
+    }
+
+    /// <summary>
+    /// 2026-10-03: an executable the sweep cannot read is answered — the check could not run — instead of leaving the
+    /// row "checking" for ever; once, and the first readable pass scans it.
+    /// </summary>
+    [Fact]
+    public async Task AnUnreadableExecutableIsAnsweredNotLeftChecking()
+    {
+        using Rig r = await BlockedAsync();
+        r.Identity.OnDisk = null;
+
+        (await r.Sweep.SweepOnceAsync(Ct)).ExceptionsChecked.Should().Be(1);
+        (await r.Sweep.SweepOnceAsync(Ct)).ExceptionsChecked.Should().Be(0, "said once, not every pass");
+
+        r.Guard.Scanned.Should().BeEmpty("nothing could be read, so nothing was scanned");
+        r.Consent.Eligibility.Should().ContainSingle().Which.Should().Be((false, "PreScanFailed||" + Path.GetFileName(_exe), 0));
+        r.Games.Rows[_exe].AcException.CheckedBlock.Should().Be(_yidun, "the row is answered about its block, so the App stops saying it is checking");
+
+        r.Identity.OnDisk = new ExecutableFingerprint { ExePath = _exe, SizeBytes = 5, MtimeUnixMs = 5 };
+        _ = await r.Sweep.SweepOnceAsync(Ct);
+        r.Guard.Tolerated.Should().Equal("NetEase Yidun");
+        r.Consent.Eligibility[^1].Eligible.Should().BeTrue("readable again, and asked again");
     }
 
     [Fact]
@@ -416,7 +470,7 @@ public sealed class AntiCheatPreScanSweepTests
         _ = await r.Sweep.SweepOnceAsync(Ct);
 
         r.Guard.Scanned.Should().BeEmpty("the notorious titles are on the lists by design");
-        r.Consent.Eligibility.Should().ContainSingle().Which.Should().Be((false, (string?)null, 3));
+        r.Consent.Eligibility.Should().ContainSingle().Which.Should().Be((false, (string?)null, 0));
     }
 
     [Fact]

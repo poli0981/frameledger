@@ -2021,6 +2021,9 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="GameDetail_AntiCheat_Format" xml:space="preserve">
     <value>Found: {0}. Hooking is off for this game and cannot be turned on; its sessions record play time and sensors only.</value>
   </data>
+  <data name="GameDetail_AntiCheat_Exceptionable_Format" xml:space="preserve">
+    <value>Found: {0}. Hooking is off for this game unless you make a user-mode exception for it (below); without one, its sessions record play time and sensors only.</value>
+  </data>
   <data name="Games_Card_AntiCheat" xml:space="preserve">
     <value>Anti-cheat</value>
   </data>
@@ -2484,10 +2487,10 @@ The documents below are the full terms; this summary does not replace them.</val
     <value>W</value>
   </data>
   <data name="Settings_Exceptions_Label" xml:space="preserve">
-    <value>Allow hooking in games with user-mode anti-cheat that were measured before</value>
+    <value>Allow hooking in games whose only anti-cheat runs in user mode</value>
   </data>
   <data name="Settings_Exceptions_Body" xml:space="preserve">
-    <value>Off by default. On, a game whose only anti-cheat runs in user mode — no kernel driver, nothing else found — and that was measured hooked at least twice can be given an exception below, one game at a time, after a disclosure. The guard still runs every check, and a ban remains possible.</value>
+    <value>Off by default. On, a game whose only anti-cheat runs in user mode — no kernel driver, nothing else found — can be given an exception below, one game at a time, after a disclosure. Its first two hooked sessions are a trial: one that does not go well ends the exception for good. The guard still runs every check, and a ban remains possible.</value>
   </data>
   <data name="Settings_Exceptions_Header" xml:space="preserve">
     <value>User-mode exceptions</value>
@@ -2507,20 +2510,17 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="Exception_Finding_Format" xml:space="preserve">
     <value>{0} — {1}</value>
   </data>
-  <data name="Exception_Sessions_Format" xml:space="preserve">
-    <value>{0} successful hooked sessions</value>
-  </data>
   <data name="Exception_State_Granted_Format" xml:space="preserve">
     <value>Exception in force since {0}</value>
+  </data>
+  <data name="Exception_State_GrantedTrial_Format" xml:space="preserve">
+    <value>Exception in force since {0} — trial: {1} of {2} good sessions so far</value>
   </data>
   <data name="Exception_State_Eligible" xml:space="preserve">
     <value>Eligible — no exception made</value>
   </data>
   <data name="Exception_State_Checking" xml:space="preserve">
     <value>Checking…</value>
-  </data>
-  <data name="Exception_State_TooFew_Format" xml:space="preserve">
-    <value>Not eligible: {0} successful hooked session(s), two are needed</value>
   </data>
   <data name="Exception_State_Refused_Format" xml:space="preserve">
     <value>Not eligible: the guard also found {0} ({1})</value>
@@ -2533,6 +2533,12 @@ The documents below are the full terms; this summary does not replace them.</val
   </data>
   <data name="Exception_State_CouldNotVerify" xml:space="preserve">
     <value>Not eligible now: the check could not finish; it runs again by itself</value>
+  </data>
+  <data name="Exception_State_TrialFailed_Format" xml:space="preserve">
+    <value>Not eligible: an exception of this game ended during its trial on {0}, so none can be made again</value>
+  </data>
+  <data name="Exception_State_NotFound_Format" xml:space="preserve">
+    <value>Not eligible now: {0} was not found in the game's folder when it was checked; the block stays</value>
   </data>
   <data name="Exception_Lapsed_Format" xml:space="preserve">
     <value>The last exception ended on {0}: {1}</value>
@@ -2557,6 +2563,9 @@ The documents below are the full terms; this summary does not replace them.</val
   </data>
   <data name="Exception_Lapse_SessionCrashed" xml:space="preserve">
     <value>a session under it crashed</value>
+  </data>
+  <data name="Exception_Lapse_TrialFailed" xml:space="preserve">
+    <value>a session during its trial did not go well (no frames recorded, or it did not end normally)</value>
   </data>
   <data name="Exception_Result_Granted_Format" xml:space="preserve">
     <value>Exception made for {0}. Turn hooking on for the game on its page when you want to measure it.</value>

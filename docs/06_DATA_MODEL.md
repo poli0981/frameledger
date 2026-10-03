@@ -69,7 +69,7 @@ CREATE TABLE games (
   -- schema 0014 (2026-09-26, D33): the user-mode anti-cheat exception, a layer OVER hook_blocked_reason, never its clearing
   ac_exception_eligible INTEGER NOT NULL DEFAULT 0,  -- the Agent's sweep: the exception may be granted now
   ac_exception_verdict TEXT,                   -- its tolerant pre-scan, Reason|Family|Signal; NULL = nothing asked
-  ac_exception_sessions INTEGER NOT NULL DEFAULT 0,  -- successful Tier-1 sessions counted
+  ac_exception_sessions INTEGER NOT NULL DEFAULT 0,  -- D38: successful sessions under the grant in force (its trial)
   ac_exception_checked_rules_version TEXT,     -- the key the verdict was reached under: rules, executable size and
   ac_exception_checked_exe_size_bytes INTEGER, -- mtime, and the block text itself
   ac_exception_checked_exe_mtime_ms INTEGER,
@@ -81,7 +81,9 @@ CREATE TABLE games (
   ac_exception_exe_mtime_ms INTEGER,
   ac_exception_lapsed_at INTEGER,              -- when and why the last grant ended (UserModeExceptionLapse:
   ac_exception_lapsed_reason TEXT,             -- Withdrawn|ExecutableChanged|NoLongerEligible|NewFinding|
-                                               -- SafetyUnhook|OverlayStopped|SessionCrashed)
+                                               -- SafetyUnhook|OverlayStopped|SessionCrashed|TrialFailed)
+  -- schema 0017 (2026-10-03, D38): an exception of this game ended during its trial — for good; never cleared
+  ac_exception_trial_failed_at INTEGER,
   hook_autodisabled_reason TEXT,               -- set after repeated crashes
   hook_crash_count INTEGER NOT NULL DEFAULT 0,
   capability_flags TEXT,                       -- JSON: what the game SHIPS — never a measurement. Since P4 PR-1 (2026-09-14) a JSON
@@ -576,6 +578,18 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > facts. `SessionRowColumns` is hand-edited (its generator is not in the repository) and reads by name. `LatestVersion` is
 > 16; `LedgerDatabaseTests.ScriptSixteenAddsTheDisplayColumnsAndAnEarlierSessionHasNone`,
 > `SqliteSessionRepositoryTests.ASessionRoundTripsColumnForColumn`.
+
+> **`0017_exception_trial.sql` (beta.11, 2026-10-03, owner decision D38) — the exception's trial.** One column,
+> `games.ac_exception_trial_failed_at`: when an exception of the game ended during its trial (`19_SAFETY` §The user-mode
+> exception), NULL when none did. ADD COLUMN only, no data change: a grant made under D33 stays in force and carries no
+> mark. Written by the Agent's revoke only (`IGameConsentStore.RevokeAntiCheatExceptionAsync(…, trialFailed)`), set once
+> (`COALESCE`), cleared by nothing — not by `ChangeExecutableAsync`, which does not name it — and carried by a twin merge
+> (the earlier of two). The store applies it in SQL: no eligibility is written as eligible and no grant is written over
+> it. `ac_exception_sessions` (0014) changes meaning without a script: since D38 it is the trial's progress under the grant
+> in force, which the sweep rewrites on its first pass. `LatestVersion` is 17;
+> `LedgerDatabaseTests.ScriptSeventeenAddsTheTrialMarkAndChangesNoRow`,
+> `SqliteGameConsentStoreTests.AnEndDuringTheTrialMarksTheGameAndNothingClearsIt`,
+> `SqliteGameMergeTests.AFailedExceptionTrialOnEitherTwinMarksTheSurvivor`.
 
 > **Every open used to migrate, and one that should not have did — 2026-09-16.** The Agent's `--console sessions`,
 > a verb that prints, was run against the owner's ledger while the file on disk was at schema 2 and applied 0003 and

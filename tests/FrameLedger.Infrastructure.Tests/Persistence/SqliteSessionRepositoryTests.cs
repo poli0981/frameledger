@@ -395,15 +395,17 @@ public sealed class SqliteSessionRepositoryTests
     }
 
     /// <summary>
-    /// D33 (owner decision 2026-09-26): the evidence a user-mode exception needs — hooked, frames recorded, <c>normal</c> —
-    /// and nothing else: a crash, a safety unhook, a Tier-2 session and a hooked session that recorded no frame do not count.
+    /// D38 (owner decision 2026-10-03): a grant's trial counts its own sessions — hooked under that family, from the grant on,
+    /// frames recorded, <c>normal</c> — and nothing else: a crash, a safety unhook, a degraded or Tier-2 session, one that
+    /// recorded no frame, one under no exception or another family, and one from before the grant do not count.
     /// </summary>
     [Fact]
-    public async Task OnlyHookedNormalSessionsWithFramesAreSuccessful()
+    public async Task OnlyHookedNormalSessionsWithFramesUnderTheGrantCount()
     {
         await using LedgerFixture f = await LedgerFixture.OpenAsync();
         (long gameId, long snapshotId) = await SeedAsync(f);
         var repo = new SqliteSessionRepository(f.Db);
+        DateTimeOffset granted = DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_000_000);
         SessionRow[] rows =
         [
             Row(gameId, snapshotId),
@@ -412,14 +414,18 @@ public sealed class SqliteSessionRepositoryTests
             Row(gameId, snapshotId) with { ExitStatus = ExitStatus.Degraded },
             Row(gameId, snapshotId) with { Tier = CaptureTier.NotHooked },
             Row(gameId, snapshotId) with { FrameCount = 0, AppFrameCount = 0, DisplayedFrameCount = 0 },
-            Row(gameId, snapshotId),
+            Row(gameId, snapshotId) with { AcExceptionFamily = null },
+            Row(gameId, snapshotId) with { AcExceptionFamily = "Anybrain" },
+            Row(gameId, snapshotId, started: granted.AddMinutes(-5)),
+            Row(gameId, snapshotId, started: granted.AddHours(1)),
         ];
         foreach (SessionRow row in rows)
         {
             await repo.InsertFinalizedAsync(new FinalizedSession { Row = row }, Ct);
         }
 
-        (await repo.CountSuccessfulHookedAsync(gameId, Ct)).Should().Be(2);
-        (await repo.CountSuccessfulHookedAsync(gameId + 1, Ct)).Should().Be(0);
+        (await repo.CountSuccessfulUnderGrantAsync(gameId, "NetEase Yidun", granted, Ct)).Should().Be(2);
+        (await repo.CountSuccessfulUnderGrantAsync(gameId, "NetEase Yidun", granted.AddMinutes(30), Ct)).Should().Be(1, "a later grant starts its own trial");
+        (await repo.CountSuccessfulUnderGrantAsync(gameId + 1, "NetEase Yidun", granted, Ct)).Should().Be(0);
     }
 }

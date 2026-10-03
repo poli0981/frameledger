@@ -91,11 +91,20 @@ internal sealed class FakeSessionRepository : ISessionRepository
     public ValueTask<long> CountSinceAsync(DateTimeOffset since, CancellationToken ct = default) =>
         ValueTask.FromResult((long)Stored.Count(s => s.Row.StartedAt >= since));
 
-    /// <summary>D33: each game's successful Tier-1 sessions, as the tests say; a game not named has none.</summary>
-    public Dictionary<long, int> SuccessfulHooked { get; } = [];
+    /// <summary>D38: each game's successful sessions under its grant in force, as the tests say; a game not named has none.</summary>
+    public Dictionary<long, int> SuccessfulUnderGrant { get; } = [];
 
-    public ValueTask<int> CountSuccessfulHookedAsync(long gameId, CancellationToken ct = default) =>
-        ValueTask.FromResult(SuccessfulHooked.GetValueOrDefault(gameId));
+    /// <summary>D38: the count for a game the dictionary does not name (the recorder's own row ids are not the test's).</summary>
+    public int UnderGrantDefault { get; set; }
+
+    /// <summary>D38: every count asked for, in order — the family and grant time it was asked about.</summary>
+    public List<(long GameId, string Family, DateTimeOffset GrantedAt)> GrantCounts { get; } = [];
+
+    public ValueTask<int> CountSuccessfulUnderGrantAsync(long gameId, string family, DateTimeOffset grantedAt, CancellationToken ct = default)
+    {
+        GrantCounts.Add((gameId, family, grantedAt));
+        return ValueTask.FromResult(SuccessfulUnderGrant.GetValueOrDefault(gameId, UnderGrantDefault));
+    }
 
     public ValueTask<IReadOnlyList<SegmentRow>> FindSegmentsAsync(long sessionId, CancellationToken ct = default) =>
         ValueTask.FromResult(sessionId >= 1 && sessionId <= Stored.Count ? Stored[(int)sessionId - 1].Segments : []);

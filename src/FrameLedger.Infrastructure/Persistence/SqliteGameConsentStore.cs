@@ -81,22 +81,28 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
 
     // D33 (schema 0014). The eligibility and the grant are each bound to the block they were reached about — the WHERE is
     // the guarantee, so a block rewritten between the caller's read and this write leaves the row alone. Neither names
-    // hook_blocked_reason, hook_enabled or the consent columns in its SET list.
+    // hook_blocked_reason, hook_enabled or the consent columns in its SET list. D38 (schema 0017): a game an exception of
+    // which failed its trial is never eligible and is never granted one — in SQL, whatever the caller read.
     private const string _exceptionEligibility =
-        "UPDATE games SET ac_exception_eligible = @eligible, ac_exception_verdict = @verdict, ac_exception_sessions = @sessions, "
+        "UPDATE games SET ac_exception_eligible = CASE WHEN ac_exception_trial_failed_at IS NULL THEN @eligible ELSE 0 END, "
+        + "ac_exception_verdict = @verdict, ac_exception_sessions = @sessions, "
         + "ac_exception_checked_rules_version = @rules, ac_exception_checked_exe_size_bytes = @size, ac_exception_checked_exe_mtime_ms = @mtime, "
         + "ac_exception_checked_block = @block, updated_at = @at WHERE exe_path = @path AND hook_blocked_reason = @block";
 
     private const string _exceptionGrant =
         "UPDATE games SET ac_exception_at = @at, ac_exception_family = @family, ac_exception_disclosure_version = @disclosure, "
         + "ac_exception_exe_size_bytes = @size, ac_exception_exe_mtime_ms = @mtime, ac_exception_lapsed_at = NULL, ac_exception_lapsed_reason = NULL, "
-        + "ac_exception_eligible = 1, ac_exception_verdict = @verdict, ac_exception_sessions = @sessions, updated_at = @at "
-        + "WHERE exe_path = @path AND hook_blocked_reason = @block";
+        + "ac_exception_eligible = 1, ac_exception_verdict = @verdict, ac_exception_sessions = 0, updated_at = @at "
+        + "WHERE exe_path = @path AND hook_blocked_reason = @block AND ac_exception_trial_failed_at IS NULL";
+
+    private const string _trialFailedOf = "SELECT ac_exception_trial_failed_at FROM games WHERE exe_path = @path";
 
     // The end of an exception keeps the consent stamp, as a block does, and turns hooking off while the block stands. The
-    // grant's family, disclosure and bytes stay as history; ac_exception_at going NULL is what ends it.
+    // grant's family, disclosure and bytes stay as history; ac_exception_at going NULL is what ends it. D38: an end during
+    // the trial also sets ac_exception_trial_failed_at, once, and nothing ever clears it.
     private const string _exceptionRevoke =
         "UPDATE games SET ac_exception_at = NULL, ac_exception_lapsed_at = @at, ac_exception_lapsed_reason = @reason, "
+        + "ac_exception_trial_failed_at = CASE WHEN @trialFailed = 1 THEN COALESCE(ac_exception_trial_failed_at, @at) ELSE ac_exception_trial_failed_at END, "
         + "hook_enabled = CASE WHEN hook_blocked_reason IS NOT NULL THEN 0 ELSE hook_enabled END, updated_at = @at "
         + "WHERE exe_path = @path AND ac_exception_at IS NOT NULL";
 
@@ -306,7 +312,8 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(block);
         ArgumentException.ThrowIfNullOrWhiteSpace(rulesVersion);
-        bool eligible = verdict is { } v && UserModeExceptionRules.IsEligible(StoredBlock.Parse(block), v, sessions);
+        // The trial mark (D38) is the row's, and the SQL applies it: this says what the verdict alone allows.
+        bool eligible = verdict is { } v && UserModeExceptionRules.IsEligible(StoredBlock.Parse(block), v, trialFailed: false);
         try
         {
             return await _db.WriteAsync(async (c, tx, token) =>
@@ -340,9 +347,10 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
         ArgumentException.ThrowIfNullOrWhiteSpace(grant.DisclosureVersion, nameof(grant));
 
         // THE STORE APPLIES THE RULE ITSELF: a grant over facts that do not make the game eligible is refused here, not
-        // only by the caller that gathered them.
+        // only by the caller that gathered them — and a game whose exception once failed its trial (D38) is refused from
+        // the row, in the same transaction as the write.
         StoredBlock? block = StoredBlock.Parse(grant.Block);
-        if (!UserModeExceptionRules.IsEligible(block, grant.Verdict, grant.Sessions))
+        if (!UserModeExceptionRules.IsEligible(block, grant.Verdict, trialFailed: false))
         {
             return ConsentWriteOutcome.NotEligible;
         }
@@ -351,6 +359,13 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
         {
             return await _db.WriteAsync(async (c, tx, token) =>
             {
+                long? trialFailedAt = await c.ExecuteScalarAsync<long?>(new CommandDefinition(_trialFailedOf, new { path = grant.Fingerprint.ExePath }, tx,
+                    cancellationToken: token)).ConfigureAwait(false);
+                if (trialFailedAt is not null)
+                {
+                    return ConsentWriteOutcome.NotEligible;
+                }
+
                 var p = new
                 {
                     path = grant.Fingerprint.ExePath,
@@ -360,7 +375,6 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
                     size = grant.Fingerprint.SizeBytes,
                     mtime = grant.Fingerprint.MtimeUnixMs,
                     verdict = BlockText(grant.Verdict),
-                    sessions = grant.Sessions,
                     at = grant.GrantedAt.ToUnixTimeMilliseconds(),
                 };
                 int rows = await c.ExecuteAsync(new CommandDefinition(_exceptionGrant, p, tx, cancellationToken: token)).ConfigureAwait(false);
@@ -374,7 +388,8 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
     }
 
     /// <inheritdoc />
-    public async ValueTask<ConsentWriteOutcome> RevokeAntiCheatExceptionAsync(string normalisedExePath, string reason, CancellationToken ct = default)
+    public async ValueTask<ConsentWriteOutcome> RevokeAntiCheatExceptionAsync(string normalisedExePath, string reason, bool trialFailed = false,
+        CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(normalisedExePath);
         ArgumentException.ThrowIfNullOrWhiteSpace(reason);
@@ -382,7 +397,7 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
         {
             return await _db.WriteAsync(async (c, tx, token) =>
             {
-                var p = new { path = normalisedExePath, reason, at = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() };
+                var p = new { path = normalisedExePath, reason, trialFailed = trialFailed ? 1 : 0, at = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() };
                 int rows = await c.ExecuteAsync(new CommandDefinition(_exceptionRevoke, p, tx, cancellationToken: token)).ConfigureAwait(false);
                 return rows == 0 ? ConsentWriteOutcome.NotFound : ConsentWriteOutcome.Written;
             }, ct).ConfigureAwait(false);

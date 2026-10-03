@@ -121,7 +121,7 @@ internal static class AgentServices
     {
         services.AddSingleton<IUserModeExceptionSwitch, SettingsUserModeExceptionSwitch>();
         services.AddSingleton<IOverlayToleranceChannel>(static _ => new OverlayToleranceChannel(static line => Serilog.Log.Information("{Line}", line)));
-        services.AddSingleton(static sp => new UserModeExceptionLapsePolicy(sp.GetRequiredService<IGameConsentStore>()));
+        services.AddSingleton(static sp => new UserModeExceptionLapsePolicy(sp.GetRequiredService<IGameConsentStore>(), sp.GetRequiredService<ISessionRepository>()));
     }
 
     /// <summary>
@@ -269,10 +269,9 @@ internal static class AgentServices
             sp.GetRequiredService<ExecutableRelocator>(),
             // beta.8: an executable that cannot run as x64 is refused before anything is scanned or stamped.
             new PeArchitectureSource(),
-            // D33: the user-mode exception's option, evidence and disclosure version.
+            // D33: the user-mode exception's option and disclosure version (D38: no session count any more).
             new AntiCheatExceptionCommands(
                 sp.GetRequiredService<IUserModeExceptionSwitch>(),
-                sp.GetRequiredService<ISessionRepository>(),
                 AntiCheatExceptionDisclosure.Version));
 
     /// <summary>

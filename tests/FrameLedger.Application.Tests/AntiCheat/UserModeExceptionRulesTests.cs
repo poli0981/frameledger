@@ -8,8 +8,8 @@ namespace FrameLedger.Application.Tests.AntiCheat;
 /// <summary>
 /// D33 (owner decision 2026-09-26): the managed half of the user-mode exception can only narrow. A family is named to the
 /// guard only when the option is on, a grant is on the row for these bytes, and the block is a module, file or folder
-/// finding of that family; a game is eligible only when the guard let exactly that family through and the evidence
-/// reaches the owner's two sessions.
+/// finding of that family; a game is eligible only when the guard let exactly that family through — D38 (2026-10-03):
+/// with no session needed, and never once an exception of the game failed its trial.
 /// </summary>
 public sealed class UserModeExceptionRulesTests
 {
@@ -25,7 +25,7 @@ public sealed class UserModeExceptionRulesTests
     {
         Family = family,
         GrantedAt = DateTimeOffset.UnixEpoch,
-        DisclosureVersion = "ac-exception-dialog/1",
+        DisclosureVersion = "ac-exception-dialog/2",
         ExeSizeBytes = size,
         ExeMtimeUnixMs = mtime,
     };
@@ -46,20 +46,30 @@ public sealed class UserModeExceptionRulesTests
     }
 
     [Fact]
-    public void EligibleMeansTheGuardLetThatFamilyThroughAndTwoSessions()
+    public void EligibleMeansTheGuardLetThatFamilyThroughAndNoTrialFailed()
     {
         StoredBlock? block = StoredBlock.Parse(_block);
         AntiCheatVerdict through = AntiCheatVerdict.AllowedUnderException("NetEase Yidun", "NEP2.dll");
 
-        UserModeExceptionRules.IsEligible(block, through, sessions: 2).Should().BeTrue();
-        UserModeExceptionRules.IsEligible(block, through, sessions: 1).Should().BeFalse("the owner's threshold is two");
-        UserModeExceptionRules.IsEligible(block, AntiCheatVerdict.Allowed(), sessions: 3).Should().BeFalse("a plain pass let nothing through, so it confirmed nothing");
-        UserModeExceptionRules.IsEligible(block, AntiCheatVerdict.AllowedUnderException("Anybrain", "x.dll"), sessions: 3).Should().BeFalse();
+        UserModeExceptionRules.IsEligible(block, through, trialFailed: false).Should().BeTrue("D38: no session is needed before a grant");
+        UserModeExceptionRules.IsEligible(block, through, trialFailed: true).Should().BeFalse("an exception that failed its trial is never made again");
+        UserModeExceptionRules.IsEligible(block, AntiCheatVerdict.Allowed(), trialFailed: false).Should().BeFalse("a plain pass let nothing through, so it confirmed nothing");
+        UserModeExceptionRules.IsEligible(block, AntiCheatVerdict.AllowedUnderException("Anybrain", "x.dll"), trialFailed: false).Should().BeFalse();
         UserModeExceptionRules.IsEligible(block, AntiCheatVerdict.Refused(AntiCheatRefusalReason.AntiCheatFile, "Kernel driver in the game folder", "NEPKernel.sys"),
-            sessions: 3).Should().BeFalse("the Aniimo shape");
-        UserModeExceptionRules.IsEligible(StoredBlock.Parse("BlockedExecutable|Valve VAC|cs2.exe"), through, sessions: 3).Should().BeFalse();
-        UserModeExceptionRules.IsEligible(null, through, sessions: 3).Should().BeFalse();
-        UserModeExceptionRules.RequiredSessions.Should().Be(2);
+            trialFailed: false).Should().BeFalse("the Aniimo shape");
+        UserModeExceptionRules.IsEligible(StoredBlock.Parse("BlockedExecutable|Valve VAC|cs2.exe"), through, trialFailed: false).Should().BeFalse();
+        UserModeExceptionRules.IsEligible(null, through, trialFailed: false).Should().BeFalse();
+    }
+
+    /// <summary>D38: the owner's trial is two good sessions under the grant; until then it is a trial.</summary>
+    [Fact]
+    public void TheTrialIsTheGrantsFirstTwoGoodSessions()
+    {
+        UserModeExceptionRules.TrialSessions.Should().Be(2);
+        UserModeExceptionRules.InTrial(0).Should().BeTrue();
+        UserModeExceptionRules.InTrial(1).Should().BeTrue();
+        UserModeExceptionRules.InTrial(2).Should().BeFalse();
+        UserModeExceptionRules.InTrial(9).Should().BeFalse();
     }
 
     [Fact]

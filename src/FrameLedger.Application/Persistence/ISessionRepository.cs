@@ -40,12 +40,14 @@ public interface ISessionRepository
     ValueTask<long> CountSinceAsync(DateTimeOffset since, CancellationToken ct = default);
 
     /// <summary>
-    /// D33 (owner decision 2026-09-26): the game's successful Tier-1 sessions — hooked, frames recorded, <c>exit_status =
-    /// normal</c> — the evidence a user-mode exception needs <c>UserModeExceptionRules.RequiredSessions</c> of. Since beta.8
-    /// <c>normal</c> includes End task's exit code 1 and a user's stop; a crashed, unhooked-for-safety, degraded or
-    /// interrupted session never counts.
+    /// D38 (owner decision 2026-10-03): the game's successful sessions under ONE grant of its user-mode exception — hooked
+    /// under <paramref name="family"/> (<c>sessions.ac_exception_family</c>), started at or after <paramref name="grantedAt"/>,
+    /// frames recorded, <c>exit_status = normal</c>: how far that grant's trial has come against
+    /// <c>UserModeExceptionRules.TrialSessions</c>. Since beta.8 <c>normal</c> includes End task's exit code 1 and a user's
+    /// stop; a crashed, unhooked-for-safety, degraded or interrupted session never counts, and neither does a session from
+    /// before the grant or under an earlier one.
     /// </summary>
-    ValueTask<int> CountSuccessfulHookedAsync(long gameId, CancellationToken ct = default);
+    ValueTask<int> CountSuccessfulUnderGrantAsync(long gameId, string family, DateTimeOffset grantedAt, CancellationToken ct = default);
 
     ValueTask<int> SweepRetentionAsync(long gameId, int keep, CancellationToken ct = default);
 

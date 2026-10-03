@@ -145,6 +145,22 @@ public sealed class SqliteGameMergeTests
         (await repo.FindByIdAsync(stale.Id, Ct))!.RecordSessions.Should().BeFalse();
     }
 
+    /// <summary>
+    /// D38 (schema 0017): an exception of either twin that failed its trial marks the survivor, the earlier mark of two — a
+    /// merge is not the way a game's "never again" disappears.
+    /// </summary>
+    [Fact]
+    public async Task AFailedExceptionTrialOnEitherTwinMarksTheSurvivor()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        (SqliteGameRepository repo, GameRow stale, GameRow twin) = await TwinsAsync(f, staleAdded: 1_000, twinAdded: 2_000);
+        await SetAsync(f, twin.Id, "ac_exception_trial_failed_at = 5000");
+
+        (await new SqliteGameMerge(f.Db).MergeAsync(await PlanAsync(repo, stale, twin), Ct)).Should().Be(0);
+
+        (await repo.FindByIdAsync(stale.Id, Ct))!.AcException.TrialFailedAt.Should().Be(DateTimeOffset.FromUnixTimeMilliseconds(5000));
+    }
+
     [Fact]
     public async Task ARowThatIsNotWhatThePlanSawIsNotMergedAndNothingIsWritten()
     {

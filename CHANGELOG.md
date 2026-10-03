@@ -37,6 +37,31 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   kind. Rules `2026.10.1` — every game is re-checked once, and these games' hooking is turned off like any title-list
   finding, never under a user-mode exception (`19_SAFETY` check 3).
 
+### Changed
+
+- **The user-mode anti-cheat exception no longer needs sessions measured before it — its first two sessions are a
+  trial** (owner decision D38, beta.11). D33 asked for two successful hooked sessions before a grant, but since beta.8 a
+  game is blocked the moment it is added, so a blocked game could never earn them, and a reset ledger lost the ones it
+  had: after the owner deleted theirs, GIRLS' FRONTLINE 2 read *"Not eligible: 0 successful hooked session(s), two are
+  needed"* for good. A grant now needs no session. Until two sessions under it have succeeded, the game page says
+  *trial: N of 2*, and any end during the trial — a crash, a safety unhook, the Overlay's own stop, a new finding, or a
+  stored hooked session that recorded no frame or did not end normally — ends the exception **for good** (schema 0017,
+  `games.ac_exception_trial_failed_at`, set once and never cleared; the Agent refuses a grant with `TrialFailed` and the
+  store refuses one in SQL; a twin merge keeps the mark). Every other condition is unchanged — one user-mode family, no
+  `.sys` in the game's folder, no title list — and after the trial an end is what it was. The disclosure is
+  `ac-exception-dialog/2`: it names no session count and has a *Trial* paragraph (`ja` stays English until reviewed).
+  **Legal text:** Disclaimer 2.9 (§2A) and EULA 1.4, so the Legal Gate opens once; the accuracy block, `SECURITY.md` and
+  `LIMITATIONS.md` say the same; CLAUDE.md rule 2 carries the amendment (`19_SAFETY` §The user-mode exception).
+
+### Fixed
+
+- **The exception's card and list say what is true** (found with D38): an eligible game's *Anti-cheat* card said hooking
+  "cannot be turned on" beside a usable *Make exception…* — it now says hooking is off unless you make one; the Settings
+  list showed each game's session count twice and listed games that could never qualify, with no action — it lists only
+  games it can act on; a tolerant scan that found nothing of the family was said as "the check could not finish" — it
+  says the family was not found; and a blocked game whose executable could not be read stayed *Checking…* for ever — the
+  sweep now answers it. **Refresh** shows only while a row is being checked, the one time it can change anything.
+
 ## [0.1.0-beta.10] - 2026-09-28
 
 **The tenth pre-release: how each game was shown, the agent as administrator if you choose it, and the exact Unreal

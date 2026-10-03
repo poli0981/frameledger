@@ -570,9 +570,11 @@ public sealed partial class SettingsViewModel : ObservableObject
             }
 
             checking |= view.Kind == ExceptionViewKind.Checking;
-            // With the option off only a kept grant is listed (suspended): nothing may be made while it is off.
+            // With the option off only a kept grant is listed (suspended): nothing may be made while it is off. On, a row is
+            // listed only when it has an action — make or withdraw (2026-10-03: a game that can never qualify was listed with
+            // none, and its page says why).
             bool listed = UserModeExceptions
-                ? view.Kind is ExceptionViewKind.Granted or ExceptionViewKind.Eligible or ExceptionViewKind.TooFewSessions
+                ? view.Kind is ExceptionViewKind.Granted or ExceptionViewKind.Eligible
                 : view.Kind == ExceptionViewKind.Granted;
             if (listed)
             {
@@ -590,7 +592,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         AntiCheatExceptionResult result = _exceptions is null
             ? AntiCheatExceptionResult.Of(AntiCheatExceptionOutcome.AgentUnavailable)
             : await _exceptions.GrantAsync(game.GameId, new AntiCheatExceptionFacts(game.Name, game.View.Family ?? string.Empty,
-                game.View.Signal ?? string.Empty, game.View.Sessions)).ConfigureAwait(true);
+                game.View.Signal ?? string.Empty)).ConfigureAwait(true);
         await ReportExceptionAsync(game.Name, result).ConfigureAwait(true);
     }
 

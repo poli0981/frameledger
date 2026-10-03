@@ -11,8 +11,9 @@ page lists them in plain words; each item links to the document that has the det
 
 - **Games with anti-cheat.** FrameLedger looks for anti-cheat before it touches a game and refuses when it
   finds one — there is no switch that overrides this. The one exception is an anti-cheat that runs entirely
-  inside the game (no driver, no service), which you can allow per game after a warning and two good
-  sessions; a ban is still possible and may come days later. Kernel anti-cheat is never allowed.
+  inside the game (no driver, no service), which you can allow per game after a warning; its first two
+  sessions are a trial, and one that does not go well ends the exception for good. A ban is still possible and
+  may come days later. Kernel anti-cheat is never allowed.
   ([Safety](docs/19_SAFETY_AND_ANTICHEAT.md))
 - **Anti-cheat FrameLedger does not know about.** The list of anti-cheat products is FrameLedger's own and
   can be incomplete. A game protected by something unknown may be hooked; that is a risk to your account
