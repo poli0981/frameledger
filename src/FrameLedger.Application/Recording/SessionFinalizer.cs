@@ -274,6 +274,10 @@ public sealed class SessionFinalizer
     private SensorBlob Blob(string series, IReadOnlyList<TelemetrySample> sensors, Func<TelemetrySample, float> value) => new()
     {
         Series = series,
+
+        // Nominal: the poller ticks once a second by default (TelemetryPollerOptions). The t_ms series stored beside every
+        // series carries each tick's real time, and that is what the App draws against; Hz is only its fallback for a row
+        // written without t_ms (06_DATA_MODEL §sensor_blobs).
         Hz = 1,
         Codec = _codec.Tag,
         Data = _codec.EncodeFloat32([.. sensors.Select(value)]),

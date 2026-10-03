@@ -69,22 +69,48 @@ public sealed class LogTail
         return [.. result];
     }
 
-    /// <summary>The three-letter level of a line under the template <c>[HH:mm:ss.fff LVL]</c>, or null for a continuation line.</summary>
+    /// <summary>
+    /// The three-letter level of a line, or null for a continuation line. Two templates: the App's
+    /// <c>[HH:mm:ss.fff LVL] …</c>, and the Agent's — Serilog's default, <c>yyyy-MM-dd HH:mm:ss.fff zzz [LVL] …</c>.
+    /// Until 2026-10-04 only the first was read, so the Warning and Error filters showed no Agent line at all.
+    /// </summary>
     public static string? LevelOf(string line)
     {
         ArgumentNullException.ThrowIfNull(line);
-        if (line.Length < 18 || line[0] != '[')
+        if (line.Length >= 18 && line[0] == '[')
         {
-            return null;
+            int close = line.IndexOf(']', StringComparison.Ordinal);
+            return close >= 5 ? Known(line[(close - 3)..close]) : null;
         }
 
-        int close = line.IndexOf(']', StringComparison.Ordinal);
-        if (close < 5)
+        // Serilog's default: "2026-10-04 09:15:02.123 +07:00 [WRN] …" — the timestamp's own shape, then the zone, then the
+        // level in brackets. Anything else that merely starts with a date is not a level line.
+        if (line.Length >= 30 && IsTimestamp(line))
         {
-            return null;
+            int open = line.IndexOf(" [", 23, StringComparison.Ordinal);
+            if (open is >= 23 and <= 32 && open + 6 <= line.Length && line[open + 5] == ']')
+            {
+                return Known(line.Substring(open + 2, 3));
+            }
         }
 
-        string level = line[(close - 3)..close];
-        return level is "VRB" or "DBG" or "INF" or "WRN" or "ERR" or "FTL" ? level : null;
+        return null;
     }
+
+    /// <summary><c>yyyy-MM-dd HH:mm:ss.fff</c> at the start of the line.</summary>
+    private static bool IsTimestamp(string line)
+    {
+        const string shape = "dddd-dd-dd dd:dd:dd.ddd";
+        for (int i = 0; i < shape.Length; i++)
+        {
+            if (shape[i] == 'd' ? !char.IsAsciiDigit(line[i]) : line[i] != shape[i])
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static string? Known(string level) => level is "VRB" or "DBG" or "INF" or "WRN" or "ERR" or "FTL" ? level : null;
 }

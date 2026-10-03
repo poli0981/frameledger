@@ -748,8 +748,6 @@ public static class Strings
         nameof(Settings_Applied),
         nameof(Settings_AutoCheck_Body),
         nameof(Settings_AutoCheck_Label),
-        nameof(Settings_Background_Body),
-        nameof(Settings_Background_Label),
         nameof(Settings_Capture_Header),
         nameof(Settings_Channel_Beta),
         nameof(Settings_Channel_Stable),
@@ -2421,10 +2419,6 @@ public static class Strings
     public static string Settings_AutoCheck_Body => ResourceManager.GetString(nameof(Settings_AutoCheck_Body), Culture) ?? nameof(Settings_AutoCheck_Body);
 
     public static string Settings_AutoCheck_Label => ResourceManager.GetString(nameof(Settings_AutoCheck_Label), Culture) ?? nameof(Settings_AutoCheck_Label);
-
-    public static string Settings_Background_Body => ResourceManager.GetString(nameof(Settings_Background_Body), Culture) ?? nameof(Settings_Background_Body);
-
-    public static string Settings_Background_Label => ResourceManager.GetString(nameof(Settings_Background_Label), Culture) ?? nameof(Settings_Background_Label);
 
     public static string Settings_Capture_Header => ResourceManager.GetString(nameof(Settings_Capture_Header), Culture) ?? nameof(Settings_Capture_Header);
 

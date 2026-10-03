@@ -22,6 +22,7 @@ public interface IFrameSource : IAsyncDisposable
 > {
 >     FlWriterState WriterState { get; }   FlShmHandshake Handshake { get; }
 >     long TotalDropped { get; }           long TotalGaps { get; }
+>     FlDisplayState? DisplayState { get; }   // region 4, beta.10 (added to this sketch 2026-10-04)
 >     DrainResult Drain(Span<FlFrameRecord> into, IList<ulong> gapIndices);
 >     void PublishGuardResult(uint completedEvaluations, bool unhookRequested);
 >     void SetPaused(bool paused);         void RequestLogFlush();
@@ -131,7 +132,7 @@ which makes the notification more important than it was, not less.
 ## Process watcher
 
 - 1 Hz snapshot via `CreateToolhelp32Snapshot` (CsWin32): pid, ppid, exe path (`QueryFullProcessImageName`).
-- Watchlist match on normalized full path (`GetFinalPathNameByHandle` — junctions/symlinks), ~~filename fallback with a stale-path warning badge~~ **and a file name alone never starts a session (2026-09-23, HANDOFF D25): it can only be the entry's own executable on a drive that changed its letter (the relocator's rule), or it is not in the library.**
+- Watchlist match on normalized full path (~~`GetFinalPathNameByHandle`~~ `File.ResolveLinkTarget` *(corrected 2026-10-04 — `ExecutableIdentity` says why)* — junctions/symlinks), ~~filename fallback with a stale-path warning badge~~ **and a file name alone never starts a session (2026-09-23, HANDOFF D25): it can only be the entry's own executable on a drive that changed its letter (the relocator's rule), or it is not in the library.**
 - Process tree assembled from ppid chains; the **capture target** is the descendant that actually presents. In launch mode we know it; in attach mode we wait for the first ring handshake. ~~or (Tier 2) elect the PID with the most presents in the first 10 s~~ — there is no Tier-2 present stream to elect from. Re-elect if the presenting PID dies while the tree lives (level-transition relaunches).
 
 > **Built 2026-09-10 (P2 PR-F), in `Application.Watch` with one adapter.** `ToolhelpProcessSnapshotSource`
@@ -179,7 +180,7 @@ which makes the notification more important than it was, not less.
 
 ## Launch mode vs attach mode
 
-**Launch mode (preferred).** User starts the game from FrameLedger (or FrameLedger is set as the launch wrapper): `CreateProcess(CREATE_SUSPENDED)` → guard → inject → `ResumeThread`. Catches swapchain creation and upscaler init, which attach mode can miss entirely — a game that creates its DLSS feature during startup will otherwise report `upscaler = unknown` for the whole session.
+**Launch mode (preferred).** User starts the game from FrameLedger ~~(or FrameLedger is set as the launch wrapper)~~ *(corrected 2026-10-04: no wrapper exists, and no App button sends `LaunchGame` yet — the pipe command has no caller; launch mode runs from the Agent's developer verb `--console launch --exe`)*: `CreateProcess(CREATE_SUSPENDED)` → guard → inject → `ResumeThread`. Catches swapchain creation and upscaler init, which attach mode can miss entirely — a game that creates its DLSS feature during startup will otherwise report `upscaler = unknown` for the whole session.
 
 > **An elevated Agent starts the game as a standard user (beta.10, the admin mode, D34).** `ProcessLauncher` checks its
 > own token: elevated, it starts the game with the desktop shell's token (`Infrastructure.Startup.UnelevatedProcess` —
@@ -225,13 +226,13 @@ which makes the notification more important than it was, not less.
 
 **Attach mode.** Game launched from Steam/GOG/Epic normally; watcher sees it, guard runs, inject. Feature hooks install late, so early-init facts may be missed; the Overlay compensates by re-reading state on the first `EvaluateFeature` call it does observe, and the session is flagged `late_attach = true` so the UI can note that startup-time settings may be incomplete.
 
-Steam users can also set FrameLedger as a launch option wrapper; documented in the UI rather than automated (never modify a user's Steam config for them).
+~~Steam users can also set FrameLedger as a launch option wrapper; documented in the UI rather than automated (never modify a user's Steam config for them).~~ *(Corrected 2026-10-04: not built — there is no wrapper entry point and no UI text; a game started from Steam is recorded in attach mode. The parenthesis still holds: never modify a user's Steam config for them.)*
 
 ## The guard
 
 The guard is **native** (`20_OPEN_QUESTIONS` §S13(a)) and the Agent reaches it through `IAntiCheatGuard`, a **thin P/Invoke facade over the single implementation** — never a second one. Two blocklist matchers that can disagree is a fail-open by construction: the day they diverge, one is wrong and nothing says which. Nothing managed parses rules or matches a blocklist, and a test asserts it (§S15 item 1).
 
-The facade exposes exactly two operations, and neither hands out a clearance:
+The facade exposes ~~exactly two operations~~ four *(corrected 2026-10-04: `GuardedInjectWhenReadyAsync`, launch mode's waiting entry, and `PreScanGameAsync`, the advisory checks 3–4 behind FR-2.2 and the library pre-scan, joined the two below; since D33 each takes `toleratedFamily`, a family name the guard resolves itself)*, and none hands out a clearance:
 
 - `GuardedInjectAsync(pid, payload)` — runs every pre-injection check and, only on a pass, injects. There is no overload that skips the checks and no way to supply evidence; the guard collects its own, so a caller can ask but only the guard answers (§S13(b)).
 - `EvaluateAsync(pid)` — the same checks with no injection, for the 30 s in-session re-scan. It cannot be used to pre-authorise anything: it takes no payload and returns no token, so acting on a pass means calling `GuardedInjectAsync`, which re-collects.
@@ -316,7 +317,7 @@ What the Agent checks **before** asking the guard is the thing the native side s
   > published at attach are counted separately as `RecordsBeforeAttach`; that is not
   > a stall and must not raise this warning.
 - **A torn record is a gap, not a skipped frame.** Silently dropping it merges two frame times into one double-length interval, i.e. fabricates a stutter. Record an explicit gap at that index; `03_METRICS` excludes gap-adjacent intervals from frame-time statistics.
-- Records go into an in-memory buffer (`ArrayPool<FlFrameRecord>` segments). Every 60 s, a crash-safety flush writes raw buffers to `%LOCALAPPDATA%\FrameLedger\tmp\<sessionGuid>.partial`.
+- Records go into an in-memory buffer (~~`ArrayPool<FlFrameRecord>` segments~~ a `List<FlFrameRecord>` — corrected 2026-10-04). Every 60 s, a crash-safety flush writes raw buffers to `%LOCALAPPDATA%\FrameLedger\tmp\<sessionGuid>.partial`.
 
 ## Threading model
 
@@ -349,7 +350,7 @@ the pipe's tasks touches the ring or the recorder, and the session loop never wa
 
 ## Telemetry poller
 
-1 Hz on its own thread: `CompositeTelemetrySource.TryRead` (`18_GPU_VENDOR_APIS` — DXGI/PDH baseline, LibreHardwareMonitor sensors, NVAPI extras on NVIDIA) + optional CPU sample when the Agent is elevated and PawnIO is present. Never called from the game process, never faster than 500 ms. Samples carry the session QPC epoch for timeline alignment.
+1 Hz (the session's `telemetry.interval_ms`, 500–2000 ms) on its own thread: `CompositeTelemetrySource.TryRead` (`18_GPU_VENDOR_APIS` — DXGI/PDH baseline, LibreHardwareMonitor sensors, NVAPI extras on NVIDIA) ~~+ optional CPU sample when the Agent is elevated and PawnIO is present~~ + *(corrected 2026-10-04)* the machine's reading on the same tick — CPU load and memory in use without elevation, CPU temperature only when elevated with PawnIO — and the game process's memory (beta.12, D43). Never called from the game process, never faster than 500 ms. Samples carry the session QPC epoch for timeline alignment.
 
 ## Session recorder — state machine
 

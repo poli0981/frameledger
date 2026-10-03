@@ -10,7 +10,8 @@ bumps for a database schema or IPC protocol break (`docs/11_UPDATER.md`).
 uses it as the GitHub release body. A missing or empty `## [x.y.z]` section is a **red
 release**, not an empty note — so cutting a release means moving the `[Unreleased]` entries
 under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, then tagging
-(`docs/13_CI_CD.md` §Branch & release policy).
+(`docs/13_CI_CD.md` §Branch & release policy). *(For a pre-release, `vX.Y.Z-beta.N`, `VERSION` already holds the
+numeric core and does not move; the heading is the full version — corrected 2026-10-04.)*
 
 > **Built 2026-09-14 (P4 PR-5).** From 2026-08-06 until then this paragraph said the workflow
 > "will" exist and that a missing section "will mean an empty release note"; the second half
@@ -103,7 +104,25 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   history notes move to `docs/legal-drift-history.md`).
 - **Help ▸ Documentation is Help ▸ Online documentation**, and opens the README of the version you run.
 
+### Removed
+
+- **Settings ▸ Recording no longer shows "Record games launched outside FrameLedger".** Nothing ever read that switch —
+  turning it off recorded every game anyway — and the App has no way to start a game itself, so "off" could only have
+  meant recording nothing. Its stored value is kept, unread, until a launch path exists.
+
 ### Fixed
+
+- **The Logs page's Warning and Error filters showed no line from the Agent.** The Agent's log starts each line with a
+  date (Serilog's default form) and the filter read only the App's `[HH:mm:ss.fff LVL]` prefix; its test had fed App-form
+  lines into the fake Agent log. Both forms are read now.
+- **The developer documentation is corrected in place** (owner decision D46): about a hundred statements across
+  `docs/01`–`20`, `HANDOFF`, `CLAUDE.md` and `FORKING.md` that the code contradicted, each struck with a dated
+  correction — among them a rules feed that does not exist (rules reach you with a release, as `LIMITATIONS.md` says),
+  hooks that were never built, the in-game thread described as doing less than it does, a delta update package that was
+  never published, the release steps for a pre-release, the Legal Gate's row count and the logging configuration. The
+  rules file's own comment and the rules workflow's header made the feed claim too, and are corrected. `docs/README.md`
+  is a new index for developers. Code comments that said what is not so (a sparkline, a flyout, a layer flag "false by
+  construction", two self-test counts) are corrected with them.
 
 - **The first start's summary said "there is no way to override that refusal"** although a per-game user-mode exception
   has existed since beta.9, and **"Nothing is sent anywhere"** although the update check is a request to GitHub; it now
@@ -130,7 +149,6 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   session opens no process (`04_CAPTURE`, `19_SAFETY`) now say what it opens, with which right, and why. The accuracy block
   and `LIMITATIONS.md` say what is measured now. `ITelemetryPoller`'s remark that the descriptor is read at finalize — it is
   read at session start — is corrected.
-
 - **The native binaries' version block named the wrong licence.** Every DLL's `LegalCopyright` read
   `GPL-3.0-or-later` while `LICENSE`, the EULA, the README and the third-party notices all say GPL-3.0-only; it now reads
   `Copyright (C) 2026 poli0981. GPL-3.0-only with additional terms: see NOTICE`.

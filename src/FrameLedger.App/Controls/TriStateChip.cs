@@ -9,7 +9,8 @@ namespace FrameLedger.App.Controls;
 
 /// <summary>
 /// <c>08_UI</c> §Tri-state feature chips: Yes = filled accent, No = outlined, N/A = dashed outline with muted text;
-/// the source (measured / manual / inherited) is the tooltip. The override flyout (FR-8.3) is PR-6's.
+/// the source (measured / manual / inherited) is the tooltip. A click opens FR-8.3's override dialog
+/// (<c>TriStateOverridePrompt</c>); this said a flyout, which was never built.
 /// </summary>
 public sealed class TriStateChip : Control
 {

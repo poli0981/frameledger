@@ -36,6 +36,10 @@ Derived in the Agent from the record stream; the mapping is in `03_METRICS`. Sum
 > **2026-09-27 (beta.10):** the first row's *swap effect* has a writer since schema 0016 — region 4's `GetDesc`, stored
 > in `sessions.swap_effect` as a name (`flip_discard`, …) — and the display-mode row is new. **Present mode has none**,
 > and the block above did not list it: `sessions.present_mode` is null on every row, and the pages say N/A.
+>
+> **2026-10-04 (beta.12, D43):** the per-process VRAM row's *usage* is measured — not by `QueryVideoMemoryInfo` but
+> from outside the game, in both tiers, with the game's RAM beside it (`game_vram_*`, `game_ram_*`; `03_METRICS`
+> §Game process memory). The in-game figure, its budget and `vram_proc_*` stay unbuilt.
 
 > **"present-count delta" is removed from the FG row, and it was not merely unreliable —
 > it was structurally zero.** `03_METRICS` §Frame Generation retired that rung on
@@ -47,11 +51,11 @@ Derived in the Agent from the record stream; the mapping is in `03_METRICS`. Sum
 > stale-by-not-being-touched failure this project keeps recording; `06_DATA_MODEL`'s
 > `fg_source` enum carried the same value and is corrected in the same pass.
 
-~~Tier-2 sessions have `upscaler = unknown`, resolutions `N/A`, RT `N/A`, and an FG mode only if cadence resolves it.~~ **Simpler since 2026-08-28: a Tier-2 session detects NOTHING.** It has no frames, so cadence has nothing to run over. `upscaler`, resolutions, RT and FG all read `N/A`, and the static-hint tier (below) is the only thing that says anything about such a title — which it labels *inference*, never measurement. **The one exception since beta.10 is how its window was shown** (the display-mode row), which the Agent reads from outside the game in either tier.
+~~Tier-2 sessions have `upscaler = unknown`, resolutions `N/A`, RT `N/A`, and an FG mode only if cadence resolves it.~~ **Simpler since 2026-08-28: a Tier-2 session detects NOTHING.** It has no frames, so cadence has nothing to run over. `upscaler`, resolutions, RT and FG all read `N/A`, and the static-hint tier (below) is the only thing that says anything about such a title — which it labels *inference*, never measurement. **The ~~one exception~~ exceptions** *(corrected 2026-10-04)* are how its window was shown (the display-mode row, beta.10) and the game process's memory (beta.12), which the Agent reads from outside the game in either tier.
 
 ## Static hints — rules engine
 
-Rules are **data, not code**: `rules/detection-rules.json`, bundled and updatable from the repo (raw GitHub URL, ETag-cached; manual "Update detection rules" in Tools + weekly auto-check). Schema:
+Rules are **data, not code**: `rules/detection-rules.json`, bundled ~~and updatable from the repo (raw GitHub URL, ETag-cached; manual "Update detection rules" in Tools + weekly auto-check)~~ *(corrected 2026-10-04: nothing fetches. The rules ship with the build and `RulesSeeder` installs them in `%LOCALAPPDATA%\FrameLedger\rules\`; Tools ▸ Update detection rules re-seeds from the copy beside the binary and wakes the detection and anti-cheat sweeps. A rules change reaches users with a release — `20_OPEN_QUESTIONS` §S20 feed half)*. Schema:
 
 ```json
 {
@@ -64,7 +68,7 @@ Rules are **data, not code**: `rules/detection-rules.json`, bundled and updatabl
 }
 ```
 
-The `anticheat` block is the same file that feeds the hard guard in `19_SAFETY` — shipping it as updatable data is what lets a newly-protected game be blocked without waiting for an app release. **Rules updates that touch the `anticheat` block are treated as security updates:** applied on next check regardless of the user's auto-update preference for other rules.
+The `anticheat` block is the same file that feeds the hard guard in `19_SAFETY` — shipping it as updatable data is what lets a newly-protected game be blocked without waiting for an app release. ~~**Rules updates that touch the `anticheat` block are treated as security updates:** applied on next check regardless of the user's auto-update preference for other rules.~~ *(Corrected 2026-10-04: there is no feed and no auto-update preference, so today a newly-protected game waits for a release; the sentence is what a feed must do once built, §S20.)*
 
 Signal types evaluated by `RuleEvaluator` (Domain): `file_exists`, `dir_exists`, `sibling_glob`, **`path_contains`**, `pe_company_contains`, `pe_product_contains`, `strings_contains` (bounded 8 MB scan), `manifest_field`. Combine with `all` / `any` — **not nested**, which schemaVersion 2 forbids. Version extractors: `pe_file_version` (of the sibling its `from` names, not of the executable), `pe_product_version_regex`, **`strings_regex`**, `manifest_field`, and since 2026-09-27 **`unreal_build`** (no parameter; decided in code, §Engine version). A regex extractor must capture exactly **one** group — the evaluator returns the first — and `rules-validate.ps1` refuses any other count and any pattern that does not compile (both promised by the rules file's `$comment` and enforced by nothing until beta.10).
 
@@ -88,7 +92,10 @@ Signal types evaluated by `RuleEvaluator` (Domain): `file_exists`, `dir_exists`,
 
 ### Trust and staleness of the rules feed
 
-`20_OPEN_QUESTIONS` §S4. The file is fetched over HTTPS from a raw GitHub URL.
+> **Specified, not built (corrected 2026-10-04):** there is no feed (§S20 feed half, §S4); these rules apply once one
+> exists. Today the seeder validates the packaged copy with the guard's parser and keeps `detection-rules.json.bak`.
+
+`20_OPEN_QUESTIONS` §S4. The file ~~is~~ would be fetched over HTTPS from a raw GitHub URL.
 Three rules, because a gate whose data can silently go stale is a gate with an
 expiry date nobody sees:
 
@@ -144,7 +151,7 @@ Recorded as a residual risk, not as a solved problem.
 | RPG Maker XP/VX/VX Ace | `RGSS1*`/`RGSS2*`/`RGSS3*.dll` sibling **or** a `*.rgssad`/`*.rgss2a`/`*.rgss3a` archive (since 2026-09-16) | `N/A` — one rule, the variant unnamed |
 | RE Engine (Capcom) | `re_chunk_000.pak` sibling, the exact name (since 2026-09-23) | `N/A` |
 | FromSoftware | a `*.bhd` **and** a `*.bdt` sibling (since 2026-09-23) | `N/A` |
-| Ren'Py | `renpy/` dir **or** `*.rpa` | `renpy/__init__` strings / `log.txt` first line |
+| Ren'Py | `renpy/` dir **or** `*.rpa` | ~~`renpy/__init__` strings / `log.txt` first line~~ `N/A` *(corrected 2026-10-04: no extractor — `strings_regex` reads only the executable)* |
 | CryEngine | `CrySystem.dll` | FileVersion |
 | Source | `gameinfo.txt` + `bin/engine.dll` | `N/A` |
 | Unknown | fallback | — |
@@ -245,7 +252,7 @@ wrote, where detection wrote it.
 |---|---|---|
 | Steam | `steam_api64.dll`/`steam_api.dll` sibling, or path contains `steamapps\common` | nearest `steamapps/appmanifest_<id>.acf` (walk up): `appid`, `name`, `buildid` → version |
 | GOG | `goggame-<id>.info` sibling, or `Galaxy64.dll` | `.info` JSON: `gameId`, `name`, `version` |
-| Epic | `EOSSDK-Win64-Shipping.dll`, or path under an Epic install | `%ProgramData%\Epic\EpicGamesLauncher\Data\Manifests\*.item` matched by `InstallLocation` |
+| Epic | `EOSSDK-Win64-Shipping.dll`~~, or path under an Epic install~~ *(corrected 2026-10-04: the rule has no path signal)* | `%ProgramData%\Epic\EpicGamesLauncher\Data\Manifests\*.item` matched by `InstallLocation` |
 | itch.io | `.itch\receipt.json.gz` | **`%APPDATA%\itch\db\butler.db`** (`install_locations` + `caves`, butler's `verdict` names the executable) since 2026-09-16, then the receipt JSON: title, id |
 | None/Manual | fallback | PE VersionInfo |
 
@@ -349,7 +356,7 @@ Three things this section previously implied that are not true, and are worth st
 
 - **The UI answer is advisory.** It decides whether the toggle is *offered*; it does not gate injection. The same scan runs a second time inside the guard's chokepoint against a directory derived from the target's own pid, so "prevention beats interception" is a convenience, not the enforcement.
 - **A hit disables the toggle; "could not scan" must not.** The scan is tri-state. `Reason::kPreScanFailed` — directory absent, unlistable, past a bound, or behind a reparse point — is *neither* a hit nor a pass. It must surface as "could not verify", distinct from "anti-cheat found": disabling the toggle on it would be a false refusal with no appeal, and clearing it would be a fail-open.
-- **The token list is thin.** `directories` and `files` carry three tokens today. Widening needs verified names; a guessed token fails closed by never firing, which is a silent hole (`19_SAFETY` §Blocklist seed).
+- **The token list is thin.** `directories` and `files` ~~carry three tokens today~~ *(corrected 2026-10-04: rules 2026.10.1 carry 9 directory families (12 names) and 18 file families (55 names), and since 2026-09-25 any `*.sys` in the install tree is a finding by code, not data)*. Widening needs verified names; a guessed token fails closed by never firing, which is a silent hole (`19_SAFETY` §Blocklist seed).
 
 ## Caching & privacy constraints
 

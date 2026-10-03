@@ -29,6 +29,12 @@
 └───────────────────────────────────────────────────────────────────────────┘
 ```
 
+> **Corrected 2026-10-04 — the game-process box names hooks that were never built.** ~~NGX · XeSS ·
+> CreateStateObject · PSO hooks~~: NGX is licence-blocked, XeSS stops at the runtime census by licence, and
+> `CreateStateObject` and pipeline creation are unwritten rows of `17_HOOK_ENGINE` §Hook inventory. What the Overlay
+> does install: the DXGI present path, `wglSwapBuffers`, the Streamline and FidelityFX entry points, the two
+> `ID3D12GraphicsCommandList4` ray-tracing methods, and the `LoadLibraryExW` wake.
+
 > `*` **`AntiCheatGuard` is a facade, not an implementation.** The guard is
 > native (`20_OPEN_QUESTIONS` §S13(a)); the box above is the P/Invoke wrapper
 > in `Infrastructure` that the Agent calls. Nothing managed parses rules or
@@ -58,8 +64,8 @@
 
 | Tier | Mechanism | Gets you | When used |
 |---|---|---|---|
-| **1** | Injected hooks (default when the user enabled it and the guard passed) | Everything: exact render/output res, upscaler + quality, FG ground truth, RT/PT evidence, per-process VRAM, PSO stutter attribution, Reflex latency, present flags | Offline/single-player titles the user opted in |
-| **2** | None | **Session duration, whatever hardware telemetry this machine can provide, and the REASON there is nothing else** — which check refused, or that the hook failed, was not enabled, or the target is 32-bit. Every measured field reads `N/A` (FR-4.9) | Guard refused, hook failed, user chose not to hook, or a target the Overlay structurally cannot enter |
+| **1** | Injected hooks (default when the user enabled it and the guard passed) | Everything: exact render/output res, upscaler + quality, FG ground truth, RT ~~/PT~~ evidence, ~~per-process VRAM, PSO stutter attribution, Reflex latency,~~ present flags *(corrected 2026-10-04: path tracing, the in-game VRAM, PSO attribution and Reflex latency have no producer — `05_DETECTION` §Runtime facts)* | Offline/single-player titles the user opted in |
+| **2** | None | **Session duration, whatever hardware telemetry this machine can provide, and the REASON there is nothing else** — which check refused, or that the hook failed, was not enabled, or the target is 32-bit. Every ~~measured~~ frame field reads `N/A` (FR-4.9) *(corrected 2026-10-04: two facts are measured from outside the game in both tiers — the display mode (beta.10) and the game process's memory (beta.12, D43))* | Guard refused, hook failed, user chose not to hook, or a target the Overlay structurally cannot enter |
 
 Tier is recorded per session (`sessions.capture_tier`) and shown in the UI, because metric availability differs and comparing across tiers must be explicit.
 
@@ -91,7 +97,7 @@ Guard re-runs every 30 s for the life of the session; anti-cheat appearing late 
 - Agent idles at ~0% CPU: 1 Hz process poll. No capture machinery exists until a tracked game launches.
 - Session ends when the process tree exits, or on safety unhook, or on user stop.
 - The DLL is **not unloaded** from a live process after unhooking (threads may still be inside trampolines). It disables its hooks, stops writing, and goes dormant until the process exits. Documented, deliberate.
-- UI exit does not stop the Agent when background capture is enabled; otherwise UI sends `Shutdown`.
+- ~~UI exit does not stop the Agent when background capture is enabled; otherwise UI sends `Shutdown`.~~ *(Corrected 2026-10-04: closing the UI never stops the Agent. `Shutdown` is sent only for an update, by the uninstall hook and for the admin mode's restart; the background-capture setting was read by nothing, and its switch is gone since beta.12 — `06_DATA_MODEL` §Settings registry.)*
 - Single instance via named mutexes; the ring name is per-PID so multiple games can be captured simultaneously (rare but supported).
 
   > **The single instance was specified here and not built until 2026-09-17**, and 0.1.0-beta.1 ran four Agents: an
@@ -111,12 +117,12 @@ Guard re-runs every 30 s for the life of the session; anti-cheat appearing late 
 | Anti-cheat detected pre-injection | Refuse, explain which signal fired, offer Tier 2 |
 | Anti-cheat detected mid-session | Immediate clean unhook, `exit_status = unhooked_safety`, prominent notice |
 | Injection API fails (access denied, protected process) | Log, no retry loop, offer Tier 2 + "run Agent elevated" hint — elevation here is about *attaching to an elevated target*, not about reaching a tier; Tier 2 needs none |
-| Hook faults 3× | DLL self-disables, sets fault flag in handshake block, Agent finalizes session as `degraded` |
+| Hook faults 3× | DLL self-disables, sets ~~fault flag in handshake block~~ `FlWriterState.status` to `SELF_DISABLED` *(corrected 2026-10-04)*, Agent finalizes session as `degraded` |
 | Game crashes ≤ 60 s after injection, twice | Hooking auto-disabled for that game, Tier 2 takes over |
-| Ring overflow (Agent stalled) | Overwrite-oldest; dropped count published in the ring header → session flagged with a data-quality warning |
+| Ring overflow (Agent stalled) | Overwrite-oldest; ~~dropped count published in the ring header~~ the Agent counts drops from its own read index *(corrected 2026-10-04: the writer keeps no reader index and publishes no count — `04_CAPTURE` §Ring draining)* → session flagged with a data-quality warning |
 | Layout/version mismatch DLL ↔ Agent | Agent refuses to attach, tells user to restart the game after update |
 | Vendor API unavailable (no NVAPI etc.) | GPU telemetry degrades to `N/A`; frame metrics unaffected |
-| DB locked/corrupt | Integrity check + backup-and-recreate in Tools |
+| DB locked/corrupt | Integrity check + backup~~-and-recreate~~ in Tools ▸ Database maintenance *(corrected 2026-10-04: there is no recreate action)* |
 
 ## Data directory
 
@@ -127,9 +133,9 @@ ledger.db                    SQLite (WAL)
 rules\detection-rules.json   engine/platform/feature + anticheat blocklist
 logs\ui-*.log, agent-*.log, overlay-<pid>-*.log   (native log flushed at session end, never mid-frame)
 crashdumps\*.dmp
-breadcrumbs\<pid>.json       pre-injection breadcrumb (19_SAFETY §Crash safety)
+breadcrumbs\<pid>.json       (corrected 2026-10-04: never created — the breadcrumb is the .partial file's header and notes)
 tmp\<sessionGuid>.partial    crash-safety flush of raw buffers, every 60 s (04_CAPTURE §Ring draining)
-covers\*.jpg
+covers\*.jpg                 (corrected 2026-10-04: never created — nothing writes games.cover_path)
 ```
 
 ## Key design decisions (ADR)

@@ -1,6 +1,6 @@
 # 11 — Updater
 
-Velopack, feeding from GitHub Releases of `https://github.com/poli0981/frameledger`. Stable channel only in v1.
+Velopack, feeding from GitHub Releases of `https://github.com/poli0981/frameledger`. ~~Stable channel only in v1.~~ *(Corrected 2026-10-04: two channels since P4 PR-5 — `update.channel`, stable by default or beta, which adds pre-releases. Every release so far is a pre-release; see §Built, Channels.)*
 
 ## Flow
 
@@ -21,7 +21,7 @@ Velopack, feeding from GitHub Releases of `https://github.com/poli0981/frameledg
 | Package hash mismatch | `Update_Err_Corrupt` | Auto-retry once, then dialog |
 | Unknown | `Update_Err_Unknown` + exception logged | "Report a bug" shortcut |
 
-Detection-rules updates share this client, but the **`anticheat` block is fetched and applied on its own schedule regardless of the user's rules-update preference** (`05_DETECTION` FR-7.3) — a user who turned off rules updates must still receive new anti-cheat entries.
+~~Detection-rules updates share this client, but the **`anticheat` block is fetched and applied on its own schedule regardless of the user's rules-update preference** (`05_DETECTION` FR-7.3) — a user who turned off rules updates must still receive new anti-cheat entries.~~ *(Corrected 2026-10-04: there is no rules fetch and no rules-update preference. Tools ▸ Update detection rules re-reads the copy seeded from the install (`07_IPC`); FR-7.3 is unmet (`20_OPEN_QUESTIONS` §S20). The sentence is what a fetch must do once built.)*
 
 All update HTTP goes through one `GitHubHttpClient` (also used by rules updates) with: UA `FrameLedger/{version}`, 10 s timeout, ETag cache in `settings`, single retry with jitter for transient failures.
 
@@ -29,7 +29,7 @@ All update HTTP goes through one `GitHubHttpClient` (also used by rules updates)
 
 Binaries are not code-signed (project policy). Consequences and mitigations, documented in README and the update dialog footer:
 - SmartScreen warning on first run of a new version — expected; SHA-256 checksums (`SHA256SUMS.txt`) published with every release; CI prints them into release notes.
-- Velopack delta packages reduce download size; full package fallback automatic.
+- ~~Velopack delta packages reduce download size; full package fallback automatic.~~ *(Corrected 2026-10-04: no delta has been published — `release.yml` never puts the previous release in `out/release` before `vpk pack`, so every update downloads the full package; a delta needs a `vpk download github` step first.)*
 - Never bypass or suppress OS warnings programmatically.
 
 ## Versioning
@@ -37,7 +37,7 @@ Binaries are not code-signed (project policy). Consequences and mitigations, doc
 SemVer `MAJOR.MINOR.PATCH`. Tag `vX.Y.Z` triggers the release workflow (13_CI_CD). `MAJOR` bumps for DB schema or IPC protocol breaks; migrations must cover every released `MAJOR-1` version.
 
 > **Under `0.x` this rule is not applied, and every pre-release says so by shipping one anyway** (SemVer §4: a major version
-> zero is initial development). Schemas 0008–0015 and the shared-memory layout 4 (2026-09-27, beta.10) each shipped in a
+> zero is initial development). Schemas ~~0008–0015~~ 0008–0017 *(corrected 2026-10-04: 0016 shipped in beta.10 beside 0015, 0017 in beta.11; 0018 rides beta.12)* and the shared-memory layout 4 (2026-09-27, beta.10) each shipped in a
 > `0.1.0-beta.N`. What protects a user is not the number: the ledger migrates in place (`06_DATA_MODEL` §Migrations), and a
 > layout mismatch is refused at attach with "restart the game" (`07_IPC` §Protocol rules). The rule applies from `1.0.0`.
 
@@ -107,5 +107,8 @@ flow, and the tests run the flow over a fake client because nothing here may tou
 - ~~Release notes are rendered as plain text, not Markdown.~~ Corrected 2026-10-03: rendered since beta.12 (Markdig; HTML off, no image fetched).
 
 `UpdateServiceTests` (App.Tests/Update) cover the two skips, the channels, Deferred ↔ Ready, each error row, and
-the apply's three endings; `UpdateFailureMapperTests` the table; `UninstallHookTests` the hook; a real feed has
-not been exercised — the first tag is the measurement (`13_CI_CD` §release.yml).
+the apply's three endings; `UpdateFailureMapperTests` the table; `UninstallHookTests` the hook; ~~a real feed has
+not been exercised — the first tag is the measurement~~ *(corrected 2026-10-04: the feed has existed since
+v0.1.0-beta.1, 2026-09-16, and every release since carries `releases.win.json`; whether an installed copy has updated
+through it is not recorded here)*
+(`13_CI_CD` §release.yml).

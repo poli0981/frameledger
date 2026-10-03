@@ -1,6 +1,6 @@
 # HANDOFF — read this first, then stop reading it
 
-The one file a new session opens to pick up P0. It carries **sequencing, decisions
+The one file a new session opens to pick up ~~P0~~ work (corrected 2026-10-04). It carries **sequencing, decisions
 and traps**. It deliberately carries **no status**.
 
 > ## The rule this file lives under
@@ -43,8 +43,9 @@ with §S2's in-layer supervision. **P1 item 1 — the `LoadLibrary` detour — l
 `04_CAPTURE` §Launch mode); item 3, the Vulkan layer to `vkQueuePresentKHR` with §S2's in-layer
 supervision, landed the same day (§S2 ✅; `17_HOOK_ENGINE` §Vulkan); item 4 — compare-and-restore per
 inline patch, the native log, `wglSwapBuffers` — landed the same day too, and D3D9 is struck per §Scope.
-P1's core is done; what stays ⏳ is the feature rows `15_ROADMAP` §P1 now lists, and P2 (the Agent, the
-recorder, SQLite) is next.** The ~~three~~ ~~two~~ one P1-deferred S-item (~~S6~~, ~~S2 part three~~, and
+P1's core is done; what stays ⏳ is the feature rows `15_ROADMAP` §P1 now lists, ~~and P2 (the Agent, the
+recorder, SQLite) is next~~.** *(Corrected 2026-10-04: P2–P4 closed 2026-09-10/14/15; later work is the dated train
+sections from §0.1.0-beta.3 on.)* The ~~three~~ ~~two~~ one P1-deferred S-item (~~S6~~, ~~S2 part three~~, and
 the hand-run blast-radius script behind S29(d)) are the reminders. The text below is
 P0's history and stays as it stood.
 
@@ -1215,7 +1216,7 @@ election are **F** and **G**; the ⏳ feature rows in `17_HOOK_ENGINE` §Hook in
 their columns (`hdr_flag`, `pt_confidence`, `pso_stutter_pct`, `vram_proc*`, `latency_*`) are an
 honest NULL in P2's schema, never a 0.
 
-## P4 — **START HERE** (2026-09-14: P3 is code-complete; the stack awaits the owner's merges) — **code-complete 2026-09-15 with PR-9**: every item below is struck; what follows is `15_ROADMAP` §P5 and §Owner-only
+## P4 — ~~**START HERE**~~ (2026-09-14: P3 is code-complete; ~~the stack awaits the owner's merges~~) — **code-complete 2026-09-15 with PR-9**: every item below is struck; what follows is `15_ROADMAP` §P5 and §Owner-only *(struck 2026-10-04: merged 2026-09-14/15; the live head is the newest dated train section below, and §Owner-only)*
 
 P3's slices are all struck below. What is left of P3 is not code: the owner merges #154 → #155 → #156 → #158 →
 #159 → #160 → #161 → #162 → #163 → PR-9 in order (squash; after each merge the next branch is rebased
@@ -1872,7 +1873,7 @@ deferred with a written rationale.
   way. Corrected in place.
 - **`README:14`'s RayQuery claim is not a rule-7 contradiction**, which an audit
   asserted. `03_METRICS:128` says AS-build hooking is what makes inline RayQuery
-  detectable *at all*. The real contradiction is between CLAUDE.md rule 7 and
+  detectable *at all* (line numbers as of 2026-08; both passages have since moved — noted 2026-10-04). The real contradiction is between CLAUDE.md rule 7 and
   `03_METRICS` — recorded as §S29(f).
 
 ---
@@ -1904,8 +1905,9 @@ diagnosis*.
   flag** — and that fix did not fire, because **NW.js has no GPU process**: the GPU runs
   in-process in the browser, the one process Chromium leaves untyped. Second rule: one
   untyped candidate among typed siblings is the browser and the target. **Read the tree before
-  guessing the rule** — the refusal line prints it now. Whether the Overlay can load inside
-  that browser process is the next thing the title measures.
+  guessing the rule** — the refusal line prints it now. ~~Whether the Overlay can load inside
+  that browser process is the next thing the title measures.~~ *(Measured 2026-09-04, `spike-notes` §9 run 3: it
+  loads and captures — marked 2026-10-04.)*
 - **A TITLE ASKS STREAMLINE FOR A FRAME TOKEN SEVERAL TIMES PER FRAME AND GETS A DIFFERENT
   OBJECT EACH TIME.** Cyberpunk 2077: 3 to 4.6 requests per application frame, distinct pointers,
   same index. A count keyed on the pointer reads the request rate and the `off` leg comes out

@@ -33,7 +33,7 @@ public interface IGpuTelemetrySource : IDisposable
 Implementations compose rather than compete:
 
 - `BaselineTelemetrySource` (L1) — always constructed.
-- `LhmTelemetrySource` (L2) — constructed when LHM initialises.
+- `LhmTelemetrySource` (L2) — ~~constructed when LHM initialises~~ always constructed; a `Computer` that will not open disables the layer for the session (corrected 2026-10-04).
 - `NvapiTelemetrySource` (L3) — ~~constructed only on NVIDIA hardware~~ **always constructed since 2026-09-10 (P2 PR-E2)** and disables itself when the bridge DLL or the NVIDIA driver is absent, so the composite's descriptor simply omits `nvapi` and no caller has to know the vendor before composing.
 - `CompositeTelemetrySource` merges them with a fixed precedence per field (**L3 > L2 > L1**) and records which layer supplied each value.
 
@@ -52,8 +52,12 @@ Implementations compose rather than compete:
 > `LayerOf(field)` answers per field. It also applies the two-fault rule one level up — a layer
 > whose `TryRead` throws (which the port forbids) is excluded on the second throw, the others
 > untouched. (3) Identity is its own record, `GpuAdapterIdentity` (name, LUID, ids, memory sizes,
-> user-mode driver version), read once per session from DXGI; the Agent hands the handshake's
-> `adapterLuid` to `SelectAdapter` so samples describe the adapter the game presented on. Every
+> user-mode driver version), read once per session from DXGI; ~~the Agent hands the handshake's
+> `adapterLuid` to `SelectAdapter` so samples describe the adapter the game presented on.~~ *(Corrected 2026-10-04:
+> nothing calls `SelectAdapter` outside tests. L1 stays on the first hardware adapter in DXGI's high-performance order,
+> as `HardwareSnapshotSource` does, and the handshake's `adapterLuid` is read by no managed code — so on a
+> multi-adapter machine L1 can describe an adapter the game did not present on. The game's own memory, D43, is
+> summed over every adapter and is not affected.)* Every
 > poller sample is stamped with QPC (`TelemetrySample.QpcTicks`), the ring's clock, and
 > `QpcClockTests` pins `Stopwatch` / `TimeProvider.GetTimestamp` to the real counter.
 
@@ -86,7 +90,7 @@ guard's and the NVAPI bridge's), never into a game — reads one process's memor
 
 ## L1 — baseline (no licence, all vendors)
 
-- **DXGI:** `IDXGIFactory6::EnumAdapterByGpuPreference` → adapter description, LUID (matches the swapchain adapter from the Overlay handshake), dedicated/shared memory sizes. ~~`IDXGIAdapter3::QueryVideoMemoryInfo` for adapter-wide usage/budget.~~ **Measured wrong, 2026-09-09:** `DXGI_QUERY_VIDEO_MEMORY_INFO.CurrentUsage` is the *calling process's* usage by the structure's own definition — which is exactly why the Overlay reads it inside the game for `vram_proc` — and from the Agent it read **0 bytes** beside a 16 GB adapter. Adapter-wide usage is the PDH counter below, as this list always said; DXGI is identity only (`DxgiAdapters`, the first CsWin32 consumer in the tree).
+- **DXGI:** `IDXGIFactory6::EnumAdapterByGpuPreference` → adapter description, LUID (matches the swapchain adapter from the Overlay handshake), dedicated/shared memory sizes. ~~`IDXGIAdapter3::QueryVideoMemoryInfo` for adapter-wide usage/budget.~~ **Measured wrong, 2026-09-09:** `DXGI_QUERY_VIDEO_MEMORY_INFO.CurrentUsage` is the *calling process's* usage by the structure's own definition ~~— which is exactly why the Overlay reads it inside the game for `vram_proc` —~~ *(corrected 2026-10-04: the Overlay never read it, and `vram_proc` was never produced — §The game process's memory)* and from the Agent it read **0 bytes** beside a 16 GB adapter. Adapter-wide usage is the PDH counter below, as this list always said; DXGI is identity only (`DxgiAdapters`, the first CsWin32 consumer in the tree).
 - **PDH performance counters** — the same source Task Manager uses, fully documented, vendor-neutral:
   - `\GPU Engine(*)\Utilization Percentage` (sum per engine type: 3D, Compute, Copy, VideoDecode)
   - `\GPU Adapter Memory(*)\Dedicated Usage`
@@ -133,7 +137,7 @@ L1 gives no temperatures on its own (unless the D3DKMT probe pans out). That is 
 
 `LibreHardwareMonitorLib` ≥ 0.9.6, consumed as an **unmodified NuGet package**. It already implements per-vendor GPU sensor access internally — which means the vendor-interop licensing problem is one LHM has solved upstream, under a licence that works for us. That is the entire reason this layer exists.
 
-- `Computer` opened with `IsGpuEnabled` always; `IsCpuEnabled` + `IsMemoryEnabled` only when the Agent is elevated and PawnIO is available.
+- `Computer` opened with `IsGpuEnabled` always; ~~`IsCpuEnabled` + `IsMemoryEnabled` only when the Agent is elevated and PawnIO is available~~ nothing else, ever — the CPU temperature uses a separate `Computer` (below) (corrected 2026-10-04).
 - Poll on a dedicated thread: `computer.Accept(updateVisitor)` then read mapped sensors. Never faster than 500 ms; default 1000 ms.
 - Sensor mapping by `SensorType` + name heuristics per vendor (`GPU Core`, `GPU Hot Spot`, `GPU Memory`, `GPU Package Power`, …), kept in `SensorMap.cs` with unit tests against captured sensor-tree fixtures.
 - **P0 verification items:** (a) which fields LHM actually returns per vendor on real hardware — fill the capability matrix below — **NVIDIA filled 2026-09-03, AMD/Intel deferred (§R5/§R6)**; (b) ~~whether GPU-only usage works **without** elevation and without PawnIO (expected yes, since GPU sensors go through user-mode vendor paths, but confirm — it determines whether the default unelevated Agent has temperatures at all)~~ — **confirmed 2026-09-03, §M5 row R1**: eight fields unelevated, the same eight elevated, PawnIO never opened; (c) ~~confirm LHM's sources are not marked with MPL-2.0 Exhibit B~~ — **done, 2026-08-02: clear.** No source file applies the notice; the only repository hit is the `LICENSE` template itself, and every file we depend on carries the permissive Exhibit A. Method and evidence in `docs/spike-notes.md` §0. Re-check on every version bump, and check *source headers*, never the LICENSE file — MPL-2.0's own text contains Exhibit B as a template, so grepping the licence finds it in every MPL project ever published.
@@ -146,7 +150,7 @@ CPU and motherboard sensors remain LHM-only, elevated-only, PawnIO-dependent, an
 > attribution above mean nothing for "how busy was the CPU". Two unprivileged Win32 calls, no process opened:
 > `GetSystemTimes` (busy = (kernel + user) − idle over the interval; kernel INCLUDES idle in that API; the first tick has
 > no interval and is null) and `GlobalMemoryStatusEx` (physical memory in use). **CPU temperature is the one privileged
-> reading**: `LhmCpuTemperatureReader.TryOpen` opens a SEPARATE `Computer` (CPU group only — L2's stays GPU-only and
+> reading**: `LhmCpuTemperatureReader.TryOpen` opens a SEPARATE `Computer` (~~CPU group only~~ CPU and memory groups, GPU off — corrected 2026-10-04 — L2's stays GPU-only and
 > unelevated by design, so the unprivileged layer's behaviour never depends on privilege) only when the process is
 > elevated AND `PawnIo.IsInstalled`; it takes the package sensor (`CPU Package`, `Core (Tctl/Tdie)`) and falls back to the
 > hottest core. **Unmeasured on real hardware**: exercised against a fake `ILhmComputer` only; the first elevated run

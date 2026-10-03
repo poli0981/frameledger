@@ -2,7 +2,7 @@
 
 `%LOCALAPPDATA%\FrameLedger\ledger.db`. Pragmas: `journal_mode=WAL`, `synchronous=NORMAL`, `foreign_keys=ON`, `busy_timeout=5000`. `Microsoft.Data.Sqlite` + Dapper; all writes in explicit transactions.
 
-**Writer ownership:** Agent writes `sessions`, `session_segments`, `frame_blobs`, `sensor_blobs`, `hardware_snapshots`, the hook-state columns on `games`, **and since P4 PR-1 (2026-09-14) the *detected* columns on `games`** — `engine`, `engine_version`, `platform` under the per-field provenance rule (`05_DETECTION` §Caching: a `user` field is never touched), `capability_flags` whole, and the cache key `detection_rules_version` / `detection_exe_size_bytes` / `detection_exe_mtime_ms`, and since schema 0011 (2026-09-25) the executable's own facts `exe_machine` / `exe_file_version` / `exe_product_version` / `library_versions`, written whole like the flags — through `IGameRepository.ApplyDetectionAsync` only. The UI and the Agent were both already writers of `games`; this adds columns to the Agent's half, not a third writer (HANDOFF §P4). **And since P4 PR-4 the UI's library import writes `platform`, `store_id` and `game_version` through `ApplyStoreMetadataAsync`** — the same per-field provenance rule, badged `detected` (a store's record is not the user's typing), on columns the UI already owned. **And since 2026-09-23 the Agent's relocator merges two entries for one executable under two drive letters** (`IGameMerge`, HANDOFF D26, `19_SAFETY` §A moved drive is the same executable): in one transaction it re-parents the dropped entry's `sessions` to the survivor (before the delete — `sessions.game_id` cascades), carries a block or a crash auto-disable still in force to the survivor (`hook_enabled` only ever to 0; `hook_blocked_reason` is copied, never originated or cleared), adds the crash counts, deletes the dropped `games` row, and then moves the survivor to the file's path (after the delete — `exe_path` is UNIQUE). It is the one Agent write that deletes a `games` row; it never touches a consent column. **And since 2026-09-23 the UI writes `record_sessions`** (schema 0009, FR-1.6): the entry's recording switch, which the Agent only reads — off, the watcher does not watch for the program. The script's one data change switches it off for entries an old import made for Steam's own tools (`SteamLibrarySource.KnownTools`, the ids as of the script); a twin merge keeps it off when either twin had it off. **And since 2026-09-25 the Agent's pre-scan of the library (`19_SAFETY` §What a finding does to the game) writes the hook-state columns of every entry, not only of those the user asked to hook** — `hook_prescan_state`, and on a finding `hook_enabled = 0` and `hook_blocked_reason` — and its own key, `hook_prescan_rules_version` / `hook_prescan_exe_size_bytes` / `hook_prescan_exe_mtime_ms` (schema 0010), through `IGameConsentStore.RecordPreScanAsync` only: columns that were already the Agent's, never over a block, never a new row. **And since 2026-09-26 (schema 0014, D33) the Agent writes the user-mode exception's columns** — `ac_exception_*` on `games` through `IGameConsentStore` only (eligibility from the sweep, a grant from the `SetAntiCheatException` command, every end), and `sessions.ac_exception_family` with the session — the grant only after the user accepted its disclosure in the UI, which asks and never writes. **And since 2026-10-03 (beta.11, D40) the Agent deletes sessions on request** — every session of one game or of every game, `DeleteSessions` over the pipe, through `ISessionRepository.DeleteSessionsAsync` in one transaction (segments, blobs and annotations cascade), never while one is being recorded; the UI asks and never deletes a session row itself. **Maintenance (P4 PR-7) adds no writer:** the retention sweep on demand is the Agent's, asked over the pipe; the UI's `VACUUM` rewrites pages with the same contents and changes no row (§Retention built note). UI writes `games` (user-editable fields — since P3 PR-3 that is the FR-1.3 metadata, the `*_default` tri-states, and `removed_at`; never a `hook_*` column), `session_annotations` (tags, notes, and since schema 0002 the FR-8.3 overrides — which is WHY they are on this table and not on `sessions`), `settings`, `legal_acceptance`. Both read everything. The ports say the same in their names: `IGameRepository.UpdateMetadataAsync` / `SetTriStateDefaultAsync` / `RemoveAsync`, `ISessionAnnotationRepository`, `RegisteredSettings`, `ILegalAcceptanceStore.RecordAsync` (all P3 PR-3).
+**Writer ownership:** Agent writes `sessions`, `session_segments`, `frame_blobs`, `sensor_blobs`, `hardware_snapshots`, the hook-state columns on `games`, **and since P4 PR-1 (2026-09-14) the *detected* columns on `games`** — `engine`, `engine_version`, `platform` under the per-field provenance rule (`05_DETECTION` §Caching: a `user` field is never touched), `capability_flags` whole, and the cache key `detection_rules_version` / `detection_exe_size_bytes` / `detection_exe_mtime_ms`, and since schema 0011 (2026-09-25) the executable's own facts `exe_machine` / `exe_file_version` / `exe_product_version` / `library_versions`, written whole like the flags — through `IGameRepository.ApplyDetectionAsync` only. The UI and the Agent were both already writers of `games`; this adds columns to the Agent's half, not a third writer (HANDOFF §P4). **And since P4 PR-4 the UI's library import writes `platform`, `store_id` and `game_version` through `ApplyStoreMetadataAsync`** — the same per-field provenance rule, badged `detected` (a store's record is not the user's typing), on columns the UI already owned. **And since 2026-09-23 the Agent's relocator merges two entries for one executable under two drive letters** (`IGameMerge`, HANDOFF D26, `19_SAFETY` §A moved drive is the same executable): in one transaction it re-parents the dropped entry's `sessions` to the survivor (before the delete — `sessions.game_id` cascades), carries a block or a crash auto-disable still in force to the survivor (`hook_enabled` only ever to 0; `hook_blocked_reason` is copied, never originated or cleared), adds the crash counts, deletes the dropped `games` row, and then moves the survivor to the file's path (after the delete — `exe_path` is UNIQUE). It is the one Agent write that deletes a `games` row; it never touches a consent column. **And since 2026-09-23 the UI writes `record_sessions`** (schema 0009, FR-1.6): the entry's recording switch, which the Agent only reads — off, the watcher does not watch for the program. The script's one data change switches it off for entries an old import made for Steam's own tools (`SteamLibrarySource.KnownTools`, the ids as of the script); a twin merge keeps it off when either twin had it off. **And since 2026-09-25 the Agent's pre-scan of the library (`19_SAFETY` §What a finding does to the game) writes the hook-state columns of every entry, not only of those the user asked to hook** — `hook_prescan_state`, and on a finding `hook_enabled = 0` and `hook_blocked_reason` — and its own key, `hook_prescan_rules_version` / `hook_prescan_exe_size_bytes` / `hook_prescan_exe_mtime_ms` (schema 0010), through `IGameConsentStore.RecordPreScanAsync` only: columns that were already the Agent's, never over a block, never a new row. **And since 2026-09-26 (schema 0014, D33) the Agent writes the user-mode exception's columns** — `ac_exception_*` on `games` through `IGameConsentStore` only (eligibility from the sweep, a grant from the `SetAntiCheatException` command, every end), and `sessions.ac_exception_family` with the session — the grant only after the user accepted its disclosure in the UI, which asks and never writes. **And since 2026-10-03 (beta.11, D40) the Agent deletes sessions on request** — every session of one game or of every game, `DeleteSessions` over the pipe, through `ISessionRepository.DeleteSessionsAsync` in one transaction (segments, blobs and annotations cascade), never while one is being recorded; the UI asks and never deletes a session row itself *(for Delete all sessions; FR-1.4's removal is the App's own cascade, above — corrected 2026-10-04)*. **Maintenance (P4 PR-7) adds no writer:** the retention sweep on demand is the Agent's, asked over the pipe; the UI's `VACUUM` rewrites pages with the same contents and changes no row (§Retention built note). UI writes `games` (user-editable fields — since P3 PR-3 that is the FR-1.3 metadata, the `*_default` tri-states, and `removed_at`; ~~never a `hook_*` column~~ **and two downgrades** *(corrected 2026-10-04)*: *Change executable* (2026-09-21, `GameLibrary.ChangeExecutableAsync`) turns hooking off, clears the consent and pre-scan columns and ends an exception grant — it never writes a block or a grant — and *Remove game ▸ Delete sessions too* (FR-1.4) deletes the `games` row, cascading to its sessions, segments, blobs and annotations), `session_annotations` (tags, notes, and since schema 0002 the FR-8.3 overrides — which is WHY they are on this table and not on `sessions`), `settings`, `legal_acceptance`. Both read everything. The ports say the same in their names: `IGameRepository.UpdateMetadataAsync` / `SetTriStateDefaultAsync` / `RemoveAsync`, `ISessionAnnotationRepository`, `RegisteredSettings`, `ILegalAcceptanceStore.RecordAsync` (all P3 PR-3).
 
 ## Schema (v2 — hook architecture)
 
@@ -123,15 +123,18 @@ CREATE TABLE games (
 > human's typed value as auto-detected is a lie they cannot see through; failing to
 > badge a detected value merely costs a badge on something they can still edit. The
 > rule it exists to support — *detection never overwrites a `user` field* — is in
-> `05_DETECTION` §Caching and is enforced by `StaticDetectionResult.ShouldWrite`,
-> which is tested even though nothing persists yet.
+> `05_DETECTION` §Caching and is enforced by ~~`StaticDetectionResult.ShouldWrite`,
+> which is tested even though nothing persists yet~~ `SqliteGameRepository.FieldProvenance.Resolve`
+> *(corrected 2026-10-04: applied per field since P4 PR-1, and it also fills an empty field that has no entry;
+> `ShouldWrite` keeps its tests but has no production caller)*.
 >
 > ~~No migration is written here. There is no SQLite layer at all, and §Migrations
 > forbids editing an applied script — so guessing the shape into `0001_init.sql`
 > before its consumers exist maximises the chance of baking in a wrong guess that
 > can only be appended to.~~ **Written 2026-09-09 (P2 PR-B), with its first consumer:** the
-> column exists in `0001_init.sql`; the writer (the detection cache, P4) and the reader (the
-> library card, P3) are still unbuilt, so it is decided, created, and empty.
+> column exists in `0001_init.sql`; ~~the writer (the detection cache, P4) and the reader (the
+> library card, P3) are still unbuilt, so it is decided, created, and empty~~ *(corrected 2026-10-04: written since
+> 2026-09-14 by the detection sweep, the store import and Edit…; read for the Edit dialog's badges and the game page)*.
 
 > **The three hook-state columns have a consumer before they have a table, and two
 > fields it needs are not here.** Added 2026-08-06 with `IGameConsentStore`, whose
@@ -142,7 +145,8 @@ CREATE TABLE games (
 >   anything else — so a record could carry a consent time that nothing had ever
 >   disclosed anything for. `ConsentProvenance`'s zero value means *no disclosure was
 >   shown*, and it deliberately has **no FR-2.1 member**: that dialog needs reviewed
->   `Safety_*` wording in en/vi/ja and no `.resx` exists anywhere in this tree.
+>   `Safety_*` wording in en/vi/ja and ~~no `.resx` exists anywhere in this tree~~ *(superseded: the dialog shipped in
+>   P3 PR-4 as `ConsentDialog`, below — corrected 2026-10-04)*.
 > - **A disclosure/wording version.** `legal_acceptance` carries `(doc, version,
 >   accepted_at)` while this column carries a timestamp alone, so nothing could mark
 >   existing per-game consent stale when the reviewed wording changes. It is carried
@@ -164,7 +168,10 @@ CREATE TABLE games (
 > shipped producer, still not FR-2.1, stamped by the Agent's clock; the store writes the NAME the
 > acknowledgement carries and refuses `NotRecorded`.
 >
-> **Still unanswered, and it is an owner decision rather than a coding one:** who
+> ~~**Still unanswered, and it is an owner decision rather than a coding one:**~~ **Answered by the owner on
+> 2026-09-22: nothing clears it** *(corrected 2026-10-04)*. A clean re-scan, *Change executable*, a re-import and a twin
+> merge all leave it, and the toggle stays disabled (`19_SAFETY` §What a finding does to the game); D33's exception
+> sits on top of the block and never clears it. The question as it stood: who
 > clears `hook_blocked_reason` when a re-scan comes back clean. `19_SAFETY` §A game
 > already enabled can become blocked later makes a non-null value mean "toggle
 > disabled" and makes re-enabling "a user action" — but if nothing clears the column
@@ -217,7 +224,7 @@ CREATE TABLE sessions (
   sync_interval_mode TEXT,                     -- observed vsync behavior
 
   -- upscaling / FG (measured at tier 1)
-  upscaler TEXT,                               -- none|dlss|fsr2|fsr3|fsr4|xess|nis|unknown
+  upscaler TEXT,                               -- none|dlss|fsr2|fsr3|fsr4|xess|nis|unknown, and fsr since 2026-09-04 (FL_UPSCALER_FSR_UNVERSIONED; added 2026-10-04)
   upscaler_quality TEXT,
   upscaler_sharpness INTEGER,                  -- percent; NULL when the API reports none
   render_w INTEGER, render_h INTEGER,          -- dominant segment
@@ -339,7 +346,7 @@ CREATE TABLE frame_blobs (
                                    -- stored only when either varies
   dispatch_rays BLOB,              -- uint32[] : ray volume per frame, tier 1 only
   pso_created BLOB,                -- uint16[] : compile COUNT per frame, not a flag
-  vram_proc BLOB,                  -- uint32[] MB per frame; held 1 Hz sample, see 03_METRICS
+  vram_proc BLOB,                  -- uint32[] MB per frame; never written (corrected 2026-10-04: the Overlay never produced vramUsedMb)
   latency_us BLOB,                 -- uint32[], tier 1 + Reflex only
   first_present_ms REAL            -- schema 0013 (beta.8): the dominant stream's first present, ms from qpc_epoch —
                                    -- the sensors' zero (t_ms) against the frames'. NULL before; the charts then
@@ -409,7 +416,7 @@ switch's rule); integers are invariant-culture within an inclusive range; choice
 | `ui.hide_anticheat_hooking` | bool | `1` | | UI (beta.8, 2026-09-25): the game page of an entry the guard found anti-cheat in shows the finding in place of its Hooking card (`08_UI` §Game detail) |
 | `ui.fps_decimals` | bool | `0` | | UI (beta.8, 2026-09-25): every FPS figure with two decimals ("62.40") instead of a whole number |
 | `ui.library_view` | choice `grid`\|`list` | `grid` | | UI (beta.11, 2026-10-03): the Games library as a grid of cards that fills the width, or as a list; written by the page's own switch, no Settings row (`08_UI` §Games) |
-| `capture.background` | bool | `1` | | Agent |
+| `capture.background` | bool | `1` | | ~~Agent~~ nobody *(corrected 2026-10-04: no Agent code ever read it, so the watcher recorded every tracked game whatever it said; beta.12 removed its switch from Settings and reserved the key — `SettingsRegistry.CaptureBackground`)* |
 | `hooking.kill_switch` | bool | `0` | | Agent (FR-2.4, since P2 PR-F) |
 | `hooking.usermode_ac_exceptions` | bool | `0` | | Agent, at every session start and command (FR-2.8, D33, 2026-09-26): off suspends every user-mode exception without deleting any; on, the user still grants each eligible game |
 | `capture.run_elevated` | bool | `0` | | The App when it starts the Agent, and an Agent the logon task started — both BEFORE the Agent exists, through `Infrastructure.Startup.RunElevatedSetting` (one row, `PRAGMA query_only`, no version gate, anything but `1` is off) (D34, beta.10): on, Windows is asked for administrator rights at every Agent start (`01_ARCHITECTURE` ADR-9) |
@@ -430,7 +437,7 @@ Because Tier-1 and Tier-2 sessions carry different fields, every query that comp
 
 ## Blob encoding
 
-`float32`/`uint16`/`uint32` little-endian arrays through `DeflateStream` (Optimal). One hour at 100 fps ≈ 360k frames ≈ 1.4 MB raw frametimes ≈ **≤ 0.7 MB stored**; flags compress far better; render-res only stored when it varies. Decode helpers in `Infrastructure.Blobs` with round-trip test
+`float32`/`uint16`/`uint32` little-endian arrays through `DeflateStream` (Optimal). One hour at 100 fps ≈ 360k frames ≈ 1.4 MB raw frametimes ≈ **≤ 0.7 MB stored**; flags compress far better; render-res only stored when it varies. Decode helpers in `Infrastructure.Blobs` with round-trip tests (NaN forbidden — assert).
 
 > **Two rules the finalizer applies (2026-09-10, P2 PR-D).** `frametimes[i]` is the interval from the previous
 > record ON THE SAME SWAPCHAIN; the first record of a stream, and any record after a torn slot or an
@@ -440,7 +447,7 @@ Because Tier-1 and Tier-2 sessions carry different fields, every query that comp
 > and the sensors from `qpc_epoch`, and nothing said how far apart the two zeros were. Gaps stay closed up on the frame
 > axis (a gap's interval is stored as 0), so a series still drifts ahead of its sensors past each gap.
 > Sensor series are aligned to `t_ms` (milliseconds from `qpc_epoch`) and a tick with no reading is stored as
-> **−1** — never 0, which would be a reading — because temperatures, loads, power and memory are never negative.s (NaN forbidden — assert).
+> **−1** — never 0, which would be a reading — because temperatures, loads, power and memory are never negative.
 
 ## The `.partial` file
 
@@ -458,10 +465,11 @@ Because Tier-1 and Tier-2 sessions carry different fields, every query that comp
 > | 1 `Header` | UTF-8 JSON: format version, `session_guid`, `started_at`, `qpc_epoch`/`qpc_frequency`, `game_id`, `snapshot_id`, exe path, pid, tier, mode, Overlay build id, telemetry descriptor, launch wait | on create — the breadcrumb `19_SAFETY` §Crash safety asks for before injection |
 > | 2 `Records` | `i64` first ordinal, then N raw `FlFrameRecord` (64 B each); a chunk that does not continue the sequence is refused | each flush |
 > | 3 `Gaps` | N × `i32` gap-before record indices | each flush |
-> | 4 `Sensors` | N × one telemetry sample: QPC, wall clock, layer, presence mask, then only the fields that carry a value — null stays null | each flush |
+> | 4 `Sensors` | N × one telemetry sample: QPC, wall clock, layer, presence mask, then only the fields that carry a value — null stays null | ~~each flush~~ read only since beta.12, so a beta.11 file still recovers *(corrected 2026-10-04)* |
 > | 5 `Tick` | drain/foreground ticks, dropped, gaps, guard ticks, wall clock, the raw `FlWriterState`; the last one wins | each flush |
 > | 6 `Note` | wall clock + UTF-8 text: a state transition | each transition |
 > | 7 `Touches` | N × `i64` QPC at which the host touched the target | each flush |
+> | 8 `SensorsWide` | the same samples under a 32-bit presence mask that carries the game process's memory (D43) | each flush, since beta.12 *(row added 2026-10-04)* |
 >
 > Recovery (`PartialRecovery`): a file whose guid is already a row is deleted (the finalize had landed);
 > one under the minimum session length is discarded; one with no readable header is dropped; the rest
@@ -505,11 +513,6 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > columns on `session_annotations` and `games.removed_at`. `LedgerDatabaseTests` asserts one
 > `schema_migrations` row per script, so `LatestVersion` is 2.
 
-> **`0002_annotation_overrides_and_removal.sql` (P3 PR-3, 2026-09-13) — the first append**, and the first
-> time the runner ran two scripts on a real file: `ALTER TABLE ADD COLUMN` only — the three override
-> columns on `session_annotations` and `games.removed_at`. `LedgerDatabaseTests` asserts one
-> `schema_migrations` row per script, so `LatestVersion` is 2.
-
 > **`0003_fg_refusal.sql` (2026-09-14) — `sessions.fg_refusal`.** The owner's ledger held two hooked rows with
 > `fg_mode = 'dlssg'`, `fg_source = 'api'` and `fg_factor` NULL — the identity stood, the count refused — and
 > nothing recorded which refusal; every FG surface said N/A beside a detection that had succeeded. One
@@ -543,6 +546,11 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > absence). "Never edit an applied script; only append" holds: 0007 stays as applied and 0008 is the append. The
 > data dropped is the override acknowledgements themselves, which is the decision. `LatestVersion` is 8.
 
+> **`0009_record_sessions.sql` (2026-09-23, D29) — `games.record_sessions`** *(entry added 2026-10-04; it was
+> missing)*. FR-1.6's recording switch, `NOT NULL DEFAULT 1`; the App writes it, the Agent only reads it. Its one data
+> change switches it off for entries an old import made for Steam's own tools (`SteamLibrarySource.KnownTools` as of the
+> script). `LatestVersion` is 9; `LedgerDatabaseTests.ScriptNineAddsTheRecordingSwitchOffForSteamToolsOnly`.
+
 > **`0010_prescan_key.sql` (2026-09-25) — `games.hook_prescan_rules_version` / `hook_prescan_exe_size_bytes` /
 > `hook_prescan_exe_mtime_ms`.** The Agent pre-scans every library entry for anti-cheat since beta.8, and again
 > whenever the rules or the executable change, so it needs what each row was last scanned against — its own key, as
@@ -567,6 +575,11 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > NVIDIA bridge was there to ask. The same day `ngx_driver_words` gained `Ratio`, `Mode`, `Preset`, `FgCount`,
 > `FgPreset`, `FgMode` beside its masks (additive JSON fields; older rows lack them). `LatestVersion` is 12;
 > `LedgerDatabaseTests.ScriptTwelveAddsTheDriverProfileColumn`.
+
+> **`0013_first_present.sql` (beta.8, 2026-09-25) — `frame_blobs.first_present_ms`** *(entry added 2026-10-04; it was
+> missing)*. The charted stream's first present, in milliseconds from `qpc_epoch`, written by the finalizer
+> (§Blob encoding); NULL before, and such a row's sensor overlay stays off rather than drawn out of step. `LatestVersion`
+> is 13; `LedgerDatabaseTests.ScriptThirteenAddsTheFirstPresentColumn`.
 
 > **`0014_usermode_ac_exception.sql` (beta.9, 2026-09-26, owner decision D33) — the user-mode anti-cheat exception.**
 > Fourteen `games.ac_exception_*` columns in three groups — the Agent's eligibility answer about a blocked row and its
@@ -659,14 +672,16 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > insert leaves no session row behind (`SqliteSessionRepositoryTests`).
 
 **`0001_init.sql` creates the schema above directly.** There is no v1 → v2
-upgrade path, because there is no released v1: nothing has shipped, so no
-FrameLedger database exists anywhere in the world. Writing and testing a
+upgrade path, because there is no released v1: ~~nothing has shipped, so no
+FrameLedger database exists anywhere in the world~~ *(corrected 2026-10-04: eleven pre-releases shipped from
+0.1.0-beta.1 on 2026-09-16, and the appended scripts carry their ledgers forward; no schema older than 0001 ever
+shipped, so there is still no v1 → v2 path)*. Writing and testing a
 migration from a schema that never existed is work with no user on the other end
 of it. The `schema_migrations` machinery still ships from day one — it is what
 makes the *next* migration safe, and `11_UPDATER` §Versioning already requires
-migrations to cover every released `MAJOR-1`. That obligation begins at the first
-release, not before it.
+migrations to cover every released `MAJOR-1`. ~~That obligation begins at the first
+release, not before it.~~ It began with 0.1.0-beta.1.
 
 ## Hardware change markers (FR-6.3)
 
-Snapshot captured per session, hashed, deduped. Trend queries join consecutive sessions' snapshots; differing fields emit a marker `{after_session_id, field, old, new}`. GPU driver version now comes from the vendor API (`18_GPU_VENDOR_APIS`) rather than WMI, which makes it accurate enough to be worth charting.
+Snapshot captured per session, hashed, deduped. Trend queries join consecutive sessions' snapshots; differing fields emit a marker `{after_session_id, field, old, new}`. GPU driver version now comes from ~~the vendor API (`18_GPU_VENDOR_APIS`)~~ DXGI's four-part user-mode driver version (`HardwareSnapshotSource`; corrected 2026-10-04) rather than WMI, which makes it accurate enough to be worth charting.
