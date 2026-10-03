@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // The rules file that SHIPS, measured against the parser that has to read it.
 //
 // guard_test.cpp proves the matcher works — but every one of its cases parses an

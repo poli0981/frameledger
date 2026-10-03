@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 namespace FrameLedger.Application.Recording;
 
 /// <summary>The recorder's per-session policy: the composition's baseline, or what an <see cref="IRecorderPolicy"/> resolved from it at session start.</summary>

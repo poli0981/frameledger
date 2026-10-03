@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 namespace FrameLedger.App.Services;
 
 /// <summary>Tools ▸ Database maintenance's two windows (P4 PR-7): the dialog itself, and the one confirmation a destructive action asks (<c>08_UI</c> §UX rules).</summary>

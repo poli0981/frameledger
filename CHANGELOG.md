@@ -27,6 +27,30 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
+### Added
+
+- **`NOTICE`, and the licence header in every source file** (owner decision D45, beta.12). FrameLedger's own material is
+  GPL-3.0-only with three additional terms of the kinds GPLv3 §7 permits: keep the copyright line and the attribution in
+  the program's legal notices (b), mark a modified version as different and do not call it "FrameLedger" alone (c), and
+  no trademark rights in the name (e). Section 7 wants such terms named in the source files themselves, so every
+  first-party `.cs`, `.cpp`, `.h`, `.inl`, `.ps1` and `.xaml` file now opens with an `SPDX-License-Identifier:
+  GPL-3.0-only` line and a line pointing at `NOTICE` (1,053 files; `src/native/third_party/` excluded). A new gate,
+  `tools/notice-check.ps1` (six self-test cases, both directions; `-Fix` writes a missing header), keeps it true, and
+  `tools/resx-gen.ps1` generates the string accessors with it. `NOTICE` ships in every package as
+  `licenses\NOTICE.txt`, and `release.yml` refuses a published tree without it.
+- **For people who build, contribute or redistribute:** `CONTRIBUTING.md` (the gate, the definition of done, what will
+  not be merged, and that a contribution is licensed GPL-3.0-only with the `NOTICE` terms — no CLA), `FORKING.md` (what
+  the GPL asks of someone who distributes builds, and the names a fork must change so that it does not share
+  FrameLedger's update feed, install folder, database, pipe, shared memory or Vulkan layer), `CODE_OF_CONDUCT.md` (the
+  Contributor Covenant 2.1, adopted by reference) and `legal/TRADEMARKS.md` (third-party names, no affiliation, and how
+  the name FrameLedger may be used).
+
+### Fixed
+
+- **The native binaries' version block named the wrong licence.** Every DLL's `LegalCopyright` read
+  `GPL-3.0-or-later` while `LICENSE`, the EULA, the README and the third-party notices all say GPL-3.0-only; it now reads
+  `Copyright (C) 2026 poli0981. GPL-3.0-only with additional terms: see NOTICE`.
+
 ## [0.1.0-beta.11] - 2026-10-03
 
 **The eleventh pre-release: a user-mode anti-cheat exception that can be reached, a library that fills the window, and

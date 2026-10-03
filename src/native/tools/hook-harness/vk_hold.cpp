@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // hook-harness --vulkan --hold-presenting N: a REAL Vulkan swapchain on a hidden
 // window, presented every few milliseconds for N seconds, so the layer's
 // vkQueuePresentKHR can be exercised under the real loader (12_BUILD §Targets:

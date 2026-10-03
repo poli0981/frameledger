@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 namespace FrameLedger.App.Services;
 
 /// <summary>The Presented-FPS qualifier (<c>03_METRICS</c> §Presented FPS), as the row's <c>presented_qualifier</c> and the wire's spell it.</summary>

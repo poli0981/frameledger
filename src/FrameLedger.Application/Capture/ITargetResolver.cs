@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 namespace FrameLedger.Application.Capture;
 
 /// <summary>How the host finds the process to capture. There is no pid argument anywhere.</summary>

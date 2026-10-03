@@ -1,0 +1,45 @@
+FrameLedger
+Copyright (C) 2026 poli0981 <contact@poli0981.dev>
+
+FrameLedger is free software: you can redistribute it and/or modify it under the terms of the
+GNU General Public License as published by the Free Software Foundation, version 3 of the
+License only (GPL-3.0-only).
+
+FrameLedger is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU General Public License for more details. Its full text is in the file LICENSE
+and at <https://www.gnu.org/licenses/gpl-3.0.html>.
+
+
+ADDITIONAL TERMS UNDER SECTION 7 OF THE GNU GENERAL PUBLIC LICENSE, VERSION 3
+
+These terms apply to the material in this repository authored by poli0981. They do not
+apply to third-party components, which keep their own licences (legal/THIRD_PARTY_NOTICES.md).
+Every first-party source file points here with the line
+"Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE".
+
+(b) Preservation of notices. You must preserve this notice, the copyright line above, and
+    the attribution "Based on FrameLedger by poli0981 - https://github.com/poli0981/frameledger"
+    in the Appropriate Legal Notices displayed by any work that contains this material
+    (in FrameLedger itself: Help > About).
+
+(c) Marking of modified versions. A modified version you convey must be marked in
+    reasonable ways as different from the original version: it must not be named
+    "FrameLedger" alone, it must say in its Appropriate Legal Notices and in its
+    documentation that it is modified and by whom, and it must not present its builds,
+    installers or update feed as those of the original project.
+
+(e) Trademarks. These terms grant no rights under trademark law to use the name
+    "FrameLedger", or the project's logo and icon, beyond describing the origin of a work
+    truthfully (for example "based on FrameLedger").
+
+Section 7 of the GPL permits additional terms of the kinds its paragraphs (a) to (f) list;
+the three above are of the kinds named in paragraphs (b), (c) and (e).
+
+
+SEE ALSO
+
+FORKING.md                     what a redistributor of a modified version is asked to change
+legal/TRADEMARKS.md            third-party names and marks
+legal/THIRD_PARTY_NOTICES.md   the third-party components and their licences
+LICENSE                        the GNU General Public License, version 3

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 namespace FrameLedger.Application.Persistence;
 
 /// <summary>One game's sessions in aggregate, for the library card (<c>08_UI</c> §Games: total playtime, last played) and the Dashboard totals.</summary>

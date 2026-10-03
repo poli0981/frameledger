@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // A stub that answers to the name `ffx_fsr3_x64.dll` -- the FSR 3.0 HOST DLL Cyberpunk
 // 2077 ships beside its 1.1.x monolith -- and exports the four names
 // fl::inventory::SpeaksFsr3Host probes for, one of which is the row the Overlay hooks.

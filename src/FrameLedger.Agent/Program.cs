@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // FrameLedger.Agent — the capture orchestrator (P2 PR-F).
 //
 // The shipped host of the guard loop, by design (01_ARCHITECTURE §Component model; §S18 blocker 3):

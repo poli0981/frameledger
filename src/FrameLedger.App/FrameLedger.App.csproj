@@ -57,6 +57,8 @@
     <None Include="..\..\legal\licenses\**\*" LinkBase="licenses" CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest" />
     <None Include="..\..\legal\THIRD_PARTY_NOTICES.md" Link="licenses\THIRD_PARTY_NOTICES.md" CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest" />
     <None Include="..\..\LICENSE" Link="licenses\FrameLedger-GPL-3.0.txt" CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest" />
+    <!-- beta.12 (D45): the copyright line and the GPLv3 section 7 additional terms travel with every copy. -->
+    <None Include="..\..\NOTICE" Link="licenses\NOTICE.txt" CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

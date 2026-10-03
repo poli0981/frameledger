@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // hook-harness --hold-presenting-hwnd N: a D3D11 swap chain bound to a REAL window, presented every few milliseconds
 // for N seconds (layout 4, 2026-09-27, beta.10). Every other DXGI mode here presents to a composition swap chain, which
 // has no window -- so until this mode no test had a chain whose OutputWindow, exclusive state and back buffer region 4

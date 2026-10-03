@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 namespace FrameLedger.App.Services;
 
 /// <summary>Which safety event a notice carries (<c>08_UI</c> §Notifications policy: these are never toasts).</summary>

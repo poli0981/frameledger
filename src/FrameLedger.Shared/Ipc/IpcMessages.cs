@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // The message set of 07_IPC §Messages: the READ half (P3 PR-1, 2026-09-13: Hello/GetStatus/Ping and the
 // Agent → UI events) and the COMMAND half (P3 PR-1b, the same day: SetWatchlist, LaunchGame, SetHookEnabled,
 // Pause/Resume, StopSession, UpdateRules, Shutdown). Every type here has a handler in AgentRequestHandler or

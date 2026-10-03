@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // THE DECOY. A second module, named `sl.common.dll`, exporting the SAME symbol
 // name -- and it must never be hooked.
 //

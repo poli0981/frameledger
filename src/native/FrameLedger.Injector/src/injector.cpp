@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // FrameLedger.Injector — launch/attach injection and the anti-cheat guard probe.
 //
 // Scaffold. Nothing in this file may open a process with

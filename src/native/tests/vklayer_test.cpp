@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // The Vulkan layer's capture side (P1 item 3): vkQueuePresentKHR intercepted,
 // the ring written, the in-layer supervision stop (§S2 part three) -- driven
 // end to end by a FAKE loader chain, exactly as 20_OPEN_QUESTIONS §S2 said it

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // The safety-guard test matrix (docs/14_TESTING.md §Safety-guard tests).
 //
 // "The anti-cheat guard is the one component where a bug can cost someone an

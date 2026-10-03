@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // The anti-cheat guard — the hard gate (docs/19_SAFETY_AND_ANTICHEAT.md).
 //
 // This is the one component where a bug can cost somebody their account

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // Shared body for the vendor-name stub DLLs.
 //
 // WHAT THESE ARE FOR. 17_HOOK_ENGINE §Hook inventory calls a wrong symbol name

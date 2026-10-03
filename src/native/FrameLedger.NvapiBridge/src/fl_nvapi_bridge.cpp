@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // fl_nvapi_bridge.cpp — see fl_nvapi_bridge.h.
 //
 // EVERY NVAPI CALL HERE IS A READ. 18_GPU_VENDOR_APIS §Runtime policy: the libraries behind the

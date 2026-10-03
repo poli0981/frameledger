@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 namespace FrameLedger.Infrastructure.Recording;
 
 /// <summary>CRC-32 (IEEE 802.3, reflected, 0xEDB88320) — the check on every <c>.partial</c> chunk. Table-driven, no dependency.</summary>

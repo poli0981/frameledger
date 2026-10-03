@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 namespace FrameLedger.Domain.Display;
 
 /// <summary>One sample's classification and the sizes it was made from; null sizes were not read.</summary>

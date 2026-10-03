@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // FrameLedger shared-memory layout.
 //
 // NORMATIVE. This header and docs/07_IPC.md must agree; the static_asserts

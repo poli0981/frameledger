@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // The anti-cheat blocklist, as data (docs/19_SAFETY §Blocklist seed).
 //
 // Fixed-capacity throughout. Nothing here allocates, and every bound is a

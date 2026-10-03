@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // fl_nvapi_bridge.h — the C ABI the managed Agent reaches NVAPI through (docs/18_GPU_VENDOR_APIS.md §L3).
 //
 // WHAT THIS IS. NVAPI is a C API behind a vendored import library, and CLAUDE.md puts the native

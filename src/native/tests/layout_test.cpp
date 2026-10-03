@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // Compiling this file IS the layout test: every size and offset assertion
 // lives in fl_shm.h as a static_assert, so a drift makes the build fail rather
 // than making a test fail. Running it re-checks the derived size arithmetic.

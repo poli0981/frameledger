@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 namespace FrameLedger.Application.Recording;
 
 /// <summary>The bits of <c>frame_blobs.frame_flags</c> (<c>06_DATA_MODEL</c>: generated / dropped / gap).</summary>

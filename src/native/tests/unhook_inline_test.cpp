@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // Compare-and-restore for INLINE patches (17_HOOK_ENGINE §Unhooking, §H7) --
 // the shape the Overlay's hooks actually are, driven against a REAL MinHook patch
 // and a SIMULATED foreign one, deterministically, with no overlay software

@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // THE LOADER STAND-IN. A module named `amd_fidelityfx_loader_dx12.dll`, exporting
 // the SAME five names as the leaves, forwarding to the two SDK 2.x leaf stubs --
 // and, since the evening of 2026-09-04, an inventory row like them.

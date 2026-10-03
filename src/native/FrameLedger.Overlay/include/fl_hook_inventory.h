@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // The vendor symbols FrameLedger.Overlay resolves by name, and the module each
 // one must come from.
 //

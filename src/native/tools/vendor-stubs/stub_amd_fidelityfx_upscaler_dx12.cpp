@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // A stub that answers to the name `amd_fidelityfx_upscaler_dx12.dll` -- the SDK
 // 2.x UPSCALER effect DLL (FSR 3.1 and FSR 4 providers; 4.0.2 in Expedition 33,
 // Dying Light: The Beast and Kingdom Come: Deliverance II, 4.0.3 in Hell Is Us).

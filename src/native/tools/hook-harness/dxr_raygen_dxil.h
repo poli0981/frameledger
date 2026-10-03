@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: GPL-3.0-only
+// Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
+
 // GENERATED FILE -- do not edit by hand. Regenerate and compare.
 //
 // Source:  src/native/tools/hook-harness/dxr_raygen.hlsl (checked in beside this)
