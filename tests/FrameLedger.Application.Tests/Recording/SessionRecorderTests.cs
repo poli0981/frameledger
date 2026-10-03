@@ -53,11 +53,19 @@ public sealed class SessionRecorderTests : IAsyncDisposable
     }
 
     /// <summary>
-    /// A clock that advances five seconds per drain call (the sink moves it), so a 150 ms test session lasts
-    /// a minute; its timestamp is the same clock, so the flush interval and the records' QPC follow it too.
+    /// A clock that advances <see cref="Step"/> per drain call (the sink moves it); its timestamp is the same clock, so the
+    /// flush interval and the records' QPC follow it too.
     /// </summary>
+    /// <remarks>
+    /// <b>How many drains a session gets is the machine's, not the test's</b> (2026-10-03, beta.12 PR-0): the loop is bounded
+    /// by <c>MaxDuration</c> on the WALL clock, and a loaded runner fits fewer 1 ms drains into it — the beta.11 trial theory
+    /// went red on <c>main</c> with a hooked session under the 30 s minimum. So the harness's minimum is one step: a session
+    /// that drained at all is over it, and a held session whose clock never moved stays under it, on any machine.
+    /// </remarks>
     private sealed class SteppingClock : TimeProvider
     {
+        public static readonly TimeSpan Step = TimeSpan.FromSeconds(5);
+
         public DateTimeOffset Now { get; set; } = new(2026, 9, 9, 12, 0, 0, TimeSpan.Zero);
 
         public override DateTimeOffset GetUtcNow() => Now;
@@ -98,7 +106,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
 
         public DrainResult Drain(Span<FlFrameRecord> into, IList<ulong> gapIndices)
         {
-            clock.Now = clock.Now.AddSeconds(5);
+            clock.Now += SteppingClock.Step;
             int n = Math.Min(into.Length, recordsToServe - _served);
             for (int i = 0; i < n; i++)
             {
@@ -176,7 +184,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
             // A held Tier-2 session's only clock is its ticks (2026-09-22): a poller told to step the clock makes each one 5 s.
             if (steps is not null)
             {
-                steps.Now += TimeSpan.FromSeconds(5);
+                steps.Now += SteppingClock.Step;
             }
 
             into.Add(new TelemetrySample(Stopwatch.GetTimestamp(), new GpuSample { TakenAt = DateTimeOffset.UtcNow, Layer = TelemetryLayer.Lhm, TempCoreC = 60 + _served++ }));
@@ -296,7 +304,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
             games, new FakeSnapshots(), new FixedHardware(), partials,
             new SessionFinalizer(sessions, new RawSeriesCodec()), new NoCrashEvents(),
             _ => poller ? new FakePoller(clockStepsOnDrain ? clock : null) : null, clock,
-            new RecorderOptions { PartialFlushInterval = TimeSpan.FromSeconds(10) }, profiles: profiles,
+            new RecorderOptions { PartialFlushInterval = TimeSpan.FromSeconds(10), MinimumSessionLength = SteppingClock.Step }, profiles: profiles,
             exceptionLapse: new UserModeExceptionLapsePolicy(store, sessions));
         return new Harness { Recorder = recorder, Games = games, Sessions = sessions, Partials = partials, Clock = clock, Store = store };
     }
@@ -403,7 +411,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
 
         r.Outcome.Reason.Should().Be(SessionEndReason.Running, "a bounded capture ends on its own limit");
         r.ExitStatus.Should().Be(ExitStatus.Normal);
-        r.Finalize.Status.Should().Be(FinalizeStatus.Saved, "the stepping clock made it a minute long");
+        r.Finalize.Status.Should().Be(FinalizeStatus.Saved, "one drain steps the clock to the harness's one-step minimum");
         FinalizedSession stored = h.Sessions.Stored.Single();
         stored.Row.SessionGuid.Should().Be(r.SessionGuid);
         stored.Row.Tier.Should().Be(CaptureTier.Hooked);
