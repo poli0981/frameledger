@@ -72,7 +72,11 @@ public static class TrendSeriesBuilder
             (TrendMetric.P1Low, Strings.Trend_Metric_P1Low),
             (TrendMetric.P01Low, Strings.Trend_Metric_P01Low),
         ];
-        return [.. metrics.Select(m => new TrendLine(m.Label, Strings.Trend_Unit_Fps, Points(rows, m.Metric, includeMidSessionChanges: true)))
+        // Native and Displayed only where frames were generated: on a session that counted none, Native is the Presented rate
+        // already drawn, and a second line on the same points reads as a second measurement.
+        HashSet<long> generated = [.. rows.Where(static r => FpsPresentation.FromRow(r).Kind == FpsReadoutKind.Generated).Select(static r => r.Id)];
+        return [.. metrics.Select(m => new TrendLine(m.Label, Strings.Trend_Unit_Fps,
+                [.. Points(rows, m.Metric, includeMidSessionChanges: true).Where(p => m.Metric is not (TrendMetric.NativeFps or TrendMetric.Displayed) || generated.Contains(p.SessionId))]))
             .Where(static l => l.Points.Count > 0)];
     }
 

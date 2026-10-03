@@ -184,6 +184,8 @@ public sealed class SessionDeletionAndOverviewTests
 
         vm.OverviewVisible.Should().BeTrue();
         vm.OverviewLines.Should().NotBeEmpty().And.OnlyContain(static l => l.Unit == Strings.Trend_Unit_Fps && l.Points.Count == 2);
+        vm.OverviewLines.Select(static l => l.Label).Should().NotContain(Strings.Trend_Metric_NativeFps,
+            "no session generated frames, so Native would only repeat the Presented line");
 
         vm.TrendLines.Should().ContainSingle("only the selected metric until another is ticked");
         TrendMetricOptionViewModel selected = vm.TrendExtras.Single(o => o.Metric == vm.TrendMetric);
