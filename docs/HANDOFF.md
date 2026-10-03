@@ -1804,6 +1804,69 @@ library and the import, PR-4 delete sessions, the charts across sessions and the
 
 **Owner-only, added to the list below:** item 8.
 
+## **START HERE** — 2026-10-04, the beta.12 train: the game's own memory, rendered documents, a user guide, the legal split
+
+*Status is `CHANGELOG.md` `[0.1.0-beta.12]`; this is what no other file carries. The approved plan was eight PRs: PR-0 the
+recorder test that went red on a loaded runner, PR-1 `NOTICE` and the licence header (D45), PR-2 the game's memory
+measured from outside the game (C++ `FrameLedger.ProcessStats.dll`, schema 0018, D43), PR-3 the App showing it, PR-4
+Markdown rendered and a tabbed About, PR-5 the user guide and the documents a user accepts, PR-6 the documentation sweep,
+PR-7 the release.*
+
+**Decisions (owner, 2026-10-03, asked before the plan — do not re-ask):**
+
+- **D43 — the game's memory is measured from OUTSIDE the game, in both tiers.** A new C++ library loaded by the Agent,
+  never into a game: dedicated and shared GPU memory from the documented `GPU Process Memory` performance counters (no
+  handle to the game), private working set / working set / commit from `GetProcessMemoryInfo` with
+  `PROCESS_QUERY_LIMITED_INFORMATION` only — a hooked game through the handle the session holds, any other through a
+  handle opened for the read and closed after it, the creation time checked, every process of the executable summed.
+  Task Manager's figures are the definition; no budget (§M11 stays open); not `D3DKMTQueryStatistics` ("Reserved for
+  system use"). Measured first: `spike-notes` §16.
+- **D44 — a user guide in English**, `guide/`, rendered in the App (Help ▸ User guide), linked from the README.
+- **D45 — the legal split.** `legal/TRADEMARKS.md`; `FORKING.md` and `CONTRIBUTING.md`; the GPL shown as information,
+  not accepted (GPLv3 §9, FR-11 changed); GPLv3 §7(b)(c)(e) additional terms in `NOTICE` and named in every source file's
+  header; the Appropriate Legal Notices in a tabbed About; the EULA's consumer-law carve-out and severability; the
+  Privacy Policy's section on sharing exports and bug reports; `CODE_OF_CONDUCT.md`.
+- **D46 — documentation is corrected in place** (struck, dated) with an index, `docs/README.md`; history stays.
+
+**Traps met on the way:**
+
+- **A test whose session length came from a fake clock but whose end came from a real 150 ms timer** went red whenever a
+  loaded runner fitted fewer than six drains into it (PR-0): make the fake drive both.
+- **Two LibreHardwareMonitor `Computer`s updating in one process** threw a NullReferenceException in `GenericCpu.Update`
+  in the local gate (`LhmRealHardwareTests` beside `PrivilegeFootprintTests`); the Agent's own read was already behind a
+  catch. The two test classes share a collection now.
+- **A test reading resource text outside the culture collection** races a class that flips `Strings.Culture`; a class
+  that adds many flips (`GameMemoryTextTests`) makes it likelier. `GamesViewModelTests` moved in; the rest are a chip.
+- **`ShmDrainIntegrationTests.AnUnhookRequestStops…` failed once on CI at the injection step** (≈1 s, `IsAllowed`
+  false) and passed on the re-run; it passed on the PR before. A flake to watch, not yet a fix.
+- **Markdig follows the table spec strictly**: a line without cells between a table's rows ends the table, and GitHub
+  still draws it. `MarkdownRendererTests` fails any embedded document whose table would show as `|---|` text.
+- **`AccentTextFillColorPrimaryBrush` is the dark accent until `ApplicationThemeManager.Apply(…, updateAccent: true)`
+  runs** — a test host that skips it draws links #003E92 on #202020; the App (and the Legal Gate, via `WpfThemeApplier`)
+  applies it.
+- **`tools/license-gather.ps1` took an override only for a URL-only package**; Markdig declares BSD-2-Clause and ships no
+  file, so the expression branch takes an override too now.
+- **A file git sees as mixed line endings is `-text`**: no EOL conversion, so a CRLF rewrite shows as a whole-file change.
+  Keep such a file's working copy LF (`docs/legal-drift-history.md`).
+- **Inserting a `### Changed` heading after an entry in the middle of `### Added`** moves every later Added entry under
+  it — read the section's headings back before committing.
+- **The stacked-branch recipe carried four PRs** (PR-3 on PR-2, PR-4 on PR-3, PR-5 on PR-4): after each squash merge,
+  `git rebase --onto origin/main <old parent>` replays only the PR's own commit, and resx / CHANGELOG additions stay
+  clean because each PR appends after the previous one's.
+
+- **A test can hide the defect it exists to catch**: `LogTailTests` fed App-form lines into the fake *Agent* log, so
+  the Logs page's level filter matched no real Agent line (Serilog's default template, a date first) and nobody saw
+  it for three weeks. A fixture for another process's file is a copy of a real line from that process.
+- **A setting with `AgentReads = true` that no Agent code reads is a switch that lies**: Settings' *Record games
+  launched outside FrameLedger* wrote `capture.background` and nothing read it (removed in PR-6, the key reserved).
+  Before trusting a registry row's flag, grep for a reader.
+- **The audits (PR-6) found code gaps the docs had been describing as built**, each left for its own PR and named
+  here so it is not rediscovered: L1 telemetry is never pointed at the game's adapter (`SelectAdapter` has no caller,
+  `18_GPU_VENDOR_APIS`); a machine-wide service refusal still says "detected in this game" (§S23-3, 🔴); no release
+  has carried a Velopack delta (`release.yml` never fetches the previous release); there is no rules feed (§S20).
+
+**Owner-only, added to the list below:** item 9.
+
 ## Owner-only — no PR can close these
 
 1. **§S23-2 — branch protection.** `Rules / validate` is not a required status check on
@@ -1853,6 +1916,15 @@ library and the import, PR-4 delete sessions, the charts across sessions and the
    on a game's page and in Settings ▸ Data. (d) *Sessions at a glance* and the Trend with a second unit. (e) The Legal
    Gate shows the Disclaimer 2.9 and the EULA 1.4 once. (f) The `ja` text of `Safety_Exception_Trial` (English until
    reviewed) and the App strings marked `review`.
+9. **beta.12 on real hardware.** (a) **The game's memory:** one hooked game and one that is not (hooking off, or a
+   blocked game), each beside Task Manager's Details tab at the same moment — the summary's *VRAM (this game)* against
+   *Dedicated GPU memory*, *RAM (this game)* against *Memory (private working set)*; the Dashboard's live line; the
+   Sessions columns, the Trend's memory metrics and the Sensors charts. (b) **The Legal Gate** shows the EULA 1.5, the
+   Disclaimer 2.10 and the Privacy Policy 2.6 once, rendered, with the GPL as *your licence*, needing no acceptance.
+   (c) **Help ▸ User guide**, **Help ▸ About** (its three tabs; *Open the licences folder* in the installed copy), and
+   *View on GitHub* opening the `v0.1.0-beta.12` tag. (d) The `ja` strings marked `review` (the memory labels, the
+   About window, the first-start summary). (e) `docs/LIST_GAME_TESTED.md` is as of beta.10: refresh it from a copy of
+   the ledger, with the games' memory figures, and approve it before it is committed (D35).
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI

@@ -76,7 +76,7 @@ src/
     FrameLedger.NvapiBridge/   # C++ DLL loaded by the Agent (never a game): NVAPI telemetry, NGX state (P2 PR-E2)
     FrameLedger.ProcessStats/  # C++ DLL loaded by the Agent (never a game): the game process's memory (beta.12, D43)
     tests/  tools/  third_party/   # ctest suites; probes, hook-harness, vendor stubs; vendored headers
-                               #   (these five lines added 2026-10-04 — the list stopped at Shm)
+                               #   (these three lines added 2026-10-04 — the list stopped at Shm)
   FrameLedger.Domain/          # entities, metric calculators — zero dependencies
                                #   (Metrics/ WRITTEN 2026-09-09, P2 PR-A: frame times,
                                #    percentiles, lows, stutter, the FG window and its
