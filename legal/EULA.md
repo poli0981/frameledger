@@ -1,6 +1,6 @@
 # FrameLedger — End User License Agreement (EULA)
 
-**Version:** 1.4 · **Effective:** {{RELEASE_DATE}}
+**Version:** 1.5 · **Effective:** {{RELEASE_DATE}}
 
 This End User License Agreement ("Agreement") applies to **FrameLedger** ("the Software"), developed and published by **poli0981** ("the Developer"), contactable at <contact@poli0981.dev> — see <https://poli0981.dev/> for other contact channels.
 
@@ -10,7 +10,7 @@ The Software is free and open-source software licensed to you under the **GNU Ge
 
 ## 2. What the Software does
 
-The Software records game performance data, hardware telemetry (temperatures, load, memory usage), and game metadata, and stores this data **locally on your device**. Details are described in the Privacy Policy and Disclaimer accompanying the Software.
+The Software records game performance data, hardware telemetry (temperatures, load, memory usage), each game's own memory use as Windows reports it, and game metadata, and stores this data **locally on your device**. Details are described in the Privacy Policy and Disclaimer accompanying the Software.
 
 ## 2A. Code injection — your responsibility
 
@@ -28,7 +28,7 @@ By enabling this feature for a game, you confirm that:
 
 (e) the Developer has no ability to reverse a ban, recover lost progress, or intervene with any game publisher on your behalf, and accepts no liability for such outcomes.
 
-The Software records without injecting unless you enable injection for a specific game. In that mode it records only the session's duration and whatever hardware sensor data is available, indicates that mode on the session, and reports unavailable measurements as such rather than estimating them. Neither mode requires the Software's agent to run with administrator rights.
+The Software records without injecting unless you enable injection for a specific game. In that mode it records only the session's duration, whatever hardware sensor data is available, and the game's own memory use as Windows reports it — read from outside the game, never from the game's memory — indicates that mode on the session, and reports unavailable measurements as such rather than estimating them. Neither mode requires the Software's agent to run with administrator rights.
 
 ## 2B. Pre-release software, and your PC
 
@@ -43,11 +43,11 @@ unstable, overheating, overclocked or faulty hardware, are your responsibility a
 
 ## 3. Acceptance
 
-By clicking "Accept" in the first-run dialog or by using the Software, you confirm that you have read this Agreement, the Disclaimer, and the Privacy Policy.
+By clicking "Accept" in the first-run dialog or by using the Software, you confirm that you have read this Agreement, the Disclaimer, and the Privacy Policy. The GPL-3.0 is shown in the same dialog for your information: it is your licence to the Software, and you need not accept it to run the Software (GPL-3.0 §9).
 
 ## 4. Third-party components
 
-The Software includes and interoperates with third-party components listed in `legal/THIRD_PARTY_NOTICES.md`, each under its own license. The optional **PawnIO** kernel driver is a separate third-party product installed by you at your discretion and governed by its own license and terms.
+The Software includes and interoperates with third-party components listed in `legal/THIRD_PARTY_NOTICES.md` — in an installed copy, `licenses\THIRD_PARTY_NOTICES.md` beside the Software, and Help ▸ About — each under its own license. The optional **PawnIO** kernel driver is a separate third-party product installed by you at your discretion and governed by its own license and terms.
 
 ## 5. No warranty
 
@@ -68,6 +68,10 @@ The Software can check for updates via GitHub. Installing updates is always your
 ## 9. Termination
 
 Your rights under the GPL-3.0 continue as described in that license. You may stop using the Software at any time by uninstalling it; local data removal options are offered during uninstall.
+
+## 10. Your rights as a consumer, and the rest of this Agreement
+
+Nothing in this Agreement limits any right you have under consumer protection law that cannot be limited or waived by agreement; where such a law applies, the warranty and liability terms above apply only as far as that law allows. If a court finds any provision of this Agreement unenforceable, that provision is enforced to the extent permitted, and the rest of the Agreement remains in effect.
 
 ---
 

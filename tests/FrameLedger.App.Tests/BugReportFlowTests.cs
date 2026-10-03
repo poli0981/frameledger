@@ -203,7 +203,7 @@ public sealed class BugReportFlowTests : IDisposable
             "https://github.com/poli0981/frameledger/issues/new?template=bug_report.yml&title=%5BBug%5D%20&labels=bug&app-version=0.1.0&os=Windows%2011%2026100.2314");
         IssueLink.OsText(new Version(10, 0, 26100, 2314)).Should().Be("Windows 11 26100.2314");
         IssueLink.OsText(new Version(10, 0, 19045, 0)).Should().Be("Windows 10 19045");
-        IssueLink.Documentation.AbsoluteUri.Should().Be("https://github.com/poli0981/frameledger#readme");
+        IssueLink.Documentation.AbsoluteUri.Should().Be("https://github.com/poli0981/frameledger/blob/main/README.md", "the README at this build's source (main for a test build), beta.12");
         IssueLink.Markdown(new Dictionary<string, string>(StringComparer.Ordinal) { ["a"] = "x|y" }).Should().Contain("| `a` | x\\|y |", "a pipe in a value must not break the table");
     }
 }

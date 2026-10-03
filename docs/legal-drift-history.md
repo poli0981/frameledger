@@ -34,3 +34,37 @@ statement is `legal/ACCURACY.md`, dated.
 > **This block is maintained by hand and nothing verifies it.** Every other document here is bound to the code by something — `rules-validate` cross-checks the blocklist, `static_assert`s bind `fl_shm.h` to `07_IPC`, `versioninfo-check` and `chokepoint-check` bind claims to binaries. `legal/` is bound by nothing, and it has now gone stale **three times**: first within hours of being written, when the 65-second sentence was added directly beneath a header that said "Three"; then again when five PRs (#40–#44) changed the Overlay from a stub into a hooking, shared-memory-mapping, control-block-reading component and touched **no documentation at all**, leaving the second bullet above asserting four things about that binary that were each false. and a third time when #46–#52 landed — seven PRs, including one (#48) that changed what the Overlay does *inside a game* — with no edit here at all. None of the three drifts was visible from inside the PR that caused it. **Whoever edits any promise in this file must re-count — and whoever changes what `FrameLedger.Overlay` does must re-read this block, because nothing will remind them.**
 >
 > **That sentence has now failed twice, so it is being replaced by something that is not a sentence.** `ci.yml` fails a pull request that touches `src/` without touching `CHANGELOG.md`. That is a weaker gate than the ones binding every other document — it forces a *ledger* entry, not a re-read of *this* file — and it is written down as weaker rather than described as a fix. A gate over the claims in `legal/` would have to assert things about behaviour rather than about files, and nobody has designed one (`docs/20_OPEN_QUESTIONS.md` §S23-6).
+
+---
+
+## Moved out of the accepted documents on 2026-10-03 (beta.12: Disclaimer 2.10, Privacy Policy 2.6)
+
+The three blocks below were notes for the documents' maintainers inside texts a user accepts. They moved here unchanged
+when the user guide (`guide/`) and a rendered Legal Gate made those documents read as what they are — terms — and they
+are kept because they record what each version changed and why (owner decision D45).
+
+### The Disclaimer's preface (versions 2.3–2.9)
+
+> **How this document is kept true.** The statement of what FrameLedger measures (§4) is `legal/ACCURACY.md`,
+> embedded here and in `README.md` and bound to its source by `tools/accuracy-check.ps1`, which fails the build when a
+> copy differs. Earlier versions of this document carried a hand-maintained audit of how its own promises drifted from
+> the software — six re-counts between 2026-08-04 and 2026-09-15; that history is `docs/legal-drift-history.md`,
+> moved out of the text you accept on 2026-09-16 and kept in full.
+
+### The Privacy Policy's §2 history note (versions 2.2–2.5)
+
+> **History.** Versions 2.0 and 2.1 of this document listed three further rows — a weekly safety-list update, a weekly detection-rules update, and an opt-in Steam store lookup — describing requests the software did not make; from 2026-08-04 they carried an audit note saying so. Version 2.2 (2026-09-16) removes them. A privacy policy that lists a transmission which never happens is as wrong as one that omits a transmission which does.
+
+### The Privacy Policy's §4 history note (versions 2.3–2.5)
+
+> **History.** Version 2.3 (2026-09-23) adds the per-entry recording switch. Before it, every program in your library was recorded whenever it ran, which recorded a utility that starts with Windows at every boot.
+>
+> Version 2.4 (2026-09-25, 0.1.0-beta.8) names what the software reads to check every game in your library for anti-cheat — until then it checked only a game you asked to hook — and to name the versions of its files, and the NVIDIA driver's settings for your games. The files of a library game's folder were already read to detect its engine and features; this version is the first to say so.
+>
+> Version 2.5 (2026-09-27, 0.1.0-beta.10) adds how a tracked game's window is shown — read from Windows — and the engine build name read from an Unreal Engine game's executable. It is also the first version to say two things the software already did: it reads the **content** of a library game's executable (markers in its first 8 MB and its import table, since the detection of engines and features; and, when a session starts, the graphics-library markers in the whole file), and it reads the processor load and the memory in use (since 0.1.0-beta.3). Nothing here leaves your device, as before.
+
+### What version 2.6 of the Privacy Policy changed
+
+It names the game's own memory use (since beta.12, read from outside the game in every session) where version 2.5
+named "video-memory usage reported by the graphics runtime" — an in-game figure the software never read — and adds
+§3A: what an export or a bug report can carry about you before you share it.

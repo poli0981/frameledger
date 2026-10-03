@@ -385,6 +385,10 @@ CREATE TABLE legal_acceptance (doc TEXT PRIMARY KEY, version TEXT NOT NULL, acce
 > App at build (`GPL-3.0-only` for the licence text) — the App is the only writer, one row per document per
 > Accept, re-recorded when the embedded version differs from the row's. `20_OPEN_QUESTIONS` §G "Legal doc
 > versioning" closes on that.
+>
+> **Three rows since beta.12 (D45).** The GPL is shown for information and needs no acceptance (GPLv3 §9), so Accept
+> writes `eula`, `disclaimer` and `privacy` only, and the gate is not held open for `gpl`. A `gpl` row an earlier
+> version wrote stays, unread (`LegalGate`).
 
 ## Settings registry
 

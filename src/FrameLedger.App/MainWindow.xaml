@@ -71,6 +71,7 @@
                 <MenuItem Header="{x:Static res:Strings.Menu_Tools_DbMaintenance}" Command="{Binding ViewModel.DatabaseMaintenanceCommand}" />
             </MenuItem>
             <MenuItem Header="{x:Static res:Strings.Menu_Help}">
+                <MenuItem Header="{x:Static res:Strings.Menu_Help_Guide}" Command="{Binding ViewModel.GuideCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_Help_CheckUpdates}" Command="{Binding ViewModel.CheckForUpdatesCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_Help_ReportBug}" Command="{Binding ViewModel.ReportBugCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_Help_Documentation}" Command="{Binding ViewModel.DocumentationCommand}" />

@@ -10,8 +10,9 @@ using FrameLedger.Infrastructure.Persistence;
 namespace FrameLedger.App.Tests;
 
 /// <summary>
-/// FR-11: required on an empty ledger and after a version moves, one Accept writes four rows at the documents'
-/// versions, a decline writes nothing and ends the flow, the steps advance, and read-only mode records nothing.
+/// FR-11: required on an empty ledger and after a version moves, one Accept writes a row per document that needs
+/// acceptance at the documents' versions — three since beta.12 (D45): the GPL is shown for information — a decline writes
+/// nothing and ends the flow, the steps advance, and read-only mode records nothing.
 /// </summary>
 public sealed class FirstRunViewModelTests
 {
@@ -20,7 +21,7 @@ public sealed class FirstRunViewModelTests
     private static IReadOnlyList<LegalDocument> Docs { get; } =
     [
         new("eula", "EULA", "1.0", "text", new Uri("https://github.com/x/eula")),
-        new("gpl", "GPL", "GPL-3.0-only", "text", new Uri("https://github.com/x/gpl")),
+        new("gpl", "GPL", "GPL-3.0-only", "text", new Uri("https://github.com/x/gpl"), RequiresAcceptance: false),
         new("disclaimer", "Disclaimer", "2.0", "text", new Uri("https://github.com/x/d")),
         new("privacy", "Privacy", "2.0", "text", new Uri("https://github.com/x/p")),
     ];
@@ -31,7 +32,7 @@ public sealed class FirstRunViewModelTests
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
         var store = new SqliteLegalAcceptanceStore(s.Db);
         var gate = new LegalGate(store, Docs);
-        (await gate.OutstandingAsync(Ct)).Should().HaveCount(4);
+        (await gate.OutstandingAsync(Ct)).Select(static d => d.Key).Should().Equal("eula", "disclaimer", "privacy");
 
         using var vm = new FirstRunViewModel(gate, new FakeAgentLink(), readOnly: false);
         vm.IsLegalStep.Should().BeTrue();
@@ -42,7 +43,7 @@ public sealed class FirstRunViewModelTests
         vm.IsAgentStep.Should().BeTrue("Accept moves to the Agent step");
         (await gate.IsRequiredAsync(Ct)).Should().BeFalse();
         IReadOnlyList<LegalAcceptance> rows = await store.ListAsync(Ct);
-        rows.Select(static r => (r.Document, r.Version)).Should().BeEquivalentTo([("eula", "1.0"), ("gpl", "GPL-3.0-only"), ("disclaimer", "2.0"), ("privacy", "2.0")]);
+        rows.Select(static r => (r.Document, r.Version)).Should().BeEquivalentTo([("eula", "1.0"), ("disclaimer", "2.0"), ("privacy", "2.0")], "the GPL needs no acceptance, so it gets no row");
 
         vm.NextCommand.Execute(null);
         vm.IsExplainerStep.Should().BeTrue();
@@ -55,6 +56,28 @@ public sealed class FirstRunViewModelTests
         vm.FinishCommand.Execute(null);
         Task<bool> outcome = vm.Outcome;
         (await outcome).Should().BeTrue();
+    }
+
+    /// <summary>
+    /// beta.12 (D45): a ledger that accepted four documents under an earlier version keeps its <c>gpl</c> row, unread; one
+    /// that never had it is not held open for it.
+    /// </summary>
+    [Fact]
+    public async Task TheGplNeitherHoldsTheGateOpenNorIsRecordedAndAnOldRowIsLeftAlone()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        var store = new SqliteLegalAcceptanceStore(s.Db);
+        await store.RecordAsync(new LegalAcceptance("eula", "1.0", DateTimeOffset.UnixEpoch), Ct);
+        await store.RecordAsync(new LegalAcceptance("disclaimer", "2.0", DateTimeOffset.UnixEpoch), Ct);
+        await store.RecordAsync(new LegalAcceptance("privacy", "2.0", DateTimeOffset.UnixEpoch), Ct);
+
+        var gate = new LegalGate(store, Docs);
+        (await gate.IsRequiredAsync(Ct)).Should().BeFalse("no gpl row is needed");
+
+        await store.RecordAsync(new LegalAcceptance("gpl", "GPL-3.0-only", DateTimeOffset.UnixEpoch), Ct);
+        await gate.AcceptAllAsync(Ct);
+        (await store.ListAsync(Ct)).Single(static r => string.Equals(r.Document, "gpl", StringComparison.Ordinal)).AcceptedAt
+            .Should().Be(DateTimeOffset.UnixEpoch, "an earlier version's gpl row stays as it was written");
     }
 
     [Fact]

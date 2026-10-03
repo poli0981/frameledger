@@ -6,6 +6,9 @@ namespace FrameLedger.App.Services;
 /// <summary>The Help menu's document windows (beta.12), as a port so the shell's commands are testable without a window.</summary>
 public interface IDocumentWindows
 {
+    /// <summary>Help ▸ User guide (beta.12, D44): <c>guide/</c>'s pages, rendered, with Limitations after them.</summary>
+    void ShowGuide();
+
     /// <summary>Help ▸ Limitations: <c>LIMITATIONS.md</c>, rendered.</summary>
     void ShowLimitations();
 

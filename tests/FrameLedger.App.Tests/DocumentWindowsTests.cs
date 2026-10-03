@@ -56,6 +56,43 @@ public sealed class DocumentWindowsTests
         AboutWindow.SourceCode.Should().Be(new Uri("https://github.com/poli0981/frameledger/tree/main"));
     }
 
+    /// <summary>beta.12 (D44): Help ▸ User guide — the guide's pages with a list, Limitations last, a section link opening its page.</summary>
+    [Fact]
+    public async Task TheGuideListsItsPagesAndOpensAnotherPageAtItsSection()
+    {
+        var urls = new NoUrlOpener();
+        var facts = await PagesLoadTests.OnStaAsync(() =>
+        {
+            var window = new DocumentWindow(Strings.Guide_Title, EmbeddedDocuments.Guide(), urls, new NoTheme(), new AppearanceSettings(new MemorySettings()));
+            try
+            {
+                string? first = window.Pages.SelectedPage?.Path;
+                bool shown = window.Pages.Show("guide/01-install.md", "updates");
+                return new
+                {
+                    Pages = window.Pages.Pages.Count,
+                    First = first,
+                    Shown = shown,
+                    Now = window.Pages.SelectedPage?.Path,
+                    ListShown = window.Pages.FindName("PageList") is UIElement { Visibility: Visibility.Visible },
+                    Unknown = window.Pages.Show("docs/03_METRICS.md"),
+                };
+            }
+            finally
+            {
+                window.Close();
+            }
+        });
+
+        facts.Pages.Should().Be(EmbeddedDocuments.GuidePages.Count + 1);
+        facts.First.Should().Be("guide/README.md");
+        facts.Shown.Should().BeTrue();
+        facts.Now.Should().Be("guide/01-install.md");
+        facts.ListShown.Should().BeTrue();
+        facts.Unknown.Should().BeFalse("a file the window does not hold opens on GitHub instead");
+        urls.Opened.Should().BeEmpty();
+    }
+
     [Fact]
     public async Task LimitationsIsOnePageWithNoListAndOpensOnGitHubAtThisBuildsSource()
     {

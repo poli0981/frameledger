@@ -134,6 +134,8 @@ tools/                         # changelog-check, chokepoint-check, coverage-gat
                                #   hook-harness    -> dummy D3D11 + D3D12 + Vulkan + OpenGL app
                                #                      (--vulkan since #140, --opengl since #141)
 rules/detection-rules.json     # engine/platform/capability + anticheat blocklist
+guide/                         # the user guide (beta.12, D44): eight short English pages for players, embedded in the
+                               #   App (Help > User guide); README.md is its contents. docs/ is for developers.
 docs/  legal/  legal/licenses/
 ```
 

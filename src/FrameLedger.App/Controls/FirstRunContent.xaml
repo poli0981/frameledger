@@ -47,6 +47,10 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
                 <StackPanel Grid.Row="0" Margin="0,0,0,6" Orientation="Horizontal">
+                    <!-- beta.12 (D45): the GPL is the user's licence, for information; Accept covers the other three. -->
+                    <ui:TextBlock Margin="0,0,12,0" VerticalAlignment="Center" Appearance="Secondary" TextWrapping="Wrap" MaxWidth="460"
+                                  Text="{x:Static res:Strings.FirstRun_Doc_InformationNote}"
+                                  Visibility="{Binding ViewModel.SelectedDocument.RequiresAcceptance, Converter={StaticResource InverseBoolToVis}}" />
                     <ui:TextBlock VerticalAlignment="Center" Appearance="Secondary" Text="{Binding ViewModel.SelectedDocument.Version}" />
                     <ui:HyperlinkButton Margin="12,0,0,0"
                                         Command="{Binding ViewModel.OpenOnlineCommand}"

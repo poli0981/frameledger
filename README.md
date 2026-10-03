@@ -4,6 +4,10 @@
 
 > No telemetry. No accounts. All data stays on your machine.
 
+**New here? Start with the [user guide](guide/README.md)** — install, record a game, read your results, stay safe with
+anti-cheat, and look after your data, a page each. What FrameLedger cannot do is on one page:
+[Limitations](LIMITATIONS.md). Both are in the app too (Help ▸ User guide, Help ▸ Limitations).
+
 <!-- accuracy-block:begin -->
 > ⚠ **What FrameLedger actually measures today — 2026-10-03.** The software is a beta; its latest
 > **pre-release is `0.1.0-beta.11`** (2026-10-03), an unsigned installer built from that tag with its
@@ -104,7 +108,7 @@ Most tools tell you your frame rate. FrameLedger tells you **what produced that 
 - **Which upscaler is running** — DLSS / FSR, read from the API the game calls, not guessed from files on disk. Intel XeSS is not read: its SDK licence forbids it.
 - **Frame Generation, measured** — native and generated frames counted separately. Shown as `62 → 118 FPS (×1.9 FG)` when both are counted, and as a qualified Presented FPS when they are not — never as one inflated number.
 - **Ray tracing, actually detected** — including inline ray tracing (DXR 1.1 `RayQuery`), which frame-counting tools miss entirely.
-- **Per-process VRAM** and whether the driver was exceeding its budget (a real stutter explanation).
+- **The game's own VRAM and RAM** — Task Manager's figures for the game's process, read from outside the game in every session, with mean, median and peak (since beta.12). ~~and whether the driver was exceeding its budget~~ — the video-memory budget is not measured yet.
 - **Shader-compilation stutter attribution** — which frame spikes were pipeline compiles.
 - **PC latency** when the game uses Reflex.
 
@@ -121,7 +125,7 @@ FrameLedger is built to keep that risk small and to be honest about it:
 | Safeguard | |
 |---|---|
 | **Off by default** | Injection is disabled for every game until you enable it individually, after a consent prompt |
-| **Hard refusal** | Known anti-cheat/anti-tamper components are detected before injection and every 30 s during a session. Detected ⇒ FrameLedger refuses, or stops capturing at the next scan — so up to 30 s can pass before it reacts to anti-cheat that loads mid-session. For Direct3D/OpenGL that means hooks are removed; for Vulkan it means the layer goes passthrough, because a layer cannot leave the loader chain of a running game. **There is no override — not in settings, not in a config file, not on the command line**<br><br>**One narrow exception since beta.9 (owner decision D33):** per game, after its own disclosure and only while a Settings option (off by default) is on, a game whose only finding is one anti-cheat that runs entirely in user mode — no driver file in its folder, on no title list — and that FrameLedger has measured successfully at least twice may be hooked under a user-mode exception. The guard still runs every check under it, refuses anything else it finds, and ends it on anything new; a ban remains possible (`legal/DISCLAIMER.md` §2A).<br><br>✅ **Both halves run since 2026-09-10.** The *pre-injection* refusal runs every documented check, and during every capture the Agent re-runs them every 30 s: the component inside the game removes its hooks within one frame of being told to, and within 65 s if it stops hearing from the scanner. *(Until 2026-09-15 this cell said the in-session re-scan did not run at all, which stopped being true when the Agent's capture loop landed.)* For a Vulkan title the stop is the layer's own: it checks the scanner's counter on every present and goes passthrough within one present of the stop flag, or after 65 s without a scan — a title that has stopped presenting is not stopped by that deadline, and presents nothing to be observed either. |
+| **Hard refusal** | Known anti-cheat/anti-tamper components are detected before injection and every 30 s during a session. Detected ⇒ FrameLedger refuses, or stops capturing at the next scan — so up to 30 s can pass before it reacts to anti-cheat that loads mid-session. For Direct3D/OpenGL that means hooks are removed; for Vulkan it means the layer goes passthrough, because a layer cannot leave the loader chain of a running game. **There is no override — not in settings, not in a config file, not on the command line**<br><br>**One narrow exception since beta.9 (owner decisions D33, D38):** per game, after its own disclosure and only while a Settings option (off by default) is on, a game whose only finding is one anti-cheat that runs entirely in user mode — no driver file in its folder, on no title list — may be hooked under a user-mode exception. ~~and that FrameLedger has measured successfully at least twice~~ *(corrected 2026-10-03: since beta.11, D38, a grant needs no earlier session; its first two hooked sessions are a trial, and one that does not go well ends it for good.)* The guard still runs every check under it, refuses anything else it finds, and ends it on anything new; a ban remains possible (`legal/DISCLAIMER.md` §2A).<br><br>✅ **Both halves run since 2026-09-10.** The *pre-injection* refusal runs every documented check, and during every capture the Agent re-runs them every 30 s: the component inside the game removes its hooks within one frame of being told to, and within 65 s if it stops hearing from the scanner. *(Until 2026-09-15 this cell said the in-session re-scan did not run at all, which stopped being true when the Agent's capture loop landed.)* For a Vulkan title the stop is the layer's own: it checks the scanner's counter on every present and goes passthrough within one present of the stop flag, or after 65 s without a scan — a title that has stopped presenting is not stopped by that deadline, and presents nothing to be observed either. |
 | **No evasion, ever** | FrameLedger does not hide, rename, obfuscate, or disguise itself. It keeps its real name, real exports, and version info. It is meant to be plainly visible to any security software that looks. This is an architectural rule, not a setting |
 | **Read-only** | It never reads or writes game memory, never modifies game behavior, never touches saves or input, and never changes GPU clocks, fans, or power limits |
 | **Always a way out** | FrameLedger refuses rather than pushes through. When the guard finds anti-cheat, or the hook fails, or you have not enabled a game, it **stops** — and records the session anyway: start, end, duration, whatever hardware sensors your machine provides, and the reason there is nothing else. Every measured value reads `N/A`; it never estimates one.<br><br>**The way out is that it does not inject, not that it measures another way.** An earlier version of this row promised a no-injection measurement mode. It was designed around Intel PresentMon, that was dropped on 2026-08-27 after measurement, and no replacement was chosen — so **frame times require hooking**. Said in this row rather than a footnote because the row is in the SAFETY table, and a reader deciding whether to enable a game needs the real alternative, not a comfortable one |
@@ -133,28 +137,19 @@ FrameLedger is built to keep that risk small and to be honest about it:
 | Tier | How | What you get |
 |---|---|---|
 | **1** | Injected hooks (opt-in, per game) | Everything above |
-| **2** | None — nothing is injected | **Session duration, whatever hardware telemetry your machine can provide, and why there is nothing else** (which check refused, or that the hook failed, was not enabled, or the game is 32-bit). On NVIDIA that telemetry is measured to be GPU temperature, load, power, clocks, VRAM in use and fan speed, with no elevation; AMD and Intel are untested. Everything else reads `N/A` |
+| **2** | None — nothing is injected | **Session duration, whatever hardware telemetry your machine can provide, the game's own memory use (read from Windows, outside the game; since beta.12), and why there is nothing else** (which check refused, or that the hook failed, was not enabled, or the game is 32-bit). On NVIDIA that telemetry is measured to be GPU temperature, load, power, clocks, VRAM in use and fan speed, with no elevation; AMD and Intel are untested. Everything else reads `N/A` |
 
 The tier is recorded on every session and shown in the UI. Metrics unavailable at a session's tier read `N/A` — FrameLedger never substitutes an estimate for a measurement.
 
 > **This ladder used to have three rungs and a middle one that measured frame times without injecting.** It was to be built on Intel PresentMon; that was dropped on 2026-08-27 after measurement, and no replacement was chosen. **So frame times, FPS and the lows are now Tier-1-only.** Said plainly because the previous README promised them without injection, and a reader who remembers that would otherwise assume it still holds.
-
-## Architecture
-
-| Component | Runs as | Role |
-|---|---|---|
-| `FrameLedger.exe` | Standard user | Fluent desktop UI (WPF + [WPF UI](https://github.com/lepoco/wpfui)), charts, library, settings |
-| `FrameLedger.Agent.exe` | Standard user — as administrator only when you turn that on in Settings, and Windows asks at every start (beta.10) | Injection control, safety guard, data collection, GPU telemetry, storage |
-| `FrameLedger.Overlay.dll` | Inside the game | C++20 hooks + lock-free shared-memory writer. Records only; never analyzes, allocates, or blocks |
-| `FrameLedger.VkLayer.dll` | Inside the game | Vulkan implicit layer (Vulkan titles use this instead of injection) |
-
-Elevation is **optional — for everything.** Hooked capture is the normal path and runs as a standard user, and there is no longer any tier that needs more than that. Elevation unlocks exactly two extras: CPU temperature sensors (~~not read yet~~ read with PawnIO, not yet checked on real hardware — see the block above), and attaching to games that themselves run elevated. ~~and the Tier-2 ETW fallback. If you expect to rely on Tier 2, run the Agent elevated.~~ — there is no ETW fallback to rely on. **Since beta.10 it is a choice in Settings** — *Run the agent as administrator*, off by default: Windows asks every time the agent starts, games you start from FrameLedger still run as you, and `LIMITATIONS.md` says what it does not change.
 
 ## Requirements
 
 - Windows 10 (22H2) or Windows 11, 64-bit
 - A 64-bit DirectX 11/12 or OpenGL game, or a Vulkan game FrameLedger starts, for hooked (Tier-1) capture. **32-bit games — including most DirectX 9 titles — cannot be measured at all**: the component FrameLedger loads is x64 and an x64 DLL cannot enter a 32-bit process. Such a title records duration and hardware telemetry and nothing else. *(This line previously said "supported at Tier 2 only", which meant frame times without injection. That tier no longer exists.)*
 - Optional: [PawnIO](https://pawnio.eu/) for CPU temperature, read only when the Agent runs as administrator (since 0.1.0-beta.3; not yet checked on real hardware). CPU load, memory in use and all GPU telemetry work without it
+
+Elevation is **optional — for everything.** Hooked capture is the normal path and runs as a standard user, and there is no longer any tier that needs more than that. Elevation unlocks exactly two extras: CPU temperature sensors (~~not read yet~~ read with PawnIO, not yet checked on real hardware — see the block above), and attaching to games that themselves run elevated. ~~and the Tier-2 ETW fallback. If you expect to rely on Tier 2, run the Agent elevated.~~ — there is no ETW fallback to rely on. **Since beta.10 it is a choice in Settings** — *Run the agent as administrator*, off by default: Windows asks every time the agent starts, games you start from FrameLedger still run as you, and `LIMITATIONS.md` says what it does not change.
 
 ## Install
 
@@ -170,19 +165,38 @@ Everything lives locally in `%LOCALAPPDATA%\FrameLedger`. The only network calls
 
 ## License
 
-GPL-3.0-only. See `LICENSE`. Third-party components: [`legal/THIRD_PARTY_NOTICES.md`](legal/THIRD_PARTY_NOTICES.md).
-
-GPU telemetry is layered so the project never depends on a proprietary vendor licence: a vendor-neutral DXGI/performance-counter baseline, LibreHardwareMonitor (MPL-2.0) for sensors on all vendors, and NVIDIA's NVAPI SDK (MIT) for NVIDIA-only extras (telemetry and the driver's DLSS record today; Reflex latency is not read yet). No Intel or AMD GPU *telemetry* SDK is bundled — see `docs/18_GPU_VENDOR_APIS.md` for why. The one AMD component in the tree is five MIT headers from the FidelityFX SDK, used for types only so the upscaler hook can read an FSR title's own dispatch descriptor; nothing AMD-built is linked or redistributed.
-
-## Documentation
-
-Developer/AI-facing docs in [`docs/`](docs/). Start with `CLAUDE.md`, then `docs/19_SAFETY_AND_ANTICHEAT.md` (which constrains everything else), then `docs/01_ARCHITECTURE.md`.
+GPL-3.0-only (see `LICENSE`), with the additional terms in [`NOTICE`](NOTICE) that GPLv3 section 7 permits: keep the copyright line and the attribution, mark a changed version as changed and do not call it "FrameLedger" alone, and no trademark rights in the name ([`legal/TRADEMARKS.md`](legal/TRADEMARKS.md)). In the app: Help ▸ About. Third-party components: [`legal/THIRD_PARTY_NOTICES.md`](legal/THIRD_PARTY_NOTICES.md).
 
 ## Reporting a safety gap
 
 If you find a game with anti-cheat that FrameLedger fails to detect, please open an issue with the *Safety gap* form — **that is a safety bug and is treated with the same priority as a security report.** A vulnerability in FrameLedger itself takes the private route in [`SECURITY.md`](SECURITY.md).
 
 **How fast a fix can reach you, stated accurately.** Blocklist entries are data rather than code, so a fix is a one-line change here. But the software has **no rules-update path yet**: it installs the blocklist that shipped with your build and never fetches another (`docs/20_OPEN_QUESTIONS.md` §S20, feed half). Until that exists, a blocklist fix reaches you **only when you install a new release**. This paragraph previously said the opposite, and the sentence it said it in was a response-time promise attached to a security-priority commitment.
+
+## For developers and forks
+
+FrameLedger is GPL-3.0-only free software, and you are welcome to build it, change it and redistribute it.
+
+- **Build it:** [`docs/12_BUILD.md`](docs/12_BUILD.md) — `./build.ps1 check` is the whole quality gate, the same one CI runs.
+- **Contribute:** [`CONTRIBUTING.md`](CONTRIBUTING.md) — the definition of done, what will not be merged, and that a
+  contribution is licensed GPL-3.0-only with the [`NOTICE`](NOTICE) terms (no CLA). Conduct:
+  [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). Security reports: [`SECURITY.md`](SECURITY.md).
+- **Fork or redistribute:** [`FORKING.md`](FORKING.md) — what the GPL asks of anyone who distributes builds, and the names
+  a fork must change so it does not share FrameLedger's update feed, install folder, data, pipe or Vulkan layer.
+- **Read the design:** the developer documentation is in [`docs/`](docs/). Start with [`CLAUDE.md`](CLAUDE.md), then
+  [`docs/19_SAFETY_AND_ANTICHEAT.md`](docs/19_SAFETY_AND_ANTICHEAT.md) — which constrains everything else — then
+  [`docs/01_ARCHITECTURE.md`](docs/01_ARCHITECTURE.md).
+
+### Architecture
+
+| Component | Runs as | Role |
+|---|---|---|
+| `FrameLedger.exe` | Standard user | Fluent desktop UI (WPF + [WPF UI](https://github.com/lepoco/wpfui)), charts, library, settings |
+| `FrameLedger.Agent.exe` | Standard user — as administrator only when you turn that on in Settings, and Windows asks at every start (beta.10) | Injection control, safety guard, data collection, GPU telemetry, storage |
+| `FrameLedger.Overlay.dll` | Inside the game | C++20 hooks + lock-free shared-memory writer. Records only; never analyzes, allocates, or blocks |
+| `FrameLedger.VkLayer.dll` | Inside the game | Vulkan implicit layer (Vulkan titles use this instead of injection) |
+
+GPU telemetry is layered so the project never depends on a proprietary vendor licence: a vendor-neutral DXGI/performance-counter baseline, LibreHardwareMonitor (MPL-2.0) for sensors on all vendors, and NVIDIA's NVAPI SDK (MIT) for NVIDIA-only extras (telemetry and the driver's DLSS record today; Reflex latency is not read yet). No Intel or AMD GPU *telemetry* SDK is bundled — see `docs/18_GPU_VENDOR_APIS.md` for why. The one AMD component in the tree is five MIT headers from the FidelityFX SDK, used for types only so the upscaler hook can read an FSR title's own dispatch descriptor; nothing AMD-built is linked or redistributed.
 
 ---
 

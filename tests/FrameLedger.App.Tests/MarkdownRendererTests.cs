@@ -112,7 +112,7 @@ public sealed partial class MarkdownRendererTests
         text.Should().Contain("  0. Definitions.").And.Contain("  # not a heading", "the GPL is not Markdown: its numbered sections are not a list");
     }
 
-    /// <summary>Every embedded document — the Legal Gate's four, LIMITATIONS, NOTICE, the trademark note, the third-party notices and the package index: nine.</summary>
+    /// <summary>Every embedded document — the Legal Gate's four, LIMITATIONS, NOTICE, the trademark note, the third-party notices, the package index and the user guide's eight pages.</summary>
     [Fact]
     public async Task NothingAnyEmbeddedDocumentSaysIsDropped()
     {
@@ -124,6 +124,7 @@ public sealed partial class MarkdownRendererTests
             (EmbeddedDocuments.Trademarks, EmbeddedDocuments.Read(EmbeddedDocuments.Trademarks), false),
             (EmbeddedDocuments.ThirdPartyNotices, EmbeddedDocuments.Read(EmbeddedDocuments.ThirdPartyNotices), false),
             (EmbeddedDocuments.PackageIndex, EmbeddedDocuments.Read(EmbeddedDocuments.PackageIndex), false),
+            .. EmbeddedDocuments.GuidePages.Select(static p => (p, EmbeddedDocuments.Read(p), false)),
         ];
 
         List<string> missing = await PagesLoadTests.OnStaAsync(() =>
@@ -154,7 +155,7 @@ public sealed partial class MarkdownRendererTests
             return problems;
         });
 
-        documents.Should().HaveCount(9);
+        documents.Should().HaveCount(17, "nine documents and the guide's eight pages");
         missing.Should().BeEmpty("the renderer must never shorten a document a user reads or accepts");
     }
 

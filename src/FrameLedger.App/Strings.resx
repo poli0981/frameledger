@@ -241,7 +241,7 @@
     <value>Check for updates</value>
   </data>
   <data name="Menu_Help_Documentation" xml:space="preserve">
-    <value>Documentation</value>
+    <value>Online documentation</value>
   </data>
   <data name="Menu_Help_Limitations" xml:space="preserve">
     <value>Limitations</value>
@@ -919,7 +919,7 @@
     <value>T2</value>
   </data>
   <data name="Tier_NotHooked_Tooltip" xml:space="preserve">
-    <value>Tier 2: not hooked — duration and sensors only; every frame-derived value is N/A</value>
+    <value>Tier 2: not hooked — duration, sensors and the game's memory only; every frame-derived value is N/A</value>
   </data>
   <data name="Upscaler_None" xml:space="preserve">
     <value>No upscaler</value>
@@ -1645,7 +1645,7 @@
     <value>FrameLedger — recording {0} without measuring</value>
   </data>
   <data name="FirstRun_Accept" xml:space="preserve">
-    <value>Accept all four</value>
+    <value>Accept</value>
   </data>
   <data name="FirstRun_Agent_Body" xml:space="preserve">
     <value>FrameLedger starts a small capture agent beside itself, as a standard user — not elevated. Elevation is optional and is not required by any capture tier: it only unlocks CPU temperature (through PawnIO) and attaching to games that run elevated themselves. Below is what the agent reports about this machine.</value>
@@ -1684,7 +1684,7 @@
     <value>End User License Agreement</value>
   </data>
   <data name="FirstRun_Doc_Gpl" xml:space="preserve">
-    <value>GNU GPL v3</value>
+    <value>GNU GPL v3 (your licence)</value>
   </data>
   <data name="FirstRun_Doc_Privacy" xml:space="preserve">
     <value>Privacy Policy</value>
@@ -1708,7 +1708,7 @@
     <value>Your library</value>
   </data>
   <data name="FirstRun_Legal_Body" xml:space="preserve">
-    <value>Four documents describe what this software does, what it does not do, and what it may cost you. Please read them; Accept covers all four. Declining closes FrameLedger.</value>
+    <value>Three documents describe what this software does, what it does not do, and what it may cost you; Accept covers those three. The GNU GPL v3 is shown too: it is your licence to FrameLedger and needs no acceptance. Declining closes FrameLedger.</value>
   </data>
   <data name="FirstRun_Legal_Header" xml:space="preserve">
     <value>Before you start</value>
@@ -2083,8 +2083,8 @@ Open the log folder?</value>
     <value>In short — please read before you accept:
 • This is a beta (pre-release). It certainly still has bugs, and the developer is not responsible for problems that result.
 • Your PC must meet at least the minimum requirements the game's developer or publisher states. Read them first. Problems on a PC below them are your responsibility, not FrameLedger's.
-• Hooking loads a component into a game, one game at a time, only after you agree. Anti-cheat systems can ban an account for that. FrameLedger refuses where it detects anti-cheat and turns hooking off for that game; there is no way to override that refusal.
-• Nothing is sent anywhere. Your recordings stay on this PC, and backing them up is up to you.
+• Hooking loads a component into a game, one game at a time, only after you agree. Anti-cheat systems can ban an account for that, and a ban can come days later. FrameLedger refuses where it detects anti-cheat and turns hooking off for that game; the only exception is one you can make yourself, per game, for anti-cheat that runs entirely in user mode — and the risk is then yours.
+• Your recordings stay on this PC, and backing them up is up to you. The only network requests are the update check and download, to GitHub; the check can be switched off.
 The documents below are the full terms; this summary does not replace them.</value>
   </data>
   <data name="Blocked_Module_Format" xml:space="preserve">
@@ -2884,5 +2884,14 @@ The documents below are the full terms; this summary does not replace them.</val
   </data>
   <data name="About_Doc_Packages" xml:space="preserve">
     <value>Package licences</value>
+  </data>
+  <data name="Menu_Help_Guide" xml:space="preserve">
+    <value>User guide</value>
+  </data>
+  <data name="Guide_Title" xml:space="preserve">
+    <value>FrameLedger user guide</value>
+  </data>
+  <data name="FirstRun_Doc_InformationNote" xml:space="preserve">
+    <value>Your licence to FrameLedger, shown for information: you do not need to accept it to run the program (GPLv3 section 9).</value>
   </data>
 </root>

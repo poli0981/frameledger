@@ -12,8 +12,21 @@ namespace FrameLedger.App.Services;
 /// </summary>
 public sealed class DocumentWindows(IUrlOpener urls, IThemeApplier theme, AppearanceSettings appearance, ShellHost shell) : IDocumentWindows
 {
+    private DocumentWindow? _guide;
     private DocumentWindow? _limitations;
     private AboutWindow? _about;
+
+    public void ShowGuide()
+    {
+        if (Reveal(_guide))
+        {
+            return;
+        }
+
+        _guide = new DocumentWindow(Strings.Guide_Title, EmbeddedDocuments.Guide(), urls, theme, appearance) { Owner = shell.Current };
+        _guide.Closed += (_, _) => _guide = null;
+        _guide.Show();
+    }
 
     public void ShowLimitations()
     {

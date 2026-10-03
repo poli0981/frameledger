@@ -26,6 +26,7 @@ public sealed class LegalDocumentsTests
         docs.Select(static d => d.Path).Should().Equal("legal/EULA.md", "LICENSE", "legal/DISCLAIMER.md", "legal/PRIVACY_POLICY.md");
         docs.Select(static d => d.Url.AbsoluteUri).Should().OnlyContain(static u => u.StartsWith("https://github.com/poli0981/frameledger/blob/main/", StringComparison.Ordinal));
         docs.Where(static d => d.IsPlainText).Select(static d => d.Key).Should().Equal(LegalDocuments.Gpl);
+        docs.Where(static d => !d.RequiresAcceptance).Select(static d => d.Key).Should().Equal([LegalDocuments.Gpl], "the GPL is shown for information (GPLv3 section 9)");
     }
 
     [Fact]

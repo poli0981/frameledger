@@ -358,6 +358,7 @@ public static class Strings
         nameof(FirstRun_Doc_Disclaimer),
         nameof(FirstRun_Doc_Eula),
         nameof(FirstRun_Doc_Gpl),
+        nameof(FirstRun_Doc_InformationNote),
         nameof(FirstRun_Doc_Privacy),
         nameof(FirstRun_Explainer_Header),
         nameof(FirstRun_Explainer_Intro),
@@ -514,6 +515,7 @@ public static class Strings
         nameof(Guard_SuspiciousUnsigned),
         nameof(Guard_TargetIsVulkanLayered),
         nameof(Guard_TargetIsWow64),
+        nameof(Guide_Title),
         nameof(Hooking_NotX64_Format),
         nameof(Import_Add),
         nameof(Import_Column_Exe),
@@ -607,6 +609,7 @@ public static class Strings
         nameof(Menu_Help_About),
         nameof(Menu_Help_CheckUpdates),
         nameof(Menu_Help_Documentation),
+        nameof(Menu_Help_Guide),
         nameof(Menu_Help_Limitations),
         nameof(Menu_Help_ReportBug),
         nameof(Menu_Tools),
@@ -1639,6 +1642,8 @@ public static class Strings
 
     public static string FirstRun_Doc_Gpl => ResourceManager.GetString(nameof(FirstRun_Doc_Gpl), Culture) ?? nameof(FirstRun_Doc_Gpl);
 
+    public static string FirstRun_Doc_InformationNote => ResourceManager.GetString(nameof(FirstRun_Doc_InformationNote), Culture) ?? nameof(FirstRun_Doc_InformationNote);
+
     public static string FirstRun_Doc_Privacy => ResourceManager.GetString(nameof(FirstRun_Doc_Privacy), Culture) ?? nameof(FirstRun_Doc_Privacy);
 
     public static string FirstRun_Explainer_Header => ResourceManager.GetString(nameof(FirstRun_Explainer_Header), Culture) ?? nameof(FirstRun_Explainer_Header);
@@ -1951,6 +1956,8 @@ public static class Strings
 
     public static string Guard_TargetIsWow64 => ResourceManager.GetString(nameof(Guard_TargetIsWow64), Culture) ?? nameof(Guard_TargetIsWow64);
 
+    public static string Guide_Title => ResourceManager.GetString(nameof(Guide_Title), Culture) ?? nameof(Guide_Title);
+
     public static string Hooking_NotX64_Format => ResourceManager.GetString(nameof(Hooking_NotX64_Format), Culture) ?? nameof(Hooking_NotX64_Format);
 
     public static string Import_Add => ResourceManager.GetString(nameof(Import_Add), Culture) ?? nameof(Import_Add);
@@ -2136,6 +2143,8 @@ public static class Strings
     public static string Menu_Help_CheckUpdates => ResourceManager.GetString(nameof(Menu_Help_CheckUpdates), Culture) ?? nameof(Menu_Help_CheckUpdates);
 
     public static string Menu_Help_Documentation => ResourceManager.GetString(nameof(Menu_Help_Documentation), Culture) ?? nameof(Menu_Help_Documentation);
+
+    public static string Menu_Help_Guide => ResourceManager.GetString(nameof(Menu_Help_Guide), Culture) ?? nameof(Menu_Help_Guide);
 
     public static string Menu_Help_Limitations => ResourceManager.GetString(nameof(Menu_Help_Limitations), Culture) ?? nameof(Menu_Help_Limitations);
 
