@@ -28,6 +28,34 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+## [0.1.0-beta.12] - 2026-10-04
+
+**The twelfth pre-release: how much memory each game itself uses, documents you can read, and a user guide.** The same
+unsigned installer: verify its hash against `SHA256SUMS.txt`, then *More info → Run anyway*. What changed for a user:
+
+- **The game's own memory, in every session** — its video memory and its RAM, the figures Task Manager's Details tab
+  shows for the game's process, read once a second from outside the game, whether or not the game is hooked. The
+  session summary shows the median and the peak, the Sessions tab has two new columns, the Trend and Compare have the
+  memory metrics, the Sensors charts draw this game's memory beside the whole graphics card's and the whole PC's, and
+  the Dashboard shows it live.
+- **Statistics per series**: every sensor's mean, median, minimum and peak, at the bottom of a session's summary.
+- **Documents are rendered**, not shown as raw text: the first-start documents, Help ▸ Limitations, the update notes,
+  and a new **Help ▸ About** with the program's legal notices, the third-party licences and the legal documents.
+- **A user guide** — eight short pages, under **Help ▸ User guide**.
+- **The GPL is no longer something you accept**: it is your licence, shown for information. You accept the EULA (now
+  1.5), the Disclaimer (2.10) and the Privacy Policy (2.6), so the first-start window opens once after the update.
+- Links to the project's documents open the version you run, not the newest one.
+- **The Logs page's Warning and Error filters show the Agent's lines** too; they showed only the App's.
+- **Settings no longer has "Record games launched outside FrameLedger"**: the switch never did anything.
+
+**Updating from `0.1.0-beta.11`:**
+
+- Quit the App (tray icon → Exit) and end `FrameLedger.Agent.exe` before running the installer.
+- Schema 0018 adds the memory columns; the database opens in place, and an older version cannot open it again.
+- Sessions recorded before this version have no memory figures and no per-series statistics: they read N/A, and the
+  summary says so.
+- The new `FrameLedger.ProcessStats.dll` is installed beside the Agent; without it the memory figures read N/A.
+
 ### Added
 
 - **The game's own memory, measured from outside the game, in every session** (owner decision D43, beta.12). A new
@@ -43,7 +71,7 @@ numeric core and does not move; the heading is the full version — corrected 20
   (`game_vram_dedicated_*`, `game_ram_private_*`, …), the process count, the sources, and every sensor series'
   n / mean / median / min / max in `sensor_stats_json`; carried live to the Dashboard (`SessionProgress`, `SessionHeld`)
   and through the crash-recovery file (a new chunk type; beta.11's files still recover). The video-memory **budget** is
-  still not measured (`20_OPEN_QUESTIONS` §M11). The App shows all of it in the next change.
+  still not measured (`20_OPEN_QUESTIONS` §M11). The App shows all of it (below).
 - **Sensor statistics have a median and a minimum** beside the mean and the maximum (`SeriesAggregates`).
 - **The App shows the game's own memory everywhere a session is** (D43, beta.12), in Task Manager's units — MB below
   1 GB, GB to two decimals, 1 GB = 1024 MB. The **session summary** has two new cards, *VRAM (this game)* and *RAM (this
@@ -71,7 +99,6 @@ numeric core and does not move; the heading is the full version — corrected 20
   game, read your results, anti-cheat and safety, your data, questions and answers, and the terms in plain words — in
   the app under **Help ▸ User guide** (the first item of the Help menu) and in the repository's `guide/` folder. The
   README now opens with a pointer to it and keeps a separate section for developers and forks.
-
 - **`NOTICE`, and the licence header in every source file** (owner decision D45, beta.12). FrameLedger's own material is
   GPL-3.0-only with three additional terms of the kinds GPLv3 §7 permits: keep the copyright line and the attribution in
   the program's legal notices (b), mark a modified version as different and do not call it "FrameLedger" alone (c), and
@@ -123,7 +150,6 @@ numeric core and does not move; the heading is the full version — corrected 20
   rules file's own comment and the rules workflow's header made the feed claim too, and are corrected. `docs/README.md`
   is a new index for developers. Code comments that said what is not so (a sparkline, a flyout, a layer flag "false by
   construction", two self-test counts) are corrected with them.
-
 - **The first start's summary said "there is no way to override that refusal"** although a per-game user-mode exception
   has existed since beta.9, and **"Nothing is sent anywhere"** although the update check is a request to GitHub; it now
   names the exception and the one request. The README's safety table still said an exception needed two earlier
