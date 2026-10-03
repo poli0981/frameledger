@@ -1751,6 +1751,58 @@ release.*
 
 **Owner-only, added to the list below:** item 7.
 
+## 2026-10-03 — the beta.11 train: the exception's trial, the library, sessions across
+
+*Status is `CHANGELOG.md` `[0.1.0-beta.11]`; this is what no other file carries. The approved plan was five PRs: PR-1 the
+CrackProof titles (rules `2026.10.1`), PR-2 the exception's trial (schema 0017, Disclaimer 2.9, EULA 1.4), PR-3 the
+library and the import, PR-4 delete sessions, the charts across sessions and the Settings clean-up, PR-5 the release.*
+
+**Decisions (owner, 2026-10-03, asked before the plan — do not re-ask):**
+
+- **D38 — the user-mode exception's evidence moved under the grant, as a trial.** The owner deleted their ledger and
+  found GIRLS' FRONTLINE 2 "Not eligible: 0 successful hooked session(s), two are needed" for good: since beta.8 a game is
+  blocked the moment it is added, a blocked game is never hooked without a grant, so D33's two sessions were unreachable
+  for every game blocked from the start and lost with a reset ledger. Chosen: a grant needs no session; the first two
+  hooked sessions under it are a trial; any end during the trial (every D33 end, or a stored hooked session with no frames
+  or an abnormal exit) ends it for good (`games.ac_exception_trial_failed_at`). Every other condition is unchanged.
+  Legal text: Disclaimer 2.9 (§2A) and EULA 1.4 — the EULA's "a game the Software has already measured successfully"
+  would have become false (D36's rule).
+- **D39 — charts across a game's sessions: both** — *Sessions at a glance* on the Sessions tab, and *Also draw* on the
+  Trend (two units at most, the second on the right axis).
+- **D40 — Delete all sessions: both places** — the game's page and Settings ▸ Data. The Agent deletes (the rows are its),
+  never while a session it would delete under is being recorded.
+- **D41 — Refresh does all three**: reload the library, offer the games the stores installed since, mark the entries
+  whose executable is gone (*Not installed*; nothing is removed).
+- **D42 — the library switches between a grid that fills the window and a list** (`ui.library_view`).
+- **CrackProof (owner's list, "a few, by Steam id")**: three titles whose own store pages say *"Uses Kernel Level
+  Anti-Cheat"* and name CrackProof; ANOTHER EDEN, named only by a community list, is left out.
+
+**Traps met on the way:**
+
+- **A fresh git worktree cannot configure the native build**: CMake's MinHook FetchContent clone runs `git submodule`,
+  which fails there ("'submodule' appears to be a git command, but we were not able to execute it"). Run the gate in the
+  primary checkout, whose `build/native/x64-release/_deps` is cached; a worktree is for writing code and managed tests.
+- **A `DataGrid` laid out outside a window draws its star columns at their minimum** (no Loaded pass): a visual check
+  renders a hosted, off-screen `Window` and pumps the dispatcher (`Dispatcher.PushFrame`), not Measure/Arrange on a page.
+- **`Native FPS` includes a measured-none session**, whose native rate is the presented one: beside Presented it is a
+  second line on the same points, so the overview keeps Native and Displayed to sessions that generated frames.
+- **Both processes may change the library while the Games page is open**, and WPF UI 4.3.0 does nothing on a navigation
+  to the page already on screen: the page reloads on `SessionCompleted` and on the App's own `LibraryChanges`.
+- **A grant's trial is counted from the sessions, not kept as a counter**: the lapse policy counts at each finalize
+  (`CountSuccessfulUnderGrantAsync`: that family, started at or after the grant), and `ac_exception_sessions` is only
+  the sweep's copy for the card. Deleting sessions can only lengthen a trial; the mark that ends one for good
+  (`ac_exception_trial_failed_at`) is the only stored decision.
+- **A session summary is a window of its own, outside every page**: deleting sessions must close the ones open on a
+  deleted session and let go of File ▸ Export's selection, asking the ledger whether the session is still there (both in
+  `SessionDeletion`, so Settings ▸ Data does it too) — ids are reused once the newest is gone. The plan said so; PR-4's
+  first version did neither, and a self-review caught it before the merge.
+- **Analyzers met:** `MA0048` (one type per file), `CA1003`/`MA0046` (an `EventArgs` type for an event), `IDE1006` (a `_`
+  prefix on private consts), `CA1030` (no method named `Raise`), `MA0051` (60 lines), and `RevokeAntiCheatExceptionAsync`'s
+  new `bool` before the token turned every `(path, reason, ct)` call into a compile error — pass `ct: ct`.
+- **The Bash tool's heredocs break on an odd number of apostrophes and halve backslashes**: patch scripts are files.
+
+**Owner-only, added to the list below:** item 8.
+
 ## Owner-only — no PR can close these
 
 1. **§S23-2 — branch protection.** `Rules / validate` is not a required status check on
@@ -1793,6 +1845,13 @@ release.*
    Gate shows Privacy 2.5 and Disclaimer 2.8 once. (e) The `ja` text of `Safety_AdminMode_*`, English until reviewed.
    (f) `docs/LIST_GAME_TESTED.md` — reviewed and approved by the owner before it was committed (D35, 2026-09-27);
    keep it current as games are run.
+8. **beta.11 on real hardware.** (a) GIRLS' FRONTLINE 2: the option on → *Eligible* → *Make exception…* (the disclosure
+   `ac-exception-dialog/2`, with its *Trial* paragraph) → hooking on → two sessions: the card says *trial: 0 of 2*, then
+   *1 of 2*, then *Exception in force since …* alone. (b) The library at your window's width, and the list; Refresh
+   after installing a game, and with the USB drive unplugged (*Not installed*, the drive named). (c) Delete all sessions
+   on a game's page and in Settings ▸ Data. (d) *Sessions at a glance* and the Trend with a second unit. (e) The Legal
+   Gate shows the Disclaimer 2.9 and the EULA 1.4 once. (f) The `ja` text of `Safety_Exception_Trial` (English until
+   reviewed) and the App strings marked `review`.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
