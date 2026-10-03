@@ -544,7 +544,9 @@ its trial, and the App says so ("trial: 1 of 2"). During the trial **any** end o
 end is recorded with its own reason and `ac_exception_trial_failed_at` is set. While it is set the sweep writes the game
 not eligible, the Agent refuses a grant (`Refused.reason = TrialFailed`, the signal is when) and the store refuses one in
 SQL; withdrawing, a game update, *Change executable* and a twin merge all keep it. A session too short to be stored, or
-one that was never hooked, proves nothing either way and is not judged. After the trial, an end is what it was under
+one that was never hooked, is not judged by its frames or its exit — it neither counts toward the two nor fails the
+trial that way — but an end of the list above still ends the exception for good during the trial: a crash while
+hooked, however short, or a finding about the game at the start. After the trial, an end is what it was under
 D33: the exception may be made again once the sweep finds the game eligible. Deleting sessions can only lengthen a trial
 — the count is read, never stored as a grant's own fact.
 

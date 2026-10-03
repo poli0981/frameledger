@@ -66,6 +66,8 @@ public sealed class UserModeExceptionLapsePolicyTests
             .Should().BeNull("a session under no exception is never the exception's business");
         UserModeExceptionLapsePolicy.EndOf(Under(SessionEndReason.TargetExited), ExitStatus.Crashed, _stored, inTrial: true)
             .Should().Be(UserModeExceptionLapse.SessionCrashed, "a more specific reason is said as itself, and still marks the trial failed");
+        UserModeExceptionLapsePolicy.EndOf(Under(SessionEndReason.TargetExited), ExitStatus.Crashed, _stored with { StoredHooked = false, FrameCount = 0 }, inTrial: true)
+            .Should().Be(UserModeExceptionLapse.SessionCrashed, "a session too short to keep is not judged by its frames, but a crash while hooked still ends it");
     }
 
     [Fact]
