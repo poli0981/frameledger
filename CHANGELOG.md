@@ -66,6 +66,10 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 - **Links into the repository open the documents of the version you run**: a release stamps its tag into the App
   (`-p:FrameLedgerSourceRef`), so *View on GitHub*, the safety document and every document link go to that tag rather
   than to `main`, where the text may have changed since.
+- **A user guide** (owner decision D44, beta.12): eight short pages for players — install and first start, record a
+  game, read your results, anti-cheat and safety, your data, questions and answers, and the terms in plain words — in
+  the app under **Help ▸ User guide** (the first item of the Help menu) and in the repository's `guide/` folder. The
+  README now opens with a pointer to it and keeps a separate section for developers and forks.
 
 - **`NOTICE`, and the licence header in every source file** (owner decision D45, beta.12). FrameLedger's own material is
   GPL-3.0-only with three additional terms of the kinds GPLv3 §7 permits: keep the copyright line and the attribution in
@@ -83,8 +87,30 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   Contributor Covenant 2.1, adopted by reference) and `legal/TRADEMARKS.md` (third-party names, no affiliation, and how
   the name FrameLedger may be used).
 
+### Changed
+
+- **The GPL is no longer accepted at the first start** (owner decision D45): it is your licence to FrameLedger and is
+  shown beside the documents for information — GPLv3 §9 needs no acceptance to run the program. **Accept** covers the
+  End User License Agreement, the Disclaimer and the Privacy Policy; a row an earlier version wrote for the GPL stays,
+  unread.
+- **The documents you accept change, and are shown again once:** **EULA 1.5** (an unmeasured session also records the
+  game's own memory use; the GPL needs no acceptance; where the third-party notices are in an installed copy; your
+  rights as a consumer that no agreement can limit, and severability), **Disclaimer 2.10** (what it reads about a game
+  from outside it: the game's memory use, opened with the least access Windows offers; §2 names everything the thread
+  it runs inside the game does, which it understated; the maintainers' preface moves to
+  `docs/legal-drift-history.md`), **Privacy Policy 2.6** (the game's memory use, replacing a video-memory figure the
+  software never read; a new §3A on what an export or a bug report can carry about you before you share it; the version
+  history notes move to `docs/legal-drift-history.md`).
+- **Help ▸ Documentation is Help ▸ Online documentation**, and opens the README of the version you run.
+
 ### Fixed
 
+- **The first start's summary said "there is no way to override that refusal"** although a per-game user-mode exception
+  has existed since beta.9, and **"Nothing is sent anywhere"** although the update check is a request to GitHub; it now
+  names the exception and the one request. The README's safety table still said an exception needed two earlier
+  successful sessions — the rule until beta.11 (D38) made them a trial — and its feature list promised "per-process VRAM
+  and whether the driver was exceeding its budget"; both now say what the software does. The tier tooltip names the
+  game's memory beside the duration and the sensors.
 - **The Legal Gate showed the documents as raw Markdown** (`**bold**`, `| --- |`) in a text box, and Help ▸ Limitations
   and the update notes the same; they are rendered now (above). The Legal Gate's *View on GitHub* went around the App's
   link opener; it goes through it.

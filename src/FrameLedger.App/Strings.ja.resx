@@ -314,7 +314,7 @@
     <comment>review</comment>
   </data>
   <data name="Menu_Help_Documentation" xml:space="preserve">
-    <value>ドキュメント</value>
+    <value>オンライン ドキュメント</value>
     <comment>review</comment>
   </data>
   <data name="Menu_Help_Limitations" xml:space="preserve">
@@ -1218,7 +1218,7 @@
     <comment>review</comment>
   </data>
   <data name="Tier_NotHooked_Tooltip" xml:space="preserve">
-    <value>ティア 2: フックなし — 時間とセンサーのみ。フレーム由来の値はすべて N/A</value>
+    <value>ティア 2: フックなし — 時間、センサー、ゲームのメモリのみ。フレームから算出する値はすべて N/A</value>
     <comment>review</comment>
   </data>
   <data name="Upscaler_None" xml:space="preserve">
@@ -2186,7 +2186,7 @@
     <comment>review</comment>
   </data>
   <data name="FirstRun_Accept" xml:space="preserve">
-    <value>4 つすべてに同意する</value>
+    <value>同意する</value>
     <comment>review</comment>
   </data>
   <data name="FirstRun_Agent_Body" xml:space="preserve">
@@ -2238,7 +2238,7 @@
     <comment>review</comment>
   </data>
   <data name="FirstRun_Doc_Gpl" xml:space="preserve">
-    <value>GNU GPL v3</value>
+    <value>GNU GPL v3（あなたのライセンス）</value>
     <comment>review</comment>
   </data>
   <data name="FirstRun_Doc_Privacy" xml:space="preserve">
@@ -2270,7 +2270,7 @@
     <comment>review</comment>
   </data>
   <data name="FirstRun_Legal_Body" xml:space="preserve">
-    <value>4 つの文書は、このソフトウェアが何を行い、何を行わず、どのような代償があり得るかを説明します。お読みください。「同意する」は 4 つすべてに適用されます。拒否すると FrameLedger は終了します。</value>
+    <value>3 つの文書が、このソフトウェアが何をし、何をしないか、そしてあなたにどんな代償があり得るかを説明しています。「同意する」はこの 3 つに適用されます。GNU GPL v3 も表示されます。これは FrameLedger に対するあなたのライセンスで、同意は不要です。同意しない場合、FrameLedger は終了します。</value>
     <comment>review</comment>
   </data>
   <data name="FirstRun_Legal_Header" xml:space="preserve">
@@ -2761,12 +2761,12 @@
     <comment>review</comment>
   </data>
   <data name="FirstRun_Legal_Summary" xml:space="preserve">
-    <value>要点 — 同意する前にお読みください:
-• これはベータ版（プレリリース）です。不具合は確実に残っており、それによって生じた問題について開発者は責任を負いません。
-• お使いの PC は、ゲームの開発元またはパブリッシャーが公表している最低動作環境を少なくとも満たしている必要があります。先にご確認ください。それを下回る PC で起きた問題は FrameLedger ではなく、あなたの責任です。
-• フックは、あなたが同意した場合にのみ、ゲームごとにコンポーネントをゲームへ読み込みます。アンチチートはこれを理由にアカウントを BAN することがあります。FrameLedger はアンチチートを検出した場合は拒否し、そのゲームのフックをオフにします。この拒否を回避する方法はありません。
-• どこにも何も送信されません。記録はこの PC に残り、バックアップはご自身で行ってください。
-以下の文書が正式な条項であり、この要約はそれらに代わるものではありません。</value>
+    <value>要約 — 同意する前にお読みください:
+• これはベータ版（プレリリース）です。確実にまだ不具合があり、それによって生じた問題について開発者は責任を負いません。
+• お使いの PC は、ゲームの開発元またはパブリッシャーが示す最小要件を満たしている必要があります。まずそれを確認してください。要件を満たさない PC での問題は FrameLedger ではなくあなたの責任です。
+• フックは、あなたが同意した後に限り、ゲームごとにコンポーネントをゲームへ読み込みます。アンチチートはそれを理由にアカウントを停止することがあり、停止は数日後に来ることもあります。FrameLedger はアンチチートを検出すると拒否し、そのゲームのフックをオフにします。唯一の例外は、完全にユーザーモードで動作するアンチチートについて、あなた自身がゲームごとに設定できるものです。その場合のリスクはあなたが負います。
+• 記録はこの PC に保存され、バックアップはあなたの責任です。ネットワーク通信は GitHub への更新の確認とダウンロードのみで、確認はオフにできます。
+以下の文書が完全な条件です。この要約はそれに代わるものではありません。</value>
     <comment>review</comment>
   </data>
   <data name="Blocked_Module_Format" xml:space="preserve">
@@ -3831,6 +3831,18 @@
   </data>
   <data name="About_Doc_Packages" xml:space="preserve">
     <value>パッケージのライセンス</value>
+    <comment>review</comment>
+  </data>
+  <data name="Menu_Help_Guide" xml:space="preserve">
+    <value>ユーザー ガイド</value>
+    <comment>review</comment>
+  </data>
+  <data name="Guide_Title" xml:space="preserve">
+    <value>FrameLedger ユーザー ガイド</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Doc_InformationNote" xml:space="preserve">
+    <value>FrameLedger に対するあなたのライセンスです。参考として表示しています。プログラムを実行するために同意する必要はありません（GPLv3 第 9 条）。</value>
     <comment>review</comment>
   </data>
 </root>

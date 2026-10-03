@@ -60,7 +60,9 @@ public static partial class LegalDocuments
             ? VersionOf(raw) ?? throw new InvalidOperationException($"{path} declares no **Version:** line; FR-11 cannot re-show a document that has no version")
             : GplVersion;
         // The GPL is a plain text — Markdown would turn its numbered sections into lists and its indented lines into code.
-        return new LegalDocument(key, title, version, StripComments(raw), RepositoryLinks.Blob(path), path, IsPlainText: !versioned);
+        // beta.12 (D45): the GPL is the user's licence, shown for information — GPLv3 §9: "You are not required to accept
+        // this License in order to receive or run a copy of the Program." Accept covers the other three.
+        return new LegalDocument(key, title, version, StripComments(raw), RepositoryLinks.Blob(path), path, IsPlainText: !versioned, RequiresAcceptance: versioned);
     }
 
     [GeneratedRegex(@"\*\*Version:\*\*\s*(?<v>[^\s·]+)", RegexOptions.ExplicitCapture | RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]

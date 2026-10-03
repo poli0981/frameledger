@@ -214,7 +214,14 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task ImportLibraryAsync() => _ = await _import.RunAsync().ConfigureAwait(true);
 
-    /// <summary>Help ▸ Documentation (P4 PR-3): the README is the user-facing entry point; `docs/` is the developers'.</summary>
+    /// <summary>Help ▸ User guide (beta.12, D44): the guide this build carries, rendered, in a window of its own.</summary>
+    [RelayCommand]
+    private void Guide() => _documents.ShowGuide();
+
+    /// <summary>
+    /// Help ▸ Online documentation (P4 PR-3; renamed beta.12): the README at this build's source — the user guide is
+    /// in the App now, so this is the repository's front page, with the developers' documents behind it.
+    /// </summary>
     [RelayCommand]
     private void Documentation()
     {

@@ -15,8 +15,11 @@ public static class IssueLink
 {
     public const string Repository = "https://github.com/poli0981/frameledger";
 
-    /// <summary>Help ▸ Documentation: the README is the user-facing entry point (`docs/` is developer-facing, README line 126).</summary>
-    public static readonly Uri Documentation = new(Repository + "#readme");
+    /// <summary>
+    /// Help ▸ Online documentation: the README at this build's source (beta.12: it was the repository's front page on
+    /// <c>main</c>, which may describe a newer version than the one installed).
+    /// </summary>
+    public static readonly Uri Documentation = RepositoryLinks.Blob("README.md");
 
     /// <summary>
     /// <c>issues/new</c> with the form's field ids (<c>.github/ISSUE_TEMPLATE/bug_report.yml</c>: <c>app-version</c>,

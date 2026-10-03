@@ -7,6 +7,7 @@ namespace FrameLedger.App.Services;
 /// One of FR-11's documents as this build ships it: its key (the <c>legal_acceptance.doc</c> value), the title shown, the
 /// version the acceptance row records, the text, and the GitHub-hosted copy — since beta.12 at this build's own source
 /// (<see cref="RepositoryLinks"/>), with the document's path in the repository (its relative links resolve against it) and
-/// whether it is a plain text shown as written rather than Markdown (the GPL's <c>LICENSE</c>).
+/// whether it is a plain text shown as written rather than Markdown (the GPL's <c>LICENSE</c>) — and, since beta.12 (D45),
+/// whether Accept covers it: the GPL is shown for information and needs no acceptance (GPLv3 §9).
 /// </summary>
-public sealed record LegalDocument(string Key, string Title, string Version, string Text, Uri Url, string Path = "", bool IsPlainText = false);
+public sealed record LegalDocument(string Key, string Title, string Version, string Text, Uri Url, string Path = "", bool IsPlainText = false, bool RequiresAcceptance = true);

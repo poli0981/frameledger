@@ -236,7 +236,7 @@
     <value>Kiểm tra cập nhật</value>
   </data>
   <data name="Menu_Help_Documentation" xml:space="preserve">
-    <value>Tài liệu</value>
+    <value>Tài liệu trực tuyến</value>
   </data>
   <data name="Menu_Help_Limitations" xml:space="preserve">
     <value>Giới hạn</value>
@@ -914,7 +914,7 @@
     <value>T2</value>
   </data>
   <data name="Tier_NotHooked_Tooltip" xml:space="preserve">
-    <value>Tier 2: không hook — chỉ thời lượng và cảm biến; mọi giá trị từ khung hình là N/A</value>
+    <value>Mức 2: không hook — chỉ có thời lượng, cảm biến và bộ nhớ của game; mọi giá trị suy ra từ khung hình đều là N/A</value>
   </data>
   <data name="Upscaler_None" xml:space="preserve">
     <value>Không upscaler</value>
@@ -1640,7 +1640,7 @@
     <value>FrameLedger — đang ghi {0} mà không đo</value>
   </data>
   <data name="FirstRun_Accept" xml:space="preserve">
-    <value>Chấp nhận cả bốn</value>
+    <value>Chấp nhận</value>
   </data>
   <data name="FirstRun_Agent_Body" xml:space="preserve">
     <value>FrameLedger khởi động một capture agent nhỏ bên cạnh nó, với quyền người dùng thường — không nâng quyền. Nâng quyền là tuỳ chọn và không tier thu thập nào yêu cầu: nó chỉ mở khoá nhiệt độ CPU (qua PawnIO) và gắn vào game tự chạy với quyền quản trị. Bên dưới là những gì agent báo cáo về máy này.</value>
@@ -1679,7 +1679,7 @@
     <value>Thoả thuận cấp phép người dùng cuối</value>
   </data>
   <data name="FirstRun_Doc_Gpl" xml:space="preserve">
-    <value>GNU GPL v3</value>
+    <value>GNU GPL v3 (giấy phép của bạn)</value>
   </data>
   <data name="FirstRun_Doc_Privacy" xml:space="preserve">
     <value>Chính sách quyền riêng tư</value>
@@ -1703,7 +1703,7 @@
     <value>Thư viện của bạn</value>
   </data>
   <data name="FirstRun_Legal_Body" xml:space="preserve">
-    <value>Bốn tài liệu mô tả phần mềm này làm gì, không làm gì, và có thể khiến bạn phải trả giá gì. Vui lòng đọc; Chấp nhận áp dụng cho cả bốn. Từ chối sẽ đóng FrameLedger.</value>
+    <value>Ba văn bản mô tả phần mềm này làm gì, không làm gì, và có thể khiến bạn mất gì; nút Chấp nhận áp dụng cho ba văn bản đó. GNU GPL v3 cũng được hiển thị: đó là giấy phép của bạn đối với FrameLedger và không cần chấp nhận. Từ chối sẽ đóng FrameLedger.</value>
   </data>
   <data name="FirstRun_Legal_Header" xml:space="preserve">
     <value>Trước khi bắt đầu</value>
@@ -2076,11 +2076,11 @@ Mở thư mục log?</value>
   </data>
   <data name="FirstRun_Legal_Summary" xml:space="preserve">
     <value>Tóm tắt — vui lòng đọc trước khi chấp nhận:
-• Đây là bản beta (pre-release). Chắc chắn vẫn còn lỗi, và nhà phát triển không chịu trách nhiệm về các sự cố phát sinh.
-• Máy của bạn phải đáp ứng ít nhất mức cấu hình tối thiểu mà nhà phát triển/nhà phát hành game công bố. Hãy đọc cấu hình tối thiểu trước. Sự cố trên máy dưới mức đó là trách nhiệm của bạn, không phải của FrameLedger.
-• Hooking nạp một thành phần vào game, từng game một, và chỉ sau khi bạn đồng ý. Hệ thống chống gian lận có thể khoá tài khoản vì việc này. FrameLedger từ chối ở nơi nó phát hiện anti-cheat và tự tắt hooking cho game đó; không có cách nào vượt qua sự từ chối này.
-• Không có gì được gửi đi đâu cả. Dữ liệu ghi lại nằm trên máy này, và việc sao lưu là của bạn.
-Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắt này không thay thế chúng.</value>
+• Đây là bản beta (phát hành trước). Chắc chắn vẫn còn lỗi, và nhà phát triển không chịu trách nhiệm cho các sự cố phát sinh.
+• Máy của bạn phải đạt ít nhất cấu hình tối thiểu mà nhà phát triển hoặc nhà phát hành game công bố. Hãy đọc trước. Sự cố trên máy dưới mức đó là trách nhiệm của bạn, không phải của FrameLedger.
+• Hooking nạp một thành phần vào game, từng game một, chỉ sau khi bạn đồng ý. Hệ thống anti-cheat có thể khóa tài khoản vì điều đó, và lệnh khóa có thể đến sau nhiều ngày. FrameLedger từ chối khi phát hiện anti-cheat và tắt hooking cho game đó; ngoại lệ duy nhất là ngoại lệ bạn tự tạo, cho từng game, với anti-cheat chạy hoàn toàn ở chế độ người dùng — khi đó rủi ro là của bạn.
+• Dữ liệu ghi lại nằm trên máy này, và việc sao lưu là do bạn. Yêu cầu mạng duy nhất là kiểm tra và tải bản cập nhật từ GitHub; có thể tắt việc kiểm tra.
+Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt này không thay thế chúng.</value>
   </data>
   <data name="Blocked_Module_Format" xml:space="preserve">
     <value>{0} — mô-đun {1} của nó đã được nạp trong game</value>
@@ -2879,5 +2879,14 @@ Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắ
   </data>
   <data name="About_Doc_Packages" xml:space="preserve">
     <value>Giấy phép các gói</value>
+  </data>
+  <data name="Menu_Help_Guide" xml:space="preserve">
+    <value>Hướng dẫn sử dụng</value>
+  </data>
+  <data name="Guide_Title" xml:space="preserve">
+    <value>Hướng dẫn sử dụng FrameLedger</value>
+  </data>
+  <data name="FirstRun_Doc_InformationNote" xml:space="preserve">
+    <value>Giấy phép của bạn đối với FrameLedger, hiển thị để bạn biết: bạn không cần chấp nhận nó để chạy chương trình (GPLv3 mục 9).</value>
   </data>
 </root>

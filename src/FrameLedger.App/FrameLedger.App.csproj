@@ -53,6 +53,8 @@
     <EmbeddedResource Include="..\..\legal\TRADEMARKS.md" LogicalName="legal/TRADEMARKS.md" />
     <EmbeddedResource Include="..\..\legal\THIRD_PARTY_NOTICES.md" LogicalName="legal/THIRD_PARTY_NOTICES.md" />
     <EmbeddedResource Include="..\..\legal\licenses\nuget\INDEX.md" LogicalName="legal/licenses/nuget/INDEX.md" />
+    <!-- beta.12 (D44): the user guide, shown under Help > User guide; English, as the documents are. -->
+    <EmbeddedResource Include="..\..\guide\*.md" LogicalName="guide/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <!-- beta.12: the source this build was made from, so the App's links into the repository open THIS version's documents

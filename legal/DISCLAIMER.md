@@ -1,12 +1,6 @@
 # FrameLedger — Disclaimer
 
-**Version:** 2.9 · **Effective:** {{RELEASE_DATE}}
-
-> **How this document is kept true.** The statement of what FrameLedger measures (§4) is `legal/ACCURACY.md`,
-> embedded here and in `README.md` and bound to its source by `tools/accuracy-check.ps1`, which fails the build when a
-> copy differs. Earlier versions of this document carried a hand-maintained audit of how its own promises drifted from
-> the software — six re-counts between 2026-08-04 and 2026-09-15; that history is `docs/legal-drift-history.md`,
-> moved out of the text you accept on 2026-09-16 and kept in full.
+**Version:** 2.10 · **Effective:** {{RELEASE_DATE}}
 
 ## 0. This is pre-release (beta) software
 
@@ -42,7 +36,9 @@ Be precise about what that does and does not promise, because the shorter versio
 
 Install it somewhere only you can write to, and verify the published SHA-256 checksums.
 
-**What it observes:** arguments the game passes to graphics APIs we intercept (presentation, upscaling, ray tracing, pipeline creation) and video-memory usage reported by the graphics runtime.
+**What it observes inside the game:** arguments the game passes to graphics APIs we intercept (presentation, upscaling, ray tracing, pipeline creation).
+
+**What it reads about the game from outside it, in every session:** the game process's own memory use — its dedicated and shared video memory and its working sets, the figures Windows' Task Manager shows — from Windows' performance counters and process-memory information. For a game it does not inject into, FrameLedger opens the game's process for this with the least access Windows offers, once a second, and closes it again; it reads nothing inside the process.
 
 > **What of that list is observed today is stated once, in §4 below** (the block `legal/ACCURACY.md` carries, dated). The list here describes what the software is designed to observe, and the boundary — API arguments and nothing else — holds for all of it.
 
@@ -69,8 +65,8 @@ FrameLedger is designed to reduce that risk substantially:
   the game exits.
 - FrameLedger contains **no evasion techniques of any kind** — it does not hide, rename, obfuscate, or disguise itself. It is intended to be plainly identifiable to any security software that looks.
 
-  For completeness about what it *does* run inside the game: besides the intercepted calls themselves, the component starts **one background thread** that sleeps for a second at a time and checks whether it has been told to stop. It reads only FrameLedger's own shared memory. It does not scan the game, enumerate what the system has loaded, or query Windows services — deliberately, because software that does those things from inside a game process looks like the thing this tool is trying not to be mistaken for.
-- FrameLedger injects into a game only after you enable that game individually. For every other game — and for any game where the safety checks refuse — it records the session's start, end and duration together with whatever hardware sensor readings your machine provides, and reports every other measurement as not available. **There is no measurement mode that works without injecting**; an earlier version of this document described one, and it was never built. FrameLedger never estimates a value it could not measure, and it always shows which of the two modes produced a session. Neither mode requires administrator rights.
+  For completeness about what it *does* run inside the game: besides the intercepted calls themselves, the component starts **one background thread**. It wakes once a second, or when the game loads a library, and then: checks FrameLedger's own shared memory for a request to stop and for the heartbeat of the safety scan described above; asks Windows, by name, whether the graphics, upscaling and frame-generation libraries it knows about are loaded, and puts its interception into the ones that are (for ray tracing it creates one command list on the game's own Direct3D 12 device, to find the functions to intercept); writes its counters to FrameLedger's shared memory; and writes FrameLedger's own log file. It does not scan the game's memory, list the modules or processes on the system, or query Windows services — deliberately, because software that does those things from inside a game process looks like the thing this tool is trying not to be mistaken for.
+- FrameLedger injects into a game only after you enable that game individually. For every other game — and for any game where the safety checks refuse — it records the session's start, end and duration together with whatever hardware sensor readings your machine provides and the game's own memory use as Windows reports it (§1), and reports every other measurement as not available. **There is no measurement mode that works without injecting**; an earlier version of this document described one, and it was never built. FrameLedger never estimates a value it could not measure, and it always shows which of the two modes produced a session. Neither mode requires administrator rights.
 
 **However, these protections cannot be complete:**
 

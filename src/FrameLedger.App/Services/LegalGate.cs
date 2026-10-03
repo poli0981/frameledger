@@ -6,11 +6,16 @@ using FrameLedger.Application.Persistence;
 namespace FrameLedger.App.Services;
 
 /// <summary>
-/// FR-11 over <c>ILegalAcceptanceStore</c>: the gate is required while any of the four documents has no
+/// FR-11 over <c>ILegalAcceptanceStore</c>: the gate is required while any document that needs acceptance has no
 /// acceptance row at this build's version — a first run, or a document whose version moved. Accept writes one
-/// row per document with the document's own version (<c>06_DATA_MODEL</c> §Writer ownership: the UI's table).
+/// row per such document with the document's own version (<c>06_DATA_MODEL</c> §Writer ownership: the UI's table).
 /// D8 stands: accepting here is not a precondition of per-game consent, which has its own dialog.
 /// </summary>
+/// <remarks>
+/// <b>Three documents, not four, since beta.12 (D45).</b> The GPL is shown for information (GPLv3 §9: no acceptance is
+/// needed to run the program), so it neither holds the gate open nor gets a row; a <c>gpl</c> row an earlier version
+/// wrote stays in the table, unread.
+/// </remarks>
 public sealed class LegalGate
 {
     private readonly ILegalAcceptanceStore _store;
@@ -29,7 +34,7 @@ public sealed class LegalGate
     public async Task<IReadOnlyList<LegalDocument>> OutstandingAsync(CancellationToken ct = default)
     {
         var outstanding = new List<LegalDocument>();
-        foreach (LegalDocument document in Documents)
+        foreach (LegalDocument document in Documents.Where(static d => d.RequiresAcceptance))
         {
             LegalAcceptance? accepted = await _store.FindAsync(document.Key, ct).ConfigureAwait(false);
             if (accepted is null || !string.Equals(accepted.Version, document.Version, StringComparison.Ordinal))
@@ -43,11 +48,11 @@ public sealed class LegalGate
 
     public async Task<bool> IsRequiredAsync(CancellationToken ct = default) => (await OutstandingAsync(ct).ConfigureAwait(false)).Count > 0;
 
-    /// <summary>One Accept, four rows — the single button FR-11 specifies.</summary>
+    /// <summary>One Accept, one row per document that needs it — the single button FR-11 specifies.</summary>
     public async Task AcceptAllAsync(CancellationToken ct = default)
     {
         DateTimeOffset now = _clock.GetUtcNow();
-        foreach (LegalDocument document in Documents)
+        foreach (LegalDocument document in Documents.Where(static d => d.RequiresAcceptance))
         {
             await _store.RecordAsync(new LegalAcceptance(document.Key, document.Version, now), ct).ConfigureAwait(false);
         }
