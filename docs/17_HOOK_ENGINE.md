@@ -22,7 +22,7 @@ The injected DLL. Its whole job: install hooks, write 64-byte records into a rin
   > ⚠ The CFG result was measured with **strict mode off**. A host that enables CFG strict mode does not auto-validate dynamically generated code and could still `__fastfail`. Rare, but real, and not something the fault policy can catch — see §Fault policy and `20_OPEN_QUESTIONS` §H8.
 - No STL container that allocates in a hook path. `std::atomic` and fixed arrays are fine.
 - VERSIONINFO populated (`ProductName=FrameLedger`, real company/version) — being identifiable is required by `19_SAFETY`.
-- Exports: `FlGetBuildId()`, `FlRequestUnhook()`, `FlGetStatus()`. Real names, no ordinal-only tricks.
+- Exports: `FlGetLayoutVersion()` (added to this line 2026-10-04), `FlGetBuildId()`, `FlRequestUnhook()`, `FlGetStatus()`. Real names, no ordinal-only tricks.
 
 ## DLL entry
 
@@ -82,7 +82,7 @@ void** vtbl = *reinterpret_cast<void***>(dummySwapChain);
 MH_CreateHook(vtbl[kPresentIndex], &Hook_Present, reinterpret_cast<void**>(&Orig_Present));
 ```
 
-Index constants (`IDXGISwapChain::Present = 8`, `Present1 = 22` on `IDXGISwapChain1`, `ResizeBuffers = 13`) live in `HookIndices.h`.
+Index constants (`IDXGISwapChain::Present = 8`, `Present1 = 22` on `IDXGISwapChain1`, `ResizeBuffers = 13`) live in ~~`HookIndices.h`~~ `FrameLedger.Overlay/include/fl_dxgi_vtable.h`, shared with the harness; the D3D12 command-list slots in `fl_d3d12_vtable.h` (corrected 2026-10-04: no `HookIndices.h` exists).
 
 > ⚠ **"Verified at runtime against the dummy object" is not implementable, and
 > must not be reintroduced.** A vtable slot holds a bare function pointer: no
@@ -112,15 +112,18 @@ Index constants (`IDXGISwapChain::Present = 8`, `Present1 = 22` on `IDXGISwapCha
 > restore-only-if-unchanged rule matters, since another overlay may have
 > patched the same shared slot after us.
 
-Prefer hooking the **vtable entry** over inline-patching for COM methods (cleaner uninstall, no trampoline hazards); use MinHook inline hooks for flat C exports (`wglSwapBuffers`, NGX/FFX/XeSS entry points).
+~~Prefer hooking the **vtable entry** over inline-patching for COM methods (cleaner uninstall, no trampoline hazards);~~ *(corrected 2026-10-04: the Overlay swaps no vtable entry. It reads the slot off a throwaway object and MinHooks the function it points at, so one patch covers every instance (§Ray tracing); §Compare-and-restore explains why the swap is not the cleaner uninstall.)* Use MinHook inline hooks for flat C exports too (`wglSwapBuffers`, the Streamline and FidelityFX entry points ~~, NGX/FFX/XeSS~~ — NGX and XeSS have none).
 
 ## Hook inventory
 
 Every hook must be listed here with a purpose. Anything not on this list is not allowed to exist (`19_SAFETY` review checklist).
 
-> **This table is a SPECIFICATION. As of 2026-09-04 the Overlay installs TWELVE DETOURS —
+> **This table is a SPECIFICATION. ~~As of 2026-09-04 the Overlay installs TWELVE DETOURS —
 > the eight of 2026-09-03 plus four `ffxDispatch` trampolines, one per AMD module a game
-> calls — and the FidelityFX row below is the ninth ✅.** The counts differed until 2026-09-03, because a
+> calls — and the FidelityFX row below is the ninth ✅.~~** *(Corrected 2026-10-04: as of 2026-09-06 it installs up
+> to SIXTEEN — the nine `FL_HOOK_INVENTORY` rows (four Streamline including `slSetTagForFrame`, four `ffxDispatch`,
+> `ffxFsr3ContextDispatchUpscale`), the three DXGI slots, the two `ID3D12GraphicsCommandList4` methods,
+> `wglSwapBuffers` and `LoadLibraryExW`; four hooks landed without this banner moving.)* The counts differed until 2026-09-03, because a
 > row is a *capability* and a detour is a *patch*, and the FG-count row rode on the
 > evaluate detour; it has its own now, `sl.interposer.dll!slGetNewFrameToken`. The AMD row
 > is the opposite shape — **one row-family, four modules, four patches from one
@@ -161,12 +164,12 @@ Every hook must be listed here with a purpose. Anything not on this list is not 
 > so a shipped hook missing from here is invisible to every gate. Flip the row **and this
 > banner** in the same PR that builds a hook.
 
-### The one system-module detour — a hook, and the asymmetry stated
+### ~~The one system-module detour~~ The two system exports patched by name — a hook, and the asymmetry stated *(heading corrected 2026-10-04: `wglSwapBuffers` above is the other)*
 
 | Hook | Purpose |
 |---|---|
 | ✅ `opengl32.dll!wglSwapBuffers` (2026-09-06, P1 item 4) | The OpenGL present hook (§Presentation). A system module, not a vendor one, so — like the row below — it is deliberately **not** in `FL_HOOK_INVENTORY` and `hookinventory-check` does not cover it; listed here so the table above and these two rows together are the whole inventory |
-| ✅ `kernelbase.dll!LoadLibraryExW` (2026-09-06, P1 item 1) | The wake for lazily loaded runtimes and the in-process anti-cheat stop — §DLL entry step 3 above carries the mechanism. **Rule 4:** it reads one argument the API was given (`flags`) and one property of a handle the loader just returned to *its own caller* (the module file name); nothing of the game's. **It is the only hook on a system module, and it is deliberately not in `FL_HOOK_INVENTORY`:** that table is *vendor* symbols resolved by name and gated by `hookinventory-check` against `vendor-exports.json`, and `LoadLibraryExW` is neither vendor nor uncertain. It is listed here instead so the table above and this row together are the whole inventory. It **never** installs, uninstalls or patches anything itself (§H2) |
+| ✅ `kernelbase.dll!LoadLibraryExW` (2026-09-06, P1 item 1) | The wake for lazily loaded runtimes and the in-process anti-cheat stop — §DLL entry step 3 above carries the mechanism. **Rule 4:** it reads one argument the API was given (`flags`) and one property of a handle the loader just returned to *its own caller* (the module file name); nothing of the game's. **~~It is the only hook on a system module, and~~ Like `wglSwapBuffers` above it, it is deliberately not in `FL_HOOK_INVENTORY` (corrected 2026-10-04):** that table is *vendor* symbols resolved by name and gated by `hookinventory-check` against `vendor-exports.json`, and `LoadLibraryExW` is neither vendor nor uncertain. It is listed here instead so the table above and this row together are the whole inventory. It **never** installs, uninstalls or patches anything itself (§H2) |
 
 ### Watchdog observations — not hooks, and listed here so nobody mistakes them for one
 
@@ -194,7 +197,7 @@ Every hook must be listed here with a purpose. Anything not on this list is not 
 | ✅ Streamline: `slSetTag` — **and, since 2026-09-05, every tag's TYPE** (`slTagCensus`; a HUD-less / UI tag marks the present `FL_FG_DLSS_G`, rule 4: the same argument) | The **global** resource tags, where a title states the size of the buffer it is upscaling *from*: `kBufferTypeScalingInputColor`'s extent → `renderW/H` — **or, since 2026-09-05, the size the tagged `sl::Resource` declares when the extent is zero** (`TagSize` in `fl_sl_inputs.h`, shared by all three tag routes; GUID-checked; a Resource declaring no size is still the honest unknown). **Built 2026-08-15** (`FL_HOOK_UPSCALER_PARAMS`), and it is an ALTERNATIVE to the local tags in `slEvaluateFeature`'s `inputs`, not a layer over them — `sl_core_api.h:258` says global and local tags "do NOT interact", so a title using one yields nothing from the other and both are read. Published only on a frame where an evaluation was also seen, because a tag is viewport state that outlives any one frame. This row was MISSING from this table while the hook shipped, which is the gap the banner above now names |
 | ✅ Streamline: `slSetTagForFrame` — **and every tag's TYPE, as above** | The same global tags through **Streamline 2.8's frame-based entry point**, which deprecates `slSetTag`: `(const FrameToken&, const ViewportHandle&, const ResourceTag*, uint32_t, CommandBuffer*)` — the token first, then exactly `slSetTag`'s list, handed to the same tag walk. **Built 2026-09-04** (`FL_HOOK_UPSCALER_PARAMS`, its own trampoline; the family is now **published when whole** — once every tag export the loaded interposer has is patched — because publishing on the first row entitled records the second was not yet producing, 38 of 41 on the fixture: the ffx leaves' #110 defect again, fixed the same way). Measured need: Dying Light: The Beast (SL 2.8.0) published `Dlss` identity on every batch and the params bit on none across three captures, because a 2.8 title that tags per frame never calls the deprecated export. The token is not read; the frame count stays with `slGetNewFrameToken`. The installer picks this detour by SYMBOL (`kSymbolSlSetTagForFrame`, bound to the row by `static_assert`), not by family, since the two rows share a family bit and differ in signature |
 | ✅ **FidelityFX ffx-api: `ffxDispatch` on the FOUR modules a game calls** — `amd_fidelityfx_dx12.dll` (SDK 1.1.x monolith), `amd_fidelityfx_upscaler_dx12.dll`, `amd_fidelityfx_framegeneration_dx12.dll`, **and `amd_fidelityfx_loader_dx12.dll`** (added the evening of 2026-09-04: three loader-shipping titles at FSR produced zero dispatches at any leaf export, so the loader is where their calls arrive) · ⏳ FSR 3.0 host route `ffx_fsr3_x64.dll!ffxFsr3ContextDispatchUpscale` / `ffxFsr3DispatchFrameGeneration` · ~~`ffxFsr2ContextCreate`~~ · ~~`ffxCreateContext`~~ | **Built 2026-09-04** (`HANDOFF` item 7c). One observer behind three trampolines reads the DESCRIPTOR the title passed — head type first, body only after the type matched a constant from the vendored MIT headers (`third_party/fidelityfx/`, tag v2.3.0): **UPSCALE** → identity (`FSR3` from the monolith, `FSR_UNVERSIONED` from the 2.x upscaler DLL, which hosts FSR 3.1 and FSR 4 behind one type) + `renderSize` → `renderW/H` (quality and sharpness `0xFF`: the dispatch carries neither) + one COUNT; **PREPARE / PREPARE_V2** → `frameID` counted on a *new* index only — this vendor's `slGetNewFrameToken`, the `fgEvaluations` producer once a title has ever prepared, with the UPSCALE count as the fallback for a title that never does; **FRAMEGENERATION** → `fgMode = FSR_FG` on that present. Rule 4: the argument of the API we hooked, never `context`, `pNext`, a command list or a resource. **Why all four:** a UE5 title ships the two leaves with no loader and calls their exports; a loader-shipping title calls the loader's export and the signed loader reaches its providers through an object, not the leaves' exports (measured: Dying Light: The Beast, KCD2, Wukong). The morning's "never the loader" rested on the export tables alone and was reversed by the run. What guards against a loader that DID re-enter a leaf's export is the K = 1 control with all four hooked and the consumer's `frames/upscale-drained`, both of which read 2× in that case. `ffxCreateContext` is deliberately NOT a row — nothing it carries fills a field the dispatch does not, and its honest family would collide with `slEvaluateFeature`'s under the installer's equality binding. The family is compound (`IDENTITY \| PARAMS \| FG_EVALUATIONS`), pinned by `static_assert`s that also bind the leaf table to the rows both ways and refuse the loader as a row. Streamline keeps precedence for the count once it has ever issued a token, so every §S31-validated title is byte-identical. Second count: the consumer prints `frames/upscale-drained`, the AMD `tokens/batch`. **FSR 3.0 — BUILT 2026-09-05 as a fifth AMD target:** `ffx_fsr3_x64.dll!ffxFsr3ContextDispatchUpscale` (Cyberpunk's copy; named export, its own descriptor, vendored from tag **`fsr3-v3.0.4`** — the tag whose twelve `ffxFsr3*` declarations match the shipped module, not the `v1.1.4` first named). Rule 4: the detour reads `renderSize` of the descriptor the title passed and nothing else — never the context, a resource or the command list; the offset is pinned to a literal (1256) so a re-vendoring that moved it fails to compile. Same family and publish point as the four rows (`PublishFfxFamilyIfWhole` waits for a loaded host too), keyed by module in the installer; identity `FSR3` as a fact. `ffxFsr3DispatchFrameGeneration` is deliberately not a row (§H11 carries the reversal condition); the `ffx_fsr3upscaler_x64.dll` leaf is the pre-committed alternative if the facade reads silent (row B2) — never both, or `frames/upscale-drained` reads 2.00 |
-| XeSS: `xessD3D12CreateContext`, `xessD3D12Init`, `xessD3D12Execute` | `outputResolution`, `qualitySetting`, XeSS version; `xess_fg` variants for XeFG |
+| ~~XeSS: `xessD3D12CreateContext`, `xessD3D12Init`, `xessD3D12Execute`~~ **Closed at the census by licence, 2026-09-04** (`20_OPEN_QUESTIONS` §Scope decisions, `18_GPU_VENDOR_APIS` §Intel XeSS SDK): no hook on any `libxess*.dll` export *(corrected 2026-10-04)* | ~~`outputResolution`, `qualitySetting`, XeSS version; `xess_fg` variants for XeFG~~ |
 | ✅ **Application frames per present** (`fgEvaluations`) — **`sl.interposer.dll!slGetNewFrameToken` since 2026-09-03** | Native vs Displayed frame counts at Tier 1 — see `03_METRICS` §Frame Generation. **The producer is the frame-token export**: Streamline hands a title one token per application frame and the title must ask; the detour counts distinct tokens between two presents (pointer changes, nothing dereferenced), `FL_HOOK_FG_EVALUATIONS` is its family, and it installs on every Streamline 2 title including the ones that evaluate nothing through `slEvaluateFeature`. Rule 4: the out-parameter of an API we hooked. Premise and its gate in `03_METRICS`; pre-committed table in `20_OPEN_QUESTIONS` §S31. *The row as it stood before:* ~~NGX/SL/FFX/XeSS FG feature evaluations per present. **Built 2026-08-15 for Streamline, and MEASURED TO YIELD NOTHING ON THAT ROUTE**~~ — `slEvaluateFeature(kFeatureDLSS_G)` is never called by Cyberpunk 2077 (0 across ~14,000 batches, four FG settings), so this row installs, is honest, and counts zero; see `docs/HANDOFF.md` item 3. Built on the detour that was already there: `kFeatureDLSS_G` contributes to a saturating COUNT in the same word the feature bits live in (`fl_sl_seen.h`) rather than to a bit, because a bit collapses several evaluations between two presents into one — and under multi-frame generation that is the common case, not the edge. The row's family is therefore compound (`FL_HOOK_UPSCALER_IDENTITY \| FL_HOOK_FG_EVALUATIONS`), pinned by a `static_assert` because `hookinventory-check` reads that column as an opaque identifier. **Counts EVALUATIONS, not generated frames** — the 2026-08-14 owner ruling; the multiplier lives in `sl::DLSSGOptions`, which is only reachable by the route §2b refused. ~~Non-NVIDIA FG vendors are **deferred with a written rationale**: `amd_fidelityfx_framegeneration_dx12.dll` 3.1.5 exports only the five generic `ffx*` entry points, identical to five sibling modules, so identity is in the arguments and we have no headers~~ — **AMD has a producer since 2026-09-04** (the FidelityFX row above: the PREPARE dispatch's `frameID`, or the UPSCALE count on a title that never prepares, feeds `fgEvaluations` when Streamline has never issued a token); Intel stays at the census (`20_OPEN_QUESTIONS` §Scope decisions, by licence); the FSR 3.0 host DLL's UPSCALE (`ffxFsr3ContextDispatchUpscale`, since 2026-09-05) counts like an ffx-api UPSCALE when neither Streamline nor a PREPARE has spoken |
 
 > `GetFrameStatistics().PresentCount` is **not** in this inventory and must not be
@@ -359,7 +362,9 @@ Vulkan gets an **implicit layer** (`FrameLedger.VkLayer`), not injection — it 
   DLL**, and it compares the variable's **value**, so a stray
   `FRAMELEDGER_ENABLE_VK_LAYER=0` does not enable us. **This makes Vulkan
   Tier 1 launch-mode-only** — the Agent sets the variable when it starts an
-  opted-in game, so a Vulkan title launched from Steam or GOG is not hooked.
+  opted-in game, so a Vulkan title launched from Steam or GOG is not ~~hooked~~ observed by the layer *(corrected
+  2026-10-04: attach mode has no Vulkan rule, so such a title gets the Overlay injected like a D3D one, and what its
+  DXGI hooks record there is unverified; `kTargetIsVulkanLayered` applies to launch mode only)*.
   It is a *loading* gate, not a security gate: anything running as the user can
   set the variable.
 
@@ -487,7 +492,9 @@ struct alignas(64) FlFrameRecord {   // 64 bytes exactly, static_assert'd
     uint8_t  fgEvaluations;          // @43 FG feature evaluations observed this frame
     uint32_t vramUsedMb;             // @44 MiB, matching vramBudgetMb
     uint32_t reflexLatencyUs;        // @48 0 = unavailable
-    uint32_t reserved;               // @52 must be zero
+    uint8_t  dxgiUnseen;             // @52 DXGI-counted presents the hook did not see (2026-09-05; this listing
+                                     //     showed a uint32 reserved here until 2026-10-04)
+    uint8_t  reserved[3];            // @53..55 must be zero
     uint32_t seq;                    // @56 seqlock counter (see 07_IPC §Protocol rules)
     uint32_t swapchainId;            // @60 which swapchain this present came through; 0 = unidentified
 };
@@ -525,8 +532,9 @@ Field notes — each of these was a defect in an earlier revision:
   uncomputable from a pinned counter. `rays_per_pixel` divides this by output
   pixels.
 - **`maxTraceRecursionDepth`** is the second of the four stated inputs to
-  `pt_confidence`. It is read at `CreateStateObject` (§Hook inventory) but
-  previously had no transport to the Agent and no column to land in.
+  `pt_confidence`. It ~~is~~ would be read at `CreateStateObject` (§Hook inventory) but
+  previously had no transport to the Agent and no column to land in. *(Corrected 2026-10-04: `CreateStateObject` is
+  not hooked, so nothing writes it yet.)*
 - **`_pad0` and `_pad1` were explicit holes and are now carrying data.** Both were
   named only so every offset could be asserted; spending them costs nothing,
   because both bytes ranges were already inside the record and already written
@@ -561,14 +569,15 @@ Field notes — each of these was a defect in an earlier revision:
 - **SPSC lock-free ring**, capacity a power of two (default 8192 records = 512 KB), overwrite-oldest.
 - Writer/reader seqlock protocol, including the rule that the payload write must
   **exclude** the `seq` field and that `seq` is never reset: `07_IPC` §Protocol rules.
-- Header: three separate 64-byte lines before the ring — `FlShmHandshake` (write-once),
+- Header: ~~three~~ **four** separate 64-byte lines before the ring *(corrected 2026-10-04: since layout 4, 2026-09-27,
+  beta.10, `FlDisplayState` at 0xC0 — Overlay-written at most every 500 ms; the ring starts at 0x100)* — `FlShmHandshake` (write-once),
   `FlWriterState` (Overlay-written: `writeIndex`, `status`, `apiMask`, `faultCount`),
   and `FlControlBlock` (**Agent**-written: `pauseRequested`, `unhookRequested`,
   `overlayEnabled`, `guardTicks`). The control flags are *not* in the Overlay's
   header — they are written by the other process, and mixing them into an
   Overlay-written line reintroduces exactly the false sharing the split exists to
   prevent. Layout is normative in `07_IPC` §A + B.
-- **The hot path performs: one QPC read, a few field reads from cached state, one 60-byte store, two relaxed atomic stores and two compiler fences.** No syscall, no allocation, no lock, no logging. Target ≤ 1 µs per present.
+- **The hot path performs: one QPC read, a few field reads from cached state, one 60-byte store, two relaxed atomic stores and two compiler fences.** No syscall, no allocation, no lock, no logging. Target ≤ 1 µs per present. *(Added 2026-10-04: the summary leaves out the per-present `IDXGISwapChain::GetLastPresentCount` call (§H5, the `dxgiUnseen` count) and the display sample every 500 ms at most (region 4).)*
 - Per-frame mutable state (current upscaler, render res, dispatch counts) lives in a small struct updated by the feature hooks and *read* by the present hook; counters reset at present.
 
 ## The watchdog thread — the only thread we add to the game
@@ -576,6 +585,11 @@ Field notes — each of these was a defect in an earlier revision:
 One thread, started on the init thread *after* the hooks are installed, sleeping
 `1000 ms` at a time. It evaluates `unhookRequested` and the `guardTicks` deadline,
 calls `StopObserving` when either fires, and **exits** once stopped.
+
+> **Corrected 2026-10-04 — this describes the thread as it was first written.** Since the lazy installers landed
+> (`slEvaluateFeature`, 2026-08-09) the loop also installs feature hooks, runs the runtime census, publishes counters,
+> appends the native log, and stops on the loader detour's early-stop family; it waits on that detour's wake event with
+> a 1000 ms timeout rather than sleeping. `legal/DISCLAIMER.md` §2 says so to users since beta.12 (Disclaimer 2.10).
 
 **Why it exists.** Both stops used to be evaluated only on the present path, and
 `MayObserve` is reachable only from `RecordPresent`, which is reachable only from
@@ -600,9 +614,12 @@ we do not own; the re-scan it would have run allocates ~1.15 MB transiently; and
 it would have called `NtQuerySystemInformation` and probed the SCM from inside a
 game, which is the behavioural signature of anti-analysis code (CLAUDE.md rule 3).
 None applies to the Overlay, which is loaded by documented `LoadLibraryW` and is
-never `FreeLibrary`'d from a live process. **This thread enumerates nothing,
+never `FreeLibrary`'d from a live process. ~~**This thread enumerates nothing,
 probes nothing and allocates nothing** — it reads two `uint32`s from our own
-mapping and sleeps. That distinction is the whole justification and must survive
+mapping and sleeps.~~ *(Corrected 2026-10-04: it enumerates no process, module list or service — the rule-3 line, which
+holds — but it asks the loader for fixed module names, allocates through MinHook and, for ray tracing, creates one
+command allocator and list on the game's own D3D12 device, and writes the log file. The justification below is
+restated for that scope: what it must never start doing is scanning.)* That distinction is the whole justification and must survive
 any future change: a watchdog that starts scanning is a different object under
 rule 3.
 
@@ -645,7 +662,7 @@ Every hook body is wrapped:
 > against the injected Overlay in ctest `fl_guard` `[log]`, where every patch reads `UNHOOK_RESTORED`
 > because the harness is alone in its process.
 
-`FlRequestUnhook()` (or the control flag) ⇒ `MH_DisableHook(MH_ALL_HOOKS)`, restore vtable entries **only where they are still ours**, flush the ring, set status. **The DLL is not `FreeLibrary`'d from the live process** — a thread could still be inside a trampoline. It goes dormant and unloads with the process. This is deliberate and documented.
+~~`FlRequestUnhook()` (or the control flag) ⇒ `MH_DisableHook(MH_ALL_HOOKS)`, restore vtable entries **only where they are still ours**, flush the ring, set status.~~ *(Corrected 2026-10-04: both reach `StopObserving` — compare-and-restore per patch as the note above says, then the status; there is no `MH_ALL_HOOKS`, no vtable entry and no ring flush. The watchdog flushes the native log on its way out.)* **The DLL is not `FreeLibrary`'d from the live process** — a thread could still be inside a trampoline. It goes dormant and unloads with the process. This is deliberate and documented.
 
 ### Compare-and-restore, never unconditional restore
 
@@ -714,7 +731,7 @@ No logging in hook bodies. A small fixed-size in-memory ring of structured event
 
 ## Test harness
 
-`src/native/tools/hook-harness` — a minimal D3D11 app that presents at a controlled rate. It lets CI and local dev exercise hook paths with **no game and no anti-cheat surface at all** (`14_TESTING`).
+`src/native/tools/hook-harness` — a ~~minimal D3D11~~ D3D11/D3D12 app (plus `--vulkan` / `--opengl` modes — corrected 2026-10-04) that presents at a controlled rate. It lets CI and local dev exercise hook paths with **no game and no anti-cheat surface at all** (`14_TESTING`).
 
 Two choices make it run on a hosted CI runner, which is what made vtable-index
 verification a dev-machine-only affair before:
@@ -722,8 +739,8 @@ verification a dev-machine-only affair before:
 - **WARP** (`D3D_DRIVER_TYPE_WARP`) — a software rasteriser, so no adapter is required.
 - **`CreateSwapChainForComposition`** — no `HWND`, so no dependency on a window station or an interactive session.
 
-Current modes: `--probe-vtable` (§H4, ctest `fl_vtable_indices`), `--probe-proxy` (§H5, ctest `fl_proxy_swapchain`), `--probe-unhook` (§H7, ctest `fl_unhook_preserves_foreign`), `--probe-cost` (NFR-1, measurement only), **`--probe-frames`** (ctest `fl_frame_identity` — what counts as a frame, against `GetLastPresentCount`), **`--probe-d3d12`** (ctest `fl_d3d12_acquisition` — device → command queue → swapchain), `--present N`, `--hold N`, **`--real`** and **`--plus-ui K``**, **`--vulkan --hold-presenting N`** (P1 item 3, real loader, exit 77 = cannot run here) and **`--opengl --hold-presenting N`** (P1 item 4, gdi32 `SwapBuffers` on a hidden window, Microsoft's generic renderer — runs on CI).
+Current modes: `--probe-vtable` (§H4, ctest `fl_vtable_indices`), `--probe-proxy` (§H5, ctest `fl_proxy_swapchain`), `--probe-unhook` (§H7, ctest `fl_unhook_preserves_foreign`), `--probe-cost` (NFR-1, measurement only), **`--probe-frames`** (ctest `fl_frame_identity` — what counts as a frame, against `GetLastPresentCount`), **`--probe-d3d12`** (ctest `fl_d3d12_acquisition` — device → command queue → swapchain), `--present N`, `--hold N`, **`--real`** and **`--plus-ui K``**, **`--vulkan --hold-presenting N`** (P1 item 3, real loader, exit 77 = cannot run here) and **`--opengl --hold-presenting N`** (P1 item 4, gdi32 `SwapBuffers` on a hidden window, Microsoft's generic renderer — runs on CI). *(Added 2026-10-04, each with its own ctest: `--probe-d3d12-vtable`, `--probe-dxr`, `--probe-dxr-inputs`, `--probe-upscaler-resolve`, `--probe-sl-abi`, `--probe-ffx-resolve`, `--probe-sl-inputs`, `--probe-sl-seen`, `--probe-dxgi-count`; and the `--hold-presenting-*` injection fixtures with `--load` / `--load-after-ms`.)*
 
 > **Every present here used to carry `DXGI_PRESENT_TEST`, which submits nothing.** Measured: 500 of them leave `GetLastPresentCount` at 0 while 37 real presents move it by 37. "N presents → N records" was therefore satisfiable only by a writer counting non-frames. `--real` issues real presents; the test-present path is kept as a named mode because it is what an alt-tabbed title actually runs.
 
-Still to add as the hook layer grows: Vulkan devices, RT PSO creation and ray dispatch, stub upscaler exports with the real vendor names, a PSO-compile spike generator, and a fault-injecting hook body for the self-disable path (`14_TESTING` §Integration tests).
+Still to add as the hook layer grows: ~~Vulkan devices, RT PSO creation and ray dispatch, stub upscaler exports with the real vendor names,~~ *(the struck three exist — corrected 2026-10-04)* a PSO-compile spike generator, and a fault-injecting hook body for the self-disable path (`14_TESTING` §Integration tests).

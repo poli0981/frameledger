@@ -1435,12 +1435,6 @@
   <data name="Settings_Applied" xml:space="preserve">
     <value>Đã áp dụng. Capture agent đọc ở lần bắt đầu phiên kế tiếp.</value>
   </data>
-  <data name="Settings_Background_Body" xml:space="preserve">
-    <value>Capture agent theo dõi các game đã thêm; game không do nó khởi chạy vẫn được ghi, và chỉ đo nếu game đó bật hooking và không phải game Vulkan.</value>
-  </data>
-  <data name="Settings_Background_Label" xml:space="preserve">
-    <value>Ghi game khởi chạy ngoài FrameLedger</value>
-  </data>
   <data name="Settings_Capture_Header" xml:space="preserve">
     <value>Thu thập</value>
   </data>

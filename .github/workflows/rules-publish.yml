@@ -1,9 +1,11 @@
 # Gate changes to the detection + anti-cheat rules (docs/13_CI_CD.md).
 #
-# The raw file on `main` IS the distribution endpoint (docs/05_DETECTION.md),
-# so there is nothing to publish — this workflow only gates correctness. That
-# also means a bad merge ships to every user on their next rules check, which
-# is why the anticheat block gets extra scrutiny here.
+# There is nothing to publish: no rules feed exists (docs/20_OPEN_QUESTIONS.md
+# §S20 feed half), so a rules change reaches users inside a release, seeded by
+# the Agent from the packaged copy. This header said the raw file on `main` was
+# the distribution endpoint until 2026-10-04. This workflow only gates
+# correctness, and the anticheat block still gets the extra scrutiny, because
+# whatever merges here ships in the next release.
 
 name: Rules
 

@@ -30,7 +30,7 @@ Requirement IDs (`FR-x`, `NFR-x`) are referenced by other docs, commits, and tes
 - FR-3.4 Track the process tree; capture the descendant that actually presents.
 - FR-3.5 Per-frame records for the whole session; telemetry at 1 Hz (configurable 0.5–2 s).
 - FR-3.6 Session ends on process-tree exit, safety unhook, or user stop. Sessions under the minimum length (default 30 s) are discarded.
-- FR-3.7 Crash detection: nonzero exit code or matching Application Error 1000 / WER 1001 events → `exit_status = crashed`.
+- FR-3.7 Crash detection: ~~nonzero exit code~~ an exception's exit code *(corrected 2026-10-04: since beta.8, `ExitStatusMapper.IsExceptionCode` — End task's exit code 1 is `normal`, the code kept in `capture_notes`; `04_CAPTURE` §Crash & exit classification)* or matching Application Error 1000 / WER 1001 events → `exit_status = crashed`.
 - FR-3.8 Post-session toast with summary + "View".
 - FR-3.9 Pause/resume capture globally from tray.
 
@@ -64,7 +64,7 @@ Requirement IDs (`FR-x`, `NFR-x`) are referenced by other docs, commits, and tes
 - FR-7.1 Static: engine, engine version, store platform, store id, publisher, game version (`05_DETECTION`; the Unreal Engine version since 2026-09-27, §Engine version).
 - FR-7.2 Runtime: API, present mode, swap effect, HDR, upscaler, FG, RT — all Tier 1, all measured. (Present mode and HDR have no writer yet, `05_DETECTION` §Runtime facts; swap effect is written since beta.10 from the display-mode sample.)
 - FR-7.4 Display mode (beta.10, owner request 2026-09-27): how each session's game was shown — exclusive fullscreen, borderless, windowed, minimised, or *fullscreen or borderless* where nothing could tell the two apart — as a share of the session's time, with the window, back buffer and monitor sizes; both tiers (Tier 2 from the window alone); shown on the session summary, the game page, the Trend (three share metrics) and Compare, and exported (`03_METRICS` §Display mode).
-- FR-7.3 Rules ship as `detection-rules.json`, updatable independently of releases; **anticheat-block updates apply regardless of the user's rules auto-update preference.**
+- FR-7.3 Rules ship as `detection-rules.json`, updatable independently of releases; **anticheat-block updates apply regardless of the user's rules auto-update preference.** *(Unmet — corrected 2026-10-04: there is no rules feed and no auto-update preference. Rules change only with a release: `RulesSeeder` installs them, Tools ▸ Update detection rules re-seeds them — `20_OPEN_QUESTIONS` §S20 feed half.)*
 
 ### FR-8 Tri-state flags
 - FR-8.1 `Yes / No / N/A` for Ray Tracing, Path Tracing, Ray Reconstruction, per session, with source (`measured | manual | inherited`).
@@ -81,7 +81,7 @@ Requirement IDs (`FR-x`, `NFR-x`) are referenced by other docs, commits, and tes
 > **beta.10 (D34):** "Agent elevation (optional — explains what it unlocks)" is the admin mode — *Run the agent as
 > administrator*, off by default, a disclosure before it turns on, Windows' prompt at every Agent start (`01_ARCHITECTURE`
 > ADR-9, `08_UI` §Settings).
-Language (en/vi/ja), theme, start with Windows, minimize to tray, background capture, **global hooking kill switch**, min session length, telemetry interval, retention, Agent elevation (optional — explains what it unlocks), Vulkan layer registration state, update channel, online metadata opt-in, reopen legal documents. **beta.11 (owner request 2026-10-03: no row without a control):** Delete all sessions (FR-1.7, a *Data* section); the elevation state is a line of the admin mode's own row, not a row of its own; the hook-enabled list shows only while a game has hooking on; the language row carries no separate note.
+Language (en/vi/ja), theme, start with Windows, minimize to tray, background capture, **global hooking kill switch**, min session length, telemetry interval, retention, Agent elevation (optional — explains what it unlocks), Vulkan layer registration state, update channel, ~~online metadata opt-in,~~ reopen legal documents *(corrected 2026-10-04: the opt-in has had no row since 2026-09-16 because no store request exists, and the background-capture switch — read by nothing — is gone since beta.12; `06_DATA_MODEL` §Settings registry)*. **beta.11 (owner request 2026-10-03: no row without a control):** Delete all sessions (FR-1.7, a *Data* section); the elevation state is a line of the admin mode's own row, not a row of its own; the hook-enabled list shows only while a game has hooking on; the language row carries no separate note.
 
 ### FR-11 Legal Gate
 First run blocks until the user accepts ~~EULA, GPLv3 notice, Disclaimer, Privacy Policy~~ the EULA, the Disclaimer and the Privacy Policy; **the GPLv3 is shown beside them for information and needs no acceptance** (GPLv3 §9 — "You are not required to accept this License in order to receive or run a copy of the Program"; changed beta.12, owner decision D45, `08_UI` §First-run flow). Re-shown when a document version increments. The injection risk is stated in the Disclaimer *and* repeated at per-game consent (FR-2.1) — once is not enough for something that can cost an account.

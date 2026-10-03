@@ -222,7 +222,6 @@ public sealed class SettingsViewModelTests
         h.Vm.MinSessionSeconds.Should().Be(30);
         h.Vm.TelemetryIntervalMs.Should().Be(1000);
         h.Vm.RetentionRawSessions.Should().Be(20);
-        h.Vm.BackgroundCapture.Should().BeTrue();
         h.Vm.UpdateChannel.Should().Be("stable");
         h.Vm.LogDebug.Should().BeFalse();
         h.Vm.KillSwitchState.Should().Be(Strings.Settings_KillSwitch_Off);

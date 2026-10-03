@@ -80,9 +80,6 @@ public sealed partial class SettingsViewModel : ObservableObject
     private int _retentionRawSessions;
 
     [ObservableProperty]
-    private bool _backgroundCapture;
-
-    [ObservableProperty]
     private bool _startWithWindows;
 
     [ObservableProperty]
@@ -359,8 +356,6 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     partial void OnRetentionRawSessionsChanged(int oldValue, int newValue) => PersistNumber(SettingsRegistry.RetentionRawSessionsPerGame, Strings.Settings_Retention_Label, oldValue, newValue, v => RetentionRawSessions = v);
 
-    partial void OnBackgroundCaptureChanged(bool value) => Persist(SettingsRegistry.CaptureBackground, value);
-
     partial void OnHideAntiCheatHookingChanged(bool value) => Persist(SettingsRegistry.UiHideAntiCheatHooking, value);
 
     /// <summary>D33: the option is one settings row the Agent reads at every session start and command; the list follows it.</summary>
@@ -497,7 +492,6 @@ public sealed partial class SettingsViewModel : ObservableObject
             MinSessionSeconds = await _settings.GetIntegerAsync(SettingsRegistry.CaptureMinSessionSeconds).ConfigureAwait(true);
             TelemetryIntervalMs = await _settings.GetIntegerAsync(SettingsRegistry.TelemetryIntervalMs).ConfigureAwait(true);
             RetentionRawSessions = await _settings.GetIntegerAsync(SettingsRegistry.RetentionRawSessionsPerGame).ConfigureAwait(true);
-            BackgroundCapture = await _settings.GetBooleanAsync(SettingsRegistry.CaptureBackground).ConfigureAwait(true);
             MinimizeToTray = await _settings.GetBooleanAsync(SettingsRegistry.UiMinimizeToTray).ConfigureAwait(true);
             HideAntiCheatHooking = await _settings.GetBooleanAsync(SettingsRegistry.UiHideAntiCheatHooking).ConfigureAwait(true);
             UserModeExceptions = await _settings.GetBooleanAsync(SettingsRegistry.HookingUserModeExceptions).ConfigureAwait(true);

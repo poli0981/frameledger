@@ -9,9 +9,12 @@ using FrameLedger.Domain.Sessions;
 namespace FrameLedger.Infrastructure.Persistence;
 
 /// <summary>
-/// The <c>sessions</c> row's column map, GENERATED from one table so the INSERT, the parameter bag and the
-/// reader cannot drift from each other. Regenerate with <c>gen_session_repo.py</c> (in the PR that adds a
-/// column) rather than editing by hand; the chunking is the analyzer's 60-line method limit, nothing more.
+/// The <c>sessions</c> row's column map: the INSERT, the parameter bag and the reader, side by side so they cannot drift
+/// from each other unnoticed. It was first generated from one table by a script that was never committed — the
+/// <c>gen_session_repo.py</c> this comment named until 2026-10-04 is not in the repository — and has been edited by hand
+/// since (schema 0018 added <c>Parameters5</c> / <c>Read5</c>). What keeps the three in step is
+/// <c>SqliteSessionRepositoryTests.ASessionRoundTripsColumnForColumn</c>, which writes a row with every column set and
+/// reads it back. The chunking is the analyzer's 60-line method limit, nothing more.
 /// </summary>
 internal static class SessionRowColumns
 {

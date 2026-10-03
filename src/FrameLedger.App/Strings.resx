@@ -1440,12 +1440,6 @@
   <data name="Settings_Applied" xml:space="preserve">
     <value>Applied. The capture agent reads it at the next session start.</value>
   </data>
-  <data name="Settings_Background_Body" xml:space="preserve">
-    <value>The capture agent watches for tracked games; a game it did not launch is recorded, and measured only if hooking is on for it and it is not a Vulkan title.</value>
-  </data>
-  <data name="Settings_Background_Label" xml:space="preserve">
-    <value>Record games launched outside FrameLedger</value>
-  </data>
   <data name="Settings_Capture_Header" xml:space="preserve">
     <value>Capture</value>
   </data>

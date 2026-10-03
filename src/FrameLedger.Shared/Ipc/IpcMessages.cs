@@ -129,8 +129,9 @@ public sealed record HelloRequest(string AppVersion, int Protocol);
 
 /// <summary>
 /// <c>HelloAck</c>: what this Agent is. <c>etwAvailable</c> from the original table is gone with the ETW tier
-/// (2026-08-28); <c>VulkanLayerRegistered</c> is false by construction today — the layer is handed to a launched
-/// process through <c>VK_ADD_IMPLICIT_LAYER_PATH</c>, never registered machine-wide (P1 item 3).
+/// (2026-08-28). <c>VulkanLayerRegistered</c> is the HKCU implicit-layer registration as the Agent found it at start
+/// (P3 PR-8b, <c>AgentIdentityFactory</c>), true while <c>VkLayerReconciler</c> keeps the layer registered for a
+/// hook-enabled Vulkan game (P4 PR-2) — it said "false by construction" until 2026-10-04.
 /// <c>DisclosureVersion</c> (P3 PR-4, D14) is the FR-2.1 text this Agent stamps against; the App refuses to open
 /// the consent dialog when it differs from its own <c>SafetyDisclosure.Version</c>. <c>ExceptionDisclosureVersion</c>
 /// (D33) is the same rule for the user-mode exception's disclosure (<c>AntiCheatExceptionDisclosure.Version</c>).

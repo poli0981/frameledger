@@ -7,7 +7,7 @@ Mandatory conventions for all XAML/C# in `FrameLedger.App`. WPF UI = lepoco's Fl
 | Package (NuGet id) | Pin | Notes |
 |---|---|---|
 | `WPF-UI` | **= 4.3.0** (exact; bump deliberately) | Assembly/namespace is `Wpf.Ui`. Targets `net8.0-windows` → resolves cleanly for our `net10.0-windows10.0.22621.0` TFM (`12_BUILD` §Managed build; this row said `19041` until 2026-09-21, which is no TFM this repository ever built — `Directory.Build.props` has been `22621` with a 19045 floor throughout) |
-| `WPF-UI.Abstractions` | transitive | Navigation abstractions (`INavigationViewPageProvider`) |
+| `WPF-UI.Abstractions` | ~~transitive~~ **= 4.3.0**, referenced directly (corrected 2026-10-04) | Navigation abstractions (`INavigationViewPageProvider`) |
 | `WPF-UI.DependencyInjection` | match `WPF-UI` | DI glue (`services.AddNavigationViewPageProvider()`); verify exact id/version at scaffold |
 | `WPF-UI.Tray` | **not used** | Tray stays on H.NotifyIcon.Wpf (CLAUDE.md stack table) |
 
@@ -81,7 +81,7 @@ Theme rules:
       <RowDefinition Height="*"/>    <!-- NavigationView -->
     </Grid.RowDefinitions>
 
-    <ui:TitleBar Grid.Row="0" Title="FrameLedger" Icon="pack://application:,,,/Assets/icon.ico" />
+    <ui:TitleBar Grid.Row="0" Title="FrameLedger" /> <!-- no Icon: no icon file exists yet (corrected 2026-10-04) -->
 
     <Menu Grid.Row="1"> <!-- classic menu, Fluent-restyled automatically --> </Menu>
 
@@ -103,7 +103,7 @@ Theme rules:
     </ui:NavigationView>
 
     <ui:SnackbarPresenter x:Name="SnackbarPresenter" Grid.Row="2" VerticalAlignment="Bottom" />
-    <ContentPresenter x:Name="DialogHost" Grid.Row="2" /> <!-- ContentDialogService host -->
+    <ui:ContentDialogHost x:Name="DialogHost" Grid.Row="2" /> <!-- §Dialogs; a ContentPresenter stood here until 2026-10-04 -->
   </Grid>
 </ui:FluentWindow>
 ```
@@ -152,7 +152,7 @@ Native `Menu`, `TabControl`, `ComboBox`, `Slider`, `ListView` are fine — the `
   styles (`Styles/FrameLedger.xaml`), or the `Pill` style with a `SystemFillColor*BackgroundBrush` and an explicit text
   brush; `ContrastTests` refuses all five (`08_UI` §Contrast).
 - Do **not** set `Background` on `FluentWindow` (kills Mica). Page backgrounds transparent by default.
-- Exception to the no-hex rule: the chart palette — defined once per theme in `Styles/ChartPalette.xaml` (two dictionaries), never inline.
+- Exception to the no-hex rule: the chart palette — defined once per theme in ~~`Styles/ChartPalette.xaml` (two dictionaries)~~ `Styles/ChartPalette.Dark.xaml` and `ChartPalette.Light.xaml` (corrected 2026-10-04), never inline.
 
 ## FlowDocument (rendered documents, beta.12)
 
@@ -191,7 +191,7 @@ var box = new Wpf.Ui.Controls.MessageBox
 var result = await box.ShowDialogAsync(); // Wpf.Ui.Controls.MessageBoxResult.Primary
 ```
 
-  ⚠ Name clash with `System.Windows.MessageBox` — in App code, `using MessageBox = Wpf.Ui.Controls.MessageBox;` and ban the System one (BannedSymbols/analyzer note).
+  ⚠ Name clash with `System.Windows.MessageBox` — in App code, `using MessageBox = Wpf.Ui.Controls.MessageBox;` ~~and ban the System one (BannedSymbols/analyzer note)~~ *(corrected 2026-10-04: nothing bans it. Three paths use the Win32 box on purpose — the crash dialog, the startup-failure dialog and the uninstall question — because they run when the shell's dialog host cannot be trusted. Use the WPF UI one everywhere else.)*
 - Rich in-flow dialogs: `IContentDialogService` (host wired in MainWindow — a `ui:ContentDialogHost`, since 4.3.0 marks `SetDialogHost(ContentPresenter)` obsolete).
 - Transient in-app: `ISnackbarService.Show(title, message, ControlAppearance.Success, new SymbolIcon(SymbolRegular.Checkmark24), TimeSpan.FromSeconds(4))`.
 - System/tray notifications: H.NotifyIcon only (08_UI §Notifications policy).

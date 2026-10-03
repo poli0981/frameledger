@@ -6,7 +6,7 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 
 ## Workflows (`.github/workflows/`)
 
-### `ci.yml` — push to `main` + all PRs · **repo-local**
+### `ci.yml` — push to `main` + all PRs + `workflow_dispatch` (added 2026-10-04) · **repo-local**
 - `runs-on: windows-latest`, .NET SDK pinned by `global.json` via `actions/setup-dotnet`, MSVC via `ilammy/msvc-dev-cmd`, NuGet cached.
 - Single step of substance: **`./build.ps1 check`** — the same script, with the same switches (none), a developer runs before pushing. The gate list lives in `12_BUILD` §Local quality gate, **once**, rather than being restated here where it goes stale.
 - ~~**`-SkipIntegration` is the one place local and CI deliberately differ**~~ — **gone since 2026-09-06.** From 2026-08-05 CI passed it for a measured reason: §S16 puts the injecting process's ancestors in the scan set, a .NET test host loads `System.Security.Cryptography.ProtectedData.dll`, and the guard's `protect` fragment refused our own harness (§S19(b)). The signer half now verifies that module's embedded signature offline and reads `O=Microsoft Corporation` on the compiled-in bound, so the `Category=Integration` cases run here — **nine** when this was written, **20 across six classes** as of 2026-09-13 (Agent 6, CaptureHost 7, Infrastructure 7); count them with `grep -rl 'Category", "Integration' tests` rather than trusting either number — and a green CI IS evidence for the managed drain and the capture host's end-to-end behaviour. The switch remains in `build.ps1`, loud, for a developer who must.
@@ -81,8 +81,8 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 > `ShmLayoutMirrorTests` did not execute. `12_BUILD` carried the identical stale sentence and is
 > corrected with it; restating the gate list in two documents is what let one of them rot.
 - **Licence guard:** `tools/license-check` fails the build if a vendored dependency is missing its licence copy, or if Intel IGCL / AMD ADLX headers appear anywhere in the tree (`docs/18_GPU_VENDOR_APIS.md` §Vendor SDKs we deliberately do not use), or — since P4 PR-6 — if `legal/licenses/nuget/` is not what `tools/license-gather.ps1` writes for the NuGet packages this build ships. A Dependabot bump therefore goes red until someone re-runs the script and commits the texts, which is the point: the new version's licence is read by a person before it ships. Licensing regressions are silent and hard to unwind later — catch them at PR time.
-- **Placeholder guard:** fails if any `{{` token survives in `README.md` or `legal/*.md`. Those are shipped, legally operative documents (FR-11 displays them in the first-run Legal Gate); an unsubstituted `{{DEVELOPER_NAME}}` in an EULA is not a cosmetic defect.
-- `permissions: contents: read`.
+- **Placeholder guard:** fails if any `{{` token survives in `README.md` or `legal/*.md` *(other than `{{RELEASE_DATE}}`, which `release.yml` substitutes — added 2026-10-04)*. Those are shipped, legally operative documents (FR-11 displays them in the first-run Legal Gate); an unsubstituted `{{DEVELOPER_NAME}}` in an EULA is not a cosmetic defect.
+- ~~`permissions: contents: read`.~~ `permissions: contents: read, pull-requests: read` — the second for the Changelog step's list of a pull request's files, read-only *(corrected 2026-10-04)*.
 
 ### `codeql.yml` — push, PR, weekly cron · **repo-local**
 
@@ -132,8 +132,8 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 - **The identical gate** — `./build.ps1 check`, native first, every tool including `versioninfo-check` against
   `VERSION`. A release never skips it.
 - `dotnet publish` App + Agent, self-contained + ReadyToRun, `-p:Version=<tag>`, into one `out/app`.
-- **The published tree asserted by name**: `FrameLedger.exe`, `FrameLedger.Agent.exe`, the four shipped natives
-  `versioninfo-check` lists, `rules/detection-rules.json`; `FrameLedger.CaptureHost.exe` absent (`12_BUILD`:
+- **The published tree asserted by name**: `FrameLedger.exe`, `FrameLedger.Agent.exe`, the ~~four~~ five shipped natives
+  `versioninfo-check` lists (`FrameLedger.ProcessStats.dll` since beta.12 — corrected 2026-10-04), `rules/detection-rules.json`; `FrameLedger.CaptureHost.exe` absent (`12_BUILD`:
   exactly two roots — `package-closure-check` proves it statically, this reads the directory); `versioninfo-check`
   run again over `out/app`, because a `.targets`-staged DLL that failed to copy is a warning to `dotnet publish`.
 - `vpk pack --packId FrameLedger.App` (the `vpk` tool pinned to the library's 1.2.0) with the release notes;
@@ -148,8 +148,8 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 - ~~Optional final step: submit installer hash to VirusTotal~~ — not built; an upload of the installer to a third
   party is a decision the owner makes, not a step a workflow adds quietly.
 
-### `rules-publish.yml` — on change to `rules/detection-rules.json` in `main`
-- Runs `tools/rules-validate` and fails on anti-cheat removals. The raw file on `main` **is** the distribution endpoint (05_DETECTION), so this workflow only gates correctness.
+### `rules-publish.yml` — ~~on change to `rules/detection-rules.json` in `main`~~ on a PR or push to `main` touching the rules file, its schema, `rules-validate.ps1` or this workflow (corrected 2026-10-04)
+- Runs `tools/rules-validate` and fails on anti-cheat removals. ~~The raw file on `main` **is** the distribution endpoint (05_DETECTION), so this workflow only gates correctness.~~ *(Corrected 2026-10-04: there is no feed — §S20's feed half is deferred and nothing in `src` fetches. A rules change reaches users only inside a release, seeded by the Agent from the packaged copy; this workflow only gates correctness.)*
 
   > **There is no `rulesVersion` bump check, and this line used to claim one.**
   > `rules-validate.ps1` checks the field's *format* and nothing compares it
@@ -173,7 +173,7 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
   > evaluator through the real probe. Both halves run on the same PR; only the
   > coverage half fires on a rules-only change, which is why the two are
   > described separately rather than as one gate.
-- **The `anticheat` block gets extra scrutiny:** schema-valid, non-empty, no entry removed without a justification in the PR body. Removing a blocklist entry is a safety change and requires the same review as a security fix.
+- **The `anticheat` block gets extra scrutiny:** schema-valid, non-empty, no entry removed without a justification in the PR body. Removing a blocklist entry is a safety change and requires the same review as a security fix. *(Added 2026-10-04: the PR-only removal step fails the job on any removal, a shrunk per-title list or an added trusted signer, whatever the body says — the justification is for the reviewer, and the job stays red.)*
 - `permissions: contents: read`.
 
 ## Dependabot (`.github/dependabot.yml`)
@@ -195,7 +195,7 @@ Central package management makes Dependabot PRs single-file diffs.
 ## Branch & release policy
 
 - `main` protected: CI + CodeQL required, linear history, no direct pushes.
-- Release: in ONE commit, bump `VERSION` and move the `[Unreleased]` entries of `CHANGELOG.md` under `## [X.Y.Z] - date` (Keep a Changelog format) → tag `vX.Y.Z` → `release.yml` does the rest (and refuses a tag that disagrees with either file) → smoke-test the produced installer on a clean Win 10 VM + Win 11 (manual checklist in 14_TESTING §Release smoke).
+- Release: in ONE commit, bump `VERSION` and move the `[Unreleased]` entries of `CHANGELOG.md` under `## [X.Y.Z] - date` (Keep a Changelog format) → tag `vX.Y.Z` → `release.yml` does the rest (and refuses a tag that disagrees with either file) *(corrected 2026-10-04: for a pre-release tag `vX.Y.Z-beta.N`, do not bump `VERSION` — it already holds the numeric core the gate compares, and it read `0.1.0` through eleven betas; the section is `## [X.Y.Z-beta.N] - date`, the full version. Bump `VERSION` only when the numeric core moves)* → smoke-test the produced installer on a clean Win 10 VM + Win 11 (manual checklist in 14_TESTING §Release smoke).
 - Pre-releases: `vX.Y.Z-beta.N` tags mark the GitHub release as pre-release; the App's `stable` channel ignores them and its `beta` channel (Settings ▸ Updates, `update.channel`) includes them — built with P4 PR-5, so ~~explicit beta channel is v2 backlog~~ is struck. The managed assemblies carry the full tag version; the native VERSIONINFO blocks carry the numeric core (`12_BUILD` §Version).
 
 ## Repo hygiene checklist
@@ -215,7 +215,8 @@ Central package management makes Dependabot PRs single-file diffs.
 
 **GitHub settings — the owner's (`HANDOFF` §Owner-only):**
 
-- [ ] Branch protection as §Branch & release policy states; `Rules / validate` as a required check (§S23-2, after its skip-shim)
+- [x] Branch protection as §Branch & release policy states *(marked 2026-10-04, read from the API: required checks `check`, `analyze (csharp, none)` and `analyze (cpp, manual)`; linear history; a pull request required; force pushes off; enforced for admins)*
+- [ ] `Rules / validate` as a required check (§S23-2, after its skip-shim)
 - [ ] Dependabot alerts + security updates (the manifest is in the tree; the alerts are a setting)
-- [ ] Private vulnerability reporting enabled (Settings ▸ Security), so `config.yml`'s link resolves
+- [x] Private vulnerability reporting enabled (Settings ▸ Security), so `config.yml`'s link resolves *(marked 2026-10-04: GitHub reports it enabled)*
 - [ ] Repo topics: `windows`, `wpf`, `benchmark`, `fps`, `game-performance` (~~`presentmon`~~ — dropped 2026-08-27, §G)

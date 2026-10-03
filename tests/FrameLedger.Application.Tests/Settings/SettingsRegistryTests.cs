@@ -54,7 +54,8 @@ public sealed class SettingsRegistryTests
         string[] agent = [.. SettingsRegistry.All.Where(static d => d.AgentReads).Select(static d => d.Key)];
         // hooking.usermode_ac_exceptions joined on 2026-09-26 (D33): the user-mode exception's option, off by default.
         // capture.run_elevated joined on 2026-09-27 (D34): the admin mode, read before the Agent exists.
-        agent.Should().BeEquivalentTo(["capture.background", "hooking.kill_switch", "hooking.usermode_ac_exceptions", "capture.run_elevated",
+        // capture.background left in beta.12: it was listed here and no Agent code ever read it; the key is reserved.
+        agent.Should().BeEquivalentTo(["hooking.kill_switch", "hooking.usermode_ac_exceptions", "capture.run_elevated",
             "capture.min_session_s", "telemetry.interval_ms", "retention.raw_sessions_per_game"]);
         agent.Should().OnlyContain(static k => k.StartsWith("hooking.", StringComparison.Ordinal) || k.StartsWith("capture.", StringComparison.Ordinal)
             || k.StartsWith("telemetry.", StringComparison.Ordinal) || k.StartsWith("retention.", StringComparison.Ordinal));

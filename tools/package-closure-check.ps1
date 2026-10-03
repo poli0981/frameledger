@@ -44,8 +44,8 @@
 
     TWO INVOCATIONS, AND BOTH ARE WIRED IN build.ps1.
 
-    -SelfTest exercises the LOGIC against temp fixtures, five cases of which two
-    must come back RED. The live pass (no switch, the DEFAULT parameter set)
+    -SelfTest exercises the LOGIC against temp fixtures, five cases of which four
+    must come back RED (corrected 2026-10-04: this said two). The live pass (no switch, the DEFAULT parameter set)
     resolves this repository. Running only the self-test would be a gate that
     never looks at the repository — the exact defect it exists to prevent, and
     the shape tools/changelog-check.ps1 has for a reason that does not apply

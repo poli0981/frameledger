@@ -23,7 +23,7 @@ A C++ DLL (`FrameLedger.Overlay.dll`) is injected into games the user explicitly
 5. **The hook must never crash the game.** Every hook body: SEH-guarded, allocation-free, lock-free, no logging, no exceptions crossing the boundary. On repeated faults, self-disable (`17_HOOK_ENGINE` §Fault policy).
 6. **FPS display rule (product requirement):** wherever FPS is shown and Frame Generation is active, show *Native FPS*, *Displayed FPS*, and the FG factor together (`62 → 118 FPS (×1.9 FG)`). Never a single inflated number. See `docs/03_METRICS.md`.
 
-   > **Amended 2026-09-03 (owner decision).** When frame generation is *not measured* — `FL_MEASURED_FG` clear, which is every title on today's writer — the one number that may stand alone is **Presented FPS** (`presents / D`), with a mandatory qualifier from the **runtime census** (`FlWriterState.runtimeCensus`): "no frame-generation runtime was loaded, so this cannot include in-process generated frames" or "a frame-generation runtime is loaded and nothing was observed — this MAY include generated frames". The word "Native" never appears alone. **The census never produces `none`**: a statically linked FSR has no module to see, and a census-`none` there would be exactly the inflated number this rule forbids.
+   > **Amended 2026-09-03 (owner decision).** When frame generation is *not measured* — `FL_MEASURED_FG` clear, ~~which is every title on today's writer~~ which is every title with no Streamline or FidelityFX hook live *(corrected 2026-10-04: the writer sets it since #103, 2026-09-03)* — the one number that may stand alone is **Presented FPS** (`presents / D`), with a mandatory qualifier from the **runtime census** (`FlWriterState.runtimeCensus`): "no frame-generation runtime was loaded, so this cannot include in-process generated frames" or "a frame-generation runtime is loaded and nothing was observed — this MAY include generated frames". The word "Native" never appears alone. **The census never produces `none`**: a statically linked FSR has no module to see, and a census-`none` there would be exactly the inflated number this rule forbids.
    >
    > **Amended 2026-09-05.** A counted `none` (`presents = application frames`) is **withheld** — Presented FPS with a third qualifier, "this number counts application frames; the Displayed rate is unknown" — on the one shape measured to produce a false `none`: Streamline ≥ 2.8.0 with `sl.dlss_g.dll` loaded (Dying Light: The Beast, five captures, DLSS FG ×4 per the owner). `docs/03_METRICS.md` §Frame Generation carries the key and why it is the Streamline plugin rather than `nvngx_dlssg.dll`; `20_OPEN_QUESTIONS` §H5 carries the session that keeps or withdraws it.
    >
@@ -47,6 +47,7 @@ A C++ DLL (`FrameLedger.Overlay.dll`) is injected into games the user explicitly
 | UI | WPF + WPF UI (`WPF-UI` pinned = 4.3.0) + CommunityToolkit.Mvvm — `docs/16_WPFUI_SYNTAX.md` |
 | App composition | .NET Generic Host + DI in `FrameLedger.App` |
 | Charts | ScottPlot 5 |
+| Markdown in the App | **Markdig** (BSD-2-Clause, pinned 1.4.0) → WPF `FlowDocument`, HTML off, no image fetched — the Legal Gate, the user guide, Help ▸ Limitations, the update notes, About (beta.12; row added 2026-10-04) |
 | GPU telemetry | **The game process's own memory since beta.12 (D43):** `FrameLedger.ProcessStats.dll` (C++, loaded by the Agent, never into a game) reads its dedicated/shared GPU memory from the `GPU Process Memory` counters and its working sets from `GetProcessMemoryInfo` — `18_GPU_VENDOR_APIS` §The game process's memory. Layered: DXGI + PDH counters (all vendors) → LibreHardwareMonitorLib (MPL-2.0, all vendors) → **NVAPI (MIT, headers + `amd64/nvapi64.lib` vendored 2026-08-05** at `src/native/third_party/nvapi/`, consumed via the `fl_nvapi` target; NVIDIA extras + Reflex). **No AMD/Intel vendor SDK** — `docs/18_GPU_VENDOR_APIS.md`. ~~**No telemetry source exists in code yet**~~ **`LhmTelemetrySource` (L2) exists since 2026-09-03 (`20_OPEN_QUESTIONS` §M5 row R1, eight GPU fields unelevated); L1 (`BaselineTelemetrySource`: DXGI identity + the PDH adapter-memory counter, the first CsWin32 consumer), `CompositeTelemetrySource` and the 1 Hz `TelemetryPoller` since 2026-09-09; L3 (`NvapiTelemetrySource` over the native `FrameLedger.NvapiBridge.dll` — the only shipped binary linking `nvapi64.lib`, loaded by the Agent into its own process and never into a game) since 2026-09-10 (PR-E2)** — `ctest fl_nvapi_probe` was the only NVAPI consumer until then, and it exists so the vendoring is verified rather than asserted. This row said no source existed for six days after one did, recorded 2026-09-09 rather than repaired quietly. This row previously claimed the vendoring in the present tense while `third_party/` held only `vulkan-headers`; `legal/` had already caught the identical claim about itself and gained a bidirectional gate, which is what made the real vendoring a red-then-green |
 | CPU/board sensors | LibreHardwareMonitorLib ≥ 0.9.6 (PawnIO) — **optional**, elevated only |
 | Tier-2 fallback | **There is none, and Tier 2 is not a measurement.** Owner decision 2026-08-28: the ladder is two rungs — hooked, or duration + sensors + the reason. ~~ETW-based, no injection~~; ~~Intel PresentMon console binary~~ dropped 2026-08-27 after §S31 retired it. Whether a shipped build ever regains a no-injection measurement is `docs/20_OPEN_QUESTIONS.md` §G |
@@ -72,6 +73,10 @@ src/
     FrameLedger.Injector/      # C++20 static lib: launch/attach injection, AC guard probe
     FrameLedger.VkLayer/       # C++20 Vulkan implicit layer DLL + manifest JSON
     FrameLedger.Shm/           # header-only: ring buffer + record layout, shared by native & C# (mirrored)
+    FrameLedger.NvapiBridge/   # C++ DLL loaded by the Agent (never a game): NVAPI telemetry, NGX state (P2 PR-E2)
+    FrameLedger.ProcessStats/  # C++ DLL loaded by the Agent (never a game): the game process's memory (beta.12, D43)
+    tests/  tools/  third_party/   # ctest suites; probes, hook-harness, vendor stubs; vendored headers
+                               #   (these five lines added 2026-10-04 — the list stopped at Shm)
   FrameLedger.Domain/          # entities, metric calculators — zero dependencies
                                #   (Metrics/ WRITTEN 2026-09-09, P2 PR-A: frame times,
                                #    percentiles, lows, stutter, the FG window and its
@@ -90,7 +95,8 @@ src/
                                #   and Capture/ (PR-C): ShmRingAttacher/ShmCaptureSink over the
                                #   reader, HeldProcessLivenessSource, TargetResolver (path only,
                                #   never a pid), ProcessLauncher, the module snapshot, the marker scan
-  FrameLedger.Shared/          # IPC contracts (System.Text.Json source-gen) + ShmRecord struct mirror
+  FrameLedger.Shared/          # IPC contracts (System.Text.Json source-gen) + the struct mirror (ShmLayout.cs;
+                               #   it said "ShmRecord", a type that never existed, until 2026-10-04)
   FrameLedger.Agent/           # capture orchestrator: watcher, injector control, shm drain, recorder
                                #   BUILT 2026-09-10 (P2 PR-F): a Generic Host. `--serve` = watcher
                                #   (Application.Watch: ProcessWatcher, ProcessTree, DescendantElection,
@@ -120,12 +126,18 @@ src/
                                #   is not what holds rule 1.
 tests/
   FrameLedger.Domain.Tests/  FrameLedger.Application.Tests/  FrameLedger.Infrastructure.Tests/
+  FrameLedger.Agent.Tests/  FrameLedger.App.Tests/
   FrameLedger.CaptureHost.Tests/      # incl. the Category=Integration end-to-end case
-  native/FrameLedger.Overlay.Tests/   # Catch2: ring buffer, record encode, fault policy
-tools/                         # changelog-check, chokepoint-check, coverage-gate, gen-ac-floor,
-                               # hookinventory-check, license-check, package-closure-check,
-                               # rules-validate, vendor-exports, versioninfo-check,
-                               # vklayer-blastradius
+  Shared/  fixtures/                  # test helpers; the detection corpus and other fixtures
+  ~~native/FrameLedger.Overlay.Tests/~~ # never existed (corrected 2026-10-04): the native tests are
+                                      #   src/native/tests/ (ctest, mostly Catch2 — ring, guard, layout,
+                                      #   vklayer, unhook, rules budget, NVAPI bridge, process stats)
+tools/                         # accuracy-check, changelog-check, chokepoint-check, coverage-gate,
+                               # gen-ac-floor, hookinventory-check, license-check, license-gather
+                               # (+ license-overrides/), notice-check, package-closure-check,
+                               # release-notes, rules-validate, test-artifacts-check, vendor-exports,
+                               # versioninfo-check, vklayer-blastradius, fps-impact-runbook
+                               # (six names added 2026-10-04)
                                # (PowerShell). This line used to name three, one of which
                                # — resx-audit — ~~does not exist~~ exists since 2026-09-13 with
                                # resx-gen (the committed Strings.Designer.cs generator).
@@ -133,6 +145,9 @@ tools/                         # changelog-check, chokepoint-check, coverage-gat
                                #   fl-layout-dump  -> struct offsets for the C# mirror test
                                #   hook-harness    -> dummy D3D11 + D3D12 + Vulkan + OpenGL app
                                #                      (--vulkan since #140, --opengl since #141)
+                               #   fl-probe-*      -> guard, hook profile, interposer, NVAPI, process
+                               #                      stats, signer, Vulkan layer; fl-baseline-probe;
+                               #   vendor-stubs/   -> fixture DLLs with the vendors' export names
 rules/detection-rules.json     # engine/platform/capability + anticheat blocklist
 guide/                         # the user guide (beta.12, D44): eight short English pages for players, embedded in the
                                #   App (Help > User guide); README.md is its contents. docs/ is for developers.
@@ -145,11 +160,11 @@ Dependency direction: `App/Agent → Application → Domain`; **`Application →
 
 **C# —** `Nullable enable`, `TreatWarningsAsErrors`, `AnalysisLevel latest-all`, file-scoped namespaces, Roslynator + Meziantou + VS Threading analyzers, `dotnet format` clean. Async suffixed `Async`, `ConfigureAwait(false)` off the UI. All user-visible strings from `.resx`. Timestamps UTC (unix-ms in SQLite); QPC ticks only inside the capture pipeline.
 
-**C++ —** `clang-format` (LLVM base, 4-space, 120 col) enforced in CI. No STL containers that allocate in hook paths. No `std::mutex` in hook paths. `-D_HAS_EXCEPTIONS=0` in the Overlay target. Every hook entry point wrapped per the `FL_HOOK_GUARD` macro (`17_HOOK_ENGINE`). Static analysis: `/analyze` + clang-tidy (`bugprone-*`, `cert-*`, `concurrency-*`).
+**C++ —** `clang-format` (LLVM base, 4-space, 120 col) enforced in CI. No STL containers that allocate in hook paths. No `std::mutex` in hook paths. `-D_HAS_EXCEPTIONS=0` in the Overlay target. Every hook entry point wrapped per the `FL_HOOK_GUARD` macro (`17_HOOK_ENGINE`). Static analysis: ~~`/analyze` + clang-tidy (`bugprone-*`, `cert-*`, `concurrency-*`)~~ CodeQL (`codeql.yml`, a required check); `/analyze` and clang-tidy are not configured *(corrected 2026-10-04)*.
 
 **Licence header —** every first-party source file (`.cs .cpp .h .inl .ps1 .xaml`) opens with two comment lines, `SPDX-License-Identifier: GPL-3.0-only` and `Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE` (beta.12, owner decision D45). GPLv3 §7 requires additional terms to be named in the source files, and `NOTICE` holds them — (b) preserve the notices, (c) mark modified versions, (e) no trademark rights in the name. `tools/notice-check.ps1` is a `build.ps1` gate; `-Fix` writes a missing header. `src/native/third_party/` is excluded.
 
-**Struct mirroring —** `FlFrameRecord`, `FlShmHandshake`, `FlWriterState` and `FlControlBlock` each exist twice: `src/native/FrameLedger.Shm/include/fl_shm.h` (**normative**) and `src/FrameLedger.Shared/ShmLayout.cs` as `[StructLayout(LayoutKind.Sequential)]`. `ShmLayoutMirrorTests` asserts size and every field offset on both sides **against JSON emitted by `tools/fl-layout-dump`**, never a transcribed table, and walks the field list in both directions so a field added on either side alone fails.
+**Struct mirroring —** ~~`FlFrameRecord`, `FlShmHandshake`, `FlWriterState` and `FlControlBlock`~~ `FlShmHandshake`, `FlWriterState`, `FlControlBlock`, `FlDisplayState` (layout 4, beta.10), `FlFrameRecord` and `FlTolerance` (D33, beta.9) each exist twice *(corrected 2026-10-04)*: `src/native/FrameLedger.Shm/include/fl_shm.h` / `fl_tolerance.h` (**normative**) and `src/FrameLedger.Shared/ShmLayout.cs` as `[StructLayout(LayoutKind.Sequential)]`. `ShmLayoutMirrorTests` asserts size and every field offset on both sides **against JSON emitted by ~~`tools/fl-layout-dump`~~ `src/native/tools/fl-layout-dump`**, never a transcribed table, and walks the field list in both directions so a field added on either side alone fails.
 
 It also asserts **blittability** (`RuntimeHelpers.IsReferenceOrContainsReferences`), because offsets cannot see it: measured 2026-08-05, swapping the `fixed byte BuildId[32]` for this repo's own `[MarshalAs(ByValTStr)] string` idiom keeps `Marshal.SizeOf` at 64 and every offset correct while `Unsafe.SizeOf` collapses to **40** — a mirror that passes the obvious checks and cannot be read out of a memory-mapped view.
 
@@ -157,7 +172,7 @@ It also asserts **blittability** (`RuntimeHelpers.IsReferenceOrContainsReference
 
 The version handshake is wired end to end as of 2026-08-05: `FlGuardBuildId` gives the Agent a build id of its own and `ShmHandshakeValidator` performs the refuse-to-attach comparison `07_IPC` specifies (§S23-1). **Its default is `NotEvaluated`, not `Ok`** — a result nobody produced has validated nothing, the same rule `AntiCheatVerdict` follows.
 
-**Dev mode —** `FL_MOCK=1` is **specified but not implemented** — `grep -rn FL_MOCK src tests tools build.ps1` returns nothing (recorded 2026-08-04). When it exists it runs the whole app with a synthetic frame source and no injection at all, and it is how the UI is meant to be developed; until then, do not plan work on the assumption that it is there. `tools/hook-harness` is a dummy **D3D11 + D3D12 + Vulkan + OpenGL** app used to exercise hooks without a real game — `--vulkan` since #140 and `--opengl` since #141 (2026-09-06); this sentence said both were unwritten until 2026-09-09 (`docs/12_BUILD.md` §Targets is the accurate list).
+**Dev mode —** `FL_MOCK=1` is **specified but not implemented** — `grep -rn FL_MOCK src tests tools build.ps1` returns nothing (recorded 2026-08-04). When it exists it runs the whole app with a synthetic frame source and no injection at all, and it is how the UI is meant to be developed; until then, do not plan work on the assumption that it is there. ~~`tools/hook-harness`~~ `src/native/tools/hook-harness` (path corrected 2026-10-04) is a dummy **D3D11 + D3D12 + Vulkan + OpenGL** app used to exercise hooks without a real game — `--vulkan` since #140 and `--opengl` since #141 (2026-09-06); this sentence said both were unwritten until 2026-09-09 (`docs/12_BUILD.md` §Targets is the accurate list).
 
 ## Definition of done (per PR)
 

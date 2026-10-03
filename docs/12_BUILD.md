@@ -5,7 +5,7 @@ Mixed toolchain: .NET 10 for managed projects, MSVC for the native layer.
 ## Prerequisites
 
 - Windows 11 (dev), **.NET 10 SDK**, **Visual Studio 2026** with: .NET desktop development, **Desktop development with C++** (MSVC v143+, Windows 11 SDK ≥ 10.0.22621), C++ ATL not required.
-- **Vulkan SDK** (for the layer + validation layers during development).
+- **Vulkan SDK** (~~for the layer +~~ validation layers during development, and to run `tools/vklayer-blastradius.ps1`) *(corrected 2026-10-04: the layer builds against the vendored `third_party/vulkan-headers`; CI installs no SDK)*.
 - CMake ≥ 3.28 (native projects use CMake; consumed by the solution via a build target — see below).
 - Optional: PawnIO for CPU-temperature testing; an NVIDIA GPU for the NVAPI/Reflex paths (dev machine: RTX 5080). AMD/Intel telemetry paths need no SDK — if you have such hardware, testing L1/L2 coverage there is valuable.
 - **No admin needed for normal development.** `FL_MOCK=1` is **specified but not implemented** — `grep -rn FL_MOCK src tests tools build.ps1` returns nothing (CLAUDE.md §Dev mode records the same, and this line contradicted it in the present tense until 2026-08-05). When it exists it runs the whole app with a synthetic source and zero injection. Until then the no-injection development path is `hook-harness`, which needs no admin either.
@@ -23,8 +23,9 @@ Targets:
 - `FrameLedger.Overlay` → `FrameLedger.Overlay.dll`
 - `FrameLedger.VkLayer` → `FrameLedger.VkLayer.dll` + `VkLayer_FRAMELEDGER_overlay.json`
 - `FrameLedger.Injector` → **static lib only.** There is no `FrameLedger.Injector.exe` and none ships (`20_OPEN_QUESTIONS` §S9, decided 2026-08-02). A standalone `LoadLibraryW` injector that users can run is a path into a game process that the guard does not stand in front of — a bypass, and a bad look for a project whose position is "we refuse where we are not welcome". The Agent links the static lib; the guard owns the chokepoint inside it (§S13(b)), so there is no callable entry point that skips the gate. Manual testing uses `hook-harness`, never a real game (§Debugging).
-- `FrameLedger.NvapiBridge` → `FrameLedger.NvapiBridge.dll` (**2026-09-10, P2 PR-E2**): the C ABI the Agent reaches NVAPI through (`18_GPU_VENDOR_APIS` §L3) and the **only shipped binary that links `nvapi64.lib`**. Read-only by construction, loaded by the Agent into **its own process** by absolute path through `/FrameLedger.NvapiBridge.targets`, and **never into a game** — its name carries none of the words the guard's §S18 heuristic scans for. `fl_native_flags` only, not the hostile-environment set. `versioninfo-check.ps1` requires its version block like the other three shipped natives. ctest `fl_nvapi_bridge` (`src/native/tests/nvapi_bridge_test.cpp`) exercises every export and requires `BRANCH: AVAILABLE` or `BRANCH: DEGRADED` in the output, so a bridge gutted to `return 0` is red on a runner without the driver too.
-- `FrameLedger.Overlay.Tests` → Catch2 unit tests (ring buffer, record layout, fault filter, seqlock) **and the guard's fail-closed matrix** (`14_TESTING` §Safety-guard tests) — the guard is native, so its tests are too
+- `FrameLedger.NvapiBridge` → `FrameLedger.NvapiBridge.dll` (**2026-09-10, P2 PR-E2**): the C ABI the Agent reaches NVAPI through (`18_GPU_VENDOR_APIS` §L3) and the **only shipped binary that links `nvapi64.lib`**. Read-only by construction, loaded by the Agent into **its own process** by absolute path through `/FrameLedger.NvapiBridge.targets`, and **never into a game** — its name carries none of the words the guard's §S18 heuristic scans for. `fl_native_flags` only, not the hostile-environment set. `versioninfo-check.ps1` requires its version block like the other ~~three~~ shipped natives (five in all since beta.12 — corrected 2026-10-04). ctest `fl_nvapi_bridge` (`src/native/tests/nvapi_bridge_test.cpp`) exercises every export and requires `BRANCH: AVAILABLE` or `BRANCH: DEGRADED` in the output, so a bridge gutted to `return 0` is red on a runner without the driver too.
+- `FrameLedger.Guard` → `FrameLedger.Guard.dll` (the guard's C ABI over the Injector library, `src/native/FrameLedger.Injector/CMakeLists.txt`; loaded by the Agent) and `FrameLedger.ProcessStats` → `FrameLedger.ProcessStats.dll` (beta.12, D43: the game process's memory, read by the Agent from outside the game; probe `fl-probe-processstats`) *(both bullets added 2026-10-04; they were missing)*
+- ~~`FrameLedger.Overlay.Tests`~~ the ctest executables in `src/native/tests/` (`fl_ring_test`, `fl_guard_test`, `fl_vklayer_test`, … — corrected 2026-10-04: no target of that name has existed) → Catch2 unit tests (ring buffer, record layout, fault filter, seqlock) **and the guard's fail-closed matrix** (`14_TESTING` §Safety-guard tests) — the guard is native, so its tests are too
 - `hook-harness` → the dummy **D3D11 + D3D12** app, WARP + composition swapchain so it runs headless on CI (`17_HOOK_ENGINE` §Test harness). D3D12 is device → command queue → swapchain, which is the acquisition asymmetry a D3D11-only fixture cannot exercise. ~~Vulkan and OpenGL modes to follow as those hooks land.~~ **`--vulkan --hold-presenting N` since 2026-09-06 (P1 item 3):** a real swapchain on a hidden window through the real loader, reached by `LoadLibraryW("vulkan-1.dll")` so only the vendored headers are needed and CI (no loader) still builds it; exit 77 = cannot run here, which the ctest reads as SKIP. **`--opengl --hold-presenting N` since the same day (P1 item 4):** a real context on a hidden window, `SwapBuffers`'d through gdi32 as a title does, on Microsoft's generic renderer — so it runs on CI.
 - `fl-probe-hookprofile` → build-profile probes for `/guard:cf` and `-D_HAS_EXCEPTIONS=0` (`20_OPEN_QUESTIONS` §H1/§H3)
 - `fl-probe-guard` → measures the Windows APIs the guard is built on, unelevated (`spike-notes.md` §1). Not the guard, and takes no injection rights.
@@ -43,7 +44,7 @@ Compiler/linker flags (enforced in CMake, not per-target ad hoc): `/std:c++20 /M
 
 **No AMD or Intel GPU *telemetry* SDK is vendored.** Those vendors' sensors are covered by LibreHardwareMonitor and the DXGI/PDH baseline (`18_GPU_VENDOR_APIS`). A build that pulls in Intel IGCL or AMD ADLX material is a licensing regression, not a feature — CI greps for it. **The AMD FidelityFX ffx-api headers (MIT by exception, tag v2.3.0) ARE vendored since 2026-09-04**, for the Overlay's upscaler hook and for types only — `fl_fidelityfx_headers` above, `18_GPU_VENDOR_APIS` §AMD for the licence reading, and `license-check.ps1` §2d for the per-file gate. Intel's XeSS SDK failed the checklist and nothing of it is here.
 
-**VERSIONINFO is mandatory** on `FrameLedger.Overlay.dll` and `FrameLedger.VkLayer.dll`: real `CompanyName`, `ProductName=FrameLedger`, `FileDescription`, version. Identifiability is a requirement (`19_SAFETY`), and a CI check fails the build if the resource block is missing.
+**VERSIONINFO is mandatory** on ~~`FrameLedger.Overlay.dll` and `FrameLedger.VkLayer.dll`~~ every shipped native — the five `tools/versioninfo-check.ps1` lists (corrected 2026-10-04): real `CompanyName`, `ProductName=FrameLedger`, `FileDescription`, version. Identifiability is a requirement (`19_SAFETY`), and a CI check fails the build if the resource block is missing.
 
 ## Managed build & native integration
 
@@ -55,7 +56,7 @@ Compiler/linker flags (enforced in CMake, not per-target ad hoc): `/std:c++20 /M
     > **`RuntimeIdentifier` is NOT set here, and this bullet claimed it was until 2026-08-06.** The props file's own comment explains why: forcing a RID onto class libraries pulls RID-specific assets into their restore for no benefit, so each executable sets it — `FrameLedger.App`, `FrameLedger.Agent` and now `FrameLedger.CaptureHost`, plus its test project, which needs the same RID to reference a RID'd exe. A new project copying this document rather than the props file would have inherited nothing.
   - Nullable enable, ImplicitUsings enable, `TreatWarningsAsErrors=true`, `AnalysisLevel=latest-all`, deterministic, `ContinuousIntegrationBuild` on CI.
 - `Directory.Packages.props`: central package management, all versions pinned (including `WPF-UI` = 4.3.0 exactly — `16_WPFUI_SYNTAX` §Version hygiene).
-- **Native output reaches the managed side through `.targets` files imported by `FrameLedger.Agent`**, not through `FrameLedger.Infrastructure`: `/FrameLedger.Guard.targets` (the guard DLL), `/FrameLedger.Overlay.targets` (the payload, §S22), `/FrameLedger.Rules.targets` (the blocklist seed) and, since 2026-09-10, `/FrameLedger.NvapiBridge.targets` (the L3 bridge; it **warns rather than fails** when the DLL is absent, because a missing telemetry layer reports itself where a missing guard would be a safety hole). Ordering comes from `build.ps1`, which runs the native build first — **not** from the solution: `FrameLedger.slnx` contains no native project.
+- **Native output reaches the managed side through `.targets` files imported by `FrameLedger.Agent`**, not through `FrameLedger.Infrastructure`: `/FrameLedger.Guard.targets` (the guard DLL), `/FrameLedger.Overlay.targets` (the payload, §S22), `/FrameLedger.Rules.targets` (the blocklist seed) and, since 2026-09-10, `/FrameLedger.NvapiBridge.targets` (the L3 bridge; it **warns rather than fails** when the DLL is absent, because a missing telemetry layer reports itself where a missing guard would be a safety hole), and since beta.12 `/FrameLedger.ProcessStats.targets` (the game-memory reader, D43; it also warns rather than fails — an absent reader reads N/A; added 2026-10-04). Ordering comes from `build.ps1`, which runs the native build first — **not** from the solution: `FrameLedger.slnx` contains no native project.
 
   > **This bullet was wrong in four ways and is corrected 2026-08-04.** It named a copy of `FrameLedger.Injector.exe`, which §S9 closed and which line 25 above says does not exist, 24 lines earlier in the same document. It attributed the copying to a build target in `FrameLedger.Infrastructure.csproj`, which contains no `<Target>` at all. It said the copies happen there, when the guard DLL was deliberately moved out to a `.targets` file so it would stop flowing to every referencing project (§S18 blocker 3). And it credited the solution with an ordering the solution cannot express.
 - **Struct mirror check — ✅ built 2026-08-05.** `ShmLayoutMirrorTests` runs `tools/fl-layout-dump`, reads its JSON, and asserts size plus every field offset against the C# `[StructLayout]` mirrors in `FrameLedger.Shared` — in **both directions**, so a field on either side alone fails. It also asserts blittability, which offsets cannot see. The `struct-mirror` gate reads the run's `.trx` and fails when that test class did not execute, so deleting the test is red as well as breaking it. Struct drift between the two layers is the most dangerous silent bug in this architecture; the build now genuinely catches it.
@@ -64,10 +65,15 @@ Compiler/linker flags (enforced in CMake, not per-target ad hoc): `/std:c++20 /M
 
 ## Debugging
 
-Launch profiles:
-- **"UI + Mock"** — `FL_MOCK=1`, no Agent, no injection. Default for UI work.
-- **"UI + Agent"** — both managed processes, real capture against `hook-harness`.
-- **"Harness + Overlay"** — starts `hook-harness` under the debugger with the Overlay injected at launch; attach a second native debugger to step hook code.
+~~Launch profiles:~~
+- ~~**"UI + Mock"** — `FL_MOCK=1`, no Agent, no injection. Default for UI work.~~
+- ~~**"UI + Agent"** — both managed processes, real capture against `hook-harness`.~~
+- ~~**"Harness + Overlay"** — starts `hook-harness` under the debugger with the Overlay injected at launch; attach a second native debugger to step hook code.~~
+
+*(Corrected 2026-10-04: none of these is committed, and "UI + Mock" needs `FL_MOCK`, which §Prerequisites says is not
+implemented. What exists: `FrameLedger.exe` starts `FrameLedger.Agent.exe --serve` beside itself. To capture against the
+harness, run `hook-harness.exe --real --hold-presenting N`, then the Agent's `--console --data-dir <scratch>` verbs
+`consent grant --exe` and `capture --exe`, as `AgentEndToEndTests` does — never against your own data folder.)*
 
 **Toolchain gotchas, both hit on a real machine and both handled by `build.ps1`:**
 
@@ -174,7 +180,7 @@ assumed to.
 cmake --build --preset x64-release
 dotnet publish src/FrameLedger.App   -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -p:FrameLedgerSourceRef={tag} -o out/app
 dotnet publish src/FrameLedger.Agent -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -o out/app
-vpk pack --packId FrameLedger.App --packVersion {ver} --packDir out/app --mainExe FrameLedger.exe --packTitle FrameLedger --releaseNotes out/notes.md --outputDir out/release
+vpk pack --packId FrameLedger.App --packVersion {ver} --packDir out/app --mainExe FrameLedger.exe --packTitle FrameLedger --packAuthors FrameLedger --releaseNotes out/notes.md --outputDir out/release
 ```
 
 > **Run by `release.yml` since 2026-09-14 (P4 PR-5)** — `13_CI_CD` §release.yml carries the steps around it
@@ -225,7 +231,7 @@ vpk pack --packId FrameLedger.App --packVersion {ver} --packDir out/app --mainEx
 the repository, and it is deliberate: the effective date of a legal document is
 the date it ships, which is not knowable at authoring time. `release.yml` (**built 2026-09-14**, P4 PR-5 — the step runs before the
 build, because the App embeds `legal/*.md`)
-substitutes it with the tag date when packaging, and `ci.yml` fails the build if
+substitutes it with ~~the tag date~~ the run's UTC date (corrected 2026-10-04) when packaging, and `ci.yml` fails the build if
 **any other** `{{` token appears in `README.md` or `legal/*.md` (`13_CI_CD.md`
 §ci.yml). Everything else — repository URL, slug, developer identity, contact
 address — is resolved in the source files, because an unsubstituted token in a
@@ -243,7 +249,9 @@ document the app displays for acceptance (FR-11) is a defect, not a template.
 4. `dotnet restore` + build (warnings as errors)
 5. `dotnet format --verify-no-changes`
 6. `dotnet test --logger trx` — including `ShmLayoutMirrorTests`; with no switches it also runs the
-   `Category=Integration` classes, which CI excludes
+   `Category=Integration` classes, ~~which CI excludes~~ which CI runs too *(corrected 2026-10-04: `ci.yml` and
+   `release.yml` call `./build.ps1 check` with no switches since 2026-09-06, as the paragraph after this list says;
+   only `-SkipIntegration`, which nobody passes, leaves them out, loudly)*
 7. `tools/coverage-gate.ps1` — reads this run's cobertura reports; self-arming, and armed today for
    `FrameLedger.Domain` and `FrameLedger.Application`
 8. `tools/rules-validate.ps1` (schema + `anticheat` block sanity — a malformed or empty blocklist is a safety bug)

@@ -1913,14 +1913,6 @@
     <value>適用しました。キャプチャエージェントは次回のセッション開始時に読み込みます。</value>
     <comment>review</comment>
   </data>
-  <data name="Settings_Background_Body" xml:space="preserve">
-    <value>キャプチャエージェントは追跡中のゲームを監視します。自身が起動していないゲームも記録され、フックが有効で Vulkan タイトルでない場合のみ実測されます。</value>
-    <comment>review</comment>
-  </data>
-  <data name="Settings_Background_Label" xml:space="preserve">
-    <value>FrameLedger 外から起動したゲームを記録</value>
-    <comment>review</comment>
-  </data>
   <data name="Settings_Capture_Header" xml:space="preserve">
     <value>キャプチャ</value>
     <comment>review</comment>

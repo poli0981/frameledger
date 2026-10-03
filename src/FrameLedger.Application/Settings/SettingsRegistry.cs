@@ -78,13 +78,19 @@ public static class SettingsRegistry
         Choices = ["grid", "list"],
     };
 
-    /// <summary>Whether the Agent's watcher records tracked games that the App did not launch (FR-3.1/FR-3.3).</summary>
+    /// <summary>
+    /// Whether the Agent's watcher records tracked games that the App did not launch (FR-3.1/FR-3.3). <b>Reserved since
+    /// beta.12:</b> the App showed a switch for it ("Record games launched outside FrameLedger") and no Agent code ever read
+    /// it, so turning it off recorded every game anyway; and the App has no way to start a game, so "off" could only have
+    /// meant recording nothing. The switch is gone and the key stays, read by nobody, until a launch path exists
+    /// (<c>06_DATA_MODEL</c> §Settings registry).
+    /// </summary>
     public static readonly SettingDefinition CaptureBackground = new()
     {
         Key = "capture.background",
         Kind = SettingKind.Boolean,
         Default = "1",
-        AgentReads = true,
+        AgentReads = false,
     };
 
     /// <summary>FR-2.4. The one key that existed before the registry (P2 PR-F, <c>SettingsKillSwitch</c>): exactly "1" is engaged.</summary>

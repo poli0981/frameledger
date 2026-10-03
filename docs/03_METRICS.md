@@ -1,6 +1,6 @@
 # 03 — Metrics
 
-**Single source of truth** for every number FrameLedger displays. ~~Implement in `FrameLedger.Domain.Metrics` with golden tests (`14_TESTING`).~~ **Implemented in `FrameLedger.Domain.Metrics` since 2026-09-09 (P2 PR-A), with the goldens `14_TESTING` names:** `FrameTimeSeries` (frame times from QPC, gaps excluded), `Percentile` (linear), `FrameStatistics` (median / lows / min / max / σ with the sufficiency guards), `RollingMedian` + `StutterDetector`, `FgWindow` + `FgRefusal` (the factor and every refusal, as facts — the English lives with the report), `UpscaleExtent`, `SegmentBuilder`, `RtVerdict` / `HdrVerdict` (the tri-states), `VramAggregates` / `LatencyAggregates` / `SeriesAggregates`. They consume `FrameSample` and `WriterFacts` — Domain's own types, since Domain references nothing — and `Application.Metrics.FrameSampleMapper` is the one place a shared-memory record becomes one; the Domain enums are pinned to `FrameLedger.Shared`'s in both directions by `MetricEnumMirrorTests`. The frame-generation LADDER (rung 0 / 1 / 3 / 4 as a verdict, and the withheld `none`) is not yet a Domain type: it is still the capture host's prose in `MeasuredFacts`, and lands with the recorder that stores `fg_mode` (PR-D).
+**Single source of truth** for every number FrameLedger displays. ~~Implement in `FrameLedger.Domain.Metrics` with golden tests (`14_TESTING`).~~ **Implemented in `FrameLedger.Domain.Metrics` since 2026-09-09 (P2 PR-A), with the goldens `14_TESTING` names:** `FrameTimeSeries` (frame times from QPC, gaps excluded), `Percentile` (linear), `FrameStatistics` (median / lows / min / max / σ with the sufficiency guards), `RollingMedian` + `StutterDetector`, `FgWindow` + `FgRefusal` (the factor and every refusal, as facts — the English lives with the report), `UpscaleExtent`, `SegmentBuilder`, `RtVerdict` / `HdrVerdict` (the tri-states), `VramAggregates` / `LatencyAggregates` / `SeriesAggregates`. They consume `FrameSample` and `WriterFacts` — Domain's own types, since Domain references nothing — and `Application.Metrics.FrameSampleMapper` is the one place a shared-memory record becomes one; the Domain enums are pinned to `FrameLedger.Shared`'s in both directions by `MetricEnumMirrorTests`. The frame-generation LADDER (rung 0 / 1 / 3 / 4 as a verdict, and the withheld `none`) ~~is not yet a Domain type: it is still the capture host's prose in `MeasuredFacts`, and lands with the recorder that stores `fg_mode` (PR-D).~~ *(Corrected 2026-10-04: it landed with PR-D on 2026-09-10 as `Application.Recording.FgLadder` — in Application, not Domain. The session row (`SessionAggregator`), the live card (`SessionProgressCalculator`) and the capture host's report all read it; `MeasuredFacts` keeps only the host's strings.)*
 
 Every metric declares which **capture tier** it requires (`01_ARCHITECTURE` §Capture tiers). A Tier-2 session simply has `N/A` where Tier-1 data is missing — never a silently degraded estimate presented as fact.
 
@@ -428,8 +428,13 @@ F_app   = Σ fgEvaluations                  (APPLICATION frames, counted at the 
 > dividing them by presents dilutes each by the frame-generation factor — at ×4 a title that
 > path-traces every application frame reports 25%. Whoever writes the RT hooks must choose a
 > denominator and state it here.
+>
+> *(Settled 2026-08-20 with the RT hooks — §RT/PT/RR, "The denominator": `rt_frame_pct` is a share of presents
+> and says so, and the tri-state is unaffected. Marked here 2026-10-04.)*
 
-`fgEvaluations` is recorded per present by the NGX/Streamline/FFX/XeSS FG hooks
+`fgEvaluations` is recorded per present by ~~the NGX/Streamline/FFX/XeSS FG hooks~~ the `slGetNewFrameToken`
+detour; where Streamline never issued a token, by the FidelityFX dispatches — new PREPARE `frameID`s, else UPSCALE
+dispatches, the FSR 3.0 host's included *(corrected 2026-10-04: NGX and XeSS have no hook)*
 (`17_HOOK_ENGINE` §Upscaling / frame generation). `fg_factor = F_disp / F_app`.
 
 > **`fgEvaluations` counts EVALUATIONS, not generated frames — owner ruling, 2026-08-14 —
@@ -512,7 +517,7 @@ carries the three shapes.
 
 From the upscaler hooks we get, per frame:
 
-- `upscaler`: the technology **actually executing** (`dlss`, `fsr2`, `fsr3`, `fsr4`, `xess`, `nis`, `none`) — from the API that was called, not from a DLL sitting on disk.
+- `upscaler`: the technology **actually executing** (`dlss`, `fsr2`, `fsr3`, `fsr4`, `xess`, `nis`, `none`; **`fsr`** since 2026-09-04 — FSR through the SDK 2.x upscaler DLL, version not named) — from the API that was called, not from a DLL sitting on disk. *(Corrected 2026-10-04: `fsr` was missing here; `fsr4` is reserved and no writer produces it.)*
 
   > **`dlss_rr` is NOT a value of this field, and this line listed it until 2026-08-06.** Layout
   > v3 retired it and **reserved** the slot rather than reusing it, because it made Ray
@@ -775,7 +780,7 @@ allocations. So dedicated is defined as Task Manager's column and is **never com
 `FlFrameRecord.vramUsedMb` stay reserved for that in-process figure.
 
 **Aggregates** (schema 0018): dedicated avg / median / max, shared max, private working set avg / median / max, working
-set max, commit max, the process count, the sources (`counters,ex2,held,opened`), and every series' n / mean / median /
+set max, commit max, the process count, the sources (`counters,ex2,ex,held,opened`), and every series' n / mean / median /
 min / max in `sensor_stats_json` (§Sensor aggregates). MiB stored; shown in GB as Task Manager does (1 GB = 1024 MiB).
 
 > **The paragraph below is the design that was never built, kept as it stood** (struck 2026-10-03: the Overlay never
@@ -793,7 +798,10 @@ Per session over 1 Hz samples: `avg` (mean of non-null), `max` — and since bet
 series. Sensor timeline aligned to the frame timeline via the shared QPC epoch captured at session start. Fields with no
 data are `N/A`, never 0.
 
-## Accuracy budget (shown in Help → About metrics)
+## Accuracy budget ~~(shown in Help → About metrics)~~
+
+*(Corrected 2026-10-04: no such page exists. Users read these limits in `LIMITATIONS.md` (Help ▸ Limitations) and in
+`legal/ACCURACY.md`, which it links.)*
 
 | Quantity | Tier 1 | Tier 2 |
 |---|---|---|
@@ -828,7 +836,7 @@ Per-column sources, and what a *Tier-2* export does instead:
 | Column | Tier-1 source | Tier 2 |
 |---|---|---|
 | `frame_index`, `qpc_ms`, `frametime_ms` | `frametimes` blob + session `qpcEpoch` | ~~from CSV~~ — no Tier-2 CSV exists; a Tier-2 session exports no per-frame rows at all |
-| `native_or_generated` | `frame_flags` generated bit — set where `fgEvaluations == 0`, i.e. the presents that carried **no** application-frame evaluation. Inverted from the pre-2026-08-14 reading, and accurate to one frame per the note in §Frame Generation | `FrameType` (2.x) |
+| `native_or_generated` | `frame_flags` generated bit — set where `fgEvaluations == 0`, i.e. the presents that carried **no** application-frame evaluation. Inverted from the pre-2026-08-14 reading, and accurate to one frame per the note in §Frame Generation | ~~`FrameType` (2.x)~~ — no Tier-2 CSV *(corrected 2026-10-04)* |
 | `render_w/h`, `output_w/h` | `render_res` blob — **two `uint16` pairs per frame**, not one; `ResizeBuffers` is hooked precisely because output resolution changes mid-session | `N/A` |
 | `upscaler`, `upscaler_quality`, `fg_mode` | segment table, joined by frame index | `N/A` |
 | `rt_flags` | `rt_flags` blob, **one byte per frame** preserving all three bits (`asBuildObserved`, `dispatchObserved`, `psoCreatedEver`) — collapsing them to a single "rt-active" bit loses the inline-RayQuery distinction this project exists to measure. The third was `rtPsoAlive` until layout v3 renamed it: creation is observed at `CreateStateObject` and destruction is COM `Release`, which is not in the hook inventory and must not be added, so the bit latches and could only ever mean "created ever" | `N/A` |

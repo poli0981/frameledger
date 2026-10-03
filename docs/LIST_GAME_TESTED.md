@@ -4,6 +4,9 @@
 measurement notes, and reviewed by the project's owner before it was published. It lists what happened on one machine;
 it promises nothing about any other.*
 
+*(Not re-read for 0.1.0-beta.11 or 0.1.0-beta.12 — noted 2026-10-04. Refreshing it needs a new copy of the database and
+the owner's review; sessions since 2026-09-27, and the game-memory figures beta.12 adds, are not here.)*
+
 **The machine.** Every row below was run on one PC: an NVIDIA GeForce RTX 5080 (the only graphics card), an Intel Core
 i7-14700KF, 32 GB of DDR5, Windows 11 (Insider builds 26300 → 29648) and a 2560×1440, 240 Hz monitor. **No AMD or Intel
 graphics card and no second machine has been tested**, and **no real Vulkan or OpenGL game has been measured** — every

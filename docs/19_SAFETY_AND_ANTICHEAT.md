@@ -217,8 +217,10 @@ Implemented in `FrameLedger.Injector` and reached from managed code through a th
    > `NtQuerySystemInformation` is a documented-as-unsupported API and its
    > `RTL_PROCESS_MODULE_INFORMATION` layout is version-sensitive; the struct
    > offsets must be asserted, not assumed. Treat a parse failure as *refuse*,
-   > never as *clean*. `20_OPEN_QUESTIONS` §S7 tracks the remaining work.
-3. **Rules blocklist** — `detection-rules.json` carries `anticheat.blockedExecutables` (exe names) and `anticheat.blockedStoreIds` (Steam appids etc.) for known competitive/online titles, updatable independently of app releases (`05_DETECTION` §Rules updates).
+   > never as *clean*. ~~`20_OPEN_QUESTIONS` §S7 tracks the remaining work.~~ *(Corrected 2026-10-04: done —
+   > `fl_guard_sources.cpp` asserts the layout and refuses a parse that yields non-native paths; §S7, closed, is about
+   > handle rights and WOW64.)*
+3. **Rules blocklist** — `detection-rules.json` carries `anticheat.blockedExecutables` (exe names) and `anticheat.blockedStoreIds` (Steam appids etc.) for known competitive/online titles, ~~updatable independently of app releases (`05_DETECTION` §Rules updates)~~ shipped with each release; there is no rules-update path yet *(corrected 2026-10-04: `20_OPEN_QUESTIONS` §S20 feed half; `05_DETECTION` §Trust and staleness of the rules feed)*.
 
    > **Both halves are wired and seeded since 2026-09-25** (owner: "as many and as strict as possible"; rules
    > `2026.09.4`). The block below is the history it replaces, kept for the reasoning.
@@ -316,7 +318,7 @@ Implemented in `FrameLedger.Injector` and reached from managed code through a th
    > nothing produced either.
    >
    > **It runs inside the chokepoint**, as the last of the four checks in
-   > `EvaluateImpl`. `FlStaticPreScan` also exports it for FR-2.2's pre-launch
+   > `EvaluateImpl`. ~~`FlStaticPreScan`~~ `FlStaticPreScanGame` (since 2026-09-25 — corrected 2026-10-04) also exports it for FR-2.2's pre-launch
    > question, but that export is **advisory**: it gates nothing, and a caller who
    > never asks it — or ignores the answer — changes nothing about what injection
    > allows.
@@ -325,9 +327,11 @@ Implemented in `FrameLedger.Injector` and reached from managed code through a th
    > could. Since 2026-08-04 `FrameLedger.Guard.dll` ships beside the **Agent
    > only** (`FrameLedger.Guard.targets`, §S18 blocker 3), so `FrameLedger.App`
    > has no `FlStaticPreScan` call site and no DLL to load. FR-2.2's advisory
-   > answer reaches the UI through the Agent over IPC (`07_IPC`) when that exists.
+   > answer reaches the UI through the Agent over IPC (`07_IPC`) ~~when that exists.
    > Recorded rather than quietly reworded: an advisory export with no consumer is
-   > a claim about the product that is not true yet.
+   > a claim about the product that is not true yet.~~ *(corrected 2026-10-04: it does — the Agent's
+   > `SetHookEnabled` answer carries it since P3, `HookEnabledAck.Prescan`, and the library sweep's
+   > `hook_prescan_state` since beta.8 is shown on the game's page)*.
    >
    > **Which directory.** The **install root**, resolved by walking up from the
    > executable to a known platform boundary (`steamapps\common\<X>` and
@@ -351,7 +355,8 @@ Implemented in `FrameLedger.Injector` and reached from managed code through a th
    > **What it does not cover.** Beyond the above, the residual is an anti-cheat
    > SDK sitting on disk whose service is not installed and whose module is not
    > loaded; checks 1, 2 and 2b already cover the rest. And today the `directories` + `files`
-   > groups carry only three tokens between them, so "check 4 ran" is a much
+   > groups carry ~~only three tokens~~ 67 tokens between them since 2026-09-25, plus any `.sys` by code *(corrected
+   > 2026-10-04; documented names, not measured ones)*, so "check 4 ran" is a much
    > narrower statement than "this game ships no anti-cheat". Widening it needs
    > **verified** file and directory names — the seed table below deliberately
    > carries "no data yet" rows rather than guesses, because a wrong token fails
@@ -502,8 +507,9 @@ says so, including that a ban can arrive days later and that FrameLedger cannot 
 - every finding about the game is `BlockedModule`, `AntiCheatFile` or `AntiCheatDirectory` of **one** family;
 - that family's whole footprint is user-mode — no `drivers` entry, no `services` entry and no `*.sys` among its `files`, in
   the compiled floor or the rules file (`fl::guard::FamilyIsUserModeOnly`). The floor cannot be shrunk, so data can make a
-  family kernel-level and never the reverse. On today's data that leaves NetEase Yidun, AhnLab HackShield, Anybrain and
-  FredaikisAntiCheat; Easy Anti-Cheat, BattlEye, ACE, NetEase Anti-Cheat, mihoyo protect, Vanguard, Ricochet and every
+  family kernel-level and never the reverse. On today's data that leaves NetEase Yidun, AhnLab HackShield, Anybrain,
+  FredaikisAntiCheat and Roblox Hyperion *(Hyperion added 2026-10-04: its rows are one module and one file; its only title
+  is on the executable list, so it is never excepted in practice)*; Easy Anti-Cheat, BattlEye, ACE, NetEase Anti-Cheat, mihoyo protect, Vanguard, Ricochet and every
   other family carry a driver or a service and are never excepted;
 - no `*.sys` anywhere in the install tree — the kernel-driver rule (D30) is never excepted, whichever family a driver
   belongs to (so *Aniimo*, which unpacks `NEPKernel.sys` beside `NEP2.dll` on its first run, stays blocked);
@@ -725,7 +731,8 @@ normative documentation. Write tokens here exactly as the data must hold them.
 
 The "no data yet" rows are deliberately kept rather than deleted. An admitted
 gap is reviewable; a deleted row is invisible. ~~Activision Ricochet's was one of them~~ — it has data since
-2026-09-25 (below); VAC's stays until its per-title route exists.
+2026-09-25 (~~below~~ above); ~~VAC's stays until its per-title route exists~~ VAC's became per-title lists the same day,
+13 Steam ids and 8 executables *(corrected 2026-10-04)*.
 
 > **Expanded 2026-09-25 (owner: "as many anti-cheats and as strict as possible").** Eleven families became
 > twenty-two and 19 entries became 74: EA AntiCheat, Activision Ricochet, NetEase Anti-Cheat, NetEase Yidun, Nexon
@@ -772,7 +779,7 @@ gap is reviewable; a deleted row is invisible. ~~Activision Ricochet's was one o
 > *every* title, which is how a user ends up hunting for the override that
 > CLAUDE.md rule 2 says does not exist.
 
-The list is data, versioned in `detection-rules.json`, expandable without a release. Unknown-but-suspicious modules (filename containing one of the `nameFragments` — today `anticheat`, `antitamper`, `guard`, `protect` — plus unsigned-by-known-vendor) produce a **warn-and-refuse** with a "report this to us" link rather than silently allowing.
+The list is data, versioned in `detection-rules.json`, expandable without ~~a release~~ a code change, still delivered by a release (§S20 feed half — corrected 2026-10-04). Unknown-but-suspicious modules (filename containing one of the `nameFragments` — today `anticheat`, `antitamper`, `guard`, `protect` — plus unsigned-by-known-vendor) produce a **warn-and-refuse** with a "report this to us" link rather than silently allowing.
 
 > **Three corrections to that sentence, all recorded in §S19; one is now closed.**
 > It listed four fragments while the data carried five (`gameguard` was missing
@@ -897,7 +904,7 @@ injected or layered**.
 > stop). Modules loaded **before** the Overlay attached are the pre-injection scan's, as always. The
 > detour supplements the poll; it replaces nothing (§S6's own ruling).
 
-> **This sentence used to say the hook "already exists and is currently unused", which was false.** Corrected 2026-08-04: the Overlay installs no hooks at all — `dllmain.cpp` exports one function and nothing in the tree calls `MH_CreateHook` outside a probe. §S6 is therefore downstream of the whole P1 hook layer, not "the cheapest available improvement to the most important behavior in the product". A reader planning work off this paragraph was being told a mechanism was sitting there ready.
+> **This sentence used to say the hook "already exists and is currently unused", which was false.** Corrected 2026-08-04: the Overlay installs no hooks at all — `dllmain.cpp` exports one function and nothing in the tree calls `MH_CreateHook` outside a probe. *(Overtaken 2026-09-06: P1 installed the hooks and the `LoadLibraryExW` detour above; the Overlay exports four functions. Marked 2026-10-04.)* §S6 is therefore downstream of the whole P1 hook layer, not "the cheapest available improvement to the most important behavior in the product". A reader planning work off this paragraph was being told a mechanism was sitting there ready.
 
 ### Elevated / protected targets
 
@@ -1057,20 +1064,22 @@ game's executable** (path, size or mtime). If it now matches:
    §games), so this needs no schema change, and a non-null value already means
    "toggle disabled in the UI".
 3. `hook_consent_at` is **preserved**. The user did consent; the block is not a
-   withdrawal of consent and must not silently require them to consent again if
-   the title is later cleared.
+   withdrawal of consent and must not silently require them to consent again ~~if
+   the title is later cleared~~ *(corrected 2026-10-04: nothing clears a block since D22; the stamp is kept for the
+   record and for a D33 exception)*.
 4. The UI shows a persistent notice, not a transient toast — the user needs to
    understand why a game they enabled stopped being captured at Tier 1.
 
-A rules update that *removes* a match does **not** re-enable hooking on its own.
+A rules update that *removes* a match does **not** re-enable hooking ~~on its own.
 Turning it back on is a user action, because re-enabling silently would mean the
-rules feed can switch injection on for a game without anyone looking.
+rules feed can switch injection on for a game without anyone looking.~~ — nothing does *(corrected 2026-10-04: the block
+outlives a rules change, a game update and *Change executable*; §What a finding does to the game)*.
 
 ## Crash & stability safety
 
 - Two crashes of the same game within 60 s of injection ⇒ hooking auto-disabled for that game, UI explains, Tier-2 takes over. Recorded in `games.hook_autodisabled_reason`. *"Crash" here is any abnormal end: since beta.8 a session whose exit code is not an exception's (End task's 1) is `normal` on its row, and this policy still counts it inside the window — a hang our hook caused, ended by the user, is the case it exists for. The row's reason says "ended abnormally twice within 60 s of injection" (`04_CAPTURE` §Crash & exit classification).*
 - The Overlay DLL self-disables after 3 faults in hook bodies (`17_HOOK_ENGINE` §Fault policy) and reports it.
-- Every hooked session writes a breadcrumb file before injection; if the game process dies before the first frame record arrives, the next run is recorded as suspect.
+- Every hooked session writes a breadcrumb file before injection~~; if the game process dies before the first frame record arrives, the next run is recorded as suspect~~ *(corrected 2026-10-04: no "suspect" mark exists; the breadcrumb is the `.partial` file, and an early death counts toward the two-within-60-s auto-disable above)*.
 
   > **"Cautious mode" is deferred to v1.1 (`20_OPEN_QUESTIONS` §S12).** It was
   > described as "hooks installed, overlay drawing disabled" — but **v1 draws no

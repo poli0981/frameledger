@@ -4,8 +4,16 @@
 
 - Sinks: rolling file per process — `logs/ui-.log`, `logs/agent-.log` (`rollingInterval: Day`, `retainedFileCountLimit: 7`, `fileSizeLimitBytes: 10 MB`, `rollOnFileSizeLimit: true`). Console sink in DEBUG builds. *(`ui-.log` is written since 2026-09-13, P3 PR-2, with `Process=ui` enriched and every unhandled path — Dispatcher, AppDomain, unobserved task — logged as Fatal/Error; ~~the crash dialog and minidump of §Crash handling are still P4's~~ — built 2026-09-15, P4 PR-9, §Crash handling's note.)*
 - Minimum level `Information` (`Debug` toggle in Settings → applies live via `LoggingLevelSwitch`).
-- Enrichers: process name, version, `SessionGuid` and `GamePid` scoped properties during capture (`LogContext.PushProperty`).
+- ~~Enrichers: process name, version, `SessionGuid` and `GamePid` scoped properties during capture (`LogContext.PushProperty`).~~
 - Template: `[{Timestamp:HH:mm:ss.fff} {Level:u3}] {SourceContext} {Message:lj} {Properties:j}{NewLine}{Exception}`.
+
+> **Corrected 2026-10-04 — the four lines above are `ui-.log`'s configuration, not both processes'.** `agent-.log`
+> (`FrameLedger.Agent/Program.cs`, since 2026-09-10) is daily with **14** files kept and no size cap, writes Serilog's
+> **default** template — `2026-10-04 09:15:02.123 +07:00 [INF] …`, a date first — and its level is fixed at
+> Information with `Microsoft.*` at Warning: `log.debug` is the App's alone. Neither process has a console sink, and no
+> enricher exists beyond the App's `Process=ui`. The Logs page reads both shapes since beta.12 — until then its level
+> filter recognised only the App's `[HH:mm:ss.fff LVL]` prefix, so Warning and Error showed no Agent line at all
+> (`LogTail.LevelOf`, `LogTailTests.TheAgentsTemplateIsReadToo`).
 - **Never log:** full user paths outside `%LOCALAPPDATA%\FrameLedger` (redact to `<user>`), machine name, any exe arguments of games. ~~A `RedactingEnricher` enforces the path rule.~~ *(No such enricher was ever written: found 2026-09-15, checking `legal/PRIVACY_POLICY.md` §3's "logs are redacted (user directory paths removed) before bundling" against the bundle, which copied the logs verbatim. An enricher could not have kept the rule anyway: exception text and the Overlay's native log never pass through one, and the data directory itself sits under the user's profile, so every run logs a user name. The rule is enforced where a log leaves the machine instead: `App/Services/LogRedactor` over every log copy in the bug bundle, §Bug report flow step 2. The files in `logs\` keep their full paths; they leave the PC only if the user copies them.)*
 - Capture hot path logs nothing per-frame; counters summarized at finalize.
 
@@ -151,7 +159,7 @@ Tails the active files (shared read), level filter, text search, pause autoscrol
 
 ## Diagnostics extras
 
-- `Tools → Agent status…` shows the `HelloAck` capability set (telemetry source, overlay build id, Vulkan layer — ~~tier availability~~, which meant "is the ETW fallback reachable" and has no meaning under a two-rung ladder) + last 20 Agent log lines.
+- `Tools → Agent status…` ~~shows the `HelloAck` capability set (telemetry source, overlay build id, Vulkan layer~~ — ~~tier availability~~, which meant "is the ETW fallback reachable" and has no meaning under a two-rung ladder ~~) + last 20 Agent log lines~~. *(Corrected 2026-10-04: it opens the Dashboard's Agent card — state, version, telemetry source, overlay build id, elevated, running sessions. The Vulkan layer state is on Settings ▸ Capture and the Agent's log on the Logs page.)*
 - **Never include a game's own logs, saves, or config files** in a bug bundle, even when a crash looks game-related. We ship our logs only.
 - `--diag` CLI flag on the App prints environment + capability report to stdout (support requests).
 
@@ -162,8 +170,9 @@ Tails the active files (shared read), level filter, text search, pause autoscrol
   > **Built 2026-09-14 (P3 PR-8a).** `App.OnStartup` sees `--diag` and runs `DiagAsync` instead of the host: no
   > window, no Agent, the ledger opened read-only for its schema version and the settings, then
   > `Services/DiagReport.Build` (app version, OS and bitness, runtime, locale, elevation, data and logs
-  > directories, ledger schema or "could not open", whether `FrameLedger.Agent.exe` is beside the App, every
-  > registry key's effective value) written to `logs/diag-<yyyyMMdd-HHmmss>.txt` **and** to stdout — the App is
+  > directories, ledger schema or "could not open", whether `FrameLedger.Agent.exe` is beside the App, since
+  > 2026-09-21 the machine as a session's hardware snapshot records it — CPU, GPU, driver, RAM, display — added to this
+  > list 2026-10-04, and every registry key's effective value) written to `logs/diag-<yyyyMMdd-HHmmss>.txt` **and** to stdout — the App is
   > a WinExe with no console of its own, so stdout carries the report only when the caller attached one or piped
   > it (`FrameLedger.exe --diag | more` works; a double-click leaves the file). Exit 0, or 1 with a Fatal line in
   > `ui-*.log`. The Agent's `--diag` stays on its `NotImplementedFlags` list — 10_LOGGING names the flag as the

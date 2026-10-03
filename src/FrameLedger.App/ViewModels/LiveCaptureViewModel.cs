@@ -12,7 +12,8 @@ namespace FrameLedger.App.ViewModels;
 /// <summary>
 /// The Dashboard's live capture card (<c>08_UI</c> §Dashboard), fed by <c>SessionStarted</c> / <c>SessionProgress</c> /
 /// <c>SessionHeld</c> / <c>SessionCompleted</c>. Tier 1 shows measured settings as facts; the readout follows the FPS
-/// display rule at 1 Hz, qualifier included. The sparkline is PR-6's.
+/// display rule at 1 Hz, qualifier included, and since beta.12 the game's own memory. There is no sparkline: this said it
+/// was PR-6's, and PR-6 shipped without one (<c>08_UI</c> §Dashboard).
 /// </summary>
 /// <remarks>
 /// <b>A session that is not measured is shown too (2026-09-23).</b> Its name, its tier, how long it has run, the machine's
