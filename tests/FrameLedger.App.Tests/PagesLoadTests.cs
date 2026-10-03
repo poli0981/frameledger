@@ -254,6 +254,102 @@ public sealed class PagesLoadTests
     }
 
     /// <summary>
+    /// beta.11 (owner request 2026-10-03: "the empty band on the right"): the library's cards share the whole width — every
+    /// card in a row as wide as the others, the row as wide as the panel — and the list view renders with the grid gone, the
+    /// choice remembered. Under the real dictionaries, so a style or binding typo is red here.
+    /// </summary>
+    [Fact]
+    public async Task TheLibraryGridFillsItsWidthAndTheListViewReplacesIt()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        foreach (string name in new[] { "Alpha", "Bravo", "Charlie", "Delta", "Echo" })
+        {
+            _ = await s.GameAsync(name);
+        }
+
+        var selection = new GameSelection();
+        var nav = new NoNavigation();
+        var strip = new NoStrip();
+        var settings = new MemorySettings();
+        var games = new GamesViewModel(s.Library, selection, nav, new AddGameFlow(s.Library, new NoPicker(), selection, nav, strip),
+            settings: new RegisteredSettings(settings));
+        Task pending = games.Pending;
+        await pending;
+        games.HeaderText.Should().EndWith("5");
+        games.Games.Should().OnlyContain(static g => g.NotInstalled, "the scratch entries point at files that do not exist");
+
+        (double PanelWidth, double[] CardWidths, int Columns) grid = await OnStaAsync(() =>
+        {
+            var page = new GamesPage(games);
+            Render(page);
+            UniformWrapPanel panel = Find<UniformWrapPanel>(page)!;
+            double[] widths = [.. panel.Children.Cast<FrameworkElement>().Select(static c => c.ActualWidth)];
+            return (panel.ActualWidth, widths, UniformWrapPanel.ColumnsFor(panel.ActualWidth, panel.MinItemWidth, panel.Spacing));
+        });
+
+        grid.Columns.Should().BeGreaterThan(1);
+        grid.CardWidths.Should().OnlyContain(w => Math.Abs(w - grid.CardWidths[0]) < 0.5, "every card is an equal share");
+        ((grid.Columns * grid.CardWidths[0]) + ((grid.Columns - 1) * 12)).Should().BeApproximately(grid.PanelWidth, 1, "a full row leaves no band unused");
+
+        games.ShowListCommand.Execute(null);
+        (bool ListShown, bool GridShown) list = await OnStaAsync(() =>
+        {
+            var page = new GamesPage(games);
+            Render(page);
+            return (((FrameworkElement)page.FindName("GameList")).Visibility == Visibility.Visible,
+                ((FrameworkElement)page.FindName("CardGrid")).Visibility == Visibility.Visible);
+        });
+
+        list.ListShown.Should().BeTrue();
+        list.GridShown.Should().BeFalse();
+        settings.Rows.Should().ContainKey("ui.library_view").WhoseValue.Should().Be("list", "the choice is remembered");
+    }
+
+    /// <summary>beta.11: the import checklist renders with the rows already in the library shown, dimmed, under the real dictionaries.</summary>
+    [Fact]
+    public async Task TheImportChecklistRendersWithTheExistingRowsShown()
+    {
+        var vm = new ImportReviewViewModel(
+        [
+            new Application.Import.ImportCandidate(new Application.Import.StoreGame("steam", "1", "A", @"C:\a", @"C:\a\a.exe", null), @"C:\a\a.exe",
+                AlreadyInLibrary: false, ExecutableGuessed: false),
+            new Application.Import.ImportCandidate(new Application.Import.StoreGame("steam", "2", "B", @"C:\b", @"C:\b\b.exe", null), @"C:\b\b.exe",
+                AlreadyInLibrary: true, ExecutableGuessed: false),
+        ])
+        { ShowExisting = true };
+
+        int rows = await OnStaAsync(() =>
+        {
+            var content = new Dialogs.ImportReviewContent(vm);
+            Render(content);
+            return Find<System.Windows.Controls.DataGrid>(content)!.Items.Count;
+        });
+
+        rows.Should().Be(2);
+    }
+
+    /// <summary>The first descendant of <paramref name="root"/> of type <typeparamref name="T"/> in the visual tree, or null.</summary>
+    private static T? Find<T>(DependencyObject root)
+        where T : DependencyObject
+    {
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            DependencyObject child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            if (child is T hit)
+            {
+                return hit;
+            }
+
+            if (Find<T>(child) is { } deeper)
+            {
+                return deeper;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// beta.8 (owner request 2026-09-25): an anti-cheat game's page under the real dictionaries — the finding's card is
     /// rendered, and the Hooking card, whose switch could only be refused, is not while <c>ui.hide_anticheat_hooking</c> is
     /// on (its default).

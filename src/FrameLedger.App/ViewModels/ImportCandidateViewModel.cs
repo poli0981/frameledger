@@ -25,6 +25,12 @@ public sealed partial class ImportCandidateViewModel : ObservableObject
 
     public bool CanImport => Candidate.CanImport;
 
+    /// <summary>
+    /// Already in the library — at this path, or (since 2026-09-23) the same file under another drive letter. Since beta.11
+    /// such a row is hidden unless the user asks to see it, and then shown dimmed with a box that cannot be ticked.
+    /// </summary>
+    public bool IsExisting => Candidate.AlreadyInLibrary || Candidate.MovedFrom is not null;
+
     public string PlatformText => Formats.Platform(Candidate.Game.Platform);
 
     public string Name => Candidate.Game.Name;

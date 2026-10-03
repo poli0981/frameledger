@@ -426,17 +426,30 @@ public static class Strings
         nameof(Games_Card_HookOn),
         nameof(Games_Card_LastPlayed_Format),
         nameof(Games_Card_NeverPlayed),
+        nameof(Games_Card_NotInstalled),
         nameof(Games_Card_NotRecorded),
         nameof(Games_Card_Playtime_Format),
         nameof(Games_Card_Sessions_Format),
         nameof(Games_Empty),
         nameof(Games_Header),
+        nameof(Games_Header_Count_Format),
+        nameof(Games_List_Engine),
+        nameof(Games_List_LastPlayed),
+        nameof(Games_List_Name),
+        nameof(Games_List_Played),
+        nameof(Games_List_Sessions),
+        nameof(Games_List_Status),
+        nameof(Games_List_Store),
         nameof(Games_NoMatch),
+        nameof(Games_Refresh),
+        nameof(Games_Refresh_ToolTip),
         nameof(Games_Search_Placeholder),
         nameof(Games_Sort_Label),
         nameof(Games_Sort_LastPlayed),
         nameof(Games_Sort_Name),
         nameof(Games_Sort_Playtime),
+        nameof(Games_View_Grid),
+        nameof(Games_View_List),
         nameof(Guard_ConsentMissing),
         nameof(Guard_DriverScanFailed),
         nameof(Guard_HookNotEnabled),
@@ -471,9 +484,11 @@ public static class Strings
         nameof(Import_Note_Moved),
         nameof(Import_Note_NoExe),
         nameof(Import_NothingFound),
+        nameof(Import_NothingNew),
         nameof(Import_SelectAll),
         nameof(Import_Selected_Format),
         nameof(Import_SelectNone),
+        nameof(Import_ShowExisting_Format),
         nameof(Import_Title),
         nameof(Latency_Avg),
         nameof(Latency_Axis),
@@ -1685,6 +1700,8 @@ public static class Strings
 
     public static string Games_Card_NeverPlayed => ResourceManager.GetString(nameof(Games_Card_NeverPlayed), Culture) ?? nameof(Games_Card_NeverPlayed);
 
+    public static string Games_Card_NotInstalled => ResourceManager.GetString(nameof(Games_Card_NotInstalled), Culture) ?? nameof(Games_Card_NotInstalled);
+
     public static string Games_Card_NotRecorded => ResourceManager.GetString(nameof(Games_Card_NotRecorded), Culture) ?? nameof(Games_Card_NotRecorded);
 
     public static string Games_Card_Playtime_Format => ResourceManager.GetString(nameof(Games_Card_Playtime_Format), Culture) ?? nameof(Games_Card_Playtime_Format);
@@ -1695,7 +1712,27 @@ public static class Strings
 
     public static string Games_Header => ResourceManager.GetString(nameof(Games_Header), Culture) ?? nameof(Games_Header);
 
+    public static string Games_Header_Count_Format => ResourceManager.GetString(nameof(Games_Header_Count_Format), Culture) ?? nameof(Games_Header_Count_Format);
+
+    public static string Games_List_Engine => ResourceManager.GetString(nameof(Games_List_Engine), Culture) ?? nameof(Games_List_Engine);
+
+    public static string Games_List_LastPlayed => ResourceManager.GetString(nameof(Games_List_LastPlayed), Culture) ?? nameof(Games_List_LastPlayed);
+
+    public static string Games_List_Name => ResourceManager.GetString(nameof(Games_List_Name), Culture) ?? nameof(Games_List_Name);
+
+    public static string Games_List_Played => ResourceManager.GetString(nameof(Games_List_Played), Culture) ?? nameof(Games_List_Played);
+
+    public static string Games_List_Sessions => ResourceManager.GetString(nameof(Games_List_Sessions), Culture) ?? nameof(Games_List_Sessions);
+
+    public static string Games_List_Status => ResourceManager.GetString(nameof(Games_List_Status), Culture) ?? nameof(Games_List_Status);
+
+    public static string Games_List_Store => ResourceManager.GetString(nameof(Games_List_Store), Culture) ?? nameof(Games_List_Store);
+
     public static string Games_NoMatch => ResourceManager.GetString(nameof(Games_NoMatch), Culture) ?? nameof(Games_NoMatch);
+
+    public static string Games_Refresh => ResourceManager.GetString(nameof(Games_Refresh), Culture) ?? nameof(Games_Refresh);
+
+    public static string Games_Refresh_ToolTip => ResourceManager.GetString(nameof(Games_Refresh_ToolTip), Culture) ?? nameof(Games_Refresh_ToolTip);
 
     public static string Games_Search_Placeholder => ResourceManager.GetString(nameof(Games_Search_Placeholder), Culture) ?? nameof(Games_Search_Placeholder);
 
@@ -1706,6 +1743,10 @@ public static class Strings
     public static string Games_Sort_Name => ResourceManager.GetString(nameof(Games_Sort_Name), Culture) ?? nameof(Games_Sort_Name);
 
     public static string Games_Sort_Playtime => ResourceManager.GetString(nameof(Games_Sort_Playtime), Culture) ?? nameof(Games_Sort_Playtime);
+
+    public static string Games_View_Grid => ResourceManager.GetString(nameof(Games_View_Grid), Culture) ?? nameof(Games_View_Grid);
+
+    public static string Games_View_List => ResourceManager.GetString(nameof(Games_View_List), Culture) ?? nameof(Games_View_List);
 
     public static string Guard_ConsentMissing => ResourceManager.GetString(nameof(Guard_ConsentMissing), Culture) ?? nameof(Guard_ConsentMissing);
 
@@ -1775,11 +1816,15 @@ public static class Strings
 
     public static string Import_NothingFound => ResourceManager.GetString(nameof(Import_NothingFound), Culture) ?? nameof(Import_NothingFound);
 
+    public static string Import_NothingNew => ResourceManager.GetString(nameof(Import_NothingNew), Culture) ?? nameof(Import_NothingNew);
+
     public static string Import_SelectAll => ResourceManager.GetString(nameof(Import_SelectAll), Culture) ?? nameof(Import_SelectAll);
 
     public static string Import_Selected_Format => ResourceManager.GetString(nameof(Import_Selected_Format), Culture) ?? nameof(Import_Selected_Format);
 
     public static string Import_SelectNone => ResourceManager.GetString(nameof(Import_SelectNone), Culture) ?? nameof(Import_SelectNone);
+
+    public static string Import_ShowExisting_Format => ResourceManager.GetString(nameof(Import_ShowExisting_Format), Culture) ?? nameof(Import_ShowExisting_Format);
 
     public static string Import_Title => ResourceManager.GetString(nameof(Import_Title), Culture) ?? nameof(Import_Title);
 

@@ -4,10 +4,16 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:res="clr-namespace:FrameLedger.App"
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
+      xmlns:controls="clr-namespace:FrameLedger.App.Controls"
       Title="{x:Static res:Strings.Games_Header}"
       AllowDrop="True"
       Drop="OnDrop">
-    <!-- 08_UI §Games: cards (ui:CardAction), search, sort; FR-1.1 add by pick or by dropping an .exe here. -->
+    <!--
+        08_UI §Games: search, sort, FR-1.1 add by pick or by dropping an .exe here. Since beta.11 (owner requests 2026-10-03):
+        the count in the title; a grid of cards that fills the width (UniformWrapPanel - a WrapPanel of 300 px cards left a
+        card's width unused at the right) or a list (ui.library_view); Refresh reads the library again, offers the games the
+        stores installed since, and marks the entries whose executable is gone.
+    -->
     <ScrollViewer>
         <StackPanel Style="{StaticResource PageRoot}">
             <Grid>
@@ -16,8 +22,10 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <ui:TextBlock Grid.Column="0" FontTypography="Title" Text="{x:Static vm:GamesViewModel.Header}" />
+                <ui:TextBlock Grid.Column="0" FontTypography="Title" Text="{Binding ViewModel.HeaderText}" />
                 <ui:TextBox Grid.Column="1" MinWidth="220" Margin="0,0,12,0" VerticalAlignment="Center"
                             AutomationProperties.Name="{x:Static vm:GamesViewModel.SearchPlaceholder}"
                             Icon="{ui:SymbolIcon Search24}"
@@ -29,7 +37,21 @@
                           ItemsSource="{x:Static vm:GamesViewModel.Sorts}"
                           SelectedValue="{Binding ViewModel.Sort, Mode=TwoWay}"
                           SelectedValuePath="Value" />
-                <ui:Button Grid.Column="3" Appearance="Primary" VerticalAlignment="Center"
+                <!-- The view switch: the one button shown is the other view. -->
+                <StackPanel Grid.Column="3" Margin="0,0,8,0" VerticalAlignment="Center" Orientation="Horizontal">
+                    <ui:Button Appearance="Secondary" Command="{Binding ViewModel.ShowListCommand}" Icon="{ui:SymbolIcon AppsList24}"
+                               ToolTip="{x:Static vm:GamesViewModel.ListText}" AutomationProperties.Name="{x:Static vm:GamesViewModel.ListText}"
+                               Visibility="{Binding ViewModel.ListView, Converter={StaticResource InverseBoolToVis}}" />
+                    <ui:Button Appearance="Secondary" Command="{Binding ViewModel.ShowGridCommand}" Icon="{ui:SymbolIcon Grid24}"
+                               ToolTip="{x:Static vm:GamesViewModel.GridText}" AutomationProperties.Name="{x:Static vm:GamesViewModel.GridText}"
+                               Visibility="{Binding ViewModel.ListView, Converter={StaticResource BoolToVis}}" />
+                </StackPanel>
+                <ui:Button Grid.Column="4" Margin="0,0,12,0" Appearance="Secondary" VerticalAlignment="Center"
+                           Command="{Binding ViewModel.RefreshCommand}"
+                           Content="{x:Static vm:GamesViewModel.RefreshText}"
+                           ToolTip="{x:Static vm:GamesViewModel.RefreshToolTip}"
+                           Icon="{ui:SymbolIcon ArrowClockwise24}" />
+                <ui:Button Grid.Column="5" Appearance="Primary" VerticalAlignment="Center"
                            Command="{Binding ViewModel.AddGameCommand}"
                            Content="{x:Static vm:GamesViewModel.AddText}"
                            Icon="{ui:SymbolIcon Add24}" />
@@ -42,34 +64,42 @@
                           Text="{x:Static vm:GamesViewModel.NoMatchText}"
                           Visibility="{Binding ViewModel.NoMatch, Converter={StaticResource BoolToVis}}" />
 
-            <ItemsControl Margin="0,16,0,0" ItemsSource="{Binding ViewModel.Games}">
+            <!-- The grid: as many columns as fit at 300 px or wider, each card an equal share of the width. -->
+            <ItemsControl x:Name="CardGrid" Margin="0,16,0,0" ItemsSource="{Binding ViewModel.Games}"
+                          Visibility="{Binding ViewModel.ListView, Converter={StaticResource InverseBoolToVis}}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <WrapPanel />
+                        <controls:UniformWrapPanel MinItemWidth="300" Spacing="12" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:GameCardViewModel}">
-                        <ui:CardAction Width="300" Margin="0,0,12,12" IsChevronVisible="False"
+                        <ui:CardAction IsChevronVisible="False" VerticalAlignment="Stretch" VerticalContentAlignment="Top"
                                        Command="{Binding DataContext.ViewModel.OpenCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                        CommandParameter="{Binding}"
                                        Icon="{ui:SymbolIcon Games24}">
                             <StackPanel>
                                 <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                                <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                    <Border Style="{StaticResource TagPill}" Margin="0,0,6,0"
+                                <!-- Pills wrap to a second line rather than being cut (the third one was, at 300 px). -->
+                                <WrapPanel Margin="0,4,0,0">
+                                    <Border Style="{StaticResource TagPill}" Margin="0,0,6,4"
                                             Visibility="{Binding HasPlatform, Converter={StaticResource BoolToVis}}">
                                         <TextBlock Style="{StaticResource TagPillText}" Text="{Binding PlatformText}" />
                                     </Border>
-                                    <Border Style="{StaticResource TagPill}" Margin="0,0,6,0"
+                                    <Border Style="{StaticResource TagPill}" Margin="0,0,6,4"
                                             Visibility="{Binding HasEngine, Converter={StaticResource BoolToVis}}">
                                         <TextBlock Style="{StaticResource TagPillText}" Text="{Binding EngineText}" />
                                     </Border>
-                                    <Border Style="{StaticResource HookStatePill}">
+                                    <Border Style="{StaticResource HookStatePill}" Margin="0,0,6,4">
                                         <TextBlock Style="{StaticResource HookStatePillText}" Text="{Binding HookText}" />
                                     </Border>
-                                </StackPanel>
-                                <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" Text="{Binding SessionsText}" />
+                                    <Border x:Name="NotInstalledPill" Style="{StaticResource TagPill}" Margin="0,0,6,4"
+                                            ToolTip="{Binding NotInstalledToolTip}"
+                                            Visibility="{Binding NotInstalled, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Style="{StaticResource TagPillText}" Text="{x:Static res:Strings.Games_Card_NotInstalled}" />
+                                    </Border>
+                                </WrapPanel>
+                                <ui:TextBlock Margin="0,2,0,0" Appearance="Secondary" Text="{Binding SessionsText}" />
                                 <ui:TextBlock Appearance="Secondary" Text="{Binding PlaytimeText}" />
                                 <ui:TextBlock Appearance="Secondary" Text="{Binding LastPlayedText}" />
                             </StackPanel>
@@ -77,6 +107,29 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+
+            <!-- The list: one row per game across the width; double-click or Enter opens it. -->
+            <DataGrid x:Name="GameList" Margin="0,16,0,0" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                      CanUserSortColumns="False" HeadersVisibility="Column" IsReadOnly="True" SelectionMode="Single"
+                      ItemsSource="{Binding ViewModel.Games}"
+                      MouseDoubleClick="OnListDoubleClick" KeyDown="OnListKeyDown"
+                      Visibility="{Binding ViewModel.ListView, Converter={StaticResource BoolToVis}}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="{x:Static res:Strings.Games_List_Name}" Binding="{Binding Name}" Width="3*" />
+                    <DataGridTextColumn Header="{x:Static res:Strings.Games_List_Store}" Binding="{Binding PlatformText}" Width="Auto" />
+                    <DataGridTextColumn Header="{x:Static res:Strings.Games_List_Engine}" Binding="{Binding EngineText}" Width="*" />
+                    <DataGridTemplateColumn Header="{x:Static res:Strings.Games_List_Status}" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Margin="4,0" VerticalAlignment="Center" Text="{Binding StatusText}" ToolTip="{Binding NotInstalledToolTip}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="{x:Static res:Strings.Games_List_Sessions}" Binding="{Binding SessionCount}" Width="Auto" />
+                    <DataGridTextColumn Header="{x:Static res:Strings.Games_List_Played}" Binding="{Binding PlaytimeValue}" Width="Auto" />
+                    <DataGridTextColumn Header="{x:Static res:Strings.Games_List_LastPlayed}" Binding="{Binding LastPlayedValue}" Width="Auto" />
+                </DataGrid.Columns>
+            </DataGrid>
         </StackPanel>
     </ScrollViewer>
 </Page>

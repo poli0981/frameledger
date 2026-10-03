@@ -109,6 +109,9 @@
   <data name="Games_Header" xml:space="preserve">
     <value>Game</value>
   </data>
+  <data name="Games_Header_Count_Format" xml:space="preserve">
+    <value>Game · {0}</value>
+  </data>
   <data name="Logs_Empty" xml:space="preserve">
     <value>Chưa có tệp nhật ký cho nguồn này.</value>
   </data>
@@ -216,6 +219,12 @@
   </data>
   <data name="Import_NothingFound" xml:space="preserve">
     <value>Không tìm thấy game nào đã cài trong Steam, GOG Galaxy, Epic hay itch.io trên máy này.</value>
+  </data>
+  <data name="Import_NothingNew" xml:space="preserve">
+    <value>Không có game mới: mọi game các store đã cài đều đã có trong thư viện.</value>
+  </data>
+  <data name="Import_ShowExisting_Format" xml:space="preserve">
+    <value>Hiện {0} game đã có trong thư viện</value>
   </data>
   <data name="Import_Done_Format" xml:space="preserve">
     <value>Đã thêm {0} game với hooking tắt; {1} giữ nguyên.</value>
@@ -733,8 +742,44 @@
   <data name="Games_Add" xml:space="preserve">
     <value>Thêm game…</value>
   </data>
+  <data name="Games_Refresh" xml:space="preserve">
+    <value>Làm mới</value>
+  </data>
+  <data name="Games_Refresh_ToolTip" xml:space="preserve">
+    <value>Đọc lại thư viện, tìm trong các store những game mới cài, và đánh dấu game không còn file chạy</value>
+  </data>
+  <data name="Games_View_Grid" xml:space="preserve">
+    <value>Hiển thị dạng lưới</value>
+  </data>
+  <data name="Games_View_List" xml:space="preserve">
+    <value>Hiển thị dạng danh sách</value>
+  </data>
+  <data name="Games_List_Name" xml:space="preserve">
+    <value>Tên</value>
+  </data>
+  <data name="Games_List_Store" xml:space="preserve">
+    <value>Store</value>
+  </data>
+  <data name="Games_List_Engine" xml:space="preserve">
+    <value>Engine</value>
+  </data>
+  <data name="Games_List_Status" xml:space="preserve">
+    <value>Trạng thái</value>
+  </data>
+  <data name="Games_List_Sessions" xml:space="preserve">
+    <value>Phiên</value>
+  </data>
+  <data name="Games_List_Played" xml:space="preserve">
+    <value>Đã chơi</value>
+  </data>
+  <data name="Games_List_LastPlayed" xml:space="preserve">
+    <value>Chơi lần cuối</value>
+  </data>
   <data name="Games_Card_NotRecorded" xml:space="preserve">
     <value>Không ghi</value>
+  </data>
+  <data name="Games_Card_NotInstalled" xml:space="preserve">
+    <value>Chưa cài</value>
   </data>
   <data name="Games_Card_HookOff" xml:space="preserve">
     <value>Hooking tắt</value>

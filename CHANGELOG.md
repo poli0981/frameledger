@@ -29,6 +29,19 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Added
 
+- **The Games library fills the window, switches to a list, counts its games and refreshes** (owner requests, beta.11).
+  The cards were 300 px in a plain wrap, so a wide window left up to a card's width empty at the right and the third pill
+  ("Hooking off") was cut; the grid now has as many columns as fit at 300 px or wider, every card an equal share of the
+  width, and the pills wrap. A button beside the sort switches to a **list** — one row per game with its store, engine,
+  status, sessions, playtime and last played — and the choice is remembered (`ui.library_view`). The title counts the
+  games. **Refresh** reads the library again, looks in the stores for games installed since and offers only those (*No
+  new games* when there are none), and marks every entry whose executable is gone **Not installed** — the tooltip says
+  when it is the drive that is not connected; nothing is removed. The page also reloads by itself when a session ends or
+  an import adds games while it is open (an import made from the menu used to show only after leaving the page).
+- **Import hides the games already in the library** (owner request, beta.11): on a re-import they were most of the list
+  and pushed the new ones out of sight. *Show the N games already in the library* brings them back, dimmed, and a row
+  that cannot be imported has its box disabled (a tick on it was taken and ignored).
+
 - **Three CrackProof titles on the anti-cheat title list** (owner request, beta.11): Umamusume: Pretty Derby (Steam
   `3224770`), Heaven Burns Red (`1973710`) and Madoka Magica Magia Exedra (`2987800`). Each store page states *"Uses
   Kernel Level Anti-Cheat"* and names HyperTech's CrackProof; its driver loads from `System32` under a numbered name,
