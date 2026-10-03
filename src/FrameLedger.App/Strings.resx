@@ -786,12 +786,6 @@
   <data name="Games_Card_NotInstalled" xml:space="preserve">
     <value>Not installed</value>
   </data>
-  <data name="Games_Card_FileMissing_Format" xml:space="preserve">
-    <value>{0} is not on disk: the game was uninstalled or moved. Its sessions stay; add the game again from its new place, or remove it.</value>
-  </data>
-  <data name="Games_Card_DriveMissing_Format" xml:space="preserve">
-    <value>{0} is not reachable: the drive {1} is not connected. Connect it and refresh.</value>
-  </data>
   <data name="Games_Card_HookOff" xml:space="preserve">
     <value>Hooking off</value>
   </data>

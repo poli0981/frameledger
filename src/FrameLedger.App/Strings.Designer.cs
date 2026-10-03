@@ -421,9 +421,7 @@ public static class Strings
         nameof(GameDetail_Tab_Trend),
         nameof(Games_Add),
         nameof(Games_Card_AntiCheat),
-        nameof(Games_Card_DriveMissing_Format),
         nameof(Games_Card_Exception),
-        nameof(Games_Card_FileMissing_Format),
         nameof(Games_Card_HookOff),
         nameof(Games_Card_HookOn),
         nameof(Games_Card_LastPlayed_Format),
@@ -1692,11 +1690,7 @@ public static class Strings
 
     public static string Games_Card_AntiCheat => ResourceManager.GetString(nameof(Games_Card_AntiCheat), Culture) ?? nameof(Games_Card_AntiCheat);
 
-    public static string Games_Card_DriveMissing_Format => ResourceManager.GetString(nameof(Games_Card_DriveMissing_Format), Culture) ?? nameof(Games_Card_DriveMissing_Format);
-
     public static string Games_Card_Exception => ResourceManager.GetString(nameof(Games_Card_Exception), Culture) ?? nameof(Games_Card_Exception);
-
-    public static string Games_Card_FileMissing_Format => ResourceManager.GetString(nameof(Games_Card_FileMissing_Format), Culture) ?? nameof(Games_Card_FileMissing_Format);
 
     public static string Games_Card_HookOff => ResourceManager.GetString(nameof(Games_Card_HookOff), Culture) ?? nameof(Games_Card_HookOff);
 

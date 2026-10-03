@@ -103,10 +103,10 @@ public sealed partial class GamesViewModel : ObservableObject
         await ReadViewAsync(ct).ConfigureAwait(true);
         IReadOnlyList<GameCard> cards = await _library.ListCardsAsync(ct).ConfigureAwait(true);
         // Whether each executable is on disk is a file-system question per entry — a drive that is gone can take a moment
-        // to say so — so it is asked off the UI thread.
-        ExecutablePresence[] presence = await Task.Run(
-            () => cards.Select(static c => ExecutablePresenceProbe.Of(c.Row.Fingerprint.ExePath)).ToArray(), ct).ConfigureAwait(true);
-        _all = [.. cards.Select((c, i) => new GameCardViewModel(c, presence[i]))];
+        // to say so — so it is asked off the UI thread, the game page's own way (GameLibrary.ExecutableExists).
+        bool[] installed = await Task.Run(() => cards.Select(static c => GameLibrary.ExecutableExists(c.Row.Fingerprint.ExePath)).ToArray(), ct)
+            .ConfigureAwait(true);
+        _all = [.. cards.Select((c, i) => new GameCardViewModel(c, installed[i]))];
         HeaderText = string.Format(CultureInfo.CurrentCulture, Strings.Games_Header_Count_Format, _all.Count);
         Apply();
     }

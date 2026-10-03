@@ -91,18 +91,21 @@ public sealed class GamesViewModelTests
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
         GameRow row = await s.GameAsync("Gone", @"Q:\Games\Gone\gone.exe");
 
-        new GameCardViewModel(new GameCard(row, null)).NotInstalled.Should().BeFalse("present unless the listing said otherwise");
-        var missing = new GameCardViewModel(new GameCard(row, null), ExecutablePresence.Missing);
+        new GameCardViewModel(new GameCard(row, null)).NotInstalled.Should().BeFalse("installed unless the listing said otherwise");
+        var missing = new GameCardViewModel(new GameCard(row, null), installed: false);
         missing.NotInstalled.Should().BeTrue();
-        missing.NotInstalledToolTip.Should().Contain(@"Q:\Games\Gone\gone.exe");
+        missing.NotInstalledToolTip.Should().Be(Formats.ExecutableMissingText(@"Q:\Games\Gone\gone.exe"), "the game page's own words for why");
         missing.StatusText.Should().Contain(Strings.Games_Card_NotInstalled);
-        var drive = new GameCardViewModel(new GameCard(row, null), ExecutablePresence.DriveMissing);
-        drive.NotInstalledToolTip.Should().Contain(@"Q:\");
 
-        string here = Path.Combine(AppContext.BaseDirectory, Path.GetFileName(typeof(GamesViewModelTests).Assembly.Location));
-        ExecutablePresenceProbe.Of(here).Should().Be(ExecutablePresence.Present);
-        ExecutablePresenceProbe.Of(Path.Combine(AppContext.BaseDirectory, "no-such-game.exe")).Should().Be(ExecutablePresence.Missing);
-        ExecutablePresenceProbe.Of(string.Empty).Should().Be(ExecutablePresence.Missing);
+        await using ScratchLedger s2 = await ScratchLedger.OpenAsync();
+        var listed = new GamesViewModel(s2.Library, new GameSelection(), new NoNavigation(),
+            new AddGameFlow(s2.Library, new NoPicker(), new GameSelection(), new NoNavigation(), new NoStrip()));
+        string here = typeof(GamesViewModelTests).Assembly.Location;
+        _ = await s2.GameAsync("Here", here);
+        _ = await s2.GameAsync("Gone", Path.Combine(AppContext.BaseDirectory, "no-such-game.exe"));
+        await listed.LoadAsync(Ct);
+        listed.Games.Single(static g => string.Equals(g.Name, "Here", StringComparison.Ordinal)).NotInstalled.Should().BeFalse();
+        listed.Games.Single(static g => string.Equals(g.Name, "Gone", StringComparison.Ordinal)).NotInstalled.Should().BeTrue();
     }
 
     [Theory]

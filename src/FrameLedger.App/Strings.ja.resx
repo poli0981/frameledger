@@ -1041,14 +1041,6 @@
     <value>未インストール</value>
     <comment>review</comment>
   </data>
-  <data name="Games_Card_FileMissing_Format" xml:space="preserve">
-    <value>{0} がディスクにありません。ゲームがアンインストールされたか移動されました。セッションは残ります。新しい場所からゲームを追加し直すか、削除してください。</value>
-    <comment>review</comment>
-  </data>
-  <data name="Games_Card_DriveMissing_Format" xml:space="preserve">
-    <value>{0} にアクセスできません。ドライブ {1} が接続されていません。接続してから更新してください。</value>
-    <comment>review</comment>
-  </data>
   <data name="Games_Card_HookOff" xml:space="preserve">
     <value>フック無効</value>
     <comment>review</comment>

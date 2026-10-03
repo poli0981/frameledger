@@ -781,12 +781,6 @@
   <data name="Games_Card_NotInstalled" xml:space="preserve">
     <value>Chưa cài</value>
   </data>
-  <data name="Games_Card_FileMissing_Format" xml:space="preserve">
-    <value>{0} không có trên ổ đĩa: game đã bị gỡ hoặc chuyển chỗ. Các phiên vẫn được giữ; hãy thêm lại game từ vị trí mới, hoặc xoá nó.</value>
-  </data>
-  <data name="Games_Card_DriveMissing_Format" xml:space="preserve">
-    <value>Không truy cập được {0}: ổ {1} chưa được kết nối. Hãy cắm ổ rồi làm mới.</value>
-  </data>
   <data name="Games_Card_HookOff" xml:space="preserve">
     <value>Hooking tắt</value>
   </data>
