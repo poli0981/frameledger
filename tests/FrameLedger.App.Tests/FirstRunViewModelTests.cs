@@ -116,6 +116,21 @@ public sealed class FirstRunViewModelTests
         vm.IsLegalStep.Should().BeTrue();
     }
 
+    /// <summary>beta.12: View on GitHub goes through the App's opener (it started a process itself), at the document's own URL.</summary>
+    [Fact]
+    public async Task ViewOnGitHubOpensTheSelectedDocumentThroughTheAppsOpener()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        var urls = new NoUrlOpener();
+        using var vm = new FirstRunViewModel(new LegalGate(new SqliteLegalAcceptanceStore(s.Db), Docs), new FakeAgentLink(), readOnly: true, urls);
+
+        vm.SelectedDocument = vm.Documents[2];
+        vm.OpenOnlineCommand.Execute(null);
+
+        urls.Opened.Should().Equal(new Uri("https://github.com/x/d"));
+        vm.Urls.Should().BeSameAs(urls, "the rendered documents' links leave through the same opener");
+    }
+
     [Fact]
     public async Task TheAgentStepShowsTheHelloAcksFactsAndNAWithoutOne()
     {

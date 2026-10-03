@@ -17,10 +17,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="About_Body_Format" xml:space="preserve">
-    <value>FrameLedger {0} — 明示的に有効化したゲーム内でグラフィックス API をフックし、ゲーム性能を計測します。GPLv3。</value>
-    <comment>review</comment>
-  </data>
   <data name="About_Title" xml:space="preserve">
     <value>FrameLedger について</value>
     <comment>review</comment>
@@ -327,10 +323,6 @@
   </data>
   <data name="Limitations_Title" xml:space="preserve">
     <value>FrameLedger にできないこと</value>
-    <comment>review</comment>
-  </data>
-  <data name="Limitations_OnGitHub" xml:space="preserve">
-    <value>GitHub で開く</value>
     <comment>review</comment>
   </data>
   <data name="Menu_Help_ReportBug" xml:space="preserve">
@@ -3751,6 +3743,94 @@
   </data>
   <data name="Dashboard_Live_GameMemory_Format" xml:space="preserve">
     <value>このゲーム: VRAM {0} · RAM {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Document_Pages" xml:space="preserve">
+    <value>ページ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Document_OnGitHub" xml:space="preserve">
+    <value>GitHub で開く</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Tab_App" xml:space="preserve">
+    <value>このアプリ</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Tab_ThirdParty" xml:space="preserve">
+    <value>サードパーティのライセンス</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Tab_Legal" xml:space="preserve">
+    <value>法的文書</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Version_Format" xml:space="preserve">
+    <value>バージョン {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Tagline" xml:space="preserve">
+    <value>明示的に有効にしたゲームの内部でグラフィックス API をフックしてパフォーマンスを計測し、各セッションをこの PC に記録します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Notices_Header" xml:space="preserve">
+    <value>法的通知</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Notices_Copyright" xml:space="preserve">
+    <value>Copyright © 2026 poli0981.</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Notices_Warranty" xml:space="preserve">
+    <value>本プログラムは、適用法で認められる範囲において、一切の保証なしに提供されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Notices_Licence" xml:space="preserve">
+    <value>本ソフトウェアはフリーソフトウェアです。GNU 一般公衆利用許諾書 バージョン 3 のみ、および同許諾書の第 7 条が認める NOTICE の追加条項に従って、再配布および改変できます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Notices_Source_Format" xml:space="preserve">
+    <value>このバージョンのソースコード: {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_ViewLicence" xml:space="preserve">
+    <value>ライセンスを表示</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_ViewNotice" xml:space="preserve">
+    <value>NOTICE を表示</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_OpenSource" xml:space="preserve">
+    <value>ソースコードを開く</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_ThirdParty_Body" xml:space="preserve">
+    <value>FrameLedger は以下のオープンソース コンポーネントの上に構築されています。各ライセンスの全文は、アプリと同じ場所の licenses フォルダーに同梱されています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_OpenLicencesFolder" xml:space="preserve">
+    <value>ライセンス フォルダーを開く</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_NoLicencesFolder" xml:space="preserve">
+    <value>このビルドの横には licenses フォルダーがありません（開発ビルド）。テキストはリポジトリの legal/licenses/ にあります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Doc_Notice" xml:space="preserve">
+    <value>NOTICE（著作権と追加条項）</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Doc_Trademarks" xml:space="preserve">
+    <value>商標</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Doc_ThirdParty" xml:space="preserve">
+    <value>サードパーティ通知</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Doc_Packages" xml:space="preserve">
+    <value>パッケージのライセンス</value>
     <comment>review</comment>
   </data>
 </root>

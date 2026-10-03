@@ -24,8 +24,6 @@ public static partial class LegalDocuments
 
     public const string GplVersion = "GPL-3.0-only";
 
-    private const string _repository = "https://github.com/poli0981/frameledger/blob/main/";
-
     public static IReadOnlyList<string> Keys { get; } = [Eula, Gpl, Disclaimer, Privacy];
 
     /// <summary>The four documents, in the order the gate shows them.</summary>
@@ -61,7 +59,8 @@ public static partial class LegalDocuments
         string version = versioned
             ? VersionOf(raw) ?? throw new InvalidOperationException($"{path} declares no **Version:** line; FR-11 cannot re-show a document that has no version")
             : GplVersion;
-        return new LegalDocument(key, title, version, StripComments(raw), new Uri(_repository + path));
+        // The GPL is a plain text — Markdown would turn its numbered sections into lists and its indented lines into code.
+        return new LegalDocument(key, title, version, StripComments(raw), RepositoryLinks.Blob(path), path, IsPlainText: !versioned);
     }
 
     [GeneratedRegex(@"\*\*Version:\*\*\s*(?<v>[^\s·]+)", RegexOptions.ExplicitCapture | RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]

@@ -13,9 +13,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="About_Body_Format" xml:space="preserve">
-    <value>FrameLedger {0} — đo hiệu năng game bằng cách hook API đồ hoạ bên trong những game bạn đã bật rõ ràng. GPLv3.</value>
-  </data>
   <data name="About_Title" xml:space="preserve">
     <value>Giới thiệu FrameLedger</value>
   </data>
@@ -246,9 +243,6 @@
   </data>
   <data name="Limitations_Title" xml:space="preserve">
     <value>Những điều FrameLedger không làm được</value>
-  </data>
-  <data name="Limitations_OnGitHub" xml:space="preserve">
-    <value>Mở trên GitHub</value>
   </data>
   <data name="Menu_Help_ReportBug" xml:space="preserve">
     <value>Báo lỗi…</value>
@@ -2819,5 +2813,71 @@ Các tài liệu bên dưới là điều khoản đầy đủ; phần tóm tắ
   </data>
   <data name="Dashboard_Live_GameMemory_Format" xml:space="preserve">
     <value>Game này: VRAM {0} · RAM {1}</value>
+  </data>
+  <data name="Document_Pages" xml:space="preserve">
+    <value>Các trang</value>
+  </data>
+  <data name="Document_OnGitHub" xml:space="preserve">
+    <value>Mở trên GitHub</value>
+  </data>
+  <data name="About_Tab_App" xml:space="preserve">
+    <value>Ứng dụng này</value>
+  </data>
+  <data name="About_Tab_ThirdParty" xml:space="preserve">
+    <value>Giấy phép bên thứ ba</value>
+  </data>
+  <data name="About_Tab_Legal" xml:space="preserve">
+    <value>Văn bản pháp lý</value>
+  </data>
+  <data name="About_Version_Format" xml:space="preserve">
+    <value>Phiên bản {0}</value>
+  </data>
+  <data name="About_Tagline" xml:space="preserve">
+    <value>Đo hiệu năng game bằng cách hook API đồ họa bên trong những game bạn bật rõ ràng, và ghi lại từng phiên chơi trên máy này.</value>
+  </data>
+  <data name="About_Notices_Header" xml:space="preserve">
+    <value>Thông báo pháp lý</value>
+  </data>
+  <data name="About_Notices_Copyright" xml:space="preserve">
+    <value>Bản quyền © 2026 poli0981.</value>
+  </data>
+  <data name="About_Notices_Warranty" xml:space="preserve">
+    <value>Chương trình này được cung cấp HOÀN TOÀN KHÔNG CÓ BẢO HÀNH, trong phạm vi pháp luật cho phép.</value>
+  </data>
+  <data name="About_Notices_Licence" xml:space="preserve">
+    <value>Đây là phần mềm tự do: bạn có thể phân phối lại và sửa đổi nó theo Giấy phép Công cộng GNU, chỉ phiên bản 3, cùng các điều khoản bổ sung trong NOTICE mà mục 7 của giấy phép đó cho phép.</value>
+  </data>
+  <data name="About_Notices_Source_Format" xml:space="preserve">
+    <value>Mã nguồn của phiên bản này: {0}</value>
+  </data>
+  <data name="About_ViewLicence" xml:space="preserve">
+    <value>Xem giấy phép</value>
+  </data>
+  <data name="About_ViewNotice" xml:space="preserve">
+    <value>Xem NOTICE</value>
+  </data>
+  <data name="About_OpenSource" xml:space="preserve">
+    <value>Mở mã nguồn</value>
+  </data>
+  <data name="About_ThirdParty_Body" xml:space="preserve">
+    <value>FrameLedger được xây dựng trên các thành phần mã nguồn mở này. Toàn văn giấy phép của từng thành phần được kèm cạnh ứng dụng, trong thư mục licenses.</value>
+  </data>
+  <data name="About_OpenLicencesFolder" xml:space="preserve">
+    <value>Mở thư mục giấy phép</value>
+  </data>
+  <data name="About_NoLicencesFolder" xml:space="preserve">
+    <value>Bản build này không có thư mục giấy phép bên cạnh (bản build phát triển); các văn bản nằm trong legal/licenses/ của kho mã.</value>
+  </data>
+  <data name="About_Doc_Notice" xml:space="preserve">
+    <value>NOTICE (bản quyền và điều khoản bổ sung)</value>
+  </data>
+  <data name="About_Doc_Trademarks" xml:space="preserve">
+    <value>Nhãn hiệu</value>
+  </data>
+  <data name="About_Doc_ThirdParty" xml:space="preserve">
+    <value>Thông báo bên thứ ba</value>
+  </data>
+  <data name="About_Doc_Packages" xml:space="preserve">
+    <value>Giấy phép các gói</value>
   </data>
 </root>

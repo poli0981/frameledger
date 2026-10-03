@@ -6,6 +6,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:res="clr-namespace:FrameLedger.App"
+             xmlns:local="clr-namespace:FrameLedger.App.Controls"
              xmlns:vm="clr-namespace:FrameLedger.App.ViewModels">
     <!-- 08_UI §First-run flow: four steps in one control; the window is a frame around it. -->
     <Grid Margin="24,16,24,16">
@@ -52,14 +53,16 @@
                                         Content="{x:Static res:Strings.FirstRun_Legal_Online}"
                                         Icon="{ui:SymbolIcon Open24}" />
                 </StackPanel>
-                <TextBox Grid.Row="1"
-                         AutomationProperties.Name="{Binding ViewModel.SelectedDocument.Title}"
-                         AcceptsReturn="True"
-                         IsReadOnly="True"
-                         IsReadOnlyCaretVisible="True"
-                         Text="{Binding ViewModel.SelectedDocument.Text, Mode=OneWay}"
-                         TextWrapping="Wrap"
-                         VerticalScrollBarVisibility="Auto" />
+                <!-- beta.12 (owner request 4): rendered, not raw Markdown; the GPL as written. Selectable and copyable. -->
+                <Border Grid.Row="1" BorderThickness="1" CornerRadius="4" Padding="8,6,0,0"
+                        BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                        Background="{DynamicResource ControlFillColorDefaultBrush}">
+                    <local:MarkdownView x:Name="DocumentView"
+                                        AutomationProperties.Name="{Binding ViewModel.SelectedDocument.Title}"
+                                        DocumentPath="{Binding ViewModel.SelectedDocument.Path}"
+                                        IsPlainText="{Binding ViewModel.SelectedDocument.IsPlainText}"
+                                        MarkdownText="{Binding ViewModel.SelectedDocument.Text}" />
+                </Border>
             </Grid>
         </Grid>
 

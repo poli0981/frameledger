@@ -29,7 +29,8 @@ namespace FrameLedger.App.ViewModels;
 public sealed partial class SettingsViewModel : ObservableObject
 {
     /// <summary>The safety document (<c>19_SAFETY_AND_ANTICHEAT.md</c>) at the project's public repository — opened by the user's browser, never fetched.</summary>
-    public const string SafetyDocsUrl = "https://github.com/poli0981/frameledger/blob/main/docs/19_SAFETY_AND_ANTICHEAT.md";
+    /// <summary>The safety document at this build's own source (beta.12: it was <c>main</c>'s, which may describe a newer guard).</summary>
+    public static Uri SafetyDocsUrl { get; } = RepositoryLinks.Blob("docs/19_SAFETY_AND_ANTICHEAT.md");
 
     private readonly AppearanceSettings _appearance;
     private readonly IThemeApplier _themes;
@@ -479,7 +480,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     {
         try
         {
-            using Process? _ = Process.Start(new ProcessStartInfo(SafetyDocsUrl) { UseShellExecute = true });
+            using Process? _ = Process.Start(new ProcessStartInfo(SafetyDocsUrl.AbsoluteUri) { UseShellExecute = true });
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
         {

@@ -1,0 +1,28 @@
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+<!-- Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE -->
+
+<UserControl x:Class="FrameLedger.App.Controls.DocumentBrowser"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:res="clr-namespace:FrameLedger.App"
+             xmlns:local="clr-namespace:FrameLedger.App.Controls">
+    <!-- beta.12: a list of pages beside one rendered page; the list hides itself when there is one page. -->
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <ListBox x:Name="PageList"
+                 Grid.Column="0"
+                 Width="230"
+                 Margin="0,0,12,0"
+                 AutomationProperties.Name="{x:Static res:Strings.Document_Pages}"
+                 DisplayMemberPath="Title"
+                 SelectionChanged="OnPageSelected" />
+        <Border Grid.Column="1" BorderThickness="1" CornerRadius="4" Padding="8,6,0,0"
+                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <local:MarkdownView x:Name="View" />
+        </Border>
+    </Grid>
+</UserControl>

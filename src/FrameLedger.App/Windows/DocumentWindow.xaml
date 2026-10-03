@@ -1,0 +1,32 @@
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+<!-- Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE -->
+
+<ui:FluentWindow x:Class="FrameLedger.App.Windows.DocumentWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 xmlns:res="clr-namespace:FrameLedger.App"
+                 xmlns:controls="clr-namespace:FrameLedger.App.Controls"
+                 Width="1000"
+                 Height="760"
+                 MinWidth="640"
+                 MinHeight="420"
+                 ExtendsContentIntoTitleBar="True"
+                 WindowBackdropType="Mica"
+                 WindowCornerPreference="Round"
+                 WindowStartupLocation="CenterOwner">
+    <!-- beta.12: embedded documents, rendered (Help ▸ Limitations, the user guide). -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <ui:TitleBar x:Name="TitleBarControl" Grid.Row="0" ShowMaximize="True" ShowMinimize="True" />
+        <controls:DocumentBrowser x:Name="Browser" Grid.Row="1" Margin="16,8,16,8" />
+        <StackPanel Grid.Row="2" Margin="16,0,16,16" HorizontalAlignment="Right" Orientation="Horizontal">
+            <ui:Button Margin="0,0,8,0" Click="OnOpenOnline" Content="{x:Static res:Strings.Document_OnGitHub}" Icon="{ui:SymbolIcon Open24}" />
+            <ui:Button Appearance="Primary" Click="OnClose" Content="{x:Static res:Strings.Common_Close}" IsCancel="True" />
+        </StackPanel>
+    </Grid>
+</ui:FluentWindow>

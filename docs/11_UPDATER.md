@@ -8,7 +8,7 @@ Velopack, feeding from GitHub Releases of `https://github.com/poli0981/frameledg
 - **Manual check** (Help → Check for updates): progress dialog; all failures produce the mapped dialog below.
 - **Never apply an update while a game is hooked** (FR-12): the Overlay DLL on disk must not change under a running game, and a mid-session swap would invalidate the ring layout handshake. If a capture is active, defer the prompt and the apply until the session ends.
 - Apply: `WaitExitThenApplyUpdates` on restart. Agent is stopped via `Shutdown` before applying and the scheduled task action path is re-validated after update (Velopack keeps a stable `current` path, but verify in P4 and re-register task if the action path changed).
-- Release notes (GitHub release body, Markdown) rendered in the update dialog.
+- Release notes (GitHub release body, Markdown) rendered in the update dialog. ~~(shown as plain text until beta.12 — §Flow and §Limits below said so)~~ **Rendered since beta.12** by `Controls/MarkdownView` (`08_UI` §Menu, *Documents are rendered*), relative links resolved against `CHANGELOG.md` at this build's source.
 
 ## Error mapping (FR-12)
 
@@ -55,8 +55,8 @@ flow, and the tests run the flow over a fake client because nothing here may tou
   window is off screen (`08_UI` §Notifications policy), and the shell's persistent InfoBar carries the download
   and the **Restart to update** button.
 - **Manual check:** Help ▸ Check for updates → `UpdateService.CheckInteractivelyAsync` and the dialogs in
-  `UpdatePrompts` (WPF-UI `MessageBox`): the offer with the release notes (the GitHub release body, shown as text —
-  no Markdown renderer is shipped), the unsigned-release footer, Download / Later; "up to date"; "not an
+  `UpdatePrompts` (WPF-UI `MessageBox`): the offer with the release notes (the GitHub release body, ~~shown as text —
+  no Markdown renderer is shipped~~ rendered since beta.12, at most 260 px tall and scrolling), the unsigned-release footer, Download / Later; "up to date"; "not an
   installed copy"; and the error table below. There is no progress *dialog*: progress is the banner's percent. A
   package that fails its checksum is downloaded once more before the Corrupt row is shown (the table's "auto-retry
   once").
@@ -104,7 +104,7 @@ flow, and the tests run the flow over a fake client because nothing here may tou
   empty token — measured on 1.2.0 by reflection, so the request identifies the product and nothing else. When the rules fetch is built
   (`05_DETECTION` FR-7.3, `20_OPEN_QUESTIONS` §S20 feed half) it needs a client of its own; this paragraph no
   longer claims the updater provides one.
-- Release notes are rendered as plain text, not Markdown.
+- ~~Release notes are rendered as plain text, not Markdown.~~ Corrected 2026-10-03: rendered since beta.12 (Markdig; HTML off, no image fetched).
 
 `UpdateServiceTests` (App.Tests/Update) cover the two skips, the channels, Deferred ↔ Ready, each error row, and
 the apply's three endings; `UpdateFailureMapperTests` the table; `UninstallHookTests` the hook; a real feed has

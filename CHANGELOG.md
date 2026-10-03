@@ -55,6 +55,17 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
   · RAM …", for a game that is not measured too; and the CSV export has a `# game_memory:` header line. Where Windows does
   not report the private working set (before the September 2023 update) the working set is shown in its place and says
   so. A session recorded before beta.12 reads N/A, and its summary says the statistics table did not exist yet.
+- **Documents are shown rendered, not as raw Markdown** (owner request 4, beta.12): the Legal Gate, Help ▸ Limitations,
+  the update notes and the new About window draw headings, lists, tables, code and links (Markdig 1.4.0, BSD-2-Clause;
+  HTML in a document is shown as text and no image is fetched). The GPL is shown as written. Selectable and copyable;
+  links open in the browser, scroll to a section, or open another document the window holds; a `file:` or
+  `javascript:` link is never followed. **Help ▸ About** is a window with three tabs: the program's legal notices
+  (copyright, no warranty, the licence with the NOTICE terms, this version's source code), the third-party licences
+  with every shipped package's version and a button that opens the licences folder, and the legal documents (EULA,
+  GPL, Disclaimer, Privacy Policy, NOTICE, Trademarks). Help ▸ Limitations is a window of its own.
+- **Links into the repository open the documents of the version you run**: a release stamps its tag into the App
+  (`-p:FrameLedgerSourceRef`), so *View on GitHub*, the safety document and every document link go to that tag rather
+  than to `main`, where the text may have changed since.
 
 - **`NOTICE`, and the licence header in every source file** (owner decision D45, beta.12). FrameLedger's own material is
   GPL-3.0-only with three additional terms of the kinds GPLv3 §7 permits: keep the copyright line and the attribution in
@@ -74,6 +85,11 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ### Fixed
 
+- **The Legal Gate showed the documents as raw Markdown** (`**bold**`, `| --- |`) in a text box, and Help ▸ Limitations
+  and the update notes the same; they are rendered now (above). The Legal Gate's *View on GitHub* went around the App's
+  link opener; it goes through it.
+- **The third-party notices' component table did not render as a table** in a Markdown renderer that follows the spec
+  strictly: a note line sat between its rows. The note is moved below the table, unchanged.
 - **"Max VRAM (game)" on the Trend never had a point, the live card's VRAM was always empty, and the Sensors chart's
   "VRAM used by this game" line was never drawn**: all three read the Overlay's in-game per-present figure, which nothing
   ever produced. They read the game's memory measured from outside it now (above), and the CSV's note no longer calls

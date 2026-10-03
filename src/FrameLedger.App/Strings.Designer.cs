@@ -33,8 +33,27 @@ public static class Strings
         nameof(A11y_Logs_Level),
         nameof(A11y_Logs_Source),
         nameof(A11y_Logs_Tail),
-        nameof(About_Body_Format),
+        nameof(About_Doc_Notice),
+        nameof(About_Doc_Packages),
+        nameof(About_Doc_ThirdParty),
+        nameof(About_Doc_Trademarks),
+        nameof(About_NoLicencesFolder),
+        nameof(About_Notices_Copyright),
+        nameof(About_Notices_Header),
+        nameof(About_Notices_Licence),
+        nameof(About_Notices_Source_Format),
+        nameof(About_Notices_Warranty),
+        nameof(About_OpenLicencesFolder),
+        nameof(About_OpenSource),
+        nameof(About_Tab_App),
+        nameof(About_Tab_Legal),
+        nameof(About_Tab_ThirdParty),
+        nameof(About_Tagline),
+        nameof(About_ThirdParty_Body),
         nameof(About_Title),
+        nameof(About_Version_Format),
+        nameof(About_ViewLicence),
+        nameof(About_ViewNotice),
         nameof(AddGame_Added_Format),
         nameof(AddGame_Dialog_Title),
         nameof(AddGame_Failed_Format),
@@ -220,6 +239,8 @@ public static class Strings
         nameof(Display_Window_Format),
         nameof(Display_WindowOnMonitor_Format),
         nameof(Display_WindowOnMonitorHz_Format),
+        nameof(Document_OnGitHub),
+        nameof(Document_Pages),
         nameof(EditGame_Detected),
         nameof(EditGame_Name),
         nameof(EditGame_Notes),
@@ -527,7 +548,6 @@ public static class Strings
         nameof(Launch_Error_740),
         nameof(Launch_Error_Format),
         nameof(Launch_Failed_Format),
-        nameof(Limitations_OnGitHub),
         nameof(Limitations_Title),
         nameof(Logs_Bundle_Exported_Format),
         nameof(Logs_Bundle_Failed_Format),
@@ -969,9 +989,47 @@ public static class Strings
 
     public static string A11y_Logs_Tail => ResourceManager.GetString(nameof(A11y_Logs_Tail), Culture) ?? nameof(A11y_Logs_Tail);
 
-    public static string About_Body_Format => ResourceManager.GetString(nameof(About_Body_Format), Culture) ?? nameof(About_Body_Format);
+    public static string About_Doc_Notice => ResourceManager.GetString(nameof(About_Doc_Notice), Culture) ?? nameof(About_Doc_Notice);
+
+    public static string About_Doc_Packages => ResourceManager.GetString(nameof(About_Doc_Packages), Culture) ?? nameof(About_Doc_Packages);
+
+    public static string About_Doc_ThirdParty => ResourceManager.GetString(nameof(About_Doc_ThirdParty), Culture) ?? nameof(About_Doc_ThirdParty);
+
+    public static string About_Doc_Trademarks => ResourceManager.GetString(nameof(About_Doc_Trademarks), Culture) ?? nameof(About_Doc_Trademarks);
+
+    public static string About_NoLicencesFolder => ResourceManager.GetString(nameof(About_NoLicencesFolder), Culture) ?? nameof(About_NoLicencesFolder);
+
+    public static string About_Notices_Copyright => ResourceManager.GetString(nameof(About_Notices_Copyright), Culture) ?? nameof(About_Notices_Copyright);
+
+    public static string About_Notices_Header => ResourceManager.GetString(nameof(About_Notices_Header), Culture) ?? nameof(About_Notices_Header);
+
+    public static string About_Notices_Licence => ResourceManager.GetString(nameof(About_Notices_Licence), Culture) ?? nameof(About_Notices_Licence);
+
+    public static string About_Notices_Source_Format => ResourceManager.GetString(nameof(About_Notices_Source_Format), Culture) ?? nameof(About_Notices_Source_Format);
+
+    public static string About_Notices_Warranty => ResourceManager.GetString(nameof(About_Notices_Warranty), Culture) ?? nameof(About_Notices_Warranty);
+
+    public static string About_OpenLicencesFolder => ResourceManager.GetString(nameof(About_OpenLicencesFolder), Culture) ?? nameof(About_OpenLicencesFolder);
+
+    public static string About_OpenSource => ResourceManager.GetString(nameof(About_OpenSource), Culture) ?? nameof(About_OpenSource);
+
+    public static string About_Tab_App => ResourceManager.GetString(nameof(About_Tab_App), Culture) ?? nameof(About_Tab_App);
+
+    public static string About_Tab_Legal => ResourceManager.GetString(nameof(About_Tab_Legal), Culture) ?? nameof(About_Tab_Legal);
+
+    public static string About_Tab_ThirdParty => ResourceManager.GetString(nameof(About_Tab_ThirdParty), Culture) ?? nameof(About_Tab_ThirdParty);
+
+    public static string About_Tagline => ResourceManager.GetString(nameof(About_Tagline), Culture) ?? nameof(About_Tagline);
+
+    public static string About_ThirdParty_Body => ResourceManager.GetString(nameof(About_ThirdParty_Body), Culture) ?? nameof(About_ThirdParty_Body);
 
     public static string About_Title => ResourceManager.GetString(nameof(About_Title), Culture) ?? nameof(About_Title);
+
+    public static string About_Version_Format => ResourceManager.GetString(nameof(About_Version_Format), Culture) ?? nameof(About_Version_Format);
+
+    public static string About_ViewLicence => ResourceManager.GetString(nameof(About_ViewLicence), Culture) ?? nameof(About_ViewLicence);
+
+    public static string About_ViewNotice => ResourceManager.GetString(nameof(About_ViewNotice), Culture) ?? nameof(About_ViewNotice);
 
     public static string AddGame_Added_Format => ResourceManager.GetString(nameof(AddGame_Added_Format), Culture) ?? nameof(AddGame_Added_Format);
 
@@ -1342,6 +1400,10 @@ public static class Strings
     public static string Display_WindowOnMonitor_Format => ResourceManager.GetString(nameof(Display_WindowOnMonitor_Format), Culture) ?? nameof(Display_WindowOnMonitor_Format);
 
     public static string Display_WindowOnMonitorHz_Format => ResourceManager.GetString(nameof(Display_WindowOnMonitorHz_Format), Culture) ?? nameof(Display_WindowOnMonitorHz_Format);
+
+    public static string Document_OnGitHub => ResourceManager.GetString(nameof(Document_OnGitHub), Culture) ?? nameof(Document_OnGitHub);
+
+    public static string Document_Pages => ResourceManager.GetString(nameof(Document_Pages), Culture) ?? nameof(Document_Pages);
 
     public static string EditGame_Detected => ResourceManager.GetString(nameof(EditGame_Detected), Culture) ?? nameof(EditGame_Detected);
 
@@ -1956,8 +2018,6 @@ public static class Strings
     public static string Launch_Error_Format => ResourceManager.GetString(nameof(Launch_Error_Format), Culture) ?? nameof(Launch_Error_Format);
 
     public static string Launch_Failed_Format => ResourceManager.GetString(nameof(Launch_Failed_Format), Culture) ?? nameof(Launch_Failed_Format);
-
-    public static string Limitations_OnGitHub => ResourceManager.GetString(nameof(Limitations_OnGitHub), Culture) ?? nameof(Limitations_OnGitHub);
 
     public static string Limitations_Title => ResourceManager.GetString(nameof(Limitations_Title), Culture) ?? nameof(Limitations_Title);
 

@@ -54,6 +54,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     private readonly IDatabaseMaintenancePrompts _maintenance;
     private readonly BugReportFlow _bugReports;
     private readonly IUrlOpener _urls;
+
+    private readonly IDocumentWindows _documents;
     private readonly SessionSelection _selection;
     private readonly SessionExportService _exports;
     private readonly ISessionSummaryOpener _summaries;
@@ -61,8 +63,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
     public MainWindowViewModel(AgentConnection agent, ISnackbarService snackbar, IShellPresence shell, IPageNavigator navigator, AddGameFlow addGame, SafetyNotices notices,
         BugReportFlow bugReports, IUrlOpener urls, SessionSelection selection, SessionExportService exports, ISessionSummaryOpener summaries, ImportLibraryFlow import,
-        UpdateService updates, IDatabaseMaintenancePrompts maintenance)
+        UpdateService updates, IDatabaseMaintenancePrompts maintenance, IDocumentWindows documents)
     {
+        _documents = documents ?? throw new ArgumentNullException(nameof(documents));
         _maintenance = maintenance ?? throw new ArgumentNullException(nameof(maintenance));
         Notices = notices ?? throw new ArgumentNullException(nameof(notices));
         _updates = updates ?? throw new ArgumentNullException(nameof(updates));
@@ -171,18 +174,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>
+    /// Help ▸ About (beta.12, D45): the program's legal notices, the third-party licences and the legal documents, rendered
+    /// in a window of tabs (<see cref="Windows.AboutWindow"/>); it was a one-line message box.
+    /// </summary>
     [RelayCommand]
-    [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format string is a resource that follows the UI culture, which changes at runtime; a cached CompositeFormat would pin the first culture")]
-    private static async Task AboutAsync()
-    {
-        var box = new MessageBox
-        {
-            Title = Strings.About_Title,
-            Content = string.Format(CultureInfo.CurrentCulture, Strings.About_Body_Format, UiIdentity.Version),
-            CloseButtonText = Strings.Common_Ok,
-        };
-        await box.ShowDialogAsync().ConfigureAwait(true);
-    }
+    private void About() => _documents.ShowAbout();
 
     /// <summary>
     /// Tools ▸ Update detection rules (P4 PR-1): the Agent re-seeds the rules file and wakes its detection sweep, so every
@@ -228,34 +225,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
-    /// Help ▸ Limitations (beta.10, D36): <c>LIMITATIONS.md</c> as this build embeds it, read-only and scrollable, with the
-    /// repository's copy one button away. Information, not terms — nothing is recorded.
+    /// Help ▸ Limitations (beta.10, D36): <c>LIMITATIONS.md</c> as this build embeds it — rendered since beta.12, in a window of
+    /// its own with the repository's copy one button away (it was the raw Markdown in a text box). Information, not terms —
+    /// nothing is recorded.
     /// </summary>
     [RelayCommand]
-    private async Task LimitationsAsync()
-    {
-        var text = new System.Windows.Controls.TextBox
-        {
-            Text = LimitationsDocument.Load(),
-            IsReadOnly = true,
-            TextWrapping = System.Windows.TextWrapping.Wrap,
-            VerticalScrollBarVisibility = System.Windows.Controls.ScrollBarVisibility.Auto,
-            MaxHeight = 520,
-            Width = 680,
-        };
-        System.Windows.Automation.AutomationProperties.SetName(text, Strings.Limitations_Title);
-        var box = new MessageBox
-        {
-            Title = Strings.Limitations_Title,
-            Content = text,
-            PrimaryButtonText = Strings.Limitations_OnGitHub,
-            CloseButtonText = Strings.Common_Close,
-        };
-        if (await box.ShowDialogAsync().ConfigureAwait(true) == MessageBoxResult.Primary && !_urls.Open(LimitationsDocument.OnGitHub))
-        {
-            _snackbar.Show(Strings.Limitations_Title, Strings.BugReport_BrowserRefused, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.Warning24), TimeSpan.FromSeconds(4));
-        }
-    }
+    private void Limitations() => _documents.ShowLimitations();
 
     /// <summary>Help ▸ Report a bug… (P4 PR-3): <c>10_LOGGING</c> §Bug report flow steps 2–4, the same flow the Logs page's button runs.</summary>
     [RelayCommand]

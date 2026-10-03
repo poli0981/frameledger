@@ -18,9 +18,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="About_Body_Format" xml:space="preserve">
-    <value>FrameLedger {0} — measures game performance by hooking graphics APIs inside games you explicitly enabled. GPLv3.</value>
-  </data>
   <data name="About_Title" xml:space="preserve">
     <value>About FrameLedger</value>
   </data>
@@ -251,9 +248,6 @@
   </data>
   <data name="Limitations_Title" xml:space="preserve">
     <value>What FrameLedger cannot do</value>
-  </data>
-  <data name="Limitations_OnGitHub" xml:space="preserve">
-    <value>Open on GitHub</value>
   </data>
   <data name="Menu_Help_ReportBug" xml:space="preserve">
     <value>Report a bug…</value>
@@ -2824,5 +2818,71 @@ The documents below are the full terms; this summary does not replace them.</val
   </data>
   <data name="Dashboard_Live_GameMemory_Format" xml:space="preserve">
     <value>This game: VRAM {0} · RAM {1}</value>
+  </data>
+  <data name="Document_Pages" xml:space="preserve">
+    <value>Pages</value>
+  </data>
+  <data name="Document_OnGitHub" xml:space="preserve">
+    <value>Open on GitHub</value>
+  </data>
+  <data name="About_Tab_App" xml:space="preserve">
+    <value>This app</value>
+  </data>
+  <data name="About_Tab_ThirdParty" xml:space="preserve">
+    <value>Third-party licences</value>
+  </data>
+  <data name="About_Tab_Legal" xml:space="preserve">
+    <value>Legal documents</value>
+  </data>
+  <data name="About_Version_Format" xml:space="preserve">
+    <value>Version {0}</value>
+  </data>
+  <data name="About_Tagline" xml:space="preserve">
+    <value>Measures game performance by hooking graphics APIs inside the games you explicitly enable, and records each session on this PC.</value>
+  </data>
+  <data name="About_Notices_Header" xml:space="preserve">
+    <value>Legal notices</value>
+  </data>
+  <data name="About_Notices_Copyright" xml:space="preserve">
+    <value>Copyright © 2026 poli0981.</value>
+  </data>
+  <data name="About_Notices_Warranty" xml:space="preserve">
+    <value>This program comes with ABSOLUTELY NO WARRANTY, to the extent permitted by applicable law.</value>
+  </data>
+  <data name="About_Notices_Licence" xml:space="preserve">
+    <value>It is free software: you may redistribute it and modify it under the GNU General Public License, version 3 only, with the additional terms in NOTICE that section 7 of that licence allows.</value>
+  </data>
+  <data name="About_Notices_Source_Format" xml:space="preserve">
+    <value>Source code of this version: {0}</value>
+  </data>
+  <data name="About_ViewLicence" xml:space="preserve">
+    <value>View the licence</value>
+  </data>
+  <data name="About_ViewNotice" xml:space="preserve">
+    <value>View NOTICE</value>
+  </data>
+  <data name="About_OpenSource" xml:space="preserve">
+    <value>Open the source code</value>
+  </data>
+  <data name="About_ThirdParty_Body" xml:space="preserve">
+    <value>FrameLedger is built on these open-source components. The full licence text of each ships beside the App, in its licenses folder.</value>
+  </data>
+  <data name="About_OpenLicencesFolder" xml:space="preserve">
+    <value>Open the licences folder</value>
+  </data>
+  <data name="About_NoLicencesFolder" xml:space="preserve">
+    <value>This build has no licences folder beside it (a development build); the texts are in legal/licenses/ in the repository.</value>
+  </data>
+  <data name="About_Doc_Notice" xml:space="preserve">
+    <value>NOTICE (copyright and additional terms)</value>
+  </data>
+  <data name="About_Doc_Trademarks" xml:space="preserve">
+    <value>Trademarks</value>
+  </data>
+  <data name="About_Doc_ThirdParty" xml:space="preserve">
+    <value>Third-party notices</value>
+  </data>
+  <data name="About_Doc_Packages" xml:space="preserve">
+    <value>Package licences</value>
   </data>
 </root>
