@@ -40,7 +40,7 @@
     "level, which made it a check that could not fire."
   ],
   "schemaVersion": 2,
-  "rulesVersion": "2026.09.6",
+  "rulesVersion": "2026.10.1",
 
   "engines": [
     {
@@ -419,7 +419,10 @@
       { "store": "steam", "id": "1517290", "family": "EA AntiCheat", "reason": "Protected by EA AntiCheat (Javelin), a kernel anti-cheat." },
       { "store": "steam", "id": "2807960", "family": "EA AntiCheat", "reason": "Protected by EA AntiCheat (Javelin), a kernel anti-cheat." },
       { "store": "steam", "id": "2669320", "family": "EA AntiCheat", "reason": "Protected by EA AntiCheat (Javelin), a kernel anti-cheat." },
-      { "store": "steam", "id": "3405690", "family": "EA AntiCheat", "reason": "Protected by EA AntiCheat (Javelin), a kernel anti-cheat." }
+      { "store": "steam", "id": "3405690", "family": "EA AntiCheat", "reason": "Protected by EA AntiCheat (Javelin), a kernel anti-cheat." },
+      { "store": "steam", "id": "3224770", "family": "CrackProof", "reason": "Protected by CrackProof (HyperTech), a kernel anti-cheat; its driver is not in the game's folder." },
+      { "store": "steam", "id": "1973710", "family": "CrackProof", "reason": "Protected by CrackProof (HyperTech), a kernel anti-cheat; its driver is not in the game's folder." },
+      { "store": "steam", "id": "2987800", "family": "CrackProof", "reason": "Protected by CrackProof (HyperTech), a kernel anti-cheat; its driver is not in the game's folder." }
     ]
   }
 }

@@ -3704,6 +3704,20 @@ TEST_CASE("a listed store id refuses as BlockedStoreId, naming its family", "[gu
     CHECK(g.lastStoreRoot == L"C:\\Games\\Example");    // the install root check 4 walks, derived from the pid
 }
 
+TEST_CASE("the CrackProof titles refuse by their Steam ids, naming CrackProof", "[guard][check3][store]") {
+    // Rules 2026.10.1 (owner's list, 2026-10-03): the floor carries them, so a rules file cannot take one off.
+    for (const char* id : {"steam:3224770", "steam:1973710", "steam:2987800"}) {
+        ResetFake();
+        g.storeIdentity = id;
+        const Verdict v = EvaluateWithSources(1234, FakeSources());
+        INFO(id);
+        REQUIRE_FALSE(v.Allowed());
+        CHECK(v.reason == Reason::kBlockedStoreId);
+        CHECK(std::strcmp(v.family, "CrackProof") == 0);
+        CHECK(std::strcmp(v.signal, id) == 0);
+    }
+}
+
 TEST_CASE("an install no store names is not refused by the store half", "[guard][check3][store]") {
     ResetFake();
     g.storeIdentity = "";

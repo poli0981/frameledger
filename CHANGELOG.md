@@ -27,6 +27,16 @@ under a `## [x.y.z] - date` heading in the same commit that bumps `VERSION`, the
 
 ## [Unreleased]
 
+### Added
+
+- **Three CrackProof titles on the anti-cheat title list** (owner request, beta.11): Umamusume: Pretty Derby (Steam
+  `3224770`), Heaven Burns Red (`1973710`) and Madoka Magica Magia Exedra (`2987800`). Each store page states *"Uses
+  Kernel Level Anti-Cheat"* and names HyperTech's CrackProof; its driver loads from `System32` under a numbered name,
+  outside the game's folder, so nothing of the game's own can name it and the list does, by Steam id only (no executable
+  name was verified). ANOTHER EDEN, which a community list also names, is left out: its store page says nothing of the
+  kind. Rules `2026.10.1` — every game is re-checked once, and these games' hooking is turned off like any title-list
+  finding, never under a user-mode exception (`19_SAFETY` check 3).
+
 ## [0.1.0-beta.10] - 2026-09-28
 
 **The tenth pre-release: how each game was shown, the agent as administrator if you choose it, and the exact Unreal

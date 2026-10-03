@@ -235,12 +235,20 @@ Implemented in `FrameLedger.Injector` and reached from managed code through a th
    > be read (a manifest that will not open, more than 4096 of them, a listing error) refuses as `PreScanFailed`. With
    > nothing listed, nothing is read. Epic has no reader: an Epic install carries no identity to this check.
    >
-   > **What is listed, and why a title list at all:** 30 Steam app ids and 33 executable names across nine families —
+   > **What is listed, and why a title list at all:** 33 Steam app ids and 33 executable names across ten families —
    > Valve VAC (CS2, Dota 2, TF2, Deadlock and Valve's older VAC titles), Riot Vanguard, Roblox Hyperion, Blizzard's
    > online titles ("Blizzard Warden"), Call of Duty (Activision Ricochet), NetEase (Marvel Rivals, NARAKA, FragPunk,
-   > Once Human), ACE (Delta Force, Arena Breakout: Infinite), HoYoverse and EA (Battlefield 2042/6, EA SPORTS FC 25/26).
+   > Once Human), ACE (Delta Force, Arena Breakout: Infinite), HoYoverse and EA (Battlefield 2042/6, EA SPORTS FC 25/26),
+   > and since 2026-10-03 (rules `2026.10.1`, owner's list) HyperTech's **CrackProof** (Umamusume: Pretty Derby
+   > `3224770`, Heaven Burns Red `1973710`, Madoka Magica Magia Exedra `2987800` — Steam ids only: no executable name
+   > was verified, and a guessed one is a false refusal waiting for an unrelated game).
    > These are the titles whose anti-cheat leaves nothing of the game's own for checks 1, 2 and 4 to find — VAC runs
    > inside Steam, Blizzard's scanner is built into the game — or whose kernel driver loads only after the checks run.
+   > CrackProof is the second kind: a Proton log of Umamusume shows its driver loaded from `C:\Windows\System32` under a
+   > numbered name (`usrdrv017864.sys`, ValveSoftware/Proton#8853), outside the game's folder, so the `.sys` rule cannot
+   > see it before the first run and no driver token could name it. Each of the three store pages states *"Uses Kernel
+   > Level Anti-Cheat"* and CrackProof (read 2026-10-03); ANOTHER EDEN, which a community list also names, was left out
+   > because its store page says nothing of the kind.
    > Every app id was checked against its Steam store page; Call of Duty's changed when Activision split CoD HQ, so only
    > ids with a live store page are listed. The per-title lists are **floored** like the families: a rules file can
    > add a title and cannot take one off. `rules-validate` refuses a name engines and tools share (`Game.exe`,
@@ -681,6 +689,7 @@ normative documentation. Write tokens here exactly as the data must hold them.
 | Activision Ricochet | `files` | name | `randgrid.sys` | 2026-09-25 |
 | FredaikisAntiCheat | `directories` | name | `FredaikisAntiCheat` | 2026-09-25 |
 | **Valve VAC** | — | — | ~~**No data yet** — needs `blockedStoreIds`, whose half of check 3 **cannot be called**~~ **Per-title lists since 2026-09-25** (check 3): 13 Steam app ids and 8 executables, the store half wired. VAC runs inside Steam, so no module, driver or file of the game's own can name it — this row stays a dash on purpose. (**Measured 2026-08-04: a real VAC title returned `Allow`**, `spike-notes.md` §13 — the gap these lists close.) | 2026-09-25 |
+| **CrackProof** | — | — | **Per-title list since 2026-10-03** (check 3, rules `2026.10.1`): 3 Steam app ids, no executables. Its kernel driver loads from `System32` under a numbered name, so no module, driver or file of the game's own can name it — this row stays a dash on purpose, like VAC's. | 2026-10-03 |
 
 The "no data yet" rows are deliberately kept rather than deleted. An admitted
 gap is reviewable; a deleted row is invisible. ~~Activision Ricochet's was one of them~~ — it has data since
