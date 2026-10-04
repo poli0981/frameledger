@@ -28,6 +28,30 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+## [0.1.0-beta.13] - 2026-10-04
+
+**The thirteenth pre-release: refusal notices that say where the anti-cheat is, GPU sensors that follow the game's graphics
+card, and smaller updates.** The same unsigned installer: verify its hash against `SHA256SUMS.txt`, then *More info → Run
+anyway*. What changed for a user:
+
+- **An anti-cheat driver or service running on the PC is said as that.** While, for example, Easy Anti-Cheat's service
+  runs for another game, FrameLedger hooks no game at all; the notice used to say the anti-cheat "was detected in this
+  game", naming a game that may not even use it. It now says the anti-cheat is running on this PC, and the session's
+  summary says the same. A finding in the game itself still says "in this game".
+- **The notice for a capture stopped mid-game** no longer promises that FrameLedger will hook the game again "when you
+  enable it again" — which was not true either way. It says where the anti-cheat was found and whether hooking was
+  turned off.
+- **On a PC with more than one graphics card**, the GPU figures follow the card the game draws on once it has shown its
+  first frame, instead of the first card Windows lists (often a laptop's integrated GPU). Not yet tested on such a PC.
+- **Updates download only what changed**: this release carries a delta package against `0.1.0-beta.12`, so updating
+  from it through the App downloads a fraction of the full ~107 MB.
+
+**Updating from `0.1.0-beta.12`:**
+
+- Help ▸ Check for updates downloads the delta; or quit the App (tray icon → Exit), end `FrameLedger.Agent.exe` and
+  run the installer as before.
+- No database change, and no document to accept again.
+
 ### Fixed
 
 - **A refusal because of a driver or service said the anti-cheat "was detected in this game".** The guard's checks for
