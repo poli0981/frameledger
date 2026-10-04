@@ -24,6 +24,27 @@ public sealed class TelemetryPollerTests
         public override long GetTimestamp() => Ticks;
     }
 
+    /// <summary>
+    /// beta.13: the adapter the game presents on reaches the source — the real L1 switches to a LUID DXGI listed — and a source
+    /// that cannot follow adapters answers false rather than pretending.
+    /// </summary>
+    [Fact]
+    public void TheGamesAdapterReachesALayerThatCanFollowIt()
+    {
+        using var memory = new FakeMemoryCounter(_ => () => 1024);
+        using var l1 = new BaselineTelemetrySource(new FakeDxgi(FakeDxgi.Identity("first", 0x10), FakeDxgi.Identity("second", 0x20)), memory, new ManualTimeProvider());
+        using var composite = new CompositeTelemetrySource([l1]);
+        using var poller = new TelemetryPoller(composite, new TelemetryPollerOptions(), new ManualTimeProvider());
+
+        poller.FollowAdapter(0x20).Should().BeTrue();
+        l1.Selected!.Name.Should().Be("second");
+        poller.FollowAdapter(0xDEAD).Should().BeFalse("DXGI never listed it");
+
+        using var layer = new FakeLayer(TelemetryLayer.Lhm);
+        using var plain = new TelemetryPoller(layer, new TelemetryPollerOptions(), new ManualTimeProvider());
+        plain.FollowAdapter(0x20).Should().BeFalse("a layer that reads its own GPU is told a vendor by the composite, not a LUID");
+    }
+
     [Fact]
     public void ATickStampsTheLayersSampleWithTheCallersTimestampClock()
     {

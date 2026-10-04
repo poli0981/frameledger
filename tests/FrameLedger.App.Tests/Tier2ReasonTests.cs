@@ -19,8 +19,13 @@ public sealed class Tier2ReasonTests
             .Should().Be(Strings.Summary_Tier2_Why_HookOff);
         Formats.Tier2Reason("end=RefusedHookNotEnabled; tier2: attach=NotEvaluated; guard=PreviouslyBlocked/previously blocked/BlockedModule: Easy Anti-Cheat EasyAntiCheat_EOS.dll")
             .Should().Be(string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_Blocked_Format, "BlockedModule: Easy Anti-Cheat EasyAntiCheat_EOS.dll"));
+        // A driver or service is on the PC, not in the game (beta.13, §S23-3); a module is the guard's finding in the game.
         Formats.Tier2Reason("end=RefusedByGuard; tier2: attach=NotEvaluated; guard=BlockedDriver/Riot Vanguard/vgk.sys")
-            .Should().Be(string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_Guard_Format, "Riot Vanguard", "vgk.sys"));
+            .Should().Be(string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_MachineWide_Format, "Riot Vanguard", "vgk.sys"));
+        Formats.Tier2Reason("end=RefusedByGuard; tier2: attach=NotEvaluated; guard=BlockedService/Easy Anti-Cheat/EasyAntiCheat_EOS")
+            .Should().Be(string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_MachineWide_Format, "Easy Anti-Cheat", "EasyAntiCheat_EOS"));
+        Formats.Tier2Reason("end=RefusedByGuard; tier2: attach=NotEvaluated; guard=BlockedModule/BattlEye/BEClient_x64.dll")
+            .Should().Be(string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_Guard_Format, "BattlEye", "BEClient_x64.dll"));
         Formats.Tier2Reason("end=TargetUnreadable; tier2: attach=NotEvaluated").Should().Be(Strings.Summary_Tier2_Why_Unreadable);
         Formats.Tier2Reason("end=AttachRefused; tier2: attach=BuildIdMismatch").Should().Be(Strings.End_AttachRefused, "every end reason has its own words since beta.8");
         Formats.Tier2Reason("end=SomethingLater; tier2: attach=NotEvaluated")

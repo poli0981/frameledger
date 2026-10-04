@@ -323,6 +323,7 @@ public sealed class SessionRecorder : ISessionRecorder
     {
         private readonly List<TelemetrySample> _drained = [];
         private CaptureProgress? _last;
+        private ulong _adapter;
 
         public DateTimeOffset? AttachedAt { get; private set; }
 
@@ -350,9 +351,27 @@ public sealed class SessionRecorder : ISessionRecorder
         public void Tick(CaptureProgress progress)
         {
             _last = progress;
+            FollowAdapter(progress.AdapterLuid);
             DrainTelemetry();
             writer.OnTick(progress);
             observer?.Tick(guid, progress, _drained);
+        }
+
+        /// <summary>
+        /// The adapter the game presents on (beta.13): the Overlay publishes its LUID at the first present, the telemetry thread
+        /// is told once, and the <c>.partial</c> says whether its layers could follow — until then, and where they could not,
+        /// they describe the adapter they found first (<c>18_GPU_VENDOR_APIS</c> §L1).
+        /// </summary>
+        private void FollowAdapter(ulong luid)
+        {
+            if (luid == 0 || luid == _adapter)
+            {
+                return;
+            }
+
+            _adapter = luid;
+            bool followed = poller?.FollowAdapter(luid) ?? false;
+            writer.Note(string.Create(CultureInfo.InvariantCulture, $"adapter: luid=0x{luid:x} {(followed ? "followed" : "not followed")}"));
         }
 
         public void FinalFlush()

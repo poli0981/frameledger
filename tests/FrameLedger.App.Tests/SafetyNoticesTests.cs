@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using System.Globalization;
 using FluentAssertions;
 using FrameLedger.App.Services;
 using FrameLedger.Shared.Ipc;
@@ -12,6 +13,7 @@ namespace FrameLedger.App.Tests;
 /// persistent notices with the signal named and the acknowledge action; a capture error is the strip's; a
 /// session event is nobody's; a notice leaves only when the user dismisses it.
 /// </summary>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the expected texts are resources that follow the UI culture")]
 public sealed class SafetyNoticesTests
 {
     [Fact]
@@ -53,6 +55,48 @@ public sealed class SafetyNoticesTests
         notice.Body.Should().StartWith(Shared.Strings.Safety_Refused_TargetUnreadable);
         notice.Body.Should().Contain(Strings.Notice_Refused_Recording);
         strip.Shown.Should().BeEmpty("never a toast");
+    }
+
+    /// <summary>
+    /// §S23-3 (beta.13): while Easy Anti-Cheat's service runs for another title, EVERY game refuses with
+    /// <c>BlockedService</c> (spike-notes §13), and the notice said it was detected "in this game" — a game the user may not
+    /// even own. A driver or a service is said as running on this PC; a module in the game still says "in this game".
+    /// </summary>
+    [Fact]
+    public void AServiceOrDriverIsOnThisPcAndAModuleIsInThisGame()
+    {
+        var link = new FakeAgentLink();
+        using var notices = new SafetyNotices(link, new RecordingStrip());
+
+        link.Raise(IpcMessageType.CaptureRefused, new CaptureRefusedEvent(7, "Title", "RefusedByGuard", "Easy Anti-Cheat", "EasyAntiCheat_EOS", GuardReason: "BlockedService"));
+        link.Raise(IpcMessageType.CaptureRefused, new CaptureRefusedEvent(7, "Title", "RefusedByGuard", "Riot Vanguard", "vgk.sys", GuardReason: "BlockedDriver"));
+        link.Raise(IpcMessageType.CaptureRefused, new CaptureRefusedEvent(7, "Title", "RefusedByGuard", "BattlEye", "BEClient_x64.dll", GuardReason: "BlockedModule"));
+        link.Raise(IpcMessageType.CaptureRefused, new CaptureRefusedEvent(7, "Title", "RefusedByGuard", "BattlEye", "BEClient_x64.dll"));
+
+        string[] bodies = [.. notices.Items.Reverse().Select(static n => n.Body)];
+        bodies[0].Should().StartWith(Format(Shared.Strings.Safety_Refused_MachineWide_Format, "Easy Anti-Cheat", "EasyAntiCheat_EOS"));
+        bodies[1].Should().StartWith(Format(Shared.Strings.Safety_Refused_MachineWide_Format, "Riot Vanguard", "vgk.sys"));
+        bodies[2].Should().StartWith(Format(Shared.Strings.Safety_Refused_Named_Format, "BattlEye", "BEClient_x64.dll"));
+        bodies[3].Should().StartWith(Format(Shared.Strings.Safety_Refused_Named_Format, "BattlEye", "BEClient_x64.dll"), "an older Agent sends no guard reason");
+    }
+
+    /// <summary>
+    /// The unhook notice promised "will not inject into this game again until you enable it again", untrue both ways since
+    /// 2026-09-22: a service that starts on the PC turns no hooking off, and a finding about the game turns it off for good —
+    /// which the turned-off sentence then says (beta.13).
+    /// </summary>
+    [Fact]
+    public void AnUnhookSaysWhereTheFindingWasAndPromisesNoReEnable()
+    {
+        var link = new FakeAgentLink();
+        using var notices = new SafetyNotices(link, new RecordingStrip());
+
+        link.Raise(IpcMessageType.SafetyUnhook, new SafetyUnhookEvent(Guid.NewGuid(), "Easy Anti-Cheat", "EasyAntiCheat_EOS", GuardReason: "BlockedService"));
+        link.Raise(IpcMessageType.SafetyUnhook, new SafetyUnhookEvent(Guid.NewGuid(), "BattlEye", "BEClient_x64.dll", HookingTurnedOff: true, GuardReason: "BlockedModule"));
+
+        string[] bodies = [.. notices.Items.Reverse().Select(static n => n.Body)];
+        bodies[0].Should().Be(Format(Shared.Strings.Safety_Unhooked_MachineWide_Format, "Easy Anti-Cheat", "EasyAntiCheat_EOS"));
+        bodies[1].Should().Be(Format(Shared.Strings.Safety_Unhooked_Format, "BattlEye") + " " + Shared.Strings.Safety_HookingTurnedOff);
     }
 
     [Fact]
@@ -150,4 +194,8 @@ public sealed class SafetyNoticesTests
 
         notices.Items.Should().BeEmpty();
     }
+
+    private static string Format(string format, string first) => string.Format(CultureInfo.CurrentCulture, format, first);
+
+    private static string Format(string format, string first, string second) => string.Format(CultureInfo.CurrentCulture, format, first, second);
 }

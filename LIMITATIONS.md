@@ -103,6 +103,11 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
 
 - GPU temperature, load, power and memory are best supported on **NVIDIA** GPUs. **AMD and Intel GPUs have
   not been tested** on real hardware yet.
+- **On a PC with more than one graphics card**, the GPU figures follow the card the game draws on once a Direct3D game
+  has shown its first frame; before that, in an unmeasured session, and for OpenGL or Vulkan games they describe the
+  first card Windows lists, and with two cards of one brand the temperature and load come from that brand's first card.
+  The session's hardware details always name the first card. None of this has been tested on a machine with two cards.
+  ([Telemetry](docs/18_GPU_VENDOR_APIS.md))
 - **CPU temperature** needs *Run the agent as administrator* and the separately installed PawnIO driver, and
   has not been verified on real hardware yet. CPU load is the time the processor was busy — not Task
   Manager's "utility" figure, which can exceed 100%. ([Telemetry](docs/18_GPU_VENDOR_APIS.md))

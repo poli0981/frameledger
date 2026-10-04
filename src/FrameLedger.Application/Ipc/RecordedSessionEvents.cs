@@ -3,6 +3,7 @@
 
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Recording;
+using FrameLedger.Domain.AntiCheat;
 using FrameLedger.Shared;
 using FrameLedger.Shared.Ipc;
 
@@ -106,10 +107,12 @@ public static class RecordedSessionEvents
         {
             case Kind.Refused:
                 pipe.Publish(IpcMessageType.CaptureRefused,
-                    new CaptureRefusedEvent(info.GameId, info.GameName, o.Reason.ToString(), NullIfEmpty(o.Verdict.Family), NullIfEmpty(o.Verdict.Signal), o.HookingTurnedOff));
+                    new CaptureRefusedEvent(info.GameId, info.GameName, o.Reason.ToString(), NullIfEmpty(o.Verdict.Family), NullIfEmpty(o.Verdict.Signal), o.HookingTurnedOff,
+                        GuardReasonOf(o.Verdict)));
                 break;
             case Kind.SafetyUnhook:
-                pipe.Publish(IpcMessageType.SafetyUnhook, new SafetyUnhookEvent(sessionGuid, NullIfEmpty(o.Verdict.Family), NullIfEmpty(o.Verdict.Signal), o.HookingTurnedOff));
+                pipe.Publish(IpcMessageType.SafetyUnhook,
+                    new SafetyUnhookEvent(sessionGuid, NullIfEmpty(o.Verdict.Family), NullIfEmpty(o.Verdict.Signal), o.HookingTurnedOff, GuardReasonOf(o.Verdict)));
                 break;
             case Kind.Degraded:
                 pipe.Publish(IpcMessageType.CaptureDegraded, new CaptureDegradedEvent(sessionGuid, From: 1, To: 2, o.Reason.ToString()));
@@ -156,4 +159,10 @@ public static class RecordedSessionEvents
     };
 
     private static string? NullIfEmpty(string? value) => string.IsNullOrEmpty(value) ? null : value;
+
+    /// <summary>
+    /// The guard's own reason when it named a family (beta.13, §S23-3): the App says a <c>BlockedService</c> or
+    /// <c>BlockedDriver</c> was found on the PC, not in the game. Null when the guard named nothing.
+    /// </summary>
+    private static string? GuardReasonOf(AntiCheatVerdict verdict) => string.IsNullOrEmpty(verdict.Family) ? null : verdict.Reason.ToString();
 }

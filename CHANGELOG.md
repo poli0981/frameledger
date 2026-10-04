@@ -28,6 +28,25 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Fixed
+
+- **A refusal because of a driver or service said the anti-cheat "was detected in this game".** The guard's checks for
+  drivers and services are machine-wide: while Easy Anti-Cheat's service runs for another title, every game is refused,
+  and the notice named a game the user may not even own. It now says the anti-cheat is running on this PC — a driver or
+  service that may belong to another game or program — and the session summary says the same; a finding in the game
+  itself still says "in this game" (`20_OPEN_QUESTIONS` §S23-3, closed). The Agent's refusal and unhook events carry the
+  guard's own reason for this (`guardReason`, additive).
+- **The notice for a mid-session stop promised "FrameLedger will not inject into this game again until you enable it
+  again"**, untrue both ways since beta.5: a driver or service that starts on the PC turns no hooking off, and a finding
+  in the game turns it off for good. It says where the finding was, and whether hooking was turned off.
+- **On a PC with more than one graphics card, the GPU sensors could describe a card the game was not using.** The
+  adapter the game draws on is now followed once it has shown its first frame: the DXGI layer switches to it,
+  LibreHardwareMonitor reads that brand's GPU rather than the first one it lists (often a laptop's integrated GPU), and
+  NVAPI says nothing when the game runs on an AMD or Intel card — N/A rather than another card's temperature.
+  `LIMITATIONS.md` says what still describes the first card.
+- **Tests that change the App's language ran beside tests that read its text**, so the second kind could read the
+  wrong language once in many runs; the language-changing tests now run on their own.
+
 ## [0.1.0-beta.12] - 2026-10-04
 
 **The twelfth pre-release: how much memory each game itself uses, documents you can read, and a user guide.** The same

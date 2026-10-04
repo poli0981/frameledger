@@ -16,3 +16,4 @@ internal static class StringsCultureCollection
 {
     public const string Name = "strings-culture";
 }
+

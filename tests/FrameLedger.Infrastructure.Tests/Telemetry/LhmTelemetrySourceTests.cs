@@ -37,10 +37,12 @@ public sealed class LhmTelemetrySourceTests
         return s;
     }
 
-    private static IHardware Gpu(params ISensor[] sensors)
+    private static IHardware Gpu(params ISensor[] sensors) => Gpu(HardwareType.GpuNvidia, sensors);
+
+    private static IHardware Gpu(HardwareType type, params ISensor[] sensors)
     {
         IHardware h = Substitute.For<IHardware>();
-        h.HardwareType.Returns(HardwareType.GpuNvidia);
+        h.HardwareType.Returns(type);
         h.Name.Returns("fake");
         h.Sensors.Returns(sensors);
         h.SubHardware.Returns([]);
@@ -56,6 +58,34 @@ public sealed class LhmTelemetrySourceTests
 
     private static LhmTelemetrySource Source(ILhmComputer computer, ManualTimeProvider? clock = null) =>
         new(computer, new LhmTelemetryOptions(), clock ?? new ManualTimeProvider());
+
+    /// <summary>
+    /// beta.13: a laptop's tree lists the integrated GPU first while the game runs on the discrete one. Told the game
+    /// adapter's vendor, the layer maps that vendor's node; with no node of that vendor it publishes nothing.
+    /// </summary>
+    [Fact]
+    public void ToldTheGamesVendorThePollMapsThatVendorsNodeOrNothing()
+    {
+        ILhmComputer computer = Computer(
+            Gpu(HardwareType.GpuIntel, Sensor(SensorType.Temperature, "GPU Core", 48f)),
+            Gpu(HardwareType.GpuNvidia, Sensor(SensorType.Temperature, "GPU Core", 66f)));
+        using LhmTelemetrySource source = Source(computer);
+
+        source.PollOnce();
+        source.TryRead(out GpuSample? first).Should().BeTrue();
+        first!.TempCoreC.Should().Be(48, "before the game's adapter is known, the first node, as before");
+
+        source.FollowVendor(0x10DE);
+        source.PollOnce();
+        source.TryRead(out GpuSample? nvidia).Should().BeTrue();
+        nvidia!.TempCoreC.Should().Be(66);
+
+        source.FollowVendor(0x1002);
+        source.PollOnce();
+        source.TryRead(out GpuSample? amd).Should().BeFalse("the tree has no AMD node: N/A, not another card's figure");
+        amd.Should().BeNull();
+        source.IsDisabled.Should().BeFalse();
+    }
 
     [Fact]
     public void APollMapsTheFirstGpuAndPublishesItsFieldsAsCapabilities()

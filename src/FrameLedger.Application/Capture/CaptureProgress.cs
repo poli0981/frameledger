@@ -32,6 +32,12 @@ public sealed record CaptureProgress
     public required NgxDriverState NgxDriver { get; init; }
 
     /// <summary>
+    /// The adapter the game presents on, as the Overlay published it in the handshake at its first present (beta.13); 0
+    /// before that, on every Tier-2 tick, and for a game that presents through OpenGL or Vulkan, which publish none.
+    /// </summary>
+    public ulong AdapterLuid { get; init; }
+
+    /// <summary>
     /// On a held session's tick (2026-09-23): the refusal it is held under — its reason, and the guard's verdict when the
     /// guard spoke — so the pipe can say, while the game runs, why nothing is measured. Null on every hooked tick.
     /// </summary>

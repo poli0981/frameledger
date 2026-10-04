@@ -161,6 +161,29 @@ public sealed class RecordedSessionEventsTests
         pipe.Of<SafetyUnhookEvent>().Single().HookingTurnedOff.Should().BeTrue();
     }
 
+    /// <summary>
+    /// §S23-3 (beta.13): the events carry the guard's own reason when it named a family, so the App can say a service or a
+    /// driver was found on the PC — and nothing when the guard named nothing (the kill switch, a block already on the row).
+    /// </summary>
+    [Fact]
+    public void BothSafetyEventsCarryTheGuardsReasonWhenItNamedAFamily()
+    {
+        var pipe = new RecordingPublisher();
+        RecordedSession service = Session(SessionEndReason.RefusedByGuard, ExitStatus.Normal, new FinalizeOutcome(FinalizeStatus.Discarded, null, 0),
+            verdict: AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedService, "Easy Anti-Cheat", "EasyAntiCheat_EOS"), tier: CaptureTier.NotHooked);
+        RecordedSession driver = Session(SessionEndReason.SafetyUnhook, ExitStatus.UnhookedSafety, new FinalizeOutcome(FinalizeStatus.Saved, 9, 0),
+            verdict: AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedDriver, "Riot Vanguard", "vgk.sys"));
+        RecordedSession killSwitch = Session(SessionEndReason.RefusedKillSwitch, ExitStatus.Normal, new FinalizeOutcome(FinalizeStatus.Discarded, null, 0),
+            tier: CaptureTier.NotHooked);
+
+        RecordedSessionEvents.PublishAll(pipe, service, _info);
+        RecordedSessionEvents.PublishAll(pipe, driver, _info);
+        RecordedSessionEvents.PublishAll(pipe, killSwitch, _info);
+
+        pipe.Of<CaptureRefusedEvent>().Select(static e => e.GuardReason).Should().Equal("BlockedService", null);
+        pipe.Of<SafetyUnhookEvent>().Single().GuardReason.Should().Be("BlockedDriver");
+    }
+
     [Fact]
     public void ASafetyUnhookCarriesTheVerdictThatFired()
     {

@@ -725,6 +725,7 @@ public sealed class CaptureSession(
             TouchQpc = Loaded.TouchQpc,
             RuntimeModules = Loaded.Set,
             NgxDriver = Loaded.Ngx,
+            AdapterLuid = sink.Handshake.AdapterLuid,
         };
     }
 

@@ -36,7 +36,7 @@ namespace FrameLedger.Infrastructure.Telemetry;
 /// answer (N/A, layer healthy), not a fault.
 /// </para>
 /// </remarks>
-public sealed class BaselineTelemetrySource : IGpuTelemetrySource
+public sealed class BaselineTelemetrySource : IGpuTelemetrySource, IGpuAdapterSelector
 {
     /// <summary>Faults tolerated before the layer is disabled. The second one disables.</summary>
     public const int MaxFaults = 2;

@@ -93,13 +93,13 @@ public sealed class SessionRecorderTests : IAsyncDisposable
             ValueTask.FromResult(AntiCheatVerdict.Allowed());
     }
 
-    private sealed class FakeSink(SteppingClock clock, int recordsToServe) : ICaptureSink
+    private sealed class FakeSink(SteppingClock clock, int recordsToServe, ulong adapterLuid = 0) : ICaptureSink
     {
         private int _served;
 
         public FlWriterState WriterState => new() { Status = (uint)FlStatus.Ready, HooksInstalledMask = 1, RuntimeCensus = 0x8000_0000 };
 
-        public FlShmHandshake Handshake => default;
+        public FlShmHandshake Handshake => new() { AdapterLuid = adapterLuid };
 
         public FlDisplayState? DisplayState => null;
 
@@ -174,7 +174,15 @@ public sealed class SessionRecorderTests : IAsyncDisposable
     {
         private int _served;
 
+        public List<ulong> Adapters { get; } = [];
+
         public string Descriptor => "l1+lhm";
+
+        public bool FollowAdapter(ulong luid)
+        {
+            Adapters.Add(luid);
+            return true;
+        }
 
         public long Dropped => 0;
 
@@ -212,12 +220,12 @@ public sealed class SessionRecorderTests : IAsyncDisposable
     }
 
     private sealed class Factory(IGameConsentStore store, FakeGuard guard, SteppingClock clock, int records, FakeLiveness liveness,
-        IUserModeExceptionSwitch? exceptions = null, IDisplayProbe? display = null) : ICaptureSessionFactory
+        IUserModeExceptionSwitch? exceptions = null, IDisplayProbe? display = null, ulong adapterLuid = 0) : ICaptureSessionFactory
     {
         public CaptureSession Create(ICaptureObserver observer) => new(
             store, new HookedCaptureGate(guard), guard, new FixedResolver(),
             new DelegateLivenessSource(_ => liveness),
-            new DelegateRingAttacher(_ => (new FakeSink(clock, records), ShmAttachRefusal.Ok)),
+            new DelegateRingAttacher(_ => (new FakeSink(clock, records, adapterLuid), ShmAttachRefusal.Ok)),
             new CaptureOptions
             {
                 DrainInterval = TimeSpan.FromMilliseconds(1),
@@ -263,6 +271,8 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         public required SteppingClock Clock { get; init; }
 
         public required SqliteGameConsentStore Store { get; init; }
+
+        public FakePoller? Poller { get; init; }
     }
 
     /// <summary>What the driver-profile source answers (beta.8); a throwing one proves a failed read costs the column, not the session.</summary>
@@ -278,7 +288,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
     }
 
     private async Task<Harness> MakeAsync(bool consented = true, AntiCheatVerdict? verdict = null, int records = 3_000, FakeLiveness? liveness = null, bool poller = true,
-        bool clockStepsOnDrain = false, IDriverProfileSource? profiles = null, bool excepted = false, IDisplayProbe? display = null)
+        bool clockStepsOnDrain = false, IDriverProfileSource? profiles = null, bool excepted = false, IDisplayProbe? display = null, ulong adapterLuid = 0)
     {
         _db ??= await LedgerDatabase.OpenAsync(Path.Combine(_dir, LedgerPaths.DatabaseFileName), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         var store = new SqliteGameConsentStore(_db);
@@ -302,14 +312,15 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         var games = new FakeGameRepository();
         var sessions = new FakeSessionRepository();
         var partials = new FakePartialSessionStore();
+        FakePoller? fakePoller = poller ? new FakePoller(clockStepsOnDrain ? clock : null) : null;
         var recorder = new SessionRecorder(
-            new Factory(store, guard, clock, records, liveness ?? _alive, excepted ? new FakeExceptionSwitch(on: true) : null, display),
+            new Factory(store, guard, clock, records, liveness ?? _alive, excepted ? new FakeExceptionSwitch(on: true) : null, display, adapterLuid),
             games, new FakeSnapshots(), new FixedHardware(), partials,
             new SessionFinalizer(sessions, new RawSeriesCodec()), new NoCrashEvents(),
-            _ => poller ? new FakePoller(clockStepsOnDrain ? clock : null) : null, clock,
+            _ => fakePoller, clock,
             new RecorderOptions { PartialFlushInterval = TimeSpan.FromSeconds(10), MinimumSessionLength = SteppingClock.Step }, profiles: profiles,
             exceptionLapse: new UserModeExceptionLapsePolicy(store, sessions));
-        return new Harness { Recorder = recorder, Games = games, Sessions = sessions, Partials = partials, Clock = clock, Store = store };
+        return new Harness { Recorder = recorder, Games = games, Sessions = sessions, Partials = partials, Clock = clock, Store = store, Poller = fakePoller };
     }
 
     /// <summary>D33: block the consented row for NetEase Yidun, grant its exception on these bytes, and turn hooking on again.</summary>
@@ -403,6 +414,22 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         GameRow after = (await new SqliteGameRepository(_db!).FindAsync(_exe, TestContext.Current.CancellationToken))!;
         after.AcException.IsGranted.Should().Be(!ends);
         after.AcException.TrialFailed.Should().Be(ends);
+    }
+
+    /// <summary>
+    /// beta.13: the adapter the Overlay names in the handshake reaches the telemetry thread once, however many ticks carry it;
+    /// a session whose handshake names none (0, before the first present or through OpenGL) tells it nothing.
+    /// </summary>
+    [Fact]
+    public async Task TheGamesAdapterIsHandedToTheTelemetryThreadOnce()
+    {
+        Harness named = await MakeAsync(adapterLuid: 0x0000_0001_0000_0042);
+        await named.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+        named.Poller!.Adapters.Should().Equal(0x0000_0001_0000_0042UL);
+
+        Harness unnamed = await MakeAsync();
+        await unnamed.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+        unnamed.Poller!.Adapters.Should().BeEmpty();
     }
 
     [Fact]

@@ -873,6 +873,7 @@ public static class Strings
         nameof(Summary_Tier2_Why_ConsentChanged),
         nameof(Summary_Tier2_Why_Guard_Format),
         nameof(Summary_Tier2_Why_HookOff),
+        nameof(Summary_Tier2_Why_MachineWide_Format),
         nameof(Summary_Tier2_Why_Other_Format),
         nameof(Summary_Tier2_Why_Unreadable),
         nameof(Summary_Title_Format),
@@ -2669,6 +2670,8 @@ public static class Strings
     public static string Summary_Tier2_Why_Guard_Format => ResourceManager.GetString(nameof(Summary_Tier2_Why_Guard_Format), Culture) ?? nameof(Summary_Tier2_Why_Guard_Format);
 
     public static string Summary_Tier2_Why_HookOff => ResourceManager.GetString(nameof(Summary_Tier2_Why_HookOff), Culture) ?? nameof(Summary_Tier2_Why_HookOff);
+
+    public static string Summary_Tier2_Why_MachineWide_Format => ResourceManager.GetString(nameof(Summary_Tier2_Why_MachineWide_Format), Culture) ?? nameof(Summary_Tier2_Why_MachineWide_Format);
 
     public static string Summary_Tier2_Why_Other_Format => ResourceManager.GetString(nameof(Summary_Tier2_Why_Other_Format), Culture) ?? nameof(Summary_Tier2_Why_Other_Format);
 

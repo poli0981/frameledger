@@ -1093,6 +1093,9 @@
   <data name="Summary_Tier2_Why_Guard_Format" xml:space="preserve">
     <value>Lý do: guard đã từ chối — {0} ({1}).</value>
   </data>
+  <data name="Summary_Tier2_Why_MachineWide_Format" xml:space="preserve">
+    <value>Lý do: {0} đang chạy trên máy này ({1}) — một driver hoặc service — và FrameLedger không inject vào game nào khi nó còn chạy.</value>
+  </data>
   <data name="Summary_Tier2_Why_HookOff" xml:space="preserve">
     <value>Lý do: hooking đang tắt cho game này, nên không có gì được inject.</value>
   </data>

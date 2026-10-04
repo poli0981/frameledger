@@ -305,7 +305,10 @@ public static class Formats
             case "RefusedHookNotEnabled":
                 return Strings.Summary_Tier2_Why_HookOff;
             case "RefusedByGuard" or "SafetyUnhook" when n.GuardFamily is { Length: > 0 } family:
-                return string.Format(CultureInfo.CurrentCulture, Strings.Summary_Tier2_Why_Guard_Format, family, n.GuardSignal ?? Strings.Common_NotAvailable);
+                // A driver or service is on the PC, not in the game (beta.13, §S23-3).
+                return string.Format(CultureInfo.CurrentCulture,
+                    IsMachineWide(n.GuardReason) ? Strings.Summary_Tier2_Why_MachineWide_Format : Strings.Summary_Tier2_Why_Guard_Format,
+                    family, n.GuardSignal ?? Strings.Common_NotAvailable);
             case "RefusedByGuard" when n.GuardReason is { Length: > 0 } reason:
                 // A refusal no family names (beta.8): the guard could not look, the game is 32-bit… — said as what it is,
                 // never "… was detected in this game", which read as a finding.
@@ -363,6 +366,18 @@ public static class Formats
     /// </summary>
     public static string GuardSentence(string reason) =>
         string.Format(CultureInfo.CurrentCulture, Strings.Guard_Refused_Format, GuardReasonText(reason));
+
+    /// <summary>
+    /// §S23-3 (beta.13): a driver or a service is found on the PC, not in the game. The guard's checks 2 and 2b are
+    /// machine-wide, so while one runs every game refuses — the measured case is Easy Anti-Cheat's service, running for
+    /// another title — and a notice must not say it was detected "in this game".
+    /// </summary>
+    public static bool IsMachineWide(string? guardReason) => guardReason is "BlockedDriver" or "BlockedService";
+
+    /// <summary>A refusal the guard named a family for, as a sentence: found on this PC, or found in this game.</summary>
+    public static string NamedRefusal(string? guardReason, string family, string signal) =>
+        string.Format(CultureInfo.CurrentCulture,
+            IsMachineWide(guardReason) ? Shared.Strings.Safety_Refused_MachineWide_Format : Shared.Strings.Safety_Refused_Named_Format, family, signal);
 
     /// <summary>What a familyless guard reason means, as a clause.</summary>
     public static string GuardReasonText(string reason) => reason switch

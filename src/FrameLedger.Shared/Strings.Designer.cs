@@ -70,10 +70,12 @@ public static class Strings
         nameof(Safety_HookingTurnedOff),
         nameof(Safety_RecordWithoutMeasuring),
         nameof(Safety_Refused_CouldNotVerify),
+        nameof(Safety_Refused_MachineWide_Format),
         nameof(Safety_Refused_Named_Format),
         nameof(Safety_Refused_TargetUnreadable),
         nameof(Safety_Refused_Unnamed),
         nameof(Safety_Unhooked_Format),
+        nameof(Safety_Unhooked_MachineWide_Format),
     ];
 
     public static string Safety_AdminMode_Accept => ResourceManager.GetString(nameof(Safety_AdminMode_Accept), Culture) ?? nameof(Safety_AdminMode_Accept);
@@ -158,6 +160,8 @@ public static class Strings
 
     public static string Safety_Refused_CouldNotVerify => ResourceManager.GetString(nameof(Safety_Refused_CouldNotVerify), Culture) ?? nameof(Safety_Refused_CouldNotVerify);
 
+    public static string Safety_Refused_MachineWide_Format => ResourceManager.GetString(nameof(Safety_Refused_MachineWide_Format), Culture) ?? nameof(Safety_Refused_MachineWide_Format);
+
     public static string Safety_Refused_Named_Format => ResourceManager.GetString(nameof(Safety_Refused_Named_Format), Culture) ?? nameof(Safety_Refused_Named_Format);
 
     public static string Safety_Refused_TargetUnreadable => ResourceManager.GetString(nameof(Safety_Refused_TargetUnreadable), Culture) ?? nameof(Safety_Refused_TargetUnreadable);
@@ -165,4 +169,6 @@ public static class Strings
     public static string Safety_Refused_Unnamed => ResourceManager.GetString(nameof(Safety_Refused_Unnamed), Culture) ?? nameof(Safety_Refused_Unnamed);
 
     public static string Safety_Unhooked_Format => ResourceManager.GetString(nameof(Safety_Unhooked_Format), Culture) ?? nameof(Safety_Unhooked_Format);
+
+    public static string Safety_Unhooked_MachineWide_Format => ResourceManager.GetString(nameof(Safety_Unhooked_MachineWide_Format), Culture) ?? nameof(Safety_Unhooked_MachineWide_Format);
 }

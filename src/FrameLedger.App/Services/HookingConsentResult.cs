@@ -36,6 +36,7 @@ public sealed record HookingConsentResult(HookingConsentOutcome Outcome, string?
             return string.IsNullOrEmpty(Refusal.Reason) ? Shared.Strings.Safety_Refused_Unnamed : Formats.GuardSentence(Refusal.Reason);
         }
 
-        return string.Format(System.Globalization.CultureInfo.CurrentCulture, Shared.Strings.Safety_Refused_Named_Format, Refusal.Family, Refusal.Signal ?? Refusal.Reason);
+        // The pre-scan's reason is the guard's own: a driver or service would be on the PC, not in the game (beta.13, §S23-3).
+        return Formats.NamedRefusal(Refusal.Reason, Refusal.Family, Refusal.Signal ?? Refusal.Reason);
     }
 }
