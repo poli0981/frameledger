@@ -180,6 +180,7 @@ assumed to.
 cmake --build --preset x64-release
 dotnet publish src/FrameLedger.App   -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -p:FrameLedgerSourceRef={tag} -o out/app
 dotnet publish src/FrameLedger.Agent -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -o out/app
+vpk download github --repoUrl https://github.com/poli0981/frameledger --channel win --pre --outputDir out/release   # beta.13: the previous release, for a delta
 vpk pack --packId FrameLedger.App --packVersion {ver} --packDir out/app --mainExe FrameLedger.exe --packTitle FrameLedger --packAuthors FrameLedger --releaseNotes out/notes.md --outputDir out/release
 ```
 

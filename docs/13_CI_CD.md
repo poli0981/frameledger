@@ -136,6 +136,11 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
   `versioninfo-check` lists (`FrameLedger.ProcessStats.dll` since beta.12 — corrected 2026-10-04), `rules/detection-rules.json`; `FrameLedger.CaptureHost.exe` absent (`12_BUILD`:
   exactly two roots — `package-closure-check` proves it statically, this reads the directory); `versioninfo-check`
   run again over `out/app`, because a `.targets`-staged DLL that failed to copy is a warning to `dotnet publish`.
+- **since beta.13, `vpk download github --pre` first**, so `vpk pack` finds the previous release's full package in
+  `out/release` and writes a delta; after the pack, what `assets.win.json` names is kept and the rest (the previous full
+  package) moves to `out/previous`, the feed and `RELEASES` are filtered to this build, and a downloaded previous package
+  with no delta beside it fails the job. A failed download is a warning: the release is full-only, as every one before it
+  was (`11_UPDATER` §Built).
 - `vpk pack --packId FrameLedger.App` (the `vpk` tool pinned to the library's 1.2.0) with the release notes;
   `FrameLedger.App-win-Setup.exe` must come out, because README §Install names it. **Not `--packId FrameLedger`**:
   Velopack installs into and uninstalls `%LOCALAPPDATA%\<packId>`, which with that id is the data folder

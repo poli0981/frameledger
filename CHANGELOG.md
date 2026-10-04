@@ -44,6 +44,10 @@ numeric core and does not move; the heading is the full version — corrected 20
   LibreHardwareMonitor reads that brand's GPU rather than the first one it lists (often a laptop's integrated GPU), and
   NVAPI says nothing when the game runs on an AMD or Intel card — N/A rather than another card's temperature.
   `LIMITATIONS.md` says what still describes the first card.
+- **Updates download only what changed**, from this release on: each release now carries a Velopack delta package
+  against the previous one beside the full package, and an installed copy one release behind downloads the delta. No
+  earlier release had one — every update so far downloaded the whole ~107 MB package — so the first update that can use
+  a delta is from `0.1.0-beta.12` to this one; Velopack falls back to the full package whenever the delta does not apply.
 - **Tests that change the App's language ran beside tests that read its text**, so the second kind could read the
   wrong language once in many runs; the language-changing tests now run on their own.
 
