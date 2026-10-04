@@ -39,6 +39,22 @@ public static class SensorMap
         return hardware.HardwareType is HardwareType.GpuNvidia or HardwareType.GpuAmd or HardwareType.GpuIntel;
     }
 
+    /// <summary>
+    /// Whether a GPU node is this PCI vendor's (beta.13): NVIDIA <c>0x10DE</c>, AMD <c>0x1002</c>, Intel <c>0x8086</c>. Any
+    /// other vendor has no node LibreHardwareMonitor understands.
+    /// </summary>
+    public static bool IsVendor(IHardware hardware, uint vendorId)
+    {
+        ArgumentNullException.ThrowIfNull(hardware);
+        return vendorId switch
+        {
+            0x10DE => hardware.HardwareType == HardwareType.GpuNvidia,
+            0x1002 => hardware.HardwareType == HardwareType.GpuAmd,
+            0x8086 => hardware.HardwareType == HardwareType.GpuIntel,
+            _ => false,
+        };
+    }
+
     /// <summary>Every sensor under a node, including its sub-hardware, in tree order.</summary>
     public static IEnumerable<ISensor> AllSensors(IHardware hardware)
     {

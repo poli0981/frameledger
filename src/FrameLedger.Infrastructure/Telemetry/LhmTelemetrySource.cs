@@ -42,7 +42,7 @@ namespace FrameLedger.Infrastructure.Telemetry;
 /// never reports sets nothing. <see cref="GpuSample.PresentFields"/> is the only input.
 /// </para>
 /// </remarks>
-public sealed class LhmTelemetrySource : IGpuTelemetrySource
+public sealed class LhmTelemetrySource : IGpuTelemetrySource, IGpuVendorFollower
 {
     /// <summary>Faults tolerated before the layer is disabled. The second one disables.</summary>
     public const int MaxFaults = 2;
@@ -61,6 +61,9 @@ public sealed class LhmTelemetrySource : IGpuTelemetrySource
     private int _polling;
     private int _hangCounted;
     private long _pollStartedUtcTicks;
+
+    /// <summary>The game adapter's PCI vendor id once known (beta.13); 0 maps the first GPU node, as before.</summary>
+    private int _vendor;
     private bool _opened;
     private bool _disposed;
     private string? _lastFault;
@@ -126,8 +129,15 @@ public sealed class LhmTelemetrySource : IGpuTelemetrySource
     }
 
     /// <summary>
-    /// One poll: refresh the tree, map the first GPU node, publish. Public so a probe or a
-    /// test can drive it without the thread; the thread calls exactly this.
+    /// The game presents on this vendor's adapter (beta.13): the next polls map that vendor's GPU node rather than the first
+    /// one LibreHardwareMonitor lists — on a laptop that is often the integrated GPU while the game runs on the discrete one —
+    /// and publish nothing when the tree has no node of that vendor.
+    /// </summary>
+    public void FollowVendor(uint vendorId) => Volatile.Write(ref _vendor, unchecked((int)vendorId));
+
+    /// <summary>
+    /// One poll: refresh the tree, map the first GPU node — of the game adapter's vendor once that is known (beta.13) —
+    /// publish. Public so a probe or a test can drive it without the thread; the thread calls exactly this.
     /// </summary>
     public void PollOnce()
     {
@@ -143,10 +153,11 @@ public sealed class LhmTelemetrySource : IGpuTelemetrySource
         {
             _computer.Update();
 
+            uint vendor = unchecked((uint)Volatile.Read(ref _vendor));
             IHardware? gpu = null;
             foreach (IHardware hardware in _computer.Hardware)
             {
-                if (SensorMap.IsGpu(hardware))
+                if (SensorMap.IsGpu(hardware) && (vendor == 0 || SensorMap.IsVendor(hardware, vendor)))
                 {
                     gpu = hardware;
                     break;

@@ -50,16 +50,15 @@ public sealed class SafetyNotices : IDisposable
                     string.Format(CultureInfo.CurrentCulture, Strings.Notice_Refused_Title_Format, refused.GameName ?? Strings.Common_NotAvailable),
                     // "The session is still recorded" is true for every refusal since 2026-09-22: the loop holds a refused session
                     // open, unhooked, until the game exits (it was untrue for a process that could not be opened, 2026-09-21).
-                    TurnedOff(RefusalText(refused.Reason, refused.Family, refused.Signal) + " " + Strings.Notice_Refused_Recording, refused.HookingTurnedOff), now);
+                    TurnedOff(RefusalText(refused.Reason, refused.GuardReason, refused.Family, refused.Signal) + " " + Strings.Notice_Refused_Recording, refused.HookingTurnedOff), now);
             case IpcMessageType.SafetyUnhook when IpcCodec.Payload<SafetyUnhookEvent>(envelope) is { } unhooked:
-                return new SafetyNotice(SafetyNoticeKind.Unhooked, Strings.Notice_Unhooked_Title,
-                    TurnedOff(string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_Unhooked_Format, unhooked.Family ?? unhooked.Signal ?? Strings.Common_NotAvailable), unhooked.HookingTurnedOff), now);
+                return new SafetyNotice(SafetyNoticeKind.Unhooked, Strings.Notice_Unhooked_Title, TurnedOff(UnhookText(unhooked), unhooked.HookingTurnedOff), now);
             // The Agent's pre-scan of the library turned hooking off for a game the user had turned it on for (2026-09-25):
             // not a session event, so none of a refusal's "this run is still recorded" — no run is going on.
             case IpcMessageType.HookingTurnedOff when IpcCodec.Payload<HookingTurnedOffEvent>(envelope) is { } off:
                 return new SafetyNotice(SafetyNoticeKind.HookingOff,
                     string.Format(CultureInfo.CurrentCulture, Strings.Notice_HookingOff_Title_Format, off.GameName ?? Strings.Common_NotAvailable),
-                    TurnedOff(RefusalText(off.Reason, off.Family, off.Signal), turnedOff: true), now);
+                    TurnedOff(RefusalText(off.Reason, off.Reason, off.Family, off.Signal), turnedOff: true), now);
             case IpcMessageType.CaptureDegraded when IpcCodec.Payload<CaptureDegradedEvent>(envelope) is { } degraded:
                 return new SafetyNotice(SafetyNoticeKind.Degraded, Strings.Notice_Degraded_Title,
                     string.Format(CultureInfo.CurrentCulture, Strings.Notice_Degraded_Body_Format, degraded.Reason), now);
@@ -71,7 +70,18 @@ public sealed class SafetyNotices : IDisposable
     /// <summary>The finding turned the game's hooking off (2026-09-22): the notice says so, because the page will.</summary>
     private static string TurnedOff(string text, bool turnedOff) => turnedOff ? text + " " + Shared.Strings.Safety_HookingTurnedOff : text;
 
-    private static string RefusalText(string reason, string? family, string? signal)
+    /// <summary>
+    /// A driver or service that started on the PC mid-session is said as that (beta.13, §S23-3) — not "detected while the
+    /// game was running … until you enable it again", which was untrue twice: such a finding turns no hooking off, and a
+    /// finding about the game turns it off for good (the turned-off sentence follows).
+    /// </summary>
+    private static string UnhookText(SafetyUnhookEvent unhooked) =>
+        Formats.IsMachineWide(unhooked.GuardReason) && unhooked.Family is { } family
+            ? string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_Unhooked_MachineWide_Format, family, unhooked.Signal ?? Strings.Common_NotAvailable)
+            : string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_Unhooked_Format, unhooked.Family ?? unhooked.Signal ?? Strings.Common_NotAvailable);
+
+    /// <summary><paramref name="reason"/> is the session's end reason; <paramref name="guardReason"/> the guard's own, when it named a family.</summary>
+    private static string RefusalText(string reason, string? guardReason, string? family, string? signal)
     {
         if (string.Equals(reason, "PreScanCouldNotVerify", StringComparison.Ordinal))
         {
@@ -90,7 +100,7 @@ public sealed class SafetyNotices : IDisposable
             return string.IsNullOrEmpty(reason) ? Shared.Strings.Safety_Refused_Unnamed : Formats.GuardSentence(reason);
         }
 
-        return string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_Refused_Named_Format, family, signal ?? reason);
+        return Formats.NamedRefusal(guardReason, family, signal ?? reason);
     }
 
     private void OnEvent(object? sender, AgentEventArgs e)

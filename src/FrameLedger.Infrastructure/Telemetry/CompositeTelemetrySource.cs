@@ -30,7 +30,7 @@ namespace FrameLedger.Infrastructure.Telemetry;
 /// Owns its layers: disposing the composite disposes them.
 /// </para>
 /// </remarks>
-public sealed class CompositeTelemetrySource : IGpuTelemetrySource
+public sealed class CompositeTelemetrySource : IGpuTelemetrySource, IGpuAdapterSelector
 {
     /// <summary>Throws tolerated from one layer's <c>TryRead</c> before it is excluded. The second one excludes.</summary>
     public const int MaxFaults = 2;
@@ -42,6 +42,7 @@ public sealed class CompositeTelemetrySource : IGpuTelemetrySource
     private readonly string?[] _lastFault;
     private readonly TelemetryLayer[] _fieldLayers = new TelemetryLayer[_fieldBits];
     private readonly Lock _lock = new();
+    private GpuAdapterIdentity? _selected;
     private bool _disposed;
 
     public CompositeTelemetrySource(IEnumerable<IGpuTelemetrySource> layers)
@@ -88,6 +89,55 @@ public sealed class CompositeTelemetrySource : IGpuTelemetrySource
     /// <summary>The layers still standing, lowest first: <c>l1+lhm+nvapi</c>. Empty when none is.</summary>
     public string Descriptor =>
         TelemetryLayerNames.Describe(Enumerable.Range(0, _layers.Length).Where(IsStanding).Select(i => _layers[i].Layer));
+
+    /// <summary>The adapter <see cref="SelectAdapter"/> last chose; null before the game's first present named one.</summary>
+    public GpuAdapterIdentity? Selected
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return _selected;
+            }
+        }
+    }
+
+    /// <summary>
+    /// The adapter the game presents on (beta.13). The layer that names adapters by LUID (L1) switches to it, and every layer
+    /// that reads its own GPU is told the adapter's vendor (<see cref="IGpuVendorFollower"/>), so a merged sample describes the
+    /// game's card and not the first one each layer happened to find. False — nothing told — when no layer listed the LUID.
+    /// Under the merge lock, so no sample mixes the old adapter with the new one.
+    /// </summary>
+    public bool SelectAdapter(ulong luid)
+    {
+        lock (_lock)
+        {
+            GpuAdapterIdentity? chosen = null;
+            for (int i = 0; i < _layers.Length; i++)
+            {
+                if (IsStanding(i) && _layers[i] is IGpuAdapterSelector selector && selector.SelectAdapter(luid))
+                {
+                    chosen ??= selector.Selected;
+                }
+            }
+
+            if (chosen is null)
+            {
+                return false;
+            }
+
+            _selected = chosen;
+            for (int i = 0; i < _layers.Length; i++)
+            {
+                if (IsStanding(i) && _layers[i] is IGpuVendorFollower follower)
+                {
+                    follower.FollowVendor(chosen.VendorId);
+                }
+            }
+
+            return true;
+        }
+    }
 
     /// <summary>What a layer's last throw said, for the report. Null if it never threw.</summary>
     public string? LastFaultOf(TelemetryLayer layer)

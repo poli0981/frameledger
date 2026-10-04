@@ -24,10 +24,16 @@ namespace FrameLedger.Infrastructure.Telemetry;
 /// this source never calls <c>NvAPI_D3D_GetLatency</c>.
 /// </para>
 /// </remarks>
-public sealed class NvapiTelemetrySource : IGpuTelemetrySource
+public sealed class NvapiTelemetrySource : IGpuTelemetrySource, IGpuVendorFollower
 {
     /// <summary>Faults tolerated before the layer is disabled. The second one disables.</summary>
     public const int MaxFaults = 2;
+
+    /// <summary>NVIDIA's PCI vendor id: the only vendor NVAPI describes.</summary>
+    private const uint _nvidiaVendorId = 0x10DE;
+
+    /// <summary>1 once the game's adapter is known to be another vendor's (beta.13): this layer then reads nothing.</summary>
+    private int _otherVendor;
 
     private readonly INvapiBridge _bridge;
     private readonly TimeProvider _clock;
@@ -109,10 +115,18 @@ public sealed class NvapiTelemetrySource : IGpuTelemetrySource
         }
     }
 
+    /// <summary>
+    /// The game presents on this vendor's adapter (beta.13). NVAPI reads NVIDIA's first physical GPU, which is not the
+    /// game's when the game's adapter is AMD's or Intel's — so for any other vendor the layer contributes nothing from now
+    /// on, rather than a temperature from a card the game is not using. Not a fault and not disabled: the layer is still
+    /// healthy, it just has nothing true to say about this session.
+    /// </summary>
+    public void FollowVendor(uint vendorId) => Volatile.Write(ref _otherVendor, vendorId == _nvidiaVendorId ? 0 : 1);
+
     public bool TryRead([NotNullWhen(true)] out GpuSample? sample)
     {
         sample = null;
-        if (IsDisabled)
+        if (IsDisabled || Volatile.Read(ref _otherVendor) != 0)
         {
             return false;
         }

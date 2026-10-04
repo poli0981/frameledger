@@ -292,14 +292,21 @@ public sealed record SessionProgressEvent
 /// </summary>
 public sealed record SessionCompletedEvent(Guid SessionGuid, long? SessionId, string ExitStatus, int Tier, string Finalize, string Reason, long? GameId = null, string? GameName = null);
 
-/// <summary>The gate or the guard said no before anything was injected (<c>08_UI</c> §Safety events: never a toast).</summary>
-public sealed record CaptureRefusedEvent(long GameId, string? GameName, string Reason, string? Family, string? Signal, bool HookingTurnedOff = false);
+/// <summary>
+/// The gate or the guard said no before anything was injected (<c>08_UI</c> §Safety events: never a toast).
+/// <see cref="Reason"/> is the session's end reason; <see cref="GuardReason"/> (beta.13, optional) is the guard's own, sent
+/// when it named a family — <c>BlockedService</c> or <c>BlockedDriver</c> is a finding on the PC, not in the game (§S23-3).
+/// </summary>
+public sealed record CaptureRefusedEvent(long GameId, string? GameName, string Reason, string? Family, string? Signal, bool HookingTurnedOff = false, string? GuardReason = null);
 
 /// <summary>Measurement STOPPED mid-session (two-rung ladder: there is no lower fidelity to continue at).</summary>
 public sealed record CaptureDegradedEvent(Guid SessionGuid, int From, int To, string Reason);
 
-/// <summary>Anti-cheat appeared mid-session and our own guard published the stop.</summary>
-public sealed record SafetyUnhookEvent(Guid SessionGuid, string? Family, string? Signal, bool HookingTurnedOff = false);
+/// <summary>
+/// Anti-cheat appeared mid-session and our own guard published the stop. <see cref="GuardReason"/> as on
+/// <see cref="CaptureRefusedEvent"/> (beta.13): a driver or service that started on the PC is not a finding in the game.
+/// </summary>
+public sealed record SafetyUnhookEvent(Guid SessionGuid, string? Family, string? Signal, bool HookingTurnedOff = false, string? GuardReason = null);
 
 public sealed record CaptureErrorEvent(Guid? SessionGuid, string Code, string Message);
 

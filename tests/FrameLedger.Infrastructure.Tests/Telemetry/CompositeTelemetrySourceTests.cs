@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using System.Diagnostics.CodeAnalysis;
 using FluentAssertions;
 using FrameLedger.Application.Telemetry;
 using FrameLedger.Infrastructure.Telemetry;
@@ -144,6 +145,26 @@ public sealed class CompositeTelemetrySourceTests
         l2.Disposed.Should().BeTrue();
     }
 
+    /// <summary>
+    /// beta.13: the game's adapter, by the LUID the Overlay published — L1 switches to it and the layers that read their own
+    /// GPU are told its vendor; a LUID no layer listed changes nothing and tells nobody.
+    /// </summary>
+    [Fact]
+    public void AnAdapterTheGamePresentsOnIsSelectedInL1AndItsVendorReachesTheOtherLayers()
+    {
+        using var l1 = new AdapterLayer(listedLuid: 0x0000_0001_0000_0042, vendor: 0x1002);
+        using var l3 = new VendorLayer(TelemetryLayer.Nvapi);
+        using var composite = new CompositeTelemetrySource([l1, l3]);
+
+        composite.SelectAdapter(0x99).Should().BeFalse("no layer listed it");
+        l3.Vendors.Should().BeEmpty();
+        composite.Selected.Should().BeNull();
+
+        composite.SelectAdapter(0x0000_0001_0000_0042).Should().BeTrue();
+        composite.Selected!.VendorId.Should().Be(0x1002u);
+        l3.Vendors.Should().Equal(0x1002u);
+    }
+
     [Fact]
     public void TheNamesAreTheOnesTheSchemaExampleUses()
     {
@@ -151,5 +172,73 @@ public sealed class CompositeTelemetrySourceTests
             .Should().Be("l1+lhm+nvapi");
         Action none = () => TelemetryLayerNames.Of(TelemetryLayer.None);
         none.Should().Throw<ArgumentOutOfRangeException>();
+    }
+
+    /// <summary>L1 as the composite sees it: one adapter, by LUID.</summary>
+    private sealed class AdapterLayer(ulong listedLuid, uint vendor) : IGpuTelemetrySource, IGpuAdapterSelector
+    {
+        public TelemetryLayer Layer => TelemetryLayer.Baseline;
+
+        public GpuCapabilities Capabilities => GpuCapabilities.None;
+
+        public bool IsDisabled => false;
+
+        public GpuAdapterIdentity? Selected { get; private set; }
+
+        public bool SelectAdapter(ulong luid)
+        {
+            if (luid != listedLuid)
+            {
+                return false;
+            }
+
+            Selected = new GpuAdapterIdentity
+            {
+                Name = "fake",
+                Luid = luid,
+                VendorId = vendor,
+                DeviceId = 1,
+                SubSysId = 0,
+                Revision = 0,
+                DedicatedVideoMemoryMb = 8192,
+                SharedSystemMemoryMb = 16384,
+                IsSoftware = false,
+            };
+            return true;
+        }
+
+        public bool TryRead([NotNullWhen(true)] out GpuSample? sample)
+        {
+            sample = null;
+            return false;
+        }
+
+        public void Dispose()
+        {
+        }
+    }
+
+    /// <summary>A layer that reads its own GPU and is told the vendor.</summary>
+    private sealed class VendorLayer(TelemetryLayer layer) : IGpuTelemetrySource, IGpuVendorFollower
+    {
+        public List<uint> Vendors { get; } = [];
+
+        public TelemetryLayer Layer => layer;
+
+        public GpuCapabilities Capabilities => GpuCapabilities.None;
+
+        public bool IsDisabled => false;
+
+        public void FollowVendor(uint vendorId) => Vendors.Add(vendorId);
+
+        public bool TryRead([NotNullWhen(true)] out GpuSample? sample)
+        {
+            sample = null;
+            return false;
+        }
+
+        public void Dispose()
+        {
+        }
     }
 }

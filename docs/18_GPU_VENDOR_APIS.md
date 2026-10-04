@@ -57,7 +57,15 @@ Implementations compose rather than compete:
 > nothing calls `SelectAdapter` outside tests. L1 stays on the first hardware adapter in DXGI's high-performance order,
 > as `HardwareSnapshotSource` does, and the handshake's `adapterLuid` is read by no managed code — so on a
 > multi-adapter machine L1 can describe an adapter the game did not present on. The game's own memory, D43, is
-> summed over every adapter and is not affected.)* Every
+> summed over every adapter and is not affected.)* **Built in beta.13:** the recorder hands the handshake's
+> `adapterLuid` to the poller at the first tick that carries one (`CaptureProgress.AdapterLuid`, noted in the
+> `.partial`), and `CompositeTelemetrySource.SelectAdapter` points L1 at it (`IGpuAdapterSelector`) and tells the layers
+> that read their own GPU its vendor (`IGpuVendorFollower`): L2 maps that vendor's GPU node instead of the first one
+> LibreHardwareMonitor lists (on a laptop often the integrated GPU), and L3 contributes nothing when the game's adapter
+> is not NVIDIA's — N/A rather than another card's temperature. **What stays first-found:** a session before the game's
+> first present, a Tier-2 session (no handshake), a game presenting through OpenGL or Vulkan (they publish no LUID), two
+> GPUs of one vendor (L2 and L3 take that vendor's first), and the session's hardware snapshot
+> (`HardwareSnapshotSource`, taken before the first present). Every
 > poller sample is stamped with QPC (`TelemetrySample.QpcTicks`), the ring's clock, and
 > `QpcClockTests` pins `Stopwatch` / `TimeProvider.GetTimestamp` to the real counter.
 

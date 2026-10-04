@@ -131,6 +131,9 @@ public sealed class TelemetryPoller : ITelemetryPoller
         }
     }
 
+    /// <summary>The adapter the game presents on (beta.13): handed to the source, which points its layers at it.</summary>
+    public bool FollowAdapter(ulong luid) => _source is IGpuAdapterSelector selector && selector.SelectAdapter(luid);
+
     /// <summary>The game process whose memory the next ticks read (beta.12, D43); ignored without a game source.</summary>
     public void Follow(GameProcess target)
     {

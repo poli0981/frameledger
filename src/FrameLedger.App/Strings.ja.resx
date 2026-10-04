@@ -1457,6 +1457,10 @@
     <value>理由: ガードが拒否しました — {0}（{1}）。</value>
     <comment>review</comment>
   </data>
+  <data name="Summary_Tier2_Why_MachineWide_Format" xml:space="preserve">
+    <value>理由: このPCで {0} が動作していました（{1}）— ドライバーまたはサービスです。これが動作している間、FrameLedger はどのゲームにも注入しません。</value>
+    <comment>review</comment>
+  </data>
   <data name="Summary_Tier2_Why_HookOff" xml:space="preserve">
     <value>理由: このゲームのフックはオフだったため、何も読み込まれていません。</value>
     <comment>review</comment>

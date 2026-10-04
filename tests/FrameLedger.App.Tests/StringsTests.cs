@@ -50,6 +50,16 @@ public sealed class StringsTests
         Strings.Keys.Should().BeEquivalentTo(keys, "Strings.Designer.cs is generated from Strings.resx and committed; tools/resx-audit.ps1 fails on drift");
     }
 
+    /// <summary>
+    /// beta.13: the culture collection's definition is the one bound — it is what takes these classes out of the parallel
+    /// phase — so a definition xUnit did not find would fail here rather than bring the races back silently.
+    /// </summary>
+    [Fact]
+    public void TheCultureCollectionIsBoundToTheDefinitionThatRunsItAlone()
+    {
+        TestContext.Current.TestCollection!.TestCollectionClassName.Should().Be(typeof(StringsCultureDefinition).FullName);
+    }
+
     [Fact]
     public void TheCulturePropertyOverridesTheThread()
     {

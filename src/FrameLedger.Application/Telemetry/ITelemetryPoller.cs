@@ -41,4 +41,10 @@ public interface ITelemetryPoller : IDisposable
     /// what may be opened (<see cref="GameProcess"/>). A poller with no game source ignores it.
     /// </summary>
     void Follow(GameProcess target) { }
+
+    /// <summary>
+    /// The adapter the game presents on, by the LUID the Overlay publishes at its first present (beta.13): the layers follow
+    /// it. False when the source cannot follow adapters or did not list this one — a poller without layers says false.
+    /// </summary>
+    bool FollowAdapter(ulong luid) => false;
 }

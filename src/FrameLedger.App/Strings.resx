@@ -1098,6 +1098,9 @@
   <data name="Summary_Tier2_Why_Guard_Format" xml:space="preserve">
     <value>Why: the guard refused — {0} ({1}).</value>
   </data>
+  <data name="Summary_Tier2_Why_MachineWide_Format" xml:space="preserve">
+    <value>Why: {0} was running on this PC ({1}) — a driver or service — and FrameLedger injects into no game while it runs.</value>
+  </data>
   <data name="Summary_Tier2_Why_HookOff" xml:space="preserve">
     <value>Why: hooking was off for this game, so nothing was injected.</value>
   </data>

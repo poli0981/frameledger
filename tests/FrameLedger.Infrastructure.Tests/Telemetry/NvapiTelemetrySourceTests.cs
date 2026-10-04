@@ -41,6 +41,26 @@ public sealed class NvapiTelemetrySourceTests
         bridge.Inits.Should().Be(1);
     }
 
+    /// <summary>
+    /// beta.13: NVAPI reads NVIDIA's first GPU, so when the game presents on AMD's or Intel's the layer says nothing rather
+    /// than another card's temperature — without a fault, and back when the game's adapter is NVIDIA's.
+    /// </summary>
+    [Fact]
+    public void AGameOnAnotherVendorsAdapterGetsNothingFromNvapi()
+    {
+        using var bridge = new FakeNvapiBridge { Sample = FakeNvapiBridge.Full };
+        using var source = new NvapiTelemetrySource(bridge, new ManualTimeProvider());
+
+        source.FollowVendor(0x1002);
+        source.TryRead(out GpuSample? amd).Should().BeFalse();
+        amd.Should().BeNull();
+        source.IsDisabled.Should().BeFalse("nothing went wrong; it just is not the game's card");
+
+        source.FollowVendor(0x10DE);
+        source.TryRead(out GpuSample? nvidia).Should().BeTrue();
+        nvidia!.TempCoreC.Should().Be(62);
+    }
+
     [Theory]
     [InlineData(NativeNvapiBridge.Unavailable)]
     [InlineData(-6)]
