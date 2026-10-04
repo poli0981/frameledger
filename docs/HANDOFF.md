@@ -1895,6 +1895,11 @@ than N/A (`FlShmHandshake.AdapterLuid`'s own comment), and a finding on the PC i
 - **`vpk download github --pre` puts the previous release's full package in `out/release`**: `vpk pack` needs it there to
   write a delta, and nothing else may ship it — `assets.win.json` names what this pack built, the rest moves to
   `out/previous`, and the feed and `RELEASES` are filtered to this build, as `vpk upload github` writes them.
+- **A 120 ms wall-clock ceiling races the second scan on a loaded runner**: the release rehearsal failed on
+  `CaptureSessionTests.AGuardThatThrowsMidSessionKeepsTheRecordsItAlreadyDrained`, which ended as `Running` before the
+  guard's second evaluation threw — the class beta.12's PR-0 fixed in the recorder tests. The four tests whose ending is a
+  scan, a throw, the kill switch or an exit take `EndsOnItsOwn` (a 30 s safety net); a test that EXPECTS `Running` keeps
+  the short ceiling, because that ceiling is its ending.
 - **The beta.12 traps about the culture race and the four code gaps are closed here** (the rules feed stays open, §S20).
 
 **Owner-only, added to the list below:** item 10.

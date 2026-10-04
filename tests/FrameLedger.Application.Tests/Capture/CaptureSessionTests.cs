@@ -353,6 +353,23 @@ public sealed class CaptureSessionTests : IAsyncDisposable
             tolerance: tolerance,
             display: display);
 
+    /// <summary>
+    /// <see cref="Loop"/>'s options with a 30 s ceiling instead of 120 ms, for a test whose session must end on something
+    /// else — a refusal at the re-scan, a guard that throws, the kill switch, an exit. A wall-clock ceiling that short lost
+    /// the race to the second scan on a loaded runner and the session ended as <c>Running</c> (the beta.13 release rehearsal,
+    /// 2026-10-04, <see cref="AGuardThatThrowsMidSessionKeepsTheRecordsItAlreadyDrained"/>); here the ceiling is a safety
+    /// net, never the ending under test.
+    /// </summary>
+    private static CaptureOptions EndsOnItsOwn => new()
+    {
+        DrainInterval = TimeSpan.FromMilliseconds(1),
+        ScanInterval = TimeSpan.FromMilliseconds(5),
+        AttachBudget = TimeSpan.FromMilliseconds(50),
+        MaxDuration = TimeSpan.FromSeconds(30),
+        HoldInterval = TimeSpan.FromMilliseconds(1),
+        LogFlushGrace = TimeSpan.FromMilliseconds(1),
+    };
+
     private static readonly bool[] _pauseThenResume = [true, false];
 
     private sealed class SwitchablePause : ICapturePauseSource
@@ -803,7 +820,7 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         };
         using var sink = new FakeSink();
         IGameConsentStore store = await StoreWithAsync();
-        CaptureSession loop = Loop(store, guard, sink);
+        CaptureSession loop = Loop(store, guard, sink, options: EndsOnItsOwn);
 
         CaptureOutcome r = await loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
 
@@ -850,7 +867,7 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         var guard = new CountingGuard();
         using var sink = new FakeSink();
         using var alive = new FakeLiveness { HasExited = true };
-        CaptureSession loop = Loop(await StoreWithAsync(), guard, sink, alive);
+        CaptureSession loop = Loop(await StoreWithAsync(), guard, sink, alive, options: EndsOnItsOwn);
 
         CaptureOutcome r = await loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
 
@@ -1011,7 +1028,7 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         // the capture side and is correct; losing the whole session's records with the stack is not.
         var guard = new CountingGuard();
         using var sink = new FakeSink(recordsToServe: 40);
-        CaptureSession loop = Loop(await StoreWithAsync(), guard, sink);
+        CaptureSession loop = Loop(await StoreWithAsync(), guard, sink, options: EndsOnItsOwn);
         guard.EvaluateThrowsAfter = 1;
 
         CaptureOutcome r = await loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
@@ -1041,7 +1058,7 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         var flipsAfterTwo = new DelegateKillSwitch(() => ++asks > 2);
         using var sink = new FakeSink(recordsToServe: 3);
         var stopped = new CountingGuard();
-        CaptureOutcome result = await Loop(await StoreWithAsync(), stopped, sink, killSwitch: flipsAfterTwo)
+        CaptureOutcome result = await Loop(await StoreWithAsync(), stopped, sink, options: EndsOnItsOwn, killSwitch: flipsAfterTwo)
             .RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
 
         result.Reason.Should().Be(SessionEndReason.KillSwitchEngaged);
