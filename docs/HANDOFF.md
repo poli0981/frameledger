@@ -1804,7 +1804,7 @@ library and the import, PR-4 delete sessions, the charts across sessions and the
 
 **Owner-only, added to the list below:** item 8.
 
-## **START HERE** — 2026-10-04, the beta.12 train: the game's own memory, rendered documents, a user guide, the legal split
+## ~~**START HERE**~~ — 2026-10-04, the beta.12 train: the game's own memory, rendered documents, a user guide, the legal split *(struck the same day: the head is §beta.13 below)*
 
 *Status is `CHANGELOG.md` `[0.1.0-beta.12]`; this is what no other file carries. The approved plan was eight PRs: PR-0 the
 recorder test that went red on a loaded runner, PR-1 `NOTICE` and the licence header (D45), PR-2 the game's memory
@@ -1836,7 +1836,8 @@ PR-7 the release.*
   in the local gate (`LhmRealHardwareTests` beside `PrivilegeFootprintTests`); the Agent's own read was already behind a
   catch. The two test classes share a collection now.
 - **A test reading resource text outside the culture collection** races a class that flips `Strings.Culture`; a class
-  that adds many flips (`GameMemoryTextTests`) makes it likelier. `GamesViewModelTests` moved in; the rest are a chip.
+  that adds many flips (`GameMemoryTextTests`) makes it likelier. `GamesViewModelTests` moved in; the rest are a chip. *(Ended in beta.13: the
+  collection runs alone.)*
 - **`ShmDrainIntegrationTests.AnUnhookRequestStops…` failed once on CI at the injection step** (≈1 s, `IsAllowed`
   false) and passed on the re-run; it passed on the PR before. A flake to watch, not yet a fix.
 - **Markdig follows the table spec strictly**: a line without cells between a table's rows ends the table, and GitHub
@@ -1863,9 +1864,45 @@ PR-7 the release.*
 - **The audits (PR-6) found code gaps the docs had been describing as built**, each left for its own PR and named
   here so it is not rediscovered: L1 telemetry is never pointed at the game's adapter (`SelectAdapter` has no caller,
   `18_GPU_VENDOR_APIS`); a machine-wide service refusal still says "detected in this game" (§S23-3, 🔴); no release
-  has carried a Velopack delta (`release.yml` never fetches the previous release); there is no rules feed (§S20).
+  has carried a Velopack delta (`release.yml` never fetches the previous release); there is no rules feed (§S20). *(Three of the four closed in
+  beta.13 — §S23-3, the adapter, the delta; the rules feed stays.)*
 
 **Owner-only, added to the list below:** item 9.
+
+## **START HERE** — 2026-10-04, the beta.13 train: the four follow-ups the beta.12 audit left
+
+*Status is `CHANGELOG.md` `[0.1.0-beta.13]`; this is what no other file carries. The owner asked (2026-10-04) for the
+four chips the beta.12 documentation audit had left — §S23-3's wording, the App tests' culture races, L1's adapter, the
+Velopack delta — then a release and the session closed. Two PRs: PR-1 the three code changes, PR-2 the release with the
+delta in `release.yml`.*
+
+**No new owner decision.** The choices below follow rules already written: a figure from the wrong graphics card is worse
+than N/A (`FlShmHandshake.AdapterLuid`'s own comment), and a finding on the PC is not a finding in the game (§S23-3,
+2026-09-06).
+
+**Traps met on the way:**
+
+- **Pointing L1 at the game's adapter changes nothing visible on its own**: `CompositeTelemetrySource` merges L3 > L2 >
+  L1 per field, and L2 (LibreHardwareMonitor's first GPU node) and L3 (NVAPI's first physical GPU) read their own card.
+  Every layer has to agree on the card — L1 by LUID (`IGpuAdapterSelector`), the others by the adapter's vendor
+  (`IGpuVendorFollower`), and L3 says nothing for an AMD or Intel adapter. Two GPUs of one vendor stay first-found.
+- **A `CaptureRefused`'s `reason` is the session's end reason** (`RefusedByGuard`), not the guard's: the App could not
+  tell a service from a module until the events carried `guardReason`. A `RefusedAck`'s `Reason`, by contrast, IS the
+  guard's — two "reason" fields one pipe apart that mean different things.
+- **A collection definition must be public** (xUnit1027), which CA1515 then flags in a test project that is an exe — the
+  suppression carries the reason. `TestContext.Current.TestCollection.TestCollectionClassName` proves the definition
+  bound, so a definition xUnit did not find fails a test instead of bringing the races back silently.
+- **`vpk download github --pre` puts the previous release's full package in `out/release`**: `vpk pack` needs it there to
+  write a delta, and nothing else may ship it — `assets.win.json` names what this pack built, the rest moves to
+  `out/previous`, and the feed and `RELEASES` are filtered to this build, as `vpk upload github` writes them.
+- **A 120 ms wall-clock ceiling races the second scan on a loaded runner**: the release rehearsal failed on
+  `CaptureSessionTests.AGuardThatThrowsMidSessionKeepsTheRecordsItAlreadyDrained`, which ended as `Running` before the
+  guard's second evaluation threw — the class beta.12's PR-0 fixed in the recorder tests. The four tests whose ending is a
+  scan, a throw, the kill switch or an exit take `EndsOnItsOwn` (a 30 s safety net); a test that EXPECTS `Running` keeps
+  the short ceiling, because that ceiling is its ending.
+- **The beta.12 traps about the culture race and the four code gaps are closed here** (the rules feed stays open, §S20).
+
+**Owner-only, added to the list below:** item 10.
 
 ## Owner-only — no PR can close these
 
@@ -1925,6 +1962,12 @@ PR-7 the release.*
    *View on GitHub* opening the `v0.1.0-beta.12` tag. (d) The `ja` strings marked `review` (the memory labels, the
    About window, the first-start summary). (e) `docs/LIST_GAME_TESTED.md` is as of beta.10: refresh it from a copy of
    the ledger, with the games' memory figures, and approve it before it is committed (D35).
+10. **beta.13 on real hardware.** (a) **The first delta:** update an installed `0.1.0-beta.12` through Help ▸ Check for
+   updates — the download is a fraction of the full ~107 MB, and the App comes back as beta.13; if it downloaded the
+   full package instead, say so (Velopack falls back silently). (b) **On this PC:** with an Easy Anti-Cheat service
+   running for any game, start a hook-enabled game — the notice says the anti-cheat is running on this PC, not in
+   the game. (c) **Two graphics cards**, if a machine with them is at hand: the Sensors chart's GPU figures are the
+   game's card. (d) The `ja` review of the new safety strings, with the others still marked for it.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI

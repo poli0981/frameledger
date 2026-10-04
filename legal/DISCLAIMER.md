@@ -114,7 +114,7 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 
 <!-- accuracy-block:begin -->
 > ⚠ **What FrameLedger actually measures today — 2026-10-04.** The software is a beta; its latest
-> **pre-release is `0.1.0-beta.12`** (2026-10-04), an unsigned installer built from that tag with its
+> **pre-release is `0.1.0-beta.13`** (2026-10-04), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
 > game in the library runs (unless you switched its recording off), injects only into games you enabled

@@ -29,7 +29,12 @@ All update HTTP goes through one `GitHubHttpClient` (also used by rules updates)
 
 Binaries are not code-signed (project policy). Consequences and mitigations, documented in README and the update dialog footer:
 - SmartScreen warning on first run of a new version — expected; SHA-256 checksums (`SHA256SUMS.txt`) published with every release; CI prints them into release notes.
-- ~~Velopack delta packages reduce download size; full package fallback automatic.~~ *(Corrected 2026-10-04: no delta has been published — `release.yml` never puts the previous release in `out/release` before `vpk pack`, so every update downloads the full package; a delta needs a `vpk download github` step first.)*
+- ~~Velopack delta packages reduce download size; full package fallback automatic.~~ *(Corrected 2026-10-04: no delta has been published — `release.yml` never puts the previous release in `out/release` before `vpk pack`, so every update downloads the full package; a delta needs a `vpk download github` step first.)* **Built in beta.13:**
+  `release.yml` downloads the previous release into `out/release` before `vpk pack`, so a release carries
+  `FrameLedger.App-<version>-delta.nupkg` beside the full package; the previous full package is moved out (neither uploaded
+  nor checksummed) and the feed lists this build alone, as `vpk upload github` would write it. Velopack applies the delta
+  when the installed copy is the previous release and falls back to the full package otherwise — `0.1.0-beta.13` is the
+  first release with one, so beta.12 → beta.13 is the first update that can use it (owner-only: HANDOFF item 10).
 - Never bypass or suppress OS warnings programmatically.
 
 ## Versioning

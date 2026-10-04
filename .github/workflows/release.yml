@@ -210,17 +210,53 @@ jobs:
       # ledger.db, logs, the layer manifest). The same id would put the install inside
       # the ledger's folder and have the uninstaller remove every session without the
       # question 12_BUILD promises. The title the user sees is still "FrameLedger".
+      # A DELTA (beta.13): vpk pack diffs against the newest full package already in --outputDir, and until beta.13 that
+      # directory was always empty - so no release carried a delta and every update downloaded the whole package
+      # (11_UPDATER §Built). The previous release is downloaded first; what THIS pack produced is assets.win.json, and only
+      # that is kept: the previous full package moves out (not uploaded, not checksummed) and the feed lists this build
+      # alone, as `vpk upload github` would write it. No previous release, or a download that fails, is a full-only
+      # release - said as a warning, not a stop, because it is exactly what every release before this one was.
       - name: Pack (Velopack)
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           $ErrorActionPreference = 'Stop'
           dotnet tool install -g vpk --version 1.2.0
           if ($LASTEXITCODE -ne 0) { throw 'vpk install failed' }
           $v = '${{ steps.version.outputs.version }}'
+          New-Item -ItemType Directory out/release -Force | Out-Null
+          vpk download github --repoUrl "https://github.com/${{ github.repository }}" --channel win --pre --token $env:GH_TOKEN --outputDir out/release
+          if ($LASTEXITCODE -ne 0) { Write-Host '::warning::the previous release could not be downloaded - this release carries a full package only' }
+          Write-Host 'previous release:'
+          Get-ChildItem out/release -File | ForEach-Object { Write-Host ("  {0,-48} {1,12:N0}" -f $_.Name, $_.Length) }
           vpk pack --packId FrameLedger.App --packVersion $v --packDir out/app --mainExe FrameLedger.exe --packTitle FrameLedger --packAuthors FrameLedger --releaseNotes out/notes.md --outputDir out/release
           if ($LASTEXITCODE -ne 0) { throw 'vpk pack failed' }
+
+          $built = @((Get-Content out/release/assets.win.json -Raw | ConvertFrom-Json) | ForEach-Object { $_.RelativeFileName })
+          if ($built.Count -eq 0) { throw 'vpk pack wrote no assets.win.json entries' }
+          $keep = $built + @('releases.win.json', 'assets.win.json', 'RELEASES')
+          New-Item -ItemType Directory out/previous -Force | Out-Null
+          Get-ChildItem out/release -File | Where-Object { $keep -notcontains $_.Name } | Move-Item -Destination out/previous
+          $feed = Get-Content out/release/releases.win.json -Raw | ConvertFrom-Json
+          $feed.Assets = @($feed.Assets | Where-Object { $built -contains $_.FileName })
+          if ($feed.Assets.Count -eq 0) { throw 'the feed lists none of this build''s packages' }
+          [System.IO.File]::WriteAllText((Join-Path $PWD 'out/release/releases.win.json'), ($feed | ConvertTo-Json -Depth 8 -Compress), [System.Text.UTF8Encoding]::new($false))
+          if (Test-Path out/release/RELEASES) {
+            $legacy = @(Get-Content out/release/RELEASES | Where-Object { $built -contains ($_ -split ' ')[1] })
+            [System.IO.File]::WriteAllLines((Join-Path $PWD 'out/release/RELEASES'), [string[]]$legacy, [System.Text.UTF8Encoding]::new($false))
+          }
+
+          Write-Host 'this release:'
           Get-ChildItem out/release | ForEach-Object { Write-Host ("  {0,-48} {1,12:N0}" -f $_.Name, $_.Length) }
+          Write-Host ('feed: ' + (($feed.Assets | ForEach-Object { '{0} {1} {2}' -f $_.Type, $_.Version, $_.FileName }) -join '; '))
           if (-not (Test-Path out/release/FrameLedger.App-win-Setup.exe)) { throw 'vpk did not produce FrameLedger.App-win-Setup.exe (README §Install names it)' }
+          $delta = "out/release/FrameLedger.App-$v-delta.nupkg"
+          if (Get-ChildItem out/previous -Filter '*-full.nupkg' -ErrorAction SilentlyContinue) {
+            if (-not (Test-Path $delta)) { throw "the previous full package was downloaded, but vpk produced no delta ($delta)" }
+          } else {
+            Write-Host '::warning::no previous full package - this release carries no delta'
+          }
 
       - name: Checksums
         shell: pwsh

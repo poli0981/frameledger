@@ -131,7 +131,8 @@ that it was checked against anything.
 | Mode | launch mode · attach mode · mid-session settings change |
 | Safety | game with anti-cheat → toggle disabled · simulated late AC load → unhook · double-crash → auto-disable |
 | Tier | forced Tier 2 (records duration, available sensors and the reason — and nothing else) · Tier 1 → Tier 2 degradation notice |
-| Update | Velopack delta; update deferred while a game is hooked (FR-12) — *a delta needs a previous release, so this row is reachable from the second release, not the first* *(corrected 2026-10-04: no release has carried a delta — `release.yml` never fetches the previous release before `vpk pack`, `11_UPDATER` §Built — so the update leg is a full package)* |
+| Update | Velopack delta; update deferred while a game is hooked (FR-12) — *a delta needs a previous release, so this row is reachable from the second release, not the first* *(corrected 2026-10-04: no release has carried a delta — `release.yml` never fetches the previous release before `vpk pack`, `11_UPDATER` §Built — so the update leg is a full package; **since beta.13** a release carries a delta against the previous one, and the first
+update that can use it is beta.12 → beta.13 — HANDOFF owner-only item 10)* |
 
 ## Release smoke
 
