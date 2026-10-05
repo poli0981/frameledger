@@ -16,5 +16,11 @@
         <sp:WpfPlot x:Name="Vram" Height="220" Margin="0,6,0,0" />
         <ui:TextBlock Margin="0,12,0,0" FontTypography="BodyStrong" Text="{x:Static res:Strings.Sensors_Ram_Header}" />
         <sp:WpfPlot x:Name="Ram" Height="220" Margin="0,6,0,0" />
+        <!-- beta.14 (D49): the card's clocks (MHz) and fan (RPM, right axis), with the ticks its power limit or heat held it
+             back shaded. Collapsed when the session stored none of them. -->
+        <StackPanel x:Name="ClocksSection">
+            <ui:TextBlock Margin="0,12,0,0" FontTypography="BodyStrong" Text="{x:Static res:Strings.Sensors_Clocks_Header}" />
+            <sp:WpfPlot x:Name="Clocks" Height="220" Margin="0,6,0,0" />
+        </StackPanel>
     </StackPanel>
 </UserControl>

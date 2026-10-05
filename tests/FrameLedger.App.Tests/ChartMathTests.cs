@@ -107,7 +107,12 @@ public sealed class ChartMathTests
     {
         Dictionary<string, (int R, int G, int B)> palette = Palette(file);
 
-        foreach (string[] plot in new[] { SensorsChart.TempsPlot.Select(static s => s.PaletteKey).ToArray(), SensorsChart.VideoMemoryPlot.Select(static s => s.PaletteKey).ToArray(), SensorsChart.SystemMemoryPlot.Select(static s => s.PaletteKey).ToArray() })
+        // beta.14: the temperatures plot has a seventh line (the card's memory), and the clocks plot is a fourth plot.
+        foreach (string[] plot in new[]
+                 {
+                     SensorsChart.TempsPlot.Select(static s => s.PaletteKey).ToArray(), SensorsChart.VideoMemoryPlot.Select(static s => s.PaletteKey).ToArray(),
+                     SensorsChart.SystemMemoryPlot.Select(static s => s.PaletteKey).ToArray(), SensorsChart.ClocksPlot.Select(static s => s.PaletteKey).ToArray(),
+                 })
         {
             for (int i = 0; i < plot.Length; i++)
             {

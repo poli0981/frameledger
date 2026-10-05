@@ -168,4 +168,50 @@ public sealed class CompareViewModelTests
         CompareViewModel.Row("t", close, static r => r.MedianFps, static v => Formats.FpsNumber(v!.Value, twoDecimals: false), higherIsBetter: true)
             .Cells.Select(static c => c.IsBest).Should().Equal([true, true, false], "both are shown as 62");
     }
+    /// <summary>
+    /// beta.14 (D49): the new rows, and the <c>(presented)</c> label — a session whose frame statistics are over its presents
+    /// says so in its cell, beside one whose statistics are over the game's own frames (rule 6). The best is decided on the
+    /// number: less time below 60 is better, more frames per watt is better, and a VSync share ranks nothing.
+    /// </summary>
+    [Fact]
+    public async Task APresentOnlySessionsStatisticsAreLabelledAndTheNewRowsRankAsTheySay()
+    {
+        CultureInfo? previous = Strings.Culture;
+        CultureInfo previousCulture = CultureInfo.CurrentCulture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow a = await s.GameAsync("Alpha");
+            await s.SessionAsync(a.Id, DateTimeOffset.UtcNow.AddHours(-2), fgMode: "na", native: null, presented: 72, qualifier: "fg_runtime_loaded",
+                shape: static r => r with { TimeBelow60Pct = 20, VsyncPresentPct = 100, AppFramesPerJoule = null, UpscaleRatio = 1.5 });
+            await s.SessionAsync(a.Id, DateTimeOffset.UtcNow.AddHours(-1),
+                shape: static r => r with { TimeBelow60Pct = 5, VsyncPresentPct = 0, AppFramesPerJoule = 0.31, UpscaleRatio = 2 });
+            CompareViewModel vm = await BuildAsync(s, new ScriptedMixed(answer: true));
+            foreach (CompareCandidateViewModel c in vm.Candidates)
+            {
+                c.IsSelected = true;
+            }
+
+            vm.CompareCommand.Execute(null);
+            Task pending = vm.Pending;
+            await pending;
+            CompareRowViewModel RowOf(string metric) => vm.Rows.Single(r => string.Equals(r.Metric, metric, StringComparison.Ordinal));
+
+            // Newest first: the counted-none session, then the present-only one.
+            RowOf("1% Low").Cells.Select(static c => c.Text).Should().Equal("48", "48 (presented)");
+            CompareRowViewModel below = RowOf("Time below 60 FPS");
+            below.Cells.Select(static c => c.Text).Should().Equal("5.0%", "20.0% (presented)");
+            below.Cells.Select(static c => c.IsBest).Should().Equal(true, false);
+            RowOf("Frames per watt").Cells.Select(static c => (c.Text, c.IsBest)).Should().Equal(("0.31 FPS/W", true), ("N/A", false));
+            RowOf("VSync share").Cells.Should().OnlyContain(static c => !c.IsBest, "a setting, not a score");
+            RowOf("Render scale").Cells.Select(static c => c.Text).Should().Equal("50.0%", "66.7%");
+        }
+        finally
+        {
+            Strings.Culture = previous;
+            CultureInfo.CurrentCulture = previousCulture;
+        }
+    }
 }

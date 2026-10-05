@@ -1,0 +1,17 @@
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+<!-- Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE -->
+
+<UserControl x:Class="FrameLedger.App.Charts.RenderScaleChart"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:res="clr-namespace:FrameLedger.App"
+             xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF">
+    <!-- 08_UI §Session summary (beta.14, D49): the render scale over the session, as steps; a line saying it was not measured
+         where the upscaler's parameters never were. -->
+    <Grid>
+        <sp:WpfPlot x:Name="Plot" />
+        <ui:TextBlock x:Name="NotMeasured" Appearance="Secondary" TextWrapping="Wrap" VerticalAlignment="Center" HorizontalAlignment="Center"
+                      Text="{x:Static res:Strings.Chart_RenderScale_NotMeasured}" Visibility="Collapsed" />
+    </Grid>
+</UserControl>

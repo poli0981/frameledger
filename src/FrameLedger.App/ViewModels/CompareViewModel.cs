@@ -182,13 +182,45 @@ public sealed partial class CompareViewModel : ObservableObject
     {
         Rows.Clear();
         SessionRow[] rows = [.. picked.Select(static c => c.Row)];
+        AddFrameRows(rows);
+        AddMachineRows(rows);
+        Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Duration, [.. rows.Select(static r => new CompareCell(Formats.Duration(r.DurationSeconds), false))]));
+
+        // beta.10: how each session was shown, both tiers. Facts, not scores: no mode is better than another, so none is best.
+        Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Display, [.. rows.Select(static r => new CompareCell(DisplayText.Shares(DisplayText.Of(r)), false))]));
+        Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Window, [.. rows.Select(static r => new CompareCell(DisplayText.Window(DisplayText.Of(r)), false))]));
+        Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Monitor, [.. rows.Select(static r => new CompareCell(DisplayText.Monitor(DisplayText.Of(r)), false))]));
+    }
+
+    /// <summary>
+    /// The frame rate's rows, hooked sessions only. A statistic a present-only session has over its presents is labelled
+    /// <c>(presented)</c> in its cell (beta.14, rule 6) — beside a session whose same statistic is over the game's own frames,
+    /// an unlabelled number would compare two different things as one.
+    /// </summary>
+    private void AddFrameRows(SessionRow[] rows)
+    {
         Rows.Add(Row(Strings.Compare_Metric_Native, rows, static r => FpsPresentation.FromRow(r) is { Kind: FpsReadoutKind.Generated or FpsReadoutKind.None } m ? m.Native : null, Formats.Fps, higherIsBetter: true));
         Rows.Add(Row(Strings.Compare_Metric_Displayed, rows, static r => FpsPresentation.FromRow(r) is { Kind: FpsReadoutKind.Generated } m ? m.Displayed : null, Formats.Fps, higherIsBetter: true));
         Rows.Add(Row(Strings.Compare_Metric_Presented, rows, static r => FpsPresentation.FromRow(r) is { Kind: FpsReadoutKind.Presented or FpsReadoutKind.IdentifiedUncounted } m ? m.Presented : null, Formats.Fps, higherIsBetter: true));
-        Rows.Add(Row(Strings.Compare_Metric_Median, rows, static r => r.Tier == Domain.Sessions.CaptureTier.Hooked ? r.MedianFps : null, Formats.Fps, higherIsBetter: true));
-        Rows.Add(Row(Strings.Compare_Metric_P1Low, rows, static r => r.Tier == Domain.Sessions.CaptureTier.Hooked ? r.P1LowFps : null, Formats.Fps, higherIsBetter: true));
-        Rows.Add(Row(Strings.Compare_Metric_P01Low, rows, static r => r.Tier == Domain.Sessions.CaptureTier.Hooked ? r.P01LowFps : null, Formats.Fps, higherIsBetter: true));
-        Rows.Add(Row(Strings.Compare_Metric_StutterPct, rows, static r => r.Tier == Domain.Sessions.CaptureTier.Hooked ? r.StutterTimePct : null, static v => v is double d ? d.ToString("0.0", CultureInfo.CurrentCulture) + "%" : Strings.Common_NotAvailable, higherIsBetter: false));
+        Rows.Add(Row(Strings.Compare_Metric_Median, rows, static r => Hooked(r, r.MedianFps), Formats.Fps, higherIsBetter: true, PresentedLabel));
+        Rows.Add(Row(Strings.Compare_Metric_P1Low, rows, static r => Hooked(r, r.P1LowFps), Formats.Fps, higherIsBetter: true, PresentedLabel));
+        Rows.Add(Row(Strings.Compare_Metric_P01Low, rows, static r => Hooked(r, r.P01LowFps), Formats.Fps, higherIsBetter: true, PresentedLabel));
+        Rows.Add(Row(Strings.Compare_Metric_StutterPct, rows, static r => Hooked(r, r.StutterTimePct), Formats.Share, higherIsBetter: false, PresentedLabel));
+
+        // beta.14 (D49): pacing — less time below 60 and less change from frame to frame is better; the refresh share is the
+        // display's, over presents, generated frames included, and is named for it rather than labelled presented.
+        Rows.Add(Row(Strings.Compare_Metric_TimeBelow60, rows, static r => Hooked(r, r.TimeBelow60Pct), Formats.Share, higherIsBetter: false, PresentedLabel));
+        Rows.Add(Row(Strings.Compare_Metric_TimeBelowRefresh, rows, static r => Hooked(r, r.TimeBelowRefreshPct), Formats.Share, higherIsBetter: false));
+        Rows.Add(Row(Strings.Compare_Metric_FrameToFrame, rows, static r => Hooked(r, r.FrametimeDeltaMeanMs), Formats.Milliseconds, higherIsBetter: false, PresentedLabel));
+
+        // What the presents asked for, and the render scale: settings, not scores — no best.
+        Rows.Add(Row(Strings.Compare_Metric_Vsync, rows, static r => Hooked(r, r.VsyncPresentPct), Formats.Share, higherIsBetter: null));
+        Rows.Add(Row(Strings.Compare_Metric_RenderScale, rows, static r => r.UpscaleRatio is > 0 ? 100.0 / r.UpscaleRatio.Value : null, Formats.Share, higherIsBetter: null));
+    }
+
+    /// <summary>The machine's rows, both tiers.</summary>
+    private void AddMachineRows(SessionRow[] rows)
+    {
         Rows.Add(Row(Strings.Compare_Metric_MaxGpuTemp, rows, static r => r.MaxGpuTemp, Formats.Temperature, higherIsBetter: false));
         // A load is neither better high nor low (beta.8): a GPU at 99 % may be the bottleneck or simply busy, so neither row
         // names a best.
@@ -202,20 +234,28 @@ public sealed partial class CompareViewModel : ObservableObject
         Rows.Add(Row(Strings.Compare_Metric_GameVramPeak, rows, static r => r.GameVramDedicatedMaxMb, Formats.Memory, higherIsBetter: null));
         Rows.Add(Row(Strings.Compare_Metric_GameRamMedian, rows, static r => r.GameRamPrivateMedianMb, Formats.Memory, higherIsBetter: null));
         Rows.Add(Row(Strings.Compare_Metric_GameRamPeak, rows, static r => r.GameRamPrivateMaxMb, Formats.Memory, higherIsBetter: null));
-        Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Duration, [.. rows.Select(static r => new CompareCell(Formats.Duration(r.DurationSeconds), false))]));
 
-        // beta.10: how each session was shown, both tiers. Facts, not scores: no mode is better than another, so none is best.
-        Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Display, [.. rows.Select(static r => new CompareCell(DisplayText.Shares(DisplayText.Of(r)), false))]));
-        Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Window, [.. rows.Select(static r => new CompareCell(DisplayText.Window(DisplayText.Of(r)), false))]));
-        Rows.Add(new CompareRowViewModel(Strings.Compare_Metric_Monitor, [.. rows.Select(static r => new CompareCell(DisplayText.Monitor(DisplayText.Of(r)), false))]));
+        // beta.14 (D49): the card. A clock and a power limit are facts about the card, not scores; a cooler memory and more
+        // of the game's own frames per watt are better.
+        Rows.Add(Row(Strings.Compare_Metric_GpuCoreClock, rows, static r => r.AvgGpuCoreClockMhz, Formats.Frequency, higherIsBetter: null));
+        Rows.Add(Row(Strings.Compare_Metric_MaxGpuMemTemp, rows, static r => r.MaxGpuMemTemp, Formats.Temperature, higherIsBetter: false));
+        Rows.Add(Row(Strings.Compare_Metric_PowerLimit, rows, static r => r.PowerLimitPct, Formats.Share, higherIsBetter: null));
+        Rows.Add(Row(Strings.Compare_Metric_Efficiency, rows, static r => r.AppFramesPerJoule, Formats.FramesPerJoule, higherIsBetter: true));
     }
+
+    private static double? Hooked(SessionRow row, double? value) => row.Tier == Domain.Sessions.CaptureTier.Hooked ? value : null;
+
+    /// <summary>The <c>(presented)</c> label for a hooked session whose statistics are over presents; null otherwise.</summary>
+    private static string? PresentedLabel(SessionRow row) =>
+        row.Tier == Domain.Sessions.CaptureTier.Hooked && FpsPresentation.FromRow(row).Kind == FpsReadoutKind.Presented ? Strings.Summary_Lows_Presented : null;
 
     /// <summary>
     /// One row: the value per session, the best (never an N/A) flagged; a row where nothing has a value is all N/A and nothing
     /// is best, and a row that ranks nothing (<paramref name="higherIsBetter"/> null) flags none. Since beta.8 the best is the
     /// best as SHOWN: two sessions that both read "62" are both best — 62.4 against 62.3 is not a difference the reader sees.
     /// </summary>
-    internal static CompareRowViewModel Row(string metric, IReadOnlyList<SessionRow> rows, Func<SessionRow, double?> value, Func<double?, string> text, bool? higherIsBetter)
+    internal static CompareRowViewModel Row(string metric, IReadOnlyList<SessionRow> rows, Func<SessionRow, double?> value, Func<double?, string> text, bool? higherIsBetter,
+        Func<SessionRow, string?>? label = null)
     {
         double?[] values = [.. rows.Select(value)];
         double? best = higherIsBetter switch
@@ -225,8 +265,14 @@ public sealed partial class CompareViewModel : ObservableObject
             null => null,
         };
         string? bestText = best.HasValue ? text(best) : null;
-        return new CompareRowViewModel(metric, [.. values.Select(v => new CompareCell(text(v), bestText is not null && v.HasValue && string.Equals(text(v), bestText, StringComparison.Ordinal)))]);
+
+        // The best is decided on the number as shown; a label beside it (beta.14) says what the number is over, not how good.
+        return new CompareRowViewModel(metric, [.. values.Select((v, i) => new CompareCell(
+            Labelled(text(v), v.HasValue ? label?.Invoke(rows[i]) : null),
+            bestText is not null && v.HasValue && string.Equals(text(v), bestText, StringComparison.Ordinal)))]);
     }
+
+    private static string Labelled(string text, string? label) => label is null ? text : text + " " + label;
 
     private void OnCandidateChanged(object? sender, PropertyChangedEventArgs e)
     {

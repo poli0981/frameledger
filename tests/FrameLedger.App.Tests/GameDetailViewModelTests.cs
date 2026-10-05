@@ -940,4 +940,17 @@ public sealed class GameDetailViewModelTests
         GameDetailViewModel.CapabilityNames("not json").Should().BeEmpty();
         GameDetailViewModel.CapabilityNames(null).Should().BeEmpty();
     }
+    /// <summary>beta.14: the Latency tab shows only when one of the game's sessions measured PC latency — nothing measures it today.</summary>
+    [Fact]
+    public async Task TheLatencyTabIsShownOnlyWhereASessionMeasuredLatency()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow without = await s.GameAsync("Without");
+        await s.SessionAsync(without.Id, DateTimeOffset.UtcNow);
+        GameRow with = await s.GameAsync("With");
+        await s.SessionAsync(with.Id, DateTimeOffset.UtcNow, shape: static r => r with { ReflexActive = true, LatencyAvgUs = 21_000, LatencyP95Us = 30_000 });
+
+        (await BuildAsync(s, without.Id)).Vm.AnyLatency.Should().BeFalse();
+        (await BuildAsync(s, with.Id)).Vm.AnyLatency.Should().BeTrue();
+    }
 }

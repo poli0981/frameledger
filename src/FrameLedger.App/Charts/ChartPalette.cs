@@ -25,13 +25,15 @@ public sealed record ChartPalette(
     Color SensorSecondary,
     Color Segment,
     Color Histogram,
-    Color Percentile)
+    Color Percentile,
+    Color SensorTertiary)
 {
     /// <summary>The keys both dictionaries must carry, in the record's order.</summary>
     public static readonly IReadOnlyList<string> Keys =
     [
         "Chart_Figure", "Chart_Data", "Chart_Axis", "Chart_Grid", "Chart_Native", "Chart_Displayed", "Chart_Stutter",
         "Chart_StutterPso", "Chart_Sensor", "Chart_SensorSecondary", "Chart_Segment", "Chart_Histogram", "Chart_Percentile",
+        "Chart_SensorTertiary",
     ];
 
     private static readonly Dictionary<ApplicationTheme, ChartPalette> _cache = [];
@@ -57,7 +59,7 @@ public sealed record ChartPalette(
     {
         ArgumentNullException.ThrowIfNull(dictionary);
         Color[] c = [.. Keys.Select(k => Convert(dictionary, k))];
-        return new ChartPalette(c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8], c[9], c[10], c[11], c[12]);
+        return new ChartPalette(c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8], c[9], c[10], c[11], c[12], c[13]);
     }
 
     /// <summary>The colour a key names — how a chart that assigns palette entries to series by name reads them (<c>SensorsChart</c>).</summary>
@@ -76,6 +78,7 @@ public sealed record ChartPalette(
         "Chart_Segment" => Segment,
         "Chart_Histogram" => Histogram,
         "Chart_Percentile" => Percentile,
+        "Chart_SensorTertiary" => SensorTertiary,
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, "not a chart palette key"),
     };
 

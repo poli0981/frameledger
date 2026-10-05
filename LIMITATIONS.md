@@ -74,6 +74,8 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
 
 ## Upscaling and ray tracing
 
+- **The render scale chart** (since 0.1.0-beta.14) is drawn only where the render resolution was measured — the
+  same games as *Render → output resolution* in the accuracy statement; elsewhere it says it was not measured.
 - The upscaler is read from the game's calls: DLSS and NIS through NVIDIA Streamline, and FSR through AMD's
   FidelityFX libraries. **Intel XeSS is not read** (its licence forbids it), FSR 2 and upscalers built into the
   game are not identified, and Vulkan and OpenGL games read N/A. Where no hook saw DLSS but the NVIDIA driver

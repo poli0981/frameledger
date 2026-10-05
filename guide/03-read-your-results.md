@@ -18,6 +18,14 @@ A value FrameLedger could not measure reads **N/A** — never 0, and never an es
 - **1% low** and **0.1% low** are the frame rate of the slowest 1% and 0.1% of frames: the further they fall below the
   average, the less smooth the game felt. **Stutter** counts frames that took much longer than the frames around them,
   and the share of time they took.
+- **Time below 60 FPS** (with *below 30* and *display under* your monitor's refresh rate beneath it) is how much of the
+  session ran slower than that. A game held at its limit is not counted as dropping below it for the tiny wobble every
+  frame limit has. **Frame to frame** is how much one frame's time differs from the next: lower is smoother.
+- **VSync** is how many frames asked to wait for the display, and *tearing allowed* how many did not mind tearing — what
+  the game asked; your graphics driver can still override it.
+- **GPU clocks**, the fan and the video memory's temperature are the card's own readings. **GPU held back** says how much
+  of the time its power limit or its temperature slowed it down (NVIDIA cards only). **Frames per watt** is the game's
+  own frames per second for each watt the graphics card drew — generated frames never count.
 
 ## Memory
 
@@ -38,8 +46,10 @@ correct it by hand — your correction is labelled as yours.
 
 - **Frametime** — how long each frame took. Spikes are stutters.
 - **Distribution** — how often each frame rate occurred.
-- **Sensors** — temperatures, load and power; video memory; memory. The game's own line and the whole card's or the
-  whole PC's are drawn separately.
+- **Render scale** — the share of the screen's resolution the game rendered at before upscaling (100% means no
+  upscaling), and when it changed.
+- **Sensors** — temperatures, load and power; video memory; memory; and the card's clocks and fan, with the moments it
+  was held back shaded. The game's own line and the whole card's or the whole PC's are drawn separately.
 - **Trend** (on the game's page) — one point per session over time, for example before and after a driver update.
   Changes to your hardware or driver are marked on it.
 - **Compare** (in the navigation on the left) — pick sessions, even of different games, and see them side by side.

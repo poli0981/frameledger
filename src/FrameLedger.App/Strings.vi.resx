@@ -2928,4 +2928,160 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="Format_Rpm_Format" xml:space="preserve">
     <value>{0:N0} vòng/phút</value>
   </data>
+  <data name="Format_Milliseconds_Format" xml:space="preserve">
+    <value>{0:0.00} ms</value>
+  </data>
+  <data name="Format_FramesPerJoule_Format" xml:space="preserve">
+    <value>{0:0.00} FPS/W</value>
+  </data>
+  <data name="Summary_Stat_TimeBelow60" xml:space="preserve">
+    <value>Thời gian dưới 60 FPS</value>
+  </data>
+  <data name="Summary_Stat_Below30_Format" xml:space="preserve">
+    <value>dưới 30: {0}</value>
+  </data>
+  <data name="Summary_Stat_BelowRefresh_Format" xml:space="preserve">
+    <value>màn hình dưới {0} Hz: {1}</value>
+  </data>
+  <data name="Summary_Stat_FrameToFrame" xml:space="preserve">
+    <value>Chênh lệch giữa các frame</value>
+  </data>
+  <data name="Summary_Stat_Vsync" xml:space="preserve">
+    <value>VSync</value>
+  </data>
+  <data name="Summary_Stat_OfFrames_Format" xml:space="preserve">
+    <value>{0} số frame</value>
+  </data>
+  <data name="Summary_Stat_Tearing_Format" xml:space="preserve">
+    <value>cho phép xé hình: {0}</value>
+  </data>
+  <data name="Summary_Stat_RayTracing" xml:space="preserve">
+    <value>Ray tracing</value>
+  </data>
+  <data name="Summary_Stat_RaysPerPixel_Format" xml:space="preserve">
+    <value>{0:0.00} tia mỗi điểm ảnh</value>
+  </data>
+  <data name="Summary_Stat_Focus" xml:space="preserve">
+    <value>Game đang được chọn</value>
+  </data>
+  <data name="Summary_Stat_Focus_Format" xml:space="preserve">
+    <value>{0} thời gian</value>
+  </data>
+  <data name="Summary_Stat_Capture" xml:space="preserve">
+    <value>Chất lượng ghi</value>
+  </data>
+  <data name="Summary_Stat_Capture_Format" xml:space="preserve">
+    <value>{0:N0} khoảng trống · {1:N0} bị mất · {2:N0} lỗi</value>
+  </data>
+  <data name="Summary_Stat_DisplayedLow_Format" xml:space="preserve">
+    <value>hiển thị: {0}</value>
+  </data>
+  <data name="Summary_Stat_GpuClocks" xml:space="preserve">
+    <value>Xung nhịp GPU</value>
+  </data>
+  <data name="Summary_Stat_Clocks_Format" xml:space="preserve">
+    <value>{0} lõi · {1} bộ nhớ</value>
+  </data>
+  <data name="Summary_Stat_FanMemTemp_Format" xml:space="preserve">
+    <value>quạt {0} · bộ nhớ {1}</value>
+  </data>
+  <data name="Summary_Stat_GpuLimits" xml:space="preserve">
+    <value>GPU bị giới hạn</value>
+  </data>
+  <data name="Summary_Stat_Limits_Format" xml:space="preserve">
+    <value>công suất {0} · nhiệt {1}</value>
+  </data>
+  <data name="Summary_Stat_Efficiency" xml:space="preserve">
+    <value>Frame mỗi watt</value>
+  </data>
+  <data name="Summary_Stat_Efficiency_Note" xml:space="preserve">
+    <value>chỉ frame của game, chỉ công suất GPU</value>
+  </data>
+  <data name="Summary_RenderScale_Header" xml:space="preserve">
+    <value>Tỉ lệ render</value>
+  </data>
+  <data name="Chart_Axis_RenderScale" xml:space="preserve">
+    <value>Tỉ lệ render %</value>
+  </data>
+  <data name="Chart_RenderScale_NotMeasured" xml:space="preserve">
+    <value>Phiên này không đo được độ phân giải render.</value>
+  </data>
+  <data name="Sensors_Clocks_Header" xml:space="preserve">
+    <value>Xung nhịp và quạt</value>
+  </data>
+  <data name="Sensors_Axis_Mhz" xml:space="preserve">
+    <value>MHz</value>
+  </data>
+  <data name="Sensors_Axis_Rpm" xml:space="preserve">
+    <value>vòng/phút</value>
+  </data>
+  <data name="Sensors_Limit_Power" xml:space="preserve">
+    <value>bị giới hạn công suất</value>
+  </data>
+  <data name="Sensors_Limit_Thermal" xml:space="preserve">
+    <value>bị giới hạn do nhiệt</value>
+  </data>
+  <data name="Trend_Metric_TimeBelow60" xml:space="preserve">
+    <value>Thời gian dưới 60 FPS %</value>
+  </data>
+  <data name="Trend_Metric_TimeBelowRefresh" xml:space="preserve">
+    <value>Màn hình dưới tần số quét %</value>
+  </data>
+  <data name="Trend_Metric_FrameToFrame" xml:space="preserve">
+    <value>Chênh lệch giữa các frame ms</value>
+  </data>
+  <data name="Trend_Metric_RenderScale" xml:space="preserve">
+    <value>Tỉ lệ render %</value>
+  </data>
+  <data name="Trend_Metric_VsyncShare" xml:space="preserve">
+    <value>Tỉ lệ VSync %</value>
+  </data>
+  <data name="Trend_Metric_GpuCoreClock" xml:space="preserve">
+    <value>Xung nhịp lõi GPU TB MHz</value>
+  </data>
+  <data name="Trend_Metric_MaxGpuMemTemp" xml:space="preserve">
+    <value>Bộ nhớ GPU tối đa °C</value>
+  </data>
+  <data name="Trend_Metric_PowerLimitShare" xml:space="preserve">
+    <value>Bị giới hạn công suất %</value>
+  </data>
+  <data name="Trend_Metric_Efficiency" xml:space="preserve">
+    <value>Frame mỗi watt</value>
+  </data>
+  <data name="Trend_Unit_Ms" xml:space="preserve">
+    <value>ms</value>
+  </data>
+  <data name="Trend_Unit_Mhz" xml:space="preserve">
+    <value>MHz</value>
+  </data>
+  <data name="Trend_Unit_FpsPerWatt" xml:space="preserve">
+    <value>FPS/W</value>
+  </data>
+  <data name="Compare_Metric_TimeBelow60" xml:space="preserve">
+    <value>Thời gian dưới 60 FPS</value>
+  </data>
+  <data name="Compare_Metric_TimeBelowRefresh" xml:space="preserve">
+    <value>Màn hình dưới tần số quét</value>
+  </data>
+  <data name="Compare_Metric_FrameToFrame" xml:space="preserve">
+    <value>Chênh lệch giữa các frame</value>
+  </data>
+  <data name="Compare_Metric_Vsync" xml:space="preserve">
+    <value>Tỉ lệ VSync</value>
+  </data>
+  <data name="Compare_Metric_RenderScale" xml:space="preserve">
+    <value>Tỉ lệ render</value>
+  </data>
+  <data name="Compare_Metric_GpuCoreClock" xml:space="preserve">
+    <value>Xung nhịp lõi GPU TB</value>
+  </data>
+  <data name="Compare_Metric_MaxGpuMemTemp" xml:space="preserve">
+    <value>Bộ nhớ GPU tối đa °C</value>
+  </data>
+  <data name="Compare_Metric_PowerLimit" xml:space="preserve">
+    <value>Bị giới hạn công suất</value>
+  </data>
+  <data name="Compare_Metric_Efficiency" xml:space="preserve">
+    <value>Frame mỗi watt</value>
+  </data>
 </root>

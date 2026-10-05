@@ -31,6 +31,16 @@ public sealed class FormatsTests
         }
     }
 
+    /// <summary>beta.14 (D49): a share to one decimal, a frame-time difference in ms, frames per joule as FPS/W; N/A, never 0.</summary>
+    [Fact]
+    public void SharesMillisecondsAndFramesPerWatt()
+    {
+        InEnglish(static () => (Formats.Share(9.62), Formats.Share(0.04), Formats.Share(null))).Should().Be(("9.6%", "0.0%", "N/A"));
+        InEnglish(static () => (Formats.Milliseconds(0.875), Formats.Milliseconds(null))).Should().Be(("0.88 ms", "N/A"));
+        InEnglish(static () => (Formats.FramesPerJoule(0.3125), Formats.FramesPerJoule(null))).Should().Be(("0.31 FPS/W", "N/A"));
+        InEnglish(static () => (Formats.Frequency(2655.4), Formats.Rpm(1450.4))).Should().Be(("2,655 MHz", "1,450 RPM"));
+    }
+
     [Fact]
     public void DurationsAndPlaytime()
     {
