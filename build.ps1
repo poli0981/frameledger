@@ -320,13 +320,27 @@ function Invoke-ProjectGates {
     # Being plainly identifiable to anti-cheat is a requirement, not packaging
     # polish (docs/19_SAFETY_AND_ANTICHEAT.md). Reads the built binary, because
     # what ships is what an anti-cheat vendor sees.
+    #
+    # beta.14 (D50): BOTH HALVES. The rules prove themselves first (ten cases,
+    # nine RED, each for its own reason), then the live pass reads the native five
+    # and the managed eight from the App's and the Agent's build output, whose
+    # ProductVersion is the VERSION file's here (release.yml passes the tag's).
+    # Under -SkipNative the managed half still runs.
     Write-Step 'versioninfo-check'
     $versionTool = Join-Path $repo 'tools/versioninfo-check.ps1'
-    if ((Test-Path $versionTool) -and -not $SkipNative) {
-        Invoke-Checked 'versioninfo-check' { & $versionTool -BuildDir (Join-Path $repo "build/native/x64-$($Configuration.ToLower())") }
-    }
-    elseif ($SkipNative) {
-        Skip-Gate 'versioninfo-check' 'native build skipped, so there is no binary to inspect'
+    if (Test-Path $versionTool) {
+        Invoke-Checked 'versioninfo-check (self-test)' { & $versionTool -SelfTest }
+        $managedDirs = @('FrameLedger.App', 'FrameLedger.Agent' | ForEach-Object { Join-Path $repo "src/$_/bin/$Configuration" })
+        $productVersion = (Get-Content (Join-Path $repo 'VERSION') -Raw).Trim()
+        if ($SkipNative) {
+            Invoke-Checked 'versioninfo-check (managed)' { & $versionTool -ManagedOnly -ManagedDir $managedDirs -ExpectedProductVersion $productVersion }
+            Skip-Gate 'versioninfo-check (native)' 'native build skipped, so there is no binary to inspect'
+        }
+        else {
+            Invoke-Checked 'versioninfo-check' {
+                & $versionTool -BuildDir (Join-Path $repo "build/native/x64-$($Configuration.ToLower())") -ManagedDir $managedDirs -ExpectedProductVersion $productVersion
+            }
+        }
     }
     else {
         Skip-Gate 'versioninfo-check' 'tools/versioninfo-check.ps1 not implemented yet'

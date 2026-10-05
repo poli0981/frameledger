@@ -86,6 +86,12 @@ numeric core and does not move; the heading is the full version — corrected 20
 - **Over a chart, the wheel scrolls the page; Ctrl+wheel zooms the chart.** ScottPlot zoomed on every wheel, which with
   the pages scrolling again would have zoomed the chart and scrolled the page at once. Dragging still pans and
   double-click still resets.
+- **FrameLedger's own programs say what they are.** In Explorer (*Properties ▸ Details*) `FrameLedger.exe` and
+  `FrameLedger.Agent.exe` now name the product, the author's copyright and what each one does, as the native DLLs always
+  have; Task Manager lists the background service as *FrameLedger Agent* rather than *FrameLedger.Agent*. Until this
+  release the Agent called its company and product "FrameLedger.Agent" and no managed file carried a copyright. The
+  release check now reads both kinds of file and fails when one of them does not name FrameLedger or carries a different
+  copyright line.
 
 ## [0.1.0-beta.13] - 2026-10-04
 

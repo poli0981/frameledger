@@ -12,6 +12,10 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <AssemblyName>FrameLedger.Agent</AssemblyName>
     <RootNamespace>FrameLedger.Agent</RootNamespace>
+    <!-- beta.14 (D50): Task Manager lists a process by its file description, and until beta.14 this one read
+         "FrameLedger.Agent" - the SDK's default, the assembly name - with the same as its company and product. -->
+    <AssemblyTitle>FrameLedger Agent</AssemblyTitle>
+    <Description>FrameLedger Agent: watches the games you added and records their sessions. Identifies itself deliberately; see https://github.com/poli0981/frameledger</Description>
   </PropertyGroup>
 
   <ItemGroup>

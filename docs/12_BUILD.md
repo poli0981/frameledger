@@ -44,7 +44,7 @@ Compiler/linker flags (enforced in CMake, not per-target ad hoc): `/std:c++20 /M
 
 **No AMD or Intel GPU *telemetry* SDK is vendored.** Those vendors' sensors are covered by LibreHardwareMonitor and the DXGI/PDH baseline (`18_GPU_VENDOR_APIS`). A build that pulls in Intel IGCL or AMD ADLX material is a licensing regression, not a feature — CI greps for it. **The AMD FidelityFX ffx-api headers (MIT by exception, tag v2.3.0) ARE vendored since 2026-09-04**, for the Overlay's upscaler hook and for types only — `fl_fidelityfx_headers` above, `18_GPU_VENDOR_APIS` §AMD for the licence reading, and `license-check.ps1` §2d for the per-file gate. Intel's XeSS SDK failed the checklist and nothing of it is here.
 
-**VERSIONINFO is mandatory** on ~~`FrameLedger.Overlay.dll` and `FrameLedger.VkLayer.dll`~~ every shipped native — the five `tools/versioninfo-check.ps1` lists (corrected 2026-10-04): real `CompanyName`, `ProductName=FrameLedger`, `FileDescription`, version. Identifiability is a requirement (`19_SAFETY`), and a CI check fails the build if the resource block is missing.
+**VERSIONINFO is mandatory** on ~~`FrameLedger.Overlay.dll` and `FrameLedger.VkLayer.dll`~~ every shipped native — the five `tools/versioninfo-check.ps1` lists (corrected 2026-10-04): real `CompanyName`, `ProductName=FrameLedger`, `FileDescription`, version. Identifiability is a requirement (`19_SAFETY`), and a CI check fails the build if the resource block is missing. **Since beta.14 (D50) the managed binaries are held to the same** — §Version, *Identity*.
 
 ## Managed build & native integration
 
@@ -170,6 +170,29 @@ two products claiming to be one.
 - `release.yml` refuses a tag whose numeric core is not the file's. Bumping the version is one edit to
   `VERSION`, in the same commit as the changelog section, before the tag.
 
+**Identity (beta.14, D50).** Every binary names the product, says what it is and carries one copyright line. Until
+beta.14 only the native blocks did: the managed ones carried the SDK's defaults — the Agent's company and product read
+`FrameLedger.Agent`, each library's its own assembly name — and no copyright, and those blocks are what Explorer's
+*Properties ▸ Details* and Task Manager show (Task Manager lists the Agent by its file description).
+
+| Field | Native (`src/native/CMakeLists.txt`) | Managed (`Directory.Build.props`, the two entry points' csproj) |
+|---|---|---|
+| CompanyName, ProductName | `FL_COMPANY_NAME`, `FL_PRODUCT_NAME` = `FrameLedger` | `Company`, `Product` = `FrameLedger` |
+| LegalCopyright | `FL_COPYRIGHT` | `Copyright` — the same line, word for word |
+| FileDescription | each target's `fl_add_version_resource` description | `AssemblyTitle`: `FrameLedger` (App), `FrameLedger Agent` (Agent); a library keeps its assembly name |
+| Comments | the identification sentence | `Description` — the same sentence for a library, a line of its own for each entry point |
+| FileVersion / ProductVersion | the numeric core, `x.y.z.0` | `x.y.z.0` / the full version (`-p:Version`, a pre-release's tag included) |
+| OriginalFilename | the file's own name | the assembly's (`FrameLedger.dll`) — the apphost `.exe` carries a copy of its assembly's block |
+
+Also stamped on every assembly: `AssemblyMetadata("RepositoryUrl")` (the SDK, from `RepositoryUrl`; the App test holds
+it equal to `IssueLink.Repository`) and, when `release.yml` passes it, `FrameLedgerSourceRef` — the App csproj's alone
+until beta.14, now `Directory.Build.props`', and passed to both publishes. `tools/versioninfo-check.ps1` reads all of it
+from the BUILT binaries — the native five and, with `-ManagedDir`, the managed eight (`FrameLedger.exe`/`.dll`,
+`FrameLedger.Agent.exe`/`.dll`, Domain, Application, Infrastructure, Shared) — and is red when a copyright differs
+anywhere, when a managed `ProductVersion` is not `-ExpectedProductVersion` (required: a comparison with nothing passes
+everything), or when an apphost does not carry its assembly's block; its `-SelfTest` (ten cases, nine RED, each for the
+reason it names) runs first. `AssemblyIdentityTests` (App and Agent) pins the source against `FL_COPYRIGHT`.
+
 The Velopack package version is the tag's (`vpk pack --packVersion`), and `UpdateManager.CurrentVersion` reads
 the installed package's manifest — not the assembly — which is why the two are made to agree here rather than
 assumed to.
@@ -179,7 +202,7 @@ assumed to.
 ```
 cmake --build --preset x64-release
 dotnet publish src/FrameLedger.App   -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -p:FrameLedgerSourceRef={tag} -o out/app
-dotnet publish src/FrameLedger.Agent -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -o out/app
+dotnet publish src/FrameLedger.Agent -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -p:FrameLedgerSourceRef={tag} -o out/app
 vpk download github --repoUrl https://github.com/poli0981/frameledger --channel win --pre --outputDir out/release   # beta.13: the previous release, for a delta
 vpk pack --packId FrameLedger.App --packVersion {ver} --packDir out/app --mainExe FrameLedger.exe --packTitle FrameLedger --packAuthors FrameLedger --releaseNotes out/notes.md --outputDir out/release
 ```
@@ -189,7 +212,9 @@ vpk pack --packId FrameLedger.App --packVersion {ver} --packDir out/app --mainEx
 > take `-p:Version=<tag>` (§Version). No `--icon`: `assets/icon.ico` does not exist, and this line named it
 > for six weeks. **Since beta.12 the App also takes `-p:FrameLedgerSourceRef`** — the tag, or for a rehearsal the
 > commit — stamped as assembly metadata so its links into the repository open THIS version's documents
-> (`Services/RepositoryLinks`); a build without it links to `main`.
+> (`Services/RepositoryLinks`); a build without it links to `main`. **Since beta.14 the Agent takes it too**, because
+> `Directory.Build.props` stamps it on every assembly and both publishes build the same libraries into `out/app` (§Version,
+> *Identity*).
 >
 > **The package id is `FrameLedger.App`, and this line said `FrameLedger` until 2026-09-14 — which would have
 > deleted every user's ledger on uninstall.** Velopack installs into `%LOCALAPPDATA%\<packId>` and removes that
@@ -256,7 +281,7 @@ document the app displays for acceptance (FR-11) is a defect, not a template.
 7. `tools/coverage-gate.ps1` — reads this run's cobertura reports; self-arming, and armed today for
    `FrameLedger.Domain` and `FrameLedger.Application`
 8. `tools/rules-validate.ps1` (schema + `anticheat` block sanity — a malformed or empty blocklist is a safety bug)
-9. `tools/versioninfo-check.ps1` — reads the built binary, because what ships is what an anti-cheat vendor sees; since P4 PR-5 it also compares every `FileVersion` against the `VERSION` file (§Version)
+9. `tools/versioninfo-check.ps1` — reads the built binary, because what ships is what an anti-cheat vendor sees; since P4 PR-5 it also compares every `FileVersion` against the `VERSION` file (§Version); **since beta.14 (D50) both halves run — the self-test, then the native five and the managed eight from the App's and the Agent's build output** (`-ManagedDir`, `-ExpectedProductVersion` = `VERSION`), one copyright across all of them (§Version, *Identity*). Under `-SkipNative` the managed half still runs
 10. `tools/chokepoint-check.ps1` — injection and evasion primitives confined to one file, native **and** managed, plus the `FL_GUARD_TESTABLE` symbol check against the shipped artifacts
 11. **`tools/hookinventory-check.ps1`** — three passes: A resolves every vendor symbol the Overlay names against `docs/vendor-exports.json`, B sweeps for stray literals, C reads the BUILT Overlay's import table and asserts it imports no vendor module. C skips loudly under `-SkipNative`. **Missing from this list until 2026-08-28**, which is §R10 happening again
 12. **`tools/package-closure-check.ps1`** — both halves: the self-test (5 cases, 4 of which must go RED) **and** a live pass over this repository. It walks the transitive `ProjectReference` closure of the two publish roots below and fails on anything outside the allowlist, naming the reference edge. `FrameLedger.CaptureHost` is an injecting entry point kept out of the package by construction, and `20_OPEN_QUESTIONS` §S27 is closed on exactly that basis

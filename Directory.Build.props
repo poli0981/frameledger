@@ -69,6 +69,32 @@
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 
+  <!-- beta.14 (D50): every managed binary names the product and who wrote it, as the native ones always have
+       (19_SAFETY: a binary says plainly what it is). Explorer's Properties > Details and Task Manager read these. Until
+       beta.14 the SDK's defaults stood: the Agent's Company and Product read "FrameLedger.Agent", each library's its own
+       assembly name, and no managed binary carried a copyright. The copyright is the native FL_COPYRIGHT
+       (src/native/CMakeLists.txt) word for word: tools/versioninfo-check.ps1 reads both from the built binaries and is
+       red when they differ. The file description is the AssemblyTitle - an entry point sets its own, a library keeps its
+       assembly name - and the Description is the Comments field, the native blocks' sentence for a library. The SDK
+       stamps RepositoryUrl into every assembly as AssemblyMetadata; it is the App's IssueLink.Repository, and the App's
+       AssemblyIdentityTests holds the two equal (a fork changes both - FORKING.md). -->
+  <PropertyGroup>
+    <Company>FrameLedger</Company>
+    <Product>FrameLedger</Product>
+    <Authors>poli0981</Authors>
+    <Copyright>Copyright (C) 2026 poli0981. GPL-3.0-only with additional terms: see NOTICE</Copyright>
+    <Description>Performance measurement tool. Identifies itself deliberately; see https://github.com/poli0981/frameledger</Description>
+    <RepositoryUrl>https://github.com/poli0981/frameledger</RepositoryUrl>
+  </PropertyGroup>
+
+  <!-- beta.12: the source a build was made from - release.yml passes the tag (a rehearsal, its commit); a local build has
+       none. The App's links into the repository open THIS version's documents with it (Services/RepositoryLinks.cs).
+       Every assembly since beta.14 (D50), not the App's alone: the two publishes build the same libraries into one
+       out/app, and release.yml passes the same ref to both. -->
+  <ItemGroup Condition="'$(FrameLedgerSourceRef)' != ''">
+    <AssemblyMetadata Include="FrameLedgerSourceRef" Value="$(FrameLedgerSourceRef)" />
+  </ItemGroup>
+
   <!-- Test projects: documentation comments are noise, and xUnit's own
        analyzers already cover what matters there. -->
   <PropertyGroup Condition="$(MSBuildProjectName.EndsWith('.Tests'))">

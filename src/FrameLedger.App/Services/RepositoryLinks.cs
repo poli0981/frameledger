@@ -8,13 +8,13 @@ namespace FrameLedger.App.Services;
 
 /// <summary>
 /// Links into the repository at the source THIS build was made from (beta.12): <c>release.yml</c> passes the release's tag
-/// (<c>-p:FrameLedgerSourceRef=v0.1.0-beta.12</c>, a rehearsal its commit), which the App csproj stamps as assembly
-/// metadata; a local build carries none and links to <c>main</c>. Until beta.12 every link said <c>blob/main</c>, so an
+/// (<c>-p:FrameLedgerSourceRef=v0.1.0-beta.12</c>, a rehearsal its commit), which <c>Directory.Build.props</c> stamps as
+/// assembly metadata (the App csproj until beta.14); a local build carries none and links to <c>main</c>. Until beta.12 every link said <c>blob/main</c>, so an
 /// installed release opened documents that had moved on since it was built — a different EULA from the one it showed.
 /// </summary>
 public static partial class RepositoryLinks
 {
-    /// <summary>The metadata key the App csproj writes.</summary>
+    /// <summary>The metadata key <c>Directory.Build.props</c> writes.</summary>
     public const string MetadataKey = "FrameLedgerSourceRef";
 
     /// <summary>The branch a build without a stamped source links to.</summary>
