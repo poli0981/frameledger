@@ -439,6 +439,92 @@ public sealed class CaptureOrchestratorTests
         log.Should().Contain(l => l.Contains("one at a time", StringComparison.Ordinal));
     }
 
+    /// <summary>A session that ended because its game exited, as the recorder reports it.</summary>
+    private static RecordedSession GameExited(int targetPid) => new()
+    {
+        SessionGuid = Guid.NewGuid(),
+        Outcome = new CaptureOutcome { Reason = SessionEndReason.TargetExited, TargetPid = targetPid },
+        Row = SessionFixtures.Skeleton(),
+        ExitStatus = ExitStatus.Normal,
+        Finalize = new FinalizeOutcome(FinalizeStatus.Saved, 1, 0),
+        CrashPolicy = CrashPolicyOutcome.NotAnEarlyCrash,
+        CrashEventFound = false,
+    };
+
+    /// <summary>
+    /// beta.15: a game started again while its last session was still finalizing — the driver profile, a crash reporter
+    /// waited for, the transaction — was turned away once ("one at a time") and, the watcher reporting a pid once, never
+    /// recorded. It is recorded when that session ends, being then the executable's only process.
+    /// </summary>
+    [Fact]
+    public async Task AGameStartedAgainWhileItsLastSessionFinalizesIsRecordedWhenThatSessionEnds()
+    {
+        (CaptureOrchestrator o, FakeRecorder recorder, FakeSnapshots processes, List<string> log) = await BuildAsync().ConfigureAwait(true);
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        processes.Processes.Add(new ProcessSnapshot(1, 1, "game.exe", _game, DateTimeOffset.UnixEpoch));
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+        await WaitForRequestsAsync(recorder, 1).ConfigureAwait(true);
+
+        // The game exits and starts again while the session is still being finalized (the fake holds it open).
+        processes.Processes.Clear();
+        processes.Processes.Add(new ProcessSnapshot(2, 1, "game.exe", _game, DateTimeOffset.UnixEpoch.AddMinutes(30)));
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+        recorder.Requests.Should().HaveCount(1, "one session per executable at a time");
+
+        recorder.Pending[0].SetResult(GameExited(targetPid: 1));
+        await WaitUntilAsync(() => o.RunningSessions == 0).ConfigureAwait(true);
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+        await WaitForRequestsAsync(recorder, 2).ConfigureAwait(true);
+
+        recorder.Requests.Should().HaveCount(2, "the game started again is recorded once the session before it has ended");
+        log.Should().Contain(l => l.Contains("recording it now", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// A helper of a game that is still running (one executable, many processes — NW.js, Electron) is turned away as before
+    /// and stays turned away when the session ends: the game is still beside it, so it is not a game started again.
+    /// </summary>
+    [Fact]
+    public async Task AHelperOfAGameStillRunningIsNotRecordedWhenTheSessionEnds()
+    {
+        (CaptureOrchestrator o, FakeRecorder recorder, FakeSnapshots processes, _) = await BuildAsync().ConfigureAwait(true);
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        processes.Processes.Add(new ProcessSnapshot(1, 1, "game.exe", _game, DateTimeOffset.UnixEpoch));
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+        await WaitForRequestsAsync(recorder, 1).ConfigureAwait(true);
+        processes.Processes.Add(new ProcessSnapshot(3, 1, "game.exe", _game, DateTimeOffset.UnixEpoch.AddSeconds(5)));
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+
+        // The session ends (the user stopped it, say) while the game and its helper both still run.
+        recorder.Pending[0].SetResult(GameExited(targetPid: 1));
+        await WaitUntilAsync(() => o.RunningSessions == 0).ConfigureAwait(true);
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+
+        recorder.Requests.Should().ContainSingle("two processes of the executable still run: the helper is not a game started again");
+    }
+
+    /// <summary>The process turned away has gone by the time the session ends: nothing to record, nothing started.</summary>
+    [Fact]
+    public async Task AProcessThatLeftBeforeTheSessionEndedStartsNothing()
+    {
+        (CaptureOrchestrator o, FakeRecorder recorder, FakeSnapshots processes, _) = await BuildAsync().ConfigureAwait(true);
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        processes.Processes.Add(new ProcessSnapshot(1, 1, "game.exe", _game, DateTimeOffset.UnixEpoch));
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+        await WaitForRequestsAsync(recorder, 1).ConfigureAwait(true);
+        processes.Processes.Clear();
+        processes.Processes.Add(new ProcessSnapshot(2, 1, "game.exe", _game, DateTimeOffset.UnixEpoch.AddMinutes(30)));
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+
+        processes.Processes.Clear();
+        recorder.Pending[0].SetResult(GameExited(targetPid: 1));
+        await WaitUntilAsync(() => o.RunningSessions == 0).ConfigureAwait(true);
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+
+        recorder.Requests.Should().ContainSingle();
+    }
+
     private static RecordedSession LauncherExited(int launcherPid) => new()
     {
         SessionGuid = Guid.NewGuid(),
