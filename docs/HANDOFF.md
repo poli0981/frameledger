@@ -1955,6 +1955,13 @@ PR-7 the metrics' Agent half (schema 0019), PR-8 their App half, PR-9 the releas
   the summary's cards into three methods and Compare's rows into two; `dotnet format` wants one property per line in an
   object initializer, even in a test.
 - **The `fl_ring` anti-vacuity flake** (§Traps) fired on #264's CI and passed on the re-run, as written.
+- **`git describe` is 31 characters ten commits after a tag** (`v0.1.0-beta.13-10-g15ec7c1c5fd4`) — the most
+  `FlShmHandshake.buildId` holds. `ShmHandshakeValidatorTests` appended `"x"` to the id for its mismatch case, the helper
+  cut it back to 31, and the check read `Ok`: red from the tenth commit after every tag, locally and on CI (#273 uses
+  another id of the same length).
+- **"The job was not acquired by Runner of type hosted even after multiple attempts"**: with seven CI runs in flight a
+  queued Windows job was cancelled after ~15 minutes, twice, without a step having run. Nothing in the code; re-run the
+  job when fewer runs are queued.
 - **The Privacy Policy 2.7 holds the merge of PR-5 and PR-7**: their wording (§4 the crash reports and the programs a
   game starts, §1 the card's sensor series) is the owner's to approve before they land, as the plan said.
 
