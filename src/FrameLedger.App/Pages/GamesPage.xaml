@@ -38,7 +38,7 @@
                 <ComboBox Grid.Column="2" MinWidth="150" Margin="0,0,12,0" VerticalAlignment="Center"
                           AutomationProperties.Name="{x:Static res:Strings.A11y_Games_Sort}"
                           DisplayMemberPath="Label"
-                          ItemsSource="{x:Static vm:GamesViewModel.Sorts}"
+                          ItemsSource="{Binding ViewModel.Sorts}"
                           SelectedValue="{Binding ViewModel.Sort, Mode=TwoWay}"
                           SelectedValuePath="Value" />
                 <!-- The view switch: the one button shown is the other view. -->

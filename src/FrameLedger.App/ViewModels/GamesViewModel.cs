@@ -89,7 +89,8 @@ public sealed partial class GamesViewModel : ObservableObject
 
     public static string ListText => Strings.Games_View_List;
 
-    public static IReadOnlyList<Choice<GamesSort>> Sorts { get; } =
+    /// <summary>The sort orders, labelled in the language this page opened in (beta.15: a static list kept the first language).</summary>
+    public IReadOnlyList<Choice<GamesSort>> Sorts { get; } =
     [
         new(GamesSort.Name, Strings.Games_Sort_Name),
         new(GamesSort.LastPlayed, Strings.Games_Sort_LastPlayed),

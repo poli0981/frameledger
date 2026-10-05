@@ -25,14 +25,14 @@
                       Margin="0,0,8,4"
                       AutomationProperties.Name="{x:Static res:Strings.A11y_Logs_Source}"
                       DisplayMemberPath="Label"
-                      ItemsSource="{x:Static vm:LogsViewModel.Sources}"
+                      ItemsSource="{Binding ViewModel.Sources}"
                       SelectedValue="{Binding ViewModel.Source, Mode=TwoWay}"
                       SelectedValuePath="Value" />
             <ComboBox MinWidth="170"
                       Margin="0,0,8,4"
                       AutomationProperties.Name="{x:Static res:Strings.A11y_Logs_Level}"
                       DisplayMemberPath="Label"
-                      ItemsSource="{x:Static vm:LogsViewModel.Levels}"
+                      ItemsSource="{Binding ViewModel.Levels}"
                       SelectedValue="{Binding ViewModel.Level, Mode=TwoWay}"
                       SelectedValuePath="Value" />
             <ui:TextBox MinWidth="220"

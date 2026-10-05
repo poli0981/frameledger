@@ -71,12 +71,19 @@ public sealed class ShellHost(IServiceProvider services, INavigationService navi
     /// <summary>The page the shell will open on, kept across a rebuild.</summary>
     public void Remember(Type page) => _page = page;
 
-    /// <summary>A new window in the current UI culture; the old one closes after the new one is up.</summary>
+    /// <summary>
+    /// A new window in the current UI culture; the old one closes after the new one is up. The long-lived pieces that
+    /// read their text once — the tray's menu, the Agent pill — read it again (<see cref="ILanguageFollower"/>, beta.15).
+    /// </summary>
     public void Rebuild()
     {
         MainWindow? old = _current;
         Show();
         old?.Close();
+        foreach (ILanguageFollower follower in services.GetServices<ILanguageFollower>())
+        {
+            follower.FollowLanguage();
+        }
     }
 
     public Window? Current => _current;

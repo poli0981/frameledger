@@ -268,7 +268,7 @@
                 <ComboBox MinWidth="180"
                           AutomationProperties.Name="{x:Static vm:SettingsViewModel.ThemeLabel}"
                           DisplayMemberPath="Label"
-                          ItemsSource="{x:Static vm:SettingsViewModel.Themes}"
+                          ItemsSource="{Binding ViewModel.Themes}"
                           SelectedValue="{Binding ViewModel.SelectedTheme, Mode=TwoWay}"
                           SelectedValuePath="Value" />
             </ui:CardControl>
@@ -340,7 +340,7 @@
                 <ComboBox MinWidth="140"
                           AutomationProperties.Name="{x:Static res:Strings.Settings_UpdateChannel_Label}"
                           DisplayMemberPath="Label"
-                          ItemsSource="{x:Static vm:SettingsViewModel.UpdateChannels}"
+                          ItemsSource="{Binding ViewModel.UpdateChannels}"
                           SelectedValue="{Binding ViewModel.UpdateChannel, Mode=TwoWay}"
                           SelectedValuePath="Value" />
             </ui:CardControl>
