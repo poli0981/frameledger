@@ -197,7 +197,9 @@ CREATE TABLE sessions (
   started_at INTEGER NOT NULL, ended_at INTEGER NOT NULL, duration_s REAL NOT NULL,
 
   capture_tier INTEGER NOT NULL,               -- 1 = hooked, 2 = not hooked; CHECK (capture_tier IN (1,2))
-  capture_notes TEXT,                          -- why tier degraded, late_attach, etc.
+  capture_notes TEXT,                          -- why tier degraded, late_attach, etc.; beta.14 adds crash_reporter= /
+                                               -- crash_reporter_seen= (an engine's crash reporter the game started) and
+                                               -- scan_at_exit= (D48: a re-scan that could not read as the game exited)
   late_attach INTEGER NOT NULL DEFAULT 0,
   telemetry_source TEXT,                       -- composite descriptor, e.g. 'l1+lhm+nvapi' (18_GPU_VENDOR_APIS)
   overlay_build_id TEXT,                       -- native DLL build that produced this data

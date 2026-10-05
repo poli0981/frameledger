@@ -43,6 +43,7 @@ internal sealed class AgentRecording
     private readonly IOverlayToleranceChannel _tolerance;
     private readonly WindowGeometryProbe _display = new();
     private readonly UserModeExceptionLapsePolicy _exceptionLapse;
+    private readonly ICrashReporterSightings _reporters;
 
     public AgentRecording(
         IGameConsentStore store,
@@ -66,8 +67,10 @@ internal sealed class AgentRecording
         IDriverProfileSource profiles,
         IUserModeExceptionSwitch exceptions,
         IOverlayToleranceChannel tolerance,
-        UserModeExceptionLapsePolicy exceptionLapse)
+        UserModeExceptionLapsePolicy exceptionLapse,
+        ICrashReporterSightings reporters)
     {
+        _reporters = reporters;
         _profiles = profiles;
         _exceptions = exceptions;
         _tolerance = tolerance;
@@ -123,7 +126,8 @@ internal sealed class AgentRecording
             _observer,
             _policy,
             _profiles,
-            _exceptionLapse);
+            _exceptionLapse,
+            _reporters);
     }
 
     /// <summary>L1 + L2 + L3 under the composite, one poller per session; the poller owns and disposes the layers. The interval is the session's (<c>telemetry.interval_ms</c>, D16).</summary>

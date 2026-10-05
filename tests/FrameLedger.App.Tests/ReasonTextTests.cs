@@ -98,6 +98,9 @@ public sealed class ReasonTextTests
             .Should().Contain("0xC0000006 in-page I/O error", "the owner's failing USB drive, 2026-09-21");
         Formats.ExitText(ExitStatus.Crashed, CaptureNotes.Parse("end=TargetExited; exit_code=0; crash_event=application_log"))
             .Should().Be("crashed (Windows logged an application error)");
+        // beta.14: Unreal's own crash handling ends with exit code 3 and the crash reporter it started is the witness.
+        Formats.ExitText(ExitStatus.Crashed, CaptureNotes.Parse("end=TargetExited; exit_code=3; crash_reporter=CrashReportClient.exe"))
+            .Should().Be("crashed (the game started its crash reporter, CrashReportClient.exe)");
         Formats.ExitText(ExitStatus.Normal, CaptureNotes.Parse("end=TargetExited; exit_code=1")).Should().StartWith("ended with exit code 1 — what End task and taskkill leave");
         Formats.ExitText(ExitStatus.Normal, CaptureNotes.Parse("end=TargetExited; exit_code=0")).Should().Be("ended normally");
         Formats.ExitText(ExitStatus.Normal, CaptureNotes.Parse("end=TargetExited; exit_code=-1")).Should().Be("ended with exit code -1");

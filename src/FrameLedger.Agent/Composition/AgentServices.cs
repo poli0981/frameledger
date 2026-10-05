@@ -94,14 +94,7 @@ internal static class AgentServices
         services.AddSingleton<IRuntimeModuleSnapshot>(static _ => new RuntimeModuleSnapshot(CensusNames.ModuleFileNames));
         AddNvidia(services);
 
-        // The recorder's adapters (PR-D).
-        services.AddSingleton<IPartialSessionStore>(_ => new PartialSessionStore(paths.Tmp));
-        services.AddSingleton<ICrashEventSource, EventLogCrashSource>();
-        services.AddSingleton<IHardwareSnapshotSource>(static _ => new HardwareSnapshotSource(new DxgiAdapters()));
-        services.AddSingleton<ISeriesCodec, DeflateSeriesCodec>();
-        services.AddSingleton<SessionFinalizer>();
-        services.AddSingleton(static sp => new PartialRecovery(sp.GetRequiredService<IPartialSessionStore>(), sp.GetRequiredService<SessionFinalizer>()));
-        services.AddSingleton<AgentRecording>();
+        AddRecording(services, paths);
 
         // The watcher (this PR): snapshots, identity, and the orchestrator over an unbounded recorder.
         services.AddSingleton<IProcessSnapshotSource, ToolhelpProcessSnapshotSource>();
@@ -113,6 +106,20 @@ internal static class AgentServices
         AddPipe(services, pipeName);
 
         return services;
+    }
+
+    /// <summary>The recorder's adapters (PR-D), and since beta.14 the witness of engine crash reporters the watcher feeds and the recorder asks.</summary>
+    private static void AddRecording(IServiceCollection services, AgentPaths paths)
+    {
+        services.AddSingleton<IPartialSessionStore>(_ => new PartialSessionStore(paths.Tmp));
+        services.AddSingleton<ICrashEventSource, EventLogCrashSource>();
+        services.AddSingleton<CrashReporterWitness>();
+        services.AddSingleton<ICrashReporterSightings>(static sp => sp.GetRequiredService<CrashReporterWitness>());
+        services.AddSingleton<IHardwareSnapshotSource>(static _ => new HardwareSnapshotSource(new DxgiAdapters()));
+        services.AddSingleton<ISeriesCodec, DeflateSeriesCodec>();
+        services.AddSingleton<SessionFinalizer>();
+        services.AddSingleton(static sp => new PartialRecovery(sp.GetRequiredService<IPartialSessionStore>(), sp.GetRequiredService<SessionFinalizer>()));
+        services.AddSingleton<AgentRecording>();
     }
 
     /// <summary>
@@ -238,7 +245,8 @@ internal static class AgentServices
             static line => Serilog.Log.Information("{Line}", line),
             sp.GetRequiredService<ILaunchRecorderFactory>(),
             sp.GetRequiredService<ExecutableRelocator>(),
-            sp.GetRequiredService<LatestProcessSnapshot>()));
+            sp.GetRequiredService<LatestProcessSnapshot>(),
+            sp.GetRequiredService<CrashReporterWitness>()));
         services.AddSingleton<ILaunchRecorderFactory, AgentLaunches>();
 
     }

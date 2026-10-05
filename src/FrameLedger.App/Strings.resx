@@ -2906,4 +2906,7 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="Update_PayloadInUse_Format" xml:space="preserve">
     <value>{0} is still loaded in a game FrameLedger measured, and the update would fail half way. Close that game, then restart to update.</value>
   </data>
+  <data name="Exit_CrashReporter_Format" xml:space="preserve">
+    <value>crashed (the game started its crash reporter, {0})</value>
+  </data>
 </root>

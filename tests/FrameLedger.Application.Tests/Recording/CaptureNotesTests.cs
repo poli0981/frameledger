@@ -26,6 +26,16 @@ public sealed class CaptureNotesTests
     }
 
     [Fact]
+    public void TheCrashReporterSlotsReadBack()
+    {
+        // beta.14: the reporter that made the session crashed, and one that was only seen.
+        CaptureNotes counted = CaptureNotes.Parse("end=TargetExited; exit_code=3; crash_reporter=CrashReportClient.exe");
+        (counted.CrashReporter, counted.CrashReporterSeen).Should().Be(("CrashReportClient.exe", (string?)null));
+        CaptureNotes seen = CaptureNotes.Parse("end=TargetExited; exit_code=0; crash_reporter_seen=CrashReporter.exe");
+        (seen.CrashReporter, seen.CrashReporterSeen).Should().Be(((string?)null, "CrashReporter.exe"));
+    }
+
+    [Fact]
     public void TheScanAtExitSlotReadsBack()
     {
         // D48(b), beta.14: a session that ended as the game's exit though its last re-scan could not read the game's tree.

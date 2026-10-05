@@ -48,12 +48,16 @@ public sealed class SessionRecorder : ISessionRecorder
     private readonly ISessionObserver? _observer;
     private readonly IDriverProfileSource? _profiles;
     private readonly UserModeExceptionLapsePolicy? _exceptionLapse;
+    private readonly ICrashReporterSightings? _reporters;
 
     public SessionRecorder(ICaptureSessionFactory sessions, IGameRepository games, IHardwareSnapshotRepository snapshots,
         IHardwareSnapshotSource hardware, IPartialSessionStore partials, SessionFinalizer finalizer, ICrashEventSource crashes,
         Func<RecorderOptions, ITelemetryPoller?> pollers, TimeProvider clock, RecorderOptions? options = null, ISessionObserver? observer = null,
-        IRecorderPolicy? policy = null, IDriverProfileSource? profiles = null, UserModeExceptionLapsePolicy? exceptionLapse = null)
+        IRecorderPolicy? policy = null, IDriverProfileSource? profiles = null, UserModeExceptionLapsePolicy? exceptionLapse = null,
+        ICrashReporterSightings? reporters = null)
     {
+        // beta.14: the engine crash reporters the watcher saw the game start; null where nothing watches (the tests, the console).
+        _reporters = reporters;
         // D33: ends a game's user-mode exception when a session under it ends badly; null in every recorder that has no
         // consent store to write to (the tests, the unshipped host), where no exception can be in force either.
         _exceptionLapse = exceptionLapse;
@@ -189,10 +193,15 @@ public sealed class SessionRecorder : ISessionRecorder
         bool hooked = outcome.AttachRefusal == ShmAttachRefusal.Ok;
         // A held Tier-2 session's duration is the game's (2026-09-22), so the Application-log witness applies to it too.
         bool hadPid = hooked || outcome.TargetPid != 0 || outcome.HeldUnhooked;
-        bool crashEvent = hadPid && _crashes.FoundCrash(Path.GetFileName(request.NormalisedExePath), header.StartedAt, endedAt + ExitStatusMapper.CrashWitnessGrace);
-        ExitStatus exit = ExitStatusMapper.Map(outcome.Reason, outcome.ExitCode, crashEvent);
+        // beta.14: the query ties every witness to THIS game's process — its pid, its path — inside the session's window.
+        bool targetLeft = outcome.ExitCode is not null || outcome.Reason is SessionEndReason.TargetExited or SessionEndReason.LaunchTargetExited;
+        var query = new CrashQuery(request.NormalisedExePath, outcome.TargetPid, header.StartedAt, endedAt + ExitStatusMapper.CrashWitnessGrace, targetLeft);
+        CrashReporterSighting? reporter = hadPid && _reporters is { } reporters ? await reporters.FindAsync(query, ct).ConfigureAwait(false) : null;
+        bool reporterCounted = reporter is { } seen && CrashReporterRule.Counts(seen, query, endedAt);
+        bool crashEvent = hadPid && _crashes.FoundCrash(query);
+        ExitStatus exit = ExitStatusMapper.Map(outcome.Reason, outcome.ExitCode, crashEvent, reporterCounted);
 
-        SessionRow skeleton = Skeleton(header, outcome, endedAt, exit, crashEvent, hooked) with { DriverProfileJson = driverProfile };
+        SessionRow skeleton = Skeleton(header, outcome, endedAt, exit, new CrashWitness(crashEvent, reporter?.Image, reporterCounted), hooked) with { DriverProfileJson = driverProfile };
         var input = new FinalizeInput
         {
             Skeleton = skeleton,
@@ -241,9 +250,9 @@ public sealed class SessionRecorder : ISessionRecorder
         };
     }
 
-    private static SessionRow Skeleton(PartialHeader h, CaptureOutcome o, DateTimeOffset endedAt, ExitStatus exit, bool crashEvent, bool hooked)
+    private static SessionRow Skeleton(PartialHeader h, CaptureOutcome o, DateTimeOffset endedAt, ExitStatus exit, CrashWitness crash, bool hooked)
     {
-        string notes = ExitStatusMapper.Describe(o.Reason, o.ExitCode, crashEvent);
+        string notes = ExitStatusMapper.Describe(o.Reason, o.ExitCode, crash.ApplicationLog, crash.Reporter, crash.ReporterCounted);
         if (o.LaunchError is { } launchError)
         {
             notes += "; launch_error=" + launchError.ToString(System.Globalization.CultureInfo.InvariantCulture);

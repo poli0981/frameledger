@@ -47,6 +47,9 @@ public sealed class ExecutableLocator : IExecutableLocator
         "crash", "handler", "unins", "setup", "install", "redist", "vc_redist", "dxsetup", "dotnet", "cef", "report", "updater",
         "launcher_helper", "easyanticheat", "beservice", "battleye", "steamerrorreporter", "ue4prereq", "uecc", "vcredist", "python", "node",
         "browser", "webview", "subprocess", "analyzer", "vconsole",
+        // beta.14: BugSplat's sender (BsSndRpt64.exe, Kingdom Come: Deliverance II) matches none of the above — its name says
+        // "report" without the letters; KCD2 picked its game by rank alone.
+        "bssndrpt", "bugsplat",
     ];
 
     /// <summary>

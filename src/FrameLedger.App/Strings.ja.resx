@@ -3861,4 +3861,8 @@
     <value>{0} は FrameLedger が計測したゲームにまだ読み込まれているため、更新は途中で失敗します。そのゲームを終了してから、再起動して更新してください。</value>
     <comment>review</comment>
   </data>
+  <data name="Exit_CrashReporter_Format" xml:space="preserve">
+    <value>クラッシュ（ゲームがクラッシュ レポーター {0} を起動しました）</value>
+    <comment>review</comment>
+  </data>
 </root>

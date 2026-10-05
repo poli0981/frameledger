@@ -63,6 +63,7 @@ public sealed class CaptureOrchestrator
     private readonly ILaunchRecorderFactory? _launches;
     private readonly ExecutableRelocator? _relocator;
     private readonly LatestProcessSnapshot? _latest;
+    private readonly CrashReporterWitness? _reporters;
     private readonly ProcessWatcher _watcher = new();
     private readonly Lock _table = new();
     private readonly Dictionary<string, Running> _running = new(StringComparer.OrdinalIgnoreCase);
@@ -73,10 +74,12 @@ public sealed class CaptureOrchestrator
 
     public CaptureOrchestrator(ISessionRecorder recorder, IGameRepository games, IProcessSnapshotSource processes,
         IExecutableIdentitySource identity, OrchestratorOptions options, Action<string> log, ILaunchRecorderFactory? launches = null,
-        ExecutableRelocator? relocator = null, LatestProcessSnapshot? latest = null)
+        ExecutableRelocator? relocator = null, LatestProcessSnapshot? latest = null, CrashReporterWitness? reporters = null)
     {
         _relocator = relocator;
         _latest = latest;
+        // beta.14: every snapshot also tells the crash-reporter witness who started what (the recorder asks it at a session's end).
+        _reporters = reporters;
         _recorder = recorder ?? throw new ArgumentNullException(nameof(recorder));
         _games = games ?? throw new ArgumentNullException(nameof(games));
         _processes = processes ?? throw new ArgumentNullException(nameof(processes));
@@ -147,6 +150,7 @@ public sealed class CaptureOrchestrator
         IReadOnlyList<GameRow> watchlist = Recorded(library);
         IReadOnlyList<ProcessSnapshot> snapshot = _processes.Take();
         _latest?.Publish(snapshot);
+        _reporters?.Observe(snapshot, DateTimeOffset.UtcNow);
         IReadOnlyList<WatchEvent> events = _watcher.Poll(snapshot, watchlist);
 
         foreach (WatchEvent e in events)

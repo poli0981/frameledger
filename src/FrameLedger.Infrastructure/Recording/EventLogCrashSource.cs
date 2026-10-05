@@ -9,7 +9,8 @@ namespace FrameLedger.Infrastructure.Recording;
 
 /// <summary>
 /// The Application log's Application Error (1000) and Windows Error Reporting (1001) events, filtered to
-/// the window and to records that name the executable (<c>04_CAPTURE</c> §Crash &amp; exit classification).
+/// the window and the two providers, and judged by <see cref="CrashEventMatcher"/> (<c>04_CAPTURE</c> §Crash &amp; exit
+/// classification) — since beta.14, which counted any such record whose text contained the executable's name.
 /// </summary>
 /// <remarks>
 /// Read-only, unprivileged (the Application log is readable by any interactive user), bounded by the
@@ -20,12 +21,13 @@ public sealed class EventLogCrashSource : ICrashEventSource
 {
     private const string _log = "Application";
 
-    public bool FoundCrash(string exeFileName, DateTimeOffset windowStart, DateTimeOffset windowEnd)
+    public bool FoundCrash(CrashQuery query)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(exeFileName);
-        string from = windowStart.UtcDateTime.ToString("o", CultureInfo.InvariantCulture);
-        string to = windowEnd.UtcDateTime.ToString("o", CultureInfo.InvariantCulture);
-        string xpath = $"*[System[(EventID=1000 or EventID=1001) and TimeCreated[@SystemTime>='{from}' and @SystemTime<='{to}']]]";
+        ArgumentNullException.ThrowIfNull(query);
+        string from = query.WindowStart.UtcDateTime.ToString("o", CultureInfo.InvariantCulture);
+        string to = query.WindowEnd.UtcDateTime.ToString("o", CultureInfo.InvariantCulture);
+        string xpath = "*[System[Provider[@Name='" + CrashEventMatcher.ApplicationErrorProvider + "' or @Name='" + CrashEventMatcher.WerProvider + "']"
+                       + $" and (EventID=1000 or EventID=1001) and TimeCreated[@SystemTime>='{from}' and @SystemTime<='{to}']]]";
         try
         {
             using var reader = new EventLogReader(new EventLogQuery(_log, PathType.LogName, xpath));
@@ -33,7 +35,8 @@ public sealed class EventLogCrashSource : ICrashEventSource
             {
                 using (record)
                 {
-                    if (Names(record, exeFileName))
+                    var read = new CrashLogRecord(record.Id, record.ProviderName, [.. record.Properties.Select(static p => p.Value)]);
+                    if (CrashEventMatcher.Matches(read, query))
                     {
                         return true;
                     }
@@ -46,19 +49,5 @@ public sealed class EventLogCrashSource : ICrashEventSource
         {
             return false;
         }
-    }
-
-    /// <summary>The executable appears among the event's properties (1000's first field is the faulting application's name).</summary>
-    private static bool Names(EventRecord record, string exeFileName)
-    {
-        foreach (EventProperty property in record.Properties)
-        {
-            if (property.Value is string s && s.Contains(exeFileName, StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-        }
-
-        return false;
     }
 }
