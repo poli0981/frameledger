@@ -2933,4 +2933,160 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="Format_Rpm_Format" xml:space="preserve">
     <value>{0:N0} RPM</value>
   </data>
+  <data name="Format_Milliseconds_Format" xml:space="preserve">
+    <value>{0:0.00} ms</value>
+  </data>
+  <data name="Format_FramesPerJoule_Format" xml:space="preserve">
+    <value>{0:0.00} FPS/W</value>
+  </data>
+  <data name="Summary_Stat_TimeBelow60" xml:space="preserve">
+    <value>Time below 60 FPS</value>
+  </data>
+  <data name="Summary_Stat_Below30_Format" xml:space="preserve">
+    <value>below 30: {0}</value>
+  </data>
+  <data name="Summary_Stat_BelowRefresh_Format" xml:space="preserve">
+    <value>display under {0} Hz: {1}</value>
+  </data>
+  <data name="Summary_Stat_FrameToFrame" xml:space="preserve">
+    <value>Frame to frame</value>
+  </data>
+  <data name="Summary_Stat_Vsync" xml:space="preserve">
+    <value>VSync</value>
+  </data>
+  <data name="Summary_Stat_OfFrames_Format" xml:space="preserve">
+    <value>{0} of frames</value>
+  </data>
+  <data name="Summary_Stat_Tearing_Format" xml:space="preserve">
+    <value>tearing allowed: {0}</value>
+  </data>
+  <data name="Summary_Stat_RayTracing" xml:space="preserve">
+    <value>Ray tracing</value>
+  </data>
+  <data name="Summary_Stat_RaysPerPixel_Format" xml:space="preserve">
+    <value>{0:0.00} rays per pixel</value>
+  </data>
+  <data name="Summary_Stat_Focus" xml:space="preserve">
+    <value>Game in focus</value>
+  </data>
+  <data name="Summary_Stat_Focus_Format" xml:space="preserve">
+    <value>{0} of the time</value>
+  </data>
+  <data name="Summary_Stat_Capture" xml:space="preserve">
+    <value>Capture quality</value>
+  </data>
+  <data name="Summary_Stat_Capture_Format" xml:space="preserve">
+    <value>{0:N0} gaps · {1:N0} lost · {2:N0} faults</value>
+  </data>
+  <data name="Summary_Stat_DisplayedLow_Format" xml:space="preserve">
+    <value>displayed: {0}</value>
+  </data>
+  <data name="Summary_Stat_GpuClocks" xml:space="preserve">
+    <value>GPU clocks</value>
+  </data>
+  <data name="Summary_Stat_Clocks_Format" xml:space="preserve">
+    <value>{0} core · {1} memory</value>
+  </data>
+  <data name="Summary_Stat_FanMemTemp_Format" xml:space="preserve">
+    <value>fan {0} · memory {1}</value>
+  </data>
+  <data name="Summary_Stat_GpuLimits" xml:space="preserve">
+    <value>GPU held back</value>
+  </data>
+  <data name="Summary_Stat_Limits_Format" xml:space="preserve">
+    <value>power {0} · heat {1}</value>
+  </data>
+  <data name="Summary_Stat_Efficiency" xml:space="preserve">
+    <value>Frames per watt</value>
+  </data>
+  <data name="Summary_Stat_Efficiency_Note" xml:space="preserve">
+    <value>the game's own frames, GPU power only</value>
+  </data>
+  <data name="Summary_RenderScale_Header" xml:space="preserve">
+    <value>Render scale</value>
+  </data>
+  <data name="Chart_Axis_RenderScale" xml:space="preserve">
+    <value>Render scale %</value>
+  </data>
+  <data name="Chart_RenderScale_NotMeasured" xml:space="preserve">
+    <value>The render resolution was not measured in this session.</value>
+  </data>
+  <data name="Sensors_Clocks_Header" xml:space="preserve">
+    <value>Clocks and fan</value>
+  </data>
+  <data name="Sensors_Axis_Mhz" xml:space="preserve">
+    <value>MHz</value>
+  </data>
+  <data name="Sensors_Axis_Rpm" xml:space="preserve">
+    <value>RPM</value>
+  </data>
+  <data name="Sensors_Limit_Power" xml:space="preserve">
+    <value>held back by its power limit</value>
+  </data>
+  <data name="Sensors_Limit_Thermal" xml:space="preserve">
+    <value>held back by heat</value>
+  </data>
+  <data name="Trend_Metric_TimeBelow60" xml:space="preserve">
+    <value>Time below 60 FPS %</value>
+  </data>
+  <data name="Trend_Metric_TimeBelowRefresh" xml:space="preserve">
+    <value>Display under refresh rate %</value>
+  </data>
+  <data name="Trend_Metric_FrameToFrame" xml:space="preserve">
+    <value>Frame to frame ms</value>
+  </data>
+  <data name="Trend_Metric_RenderScale" xml:space="preserve">
+    <value>Render scale %</value>
+  </data>
+  <data name="Trend_Metric_VsyncShare" xml:space="preserve">
+    <value>VSync share %</value>
+  </data>
+  <data name="Trend_Metric_GpuCoreClock" xml:space="preserve">
+    <value>Avg GPU core clock MHz</value>
+  </data>
+  <data name="Trend_Metric_MaxGpuMemTemp" xml:space="preserve">
+    <value>Max GPU memory °C</value>
+  </data>
+  <data name="Trend_Metric_PowerLimitShare" xml:space="preserve">
+    <value>Held back by power limit %</value>
+  </data>
+  <data name="Trend_Metric_Efficiency" xml:space="preserve">
+    <value>Frames per watt</value>
+  </data>
+  <data name="Trend_Unit_Ms" xml:space="preserve">
+    <value>ms</value>
+  </data>
+  <data name="Trend_Unit_Mhz" xml:space="preserve">
+    <value>MHz</value>
+  </data>
+  <data name="Trend_Unit_FpsPerWatt" xml:space="preserve">
+    <value>FPS/W</value>
+  </data>
+  <data name="Compare_Metric_TimeBelow60" xml:space="preserve">
+    <value>Time below 60 FPS</value>
+  </data>
+  <data name="Compare_Metric_TimeBelowRefresh" xml:space="preserve">
+    <value>Display under refresh rate</value>
+  </data>
+  <data name="Compare_Metric_FrameToFrame" xml:space="preserve">
+    <value>Frame to frame</value>
+  </data>
+  <data name="Compare_Metric_Vsync" xml:space="preserve">
+    <value>VSync share</value>
+  </data>
+  <data name="Compare_Metric_RenderScale" xml:space="preserve">
+    <value>Render scale</value>
+  </data>
+  <data name="Compare_Metric_GpuCoreClock" xml:space="preserve">
+    <value>Avg GPU core clock</value>
+  </data>
+  <data name="Compare_Metric_MaxGpuMemTemp" xml:space="preserve">
+    <value>Max GPU memory °C</value>
+  </data>
+  <data name="Compare_Metric_PowerLimit" xml:space="preserve">
+    <value>Held back by power limit</value>
+  </data>
+  <data name="Compare_Metric_Efficiency" xml:space="preserve">
+    <value>Frames per watt</value>
+  </data>
 </root>

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using System.Windows;
 using System.Windows.Controls;
 using FrameLedger.App.Services;
 using FrameLedger.Application.Recording;
@@ -28,6 +29,7 @@ public partial class SensorsChart : UserControl
     [
         ("gpu_temp", "Chart_Sensor", false),
         ("gpu_hotspot", "Chart_Stutter", false),
+        (SensorSeriesCatalog.GpuMemTemp, "Chart_SensorTertiary", false),
         ("gpu_load", "Chart_Native", false),
         ("gpu_power", "Chart_SensorSecondary", true),
         ("cpu_temp", "Chart_Percentile", false),
@@ -52,6 +54,21 @@ public partial class SensorsChart : UserControl
         (SensorSeriesCatalog.RamSystem, "Chart_Percentile"),
     ];
 
+    /// <summary>The clocks plot's lines (beta.14): core and memory clock on the MHz axis, the fan on the right-hand RPM axis.</summary>
+    internal static readonly IReadOnlyList<(string Series, string PaletteKey, bool Rpm)> ClocksPlot =
+    [
+        (SensorSeriesCatalog.GpuCoreClock, "Chart_Native", false),
+        (SensorSeriesCatalog.GpuMemClock, "Chart_Displayed", false),
+        (SensorSeriesCatalog.GpuFan, "Chart_SensorSecondary", true),
+    ];
+
+    /// <summary>The limits shaded on the clocks plot (beta.14): the ticks each one held the card back, NVIDIA only.</summary>
+    internal static readonly IReadOnlyList<(string Series, string PaletteKey)> LimitSpans =
+    [
+        (SensorSeriesCatalog.GpuPowerLimit, "Chart_Stutter"),
+        (SensorSeriesCatalog.GpuThermalLimit, "Chart_StutterPso"),
+    ];
+
     private const double _mibPerGb = 1024.0;
 
     public SensorsChart()
@@ -60,7 +77,11 @@ public partial class SensorsChart : UserControl
         ChartTheme.Attach(Temps);
         ChartTheme.Attach(Vram);
         ChartTheme.Attach(Ram);
+        ChartTheme.Attach(Clocks);
     }
+
+    /// <summary>The shaded spans the last <see cref="Show"/> drew on the clocks plot.</summary>
+    public int LimitSpansDrawn { get; private set; }
 
     public int DrawnSeries { get; private set; }
 
@@ -73,6 +94,104 @@ public partial class SensorsChart : UserControl
         DrawTemps(series);
         DrawMemory(Vram, series, VideoMemoryPlot);
         DrawMemory(Ram, series, SystemMemoryPlot);
+        DrawClocks(series);
+    }
+
+    /// <summary>
+    /// The card's clocks and fan (beta.14), and every run of ticks a limit held it back as a shaded span behind them — a span
+    /// from the first such tick to the next tick that was not, so one tick reads as a second. The section collapses for a
+    /// session that stored none of these series (recorded before beta.14, or a card no layer reads them on).
+    /// </summary>
+    private void DrawClocks(SessionSeries? series)
+    {
+        ScottPlot.Plot plot = Clocks.Plot;
+        plot.Clear();
+        ChartTheme.Apply(plot);
+        plot.XLabel(TimeAxisLabel(series));
+        plot.YLabel(Strings.Sensors_Axis_Mhz);
+        LimitSpansDrawn = 0;
+        bool any = false;
+        if (series is not null)
+        {
+            ChartPalette p = ChartTheme.Current;
+            foreach ((string name, string key) in LimitSpans)
+            {
+                string label = string.Equals(name, SensorSeriesCatalog.GpuPowerLimit, StringComparison.Ordinal) ? Strings.Sensors_Limit_Power : Strings.Sensors_Limit_Thermal;
+                LimitSpansDrawn += Spans(plot, series, name, label, p.ByKey(key));
+            }
+
+            foreach ((string name, string key, bool rpm) in ClocksPlot)
+            {
+                bool drawn = Line(plot, series, name, Label(name), p.ByKey(key), rpm ? plot.Axes.Right : null);
+                any |= drawn;
+                if (drawn && rpm)
+                {
+                    plot.Axes.Right.Label.Text = Strings.Sensors_Axis_Rpm;
+                }
+            }
+
+            any |= LimitSpansDrawn > 0;
+            plot.Axes.AutoScale();
+            plot.ShowLegend(Alignment.UpperRight);
+        }
+
+        ClocksSection.Visibility = any ? Visibility.Visible : Visibility.Collapsed;
+        Clocks.Refresh();
+    }
+
+    /// <summary>Shades every run of ticks whose value is 100 (held back) in <paramref name="name"/>; how many spans it drew.</summary>
+    private static int Spans(ScottPlot.Plot plot, SessionSeries series, string name, string label, Color color)
+    {
+        SensorSeries? limit = series.Sensors.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.Ordinal));
+        if (limit is null)
+        {
+            return 0;
+        }
+
+        int drawn = 0;
+        foreach ((double from, double to) in LimitRuns(limit))
+        {
+            VerticalSpan span = plot.Add.VerticalSpan(from, to, color.WithAlpha(0.18));
+            span.LineWidth = 0;
+            if (drawn++ == 0)
+            {
+                span.LegendText = label;
+            }
+        }
+
+        return drawn;
+    }
+
+    /// <summary>
+    /// The runs of ticks held back, as (start, end) seconds: from a tick at 100 to the next tick, and through every tick at
+    /// 100 after it — the reading holds for the second until the next. Pure, for the tests.
+    /// </summary>
+    internal static IReadOnlyList<(double From, double To)> LimitRuns(SensorSeries limit)
+    {
+        ArgumentNullException.ThrowIfNull(limit);
+        var runs = new List<(double, double)>();
+        double? start = null;
+        for (int i = 0; i < limit.Values.Length; i++)
+        {
+            bool held = limit.Values[i] >= 50;
+            if (held && start is null)
+            {
+                start = limit.TimesS[i];
+            }
+            else if (!held && start is double s)
+            {
+                runs.Add((s, limit.TimesS[i]));
+                start = null;
+            }
+        }
+
+        if (start is double open)
+        {
+            double last = limit.TimesS[^1];
+            runs.Add((open, last > open ? last + (last - limit.TimesS[Math.Max(0, limit.TimesS.Length - 2)]) : open + 1));
+        }
+
+        return runs;
     }
 
     /// <summary>The time axis says where its zero is: the first frame when the sensors sit on the frames' axis, the session's start otherwise.</summary>

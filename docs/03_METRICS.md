@@ -640,6 +640,12 @@ Tier 2 has none of this: `upscaler = unknown`, ratio `N/A`.
 > bookkeeping is per process, not per settings change. **Nothing native changed and no NGX hook was added**: the
 > licence bar in `20_OPEN_QUESTIONS` stands.
 
+**The render scale over time (beta.14, D49).** The session summary draws `100 × √(render pixels / output pixels)` — the
+per-axis scale, `100 / upscale_ratio` — as steps over the session: from the `render_res` blob where the resolution
+varied (the finalizer stores it only then), a flat line at the row's extent where it did not, and a sentence where the
+upscaler's parameters were never measured (`App.Charts.RenderScaleSeries`). The Trend and Compare read the row's
+`upscale_ratio`, the dominant extent.
+
 ## RT / PT / RR — evidence-based tri-state
 
 Tri-state `Yes | No | N/A` per session with `source` (`measured | manual | inherited`).

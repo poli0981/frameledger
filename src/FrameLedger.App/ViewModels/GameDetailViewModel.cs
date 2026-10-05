@@ -191,6 +191,13 @@ public sealed partial class GameDetailViewModel : ObservableObject
     [ObservableProperty]
     private bool _hasLatency;
 
+    /// <summary>
+    /// beta.14: any of the game's sessions measured PC latency, so the Latency tab is shown. Nothing measures Reflex today
+    /// (<c>sessions.reflex_active</c> is null on every row), and a tab that can only ever say "no data" was noise.
+    /// </summary>
+    [ObservableProperty]
+    private bool _anyLatency;
+
     [ObservableProperty]
     private TrendMetric _trendMetric = TrendMetric.PresentedFps;
 
@@ -344,6 +351,15 @@ public sealed partial class GameDetailViewModel : ObservableObject
         new(TrendMetric.DisplayExclusiveShare, Strings.Trend_Metric_DisplayExclusive),
         new(TrendMetric.DisplayBorderlessShare, Strings.Trend_Metric_DisplayBorderless),
         new(TrendMetric.DisplayWindowedShare, Strings.Trend_Metric_DisplayWindowed),
+        new(TrendMetric.TimeBelow60, Strings.Trend_Metric_TimeBelow60),
+        new(TrendMetric.TimeBelowRefresh, Strings.Trend_Metric_TimeBelowRefresh),
+        new(TrendMetric.FrameToFrame, Strings.Trend_Metric_FrameToFrame),
+        new(TrendMetric.RenderScale, Strings.Trend_Metric_RenderScale),
+        new(TrendMetric.VsyncShare, Strings.Trend_Metric_VsyncShare),
+        new(TrendMetric.GpuCoreClock, Strings.Trend_Metric_GpuCoreClock),
+        new(TrendMetric.MaxGpuMemTemp, Strings.Trend_Metric_MaxGpuMemTemp),
+        new(TrendMetric.PowerLimitShare, Strings.Trend_Metric_PowerLimitShare),
+        new(TrendMetric.Efficiency, Strings.Trend_Metric_Efficiency),
     ];
 
     /// <summary>The selected session's decoded series (null: none selected, Tier 2, or swept).</summary>
@@ -424,6 +440,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         }
 
         Present(detail);
+        AnyLatency = detail.Sessions.Any(static s => s.ReflexActive == true);
         ChooseDefaultMetric(detail);
         await RebuildTrendAsync(ct).ConfigureAwait(true);
     }

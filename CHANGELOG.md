@@ -46,6 +46,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
   The session's sensor statistics table shows the new card readings in their own units. The database is migrated in
   place (schema 0019), and an earlier version cannot open it afterwards.
+- **Where the new measurements are shown:** the session summary has a card for each (the 1% low card also shows the
+  displayed frames' 1% low when frame generation was counted, beside the game's own), a **Render scale** chart — the
+  share of the screen's resolution the game rendered at, over the session — and a **Clocks and fan** chart under
+  Sensors, with the moments the card was held back shaded; the card's memory temperature joins the temperatures chart.
+  A game's **Trend** has nine more metrics and **Compare** nine more rows, where a figure taken over presents says
+  *(presented)* beside one taken over the game's own frames. The **Latency** tab is shown only for a game with a session
+  that measured latency — none does yet.
 
 ### Fixed
 
