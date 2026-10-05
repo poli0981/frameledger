@@ -438,7 +438,9 @@ because a layer cannot leave a running game's loader chain.
 
 - Normal: presenting PID exit code 0 — **and since beta.8 any exit code that is not an exception's** (End task and taskkill leave 1; a program's own error exit; Ctrl+C's `0xC000013A`), kept in `capture_notes` and said as what it is.
 - `crashed`: ~~nonzero exit code~~ **an exception's exit code** (`ExitStatusMapper.IsExceptionCode`: NTSTATUS `0xC0000000–0xC0FFFFFF` but `0xC000013A`, `0xE06D7363` C++, `0xE0434352` .NET, `0x80000003` breakpoint), **or** an Application Error (1000) / WER (1001) event log record naming the exe within `[start, end + 30 s]`.
-- `unhooked_safety`: the guard fired mid-session.
+- `unhooked_safety`: the guard fired mid-session. *(Since beta.14, D48: a re-scan that refused only because it could not
+  read the game's tree, concluded after the game itself had exited, is the game's exit instead — `normal` or `crashed` by
+  its exit code — with `scan_at_exit=<reason>` in `capture_notes`; `19_SAFETY` §During a session.)*
 - `degraded`: Overlay self-disabled after faults, or ring layout mismatch mid-session.
 - `interrupted`: Agent died mid-session; recovered from `.partial` on next start.
 - A **user stop** (FR-3.6; `StopSession` over the pipe, P3 PR-1b) is `normal`: the loop ends as `SessionEndReason.StoppedByUser` at its next tick, drains once more and finalizes; the target keeps running, unhooked from here. It is the session's own stop token, not the host's cancellation — the latter leaves a `.partial`.

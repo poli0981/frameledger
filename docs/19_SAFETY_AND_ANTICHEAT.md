@@ -51,6 +51,19 @@ Implemented in `FrameLedger.Injector` and reached from managed code through a th
    > handle rights above are confirmed sufficient for every target this call can
    > legitimately reach.
    >
+   > **Amended 2026-10-05 (owner decision D48, beta.14): one re-read, never a pass.** A member of the scan set that
+   > is still being created answers `ERROR_PARTIAL_COPY` (its loader has not built a module list), and one that exited
+   > between the snapshot and the open answers `ERROR_INVALID_PARAMETER`. Both refused the whole session — and at the
+   > 30 s re-scan an engine's crash reporter starting as its game died, or any helper started a moment before the scan,
+   > turned an ordinary exit into a "safety" unhook, which ends a user-mode exception's trial for good. Such a member
+   > (`Collected::kRetry`, `fl_guard.h`) is now read once more: the pass finishes (a finding in any member still refuses
+   > at once), waits `kScanRetryPauseMs` (250 ms), takes a **fresh** scan set and scans it whole. A member still unreadable
+   > then refuses `kProcessUnreadable`, as before; one that has gone is not in the new set; a target that has gone leaves
+   > no set, which refuses `kProcessTreeUnavailable`. **`ERROR_ACCESS_DENIED` — a protected process — is never retried**,
+   > and no other answer of any source is. The sentence above stands: every failure still means REFUSE; what changed is
+   > how many times "still loading" is asked before it counts as one. ctest `fl_guard` `[D48]` holds both directions,
+   > against fakes and against the real source (a process created suspended, a pid with no process).
+   >
    > **Launch mode (2026-09-06, P1 item 2) does not weaken this.** `FlGuardedInjectWhenReady` polls
    > the same enumeration to learn *when* the launched target has mapped a presentation runtime, and a
    > failing enumeration there means "not yet" — the poll continues. That is not a pass: the poll
@@ -835,6 +848,15 @@ checked stays untrusted and refuses — that direction is deliberate.
 
 Re-run **every pre-injection check** every 30 s, for **every Tier-1 session —
 injected or layered**.
+
+> **A refused re-scan of a game that has already exited is that exit (owner decision D48, beta.14).** When the re-scan
+> refuses only because it could not read the game's tree (`ProcessUnreadable`, `ModuleScanFailed`,
+> `ProcessTreeUnavailable` — never a finding) and the game itself has exited by the time the session concludes, the
+> session ends as `TargetExited`, its exit code deciding normal or crashed, with `scan_at_exit=<reason>` in its notes
+> (`Application.Capture.ExitScanRelabel`). The stop was still published to the Overlay — the game it would have stopped
+> is gone. A finding, any refusal while the game still runs, and a refusal of another check (drivers, services, the
+> pre-scan) are a safety unhook exactly as before. `CaptureSessionTests.AnUnreadableRescanOfAGameThatHasExited…` and
+> its three refusing neighbours.
 
 > **This said "both the module scan and the driver scan" until 2026-08-05, and
 > the loop runs four checks, not two** (`20_OPEN_QUESTIONS` §S23-4).

@@ -86,10 +86,18 @@ bool IsPlatformLauncher(const wchar_t* imageName) noexcept {
     return false;
 }
 
+// The module check's one pause before its re-read (D48).
+void PauseImpl(std::uint32_t ms) noexcept {
+    Sleep(ms);
+}
+
 Collected EnumerateModulesImpl(std::uint32_t pid, ModuleSink sink, void* ctx) noexcept {
     HANDLE h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, pid);
     if (h == nullptr) {
-        return Collected::kFailed;    // ACCESS_DENIED on a protected target: cannot determine
+        // D48 (beta.14): ERROR_INVALID_PARAMETER is a pid with no process -- it exited between the scan set's snapshot
+        // and this open -- which the module check reads again from a fresh snapshot. ACCESS_DENIED on a protected
+        // target, and everything else: cannot determine, as ever.
+        return GetLastError() == ERROR_INVALID_PARAMETER ? Collected::kRetry : Collected::kFailed;
     }
 
     HMODULE mods[1024]{};
@@ -97,8 +105,11 @@ Collected EnumerateModulesImpl(std::uint32_t pid, ModuleSink sink, void* ctx) no
     // LIST_MODULES_ALL, always. Measured: the default filter under-reports a
     // 32-bit target by more than half and returns that as a success.
     if (!EnumProcessModulesEx(h, mods, sizeof(mods), &needed, LIST_MODULES_ALL)) {
+        const DWORD err = GetLastError();
         CloseHandle(h);
-        return Collected::kFailed;    // includes ERROR_PARTIAL_COPY on a suspended target
+        // ERROR_PARTIAL_COPY: a process whose loader has not built its module list yet -- a child created moments ago,
+        // an engine's crash reporter starting as its game dies, a suspended target. Read again once (D48).
+        return err == ERROR_PARTIAL_COPY ? Collected::kRetry : Collected::kFailed;
     }
 
     const bool   truncated = needed > sizeof(mods);
@@ -994,6 +1005,7 @@ Collected ModuleSignerOrganisationImpl(const wchar_t* modulePath, char* out, std
 Sources SystemSources() noexcept {
     Sources s;
     s.EnumerateModules = &EnumerateModulesImpl;
+    s.Pause = &PauseImpl;
     s.EnumerateDrivers = &EnumerateDriversImpl;
     s.QueryService = &QueryServiceImpl;
     s.EnumerateScanSet = &EnumerateScanSetImpl;

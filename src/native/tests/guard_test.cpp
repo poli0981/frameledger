@@ -119,6 +119,10 @@ struct Fake {
     int                                moduleCalls = 0;
     std::map<std::uint32_t, Collected> moduleResultByPid;
     Collected                          moduleResult = Collected::kOk;
+    // D48 (beta.14): a pid's answers call by call -- the first pass, then the re-read. Past its end the last one
+    // repeats.
+    std::map<std::uint32_t, std::vector<Collected>> moduleResultsInTurn;
+    std::map<std::uint32_t, int>                    moduleCallsByPid;
 
     // Check 3's evidence. Defaults to a name no blocklist entry matches, so every
     // pre-existing case keeps its meaning: check 3 runs, looks, and allows.
@@ -133,6 +137,13 @@ struct Fake {
 
     std::vector<std::uint32_t> scanSet{1234};
     Collected                  scanSetResult = Collected::kOk;
+    // D48: the fresh snapshot the re-read takes. Empty keeps `scanSet`; the result defaults to the first one's.
+    std::vector<std::uint32_t> scanSetAfterFirst;
+    Collected                  scanSetResultAfterFirst = Collected::kOk;
+    bool                       scanSetAfterFirstFails = false;
+    int                        scanSetCalls = 0;
+    int                        pauses = 0;
+    std::uint32_t              lastPauseMs = 0;
 
     // Check 4 — the static pre-scan. Entries are (name, isDirectory), because
     // directories and files are matched against different blocklist groups and
@@ -227,6 +238,13 @@ Collected FakeEnumModules(std::uint32_t pid, ModuleSink sink, void* ctx) {
             break;
         }
     }
+    const int  turn = g.moduleCallsByPid[pid]++;
+    const auto tit = g.moduleResultsInTurn.find(pid);
+    if (tit != g.moduleResultsInTurn.end() && !tit->second.empty()) {
+        const std::size_t last = tit->second.size() - 1;    // windows.h's min macro: no std::min here
+        const std::size_t at = static_cast<std::size_t>(turn) < last ? static_cast<std::size_t>(turn) : last;
+        return tit->second[at];
+    }
     const auto rit = g.moduleResultByPid.find(pid);
     return (rit != g.moduleResultByPid.end()) ? rit->second : g.moduleResult;
 }
@@ -251,12 +269,22 @@ Collected FakeQueryService(const char* name, bool* present) {
 }
 
 Collected FakeEnumScanSet(std::uint32_t, bool (*sink)(void*, std::uint32_t), void* ctx) {
-    for (auto pid : g.scanSet) {
+    const bool  later = g.scanSetCalls++ >= 1;
+    const auto& set = (later && !g.scanSetAfterFirst.empty()) ? g.scanSetAfterFirst : g.scanSet;
+    if (later && g.scanSetAfterFirstFails) {
+        return Collected::kFailed;
+    }
+    for (auto pid : set) {
         if (!sink(ctx, pid)) {
             break;
         }
     }
     return g.scanSetResult;
+}
+
+void FakePause(std::uint32_t ms) {
+    ++g.pauses;
+    g.lastPauseMs = ms;
 }
 
 Collected FakeImageDirectory(std::uint32_t, wchar_t* out, std::size_t cap) {
@@ -399,6 +427,7 @@ Sources FakeSources() {
     s.EnumerateDrivers = &FakeEnumDrivers;
     s.QueryService = &FakeQueryService;
     s.EnumerateScanSet = &FakeEnumScanSet;
+    s.Pause = &FakePause;
     s.ImageDirectory = &FakeImageDirectory;
     s.ImageFileName = &FakeImageFileName;
     s.EnumerateDirEntries = &FakeEnumDirEntries;
@@ -683,6 +712,116 @@ TEST_CASE("EVERY process in the scan set is scanned, not just the target", "[gua
         std::sort(sorted.begin(), sorted.end());
         CHECK(sorted == std::vector<std::uint32_t>{1000, 1001, 1234});
     }
+}
+
+// ===========================================================================
+// D48 (owner decision, beta.14) — a member still being created, or gone, is read
+// again ONCE, and the re-read can only turn "could not read" into a full read.
+//
+// The case it is for: an engine's crash reporter starting as its game dies, or any
+// helper launched a moment before the 30 s re-scan, answered ERROR_PARTIAL_COPY
+// (its loader had not built a module list) and the whole session ended as a
+// safety unhook. What it must never do is pass something it did not read: the
+// sections below spend most of their effort on that.
+// ===========================================================================
+TEST_CASE("D48 — a scan-set member still loading, or gone, is read again once", "[guard][failclosed][D48]") {
+    ResetFake();
+    g.scanSet = {1234, 1000, 4000};    // target first, its launcher, a child that is starting
+
+    SECTION("a member still loading reads clean on the re-read: one pause, two snapshots, allowed") {
+        g.moduleResultsInTurn[4000] = {Collected::kRetry, Collected::kOk};
+
+        CHECK(EvaluateWithSources(1234, FakeSources()).Allowed());
+        CHECK(g.pauses == 1);
+        CHECK(g.lastPauseMs == kScanRetryPauseMs);
+        CHECK(g.scanSetCalls == 2);
+    }
+
+    SECTION("a member that is still unreadable on the re-read refuses as unreadable") {
+        g.moduleResultsInTurn[4000] = {Collected::kRetry, Collected::kRetry};
+
+        const Verdict v = EvaluateWithSources(1234, FakeSources());
+        REQUIRE_FALSE(v.Allowed());
+        CHECK(v.reason == Reason::kProcessUnreadable);
+        CHECK(g.pauses == 1);
+    }
+
+    SECTION("a member that exited is not in the fresh snapshot, and the rest reads clean") {
+        g.moduleResultsInTurn[4000] = {Collected::kRetry};
+        g.scanSetAfterFirst = {1234, 1000};
+
+        CHECK(EvaluateWithSources(1234, FakeSources()).Allowed());
+        CHECK(g.moduleCallsByPid[4000] == 1);
+    }
+
+    SECTION("a target that is gone leaves no scan set to take, which refuses") {
+        g.moduleResultsInTurn[1234] = {Collected::kRetry};
+        g.scanSetAfterFirstFails = true;
+
+        const Verdict v = EvaluateWithSources(1234, FakeSources());
+        REQUIRE_FALSE(v.Allowed());
+        CHECK(v.reason == Reason::kProcessTreeUnavailable);
+    }
+
+    SECTION("ACCESS_DENIED -- a protected process -- is never retried") {
+        g.moduleResultByPid[4000] = Collected::kFailed;
+
+        const Verdict v = EvaluateWithSources(1234, FakeSources());
+        REQUIRE_FALSE(v.Allowed());
+        CHECK(v.reason == Reason::kProcessUnreadable);
+        CHECK(g.pauses == 0);
+        CHECK(g.scanSetCalls == 1);
+    }
+
+    SECTION("a finding in another member refuses at once, with no pause") {
+        g.moduleResultsInTurn[4000] = {Collected::kRetry, Collected::kOk};
+        g.modulesByPid[1000] = {"EasyAntiCheat_EOS.dll"};
+
+        const Verdict v = EvaluateWithSources(1234, FakeSources());
+        REQUIRE_FALSE(v.Allowed());
+        CHECK(v.reason == Reason::kBlockedModule);
+        CHECK(g.pauses == 0);
+    }
+
+    SECTION("a finding the re-read sees refuses") {
+        g.moduleResultsInTurn[4000] = {Collected::kRetry, Collected::kOk};
+        g.modulesByPid[1234] = {"kernel32.dll"};
+        g.modulesByPid[1000] = {"kernel32.dll"};
+        g.modulesLate = {"EasyAntiCheat_EOS.dll"};
+        g.moduleCallsBeforeLate = 3;    // the first pass's three reads; the reporter shows its module on the re-read
+
+        const Verdict v = EvaluateWithSources(1234, FakeSources());
+        REQUIRE_FALSE(v.Allowed());
+        CHECK(v.reason == Reason::kBlockedModule);
+        CHECK(g.pauses == 1);
+    }
+}
+
+TEST_CASE("D48 — the real module source answers kRetry for a process still loading and for one that is gone",
+          "[guard][D48][live]") {
+    const Sources s = SystemSources();
+    REQUIRE(s.EnumerateModules != nullptr);
+    REQUIRE(s.Pause != nullptr);
+    auto none = [](void*, const char*, const wchar_t*) noexcept -> bool { return true; };
+
+    // A pid with no process behind it: the open fails with ERROR_INVALID_PARAMETER.
+    CHECK(s.EnumerateModules(0x7FFFFFFCu, none, nullptr) == Collected::kRetry);
+
+    // A process created suspended: its loader has not run, and the module list is a partial copy.
+    STARTUPINFOW        si{};
+    PROCESS_INFORMATION pi{};
+    si.cb = sizeof(si);
+    wchar_t cmd[] = L"cmd.exe /c exit 0";
+    REQUIRE(CreateProcessW(nullptr, cmd, nullptr, nullptr, FALSE, CREATE_SUSPENDED | CREATE_NO_WINDOW, nullptr, nullptr,
+                           &si, &pi));
+    const Collected suspended = s.EnumerateModules(pi.dwProcessId, none, nullptr);
+    TerminateProcess(pi.hProcess, 0);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+    CHECK(suspended == Collected::kRetry);
+
+    // And a process this test may read whole is kOk, as ever.
+    CHECK(s.EnumerateModules(GetCurrentProcessId(), none, nullptr) == Collected::kOk);
 }
 
 // ===========================================================================

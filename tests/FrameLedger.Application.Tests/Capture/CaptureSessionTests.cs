@@ -831,6 +831,74 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         (await store.FindAsync(_exe, TestContext.Current.CancellationToken)).HookEnabled.Should().BeFalse();
     }
 
+    /// <summary>
+    /// D48(b), beta.14: the re-scan could not read the game's tree — an engine's crash reporter still starting as its game
+    /// died — and the game itself has exited. The session is the game's exit, not a safety unhook, and the scan's answer is
+    /// kept; nothing turns hooking off.
+    /// </summary>
+    [Theory]
+    [InlineData(AntiCheatRefusalReason.ProcessUnreadable)]
+    [InlineData(AntiCheatRefusalReason.ModuleScanFailed)]
+    [InlineData(AntiCheatRefusalReason.ProcessTreeUnavailable)]
+    public async Task AnUnreadableRescanOfAGameThatHasExitedEndsAsItsExit(AntiCheatRefusalReason couldNotRead)
+    {
+        var guard = new CountingGuard { EvaluateVerdict = AntiCheatVerdict.Refused(couldNotRead, string.Empty, "a process in the scan set could not be read") };
+        using var sink = new FakeSink();
+        using var alive = new FakeLiveness { HasExited = true, ExitCode = 3 };
+        IGameConsentStore store = await StoreWithAsync();
+        CaptureSession loop = Loop(store, guard, sink, alive, options: EndsOnItsOwn);
+
+        CaptureOutcome r = await loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        r.Reason.Should().Be(SessionEndReason.TargetExited, "the game had gone; its exit decides how the session ended");
+        r.ExitScanReason.Should().Be(couldNotRead);
+        r.HookingTurnedOff.Should().BeFalse("nothing was found");
+        (await store.FindAsync(_exe, TestContext.Current.CancellationToken)).HookEnabled.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task AnUnreadableRescanOfALiveGameIsStillASafetyUnhook()
+    {
+        var guard = new CountingGuard { EvaluateVerdict = AntiCheatVerdict.Refused(AntiCheatRefusalReason.ProcessUnreadable, string.Empty, "access is denied") };
+        using var sink = new FakeSink();
+        using var alive = new FakeLiveness { HasExited = false };
+        CaptureSession loop = Loop(await StoreWithAsync(), guard, sink, alive, options: EndsOnItsOwn);
+
+        CaptureOutcome r = await loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        r.Reason.Should().Be(SessionEndReason.SafetyUnhook, "a game still running that the guard cannot read is unhooked, as ever");
+        r.ExitScanReason.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task AFindingOnAGameThatHasExitedIsStillASafetyUnhook()
+    {
+        var guard = new CountingGuard { EvaluateVerdict = AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedModule, "BattlEye", "BEClient_x64.dll") };
+        using var sink = new FakeSink();
+        using var alive = new FakeLiveness { HasExited = true, ExitCode = 0 };
+        IGameConsentStore store = await StoreWithAsync();
+        CaptureSession loop = Loop(store, guard, sink, alive, options: EndsOnItsOwn);
+
+        CaptureOutcome r = await loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        r.Reason.Should().Be(SessionEndReason.SafetyUnhook, "a finding is never relabelled, whatever the game did next");
+        r.HookingTurnedOff.Should().BeTrue();
+        r.ExitScanReason.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ADriverScanFailureIsNotRelabelled()
+    {
+        var guard = new CountingGuard { EvaluateVerdict = AntiCheatVerdict.Refused(AntiCheatRefusalReason.DriverScanFailed, string.Empty, "driver list unreadable") };
+        using var sink = new FakeSink();
+        using var alive = new FakeLiveness { HasExited = true };
+        CaptureSession loop = Loop(await StoreWithAsync(), guard, sink, alive, options: EndsOnItsOwn);
+
+        CaptureOutcome r = await loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        r.Reason.Should().Be(SessionEndReason.SafetyUnhook, "only the module check's could-not-read answers concern the game's own tree");
+    }
+
     [Fact]
     public async Task AGuardThatThrowsStopsTheTickRatherThanBeingSwallowed()
     {

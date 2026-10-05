@@ -266,6 +266,13 @@ public sealed class SessionRecorder : ISessionRecorder
             notes += "; " + CaptureNotes.AcExceptionSlot(excepted);
         }
 
+        // D48(b), beta.14: the last re-scan could not read the game's tree as the game exited, and the session ended as
+        // that exit rather than as a safety unhook; what the scan said stays with the row.
+        if (o.ExitScanReason is { } scanAtExit)
+        {
+            notes += "; scan_at_exit=" + scanAtExit;
+        }
+
         // The session that turned the game's hooking off says so in its notes (2026-09-22): the row's block names
         // the finding, and the notes travel into every bug bundle.
         if (o.HookingTurnedOff)

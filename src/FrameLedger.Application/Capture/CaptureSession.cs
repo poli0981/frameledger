@@ -431,6 +431,9 @@ public sealed class CaptureSession(
         // about the game at the 30 s re-scan turns its hooking off exactly as one at the start does (2026-09-22).
         AntiCheatVerdict final = end == SessionEndReason.SafetyUnhook && supervisor.LastVerdict is { } fired ? fired : verdict;
         bool turnedOff = end == SessionEndReason.SafetyUnhook && await TurnHookingOffAsync(observed, final, ct).ConfigureAwait(false);
+        // D48(b): a re-scan that could not read, concluded as the game's exit (ExitScanRelabel) — its reason goes in the notes.
+        AntiCheatRefusalReason? exitScan = end == SessionEndReason.TargetExited && supervisor.LastVerdict is { IsAllowed: false } last
+                                           && ExitScanRelabel.Applies(last.Reason) ? last.Reason : null;
 
         return new CaptureOutcome
         {
@@ -440,6 +443,7 @@ public sealed class CaptureSession(
             Reason = end,
             Verdict = final,
             HookingTurnedOff = turnedOff,
+            ExitScanReason = exitScan,
             ExceptionFamily = toleratedFamily,
             AttachRefusal = ShmAttachRefusal.Ok,
             Records = state.Records,
@@ -555,7 +559,7 @@ public sealed class CaptureSession(
         await FlushNativeLogAsync(sink, alive, end, ct).ConfigureAwait(false);
         // The switch's stop is the user's, not the guard's: it ends the session as its own reason rather
         // than as the safety refusal a false mayContinue would otherwise read as.
-        return state.KillSwitchStopped ? SessionEndReason.KillSwitchEngaged : Conclude(end, faulted, mayContinue);
+        return state.KillSwitchStopped ? SessionEndReason.KillSwitchEngaged : Conclude(end, faulted, mayContinue, supervisor.LastVerdict, alive.HasExited);
     }
 
     /// <summary>
@@ -738,14 +742,18 @@ public sealed class CaptureSession(
     /// <see cref="SessionEndClassifier"/> cannot know that, because the mapping stores
     /// one status for both stops.
     /// </remarks>
-    private static SessionEndReason Conclude(SessionEndReason end, Exception? faulted, bool mayContinue)
+    /// <remarks>
+    /// D48(b), beta.14: a refusal that says only that the guard could not read, concluded after the game itself has exited
+    /// (read after the last drain), is the game's exit — <see cref="ExitScanRelabel"/>. A finding never is.
+    /// </remarks>
+    private static SessionEndReason Conclude(SessionEndReason end, Exception? faulted, bool mayContinue, AntiCheatVerdict? lastVerdict, bool targetExited)
     {
         if (faulted is not null)
         {
             return SessionEndReason.SupervisionFaulted;
         }
 
-        return mayContinue ? end : SessionEndReason.SafetyUnhook;
+        return mayContinue ? end : ExitScanRelabel.EndOf(lastVerdict, targetExited);
     }
 
     /// <summary>

@@ -223,6 +223,8 @@ const char* CollectedName(fl::guard::Collected c) {
         return "FAILED";
     case fl::guard::Collected::kIncomplete:
         return "INCOMPLETE";
+    case fl::guard::Collected::kRetry:
+        return "RETRY (still loading, or gone)";
     }
     return "?";
 }
