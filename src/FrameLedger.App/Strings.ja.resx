@@ -3841,4 +3841,12 @@
     <value>FrameLedger に対するあなたのライセンスです。参考として表示しています。プログラムを実行するために同意する必要はありません（GPLv3 第 9 条）。</value>
     <comment>review</comment>
   </data>
+  <data name="Settings_HideScrollBars_Label" xml:space="preserve">
+    <value>スクロール バーを非表示にする</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_HideScrollBars_Body" xml:space="preserve">
+    <value>アプリ内のどこにもスクロール バーを表示しません。マウス ホイール、キーボード、タッチでのスクロールは引き続き使えます。</value>
+    <comment>review</comment>
+  </data>
 </root>

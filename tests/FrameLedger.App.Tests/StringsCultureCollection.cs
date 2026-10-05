@@ -10,7 +10,8 @@ namespace FrameLedger.App.Tests;
 /// first gate run on xUnit.net v3 4.0.1 (2026-09-21) read "Settings" where it had just written <c>vi</c>. The race was
 /// always there; the new scheduler found it. An implicit collection: no fixture, so no definition class is needed.
 /// Since beta.8 it also holds the classes that write <c>FpsDecimals.Two</c> or read FPS text the setting changes — the
-/// same kind of process-wide formatting state.
+/// same kind of process-wide formatting state — and since beta.14 <see cref="ScrollBarHidingTests"/>, whose option is a
+/// process-wide flag that <c>SettingsViewModelTests</c> writes too.
 /// </summary>
 internal static class StringsCultureCollection
 {

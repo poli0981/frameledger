@@ -2886,4 +2886,10 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="FirstRun_Doc_InformationNote" xml:space="preserve">
     <value>Giấy phép của bạn đối với FrameLedger, hiển thị để bạn biết: bạn không cần chấp nhận nó để chạy chương trình (GPLv3 mục 9).</value>
   </data>
+  <data name="Settings_HideScrollBars_Label" xml:space="preserve">
+    <value>Ẩn thanh cuộn</value>
+  </data>
+  <data name="Settings_HideScrollBars_Body" xml:space="preserve">
+    <value>Không vẽ thanh cuộn ở bất kỳ đâu trong ứng dụng. Mọi thứ vẫn cuộn được bằng con lăn chuột, bàn phím và cảm ứng.</value>
+  </data>
 </root>

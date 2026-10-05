@@ -415,6 +415,7 @@ switch's rule); integers are invariant-culture within an inclusive range; choice
 | `ui.minimize_to_tray` | bool | `0` | | UI (PR-8) |
 | `ui.hide_anticheat_hooking` | bool | `1` | | UI (beta.8, 2026-09-25): the game page of an entry the guard found anti-cheat in shows the finding in place of its Hooking card (`08_UI` §Game detail) |
 | `ui.fps_decimals` | bool | `0` | | UI (beta.8, 2026-09-25): every FPS figure with two decimals ("62.40") instead of a whole number |
+| `ui.hide_scrollbars` | bool | `0` | | UI (beta.14, 2026-10-05): no scroll bar drawn anywhere; every scroller still scrolls with the wheel, the keyboard and touch (`App.Services.ScrollBarHiding`, `08_UI` §Settings) |
 | `ui.library_view` | choice `grid`\|`list` | `grid` | | UI (beta.11, 2026-10-03): the Games library as a grid of cards that fills the width, or as a list; written by the page's own switch, no Settings row (`08_UI` §Games) |
 | `capture.background` | bool | `1` | | ~~Agent~~ nobody *(corrected 2026-10-04: no Agent code ever read it, so the watcher recorded every tracked game whatever it said; beta.12 removed its switch from Settings and reserved the key — `SettingsRegistry.CaptureBackground`)* |
 | `hooking.kill_switch` | bool | `0` | | Agent (FR-2.4, since P2 PR-F) |

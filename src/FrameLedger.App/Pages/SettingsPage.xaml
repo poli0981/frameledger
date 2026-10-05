@@ -311,6 +311,17 @@
                 </ui:CardControl.Header>
                 <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_FpsDecimals_Label}" IsChecked="{Binding ViewModel.FpsTwoDecimals, Mode=TwoWay}" />
             </ui:CardControl>
+            <!-- beta.14 (owner request 2026-10-05): no scroll bars drawn; the wheel, the keyboard and touch still scroll. -->
+            <ui:CardControl Margin="0,8,0,0" Icon="{ui:SymbolIcon ArrowSortDownLines24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_HideScrollBars_Label}" />
+                        <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Appearance="Secondary" TextWrapping="Wrap"
+                                      Text="{x:Static res:Strings.Settings_HideScrollBars_Body}" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_HideScrollBars_Label}" IsChecked="{Binding ViewModel.HideScrollBars, Mode=TwoWay}" />
+            </ui:CardControl>
 
             <!--
                 Updates, logging, legal. The Privacy card — the `privacy.online_metadata` toggle — is not shown

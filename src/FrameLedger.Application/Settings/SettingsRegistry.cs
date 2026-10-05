@@ -67,6 +67,17 @@ public static class SettingsRegistry
     };
 
     /// <summary>
+    /// Whether the App draws no scroll bars (beta.14, owner request 2026-10-05): every scroller still scrolls with the wheel,
+    /// the keyboard and touch, it only stops showing its bar. Off by default — the bars are what every page showed until then.
+    /// </summary>
+    public static readonly SettingDefinition UiHideScrollBars = new()
+    {
+        Key = "ui.hide_scrollbars",
+        Kind = SettingKind.Boolean,
+        Default = "0",
+    };
+
+    /// <summary>
     /// How the Games library is shown (beta.11, owner request 2026-10-03): a grid of cards that fills the width, or a list.
     /// The page's own switch writes it; Settings has no row for it.
     /// </summary>
@@ -199,7 +210,7 @@ public static class SettingsRegistry
     /// <summary>Every definition, in the order <c>06_DATA_MODEL</c> lists them.</summary>
     public static IReadOnlyList<SettingDefinition> All { get; } =
     [
-        UiLanguage, UiTheme, UiStartWithWindows, UiMinimizeToTray, UiHideAntiCheatHooking, UiFpsDecimals, UiLibraryView,
+        UiLanguage, UiTheme, UiStartWithWindows, UiMinimizeToTray, UiHideAntiCheatHooking, UiFpsDecimals, UiHideScrollBars, UiLibraryView,
         CaptureBackground, HookingKillSwitch, HookingUserModeExceptions, CaptureRunElevated, CaptureMinSessionSeconds, TelemetryIntervalMs, RetentionRawSessionsPerGame,
         UpdateChannel, UpdateAutoCheck, PrivacyOnlineMetadata, LogDebug,
     ];

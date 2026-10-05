@@ -420,6 +420,28 @@ public sealed class SettingsViewModelTests
     }
 
     [Fact]
+    public async Task HidingScrollBarsIsOffByDefaultAndItsToggleIsPersistedAndAppliedAtOnce()
+    {
+        // beta.14 (owner request 2026-10-05): ui.hide_scrollbars, default 0; the scrollers on screen follow it at once.
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        Harness h = await OpenAsync(s);
+        h.Vm.HideScrollBars.Should().BeFalse();
+        try
+        {
+            h.Vm.HideScrollBars = true;
+            Task pending = h.Vm.Pending;
+            await pending;
+
+            (await h.Settings.GetBooleanAsync(SettingsRegistry.UiHideScrollBars, Ct)).Should().BeTrue();
+            ScrollBarHiding.Hidden.Should().BeTrue();
+        }
+        finally
+        {
+            ScrollBarHiding.Apply(false);
+        }
+    }
+
+    [Fact]
     public async Task ARevokeTheAgentCannotTakeStaysInTheListAndSaysWhy()
     {
         await using ScratchLedger s = await ScratchLedger.OpenAsync();

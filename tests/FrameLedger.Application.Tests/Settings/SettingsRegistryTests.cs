@@ -25,6 +25,18 @@ public sealed class SettingsRegistryTests
 
     /// <summary>D33: the exception option is off unless the user turns it on — and exactly "1" is on.</summary>
     [Fact]
+    public void HidingScrollBarsIsOffByDefaultAndTheAgentNeverReadsIt()
+    {
+        // beta.14: ui.hide_scrollbars is the App's alone; the bars are what every page showed until then.
+        SettingDefinition d = SettingsRegistry.UiHideScrollBars;
+        d.Key.Should().Be("ui.hide_scrollbars");
+        d.Kind.Should().Be(SettingKind.Boolean);
+        d.Default.Should().Be("0");
+        d.AgentReads.Should().BeFalse();
+        SettingsRegistry.Find("ui.hide_scrollbars").Should().BeSameAs(d);
+    }
+
+    [Fact]
     public void TheUserModeExceptionOptionIsOffByDefault()
     {
         SettingDefinition d = SettingsRegistry.HookingUserModeExceptions;

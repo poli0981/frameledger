@@ -251,6 +251,10 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
 - [ ] **ScottPlot 5 zooms on every wheel and never marks it handled.** Without `Charts/ChartWheel` a wheel over a chart
   zoomed it and scrolled the page at once; a plain wheel is the page's, Ctrl+wheel the chart's, for every plot that
   `ChartTheme.Attach` registers.
+- [ ] **A scroll bar's visibility is bound inside its scroller's template** (`ComputedVerticalScrollBarVisibility`), so a style
+  on `ScrollBar` or `ui:DynamicScrollBar` cannot hide it. Set the scroller's own `ScrollBarVisibility` to `Hidden` — no
+  bar, and the wheel, the keyboard and touch still scroll (`ui:PassiveScrollViewer` treats only `Disabled` as "cannot
+  scroll") — as `Services.ScrollBarHiding` does for `ui.hide_scrollbars` (beta.14).
 - [ ] **No dialog in 4.3.0 closes on Esc.** Neither `ContentDialog.cs` nor `MessageBox.cs` at the 4.3.0 tag handles a
   key (read 2026-09-15), and `ContentDialog.CloseButtonText` DEFAULTS to "Close" — an empty string is how a dialog
   says it has no Close button. `MessageBox.Close()` is `[Obsolete("Use Close with MessageBoxResult instead")]` while no
