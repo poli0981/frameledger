@@ -30,6 +30,10 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Fixed
 
+- **A game started through its launcher was never followed to the game itself** (the Agent's `--console launch`): when
+  the launcher exited or never drew a frame, FrameLedger was to find the game the launcher had started and record it, and
+  it never did — the launcher's process id was not passed on, so the search stopped before it began. It is passed on now,
+  and a launch that ends without one says so in the log.
 - **After a change of language some text stayed in the old one** until FrameLedger restarted: the theme and update-channel
   lists in Settings, the log and level lists on the Logs page, the sort order on the Games page, the tray icon's menu and
   the Agent's status in the title bar. They follow the language at once now.

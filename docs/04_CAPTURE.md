@@ -208,6 +208,11 @@ which makes the notification more important than it was, not less.
 > that spawns the real game and quits lands on the first, and re-electing the descendant is the Agent's
 > (P2, §Process watcher) — **built 2026-09-10 (PR-F)**: the Agent's `--console launch` hands either
 > answer to `DescendantElection` and runs an attach-mode session against the newest tracked descendant.
+> *(Corrected 2026-10-06, beta.15: **it never ran until beta.15.** The refused outcome carried no `TargetPid`, and
+> `CaptureOrchestrator.ElectAfterLaunchAsync` returned at `TargetPid == 0` — before its own `election:` log line — on every
+> launch since #150; the orchestrator's tests built the outcome by hand, pid included, so nothing saw it. The refused
+> outcome carries the launcher's pid and exit code now (`CaptureSessionLaunchTests` pins it), and an outcome without
+> one is logged rather than silent. A real launcher run is still owed: HANDOFF, owner-only.)*
 > **The host never terminates what it launched**: any refusal after the start
 > leaves the title running unhooked, which is Tier 2.
 >
