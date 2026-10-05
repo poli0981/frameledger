@@ -46,7 +46,7 @@ public sealed class TrayHost : IDisposable, ILanguageFollower
             var menu = new ContextMenu();
             _open = new MenuItem { Header = Strings.Tray_Open, Command = _viewModel.OpenCommand };
             menu.Items.Add(_open);
-            var pause = new MenuItem { Header = _viewModel.PauseText, Command = _viewModel.TogglePauseCommand };
+            var pause = new MenuItem { Header = _viewModel.PauseText, Command = _viewModel.TogglePauseCommand, IsEnabled = _viewModel.ActsOnThisPc };
             _pause = pause;
             menu.Items.Add(pause);
             _status = new MenuItem { Header = Strings.Tray_AgentStatus, Command = _viewModel.AgentStatusCommand };

@@ -27,6 +27,11 @@ That is the whole quality gate, and continuous integration runs the identical sc
 checks (licences, the accuracy blocks, the licence headers, the changelog rules, …). `docs/12_BUILD.md` describes each
 step and the build profiles. Run it in your main checkout: a fresh `git worktree` cannot configure the native build.
 
+Never point a build of your own at the data FrameLedger records into (`%LOCALAPPDATA%\FrameLedger`): a newer build
+migrates the database, and the released one cannot read it back. To look at real data, copy the folder and start
+`FrameLedger.exe --data-dir <copy>` — a viewer that starts no Agent and changes nothing on the PC (`docs/12_BUILD.md`
+§Debugging says how to copy it safely).
+
 ## What a pull request brings with it
 
 The definition of done is the one in `CLAUDE.md`:

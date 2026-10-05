@@ -46,6 +46,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private long _sessionTotal;
     private readonly IMaintenanceState _maintenance;
     private readonly IAgentTool _tool;
+    private readonly UiMode _mode;
     private readonly WindowClosePolicy _closePolicy;
     private readonly IFirstRunFlow _firstRun;
     private readonly AntiCheatExceptions? _exceptions;
@@ -157,8 +158,12 @@ public sealed partial class SettingsViewModel : ObservableObject
         IAgentAdminPrompt? adminPrompt = null,
         Func<bool>? agentHeld = null,
         IConfirmations? confirmations = null,
-        SessionDeletion? deletion = null)
+        SessionDeletion? deletion = null,
+        UiMode? mode = null)
     {
+        // beta.15 (D52): a viewer over a copy disables what asks the Agent or changes this PC; a composition without a mode
+        // (a test) is the profile's App.
+        _mode = mode ?? UiMode.Profile;
         // beta.11 (D40): Settings ▸ Data's Delete all sessions — its confirmation and its request; a composition without them
         // (a test) deletes nothing.
         _confirmations = confirmations;
@@ -255,15 +260,22 @@ public sealed partial class SettingsViewModel : ObservableObject
     public string KillSwitchState => KillSwitch ? Strings.Settings_KillSwitch_On : Strings.Settings_KillSwitch_Off;
 
     /// <summary>12_BUILD: the registration exists only while a hook-enabled game references the Vulkan loader (P4 PR-2) — the button follows the same rule as the Agent's reconciler.</summary>
-    public bool CanRegisterLayer => MaintenanceSnapshot.LayerStaged && !MaintenanceSnapshot.LayerRegistered && HookedGames.Any(static g => g.UsesVulkan);
+    public bool CanRegisterLayer => ActsOnThisPc && MaintenanceSnapshot.LayerStaged && !MaintenanceSnapshot.LayerRegistered && HookedGames.Any(static g => g.UsesVulkan);
 
-    public bool CanUnregisterLayer => MaintenanceSnapshot.LayerRegistered;
+    public bool CanUnregisterLayer => ActsOnThisPc && MaintenanceSnapshot.LayerRegistered;
 
-    public bool CanInstallTask => MaintenanceSnapshot.Task == LogonTaskState.NotInstalled;
+    public bool CanInstallTask => ActsOnThisPc && MaintenanceSnapshot.Task == LogonTaskState.NotInstalled;
 
-    public bool CanRepairTask => MaintenanceSnapshot.Task == LogonTaskState.Stale;
+    public bool CanRepairTask => ActsOnThisPc && MaintenanceSnapshot.Task == LogonTaskState.Stale;
 
-    public bool CanRemoveTask => MaintenanceSnapshot.Task is LogonTaskState.Installed or LogonTaskState.Stale;
+    public bool CanRemoveTask => ActsOnThisPc && (MaintenanceSnapshot.Task is LogonTaskState.Installed or LogonTaskState.Stale);
+
+    /// <summary>
+    /// beta.15 (D52): what asks the Agent or changes this PC — the kill switch, the exceptions' grants, Delete all sessions,
+    /// the admin mode, the logon task, the Vulkan layer, Start with Windows, the update check — is live everywhere but in a
+    /// viewer over a copy, which has no Agent and is not this PC's FrameLedger.
+    /// </summary>
+    public bool ActsOnThisPc => _mode.ActsOnThisPc;
 
     /// <summary>A pending load or write, for a test to await; the UI does not.</summary>
     public Task Pending { get; private set; } = Task.CompletedTask;

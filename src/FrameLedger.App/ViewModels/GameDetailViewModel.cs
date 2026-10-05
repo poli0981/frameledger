@@ -40,6 +40,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private readonly ISessionSummaryOpener _summaries;
     private readonly SessionSeriesLoader _loader;
     private readonly IAgentLink? _agent;
+    private readonly UiMode _mode;
     private readonly UiThread _ui = new();
     private bool _attached;
     private readonly IHardwareSnapshotRepository _hardware;
@@ -217,8 +218,11 @@ public sealed partial class GameDetailViewModel : ObservableObject
     public GameDetailViewModel(GameLibrary library, GameSelection selection, HookingConsent consent, IPageNavigator navigator,
         IConfirmations confirmations, IEditGamePrompt edit, IMessageStrip strip, ISessionSummaryOpener summaries,
         SessionSeriesLoader loader, IHardwareSnapshotRepository hardware, SessionSelection sessionSelection, IGamePicker picker,
-        RegisteredSettings? settings = null, IAgentLink? agent = null, AntiCheatExceptions? exceptions = null, SessionDeletion? deletion = null)
+        RegisteredSettings? settings = null, IAgentLink? agent = null, AntiCheatExceptions? exceptions = null, SessionDeletion? deletion = null,
+        UiMode? mode = null)
     {
+        // beta.15 (D52): a viewer over a copy has no Agent to ask; a composition without a mode (a test) is the profile's App.
+        _mode = mode ?? UiMode.Profile;
         _deletion = deletion;
         _exceptions = exceptions;
         _settings = settings;
@@ -240,6 +244,12 @@ public sealed partial class GameDetailViewModel : ObservableObject
     }
 
     public static string BackText => Strings.GameDetail_Back;
+
+    /// <summary>
+    /// beta.15 (D52): what asks the Agent — hooking, the exception's grant and withdrawal, re-enabling, Delete all sessions —
+    /// is live everywhere but in a viewer over a copy, which has none to ask.
+    /// </summary>
+    public bool ActsOnThisPc => _mode.ActsOnThisPc;
 
     public static string ExceptionHeader => Strings.GameDetail_Exception_Header;
 
@@ -1099,7 +1109,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         // through FR-2.1's dialog as ever, and the Agent's pre-scan names the family; the finding stays on the page.
         ExceptionView? exception = ExceptionView.Of(row);
         bool exceptionInForce = _exceptionsOn && exception is { Kind: ExceptionViewKind.Granted };
-        HookToggleEnabled = (!blocked || exceptionInForce) && !Busy && (row.HookEnabled || !notX64);
+        HookToggleEnabled = ActsOnThisPc && (!blocked || exceptionInForce) && !Busy && (row.HookEnabled || !notX64);
         NotX64Text = notX64 && !blocked
             ? string.Format(CultureInfo.CurrentCulture, Strings.Hooking_NotX64_Format, Formats.Architecture(row.ExeMachine))
             : null;

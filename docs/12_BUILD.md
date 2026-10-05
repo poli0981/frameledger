@@ -75,6 +75,15 @@ implemented. What exists: `FrameLedger.exe` starts `FrameLedger.Agent.exe --serv
 harness, run `hook-harness.exe --real --hold-presenting N`, then the Agent's `--console --data-dir <scratch>` verbs
 `consent grant --exe` and `capture --exe`, as `AgentEndToEndTests` does — never against your own data folder.)*
 
+**To look at real data with a build of your own (beta.15, D52): `FrameLedger.exe --data-dir <copy>`.** Make the copy with
+SQLite's online backup, which is consistent while the Agent writes — in Python,
+`sqlite3.connect("file:C:/Users/<you>/AppData/Local/FrameLedger/ledger.db?mode=ro", uri=True).backup(sqlite3.connect(r"<copy>\ledger.db"))`
+— or copy the whole folder with every FrameLedger process stopped
+(closing the App does not stop the Agent). The App opens the copy, migrating it if your build is newer, which is exactly
+why it must be a copy, and writes its log and crash dumps beside it. It is a viewer: no Agent is started or contacted and
+nothing on the PC is changed (`08_UI` §Shell). It refuses the profile's own folder however it is spelled, and a folder
+that does not exist.
+
 **Toolchain gotchas, both hit on a real machine and both handled by `build.ps1`:**
 
 - **msys2 / MinGW on `PATH` breaks the native build.** `vcvars64` *prepends* to

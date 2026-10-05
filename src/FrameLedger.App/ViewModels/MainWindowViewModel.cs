@@ -20,7 +20,8 @@ namespace FrameLedger.App.ViewModels;
 /// <summary>The shell's state: the Agent pill, the offline banner, and the menu commands that exist in this build.</summary>
 public sealed partial class MainWindowViewModel : ObservableObject, IDisposable, ILanguageFollower
 {
-    private readonly AgentConnection _agent;
+    private readonly IAgentLink _agent;
+    private readonly UiMode _mode;
     private readonly ISnackbarService _snackbar;
     private readonly IShellPresence _shell;
     private readonly IPageNavigator _navigator;
@@ -61,10 +62,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
     private readonly ISessionSummaryOpener _summaries;
     private readonly ImportLibraryFlow _import;
 
-    public MainWindowViewModel(AgentConnection agent, ISnackbarService snackbar, IShellPresence shell, IPageNavigator navigator, AddGameFlow addGame, SafetyNotices notices,
+    public MainWindowViewModel(IAgentLink agent, ISnackbarService snackbar, IShellPresence shell, IPageNavigator navigator, AddGameFlow addGame, SafetyNotices notices,
         BugReportFlow bugReports, IUrlOpener urls, SessionSelection selection, SessionExportService exports, ISessionSummaryOpener summaries, ImportLibraryFlow import,
-        UpdateService updates, IDatabaseMaintenancePrompts maintenance, IDocumentWindows documents)
+        UpdateService updates, IDatabaseMaintenancePrompts maintenance, IDocumentWindows documents, UiMode? mode = null)
     {
+        _mode = mode ?? UiMode.Profile;
         _documents = documents ?? throw new ArgumentNullException(nameof(documents));
         _maintenance = maintenance ?? throw new ArgumentNullException(nameof(maintenance));
         Notices = notices ?? throw new ArgumentNullException(nameof(notices));
@@ -87,6 +89,18 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
     }
 
     public static string Title => Strings.App_Title;
+
+    /// <summary>
+    /// The menu entries that ask the Agent or change this PC (Update detection rules, Check for updates) are live everywhere
+    /// but in a viewer (beta.15, D52).
+    /// </summary>
+    public bool ActsOnThisPc => _mode.ActsOnThisPc;
+
+    /// <summary>D52: a viewer says so above every page, persistently, and names the folder it reads.</summary>
+    public bool IsViewerBannerVisible => _mode.IsViewer;
+
+    [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format string is a resource that follows the UI culture")]
+    public string ViewerBannerBody => _mode.IsViewer ? string.Format(CultureInfo.CurrentCulture, Strings.Viewer_Banner_Body_Format, _mode.DataDirectory) : string.Empty;
 
     /// <summary>08_UI §Notifications policy: the safety events, as persistent InfoBars above every page — never toasts.</summary>
     public SafetyNotices Notices { get; }
@@ -132,6 +146,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
     {
         Refresh();
         RefreshUpdate();
+        OnPropertyChanged(nameof(ViewerBannerBody));
     }
 
     private void Refresh()

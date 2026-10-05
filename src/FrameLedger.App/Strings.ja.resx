@@ -61,6 +61,10 @@
     <value>管理者の許可を待っています…</value>
     <comment>review</comment>
   </data>
+  <data name="Agent_State_Viewer" xml:space="preserve">
+    <value>ビューアー — Agent なし</value>
+    <comment>review</comment>
+  </data>
   <data name="App_Title" xml:space="preserve">
     <value>FrameLedger</value>
     <comment>review</comment>
@@ -4103,6 +4107,38 @@
   </data>
   <data name="Compare_Metric_Efficiency" xml:space="preserve">
     <value>ワットあたりのフレーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Viewer_Banner_Title" xml:space="preserve">
+    <value>コピーを表示中</value>
+    <comment>review</comment>
+  </data>
+  <data name="Viewer_Banner_Body_Format" xml:space="preserve">
+    <value>このウィンドウは {0} のデータを読み取ります。Agent を起動も接続もしないため何も記録されず、この PC を変更する操作（Windows と同時に起動、Vulkan レイヤー、ログオン タスク、管理者モード、更新）はここでは無効です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Viewer_ChangesThisPc_Off" xml:space="preserve">
+    <value>ビューアー ウィンドウ (--data-dir) では使用できません。この PC が変更されるためです。</value>
+    <comment>review</comment>
+  </data>
+  <data name="DataDir_Refused_Title" xml:space="preserve">
+    <value>FrameLedger はそのフォルダーを開けません</value>
+    <comment>review</comment>
+  </data>
+  <data name="DataDir_NoFolder" xml:space="preserve">
+    <value>--data-dir にはフォルダーが必要です: FrameLedger.exe --data-dir &lt;フォルダー&gt;</value>
+    <comment>review</comment>
+  </data>
+  <data name="DataDir_Twice" xml:space="preserve">
+    <value>--data-dir が複数回指定されました。フォルダーを 1 つだけ指定してください: FrameLedger.exe --data-dir &lt;フォルダー&gt;</value>
+    <comment>review</comment>
+  </data>
+  <data name="DataDir_Missing_Format" xml:space="preserve">
+    <value>フォルダー {0} は存在しません。--data-dir は FrameLedger のデータ フォルダーのコピーを開きます。先にフォルダーをそこへコピーしてください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="DataDir_Profile_Format" xml:space="preserve">
+    <value>{0} は FrameLedger 自身のデータ フォルダーです。--data-dir はそのコピー用で、テスト ビルドが記録先のデータベースを開かないようにするためのものです。このフォルダーを使うには --data-dir を付けずに FrameLedger を起動してください。</value>
     <comment>review</comment>
   </data>
 </root>
