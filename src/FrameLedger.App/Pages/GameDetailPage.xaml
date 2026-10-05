@@ -9,13 +9,14 @@
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
       xmlns:controls="clr-namespace:FrameLedger.App.Controls"
       xmlns:charts="clr-namespace:FrameLedger.App.Charts"
-      Title="{x:Static res:Strings.Games_Header}">
+      Title="{x:Static res:Strings.Games_Header}"
+      ScrollViewer.CanContentScroll="False">
     <!--
         08_UI §Games › Game detail. The two rows — Supports (files on disk) and Last session measured (the
         hooks) — are two cards and never mixed. The hooking control opens FR-2.1's dialog; a blocked pre-scan
         disables it with the reason inline; a refusal is a persistent InfoBar on this page, never a toast.
     -->
-    <ScrollViewer>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Style="{StaticResource PageRoot}">
             <ui:HyperlinkButton Padding="0" Command="{Binding ViewModel.BackCommand}" Content="{x:Static vm:GameDetailViewModel.BackText}" Icon="{ui:SymbolIcon ArrowLeft24}" />
 

@@ -44,6 +44,18 @@ The anti-cheat guard is the one component where a bug can cost someone an accoun
 - Blob codecs round-trip for every series in `frame_blobs` (NaN forbidden — assert), including the two-pair `render_res` encoding and the three-bit `rt_flags` byte. SQLite migrations apply cleanly from an empty file to the current schema, and re-applying is a no-op. (There is no v1→v2 upgrade to test — `06_DATA_MODEL` §Migrations.)
 - IPC pipe: framing, split reads, oversize rejection, unknown fields/types ignored, protocol mismatch.
 
+### What the App draws (beta.14)
+
+A page or dialog that only *loads* has proved nothing about how it looks: `PagesLoadTests` counted the import list's
+rows while every row was white text on white in the dark theme (`08_UI` §Contrast). The rendered checks run on the one
+STA thread with the App's three dictionaries (`PagesLoadTests.OnStaAsync`) and look at the result: `Visuals` lays a
+control out at a window's size, pumps the dispatcher (a `NavigationViewContentPresenter`'s navigation), swaps the theme
+dictionary for one check and puts Dark back, and composites every Border and Panel background between a text and the
+window into the colour actually painted under it; `Wcag` is the arithmetic. `ImportReviewRenderTests` measures each text
+cell against that colour in both themes and counts the accent pixels of each ticked box in a `RenderTargetBitmap`; the
+paging checks navigate a real page in WPF UI's presenter and send it the wheel. Each was run red against the unfixed XAML
+first — a rendered check that cannot fail is the counted-rows check again.
+
 ## Integration tests (CI-runnable, no game, no anti-cheat surface)
 
 `hook-harness` is what makes this architecture testable without touching a real title:

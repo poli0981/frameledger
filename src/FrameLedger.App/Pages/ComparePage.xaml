@@ -8,9 +8,10 @@
       xmlns:res="clr-namespace:FrameLedger.App"
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
       xmlns:charts="clr-namespace:FrameLedger.App.Charts"
-      Title="{x:Static res:Strings.Compare_Header}">
+      Title="{x:Static res:Strings.Compare_Header}"
+      ScrollViewer.CanContentScroll="False">
     <!-- 08_UI §Compare: the picker (2–5, cross-game), the overlaid percentile curves, the stat table; FR-6.2's guard is the view model's. -->
-    <ScrollViewer>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Style="{StaticResource PageRoot}">
             <ui:TextBlock FontTypography="Title" Text="{x:Static vm:CompareViewModel.Header}" />
             <ui:TextBlock Margin="0,16,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:CompareViewModel.EmptyText}"
@@ -32,7 +33,16 @@
                       ItemsSource="{Binding ViewModel.Candidates}" SelectionMode="Single"
                       Visibility="{Binding ViewModel.IsEmpty, Converter={StaticResource InverseBoolToVis}}">
                 <DataGrid.Columns>
-                    <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="40" />
+                    <!-- A template column, not DataGridCheckBoxColumn: that one's element style is WPF's own, an Aero2 box on the Fluent grid; MinWidth 0
+                         and no padding, or WPF UI's CheckBox (MinWidth 120, padding 11) draws a sliver of the box in 40 px (beta.14). -->
+                    <DataGridTemplateColumn Width="40">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate DataType="{x:Type vm:CompareCandidateViewModel}">
+                                <CheckBox MinWidth="0" Padding="0" HorizontalAlignment="Center" AutomationProperties.Name="{Binding Label}"
+                                          IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                     <DataGridTextColumn Header="{x:Static res:Strings.Compare_Col_Game}" Binding="{Binding GameName}" IsReadOnly="True" Width="2*" />
                     <DataGridTextColumn Header="{x:Static res:Strings.Compare_Col_Date}" Binding="{Binding DateText}" IsReadOnly="True" Width="*" />
                     <DataGridTextColumn Header="{x:Static res:Strings.Compare_Col_Tier}" Binding="{Binding TierText}" IsReadOnly="True" Width="Auto" />

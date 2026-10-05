@@ -44,6 +44,9 @@ correct it by hand — your correction is labelled as yours.
   Changes to your hardware or driver are marked on it.
 - **Compare** (in the navigation on the left) — pick sessions, even of different games, and see them side by side.
 
+To look closer, hold **Ctrl** and turn the mouse wheel over a chart to zoom, drag to pan, and double-click to reset. The
+wheel alone scrolls the page.
+
 ## Export
 
 The summary's **Export CSV**, **Export JSON** and **Export PNG** buttons — or File ▸ Export — save a session to a file.

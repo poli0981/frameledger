@@ -16,7 +16,7 @@
         versioned by AntiCheatExceptionDisclosure.Version. It states why the exception is offered, the risk, what is still
         refused, how it ends, and that it turns nothing on; it recommends neither choice. Every colour is a theme brush.
     -->
-    <ScrollViewer MaxHeight="520" VerticalScrollBarVisibility="Auto">
+    <ui:PassiveScrollViewer MaxHeight="520" VerticalScrollBarVisibility="Auto">
         <StackPanel>
             <ui:TextBlock Text="{Binding Intro}" TextWrapping="Wrap" />
             <ui:TextBlock Margin="0,14,0,0" Text="{Binding Why}" TextWrapping="Wrap" />
@@ -37,5 +37,5 @@
                       Content="{x:Static vm:AntiCheatExceptionDialogViewModel.AcceptText}"
                       IsChecked="{Binding Accepted, Mode=TwoWay}" />
         </StackPanel>
-    </ScrollViewer>
+    </ui:PassiveScrollViewer>
 </UserControl>

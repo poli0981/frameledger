@@ -24,7 +24,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <ui:TitleBar Grid.Row="0" Title="{Binding ViewModel.Title}" ShowMaximize="True" ShowMinimize="True" />
-        <ScrollViewer Grid.Row="1">
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Style="{StaticResource PageRoot}">
                 <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:SessionSummaryViewModel.NotFoundText}"
                               Visibility="{Binding ViewModel.NotFound, Converter={StaticResource BoolToVis}}" />

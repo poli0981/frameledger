@@ -111,6 +111,92 @@ public sealed class AccessibilityTests
         found.Should().BeEmpty("08_UI §Accessibility, contrast: colours come from the WPF UI theme dictionaries, whose Fluent themes meet contrast in both modes");
     }
 
+    /// <summary>
+    /// The import list's rows were white on white in the dark theme (beta.14): a row style <c>BasedOn="{StaticResource
+    /// {x:Type DataGridRow}}"</c>, which WPF UI 4.3.0 does not define — it keys its row style <c>DefaultDataGridRowStyle</c> —
+    /// so the lookup fell through to Aero2's, whose <c>SystemColors.WindowBrush</c> no theme reaches and no colour scan can see.
+    /// Every type a style is based on must have a style in the App's own dictionaries.
+    /// </summary>
+    [Fact]
+    public async Task NoStyleIsBasedOnAnImplicitStyleTheThemeDoesNotDefine()
+    {
+        var typeKeyed = new Regex(@"^\{StaticResource \{x:Type (?:\w+:)?(?<type>\w+)\}\}$", RegexOptions.ExplicitCapture | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
+        var wanted = new List<(string File, string Type)>();
+        foreach ((string file, XDocument xaml) in AppXaml())
+        {
+            foreach (XAttribute basedOn in xaml.Descendants().Attributes().Where(static a => string.Equals(a.Name.LocalName, "BasedOn", StringComparison.Ordinal)))
+            {
+                Match match = typeKeyed.Match(basedOn.Value.Trim());
+                if (match.Success)
+                {
+                    wanted.Add((file, match.Groups["type"].Value));
+                }
+            }
+        }
+
+        HashSet<string> defined = await PagesLoadTests.OnStaAsync(() => TypeKeyedStyles(System.Windows.Application.Current.Resources));
+
+        wanted.Where(w => !defined.Contains(w.Type)).Select(static w => $"{w.File}: BasedOn {{x:Type {w.Type}}}").Should().BeEmpty(
+            "WPF UI defines no implicit style for that type, so the style would be based on Aero2's — base it on WPF UI's keyed style (DefaultDataGridRowStyle, …)");
+    }
+
+    /// <summary>The names of the types the dictionary (and those merged into it) has an implicit style for.</summary>
+    private static HashSet<string> TypeKeyedStyles(ResourceDictionary dictionary)
+    {
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        foreach (object key in dictionary.Keys)
+        {
+            if (key is Type type)
+            {
+                _ = names.Add(type.Name);
+            }
+        }
+
+        foreach (ResourceDictionary merged in dictionary.MergedDictionaries)
+        {
+            names.UnionWith(TypeKeyedStyles(merged));
+        }
+
+        return names;
+    }
+
+    /// <summary>A <c>DataGridCheckBoxColumn</c>'s box is WPF's own element style — an Aero2 box on the Fluent grid (beta.14).</summary>
+    [Fact]
+    public void NoDataGridCheckBoxColumn()
+    {
+        AppXaml().SelectMany(static x => x.Xaml.Descendants().Where(static e => string.Equals(e.Name.LocalName, "DataGridCheckBoxColumn", StringComparison.Ordinal)).Select(_ => x.File))
+            .Should().BeEmpty("a template column with a CheckBox (MinWidth=\"0\" Padding=\"0\") draws the theme's box");
+    }
+
+    /// <summary>
+    /// WPF UI 4.3.0 wraps a page in a <c>DynamicScrollViewer</c> unless the page sets <c>ScrollViewer.CanContentScroll</c> to
+    /// false; inside it the page's own root scroller has nothing to scroll and takes every wheel (beta.14: "the wheel does not
+    /// scroll"). Every page opts out and scrolls itself.
+    /// </summary>
+    [Fact]
+    public void EveryPageOptsOutOfTheDynamicScrollViewer()
+    {
+        List<string> pages = [.. AppXaml().Where(static x => string.Equals(x.Xaml.Root!.Name.LocalName, "Page", StringComparison.Ordinal)).Select(static x => x.File)];
+        List<string> wrapped = [.. AppXaml().Where(static x => string.Equals(x.Xaml.Root!.Name.LocalName, "Page", StringComparison.Ordinal)
+                                                       && !string.Equals(x.Xaml.Root.Attribute("ScrollViewer.CanContentScroll")?.Value, "False", StringComparison.Ordinal))
+                                             .Select(static x => x.File)];
+
+        pages.Should().HaveCountGreaterThanOrEqualTo(6);
+        wrapped.Should().BeEmpty("a page without ScrollViewer.CanContentScroll=\"False\" is wrapped in WPF UI's scroller, and its own root swallows the wheel");
+    }
+
+    /// <summary>
+    /// A stock <c>ScrollViewer</c> takes every wheel, even with nothing left to scroll; inside a dialog that scrolls, the wheel
+    /// then stops at it. WPF UI's <c>PassiveScrollViewer</c> hands the wheel on at its ends (beta.14).
+    /// </summary>
+    [Fact]
+    public void NoPlainScrollViewerInsideADialog()
+    {
+        AppXaml().Where(static x => x.File.StartsWith("Dialogs" + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            .SelectMany(static x => x.Xaml.Descendants().Where(static e => string.Equals(e.Name.LocalName, "ScrollViewer", StringComparison.Ordinal)).Select(_ => x.File))
+            .Should().BeEmpty("use ui:PassiveScrollViewer inside a dialog");
+    }
+
     [Fact]
     public void TheManifestIsPerMonitorV2()
     {

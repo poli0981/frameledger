@@ -16,7 +16,7 @@
         tiers are two paragraphs of the same shape, in the order enable / do-not-enable, with nothing between
         them that reads as a recommendation. Every colour is a theme brush (16_WPFUI §Theming).
     -->
-    <ScrollViewer MaxHeight="520" VerticalScrollBarVisibility="Auto">
+    <ui:PassiveScrollViewer MaxHeight="520" VerticalScrollBarVisibility="Auto">
         <StackPanel>
             <ui:TextBlock Text="{x:Static vm:ConsentDialogViewModel.Intro}" TextWrapping="Wrap" />
 
@@ -38,5 +38,5 @@
                         Text="{Binding Typed, UpdateSourceTrigger=PropertyChanged}"
                         PlaceholderText="{x:Static vm:ConsentDialogViewModel.Phrase}" />
         </StackPanel>
-    </ScrollViewer>
+    </ui:PassiveScrollViewer>
 </UserControl>

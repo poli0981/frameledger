@@ -19,7 +19,7 @@
         <ui:TextBlock TextWrapping="Wrap" Text="{Binding Intro}" />
         <Border Margin="0,10,0,10" Padding="10,6" CornerRadius="6"
                 Background="{DynamicResource ControlFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1">
-            <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto">
+            <ui:PassiveScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto">
                 <ItemsControl ItemsSource="{Binding Entries}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
@@ -27,7 +27,7 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </ScrollViewer>
+            </ui:PassiveScrollViewer>
         </Border>
         <ui:HyperlinkButton Padding="0" Content="{x:Static vm:BugReportPreviewViewModel.ShowZipText}" Command="{Binding ShowZipCommand}" />
         <ui:TextBlock Margin="0,10,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:BugReportPreviewViewModel.DragInstruction}" />
