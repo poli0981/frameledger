@@ -28,6 +28,36 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+## [0.1.0-beta.14] - 2026-10-06
+
+**The fourteenth pre-release: a wheel that scrolls, updates that find this channel and wait for your games, crashes told
+apart from memory reports, and new measurements.** The same unsigned installer: verify its hash against
+`SHA256SUMS.txt`, then *More info → Run anyway*. What changed for a user:
+
+- **The mouse wheel scrolls every page, dialog and chart**; over a chart the wheel scrolls the page and **Ctrl+wheel**
+  zooms the chart. **Settings ▸ Window ▸ Hide scroll bars** draws no bar and still scrolls. The import list is readable
+  in the dark theme.
+- **Updates come from the channel of the copy you run** — a beta looks for betas — and are never applied on their own
+  when the App starts; restarting to update waits while a game FrameLedger measured is still running, and says so.
+- **A game that crashed reads *crashed*, and only then**: a Windows memory report about a game no longer counts as a
+  crash, and an Unreal Engine game that opens its crash reporter and closes is recorded as crashed, the reporter named.
+- **A game starting up or closing during FrameLedger's anti-cheat check** is read again once instead of refused, and a
+  check that could not read a game that had already closed ends the session as the game's own exit.
+- **New in every session's summary**: time below 30 and 60 FPS and below the monitor's refresh rate, how even the frames
+  were, VSync and tearing, the graphics card's clocks, fan and memory temperature, how much of the time its power limit
+  or heat held it back (NVIDIA), frames per watt, and a render scale chart. Trend and Compare have them too.
+- **FrameLedger's own programs say what they are** in Explorer and Task Manager (*FrameLedger Agent*).
+
+**Updating from `0.1.0-beta.13`:**
+
+1. **First choose *Beta* in Settings ▸ Updates.** beta.13 looks for stable releases by default, and every release so far
+   is a pre-release, so it finds nothing until you do. From beta.14 on the channel follows the copy you run.
+2. **Update with no game running.** beta.13 still applies a downloaded update the next time the App starts, stopping the
+   Agent to do it; beta.14 no longer does.
+3. **The database is migrated in place** (schema 0019, new columns only). An earlier version cannot open it afterwards.
+4. Sessions already stored keep their status — a few may still read *crashed* because Windows logged a memory report
+   about the game. The Privacy Policy (version 2.7) is shown once for you to accept.
+
 ### Added
 
 - **Settings ▸ Window ▸ Hide scroll bars.** No scroll bar is drawn anywhere in the app while it is on, and everything

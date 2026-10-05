@@ -1869,7 +1869,7 @@ PR-7 the release.*
 
 **Owner-only, added to the list below:** item 9.
 
-## **START HERE** — 2026-10-04, the beta.13 train: the four follow-ups the beta.12 audit left
+## ~~**START HERE**~~ — 2026-10-04, the beta.13 train: the four follow-ups the beta.12 audit left *(struck 2026-10-06: the head is §beta.14 below)*
 
 *Status is `CHANGELOG.md` `[0.1.0-beta.13]`; this is what no other file carries. The owner asked (2026-10-04) for the
 four chips the beta.12 documentation audit had left — §S23-3's wording, the App tests' culture races, L1's adapter, the
@@ -1903,6 +1903,62 @@ than N/A (`FlShmHandshake.AdapterLuid`'s own comment), and a finding on the PC i
 - **The beta.12 traps about the culture race and the four code gaps are closed here** (the rules feed stays open, §S20).
 
 **Owner-only, added to the list below:** item 10.
+
+## **START HERE** — 2026-10-06, the beta.14 train: contrast and the wheel, the update audit, crash reporters, assembly metadata, new measurements
+
+*Status is `CHANGELOG.md` `[0.1.0-beta.14]`; this is what no other file carries. The owner's list (2026-10-05, with a
+screenshot of the import list in the dark theme): the contrast, a review of the update logic, games recorded as crashed
+by an engine's crash reporter (prevention; SILENT HILL 2 as the example), assembly metadata, new metrics and charts, and
+a wheel that scrolls with an option to hide the scroll bars. Nine stacked PRs — PR-1 contrast and the wheel, PR-2 the
+scroll-bar option, PR-3 the update audit, PR-4 the guard's retry, PR-5 crash classification, PR-6 assembly metadata,
+PR-7 the metrics' Agent half (schema 0019), PR-8 their App half, PR-9 the release — plus one test fix (#268).*
+
+**Decisions (owner, 2026-10-05, asked before the plan — do not re-ask):**
+
+- **D47 — the update channel follows the running copy.** `update.channel` gained `auto`, the default: a pre-release
+  copy asks for pre-releases, a stable one for stable; an explicit *Stable* or *Beta* in Settings wins
+  (`Update/UpdateChannelPolicy`). Until beta.14 the default was `stable` and every release is a pre-release, so an
+  installed copy never found an update (the owner's own `velopack` log: "No releases found").
+- **D48 — the guard's narrow fix, both halves.** A scan-set member still loading (`ERROR_PARTIAL_COPY`) or already gone
+  is read again once, ~250 ms later, before the guard refuses; still unreadable still refuses, and `ACCESS_DENIED` is
+  never retried. A refused re-scan for a could-not-read reason (`ProcessUnreadable`, `ModuleScanFailed`,
+  `ProcessTreeUnavailable` — never a finding) when the game itself had exited ends as the game's exit
+  (`ExitScanRelabel`, the note `scan_at_exit=`). CLAUDE.md rule 2 is unchanged: a failure still refuses.
+- **D49 — all four metric groups.** The render scale over time; time below 30 / 60 / the refresh rate and frame to frame;
+  the facts the row stored and nothing showed (VSync and tearing, ray tracing's share, focus, capture quality, the
+  displayed 1 % low); the card's clocks, fan, memory temperature, limits, and frames per watt.
+- **D50 — the managed binaries' identity.** Company and Product "FrameLedger", the copyright the native `FL_COPYRIGHT`
+  word for word; `versioninfo-check` reads both kinds and compares them.
+
+**Traps met on the way:**
+
+- **WPF UI 4.3.0 keys its DataGrid styles** (`DefaultDataGridRowStyle`) and defines no implicit row style: a `RowStyle`
+  `BasedOn="{StaticResource {x:Type DataGridRow}}"` falls through to Aero2's row and `SystemColors.WindowBrush` — white
+  under the dark theme's white text. Its `CheckBox` has `MinWidth` 120. Both in `16_WPFUI_SYNTAX` §Gotchas now.
+- **`NavigationViewContentPresenter` makes a `Page`'s `CanContentScroll` true and wraps it in its own scroller**; a page's
+  own root `ScrollViewer` is then measured unbounded, has nothing to scroll, and still marks every wheel handled. ScottPlot
+  never marks the wheel handled.
+- **`Keyboard.Modifiers` is the machine's real keyboard, from any thread** (a fresh background thread's `GetKeyState`
+  reported the machine's NumLock): a local gate went red on the chart-wheel test while a Ctrl was held. A test that sends
+  input sets the keys itself (`ChartWheel.CurrentModifiers`, #268).
+- **Velopack 1.2.0 applies a downloaded update at the next start by default** (`SetAutoApplyOnStartup`), before FR-12's
+  check and with the Agent killed; `VelopackHooks` turns it off and a pending package is adopted instead.
+- **The plain "time below X" rule fabricates drops**: a game capped at 60 read 50.0 % "below 60" from present-timing
+  jitter (measured on a copy of the owner's ledger); a rolling mean does not help. The margins of `FramePacing` and what
+  they cost are in `03_METRICS` §Pacing.
+- **A WER 1001 is not a crash by its number**: `RADAR_PRE_LEAK_64` is Windows' memory-leak detector, and a substring match
+  on the executable's name stored an ordinary The Witcher 3 session as crashed. `CrashEventMatcher` reads the event name
+  and the typed process id.
+- **No chart palette colour was 60 apart from all six on the temperatures plot** — `Chart_Histogram` equals
+  `Chart_Native` — so the seventh line got a key of its own (`Chart_SensorTertiary`); `ChartMathTests` caught it.
+- **Meziantou's MA0051 (60 lines, 40 statements) split** `FrameTimeSeries`'s two builders into one `Kept` accumulator,
+  the summary's cards into three methods and Compare's rows into two; `dotnet format` wants one property per line in an
+  object initializer, even in a test.
+- **The `fl_ring` anti-vacuity flake** (§Traps) fired on #264's CI and passed on the re-run, as written.
+- **The Privacy Policy 2.7 holds the merge of PR-5 and PR-7**: their wording (§4 the crash reports and the programs a
+  game starts, §1 the card's sensor series) is the owner's to approve before they land, as the plan said.
+
+**Owner-only, added to the list below:** item 11.
 
 ## Owner-only — no PR can close these
 
@@ -1968,6 +2024,17 @@ than N/A (`FlShmHandshake.AdapterLuid`'s own comment), and a finding on the PC i
    running for any game, start a hook-enabled game — the notice says the anti-cheat is running on this PC, not in
    the game. (c) **Two graphics cards**, if a machine with them is at hand: the Sensors chart's GPU figures are the
    game's card. (d) The `ja` review of the new safety strings, with the others still marked for it.
+11. **beta.14 on real hardware.** (a) **The update from beta.13:** choose *Beta* in Settings ▸ Updates, Help ▸ Check for
+   updates, then *Restart to update* with no game running; Settings then reads *Automatic (Beta)*. The `velopack:` lines
+   in `ui-*.log` say what was downloaded — a delta of about 2 MB; say so if it was the full package. (b) **Explorer ▸
+   Properties ▸ Details** of `FrameLedger.exe` and `FrameLedger.Agent.exe` name FrameLedger and the copyright; Task Manager
+   lists *FrameLedger Agent*. (c) **The wheel** on every page, the dialogs and the summary window; over a chart the wheel
+   scrolls the page and Ctrl+wheel zooms; the Logs page follows the newest line. (d) **Hide scroll bars** on and off,
+   without a restart. (e) **The import list in the dark theme**, and Compare's tick boxes. (f) **A crash**: an Unreal game
+   that crashes reads *crashed (… CrashReportClient.exe)*; The Witcher 3 closed normally no longer reads *crashed*. (g)
+   **The new measurements** on the RTX 5080: the VSync share against the game's own VSync setting, the render scale
+   against the DLSS mode, the clocks, fan and limits. (h) The `ja` strings marked `review`. (i) **The Privacy Policy 2.7
+   wording — before PR-5 and PR-7 merge.**
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
