@@ -3865,4 +3865,36 @@
     <value>クラッシュ（ゲームがクラッシュ レポーター {0} を起動しました）</value>
     <comment>review</comment>
   </data>
+  <data name="Sensors_Series_GpuCoreClock" xml:space="preserve">
+    <value>GPU コアクロック MHz</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GpuMemClock" xml:space="preserve">
+    <value>GPU メモリクロック MHz</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GpuFan" xml:space="preserve">
+    <value>GPU ファン RPM</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GpuMemTemp" xml:space="preserve">
+    <value>GPU メモリ °C</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GpuPowerLimit" xml:space="preserve">
+    <value>GPU 電力制限 %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GpuThermalLimit" xml:space="preserve">
+    <value>GPU 温度制限 %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Format_Frequency_Format" xml:space="preserve">
+    <value>{0:N0} MHz</value>
+    <comment>review</comment>
+  </data>
+  <data name="Format_Rpm_Format" xml:space="preserve">
+    <value>{0:N0} RPM</value>
+    <comment>review</comment>
+  </data>
 </root>

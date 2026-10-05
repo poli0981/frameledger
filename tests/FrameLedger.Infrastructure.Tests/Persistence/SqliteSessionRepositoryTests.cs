@@ -29,7 +29,7 @@ public sealed class SqliteSessionRepositoryTests
         return (gameId, snapshotId);
     }
 
-    private static SessionRow Row(long gameId, long snapshotId, Guid? guid = null, DateTimeOffset? started = null) => new()
+    private static SessionRow Row(long gameId, long snapshotId, Guid? guid = null, DateTimeOffset? started = null) => WithSchema19(new()
     {
         SessionGuid = guid ?? Guid.NewGuid(),
         GameId = gameId,
@@ -89,6 +89,24 @@ public sealed class SqliteSessionRepositoryTests
         GameMemoryProcesses = 1,
         GameMemorySource = "counters,ex2,held",
         SensorStatsJson = "{\"gpu_temp\":{\"N\":3,\"Mean\":61,\"Median\":61,\"Min\":60,\"Max\":62}}",
+    });
+
+    /// <summary>Schema 0019 (beta.14, D49): every value distinct and non-null, for the same reason as the rest of <see cref="Row"/>.</summary>
+    private static SessionRow WithSchema19(SessionRow row) => row with
+    {
+        TimeBelow30Pct = 1.25,
+        TimeBelow60Pct = 9.5,
+        TimeBelowRefreshPct = 42.75,
+        FrametimeDeltaMeanMs = 0.875,
+        VsyncPresentPct = 25.5,
+        TearingAllowedPct = 74.5,
+        AvgGpuCoreClockMhz = 2655.5,
+        AvgGpuMemClockMhz = 15001,
+        AvgGpuFanRpm = 1450.25,
+        MaxGpuMemTemp = 78,
+        PowerLimitPct = 33.25,
+        ThermalLimitPct = 2.5,
+        AppFramesPerJoule = 0.3125,
     };
 
     private static FrameBlobs Frames(int n) => new()

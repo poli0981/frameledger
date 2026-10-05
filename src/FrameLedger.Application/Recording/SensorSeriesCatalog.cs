@@ -37,7 +37,29 @@ public static class SensorSeriesCatalog
     /// <summary>The game process's commit charge, MiB.</summary>
     public const string GameCommit = "game_commit";
 
-    /// <summary>The series in storage order. The first eight predate beta.12; their names are on disk and never change.</summary>
+    /// <summary>The graphics card's core clock, MHz (beta.14, D49).</summary>
+    public const string GpuCoreClock = "gpu_core_clock";
+
+    /// <summary>Its memory clock, MHz.</summary>
+    public const string GpuMemClock = "gpu_mem_clock";
+
+    /// <summary>Its fan speed, RPM.</summary>
+    public const string GpuFan = "gpu_fan";
+
+    /// <summary>Its memory temperature, °C.</summary>
+    public const string GpuMemTemp = "gpu_mem_temp";
+
+    /// <summary>Held back by its power limit on the tick: 100 or 0 (<see cref="GpuLimitReasons"/>), so the mean is a share in percent.</summary>
+    public const string GpuPowerLimit = "gpu_power_limit";
+
+    /// <summary>Held back by heat on the tick: 100 or 0.</summary>
+    public const string GpuThermalLimit = "gpu_thermal_limit";
+
+    /// <summary>
+    /// The series in storage order: the first eight predate beta.12, the next five came with it and the last six with
+    /// beta.14. Their names are on disk and never change. The six of beta.14 were in the samples before it — the L2 and L3
+    /// layers read them — and stored nowhere.
+    /// </summary>
     public static IReadOnlyList<(string Name, Func<TelemetrySample, double?> Select)> All { get; } =
     [
         (GpuTemp, static s => s.Sample.TempCoreC),
@@ -53,5 +75,11 @@ public static class SensorSeriesCatalog
         (GameRamPrivate, static s => s.Game.RamPrivateMb),
         (GameRamWorkingSet, static s => s.Game.RamWorkingSetMb),
         (GameCommit, static s => s.Game.CommitMb),
+        (GpuCoreClock, static s => s.Sample.CoreClockMhz),
+        (GpuMemClock, static s => s.Sample.MemClockMhz),
+        (GpuFan, static s => s.Sample.FanRpm),
+        (GpuMemTemp, static s => s.Sample.TempMemoryC),
+        (GpuPowerLimit, static s => GpuLimitReasons.PowerLimited(s.Sample.ThrottleReasons)),
+        (GpuThermalLimit, static s => GpuLimitReasons.ThermalLimited(s.Sample.ThrottleReasons)),
     ];
 }

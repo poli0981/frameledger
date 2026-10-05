@@ -34,6 +34,13 @@ public sealed record FrameTimeSeries
     /// <summary>For each kept interval, the index of the sample that ENDS it — the frame the interval belongs to.</summary>
     public required IReadOnlyList<int> EndingSample { get; init; }
 
+    /// <summary>
+    /// For each kept interval, whether an interval was left out right before it — a gap, a pause, a clock that did not
+    /// advance, a broken application-frame chain — so it and the kept interval before it are not neighbours (beta.14). A
+    /// frame-to-frame difference across the two would compare frames a pause apart (<see cref="FramePacing"/>).
+    /// </summary>
+    public required IReadOnlyList<bool> FollowsBreak { get; init; }
+
     /// <summary>Intervals excluded because a gap sat inside them.</summary>
     public required int ExcludedForGaps { get; init; }
 
@@ -70,43 +77,22 @@ public sealed record FrameTimeSeries
         ArgumentNullException.ThrowIfNull(stream);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(qpcFrequency);
 
-        var times = new List<double>(Math.Max(0, stream.Count - 1));
-        var ending = new List<int>(times.Capacity);
-        int gaps = 0;
-        int nonPositive = 0;
+        var kept = new Kept(qpcFrequency);
         for (int i = 1; i < stream.Count; i++)
         {
             if (gapBefore?.Contains(i) == true)
             {
-                gaps++;
+                kept.LeaveOutGap();
                 continue;
             }
 
-            long delta = (long)stream[i].Qpc - (long)stream[i - 1].Qpc;
-            if (delta <= 0)
-            {
-                nonPositive++;
-                continue;
-            }
-
-            times.Add(delta * 1000.0 / qpcFrequency);
-            ending.Add(i);
+            kept.Interval((long)stream[i].Qpc - (long)stream[i - 1].Qpc, i);
         }
 
         double duration = stream.Count > 1
             ? Math.Max(0, ((long)stream[^1].Qpc - (long)stream[0].Qpc) / (double)qpcFrequency)
             : 0;
-
-        return new FrameTimeSeries
-        {
-            FrameTimesMs = times,
-            EndingSample = ending,
-            ExcludedForGaps = gaps,
-            ExcludedNonPositive = nonPositive,
-            DurationSeconds = duration,
-            MeasuredSeconds = times.Sum() / 1000.0,
-            Presents = stream.Count,
-        };
+        return kept.Build(duration, stream.Count);
     }
 
     /// <summary>
@@ -141,10 +127,7 @@ public sealed record FrameTimeSeries
         ArgumentNullException.ThrowIfNull(stream);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(qpcFrequency);
 
-        var times = new List<double>();
-        var ending = new List<int>();
-        int gaps = 0;
-        int nonPositive = 0;
+        var kept = new Kept(qpcFrequency);
         int applicationFrames = 0;
         int first = -1;
         int previous = -1;
@@ -165,35 +148,63 @@ public sealed record FrameTimeSeries
             }
             else if (broken)
             {
-                gaps++;
+                kept.LeaveOutGap();
             }
             else
             {
-                long delta = (long)s.Qpc - (long)stream[previous].Qpc;
-                if (delta > 0)
-                {
-                    times.Add(delta * 1000.0 / qpcFrequency);
-                    ending.Add(i);
-                }
-                else
-                {
-                    nonPositive++;
-                }
+                kept.Interval((long)s.Qpc - (long)stream[previous].Qpc, i);
             }
 
             previous = i;
             broken = false;
         }
 
-        return new FrameTimeSeries
+        double duration = first < 0 ? 0 : Math.Max(0, ((long)stream[previous].Qpc - (long)stream[first].Qpc) / (double)qpcFrequency);
+        return kept.Build(duration, applicationFrames);
+    }
+
+    /// <summary>What both builders accumulate: the kept intervals, the ones left out, and whether one was left out since the last kept.</summary>
+    private sealed class Kept(long qpcFrequency)
+    {
+        private readonly List<double> _times = [];
+        private readonly List<int> _ending = [];
+        private readonly List<bool> _followsBreak = [];
+        private int _gaps;
+        private int _nonPositive;
+        private bool _leftOut;
+
+        public void LeaveOutGap()
         {
-            FrameTimesMs = times,
-            EndingSample = ending,
-            ExcludedForGaps = gaps,
-            ExcludedNonPositive = nonPositive,
-            DurationSeconds = first < 0 ? 0 : Math.Max(0, ((long)stream[previous].Qpc - (long)stream[first].Qpc) / (double)qpcFrequency),
-            MeasuredSeconds = times.Sum() / 1000.0,
-            Presents = applicationFrames,
+            _gaps++;
+            _leftOut = true;
+        }
+
+        /// <summary>Keeps the interval of <paramref name="delta"/> ticks ending at sample <paramref name="ending"/>, or leaves out a clock that did not advance.</summary>
+        public void Interval(long delta, int ending)
+        {
+            if (delta <= 0)
+            {
+                _nonPositive++;
+                _leftOut = true;
+                return;
+            }
+
+            _times.Add(delta * 1000.0 / qpcFrequency);
+            _ending.Add(ending);
+            _followsBreak.Add(_leftOut);
+            _leftOut = false;
+        }
+
+        public FrameTimeSeries Build(double durationSeconds, int presents) => new()
+        {
+            FrameTimesMs = _times,
+            EndingSample = _ending,
+            FollowsBreak = _followsBreak,
+            ExcludedForGaps = _gaps,
+            ExcludedNonPositive = _nonPositive,
+            DurationSeconds = durationSeconds,
+            MeasuredSeconds = _times.Sum() / 1000.0,
+            Presents = presents,
         };
     }
 }

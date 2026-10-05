@@ -148,8 +148,14 @@ public static class FgLadder
             return "census_not_run";
         }
 
-        return (census & FlRuntimeCensusFamilies.Fg) == FlRuntimeCensus.None ? "no_fg_runtime" : "fg_runtime_loaded";
+        return (census & FlRuntimeCensusFamilies.Fg) == FlRuntimeCensus.None ? NoFgRuntimeQualifier : "fg_runtime_loaded";
     }
+
+    /// <summary>
+    /// The qualifier that says no frame-generation runtime was loaded, so the presents cannot include in-process generated
+    /// frames: the one case the presented rate is the application rate without a count (beta.14: efficiency reads it).
+    /// </summary>
+    public const string NoFgRuntimeQualifier = "no_fg_runtime";
 
     /// <summary>DXGI's counter as a second witness beside a counted <c>none</c>; null when it was not read.</summary>
     public static string? DxgiBesideNone(FlWriterState writer)

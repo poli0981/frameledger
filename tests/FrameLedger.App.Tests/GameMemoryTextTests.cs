@@ -197,4 +197,33 @@ public sealed class GameMemoryTextTests
         rows[3].Should().Be(new SensorStatRowModel(Strings.Sensors_Series_GameRam, "2.93 GB", "3.00 GB", "512 MB", "3.50 GB", "600"));
         SensorStatsTable.Rows(_noStats).Should().BeEmpty("a session recorded before beta.12 stored none");
     }
+
+    /// <summary>beta.14 (D49): the card's six series, each in its own unit — every series the table did not know was memory, so a clock would have read as megabytes.</summary>
+    [Fact]
+    public void TheCardsClocksFanAndLimitsReadInTheirOwnUnits()
+    {
+        var stats = new Dictionary<string, SensorSeriesStats>(StringComparer.Ordinal)
+        {
+            [SensorSeriesCatalog.GpuThermalLimit] = new SensorSeriesStats(600, 0, 0, 0, 0),
+            [SensorSeriesCatalog.GpuPowerLimit] = new SensorSeriesStats(600, 33.3, 0, 0, 100),
+            [SensorSeriesCatalog.GpuMemTemp] = new SensorSeriesStats(600, 70.4, 70, 60, 78),
+            [SensorSeriesCatalog.GpuFan] = new SensorSeriesStats(600, 1450.4, 1450, 0, 2100),
+            [SensorSeriesCatalog.GpuMemClock] = new SensorSeriesStats(600, 15001, 15001, 405, 15001),
+            [SensorSeriesCatalog.GpuCoreClock] = new SensorSeriesStats(600, 2655.4, 2700, 210, 2805),
+        };
+
+        IReadOnlyList<SensorStatRowModel> rows = InEnglish(() => SensorStatsTable.Rows(stats));
+
+        rows.Select(static r => r.Series).Should().Equal(InEnglish(static () => new[]
+        {
+            Strings.Sensors_Series_GpuCoreClock, Strings.Sensors_Series_GpuMemClock, Strings.Sensors_Series_GpuFan,
+            Strings.Sensors_Series_GpuMemTemp, Strings.Sensors_Series_GpuPowerLimit, Strings.Sensors_Series_GpuThermalLimit,
+        }));
+        rows[0].Mean.Should().Be("2,655 MHz");
+        rows[1].Max.Should().Be("15,001 MHz");
+        rows[2].Mean.Should().Be("1,450 RPM");
+        rows[3].Max.Should().Be("78 °C");
+        (rows[4].Mean, rows[4].Max).Should().Be(("33%", "100%"), "the mean of a 0-or-100 series is the share of ticks held back");
+        rows[5].Max.Should().Be("0%", "never held back by heat is 0 %, a measured answer");
+    }
 }

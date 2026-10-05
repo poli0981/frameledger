@@ -29,11 +29,14 @@ public static class SessionAggregator
 
         var ctx = new Context(input);
         SessionRow row = ApplyFrames(skeleton, ctx);
+        row = ApplyPacing(row, ctx);
+        row = ApplySync(row, ctx);
         row = ApplyFg(row, ctx);
         row = ApplyUpscaler(row, ctx);
         row = ApplyRt(row, ctx);
         row = ApplyWriter(row, ctx);
         row = WithSensorAggregates(row, input.Sensors);
+        row = ApplyEfficiency(row, ctx);
         row = ApplyWitnesses(row, ctx);
 
         return new AggregationResult
@@ -80,10 +83,55 @@ public static class SessionAggregator
         };
     }
 
+    /// <summary>
+    /// <c>03_METRICS</c> §Pacing (beta.14, D49): time below 30 and 60 FPS and frame to frame over the series the statistics are
+    /// over, time below the refresh rate over the presents the display received (<see cref="FramePacing"/>). The refresh rate is
+    /// the display tally's, on the skeleton before the aggregator runs; a session recovered from a crash file has none.
+    /// </summary>
+    private static SessionRow ApplyPacing(SessionRow row, Context c)
+    {
+        FramePacing pacing = FramePacing.From(c.Frames, c.Series, row.DisplayMonitorHz);
+        return row with
+        {
+            TimeBelow30Pct = pacing.TimeBelow30Pct,
+            TimeBelow60Pct = pacing.TimeBelow60Pct,
+            TimeBelowRefreshPct = pacing.TimeBelowRefreshPct,
+            FrametimeDeltaMeanMs = pacing.FrameToFrameMeanMs,
+        };
+    }
+
+    /// <summary><c>03_METRICS</c> §Sync (beta.14): what the dominant stream's presents asked for, and <c>sync_interval_mode</c>'s first writer.</summary>
+    private static SessionRow ApplySync(SessionRow row, Context c)
+    {
+        PresentArgsShares shares = PresentArgsShares.From(c.Dominant);
+        return row with
+        {
+            VsyncPresentPct = shares.VsyncPct,
+            TearingAllowedPct = shares.TearingAllowedPct,
+            SyncIntervalMode = Vocabulary.SyncIntervalMode(shares),
+        };
+    }
+
+    /// <summary>
+    /// <c>03_METRICS</c> §Efficiency (beta.14, D49): application frames per joule — the application frame rate over the card's
+    /// average power. Never the displayed rate (rule 6). The application rate is known where frame generation was counted
+    /// over the session (the window usable: its native rate, which a counted <c>none</c> makes the presented one); without a
+    /// count, the presented rate is the application rate only where no frame-generation runtime was loaded. A session whose
+    /// generation changed state publishes a steady state's rate, scoped to a share of the session, and has no session-wide
+    /// rate to divide: null, as is every case the census could not clear.
+    /// </summary>
+    private static SessionRow ApplyEfficiency(SessionRow row, Context c)
+    {
+        double? applicationFps = c.FgUsable ? row.NativeFps
+            : string.Equals(row.PresentedQualifier, FgLadder.NoFgRuntimeQualifier, StringComparison.Ordinal) ? row.PresentedFps
+            : null;
+        return row with { AppFramesPerJoule = EnergyEfficiency.FramesPerJoule(applicationFps, row.AvgGpuPowerW) };
+    }
+
     private static SessionRow ApplyFg(SessionRow row, Context c)
     {
         FgWindow? fg = c.Fg;
-        bool usable = fg is { Refusal: null } && c.Verdict is FgVerdict.Named or FgVerdict.ActiveUnidentified or FgVerdict.None or FgVerdict.NoneInputsTagged;
+        bool usable = c.FgUsable;
 
         // 03_METRICS §Frame Generation (2026-09-17): a session refused as non-uniform still publishes the state it
         // spent most of its generating time in, scoped and with its share -- never the session average.
@@ -199,7 +247,7 @@ public static class SessionAggregator
         SeriesAggregates cpuLoad = SeriesAggregates.Of(sensors.Select(static t => t.System.CpuLoadPct));
         SeriesAggregates cpuTemp = SeriesAggregates.Of(sensors.Select(static t => t.System.CpuTempC));
         SeriesAggregates ram = SeriesAggregates.Of(sensors.Select(static t => t.System.RamUsedMb));
-        return (row with
+        return (row.WithGpuClocks(s) with
         {
             AvgCpuLoad = cpuLoad.Average,
             AvgCpuTemp = cpuTemp.Average,
@@ -214,6 +262,21 @@ public static class SessionAggregator
             ThrottlePct = throttleSamples == 0 ? null : 100.0 * s.Count(static x => x.ThrottleReasons is > 0) / throttleSamples,
         }).WithGameMemory(sensors);
     }
+
+    /// <summary>
+    /// The card's clocks, fan, memory temperature and what held it back (beta.14, D49; <c>03_METRICS</c> §Sensor aggregates) —
+    /// both tiers. The limits are shares of the ticks that carried reasons at all, which only NVIDIA's layer reports; null
+    /// elsewhere, never "not limited".
+    /// </summary>
+    private static SessionRow WithGpuClocks(this SessionRow row, IReadOnlyList<GpuSample> s) => row with
+    {
+        AvgGpuCoreClockMhz = SeriesAggregates.Of(s.Select(static x => x.CoreClockMhz)).Average,
+        AvgGpuMemClockMhz = SeriesAggregates.Of(s.Select(static x => x.MemClockMhz)).Average,
+        AvgGpuFanRpm = SeriesAggregates.Of(s.Select(static x => x.FanRpm)).Average,
+        MaxGpuMemTemp = SeriesAggregates.Of(s.Select(static x => x.TempMemoryC)).Max,
+        PowerLimitPct = SeriesAggregates.Of(s.Select(static x => GpuLimitReasons.PowerLimited(x.ThrottleReasons))).Average,
+        ThermalLimitPct = SeriesAggregates.Of(s.Select(static x => GpuLimitReasons.ThermalLimited(x.ThrottleReasons))).Average,
+    };
 
     /// <summary>
     /// The game process's own memory (beta.12, D43; <c>03_METRICS</c> §Game process memory) and every series' statistics —
@@ -373,6 +436,7 @@ public static class SessionAggregator
             Withheld = Fg?.IsNone == true ? FgLadder.WithholdNone(census, input.Modules, input.Writer) : null;
             FgIdentity = FgLadder.Identity(dominantRecords);
             Verdict = FgLadder.Resolve(FgIdentity, Fg, Withheld);
+            FgUsable = Fg is { Refusal: null } && Verdict is FgVerdict.Named or FgVerdict.ActiveUnidentified or FgVerdict.None or FgVerdict.NoneInputsTagged;
 
             // 03_METRICS §Core definitions: the median, the lows, min / max, σ and the stutter rule are over ft_app. Where
             // generated frames were counted (beta.8) that is application frame to application frame, never present to
@@ -410,6 +474,9 @@ public static class SessionAggregator
         public FlFgMode? FgIdentity { get; }
 
         public FgVerdict Verdict { get; }
+
+        /// <summary>The window's count stands for the session: no refusal, and a verdict that publishes a factor or a counted none.</summary>
+        public bool FgUsable { get; }
 
         /// <summary>Generated frames were counted, or a technology named: the frame statistics are over application frames.</summary>
         public bool Generating { get; }

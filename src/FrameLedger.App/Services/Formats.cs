@@ -75,6 +75,12 @@ public static class Formats
     /// <summary>A GPU's power as <c>215 W</c>; null → N/A.</summary>
     public static string Power(double? watts) => watts is double w ? w.ToString("0", CultureInfo.CurrentCulture) + " W" : Strings.Common_NotAvailable;
 
+    /// <summary>A clock as <c>2,655 MHz</c> (beta.14); null → N/A.</summary>
+    public static string Frequency(double? mhz) => mhz is double f ? string.Format(CultureInfo.CurrentCulture, Strings.Format_Frequency_Format, f) : Strings.Common_NotAvailable;
+
+    /// <summary>A fan's speed as <c>1,450 RPM</c> (beta.14); null → N/A.</summary>
+    public static string Rpm(double? rpm) => rpm is double r ? string.Format(CultureInfo.CurrentCulture, Strings.Format_Rpm_Format, r) : Strings.Common_NotAvailable;
+
     /// <summary><c>1485×835 → 2560×1440</c>, or one pair when only one is known, or N/A.</summary>
     public static string Resolution(int? renderW, int? renderH, int? outputW, int? outputH)
     {

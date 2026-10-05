@@ -64,6 +64,13 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
 - **A session whose frame generation changed** (menus, loading, a settings change) shows the factor of the
   state it spent most of its time in, with the share of the session it covers — never an average of the two.
   ([Metrics](docs/03_METRICS.md))
+- **Time below 30, 60 FPS and below the refresh rate** (since 0.1.0-beta.14) leaves out the small wobble of a game
+  held at its limit: a frame counts as below 60 when it took 10 % longer than 1/60 s, or when the frames around it ran
+  2 % slower. So a game running steadily just under the line — 59 FPS against 60 — reads partly as at it. Time below
+  the refresh rate needs the monitor's rate, which a session saved after a crash does not have.
+- **VSync and tearing** (since 0.1.0-beta.14) are what the game *asked* for on each frame; the graphics driver or a
+  variable-refresh display can override it, and FrameLedger cannot see which won. OpenGL and Vulkan games do not say,
+  and read N/A. ([Metrics](docs/03_METRICS.md))
 
 ## Upscaling and ray tracing
 
@@ -123,6 +130,11 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
 - **CPU temperature** needs *Run the agent as administrator* and the separately installed PawnIO driver, and
   has not been verified on real hardware yet. CPU load is the time the processor was busy — not Task
   Manager's "utility" figure, which can exceed 100%. ([Telemetry](docs/18_GPU_VENDOR_APIS.md))
+- **Whether the graphics card was held back by its power limit or by heat** (since 0.1.0-beta.14) is known only on
+  NVIDIA cards, and only as it was at each once-a-second reading. On other cards it reads N/A.
+- **Frames per watt** (since 0.1.0-beta.14) counts the game's own frames — never generated ones — against the graphics
+  card's power alone, not the processor's or the whole PC's. It reads N/A where the game's own frame rate is not known.
+  ([Metrics](docs/03_METRICS.md))
 
 ## Running the agent as administrator
 
