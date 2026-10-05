@@ -82,7 +82,10 @@ public sealed class SessionRecorderTests : IAsyncDisposable
     {
         public AntiCheatVerdict Verdict { get; set; } = AntiCheatVerdict.Allowed();
 
-        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, string? toleratedFamily, CancellationToken ct = default) => ValueTask.FromResult(AntiCheatVerdict.Allowed());
+        /// <summary>What every re-scan answers (D48's tests): allowed unless a test says otherwise.</summary>
+        public AntiCheatVerdict Rescan { get; set; } = AntiCheatVerdict.Allowed();
+
+        public ValueTask<AntiCheatVerdict> EvaluateAsync(int targetPid, string? toleratedFamily, CancellationToken ct = default) => ValueTask.FromResult(Rescan);
 
         public ValueTask<AntiCheatVerdict> GuardedInjectAsync(int targetPid, string payloadPath, string? toleratedFamily, CancellationToken ct = default) => ValueTask.FromResult(Verdict);
 
@@ -288,7 +291,8 @@ public sealed class SessionRecorderTests : IAsyncDisposable
     }
 
     private async Task<Harness> MakeAsync(bool consented = true, AntiCheatVerdict? verdict = null, int records = 3_000, FakeLiveness? liveness = null, bool poller = true,
-        bool clockStepsOnDrain = false, IDriverProfileSource? profiles = null, bool excepted = false, IDisplayProbe? display = null, ulong adapterLuid = 0)
+        bool clockStepsOnDrain = false, IDriverProfileSource? profiles = null, bool excepted = false, IDisplayProbe? display = null, ulong adapterLuid = 0,
+        AntiCheatVerdict? rescan = null)
     {
         _db ??= await LedgerDatabase.OpenAsync(Path.Combine(_dir, LedgerPaths.DatabaseFileName), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         var store = new SqliteGameConsentStore(_db);
@@ -308,7 +312,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         }
 
         var clock = new SteppingClock();
-        var guard = new FakeGuard { Verdict = verdict ?? AntiCheatVerdict.Allowed() };
+        var guard = new FakeGuard { Verdict = verdict ?? AntiCheatVerdict.Allowed(), Rescan = rescan ?? AntiCheatVerdict.Allowed() };
         var games = new FakeGameRepository();
         var sessions = new FakeSessionRepository();
         var partials = new FakePartialSessionStore();
@@ -563,6 +567,25 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         r.Outcome.Reason.Should().Be(SessionEndReason.RefusedHookNotEnabled);
         h.Games.Rows.Should().ContainKey(_exe, "a Tier-2 session has somewhere to land");
         h.Games.Rows[_exe].HookEnabled.Should().BeFalse();
+    }
+
+    /// <summary>
+    /// D48(b), beta.14: the re-scan could not read the game's tree as the game exited — the session is that exit, its exit
+    /// code deciding normal or crashed, and the notes keep what the scan said.
+    /// </summary>
+    [Fact]
+    public async Task ARescanThatCouldNotReadAsTheGameExitedEndsAsItsExitWithTheScanInTheNotes()
+    {
+        using var exited = new FakeLiveness(exited: true, exitCode: 0);
+        Harness h = await MakeAsync(liveness: exited,
+            rescan: AntiCheatVerdict.Refused(AntiCheatRefusalReason.ProcessUnreadable, string.Empty, "a process in the scan set could not be read"));
+
+        RecordedSession r = await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        r.Outcome.Reason.Should().Be(SessionEndReason.TargetExited);
+        r.ExitStatus.Should().Be(ExitStatus.Normal, "a game that exited with 0 ended normally, whatever the last scan could read");
+        r.Row.CaptureNotes.Should().Contain("scan_at_exit=ProcessUnreadable");
+        CaptureNotes.Parse(r.Row.CaptureNotes).ScanAtExit.Should().Be("ProcessUnreadable");
     }
 
     [Fact]

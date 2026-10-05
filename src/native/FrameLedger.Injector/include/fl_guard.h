@@ -252,7 +252,17 @@ enum class Collected : std::uint8_t {
     kOk = 0,
     kFailed,        // the call failed outright
     kIncomplete,    // partial result: e.g. WOW64 without LIST_MODULES_ALL
+    // EnumerateModules ONLY (owner decision D48, beta.14): a process still being created (ERROR_PARTIAL_COPY -- its
+    // loader has not finished) or gone between the scan set's snapshot and the open (ERROR_INVALID_PARAMETER). The
+    // module check reads the whole scan set once more, after kScanRetryPauseMs, and a second kRetry refuses as
+    // kProcessUnreadable -- so it is never a pass. ACCESS_DENIED (a protected process) is kFailed and is never retried.
+    // Every other consumer of Collected treats anything but kOk as a failure.
+    kRetry,
 };
+
+// How long the module check waits before its one re-read (D48). A process that was still loading has its modules
+// well within it; one that has exited is out of the fresh snapshot.
+inline constexpr std::uint32_t kScanRetryPauseMs = 250;
 
 // Callbacks receive (context, name) for each item found. Returning false stops
 // enumeration early — used when a match has already been found.
@@ -299,6 +309,10 @@ struct Sources {
     // The scan set for §S16: the injection target, its descendants, and its
     // ancestors up to but excluding the first known platform launcher.
     Collected (*EnumerateScanSet)(std::uint32_t targetPid, bool (*sink)(void*, std::uint32_t), void* ctx) = nullptr;
+
+    // The module check's one pause before it re-reads the scan set (D48). Null skips the pause: the re-read still
+    // happens, and still refuses what it still cannot read.
+    void (*Pause)(std::uint32_t ms) = nullptr;
 
     // Whole rules file into a caller-owned buffer. Returns bytes written, or
     // SIZE_MAX on any failure — unreadable, absent, or larger than the cap.
@@ -453,9 +467,9 @@ struct Sources {
 // would make one of them untestable without disturbing the other.
 
 // The real Windows implementations. Behaviour measured in spike-notes.md §1;
-// notably EnumerateModules reports kFailed on ERROR_PARTIAL_COPY (a suspended
-// target) and uses LIST_MODULES_ALL, without which a 32-bit target under-reports
-// by more than half AS A SUCCESS.
+// notably EnumerateModules reports kRetry (kFailed until D48, beta.14) on ERROR_PARTIAL_COPY (a suspended
+// target, or one whose loader has not finished) and on a process already gone, and uses LIST_MODULES_ALL,
+// without which a 32-bit target under-reports by more than half AS A SUCCESS.
 [[nodiscard]] Sources SystemSources() noexcept;
 
 // ---------------------------------------------------------------------------

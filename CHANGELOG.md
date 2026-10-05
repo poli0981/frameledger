@@ -36,6 +36,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Fixed
 
+- **A game that exited as FrameLedger's anti-cheat check ran could be recorded as "unhooked (safety)"** — and, under a
+  user-mode anti-cheat exception, end the exception's trial for good. The check reads every process in the game's
+  tree every 30 s; one that was just starting (an engine's crash reporter as its game dies, any helper the game launched
+  a moment before) or already gone could not be read, and the check refused. Such a process is now read once more a
+  quarter of a second later, and refused only if it is still unreadable (a protected process never gets the second
+  look). And when the check could not read and the game itself has exited, the session ends as that exit, normal or
+  crashed by its exit code. Anything the check *finds* is a refusal exactly as before (owner decision D48).
 - **An installed copy never found an update unless you had changed its channel.** The update channel was *Stable* by
   default and every FrameLedger release so far is a pre-release, so the check found nothing. The channel is now
   *Automatic*: a pre-release looks for pre-releases and a release for releases; choosing *Stable* or *Beta* still decides.

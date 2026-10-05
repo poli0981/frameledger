@@ -26,6 +26,15 @@ public sealed class CaptureNotesTests
     }
 
     [Fact]
+    public void TheScanAtExitSlotReadsBack()
+    {
+        // D48(b), beta.14: a session that ended as the game's exit though its last re-scan could not read the game's tree.
+        CaptureNotes n = CaptureNotes.Parse("end=TargetExited; exit_code=3; scan_at_exit=ProcessUnreadable");
+        (n.End, n.ExitCode, n.ScanAtExit).Should().Be(("TargetExited", 3, "ProcessUnreadable"));
+        CaptureNotes.Parse("end=TargetExited; exit_code=0").ScanAtExit.Should().BeNull();
+    }
+
+    [Fact]
     public void TheRecorderWritesEverySlotAndNoSemicolonInsideOne()
     {
         CaptureNotes.GuardSlot("PreScanFailed", null, "could not list; access denied").Should().Be("guard=PreScanFailed||could not list, access denied");

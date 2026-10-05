@@ -388,14 +388,12 @@ Verdict LoadRules(const Sources& s, Rules& rules) noexcept {
     }
 }
 
-// Check 1 — modules, across the §S16 scan set. With a `tolerance` (D33), a module of a tolerated family is recorded in
-// `finding` rather than refused; everything else refuses exactly as without one.
-Verdict CheckModules(const Sources& s, const Rules& rules, std::uint32_t targetPid, const Tolerance* tolerance,
-                     ToleratedFinding& finding) noexcept {
-    if (s.EnumerateScanSet == nullptr || s.EnumerateModules == nullptr) {
-        return Refuse(Reason::kProcessTreeUnavailable, nullptr, "no process source");
-    }
-
+// One pass of check 1 over a fresh scan set. `allowRetry` (D48): on the first pass a member that is still being
+// created or already gone (Collected::kRetry) is noted in `retryWanted` and the pass goes on -- a finding in any other
+// member still refuses at once; on the second pass the same answer refuses as kProcessUnreadable, exactly as an
+// unreadable member always has. Anything but the four answers refuses too: no answer is a pass by omission.
+Verdict ScanModulesOnce(const Sources& s, const Rules& rules, std::uint32_t targetPid, const Tolerance* tolerance,
+                        ToleratedFinding& finding, bool allowRetry, bool& retryWanted) noexcept {
     ScanSet set;
     if (s.EnumerateScanSet(targetPid, &ScanSetSink, &set) != Collected::kOk || set.overflowed || set.count == 0) {
         // An empty scan set is not "nothing to scan" — it is "we do not know
@@ -417,14 +415,19 @@ Verdict CheckModules(const Sources& s, const Rules& rules, std::uint32_t targetP
         if (st.hit != nullptr) {
             return Refuse(Reason::kBlockedModule, st.hit->name, st.signal);
         }
-        // kFailed covers ERROR_ACCESS_DENIED on a protected target and
-        // ERROR_PARTIAL_COPY on a suspended one; kIncomplete covers a WOW64
-        // under-report. Both mean we did not see the whole picture, and the
+        // D48: a member still being created, or gone since the snapshot, is read again once from a fresh one.
+        if (c == Collected::kRetry && allowRetry) {
+            retryWanted = true;
+            continue;
+        }
+        // kFailed covers ERROR_ACCESS_DENIED on a protected target; kRetry here
+        // is a member that was still unreadable on the re-read; kIncomplete covers a WOW64
+        // under-report. Each means we did not see the whole picture, and the
         // whole point of this guard is that a partial look is not a clean one.
-        if (c == Collected::kFailed) {
+        if (c == Collected::kFailed || c == Collected::kRetry) {
             return Refuse(Reason::kProcessUnreadable, nullptr, "a process in the scan set could not be read");
         }
-        if (c == Collected::kIncomplete) {
+        if (c != Collected::kOk) {
             return Refuse(Reason::kModuleScanFailed, nullptr, "a module list came back incomplete");
         }
         if (st.sawSuspicious) {
@@ -449,6 +452,36 @@ Verdict CheckModules(const Sources& s, const Rules& rules, std::uint32_t targetP
         }
     }
     return Allow();
+}
+
+// Check 1 — modules, across the §S16 scan set. With a `tolerance` (D33), a module of a tolerated family is recorded in
+// `finding` rather than refused; everything else refuses exactly as without one.
+//
+// D48 (owner decision, beta.14): a member that was still being created -- an engine's crash reporter started as its
+// game died, a helper launched a moment before the 30 s re-scan -- or that exited between the snapshot and the read,
+// refused the whole session as "unreadable" and ended it as a safety unhook. Such a member is read again ONCE: the pass
+// finishes (a finding anywhere still refuses at once), pauses kScanRetryPauseMs, takes a FRESH scan set and scans it
+// whole. A member still unreadable then refuses as before; one that is gone is not in the new set; a target that is
+// gone makes the new set unavailable, which refuses. The re-read can only turn a refusal of "could not read" into a
+// full read -- never into a pass that skipped anything.
+Verdict CheckModules(const Sources& s, const Rules& rules, std::uint32_t targetPid, const Tolerance* tolerance,
+                     ToleratedFinding& finding) noexcept {
+    if (s.EnumerateScanSet == nullptr || s.EnumerateModules == nullptr) {
+        return Refuse(Reason::kProcessTreeUnavailable, nullptr, "no process source");
+    }
+
+    bool          retryWanted = false;
+    const Verdict first = ScanModulesOnce(s, rules, targetPid, tolerance, finding, true, retryWanted);
+    if (!first.Allowed() || !retryWanted) {
+        return first;
+    }
+
+    if (s.Pause != nullptr) {
+        s.Pause(kScanRetryPauseMs);
+    }
+    finding = ToleratedFinding{};    // collected again from the pass that decides
+    bool again = false;
+    return ScanModulesOnce(s, rules, targetPid, tolerance, finding, false, again);
 }
 
 // Check 2 — machine-wide drivers. Independent of process identity, which is
@@ -800,8 +833,9 @@ PresentationRuntime FindPresentationRuntime(const Sources& s, std::uint32_t pid)
     if (s.EnumerateModules == nullptr) {
         return PresentationRuntime::kNone;
     }
-    RuntimeProbe p;
-    if (s.EnumerateModules(pid, &RuntimeSinkFn, &p) == Collected::kFailed) {
+    RuntimeProbe    p;
+    const Collected c = s.EnumerateModules(pid, &RuntimeSinkFn, &p);
+    if (c == Collected::kFailed || c == Collected::kRetry) {
         return PresentationRuntime::kNone;    // still in its loader, or unreadable -- the full scan refuses the latter
     }
     if (p.vk) {

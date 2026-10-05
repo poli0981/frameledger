@@ -143,6 +143,12 @@ Verdict ScanWith(const Sources& s, const Rules& rules, const wchar_t* dir, const
         return Refused(Reason::kPreScanFailed, nullptr,
                        "the game directory listing was truncated, unreadable, or crossed a reparse point");
     }
+    // Any other answer refuses too (beta.14, with Collected::kRetry's arrival): this chain ended in an implicit pass,
+    // so a new value of the tri-state would have read as a clean walk.
+    if (c != Collected::kOk) {
+        return Refused(Reason::kPreScanFailed, nullptr,
+                       "the game directory listing gave an answer the pre-scan does not know");
+    }
     // The whole tree was seen and only the exception's family was in it: the caller turns the record into the verdict.
     if (st.tolerated != nullptr && finding != nullptr && !finding->seen) {
         finding->seen = true;

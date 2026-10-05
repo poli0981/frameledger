@@ -21,6 +21,13 @@ public sealed record CaptureOutcome
     public bool HookingTurnedOff { get; init; }
 
     /// <summary>
+    /// D48(b), beta.14: the guard's "could not read" refusal at the last re-scan, when the session concluded as the game's
+    /// exit rather than a safety unhook because the game itself had already exited (<see cref="ExitScanRelabel"/>); null
+    /// otherwise. Written to the notes as <c>scan_at_exit=</c>.
+    /// </summary>
+    public AntiCheatRefusalReason? ExitScanReason { get; init; }
+
+    /// <summary>
     /// D33 (owner decision 2026-09-26): the family the game's user-mode exception covered for this session — published to
     /// the Overlay and named to the guard at the injection and at every re-scan — or null when none was in force. The
     /// recorder marks a HOOKED session with it, and ends the exception when a session under it ends badly.

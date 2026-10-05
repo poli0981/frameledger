@@ -40,6 +40,12 @@ public readonly record struct CaptureNotes(string? End, string? GuardReason, str
     /// <summary>D33: the family the game's user-mode exception let through while the session was hooked (<c>ac-exception=</c>).</summary>
     public string? AcExceptionFamily { get; init; }
 
+    /// <summary>
+    /// D48(b), beta.14: the guard's "could not read" answer at the last re-scan of a session that ended as the game's exit
+    /// (<c>scan_at_exit=</c>), or null.
+    /// </summary>
+    public string? ScanAtExit { get; init; }
+
     public static CaptureNotes Parse(string? notes)
     {
         if (string.IsNullOrWhiteSpace(notes))
@@ -47,7 +53,7 @@ public readonly record struct CaptureNotes(string? End, string? GuardReason, str
             return default;
         }
 
-        string? end = null, reason = null, family = null, signal = null, acException = null;
+        string? end = null, reason = null, family = null, signal = null, acException = null, scanAtExit = null;
         int? exitCode = null, launchError = null;
         bool crashEvent = false;
         foreach (string raw in notes.Split(';'))
@@ -77,6 +83,10 @@ public readonly record struct CaptureNotes(string? End, string? GuardReason, str
             {
                 acException = Blank(part[_acExceptionPrefix.Length..]);
             }
+            else if (part.StartsWith(_scanAtExitPrefix, StringComparison.Ordinal))
+            {
+                scanAtExit = Blank(part[_scanAtExitPrefix.Length..]);
+            }
         }
 
         return new CaptureNotes(end, reason, family, signal)
@@ -85,6 +95,7 @@ public readonly record struct CaptureNotes(string? End, string? GuardReason, str
             CrashEvent = crashEvent,
             LaunchError = launchError,
             AcExceptionFamily = acException,
+            ScanAtExit = scanAtExit,
         };
     }
 
@@ -131,6 +142,8 @@ public readonly record struct CaptureNotes(string? End, string? GuardReason, str
     }
 
     private const string _acExceptionPrefix = "ac-exception=";
+
+    private const string _scanAtExitPrefix = "scan_at_exit=";
 
     private static string Clean(string? s) => string.IsNullOrEmpty(s) ? string.Empty : s.Replace(';', ',');
 
