@@ -769,6 +769,8 @@ public static class Strings
         nameof(Settings_Header),
         nameof(Settings_HideAntiCheatHooking_Body),
         nameof(Settings_HideAntiCheatHooking_Label),
+        nameof(Settings_HideScrollBars_Body),
+        nameof(Settings_HideScrollBars_Label),
         nameof(Settings_HookedGames_Label),
         nameof(Settings_HookedGames_Revoke),
         nameof(Settings_Interval_Body),
@@ -2462,6 +2464,10 @@ public static class Strings
     public static string Settings_HideAntiCheatHooking_Body => ResourceManager.GetString(nameof(Settings_HideAntiCheatHooking_Body), Culture) ?? nameof(Settings_HideAntiCheatHooking_Body);
 
     public static string Settings_HideAntiCheatHooking_Label => ResourceManager.GetString(nameof(Settings_HideAntiCheatHooking_Label), Culture) ?? nameof(Settings_HideAntiCheatHooking_Label);
+
+    public static string Settings_HideScrollBars_Body => ResourceManager.GetString(nameof(Settings_HideScrollBars_Body), Culture) ?? nameof(Settings_HideScrollBars_Body);
+
+    public static string Settings_HideScrollBars_Label => ResourceManager.GetString(nameof(Settings_HideScrollBars_Label), Culture) ?? nameof(Settings_HideScrollBars_Label);
 
     public static string Settings_HookedGames_Label => ResourceManager.GetString(nameof(Settings_HookedGames_Label), Culture) ?? nameof(Settings_HookedGames_Label);
 

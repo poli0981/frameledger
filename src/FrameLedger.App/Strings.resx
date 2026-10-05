@@ -2891,4 +2891,10 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="FirstRun_Doc_InformationNote" xml:space="preserve">
     <value>Your licence to FrameLedger, shown for information: you do not need to accept it to run the program (GPLv3 section 9).</value>
   </data>
+  <data name="Settings_HideScrollBars_Label" xml:space="preserve">
+    <value>Hide scroll bars</value>
+  </data>
+  <data name="Settings_HideScrollBars_Body" xml:space="preserve">
+    <value>No scroll bars are drawn anywhere in the app. Everything still scrolls with the mouse wheel, the keyboard and touch.</value>
+  </data>
 </root>

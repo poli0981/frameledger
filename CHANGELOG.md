@@ -28,6 +28,12 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **Settings ▸ Window ▸ Hide scroll bars.** No scroll bar is drawn anywhere in the app while it is on, and everything
+  still scrolls with the mouse wheel, the keyboard and touch. Off by default; it applies at once, to the open windows
+  too, and off brings every bar back.
+
 ### Fixed
 
 - **The import list was unreadable in the dark theme.** File ▸ Import library (and Games ▸ Refresh) drew every row white

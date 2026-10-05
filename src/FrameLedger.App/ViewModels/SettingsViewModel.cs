@@ -105,6 +105,10 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _fpsTwoDecimals;
 
+    /// <summary><c>ui.hide_scrollbars</c> (beta.14): no scroll bars drawn; every scroller still scrolls.</summary>
+    [ObservableProperty]
+    private bool _hideScrollBars;
+
     [ObservableProperty]
     private bool _onlineMetadata;
 
@@ -385,6 +389,18 @@ public sealed partial class SettingsViewModel : ObservableObject
         Persist(SettingsRegistry.UiFpsDecimals, value);
     }
 
+    partial void OnHideScrollBarsChanged(bool value)
+    {
+        if (_loading)
+        {
+            return;
+        }
+
+        // On screen at once — this page's own bars included — and on every scroller that loads from now on.
+        ScrollBarHiding.Apply(value);
+        Persist(SettingsRegistry.UiHideScrollBars, value);
+    }
+
     partial void OnMinimizeToTrayChanged(bool value)
     {
         if (!_loading)
@@ -497,6 +513,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             UserModeExceptions = await _settings.GetBooleanAsync(SettingsRegistry.HookingUserModeExceptions).ConfigureAwait(true);
             RunElevated = await _settings.GetBooleanAsync(SettingsRegistry.CaptureRunElevated).ConfigureAwait(true);
             FpsTwoDecimals = await _settings.GetBooleanAsync(SettingsRegistry.UiFpsDecimals).ConfigureAwait(true);
+            HideScrollBars = await _settings.GetBooleanAsync(SettingsRegistry.UiHideScrollBars).ConfigureAwait(true);
             OnlineMetadata = await _settings.GetBooleanAsync(SettingsRegistry.PrivacyOnlineMetadata).ConfigureAwait(true);
             UpdateChannel = await _settings.GetAsync(SettingsRegistry.UpdateChannel).ConfigureAwait(true);
             AutoCheckUpdates = await _settings.GetBooleanAsync(SettingsRegistry.UpdateAutoCheck).ConfigureAwait(true);
