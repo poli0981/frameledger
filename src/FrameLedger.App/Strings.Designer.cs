@@ -375,12 +375,14 @@ public static class Strings
         nameof(FirstRun_Title),
         nameof(Format_Duration_HoursMinutes_Format),
         nameof(Format_Duration_MinutesSeconds_Format),
+        nameof(Format_Frequency_Format),
         nameof(Format_Memory_Gb_Format),
         nameof(Format_Memory_Mb_Format),
         nameof(Format_Playtime_Hours_Format),
         nameof(Format_Playtime_Minutes_Format),
         nameof(Format_Resolution_Format),
         nameof(Format_Resolution_Single_Format),
+        nameof(Format_Rpm_Format),
         nameof(Format_Temperature_Format),
         nameof(Fps_Census_NoRuntime),
         nameof(Fps_Census_NoRuntime_Tooltip),
@@ -686,10 +688,16 @@ public static class Strings
         nameof(Sensors_Series_GameRamWs),
         nameof(Sensors_Series_GameVram),
         nameof(Sensors_Series_GameVramShared),
+        nameof(Sensors_Series_GpuCoreClock),
+        nameof(Sensors_Series_GpuFan),
         nameof(Sensors_Series_GpuHotspot),
         nameof(Sensors_Series_GpuLoad),
+        nameof(Sensors_Series_GpuMemClock),
+        nameof(Sensors_Series_GpuMemTemp),
         nameof(Sensors_Series_GpuPower),
+        nameof(Sensors_Series_GpuPowerLimit),
         nameof(Sensors_Series_GpuTemp),
+        nameof(Sensors_Series_GpuThermalLimit),
         nameof(Sensors_Series_Ram),
         nameof(Sensors_Series_VramAdapter),
         nameof(Sensors_Temps_Header),
@@ -1681,6 +1689,8 @@ public static class Strings
 
     public static string Format_Duration_MinutesSeconds_Format => ResourceManager.GetString(nameof(Format_Duration_MinutesSeconds_Format), Culture) ?? nameof(Format_Duration_MinutesSeconds_Format);
 
+    public static string Format_Frequency_Format => ResourceManager.GetString(nameof(Format_Frequency_Format), Culture) ?? nameof(Format_Frequency_Format);
+
     public static string Format_Memory_Gb_Format => ResourceManager.GetString(nameof(Format_Memory_Gb_Format), Culture) ?? nameof(Format_Memory_Gb_Format);
 
     public static string Format_Memory_Mb_Format => ResourceManager.GetString(nameof(Format_Memory_Mb_Format), Culture) ?? nameof(Format_Memory_Mb_Format);
@@ -1692,6 +1702,8 @@ public static class Strings
     public static string Format_Resolution_Format => ResourceManager.GetString(nameof(Format_Resolution_Format), Culture) ?? nameof(Format_Resolution_Format);
 
     public static string Format_Resolution_Single_Format => ResourceManager.GetString(nameof(Format_Resolution_Single_Format), Culture) ?? nameof(Format_Resolution_Single_Format);
+
+    public static string Format_Rpm_Format => ResourceManager.GetString(nameof(Format_Rpm_Format), Culture) ?? nameof(Format_Rpm_Format);
 
     public static string Format_Temperature_Format => ResourceManager.GetString(nameof(Format_Temperature_Format), Culture) ?? nameof(Format_Temperature_Format);
 
@@ -2303,13 +2315,25 @@ public static class Strings
 
     public static string Sensors_Series_GameVramShared => ResourceManager.GetString(nameof(Sensors_Series_GameVramShared), Culture) ?? nameof(Sensors_Series_GameVramShared);
 
+    public static string Sensors_Series_GpuCoreClock => ResourceManager.GetString(nameof(Sensors_Series_GpuCoreClock), Culture) ?? nameof(Sensors_Series_GpuCoreClock);
+
+    public static string Sensors_Series_GpuFan => ResourceManager.GetString(nameof(Sensors_Series_GpuFan), Culture) ?? nameof(Sensors_Series_GpuFan);
+
     public static string Sensors_Series_GpuHotspot => ResourceManager.GetString(nameof(Sensors_Series_GpuHotspot), Culture) ?? nameof(Sensors_Series_GpuHotspot);
 
     public static string Sensors_Series_GpuLoad => ResourceManager.GetString(nameof(Sensors_Series_GpuLoad), Culture) ?? nameof(Sensors_Series_GpuLoad);
 
+    public static string Sensors_Series_GpuMemClock => ResourceManager.GetString(nameof(Sensors_Series_GpuMemClock), Culture) ?? nameof(Sensors_Series_GpuMemClock);
+
+    public static string Sensors_Series_GpuMemTemp => ResourceManager.GetString(nameof(Sensors_Series_GpuMemTemp), Culture) ?? nameof(Sensors_Series_GpuMemTemp);
+
     public static string Sensors_Series_GpuPower => ResourceManager.GetString(nameof(Sensors_Series_GpuPower), Culture) ?? nameof(Sensors_Series_GpuPower);
 
+    public static string Sensors_Series_GpuPowerLimit => ResourceManager.GetString(nameof(Sensors_Series_GpuPowerLimit), Culture) ?? nameof(Sensors_Series_GpuPowerLimit);
+
     public static string Sensors_Series_GpuTemp => ResourceManager.GetString(nameof(Sensors_Series_GpuTemp), Culture) ?? nameof(Sensors_Series_GpuTemp);
+
+    public static string Sensors_Series_GpuThermalLimit => ResourceManager.GetString(nameof(Sensors_Series_GpuThermalLimit), Culture) ?? nameof(Sensors_Series_GpuThermalLimit);
 
     public static string Sensors_Series_Ram => ResourceManager.GetString(nameof(Sensors_Series_Ram), Culture) ?? nameof(Sensors_Series_Ram);
 

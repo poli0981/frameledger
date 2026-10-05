@@ -33,6 +33,19 @@ numeric core and does not move; the heading is the full version — corrected 20
 - **Settings ▸ Window ▸ Hide scroll bars.** No scroll bar is drawn anywhere in the app while it is on, and everything
   still scrolls with the mouse wheel, the keyboard and touch. Off by default; it applies at once, to the open windows
   too, and off brings every bar back.
+- **New measurements in every session** (recorded from this version on; earlier sessions read N/A):
+  - **time below 30 FPS, below 60 FPS and below the monitor's refresh rate**, and how much one frame's time differs from
+    the next. A game held at its frame limit is not counted as dropping below it for the small wobble every frame limit
+    has — on the developer's machine a game capped at 60 read half its time "below 60" by the plain rule;
+  - **VSync and tearing**: how many of the game's frames asked to wait for the display, and how many allowed tearing
+    (Direct3D games);
+  - **the graphics card's clock speeds, fan speed and memory temperature**, and — on NVIDIA cards — how much of the time
+    its power limit or its temperature held it back;
+  - **frames per watt**: the game's own frames per second for each watt the graphics card drew, never counting generated
+    frames.
+
+  The session's sensor statistics table shows the new card readings in their own units. The database is migrated in
+  place (schema 0019), and an earlier version cannot open it afterwards.
 
 ### Fixed
 

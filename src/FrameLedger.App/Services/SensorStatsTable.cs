@@ -49,14 +49,28 @@ public static class SensorStatsTable
         SensorSeriesCatalog.GameRamPrivate => Strings.Sensors_Series_GameRam,
         SensorSeriesCatalog.GameRamWorkingSet => Strings.Sensors_Series_GameRamWs,
         SensorSeriesCatalog.GameCommit => Strings.Sensors_Series_GameCommit,
+        SensorSeriesCatalog.GpuCoreClock => Strings.Sensors_Series_GpuCoreClock,
+        SensorSeriesCatalog.GpuMemClock => Strings.Sensors_Series_GpuMemClock,
+        SensorSeriesCatalog.GpuFan => Strings.Sensors_Series_GpuFan,
+        SensorSeriesCatalog.GpuMemTemp => Strings.Sensors_Series_GpuMemTemp,
+        SensorSeriesCatalog.GpuPowerLimit => Strings.Sensors_Series_GpuPowerLimit,
+        SensorSeriesCatalog.GpuThermalLimit => Strings.Sensors_Series_GpuThermalLimit,
         _ => series,
     };
 
+    /// <summary>
+    /// Each series in its own unit. Until beta.14 everything that was not a temperature, a load or a power was memory — so a
+    /// clock stored after it would have printed its MHz as megabytes; a series this build does not know prints as itself.
+    /// </summary>
     private static Func<double?, string> FormatOf(string series) => series switch
     {
-        SensorSeriesCatalog.GpuTemp or SensorSeriesCatalog.GpuHotspot or SensorSeriesCatalog.CpuTemp => Formats.Temperature,
-        SensorSeriesCatalog.GpuLoad or SensorSeriesCatalog.CpuLoad => Formats.Percent,
+        SensorSeriesCatalog.GpuTemp or SensorSeriesCatalog.GpuHotspot or SensorSeriesCatalog.CpuTemp or SensorSeriesCatalog.GpuMemTemp => Formats.Temperature,
+        SensorSeriesCatalog.GpuLoad or SensorSeriesCatalog.CpuLoad or SensorSeriesCatalog.GpuPowerLimit or SensorSeriesCatalog.GpuThermalLimit => Formats.Percent,
         SensorSeriesCatalog.GpuPower => Formats.Power,
-        _ => Formats.Memory,
+        SensorSeriesCatalog.GpuCoreClock or SensorSeriesCatalog.GpuMemClock => Formats.Frequency,
+        SensorSeriesCatalog.GpuFan => Formats.Rpm,
+        SensorSeriesCatalog.VramAdapter or SensorSeriesCatalog.RamSystem or SensorSeriesCatalog.GameVramDedicated or SensorSeriesCatalog.GameVramShared
+            or SensorSeriesCatalog.GameRamPrivate or SensorSeriesCatalog.GameRamWorkingSet or SensorSeriesCatalog.GameCommit => Formats.Memory,
+        _ => static v => v?.ToString("N1", CultureInfo.CurrentCulture) ?? Strings.Common_NotAvailable,
     };
 }

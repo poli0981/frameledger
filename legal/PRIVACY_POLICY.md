@@ -9,7 +9,7 @@
 Stored in `%LOCALAPPDATA%\FrameLedger` on your device:
 
 - Your game library entries (names, executable paths, metadata you or the app filled in, and whether each one is recorded).
-- Performance sessions: frame timing series, computed statistics, hardware sensor series (temperatures, load, memory usage), the game's own memory use (its dedicated and shared video memory, private working set, working set and commit, once a second), session duration, crash flags, the graphics driver's settings the game ran under (NVIDIA only), how the game's window was shown (full-screen, borderless or windowed, for how long, its size and the monitor's), tags and notes you write.
+- Performance sessions: frame timing series, computed statistics, hardware sensor series (temperatures, load, power, memory usage, and the graphics card's clock speeds, fan speed, memory temperature and whether its power limit or heat held it back), the game's own memory use (its dedicated and shared video memory, private working set, working set and commit, once a second), session duration, crash flags, the graphics driver's settings the game ran under (NVIDIA only), how the game's window was shown (full-screen, borderless or windowed, for how long, its size and the monitor's), tags and notes you write.
 - A hardware snapshot per session (CPU/GPU model, driver version, RAM size, OS build, display mode) used for the "what changed between sessions" feature.
 - App settings, logs (rotated daily — the app keeps 7 days, the capture agent 14 — including the logs written by the component loaded into games), and, after a crash of the app itself, crash dump files.
 - Which games you enabled code injection for, and when you consented.

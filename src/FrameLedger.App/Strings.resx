@@ -2909,4 +2909,28 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="Exit_CrashReporter_Format" xml:space="preserve">
     <value>crashed (the game started its crash reporter, {0})</value>
   </data>
+  <data name="Sensors_Series_GpuCoreClock" xml:space="preserve">
+    <value>GPU core clock MHz</value>
+  </data>
+  <data name="Sensors_Series_GpuMemClock" xml:space="preserve">
+    <value>GPU memory clock MHz</value>
+  </data>
+  <data name="Sensors_Series_GpuFan" xml:space="preserve">
+    <value>GPU fan RPM</value>
+  </data>
+  <data name="Sensors_Series_GpuMemTemp" xml:space="preserve">
+    <value>GPU memory °C</value>
+  </data>
+  <data name="Sensors_Series_GpuPowerLimit" xml:space="preserve">
+    <value>GPU held back by its power limit %</value>
+  </data>
+  <data name="Sensors_Series_GpuThermalLimit" xml:space="preserve">
+    <value>GPU held back by heat %</value>
+  </data>
+  <data name="Format_Frequency_Format" xml:space="preserve">
+    <value>{0:N0} MHz</value>
+  </data>
+  <data name="Format_Rpm_Format" xml:space="preserve">
+    <value>{0:N0} RPM</value>
+  </data>
 </root>

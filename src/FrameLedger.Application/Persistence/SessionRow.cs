@@ -343,4 +343,42 @@ public sealed record SessionRow
     public string? GameMemorySource { get; init; }
 
     public string? SensorStatsJson { get; init; }
+
+    // --- Schema 0019 (beta.14, D49): pacing, the present arguments, the graphics card's clocks and limits, and efficiency
+    // (03_METRICS §Pacing, §Sync, §Sensor aggregates, §Efficiency). Null on a row written before beta.14 and wherever nothing
+    // measured the value — never a zero for an answer nobody gave.
+
+    /// <summary>Percent of the measured time below 30 FPS (<c>Domain.Metrics.FramePacing</c>).</summary>
+    public double? TimeBelow30Pct { get; init; }
+
+    public double? TimeBelow60Pct { get; init; }
+
+    /// <summary>Percent of the presented time below the monitor's refresh rate; null without <see cref="DisplayMonitorHz"/>.</summary>
+    public double? TimeBelowRefreshPct { get; init; }
+
+    /// <summary>Mean change from one frame time to the next, ms.</summary>
+    public double? FrametimeDeltaMeanMs { get; init; }
+
+    /// <summary>Percent of the presents that asked to wait for the display (a sync interval of one or more); Direct3D only.</summary>
+    public double? VsyncPresentPct { get; init; }
+
+    /// <summary>Percent of the presents that allowed tearing; Direct3D only.</summary>
+    public double? TearingAllowedPct { get; init; }
+
+    public double? AvgGpuCoreClockMhz { get; init; }
+
+    public double? AvgGpuMemClockMhz { get; init; }
+
+    public double? AvgGpuFanRpm { get; init; }
+
+    public double? MaxGpuMemTemp { get; init; }
+
+    /// <summary>Percent of the sensor ticks the card was held back by its power limit; NVIDIA (L3) only.</summary>
+    public double? PowerLimitPct { get; init; }
+
+    /// <summary>Percent of the sensor ticks the card was held back by heat; NVIDIA (L3) only.</summary>
+    public double? ThermalLimitPct { get; init; }
+
+    /// <summary>Application frames per joule of the card's power — FPS per watt; never over displayed frames (rule 6).</summary>
+    public double? AppFramesPerJoule { get; init; }
 }

@@ -2904,4 +2904,28 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="Exit_CrashReporter_Format" xml:space="preserve">
     <value>bị crash (game đã mở trình báo lỗi crash của nó, {0})</value>
   </data>
+  <data name="Sensors_Series_GpuCoreClock" xml:space="preserve">
+    <value>Xung nhịp lõi GPU MHz</value>
+  </data>
+  <data name="Sensors_Series_GpuMemClock" xml:space="preserve">
+    <value>Xung nhịp bộ nhớ GPU MHz</value>
+  </data>
+  <data name="Sensors_Series_GpuFan" xml:space="preserve">
+    <value>Quạt GPU vòng/phút</value>
+  </data>
+  <data name="Sensors_Series_GpuMemTemp" xml:space="preserve">
+    <value>Bộ nhớ GPU °C</value>
+  </data>
+  <data name="Sensors_Series_GpuPowerLimit" xml:space="preserve">
+    <value>GPU bị giới hạn công suất %</value>
+  </data>
+  <data name="Sensors_Series_GpuThermalLimit" xml:space="preserve">
+    <value>GPU bị giới hạn do nhiệt %</value>
+  </data>
+  <data name="Format_Frequency_Format" xml:space="preserve">
+    <value>{0:N0} MHz</value>
+  </data>
+  <data name="Format_Rpm_Format" xml:space="preserve">
+    <value>{0:N0} vòng/phút</value>
+  </data>
 </root>

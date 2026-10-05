@@ -92,6 +92,22 @@ public static class Vocabulary
         _ => Domain.Metrics.Tri.NotApplicable,
     };
 
+    /// <summary>
+    /// <c>sessions.sync_interval_mode</c> — a column since 0001 with no writer until beta.14: <c>on</c> when every counted present
+    /// asked to wait for the display, <c>off</c> when none did, <c>mixed</c> otherwise (a menu with VSync, a game without);
+    /// null when no present carried its arguments (OpenGL, Vulkan, a Tier-2 session).
+    /// </summary>
+    public static string? SyncIntervalMode(PresentArgsShares shares)
+    {
+        ArgumentNullException.ThrowIfNull(shares);
+        if (shares.Count == 0)
+        {
+            return null;
+        }
+
+        return shares.VsyncCount == shares.Count ? "on" : shares.VsyncCount == 0 ? "off" : "mixed";
+    }
+
     public static string? Api(FrameApi api) => api switch
     {
         FrameApi.D3D11 => "d3d11",
