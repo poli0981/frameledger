@@ -24,6 +24,7 @@
 #include <cwchar>
 #include <fl_ac_rules.h>
 #include <fl_guard.h>
+#include <fl_guard_scanset.h>
 #include <fl_prescan.h>
 #include <map>
 #include <memory>
@@ -649,8 +650,8 @@ TEST_CASE("EVERY process in the scan set is scanned, not just the target", "[gua
     // processes; it does not prove it looked at the right three, and it cannot
     // prove it ACTED on what it found in one of them. Both are now assertable.
     ResetFake();
-    // TARGET FIRST, mirroring EnumerateScanSetImpl (fl_guard_sources.cpp emits
-    // the injection target, then ancestors, then descendants). The order is not
+    // TARGET FIRST, mirroring WalkScanSet (fl_guard_scanset.cpp sends the
+    // injection target, then ancestors, then descendants). The order is not
     // cosmetic here: with the target last, a guard that scanned only the FIRST
     // entry would still refuse in the launcher case below and the section would
     // pass while covering nothing. Measured — that is exactly what happened when
@@ -712,6 +713,201 @@ TEST_CASE("EVERY process in the scan set is scanned, not just the target", "[gua
         std::sort(sorted.begin(), sorted.end());
         CHECK(sorted == std::vector<std::uint32_t>{1000, 1001, 1234});
     }
+}
+
+// ===========================================================================
+// D51 (owner decision, beta.15) — the scan set's walk cuts a parent/child link
+// only when creation times PROVE it wrong, and walks each pid once.
+//
+// Windows reuses pids. A launcher that exited after starting its game leaves the
+// game naming a pid that may now belong to anything, and until beta.15 the walk
+// scanned whatever held it: a protected process refused the session as
+// unreadable, a blocklisted one turned the game's hooking off for good. The
+// direction that matters most is the other one, and most sections below are
+// about it: a link whose times cannot be read is KEPT, so nothing here makes the
+// scan set smaller on a guess.
+// ===========================================================================
+namespace {
+
+struct WalkFixture {
+    std::vector<ScanSetRow>                rows;
+    std::map<std::uint32_t, std::uint64_t> created;    // absent: the time could not be read
+    std::vector<std::uint32_t>             sent;
+    std::size_t                            stopAfter = SIZE_MAX;
+};
+
+std::uint64_t WalkCreated(void* ctx, std::uint32_t pid) {
+    const auto* f = static_cast<const WalkFixture*>(ctx);
+    const auto  it = f->created.find(pid);
+    return it == f->created.end() ? 0 : it->second;
+}
+
+bool WalkSink(void* ctx, std::uint32_t pid) {
+    auto* f = static_cast<WalkFixture*>(ctx);
+    f->sent.push_back(pid);
+    return f->sent.size() < f->stopAfter;
+}
+
+Collected Walk(WalkFixture& f, std::uint32_t target) {
+    const ScanSetEnv env{&WalkCreated, &f, &WalkSink, &f};
+    return WalkScanSet(f.rows.data(), f.rows.size(), target, env);
+}
+
+}    // namespace
+
+TEST_CASE("D51 — the walk sends the target, its ancestors below the launcher, then its descendants",
+          "[guard][S16][D51]") {
+    WalkFixture f;
+    // steam.exe (10) > the game's launcher (20) > the game (30) > a helper (40) > its child (50); beside them a process
+    // of nobody's (60) and the launcher's other child (70). Every time read, every link true.
+    f.rows = {{10, 1, true},   {20, 10, false}, {30, 20, false}, {40, 30, false},
+              {50, 40, false}, {60, 1, false},  {70, 10, false}};
+    f.created = {{10, 100}, {20, 200}, {30, 300}, {40, 400}, {50, 500}, {60, 50}, {70, 250}};
+
+    CHECK(Walk(f, 30) == Collected::kOk);
+    CHECK(f.sent == std::vector<std::uint32_t>{30, 20, 40, 50});
+}
+
+TEST_CASE("D51 — a link is cut only when creation times prove it wrong", "[guard][S16][D51][failclosed]") {
+    WalkFixture f;
+
+    SECTION("a parent pid now held by a younger process is not the game's parent, nor is anything above it") {
+        // The game's launcher (pid 20) exited after starting it, and a process started later took pid 20.
+        f.rows = {{5, 0, false}, {20, 5, false}, {30, 20, false}};
+        f.created = {{5, 10}, {20, 900}, {30, 300}};
+
+        CHECK(Walk(f, 30) == Collected::kOk);
+        CHECK(f.sent == std::vector<std::uint32_t>{30});
+    }
+
+    SECTION("a process older than the pid it names as its parent is not that process's child, nor are its own") {
+        // 80 was started (at 100) by an earlier holder of pid 30; the game took the pid at 300. 90 is 80's child.
+        f.rows = {{30, 0, false}, {80, 30, false}, {40, 30, false}, {90, 80, false}};
+        f.created = {{30, 300}, {80, 100}, {40, 400}, {90, 150}};
+
+        CHECK(Walk(f, 30) == Collected::kOk);
+        CHECK(f.sent == std::vector<std::uint32_t>{30, 40});
+    }
+
+    SECTION("a time that cannot be read keeps the link — the walk never shrinks on a guess") {
+        f.rows = {{30, 0, false}, {80, 30, false}, {40, 30, false}, {90, 80, false}};
+        f.created = {{30, 300}, {40, 400}, {90, 150}};    // 80's time unread
+
+        CHECK(Walk(f, 30) == Collected::kOk);
+        CHECK(f.sent == std::vector<std::uint32_t>{30, 80, 40, 90});
+    }
+
+    SECTION("nor does an unread time at the other end of the link") {
+        f.rows = {{5, 0, false}, {20, 5, false}, {30, 20, false}, {80, 30, false}};
+        f.created = {{5, 10}, {20, 900}, {80, 100}};    // the game's own time unread
+
+        CHECK(Walk(f, 30) == Collected::kOk);
+        CHECK(f.sent == std::vector<std::uint32_t>{30, 20, 5, 80});
+    }
+
+    SECTION("equal times keep the link: a parent and its child can start within one tick of the clock") {
+        f.rows = {{20, 0, false}, {30, 20, false}, {40, 30, false}};
+        f.created = {{20, 300}, {30, 300}, {40, 300}};
+
+        CHECK(Walk(f, 30) == Collected::kOk);
+        CHECK(f.sent == std::vector<std::uint32_t>{30, 20, 40});
+    }
+}
+
+TEST_CASE("D51 — a cycle of reused pids ends, and no pid is sent twice", "[guard][S16][D51]") {
+    WalkFixture f;
+
+    SECTION("two processes naming each other as parent, their times unread") {
+        f.rows = {{30, 31, false}, {31, 30, false}};
+
+        CHECK(Walk(f, 30) == Collected::kOk);
+        CHECK(f.sent == std::vector<std::uint32_t>{30, 31});
+    }
+
+    SECTION("an ancestor the snapshot also lists as a child is sent once, and its children are still walked") {
+        // Without times neither link is proven wrong, so 31's other child (32) is kept as the game's descendant.
+        f.rows = {{30, 31, false}, {31, 30, false}, {32, 31, false}};
+
+        CHECK(Walk(f, 30) == Collected::kOk);
+        CHECK(f.sent == std::vector<std::uint32_t>{30, 31, 32});
+    }
+}
+
+TEST_CASE("D51 — the walk's limits: a missing target, the frontier, the depth, a sink that is full",
+          "[guard][S16][D51][failclosed]") {
+    WalkFixture f;
+
+    SECTION("a target that is not in the snapshot fails — there is no tree to scan") {
+        f.rows = {{20, 0, false}};
+
+        CHECK(Walk(f, 30) == Collected::kFailed);
+        CHECK(f.sent.empty());
+    }
+
+    SECTION("more descendants than the frontier holds fails rather than scanning some of them") {
+        f.rows.push_back({1, 0, false});
+        for (std::uint32_t pid = 2; pid < 2 + kScanSetFrontier - 1; ++pid) {
+            f.rows.push_back({pid, 1, false});
+        }
+        CHECK(Walk(f, 1) == Collected::kOk);    // the target and its 511 children fill it exactly
+
+        f.sent.clear();
+        f.rows.push_back({5000, 1, false});
+        CHECK(Walk(f, 1) == Collected::kFailed);
+    }
+
+    SECTION("ancestors stop after kScanSetMaxDepth") {
+        for (std::uint32_t pid = 100; pid < 130; ++pid) {
+            f.rows.push_back({pid, pid + 1, false});
+        }
+
+        CHECK(Walk(f, 100) == Collected::kOk);
+        CHECK(f.sent.size() == 1 + kScanSetMaxDepth);
+    }
+
+    SECTION("a sink that stops the walk ends it, and nothing after is sent") {
+        f.rows = {{20, 0, false}, {30, 20, false}, {40, 30, false}};
+        f.stopAfter = 2;
+
+        CHECK(Walk(f, 30) == Collected::kOk);
+        CHECK(f.sent == std::vector<std::uint32_t>{30, 20});
+    }
+}
+
+TEST_CASE("D51 — the real scan set keeps a child this process just started, and reads real creation times",
+          "[guard][S16][D51][live]") {
+    const Sources s = SystemSources();
+    REQUIRE(s.EnumerateScanSet != nullptr);
+
+    STARTUPINFOW        si{};
+    PROCESS_INFORMATION pi{};
+    si.cb = sizeof(si);
+    wchar_t cmd[] = L"cmd.exe /c exit 0";
+    REQUIRE(CreateProcessW(nullptr, cmd, nullptr, nullptr, FALSE, CREATE_SUSPENDED | CREATE_NO_WINDOW, nullptr, nullptr,
+                           &si, &pi));
+    static std::vector<std::uint32_t> members;
+    members.clear();
+    const Collected walked = s.EnumerateScanSet(
+        GetCurrentProcessId(),
+        [](void*, std::uint32_t pid) {
+            members.push_back(pid);
+            return true;
+        },
+        nullptr);
+    const std::uint64_t self = ProcessCreatedAt(GetCurrentProcessId());
+    const std::uint64_t child = ProcessCreatedAt(pi.dwProcessId);
+    TerminateProcess(pi.hProcess, 0);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
+
+    CHECK(walked == Collected::kOk);
+    REQUIRE_FALSE(members.empty());
+    CHECK(members.front() == GetCurrentProcessId());
+    CHECK(std::count(members.begin(), members.end(), pi.dwProcessId) == 1);
+    CHECK(std::set<std::uint32_t>(members.begin(), members.end()).size() == members.size());
+    CHECK(self != 0);
+    CHECK(child >= self);                         // a child is never proven older than its parent
+    CHECK(ProcessCreatedAt(0x7FFFFFFCu) == 0);    // no process: unread, which keeps a link
 }
 
 // ===========================================================================

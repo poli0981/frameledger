@@ -30,6 +30,11 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Fixed
 
+- **The anti-cheat check could scan a program that had nothing to do with the game**: Windows reuses process numbers, and
+  once a game's launcher had closed, the check followed its number to whatever program held it now — a protected one
+  refused the session, one carrying anti-cheat turned the game's measuring off for good. A program started after the game
+  is no longer taken for its launcher, nor one started before the game for its child; when FrameLedger cannot read when a
+  program started, it still scans it, as before.
 - **A game started again within a few seconds of closing was not recorded**: while FrameLedger was still saving the
   session that had just ended, the new start was turned away ("one session at a time") and never looked at again. It is
   recorded now, as soon as the session before it is saved — unless the game's other processes are still running beside
