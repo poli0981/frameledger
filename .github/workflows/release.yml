@@ -154,7 +154,9 @@ jobs:
           $ref = if ('${{ steps.version.outputs.dry_run }}' -eq 'true') { '${{ github.sha }}' } else { "v$v" }
           dotnet publish src/FrameLedger.App   -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -p:Version=$v -p:FrameLedgerSourceRef=$ref -o out/app
           if ($LASTEXITCODE -ne 0) { throw 'App publish failed' }
-          dotnet publish src/FrameLedger.Agent -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -p:Version=$v -o out/app
+          # beta.14 (D50): the same ref for the Agent - Directory.Build.props stamps it on every assembly, and both
+          # publishes build the same libraries into this one folder.
+          dotnet publish src/FrameLedger.Agent -c Release -r win-x64 --self-contained -p:PublishReadyToRun=true -p:Version=$v -p:FrameLedgerSourceRef=$ref -o out/app
           if ($LASTEXITCODE -ne 0) { throw 'Agent publish failed' }
 
       # A self-contained package redistributes the .NET runtime, and its licence and
@@ -195,7 +197,8 @@ jobs:
           if ($missing.Count -gt 0) { throw "out/app is missing: $($missing -join ', ')" }
           if (Test-Path out/app/FrameLedger.CaptureHost.exe) { throw 'out/app contains the unshipped capture host (12_BUILD: exactly two roots)' }
           if (@(Get-ChildItem out/app/licenses/dotnet -File -ErrorAction SilentlyContinue).Count -lt 2) { throw 'out/app/licenses/dotnet holds fewer than two files -- the runtime licence step did not run' }
-          ./tools/versioninfo-check.ps1 -BuildDir out/app
+          # beta.14 (D50): the managed half too - the eight managed binaries, carrying the tag's full version.
+          ./tools/versioninfo-check.ps1 -BuildDir out/app -ManagedDir out/app -ExpectedProductVersion '${{ steps.version.outputs.version }}'
           if ($LASTEXITCODE -ne 0) { throw 'versioninfo-check over the published tree' }
           $size = (Get-ChildItem out/app -Recurse -File | Measure-Object Length -Sum).Sum / 1MB
           Write-Host ("published tree: {0:N0} MB" -f $size)

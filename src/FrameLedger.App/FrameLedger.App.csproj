@@ -24,6 +24,10 @@
     <!-- 11_UPDATER (P4 PR-5): Velopack must run before any window exists, so the
          entry point is Program.Main rather than the generated App.Main. -->
     <StartupObject>FrameLedger.App.Program</StartupObject>
+    <!-- beta.14 (D50): the file description Explorer and Task Manager show, and the Comments line. The company, product
+         and copyright are every assembly's (Directory.Build.props). -->
+    <AssemblyTitle>FrameLedger</AssemblyTitle>
+    <Description>FrameLedger: records game performance sessions and shows them over time. Identifies itself deliberately; see https://github.com/poli0981/frameledger</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -55,13 +59,6 @@
     <EmbeddedResource Include="..\..\legal\licenses\nuget\INDEX.md" LogicalName="legal/licenses/nuget/INDEX.md" />
     <!-- beta.12 (D44): the user guide, shown under Help > User guide; English, as the documents are. -->
     <EmbeddedResource Include="..\..\guide\*.md" LogicalName="guide/%(Filename)%(Extension)" />
-  </ItemGroup>
-
-  <!-- beta.12: the source this build was made from, so the App's links into the repository open THIS version's documents
-       (Services/RepositoryLinks.cs). release.yml passes the tag (a rehearsal, its commit); a local build has none and links
-       to main. -->
-  <ItemGroup Condition="'$(FrameLedgerSourceRef)' != ''">
-    <AssemblyMetadata Include="FrameLedgerSourceRef" Value="$(FrameLedgerSourceRef)" />
   </ItemGroup>
 
   <ItemGroup>

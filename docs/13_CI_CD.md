@@ -135,7 +135,10 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 - **The published tree asserted by name**: `FrameLedger.exe`, `FrameLedger.Agent.exe`, the ~~four~~ five shipped natives
   `versioninfo-check` lists (`FrameLedger.ProcessStats.dll` since beta.12 — corrected 2026-10-04), `rules/detection-rules.json`; `FrameLedger.CaptureHost.exe` absent (`12_BUILD`:
   exactly two roots — `package-closure-check` proves it statically, this reads the directory); `versioninfo-check`
-  run again over `out/app`, because a `.targets`-staged DLL that failed to copy is a warning to `dotnet publish`.
+  run again over `out/app`, because a `.targets`-staged DLL that failed to copy is a warning to `dotnet publish` —
+  **since beta.14 (D50) with its managed half** (`-ManagedDir out/app -ExpectedProductVersion <tag>`): the eight managed
+  binaries name FrameLedger, carry the tag's full version and the native binaries' copyright line (`12_BUILD` §Version,
+  *Identity*). Both publishes take `-p:FrameLedgerSourceRef` since beta.14.
 - **since beta.13, `vpk download github --pre` first**, so `vpk pack` finds the previous release's full package in
   `out/release` and writes a delta; after the pack, what `assets.win.json` names is kept and the rest (the previous full
   package) moves to `out/previous`, the feed and `RELEASES` are filtered to this build, and a downloaded previous package

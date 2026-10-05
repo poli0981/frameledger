@@ -22,7 +22,7 @@ These are permanently out of scope. A PR implementing any of them is rejected re
 - Reading or writing game memory outside the arguments of APIs we hooked
 - Kernel drivers of our own
 
-The DLL ships with its real filename, a populated VERSIONINFO block (`CompanyName`, `ProductName=FrameLedger`, version), and named kernel objects that clearly say `FrameLedger`. Being identifiable is a feature.
+The DLL ships with its real filename, a populated VERSIONINFO block (`CompanyName`, `ProductName=FrameLedger`, version), and named kernel objects that clearly say `FrameLedger`. Being identifiable is a feature. Since beta.14 (D50) the Agent — the process that injects — and the App say the same about themselves: `FrameLedger` as company and product, *FrameLedger Agent* as the Agent's description, the native binaries' copyright line (`12_BUILD` §Version, *Identity*; `tools/versioninfo-check.ps1` reads both kinds).
 
 ## The anti-cheat guard (hard gate)
 
