@@ -9,7 +9,11 @@ public enum ExitStatus
     /// <summary>The presenting process exited 0 and no Application Error / WER record names it.</summary>
     Normal = 0,
 
-    /// <summary>Non-zero exit code, or an event 1000 / 1001 naming the exe within <c>[start, end + 30 s]</c>.</summary>
+    /// <summary>
+    /// An exception's exit code (<c>ExitStatusMapper.IsExceptionCode</c> — "non-zero" until beta.8, corrected 2026-10-05), an
+    /// Application-log crash report of this game (<c>CrashEventMatcher</c>, beta.14), or an engine's crash reporter the game
+    /// started before it left (<c>CrashReporterRule</c>, beta.14).
+    /// </summary>
     Crashed,
 
     /// <summary>The guard fired mid-session.</summary>

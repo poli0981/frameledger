@@ -304,6 +304,7 @@ public static class Strings
         nameof(Exit_Crashed),
         nameof(Exit_Crashed_Format),
         nameof(Exit_CrashEvent),
+        nameof(Exit_CrashReporter_Format),
         nameof(Exit_Degraded),
         nameof(Exit_EndedNormally),
         nameof(Exit_Ex_AccessViolation),
@@ -1537,6 +1538,8 @@ public static class Strings
     public static string Exit_Crashed_Format => ResourceManager.GetString(nameof(Exit_Crashed_Format), Culture) ?? nameof(Exit_Crashed_Format);
 
     public static string Exit_CrashEvent => ResourceManager.GetString(nameof(Exit_CrashEvent), Culture) ?? nameof(Exit_CrashEvent);
+
+    public static string Exit_CrashReporter_Format => ResourceManager.GetString(nameof(Exit_CrashReporter_Format), Culture) ?? nameof(Exit_CrashReporter_Format);
 
     public static string Exit_Degraded => ResourceManager.GetString(nameof(Exit_Degraded), Culture) ?? nameof(Exit_Degraded);
 

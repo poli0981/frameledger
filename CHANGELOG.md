@@ -36,6 +36,16 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Fixed
 
+- **A session could read "crashed" when the game had not crashed, and an Unreal game's crash read "ended normally".**
+  Any Windows report that named the game counted as a crash — on the developer's machine a memory-leak report Windows
+  writes about large games marked an ordinary The Witcher 3 session *crashed*; hang reports and another program whose
+  name contains the game's would have done the same. Only a crash report of this game's own process counts now. And
+  Unreal Engine games handle their own crash: they open their crash reporter and exit with code 3, which said nothing;
+  FrameLedger now sees the crash reporter a game starts (Unreal's, CD PROJEKT RED's, Capcom's, BugSplat's) and records
+  the session as crashed when the game exits within a minute of it — the summary names the reporter. Unity's and
+  Chromium's crash handlers start with their game and are never taken for a crash. Sessions already stored keep their
+  status. BugSplat's sender (Kingdom Come: Deliverance II) can no longer be picked as a game's executable by the import.
+  The Privacy Policy (2.7) now says that FrameLedger reads Windows' crash reports and the names of programs a game starts.
 - **A game that exited as FrameLedger's anti-cheat check ran could be recorded as "unhooked (safety)"** — and, under a
   user-mode anti-cheat exception, end the exception's trial for good. The check reads every process in the game's
   tree every 30 s; one that was just starting (an engine's crash reporter as its game dies, any helper the game launched

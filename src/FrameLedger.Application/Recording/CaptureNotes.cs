@@ -46,6 +46,12 @@ public readonly record struct CaptureNotes(string? End, string? GuardReason, str
     /// </summary>
     public string? ScanAtExit { get; init; }
 
+    /// <summary>beta.14: the crash reporter the game started that made the session crashed (<c>crash_reporter=</c>), or null.</summary>
+    public string? CrashReporter { get; init; }
+
+    /// <summary>beta.14: a crash reporter the game started that did not count — the game kept running (<c>crash_reporter_seen=</c>).</summary>
+    public string? CrashReporterSeen { get; init; }
+
     public static CaptureNotes Parse(string? notes)
     {
         if (string.IsNullOrWhiteSpace(notes))
@@ -53,7 +59,7 @@ public readonly record struct CaptureNotes(string? End, string? GuardReason, str
             return default;
         }
 
-        string? end = null, reason = null, family = null, signal = null, acException = null, scanAtExit = null;
+        string? end = null, reason = null, family = null, signal = null, acException = null, scanAtExit = null, reporter = null, reporterSeen = null;
         int? exitCode = null, launchError = null;
         bool crashEvent = false;
         foreach (string raw in notes.Split(';'))
@@ -87,6 +93,14 @@ public readonly record struct CaptureNotes(string? End, string? GuardReason, str
             {
                 scanAtExit = Blank(part[_scanAtExitPrefix.Length..]);
             }
+            else if (part.StartsWith(_reporterPrefix, StringComparison.Ordinal))
+            {
+                reporter = Blank(part[_reporterPrefix.Length..]);
+            }
+            else if (part.StartsWith(_reporterSeenPrefix, StringComparison.Ordinal))
+            {
+                reporterSeen = Blank(part[_reporterSeenPrefix.Length..]);
+            }
         }
 
         return new CaptureNotes(end, reason, family, signal)
@@ -96,6 +110,8 @@ public readonly record struct CaptureNotes(string? End, string? GuardReason, str
             LaunchError = launchError,
             AcExceptionFamily = acException,
             ScanAtExit = scanAtExit,
+            CrashReporter = reporter,
+            CrashReporterSeen = reporterSeen,
         };
     }
 
@@ -144,6 +160,10 @@ public readonly record struct CaptureNotes(string? End, string? GuardReason, str
     private const string _acExceptionPrefix = "ac-exception=";
 
     private const string _scanAtExitPrefix = "scan_at_exit=";
+
+    private const string _reporterPrefix = "crash_reporter=";
+
+    private const string _reporterSeenPrefix = "crash_reporter_seen=";
 
     private static string Clean(string? s) => string.IsNullOrEmpty(s) ? string.Empty : s.Replace(';', ',');
 

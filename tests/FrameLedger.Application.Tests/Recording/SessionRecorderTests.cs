@@ -246,7 +246,18 @@ public sealed class SessionRecorderTests : IAsyncDisposable
 
     private sealed class NoCrashEvents : ICrashEventSource
     {
-        public bool FoundCrash(string exeFileName, DateTimeOffset windowStart, DateTimeOffset windowEnd) => false;
+        public bool FoundCrash(CrashQuery query) => false;
+    }
+
+    /// <summary>beta.14: a game that started an engine's crash reporter <paramref name="beforeEnd"/> before the session ended, 20 min after it started.</summary>
+    private sealed class OneReporter(TimeSpan beforeEnd) : ICrashReporterSightings
+    {
+        public Task<CrashReporterSighting?> FindAsync(CrashQuery query, CancellationToken ct = default)
+        {
+            DateTimeOffset endedAt = query.WindowEnd - ExitStatusMapper.CrashWitnessGrace;
+            return Task.FromResult<CrashReporterSighting?>(new CrashReporterSighting("CrashReportClient.exe", query.TargetPid, query.ExePath,
+                endedAt - beforeEnd - TimeSpan.FromMinutes(20), endedAt - beforeEnd));
+        }
     }
 
     private sealed class FixedHardware : IHardwareSnapshotSource
@@ -292,7 +303,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
 
     private async Task<Harness> MakeAsync(bool consented = true, AntiCheatVerdict? verdict = null, int records = 3_000, FakeLiveness? liveness = null, bool poller = true,
         bool clockStepsOnDrain = false, IDriverProfileSource? profiles = null, bool excepted = false, IDisplayProbe? display = null, ulong adapterLuid = 0,
-        AntiCheatVerdict? rescan = null)
+        AntiCheatVerdict? rescan = null, ICrashReporterSightings? reporters = null)
     {
         _db ??= await LedgerDatabase.OpenAsync(Path.Combine(_dir, LedgerPaths.DatabaseFileName), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         var store = new SqliteGameConsentStore(_db);
@@ -323,7 +334,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
             new SessionFinalizer(sessions, new RawSeriesCodec()), new NoCrashEvents(),
             _ => fakePoller, clock,
             new RecorderOptions { PartialFlushInterval = TimeSpan.FromSeconds(10), MinimumSessionLength = SteppingClock.Step }, profiles: profiles,
-            exceptionLapse: new UserModeExceptionLapsePolicy(store, sessions));
+            exceptionLapse: new UserModeExceptionLapsePolicy(store, sessions), reporters: reporters);
         return new Harness { Recorder = recorder, Games = games, Sessions = sessions, Partials = partials, Clock = clock, Store = store, Poller = fakePoller };
     }
 
@@ -586,6 +597,35 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         r.ExitStatus.Should().Be(ExitStatus.Normal, "a game that exited with 0 ended normally, whatever the last scan could read");
         r.Row.CaptureNotes.Should().Contain("scan_at_exit=ProcessUnreadable");
         CaptureNotes.Parse(r.Row.CaptureNotes).ScanAtExit.Should().Be("ProcessUnreadable");
+    }
+
+    /// <summary>
+    /// beta.14: Unreal handles its own crash, starts CrashReportClient.exe and exits with code 3 — no exception code, no event.
+    /// The reporter the watcher saw is the witness: crashed, and the notes name it.
+    /// </summary>
+    [Fact]
+    public async Task AGameThatStartedItsCrashReporterAndExitedWithinAMinuteCrashed()
+    {
+        using var exited = new FakeLiveness(exited: true, exitCode: 3);
+        Harness h = await MakeAsync(liveness: exited, reporters: new OneReporter(TimeSpan.FromSeconds(6)));
+
+        RecordedSession r = await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        r.ExitStatus.Should().Be(ExitStatus.Crashed, "exit code 3 alone read 'normal' until beta.14");
+        r.Row.CaptureNotes.Should().Contain("crash_reporter=CrashReportClient.exe");
+        CaptureNotes.Parse(r.Row.CaptureNotes).CrashReporter.Should().Be("CrashReportClient.exe");
+    }
+
+    [Fact]
+    public async Task AReporterWhoseGameKeptRunningIsANoteOnly()
+    {
+        using var exited = new FakeLiveness(exited: true, exitCode: 0);
+        Harness h = await MakeAsync(liveness: exited, reporters: new OneReporter(TimeSpan.FromMinutes(10)));
+
+        RecordedSession r = await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        r.ExitStatus.Should().Be(ExitStatus.Normal, "the game ran ten more minutes after it reported");
+        r.Row.CaptureNotes.Should().Contain("crash_reporter_seen=CrashReportClient.exe");
     }
 
     [Fact]

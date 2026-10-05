@@ -39,6 +39,18 @@ Windows, outside the game) and why nothing was measured.** Every
 frame-rate, upscaler, frame-generation and ray-tracing value reads **N/A**, never 0. How the game's window was
 shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
 
+## When a game crashed
+
+- A session reads **crashed** when the game ended with an exception's code, when Windows logged a crash report of it,
+  or — since 0.1.0-beta.14 — when it started its engine's crash reporter (Unreal's, CD PROJEKT RED's, Capcom's,
+  BugSplat's) and exited within a minute. A game that handles its own crash quietly, starts no reporter and leaves no
+  crash report reads **ended normally**, with its exit code.
+- A crash reporter is seen from a once-a-second look at running programs: one that opens and closes faster can be
+  missed, and one started in the game's first 10 seconds is not counted (it could be a monitor that starts with the
+  game). Unity's crash handler and Chromium's `crashpad_handler` start with every game that has them, so their presence
+  says nothing. Sessions recorded before 0.1.0-beta.14 keep how they were stored — a few of them may read *crashed*
+  because Windows logged a memory report about the game. ([details](docs/04_CAPTURE.md))
+
 ## Frame rate and frame generation
 
 - **One inflated number is never shown.** When frame generation is measured, the page shows the game's own

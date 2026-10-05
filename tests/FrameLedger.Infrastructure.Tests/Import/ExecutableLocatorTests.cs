@@ -112,6 +112,10 @@ public sealed class ExecutableLocatorTests : IDisposable
     [InlineData("msedgewebview2")]
     [InlineData("QtWebEngineSubprocess")]
     [InlineData("vconsole2")]
+    [InlineData("BsSndRpt64")]
+    [InlineData("CrashReportClient")]
+    [InlineData("UnityCrashHandler64")]
+    [InlineData("crashpad_handler")]
     public void TheHelpersThisWasMeasuredOnAreHelpers(string name) =>
         ExecutableLocator.IsHelper(name).Should().BeTrue();
 }

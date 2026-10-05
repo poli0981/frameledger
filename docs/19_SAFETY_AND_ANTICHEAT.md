@@ -1100,6 +1100,11 @@ outlives a rules change, a game update and *Change executable*; §What a finding
 ## Crash & stability safety
 
 - Two crashes of the same game within 60 s of injection ⇒ hooking auto-disabled for that game, UI explains, Tier-2 takes over. Recorded in `games.hook_autodisabled_reason`. *"Crash" here is any abnormal end: since beta.8 a session whose exit code is not an exception's (End task's 1) is `normal` on its row, and this policy still counts it inside the window — a hang our hook caused, ended by the user, is the case it exists for. The row's reason says "ended abnormally twice within 60 s of injection" (`04_CAPTURE` §Crash & exit classification).*
+- **What reads as a crash changed in beta.14, in both directions** (`04_CAPTURE` §Crash & exit classification): a
+  Windows report that is not a crash (a memory-leak or hang report) no longer makes one, and an engine's crash reporter
+  started by a game that then left does — Unreal's crash ended with exit code 3 and read `normal`. Both feed this policy,
+  the D33 lapse and D38's trial as `crashed` always has: an Unreal game that crashes under a user-mode exception ends it
+  now, where before beta.14 the crash went unseen; a leak report no longer ends one.
 - The Overlay DLL self-disables after 3 faults in hook bodies (`17_HOOK_ENGINE` §Fault policy) and reports it.
 - Every hooked session writes a breadcrumb file before injection~~; if the game process dies before the first frame record arrives, the next run is recorded as suspect~~ *(corrected 2026-10-04: no "suspect" mark exists; the breadcrumb is the `.partial` file, and an early death counts toward the two-within-60-s auto-disable above)*.
 

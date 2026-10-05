@@ -407,13 +407,16 @@ public static class Formats
     /// <summary>
     /// How a session ended, in words (beta.8): a crash names its exception ("crashed (0xC0000005 access violation)"), an
     /// exit code that is not one is an ordinary end with its code — End task's 1 said as what it is — and the other
-    /// statuses keep their words.
+    /// statuses keep their words. Since beta.14 a crash witnessed by the engine's crash reporter names it ("crashed (the
+    /// game started its crash reporter, CrashReportClient.exe)"): the exception's code first, then the reporter, then the log.
     /// </summary>
     public static string ExitText(ExitStatus status, CaptureNotes notes) => status switch
     {
         ExitStatus.Crashed => notes.ExitCode is { } code && ExitStatusMapper.IsExceptionCode(code)
             ? string.Format(CultureInfo.CurrentCulture, Strings.Exit_Crashed_Format, ExceptionName(code))
-            : Strings.Exit_CrashEvent,
+            : notes.CrashReporter is { Length: > 0 } reporter
+                ? string.Format(CultureInfo.CurrentCulture, Strings.Exit_CrashReporter_Format, reporter)
+                : Strings.Exit_CrashEvent,
         ExitStatus.Normal => notes.ExitCode switch
         {
             null or 0 => Strings.Exit_EndedNormally,

@@ -15,7 +15,8 @@ public sealed class EventLogCrashSourceTests
         var source = new EventLogCrashSource();
         DateTimeOffset now = DateTimeOffset.UtcNow;
 
-        bool found = source.FoundCrash("fl-nobody-ever-ran-this-" + Guid.NewGuid().ToString("N") + ".exe", now.AddMinutes(-1), now.AddSeconds(30));
+        string exe = @"C:\Games\fl-nobody-ever-ran-this-" + Guid.NewGuid().ToString("N") + ".exe";
+        bool found = source.FoundCrash(new Application.Recording.CrashQuery(exe, 0, now.AddMinutes(-1), now.AddSeconds(30), TargetLeft: true));
 
         found.Should().BeFalse();
     }

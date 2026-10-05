@@ -437,7 +437,26 @@ because a layer cannot leave a running game's loader chain.
 ## Crash & exit classification
 
 - Normal: presenting PID exit code 0 — **and since beta.8 any exit code that is not an exception's** (End task and taskkill leave 1; a program's own error exit; Ctrl+C's `0xC000013A`), kept in `capture_notes` and said as what it is.
-- `crashed`: ~~nonzero exit code~~ **an exception's exit code** (`ExitStatusMapper.IsExceptionCode`: NTSTATUS `0xC0000000–0xC0FFFFFF` but `0xC000013A`, `0xE06D7363` C++, `0xE0434352` .NET, `0x80000003` breakpoint), **or** an Application Error (1000) / WER (1001) event log record naming the exe within `[start, end + 30 s]`.
+- `crashed`: ~~nonzero exit code~~ **an exception's exit code** (`ExitStatusMapper.IsExceptionCode`: NTSTATUS `0xC0000000–0xC0FFFFFF` but `0xC000013A`, `0xE06D7363` C++, `0xE0434352` .NET, `0x80000003` breakpoint), **or** an Application Error (1000) / WER (1001) event log record ~~naming the exe~~ **that is a crash report of this game** within `[start, end + 30 s]`, **or** (beta.14) an engine's crash reporter the game started before it left.
+
+  > **Corrected 2026-10-05 (beta.14, the crash-reporter question): the event-log witness was too broad, and one engine's
+  > crashes had no witness at all.** A record counted when any of its strings *contained* the executable's name: on the
+  > owner's machine a WER 1001 `RADAR_PRE_LEAK_64` — Windows' memory-leak detector — named `witcher3.exe` and a session
+  > that ended with exit code 0 was stored `crashed` (2026-10-04, read from a copy of the ledger and the event log); a hang
+  > report, another program whose name contains this one's, or a crash of a same-image child would have done the same.
+  > `CrashEventMatcher` now takes a 1000 from `Application Error` only when its application name equals the executable's,
+  > its path (when given) is the executable's and its process id is the session's, and a 1001 from `Windows Error
+  > Reporting` only when it is a crash report (`APPCRASH`, `BEX`, `BEX64`, `CLR20r3`, `MoAppCrash`, `MoBEX`) whose first
+  > parameter is the executable's name. And Unreal handles its own crash — it starts `CrashReportClient.exe` and exits
+  > with code 3, no exception code and no event — so it read `normal`. The watcher's once-a-second snapshots now record
+  > every **on-crash** reporter a process starts (`Watch.CrashReporterCatalog`: Unreal's `CrashReportClient.exe`,
+  > REDengine's `CrashReporter.exe`, RE Engine's `CrashReport.exe`, BugSplat's `BsSndRpt(64).exe`) with its parent by pid,
+  > image and start (`CrashReporterWitness` — a pid reused by a later process is not the parent); the recorder asks at the
+  > end, after two more polls when the game just left. It counts (`CrashReporterRule`) when it started at least 10 s after
+  > the game and the game left within 60 s of it: `crashed`, with `crash_reporter=<image>` in the notes. A reporter whose
+  > game kept running is a note (`crash_reporter_seen=`). **Always-on handlers never count** — Unity's
+  > `UnityCrashHandler64.exe` and `crashpad_handler.exe` start with their game. No process is opened for any of this.
+  > Sessions stored before beta.14 keep their status.
 - `unhooked_safety`: the guard fired mid-session. *(Since beta.14, D48: a re-scan that refused only because it could not
   read the game's tree, concluded after the game itself had exited, is the game's exit instead — `normal` or `crashed` by
   its exit code — with `scan_at_exit=<reason>` in `capture_notes`; `19_SAFETY` §During a session.)*

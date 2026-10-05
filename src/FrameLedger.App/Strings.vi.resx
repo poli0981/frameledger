@@ -2901,4 +2901,7 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="Update_PayloadInUse_Format" xml:space="preserve">
     <value>{0} vẫn đang được nạp trong một game mà FrameLedger đã đo, và bản cập nhật sẽ thất bại giữa chừng. Hãy đóng game đó, rồi khởi động lại để cập nhật.</value>
   </data>
+  <data name="Exit_CrashReporter_Format" xml:space="preserve">
+    <value>bị crash (game đã mở trình báo lỗi crash của nó, {0})</value>
+  </data>
 </root>

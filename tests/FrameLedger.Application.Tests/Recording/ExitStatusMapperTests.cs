@@ -51,4 +51,17 @@ public sealed class ExitStatusMapperTests
         ExitStatusMapper.Describe(SessionEndReason.Running, null, false).Should().Be("end=Running");
         ExitStatusMapper.CrashWitnessGrace.Should().Be(TimeSpan.FromSeconds(30));
     }
+
+    /// <summary>beta.14: the engine's crash reporter is the third witness — counted, crashed; only seen, a note.</summary>
+    [Fact]
+    public void ACountedCrashReporterIsACrashAndOneOnlySeenIsANote()
+    {
+        ExitStatusMapper.Map(SessionEndReason.TargetExited, 3, crashEventFound: false, crashReporterCounted: true).Should().Be(ExitStatus.Crashed);
+        ExitStatusMapper.Map(SessionEndReason.TargetExited, 3, crashEventFound: false).Should().Be(ExitStatus.Normal, "exit code 3 alone is the program's own");
+        ExitStatusMapper.Map(SessionEndReason.SafetyUnhook, 3, false, crashReporterCounted: true).Should().Be(ExitStatus.UnhookedSafety, "our own stop still outranks");
+        ExitStatusMapper.Describe(SessionEndReason.TargetExited, 3, false, "CrashReportClient.exe", crashReporterCounted: true)
+            .Should().Be("end=TargetExited; exit_code=3; crash_reporter=CrashReportClient.exe");
+        ExitStatusMapper.Describe(SessionEndReason.TargetExited, 0, false, "CrashReporter.exe")
+            .Should().Be("end=TargetExited; exit_code=0; crash_reporter_seen=CrashReporter.exe");
+    }
 }
