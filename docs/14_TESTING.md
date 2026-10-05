@@ -63,6 +63,12 @@ cell against that colour in both themes and counts the accent pixels of each tic
 paging checks navigate a real page in WPF UI's presenter and send it the wheel. Each was run red against the unfixed XAML
 first — a rendered check that cannot fail is the counted-rows check again.
 
+**A test that sends input must also say which keys are held.** `Keyboard.Modifiers` is the machine's real keyboard, read
+from any thread (a fresh background thread's `GetKeyState` reports the machine's NumLock — measured 2026-10-06), so a
+wheel test that read it held whatever key a person pressed while the gate ran: `ChartWheelTests`' plain half went red once
+on the developer's machine and never on CI. The handlers read `ChartWheel.CurrentModifiers`, which the test sets inside its
+own work item on the STA thread and puts back — and with the keys a parameter, the Ctrl half is driven end to end too.
+
 ## Integration tests (CI-runnable, no game, no anti-cheat surface)
 
 `hook-harness` is what makes this architecture testable without touching a real title:

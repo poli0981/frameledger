@@ -20,6 +20,16 @@ internal static class ChartWheel
     /// <summary>Whether a wheel with these modifier keys zooms the chart rather than scrolling the page: Ctrl held.</summary>
     public static bool Zooms(ModifierKeys modifiers) => (modifiers & ModifierKeys.Control) == ModifierKeys.Control;
 
+    /// <summary>
+    /// The modifier keys the two handlers read: <see cref="Keyboard.Modifiers"/>, which is the machine's real keyboard — a
+    /// thread that never had keyboard focus still reads it (measured 2026-10-06: a fresh background thread's
+    /// <c>GetKeyState</c> reported the machine's NumLock). So a test driving the wheel end to end held whatever key a person
+    /// pressed while it ran — the one input it did not control, and the plain half went red once in a gate on the developer's
+    /// machine and never on CI. The tests set this for the length of one dispatcher work item and put it back; the App never
+    /// sets it.
+    /// </summary>
+    internal static Func<ModifierKeys> CurrentModifiers { get; set; } = static () => Keyboard.Modifiers;
+
     public static void Attach(WpfPlot plot)
     {
         ArgumentNullException.ThrowIfNull(plot);
@@ -33,7 +43,7 @@ internal static class ChartWheel
     /// </summary>
     private static void OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        if (e.Handled || Zooms(Keyboard.Modifiers) || sender is not DependencyObject plot)
+        if (e.Handled || Zooms(CurrentModifiers()) || sender is not DependencyObject plot)
         {
             return;
         }
@@ -48,7 +58,7 @@ internal static class ChartWheel
     /// <summary>The bubbling half, after ScottPlot has zoomed: Ctrl+wheel stops here, so the page does not scroll as well.</summary>
     private static void OnMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        if (Zooms(Keyboard.Modifiers))
+        if (Zooms(CurrentModifiers()))
         {
             e.Handled = true;
         }
