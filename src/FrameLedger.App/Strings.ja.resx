@@ -2050,7 +2050,7 @@
     <comment>review</comment>
   </data>
   <data name="Settings_UpdateChannel_Body" xml:space="preserve">
-    <value>安定版のみ、または安定版とプレリリース。見つかった更新はバックグラウンドでダウンロードされ、再起動時にのみ適用されます。ゲームがフックされている間は適用されません。</value>
+    <value>自動は、このコピーに合わせます。プレリリース版はプレリリースを、正式版は正式リリースを探します。安定版、またはベータ（安定版とプレリリース）を選ぶこともできます。見つかった更新はバックグラウンドでダウンロードされ、再起動時にのみ適用されます。ゲームがフックされている間は適用されません。</value>
     <comment>review</comment>
   </data>
   <data name="Settings_UpdateChannel_Label" xml:space="preserve">
@@ -3847,6 +3847,18 @@
   </data>
   <data name="Settings_HideScrollBars_Body" xml:space="preserve">
     <value>アプリ内のどこにもスクロール バーを表示しません。マウス ホイール、キーボード、タッチでのスクロールは引き続き使えます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Channel_Auto_Format" xml:space="preserve">
+    <value>自動（{0}）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_Available_Body_Delta_Format" xml:space="preserve">
+    <value>バージョン {0} を今すぐダウンロードできます：約 {1} MB（お使いのバージョンからの変更分のみ。適用できない場合は {2} MB の完全なパッケージ）。適用は FrameLedger の再起動時のみで、ゲームがフックされている間は行われません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Update_PayloadInUse_Format" xml:space="preserve">
+    <value>{0} は FrameLedger が計測したゲームにまだ読み込まれているため、更新は途中で失敗します。そのゲームを終了してから、再起動して更新してください。</value>
     <comment>review</comment>
   </data>
 </root>

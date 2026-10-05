@@ -12,7 +12,8 @@ namespace FrameLedger.App.Update;
 /// (<c>11_UPDATER</c>): the stable channel is the releases GitHub does not mark pre-release, the beta channel adds the
 /// ones it does (<c>13_CI_CD</c> §Branch &amp; release policy — <c>vX.Y.Z-beta.N</c>). One manager per check, because
 /// the channel is a constructor argument there; the <see cref="UpdateInfo"/> a check returned is held for the
-/// download and the apply that follow it.
+/// download and the apply that follow it — or, since beta.14, the package an earlier run left downloaded
+/// (<see cref="FindPendingRestart"/>), which is applied without a download.
 /// </summary>
 public sealed class VelopackUpdateClient : IUpdateClient
 {
@@ -20,11 +21,36 @@ public sealed class VelopackUpdateClient : IUpdateClient
     public const string RepositoryUrl = "https://github.com/poli0981/frameledger";
 
     private readonly Lock _lock = new();
-    private (UpdateManager Manager, UpdateInfo Info, string Version)? _held;
+    private (UpdateManager Manager, UpdateInfo? Info, VelopackAsset Asset, string Version)? _held;
 
     public bool IsInstalled => Probe(static m => m.IsInstalled, false);
 
     public string? CurrentVersion => Probe(static m => m.CurrentVersion?.ToString(), null);
+
+    public UpdateCandidate? FindPendingRestart()
+    {
+        try
+        {
+            UpdateManager manager = Create(false);
+            if (manager.UpdatePendingRestart is not { } pending)
+            {
+                return null;
+            }
+
+            string version = pending.Version.ToString();
+            lock (_lock)
+            {
+                _held = (manager, null, pending, version);
+            }
+
+            return new UpdateCandidate(version, pending.NotesMarkdown, pending.Size);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            Serilog.Log.Debug(ex, "update: the install folder's pending package could not be read");
+            return null;
+        }
+    }
 
     public async Task<UpdateCandidate?> CheckAsync(bool includePrereleases, CancellationToken ct = default)
     {
@@ -42,10 +68,13 @@ public sealed class VelopackUpdateClient : IUpdateClient
             string version = target.Version.ToString();
             lock (_lock)
             {
-                _held = (manager, info, version);
+                _held = (manager, info, target, version);
             }
 
-            return new UpdateCandidate(version, target.NotesMarkdown, target.Size);
+            // Velopack downloads the deltas from the installed version when the feed has them (beta.13 on), the full
+            // package when it has none or a delta fails to apply; the offer says the first and names the second.
+            long? delta = info.DeltasToTarget is { Length: > 0 } deltas ? deltas.Sum(static d => d.Size) : null;
+            return new UpdateCandidate(version, target.NotesMarkdown, target.Size) { DeltaBytes = delta };
         }
         catch (Exception ex) when (IsFailure(ex, ct))
         {
@@ -55,7 +84,14 @@ public sealed class VelopackUpdateClient : IUpdateClient
 
     public async Task DownloadAsync(UpdateCandidate candidate, IProgress<int>? progress, CancellationToken ct = default)
     {
-        (UpdateManager manager, UpdateInfo info) = Held(candidate);
+        (UpdateManager manager, UpdateInfo? info, _) = Held(candidate);
+        if (info is null)
+        {
+            // The package an earlier run downloaded: already in place, verified when it was downloaded.
+            progress?.Report(100);
+            return;
+        }
+
         try
         {
             await manager.DownloadUpdatesAsync(info, p => progress?.Report(p), ct).ConfigureAwait(false);
@@ -69,8 +105,8 @@ public sealed class VelopackUpdateClient : IUpdateClient
     /// <summary>Velopack's updater waits up to 60 s for this process to exit; the caller ends the host right after.</summary>
     public void ApplyOnExit(UpdateCandidate candidate)
     {
-        (UpdateManager manager, UpdateInfo info) = Held(candidate);
-        manager.WaitExitThenApplyUpdates(info.TargetFullRelease, silent: false, restart: true);
+        (UpdateManager manager, _, VelopackAsset asset) = Held(candidate);
+        manager.WaitExitThenApplyUpdates(asset, silent: false, restart: true);
     }
 
     /// <summary>
@@ -99,14 +135,14 @@ public sealed class VelopackUpdateClient : IUpdateClient
         }
     }
 
-    private (UpdateManager Manager, UpdateInfo Info) Held(UpdateCandidate candidate)
+    private (UpdateManager Manager, UpdateInfo? Info, VelopackAsset Asset) Held(UpdateCandidate candidate)
     {
         ArgumentNullException.ThrowIfNull(candidate);
         lock (_lock)
         {
             if (_held is { } held && string.Equals(held.Version, candidate.Version, StringComparison.Ordinal))
             {
-                return (held.Manager, held.Info);
+                return (held.Manager, held.Info, held.Asset);
             }
         }
 

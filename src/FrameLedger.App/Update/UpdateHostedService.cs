@@ -9,7 +9,7 @@ using Serilog;
 namespace FrameLedger.App.Update;
 
 /// <summary>
-/// The startup leg of <c>11_UPDATER</c> §Flow: the silent check 5 s after the host is up (the spec's "5 s after UI
+/// The startup leg of <c>11_UPDATER</c> §Flow: a package an earlier run left downloaded offered at once (beta.14), the silent check 5 s after the host is up (the spec's "5 s after UI
 /// idle", measured from start because the shell shows synchronously inside it), and — on the first run after an
 /// update — the logon task's action path re-validated, because the updater rewrote the install directory
 /// (<c>LogonTaskState.Stale</c> is the signal; <c>--install-task</c> the repair, this user's own task).
@@ -27,6 +27,8 @@ internal sealed class UpdateHostedService(UpdateService updates, IMaintenanceSta
                 await RepairTaskAsync(stoppingToken).ConfigureAwait(false);
             }
 
+            // A package an earlier run downloaded is offered first, from the install folder; the check then has nothing to do.
+            updates.AdoptPending();
             await Task.Delay(_startupDelay, stoppingToken).ConfigureAwait(false);
             await updates.CheckSilentlyAsync(stoppingToken).ConfigureAwait(false);
         }

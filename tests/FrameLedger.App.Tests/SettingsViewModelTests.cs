@@ -222,7 +222,7 @@ public sealed class SettingsViewModelTests
         h.Vm.MinSessionSeconds.Should().Be(30);
         h.Vm.TelemetryIntervalMs.Should().Be(1000);
         h.Vm.RetentionRawSessions.Should().Be(20);
-        h.Vm.UpdateChannel.Should().Be("stable");
+        h.Vm.UpdateChannel.Should().Be("auto", "D47 (beta.14): the channel follows the running copy unless the user chose one");
         h.Vm.LogDebug.Should().BeFalse();
         h.Vm.KillSwitchState.Should().Be(Strings.Settings_KillSwitch_Off);
         h.Vm.VulkanLayerText.Should().Be(Strings.Settings_VkLayer_NotStaged, "no layer DLL in the fake");

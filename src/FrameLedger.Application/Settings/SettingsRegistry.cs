@@ -174,13 +174,18 @@ public static class SettingsRegistry
         AgentReads = true,
     };
 
-    /// <summary><c>11_UPDATER</c>: the release feed's channel — <c>stable</c> is the releases GitHub does not mark pre-release, <c>beta</c> adds the ones it does (P4 PR-5 reads it).</summary>
+    /// <summary>
+    /// <c>11_UPDATER</c>: the release feed's channel — <c>stable</c> is the releases GitHub does not mark pre-release, <c>beta</c>
+    /// adds the ones it does (P4 PR-5 reads it). <c>auto</c>, the default since beta.14 (owner decision D47), follows the
+    /// running copy: a pre-release asks for pre-releases. The default was <c>stable</c> until then, while every release is a
+    /// pre-release — a copy left on its defaults never found one.
+    /// </summary>
     public static readonly SettingDefinition UpdateChannel = new()
     {
         Key = "update.channel",
         Kind = SettingKind.Choice,
-        Default = "stable",
-        Choices = ["stable", "beta"],
+        Default = "auto",
+        Choices = ["auto", "stable", "beta"],
     };
 
     /// <summary><c>11_UPDATER</c> §Flow: the startup silent check, "if enabled" — on by default, one request to GitHub Releases after start (P4 PR-5).</summary>

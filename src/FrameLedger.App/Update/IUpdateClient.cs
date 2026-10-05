@@ -16,6 +16,12 @@ public interface IUpdateClient
     /// <summary>The installed version as the package manifest states it, or null when not installed.</summary>
     string? CurrentVersion { get; }
 
+    /// <summary>
+    /// A package an earlier run downloaded and nobody applied, or null — read from the install folder, no feed request
+    /// (beta.14: with Velopack's own apply-at-start switched off, the App offers it as any other).
+    /// </summary>
+    UpdateCandidate? FindPendingRestart();
+
     /// <summary>One feed request; null when the installed version is current.</summary>
     /// <exception cref="UpdateException">The feed could not be read.</exception>
     Task<UpdateCandidate?> CheckAsync(bool includePrereleases, CancellationToken ct = default);

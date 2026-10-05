@@ -31,4 +31,10 @@ public static class IpcProtocol
 
     /// <summary>The client's keepalive cadence (<c>Ping</c> → <c>Pong</c>).</summary>
     public static readonly TimeSpan Keepalive = TimeSpan.FromSeconds(15);
+
+    /// <summary>
+    /// How long the Agent's host gives its services to stop after <c>Shutdown</c> — a session's finalize included — before it
+    /// exits anyway. One constant (beta.14): the App's update waited 10 s for an Agent that took up to 15.
+    /// </summary>
+    public static readonly TimeSpan AgentShutdownGrace = TimeSpan.FromSeconds(15);
 }

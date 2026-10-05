@@ -24,6 +24,10 @@ public sealed class UpdateFailureMapperTests
         { new TaskCanceledException("timeout"), UpdateFailure.Offline },
         { new SocketException(10060), UpdateFailure.Offline },
         { new TimeoutException(), UpdateFailure.Offline },
+        { new HttpIOException(HttpRequestError.ResponseEnded, "the response ended prematurely"), UpdateFailure.Offline },
+        { new System.IO.IOException("Unable to read data from the transport connection", new SocketException(10054)), UpdateFailure.Offline },
+        // beta.14: an I/O error that is not the network's — a full disk, a file held by another process — is not "offline".
+        { new System.IO.IOException("There is not enough space on the disk."), UpdateFailure.Unknown },
         { new InvalidOperationException("wrapped by the source", new HttpRequestException("gone", null, HttpStatusCode.NotFound)), UpdateFailure.NotFound },
         { new HttpRequestException("odd", null, HttpStatusCode.Unauthorized), UpdateFailure.Unknown },
         { new InvalidOperationException("no idea"), UpdateFailure.Unknown },

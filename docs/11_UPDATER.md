@@ -1,6 +1,6 @@
 # 11 — Updater
 
-Velopack, feeding from GitHub Releases of `https://github.com/poli0981/frameledger`. ~~Stable channel only in v1.~~ *(Corrected 2026-10-04: two channels since P4 PR-5 — `update.channel`, stable by default or beta, which adds pre-releases. Every release so far is a pre-release; see §Built, Channels.)*
+Velopack, feeding from GitHub Releases of `https://github.com/poli0981/frameledger`. ~~Stable channel only in v1.~~ *(Corrected 2026-10-04: two channels since P4 PR-5 — `update.channel`, ~~stable by default~~ or beta, which adds pre-releases. Every release so far is a pre-release; see §Built, Channels.)* *(Corrected 2026-10-05: the default is `auto` since beta.14, which follows the running copy — §The update audit, beta.14.)*
 
 ## Flow
 
@@ -110,6 +110,50 @@ flow, and the tests run the flow over a fake client because nothing here may tou
   (`05_DETECTION` FR-7.3, `20_OPEN_QUESTIONS` §S20 feed half) it needs a client of its own; this paragraph no
   longer claims the updater provides one.
 - ~~Release notes are rendered as plain text, not Markdown.~~ Corrected 2026-10-03: rendered since beta.12 (Markdig; HTML off, no image fetched).
+
+## The update audit, beta.14 (owner request 2026-10-05: "check the update logic")
+
+No failure had been reported; the audit read the flow above against Velopack 1.2.0 and the owner's own updater log
+(`%LOCALAPPDATA%\velopack\velopack_FrameLedger.App.log`, read-only) and found two defects that made the flow above
+partly fiction, and six smaller ones. Each is fixed in place:
+
+- **A copy left on its defaults never found an update.** `update.channel` defaulted to `stable` while every release is a
+  GitHub pre-release; the owner's log reads "No releases found" from the day their ledger (and its settings row) was reset.
+  **Owner decision D47:** the default is `auto`, which follows the running copy — a pre-release asks for pre-releases, a
+  release for releases (`Update/UpdateChannelPolicy`, SemVer's `-` before any `+`) — and a stored `stable` or `beta` is the
+  user's choice and wins. Settings shows *Automatic (Beta)* or *(Stable)* first. Only an explicit selection ever wrote the
+  row (`SettingsViewModel.Persist` is guarded while loading), so existing copies with no row move to `auto`.
+- **Velopack applied a downloaded update at the next start, behind FR-12.** `VelopackApp` applies a package waiting in
+  the install folder on startup unless told not to (`SetAutoApplyOnStartup`, ON by default), and the startup check
+  downloads in the background — so the next start of `FrameLedger.exe` (the Start menu, the logon Run value, a second
+  click, `--diag`) applied it inside `VelopackApp.Run()`, before the single-instance claim, before FR-12 could ask
+  whether a session runs, and before the Agent was asked to stop; its updater killed the Agent instead (the owner's log:
+  "Auto apply is true, so restarting to apply update…", then "Killing process: …FrameLedger.Agent.exe"). Off now
+  (`VelopackHooks`, pinned by `VelopackHooksTests` through the builder's private fields); a package an earlier run left
+  is adopted at start — `UpdateService.AdoptPending`, from `UpdateManager.UpdatePendingRestart`, no feed request — and is
+  Ready or Deferred like any other.
+- **An update Velopack starts itself** (the installer run over an installed copy) asks the Agent to stop first, as the
+  uninstaller does (`OnBeforeUpdateFastCallback`, 15 s budget, a line in `logs\update.log`). The hook runs in the
+  version being replaced, so it first works for the update after beta.14.
+- **The apply waits while a game still has the Overlay loaded** from the install folder (`Update/PayloadInUse`: a mapped
+  image refuses an exclusive write — a file-system question, no process opened). The Overlay is never unloaded from a
+  live game (`17_HOOK_ENGINE`), so after a mid-game stop the swap would fail half way after the App had quit. Asked before
+  the Agent is stopped; the strip names the file.
+- **An Agent waiting on the administrator prompt** (the logon task's, the admin mode) holds only its elevation marker, not
+  the instance lock; the apply now waits for either (`UpdateService.AgentHolds`).
+- **The stop budget is the Agent's own shutdown grace and five seconds** (`IpcProtocol.AgentShutdownGrace`, 15 s, which
+  the Agent's host now reads too): the App waited 10 s for an Agent that took up to 15 to finalize its sessions.
+- **The offer says the download Velopack will make:** the deltas from the installed version when the feed has them
+  (`UpdateInfo.DeltasToTarget`; 1.6 MB for beta.12 → beta.13) and the full package as the fallback — it said ~102 MB.
+  Velopack's own lines are in the App's log since beta.14 (`velopack: …`, `VelopackSerilogLogger`), so whether a delta
+  or the full package came is in the bug report too.
+- **Smaller:** an `IOException` is "offline" only from the network (`HttpIOException`, a socket error) — a full disk
+  read as offline; the uninstaller removes the "Start FrameLedger with Windows" Run value, which named an executable it
+  deletes.
+
+**What none of this reaches:** a copy still on 0.1.0-beta.13 or older runs its own code for the update to beta.14 —
+stable by default, apply-at-start on. Its user chooses *Beta* in Settings ▸ Updates and updates with no game running
+(the beta.14 release notes say so); everything above holds from beta.14 on.
 
 `UpdateServiceTests` (App.Tests/Update) cover the two skips, the channels, Deferred ↔ Ready, each error row, and
 the apply's three endings; `UpdateFailureMapperTests` the table; `UninstallHookTests` the hook; ~~a real feed has

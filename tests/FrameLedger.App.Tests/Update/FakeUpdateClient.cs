@@ -12,6 +12,9 @@ internal sealed class FakeUpdateClient : IUpdateClient
 
     public string? CurrentVersion { get; set; } = "0.1.0";
 
+    /// <summary>A package an earlier run left downloaded (beta.14), or null.</summary>
+    public UpdateCandidate? Pending { get; set; }
+
     /// <summary>What the next check returns; null is "current".</summary>
     public UpdateCandidate? Next { get; set; }
 
@@ -28,6 +31,8 @@ internal sealed class FakeUpdateClient : IUpdateClient
     public List<string> Downloaded { get; } = [];
 
     public List<string> Applied { get; } = [];
+
+    public UpdateCandidate? FindPendingRestart() => Pending;
 
     public Task<UpdateCandidate?> CheckAsync(bool includePrereleases, CancellationToken ct = default)
     {

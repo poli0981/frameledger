@@ -20,12 +20,22 @@ namespace FrameLedger.App.Update;
 /// the host once the pipe has dropped; Velopack waits for the exit, applies, and restarts the App, which starts
 /// the Agent beside itself as it always does.
 /// </summary>
+/// <remarks>
+/// beta.14 (the update audit): Velopack's own apply-at-start is off (<see cref="VelopackHooks"/>), so a package an earlier
+/// run downloaded is adopted here (<see cref="AdoptPending"/>) and goes through FR-12 and the Agent's stop like any other —
+/// until then the next start applied it inside <c>VelopackApp.Run</c>, killing the Agent, before any of this ran. The
+/// channel follows the running copy unless the user chose one (<see cref="UpdateChannelPolicy"/>, D47); an apply waits
+/// while a game still has the Overlay loaded (<see cref="PayloadInUse"/>) and while an Agent waits on the administrator
+/// prompt; the stop budget outlasts the Agent's own shutdown grace.
+/// </remarks>
 public sealed partial class UpdateService : ObservableObject, IDisposable
 {
-    private static readonly TimeSpan _defaultAgentStopTimeout = TimeSpan.FromSeconds(10);
+    /// <summary>The Agent's own shutdown grace (it finalizes its sessions inside it), and five seconds to leave after it.</summary>
+    internal static readonly TimeSpan DefaultAgentStopTimeout = IpcProtocol.AgentShutdownGrace + TimeSpan.FromSeconds(5);
 
     private readonly TimeSpan _agentStopTimeout;
     private readonly Func<bool> _agentHeld;
+    private readonly Func<string?> _payloadInUse;
     private readonly IUpdateClient _client;
     private readonly IAgentLink _agent;
     private readonly RegisteredSettings _settings;
@@ -47,14 +57,17 @@ public sealed partial class UpdateService : ObservableObject, IDisposable
 
     /// <summary>
     /// The flow over its ports; subscribes to the Agent link for the session facts FR-12 needs. <paramref name="agentStopTimeout"/>
-    /// is how long the apply waits for the Agent to stop after <c>Shutdown</c> (10 s), overridable as a test's clock;
-    /// <paramref name="agentHeld"/> is whether an Agent process still holds the data folder (the instance lock), a test's own.
+    /// is how long the apply waits for the Agent to stop after <c>Shutdown</c> (<see cref="DefaultAgentStopTimeout"/>), overridable
+    /// as a test's clock; <paramref name="agentHeld"/> is whether an Agent process still holds the data folder — its instance
+    /// lock, or the marker of one waiting on the administrator prompt — and <paramref name="payloadInUse"/> which library a game
+    /// still has loaded from the install folder, both a test's own.
     /// </summary>
     public UpdateService(IUpdateClient client, IAgentLink agent, RegisteredSettings settings, IUpdatePrompts prompts, IShellPresence shell, IMessageStrip strip,
-        TimeSpan? agentStopTimeout = null, Func<bool>? agentHeld = null)
+        TimeSpan? agentStopTimeout = null, Func<bool>? agentHeld = null, Func<string?>? payloadInUse = null)
     {
-        _agentStopTimeout = agentStopTimeout ?? _defaultAgentStopTimeout;
-        _agentHeld = agentHeld ?? (static () => Infrastructure.Startup.AgentInstanceLock.IsHeld(Services.UiPaths.DataDirectory));
+        _agentStopTimeout = agentStopTimeout ?? DefaultAgentStopTimeout;
+        _agentHeld = agentHeld ?? (static () => AgentHolds(Services.UiPaths.DataDirectory));
+        _payloadInUse = payloadInUse ?? (static () => PayloadInUse.Find(AppContext.BaseDirectory));
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
@@ -80,6 +93,34 @@ public sealed partial class UpdateService : ObservableObject, IDisposable
     {
         _agent.Changed -= OnAgentChanged;
         _agent.EventReceived -= OnAgentEvent;
+    }
+
+    /// <summary>
+    /// Whether an Agent holds <paramref name="dataDirectory"/>: its instance lock, or — since beta.14 — the marker of one waiting on
+    /// the administrator prompt, which holds no lock yet and was stopped by nothing (Velopack's updater killed it).
+    /// </summary>
+    internal static bool AgentHolds(string dataDirectory) =>
+        Infrastructure.Startup.AgentInstanceLock.IsHeld(dataDirectory) || Infrastructure.Startup.ElevationMarker.IsHeld(dataDirectory);
+
+    /// <summary>
+    /// A package an earlier run downloaded and nobody applied (beta.14): Ready, or Deferred while a session runs — no feed request.
+    /// Velopack applied it at the next start until then, before FR-12 or the Agent's stop could run. Called before the startup check.
+    /// </summary>
+    public void AdoptPending()
+    {
+        if (!_client.IsInstalled || Stage != UpdateStage.Idle || _client.FindPendingRestart() is not { } pending)
+        {
+            return;
+        }
+
+        Log.Information("update: {Version} was downloaded by an earlier run and is waiting for a restart", pending.Version);
+        _pending = pending;
+        Post(() =>
+        {
+            Version = pending.Version;
+            Percent = 100;
+            Settle();
+        });
     }
 
     /// <summary>The startup check: skipped for an uninstalled copy and when the setting is off; every failure is a log line, never a dialog (NFR-10).</summary>
@@ -172,6 +213,7 @@ public sealed partial class UpdateService : ObservableObject, IDisposable
     /// Then <c>Shutdown</c> to the Agent, the relaunch held, the pipe watched until it drops, the updater told to
     /// wait for this process, and the host ended. An Agent that does not stop in time leaves everything as it was.
     /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format string is a resource that follows the UI culture, which changes at runtime")]
     public async Task RestartToUpdateAsync(CancellationToken ct = default)
     {
         UpdateCandidate? pending = _pending;
@@ -184,6 +226,16 @@ public sealed partial class UpdateService : ObservableObject, IDisposable
         {
             Stage = UpdateStage.Deferred;
             _strip.Warn(Strings.Update_Banner_Title, Strings.Update_HookedRefused);
+            return;
+        }
+
+        // A game FrameLedger measured earlier can still have the Overlay loaded from the install folder; the swap would fail
+        // half way after this App had quit. Asked before the Agent is stopped, so a refusal leaves it running.
+        if (_payloadInUse() is { } held)
+        {
+            Log.Information("update: {File} is still loaded by a running game; the apply waits", held);
+            Stage = UpdateStage.Ready;
+            _strip.Warn(Strings.Update_Banner_Title, string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.Update_PayloadInUse_Format, held));
             return;
         }
 
@@ -217,7 +269,9 @@ public sealed partial class UpdateService : ObservableObject, IDisposable
     private async Task<UpdateCandidate?> CheckCoreAsync(CancellationToken ct)
     {
         Post(() => Stage = UpdateStage.Checking);
-        bool prereleases = string.Equals(await _settings.GetAsync(SettingsRegistry.UpdateChannel, ct).ConfigureAwait(false), "beta", StringComparison.Ordinal);
+        // D47 (beta.14): `auto` follows this copy; a stored `stable` or `beta` is the user's choice.
+        string channel = await _settings.GetAsync(SettingsRegistry.UpdateChannel, ct).ConfigureAwait(false);
+        bool prereleases = UpdateChannelPolicy.IncludesPrereleases(channel, _client.CurrentVersion ?? UiIdentity.Version);
         UpdateCandidate? candidate = await _client.CheckAsync(prereleases, ct).ConfigureAwait(false);
         if (candidate is null)
         {

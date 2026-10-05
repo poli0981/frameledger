@@ -749,6 +749,7 @@ public static class Strings
         nameof(Settings_AutoCheck_Body),
         nameof(Settings_AutoCheck_Label),
         nameof(Settings_Capture_Header),
+        nameof(Settings_Channel_Auto_Format),
         nameof(Settings_Channel_Beta),
         nameof(Settings_Channel_Stable),
         nameof(Settings_Data_Header),
@@ -955,6 +956,7 @@ public static class Strings
         nameof(Uninstall_DataFolder_Body),
         nameof(Uninstall_DataFolder_Title),
         nameof(Update_AgentStillRunning),
+        nameof(Update_Available_Body_Delta_Format),
         nameof(Update_Available_Body_Format),
         nameof(Update_Available_Title_Format),
         nameof(Update_Banner_Applying_Format),
@@ -976,6 +978,7 @@ public static class Strings
         nameof(Update_Notes_Header),
         nameof(Update_NotInstalled),
         nameof(Update_OpenReleases),
+        nameof(Update_PayloadInUse_Format),
         nameof(Update_Toast_Body_Format),
         nameof(Update_Toast_Title),
         nameof(Update_Unsigned_Footer),
@@ -2425,6 +2428,8 @@ public static class Strings
 
     public static string Settings_Capture_Header => ResourceManager.GetString(nameof(Settings_Capture_Header), Culture) ?? nameof(Settings_Capture_Header);
 
+    public static string Settings_Channel_Auto_Format => ResourceManager.GetString(nameof(Settings_Channel_Auto_Format), Culture) ?? nameof(Settings_Channel_Auto_Format);
+
     public static string Settings_Channel_Beta => ResourceManager.GetString(nameof(Settings_Channel_Beta), Culture) ?? nameof(Settings_Channel_Beta);
 
     public static string Settings_Channel_Stable => ResourceManager.GetString(nameof(Settings_Channel_Stable), Culture) ?? nameof(Settings_Channel_Stable);
@@ -2837,6 +2842,8 @@ public static class Strings
 
     public static string Update_AgentStillRunning => ResourceManager.GetString(nameof(Update_AgentStillRunning), Culture) ?? nameof(Update_AgentStillRunning);
 
+    public static string Update_Available_Body_Delta_Format => ResourceManager.GetString(nameof(Update_Available_Body_Delta_Format), Culture) ?? nameof(Update_Available_Body_Delta_Format);
+
     public static string Update_Available_Body_Format => ResourceManager.GetString(nameof(Update_Available_Body_Format), Culture) ?? nameof(Update_Available_Body_Format);
 
     public static string Update_Available_Title_Format => ResourceManager.GetString(nameof(Update_Available_Title_Format), Culture) ?? nameof(Update_Available_Title_Format);
@@ -2878,6 +2885,8 @@ public static class Strings
     public static string Update_NotInstalled => ResourceManager.GetString(nameof(Update_NotInstalled), Culture) ?? nameof(Update_NotInstalled);
 
     public static string Update_OpenReleases => ResourceManager.GetString(nameof(Update_OpenReleases), Culture) ?? nameof(Update_OpenReleases);
+
+    public static string Update_PayloadInUse_Format => ResourceManager.GetString(nameof(Update_PayloadInUse_Format), Culture) ?? nameof(Update_PayloadInUse_Format);
 
     public static string Update_Toast_Body_Format => ResourceManager.GetString(nameof(Update_Toast_Body_Format), Culture) ?? nameof(Update_Toast_Body_Format);
 
