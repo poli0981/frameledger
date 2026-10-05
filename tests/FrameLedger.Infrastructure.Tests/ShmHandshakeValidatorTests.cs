@@ -186,6 +186,11 @@ public sealed class ShmHandshakeValidatorTests
 
         // And it must actually work as the comparison input, not merely be non-empty.
         ShmHandshakeValidator.Validate(Handshake(id), id, _mapped).Should().Be(ShmAttachRefusal.Ok);
-        ShmHandshakeValidator.Validate(Handshake(id + "x"), id, _mapped).Should().Be(ShmAttachRefusal.BuildIdMismatch);
+
+        // Another id of the SAME length. An appended character is cut at 31 and compares equal once the id is 31 characters
+        // long — which `git describe` reaches ten commits after a tag (v0.1.0-beta.13-10-g15ec7c1c5fd4, a local gate on
+        // 2026-10-06) — so "id + x" passed for nine commits and then read as Ok.
+        string other = id[..^1] + (id[^1] == 'x' ? 'y' : 'x');
+        ShmHandshakeValidator.Validate(Handshake(other), id, _mapped).Should().Be(ShmAttachRefusal.BuildIdMismatch);
     }
 }
