@@ -5,7 +5,8 @@ namespace FrameLedger.App.Update;
 
 /// <summary>
 /// The uninstall hook's decisions (<c>12_BUILD</c> §Publish &amp; package: "uninstalled → unregister the layer, remove
-/// the scheduled task, ask about the data folder"), over delegates so a test runs it without a pipe, a registry, a
+/// the scheduled task, ask about the data folder" — and since beta.14 remove "Start FrameLedger with Windows", which named an
+/// executable the uninstaller deletes), over delegates so a test runs it without a pipe, a registry, a
 /// Task Scheduler or a data folder. Every step is independent: a failure in one is logged and the next still
 /// runs, and the data folder is deleted only on an explicit yes — a question that goes unanswered inside
 /// Velopack's 30 s budget leaves the folder where it is.
@@ -14,6 +15,7 @@ public sealed class UninstallHook(
     Func<bool> stopAgent,
     Func<bool> unregisterLayer,
     Func<bool> removeTask,
+    Func<bool> removeRunValue,
     Func<bool> askDeleteData,
     Action deleteData,
     Action<string> log)
@@ -23,6 +25,7 @@ public sealed class UninstallHook(
         bool agent = Step("agent shutdown", stopAgent);
         bool layer = Step("vulkan layer unregister", unregisterLayer);
         bool task = Step("logon task remove", removeTask);
+        bool run = Step("start with windows remove", removeRunValue);
         bool asked = false;
         bool deleted = false;
         if (Step("data folder question", () =>
@@ -38,7 +41,7 @@ public sealed class UninstallHook(
             });
         }
 
-        var outcome = new UninstallOutcome(agent, layer, task, asked, deleted);
+        var outcome = new UninstallOutcome(agent, layer, task, run, asked, deleted);
         log("uninstall: " + outcome);
         return outcome;
     }

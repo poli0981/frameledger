@@ -17,6 +17,8 @@ public sealed class UninstallHookTests
 
         public int Task { get; set; }
 
+        public int RunValue { get; set; }
+
         public int Asked { get; set; }
 
         public int Deleted { get; set; }
@@ -41,6 +43,11 @@ public sealed class UninstallHookTests
             removeTask: () =>
             {
                 Task++;
+                return true;
+            },
+            removeRunValue: () =>
+            {
+                RunValue++;
                 return true;
             },
             askDeleteData: () =>
@@ -68,8 +75,8 @@ public sealed class UninstallHookTests
 
         UninstallOutcome outcome = p.Hook().Run();
 
-        outcome.Should().Be(new UninstallOutcome(true, true, true, true, true));
-        (p.Agent, p.Layer, p.Task, p.Asked, p.Deleted).Should().Be((1, 1, 1, 1, 1));
+        outcome.Should().Be(new UninstallOutcome(true, true, true, true, true, true));
+        (p.Agent, p.Layer, p.Task, p.RunValue, p.Asked, p.Deleted).Should().Be((1, 1, 1, 1, 1, 1), "beta.14: the Run value named an executable the uninstaller deletes");
         p.Log.Should().Contain(static l => l.Contains("data folder delete: done", StringComparison.Ordinal));
     }
 
@@ -80,7 +87,7 @@ public sealed class UninstallHookTests
 
         UninstallOutcome outcome = p.Hook().Run();
 
-        outcome.Should().Be(new UninstallOutcome(true, true, true, true, false));
+        outcome.Should().Be(new UninstallOutcome(true, true, true, true, true, false));
         p.Deleted.Should().Be(0, "the folder is the user's; only a yes removes it");
         (p.Layer, p.Task).Should().Be((1, 1));
     }

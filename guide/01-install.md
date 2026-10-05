@@ -36,9 +36,13 @@ The first window walks you through four short steps:
 ## Updates
 
 A few seconds after it starts, FrameLedger asks GitHub whether a newer version exists. A new version downloads in the
-background and is installed only when you restart FrameLedger — never while a game is being measured. You can switch
-the check off in **Settings ▸ Updates ▸ Check for updates at startup**, and check by hand with Help ▸ Check for
-updates.
+background and is installed only when you restart FrameLedger — never while a game is being measured, and not while a
+game it measured earlier is still running. You can switch the check off in **Settings ▸ Updates ▸ Check for updates at
+startup**, and check by hand with Help ▸ Check for updates.
+
+**Settings ▸ Updates ▸ Channel** is *Automatic* unless you choose: a test version (a pre-release, like every version so
+far) looks for test versions, a release looks for releases. Choose *Stable* or *Beta* to decide yourself. Before
+0.1.0-beta.14 the channel was *Stable* by default and found no version at all — on an older copy, choose *Beta* to update.
 
 ## Uninstall
 

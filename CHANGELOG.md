@@ -36,6 +36,19 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Fixed
 
+- **An installed copy never found an update unless you had changed its channel.** The update channel was *Stable* by
+  default and every FrameLedger release so far is a pre-release, so the check found nothing. The channel is now
+  *Automatic*: a pre-release looks for pre-releases and a release for releases; choosing *Stable* or *Beta* still decides.
+- **A downloaded update was applied the next time FrameLedger started, before anything could check for a running game.**
+  The update library applies a waiting package at start unless told not to, and nothing told it: it stopped the capture
+  agent mid-session instead of letting it finish. The App now offers such a package as *Restart to update*, which waits
+  for the session to end and stops the agent properly, as it always did for a download in the same run.
+- **The update dialog said ~102 MB when the download was the 1.6 MB delta.** It now says the delta's size and names the
+  full package as the fallback; the updater's own lines are in the App's log, so a full download shows there.
+- **Restart to update could fail half way** when a game FrameLedger had measured was still running — its loaded overlay
+  cannot be replaced — or when an agent was still waiting on the administrator prompt, and it gave the agent 10 s to stop
+  where the agent takes up to 15. It waits for all three now and says why. A full disk no longer reads as "offline",
+  and uninstalling removes the *Start FrameLedger with Windows* entry.
 - **The import list was unreadable in the dark theme.** File ▸ Import library (and Games ▸ Refresh) drew every row white
   with white text, and each tick box as a sliver at the row's edge: a row style added in beta.11 to dim the games already
   in the library fell through to Windows' own row, which is white in every theme, and WPF UI's check box is too wide for

@@ -1538,7 +1538,7 @@
     <value>Khởi động FrameLedger cùng Windows</value>
   </data>
   <data name="Settings_UpdateChannel_Body" xml:space="preserve">
-    <value>Ổn định, hoặc ổn định kèm bản tiền phát hành. Bản cập nhật tìm thấy sẽ tải ở nền và chỉ được áp dụng khi bạn khởi động lại — không bao giờ khi game đang được hook.</value>
+    <value>Tự động theo bản đang dùng: bản tiền phát hành tìm bản tiền phát hành, bản chính thức tìm bản chính thức. Hoặc chọn Ổn định, hay Beta (ổn định kèm bản tiền phát hành). Bản cập nhật tìm thấy sẽ tải ở nền và chỉ được áp dụng khi bạn khởi động lại — không bao giờ khi game đang được hook.</value>
   </data>
   <data name="Settings_UpdateChannel_Label" xml:space="preserve">
     <value>Kênh</value>
@@ -2891,5 +2891,14 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   </data>
   <data name="Settings_HideScrollBars_Body" xml:space="preserve">
     <value>Không vẽ thanh cuộn ở bất kỳ đâu trong ứng dụng. Mọi thứ vẫn cuộn được bằng con lăn chuột, bàn phím và cảm ứng.</value>
+  </data>
+  <data name="Settings_Channel_Auto_Format" xml:space="preserve">
+    <value>Tự động ({0})</value>
+  </data>
+  <data name="Update_Available_Body_Delta_Format" xml:space="preserve">
+    <value>Có thể tải phiên bản {0} ngay bây giờ: khoảng {1} MB — chỉ phần thay đổi so với phiên bản của bạn, hoặc gói đầy đủ {2} MB nếu phần đó không áp dụng được. Bản cập nhật chỉ được áp dụng khi bạn khởi động lại FrameLedger, và không bao giờ khi game đang được hook.</value>
+  </data>
+  <data name="Update_PayloadInUse_Format" xml:space="preserve">
+    <value>{0} vẫn đang được nạp trong một game mà FrameLedger đã đo, và bản cập nhật sẽ thất bại giữa chừng. Hãy đóng game đó, rồi khởi động lại để cập nhật.</value>
   </data>
 </root>

@@ -146,3 +146,8 @@ you accept the prompt. Turn it on only if you trust everything that runs under y
 
 FrameLedger's programs are **not code-signed**: Windows SmartScreen may warn when you install it, and the
 administrator prompt names an unknown publisher. Each release publishes SHA-256 checksums you can compare.
+
+**An update waits while a game FrameLedger measured is still running.** The part of FrameLedger loaded into a game stays
+loaded until the game exits, and Windows will not let the update replace it; *Restart to update* says which file is held
+until you close that game ([details](docs/11_UPDATER.md)). Copies older than 0.1.0-beta.14 look only for stable
+releases unless you choose *Beta* in Settings ▸ Updates, and apply a downloaded update the next time they start.

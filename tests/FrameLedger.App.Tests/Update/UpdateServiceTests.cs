@@ -15,6 +15,7 @@ namespace FrameLedger.App.Tests.Update;
 /// and the apply — <c>Shutdown</c> to the Agent, the relaunch held, the updater told, the host ended — or refused
 /// with everything left as it was.
 /// </summary>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the expected texts are resources that follow the UI culture")]
 public sealed class UpdateServiceTests
 {
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
@@ -53,9 +54,12 @@ public sealed class UpdateServiceTests
         /// <summary>Whether an Agent process still holds the data folder (beta.10) — this test's, never the real folder's lock.</summary>
         public bool AgentHeld { get; set; }
 
+        /// <summary>A library a game still has loaded from the install folder (beta.14) — this test's, never the real folder's.</summary>
+        public string? PayloadHeld { get; set; }
+
         public Harness(TimeSpan? agentStop = null)
         {
-            Service = new UpdateService(Client, Agent, new RegisteredSettings(Store), Prompts, Shell, Strip, agentStop, () => AgentHeld);
+            Service = new UpdateService(Client, Agent, new RegisteredSettings(Store), Prompts, Shell, Strip, agentStop, () => AgentHeld, () => PayloadHeld);
             Service.Available += (_, e) => Available.Add(e.Version);
         }
     }
@@ -97,7 +101,7 @@ public sealed class UpdateServiceTests
 
         await h.Service.CheckSilentlyAsync(Ct);
 
-        h.Client.Checks.Should().ContainSingle().Which.Should().BeFalse("the stable channel asks for no pre-releases");
+        h.Client.Checks.Should().ContainSingle().Which.Should().BeFalse("the automatic channel on a release copy (0.1.0) asks for no pre-releases");
         h.Service.Stage.Should().Be(UpdateStage.Idle);
         h.Prompts.Offered.Should().BeEmpty();
         h.Prompts.UpToDate.Should().BeEmpty("silent means silent");
@@ -119,6 +123,106 @@ public sealed class UpdateServiceTests
         h.Service.Percent.Should().Be(100);
         h.Prompts.Offered.Should().BeEmpty("the startup check never asks; the banner offers the restart");
     }
+
+    /// <summary>D47 (beta.14): with no choice stored, a pre-release copy asks for pre-releases — the stable default found none.</summary>
+    [Fact]
+    public async Task APrereleaseCopyWithNoChoiceAsksForPrereleases()
+    {
+        var h = new Harness();
+        h.Client.CurrentVersion = "0.1.0-beta.13";
+
+        await h.Service.CheckSilentlyAsync(Ct);
+
+        h.Client.Checks.Should().ContainSingle().Which.Should().BeTrue("every release so far is a GitHub pre-release");
+    }
+
+    [Fact]
+    public async Task AnExplicitStableChoiceWinsOnAPrereleaseCopy()
+    {
+        var h = new Harness();
+        h.Client.CurrentVersion = "0.1.0-beta.13";
+        h.Store.Rows[SettingsRegistry.UpdateChannel.Key] = "stable";
+
+        await h.Service.CheckSilentlyAsync(Ct);
+
+        h.Client.Checks.Should().ContainSingle().Which.Should().BeFalse("the user chose stable");
+    }
+
+    /// <summary>
+    /// beta.14: Velopack applied a package an earlier run had downloaded at the next start, before FR-12 or the Agent's stop.
+    /// With that switched off the App offers it — Ready at once, no feed request — and applies it the usual way.
+    /// </summary>
+    [Fact]
+    public async Task APackageDownloadedBeforeARestartIsReadyWithoutAFeedRequest()
+    {
+        var h = new Harness();
+        h.Agent.IsConnected = false;
+        h.Client.Pending = Candidate();
+
+        h.Service.AdoptPending();
+        await h.Service.CheckSilentlyAsync(Ct);
+
+        h.Service.Stage.Should().Be(UpdateStage.Ready);
+        h.Service.Version.Should().Be("0.2.0");
+        h.Client.Checks.Should().BeEmpty("the startup check has nothing to do while a package waits");
+
+        await h.Service.RestartToUpdateAsync(Ct);
+
+        h.Client.Applied.Should().Equal("0.2.0");
+        h.Shell.Quits.Should().Be(1);
+    }
+
+    [Fact]
+    public void APendingPackageWhileASessionRunsIsDeferred()
+    {
+        var h = new Harness();
+        h.Agent.Status = Status("capturing", 1);
+        h.Agent.RaiseChanged();
+        h.Client.Pending = Candidate();
+
+        h.Service.AdoptPending();
+
+        h.Service.Stage.Should().Be(UpdateStage.Deferred, "FR-12 holds for a package an earlier run downloaded, as for any other");
+    }
+
+    /// <summary>
+    /// beta.14: a game measured earlier can still have the Overlay loaded from the install folder; the updater would fail half
+    /// way after the App had quit. The apply waits, says why, and leaves the Agent running.
+    /// </summary>
+    [Fact]
+    public async Task AGameThatStillHasTheOverlayMappedKeepsTheUpdateReadyAndSaysWhy()
+    {
+        var h = new Harness { PayloadHeld = "FrameLedger.Overlay.dll" };
+        h.Client.Next = Candidate();
+        await h.Service.CheckSilentlyAsync(Ct);
+
+        await h.Service.RestartToUpdateAsync(Ct);
+
+        h.Client.Applied.Should().BeEmpty();
+        h.Agent.Sent.Should().BeEmpty("the Agent is not stopped for an update that cannot run");
+        h.Agent.Holds.Should().BeEmpty();
+        h.Shell.Quits.Should().Be(0);
+        h.Service.Stage.Should().Be(UpdateStage.Ready);
+        h.Strip.Shown.Should().ContainSingle().Which.Body.Should().Be(string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.Update_PayloadInUse_Format, "FrameLedger.Overlay.dll"));
+    }
+
+    /// <summary>beta.14: an Agent started by the logon task waits on the administrator prompt holding only its marker — and is not updated under.</summary>
+    [Fact]
+    public void AnAgentWaitingOnTheAdministratorPromptHoldsTheFolder()
+    {
+        string folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "fl-elevating-" + Guid.NewGuid().ToString("N"));
+        UpdateService.AgentHolds(folder).Should().BeFalse();
+        using (Infrastructure.Startup.ElevationMarker.TryAcquire(folder) ?? throw new InvalidOperationException("the marker could not be taken"))
+        {
+            UpdateService.AgentHolds(folder).Should().BeTrue("the marker is the Agent's until its lock exists");
+        }
+
+        UpdateService.AgentHolds(folder).Should().BeFalse();
+    }
+
+    [Fact]
+    public void TheStopBudgetOutlastsTheAgentsOwnShutdownGrace() =>
+        UpdateService.DefaultAgentStopTimeout.Should().BeGreaterThan(IpcProtocol.AgentShutdownGrace, "the App waited 10 s for an Agent whose host gives its sessions 15 to finalize");
 
     [Fact]
     public async Task TheBetaChannelAsksForPrereleases()
@@ -315,6 +419,8 @@ public sealed class UpdateServiceTests
         public bool IsInstalled => true;
 
         public string? CurrentVersion => "0.1.0";
+
+        public UpdateCandidate? FindPendingRestart() => null;
 
         public Task<UpdateCandidate?> CheckAsync(bool includePrereleases, CancellationToken ct = default) =>
             Task.FromException<UpdateCandidate?>(new InvalidOperationException("not wrapped"));

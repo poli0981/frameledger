@@ -24,7 +24,7 @@ public sealed class UpdatePrompts(IUrlOpener urls, BugReportFlow bugReports) : I
         var body = new StackPanel();
         body.Children.Add(new System.Windows.Controls.TextBlock
         {
-            Text = string.Format(CultureInfo.CurrentCulture, Strings.Update_Available_Body_Format, candidate.Version, candidate.SizeBytes / (1024 * 1024)),
+            Text = OfferText(candidate),
             TextWrapping = TextWrapping.Wrap,
         });
         if (!string.IsNullOrWhiteSpace(candidate.NotesMarkdown))
@@ -48,6 +48,27 @@ public sealed class UpdatePrompts(IUrlOpener urls, BugReportFlow bugReports) : I
         };
         MessageBoxResult result = await box.ShowDialogAsync(cancellationToken: ct).ConfigureAwait(true);
         return result == MessageBoxResult.Primary;
+    }
+
+    /// <summary>
+    /// The offer's first line. Since beta.14 it says the download Velopack will make: the deltas from the installed version
+    /// when the feed has them — 1.6 MB for beta.12 → beta.13 — with the full package named as the fallback; it said the full
+    /// package's ~102 MB even when the delta was what came.
+    /// </summary>
+    public static string OfferText(UpdateCandidate candidate)
+    {
+        ArgumentNullException.ThrowIfNull(candidate);
+        string full = Megabytes(candidate.SizeBytes);
+        return candidate.DeltaBytes is { } delta && delta < candidate.SizeBytes
+            ? string.Format(CultureInfo.CurrentCulture, Strings.Update_Available_Body_Delta_Format, candidate.Version, Megabytes(delta), full)
+            : string.Format(CultureInfo.CurrentCulture, Strings.Update_Available_Body_Format, candidate.Version, full);
+    }
+
+    /// <summary>Whole megabytes, one decimal under ten ("1.5", "102").</summary>
+    private static string Megabytes(long bytes)
+    {
+        double mb = bytes / (1024.0 * 1024.0);
+        return mb.ToString(mb < 10 ? "0.#" : "0", CultureInfo.CurrentCulture);
     }
 
     public Task UpToDateAsync(string version, CancellationToken ct = default) =>

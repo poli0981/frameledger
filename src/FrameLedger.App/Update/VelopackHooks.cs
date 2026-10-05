@@ -21,6 +21,15 @@ namespace FrameLedger.App.Update;
 /// is <see cref="UninstallHook"/> over the real pieces. A restart after an update sets <see cref="UpdateRestart"/>
 /// so the host re-validates the logon task's action path.
 /// </summary>
+/// <remarks>
+/// beta.14 (the update audit). <b>Velopack's apply-at-start is off</b>: it is on by default, and a package the startup check
+/// downloaded was applied by the next start of this executable inside <see cref="VelopackApp.Run"/> — before FR-12 could
+/// ask whether a session runs and before the Agent could be stopped; its updater killed the Agent instead ("Killing
+/// process: …FrameLedger.Agent.exe", the owner's own log). <c>UpdateService.AdoptPending</c> offers such a package now.
+/// Velopack's own diagnostics go to this App's log (<see cref="VelopackSerilogLogger"/>). An update Velopack starts itself — the
+/// installer run over an installed copy — asks the Agent to stop first, as the uninstaller does; that hook runs in the
+/// version being replaced, so it first works for the update after beta.14.
+/// </remarks>
 internal static class VelopackHooks
 {
     /// <summary>
@@ -34,8 +43,18 @@ internal static class VelopackHooks
     private static readonly TimeSpan _exitTimeout = TimeSpan.FromSeconds(5);
 
     public static VelopackApp Configure(VelopackApp app) => app
+        .SetAutoApplyOnStartup(false)
+        .SetLogger(new VelopackSerilogLogger())
         .OnRestarted(static _ => UpdateRestart.Detected = true)
+        .OnBeforeUpdateFastCallback(static _ => BeforeUpdate())
         .OnBeforeUninstallFastCallback(static _ => BeforeUninstall());
+
+    /// <summary>Velopack is about to replace this version: the Agent finalizes its sessions and leaves, rather than being killed.</summary>
+    private static void BeforeUpdate()
+    {
+        bool asked = StopAgent();
+        Log("update.log", "before update: " + (asked ? "the Agent was asked to stop" : "no Agent answered; nothing to stop"));
+    }
 
     private static void BeforeUninstall()
     {
@@ -44,11 +63,22 @@ internal static class VelopackHooks
             stopAgent: StopAgent,
             unregisterLayer: () => new VkLayerRegistration().Unregister(manifest),
             removeTask: static () => new LogonTask().Remove() is null,
+            removeRunValue: static () =>
+            {
+                var run = new RunAtLogonRegistry();
+                if (!run.IsSet)
+                {
+                    return false;
+                }
+
+                run.Apply(enabled: false);
+                return true;
+            },
             askDeleteData: static () => UninstallHook.AreSeparate(UiPaths.DataDirectory, AppContext.BaseDirectory)
                 ? System.Windows.MessageBox.Show(Strings.Uninstall_DataFolder_Body, Strings.Uninstall_DataFolder_Title, MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes
                 : throw new InvalidOperationException($"the install ({AppContext.BaseDirectory}) and the data folder ({UiPaths.DataDirectory}) overlap; nothing is deleted"),
             deleteData: static () => Directory.Delete(UiPaths.DataDirectory, recursive: true),
-            log: Log);
+            log: static line => Log("uninstall.log", line));
         hook.Run();
     }
 
@@ -109,7 +139,7 @@ internal static class VelopackHooks
     }
 
     /// <summary>Serilog is not configured this early; the hook's own file under <c>logs/</c>, appended, never thrown from.</summary>
-    private static void Log(string line)
+    private static void Log(string file, string line)
     {
         try
         {
@@ -120,7 +150,7 @@ internal static class VelopackHooks
             }
 
             Directory.CreateDirectory(UiPaths.Logs);
-            File.AppendAllText(Path.Combine(UiPaths.Logs, "uninstall.log"), $"[{DateTimeOffset.UtcNow:O}] {line}{Environment.NewLine}");
+            File.AppendAllText(Path.Combine(UiPaths.Logs, file), $"[{DateTimeOffset.UtcNow:O}] {line}{Environment.NewLine}");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

@@ -25,6 +25,17 @@ public sealed class SettingsRegistryTests
 
     /// <summary>D33: the exception option is off unless the user turns it on — and exactly "1" is on.</summary>
     [Fact]
+    public void TheUpdateChannelFollowsTheRunningCopyUnlessTheUserChose()
+    {
+        // D47 (beta.14): stable by default found no release while every release is a pre-release.
+        SettingDefinition d = SettingsRegistry.UpdateChannel;
+        d.Default.Should().Be("auto");
+        d.Choices.Should().Equal("auto", "stable", "beta");
+        d.Validate("stable").Should().BeNull("a choice stored before beta.14 stays valid");
+        d.AgentReads.Should().BeFalse();
+    }
+
+    [Fact]
     public void HidingScrollBarsIsOffByDefaultAndTheAgentNeverReadsIt()
     {
         // beta.14: ui.hide_scrollbars is the App's alone; the bars are what every page showed until then.

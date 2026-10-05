@@ -353,7 +353,7 @@ internal static class Program
         builder.Services.AddHostedService<PipeServerHostedService>();
         // Finalize's grace on shutdown (04_CAPTURE §Threading model): a session that does not make it leaves
         // its .partial for the next start's recovery.
-        builder.Services.Configure<HostOptions>(static o => o.ShutdownTimeout = TimeSpan.FromSeconds(15));
+        builder.Services.Configure<HostOptions>(static o => o.ShutdownTimeout = Shared.Ipc.IpcProtocol.AgentShutdownGrace);
 
         using IHost host = builder.Build();
         AgentConsole.Line($@"serve: ledger {paths.Database}; logs {paths.Logs}; pipe \.\pipe\{Shared.Ipc.IpcProtocol.PipeName}; Ctrl+C stops");

@@ -210,10 +210,16 @@ public sealed partial class SettingsViewModel : ObservableObject
         new("ja", "日本語"),
     ];
 
+    /// <summary>
+    /// D47 (beta.14): Automatic first, its label saying what it resolves to for this copy — "Automatic (Beta)" on a
+    /// pre-release — then the two explicit choices, either of which wins over the copy.
+    /// </summary>
     public static IReadOnlyList<Choice<string>> UpdateChannels { get; } =
     [
-        new("stable", Strings.Settings_Channel_Stable),
-        new("beta", Strings.Settings_Channel_Beta),
+        new(Update.UpdateChannelPolicy.Automatic, string.Format(CultureInfo.CurrentCulture, Strings.Settings_Channel_Auto_Format,
+            Update.UpdateChannelPolicy.IsPrerelease(UiIdentity.Version) ? Strings.Settings_Channel_Beta : Strings.Settings_Channel_Stable)),
+        new(Update.UpdateChannelPolicy.Stable, Strings.Settings_Channel_Stable),
+        new(Update.UpdateChannelPolicy.Beta, Strings.Settings_Channel_Beta),
     ];
 
     public static double MinSessionMinimum => SettingsRegistry.CaptureMinSessionSeconds.Minimum;
