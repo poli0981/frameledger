@@ -7,7 +7,8 @@
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
              MinHeight="260">
-    <!-- 08_UI §Session summary / FR-5.1: the frametime timeline, min/max decimated (FR-5.3); zoom and pan are ScottPlot's.
+    <!-- 08_UI §Session summary / FR-5.1: the frametime timeline, min/max decimated (FR-5.3); zoom and pan are ScottPlot's —
+         zoom with Ctrl+wheel since beta.14, a plain wheel scrolls the page (ChartWheel).
          The note above it says what the lines are not, when that is not obvious (beta.8). -->
     <Grid>
         <Grid.RowDefinitions>

@@ -24,7 +24,7 @@ namespace FrameLedger.App.Tests;
 /// binding typo or a missing resource key produces is a XamlParseException at first navigation, which no
 /// view-model test sees. Runs on an STA thread with an <c>Application</c> of its own.
 /// </summary>
-public sealed class PagesLoadTests
+public sealed partial class PagesLoadTests
 {
     private sealed class NoAgent : IAgentLink
     {
@@ -563,20 +563,29 @@ public sealed class PagesLoadTests
         (SettingsViewModel settings, LogsViewModel logs) = await SettingsAndLogsAsync(s, consent, strip);
         using LogsViewModel _ = logs;
 
-        string loaded = await OnStaAsync(() =>
+        (string loaded, List<string> wrapped) = await OnStaAsync(() =>
         {
-            Render(new DashboardPage(dashboard));
-            Render(new GamesPage(games));
-            Render(new GameDetailPage(detail));
-            Render(new ComparePage(compare));
-            Render(new SettingsPage(settings, new SystemInfoViewModel(new FixedHardware(), new NoClipboard(), strip)));
-            Render(new LogsPage(logs));
+            // WPF UI changes ScrollViewer.CanContentScroll's default for Page to true when its content presenter is first
+            // used, as the App's NavigationView does at start-up; a page that keeps it is wrapped in a scroller (beta.14).
+            System.Runtime.CompilerServices.RuntimeHelpers.RunClassConstructor(typeof(Wpf.Ui.Controls.NavigationViewContentPresenter).TypeHandle);
+            System.Windows.Controls.Page[] pages =
+            [
+                new DashboardPage(dashboard), new GamesPage(games), new GameDetailPage(detail), new ComparePage(compare),
+                new SettingsPage(settings, new SystemInfoViewModel(new FixedHardware(), new NoClipboard(), strip)), new LogsPage(logs),
+            ];
+            foreach (System.Windows.Controls.Page page in pages)
+            {
+                Render(page);
+            }
+
             RenderFirstRun(s);
             RenderControls(detail);
-            return "dashboard,games,detail,settings,logs,firstrun,readout,chip";
+            return ("dashboard,games,detail,settings,logs,firstrun,readout,chip",
+                pages.Where(static p => System.Windows.Controls.ScrollViewer.GetCanContentScroll(p)).Select(static p => p.GetType().Name).ToList());
         });
 
         loaded.Should().Be("dashboard,games,detail,settings,logs,firstrun,readout,chip");
+        wrapped.Should().BeEmpty("every page sets ScrollViewer.CanContentScroll=\"False\", or WPF UI wraps it in a scroller its own root swallows the wheel for (16_WPFUI_SYNTAX §Gotchas)");
         settings.MinSessionSeconds.Should().Be(30);
         games.Games.Should().ContainSingle();
         detail.Sessions.Should().HaveCount(2);

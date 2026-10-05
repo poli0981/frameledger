@@ -28,6 +28,26 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Fixed
+
+- **The import list was unreadable in the dark theme.** File ▸ Import library (and Games ▸ Refresh) drew every row white
+  with white text, and each tick box as a sliver at the row's edge: a row style added in beta.11 to dim the games already
+  in the library fell through to Windows' own row, which is white in every theme, and WPF UI's check box is too wide for
+  its 40 px column. The rows take the theme's colours again and the boxes are whole, and the list is the one thing in the
+  dialog that scrolls — its intro and the count under it stay in view, where a list scrolling inside a scrolling dialog
+  used to carry the intro away. Compare's session picker draws the theme's check boxes too (it drew Windows' old ones).
+- **The mouse wheel scrolled nothing on the Dashboard, Games, a game's page, Compare and Settings** — only dragging the
+  scroll bar did. WPF UI wraps a page in a scroller of its own unless the page says otherwise, and inside it each page's
+  own scroller had nothing to scroll and still took every wheel. Every page scrolls itself now. The Logs page had the same
+  cause: its tail grew to hold every line and never followed the newest one, as it was meant to. A scroller inside a
+  dialog (the consent, administrator, anti-cheat exception and bug report dialogs) hands the wheel on at its ends.
+
+### Changed
+
+- **Over a chart, the wheel scrolls the page; Ctrl+wheel zooms the chart.** ScottPlot zoomed on every wheel, which with
+  the pages scrolling again would have zoomed the chart and scrolled the page at once. Dragging still pans and
+  double-click still resets.
+
 ## [0.1.0-beta.13] - 2026-10-04
 
 **The thirteenth pre-release: refusal notices that say where the anti-cheat is, GPU sensors that follow the game's graphics

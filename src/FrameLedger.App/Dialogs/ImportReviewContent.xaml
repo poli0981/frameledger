@@ -16,15 +16,30 @@
         or has no executable cannot be ticked (its box is disabled since beta.11 - before, a tick was taken and ignored).
         Rows already in the library are hidden unless "Show the N games already in the library" is ticked, and then
         dimmed. Import never enables hooking (the intro says so).
+
+        beta.14 (owner's screenshot, dark theme): every row was white with white text and every tick box a sliver. The row
+        style was based on {x:Type DataGridRow}, which WPF UI 4.3.0 does not define - it keys its row style
+        DefaultDataGridRowStyle and hands it to the grid through the DataGrid style's RowStyle - so the lookup fell through
+        to Aero2's row template and its SystemColors.WindowBrush, which no theme reaches. The sliver is WPF UI's CheckBox
+        style, MinWidth 120 and padding 11, in a 40 px column: MinWidth 0 and no padding draw the whole box. And the list
+        no longer scrolls inside a dialog that scrolls too: ImportReviewPrompt turns the dialog's own
+        scrolling off, so the grid takes the height the window leaves and is the one thing that scrolls - the intro and the
+        count stay where they are (ImportReviewRenderTests).
     -->
-    <StackPanel>
-        <ui:TextBlock TextWrapping="Wrap" Text="{x:Static vm:ImportReviewViewModel.Intro}" />
-        <CheckBox Margin="0,8,0,0" Content="{Binding ShowExistingText}" IsChecked="{Binding ShowExisting, Mode=TwoWay}"
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" MinHeight="120" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <ui:TextBlock Grid.Row="0" TextWrapping="Wrap" Text="{x:Static vm:ImportReviewViewModel.Intro}" />
+        <CheckBox Grid.Row="1" Margin="0,8,0,0" Content="{Binding ShowExistingText}" IsChecked="{Binding ShowExisting, Mode=TwoWay}"
                   Visibility="{Binding HasExisting, Converter={StaticResource BoolToVis}}" />
-        <DataGrid Margin="0,10,0,8" MaxHeight="360" AutoGenerateColumns="False" CanUserAddRows="False" HeadersVisibility="Column"
+        <DataGrid x:Name="Candidates" Grid.Row="2" Margin="0,10,0,8" AutoGenerateColumns="False" CanUserAddRows="False" HeadersVisibility="Column"
                   ItemsSource="{Binding Shown}" SelectionMode="Single" IsReadOnly="False">
             <DataGrid.RowStyle>
-                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                <Style TargetType="DataGridRow" BasedOn="{StaticResource DefaultDataGridRowStyle}">
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding IsExisting}" Value="True">
                             <Setter Property="Opacity" Value="0.55" />
@@ -36,7 +51,7 @@
                 <DataGridTemplateColumn Width="40">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <CheckBox HorizontalAlignment="Center" IsEnabled="{Binding CanImport}"
+                            <CheckBox MinWidth="0" Padding="0" HorizontalAlignment="Center" IsEnabled="{Binding CanImport}"
                                       AutomationProperties.Name="{Binding Name}"
                                       IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         </DataTemplate>
@@ -48,12 +63,12 @@
                 <DataGridTextColumn Header="{x:Static vm:ImportReviewViewModel.ColumnNote}" Binding="{Binding Note}" IsReadOnly="True" Width="Auto" />
             </DataGrid.Columns>
         </DataGrid>
-        <DockPanel>
+        <DockPanel Grid.Row="3">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                 <ui:HyperlinkButton Padding="4,0" Content="{x:Static res:Strings.Import_SelectAll}" Command="{Binding SelectAllCommand}" xmlns:res="clr-namespace:FrameLedger.App" />
                 <ui:HyperlinkButton Padding="4,0" Content="{x:Static res:Strings.Import_SelectNone}" Command="{Binding SelectNoneCommand}" xmlns:res="clr-namespace:FrameLedger.App" />
             </StackPanel>
             <ui:TextBlock Appearance="Secondary" VerticalAlignment="Center" Text="{Binding SelectedText}" />
         </DockPanel>
-    </StackPanel>
+    </Grid>
 </UserControl>

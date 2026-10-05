@@ -70,10 +70,14 @@ public static class ChartTheme
             (byte)Math.Round((top.B * a) + (under.B * (1 - a))));
     }
 
-    /// <summary>Registers a control so a theme change re-applies and refreshes it (weakly held; a closed window is forgotten).</summary>
+    /// <summary>
+    /// Registers a control so a theme change re-applies and refreshes it (weakly held; a closed window is forgotten), and
+    /// gives it the App's wheel: a plain wheel scrolls the page, Ctrl+wheel zooms (<see cref="ChartWheel"/>, beta.14).
+    /// </summary>
     public static void Attach(WpfPlot control)
     {
         ArgumentNullException.ThrowIfNull(control);
+        ChartWheel.Attach(control);
         lock (_lock)
         {
             _live.RemoveAll(static w => !w.TryGetTarget(out _));

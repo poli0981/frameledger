@@ -7,8 +7,9 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:res="clr-namespace:FrameLedger.App"
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
-      Title="{x:Static res:Strings.Settings_Header}">
-    <ScrollViewer>
+      Title="{x:Static res:Strings.Settings_Header}"
+      ScrollViewer.CanContentScroll="False">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Style="{StaticResource PageRoot}">
             <ui:TextBlock FontTypography="Title" Text="{x:Static vm:SettingsViewModel.Header}" />
 

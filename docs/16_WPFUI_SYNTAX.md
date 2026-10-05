@@ -132,9 +132,9 @@ Code-behind wires services once: `navigationService.SetNavigationControl(RootNav
 | Busy | `ui:ProgressRing` | |
 | Contextual popup | `ui:Flyout` | Popup hand-rolling |
 | Hyperlink-ish | `ui:HyperlinkButton`, `ui:Anchor` | |
-| Grid of records | native `DataGrid` (WPF UI restyles it) | third-party grids |
+| Grid of records | native `DataGrid` (WPF UI restyles it — through the grid's own `RowStyle`/`CellStyle`/`ColumnHeaderStyle` setters, so a local one is based on WPF UI's keyed style: §Gotchas, added 2026-10-05) | third-party grids |
 
-Native `Menu`, `TabControl`, `ComboBox`, `Slider`, `ListView` are fine — the `ControlsDictionary` restyles standard WPF controls to Fluent automatically.
+Native `Menu`, `TabControl`, `ComboBox`, `Slider`~~, `ListView`~~ are fine — the `ControlsDictionary` restyles standard WPF controls to Fluent automatically. *(Corrected 2026-10-05: 4.3.0 has no implicit style for the native `ListView`, `ListViewItem` or `GridViewColumnHeader` — only `ui:ListView` is restyled — nor for `DataGridRow`, `DataGridCell`, `DataGridColumnHeader` or `FlowDocumentScrollViewer`; read from the loaded `ControlsDictionary`.)*
 
 ## Icons
 
@@ -227,6 +227,30 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
   bar with no exit, which is exactly how the safety notices shipped (2026-09-14). `Styles/FrameLedger.xaml` carries
   the upstream template plus one presenter column; `PagesLoadTests.TheInfoBarTemplateRendersItsContent` renders both
   templates and turns red when upstream gains a presenter, which is when the copy comes out.
+- [ ] **WPF UI 4.3.0 keys its DataGrid parts' styles and defines no implicit one** (`DefaultDataGridRowStyle`,
+  `DefaultDataGridCellStyle`, `DefaultDataGridColumnHeaderStyle`, handed to the grid by its implicit `DataGrid` style's
+  `RowStyle`/`CellStyle`/`ColumnHeaderStyle` setters). A local `RowStyle` replaces WPF UI's; based on
+  `{StaticResource {x:Type DataGridRow}}` it falls through to Aero2's row, whose `SystemColors.WindowBrush` no theme
+  reaches: the import list was white text on white in the dark theme (owner's screenshot, beta.14). Base it on
+  `DefaultDataGridRowStyle`. `AccessibilityTests.NoStyleIsBasedOnAnImplicitStyleTheThemeDoesNotDefine` refuses any
+  `BasedOn` a type the App's dictionaries hold no style for, and `ImportReviewRenderTests` measures the rendered rows.
+- [ ] **WPF UI's `CheckBox` is `MinWidth` 120 with an 11 px padding**: in a narrow grid column it draws a sliver of the box.
+  `MinWidth="0" Padding="0"` there. A `DataGridCheckBoxColumn` uses WPF's own element style, an Aero2 box — use a template
+  column (`AccessibilityTests.NoDataGridCheckBoxColumn`).
+- [ ] **Every page sets `ScrollViewer.CanContentScroll="False"`.** `NavigationViewContentPresenter` changes that property's
+  default to true for `Page` and, on each navigation, wraps a page that keeps it in a `DynamicScrollViewer`. A page with
+  its own root `ScrollViewer` inside that wrapper has infinite height, nothing to scroll — and a stock `ScrollViewer`
+  marks every wheel handled even then, so the wheel scrolled nothing on five pages until beta.14 (owner: "I have to drag
+  the scroll bar"); the Logs tail grew to hold every line and never followed the end.
+  `AccessibilityTests.EveryPageOptsOutOfTheDynamicScrollViewer`, `PagesLoadTests.ANavigatedPageIsNot…`.
+- [ ] **A stock `ScrollViewer` nested in a scroller takes the wheel at its ends too.** Inside a dialog use
+  `ui:PassiveScrollViewer`, which hands the wheel on when it cannot scroll (`AccessibilityTests.NoPlainScrollViewerInsideADialog`).
+  A `ContentDialog` whose content should not scroll as a whole sets `ScrollViewer.VerticalScrollBarVisibility="Disabled"`
+  on the dialog: its content row then has the window's height, and a `*` row inside it can hold a list that scrolls alone
+  (`ImportReviewPrompt`).
+- [ ] **ScottPlot 5 zooms on every wheel and never marks it handled.** Without `Charts/ChartWheel` a wheel over a chart
+  zoomed it and scrolled the page at once; a plain wheel is the page's, Ctrl+wheel the chart's, for every plot that
+  `ChartTheme.Attach` registers.
 - [ ] **No dialog in 4.3.0 closes on Esc.** Neither `ContentDialog.cs` nor `MessageBox.cs` at the 4.3.0 tag handles a
   key (read 2026-09-15), and `ContentDialog.CloseButtonText` DEFAULTS to "Close" — an empty string is how a dialog
   says it has no Close button. `MessageBox.Close()` is `[Obsolete("Use Close with MessageBoxResult instead")]` while no

@@ -21,8 +21,6 @@ namespace FrameLedger.App.Tests;
 /// </summary>
 public sealed class ContrastTests
 {
-    private const double _aa = 4.5;
-
     private static readonly string[] _paletteAppearances = ["Info", "Caution", "Danger", "Success"];
 
     /// <summary>
@@ -91,73 +89,33 @@ public sealed class ContrastTests
         {
             var themed = new ThemesDictionary { Theme = theme };
             ApplicationAccentColorManager.Apply(_defaultAccent, theme, systemGlassColor: false, systemAccentColor: true);
-            Color window = Resolve(themed, "ApplicationBackgroundColor");
-            Color card = Over(Resolve(themed, "CardBackgroundFillColorDefault"), window);
-            Color pillOff = Over(Resolve(themed, "ControlFillColorDefault"), card);
-            Color accent = Over(Resolve(themed, "AccentFillColorDefaultBrush"), card);
-            Color caution = Over(Resolve(themed, "SystemFillColorCautionBackground"), card);
+            Color window = Wcag.Resolve(themed, "ApplicationBackgroundColor");
+            Color card = Wcag.Over(Wcag.Resolve(themed, "CardBackgroundFillColorDefault"), window);
+            Color pillOff = Wcag.Over(Wcag.Resolve(themed, "ControlFillColorDefault"), card);
+            Color accent = Wcag.Over(Wcag.Resolve(themed, "AccentFillColorDefaultBrush"), card);
+            Color caution = Wcag.Over(Wcag.Resolve(themed, "SystemFillColorCautionBackground"), card);
             return new Dictionary<string, double>(StringComparer.Ordinal)
             {
-                ["hooking off: secondary text on the pill"] = Ratio(Over(Resolve(themed, "TextFillColorSecondary"), pillOff), pillOff),
-                ["hooking on: on-accent text on the accent"] = Ratio(Over(Resolve(themed, "TextOnAccentFillColorPrimaryBrush"), accent), accent),
-                ["qualifier warning: primary text on caution"] = Ratio(Over(Resolve(themed, "TextFillColorPrimary"), caution), caution),
-                ["the Info badge, for the record"] = Ratio(Over(Resolve(themed, "TextFillColorPrimary"), PaletteLightBlue()), PaletteLightBlue()),
+                ["hooking off: secondary text on the pill"] = Wcag.Ratio(Wcag.Over(Wcag.Resolve(themed, "TextFillColorSecondary"), pillOff), pillOff),
+                ["hooking on: on-accent text on the accent"] = Wcag.Ratio(Wcag.Over(Wcag.Resolve(themed, "TextOnAccentFillColorPrimaryBrush"), accent), accent),
+                ["qualifier warning: primary text on caution"] = Wcag.Ratio(Wcag.Over(Wcag.Resolve(themed, "TextFillColorPrimary"), caution), caution),
+                ["the Info badge, for the record"] = Wcag.Ratio(Wcag.Over(Wcag.Resolve(themed, "TextFillColorPrimary"), PaletteLightBlue()), PaletteLightBlue()),
             };
         });
 
         using (new FluentAssertions.Execution.AssertionScope(theme.ToString()))
         {
-            ratios["hooking off: secondary text on the pill"].Should().BeGreaterThanOrEqualTo(_aa);
-            ratios["hooking on: on-accent text on the accent"].Should().BeGreaterThanOrEqualTo(_aa);
-            ratios["qualifier warning: primary text on caution"].Should().BeGreaterThanOrEqualTo(_aa);
+            ratios["hooking off: secondary text on the pill"].Should().BeGreaterThanOrEqualTo(Wcag.AA);
+            ratios["hooking on: on-accent text on the accent"].Should().BeGreaterThanOrEqualTo(Wcag.AA);
+            ratios["qualifier warning: primary text on caution"].Should().BeGreaterThanOrEqualTo(Wcag.AA);
         }
 
         if (theme == ApplicationTheme.Dark)
         {
-            ratios["the Info badge, for the record"].Should().BeLessThan(_aa, "the pair this class exists for, white on #03A9F4, is what the check must be able to refuse");
+            ratios["the Info badge, for the record"].Should().BeLessThan(Wcag.AA, "the pair this class exists for, white on #03A9F4, is what the check must be able to refuse");
         }
-    }
-
-    private static Color Resolve(ResourceDictionary themed, string key)
-    {
-        object value = themed[key] ?? System.Windows.Application.Current.Resources[key] ?? throw new InvalidOperationException($"{key} is in neither the theme nor the merged dictionaries");
-        return value switch
-        {
-            Color c => c,
-            SolidColorBrush b => b.Color,
-            _ => throw new InvalidOperationException($"{key} is not a Color or SolidColorBrush in the theme dictionary (got {value.GetType().Name})"),
-        };
     }
 
     /// <summary>WPF UI's Palette.xaml value, the same in both themes; read from the merged dictionaries rather than typed, so a palette change upstream is measured.</summary>
-    private static Color PaletteLightBlue() => Resolve(new ResourceDictionary(), "PaletteLightBlueBrush");
-
-    /// <summary>Source-over compositing of <paramref name="top"/> on an opaque <paramref name="under"/>.</summary>
-    private static Color Over(Color top, Color under)
-    {
-        double a = top.A / 255.0;
-        return Color.FromRgb(
-            (byte)Math.Round(top.R * a + under.R * (1 - a)),
-            (byte)Math.Round(top.G * a + under.G * (1 - a)),
-            (byte)Math.Round(top.B * a + under.B * (1 - a)));
-    }
-
-    /// <summary>WCAG 2.1 contrast ratio between two opaque colours.</summary>
-    private static double Ratio(Color a, Color b)
-    {
-        double la = Luminance(a);
-        double lb = Luminance(b);
-        return (Math.Max(la, lb) + 0.05) / (Math.Min(la, lb) + 0.05);
-    }
-
-    private static double Luminance(Color c)
-    {
-        static double Channel(byte v)
-        {
-            double s = v / 255.0;
-            return s <= 0.03928 ? s / 12.92 : Math.Pow((s + 0.055) / 1.055, 2.4);
-        }
-
-        return (0.2126 * Channel(c.R)) + (0.7152 * Channel(c.G)) + (0.0722 * Channel(c.B));
-    }
+    private static Color PaletteLightBlue() => Wcag.Resolve(new ResourceDictionary(), "PaletteLightBlueBrush");
 }

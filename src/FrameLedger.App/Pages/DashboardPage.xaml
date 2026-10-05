@@ -8,8 +8,9 @@
       xmlns:res="clr-namespace:FrameLedger.App"
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
       xmlns:controls="clr-namespace:FrameLedger.App.Controls"
-      Title="{x:Static res:Strings.Dashboard_Header}">
-    <ScrollViewer>
+      Title="{x:Static res:Strings.Dashboard_Header}"
+      ScrollViewer.CanContentScroll="False">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Style="{StaticResource PageRoot}">
             <ui:TextBlock FontTypography="Title" Text="{x:Static vm:DashboardViewModel.Header}" />
 

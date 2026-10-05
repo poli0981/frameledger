@@ -16,7 +16,7 @@
         Safety_AdminMode_* only, versioned by AgentAdminDisclosure.Version. It states what the option adds, what it does not
         change, how Windows asks, and the risk; every colour is a theme brush.
     -->
-    <ScrollViewer MaxHeight="520" VerticalScrollBarVisibility="Auto">
+    <ui:PassiveScrollViewer MaxHeight="520" VerticalScrollBarVisibility="Auto">
         <StackPanel>
             <ui:TextBlock Text="{x:Static vm:AgentAdminDialogViewModel.Intro}" TextWrapping="Wrap" />
             <ui:TextBlock Margin="0,14,0,0" Text="{x:Static vm:AgentAdminDialogViewModel.Adds}" TextWrapping="Wrap" />
@@ -34,5 +34,5 @@
                       IsChecked="{Binding Accepted, Mode=TwoWay}" />
             <ui:TextBlock Margin="0,12,0,0" HorizontalAlignment="Right" Appearance="Tertiary" Text="{x:Static vm:AgentAdminDialogViewModel.Version}" />
         </StackPanel>
-    </ScrollViewer>
+    </ui:PassiveScrollViewer>
 </UserControl>
