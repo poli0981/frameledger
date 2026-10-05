@@ -67,6 +67,9 @@ numeric core and does not move; the heading is the full version — corrected 20
   own scroller had nothing to scroll and still took every wheel. Every page scrolls itself now. The Logs page had the same
   cause: its tail grew to hold every line and never followed the newest one, as it was meant to. A scroller inside a
   dialog (the consent, administrator, anti-cheat exception and bug report dialogs) hands the wheel on at its ends.
+- **The chart-wheel test read the real keyboard** (developers): a Ctrl held anywhere on the machine while the test ran
+  turned its plain wheel into a zoom, and a local gate went red once. The keys held are now the test's own input, and the
+  Ctrl+wheel half is driven end to end as well.
 
 ### Changed
 
