@@ -1813,6 +1813,12 @@ refuses too. Sibling *services* are covered by name via the rules data rather
 than by tree walking, which is more reliable. The runtime re-scan recomputes the
 set rather than caching it.
 
+**Amended 2026-10-06 (D51, beta.15).** The set's parent links come from a snapshot that links by pid alone, and pids
+are reused: the walk followed a launcher's pid after the launcher had exited and something else had taken it, and a
+cycle of reused pids was walked round. A link is now cut only when creation times prove it wrong (the child created
+before its named parent); an unread time keeps it, and each pid is walked once. `19_SAFETY` §Pre-injection checks item 1
+carries the rule and its one residual — a clock set backwards between a parent's start and its child's.
+
 <details><summary>The question as originally recorded</summary>
 
 Found 2026-08-02. Not previously recorded anywhere, and it changes the guard's
