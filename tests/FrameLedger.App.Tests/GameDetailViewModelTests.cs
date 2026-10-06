@@ -953,4 +953,27 @@ public sealed class GameDetailViewModelTests
         (await BuildAsync(s, without.Id)).Vm.AnyLatency.Should().BeFalse();
         (await BuildAsync(s, with.Id)).Vm.AnyLatency.Should().BeTrue();
     }
+    /// <summary>beta.8 made the trend selector per page; beta.15 pins it: a page opened in Vietnamese lists Vietnamese metrics.</summary>
+    [Fact]
+    public async Task TheTrendSelectorIsInTheLanguageThePageOpenedIn()
+    {
+        CultureInfo? previous = Strings.Culture;
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow game = await s.GameAsync("Alpha");
+            Strings.Culture = CultureInfo.GetCultureInfo("en");
+            string english = Strings.Trend_Metric_PresentedFps;
+            (GameDetailViewModel en, _, _, _, _) = await BuildAsync(s, game.Id);
+            Strings.Culture = CultureInfo.GetCultureInfo("vi");
+            (GameDetailViewModel vi, _, _, _, _) = await BuildAsync(s, game.Id);
+
+            en.TrendMetrics[0].Label.Should().Be(english);
+            vi.TrendMetrics[0].Label.Should().Be(Strings.Trend_Metric_PresentedFps).And.NotBe(english);
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
 }

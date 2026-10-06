@@ -196,13 +196,18 @@ public sealed partial class SettingsViewModel : ObservableObject
     public static string LanguageLabel => Strings.Settings_Language_Label;
 
 
-    public static IReadOnlyList<Choice<AppTheme>> Themes { get; } =
+    /// <summary>
+    /// The themes, labelled in the language this page opened in (beta.15): a static list kept the language the App started
+    /// in after a change of language, while the rest of the rebuilt page followed it.
+    /// </summary>
+    public IReadOnlyList<Choice<AppTheme>> Themes { get; } =
     [
         new(AppTheme.System, Strings.Settings_Theme_System),
         new(AppTheme.Light, Strings.Settings_Theme_Light),
         new(AppTheme.Dark, Strings.Settings_Theme_Dark),
     ];
 
+    /// <summary>Each language in its own words, so the same in every language: the one list that may stay static.</summary>
     public static IReadOnlyList<Choice<string>> Languages { get; } =
     [
         new("en", "English"),
@@ -212,9 +217,10 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     /// <summary>
     /// D47 (beta.14): Automatic first, its label saying what it resolves to for this copy — "Automatic (Beta)" on a
-    /// pre-release — then the two explicit choices, either of which wins over the copy.
+    /// pre-release — then the two explicit choices, either of which wins over the copy. Per page since beta.15, so the
+    /// labels follow a change of language.
     /// </summary>
-    public static IReadOnlyList<Choice<string>> UpdateChannels { get; } =
+    public IReadOnlyList<Choice<string>> UpdateChannels { get; } =
     [
         new(Update.UpdateChannelPolicy.Automatic, string.Format(CultureInfo.CurrentCulture, Strings.Settings_Channel_Auto_Format,
             Update.UpdateChannelPolicy.IsPrerelease(UiIdentity.Version) ? Strings.Settings_Channel_Beta : Strings.Settings_Channel_Stable)),

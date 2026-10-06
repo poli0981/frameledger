@@ -291,14 +291,7 @@ public partial class App : System.Windows.Application
 
         AddLibrary(builder.Services);
 
-        // The shell: the window is TRANSIENT because a language change rebuilds it (09_I18N §Mechanics); the
-        // shell host tracks the live one. Pages and their view models are transient (16 §Navigation).
-        builder.Services.AddSingleton<ShellHost>();
-        builder.Services.AddSingleton<IShellPresence>(static sp => sp.GetRequiredService<ShellHost>());
-        builder.Services.AddSingleton<TrayViewModel>();
-        builder.Services.AddSingleton<TrayHost>();
-        builder.Services.AddTransient<MainWindow>();
-        builder.Services.AddSingleton<MainWindowViewModel>();
+        AddShell(builder.Services);
         builder.Services.AddTransient<DashboardPage>();
         builder.Services.AddTransient<DashboardViewModel>();
         builder.Services.AddTransient<GamesPage>();
@@ -313,6 +306,23 @@ public partial class App : System.Windows.Application
         builder.Services.AddTransient<SettingsViewModel>();
         builder.Services.AddHostedService<ApplicationHostService>();
         return builder.Build();
+    }
+
+    /// <summary>
+    /// The shell: the window is TRANSIENT because a language change rebuilds it (09_I18N §Mechanics); the shell host tracks
+    /// the live one. Pages and their view models are transient (16 §Navigation). The singletons that wrote their text once
+    /// read it again after a change of language (beta.15, <see cref="ILanguageFollower"/>, called by ShellHost.Rebuild).
+    /// </summary>
+    private static void AddShell(IServiceCollection services)
+    {
+        services.AddSingleton<ShellHost>();
+        services.AddSingleton<IShellPresence>(static sp => sp.GetRequiredService<ShellHost>());
+        services.AddSingleton<TrayViewModel>();
+        services.AddSingleton<TrayHost>();
+        services.AddTransient<MainWindow>();
+        services.AddSingleton<MainWindowViewModel>();
+        services.AddSingleton<ILanguageFollower>(static sp => sp.GetRequiredService<TrayHost>());
+        services.AddSingleton<ILanguageFollower>(static sp => sp.GetRequiredService<MainWindowViewModel>());
     }
 
     /// <summary>The Agent over the pipe (07_IPC §Client behavior): connect, start it when it is not there, tell the shell.</summary>

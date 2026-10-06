@@ -18,7 +18,7 @@ using Wpf.Ui.Controls;
 namespace FrameLedger.App.ViewModels;
 
 /// <summary>The shell's state: the Agent pill, the offline banner, and the menu commands that exist in this build.</summary>
-public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
+public sealed partial class MainWindowViewModel : ObservableObject, IDisposable, ILanguageFollower
 {
     private readonly AgentConnection _agent;
     private readonly ISnackbarService _snackbar;
@@ -123,6 +123,16 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
     /// <summary>The banner's button: the Agent stopped, the updater told to wait for this process, the host ended (FR-12 is checked again inside).</summary>
     [RelayCommand]
     private Task RestartToUpdateAsync() => _updates.RestartToUpdateAsync();
+
+    /// <summary>
+    /// The Agent pill, its banner and the update banner in the current language (beta.15): this view model outlives a
+    /// rebuilt window, and its texts were read at the last change of state.
+    /// </summary>
+    public void FollowLanguage()
+    {
+        Refresh();
+        RefreshUpdate();
+    }
 
     private void Refresh()
     {

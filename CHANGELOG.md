@@ -28,6 +28,12 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Fixed
+
+- **After a change of language some text stayed in the old one** until FrameLedger restarted: the theme and update-channel
+  lists in Settings, the log and level lists on the Logs page, the sort order on the Games page, the tray icon's menu and
+  the Agent's status in the title bar. They follow the language at once now.
+
 ## [0.1.0-beta.14] - 2026-10-06
 
 **The fourteenth pre-release: a wheel that scrolls, updates that find this channel and wait for your games, crashes told

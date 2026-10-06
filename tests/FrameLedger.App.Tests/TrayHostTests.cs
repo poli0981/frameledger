@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using System.Globalization;
 using System.Windows.Threading;
 using FluentAssertions;
 using FrameLedger.App.Services;
@@ -16,6 +17,7 @@ namespace FrameLedger.App.Tests;
 /// a thread-pool thread and <see cref="TrayHost.Dispose"/> removed the icon there — a WPF object whose disposal unsubscribes
 /// <c>Application.Exit</c>, both owned by the UI thread.
 /// </summary>
+[Collection(StringsCultureCollection.Name)]
 public sealed class TrayHostTests
 {
     private sealed class Shell : IShellPresence
@@ -87,5 +89,35 @@ public sealed class TrayHostTests
         Assert.SkipUnless(created, "no notification area in this session (Shell_NotifyIcon refused), so there is no icon to remove");
         error.Should().BeNull("the icon is removed on the thread that owns it, whatever thread asks");
         stillCreated.Should().BeFalse();
+    }
+    /// <summary>beta.15: the tray outlives a rebuilt window, and its menu was written once; a change of language relabels it.</summary>
+    [Fact]
+    public async Task AChangeOfLanguageRelabelsTheTraysMenu()
+    {
+        CultureInfo? previous = Strings.Culture;
+        try
+        {
+            (IReadOnlyList<string> before, IReadOnlyList<string> after, IReadOnlyList<string> expected) = await PagesLoadTests.OnStaAsync(static () =>
+            {
+                Strings.Culture = CultureInfo.GetCultureInfo("en");
+                var link = new FakeAgentLink();
+                using var updates = new UpdateService(new FakeUpdateClient(), link, new RegisteredSettings(new MemorySettings()), new FakeUpdatePrompts(), new Shell(), new RecordingStrip());
+                using var viewModel = new TrayViewModel(link, new Shell(), new Summaries(), new Navigation(), updates);
+                using var tray = new TrayHost(viewModel, new WindowClosePolicy());
+                tray.Create();
+                IReadOnlyList<string> english = tray.MenuHeaders;
+                Strings.Culture = CultureInfo.GetCultureInfo("vi");
+                tray.FollowLanguage();
+                return (english, tray.MenuHeaders, (IReadOnlyList<string>)[Strings.Tray_Open, viewModel.PauseText, Strings.Tray_AgentStatus, Strings.Tray_Exit]);
+            });
+
+            before.Should().HaveCount(4);
+            after.Should().Equal(expected);
+            after[0].Should().NotBe(before[0], "the menu was written in English and the language is now Vietnamese");
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
     }
 }

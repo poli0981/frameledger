@@ -682,4 +682,28 @@ public sealed class SettingsViewModelTests
             Strings.Culture = previous;
         }
     }
+    /// <summary>beta.15: the theme and channel lists are labelled in the language the page opened in — a rebuilt page follows a change.</summary>
+    [Fact]
+    public async Task TheChoiceListsAreInTheLanguageThePageOpenedIn()
+    {
+        CultureInfo? previous = Strings.Culture;
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            Strings.Culture = CultureInfo.GetCultureInfo("en");
+            Harness english = await OpenAsync(s);
+            string englishSystem = Strings.Settings_Theme_System;
+            string englishStable = Strings.Settings_Channel_Stable;
+            Strings.Culture = CultureInfo.GetCultureInfo("vi");
+            Harness vietnamese = await OpenAsync(s);
+
+            english.Vm.Themes[0].Label.Should().Be(englishSystem);
+            vietnamese.Vm.Themes[0].Label.Should().Be(Strings.Settings_Theme_System).And.NotBe(englishSystem);
+            vietnamese.Vm.UpdateChannels.Single(static c => string.Equals(c.Value, "stable", StringComparison.Ordinal)).Label.Should().Be(Strings.Settings_Channel_Stable).And.NotBe(englishStable);
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
 }

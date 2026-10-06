@@ -63,13 +63,14 @@ public sealed partial class LogsViewModel : ObservableObject, IDisposable
 
     public static string Header => Strings.Logs_Header;
 
-    public static IReadOnlyList<Choice<LogSource>> Sources { get; } =
+    /// <summary>The two logs, labelled in the language this page opened in (beta.15: a static list kept the first language).</summary>
+    public IReadOnlyList<Choice<LogSource>> Sources { get; } =
     [
         new(LogSource.Ui, Strings.Logs_Source_Ui),
         new(LogSource.Agent, Strings.Logs_Source_Agent),
     ];
 
-    public static IReadOnlyList<Choice<LogLevelFilter>> Levels { get; } =
+    public IReadOnlyList<Choice<LogLevelFilter>> Levels { get; } =
     [
         new(LogLevelFilter.All, Strings.Logs_Level_All),
         new(LogLevelFilter.WarningAndAbove, Strings.Logs_Level_Warning),
