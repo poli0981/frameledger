@@ -30,6 +30,10 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Fixed
 
+- **A game started again within a few seconds of closing was not recorded**: while FrameLedger was still saving the
+  session that had just ended, the new start was turned away ("one session at a time") and never looked at again. It is
+  recorded now, as soon as the session before it is saved — unless the game's other processes are still running beside
+  it, as a multi-process game's helpers are.
 - **A game started through its launcher was never followed to the game itself** (the Agent's `--console launch`): when
   the launcher exited or never drew a frame, FrameLedger was to find the game the launcher had started and record it, and
   it never did — the launcher's process id was not passed on, so the search stopped before it began. It is passed on now,

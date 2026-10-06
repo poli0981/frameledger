@@ -1558,7 +1558,9 @@ và legal"), so the Legal Gate shows both once.
 **Traps.**
 - **A pid the watcher matched stays matched.** Switching recording off stops the session but leaves the process in
   `ProcessWatcher`'s table, so switching it back on while the same process still runs starts nothing until it restarts.
-  A process the watcher never matched (off from the start) is picked up by the next poll.
+  A process the watcher never matched (off from the start) is picked up by the next poll. *(beta.15: one case of this is
+  fixed — a process turned away because its executable's session was still running is remembered and recorded when that
+  session ends, if it is then the executable's only process; 04_CAPTURE §Process watcher.)*
 - **A migration that changes data needs its own rewind in a test.** `RewindSchemaAsync` leaves columns in place, so
   `ScriptNineAddsTheRecordingSwitchOffForSteamToolsOnly` drops the column itself before re-applying 0009.
 - **`SqliteGameRepository._columns` is read by ordinal** (`ReadMore`): a new column goes at the end of the list, and the
