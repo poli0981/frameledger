@@ -234,6 +234,10 @@ public sealed class CaptureSessionLaunchTests : IAsyncDisposable
 
             r.Reason.Should().Be(expected);
             r.Verdict.Reason.Should().Be(native);
+
+            // beta.15: the launcher's pid is the election's input (CaptureOrchestrator.ElectAfterLaunchAsync). Without it the
+            // election returned before it ran, every time since it was written.
+            r.TargetPid.Should().Be(_pid, "the orchestrator elects among the launcher's descendants by this pid");
         }
     }
 

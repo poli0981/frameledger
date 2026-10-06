@@ -287,9 +287,16 @@ public sealed class CaptureOrchestrator
     public async Task<RecordedSession?> ElectAfterLaunchAsync(RecordedSession launched, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(launched);
-        if (launched.Outcome.Reason is not (SessionEndReason.LaunchTargetExited or SessionEndReason.LaunchNoPresentationRuntime)
-            || launched.Outcome.TargetPid == 0)
+        if (launched.Outcome.Reason is not (SessionEndReason.LaunchTargetExited or SessionEndReason.LaunchNoPresentationRuntime))
         {
+            return null;
+        }
+
+        // Never silent again (beta.15): an outcome without the launcher's pid returned here without a word, and the operator's
+        // guide (spike-notes §14.2) told them to read an `election:` line that could not appear.
+        if (launched.Outcome.TargetPid == 0)
+        {
+            _log("election: the launch ended without the launcher's pid; nothing to elect from");
             return null;
         }
 

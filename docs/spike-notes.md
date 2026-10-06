@@ -2531,6 +2531,9 @@ then elects the newest tracked descendant and attaches.
 spawns — so the run is: `consent grant` the launcher, `launch` it, read the `election:` line, then
 `consent grant` the game the election named and `launch` again.
 
+*(2026-10-06, beta.15: before beta.15 the `election:` line could not appear — the launch's refused outcome carried no
+launcher pid and the election returned before it logged anything. Run this table on beta.15 or later.)*
+
 | | |
 |---|---|
 | Title / launcher | |
