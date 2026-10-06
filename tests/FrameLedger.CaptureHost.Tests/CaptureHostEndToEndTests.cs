@@ -13,6 +13,7 @@ using FrameLedger.Domain.Sessions;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Infrastructure.Recording;
 using FrameLedger.Shared;
+using FrameLedger.Testing;
 
 namespace FrameLedger.CaptureHost.Tests;
 
@@ -52,22 +53,30 @@ public sealed class CaptureHostEndToEndTests : IDisposable
 
     private static string Host => Path.Combine(AppContext.BaseDirectory, "FrameLedger.CaptureHost.exe");
 
+    /// <summary>This test's scratch directory: the harness copy it consents to, and nothing else.</summary>
+    private readonly string _scratch = Path.Combine(Path.GetTempPath(), "fl-capturehost-e2e-" + Guid.NewGuid().ToString("N"));
+
     /// <summary>
-    /// The ONE executable this suite may write a consent record for.
+    /// The ONE executable this suite may write a consent record for: our harness, copied under a run-unique name
+    /// (beta.16). The host resolves its target BY NAME (<c>TargetResolver</c>), and <c>build.ps1</c> runs the test projects as
+    /// parallel processes: a <c>hook-harness.exe</c> another project was still starting - its module list a partial copy -
+    /// is an unreadable process of the same name, which the resolver must count, and it refused <c>TargetAmbiguous</c>
+    /// (#269's first CI run). No other test starts a process of this name.
     /// </summary>
     /// <remarks>
     /// Every write goes through here, so "which binary did the suite consent to?" has
     /// one answer and one place to change it — and changing it is what the assertion
     /// below turns red.
     /// </remarks>
-    private static string ConsentedExecutable => Harness;
+    private string ConsentedExecutable => Path.Combine(_scratch, "hook-harness-" + Path.GetFileName(_scratch) + ".exe");
 
     /// <summary>The host's own ledger, beside its binary (P2 PR-B): the same SQLite adapter the Agent will use.</summary>
     private static string HostLedger => Path.Combine(Path.GetDirectoryName(Host)!, LedgerPaths.DatabaseFileName);
 
     /// <summary>Writes the ONE consent record this suite may write, through the real store, and closes the ledger again.</summary>
-    private static async Task<ConsentWriteOutcome> GrantConsentAsync()
+    private async Task<ConsentWriteOutcome> GrantConsentAsync()
     {
+        StageTarget();
         ExecutableFingerprint fingerprint = FrameLedger.Infrastructure.Io.ExecutableIdentity.Read(ConsentedExecutable)!.Value;
         LedgerDatabase db = await LedgerDatabase.OpenAsync(HostLedger, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         await using (db.ConfigureAwait(false))
@@ -81,7 +90,7 @@ public sealed class CaptureHostEndToEndTests : IDisposable
         }
     }
 
-    private static async Task<GameConsentRecord> FindConsentAsync()
+    private async Task<GameConsentRecord> FindConsentAsync()
     {
         LedgerDatabase db = await LedgerDatabase.OpenAsync(HostLedger, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         await using (db.ConfigureAwait(false))
@@ -122,26 +131,52 @@ public sealed class CaptureHostEndToEndTests : IDisposable
         // output directory. Leaving a consent record there would make the NEXT run of the refusal case
         // pass for the wrong reason.
         DeleteHostLedger();
+        try
+        {
+            Directory.Delete(_scratch, recursive: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // A harness this test killed may still hold its image for a moment; the directory is the temp folder's.
+        }
     }
 
     [Fact]
     public void TheTargetAndTheConsentRecordAreBothOurOwnHarness()
     {
-        Path.GetFileName(ConsentedExecutable).Should().Be("hook-harness.exe");
-        Path.GetDirectoryName(ConsentedExecutable).Should().Be(
+        StageTarget();
+        Path.GetFileName(Harness).Should().Be("hook-harness.exe");
+        Path.GetDirectoryName(Harness).Should().Be(
             AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar));
+        Path.GetFileName(ConsentedExecutable).Should().StartWith("hook-harness-");
+        Path.GetDirectoryName(ConsentedExecutable).Should().Be(_scratch, "the copy lives in this test's scratch directory and nowhere else");
+        File.ReadAllBytes(ConsentedExecutable).Should().Equal(File.ReadAllBytes(Harness), "the target IS hook-harness, byte for byte, under another name");
         Path.GetFileName(Host).Should().Be("FrameLedger.CaptureHost.exe");
     }
 
-    private static Process StartHarness(string arguments)
+    /// <summary>This run's copy of hook-harness, once per test; its overlay logs are this assembly's to remove (<c>17_HOOK_ENGINE</c> §Native logging).</summary>
+    private void StageTarget()
     {
+        if (File.Exists(ConsentedExecutable))
+        {
+            return;
+        }
+
         File.Exists(Harness).Should().BeTrue(
             "hook-harness.exe must be staged beside the test binary (FrameLedger.DrainFixtures.targets). "
-            + "This FAILS rather than skipping: an integration test that quietly does nothing when its "
-            + "fixture is absent is a gate that cannot fail.");
+            + "This FAILS rather than skipping: an integration test that quietly does nothing when its fixture "
+            + "is absent is a gate that cannot fail.");
+        Directory.CreateDirectory(_scratch);
+        HarnessOverlayLogSweep.Own(_scratch);
+        File.Copy(Harness, ConsentedExecutable);
+    }
+
+    private Process StartHarness(string arguments)
+    {
+        StageTarget();
         File.Exists(Host).Should().BeTrue("the host must be built and copied beside this test");
 
-        var p = Process.Start(new ProcessStartInfo(Harness, arguments)
+        var p = Process.Start(new ProcessStartInfo(ConsentedExecutable, arguments)
         {
             UseShellExecute = false,
             CreateNoWindow = true,

@@ -1970,7 +1970,7 @@ PR-7 the metrics' Agent half (schema 0019), PR-8 their App half, PR-9 the releas
 
 **Owner-only, added to the list below:** item 11.
 
-## **START HERE** — 2026-10-06, the beta.15 train: the five chips beta.14 left
+## ~~**START HERE**~~ — 2026-10-06, the beta.15 train: the five chips beta.14 left *(struck the same day: the head is §beta.16 below)*
 
 *Status is `CHANGELOG.md` `[0.1.0-beta.15]`; this is what no other file carries. The owner's request (2026-10-06): "Xong
 beta14, tổng hợp 5 chip thành 1 bản beta15" — the five findings the beta.14 train spawned as tasks instead of fixing in
@@ -2006,9 +2006,38 @@ during finalize, PR-4 the scan set's creation times (D51), PR-5 the App's viewer
 - **An Agent end-to-end test can lose to another project's harness**: `build.ps1` runs the test projects as parallel
   processes, and a `hook-harness.exe` another project was still starting made `TargetResolver` refuse with
   `TargetAmbiguous` (#269's first CI run; the re-run passed). The refusal is right and the test isolation is not — left
-  as a task, not fixed in this train.
+  as a task, not fixed in this train. *(Fixed in beta.16: the by-name suites consent to a run-unique copy of the
+  harness — `14_TESTING` §hook-harness, test isolation.)*
 
 **Owner-only, added to the list below:** item 12.
+
+## **START HERE** — 2026-10-06, 0.1.0-beta.16: beta.15 verified, and the chip it left
+
+*Status is `CHANGELOG.md` `[0.1.0-beta.16]`; this is what no other file carries. The owner, after beta.15's release
+(2026-10-06): owner-only item 12 passed on real hardware ("đã chạy và ok"), do the chip beta.15 left, release, and close
+the session. One PR carries the test isolation and the release. Nothing in the app changed, so no owner-only item is
+added.*
+
+- **The chip:** a suite whose host resolves its target BY NAME (`TargetResolver`) — the Agent's end-to-end and
+  partial-recovery suites, the capture host's — consents to a run-unique copy of the harness, as the pipe suite already
+  did, so another project's `hook-harness.exe` starting at the same moment can no longer make the target ambiguous
+  (`14_TESTING` §hook-harness). `AnotherHookHarnessRunningBesideTheSuiteDoesNotMakeTheTargetAmbiguous` runs a second
+  harness beside the capture and was red against the shared name (`TargetAmbiguous`), measured before the fix.
+- **The beta.15 train's merges, for the record:** #274–#276 and #279 carry the PRs' own titles; #277 (PR-4, the scan
+  set, D51) and #278 (PR-5, the viewer, D52) were opened by the owner from the pushed branches, so their squash commits
+  are titled "Beta15/pr4 guard" and "Beta15/pr5 viewer" and list every commit of the branch. Their content is the gated
+  stack's: main's tree matched it after each merge.
+
+**Traps met on the way:**
+
+- **A session restart restarts gpg-agent**, so the first signature after it asks for the passphrase again, whatever the
+  cache said a minute before; pinentry-qt gives up in about half a minute with nobody at the desk (`git tag -s` failed
+  with "signing failed: Timeout"). Ask the owner for `echo x | gpg --clearsign` right before a tag.
+- **main is strict and linear**: each PR of a stack must be rebased onto the squash of the one before and run CI again.
+  `git rebase --update-refs --onto origin/main <merged branch> <tip>` moves every branch of the stack at once and drops
+  a commit main already carries (it dropped PR-4 and PR-5 when the owner had merged them from the branches).
+- **The desktop app forbids polling CI** (no `gh` loop, Monitor or ScheduleWakeup): it wakes the session on a failure, a
+  conflict or a review comment, never on green, so a green PR waits for the owner's word or the owner's auto-merge.
 
 ## Owner-only — no PR can close these
 
@@ -2086,7 +2115,8 @@ during finalize, PR-4 the scan set's creation times (D51), PR-5 the App's viewer
    against the DLSS mode, the clocks, fan and limits. (h) The `ja` strings marked `review`. (i) **The Privacy Policy 2.7
    wording — before PR-5 and PR-7 merge.**
 
-12. **beta.15 on real hardware.** (a) **The update from beta.14:** Help ▸ Check for updates, then *Restart to update*
+12. ~~**beta.15 on real hardware.**~~ **Passed 2026-10-06** — the owner ran it on real hardware and reported it OK ("đã
+   chạy và ok"). *(The item as written:)* (a) **The update from beta.14:** Help ▸ Check for updates, then *Restart to update*
    with no game running — the first update in which beta.14's own step stops the Agent before Velopack applies; the
    `velopack:` lines in `ui-*.log` say what was downloaded. (b) **A quick restart:** close a hooked game and start it again
    within a few seconds; both sessions are recorded. (c) **A change of language:** English ↔ Tiếng Việt in Settings; the

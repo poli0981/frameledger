@@ -28,6 +28,21 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+## [0.1.0-beta.16] - 2026-10-06
+
+**The sixteenth pre-release: nothing changes in the app.** It is 0.1.0-beta.15 as the owner verified it on real hardware
+the same day, with the developers' end-to-end tests made reliable. The same unsigned installer: verify its hash against
+`SHA256SUMS.txt`, then *More info → Run anyway*.
+
+**Updating from `0.1.0-beta.15`:** Help ▸ Check for updates, then *Restart to update* with no game running. Nothing in
+the database changes and nothing is shown again for you to accept; sessions already stored keep their status.
+
+### Fixed
+
+- **Development: the Agent's and the capture host's end-to-end tests no longer fail when another test project starts
+  the test harness at the same moment.** Each such suite now records into a copy of the harness under a name of its
+  own, so the target it asks for is never ambiguous (`14_TESTING`). Nothing in the app changes.
+
 ## [0.1.0-beta.15] - 2026-10-06
 
 **The fifteenth pre-release: a quick restart recorded, an anti-cheat check that stays on the game's own programs, a
