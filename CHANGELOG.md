@@ -28,6 +28,27 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+## [0.1.0-beta.15] - 2026-10-06
+
+**The fifteenth pre-release: a quick restart recorded, an anti-cheat check that stays on the game's own programs, a
+change of language that reaches every list, and a launcher followed to its game.** The same unsigned installer: verify
+its hash against `SHA256SUMS.txt`, then *More info → Run anyway*. What changed for a user:
+
+- **A game started again a few seconds after closing is recorded** — while the session before it was being saved, the
+  new start used to be turned away and never looked at again.
+- **The anti-cheat check stays on the game's own programs.** Windows reuses process numbers, and a program that had
+  taken over the number of a game's closed launcher could be scanned as part of the game — refusing the session, or
+  turning the game's measuring off. It no longer is.
+- **A change of language reaches every list at once** — the theme and update-channel lists, the Logs page, the Games
+  sort order, the tray's menu and the Agent's status — without a restart.
+- **A game started through its launcher is followed to the game itself** (the Agent's console `launch`).
+- **`FrameLedger.exe --data-dir <folder>` opens a copy of a data folder to look at**, with no Agent and nothing on the PC
+  changed.
+
+**Updating from `0.1.0-beta.14`:** Help ▸ Check for updates, then *Restart to update* with no game running — FrameLedger
+stops its Agent before the update is applied. Nothing in the database changes and nothing is shown again for you to
+accept; sessions already stored keep their status.
+
 ### Added
 
 - **`FrameLedger.exe --data-dir <folder>` opens a copy of a data folder to look at**, for checking a build of your own

@@ -1907,7 +1907,7 @@ than N/A (`FlShmHandshake.AdapterLuid`'s own comment), and a finding on the PC i
 
 **Owner-only, added to the list below:** item 10.
 
-## **START HERE** — 2026-10-06, the beta.14 train: contrast and the wheel, the update audit, crash reporters, assembly metadata, new measurements
+## ~~**START HERE**~~ — 2026-10-06, the beta.14 train: contrast and the wheel, the update audit, crash reporters, assembly metadata, new measurements *(struck the same day: the head is §beta.15 below)*
 
 *Status is `CHANGELOG.md` `[0.1.0-beta.14]`; this is what no other file carries. The owner's list (2026-10-05, with a
 screenshot of the import list in the dark theme): the contrast, a review of the update logic, games recorded as crashed
@@ -1969,6 +1969,46 @@ PR-7 the metrics' Agent half (schema 0019), PR-8 their App half, PR-9 the releas
   game starts, §1 the card's sensor series) is the owner's to approve before they land, as the plan said.
 
 **Owner-only, added to the list below:** item 11.
+
+## **START HERE** — 2026-10-06, the beta.15 train: the five chips beta.14 left
+
+*Status is `CHANGELOG.md` `[0.1.0-beta.15]`; this is what no other file carries. The owner's request (2026-10-06): "Xong
+beta14, tổng hợp 5 chip thành 1 bản beta15" — the five findings the beta.14 train spawned as tasks instead of fixing in
+its own scope. Six stacked PRs — PR-1 the choice lists follow the language, PR-2 launch mode's election, PR-3 a restart
+during finalize, PR-4 the scan set's creation times (D51), PR-5 the App's viewer (D52), PR-6 the release.*
+
+**Decisions (owner, 2026-10-06, asked before the plan — do not re-ask):**
+
+- **D51 — the scan set cuts a parent/child link only when it is proven wrong**: both creation times read and the child
+  created before the process whose pid it names as its parent. An unread time keeps the link (rule 2, fail closed), equal
+  times keep it, and each pid is walked once (`fl_guard_scanset.cpp`; `19_SAFETY` item 1 carries the rule and its one
+  residual, a clock set backwards between a parent's start and its child's).
+- **D52 — the App's `--data-dir` is a viewer over a copy**: no Agent is started or contacted (its composition holds no
+  pipe client, launcher, update check or Run-entry writer — `Services.MachineFacingServices`), every control that would
+  ask the Agent or change the PC is disabled, and the profile's own folder is refused however it is spelled. D6 is
+  unchanged; the full alternative (an Agent `--serve --data-dir`) would have changed D6, the pipe's per-user name and the
+  hello.
+
+**Traps met on the way:**
+
+- **Launch mode's election had never run** (since #150): a refused launch returned its outcome without the launcher's
+  pid, so the orchestrator stopped before its first `election:` line — and its tests hand-built an outcome that already
+  carried a pid. A test of one half that hand-builds what the other half returns proves the half, not the pair
+  (`CaptureSessionLaunchTests` now asserts what the session itself returns).
+- **The watcher reports a process once.** "One session per executable at a time" turned a restarted game away and nothing
+  looked at it again; the orchestrator remembers the newest such process per executable and starts it when the running
+  session ends, if it is then the executable's only process — a multi-process game's helper is not a restart.
+- **A pid in a snapshot names whoever holds it now.** Creation times are the evidence (`GetProcessTimes`, under the
+  module scan's own read-only right), compared strictly: a parent and a child can share one tick of the clock.
+- **Static choice lists keep the language they were built in**; a list read once into a `static` field, the tray's
+  menu built once and the pill's text written once all needed a way back (`ILanguageFollower`, called by the shell's
+  rebuild).
+- **An Agent end-to-end test can lose to another project's harness**: `build.ps1` runs the test projects as parallel
+  processes, and a `hook-harness.exe` another project was still starting made `TargetResolver` refuse with
+  `TargetAmbiguous` (#269's first CI run; the re-run passed). The refusal is right and the test isolation is not — left
+  as a task, not fixed in this train.
+
+**Owner-only, added to the list below:** item 12.
 
 ## Owner-only — no PR can close these
 
@@ -2045,6 +2085,17 @@ PR-7 the metrics' Agent half (schema 0019), PR-8 their App half, PR-9 the releas
    **The new measurements** on the RTX 5080: the VSync share against the game's own VSync setting, the render scale
    against the DLSS mode, the clocks, fan and limits. (h) The `ja` strings marked `review`. (i) **The Privacy Policy 2.7
    wording — before PR-5 and PR-7 merge.**
+
+12. **beta.15 on real hardware.** (a) **The update from beta.14:** Help ▸ Check for updates, then *Restart to update*
+   with no game running — the first update in which beta.14's own step stops the Agent before Velopack applies; the
+   `velopack:` lines in `ui-*.log` say what was downloaded. (b) **A quick restart:** close a hooked game and start it again
+   within a few seconds; both sessions are recorded. (c) **A change of language:** English ↔ Tiếng Việt in Settings; the
+   theme and channel lists, the Logs page's lists, the Games sort, the tray's menu and the Agent pill follow without a
+   restart. (d) **A launcher:** `FrameLedger.Agent.exe --console launch --exe <a launcher that starts the game>`; the
+   log has `election:` lines and the session is the game's. (e) **The viewer:** copy the data folder with SQLite's backup
+   (`12_BUILD` §Debugging) and start `FrameLedger.exe --data-dir <copy>`; the banner names the folder, the pill reads
+   *Viewer — no Agent*, the switches are off, and the installed App runs beside it untouched. (f) The `ja` strings
+   marked `review`.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
