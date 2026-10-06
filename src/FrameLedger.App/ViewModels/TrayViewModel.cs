@@ -40,8 +40,11 @@ public sealed partial class TrayViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(Tooltip))]
     private bool _isPaused;
 
-    public TrayViewModel(IAgentLink agent, IShellPresence shell, ISessionSummaryOpener summaries, IPageNavigator navigator, UpdateService updates)
+    public TrayViewModel(IAgentLink agent, IShellPresence shell, ISessionSummaryOpener summaries, IPageNavigator navigator, UpdateService updates,
+        UiMode? mode = null)
     {
+        // beta.15 (D52): a viewer's tray has no Agent to pause; a composition without a mode (a test) is the profile's App.
+        ActsOnThisPc = (mode ?? UiMode.Profile).ActsOnThisPc;
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _shell = shell ?? throw new ArgumentNullException(nameof(shell));
         _summaries = summaries ?? throw new ArgumentNullException(nameof(summaries));
@@ -66,6 +69,9 @@ public sealed partial class TrayViewModel : ObservableObject, IDisposable
     public event EventHandler<TrayToastEventArgs>? ToastRequested;
 
     public string PauseText => IsPaused ? Strings.Tray_Resume : Strings.Tray_Pause;
+
+    /// <summary>beta.15 (D52): Pause asks the Agent; a viewer over a copy has none, so the tray disables it.</summary>
+    public bool ActsOnThisPc { get; }
 
     /// <summary>The last saved session, for the balloon's click.</summary>
     public long? LastSavedSessionId { get; private set; }

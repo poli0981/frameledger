@@ -168,6 +168,8 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
 
     public static string DistributionHeader => Strings.Summary_Distribution_Header;
 
+    public static string RenderScaleHeader => Strings.Summary_RenderScale_Header;
+
     public static string SensorsHeader => Strings.GameDetail_Tab_Sensors;
 
     public static string SensorStatsHeader => Strings.SensorStats_Header;
@@ -395,9 +397,32 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         IReadOnlyDictionary<string, Application.Recording.SensorSeriesStats> stats = Application.Recording.SensorSeriesStats.Parse(row.SensorStatsJson);
         string? presented = IsHooked && FpsPresentation.FromRow(row).Kind == FpsReadoutKind.Presented ? Strings.Summary_Lows_Presented : null;
         Stats.Clear();
+        AddFrameCards(row, presented);
+        AddPacingCards(row, presented);
+        AddMachineCards(row, stats);
+
+        // The table reads what finalize stored; a session from before beta.12 says so rather than computing it here.
+        SensorStats.Clear();
+        foreach (SensorStatRowModel line in SensorStatsTable.Rows(stats))
+        {
+            SensorStats.Add(line);
+        }
+
+        HasSensorStats = SensorStats.Count > 0;
+        SensorStatsMissing = !HasSensorStats && (HasSensorCharts || row.AvgGpuLoad is not null || row.MaxGpuTemp is not null) ? Strings.SensorStats_NotStored : null;
+    }
+
+    /// <summary>The frame rate's cards; <paramref name="presented"/> labels the statistics a present-only session has over presents.</summary>
+    private void AddFrameCards(SessionRow row, string? presented)
+    {
+        // CLAUDE.md rule 6 (beta.14): where frames were generated the 1% low is the game's own frames', and the presents' —
+        // what the display received — stands beside it, never instead of it.
+        string? displayedLow = IsHooked && Readout.Kind == FpsReadoutKind.Generated && row.DisplayedP1LowFps is double shown
+            ? string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_DisplayedLow_Format, Formats.Fps(shown))
+            : null;
         Stats.Add(new StatCardModel(Strings.Summary_Stat_Avg, Readout.Line));
         Stats.Add(new StatCardModel(Strings.Summary_Stat_Median, IsHooked ? Formats.Fps(row.MedianFps) : Strings.Common_NotAvailable));
-        Stats.Add(new StatCardModel(Strings.Summary_Stat_P1Low, IsHooked ? Formats.Fps(row.P1LowFps) : Strings.Common_NotAvailable, presented));
+        Stats.Add(new StatCardModel(Strings.Summary_Stat_P1Low, IsHooked ? Formats.Fps(row.P1LowFps) : Strings.Common_NotAvailable, presented ?? displayedLow));
         Stats.Add(new StatCardModel(Strings.Summary_Stat_P01Low, IsHooked ? Formats.Fps(row.P01LowFps) : Strings.Common_NotAvailable, presented));
         Stats.Add(new StatCardModel(Strings.Summary_Stat_MinMax, IsHooked ? string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_MinMax_Format, Formats.Fps(row.MinFps), Formats.Fps(row.MaxFps)) : Strings.Common_NotAvailable));
         Stats.Add(new StatCardModel(Strings.Summary_Stat_StdDev, IsHooked && row.FrametimeStdDevMs is double sd ? string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_StdDev_Format, sd) : Strings.Common_NotAvailable));
@@ -410,8 +435,55 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         string window = DisplayText.Window(display);
         Stats.Add(new StatCardModel(Strings.Summary_Stat_Display, DisplayText.Headline(display),
             string.Equals(window, Strings.Common_NotAvailable, StringComparison.Ordinal) ? null : window));
+    }
 
-        // The machine, both tiers: telemetry is what a not-hooked session still has. Load is the average, temperature the peak.
+    /// <summary>
+    /// beta.14 (D49), hooked sessions: how the frames were paced, what the presents asked for, ray tracing where it was
+    /// measured, focus, and how complete the record is. A session recorded before beta.14 reads N/A on the new ones.
+    /// </summary>
+    private void AddPacingCards(SessionRow row, string? presented)
+    {
+        string na = Strings.Common_NotAvailable;
+        var below = new List<string>(3);
+        if (IsHooked && row.TimeBelow30Pct is double below30)
+        {
+            below.Add(string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_Below30_Format, Formats.Share(below30)));
+        }
+
+        // The refresh share is over what the display received — generated frames included — so it is named for the display.
+        if (IsHooked && row.TimeBelowRefreshPct is double belowRefresh && row.DisplayMonitorHz is int hz)
+        {
+            below.Add(string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_BelowRefresh_Format, hz, Formats.Share(belowRefresh)));
+        }
+
+        if (presented is not null)
+        {
+            below.Add(presented);
+        }
+
+        Stats.Add(new StatCardModel(Strings.Summary_Stat_TimeBelow60, IsHooked ? Formats.Share(row.TimeBelow60Pct) : na, below.Count == 0 ? null : string.Join(" · ", below)));
+        Stats.Add(new StatCardModel(Strings.Summary_Stat_FrameToFrame, IsHooked ? Formats.Milliseconds(row.FrametimeDeltaMeanMs) : na, presented));
+        Stats.Add(new StatCardModel(Strings.Summary_Stat_Vsync,
+            IsHooked && row.VsyncPresentPct is double vsync ? string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_OfFrames_Format, Formats.Share(vsync)) : na,
+            IsHooked && row.TearingAllowedPct is double tearing ? string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_Tearing_Format, Formats.Share(tearing)) : null));
+        if (IsHooked && row.RtFramePct is double rt)
+        {
+            Stats.Add(new StatCardModel(Strings.Summary_Stat_RayTracing, string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_OfFrames_Format, Formats.Share(rt)),
+                row.RaysPerPixel is double rays ? string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_RaysPerPixel_Format, rays) : null));
+        }
+
+        Stats.Add(new StatCardModel(Strings.Summary_Stat_Focus,
+            IsHooked && row.DrainTicks is > 0 && row.ForegroundTicks is long focused
+                ? string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_Focus_Format, Formats.Share(focused * 100.0 / row.DrainTicks.Value))
+                : na));
+        Stats.Add(new StatCardModel(Strings.Summary_Stat_Capture,
+            IsHooked ? string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_Capture_Format, row.GapCount, row.DroppedRecords, row.FaultCount) : na));
+    }
+
+    /// <summary>The machine, both tiers: telemetry is what a not-hooked session still has.</summary>
+    private void AddMachineCards(SessionRow row, IReadOnlyDictionary<string, Application.Recording.SensorSeriesStats> stats)
+    {
+        // Load is the average, temperature the peak.
         Stats.Add(new StatCardModel(Strings.Summary_Stat_Gpu, string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_LoadTemp_Format, Formats.Percent(row.AvgGpuLoad), Formats.Temperature(row.MaxGpuTemp))));
         Stats.Add(new StatCardModel(Strings.Summary_Stat_Cpu, string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_LoadTemp_Format, Formats.Percent(row.AvgCpuLoad), Formats.Temperature(row.MaxCpuTemp))));
 
@@ -419,15 +491,18 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         Stats.Add(GameMemoryText.VramCard(row));
         Stats.Add(GameMemoryText.RamCard(row, stats));
 
-        // The table reads what finalize stored; a session from before beta.12 says so rather than computing it here.
-        SensorStats.Clear();
-        foreach (SensorStatRowModel line in SensorStatsTable.Rows(stats))
-        {
-            SensorStats.Add(line);
-        }
-
-        HasSensorStats = SensorStats.Count > 0;
-        SensorStatsMissing = !HasSensorStats && (HasSensorCharts || row.AvgGpuLoad is not null || row.MaxGpuTemp is not null) ? Strings.SensorStats_NotStored : null;
+        // beta.14 (D49): the card's clocks, fan and memory temperature, what held it back (NVIDIA only), and frames per watt.
+        bool clocks = row.AvgGpuCoreClockMhz is not null || row.AvgGpuMemClockMhz is not null;
+        bool fan = row.AvgGpuFanRpm is not null || row.MaxGpuMemTemp is not null;
+        Stats.Add(new StatCardModel(Strings.Summary_Stat_GpuClocks,
+            clocks ? string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_Clocks_Format, Formats.Frequency(row.AvgGpuCoreClockMhz), Formats.Frequency(row.AvgGpuMemClockMhz)) : Strings.Common_NotAvailable,
+            fan ? string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_FanMemTemp_Format, Formats.Rpm(row.AvgGpuFanRpm), Formats.Temperature(row.MaxGpuMemTemp)) : null));
+        Stats.Add(new StatCardModel(Strings.Summary_Stat_GpuLimits,
+            row.PowerLimitPct is not null || row.ThermalLimitPct is not null
+                ? string.Format(CultureInfo.CurrentCulture, Strings.Summary_Stat_Limits_Format, Formats.Share(row.PowerLimitPct), Formats.Share(row.ThermalLimitPct))
+                : Strings.Common_NotAvailable));
+        Stats.Add(new StatCardModel(Strings.Summary_Stat_Efficiency, Formats.FramesPerJoule(row.AppFramesPerJoule),
+            row.AppFramesPerJoule is null ? null : Strings.Summary_Stat_Efficiency_Note));
     }
 
     /// <summary>

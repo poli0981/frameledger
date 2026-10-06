@@ -87,6 +87,16 @@ own work item on the STA thread and puts back — and with the keys a parameter,
   caused when its run ends, and `tools/test-artifacts-check.ps1` fails the gate for one left behind
   (`17_HOOK_ENGINE` §Native logging, 2026-09-15). A new native test binary that starts the harness needs the listener;
   a managed test project that stages it gets the sweep from `FrameLedger.DrainFixtures.targets`.
+- **Test isolation: a suite whose host resolves its target BY NAME consents to a run-unique copy of the harness**
+  (beta.16). `build.ps1` runs the test projects as parallel processes, and `TargetResolver` counts every process of the
+  consented executable's name — an unreadable one too, which is what a `hook-harness.exe` another project is still
+  starting is (its module list a partial copy). #269's first CI run lost `AgentEndToEndTests` that way:
+  `TargetAmbiguous`, exit 6. `AgentEndToEndTests`, `PartialRecoveryEndToEndTests` and `CaptureHostEndToEndTests` now copy
+  the staged harness to `hook-harness-<their scratch directory>.exe` beside their data, as `PipeEndToEndTests` already
+  did, register that directory with the sweep, and pin the copy to the staged harness byte for byte;
+  `AnotherHookHarnessRunningBesideTheSuiteDoesNotMakeTheTargetAmbiguous` runs a second harness beside the capture (red
+  against the shared name: `TargetAmbiguous`). A suite that attaches by pid (`ShmDrainIntegrationTests`, the native
+  `fl_guard_test`) is not exposed and keeps the staged name.
 - Guard integration: harness loads a **dummy DLL named like an anti-cheat module** → injection refused pre-launch; loaded late → safety unhook. (A renamed harmless DLL, not real anti-cheat software.)
 
 ## Hook overhead measurement (NFR-1, per release)

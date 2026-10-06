@@ -1204,7 +1204,8 @@ milestone must not wait on a new native target crossing every gate — it lands 
   (§G). **D5 — `FileGameConsentStore` is retired in B**; the CaptureHost writes a build-tree `ledger.db`
   so the Agent stays the sole owner of `%LOCALAPPDATA%\FrameLedger`.
 - **D6 — `--data-dir` exists only under `--console`** (F; `12_BUILD` §Debugging), so `--serve` can never
-  be pointed at a ledger that is not the Agent's own.
+  be pointed at a ledger that is not the Agent's own. *(beta.15, D52: the App gained a `--data-dir` of its own — a
+  viewer over a copy that starts and contacts no Agent; D6 itself is unchanged.)*
 - *(Numbering, recorded 2026-09-13: D1, D5, D6 and D10 were cited by number from `CHANGELOG`, `04_CAPTURE`,
   `12_BUILD` and `07_IPC` while this list carried them unlabelled — labels added above. **D2 and D3 were
   never assigned**; the numbering skips them. Nobody needs to hunt for a missing decision.)*
@@ -1558,7 +1559,9 @@ và legal"), so the Legal Gate shows both once.
 **Traps.**
 - **A pid the watcher matched stays matched.** Switching recording off stops the session but leaves the process in
   `ProcessWatcher`'s table, so switching it back on while the same process still runs starts nothing until it restarts.
-  A process the watcher never matched (off from the start) is picked up by the next poll.
+  A process the watcher never matched (off from the start) is picked up by the next poll. *(beta.15: one case of this is
+  fixed — a process turned away because its executable's session was still running is remembered and recorded when that
+  session ends, if it is then the executable's only process; 04_CAPTURE §Process watcher.)*
 - **A migration that changes data needs its own rewind in a test.** `RewindSchemaAsync` leaves columns in place, so
   `ScriptNineAddsTheRecordingSwitchOffForSteamToolsOnly` drops the column itself before re-applying 0009.
 - **`SqliteGameRepository._columns` is read by ordinal** (`ReadMore`): a new column goes at the end of the list, and the
@@ -1869,7 +1872,7 @@ PR-7 the release.*
 
 **Owner-only, added to the list below:** item 9.
 
-## **START HERE** — 2026-10-04, the beta.13 train: the four follow-ups the beta.12 audit left
+## ~~**START HERE**~~ — 2026-10-04, the beta.13 train: the four follow-ups the beta.12 audit left *(struck 2026-10-06: the head is §beta.14 below)*
 
 *Status is `CHANGELOG.md` `[0.1.0-beta.13]`; this is what no other file carries. The owner asked (2026-10-04) for the
 four chips the beta.12 documentation audit had left — §S23-3's wording, the App tests' culture races, L1's adapter, the
@@ -1903,6 +1906,138 @@ than N/A (`FlShmHandshake.AdapterLuid`'s own comment), and a finding on the PC i
 - **The beta.12 traps about the culture race and the four code gaps are closed here** (the rules feed stays open, §S20).
 
 **Owner-only, added to the list below:** item 10.
+
+## ~~**START HERE**~~ — 2026-10-06, the beta.14 train: contrast and the wheel, the update audit, crash reporters, assembly metadata, new measurements *(struck the same day: the head is §beta.15 below)*
+
+*Status is `CHANGELOG.md` `[0.1.0-beta.14]`; this is what no other file carries. The owner's list (2026-10-05, with a
+screenshot of the import list in the dark theme): the contrast, a review of the update logic, games recorded as crashed
+by an engine's crash reporter (prevention; SILENT HILL 2 as the example), assembly metadata, new metrics and charts, and
+a wheel that scrolls with an option to hide the scroll bars. Nine stacked PRs — PR-1 contrast and the wheel, PR-2 the
+scroll-bar option, PR-3 the update audit, PR-4 the guard's retry, PR-5 crash classification, PR-6 assembly metadata,
+PR-7 the metrics' Agent half (schema 0019), PR-8 their App half, PR-9 the release — plus one test fix (#268).*
+
+**Decisions (owner, 2026-10-05, asked before the plan — do not re-ask):**
+
+- **D47 — the update channel follows the running copy.** `update.channel` gained `auto`, the default: a pre-release
+  copy asks for pre-releases, a stable one for stable; an explicit *Stable* or *Beta* in Settings wins
+  (`Update/UpdateChannelPolicy`). Until beta.14 the default was `stable` and every release is a pre-release, so an
+  installed copy never found an update (the owner's own `velopack` log: "No releases found").
+- **D48 — the guard's narrow fix, both halves.** A scan-set member still loading (`ERROR_PARTIAL_COPY`) or already gone
+  is read again once, ~250 ms later, before the guard refuses; still unreadable still refuses, and `ACCESS_DENIED` is
+  never retried. A refused re-scan for a could-not-read reason (`ProcessUnreadable`, `ModuleScanFailed`,
+  `ProcessTreeUnavailable` — never a finding) when the game itself had exited ends as the game's exit
+  (`ExitScanRelabel`, the note `scan_at_exit=`). CLAUDE.md rule 2 is unchanged: a failure still refuses.
+- **D49 — all four metric groups.** The render scale over time; time below 30 / 60 / the refresh rate and frame to frame;
+  the facts the row stored and nothing showed (VSync and tearing, ray tracing's share, focus, capture quality, the
+  displayed 1 % low); the card's clocks, fan, memory temperature, limits, and frames per watt.
+- **D50 — the managed binaries' identity.** Company and Product "FrameLedger", the copyright the native `FL_COPYRIGHT`
+  word for word; `versioninfo-check` reads both kinds and compares them.
+
+**Traps met on the way:**
+
+- **WPF UI 4.3.0 keys its DataGrid styles** (`DefaultDataGridRowStyle`) and defines no implicit row style: a `RowStyle`
+  `BasedOn="{StaticResource {x:Type DataGridRow}}"` falls through to Aero2's row and `SystemColors.WindowBrush` — white
+  under the dark theme's white text. Its `CheckBox` has `MinWidth` 120. Both in `16_WPFUI_SYNTAX` §Gotchas now.
+- **`NavigationViewContentPresenter` makes a `Page`'s `CanContentScroll` true and wraps it in its own scroller**; a page's
+  own root `ScrollViewer` is then measured unbounded, has nothing to scroll, and still marks every wheel handled. ScottPlot
+  never marks the wheel handled.
+- **`Keyboard.Modifiers` is the machine's real keyboard, from any thread** (a fresh background thread's `GetKeyState`
+  reported the machine's NumLock): a local gate went red on the chart-wheel test while a Ctrl was held. A test that sends
+  input sets the keys itself (`ChartWheel.CurrentModifiers`, #268).
+- **Velopack 1.2.0 applies a downloaded update at the next start by default** (`SetAutoApplyOnStartup`), before FR-12's
+  check and with the Agent killed; `VelopackHooks` turns it off and a pending package is adopted instead.
+- **The plain "time below X" rule fabricates drops**: a game capped at 60 read 50.0 % "below 60" from present-timing
+  jitter (measured on a copy of the owner's ledger); a rolling mean does not help. The margins of `FramePacing` and what
+  they cost are in `03_METRICS` §Pacing.
+- **A WER 1001 is not a crash by its number**: `RADAR_PRE_LEAK_64` is Windows' memory-leak detector, and a substring match
+  on the executable's name stored an ordinary The Witcher 3 session as crashed. `CrashEventMatcher` reads the event name
+  and the typed process id.
+- **No chart palette colour was 60 apart from all six on the temperatures plot** — `Chart_Histogram` equals
+  `Chart_Native` — so the seventh line got a key of its own (`Chart_SensorTertiary`); `ChartMathTests` caught it.
+- **Meziantou's MA0051 (60 lines, 40 statements) split** `FrameTimeSeries`'s two builders into one `Kept` accumulator,
+  the summary's cards into three methods and Compare's rows into two; `dotnet format` wants one property per line in an
+  object initializer, even in a test.
+- **The `fl_ring` anti-vacuity flake** (§Traps) fired on #264's CI and passed on the re-run, as written.
+- **`git describe` is 31 characters ten commits after a tag** (`v0.1.0-beta.13-10-g15ec7c1c5fd4`) — the most
+  `FlShmHandshake.buildId` holds. `ShmHandshakeValidatorTests` appended `"x"` to the id for its mismatch case, the helper
+  cut it back to 31, and the check read `Ok`: red from the tenth commit after every tag, locally and on CI (#273 uses
+  another id of the same length).
+- **"The job was not acquired by Runner of type hosted even after multiple attempts"**: with seven CI runs in flight a
+  queued Windows job was cancelled after ~15 minutes, twice, without a step having run. Nothing in the code; re-run the
+  job when fewer runs are queued.
+- **The Privacy Policy 2.7 holds the merge of PR-5 and PR-7**: their wording (§4 the crash reports and the programs a
+  game starts, §1 the card's sensor series) is the owner's to approve before they land, as the plan said.
+
+**Owner-only, added to the list below:** item 11.
+
+## ~~**START HERE**~~ — 2026-10-06, the beta.15 train: the five chips beta.14 left *(struck the same day: the head is §beta.16 below)*
+
+*Status is `CHANGELOG.md` `[0.1.0-beta.15]`; this is what no other file carries. The owner's request (2026-10-06): "Xong
+beta14, tổng hợp 5 chip thành 1 bản beta15" — the five findings the beta.14 train spawned as tasks instead of fixing in
+its own scope. Six stacked PRs — PR-1 the choice lists follow the language, PR-2 launch mode's election, PR-3 a restart
+during finalize, PR-4 the scan set's creation times (D51), PR-5 the App's viewer (D52), PR-6 the release.*
+
+**Decisions (owner, 2026-10-06, asked before the plan — do not re-ask):**
+
+- **D51 — the scan set cuts a parent/child link only when it is proven wrong**: both creation times read and the child
+  created before the process whose pid it names as its parent. An unread time keeps the link (rule 2, fail closed), equal
+  times keep it, and each pid is walked once (`fl_guard_scanset.cpp`; `19_SAFETY` item 1 carries the rule and its one
+  residual, a clock set backwards between a parent's start and its child's).
+- **D52 — the App's `--data-dir` is a viewer over a copy**: no Agent is started or contacted (its composition holds no
+  pipe client, launcher, update check or Run-entry writer — `Services.MachineFacingServices`), every control that would
+  ask the Agent or change the PC is disabled, and the profile's own folder is refused however it is spelled. D6 is
+  unchanged; the full alternative (an Agent `--serve --data-dir`) would have changed D6, the pipe's per-user name and the
+  hello.
+
+**Traps met on the way:**
+
+- **Launch mode's election had never run** (since #150): a refused launch returned its outcome without the launcher's
+  pid, so the orchestrator stopped before its first `election:` line — and its tests hand-built an outcome that already
+  carried a pid. A test of one half that hand-builds what the other half returns proves the half, not the pair
+  (`CaptureSessionLaunchTests` now asserts what the session itself returns).
+- **The watcher reports a process once.** "One session per executable at a time" turned a restarted game away and nothing
+  looked at it again; the orchestrator remembers the newest such process per executable and starts it when the running
+  session ends, if it is then the executable's only process — a multi-process game's helper is not a restart.
+- **A pid in a snapshot names whoever holds it now.** Creation times are the evidence (`GetProcessTimes`, under the
+  module scan's own read-only right), compared strictly: a parent and a child can share one tick of the clock.
+- **Static choice lists keep the language they were built in**; a list read once into a `static` field, the tray's
+  menu built once and the pill's text written once all needed a way back (`ILanguageFollower`, called by the shell's
+  rebuild).
+- **An Agent end-to-end test can lose to another project's harness**: `build.ps1` runs the test projects as parallel
+  processes, and a `hook-harness.exe` another project was still starting made `TargetResolver` refuse with
+  `TargetAmbiguous` (#269's first CI run; the re-run passed). The refusal is right and the test isolation is not — left
+  as a task, not fixed in this train. *(Fixed in beta.16: the by-name suites consent to a run-unique copy of the
+  harness — `14_TESTING` §hook-harness, test isolation.)*
+
+**Owner-only, added to the list below:** item 12.
+
+## **START HERE** — 2026-10-06, 0.1.0-beta.16: beta.15 verified, and the chip it left
+
+*Status is `CHANGELOG.md` `[0.1.0-beta.16]`; this is what no other file carries. The owner, after beta.15's release
+(2026-10-06): owner-only item 12 passed on real hardware ("đã chạy và ok"), do the chip beta.15 left, release, and close
+the session. One PR carries the test isolation and the release. Nothing in the app changed, so no owner-only item is
+added.*
+
+- **The chip:** a suite whose host resolves its target BY NAME (`TargetResolver`) — the Agent's end-to-end and
+  partial-recovery suites, the capture host's — consents to a run-unique copy of the harness, as the pipe suite already
+  did, so another project's `hook-harness.exe` starting at the same moment can no longer make the target ambiguous
+  (`14_TESTING` §hook-harness). `AnotherHookHarnessRunningBesideTheSuiteDoesNotMakeTheTargetAmbiguous` runs a second
+  harness beside the capture and was red against the shared name (`TargetAmbiguous`), measured before the fix.
+- **The beta.15 train's merges, for the record:** #274–#276 and #279 carry the PRs' own titles; #277 (PR-4, the scan
+  set, D51) and #278 (PR-5, the viewer, D52) were opened by the owner from the pushed branches, so their squash commits
+  are titled "Beta15/pr4 guard" and "Beta15/pr5 viewer" and list every commit of the branch. Their content is the gated
+  stack's: main's tree matched it after each merge.
+
+**Traps met on the way:**
+
+- **A session restart restarts gpg-agent**, so the first signature after it asks for the passphrase again, whatever the
+  cache said a minute before; pinentry-qt gives up in about half a minute with nobody at the desk (`git tag -s` failed
+  with "signing failed: Timeout"). Ask the owner for `echo x | gpg --clearsign` right before a tag.
+- **main is strict and linear**: each PR of a stack must be rebased onto the squash of the one before and run CI again.
+  `git rebase --update-refs --onto origin/main <merged branch> <tip>` moves every branch of the stack at once and drops
+  a commit main already carries (it dropped PR-4 and PR-5 when the owner had merged them from the branches).
+- **The desktop app forbids polling CI** (no `gh` loop, Monitor or ScheduleWakeup): it wakes the session on a failure, a
+  conflict or a review comment, never on green, so a green PR waits for the owner's word or the owner's auto-merge.
 
 ## Owner-only — no PR can close these
 
@@ -1968,6 +2103,29 @@ than N/A (`FlShmHandshake.AdapterLuid`'s own comment), and a finding on the PC i
    running for any game, start a hook-enabled game — the notice says the anti-cheat is running on this PC, not in
    the game. (c) **Two graphics cards**, if a machine with them is at hand: the Sensors chart's GPU figures are the
    game's card. (d) The `ja` review of the new safety strings, with the others still marked for it.
+11. **beta.14 on real hardware.** (a) **The update from beta.13:** choose *Beta* in Settings ▸ Updates, Help ▸ Check for
+   updates, then *Restart to update* with no game running; Settings then reads *Automatic (Beta)*. The `velopack:` lines
+   in `ui-*.log` say what was downloaded — a delta of about 2 MB; say so if it was the full package. (b) **Explorer ▸
+   Properties ▸ Details** of `FrameLedger.exe` and `FrameLedger.Agent.exe` name FrameLedger and the copyright; Task Manager
+   lists *FrameLedger Agent*. (c) **The wheel** on every page, the dialogs and the summary window; over a chart the wheel
+   scrolls the page and Ctrl+wheel zooms; the Logs page follows the newest line. (d) **Hide scroll bars** on and off,
+   without a restart. (e) **The import list in the dark theme**, and Compare's tick boxes. (f) **A crash**: an Unreal game
+   that crashes reads *crashed (… CrashReportClient.exe)*; The Witcher 3 closed normally no longer reads *crashed*. (g)
+   **The new measurements** on the RTX 5080: the VSync share against the game's own VSync setting, the render scale
+   against the DLSS mode, the clocks, fan and limits. (h) The `ja` strings marked `review`. (i) **The Privacy Policy 2.7
+   wording — before PR-5 and PR-7 merge.**
+
+12. ~~**beta.15 on real hardware.**~~ **Passed 2026-10-06** — the owner ran it on real hardware and reported it OK ("đã
+   chạy và ok"). *(The item as written:)* (a) **The update from beta.14:** Help ▸ Check for updates, then *Restart to update*
+   with no game running — the first update in which beta.14's own step stops the Agent before Velopack applies; the
+   `velopack:` lines in `ui-*.log` say what was downloaded. (b) **A quick restart:** close a hooked game and start it again
+   within a few seconds; both sessions are recorded. (c) **A change of language:** English ↔ Tiếng Việt in Settings; the
+   theme and channel lists, the Logs page's lists, the Games sort, the tray's menu and the Agent pill follow without a
+   restart. (d) **A launcher:** `FrameLedger.Agent.exe --console launch --exe <a launcher that starts the game>`; the
+   log has `election:` lines and the session is the game's. (e) **The viewer:** copy the data folder with SQLite's backup
+   (`12_BUILD` §Debugging) and start `FrameLedger.exe --data-dir <copy>`; the banner names the folder, the pill reads
+   *Viewer — no Agent*, the switches are off, and the installed App runs beside it untouched. (f) The `ja` strings
+   marked `review`.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
@@ -2002,7 +2160,9 @@ diagnosis*.
   sessions` against `%LOCALAPPDATA%\FrameLedger\ledger.db` applied two migration scripts, because every verb opened
   through the one migrating path. The print verbs open read-only now (`Program.PrintsOnly`; a schema older than the
   build is refused, exit 7) — but the rule that outlives the fix is: **nothing from a session is run against the
-  owner's data directory unless the owner asks for exactly that**; `--data-dir` exists for everything else. The same
+  owner's data directory unless the owner asks for exactly that**; `--data-dir` exists for everything else — and since
+  beta.15 for the App too (`FrameLedger.exe --data-dir <copy>`, a viewer, D52), so a UI change can be looked at over a
+  copy of the owner's ledger made with SQLite's backup (`12_BUILD` §Debugging). The same
   day's ledger held a whole day of rows only in a WAL a fresh connection discarded (`06_DATA_MODEL` §Migrations
   carries the shape); if `ledger: wal at open` in `agent-*.log` or `ui-*.log` reports frames that a passive checkpoint
   did not move while no other FrameLedger process is running, stop and read that note before touching the file.

@@ -112,7 +112,7 @@ public sealed class GameDetailViewModelTests
 
     private static async Task<(GameDetailViewModel Vm, FakeAgent Agent, FakePrompt Prompt, FakeNavigator Nav, FakeStrip Strip)> BuildAsync(
         ScratchLedger s, long gameId, RemoveGameChoice remove = RemoveGameChoice.Cancel, GameMetadata? edit = null, string? pick = null,
-        FakeAgent? withAgent = null, RegisteredSettings? settings = null)
+        FakeAgent? withAgent = null, RegisteredSettings? settings = null, UiMode? mode = null)
     {
         FakeAgent agent = withAgent ?? new FakeAgent();
         var prompt = new FakePrompt();
@@ -121,7 +121,7 @@ public sealed class GameDetailViewModelTests
         var vm = new GameDetailViewModel(s.Library, new GameSelection { GameId = gameId }, new HookingConsent(agent, prompt), nav,
             new FakeConfirmations(remove), new FakeEdit(edit), strip, new NoSummaries(),
             new Charts.SessionSeriesLoader(s.Sessions), new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(),
-            new FakePicker(pick), settings);
+            new FakePicker(pick), settings, mode: mode);
         Task pending = vm.Pending;
         await pending.ConfigureAwait(false);
         return (vm, agent, prompt, nav, strip);
@@ -316,6 +316,21 @@ public sealed class GameDetailViewModelTests
         {
             Strings.Culture = previous;
         }
+    }
+
+    /// <summary>beta.15 (D52): a viewer over a copy has no Agent to ask, so the hooking switch is off whatever the row says.</summary>
+    [Fact]
+    public async Task InAViewerTheHookingSwitchIsOff()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Alpha");
+
+        (GameDetailViewModel viewer, _, _, _, _) = await BuildAsync(s, game.Id, mode: new UiMode(true, @"C:\copy-of-FrameLedger"));
+        (GameDetailViewModel profile, _, _, _, _) = await BuildAsync(s, game.Id);
+
+        viewer.ActsOnThisPc.Should().BeFalse();
+        viewer.HookToggleEnabled.Should().BeFalse();
+        profile.HookToggleEnabled.Should().BeTrue("the same row in the profile's App offers the switch");
     }
 
     [Fact]
@@ -939,5 +954,41 @@ public sealed class GameDetailViewModelTests
             .Should().Equal("DLSS", "DLSS-G", "DLSS Ray Reconstruction", "Streamline", "FSR"); // the rule ids of rules/detection-rules.json, as the Agent's sweep writes them (P4 PR-1)
         GameDetailViewModel.CapabilityNames("not json").Should().BeEmpty();
         GameDetailViewModel.CapabilityNames(null).Should().BeEmpty();
+    }
+    /// <summary>beta.14: the Latency tab shows only when one of the game's sessions measured PC latency — nothing measures it today.</summary>
+    [Fact]
+    public async Task TheLatencyTabIsShownOnlyWhereASessionMeasuredLatency()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow without = await s.GameAsync("Without");
+        await s.SessionAsync(without.Id, DateTimeOffset.UtcNow);
+        GameRow with = await s.GameAsync("With");
+        await s.SessionAsync(with.Id, DateTimeOffset.UtcNow, shape: static r => r with { ReflexActive = true, LatencyAvgUs = 21_000, LatencyP95Us = 30_000 });
+
+        (await BuildAsync(s, without.Id)).Vm.AnyLatency.Should().BeFalse();
+        (await BuildAsync(s, with.Id)).Vm.AnyLatency.Should().BeTrue();
+    }
+    /// <summary>beta.8 made the trend selector per page; beta.15 pins it: a page opened in Vietnamese lists Vietnamese metrics.</summary>
+    [Fact]
+    public async Task TheTrendSelectorIsInTheLanguageThePageOpenedIn()
+    {
+        CultureInfo? previous = Strings.Culture;
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow game = await s.GameAsync("Alpha");
+            Strings.Culture = CultureInfo.GetCultureInfo("en");
+            string english = Strings.Trend_Metric_PresentedFps;
+            (GameDetailViewModel en, _, _, _, _) = await BuildAsync(s, game.Id);
+            Strings.Culture = CultureInfo.GetCultureInfo("vi");
+            (GameDetailViewModel vi, _, _, _, _) = await BuildAsync(s, game.Id);
+
+            en.TrendMetrics[0].Label.Should().Be(english);
+            vi.TrendMetrics[0].Label.Should().Be(Strings.Trend_Metric_PresentedFps).And.NotBe(english);
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
     }
 }

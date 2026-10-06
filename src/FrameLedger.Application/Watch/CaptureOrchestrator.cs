@@ -72,6 +72,11 @@ public sealed class CaptureOrchestrator
     // not an entry's, and a launch that spawns five of them is said once.
     private readonly Dictionary<int, string> _declined = [];
 
+    // beta.15: a process of an executable whose session was still running — often still FINALIZING — when it appeared:
+    // a game started again at once. The watcher reports a pid once, so until beta.15 it was never recorded. The newest one
+    // per executable is kept here, under the table's lock, and started when that session ends (Reap).
+    private readonly Dictionary<string, Deferred> _deferred = new(StringComparer.OrdinalIgnoreCase);
+
     public CaptureOrchestrator(ISessionRecorder recorder, IGameRepository games, IProcessSnapshotSource processes,
         IExecutableIdentitySource identity, OrchestratorOptions options, Action<string> log, ILaunchRecorderFactory? launches = null,
         ExecutableRelocator? relocator = null, LatestProcessSnapshot? latest = null, CrashReporterWitness? reporters = null)
@@ -158,12 +163,12 @@ public sealed class CaptureOrchestrator
             switch (e)
             {
                 case TrackedProcessAppeared { StalePath: false } appeared:
-                    Start(appeared, ct);
+                    Start(appeared, StartedAt(snapshot, appeared.Pid), ct);
                     break;
                 case TrackedProcessAppeared nameOnly:
                     if (await AdoptIfMovedAsync(nameOnly, ct).ConfigureAwait(false) is { } adopted)
                     {
-                        Start(adopted, ct);
+                        Start(adopted, StartedAt(snapshot, adopted.Pid), ct);
                     }
                     else
                     {
@@ -183,8 +188,21 @@ public sealed class CaptureOrchestrator
             }
         }
 
-        Reap();
+        Reap(snapshot, ct);
         return events;
+    }
+
+    private static DateTimeOffset? StartedAt(IReadOnlyList<ProcessSnapshot> snapshot, int pid)
+    {
+        foreach (ProcessSnapshot p in snapshot)
+        {
+            if (p.Pid == pid)
+            {
+                return p.StartedAt;
+            }
+        }
+
+        return null;
     }
 
     /// <summary>The entries FrameLedger watches for: the library minus those whose recording the user switched off.</summary>
@@ -287,9 +305,16 @@ public sealed class CaptureOrchestrator
     public async Task<RecordedSession?> ElectAfterLaunchAsync(RecordedSession launched, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(launched);
-        if (launched.Outcome.Reason is not (SessionEndReason.LaunchTargetExited or SessionEndReason.LaunchNoPresentationRuntime)
-            || launched.Outcome.TargetPid == 0)
+        if (launched.Outcome.Reason is not (SessionEndReason.LaunchTargetExited or SessionEndReason.LaunchNoPresentationRuntime))
         {
+            return null;
+        }
+
+        // Never silent again (beta.15): an outcome without the launcher's pid returned here without a word, and the operator's
+        // guide (spike-notes §14.2) told them to read an `election:` line that could not appear.
+        if (launched.Outcome.TargetPid == 0)
+        {
+            _log("election: the launch ended without the launcher's pid; nothing to elect from");
             return null;
         }
 
@@ -360,30 +385,33 @@ public sealed class CaptureOrchestrator
         }
     }
 
-    private void Start(TrackedProcessAppeared appeared, CancellationToken ct)
+    private void Start(TrackedProcessAppeared appeared, DateTimeOffset? startedAt, CancellationToken ct)
     {
         lock (_table)
         {
             if (_running.TryGetValue(appeared.ImagePath, out Running? current) && !current.Task.IsCompleted)
             {
-                _log($"watch: pid {appeared.Pid} ({appeared.Game.Name}) appeared while a session for that executable is running; one at a time");
+                _deferred[appeared.ImagePath] = new Deferred(appeared, startedAt);
+                _log($"watch: pid {appeared.Pid} ({appeared.Game.Name}) appeared while a session for that executable is running; one at a time"
+                     + " - it is recorded when that session ends, if it is then the executable's only process");
                 return;
             }
 
             _log($"watch: pid {appeared.Pid} ({appeared.Game.Name}) appeared; starting a session");
             var running = new Running(Guid.NewGuid(), appeared.Game.Id);
             RecordRequest request = Attach(appeared.ImagePath, appeared.Game.Name, running.SessionGuid, running.Stop.Token);
-            running.Task = RunAndReportAsync(_recorder, request, ct);
+            running.Task = RunAndReportAsync(_recorder, request, running, ct);
             _running[appeared.ImagePath] = running;
         }
     }
 
     /// <summary>The session on its own task, reporting its own end; nothing else awaits a stored task.</summary>
-    private async Task RunAndReportAsync(ISessionRecorder recorder, RecordRequest request, CancellationToken ct)
+    private async Task RunAndReportAsync(ISessionRecorder recorder, RecordRequest request, Running? running, CancellationToken ct)
     {
         try
         {
             RecordedSession r = await Task.Run(() => recorder.RecordAsync(request, ct), ct).ConfigureAwait(false);
+            running?.Recorded = r;
             Report(r, Name(request));
         }
         catch (OperationCanceledException)
@@ -474,8 +502,9 @@ public sealed class CaptureOrchestrator
         };
     }
 
-    private void Reap()
+    private void Reap(IReadOnlyList<ProcessSnapshot> snapshot, CancellationToken ct)
     {
+        var restarts = new List<Deferred>();
         lock (_table)
         {
             foreach ((string path, Running running) in _running.ToArray())
@@ -483,9 +512,20 @@ public sealed class CaptureOrchestrator
                 if (running.Task.IsCompleted)
                 {
                     _running.Remove(path);
+                    if (_deferred.Remove(path, out Deferred? deferred) && deferred.StartsAfter(running, snapshot))
+                    {
+                        restarts.Add(deferred);
+                    }
+
                     running.Dispose();
                 }
             }
+        }
+
+        foreach (Deferred d in restarts)
+        {
+            _log($"watch: pid {d.Appeared.Pid} ({d.Appeared.Game.Name}) started while the last session of its executable was ending; recording it now");
+            Start(d.Appeared, d.StartedAt, ct);
         }
     }
 
@@ -505,6 +545,27 @@ public sealed class CaptureOrchestrator
         }
     }
 
+    /// <summary>
+    /// A process turned away because its executable's session was running (beta.15). It is recorded when that session ends
+    /// only if the session ended on its own (a cancelled or faulted one — the host stopping — starts nothing), the process
+    /// is still the same one (pid and start time), and it is then the executable's ONLY process: a game started again has
+    /// replaced the old one, where a helper of a multi-process game (NW.js, Electron — one executable, many processes)
+    /// still has the game beside it, or several of its kind.
+    /// </summary>
+    private sealed record Deferred(TrackedProcessAppeared Appeared, DateTimeOffset? StartedAt)
+    {
+        public bool StartsAfter(Running ended, IReadOnlyList<ProcessSnapshot> snapshot)
+        {
+            if (ended.Recorded is null)
+            {
+                return false;
+            }
+
+            ProcessSnapshot[] same = [.. snapshot.Where(p => p.ImagePath is { } image && string.Equals(image, Appeared.ImagePath, StringComparison.OrdinalIgnoreCase))];
+            return same.Length == 1 && same[0].Pid == Appeared.Pid && (StartedAt is null || same[0].StartedAt == StartedAt);
+        }
+    }
+
     /// <summary>One started session: its guid (chosen here, so the stop is addressable), its entry, its task, its stop token.</summary>
     private sealed class Running(Guid sessionGuid, long gameId) : IDisposable
     {
@@ -516,6 +577,9 @@ public sealed class CaptureOrchestrator
         public CancellationTokenSource Stop { get; } = new();
 
         public Task Task { get; set; } = System.Threading.Tasks.Task.CompletedTask;
+
+        /// <summary>The session as recorded; null until it ended, and for one cancelled or faulted. Written before <see cref="Task"/> completes.</summary>
+        public RecordedSession? Recorded { get; set; }
 
         public void Dispose() => Stop.Dispose();
     }

@@ -288,6 +288,32 @@ public sealed class CaptureSession(
         return observed is null ? SessionEndReason.ExecutableUnreadable : null;
     }
 
+    /// <summary>The guard refused (and the target is not Vulkan-layered): the outcome, held as Tier 2 unless it is launch mode's cue.</summary>
+    private async Task<CaptureOutcome> RefusedAsync(AntiCheatVerdict verdict, HookRequest request, ExecutableFingerprint observed,
+        ITargetLiveness alive, int pid, TimeSpan? launchWait, CancellationToken ct, CancellationToken stop)
+    {
+        // A finding about the game turns its hooking off here and now (owner decision 2026-09-22), not only at
+        // the pre-scan: the guard's start-time scan sees the process and the drivers the pre-scan cannot.
+        bool turnedOff = await TurnHookingOffAsync(observed, verdict, ct).ConfigureAwait(false);
+        var refused = new CaptureOutcome
+        {
+            Reason = RefusalOf(verdict.Reason),
+            Verdict = verdict,
+            LaunchWait = launchWait,
+            HookingTurnedOff = turnedOff,
+            ExceptionFamily = request.ToleratedFamily,
+        };
+
+        // Launch mode's two guard refusals are the orchestrator's cue to elect a descendant (04_CAPTURE §Launch
+        // mode); holding the launcher's session open would delay that. Every other refusal is Tier 2 from here.
+        // The launcher's pid goes with the cue (beta.15): the election looks for the launcher's descendants BY it, and
+        // an outcome without it made ElectAfterLaunchAsync return before electing anything — since the election was
+        // written (#150). Its exit code too, as every other ending records one.
+        return refused.Reason is SessionEndReason.LaunchTargetExited or SessionEndReason.LaunchNoPresentationRuntime
+            ? refused with { TargetPid = pid, ExitCode = alive.ExitCode }
+            : await HoldUnhookedAsync(refused, observed.ExePath, alive, pid, ct, stop).ConfigureAwait(false);
+    }
+
     /// <summary>Gate, attach, drain — shared by both modes; <paramref name="started"/> non-null is launch mode.</summary>
     private async Task<CaptureOutcome> SessionAsync(int pid, ITargetLiveness alive, GameConsentRecord record,
         ExecutableFingerprint observed, string payloadPath, Stopwatch? started, CancellationToken ct, CancellationToken stop)
@@ -312,23 +338,8 @@ public sealed class CaptureSession(
         bool layered = verdict.Reason == AntiCheatRefusalReason.TargetIsVulkanLayered;
         if (!verdict.IsAllowed && !layered)
         {
-            // A finding about the game turns its hooking off here and now (owner decision 2026-09-22), not only at
-            // the pre-scan: the guard's start-time scan sees the process and the drivers the pre-scan cannot.
-            bool turnedOff = await TurnHookingOffAsync(observed, verdict, ct).ConfigureAwait(false);
-            var refused = new CaptureOutcome
-            {
-                Reason = RefusalOf(verdict.Reason),
-                Verdict = verdict,
-                LaunchWait = launchWait,
-                HookingTurnedOff = turnedOff,
-                ExceptionFamily = request.ToleratedFamily,
-            };
             channel?.Dispose();
-            // Launch mode's two guard refusals are the orchestrator's cue to elect a descendant (04_CAPTURE §Launch
-            // mode); holding the launcher's session open would delay that. Every other refusal is Tier 2 from here.
-            return refused.Reason is SessionEndReason.LaunchTargetExited or SessionEndReason.LaunchNoPresentationRuntime
-                ? refused
-                : await HoldUnhookedAsync(refused, observedPath, alive, pid, ct, stop).ConfigureAwait(false);
+            return await RefusedAsync(verdict, request, observed, alive, pid, launchWait, ct, stop).ConfigureAwait(false);
         }
 
         TimeSpan attachBudget = layered ? options.LaunchWaitBudget : options.AttachBudget;

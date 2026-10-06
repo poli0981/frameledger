@@ -28,11 +28,123 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+## [0.1.0-beta.16] - 2026-10-06
+
+**The sixteenth pre-release: nothing changes in the app.** It is 0.1.0-beta.15 as the owner verified it on real hardware
+the same day, with the developers' end-to-end tests made reliable. The same unsigned installer: verify its hash against
+`SHA256SUMS.txt`, then *More info → Run anyway*.
+
+**Updating from `0.1.0-beta.15`:** Help ▸ Check for updates, then *Restart to update* with no game running. Nothing in
+the database changes and nothing is shown again for you to accept; sessions already stored keep their status.
+
+### Fixed
+
+- **Development: the Agent's and the capture host's end-to-end tests no longer fail when another test project starts
+  the test harness at the same moment.** Each such suite now records into a copy of the harness under a name of its
+  own, so the target it asks for is never ambiguous (`14_TESTING`). Nothing in the app changes.
+
+## [0.1.0-beta.15] - 2026-10-06
+
+**The fifteenth pre-release: a quick restart recorded, an anti-cheat check that stays on the game's own programs, a
+change of language that reaches every list, and a launcher followed to its game.** The same unsigned installer: verify
+its hash against `SHA256SUMS.txt`, then *More info → Run anyway*. What changed for a user:
+
+- **A game started again a few seconds after closing is recorded** — while the session before it was being saved, the
+  new start used to be turned away and never looked at again.
+- **The anti-cheat check stays on the game's own programs.** Windows reuses process numbers, and a program that had
+  taken over the number of a game's closed launcher could be scanned as part of the game — refusing the session, or
+  turning the game's measuring off. It no longer is.
+- **A change of language reaches every list at once** — the theme and update-channel lists, the Logs page, the Games
+  sort order, the tray's menu and the Agent's status — without a restart.
+- **A game started through its launcher is followed to the game itself** (the Agent's console `launch`).
+- **`FrameLedger.exe --data-dir <folder>` opens a copy of a data folder to look at**, with no Agent and nothing on the PC
+  changed.
+
+**Updating from `0.1.0-beta.14`:** Help ▸ Check for updates, then *Restart to update* with no game running — FrameLedger
+stops its Agent before the update is applied. Nothing in the database changes and nothing is shown again for you to
+accept; sessions already stored keep their status.
+
+### Added
+
+- **`FrameLedger.exe --data-dir <folder>` opens a copy of a data folder to look at**, for checking a build of your own
+  against real data without touching your own. Such a window starts and contacts no Agent, records nothing and changes
+  nothing on the PC — the controls that would are disabled, and a banner says whose data it shows. It refuses
+  FrameLedger's own folder.
+
+### Fixed
+
+- **The anti-cheat check could scan a program that had nothing to do with the game**: Windows reuses process numbers, and
+  once a game's launcher had closed, the check followed its number to whatever program held it now — a protected one
+  refused the session, one carrying anti-cheat turned the game's measuring off for good. A program started after the game
+  is no longer taken for its launcher, nor one started before the game for its child; when FrameLedger cannot read when a
+  program started, it still scans it, as before.
+- **A game started again within a few seconds of closing was not recorded**: while FrameLedger was still saving the
+  session that had just ended, the new start was turned away ("one session at a time") and never looked at again. It is
+  recorded now, as soon as the session before it is saved — unless the game's other processes are still running beside
+  it, as a multi-process game's helpers are.
+- **A game started through its launcher was never followed to the game itself** (the Agent's `--console launch`): when
+  the launcher exited or never drew a frame, FrameLedger was to find the game the launcher had started and record it, and
+  it never did — the launcher's process id was not passed on, so the search stopped before it began. It is passed on now,
+  and a launch that ends without one says so in the log.
+- **After a change of language some text stayed in the old one** until FrameLedger restarted: the theme and update-channel
+  lists in Settings, the log and level lists on the Logs page, the sort order on the Games page, the tray icon's menu and
+  the Agent's status in the title bar. They follow the language at once now.
+
+## [0.1.0-beta.14] - 2026-10-06
+
+**The fourteenth pre-release: a wheel that scrolls, updates that find this channel and wait for your games, crashes told
+apart from memory reports, and new measurements.** The same unsigned installer: verify its hash against
+`SHA256SUMS.txt`, then *More info → Run anyway*. What changed for a user:
+
+- **The mouse wheel scrolls every page, dialog and chart**; over a chart the wheel scrolls the page and **Ctrl+wheel**
+  zooms the chart. **Settings ▸ Window ▸ Hide scroll bars** draws no bar and still scrolls. The import list is readable
+  in the dark theme.
+- **Updates come from the channel of the copy you run** — a beta looks for betas — and are never applied on their own
+  when the App starts; restarting to update waits while a game FrameLedger measured is still running, and says so.
+- **A game that crashed reads *crashed*, and only then**: a Windows memory report about a game no longer counts as a
+  crash, and an Unreal Engine game that opens its crash reporter and closes is recorded as crashed, the reporter named.
+- **A game starting up or closing during FrameLedger's anti-cheat check** is read again once instead of refused, and a
+  check that could not read a game that had already closed ends the session as the game's own exit.
+- **New in every session's summary**: time below 30 and 60 FPS and below the monitor's refresh rate, how even the frames
+  were, VSync and tearing, the graphics card's clocks, fan and memory temperature, how much of the time its power limit
+  or heat held it back (NVIDIA), frames per watt, and a render scale chart. Trend and Compare have them too.
+- **FrameLedger's own programs say what they are** in Explorer and Task Manager (*FrameLedger Agent*).
+
+**Updating from `0.1.0-beta.13`:**
+
+1. **First choose *Beta* in Settings ▸ Updates.** beta.13 looks for stable releases by default, and every release so far
+   is a pre-release, so it finds nothing until you do. From beta.14 on the channel follows the copy you run.
+2. **Update with no game running.** beta.13 still applies a downloaded update the next time the App starts, stopping the
+   Agent to do it; beta.14 no longer does.
+3. **The database is migrated in place** (schema 0019, new columns only). An earlier version cannot open it afterwards.
+4. Sessions already stored keep their status — a few may still read *crashed* because Windows logged a memory report
+   about the game. The Privacy Policy (version 2.7) is shown once for you to accept.
+
 ### Added
 
 - **Settings ▸ Window ▸ Hide scroll bars.** No scroll bar is drawn anywhere in the app while it is on, and everything
   still scrolls with the mouse wheel, the keyboard and touch. Off by default; it applies at once, to the open windows
   too, and off brings every bar back.
+- **New measurements in every session** (recorded from this version on; earlier sessions read N/A):
+  - **time below 30 FPS, below 60 FPS and below the monitor's refresh rate**, and how much one frame's time differs from
+    the next. A game held at its frame limit is not counted as dropping below it for the small wobble every frame limit
+    has — on the developer's machine a game capped at 60 read half its time "below 60" by the plain rule;
+  - **VSync and tearing**: how many of the game's frames asked to wait for the display, and how many allowed tearing
+    (Direct3D games);
+  - **the graphics card's clock speeds, fan speed and memory temperature**, and — on NVIDIA cards — how much of the time
+    its power limit or its temperature held it back;
+  - **frames per watt**: the game's own frames per second for each watt the graphics card drew, never counting generated
+    frames.
+
+  The session's sensor statistics table shows the new card readings in their own units. The database is migrated in
+  place (schema 0019), and an earlier version cannot open it afterwards.
+- **Where the new measurements are shown:** the session summary has a card for each (the 1% low card also shows the
+  displayed frames' 1% low when frame generation was counted, beside the game's own), a **Render scale** chart — the
+  share of the screen's resolution the game rendered at, over the session — and a **Clocks and fan** chart under
+  Sensors, with the moments the card was held back shaded; the card's memory temperature joins the temperatures chart.
+  A game's **Trend** has nine more metrics and **Compare** nine more rows, where a figure taken over presents says
+  *(presented)* beside one taken over the game's own frames. The **Latency** tab is shown only for a game with a session
+  that measured latency — none does yet.
 
 ### Fixed
 

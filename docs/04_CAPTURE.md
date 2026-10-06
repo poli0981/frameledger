@@ -154,7 +154,13 @@ which makes the notification more important than it was, not less.
 > row's path with its drive letter changed (an RPG Maker `Game.exe` has the same bytes in every game); and the
 > running-session table is keyed by the executable's path, so a re-imported or merged entry's new id cannot start a
 > second session for the same executable. The launch election registers its session there too, and skips a child the
-> watcher already records. **Behaviour change:** a game whose folder moved (not its drive letter) records nothing until
+> watcher already records. *(beta.15, 2026-10-06:)* a process turned away by that rule — "one at a time" — was never
+> recorded, because the watcher reports a pid once: **a game started again while its last session was still finalizing**
+> (the driver profile, a crash reporter waited for, the transaction — seconds) got no session at all. The orchestrator
+> now remembers the newest such process per executable and starts its session when the running one ends, if that one
+> ended on its own (not cancelled with the host), the process is the same (pid and start time) and it is then the
+> executable's ONLY process — a helper of a game still running has the game beside it and stays turned away, as before
+> (`CaptureOrchestratorTests`: the restart recorded, the helper not, a process that left meanwhile not). **Behaviour change:** a game whose folder moved (not its drive letter) records nothing until
 > *Change executable* points its entry at the new file. `ProcessTree` reads ppid chains with the one rule that defeats pid
 > reuse: a child that started before its parent is not its child. `DescendantElection` picks the newest-started
 > descendant whose image is tracked — a launcher's consent does not extend to what it spawns, so the elected image
@@ -208,6 +214,11 @@ which makes the notification more important than it was, not less.
 > that spawns the real game and quits lands on the first, and re-electing the descendant is the Agent's
 > (P2, §Process watcher) — **built 2026-09-10 (PR-F)**: the Agent's `--console launch` hands either
 > answer to `DescendantElection` and runs an attach-mode session against the newest tracked descendant.
+> *(Corrected 2026-10-06, beta.15: **it never ran until beta.15.** The refused outcome carried no `TargetPid`, and
+> `CaptureOrchestrator.ElectAfterLaunchAsync` returned at `TargetPid == 0` — before its own `election:` log line — on every
+> launch since #150; the orchestrator's tests built the outcome by hand, pid included, so nothing saw it. The refused
+> outcome carries the launcher's pid and exit code now (`CaptureSessionLaunchTests` pins it), and an outcome without
+> one is logged rather than silent. A real launcher run is still owed: HANDOFF, owner-only.)*
 > **The host never terminates what it launched**: any refusal after the start
 > leaves the title running unhooked, which is Tier 2.
 >

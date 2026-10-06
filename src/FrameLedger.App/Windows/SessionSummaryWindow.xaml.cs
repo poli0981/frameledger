@@ -63,6 +63,7 @@ public partial class SessionSummaryWindow : FluentWindow
     {
         Frametime.Show(ViewModel.Series, ViewModel.ShowDisplayed, ViewModel.ShowSensors);
         Distribution.Show(ViewModel.Series);
+        RenderScale.Show(ViewModel.Series, ViewModel.Row);
         Sensors.Show(ViewModel.SensorSeries);
     }
 

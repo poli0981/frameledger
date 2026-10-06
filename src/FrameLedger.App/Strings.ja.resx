@@ -61,6 +61,10 @@
     <value>管理者の許可を待っています…</value>
     <comment>review</comment>
   </data>
+  <data name="Agent_State_Viewer" xml:space="preserve">
+    <value>ビューアー — Agent なし</value>
+    <comment>review</comment>
+  </data>
   <data name="App_Title" xml:space="preserve">
     <value>FrameLedger</value>
     <comment>review</comment>
@@ -3863,6 +3867,278 @@
   </data>
   <data name="Exit_CrashReporter_Format" xml:space="preserve">
     <value>クラッシュ（ゲームがクラッシュ レポーター {0} を起動しました）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GpuCoreClock" xml:space="preserve">
+    <value>GPU コアクロック MHz</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GpuMemClock" xml:space="preserve">
+    <value>GPU メモリクロック MHz</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GpuFan" xml:space="preserve">
+    <value>GPU ファン RPM</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GpuMemTemp" xml:space="preserve">
+    <value>GPU メモリ °C</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GpuPowerLimit" xml:space="preserve">
+    <value>GPU 電力制限 %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Series_GpuThermalLimit" xml:space="preserve">
+    <value>GPU 温度制限 %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Format_Frequency_Format" xml:space="preserve">
+    <value>{0:N0} MHz</value>
+    <comment>review</comment>
+  </data>
+  <data name="Format_Rpm_Format" xml:space="preserve">
+    <value>{0:N0} RPM</value>
+    <comment>review</comment>
+  </data>
+  <data name="Format_Milliseconds_Format" xml:space="preserve">
+    <value>{0:0.00} ms</value>
+    <comment>review</comment>
+  </data>
+  <data name="Format_FramesPerJoule_Format" xml:space="preserve">
+    <value>{0:0.00} FPS/W</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_TimeBelow60" xml:space="preserve">
+    <value>60 FPS 未満の時間</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Below30_Format" xml:space="preserve">
+    <value>30 未満: {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_BelowRefresh_Format" xml:space="preserve">
+    <value>表示 {0} Hz 未満: {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_FrameToFrame" xml:space="preserve">
+    <value>フレーム間の変動</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Vsync" xml:space="preserve">
+    <value>VSync</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_OfFrames_Format" xml:space="preserve">
+    <value>フレームの {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Tearing_Format" xml:space="preserve">
+    <value>ティアリング許可: {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_RayTracing" xml:space="preserve">
+    <value>レイトレーシング</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_RaysPerPixel_Format" xml:space="preserve">
+    <value>1 ピクセルあたり {0:0.00} レイ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Focus" xml:space="preserve">
+    <value>ゲームがアクティブ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Focus_Format" xml:space="preserve">
+    <value>時間の {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Capture" xml:space="preserve">
+    <value>記録の品質</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Capture_Format" xml:space="preserve">
+    <value>欠落 {0:N0} · 消失 {1:N0} · 障害 {2:N0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_DisplayedLow_Format" xml:space="preserve">
+    <value>表示: {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_GpuClocks" xml:space="preserve">
+    <value>GPU クロック</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Clocks_Format" xml:space="preserve">
+    <value>コア {0} · メモリ {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_FanMemTemp_Format" xml:space="preserve">
+    <value>ファン {0} · メモリ {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_GpuLimits" xml:space="preserve">
+    <value>GPU の制限</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Limits_Format" xml:space="preserve">
+    <value>電力 {0} · 温度 {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Efficiency" xml:space="preserve">
+    <value>ワットあたりのフレーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Stat_Efficiency_Note" xml:space="preserve">
+    <value>ゲーム自身のフレーム・GPU 電力のみ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_RenderScale_Header" xml:space="preserve">
+    <value>レンダースケール</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_Axis_RenderScale" xml:space="preserve">
+    <value>レンダースケール %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Chart_RenderScale_NotMeasured" xml:space="preserve">
+    <value>このセッションではレンダー解像度を測定していません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Clocks_Header" xml:space="preserve">
+    <value>クロックとファン</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Axis_Mhz" xml:space="preserve">
+    <value>MHz</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Axis_Rpm" xml:space="preserve">
+    <value>RPM</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Limit_Power" xml:space="preserve">
+    <value>電力制限</value>
+    <comment>review</comment>
+  </data>
+  <data name="Sensors_Limit_Thermal" xml:space="preserve">
+    <value>温度制限</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_TimeBelow60" xml:space="preserve">
+    <value>60 FPS 未満の時間 %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_TimeBelowRefresh" xml:space="preserve">
+    <value>リフレッシュレート未満の表示 %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_FrameToFrame" xml:space="preserve">
+    <value>フレーム間の変動 ms</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_RenderScale" xml:space="preserve">
+    <value>レンダースケール %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_VsyncShare" xml:space="preserve">
+    <value>VSync の割合 %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_GpuCoreClock" xml:space="preserve">
+    <value>平均GPUコアクロック MHz</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_MaxGpuMemTemp" xml:space="preserve">
+    <value>GPU メモリ最高 °C</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_PowerLimitShare" xml:space="preserve">
+    <value>電力制限の割合 %</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Metric_Efficiency" xml:space="preserve">
+    <value>ワットあたりのフレーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Unit_Ms" xml:space="preserve">
+    <value>ms</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Unit_Mhz" xml:space="preserve">
+    <value>MHz</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Unit_FpsPerWatt" xml:space="preserve">
+    <value>FPS/W</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_TimeBelow60" xml:space="preserve">
+    <value>60 FPS 未満の時間</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_TimeBelowRefresh" xml:space="preserve">
+    <value>リフレッシュレート未満の表示</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_FrameToFrame" xml:space="preserve">
+    <value>フレーム間の変動</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_Vsync" xml:space="preserve">
+    <value>VSync の割合</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_RenderScale" xml:space="preserve">
+    <value>レンダースケール</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_GpuCoreClock" xml:space="preserve">
+    <value>平均GPUコアクロック</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_MaxGpuMemTemp" xml:space="preserve">
+    <value>GPU メモリ最高 °C</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_PowerLimit" xml:space="preserve">
+    <value>電力制限の割合</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Metric_Efficiency" xml:space="preserve">
+    <value>ワットあたりのフレーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Viewer_Banner_Title" xml:space="preserve">
+    <value>コピーを表示中</value>
+    <comment>review</comment>
+  </data>
+  <data name="Viewer_Banner_Body_Format" xml:space="preserve">
+    <value>このウィンドウは {0} のデータを読み取ります。Agent を起動も接続もしないため何も記録されず、この PC を変更する操作（Windows と同時に起動、Vulkan レイヤー、ログオン タスク、管理者モード、更新）はここでは無効です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Viewer_ChangesThisPc_Off" xml:space="preserve">
+    <value>ビューアー ウィンドウ (--data-dir) では使用できません。この PC が変更されるためです。</value>
+    <comment>review</comment>
+  </data>
+  <data name="DataDir_Refused_Title" xml:space="preserve">
+    <value>FrameLedger はそのフォルダーを開けません</value>
+    <comment>review</comment>
+  </data>
+  <data name="DataDir_NoFolder" xml:space="preserve">
+    <value>--data-dir にはフォルダーが必要です: FrameLedger.exe --data-dir &lt;フォルダー&gt;</value>
+    <comment>review</comment>
+  </data>
+  <data name="DataDir_Twice" xml:space="preserve">
+    <value>--data-dir が複数回指定されました。フォルダーを 1 つだけ指定してください: FrameLedger.exe --data-dir &lt;フォルダー&gt;</value>
+    <comment>review</comment>
+  </data>
+  <data name="DataDir_Missing_Format" xml:space="preserve">
+    <value>フォルダー {0} は存在しません。--data-dir は FrameLedger のデータ フォルダーのコピーを開きます。先にフォルダーをそこへコピーしてください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="DataDir_Profile_Format" xml:space="preserve">
+    <value>{0} は FrameLedger 自身のデータ フォルダーです。--data-dir はそのコピー用で、テスト ビルドが記録先のデータベースを開かないようにするためのものです。このフォルダーを使うには --data-dir を付けずに FrameLedger を起動してください。</value>
     <comment>review</comment>
   </data>
 </root>

@@ -18,4 +18,6 @@
     <Color x:Key="Chart_Histogram">#CC0A6FB3</Color>
     <!-- Not Chart_SensorSecondary's gold (beta.8): the Sensors tab draws both, and in this theme they were one colour. -->
     <Color x:Key="Chart_Percentile">#FF795548</Color>
+    <!-- beta.14: the seventh line on the temperatures plot (the card's memory temperature). -->
+    <Color x:Key="Chart_SensorTertiary">#FFBE008C</Color>
 </ResourceDictionary>

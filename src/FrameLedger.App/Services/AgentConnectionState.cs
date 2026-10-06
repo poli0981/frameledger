@@ -26,4 +26,10 @@ public enum AgentConnectionState
     /// flashing on the taskbar, and the round waits for its answer.
     /// </summary>
     Elevating,
+
+    /// <summary>
+    /// A viewer over a copy of a data folder (beta.15, D52: <c>--data-dir</c>): no Agent is started or contacted, ever —
+    /// the state never changes.
+    /// </summary>
+    Viewer,
 }

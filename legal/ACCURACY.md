@@ -11,8 +11,8 @@
   that changes what FrameLedger.Overlay or the capture host does; date the change.
   HTML comments are not part of the block.
 -->
-> ⚠ **What FrameLedger actually measures today — 2026-10-04.** The software is a beta; its latest
-> **pre-release is `0.1.0-beta.13`** (2026-10-04), an unsigned installer built from that tag with its
+> ⚠ **What FrameLedger actually measures today — 2026-10-06.** The software is a beta; its latest
+> **pre-release is `0.1.0-beta.16`** (2026-10-06), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
 > game in the library runs (unless you switched its recording off), injects only into games you enabled
@@ -75,6 +75,14 @@
 >   and charted. **Not measured at all:** the video-memory budget Windows gives a game, which frame
 >   spikes were shader compilation, PC latency (Reflex), and HDR. Stutter count and stutter time are
 >   measured from frame times.
+> - **Pacing, VSync and the graphics card (since beta.14):** the share of the time below 30 FPS, below 60 FPS and below
+>   the monitor's refresh rate, measured from frame times with small margins so that a game held at its limit is not
+>   counted as below it (a rate less than 2 % under the line reads partly as at it), and how much one frame's time
+>   differs from the next; for Direct3D titles, how many frames asked to wait for the display and how many allowed
+>   tearing — what the game asked, not what the driver did; the graphics card's clock speeds, fan speed and memory
+>   temperature in every session, and, on NVIDIA cards only, how much of the time its power limit or its temperature held
+>   it back, read once a second; and frames per watt — the game's own frames per second for each watt the graphics card
+>   drew, never counting generated frames, `N/A` where the game's own frame rate is not known.
 > - **Processor and memory:** how busy the processor was (time busy, all cores together — not the
 >   frequency-scaled figure Task Manager draws) and how much system memory was in use, read from
 >   Windows once a second and charted. Processor temperature is read only when the Agent runs as

@@ -104,6 +104,23 @@ Implemented in `FrameLedger.Injector` and reached from managed code through a th
    > inspected (`ERROR_ACCESS_DENIED`) refuses too — there is no "scanned what we
    > could" state.
    >
+   > **Amended 2026-10-06 (owner decision D51, beta.15): a parent link is followed only while creation times allow it.**
+   > The set is walked over one process snapshot, which links a process to its parent by pid alone, and Windows reuses
+   > pids. A launcher that exits after starting its game leaves the game naming a pid that may now belong to anything:
+   > until beta.15 the walk scanned whatever held it — a protected process refused the session as unreadable, a
+   > blocklisted one turned the game's hooking off for good — and a cycle of reused pids sent the same processes round
+   > again. A parent/child link is now cut **only when it is proven wrong**: both creation times read (`GetProcessTimes`,
+   > under the module scan's own read-only right) and the child created **before** the process whose pid it names as its
+   > parent, which no real child can be. A cut ancestor link ends the ancestor walk there; a cut child is not walked, nor
+   > is anything below it. A time that cannot be read keeps the link, equal times keep it, and each pid is walked and
+   > scanned once (`WalkScanSet`, `fl_guard_scanset.cpp`). Nothing else about the set moved: the launcher boundary, the
+   > depth (16 ancestors), the frontier (512 — one more refuses) and "a member that cannot be read refuses". **The
+   > residual:** creation times are wall-clock, so a clock set *backwards* between a parent's start and its child's makes a
+   > real link look wrong and drops that branch from the module check; the install-folder scan and the machine-wide driver
+   > and service checks do not depend on the tree. ctest `fl_guard` `[D51]` holds the walk against fixtures (a reused
+   > parent, an older "child", unread times, equal times, cycles, the limits) and the real source against a child this
+   > process starts.
+   >
    > **One reviewed exception, decided 2026-08-03 and implemented 2026-08-04
    > (§S18), then re-keyed the same day (§S22(b)).** A module that is FrameLedger's
    > own does not trip the *fuzzy* fragment tier. The exact blocklist still applies

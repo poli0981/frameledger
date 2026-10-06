@@ -181,6 +181,29 @@ public sealed class FrameTimeSeriesTests
         s.ExcludedNonPositive.Should().Be(1);
     }
 
+    /// <summary>beta.14: a kept interval after one left out is not the neighbour of the one kept before it.</summary>
+    [Fact]
+    public void AnIntervalAfterAGapOrAStoppedClockFollowsABreak()
+    {
+        List<FrameSample> stream = FromFrameTimes([10, 30, 10, 10]);
+        stream.Add(stream[^1]);
+        stream.Add(stream[^1] with { Qpc = stream[^1].Qpc + 10_000 });
+
+        FrameTimeSeries s = FrameTimeSeries.From(stream, new HashSet<int> { 2 }, Frequency);
+
+        s.FrameTimesMs.Should().Equal(10, 10, 10, 10);
+        s.FollowsBreak.Should().Equal(false, true, false, true);
+    }
+
+    [Fact]
+    public void AnApplicationFrameAfterABrokenChainFollowsABreak()
+    {
+        FrameTimeSeries s = FrameTimeSeries.ApplicationFrames(FgStream(appFrames: 5, k: 2), new HashSet<int> { 5 }, Frequency);
+
+        s.EndingSample.Should().Equal(2, 4, 8);
+        s.FollowsBreak.Should().Equal(false, false, true);
+    }
+
     [Fact]
     public void ApplicationFramesRefuseAZeroFrequency() =>
         FluentActions.Invoking(() => FrameTimeSeries.ApplicationFrames(FgStream(2, 2), null, 0)).Should().Throw<ArgumentOutOfRangeException>();

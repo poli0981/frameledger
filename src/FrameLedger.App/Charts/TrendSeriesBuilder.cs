@@ -52,7 +52,10 @@ public static class TrendSeriesBuilder
     public static string UnitOf(TrendMetric metric) => metric switch
     {
         TrendMetric.PresentedFps or TrendMetric.NativeFps or TrendMetric.Displayed or TrendMetric.P1Low or TrendMetric.P01Low => Strings.Trend_Unit_Fps,
-        TrendMetric.MaxGpuTemp or TrendMetric.MaxCpuTemp => Strings.Trend_Unit_Celsius,
+        TrendMetric.MaxGpuTemp or TrendMetric.MaxCpuTemp or TrendMetric.MaxGpuMemTemp => Strings.Trend_Unit_Celsius,
+        TrendMetric.FrameToFrame => Strings.Trend_Unit_Ms,
+        TrendMetric.GpuCoreClock => Strings.Trend_Unit_Mhz,
+        TrendMetric.Efficiency => Strings.Trend_Unit_FpsPerWatt,
         TrendMetric.AvgGpuPower => Strings.Trend_Unit_Watts,
         TrendMetric.AvgRam or TrendMetric.GameVramMedian or TrendMetric.GameVramPeak or TrendMetric.GameRamMedian or TrendMetric.GameRamPeak => Strings.Trend_Unit_Gigabytes,
         TrendMetric.FgFactor => Strings.Trend_Unit_Factor,
@@ -106,7 +109,8 @@ public static class TrendSeriesBuilder
     /// </summary>
     public static bool IsMachineMetric(TrendMetric metric) => metric is TrendMetric.MaxGpuTemp or TrendMetric.AvgGpuLoad or TrendMetric.AvgGpuPower
         or TrendMetric.AvgCpuLoad or TrendMetric.MaxCpuTemp or TrendMetric.AvgRam
-        or TrendMetric.GameVramMedian or TrendMetric.GameVramPeak or TrendMetric.GameRamMedian or TrendMetric.GameRamPeak;
+        or TrendMetric.GameVramMedian or TrendMetric.GameVramPeak or TrendMetric.GameRamMedian or TrendMetric.GameRamPeak
+        or TrendMetric.GpuCoreClock or TrendMetric.MaxGpuMemTemp or TrendMetric.PowerLimitShare;
 
     public static int ExcludedCount(IReadOnlyList<SessionRow> rows, TrendMetric metric)
     {
@@ -170,9 +174,24 @@ public static class TrendSeriesBuilder
             TrendMetric.DisplayExclusiveShare => DisplayShare(row, DisplayMode.ExclusiveFullscreen),
             TrendMetric.DisplayBorderlessShare => DisplayShare(row, DisplayMode.Borderless),
             TrendMetric.DisplayWindowedShare => DisplayShare(row, DisplayMode.Windowed),
-            _ => null,
+            _ => Beta14ValueOf(row, metric),
         };
     }
+
+    /// <summary>beta.14 (D49): the values of schema 0019 — null on a row written before it, as on one where nothing measured them.</summary>
+    private static double? Beta14ValueOf(SessionRow row, TrendMetric metric) => metric switch
+    {
+        TrendMetric.TimeBelow60 => row.TimeBelow60Pct,
+        TrendMetric.TimeBelowRefresh => row.TimeBelowRefreshPct,
+        TrendMetric.FrameToFrame => row.FrametimeDeltaMeanMs,
+        TrendMetric.RenderScale => row.UpscaleRatio is > 0 ? 100.0 / row.UpscaleRatio.Value : null,
+        TrendMetric.VsyncShare => row.VsyncPresentPct,
+        TrendMetric.GpuCoreClock => row.AvgGpuCoreClockMhz,
+        TrendMetric.MaxGpuMemTemp => row.MaxGpuMemTemp,
+        TrendMetric.PowerLimitShare => row.PowerLimitPct,
+        TrendMetric.Efficiency => row.AppFramesPerJoule,
+        _ => null,
+    };
 
     /// <summary>MiB as stored, in GB as Task Manager counts them (1 GB = 1024 MiB).</summary>
     private static double? Gb(double? mib) => mib / 1024.0;

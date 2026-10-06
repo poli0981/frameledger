@@ -180,6 +180,52 @@ public sealed class LedgerDatabaseTests
     }
 
     /// <summary>
+    /// Schema 0019 (2026-10-06, beta.14, D49): pacing, the present arguments, the card's clocks and limits and efficiency,
+    /// thirteen REAL columns, ADD COLUMN only — a session written before has none of them and reads N/A, never a zero.
+    /// </summary>
+    [Fact]
+    public async Task ScriptNineteenAddsThePacingAndCardColumnsAndAnEarlierSessionHasNone()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(19);
+        long gameId = (await new SqliteGameRepository(f.Db).EnsureAsync(
+            new() { ExePath = @"C:\Games\P\p.exe", SizeBytes = 1, MtimeUnixMs = 2 }, "P", Ct).ConfigureAwait(true)).Id;
+        long snapshotId = await new SqliteHardwareSnapshotRepository(f.Db).EnsureAsync(new HardwareSnapshot { GpuName = "g" }, DateTimeOffset.UnixEpoch, Ct)
+            .ConfigureAwait(true);
+        string path = f.Path;
+        await f.Db.DisposeAsync().ConfigureAwait(true);
+        var c18 = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        await using (c18.ConfigureAwait(true))
+        {
+            await c18.OpenAsync(Ct).ConfigureAwait(true);
+            await RewindToAsync(c18, 18).ConfigureAwait(true);
+            await c18.ExecuteAsync(new CommandDefinition(
+                "INSERT INTO sessions (session_guid, game_id, snapshot_id, started_at, ended_at, duration_s, qpc_epoch, qpc_frequency, capture_tier, capture_mode, exit_status, frame_count, app_frame_count, displayed_frame_count, dropped_frames, avg_gpu_power_w) "
+                + "VALUES ('00000000-0000-0000-0000-000000000019', @gameId, @snapshotId, 0, 60000, 60, 0, 10000000, 1, 'attach', 'normal', 6000, 6000, 6000, 0, 250)",
+                new { gameId, snapshotId }, cancellationToken: Ct)).ConfigureAwait(true);
+        }
+
+        LedgerDatabase migrated = await LedgerDatabase.OpenAsync(path, ct: Ct).ConfigureAwait(true);
+        await using (migrated.ConfigureAwait(true))
+        {
+            migrated.SchemaVersion.Should().Be(MigrationRunner.LatestVersion);
+            IReadOnlyList<string> added = await migrated.ReadAsync(async (c, ct) => (IReadOnlyList<string>)[.. await c.QueryAsync<string>(new CommandDefinition(
+                "SELECT name FROM pragma_table_info('sessions') WHERE name IN ('time_below_30_pct', 'time_below_60_pct', 'time_below_refresh_pct', "
+                + "'frametime_delta_mean_ms', 'vsync_present_pct', 'tearing_allowed_pct', 'avg_gpu_core_clock_mhz', 'avg_gpu_mem_clock_mhz', "
+                + "'avg_gpu_fan_rpm', 'max_gpu_mem_temp', 'power_limit_pct', 'thermal_limit_pct', 'app_frames_per_joule') AND type = 'REAL'",
+                cancellationToken: ct)).ConfigureAwait(false)], Ct).ConfigureAwait(true);
+            added.Should().HaveCount(13);
+            SessionRow before = (await new SqliteSessionRepository(migrated).FindAsync(Guid.Parse("00000000-0000-0000-0000-000000000019"), Ct).ConfigureAwait(true))!;
+            before.AvgGpuPowerW.Should().Be(250, "the row keeps everything it had");
+            before.TimeBelow60Pct.Should().BeNull("a session recorded before beta.14 has no pacing, and reads N/A");
+            before.VsyncPresentPct.Should().BeNull();
+            before.AvgGpuCoreClockMhz.Should().BeNull();
+            before.PowerLimitPct.Should().BeNull();
+            before.AppFramesPerJoule.Should().BeNull("never computed after the fact from the stored averages");
+        }
+    }
+
+    /// <summary>
     /// Schema 0017 (2026-10-03, beta.11, D38): <c>games.ac_exception_trial_failed_at</c>, NULL on every row written before — a
     /// grant made under D33 keeps everything it had and carries no failed trial.
     /// </summary>

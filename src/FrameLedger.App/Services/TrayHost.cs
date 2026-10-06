@@ -15,12 +15,16 @@ namespace FrameLedger.App.Services;
 /// and tooltip follow the state, the context menu is the four items, a left click opens the window, and the
 /// FR-3.8 balloon's click opens the saved session. Created once the shell is up, on the UI thread.
 /// </summary>
-public sealed class TrayHost : IDisposable
+public sealed class TrayHost : IDisposable, ILanguageFollower
 {
     private readonly TrayViewModel _viewModel;
     private readonly WindowClosePolicy _policy;
     private TaskbarIcon? _icon;
     private System.Drawing.Icon? _image;
+    private MenuItem? _open;
+    private MenuItem? _pause;
+    private MenuItem? _status;
+    private MenuItem? _exit;
 
     public TrayHost(TrayViewModel viewModel, WindowClosePolicy policy)
     {
@@ -40,12 +44,16 @@ public sealed class TrayHost : IDisposable
         try
         {
             var menu = new ContextMenu();
-            menu.Items.Add(new MenuItem { Header = Strings.Tray_Open, Command = _viewModel.OpenCommand });
-            var pause = new MenuItem { Header = _viewModel.PauseText, Command = _viewModel.TogglePauseCommand };
+            _open = new MenuItem { Header = Strings.Tray_Open, Command = _viewModel.OpenCommand };
+            menu.Items.Add(_open);
+            var pause = new MenuItem { Header = _viewModel.PauseText, Command = _viewModel.TogglePauseCommand, IsEnabled = _viewModel.ActsOnThisPc };
+            _pause = pause;
             menu.Items.Add(pause);
-            menu.Items.Add(new MenuItem { Header = Strings.Tray_AgentStatus, Command = _viewModel.AgentStatusCommand });
+            _status = new MenuItem { Header = Strings.Tray_AgentStatus, Command = _viewModel.AgentStatusCommand };
+            menu.Items.Add(_status);
             menu.Items.Add(new Separator());
-            menu.Items.Add(new MenuItem { Header = Strings.Tray_Exit, Command = _viewModel.ExitCommand });
+            _exit = new MenuItem { Header = Strings.Tray_Exit, Command = _viewModel.ExitCommand };
+            menu.Items.Add(_exit);
 
             _image = TrayIcons.For(_viewModel.State);
             var icon = new TaskbarIcon
@@ -110,6 +118,30 @@ public sealed class TrayHost : IDisposable
         _image?.Dispose();
         _image = null;
     }
+
+    /// <summary>
+    /// The menu and the tooltip in the current language (beta.15): they were written once, when the icon was made, and a
+    /// change of language left them in the first one. Nothing before the icon exists.
+    /// </summary>
+    public void FollowLanguage()
+    {
+        if (_icon is null || _open is null || _pause is null || _status is null || _exit is null)
+        {
+            return;
+        }
+
+        _open.Header = Strings.Tray_Open;
+        _pause.Header = _viewModel.PauseText;
+        _status.Header = Strings.Tray_AgentStatus;
+        _exit.Header = Strings.Tray_Exit;
+        _icon.ToolTipText = _viewModel.Tooltip;
+    }
+
+    /// <summary>The menu's items as shown, in order, for a test; empty before the icon exists.</summary>
+    internal IReadOnlyList<string> MenuHeaders =>
+        _open is null || _pause is null || _status is null || _exit is null
+            ? []
+            : [.. new[] { _open, _pause, _status, _exit }.Select(static m => m.Header as string ?? string.Empty)];
 
     private void OnViewModelChanged(MenuItem pause, PropertyChangedEventArgs e)
     {

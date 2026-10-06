@@ -68,6 +68,7 @@ public static class Strings
         nameof(Agent_State_Missing),
         nameof(Agent_State_Offline),
         nameof(Agent_State_Starting),
+        nameof(Agent_State_Viewer),
         nameof(App_Title),
         nameof(Arch_AnyCpu),
         nameof(Arch_AnyCpu32),
@@ -106,6 +107,7 @@ public static class Strings
         nameof(Chart_Axis_Fps),
         nameof(Chart_Axis_Frametime),
         nameof(Chart_Axis_Percentile),
+        nameof(Chart_Axis_RenderScale),
         nameof(Chart_Axis_Sensor),
         nameof(Chart_Axis_Time),
         nameof(Chart_Axis_TimeFromFirstFrame),
@@ -115,6 +117,7 @@ public static class Strings
         nameof(Chart_Note_NoApplicationFrames),
         nameof(Chart_Note_OutsideRange_Format),
         nameof(Chart_Note_PresentsTiming),
+        nameof(Chart_RenderScale_NotMeasured),
         nameof(Chart_Series_AppFrames),
         nameof(Chart_Series_Displayed),
         nameof(Chart_Series_GpuLoad),
@@ -156,19 +159,28 @@ public static class Strings
         nameof(Compare_Metric_Display),
         nameof(Compare_Metric_Displayed),
         nameof(Compare_Metric_Duration),
+        nameof(Compare_Metric_Efficiency),
+        nameof(Compare_Metric_FrameToFrame),
         nameof(Compare_Metric_GameRamMedian),
         nameof(Compare_Metric_GameRamPeak),
         nameof(Compare_Metric_GameVramMedian),
         nameof(Compare_Metric_GameVramPeak),
+        nameof(Compare_Metric_GpuCoreClock),
         nameof(Compare_Metric_MaxCpuTemp),
+        nameof(Compare_Metric_MaxGpuMemTemp),
         nameof(Compare_Metric_MaxGpuTemp),
         nameof(Compare_Metric_Median),
         nameof(Compare_Metric_Monitor),
         nameof(Compare_Metric_Native),
         nameof(Compare_Metric_P01Low),
         nameof(Compare_Metric_P1Low),
+        nameof(Compare_Metric_PowerLimit),
         nameof(Compare_Metric_Presented),
+        nameof(Compare_Metric_RenderScale),
         nameof(Compare_Metric_StutterPct),
+        nameof(Compare_Metric_TimeBelow60),
+        nameof(Compare_Metric_TimeBelowRefresh),
+        nameof(Compare_Metric_Vsync),
         nameof(Compare_Metric_Window),
         nameof(Compare_Mixed_Body),
         nameof(Compare_Mixed_Legend),
@@ -209,6 +221,11 @@ public static class Strings
         nameof(Dashboard_Totals_Games),
         nameof(Dashboard_Totals_Playtime),
         nameof(Dashboard_Totals_ThisWeek),
+        nameof(DataDir_Missing_Format),
+        nameof(DataDir_NoFolder),
+        nameof(DataDir_Profile_Format),
+        nameof(DataDir_Refused_Title),
+        nameof(DataDir_Twice),
         nameof(DeleteSessions_AgentTooOld),
         nameof(DeleteSessions_AllBody_Format),
         nameof(DeleteSessions_AllTitle),
@@ -375,12 +392,16 @@ public static class Strings
         nameof(FirstRun_Title),
         nameof(Format_Duration_HoursMinutes_Format),
         nameof(Format_Duration_MinutesSeconds_Format),
+        nameof(Format_FramesPerJoule_Format),
+        nameof(Format_Frequency_Format),
         nameof(Format_Memory_Gb_Format),
         nameof(Format_Memory_Mb_Format),
+        nameof(Format_Milliseconds_Format),
         nameof(Format_Playtime_Hours_Format),
         nameof(Format_Playtime_Minutes_Format),
         nameof(Format_Resolution_Format),
         nameof(Format_Resolution_Single_Format),
+        nameof(Format_Rpm_Format),
         nameof(Format_Temperature_Format),
         nameof(Fps_Census_NoRuntime),
         nameof(Fps_Census_NoRuntime_Tooltip),
@@ -676,8 +697,13 @@ public static class Strings
         nameof(Rules_Update_NoAgent),
         nameof(Rules_Update_Title),
         nameof(Sensors_Axis_Gb),
+        nameof(Sensors_Axis_Mhz),
+        nameof(Sensors_Axis_Rpm),
         nameof(Sensors_Axis_Watts),
+        nameof(Sensors_Clocks_Header),
         nameof(Sensors_Empty),
+        nameof(Sensors_Limit_Power),
+        nameof(Sensors_Limit_Thermal),
         nameof(Sensors_Ram_Header),
         nameof(Sensors_Series_CpuLoad),
         nameof(Sensors_Series_CpuTemp),
@@ -686,10 +712,16 @@ public static class Strings
         nameof(Sensors_Series_GameRamWs),
         nameof(Sensors_Series_GameVram),
         nameof(Sensors_Series_GameVramShared),
+        nameof(Sensors_Series_GpuCoreClock),
+        nameof(Sensors_Series_GpuFan),
         nameof(Sensors_Series_GpuHotspot),
         nameof(Sensors_Series_GpuLoad),
+        nameof(Sensors_Series_GpuMemClock),
+        nameof(Sensors_Series_GpuMemTemp),
         nameof(Sensors_Series_GpuPower),
+        nameof(Sensors_Series_GpuPowerLimit),
         nameof(Sensors_Series_GpuTemp),
+        nameof(Sensors_Series_GpuThermalLimit),
         nameof(Sensors_Series_Ram),
         nameof(Sensors_Series_VramAdapter),
         nameof(Sensors_Temps_Header),
@@ -846,14 +878,27 @@ public static class Strings
         nameof(Summary_Notes_Placeholder),
         nameof(Summary_NotFound),
         nameof(Summary_Open),
+        nameof(Summary_RenderScale_Header),
         nameof(Summary_Save),
         nameof(Summary_Saved),
         nameof(Summary_Show_Displayed),
         nameof(Summary_Show_Sensors),
         nameof(Summary_Stat_Avg),
+        nameof(Summary_Stat_Below30_Format),
+        nameof(Summary_Stat_BelowRefresh_Format),
+        nameof(Summary_Stat_Capture),
+        nameof(Summary_Stat_Capture_Format),
+        nameof(Summary_Stat_Clocks_Format),
         nameof(Summary_Stat_Cpu),
         nameof(Summary_Stat_Display),
+        nameof(Summary_Stat_DisplayedLow_Format),
         nameof(Summary_Stat_Duration),
+        nameof(Summary_Stat_Efficiency),
+        nameof(Summary_Stat_Efficiency_Note),
+        nameof(Summary_Stat_FanMemTemp_Format),
+        nameof(Summary_Stat_Focus),
+        nameof(Summary_Stat_Focus_Format),
+        nameof(Summary_Stat_FrameToFrame),
         nameof(Summary_Stat_GameRam),
         nameof(Summary_Stat_GameRam_Suffix_Format),
         nameof(Summary_Stat_GameRamWs),
@@ -861,16 +906,25 @@ public static class Strings
         nameof(Summary_Stat_GameVram),
         nameof(Summary_Stat_GameVram_Suffix_Format),
         nameof(Summary_Stat_Gpu),
+        nameof(Summary_Stat_GpuClocks),
+        nameof(Summary_Stat_GpuLimits),
+        nameof(Summary_Stat_Limits_Format),
         nameof(Summary_Stat_LoadTemp_Format),
         nameof(Summary_Stat_Median),
         nameof(Summary_Stat_MinMax),
         nameof(Summary_Stat_MinMax_Format),
+        nameof(Summary_Stat_OfFrames_Format),
         nameof(Summary_Stat_P01Low),
         nameof(Summary_Stat_P1Low),
+        nameof(Summary_Stat_RaysPerPixel_Format),
+        nameof(Summary_Stat_RayTracing),
         nameof(Summary_Stat_StdDev),
         nameof(Summary_Stat_StdDev_Format),
         nameof(Summary_Stat_Stutter),
         nameof(Summary_Stat_Stutter_Format),
+        nameof(Summary_Stat_Tearing_Format),
+        nameof(Summary_Stat_TimeBelow60),
+        nameof(Summary_Stat_Vsync),
         nameof(Summary_Tags_Placeholder),
         nameof(Summary_Tier2_Body),
         nameof(Summary_Tier2_Why_Blocked_Format),
@@ -935,23 +989,35 @@ public static class Strings
         nameof(Trend_Metric_Displayed),
         nameof(Trend_Metric_DisplayExclusive),
         nameof(Trend_Metric_DisplayWindowed),
+        nameof(Trend_Metric_Efficiency),
         nameof(Trend_Metric_FgFactor),
+        nameof(Trend_Metric_FrameToFrame),
         nameof(Trend_Metric_GameRamMedian),
         nameof(Trend_Metric_GameRamPeak),
         nameof(Trend_Metric_GameVramMedian),
         nameof(Trend_Metric_GameVramPeak),
+        nameof(Trend_Metric_GpuCoreClock),
         nameof(Trend_Metric_Label),
         nameof(Trend_Metric_MaxCpuTemp),
+        nameof(Trend_Metric_MaxGpuMemTemp),
         nameof(Trend_Metric_MaxGpuTemp),
         nameof(Trend_Metric_NativeFps),
         nameof(Trend_Metric_P01Low),
         nameof(Trend_Metric_P1Low),
+        nameof(Trend_Metric_PowerLimitShare),
         nameof(Trend_Metric_PresentedFps),
+        nameof(Trend_Metric_RenderScale),
+        nameof(Trend_Metric_TimeBelow60),
+        nameof(Trend_Metric_TimeBelowRefresh),
+        nameof(Trend_Metric_VsyncShare),
         nameof(Trend_Partial_Note),
         nameof(Trend_Unit_Celsius),
         nameof(Trend_Unit_Factor),
         nameof(Trend_Unit_Fps),
+        nameof(Trend_Unit_FpsPerWatt),
         nameof(Trend_Unit_Gigabytes),
+        nameof(Trend_Unit_Mhz),
+        nameof(Trend_Unit_Ms),
         nameof(Trend_Unit_Percent),
         nameof(Trend_Unit_Watts),
         nameof(Uninstall_DataFolder_Body),
@@ -987,6 +1053,9 @@ public static class Strings
         nameof(Upscaler_DriverReported_Format),
         nameof(Upscaler_None),
         nameof(Upscaler_Unknown),
+        nameof(Viewer_Banner_Body_Format),
+        nameof(Viewer_Banner_Title),
+        nameof(Viewer_ChangesThisPc_Off),
     ];
 
     public static string A11y_Games_Sort => ResourceManager.GetString(nameof(A11y_Games_Sort), Culture) ?? nameof(A11y_Games_Sort);
@@ -1067,6 +1136,8 @@ public static class Strings
 
     public static string Agent_State_Starting => ResourceManager.GetString(nameof(Agent_State_Starting), Culture) ?? nameof(Agent_State_Starting);
 
+    public static string Agent_State_Viewer => ResourceManager.GetString(nameof(Agent_State_Viewer), Culture) ?? nameof(Agent_State_Viewer);
+
     public static string App_Title => ResourceManager.GetString(nameof(App_Title), Culture) ?? nameof(App_Title);
 
     public static string Arch_AnyCpu => ResourceManager.GetString(nameof(Arch_AnyCpu), Culture) ?? nameof(Arch_AnyCpu);
@@ -1143,6 +1214,8 @@ public static class Strings
 
     public static string Chart_Axis_Percentile => ResourceManager.GetString(nameof(Chart_Axis_Percentile), Culture) ?? nameof(Chart_Axis_Percentile);
 
+    public static string Chart_Axis_RenderScale => ResourceManager.GetString(nameof(Chart_Axis_RenderScale), Culture) ?? nameof(Chart_Axis_RenderScale);
+
     public static string Chart_Axis_Sensor => ResourceManager.GetString(nameof(Chart_Axis_Sensor), Culture) ?? nameof(Chart_Axis_Sensor);
 
     public static string Chart_Axis_Time => ResourceManager.GetString(nameof(Chart_Axis_Time), Culture) ?? nameof(Chart_Axis_Time);
@@ -1160,6 +1233,8 @@ public static class Strings
     public static string Chart_Note_OutsideRange_Format => ResourceManager.GetString(nameof(Chart_Note_OutsideRange_Format), Culture) ?? nameof(Chart_Note_OutsideRange_Format);
 
     public static string Chart_Note_PresentsTiming => ResourceManager.GetString(nameof(Chart_Note_PresentsTiming), Culture) ?? nameof(Chart_Note_PresentsTiming);
+
+    public static string Chart_RenderScale_NotMeasured => ResourceManager.GetString(nameof(Chart_RenderScale_NotMeasured), Culture) ?? nameof(Chart_RenderScale_NotMeasured);
 
     public static string Chart_Series_AppFrames => ResourceManager.GetString(nameof(Chart_Series_AppFrames), Culture) ?? nameof(Chart_Series_AppFrames);
 
@@ -1243,6 +1318,10 @@ public static class Strings
 
     public static string Compare_Metric_Duration => ResourceManager.GetString(nameof(Compare_Metric_Duration), Culture) ?? nameof(Compare_Metric_Duration);
 
+    public static string Compare_Metric_Efficiency => ResourceManager.GetString(nameof(Compare_Metric_Efficiency), Culture) ?? nameof(Compare_Metric_Efficiency);
+
+    public static string Compare_Metric_FrameToFrame => ResourceManager.GetString(nameof(Compare_Metric_FrameToFrame), Culture) ?? nameof(Compare_Metric_FrameToFrame);
+
     public static string Compare_Metric_GameRamMedian => ResourceManager.GetString(nameof(Compare_Metric_GameRamMedian), Culture) ?? nameof(Compare_Metric_GameRamMedian);
 
     public static string Compare_Metric_GameRamPeak => ResourceManager.GetString(nameof(Compare_Metric_GameRamPeak), Culture) ?? nameof(Compare_Metric_GameRamPeak);
@@ -1251,7 +1330,11 @@ public static class Strings
 
     public static string Compare_Metric_GameVramPeak => ResourceManager.GetString(nameof(Compare_Metric_GameVramPeak), Culture) ?? nameof(Compare_Metric_GameVramPeak);
 
+    public static string Compare_Metric_GpuCoreClock => ResourceManager.GetString(nameof(Compare_Metric_GpuCoreClock), Culture) ?? nameof(Compare_Metric_GpuCoreClock);
+
     public static string Compare_Metric_MaxCpuTemp => ResourceManager.GetString(nameof(Compare_Metric_MaxCpuTemp), Culture) ?? nameof(Compare_Metric_MaxCpuTemp);
+
+    public static string Compare_Metric_MaxGpuMemTemp => ResourceManager.GetString(nameof(Compare_Metric_MaxGpuMemTemp), Culture) ?? nameof(Compare_Metric_MaxGpuMemTemp);
 
     public static string Compare_Metric_MaxGpuTemp => ResourceManager.GetString(nameof(Compare_Metric_MaxGpuTemp), Culture) ?? nameof(Compare_Metric_MaxGpuTemp);
 
@@ -1265,9 +1348,19 @@ public static class Strings
 
     public static string Compare_Metric_P1Low => ResourceManager.GetString(nameof(Compare_Metric_P1Low), Culture) ?? nameof(Compare_Metric_P1Low);
 
+    public static string Compare_Metric_PowerLimit => ResourceManager.GetString(nameof(Compare_Metric_PowerLimit), Culture) ?? nameof(Compare_Metric_PowerLimit);
+
     public static string Compare_Metric_Presented => ResourceManager.GetString(nameof(Compare_Metric_Presented), Culture) ?? nameof(Compare_Metric_Presented);
 
+    public static string Compare_Metric_RenderScale => ResourceManager.GetString(nameof(Compare_Metric_RenderScale), Culture) ?? nameof(Compare_Metric_RenderScale);
+
     public static string Compare_Metric_StutterPct => ResourceManager.GetString(nameof(Compare_Metric_StutterPct), Culture) ?? nameof(Compare_Metric_StutterPct);
+
+    public static string Compare_Metric_TimeBelow60 => ResourceManager.GetString(nameof(Compare_Metric_TimeBelow60), Culture) ?? nameof(Compare_Metric_TimeBelow60);
+
+    public static string Compare_Metric_TimeBelowRefresh => ResourceManager.GetString(nameof(Compare_Metric_TimeBelowRefresh), Culture) ?? nameof(Compare_Metric_TimeBelowRefresh);
+
+    public static string Compare_Metric_Vsync => ResourceManager.GetString(nameof(Compare_Metric_Vsync), Culture) ?? nameof(Compare_Metric_Vsync);
 
     public static string Compare_Metric_Window => ResourceManager.GetString(nameof(Compare_Metric_Window), Culture) ?? nameof(Compare_Metric_Window);
 
@@ -1348,6 +1441,16 @@ public static class Strings
     public static string Dashboard_Totals_Playtime => ResourceManager.GetString(nameof(Dashboard_Totals_Playtime), Culture) ?? nameof(Dashboard_Totals_Playtime);
 
     public static string Dashboard_Totals_ThisWeek => ResourceManager.GetString(nameof(Dashboard_Totals_ThisWeek), Culture) ?? nameof(Dashboard_Totals_ThisWeek);
+
+    public static string DataDir_Missing_Format => ResourceManager.GetString(nameof(DataDir_Missing_Format), Culture) ?? nameof(DataDir_Missing_Format);
+
+    public static string DataDir_NoFolder => ResourceManager.GetString(nameof(DataDir_NoFolder), Culture) ?? nameof(DataDir_NoFolder);
+
+    public static string DataDir_Profile_Format => ResourceManager.GetString(nameof(DataDir_Profile_Format), Culture) ?? nameof(DataDir_Profile_Format);
+
+    public static string DataDir_Refused_Title => ResourceManager.GetString(nameof(DataDir_Refused_Title), Culture) ?? nameof(DataDir_Refused_Title);
+
+    public static string DataDir_Twice => ResourceManager.GetString(nameof(DataDir_Twice), Culture) ?? nameof(DataDir_Twice);
 
     public static string DeleteSessions_AgentTooOld => ResourceManager.GetString(nameof(DeleteSessions_AgentTooOld), Culture) ?? nameof(DeleteSessions_AgentTooOld);
 
@@ -1681,9 +1784,15 @@ public static class Strings
 
     public static string Format_Duration_MinutesSeconds_Format => ResourceManager.GetString(nameof(Format_Duration_MinutesSeconds_Format), Culture) ?? nameof(Format_Duration_MinutesSeconds_Format);
 
+    public static string Format_FramesPerJoule_Format => ResourceManager.GetString(nameof(Format_FramesPerJoule_Format), Culture) ?? nameof(Format_FramesPerJoule_Format);
+
+    public static string Format_Frequency_Format => ResourceManager.GetString(nameof(Format_Frequency_Format), Culture) ?? nameof(Format_Frequency_Format);
+
     public static string Format_Memory_Gb_Format => ResourceManager.GetString(nameof(Format_Memory_Gb_Format), Culture) ?? nameof(Format_Memory_Gb_Format);
 
     public static string Format_Memory_Mb_Format => ResourceManager.GetString(nameof(Format_Memory_Mb_Format), Culture) ?? nameof(Format_Memory_Mb_Format);
+
+    public static string Format_Milliseconds_Format => ResourceManager.GetString(nameof(Format_Milliseconds_Format), Culture) ?? nameof(Format_Milliseconds_Format);
 
     public static string Format_Playtime_Hours_Format => ResourceManager.GetString(nameof(Format_Playtime_Hours_Format), Culture) ?? nameof(Format_Playtime_Hours_Format);
 
@@ -1692,6 +1801,8 @@ public static class Strings
     public static string Format_Resolution_Format => ResourceManager.GetString(nameof(Format_Resolution_Format), Culture) ?? nameof(Format_Resolution_Format);
 
     public static string Format_Resolution_Single_Format => ResourceManager.GetString(nameof(Format_Resolution_Single_Format), Culture) ?? nameof(Format_Resolution_Single_Format);
+
+    public static string Format_Rpm_Format => ResourceManager.GetString(nameof(Format_Rpm_Format), Culture) ?? nameof(Format_Rpm_Format);
 
     public static string Format_Temperature_Format => ResourceManager.GetString(nameof(Format_Temperature_Format), Culture) ?? nameof(Format_Temperature_Format);
 
@@ -2283,9 +2394,19 @@ public static class Strings
 
     public static string Sensors_Axis_Gb => ResourceManager.GetString(nameof(Sensors_Axis_Gb), Culture) ?? nameof(Sensors_Axis_Gb);
 
+    public static string Sensors_Axis_Mhz => ResourceManager.GetString(nameof(Sensors_Axis_Mhz), Culture) ?? nameof(Sensors_Axis_Mhz);
+
+    public static string Sensors_Axis_Rpm => ResourceManager.GetString(nameof(Sensors_Axis_Rpm), Culture) ?? nameof(Sensors_Axis_Rpm);
+
     public static string Sensors_Axis_Watts => ResourceManager.GetString(nameof(Sensors_Axis_Watts), Culture) ?? nameof(Sensors_Axis_Watts);
 
+    public static string Sensors_Clocks_Header => ResourceManager.GetString(nameof(Sensors_Clocks_Header), Culture) ?? nameof(Sensors_Clocks_Header);
+
     public static string Sensors_Empty => ResourceManager.GetString(nameof(Sensors_Empty), Culture) ?? nameof(Sensors_Empty);
+
+    public static string Sensors_Limit_Power => ResourceManager.GetString(nameof(Sensors_Limit_Power), Culture) ?? nameof(Sensors_Limit_Power);
+
+    public static string Sensors_Limit_Thermal => ResourceManager.GetString(nameof(Sensors_Limit_Thermal), Culture) ?? nameof(Sensors_Limit_Thermal);
 
     public static string Sensors_Ram_Header => ResourceManager.GetString(nameof(Sensors_Ram_Header), Culture) ?? nameof(Sensors_Ram_Header);
 
@@ -2303,13 +2424,25 @@ public static class Strings
 
     public static string Sensors_Series_GameVramShared => ResourceManager.GetString(nameof(Sensors_Series_GameVramShared), Culture) ?? nameof(Sensors_Series_GameVramShared);
 
+    public static string Sensors_Series_GpuCoreClock => ResourceManager.GetString(nameof(Sensors_Series_GpuCoreClock), Culture) ?? nameof(Sensors_Series_GpuCoreClock);
+
+    public static string Sensors_Series_GpuFan => ResourceManager.GetString(nameof(Sensors_Series_GpuFan), Culture) ?? nameof(Sensors_Series_GpuFan);
+
     public static string Sensors_Series_GpuHotspot => ResourceManager.GetString(nameof(Sensors_Series_GpuHotspot), Culture) ?? nameof(Sensors_Series_GpuHotspot);
 
     public static string Sensors_Series_GpuLoad => ResourceManager.GetString(nameof(Sensors_Series_GpuLoad), Culture) ?? nameof(Sensors_Series_GpuLoad);
 
+    public static string Sensors_Series_GpuMemClock => ResourceManager.GetString(nameof(Sensors_Series_GpuMemClock), Culture) ?? nameof(Sensors_Series_GpuMemClock);
+
+    public static string Sensors_Series_GpuMemTemp => ResourceManager.GetString(nameof(Sensors_Series_GpuMemTemp), Culture) ?? nameof(Sensors_Series_GpuMemTemp);
+
     public static string Sensors_Series_GpuPower => ResourceManager.GetString(nameof(Sensors_Series_GpuPower), Culture) ?? nameof(Sensors_Series_GpuPower);
 
+    public static string Sensors_Series_GpuPowerLimit => ResourceManager.GetString(nameof(Sensors_Series_GpuPowerLimit), Culture) ?? nameof(Sensors_Series_GpuPowerLimit);
+
     public static string Sensors_Series_GpuTemp => ResourceManager.GetString(nameof(Sensors_Series_GpuTemp), Culture) ?? nameof(Sensors_Series_GpuTemp);
+
+    public static string Sensors_Series_GpuThermalLimit => ResourceManager.GetString(nameof(Sensors_Series_GpuThermalLimit), Culture) ?? nameof(Sensors_Series_GpuThermalLimit);
 
     public static string Sensors_Series_Ram => ResourceManager.GetString(nameof(Sensors_Series_Ram), Culture) ?? nameof(Sensors_Series_Ram);
 
@@ -2623,6 +2756,8 @@ public static class Strings
 
     public static string Summary_Open => ResourceManager.GetString(nameof(Summary_Open), Culture) ?? nameof(Summary_Open);
 
+    public static string Summary_RenderScale_Header => ResourceManager.GetString(nameof(Summary_RenderScale_Header), Culture) ?? nameof(Summary_RenderScale_Header);
+
     public static string Summary_Save => ResourceManager.GetString(nameof(Summary_Save), Culture) ?? nameof(Summary_Save);
 
     public static string Summary_Saved => ResourceManager.GetString(nameof(Summary_Saved), Culture) ?? nameof(Summary_Saved);
@@ -2633,11 +2768,35 @@ public static class Strings
 
     public static string Summary_Stat_Avg => ResourceManager.GetString(nameof(Summary_Stat_Avg), Culture) ?? nameof(Summary_Stat_Avg);
 
+    public static string Summary_Stat_Below30_Format => ResourceManager.GetString(nameof(Summary_Stat_Below30_Format), Culture) ?? nameof(Summary_Stat_Below30_Format);
+
+    public static string Summary_Stat_BelowRefresh_Format => ResourceManager.GetString(nameof(Summary_Stat_BelowRefresh_Format), Culture) ?? nameof(Summary_Stat_BelowRefresh_Format);
+
+    public static string Summary_Stat_Capture => ResourceManager.GetString(nameof(Summary_Stat_Capture), Culture) ?? nameof(Summary_Stat_Capture);
+
+    public static string Summary_Stat_Capture_Format => ResourceManager.GetString(nameof(Summary_Stat_Capture_Format), Culture) ?? nameof(Summary_Stat_Capture_Format);
+
+    public static string Summary_Stat_Clocks_Format => ResourceManager.GetString(nameof(Summary_Stat_Clocks_Format), Culture) ?? nameof(Summary_Stat_Clocks_Format);
+
     public static string Summary_Stat_Cpu => ResourceManager.GetString(nameof(Summary_Stat_Cpu), Culture) ?? nameof(Summary_Stat_Cpu);
 
     public static string Summary_Stat_Display => ResourceManager.GetString(nameof(Summary_Stat_Display), Culture) ?? nameof(Summary_Stat_Display);
 
+    public static string Summary_Stat_DisplayedLow_Format => ResourceManager.GetString(nameof(Summary_Stat_DisplayedLow_Format), Culture) ?? nameof(Summary_Stat_DisplayedLow_Format);
+
     public static string Summary_Stat_Duration => ResourceManager.GetString(nameof(Summary_Stat_Duration), Culture) ?? nameof(Summary_Stat_Duration);
+
+    public static string Summary_Stat_Efficiency => ResourceManager.GetString(nameof(Summary_Stat_Efficiency), Culture) ?? nameof(Summary_Stat_Efficiency);
+
+    public static string Summary_Stat_Efficiency_Note => ResourceManager.GetString(nameof(Summary_Stat_Efficiency_Note), Culture) ?? nameof(Summary_Stat_Efficiency_Note);
+
+    public static string Summary_Stat_FanMemTemp_Format => ResourceManager.GetString(nameof(Summary_Stat_FanMemTemp_Format), Culture) ?? nameof(Summary_Stat_FanMemTemp_Format);
+
+    public static string Summary_Stat_Focus => ResourceManager.GetString(nameof(Summary_Stat_Focus), Culture) ?? nameof(Summary_Stat_Focus);
+
+    public static string Summary_Stat_Focus_Format => ResourceManager.GetString(nameof(Summary_Stat_Focus_Format), Culture) ?? nameof(Summary_Stat_Focus_Format);
+
+    public static string Summary_Stat_FrameToFrame => ResourceManager.GetString(nameof(Summary_Stat_FrameToFrame), Culture) ?? nameof(Summary_Stat_FrameToFrame);
 
     public static string Summary_Stat_GameRam => ResourceManager.GetString(nameof(Summary_Stat_GameRam), Culture) ?? nameof(Summary_Stat_GameRam);
 
@@ -2653,6 +2812,12 @@ public static class Strings
 
     public static string Summary_Stat_Gpu => ResourceManager.GetString(nameof(Summary_Stat_Gpu), Culture) ?? nameof(Summary_Stat_Gpu);
 
+    public static string Summary_Stat_GpuClocks => ResourceManager.GetString(nameof(Summary_Stat_GpuClocks), Culture) ?? nameof(Summary_Stat_GpuClocks);
+
+    public static string Summary_Stat_GpuLimits => ResourceManager.GetString(nameof(Summary_Stat_GpuLimits), Culture) ?? nameof(Summary_Stat_GpuLimits);
+
+    public static string Summary_Stat_Limits_Format => ResourceManager.GetString(nameof(Summary_Stat_Limits_Format), Culture) ?? nameof(Summary_Stat_Limits_Format);
+
     public static string Summary_Stat_LoadTemp_Format => ResourceManager.GetString(nameof(Summary_Stat_LoadTemp_Format), Culture) ?? nameof(Summary_Stat_LoadTemp_Format);
 
     public static string Summary_Stat_Median => ResourceManager.GetString(nameof(Summary_Stat_Median), Culture) ?? nameof(Summary_Stat_Median);
@@ -2661,9 +2826,15 @@ public static class Strings
 
     public static string Summary_Stat_MinMax_Format => ResourceManager.GetString(nameof(Summary_Stat_MinMax_Format), Culture) ?? nameof(Summary_Stat_MinMax_Format);
 
+    public static string Summary_Stat_OfFrames_Format => ResourceManager.GetString(nameof(Summary_Stat_OfFrames_Format), Culture) ?? nameof(Summary_Stat_OfFrames_Format);
+
     public static string Summary_Stat_P01Low => ResourceManager.GetString(nameof(Summary_Stat_P01Low), Culture) ?? nameof(Summary_Stat_P01Low);
 
     public static string Summary_Stat_P1Low => ResourceManager.GetString(nameof(Summary_Stat_P1Low), Culture) ?? nameof(Summary_Stat_P1Low);
+
+    public static string Summary_Stat_RaysPerPixel_Format => ResourceManager.GetString(nameof(Summary_Stat_RaysPerPixel_Format), Culture) ?? nameof(Summary_Stat_RaysPerPixel_Format);
+
+    public static string Summary_Stat_RayTracing => ResourceManager.GetString(nameof(Summary_Stat_RayTracing), Culture) ?? nameof(Summary_Stat_RayTracing);
 
     public static string Summary_Stat_StdDev => ResourceManager.GetString(nameof(Summary_Stat_StdDev), Culture) ?? nameof(Summary_Stat_StdDev);
 
@@ -2672,6 +2843,12 @@ public static class Strings
     public static string Summary_Stat_Stutter => ResourceManager.GetString(nameof(Summary_Stat_Stutter), Culture) ?? nameof(Summary_Stat_Stutter);
 
     public static string Summary_Stat_Stutter_Format => ResourceManager.GetString(nameof(Summary_Stat_Stutter_Format), Culture) ?? nameof(Summary_Stat_Stutter_Format);
+
+    public static string Summary_Stat_Tearing_Format => ResourceManager.GetString(nameof(Summary_Stat_Tearing_Format), Culture) ?? nameof(Summary_Stat_Tearing_Format);
+
+    public static string Summary_Stat_TimeBelow60 => ResourceManager.GetString(nameof(Summary_Stat_TimeBelow60), Culture) ?? nameof(Summary_Stat_TimeBelow60);
+
+    public static string Summary_Stat_Vsync => ResourceManager.GetString(nameof(Summary_Stat_Vsync), Culture) ?? nameof(Summary_Stat_Vsync);
 
     public static string Summary_Tags_Placeholder => ResourceManager.GetString(nameof(Summary_Tags_Placeholder), Culture) ?? nameof(Summary_Tags_Placeholder);
 
@@ -2801,7 +2978,11 @@ public static class Strings
 
     public static string Trend_Metric_DisplayWindowed => ResourceManager.GetString(nameof(Trend_Metric_DisplayWindowed), Culture) ?? nameof(Trend_Metric_DisplayWindowed);
 
+    public static string Trend_Metric_Efficiency => ResourceManager.GetString(nameof(Trend_Metric_Efficiency), Culture) ?? nameof(Trend_Metric_Efficiency);
+
     public static string Trend_Metric_FgFactor => ResourceManager.GetString(nameof(Trend_Metric_FgFactor), Culture) ?? nameof(Trend_Metric_FgFactor);
+
+    public static string Trend_Metric_FrameToFrame => ResourceManager.GetString(nameof(Trend_Metric_FrameToFrame), Culture) ?? nameof(Trend_Metric_FrameToFrame);
 
     public static string Trend_Metric_GameRamMedian => ResourceManager.GetString(nameof(Trend_Metric_GameRamMedian), Culture) ?? nameof(Trend_Metric_GameRamMedian);
 
@@ -2811,9 +2992,13 @@ public static class Strings
 
     public static string Trend_Metric_GameVramPeak => ResourceManager.GetString(nameof(Trend_Metric_GameVramPeak), Culture) ?? nameof(Trend_Metric_GameVramPeak);
 
+    public static string Trend_Metric_GpuCoreClock => ResourceManager.GetString(nameof(Trend_Metric_GpuCoreClock), Culture) ?? nameof(Trend_Metric_GpuCoreClock);
+
     public static string Trend_Metric_Label => ResourceManager.GetString(nameof(Trend_Metric_Label), Culture) ?? nameof(Trend_Metric_Label);
 
     public static string Trend_Metric_MaxCpuTemp => ResourceManager.GetString(nameof(Trend_Metric_MaxCpuTemp), Culture) ?? nameof(Trend_Metric_MaxCpuTemp);
+
+    public static string Trend_Metric_MaxGpuMemTemp => ResourceManager.GetString(nameof(Trend_Metric_MaxGpuMemTemp), Culture) ?? nameof(Trend_Metric_MaxGpuMemTemp);
 
     public static string Trend_Metric_MaxGpuTemp => ResourceManager.GetString(nameof(Trend_Metric_MaxGpuTemp), Culture) ?? nameof(Trend_Metric_MaxGpuTemp);
 
@@ -2823,7 +3008,17 @@ public static class Strings
 
     public static string Trend_Metric_P1Low => ResourceManager.GetString(nameof(Trend_Metric_P1Low), Culture) ?? nameof(Trend_Metric_P1Low);
 
+    public static string Trend_Metric_PowerLimitShare => ResourceManager.GetString(nameof(Trend_Metric_PowerLimitShare), Culture) ?? nameof(Trend_Metric_PowerLimitShare);
+
     public static string Trend_Metric_PresentedFps => ResourceManager.GetString(nameof(Trend_Metric_PresentedFps), Culture) ?? nameof(Trend_Metric_PresentedFps);
+
+    public static string Trend_Metric_RenderScale => ResourceManager.GetString(nameof(Trend_Metric_RenderScale), Culture) ?? nameof(Trend_Metric_RenderScale);
+
+    public static string Trend_Metric_TimeBelow60 => ResourceManager.GetString(nameof(Trend_Metric_TimeBelow60), Culture) ?? nameof(Trend_Metric_TimeBelow60);
+
+    public static string Trend_Metric_TimeBelowRefresh => ResourceManager.GetString(nameof(Trend_Metric_TimeBelowRefresh), Culture) ?? nameof(Trend_Metric_TimeBelowRefresh);
+
+    public static string Trend_Metric_VsyncShare => ResourceManager.GetString(nameof(Trend_Metric_VsyncShare), Culture) ?? nameof(Trend_Metric_VsyncShare);
 
     public static string Trend_Partial_Note => ResourceManager.GetString(nameof(Trend_Partial_Note), Culture) ?? nameof(Trend_Partial_Note);
 
@@ -2833,7 +3028,13 @@ public static class Strings
 
     public static string Trend_Unit_Fps => ResourceManager.GetString(nameof(Trend_Unit_Fps), Culture) ?? nameof(Trend_Unit_Fps);
 
+    public static string Trend_Unit_FpsPerWatt => ResourceManager.GetString(nameof(Trend_Unit_FpsPerWatt), Culture) ?? nameof(Trend_Unit_FpsPerWatt);
+
     public static string Trend_Unit_Gigabytes => ResourceManager.GetString(nameof(Trend_Unit_Gigabytes), Culture) ?? nameof(Trend_Unit_Gigabytes);
+
+    public static string Trend_Unit_Mhz => ResourceManager.GetString(nameof(Trend_Unit_Mhz), Culture) ?? nameof(Trend_Unit_Mhz);
+
+    public static string Trend_Unit_Ms => ResourceManager.GetString(nameof(Trend_Unit_Ms), Culture) ?? nameof(Trend_Unit_Ms);
 
     public static string Trend_Unit_Percent => ResourceManager.GetString(nameof(Trend_Unit_Percent), Culture) ?? nameof(Trend_Unit_Percent);
 
@@ -2904,4 +3105,10 @@ public static class Strings
     public static string Upscaler_None => ResourceManager.GetString(nameof(Upscaler_None), Culture) ?? nameof(Upscaler_None);
 
     public static string Upscaler_Unknown => ResourceManager.GetString(nameof(Upscaler_Unknown), Culture) ?? nameof(Upscaler_Unknown);
+
+    public static string Viewer_Banner_Body_Format => ResourceManager.GetString(nameof(Viewer_Banner_Body_Format), Culture) ?? nameof(Viewer_Banner_Body_Format);
+
+    public static string Viewer_Banner_Title => ResourceManager.GetString(nameof(Viewer_Banner_Title), Culture) ?? nameof(Viewer_Banner_Title);
+
+    public static string Viewer_ChangesThisPc_Off => ResourceManager.GetString(nameof(Viewer_ChangesThisPc_Off), Culture) ?? nameof(Viewer_ChangesThisPc_Off);
 }

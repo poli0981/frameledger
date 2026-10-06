@@ -75,6 +75,24 @@ public static class Formats
     /// <summary>A GPU's power as <c>215 W</c>; null → N/A.</summary>
     public static string Power(double? watts) => watts is double w ? w.ToString("0", CultureInfo.CurrentCulture) + " W" : Strings.Common_NotAvailable;
 
+    /// <summary>
+    /// A share of time or of frames as <c>9.6%</c> (beta.14) — one decimal, because the small shares are the telling ones: a
+    /// game held at its limit reads 0.4 % below it, not "0%"; null → N/A, never 0%.
+    /// </summary>
+    public static string Share(double? pct) => pct is double v ? v.ToString("0.0", CultureInfo.CurrentCulture) + "%" : Strings.Common_NotAvailable;
+
+    /// <summary>A frame-time difference as <c>0.88 ms</c> (beta.14); null → N/A.</summary>
+    public static string Milliseconds(double? ms) => ms is double v ? string.Format(CultureInfo.CurrentCulture, Strings.Format_Milliseconds_Format, v) : Strings.Common_NotAvailable;
+
+    /// <summary>Application frames per joule as <c>0.31 FPS/W</c> (beta.14) — frames per second over watts; null → N/A.</summary>
+    public static string FramesPerJoule(double? perJoule) => perJoule is double v ? string.Format(CultureInfo.CurrentCulture, Strings.Format_FramesPerJoule_Format, v) : Strings.Common_NotAvailable;
+
+    /// <summary>A clock as <c>2,655 MHz</c> (beta.14); null → N/A.</summary>
+    public static string Frequency(double? mhz) => mhz is double f ? string.Format(CultureInfo.CurrentCulture, Strings.Format_Frequency_Format, f) : Strings.Common_NotAvailable;
+
+    /// <summary>A fan's speed as <c>1,450 RPM</c> (beta.14); null → N/A.</summary>
+    public static string Rpm(double? rpm) => rpm is double r ? string.Format(CultureInfo.CurrentCulture, Strings.Format_Rpm_Format, r) : Strings.Common_NotAvailable;
+
     /// <summary><c>1485×835 → 2560×1440</c>, or one pair when only one is known, or N/A.</summary>
     public static string Resolution(int? renderW, int? renderH, int? outputW, int? outputH)
     {

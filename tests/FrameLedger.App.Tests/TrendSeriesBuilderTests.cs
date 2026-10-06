@@ -243,4 +243,42 @@ public sealed class TrendSeriesBuilderTests
         TrendSeriesBuilder.ValueOf(Shown(3, hooked: true, new() { NoWindowMs = 9_000 }), TrendMetric.DisplayWindowedShare)
             .Should().BeNull("no window was ever read, so there is no share of anything");
     }
+    /// <summary>
+    /// beta.14 (D49): the nine new metrics are schema 0019's columns in their own units. Pacing and efficiency are the hooks',
+    /// so a Tier-2 session has no point there even with a value; the card's clock, memory temperature and power limit are
+    /// telemetry, every session's; a session recorded before beta.14 has no point at all.
+    /// </summary>
+    [Fact]
+    public void TheBetaFourteenMetricsAreTheRowsColumnsInTheirOwnUnits()
+    {
+        SessionRow hooked = Row(1, 1) with
+        {
+            TimeBelow60Pct = 9.6,
+            TimeBelowRefreshPct = 3.5,
+            FrametimeDeltaMeanMs = 0.9,
+            UpscaleRatio = 1.5,
+            VsyncPresentPct = 100,
+            AvgGpuCoreClockMhz = 2655,
+            MaxGpuMemTemp = 78,
+            PowerLimitPct = 33,
+            AppFramesPerJoule = 0.31,
+        };
+        SessionRow tier2 = Row(2, 1, hooked: false) with { TimeBelow60Pct = 50, AvgGpuCoreClockMhz = 2400, MaxGpuMemTemp = 70, PowerLimitPct = 10 };
+        SessionRow[] rows = [hooked, tier2, Row(3, 1)];
+
+        TrendSeriesBuilder.Points(rows, TrendMetric.TimeBelow60, false).Select(static p => p.Value).Should().Equal(9.6);
+        TrendSeriesBuilder.Points(rows, TrendMetric.GpuCoreClock, false).Select(static p => p.Value).Should().Equal(2655, 2400);
+        TrendSeriesBuilder.Points(rows, TrendMetric.MaxGpuMemTemp, false).Select(static p => p.Value).Should().Equal(78, 70);
+        TrendSeriesBuilder.Points(rows, TrendMetric.PowerLimitShare, false).Select(static p => p.Value).Should().Equal(33, 10);
+        TrendSeriesBuilder.Points(rows, TrendMetric.RenderScale, false).Single().Value.Should().BeApproximately(66.67, 0.01, "100 / upscale_ratio");
+        TrendSeriesBuilder.Points(rows, TrendMetric.Efficiency, false).Select(static p => p.Value).Should().Equal(0.31);
+        TrendSeriesBuilder.Points(rows, TrendMetric.VsyncShare, false).Select(static p => p.Value).Should().Equal(100);
+        TrendSeriesBuilder.Points(rows, TrendMetric.FrameToFrame, false).Select(static p => p.Value).Should().Equal(0.9);
+        TrendSeriesBuilder.Points(rows, TrendMetric.TimeBelowRefresh, false).Select(static p => p.Value).Should().Equal(3.5);
+
+        (TrendSeriesBuilder.UnitOf(TrendMetric.FrameToFrame), TrendSeriesBuilder.UnitOf(TrendMetric.GpuCoreClock), TrendSeriesBuilder.UnitOf(TrendMetric.Efficiency))
+            .Should().Be((Strings.Trend_Unit_Ms, Strings.Trend_Unit_Mhz, Strings.Trend_Unit_FpsPerWatt));
+        (TrendSeriesBuilder.UnitOf(TrendMetric.MaxGpuMemTemp), TrendSeriesBuilder.UnitOf(TrendMetric.TimeBelow60), TrendSeriesBuilder.UnitOf(TrendMetric.RenderScale))
+            .Should().Be((Strings.Trend_Unit_Celsius, Strings.Trend_Unit_Percent, Strings.Trend_Unit_Percent));
+    }
 }

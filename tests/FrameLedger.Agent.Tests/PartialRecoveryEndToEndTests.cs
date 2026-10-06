@@ -10,6 +10,7 @@ using FrameLedger.Domain.Consent;
 using FrameLedger.Domain.Sessions;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Infrastructure.Recording;
+using FrameLedger.Testing;
 
 namespace FrameLedger.Agent.Tests;
 
@@ -48,10 +49,16 @@ public sealed class PartialRecoveryEndToEndTests : IDisposable
 
     private static string Agent => Path.Combine(AppContext.BaseDirectory, "FrameLedger.Agent.exe");
 
-    /// <summary>The ONE executable this suite may write a consent record for.</summary>
-    private static string ConsentedExecutable => Harness;
-
     private readonly string _dataDir = Path.Combine(Path.GetTempPath(), "fl-agent-recover-" + Guid.NewGuid().ToString("N"));
+
+    /// <summary>
+    /// The ONE executable this suite may write a consent record for: our harness, copied under a run-unique name
+    /// (beta.16). The Agent resolves its target BY NAME (<c>TargetResolver</c>), and <c>build.ps1</c> runs the test projects as
+    /// parallel processes: a <c>hook-harness.exe</c> another project was still starting - its module list a partial copy -
+    /// is an unreadable process of the same name, which the resolver must count, and it refused <c>TargetAmbiguous</c>
+    /// (#269's first CI run). No other test starts a process of this name.
+    /// </summary>
+    private string ConsentedExecutable => Path.Combine(_dataDir, "hook-harness-" + Path.GetFileName(_dataDir) + ".exe");
 
     private string Ledger => Path.Combine(_dataDir, LedgerPaths.DatabaseFileName);
 
@@ -70,7 +77,10 @@ public sealed class PartialRecoveryEndToEndTests : IDisposable
 
     private async Task GrantConsentAsync()
     {
-        Path.GetFileName(ConsentedExecutable).Should().Be("hook-harness.exe", "this suite injects into nothing else");
+        StageTarget();
+        byte[] target = await File.ReadAllBytesAsync(ConsentedExecutable, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        byte[] harness = await File.ReadAllBytesAsync(Harness, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        target.Should().Equal(harness, "this suite injects into nothing but hook-harness, under a run-unique name");
         ExecutableFingerprint fingerprint = FrameLedger.Infrastructure.Io.ExecutableIdentity.Read(ConsentedExecutable)!.Value;
         Directory.CreateDirectory(_dataDir);
         LedgerDatabase db = await LedgerDatabase.OpenAsync(Ledger, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
@@ -102,13 +112,27 @@ public sealed class PartialRecoveryEndToEndTests : IDisposable
         return Process.Start(psi)!;
     }
 
-    private static Process StartHarness(string arguments)
+    /// <summary>This run's copy of hook-harness, once per test; its overlay logs are this assembly's to remove (<c>17_HOOK_ENGINE</c> §Native logging).</summary>
+    private void StageTarget()
     {
+        if (File.Exists(ConsentedExecutable))
+        {
+            return;
+        }
+
         File.Exists(Harness).Should().BeTrue(
             "hook-harness.exe must be staged beside the test binary (FrameLedger.DrainFixtures.targets). "
             + "This FAILS rather than skipping: an integration test that quietly does nothing when its fixture "
             + "is absent is a gate that cannot fail.");
-        var p = Process.Start(new ProcessStartInfo(Harness, arguments) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true })!;
+        Directory.CreateDirectory(_dataDir);
+        HarnessOverlayLogSweep.Own(_dataDir);
+        File.Copy(Harness, ConsentedExecutable);
+    }
+
+    private Process StartHarness(string arguments)
+    {
+        StageTarget();
+        var p = Process.Start(new ProcessStartInfo(ConsentedExecutable, arguments) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true })!;
         Thread.Sleep(800);
         p.HasExited.Should().BeFalse("the harness must be running before the Agent looks for it");
         return p;

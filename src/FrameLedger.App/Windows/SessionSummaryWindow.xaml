@@ -115,6 +115,9 @@
                     <charts:FrametimeChart x:Name="Frametime" Margin="0,6,0,0" Height="300" />
                     <ui:TextBlock Margin="0,16,0,0" FontTypography="Subtitle" Text="{x:Static vm:SessionSummaryViewModel.DistributionHeader}" />
                     <charts:DistributionChart x:Name="Distribution" Margin="0,6,0,0" Height="260" />
+                    <!-- beta.14 (D49): the render scale over the session -->
+                    <ui:TextBlock Margin="0,16,0,0" FontTypography="Subtitle" Text="{x:Static vm:SessionSummaryViewModel.RenderScaleHeader}" />
+                    <charts:RenderScaleChart x:Name="RenderScale" Margin="0,6,0,0" Height="200" />
                 </StackPanel>
 
                 <!-- sensors, in either tier (beta.8): a session that was not hooked has nothing else to chart -->

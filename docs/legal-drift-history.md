@@ -63,6 +63,14 @@ are kept because they record what each version changed and why (owner decision D
 >
 > Version 2.5 (2026-09-27, 0.1.0-beta.10) adds how a tracked game's window is shown — read from Windows — and the engine build name read from an Unreal Engine game's executable. It is also the first version to say two things the software already did: it reads the **content** of a library game's executable (markers in its first 8 MB and its import table, since the detection of engines and features; and, when a session starts, the graphics-library markers in the whole file), and it reads the processor load and the memory in use (since 0.1.0-beta.3). Nothing here leaves your device, as before.
 
+### What version 2.7 of the Privacy Policy changed (0.1.0-beta.14)
+
+§4 says two things the software reads to tell a crash from an ordinary exit: the crash reports Windows keeps in its
+Application log about a tracked game — read since P2 and never stated until 2.7 — and the names of the programs a tracked
+game starts, so that an engine's own crash reporter is recognised (beta.14 PR-5). §1 lists the graphics card's clock
+speeds, fan speed, memory temperature and power or thermal limit among the stored sensor series (beta.14 PR-7, D49): they
+were read before and are stored since.
+
 ### What version 2.6 of the Privacy Policy changed
 
 It names the game's own memory use (since beta.12, read from outside the game in every session) where version 2.5

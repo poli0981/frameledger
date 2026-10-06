@@ -223,7 +223,8 @@ CREATE TABLE sessions (
   -- presentation
   api TEXT, present_mode TEXT, swap_effect TEXT,
   hdr_flag TEXT NOT NULL DEFAULT 'na', hdr_source TEXT,  -- tri-state, like rt/rr beside it
-  sync_interval_mode TEXT,                     -- observed vsync behavior
+  sync_interval_mode TEXT,                     -- observed vsync behavior: on|off|mixed — first written in beta.14 (0019's
+                                               -- §Sync), NULL where no present carried its arguments (OpenGL, Vulkan, Tier 2)
 
   -- upscaling / FG (measured at tier 1)
   upscaler TEXT,                               -- none|dlss|fsr2|fsr3|fsr4|xess|nis|unknown, and fsr since 2026-09-04 (FL_UPSCALER_FSR_UNVERSIONED; added 2026-10-04)
@@ -297,6 +298,16 @@ CREATE TABLE sessions (
   game_memory_source TEXT,              -- counters,ex2,ex,held,opened — the reads that answered
   sensor_stats_json TEXT,               -- {"gpu_temp":{"N":…,"Mean":…,"Median":…,"Min":…,"Max":…}, …}
 
+  -- schema 0019 (2026-10-06, beta.14, D49): pacing (hooked), the present arguments (Direct3D), the card's clocks and limits
+  -- (both tiers) and efficiency (hooked) — 03_METRICS §Pacing, §Sync, §Sensor aggregates, §Efficiency
+  time_below_30_pct REAL, time_below_60_pct REAL,
+  time_below_refresh_pct REAL,          -- over presents, at display_monitor_hz; NULL without a rate
+  frametime_delta_mean_ms REAL,         -- mean |ft[k] - ft[k-1]| over neighbouring intervals
+  vsync_present_pct REAL, tearing_allowed_pct REAL,   -- shares of the presents that carried their arguments
+  avg_gpu_core_clock_mhz REAL, avg_gpu_mem_clock_mhz REAL, avg_gpu_fan_rpm REAL, max_gpu_mem_temp REAL,
+  power_limit_pct REAL, thermal_limit_pct REAL,       -- shares of the ticks that carried reasons: NVIDIA (L3) only
+  app_frames_per_joule REAL,            -- application FPS / average GPU board power; never displayed frames (rule 6)
+
   -- schema 0016 (2026-09-27, beta.10): the display mode, both tiers (03_METRICS §Display mode). Milliseconds per mode,
   -- each sample standing for the time until the next (100 ms hooked, 1 s at Tier 2), a pause not counted; nowindow is
   -- outside every share. NULL before, on a session recovered from its .partial file, and where the loop never sampled —
@@ -364,7 +375,10 @@ CREATE TABLE sensor_blobs (
   series TEXT NOT NULL,            -- cpu_temp|gpu_temp|gpu_hotspot|gpu_load|gpu_power|vram_proc|vram_adapter|cpu_load|ram_mb
                                    -- (vram_proc was listed here from 0001 and never written); since schema 0018 (beta.12,
                                    -- D43) also game_vram_dedicated|game_vram_shared|game_ram_private|game_ram_ws|game_commit,
-                                   -- MiB — the game process's own memory (Application.Recording.SensorSeriesCatalog)
+                                   -- MiB — the game process's own memory (Application.Recording.SensorSeriesCatalog); since
+                                   -- beta.14 (D49) also gpu_core_clock|gpu_mem_clock (MHz), gpu_fan (RPM), gpu_mem_temp (°C)
+                                   -- and gpu_power_limit|gpu_thermal_limit (100 or 0 per tick, NVIDIA only) — a series name
+                                   -- needs no migration
                                    -- cpu_load / ram_mb / cpu_temp and sessions.avg_cpu_load, avg_cpu_temp, max_cpu_temp,
                                    -- avg_ram_mb were in schema 0001 with NO producer until 2026-09-21 (Telemetry.SystemTelemetrySource
                                    -- on the poller's tick). Rows before that date hold NULL, which is what they measured; no migration.
@@ -635,6 +649,16 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > so a beta.11 crash file recovers. `LatestVersion` is 18; `LedgerDatabaseTests.ScriptEighteenAddsTheGameMemoryColumnsAndAnEarlierSessionHasNone`,
 > `SqliteSessionRepositoryTests.ASessionRoundTripsColumnForColumn`,
 > `PartialSessionFileTests.TheGameMemoryRoundTripsAndANarrowSensorsChunkFromBeta11StillReads`.
+
+> **`0019_pacing_sync_gpu_limits.sql` (beta.14, 2026-10-06, owner decision D49) — pacing, sync, the card, efficiency.**
+> Thirteen REAL columns, ADD COLUMN only: `time_below_{30,60,refresh}_pct`, `frametime_delta_mean_ms`,
+> `vsync_present_pct`, `tearing_allowed_pct`, `avg_gpu_{core,mem}_clock_mhz`, `avg_gpu_fan_rpm`, `max_gpu_mem_temp`,
+> `power_limit_pct`, `thermal_limit_pct`, `app_frames_per_joule`. Written by the recorder's aggregation
+> (`SessionAggregator.ApplyPacing` / `ApplySync` / `ApplyEfficiency` for a hooked session, `WithSensorAggregates` for the
+> card on both tiers); `sync_interval_mode` (0001) gets its first writer beside them. A session before it reads N/A — no
+> value is computed after the fact. The `.partial` needs no change: the six new sensor series are fields every sample
+> already carried. `LatestVersion` is 19; `LedgerDatabaseTests.ScriptNineteenAddsThePacingAndCardColumnsAndAnEarlierSessionHasNone`,
+> `SqliteSessionRepositoryTests.ASessionRoundTripsColumnForColumn`. **A beta.13 cannot open a ledger beta.14 migrated.**
 
 > **Every open used to migrate, and one that should not have did — 2026-09-16.** The Agent's `--console sessions`,
 > a verb that prints, was run against the owner's ledger while the file on disk was at schema 2 and applied 0003 and

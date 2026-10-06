@@ -22,4 +22,7 @@
     <Color x:Key="Chart_Histogram">#CC4CC2FF</Color>
     <!-- Not a second gold beside Chart_SensorSecondary (beta.8): the Sensors tab draws both. -->
     <Color x:Key="Chart_Percentile">#FFFF79C6</Color>
+    <!-- beta.14: the seventh line on the temperatures plot (the card's memory temperature) — no colour above is 60 apart
+         from all six beside it. -->
+    <Color x:Key="Chart_SensorTertiary">#FFE6E6E6</Color>
 </ResourceDictionary>

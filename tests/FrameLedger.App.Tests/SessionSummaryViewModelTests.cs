@@ -61,7 +61,8 @@ public sealed class SessionSummaryViewModelTests
             vm.NotFound.Should().BeFalse();
             vm.IsHooked.Should().BeTrue();
             vm.Series.Should().NotBeNull();
-            vm.Stats.Should().HaveCount(13, "eight frame statistics, the display mode (beta.10), the machine: GPU and CPU (2026-09-21), then the game's own memory (beta.12)");
+            vm.Stats.Should().HaveCount(21, "eight frame statistics, the display mode (beta.10), pacing, VSync, focus and capture quality (beta.14), "
+                + "the machine: GPU and CPU (2026-09-21), the game's own memory (beta.12), then the card's clocks, its limits and frames per watt (beta.14)");
             vm.Stats.Single(c => string.Equals(c.Label, "CPU", StringComparison.Ordinal)).Value.Should().Be("N/A avg · N/A max", "this row carries no CPU reading: N/A, never 0%");
             vm.Stats.Single(c => string.Equals(c.Label, "Median", StringComparison.Ordinal)).Value.Should().Be("60");
             vm.Stats.Single(c => string.Equals(c.Label, "1% Low", StringComparison.Ordinal)).Value.Should().Be("48");
@@ -92,6 +93,96 @@ public sealed class SessionSummaryViewModelTests
             SessionSummaryViewModel missing = Build(s);
             await missing.LoadAsync(tier2 + 99, Ct);
             missing.NotFound.Should().BeTrue();
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
+
+    /// <summary>
+    /// beta.14 (D49): the new cards read the stored row — pacing with the display's own share named for the display, VSync and
+    /// tearing, ray tracing where it was measured, focus, capture quality, the card's clocks and limits, frames per watt — and
+    /// where frames were generated the displayed 1% low stands beside the game's own (rule 6), never instead of it.
+    /// </summary>
+    [Fact]
+    public async Task TheBetaFourteenCardsReadTheStoredRowAndTheDisplayedLowStandsBesideTheGamesOwn()
+    {
+        CultureInfo? previous = Strings.Culture;
+        CultureInfo previousCulture = CultureInfo.CurrentCulture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow game = await s.GameAsync("Beta");
+            long id = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow, fgMode: "dlssg", native: 60, displayed: 118, factor: 1.97, shape: static r => r with
+            {
+                FgFactorScope = "session",
+                DisplayedP1LowFps = 101,
+                TimeBelow30Pct = 1.25,
+                TimeBelow60Pct = 9.62,
+                TimeBelowRefreshPct = 3.5,
+                DisplayMonitorHz = 144,
+                FrametimeDeltaMeanMs = 0.875,
+                VsyncPresentPct = 100,
+                TearingAllowedPct = 0,
+                RtFramePct = 45.5,
+                RaysPerPixel = 0.82,
+                DrainTicks = 1000,
+                ForegroundTicks = 950,
+                GapCount = 2,
+                AvgGpuCoreClockMhz = 2655.4,
+                AvgGpuMemClockMhz = 15001,
+                AvgGpuFanRpm = 1450.4,
+                MaxGpuMemTemp = 78,
+                PowerLimitPct = 33.3,
+                ThermalLimitPct = 0,
+                AppFramesPerJoule = 0.3125,
+            });
+
+            SessionSummaryViewModel vm = Build(s);
+            await vm.LoadAsync(id, Ct);
+            StatCardModel Card(string label) => vm.Stats.Single(c => string.Equals(c.Label, label, StringComparison.Ordinal));
+
+            vm.Readout.Kind.Should().Be(FpsReadoutKind.Generated);
+            Card("1% Low").Suffix.Should().Be("displayed: 101", "rule 6: the presents' low beside the game's own, never instead");
+            Card("Time below 60 FPS").Should().Be(new StatCardModel("Time below 60 FPS", "9.6%", "below 30: 1.3% · display under 144 Hz: 3.5%"));
+            Card("Frame to frame").Value.Should().Be("0.88 ms");
+            Card("VSync").Should().Be(new StatCardModel("VSync", "100.0% of frames", "tearing allowed: 0.0%"));
+            Card("Ray tracing").Should().Be(new StatCardModel("Ray tracing", "45.5% of frames", "0.82 rays per pixel"));
+            Card("Game in focus").Value.Should().Be("95.0% of the time");
+            Card("Capture quality").Value.Should().Be("2 gaps · 0 lost · 0 faults");
+            Card("GPU clocks").Should().Be(new StatCardModel("GPU clocks", "2,655 MHz core · 15,001 MHz memory", "fan 1,450 RPM · memory 78 °C"));
+            Card("GPU held back").Value.Should().Be("power 33.3% · heat 0.0%");
+            Card("Frames per watt").Should().Be(new StatCardModel("Frames per watt", "0.31 FPS/W", "the game's own frames, GPU power only"));
+        }
+        finally
+        {
+            Strings.Culture = previous;
+            CultureInfo.CurrentCulture = previousCulture;
+        }
+    }
+
+    /// <summary>A session recorded before beta.14 has none of schema 0019's values: every new card reads N/A, never a zero.</summary>
+    [Fact]
+    public async Task ARowRecordedBeforeBetaFourteenReadsNotAvailableOnTheNewCards()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow game = await s.GameAsync("Old");
+            SessionSummaryViewModel vm = Build(s);
+            await vm.LoadAsync(await s.SessionAsync(game.Id, DateTimeOffset.UtcNow), Ct);
+
+            foreach (string label in new[] { "Time below 60 FPS", "Frame to frame", "VSync", "Game in focus", "GPU clocks", "GPU held back", "Frames per watt" })
+            {
+                vm.Stats.Single(c => string.Equals(c.Label, label, StringComparison.Ordinal)).Value.Should().Be("N/A", label + " was not recorded before beta.14");
+            }
+
+            vm.Stats.Should().NotContain(c => string.Equals(c.Label, "Ray tracing", StringComparison.Ordinal), "the card appears only where ray tracing was measured");
         }
         finally
         {

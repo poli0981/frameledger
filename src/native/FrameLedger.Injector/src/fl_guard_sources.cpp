@@ -24,6 +24,7 @@
 #include <cwchar>
 #include <fl_ac_rules.h>
 #include <fl_guard.h>
+#include <fl_guard_scanset.h>
 #include <fl_prescan.h>
 #include <psapi.h>
 #include <tlhelp32.h>
@@ -257,19 +258,22 @@ Collected QueryServiceImpl(const char* name, bool* present) noexcept {
 
 // §S16: the injection target, its descendants, and its ancestors up to but
 // excluding the first known platform launcher.
+std::uint64_t CreatedAtImpl(void*, std::uint32_t pid) {
+    return ProcessCreatedAt(pid);
+}
+
+// The §S16 scan set from one Toolhelp snapshot, walked by WalkScanSet (fl_guard_scanset.cpp), which reads creation
+// times as it goes and cuts a link only when they prove it wrong (D51, beta.15). The rows are static because the guard
+// is not re-entrant: NativeAntiCheatGuard serialises every call into it.
 Collected EnumerateScanSetImpl(std::uint32_t targetPid, bool (*sink)(void*, std::uint32_t), void* ctx) noexcept {
     HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (snap == INVALID_HANDLE_VALUE) {
         return Collected::kFailed;
     }
 
-    struct Entry {
-        DWORD   pid;
-        DWORD   ppid;
-        wchar_t name[MAX_PATH];
-    };
-    static Entry entries[4096];
-    size_t       count = 0;
+    constexpr std::size_t kMaxRows = 4096;
+    static ScanSetRow     rows[kMaxRows];
+    std::size_t           count = 0;
 
     PROCESSENTRY32W pe{};
     pe.dwSize = sizeof(pe);
@@ -278,84 +282,16 @@ Collected EnumerateScanSetImpl(std::uint32_t targetPid, bool (*sink)(void*, std:
         return Collected::kFailed;
     }
     do {
-        if (count >= 4096) {
+        if (count >= kMaxRows) {
             CloseHandle(snap);
             return Collected::kFailed;    // a machine we cannot fully enumerate
         }
-        entries[count].pid = pe.th32ProcessID;
-        entries[count].ppid = pe.th32ParentProcessID;
-        wcscpy_s(entries[count].name, pe.szExeFile);
-        ++count;
+        rows[count++] = ScanSetRow{pe.th32ProcessID, pe.th32ParentProcessID, IsPlatformLauncher(pe.szExeFile)};
     } while (Process32NextW(snap, &pe));
     CloseHandle(snap);
 
-    bool targetFound = false;
-    for (size_t i = 0; i < count; ++i) {
-        if (entries[i].pid == targetPid) {
-            targetFound = true;
-        }
-    }
-    if (!targetFound) {
-        return Collected::kFailed;    // we were asked about a process that is not there
-    }
-
-    if (!sink(ctx, targetPid)) {
-        return Collected::kOk;
-    }
-
-    // Ancestors, stopping below the first platform launcher.
-    DWORD cur = targetPid;
-    for (int depth = 0; depth < 16; ++depth) {
-        DWORD parent = 0;
-        for (size_t i = 0; i < count; ++i) {
-            if (entries[i].pid == cur) {
-                parent = entries[i].ppid;
-            }
-        }
-        if (parent == 0) {
-            break;
-        }
-        bool found = false;
-        for (size_t i = 0; i < count; ++i) {
-            if (entries[i].pid != parent) {
-                continue;
-            }
-            found = true;
-            if (IsPlatformLauncher(entries[i].name)) {
-                parent = 0;    // boundary: the game's tree ends here
-            }
-            break;
-        }
-        if (!found || parent == 0) {
-            break;
-        }
-        if (!sink(ctx, parent)) {
-            return Collected::kOk;
-        }
-        cur = parent;
-    }
-
-    // Descendants of the target, breadth-first over the snapshot.
-    static DWORD frontier[512];
-    size_t       head = 0;
-    size_t       tail = 0;
-    frontier[tail++] = targetPid;
-    while (head < tail) {
-        const DWORD p = frontier[head++];
-        for (size_t i = 0; i < count; ++i) {
-            if (entries[i].ppid != p || entries[i].pid == targetPid) {
-                continue;
-            }
-            if (tail >= 512) {
-                return Collected::kFailed;
-            }
-            frontier[tail++] = entries[i].pid;
-            if (!sink(ctx, entries[i].pid)) {
-                return Collected::kOk;
-            }
-        }
-    }
-    return Collected::kOk;
+    const ScanSetEnv env{&CreatedAtImpl, nullptr, sink, ctx};
+    return WalkScanSet(rows, count, targetPid, env);
 }
 
 std::size_t ReadRulesFileImpl(char* buffer, std::size_t cap) noexcept {
@@ -1001,6 +937,23 @@ Collected ModuleSignerOrganisationImpl(const wchar_t* modulePath, char* out, std
 }
 
 }    // namespace
+
+std::uint64_t ProcessCreatedAt(std::uint32_t pid) noexcept {
+    HANDLE h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    if (h == nullptr) {
+        return 0;
+    }
+    FILETIME   created{};
+    FILETIME   exited{};
+    FILETIME   kernel{};
+    FILETIME   user{};
+    const BOOL read = GetProcessTimes(h, &created, &exited, &kernel, &user);
+    CloseHandle(h);
+    if (!read) {
+        return 0;
+    }
+    return (static_cast<std::uint64_t>(created.dwHighDateTime) << 32) | created.dwLowDateTime;
+}
 
 Sources SystemSources() noexcept {
     Sources s;

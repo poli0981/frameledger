@@ -68,4 +68,29 @@ public enum TrendMetric
     DisplayBorderlessShare,
 
     DisplayWindowedShare,
+
+    /// <summary>
+    /// The nine below are beta.14's (D49): pacing and efficiency from the hooks, the card's clock, memory temperature and power
+    /// limit from the telemetry every session records. A session before beta.14 has no point on any of them.
+    /// </summary>
+    TimeBelow60,
+
+    /// <summary>The share of the presented time below the monitor's refresh rate — what the display received.</summary>
+    TimeBelowRefresh,
+
+    FrameToFrame,
+
+    /// <summary>The render scale, <c>100 / upscale_ratio</c> — the per-axis scale of the session's dominant extent.</summary>
+    RenderScale,
+
+    VsyncShare,
+
+    GpuCoreClock,
+
+    MaxGpuMemTemp,
+
+    PowerLimitShare,
+
+    /// <summary>Application frames per watt of the card's power — never displayed frames (rule 6).</summary>
+    Efficiency,
 }

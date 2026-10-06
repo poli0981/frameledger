@@ -11,6 +11,7 @@ using FrameLedger.Domain.Consent;
 using FrameLedger.Domain.Sessions;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Infrastructure.Settings;
+using FrameLedger.Testing;
 
 namespace FrameLedger.Agent.Tests;
 
@@ -45,10 +46,16 @@ public sealed class AgentEndToEndTests : IDisposable
 
     private static string Agent => Path.Combine(AppContext.BaseDirectory, "FrameLedger.Agent.exe");
 
-    /// <summary>The ONE executable this suite may write a consent record for.</summary>
-    private static string ConsentedExecutable => Harness;
-
     private readonly string _dataDir = Path.Combine(Path.GetTempPath(), "fl-agent-e2e-" + Guid.NewGuid().ToString("N"));
+
+    /// <summary>
+    /// The ONE executable this suite may write a consent record for: our harness, copied under a run-unique name
+    /// (beta.16). The Agent resolves its target BY NAME (<c>TargetResolver</c>), and <c>build.ps1</c> runs the test projects as
+    /// parallel processes: a <c>hook-harness.exe</c> another project was still starting - its module list a partial copy -
+    /// is an unreadable process of the same name, which the resolver must count, and it refused <c>TargetAmbiguous</c>
+    /// (#269's first CI run). No other test starts a process of this name.
+    /// </summary>
+    private string ConsentedExecutable => Path.Combine(_dataDir, "hook-harness-" + Path.GetFileName(_dataDir) + ".exe");
 
     private string Ledger => Path.Combine(_dataDir, LedgerPaths.DatabaseFileName);
 
@@ -66,13 +73,35 @@ public sealed class AgentEndToEndTests : IDisposable
     [Fact]
     public void TheTargetAndTheConsentRecordAreBothOurOwnHarness()
     {
-        Path.GetFileName(ConsentedExecutable).Should().Be("hook-harness.exe");
-        Path.GetDirectoryName(ConsentedExecutable).Should().Be(AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar));
+        StageTarget();
+        Path.GetFileName(Harness).Should().Be("hook-harness.exe");
+        Path.GetDirectoryName(Harness).Should().Be(AppContext.BaseDirectory.TrimEnd(Path.DirectorySeparatorChar));
+        Path.GetFileName(ConsentedExecutable).Should().StartWith("hook-harness-");
+        Path.GetDirectoryName(ConsentedExecutable).Should().Be(_dataDir, "the copy lives in this run's scratch directory and nowhere else");
+        File.ReadAllBytes(ConsentedExecutable).Should().Equal(File.ReadAllBytes(Harness), "the target IS hook-harness, byte for byte, under another name");
         Path.GetFileName(Agent).Should().Be("FrameLedger.Agent.exe");
+    }
+
+    /// <summary>This run's copy of hook-harness, once per test; its overlay logs are this assembly's to remove (<c>17_HOOK_ENGINE</c> §Native logging).</summary>
+    private void StageTarget()
+    {
+        if (File.Exists(ConsentedExecutable))
+        {
+            return;
+        }
+
+        File.Exists(Harness).Should().BeTrue(
+            "hook-harness.exe must be staged beside the test binary (FrameLedger.DrainFixtures.targets). "
+            + "This FAILS rather than skipping: an integration test that quietly does nothing when its fixture "
+            + "is absent is a gate that cannot fail.");
+        Directory.CreateDirectory(_dataDir);
+        HarnessOverlayLogSweep.Own(_dataDir);
+        File.Copy(Harness, ConsentedExecutable);
     }
 
     private async Task<ConsentWriteOutcome> GrantConsentAsync()
     {
+        StageTarget();
         ExecutableFingerprint fingerprint = FrameLedger.Infrastructure.Io.ExecutableIdentity.Read(ConsentedExecutable)!.Value;
         Directory.CreateDirectory(_dataDir);
         LedgerDatabase db = await LedgerDatabase.OpenAsync(Ledger, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
@@ -98,11 +127,11 @@ public sealed class AgentEndToEndTests : IDisposable
         }
     }
 
-    private static Process StartHarness(string arguments)
+    private Process StartHarness(string arguments)
     {
-        File.Exists(Harness).Should().BeTrue("hook-harness.exe must be staged beside the test binary (FrameLedger.DrainFixtures.targets); this FAILS rather than skipping");
+        StageTarget();
         File.Exists(Agent).Should().BeTrue("the Agent must be built and copied beside this test");
-        var p = Process.Start(new ProcessStartInfo(Harness, arguments) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true })!;
+        var p = Process.Start(new ProcessStartInfo(ConsentedExecutable, arguments) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true })!;
         Thread.Sleep(800);
         p.HasExited.Should().BeFalse("the harness must be running before the Agent looks for it");
         return p;
@@ -215,9 +244,38 @@ public sealed class AgentEndToEndTests : IDisposable
         }
     }
 
+    /// <summary>
+    /// beta.16: the collision #269's first CI run hit. Another hook-harness.exe running beside this suite's run - another
+    /// test project's, or one left over - shares neither the copy's name nor its path, so the Agent's resolver never counts
+    /// it. Until beta.16 this suite consented to the staged hook-harness.exe itself, and a second one was a second match:
+    /// TargetAmbiguous, exit 6.
+    /// </summary>
+    [Fact]
+    public async Task AnotherHookHarnessRunningBesideTheSuiteDoesNotMakeTheTargetAmbiguous()
+    {
+        (await GrantConsentAsync()).Should().Be(ConsentWriteOutcome.Written);
+        Process stranger = Process.Start(new ProcessStartInfo(Harness, "--real --hold-presenting 30") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true })!;
+        Process harness = StartHarness("--real --hold-presenting 30");
+        try
+        {
+            using Process agent = StartAgent("capture", "--exe", ConsentedExecutable, "--seconds", "3");
+            (string output, int exit) = await FinishAsync(agent);
+
+            exit.Should().Be(0, output);
+            output.Should().Contain("SAVED as sessions.id=", output);
+            output.Should().NotContain("TargetAmbiguous", output);
+        }
+        finally
+        {
+            Kill(harness);
+            Kill(stranger);
+        }
+    }
+
     [Fact]
     public async Task ConsentGrantRefusesRedirectedStdinAndWritesNothing()
     {
+        StageTarget();
         using Process agent = StartAgent("consent", "grant", "--exe", ConsentedExecutable);
         (string output, int exit) = await FinishAsync(agent);
 

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using System.Globalization;
 using System.IO;
 using FluentAssertions;
 using FrameLedger.App.Controls;
@@ -129,6 +130,33 @@ public sealed class GamesViewModelTests
             double item = UniformWrapPanel.ItemWidthFor(width, columns, 12);
             item.Should().BeGreaterThanOrEqualTo(columns == 1 ? 0 : 300);
             ((columns * item) + ((columns - 1) * 12)).Should().BeApproximately(width, 0.001, "a row fills the width");
+        }
+    }
+    /// <summary>beta.15: the sort order is labelled in the language the page opened in.</summary>
+    [Fact]
+    public async Task TheSortListIsInTheLanguageThePageOpenedIn()
+    {
+        CultureInfo? previous = Strings.Culture;
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            var selection = new GameSelection();
+            var nav = new NoNavigation();
+            GamesViewModel Open() => new(s.Library, selection, nav, new AddGameFlow(s.Library, new NoPicker(), selection, nav, new NoStrip()));
+            Strings.Culture = CultureInfo.GetCultureInfo("en");
+            GamesViewModel english = Open();
+            string englishName = Strings.Games_Sort_Name;
+            Strings.Culture = CultureInfo.GetCultureInfo("vi");
+            GamesViewModel vietnamese = Open();
+            await english.Pending;
+            await vietnamese.Pending;
+
+            english.Sorts[0].Label.Should().Be(englishName);
+            vietnamese.Sorts[0].Label.Should().Be(Strings.Games_Sort_Name).And.NotBe(englishName);
+        }
+        finally
+        {
+            Strings.Culture = previous;
         }
     }
 }

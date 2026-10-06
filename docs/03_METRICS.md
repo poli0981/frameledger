@@ -38,6 +38,9 @@ Let `D` = session duration (first → last present), `F_app` = frames the *game*
 | **Stutter time %** | `Σ ft_app[stutter] / Σ ft_app × 100` | 1 |
 | **PC latency** | mean/p95 of `reflexLatencyUs` when Reflex reports it | **1 only** |
 | **PSO stutter %** | share of stutter frames with `psoCreatedThisFrame > 0` | **1 only** |
+| **Time below 30 / 60 FPS** (beta.14) | share of `Σ ft_app` in frames that count as below X — `ft > 1.10 × 1000/X`, or the nine-frame rolling median `> 1.02 × 1000/X` (§Pacing) | 1 |
+| **Time below refresh** (beta.14) | the same over **presents**, X = `display_monitor_hz` — the display's rate, so over what the display received | 1 |
+| **Frame to frame** (beta.14) | mean `\|ft_app[k] − ft_app[k−1]\|` over neighbouring intervals, ms | 1 |
 
 **Percentile method:** sort ascending, linear interpolation between closest ranks (NumPy `linear` / Excel `PERCENTILE`). Document it, test it — tools differ and users will compare numbers.
 
@@ -89,6 +92,41 @@ toward the session's data-quality warnings.
 > and a present-only writer cannot make it.
 
 **Sufficiency guards (FR-4.8):** 0.1% Low needs ≥ 10,000 application frames, 1% Low ≥ 1,000; otherwise `N/A`.
+
+## Pacing (beta.14, D49)
+
+**Time below 30 / 60 FPS and below the refresh rate** are shares of the measured time — `Σ ft (counted) / Σ ft` — so a long
+hitch weighs what a player sits through, not one frame among many. **Frame to frame** is the mean change from one frame
+time to the next over neighbouring intervals (`FrameTimeSeries.FollowsBreak`: a pair with an interval left out between —
+a gap, a pause — is not a pair); it is low when pacing is even whatever the rate.
+
+**Which frames count as below X — and why not "longer than 1000 / X".** The present-to-present interval of a game held
+at X jitters around `1000 / X` by a few tenths of a millisecond, half of it on the long side. Measured on a copy of the
+owner's ledger (2026-10-06): a GIRLS' FRONTLINE 2 session capped at 60 (median 16.63 ms, 296,380 frames) reads **50.0 %**
+of its time "below 60" under the plain rule, and a rolling mean does not help — the local average of a game held at 60
+sits on the threshold. So a frame counts when **it is itself more than 10 % longer** than `1000 / X` (a long frame, never
+jitter) **or the median of the nine frames around it** (`RollingMedian`, the stutter rule's centered window and edges) **is
+more than 2 % longer** (a rate that stays below X). The same session reads 9.6 % (its time below 30 alone is 4.7 %); with
+a 0.4 ms jitter a steady 58 FPS reads 93 %, a steady 60.2 reads 0.7 %, and a 100 ms hitch counts its own 100 ms and no
+neighbour's. **The cost, stated:** a rate less than 2 % under X (58.8–60 FPS for 60) reads partly as at X — a steady 59
+reads 40 %. `Domain.Metrics.FramePacing`; `FramePacingTests` pins each of these.
+
+**Which series.** 30, 60 and frame to frame are over `ft_app` — application frames where generated frames were counted
+(rule 6: generated frames do not make a game run at 60), the presents otherwise, labelled `(presented)` as every
+present-only statistic is. **The refresh share is over the presents**, generated ones included: it is the display's rate,
+and what matters there is what the display received — a ×4 frame-generation session on a 240 Hz display reads near 0 %,
+and over its application frames it would read 100 % whatever the pacing. It needs `display_monitor_hz` (the display
+tally's, §Display mode): a session recovered from its crash file has none, and reads N/A. **Sufficiency:** the 1 % low's
+1,000 frames; below it every value is N/A.
+
+## Sync — what the presents asked for (beta.14, D49)
+
+`vsync_present_pct` is the share of the dominant stream's presents with a sync interval of one or more (the game asked
+to wait for the display), `tearing_allowed_pct` the share with `DXGI_PRESENT_ALLOW_TEARING`. Both arguments were in every
+Direct3D record since P1 (`FL_MEASURED_PRESENT_ARGS`) and read by nothing; `sessions.sync_interval_mode` (0001) gets its
+first writer with them — `on` (every present), `off` (none), `mixed`. **Asked, not obtained:** a driver setting or a
+variable-refresh display can override the request, and nothing in the process says which won. OpenGL's
+`wglSwapBuffers` and Vulkan's `vkQueuePresentKHR` carry neither argument: N/A, never 0 %. Tier 1 only.
 
 ## Frame Generation — ground truth (Tier 1)
 
@@ -602,6 +640,12 @@ Tier 2 has none of this: `upscaler = unknown`, ratio `N/A`.
 > bookkeeping is per process, not per settings change. **Nothing native changed and no NGX hook was added**: the
 > licence bar in `20_OPEN_QUESTIONS` stands.
 
+**The render scale over time (beta.14, D49).** The session summary draws `100 × √(render pixels / output pixels)` — the
+per-axis scale, `100 / upscale_ratio` — as steps over the session: from the `render_res` blob where the resolution
+varied (the finalizer stores it only then), a flat line at the row's extent where it did not, and a sentence where the
+upscaler's parameters were never measured (`App.Charts.RenderScaleSeries`). The Trend and Compare read the row's
+`upscale_ratio`, the dominant extent.
+
 ## RT / PT / RR — evidence-based tri-state
 
 Tri-state `Yes | No | N/A` per session with `source` (`measured | manual | inherited`).
@@ -798,6 +842,27 @@ Per session over 1 Hz samples: `avg` (mean of non-null), `max` — and since bet
 series. Sensor timeline aligned to the frame timeline via the shared QPC epoch captured at session start. Fields with no
 data are `N/A`, never 0.
 
+**The card's clocks and limits (beta.14, D49), both tiers.** The core and memory clock (MHz), the fan (RPM) and the
+memory temperature were in the samples before (L2 reads them, L3 too) and stored nowhere; they are series now
+(`gpu_core_clock`, `gpu_mem_clock`, `gpu_fan`, `gpu_mem_temp`) with `avg_gpu_core_clock_mhz`, `avg_gpu_mem_clock_mhz`,
+`avg_gpu_fan_rpm` and `max_gpu_mem_temp`. **What held the card back** is NVAPI's perf-decrease reasons
+(`GpuSample.ThrottleReasons`, L3 only): `gpu_power_limit` / `gpu_thermal_limit` read 100 on a tick whose reasons include
+the power limit (`0x2`) / thermal slowdown (`0x1`) and 0 on one whose reasons do not, so their mean — `power_limit_pct`,
+`thermal_limit_pct` — is the share of ticks held back. A card no layer reports reasons for (every card but NVIDIA's) has
+no answer: N/A, never "not limited". `throttle_pct` (any reason) is unchanged.
+
+## Efficiency (beta.14, D49)
+
+`app_frames_per_joule` = the application frame rate ÷ the card's average board power — FPS per watt, frames per joule.
+**Never the displayed rate** (rule 6): a generated frame costs the card a fraction of a rendered one, and counting it would
+sell frame generation as efficiency. The application rate is known when frame generation was counted over the session
+(Native FPS; a counted `none` makes it the presented rate), or when no frame-generation runtime was loaded
+(`presented_qualifier = no_fg_runtime`). **Null** for `census_not_run`, `fg_runtime_loaded` and `none_withheld`, for a
+session whose generation changed state (its steady state covers a share of the session, and the power is the whole
+session's), without a power reading, and at Tier 2 (no frames). The power is the **graphics card's** — not the
+processor's, not the whole PC's — averaged over the session's sensor ticks. `Domain.Metrics.EnergyEfficiency`,
+`SessionAggregator.ApplyEfficiency`.
+
 ## Accuracy budget ~~(shown in Help → About metrics)~~
 
 *(Corrected 2026-10-04: no such page exists. Users read these limits in `LIMITATIONS.md` (Help ▸ Limitations) and in
@@ -814,6 +879,10 @@ data are `N/A`, never 0.
 | PC latency | as reported by Reflex | not available |
 | Display mode (beta.10) | per 100 ms sample: exclusive fullscreen as the swap chain answers it (DXGI; OpenGL and Vulkan cannot say), borderless, windowed, minimised; the window's size from user32 | per 1 s sample, from the window alone: windowed, minimised, or *fullscreen or borderless* — never split |
 | GPU temp / load / power | vendor API accuracy, ±1 s sampling | same |
+| GPU clocks / fan / memory temperature (beta.14) | vendor API accuracy, ±1 s sampling | same |
+| GPU power / thermal limit (beta.14) | NVAPI's perf-decrease reasons once a second — a limit that came and went between two ticks is not seen; NVIDIA only, N/A on every other card | same |
+| Time below 30 / 60 / refresh (beta.14) | from the frame times above, with the margins of §Pacing — a rate less than 2 % under the threshold reads partly as at it | **not available** |
+| Efficiency (beta.14) | the application rate's accuracy over the board-power sensor's; N/A wherever the application rate is not known | **not available** |
 | CPU temperature | sensor-inherent ±1–2 °C, needs LHM + PawnIO + elevation. **Read since 2026-09-21** (`Telemetry.LhmCpuTemperatureReader`: the package sensor, else the hottest core) and **unmeasured on real hardware** — no elevated run with PawnIO has been taken (`20_OPEN_QUESTIONS` §CPU) | same |
 | CPU load | **time busy over elapsed, every logical processor** (`GetSystemTimes`, 1 Hz, unprivileged; since 2026-09-21). Not Task Manager's "utility", which is frequency-scaled and exceeds 100 under turbo — the two are different numbers and this one is stated as what it is. Null on a session's first tick (no interval yet), never 0 | same |
 | System memory in use | physical memory in use machine-wide, MiB (`GlobalMemoryStatusEx`, 1 Hz, unprivileged; since 2026-09-21). The machine's, not the game's | same |

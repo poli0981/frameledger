@@ -173,10 +173,12 @@
                     <ui:Button Appearance="Secondary"
                                Command="{Binding ViewModel.GrantExceptionCommand}"
                                Content="{x:Static vm:GameDetailViewModel.GrantExceptionText}"
+                               IsEnabled="{Binding ViewModel.ActsOnThisPc}"
                                Visibility="{Binding ViewModel.CanGrantException, Converter={StaticResource BoolToVis}}" />
                     <ui:Button Appearance="Secondary"
                                Command="{Binding ViewModel.WithdrawExceptionCommand}"
                                Content="{x:Static vm:GameDetailViewModel.WithdrawExceptionText}"
+                               IsEnabled="{Binding ViewModel.ActsOnThisPc}"
                                Visibility="{Binding ViewModel.CanWithdrawException, Converter={StaticResource BoolToVis}}" />
                 </StackPanel>
             </ui:CardControl>
@@ -205,7 +207,8 @@
             <ui:InfoBar Margin="0,8,0,0" IsClosable="False" Severity="Warning"
                         IsOpen="{Binding ViewModel.AutoDisabledText, Converter={StaticResource NotNull}}"
                         Message="{Binding ViewModel.AutoDisabledText}">
-                <ui:Button Command="{Binding ViewModel.ReEnableHookingCommand}" Content="{x:Static vm:GameDetailViewModel.ReEnableText}" />
+                <ui:Button Command="{Binding ViewModel.ReEnableHookingCommand}" Content="{x:Static vm:GameDetailViewModel.ReEnableText}"
+                           IsEnabled="{Binding ViewModel.ActsOnThisPc}" />
             </ui:InfoBar>
             <ui:InfoBar Margin="0,8,0,0" IsClosable="True"
                         IsOpen="{Binding ViewModel.NoticeVisible, Mode=OneWay}"
@@ -229,7 +232,8 @@
                         <StackPanel Margin="0,0,0,8" Orientation="Horizontal" HorizontalAlignment="Right"
                                     Visibility="{Binding ViewModel.SessionsEmpty, Converter={StaticResource InverseBoolToVis}}">
                             <ui:Button Appearance="Secondary" Command="{Binding ViewModel.DeleteAllSessionsCommand}"
-                                       Content="{x:Static vm:GameDetailViewModel.DeleteAllSessionsText}" Icon="{ui:SymbolIcon Delete24}" />
+                                       Content="{x:Static vm:GameDetailViewModel.DeleteAllSessionsText}" Icon="{ui:SymbolIcon Delete24}"
+                                       IsEnabled="{Binding ViewModel.ActsOnThisPc}" />
                         </StackPanel>
                         <DataGrid x:Name="SessionsGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column"
                                   ItemsSource="{Binding ViewModel.Sessions}" SelectionMode="Extended" MouseDoubleClick="OnSessionDoubleClick"
@@ -386,7 +390,7 @@
                         <charts:SensorsChart x:Name="Sensors" Visibility="{Binding ViewModel.SelectedHasSensors, Converter={StaticResource BoolToVis}}" />
                     </StackPanel>
                 </TabItem>
-                <TabItem Header="{x:Static vm:GameDetailViewModel.TabLatency}">
+                <TabItem Header="{x:Static vm:GameDetailViewModel.TabLatency}" Visibility="{Binding ViewModel.AnyLatency, Converter={StaticResource BoolToVis}}">
                     <StackPanel Margin="0,12,0,0">
                         <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.SelectedNote}"
                                       Visibility="{Binding ViewModel.SelectedNote, Converter={StaticResource NullToCollapsed}}" />
