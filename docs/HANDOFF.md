@@ -2006,7 +2006,8 @@ during finalize, PR-4 the scan set's creation times (D51), PR-5 the App's viewer
 - **An Agent end-to-end test can lose to another project's harness**: `build.ps1` runs the test projects as parallel
   processes, and a `hook-harness.exe` another project was still starting made `TargetResolver` refuse with
   `TargetAmbiguous` (#269's first CI run; the re-run passed). The refusal is right and the test isolation is not — left
-  as a task, not fixed in this train.
+  as a task, not fixed in this train. *(Fixed in beta.16: the by-name suites consent to a run-unique copy of the
+  harness — `14_TESTING` §hook-harness, test isolation.)*
 
 **Owner-only, added to the list below:** item 12.
 
