@@ -1204,7 +1204,8 @@ milestone must not wait on a new native target crossing every gate — it lands 
   (§G). **D5 — `FileGameConsentStore` is retired in B**; the CaptureHost writes a build-tree `ledger.db`
   so the Agent stays the sole owner of `%LOCALAPPDATA%\FrameLedger`.
 - **D6 — `--data-dir` exists only under `--console`** (F; `12_BUILD` §Debugging), so `--serve` can never
-  be pointed at a ledger that is not the Agent's own.
+  be pointed at a ledger that is not the Agent's own. *(beta.15, D52: the App gained a `--data-dir` of its own — a
+  viewer over a copy that starts and contacts no Agent; D6 itself is unchanged.)*
 - *(Numbering, recorded 2026-09-13: D1, D5, D6 and D10 were cited by number from `CHANGELOG`, `04_CAPTURE`,
   `12_BUILD` and `07_IPC` while this list carried them unlabelled — labels added above. **D2 and D3 were
   never assigned**; the numbering skips them. Nobody needs to hunt for a missing decision.)*
@@ -2078,7 +2079,9 @@ diagnosis*.
   sessions` against `%LOCALAPPDATA%\FrameLedger\ledger.db` applied two migration scripts, because every verb opened
   through the one migrating path. The print verbs open read-only now (`Program.PrintsOnly`; a schema older than the
   build is refused, exit 7) — but the rule that outlives the fix is: **nothing from a session is run against the
-  owner's data directory unless the owner asks for exactly that**; `--data-dir` exists for everything else. The same
+  owner's data directory unless the owner asks for exactly that**; `--data-dir` exists for everything else — and since
+  beta.15 for the App too (`FrameLedger.exe --data-dir <copy>`, a viewer, D52), so a UI change can be looked at over a
+  copy of the owner's ledger made with SQLite's backup (`12_BUILD` §Debugging). The same
   day's ledger held a whole day of rows only in a WAL a fresh connection discarded (`06_DATA_MODEL` §Migrations
   carries the shape); if `ledger: wal at open` in `agent-*.log` or `ui-*.log` reports frames that a passive checkpoint
   did not move while no other FrameLedger process is running, stop and read that note before touching the file.

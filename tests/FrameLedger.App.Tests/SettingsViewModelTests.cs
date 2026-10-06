@@ -131,7 +131,7 @@ public sealed class SettingsViewModelTests
     }
 
     private static async Task<Harness> OpenAsync(ScratchLedger s, FakeAgentLink? agent = null, FakeRun? run = null, FakeMaintenance? maintenance = null, FakeTool? tool = null,
-        IAgentAdminPrompt? adminPrompt = null, IConfirmations? confirmations = null, SessionDeletion? deletion = null)
+        IAgentAdminPrompt? adminPrompt = null, IConfirmations? confirmations = null, SessionDeletion? deletion = null, UiMode? mode = null)
     {
         maintenance ??= new FakeMaintenance();
         tool ??= new FakeTool();
@@ -147,7 +147,7 @@ public sealed class SettingsViewModelTests
         var shell = new ShellHost(new ServiceCollection().BuildServiceProvider(), null!, null!, closePolicy);
         // The instance-lock probe is the test's (never the real folder's): no Agent holds it, so a restart never waits.
         var vm = new SettingsViewModel(appearance, new NoTheme(), shell, settings, s.Library, new HookingConsent(agent, new NoPrompt()), agent, run, strip, maintenance, tool, closePolicy, firstRun,
-            adminPrompt: adminPrompt, agentHeld: static () => false, confirmations: confirmations, deletion: deletion);
+            adminPrompt: adminPrompt, agentHeld: static () => false, confirmations: confirmations, deletion: deletion, mode: mode);
         Task pending = vm.Pending;
         await pending.ConfigureAwait(false);
         return new Harness { Ledger = s, Settings = settings, Agent = agent, Run = run, Strip = strip, Vm = vm, Maintenance = maintenance, Tool = tool, ClosePolicy = closePolicy, FirstRun = firstRun };
@@ -529,6 +529,31 @@ public sealed class SettingsViewModelTests
         Harness after = await OpenAsync(s, maintenance: maintenance);
         after.Vm.HookedGames.Should().ContainSingle(static g => g.UsesVulkan).Which.Name.Should().Be("Vulkanic");
         after.Vm.CanRegisterLayer.Should().BeTrue();
+    }
+
+    /// <summary>
+    /// beta.15 (D52): a viewer over a copy offers nothing that changes this PC — the layer and task buttons stay off whatever
+    /// the machine answers, and the switch every other such control binds is off. The same answer in the profile's App
+    /// offers them.
+    /// </summary>
+    [Fact]
+    public async Task AViewerOverACopyOffersNothingThatChangesThisPc()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        var maintenance = new FakeMaintenance { Snapshot = new MaintenanceSnapshot(true, true, LogonTaskState.Stale) };
+
+        Harness viewer = await OpenAsync(s, maintenance: maintenance, mode: new UiMode(true, @"C:\copy-of-FrameLedger"));
+        viewer.Vm.ActsOnThisPc.Should().BeFalse();
+        viewer.Vm.CanUnregisterLayer.Should().BeFalse("the machine says registered, and a viewer still offers nothing");
+        viewer.Vm.CanRepairTask.Should().BeFalse();
+        viewer.Vm.CanRemoveTask.Should().BeFalse();
+        viewer.Vm.CanInstallTask.Should().BeFalse();
+
+        Harness profile = await OpenAsync(s, maintenance: maintenance);
+        profile.Vm.ActsOnThisPc.Should().BeTrue();
+        profile.Vm.CanUnregisterLayer.Should().BeTrue();
+        profile.Vm.CanRepairTask.Should().BeTrue();
+        profile.Vm.CanRemoveTask.Should().BeTrue();
     }
 
     [Fact]

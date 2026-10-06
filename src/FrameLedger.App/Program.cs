@@ -16,17 +16,36 @@ namespace FrameLedger.App;
 /// </summary>
 internal static class Program
 {
+    /// <summary>The exit code of a <c>--data-dir</c> refused before any window (beta.15, D52).</summary>
+    internal const int ExitDataFolderRefused = 2;
+
     [STAThread]
     private static int Main()
     {
         VelopackHooks.Configure(VelopackApp.Build()).Run();
 
+        // D52 (beta.15): --data-dir makes this App a viewer over a copy, decided before the single-instance key, the log
+        // or the ledger reads a path. A refusal is said in a message box (a WinExe has no console) and opens nothing.
+        string[] args = Environment.GetCommandLineArgs()[1..];
+        DataFolderChoice folder = DataFolderArgument.Read(args, UiPaths.ProfileDirectory);
+        if (folder.Kind == DataFolderChoiceKind.Refused)
+        {
+            _ = System.Windows.MessageBox.Show(folder.Problem, Strings.DataDir_Refused_Title, System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
+            return ExitDataFolderRefused;
+        }
+
+        if (folder.Kind == DataFolderChoiceKind.Viewer)
+        {
+            UiPaths.UseViewerFolder(folder.Folder!);
+        }
+
         // One App per data folder (2026-09-21): a second start hands over to the first and exits. --diag opens no window
-        // and must work beside a running App, so it never claims.
+        // and must work beside a running App, so it never claims. A viewer's folder is its own key, so it runs beside the
+        // profile's App.
         SingleInstance? single = null;
         try
         {
-            if (!DiagReport.Requested(Environment.GetCommandLineArgs())
+            if (!DiagReport.Requested(args)
                 && SingleInstance.TryClaim(SingleInstance.KeyOf(UiPaths.DataDirectory), out single) == SingleInstance.Claim.AnotherInstanceIsRunning)
             {
                 return 0;

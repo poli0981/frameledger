@@ -112,7 +112,7 @@ public sealed class GameDetailViewModelTests
 
     private static async Task<(GameDetailViewModel Vm, FakeAgent Agent, FakePrompt Prompt, FakeNavigator Nav, FakeStrip Strip)> BuildAsync(
         ScratchLedger s, long gameId, RemoveGameChoice remove = RemoveGameChoice.Cancel, GameMetadata? edit = null, string? pick = null,
-        FakeAgent? withAgent = null, RegisteredSettings? settings = null)
+        FakeAgent? withAgent = null, RegisteredSettings? settings = null, UiMode? mode = null)
     {
         FakeAgent agent = withAgent ?? new FakeAgent();
         var prompt = new FakePrompt();
@@ -121,7 +121,7 @@ public sealed class GameDetailViewModelTests
         var vm = new GameDetailViewModel(s.Library, new GameSelection { GameId = gameId }, new HookingConsent(agent, prompt), nav,
             new FakeConfirmations(remove), new FakeEdit(edit), strip, new NoSummaries(),
             new Charts.SessionSeriesLoader(s.Sessions), new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(),
-            new FakePicker(pick), settings);
+            new FakePicker(pick), settings, mode: mode);
         Task pending = vm.Pending;
         await pending.ConfigureAwait(false);
         return (vm, agent, prompt, nav, strip);
@@ -316,6 +316,21 @@ public sealed class GameDetailViewModelTests
         {
             Strings.Culture = previous;
         }
+    }
+
+    /// <summary>beta.15 (D52): a viewer over a copy has no Agent to ask, so the hooking switch is off whatever the row says.</summary>
+    [Fact]
+    public async Task InAViewerTheHookingSwitchIsOff()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Alpha");
+
+        (GameDetailViewModel viewer, _, _, _, _) = await BuildAsync(s, game.Id, mode: new UiMode(true, @"C:\copy-of-FrameLedger"));
+        (GameDetailViewModel profile, _, _, _, _) = await BuildAsync(s, game.Id);
+
+        viewer.ActsOnThisPc.Should().BeFalse();
+        viewer.HookToggleEnabled.Should().BeFalse();
+        profile.HookToggleEnabled.Should().BeTrue("the same row in the profile's App offers the switch");
     }
 
     [Fact]

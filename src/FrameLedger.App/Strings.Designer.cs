@@ -68,6 +68,7 @@ public static class Strings
         nameof(Agent_State_Missing),
         nameof(Agent_State_Offline),
         nameof(Agent_State_Starting),
+        nameof(Agent_State_Viewer),
         nameof(App_Title),
         nameof(Arch_AnyCpu),
         nameof(Arch_AnyCpu32),
@@ -220,6 +221,11 @@ public static class Strings
         nameof(Dashboard_Totals_Games),
         nameof(Dashboard_Totals_Playtime),
         nameof(Dashboard_Totals_ThisWeek),
+        nameof(DataDir_Missing_Format),
+        nameof(DataDir_NoFolder),
+        nameof(DataDir_Profile_Format),
+        nameof(DataDir_Refused_Title),
+        nameof(DataDir_Twice),
         nameof(DeleteSessions_AgentTooOld),
         nameof(DeleteSessions_AllBody_Format),
         nameof(DeleteSessions_AllTitle),
@@ -1047,6 +1053,9 @@ public static class Strings
         nameof(Upscaler_DriverReported_Format),
         nameof(Upscaler_None),
         nameof(Upscaler_Unknown),
+        nameof(Viewer_Banner_Body_Format),
+        nameof(Viewer_Banner_Title),
+        nameof(Viewer_ChangesThisPc_Off),
     ];
 
     public static string A11y_Games_Sort => ResourceManager.GetString(nameof(A11y_Games_Sort), Culture) ?? nameof(A11y_Games_Sort);
@@ -1126,6 +1135,8 @@ public static class Strings
     public static string Agent_State_Offline => ResourceManager.GetString(nameof(Agent_State_Offline), Culture) ?? nameof(Agent_State_Offline);
 
     public static string Agent_State_Starting => ResourceManager.GetString(nameof(Agent_State_Starting), Culture) ?? nameof(Agent_State_Starting);
+
+    public static string Agent_State_Viewer => ResourceManager.GetString(nameof(Agent_State_Viewer), Culture) ?? nameof(Agent_State_Viewer);
 
     public static string App_Title => ResourceManager.GetString(nameof(App_Title), Culture) ?? nameof(App_Title);
 
@@ -1430,6 +1441,16 @@ public static class Strings
     public static string Dashboard_Totals_Playtime => ResourceManager.GetString(nameof(Dashboard_Totals_Playtime), Culture) ?? nameof(Dashboard_Totals_Playtime);
 
     public static string Dashboard_Totals_ThisWeek => ResourceManager.GetString(nameof(Dashboard_Totals_ThisWeek), Culture) ?? nameof(Dashboard_Totals_ThisWeek);
+
+    public static string DataDir_Missing_Format => ResourceManager.GetString(nameof(DataDir_Missing_Format), Culture) ?? nameof(DataDir_Missing_Format);
+
+    public static string DataDir_NoFolder => ResourceManager.GetString(nameof(DataDir_NoFolder), Culture) ?? nameof(DataDir_NoFolder);
+
+    public static string DataDir_Profile_Format => ResourceManager.GetString(nameof(DataDir_Profile_Format), Culture) ?? nameof(DataDir_Profile_Format);
+
+    public static string DataDir_Refused_Title => ResourceManager.GetString(nameof(DataDir_Refused_Title), Culture) ?? nameof(DataDir_Refused_Title);
+
+    public static string DataDir_Twice => ResourceManager.GetString(nameof(DataDir_Twice), Culture) ?? nameof(DataDir_Twice);
 
     public static string DeleteSessions_AgentTooOld => ResourceManager.GetString(nameof(DeleteSessions_AgentTooOld), Culture) ?? nameof(DeleteSessions_AgentTooOld);
 
@@ -3084,4 +3105,10 @@ public static class Strings
     public static string Upscaler_None => ResourceManager.GetString(nameof(Upscaler_None), Culture) ?? nameof(Upscaler_None);
 
     public static string Upscaler_Unknown => ResourceManager.GetString(nameof(Upscaler_Unknown), Culture) ?? nameof(Upscaler_Unknown);
+
+    public static string Viewer_Banner_Body_Format => ResourceManager.GetString(nameof(Viewer_Banner_Body_Format), Culture) ?? nameof(Viewer_Banner_Body_Format);
+
+    public static string Viewer_Banner_Title => ResourceManager.GetString(nameof(Viewer_Banner_Title), Culture) ?? nameof(Viewer_Banner_Title);
+
+    public static string Viewer_ChangesThisPc_Off => ResourceManager.GetString(nameof(Viewer_ChangesThisPc_Off), Culture) ?? nameof(Viewer_ChangesThisPc_Off);
 }

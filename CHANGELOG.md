@@ -28,6 +28,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **`FrameLedger.exe --data-dir <folder>` opens a copy of a data folder to look at**, for checking a build of your own
+  against real data without touching your own. Such a window starts and contacts no Agent, records nothing and changes
+  nothing on the PC — the controls that would are disabled, and a banner says whose data it shows. It refuses
+  FrameLedger's own folder.
+
 ### Fixed
 
 - **The anti-cheat check could scan a program that had nothing to do with the game**: Windows reuses process numbers, and

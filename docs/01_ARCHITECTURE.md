@@ -138,6 +138,10 @@ tmp\<sessionGuid>.partial    crash-safety flush of raw buffers, every 60 s (04_C
 covers\*.jpg                 (corrected 2026-10-04: never created — nothing writes games.cover_path)
 ```
 
+*(beta.15, D52: `FrameLedger.exe --data-dir <folder>` reads a COPY of this folder instead — a viewer that starts and
+contacts no Agent and changes nothing on the PC, with its own `logs\` and `crashdumps\` beside the copy; `08_UI` §Shell.
+The profile's own folder is refused there.)*
+
 ## Key design decisions (ADR)
 
 - **ADR-1 (superseded):** ~~Passive ETW only; injection out of scope.~~ Replaced by ADR-7.

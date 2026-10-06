@@ -46,6 +46,9 @@
   <data name="Agent_State_Elevating" xml:space="preserve">
     <value>Đang chờ quyền quản trị…</value>
   </data>
+  <data name="Agent_State_Viewer" xml:space="preserve">
+    <value>Chế độ xem — không có Agent</value>
+  </data>
   <data name="App_Title" xml:space="preserve">
     <value>FrameLedger</value>
   </data>
@@ -3083,5 +3086,29 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   </data>
   <data name="Compare_Metric_Efficiency" xml:space="preserve">
     <value>Frame mỗi watt</value>
+  </data>
+  <data name="Viewer_Banner_Title" xml:space="preserve">
+    <value>Đang xem một bản sao</value>
+  </data>
+  <data name="Viewer_Banner_Body_Format" xml:space="preserve">
+    <value>Cửa sổ này đọc dữ liệu trong {0}. Nó không khởi động và không liên lạc với Agent nào, nên không có gì được ghi lại, và những gì sẽ thay đổi máy này — khởi động cùng Windows, layer Vulkan, tác vụ khi đăng nhập, chế độ quản trị viên, cập nhật — đều tắt ở đây.</value>
+  </data>
+  <data name="Viewer_ChangesThisPc_Off" xml:space="preserve">
+    <value>Không dùng được trong cửa sổ xem (--data-dir): thao tác này sẽ thay đổi máy này.</value>
+  </data>
+  <data name="DataDir_Refused_Title" xml:space="preserve">
+    <value>FrameLedger không mở được thư mục đó</value>
+  </data>
+  <data name="DataDir_NoFolder" xml:space="preserve">
+    <value>--data-dir cần một thư mục: FrameLedger.exe --data-dir &lt;thư mục&gt;</value>
+  </data>
+  <data name="DataDir_Twice" xml:space="preserve">
+    <value>--data-dir được nêu nhiều lần. Hãy chỉ một thư mục: FrameLedger.exe --data-dir &lt;thư mục&gt;</value>
+  </data>
+  <data name="DataDir_Missing_Format" xml:space="preserve">
+    <value>Thư mục {0} không tồn tại. --data-dir mở một bản sao của thư mục dữ liệu FrameLedger: hãy chép thư mục tới đó trước.</value>
+  </data>
+  <data name="DataDir_Profile_Format" xml:space="preserve">
+    <value>{0} là thư mục dữ liệu của chính FrameLedger. --data-dir dành cho một bản sao của nó, để một bản thử nghiệm không bao giờ mở cơ sở dữ liệu bạn đang ghi vào. Để dùng thư mục này, hãy mở FrameLedger không kèm --data-dir.</value>
   </data>
 </root>

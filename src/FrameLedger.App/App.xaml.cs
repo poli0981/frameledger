@@ -15,7 +15,6 @@ using FrameLedger.Application.Settings;
 using FrameLedger.Application.Watch;
 using FrameLedger.Infrastructure.Diagnostics;
 using FrameLedger.Infrastructure.Import;
-using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Infrastructure.Watch;
 using Microsoft.Extensions.DependencyInjection;
@@ -110,6 +109,10 @@ public partial class App : System.Windows.Application
             _host = BuildHost(_db, appearance, registered, closePolicy);
             await _host.StartAsync().ConfigureAwait(true);
             Log.Information("ui: started ({Version}), ledger {Ledger}", UiIdentity.Version, UiPaths.Database);
+            if (UiPaths.IsViewer)
+            {
+                Log.Warning("ui: a VIEWER over {Folder} (--data-dir, D52): no Agent is started or contacted, nothing on this PC is changed", UiPaths.DataDirectory);
+            }
 
             // A second start of the App hands over to this one: bring the window forward, from the tray too.
             if (Instance is not null)
@@ -275,7 +278,9 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton(closePolicy);
         builder.Services.AddSingleton<IThemeApplier, WpfThemeApplier>();
 
-        AddAgentLink(builder.Services);
+        // The Agent link, the Run entry, the Agent's maintenance flags and the updater: a viewer's composition holds none of
+        // them that reaches past its ledger (beta.15, D52).
+        MachineFacingServices.Add(builder.Services, UiPaths.Mode);
 
         // FR-2.1 (P3 PR-4): the consent dialog and the request it ends in; the toggle that opens it is the game page's (PR-5).
         builder.Services.AddSingleton<IConsentPrompt, ConsentPrompt>();
@@ -325,24 +330,6 @@ public partial class App : System.Windows.Application
         services.AddSingleton<ILanguageFollower>(static sp => sp.GetRequiredService<MainWindowViewModel>());
     }
 
-    /// <summary>The Agent over the pipe (07_IPC §Client behavior): connect, start it when it is not there, tell the shell.</summary>
-    private static void AddAgentLink(IServiceCollection services)
-    {
-        // The admin mode's prompt (beta.10) belongs to the main window; the handle is read when a start asks, never earlier.
-        services.AddSingleton<IAgentLauncher>(static sp => AgentLauncher.ForApp(() => sp.GetRequiredService<ShellHost>().Handle));
-        services.AddSingleton(static sp => new AgentConnection(
-            sp.GetRequiredService<IAgentLauncher>(),
-            static () => new PipeClient(),
-            new AgentConnectionOptions(),
-            UiIdentity.Version));
-        services.AddHostedService<AgentConnectionHostedService>();
-        services.AddSingleton<IAgentRequests>(static sp => sp.GetRequiredService<AgentConnection>());
-        services.AddSingleton<IAgentLink>(static sp => sp.GetRequiredService<AgentConnection>());
-        // What the Agent runs right now (2026-09-23), for the pages rebuilt on every visit; built before the connection's
-        // first round by AgentConnectionHostedService, so it never misses a session.
-        services.AddSingleton(static sp => new LiveSessions(sp.GetRequiredService<IAgentLink>()));
-    }
-
     /// <summary>
     /// The library (P3 PR-5): the ports the pages read and write, the selection that travels between pages, and the
     /// pickers, prompts and confirmations behind interfaces so the view models are testable without a window.
@@ -373,9 +360,8 @@ public partial class App : System.Windows.Application
         services.AddSingleton<ISessionWindows>(static sp => sp.GetRequiredService<SessionSummaryOpener>());    // beta.11: Delete all sessions closes them
         services.AddSingleton<IMixedTierPrompt, MixedTierPrompt>();
 
-        // Settings, the safety notices and the Logs page (P3 PR-8a): the Run entry, the notices over the pipe's
-        // events, the tail and the bundle over the logs directory.
-        services.AddSingleton<IRunAtLogon, RunAtLogonRegistry>();
+        // Settings, the safety notices and the Logs page (P3 PR-8a): the notices over the pipe's events, the tail and the
+        // bundle over the logs directory (the Run entry is MachineFacingServices').
         services.AddSingleton<SafetyNotices>();
         services.AddSingleton(static _ => new LogTail(UiPaths.Logs));
         services.AddSingleton(static sp => new BugBundleBuilder(UiPaths.Logs, sp.GetRequiredService<RegisteredSettings>(), crashDumpDirectory: UiPaths.CrashDumps, redactor: LogRedactor.ForCurrentUser()));
@@ -392,9 +378,9 @@ public partial class App : System.Windows.Application
 
         AddImport(services);
 
-        // The layer registration and the logon task (P3 PR-8b): read from the machine, written by the Agent's flags.
+        // The layer registration and the logon task (P3 PR-8b): read from the machine, written by the Agent's flags
+        // (IAgentTool, MachineFacingServices').
         services.AddSingleton<IMaintenanceState, MaintenanceState>();
-        services.AddSingleton<IAgentTool, AgentTool>();
 
         AddUpdates(services);
 
@@ -411,15 +397,14 @@ public partial class App : System.Windows.Application
     }
 
     /// <summary>
-    /// The updater (P4 PR-5, <c>11_UPDATER</c>): Velopack behind the <see cref="IUpdateClient"/> port, the dialogs behind
-    /// <see cref="IUpdatePrompts"/>, the flow that holds FR-12, and the startup check as a hosted service.
+    /// The updater (P4 PR-5, <c>11_UPDATER</c>): the dialogs behind <see cref="IUpdatePrompts"/> and the flow that holds
+    /// FR-12. Velopack behind the <see cref="IUpdateClient"/> port and the startup check are MachineFacingServices': a
+    /// viewer has neither.
     /// </summary>
     private static void AddUpdates(IServiceCollection services)
     {
-        services.AddSingleton<IUpdateClient, VelopackUpdateClient>();
         services.AddSingleton<IUpdatePrompts, UpdatePrompts>();
         services.AddSingleton<UpdateService>();
-        services.AddHostedService<UpdateHostedService>();
     }
 
     /// <summary>FR-1.2's library import (P4 PR-4): the stores, the executable guess, the importer over the games port, the review checklist behind a port.</summary>

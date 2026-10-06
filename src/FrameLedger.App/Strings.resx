@@ -51,6 +51,9 @@
   <data name="Agent_State_Elevating" xml:space="preserve">
     <value>Waiting for administrator permission…</value>
   </data>
+  <data name="Agent_State_Viewer" xml:space="preserve">
+    <value>Viewer — no Agent</value>
+  </data>
   <data name="App_Title" xml:space="preserve">
     <value>FrameLedger</value>
   </data>
@@ -3088,5 +3091,29 @@ The documents below are the full terms; this summary does not replace them.</val
   </data>
   <data name="Compare_Metric_Efficiency" xml:space="preserve">
     <value>Frames per watt</value>
+  </data>
+  <data name="Viewer_Banner_Title" xml:space="preserve">
+    <value>Viewing a copy</value>
+  </data>
+  <data name="Viewer_Banner_Body_Format" xml:space="preserve">
+    <value>This window reads the data in {0}. It starts and contacts no Agent, so nothing is recorded, and what would change this PC — starting with Windows, the Vulkan layer, the logon task, the administrator mode, updates — is off here.</value>
+  </data>
+  <data name="Viewer_ChangesThisPc_Off" xml:space="preserve">
+    <value>Not available in a viewer window (--data-dir): it would change this PC.</value>
+  </data>
+  <data name="DataDir_Refused_Title" xml:space="preserve">
+    <value>FrameLedger cannot open that folder</value>
+  </data>
+  <data name="DataDir_NoFolder" xml:space="preserve">
+    <value>--data-dir needs a folder: FrameLedger.exe --data-dir &lt;folder&gt;</value>
+  </data>
+  <data name="DataDir_Twice" xml:space="preserve">
+    <value>--data-dir was given more than once. Name one folder: FrameLedger.exe --data-dir &lt;folder&gt;</value>
+  </data>
+  <data name="DataDir_Missing_Format" xml:space="preserve">
+    <value>The folder {0} does not exist. --data-dir opens a copy of a FrameLedger data folder: copy the folder there first.</value>
+  </data>
+  <data name="DataDir_Profile_Format" xml:space="preserve">
+    <value>{0} is FrameLedger's own data folder. --data-dir is for a copy of it, so that a test build never opens the database you record into. To use this folder, start FrameLedger without --data-dir.</value>
   </data>
 </root>

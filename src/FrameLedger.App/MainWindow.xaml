@@ -65,14 +65,14 @@
             </MenuItem>
             <MenuItem Header="{x:Static res:Strings.Menu_Tools}">
                 <MenuItem Header="{x:Static res:Strings.Menu_Tools_AgentStatus}" Command="{Binding ViewModel.AgentStatusCommand}" />
-                <MenuItem Header="{x:Static res:Strings.Menu_Tools_UpdateRules}" Command="{Binding ViewModel.UpdateRulesCommand}" />
+                <MenuItem Header="{x:Static res:Strings.Menu_Tools_UpdateRules}" Command="{Binding ViewModel.UpdateRulesCommand}" IsEnabled="{Binding ViewModel.ActsOnThisPc}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_Tools_VulkanLayer}" Command="{Binding ViewModel.VulkanLayerCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_Tools_OpenDataFolder}" Command="{Binding ViewModel.OpenDataFolderCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_Tools_DbMaintenance}" Command="{Binding ViewModel.DatabaseMaintenanceCommand}" />
             </MenuItem>
             <MenuItem Header="{x:Static res:Strings.Menu_Help}">
                 <MenuItem Header="{x:Static res:Strings.Menu_Help_Guide}" Command="{Binding ViewModel.GuideCommand}" />
-                <MenuItem Header="{x:Static res:Strings.Menu_Help_CheckUpdates}" Command="{Binding ViewModel.CheckForUpdatesCommand}" />
+                <MenuItem Header="{x:Static res:Strings.Menu_Help_CheckUpdates}" Command="{Binding ViewModel.CheckForUpdatesCommand}" IsEnabled="{Binding ViewModel.ActsOnThisPc}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_Help_ReportBug}" Command="{Binding ViewModel.ReportBugCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_Help_Documentation}" Command="{Binding ViewModel.DocumentationCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_Help_Limitations}" Command="{Binding ViewModel.LimitationsCommand}" />
@@ -83,6 +83,14 @@
 
         <!-- 08_UI §Notifications policy: "Agent offline" is in-app and PERSISTENT — an InfoBar with an action, never a toast. -->
         <StackPanel Grid.Row="2">
+            <!-- beta.15 (D52): a viewer over a copy says so above every page, for as long as it runs, and names the folder. -->
+            <ui:InfoBar Margin="12,4,12,0"
+                        IsClosable="False"
+                        IsOpen="{Binding ViewModel.IsViewerBannerVisible, Mode=OneTime}"
+                        Message="{Binding ViewModel.ViewerBannerBody}"
+                        Severity="Informational"
+                        Title="{x:Static res:Strings.Viewer_Banner_Title}" />
+
             <ui:InfoBar Margin="12,4,12,0"
                         IsClosable="False"
                         IsOpen="{Binding ViewModel.IsAgentBannerVisible}"
