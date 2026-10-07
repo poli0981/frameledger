@@ -152,6 +152,8 @@ Native `Menu`, `TabControl`, `ComboBox`, `Slider`~~, `ListView`~~ are fine — t
   styles (`Styles/FrameLedger.xaml`), or the `Pill` style with a `SystemFillColor*BackgroundBrush` and an explicit text
   brush; `ContrastTests` refuses all five (`08_UI` §Contrast).
 - Do **not** set `Background` on `FluentWindow` (kills Mica). Page backgrounds transparent by default.
+- **Every `Page` root sets `Foreground="{DynamicResource TextFillColorPrimaryBrush}"`** (2026-10-07): the navigation's
+  Frame passes no text colour into a page, and a text with none is black (§Gotchas).
 - Exception to the no-hex rule: the chart palette — defined once per theme in ~~`Styles/ChartPalette.xaml` (two dictionaries)~~ `Styles/ChartPalette.Dark.xaml` and `ChartPalette.Light.xaml` (corrected 2026-10-04), never inline.
 
 ## FlowDocument (rendered documents, beta.12)
@@ -280,3 +282,14 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
   `DynamicResource`). `ContrastTests.NoTextBlockTakesItsColourFromAppearance` refuses every form in the App's XAML and code,
   `PagesLoadTests.EveryTextFollowsAThemeSwitch` renders every surface through a switch both ways, and
   `PagesLoadTests.WpfUisAppearanceStillKeepsTheThemeATextWasMadeUnder` turns red the day upstream follows a switch.
+- [ ] **A page in the `NavigationView` inherits nothing, its text colour included.** `NavigationViewContentPresenter` is a
+  `Frame`, and `Frame` sets `InheritanceBehavior.SkipToAppNow`: the window's `Foreground` stops there, and a text that sets
+  no colour falls to the TextBlock default, which WPF UI 4.3.0's `TextBlockMetadata` makes `Brushes.Black`. Cards, grids
+  and controls set their own colour in their templates; the bare texts did not — every page's title and section headings
+  were black on the dark window, 1.3:1 (the owner's screenshots of beta.17; beta.16's show it too). It came and went: a
+  page on screen during a theme switch did take the window's new colour through the switch, and every navigation makes a
+  new page that does not. Every `Page` root sets `Foreground="{DynamicResource TextFillColorPrimaryBrush}"`
+  (`AccessibilityTests.EveryPageSetsItsOwnTextColour`). A check that lays a page out straight in a window measures the
+  window's colour, not the App's — beta.17's theme-switch check did and was green over the black titles — so the rendered
+  checks host a page in the presenter, and `PagesLoadTests.EveryTextIsReadableInBothThemes` measures every surface so
+  hosted at ≥ 3:1 in both themes.

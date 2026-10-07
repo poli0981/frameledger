@@ -11,6 +11,7 @@
       Title="{x:Static res:Strings.Games_Header}"
       AllowDrop="True"
       Drop="OnDrop"
+      Foreground="{DynamicResource TextFillColorPrimaryBrush}"
       ScrollViewer.CanContentScroll="False">
     <!--
         08_UI §Games: search, sort, FR-1.1 add by pick or by dropping an .exe here. Since beta.11 (owner requests 2026-10-03):

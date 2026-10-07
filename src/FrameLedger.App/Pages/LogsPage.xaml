@@ -8,6 +8,7 @@
       xmlns:res="clr-namespace:FrameLedger.App"
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
       Title="{x:Static res:Strings.Logs_Header}"
+      Foreground="{DynamicResource TextFillColorPrimaryBrush}"
       ScrollViewer.CanContentScroll="False">
     <Grid Margin="24,16,24,16">
         <Grid.RowDefinitions>

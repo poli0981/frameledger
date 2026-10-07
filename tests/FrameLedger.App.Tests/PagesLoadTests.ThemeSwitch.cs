@@ -121,17 +121,22 @@ public sealed partial class PagesLoadTests
         try
         {
             Lay(fresh);
-            List<(string Path, string Text, string Colour)> before = Texts(switched);
-            List<(string Path, string Text, string Colour)> after = Texts(fresh);
-            if (before.Count != after.Count)
-            {
-                return (before.Count, [$"{name}: {before.Count} texts after the switch, {after.Count} in a fresh one"]);
-            }
+            List<DrawnText> before = Texts(switched);
+            List<DrawnText> after = Texts(fresh);
+            Dictionary<string, DrawnText> lived = before.ToDictionary(static d => d.Path, StringComparer.Ordinal);
+            Dictionary<string, DrawnText> made = after.ToDictionary(static d => d.Path, StringComparer.Ordinal);
 
-            // Texts are reported, never compared: another test class may change Strings.Culture between the two builds.
-            List<string> stale = [.. before.Zip(after)
-                .Where(static p => !string.Equals(p.First.Path, p.Second.Path, StringComparison.Ordinal) || !string.Equals(p.First.Colour, p.Second.Colour, StringComparison.Ordinal))
-                .Select(p => $"{name}: \"{p.First.Text}\" is {p.First.Colour}, made fresh {p.Second.Colour} ({p.First.Path})")];
+            // Texts are reported, never compared: another test class may change Strings.Culture between the two builds. What is
+            // compared is what a user can see (beta.18, when pages moved into the Frame): inside a collapsed part a theme switch
+            // re-applies a DataGrid's idle scroll bar, whose arrow glyphs then exist in the switched page only, and the select-all
+            // corner — collapsed, every grid here shows column headers only — kept the old theme's disabled colour.
+            List<string> stale =
+            [
+                .. before.Where(d => made.TryGetValue(d.Path, out DrawnText f) && (d.Shown || f.Shown) && !string.Equals(d.Colour, f.Colour, StringComparison.Ordinal))
+                    .Select(d => $"{name}: \"{d.Text}\" is {d.Colour}, made fresh {made[d.Path].Colour} ({d.Path})"),
+                .. before.Where(d => d.Shown && !made.ContainsKey(d.Path)).Select(d => $"{name}: \"{d.Text}\" shows after the switch only ({d.Path})"),
+                .. after.Where(d => d.Shown && !lived.ContainsKey(d.Path)).Select(d => $"{name}: \"{d.Text}\" shows in a fresh one only ({d.Path})"),
+            ];
             return (before.Count, stale.Count <= _staleShownPerSurface ? stale : [.. stale.Take(_staleShownPerSurface), $"{name}: … and {stale.Count - _staleShownPerSurface} more"]);
         }
         finally
@@ -140,13 +145,28 @@ public sealed partial class PagesLoadTests
         }
     }
 
-    /// <summary>A surface in a window that is never shown: itself when it is one, otherwise as the window's content.</summary>
+    /// <summary>
+    /// A surface hosted as the App shows it, in a window that is never shown: a window as itself; a page in WPF UI's
+    /// <c>NavigationViewContentPresenter</c>, the shell's Frame — which passes no inherited value into the page, the text
+    /// colour included (beta.18; until then pages sat straight in the window here, and their black titles inherited the
+    /// window's colour in this check only); anything else as the window's content.
+    /// </summary>
     private static (Window Host, FrameworkElement Root) Hosted(Func<FrameworkElement> build)
     {
         FrameworkElement built = build();
         if (built is Window window)
         {
             return (window, (FrameworkElement)window.Content);
+        }
+
+        if (built is Page page)
+        {
+            var frame = new Wpf.Ui.Controls.NavigationViewContentPresenter();
+            var shell = new Wpf.Ui.Controls.FluentWindow { Content = frame };
+            Lay(frame);
+            _ = frame.Navigate(page);
+            Visuals.Pump();
+            return (shell, frame);
         }
 
         // A FluentWindow, as the shell is: its style gives the inherited text colour by theme resource too.
@@ -156,28 +176,34 @@ public sealed partial class PagesLoadTests
 
     private static void Lay(FrameworkElement root) => Visuals.Layout(root, 1200, 900);
 
-    /// <summary>Every TextBlock under <paramref name="root"/> in visual-tree order: where it is, what it says, the colour it is drawn in.</summary>
-    private static List<(string Path, string Text, string Colour)> Texts(DependencyObject root)
+    /// <summary>
+    /// Every TextBlock under <paramref name="root"/> in visual-tree order: where it is, what it says, the colour it is drawn
+    /// in, and whether it shows — nothing above it collapsed or hidden.
+    /// </summary>
+    private static List<DrawnText> Texts(DependencyObject root)
     {
-        var found = new List<(string, string, string)>();
-        Walk(root, root.GetType().Name, found);
+        var found = new List<DrawnText>();
+        Walk(root, root.GetType().Name, shown: true, found);
         return found;
     }
 
-    private static void Walk(DependencyObject node, string path, List<(string, string, string)> found)
+    private static void Walk(DependencyObject node, string path, bool shown, List<DrawnText> found)
     {
+        shown &= node is not UIElement { Visibility: not Visibility.Visible };
         if (node is TextBlock text)
         {
-            found.Add((path, text.Text, text.Foreground is SolidColorBrush solid ? solid.Color.ToString(CultureInfo.InvariantCulture) : text.Foreground?.ToString(CultureInfo.InvariantCulture) ?? "null"));
+            found.Add(new DrawnText(path, text.Text, text.Foreground is SolidColorBrush solid ? solid.Color.ToString(CultureInfo.InvariantCulture) : text.Foreground?.ToString(CultureInfo.InvariantCulture) ?? "null", shown));
         }
 
         int count = VisualTreeHelper.GetChildrenCount(node);
         for (int i = 0; i < count; i++)
         {
             DependencyObject child = VisualTreeHelper.GetChild(node, i);
-            Walk(child, string.Create(CultureInfo.InvariantCulture, $"{path}/{child.GetType().Name}[{i}]"), found);
+            Walk(child, string.Create(CultureInfo.InvariantCulture, $"{path}/{child.GetType().Name}[{i}]"), shown, found);
         }
     }
+
+    private readonly record struct DrawnText(string Path, string Text, string Colour, bool Shown);
 
     private static Color Solid(Brush brush) => brush is SolidColorBrush solid ? solid.Color : throw new InvalidOperationException("a text whose foreground is not a solid colour");
 }
