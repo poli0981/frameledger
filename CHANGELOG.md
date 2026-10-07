@@ -48,6 +48,11 @@ numeric core and does not move; the heading is the full version — corrected 20
   button and shortcut), *Every setting* (what each one does and its default), *When something goes wrong* (what you see,
   what it means, what to do) and *Words FrameLedger uses*. Tests now fail when a setting or a menu item is added without
   its line in the guide, or a link names a section that does not exist.
+- **A wiki.** The project's [wiki](https://github.com/poli0981/frameledger/wiki) has two halves: the user guide, the
+  same pages the app shows, and short pages for developers — the architecture, the repository, building and testing,
+  the rules every change keeps, capture, metrics, data, the app's UI and releasing — each linking to its full document.
+  It is published from the repository whenever a release is made (`wiki.yml`), so it always matches the newest
+  release, and `./build.ps1 check` fails on any link in it that leads nowhere (`13_CI_CD` §wiki.yml).
 
 ## [0.1.0-beta.16] - 2026-10-06
 

@@ -7,7 +7,8 @@ This folder is for people who build, change or review FrameLedger. **If you only
 
 | You want to… | Read |
 |---|---|
-| Pick up work where it stopped | [`HANDOFF.md`](HANDOFF.md) — sequencing, decisions (D1…D46) and the traps that each cost a cycle. It carries no status on purpose |
+| Pick up work where it stopped | [`HANDOFF.md`](HANDOFF.md) — sequencing, decisions (~~D1…D46~~ D1 onward — *corrected 2026-10-07: the range grows with every train*) and the traps that each cost a cycle. It carries no status on purpose |
+| Find your way around first | The [wiki](https://github.com/poli0981/frameledger/wiki)'s developer pages (source: [`../wiki/`](../wiki/), beta.17) — a short page per part, each linking here |
 | Learn the system | [`../CLAUDE.md`](../CLAUDE.md) (the rules and the layout), then the reading order below |
 | Build it | [`12_BUILD.md`](12_BUILD.md) — `./build.ps1 check` is the whole gate, the same one CI runs |
 | Contribute or fork | [`../CONTRIBUTING.md`](../CONTRIBUTING.md), [`../FORKING.md`](../FORKING.md), [`../NOTICE`](../NOTICE) |
@@ -76,7 +77,9 @@ are safety items, and something listed there as unresolved should not be built t
 
 ## Beside this folder
 
-- [`../guide/`](../guide/README.md) — the user guide (players, English).
+- [`../guide/`](../guide/README.md) — the user guide (players, English); since beta.17 (D54) also the wiki's End-user part.
+- [`../wiki/`](../wiki/Home.md) — the wiki's own pages: Home, the sidebar, the developer pages (D53). `wiki.yml`
+  publishes them with the guide to the Wiki tab when a release is made; `build.ps1`'s `wiki-check` holds every link.
 - [`../legal/`](../legal/) — the documents a user accepts, the accuracy statement, the third-party notices and licence
   texts, the trademark note.
 - [`../LIMITATIONS.md`](../LIMITATIONS.md) — what the whole software cannot do, in a player's words.

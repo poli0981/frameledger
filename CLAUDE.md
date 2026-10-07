@@ -138,7 +138,8 @@ tools/                         # accuracy-check, changelog-check, chokepoint-che
                                # gen-ac-floor, hookinventory-check, license-check, license-gather
                                # (+ license-overrides/), notice-check, package-closure-check,
                                # release-notes, rules-validate, test-artifacts-check, vendor-exports,
-                               # versioninfo-check, vklayer-blastradius, fps-impact-runbook
+                               # versioninfo-check, vklayer-blastradius, fps-impact-runbook,
+                               # wiki-build (beta.17: builds and checks the wiki; the wiki-check gate)
                                # (six names added 2026-10-04)
                                # (PowerShell). This line used to name three, one of which
                                # — resx-audit — ~~does not exist~~ exists since 2026-09-13 with
@@ -155,6 +156,9 @@ guide/                         # the user guide (beta.12, D44): ~~eight~~ short 
                                #   App (Help > User guide); README.md is its contents. docs/ is for developers.
                                #   (twelve since beta.17, D54: the screens, every setting, troubleshooting, a glossary;
                                #   and the guide is the wiki's End-user part)
+wiki/                          # the wiki's own pages (beta.17, D53): Home, _Sidebar, the developer pages. wiki.yml
+                               #   publishes them with guide/ and LIMITATIONS.md to the Wiki tab at a release;
+                               #   tools/wiki-build.ps1 assembles and checks them (build.ps1 wiki-check)
 docs/  legal/  legal/licenses/
 ```
 

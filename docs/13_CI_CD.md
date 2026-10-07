@@ -184,6 +184,29 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 - **The `anticheat` block gets extra scrutiny:** schema-valid, non-empty, no entry removed without a justification in the PR body. Removing a blocklist entry is a safety change and requires the same review as a security fix. *(Added 2026-10-04: the PR-only removal step fails the job on any removal, a shrunk per-title list or an added trusted signer, whatever the body says — the justification is for the reviewer, and the job stays red.)*
 - `permissions: contents: read`.
 
+### `wiki.yml` — after a successful Release run, and by hand · **repo-local, built 2026-10-07 (beta.17, D53/D54)**
+- **What:** the GitHub Wiki is a copy of the repository's own pages — `wiki/` (Home, the sidebar, the developer pages)
+  and `guide/` (the user guide: the End-user part, the same pages the App shows) with `LIMITATIONS.md`.
+  `tools/wiki-build.ps1` names each page (a guide page after its first heading, `guide/README.md` as *User-guide*,
+  `LIMITATIONS.md` as *Limitations*), rewrites links between pages to page names and every other repository link to
+  its address on GitHub **at the release's tag**, drops each page's first heading (the wiki prints the page name), and
+  writes a footer naming the tag. The same assembly is `build.ps1`'s `wiki-check` gate (`12_BUILD` §Local quality gate,
+  13d), so a dead link is red on the pull request, never on the published wiki.
+- **When:** `workflow_run` on `Release`, completed — the job runs only when that run succeeded and was started by a
+  pushed `v*` tag, so a `workflow_dispatch` rehearsal of `release.yml` never publishes. It checks out the run's
+  `head_sha` (a `workflow_run` job runs `main`'s copy of this file) and links at `head_branch`, the tag. By hand:
+  `gh workflow run wiki.yml -f ref=main -f publish=false` builds, checks and uploads the pages as an artifact; with
+  `publish=true` it publishes them.
+- **Why not a step of `release.yml`:** the release stays as it was, its rehearsal stays a pure rehearsal, and a wiki
+  that fails to publish is a red run of its own that can be re-run — a step after `gh release create` could never be
+  re-run, the release already existing. A release created with `GITHUB_TOKEN` fires no `release` event for other
+  workflows; `workflow_run` fires because the Release run itself was started by a tag push.
+- **Publishing:** `gh auth setup-git`, a clone of `<repo>.wiki.git`, everything but `.git` replaced, a commit as
+  `github-actions[bot]` only when something changed, `git push origin HEAD:master` (the wiki's branch is `master`). A
+  page edited on the Wiki tab is overwritten at the next release: edit `wiki/` or `guide/`.
+- `permissions: contents: write` — the repository's default workflow token is read-only (read from the API,
+  2026-10-07), and pushing to the wiki repository needs write.
+
 ## Dependabot (`.github/dependabot.yml`)
 
 ```yaml
@@ -215,7 +238,7 @@ Central package management makes Dependabot PRs single-file diffs.
 
 **In the tree — done:**
 
-- [x] Repo-local `ci.yml`, `codeql.yml`, `release.yml`, `rules-publish.yml` (all four repo-local by decision, §Workflows); ~~caller stubs pointing at `poli0981/.github`~~ — never the design, see the first paragraph
+- [x] Repo-local `ci.yml`, `codeql.yml`, `release.yml`, `rules-publish.yml` (all four repo-local by decision, §Workflows); ~~caller stubs pointing at `poli0981/.github`~~ — never the design, see the first paragraph *(and `wiki.yml` since beta.17, repo-local too: five)*
 - [x] Issue forms `bug_report.yml`, `feature_request.yml`, `safety_gap.yml`; `ISSUE_TEMPLATE/config.yml` pointing a vulnerability at private reporting; PR template referencing CLAUDE.md's definition of done
 - [x] `.github/dependabot.yml` (nuget + github-actions, weekly)
 - [x] `SECURITY.md` — the private route for a vulnerability, the public route for a safety gap, and the honest response intent (2026-09-16)
@@ -227,4 +250,5 @@ Central package management makes Dependabot PRs single-file diffs.
 - [ ] `Rules / validate` as a required check (§S23-2, after its skip-shim)
 - [ ] Dependabot alerts + security updates (the manifest is in the tree; the alerts are a setting)
 - [x] Private vulnerability reporting enabled (Settings ▸ Security), so `config.yml`'s link resolves *(marked 2026-10-04: GitHub reports it enabled)*
+- [ ] Wiki editing restricted to collaborators (Settings ▸ General ▸ Features ▸ Wikis ▸ *Restrict editing to collaborators only*): otherwise anyone with a GitHub account can change a page until the next release overwrites it (§wiki.yml, beta.17)
 - [ ] Repo topics: `windows`, `wpf`, `benchmark`, `fps`, `game-performance` (~~`presentmon`~~ — dropped 2026-08-27, §G)

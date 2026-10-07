@@ -27,6 +27,11 @@ That is the whole quality gate, and continuous integration runs the identical sc
 checks (licences, the accuracy blocks, the licence headers, the changelog rules, …). `docs/12_BUILD.md` describes each
 step and the build profiles. Run it in your main checkout: a fresh `git worktree` cannot configure the native build.
 
+Documentation lives in three places: `guide/` for players (shown in the app and on the wiki), `wiki/` for the wiki's own
+pages, and `docs/` for developers. A change a player would notice updates `guide/`; a change to how the code is put
+together updates `docs/` — and the `wiki/` page that summarises it, if that page now says something else.
+`./build.ps1 check` builds the wiki and fails on a link that leads nowhere.
+
 Never point a build of your own at the data FrameLedger records into (`%LOCALAPPDATA%\FrameLedger`): a newer build
 migrates the database, and the released one cannot read it back. To look at real data, copy the folder and start
 `FrameLedger.exe --data-dir <copy>` — a viewer that starts no Agent and changes nothing on the PC (`docs/12_BUILD.md`

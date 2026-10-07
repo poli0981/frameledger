@@ -1,0 +1,100 @@
+# The GitHub Wiki is a copy of the repository's own pages (D53/D54, the owner, 2026-10-07): wiki/ (Home, the sidebar,
+# the developer pages) and guide/ (the user guide, which is the End-user part) with LIMITATIONS.md, assembled and checked
+# by tools/wiki-build.ps1 - the check build.ps1 runs as `wiki-check`. A page edited on the Wiki tab is overwritten here;
+# edit wiki/ or guide/ instead (docs/13_CI_CD.md §wiki.yml).
+#
+# Separate from release.yml on purpose. The release stays as it was and its dry run stays a pure rehearsal; a wiki that
+# fails to publish is a red run of its own, re-run on its own, never a red release. A step after `gh release create`
+# could never be re-run at all: the release would already exist.
+#
+# A release that release.yml creates with GITHUB_TOKEN fires no `release` event for other workflows. `workflow_run` does
+# fire - the Release run itself was started by the owner's tag push - and it runs THIS file as it is on main, so the job
+# checks out the commit the release was built from (head_sha) and links the repository's files at the tag (head_branch).
+
+name: Wiki
+
+on:
+  workflow_run:
+    workflows: [Release]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch, tag or commit to build the wiki from; repository files are linked at this ref'
+        required: true
+        default: main
+        type: string
+      publish:
+        description: 'Publish to the Wiki tab (off: build, check and upload the pages only)'
+        required: true
+        default: false
+        type: boolean
+
+# The repository's default token is read-only; pushing to <repo>.wiki.git needs contents: write.
+permissions:
+  contents: write
+
+concurrency:
+  group: wiki
+  cancel-in-progress: false
+
+jobs:
+  wiki:
+    # A rehearsal of release.yml (workflow_dispatch) never publishes the wiki: only a run started by a pushed v* tag
+    # that succeeded.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       startsWith(github.event.workflow_run.head_branch, 'v'))
+    runs-on: windows-latest
+    timeout-minutes: 10
+    env:
+      # Values reach the scripts through the environment only, never pasted into them.
+      WIKI_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.event.workflow_run.head_branch }}
+      WIKI_PUBLISH: ${{ github.event_name == 'workflow_run' || inputs.publish }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: Build and check the wiki
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          ./tools/wiki-build.ps1 -Ref $env:WIKI_REF -Out out/wiki
+          if ($LASTEXITCODE -ne 0) { throw 'wiki-build failed' }
+
+      - name: Upload the pages
+        uses: actions/upload-artifact@v7
+        with:
+          name: wiki-${{ github.run_id }}
+          path: out/wiki/**
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish to the Wiki tab
+        if: env.WIKI_PUBLISH == 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          gh auth setup-git
+          if ($LASTEXITCODE -ne 0) { throw 'gh auth setup-git failed' }
+          git clone --depth 1 "https://github.com/$env:GITHUB_REPOSITORY.wiki.git" wiki-repo
+          if ($LASTEXITCODE -ne 0) { throw 'cloning the wiki failed - it must have one page created on github.com first' }
+          Get-ChildItem wiki-repo -Force | Where-Object Name -ne '.git' | Remove-Item -Recurse -Force
+          Copy-Item out/wiki/* wiki-repo -Recurse
+          Set-Location wiki-repo
+          git add -A
+          git diff --cached --quiet
+          if ($LASTEXITCODE -eq 0) { Write-Host "The wiki already shows $env:WIKI_REF; nothing to publish."; exit 0 }
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -q -m "wiki: $env:WIKI_REF"
+          if ($LASTEXITCODE -ne 0) { throw 'commit failed' }
+          # The wiki repository's branch is master (git ls-remote, 2026-10-07).
+          git push origin HEAD:master
+          if ($LASTEXITCODE -ne 0) { throw 'push failed' }
+          Write-Host "Published the wiki at $env:WIKI_REF"
