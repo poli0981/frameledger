@@ -2113,7 +2113,12 @@ blends into the background in dark mode").
 - **A release's natives were `-dirty` by the release's own hand:** its date substitution edits `legal/*.md` before CMake
   reads describe. The id is read first, handed in, and read back out of the binaries (`tools/buildid-check.ps1`).
 - **Met again:** `CaptureHostEndToEndTests.WhenTheTargetExitsTheHostStopsAndSaysWhy` (`TargetNotRunning` on a slow
-  runner) failed #286's first CI run; the job was re-run.
+  runner) failed #286's first CI run; the job was re-run. **And a new one** failed #288's:
+  `…LaunchModeOnAVulkanTargetAttachesToTheLayersRingAndInjectsNothing`. A hosted runner has the Vulkan loader and no
+  device, so the harness exits 77 with a `[SKIP]` line — but the runner is elevated, the launch goes through
+  `CreateProcessWithTokenW` (`UnelevatedProcess`), the child inherits no stdout, and the line never reaches the host's
+  output; when the guard's scan hits the exiting harness (`ModuleScanFailed`) the test fails instead of skipping. Re-run;
+  the deterministic fix is a task of its own.
 
 **Owner-only, added to the list below:** item 14.
 
