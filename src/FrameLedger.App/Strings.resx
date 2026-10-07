@@ -1702,7 +1702,7 @@
     <value>Finish</value>
   </data>
   <data name="FirstRun_Import_Body" xml:space="preserve">
-    <value>FrameLedger can read what Steam, GOG Galaxy, Epic and itch.io have installed and add them from a checklist — File ▸ Import library… on the Games page, once you are in. Every imported game starts with hooking off, exactly like one you add by hand.</value>
+    <value>FrameLedger can read what Steam, GOG Galaxy, Epic and itch.io have installed and add them from a checklist — File ▸ Import library…, once you are in. Every imported game starts with hooking off, exactly like one you add by hand.</value>
   </data>
   <data name="FirstRun_Import_Header" xml:space="preserve">
     <value>Your library</value>

@@ -38,6 +38,16 @@ numeric core and does not move; the heading is the full version — corrected 20
   scroll bar — and so did the first run, About, the user guide and a game's wide sessions table; only screens with a
   switch or a tick box on them lost theirs. Every scroller follows the option now, and still scrolls with the wheel, the
   keyboard and touch (`08_UI` §Settings, `16_WPFUI_SYNTAX` §Gotchas).
+- **The first run names the right place to import your library.** Its last step said *File ▸ Import library… on the
+  Games page*; File is the main window's menu, and the Games page has no such button. In Vietnamese it now names the menu
+  as it is shown (*Tệp*).
+
+### Added
+
+- **The user guide looks things up too.** Four pages join it, in Help ▸ User guide: *The screens* (every page, menu,
+  button and shortcut), *Every setting* (what each one does and its default), *When something goes wrong* (what you see,
+  what it means, what to do) and *Words FrameLedger uses*. Tests now fail when a setting or a menu item is added without
+  its line in the guide, or a link names a section that does not exist.
 
 ## [0.1.0-beta.16] - 2026-10-06
 
