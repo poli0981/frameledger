@@ -28,6 +28,15 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+## [0.1.0-beta.17] - 2026-10-07
+
+**The seventeenth pre-release: text that keeps up with a change of theme, scroll bars hidden everywhere when you ask, a
+user guide that answers more, and a wiki.** The same unsigned installer: verify its hash against `SHA256SUMS.txt`, then
+*More info → Run anyway*.
+
+**Updating from `0.1.0-beta.16`:** Help ▸ Check for updates, then *Restart to update* with no game running. Nothing in
+the database changes and nothing is shown again for you to accept; sessions already stored keep their status.
+
 ### Fixed
 
 - **Text keeps up with a change of theme.** After switching between Light and Dark, the descriptions and captions of the

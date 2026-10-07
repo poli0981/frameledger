@@ -2011,7 +2011,7 @@ during finalize, PR-4 the scan set's creation times (D51), PR-5 the App's viewer
 
 **Owner-only, added to the list below:** item 12.
 
-## **START HERE** — 2026-10-06, 0.1.0-beta.16: beta.15 verified, and the chip it left
+## ~~**START HERE**~~ — 2026-10-06, 0.1.0-beta.16: beta.15 verified, and the chip it left *(struck 2026-10-07: the head is §beta.17 below)*
 
 *Status is `CHANGELOG.md` `[0.1.0-beta.16]`; this is what no other file carries. The owner, after beta.15's release
 (2026-10-06): owner-only item 12 passed on real hardware ("đã chạy và ok"), do the chip beta.15 left, release, and close
@@ -2038,6 +2038,47 @@ added.*
   a commit main already carries (it dropped PR-4 and PR-5 when the owner had merged them from the branches).
 - **The desktop app forbids polling CI** (no `gh` loop, Monitor or ScheduleWakeup): it wakes the session on a failure, a
   conflict or a review comment, never on green, so a green PR waits for the owner's word or the owner's auto-merge.
+
+## **START HERE** — 2026-10-07, 0.1.0-beta.17: text that follows a theme switch, scroll bars hidden everywhere, a wiki
+
+*Status is `CHANGELOG.md` `[0.1.0-beta.17]`; this is what no other file carries. The owner's report (2026-10-07, three
+screenshots of beta.16): Settings' descriptions kept the old theme's colour after a switch; the Dashboard kept its
+scroll bar with Hide scroll bars on; "a complete wiki, concise and easy, End-user and Dev". Five stacked PRs — #281 the
+theme text, #282 the scroll bars, #283 the guide's four new pages, #284 the wiki and its publishing, then the
+release.*
+
+**Decisions (owner, 2026-10-07, asked before the plan — do not re-ask):**
+
+- **D53 — the wiki's source is the repository.** `wiki/` (Home, the sidebar, the developer pages) and `guide/` with
+  `LIMITATIONS.md` are assembled by `tools/wiki-build.ps1` and published to the Wiki tab by `.github/workflows/wiki.yml`
+  after a successful Release run (and by hand); a page edited on the tab is overwritten at the next release. English.
+- **D54 — the wiki's End-user half is the user guide**, one source: it grows past D44's eight pages (the screens, every
+  setting, troubleshooting, a glossary — twelve) and stays embedded in the App. Tests hold that every setting the
+  Settings page shows and every page and menu item of the main window is named in it.
+
+**Traps met on the way:**
+
+- **`ui:TextBlock Appearance` pins a brush.** WPF UI 4.3.0 resolves it once (`TryFindResource`) and coerces Foreground
+  to it, so a theme switch leaves the text in the old theme; 129 texts used it. Every contrast check before measured a
+  theme as a surface was *made* under it — a switch needs the surface hosted in a `Window`, because only
+  `Application.Windows` hear a dictionary change (`16_WPFUI_SYNTAX` §Gotchas, `14_TESTING`).
+- **A class handler on `Loaded` is not a load hook.** WPF raises Loaded only where a subtree listens for it with its own
+  handler, style EventSetter or template trigger — WPF UI's toggle switches carry one, which is why Settings hid its
+  bar and the Dashboard never did. A test that calls `RaiseEvent(Loaded)` proves the handler, never that WPF reaches it;
+  `ScrollChanged` reaches every scroller from its first layout.
+- **The wiki's git branch is `master`, and the repository's default workflow token is read-only:** `wiki.yml` declares
+  `contents: write`. A release made with `GITHUB_TOKEN` fires no `release` event for another workflow; `workflow_run`
+  does, and runs `main`'s copy of the file — so it checks out the run's `head_sha` and links at its tag.
+- **A fresh worktree cannot run the full gate** (the native configure, `CONTRIBUTING`): the stack's tip was gated in the
+  main checkout on a detached HEAD, and each PR's own CI ran on its branch.
+- **Found while writing the guide, not fixed** (a task each): two notices can print an internal name — *"The hook
+  stopped (WriterSelfDisabled)…"*, and a refusal no anti-cheat names reads *"The anti-cheat guard did not hook this
+  game: reason RefusedKillSwitch."*; the kill switch's *Applied* strip says "at the next session start" (it applies
+  within 30 s); *Turn off* failing says "Nothing was enabled."; in the viewer, the exception switch, the Recording numbers and the Channel stay enabled;
+  `08_UI` lists a "PawnIO missing" banner that does not exist; and a release's Overlay build id reads `-dirty` (§0.1.0-beta.4,
+  "Found and NOT fixed", still open).
+
+**Owner-only, added to the list below:** item 13.
 
 ## Owner-only — no PR can close these
 
@@ -2126,6 +2167,14 @@ added.*
    (`12_BUILD` §Debugging) and start `FrameLedger.exe --data-dir <copy>`; the banner names the folder, the pill reads
    *Viewer — no Agent*, the switches are off, and the installed App runs beside it untouched. (f) The `ja` strings
    marked `review`.
+13. **beta.17 on real hardware.** (a) **A theme switch:** on Settings, Dark → Light → Dark, and again with a session's
+   summary window open — every description and caption follows at once. (b) **Hide scroll bars** on: the Dashboard,
+   Games, a game's page, Logs, About, Help ▸ User guide and a drop-down list draw no bar, and the wheel still scrolls;
+   off, the bars come back without a restart. (c) **Help ▸ User guide** lists twelve pages and Limitations; a link to a
+   section opens that section. (d) **The wiki**, once the release is out: the Wiki tab shows Home, the sidebar's two
+   halves and a footer naming `v0.1.0-beta.17` — then tick *Restrict editing to collaborators only* (Settings ▸ General
+   ▸ Features ▸ Wikis), or anyone can change a page until the next release overwrites it. (e) The `ja` strings marked
+   `review`.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
