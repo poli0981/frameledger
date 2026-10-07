@@ -76,14 +76,31 @@ internal static class Visuals
     }
 
     /// <summary>
-    /// Runs <paramref name="work"/> with the App's theme dictionary swapped for <paramref name="theme"/>, and puts Dark back:
-    /// elements made inside take the theme's resources when they are created.
+    /// Windows' default accent. The App derives its accent resources from the system's at each theme switch; the checks
+    /// derive them from this one colour, so a result does not depend on the machine's personalisation.
     /// </summary>
+    public static readonly Color DefaultAccent = Color.FromRgb(0x00, 0x78, 0xD4);
+
+    /// <summary>
+    /// Runs <paramref name="work"/> under <paramref name="theme"/> the way the App switches (<c>WpfThemeApplier</c> →
+    /// <c>ApplicationThemeManager.Apply(theme, …, updateAccent: true)</c>): the accent resources derived for the theme from
+    /// <see cref="DefaultAccent"/>, then the theme dictionary swapped. Afterwards the dictionary and the application's own
+    /// resources are put back as they were, so no other check inherits this one's theme. Elements made inside take the
+    /// theme's resources when they are created; elements made before it hear the change, as a shown window does.
+    /// </summary>
+    /// <remarks>
+    /// The accent is not in the theme dictionaries (WPF UI 4.3.0 writes it into <c>Application.Resources</c>), and the
+    /// test application's only accent is <c>Accent.xaml</c>'s default, the dark theme's: before 2026-10-07 a check under
+    /// Light measured a link in the dark theme's light blue on the light window, 1.9:1, a colour the App never shows.
+    /// </remarks>
     public static T UnderTheme<T>(ApplicationTheme theme, Func<T> work)
     {
-        System.Collections.ObjectModel.Collection<ResourceDictionary> merged = System.Windows.Application.Current.Resources.MergedDictionaries;
+        ResourceDictionary resources = System.Windows.Application.Current.Resources;
+        System.Collections.ObjectModel.Collection<ResourceDictionary> merged = resources.MergedDictionaries;
         int index = merged.ToList().FindIndex(static d => d is ThemesDictionary);
         ResourceDictionary original = merged[index];
+        Dictionary<object, object> own = resources.Keys.Cast<object>().ToDictionary(static k => k, k => resources[k]);
+        ApplicationAccentColorManager.Apply(DefaultAccent, theme);
         merged[index] = new ThemesDictionary { Theme = theme };
         try
         {
@@ -92,6 +109,15 @@ internal static class Visuals
         finally
         {
             merged[index] = original;
+            foreach (object added in resources.Keys.Cast<object>().Where(k => !own.ContainsKey(k)).ToList())
+            {
+                resources.Remove(added);
+            }
+
+            foreach ((object key, object value) in own.Where(kv => !ReferenceEquals(resources[kv.Key], kv.Value)))
+            {
+                resources[key] = value;
+            }
         }
     }
 

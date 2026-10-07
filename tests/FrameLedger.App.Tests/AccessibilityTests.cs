@@ -186,6 +186,24 @@ public sealed class AccessibilityTests
     }
 
     /// <summary>
+    /// beta.18 (the owner's screenshots of beta.17 in the dark theme: every page's title near-black on the dark window). A
+    /// page is shown in WPF UI's <c>NavigationViewContentPresenter</c>, a <c>Frame</c>, and a Frame sets
+    /// <c>InheritanceBehavior.SkipToAppNow</c>: the window's text colour never reaches the page, and a text with no colour
+    /// of its own is WPF UI's TextBlock default, black. Every page gives its texts the theme's colour itself.
+    /// </summary>
+    [Fact]
+    public void EveryPageSetsItsOwnTextColour()
+    {
+        List<string> pages = [.. AppXaml().Where(static x => string.Equals(x.Xaml.Root!.Name.LocalName, "Page", StringComparison.Ordinal)).Select(static x => x.File)];
+        List<string> uncoloured = [.. AppXaml().Where(static x => string.Equals(x.Xaml.Root!.Name.LocalName, "Page", StringComparison.Ordinal)
+                                                          && !string.Equals(x.Xaml.Root.Attribute("Foreground")?.Value, "{DynamicResource TextFillColorPrimaryBrush}", StringComparison.Ordinal))
+                                                .Select(static x => x.File)];
+
+        pages.Should().HaveCountGreaterThanOrEqualTo(6);
+        string.Join(", ", uncoloured).Should().BeEmpty("a Frame passes no text colour into a page: each sets Foreground=\"{DynamicResource TextFillColorPrimaryBrush}\" (16_WPFUI_SYNTAX §Gotchas)");
+    }
+
+    /// <summary>
     /// A stock <c>ScrollViewer</c> takes every wheel, even with nothing left to scroll; inside a dialog that scrolls, the wheel
     /// then stops at it. WPF UI's <c>PassiveScrollViewer</c> hands the wheel on at its ends (beta.14).
     /// </summary>

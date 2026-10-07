@@ -8,6 +8,7 @@
       xmlns:res="clr-namespace:FrameLedger.App"
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
       Title="{x:Static res:Strings.Settings_Header}"
+      Foreground="{DynamicResource TextFillColorPrimaryBrush}"
       ScrollViewer.CanContentScroll="False">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Style="{StaticResource PageRoot}">

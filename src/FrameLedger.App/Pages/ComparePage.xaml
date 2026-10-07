@@ -9,6 +9,7 @@
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
       xmlns:charts="clr-namespace:FrameLedger.App.Charts"
       Title="{x:Static res:Strings.Compare_Header}"
+      Foreground="{DynamicResource TextFillColorPrimaryBrush}"
       ScrollViewer.CanContentScroll="False">
     <!-- 08_UI §Compare: the picker (2–5, cross-game), the overlaid percentile curves, the stat table; FR-6.2's guard is the view model's. -->
     <ScrollViewer VerticalScrollBarVisibility="Auto">

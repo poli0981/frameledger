@@ -28,6 +28,17 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Fixed
+
+- **Page titles and section headings read in the dark theme again.** Every page's title and its section headings — Dashboard,
+  Recent sessions, Games, Compare, Settings and each of its groups, Logs — were drawn near-black on the dark window
+  (owner's screenshots of beta.17; beta.16 had it too). A page is shown in WPF UI's navigation Frame, which passes no text
+  colour into the page, and a text that sets none is black; a page open during a theme switch picked the right colour up,
+  and the next one navigated to did not. Every page now sets the theme's text colour itself. `AccessibilityTests.EveryPageSetsItsOwnTextColour`
+  and `PagesLoadTests.EveryTextIsReadableInBothThemes` (every surface hosted as the App hosts it, ≥ 3:1 in both themes)
+  went red on the unfixed pages first; the theme-switch check now hosts pages in the Frame too, and its harness derives the
+  accent for each theme as the App does (`docs/08_UI.md` §Contrast, `docs/16_WPFUI_SYNTAX.md` §Gotchas, `docs/14_TESTING.md`).
+
 ## [0.1.0-beta.17] - 2026-10-07
 
 **The seventeenth pre-release: text that keeps up with a change of theme, scroll bars hidden everywhere when you ask, a

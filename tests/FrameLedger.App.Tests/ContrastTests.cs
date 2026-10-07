@@ -23,13 +23,6 @@ public sealed class ContrastTests
 {
     private static readonly string[] _paletteAppearances = ["Info", "Caution", "Danger", "Success"];
 
-    /// <summary>
-    /// Windows' default accent. The accent brushes are not in the theme dictionaries: `ApplicationThemeManager.Apply(…,
-    /// updateAccent: true)` derives them from the system accent at start-up (`MainWindow`), so the test derives them the
-    /// same way from a fixed colour and measures WPF UI's own on-accent text against them.
-    /// </summary>
-    private static readonly Color _defaultAccent = Color.FromRgb(0x00, 0x78, 0xD4);
-
     [Fact]
     public void NoBadgeUsesAPaletteAppearance()
     {
@@ -143,10 +136,12 @@ public sealed class ContrastTests
     [InlineData(ApplicationTheme.Light)]
     public async Task EveryPillPairMeetsAAInBothThemes(ApplicationTheme theme)
     {
-        Dictionary<string, double> ratios = await PagesLoadTests.OnStaAsync(() =>
+        // The accent brushes are not in the theme dictionaries: the App derives them from the system accent at each theme
+        // switch, and Visuals.UnderTheme derives them the same way from Windows' default accent. Until 2026-10-07 this
+        // passed systemAccentColor: true, which reads the machine's own accent palette wherever Windows answers.
+        Dictionary<string, double> ratios = await PagesLoadTests.OnStaAsync(() => Visuals.UnderTheme(theme, () =>
         {
             var themed = new ThemesDictionary { Theme = theme };
-            ApplicationAccentColorManager.Apply(_defaultAccent, theme, systemGlassColor: false, systemAccentColor: true);
             Color window = Wcag.Resolve(themed, "ApplicationBackgroundColor");
             Color card = Wcag.Over(Wcag.Resolve(themed, "CardBackgroundFillColorDefault"), window);
             Color pillOff = Wcag.Over(Wcag.Resolve(themed, "ControlFillColorDefault"), card);
@@ -159,7 +154,7 @@ public sealed class ContrastTests
                 ["qualifier warning: primary text on caution"] = Wcag.Ratio(Wcag.Over(Wcag.Resolve(themed, "TextFillColorPrimary"), caution), caution),
                 ["the Info badge, for the record"] = Wcag.Ratio(Wcag.Over(Wcag.Resolve(themed, "TextFillColorPrimary"), PaletteLightBlue()), PaletteLightBlue()),
             };
-        });
+        }));
 
         using (new FluentAssertions.Execution.AssertionScope(theme.ToString()))
         {

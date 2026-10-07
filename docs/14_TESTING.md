@@ -71,6 +71,19 @@ under the new theme. `PagesLoadTests.Surfaces` builds every page, window and dia
 any check that wants all of them. Colours are compared and texts only reported: another test class may change
 `Strings.Culture` between the two builds.
 
+**A page is measured in the Frame the App shows it in, and a theme brings its accent (beta.18).** WPF UI's
+`NavigationViewContentPresenter` is a `Frame`, which passes no inherited value into the page, the text colour included, so
+a page laid out straight in a window measures the window's colour and not the App's: the theme-switch check above did, and
+stayed green over every page title drawn black (`08_UI` §Contrast, fifth hole). The rendered checks host a page in the
+presenter (`PagesLoadTests.Hosted`), and `PagesLoadTests.EveryTextIsReadableInBothThemes` measures every surface's shown
+texts at ≥ 3:1 in both themes. `Visuals.UnderTheme` switches as the App does — the accent resources derived for the theme
+from Windows' default accent (`Visuals.DefaultAccent`, the App's derivation rather than the machine's own palette), then
+the dictionary — and puts the application's own resources back afterwards. The accent lives in `Application.Resources`,
+not in a theme dictionary; until then a check under Light measured the dark theme's link blue on the light window, 1.9:1,
+a colour the App never shows. The theme-switch check compares what can be seen: a text only one of the two instances holds
+counts where it shows, and a collapsed part is not compared (a switch re-applies the template of a DataGrid's idle scroll
+bar, and its glyphs exist in the switched instance only).
+
 **Loaded needs a shown window, and even then it is not raised everywhere (beta.17).** A tree laid out by hand never raises
 Loaded, and a shown one raises it only where a subtree listens for it (`16_WPFUI_SYNTAX` §Gotchas) — so a test that calls
 `RaiseEvent(Loaded)` proves a handler, never that WPF reaches it. `ScrollBarHidingTests.EverySurfaceShownWithTheOptionOnDrawsNoBar`

@@ -10,6 +10,7 @@
       xmlns:controls="clr-namespace:FrameLedger.App.Controls"
       xmlns:charts="clr-namespace:FrameLedger.App.Charts"
       Title="{x:Static res:Strings.Games_Header}"
+      Foreground="{DynamicResource TextFillColorPrimaryBrush}"
       ScrollViewer.CanContentScroll="False">
     <!--
         08_UI §Games › Game detail. The two rows — Supports (files on disk) and Last session measured (the
