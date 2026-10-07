@@ -28,6 +28,15 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+## [0.1.0-beta.18] - 2026-10-07
+
+**The eighteenth pre-release: every page readable in the dark theme, notices that say what happened in words, and a
+release whose build no longer calls itself dirty.** The same unsigned installer: verify its hash against
+`SHA256SUMS.txt`, then *More info → Run anyway*.
+
+**Updating from `0.1.0-beta.17`:** Help ▸ Check for updates, then *Restart to update* with no game running. Nothing in
+the database changes and nothing is shown again for you to accept; sessions already stored keep their status.
+
 ### Fixed
 
 - **Page titles and section headings read in the dark theme again.** Every page's title and its section headings — Dashboard,
