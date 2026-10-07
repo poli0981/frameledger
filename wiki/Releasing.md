@@ -19,9 +19,11 @@ The full documents are [`docs/13_CI_CD.md`](../docs/13_CI_CD.md) and [`docs/11_U
    statement (`legal/ACCURACY.md` and its copies) and `LIMITATIONS.md`. `VERSION` changes only with the numeric core.
 2. After it merges, a signed tag `vx.y.z` (or `vx.y.z-beta.N`) on the merge commit starts `release.yml`:
    - it checks the tag against `VERSION` and that the changelog has the section;
+   - reads the build id from the clean checkout, before anything is edited;
    - writes the release date into the legal documents;
    - runs the whole gate;
-   - publishes the App and the agent (self-contained, ReadyToRun) and checks the published tree;
+   - publishes the App and the agent (self-contained, ReadyToRun) and checks the published tree, the build id in the
+     native binaries included;
    - packs them with Velopack, with a delta from the previous release;
    - writes `SHA256SUMS.txt`;
    - creates the GitHub release from the changelog section, marked pre-release for a beta.

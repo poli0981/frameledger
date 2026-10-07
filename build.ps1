@@ -488,6 +488,12 @@ function Invoke-ProjectGates {
     Write-Step 'release-notes'
     Invoke-Checked 'release-notes (self-test)' { & (Join-Path $repo 'tools/release-notes.ps1') -SelfTest }
 
+    # beta.18: the build id a release hands CMake (read from the clean checkout before the date substitution edits
+    # legal/*.md) is read back out of the published native binaries by release.yml. Self-test only here — the live
+    # pass needs that id, which only a release has (12_BUILD §Release-time token substitution).
+    Write-Step 'buildid-check'
+    Invoke-Checked 'buildid-check (self-test)' { & (Join-Path $repo 'tools/buildid-check.ps1') -SelfTest }
+
     # 09_I18N's gate, built with the first .resx family (P3 PR-2, 2026-09-13): every key in en/vi/ja, ja
     # Safety_* marked for human review, the generated accessor current. Self-test first (at least four
     # cases must go red), then the live pass; a tree with no family is red, not skipped.
