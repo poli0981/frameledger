@@ -63,6 +63,14 @@ cell against that colour in both themes and counts the accent pixels of each tic
 paging checks navigate a real page in WPF UI's presenter and send it the wheel. Each was run red against the unfixed XAML
 first — a rendered check that cannot fail is the counted-rows check again.
 
+**A theme switch needs a window (beta.17).** A change to `Application.Resources` reaches only the trees of
+`Application.Windows`, and a `Window` registers itself there when it is constructed, shown or not. So
+`PagesLoadTests.EveryTextFollowsAThemeSwitch` hosts each surface in a `FluentWindow` it never shows, swaps the theme
+dictionary as `ApplicationThemeManager.Apply` does, and compares every text's colour with the same surface made fresh
+under the new theme. `PagesLoadTests.Surfaces` builds every page, window and dialog content from loaded view models, for
+any check that wants all of them. Colours are compared and texts only reported: another test class may change
+`Strings.Culture` between the two builds.
+
 **A test that sends input must also say which keys are held.** `Keyboard.Modifiers` is the machine's real keyboard, read
 from any thread (a fresh background thread's `GetKeyState` reports the machine's NumLock — measured 2026-10-06), so a
 wheel test that read it held whatever key a person pressed while the gate ran: `ChartWheelTests`' plain half went red once

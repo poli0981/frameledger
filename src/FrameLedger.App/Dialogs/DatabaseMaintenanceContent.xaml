@@ -18,13 +18,13 @@
         session runs; the sweep is the Agent's and asks first. Buttons are disabled while an action runs.
     -->
     <StackPanel>
-        <ui:TextBlock MaxWidth="700" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Maintenance_Intro}" TextWrapping="Wrap" />
+        <ui:TextBlock MaxWidth="700" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Maintenance_Intro}" TextWrapping="Wrap" />
 
         <ui:CardControl Margin="0,12,0,0" Icon="{ui:SymbolIcon ShieldCheckmark24}">
             <ui:CardControl.Header>
                 <StackPanel>
                     <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Maintenance_Integrity_Label}" />
-                    <ui:TextBlock MaxWidth="440" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Maintenance_Integrity_Body}" TextWrapping="Wrap" />
+                    <ui:TextBlock MaxWidth="440" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Maintenance_Integrity_Body}" TextWrapping="Wrap" />
                 </StackPanel>
             </ui:CardControl.Header>
             <ui:Button MinWidth="120" Command="{Binding CheckIntegrityCommand}" Content="{x:Static res:Strings.Maintenance_Integrity_Button}" />
@@ -34,7 +34,7 @@
             <ui:CardControl.Header>
                 <StackPanel>
                     <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Maintenance_Backup_Label}" />
-                    <ui:TextBlock MaxWidth="440" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Maintenance_Backup_Body}" TextWrapping="Wrap" />
+                    <ui:TextBlock MaxWidth="440" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Maintenance_Backup_Body}" TextWrapping="Wrap" />
                 </StackPanel>
             </ui:CardControl.Header>
             <ui:Button MinWidth="120" Command="{Binding BackUpCommand}" Content="{x:Static res:Strings.Maintenance_Backup_Button}" />
@@ -44,7 +44,7 @@
             <ui:CardControl.Header>
                 <StackPanel>
                     <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Maintenance_Sweep_Label}" />
-                    <ui:TextBlock MaxWidth="440" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Maintenance_Sweep_Body}" TextWrapping="Wrap" />
+                    <ui:TextBlock MaxWidth="440" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Maintenance_Sweep_Body}" TextWrapping="Wrap" />
                 </StackPanel>
             </ui:CardControl.Header>
             <ui:Button MinWidth="120" Command="{Binding SweepCommand}" Content="{x:Static res:Strings.Maintenance_Sweep_Button}" />
@@ -54,7 +54,7 @@
             <ui:CardControl.Header>
                 <StackPanel>
                     <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Maintenance_Compact_Label}" />
-                    <ui:TextBlock MaxWidth="440" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Maintenance_Compact_Body}" TextWrapping="Wrap" />
+                    <ui:TextBlock MaxWidth="440" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Maintenance_Compact_Body}" TextWrapping="Wrap" />
                 </StackPanel>
             </ui:CardControl.Header>
             <ui:Button MinWidth="120" Command="{Binding CompactCommand}" Content="{x:Static res:Strings.Maintenance_Compact_Button}" />

@@ -24,16 +24,16 @@
                             <TextBlock Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding ViewModel.Live.TierText}" />
                         </Border>
                     </StackPanel>
-                    <ui:TextBlock Margin="0,8,0,0" Appearance="Secondary" Text="{x:Static vm:LiveCaptureViewModel.IdleText}"
+                    <ui:TextBlock Margin="0,8,0,0" Style="{StaticResource SecondaryText}" Text="{x:Static vm:LiveCaptureViewModel.IdleText}"
                                   Visibility="{Binding ViewModel.Live.IsActive, Converter={StaticResource InverseBoolToVis}}" />
                     <StackPanel Margin="0,8,0,0" Visibility="{Binding ViewModel.Live.IsActive, Converter={StaticResource BoolToVis}}">
                         <ui:TextBlock FontTypography="BodyStrong" Text="{Binding ViewModel.Live.GameName}" />
-                        <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.Live.ElapsedText}" />
-                        <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:LiveCaptureViewModel.WaitingText}"
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.Live.ElapsedText}" />
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:LiveCaptureViewModel.WaitingText}"
                                       Visibility="{Binding ViewModel.Live.WaitingForFrames, Converter={StaticResource BoolToVis}}" />
                         <StackPanel Margin="0,8,0,0" Visibility="{Binding ViewModel.Live.IsHeld, Converter={StaticResource BoolToVis}}">
                             <ui:TextBlock Text="{x:Static vm:LiveCaptureViewModel.HeldText}" TextWrapping="Wrap" />
-                            <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.Live.HeldReason}" TextWrapping="Wrap" />
+                            <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.Live.HeldReason}" TextWrapping="Wrap" />
                         </StackPanel>
                         <controls:FpsReadout Margin="0,8,0,0" Model="{Binding ViewModel.Live.Readout}"
                                              Visibility="{Binding ViewModel.Live.IsHeld, Converter={StaticResource InverseBoolToVis}}" />
@@ -45,9 +45,9 @@
                                     Visibility="{Binding ViewModel.Live.RtActive, Converter={StaticResource BoolToVis}}">
                                 <TextBlock Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" Text="{x:Static vm:LiveCaptureViewModel.RtOnText}" />
                             </Border>
-                            <ui:TextBlock Margin="0,0,16,0" Appearance="Secondary" Text="{Binding ViewModel.Live.GpuTempText}" />
-                            <ui:TextBlock Margin="0,0,16,0" Appearance="Secondary" Text="{Binding ViewModel.Live.CpuTempText}" />
-                            <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.Live.MemoryText}" />
+                            <ui:TextBlock Margin="0,0,16,0" Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.Live.GpuTempText}" />
+                            <ui:TextBlock Margin="0,0,16,0" Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.Live.CpuTempText}" />
+                            <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.Live.MemoryText}" />
                         </WrapPanel>
                     </StackPanel>
                 </StackPanel>
@@ -57,19 +57,19 @@
             <UniformGrid Margin="0,12,0,0" Columns="3">
                 <ui:Card Margin="0,0,6,0">
                     <StackPanel>
-                        <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:DashboardViewModel.TotalsGames}" />
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:DashboardViewModel.TotalsGames}" />
                         <ui:TextBlock FontTypography="Subtitle" Text="{Binding ViewModel.GamesTrackedText}" />
                     </StackPanel>
                 </ui:Card>
                 <ui:Card Margin="6,0,6,0">
                     <StackPanel>
-                        <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:DashboardViewModel.TotalsPlaytime}" />
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:DashboardViewModel.TotalsPlaytime}" />
                         <ui:TextBlock FontTypography="Subtitle" Text="{Binding ViewModel.PlaytimeText}" />
                     </StackPanel>
                 </ui:Card>
                 <ui:Card Margin="6,0,0,0">
                     <StackPanel>
-                        <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:DashboardViewModel.TotalsThisWeek}" />
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:DashboardViewModel.TotalsThisWeek}" />
                         <ui:TextBlock FontTypography="Subtitle" Text="{Binding ViewModel.ThisWeekText}" />
                     </StackPanel>
                 </ui:Card>
@@ -110,7 +110,7 @@
 
             <!-- recent sessions -->
             <ui:TextBlock Margin="0,20,0,0" FontTypography="Subtitle" Text="{x:Static vm:DashboardViewModel.RecentHeader}" />
-            <ui:TextBlock Margin="0,8,0,0" Appearance="Secondary" TextWrapping="Wrap"
+            <ui:TextBlock Margin="0,8,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap"
                           Text="{x:Static vm:DashboardViewModel.EmptyText}"
                           Visibility="{Binding ViewModel.RecentEmpty, Converter={StaticResource BoolToVis}}" />
             <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding ViewModel.Recent}">
@@ -132,8 +132,8 @@
                                 <Border Grid.Column="1" Style="{StaticResource Pill}" Margin="8,0">
                                     <TextBlock Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding TierText}" />
                                 </Border>
-                                <ui:TextBlock Grid.Column="2" Appearance="Secondary" VerticalAlignment="Center" Margin="4,0,0,0" Text="{Binding DateText}" />
-                                <ui:TextBlock Grid.Column="3" Appearance="Secondary" VerticalAlignment="Center" Margin="12,0" Text="{Binding DurationText}" />
+                                <ui:TextBlock Grid.Column="2" Style="{StaticResource SecondaryText}" VerticalAlignment="Center" Margin="4,0,0,0" Text="{Binding DateText}" />
+                                <ui:TextBlock Grid.Column="3" Style="{StaticResource SecondaryText}" VerticalAlignment="Center" Margin="12,0" Text="{Binding DurationText}" />
                                 <controls:FpsReadout Grid.Column="4" HorizontalAlignment="Right" Model="{Binding Readout}" />
                             </Grid>
                         </ui:CardAction>

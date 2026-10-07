@@ -24,12 +24,12 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
                             <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_KillSwitch_Label}" />
-                            <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.KillSwitchState}" />
+                            <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.KillSwitchState}" />
                         </StackPanel>
                         <ui:ToggleSwitch Grid.Column="1" Margin="12,0" AutomationProperties.Name="{x:Static res:Strings.Settings_KillSwitch_Label}" IsChecked="{Binding ViewModel.KillSwitch, Mode=TwoWay}" IsEnabled="{Binding ViewModel.ActsOnThisPc}" />
                     </Grid>
                 </ui:CardExpander.Header>
-                <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_KillSwitch_Body}" TextWrapping="Wrap" />
+                <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Settings_KillSwitch_Body}" TextWrapping="Wrap" />
             </ui:CardExpander>
 
             <!-- beta.11 (owner request 2026-10-03: no row without a control): shown only while a game has hooking on, each with its Turn off. -->
@@ -61,7 +61,7 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_HideAntiCheatHooking_Label}" />
-                        <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Appearance="Secondary" TextWrapping="Wrap"
+                        <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" TextWrapping="Wrap"
                                       Text="{x:Static res:Strings.Settings_HideAntiCheatHooking_Body}" />
                     </StackPanel>
                 </ui:CardControl.Header>
@@ -79,7 +79,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
                             <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_Exceptions_Label}" TextWrapping="Wrap" />
-                            <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Appearance="Secondary" TextWrapping="Wrap"
+                            <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" TextWrapping="Wrap"
                                           Text="{x:Static res:Strings.Settings_Exceptions_Body}" />
                         </StackPanel>
                         <ui:ToggleSwitch Grid.Column="1" Margin="12,0" AutomationProperties.Name="{x:Static res:Strings.Settings_Exceptions_Label}"
@@ -88,11 +88,11 @@
                 </ui:CardExpander.Header>
                 <StackPanel>
                     <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_Exceptions_Header}" />
-                    <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static res:Strings.Settings_Exceptions_Suspended}"
+                    <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{x:Static res:Strings.Settings_Exceptions_Suspended}"
                                   Visibility="{Binding ViewModel.ExceptionsSuspended, Converter={StaticResource BoolToVis}}" />
-                    <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static res:Strings.Settings_Exceptions_Checking}"
+                    <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{x:Static res:Strings.Settings_Exceptions_Checking}"
                                   Visibility="{Binding ViewModel.ExceptionsChecking, Converter={StaticResource BoolToVis}}" />
-                    <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_Exceptions_Empty}"
+                    <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Settings_Exceptions_Empty}"
                                   Visibility="{Binding ViewModel.ExceptionGames.Count, Converter={StaticResource ZeroToVisible}}" />
                     <ItemsControl ItemsSource="{Binding ViewModel.ExceptionGames}" IsEnabled="{Binding ViewModel.ActsOnThisPc}">
                         <ItemsControl.ItemTemplate>
@@ -104,9 +104,9 @@
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0">
                                         <ui:TextBlock FontTypography="BodyStrong" Text="{Binding Name}" />
-                                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding FindingText}" />
-                                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding StateText}" />
-                                        <ui:TextBlock Appearance="Tertiary" TextWrapping="Wrap" Text="{Binding LapseText}"
+                                        <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding FindingText}" />
+                                        <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding StateText}" />
+                                        <ui:TextBlock Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{Binding LapseText}"
                                                       Visibility="{Binding LapseText, Converter={StaticResource NullToCollapsed}}" />
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Orientation="Horizontal">
@@ -142,7 +142,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0">
                             <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_VkLayer_Label}" />
-                            <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Appearance="Secondary" Text="{Binding ViewModel.VulkanLayerText}" TextWrapping="Wrap" />
+                            <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.VulkanLayerText}" TextWrapping="Wrap" />
                         </StackPanel>
                         <StackPanel Grid.Column="1" Margin="12,0" Orientation="Horizontal">
                             <ui:Button Margin="0,0,8,0"
@@ -157,7 +157,7 @@
                         </StackPanel>
                     </Grid>
                 </ui:CardExpander.Header>
-                <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_VkLayer_Note}" TextWrapping="Wrap" />
+                <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Settings_VkLayer_Note}" TextWrapping="Wrap" />
             </ui:CardExpander>
             <ui:HyperlinkButton Margin="0,6,0,0"
                                 Command="{Binding ViewModel.OpenSafetyDocsCommand}"
@@ -170,7 +170,7 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_MinSession_Label}" />
-                        <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_MinSession_Body}" />
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Settings_MinSession_Body}" />
                     </StackPanel>
                 </ui:CardControl.Header>
                 <ui:NumberBox MinWidth="140"
@@ -184,7 +184,7 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_Interval_Label}" />
-                        <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_Interval_Body}" />
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Settings_Interval_Body}" />
                     </StackPanel>
                 </ui:CardControl.Header>
                 <ui:NumberBox MinWidth="140"
@@ -198,7 +198,7 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_Retention_Label}" />
-                        <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_Retention_Body}" />
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Settings_Retention_Body}" />
                     </StackPanel>
                 </ui:CardControl.Header>
                 <ui:NumberBox MinWidth="140"
@@ -218,7 +218,7 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_DeleteSessions_Label}" />
-                        <ui:TextBlock MaxWidth="560" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Settings_DeleteSessions_Body}" TextWrapping="Wrap" />
+                        <ui:TextBlock MaxWidth="560" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Settings_DeleteSessions_Body}" TextWrapping="Wrap" />
                     </StackPanel>
                 </ui:CardControl.Header>
                 <ui:Button Appearance="Secondary" Command="{Binding ViewModel.DeleteAllSessionsCommand}" Content="{x:Static res:Strings.Settings_DeleteSessions_Button}" IsEnabled="{Binding ViewModel.ActsOnThisPc}" />
@@ -231,7 +231,7 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_Agent_RunElevated_Label}" />
-                        <ui:TextBlock MaxWidth="560" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Settings_Agent_RunElevated_Body}" TextWrapping="Wrap" />
+                        <ui:TextBlock MaxWidth="560" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Settings_Agent_RunElevated_Body}" TextWrapping="Wrap" />
                         <ui:TextBlock Margin="0,4,0,0" FontTypography="BodyStrong" Text="{Binding ViewModel.ElevationText}" TextWrapping="Wrap"
                                       ToolTip="{x:Static res:Strings.Settings_Agent_Elevation_Body}" />
                     </StackPanel>
@@ -242,7 +242,7 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_Agent_Task_Label}" />
-                        <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Appearance="Secondary" Text="{Binding ViewModel.TaskText}" TextWrapping="Wrap" />
+                        <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.TaskText}" TextWrapping="Wrap" />
                     </StackPanel>
                 </ui:CardControl.Header>
                 <StackPanel Orientation="Horizontal">
@@ -287,7 +287,7 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_StartWithWindows_Label}" />
-                        <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_StartWithWindows_Body}" />
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Settings_StartWithWindows_Body}" />
                     </StackPanel>
                 </ui:CardControl.Header>
                 <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_StartWithWindows_Label}" IsChecked="{Binding ViewModel.StartWithWindows, Mode=TwoWay}" IsEnabled="{Binding ViewModel.ActsOnThisPc}" />
@@ -296,7 +296,7 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_MinimizeToTray_Label}" />
-                        <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_MinimizeToTray_Body}" />
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Settings_MinimizeToTray_Body}" />
                     </StackPanel>
                 </ui:CardControl.Header>
                 <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_MinimizeToTray_Label}" IsChecked="{Binding ViewModel.MinimizeToTray, Mode=TwoWay}" />
@@ -306,7 +306,7 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_FpsDecimals_Label}" />
-                        <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Appearance="Secondary" TextWrapping="Wrap"
+                        <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" TextWrapping="Wrap"
                                       Text="{x:Static res:Strings.Settings_FpsDecimals_Body}" />
                     </StackPanel>
                 </ui:CardControl.Header>
@@ -317,7 +317,7 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_HideScrollBars_Label}" />
-                        <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Appearance="Secondary" TextWrapping="Wrap"
+                        <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" TextWrapping="Wrap"
                                       Text="{x:Static res:Strings.Settings_HideScrollBars_Body}" />
                     </StackPanel>
                 </ui:CardControl.Header>
@@ -335,7 +335,7 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_UpdateChannel_Label}" />
-                        <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_UpdateChannel_Body}" />
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Settings_UpdateChannel_Body}" />
                     </StackPanel>
                 </ui:CardControl.Header>
                 <ComboBox MinWidth="140"
@@ -350,7 +350,7 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_AutoCheck_Label}" />
-                        <ui:TextBlock MaxWidth="560" HorizontalAlignment="Left" Appearance="Secondary" Text="{x:Static res:Strings.Settings_AutoCheck_Body}" TextWrapping="Wrap" />
+                        <ui:TextBlock MaxWidth="560" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Settings_AutoCheck_Body}" TextWrapping="Wrap" />
                     </StackPanel>
                 </ui:CardControl.Header>
                 <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_AutoCheck_Label}" IsChecked="{Binding ViewModel.AutoCheckUpdates, Mode=TwoWay}" IsEnabled="{Binding ViewModel.ActsOnThisPc}" />
@@ -361,7 +361,7 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_LogDebug_Label}" />
-                        <ui:TextBlock Appearance="Secondary" Text="{x:Static res:Strings.Settings_LogDebug_Body}" />
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Settings_LogDebug_Body}" />
                     </StackPanel>
                 </ui:CardControl.Header>
                 <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_LogDebug_Label}" IsChecked="{Binding ViewModel.LogDebug, Mode=TwoWay}" />
@@ -378,13 +378,13 @@
                                         <ColumnDefinition Width="160" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <ui:TextBlock Grid.Column="0" Appearance="Secondary" Text="{Binding Label}" />
+                                    <ui:TextBlock Grid.Column="0" Style="{StaticResource SecondaryText}" Text="{Binding Label}" />
                                     <ui:TextBlock Grid.Column="1" TextWrapping="Wrap" Text="{Binding Value}" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                    <ui:TextBlock Margin="0,8,0,0" Appearance="Tertiary" TextWrapping="Wrap" Text="{x:Static vm:SystemInfoViewModel.Note}" />
+                    <ui:TextBlock Margin="0,8,0,0" Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{x:Static vm:SystemInfoViewModel.Note}" />
                     <ui:Button Margin="0,8,0,0" Command="{Binding SystemInfo.CopyCommand}" Content="{x:Static vm:SystemInfoViewModel.CopyText}" Icon="{ui:SymbolIcon Copy24}" />
                 </StackPanel>
             </ui:Card>

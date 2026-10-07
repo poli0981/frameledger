@@ -26,7 +26,7 @@
         <ui:TitleBar Grid.Row="0" Title="{Binding ViewModel.Title}" ShowMaximize="True" ShowMinimize="True" />
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Style="{StaticResource PageRoot}">
-                <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:SessionSummaryViewModel.NotFoundText}"
+                <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{x:Static vm:SessionSummaryViewModel.NotFoundText}"
                               Visibility="{Binding ViewModel.NotFound, Converter={StaticResource BoolToVis}}" />
 
                 <ui:InfoBar IsClosable="False" Severity="Error" Margin="0,0,0,12"
@@ -39,19 +39,19 @@
                             Message="{x:Static vm:SessionSummaryViewModel.UnhookedBody}" />
 
                 <!-- header line + chips -->
-                <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.Line}" />
-                <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.ExitLine}" />
-                <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.ExceptionLine}"
+                <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.Line}" />
+                <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.ExitLine}" />
+                <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.ExceptionLine}"
                               Visibility="{Binding ViewModel.ExceptionLine, Converter={StaticResource NullToCollapsed}}" />
                 <!-- beta.10: how the game was shown, in either tier (03_METRICS §Display mode) -->
-                <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.DisplayLine}"
+                <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.DisplayLine}"
                               Visibility="{Binding ViewModel.DisplayLine, Converter={StaticResource NullToCollapsed}}" />
-                <ui:TextBlock Appearance="Tertiary" TextWrapping="Wrap" Text="{Binding ViewModel.HardwareLine}" />
-                <ui:TextBlock Appearance="Tertiary" TextWrapping="Wrap" Text="{Binding ViewModel.LibrariesLine}"
+                <ui:TextBlock Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.HardwareLine}" />
+                <ui:TextBlock Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.LibrariesLine}"
                               Visibility="{Binding ViewModel.LibrariesLine, Converter={StaticResource NullToCollapsed}}" />
-                <ui:TextBlock Appearance="Tertiary" TextWrapping="Wrap" Text="{Binding ViewModel.DriverProfileLine}"
+                <ui:TextBlock Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.DriverProfileLine}"
                               Visibility="{Binding ViewModel.DriverProfileLine, Converter={StaticResource NullToCollapsed}}" />
-                <ui:TextBlock Appearance="Tertiary" TextWrapping="Wrap" Text="{Binding ViewModel.DriverStateLine}"
+                <ui:TextBlock Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.DriverStateLine}"
                               Visibility="{Binding ViewModel.DriverStateLine, Converter={StaticResource NullToCollapsed}}" />
                 <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding ViewModel.Chips}">
                     <ItemsControl.ItemsPanel>
@@ -82,16 +82,16 @@
                         <DataTemplate DataType="{x:Type vm:StatCardModel}">
                             <ui:Card Margin="0,0,8,8">
                                 <StackPanel>
-                                    <ui:TextBlock Appearance="Secondary" Text="{Binding Label}" />
+                                    <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding Label}" />
                                     <ui:TextBlock FontTypography="Subtitle" Text="{Binding Value}" />
-                                    <ui:TextBlock Appearance="Tertiary" Text="{Binding Suffix}" Visibility="{Binding Suffix, Converter={StaticResource NullToCollapsed}}" />
+                                    <ui:TextBlock Style="{StaticResource TertiaryText}" Text="{Binding Suffix}" Visibility="{Binding Suffix, Converter={StaticResource NullToCollapsed}}" />
                                 </StackPanel>
                             </ui:Card>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <ui:TextBlock Margin="0,8,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:SessionSummaryViewModel.Tier2Text}"
+                <ui:TextBlock Margin="0,8,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{x:Static vm:SessionSummaryViewModel.Tier2Text}"
                               Visibility="{Binding ViewModel.IsHooked, Converter={StaticResource InverseBoolToVis}}" />
                 <ui:TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Text="{Binding ViewModel.Tier2Reason}"
                               Visibility="{Binding ViewModel.IsHooked, Converter={StaticResource InverseBoolToVis}}" />
@@ -111,7 +111,7 @@
                         <CheckBox Grid.Column="2" Content="{x:Static vm:SessionSummaryViewModel.ShowSensorsText}"
                                   IsChecked="{Binding ViewModel.ShowSensors}" IsEnabled="{Binding ViewModel.HasSensors}" />
                     </Grid>
-                    <ui:TextBlock Appearance="Tertiary" Text="{Binding ViewModel.DecimationNote}" />
+                    <ui:TextBlock Style="{StaticResource TertiaryText}" Text="{Binding ViewModel.DecimationNote}" />
                     <charts:FrametimeChart x:Name="Frametime" Margin="0,6,0,0" Height="300" />
                     <ui:TextBlock Margin="0,16,0,0" FontTypography="Subtitle" Text="{x:Static vm:SessionSummaryViewModel.DistributionHeader}" />
                     <charts:DistributionChart x:Name="Distribution" Margin="0,6,0,0" Height="260" />
@@ -131,7 +131,7 @@
                      window's wheel. -->
                 <StackPanel Visibility="{Binding ViewModel.HasSensorStats, Converter={StaticResource BoolToVis}}">
                     <ui:TextBlock Margin="0,16,0,0" FontTypography="Subtitle" Text="{x:Static vm:SessionSummaryViewModel.SensorStatsHeader}" />
-                    <ui:TextBlock Appearance="Tertiary" TextWrapping="Wrap" Text="{x:Static vm:SessionSummaryViewModel.SensorStatsNote}" />
+                    <ui:TextBlock Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{x:Static vm:SessionSummaryViewModel.SensorStatsNote}" />
                     <StackPanel Margin="0,6,0,0" Grid.IsSharedSizeScope="True">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -166,14 +166,14 @@
                                         <ui:TextBlock Grid.Column="2" Margin="0,2,24,2" TextAlignment="Right" Text="{Binding Median}" />
                                         <ui:TextBlock Grid.Column="3" Margin="0,2,24,2" TextAlignment="Right" Text="{Binding Min}" />
                                         <ui:TextBlock Grid.Column="4" Margin="0,2,24,2" TextAlignment="Right" Text="{Binding Max}" />
-                                        <ui:TextBlock Grid.Column="5" Margin="0,2,0,2" Appearance="Secondary" TextAlignment="Right" Text="{Binding Readings}" />
+                                        <ui:TextBlock Grid.Column="5" Margin="0,2,0,2" Style="{StaticResource SecondaryText}" TextAlignment="Right" Text="{Binding Readings}" />
                                     </Grid>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </StackPanel>
                 </StackPanel>
-                <ui:TextBlock Margin="0,8,0,0" Appearance="Tertiary" TextWrapping="Wrap" Text="{Binding ViewModel.SensorStatsMissing}"
+                <ui:TextBlock Margin="0,8,0,0" Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.SensorStatsMissing}"
                               Visibility="{Binding ViewModel.SensorStatsMissing, Converter={StaticResource NullToCollapsed}}" />
 
                 <!-- annotations -->

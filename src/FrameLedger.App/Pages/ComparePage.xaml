@@ -14,7 +14,7 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Style="{StaticResource PageRoot}">
             <ui:TextBlock FontTypography="Title" Text="{x:Static vm:CompareViewModel.Header}" />
-            <ui:TextBlock Margin="0,16,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:CompareViewModel.EmptyText}"
+            <ui:TextBlock Margin="0,16,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{x:Static vm:CompareViewModel.EmptyText}"
                           Visibility="{Binding ViewModel.IsEmpty, Converter={StaticResource BoolToVis}}" />
 
             <Grid Margin="0,16,0,0" Visibility="{Binding ViewModel.IsEmpty, Converter={StaticResource InverseBoolToVis}}">
@@ -24,7 +24,7 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <ui:TextBlock Grid.Column="0" FontTypography="Subtitle" Text="{x:Static vm:CompareViewModel.PickHeader}" />
-                <ui:TextBlock Grid.Column="1" Margin="0,0,16,0" VerticalAlignment="Center" Appearance="Secondary" Text="{Binding ViewModel.SelectedText}" />
+                <ui:TextBlock Grid.Column="1" Margin="0,0,16,0" VerticalAlignment="Center" Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.SelectedText}" />
                 <ui:Button Grid.Column="2" Appearance="Primary" Command="{Binding ViewModel.CompareCommand}" IsEnabled="{Binding ViewModel.CanCompare}"
                            Content="{x:Static vm:CompareViewModel.RunText}" Icon="{ui:SymbolIcon ArrowSwap24}" />
             </Grid>
@@ -83,7 +83,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type vm:CompareCandidateViewModel}">
-                            <ui:TextBlock Margin="4,0" Appearance="Secondary" FontTypography="Caption" TextWrapping="Wrap" Text="{Binding Label}" />
+                            <ui:TextBlock Margin="4,0" Style="{StaticResource SecondaryText}" FontTypography="Caption" TextWrapping="Wrap" Text="{Binding Label}" />
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
@@ -92,7 +92,7 @@
                         <DataTemplate DataType="{x:Type vm:CompareRowViewModel}">
                             <Border BorderThickness="0,0,0,1" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Padding="0,6">
                                 <DockPanel>
-                                    <ui:TextBlock DockPanel.Dock="Left" Width="140" Appearance="Secondary" Text="{Binding Metric}" />
+                                    <ui:TextBlock DockPanel.Dock="Left" Width="140" Style="{StaticResource SecondaryText}" Text="{Binding Metric}" />
                                     <ItemsControl ItemsSource="{Binding Cells}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>

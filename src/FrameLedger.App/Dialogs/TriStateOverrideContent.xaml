@@ -13,7 +13,7 @@
              MinWidth="360">
     <!-- FR-8.3: the override beside the measurement, never over it (06_DATA_MODEL: session_annotations.*_override). -->
     <StackPanel>
-        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:TriStateOverrideViewModel.Body}" />
+        <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{x:Static vm:TriStateOverrideViewModel.Body}" />
         <RadioButton Margin="0,12,0,0" GroupName="Override" Content="{x:Static vm:TriStateOverrideViewModel.KeepText}" IsChecked="{Binding UseMeasured}" />
         <RadioButton Margin="0,4,0,0" GroupName="Override" Content="{x:Static vm:TriStateOverrideViewModel.YesText}" IsChecked="{Binding Yes}" />
         <RadioButton Margin="0,4,0,0" GroupName="Override" Content="{x:Static vm:TriStateOverrideViewModel.NoText}" IsChecked="{Binding No}" />

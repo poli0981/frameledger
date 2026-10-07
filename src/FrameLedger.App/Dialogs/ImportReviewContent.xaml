@@ -68,7 +68,7 @@
                 <ui:HyperlinkButton Padding="4,0" Content="{x:Static res:Strings.Import_SelectAll}" Command="{Binding SelectAllCommand}" xmlns:res="clr-namespace:FrameLedger.App" />
                 <ui:HyperlinkButton Padding="4,0" Content="{x:Static res:Strings.Import_SelectNone}" Command="{Binding SelectNoneCommand}" xmlns:res="clr-namespace:FrameLedger.App" />
             </StackPanel>
-            <ui:TextBlock Appearance="Secondary" VerticalAlignment="Center" Text="{Binding SelectedText}" />
+            <ui:TextBlock Style="{StaticResource SecondaryText}" VerticalAlignment="Center" Text="{Binding SelectedText}" />
         </DockPanel>
     </Grid>
 </UserControl>

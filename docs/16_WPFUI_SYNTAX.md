@@ -121,7 +121,7 @@ Code-behind wires services once: `navigationService.SetNavigationControl(RootNav
 | Need | Use | Not |
 |---|---|---|
 | Button | `ui:Button` with `Appearance="Primary/Secondary/Danger"`, `Icon="{ui:SymbolIcon Play24}"` | bare `Button` |
-| Text | `ui:TextBlock` with `FontTypography="Caption/Body/BodyStrong/Subtitle/Title"` | hardcoded FontSize |
+| Text | `ui:TextBlock` with `FontTypography="Caption/Body/BodyStrong/Subtitle/Title"`; muted text with `Style="{StaticResource SecondaryText}"` or `TertiaryText` (beta.17) | hardcoded FontSize; `Appearance="Secondary"` on a TextBlock (§Gotchas) |
 | Text input | `ui:TextBox` (`PlaceholderText`, `Icon`) | native TextBox |
 | Numbers | `ui:NumberBox` (`Minimum/Maximum/SmallChange`, `SpinButtonPlacementMode="Compact"` — needs ≥ 4.3.0) | TextBox + parsing |
 | Toggle | `ui:ToggleSwitch` | CheckBox for on/off settings |
@@ -143,7 +143,7 @@ Native `Menu`, `TabControl`, `ComboBox`, `Slider`~~, `ListView`~~ are fine — t
 
 ## Theming & brushes
 
-- Colors **only** via `{DynamicResource …}` theme keys, e.g. `TextFillColorPrimaryBrush`, `TextFillColorSecondaryBrush`, `ControlFillColorDefaultBrush`, `CardBackgroundFillColorDefaultBrush`, `ApplicationBackgroundBrush`, `AccentTextFillColorPrimaryBrush`, `SystemFillColorCriticalBrush`. `DynamicResource` always (theme can change at runtime); `StaticResource` for theme brushes is a review-blocking bug.
+- Colors **only** via `{DynamicResource …}` theme keys, e.g. `TextFillColorPrimaryBrush`, `TextFillColorSecondaryBrush`, `ControlFillColorDefaultBrush`, `CardBackgroundFillColorDefaultBrush`, `ApplicationBackgroundBrush`, `AccentTextFillColorPrimaryBrush`, `SystemFillColorCriticalBrush`. `DynamicResource` always (theme can change at runtime); `StaticResource` for theme brushes is a review-blocking bug. *(Added 2026-10-07: so is a property that looks like a theme colour but is looked up once — `ui:TextBlock Appearance`, §Gotchas.)*
 - **`ui:Badge` `Appearance="Info"` / `Caution` / `Danger` / `Success` are NOT theme colours.** Their backgrounds are
   `Palette*Brush` from WPF UI's `Palette.xaml` — one fixed Material palette shared by both themes — under the theme's
   text: Info is white on `#03A9F4` in dark (2.6:1), measured 2026-09-16 on the Games card. ~~Use `Secondary` (theme
@@ -261,3 +261,12 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
   such overload is public; the Close button's own path is `TemplateButtonCommand.Execute(MessageBoxButton.Close)`.
   `Services/DialogKeyboard` registers one class handler on `Window` (bubbling `KeyDown`, so a dropdown's Esc wins) and
   closes through those paths; `AccessibilityTests.EscapeClosesTheOpenDialogWithNoResult` holds it (`08_UI` §Accessibility).
+- [ ] **`ui:TextBlock Appearance` keeps the theme a text was made under (4.3.0).** `TextBlock.OnAppearanceChanged` stores
+  `TryFindResource(…)` in the internal `AppearanceForeground`, and `TextBlockMetadata` coerces every TextBlock's `Foreground`
+  to it — the brush found when the element was made, never looked up again (read at tag 4.3.0, 2026-10-07; `main` is the
+  same). After a theme switch the page on screen kept the old theme's secondary text: light grey on white, dark grey on dark
+  (the owner's screenshots of Settings, beta.17). The property also inherits, so the attached form on a container pins every
+  text under it. Muted text takes `Style="{StaticResource SecondaryText}"` or `TertiaryText` (`Styles/FrameLedger.xaml`,
+  `DynamicResource`). `ContrastTests.NoTextBlockTakesItsColourFromAppearance` refuses every form in the App's XAML and code,
+  `PagesLoadTests.EveryTextFollowsAThemeSwitch` renders every surface through a switch both ways, and
+  `PagesLoadTests.WpfUisAppearanceStillKeepsTheThemeATextWasMadeUnder` turns red the day upstream follows a switch.
