@@ -30,6 +30,9 @@
   <data name="Agent_Banner_Offline_Title" xml:space="preserve">
     <value>Capture agent offline</value>
   </data>
+  <data name="Agent_NotConnected_NothingChanged" xml:space="preserve">
+    <value>The capture agent is not connected. Nothing was changed.</value>
+  </data>
   <data name="Agent_Banner_Retry" xml:space="preserve">
     <value>Retry</value>
   </data>
@@ -1380,8 +1383,8 @@
   <data name="Logs_Source_Ui" xml:space="preserve">
     <value>App</value>
   </data>
-  <data name="Notice_Degraded_Body_Format" xml:space="preserve">
-    <value>The hook stopped ({0}); the session continues without measuring.</value>
+  <data name="Notice_Degraded_Unknown_Format" xml:space="preserve">
+    <value>Measuring stopped ({0}).</value>
   </data>
   <data name="Notice_Degraded_Title" xml:space="preserve">
     <value>Measurement stopped</value>
@@ -1445,6 +1448,9 @@
   </data>
   <data name="Settings_Applied" xml:space="preserve">
     <value>Applied. The capture agent reads it at the next session start.</value>
+  </data>
+  <data name="Settings_KillSwitch_Applied_On" xml:space="preserve">
+    <value>All hooking is off. A game being measured stops being measured at its next safety scan, within 30 seconds.</value>
   </data>
   <data name="Settings_Capture_Header" xml:space="preserve">
     <value>Capture</value>

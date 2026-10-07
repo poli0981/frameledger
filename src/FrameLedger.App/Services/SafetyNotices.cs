@@ -55,13 +55,16 @@ public sealed class SafetyNotices : IDisposable
                 return new SafetyNotice(SafetyNoticeKind.Unhooked, Strings.Notice_Unhooked_Title, TurnedOff(UnhookText(unhooked), unhooked.HookingTurnedOff), now);
             // The Agent's pre-scan of the library turned hooking off for a game the user had turned it on for (2026-09-25):
             // not a session event, so none of a refusal's "this run is still recorded" — no run is going on.
+            // Its reason is the guard's own, and it is sent only for a finding about the game, which names its family.
             case IpcMessageType.HookingTurnedOff when IpcCodec.Payload<HookingTurnedOffEvent>(envelope) is { } off:
                 return new SafetyNotice(SafetyNoticeKind.HookingOff,
                     string.Format(CultureInfo.CurrentCulture, Strings.Notice_HookingOff_Title_Format, off.GameName ?? Strings.Common_NotAvailable),
-                    TurnedOff(RefusalText(off.Reason, off.Reason, off.Family, off.Signal), turnedOff: true), now);
+                    TurnedOff(GuardText(off.Reason, off.Family, off.Signal) ?? Shared.Strings.Safety_Refused_Unnamed, turnedOff: true), now);
+            // The session's end in words (beta.18): it printed the enum's name — "The hook stopped (WriterSelfDisabled)" —
+            // and said the session continued without measuring, while a stop ends it (07_IPC: measurement STOPPED).
             case IpcMessageType.CaptureDegraded when IpcCodec.Payload<CaptureDegradedEvent>(envelope) is { } degraded:
                 return new SafetyNotice(SafetyNoticeKind.Degraded, Strings.Notice_Degraded_Title,
-                    string.Format(CultureInfo.CurrentCulture, Strings.Notice_Degraded_Body_Format, degraded.Reason), now);
+                    Formats.EndReasonText(degraded.Reason) ?? string.Format(CultureInfo.CurrentCulture, Strings.Notice_Degraded_Unknown_Format, degraded.Reason), now);
             default:
                 return null;
         }
@@ -73,35 +76,45 @@ public sealed class SafetyNotices : IDisposable
     /// <summary>
     /// A driver or service that started on the PC mid-session is said as that (beta.13, §S23-3) — not "detected while the
     /// game was running … until you enable it again", which was untrue twice: such a finding turns no hooking off, and a
-    /// finding about the game turns it off for good (the turned-off sentence follows).
+    /// finding about the game turns it off for good (the turned-off sentence follows). A re-scan that could not look while
+    /// the game still ran is said as that too (beta.18): it named its signal as a finding, "Access is denied was detected".
     /// </summary>
-    private static string UnhookText(SafetyUnhookEvent unhooked) =>
-        Formats.IsMachineWide(unhooked.GuardReason) && unhooked.Family is { } family
-            ? string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_Unhooked_MachineWide_Format, family, unhooked.Signal ?? Strings.Common_NotAvailable)
-            : string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_Unhooked_Format, unhooked.Family ?? unhooked.Signal ?? Strings.Common_NotAvailable);
-
-    /// <summary><paramref name="reason"/> is the session's end reason; <paramref name="guardReason"/> the guard's own, when it named a family.</summary>
-    private static string RefusalText(string reason, string? guardReason, string? family, string? signal)
+    private static string UnhookText(SafetyUnhookEvent unhooked) => unhooked switch
     {
-        if (string.Equals(reason, "PreScanCouldNotVerify", StringComparison.Ordinal))
-        {
-            return Shared.Strings.Safety_Refused_CouldNotVerify;
-        }
+        { Family: { } family } when Formats.IsMachineWide(unhooked.GuardReason) =>
+            string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_Unhooked_MachineWide_Format, family, unhooked.Signal ?? Strings.Common_NotAvailable),
+        { Family: null, GuardReason: { Length: > 0 } guardReason } =>
+            string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_Unhooked_Unnamed_Format, Formats.GuardReasonText(guardReason)),
+        _ => string.Format(CultureInfo.CurrentCulture, Shared.Strings.Safety_Unhooked_Format, unhooked.Family ?? unhooked.Signal ?? Strings.Common_NotAvailable),
+    };
 
-        if (string.Equals(reason, "TargetUnreadable", StringComparison.Ordinal))
-        {
-            return Shared.Strings.Safety_Refused_TargetUnreadable;
-        }
+    /// <summary>
+    /// A refusal in words. <paramref name="reason"/> is the session's end; <paramref name="guardReason"/> the guard's own,
+    /// sent for every refusal it gave since beta.18 (beside a family only, before).
+    /// </summary>
+    private static string RefusalText(string reason, string? guardReason, string? family, string? signal) => reason switch
+    {
+        "PreScanCouldNotVerify" => Shared.Strings.Safety_Refused_CouldNotVerify,
+        "TargetUnreadable" => Shared.Strings.Safety_Refused_TargetUnreadable,
+        // What the guard found, or could not do; from an agent that sent no reason beside no family, the end's own words.
+        "RefusedByGuard" => GuardText(guardReason, family, signal) ?? Strings.End_RefusedByGuard,
+        // The gate's own refusals (beta.18) — Disable all hooking, a game blocked before — are the user's switch or the row's,
+        // never a finding. The gate labels them in the family's place, and the kill switch's notice read "kill switch was
+        // detected in this game (the global 'disable all hooking' switch is on (FR-2.4); …)".
+        // A name this build has no words for (a newer agent's) is named as it is, never as something detected.
+        _ => Formats.EndReasonText(reason) ?? GuardText(guardReason, family, signal)
+            ?? (string.IsNullOrEmpty(reason) ? Shared.Strings.Safety_Refused_Unnamed : Formats.GuardSentence(reason)),
+    };
 
-        // A refusal no anti-cheat family names (beta.8) — the guard could not look, the game is 32-bit — is said as what it
-        // is. It used to name its SIGNAL as the family, and the notice read "Access is denied was detected in this game".
-        if (family is null)
-        {
-            return string.IsNullOrEmpty(reason) ? Shared.Strings.Safety_Refused_Unnamed : Formats.GuardSentence(reason);
-        }
-
-        return Formats.NamedRefusal(guardReason, family, signal ?? reason);
-    }
+    /// <summary>
+    /// What the guard said, as a sentence: an anti-cheat it named, found in this game or on this PC; a refusal no family names
+    /// (beta.8) in its own words — never its signal as the family, which read "Access is denied was detected in this game".
+    /// Null when it said nothing.
+    /// </summary>
+    private static string? GuardText(string? guardReason, string? family, string? signal) =>
+        family is { Length: > 0 }
+            ? Formats.NamedRefusal(guardReason, family, signal ?? Strings.Common_NotAvailable)
+            : guardReason is { Length: > 0 } ? Formats.GuardSentence(guardReason) : null;
 
     private void OnEvent(object? sender, AgentEventArgs e)
     {

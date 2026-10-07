@@ -712,7 +712,8 @@ public sealed partial class SettingsViewModel : ObservableObject
             return;
         }
 
-        string body = result.Outcome == HookingConsentOutcome.AgentUnavailable ? Shared.Strings.Safety_Consent_AgentUnavailable : result.Detail ?? Strings.Common_NotAvailable;
+        // Turning off with no Agent changed nothing (beta.18): it said the enable path's "Nothing was enabled."
+        string body = result.Outcome == HookingConsentOutcome.AgentUnavailable ? Strings.Agent_NotConnected_NothingChanged : result.Detail ?? Strings.Common_NotAvailable;
         _strip.Warn(game.Name, body);
     }
 
@@ -765,7 +766,9 @@ public sealed partial class SettingsViewModel : ObservableObject
         await _settings.SetAsync(definition, value).ConfigureAwait(true);
         if (definition.AgentReads)
         {
-            _strip.Info(Strings.Settings_Header, Strings.Settings_Applied);
+            // Disable all hooking does not wait for a session to start (beta.18): a measured one stops at its next safety scan.
+            bool killSwitchOn = ReferenceEquals(definition, SettingsRegistry.HookingKillSwitch) && string.Equals(value, "1", StringComparison.Ordinal);
+            _strip.Info(Strings.Settings_Header, killSwitchOn ? Strings.Settings_KillSwitch_Applied_On : Strings.Settings_Applied);
         }
     }
 

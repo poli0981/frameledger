@@ -62,6 +62,7 @@ public static class Strings
         nameof(Agent_Banner_Offline_Body),
         nameof(Agent_Banner_Offline_Title),
         nameof(Agent_Banner_Retry),
+        nameof(Agent_NotConnected_NothingChanged),
         nameof(Agent_State_Connected),
         nameof(Agent_State_Connecting),
         nameof(Agent_State_Elevating),
@@ -645,8 +646,8 @@ public static class Strings
         nameof(Nav_Games),
         nameof(Nav_Logs),
         nameof(Nav_Settings),
-        nameof(Notice_Degraded_Body_Format),
         nameof(Notice_Degraded_Title),
+        nameof(Notice_Degraded_Unknown_Format),
         nameof(Notice_Dismiss),
         nameof(Notice_Error_Title),
         nameof(Notice_HookingOff_Title_Format),
@@ -810,6 +811,7 @@ public static class Strings
         nameof(Settings_Interval_Body),
         nameof(Settings_Interval_Label),
         nameof(Settings_Invalid_Format),
+        nameof(Settings_KillSwitch_Applied_On),
         nameof(Settings_KillSwitch_Body),
         nameof(Settings_KillSwitch_Label),
         nameof(Settings_KillSwitch_Off),
@@ -1123,6 +1125,8 @@ public static class Strings
     public static string Agent_Banner_Offline_Title => ResourceManager.GetString(nameof(Agent_Banner_Offline_Title), Culture) ?? nameof(Agent_Banner_Offline_Title);
 
     public static string Agent_Banner_Retry => ResourceManager.GetString(nameof(Agent_Banner_Retry), Culture) ?? nameof(Agent_Banner_Retry);
+
+    public static string Agent_NotConnected_NothingChanged => ResourceManager.GetString(nameof(Agent_NotConnected_NothingChanged), Culture) ?? nameof(Agent_NotConnected_NothingChanged);
 
     public static string Agent_State_Connected => ResourceManager.GetString(nameof(Agent_State_Connected), Culture) ?? nameof(Agent_State_Connected);
 
@@ -2290,9 +2294,9 @@ public static class Strings
 
     public static string Nav_Settings => ResourceManager.GetString(nameof(Nav_Settings), Culture) ?? nameof(Nav_Settings);
 
-    public static string Notice_Degraded_Body_Format => ResourceManager.GetString(nameof(Notice_Degraded_Body_Format), Culture) ?? nameof(Notice_Degraded_Body_Format);
-
     public static string Notice_Degraded_Title => ResourceManager.GetString(nameof(Notice_Degraded_Title), Culture) ?? nameof(Notice_Degraded_Title);
+
+    public static string Notice_Degraded_Unknown_Format => ResourceManager.GetString(nameof(Notice_Degraded_Unknown_Format), Culture) ?? nameof(Notice_Degraded_Unknown_Format);
 
     public static string Notice_Dismiss => ResourceManager.GetString(nameof(Notice_Dismiss), Culture) ?? nameof(Notice_Dismiss);
 
@@ -2619,6 +2623,8 @@ public static class Strings
     public static string Settings_Interval_Label => ResourceManager.GetString(nameof(Settings_Interval_Label), Culture) ?? nameof(Settings_Interval_Label);
 
     public static string Settings_Invalid_Format => ResourceManager.GetString(nameof(Settings_Invalid_Format), Culture) ?? nameof(Settings_Invalid_Format);
+
+    public static string Settings_KillSwitch_Applied_On => ResourceManager.GetString(nameof(Settings_KillSwitch_Applied_On), Culture) ?? nameof(Settings_KillSwitch_Applied_On);
 
     public static string Settings_KillSwitch_Body => ResourceManager.GetString(nameof(Settings_KillSwitch_Body), Culture) ?? nameof(Settings_KillSwitch_Body);
 

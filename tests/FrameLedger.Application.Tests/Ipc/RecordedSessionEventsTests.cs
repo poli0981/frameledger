@@ -162,26 +162,33 @@ public sealed class RecordedSessionEventsTests
     }
 
     /// <summary>
-    /// §S23-3 (beta.13): the events carry the guard's own reason when it named a family, so the App can say a service or a
-    /// driver was found on the PC — and nothing when the guard named nothing (the kill switch, a block already on the row).
+    /// The events carry the guard's own reason whenever it refused: beside a family since §S23-3 (beta.13), so the App can say
+    /// a service or a driver was found on the PC, and beside none since beta.18, so a refusal no family names is said in the
+    /// guard's words — not as the end's name, "reason RefusedByGuard", nor its signal as a finding. Nothing when no verdict
+    /// refused (a process that could not be opened is the loop's, not the guard's).
     /// </summary>
     [Fact]
-    public void BothSafetyEventsCarryTheGuardsReasonWhenItNamedAFamily()
+    public void BothSafetyEventsCarryTheGuardsReasonWheneverItRefused()
     {
         var pipe = new RecordingPublisher();
         RecordedSession service = Session(SessionEndReason.RefusedByGuard, ExitStatus.Normal, new FinalizeOutcome(FinalizeStatus.Discarded, null, 0),
             verdict: AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedService, "Easy Anti-Cheat", "EasyAntiCheat_EOS"), tier: CaptureTier.NotHooked);
+        RecordedSession wow64 = Session(SessionEndReason.RefusedByGuard, ExitStatus.Normal, new FinalizeOutcome(FinalizeStatus.Discarded, null, 0),
+            verdict: AntiCheatVerdict.FromNative((int)AntiCheatRefusalReason.TargetIsWow64, string.Empty, "target is a WOW64 process"), tier: CaptureTier.NotHooked);
+        RecordedSession unreadable = Session(SessionEndReason.TargetUnreadable, ExitStatus.Normal, new FinalizeOutcome(FinalizeStatus.Discarded, null, 0),
+            tier: CaptureTier.NotHooked);
         RecordedSession driver = Session(SessionEndReason.SafetyUnhook, ExitStatus.UnhookedSafety, new FinalizeOutcome(FinalizeStatus.Saved, 9, 0),
             verdict: AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedDriver, "Riot Vanguard", "vgk.sys"));
-        RecordedSession killSwitch = Session(SessionEndReason.RefusedKillSwitch, ExitStatus.Normal, new FinalizeOutcome(FinalizeStatus.Discarded, null, 0),
-            tier: CaptureTier.NotHooked);
+        RecordedSession rescan = Session(SessionEndReason.SafetyUnhook, ExitStatus.UnhookedSafety, new FinalizeOutcome(FinalizeStatus.Saved, 10, 0),
+            verdict: AntiCheatVerdict.FromNative((int)AntiCheatRefusalReason.ProcessUnreadable, string.Empty, "Access is denied."));
 
-        RecordedSessionEvents.PublishAll(pipe, service, _info);
-        RecordedSessionEvents.PublishAll(pipe, driver, _info);
-        RecordedSessionEvents.PublishAll(pipe, killSwitch, _info);
+        foreach (RecordedSession session in new[] { service, wow64, unreadable, driver, rescan })
+        {
+            RecordedSessionEvents.PublishAll(pipe, session, _info);
+        }
 
-        pipe.Of<CaptureRefusedEvent>().Select(static e => e.GuardReason).Should().Equal("BlockedService", null);
-        pipe.Of<SafetyUnhookEvent>().Single().GuardReason.Should().Be("BlockedDriver");
+        pipe.Of<CaptureRefusedEvent>().Select(static e => e.GuardReason).Should().Equal("BlockedService", "TargetIsWow64", null);
+        pipe.Of<SafetyUnhookEvent>().Select(static e => e.GuardReason).Should().Equal("BlockedDriver", "ProcessUnreadable");
     }
 
     [Fact]

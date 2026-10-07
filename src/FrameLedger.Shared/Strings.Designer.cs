@@ -76,6 +76,7 @@ public static class Strings
         nameof(Safety_Refused_Unnamed),
         nameof(Safety_Unhooked_Format),
         nameof(Safety_Unhooked_MachineWide_Format),
+        nameof(Safety_Unhooked_Unnamed_Format),
     ];
 
     public static string Safety_AdminMode_Accept => ResourceManager.GetString(nameof(Safety_AdminMode_Accept), Culture) ?? nameof(Safety_AdminMode_Accept);
@@ -171,4 +172,6 @@ public static class Strings
     public static string Safety_Unhooked_Format => ResourceManager.GetString(nameof(Safety_Unhooked_Format), Culture) ?? nameof(Safety_Unhooked_Format);
 
     public static string Safety_Unhooked_MachineWide_Format => ResourceManager.GetString(nameof(Safety_Unhooked_MachineWide_Format), Culture) ?? nameof(Safety_Unhooked_MachineWide_Format);
+
+    public static string Safety_Unhooked_Unnamed_Format => ResourceManager.GetString(nameof(Safety_Unhooked_Unnamed_Format), Culture) ?? nameof(Safety_Unhooked_Unnamed_Format);
 }

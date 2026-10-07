@@ -84,7 +84,7 @@
                                           Text="{x:Static res:Strings.Settings_Exceptions_Body}" />
                         </StackPanel>
                         <ui:ToggleSwitch Grid.Column="1" Margin="12,0" AutomationProperties.Name="{x:Static res:Strings.Settings_Exceptions_Label}"
-                                         IsChecked="{Binding ViewModel.UserModeExceptions, Mode=TwoWay}" />
+                                         IsChecked="{Binding ViewModel.UserModeExceptions, Mode=TwoWay}" IsEnabled="{Binding ViewModel.ActsOnThisPc}" />
                     </Grid>
                 </ui:CardExpander.Header>
                 <StackPanel>
@@ -165,7 +165,8 @@
                                 Content="{x:Static res:Strings.Settings_SafetyDocs}"
                                 Icon="{ui:SymbolIcon Open24}" />
 
-            <!-- Recording policy: the three numbers and background capture (D16: the Agent reads them at session start). -->
+            <!-- Recording policy: the three numbers and background capture (D16: the Agent reads them at session start) — off in a
+                 viewer, which has no Agent (beta.18; every setting the Agent reads is, ViewerModeTests). -->
             <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Policy_Header}" />
             <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Timer24}">
                 <ui:CardControl.Header>
@@ -176,6 +177,7 @@
                 </ui:CardControl.Header>
                 <ui:NumberBox MinWidth="140"
                               AutomationProperties.Name="{x:Static res:Strings.Settings_MinSession_Label}"
+                              IsEnabled="{Binding ViewModel.ActsOnThisPc}"
                               Maximum="{x:Static vm:SettingsViewModel.MinSessionMaximum}"
                               Minimum="{x:Static vm:SettingsViewModel.MinSessionMinimum}"
                               SpinButtonPlacementMode="Inline"
@@ -190,6 +192,7 @@
                 </ui:CardControl.Header>
                 <ui:NumberBox MinWidth="140"
                               AutomationProperties.Name="{x:Static res:Strings.Settings_Interval_Label}"
+                              IsEnabled="{Binding ViewModel.ActsOnThisPc}"
                               Maximum="{x:Static vm:SettingsViewModel.IntervalMaximum}"
                               Minimum="{x:Static vm:SettingsViewModel.IntervalMinimum}"
                               SpinButtonPlacementMode="Inline"
@@ -204,6 +207,7 @@
                 </ui:CardControl.Header>
                 <ui:NumberBox MinWidth="140"
                               AutomationProperties.Name="{x:Static res:Strings.Settings_Retention_Label}"
+                              IsEnabled="{Binding ViewModel.ActsOnThisPc}"
                               Maximum="{x:Static vm:SettingsViewModel.RetentionMaximum}"
                               Minimum="0"
                               SpinButtonPlacementMode="Inline"
@@ -342,6 +346,7 @@
                 <ComboBox MinWidth="140"
                           AutomationProperties.Name="{x:Static res:Strings.Settings_UpdateChannel_Label}"
                           DisplayMemberPath="Label"
+                          IsEnabled="{Binding ViewModel.ActsOnThisPc}"
                           ItemsSource="{Binding ViewModel.UpdateChannels}"
                           SelectedValue="{Binding ViewModel.UpdateChannel, Mode=TwoWay}"
                           SelectedValuePath="Value" />

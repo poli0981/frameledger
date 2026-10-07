@@ -24,7 +24,8 @@ public sealed record AntiCheatExceptionResult(AntiCheatExceptionOutcome Outcome,
             RefusalText() ?? Detail ?? Strings.Common_NotAvailable),
         AntiCheatExceptionOutcome.VersionMismatch => Shared.Strings.Safety_Exception_VersionMismatch,
         AntiCheatExceptionOutcome.OptionOff => Shared.Strings.Safety_Exception_OptionOff,
-        AntiCheatExceptionOutcome.AgentUnavailable => Shared.Strings.Safety_Consent_AgentUnavailable,
+        // A grant and a withdrawal alike (beta.18): "Nothing was enabled." was the hooking consent's words, untrue for a withdrawal.
+        AntiCheatExceptionOutcome.AgentUnavailable => Strings.Agent_NotConnected_NothingChanged,
         AntiCheatExceptionOutcome.Failed => Detail ?? Strings.Common_NotAvailable,
         _ => null,
     };

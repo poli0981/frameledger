@@ -161,8 +161,12 @@ public static class RecordedSessionEvents
     private static string? NullIfEmpty(string? value) => string.IsNullOrEmpty(value) ? null : value;
 
     /// <summary>
-    /// The guard's own reason when it named a family (beta.13, §S23-3): the App says a <c>BlockedService</c> or
-    /// <c>BlockedDriver</c> was found on the PC, not in the game. Null when the guard named nothing.
+    /// The guard's own reason whenever it refused: the App says a <c>BlockedService</c> or <c>BlockedDriver</c> was found on
+    /// the PC, not in the game (beta.13, §S23-3), and a refusal no family names in the guard's words — "the game is 32-bit…",
+    /// "the game's loaded modules could not be listed" — rather than by the session's end reason, which printed as
+    /// <c>reason RefusedByGuard</c> (beta.18). Until beta.18 it was sent only beside a family. Null for an allow, and for a
+    /// verdict nobody produced.
     /// </summary>
-    private static string? GuardReasonOf(AntiCheatVerdict verdict) => string.IsNullOrEmpty(verdict.Family) ? null : verdict.Reason.ToString();
+    private static string? GuardReasonOf(AntiCheatVerdict verdict) =>
+        verdict.Reason is AntiCheatRefusalReason.Allow or AntiCheatRefusalReason.AllowedUnderUserModeException ? null : verdict.Reason.ToString();
 }

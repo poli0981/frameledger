@@ -82,7 +82,7 @@ public sealed class ReasonTextTests
 
         var link = new FakeAgentLink();
         using var notices = new SafetyNotices(link, new RecordingStrip());
-        link.Raise(IpcMessageType.CaptureRefused, new CaptureRefusedEvent(7, "Title", "PreScanFailed", null, "the folder could not be listed"));
+        link.Raise(IpcMessageType.CaptureRefused, new CaptureRefusedEvent(7, "Title", "RefusedByGuard", null, "the folder could not be listed", GuardReason: "PreScanFailed"));
         notices.Items.Should().ContainSingle().Which.Body.Should().StartWith("The anti-cheat guard did not hook this game: the game's folder could not be scanned.")
             .And.NotContain("detected");
         new HookingConsentResult(HookingConsentOutcome.Refused, Refusal: new RefusedAck(7, "ProcessUnreadable", null, "Access is denied")).RefusalText()
