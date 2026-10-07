@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using FluentAssertions;
+using FrameLedger.App.Pages;
 using FrameLedger.App.Services;
 
 namespace FrameLedger.App.Tests;
@@ -127,5 +129,182 @@ public sealed class ScrollBarHidingTests
         result.WhileOn.Should().Be(ScrollBarVisibility.Hidden, "the class handler reaches a scroller as it loads");
         result.FirstAfterOff.Should().Be(ScrollBarVisibility.Auto, "and gives it back its own setting on its next load after off");
         result.LoadedAfterOff.Should().Be(ScrollBarVisibility.Visible, "a scroller the option never touched keeps what it has");
+    }
+
+    /// <summary>
+    /// beta.17 (the owner's screenshot of 2026-10-07: the Dashboard kept its bar with the option on). WPF raises Loaded only on
+    /// an element whose subtree listens for it with a handler of its own — an instance handler, a style's EventSetter or a
+    /// template's trigger (<c>BroadcastEventHelper</c>, <c>FrameworkElement.ThisHasLoadedChangeEventHandler</c>) — and a
+    /// class handler is none of those, so a scroller over plain cards and text never loaded as far as the option knew. Laid
+    /// out with no Loaded at all, a scroller must be hidden all the same.
+    /// </summary>
+    [Fact]
+    public async Task AScrollerLaidOutWithNoLoadedEventIsHidden()
+    {
+        (ScrollBarVisibility Axis, Visibility Bar, double Scrollable) result = await PagesLoadTests.OnStaAsync(() =>
+        {
+            ScrollBarHiding.Register();
+            try
+            {
+                ScrollBarHiding.Apply(true);
+                var viewer = new ScrollViewer { Height = 120, VerticalScrollBarVisibility = ScrollBarVisibility.Auto, Content = new Border { Height = 600 } };
+                Visuals.Layout(viewer, 300, 120);
+                return (viewer.VerticalScrollBarVisibility, viewer.ComputedVerticalScrollBarVisibility, viewer.ScrollableHeight);
+            }
+            finally
+            {
+                ScrollBarHiding.Apply(false);
+            }
+        });
+
+        result.Scrollable.Should().BeGreaterThan(0, "the scroller has something to scroll");
+        result.Axis.Should().Be(ScrollBarVisibility.Hidden, "the option reaches a scroller when it is laid out, Loaded or not");
+        result.Bar.Should().NotBe(Visibility.Visible);
+    }
+
+    /// <summary>
+    /// The option as the owner has it: on at start-up (<c>App.RunAsync</c> applies it before the first window), then every
+    /// surface shown in a real window off the screen — each page navigated in WPF UI's presenter as the shell does, the
+    /// secondary windows, the first run, every dialog's content. No scroller that has something to scroll draws a bar. Before
+    /// beta.17 Settings passed (its toggle switches' template has a Loaded trigger, so its scroller loaded) and the Dashboard
+    /// did not; Settings and the Dashboard must both be scrollable here, or the check proves nothing.
+    /// </summary>
+    [Fact]
+    public async Task EverySurfaceShownWithTheOptionOnDrawsNoBar()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        using PagesLoadTests.Surfaces surfaces = await PagesLoadTests.Surfaces.LoadAsync(s);
+
+        (List<string> Bars, HashSet<string> Scrollable) result = await PagesLoadTests.OnStaAsync(() =>
+        {
+            ScrollBarHiding.Register();
+            ScrollBarHiding.Apply(true);
+            try
+            {
+                var bars = new List<string>();
+                var scrollable = new HashSet<string>(StringComparer.Ordinal);
+                foreach ((string name, Func<FrameworkElement> build) in surfaces.Pages())
+                {
+                    Sweep(name, () => InPresenter(build()), bars, scrollable);
+                }
+
+                foreach ((string name, Func<FrameworkElement> build) in surfaces.Windows().Concat(surfaces.Dialogs()))
+                {
+                    Sweep(name, build, bars, scrollable);
+                }
+
+                return (bars, scrollable);
+            }
+            finally
+            {
+                ScrollBarHiding.Apply(false);
+            }
+        });
+
+        result.Scrollable.Should().Contain(["Dashboard", "Settings", "Logs", "User guide"], "the check is vacuous unless those scroll in a window this small");
+        string.Join(Environment.NewLine, result.Bars).Should().BeEmpty("ui.hide_scrollbars: no scroller the App shows draws a bar, and the wheel still scrolls it");
+    }
+
+    /// <summary>
+    /// The harness against WPF itself: a scroller of our own with a Loaded class handler, shown in a real window, is never
+    /// called while it holds only a Border, and is called once it holds a CheckBox, whose template listens for Loaded. If the
+    /// first half fails, WPF raises Loaded everywhere and the reason above is gone; if the second fails, the harness does not
+    /// deliver Loaded and <see cref="EverySurfaceShownWithTheOptionOnDrawsNoBar"/> could not tell Settings from the Dashboard.
+    /// </summary>
+    [Fact]
+    public async Task WpfRaisesLoadedOnlyWhereASubtreeListensForIt()
+    {
+        (int WithBorder, int WithCheckBox) loads = await PagesLoadTests.OnStaAsync(() =>
+            (LoadsOfAProbeHolding(new Border { Height = 40 }), LoadsOfAProbeHolding(new CheckBox { Content = "listens" })));
+
+        loads.WithBorder.Should().Be(0, "a class handler does not put an element on WPF's Loaded route");
+        loads.WithCheckBox.Should().BeGreaterThan(0, "WPF UI's CheckBox template has a Loaded trigger, which does");
+    }
+
+    private sealed class ProbeScrollViewer : ScrollViewer
+    {
+        static ProbeScrollViewer() => EventManager.RegisterClassHandler(typeof(ProbeScrollViewer), LoadedEvent, new RoutedEventHandler(static (_, _) => Loads++), handledEventsToo: true);
+
+        public static int Loads { get; private set; }
+    }
+
+    private static int LoadsOfAProbeHolding(UIElement content)
+    {
+        var probe = new ProbeScrollViewer { Content = content };
+        int before = ProbeScrollViewer.Loads;
+        Window window = OffScreen(new Window { Content = probe });
+        try
+        {
+            window.Show();
+            Visuals.Pump();
+            return ProbeScrollViewer.Loads - before;
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    /// <summary>A page navigated in WPF UI's presenter, as the shell's NavigationView hosts it.</summary>
+    private static Grid InPresenter(FrameworkElement page)
+    {
+        var presenter = new Wpf.Ui.Controls.NavigationViewContentPresenter();
+        _ = presenter.Navigate(page);
+        return new Grid { Children = { presenter } };
+    }
+
+    /// <summary>
+    /// Shows the surface in a real window off the screen, lets WPF load and lay it out, and notes every scroller that has
+    /// something to scroll and every one of those that draws a bar.
+    /// </summary>
+    private static void Sweep(string name, Func<FrameworkElement> build, List<string> bars, HashSet<string> scrollable)
+    {
+        FrameworkElement built = build();
+        Window window = OffScreen(built as Window ?? new Window { Content = built });
+        try
+        {
+            window.Show();
+            Visuals.Pump();
+            if (Visuals.Find<LogsPage>(window) is { } logs)
+            {
+                // The tail is empty in a scratch folder; fill it as a log file would.
+                logs.Tail.Text = string.Join(Environment.NewLine, Enumerable.Range(1, 200).Select(static i => "line " + i.ToString(CultureInfo.InvariantCulture)));
+                Visuals.Pump();
+            }
+
+            foreach (ScrollViewer viewer in Visuals.FindAll<ScrollViewer>(window))
+            {
+                bool vertical = viewer.ScrollableHeight > 0.5;
+                bool horizontal = viewer.ScrollableWidth > 0.5;
+                if (vertical || horizontal)
+                {
+                    _ = scrollable.Add(name);
+                }
+
+                if ((vertical && viewer.ComputedVerticalScrollBarVisibility == Visibility.Visible)
+                    || (horizontal && viewer.ComputedHorizontalScrollBarVisibility == Visibility.Visible))
+                {
+                    bars.Add(string.Create(CultureInfo.InvariantCulture,
+                        $"{name}: {(viewer.TemplatedParent ?? viewer).GetType().Name} draws a bar ({viewer.ScrollableWidth:0} x {viewer.ScrollableHeight:0} to scroll)"));
+                }
+            }
+        }
+        finally
+        {
+            window.Close();
+        }
+    }
+
+    /// <summary>A window shown where nobody sees it and never activated, small enough that the surfaces overflow it.</summary>
+    private static Window OffScreen(Window window)
+    {
+        window.Width = 1000;
+        window.Height = 420;
+        window.WindowStartupLocation = WindowStartupLocation.Manual;
+        window.Left = -20000;
+        window.Top = -20000;
+        window.ShowActivated = false;
+        window.ShowInTaskbar = false;
+        return window;
     }
 }

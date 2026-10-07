@@ -71,6 +71,13 @@ under the new theme. `PagesLoadTests.Surfaces` builds every page, window and dia
 any check that wants all of them. Colours are compared and texts only reported: another test class may change
 `Strings.Culture` between the two builds.
 
+**Loaded needs a shown window, and even then it is not raised everywhere (beta.17).** A tree laid out by hand never raises
+Loaded, and a shown one raises it only where a subtree listens for it (`16_WPFUI_SYNTAX` §Gotchas) — so a test that calls
+`RaiseEvent(Loaded)` proves a handler, never that WPF reaches it. `ScrollBarHidingTests.EverySurfaceShownWithTheOptionOnDrawsNoBar`
+shows each surface in a real window, off the screen and never activated, with the option on before anything is built as
+at start-up; `WpfRaisesLoadedOnlyWhereASubtreeListensForIt` checks the harness against WPF itself (a scroller holding a
+Border is never loaded, one holding a CheckBox is), on CI too.
+
 **A test that sends input must also say which keys are held.** `Keyboard.Modifiers` is the machine's real keyboard, read
 from any thread (a fresh background thread's `GetKeyState` reports the machine's NumLock — measured 2026-10-06), so a
 wheel test that read it held whatever key a person pressed while the gate ran: `ChartWheelTests`' plain half went red once
