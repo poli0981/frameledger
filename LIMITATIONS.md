@@ -5,7 +5,7 @@ hooking on for — and reading the graphics calls the game makes. That is why it
 resolution, the upscaler, frame generation and ray tracing apart. It is also where its limits come from. This
 page lists them in plain words; each item links to the document that has the details.
 
-*Beta software: this page describes version 0.1.0-beta.16.*
+*Beta software: this page describes version 0.1.0-beta.17.*
 
 ## Games it will not measure
 
