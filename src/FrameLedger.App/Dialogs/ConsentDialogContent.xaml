@@ -32,7 +32,7 @@
             <ui:TextBlock Margin="0,14,0,0" FontWeight="SemiBold" Text="{x:Static vm:ConsentDialogViewModel.AntiCheat}" TextWrapping="Wrap" />
             <ui:TextBlock Margin="0,8,0,0" Text="{x:Static vm:ConsentDialogViewModel.Terms}" TextWrapping="Wrap" />
 
-            <ui:TextBlock Margin="0,18,0,6" Appearance="Secondary" Text="{Binding TypeToConfirm}" TextWrapping="Wrap" />
+            <ui:TextBlock Margin="0,18,0,6" Style="{StaticResource SecondaryText}" Text="{Binding TypeToConfirm}" TextWrapping="Wrap" />
             <ui:TextBox x:Name="Acknowledgement"
                         AutomationProperties.Name="{Binding TypeToConfirm}"
                         Text="{Binding Typed, UpdateSourceTrigger=PropertyChanged}"

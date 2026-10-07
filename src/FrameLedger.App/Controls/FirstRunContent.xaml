@@ -33,7 +33,7 @@
                 <Border Padding="12" CornerRadius="6" Background="{DynamicResource SystemFillColorCautionBackgroundBrush}">
                     <ui:TextBlock Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{x:Static vm:FirstRunViewModel.LegalSummary}" TextWrapping="Wrap" />
                 </Border>
-                <ui:TextBlock Margin="0,10,0,0" Appearance="Secondary" Text="{x:Static vm:FirstRunViewModel.LegalBody}" TextWrapping="Wrap" />
+                <ui:TextBlock Margin="0,10,0,0" Style="{StaticResource SecondaryText}" Text="{x:Static vm:FirstRunViewModel.LegalBody}" TextWrapping="Wrap" />
             </StackPanel>
             <ListBox Grid.Row="1"
                      Grid.Column="0"
@@ -48,10 +48,10 @@
                 </Grid.RowDefinitions>
                 <StackPanel Grid.Row="0" Margin="0,0,0,6" Orientation="Horizontal">
                     <!-- beta.12 (D45): the GPL is the user's licence, for information; Accept covers the other three. -->
-                    <ui:TextBlock Margin="0,0,12,0" VerticalAlignment="Center" Appearance="Secondary" TextWrapping="Wrap" MaxWidth="460"
+                    <ui:TextBlock Margin="0,0,12,0" VerticalAlignment="Center" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" MaxWidth="460"
                                   Text="{x:Static res:Strings.FirstRun_Doc_InformationNote}"
                                   Visibility="{Binding ViewModel.SelectedDocument.RequiresAcceptance, Converter={StaticResource InverseBoolToVis}}" />
-                    <ui:TextBlock VerticalAlignment="Center" Appearance="Secondary" Text="{Binding ViewModel.SelectedDocument.Version}" />
+                    <ui:TextBlock VerticalAlignment="Center" Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.SelectedDocument.Version}" />
                     <ui:HyperlinkButton Margin="12,0,0,0"
                                         Command="{Binding ViewModel.OpenOnlineCommand}"
                                         Content="{x:Static res:Strings.FirstRun_Legal_Online}"
@@ -72,7 +72,7 @@
 
         <!-- Step 2: Agent setup, the facts as the Agent reports them. -->
         <StackPanel Grid.Row="1" Margin="0,12,0,0" Visibility="{Binding ViewModel.IsAgentStep, Converter={StaticResource BoolToVis}}">
-            <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:FirstRunViewModel.AgentBody}" TextWrapping="Wrap" />
+            <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:FirstRunViewModel.AgentBody}" TextWrapping="Wrap" />
             <Grid Margin="0,16,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -104,18 +104,18 @@
         <!-- Step 3: the hooking explainer — the consent dialog's reviewed tier paragraphs, and what "off" means. -->
         <ScrollViewer Grid.Row="1" Margin="0,12,0,0" Visibility="{Binding ViewModel.IsExplainerStep, Converter={StaticResource BoolToVis}}">
             <StackPanel>
-                <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:FirstRunViewModel.ExplainerIntro}" TextWrapping="Wrap" />
+                <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:FirstRunViewModel.ExplainerIntro}" TextWrapping="Wrap" />
                 <ui:TextBlock Margin="0,16,0,4" FontTypography="BodyStrong" Text="{x:Static res:Strings.Tier_Hooked}" />
                 <ui:TextBlock Text="{x:Static vm:FirstRunViewModel.ExplainerHooked}" TextWrapping="Wrap" />
                 <ui:TextBlock Margin="0,16,0,4" FontTypography="BodyStrong" Text="{x:Static res:Strings.Tier_NotHooked}" />
                 <ui:TextBlock Text="{x:Static vm:FirstRunViewModel.ExplainerNotHooked}" TextWrapping="Wrap" />
-                <ui:TextBlock Margin="0,16,0,0" Appearance="Secondary" Text="{x:Static vm:FirstRunViewModel.ExplainerOff}" TextWrapping="Wrap" />
+                <ui:TextBlock Margin="0,16,0,0" Style="{StaticResource SecondaryText}" Text="{x:Static vm:FirstRunViewModel.ExplainerOff}" TextWrapping="Wrap" />
             </StackPanel>
         </ScrollViewer>
 
         <!-- Step 4: the import placeholder. -->
         <StackPanel Grid.Row="1" Margin="0,12,0,0" Visibility="{Binding ViewModel.IsImportStep, Converter={StaticResource BoolToVis}}">
-            <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:FirstRunViewModel.ImportBody}" TextWrapping="Wrap" />
+            <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:FirstRunViewModel.ImportBody}" TextWrapping="Wrap" />
         </StackPanel>
 
         <!-- Buttons: Decline/Accept on the gate; Back/Next on the middle steps; Finish at the end; Close in read-only mode. -->

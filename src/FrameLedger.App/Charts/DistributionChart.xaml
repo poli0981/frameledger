@@ -20,6 +20,6 @@
         </Grid.ColumnDefinitions>
         <sp:WpfPlot x:Name="Histogram" Grid.Column="0" />
         <sp:WpfPlot x:Name="Percentiles" Grid.Column="2" />
-        <ui:TextBlock x:Name="Note" Grid.Row="1" Grid.ColumnSpan="3" Margin="0,4,0,0" Appearance="Tertiary" TextWrapping="Wrap" Visibility="Collapsed" />
+        <ui:TextBlock x:Name="Note" Grid.Row="1" Grid.ColumnSpan="3" Margin="0,4,0,0" Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Visibility="Collapsed" />
     </Grid>
 </UserControl>

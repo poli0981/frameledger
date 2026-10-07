@@ -33,7 +33,7 @@ public sealed class AccessibilityTests
         "Foreground", "Background", "BorderBrush", "Fill", "Stroke", "Color", "CaretBrush", "SelectionBrush",
     };
 
-    private static string RepoRoot()
+    internal static string RepoRoot()
     {
         for (DirectoryInfo? dir = new(AppContext.BaseDirectory); dir is not null; dir = dir.Parent)
         {
@@ -53,7 +53,7 @@ public sealed class AccessibilityTests
                      .Where(static f => !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar, StringComparison.Ordinal)
                                         && !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar, StringComparison.Ordinal)))
         {
-            yield return (Path.GetRelativePath(app, file), XDocument.Load(file));
+            yield return (Path.GetRelativePath(app, file), XDocument.Load(file, LoadOptions.SetLineInfo));
         }
     }
 

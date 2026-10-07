@@ -11,7 +11,7 @@
          where the upscaler's parameters never were. -->
     <Grid>
         <sp:WpfPlot x:Name="Plot" />
-        <ui:TextBlock x:Name="NotMeasured" Appearance="Secondary" TextWrapping="Wrap" VerticalAlignment="Center" HorizontalAlignment="Center"
+        <ui:TextBlock x:Name="NotMeasured" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" VerticalAlignment="Center" HorizontalAlignment="Center"
                       Text="{x:Static res:Strings.Chart_RenderScale_NotMeasured}" Visibility="Collapsed" />
     </Grid>
 </UserControl>

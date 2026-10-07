@@ -30,7 +30,7 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="0,12,0,0" MaxWidth="760" HorizontalAlignment="Left">
                         <ui:TextBlock FontTypography="Title" Text="{x:Static res:Strings.App_Title}" />
-                        <ui:TextBlock x:Name="VersionText" Appearance="Secondary" />
+                        <ui:TextBlock x:Name="VersionText" Style="{StaticResource SecondaryText}" />
                         <ui:TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Text="{x:Static res:Strings.About_Tagline}" />
                         <ui:TextBlock Margin="0,20,0,6" FontTypography="Subtitle" Text="{x:Static res:Strings.About_Notices_Header}" />
                         <ui:TextBlock TextWrapping="Wrap" Text="{x:Static res:Strings.About_Notices_Copyright}" />
@@ -56,7 +56,7 @@
                         <ui:Button DockPanel.Dock="Right" Margin="12,0,0,0" Click="OnOpenLicencesFolder" Content="{x:Static res:Strings.About_OpenLicencesFolder}" Icon="{ui:SymbolIcon Folder24}" />
                         <ui:TextBlock VerticalAlignment="Center" TextWrapping="Wrap" Text="{x:Static res:Strings.About_ThirdParty_Body}" />
                     </DockPanel>
-                    <ui:TextBlock x:Name="NoLicencesFolder" Grid.Row="1" Margin="0,0,0,8" Appearance="Secondary" TextWrapping="Wrap"
+                    <ui:TextBlock x:Name="NoLicencesFolder" Grid.Row="1" Margin="0,0,0,8" Style="{StaticResource SecondaryText}" TextWrapping="Wrap"
                                   Text="{x:Static res:Strings.About_NoLicencesFolder}" Visibility="Collapsed" />
                     <controls:DocumentBrowser x:Name="ThirdParty" Grid.Row="2" />
                 </Grid>

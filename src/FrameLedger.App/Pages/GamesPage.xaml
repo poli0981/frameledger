@@ -61,10 +61,10 @@
                            Icon="{ui:SymbolIcon Add24}" />
             </Grid>
 
-            <ui:TextBlock Margin="0,16,0,0" Appearance="Secondary" TextWrapping="Wrap"
+            <ui:TextBlock Margin="0,16,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap"
                           Text="{x:Static vm:GamesViewModel.EmptyText}"
                           Visibility="{Binding ViewModel.IsEmpty, Converter={StaticResource BoolToVis}}" />
-            <ui:TextBlock Margin="0,16,0,0" Appearance="Secondary" TextWrapping="Wrap"
+            <ui:TextBlock Margin="0,16,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap"
                           Text="{x:Static vm:GamesViewModel.NoMatchText}"
                           Visibility="{Binding ViewModel.NoMatch, Converter={StaticResource BoolToVis}}" />
 
@@ -103,9 +103,9 @@
                                         <TextBlock Style="{StaticResource TagPillText}" Text="{x:Static res:Strings.Games_Card_NotInstalled}" />
                                     </Border>
                                 </WrapPanel>
-                                <ui:TextBlock Margin="0,2,0,0" Appearance="Secondary" Text="{Binding SessionsText}" />
-                                <ui:TextBlock Appearance="Secondary" Text="{Binding PlaytimeText}" />
-                                <ui:TextBlock Appearance="Secondary" Text="{Binding LastPlayedText}" />
+                                <ui:TextBlock Margin="0,2,0,0" Style="{StaticResource SecondaryText}" Text="{Binding SessionsText}" />
+                                <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding PlaytimeText}" />
+                                <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding LastPlayedText}" />
                             </StackPanel>
                         </ui:CardAction>
                     </DataTemplate>

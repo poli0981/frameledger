@@ -28,6 +28,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Fixed
+
+- **Text keeps up with a change of theme.** After switching between Light and Dark, the descriptions and captions of the
+  page in view — Settings above all, where the theme is chosen — kept the old theme's colour: light grey on white, or dark
+  grey on dark. Every such text now follows the switch, on every page, window and dialog (`08_UI` §Contrast,
+  `16_WPFUI_SYNTAX` §Gotchas).
+
 ## [0.1.0-beta.16] - 2026-10-06
 
 **The sixteenth pre-release: nothing changes in the app.** It is 0.1.0-beta.15 as the owner verified it on real hardware

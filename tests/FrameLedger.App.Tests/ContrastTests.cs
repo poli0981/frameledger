@@ -75,6 +75,64 @@ public sealed class ContrastTests
     }
 
     /// <summary>
+    /// beta.17 (the owner's screenshots of 2026-10-07: Settings' descriptions light grey on white after Dark → Light, dark grey
+    /// on dark after the way back). WPF UI 4.3.0's <c>ui:TextBlock Appearance</c> looks its brush up ONCE —
+    /// <c>OnAppearanceChanged</c> stores <c>TryFindResource(…)</c> and <c>TextBlockMetadata</c> coerces Foreground to it — so a
+    /// text keeps the theme it was made under. The property inherits, so the attached form on a container pins every text
+    /// below it, and a style setter or the code form does the same. Colour comes from <c>Styles/FrameLedger.xaml</c>'s
+    /// <c>SecondaryText</c> / <c>TertiaryText</c>, whose <c>DynamicResource</c> follows a switch.
+    /// </summary>
+    [Fact]
+    public void NoTextBlockTakesItsColourFromAppearance()
+    {
+        List<string> offenders = [];
+        foreach ((string file, XDocument xaml) in AccessibilityTests.AppXaml())
+        {
+            foreach (XElement element in xaml.Descendants())
+            {
+                if (TakesItsColourFromAppearance(element))
+                {
+                    offenders.Add($"{file}:{((System.Xml.IXmlLineInfo)element).LineNumber}: <{element.Name.LocalName}>");
+                }
+            }
+        }
+
+        string app = System.IO.Path.Combine(AccessibilityTests.RepoRoot(), "src", "FrameLedger.App");
+        foreach (string file in System.IO.Directory.EnumerateFiles(app, "*.cs", System.IO.SearchOption.AllDirectories)
+                     .Where(static f => !f.Contains(System.IO.Path.DirectorySeparatorChar + "obj" + System.IO.Path.DirectorySeparatorChar, StringComparison.Ordinal)
+                                        && !f.Contains(System.IO.Path.DirectorySeparatorChar + "bin" + System.IO.Path.DirectorySeparatorChar, StringComparison.Ordinal)))
+        {
+            string code = System.IO.File.ReadAllText(file);
+            if (code.Contains("TextColor.", StringComparison.Ordinal) || code.Contains("TextBlock.AppearanceProperty", StringComparison.Ordinal))
+            {
+                offenders.Add(System.IO.Path.GetRelativePath(app, file) + ": the code form");
+            }
+        }
+
+        string.Join(Environment.NewLine, offenders).Should().BeEmpty("WPF UI 4.3.0's TextBlock Appearance keeps the brush of the theme a text was made under (08_UI §Contrast); use Style=\"{StaticResource SecondaryText}\" or TertiaryText");
+    }
+
+    /// <summary>An <c>Appearance</c> on a TextBlock, the attached <c>ui:TextBlock.Appearance</c> on anything, or a style setter for either.</summary>
+    private static bool TakesItsColourFromAppearance(XElement element)
+    {
+        bool isTextBlock = string.Equals(element.Name.LocalName, "TextBlock", StringComparison.Ordinal);
+        if (element.Attributes().Any(a => (isTextBlock && string.Equals(a.Name.LocalName, "Appearance", StringComparison.Ordinal))
+                                          || a.Name.LocalName.EndsWith("TextBlock.Appearance", StringComparison.Ordinal)))
+        {
+            return true;
+        }
+
+        if (!string.Equals(element.Name.LocalName, "Setter", StringComparison.Ordinal) || element.Attribute("Property")?.Value is not { } property)
+        {
+            return false;
+        }
+
+        string? target = element.Ancestors().FirstOrDefault(static a => string.Equals(a.Name.LocalName, "Style", StringComparison.Ordinal))?.Attribute("TargetType")?.Value;
+        return property.EndsWith("TextBlock.Appearance", StringComparison.Ordinal)
+               || (string.Equals(property, "Appearance", StringComparison.Ordinal) && target is not null && target.Contains("TextBlock", StringComparison.Ordinal));
+    }
+
+    /// <summary>
     /// The pairs the App's own styles compose (<c>Styles/FrameLedger.xaml</c>): the hooking pill OFF (secondary text on the
     /// Pill's fill), ON (on-accent text on the accent fill, the ×FG chip's pair), and the warning qualifier (primary text
     /// on the caution fill) — also the hooking pill's "Anti-cheat" state since 2026-09-25. Translucent fills are composited

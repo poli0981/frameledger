@@ -20,7 +20,7 @@
         <StackPanel Style="{StaticResource PageRoot}">
             <ui:HyperlinkButton Padding="0" Command="{Binding ViewModel.BackCommand}" Content="{x:Static vm:GameDetailViewModel.BackText}" Icon="{ui:SymbolIcon ArrowLeft24}" />
 
-            <ui:TextBlock Margin="0,12,0,0" Appearance="Secondary" TextWrapping="Wrap"
+            <ui:TextBlock Margin="0,12,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap"
                           Text="{x:Static vm:GameDetailViewModel.NotFoundText}"
                           Visibility="{Binding ViewModel.NotFound, Converter={StaticResource BoolToVis}}" />
 
@@ -32,14 +32,14 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
                     <ui:TextBlock FontTypography="Title" Text="{Binding ViewModel.Name}" />
-                    <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.Subtitle}" />
-                    <ui:TextBlock Appearance="Tertiary" TextTrimming="CharacterEllipsis" Text="{Binding ViewModel.ExecutableText}" ToolTip="{Binding ViewModel.ExecutableText}" />
+                    <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.Subtitle}" />
+                    <ui:TextBlock Style="{StaticResource TertiaryText}" TextTrimming="CharacterEllipsis" Text="{Binding ViewModel.ExecutableText}" ToolTip="{Binding ViewModel.ExecutableText}" />
                     <ui:InfoBar Margin="0,6,0,0" IsClosable="False" Severity="Warning"
                                 IsOpen="{Binding ViewModel.ExecutableMissing, Mode=OneWay}"
                                 Message="{Binding ViewModel.ExecutableMissingMessage}" />
-                    <ui:TextBlock Appearance="Secondary" Text="{Binding ViewModel.LastSessionText}" />
+                    <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.LastSessionText}" />
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                        <ui:TextBlock Appearance="Secondary" VerticalAlignment="Center" Margin="0,0,12,0" Text="{x:Static vm:GameDetailViewModel.LifetimeLabel}" />
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" VerticalAlignment="Center" Margin="0,0,12,0" Text="{x:Static vm:GameDetailViewModel.LifetimeLabel}" />
                         <controls:FpsReadout Model="{Binding ViewModel.Lifetime}" />
                     </StackPanel>
                     <ItemsControl Margin="0,10,0,0" ItemsSource="{Binding ViewModel.Chips}">
@@ -72,7 +72,7 @@
                 <ui:Card Grid.Column="0" VerticalAlignment="Stretch">
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static vm:GameDetailViewModel.SupportsHeader}" />
-                        <ui:TextBlock Margin="0,6,0,0" Appearance="Tertiary" TextWrapping="Wrap"
+                        <ui:TextBlock Margin="0,6,0,0" Style="{StaticResource TertiaryText}" TextWrapping="Wrap"
                                       Text="{x:Static vm:GameDetailViewModel.SupportsEmptyText}"
                                       Visibility="{Binding ViewModel.SupportsEmpty, Converter={StaticResource BoolToVis}}" />
                         <ItemsControl Margin="0,6,0,0" ItemsSource="{Binding ViewModel.Supports}">
@@ -94,7 +94,7 @@
                 <ui:Card Grid.Column="2" VerticalAlignment="Stretch">
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static vm:GameDetailViewModel.MeasuredHeader}" />
-                        <ui:TextBlock Margin="0,6,0,0" Appearance="Tertiary" TextWrapping="Wrap" Text="{Binding ViewModel.MeasuredEmptyText}" />
+                        <ui:TextBlock Margin="0,6,0,0" Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.MeasuredEmptyText}" />
                         <ItemsControl Margin="0,6,0,0" ItemsSource="{Binding ViewModel.Measured}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -124,7 +124,7 @@
                                     <ColumnDefinition Width="180" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <ui:TextBlock Grid.Column="0" Appearance="Secondary" TextWrapping="Wrap" Text="{Binding Label}" />
+                                <ui:TextBlock Grid.Column="0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding Label}" />
                                 <ui:TextBlock Grid.Column="1" TextWrapping="Wrap" Text="{Binding Value}" />
                             </Grid>
                         </DataTemplate>
@@ -135,13 +135,13 @@
             <!-- recording switch (schema 0009, 2026-09-23): off, FrameLedger does not watch for this program at all -->
             <ui:CardControl Margin="0,12,0,0" Header="{x:Static vm:GameDetailViewModel.RecordingHeader}" Icon="{ui:SymbolIcon Record24}">
                 <StackPanel Orientation="Horizontal">
-                    <ui:TextBlock Appearance="Secondary" VerticalAlignment="Center" Margin="0,0,12,0" Text="{Binding ViewModel.RecordingStatusText}" />
+                    <ui:TextBlock Style="{StaticResource SecondaryText}" VerticalAlignment="Center" Margin="0,0,12,0" Text="{Binding ViewModel.RecordingStatusText}" />
                     <ui:ToggleSwitch AutomationProperties.Name="{x:Static vm:GameDetailViewModel.RecordingHeader}"
                                      IsChecked="{Binding ViewModel.RecordSessions, Mode=OneWay}"
                                      Command="{Binding ViewModel.ToggleRecordingCommand}" />
                 </StackPanel>
             </ui:CardControl>
-            <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.RecordingBody}" />
+            <ui:TextBlock Margin="0,6,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.RecordingBody}" />
 
             <!-- anti-cheat found, shown IN PLACE of the hooking card while such cards are hidden (beta.8, ui.hide_anticheat_hooking) -->
             <ui:CardControl Margin="0,12,0,0" Icon="{ui:SymbolIcon ShieldError24}"
@@ -149,7 +149,7 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static vm:GameDetailViewModel.AntiCheatHeader}" />
-                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.AntiCheatText}" />
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.AntiCheatText}" />
                     </StackPanel>
                 </ui:CardControl.Header>
             </ui:CardControl>
@@ -160,12 +160,12 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static vm:GameDetailViewModel.ExceptionHeader}" />
-                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.ExceptionText}" />
-                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.ExceptionInForceText}"
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.ExceptionText}" />
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.ExceptionInForceText}"
                                       Visibility="{Binding ViewModel.ExceptionInForceText, Converter={StaticResource NullToCollapsed}}" />
-                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.ExceptionSuspendedText}"
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.ExceptionSuspendedText}"
                                       Visibility="{Binding ViewModel.ExceptionSuspendedText, Converter={StaticResource NullToCollapsed}}" />
-                        <ui:TextBlock Appearance="Tertiary" TextWrapping="Wrap" Text="{Binding ViewModel.ExceptionLapseText}"
+                        <ui:TextBlock Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.ExceptionLapseText}"
                                       Visibility="{Binding ViewModel.ExceptionLapseText, Converter={StaticResource NullToCollapsed}}" />
                     </StackPanel>
                 </ui:CardControl.Header>
@@ -187,21 +187,21 @@
             <StackPanel Visibility="{Binding ViewModel.HookingSectionVisible, Converter={StaticResource BoolToVis}}">
                 <ui:CardControl Margin="0,12,0,0" Header="{x:Static vm:GameDetailViewModel.HookingHeader}" Icon="{ui:SymbolIcon ShieldTask24}">
                     <StackPanel Orientation="Horizontal">
-                        <ui:TextBlock Appearance="Secondary" VerticalAlignment="Center" Margin="0,0,12,0" Text="{Binding ViewModel.HookStatusText}" />
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" VerticalAlignment="Center" Margin="0,0,12,0" Text="{Binding ViewModel.HookStatusText}" />
                         <ui:ToggleSwitch AutomationProperties.Name="{x:Static vm:GameDetailViewModel.HookingHeader}"
                                          IsChecked="{Binding ViewModel.HookEnabled, Mode=OneWay}"
                                          IsEnabled="{Binding ViewModel.HookToggleEnabled}"
                                          Command="{Binding ViewModel.ToggleHookingCommand}" />
                     </StackPanel>
                 </ui:CardControl>
-                <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.HookingBody}" />
-                <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.BlockedText}"
+                <ui:TextBlock Margin="0,6,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.HookingBody}" />
+                <ui:TextBlock Margin="0,6,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.BlockedText}"
                               Visibility="{Binding ViewModel.BlockedText, Converter={StaticResource NullToCollapsed}}" />
-                <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.NotX64Text}"
+                <ui:TextBlock Margin="0,6,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.NotX64Text}"
                               Visibility="{Binding ViewModel.NotX64Text, Converter={StaticResource NullToCollapsed}}" />
-                <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.UnverifiedText}"
+                <ui:TextBlock Margin="0,6,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.UnverifiedText}"
                               Visibility="{Binding ViewModel.UnverifiedText, Converter={StaticResource NullToCollapsed}}" />
-                <ui:TextBlock Margin="0,6,0,0" Appearance="Secondary" Text="{x:Static vm:GameDetailViewModel.BusyText}"
+                <ui:TextBlock Margin="0,6,0,0" Style="{StaticResource SecondaryText}" Text="{x:Static vm:GameDetailViewModel.BusyText}"
                               Visibility="{Binding ViewModel.Busy, Converter={StaticResource BoolToVis}}" />
             </StackPanel>
             <ui:InfoBar Margin="0,8,0,0" IsClosable="False" Severity="Warning"
@@ -219,13 +219,13 @@
             <TabControl Margin="0,20,0,0">
                 <TabItem Header="{x:Static vm:GameDetailViewModel.TabSessions}">
                     <StackPanel Margin="0,12,0,0">
-                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap"
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap"
                                       Text="{x:Static vm:GameDetailViewModel.SessionsEmptyText}"
                                       Visibility="{Binding ViewModel.SessionsEmpty, Converter={StaticResource BoolToVis}}" />
                         <!-- beta.11 (D39): every hooked session's rate and lows at a glance; a click selects the session below. -->
                         <StackPanel Visibility="{Binding ViewModel.OverviewVisible, Converter={StaticResource BoolToVis}}">
                             <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static vm:GameDetailViewModel.OverviewHeader}" />
-                            <ui:TextBlock Appearance="Tertiary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.OverviewNote}" />
+                            <ui:TextBlock Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.OverviewNote}" />
                             <charts:TrendChart x:Name="Overview" Height="220" MinHeight="200" Margin="0,4,0,8" />
                         </StackPanel>
                         <!-- beta.11 (D40): the game, its settings and its consent stay; the confirmation says how many go. -->
@@ -337,14 +337,14 @@
                 </TabItem>
                 <TabItem Header="{x:Static vm:GameDetailViewModel.TabFrametime}">
                     <StackPanel Margin="0,12,0,0">
-                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.SelectedNote}"
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.SelectedNote}"
                                       Visibility="{Binding ViewModel.SelectedNote, Converter={StaticResource NullToCollapsed}}" />
                         <charts:FrametimeChart x:Name="Frametime" Height="320" Visibility="{Binding ViewModel.SelectedHasSeries, Converter={StaticResource BoolToVis}}" />
                     </StackPanel>
                 </TabItem>
                 <TabItem Header="{x:Static vm:GameDetailViewModel.TabDistribution}">
                     <StackPanel Margin="0,12,0,0">
-                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.SelectedNote}"
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.SelectedNote}"
                                       Visibility="{Binding ViewModel.SelectedNote, Converter={StaticResource NullToCollapsed}}" />
                         <charts:DistributionChart x:Name="Distribution" Height="280" Visibility="{Binding ViewModel.SelectedHasSeries, Converter={StaticResource BoolToVis}}" />
                     </StackPanel>
@@ -352,14 +352,14 @@
                 <TabItem Header="{x:Static vm:GameDetailViewModel.TabTrend}">
                     <StackPanel Margin="0,12,0,0">
                         <StackPanel Orientation="Horizontal">
-                            <ui:TextBlock Appearance="Secondary" VerticalAlignment="Center" Margin="0,0,8,0" Text="{x:Static vm:GameDetailViewModel.TrendMetricLabel}" />
+                            <ui:TextBlock Style="{StaticResource SecondaryText}" VerticalAlignment="Center" Margin="0,0,8,0" Text="{x:Static vm:GameDetailViewModel.TrendMetricLabel}" />
                             <ComboBox MinWidth="180" AutomationProperties.Name="{x:Static vm:GameDetailViewModel.TrendMetricLabel}" DisplayMemberPath="Label" ItemsSource="{Binding ViewModel.TrendMetrics}"
                                       SelectedValue="{Binding ViewModel.TrendMetric, Mode=TwoWay}" SelectedValuePath="Value" />
                             <CheckBox Margin="16,0,0,0" VerticalAlignment="Center" Content="{x:Static vm:GameDetailViewModel.IncludeMidSessionText}"
                                       IsChecked="{Binding ViewModel.IncludeMidSession}" />
                         </StackPanel>
                         <!-- beta.11 (D39): more metrics on the same chart; a second unit is drawn against the right axis, a third cannot be ticked. -->
-                        <ui:TextBlock Margin="0,10,0,0" Appearance="Secondary" Text="{x:Static vm:GameDetailViewModel.TrendExtrasLabel}" />
+                        <ui:TextBlock Margin="0,10,0,0" Style="{StaticResource SecondaryText}" Text="{x:Static vm:GameDetailViewModel.TrendExtrasLabel}" />
                         <ItemsControl ItemsSource="{Binding ViewModel.TrendExtras}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -372,12 +372,12 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <ui:TextBlock Margin="0,4,0,0" Appearance="Tertiary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.TrendExtrasNote}" />
-                        <ui:TextBlock Margin="0,6,0,0" Appearance="Tertiary" Text="{Binding ViewModel.TrendExcludedText}"
+                        <ui:TextBlock Margin="0,4,0,0" Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.TrendExtrasNote}" />
+                        <ui:TextBlock Margin="0,6,0,0" Style="{StaticResource TertiaryText}" Text="{Binding ViewModel.TrendExcludedText}"
                                       Visibility="{Binding ViewModel.TrendExcludedText, Converter={StaticResource NullToCollapsed}}" />
-                        <ui:TextBlock Margin="0,6,0,0" Appearance="Tertiary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.TrendAverageNote}" />
-                        <ui:TextBlock Margin="0,6,0,0" Appearance="Tertiary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.TrendPartialNote}" />
-                        <ui:TextBlock Margin="0,12,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.TrendEmptyMessage}"
+                        <ui:TextBlock Margin="0,6,0,0" Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.TrendAverageNote}" />
+                        <ui:TextBlock Margin="0,6,0,0" Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.TrendPartialNote}" />
+                        <ui:TextBlock Margin="0,12,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.TrendEmptyMessage}"
                                       Visibility="{Binding ViewModel.TrendEmpty, Converter={StaticResource BoolToVis}}" />
                         <charts:TrendChart x:Name="Trend" Height="320" Visibility="{Binding ViewModel.TrendEmpty, Converter={StaticResource InverseBoolToVis}}" />
                     </StackPanel>
@@ -385,16 +385,16 @@
                 <TabItem Header="{x:Static vm:GameDetailViewModel.TabSensors}">
                     <StackPanel Margin="0,12,0,0">
                         <!-- A session that was not hooked has its sensors (beta.8): the tab's own note and visibility, not the frames'. -->
-                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.SensorsNote}"
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.SensorsNote}"
                                       Visibility="{Binding ViewModel.SensorsNote, Converter={StaticResource NullToCollapsed}}" />
                         <charts:SensorsChart x:Name="Sensors" Visibility="{Binding ViewModel.SelectedHasSensors, Converter={StaticResource BoolToVis}}" />
                     </StackPanel>
                 </TabItem>
                 <TabItem Header="{x:Static vm:GameDetailViewModel.TabLatency}" Visibility="{Binding ViewModel.AnyLatency, Converter={StaticResource BoolToVis}}">
                     <StackPanel Margin="0,12,0,0">
-                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{Binding ViewModel.SelectedNote}"
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.SelectedNote}"
                                       Visibility="{Binding ViewModel.SelectedNote, Converter={StaticResource NullToCollapsed}}" />
-                        <ui:TextBlock Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.LatencyEmptyText}"
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.LatencyEmptyText}"
                                       Visibility="{Binding ViewModel.HasLatency, Converter={StaticResource InverseBoolToVis}}" />
                         <ui:TextBlock FontTypography="BodyStrong" Text="{Binding ViewModel.LatencyText}"
                                       Visibility="{Binding ViewModel.HasLatency, Converter={StaticResource BoolToVis}}" />

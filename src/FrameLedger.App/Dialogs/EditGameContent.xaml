@@ -22,7 +22,7 @@
                     Visibility="{Binding NameDetected, Converter={StaticResource BoolToVis}}">
                 <TextBlock Style="{StaticResource TagPillText}" Text="{x:Static vm:EditGameViewModel.DetectedBadge}" />
             </Border>
-            <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:EditGameViewModel.NameLabel}" />
+            <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:EditGameViewModel.NameLabel}" />
         </DockPanel>
         <ui:TextBox Margin="0,4,0,12" AutomationProperties.Name="{x:Static vm:EditGameViewModel.NameLabel}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -31,7 +31,7 @@
                     Visibility="{Binding PublisherDetected, Converter={StaticResource BoolToVis}}">
                 <TextBlock Style="{StaticResource TagPillText}" Text="{x:Static vm:EditGameViewModel.DetectedBadge}" />
             </Border>
-            <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:EditGameViewModel.PublisherLabel}" />
+            <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:EditGameViewModel.PublisherLabel}" />
         </DockPanel>
         <ui:TextBox Margin="0,4,0,12" AutomationProperties.Name="{x:Static vm:EditGameViewModel.PublisherLabel}" Text="{Binding Publisher, UpdateSourceTrigger=PropertyChanged}" />
 
@@ -40,11 +40,11 @@
                     Visibility="{Binding VersionDetected, Converter={StaticResource BoolToVis}}">
                 <TextBlock Style="{StaticResource TagPillText}" Text="{x:Static vm:EditGameViewModel.DetectedBadge}" />
             </Border>
-            <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:EditGameViewModel.VersionLabel}" />
+            <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:EditGameViewModel.VersionLabel}" />
         </DockPanel>
         <ui:TextBox Margin="0,4,0,12" AutomationProperties.Name="{x:Static vm:EditGameViewModel.VersionLabel}" Text="{Binding Version, UpdateSourceTrigger=PropertyChanged}" />
 
-        <ui:TextBlock Appearance="Secondary" Text="{x:Static vm:EditGameViewModel.NotesLabel}" />
+        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:EditGameViewModel.NotesLabel}" />
         <ui:TextBox Margin="0,4,0,0" MinHeight="72" AutomationProperties.Name="{x:Static vm:EditGameViewModel.NotesLabel}" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" />
     </StackPanel>
 </UserControl>

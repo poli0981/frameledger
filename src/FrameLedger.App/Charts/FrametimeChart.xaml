@@ -15,7 +15,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <ui:TextBlock x:Name="Note" Grid.Row="0" Margin="0,0,0,4" Appearance="Tertiary" TextWrapping="Wrap" Visibility="Collapsed" />
+        <ui:TextBlock x:Name="Note" Grid.Row="0" Margin="0,0,0,4" Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Visibility="Collapsed" />
         <sp:WpfPlot x:Name="Plot" Grid.Row="1" />
     </Grid>
 </UserControl>

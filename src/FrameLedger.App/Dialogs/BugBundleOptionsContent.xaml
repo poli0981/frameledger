@@ -20,11 +20,11 @@
         <ui:TextBlock TextWrapping="Wrap" Text="{x:Static vm:BugBundleOptionsViewModel.Intro}" />
         <StackPanel Visibility="{Binding HasCrashDump, Converter={StaticResource BoolToVis}}">
             <CheckBox Margin="0,12,0,0" IsChecked="{Binding IncludeCrashDump}" Content="{Binding DumpLabel}" />
-            <ui:TextBlock Margin="28,4,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:BugBundleOptionsViewModel.DumpDetail}" />
+            <ui:TextBlock Margin="28,4,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{x:Static vm:BugBundleOptionsViewModel.DumpDetail}" />
         </StackPanel>
         <StackPanel Visibility="{Binding HasLastSession, Converter={StaticResource BoolToVis}}">
             <CheckBox Margin="0,12,0,0" IsChecked="{Binding IncludeLastSession}" Content="{Binding SessionLabel}" />
-            <ui:TextBlock Margin="28,4,0,0" Appearance="Secondary" TextWrapping="Wrap" Text="{x:Static vm:BugBundleOptionsViewModel.SessionDetail}" />
+            <ui:TextBlock Margin="28,4,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{x:Static vm:BugBundleOptionsViewModel.SessionDetail}" />
         </StackPanel>
     </StackPanel>
 </UserControl>

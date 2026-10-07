@@ -21,6 +21,22 @@
         <Setter Property="Margin" Value="28,20,28,20" />
     </Style>
 
+    <!--
+        Secondary and tertiary text (beta.17). These replace `ui:TextBlock Appearance="Secondary|Tertiary"`, which WPF UI
+        4.3.0 resolves ONCE: TextBlock.OnAppearanceChanged stores TryFindResource(…) in AppearanceForeground and
+        TextBlockMetadata coerces Foreground to it, so a text kept the theme it was made under. The owner's screenshots of
+        2026-10-07 showed Settings' descriptions light grey on white after Dark → Light, and dark grey on dark after the way
+        back. These follow a switch, like every other brush here (DynamicResource). ContrastTests.NoTextBlockTakesItsColourFromAppearance
+        refuses Appearance on a TextBlock; PagesLoadTests.EveryTextFollowsAThemeSwitch renders every surface through a switch.
+    -->
+    <Style x:Key="SecondaryText" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+    </Style>
+
+    <Style x:Key="TertiaryText" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+    </Style>
+
     <Style x:Key="FieldLabel" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
         <Setter Property="Margin" Value="0,0,16,6" />
