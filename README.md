@@ -5,8 +5,10 @@
 > No telemetry. No accounts. All data stays on your machine.
 
 **New here? Start with the [user guide](guide/README.md)** — install, record a game, read your results, stay safe with
-anti-cheat, and look after your data, a page each. What FrameLedger cannot do is on one page:
-[Limitations](LIMITATIONS.md). Both are in the app too (Help ▸ User guide, Help ▸ Limitations).
+anti-cheat, and look after your data, a page each, then every screen, every setting and what to do when something goes
+wrong. What FrameLedger cannot do is on one page: [Limitations](LIMITATIONS.md). Both are in the app too (Help ▸ User
+guide, Help ▸ Limitations), and on the project's [wiki](https://github.com/poli0981/frameledger/wiki) with the developer
+pages.
 
 <!-- accuracy-block:begin -->
 > ⚠ **What FrameLedger actually measures today — 2026-10-06.** The software is a beta; its latest
@@ -191,6 +193,8 @@ FrameLedger is GPL-3.0-only free software, and you are welcome to build it, chan
   [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). Security reports: [`SECURITY.md`](SECURITY.md).
 - **Fork or redistribute:** [`FORKING.md`](FORKING.md) — what the GPL asks of anyone who distributes builds, and the names
   a fork must change so it does not share FrameLedger's update feed, install folder, data, pipe or Vulkan layer.
+- **Find your way around:** the [wiki](https://github.com/poli0981/frameledger/wiki)'s developer pages are short, and each
+  links to the document it summarises ([`wiki/`](wiki/) is their source).
 - **Read the design:** the developer documentation is in [`docs/`](docs/). Start with [`CLAUDE.md`](CLAUDE.md), then
   [`docs/19_SAFETY_AND_ANTICHEAT.md`](docs/19_SAFETY_AND_ANTICHEAT.md) — which constrains everything else — then
   [`docs/01_ARCHITECTURE.md`](docs/01_ARCHITECTURE.md).
