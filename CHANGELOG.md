@@ -34,6 +34,10 @@ numeric core and does not move; the heading is the full version — corrected 20
   page in view — Settings above all, where the theme is chosen — kept the old theme's colour: light grey on white, or dark
   grey on dark. Every such text now follows the switch, on every page, window and dialog (`08_UI` §Contrast,
   `16_WPFUI_SYNTAX` §Gotchas).
+- **Hide scroll bars hides every scroll bar.** With Settings ▸ Window ▸ Hide scroll bars on, the Dashboard still drew its
+  scroll bar — and so did the first run, About, the user guide and a game's wide sessions table; only screens with a
+  switch or a tick box on them lost theirs. Every scroller follows the option now, and still scrolls with the wheel, the
+  keyboard and touch (`08_UI` §Settings, `16_WPFUI_SYNTAX` §Gotchas).
 
 ## [0.1.0-beta.16] - 2026-10-06
 

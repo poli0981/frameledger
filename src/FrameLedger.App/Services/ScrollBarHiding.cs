@@ -10,13 +10,22 @@ namespace FrameLedger.App.Services;
 /// <summary>
 /// <c>ui.hide_scrollbars</c> (beta.14, owner request 2026-10-05): the App draws no scroll bars, and every scroller still
 /// scrolls — with the wheel, the keyboard and touch. A bar's visibility is bound in its scroller's template, so no style can
-/// reach it; this sets the scroller's own <see cref="ScrollBarVisibility"/> instead. One class handler on
-/// <see cref="ScrollViewer"/>'s <c>Loaded</c>, registered at start beside <see cref="DialogKeyboard"/>, sees every scroller the
-/// App shows, those inside a control's template too (a DataGrid's, a TextBox's, a rendered document's, a dialog's). While
-/// on, an axis whose bar is <see cref="ScrollBarVisibility.Auto"/> or <see cref="ScrollBarVisibility.Visible"/> becomes
+/// reach it; this sets the scroller's own <see cref="ScrollBarVisibility"/> instead, from two class handlers on
+/// <see cref="ScrollViewer"/> registered at start beside <see cref="DialogKeyboard"/>, which reach every scroller the App shows,
+/// those inside a control's template too (a DataGrid's, a TextBox's, a rendered document's, a dialog's):
+/// <list type="bullet">
+/// <item><c>ScrollChanged</c>, which every scroller raises from its first layout, when its extent and viewport stop being
+/// zero, and again whenever they change — inside the layout pass, so the bar is gone before the first frame is drawn.</item>
+/// <item><c>Loaded</c>, which beta.14 relied on alone, wrongly (beta.17, the owner's screenshot: the Dashboard kept its bar).
+/// WPF raises Loaded only on an element whose subtree listens for it with a handler of its own — an instance handler, a
+/// style's EventSetter, a template's trigger — and a class handler is none of those; WPF UI's toggle switches carry one,
+/// so Settings was hidden and the Dashboard, all cards and text, never was. It stays for a scroller that comes back with
+/// nothing to lay out again.</item>
+/// </list>
+/// While on, an axis whose bar is <see cref="ScrollBarVisibility.Auto"/> or <see cref="ScrollBarVisibility.Visible"/> becomes
 /// <see cref="ScrollBarVisibility.Hidden"/> — WPF's "no bar, still scrolls" — and its own value is remembered on it;
 /// <see cref="ScrollBarVisibility.Disabled"/> is never touched, because a disabled axis lays its content out at the viewport's
-/// size and wraps text. Off puts every remembered value back, on screen at once and on the next load for the rest.
+/// size and wraps text. Off puts every remembered value back, on screen at once and at the next layout for the rest.
 /// </summary>
 public static class ScrollBarHiding
 {
@@ -32,11 +41,12 @@ public static class ScrollBarHiding
     /// <summary>Whether the bars are hidden right now.</summary>
     public static bool Hidden => _hidden;
 
-    /// <summary>Registers the class handler, once per process.</summary>
+    /// <summary>Registers the class handlers, once per process.</summary>
     public static void Register()
     {
         if (Interlocked.Exchange(ref _registered, 1) == 0)
         {
+            EventManager.RegisterClassHandler(typeof(ScrollViewer), ScrollViewer.ScrollChangedEvent, new ScrollChangedEventHandler(OnScrollChanged), handledEventsToo: true);
             EventManager.RegisterClassHandler(typeof(ScrollViewer), FrameworkElement.LoadedEvent, new RoutedEventHandler(OnLoaded), handledEventsToo: true);
         }
     }
@@ -89,6 +99,15 @@ public static class ScrollBarHiding
     }
 
     private static void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is ScrollViewer viewer)
+        {
+            Set(viewer);
+        }
+    }
+
+    // ScrollChanged bubbles: a scroller's ancestors that are scrollers hear it too, and each gets the same idempotent check.
+    private static void OnScrollChanged(object sender, ScrollChangedEventArgs e)
     {
         if (sender is ScrollViewer viewer)
         {

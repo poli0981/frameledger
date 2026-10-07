@@ -77,7 +77,8 @@ public partial class App : System.Windows.Application
         HookCrashHandlers();
         // 08_UI §Accessibility (P4 PR-8): Esc closes the open ContentDialog or MessageBox, before any window exists.
         DialogKeyboard.Register();
-        // beta.14: ui.hide_scrollbars reaches every scroller as it loads, those in a control's template too.
+        // beta.14: ui.hide_scrollbars reaches every scroller as it is laid out (beta.17: not only as it loads), those in a
+        // control's template too.
         ScrollBarHiding.Register();
         _run = DiagReport.Requested(e.Args) ? DiagAsync() : RunAsync();
     }

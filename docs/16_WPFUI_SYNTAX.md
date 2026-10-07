@@ -254,7 +254,17 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
 - [ ] **A scroll bar's visibility is bound inside its scroller's template** (`ComputedVerticalScrollBarVisibility`), so a style
   on `ScrollBar` or `ui:DynamicScrollBar` cannot hide it. Set the scroller's own `ScrollBarVisibility` to `Hidden` — no
   bar, and the wheel, the keyboard and touch still scroll (`ui:PassiveScrollViewer` treats only `Disabled` as "cannot
-  scroll") — as `Services.ScrollBarHiding` does for `ui.hide_scrollbars` (beta.14).
+  scroll") — as `Services.ScrollBarHiding` does for `ui.hide_scrollbars` (beta.14), reaching each scroller from a class
+  handler on `ScrollChanged` since beta.17 rather than from `Loaded` alone (next item).
+- [ ] **A class handler on `Loaded` is not a load hook.** WPF raises Loaded only on an element whose subtree listens for it
+  with a handler of its own — an instance handler, a style's `EventSetter`, a template's trigger
+  (`BroadcastEventHelper.OnBroadcastCallback` walks only into `SubtreeHasLoadedChangeHandler`;
+  `FrameworkElement.ThisHasLoadedChangeEventHandler`) — and `EventManager.RegisterClassHandler` counts as none of them.
+  WPF UI 4.3.0's `ToggleSwitch`, `CheckBox` and `ProgressRing` templates carry a Loaded trigger, so a scroller over those
+  loads and a scroller over plain cards and text never does: `ScrollBarHiding` hid Settings' bar and not the Dashboard's
+  (beta.17). To reach every instance, hook an event the element raises itself — a scroller's `ScrollChanged` comes from its
+  first layout. `ScrollBarHidingTests.WpfRaisesLoadedOnlyWhereASubtreeListensForIt` keeps the behaviour visible, and a test
+  that raises Loaded with `RaiseEvent` proves the handler, never that it is reached.
 - [ ] **No dialog in 4.3.0 closes on Esc.** Neither `ContentDialog.cs` nor `MessageBox.cs` at the 4.3.0 tag handles a
   key (read 2026-09-15), and `ContentDialog.CloseButtonText` DEFAULTS to "Close" — an empty string is how a dialog
   says it has no Close button. `MessageBox.Close()` is `[Obsolete("Use Close with MessageBoxResult instead")]` while no
