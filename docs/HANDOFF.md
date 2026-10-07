@@ -2118,7 +2118,8 @@ blends into the background in dark mode").
   device, so the harness exits 77 with a `[SKIP]` line — but the runner is elevated, the launch goes through
   `CreateProcessWithTokenW` (`UnelevatedProcess`), the child inherits no stdout, and the line never reaches the host's
   output; when the guard's scan hits the exiting harness (`ModuleScanFailed`) the test fails instead of skipping. Re-run;
-  the deterministic fix is a task of its own.
+  ~~the deterministic fix is a task of its own~~ fixed the same day by beta.18 PR-5 (the test asks the harness itself,
+  before the host runs), which also gave the `TargetNotRunning` case a 15 s hold (`13_CI_CD` §ci.yml).
 
 **Owner-only, added to the list below:** item 14.
 

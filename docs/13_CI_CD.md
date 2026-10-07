@@ -52,6 +52,17 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
     case. `Kill` now waits for exit (bounded, asserted) and the delete retries. Not §S19(b) either — a test-harness
     race, and the third flake shape of the day (the registry-subtree race between `VkLayerRegistrationTests` and the
     GOG reader's test, fixed in #188) was the same kind.
+  - **Two more on 2026-10-07 (beta.18), both re-run green and then fixed the same day.**
+    `WhenTheTargetExitsTheHostStopsAndSaysWhy` ended **`TargetNotRunning`** (#286, run 37619719203): the host resolves its
+    target once, as it starts, and a host slower than the harness's 6 s hold found it gone — the shape recorded since
+    2026-09-21. The hold is 15 s: a margin, not a signal, because the host prints nothing until its session ends.
+    `LaunchModeOnAVulkanTargetAttachesToTheLayersRingAndInjectsNothing` ended **`RefusedByGuard` / `ModuleScanFailed`**
+    (#288, run 37627351438): the hosted runner has the Vulkan loader and no device, so the harness exits 77 with a
+    `[SKIP]` line — but the runner is elevated, the host starts the harness through `CreateProcessWithTokenW`
+    (`UnelevatedProcess`), the child gets no stdout, and the line never reached the host's output; the test then
+    depended on the session reading `LaunchTargetExited`, and a scan that hit the dying harness failed it instead. The
+    test now asks the harness directly, before the host runs (exit 77 = skip, with the harness's own line); hiding the
+    Vulkan ICDs from that probe makes it skip in under a second, and on a machine with a device it runs in full.
 - **A re-run ERASES the evidence, which is why the count above had to be kept by hand.**
   `gh run rerun --failed` updates the original run's conclusion, so `gh run list` showed **18 success, 1
   cancelled, 0 failed** across the twenty runs that contained all three failures above. Anyone measuring
