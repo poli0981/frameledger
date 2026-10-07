@@ -39,11 +39,10 @@ namespace FrameLedger.CaptureHost.Tests;
 /// machine, so the record's path is pinned too.
 /// </para>
 /// <para>
-/// <b>Category=Integration, and CI will not run it.</b> §S19(b): the guard refuses a
-/// .NET test host that has loaded a <c>protect</c>-matching module, measured on CI.
-/// On this dev box the guard allows it, so these are dev-box-reproducible and
-/// merge-gate-absent — the same split <c>ShmDrainIntegrationTests</c> lives with, and
-/// stated rather than implied.
+/// <b>Category=Integration — and CI runs it.</b> This paragraph said CI would not (corrected 2026-10-07): §S19(b), the
+/// guard refusing a .NET test host that had loaded a <c>protect</c>-matching module, was answered on 2026-09-06 by the
+/// signer check, and <c>./build.ps1 check</c> runs the Integration category on CI since (<c>13_CI_CD</c> §ci.yml). A green
+/// CI is evidence for this suite, and a race in it fails a merge: two did on 2026-10-07 (the two cases below that say so).
 /// </para>
 /// </remarks>
 [Trait("Category", "Integration")]
@@ -454,13 +453,26 @@ public sealed class CaptureHostEndToEndTests : IDisposable
         // P1 item 3, from OUTSIDE the process: the host launches the harness in its Vulkan mode with the
         // layer's environment, the guard passes and injects nothing (TargetIsVulkanLayered), and the
         // records come from the layer's ring. Skipped honestly where there is no Vulkan loader or no
-        // presentable device -- the harness says so with exit 77, which the session reports as
-        // LaunchTargetExited before any ring existed.
+        // presentable device -- the harness says so itself, with exit 77 and a "[SKIP]" line.
         if (!File.Exists(Path.Combine(Environment.SystemDirectory, "vulkan-1.dll")))
         {
             Assert.Skip("no Vulkan loader on this machine");
         }
 
+        // ASKED BEFORE THE HOST RUNS, of the harness itself (beta.18). This used to be read off the host's run: its output
+        // for the harness's "[SKIP]" line, or the session's LaunchTargetExited. Neither holds on a hosted runner, which has
+        // the loader and no device. The runner is elevated, so the host starts the harness through CreateProcessWithTokenW
+        // (UnelevatedProcess), which hands the child no stdout -- the line never reached the host's output -- and the
+        // harness's exit races the guard's poll: #288's CI run scanned it while it died and ended RefusedByGuard
+        // (ModuleScanFailed, "a module list came back incomplete"), failing where it should have skipped. Run directly, the
+        // harness's own output and exit code are this test's; and once it HAS presented here, every failure below is real.
+        (int probeExit, string probeOutput) = await ProbeVulkanAsync();
+        if (probeExit == 77)
+        {
+            Assert.Skip("the harness found no presentable Vulkan device on this machine: " + probeOutput);
+        }
+
+        probeExit.Should().Be(0, "the harness presents through Vulkan on this machine, or says why it cannot: " + probeOutput);
         (await GrantConsentAsync()).Should().Be(ConsentWriteOutcome.Written);
 
         using Process host = StartHost("launch", "--exe", ConsentedExecutable, "--args", "--vulkan --hold-presenting 8",
@@ -470,21 +482,39 @@ public sealed class CaptureHostEndToEndTests : IDisposable
         await host.WaitForExitAsync(TestContext.Current.CancellationToken);
         stdout += "\n---- stderr ----\n" + await stderrTask + $"\n---- exit {host.ExitCode} ----\n";
 
-        // The harness says so itself (exit 77, a "[SKIP]" line on the shared console) when this
-        // machine has a loader but no device -- a hosted runner's shape. Its exit races the guard's
-        // poll, so the session may read LaunchTargetExited or, if it died under the scan, whatever
-        // the scan could not read; the harness's own line is the signal that does not race.
-        if (stdout.Contains("[SKIP]", StringComparison.Ordinal)
-            || stdout.Contains(nameof(SessionEndReason.LaunchTargetExited), StringComparison.Ordinal))
-        {
-            Assert.Skip("the harness found no presentable Vulkan device on this machine: " + stdout);
-        }
-
         stdout.Should().Contain("vulkan layer: ", "the launch names the manifest it wrote and the enable-list entry");
         stdout.Should().Contain("capture side: the Vulkan implicit layer", stdout);
         stdout.Should().Contain("apiMask=0x8", "FL_API_VULKAN is bit 3; the ring is the layer's, not an Overlay's");
         stdout.Should().NotContain("records: 0 ", stdout);
         host.ExitCode.Should().Be(0, stdout);
+    }
+
+    /// <summary>
+    /// The plain harness asked to present through Vulkan for a second, under its own name — never the consented copy, whose
+    /// name the host resolves its target by — with its output and exit code read here: 77 and a "[SKIP]" line where this
+    /// machine cannot, 0 where it can. Bounded: a driver that hangs is a failure to report, not a test that never ends.
+    /// </summary>
+    private static async Task<(int ExitCode, string Output)> ProbeVulkanAsync()
+    {
+        using var probe = Process.Start(new ProcessStartInfo(Harness, "--vulkan --hold-presenting 1")
+        {
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+        })!;
+        using var bound = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        bound.CancelAfter(TimeSpan.FromSeconds(60));
+        try
+        {
+            string output = await probe.StandardOutput.ReadToEndAsync(bound.Token).ConfigureAwait(false);
+            await probe.WaitForExitAsync(bound.Token).ConfigureAwait(false);
+            return (probe.ExitCode, output);
+        }
+        catch (OperationCanceledException e) when (!TestContext.Current.CancellationToken.IsCancellationRequested)
+        {
+            probe.Kill(entireProcessTree: true);
+            throw new TimeoutException("hook-harness --vulkan --hold-presenting 1 did not end within 60 s", e);
+        }
     }
 
     [Fact]
@@ -494,7 +524,11 @@ public sealed class CaptureHostEndToEndTests : IDisposable
         // DLL_PROCESS_DETACH teardown — so this can only come from the held process handle.
         (await GrantConsentAsync()).Should().Be(ConsentWriteOutcome.Written);
 
-        Process harness = StartHarness("--real --hold-presenting 6");
+        // 15 s, not 6 (beta.18): the host resolves its target once, as it starts, and on a loaded runner a host that took
+        // longer than the hold found the harness gone and ended TargetNotRunning — #286's first CI run, as on 2026-09-21
+        // and before. The host prints nothing until its session ends, so there is no "attached" to wait for; the hold is
+        // the margin, and the case's run time with it.
+        Process harness = StartHarness("--real --hold-presenting 15");
         Process? host = null;
         try
         {

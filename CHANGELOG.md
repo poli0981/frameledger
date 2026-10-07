@@ -68,6 +68,11 @@ the database changes and nothing is shown again for you to accept; sessions alre
   the build, and the build id was read from the tree after that. It is read from the clean checkout first and handed to
   the build, and `tools/buildid-check.ps1` reads it back out of the published binaries (`docs/12_BUILD.md` §Release-time
   token substitution). Nothing changes for a game: both sides of the ring's handshake always carried the same id.
+- **Two end-to-end tests no longer fail CI by a race** (developers only). The Vulkan launch test asks the test harness
+  whether this machine can present through Vulkan before it starts the capture host: on GitHub's runners the harness's
+  own "skip" line never reached the host's output, and a scan of the exiting harness failed the test instead of skipping
+  it. The target-exit test holds its harness 15 seconds instead of 6, the margin a slow runner's host needed
+  (`docs/13_CI_CD.md`).
 
 ## [0.1.0-beta.17] - 2026-10-07
 
