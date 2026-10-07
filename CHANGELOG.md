@@ -54,6 +54,11 @@ numeric core and does not move; the heading is the full version — corrected 20
 - **A viewer over a copy leaves every agent setting alone.** The user-mode exception option, the three Recording numbers
   and the update channel stayed live in `--data-dir`, where no agent reads them (`ViewerModeTests`).
 - `docs/08_UI.md` listed a "PawnIO missing" banner that was never built; struck, with the banners that do exist.
+- **A release's overlay build no longer calls itself dirty.** The Dashboard read *Overlay build v0.1.0-beta.17-dirty* (and
+  beta.16's, and every release's before): the release workflow writes the release date into the legal documents before
+  the build, and the build id was read from the tree after that. It is read from the clean checkout first and handed to
+  the build, and `tools/buildid-check.ps1` reads it back out of the published binaries (`docs/12_BUILD.md` §Release-time
+  token substitution). Nothing changes for a game: both sides of the ring's handshake always carried the same id.
 
 ## [0.1.0-beta.17] - 2026-10-07
 

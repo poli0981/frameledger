@@ -116,6 +116,22 @@ jobs:
           "dry_run=$($dry.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
           Write-Host "$(if ($dry) { 'DRY RUN of' } else { 'releasing' }) $full (pre-release: $pre)"
 
+      # The Overlay's build id is `git describe --dirty` at CMake's configure
+      # (src/native/FrameLedger.Shm/CMakeLists.txt), and the next step edits tracked
+      # files: every release until beta.18 shipped "<tag>-dirty". So the id is read
+      # here, from the clean checkout, and handed to CMake through the environment;
+      # buildid-check reads it back out of the published binaries.
+      - name: Build id (the clean checkout)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $id = "$(git describe --always --dirty --abbrev=12)".Trim()
+          if ($LASTEXITCODE -ne 0 -or -not $id) { throw 'git describe failed' }
+          if ($id.EndsWith('-dirty')) { throw "the checkout is dirty before the release has touched it: $id" }
+          if ($id.Length -gt 31) { throw "build id '$id' is $($id.Length) characters; FlShmHandshake::buildId holds 31" }
+          "FL_BUILD_ID=$id" >> $env:GITHUB_ENV
+          Write-Host "FL_BUILD_ID = $id"
+
       # 12_BUILD §Release-time token substitution: the effective date of a legal
       # document is the date it ships. The only placeholder that survives into the
       # repository, substituted here and nowhere else; the App embeds legal/*.md at
@@ -200,6 +216,9 @@ jobs:
           # beta.14 (D50): the managed half too - the eight managed binaries, carrying the tag's full version.
           ./tools/versioninfo-check.ps1 -BuildDir out/app -ManagedDir out/app -ExpectedProductVersion '${{ steps.version.outputs.version }}'
           if ($LASTEXITCODE -ne 0) { throw 'versioninfo-check over the published tree' }
+          # beta.18: the native binaries carry the build id read from the clean checkout, exactly - never "<tag>-dirty".
+          ./tools/buildid-check.ps1 -BuildDir out/app -Expected $env:FL_BUILD_ID
+          if ($LASTEXITCODE -ne 0) { throw 'buildid-check over the published tree' }
           $size = (Get-ChildItem out/app -Recurse -File | Measure-Object Length -Sum).Sum / 1MB
           Write-Host ("published tree: {0:N0} MB" -f $size)
 

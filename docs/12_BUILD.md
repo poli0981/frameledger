@@ -272,6 +272,16 @@ substitutes it with ~~the tag date~~ the run's UTC date (corrected 2026-10-04) w
 address — is resolved in the source files, because an unsubstituted token in a
 document the app displays for acceptance (FR-11) is a defect, not a template.
 
+**The build id is read before it (beta.18).** The substitution edits tracked files, and the native build id is
+`git describe --dirty` at CMake's configure (`src/native/FrameLedger.Shm/CMakeLists.txt`): every release until beta.18
+shipped `<tag>-dirty` — the owner's Dashboard read *Overlay build v0.1.0-beta.17-dirty*, and that run's log printed
+`FL_BUILD_ID = v0.1.0-beta.17-dirty` two lines after `RELEASE_DATE = 2026-10-07 in 3 file(s)`. `release.yml` now reads
+describe from the clean checkout first, refuses one that is already dirty or longer than 31 characters, and passes it
+as the environment's `FL_BUILD_ID`, which CMake takes as given (checked for the characters a C string literal carries);
+after the publish, `tools/buildid-check.ps1` reads it back out of the four native binaries that compile it, by their
+bytes — nothing is loaded. A developer's build still runs describe itself (`+` marks a dirty tree when the long form
+would not fit).
+
 ## Local quality gate (pre-push)
 
 `./build.ps1 check`:
@@ -301,6 +311,7 @@ Seven self-test cases, both directions; `./tools/notice-check.ps1 -Fix` writes a
 13d. **`tools/wiki-build.ps1 -SelfTest`, then `-Check`** (beta.17, owner decisions D53/D54, 2026-10-07) — assembles the GitHub Wiki from `wiki/`, `guide/` and `LIMITATIONS.md` into a temporary folder, as `wiki.yml` does at a release (`13_CI_CD` §wiki.yml), and fails on a link to a file, folder or section that does not exist, two sources for one page, a page that neither Home nor the sidebar leads to, a sidebar that lists the guide in another order than `guide/README.md`, a backticked repository path in a `wiki/` page that names nothing, and a version number written into a `wiki/` page (the footer says which release the wiki shows). Nine self-test cases, both directions
 14. `tools/changelog-check.ps1 -SelfTest` — nine cases, five expected RED. The live half needs a pull request's changed-file list and is supplied by `ci.yml`
 14b. `tools/release-notes.ps1 -SelfTest` — five cases over a fixture changelog (a dated and an undated section, a missing one, a prefix that must not match, an empty one). The live half needs a tag's version and runs in `release.yml`, where a missing or empty section is a red release (P4 PR-5)
+14c. **`tools/buildid-check.ps1 -SelfTest`** (beta.18) — eight cases, both directions: a binary built from a dirty tree (`-dirty`, or the short form's `+`), one with no id, a missing one, and an expected id that is dirty or not an id are red. The live half needs the release's clean-checkout id and runs in `release.yml` over the published tree (§Release-time token substitution)
 15. `tools/resx-audit.ps1` — ~~**skipped loudly; it does not exist, and no `.resx` file does either**~~ **built 2026-09-13 (P3 PR-2)**: `-SelfTest` first (11 fixture cases, both directions), then the live pass over every `Strings.resx` family under `src/` — key sets equal across en/vi/ja, `Safety_*` in `ja` marked for review or signed, `Strings.Designer.cs` current with `tools/resx-gen.ps1`. A tree with no family is red (`09_I18N` §Translation workflow)
 16. **struct-mirror** — reads this run's `.trx` and fails when `ShmLayoutMirrorTests` did not execute, so deleting the mirror test is red as well as breaking it
 16b. **`tools/test-artifacts-check.ps1`** — `-SelfTest` first (seven cases, two RED), then live: an `overlay-*.log` created since this gate started, still in the real `%LOCALAPPDATA%\FrameLedger\logs` after the tests, whose first line names a `hook-harness*` image, fails the gate. It is what makes a test binary without its log sweep red (`17_HOOK_ENGINE` §Native logging, 2026-09-15); a game's log never counts

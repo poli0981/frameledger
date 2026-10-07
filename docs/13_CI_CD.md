@@ -127,6 +127,10 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
   `VERSION` file (`12_BUILD` §Version); and `CHANGELOG.md` must carry a **non-empty** `## [x.y.z]` section for the
   full version, extracted by `tools/release-notes.ps1` (self-tested on every `build.ps1 check`). A missing
   section is a red release, not an empty note — the ledger's header said the opposite for five weeks.
+- **The build id from the clean checkout** (beta.18): `git describe --always --dirty --abbrev=12` before anything edits a
+  tracked file — a dirty one or one over 31 characters stops the run — into `FL_BUILD_ID` for CMake. Until beta.18 the
+  substitution below ran first and every release's natives called themselves `<tag>-dirty` (`12_BUILD` §Release-time
+  token substitution).
 - `{{RELEASE_DATE}}` substituted in `legal/*.md` with the run's UTC date **before the build**, because the App
   embeds those documents (FR-11); any `{{` token left anywhere after that fails the job.
 - **The identical gate** — `./build.ps1 check`, native first, every tool including `versioninfo-check` against

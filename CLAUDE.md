@@ -139,7 +139,8 @@ tools/                         # accuracy-check, changelog-check, chokepoint-che
                                # (+ license-overrides/), notice-check, package-closure-check,
                                # release-notes, rules-validate, test-artifacts-check, vendor-exports,
                                # versioninfo-check, vklayer-blastradius, fps-impact-runbook,
-                               # wiki-build (beta.17: builds and checks the wiki; the wiki-check gate)
+                               # wiki-build (beta.17: builds and checks the wiki; the wiki-check gate),
+                               # buildid-check (beta.18: the release's build id in the shipped natives)
                                # (six names added 2026-10-04)
                                # (PowerShell). This line used to name three, one of which
                                # — resx-audit — ~~does not exist~~ exists since 2026-09-13 with

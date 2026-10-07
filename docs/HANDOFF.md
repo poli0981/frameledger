@@ -1410,9 +1410,11 @@ stops there"~~ — the override itself is gone since 2026-09-22 (D22).
 **Found and NOT fixed — each needs its own PR.**
 - ~~**A refused session is not recorded, though the notice says it is.**~~ **Fixed 2026-09-22 (D23):** the loop holds a
   refused session open until the target exits, so Tier 2 has a producer and the sentence is true for every refusal.
-- **A released Overlay logs its build as `v0.1.0-beta.3-dirty`**: the CI checkout is dirty by the time CMake runs
+- ~~**A released Overlay logs its build as `v0.1.0-beta.3-dirty`**: the CI checkout is dirty by the time CMake runs
   `git describe`. Both sides of the handshake compile the same string, so nothing breaks; it is a release that calls
-  itself dirty.
+  itself dirty.~~ **Fixed 2026-10-07 (beta.18 PR-3):** the dirt was `release.yml`'s own date substitution in
+  `legal/*.md`; the workflow reads describe from the clean checkout before it and hands it to CMake as `FL_BUILD_ID`,
+  and `tools/buildid-check.ps1` reads it back out of the published binaries (`12_BUILD` §Release-time token substitution).
 - ~~**An install over a running Agent half-replaces the folder** (three failed starts, `Microsoft.Data.Sqlite` not
   found).~~ **A GUESS, WITHDRAWN the same evening, and it had already been published in beta.4's notes.** Nothing was
   installed between the failures (20:59–21:01) and the start that worked (21:02); the PC had been restarted at 20:57
