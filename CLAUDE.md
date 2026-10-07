@@ -151,8 +151,10 @@ tools/                         # accuracy-check, changelog-check, chokepoint-che
                                #                      stats, signer, Vulkan layer; fl-baseline-probe;
                                #   vendor-stubs/   -> fixture DLLs with the vendors' export names
 rules/detection-rules.json     # engine/platform/capability + anticheat blocklist
-guide/                         # the user guide (beta.12, D44): eight short English pages for players, embedded in the
+guide/                         # the user guide (beta.12, D44): ~~eight~~ short English pages for players, embedded in the
                                #   App (Help > User guide); README.md is its contents. docs/ is for developers.
+                               #   (twelve since beta.17, D54: the screens, every setting, troubleshooting, a glossary;
+                               #   and the guide is the wiki's End-user part)
 docs/  legal/  legal/licenses/
 ```
 

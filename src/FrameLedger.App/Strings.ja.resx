@@ -2262,7 +2262,7 @@
     <comment>review</comment>
   </data>
   <data name="FirstRun_Import_Body" xml:space="preserve">
-    <value>FrameLedger は Steam、GOG Galaxy、Epic、itch.io のインストール済みゲームを読み取り、チェックリストから追加できます — 入った後、ゲームページの「ファイル ▸ ライブラリを取り込む…」から。取り込んだゲームはどれも、手動で追加したものと同じくフック無効で始まります。</value>
+    <value>FrameLedger は Steam、GOG Galaxy、Epic、itch.io のインストール済みゲームを読み取り、チェックリストから追加できます — 入った後、「ファイル ▸ ライブラリをインポート…」から。取り込んだゲームはどれも、手動で追加したものと同じくフック無効で始まります。</value>
     <comment>review</comment>
   </data>
   <data name="FirstRun_Import_Header" xml:space="preserve">

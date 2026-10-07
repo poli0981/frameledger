@@ -23,6 +23,7 @@ public static class EmbeddedDocuments
     /// <summary>
     /// The user guide's pages in reading order (beta.12, D44; <c>guide/</c> in the repository). Each page's title is its
     /// first heading; <see cref="LimitationsDocument"/> closes the list, so the guide's links to it open in the window.
+    /// beta.17 (D54): the four reference pages after the FAQ make the guide the wiki's End-user part too.
     /// </summary>
     public static IReadOnlyList<string> GuidePages { get; } =
     [
@@ -33,6 +34,10 @@ public static class EmbeddedDocuments
         "guide/04-anti-cheat-and-safety.md",
         "guide/05-your-data.md",
         "guide/06-faq.md",
+        "guide/07-screens.md",
+        "guide/08-settings.md",
+        "guide/09-troubleshooting.md",
+        "guide/10-glossary.md",
         "guide/terms-in-plain-words.md",
     ];
 

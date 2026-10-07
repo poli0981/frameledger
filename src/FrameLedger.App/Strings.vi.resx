@@ -1697,7 +1697,7 @@
     <value>Hoàn tất</value>
   </data>
   <data name="FirstRun_Import_Body" xml:space="preserve">
-    <value>FrameLedger có thể đọc những gì Steam, GOG Galaxy, Epic và itch.io đã cài và thêm chúng từ một danh sách chọn — File ▸ Nhập thư viện… ở trang Game, khi bạn đã vào trong. Mọi game nhập vào đều bắt đầu với hooking tắt, đúng như game bạn thêm thủ công.</value>
+    <value>FrameLedger có thể đọc những gì Steam, GOG Galaxy, Epic và itch.io đã cài và thêm chúng từ một danh sách chọn — Tệp ▸ Nhập thư viện…, khi bạn đã vào trong. Mọi game nhập vào đều bắt đầu với hooking tắt, đúng như game bạn thêm thủ công.</value>
   </data>
   <data name="FirstRun_Import_Header" xml:space="preserve">
     <value>Thư viện của bạn</value>
