@@ -2072,11 +2072,13 @@ release.*
 - **A fresh worktree cannot run the full gate** (the native configure, `CONTRIBUTING`): the stack's tip was gated in the
   main checkout on a detached HEAD, and each PR's own CI ran on its branch.
 - **Found while writing the guide, not fixed** (a task each): two notices can print an internal name — *"The hook
-  stopped (WriterSelfDisabled)…"*, and a refusal no anti-cheat names reads *"The anti-cheat guard did not hook this
-  game: reason RefusedKillSwitch."*; the kill switch's *Applied* strip says "at the next session start" (it applies
+  stopped (WriterSelfDisabled)…"*, and a refusal no anti-cheat names reads ~~*"The anti-cheat guard did not hook this
+  game: reason RefusedKillSwitch."*~~ *"…: reason RefusedByGuard."* *(corrected 2026-10-07 by beta.18's tests, which
+  build the Agent's own events: the kill switch's refusal carries the gate's label where a family goes, and read "kill
+  switch was detected in this game (… (FR-2.4) …)"; a re-scan that could not look read "Access is denied. was detected")*; the kill switch's *Applied* strip says "at the next session start" (it applies
   within 30 s); *Turn off* failing says "Nothing was enabled."; in the viewer, the exception switch, the Recording numbers and the Channel stay enabled;
   `08_UI` lists a "PawnIO missing" banner that does not exist; and a release's Overlay build id reads `-dirty` (§0.1.0-beta.4,
-  "Found and NOT fixed", still open).
+  "Found and NOT fixed", still open). *(All but the build id fixed by beta.18 PR-2, 2026-10-07; the build id is PR-3's.)*
 
 **Owner-only, added to the list below:** item 13.
 

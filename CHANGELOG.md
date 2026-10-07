@@ -38,6 +38,22 @@ numeric core and does not move; the heading is the full version — corrected 20
   and `PagesLoadTests.EveryTextIsReadableInBothThemes` (every surface hosted as the App hosts it, ≥ 3:1 in both themes)
   went red on the unfixed pages first; the theme-switch check now hosts pages in the Frame too, and its harness derives the
   accent for each theme as the App does (`docs/08_UI.md` §Contrast, `docs/16_WPFUI_SYNTAX.md` §Gotchas, `docs/14_TESTING.md`).
+- **Every notice says what happened in words.** With *Disable all hooking* on, a game's notice read "kill switch was
+  detected in this game (the global 'disable all hooking' switch is on (FR-2.4); …)" — it reads "All hooking is switched
+  off in Settings, so nothing was measured." now, and a game blocked before reads as that, not as a finding. A refusal no
+  anti-cheat names read "… reason RefusedByGuard." and is said in the guard's words ("the game is 32-bit, and the hook
+  runs in 64-bit games only"); the agent sends the guard's reason for every refusal (`docs/07_IPC.md`). A safety re-scan
+  that could not look while the game ran read "Access is denied. was detected" and says the check could not be made. And
+  *Measurement stopped* printed "The hook stopped (WriterSelfDisabled); the session continues without measuring." — it
+  says why in a sentence, and no longer that the session went on: a stop ends it. `NoticesFromTheAgentTests` builds the
+  agent's own events for every refusal and every stop and went red with each text above (`docs/08_UI.md` §Notifications policy).
+- **Disable all hooking says when it applies.** Turning it on said "The capture agent reads it at the next session start";
+  a game being measured stops at its next safety scan, within 30 seconds, and the message says so.
+- **Turning hooking off with no agent says nothing changed** — Settings' *Turn off*, the game page's switch and a
+  withdrawn exception said "Nothing was enabled.", the enabling path's words.
+- **A viewer over a copy leaves every agent setting alone.** The user-mode exception option, the three Recording numbers
+  and the update channel stayed live in `--data-dir`, where no agent reads them (`ViewerModeTests`).
+- `docs/08_UI.md` listed a "PawnIO missing" banner that was never built; struck, with the banners that do exist.
 
 ## [0.1.0-beta.17] - 2026-10-07
 

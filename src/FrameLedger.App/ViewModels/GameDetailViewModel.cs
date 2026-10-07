@@ -755,7 +755,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         try
         {
             HookingConsentResult result = await _consent.DisableAsync(Game.Id).ConfigureAwait(true);
-            Notice(result);
+            Notice(result, turningOff: true);
         }
         finally
         {
@@ -940,14 +940,17 @@ public sealed partial class GameDetailViewModel : ObservableObject
         OnPropertyChanged(nameof(NoticeVisible));
     }
 
-    /// <summary>A refusal, a mismatch or a failure is a persistent notice on the page; a success clears it.</summary>
-    private void Notice(HookingConsentResult result)
+    /// <summary>
+    /// A refusal, a mismatch or a failure is a persistent notice on the page; a success clears it. With no Agent, turning
+    /// hooking off changed nothing — not "Nothing was enabled.", the enable path's words, which it said until beta.18.
+    /// </summary>
+    private void Notice(HookingConsentResult result, bool turningOff = false)
     {
         (NoticeText, NoticeSeverity) = result.Outcome switch
         {
             HookingConsentOutcome.Refused => (result.RefusalText(), InfoBarSeverity.Error),
             HookingConsentOutcome.VersionMismatch => (Shared.Strings.Safety_Consent_VersionMismatch, InfoBarSeverity.Warning),
-            HookingConsentOutcome.AgentUnavailable => (Shared.Strings.Safety_Consent_AgentUnavailable, InfoBarSeverity.Warning),
+            HookingConsentOutcome.AgentUnavailable => (turningOff ? Strings.Agent_NotConnected_NothingChanged : Shared.Strings.Safety_Consent_AgentUnavailable, InfoBarSeverity.Warning),
             // The Agent could not read the executable (beta.8): say whether its drive or the file is missing, not the IPC code.
             HookingConsentOutcome.Failed when string.Equals(result.Detail, Shared.Ipc.IpcErrorCode.ExecutableUnreadable, StringComparison.Ordinal) && Game is not null
                 => (Formats.ExecutableMissingText(Game.Fingerprint.ExePath), InfoBarSeverity.Warning),

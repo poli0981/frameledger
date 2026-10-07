@@ -6,6 +6,7 @@ using System.Xml.Linq;
 using FluentAssertions;
 using FrameLedger.App.Services;
 using FrameLedger.App.Update;
+using FrameLedger.Application.Settings;
 using FrameLedger.Shared.Ipc;
 using FrameLedger.Shared.Safety;
 using Microsoft.Extensions.DependencyInjection;
@@ -111,6 +112,7 @@ public sealed class ViewerModeTests
     [InlineData("Pages/SettingsPage.xaml", "IsChecked", "RunElevated, Mode=TwoWay")]
     [InlineData("Pages/SettingsPage.xaml", "IsChecked", "StartWithWindows, Mode=TwoWay")]
     [InlineData("Pages/SettingsPage.xaml", "IsChecked", "AutoCheckUpdates, Mode=TwoWay")]
+    [InlineData("Pages/SettingsPage.xaml", "SelectedValue", "UpdateChannel, Mode=TwoWay")]
     [InlineData("Pages/SettingsPage.xaml", "ItemsSource", "ExceptionGames")]
     public void EveryControlThatAsksTheAgentOrChangesThisPcIsOffInAViewer(string file, string attribute, string binding)
     {
@@ -121,5 +123,33 @@ public sealed class ViewerModeTests
         XElement control = xaml.Descendants().Single(e => string.Equals((string?)e.Attribute(attribute), "{Binding ViewModel." + binding + "}", StringComparison.Ordinal));
 
         ((string?)control.Attribute("IsEnabled")).Should().Be("{Binding ViewModel.ActsOnThisPc}", $"{file}: {binding}");
+    }
+
+    /// <summary>
+    /// beta.18: every setting the Agent reads is off in a viewer, which has no Agent — the exception option and the three
+    /// Recording numbers stayed live, and a change said "Applied. The capture agent reads it at the next session start." The
+    /// registry says which settings the Agent reads, so a new one without its control here turns this red.
+    /// </summary>
+    [Fact]
+    public void EverySettingTheAgentReadsIsOffInAViewer()
+    {
+        Dictionary<string, (string Attribute, string Binding)> controls = new(StringComparer.Ordinal)
+        {
+            [SettingsRegistry.HookingKillSwitch.Key] = ("IsChecked", "KillSwitch, Mode=TwoWay"),
+            [SettingsRegistry.HookingUserModeExceptions.Key] = ("IsChecked", "UserModeExceptions, Mode=TwoWay"),
+            [SettingsRegistry.CaptureRunElevated.Key] = ("IsChecked", "RunElevated, Mode=TwoWay"),
+            [SettingsRegistry.CaptureMinSessionSeconds.Key] = ("Value", "MinSessionSeconds, Mode=TwoWay"),
+            [SettingsRegistry.TelemetryIntervalMs.Key] = ("Value", "TelemetryIntervalMs, Mode=TwoWay"),
+            [SettingsRegistry.RetentionRawSessionsPerGame.Key] = ("Value", "RetentionRawSessions, Mode=TwoWay"),
+        };
+        XDocument xaml = AccessibilityTests.AppXaml().Single(static x => string.Equals(x.File, Path.Combine("Pages", "SettingsPage.xaml"), StringComparison.Ordinal)).Xaml;
+
+        List<string> live = [.. controls
+            .Select(c => (Key: c.Key, Control: xaml.Descendants().Single(e => string.Equals((string?)e.Attribute(c.Value.Attribute), "{Binding ViewModel." + c.Value.Binding + "}", StringComparison.Ordinal))))
+            .Where(static c => !string.Equals((string?)c.Control.Attribute("IsEnabled"), "{Binding ViewModel.ActsOnThisPc}", StringComparison.Ordinal))
+            .Select(static c => c.Key)];
+
+        SettingsRegistry.All.Where(static d => d.AgentReads).Select(static d => d.Key).Should().BeEquivalentTo(controls.Keys, "every setting the Agent reads has its control named here");
+        string.Join(", ", live).Should().BeEmpty("a viewer has no Agent to read them");
     }
 }

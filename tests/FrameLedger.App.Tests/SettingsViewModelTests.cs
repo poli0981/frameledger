@@ -300,8 +300,12 @@ public sealed class SettingsViewModelTests
         h.Vm.ExceptionsSuspended.Should().BeTrue();
     }
 
+    /// <summary>
+    /// The strip says when it applies (beta.18): turned on, a measured session stops at its next safety scan — not "at the next
+    /// session start", which it said until then — and turned off, per-game settings decide from the next session start.
+    /// </summary>
     [Fact]
-    public async Task TheKillSwitchIsOneSettingsRowAndTheAgentIsToldWhenItReadsIt()
+    public async Task TheKillSwitchIsOneSettingsRowAndTheStripSaysWhenItApplies()
     {
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
         Harness h = await OpenAsync(s);
@@ -312,7 +316,14 @@ public sealed class SettingsViewModelTests
 
         (await h.Settings.GetBooleanAsync(SettingsRegistry.HookingKillSwitch, Ct)).Should().BeTrue();
         h.Vm.KillSwitchState.Should().Be(Strings.Settings_KillSwitch_On);
-        h.Strip.Shown.Should().ContainSingle().Which.Body.Should().Be(Strings.Settings_Applied, "hooking.kill_switch is an Agent-read key (D16)");
+        h.Strip.Shown.Should().ContainSingle().Which.Body.Should().Be(Strings.Settings_KillSwitch_Applied_On, "a measured session stops at its next safety scan");
+        new Application.Capture.CaptureOptions().ScanInterval.Should().Be(TimeSpan.FromSeconds(30), "the strip says within 30 seconds");
+
+        h.Vm.KillSwitch = false;
+        Task off = h.Vm.Pending;
+        await off;
+
+        h.Strip.Shown.Should().HaveCount(2).And.Subject.Last().Body.Should().Be(Strings.Settings_Applied, "hooking.kill_switch is an Agent-read key (D16)");
     }
 
     [Fact]
@@ -458,7 +469,7 @@ public sealed class SettingsViewModelTests
         await h.Vm.HookedGames[0].RevokeCommand.ExecuteAsync(null);
 
         h.Vm.HookedGames.Should().ContainSingle();
-        h.Strip.Shown.Should().ContainSingle().Which.Body.Should().Be(Shared.Strings.Safety_Consent_AgentUnavailable);
+        h.Strip.Shown.Should().ContainSingle().Which.Body.Should().Be(Strings.Agent_NotConnected_NothingChanged, "turning off changed nothing; \"Nothing was enabled.\" was the enable path's words");
         h.Vm.ElevationText.Should().Be(Strings.Settings_VkLayer_Unknown, "no HelloAck, no claim");
     }
 

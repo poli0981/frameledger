@@ -33,6 +33,10 @@
     <value>キャプチャエージェントがオフライン</value>
     <comment>review</comment>
   </data>
+  <data name="Agent_NotConnected_NothingChanged" xml:space="preserve">
+    <value>キャプチャエージェントに接続されていません。何も変更されていません。</value>
+    <comment>review</comment>
+  </data>
   <data name="Agent_Banner_Retry" xml:space="preserve">
     <value>再試行</value>
     <comment>review</comment>
@@ -1833,8 +1837,8 @@
     <value>アプリ</value>
     <comment>review</comment>
   </data>
-  <data name="Notice_Degraded_Body_Format" xml:space="preserve">
-    <value>フックが停止しました ({0})。セッションは実測なしで続行します。</value>
+  <data name="Notice_Degraded_Unknown_Format" xml:space="preserve">
+    <value>計測を停止しました ({0})。</value>
     <comment>review</comment>
   </data>
   <data name="Notice_Degraded_Title" xml:space="preserve">
@@ -1919,6 +1923,10 @@
   </data>
   <data name="Settings_Applied" xml:space="preserve">
     <value>適用しました。キャプチャエージェントは次回のセッション開始時に読み込みます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_KillSwitch_Applied_On" xml:space="preserve">
+    <value>すべてのフックを無効にしました。実測中のゲームは次回の安全スキャン (30 秒以内) で実測を停止します。</value>
     <comment>review</comment>
   </data>
   <data name="Settings_Capture_Header" xml:space="preserve">
