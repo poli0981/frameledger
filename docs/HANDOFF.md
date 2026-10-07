@@ -2041,7 +2041,7 @@ added.*
 - **The desktop app forbids polling CI** (no `gh` loop, Monitor or ScheduleWakeup): it wakes the session on a failure, a
   conflict or a review comment, never on green, so a green PR waits for the owner's word or the owner's auto-merge.
 
-## **START HERE** — 2026-10-07, 0.1.0-beta.17: text that follows a theme switch, scroll bars hidden everywhere, a wiki
+## ~~**START HERE**~~ — 2026-10-07, 0.1.0-beta.17: text that follows a theme switch, scroll bars hidden everywhere, a wiki *(struck 2026-10-07: the head is §beta.18 below)*
 
 *Status is `CHANGELOG.md` `[0.1.0-beta.17]`; this is what no other file carries. The owner's report (2026-10-07, three
 screenshots of beta.16): Settings' descriptions kept the old theme's colour after a switch; the Dashboard kept its
@@ -2083,6 +2083,44 @@ release.*
   "Found and NOT fixed", still open). *(All but the build id fixed by beta.18 PR-2, 2026-10-07; the build id is PR-3's.)*
 
 **Owner-only, added to the list below:** item 13.
+
+## **START HERE** — 2026-10-07, 0.1.0-beta.18: page titles readable in the dark theme, notices in words, a clean build id
+
+*Status is `CHANGELOG.md` `[0.1.0-beta.18]`; this is what no other file carries. The owner's report (2026-10-07, five
+screenshots of beta.17 in the dark theme): every page's title and section headings near-black on the dark window — and
+the two chips beta.17 left (§beta.17, "Found while writing the guide"). Three stacked PRs — #286 the page text, #287
+the notices and the rest of that list, #288 the release build id — then the release.*
+
+**No new decisions.** The train is the owner's request of 2026-10-07 ("beta18 with the two chip tasks, and the text that
+blends into the background in dark mode").
+
+**Traps met on the way:**
+
+- **A page in the `NavigationView` inherits nothing.** `NavigationViewContentPresenter` is a `Frame`, and a Frame sets
+  `InheritanceBehavior.SkipToAppNow`; WPF UI 4.3.0 makes the TextBlock default black. A page on screen during a theme
+  switch takes the window's new colour through the switch and a page navigated to afterwards does not, so it came and
+  went. Every check before hosted pages straight in a window and measured a page the App never draws — host a page in the
+  presenter (`PagesLoadTests.Hosted`, `16_WPFUI_SYNTAX` §Gotchas).
+- **The accent is not in the theme dictionary.** WPF UI writes it into `Application.Resources` at every
+  `ApplicationThemeManager.Apply(…, updateAccent: true)`; a test that swaps only the dictionary measures the other theme's
+  accent (`Visuals.UnderTheme` derives it as the App does; `systemAccentColor: true` reads the machine's own palette).
+- **The gate's own refusals look like findings on the wire.** `HookedCaptureGate` puts a label ("kill switch", "previously
+  blocked") where a family goes; whatever reads a family as "an anti-cheat was found" asks the end reason first. A test
+  of what the user reads builds the event as the Agent does (`NoticesFromTheAgentTests`), never by hand — the
+  hand-written events were why every notice test was green.
+- **`Safety_Consent_*` strings are versioned with the consent disclosure** (`SafetyDisclosure`): a message that is wrong
+  on one path gets a key of its own rather than a changed meaning.
+- **A release's natives were `-dirty` by the release's own hand:** its date substitution edits `legal/*.md` before CMake
+  reads describe. The id is read first, handed in, and read back out of the binaries (`tools/buildid-check.ps1`).
+- **Met again:** `CaptureHostEndToEndTests.WhenTheTargetExitsTheHostStopsAndSaysWhy` (`TargetNotRunning` on a slow
+  runner) failed #286's first CI run; the job was re-run. **And a new one** failed #288's:
+  `…LaunchModeOnAVulkanTargetAttachesToTheLayersRingAndInjectsNothing`. A hosted runner has the Vulkan loader and no
+  device, so the harness exits 77 with a `[SKIP]` line — but the runner is elevated, the launch goes through
+  `CreateProcessWithTokenW` (`UnelevatedProcess`), the child inherits no stdout, and the line never reaches the host's
+  output; when the guard's scan hits the exiting harness (`ModuleScanFailed`) the test fails instead of skipping. Re-run;
+  the deterministic fix is a task of its own.
+
+**Owner-only, added to the list below:** item 14.
 
 ## Owner-only — no PR can close these
 
@@ -2179,6 +2217,12 @@ release.*
    halves and a footer naming `v0.1.0-beta.17` — then tick *Restrict editing to collaborators only* (Settings ▸ General
    ▸ Features ▸ Wikis), or anyone can change a page until the next release overwrites it. (e) The `ja` strings marked
    `review`.
+14. **beta.18 on real hardware.** (a) **The dark theme:** every page's title and section headings — Dashboard, Games, a
+   game's page, Compare, Settings, Logs — read light on the dark window, after starting in Dark, after Light → Dark, and
+   after moving between pages. (b) **The overlay build** on the Dashboard's *Capture agent* card reads `v0.1.0-beta.18`,
+   without `-dirty`. (c) **Disable all hooking:** turning it on says a game being measured stops within 30 seconds; with
+   it on, a hooked game's notice reads "All hooking is switched off in Settings, so nothing was measured." (d) The `ja`
+   strings marked `review`, `Safety_Unhooked_Unnamed_Format` among them.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
