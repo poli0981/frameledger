@@ -2921,6 +2921,42 @@
     <value>ゲームの実行ファイル内に見つかりません。実行ファイルが圧縮・保護されているか、スタジオがエンジンのビルド名を変更している可能性があります。</value>
     <comment>review</comment>
   </data>
+  <data name="GameDetail_EngineVersion_UnityPlayer" xml:space="preserve">
+    <value>ゲームの Unity プレーヤーライブラリ（UnityPlayer.dll）のバージョンから。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_EngineVersion_UnityData" xml:space="preserve">
+    <value>ゲームの Unity データファイル（globalgamemanagers）の先頭から。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_EngineVersion_UnityPlayerFile" xml:space="preserve">
+    <value>Unity プレーヤーライブラリのバージョン番号のみから。リリースを示す文字（f1 など）はそこに記録されていません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_EngineVersion_GodotPack" xml:space="preserve">
+    <value>ゲームの Godot データパック（.pck）の先頭から。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_EngineVersion_GodotPackEmbedded" xml:space="preserve">
+    <value>ゲームの実行ファイルに含まれる Godot データパックの先頭から。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_EngineVersion_GodotExe" xml:space="preserve">
+    <value>Godot がゲームの実行ファイルに残したバージョン情報から。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_EngineVersion_CoreScript_Format" xml:space="preserve">
+    <value>ゲームの {0} の最初の行から。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_EngineVersion_Rgss" xml:space="preserve">
+    <value>ゲームの Game.ini が指定する RPG Maker のランタイムライブラリ（RGSS）から。この番号はエディターではなくライブラリのものです。</value>
+    <comment>review</comment>
+  </data>
+  <data name="GameDetail_EngineVersion_NotFoundInFiles" xml:space="preserve">
+    <value>ゲームのファイルには見つかりません。</value>
+    <comment>review</comment>
+  </data>
   <data name="GameDetail_Details_Libraries" xml:space="preserve">
     <value>同梱ライブラリ</value>
     <comment>review</comment>

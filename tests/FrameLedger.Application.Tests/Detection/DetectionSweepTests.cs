@@ -78,6 +78,15 @@ public sealed class DetectionSweepTests
         // Unity rules only here: the sweep's second read is StaticGameDetector's, pinned in StaticGameDetectorTests.
         public ValueTask<UnrealBuildFacts?> ReadUnrealBuildAsync(GameFileSnapshot snapshot, CancellationToken ct = default) =>
             ValueTask.FromResult<UnrealBuildFacts?>(null);
+
+        public ValueTask<UnityBuildFacts?> ReadUnityBuildAsync(GameFileSnapshot snapshot, CancellationToken ct = default) =>
+            ValueTask.FromResult<UnityBuildFacts?>(null);
+
+        public ValueTask<GodotBuildFacts?> ReadGodotBuildAsync(GameFileSnapshot snapshot, CancellationToken ct = default) =>
+            ValueTask.FromResult<GodotBuildFacts?>(null);
+
+        public ValueTask<RpgMakerBuildFacts?> ReadRpgMakerBuildAsync(GameFileSnapshot snapshot, CancellationToken ct = default) =>
+            ValueTask.FromResult<RpgMakerBuildFacts?>(null);
     }
 
     private sealed class FakeIdentity : IExecutableIdentitySource

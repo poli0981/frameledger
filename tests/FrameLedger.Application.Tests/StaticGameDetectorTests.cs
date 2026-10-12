@@ -41,6 +41,33 @@ public sealed class StaticGameDetectorTests
             UnrealReads++;
             return ValueTask.FromResult(unreal);
         }
+
+        public UnityBuildFacts? Unity { get; init; }
+
+        public GodotBuildFacts? Godot { get; init; }
+
+        public RpgMakerBuildFacts? RpgMaker { get; init; }
+
+        /// <summary>Which of the beta.19 second reads was made, in order.</summary>
+        public List<string> BuildReads { get; } = [];
+
+        public ValueTask<UnityBuildFacts?> ReadUnityBuildAsync(GameFileSnapshot s, CancellationToken ct = default)
+        {
+            BuildReads.Add("unity");
+            return ValueTask.FromResult(Unity);
+        }
+
+        public ValueTask<GodotBuildFacts?> ReadGodotBuildAsync(GameFileSnapshot s, CancellationToken ct = default)
+        {
+            BuildReads.Add("godot");
+            return ValueTask.FromResult(Godot);
+        }
+
+        public ValueTask<RpgMakerBuildFacts?> ReadRpgMakerBuildAsync(GameFileSnapshot s, CancellationToken ct = default)
+        {
+            BuildReads.Add("rpgmaker");
+            return ValueTask.FromResult(RpgMaker);
+        }
     }
 
     private static SignalGroup Any(params string[] globs) => new()
@@ -247,6 +274,55 @@ public sealed class StaticGameDetectorTests
         r.EngineVersion.Should().Be("2022.3.32.1");
         r.EngineVersionSource.Should().Be("pe_file_version");
         probe.UnrealReads.Should().Be(0);
+    }
+
+    private static DetectionRuleSet BuildRules() => Rules() with
+    {
+        Engines =
+        [
+            new EngineRule { Id = "unity", Name = "Unity", Signals = Any("UnityPlayer.dll"), Version = new VersionExtractor { Type = VersionExtractorType.UnityBuild } },
+            new EngineRule { Id = "rpgmaker_mv", Name = "RPG Maker MV/MZ", Signals = Any("nw.dll"), Version = new VersionExtractor { Type = VersionExtractorType.RpgMakerBuild } },
+            new EngineRule { Id = "godot", Name = "Godot", Signals = Any("*.pck"), Version = new VersionExtractor { Type = VersionExtractorType.GodotBuild } },
+        ],
+    };
+
+    /// <summary>
+    /// beta.19: Unity, Godot and RPG Maker decide their versions in code as Unreal does — one second read, for the engine that
+    /// matched only, and the decider's witness reported (the owner's Dialoop, 衔蝶 and A Doll's Locket - Remake as measured).
+    /// </summary>
+    [Theory]
+    [InlineData("UnityPlayer.dll", "unity", "6000.3.3f1", EngineVersionSource.UnityPlayer)]
+    [InlineData("xiandie.pck", "godot", "4.4.1", EngineVersionSource.GodotPack)]
+    [InlineData("css/nw.dll", "rpgmaker", "1.10.0", EngineVersionSource.RpgMakerMzCore)]
+    public async Task UnityGodotAndRpgMakerReadTheirBuildFactsOnceForTheEngineThatMatched(string marker, string read, string version, string source)
+    {
+        var probe = new ScriptedProbe(Snapshot(marker))
+        {
+            Unity = new UnityBuildFacts { PlayerProductVersion = "6000.3.3f1 (ef04196de0d6)", PlayerFileVersion = [6000, 3, 3, 15664153] },
+            Godot = new GodotBuildFacts { PackVersion = [4, 4, 1], ExeProductName = "xiandie", ExeProductVersion = "0.1.0.3" },
+            RpgMaker = new RpgMakerBuildFacts { CoreScript = "rmmz_core.js", CoreScriptVersion = "1.10.0" },
+        };
+        var detector = new StaticGameDetector(new ScriptedRules(BuildRules()), probe);
+
+        StaticDetectionResult r = await detector.DetectAsync(@"C:\Games\Example\Game.exe", TestContext.Current.CancellationToken);
+
+        r.EngineVersion.Should().Be(version);
+        r.EngineVersionSource.Should().Be(source);
+        probe.BuildReads.Should().Equal([read], "one read, for the matched engine only");
+        probe.UnrealReads.Should().Be(0);
+    }
+
+    /// <summary>A build read that found nothing is no version and no witness — never the old rules' raw file version.</summary>
+    [Fact]
+    public async Task ABuildReadWithNoFactsHasNoVersion()
+    {
+        var detector = new StaticGameDetector(new ScriptedRules(BuildRules()), new ScriptedProbe(Snapshot("UnityPlayer.dll")));
+
+        StaticDetectionResult r = await detector.DetectAsync(@"C:\Games\Example\Game.exe", TestContext.Current.CancellationToken);
+
+        r.EngineId.Should().Be("unity");
+        r.EngineVersion.Should().BeNull();
+        r.EngineVersionSource.Should().BeNull();
     }
 
     [Fact]

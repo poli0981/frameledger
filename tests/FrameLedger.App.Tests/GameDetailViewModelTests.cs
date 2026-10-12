@@ -620,7 +620,47 @@ public sealed class GameDetailViewModelTests
                 .And.Contain(new GameDetailRow("Engine version", Strings.GameDetail_EngineVersion_NotFound), "an Unreal title says its version was not found rather than nothing");
 
             (GameDetailViewModel gf2, _, _, _, _) = await BuildAsync(s, unity.Id);
-            gf2.Details.Should().NotContain(r => r.Label == "Engine version", "other engines add no line");
+            gf2.Details.Should().NotContain(r => r.Label == "Engine version", "a version an older rules file's extractor wrote names no witness");
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
+
+    /// <summary>
+    /// beta.19: a Unity, Godot or RPG Maker version says what it was read from, RPG Maker's witness names the maker in the
+    /// header, and such a title whose files named no version says so once the sweep has read it.
+    /// </summary>
+    [Fact]
+    public async Task TheDetailsCardSaysWhatAUnityGodotOrRpgMakerVersionWasReadFrom()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            ValueTask<int> SetAsync(long id, string engine, string? version, string? source) => s.Db.WriteAsync((c, tx, ct) => Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(
+                "UPDATE games SET engine = @engine, engine_version = @version, engine_version_source = @source, exe_machine = 'x64' WHERE id = @id",
+                new { id, engine, version, source }, tx, cancellationToken: ct)), Ct);
+            (string Name, string Engine, string? Version, string? Source, string Subtitle, string Witness)[] cases =
+            [
+                ("A Doll's Locket - Remake", "rpgmaker_mv", "1.10.0", EngineVersionSource.RpgMakerMzCore, "RPG Maker MZ 1.10.0", "From the first lines of the game's js/rmmz_core.js."),
+                ("City of Bones", "rpgmaker_rgss", "3.0.1", EngineVersionSource.Rgss3Library, "RPG Maker VX Ace (RGSS 3.0.1)", Strings.GameDetail_EngineVersion_Rgss),
+                ("xiandie", "godot", "4.4.1", EngineVersionSource.GodotPack, "Godot 4.4.1", Strings.GameDetail_EngineVersion_GodotPack),
+                ("GF2", "unity", "2019.4.40", EngineVersionSource.UnityPlayerFile, "Unity 2019.4.40", Strings.GameDetail_EngineVersion_UnityPlayerFile),
+                ("Unread", "unity", null, null, "Unity", Strings.GameDetail_EngineVersion_NotFoundInFiles),
+            ];
+            foreach ((string name, string engine, string? version, string? source, string subtitle, string witness) in cases)
+            {
+                GameRow row = await s.GameAsync(name);
+                await SetAsync(row.Id, engine, version, source);
+
+                (GameDetailViewModel vm, _, _, _, _) = await BuildAsync(s, row.Id);
+
+                vm.Subtitle.Should().EndWith(subtitle, name);
+                vm.Details.Should().Contain(new GameDetailRow("Engine version", witness), name);
+            }
         }
         finally
         {

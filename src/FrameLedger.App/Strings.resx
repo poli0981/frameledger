@@ -2201,6 +2201,33 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="GameDetail_EngineVersion_NotFound" xml:space="preserve">
     <value>Not found in the game's executable. It may be packed or protected, or the studio renamed the engine's build.</value>
   </data>
+  <data name="GameDetail_EngineVersion_UnityPlayer" xml:space="preserve">
+    <value>From the version of the game's Unity player library (UnityPlayer.dll).</value>
+  </data>
+  <data name="GameDetail_EngineVersion_UnityData" xml:space="preserve">
+    <value>From the header of the game's Unity data file (globalgamemanagers).</value>
+  </data>
+  <data name="GameDetail_EngineVersion_UnityPlayerFile" xml:space="preserve">
+    <value>From the Unity player library's version number only. The release letter (such as f1) is not recorded there.</value>
+  </data>
+  <data name="GameDetail_EngineVersion_GodotPack" xml:space="preserve">
+    <value>From the header of the game's Godot data pack (.pck).</value>
+  </data>
+  <data name="GameDetail_EngineVersion_GodotPackEmbedded" xml:space="preserve">
+    <value>From the header of the Godot data pack inside the game's executable.</value>
+  </data>
+  <data name="GameDetail_EngineVersion_GodotExe" xml:space="preserve">
+    <value>From the version information Godot left in the game's executable.</value>
+  </data>
+  <data name="GameDetail_EngineVersion_CoreScript_Format" xml:space="preserve">
+    <value>From the first lines of the game's {0}.</value>
+  </data>
+  <data name="GameDetail_EngineVersion_Rgss" xml:space="preserve">
+    <value>From the RPG Maker runtime library (RGSS) that the game's Game.ini names. The number is the library's, not the editor's.</value>
+  </data>
+  <data name="GameDetail_EngineVersion_NotFoundInFiles" xml:space="preserve">
+    <value>Not found in the game's files.</value>
+  </data>
   <data name="GameDetail_Details_Libraries" xml:space="preserve">
     <value>Ships with</value>
   </data>

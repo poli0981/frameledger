@@ -202,6 +202,38 @@ public static class Formats
         _ => id,
     };
 
+    /// <summary>
+    /// The engine's name as its version's witness names it (beta.19): each RPG Maker rule covers several makers, and the
+    /// file the version was read from says which — MZ's or MV's core script, an RGSS1, RGSS2 or RGSS3 library (XP, VX,
+    /// VX Ace). Any other engine, or no witness, is <see cref="Engine(string?)"/>.
+    /// </summary>
+    public static string Engine(string? id, string? versionSource) => (id, versionSource) switch
+    {
+        ("rpgmaker_mv", EngineVersionSource.RpgMakerMzCore) => "RPG Maker MZ",
+        ("rpgmaker_mv", EngineVersionSource.RpgMakerMvCore) => "RPG Maker MV",
+        ("rpgmaker_rgss", EngineVersionSource.Rgss1Library) => "RPG Maker XP",
+        ("rpgmaker_rgss", EngineVersionSource.Rgss2Library) => "RPG Maker VX",
+        ("rpgmaker_rgss", EngineVersionSource.Rgss3Library) => "RPG Maker VX Ace",
+        _ => Engine(id),
+    };
+
+    /// <summary>
+    /// The engine and its version as one text (beta.19): "Unreal Engine 5.4.4", "Unity 2022.3.39f1", "Godot 4.4.1", "RPG Maker
+    /// MZ 1.10.0" — and "RPG Maker VX Ace (RGSS 3.0.1)", whose number is its runtime library's, not the maker's.
+    /// </summary>
+    public static string EngineWithVersion(string? id, string? version, string? versionSource)
+    {
+        string name = Engine(id, versionSource);
+        if (id is null || string.IsNullOrWhiteSpace(version))
+        {
+            return name;
+        }
+
+        return versionSource is EngineVersionSource.Rgss1Library or EngineVersionSource.Rgss2Library or EngineVersionSource.Rgss3Library
+            ? string.Create(CultureInfo.InvariantCulture, $"{name} (RGSS {version})")
+            : string.Create(CultureInfo.InvariantCulture, $"{name} {version}");
+    }
+
     /// <summary>What an executable runs as (<c>games.exe_machine</c>, beta.8), in the user's language.</summary>
     public static string Architecture(string? id) => id switch
     {

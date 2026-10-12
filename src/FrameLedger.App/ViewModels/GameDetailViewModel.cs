@@ -1169,13 +1169,12 @@ public sealed partial class GameDetailViewModel : ObservableObject
         SessionsEmpty = Sessions.Count == 0;
     }
 
-    private static string EngineText(GameRow row) =>
-        row.Engine is null || row.EngineVersion is null ? Formats.Engine(row.Engine) : Formats.Engine(row.Engine) + " " + row.EngineVersion;
+    private static string EngineText(GameRow row) => Formats.EngineWithVersion(row.Engine, row.EngineVersion, row.EngineVersionSource);
 
     /// <summary>
-    /// Which witness an Unreal Engine version rests on (beta.10, schema 0015) — said, because the executable's version
-    /// number and the engine's build name can each be wrong in their own way (<c>05_DETECTION</c> §Engine version). An
-    /// Unreal title whose executable names no version says so once the sweep has read it; other engines add no line.
+    /// Which witness an engine version rests on (beta.10 for Unreal, schema 0015; beta.19 for Unity, Godot and RPG Maker) —
+    /// said, because each witness can be wrong or short in its own way (<c>05_DETECTION</c> §Engine version). A title of
+    /// these engines whose files name no version says so once the sweep has read it; other engines add no line.
     /// </summary>
     internal static string? EngineVersionSourceText(GameRow row)
     {
@@ -1185,8 +1184,19 @@ public sealed partial class GameDetailViewModel : ObservableObject
             EngineVersionSource.UnrealBranchAndFile => Strings.GameDetail_EngineVersion_BranchAndFile,
             EngineVersionSource.UnrealBranch => Strings.GameDetail_EngineVersion_Branch,
             EngineVersionSource.UnrealFileVersion => Strings.GameDetail_EngineVersion_FileVersion,
+            EngineVersionSource.UnityPlayer => Strings.GameDetail_EngineVersion_UnityPlayer,
+            EngineVersionSource.UnityData => Strings.GameDetail_EngineVersion_UnityData,
+            EngineVersionSource.UnityPlayerFile => Strings.GameDetail_EngineVersion_UnityPlayerFile,
+            EngineVersionSource.GodotPack => Strings.GameDetail_EngineVersion_GodotPack,
+            EngineVersionSource.GodotPackEmbedded => Strings.GameDetail_EngineVersion_GodotPackEmbedded,
+            EngineVersionSource.GodotExe => Strings.GameDetail_EngineVersion_GodotExe,
+            EngineVersionSource.RpgMakerMzCore => string.Format(CultureInfo.CurrentCulture, Strings.GameDetail_EngineVersion_CoreScript_Format, "js/rmmz_core.js"),
+            EngineVersionSource.RpgMakerMvCore => string.Format(CultureInfo.CurrentCulture, Strings.GameDetail_EngineVersion_CoreScript_Format, "rpg_core.js"),
+            EngineVersionSource.Rgss1Library or EngineVersionSource.Rgss2Library or EngineVersionSource.Rgss3Library => Strings.GameDetail_EngineVersion_Rgss,
             null when string.Equals(row.Engine, "unreal", StringComparison.Ordinal) && row.EngineVersion is null && row.ExeMachine is not null
                 => Strings.GameDetail_EngineVersion_NotFound,
+            null when row.Engine is "unity" or "godot" or "rpgmaker_mv" or "rpgmaker_rgss" && row.EngineVersion is null && row.ExeMachine is not null
+                => Strings.GameDetail_EngineVersion_NotFoundInFiles,
             _ => null,
         };
     }

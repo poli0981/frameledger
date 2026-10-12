@@ -446,8 +446,17 @@ public static class Strings
         nameof(GameDetail_Edit),
         nameof(GameDetail_EngineVersion_Branch),
         nameof(GameDetail_EngineVersion_BranchAndFile),
+        nameof(GameDetail_EngineVersion_CoreScript_Format),
         nameof(GameDetail_EngineVersion_FileVersion),
+        nameof(GameDetail_EngineVersion_GodotExe),
+        nameof(GameDetail_EngineVersion_GodotPack),
+        nameof(GameDetail_EngineVersion_GodotPackEmbedded),
         nameof(GameDetail_EngineVersion_NotFound),
+        nameof(GameDetail_EngineVersion_NotFoundInFiles),
+        nameof(GameDetail_EngineVersion_Rgss),
+        nameof(GameDetail_EngineVersion_UnityData),
+        nameof(GameDetail_EngineVersion_UnityPlayer),
+        nameof(GameDetail_EngineVersion_UnityPlayerFile),
         nameof(GameDetail_Exception_Grant),
         nameof(GameDetail_Exception_Granted_Format),
         nameof(GameDetail_Exception_Header),
@@ -1894,9 +1903,27 @@ public static class Strings
 
     public static string GameDetail_EngineVersion_BranchAndFile => ResourceManager.GetString(nameof(GameDetail_EngineVersion_BranchAndFile), Culture) ?? nameof(GameDetail_EngineVersion_BranchAndFile);
 
+    public static string GameDetail_EngineVersion_CoreScript_Format => ResourceManager.GetString(nameof(GameDetail_EngineVersion_CoreScript_Format), Culture) ?? nameof(GameDetail_EngineVersion_CoreScript_Format);
+
     public static string GameDetail_EngineVersion_FileVersion => ResourceManager.GetString(nameof(GameDetail_EngineVersion_FileVersion), Culture) ?? nameof(GameDetail_EngineVersion_FileVersion);
 
+    public static string GameDetail_EngineVersion_GodotExe => ResourceManager.GetString(nameof(GameDetail_EngineVersion_GodotExe), Culture) ?? nameof(GameDetail_EngineVersion_GodotExe);
+
+    public static string GameDetail_EngineVersion_GodotPack => ResourceManager.GetString(nameof(GameDetail_EngineVersion_GodotPack), Culture) ?? nameof(GameDetail_EngineVersion_GodotPack);
+
+    public static string GameDetail_EngineVersion_GodotPackEmbedded => ResourceManager.GetString(nameof(GameDetail_EngineVersion_GodotPackEmbedded), Culture) ?? nameof(GameDetail_EngineVersion_GodotPackEmbedded);
+
     public static string GameDetail_EngineVersion_NotFound => ResourceManager.GetString(nameof(GameDetail_EngineVersion_NotFound), Culture) ?? nameof(GameDetail_EngineVersion_NotFound);
+
+    public static string GameDetail_EngineVersion_NotFoundInFiles => ResourceManager.GetString(nameof(GameDetail_EngineVersion_NotFoundInFiles), Culture) ?? nameof(GameDetail_EngineVersion_NotFoundInFiles);
+
+    public static string GameDetail_EngineVersion_Rgss => ResourceManager.GetString(nameof(GameDetail_EngineVersion_Rgss), Culture) ?? nameof(GameDetail_EngineVersion_Rgss);
+
+    public static string GameDetail_EngineVersion_UnityData => ResourceManager.GetString(nameof(GameDetail_EngineVersion_UnityData), Culture) ?? nameof(GameDetail_EngineVersion_UnityData);
+
+    public static string GameDetail_EngineVersion_UnityPlayer => ResourceManager.GetString(nameof(GameDetail_EngineVersion_UnityPlayer), Culture) ?? nameof(GameDetail_EngineVersion_UnityPlayer);
+
+    public static string GameDetail_EngineVersion_UnityPlayerFile => ResourceManager.GetString(nameof(GameDetail_EngineVersion_UnityPlayerFile), Culture) ?? nameof(GameDetail_EngineVersion_UnityPlayerFile);
 
     public static string GameDetail_Exception_Grant => ResourceManager.GetString(nameof(GameDetail_Exception_Grant), Culture) ?? nameof(GameDetail_Exception_Grant);
 

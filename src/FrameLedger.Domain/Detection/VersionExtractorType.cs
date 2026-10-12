@@ -25,4 +25,19 @@ public enum VersionExtractorType
     /// matched — so <see cref="RuleEvaluator"/> returns null for it.
     /// </summary>
     UnrealBuild,
+
+    /// <summary>
+    /// Unity's (beta.19): the player library's version resource and the data file's header, weighed by
+    /// <see cref="UnityVersion.Decide"/>. A second read, like <see cref="UnrealBuild"/>.
+    /// </summary>
+    UnityBuild,
+
+    /// <summary>Godot's (beta.19): a data pack's header and the executable's version resource (<see cref="GodotVersion.Decide"/>).</summary>
+    GodotBuild,
+
+    /// <summary>
+    /// RPG Maker's (beta.19): MV/MZ's core-script header, or the RGSS library <c>Game.ini</c> names
+    /// (<see cref="RpgMakerVersion.Decide"/>).
+    /// </summary>
+    RpgMakerBuild,
 }
