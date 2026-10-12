@@ -5,7 +5,7 @@ hooking on for — and reading the graphics calls the game makes. That is why it
 resolution, the upscaler, frame generation and ray tracing apart. It is also where its limits come from. This
 page lists them in plain words; each item links to the document that has the details.
 
-*Beta software: this page describes version 0.1.0-beta.18.*
+*Beta software: this page describes version 0.1.0-beta.20.*
 
 ## Games it will not measure
 
@@ -117,8 +117,15 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
 
 - The exact version is read for **Unreal Engine 4 and 5** games, from the game's executable file on disk.
   A studio can remove or rename what it is read from; then the page says the version was not found.
-  **Unreal Engine 3 and older are not recognised.** Other engines show a version only where their files
-  state one. ([Detection](docs/05_DETECTION.md))
+  **Unreal Engine 3 and older are not recognised.**
+- Since beta.19 also **Unity**, **Godot** and **RPG Maker** (MV, MZ, XP, VX, VX Ace): from the engine's own files —
+  Unity's player library or data file, Godot's data pack, RPG Maker's core script or the runtime library its `Game.ini`
+  names. A Unity game whose data file is encrypted shows the version without its release letter (`2019.4.40`, not
+  `2019.4.40f1`); an XP, VX or VX Ace game shows its runtime library's number, which is not the editor's.
+  **RPG Maker 2000 and 2003 are not recognised.**
+- Since beta.20 also **Ren'Py**: from the engine's own version file (`renpy/vc_version.py`); a Ren'Py game whose engine
+  names no version there shows none. Other engines show a version only where their files state one.
+  ([Detection](docs/05_DETECTION.md))
 
 ## Sensors
 

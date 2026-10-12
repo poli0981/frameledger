@@ -446,8 +446,18 @@ public static class Strings
         nameof(GameDetail_Edit),
         nameof(GameDetail_EngineVersion_Branch),
         nameof(GameDetail_EngineVersion_BranchAndFile),
+        nameof(GameDetail_EngineVersion_CoreScript_Format),
         nameof(GameDetail_EngineVersion_FileVersion),
+        nameof(GameDetail_EngineVersion_GodotExe),
+        nameof(GameDetail_EngineVersion_GodotPack),
+        nameof(GameDetail_EngineVersion_GodotPackEmbedded),
         nameof(GameDetail_EngineVersion_NotFound),
+        nameof(GameDetail_EngineVersion_NotFoundInFiles),
+        nameof(GameDetail_EngineVersion_RenPyVcVersion),
+        nameof(GameDetail_EngineVersion_Rgss),
+        nameof(GameDetail_EngineVersion_UnityData),
+        nameof(GameDetail_EngineVersion_UnityPlayer),
+        nameof(GameDetail_EngineVersion_UnityPlayerFile),
         nameof(GameDetail_Exception_Grant),
         nameof(GameDetail_Exception_Granted_Format),
         nameof(GameDetail_Exception_Header),
@@ -510,6 +520,10 @@ public static class Strings
         nameof(Games_NoMatch),
         nameof(Games_Refresh),
         nameof(Games_Refresh_ToolTip),
+        nameof(Games_Removed_Format),
+        nameof(Games_Removed_Many_Format),
+        nameof(Games_Removed_More_Format),
+        nameof(Games_Removed_Title),
         nameof(Games_Search_Placeholder),
         nameof(Games_Sort_Label),
         nameof(Games_Sort_LastPlayed),
@@ -830,6 +844,9 @@ public static class Strings
         nameof(Settings_OnlineMetadata_Label),
         nameof(Settings_Policy_Header),
         nameof(Settings_Privacy_Header),
+        nameof(Settings_RemoveUninstalled_Applied),
+        nameof(Settings_RemoveUninstalled_Body),
+        nameof(Settings_RemoveUninstalled_Label),
         nameof(Settings_Retention_Body),
         nameof(Settings_Retention_Label),
         nameof(Settings_SafetyDocs),
@@ -1894,9 +1911,29 @@ public static class Strings
 
     public static string GameDetail_EngineVersion_BranchAndFile => ResourceManager.GetString(nameof(GameDetail_EngineVersion_BranchAndFile), Culture) ?? nameof(GameDetail_EngineVersion_BranchAndFile);
 
+    public static string GameDetail_EngineVersion_CoreScript_Format => ResourceManager.GetString(nameof(GameDetail_EngineVersion_CoreScript_Format), Culture) ?? nameof(GameDetail_EngineVersion_CoreScript_Format);
+
     public static string GameDetail_EngineVersion_FileVersion => ResourceManager.GetString(nameof(GameDetail_EngineVersion_FileVersion), Culture) ?? nameof(GameDetail_EngineVersion_FileVersion);
 
+    public static string GameDetail_EngineVersion_GodotExe => ResourceManager.GetString(nameof(GameDetail_EngineVersion_GodotExe), Culture) ?? nameof(GameDetail_EngineVersion_GodotExe);
+
+    public static string GameDetail_EngineVersion_GodotPack => ResourceManager.GetString(nameof(GameDetail_EngineVersion_GodotPack), Culture) ?? nameof(GameDetail_EngineVersion_GodotPack);
+
+    public static string GameDetail_EngineVersion_GodotPackEmbedded => ResourceManager.GetString(nameof(GameDetail_EngineVersion_GodotPackEmbedded), Culture) ?? nameof(GameDetail_EngineVersion_GodotPackEmbedded);
+
     public static string GameDetail_EngineVersion_NotFound => ResourceManager.GetString(nameof(GameDetail_EngineVersion_NotFound), Culture) ?? nameof(GameDetail_EngineVersion_NotFound);
+
+    public static string GameDetail_EngineVersion_NotFoundInFiles => ResourceManager.GetString(nameof(GameDetail_EngineVersion_NotFoundInFiles), Culture) ?? nameof(GameDetail_EngineVersion_NotFoundInFiles);
+
+    public static string GameDetail_EngineVersion_RenPyVcVersion => ResourceManager.GetString(nameof(GameDetail_EngineVersion_RenPyVcVersion), Culture) ?? nameof(GameDetail_EngineVersion_RenPyVcVersion);
+
+    public static string GameDetail_EngineVersion_Rgss => ResourceManager.GetString(nameof(GameDetail_EngineVersion_Rgss), Culture) ?? nameof(GameDetail_EngineVersion_Rgss);
+
+    public static string GameDetail_EngineVersion_UnityData => ResourceManager.GetString(nameof(GameDetail_EngineVersion_UnityData), Culture) ?? nameof(GameDetail_EngineVersion_UnityData);
+
+    public static string GameDetail_EngineVersion_UnityPlayer => ResourceManager.GetString(nameof(GameDetail_EngineVersion_UnityPlayer), Culture) ?? nameof(GameDetail_EngineVersion_UnityPlayer);
+
+    public static string GameDetail_EngineVersion_UnityPlayerFile => ResourceManager.GetString(nameof(GameDetail_EngineVersion_UnityPlayerFile), Culture) ?? nameof(GameDetail_EngineVersion_UnityPlayerFile);
 
     public static string GameDetail_Exception_Grant => ResourceManager.GetString(nameof(GameDetail_Exception_Grant), Culture) ?? nameof(GameDetail_Exception_Grant);
 
@@ -2021,6 +2058,14 @@ public static class Strings
     public static string Games_Refresh => ResourceManager.GetString(nameof(Games_Refresh), Culture) ?? nameof(Games_Refresh);
 
     public static string Games_Refresh_ToolTip => ResourceManager.GetString(nameof(Games_Refresh_ToolTip), Culture) ?? nameof(Games_Refresh_ToolTip);
+
+    public static string Games_Removed_Format => ResourceManager.GetString(nameof(Games_Removed_Format), Culture) ?? nameof(Games_Removed_Format);
+
+    public static string Games_Removed_Many_Format => ResourceManager.GetString(nameof(Games_Removed_Many_Format), Culture) ?? nameof(Games_Removed_Many_Format);
+
+    public static string Games_Removed_More_Format => ResourceManager.GetString(nameof(Games_Removed_More_Format), Culture) ?? nameof(Games_Removed_More_Format);
+
+    public static string Games_Removed_Title => ResourceManager.GetString(nameof(Games_Removed_Title), Culture) ?? nameof(Games_Removed_Title);
 
     public static string Games_Search_Placeholder => ResourceManager.GetString(nameof(Games_Search_Placeholder), Culture) ?? nameof(Games_Search_Placeholder);
 
@@ -2661,6 +2706,12 @@ public static class Strings
     public static string Settings_Policy_Header => ResourceManager.GetString(nameof(Settings_Policy_Header), Culture) ?? nameof(Settings_Policy_Header);
 
     public static string Settings_Privacy_Header => ResourceManager.GetString(nameof(Settings_Privacy_Header), Culture) ?? nameof(Settings_Privacy_Header);
+
+    public static string Settings_RemoveUninstalled_Applied => ResourceManager.GetString(nameof(Settings_RemoveUninstalled_Applied), Culture) ?? nameof(Settings_RemoveUninstalled_Applied);
+
+    public static string Settings_RemoveUninstalled_Body => ResourceManager.GetString(nameof(Settings_RemoveUninstalled_Body), Culture) ?? nameof(Settings_RemoveUninstalled_Body);
+
+    public static string Settings_RemoveUninstalled_Label => ResourceManager.GetString(nameof(Settings_RemoveUninstalled_Label), Culture) ?? nameof(Settings_RemoveUninstalled_Label);
 
     public static string Settings_Retention_Body => ResourceManager.GetString(nameof(Settings_Retention_Body), Culture) ?? nameof(Settings_Retention_Body);
 

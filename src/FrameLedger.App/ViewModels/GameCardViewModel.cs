@@ -26,7 +26,7 @@ public sealed class GameCardViewModel
         Id = card.Row.Id;
         Name = card.Row.Name;
         PlatformText = Formats.Platform(card.Row.Platform);
-        EngineText = Formats.Engine(card.Row.Engine);
+        EngineText = Formats.Engine(card.Row.Engine, card.Row.EngineVersionSource);
         Recorded = card.Row.RecordSessions;
         HookOn = Recorded && card.Row.HookEnabled;
         // An entry the guard found anti-cheat in says so (beta.8): its hooking is off for good, and "Hooking off" read as

@@ -147,6 +147,25 @@ internal static class AgentServices
         services.AddSingleton<IDriverProfileSource>(static sp => sp.GetRequiredService<NvapiDriverProfileSource>());
     }
 
+    /// <summary>
+    /// An entry whose game is no longer installed and that had no session goes (beta.19, D55): asked by the detection sweep after
+    /// the relocator, behind the user's switch, never while a session of it is recorded or waits to be recovered — the merge's
+    /// own busy test — and never for an entry carrying an anti-cheat block or exception (the delete's SQL checks again).
+    /// </summary>
+    private static void AddUninstalledEntryPrune(IServiceCollection services)
+    {
+        services.AddSingleton<IGamePrune>(static sp => new SqliteGamePrune(sp.GetRequiredService<LedgerDatabase>()));
+        services.AddSingleton<IExecutablePresence>(static _ => new ExecutablePresenceProbe(VolumeRoots.IsReady));
+        services.AddSingleton(static sp => new UninstalledEntryPrune(
+            sp.GetRequiredService<IGamePrune>(),
+            sp.GetRequiredService<IExecutablePresence>(),
+            ct => sp.GetRequiredService<RegisteredSettings>().GetBooleanAsync(SettingsRegistry.RetentionRemoveUninstalledGames, ct),
+            id => sp.GetRequiredService<CaptureOrchestrator>().IsRecording(id)
+                  || sp.GetRequiredService<IPartialSessionStore>().PendingGameIds().Contains(id),
+            static line => Serilog.Log.Information("{Line}", line),
+            sp.GetRequiredService<IIpcEventPublisher>()));
+    }
+
     /// <summary>The static detection sweep (P4 PR-1, <c>05_DETECTION</c> §Caching): hosted under <c>--serve</c> only, composed and inert under <c>--console</c>.</summary>
     private static void AddDetection(IServiceCollection services, AgentPaths paths)
     {
@@ -168,13 +187,15 @@ internal static class AgentServices
             merge: sp.GetRequiredService<IGameMerge>(),
             busy: id => sp.GetRequiredService<CaptureOrchestrator>().IsRecording(id)
                         || sp.GetRequiredService<IPartialSessionStore>().PendingGameIds().Contains(id)));
+        AddUninstalledEntryPrune(services);
         services.AddSingleton(static sp => new DetectionSweep(
             sp.GetRequiredService<IGameRepository>(),
             sp.GetRequiredService<IDetectionRulesSource>(),
             sp.GetRequiredService<IGameFileProbe>(),
             sp.GetRequiredService<IExecutableIdentitySource>(),
             static line => Serilog.Log.Information("{Line}", line),
-            sp.GetRequiredService<ExecutableRelocator>()));
+            sp.GetRequiredService<ExecutableRelocator>(),
+            sp.GetRequiredService<UninstalledEntryPrune>()));
 
         // The anti-cheat pre-scan of the library (beta.8, 19_SAFETY §What a finding does to the game): every entry through
         // the guard's advisory checks 3 and 4, again whenever the rules or the executable change. It waits while a session

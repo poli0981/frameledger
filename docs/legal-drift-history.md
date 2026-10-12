@@ -63,6 +63,21 @@ are kept because they record what each version changed and why (owner decision D
 >
 > Version 2.5 (2026-09-27, 0.1.0-beta.10) adds how a tracked game's window is shown — read from Windows — and the engine build name read from an Unreal Engine game's executable. It is also the first version to say two things the software already did: it reads the **content** of a library game's executable (markers in its first 8 MB and its import table, since the detection of engines and features; and, when a session starts, the graphics-library markers in the whole file), and it reads the processor load and the memory in use (since 0.1.0-beta.3). Nothing here leaves your device, as before.
 
+### What version 2.9 of the Privacy Policy changed (0.1.0-beta.20)
+
+§4's list of the version marks an engine keeps in its own files gains one: the version file of a Ren'Py game's engine
+(`renpy/vc_version.py`), read to show a Ren'Py game's engine version (beta.20 PR-1, owner request 2026-10-12) — its first
+4 KiB, for the `version` line only. Nothing here leaves your device, as before.
+
+### What version 2.8 of the Privacy Policy changed (0.1.0-beta.19)
+
+§4 names the version marks an engine keeps in its own files, read to show a Unity, Godot or RPG Maker game's engine
+version (beta.19 PR-3, owner request 2026-10-12): Unity's player library (its version information) and the header of its
+data file, the header of a Godot data pack, an RPG Maker game's core script and `Game.ini` and the library `Game.ini`
+names. Two of them were read before and never stated: the version information of `UnityPlayer.dll` (the Unity rule's
+extractor since the detection rules began) and an RPG Maker MV/MZ game's title in `data/System.json`, which the App reads
+to name a game added by hand (since 2026-09-23). Nothing here leaves your device, as before.
+
 ### What version 2.7 of the Privacy Policy changed (0.1.0-beta.14)
 
 §4 says two things the software reads to tell a crash from an ordinary exit: the crash reports Windows keeps in its

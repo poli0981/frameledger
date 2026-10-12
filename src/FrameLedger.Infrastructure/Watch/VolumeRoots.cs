@@ -30,4 +30,23 @@ public static class VolumeRoots
 
         return roots;
     }
+
+    /// <summary>
+    /// Whether the one drive <paramref name="root"/> names is a ready fixed or removable drive (beta.19) — the same test as
+    /// <see cref="Ready"/>, asked of one drive. The type is read first: a network or optical drive is never asked whether it
+    /// is ready, which can block for seconds on a share that went away.
+    /// </summary>
+    public static bool IsReady(string root)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(root);
+        try
+        {
+            var drive = new DriveInfo(root);
+            return drive.DriveType is DriveType.Fixed or DriveType.Removable && drive.IsReady;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            return false;
+        }
+    }
 }

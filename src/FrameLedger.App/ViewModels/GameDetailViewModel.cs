@@ -521,6 +521,13 @@ public sealed partial class GameDetailViewModel : ObservableObject
         {
             Pending = LoadAsync();
         }
+        else if (string.Equals(e.Envelope.Type, IpcMessageType.GameRemoved, StringComparison.Ordinal)
+                 && IpcCodec.Payload<GameRemovedEvent>(e.Envelope) is { } removed && removed.GameId == _gameId)
+        {
+            // D55 (beta.19): this very entry was removed by the Agent — the page reloads into its not-found state and says why.
+            _strip.Info(Strings.Games_Removed_Title, string.Format(CultureInfo.CurrentCulture, Strings.Games_Removed_Format, removed.GameName ?? removed.ExePath));
+            Pending = LoadAsync();
+        }
     });
 
     private async Task LoadSelectedAsync(SessionItemViewModel? session)
@@ -801,7 +808,8 @@ public sealed partial class GameDetailViewModel : ObservableObject
     /// <summary>
     /// A store import guesses the executable (Steam names none), and everything downstream is keyed on it: a wrong guess
     /// is a game that can never be matched. The pick is the user's own; the row comes back hooking-off and unconsented,
-    /// exactly as a new game would, and consent is revoked over the pipe first, as removal does.
+    /// exactly as a new game would, and consent is revoked over the pipe first, as removal does. The dialog opens in the
+    /// game's own folder (beta.19, <see cref="GameFolder"/>), asked off the UI thread.
     /// </summary>
     private async Task ChangeExecutableCoreAsync()
     {
@@ -810,7 +818,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
             return;
         }
 
-        string? path = _picker.PickExecutable();
+        string current = Game.Fingerprint.ExePath;
+        string? folder = await Task.Run(() => GameFolder.StartFolder(current)).ConfigureAwait(true);
+        string? path = _picker.PickExecutable(folder);
         if (path is null || string.Equals(ExecutableIdentity.Normalise(path), Game.Fingerprint.ExePath, StringComparison.OrdinalIgnoreCase))
         {
             return;
@@ -1166,13 +1176,12 @@ public sealed partial class GameDetailViewModel : ObservableObject
         SessionsEmpty = Sessions.Count == 0;
     }
 
-    private static string EngineText(GameRow row) =>
-        row.Engine is null || row.EngineVersion is null ? Formats.Engine(row.Engine) : Formats.Engine(row.Engine) + " " + row.EngineVersion;
+    private static string EngineText(GameRow row) => Formats.EngineWithVersion(row.Engine, row.EngineVersion, row.EngineVersionSource);
 
     /// <summary>
-    /// Which witness an Unreal Engine version rests on (beta.10, schema 0015) — said, because the executable's version
-    /// number and the engine's build name can each be wrong in their own way (<c>05_DETECTION</c> §Engine version). An
-    /// Unreal title whose executable names no version says so once the sweep has read it; other engines add no line.
+    /// Which witness an engine version rests on (beta.10 for Unreal, schema 0015; beta.19 for Unity, Godot and RPG Maker) —
+    /// said, because each witness can be wrong or short in its own way (<c>05_DETECTION</c> §Engine version). A title of
+    /// these engines whose files name no version says so once the sweep has read it; other engines add no line.
     /// </summary>
     internal static string? EngineVersionSourceText(GameRow row)
     {
@@ -1182,8 +1191,20 @@ public sealed partial class GameDetailViewModel : ObservableObject
             EngineVersionSource.UnrealBranchAndFile => Strings.GameDetail_EngineVersion_BranchAndFile,
             EngineVersionSource.UnrealBranch => Strings.GameDetail_EngineVersion_Branch,
             EngineVersionSource.UnrealFileVersion => Strings.GameDetail_EngineVersion_FileVersion,
+            EngineVersionSource.UnityPlayer => Strings.GameDetail_EngineVersion_UnityPlayer,
+            EngineVersionSource.UnityData => Strings.GameDetail_EngineVersion_UnityData,
+            EngineVersionSource.UnityPlayerFile => Strings.GameDetail_EngineVersion_UnityPlayerFile,
+            EngineVersionSource.GodotPack => Strings.GameDetail_EngineVersion_GodotPack,
+            EngineVersionSource.GodotPackEmbedded => Strings.GameDetail_EngineVersion_GodotPackEmbedded,
+            EngineVersionSource.GodotExe => Strings.GameDetail_EngineVersion_GodotExe,
+            EngineVersionSource.RpgMakerMzCore => string.Format(CultureInfo.CurrentCulture, Strings.GameDetail_EngineVersion_CoreScript_Format, "js/rmmz_core.js"),
+            EngineVersionSource.RpgMakerMvCore => string.Format(CultureInfo.CurrentCulture, Strings.GameDetail_EngineVersion_CoreScript_Format, "rpg_core.js"),
+            EngineVersionSource.Rgss1Library or EngineVersionSource.Rgss2Library or EngineVersionSource.Rgss3Library => Strings.GameDetail_EngineVersion_Rgss,
+            EngineVersionSource.RenPyVcVersion => Strings.GameDetail_EngineVersion_RenPyVcVersion,
             null when string.Equals(row.Engine, "unreal", StringComparison.Ordinal) && row.EngineVersion is null && row.ExeMachine is not null
                 => Strings.GameDetail_EngineVersion_NotFound,
+            null when row.Engine is "unity" or "godot" or "rpgmaker_mv" or "rpgmaker_rgss" or "renpy" && row.EngineVersion is null && row.ExeMachine is not null
+                => Strings.GameDetail_EngineVersion_NotFoundInFiles,
             _ => null,
         };
     }

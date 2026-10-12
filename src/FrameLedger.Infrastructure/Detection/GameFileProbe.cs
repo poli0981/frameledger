@@ -124,6 +124,131 @@ public sealed class GameFileProbe : IGameFileProbe
         return ValueTask.FromResult(ShippingExecutable(snapshot) is { } exe ? UnrealBuildReader.Read(exe.FullPath, exe.RelativePath, ct) : null);
     }
 
+    /// <inheritdoc />
+    /// <remarks>
+    /// <c>UnityPlayer.dll</c> beside the row's executable, else the shallowest one the walk listed; the data file is
+    /// <c>&lt;exe&gt;_Data\globalgamemanagers</c>, else the one in a <c>*_Data</c> folder beside that player.
+    /// </remarks>
+    public ValueTask<UnityBuildFacts?> ReadUnityBuildAsync(GameFileSnapshot snapshot, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ct.ThrowIfCancellationRequested();
+        string exe = Native(snapshot.ExePath);
+        string? exeDirectory = Path.GetDirectoryName(exe);
+        string? beside = exeDirectory is null ? null : Path.Combine(exeDirectory, "UnityPlayer.dll");
+        string? player = beside is not null && File.Exists(beside) ? beside : Shallowest(snapshot, static name => string.Equals(name, "UnityPlayer.dll", StringComparison.OrdinalIgnoreCase));
+        return ValueTask.FromResult(UnityBuildReader.Read(player, UnityDataFile(snapshot, exe, player)));
+    }
+
+    /// <inheritdoc />
+    /// <remarks>The pack is <c>&lt;exe&gt;.pck</c> beside the executable, else the only <c>.pck</c> there; else the executable's own end.</remarks>
+    public ValueTask<GodotBuildFacts?> ReadGodotBuildAsync(GameFileSnapshot snapshot, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ct.ThrowIfCancellationRequested();
+        string exe = Native(snapshot.ExePath);
+        return ValueTask.FromResult(GodotBuildReader.Read(exe, GodotPack(exe)));
+    }
+
+    /// <inheritdoc />
+    /// <remarks>The core script or <c>Game.ini</c> beside the executable or up to two folders above; else an RGSS library the walk listed.</remarks>
+    public ValueTask<RpgMakerBuildFacts?> ReadRpgMakerBuildAsync(GameFileSnapshot snapshot, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ct.ThrowIfCancellationRequested();
+        string? library = Shallowest(snapshot, static name => name.StartsWith("RGSS", StringComparison.OrdinalIgnoreCase) && name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase));
+        return ValueTask.FromResult(RpgMakerBuildReader.Read(Native(snapshot.ExePath), library));
+    }
+
+    /// <inheritdoc />
+    /// <remarks>The engine's <c>renpy/vc_version.py</c> beside the launcher, where Ren'Py keeps it.</remarks>
+    public ValueTask<RenPyBuildFacts?> ReadRenPyBuildAsync(GameFileSnapshot snapshot, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ct.ThrowIfCancellationRequested();
+        return ValueTask.FromResult(RenPyBuildReader.Read(Native(snapshot.ExePath)));
+    }
+
+    private static string Native(string path) => path.Replace('/', Path.DirectorySeparatorChar);
+
+    /// <summary>The full path of the shallowest file the walk listed whose name <paramref name="named"/> accepts, or null.</summary>
+    private static string? Shallowest(GameFileSnapshot snapshot, Func<string, bool> named)
+    {
+        string? best = null;
+        int bestDepth = int.MaxValue;
+        foreach (string relative in snapshot.RelativeFiles)
+        {
+            int slash = relative.LastIndexOf('/');
+            if (!named(relative[(slash + 1)..]))
+            {
+                continue;
+            }
+
+            int depth = relative.Count(static c => c == '/');
+            if (depth < bestDepth)
+            {
+                (best, bestDepth) = (relative, depth);
+            }
+        }
+
+        return best is null ? null : Native(snapshot.GameDirectory.TrimEnd('/') + "/" + best);
+    }
+
+    private static string? UnityDataFile(GameFileSnapshot snapshot, string exe, string? player)
+    {
+        string? exeDirectory = Path.GetDirectoryName(exe);
+        if (exeDirectory is not null)
+        {
+            string own = Path.Combine(exeDirectory, Path.GetFileNameWithoutExtension(exe) + "_Data", "globalgamemanagers");
+            if (File.Exists(own))
+            {
+                return own;
+            }
+        }
+
+        string? playerDirectory = player is null ? null : Path.GetDirectoryName(player);
+        if (playerDirectory is null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return Directory.EnumerateDirectories(playerDirectory, "*_Data")
+                .Select(static d => Path.Combine(d, "globalgamemanagers"))
+                .FirstOrDefault(File.Exists);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    private static string? GodotPack(string exe)
+    {
+        string? directory = Path.GetDirectoryName(exe);
+        if (directory is null)
+        {
+            return null;
+        }
+
+        string own = Path.Combine(directory, Path.GetFileNameWithoutExtension(exe) + ".pck");
+        if (File.Exists(own))
+        {
+            return own;
+        }
+
+        try
+        {
+            string[] packs = [.. Directory.EnumerateFiles(directory, "*.pck").Take(2)];
+            return packs.Length == 1 ? packs[0] : null;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
     /// <summary>
     /// The executable an Unreal title's engine version is read from (beta.10): the row's own when it is the shipping build
     /// (<c>*-Win64-Shipping.exe</c>, <c>*-WinGDK-Shipping.exe</c> — what <c>ExecutableLocator</c> prefers), else the largest
@@ -303,9 +428,9 @@ public sealed class GameFileProbe : IGameFileProbe
     /// name, keyed by the <c>from</c> value.
     /// </summary>
     /// <remarks>
-    /// Unity's rule reads <c>UnityPlayer.dll</c>. Answering that from the game
-    /// executable would report a version that is <em>wrong</em> rather than
-    /// merely missing, which is the worse of the two failures.
+    /// CryEngine's rule reads <c>CrySystem.dll</c> (Unity's read <c>UnityPlayer.dll</c> until beta.19, when its version
+    /// became <see cref="ReadUnityBuildAsync"/>'s). Answering that from the game executable would report a version that is
+    /// <em>wrong</em> rather than merely missing, which is the worse of the two failures.
     /// </remarks>
     private static Dictionary<string, string> ReadSiblingVersions(string dir, DetectionRuleSet rules)
     {

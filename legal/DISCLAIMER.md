@@ -114,7 +114,7 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 
 <!-- accuracy-block:begin -->
 > ⚠ **What FrameLedger actually measures today — 2026-10-06.** The software is a beta; its latest
-> **pre-release is `0.1.0-beta.18`** (2026-10-07), an unsigned installer built from that tag with its
+> **pre-release is `0.1.0-beta.20`** (2026-10-12), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
 > game in the library runs (unless you switched its recording off), injects only into games you enabled
@@ -165,8 +165,11 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 >   swap chain; for every other session the window alone is read, and a window covering its monitor reads
 >   *full-screen or borderless*. What Windows does behind the game (fullscreen optimizations) is not visible.
 > - **Engine version:** the exact Unreal Engine 4 or 5 version, read from the game's executable on disk and
->   labelled with what it rests on; `N/A` where the executable names none. Other engines show what their own
->   files state.
+>   labelled with what it rests on; `N/A` where the executable names none. Since beta.19 also Unity's (from its
+>   player library or its data file — without the release letter where only the library's number is readable),
+>   Godot's (from its data pack) and RPG Maker's maker and version (MV and MZ from their core script; XP, VX and VX
+>   Ace by their runtime library's version, which is not the editor's). RPG Maker 2000/2003 is not detected. Since
+>   beta.20 also Ren'Py's (from its engine's version file). Other engines show what their own files state.
 > - **The game's own memory (since beta.12):** its dedicated and shared GPU memory and its private
 >   working set — the numbers Task Manager's Details tab shows — with its working set and commit, read
 >   once a second from Windows' own counters, from outside the game, in every session: a game

@@ -143,12 +143,12 @@ Recorded as a residual risk, not as a solved problem.
 
 | Engine | Signals | Version |
 |---|---|---|
-| Unity | `UnityPlayer.dll` sibling **or** `<Exe>_Data/` dir | FileVersion of `UnityPlayer.dll` |
+| Unity | `UnityPlayer.dll` sibling **or** `<Exe>_Data/` dir | `unity_build` (since 2026-10-12, §Engine version — Unity, Godot, RPG Maker): the player library's ProductVersion, the data file's header, the library's numeric version. ~~FileVersion of `UnityPlayer.dll`~~ — the string as it is, `2022.3.39.5118735`, the build number where the release letter belongs |
 | Unreal 4/5 | exe matches `*-Win64-Shipping.exe` **or** `*/Content/Paks/*.pak` | `unreal_build` (since 2026-09-27, §Engine version): the shipping executable's numeric file version and the engine's branch name inside it. ~~ProductVersion regex `\+\+UE(4\|5)\+Release-(\d+\.\d+)`~~ — two capture groups, of which the evaluator returns the first, so every Unreal version it ever stored was a bare `4` or `5` |
-| Godot | `.pck` sibling **or** `strings_contains("Godot Engine v")` | strings regex `Godot Engine v(\d+\.\d+[\.\d]*)` |
+| Godot | `.pck` sibling **or** `strings_contains("Godot Engine v")` | `godot_build` (since 2026-10-12): a data pack's header, beside the executable or appended to it. ~~strings regex `Godot Engine v(\d+\.\d+[\.\d]*)`~~ — the string sits 57–78 MB into a real export, past the 8 MiB scan, so it never read one |
 | GameMaker | `data.win` | `N/A` |
-| RPG Maker MV/MZ | `nw.dll` **and** `package.json` siblings (since 2026-09-16) | `N/A` — the `.js` header needs a `from` that `strings_regex` lacks |
-| RPG Maker XP/VX/VX Ace | `RGSS1*`/`RGSS2*`/`RGSS3*.dll` sibling **or** a `*.rgssad`/`*.rgss2a`/`*.rgss3a` archive (since 2026-09-16) | `N/A` — one rule, the variant unnamed |
+| RPG Maker MV/MZ | `nw.dll` **and** `package.json` siblings (since 2026-09-16) | `rpgmaker_build` (since 2026-10-12): the core script's header, which also names the maker (MZ or MV). ~~`N/A` — the `.js` header needs a `from` that `strings_regex` lacks~~ |
+| RPG Maker XP/VX/VX Ace | `RGSS1*`/`RGSS2*`/`RGSS3*.dll` sibling **or** a `*.rgssad`/`*.rgss2a`/`*.rgss3a` archive (since 2026-09-16) | `rpgmaker_build` (since 2026-10-12): the RGSS library `Game.ini` names — its generation names the maker (XP, VX, VX Ace), its version is the library's. ~~`N/A` — one rule, the variant unnamed~~ |
 | RE Engine (Capcom) | `re_chunk_000.pak` sibling, the exact name (since 2026-09-23) | `N/A` |
 | FromSoftware | a `*.bhd` **and** a `*.bdt` sibling (since 2026-09-23) | `N/A` |
 | Ren'Py | `renpy/` dir **or** `*.rpa` | ~~`renpy/__init__` strings / `log.txt` first line~~ `N/A` *(corrected 2026-10-04: no extractor — `strings_regex` reads only the executable)* |
@@ -246,6 +246,67 @@ numbered release lines to report. A version the user typed is never overwritten 
 `2026.09.6` change the key, so every library entry is read again once; schema 0015 removes the bare `4`/`5` the old rule
 wrote, where detection wrote it.
 
+### Engine version — Unity, Godot, RPG Maker (beta.19, 2026-10-12, rules 2026.10.2)
+
+The owner asked for the version of RPG Maker, Unity and Godot games ("if possible"). What the rules gave: Unity's
+`pe_file_version` stored `UnityPlayer.dll`'s FileVersion string as it is (`2022.3.39.5118735`, the build number where the
+release letter belongs); Godot's `strings_regex` scanned the executable's first 8 MiB, and in both Godot exports on the
+owner's disk the `Godot Engine v…` string sits 57–78 MB in, so it never read one; both RPG Maker rules had `version: null`.
+**Measured before anything was written, read-only, on 23 installs** (`spike-notes` §17), and decided in code as Unreal's
+is — three extractor types that take no parameter (`unity_build`, `godot_build`, `rpgmaker_build`; the schema's enum),
+one second read by `StaticGameDetector` for the engine that matched, a decider in `Domain.Detection` and the witness in
+`games.engine_version_source`:
+
+| Engine | Witness, strongest first | Source id | On the owner's disk |
+|---|---|---|---|
+| Unity | `UnityPlayer.dll`'s ProductVersion is an editor version (`2022.3.39f1 (4e1b…)` → `2022.3.39f1`) | `unity_player` | 13 of 15 |
+| | the header of `<Game>_Data\globalgamemanagers` (first 256 bytes) names one | `unity_data` | A Space for the Unbound, 2019.4.1f1 |
+| | the library's numeric file version, MAJOR.MINOR.PATCH and no release letter — Unity's own binary, so the engine's, only shorter | `unity_player_file` | GIRLS' FRONTLINE 2 (data file encrypted), 2019.4.40 |
+| Godot | the 20-byte header of the data pack beside the executable (`<exe>.pck`, else the only `.pck` there): `GDPC`, format, MAJOR, MINOR, PATCH | `godot_pck` | both: 4.2.2, 4.4.1 |
+| | the same header of a pack appended to the executable, found through its 12-byte trailer (size + `GDPC`) | `godot_pck_embedded` | none (synthetic files only) |
+| | the executable's ProductVersion while its ProductName is still `Godot Engine` (a project that set its own carries the game's: 衔蝶 `0.1.0.3`) | `godot_exe` | — |
+| RPG Maker MV/MZ | line 2 of the core script: `js/rmmz_core.js` → MZ, `www/js/rpg_core.js` or `js/rpg_core.js` → MV (first 4 KiB) | `rpgmaker_mz_core`, `rpgmaker_mv_core` | MZ 1.10.0; MV 1.6.2, 1.6.2, 1.6.1 |
+| RPG Maker XP/VX/VX Ace | the RGSS library `Game.ini`'s `Library=` names: RGSS1 → XP, RGSS2 → VX, RGSS3 → VX Ace; its numeric version when it is its generation's, else the one its name carries (`RGSS301` → 3.0.1) | `rgss1_library`, `rgss2_library`, `rgss3_library` | VX Ace 3.0.1, twice |
+
+A Godot version leaves out a zero patch, as Godot names its releases (4.3, 4.2.2). The App names the maker from the
+witness — the two RPG Maker rules each cover several makers — and says that an RGSS number is the runtime library's, not
+the editor's: *RPG Maker MZ 1.10.0*, *RPG Maker VX Ace (RGSS 3.0.1)* (`Formats.Engine(id, source)`,
+`Formats.EngineWithVersion`); the game page's *Engine version* row says what each version was read from, and *Not found in
+the game's files* once the sweep has read a row of these engines and found none.
+
+**Where it is read.** Beside the row's executable first: `UnityPlayer.dll` (else the shallowest one the walk listed) and
+`<exe>_Data` (else a `*_Data` beside that player); `<exe>.pck`. RPG Maker's files are looked for beside the executable and
+up to two folders above it, as `RpgMakerTitle` already looked for a title — a launcher-fronted game keeps its runtime in
+a subfolder (A Doll's Locket's `css\`, HELLO, HELLO WORLD!'s `swiftshader\`); a `Library=` that points outside the ini's
+folder is named and not read. Version resources and at most a few kilobytes of any file; the whole detection of one entry
+measured 24 ms to 4.1 s on the owner's USB drive, nearly all of it the install's walk, once per executable and rules
+version. The Privacy Policy says so since 2.8 (§4).
+
+**What it is not.** RPG Maker 2000/2003 is not detected at all (no install to measure, no rule). XP and VX libraries are
+read by the VX Ace rule's reader unmeasured. A Unity build older than 2019 keeps its player in the executable (no
+`UnityPlayer.dll`): its data file's header is the only witness. Rules `2026.10.2` change the detection key, so every
+library entry is read again once; a Unity row keeps the old raw string only if none of its witnesses can be read now.
+
+### Engine version — Ren'Py (beta.20, 2026-10-12, rules 2026.10.3)
+
+The owner asked for the version of Ren'Py games once beta.19's were on screen. The `renpy` rule had no version extractor
+(`version: null`). Ren'Py ships its engine as Python beside the game's launcher, and `renpy/vc_version.py` names its
+release — `version = '8.5.0.25111603'`, beside `branch`, `nightly`, `official` and `version_name`. Measured 2026-10-12 on
+the owner's one Ren'Py install, Bound Between Desks (Steam): 109 bytes, and the game's own `log.txt` printed
+`Ren'Py 8.5.0.25111603` at its last start; the launcher carries no version resource (`spike-notes` §18).
+
+**What is read and how it is decided.** `renpy_build` (`RenPyBuildReader`): the first 4 KiB of `renpy/vc_version.py`
+beside the row's executable, its `version` line only (`version_name` is not it). `RenPyVersion.Decide` keeps
+MAJOR.MINOR.PATCH — Ren'Py names its releases by those three; the fourth is the build — and records `renpy_vc_version`.
+The page says *Ren'Py 8.5.0* and that it was read from the engine's version file; a Ren'Py row whose file names no
+version says *Not found in the game's files*. Through the shipped pipeline (`StaticGameDetector` over `GameFileProbe`)
+Bound Between Desks read `8.5.0` in 79 ms, and the Unity, Godot and RPG Maker installs read as before. The Privacy
+Policy names the file since 2.9 (§4). Rules `2026.10.3` change the detection key, so every library entry is read again
+once.
+
+**What it is not.** Nothing else is guessed from: a Ren'Py game whose `vc_version.py` names no version, or that ships its
+engine compiled only, reads as not found. One Ren'Py install was measured.
+
 ### Platform signatures & metadata
 
 | Platform | Signals | Metadata |
@@ -292,6 +353,29 @@ wrote, where detection wrote it.
 > **Privacy:** local files and registry keys the launchers already wrote, read-only; no process is touched, nothing
 > is fetched (CLAUDE.md rule 8's "opt-in store metadata" is the online lookup, which does not exist). First-run
 > step 4 now points at File ▸ Import library… rather than saying "later build".
+
+> **beta.19 (owner report 2026-10-12): a store's own pick can be a helper, and a launcher is not the game.** The owner's
+> A Doll's Locket - Remake (itch 5085165, RPG Maker MZ) was imported as `Dolls Locket\notification_helper.exe` — NW.js's
+> toast helper. The pick was **butler's verdict**, taken as is: butler stores a *filtered* verdict (the shallowest
+> candidates, minus those whose manifest asks for elevation) and does not rank what is left, and on that install the
+> 213 MB `DollsLocket.exe` launcher asks for administrator while the NW.js runtime sits a level deeper in `css\`, so the
+> helper was the whole verdict (read from the owner's `butler.db`, read-only). Three changes:
+> **(1)** a verdict candidate whose whole name is a runtime helper (`ExecutableLocator.RuntimeHelperNames`:
+> `notification_helper`, `crashpad_handler`, `UnityCrashHandler64/32`, `CrashReportClient`, NW.js's `nwjc` and
+> `chromedriver`) or that sits in a Unity plugin folder is skipped, and with nothing left the locator guesses and the
+> review marks the row *guessed* — whole names, because the locator's fragments are inside real games' names (`node` in
+> *Nodebuster*) and a store's pick is overruled only when it cannot be the game; the locator's `HelperFragments` gain the
+> same three NW.js names. **(2)** The locator ranks **an executable beside `nw.dll` + `package.json`** — the `rpgmaker_mv`
+> rule's own signal — as an NW.js runtime (owner decision D56), below the Unity and Unreal layouts (an NW.js folder can
+> be a tool shipped beside such a game) and above a name match (the launcher in front of the runtime is named after the
+> install): the install's guess is `css\Game.exe`, the process that draws, as D28 pointed HELLO, HELLO WORLD!'s entry at
+> its runtime by hand. That runtime starts elevated (its launcher asks for administrator), so it is measured with the
+> admin mode on (D34). **(3)** Discovery matches a store title to an entry by **platform + store id** as well as by
+> path: the entry an earlier import made at another executable is "already in the library" (the log names its path),
+> so a corrected guess never adds the same game a second time — that entry is re-pointed with Change executable…, and
+> nothing rewrites it by itself (D25/D27). Tests: `ExecutableLocatorTests.AnNwjsRuntimeBeatsTheLauncherNamedAfterTheInstallAndItsHelpersAreDropped`,
+> `StoreLibrarySourcesTests.ItchSkipsAVerdictCandidateThatIsARuntimeHelper` (the verdict as stored),
+> `LibraryImporterTests.AStoreTitleAlreadyInTheLibraryAtAnotherExecutableIsNotOfferedAgain`.
 
 **Publisher/version order:** store manifest → PE `CompanyName`/`ProductVersion` → *(opt-in)* Steam `appdetails` lookup, cached 7 days. *(Since beta.8 the PE versions are stored beside the store's rather than instead of it — §What the files say about themselves; the page labels a store's value with its store, "Steam build 20374416".)*
 

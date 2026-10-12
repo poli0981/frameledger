@@ -25,6 +25,9 @@ public sealed partial class GamesViewModel : ObservableObject
     private const string _listValue = "list";
     private const string _gridValue = "grid";
 
+    /// <summary>How many removed games one notice names; the rest are counted (<c>Games_Removed_More_Format</c>).</summary>
+    private const int _removedNamed = 5;
+
     private readonly GameLibrary _library;
     private readonly GameSelection _selection;
     private readonly IPageNavigator _navigator;
@@ -33,8 +36,13 @@ public sealed partial class GamesViewModel : ObservableObject
     private readonly RegisteredSettings? _settings;
     private readonly IAgentLink? _agent;
     private readonly LibraryChanges? _changes;
+    private readonly IMessageStrip? _strip;
+    private readonly TimeProvider _clock;
+    private readonly Func<string, bool> _exists;
     private readonly UiThread _ui = new();
+    private readonly List<string> _removed = [];
     private IReadOnlyList<GameCardViewModel> _all = [];
+    private int _reads;
     private bool _viewRead;
     private bool _attached;
 
@@ -58,8 +66,12 @@ public sealed partial class GamesViewModel : ObservableObject
     private bool _listView;
 
     public GamesViewModel(GameLibrary library, GameSelection selection, IPageNavigator navigator, AddGameFlow addGame, ImportLibraryFlow? import = null,
-        RegisteredSettings? settings = null, IAgentLink? agent = null, LibraryChanges? changes = null)
+        RegisteredSettings? settings = null, IAgentLink? agent = null, LibraryChanges? changes = null, IMessageStrip? strip = null, TimeProvider? clock = null,
+        Func<string, bool>? executableExists = null)
     {
+        _strip = strip;
+        _clock = clock ?? TimeProvider.System;
+        _exists = executableExists ?? GameLibrary.ExecutableExists;
         _library = library ?? throw new ArgumentNullException(nameof(library));
         _selection = selection ?? throw new ArgumentNullException(nameof(selection));
         _navigator = navigator ?? throw new ArgumentNullException(nameof(navigator));
@@ -89,6 +101,12 @@ public sealed partial class GamesViewModel : ObservableObject
 
     public static string ListText => Strings.Games_View_List;
 
+    /// <summary>
+    /// How long the page waits after the Agent says it removed a game (D55) for the rest of the same check before it reloads
+    /// and says what went (beta.19). One check removes its games a few milliseconds apart, each in its own event.
+    /// </summary>
+    public static TimeSpan RemovalSettle { get; } = TimeSpan.FromSeconds(1);
+
     /// <summary>The sort orders, labelled in the language this page opened in (beta.15: a static list kept the first language).</summary>
     public IReadOnlyList<Choice<GamesSort>> Sorts { get; } =
     [
@@ -102,14 +120,26 @@ public sealed partial class GamesViewModel : ObservableObject
     /// <summary>The load in flight, for a test to await.</summary>
     public Task Pending { get; private set; }
 
+    /// <summary>
+    /// The library read and listed. Reads overlap — a session that ends, an import, a removal — and the one that started first
+    /// can finish last, its checks waiting on a drive that is slow to answer: only the newest read is shown (beta.19 — an
+    /// older one put back the card of a game the Agent had just removed, until the next read).
+    /// </summary>
     public async Task LoadAsync(CancellationToken ct = default)
     {
+        int read = Interlocked.Increment(ref _reads);
         await ReadViewAsync(ct).ConfigureAwait(true);
         IReadOnlyList<GameCard> cards = await _library.ListCardsAsync(ct).ConfigureAwait(true);
         // Whether each executable is on disk is a file-system question per entry — a drive that is gone can take a moment
         // to say so — so it is asked off the UI thread, the game page's own way (GameLibrary.ExecutableExists).
-        bool[] installed = await Task.Run(() => cards.Select(static c => GameLibrary.ExecutableExists(c.Row.Fingerprint.ExePath)).ToArray(), ct)
+        Func<string, bool> exists = _exists;
+        bool[] installed = await Task.Run(() => cards.Select(c => exists(c.Row.Fingerprint.ExePath)).ToArray(), ct)
             .ConfigureAwait(true);
+        if (read != Volatile.Read(ref _reads))
+        {
+            return;
+        }
+
         _all = [.. cards.Select((c, i) => new GameCardViewModel(c, installed[i]))];
         HeaderText = string.Format(CultureInfo.CurrentCulture, Strings.Games_Header_Count_Format, _all.Count);
         Apply();
@@ -245,7 +275,41 @@ public sealed partial class GamesViewModel : ObservableObject
         {
             Pending = LoadAsync();
         }
+        else if (string.Equals(e.Envelope.Type, IpcMessageType.GameRemoved, StringComparison.Ordinal)
+                 && IpcCodec.Payload<GameRemovedEvent>(e.Envelope) is { } removed)
+        {
+            // D55 (beta.19): the Agent removed an entry whose game is no longer installed; the card goes, and the page says why.
+            // A check that removes five says it in five events: the first waits for the rest, then one reload and one notice.
+            _removed.Add(removed.GameName ?? removed.ExePath);
+            if (_removed.Count == 1)
+            {
+                Pending = SayRemovedAsync();
+            }
+        }
     });
+
+    /// <summary>
+    /// The games the Agent removed since the first of them, after <see cref="RemovalSettle"/>: the library read once, then one
+    /// notice — the game's name, or how many went and which. A removal heard during the read starts the next notice.
+    /// </summary>
+    private async Task SayRemovedAsync()
+    {
+        await Task.Delay(RemovalSettle, _clock).ConfigureAwait(true);
+        string[] names = [.. _removed];
+        _removed.Clear();
+        await LoadAsync().ConfigureAwait(true);
+        if (_strip is null)
+        {
+            return;
+        }
+
+        string listed = names.Length <= _removedNamed
+            ? string.Join(", ", names)
+            : string.Format(CultureInfo.CurrentCulture, Strings.Games_Removed_More_Format, string.Join(", ", names.Take(_removedNamed)), names.Length - _removedNamed);
+        _strip.Info(Strings.Games_Removed_Title, names.Length == 1
+            ? string.Format(CultureInfo.CurrentCulture, Strings.Games_Removed_Format, names[0])
+            : string.Format(CultureInfo.CurrentCulture, Strings.Games_Removed_Many_Format, names.Length, listed));
+    }
 
     private void OnLibraryChanged(object? sender, EventArgs e) => _ui.Post(() => Pending = LoadAsync());
 

@@ -107,12 +107,19 @@ public sealed class GameDetailViewModelTests
 
     private sealed class FakePicker(string? path) : IGamePicker
     {
-        public string? PickExecutable() => path;
+        /// <summary>The folder each pick was asked to open in.</summary>
+        public List<string?> Folders { get; } = [];
+
+        public string? PickExecutable(string? initialDirectory = null)
+        {
+            Folders.Add(initialDirectory);
+            return path;
+        }
     }
 
     private static async Task<(GameDetailViewModel Vm, FakeAgent Agent, FakePrompt Prompt, FakeNavigator Nav, FakeStrip Strip)> BuildAsync(
         ScratchLedger s, long gameId, RemoveGameChoice remove = RemoveGameChoice.Cancel, GameMetadata? edit = null, string? pick = null,
-        FakeAgent? withAgent = null, RegisteredSettings? settings = null, UiMode? mode = null)
+        FakeAgent? withAgent = null, RegisteredSettings? settings = null, UiMode? mode = null, FakePicker? picker = null)
     {
         FakeAgent agent = withAgent ?? new FakeAgent();
         var prompt = new FakePrompt();
@@ -121,7 +128,7 @@ public sealed class GameDetailViewModelTests
         var vm = new GameDetailViewModel(s.Library, new GameSelection { GameId = gameId }, new HookingConsent(agent, prompt), nav,
             new FakeConfirmations(remove), new FakeEdit(edit), strip, new NoSummaries(),
             new Charts.SessionSeriesLoader(s.Sessions), new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(),
-            new FakePicker(pick), settings, mode: mode);
+            picker ?? new FakePicker(pick), settings, mode: mode);
         Task pending = vm.Pending;
         await pending.ConfigureAwait(false);
         return (vm, agent, prompt, nav, strip);
@@ -613,7 +620,49 @@ public sealed class GameDetailViewModelTests
                 .And.Contain(new GameDetailRow("Engine version", Strings.GameDetail_EngineVersion_NotFound), "an Unreal title says its version was not found rather than nothing");
 
             (GameDetailViewModel gf2, _, _, _, _) = await BuildAsync(s, unity.Id);
-            gf2.Details.Should().NotContain(r => r.Label == "Engine version", "other engines add no line");
+            gf2.Details.Should().NotContain(r => r.Label == "Engine version", "a version an older rules file's extractor wrote names no witness");
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
+
+    /// <summary>
+    /// beta.19: a Unity, Godot or RPG Maker version says what it was read from, RPG Maker's witness names the maker in the
+    /// header, and such a title whose files named no version says so once the sweep has read it — Ren'Py's too since beta.20.
+    /// </summary>
+    [Fact]
+    public async Task TheDetailsCardSaysWhatAUnityGodotOrRpgMakerVersionWasReadFrom()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            ValueTask<int> SetAsync(long id, string engine, string? version, string? source) => s.Db.WriteAsync((c, tx, ct) => Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition(
+                "UPDATE games SET engine = @engine, engine_version = @version, engine_version_source = @source, exe_machine = 'x64' WHERE id = @id",
+                new { id, engine, version, source }, tx, cancellationToken: ct)), Ct);
+            (string Name, string Engine, string? Version, string? Source, string Subtitle, string Witness)[] cases =
+            [
+                ("A Doll's Locket - Remake", "rpgmaker_mv", "1.10.0", EngineVersionSource.RpgMakerMzCore, "RPG Maker MZ 1.10.0", "From the first lines of the game's js/rmmz_core.js."),
+                ("City of Bones", "rpgmaker_rgss", "3.0.1", EngineVersionSource.Rgss3Library, "RPG Maker VX Ace (RGSS 3.0.1)", Strings.GameDetail_EngineVersion_Rgss),
+                ("xiandie", "godot", "4.4.1", EngineVersionSource.GodotPack, "Godot 4.4.1", Strings.GameDetail_EngineVersion_GodotPack),
+                ("GF2", "unity", "2019.4.40", EngineVersionSource.UnityPlayerFile, "Unity 2019.4.40", Strings.GameDetail_EngineVersion_UnityPlayerFile),
+                ("Unread", "unity", null, null, "Unity", Strings.GameDetail_EngineVersion_NotFoundInFiles),
+                ("Bound Between Desks", "renpy", "8.5.0", EngineVersionSource.RenPyVcVersion, "Ren'Py 8.5.0", "From the version file of the game's Ren'Py engine (renpy/vc_version.py)."),
+                ("Older Novel", "renpy", null, null, "Ren'Py", Strings.GameDetail_EngineVersion_NotFoundInFiles),
+            ];
+            foreach ((string name, string engine, string? version, string? source, string subtitle, string witness) in cases)
+            {
+                GameRow row = await s.GameAsync(name);
+                await SetAsync(row.Id, engine, version, source);
+
+                (GameDetailViewModel vm, _, _, _, _) = await BuildAsync(s, row.Id);
+
+                vm.Subtitle.Should().EndWith(subtitle, name);
+                vm.Details.Should().Contain(new GameDetailRow("Engine version", witness), name);
+            }
         }
         finally
         {
@@ -812,6 +861,36 @@ public sealed class GameDetailViewModelTests
         finally
         {
             File.Delete(real);
+        }
+    }
+
+    /// <summary>
+    /// beta.19 (owner request 2026-10-12): the pick opens in the game's own root folder — a Steam install's folder under
+    /// <c>steamapps\common</c>, not the <c>bin\x64</c> the executable sits in, and not wherever the dialog was last.
+    /// </summary>
+    [Fact]
+    public async Task ChangingTheExecutableOpensThePickInTheGamesOwnFolder()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        string library = Path.Combine(Path.GetTempPath(), "fl-pick-" + Guid.NewGuid().ToString("N"));
+        string install = Path.Combine(library, "steamapps", "common", "Title");
+        Directory.CreateDirectory(Path.Combine(install, "bin", "x64"));
+        try
+        {
+            GameRow game = await s.GameAsync("Title", Infrastructure.Io.ExecutableIdentity.Normalise(Path.Combine(install, "bin", "x64", "Title.exe")));
+            var picker = new FakePicker(null);
+            (GameDetailViewModel vm, _, _, _, FakeStrip strip) = await BuildAsync(s, game.Id, picker: picker);
+
+            vm.ChangeExecutableCommand.Execute(null);
+            Task pending = vm.Pending;
+            await pending;
+
+            picker.Folders.Should().Equal([install], "the install root under steamapps\\common, not bin\\x64");
+            strip.Lines.Should().BeEmpty("a cancelled pick changes nothing");
+        }
+        finally
+        {
+            Directory.Delete(library, recursive: true);
         }
     }
 

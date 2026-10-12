@@ -59,8 +59,9 @@ public sealed class StaticGameDetector(IDetectionRulesSource rulesSource, IGameF
     }
 
     /// <summary>
-    /// The matched engine's version and its witness. Every extractor but one answers from the snapshot; Unreal's is the
-    /// second read (beta.10), made here for the one engine that matched rather than by the probe for every game.
+    /// The matched engine's version and its witness. The rules' own extractors answer from the snapshot; an engine whose
+    /// version is decided in code — Unreal since beta.10, Unity, Godot and RPG Maker since beta.19, Ren'Py since beta.20 — gets one second read,
+    /// made here for the one engine that matched rather than by the probe for every game.
     /// </summary>
     private async ValueTask<EngineVersionReading> VersionAsync(EngineMatch engine, GameFileSnapshot snapshot, CancellationToken ct)
     {
@@ -69,12 +70,20 @@ public sealed class StaticGameDetector(IDetectionRulesSource rulesSource, IGameF
             return EngineVersionReading.None;
         }
 
-        if (extractor.Type != VersionExtractorType.UnrealBuild)
+        switch (extractor.Type)
         {
-            return engine.Version is null ? EngineVersionReading.None : new EngineVersionReading(engine.Version, EngineVersionSource.Of(extractor.Type));
+            case VersionExtractorType.UnrealBuild:
+                return await _probe.ReadUnrealBuildAsync(snapshot, ct).ConfigureAwait(false) is { } unreal ? UnrealVersion.Decide(unreal) : EngineVersionReading.None;
+            case VersionExtractorType.UnityBuild:
+                return await _probe.ReadUnityBuildAsync(snapshot, ct).ConfigureAwait(false) is { } unity ? UnityVersion.Decide(unity) : EngineVersionReading.None;
+            case VersionExtractorType.GodotBuild:
+                return await _probe.ReadGodotBuildAsync(snapshot, ct).ConfigureAwait(false) is { } godot ? GodotVersion.Decide(godot) : EngineVersionReading.None;
+            case VersionExtractorType.RpgMakerBuild:
+                return await _probe.ReadRpgMakerBuildAsync(snapshot, ct).ConfigureAwait(false) is { } maker ? RpgMakerVersion.Decide(maker) : EngineVersionReading.None;
+            case VersionExtractorType.RenPyBuild:
+                return await _probe.ReadRenPyBuildAsync(snapshot, ct).ConfigureAwait(false) is { } renpy ? RenPyVersion.Decide(renpy) : EngineVersionReading.None;
+            default:
+                return engine.Version is null ? EngineVersionReading.None : new EngineVersionReading(engine.Version, EngineVersionSource.Of(extractor.Type));
         }
-
-        UnrealBuildFacts? facts = await _probe.ReadUnrealBuildAsync(snapshot, ct).ConfigureAwait(false);
-        return facts is null ? EngineVersionReading.None : UnrealVersion.Decide(facts);
     }
 }

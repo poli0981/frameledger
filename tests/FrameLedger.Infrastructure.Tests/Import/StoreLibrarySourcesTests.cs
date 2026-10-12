@@ -190,6 +190,35 @@ public sealed class StoreLibrarySourcesTests : IDisposable
         log.Should().ContainSingle().Which.Should().Contain("butler.db read: 1 location(s), 4 cave(s), 4 title(s)").And.Contain("1 receipt(s), 1 new", "only the apps folder is scanned for receipts; the one beside a cave elsewhere is read for its title, not counted here");
     }
 
+    /// <summary>
+    /// beta.19: butler's verdict for A Doll's Locket - Remake (game 5085165), as it is stored on the owner's machine — one
+    /// candidate, NW.js's toast helper, because butler keeps the shallowest candidates and drops the launcher that asks
+    /// for elevation. A helper is no game whoever names it: the row leaves the guess to the locator, and a verdict with a
+    /// real candidate after a helper still names that one.
+    /// </summary>
+    [Fact]
+    public async Task ItchSkipsAVerdictCandidateThatIsARuntimeHelper()
+    {
+        string itch = Sub("itch");
+        string location = Sub("it");
+        string dolls = Sub("it", "a-dolls-locket-remake", "Dolls Locket");
+        await File.WriteAllBytesAsync(Path.Combine(dolls, "notification_helper.exe"), new byte[10], Ct);
+        string other = Sub("it", "other-game");
+        await WriteButlerAsync(Path.Combine(itch, "db", "butler.db"), location, [
+            (5085165, "a-dolls-locket-remake", "", "A Doll's Locket - Remake",
+                "{\"basePath\":\"x\",\"candidates\":[{\"path\":\"Dolls Locket/notification_helper.exe\",\"depth\":2,\"flavor\":\"windows\",\"arch\":\"amd64\",\"size\":919552,\"windowsInfo\":{\"gui\":true}}]}"),
+            (42, "other-game", "", "Other Game",
+                "{\"candidates\":[{\"path\":\"crashpad_handler.exe\",\"flavor\":\"windows\"},{\"path\":\"Other.exe\",\"flavor\":\"windows\"}]}"),
+        ]);
+        List<string> log = [];
+
+        IReadOnlyList<StoreGame> games = await new ItchLibrarySource(itch, log.Add).ListAsync(Ct);
+
+        games.Single(g => string.Equals(g.StoreId, "5085165", StringComparison.Ordinal)).ExePath.Should().BeNull("the only candidate is a helper, so the locator guesses");
+        games.Single(g => string.Equals(g.StoreId, "42", StringComparison.Ordinal)).ExePath.Should().Be(Path.Combine(other, "Other.exe"), "the first candidate that is not a helper");
+        log.Should().ContainSingle().Which.Should().Contain("named only a helper for A Doll's Locket - Remake").And.NotContain("Other Game");
+    }
+
     [Fact]
     public async Task ItchWithoutADatabaseOrWithAnUnreadableOneStillReadsReceipts()
     {

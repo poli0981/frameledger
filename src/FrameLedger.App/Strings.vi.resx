@@ -1519,6 +1519,27 @@
   <data name="Settings_Data_Header" xml:space="preserve">
     <value>Dữ liệu</value>
   </data>
+  <data name="Settings_RemoveUninstalled_Label" xml:space="preserve">
+    <value>Xoá game đã gỡ cài đặt</value>
+  </data>
+  <data name="Settings_RemoveUninstalled_Body" xml:space="preserve">
+    <value>Game có file thực thi đã biến mất mười phút, trên ổ đĩa vẫn đang cắm, sẽ được xoá khỏi thư viện — chỉ khi game chưa có phiên nào, và không bao giờ xoá game đã phát hiện anti-cheat. Khi tắt, game vẫn ở lại với nhãn Chưa cài.</value>
+  </data>
+  <data name="Settings_RemoveUninstalled_Applied" xml:space="preserve">
+    <value>Đã áp dụng. Capture agent đọc trong vòng 15 giây.</value>
+  </data>
+  <data name="Games_Removed_Title" xml:space="preserve">
+    <value>Đã xoá khỏi thư viện</value>
+  </data>
+  <data name="Games_Removed_Format" xml:space="preserve">
+    <value>{0} không còn được cài đặt và chưa có phiên nào, nên capture agent đã xoá nó. Tắt việc này trong Cài đặt ▸ Dữ liệu.</value>
+  </data>
+  <data name="Games_Removed_Many_Format" xml:space="preserve">
+    <value>{0} game không còn được cài đặt và chưa có phiên nào, nên capture agent đã xoá chúng: {1}. Tắt việc này trong Cài đặt ▸ Dữ liệu.</value>
+  </data>
+  <data name="Games_Removed_More_Format" xml:space="preserve">
+    <value>{0} và {1} game khác</value>
+  </data>
   <data name="Settings_DeleteSessions_Label" xml:space="preserve">
     <value>Xoá mọi phiên</value>
   </data>
@@ -2195,6 +2216,36 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   </data>
   <data name="GameDetail_EngineVersion_NotFound" xml:space="preserve">
     <value>Không tìm thấy trong file thực thi của game. File có thể đã bị nén hoặc bảo vệ, hoặc studio đã đổi tên bản dựng của engine.</value>
+  </data>
+  <data name="GameDetail_EngineVersion_UnityPlayer" xml:space="preserve">
+    <value>Lấy từ phiên bản thư viện Unity player của game (UnityPlayer.dll).</value>
+  </data>
+  <data name="GameDetail_EngineVersion_UnityData" xml:space="preserve">
+    <value>Lấy từ phần đầu file dữ liệu Unity của game (globalgamemanagers).</value>
+  </data>
+  <data name="GameDetail_EngineVersion_UnityPlayerFile" xml:space="preserve">
+    <value>Chỉ lấy từ số phiên bản của thư viện Unity player. Chữ cái của bản phát hành (như f1) không được ghi ở đó.</value>
+  </data>
+  <data name="GameDetail_EngineVersion_GodotPack" xml:space="preserve">
+    <value>Lấy từ phần đầu gói dữ liệu Godot của game (.pck).</value>
+  </data>
+  <data name="GameDetail_EngineVersion_GodotPackEmbedded" xml:space="preserve">
+    <value>Lấy từ phần đầu gói dữ liệu Godot nằm trong file thực thi của game.</value>
+  </data>
+  <data name="GameDetail_EngineVersion_GodotExe" xml:space="preserve">
+    <value>Lấy từ thông tin phiên bản mà Godot để lại trong file thực thi của game.</value>
+  </data>
+  <data name="GameDetail_EngineVersion_CoreScript_Format" xml:space="preserve">
+    <value>Lấy từ những dòng đầu của {0} trong game.</value>
+  </data>
+  <data name="GameDetail_EngineVersion_Rgss" xml:space="preserve">
+    <value>Lấy từ thư viện runtime RPG Maker (RGSS) mà file Game.ini của game chỉ định. Đây là số phiên bản của thư viện, không phải của trình biên tập.</value>
+  </data>
+  <data name="GameDetail_EngineVersion_RenPyVcVersion" xml:space="preserve">
+    <value>Lấy từ file phiên bản của engine Ren'Py trong game (renpy/vc_version.py).</value>
+  </data>
+  <data name="GameDetail_EngineVersion_NotFoundInFiles" xml:space="preserve">
+    <value>Không tìm thấy trong các file của game.</value>
   </data>
   <data name="GameDetail_Details_Libraries" xml:space="preserve">
     <value>Đi kèm</value>

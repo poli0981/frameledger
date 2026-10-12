@@ -59,7 +59,9 @@ stopped, hooking turned off — each with one button that only says you have rea
 
 - **Search games**; sort by **Name**, **Last played** or **Playtime**; **Show as a list** or **Show as a grid**.
 - **Refresh** reads your library again: it offers games newly installed through a store, and marks a game whose `.exe`
-  is gone as *Not installed*.
+  is gone as *Not installed*. The agent removes such a game by itself after ten minutes when it has no sessions and its
+  drive is connected — never one where anti-cheat was found (**Settings ▸ Data ▸ Remove uninstalled games** turns this
+  off).
 - **Add game…** — or drop `.exe` files onto the page.
 - Each game shows its name, its store and engine, and one state: **Hooking on**, **Hooking off**, **Anti-cheat** (found,
   so it is not hooked), **Exception** (a user-mode exception is in force) or **Not recorded**; then its sessions,
@@ -69,8 +71,8 @@ stopped, hooking turned off — each with one button that only says you have rea
 
 - **At the top:** the name, publisher, version, store and engine, the `.exe` path, the last session, the last measured
   session's frame rate and its ray-tracing chips. **Edit…** changes the name, publisher, version and notes. **Change
-  executable…** points the entry at another `.exe` and turns hooking back off. **Remove…** asks whether to keep the
-  game's sessions.
+  executable…** points the entry at another `.exe` and turns hooking back off; its file dialog opens in the game's own
+  folder. **Remove…** asks whether to keep the game's sessions.
 - **Recording** — off, FrameLedger ignores the program completely: for a launcher or a tool that is not a game.
 - **Hooking** — on, the game is measured. A warning comes first, and you type `I ACCEPT THE INJECTION RISK` to go on.
   Read [Anti-cheat and safety](04-anti-cheat-and-safety.md) before you do.
