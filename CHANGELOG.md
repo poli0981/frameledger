@@ -28,6 +28,14 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+## [0.1.0-beta.20] - 2026-10-12
+
+**The twentieth pre-release: the engine version of Ren'Py games.** The same unsigned installer: verify its hash against
+`SHA256SUMS.txt`, then *More info → Run anyway*.
+
+**Updating from `0.1.0-beta.19`:** Help ▸ Check for updates, then *Restart to update* with no game running. The Privacy
+Policy (2.9) is shown once for you to accept. Every game is read once more for its engine (detection rules `2026.10.3`).
+
 ### Added
 
 - **The engine version of Ren'Py games**, as Unity's, Godot's and RPG Maker's have been shown since beta.19 — on the game's

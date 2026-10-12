@@ -2123,7 +2123,7 @@ blends into the background in dark mode").
 
 **Owner-only, added to the list below:** item 14.
 
-## **START HERE** — 2026-10-12, 0.1.0-beta.19: the import's helper, the folder Change executable opens in, three engines' versions, uninstalled games
+## ~~**START HERE**~~ — 2026-10-12, 0.1.0-beta.19: the import's helper, the folder Change executable opens in, three engines' versions, uninstalled games *(struck 2026-10-12: the head is §beta.20 below)*
 
 *Status is `CHANGELOG.md` `[0.1.0-beta.19]`; this is what no other file carries. The owner's list (2026-10-12, four items):
 *Change executable…* opens in the game's root folder; the version of RPG Maker, Unity and Godot games; A Doll's Locket -
@@ -2194,6 +2194,26 @@ then the release.*
 a Ren'Py game's engine version from `renpy/vc_version.py` (rules `2026.10.3`, Privacy Policy 2.9 — the Legal Gate shows it
 once at the next update; `05_DETECTION` §Engine version — Ren'Py) and strikes item 15. Merged for the next pre-release;
 no release was asked for.
+
+## **START HERE** — 2026-10-12, 0.1.0-beta.20: the engine version of Ren'Py games
+
+*Status is `CHANGELOG.md` `[0.1.0-beta.20]`; this is what no other file carries.* The owner, the same evening as beta.19 and
+after confirming it on real hardware: "tiếp tục với 1 pr kèm với detect version game dùng ren'py", then "tung bản beta20
+rồi đóng phiên hẳn". One PR — #299, a Ren'Py game's version from the engine's own `renpy/vc_version.py` (rules
+`2026.10.3`, Privacy Policy 2.9, item 15 struck) — then the release.
+
+**Decisions:** none new. The Privacy Policy 2.9 wording — one item added to §4's list, "the version file of a Ren'Py
+game's engine" — was shown to the owner with #299 and released on their word.
+
+**Traps met on the way:**
+
+- **`keyboxd` can fail with "Input/output error" while the key is unlocked**: `gpgconf --kill keyboxd` alone brings it
+  back on the next use; killing `gpg-agent` would drop the cached passphrase and wait on a pinentry.
+- **A test run still seeds the owner's live rules** (§beta.19's trap): rules `2026.10.3` cannot be parsed by an installed
+  beta.19, so the owner's `detection-rules.json` and `.seeded` were copied aside before each local gate and back after.
+- **Loop a test class you touched before the merge** (§beta.19): `GamesViewModelTests` then ran 340 times green after #297.
+
+**Owner-only, added to the list below:** item 16.
 
 ## Owner-only — no PR can close these
 
@@ -2311,6 +2331,10 @@ no release was asked for.
    together are said in one notice that names both; with the USB drive unplugged nothing is removed; *Remove uninstalled
    games* off keeps it. (e) The Legal Gate shows the Privacy Policy 2.8
    once. (f) The `ja` strings marked `review`.
+16. **beta.20 on real hardware.** (a) **Bound Between Desks:** its page reads *Ren'Py 8.5.0*, and its *Engine version*
+   line says it was read from the engine's version file (`renpy/vc_version.py`); the first sweep after the update reads
+   every game once more (rules `2026.10.3`). (b) The Legal Gate shows the Privacy Policy 2.9 once. (c) The `ja` string
+   marked `review` (`GameDetail_EngineVersion_RenPyVcVersion`).
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
