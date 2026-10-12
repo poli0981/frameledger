@@ -47,8 +47,10 @@ CREATE TABLE games (
   store_id TEXT,
   engine TEXT, engine_version TEXT,
   -- (schema 0015, ALTERed last) engine_version_source TEXT: where engine_version came from — a
-  --   Domain.Detection.EngineVersionSource id (unreal_branch_file | unreal_branch | unreal_file_version, or the rule's
-  --   extractor type); NULL for a version the user typed. Written with the version only (05_DETECTION §Engine version)
+  --   Domain.Detection.EngineVersionSource id (unreal_branch_file | unreal_branch | unreal_file_version; since beta.19
+  --   unity_player | unity_data | unity_player_file | godot_pck | godot_pck_embedded | godot_exe | rpgmaker_mz_core |
+  --   rpgmaker_mv_core | rgss1_library | rgss2_library | rgss3_library — the RPG Maker ids also name the maker; or the
+  --   rule's extractor type); NULL for a version the user typed. Written with the version only (05_DETECTION §Engine version)
   publisher TEXT, game_version TEXT,
   cover_path TEXT, notes TEXT,
   removed_at INTEGER,                          -- schema 0002 (P3 PR-3): FR-1.4 "remove, keep sessions" — the row stays

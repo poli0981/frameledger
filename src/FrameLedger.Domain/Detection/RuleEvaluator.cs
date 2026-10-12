@@ -232,8 +232,10 @@ public sealed class RuleEvaluator
                 ? v
                 : null,
             // Not answerable from the snapshot: StaticGameDetector reads the engine's build facts for the one engine
-            // that matched (beta.10) — a scan the probe must not make for every game in the library.
-            VersionExtractorType.UnrealBuild => null,
+            // that matched (beta.10; Unity, Godot and RPG Maker since beta.19) — reads the probe must not make for every
+            // game in the library.
+            VersionExtractorType.UnrealBuild or VersionExtractorType.UnityBuild or VersionExtractorType.GodotBuild
+                or VersionExtractorType.RpgMakerBuild => null,
             _ => null,
         };
     }

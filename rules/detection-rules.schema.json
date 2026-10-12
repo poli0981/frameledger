@@ -198,12 +198,12 @@
             }
           },
           {
-            "$comment": "beta.10: Unreal Engine's build facts (the shipping executable's numeric file version and the engine's branch name inside it), decided in code (Domain.Detection.UnrealVersion) rather than by a pattern - which is why it takes no parameter.",
+            "$comment": "beta.10: Unreal Engine's build facts (the shipping executable's numeric file version and the engine's branch name inside it), decided in code (Domain.Detection.UnrealVersion) rather than by a pattern - which is why it takes no parameter. beta.19 adds Unity's (the player library's version resource, the data file's header), Godot's (a data pack's header, the executable's version resource) and RPG Maker's (MV/MZ's core-script header, the RGSS library Game.ini names), decided by UnityVersion, GodotVersion and RpgMakerVersion.",
             "type": "object",
             "additionalProperties": false,
             "required": ["type"],
             "properties": {
-              "type": { "const": "unreal_build" }
+              "type": { "enum": ["unreal_build", "unity_build", "godot_build", "rpgmaker_build"] }
             }
           }
         ]

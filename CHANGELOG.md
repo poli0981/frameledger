@@ -28,6 +28,19 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **The engine version of Unity, Godot and RPG Maker games**, as Unreal Engine's has been shown since beta.10 — on the game's
+  page with what it was read from, and the maker on the library card too: *Unity 2022.3.39f1* (from the player library,
+  else its data file; a game whose data file is encrypted reads without the release letter, *2019.4.40*), *Godot 4.4.1*
+  (from its data pack), *RPG Maker MZ 1.10.0* and *MV 1.6.2* (from the core script), *RPG Maker VX Ace (RGSS 3.0.1)*
+  (from the runtime library its `Game.ini` names — that number is the library's, not the editor's). A Unity version used
+  to read as its library's build number (`2022.3.39.5118735`), and a Godot one was never found. Every game is read once
+  more after the update (detection rules `2026.10.2`). RPG Maker 2000/2003 is not recognised (`docs/05_DETECTION.md`
+  §Engine version — Unity, Godot, RPG Maker).
+- **The Privacy Policy (version 2.8)** names the files those versions are read from, and two that were already read and
+  never named (Unity's player library and an RPG Maker game's title); it is shown once for you to accept.
+
 ### Changed
 
 - **Change executable… opens in the game's own folder** — the install folder a store made (`steamapps\common\<game>`
