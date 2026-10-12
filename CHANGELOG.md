@@ -28,6 +28,18 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+## [0.1.0-beta.19] - 2026-10-12
+
+**The nineteenth pre-release: an imported game that is its own runtime and not a helper, Change executable… in the game's
+folder, the engine version of Unity, Godot and RPG Maker games, and games you uninstalled leaving the library by
+themselves.** The same unsigned installer: verify its hash against `SHA256SUMS.txt`, then *More info → Run anyway*.
+
+**Updating from `0.1.0-beta.18`:** Help ▸ Check for updates, then *Restart to update* with no game running. The Privacy
+Policy (2.8) is shown once for you to accept. Every game is read once more for its engine (detection rules `2026.10.2`).
+The agent removes the entries of games you uninstalled that have no sessions, about ten minutes after it sees them gone —
+turn **Settings ▸ Data ▸ Remove uninstalled games** off first if you want them kept. An entry an earlier import made for a
+helper is not changed: re-point it with *Change executable…*.
+
 ### Added
 
 - **The engine version of Unity, Godot and RPG Maker games**, as Unreal Engine's has been shown since beta.10 — on the game's
