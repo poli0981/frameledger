@@ -520,6 +520,8 @@ public static class Strings
         nameof(Games_Refresh),
         nameof(Games_Refresh_ToolTip),
         nameof(Games_Removed_Format),
+        nameof(Games_Removed_Many_Format),
+        nameof(Games_Removed_More_Format),
         nameof(Games_Removed_Title),
         nameof(Games_Search_Placeholder),
         nameof(Games_Sort_Label),
@@ -2055,6 +2057,10 @@ public static class Strings
     public static string Games_Refresh_ToolTip => ResourceManager.GetString(nameof(Games_Refresh_ToolTip), Culture) ?? nameof(Games_Refresh_ToolTip);
 
     public static string Games_Removed_Format => ResourceManager.GetString(nameof(Games_Removed_Format), Culture) ?? nameof(Games_Removed_Format);
+
+    public static string Games_Removed_Many_Format => ResourceManager.GetString(nameof(Games_Removed_Many_Format), Culture) ?? nameof(Games_Removed_Many_Format);
+
+    public static string Games_Removed_More_Format => ResourceManager.GetString(nameof(Games_Removed_More_Format), Culture) ?? nameof(Games_Removed_More_Format);
 
     public static string Games_Removed_Title => ResourceManager.GetString(nameof(Games_Removed_Title), Culture) ?? nameof(Games_Removed_Title);
 
