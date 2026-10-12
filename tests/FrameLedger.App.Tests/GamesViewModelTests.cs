@@ -103,9 +103,44 @@ public sealed class GamesViewModelTests
         public void Warn(string title, string body) => Lines.Add(title + ": " + body);
     }
 
+    /// <summary>A clock whose timers fire when the test says so (beta.19): the page's wait for the rest of a check, held.</summary>
+    private sealed class HeldTimers : TimeProvider
+    {
+        private readonly List<(TimerCallback Callback, object? State)> _due = [];
+
+        public int Waiting => _due.Count;
+
+        public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
+        {
+            _due.Add((callback, state));
+            return new Held();
+        }
+
+        public void Fire()
+        {
+            (TimerCallback Callback, object? State)[] due = [.. _due];
+            _due.Clear();
+            foreach ((TimerCallback callback, object? state) in due)
+            {
+                callback(state);
+            }
+        }
+
+        private sealed class Held : ITimer
+        {
+            public bool Change(TimeSpan dueTime, TimeSpan period) => true;
+
+            public void Dispose()
+            {
+            }
+
+            public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        }
+    }
+
     /// <summary>
-    /// beta.19, D55: the Agent removed an entry whose game is no longer installed — the page on screen drops its card at once
-    /// and says why, in words that name the switch that turns it off.
+    /// beta.19, D55: the Agent removed an entry whose game is no longer installed — the page on screen drops its card and says
+    /// why, in words that name the switch that turns it off, once it has waited a moment for the rest of the same check.
     /// </summary>
     [Fact]
     public async Task AnEntryTheAgentRemovedLeavesThePageOnScreenWithAWord()
@@ -121,7 +156,8 @@ public sealed class GamesViewModelTests
             var nav = new NoNavigation();
             var link = new FakeAgentLink();
             var strip = new RecordingStrip();
-            var vm = new GamesViewModel(s.Library, selection, nav, new AddGameFlow(s.Library, new NoPicker(), selection, nav, new NoStrip()), agent: link, strip: strip);
+            var clock = new HeldTimers();
+            var vm = new GamesViewModel(s.Library, selection, nav, new AddGameFlow(s.Library, new NoPicker(), selection, nav, new NoStrip()), agent: link, strip: strip, clock: clock);
             Task loaded = vm.Pending;
             await loaded;
             vm.Attach();
@@ -129,11 +165,77 @@ public sealed class GamesViewModelTests
             // What the Agent did, then said.
             await s.Db.WriteAsync((c, tx, ct) => Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition("DELETE FROM games WHERE id = @id", new { id = gone.Id }, tx, cancellationToken: ct)), Ct);
             link.Raise(IpcMessageType.GameRemoved, new GameRemovedEvent(gone.Id, "Gone", gone.Fingerprint.ExePath, GameRemovedEvent.Uninstalled));
-            Task reloaded = vm.Pending;
-            await reloaded;
+            Task said = vm.Pending;
+            strip.Lines.Should().BeEmpty("the page waits a moment for the rest of the same check");
+            clock.Fire();
+            await said;
 
             vm.Games.Should().ContainSingle().Which.Name.Should().Be("Kept");
             strip.Lines.Should().ContainSingle().Which.Should().StartWith("Removed from the library: Gone is no longer installed").And.Contain("Settings ▸ Data");
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
+
+    /// <summary>
+    /// beta.19: a check that removes several entries says each in its own event, milliseconds apart. The page read the library
+    /// and spoke once per event, and the shell's one snackbar kept only the last name; it now waits once, reads the library
+    /// once and says them all in one notice — the count, and five names at most.
+    /// </summary>
+    [Fact]
+    public async Task OneCheckThatRemovesSeveralEntriesIsSaidOnceAfterOneRead()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow[] gone = [await s.GameAsync("Alpha"), await s.GameAsync("Bravo"), await s.GameAsync("Charlie")];
+            _ = await s.GameAsync("Kept");
+            var selection = new GameSelection();
+            var nav = new NoNavigation();
+            var link = new FakeAgentLink();
+            var strip = new RecordingStrip();
+            var clock = new HeldTimers();
+            var vm = new GamesViewModel(s.Library, selection, nav, new AddGameFlow(s.Library, new NoPicker(), selection, nav, new NoStrip()), agent: link, strip: strip, clock: clock);
+            Task loaded = vm.Pending;
+            await loaded;
+            vm.Attach();
+
+            foreach (GameRow row in gone)
+            {
+                await s.Db.WriteAsync((c, tx, ct) => Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition("DELETE FROM games WHERE id = @id", new { id = row.Id }, tx, cancellationToken: ct)), Ct);
+            }
+
+            foreach (GameRow row in gone)
+            {
+                link.Raise(IpcMessageType.GameRemoved, new GameRemovedEvent(row.Id, row.Name, row.Fingerprint.ExePath, GameRemovedEvent.Uninstalled));
+            }
+
+            Task said = vm.Pending;
+            clock.Waiting.Should().Be(1, "one wait for the whole check, not one per entry");
+            clock.Fire();
+            await said;
+
+            vm.Games.Should().ContainSingle().Which.Name.Should().Be("Kept");
+            strip.Lines.Should().ContainSingle().Which.Should().Be("Removed from the library: 3 games are no longer installed and had no sessions, so the capture "
+                + "agent removed them: Alpha, Bravo, Charlie. Settings ▸ Data turns this off.");
+
+            // Six in one check: the count, five names and how many more.
+            for (int i = 1; i <= 6; i++)
+            {
+                link.Raise(IpcMessageType.GameRemoved, new GameRemovedEvent(1000 + i, "G" + i.ToString(CultureInfo.InvariantCulture), @"Q:\G\g.exe", GameRemovedEvent.Uninstalled));
+            }
+
+            Task again = vm.Pending;
+            clock.Waiting.Should().Be(1);
+            clock.Fire();
+            await again;
+
+            strip.Lines.Should().HaveCount(2);
+            strip.Lines[^1].Should().Contain("6 games").And.Contain(": G1, G2, G3, G4, G5 and 1 more. ").And.NotContain("G6");
         }
         finally
         {
@@ -156,12 +258,63 @@ public sealed class GamesViewModelTests
         await using ScratchLedger s2 = await ScratchLedger.OpenAsync();
         var listed = new GamesViewModel(s2.Library, new GameSelection(), new NoNavigation(),
             new AddGameFlow(s2.Library, new NoPicker(), new GameSelection(), new NoNavigation(), new NoStrip()));
+        Task opened = listed.Pending;
+        await opened;    // the page's own first read, of an empty library, before the games below are added
         string here = typeof(GamesViewModelTests).Assembly.Location;
         _ = await s2.GameAsync("Here", here);
         _ = await s2.GameAsync("Gone", Path.Combine(AppContext.BaseDirectory, "no-such-game.exe"));
         await listed.LoadAsync(Ct);
         listed.Games.Single(static g => string.Equals(g.Name, "Here", StringComparison.Ordinal)).NotInstalled.Should().BeFalse();
         listed.Games.Single(static g => string.Equals(g.Name, "Gone", StringComparison.Ordinal)).NotInstalled.Should().BeTrue();
+    }
+
+    /// <summary>
+    /// beta.19: reads of the library overlap, and the one that started first can finish last — its checks waiting on a drive
+    /// that is slow to answer. It used to be shown over the newer one: a game the Agent had just removed came back until the
+    /// next read. One local run in about 165 failed <see cref="ACardSaysWhetherItsExecutableIsThereAndWhy"/> that way, its
+    /// own two reads racing.
+    /// </summary>
+    [Fact]
+    public async Task AnOlderReadThatFinishesLastIsNotShownOverANewerOne()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        _ = await s.GameAsync("Alpha");
+        var bound = TimeSpan.FromSeconds(30);
+        using var firstBegan = new ManualResetEventSlim();
+        using var firstMayEnd = new ManualResetEventSlim();
+        int checks = 0;
+        bool Exists(string path)
+        {
+            if (Interlocked.Increment(ref checks) == 1)
+            {
+                // The first read's check waits, as on a drive that is slow to answer.
+                firstBegan.Set();
+                _ = firstMayEnd.Wait(bound, Ct);
+            }
+
+            return true;
+        }
+
+        var selection = new GameSelection();
+        var nav = new NoNavigation();
+        var vm = new GamesViewModel(s.Library, selection, nav, new AddGameFlow(s.Library, new NoPicker(), selection, nav, new NoStrip()), executableExists: Exists);
+        Task first = vm.Pending;
+        try
+        {
+            // Only once the first read is held in its check does the second begin: its checks are then never the held one.
+            firstBegan.Wait(bound, Ct).Should().BeTrue("the page's first read checks its one game");
+            _ = await s.GameAsync("Bravo");
+            await vm.LoadAsync(Ct);
+            vm.Games.Should().HaveCount(2, "the newer read lists both");
+        }
+        finally
+        {
+            firstMayEnd.Set();
+        }
+
+        await first;
+        vm.Games.Should().HaveCount(2, "the older read, of one game, finished last and is not shown");
+        vm.HeaderText.Should().EndWith("2");
     }
 
     [Theory]

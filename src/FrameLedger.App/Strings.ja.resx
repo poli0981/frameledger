@@ -2045,6 +2045,14 @@
     <value>{0} はインストールされておらずセッションもないため、キャプチャエージェントが削除しました。「設定 ▸ データ」でオフにできます。</value>
     <comment>review</comment>
   </data>
+  <data name="Games_Removed_Many_Format" xml:space="preserve">
+    <value>{0} 本のゲームはインストールされておらずセッションもないため、キャプチャエージェントが削除しました: {1}。「設定 ▸ データ」でオフにできます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Removed_More_Format" xml:space="preserve">
+    <value>{0} ほか {1} 本</value>
+    <comment>review</comment>
+  </data>
   <data name="Settings_DeleteSessions_Label" xml:space="preserve">
     <value>すべてのセッションを削除</value>
     <comment>review</comment>

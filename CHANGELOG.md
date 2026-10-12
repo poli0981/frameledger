@@ -43,8 +43,8 @@ numeric core and does not move; the heading is the full version — corrected 20
 - **A game you uninstalled leaves the library by itself** when it has no sessions: the agent removes an entry whose `.exe`
   has been gone for ten minutes, if its drive is connected and the folder it was installed in is still there — an
   unplugged or re-lettered drive never counts — and never one where anti-cheat was found. A game with sessions stays, with
-  them, and reads *Not installed* as before. The Games page says so when it happens; **Settings ▸ Data ▸ Remove uninstalled
-  games** turns it off (`docs/02_SPEC.md` FR-1.8).
+  them, and reads *Not installed* as before. The Games page says so when it happens — once, naming them, for all the games
+  one check removes; **Settings ▸ Data ▸ Remove uninstalled games** turns it off (`docs/02_SPEC.md` FR-1.8).
 
 ### Changed
 
@@ -63,6 +63,8 @@ numeric core and does not move; the heading is the full version — corrected 20
   that draws (`css\Game.exe` there; its launcher asks for administrator, so it is measured with *Run the agent as
   administrator* on). The import also no longer offers a store's game again when the library has it at another
   executable: an entry already there is re-pointed with *Change executable…* (`docs/05_DETECTION.md` §Library import).
+- **The Games page shows its newest read of the library.** When two reads overlapped — a session ending while an import
+  added games — the one that started first could finish last and be shown, an older list until the next read.
 
 ## [0.1.0-beta.18] - 2026-10-07
 

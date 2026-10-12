@@ -1534,6 +1534,12 @@
   <data name="Games_Removed_Format" xml:space="preserve">
     <value>{0} không còn được cài đặt và chưa có phiên nào, nên capture agent đã xoá nó. Tắt việc này trong Cài đặt ▸ Dữ liệu.</value>
   </data>
+  <data name="Games_Removed_Many_Format" xml:space="preserve">
+    <value>{0} game không còn được cài đặt và chưa có phiên nào, nên capture agent đã xoá chúng: {1}. Tắt việc này trong Cài đặt ▸ Dữ liệu.</value>
+  </data>
+  <data name="Games_Removed_More_Format" xml:space="preserve">
+    <value>{0} và {1} game khác</value>
+  </data>
   <data name="Settings_DeleteSessions_Label" xml:space="preserve">
     <value>Xoá mọi phiên</value>
   </data>
