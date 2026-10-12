@@ -453,6 +453,7 @@ public static class Strings
         nameof(GameDetail_EngineVersion_GodotPackEmbedded),
         nameof(GameDetail_EngineVersion_NotFound),
         nameof(GameDetail_EngineVersion_NotFoundInFiles),
+        nameof(GameDetail_EngineVersion_RenPyVcVersion),
         nameof(GameDetail_EngineVersion_Rgss),
         nameof(GameDetail_EngineVersion_UnityData),
         nameof(GameDetail_EngineVersion_UnityPlayer),
@@ -1923,6 +1924,8 @@ public static class Strings
     public static string GameDetail_EngineVersion_NotFound => ResourceManager.GetString(nameof(GameDetail_EngineVersion_NotFound), Culture) ?? nameof(GameDetail_EngineVersion_NotFound);
 
     public static string GameDetail_EngineVersion_NotFoundInFiles => ResourceManager.GetString(nameof(GameDetail_EngineVersion_NotFoundInFiles), Culture) ?? nameof(GameDetail_EngineVersion_NotFoundInFiles);
+
+    public static string GameDetail_EngineVersion_RenPyVcVersion => ResourceManager.GetString(nameof(GameDetail_EngineVersion_RenPyVcVersion), Culture) ?? nameof(GameDetail_EngineVersion_RenPyVcVersion);
 
     public static string GameDetail_EngineVersion_Rgss => ResourceManager.GetString(nameof(GameDetail_EngineVersion_Rgss), Culture) ?? nameof(GameDetail_EngineVersion_Rgss);
 

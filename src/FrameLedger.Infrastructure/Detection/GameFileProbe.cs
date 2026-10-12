@@ -160,6 +160,15 @@ public sealed class GameFileProbe : IGameFileProbe
         return ValueTask.FromResult(RpgMakerBuildReader.Read(Native(snapshot.ExePath), library));
     }
 
+    /// <inheritdoc />
+    /// <remarks>The engine's <c>renpy/vc_version.py</c> beside the launcher, where Ren'Py keeps it.</remarks>
+    public ValueTask<RenPyBuildFacts?> ReadRenPyBuildAsync(GameFileSnapshot snapshot, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ct.ThrowIfCancellationRequested();
+        return ValueTask.FromResult(RenPyBuildReader.Read(Native(snapshot.ExePath)));
+    }
+
     private static string Native(string path) => path.Replace('/', Path.DirectorySeparatorChar);
 
     /// <summary>The full path of the shallowest file the walk listed whose name <paramref name="named"/> accepts, or null.</summary>

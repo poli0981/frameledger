@@ -40,4 +40,7 @@ public enum VersionExtractorType
     /// (<see cref="RpgMakerVersion.Decide"/>).
     /// </summary>
     RpgMakerBuild,
+
+    /// <summary>Ren'Py's (beta.20): the <c>version</c> line of the engine's <c>renpy/vc_version.py</c> (<see cref="RenPyVersion.Decide"/>).</summary>
+    RenPyBuild,
 }

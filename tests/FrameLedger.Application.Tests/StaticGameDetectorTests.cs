@@ -48,6 +48,8 @@ public sealed class StaticGameDetectorTests
 
         public RpgMakerBuildFacts? RpgMaker { get; init; }
 
+        public RenPyBuildFacts? RenPy { get; init; }
+
         /// <summary>Which of the beta.19 second reads was made, in order.</summary>
         public List<string> BuildReads { get; } = [];
 
@@ -67,6 +69,12 @@ public sealed class StaticGameDetectorTests
         {
             BuildReads.Add("rpgmaker");
             return ValueTask.FromResult(RpgMaker);
+        }
+
+        public ValueTask<RenPyBuildFacts?> ReadRenPyBuildAsync(GameFileSnapshot s, CancellationToken ct = default)
+        {
+            BuildReads.Add("renpy");
+            return ValueTask.FromResult(RenPy);
         }
     }
 
@@ -283,24 +291,28 @@ public sealed class StaticGameDetectorTests
             new EngineRule { Id = "unity", Name = "Unity", Signals = Any("UnityPlayer.dll"), Version = new VersionExtractor { Type = VersionExtractorType.UnityBuild } },
             new EngineRule { Id = "rpgmaker_mv", Name = "RPG Maker MV/MZ", Signals = Any("nw.dll"), Version = new VersionExtractor { Type = VersionExtractorType.RpgMakerBuild } },
             new EngineRule { Id = "godot", Name = "Godot", Signals = Any("*.pck"), Version = new VersionExtractor { Type = VersionExtractorType.GodotBuild } },
+            new EngineRule { Id = "renpy", Name = "Ren'Py", Signals = Any("*.rpa"), Version = new VersionExtractor { Type = VersionExtractorType.RenPyBuild } },
         ],
     };
 
     /// <summary>
     /// beta.19: Unity, Godot and RPG Maker decide their versions in code as Unreal does — one second read, for the engine that
-    /// matched only, and the decider's witness reported (the owner's Dialoop, 衔蝶 and A Doll's Locket - Remake as measured).
+    /// matched only, and the decider's witness reported (the owner's Dialoop, 衔蝶 and A Doll's Locket - Remake as measured);
+    /// Ren'Py since beta.20 (Bound Between Desks).
     /// </summary>
     [Theory]
     [InlineData("UnityPlayer.dll", "unity", "6000.3.3f1", EngineVersionSource.UnityPlayer)]
     [InlineData("xiandie.pck", "godot", "4.4.1", EngineVersionSource.GodotPack)]
     [InlineData("css/nw.dll", "rpgmaker", "1.10.0", EngineVersionSource.RpgMakerMzCore)]
-    public async Task UnityGodotAndRpgMakerReadTheirBuildFactsOnceForTheEngineThatMatched(string marker, string read, string version, string source)
+    [InlineData("game/archive.rpa", "renpy", "8.5.0", EngineVersionSource.RenPyVcVersion)]
+    public async Task EnginesDecidedInCodeReadTheirBuildFactsOnceForTheEngineThatMatched(string marker, string read, string version, string source)
     {
         var probe = new ScriptedProbe(Snapshot(marker))
         {
             Unity = new UnityBuildFacts { PlayerProductVersion = "6000.3.3f1 (ef04196de0d6)", PlayerFileVersion = [6000, 3, 3, 15664153] },
             Godot = new GodotBuildFacts { PackVersion = [4, 4, 1], ExeProductName = "xiandie", ExeProductVersion = "0.1.0.3" },
             RpgMaker = new RpgMakerBuildFacts { CoreScript = "rmmz_core.js", CoreScriptVersion = "1.10.0" },
+            RenPy = new RenPyBuildFacts { VcVersion = "8.5.0.25111603" },
         };
         var detector = new StaticGameDetector(new ScriptedRules(BuildRules()), probe);
 

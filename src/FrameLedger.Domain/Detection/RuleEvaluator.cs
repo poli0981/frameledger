@@ -235,7 +235,7 @@ public sealed class RuleEvaluator
             // that matched (beta.10; Unity, Godot and RPG Maker since beta.19) — reads the probe must not make for every
             // game in the library.
             VersionExtractorType.UnrealBuild or VersionExtractorType.UnityBuild or VersionExtractorType.GodotBuild
-                or VersionExtractorType.RpgMakerBuild => null,
+                or VersionExtractorType.RpgMakerBuild or VersionExtractorType.RenPyBuild => null,
             _ => null,
         };
     }

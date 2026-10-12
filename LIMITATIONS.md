@@ -122,7 +122,9 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
   Unity's player library or data file, Godot's data pack, RPG Maker's core script or the runtime library its `Game.ini`
   names. A Unity game whose data file is encrypted shows the version without its release letter (`2019.4.40`, not
   `2019.4.40f1`); an XP, VX or VX Ace game shows its runtime library's number, which is not the editor's.
-  **RPG Maker 2000 and 2003 are not recognised.** Other engines show a version only where their files state one.
+  **RPG Maker 2000 and 2003 are not recognised.**
+- Since beta.20 also **Ren'Py**: from the engine's own version file (`renpy/vc_version.py`); a Ren'Py game whose engine
+  names no version there shows none. Other engines show a version only where their files state one.
   ([Detection](docs/05_DETECTION.md))
 
 ## Sensors

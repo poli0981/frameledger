@@ -12,7 +12,8 @@ namespace FrameLedger.Infrastructure.Tests.Detection;
 /// <summary>
 /// beta.19's three readers over files the test writes in the shapes measured on the owner's installs (2026-10-12): a Unity
 /// data file's header, a Godot pack beside the executable and one appended to it, RPG Maker MZ/MV core scripts and a VX Ace
-/// <c>Game.ini</c>. Each reads a bounded head of one file and says nothing when the file is not what it expects.
+/// <c>Game.ini</c> — and since beta.20 Ren'Py's <c>renpy/vc_version.py</c>. Each reads a bounded head of one file and says
+/// nothing when the file is not what it expects.
 /// </summary>
 public sealed class EngineBuildReadersTests : IDisposable
 {
@@ -165,5 +166,33 @@ public sealed class EngineBuildReadersTests : IDisposable
         RpgMakerBuildReader.Read(Path.Combine(plain, "Plain.exe")).Should().BeNull();
         RpgMakerBuildReader.Read(Path.Combine(plain, "Plain.exe"), rgssLibrary: Path.Combine(plain, "RGSS202E.dll"))
             .Should().Be(new RpgMakerBuildFacts { RgssLibrary = "RGSS202E.dll" }, "the walk's own find when no Game.ini names one");
+    }
+
+    /// <summary>
+    /// beta.20: Ren'Py's version line, from the engine's <c>renpy/vc_version.py</c> beside the launcher, in the shape measured
+    /// on Bound Between Desks — and nothing from a folder without the file, from a file whose lines name no version
+    /// (<c>version_name</c> is not <c>version</c>), or from past the bounded head.
+    /// </summary>
+    [Fact]
+    public async Task RenPysVersionLineIsReadFromTheEngineBesideTheLauncher()
+    {
+        string game = Sub("Bound Between Desks");
+        string engine = Sub("Bound Between Desks", "renpy");
+        string exe = Path.Combine(game, "BoundBetweenDesks.exe");
+        string versionFile = Path.Combine(engine, "vc_version.py");
+        await File.WriteAllBytesAsync(exe, new byte[8], Ct);
+
+        RenPyBuildReader.Read(exe).Should().BeNull("no version file");
+
+        await File.WriteAllTextAsync(versionFile, "branch = 'master'\nnightly = False\nofficial = True\nversion = '8.5.0.25111603'\nversion_name = 'In Good Health'\n", Ct);
+        RenPyBuildFacts? facts = RenPyBuildReader.Read(exe);
+        facts.Should().Be(new RenPyBuildFacts { VcVersion = "8.5.0.25111603" });
+        RenPyVersion.Decide(facts!).Should().Be(new EngineVersionReading("8.5.0", EngineVersionSource.RenPyVcVersion));
+
+        await File.WriteAllTextAsync(versionFile, "version_name = 'In Good Health'\nnightly = False\n", Ct);
+        RenPyBuildReader.Read(exe).Should().BeNull("a version name is not a version");
+
+        await File.WriteAllTextAsync(versionFile, new string('#', RenPyBuildReader.VersionFileBytes) + "\nversion = '8.5.0.1'\n", Ct);
+        RenPyBuildReader.Read(exe).Should().BeNull("only the bounded head is read");
     }
 }

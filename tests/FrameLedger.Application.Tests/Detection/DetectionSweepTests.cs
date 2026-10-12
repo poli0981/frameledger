@@ -87,6 +87,9 @@ public sealed class DetectionSweepTests
 
         public ValueTask<RpgMakerBuildFacts?> ReadRpgMakerBuildAsync(GameFileSnapshot snapshot, CancellationToken ct = default) =>
             ValueTask.FromResult<RpgMakerBuildFacts?>(null);
+
+        public ValueTask<RenPyBuildFacts?> ReadRenPyBuildAsync(GameFileSnapshot snapshot, CancellationToken ct = default) =>
+            ValueTask.FromResult<RenPyBuildFacts?>(null);
     }
 
     private sealed class FakeIdentity : IExecutableIdentitySource

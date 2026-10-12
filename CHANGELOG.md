@@ -28,6 +28,15 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **The engine version of Ren'Py games**, as Unity's, Godot's and RPG Maker's have been shown since beta.19 — on the game's
+  page with what it was read from, the engine's own `renpy/vc_version.py`: *Ren'Py 8.5.0*. A game whose engine names no
+  version there reads as not found. Every game is read once more after the update (detection rules `2026.10.3`;
+  `docs/05_DETECTION.md` §Engine version — Ren'Py).
+- **The Privacy Policy (version 2.9)** names that file among the version marks it reads; it is shown once for you to
+  accept.
+
 ## [0.1.0-beta.19] - 2026-10-12
 
 **The nineteenth pre-release: an imported game that is its own runtime and not a helper, Change executable… in the game's

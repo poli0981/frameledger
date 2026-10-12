@@ -2246,6 +2246,9 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="GameDetail_EngineVersion_Rgss" xml:space="preserve">
     <value>From the RPG Maker runtime library (RGSS) that the game's Game.ini names. The number is the library's, not the editor's.</value>
   </data>
+  <data name="GameDetail_EngineVersion_RenPyVcVersion" xml:space="preserve">
+    <value>From the version file of the game's Ren'Py engine (renpy/vc_version.py).</value>
+  </data>
   <data name="GameDetail_EngineVersion_NotFoundInFiles" xml:space="preserve">
     <value>Not found in the game's files.</value>
   </data>

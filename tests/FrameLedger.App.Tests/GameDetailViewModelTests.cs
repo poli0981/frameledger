@@ -630,7 +630,7 @@ public sealed class GameDetailViewModelTests
 
     /// <summary>
     /// beta.19: a Unity, Godot or RPG Maker version says what it was read from, RPG Maker's witness names the maker in the
-    /// header, and such a title whose files named no version says so once the sweep has read it.
+    /// header, and such a title whose files named no version says so once the sweep has read it — Ren'Py's too since beta.20.
     /// </summary>
     [Fact]
     public async Task TheDetailsCardSaysWhatAUnityGodotOrRpgMakerVersionWasReadFrom()
@@ -650,6 +650,8 @@ public sealed class GameDetailViewModelTests
                 ("xiandie", "godot", "4.4.1", EngineVersionSource.GodotPack, "Godot 4.4.1", Strings.GameDetail_EngineVersion_GodotPack),
                 ("GF2", "unity", "2019.4.40", EngineVersionSource.UnityPlayerFile, "Unity 2019.4.40", Strings.GameDetail_EngineVersion_UnityPlayerFile),
                 ("Unread", "unity", null, null, "Unity", Strings.GameDetail_EngineVersion_NotFoundInFiles),
+                ("Bound Between Desks", "renpy", "8.5.0", EngineVersionSource.RenPyVcVersion, "Ren'Py 8.5.0", "From the version file of the game's Ren'Py engine (renpy/vc_version.py)."),
+                ("Older Novel", "renpy", null, null, "Ren'Py", Strings.GameDetail_EngineVersion_NotFoundInFiles),
             ];
             foreach ((string name, string engine, string? version, string? source, string subtitle, string witness) in cases)
             {

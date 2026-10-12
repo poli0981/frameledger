@@ -66,8 +66,8 @@ pages.
 >   labelled with what it rests on; `N/A` where the executable names none. Since beta.19 also Unity's (from its
 >   player library or its data file — without the release letter where only the library's number is readable),
 >   Godot's (from its data pack) and RPG Maker's maker and version (MV and MZ from their core script; XP, VX and VX
->   Ace by their runtime library's version, which is not the editor's). RPG Maker 2000/2003 is not detected. Other
->   engines show what their own files state.
+>   Ace by their runtime library's version, which is not the editor's). RPG Maker 2000/2003 is not detected. Since
+>   beta.20 also Ren'Py's (from its engine's version file). Other engines show what their own files state.
 > - **The game's own memory (since beta.12):** its dedicated and shared GPU memory and its private
 >   working set — the numbers Task Manager's Details tab shows — with its working set and commit, read
 >   once a second from Windows' own counters, from outside the game, in every session: a game

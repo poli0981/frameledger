@@ -2241,6 +2241,9 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="GameDetail_EngineVersion_Rgss" xml:space="preserve">
     <value>Lấy từ thư viện runtime RPG Maker (RGSS) mà file Game.ini của game chỉ định. Đây là số phiên bản của thư viện, không phải của trình biên tập.</value>
   </data>
+  <data name="GameDetail_EngineVersion_RenPyVcVersion" xml:space="preserve">
+    <value>Lấy từ file phiên bản của engine Ren'Py trong game (renpy/vc_version.py).</value>
+  </data>
   <data name="GameDetail_EngineVersion_NotFoundInFiles" xml:space="preserve">
     <value>Không tìm thấy trong các file của game.</value>
   </data>

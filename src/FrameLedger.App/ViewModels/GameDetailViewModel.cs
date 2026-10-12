@@ -1200,9 +1200,10 @@ public sealed partial class GameDetailViewModel : ObservableObject
             EngineVersionSource.RpgMakerMzCore => string.Format(CultureInfo.CurrentCulture, Strings.GameDetail_EngineVersion_CoreScript_Format, "js/rmmz_core.js"),
             EngineVersionSource.RpgMakerMvCore => string.Format(CultureInfo.CurrentCulture, Strings.GameDetail_EngineVersion_CoreScript_Format, "rpg_core.js"),
             EngineVersionSource.Rgss1Library or EngineVersionSource.Rgss2Library or EngineVersionSource.Rgss3Library => Strings.GameDetail_EngineVersion_Rgss,
+            EngineVersionSource.RenPyVcVersion => Strings.GameDetail_EngineVersion_RenPyVcVersion,
             null when string.Equals(row.Engine, "unreal", StringComparison.Ordinal) && row.EngineVersion is null && row.ExeMachine is not null
                 => Strings.GameDetail_EngineVersion_NotFound,
-            null when row.Engine is "unity" or "godot" or "rpgmaker_mv" or "rpgmaker_rgss" && row.EngineVersion is null && row.ExeMachine is not null
+            null when row.Engine is "unity" or "godot" or "rpgmaker_mv" or "rpgmaker_rgss" or "renpy" && row.EngineVersion is null && row.ExeMachine is not null
                 => Strings.GameDetail_EngineVersion_NotFoundInFiles,
             _ => null,
         };
