@@ -71,6 +71,13 @@ public sealed partial class SettingsViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(KillSwitchState))]
     private bool _killSwitch;
 
+    /// <summary>
+    /// D55 (beta.19): the Agent removes an entry whose game is no longer installed and that has no session
+    /// (<c>retention.remove_uninstalled_games</c>, on by default).
+    /// </summary>
+    [ObservableProperty]
+    private bool _removeUninstalledGames;
+
     [ObservableProperty]
     private int _minSessionSeconds;
 
@@ -384,6 +391,8 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     partial void OnRetentionRawSessionsChanged(int oldValue, int newValue) => PersistNumber(SettingsRegistry.RetentionRawSessionsPerGame, Strings.Settings_Retention_Label, oldValue, newValue, v => RetentionRawSessions = v);
 
+    partial void OnRemoveUninstalledGamesChanged(bool value) => Persist(SettingsRegistry.RetentionRemoveUninstalledGames, value);
+
     partial void OnHideAntiCheatHookingChanged(bool value) => Persist(SettingsRegistry.UiHideAntiCheatHooking, value);
 
     /// <summary>D33: the option is one settings row the Agent reads at every session start and command; the list follows it.</summary>
@@ -532,6 +541,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             MinSessionSeconds = await _settings.GetIntegerAsync(SettingsRegistry.CaptureMinSessionSeconds).ConfigureAwait(true);
             TelemetryIntervalMs = await _settings.GetIntegerAsync(SettingsRegistry.TelemetryIntervalMs).ConfigureAwait(true);
             RetentionRawSessions = await _settings.GetIntegerAsync(SettingsRegistry.RetentionRawSessionsPerGame).ConfigureAwait(true);
+            RemoveUninstalledGames = await _settings.GetBooleanAsync(SettingsRegistry.RetentionRemoveUninstalledGames).ConfigureAwait(true);
             MinimizeToTray = await _settings.GetBooleanAsync(SettingsRegistry.UiMinimizeToTray).ConfigureAwait(true);
             HideAntiCheatHooking = await _settings.GetBooleanAsync(SettingsRegistry.UiHideAntiCheatHooking).ConfigureAwait(true);
             UserModeExceptions = await _settings.GetBooleanAsync(SettingsRegistry.HookingUserModeExceptions).ConfigureAwait(true);
@@ -767,8 +777,12 @@ public sealed partial class SettingsViewModel : ObservableObject
         if (definition.AgentReads)
         {
             // Disable all hooking does not wait for a session to start (beta.18): a measured one stops at its next safety scan.
+            // Nor does the removal of uninstalled games (beta.19, D55): the Agent reads it at every sweep.
             bool killSwitchOn = ReferenceEquals(definition, SettingsRegistry.HookingKillSwitch) && string.Equals(value, "1", StringComparison.Ordinal);
-            _strip.Info(Strings.Settings_Header, killSwitchOn ? Strings.Settings_KillSwitch_Applied_On : Strings.Settings_Applied);
+            string applied = killSwitchOn ? Strings.Settings_KillSwitch_Applied_On
+                : ReferenceEquals(definition, SettingsRegistry.RetentionRemoveUninstalledGames) ? Strings.Settings_RemoveUninstalled_Applied
+                : Strings.Settings_Applied;
+            _strip.Info(Strings.Settings_Header, applied);
         }
     }
 

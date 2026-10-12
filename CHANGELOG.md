@@ -40,6 +40,11 @@ numeric core and does not move; the heading is the full version — corrected 20
   §Engine version — Unity, Godot, RPG Maker).
 - **The Privacy Policy (version 2.8)** names the files those versions are read from, and two that were already read and
   never named (Unity's player library and an RPG Maker game's title); it is shown once for you to accept.
+- **A game you uninstalled leaves the library by itself** when it has no sessions: the agent removes an entry whose `.exe`
+  has been gone for ten minutes, if its drive is connected and the folder it was installed in is still there — an
+  unplugged or re-lettered drive never counts — and never one where anti-cheat was found. A game with sessions stays, with
+  them, and reads *Not installed* as before. The Games page says so when it happens; **Settings ▸ Data ▸ Remove uninstalled
+  games** turns it off (`docs/02_SPEC.md` FR-1.8).
 
 ### Changed
 

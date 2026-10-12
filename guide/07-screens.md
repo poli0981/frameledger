@@ -59,7 +59,9 @@ stopped, hooking turned off — each with one button that only says you have rea
 
 - **Search games**; sort by **Name**, **Last played** or **Playtime**; **Show as a list** or **Show as a grid**.
 - **Refresh** reads your library again: it offers games newly installed through a store, and marks a game whose `.exe`
-  is gone as *Not installed*.
+  is gone as *Not installed*. The agent removes such a game by itself after ten minutes when it has no sessions and its
+  drive is connected — never one where anti-cheat was found (**Settings ▸ Data ▸ Remove uninstalled games** turns this
+  off).
 - **Add game…** — or drop `.exe` files onto the page.
 - Each game shows its name, its store and engine, and one state: **Hooking on**, **Hooking off**, **Anti-cheat** (found,
   so it is not hooked), **Exception** (a user-mode exception is in force) or **Not recorded**; then its sessions,

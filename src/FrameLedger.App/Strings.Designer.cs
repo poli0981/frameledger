@@ -519,6 +519,8 @@ public static class Strings
         nameof(Games_NoMatch),
         nameof(Games_Refresh),
         nameof(Games_Refresh_ToolTip),
+        nameof(Games_Removed_Format),
+        nameof(Games_Removed_Title),
         nameof(Games_Search_Placeholder),
         nameof(Games_Sort_Label),
         nameof(Games_Sort_LastPlayed),
@@ -839,6 +841,9 @@ public static class Strings
         nameof(Settings_OnlineMetadata_Label),
         nameof(Settings_Policy_Header),
         nameof(Settings_Privacy_Header),
+        nameof(Settings_RemoveUninstalled_Applied),
+        nameof(Settings_RemoveUninstalled_Body),
+        nameof(Settings_RemoveUninstalled_Label),
         nameof(Settings_Retention_Body),
         nameof(Settings_Retention_Label),
         nameof(Settings_SafetyDocs),
@@ -2049,6 +2054,10 @@ public static class Strings
 
     public static string Games_Refresh_ToolTip => ResourceManager.GetString(nameof(Games_Refresh_ToolTip), Culture) ?? nameof(Games_Refresh_ToolTip);
 
+    public static string Games_Removed_Format => ResourceManager.GetString(nameof(Games_Removed_Format), Culture) ?? nameof(Games_Removed_Format);
+
+    public static string Games_Removed_Title => ResourceManager.GetString(nameof(Games_Removed_Title), Culture) ?? nameof(Games_Removed_Title);
+
     public static string Games_Search_Placeholder => ResourceManager.GetString(nameof(Games_Search_Placeholder), Culture) ?? nameof(Games_Search_Placeholder);
 
     public static string Games_Sort_Label => ResourceManager.GetString(nameof(Games_Sort_Label), Culture) ?? nameof(Games_Sort_Label);
@@ -2688,6 +2697,12 @@ public static class Strings
     public static string Settings_Policy_Header => ResourceManager.GetString(nameof(Settings_Policy_Header), Culture) ?? nameof(Settings_Policy_Header);
 
     public static string Settings_Privacy_Header => ResourceManager.GetString(nameof(Settings_Privacy_Header), Culture) ?? nameof(Settings_Privacy_Header);
+
+    public static string Settings_RemoveUninstalled_Applied => ResourceManager.GetString(nameof(Settings_RemoveUninstalled_Applied), Culture) ?? nameof(Settings_RemoveUninstalled_Applied);
+
+    public static string Settings_RemoveUninstalled_Body => ResourceManager.GetString(nameof(Settings_RemoveUninstalled_Body), Culture) ?? nameof(Settings_RemoveUninstalled_Body);
+
+    public static string Settings_RemoveUninstalled_Label => ResourceManager.GetString(nameof(Settings_RemoveUninstalled_Label), Culture) ?? nameof(Settings_RemoveUninstalled_Label);
 
     public static string Settings_Retention_Body => ResourceManager.GetString(nameof(Settings_Retention_Body), Culture) ?? nameof(Settings_Retention_Body);
 

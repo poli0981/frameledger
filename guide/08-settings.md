@@ -27,6 +27,7 @@ The link under them, *Read what the hook does and does not do*, opens the safety
 
 | Setting | What it does | Default |
 |---|---|---|
+| **Remove uninstalled games** | A game whose `.exe` has been gone for ten minutes is removed from your library — only when it has no sessions, its drive is connected and the folder it was installed in is still there (an unplugged drive never counts), and never a game where anti-cheat was found. Off, it stays and reads *Not installed*. *Agent*, within 15 seconds. | On |
 | **Delete all sessions** | Deletes every session of every game, with its data and notes, after asking. Your library, your settings and each game's hooking choice stay. It cannot be undone, and it is refused while a game is being recorded. | — |
 
 ## Capture agent

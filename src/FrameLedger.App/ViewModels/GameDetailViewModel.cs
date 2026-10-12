@@ -521,6 +521,13 @@ public sealed partial class GameDetailViewModel : ObservableObject
         {
             Pending = LoadAsync();
         }
+        else if (string.Equals(e.Envelope.Type, IpcMessageType.GameRemoved, StringComparison.Ordinal)
+                 && IpcCodec.Payload<GameRemovedEvent>(e.Envelope) is { } removed && removed.GameId == _gameId)
+        {
+            // D55 (beta.19): this very entry was removed by the Agent — the page reloads into its not-found state and says why.
+            _strip.Info(Strings.Games_Removed_Title, string.Format(CultureInfo.CurrentCulture, Strings.Games_Removed_Format, removed.GameName ?? removed.ExePath));
+            Pending = LoadAsync();
+        }
     });
 
     private async Task LoadSelectedAsync(SessionItemViewModel? session)

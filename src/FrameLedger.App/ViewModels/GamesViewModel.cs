@@ -33,6 +33,7 @@ public sealed partial class GamesViewModel : ObservableObject
     private readonly RegisteredSettings? _settings;
     private readonly IAgentLink? _agent;
     private readonly LibraryChanges? _changes;
+    private readonly IMessageStrip? _strip;
     private readonly UiThread _ui = new();
     private IReadOnlyList<GameCardViewModel> _all = [];
     private bool _viewRead;
@@ -58,8 +59,9 @@ public sealed partial class GamesViewModel : ObservableObject
     private bool _listView;
 
     public GamesViewModel(GameLibrary library, GameSelection selection, IPageNavigator navigator, AddGameFlow addGame, ImportLibraryFlow? import = null,
-        RegisteredSettings? settings = null, IAgentLink? agent = null, LibraryChanges? changes = null)
+        RegisteredSettings? settings = null, IAgentLink? agent = null, LibraryChanges? changes = null, IMessageStrip? strip = null)
     {
+        _strip = strip;
         _library = library ?? throw new ArgumentNullException(nameof(library));
         _selection = selection ?? throw new ArgumentNullException(nameof(selection));
         _navigator = navigator ?? throw new ArgumentNullException(nameof(navigator));
@@ -243,6 +245,13 @@ public sealed partial class GamesViewModel : ObservableObject
     {
         if (string.Equals(e.Envelope.Type, IpcMessageType.SessionCompleted, StringComparison.Ordinal))
         {
+            Pending = LoadAsync();
+        }
+        else if (string.Equals(e.Envelope.Type, IpcMessageType.GameRemoved, StringComparison.Ordinal)
+                 && IpcCodec.Payload<GameRemovedEvent>(e.Envelope) is { } removed)
+        {
+            // D55 (beta.19): the Agent removed an entry whose game is no longer installed; the card goes, and the page says why.
+            _strip?.Info(Strings.Games_Removed_Title, string.Format(CultureInfo.CurrentCulture, Strings.Games_Removed_Format, removed.GameName ?? removed.ExePath));
             Pending = LoadAsync();
         }
     });

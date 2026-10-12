@@ -40,6 +40,7 @@ public sealed class DetectionSweep : IDisposable
     private readonly IExecutableIdentitySource _identity;
     private readonly Action<string> _log;
     private readonly ExecutableRelocator? _relocator;
+    private readonly UninstalledEntryPrune? _prune;
     private readonly SemaphoreSlim _wake = new(0, 1);
 
     // The path each unreadable entry was last reported at (2026-09-23): said once until it changes or reads again. The
@@ -53,8 +54,9 @@ public sealed class DetectionSweep : IDisposable
     /// <param name="identity">Reads each row's executable (its fingerprint), or null when it cannot.</param>
     /// <param name="log">The Agent's log line.</param>
     /// <param name="relocator">Follows an executable to a drive that changed its letter (2026-09-22); null sweeps without looking.</param>
+    /// <param name="prune">Removes an entry whose game is no longer installed and had no session (beta.19, D55); null removes nothing.</param>
     public DetectionSweep(IGameRepository games, IDetectionRulesSource rules, IGameFileProbe probe, IExecutableIdentitySource identity, Action<string> log,
-        ExecutableRelocator? relocator = null)
+        ExecutableRelocator? relocator = null, UninstalledEntryPrune? prune = null)
     {
         _games = games ?? throw new ArgumentNullException(nameof(games));
         _rules = rules ?? throw new ArgumentNullException(nameof(rules));
@@ -62,6 +64,7 @@ public sealed class DetectionSweep : IDisposable
         _identity = identity ?? throw new ArgumentNullException(nameof(identity));
         _log = log ?? throw new ArgumentNullException(nameof(log));
         _relocator = relocator;
+        _prune = prune;
         _detector = new StaticGameDetector(rules, probe);
     }
 
@@ -101,6 +104,7 @@ public sealed class DetectionSweep : IDisposable
         int current = 0;
         int unreadable = 0;
         int relocated = 0;
+        int removed = 0;
         foreach (GameRow listed in await _games.ListAsync(ct).ConfigureAwait(false))
         {
             ct.ThrowIfCancellationRequested();
@@ -119,17 +123,14 @@ public sealed class DetectionSweep : IDisposable
 
             if (read is not { } onDisk)
             {
-                unreadable++;
-                if (!_unreadableSaid.TryGetValue(game.Id, out string? said) || !string.Equals(said, game.Fingerprint.ExePath, StringComparison.OrdinalIgnoreCase))
-                {
-                    _unreadableSaid[game.Id] = game.Fingerprint.ExePath;
-                    _log($"detect: {game.Name} — executable unreadable, skipped ({game.Fingerprint.ExePath}); said once until that changes");
-                }
-
+                bool uninstalled = await UnreadableAsync(game, ct).ConfigureAwait(false);
+                removed += uninstalled ? 1 : 0;
+                unreadable += uninstalled ? 0 : 1;
                 continue;
             }
 
             _unreadableSaid.Remove(game.Id);
+            _prune?.Present(game.Id);
 
             if (!IsStale(game, onDisk, rules.RulesVersion))
             {
@@ -143,7 +144,28 @@ public sealed class DetectionSweep : IDisposable
             }
         }
 
-        return new DetectionSweepReport { Scanned = scanned, Current = current, Unreadable = unreadable, Relocated = relocated };
+        return new DetectionSweepReport { Scanned = scanned, Current = current, Unreadable = unreadable, Relocated = relocated, Removed = removed };
+    }
+
+    /// <summary>
+    /// An entry whose executable did not read, after the relocator looked for it on every other drive: removed when its game
+    /// is no longer installed and it had no session (beta.19, D55), else skipped and named once. True when it was removed.
+    /// </summary>
+    private async ValueTask<bool> UnreadableAsync(GameRow game, CancellationToken ct)
+    {
+        if (_prune is not null && await _prune.ConsiderAsync(game, ct).ConfigureAwait(false))
+        {
+            _unreadableSaid.Remove(game.Id);
+            return true;
+        }
+
+        if (!_unreadableSaid.TryGetValue(game.Id, out string? said) || !string.Equals(said, game.Fingerprint.ExePath, StringComparison.OrdinalIgnoreCase))
+        {
+            _unreadableSaid[game.Id] = game.Fingerprint.ExePath;
+            _log($"detect: {game.Name} — executable unreadable, skipped ({game.Fingerprint.ExePath}); said once until that changes");
+        }
+
+        return false;
     }
 
     /// <summary>

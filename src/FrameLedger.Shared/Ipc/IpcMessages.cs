@@ -84,6 +84,12 @@ public static class IpcMessageType
     /// need be running.
     /// </summary>
     public const string HookingTurnedOff = "HookingTurnedOff";
+
+    /// <summary>
+    /// The Agent removed a library entry by itself (beta.19, owner decision D55): its game is no longer installed and it had
+    /// no session. Not a session event; the App reloads what shows the library.
+    /// </summary>
+    public const string GameRemoved = "GameRemoved";
 }
 
 /// <summary>Codes an <see cref="ErrorAck"/> carries.</summary>
@@ -312,6 +318,16 @@ public sealed record CaptureErrorEvent(Guid? SessionGuid, string Code, string Me
 
 /// <summary><see cref="IpcMessageType.HookingTurnedOff"/>: which entry, and what the guard found (its reason, family and signal).</summary>
 public sealed record HookingTurnedOffEvent(long GameId, string? GameName, string Reason, string? Family, string? Signal);
+
+/// <summary>
+/// <see cref="IpcMessageType.GameRemoved"/> (beta.19, D55): the entry the Agent removed, its executable's path, and why —
+/// <see cref="Uninstalled"/>, the one reason there is: gone from its folder for ten minutes, with no session.
+/// </summary>
+public sealed record GameRemovedEvent(long GameId, string? GameName, string ExePath, string Reason)
+{
+    /// <summary>The executable is no longer installed and the entry had no session.</summary>
+    public const string Uninstalled = "uninstalled";
+}
 
 // ----------------------------------------------------------------------------------------------------------------
 // The command half (P3 PR-1b). 07_IPC §The pipe is not a trust boundary: none of these carries a verdict, a

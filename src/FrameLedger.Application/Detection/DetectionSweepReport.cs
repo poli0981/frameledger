@@ -18,6 +18,9 @@ public sealed record DetectionSweepReport
     /// <summary>Rows whose executable was found under another drive letter and moved there this pass (2026-09-22).</summary>
     public int Relocated { get; init; }
 
+    /// <summary>Entries removed this pass because their game is no longer installed and had no session (beta.19, D55).</summary>
+    public int Removed { get; init; }
+
     /// <summary>The rules file could not be loaded; nothing was scanned.</summary>
     public bool RulesUnusable { get; init; }
 }
