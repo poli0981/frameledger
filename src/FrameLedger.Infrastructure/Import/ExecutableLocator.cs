@@ -24,9 +24,14 @@ namespace FrameLedger.Infrastructure.Import;
 /// bootstrapper and as <c>Game-Win64-Shipping.exe</c>.
 /// </para>
 /// <para>
-/// The two layout rules are the engines' own conventions, not guesses about names: a Unity player is <c>X.exe</c>
-/// beside a directory <c>X_Data</c>, and an Unreal packaged build's game process is <c>*-Win64-Shipping.exe</c> (the
-/// root executable of the same name is a bootstrapper that starts it and exits).
+/// The layout rules are the engines' own conventions, not guesses about names: a Unity player is <c>X.exe</c> beside a
+/// directory <c>X_Data</c>, an Unreal packaged build's game process is <c>*-Win64-Shipping.exe</c> (the root executable
+/// of the same name is a bootstrapper that starts it and exits), and — since beta.19 (owner decision D56) — an NW.js
+/// runtime is the executable beside its <c>nw.dll</c> and <c>package.json</c>, which is how an RPG Maker MV/MZ game
+/// ships. The last one ranks below the first two and above a name: an NW.js folder can be a tool shipped beside a Unity
+/// or Unreal game, and a launcher named after the install is exactly what fronts the runtime on A Doll's Locket - Remake
+/// (itch), whose 213 MB <c>DollsLocket.exe</c> starts <c>css\Game.exe</c> — the process that draws, the one D28 pointed
+/// HELLO, HELLO WORLD!'s entry at by hand.
 /// </para>
 /// </remarks>
 public sealed class ExecutableLocator : IExecutableLocator
@@ -37,7 +42,8 @@ public sealed class ExecutableLocator : IExecutableLocator
     /// </summary>
     public const int MaxDepth = 4;
 
-    private const int _rankEngineLayout = 2;
+    private const int _rankEngineLayout = 3;
+    private const int _rankNwjsRuntime = 2;
     private const int _rankNamedAfterTheInstall = 1;
     private const int _minimumNameLength = 4;
 
@@ -50,7 +56,29 @@ public sealed class ExecutableLocator : IExecutableLocator
         // beta.14: BugSplat's sender (BsSndRpt64.exe, Kingdom Come: Deliverance II) matches none of the above — its name says
         // "report" without the letters; KCD2 picked its game by rank alone.
         "bssndrpt", "bugsplat",
+        // beta.19: what an NW.js runtime keeps beside itself — Chromium's toast helper (NW.js 0.48.4 on A Doll's Locket - Remake,
+        // 0.82.0 on Flower in Us), and the SDK flavour's compiler and driver, which the NW.js rank would otherwise weigh as the game.
+        "notification_helper", "nwjc", "chromedriver",
     ];
+
+    /// <summary>
+    /// Whole names (no extension) of helpers a runtime ships beside a game, which no store's choice makes the game (beta.19).
+    /// itch's butler keeps the shallowest candidates and drops those that ask for elevation, so its verdict for A Doll's
+    /// Locket - Remake named <c>notification_helper.exe</c> and nothing else. Whole names rather than
+    /// <see cref="HelperFragments"/>: a store names its own pick, and a fragment such as <c>node</c> is inside a real game's
+    /// name (<c>Nodebuster</c>) — the locator's guess can afford that, overruling a store's verdict cannot.
+    /// </summary>
+    public static readonly IReadOnlySet<string> RuntimeHelperNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "notification_helper", "crashpad_handler", "UnityCrashHandler64", "UnityCrashHandler32", "CrashReportClient", "nwjc", "chromedriver",
+    };
+
+    /// <summary>True for a name in <see cref="RuntimeHelperNames"/>.</summary>
+    public static bool IsRuntimeHelper(string fileNameWithoutExtension)
+    {
+        ArgumentNullException.ThrowIfNull(fileNameWithoutExtension);
+        return RuntimeHelperNames.Contains(fileNameWithoutExtension);
+    }
 
     /// <summary>
     /// Folder-name fragments of what a store install carries beside the game: a folder whose name holds one is not walked.
@@ -162,6 +190,11 @@ public sealed class ExecutableLocator : IExecutableLocator
         if (name.EndsWith("-Win64-Shipping", StringComparison.OrdinalIgnoreCase) || name.EndsWith("-WinGDK-Shipping", StringComparison.OrdinalIgnoreCase))
         {
             return _rankEngineLayout;    // Unreal: the packaged game process, not the root bootstrapper
+        }
+
+        if (dir is not null && File.Exists(Path.Combine(dir, "nw.dll")) && File.Exists(Path.Combine(dir, "package.json")))
+        {
+            return _rankNwjsRuntime;    // NW.js (RPG Maker MV/MZ): the runtime, not the launcher in front of it (D56)
         }
 
         string squashed = Squash(name);

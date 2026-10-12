@@ -293,6 +293,29 @@ wrote, where detection wrote it.
 > is fetched (CLAUDE.md rule 8's "opt-in store metadata" is the online lookup, which does not exist). First-run
 > step 4 now points at File ▸ Import library… rather than saying "later build".
 
+> **beta.19 (owner report 2026-10-12): a store's own pick can be a helper, and a launcher is not the game.** The owner's
+> A Doll's Locket - Remake (itch 5085165, RPG Maker MZ) was imported as `Dolls Locket\notification_helper.exe` — NW.js's
+> toast helper. The pick was **butler's verdict**, taken as is: butler stores a *filtered* verdict (the shallowest
+> candidates, minus those whose manifest asks for elevation) and does not rank what is left, and on that install the
+> 213 MB `DollsLocket.exe` launcher asks for administrator while the NW.js runtime sits a level deeper in `css\`, so the
+> helper was the whole verdict (read from the owner's `butler.db`, read-only). Three changes:
+> **(1)** a verdict candidate whose whole name is a runtime helper (`ExecutableLocator.RuntimeHelperNames`:
+> `notification_helper`, `crashpad_handler`, `UnityCrashHandler64/32`, `CrashReportClient`, NW.js's `nwjc` and
+> `chromedriver`) or that sits in a Unity plugin folder is skipped, and with nothing left the locator guesses and the
+> review marks the row *guessed* — whole names, because the locator's fragments are inside real games' names (`node` in
+> *Nodebuster*) and a store's pick is overruled only when it cannot be the game; the locator's `HelperFragments` gain the
+> same three NW.js names. **(2)** The locator ranks **an executable beside `nw.dll` + `package.json`** — the `rpgmaker_mv`
+> rule's own signal — as an NW.js runtime (owner decision D56), below the Unity and Unreal layouts (an NW.js folder can
+> be a tool shipped beside such a game) and above a name match (the launcher in front of the runtime is named after the
+> install): the install's guess is `css\Game.exe`, the process that draws, as D28 pointed HELLO, HELLO WORLD!'s entry at
+> its runtime by hand. That runtime starts elevated (its launcher asks for administrator), so it is measured with the
+> admin mode on (D34). **(3)** Discovery matches a store title to an entry by **platform + store id** as well as by
+> path: the entry an earlier import made at another executable is "already in the library" (the log names its path),
+> so a corrected guess never adds the same game a second time — that entry is re-pointed with Change executable…, and
+> nothing rewrites it by itself (D25/D27). Tests: `ExecutableLocatorTests.AnNwjsRuntimeBeatsTheLauncherNamedAfterTheInstallAndItsHelpersAreDropped`,
+> `StoreLibrarySourcesTests.ItchSkipsAVerdictCandidateThatIsARuntimeHelper` (the verdict as stored),
+> `LibraryImporterTests.AStoreTitleAlreadyInTheLibraryAtAnotherExecutableIsNotOfferedAgain`.
+
 **Publisher/version order:** store manifest → PE `CompanyName`/`ProductVersion` → *(opt-in)* Steam `appdetails` lookup, cached 7 days. *(Since beta.8 the PE versions are stored beside the store's rather than instead of it — §What the files say about themselves; the page labels a store's value with its store, "Steam build 20374416".)*
 
 ## Capability hints (explicitly labelled as such)

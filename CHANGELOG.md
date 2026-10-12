@@ -28,6 +28,17 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Fixed
+
+- **An imported game is no longer one of its helpers, and an RPG Maker MV/MZ game behind a launcher is its runtime.**
+  A Doll's Locket - Remake (itch) was added as `notification_helper.exe`, NW.js's notification helper, because the itch
+  app's own record named only that file (it leaves out a launcher that asks for administrator and anything a folder
+  deeper) and the import took it as the game. A helper named by the store is skipped now and the executable is guessed —
+  the import list says so — and the guess takes the executable beside NW.js's `nw.dll` and `package.json`, the process
+  that draws (`css\Game.exe` there; its launcher asks for administrator, so it is measured with *Run the agent as
+  administrator* on). The import also no longer offers a store's game again when the library has it at another
+  executable: an entry already there is re-pointed with *Change executable…* (`docs/05_DETECTION.md` §Library import).
+
 ## [0.1.0-beta.18] - 2026-10-07
 
 **The eighteenth pre-release: every page readable in the dark theme, notices that say what happened in words, and a

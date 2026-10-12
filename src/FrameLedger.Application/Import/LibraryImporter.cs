@@ -72,6 +72,12 @@ public sealed class LibraryImporter
                 bool missing = exe is not null && _identity.Read(exe) is null;
                 bool already = exe is not null && await _games.FindAsync(exe, ct).ConfigureAwait(false) is { InLibrary: true };
                 string? movedFrom = exe is null || already ? null : StaleTwinOf(exe, library)?.Fingerprint.ExePath;
+                if (exe is not null && !already && movedFrom is null && SameStoreTitleOf(game, library) is { } entry)
+                {
+                    already = true;
+                    _log($"import: {game.Name} ({game.Platform} {game.StoreId}) is already in the library as {entry.Fingerprint.ExePath} — not offered again at {exe}");
+                }
+
                 candidates.Add(new ImportCandidate(game, exe, already, guessed, missing, movedFrom));
             }
 
@@ -130,4 +136,23 @@ public sealed class LibraryImporter
     /// </summary>
     private GameRow? StaleTwinOf(string exe, IReadOnlyList<GameRow> library) =>
         library.FirstOrDefault(r => ExecutableRelocator.IsDriveLetterTwin(r.Fingerprint.ExePath, exe) && _identity.Read(r.Fingerprint.ExePath) is null);
+
+    /// <summary>
+    /// The library entry an earlier import made for this very store title, at another executable (beta.19): the store's id,
+    /// under the same platform or with the entry's executable inside the title's install folder. The import used to compare
+    /// paths only, so a guess that changed between builds — A Doll's Locket - Remake's helper became its NW.js runtime —
+    /// would have offered the same game again beside the entry the user already has; that entry is what Change executable…
+    /// re-points. The folder half is there because the platform is the detection sweep's to refresh: an itch build that
+    /// ships Steam's API reads as Steam. A title with no store id is never matched.
+    /// </summary>
+    private static GameRow? SameStoreTitleOf(StoreGame game, IReadOnlyList<GameRow> library) =>
+        string.IsNullOrEmpty(game.StoreId)
+            ? null
+            : library.FirstOrDefault(r => string.Equals(r.StoreId, game.StoreId, StringComparison.Ordinal)
+                                          && (string.Equals(r.Platform, game.Platform, StringComparison.OrdinalIgnoreCase)
+                                              || IsInside(r.Fingerprint.ExePath, game.InstallDirectory)));
+
+    private static bool IsInside(string path, string directory) =>
+        !string.IsNullOrEmpty(directory)
+        && path.StartsWith(Path.TrimEndingDirectorySeparator(directory) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
 }
