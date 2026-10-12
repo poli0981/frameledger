@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using System.IO;
 using Microsoft.Win32;
 
 namespace FrameLedger.App.Services;
@@ -8,7 +9,7 @@ namespace FrameLedger.App.Services;
 /// <summary>The WPF <see cref="OpenFileDialog"/> for FR-1.1.</summary>
 public sealed class GamePicker : IGamePicker
 {
-    public string? PickExecutable()
+    public string? PickExecutable(string? initialDirectory = null)
     {
         var dialog = new OpenFileDialog
         {
@@ -17,6 +18,13 @@ public sealed class GamePicker : IGamePicker
             CheckFileExists = true,
             Multiselect = false,
         };
+
+        // InitialDirectory opens the dialog there whatever folder it remembers (DefaultDirectory would only be a fallback).
+        if (!string.IsNullOrEmpty(initialDirectory) && Directory.Exists(initialDirectory))
+        {
+            dialog.InitialDirectory = initialDirectory;
+        }
+
         return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
 }

@@ -129,7 +129,7 @@ public sealed partial class PagesLoadTests
 
     private sealed class NoPicker : IGamePicker
     {
-        public string? PickExecutable() => null;
+        public string? PickExecutable(string? initialDirectory = null) => null;
     }
 
     private sealed class NoTheme : IThemeApplier

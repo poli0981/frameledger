@@ -801,7 +801,8 @@ public sealed partial class GameDetailViewModel : ObservableObject
     /// <summary>
     /// A store import guesses the executable (Steam names none), and everything downstream is keyed on it: a wrong guess
     /// is a game that can never be matched. The pick is the user's own; the row comes back hooking-off and unconsented,
-    /// exactly as a new game would, and consent is revoked over the pipe first, as removal does.
+    /// exactly as a new game would, and consent is revoked over the pipe first, as removal does. The dialog opens in the
+    /// game's own folder (beta.19, <see cref="GameFolder"/>), asked off the UI thread.
     /// </summary>
     private async Task ChangeExecutableCoreAsync()
     {
@@ -810,7 +811,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
             return;
         }
 
-        string? path = _picker.PickExecutable();
+        string current = Game.Fingerprint.ExePath;
+        string? folder = await Task.Run(() => GameFolder.StartFolder(current)).ConfigureAwait(true);
+        string? path = _picker.PickExecutable(folder);
         if (path is null || string.Equals(ExecutableIdentity.Normalise(path), Game.Fingerprint.ExePath, StringComparison.OrdinalIgnoreCase))
         {
             return;

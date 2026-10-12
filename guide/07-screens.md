@@ -69,8 +69,8 @@ stopped, hooking turned off — each with one button that only says you have rea
 
 - **At the top:** the name, publisher, version, store and engine, the `.exe` path, the last session, the last measured
   session's frame rate and its ray-tracing chips. **Edit…** changes the name, publisher, version and notes. **Change
-  executable…** points the entry at another `.exe` and turns hooking back off. **Remove…** asks whether to keep the
-  game's sessions.
+  executable…** points the entry at another `.exe` and turns hooking back off; its file dialog opens in the game's own
+  folder. **Remove…** asks whether to keep the game's sessions.
 - **Recording** — off, FrameLedger ignores the program completely: for a launcher or a tool that is not a game.
 - **Hooking** — on, the game is measured. A warning comes first, and you type `I ACCEPT THE INJECTION RISK` to go on.
   Read [Anti-cheat and safety](04-anti-cheat-and-safety.md) before you do.

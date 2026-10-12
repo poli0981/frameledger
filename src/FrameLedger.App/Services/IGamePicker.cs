@@ -7,5 +7,9 @@ namespace FrameLedger.App.Services;
 public interface IGamePicker
 {
     /// <summary>The chosen executable's full path, or null when the user cancelled.</summary>
-    string? PickExecutable();
+    /// <param name="initialDirectory">
+    /// The folder the dialog opens in (beta.19: Change executable… opens in the game's own folder, <see cref="GameFolder"/>);
+    /// null leaves it to Windows, which opens where the last pick was.
+    /// </param>
+    string? PickExecutable(string? initialDirectory = null);
 }
