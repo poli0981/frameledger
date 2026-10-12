@@ -175,6 +175,20 @@ public static class SettingsRegistry
     };
 
     /// <summary>
+    /// Whether the Agent removes a library entry whose game is no longer installed and that has no session (beta.19, owner
+    /// decision D55, amending D41's "nothing is removed"): its executable gone at sweeps ten minutes apart, on a drive that is
+    /// connected, from a folder whose parents are still there — never an entry carrying an anti-cheat block or exception.
+    /// On by default; off, such an entry stays and reads <i>Not installed</i>. The Agent reads it at every sweep (15 s).
+    /// </summary>
+    public static readonly SettingDefinition RetentionRemoveUninstalledGames = new()
+    {
+        Key = "retention.remove_uninstalled_games",
+        Kind = SettingKind.Boolean,
+        Default = "1",
+        AgentReads = true,
+    };
+
+    /// <summary>
     /// <c>11_UPDATER</c>: the release feed's channel — <c>stable</c> is the releases GitHub does not mark pre-release, <c>beta</c>
     /// adds the ones it does (P4 PR-5 reads it). <c>auto</c>, the default since beta.14 (owner decision D47), follows the
     /// running copy: a pre-release asks for pre-releases. The default was <c>stable</c> until then, while every release is a
@@ -217,7 +231,7 @@ public static class SettingsRegistry
     [
         UiLanguage, UiTheme, UiStartWithWindows, UiMinimizeToTray, UiHideAntiCheatHooking, UiFpsDecimals, UiHideScrollBars, UiLibraryView,
         CaptureBackground, HookingKillSwitch, HookingUserModeExceptions, CaptureRunElevated, CaptureMinSessionSeconds, TelemetryIntervalMs, RetentionRawSessionsPerGame,
-        UpdateChannel, UpdateAutoCheck, PrivacyOnlineMetadata, LogDebug,
+        RetentionRemoveUninstalledGames, UpdateChannel, UpdateAutoCheck, PrivacyOnlineMetadata, LogDebug,
     ];
 
     private static readonly Dictionary<string, SettingDefinition> _byKey = All.ToDictionary(static d => d.Key, StringComparer.Ordinal);

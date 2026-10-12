@@ -92,6 +92,55 @@ public sealed class GamesViewModelTests
         vm.Games.Should().HaveCount(2);
     }
 
+    private sealed class RecordingStrip : IMessageStrip
+    {
+        public List<string> Lines { get; } = [];
+
+        public void Info(string title, string body) => Lines.Add(title + ": " + body);
+
+        public void Success(string title, string body) => Lines.Add(title + ": " + body);
+
+        public void Warn(string title, string body) => Lines.Add(title + ": " + body);
+    }
+
+    /// <summary>
+    /// beta.19, D55: the Agent removed an entry whose game is no longer installed — the page on screen drops its card at once
+    /// and says why, in words that name the switch that turns it off.
+    /// </summary>
+    [Fact]
+    public async Task AnEntryTheAgentRemovedLeavesThePageOnScreenWithAWord()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow gone = await s.GameAsync("Gone");
+            _ = await s.GameAsync("Kept");
+            var selection = new GameSelection();
+            var nav = new NoNavigation();
+            var link = new FakeAgentLink();
+            var strip = new RecordingStrip();
+            var vm = new GamesViewModel(s.Library, selection, nav, new AddGameFlow(s.Library, new NoPicker(), selection, nav, new NoStrip()), agent: link, strip: strip);
+            Task loaded = vm.Pending;
+            await loaded;
+            vm.Attach();
+
+            // What the Agent did, then said.
+            await s.Db.WriteAsync((c, tx, ct) => Dapper.SqlMapper.ExecuteAsync(c, new Dapper.CommandDefinition("DELETE FROM games WHERE id = @id", new { id = gone.Id }, tx, cancellationToken: ct)), Ct);
+            link.Raise(IpcMessageType.GameRemoved, new GameRemovedEvent(gone.Id, "Gone", gone.Fingerprint.ExePath, GameRemovedEvent.Uninstalled));
+            Task reloaded = vm.Pending;
+            await reloaded;
+
+            vm.Games.Should().ContainSingle().Which.Name.Should().Be("Kept");
+            strip.Lines.Should().ContainSingle().Which.Should().StartWith("Removed from the library: Gone is no longer installed").And.Contain("Settings ▸ Data");
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
+
     [Fact]
     public async Task ACardSaysWhetherItsExecutableIsThereAndWhy()
     {

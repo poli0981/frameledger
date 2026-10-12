@@ -499,7 +499,10 @@ card is back with the finding under its disabled switch. The finding itself is o
 **What clears it.** Nothing, as before: the block outlives *Change executable* and a re-import (§A game already enabled
 can become blocked later). The owner asked for hooking to be turned off when anti-cheat is detected, not for a second
 switch. *(Still true under D33: an exception is a separate layer over the block, never a clearing of it — §The user-mode
-exception.)*
+exception.)* *(And under D55, beta.19: the Agent removes an entry whose game is no longer installed and that has no session,
+but never one that carries a block, an exception's grant or a failed trial — the delete's own SQL refuses them
+(`SqliteGamePrune`), so an uninstall is not how a block, a grant or D38's "never again" disappears. Only the user's
+*Remove… ▸ Delete sessions too* deletes such a row, as before.)*
 
 **D21 stands as a fact.** A process an anti-cheat driver protects is `SessionEndReason.TargetUnreadable` (2026-09-21:
 every candidate of that name exists and none can be opened; ELDEN RING under Easy Anti-Cheat on the owner's machine).

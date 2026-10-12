@@ -39,10 +39,10 @@ internal sealed class DetectionHostedService(DetectionSweep sweep, VkLayerReconc
                 DetectionSweepReport r = await sweep.SweepOnceAsync(stoppingToken).ConfigureAwait(false);
                 // Said when something happened or changed (2026-09-23): an unreadable entry used to repeat this line every
                 // 15 s — 5,760 a day — with nothing new in it.
-                if (r.Scanned > 0 || r.Relocated > 0 || r.RulesUnusable || (r.Unreadable > 0 && r.Unreadable != previous?.Unreadable))
+                if (r.Scanned > 0 || r.Relocated > 0 || r.Removed > 0 || r.RulesUnusable || (r.Unreadable > 0 && r.Unreadable != previous?.Unreadable))
                 {
-                    Log.Information("detect: sweep scanned {Scanned}, current {Current}, unreadable {Unreadable}{Rules}",
-                        r.Scanned, r.Current, r.Unreadable, r.RulesUnusable ? ", rules unusable" : string.Empty);
+                    Log.Information("detect: sweep scanned {Scanned}, current {Current}, unreadable {Unreadable}, removed {Removed}{Rules}",
+                        r.Scanned, r.Current, r.Unreadable, r.Removed, r.RulesUnusable ? ", rules unusable" : string.Empty);
                 }
 
                 previous = r;

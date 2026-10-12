@@ -219,7 +219,19 @@
 
             <!-- beta.11 (owner request 2026-10-03: no row without a control): Data - Delete all sessions (D40). -->
             <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Data_Header}" />
-            <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Delete24}">
+            <!-- beta.19 (owner decision D55): the Agent removes an entry whose game is no longer installed and that has no session. -->
+            <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon BoxDismiss24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_RemoveUninstalled_Label}" />
+                        <ui:TextBlock MaxWidth="560" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Settings_RemoveUninstalled_Body}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_RemoveUninstalled_Label}"
+                                 IsChecked="{Binding ViewModel.RemoveUninstalledGames, Mode=TwoWay}"
+                                 IsEnabled="{Binding ViewModel.ActsOnThisPc}" />
+            </ui:CardControl>
+            <ui:CardControl Margin="0,8,0,0" Icon="{ui:SymbolIcon Delete24}">
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_DeleteSessions_Label}" />

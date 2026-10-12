@@ -141,6 +141,7 @@ public sealed class ViewerModeTests
             [SettingsRegistry.CaptureMinSessionSeconds.Key] = ("Value", "MinSessionSeconds, Mode=TwoWay"),
             [SettingsRegistry.TelemetryIntervalMs.Key] = ("Value", "TelemetryIntervalMs, Mode=TwoWay"),
             [SettingsRegistry.RetentionRawSessionsPerGame.Key] = ("Value", "RetentionRawSessions, Mode=TwoWay"),
+            [SettingsRegistry.RetentionRemoveUninstalledGames.Key] = ("IsChecked", "RemoveUninstalledGames, Mode=TwoWay"),
         };
         XDocument xaml = AccessibilityTests.AppXaml().Single(static x => string.Equals(x.File, Path.Combine("Pages", "SettingsPage.xaml"), StringComparison.Ordinal)).Xaml;
 

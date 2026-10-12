@@ -26,7 +26,8 @@ a game is being recorded. Backing up is up to you — FrameLedger does not do it
 ## Delete it
 
 - **A game's sessions:** Games ▸ the game ▸ Sessions ▸ **Delete all sessions…**
-- **A game:** its page ▸ **Remove…**
+- **A game:** its page ▸ **Remove…** A game you uninstalled goes by itself when it has no sessions (Settings ▸ Data ▸
+  **Remove uninstalled games**, on unless you turn it off); one with sessions stays, with them, until you remove it.
 - **Every session of every game:** Settings ▸ Data ▸ **Delete all sessions…**
 - **Everything:** uninstall FrameLedger and let it delete the data folder, or delete the folder yourself.
 

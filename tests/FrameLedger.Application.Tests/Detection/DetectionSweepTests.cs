@@ -270,6 +270,57 @@ public sealed class DetectionSweepTests
         log.Where(static l => l.Contains("unreadable", StringComparison.Ordinal)).Should().HaveCount(2, "it read in between, so going unreadable again is news");
     }
 
+    private sealed class PruneClock : TimeProvider
+    {
+        public DateTimeOffset Now { get; set; } = new(2026, 10, 12, 8, 0, 0, TimeSpan.Zero);
+
+        public override DateTimeOffset GetUtcNow() => Now;
+    }
+
+    private sealed class GonePresence : IExecutablePresence
+    {
+        public ExecutablePresence Probe(string exePath) => ExecutablePresence.FileGone;
+    }
+
+    private sealed class DeletingPrune : IGamePrune
+    {
+        public List<long> Deleted { get; } = [];
+
+        public ValueTask<bool> RemoveUninstalledAsync(long gameId, string exePath, CancellationToken ct = default)
+        {
+            Deleted.Add(gameId);
+            return ValueTask.FromResult(true);
+        }
+    }
+
+    /// <summary>
+    /// beta.19, D55: an unreadable entry whose game is no longer installed is asked about after the relocator, and once the
+    /// prune removes it the sweep counts it removed — not unreadable — and says nothing else about it.
+    /// </summary>
+    [Fact]
+    public async Task AnUninstalledEntryIsRemovedAfterTheGraceAndCountedAsRemoved()
+    {
+        var games = new FakeGameRepository();
+        await games.EnsureAsync(new ExecutableFingerprint { ExePath = _exe, SizeBytes = 1, MtimeUnixMs = 1 }, "Title", Ct);
+        var identity = new FakeIdentity { OnDisk = null };
+        var clock = new PruneClock();
+        var deleting = new DeletingPrune();
+        List<string> log = [];
+        var prune = new UninstalledEntryPrune(deleting, new GonePresence(), static _ => ValueTask.FromResult(true), static _ => false, log.Add, clock: clock);
+        using var sweep = new DetectionSweep(games, new ScriptedRules("2026.10.2"), new ScriptedProbe(), identity, log.Add, prune: prune);
+
+        DetectionSweepReport first = await sweep.SweepOnceAsync(Ct);
+        first.Unreadable.Should().Be(1);
+        first.Removed.Should().Be(0, "the first sweep that sees it gone only starts the count");
+
+        clock.Now += UninstalledEntryPrune.Grace;
+        DetectionSweepReport second = await sweep.SweepOnceAsync(Ct);
+        second.Removed.Should().Be(1);
+        second.Unreadable.Should().Be(0);
+        deleting.Deleted.Should().ContainSingle();
+        log.Should().Contain(static l => l.StartsWith("library: removed 'Title'", StringComparison.Ordinal));
+    }
+
     [Fact]
     public async Task RequestNowWakesTheWaitBeforeTheIntervalAndIsIdempotent()
     {
