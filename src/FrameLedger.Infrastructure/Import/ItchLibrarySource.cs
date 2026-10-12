@@ -99,16 +99,7 @@ public sealed class ItchLibrarySource(string? itchDirectory = null, Action<strin
                     """, cancellationToken: ct)).ConfigureAwait(false)).Select(static r => new CaveRow(r.GameId, r.LocationPath, r.FolderName, r.CustomFolder, r.Verdict, r.Title))];
             }
 
-            int added = 0;
-            foreach (CaveRow cave in caves)
-            {
-                if (ToGame(cave) is { } game && byInstall.TryAdd(game.InstallDirectory, game))
-                {
-                    added++;
-                }
-            }
-
-            return $"butler.db read: {locations} location(s), {caves.Count} cave(s), {added} title(s)";
+            return AddCaves(locations, caves, byInstall);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SqliteException or InvalidOperationException)
         {
@@ -126,7 +117,26 @@ public sealed class ItchLibrarySource(string? itchDirectory = null, Action<strin
         }
     }
 
-    private static StoreGame? ToGame(CaveRow cave)
+    /// <summary>One row per cave the database lists; returns the log fragment — with the titles whose verdict named only a helper.</summary>
+    private static string AddCaves(int locations, List<CaveRow> caves, Dictionary<string, StoreGame> byInstall)
+    {
+        int added = 0;
+        List<string> helperVerdicts = [];
+        foreach (CaveRow cave in caves)
+        {
+            if (ToGame(cave, helperVerdicts) is { } game && byInstall.TryAdd(game.InstallDirectory, game))
+            {
+                added++;
+            }
+        }
+
+        string note = $"butler.db read: {locations} location(s), {caves.Count} cave(s), {added} title(s)";
+        return helperVerdicts.Count == 0
+            ? note
+            : note + $"; butler's verdict named only a helper for {string.Join(", ", helperVerdicts)} — the executable is guessed instead";
+    }
+
+    private static StoreGame? ToGame(CaveRow cave, List<string> helperVerdicts)
     {
         string? install = !string.IsNullOrWhiteSpace(cave.CustomFolder) ? cave.CustomFolder
             : cave.LocationPath is { Length: > 0 } && cave.FolderName is { Length: > 0 } ? Path.Combine(cave.LocationPath, cave.FolderName)
@@ -138,7 +148,13 @@ public sealed class ItchLibrarySource(string? itchDirectory = null, Action<strin
 
         install = Path.GetFullPath(install);
         string name = cave.Title is { Length: > 0 } ? cave.Title : ReadReceipt(Path.Combine(install, ".itch", "receipt.json.gz"))?.Title ?? Path.GetFileName(install);
-        return new StoreGame(_platform, cave.GameId.ToString(System.Globalization.CultureInfo.InvariantCulture), name, install, VerdictExecutable(cave.Verdict, install), Version: null);
+        string? exe = VerdictExecutable(cave.Verdict, install, out bool onlyHelpers);
+        if (onlyHelpers)
+        {
+            helperVerdicts.Add(name);
+        }
+
+        return new StoreGame(_platform, cave.GameId.ToString(System.Globalization.CultureInfo.InvariantCulture), name, install, exe, Version: null);
     }
 
     /// <summary>
@@ -146,8 +162,17 @@ public sealed class ItchLibrarySource(string? itchDirectory = null, Action<strin
     /// Windows candidate is the executable butler itself launches; anything else (an HTML5 or Love2D game, a
     /// verdict that will not parse) leaves the guess to the locator.
     /// </summary>
-    private static string? VerdictExecutable(string? verdict, string install)
+    /// <remarks>
+    /// <b>Not a candidate a runtime ships as a helper (beta.19).</b> butler saves a FILTERED verdict — the shallowest
+    /// candidates, minus those whose manifest asks for elevation — and does not rank what is left, so on A Doll's Locket -
+    /// Remake (game 5085165) the one candidate was <c>Dolls Locket/notification_helper.exe</c>: the 213 MB launcher asks for
+    /// administrator and the NW.js runtime sits a level deeper. The import took it as the game, unmarked as a guess. A
+    /// candidate <see cref="ExecutableLocator.IsRuntimeHelper"/> names, or one inside a Unity plugin folder, is skipped;
+    /// when nothing else is left, <paramref name="onlyHelpers"/> is true and the locator guesses — the review says so.
+    /// </remarks>
+    private static string? VerdictExecutable(string? verdict, string install, out bool onlyHelpers)
     {
+        onlyHelpers = false;
         if (string.IsNullOrWhiteSpace(verdict))
         {
             return null;
@@ -167,7 +192,15 @@ public sealed class ItchLibrarySource(string? itchDirectory = null, Action<strin
                     && string.Equals(flavor.GetString(), "windows", StringComparison.Ordinal);
                 if (windows && candidate.TryGetProperty("path", out JsonElement path) && path.ValueKind == JsonValueKind.String && path.GetString() is { Length: > 0 } relative)
                 {
-                    return Path.GetFullPath(Path.Combine(install, relative.Replace('/', Path.DirectorySeparatorChar)));
+                    string full = Path.GetFullPath(Path.Combine(install, relative.Replace('/', Path.DirectorySeparatorChar)));
+                    if (ExecutableLocator.IsRuntimeHelper(Path.GetFileNameWithoutExtension(full)) || ExecutableLocator.IsUnderPluginFolder(install, full))
+                    {
+                        onlyHelpers = true;
+                        continue;
+                    }
+
+                    onlyHelpers = false;
+                    return full;
                 }
             }
 
@@ -175,6 +208,7 @@ public sealed class ItchLibrarySource(string? itchDirectory = null, Action<strin
         }
         catch (JsonException)
         {
+            onlyHelpers = false;
             return null;
         }
     }

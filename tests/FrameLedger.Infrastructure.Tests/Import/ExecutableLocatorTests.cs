@@ -106,6 +106,51 @@ public sealed class ExecutableLocatorTests : IDisposable
         new ExecutableLocator().PickPrimary(game).Should().Be(Path.Combine(game, "b.exe"));
     }
 
+    /// <summary>
+    /// A Doll's Locket - Remake (itch, 2026-10-12), with its real names: a .NET launcher named after the install at the top
+    /// (213,745,664 bytes on disk — scaled down here, it only has to be the largest), NW.js's toast helper beside it, and the
+    /// RPG Maker MZ runtime one folder down beside its <c>nw.dll</c> and <c>package.json</c>. The runtime is the process
+    /// that draws (D56); the launcher only starts it.
+    /// </summary>
+    [Fact]
+    public async Task AnNwjsRuntimeBeatsTheLauncherNamedAfterTheInstallAndItsHelpersAreDropped()
+    {
+        string cave = Sub("a-dolls-locket-remake");
+        string game = Sub("a-dolls-locket-remake", "Dolls Locket");
+        string css = Sub("a-dolls-locket-remake", "Dolls Locket", "css");
+        await File.WriteAllBytesAsync(Path.Combine(game, "DollsLocket.exe"), new byte[3_000_000], Ct);
+        await File.WriteAllBytesAsync(Path.Combine(game, "notification_helper.exe"), new byte[919_552], Ct);
+        await File.WriteAllBytesAsync(Path.Combine(css, "Game.exe"), new byte[2_139_648], Ct);
+        await File.WriteAllBytesAsync(Path.Combine(css, "notification_helper.exe"), new byte[919_552], Ct);
+        await File.WriteAllBytesAsync(Path.Combine(css, "nw.dll"), new byte[10], Ct);
+        await File.WriteAllTextAsync(Path.Combine(css, "package.json"), "{\"name\":\"rmmz-game\",\"main\":\"index.html\"}", Ct);
+
+        new ExecutableLocator().PickPrimary(cave).Should().Be(Path.Combine(css, "Game.exe"),
+            "an executable beside nw.dll and package.json is the NW.js runtime; the larger launcher named after the install only starts it");
+    }
+
+    [Fact]
+    public async Task AnNwjsRuntimeAtTheRootIsTheGameAndAUnityPlayerOutranksAnNwjsToolBesideIt()
+    {
+        // Flower in Us (Steam): the runtime at the root, NW.js 0.82.0's helper beside it.
+        string flower = Sub("Flower in Us");
+        await File.WriteAllBytesAsync(Path.Combine(flower, "Game.exe"), new byte[2_191_360], Ct);
+        await File.WriteAllBytesAsync(Path.Combine(flower, "notification_helper.exe"), new byte[1_157_632], Ct);
+        await File.WriteAllBytesAsync(Path.Combine(flower, "nw.dll"), new byte[10], Ct);
+        await File.WriteAllTextAsync(Path.Combine(flower, "package.json"), "{}", Ct);
+        new ExecutableLocator().PickPrimary(flower).Should().Be(Path.Combine(flower, "Game.exe"));
+
+        // A Unity game shipping an NW.js tool: the NW.js rank sits below the engines' own layouts.
+        string unity = Sub("Some Unity Title");
+        string tool = Sub("Some Unity Title", "tools", "config");
+        Sub("Some Unity Title", "Title_Data");
+        await File.WriteAllBytesAsync(Path.Combine(unity, "Title.exe"), new byte[650_000], Ct);
+        await File.WriteAllBytesAsync(Path.Combine(tool, "Config.exe"), new byte[2_000_000], Ct);
+        await File.WriteAllBytesAsync(Path.Combine(tool, "nw.dll"), new byte[10], Ct);
+        await File.WriteAllTextAsync(Path.Combine(tool, "package.json"), "{}", Ct);
+        new ExecutableLocator().PickPrimary(unity).Should().Be(Path.Combine(unity, "Title.exe"), "X.exe beside X_Data outranks an NW.js folder");
+    }
+
     [Theory]
     [InlineData("ZFGameBrowser")]
     [InlineData("KernelDumpAnalyzer")]
@@ -116,6 +161,22 @@ public sealed class ExecutableLocatorTests : IDisposable
     [InlineData("CrashReportClient")]
     [InlineData("UnityCrashHandler64")]
     [InlineData("crashpad_handler")]
+    [InlineData("notification_helper")]
     public void TheHelpersThisWasMeasuredOnAreHelpers(string name) =>
         ExecutableLocator.IsHelper(name).Should().BeTrue();
+
+    /// <summary>
+    /// What may overrule a store's own pick is a whole name, never a fragment: <c>node</c> is a helper fragment and inside
+    /// a real game's name.
+    /// </summary>
+    [Theory]
+    [InlineData("notification_helper", true)]
+    [InlineData("NOTIFICATION_HELPER", true)]
+    [InlineData("crashpad_handler", true)]
+    [InlineData("UnityCrashHandler64", true)]
+    [InlineData("Nodebuster", false)]
+    [InlineData("Game", false)]
+    [InlineData("DollsLocket", false)]
+    public void OnlyWholeRuntimeHelperNamesOverruleAStore(string name, bool helper) =>
+        ExecutableLocator.IsRuntimeHelper(name).Should().Be(helper);
 }

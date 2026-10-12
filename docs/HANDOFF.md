@@ -2218,7 +2218,8 @@ blends into the background in dark mode").
    halves and a footer naming `v0.1.0-beta.17` — then tick *Restrict editing to collaborators only* (Settings ▸ General
    ▸ Features ▸ Wikis), or anyone can change a page until the next release overwrites it. (e) The `ja` strings marked
    `review`.
-14. **beta.18 on real hardware.** (a) **The dark theme:** every page's title and section headings — Dashboard, Games, a
+14. ~~**beta.18 on real hardware.**~~ **Passed 2026-10-08** — the owner ran it on real hardware and reported it OK ("Đã
+   test và ok"). *(The item as written:)* (a) **The dark theme:** every page's title and section headings — Dashboard, Games, a
    game's page, Compare, Settings, Logs — read light on the dark window, after starting in Dark, after Light → Dark, and
    after moving between pages. (b) **The overlay build** on the Dashboard's *Capture agent* card reads `v0.1.0-beta.18`,
    without `-dirty`. (c) **Disable all hooking:** turning it on says a game being measured stops within 30 seconds; with

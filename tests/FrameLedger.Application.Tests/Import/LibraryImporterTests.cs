@@ -129,6 +129,43 @@ public sealed class LibraryImporterTests
         log.Should().Contain(static l => l.Contains("added Cyberpunk 2077", StringComparison.Ordinal) && l.Contains("hooking off", StringComparison.Ordinal));
     }
 
+    /// <summary>
+    /// beta.19: the owner's library holds A Doll's Locket - Remake at the helper an earlier import took from butler's
+    /// verdict. This build guesses the NW.js runtime instead — and without matching the store's own id it would offer the
+    /// same game a second time beside the entry the owner already has (and re-points with Change executable…).
+    /// </summary>
+    [Fact]
+    public async Task AStoreTitleAlreadyInTheLibraryAtAnotherExecutableIsNotOfferedAgain()
+    {
+        var games = new FakeGameRepository();
+        var identity = new FakeIdentity();
+        var locator = new FakeLocator();
+        List<string> log = [];
+        const string install = @"D:\another\it\a-dolls-locket-remake";
+        const string helper = @"D:\ANOTHER\IT\A-DOLLS-LOCKET-REMAKE\DOLLS LOCKET\NOTIFICATION_HELPER.EXE";
+        GameRow old = await games.EnsureAsync(new ExecutableFingerprint { ExePath = helper, SizeBytes = 7, MtimeUnixMs = 7 }, "A Doll's Locket - Remake", Ct);
+        await games.ApplyStoreMetadataAsync(old.Id, new StoreMetadata { Platform = "itch", StoreId = "5085165" }, Ct);
+        identity.Existing.Add(helper);
+        identity.Existing.Add(@"D:\ANOTHER\IT\A-DOLLS-LOCKET-REMAKE\DOLLS LOCKET\CSS\GAME.EXE");
+        locator.Guesses[install] = install + @"\Dolls Locket\css\Game.exe";
+        var itch = new ScriptedStore("itch",
+            new StoreGame("itch", "5085165", "A Doll's Locket - Remake", install, null, null),
+            new StoreGame("itch", "1659887", "Plethora of Bullets 2", @"D:\another\it\plethora-of-bullets-2", @"D:\another\it\plethora-of-bullets-2\POB2.exe", null));
+        identity.Existing.Add(@"D:\ANOTHER\IT\PLETHORA-OF-BULLETS-2\POB2.EXE");
+        var importer = new LibraryImporter([itch], games, identity, locator, log.Add);
+
+        IReadOnlyList<ImportCandidate> found = await importer.DiscoverAsync(Ct);
+
+        ImportCandidate dolls = found.Single(static c => string.Equals(c.Game.StoreId, "5085165", StringComparison.Ordinal));
+        dolls.AlreadyInLibrary.Should().BeTrue("the same itch title is an entry already, at the executable an earlier import chose");
+        dolls.CanImport.Should().BeFalse();
+        found.Single(static c => string.Equals(c.Game.StoreId, "1659887", StringComparison.Ordinal)).CanImport.Should().BeTrue("another title of the same store is not matched");
+        log.Should().Contain(l => l.Contains("already in the library as " + helper, StringComparison.Ordinal));
+
+        (await importer.ImportAsync([.. found.Where(static c => c.CanImport)], Ct)).Added.Should().Be(1);
+        games.Rows.Should().HaveCount(2, "Plethora was added and A Doll's Locket stayed one entry");
+    }
+
     [Fact]
     public async Task AStoreThatThrowsCostsItsOwnTitlesAndTheSameExecutableUnderTwoStoresIsOneRow()
     {

@@ -72,6 +72,12 @@ public sealed class LibraryImporter
                 bool missing = exe is not null && _identity.Read(exe) is null;
                 bool already = exe is not null && await _games.FindAsync(exe, ct).ConfigureAwait(false) is { InLibrary: true };
                 string? movedFrom = exe is null || already ? null : StaleTwinOf(exe, library)?.Fingerprint.ExePath;
+                if (exe is not null && !already && movedFrom is null && SameStoreTitleOf(game, library) is { } entry)
+                {
+                    already = true;
+                    _log($"import: {game.Name} ({game.Platform} {game.StoreId}) is already in the library as {entry.Fingerprint.ExePath} — not offered again at {exe}");
+                }
+
                 candidates.Add(new ImportCandidate(game, exe, already, guessed, missing, movedFrom));
             }
 
@@ -130,4 +136,16 @@ public sealed class LibraryImporter
     /// </summary>
     private GameRow? StaleTwinOf(string exe, IReadOnlyList<GameRow> library) =>
         library.FirstOrDefault(r => ExecutableRelocator.IsDriveLetterTwin(r.Fingerprint.ExePath, exe) && _identity.Read(r.Fingerprint.ExePath) is null);
+
+    /// <summary>
+    /// The library entry an earlier import made for this very store title, at another executable (beta.19): the store's id
+    /// under the same platform. The import used to compare paths only, so a guess that changed between builds — A Doll's
+    /// Locket - Remake's helper became its NW.js runtime — would have offered the same game again beside the entry the
+    /// user already has; that entry is what Change executable… re-points. A title with no store id is never matched.
+    /// </summary>
+    private static GameRow? SameStoreTitleOf(StoreGame game, IReadOnlyList<GameRow> library) =>
+        string.IsNullOrEmpty(game.StoreId)
+            ? null
+            : library.FirstOrDefault(r => string.Equals(r.Platform, game.Platform, StringComparison.OrdinalIgnoreCase)
+                                          && string.Equals(r.StoreId, game.StoreId, StringComparison.Ordinal));
 }
