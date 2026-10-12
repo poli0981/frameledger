@@ -107,12 +107,19 @@ public sealed class GameDetailViewModelTests
 
     private sealed class FakePicker(string? path) : IGamePicker
     {
-        public string? PickExecutable() => path;
+        /// <summary>The folder each pick was asked to open in.</summary>
+        public List<string?> Folders { get; } = [];
+
+        public string? PickExecutable(string? initialDirectory = null)
+        {
+            Folders.Add(initialDirectory);
+            return path;
+        }
     }
 
     private static async Task<(GameDetailViewModel Vm, FakeAgent Agent, FakePrompt Prompt, FakeNavigator Nav, FakeStrip Strip)> BuildAsync(
         ScratchLedger s, long gameId, RemoveGameChoice remove = RemoveGameChoice.Cancel, GameMetadata? edit = null, string? pick = null,
-        FakeAgent? withAgent = null, RegisteredSettings? settings = null, UiMode? mode = null)
+        FakeAgent? withAgent = null, RegisteredSettings? settings = null, UiMode? mode = null, FakePicker? picker = null)
     {
         FakeAgent agent = withAgent ?? new FakeAgent();
         var prompt = new FakePrompt();
@@ -121,7 +128,7 @@ public sealed class GameDetailViewModelTests
         var vm = new GameDetailViewModel(s.Library, new GameSelection { GameId = gameId }, new HookingConsent(agent, prompt), nav,
             new FakeConfirmations(remove), new FakeEdit(edit), strip, new NoSummaries(),
             new Charts.SessionSeriesLoader(s.Sessions), new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(),
-            new FakePicker(pick), settings, mode: mode);
+            picker ?? new FakePicker(pick), settings, mode: mode);
         Task pending = vm.Pending;
         await pending.ConfigureAwait(false);
         return (vm, agent, prompt, nav, strip);
@@ -812,6 +819,36 @@ public sealed class GameDetailViewModelTests
         finally
         {
             File.Delete(real);
+        }
+    }
+
+    /// <summary>
+    /// beta.19 (owner request 2026-10-12): the pick opens in the game's own root folder — a Steam install's folder under
+    /// <c>steamapps\common</c>, not the <c>bin\x64</c> the executable sits in, and not wherever the dialog was last.
+    /// </summary>
+    [Fact]
+    public async Task ChangingTheExecutableOpensThePickInTheGamesOwnFolder()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        string library = Path.Combine(Path.GetTempPath(), "fl-pick-" + Guid.NewGuid().ToString("N"));
+        string install = Path.Combine(library, "steamapps", "common", "Title");
+        Directory.CreateDirectory(Path.Combine(install, "bin", "x64"));
+        try
+        {
+            GameRow game = await s.GameAsync("Title", Infrastructure.Io.ExecutableIdentity.Normalise(Path.Combine(install, "bin", "x64", "Title.exe")));
+            var picker = new FakePicker(null);
+            (GameDetailViewModel vm, _, _, _, FakeStrip strip) = await BuildAsync(s, game.Id, picker: picker);
+
+            vm.ChangeExecutableCommand.Execute(null);
+            Task pending = vm.Pending;
+            await pending;
+
+            picker.Folders.Should().Equal([install], "the install root under steamapps\\common, not bin\\x64");
+            strip.Lines.Should().BeEmpty("a cancelled pick changes nothing");
+        }
+        finally
+        {
+            Directory.Delete(library, recursive: true);
         }
     }
 

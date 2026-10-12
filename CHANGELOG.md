@@ -28,6 +28,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Changed
+
+- **Change executable… opens in the game's own folder** — the install folder a store made (`steamapps\common\<game>`
+  and the like), or above an Unreal game's `Binaries\Win64`, else the folder the executable is in — instead of wherever
+  the last file dialog was. For a game whose folder is gone it opens at the nearest folder still there
+  (`docs/08_UI.md` §Games).
+
 ### Fixed
 
 - **An imported game is no longer one of its helpers, and an RPG Maker MV/MZ game behind a launcher is its runtime.**

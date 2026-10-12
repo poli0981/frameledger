@@ -92,7 +92,7 @@ public sealed class SessionDeletionAndOverviewTests
 
     private sealed class NoPicker : IGamePicker
     {
-        public string? PickExecutable() => null;
+        public string? PickExecutable(string? initialDirectory = null) => null;
     }
 
     /// <summary>The summary windows, counting how often they were asked to close the deleted sessions' ones.</summary>
