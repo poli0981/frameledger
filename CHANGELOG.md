@@ -63,6 +63,8 @@ numeric core and does not move; the heading is the full version — corrected 20
   that draws (`css\Game.exe` there; its launcher asks for administrator, so it is measured with *Run the agent as
   administrator* on). The import also no longer offers a store's game again when the library has it at another
   executable: an entry already there is re-pointed with *Change executable…* (`docs/05_DETECTION.md` §Library import).
+- **The Games page shows its newest read of the library.** When two reads overlapped — a session ending while an import
+  added games — the one that started first could finish last and be shown, an older list until the next read.
 
 ## [0.1.0-beta.18] - 2026-10-07
 

@@ -258,12 +258,63 @@ public sealed class GamesViewModelTests
         await using ScratchLedger s2 = await ScratchLedger.OpenAsync();
         var listed = new GamesViewModel(s2.Library, new GameSelection(), new NoNavigation(),
             new AddGameFlow(s2.Library, new NoPicker(), new GameSelection(), new NoNavigation(), new NoStrip()));
+        Task opened = listed.Pending;
+        await opened;    // the page's own first read, of an empty library, before the games below are added
         string here = typeof(GamesViewModelTests).Assembly.Location;
         _ = await s2.GameAsync("Here", here);
         _ = await s2.GameAsync("Gone", Path.Combine(AppContext.BaseDirectory, "no-such-game.exe"));
         await listed.LoadAsync(Ct);
         listed.Games.Single(static g => string.Equals(g.Name, "Here", StringComparison.Ordinal)).NotInstalled.Should().BeFalse();
         listed.Games.Single(static g => string.Equals(g.Name, "Gone", StringComparison.Ordinal)).NotInstalled.Should().BeTrue();
+    }
+
+    /// <summary>
+    /// beta.19: reads of the library overlap, and the one that started first can finish last — its checks waiting on a drive
+    /// that is slow to answer. It used to be shown over the newer one: a game the Agent had just removed came back until the
+    /// next read. One local run in about 165 failed <see cref="ACardSaysWhetherItsExecutableIsThereAndWhy"/> that way, its
+    /// own two reads racing.
+    /// </summary>
+    [Fact]
+    public async Task AnOlderReadThatFinishesLastIsNotShownOverANewerOne()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        _ = await s.GameAsync("Alpha");
+        var bound = TimeSpan.FromSeconds(30);
+        using var firstBegan = new ManualResetEventSlim();
+        using var firstMayEnd = new ManualResetEventSlim();
+        int checks = 0;
+        bool Exists(string path)
+        {
+            if (Interlocked.Increment(ref checks) == 1)
+            {
+                // The first read's check waits, as on a drive that is slow to answer.
+                firstBegan.Set();
+                _ = firstMayEnd.Wait(bound, Ct);
+            }
+
+            return true;
+        }
+
+        var selection = new GameSelection();
+        var nav = new NoNavigation();
+        var vm = new GamesViewModel(s.Library, selection, nav, new AddGameFlow(s.Library, new NoPicker(), selection, nav, new NoStrip()), executableExists: Exists);
+        Task first = vm.Pending;
+        try
+        {
+            // Only once the first read is held in its check does the second begin: its checks are then never the held one.
+            firstBegan.Wait(bound, Ct).Should().BeTrue("the page's first read checks its one game");
+            _ = await s.GameAsync("Bravo");
+            await vm.LoadAsync(Ct);
+            vm.Games.Should().HaveCount(2, "the newer read lists both");
+        }
+        finally
+        {
+            firstMayEnd.Set();
+        }
+
+        await first;
+        vm.Games.Should().HaveCount(2, "the older read, of one game, finished last and is not shown");
+        vm.HeaderText.Should().EndWith("2");
     }
 
     [Theory]
