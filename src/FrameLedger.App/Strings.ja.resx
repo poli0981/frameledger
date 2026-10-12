@@ -2981,6 +2981,10 @@
     <value>ゲームの Game.ini が指定する RPG Maker のランタイムライブラリ（RGSS）から。この番号はエディターではなくライブラリのものです。</value>
     <comment>review</comment>
   </data>
+  <data name="GameDetail_EngineVersion_RenPyVcVersion" xml:space="preserve">
+    <value>ゲームの Ren'Py エンジンのバージョンファイル（renpy/vc_version.py）から。</value>
+    <comment>review</comment>
+  </data>
   <data name="GameDetail_EngineVersion_NotFoundInFiles" xml:space="preserve">
     <value>ゲームのファイルには見つかりません。</value>
     <comment>review</comment>

@@ -228,6 +228,7 @@ public sealed class DetectionRulesFile : IDetectionRulesSource
             "unity_build" => VersionExtractorType.UnityBuild,
             "godot_build" => VersionExtractorType.GodotBuild,
             "rpgmaker_build" => VersionExtractorType.RpgMakerBuild,
+            "renpy_build" => VersionExtractorType.RenPyBuild,
             _ => throw new InvalidOperationException($"'{owner}' has unknown version extractor '{d.Type}'"),
         },
         Value = d.Value,

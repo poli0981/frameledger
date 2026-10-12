@@ -43,4 +43,10 @@ public interface IGameFileProbe
     /// <see cref="VersionExtractorType.RpgMakerBuild"/>. Null when neither is found.
     /// </summary>
     ValueTask<RpgMakerBuildFacts?> ReadRpgMakerBuildAsync(GameFileSnapshot snapshot, CancellationToken ct = default);
+
+    /// <summary>
+    /// Ren'Py's build facts (beta.20) — the <c>version</c> line of the engine's <c>renpy/vc_version.py</c> beside the
+    /// launcher — for <see cref="VersionExtractorType.RenPyBuild"/>. Null when the file names none or could not be read.
+    /// </summary>
+    ValueTask<RenPyBuildFacts?> ReadRenPyBuildAsync(GameFileSnapshot snapshot, CancellationToken ct = default);
 }

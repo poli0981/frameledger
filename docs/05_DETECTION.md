@@ -287,6 +287,26 @@ read by the VX Ace rule's reader unmeasured. A Unity build older than 2019 keeps
 `UnityPlayer.dll`): its data file's header is the only witness. Rules `2026.10.2` change the detection key, so every
 library entry is read again once; a Unity row keeps the old raw string only if none of its witnesses can be read now.
 
+### Engine version — Ren'Py (beta.20, 2026-10-12, rules 2026.10.3)
+
+The owner asked for the version of Ren'Py games once beta.19's were on screen. The `renpy` rule had no version extractor
+(`version: null`). Ren'Py ships its engine as Python beside the game's launcher, and `renpy/vc_version.py` names its
+release — `version = '8.5.0.25111603'`, beside `branch`, `nightly`, `official` and `version_name`. Measured 2026-10-12 on
+the owner's one Ren'Py install, Bound Between Desks (Steam): 109 bytes, and the game's own `log.txt` printed
+`Ren'Py 8.5.0.25111603` at its last start; the launcher carries no version resource (`spike-notes` §18).
+
+**What is read and how it is decided.** `renpy_build` (`RenPyBuildReader`): the first 4 KiB of `renpy/vc_version.py`
+beside the row's executable, its `version` line only (`version_name` is not it). `RenPyVersion.Decide` keeps
+MAJOR.MINOR.PATCH — Ren'Py names its releases by those three; the fourth is the build — and records `renpy_vc_version`.
+The page says *Ren'Py 8.5.0* and that it was read from the engine's version file; a Ren'Py row whose file names no
+version says *Not found in the game's files*. Through the shipped pipeline (`StaticGameDetector` over `GameFileProbe`)
+Bound Between Desks read `8.5.0` in 79 ms, and the Unity, Godot and RPG Maker installs read as before. The Privacy
+Policy names the file since 2.9 (§4). Rules `2026.10.3` change the detection key, so every library entry is read again
+once.
+
+**What it is not.** Nothing else is guessed from: a Ren'Py game whose `vc_version.py` names no version, or that ships its
+engine compiled only, reads as not found. One Ren'Py install was measured.
+
 ### Platform signatures & metadata
 
 | Platform | Signals | Metadata |

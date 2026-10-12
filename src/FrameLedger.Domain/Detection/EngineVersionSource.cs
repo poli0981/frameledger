@@ -51,6 +51,9 @@ public static class EngineVersionSource
     /// <summary>RPG Maker VX Ace: the RGSS3 library.</summary>
     public const string Rgss3Library = "rgss3_library";
 
+    /// <summary>Ren'Py (beta.20): the <c>version</c> line of the engine's <c>renpy/vc_version.py</c>, MAJOR.MINOR.PATCH.</summary>
+    public const string RenPyVcVersion = "renpy_vc_version";
+
     /// <summary>The rule's own extractor, named as the rules file names it (<c>pe_file_version</c>, <c>strings_regex</c>, …).</summary>
     public static string Of(VersionExtractorType type) => type switch
     {
@@ -62,6 +65,7 @@ public static class EngineVersionSource
         VersionExtractorType.UnityBuild => "unity_build",
         VersionExtractorType.GodotBuild => "godot_build",
         VersionExtractorType.RpgMakerBuild => "rpgmaker_build",
+        VersionExtractorType.RenPyBuild => "renpy_build",
         _ => throw new ArgumentOutOfRangeException(nameof(type), type, "not a version extractor"),
     };
 }

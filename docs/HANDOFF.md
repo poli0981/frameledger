@@ -2184,9 +2184,16 @@ then the release.*
   first to be held before starting the second, and bound every wait).
 - **A test run reseeds `%LOCALAPPDATA%\FrameLedger\rules`** with rules `2026.10.2`, whose extractor types the installed
   beta.18 cannot parse: its detection sweep says "rules unusable" until it restarts or beta.19 is installed (beta.10's
-  trap, met again; the guard is unaffected).
+  trap, met again; the guard is unaffected). For beta.20 PR-1 (rules `2026.10.3`, which the installed beta.19 cannot
+  parse) the session copied the owner's `detection-rules.json` and `.seeded` aside before testing and back after,
+  byte for byte, so the owner's running Agent kept its own.
 
-**Owner-only, added to the list below:** item 15.
+**Owner-only, added to the list below:** item 15 — **passed 2026-10-12**.
+
+**After the release (owner, 2026-10-12):** "tiếp tục với 1 pr kèm với detect version game dùng ren'py" — beta.20 PR-1 reads
+a Ren'Py game's engine version from `renpy/vc_version.py` (rules `2026.10.3`, Privacy Policy 2.9 — the Legal Gate shows it
+once at the next update; `05_DETECTION` §Engine version — Ren'Py) and strikes item 15. Merged for the next pre-release;
+no release was asked for.
 
 ## Owner-only — no PR can close these
 
@@ -2290,7 +2297,11 @@ then the release.*
    without `-dirty`. (c) **Disable all hooking:** turning it on says a game being measured stops within 30 seconds; with
    it on, a hooked game's notice reads "All hooking is switched off in Settings, so nothing was measured." (d) The `ja`
    strings marked `review`, `Safety_Unhooked_Unnamed_Format` among them.
-15. **beta.19 on real hardware.** (a) **A Doll's Locket - Remake:** its page ▸ *Change executable…* opens in `Dolls
+15. ~~**beta.19 on real hardware.**~~ **Passed 2026-10-12** — the owner ran it and reported (a), (c), (d)'s unplugged
+   drive, (e) and (f) OK ("Các mục đã test: 1, 2. 5, 6, 4, ok"); (b) and (d)'s removal were read from the logs: Refresh
+   named the existing entry instead of offering a twin, and one check at 18:04:00 removed Deadly Heart Gambit, Vibe Train
+   Demo and 衔蝶 (the App's restart at 17:47 had started the ten minutes again), the library then reading *Games · 46*.
+   *(The item as written:)* (a) **A Doll's Locket - Remake:** its page ▸ *Change executable…* opens in `Dolls
    Locket\`; pick `css\Game.exe`. Its launcher asks for administrator, so the runtime is measured only with *Run the agent
    as administrator* on — otherwise the session says why nothing was measured. (b) **Refresh** offers no second A Doll's
    Locket. (c) **Engine versions:** a Unity game's page (*Unity 2022.3.62f2* on Umamusume, *Unity 2019.4.40* on GIRLS'

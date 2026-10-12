@@ -190,6 +190,7 @@ public sealed class FormatsTests
         Formats.EngineWithVersion("rpgmaker_rgss", "3.0.1", EngineVersionSource.Rgss3Library).Should().Be("RPG Maker VX Ace (RGSS 3.0.1)");
         Formats.EngineWithVersion("unity", "2022.3.39f1", EngineVersionSource.UnityPlayer).Should().Be("Unity 2022.3.39f1");
         Formats.EngineWithVersion("godot", "4.4.1", EngineVersionSource.GodotPack).Should().Be("Godot 4.4.1");
+        Formats.EngineWithVersion("renpy", "8.5.0", EngineVersionSource.RenPyVcVersion).Should().Be("Ren'Py 8.5.0");
         Formats.EngineWithVersion("unreal", "5.4.4", EngineVersionSource.UnrealFileVersion).Should().Be("Unreal Engine 5.4.4");
         Formats.EngineWithVersion("unity", "6000.0", null).Should().Be("Unity 6000.0", "a version the user typed has no witness");
         Formats.EngineWithVersion("godot", null, null).Should().Be("Godot");
