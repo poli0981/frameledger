@@ -2084,7 +2084,7 @@ release.*
 
 **Owner-only, added to the list below:** item 13.
 
-## **START HERE** — 2026-10-07, 0.1.0-beta.18: page titles readable in the dark theme, notices in words, a clean build id
+## ~~**START HERE**~~ — 2026-10-07, 0.1.0-beta.18: page titles readable in the dark theme, notices in words, a clean build id *(struck 2026-10-12: the head is §beta.19 below)*
 
 *Status is `CHANGELOG.md` `[0.1.0-beta.18]`; this is what no other file carries. The owner's report (2026-10-07, five
 screenshots of beta.17 in the dark theme): every page's title and section headings near-black on the dark window — and
@@ -2122,6 +2122,71 @@ blends into the background in dark mode").
   before the host runs), which also gave the `TargetNotRunning` case a 15 s hold (`13_CI_CD` §ci.yml).
 
 **Owner-only, added to the list below:** item 14.
+
+## **START HERE** — 2026-10-12, 0.1.0-beta.19: the import's helper, the folder Change executable opens in, three engines' versions, uninstalled games
+
+*Status is `CHANGELOG.md` `[0.1.0-beta.19]`; this is what no other file carries. The owner's list (2026-10-12, four items):
+*Change executable…* opens in the game's root folder; the version of RPG Maker, Unity and Godot games; A Doll's Locket -
+Remake imported as `notification_helper.exe`; whether the Agent removes games whose executable is gone, and if not, to
+remove them when no session was recorded. Four stacked PRs — #292 the import, #293 the folder, #294 the versions,
+#295 the removal — and two from #295's review, #297 one notice per check and #298 the probe's unreadable-folder tests —
+then the release.*
+
+**Decisions (owner, 2026-10-12, asked before the plan — do not re-ask):**
+
+- **D55 — a game you uninstalled leaves the library by itself when it has no session** (amends D41's "nothing is
+  removed"): its executable gone at sweeps ten minutes apart (counted in the Agent's memory), its drive connected and the
+  folder it was installed in still there, no session stored, recording or waiting to be recovered — behind Settings ▸
+  Data ▸ *Remove uninstalled games*, on by default (`02_SPEC` FR-1.8). **Never an entry carrying an anti-cheat block, an
+  exception's grant or a failed trial**: that part follows from rule 2 and D38 and was not asked (`19_SAFETY` §What a
+  finding does to the game).
+- **D56 — an NW.js runtime is the import's game**: an executable beside `nw.dll` + `package.json` ranks as the engine's
+  own layout, below Unity's and Unreal's and above a name match, so a launcher-fronted RPG Maker MV/MZ install is pointed
+  at the process that draws. D28 did that by hand for HELLO, HELLO WORLD!; the locator now picks the same file.
+- **The owner's existing A Doll's Locket entry is not rewritten** (D25/D27): *Change executable…* re-points it, and the
+  import no longer offers a twin of the same store title.
+- **The train (owner, 2026-10-12, after the PRs were up):** "commit, push và release luôn" — each PR squash-merged by the
+  session as its CI went green, then the signed tag and the release, without asking again. Then, of the review's two
+  follow-ups the session had offered as separate tasks: "2 pr riêng, rồi merge, push và release" — #297 and #298, in this
+  release.
+
+**Traps met on the way:**
+
+- **A store's own pick can be a helper.** itch's butler saves a *filtered* verdict — the shallowest candidates, minus
+  those whose manifest asks for elevation — and ranks nothing, so A Doll's Locket's whole verdict was
+  `notification_helper.exe`. Its database lives in the WAL (a 4 KB main file): a read with `immutable=1` sees no tables;
+  open it `mode=ro` with the itch app closed, or copy the `-wal` beside it as `ItchLibrarySource` does.
+- **The locator's helper fragments are substrings** (`node` is inside *Nodebuster*): good enough for a guess, never to
+  overrule a store — `ExecutableLocator.RuntimeHelperNames` holds whole names for that.
+- **Godot's version string sits 57–78 MB into an export**, past the rules' 8 MiB strings scan; the data pack's header
+  has it in 20 bytes. **Unity's FileVersion string is not the editor version** (`2022.3.39.5118735`); the ProductVersion
+  is (`2022.3.39f1 (hash)`), except on 2019.4 players, whose data file's header carries it.
+- **`File.Exists` and `Directory.Exists` answer false for a path they may not look at**: before removing anything, the
+  parent's listing is asked whether the child is there (`ExecutablePresenceProbe`).
+- **The signing key was locked when the session began**, and ten pinentry prompts went unanswered; the code went on and
+  the commits waited. Probe first: `echo x | gpg --batch --pinentry-mode error --local-user <key> --clearsign`.
+- **Mechanical, again:** the Write tool writes LF (convert after it); a Bash heredoc halves `\\` (patch scripts are
+  files); a WPF project has no implicit `System.IO` using; MA0051 (60 lines) hit `ItchLibrarySource.ReadDatabaseAsync`,
+  `DetectionSweep.SweepOnceAsync` and `AgentServices.AddDetection`; CA1716 rejects an interface member named `Of`.
+- **A review of the PR that deletes data, after its gates were green and before it merged, found three defects no gate
+  could:** a cross-reference to a `19_SAFETY` section that does not exist; a presence probe that listed every drive for
+  every entry and asked a dead share whether it was ready (`VolumeRoots.IsReady` reads the type first); and an entry
+  the delete refused that was never asked again (`UninstalledEntryPrune.RetryAfter`, an hour). The `vi`/`ja` switch text
+  also named the pill in English where those languages show their own word. Review such a PR before the merge. The two
+  it left for later landed in the same release: one check's removals arrive as one event each, and WPF UI 4.3.0's
+  `SnackbarService` keeps ONE snackbar and shows every message in it at once (`Show(true)`, read from the assembly), so
+  only the last name stayed on screen (#297: the page waits `GamesViewModel.RemovalSettle` and says them once); and the
+  probe's two *Unknown* branches had no test (#298: real folders the test user is denied, each test measured red with its
+  branch broken).
+- **Loop a test class you touched before the merge.** `GamesViewModelTests` run 165 times failed once: two overlapping
+  reads of the library, the older finishing last and shown — a removed game's card came back. #297 shows only the newest
+  read. The first version of its test hung: which read reached the held check first was itself a race (wait for the
+  first to be held before starting the second, and bound every wait).
+- **A test run reseeds `%LOCALAPPDATA%\FrameLedger\rules`** with rules `2026.10.2`, whose extractor types the installed
+  beta.18 cannot parse: its detection sweep says "rules unusable" until it restarts or beta.19 is installed (beta.10's
+  trap, met again; the guard is unaffected).
+
+**Owner-only, added to the list below:** item 15.
 
 ## Owner-only — no PR can close these
 
@@ -2225,6 +2290,16 @@ blends into the background in dark mode").
    without `-dirty`. (c) **Disable all hooking:** turning it on says a game being measured stops within 30 seconds; with
    it on, a hooked game's notice reads "All hooking is switched off in Settings, so nothing was measured." (d) The `ja`
    strings marked `review`, `Safety_Unhooked_Unnamed_Format` among them.
+15. **beta.19 on real hardware.** (a) **A Doll's Locket - Remake:** its page ▸ *Change executable…* opens in `Dolls
+   Locket\`; pick `css\Game.exe`. Its launcher asks for administrator, so the runtime is measured only with *Run the agent
+   as administrator* on — otherwise the session says why nothing was measured. (b) **Refresh** offers no second A Doll's
+   Locket. (c) **Engine versions:** a Unity game's page (*Unity 2022.3.62f2* on Umamusume, *Unity 2019.4.40* on GIRLS'
+   FRONTLINE 2), Godot's (*Godot 4.4.1* on 衔蝶), RPG Maker's (*RPG Maker MZ 1.10.0*, *RPG Maker MV 1.6.2* on Flower in
+   Us, *RPG Maker VX Ace (RGSS 3.0.1)*), each with its *Engine version* line. (d) **Uninstall a game that has no session**
+   (or delete a copy you added): about ten minutes later its entry is gone and the Games page says so — two removed
+   together are said in one notice that names both; with the USB drive unplugged nothing is removed; *Remove uninstalled
+   games* off keeps it. (e) The Legal Gate shows the Privacy Policy 2.8
+   once. (f) The `ja` strings marked `review`.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
