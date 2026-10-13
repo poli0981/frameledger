@@ -2198,7 +2198,7 @@ a Ren'Py game's engine version from `renpy/vc_version.py` (rules `2026.10.3`, Pr
 once at the next update; `05_DETECTION` §Engine version — Ren'Py) and strikes item 15. Merged for the next pre-release;
 no release was asked for.
 
-## **START HERE** — 2026-10-12, 0.1.0-beta.20: the engine version of Ren'Py games
+## ~~**START HERE**~~ — 2026-10-12, 0.1.0-beta.20: the engine version of Ren'Py games *(struck 2026-10-13: the head is §beta.21 below)*
 
 *Status is `CHANGELOG.md` `[0.1.0-beta.20]`; this is what no other file carries.* The owner, the same evening as beta.19 and
 after confirming it on real hardware: "tiếp tục với 1 pr kèm với detect version game dùng ren'py", then "tung bản beta20
@@ -2217,6 +2217,65 @@ game's engine" — was shown to the owner with #299 and released on their word.
 - **Loop a test class you touched before the merge** (§beta.19): `GamesViewModelTests` then ran 340 times green after #297.
 
 **Owner-only, added to the list below:** item 16.
+
+## **START HERE** — 2026-10-13, 0.1.0-beta.21: an anti-cheat beside the executable, four itch downloads that are malware, documents that scroll, Play
+
+*Status is `CHANGELOG.md` `[0.1.0-beta.21]`; this is what no other file carries. The owner's list (2026-10-13, four items,
+with screenshots of two game pages): HELLO, HELLO WORLD!'s RPG Maker path is wrong; no anti-cheat is found for Wuthering
+Waves; the documents in the app scroll slowly; and, if possible, a Play button on a game's page or in the library that
+points to the platform. Then: once the plan is approved, commit → push → CI → auto-fix → merge → bump the version →
+release, in one go. Four stacked PRs — #301 check 4 also walks the executable's folder (rules `2026.10.4`), #302 the four
+itch "launchers" are malware and the Supports card, #303 the documents' wheel and one render per page, #304 Play and the
+Privacy Policy 2.10 — then the release.*
+
+**Decisions (owner, 2026-10-13, asked with the plan — do not re-ask):**
+
+- **D57 — the four itch "launchers" are malware: the documentation is corrected, the import is not changed.** The
+  "wrong path" of HELLO, HELLO WORLD! is itch's own pick: the 213 MB .NET program in front of the RPG Maker runtime,
+  which is not a helper, so the import takes it (D56). Read without running it, that program — the same in A Doll's
+  Locket - Remake, City of Bones and Träumerei Chapter 2 — is malware (`spike-notes.md` §20). D28, D56, item 15(a), the
+  beta.19 entry and `05_DETECTION` are corrected in place, and no document advises running one. The repository records
+  what the files are, never the state of a PC that ran one.
+- **D58 — Wuthering Waves is on the title list** (Steam `3513350`, Anti-Cheat Expert), beside the fix that finds ACE's
+  folder beside the game's executable.
+- **D59 — Play, in two modes switched in Settings:** "1: press Play → the platform opens → it runs; 3: it runs at once;
+  let me switch between the two". `ui.play_mode` is `store` (the default) or `direct`; the store is the one whose own
+  records name the game's folder, never the row's `platform`; an App running as administrator never starts a store's
+  app (`08_UI` §Games).
+- **The train (owner, with the plan):** "Làm trọn mạch ngay" — each PR squash-merged as its CI went green, then the
+  signed tag and the release, without asking again. The Privacy Policy 2.10 wording and the Wuthering Waves row of
+  `LIST_GAME_TESTED.md` (D35) were approved with the plan.
+
+**Traps met on the way:**
+
+- **The pre-scan's depth limit is a reach, not a refusal.** A folder at the third level is named and never opened, and
+  the walk reports a complete, clean tree; only the 4096-entry budget refuses. An anti-cheat deeper than three levels
+  under both the install root and the executable's folder is still invisible to check 4 — the 30 s re-check meets it
+  only once its driver is loaded, and a driver is a machine-wide finding that turns nothing off (`spike-notes.md` §19).
+- **A rules note over 300 characters fails `rules-validate` with a message about something else** ("Value is null …
+  `/engines/4/version`"): `Test-Json` names a branch of the schema, not the long `notes` (`freeText`, maxLength 300).
+  Bisect the edit, not the message.
+- **The owner's live rules, older than the repository's, make parallel test hosts race**: each reseeds
+  `%LOCALAPPDATA%\FrameLedger\rules`, and `ReplaceFileW` fails one of them ("could not write the rules file"). Before
+  the gate, seed the repository's rules and its `.seeded` marker (the uppercase SHA-256 hex) yourself; after it, put the
+  owner's files back byte for byte.
+- **WPF's `ScrollViewer` moves 48 DIP per wheel message whatever its delta** (`16_WPFUI_SYNTAX`), so a touchpad's small
+  deltas each jump the whole step; `MarkdownView` handles the wheel itself.
+- **A review of Play after its gates and its first CI run were green found four defects no gate could** (§beta.19's
+  lesson, again). The pipe fails a request in flight with an `IOException` when the agent stops (`PipeClient` fails every
+  pending request so), nothing on the Play path caught it, and a command's unhandled exception is the App's crash dialog —
+  so pressing Play while the agent restarted for an update would have ended there. A store record whose id builds no
+  link read "GOG GALAXY is not installed"; the agent's `UnknownGame` reached a notice as that token; two notices advised
+  what their own path could not do. All four fixed in #304 before it merged. **Not fixed here:** `SessionDeletion` has the
+  same gap (it catches no `IOException`), and every other caller of the pipe misses the `ObjectDisposedException` and
+  `IpcFramingException` the same failure can raise — the owner asked for it as its own PR after this release, and
+  its own pre-release (beta.22).
+- **Analyzers met:** MA0048 (one type per file), MA0099 (compare a flags enum with its `None`, not `0`), CS1573 (a
+  `<param>` on some of a record's parameters needs one on all — `<remarks>` instead), IDE1006 (a `private const` takes
+  the `_` prefix). **Mechanical, again:** a Bash heredoc halves `\\`; the Write tool writes LF and `sed -i` turns CRLF
+  into LF.
+
+**Owner-only, added to the list below:** item 17.
 
 ## Owner-only — no PR can close these
 
@@ -2339,6 +2398,14 @@ game's engine" — was shown to the owner with #299 and released on their word.
    line says it was read from the engine's version file (`renpy/vc_version.py`); the first sweep after the update reads
    every game once more (rules `2026.10.3`). (b) The Legal Gate shows the Privacy Policy 2.9 once. (c) The `ja` string
    marked `review` (`GameDetail_EngineVersion_RenPyVcVersion`).
+17. **beta.21 on real hardware.** (a) **Wuthering Waves:** after the update, before any session, its page says hooking
+   is off — Anti-Cheat Expert beside its executable, and its Steam id on the title list; Neverness To Everness stays
+   blocked, and GIRLS' FRONTLINE 2's exception stays in force. (b) **Play**, in both modes of Settings ▸ Games ▸ *Play
+   button*, with a Steam game, Alan Wake 2 from the Epic Games Launcher (its link has not been tried on a real game), a
+   GOG game and an itch game — and in Task Manager's Details tab the game's *Elevated* column reads *No*. (c) **The
+   wheel and a touchpad** in Help ▸ User guide, the licence in Help ▸ About and the Legal Gate: about three lines a
+   notch, gliding; at the end of the update notes the window scrolls instead. (d) The Legal Gate shows the Privacy
+   Policy 2.10 once. (e) The `ja` strings marked `review` (Play, Settings ▸ Games, `GameDetail_Supports_None`).
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
