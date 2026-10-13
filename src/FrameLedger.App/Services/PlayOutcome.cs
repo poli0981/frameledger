@@ -24,6 +24,9 @@ public enum PlayOutcome
     /// <summary>A session of the game is already running.</summary>
     AlreadyRunning,
 
+    /// <summary>The agent has no entry with the game's id (<c>UnknownGame</c>): it left the library since the page was read.</summary>
+    NotInLibrary,
+
     /// <summary>Windows would not open the store's app, or the agent refused for another reason (<see cref="PlayResult.Detail"/>).</summary>
     Failed,
 }

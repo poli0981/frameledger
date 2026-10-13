@@ -4270,7 +4270,7 @@
     <comment>review</comment>
   </data>
   <data name="Play_AgentUnavailable_Format" xml:space="preserve">
-    <value>キャプチャ エージェントが実行されていないため、FrameLedger は {0} を起動できません。ストアから起動するか、エージェントが接続してからもう一度お試しください。</value>
+    <value>キャプチャ エージェントが実行されていないため、FrameLedger は {0} を起動できません。ご自分で起動するか、エージェントが接続してからもう一度お試しください。</value>
     <comment>review</comment>
   </data>
   <data name="Play_RecordingOff_Format" xml:space="preserve">
@@ -4307,6 +4307,14 @@
   </data>
   <data name="Settings_PlayMode_Direct" xml:space="preserve">
     <value>直接起動</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_RecordingOff_Fallback_Format" xml:space="preserve">
+    <value>{0} の記録がオフで、FrameLedger は記録するゲームしか起動しません。記録をオンにするか、ご自分で起動してください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_NotInLibrary_Format" xml:space="preserve">
+    <value>{0} はもうライブラリにないため、起動しませんでした。</value>
     <comment>review</comment>
   </data>
 </root>

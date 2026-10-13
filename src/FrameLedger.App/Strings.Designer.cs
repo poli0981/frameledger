@@ -714,6 +714,8 @@ public static class Strings
         nameof(Play_Itch_Format),
         nameof(Play_NoGalaxy_Format),
         nameof(Play_NoStore_Format),
+        nameof(Play_NotInLibrary_Format),
+        nameof(Play_RecordingOff_Fallback_Format),
         nameof(Play_RecordingOff_Format),
         nameof(Play_Started_Format),
         nameof(Play_Steam_Format),
@@ -2469,6 +2471,10 @@ public static class Strings
     public static string Play_NoGalaxy_Format => ResourceManager.GetString(nameof(Play_NoGalaxy_Format), Culture) ?? nameof(Play_NoGalaxy_Format);
 
     public static string Play_NoStore_Format => ResourceManager.GetString(nameof(Play_NoStore_Format), Culture) ?? nameof(Play_NoStore_Format);
+
+    public static string Play_NotInLibrary_Format => ResourceManager.GetString(nameof(Play_NotInLibrary_Format), Culture) ?? nameof(Play_NotInLibrary_Format);
+
+    public static string Play_RecordingOff_Fallback_Format => ResourceManager.GetString(nameof(Play_RecordingOff_Fallback_Format), Culture) ?? nameof(Play_RecordingOff_Fallback_Format);
 
     public static string Play_RecordingOff_Format => ResourceManager.GetString(nameof(Play_RecordingOff_Format), Culture) ?? nameof(Play_RecordingOff_Format);
 

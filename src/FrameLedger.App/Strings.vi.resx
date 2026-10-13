@@ -3208,7 +3208,7 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
     <value>FrameLedger đang chạy với quyền quản trị, nên capture agent sẽ chạy {0} với quyền thường của bạn thay vì qua store.</value>
   </data>
   <data name="Play_AgentUnavailable_Format" xml:space="preserve">
-    <value>Capture agent không chạy, nên FrameLedger không thể chạy {0}. Hãy chạy game từ store, hoặc thử lại khi agent đã kết nối.</value>
+    <value>Capture agent không chạy, nên FrameLedger không thể chạy {0}. Hãy tự chạy game, hoặc thử lại khi agent đã kết nối.</value>
   </data>
   <data name="Play_RecordingOff_Format" xml:space="preserve">
     <value>Việc ghi đang tắt cho {0}, và FrameLedger chỉ chạy game mà nó ghi. Hãy bật ghi, hoặc đặt nút Chơi đi qua store (Cài đặt ▸ Game).</value>
@@ -3236,5 +3236,11 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   </data>
   <data name="Settings_PlayMode_Direct" xml:space="preserve">
     <value>Chạy trực tiếp</value>
+  </data>
+  <data name="Play_RecordingOff_Fallback_Format" xml:space="preserve">
+    <value>Việc ghi đang tắt cho {0}, và FrameLedger chỉ chạy game mà nó ghi. Hãy bật ghi, hoặc tự chạy game.</value>
+  </data>
+  <data name="Play_NotInLibrary_Format" xml:space="preserve">
+    <value>{0} không còn trong thư viện, nên không được chạy.</value>
   </data>
 </root>

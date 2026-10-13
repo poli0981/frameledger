@@ -3213,7 +3213,7 @@ The documents below are the full terms; this summary does not replace them.</val
     <value>FrameLedger is running as administrator, so the capture agent is starting {0} with your standard rights instead of its store.</value>
   </data>
   <data name="Play_AgentUnavailable_Format" xml:space="preserve">
-    <value>The capture agent is not running, so FrameLedger cannot start {0}. Start it from its store, or try again when the agent is connected.</value>
+    <value>The capture agent is not running, so FrameLedger cannot start {0}. Start it yourself, or try again when the agent is connected.</value>
   </data>
   <data name="Play_RecordingOff_Format" xml:space="preserve">
     <value>Recording is off for {0}, and FrameLedger starts only games it records. Turn recording on, or set Play to go through the store (Settings ▸ Games).</value>
@@ -3241,5 +3241,11 @@ The documents below are the full terms; this summary does not replace them.</val
   </data>
   <data name="Settings_PlayMode_Direct" xml:space="preserve">
     <value>Start directly</value>
+  </data>
+  <data name="Play_RecordingOff_Fallback_Format" xml:space="preserve">
+    <value>Recording is off for {0}, and FrameLedger starts only games it records. Turn its recording on, or start it yourself.</value>
+  </data>
+  <data name="Play_NotInLibrary_Format" xml:space="preserve">
+    <value>{0} is no longer in the library, so it was not started.</value>
   </data>
 </root>

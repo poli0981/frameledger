@@ -66,7 +66,7 @@ public sealed class GamePlayerTests
         }
     }
 
-    private sealed class Agent(bool connected = true, string outcome = "Accepted") : IAgentRequests
+    private sealed class Agent(bool connected = true, string outcome = "Accepted", Exception? fails = null) : IAgentRequests
     {
         public HelloAck? Hello => null;
 
@@ -80,6 +80,11 @@ public sealed class GamePlayerTests
             type.Should().Be(IpcMessageType.LaunchGame);
             var request = (LaunchGameRequest)(object)payload;
             Sent.Add(request);
+            if (fails is not null)
+            {
+                return Task.FromException<IpcEnvelope>(fails);
+            }
+
             bool accepted = string.Equals(outcome, "Accepted", StringComparison.Ordinal);
             return Task.FromResult(IpcCodec.Decode(IpcCodec.Encode(IpcMessageType.LaunchAck, "1",
                 new LaunchAck(request.GameId, accepted, outcome, accepted ? Guid.NewGuid() : null))));
@@ -171,6 +176,58 @@ public sealed class GamePlayerTests
         (await Player(s, shell, agent, steam).IsDirectAsync(Ct)).Should().BeTrue();
         GamePlayer.Describe(failed, "W").Warning.Should().BeTrue();
         GamePlayer.Describe(new PlayResult(PlayOutcome.RecordingOff), "W").Text.Should().Contain("Settings");
+    }
+
+    /// <summary>
+    /// From the review before the merge: the pipe fails a request in flight with an IOException when the agent stops (PipeClient),
+    /// and a command's unhandled exception is the App's crash dialog. Each way the connection can go mid-request is "not running".
+    /// </summary>
+    [Fact]
+    public async Task AConnectionThatGoesMidRequestIsTheAgentNotRunningNeverAnException()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        await new RegisteredSettings(new SqliteSettingsStore(s.Db)).SetAsync(SettingsRegistry.UiPlayMode, PlayMode.Direct, Ct);
+        GameRow game = Game(@"D:\Games\Loose\game.exe", null);
+        Exception[] gone =
+        [
+            new IOException("the pipe closed before the Agent answered"), new ObjectDisposedException("pipe"), new TimeoutException(),
+            new InvalidOperationException("the Agent is not connected"), new IpcFramingException("truncated frame"),
+        ];
+        foreach (Exception ex in gone)
+        {
+            PlayResult result = await Player(s, new Shell(), new Agent(fails: ex), new Stores()).PlayAsync(game, Ct);
+            result.Should().Be(new PlayResult(PlayOutcome.AgentUnavailable), ex.GetType().Name);
+        }
+
+        PlayResult refused = await Player(s, new Shell(), new Agent(fails: new IpcRequestException("UnknownType", "no such command")), new Stores())
+            .PlayAsync(game, Ct);
+        refused.Should().Be(new PlayResult(PlayOutcome.Failed, Detail: "UnknownType"));
+    }
+
+    /// <summary>From the review before the merge: each notice is true on the path it is said on.</summary>
+    [Fact]
+    public async Task EachNoticeIsTrueOnThePathItIsSaidOn()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+
+        // A Steam record whose id is not a Steam id builds no link — and is not "GOG GALAXY is not installed".
+        var odd = new Stores(new StoreGame("steam", "not-an-app-id", "W", _steam, null, null));
+        PlayResult noLink = await Player(s, new Shell(), new Agent(), odd).PlayAsync(Game(_steam + @"\game.exe", null), Ct);
+        noLink.Should().Be(new PlayResult(PlayOutcome.StartedByAgent, Fallback: PlayFallback.NoLink));
+        GamePlayer.Describe(noLink, "W").Text.Should().NotContain("GOG").And.NotContain("store");
+
+        // The store mode fell back and recording is off: switching Play to the store is no advice.
+        PlayResult storeModeOff = await Player(s, new Shell(), new Agent(outcome: "RecordingOff"), new Stores())
+            .PlayAsync(Game(@"D:\Games\Loose\game.exe", null), Ct);
+        storeModeOff.Should().Be(new PlayResult(PlayOutcome.RecordingOff, Fallback: PlayFallback.NoStore));
+        GamePlayer.Describe(storeModeOff, "W").Text.Should().NotContain("Settings");
+
+        // The agent's UnknownGame is said in words, never as the token.
+        PlayResult gone = await Player(s, new Shell(), new Agent(outcome: "UnknownGame"), new Stores())
+            .PlayAsync(Game(@"D:\Games\Loose\game.exe", null), Ct);
+        gone.Outcome.Should().Be(PlayOutcome.NotInLibrary);
+        GamePlayer.Describe(gone, "W").Text.Should().NotContain("UnknownGame").And.Contain("W");
+        GamePlayer.Describe(new PlayResult(PlayOutcome.AgentUnavailable, Fallback: PlayFallback.NoStore), "W").Text.Should().NotContain("its store");
     }
 
     [Fact]

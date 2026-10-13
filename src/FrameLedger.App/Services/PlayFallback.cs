@@ -16,4 +16,7 @@ public enum PlayFallback
 
     /// <summary>The App runs as administrator, and a store's app it started would too — and so would the game.</summary>
     Elevated,
+
+    /// <summary>A store's records name it with an id or a folder FrameLedger puts in no link (never seen; logged).</summary>
+    NoLink,
 }

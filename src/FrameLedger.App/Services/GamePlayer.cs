@@ -2,6 +2,8 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.Globalization;
+using System.IO;
+using System.Text.Json;
 using FrameLedger.Application.Import;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Play;
@@ -61,14 +63,20 @@ public sealed class GamePlayer
             else
             {
                 StoreGame? record = StoreRecords.Owning(game.Fingerprint.ExePath, game.StoreId, await RecordsAsync(ct).ConfigureAwait(false));
-                StoreLaunch? launch = record is null ? null
-                    : StoreLaunches.For(record, string.Equals(record.Platform, "gog", StringComparison.Ordinal) ? _galaxy.ClientPath() : null);
-                if (launch is not null)
+                if (record is null)
                 {
-                    return HandOff(game, launch);
+                    fallback = PlayFallback.NoStore;
                 }
+                else
+                {
+                    string? galaxy = string.Equals(record.Platform, "gog", StringComparison.Ordinal) ? _galaxy.ClientPath() : null;
+                    if (StoreLaunches.For(record, galaxy) is { } launch)
+                    {
+                        return HandOff(game, launch);
+                    }
 
-                fallback = record is null ? PlayFallback.NoStore : PlayFallback.NoGalaxy;
+                    fallback = WhyNoHandOff(game, record, galaxy);
+                }
             }
         }
 
@@ -96,8 +104,11 @@ public sealed class GamePlayer
                 _ => string.Format(CultureInfo.CurrentCulture, Strings.Play_Started_Format, gameName),
             }, false),
             PlayOutcome.AgentUnavailable => (string.Format(CultureInfo.CurrentCulture, Strings.Play_AgentUnavailable_Format, gameName), true),
-            PlayOutcome.RecordingOff => (string.Format(CultureInfo.CurrentCulture, Strings.Play_RecordingOff_Format, gameName), true),
+            // "Set Play to go through the store" only where Play was not already going through it.
+            PlayOutcome.RecordingOff => (string.Format(CultureInfo.CurrentCulture,
+                result.Fallback == PlayFallback.None ? Strings.Play_RecordingOff_Format : Strings.Play_RecordingOff_Fallback_Format, gameName), true),
             PlayOutcome.AlreadyRunning => (string.Format(CultureInfo.CurrentCulture, Strings.Play_AlreadyRunning_Format, gameName), false),
+            PlayOutcome.NotInLibrary => (string.Format(CultureInfo.CurrentCulture, Strings.Play_NotInLibrary_Format, gameName), true),
             _ when result.Detail is null => (string.Format(CultureInfo.CurrentCulture, Strings.Play_HandOffFailed_Format, gameName), true),
             _ => (string.Format(CultureInfo.CurrentCulture, Strings.Play_Failed_Format, gameName, result.Detail), true),
         };
@@ -110,6 +121,22 @@ public sealed class GamePlayer
             : _shell.OpenLink(launch.Target);
         Log.Information("play: {Game} (id {Id}) through {Store}: {Handed}", game.Name, game.Id, launch.Platform, handed ? "handed to its app" : "Windows did not take it");
         return handed ? new PlayResult(PlayOutcome.HandedToStore, launch.Platform) : new PlayResult(PlayOutcome.Failed, launch.Platform);
+    }
+
+    /// <summary>
+    /// A store's record with no hand-off: a GOG game without GOG GALAXY, or — never seen, and logged — an id or a folder of a
+    /// shape that store's own never have, which <see cref="StoreLaunches"/> puts in no link.
+    /// </summary>
+    private static PlayFallback WhyNoHandOff(GameRow game, StoreGame record, string? galaxy)
+    {
+        if (string.Equals(record.Platform, "gog", StringComparison.Ordinal) && galaxy is null)
+        {
+            return PlayFallback.NoGalaxy;
+        }
+
+        Log.Warning("play: {Game} (id {Id}): {Store}'s record of it names nothing FrameLedger may hand to its app; the agent starts it",
+            game.Name, game.Id, record.Platform);
+        return PlayFallback.NoLink;
     }
 
     private async Task<IReadOnlyList<StoreGame>> RecordsAsync(CancellationToken ct)
@@ -138,23 +165,39 @@ public sealed class GamePlayer
             return new PlayResult(PlayOutcome.AgentUnavailable, Fallback: fallback);
         }
 
+        LaunchAck? ack;
         try
         {
             IpcEnvelope envelope = await _agent.RequestAsync(IpcMessageType.LaunchGame, new LaunchGameRequest(game.Id, null), ct).ConfigureAwait(false);
-            LaunchAck ack = IpcCodec.Payload<LaunchAck>(envelope) ?? throw new InvalidOperationException("LaunchGame answered without a payload");
-            Log.Information("play: {Game} (id {Id}) through the agent: {Outcome}", game.Name, game.Id, ack.Outcome);
-            return ack.Outcome switch
-            {
-                _ when ack.Accepted => new PlayResult(PlayOutcome.StartedByAgent, Fallback: fallback),
-                "RecordingOff" => new PlayResult(PlayOutcome.RecordingOff, Fallback: fallback),
-                "SessionRunning" => new PlayResult(PlayOutcome.AlreadyRunning, Fallback: fallback),
-                _ => new PlayResult(PlayOutcome.Failed, Fallback: fallback, Detail: ack.Outcome),
-            };
+            ack = IpcCodec.Payload<LaunchAck>(envelope);
         }
-        catch (Exception ex) when (ex is IpcRequestException or InvalidOperationException or TimeoutException)
+        catch (Exception ex) when (ex is InvalidOperationException or TimeoutException or IOException or ObjectDisposedException or IpcFramingException)
         {
-            Log.Warning("play: LaunchGame for {Game} (id {Id}) failed ({Message})", game.Name, game.Id, ex.Message);
-            return new PlayResult(PlayOutcome.Failed, Fallback: fallback, Detail: ex.Message);
+            // The connection went between the check above and the answer — the agent stopping, or restarting for an update:
+            // the pipe fails a request in flight with these (PipeClient), and a press never ends in an unhandled exception.
+            Log.Warning("play: LaunchGame for {Game} (id {Id}) had no answer ({Kind}: {Message})", game.Name, game.Id, ex.GetType().Name, ex.Message);
+            return new PlayResult(PlayOutcome.AgentUnavailable, Fallback: fallback);
         }
+        catch (Exception ex) when (ex is IpcRequestException or JsonException)
+        {
+            Log.Warning("play: LaunchGame for {Game} (id {Id}) failed ({Kind}: {Message})", game.Name, game.Id, ex.GetType().Name, ex.Message);
+            return new PlayResult(PlayOutcome.Failed, Fallback: fallback, Detail: (ex as IpcRequestException)?.Code ?? ex.GetType().Name);
+        }
+
+        if (ack is null)
+        {
+            Log.Warning("play: LaunchGame for {Game} (id {Id}) was answered without a payload", game.Name, game.Id);
+            return new PlayResult(PlayOutcome.Failed, Fallback: fallback, Detail: IpcMessageType.LaunchAck);
+        }
+
+        Log.Information("play: {Game} (id {Id}) through the agent: {Outcome}", game.Name, game.Id, ack.Outcome);
+        return ack.Outcome switch
+        {
+            _ when ack.Accepted => new PlayResult(PlayOutcome.StartedByAgent, Fallback: fallback),
+            "RecordingOff" => new PlayResult(PlayOutcome.RecordingOff, Fallback: fallback),
+            "SessionRunning" => new PlayResult(PlayOutcome.AlreadyRunning, Fallback: fallback),
+            "UnknownGame" => new PlayResult(PlayOutcome.NotInLibrary, Fallback: fallback),
+            _ => new PlayResult(PlayOutcome.Failed, Fallback: fallback, Detail: ack.Outcome),
+        };
     }
 }
