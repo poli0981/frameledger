@@ -267,13 +267,17 @@ Implemented in `FrameLedger.Injector` and reached from managed code through a th
    > be read (a manifest that will not open, more than 4096 of them, a listing error) refuses as `PreScanFailed`. With
    > nothing listed, nothing is read. Epic has no reader: an Epic install carries no identity to this check.
    >
-   > **What is listed, and why a title list at all:** 33 Steam app ids and 33 executable names across ten families —
+   > **What is listed, and why a title list at all:** ~~33~~ 34 Steam app ids and 33 executable names across ten families —
    > Valve VAC (CS2, Dota 2, TF2, Deadlock and Valve's older VAC titles), Riot Vanguard, Roblox Hyperion, Blizzard's
    > online titles ("Blizzard Warden"), Call of Duty (Activision Ricochet), NetEase (Marvel Rivals, NARAKA, FragPunk,
    > Once Human), ACE (Delta Force, Arena Breakout: Infinite), HoYoverse and EA (Battlefield 2042/6, EA SPORTS FC 25/26),
    > and since 2026-10-03 (rules `2026.10.1`, owner's list) HyperTech's **CrackProof** (Umamusume: Pretty Derby
    > `3224770`, Heaven Burns Red `1973710`, Madoka Magica Magia Exedra `2987800` — Steam ids only: no executable name
-   > was verified, and a guessed one is a false refusal waiting for an unrelated game).
+   > was verified, and a guessed one is a false refusal waiting for an unrelated game). **Since 2026-10-13 (rules
+   > `2026.10.4`, owner decision D58) Wuthering Waves `3513350`, under ACE**, by its Steam id alone (its executable,
+   > `Client-Win64-Shipping.exe`, is a name Unreal games share): its ACE sits beside the executable, where check 4 did
+   > not reach until the same rules (item 4 below), and a session was hooked for 37 s on 2026-10-12 before the 30 s
+   > re-scan met the driver — a machine-wide finding, which turned nothing off (`spike-notes.md` §19).
    > These are the titles whose anti-cheat leaves nothing of the game's own for checks 1, 2 and 4 to find — VAC runs
    > inside Steam, Blizzard's scanner is built into the game — or whose kernel driver loads only after the checks run.
    > CrackProof is the second kind: a Proton log of Umamusume shows its driver loaded from `C:\Windows\System32` under a
@@ -337,7 +341,8 @@ Implemented in `FrameLedger.Injector` and reached from managed code through a th
    > `ResolveInstallRoot`, plus check 3 on the executable's name and the install's store identity.
 
    > **Implemented, and stated narrowly.** `fl_prescan.cpp` walks the target's
-   > own directory (derived from its pid, never from a caller-supplied path) to
+   > install root and, since 2026-10-13, its executable's own folder (both derived from its pid, never from a
+   > caller-supplied path — "Which directory" below) to
    > **depth 3** — raised from 2 on 2026-08-04 (§S22, `spike-notes.md` §13), because a
    > title shipping its own kernel driver two levels below the install root was
    > invisible from where the scan starts, so the blocklist row naming it could not
@@ -382,6 +387,21 @@ Implemented in `FrameLedger.Injector` and reached from managed code through a th
    > appeal. A nested executable outside a recognised store layout is therefore
    > still scanned narrowly; that residual is stated, not closed.
    >
+   > **Amended 2026-10-13: the root AND the executable's folder.** The root replaced the executable's folder, and
+   > that was half the answer. The walk reaches three levels below where it starts, and an Unreal executable is
+   > already three below its root, so a folder **beside** the executable is four: MEASURED on Wuthering Waves, whose
+   > Tencent ACE lives in `Client\Binaries\Win64\AntiCheatExpert\` (with `ACE-BASE.sys` and `ACE-CORE.sys` in it). The
+   > walk from the root listed `Win64` and never opened it, so the library pre-scan read the game clean three times,
+   > hooking stayed available, and the first session was hooked for 37 s until the 30 s re-scan met ACE's driver —
+   > machine-wide, so nothing was turned off (`spike-notes.md` §19). Neverness To Everness keeps a second
+   > `AntiCheatExpert\` beside its `HTGame.exe`, six levels down, that no walk had seen either. Check 4 now walks the
+   > root and then, when the executable lives below it, the executable's own folder — same walk, same reach, its own
+   > 4096-entry budget, the same matcher and the same D33 tolerance (`ScanGameFolders`). `ImageDirectory` names the
+   > executable's folder and the checks resolve the root from it. Raising the reach instead was measured and rejected:
+   > depth 4 still misses NTE's folder, and at depth 5 three installed titles overrun 4096 entries (Yu-Gi-Oh! Master
+   > Duel: 41,251), which would refuse them. Measured across the owner's 83 Steam installs, the second walk costs at most
+   > 103 entries and newly finds exactly those two folders.
+   >
    > **What it does not cover.** Beyond the above, the residual is an anti-cheat
    > SDK sitting on disk whose service is not installed and whose module is not
    > loaded; checks 1, 2 and 2b already cover the rest. And today the `directories` + `files`
@@ -393,9 +413,11 @@ Implemented in `FrameLedger.Injector` and reached from managed code through a th
    > closed by never firing, which is a silent hole.
    >
    > **Every uncertainty refuses**, with `Reason::kPreScanFailed` rather than a
-   > hit: directory absent or unlistable, either bound exceeded, a name we could
+   > hit: directory absent or unlistable, ~~either bound exceeded~~ the 4096-entry bound exceeded, a name we could
    > not convert, or a reparse point — which is never followed, because a
-   > junction can hide an `EasyAntiCheat/` beneath it. **Unmeasured:** how often
+   > junction can hide an `EasyAntiCheat/` beneath it. *(Corrected 2026-10-13: the DEPTH bound never refused. It is a
+   > reach — a folder at the last level is named and not opened, and the walk still reads as complete — which is how
+   > Wuthering Waves' ACE was missed; the paragraph above is what answers it.)* **Unmeasured:** how often
    > a legitimate library trips the reparse-point rule or the 4096-entry bound.
    > That needs a real game library, and it is a false-refusal path, so it is
    > recorded rather than assumed benign.
@@ -544,7 +566,7 @@ says so, including that a ban can arrive days later and that FrameLedger cannot 
   FredaikisAntiCheat and Roblox Hyperion *(Hyperion added 2026-10-04: its rows are one module and one file; its only title
   is on the executable list, so it is never excepted in practice)*; Easy Anti-Cheat, BattlEye, ACE, NetEase Anti-Cheat, mihoyo protect, Vanguard, Ricochet and every
   other family carry a driver or a service and are never excepted;
-- no `*.sys` anywhere in the install tree — the kernel-driver rule (D30) is never excepted, whichever family a driver
+- no `*.sys` anywhere in the install tree *(within check 4's reach: three levels under the install root and, since 2026-10-13, under the executable's own folder)* — the kernel-driver rule (D30) is never excepted, whichever family a driver
   belongs to (so *Aniimo*, which unpacks `NEPKernel.sys` beside `NEP2.dll` on its first run, stays blocked);
 - the game is on no title list (`BlockedExecutable`, `BlockedStoreId` — the notorious titles are there by design);
 - ~~the ledger holds **at least two successful Tier-1 sessions** of the game: hooked, frames recorded, `exit_status = normal`
@@ -726,10 +748,13 @@ normative documentation. Write tokens here exactly as the data must hold them.
 | mihoyo protect | `services` | name | `mhyprot2`, `mhyprot3`, `HoYoKProtect` | 2026-09-25 |
 | mihoyo protect | `files` | name | `mhypbase.dll`, `mhyprot2.sys`, `mhyprot3.sys`, `HoYoKProtect.sys` | 2026-09-25 |
 | Anti-Cheat Expert | `modules` | prefix | `SGuard`, `AntiCheatExpert` | 2026-09-25 |
+| Anti-Cheat Expert | `modules` | exact | `ACE-Base64.dll` | 2026-10-13 |
 | Anti-Cheat Expert | `drivers` | exact | `ACE-BASE.sys`, `ACE-ADVT.sys`, `ACE-GAME.sys` — **machine-wide refusal** (check 2) | seed |
+| Anti-Cheat Expert | `drivers` | exact | `ACE-CORE.sys` — **machine-wide refusal** (check 2) | 2026-10-13 |
 | Anti-Cheat Expert | `directories` | name | `AntiCheatExpert`, `AceAntibotClient` | 2026-09-25 |
-| Anti-Cheat Expert | `services` | name | `AntiCheatExpert Protection`, `AntiCheatExpert Service` | seed |
+| Anti-Cheat Expert | `services` | name | `AntiCheatExpert Protection`, `AntiCheatExpert Service`, `ACE-BASE` | seed; `ACE-BASE` 2026-10-13 |
 | Anti-Cheat Expert | `files` | name | `PGameProtectDriver_X64.sys`, `SGuard64.exe`, `SGuardSvc64.exe` | seed; `SGuard64.exe`, `SGuardSvc64.exe` 2026-09-25 |
+| Anti-Cheat Expert | `files` | name | `ACE-BASE.sys`, `ACE-CORE.sys`, `ACE-Base64.dll`, `ACE-Service64.exe`, `ACE-Setup64.exe` (measured in Wuthering Waves' folder) | 2026-10-13 |
 | EA AntiCheat | `modules` | prefix | `EAAntiCheat` | 2026-09-25 |
 | EA AntiCheat | `drivers` | exact | `EAAntiCheat.sys` — **machine-wide refusal** (check 2) | 2026-09-25 |
 | EA AntiCheat | `files` | name | `EAAntiCheat.Installer.exe`, `EAAntiCheat.GameServiceLauncher.exe`, `EAAntiCheat.GameServiceLauncher.dll` | 2026-09-25 |

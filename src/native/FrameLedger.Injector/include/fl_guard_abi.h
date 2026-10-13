@@ -90,7 +90,10 @@ FL_GUARD_ABI void FlGuardedInjectWhenReady(std::uint32_t targetPid, const wchar_
 // It replaced FlStaticPreScan(gameDirectory) on 2026-09-25. That export scanned the directory it was given, and its
 // one caller gave the executable's own folder, so an Unreal title's root-level EasyAntiCheat/ was never seen by the
 // scan that decides whether hooking may be enabled. This one resolves the install root itself (ResolveInstallRoot, as
-// the chokepoint always did) and adds check 3: the executable's name and the install's store identity.
+// the chokepoint always did) and adds check 3: the executable's name and the install's store identity. Since
+// 2026-10-13 check 4 walks the executable's own folder too when it lives below the root, here and in the chokepoint
+// alike: the root's walk reaches three levels, and Wuthering Waves keeps its AntiCheatExpert\ beside an executable
+// that is already three levels down.
 //
 // It reports through FlGuardResult rather than an outcome enum of its own, so there is ONE reason table and ONE
 // mirror surface: kAllow means clean; BlockedExecutable, BlockedStoreId, AntiCheatDirectory and AntiCheatFile name

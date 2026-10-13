@@ -54,8 +54,18 @@ namespace fl::guard {
 // because the entry cap is a REFUSAL: overrunning it does not scan less, it
 // refuses the title.
 //
-// Both caps are REFUSALS, not truncations. A walk that stopped early has not
-// seen the directory, and this file has no "scanned what we could" state.
+// THE TWO CAPS ARE NOT THE SAME KIND — corrected 2026-10-13. This said both were
+// refusals, and only the ENTRY cap is: overrunning it, an unreadable name or a
+// reparse point is kIncomplete, which refuses. The DEPTH cap is a REACH: a folder
+// at the last level is reported by name and never opened, silently — so what it
+// holds is not seen, and the walk still reads as complete. Raising it is not the
+// answer: at depth 5 three installed titles overrun 4096 entries (Master Duel
+// 41,251), which would refuse them. What the reach cost was measured instead:
+// Wuthering Waves keeps `AntiCheatExpert\` beside its executable at
+// `Client\Binaries\Win64\` — four levels under the install root — and the walk
+// from the root read it clean. Check 4 therefore walks the root AND, when the
+// executable lives below it, the executable's own folder (ScanGameFolders,
+// fl_prescan.cpp): each with this reach and its own entry budget.
 inline constexpr std::size_t kMaxPreScanDepth = 3;
 inline constexpr std::size_t kMaxPreScanEntries = 4096;
 
@@ -84,6 +94,11 @@ inline constexpr std::size_t kMaxPreScanPathLen = 1024;
 // `D:\games\Title\` is a folder of other games, and refusing this title because
 // a sibling ships anti-cheat is a false refusal with no appeal.
 //
+// The root REPLACED the executable's folder as check 4's one walk on 2026-09-25,
+// and that was half right: what sits at the root (Lies of P's EasyAntiCheat/) is
+// seen, what sits beside a nested executable is not (kMaxPreScanDepth). Since
+// 2026-10-13 check 4 walks both.
+//
 // Returns false if the result does not fit, which the caller treats as
 // "cannot determine".
 [[nodiscard]] bool ResolveInstallRoot(const wchar_t* exeDir, wchar_t* out, std::size_t cap) noexcept;
@@ -96,8 +111,9 @@ inline constexpr std::size_t kMaxPreScanPathLen = 1024;
 // game's hooking off like any finding (19_SAFETY §What a finding does to the game); the owner took that trade.
 inline constexpr const char* kKernelDriverInTreeFamily = "Kernel driver in the game folder";
 
-// Check 4, as EvaluateImpl runs it: derive the target's directory from its pid,
-// then scan it.
+// Check 4, as EvaluateImpl runs it: derive the target's own folder from its pid
+// (Sources::ImageDirectory), resolve the install root from it, then walk the root
+// and — when they differ — the executable's folder.
 //
 // Takes Sources because every evidence input in this guard is a seam — an input
 // whose failure path cannot be exercised is an input whose failure path is
@@ -119,13 +135,14 @@ inline constexpr const char* kKernelDriverInTreeFamily = "Kernel driver in the g
 // read.
 [[nodiscard]] Verdict CheckStoreIdentity(const Sources& s, const Rules& rules, const wchar_t* installRoot) noexcept;
 
-// The same, as EvaluateImpl runs it: the install root derived from the pid, exactly as check 4 derives it.
+// The same, as EvaluateImpl runs it: the install root resolved from the target's own folder, exactly as check 4
+// resolves it.
 [[nodiscard]] Verdict CheckBlockedStoreId(const Sources& s, const Rules& rules, std::uint32_t targetPid) noexcept;
 
 // The advisory form, for the question "can this game be enabled at all?" (FR-2.2) and for the Agent's pre-scan of
 // the library (19_SAFETY §What a finding does to the game). Same matcher, same polarity, no pid: check 3 (the
-// executable's own name, and the store identity of its install root) and check 4 (the install root's tree), from the
-// EXECUTABLE's path.
+// executable's own name, and the store identity of its install root) and check 4 (the install root's tree, and the
+// executable's own folder's tree when it lives below the root — 2026-10-13), from the EXECUTABLE's path.
 //
 // It takes the executable, not a directory, since 2026-09-25. It took a directory, and its one caller passed the
 // executable's own folder while nothing resolved the install root — so the pre-scan that decides whether hooking may

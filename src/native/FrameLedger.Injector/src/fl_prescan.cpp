@@ -158,6 +158,23 @@ Verdict ScanWith(const Sources& s, const Rules& rules, const wchar_t* dir, const
     return Passed();
 }
 
+// Check 4's two walks (2026-10-13): the install root's tree, then — when the executable lives below the root — the
+// executable's own folder's tree. The walk reaches kMaxPreScanDepth levels below the folder it starts from
+// (fl_prescan.h), and an Unreal executable sits three levels below its root, so a folder BESIDE it is four: MEASURED on
+// Wuthering Waves, whose `Client\Binaries\Win64\AntiCheatExpert\` the root's walk listed the parent of and never
+// opened, and which therefore read clean. Same walk, same caps, same tolerance and the same record of a tolerated
+// finding; the first refusal is the answer.
+Verdict ScanGameFolders(const Sources& s, const Rules& rules, const wchar_t* root, const wchar_t* exeDir,
+                        const Tolerance* tolerance, ToleratedFinding* finding) noexcept {
+    if (Verdict v = ScanWith(s, rules, root, tolerance, finding); !v.Allowed()) {
+        return v;
+    }
+    if (exeDir == nullptr || exeDir[0] == L'\0' || _wcsicmp(root, exeDir) == 0) {
+        return Passed();    // the executable lives at its root: the one walk saw its folder
+    }
+    return ScanWith(s, rules, exeDir, tolerance, finding);
+}
+
 // Case-insensitive comparison of one path segment.
 bool SegmentIs(const wchar_t* begin, const wchar_t* end, const wchar_t* literal) noexcept {
     const std::size_t n = static_cast<std::size_t>(end - begin);
@@ -240,15 +257,16 @@ Verdict PreScanGameWith(const wchar_t* exePath, const Sources& s, const char* to
         return Refused(Reason::kBlockedExecutable, hit->family, leaf);
     }
 
-    // Check 3's store half, then check 4 — both over the install root. Title lists are never tolerated (D33): only
-    // check 4 takes the exception, and only for a user-mode family.
+    // Check 3's store half over the install root, then check 4 over the root and the executable's own folder. Title
+    // lists are never tolerated (D33): only check 4 takes the exception, and only for a user-mode family.
     if (Verdict v = CheckStoreIdentity(s, rules, root); !v.Allowed()) {
         return v;
     }
     Tolerance tolerance;
     ResolveTolerance(rules, toleratedFamilies, tolerance);
     ToleratedFinding finding;
-    if (Verdict v = ScanWith(s, rules, root, tolerance.any ? &tolerance : nullptr, &finding); !v.Allowed()) {
+    if (Verdict v = ScanGameFolders(s, rules, root, dir, tolerance.any ? &tolerance : nullptr, &finding);
+        !v.Allowed()) {
         return v;
     }
     return finding.seen ? ToleratedVerdict(finding) : Passed();
@@ -335,7 +353,11 @@ Verdict CheckStaticPreScan(const Sources& s, const Rules& rules, std::uint32_t t
         // 19_SAFETY has no "three of four checks passed" state.
         return Refused(Reason::kPreScanFailed, nullptr, "could not establish the target's directory");
     }
-    return ScanWith(s, rules, dir, tolerance, finding);
+    wchar_t root[kMaxPreScanPathLen] = {};
+    if (!ResolveInstallRoot(dir, root, kMaxPreScanPathLen)) {
+        return Refused(Reason::kPreScanFailed, nullptr, "could not establish the game's install root");
+    }
+    return ScanGameFolders(s, rules, root, dir, tolerance, finding);
 }
 
 Verdict CheckStoreIdentity(const Sources& s, const Rules& rules, const wchar_t* installRoot) noexcept {
@@ -370,9 +392,13 @@ Verdict CheckBlockedStoreId(const Sources& s, const Rules& rules, std::uint32_t 
     if (s.ImageDirectory == nullptr) {
         return Refused(Reason::kPreScanFailed, nullptr, "no image-path source");
     }
-    wchar_t root[kMaxPreScanPathLen] = {};
-    if (s.ImageDirectory(targetPid, root, kMaxPreScanPathLen) != Collected::kOk || root[0] == L'\0') {
+    wchar_t dir[kMaxPreScanPathLen] = {};
+    if (s.ImageDirectory(targetPid, dir, kMaxPreScanPathLen) != Collected::kOk || dir[0] == L'\0') {
         return Refused(Reason::kPreScanFailed, nullptr, "could not establish the target's directory");
+    }
+    wchar_t root[kMaxPreScanPathLen] = {};
+    if (!ResolveInstallRoot(dir, root, kMaxPreScanPathLen)) {
+        return Refused(Reason::kPreScanFailed, nullptr, "could not establish the game's install root");
     }
     return CheckStoreIdentity(s, rules, root);
 }

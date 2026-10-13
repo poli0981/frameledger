@@ -154,6 +154,14 @@ struct Fake {
     std::wstring                              imageDirectory = L"C:\\Games\\Example";
     Collected                                 imageDirectoryResult = Collected::kOk;
     std::wstring                              lastScannedDir;    // what check 4 was asked to walk
+    // 2026-10-13: check 4 walks the install root AND the executable's own folder. A directory named here answers with
+    // its own listing; any other answers with `dirEntries`, so every case written before keeps its meaning.
+    struct Listing {
+        std::vector<std::pair<std::string, bool>> entries;
+        Collected                                 result = Collected::kOk;
+    };
+    std::map<std::wstring, Listing> listingAt;
+    std::vector<std::wstring>       scannedDirs;    // every directory check 4 was asked to walk, in order
 
     // Check 3's store half (2026-09-25). Defaults to "this install carries no store identity", so every
     // pre-existing case keeps its meaning now that the floor lists store ids: check 3 asks, and allows.
@@ -312,12 +320,15 @@ Collected FakeImageFileName(std::uint32_t, char* out, std::size_t cap) {
 
 Collected FakeEnumDirEntries(const wchar_t* dir, DirEntrySink sink, void* ctx) {
     g.lastScannedDir = dir != nullptr ? dir : L"";
-    for (const auto& e : g.dirEntries) {
+    g.scannedDirs.push_back(g.lastScannedDir);
+    const auto  own = g.listingAt.find(g.lastScannedDir);
+    const auto& entries = own != g.listingAt.end() ? own->second.entries : g.dirEntries;
+    for (const auto& e : entries) {
         if (!sink(ctx, e.first.c_str(), e.second)) {
             break;
         }
     }
-    return g.dirEntriesResult;
+    return own != g.listingAt.end() ? own->second.result : g.dirEntriesResult;
 }
 
 Collected FakeStoreIdentity(const wchar_t* installRoot, char* out, std::size_t cap) {
@@ -3759,10 +3770,13 @@ TEST_CASE("a directory listing that FAILED is undetermined, not clean", "[guard]
 }
 
 TEST_CASE("a TRUNCATED directory listing is undetermined, not clean", "[guard][prescan][failclosed]") {
-    // The entry cap, the depth cap and an unfollowed reparse point all arrive
+    // The entry cap, an unreadable name and an unfollowed reparse point arrive
     // here as kIncomplete. An empty-but-incomplete listing is the exact shape
     // of this project's worst defect: it reads as "nothing found" when it means
-    // "we did not finish looking".
+    // "we did not finish looking". The DEPTH cap does not arrive here, and this
+    // comment said it did until 2026-10-13: it is a reach — a folder at the last
+    // level is named and never opened, and the walk still reports kOk — which
+    // is why check 4 walks the executable's own folder too (fl_prescan.h).
     ResetFake();
     g.dirEntries = {{"game.exe", false}};
     g.dirEntriesResult = Collected::kIncomplete;
@@ -3951,17 +3965,95 @@ TEST_CASE("the advisory pre-scan reaches the same verdict as the one inside the 
     CHECK(StaticPreScanGameWithSources(L"C:\\Games\\Example\\", FakeSources()).reason == Reason::kPreScanFailed);
 }
 
-TEST_CASE("the advisory pre-scan walks the INSTALL ROOT, not the executable's folder", "[guard][prescan]") {
+TEST_CASE("the advisory pre-scan walks the INSTALL ROOT first, then the executable's folder", "[guard][prescan]") {
     // Until 2026-09-25 the advisory pre-scan scanned the directory it was handed, and the Agent handed it the
     // executable's own folder: for Lies of P's layout, a folder of seven files, with EasyAntiCheat/ three levels up.
-    // The chokepoint resolved the root all along; the scan that decides whether hooking may be enabled did not.
+    // The chokepoint resolved the root all along; the scan that decides whether hooking may be enabled did not. A hit
+    // at the root is the answer, so nothing is walked after it.
+    const std::wstring root = LR"(D:\SteamLibrary\steamapps\common\Lies of P)";
+    const std::wstring exe = root + LR"(\LiesofP\Binaries\Win64\LOP-Win64-Shipping.exe)";
     ResetFake();
     g.dirEntries = {{"EasyAntiCheat", true}};
-    const Verdict v = StaticPreScanGameWithSources(
-        LR"(D:\SteamLibrary\steamapps\common\Lies of P\LiesofP\Binaries\Win64\LOP-Win64-Shipping.exe)", FakeSources());
+    const Verdict v = StaticPreScanGameWithSources(exe.c_str(), FakeSources());
     CHECK(v.reason == Reason::kAntiCheatDirectory);
-    CHECK(g.lastScannedDir == LR"(D:\SteamLibrary\steamapps\common\Lies of P)");
-    CHECK(g.lastStoreRoot == LR"(D:\SteamLibrary\steamapps\common\Lies of P)");
+    CHECK(g.lastScannedDir == root);
+    CHECK(g.scannedDirs.size() == 1);
+    CHECK(g.lastStoreRoot == root);
+
+    // A clean root: the executable's own folder is walked next (2026-10-13), and both are clean.
+    ResetFake();
+    g.dirEntries = {{"LOP-Win64-Shipping.exe", false}};
+    CHECK(StaticPreScanGameWithSources(exe.c_str(), FakeSources()).Allowed());
+    REQUIRE(g.scannedDirs.size() == 2);
+    CHECK(g.scannedDirs[0] == root);
+    CHECK(g.scannedDirs[1] == root + LR"(\LiesofP\Binaries\Win64)");
+}
+
+TEST_CASE("an anti-cheat folder beside a nested executable refuses -- Wuthering Waves", "[guard][prescan]") {
+    // MEASURED 2026-10-13 (spike-notes §19). Wuthering Waves keeps Tencent's ACE in `Client\Binaries\Win64\
+    // AntiCheatExpert\`, beside `Client-Win64-Shipping.exe` and four levels under its install root. The root's walk named
+    // `Win64` and never opened it (kMaxPreScanDepth), so the library pre-scan read the game clean three times, and a
+    // session was hooked for 37 s before the 30 s re-scan met ACE's driver — a machine-wide finding, which turned
+    // nothing off. The root's listing here is what the real walk returns to that depth.
+    const std::wstring root = LR"(D:\SteamLibrary\steamapps\common\Wuthering Waves)";
+    const std::wstring exeDir = root + LR"(\Client\Binaries\Win64)";
+    const std::wstring exe = exeDir + LR"(\Client-Win64-Shipping.exe)";
+
+    ResetFake();
+    g.listingAt[root].entries = {
+        {"Client", true}, {"Binaries", true}, {"Win64", true}, {"Engine", true}, {"Wuthering Waves.exe", false}};
+    g.listingAt[exeDir].entries = {
+        {"AntiCheatExpert", true}, {"ACE-BASE.sys", false}, {"Client-Win64-Shipping.exe", false}};
+
+    const Verdict advisory = StaticPreScanGameWithSources(exe.c_str(), FakeSources());
+    REQUIRE_FALSE(advisory.Allowed());
+    CHECK(advisory.reason == Reason::kAntiCheatDirectory);
+    CHECK(std::strcmp(advisory.family, "Anti-Cheat Expert") == 0);
+    CHECK(std::strcmp(advisory.signal, "AntiCheatExpert") == 0);
+    REQUIRE(g.scannedDirs.size() == 2);
+    CHECK(g.scannedDirs[1] == exeDir);
+
+    // The chokepoint, from the pid: the seam names the executable's folder, the store half asks the root resolved from
+    // it, and check 4 walks both.
+    g.scannedDirs.clear();
+    g.imageDirectory = exeDir;
+    const Verdict chokepoint = EvaluateWithSources(1234, FakeSources());
+    REQUIRE_FALSE(chokepoint.Allowed());
+    CHECK(chokepoint.reason == Reason::kAntiCheatDirectory);
+    CHECK(std::strcmp(chokepoint.family, "Anti-Cheat Expert") == 0);
+    CHECK(g.lastStoreRoot == root);
+    REQUIRE(g.scannedDirs.size() == 2);
+    CHECK(g.scannedDirs[0] == root);
+    CHECK(g.scannedDirs[1] == exeDir);
+}
+
+TEST_CASE("an executable at its install root is walked once", "[guard][prescan]") {
+    ResetFake();
+    g.dirEntries = {{"game.exe", false}};
+    CHECK(StaticPreScanGameWithSources(LR"(D:\SteamLibrary\steamapps\common\Some Title\game.exe)", FakeSources())
+              .Allowed());
+    REQUIRE(g.scannedDirs.size() == 1);
+    CHECK(g.scannedDirs[0] == LR"(D:\SteamLibrary\steamapps\common\Some Title)");
+
+    // So is one no store boundary names — its folder is its root — from the pid as from the path.
+    ResetFake();
+    g.dirEntries = {{"game.exe", false}};
+    CHECK(EvaluateWithSources(1234, FakeSources()).Allowed());
+    REQUIRE(g.scannedDirs.size() == 1);
+    CHECK(g.scannedDirs[0] == L"C:\\Games\\Example");
+}
+
+TEST_CASE("a walk of the executable's folder that could not finish refuses after a clean root",
+          "[guard][prescan][failclosed]") {
+    const std::wstring root = LR"(D:\SteamLibrary\steamapps\common\Nested)";
+    const std::wstring exeDir = root + LR"(\Game\Binaries\Win64)";
+    ResetFake();
+    g.listingAt[root].entries = {{"Game", true}};
+    g.listingAt[exeDir].entries = {{"Game-Win64-Shipping.exe", false}};
+    g.listingAt[exeDir].result = Collected::kIncomplete;
+    const Verdict v = StaticPreScanGameWithSources((exeDir + LR"(\Game-Win64-Shipping.exe)").c_str(), FakeSources());
+    REQUIRE_FALSE(v.Allowed());
+    CHECK(v.reason == Reason::kPreScanFailed);
 }
 
 TEST_CASE("the advisory pre-scan runs check 3 on the executable's own name", "[guard][prescan][check3]") {
@@ -4170,6 +4262,67 @@ TEST_CASE("the real seam reads a GOG product id, and a plain folder carries none
     REQUIRE(s.StoreIdentity(root.c_str(), id, sizeof(id)) == Collected::kOk);
     CHECK(std::string(id).empty());
     RemoveDirectoryW(root.c_str());
+}
+
+TEST_CASE("the real walk reaches an anti-cheat folder beside a nested executable", "[guard][prescan][real]") {
+    // Wuthering Waves' layout, on disk (2026-10-13). From the root the real walk names `Win64` and never opens it — the
+    // reach this test pins — and check 4's second walk, from the executable's own folder, finds `AntiCheatExpert\`.
+    const std::wstring lib = MakeTempTree(L"nested");
+    const std::wstring steamapps = lib + L"\\steamapps";
+    const std::wstring root = steamapps + L"\\common\\Game";
+    const std::wstring exeDir = root + L"\\Client\\Binaries\\Win64";
+    const std::wstring ac = exeDir + L"\\AntiCheatExpert";
+    for (const std::wstring& d : {lib, steamapps, steamapps + L"\\common", root, root + L"\\Client",
+                                  root + L"\\Client\\Binaries", exeDir, ac}) {
+        CreateDirectoryW(d.c_str(), nullptr);
+    }
+    const std::wstring exe = exeDir + L"\\Game-Win64-Shipping.exe";
+    WriteText(exe, "MZ");
+    WriteText(ac + L"\\ACE-Base64.dll", "MZ");
+
+    Sources s = SystemSources();
+    REQUIRE(s.EnumerateDirEntries != nullptr);
+
+    std::vector<std::string> fromRoot;
+    const DirEntrySink       collect = [](void* ctx, const char* name, bool) {
+        static_cast<std::vector<std::string>*>(ctx)->push_back(name);
+        return true;
+    };
+    REQUIRE(s.EnumerateDirEntries(root.c_str(), collect, &fromRoot) == Collected::kOk);
+    CHECK(std::find(fromRoot.begin(), fromRoot.end(), "Win64") != fromRoot.end());
+    CHECK(std::find(fromRoot.begin(), fromRoot.end(), "AntiCheatExpert") == fromRoot.end());
+
+    // The pre-scan over the real walk and the real store seam (no manifest names this install), with the fixture's
+    // rules: the floor carries ACE's folder whatever the file says.
+    ResetFake();
+    s.ReadRulesFile = &FakeReadRules;
+    const Verdict v = StaticPreScanGameWithSources(exe.c_str(), s);
+    REQUIRE_FALSE(v.Allowed());
+    CHECK(v.reason == Reason::kAntiCheatDirectory);
+    CHECK(std::strcmp(v.family, "Anti-Cheat Expert") == 0);
+
+    // The folder gone, the same tree is clean: the second walk refuses nothing it should not.
+    DeleteFileW((ac + L"\\ACE-Base64.dll").c_str());
+    RemoveDirectoryW(ac.c_str());
+    CHECK(StaticPreScanGameWithSources(exe.c_str(), s).Allowed());
+
+    DeleteFileW(exe.c_str());
+    for (const std::wstring& d :
+         {exeDir, root + L"\\Client\\Binaries", root + L"\\Client", root, steamapps + L"\\common", steamapps, lib}) {
+        RemoveDirectoryW(d.c_str());
+    }
+}
+
+TEST_CASE("the real ImageDirectory names the executable's own folder", "[guard][prescan][real]") {
+    // Not the install root (2026-10-13): the checks resolve that themselves, and check 4 walks both.
+    wchar_t self[MAX_PATH] = {};
+    REQUIRE(GetModuleFileNameW(nullptr, self, MAX_PATH) != 0);
+    std::wstring folder(self);
+    folder.resize(folder.find_last_of(L"\\/"));
+
+    wchar_t out[kMaxPreScanPathLen] = {};
+    REQUIRE(SystemSources().ImageDirectory(GetCurrentProcessId(), out, kMaxPreScanPathLen) == Collected::kOk);
+    CHECK(_wcsicmp(out, folder.c_str()) == 0);
 }
 
 // ===========================================================================
@@ -5885,6 +6038,26 @@ TEST_CASE("D33 -- the advisory pre-scan answers the same question the chokepoint
     const Verdict aniimo = StaticPreScanGameWithSources(exe, FakeSources(), kYidun);
     CHECK(aniimo.reason == Reason::kAntiCheatFile);
     CHECK(std::string(aniimo.family) == kKernelDriverInTreeFamily);
+}
+
+TEST_CASE("D33 -- the executable's folder is walked under the same exception", "[guard][D33][prescan]") {
+    // 2026-10-13: check 4's second walk takes the tolerance and the finding record exactly as the first does — the
+    // family's file beside a nested executable is recorded, and a kernel driver there still refuses.
+    const std::wstring root = LR"(D:\SteamLibrary\steamapps\common\Nested Yidun)";
+    const std::wstring exeDir = root + LR"(\Game\Binaries\Win64)";
+    const std::wstring exe = exeDir + LR"(\Game-Win64-Shipping.exe)";
+    ResetFake();
+    g.listingAt[root].entries = {{"Game", true}};
+    g.listingAt[exeDir].entries = {{"Game-Win64-Shipping.exe", false}, {"NEP2.dll", false}};
+
+    const Verdict v = StaticPreScanGameWithSources(exe.c_str(), FakeSources(), kYidun);
+    CHECK(v.reason == Reason::kAllowedUserModeException);
+    CHECK(std::string(v.signal) == "NEP2.dll");
+
+    g.listingAt[exeDir].entries.push_back({"NEPKernel.sys", false});
+    const Verdict driver = StaticPreScanGameWithSources(exe.c_str(), FakeSources(), kYidun);
+    CHECK(driver.reason == Reason::kAntiCheatFile);
+    CHECK(std::string(driver.family) == kKernelDriverInTreeFamily);
 }
 
 TEST_CASE("D33 -- the excepted family's module loading late does not stop the Overlay; any other family still does",
