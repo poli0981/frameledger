@@ -48,7 +48,7 @@ with the 2026-09-16 recovery and with library entries removed since.
 
 | Game | Why nothing was measured | When | Evidence |
 |---|---|---|---|
-| HELLO, HELLO WORLD! | A 32-bit game (RPG Maker MV): refused by the guard once, and two sessions with hooking switched off — each recorded with its duration and sensors | 2026-09-23 | database |
+| HELLO, HELLO WORLD! | A 32-bit game (RPG Maker MV): refused by the guard once, and two sessions with hooking switched off — each recorded with its duration and sensors. *Its itch.io download puts malware in front of the game — do not run it (noted 2026-10-13, [spike-notes §20](spike-notes.md))* | 2026-09-23 | database |
 | Umamusume: Pretty Derby | Three sessions played with hooking switched off for the game | 2026-09-27 | database |
 | Sekiro: Shadows Die Twice | One session played with hooking switched off | 2026-09-25 | database |
 | GIRLS' FRONTLINE 2: EXILIUM | One session whose process Windows would not let FrameLedger open, and two recovered after the agent itself stopped mid-session (*interrupted*) | 2026-09-22 → 09-23 | database |

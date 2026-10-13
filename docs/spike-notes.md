@@ -2656,9 +2656,11 @@ Godot, RPG Maker.
 - **Detect time** is the whole detection of one entry — the install's walk, the rules and the second read — on the USB
   drive; the second read itself is a version resource and at most a few kilobytes. It runs once per executable and rules
   version, like Unreal's.
-- **Four of the itch installs front their runtime with a 213 MB .NET launcher** (HELLO, HELLO WORLD!, A Doll's Locket -
-  Remake — whose launcher asks for administrator —, City of Bones and Träumerei) — the reason the import's choice of
-  executable changed in the same train (`05_DETECTION` §Library import, D56).
+- ~~**Four of the itch installs front their runtime with a 213 MB .NET launcher**~~ **Four of the itch installs put a
+  213 MB .NET program in front of their runtime, and it is malware** *(corrected 2026-10-13, owner decision D57 — §20;
+  do not run it)* (HELLO, HELLO WORLD!, A Doll's Locket - Remake — whose launcher asks for administrator —, City of
+  Bones and Träumerei) — read as a launcher, the reason the import's choice of executable changed in the same train
+  (`05_DETECTION` §Library import, D56).
 - **Not measured:** RPG Maker 2000/2003 (`RPG_RT.exe`; none installed, and no rule detects it), XP and VX (no install —
   their RGSS1/RGSS2 libraries are read by the same rule as VX Ace's, unmeasured), a Unity build older than 2019 (its
   player is the executable, with no `UnityPlayer.dll`), a Godot 3 export, and a Godot pack appended to the executable
@@ -2728,3 +2730,45 @@ executable changes.
 
 - **Not measured:** that the game loads `ACE-Base64.dll` (no session has run since), and whether ACE's other titles
   keep the same layout.
+
+## 20 · The launcher in front of four itch installs is malware *(2026-10-13, beta.21, owner decision D57)*
+
+§17 read the 213 MB program four itch.io downloads put in front of their RPG Maker game as a *launcher*, and the
+documentation built on that reading (D28, D56's rationale, HANDOFF item 15(a), which told the owner to run A Doll's
+Locket's with the agent as administrator). Read on 2026-10-13 without running anything — file listings, the itch
+receipt, version resources, the .NET metadata strings and the files beside it — it is not a launcher. **It is malware.
+Do not run it.**
+
+| Download (itch) | The program | SHA-256 | Beside it |
+|---|---|---|---|
+| HELLO, HELLO WORLD! (5015466) | `HELLOHELLOWORLD.exe`, 213,572,096 bytes | `053553514C3E34865393654477631DEFB50B36509F44B8ADC5B1E555E1F64FD1` | `locales\ml.reg`, `locales\ko.xml` |
+| A Doll's Locket - Remake (5085165) | `DollsLocket.exe`, 213,745,664 bytes | `51D3271AD0FFAF3652DAB9F66C1279CB2CA16F46A6AB2E5173D032600C1E5E53` | `data\Items.reg`, `data\Armors.xml` |
+| City of Bones | `CityofBones.exe`, 213,557,760 bytes | `CA81BE260941E7BE2D87FE6852E7DAD0D432A84F071C2C578A7BD06BE7E61248` | `System\Windowskin.reg`, `System\RGSS301.xml` |
+| Träumerei Chapter 2 | `TräumereiChapter2.exe`, 213,559,808 bytes | `65D4CCB7065227A0ED08D8977CA2F00F1E2A6DDC5F375C2C32E115D90DE29E4D` | `System\Game.reg`, `System\RGSS301.xml` |
+
+- **The four programs are one .NET program**, unsigned, its version resource Visual Studio's template named after each
+  game (`HELLOHELLOWORLD`, version 1.0.0.7, "Copyright © 2026"), and nearly all of its size embedded resources.
+- **Beside each, two files named like the game's own.** A 3,060-byte Windows registry file — byte-identical in all four —
+  that sets `AmsiEnable = 0` under `HKCU` and `HKLM\SOFTWARE\Microsoft\Windows Script\Settings` (it switches off
+  Windows' script scanning), and under `HKLM\SOFTWARE\Policies\Microsoft\Windows Defender` adds exclusions for the `.exe`
+  and `.msi` extensions and for `powershell.exe`, `rundll32.exe`, `msiexec.exe` and `regasm.exe`, and sets
+  `SpynetReporting = 0` and `SubmitSamplesConsent = 2` (no cloud protection, no samples sent). And a 3,216-byte `.xml`
+  that is no XML: high-entropy bytes, a different blob in each download.
+- **What the program's own metadata names** (type and member names, read as strings): checks for virtual machines
+  (VMware, VirtualBox, QEMU, Hyper-V, Xen, KVM, Bochs, Parallels — through WMI, the registry and the firmware) and for
+  debuggers (`IsDebuggerPresent`, `CheckRemoteDebuggerPresent`, `NtQueryInformationProcess` on the debug port, object and
+  flags, hardware breakpoints, debugger windows); AES decryption of Base64 text; PowerShell run inside the process
+  (`CreateRunspace`, `AddScript`); registry writes; steps named `RunPayload` and `PayloadStep`; and the game it starts
+  afterwards — the RPG Maker runtime beside it (`swiftshader\Game.exe`, `css\Game.exe`, `Game.exe` with
+  `RGSS301.dll`), which is what makes it look like the game.
+- **Where it sits in each download:** the itch receipt of HELLO, HELLO WORLD! lists the program, the runtime in
+  `swiftshader\` and both disguised files as what the download installed; nothing was added afterwards.
+
+**What changes in FrameLedger (D57): the documentation, not the import.** The import still takes a store's own pick when
+it is not a helper (beta.19) — FrameLedger reads a game's files to find its engine and anti-cheat, never to judge
+whether it is safe, and a store's verdict stays the store's. What is corrected in place: §17's bullet, `05_DETECTION`
+§Library import (D56's rationale and its admin-mode sentence), HANDOFF D28, D56 and item 15(a), the beta.19 CHANGELOG
+entry, and the HELLO, HELLO WORLD! row of `LIST_GAME_TESTED.md`; `LIMITATIONS.md` says FrameLedger does not tell a safe
+game from an unsafe one.
+
+- **Not measured, and not to be:** what the payload does. Nothing here was run, decrypted or uploaded anywhere.

@@ -4217,4 +4217,8 @@
     <value>{0} は FrameLedger 自身のデータ フォルダーです。--data-dir はそのコピー用で、テスト ビルドが記録先のデータベースを開かないようにするためのものです。このフォルダーを使うには --data-dir を付けずに FrameLedger を起動してください。</value>
     <comment>review</comment>
   </data>
+  <data name="GameDetail_Supports_None" xml:space="preserve">
+    <value>見つかりません — ゲームのフォルダーには、ルールが挙げるアップスケーラー、フレーム生成、Vulkan のファイルがありません。</value>
+    <comment>review</comment>
+  </data>
 </root>

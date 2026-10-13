@@ -3173,4 +3173,7 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="DataDir_Profile_Format" xml:space="preserve">
     <value>{0} is FrameLedger's own data folder. --data-dir is for a copy of it, so that a test build never opens the database you record into. To use this folder, start FrameLedger without --data-dir.</value>
   </data>
+  <data name="GameDetail_Supports_None" xml:space="preserve">
+    <value>None found — the game's folder holds no upscaler, frame-generation or Vulkan file the rules name.</value>
+  </data>
 </root>

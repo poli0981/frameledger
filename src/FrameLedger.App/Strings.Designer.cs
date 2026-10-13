@@ -488,6 +488,7 @@ public static class Strings
         nameof(GameDetail_Supports_Empty),
         nameof(GameDetail_Supports_Format),
         nameof(GameDetail_Supports_Header),
+        nameof(GameDetail_Supports_None),
         nameof(GameDetail_Tab_Distribution),
         nameof(GameDetail_Tab_Frametime),
         nameof(GameDetail_Tab_Latency),
@@ -1994,6 +1995,8 @@ public static class Strings
     public static string GameDetail_Supports_Format => ResourceManager.GetString(nameof(GameDetail_Supports_Format), Culture) ?? nameof(GameDetail_Supports_Format);
 
     public static string GameDetail_Supports_Header => ResourceManager.GetString(nameof(GameDetail_Supports_Header), Culture) ?? nameof(GameDetail_Supports_Header);
+
+    public static string GameDetail_Supports_None => ResourceManager.GetString(nameof(GameDetail_Supports_None), Culture) ?? nameof(GameDetail_Supports_None);
 
     public static string GameDetail_Tab_Distribution => ResourceManager.GetString(nameof(GameDetail_Tab_Distribution), Culture) ?? nameof(GameDetail_Tab_Distribution);
 
