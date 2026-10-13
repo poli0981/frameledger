@@ -21,9 +21,14 @@ public interface IAgentRequests
     /// Sends <paramref name="payload"/> as <paramref name="type"/> and returns whatever non-<c>Error</c> envelope
     /// answers it — the caller distinguishes the acks (a <c>HookEnabledAck</c> from a <c>Refused</c>).
     /// </summary>
-    /// <exception cref="InvalidOperationException">Not connected.</exception>
+    /// <exception cref="InvalidOperationException">Not connected: nothing was sent.</exception>
     /// <exception cref="Infrastructure.Ipc.IpcRequestException">The Agent answered <c>Error</c>.</exception>
-    /// <exception cref="TimeoutException">No answer within the request timeout.</exception>
+    /// <exception cref="TimeoutException">No answer within the request timeout: whether it was carried out is not known.</exception>
+    /// <exception cref="System.IO.IOException">
+    /// The connection closed before the Agent answered — it stopped, or restarted for an update (beta.22: every way the pipe
+    /// closes is this one exception, <see cref="AgentConnection.AnsweredAsync"/>): whether it was carried out is not known.
+    /// <see cref="AgentAnswers.IsUnanswered"/> names this and the timeout.
+    /// </exception>
     Task<IpcEnvelope> RequestAsync<TRequest>(string type, TRequest payload, CancellationToken ct = default)
         where TRequest : class;
 }

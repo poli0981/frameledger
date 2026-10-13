@@ -179,25 +179,25 @@ public sealed class GamePlayerTests
     }
 
     /// <summary>
-    /// From the review before the merge: the pipe fails a request in flight with an IOException when the agent stops (PipeClient),
-    /// and a command's unhandled exception is the App's crash dialog. Each way the connection can go mid-request is "not running".
+    /// The pipe fails a request in flight when the agent stops, and a command's unhandled exception is the App's crash dialog
+    /// (beta.21's review). Since beta.22 an answer that never came — the connection closed (one IOException, AgentConnection) or no
+    /// answer in time — is "not known": the game may be starting. The connection gone before the request is "not running".
     /// </summary>
     [Fact]
-    public async Task AConnectionThatGoesMidRequestIsTheAgentNotRunningNeverAnException()
+    public async Task AnAnswerThatNeverCameIsNotKnownAndARequestNeverSentIsNotRunning()
     {
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
         await new RegisteredSettings(new SqliteSettingsStore(s.Db)).SetAsync(SettingsRegistry.UiPlayMode, PlayMode.Direct, Ct);
         GameRow game = Game(@"D:\Games\Loose\game.exe", null);
-        Exception[] gone =
-        [
-            new IOException("the pipe closed before the Agent answered"), new ObjectDisposedException("pipe"), new TimeoutException(),
-            new InvalidOperationException("the Agent is not connected"), new IpcFramingException("truncated frame"),
-        ];
-        foreach (Exception ex in gone)
+        foreach (Exception ex in new Exception[] { new IOException("the connection to the Agent closed before it answered"), new TimeoutException() })
         {
             PlayResult result = await Player(s, new Shell(), new Agent(fails: ex), new Stores()).PlayAsync(game, Ct);
-            result.Should().Be(new PlayResult(PlayOutcome.AgentUnavailable), ex.GetType().Name);
+            result.Should().Be(new PlayResult(PlayOutcome.Unanswered), ex.GetType().Name);
+            GamePlayer.Describe(result, "W").Should().Be((Strings.Agent_Unanswered, true));
         }
+
+        (await Player(s, new Shell(), new Agent(fails: new InvalidOperationException("the Agent is not connected")), new Stores()).PlayAsync(game, Ct))
+            .Should().Be(new PlayResult(PlayOutcome.AgentUnavailable), "nothing was sent");
 
         PlayResult refused = await Player(s, new Shell(), new Agent(fails: new IpcRequestException("UnknownType", "no such command")), new Stores())
             .PlayAsync(game, Ct);

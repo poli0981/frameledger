@@ -39,13 +39,10 @@ public sealed class SessionDeletion
             return new(SessionDeletionOutcome.AgentUnavailable);
         }
 
+        IpcEnvelope envelope;
         try
         {
-            IpcEnvelope envelope = await _agent.RequestAsync(IpcMessageType.DeleteSessions, new DeleteSessionsRequest(gameId), ct).ConfigureAwait(true);
-            DeleteSessionsAck ack = IpcCodec.Payload<DeleteSessionsAck>(envelope) ?? throw new InvalidOperationException("DeleteSessions answered without a payload");
-            Log.Information("sessions: deleted {Sessions} session(s) of {Games} game(s) ({Scope})", ack.Sessions, ack.Games, gameId is null ? "every game" : "game " + gameId);
-            await ForgetDeletedAsync(ct).ConfigureAwait(true);
-            return new(SessionDeletionOutcome.Deleted, ack.Games, ack.Sessions);
+            envelope = await _agent.RequestAsync(IpcMessageType.DeleteSessions, new DeleteSessionsRequest(gameId), ct).ConfigureAwait(true);
         }
         catch (IpcRequestException ex) when (string.Equals(ex.Code, IpcErrorCode.SessionRunning, StringComparison.Ordinal))
         {
@@ -56,14 +53,39 @@ public sealed class SessionDeletion
             Log.Warning("sessions: the Agent does not know DeleteSessions ({Message})", ex.Message);
             return new(SessionDeletionOutcome.AgentTooOld);
         }
-        catch (Exception ex) when (ex is IpcRequestException or InvalidOperationException or TimeoutException)
+        catch (IpcRequestException ex)
         {
-            Log.Warning("sessions: DeleteSessions failed ({Message})", ex.Message);
+            Log.Warning("sessions: DeleteSessions failed ({Code}: {Message})", ex.Code, ex.Message);
             return new(SessionDeletionOutcome.Failed, Detail: ex.Message);
         }
+        catch (InvalidOperationException ex)
+        {
+            // The connection went between the check above and the request: nothing was sent.
+            Log.Warning("sessions: DeleteSessions was not sent ({Message})", ex.Message);
+            return new(SessionDeletionOutcome.AgentUnavailable);
+        }
+        catch (Exception ex) when (AgentAnswers.IsUnanswered(ex))
+        {
+            // beta.22: the delete may have run before the connection went — it caught no IOException before, and its exception
+            // was the App's crash dialog. What named a deleted session lets go of it, and the page reads what is stored.
+            Log.Warning("sessions: DeleteSessions had no answer ({Kind}: {Message})", ex.GetType().Name, ex.Message);
+            await ForgetDeletedAsync(ct).ConfigureAwait(true);
+            return new(SessionDeletionOutcome.Unanswered);
+        }
+
+        if (IpcCodec.Payload<DeleteSessionsAck>(envelope) is not { } ack)
+        {
+            Log.Warning("sessions: DeleteSessions was answered without a payload");
+            await ForgetDeletedAsync(ct).ConfigureAwait(true);
+            return new(SessionDeletionOutcome.Unanswered);
+        }
+
+        Log.Information("sessions: deleted {Sessions} session(s) of {Games} game(s) ({Scope})", ack.Sessions, ack.Games, gameId is null ? "every game" : "game " + gameId);
+        await ForgetDeletedAsync(ct).ConfigureAwait(true);
+        return new(SessionDeletionOutcome.Deleted, ack.Games, ack.Sessions);
     }
 
-    /// <summary>The delete happened: what still names a deleted session lets go of it. A failure here is logged, not the delete's.</summary>
+    /// <summary>The delete happened, or may have (beta.22): what still names a deleted session lets go of it. A failure here is logged, not the delete's.</summary>
     private async Task ForgetDeletedAsync(CancellationToken ct)
     {
         try

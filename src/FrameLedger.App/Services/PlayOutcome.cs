@@ -15,8 +15,11 @@ public enum PlayOutcome
     /// <summary>The capture agent accepted the launch (<c>LaunchGame</c>).</summary>
     StartedByAgent,
 
-    /// <summary>Direct, and no capture agent is connected.</summary>
+    /// <summary>Direct, and no capture agent is connected: nothing was sent.</summary>
     AgentUnavailable,
+
+    /// <summary>beta.22: the agent did not answer (<see cref="AgentAnswers.IsUnanswered"/>): whether the game is starting is not known.</summary>
+    Unanswered,
 
     /// <summary>Direct, and the entry's recording is off: FrameLedger starts only what it records (schema 0009).</summary>
     RecordingOff,

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using System.IO;
 using FluentAssertions;
 using FrameLedger.App.Services;
 using FrameLedger.App.ViewModels;
@@ -146,6 +147,28 @@ public sealed class HookingConsentTests
         agent.Answer = static _ => Ack(IpcMessageType.HookEnabledAck, new HookEnabledAck(7, false, "Written", null));
         (await consent.DisableAsync(7, Ct)).Outcome.Should().Be(HookingConsentOutcome.Disabled);
         agent.Sent.Last().Payload.Should().Be(new SetHookEnabledRequest(7, false, null), "a revoke names no disclosure");
+    }
+
+    /// <summary>
+    /// beta.22: an ask the Agent never answered — the connection closed under it, or no answer in time — is not known, never the
+    /// exception's type name as the notice (it read "IOException"); one the connection was gone before is "no agent".
+    /// </summary>
+    [Fact]
+    public async Task AnAskTheAgentNeverAnsweredIsNotKnownAndOneNeverSentIsNoAgent()
+    {
+        var agent = new FakeAgent { Hello = Hello(SafetyDisclosure.Version) };
+        var consent = new HookingConsent(agent, new FakePrompt { Accepts = true });
+
+        agent.Answer = static _ => throw new IOException("the connection to the Agent closed before it answered");
+        HookingConsentResult closed = await consent.EnableAsync(7, "Title", Ct);
+        closed.Outcome.Should().Be(HookingConsentOutcome.Unanswered);
+        closed.Detail.Should().BeNull("no exception's name is a notice");
+
+        agent.Answer = static _ => throw new TimeoutException();
+        (await consent.DisableAsync(7, Ct)).Outcome.Should().Be(HookingConsentOutcome.Unanswered);
+
+        agent.Answer = static _ => throw new InvalidOperationException("the Agent is not connected");
+        (await consent.DisableAsync(7, Ct)).Outcome.Should().Be(HookingConsentOutcome.AgentUnavailable, "nothing was sent");
     }
 
     [Theory]

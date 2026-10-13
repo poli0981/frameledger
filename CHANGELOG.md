@@ -28,6 +28,15 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Fixed
+
+- **A request the capture agent never answered is said as such, never as a crash.** When the agent stopped, or restarted
+  for an update, while FrameLedger was asking it something, deleting sessions ended in the crash dialog, and turning a
+  game's hooking on or off or making or withdrawing an anti-cheat exception showed *IOException* or *TimeoutException* as
+  its notice. Each now says that the agent did not answer and that whether it was done is not known, and the page shows
+  what is stored; Play says the same (it said the agent was not running). A request that could not be sent because the
+  agent was already gone still says that nothing was changed (`docs/07_IPC.md` §Client behavior).
+
 ## [0.1.0-beta.21] - 2026-10-13
 
 **The twenty-first pre-release: an anti-cheat kept beside a game's executable found before anything is injected, four

@@ -482,6 +482,15 @@ message, and that message always re-scans.
   and SYSTEM) each carry an explicit descriptor. The instance lock and the elevation marker are only ever probed, and a
   probe that is refused reads as "held".
 - Treat the pipe as unreliable: library, history and charts must all work with the Agent offline. Only live status degrades.
+- **A request the Agent never answered is neither a failure nor a refusal (beta.22).** `IAgentRequests.RequestAsync` fails
+  in one of four ways: `InvalidOperationException` — not connected, nothing was sent; `IpcRequestException` — the Agent
+  answered `Error`; `TimeoutException`; and `IOException` — the connection closed before the answer, whatever closed it
+  (`AgentConnection.AnsweredAsync` turns the `IpcFramingException` and `ObjectDisposedException` that `PipeClient` can fail a
+  request in flight with into it, so a caller handles one). The last two mean *whether it was carried out is not known*
+  (`AgentAnswers.IsUnanswered`): the caller says so in words (`Agent_Unanswered`) and reads what is stored again — deleting
+  sessions, the hooking switch, the anti-cheat exception and Play alike. Until beta.22 deleting sessions caught no
+  `IOException` (the App's crash dialog) and showed a timeout's own message, and the hooking switch and the exception
+  showed `IOException` or `TimeoutException` as their notice.
 - SQLite is the source of truth for anything persisted; pipe events are refresh signals (except `SessionProgress`, which is live-only by design).
 - `CaptureRefused`, `SafetyUnhook` and (since 2026-09-25) `HookingTurnedOff` are **never** collapsed into a generic error toast — they get dedicated, explanatory UI (`08_UI` §Notifications).
 

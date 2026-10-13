@@ -27,6 +27,9 @@ public enum AntiCheatExceptionOutcome
     /// <summary>No connected Agent; nothing was sent.</summary>
     AgentUnavailable,
 
-    /// <summary>The Agent answered and did not grant (a store outcome, an <c>Error</c>, a timeout); <c>Detail</c> says which.</summary>
+    /// <summary>The Agent answered and did not grant (a store outcome, an <c>Error</c>); <c>Detail</c> says which.</summary>
     Failed,
+
+    /// <summary>beta.22: the Agent did not answer (<see cref="AgentAnswers.IsUnanswered"/>): whether it granted or withdrew is not known.</summary>
+    Unanswered,
 }

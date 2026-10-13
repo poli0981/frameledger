@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
-using System.IO;
 using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Shared.Ipc;
 using FrameLedger.Shared.Safety;
@@ -65,13 +64,25 @@ public sealed class HookingConsent
             IpcEnvelope ack = await _agent.RequestAsync(IpcMessageType.SetHookEnabled, request, ct).ConfigureAwait(true);
             return Interpret(ack, request.Enabled, onWritten);
         }
-        catch (Exception ex) when (ex is IpcRequestException or TimeoutException or IOException or InvalidOperationException)
+        catch (IpcRequestException ex)
         {
             Log.Warning(ex, "consent: SetHookEnabled(game {GameId}, {Enabled}) did not complete", request.GameId, request.Enabled);
-            string detail = ex is IpcRequestException ipc ? ipc.Code ?? IpcMessageType.Error : ex.GetType().Name;
+            string detail = ex.Code ?? IpcMessageType.Error;
             return new HookingConsentResult(
                 string.Equals(detail, IpcErrorCode.DisclosureVersionMismatch, StringComparison.Ordinal) ? HookingConsentOutcome.VersionMismatch : HookingConsentOutcome.Failed,
                 detail);
+        }
+        catch (InvalidOperationException ex)
+        {
+            // The connection went between the caller's check and the request: nothing was sent.
+            Log.Warning("consent: SetHookEnabled(game {GameId}, {Enabled}) was not sent ({Message})", request.GameId, request.Enabled, ex.Message);
+            return HookingConsentResult.Of(HookingConsentOutcome.AgentUnavailable);
+        }
+        catch (Exception ex) when (AgentAnswers.IsUnanswered(ex))
+        {
+            // beta.22: whether the Agent stamped or revoked is not known — never the exception's type name as the notice.
+            Log.Warning(ex, "consent: SetHookEnabled(game {GameId}, {Enabled}) had no answer", request.GameId, request.Enabled);
+            return HookingConsentResult.Of(HookingConsentOutcome.Unanswered);
         }
     }
 

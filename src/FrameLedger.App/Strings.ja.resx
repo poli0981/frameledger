@@ -4317,4 +4317,8 @@
     <value>{0} はもうライブラリにないため、起動しませんでした。</value>
     <comment>review</comment>
   </data>
+  <data name="Agent_Unanswered" xml:space="preserve">
+    <value>キャプチャ エージェントが応答しなかったため、この操作が行われたかどうかは分かりません。エージェントが接続してから、もう一度確認してください。</value>
+    <comment>review</comment>
+  </data>
 </root>

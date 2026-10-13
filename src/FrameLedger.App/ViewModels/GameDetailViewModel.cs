@@ -910,6 +910,12 @@ public sealed partial class GameDetailViewModel : ObservableObject
         if (!result.Succeeded)
         {
             _strip.Warn(Game.Name, result.Message);
+            if (result.Outcome == SessionDeletionOutcome.Unanswered)
+            {
+                // beta.22: the delete may have run — the page shows what is stored, not what it held before the ask.
+                await LoadAsync().ConfigureAwait(true);
+            }
+
             return;
         }
 
@@ -1009,6 +1015,8 @@ public sealed partial class GameDetailViewModel : ObservableObject
             HookingConsentOutcome.Refused => (result.RefusalText(), InfoBarSeverity.Error),
             HookingConsentOutcome.VersionMismatch => (Shared.Strings.Safety_Consent_VersionMismatch, InfoBarSeverity.Warning),
             HookingConsentOutcome.AgentUnavailable => (turningOff ? Strings.Agent_NotConnected_NothingChanged : Shared.Strings.Safety_Consent_AgentUnavailable, InfoBarSeverity.Warning),
+            // beta.22: the page reads what is stored after every ask, so whether hooking changed is shown beside this.
+            HookingConsentOutcome.Unanswered => (Strings.Agent_Unanswered, InfoBarSeverity.Warning),
             // The Agent could not read the executable (beta.8): say whether its drive or the file is missing, not the IPC code.
             HookingConsentOutcome.Failed when string.Equals(result.Detail, Shared.Ipc.IpcErrorCode.ExecutableUnreadable, StringComparison.Ordinal) && Game is not null
                 => (Formats.ExecutableMissingText(Game.Fingerprint.ExePath), InfoBarSeverity.Warning),

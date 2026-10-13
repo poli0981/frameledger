@@ -316,6 +316,33 @@ public sealed class AgentConnectionTests : IAsyncDisposable
     }
 
     /// <summary>beta.10 (the admin mode): a start that asks Windows for administrator rights says so on the pill while it waits.</summary>
+    /// <summary>
+    /// beta.22: every way the pipe can close under a request reaches a caller as ONE exception, an IOException. PipeClient fails a
+    /// request in flight with what ended its reader — an IpcFramingException or an ObjectDisposedException among them — and a
+    /// caller that knew only IOException ended in the App's crash dialog (beta.21's review of Play). What is not a closed pipe
+    /// passes through as it was, and an answer is the answer.
+    /// </summary>
+    [Fact]
+    public async Task EveryWayThePipeClosesUnderARequestIsOneIOException()
+    {
+        foreach (Exception closed in new Exception[] { new ObjectDisposedException("pipe"), new IpcFramingException("the frame ended early") })
+        {
+            Func<Task> request = () => AgentConnection.AnsweredAsync(() => Task.FromException<IpcEnvelope>(closed));
+            IOException said = (await request.Should().ThrowAsync<IOException>()).Which;
+            said.InnerException.Should().BeSameAs(closed, closed.GetType().Name);
+        }
+
+        Exception[] kept = [new IOException("the pipe closed before the Agent answered"), new TimeoutException(), new IpcRequestException(IpcErrorCode.SessionRunning, "running")];
+        foreach (Exception ex in kept)
+        {
+            Func<Task> request = () => AgentConnection.AnsweredAsync(() => Task.FromException<IpcEnvelope>(ex));
+            (await request.Should().ThrowAsync<Exception>()).Which.Should().BeSameAs(ex, ex.GetType().Name);
+        }
+
+        IpcEnvelope answer = IpcCodec.Decode(IpcCodec.Encode(IpcMessageType.DeleteSessionsAck, "1", new DeleteSessionsAck(null, 0, 0)));
+        (await AgentConnection.AnsweredAsync(() => Task.FromResult(answer))).Should().BeSameAs(answer);
+    }
+
     [Fact]
     public async Task AStartThatAsksForAdministratorRightsSaysSoOnThePill()
     {
