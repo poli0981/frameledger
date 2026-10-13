@@ -28,6 +28,14 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+## [0.1.0-beta.22] - 2026-10-13
+
+**The twenty-second pre-release: a request the capture agent never answered is said as such, never as a crash.** The
+same unsigned installer: verify its hash against `SHA256SUMS.txt`, then *More info → Run anyway*.
+
+**Updating from `0.1.0-beta.21`:** Help ▸ Check for updates, then *Restart to update* with no game running. Nothing is
+shown to accept and no game is read again: the legal documents and the detection rules (`2026.10.4`) are beta.21's.
+
 ### Fixed
 
 - **A request the capture agent never answered is said as such, never as a crash.** When the agent stopped, or restarted
