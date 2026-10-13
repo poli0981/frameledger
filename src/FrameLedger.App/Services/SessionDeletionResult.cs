@@ -17,6 +17,7 @@ public sealed record SessionDeletionResult(SessionDeletionOutcome Outcome, int G
         SessionDeletionOutcome.SessionRunning => Strings.DeleteSessions_Running,
         SessionDeletionOutcome.AgentUnavailable => Strings.DeleteSessions_NoAgent,
         SessionDeletionOutcome.AgentTooOld => Strings.DeleteSessions_AgentTooOld,
+        SessionDeletionOutcome.Unanswered => Strings.Agent_Unanswered,
         _ => Detail ?? Strings.Common_NotAvailable,
     };
 }

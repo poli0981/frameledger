@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using System.IO;
 using FluentAssertions;
 using FrameLedger.App.Services;
 using FrameLedger.App.ViewModels;
@@ -119,6 +120,31 @@ public sealed class AntiCheatExceptionsTests
 
         agent.Answer = static _ => throw new IpcRequestException(IpcErrorCode.DisclosureVersionMismatch, "restart");
         (await exceptions.GrantAsync(56, _gf2, Ct)).Outcome.Should().Be(AntiCheatExceptionOutcome.VersionMismatch);
+    }
+
+    /// <summary>
+    /// beta.22: an ask the Agent never answered is not known, and its notice says so in words — it read "IOException"; one the
+    /// connection was gone before is "no agent", which changed nothing.
+    /// </summary>
+    [Fact]
+    public async Task AnAskTheAgentNeverAnsweredIsNotKnownAndSaidInWords()
+    {
+        var agent = new FakeAgent
+        {
+            Hello = Hello(AntiCheatExceptionDisclosure.Version),
+            Answer = static _ => throw new IOException("the connection to the Agent closed before it answered"),
+        };
+        var exceptions = new AntiCheatExceptions(agent, new FakePrompt { Accepts = true });
+
+        AntiCheatExceptionResult closed = await exceptions.GrantAsync(56, _gf2, Ct);
+        closed.Outcome.Should().Be(AntiCheatExceptionOutcome.Unanswered);
+        closed.MessageFor("GIRLS' FRONTLINE 2").Should().Be(Strings.Agent_Unanswered);
+
+        agent.Answer = static _ => throw new TimeoutException();
+        (await exceptions.WithdrawAsync(56, Ct)).Outcome.Should().Be(AntiCheatExceptionOutcome.Unanswered);
+
+        agent.Answer = static _ => throw new InvalidOperationException("the Agent is not connected");
+        (await exceptions.WithdrawAsync(56, Ct)).Outcome.Should().Be(AntiCheatExceptionOutcome.AgentUnavailable, "nothing was sent");
     }
 
     [Fact]

@@ -20,4 +20,10 @@ public enum SessionDeletionOutcome
 
     /// <summary>Anything else; the detail says what.</summary>
     Failed,
+
+    /// <summary>
+    /// beta.22: the capture agent did not answer (<see cref="AgentAnswers.IsUnanswered"/>), or answered without saying what it
+    /// did: whether anything was deleted is not known, and the page reads what is stored.
+    /// </summary>
+    Unanswered,
 }

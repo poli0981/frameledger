@@ -736,6 +736,14 @@ public sealed partial class SettingsViewModel : ObservableObject
             return;
         }
 
+        if (result.Outcome == HookingConsentOutcome.Unanswered)
+        {
+            // beta.22: whether hooking was turned off is not known — the list is read again from what is stored.
+            _strip.Warn(game.Name, Strings.Agent_Unanswered);
+            await RefreshCoreAsync().ConfigureAwait(true);
+            return;
+        }
+
         // Turning off with no Agent changed nothing (beta.18): it said the enable path's "Nothing was enabled."
         string body = result.Outcome == HookingConsentOutcome.AgentUnavailable ? Strings.Agent_NotConnected_NothingChanged : result.Detail ?? Strings.Common_NotAvailable;
         _strip.Warn(game.Name, body);

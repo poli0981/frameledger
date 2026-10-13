@@ -24,6 +24,9 @@ public enum HookingConsentOutcome
     /// <summary>No connected Agent; nothing was sent.</summary>
     AgentUnavailable,
 
-    /// <summary>The Agent answered but did not stamp (a store outcome other than <c>Written</c>, an <c>Error</c>, a timeout); <c>Detail</c> says which.</summary>
+    /// <summary>The Agent answered but did not stamp (a store outcome other than <c>Written</c>, an <c>Error</c>); <c>Detail</c> says which.</summary>
     Failed,
+
+    /// <summary>beta.22: the Agent did not answer (<see cref="AgentAnswers.IsUnanswered"/>): whether it stamped or revoked is not known.</summary>
+    Unanswered,
 }

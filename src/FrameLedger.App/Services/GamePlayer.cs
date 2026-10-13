@@ -2,7 +2,6 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.Globalization;
-using System.IO;
 using System.Text.Json;
 using FrameLedger.Application.Import;
 using FrameLedger.Application.Persistence;
@@ -104,6 +103,7 @@ public sealed class GamePlayer
                 _ => string.Format(CultureInfo.CurrentCulture, Strings.Play_Started_Format, gameName),
             }, false),
             PlayOutcome.AgentUnavailable => (string.Format(CultureInfo.CurrentCulture, Strings.Play_AgentUnavailable_Format, gameName), true),
+            PlayOutcome.Unanswered => (Strings.Agent_Unanswered, true),
             // "Set Play to go through the store" only where Play was not already going through it.
             PlayOutcome.RecordingOff => (string.Format(CultureInfo.CurrentCulture,
                 result.Fallback == PlayFallback.None ? Strings.Play_RecordingOff_Format : Strings.Play_RecordingOff_Fallback_Format, gameName), true),
@@ -171,12 +171,18 @@ public sealed class GamePlayer
             IpcEnvelope envelope = await _agent.RequestAsync(IpcMessageType.LaunchGame, new LaunchGameRequest(game.Id, null), ct).ConfigureAwait(false);
             ack = IpcCodec.Payload<LaunchAck>(envelope);
         }
-        catch (Exception ex) when (ex is InvalidOperationException or TimeoutException or IOException or ObjectDisposedException or IpcFramingException)
+        catch (InvalidOperationException ex)
         {
-            // The connection went between the check above and the answer — the agent stopping, or restarting for an update:
-            // the pipe fails a request in flight with these (PipeClient), and a press never ends in an unhandled exception.
-            Log.Warning("play: LaunchGame for {Game} (id {Id}) had no answer ({Kind}: {Message})", game.Name, game.Id, ex.GetType().Name, ex.Message);
+            // The connection went between the check above and the request: nothing was sent.
+            Log.Warning("play: LaunchGame for {Game} (id {Id}) was not sent ({Message})", game.Name, game.Id, ex.Message);
             return new PlayResult(PlayOutcome.AgentUnavailable, Fallback: fallback);
+        }
+        catch (Exception ex) when (AgentAnswers.IsUnanswered(ex))
+        {
+            // The agent stopping or restarting under the request, or no answer in time (beta.22): whether the game is starting
+            // is not known — and a press never ends in an unhandled exception (beta.21's review).
+            Log.Warning("play: LaunchGame for {Game} (id {Id}) had no answer ({Kind}: {Message})", game.Name, game.Id, ex.GetType().Name, ex.Message);
+            return new PlayResult(PlayOutcome.Unanswered, Fallback: fallback);
         }
         catch (Exception ex) when (ex is IpcRequestException or JsonException)
         {

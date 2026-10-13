@@ -108,7 +108,27 @@ public sealed class AgentConnection : IAgentLink, IAsyncDisposable
             throw new InvalidOperationException("the Agent is not connected");
         }
 
-        return client.RequestEnvelopeAsync(type, payload, _options.RequestTimeout, ct);
+        return AnsweredAsync(() => client.RequestEnvelopeAsync(type, payload, _options.RequestTimeout, ct));
+    }
+
+    /// <summary>
+    /// beta.22: a request's answer, with every way the pipe can close under it said as ONE <see cref="IOException"/>.
+    /// <see cref="PipeClient"/> fails a request in flight with what ended its reader — an <see cref="IOException"/>, an
+    /// <see cref="IpcFramingException"/> or an <see cref="ObjectDisposedException"/> — and a client this connection disposed
+    /// between the check above and the write throws the last; a caller that knew only the first ended in the App's crash
+    /// dialog (beta.21's review of Play). <see cref="IAgentRequests.RequestAsync{TRequest}"/> names what is left.
+    /// </summary>
+    internal static async Task<IpcEnvelope> AnsweredAsync(Func<Task<IpcEnvelope>> request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        try
+        {
+            return await request().ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is ObjectDisposedException or IpcFramingException)
+        {
+            throw new IOException("the connection to the Agent closed before it answered", ex);
+        }
     }
 
     /// <summary>Ask the Agent for its status now; null when not connected or when the request failed.</summary>
@@ -126,7 +146,7 @@ public sealed class AgentConnection : IAgentLink, IAsyncDisposable
             Set(AgentConnectionState.Connected, Hello, status);
             return status;
         }
-        catch (Exception ex) when (ex is IOException or TimeoutException or IpcRequestException or ObjectDisposedException)
+        catch (Exception ex) when (ex is IOException or TimeoutException or IpcRequestException or ObjectDisposedException or IpcFramingException)
         {
             return null;
         }

@@ -3248,4 +3248,7 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="Play_NotInLibrary_Format" xml:space="preserve">
     <value>{0} is no longer in the library, so it was not started.</value>
   </data>
+  <data name="Agent_Unanswered" xml:space="preserve">
+    <value>The capture agent did not answer, so whether this was done is not known. Check again once it is connected.</value>
+  </data>
 </root>

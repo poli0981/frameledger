@@ -3243,4 +3243,7 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="Play_NotInLibrary_Format" xml:space="preserve">
     <value>{0} không còn trong thư viện, nên không được chạy.</value>
   </data>
+  <data name="Agent_Unanswered" xml:space="preserve">
+    <value>Capture agent không trả lời, nên không biết việc này đã được thực hiện hay chưa. Hãy kiểm tra lại khi agent đã kết nối.</value>
+  </data>
 </root>

@@ -70,6 +70,7 @@ public static class Strings
         nameof(Agent_State_Offline),
         nameof(Agent_State_Starting),
         nameof(Agent_State_Viewer),
+        nameof(Agent_Unanswered),
         nameof(App_Title),
         nameof(Arch_AnyCpu),
         nameof(Arch_AnyCpu32),
@@ -1183,6 +1184,8 @@ public static class Strings
     public static string Agent_State_Starting => ResourceManager.GetString(nameof(Agent_State_Starting), Culture) ?? nameof(Agent_State_Starting);
 
     public static string Agent_State_Viewer => ResourceManager.GetString(nameof(Agent_State_Viewer), Culture) ?? nameof(Agent_State_Viewer);
+
+    public static string Agent_Unanswered => ResourceManager.GetString(nameof(Agent_Unanswered), Culture) ?? nameof(Agent_Unanswered);
 
     public static string App_Title => ResourceManager.GetString(nameof(App_Title), Culture) ?? nameof(App_Title);
 

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using System.IO;
 using FluentAssertions;
 using FrameLedger.App.Charts;
 using FrameLedger.App.Services;
@@ -219,6 +220,50 @@ public sealed class SessionDeletionAndOverviewTests
         (await deletion.DeleteAsync(null, Ct)).Outcome.Should().Be(SessionDeletionOutcome.SessionRunning);
         selection.SessionId.Should().Be(kept, "nothing was deleted");
         windows.Asked.Should().Be(2, "nothing was deleted");
+    }
+
+    /// <summary>
+    /// beta.22: a delete the Agent never answered — the connection closed under it, or no answer in time — is said as not known;
+    /// what named a deleted session lets go of it (the delete may have run), and the game page reads what is stored. It caught
+    /// no IOException before, and that exception was the App's crash dialog. The connection gone before the ask deleted nothing.
+    /// </summary>
+    [Fact]
+    public async Task ADeleteTheAgentNeverAnsweredIsSaidAsNotKnownAndThePageReadsWhatIsStored()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Alpha");
+        long gone = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-2));
+
+        var windows = new Windows();
+        var selection = new SessionSelection();
+        selection.Set(gone);
+        var agent = new ScriptedAgent { Answer = static _ => Task.FromException<IpcEnvelope>(new TimeoutException()) };
+        var deletion = new SessionDeletion(agent, s.Sessions, selection, windows);
+
+        SessionDeletionResult timedOut = await deletion.DeleteAsync(game.Id, Ct);
+        timedOut.Outcome.Should().Be(SessionDeletionOutcome.Unanswered);
+        timedOut.Message.Should().Be(Strings.Agent_Unanswered);
+        windows.Asked.Should().Be(1, "the delete may have run: what named a deleted session lets go of it");
+        selection.SessionId.Should().Be(gone, "the session is still stored, so it stays selected");
+
+        agent.Answer = static _ => throw new InvalidOperationException("the Agent is not connected");
+        (await deletion.DeleteAsync(game.Id, Ct)).Outcome.Should().Be(SessionDeletionOutcome.AgentUnavailable, "nothing was sent");
+        windows.Asked.Should().Be(1, "nothing was asked, so nothing can be gone");
+
+        // The delete ran and its answer was lost on the way back: the page says it is not known and shows what is stored.
+        agent.Answer = async r =>
+        {
+            await DeletesFrom(s)(r).ConfigureAwait(false);
+            throw new IOException("the connection to the Agent closed before it answered");
+        };
+        var strip = new Strip();
+        GameDetailViewModel page = await PageAsync(s, game.Id, new Confirm(true), deletion, strip, selection);
+        page.Sessions.Should().ContainSingle();
+        await page.DeleteAllSessionsCommand.ExecuteAsync(null);
+
+        strip.Lines.Should().Equal("warn:" + Strings.Agent_Unanswered);
+        page.Sessions.Should().BeEmpty("the page read what is stored after an answer that never came");
+        selection.SessionId.Should().BeNull("the selected session is gone, and its id can be reused");
     }
 
     /// <summary>

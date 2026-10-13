@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
-using System.IO;
 using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Shared.Ipc;
 using FrameLedger.Shared.Safety;
@@ -66,17 +65,28 @@ public sealed class AntiCheatExceptions
             IpcEnvelope ack = await _agent.RequestAsync(IpcMessageType.SetAntiCheatException, request, ct).ConfigureAwait(true);
             return Interpret(ack, request.Enabled);
         }
-        catch (Exception ex) when (ex is IpcRequestException or TimeoutException or IOException or InvalidOperationException)
+        catch (IpcRequestException ex)
         {
             Log.Warning(ex, "exception: SetAntiCheatException(game {GameId}, {Enabled}) did not complete", request.GameId, request.Enabled);
-            string? code = (ex as IpcRequestException)?.Code;
-            AntiCheatExceptionOutcome outcome = code switch
+            AntiCheatExceptionOutcome outcome = ex.Code switch
             {
                 IpcErrorCode.DisclosureVersionMismatch => AntiCheatExceptionOutcome.VersionMismatch,
                 IpcErrorCode.ExceptionsOff => AntiCheatExceptionOutcome.OptionOff,
                 _ => AntiCheatExceptionOutcome.Failed,
             };
-            return new AntiCheatExceptionResult(outcome, code ?? ex.GetType().Name);
+            return new AntiCheatExceptionResult(outcome, ex.Code ?? IpcMessageType.Error);
+        }
+        catch (InvalidOperationException ex)
+        {
+            // The connection went between the caller's check and the request: nothing was sent.
+            Log.Warning("exception: SetAntiCheatException(game {GameId}, {Enabled}) was not sent ({Message})", request.GameId, request.Enabled, ex.Message);
+            return AntiCheatExceptionResult.Of(AntiCheatExceptionOutcome.AgentUnavailable);
+        }
+        catch (Exception ex) when (AgentAnswers.IsUnanswered(ex))
+        {
+            // beta.22: whether the exception was made or withdrawn is not known — never the exception's type name as the notice.
+            Log.Warning(ex, "exception: SetAntiCheatException(game {GameId}, {Enabled}) had no answer", request.GameId, request.Enabled);
+            return AntiCheatExceptionResult.Of(AntiCheatExceptionOutcome.Unanswered);
         }
     }
 
