@@ -250,6 +250,11 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
   A `ContentDialog` whose content should not scroll as a whole sets `ScrollViewer.VerticalScrollBarVisibility="Disabled"`
   on the dialog: its content row then has the window's height, and a `*` row inside it can hold a list that scrolls alone
   (`ImportReviewPrompt`).
+- [ ] **A `ScrollViewer` moves a FIXED 48 DIP per wheel message, whatever its delta** (`ScrollViewer._mouseWheelDelta`,
+  read from .NET 10.0.12; measured on a `FlowDocumentScrollViewer`: deltas of −1, −15, −120 and −360 each moved 48). It
+  ignores Windows' *lines to scroll*, and a precision touchpad's small deltas each jump the whole step — a long document
+  read as slow and jerky while its layout cost about a millisecond a step. `Controls/MarkdownView` handles
+  `PreviewMouseWheel` itself (beta.21): the delta in proportion at Windows' lines, eased, unhandled at its ends.
 - [ ] **ScottPlot 5 zooms on every wheel and never marks it handled.** Without `Charts/ChartWheel` a wheel over a chart
   zoomed it and scrolled the page at once; a plain wheel is the page's, Ctrl+wheel the chart's, for every plot that
   `ChartTheme.Attach` registers.

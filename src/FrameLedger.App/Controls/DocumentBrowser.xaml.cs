@@ -97,9 +97,8 @@ public partial class DocumentBrowser : UserControl
 
     private void ShowPage(DocumentPage? page)
     {
-        View.DocumentPath = page?.Path;
-        View.IsPlainText = page?.IsPlainText ?? false;
-        View.MarkdownText = page?.Text ?? string.Empty;
+        // One render, now (beta.21): the three properties one by one rendered the old text under the new path first.
+        View.Show(page?.Text ?? string.Empty, page?.IsPlainText ?? false, page?.Path);
         AutomationProperties.SetName(View, page?.Title ?? string.Empty);
         PageChanged?.Invoke(this, EventArgs.Empty);
     }

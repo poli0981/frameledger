@@ -26,7 +26,8 @@ public static class DiagReport
     }
 
     /// <summary>The report text. <paramref name="settings"/> is every registry key's effective value; <paramref name="schemaVersion"/> null when the ledger could not be opened.</summary>
-    public static string Build(string appVersion, string dataDirectory, string logsDirectory, long? schemaVersion, IReadOnlyDictionary<string, string> settings, bool agentBesideApp, DateTimeOffset now, HardwareSnapshot? hardware = null)
+    public static string Build(string appVersion, string dataDirectory, string logsDirectory, long? schemaVersion, IReadOnlyDictionary<string, string> settings, bool agentBesideApp, DateTimeOffset now, HardwareSnapshot? hardware = null,
+        int? renderTier = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         var sb = new StringBuilder();
@@ -48,6 +49,8 @@ public static class DiagReport
         sb.AppendLine(CultureInfo.InvariantCulture, $"gpu_driver: {hardware?.GpuDriver ?? "n/a"}");
         sb.AppendLine(CultureInfo.InvariantCulture, $"ram_gb: {(hardware?.RamGb is double gb ? gb.ToString("0.#", CultureInfo.InvariantCulture) : "n/a")}");
         sb.AppendLine(CultureInfo.InvariantCulture, $"display: {hardware?.DisplayRes ?? "n/a"}{(hardware?.DisplayHz is double hz ? " @ " + hz.ToString("0.#", CultureInfo.InvariantCulture) + " Hz" : string.Empty)}");
+        // beta.21: WPF's rendering tier — 0 is software rendering, where every scroll of a document is drawn on the CPU.
+        sb.AppendLine(CultureInfo.InvariantCulture, $"render_tier: {(renderTier is int tier ? tier.ToString(CultureInfo.InvariantCulture) : "n/a")}");
         sb.AppendLine("settings:");
         foreach (SettingDefinition definition in SettingsRegistry.All)
         {

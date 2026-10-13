@@ -36,6 +36,9 @@ public sealed class DiagReportTests
         }
 
         report.Should().Contain("  capture.min_session_s = 30", "a key with no row reports its default");
+        report.Should().Contain("render_tier: n/a", "no tier given");
+        DiagReport.Build("1.2.3", @"C:\data", @"C:\data\logs", 2, values, agentBesideApp: true, now, renderTier: 0)
+            .Should().Contain("render_tier: 0", "beta.21: software rendering, where every scroll is drawn on the CPU, is named");
     }
 
     [Fact]
