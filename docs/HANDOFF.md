@@ -1494,7 +1494,8 @@ wrongly-named entry through `SessionRecorder`'s `EnsureAsync`); the running tabl
 launch election registers its session and defers to the watcher's. **What it costs:** a game whose FOLDER moved records
 nothing until *Change executable* — accepted, because the alternative is exactly what put HHW's sessions under Flower
 in Us. **D28 (owner, same day):** HHW itself is measured by pointing an entry at `swiftshader\Game.exe` (the NW.js
-runtime its .NET launcher starts); no launcher-following in beta.6.
+runtime its .NET launcher starts); no launcher-following in beta.6. *(Corrected 2026-10-13, D57: that ".NET launcher"
+is malware — `spike-notes.md` §20. Nothing here asks for it to be run.)*
 
 **Decision (D26, owner: "the library still shows two entries side by side after the drive letter changed, with the
 data unchanged").** The Agent merges two entries for one executable under two drive letters by itself: the stale
@@ -2142,7 +2143,9 @@ then the release.*
   finding does to the game).
 - **D56 — an NW.js runtime is the import's game**: an executable beside `nw.dll` + `package.json` ranks as the engine's
   own layout, below Unity's and Unreal's and above a name match, so a launcher-fronted RPG Maker MV/MZ install is pointed
-  at the process that draws. D28 did that by hand for HELLO, HELLO WORLD!; the locator now picks the same file.
+  at the process that draws. D28 did that by hand for HELLO, HELLO WORLD!; ~~the locator now picks the same file~~
+  *(corrected 2026-10-13: the locator does, and an import never asks it there — itch's own pick names the program in
+  front, which is not a helper, so the import takes it; and that program is malware, D57 — §beta.21)*.
 - **The owner's existing A Doll's Locket entry is not rewritten** (D25/D27): *Change executable…* re-points it, and the
   import no longer offers a twin of the same store title.
 - **The train (owner, 2026-10-12, after the PRs were up):** "commit, push và release luôn" — each PR squash-merged by the
@@ -2323,7 +2326,8 @@ game's engine" — was shown to the owner with #299 and released on their word.
    Demo and 衔蝶 (the App's restart at 17:47 had started the ten minutes again), the library then reading *Games · 46*.
    *(The item as written:)* (a) **A Doll's Locket - Remake:** its page ▸ *Change executable…* opens in `Dolls
    Locket\`; pick `css\Game.exe`. Its launcher asks for administrator, so the runtime is measured only with *Run the agent
-   as administrator* on — otherwise the session says why nothing was measured. (b) **Refresh** offers no second A Doll's
+   as administrator* on — otherwise the session says why nothing was measured. *(Withdrawn 2026-10-13, D57: that
+   launcher is malware — do not run it; `spike-notes.md` §20.)* (b) **Refresh** offers no second A Doll's
    Locket. (c) **Engine versions:** a Unity game's page (*Unity 2022.3.62f2* on Umamusume, *Unity 2019.4.40* on GIRLS'
    FRONTLINE 2), Godot's (*Godot 4.4.1* on 衔蝶), RPG Maker's (*RPG Maker MZ 1.10.0*, *RPG Maker MV 1.6.2* on Flower in
    Us, *RPG Maker VX Ace (RGSS 3.0.1)*), each with its *Engine version* line. (d) **Uninstall a game that has no session**

@@ -3168,4 +3168,7 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="DataDir_Profile_Format" xml:space="preserve">
     <value>{0} là thư mục dữ liệu của chính FrameLedger. --data-dir dành cho một bản sao của nó, để một bản thử nghiệm không bao giờ mở cơ sở dữ liệu bạn đang ghi vào. Để dùng thư mục này, hãy mở FrameLedger không kèm --data-dir.</value>
   </data>
+  <data name="GameDetail_Supports_None" xml:space="preserve">
+    <value>Không tìm thấy — thư mục game không có file upscaler, frame generation hay Vulkan nào mà bộ quy tắc liệt kê.</value>
+  </data>
 </root>

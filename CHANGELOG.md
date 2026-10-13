@@ -28,6 +28,17 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Security
+
+- **Four itch.io downloads this project's documentation used as examples carry malware.** HELLO, HELLO WORLD!, A Doll's
+  Locket - Remake, City of Bones and Träumerei Chapter 2 put the same 213 MB program in front of their RPG Maker game.
+  Read without running it, it ships a registry file that switches off Windows' script scanning (AMSI) and adds
+  Microsoft Defender exclusions, carries an encrypted payload, and checks for virtual machines and debuggers before it
+  starts the game. The documentation called it a launcher and, for A Doll's Locket, said to measure it with the agent
+  running as administrator: that advice is withdrawn. If you installed one of them, remove it and scan your PC.
+  FrameLedger itself does not change: it reads a game's files to find its engine and anti-cheat, and does not judge
+  whether a game is safe (`docs/spike-notes.md` §20).
+
 ### Fixed
 
 - **An anti-cheat kept beside a game's executable is found before anything is injected.** The safety check looked three folder
@@ -102,7 +113,8 @@ helper is not changed: re-point it with *Change executable…*.
   deeper) and the import took it as the game. A helper named by the store is skipped now and the executable is guessed —
   the import list says so — and the guess takes the executable beside NW.js's `nw.dll` and `package.json`, the process
   that draws (`css\Game.exe` there; its launcher asks for administrator, so it is measured with *Run the agent as
-  administrator* on). The import also no longer offers a store's game again when the library has it at another
+  administrator* on — *withdrawn 2026-10-13: that launcher is malware, do not run it; [0.1.0-beta.21]'s Security*). The
+  import also no longer offers a store's game again when the library has it at another
   executable: an entry already there is re-pointed with *Change executable…* (`docs/05_DETECTION.md` §Library import).
 - **The Games page shows its newest read of the library.** When two reads overlapped — a session ending while an import
   added games — the one that started first could finish last and be shown, an older list until the next read.

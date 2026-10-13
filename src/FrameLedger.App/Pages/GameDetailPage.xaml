@@ -74,7 +74,7 @@
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static vm:GameDetailViewModel.SupportsHeader}" />
                         <ui:TextBlock Margin="0,6,0,0" Style="{StaticResource TertiaryText}" TextWrapping="Wrap"
-                                      Text="{x:Static vm:GameDetailViewModel.SupportsEmptyText}"
+                                      Text="{Binding ViewModel.SupportsEmptyText}"
                                       Visibility="{Binding ViewModel.SupportsEmpty, Converter={StaticResource BoolToVis}}" />
                         <ItemsControl Margin="0,6,0,0" ItemsSource="{Binding ViewModel.Supports}">
                             <ItemsControl.ItemsPanel>

@@ -277,7 +277,8 @@ the game's files* once the sweep has read a row of these engines and found none.
 **Where it is read.** Beside the row's executable first: `UnityPlayer.dll` (else the shallowest one the walk listed) and
 `<exe>_Data` (else a `*_Data` beside that player); `<exe>.pck`. RPG Maker's files are looked for beside the executable and
 up to two folders above it, as `RpgMakerTitle` already looked for a title — a launcher-fronted game keeps its runtime in
-a subfolder (A Doll's Locket's `css\`, HELLO, HELLO WORLD!'s `swiftshader\`); a `Library=` that points outside the ini's
+a subfolder (A Doll's Locket's `css\`, HELLO, HELLO WORLD!'s `swiftshader\` — *both "launchers" are malware, D57,
+`spike-notes.md` §20*); a `Library=` that points outside the ini's
 folder is named and not read. Version resources and at most a few kilobytes of any file; the whole detection of one entry
 measured 24 ms to 4.1 s on the owner's USB drive, nearly all of it the install's walk, once per executable and rules
 version. The Privacy Policy says so since 2.8 (§4).
@@ -359,7 +360,12 @@ engine compiled only, reads as not found. One Ren'Py install was measured.
 > toast helper. The pick was **butler's verdict**, taken as is: butler stores a *filtered* verdict (the shallowest
 > candidates, minus those whose manifest asks for elevation) and does not rank what is left, and on that install the
 > 213 MB `DollsLocket.exe` launcher asks for administrator while the NW.js runtime sits a level deeper in `css\`, so the
-> helper was the whole verdict (read from the owner's `butler.db`, read-only). Three changes:
+> helper was the whole verdict (read from the owner's `butler.db`, read-only). *(Corrected 2026-10-13, owner decision
+> D57: that "launcher" — the same 213 MB program HELLO, HELLO WORLD!, City of Bones and Träumerei put in front of their
+> runtime — is malware: it ships a registry file that switches off Windows' script scanning and adds Microsoft Defender
+> exclusions (`spike-notes.md` §20). Do not run it. The admin-mode sentence below is withdrawn; the three changes stand
+> as rules about helpers and NW.js layouts, and the import still takes a store's own pick when it is not a helper.)*
+> Three changes:
 > **(1)** a verdict candidate whose whole name is a runtime helper (`ExecutableLocator.RuntimeHelperNames`:
 > `notification_helper`, `crashpad_handler`, `UnityCrashHandler64/32`, `CrashReportClient`, NW.js's `nwjc` and
 > `chromedriver`) or that sits in a Unity plugin folder is skipped, and with nothing left the locator guesses and the
@@ -369,8 +375,9 @@ engine compiled only, reads as not found. One Ren'Py install was measured.
 > rule's own signal — as an NW.js runtime (owner decision D56), below the Unity and Unreal layouts (an NW.js folder can
 > be a tool shipped beside such a game) and above a name match (the launcher in front of the runtime is named after the
 > install): the install's guess is `css\Game.exe`, the process that draws, as D28 pointed HELLO, HELLO WORLD!'s entry at
-> its runtime by hand. That runtime starts elevated (its launcher asks for administrator), so it is measured with the
-> admin mode on (D34). **(3)** Discovery matches a store title to an entry by **platform + store id** as well as by
+> its runtime by hand. ~~That runtime starts elevated (its launcher asks for administrator), so it is measured with the
+> admin mode on (D34).~~ *(Withdrawn 2026-10-13, D57: it starts elevated because the malware in front of it asks for
+> administrator.)* **(3)** Discovery matches a store title to an entry by **platform + store id** as well as by
 > path: the entry an earlier import made at another executable is "already in the library" (the log names its path),
 > so a corrected guess never adds the same game a second time — that entry is re-pointed with Change executable…, and
 > nothing rewrites it by itself (D25/D27). Tests: `ExecutableLocatorTests.AnNwjsRuntimeBeatsTheLauncherNamedAfterTheInstallAndItsHelpersAreDropped`,

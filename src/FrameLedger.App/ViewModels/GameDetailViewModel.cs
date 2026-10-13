@@ -83,6 +83,14 @@ public sealed partial class GameDetailViewModel : ObservableObject
     [ObservableProperty]
     private bool _supportsEmpty = true;
 
+    /// <summary>
+    /// What the Supports card says when it lists nothing (beta.21): "not scanned yet" until the Agent's sweep has read the
+    /// executable, then that none of the files the rules name was found. It said "not scanned yet" for every game that
+    /// ships none of them — a scanned RPG Maker game's page contradicted its own Details card.
+    /// </summary>
+    [ObservableProperty]
+    private string _supportsEmptyText = Strings.GameDetail_Supports_Empty;
+
     [ObservableProperty]
     private string _measuredEmptyText = string.Empty;
 
@@ -276,8 +284,6 @@ public sealed partial class GameDetailViewModel : ObservableObject
     public static string LifetimeLabel => Strings.GameDetail_LifetimeAvg;
 
     public static string SupportsHeader => Strings.GameDetail_Supports_Header;
-
-    public static string SupportsEmptyText => Strings.GameDetail_Supports_Empty;
 
     public static string MeasuredHeader => Strings.GameDetail_Measured_Header;
 
@@ -1025,6 +1031,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
         }
 
         SupportsEmpty = Supports.Count == 0;
+
+        // The Details card's own test: a row the sweep has read carries the executable's machine.
+        SupportsEmptyText = row.ExeMachine is null ? Strings.GameDetail_Supports_Empty : Strings.GameDetail_Supports_None;
     }
 
     private void PresentDetails(GameDetail detail)

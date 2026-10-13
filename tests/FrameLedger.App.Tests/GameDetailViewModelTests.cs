@@ -238,6 +238,35 @@ public sealed class GameDetailViewModelTests
         }
     }
 
+    /// <summary>
+    /// beta.21: a game the sweep has read and found none of the capability files in says so — the card read "not scanned yet"
+    /// for every such game, as HELLO, HELLO WORLD!'s page did beside a Details card that had been read.
+    /// </summary>
+    [Fact]
+    public async Task TheSupportsCardSaysNotScannedOnlyUntilTheSweepHasReadTheExecutable()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Plain");
+
+        (GameDetailViewModel unread, _, _, _, _) = await BuildAsync(s, game.Id);
+        unread.SupportsEmpty.Should().BeTrue();
+        unread.SupportsEmptyText.Should().Be(Strings.GameDetail_Supports_Empty, "the sweep has not read this game yet");
+
+        (await s.Games.ApplyDetectionAsync(game.Id, new DetectionWrite
+        {
+            EngineId = "rpgmaker_mv",
+            CapabilityIds = [],
+            RulesVersion = "2026.10.4",
+            ExeSizeBytes = 1,
+            ExeMtimeMs = 1,
+            ExeArchitecture = ExecutableArchitecture.X64,
+        }, Ct)).Should().BeTrue();
+
+        (GameDetailViewModel read, _, _, _, _) = await BuildAsync(s, game.Id);
+        read.SupportsEmpty.Should().BeTrue("the game ships none of the files the rules name");
+        read.SupportsEmptyText.Should().Be(Strings.GameDetail_Supports_None);
+    }
+
     [Fact]
     public async Task TheHeaderTheTwoRowsAndTheSessionsTabReadFromTheLedger()
     {

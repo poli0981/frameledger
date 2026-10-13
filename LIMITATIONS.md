@@ -163,6 +163,9 @@ you accept the prompt. Turn it on only if you trust everything that runs under y
   GeForce RTX 5080 with an Intel Core i7-14700KF on Windows 11); other hardware is untested.
 - **No real Vulkan or OpenGL game has been measured yet** — only FrameLedger's own test program.
 - There is **no in-game overlay**; everything is shown in the FrameLedger window.
+- **FrameLedger does not tell whether a game is safe to run.** It reads a game's files to find its engine and its
+  anti-cheat, never to judge it, and recording or measuring a game vouches for nothing. Four itch.io downloads this
+  project once used as examples turned out to carry malware ([details](docs/spike-notes.md)).
 
 ## Your data
 
