@@ -320,15 +320,17 @@ struct Sources {
 
     // Check 4 — the static pre-scan.
     //
-    // The directory the target's image lives in. kFailed means we could not
+    // The directory the target's image lives in — its OWN folder (2026-10-13;
+    // until then the seam resolved the install root itself, and a folder beside
+    // a nested executable was out of check 4's reach). The checks resolve the
+    // install root from it (ResolveInstallRoot). kFailed means we could not
     // name it, which refuses: check 4 cannot run against a directory we cannot
     // find, and "we did not look" has never been a pass in this file.
     Collected (*ImageDirectory)(std::uint32_t pid, wchar_t* out, std::size_t cap) = nullptr;
 
     // The target's executable LEAF NAME, for check 3. A separate seam from
-    // ImageDirectory because it is a different fact: that one deliberately
-    // resolves the INSTALL ROOT (Unreal puts the exe three levels below it), and
-    // the name is exactly what it throws away.
+    // ImageDirectory because it is a different fact: that one strips the name
+    // to name the folder, and the name is exactly what it throws away.
     //
     // NARROW on purpose. `blockedExecutables` is ASCII by schema and
     // MatchesBlockedExecutable compares ASCII, so converting here keeps one

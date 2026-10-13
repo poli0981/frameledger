@@ -28,6 +28,18 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Fixed
+
+- **An anti-cheat kept beside a game's executable is found before anything is injected.** The safety check looked three folder
+  levels into a game's install folder and no further, so an anti-cheat beside an executable that is itself three levels down
+  was never seen: Wuthering Waves keeps Tencent's Anti-Cheat Expert in `Client\Binaries\Win64\AntiCheatExpert\`, its
+  page read clean, and a session with hooking turned on was hooked for 37 seconds before the check that runs every 30 seconds
+  met the anti-cheat's driver — and because a driver counts for the whole PC, the game's hooking stayed on. The check now also
+  looks in the executable's own folder, on the game's page and before every injection. Wuthering Waves is also named by its
+  Steam id (owner decision D58), and ACE's files, its second driver, its driver's service and its module are named (detection
+  rules `2026.10.4`). Every game is checked for anti-cheat once more after the update; one found this way has its hooking
+  turned off, as any finding does (`docs/19_SAFETY_AND_ANTICHEAT.md` §Pre-injection checks, item 4).
+
 ## [0.1.0-beta.20] - 2026-10-12
 
 **The twentieth pre-release: the engine version of Ren'Py games.** The same unsigned installer: verify its hash against
