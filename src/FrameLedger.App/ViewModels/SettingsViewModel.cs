@@ -123,6 +123,10 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string _updateChannel = "stable";
 
+    /// <summary>beta.21 (owner decision D59): what Play does — <c>ui.play_mode</c>.</summary>
+    [ObservableProperty]
+    private string _playMode = Application.Play.PlayMode.Store;
+
     /// <summary><c>11_UPDATER</c> §Flow: the startup silent check, on by default (P4 PR-5).</summary>
     [ObservableProperty]
     private bool _autoCheckUpdates = true;
@@ -238,6 +242,13 @@ public sealed partial class SettingsViewModel : ObservableObject
             Update.UpdateChannelPolicy.IsPrerelease(UiIdentity.Version) ? Strings.Settings_Channel_Beta : Strings.Settings_Channel_Stable)),
         new(Update.UpdateChannelPolicy.Stable, Strings.Settings_Channel_Stable),
         new(Update.UpdateChannelPolicy.Beta, Strings.Settings_Channel_Beta),
+    ];
+
+    /// <summary>Play's two modes (beta.21, D59), labelled in the language this page opened in.</summary>
+    public IReadOnlyList<Choice<string>> PlayModes { get; } =
+    [
+        new(Application.Play.PlayMode.Store, Strings.Settings_PlayMode_Store),
+        new(Application.Play.PlayMode.Direct, Strings.Settings_PlayMode_Direct),
     ];
 
     public static double MinSessionMinimum => SettingsRegistry.CaptureMinSessionSeconds.Minimum;
@@ -482,6 +493,8 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     partial void OnUpdateChannelChanged(string value) => Persist(SettingsRegistry.UpdateChannel, value);
 
+    partial void OnPlayModeChanged(string value) => Persist(SettingsRegistry.UiPlayMode, value);
+
     partial void OnAutoCheckUpdatesChanged(bool value) => Persist(SettingsRegistry.UpdateAutoCheck, value);
 
     partial void OnStartWithWindowsChanged(bool value)
@@ -550,6 +563,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             HideScrollBars = await _settings.GetBooleanAsync(SettingsRegistry.UiHideScrollBars).ConfigureAwait(true);
             OnlineMetadata = await _settings.GetBooleanAsync(SettingsRegistry.PrivacyOnlineMetadata).ConfigureAwait(true);
             UpdateChannel = await _settings.GetAsync(SettingsRegistry.UpdateChannel).ConfigureAwait(true);
+            PlayMode = await _settings.GetAsync(SettingsRegistry.UiPlayMode).ConfigureAwait(true);
             AutoCheckUpdates = await _settings.GetBooleanAsync(SettingsRegistry.UpdateAutoCheck).ConfigureAwait(true);
             LogDebug = await _settings.GetBooleanAsync(SettingsRegistry.LogDebug).ConfigureAwait(true);
 

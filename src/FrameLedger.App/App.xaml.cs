@@ -421,6 +421,14 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IStoreLibrarySource>(static _ => new EpicLibrarySource());
         services.AddSingleton<IStoreLibrarySource>(static _ => new ItchLibrarySource(log: static line => Serilog.Log.Information("{Line}", line)));
         services.AddSingleton<IExecutableLocator, ExecutableLocator>();
+        // beta.21 (D59): Play reads the same records to find the store that installed a game, and GOG GALAXY's program.
+        services.AddSingleton<Application.Play.IGogGalaxyLocator>(static _ => new GogGalaxyLocator());
+        services.AddSingleton(static sp => new GamePlayer(
+            sp.GetRequiredService<Application.Settings.RegisteredSettings>(),
+            sp.GetServices<IStoreLibrarySource>(),
+            sp.GetRequiredService<Application.Play.IGogGalaxyLocator>(),
+            sp.GetRequiredService<IShellStarter>(),
+            sp.GetRequiredService<IAgentRequests>()));
         services.AddSingleton<IExecutableIdentitySource, ExecutableIdentitySource>();
         services.AddSingleton(static sp => new LibraryImporter(
             sp.GetServices<IStoreLibrarySource>(),

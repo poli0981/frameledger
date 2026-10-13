@@ -4221,4 +4221,100 @@
     <value>見つかりません — ゲームのフォルダーには、ルールが挙げるアップスケーラー、フレーム生成、Vulkan のファイルがありません。</value>
     <comment>review</comment>
   </data>
+  <data name="Play_Button" xml:space="preserve">
+    <value>プレイ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_ToolTip_Store" xml:space="preserve">
+    <value>ゲームをインストールしたストア経由でプレイします。Steam または Epic Games Launcher が起動し、GOG GALAXY が実行し、itch アプリは先に確認します。どのストアからもインストールされていないゲームは FrameLedger が起動します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_ToolTip_Direct" xml:space="preserve">
+    <value>プレイ: FrameLedger がゲームを自分で起動します。最初のフレームから記録し、通常の権限で実行します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_Title" xml:space="preserve">
+    <value>プレイ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_Steam_Format" xml:space="preserve">
+    <value>Steam が {0} を起動しています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_Epic_Format" xml:space="preserve">
+    <value>Epic Games Launcher が {0} を起動しています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_Gog_Format" xml:space="preserve">
+    <value>GOG GALAXY が {0} を起動しています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_Itch_Format" xml:space="preserve">
+    <value>itch アプリが起動する {0} のコピーを確認します。そちらで確定してください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_Started_Format" xml:space="preserve">
+    <value>FrameLedger が {0} を起動しています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_NoStore_Format" xml:space="preserve">
+    <value>{0} のフォルダーを記録しているストアがないため、FrameLedger が起動しています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_NoGalaxy_Format" xml:space="preserve">
+    <value>GOG GALAXY がインストールされていないため、FrameLedger が {0} を起動しています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_Elevated_Format" xml:space="preserve">
+    <value>FrameLedger が管理者として実行されているため、ストアではなくキャプチャ エージェントが通常の権限で {0} を起動しています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_AgentUnavailable_Format" xml:space="preserve">
+    <value>キャプチャ エージェントが実行されていないため、FrameLedger は {0} を起動できません。ご自分で起動するか、エージェントが接続してからもう一度お試しください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_RecordingOff_Format" xml:space="preserve">
+    <value>{0} の記録がオフで、FrameLedger は記録するゲームしか起動しません。記録をオンにするか、プレイをストア経由にしてください（設定 ▸ ゲーム）。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_AlreadyRunning_Format" xml:space="preserve">
+    <value>{0} はすでに実行中です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_Failed_Format" xml:space="preserve">
+    <value>{0} を起動できませんでした（{1}）。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_HandOffFailed_Format" xml:space="preserve">
+    <value>Windows は {0} のストア アプリを開けませんでした。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Games_Header" xml:space="preserve">
+    <value>ゲーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_PlayMode_Label" xml:space="preserve">
+    <value>プレイ ボタン</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_PlayMode_Body" xml:space="preserve">
+    <value>ストア経由: Steam と Epic Games Launcher がゲームを起動し、GOG GALAXY が実行し、itch アプリは先に確認します。どのストアからもインストールされていないゲームは FrameLedger が起動します。直接: FrameLedger がゲームを自分で起動します。最初のフレームから記録し、通常の権限で実行します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_PlayMode_Store" xml:space="preserve">
+    <value>ストア経由</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_PlayMode_Direct" xml:space="preserve">
+    <value>直接起動</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_RecordingOff_Fallback_Format" xml:space="preserve">
+    <value>{0} の記録がオフで、FrameLedger は記録するゲームしか起動しません。記録をオンにするか、ご自分で起動してください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_NotInLibrary_Format" xml:space="preserve">
+    <value>{0} はもうライブラリにないため、起動しませんでした。</value>
+    <comment>review</comment>
+  </data>
 </root>

@@ -11,7 +11,7 @@ by the capture agent; unless the row says otherwise, a change applies from the n
 | **Games with hooking on** | Shown while any game has hooking on: one **Turn off** per game. | — |
 | **Hide hooking on anti-cheat games** | On, the page of a game where anti-cheat was found shows only what was found; off, it also shows the Hooking switch, greyed out. Such a game is never hooked either way. | On |
 | **Allow hooking in games whose only anti-cheat runs in user mode** | Turns on the one narrow exception ([Anti-cheat and safety](04-anti-cheat-and-safety.md#the-one-exception-you-can-make)). The games that qualify are listed under it, each with **Make exception…** (after a warning) or **Withdraw**. *Agent.* | Off |
-| **Vulkan layer** | The component that measures Vulkan games — but only a game FrameLedger starts itself, which the App cannot do yet, so a Vulkan game you start is recorded, not measured. The agent registers and removes it by itself; **Register** and **Unregister** repair that, for your Windows user only. | — |
+| **Vulkan layer** | The component that measures Vulkan games — but only a game FrameLedger starts itself: **Play** set to *Start directly* (Games, below) does; a Vulkan game started any other way is recorded, not measured. The agent registers and removes it by itself; **Register** and **Unregister** repair that, for your Windows user only. | — |
 
 The link under them, *Read what the hook does and does not do*, opens the safety document on GitHub.
 
@@ -43,6 +43,12 @@ The link under them, *Read what the hook does and does not do*, opens the safety
 |---|---|---|
 | **Theme** | Follow system, Light or Dark. Applies at once. | Follow system |
 | **Language** | English, Tiếng Việt or 日本語. The window is rebuilt in the new language at once. | English |
+
+## Games
+
+| Setting | What it does | Default |
+|---|---|---|
+| **Play button** | What **Play** does, on a game's page and on each game in the library. *Through the store*: Steam or the Epic Games Launcher starts the game, GOG GALAXY runs it, and the itch app asks which copy to launch — each store's app does what it does when you start a game from it. A game no store installed, and a GOG game without GOG GALAXY, is started by FrameLedger instead; so is every game while FrameLedger itself runs as administrator, so that the game does not. *Start directly*: FrameLedger's agent starts the game, recorded from its first frame, with your standard rights; it does not start a game whose recording is off, or one that asks to run as administrator. | Through the store |
 
 ## Window
 

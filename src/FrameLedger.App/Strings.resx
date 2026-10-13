@@ -3176,4 +3176,76 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="GameDetail_Supports_None" xml:space="preserve">
     <value>None found — the game's folder holds no upscaler, frame-generation or Vulkan file the rules name.</value>
   </data>
+  <data name="Play_Button" xml:space="preserve">
+    <value>Play</value>
+  </data>
+  <data name="Play_ToolTip_Store" xml:space="preserve">
+    <value>Play through the store that installed the game: Steam or the Epic Games Launcher starts it, GOG GALAXY runs it, the itch app asks first. A game no store installed is started by FrameLedger.</value>
+  </data>
+  <data name="Play_ToolTip_Direct" xml:space="preserve">
+    <value>Play: FrameLedger starts the game itself, recorded from its first frame, with your standard rights.</value>
+  </data>
+  <data name="Play_Title" xml:space="preserve">
+    <value>Play</value>
+  </data>
+  <data name="Play_Steam_Format" xml:space="preserve">
+    <value>Steam is starting {0}.</value>
+  </data>
+  <data name="Play_Epic_Format" xml:space="preserve">
+    <value>The Epic Games Launcher is starting {0}.</value>
+  </data>
+  <data name="Play_Gog_Format" xml:space="preserve">
+    <value>GOG GALAXY is starting {0}.</value>
+  </data>
+  <data name="Play_Itch_Format" xml:space="preserve">
+    <value>The itch app asks which copy of {0} to launch — confirm there.</value>
+  </data>
+  <data name="Play_Started_Format" xml:space="preserve">
+    <value>FrameLedger is starting {0}.</value>
+  </data>
+  <data name="Play_NoStore_Format" xml:space="preserve">
+    <value>No store's records name the folder of {0}, so FrameLedger is starting it.</value>
+  </data>
+  <data name="Play_NoGalaxy_Format" xml:space="preserve">
+    <value>GOG GALAXY is not installed, so FrameLedger is starting {0}.</value>
+  </data>
+  <data name="Play_Elevated_Format" xml:space="preserve">
+    <value>FrameLedger is running as administrator, so the capture agent is starting {0} with your standard rights instead of its store.</value>
+  </data>
+  <data name="Play_AgentUnavailable_Format" xml:space="preserve">
+    <value>The capture agent is not running, so FrameLedger cannot start {0}. Start it yourself, or try again when the agent is connected.</value>
+  </data>
+  <data name="Play_RecordingOff_Format" xml:space="preserve">
+    <value>Recording is off for {0}, and FrameLedger starts only games it records. Turn recording on, or set Play to go through the store (Settings ▸ Games).</value>
+  </data>
+  <data name="Play_AlreadyRunning_Format" xml:space="preserve">
+    <value>{0} is already running.</value>
+  </data>
+  <data name="Play_Failed_Format" xml:space="preserve">
+    <value>{0} could not be started ({1}).</value>
+  </data>
+  <data name="Play_HandOffFailed_Format" xml:space="preserve">
+    <value>Windows could not open the store's app for {0}.</value>
+  </data>
+  <data name="Settings_Games_Header" xml:space="preserve">
+    <value>Games</value>
+  </data>
+  <data name="Settings_PlayMode_Label" xml:space="preserve">
+    <value>Play button</value>
+  </data>
+  <data name="Settings_PlayMode_Body" xml:space="preserve">
+    <value>Through the store: Steam and the Epic Games Launcher start the game, GOG GALAXY runs it, the itch app asks first; a game no store installed is started by FrameLedger. Directly: FrameLedger starts the game itself — recorded from its first frame, with your standard rights.</value>
+  </data>
+  <data name="Settings_PlayMode_Store" xml:space="preserve">
+    <value>Through the store</value>
+  </data>
+  <data name="Settings_PlayMode_Direct" xml:space="preserve">
+    <value>Start directly</value>
+  </data>
+  <data name="Play_RecordingOff_Fallback_Format" xml:space="preserve">
+    <value>Recording is off for {0}, and FrameLedger starts only games it records. Turn its recording on, or start it yourself.</value>
+  </data>
+  <data name="Play_NotInLibrary_Format" xml:space="preserve">
+    <value>{0} is no longer in the library, so it was not started.</value>
+  </data>
 </root>

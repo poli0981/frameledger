@@ -3171,4 +3171,76 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="GameDetail_Supports_None" xml:space="preserve">
     <value>Không tìm thấy — thư mục game không có file upscaler, frame generation hay Vulkan nào mà bộ quy tắc liệt kê.</value>
   </data>
+  <data name="Play_Button" xml:space="preserve">
+    <value>Chơi</value>
+  </data>
+  <data name="Play_ToolTip_Store" xml:space="preserve">
+    <value>Chơi qua store đã cài game: Steam hoặc Epic Games Launcher sẽ chạy game, GOG GALAXY chạy game, app itch hỏi trước. Game không do store nào cài thì FrameLedger tự chạy.</value>
+  </data>
+  <data name="Play_ToolTip_Direct" xml:space="preserve">
+    <value>Chơi: FrameLedger tự chạy game, ghi lại từ khung hình đầu tiên, với quyền thường của bạn.</value>
+  </data>
+  <data name="Play_Title" xml:space="preserve">
+    <value>Chơi</value>
+  </data>
+  <data name="Play_Steam_Format" xml:space="preserve">
+    <value>Steam đang chạy {0}.</value>
+  </data>
+  <data name="Play_Epic_Format" xml:space="preserve">
+    <value>Epic Games Launcher đang chạy {0}.</value>
+  </data>
+  <data name="Play_Gog_Format" xml:space="preserve">
+    <value>GOG GALAXY đang chạy {0}.</value>
+  </data>
+  <data name="Play_Itch_Format" xml:space="preserve">
+    <value>App itch sẽ hỏi chạy bản nào của {0} — hãy xác nhận ở đó.</value>
+  </data>
+  <data name="Play_Started_Format" xml:space="preserve">
+    <value>FrameLedger đang chạy {0}.</value>
+  </data>
+  <data name="Play_NoStore_Format" xml:space="preserve">
+    <value>Không store nào ghi nhận thư mục của {0}, nên FrameLedger tự chạy game.</value>
+  </data>
+  <data name="Play_NoGalaxy_Format" xml:space="preserve">
+    <value>GOG GALAXY chưa được cài, nên FrameLedger tự chạy {0}.</value>
+  </data>
+  <data name="Play_Elevated_Format" xml:space="preserve">
+    <value>FrameLedger đang chạy với quyền quản trị, nên capture agent sẽ chạy {0} với quyền thường của bạn thay vì qua store.</value>
+  </data>
+  <data name="Play_AgentUnavailable_Format" xml:space="preserve">
+    <value>Capture agent không chạy, nên FrameLedger không thể chạy {0}. Hãy tự chạy game, hoặc thử lại khi agent đã kết nối.</value>
+  </data>
+  <data name="Play_RecordingOff_Format" xml:space="preserve">
+    <value>Việc ghi đang tắt cho {0}, và FrameLedger chỉ chạy game mà nó ghi. Hãy bật ghi, hoặc đặt nút Chơi đi qua store (Cài đặt ▸ Game).</value>
+  </data>
+  <data name="Play_AlreadyRunning_Format" xml:space="preserve">
+    <value>{0} đang chạy rồi.</value>
+  </data>
+  <data name="Play_Failed_Format" xml:space="preserve">
+    <value>Không chạy được {0} ({1}).</value>
+  </data>
+  <data name="Play_HandOffFailed_Format" xml:space="preserve">
+    <value>Windows không mở được app của store cho {0}.</value>
+  </data>
+  <data name="Settings_Games_Header" xml:space="preserve">
+    <value>Game</value>
+  </data>
+  <data name="Settings_PlayMode_Label" xml:space="preserve">
+    <value>Nút Chơi</value>
+  </data>
+  <data name="Settings_PlayMode_Body" xml:space="preserve">
+    <value>Qua store: Steam và Epic Games Launcher chạy game, GOG GALAXY chạy game, app itch hỏi trước; game không do store nào cài thì FrameLedger tự chạy. Chạy trực tiếp: FrameLedger tự chạy game — ghi lại từ khung hình đầu tiên, với quyền thường của bạn.</value>
+  </data>
+  <data name="Settings_PlayMode_Store" xml:space="preserve">
+    <value>Qua store</value>
+  </data>
+  <data name="Settings_PlayMode_Direct" xml:space="preserve">
+    <value>Chạy trực tiếp</value>
+  </data>
+  <data name="Play_RecordingOff_Fallback_Format" xml:space="preserve">
+    <value>Việc ghi đang tắt cho {0}, và FrameLedger chỉ chạy game mà nó ghi. Hãy bật ghi, hoặc tự chạy game.</value>
+  </data>
+  <data name="Play_NotInLibrary_Format" xml:space="preserve">
+    <value>{0} không còn trong thư viện, nên không được chạy.</value>
+  </data>
 </root>

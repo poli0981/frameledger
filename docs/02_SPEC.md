@@ -12,6 +12,7 @@ Requirement IDs (`FR-x`, `NFR-x`) are referenced by other docs, commits, and tes
 - FR-1.5 "Supports" row shows shipped-capability hints (DLSS/FSR/XeSS/FG) — visually distinct from measured per-session values (`05_DETECTION` §Capability hints).
 - FR-1.7 Delete all sessions (beta.11, owner decision D40): of one game from its page, or of every game from Settings ▸ Data, after a confirmation that says how many — with their frame and sensor series and notes; the library, the settings and every consent stay. The Agent deletes them (the rows are its, `06_DATA_MODEL` §Writer ownership) and refuses while a session it would delete under is being recorded.
 - FR-1.8 Uninstalled games leave the library by themselves (beta.19, owner decision D55, amending D41): an entry whose executable has been gone for ten minutes — its drive connected and the folder it was installed in still there, so an unplugged or re-lettered drive never counts, and neither does a folder Windows will not list (`ExecutablePresenceProbeTests`) — and that has no session (stored, being recorded or waiting to be recovered) is removed by the Agent, behind Settings ▸ Data ▸ *Remove uninstalled games* (on by default). Never an entry carrying an anti-cheat block, an exception or a failed-trial mark (FR-2.2, rule 2). The App is told (`GameRemoved`).
+- FR-1.9 Play (beta.21, owner decision D59): a game's page and each library entry start the game — through the app of the store whose own records name its folder (Steam, the Epic Games Launcher, GOG GALAXY, itch), or by the agent's launch mode (FR-3.2), as Settings ▸ Games says; never as administrator, and never in a viewer (`08_UI` §Games).
 - FR-1.6 Recording switch per entry (2026-09-23, HANDOFF D29): off, the program is not watched at all — no session, no measurement, no injection — and a session of it that is running stops. On by default; entries an old import made for Steam's own tools start with it off. The library card says "Not recorded".
 
 ### FR-2 Hooking consent & control (new, safety-critical — see `19_SAFETY`)
@@ -26,7 +27,7 @@ Requirement IDs (`FR-x`, `NFR-x`) are referenced by other docs, commits, and tes
 
 ### FR-3 Session capture
 - FR-3.1 Watcher detects tracked exe launches (1 Hz) and captures automatically at the highest permitted tier.
-- FR-3.2 Launch mode: start the game from FrameLedger for suspended-launch injection (catches startup-time upscaler init).
+- FR-3.2 Launch mode: start the game from FrameLedger for suspended-launch injection (catches startup-time upscaler init). *(The App reaches it since beta.21: Play set to Start directly sends `LaunchGame` — FR-1.9.)*
 - FR-3.3 Attach mode for games launched externally; sessions flagged `late_attach`.
 - FR-3.4 Track the process tree; capture the descendant that actually presents.
 - FR-3.5 Per-frame records for the whole session; telemetry at 1 Hz (configurable 0.5–2 s).

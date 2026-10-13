@@ -63,6 +63,15 @@ are kept because they record what each version changed and why (owner decision D
 >
 > Version 2.5 (2026-09-27, 0.1.0-beta.10) adds how a tracked game's window is shown — read from Windows — and the engine build name read from an Unreal Engine game's executable. It is also the first version to say two things the software already did: it reads the **content** of a library game's executable (markers in its first 8 MB and its import table, since the detection of engines and features; and, when a session starts, the graphics-library markers in the whole file), and it reads the processor load and the memory in use (since 0.1.0-beta.3). Nothing here leaves your device, as before.
 
+### What version 2.10 of the Privacy Policy changed (0.1.0-beta.21)
+
+§4 names the lists of installed games the Steam, GOG GALAXY, Epic Games and itch apps keep on the disk, and where GOG
+GALAXY is installed, read when the library is imported and when Play is pressed (beta.21 PR-4, owner decision D59; the
+wording approved with the plan). The import has read the Epic Games Launcher's manifests and itch's records since
+0.1.0-beta.1 without a word here — §4 named only "the store files that name it (Steam's and GOG's, on your disk)", read for
+detection; this version is the first to say so. §2 says that Play hands a game to its store's app, which may connect to
+its store, and that FrameLedger itself connects to nothing. Nothing here leaves your device, as before.
+
 ### What version 2.9 of the Privacy Policy changed (0.1.0-beta.20)
 
 §4's list of the version marks an engine keeps in its own files gains one: the version file of a Ren'Py game's engine

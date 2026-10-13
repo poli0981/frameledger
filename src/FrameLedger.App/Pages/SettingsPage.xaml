@@ -299,6 +299,24 @@
                           SelectedValuePath="Value" />
             </ui:CardControl>
 
+            <!-- beta.21 (owner decision D59): what Play does. The App's own setting; the Agent never reads it. -->
+            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Games_Header}" />
+            <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Play24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_PlayMode_Label}" />
+                        <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" TextWrapping="Wrap"
+                                      Text="{x:Static res:Strings.Settings_PlayMode_Body}" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ComboBox MinWidth="160"
+                          AutomationProperties.Name="{x:Static res:Strings.Settings_PlayMode_Label}"
+                          DisplayMemberPath="Label"
+                          ItemsSource="{Binding ViewModel.PlayModes}"
+                          SelectedValue="{Binding ViewModel.PlayMode, Mode=TwoWay}"
+                          SelectedValuePath="Value" />
+            </ui:CardControl>
+
             <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Window_Header}" />
             <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Power24}">
                 <ui:CardControl.Header>

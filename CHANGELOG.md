@@ -28,6 +28,21 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **Play, on a game's page and on each game in the library.** Through the store that installed the game — Steam or the
+  Epic Games Launcher starts it, GOG GALAXY runs it, the itch app asks which copy to launch — or started directly by
+  FrameLedger, recorded from its first frame: **Settings ▸ Games ▸ Play button** switches between the two. A game no
+  store installed, and a GOG game without GOG GALAXY, is started directly. FrameLedger never starts a game as
+  administrator: *Start directly* does not start one that asks for it, and while FrameLedger itself runs as
+  administrator, Play starts every game directly so that the game does not. A game whose recording is off is started
+  only through its store. The Epic Games Launcher's link is the one its own shortcuts carry and has not been tried on a
+  real Epic game yet (`docs/08_UI.md` §Games).
+- **The Privacy Policy (version 2.10)** names the store records Play and the library import read — the lists of installed
+  games the Steam, GOG GALAXY, Epic Games and itch apps keep on your disk, and where GOG GALAXY is installed; the import
+  read the Epic and itch lists before and the policy did not say so — and that Play hands a game to its store's app,
+  which may connect to its store while FrameLedger itself connects to nothing. It is shown once for you to accept.
+
 ### Changed
 
 - **The documents in the app scroll further and smoothly** — the user guide, Help ▸ Limitations, About's documents, the

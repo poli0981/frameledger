@@ -52,6 +52,8 @@ internal static class MachineFacingServices
 
         services.AddSingleton<IRunAtLogon, RunAtLogonRegistry>();
         services.AddSingleton<IAgentTool, AgentTool>();
+        // beta.21 (D59): Play hands a game to its store's app.
+        services.AddSingleton<IShellStarter, ShellStarter>();
 
         // The startup check is a hosted service; after an update's restart it also repairs the logon task.
         services.AddSingleton<IUpdateClient, VelopackUpdateClient>();
@@ -66,6 +68,7 @@ internal static class MachineFacingServices
         services.AddSingleton<IAgentLink>(static sp => sp.GetRequiredService<ViewerAgentLink>());
         services.AddSingleton<IRunAtLogon, ViewerRunAtLogon>();
         services.AddSingleton<IAgentTool, ViewerAgentTool>();
+        services.AddSingleton<IShellStarter, ViewerShellStarter>();
         services.AddSingleton<IUpdateClient, ViewerUpdateClient>();
     }
 }

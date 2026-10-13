@@ -80,6 +80,8 @@ public sealed class ViewerModeTests
         provider.GetRequiredService<IUpdateClient>().IsInstalled.Should().BeFalse("a viewer never looks for, downloads or applies an update");
         (await provider.GetRequiredService<IAgentTool>().RunAsync("--install-task", TestContext.Current.CancellationToken)).ExitCode.Should().Be(ViewerAgentTool.ExitViewer);
         provider.GetRequiredService<UiMode>().Should().Be(_viewer);
+        provider.GetRequiredService<IShellStarter>().Should().BeOfType<ViewerShellStarter>("beta.21: Play hands nothing to a store's app");
+        provider.GetRequiredService<IShellStarter>().OpenLink("steam://rungameid/1").Should().BeFalse();
         provider.GetRequiredService<LiveSessions>().Should().NotBeNull();
     }
 
@@ -96,12 +98,14 @@ public sealed class ViewerModeTests
         services.Should().Contain(static d => d.ImplementationType == typeof(RunAtLogonRegistry));
         services.Should().Contain(static d => d.ImplementationType == typeof(AgentTool));
         services.Should().Contain(static d => d.ImplementationType == typeof(VelopackUpdateClient));
+        services.Should().Contain(static d => d.ImplementationType == typeof(ShellStarter));
     }
 
     /// <summary>Every control that asks the Agent or changes this PC binds the viewer's switch, page by page.</summary>
     [Theory]
     [InlineData("MainWindow.xaml", "Command", "UpdateRulesCommand")]
     [InlineData("MainWindow.xaml", "Command", "CheckForUpdatesCommand")]
+    [InlineData("Pages/GameDetailPage.xaml", "Command", "PlayCommand")]
     [InlineData("Pages/GameDetailPage.xaml", "Command", "GrantExceptionCommand")]
     [InlineData("Pages/GameDetailPage.xaml", "Command", "WithdrawExceptionCommand")]
     [InlineData("Pages/GameDetailPage.xaml", "Command", "ReEnableHookingCommand")]
@@ -123,6 +127,19 @@ public sealed class ViewerModeTests
         XElement control = xaml.Descendants().Single(e => string.Equals((string?)e.Attribute(attribute), "{Binding ViewModel." + binding + "}", StringComparison.Ordinal));
 
         ((string?)control.Attribute("IsEnabled")).Should().Be("{Binding ViewModel.ActsOnThisPc}", $"{file}: {binding}");
+    }
+
+    /// <summary>beta.21 (D59): every Play on the library — a card's and a row's — binds the page's viewer switch too.</summary>
+    [Fact]
+    public void EveryPlayOnTheLibraryIsOffInAViewer()
+    {
+        const string Through = ", RelativeSource={RelativeSource AncestorType=Page}}";
+        XDocument xaml = AccessibilityTests.AppXaml().Single(static x => string.Equals(x.File, Path.Combine("Pages", "GamesPage.xaml"), StringComparison.Ordinal)).Xaml;
+
+        List<XElement> plays = [.. xaml.Descendants().Where(static e => string.Equals((string?)e.Attribute("Command"), "{Binding DataContext.ViewModel.PlayCommand" + Through, StringComparison.Ordinal))];
+
+        plays.Should().HaveCount(2, "the card's and the row's");
+        plays.Should().AllSatisfy(static e => ((string?)e.Attribute("IsEnabled")).Should().Be("{Binding DataContext.ViewModel.ActsOnThisPc" + Through));
     }
 
     /// <summary>

@@ -21,7 +21,8 @@ page lists them in plain words; each item links to the document that has the det
 - **32-bit games and Direct3D 9 games.** Only 64-bit Direct3D 11, Direct3D 12 and OpenGL games are measured
   from their own calls; a 32-bit or Direct3D 9 game is recorded without measurement.
 - **Vulkan games, unless FrameLedger starts them.** A Vulkan game is measured only when FrameLedger launches it
-  with its Vulkan layer switched on; one started another way is not observed by the layer.
+  with its Vulkan layer switched on — **Play** set to *Start directly* does; one started another way is not observed by
+  the layer.
 - **Games that run as administrator,** unless you turn on *Run the agent as administrator* in Settings
   (off by default; Windows asks every time the agent starts). **A process Windows protects** stays closed
   either way.
@@ -166,6 +167,15 @@ you accept the prompt. Turn it on only if you trust everything that runs under y
 - **FrameLedger does not tell whether a game is safe to run.** It reads a game's files to find its engine and its
   anti-cheat, never to judge it, and recording or measuring a game vouches for nothing. Four itch.io downloads this
   project once used as examples turned out to carry malware ([details](docs/spike-notes.md)).
+
+## Play
+
+- **Through GOG GALAXY or itch, you finish in their app.** GOG GALAXY runs the game as its own shortcuts do, and the
+  itch app asks which copy to launch. The Epic Games Launcher's link is the one its own shortcuts carry, and has not
+  been tried on a real Epic game yet.
+- **FrameLedger never starts a game as administrator.** *Start directly* does not start a game that asks for it — start
+  that one from its store or its own shortcut — nor a game whose recording is off: FrameLedger starts only what it
+  records. While FrameLedger itself runs as administrator, Play starts every game directly, with your standard rights.
 
 ## Your data
 

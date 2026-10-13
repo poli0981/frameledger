@@ -65,12 +65,14 @@ stopped, hooking turned off — each with one button that only says you have rea
 - **Add game…** — or drop `.exe` files onto the page.
 - Each game shows its name, its store and engine, and one state: **Hooking on**, **Hooking off**, **Anti-cheat** (found,
   so it is not hooked), **Exception** (a user-mode exception is in force) or **Not recorded**; then its sessions,
-  playtime and last play. Click it to open its page (in the list: double-click, or Enter).
+  playtime and last play. Click it to open its page (in the list: double-click, or Enter). Its **Play** button (on the
+  card's corner; the list's first column) starts it as the game's page does.
 
 ## A game's page
 
 - **At the top:** the name, publisher, version, store and engine, the `.exe` path, the last session, the last measured
-  session's frame rate and its ray-tracing chips. **Edit…** changes the name, publisher, version and notes. **Change
+  session's frame rate and its ray-tracing chips. **Play** starts the game: through the store that installed it, or
+  directly — **Settings ▸ Games ▸ Play button** chooses. **Edit…** changes the name, publisher, version and notes. **Change
   executable…** points the entry at another `.exe` and turns hooking back off; its file dialog opens in the game's own
   folder. **Remove…** asks whether to keep the game's sessions.
 - **Recording** — off, FrameLedger ignores the program completely: for a launcher or a tool that is not a game.
