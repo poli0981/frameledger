@@ -2218,7 +2218,7 @@ game's engine" — was shown to the owner with #299 and released on their word.
 
 **Owner-only, added to the list below:** item 16.
 
-## **START HERE** — 2026-10-13, 0.1.0-beta.21: an anti-cheat beside the executable, four itch downloads that are malware, documents that scroll, Play
+## ~~**START HERE**~~ — 2026-10-13, 0.1.0-beta.21: an anti-cheat beside the executable, four itch downloads that are malware, documents that scroll, Play *(struck 2026-10-13: the head is §beta.22 below)*
 
 *Status is `CHANGELOG.md` `[0.1.0-beta.21]`; this is what no other file carries. The owner's list (2026-10-13, four items,
 with screenshots of two game pages): HELLO, HELLO WORLD!'s RPG Maker path is wrong; no anti-cheat is found for Wuthering
@@ -2276,6 +2276,28 @@ Privacy Policy 2.10 — then the release.*
   into LF.
 
 **Owner-only, added to the list below:** item 17.
+
+## **START HERE** — 2026-10-13, 0.1.0-beta.22: a request the capture agent never answered
+
+*Status is `CHANGELOG.md` `[0.1.0-beta.22]`; this is what no other file carries.* The owner, during the beta.21
+train: "Bạn xử lý chip thành 1 pr mới sau release và thành 1 phiên bản mới nhé" — the chip beta.21's review of Play
+left (§beta.21's traps): every caller of the pipe, not only Play, as its own PR and its own pre-release. One PR — #306,
+`AgentConnection.AnsweredAsync` and `AgentAnswers.IsUnanswered`, with deleting sessions, the hooking switch, the anti-cheat
+exception and Play telling *not sent* from *not answered* — then the release.
+
+**Decisions:** none new. *Not answered* is said as not known (`Agent_Unanswered`) and never as the old words for *not
+sent* ("nothing was deleted", "nothing changed"): a request the connection closed under may have been carried out.
+
+**Traps met on the way:**
+
+- **VSTHRD003 rejects awaiting a `Task` a method was handed** ("work that was not started within your context"): a helper
+  that wraps a request's exceptions takes a `Func<Task<T>>` and starts it itself — which also catches what the request
+  throws before it returns a task.
+- **`ObjectDisposedException` derives from `InvalidOperationException`**: a `catch (InvalidOperationException)` for "not
+  connected" would read a disposed pipe as "nothing was sent". `AgentConnection` turns it into the `IOException` first,
+  so the callers' split holds.
+
+**Owner-only, added to the list below:** item 18.
 
 ## Owner-only — no PR can close these
 
@@ -2406,6 +2428,9 @@ Privacy Policy 2.10 — then the release.*
    wheel and a touchpad** in Help ▸ User guide, the licence in Help ▸ About and the Legal Gate: about three lines a
    notch, gliding; at the end of the update notes the window scrolls instead. (d) The Legal Gate shows the Privacy
    Policy 2.10 once. (e) The `ja` strings marked `review` (Play, Settings ▸ Games, `GameDetail_Supports_None`).
+18. **beta.22 on real hardware.** (a) The `ja` string marked `review` (`Agent_Unanswered`). (b) Nothing else to run: the
+   change answers a request the agent drops mid-way, which the tests make happen and a person can only meet by chance —
+   if a notice ever says the capture agent did not answer, the page beside it shows what was stored.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
