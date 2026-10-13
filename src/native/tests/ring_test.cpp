@@ -33,6 +33,7 @@
 // added trying to close it and did not; they are kept because they are the right
 // shape and would catch a wider window.
 
+#include <algorithm>
 #include <atomic>
 #include <catch2/catch_test_macros.hpp>
 #include <cstring>
@@ -246,6 +247,18 @@ TEST_CASE("a reader stalled exactly ONE FULL LAP does not accept a stale frame",
     CHECK(out[0].frameIndex == kCap);    // the SECOND occupant, not the first
 }
 
+// What makes the two concurrency cases below prove anything is that the reader drained the ring WHILE the writer
+// wrote it (2026-10-13). The hammering case's guard was `accepted > kTotal / 2`, a share of the stream, and that
+// measured the scheduler rather than the run: on the owner's hybrid i7-14700KF it failed 5 of 40 runs, then 5 of 200,
+// with `mixed` clean every time. A start barrier (the writer begins only once the reader is about to loop) left 1 of
+// 200 — a reader the OS did not run while the writer wrote: one drain beside it, accepted 2048. No single run can rule
+// that out, so each case repeats its run, every attempt checked for its properties, until one attempt made enough
+// drains that copied records while the writer was still writing. Measured over 1,000 runs: no failure, at most 3
+// attempts, at least 122 such drains in the best attempt (median 146,981). A reader made to wait for the writer to
+// finish makes none in all 8 attempts and fails here, where the tiny ring's old `dropped > 0` still passed.
+constexpr std::uint64_t kMinOverlappedDrains = 100;
+constexpr int           kMaxAttempts = 8;
+
 TEST_CASE("SPSC under a hammering writer: every accepted record is internally consistent", "[ring]") {
     // The real concurrency case. The reader may legitimately miss records
     // (overwrite-oldest) and may see torn ones; what it must NEVER do is accept a
@@ -254,44 +267,63 @@ TEST_CASE("SPSC under a hammering writer: every accepted record is internally co
     constexpr std::uint32_t kBigCap = 1024;
     constexpr std::uint32_t kTotal = 200000;
 
-    Mapping    m{kBigCap};
-    RingWriter w;
-    RingReader rd;
-    REQUIRE(w.Init(m.base(), kBigCap));
-    REQUIRE(rd.Init(m.base(), kBigCap));
+    std::uint64_t mostOverlapped = 0;
+    int           attempts = 0;
+    while (mostOverlapped < kMinOverlappedDrains && attempts < kMaxAttempts) {
+        ++attempts;
+        Mapping    m{kBigCap};
+        RingWriter w;
+        RingReader rd;
+        REQUIRE(w.Init(m.base(), kBigCap));
+        REQUIRE(rd.Init(m.base(), kBigCap));
 
-    std::atomic<bool> done{false};
-    std::thread       producer([&] {
-        for (std::uint32_t i = 0; i < kTotal; ++i) {
-            w.Publish(MakeRecord(i));
-        }
-        done.store(true, std::memory_order_release);
-    });
-
-    std::vector<FlFrameRecord> buf(kBigCap);
-    std::uint64_t              accepted = 0;
-    std::uint64_t              torn = 0;
-    bool                       mixed = false;
-
-    while (!done.load(std::memory_order_acquire) || rd.ReadIndex() < m.writer()->writeIndex) {
-        const DrainResult r = rd.Drain(buf.data(), kBigCap);
-        for (std::uint32_t i = 0; i < r.copied; ++i) {
-            if (buf[i].qpc != 1000ULL + buf[i].frameIndex) {
-                mixed = true;
+        std::atomic<bool> go{false};
+        std::atomic<bool> done{false};
+        std::thread       producer([&] {
+            while (!go.load(std::memory_order_acquire)) {
+                std::this_thread::yield();
             }
-            if (buf[i].swapchainId != (0xABCD0000u | (buf[i].frameIndex & 0xFFFFu))) {
-                mixed = true;    // the tail span belongs to the same frame as the head
+            for (std::uint32_t i = 0; i < kTotal; ++i) {
+                w.Publish(MakeRecord(i));
             }
+            done.store(true, std::memory_order_release);
+        });
+
+        std::vector<FlFrameRecord> buf(kBigCap);
+        std::uint64_t              accepted = 0;
+        std::uint64_t              torn = 0;
+        std::uint64_t              overlapped = 0;    // drains that copied records while the writer was writing
+        bool                       mixed = false;
+
+        go.store(true, std::memory_order_release);
+        while (!done.load(std::memory_order_acquire) || rd.ReadIndex() < m.writer()->writeIndex) {
+            const bool        writing = !done.load(std::memory_order_acquire);
+            const DrainResult r = rd.Drain(buf.data(), kBigCap);
+            for (std::uint32_t i = 0; i < r.copied; ++i) {
+                if (buf[i].qpc != 1000ULL + buf[i].frameIndex) {
+                    mixed = true;
+                }
+                if (buf[i].swapchainId != (0xABCD0000u | (buf[i].frameIndex & 0xFFFFu))) {
+                    mixed = true;    // the tail span belongs to the same frame as the head
+                }
+            }
+            if (writing && r.copied > 0) {
+                ++overlapped;
+            }
+            accepted += r.copied;
+            torn += r.gaps;
         }
-        accepted += r.copied;
-        torn += r.gaps;
+        producer.join();
+
+        INFO("attempt " << attempts << ": accepted " << accepted << ", torn " << torn << ", overlapped drains "
+                        << overlapped << " of " << kTotal);
+        CHECK_FALSE(mixed);
+        mostOverlapped = std::max(mostOverlapped, overlapped);
     }
-    producer.join();
 
-    INFO("accepted " << accepted << ", torn " << torn << " of " << kTotal);
-    CHECK_FALSE(mixed);
-    // Not a vacuous run: the reader must actually have seen most of the stream.
-    CHECK(accepted > kTotal / 2);
+    INFO("attempts " << attempts << ", most overlapped drains " << mostOverlapped);
+    // Not a vacuous run: in one attempt at least, the reader read the ring while the writer was writing it.
+    CHECK(mostOverlapped >= kMinOverlappedDrains);
 }
 
 TEST_CASE("a tiny ring, so the writer laps the reader constantly", "[ring]") {
@@ -307,50 +339,72 @@ TEST_CASE("a tiny ring, so the writer laps the reader constantly", "[ring]") {
     constexpr std::uint32_t kTiny = 8;
     constexpr std::uint32_t kTotal = 200000;
 
-    Mapping    m{kTiny};
-    RingWriter w;
-    RingReader rd;
-    REQUIRE(w.Init(m.base(), kTiny));
-    REQUIRE(rd.Init(m.base(), kTiny));
+    std::uint64_t mostOverlapped = 0;
+    std::uint64_t dropped = 0;    // the last attempt's: the one that overlapped, when one did
+    int           attempts = 0;
+    while (mostOverlapped < kMinOverlappedDrains && attempts < kMaxAttempts) {
+        ++attempts;
+        Mapping    m{kTiny};
+        RingWriter w;
+        RingReader rd;
+        REQUIRE(w.Init(m.base(), kTiny));
+        REQUIRE(rd.Init(m.base(), kTiny));
 
-    std::atomic<bool> done{false};
-    std::thread       producer([&] {
-        for (std::uint32_t i = 0; i < kTotal; ++i) {
-            w.Publish(MakeRecord(i));
-        }
-        done.store(true, std::memory_order_release);
-    });
-
-    FlFrameRecord buf[kTiny]{};
-    std::uint64_t accepted = 0;
-    std::uint64_t dropped = 0;
-    bool          mixed = false;
-    bool          poisonAccepted = false;
-
-    while (!done.load(std::memory_order_acquire) || rd.ReadIndex() < m.writer()->writeIndex) {
-        const DrainResult r = rd.Drain(buf, kTiny);
-        for (std::uint32_t i = 0; i < r.copied; ++i) {
-            if (buf[i].qpc != 1000ULL + buf[i].frameIndex ||
-                buf[i].swapchainId != (0xABCD0000u | (buf[i].frameIndex & 0xFFFFu))) {
-                mixed = true;
+        std::atomic<bool> go{false};
+        std::atomic<bool> done{false};
+        std::thread       producer([&] {
+            while (!go.load(std::memory_order_acquire)) {
+                std::this_thread::yield();
             }
-            // An accepted record's seq is the seqlock counter and must be even.
-            // kPoisonSeq here means the payload write reached the guard field.
-            if (buf[i].seq == kPoisonSeq || (buf[i].seq & 1u) != 0u) {
-                poisonAccepted = true;
+            for (std::uint32_t i = 0; i < kTotal; ++i) {
+                w.Publish(MakeRecord(i));
             }
+            done.store(true, std::memory_order_release);
+        });
+
+        FlFrameRecord buf[kTiny]{};
+        std::uint64_t accepted = 0;
+        std::uint64_t lost = 0;
+        std::uint64_t overlapped = 0;    // drains that copied records while the writer was writing
+        bool          mixed = false;
+        bool          poisonAccepted = false;
+
+        go.store(true, std::memory_order_release);
+        while (!done.load(std::memory_order_acquire) || rd.ReadIndex() < m.writer()->writeIndex) {
+            const bool        writing = !done.load(std::memory_order_acquire);
+            const DrainResult r = rd.Drain(buf, kTiny);
+            for (std::uint32_t i = 0; i < r.copied; ++i) {
+                if (buf[i].qpc != 1000ULL + buf[i].frameIndex ||
+                    buf[i].swapchainId != (0xABCD0000u | (buf[i].frameIndex & 0xFFFFu))) {
+                    mixed = true;
+                }
+                // An accepted record's seq is the seqlock counter and must be even.
+                // kPoisonSeq here means the payload write reached the guard field.
+                if (buf[i].seq == kPoisonSeq || (buf[i].seq & 1u) != 0u) {
+                    poisonAccepted = true;
+                }
+            }
+            if (writing && r.copied > 0) {
+                ++overlapped;
+            }
+            accepted += r.copied;
+            lost += r.dropped;
         }
-        accepted += r.copied;
-        dropped += r.dropped;
+        producer.join();
+        dropped = lost;
+
+        INFO("attempt " << attempts << ": accepted " << accepted << ", overlapped drains " << overlapped << " of "
+                        << kTotal);
+        CHECK_FALSE(mixed);
+        CHECK_FALSE(poisonAccepted);
+        mostOverlapped = std::max(mostOverlapped, overlapped);
     }
-    producer.join();
 
-    INFO("accepted " << accepted << ", dropped " << dropped << " of " << kTotal);
-    CHECK_FALSE(mixed);
-    CHECK_FALSE(poisonAccepted);
-    // Not vacuous in the other direction either: with 8 slots the writer MUST
-    // have lapped us, so a run reporting no drops means the threads never
-    // actually overlapped and the case proved nothing.
+    INFO("attempts " << attempts << ", most overlapped drains " << mostOverlapped << ", dropped " << dropped);
+    // Not vacuous: the reader read the ring while the writer was writing it. `dropped > 0` alone could not say so — a
+    // reader that started after the writer had finished drops nearly everything — and with eight slots the attempt
+    // that overlapped (the last one) is lapped, which the second check holds it to.
+    CHECK(mostOverlapped >= kMinOverlappedDrains);
     CHECK(dropped > 0);
 }
 

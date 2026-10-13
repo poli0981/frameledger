@@ -2297,7 +2297,13 @@ sent* ("nothing was deleted", "nothing changed"): a request the connection close
   connected" would read a disposed pipe as "nothing was sent". `AgentConnection` turns it into the `IOException` first,
   so the callers' split holds.
 
-**Owner-only, added to the list below:** item 18.
+**Owner-only, added to the list below:** item 18 — **passed 2026-10-13**.
+
+**After the release (owner, 2026-10-13):** "Tất cả các item đã đạt yêu cầu. Bạn có thể xử lý chip, phiên bản mới (nếu
+cần), cập nhật, rồi đóng phiên nhé" — items 16, 17 and 18 passed; the chip beta.22's local gate left (`fl_ring`'s
+hammering-writer guard, red on a correct ring) became beta.23 PR-1, #308: both concurrency cases guard on drains that
+overlapped the writer (§Traps, the native-test entry). Merged for the next pre-release; no release, since nothing a
+user runs changed.
 
 ## Owner-only — no PR can close these
 
@@ -2416,21 +2422,24 @@ sent* ("nothing was deleted", "nothing changed"): a request the connection close
    together are said in one notice that names both; with the USB drive unplugged nothing is removed; *Remove uninstalled
    games* off keeps it. (e) The Legal Gate shows the Privacy Policy 2.8
    once. (f) The `ja` strings marked `review`.
-16. **beta.20 on real hardware.** (a) **Bound Between Desks:** its page reads *Ren'Py 8.5.0*, and its *Engine version*
-   line says it was read from the engine's version file (`renpy/vc_version.py`); the first sweep after the update reads
-   every game once more (rules `2026.10.3`). (b) The Legal Gate shows the Privacy Policy 2.9 once. (c) The `ja` string
-   marked `review` (`GameDetail_EngineVersion_RenPyVcVersion`).
-17. **beta.21 on real hardware.** (a) **Wuthering Waves:** after the update, before any session, its page says hooking
-   is off — Anti-Cheat Expert beside its executable, and its Steam id on the title list; Neverness To Everness stays
-   blocked, and GIRLS' FRONTLINE 2's exception stays in force. (b) **Play**, in both modes of Settings ▸ Games ▸ *Play
-   button*, with a Steam game, Alan Wake 2 from the Epic Games Launcher (its link has not been tried on a real game), a
-   GOG game and an itch game — and in Task Manager's Details tab the game's *Elevated* column reads *No*. (c) **The
-   wheel and a touchpad** in Help ▸ User guide, the licence in Help ▸ About and the Legal Gate: about three lines a
-   notch, gliding; at the end of the update notes the window scrolls instead. (d) The Legal Gate shows the Privacy
-   Policy 2.10 once. (e) The `ja` strings marked `review` (Play, Settings ▸ Games, `GameDetail_Supports_None`).
-18. **beta.22 on real hardware.** (a) The `ja` string marked `review` (`Agent_Unanswered`). (b) Nothing else to run: the
-   change answers a request the agent drops mid-way, which the tests make happen and a person can only meet by chance —
-   if a notice ever says the capture agent did not answer, the page beside it shows what was stored.
+16. ~~**beta.20 on real hardware.**~~ **Passed 2026-10-13** — the owner: "Tất cả các item đã đạt yêu cầu" (every item
+   met its requirement). *(The item as written:)* (a) **Bound Between Desks:** its page reads *Ren'Py 8.5.0*, and its
+   *Engine version* line says it was read from the engine's version file (`renpy/vc_version.py`); the first sweep after
+   the update reads every game once more (rules `2026.10.3`). (b) The Legal Gate shows the Privacy Policy 2.9 once. (c)
+   The `ja` string marked `review` (`GameDetail_EngineVersion_RenPyVcVersion`).
+17. ~~**beta.21 on real hardware.**~~ **Passed 2026-10-13** — the same answer. *(The item as written:)* (a) **Wuthering
+   Waves:** after the update, before any session, its page says hooking is off — Anti-Cheat Expert beside its
+   executable, and its Steam id on the title list; Neverness To Everness stays blocked, and GIRLS' FRONTLINE 2's
+   exception stays in force. (b) **Play**, in both modes of Settings ▸ Games ▸ *Play button*, with a Steam game, Alan
+   Wake 2 from the Epic Games Launcher (its link has not been tried on a real game), a GOG game and an itch game — and
+   in Task Manager's Details tab the game's *Elevated* column reads *No*. (c) **The wheel and a touchpad** in Help ▸
+   User guide, the licence in Help ▸ About and the Legal Gate: about three lines a notch, gliding; at the end of the
+   update notes the window scrolls instead. (d) The Legal Gate shows the Privacy Policy 2.10 once. (e) The `ja` strings
+   marked `review` (Play, Settings ▸ Games, `GameDetail_Supports_None`).
+18. ~~**beta.22 on real hardware.**~~ **Passed 2026-10-13** — the same answer. *(The item as written:)* (a) The `ja`
+   string marked `review` (`Agent_Unanswered`). (b) Nothing else to run: the change answers a request the agent drops
+   mid-way, which the tests make happen and a person can only meet by chance — if a notice ever says the capture agent
+   did not answer, the page beside it shows what was stored.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
@@ -2672,6 +2681,17 @@ diagnosis*.
   Do **not** relax it to `>= 0`. The guard is what stops the case passing while proving
   nothing, and `ring_test.cpp`'s own header already records that two of its four properties
   have never been shown red.
+
+  > **Amended 2026-10-13 (beta.23 PR-1, #308): both guards now measure overlap.** The hammering case's own guard,
+  > `accepted > kTotal / 2`, failed 5 of 40 runs and then 5 of 200 on the owner's hybrid i7-14700KF — `mixed` clean every
+  > time — and once made a full local gate red. A share of the stream measured the scheduler: a reader on an efficiency
+  > core keeps less than half, and one the OS does not run until the writer is done keeps one lap (accepted 1024). The
+  > tiny ring's `dropped > 0` was weaker the other way: a reader made to wait for the writer to finish drops nearly
+  > everything (1.6 million over eight attempts) and passed it. Both cases now start the writer only once the reader
+  > is about to loop, count the drains that copied records while the writer was still writing, and repeat — every
+  > attempt checked for its properties — until one attempt made 100 such drains, at most eight times; the tiny ring
+  > also holds that attempt's own `dropped > 0`. A start barrier alone left 1 of 200 (one overlapping drain). Measured:
+  > 1,000 runs, no failure, at most 3 attempts; with the waiting reader, both guards fail in every run.
 
 - **A self-test's cases can all pass while testing nothing, and their NAMES will not tell
   you.** Found 2026-08-27 in a PowerShell gate's `-SelfTest`: removing the fail-closed guard
