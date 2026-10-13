@@ -28,6 +28,18 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+## [0.1.0-beta.21] - 2026-10-13
+
+**The twenty-first pre-release: an anti-cheat kept beside a game's executable found before anything is injected, four
+itch.io downloads that carry malware, documents that scroll further and smoothly, and Play.** The same unsigned
+installer: verify its hash against `SHA256SUMS.txt`, then *More info → Run anyway*.
+
+**Updating from `0.1.0-beta.20`:** Help ▸ Check for updates, then *Restart to update* with no game running. The Privacy
+Policy (2.10) is shown once for you to accept. Every game is read and checked for anti-cheat once more (detection rules
+`2026.10.4`): Wuthering Waves, and any game that keeps an anti-cheat beside its executable, has its hooking turned off.
+If you installed HELLO, HELLO WORLD!, A Doll's Locket - Remake, City of Bones or Träumerei Chapter 2 from itch.io, read
+*Security* below first.
+
 ### Added
 
 - **Play, on a game's page and on each game in the library.** Through the store that installed the game — Steam or the
@@ -52,17 +64,6 @@ numeric core and does not move; the heading is the full version — corrected 20
   notes the wheel scrolls the window instead; Ctrl+wheel still zooms. A page is drawn once when it is opened, not two or
   three times, and going back to a page you have read in the same window is immediate.
 
-### Security
-
-- **Four itch.io downloads this project's documentation used as examples carry malware.** HELLO, HELLO WORLD!, A Doll's
-  Locket - Remake, City of Bones and Träumerei Chapter 2 put the same 213 MB program in front of their RPG Maker game.
-  Read without running it, it ships a registry file that switches off Windows' script scanning (AMSI) and adds
-  Microsoft Defender exclusions, carries an encrypted payload, and checks for virtual machines and debuggers before it
-  starts the game. The documentation called it a launcher and, for A Doll's Locket, said to measure it with the agent
-  running as administrator: that advice is withdrawn. If you installed one of them, remove it and scan your PC.
-  FrameLedger itself does not change: it reads a game's files to find its engine and anti-cheat, and does not judge
-  whether a game is safe (`docs/spike-notes.md` §20).
-
 ### Fixed
 
 - **An anti-cheat kept beside a game's executable is found before anything is injected.** The safety check looked three folder
@@ -74,6 +75,20 @@ numeric core and does not move; the heading is the full version — corrected 20
   Steam id (owner decision D58), and ACE's files, its second driver, its driver's service and its module are named (detection
   rules `2026.10.4`). Every game is checked for anti-cheat once more after the update; one found this way has its hooking
   turned off, as any finding does (`docs/19_SAFETY_AND_ANTICHEAT.md` §Pre-injection checks, item 4).
+- **A game's Supports card said *Not scanned yet* for a game the agent had read** whenever the game ships none of the
+  upscaler, frame-generation or Vulkan files the rules name — beside a Details card the same read had filled. It says
+  so now only until the agent has read the game, then *None found*.
+
+### Security
+
+- **Four itch.io downloads this project's documentation used as examples carry malware.** HELLO, HELLO WORLD!, A Doll's
+  Locket - Remake, City of Bones and Träumerei Chapter 2 put the same 213 MB program in front of their RPG Maker game.
+  Read without running it, it ships a registry file that switches off Windows' script scanning (AMSI) and adds
+  Microsoft Defender exclusions, carries an encrypted payload, and checks for virtual machines and debuggers before it
+  starts the game. The documentation called it a launcher and, for A Doll's Locket, said to measure it with the agent
+  running as administrator: that advice is withdrawn. If you installed one of them, remove it and scan your PC.
+  FrameLedger itself does not change: it reads a game's files to find its engine and anti-cheat, and does not judge
+  whether a game is safe (`docs/spike-notes.md` §20).
 
 ## [0.1.0-beta.20] - 2026-10-12
 

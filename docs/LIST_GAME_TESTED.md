@@ -62,6 +62,7 @@ with the 2026-09-16 recovery and with library entries removed since.
 | Aniimo | NetEase Yidun with a kernel driver (`NEPKernel.sys`) in the game's folder — never eligible for an exception | 2026-09-25 | [19_SAFETY](19_SAFETY_AND_ANTICHEAT.md) |
 | Goose Goose Duck | Easy Anti-Cheat's service running, and its folder | 2026-08-04 | [spike-notes §13](spike-notes.md) |
 | Neverness To Everness | Anti-Cheat Expert's kernel driver in the game's folder | 2026-08-04 | [spike-notes §13](spike-notes.md) |
+| Wuthering Waves | Anti-Cheat Expert, kept beside the game's executable four folder levels in, where the check did not look before beta.21: a session with hooking on was injected and unhooked 37 seconds later, when the 30-second re-check met ACE's driver (`ACE-BASE.sys`); nothing was measured. Since beta.21 its folder and its Steam id refuse it before any injection *(row added 2026-10-13 from the agent's log)* | 2026-10-12 | [spike-notes §19](spike-notes.md) |
 | Counter-Strike 2 | Valve Anti-Cheat — refused by FrameLedger's title list since beta.8. On 2026-08-04 the checks alone allowed it (VAC is invisible to them); nothing was injected | 2026-08-04, beta.8 | [spike-notes §13](spike-notes.md), [19_SAFETY](19_SAFETY_AND_ANTICHEAT.md) |
 
 Also refused before any injection: **Deadly Heart Gambit** — a 32-bit game (2026-08-03).
