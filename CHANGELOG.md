@@ -28,6 +28,15 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Fixed
+
+- **The native ring-buffer tests no longer pass or fail by the scheduler's luck** (developers only). The
+  hammering-writer test required the reader to keep more than half of the stream, which measured how the operating
+  system scheduled two threads: on a hybrid Intel processor it failed 5 of 200 runs with the ring correct every time.
+  Both concurrency tests now start the writer only once the reader is running, repeat until the reader really read
+  the ring while the writer wrote it, and require that; the small-ring test's old check also passed a reader that
+  started after the writer had finished (`src/native/tests/ring_test.cpp`).
+
 ## [0.1.0-beta.22] - 2026-10-13
 
 **The twenty-second pre-release: a request the capture agent never answered is said as such, never as a crash.** The
