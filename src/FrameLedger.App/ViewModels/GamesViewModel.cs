@@ -37,6 +37,8 @@ public sealed partial class GamesViewModel : ObservableObject
     private readonly IAgentLink? _agent;
     private readonly LibraryChanges? _changes;
     private readonly IMessageStrip? _strip;
+    private readonly GamePlayer? _player;
+    private readonly UiMode _mode;
     private readonly TimeProvider _clock;
     private readonly Func<string, bool> _exists;
     private readonly UiThread _ui = new();
@@ -65,11 +67,17 @@ public sealed partial class GamesViewModel : ObservableObject
     [ObservableProperty]
     private bool _listView;
 
+    /// <summary>What Play will do, in the mode Settings ▸ Games has now (beta.21, D59).</summary>
+    [ObservableProperty]
+    private string _playToolTip = Strings.Play_ToolTip_Store;
+
     public GamesViewModel(GameLibrary library, GameSelection selection, IPageNavigator navigator, AddGameFlow addGame, ImportLibraryFlow? import = null,
         RegisteredSettings? settings = null, IAgentLink? agent = null, LibraryChanges? changes = null, IMessageStrip? strip = null, TimeProvider? clock = null,
-        Func<string, bool>? executableExists = null)
+        Func<string, bool>? executableExists = null, GamePlayer? player = null, UiMode? mode = null)
     {
         _strip = strip;
+        _player = player;
+        _mode = mode ?? UiMode.Profile;
         _clock = clock ?? TimeProvider.System;
         _exists = executableExists ?? GameLibrary.ExecutableExists;
         _library = library ?? throw new ArgumentNullException(nameof(library));
@@ -84,6 +92,9 @@ public sealed partial class GamesViewModel : ObservableObject
     }
 
     public static string EmptyText => Strings.Games_Empty;
+
+    /// <summary>beta.21 (D52's rule for Play): a viewer over a copy starts no game.</summary>
+    public bool ActsOnThisPc => _mode.ActsOnThisPc;
 
     public static string NoMatchText => Strings.Games_NoMatch;
 
@@ -129,6 +140,11 @@ public sealed partial class GamesViewModel : ObservableObject
     {
         int read = Interlocked.Increment(ref _reads);
         await ReadViewAsync(ct).ConfigureAwait(true);
+        if (_player is not null)
+        {
+            PlayToolTip = await _player.IsDirectAsync(ct).ConfigureAwait(true) ? Strings.Play_ToolTip_Direct : Strings.Play_ToolTip_Store;
+        }
+
         IReadOnlyList<GameCard> cards = await _library.ListCardsAsync(ct).ConfigureAwait(true);
         // Whether each executable is on disk is a file-system question per entry — a drive that is gone can take a moment
         // to say so — so it is asked off the UI thread, the game page's own way (GameLibrary.ExecutableExists).
@@ -215,6 +231,29 @@ public sealed partial class GamesViewModel : ObservableObject
 
     [RelayCommand]
     private async Task AddGameAsync() => _ = await _addGame.RunAsync().ConfigureAwait(true);
+
+    /// <summary>beta.21 (D59): a card's or a row's Play — as the game's page plays it (<see cref="GamePlayer"/>).</summary>
+    [RelayCommand(CanExecute = nameof(CanPlay))]
+    private async Task PlayAsync(GameCardViewModel? card)
+    {
+        if (_player is null || card is null)
+        {
+            return;
+        }
+
+        PlayResult result = await _player.PlayAsync(card.Card.Row).ConfigureAwait(true);
+        (string message, bool warning) = GamePlayer.Describe(result, card.Name);
+        if (warning)
+        {
+            _strip?.Warn(Strings.Play_Title, message);
+        }
+        else
+        {
+            _strip?.Info(Strings.Play_Title, message);
+        }
+    }
+
+    private bool CanPlay(GameCardViewModel? card) => _player is not null && card is { NotInstalled: false };
 
     [RelayCommand]
     private void Open(GameCardViewModel? card)

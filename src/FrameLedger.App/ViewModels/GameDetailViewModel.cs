@@ -37,6 +37,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private readonly IEditGamePrompt _edit;
     private readonly IGamePicker _picker;
     private readonly IMessageStrip _strip;
+    private readonly GamePlayer? _player;
     private readonly ISessionSummaryOpener _summaries;
     private readonly SessionSeriesLoader _loader;
     private readonly IAgentLink? _agent;
@@ -72,7 +73,12 @@ public sealed partial class GameDetailViewModel : ObservableObject
     /// itself when the file is under another drive letter, so this clears on the next visit once it has.
     /// </summary>
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(PlayCommand))]
     private bool _executableMissing;
+
+    /// <summary>What Play will do, in the mode Settings ▸ Games has now (beta.21, D59).</summary>
+    [ObservableProperty]
+    private string _playToolTip = Strings.Play_ToolTip_Store;
 
     [ObservableProperty]
     private string _lastSessionText = string.Empty;
@@ -227,9 +233,10 @@ public sealed partial class GameDetailViewModel : ObservableObject
         IConfirmations confirmations, IEditGamePrompt edit, IMessageStrip strip, ISessionSummaryOpener summaries,
         SessionSeriesLoader loader, IHardwareSnapshotRepository hardware, SessionSelection sessionSelection, IGamePicker picker,
         RegisteredSettings? settings = null, IAgentLink? agent = null, AntiCheatExceptions? exceptions = null, SessionDeletion? deletion = null,
-        UiMode? mode = null)
+        UiMode? mode = null, GamePlayer? player = null)
     {
         // beta.15 (D52): a viewer over a copy has no Agent to ask; a composition without a mode (a test) is the profile's App.
+        _player = player;
         _mode = mode ?? UiMode.Profile;
         _deletion = deletion;
         _exceptions = exceptions;
@@ -266,6 +273,8 @@ public sealed partial class GameDetailViewModel : ObservableObject
     public static string WithdrawExceptionText => Strings.GameDetail_Exception_Withdraw;
 
     public static string EditText => Strings.GameDetail_Edit;
+
+    public static string PlayText => Strings.Play_Button;
 
     public static string RemoveText => Strings.GameDetail_Remove;
 
@@ -449,6 +458,11 @@ public sealed partial class GameDetailViewModel : ObservableObject
         Game = detail.Row;
         _detail = detail;
         NotFound = false;
+        if (_player is not null)
+        {
+            PlayToolTip = await _player.IsDirectAsync(ct).ConfigureAwait(true) ? Strings.Play_ToolTip_Direct : Strings.Play_ToolTip_Store;
+        }
+
         if (_settings is not null)
         {
             _hideAntiCheatHooking = await _settings.GetBooleanAsync(SettingsRegistry.UiHideAntiCheatHooking, ct).ConfigureAwait(true);
@@ -715,6 +729,13 @@ public sealed partial class GameDetailViewModel : ObservableObject
     [RelayCommand]
     private Task ReEnableHookingAsync() => RunAsync(EnableAsync);
 
+    /// <summary>
+    /// beta.21 (owner decision D59): Play — through the store that installed the game, or started by the capture agent
+    /// (Settings ▸ Games); <see cref="GamePlayer"/> says what each does. A game whose executable is not there has none.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanPlay))]
+    private Task PlayAsync() => RunAsync(PlayCoreAsync);
+
     [RelayCommand]
     private Task EditAsync() => RunAsync(EditCoreAsync);
 
@@ -727,6 +748,27 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
     [RelayCommand]
     private Task ChangeExecutableAsync() => RunAsync(ChangeExecutableCoreAsync);
+
+    private bool CanPlay() => _player is not null && !ExecutableMissing;
+
+    private async Task PlayCoreAsync()
+    {
+        if (_player is null || Game is not { } game)
+        {
+            return;
+        }
+
+        PlayResult result = await _player.PlayAsync(game).ConfigureAwait(true);
+        (string message, bool warning) = GamePlayer.Describe(result, game.Name);
+        if (warning)
+        {
+            _strip.Warn(Strings.Play_Title, message);
+        }
+        else
+        {
+            _strip.Info(Strings.Play_Title, message);
+        }
+    }
 
     /// <summary>One action at a time, and the one in flight is <see cref="Pending"/> for a test to await.</summary>
     private async Task RunAsync(Func<Task> work)

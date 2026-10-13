@@ -107,12 +107,49 @@ public sealed class StoreLibrarySourcesTests : IDisposable
         }
     }
 
+    /// <summary>beta.21 (Play): GOG GALAXY's program, from GOG's own registry entries, and only when the file is there.</summary>
+    [Fact]
+    public void GalaxysProgramIsWhereGogsKeysNameIt()
+    {
+        string own = @"SOFTWARE\FrameLedger.Test\" + Guid.NewGuid().ToString("N");
+        string key = own + @"\GOG.com\GalaxyClient";
+        string folder = Sub("GOG Galaxy");
+        try
+        {
+            new GogGalaxyLocator(RegistryHive.CurrentUser, key).ClientPath().Should().BeNull("no key, no GALAXY");
+            using (RegistryKey client = Registry.CurrentUser.CreateSubKey(key, writable: true))
+            {
+                client.SetValue("clientExecutable", "GalaxyClient.exe");
+            }
+
+            using (RegistryKey paths = Registry.CurrentUser.CreateSubKey(key + @"\paths", writable: true))
+            {
+                paths.SetValue("client", folder);
+            }
+
+            new GogGalaxyLocator(RegistryHive.CurrentUser, key).ClientPath().Should().BeNull("the keys name a file that is not there");
+            File.WriteAllText(Path.Combine(folder, "GalaxyClient.exe"), "MZ");
+            new GogGalaxyLocator(RegistryHive.CurrentUser, key).ClientPath().Should().Be(Path.Combine(folder, "GalaxyClient.exe"));
+
+            using (RegistryKey client = Registry.CurrentUser.CreateSubKey(key, writable: true))
+            {
+                client.SetValue("clientExecutable", @"..\elsewhere\GalaxyClient.exe");
+            }
+
+            new GogGalaxyLocator(RegistryHive.CurrentUser, key).ClientPath().Should().BeNull("a program name, never a path out of its folder");
+        }
+        finally
+        {
+            Registry.CurrentUser.DeleteSubKeyTree(own, throwOnMissingSubKey: false);
+        }
+    }
+
     [Fact]
     public async Task EpicReadsItemManifestsAndItchReadsGzippedReceipts()
     {
         string manifests = Sub("Manifests");
         await File.WriteAllTextAsync(Path.Combine(manifests, "A1.item"),
-            "{\"DisplayName\":\"Alan Wake 2\",\"InstallLocation\":\"D:\\\\Epic Games\\\\AlanWake2\",\"LaunchExecutable\":\"AlanWake2.exe\",\"AppName\":\"dcbb1ebd\",\"AppVersionString\":\"1.2.3\"}", Ct);
+            "{\"DisplayName\":\"Alan Wake 2\",\"InstallLocation\":\"D:\\\\Epic Games\\\\AlanWake2\",\"LaunchExecutable\":\"AlanWake2.exe\",\"AppName\":\"dcbb1ebd\",\"AppVersionString\":\"1.2.3\",\"CatalogNamespace\":\"c4763f23\",\"CatalogItemId\":\"93f2a8c3\"}", Ct);
         await File.WriteAllTextAsync(Path.Combine(manifests, "B2.item"), "{\"DisplayName\":\"No location\"}", Ct);
         await File.WriteAllTextAsync(Path.Combine(manifests, "C3.item"), "{ not json", Ct);
         IReadOnlyList<StoreGame> epic = await new EpicLibrarySource(manifests).ListAsync(Ct);
@@ -121,6 +158,7 @@ public sealed class StoreLibrarySourcesTests : IDisposable
         aw.StoreId.Should().Be("dcbb1ebd");
         aw.ExePath.Should().Be(@"D:\Epic Games\AlanWake2\AlanWake2.exe");
         aw.Version.Should().Be("1.2.3");
+        aw.LaunchKey.Should().Be("c4763f23:93f2a8c3:dcbb1ebd", "beta.21: what the launcher's own launch link names");
 
         string itch = Sub("itch");
         string install = Sub("itch", "apps", "celeste");

@@ -21,8 +21,9 @@ pages.
 >
 > - **Frame times and output resolution:** measured from the present call for Direct3D 11/12 and
 >   OpenGL titles FrameLedger injects into. Vulkan titles are measured only when FrameLedger itself
->   starts the game with its Vulkan layer enabled, which today only the Agent's command-line launch
->   does. A Vulkan title started any other way is not observed by the layer; FrameLedger injects its
+>   starts the game with its Vulkan layer enabled, which the Play button set to *Start directly* (since
+>   beta.21) and the Agent's command-line launch do. A Vulkan title started any other way is not
+>   observed by the layer; FrameLedger injects its
 >   Direct3D component into it instead, and what that records on a Vulkan title has not been
 >   verified. Direct3D 9 and every 32-bit title are not measured.
 > - **Which upscaler is running:** measured from the API a Direct3D title calls — DLSS or NIS through

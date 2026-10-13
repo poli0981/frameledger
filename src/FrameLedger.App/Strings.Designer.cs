@@ -703,6 +703,23 @@ public static class Strings
         nameof(Override_Default),
         nameof(Override_Keep),
         nameof(Override_Title_Format),
+        nameof(Play_AgentUnavailable_Format),
+        nameof(Play_AlreadyRunning_Format),
+        nameof(Play_Button),
+        nameof(Play_Elevated_Format),
+        nameof(Play_Epic_Format),
+        nameof(Play_Failed_Format),
+        nameof(Play_Gog_Format),
+        nameof(Play_HandOffFailed_Format),
+        nameof(Play_Itch_Format),
+        nameof(Play_NoGalaxy_Format),
+        nameof(Play_NoStore_Format),
+        nameof(Play_RecordingOff_Format),
+        nameof(Play_Started_Format),
+        nameof(Play_Steam_Format),
+        nameof(Play_Title),
+        nameof(Play_ToolTip_Direct),
+        nameof(Play_ToolTip_Store),
         nameof(RemoveGame_Body),
         nameof(RemoveGame_Delete),
         nameof(RemoveGame_Keep),
@@ -816,6 +833,7 @@ public static class Strings
         nameof(Settings_Exceptions_Withdraw),
         nameof(Settings_FpsDecimals_Body),
         nameof(Settings_FpsDecimals_Label),
+        nameof(Settings_Games_Header),
         nameof(Settings_Header),
         nameof(Settings_HideAntiCheatHooking_Body),
         nameof(Settings_HideAntiCheatHooking_Label),
@@ -843,6 +861,10 @@ public static class Strings
         nameof(Settings_MinSession_Label),
         nameof(Settings_OnlineMetadata_Body),
         nameof(Settings_OnlineMetadata_Label),
+        nameof(Settings_PlayMode_Body),
+        nameof(Settings_PlayMode_Direct),
+        nameof(Settings_PlayMode_Label),
+        nameof(Settings_PlayMode_Store),
         nameof(Settings_Policy_Header),
         nameof(Settings_Privacy_Header),
         nameof(Settings_RemoveUninstalled_Applied),
@@ -2426,6 +2448,40 @@ public static class Strings
 
     public static string Override_Title_Format => ResourceManager.GetString(nameof(Override_Title_Format), Culture) ?? nameof(Override_Title_Format);
 
+    public static string Play_AgentUnavailable_Format => ResourceManager.GetString(nameof(Play_AgentUnavailable_Format), Culture) ?? nameof(Play_AgentUnavailable_Format);
+
+    public static string Play_AlreadyRunning_Format => ResourceManager.GetString(nameof(Play_AlreadyRunning_Format), Culture) ?? nameof(Play_AlreadyRunning_Format);
+
+    public static string Play_Button => ResourceManager.GetString(nameof(Play_Button), Culture) ?? nameof(Play_Button);
+
+    public static string Play_Elevated_Format => ResourceManager.GetString(nameof(Play_Elevated_Format), Culture) ?? nameof(Play_Elevated_Format);
+
+    public static string Play_Epic_Format => ResourceManager.GetString(nameof(Play_Epic_Format), Culture) ?? nameof(Play_Epic_Format);
+
+    public static string Play_Failed_Format => ResourceManager.GetString(nameof(Play_Failed_Format), Culture) ?? nameof(Play_Failed_Format);
+
+    public static string Play_Gog_Format => ResourceManager.GetString(nameof(Play_Gog_Format), Culture) ?? nameof(Play_Gog_Format);
+
+    public static string Play_HandOffFailed_Format => ResourceManager.GetString(nameof(Play_HandOffFailed_Format), Culture) ?? nameof(Play_HandOffFailed_Format);
+
+    public static string Play_Itch_Format => ResourceManager.GetString(nameof(Play_Itch_Format), Culture) ?? nameof(Play_Itch_Format);
+
+    public static string Play_NoGalaxy_Format => ResourceManager.GetString(nameof(Play_NoGalaxy_Format), Culture) ?? nameof(Play_NoGalaxy_Format);
+
+    public static string Play_NoStore_Format => ResourceManager.GetString(nameof(Play_NoStore_Format), Culture) ?? nameof(Play_NoStore_Format);
+
+    public static string Play_RecordingOff_Format => ResourceManager.GetString(nameof(Play_RecordingOff_Format), Culture) ?? nameof(Play_RecordingOff_Format);
+
+    public static string Play_Started_Format => ResourceManager.GetString(nameof(Play_Started_Format), Culture) ?? nameof(Play_Started_Format);
+
+    public static string Play_Steam_Format => ResourceManager.GetString(nameof(Play_Steam_Format), Culture) ?? nameof(Play_Steam_Format);
+
+    public static string Play_Title => ResourceManager.GetString(nameof(Play_Title), Culture) ?? nameof(Play_Title);
+
+    public static string Play_ToolTip_Direct => ResourceManager.GetString(nameof(Play_ToolTip_Direct), Culture) ?? nameof(Play_ToolTip_Direct);
+
+    public static string Play_ToolTip_Store => ResourceManager.GetString(nameof(Play_ToolTip_Store), Culture) ?? nameof(Play_ToolTip_Store);
+
     public static string RemoveGame_Body => ResourceManager.GetString(nameof(RemoveGame_Body), Culture) ?? nameof(RemoveGame_Body);
 
     public static string RemoveGame_Delete => ResourceManager.GetString(nameof(RemoveGame_Delete), Culture) ?? nameof(RemoveGame_Delete);
@@ -2652,6 +2708,8 @@ public static class Strings
 
     public static string Settings_FpsDecimals_Label => ResourceManager.GetString(nameof(Settings_FpsDecimals_Label), Culture) ?? nameof(Settings_FpsDecimals_Label);
 
+    public static string Settings_Games_Header => ResourceManager.GetString(nameof(Settings_Games_Header), Culture) ?? nameof(Settings_Games_Header);
+
     public static string Settings_Header => ResourceManager.GetString(nameof(Settings_Header), Culture) ?? nameof(Settings_Header);
 
     public static string Settings_HideAntiCheatHooking_Body => ResourceManager.GetString(nameof(Settings_HideAntiCheatHooking_Body), Culture) ?? nameof(Settings_HideAntiCheatHooking_Body);
@@ -2705,6 +2763,14 @@ public static class Strings
     public static string Settings_OnlineMetadata_Body => ResourceManager.GetString(nameof(Settings_OnlineMetadata_Body), Culture) ?? nameof(Settings_OnlineMetadata_Body);
 
     public static string Settings_OnlineMetadata_Label => ResourceManager.GetString(nameof(Settings_OnlineMetadata_Label), Culture) ?? nameof(Settings_OnlineMetadata_Label);
+
+    public static string Settings_PlayMode_Body => ResourceManager.GetString(nameof(Settings_PlayMode_Body), Culture) ?? nameof(Settings_PlayMode_Body);
+
+    public static string Settings_PlayMode_Direct => ResourceManager.GetString(nameof(Settings_PlayMode_Direct), Culture) ?? nameof(Settings_PlayMode_Direct);
+
+    public static string Settings_PlayMode_Label => ResourceManager.GetString(nameof(Settings_PlayMode_Label), Culture) ?? nameof(Settings_PlayMode_Label);
+
+    public static string Settings_PlayMode_Store => ResourceManager.GetString(nameof(Settings_PlayMode_Store), Culture) ?? nameof(Settings_PlayMode_Store);
 
     public static string Settings_Policy_Header => ResourceManager.GetString(nameof(Settings_Policy_Header), Culture) ?? nameof(Settings_Policy_Header);
 

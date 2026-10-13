@@ -186,7 +186,7 @@ which makes the notification more important than it was, not less.
 
 ## Launch mode vs attach mode
 
-**Launch mode (preferred).** User starts the game from FrameLedger ~~(or FrameLedger is set as the launch wrapper)~~ *(corrected 2026-10-04: no wrapper exists, and no App button sends `LaunchGame` yet — the pipe command has no caller; launch mode runs from the Agent's developer verb `--console launch --exe`)*: `CreateProcess(CREATE_SUSPENDED)` → guard → inject → `ResumeThread`. Catches swapchain creation and upscaler init, which attach mode can miss entirely — a game that creates its DLSS feature during startup will otherwise report `upscaler = unknown` for the whole session.
+**Launch mode (preferred).** User starts the game from FrameLedger ~~(or FrameLedger is set as the launch wrapper)~~ *(corrected 2026-10-04: no wrapper exists, and no App button sends `LaunchGame` yet — the pipe command has no caller; launch mode runs from the Agent's developer verb `--console launch --exe`. Since beta.21 one does: **Play** set to *Start directly* — D59, `08_UI` §Games)*: `CreateProcess(CREATE_SUSPENDED)` → guard → inject → `ResumeThread`. Catches swapchain creation and upscaler init, which attach mode can miss entirely — a game that creates its DLSS feature during startup will otherwise report `upscaler = unknown` for the whole session.
 
 > **An elevated Agent starts the game as a standard user (beta.10, the admin mode, D34).** `ProcessLauncher` checks its
 > own token: elevated, it starts the game with the desktop shell's token (`Infrastructure.Startup.UnelevatedProcess` —

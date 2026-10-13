@@ -57,6 +57,9 @@
                     </ItemsControl>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                    <!-- beta.21 (D59): Play, through the store that installed the game or started directly (Settings ▸ Games). -->
+                    <ui:Button Margin="0,0,8,0" Appearance="Primary" Command="{Binding ViewModel.PlayCommand}" Content="{x:Static vm:GameDetailViewModel.PlayText}"
+                               Icon="{ui:SymbolIcon Play24}" IsEnabled="{Binding ViewModel.ActsOnThisPc}" ToolTip="{Binding ViewModel.PlayToolTip}" />
                     <ui:Button Margin="0,0,8,0" Command="{Binding ViewModel.EditCommand}" Content="{x:Static vm:GameDetailViewModel.EditText}" Icon="{ui:SymbolIcon Edit24}" />
                     <ui:Button Margin="0,0,8,0" Command="{Binding ViewModel.ChangeExecutableCommand}" Content="{x:Static vm:GameDetailViewModel.ChangeExecutableText}" Icon="{ui:SymbolIcon DocumentArrowRight24}" />
                     <ui:Button Appearance="Danger" Command="{Binding ViewModel.RemoveCommand}" Content="{x:Static vm:GameDetailViewModel.RemoveText}" Icon="{ui:SymbolIcon Delete24}" />

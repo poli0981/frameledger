@@ -90,11 +90,26 @@ public static class SettingsRegistry
     };
 
     /// <summary>
+    /// What the Play button does (beta.21, owner decision D59): <c>store</c> hands the game to the app of the store that
+    /// installed it — Steam and the Epic Games Launcher start it, GOG GALAXY runs it as its own shortcuts do, itch asks
+    /// first — and has the capture agent start it when no store did; <c>direct</c> has the capture agent start it, recorded
+    /// from its first frame and never as administrator. Settings ▸ Games; the Agent never reads it.
+    /// </summary>
+    public static readonly SettingDefinition UiPlayMode = new()
+    {
+        Key = "ui.play_mode",
+        Kind = SettingKind.Choice,
+        Default = "store",
+        Choices = ["store", "direct"],
+    };
+
+    /// <summary>
     /// Whether the Agent's watcher records tracked games that the App did not launch (FR-3.1/FR-3.3). <b>Reserved since
     /// beta.12:</b> the App showed a switch for it ("Record games launched outside FrameLedger") and no Agent code ever read
-    /// it, so turning it off recorded every game anyway; and the App has no way to start a game, so "off" could only have
+    /// it, so turning it off recorded every game anyway; and the App had no way to start a game, so "off" could only have
     /// meant recording nothing. The switch is gone and the key stays, read by nobody, until a launch path exists
-    /// (<c>06_DATA_MODEL</c> §Settings registry).
+    /// (<c>06_DATA_MODEL</c> §Settings registry). One does since beta.21 — Play, through the store or the capture agent —
+    /// and the key stays reserved: a game Play starts is recorded exactly as a game started any other way.
     /// </summary>
     public static readonly SettingDefinition CaptureBackground = new()
     {
@@ -229,7 +244,7 @@ public static class SettingsRegistry
     /// <summary>Every definition, in the order <c>06_DATA_MODEL</c> lists them.</summary>
     public static IReadOnlyList<SettingDefinition> All { get; } =
     [
-        UiLanguage, UiTheme, UiStartWithWindows, UiMinimizeToTray, UiHideAntiCheatHooking, UiFpsDecimals, UiHideScrollBars, UiLibraryView,
+        UiLanguage, UiTheme, UiStartWithWindows, UiMinimizeToTray, UiHideAntiCheatHooking, UiFpsDecimals, UiHideScrollBars, UiLibraryView, UiPlayMode,
         CaptureBackground, HookingKillSwitch, HookingUserModeExceptions, CaptureRunElevated, CaptureMinSessionSeconds, TelemetryIntervalMs, RetentionRawSessionsPerGame,
         RetentionRemoveUninstalledGames, UpdateChannel, UpdateAutoCheck, PrivacyOnlineMetadata, LogDebug,
     ];

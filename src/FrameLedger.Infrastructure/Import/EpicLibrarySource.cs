@@ -9,7 +9,9 @@ namespace FrameLedger.Infrastructure.Import;
 /// <summary>
 /// The Epic Games Launcher's installed library (FR-1.2): one <c>*.item</c> JSON per title under
 /// <c>%ProgramData%\Epic\EpicGamesLauncher\Data\Manifests</c> — <c>DisplayName</c>, <c>InstallLocation</c>,
-/// <c>LaunchExecutable</c> (relative to the install), <c>AppName</c> (the store id) and <c>AppVersionString</c>.
+/// <c>LaunchExecutable</c> (relative to the install), <c>AppName</c> (the store id) and <c>AppVersionString</c>; since beta.21
+/// also <c>CatalogNamespace</c> and <c>CatalogItemId</c>, which with the AppName are what the launcher's own launch link names
+/// (<see cref="StoreGame.LaunchKey"/>, for Play).
 /// Read with <c>JsonDocument</c> so an unexpected shape costs that one file, never the import.
 /// </summary>
 public sealed class EpicLibrarySource(string? manifestsDirectory = null) : IStoreLibrarySource
@@ -55,7 +57,10 @@ public sealed class EpicLibrarySource(string? manifestsDirectory = null) : IStor
 
             string? launch = Text(root, "LaunchExecutable");
             string? exe = string.IsNullOrWhiteSpace(launch) ? null : Path.Combine(location, launch);
-            return new StoreGame("epic", id, name, location, exe, Text(root, "AppVersionString"));
+            string? ns = Text(root, "CatalogNamespace");
+            string? catalogItem = Text(root, "CatalogItemId");
+            string? launchKey = string.IsNullOrWhiteSpace(ns) || string.IsNullOrWhiteSpace(catalogItem) ? null : ns + ":" + catalogItem + ":" + id;
+            return new StoreGame("epic", id, name, location, exe, Text(root, "AppVersionString"), launchKey);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {

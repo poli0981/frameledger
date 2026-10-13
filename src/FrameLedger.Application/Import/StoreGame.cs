@@ -9,4 +9,9 @@ namespace FrameLedger.Application.Import;
 /// executable when the store names one (GOG and Epic do; Steam and itch do not), and the store's version string.
 /// Read from local launcher files and registry keys only — nothing is fetched (CLAUDE.md rule 8).
 /// </summary>
-public sealed record StoreGame(string Platform, string StoreId, string Name, string InstallDirectory, string? ExePath, string? Version);
+/// <remarks>
+/// <c>LaunchKey</c> (beta.21, Play, D59): what the store's own launch link names where that is more than the store id —
+/// the Epic Games Launcher's <c>CatalogNamespace:CatalogItemId:AppName</c>; null for every other store.
+/// </remarks>
+public sealed record StoreGame(string Platform, string StoreId, string Name, string InstallDirectory, string? ExePath, string? Version,
+    string? LaunchKey = null);
