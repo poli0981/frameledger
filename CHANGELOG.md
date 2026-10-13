@@ -28,6 +28,15 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Changed
+
+- **The documents in the app scroll further and smoothly** — the user guide, Help ▸ Limitations, About's documents, the
+  Legal Gate and the update notes. A wheel notch moved them a fixed short step whatever the wheel or touchpad sent;
+  it now moves the number of lines Windows is set to scroll (a screen if it is set to that), about twice as far by
+  default, in proportion for a touchpad, and glides there unless Windows' animations are off. At the end of the update
+  notes the wheel scrolls the window instead; Ctrl+wheel still zooms. A page is drawn once when it is opened, not two or
+  three times, and going back to a page you have read in the same window is immediate.
+
 ### Security
 
 - **Four itch.io downloads this project's documentation used as examples carry malware.** HELLO, HELLO WORLD!, A Doll's

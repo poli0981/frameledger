@@ -110,6 +110,8 @@ public partial class App : System.Windows.Application
             _host = BuildHost(_db, appearance, registered, closePolicy);
             await _host.StartAsync().ConfigureAwait(true);
             Log.Information("ui: started ({Version}), ledger {Ledger}", UiIdentity.Version, UiPaths.Database);
+            // beta.21: tier 0 is software rendering (a VM without a GPU, Remote Desktop) - every scroll drawn on the CPU.
+            Log.Information("ui: render tier {Tier} (2 = the GPU draws; 0 = software)", System.Windows.Media.RenderCapability.Tier >> 16);
             if (UiPaths.IsViewer)
             {
                 Log.Warning("ui: a VIEWER over {Folder} (--data-dir, D52): no Agent is started or contacted, nothing on this PC is changed", UiPaths.DataDirectory);
@@ -192,7 +194,8 @@ public partial class App : System.Windows.Application
                 Log.Warning(ex, "diag: the hardware could not be read; its lines are n/a");
             }
 
-            string report = DiagReport.Build(UiIdentity.Version, UiPaths.DataDirectory, UiPaths.Logs, schema, values, new AgentLauncher().CanLaunch, now, hardware);
+            string report = DiagReport.Build(UiIdentity.Version, UiPaths.DataDirectory, UiPaths.Logs, schema, values, new AgentLauncher().CanLaunch, now, hardware,
+                System.Windows.Media.RenderCapability.Tier >> 16);
             string path = DiagReport.Write(UiPaths.Logs, report, now);
             await Console.Out.WriteLineAsync(string.Format(CultureInfo.CurrentCulture, Strings.Diag_Written_Format, path)).ConfigureAwait(true);
             Log.Information("ui: --diag written to {Path}", path);

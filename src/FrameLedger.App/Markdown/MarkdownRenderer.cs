@@ -233,7 +233,7 @@ public static class MarkdownRenderer
         int columns = Math.Max(table.ColumnDefinitions.Count, rows.Select(static r => r.Count).DefaultIfEmpty(0).Max());
         for (int i = 0; i < columns; i++)
         {
-            wpf.Columns.Add(new TableColumn { Width = GridLength.Auto });
+            wpf.Columns.Add(new TableColumn());    // WPF's default width is already Auto (read by reflection, beta.21)
         }
 
         var group = new TableRowGroup();
