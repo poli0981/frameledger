@@ -50,6 +50,9 @@ internal static class MachineFacingServices
         services.AddSingleton<IAgentRequests>(static sp => sp.GetRequiredService<AgentConnection>());
         services.AddSingleton<IAgentLink>(static sp => sp.GetRequiredService<AgentConnection>());
 
+        // FR-3.8's post-session notice (beta.23): one subscription for the App's life, built with the connection's service.
+        services.AddSingleton(static sp => new SessionNotices(sp.GetRequiredService<IAgentLink>(), sp.GetRequiredService<IMessageStrip>(), sp.GetService<IShellPresence>()));
+
         services.AddSingleton<IRunAtLogon, RunAtLogonRegistry>();
         services.AddSingleton<IAgentTool, AgentTool>();
         // beta.21 (D59): Play hands a game to its store's app.

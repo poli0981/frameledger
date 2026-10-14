@@ -21,7 +21,23 @@ public sealed class SessionSeriesLoader
 
     public SessionSeriesLoader(ISessionRepository sessions) => _sessions = sessions ?? throw new ArgumentNullException(nameof(sessions));
 
-    public async Task<SessionSeries?> LoadAsync(long sessionId, CancellationToken ct = default)
+    /// <summary>
+    /// The session's series, read and decoded on the thread pool (beta.23). Microsoft.Data.Sqlite runs its asynchronous
+    /// methods synchronously, so before this the blob read, the decode and the stutter detection of a two-million-frame
+    /// session all ran on the UI thread of whoever asked — the game page, a session's summary, Compare, an export — whatever
+    /// <c>ConfigureAwait</c> said (<c>spike-notes</c> §21).
+    /// </summary>
+    public Task<SessionSeries?> LoadAsync(long sessionId, CancellationToken ct = default) => Task.Run(() => ReadAndDecodeAsync(sessionId, ct), ct);
+
+    /// <summary>
+    /// The sensor series alone, timed from the session's start — what a session that was not hooked has to chart (beta.8: the
+    /// Tier-2 row has kept its sensors since 2026-09-22, and no chart read them). Empty when none were recorded. On the
+    /// thread pool, as <see cref="LoadAsync"/>.
+    /// </summary>
+    public Task<IReadOnlyList<SensorSeries>> LoadSensorsAsync(long sessionId, CancellationToken ct = default) =>
+        Task.Run(async () => (IReadOnlyList<SensorSeries>)DecodeSensors(await _sessions.FindSensorsAsync(sessionId, ct).ConfigureAwait(false), offsetS: 0), ct);
+
+    private async Task<SessionSeries?> ReadAndDecodeAsync(long sessionId, CancellationToken ct)
     {
         FrameBlobs? frames = await _sessions.FindFramesAsync(sessionId, ct).ConfigureAwait(false);
         if (frames is null || !string.Equals(frames.Codec, SeriesCodec.Tag, StringComparison.Ordinal))
@@ -33,13 +49,6 @@ public sealed class SessionSeriesLoader
         IReadOnlyList<SensorBlob> sensors = await _sessions.FindSensorsAsync(sessionId, ct).ConfigureAwait(false);
         return Decode(frames, segments, sensors);
     }
-
-    /// <summary>
-    /// The sensor series alone, timed from the session's start — what a session that was not hooked has to chart (beta.8: the
-    /// Tier-2 row has kept its sensors since 2026-09-22, and no chart read them). Empty when none were recorded.
-    /// </summary>
-    public async Task<IReadOnlyList<SensorSeries>> LoadSensorsAsync(long sessionId, CancellationToken ct = default) =>
-        DecodeSensors(await _sessions.FindSensorsAsync(sessionId, ct).ConfigureAwait(false), offsetS: 0);
 
     public static SessionSeries Decode(FrameBlobs frames, IReadOnlyList<SegmentRow> segments, IReadOnlyList<SensorBlob> sensors)
     {
@@ -71,6 +80,7 @@ public sealed class SessionSeriesLoader
         StutterResult? stutter = StutterDetector.Detect(appFrametimes);
         uint[]? frameIndex = frames.FrameIndex is { } fi ? PickOptional(SeriesCodec.DecodeUInt32(fi.ToArray()), keep) : null;
         double? offsetS = frames.FirstPresentMs / 1000.0;
+        double[] appFrameTimesMs = [.. appFrametimes];
         return new SessionSeries
         {
             TimesS = times,
@@ -85,13 +95,14 @@ public sealed class SessionSeriesLoader
             LatencyUs = frames.LatencyUs is { } lat ? PickOptional(SeriesCodec.DecodeUInt32(lat.ToArray()), keep) : null,
             RenderRes = frames.RenderRes is { } rr ? PickQuads(SeriesCodec.DecodeUInt16(rr.ToArray()), keep) : null,
             AppTimesS = [.. appIndex.Select(i => times[i])],
-            AppFrameTimesMs = [.. appFrametimes],
+            AppFrameTimesMs = appFrameTimesMs,
             AppPresentIndex = [.. appIndex],
             NoApplicationFrames = noApplicationFrames,
             Stutter = stutter is null ? null : [.. stutter.IsStutter],
             Segments = MapSegments([.. segments.Where(s => swapchain is null || s.SwapchainId == swapchain.Value)], times, frameIndex),
             Sensors = DecodeSensors(sensors, offsetS ?? 0),
             SensorsAligned = offsetS is not null,
+            Digest = SeriesDigest.Of(appFrameTimesMs, times, frametimes, generated, gap, noApplicationFrames),
         };
     }
 

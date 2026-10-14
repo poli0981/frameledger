@@ -16,15 +16,21 @@ namespace FrameLedger.App.ViewModels;
 /// value <c>N/A</c> until the Agent answered — never a placeholder that reads as a measurement), the live capture
 /// card fed by the pipe's events, the recent sessions, and the totals strip.
 /// </summary>
-public sealed partial class DashboardViewModel : ObservableObject, IDisposable
+/// <remarks>
+/// <b>It listens only while its page is on screen (beta.23):</b> <see cref="Attach"/> on Loaded, <see cref="Detach"/> on
+/// Unloaded, as the Games and game pages do. It subscribed in its constructor and unsubscribed in a Dispose nothing called —
+/// the root container kept every Dashboard ever opened, each answering every event and reloading its lists on the UI thread
+/// at every session's end. FR-3.8's notice, which it raised, is <see cref="SessionNotices"/>'s.
+/// </remarks>
+public sealed partial class DashboardViewModel : ObservableObject
 {
     private readonly IAgentLink _agent;
     private readonly GameLibrary _library;
     private readonly GameSelection _selection;
     private readonly IPageNavigator _navigator;
     private readonly ISessionSummaryOpener _summaries;
-    private readonly IMessageStrip _strip;
     private readonly UiThread _ui = new();
+    private bool _attached;
 
     [ObservableProperty]
     private string _agentState = Strings.Agent_State_Connecting;
@@ -56,27 +62,17 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private bool _recentEmpty = true;
 
-    private readonly IShellPresence? _presence;
     private readonly LiveSessions? _sessions;
 
-    public DashboardViewModel(IAgentLink agent, GameLibrary library, GameSelection selection, IPageNavigator navigator, ISessionSummaryOpener summaries, IMessageStrip strip, IShellPresence? presence = null,
+    public DashboardViewModel(IAgentLink agent, GameLibrary library, GameSelection selection, IPageNavigator navigator, ISessionSummaryOpener summaries,
         LiveSessions? sessions = null)
     {
-        _presence = presence;
         _sessions = sessions;
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _library = library ?? throw new ArgumentNullException(nameof(library));
         _selection = selection ?? throw new ArgumentNullException(nameof(selection));
         _navigator = navigator ?? throw new ArgumentNullException(nameof(navigator));
         _summaries = summaries ?? throw new ArgumentNullException(nameof(summaries));
-        _strip = strip ?? throw new ArgumentNullException(nameof(strip));
-        _agent.Changed += OnAgentChanged;
-        _agent.EventReceived += OnAgentEvent;
-        if (_sessions is not null)
-        {
-            _sessions.Changed += OnSessionsChanged;
-        }
-
         Refresh();
         SeedLive();
         Pending = LoadAsync();
@@ -103,14 +99,44 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
     /// <summary>The load in flight, for a test to await.</summary>
     public Task Pending { get; private set; }
 
-    public void Dispose()
+    /// <summary>
+    /// Listens to the Agent and to the running sessions while the page is on screen (beta.23): the page calls it on Loaded
+    /// and <see cref="Detach"/> on Unloaded. What changed before it listened is read again here.
+    /// </summary>
+    public void Attach()
     {
+        if (_attached)
+        {
+            return;
+        }
+
+        _agent.Changed += OnAgentChanged;
+        _agent.EventReceived += OnAgentEvent;
+        if (_sessions is not null)
+        {
+            _sessions.Changed += OnSessionsChanged;
+        }
+
+        _attached = true;
+        Refresh();
+        SeedLive();
+    }
+
+    public void Detach()
+    {
+        if (!_attached)
+        {
+            return;
+        }
+
         _agent.Changed -= OnAgentChanged;
         _agent.EventReceived -= OnAgentEvent;
         if (_sessions is not null)
         {
             _sessions.Changed -= OnSessionsChanged;
         }
+
+        _attached = false;
     }
 
     public async Task LoadAsync(CancellationToken ct = default)
@@ -191,36 +217,13 @@ public sealed partial class DashboardViewModel : ObservableObject, IDisposable
                 Live.Hold(held);
                 break;
             case IpcMessageType.SessionCompleted when IpcCodec.Payload<SessionCompletedEvent>(envelope) is { } completed:
-                // The session's own name (2026-09-23): the card may show another session, and a Tier-2 one had none here.
-                string? name = completed.GameName ?? (Live.SessionGuid == completed.SessionGuid ? Live.GameName : null);
+                // FR-3.8's notice is SessionNotices' (beta.23); the card and the lists are this page's.
                 Live.Stop(completed);
-                Notice(completed, name);
                 SeedLive();
                 Pending = LoadAsync();
                 break;
             default:
                 break;
-        }
-    }
-
-    /// <summary>FR-3.8's post-session notice, in-app while the window is on screen; the tray's balloon carries it otherwise (P3 PR-8b, one event → one channel). A safety stop is never a toast (08_UI §Notifications policy) — the shell's notices carry those.</summary>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format string is a resource that follows the UI culture, which changes at runtime")]
-    private void Notice(SessionCompletedEvent completed, string? name)
-    {
-        // A faulted session is the strip's CaptureError already; "discarded" would say something that did not happen.
-        if (_presence is { IsShown: false } || string.Equals(completed.Finalize, "faulted", StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        string game = name is { Length: > 0 } ? name : Strings.Common_NotAvailable;
-        if (completed.SessionId is not null)
-        {
-            _strip.Success(Strings.Dashboard_Live_Header, string.Format(CultureInfo.CurrentCulture, Strings.Dashboard_SessionSaved_Format, game));
-        }
-        else
-        {
-            _strip.Info(Strings.Dashboard_Live_Header, string.Format(CultureInfo.CurrentCulture, Strings.Dashboard_SessionDiscarded_Format, game));
         }
     }
 

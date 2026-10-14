@@ -5,9 +5,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using FluentAssertions;
+using FrameLedger.App.Charts;
 using FrameLedger.App.Pages;
 using FrameLedger.App.Services;
 using FrameLedger.App.ViewModels;
+using FrameLedger.Application.Persistence;
 using FrameLedger.Infrastructure.Persistence;
 using Wpf.Ui.Controls;
 
@@ -49,7 +51,6 @@ public sealed partial class PagesLoadTests
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
         var consent = new HookingConsent(new NoAgent(), new NoPrompt());
         (SettingsViewModel settings, LogsViewModel logs) = await SettingsAndLogsAsync(s, consent, new NoStrip());
-        using LogsViewModel ownedLogs = logs;
 
         (bool Wrapped, double Offset) result = await OnStaAsync(() =>
         {
@@ -71,7 +72,6 @@ public sealed partial class PagesLoadTests
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
         var consent = new HookingConsent(new NoAgent(), new NoPrompt());
         (_, LogsViewModel logs) = await SettingsAndLogsAsync(s, consent, new NoStrip());
-        using LogsViewModel ownedLogs = logs;
 
         (double Height, double Offset) tail = await OnStaAsync(() =>
         {
@@ -86,5 +86,47 @@ public sealed partial class PagesLoadTests
 
         tail.Height.Should().BeLessThan(500, "the tail has the height the page leaves it, not one tall enough for every line");
         tail.Offset.Should().BeGreaterThan(0, "so it scrolls, and ScrollToEnd (autoscroll) shows the newest line");
+    }
+    /// <summary>
+    /// beta.23: the game page's Sessions grid is bounded, so it builds the rows on screen and scrolls itself. Inside the page's
+    /// own scroller it was measured with no height limit and built every row - 100 sessions were 100 rows of 17 columns at
+    /// every open, 1.2 s (spike-notes 21). The wheel over it still reaches the page once the grid can scroll no further.
+    /// </summary>
+    [Fact]
+    public async Task TheSessionsGridBuildsTheRowsOnScreenAndHandsTheWheelOnAtItsEnd()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Alpha");
+        for (int i = 0; i < 100; i++)
+        {
+            await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-i - 1));
+        }
+
+        var detail = new GameDetailViewModel(s.Library, new GameSelection { GameId = game.Id }, new HookingConsent(new NoAgent(), new NoPrompt()), new NoNavigation(),
+            new NoConfirm(), new NoEdit(), new NoStrip(), new NoSummaries(), new SessionSeriesLoader(s.Sessions),
+            new SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(), new NoPicker());
+        Task pending = detail.Pending;
+        await pending;
+
+        (int Rows, double PageBefore, double PageAfter, double GridOffset) result = await OnStaAsync(() =>
+        {
+            var page = new GameDetailPage(detail);
+            NavigationViewContentPresenter presenter = Navigated(page, 900);
+            int rows = Visuals.FindAll<DataGridRow>(page).Count();
+            System.Windows.Controls.DataGrid grid = Visuals.Find<System.Windows.Controls.DataGrid>(page)!;
+            System.Windows.Controls.ScrollViewer gridScroller = Visuals.Find<System.Windows.Controls.ScrollViewer>(grid)!;
+            System.Windows.Controls.ScrollViewer root = Visuals.Find<System.Windows.Controls.ScrollViewer>(page)!;
+            gridScroller.ScrollToEnd();
+            presenter.UpdateLayout();
+            double before = root.VerticalOffset;
+            Wheel(Visuals.Leaf(Visuals.FindAll<DataGridRow>(grid).Last()), -120);
+            presenter.UpdateLayout();
+            return (rows, before, root.VerticalOffset, gridScroller.VerticalOffset);
+        });
+
+        detail.Sessions.Should().HaveCount(100);
+        result.Rows.Should().BeInRange(1, 40, "only the rows the bounded grid shows are built");
+        result.GridOffset.Should().BeGreaterThan(0, "the grid scrolls its own rows");
+        result.PageAfter.Should().BeGreaterThan(result.PageBefore, "at the grid's end the wheel scrolls the page");
     }
 }

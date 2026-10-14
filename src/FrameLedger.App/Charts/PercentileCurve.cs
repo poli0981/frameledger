@@ -24,12 +24,18 @@ public static class PercentileCurve
     public static (double[] Xs, double[] Ys) Of(IReadOnlyList<double> appFrameTimesMs)
     {
         ArgumentNullException.ThrowIfNull(appFrameTimesMs);
-        if (appFrameTimesMs.Count < 2)
+        return appFrameTimesMs.Count < 2 ? ([], []) : OfSorted(Percentile.Sorted(appFrameTimesMs));
+    }
+
+    /// <summary><see cref="Of"/> over frame times already sorted ascending (beta.23, <see cref="SeriesDigest"/>).</summary>
+    public static (double[] Xs, double[] Ys) OfSorted(IReadOnlyList<double> sorted)
+    {
+        ArgumentNullException.ThrowIfNull(sorted);
+        if (sorted.Count < 2)
         {
             return ([], []);
         }
 
-        IReadOnlyList<double> sorted = Percentile.Sorted(appFrameTimesMs);
         var xs = new List<double>(103);
         var ys = new List<double>(103);
         foreach (double p in Percents())
@@ -48,7 +54,13 @@ public static class PercentileCurve
     public static IReadOnlyList<(double X, double Fps, bool PointOne)> Lows(IReadOnlyList<double> appFrameTimesMs)
     {
         ArgumentNullException.ThrowIfNull(appFrameTimesMs);
-        IReadOnlyList<double> sorted = Percentile.Sorted(appFrameTimesMs);
+        return LowsOfSorted(Percentile.Sorted(appFrameTimesMs));
+    }
+
+    /// <summary><see cref="Lows"/> over frame times already sorted ascending (beta.23, <see cref="SeriesDigest"/>).</summary>
+    public static IReadOnlyList<(double X, double Fps, bool PointOne)> LowsOfSorted(IReadOnlyList<double> sorted)
+    {
+        ArgumentNullException.ThrowIfNull(sorted);
         var lows = new List<(double, double, bool)>(2);
         if (Supported(sorted.Count, 99) && Fps(sorted, 99) is double p1)
         {

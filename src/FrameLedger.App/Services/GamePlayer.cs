@@ -27,7 +27,7 @@ namespace FrameLedger.App.Services;
 public sealed class GamePlayer
 {
     private readonly RegisteredSettings _settings;
-    private readonly IReadOnlyList<IStoreLibrarySource> _stores;
+    private readonly StoreRecordsReader _stores;
     private readonly IGogGalaxyLocator _galaxy;
     private readonly IShellStarter _shell;
     private readonly IAgentRequests _agent;
@@ -38,7 +38,7 @@ public sealed class GamePlayer
     {
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         ArgumentNullException.ThrowIfNull(stores);
-        _stores = [.. stores];
+        _stores = new StoreRecordsReader(stores);
         _galaxy = galaxy ?? throw new ArgumentNullException(nameof(galaxy));
         _shell = shell ?? throw new ArgumentNullException(nameof(shell));
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
@@ -61,7 +61,7 @@ public sealed class GamePlayer
             }
             else
             {
-                StoreGame? record = StoreRecords.Owning(game.Fingerprint.ExePath, game.StoreId, await RecordsAsync(ct).ConfigureAwait(false));
+                StoreGame? record = StoreRecords.Owning(game.Fingerprint.ExePath, game.StoreId, await _stores.ReadAsync("play", ct: ct).ConfigureAwait(false));
                 if (record is null)
                 {
                     fallback = PlayFallback.NoStore;
@@ -137,25 +137,6 @@ public sealed class GamePlayer
         Log.Warning("play: {Game} (id {Id}): {Store}'s record of it names nothing FrameLedger may hand to its app; the agent starts it",
             game.Name, game.Id, record.Platform);
         return PlayFallback.NoLink;
-    }
-
-    private async Task<IReadOnlyList<StoreGame>> RecordsAsync(CancellationToken ct)
-    {
-        List<StoreGame> all = [];
-        foreach (IStoreLibrarySource store in _stores)
-        {
-            try
-            {
-                all.AddRange(await store.ListAsync(ct).ConfigureAwait(false));
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException)
-            {
-                // One store's records that cannot be read are that store's, never the press's.
-                Log.Warning("play: {Store}'s records could not be read ({Message})", store.Platform, ex.Message);
-            }
-        }
-
-        return all;
     }
 
     private async Task<PlayResult> StartDirectlyAsync(GameRow game, PlayFallback fallback, CancellationToken ct)

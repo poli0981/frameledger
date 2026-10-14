@@ -80,7 +80,7 @@ public sealed partial class PagesLoadTests
             var consent = new HookingConsent(new NoAgent(), new NoPrompt());
 
             // The view models load off the STA thread; the pages bind to them on it.
-            Dashboard = Own(new DashboardViewModel(new NoAgent(), s.Library, selection, nav, new NoSummaries(), strip));
+            Dashboard = new DashboardViewModel(new NoAgent(), s.Library, selection, nav, new NoSummaries());
             Task pending1 = Dashboard.Pending;
             await pending1.ConfigureAwait(false);
             Games = new GamesViewModel(s.Library, selection, nav, new AddGameFlow(s.Library, new NoPicker(), selection, nav, strip));
@@ -95,7 +95,7 @@ public sealed partial class PagesLoadTests
             await pending4.ConfigureAwait(false);
             (SettingsViewModel settings, LogsViewModel logs) = await SettingsAndLogsAsync(s, consent, strip).ConfigureAwait(false);
             Settings = settings;
-            Logs = Own(logs);
+            Logs = logs;
         }
 
         /// <summary>Every surface by name, each with a builder to call on the STA thread.</summary>

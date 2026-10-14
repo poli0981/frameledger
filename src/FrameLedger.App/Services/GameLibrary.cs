@@ -50,8 +50,7 @@ public sealed class GameLibrary
 
         IReadOnlyList<SessionRow> sessions = await _sessions.ListByGameAsync(gameId, sessionLimit, ct).ConfigureAwait(false);
         IReadOnlyList<SessionAnnotation> annotations = await _annotations.ListByGameAsync(gameId, ct).ConfigureAwait(false);
-        GameSessionSummary? summary = (await _sessions.SummariseByGameAsync(ct).ConfigureAwait(false)).FirstOrDefault(s => s.GameId == gameId);
-        return new GameDetail(row, sessions, annotations.ToDictionary(static a => a.SessionId), summary);
+        return new GameDetail(row, sessions, annotations.ToDictionary(static a => a.SessionId));
     }
 
     /// <summary>FR-1.1: the executable becomes a <c>games</c> row, hooking off; null when the file cannot be read.</summary>

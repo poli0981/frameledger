@@ -7,7 +7,11 @@ WPF UI 4.3.0 (pinned), CommunityToolkit.Mvvm, ScottPlot for charts and Markdig f
 ## How it is put together
 
 - A .NET Generic Host with dependency injection. Pages and their view models are transient — a page is made again on
-  every navigation, so state lives in the view models' services and the database, never in a page.
+  every navigation, so state lives in the view models' services and the database, never in a page. A view model that
+  listens to a service attaches on its page's Loaded and detaches on Unloaded, and is never `IDisposable`: the container
+  keeps every transient disposable it makes until the App exits.
+- The ledger's reads run on the thread that calls them (Microsoft.Data.Sqlite completes its asynchronous calls
+  synchronously): anything heavy after one — decoding a session, sorting its frames — is put on the thread pool.
 - Navigation goes only through WPF UI's `INavigationService`; a page implements `INavigableView<TViewModel>`.
 - The App opens `ledger.db` itself to read; anything that acts on the PC — hooking, deleting sessions, pausing — is a
   request to the agent over the pipe.

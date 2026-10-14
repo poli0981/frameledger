@@ -547,7 +547,7 @@ public sealed partial class PagesLoadTests
         var consent = new HookingConsent(new NoAgent(), new NoPrompt());
 
         // The view models load off the STA thread; the pages bind to them on it.
-        using var dashboard = new DashboardViewModel(new NoAgent(), s.Library, selection, nav, new NoSummaries(), strip);
+        var dashboard = new DashboardViewModel(new NoAgent(), s.Library, selection, nav, new NoSummaries());
         Task pending1 = dashboard.Pending;
         await pending1;
         var games = new GamesViewModel(s.Library, selection, nav, addGame);
@@ -561,7 +561,6 @@ public sealed partial class PagesLoadTests
         Task pending4 = compare.Pending;
         await pending4;
         (SettingsViewModel settings, LogsViewModel logs) = await SettingsAndLogsAsync(s, consent, strip);
-        using LogsViewModel _ = logs;
 
         (string loaded, List<string> wrapped) = await OnStaAsync(() =>
         {

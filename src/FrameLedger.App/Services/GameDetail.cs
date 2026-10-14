@@ -5,9 +5,12 @@ using FrameLedger.Application.Persistence;
 
 namespace FrameLedger.App.Services;
 
-/// <summary>Everything the detail page shows for one game, loaded in one pass: the row, its sessions newest first, their annotations, the aggregate.</summary>
+/// <summary>
+/// Everything the detail page shows for one game, loaded in one pass: the row, its sessions newest first, their annotations.
+/// (It carried the library's aggregate too, read by summarising EVERY game's sessions to keep one, and read by nothing — gone
+/// in beta.23.)
+/// </summary>
 public sealed record GameDetail(
     GameRow Row,
     IReadOnlyList<SessionRow> Sessions,
-    IReadOnlyDictionary<long, SessionAnnotation> Annotations,
-    GameSessionSummary? Summary);
+    IReadOnlyDictionary<long, SessionAnnotation> Annotations);

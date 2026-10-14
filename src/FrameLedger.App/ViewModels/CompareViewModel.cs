@@ -159,7 +159,7 @@ public sealed partial class CompareViewModel : ObservableObject
             SessionSeries? series = await _loader.LoadAsync(c.Id).ConfigureAwait(true);
             if (series is not null)
             {
-                (double[] xs, double[] ys) = PercentileCurve.Of(series.AppFrameTimesMs);
+                (double[] xs, double[] ys) = series.Digest?.Percentiles ?? PercentileCurve.Of(series.AppFrameTimesMs);
                 curves.Add(new CompareCurve(c.Label, xs, ys));
             }
         }

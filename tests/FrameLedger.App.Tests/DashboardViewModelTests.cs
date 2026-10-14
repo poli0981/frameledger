@@ -47,21 +47,6 @@ public sealed class DashboardViewModelTests
         public void Open(long sessionId) => Opened.Add(sessionId);
     }
 
-    private sealed class NoStrip : IMessageStrip
-    {
-        public void Info(string title, string body)
-        {
-        }
-
-        public void Success(string title, string body)
-        {
-        }
-
-        public void Warn(string title, string body)
-        {
-        }
-    }
-
     private sealed class FakeNavigator : IPageNavigator
     {
         public List<string> Pages { get; } = [];
@@ -83,7 +68,8 @@ public sealed class DashboardViewModelTests
         var nav = new FakeNavigator();
 
         var summaries = new NoSummaries();
-        using var vm = new DashboardViewModel(link, s.Library, selection, nav, summaries, new NoStrip());
+        var vm = new DashboardViewModel(link, s.Library, selection, nav, summaries);
+        vm.Attach();
         Task pending1 = vm.Pending;
         await pending1;
 
@@ -111,7 +97,8 @@ public sealed class DashboardViewModelTests
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
         GameRow game = await s.GameAsync("Alpha");
         var link = new FakeLink();
-        using var vm = new DashboardViewModel(link, s.Library, new GameSelection(), new FakeNavigator(), new NoSummaries(), new NoStrip());
+        var vm = new DashboardViewModel(link, s.Library, new GameSelection(), new FakeNavigator(), new NoSummaries());
+        vm.Attach();
         Task pending2 = vm.Pending;
         await pending2;
         vm.Live.IsActive.Should().BeFalse();
@@ -178,7 +165,9 @@ public sealed class DashboardViewModelTests
         };
         using var sessions = new LiveSessions(link);
         var strip = new RecordingStrip();
-        using var vm = new DashboardViewModel(link, s.Library, new GameSelection(), new FakeNavigator(), new NoSummaries(), strip, sessions: sessions);
+        using var notices = new SessionNotices(link, strip);
+        var vm = new DashboardViewModel(link, s.Library, new GameSelection(), new FakeNavigator(), new NoSummaries(), sessions: sessions);
+        vm.Attach();
         Task loaded = vm.Pending;
         await loaded;
 
@@ -207,7 +196,9 @@ public sealed class DashboardViewModelTests
         var link = new FakeLink();
         using var sessions = new LiveSessions(link);
         var strip = new RecordingStrip();
-        using var vm = new DashboardViewModel(link, s.Library, new GameSelection(), new FakeNavigator(), new NoSummaries(), strip, sessions: sessions);
+        using var notices = new SessionNotices(link, strip);
+        var vm = new DashboardViewModel(link, s.Library, new GameSelection(), new FakeNavigator(), new NoSummaries(), sessions: sessions);
+        vm.Attach();
         Task loaded = vm.Pending;
         await loaded;
         var hooked = Guid.NewGuid();
@@ -227,5 +218,75 @@ public sealed class DashboardViewModelTests
         await second;
         strip.Shown.Should().ContainSingle("a faulted session is the strip's CaptureError already; \"discarded\" would say what did not happen");
         vm.Live.IsActive.Should().BeFalse();
+    }
+    /// <summary>
+    /// beta.23: a Dashboard hears the Agent only while its page is on screen. Every visit made a new one and none went
+    /// away — the root container kept them all, each subscribed — so each session's end reloaded every Dashboard ever
+    /// opened, on the UI thread, and raised one notice apiece.
+    /// </summary>
+    [Fact]
+    public async Task ADashboardOffScreenHearsNothingAndASessionHasOneNoticeHoweverManyWereOpened()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Alpha");
+        var link = new FakeLink();
+        var strip = new RecordingStrip();
+        using var notices = new SessionNotices(link, strip);
+        var visits = new List<DashboardViewModel>();
+        for (int i = 0; i < 5; i++)
+        {
+            // What navigating does: the page on screen is attached, the one it replaced detached.
+            visits.LastOrDefault()?.Detach();
+            var vm = new DashboardViewModel(link, s.Library, new GameSelection(), new FakeNavigator(), new NoSummaries());
+            vm.Attach();
+            visits.Add(vm);
+            Task pending = vm.Pending;
+            await pending;
+        }
+
+        var guid = Guid.NewGuid();
+        link.Raise(IpcMessageType.SessionStarted, new SessionStartedEvent(guid, game.Id, "Alpha", 4242, 1, DateTimeOffset.UtcNow));
+        visits[^1].Live.IsActive.Should().BeTrue("the Dashboard on screen follows the session");
+        visits.Take(4).Should().OnlyContain(static v => !v.Live.IsActive, "a Dashboard that was navigated away from hears nothing");
+
+        long id = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddMinutes(-2), seconds: 65);
+        link.Raise(IpcMessageType.SessionCompleted, new SessionCompletedEvent(guid, id, "normal", 1, "saved", "TargetExited"));
+        Task reloaded = visits[^1].Pending;
+        await reloaded;
+
+        strip.Shown.Should().ContainSingle("one session, one notice — it was one per Dashboard ever opened")
+            .Which.Body.Should().Contain("Alpha", "the name the start gave, for a completion that carries none");
+        visits[^1].Recent.Should().ContainSingle();
+        visits.Take(4).Should().OnlyContain(static v => v.Recent.Count == 0, "only the Dashboard on screen reloads its lists");
+    }
+
+    /// <summary>FR-3.8 (beta.23): the notice is the window's while it is shown; a hidden window leaves it to the tray's balloon.</summary>
+    [Fact]
+    public void ANoticeWaitsForTheWindowAndATrayBalloonCarriesItWhenHidden()
+    {
+        var link = new FakeLink();
+        var strip = new RecordingStrip();
+        var presence = new Presence { IsShown = false };
+        using var notices = new SessionNotices(link, strip, presence);
+
+        link.Raise(IpcMessageType.SessionCompleted, new SessionCompletedEvent(Guid.NewGuid(), 7, "normal", 1, "saved", "TargetExited", 1, "Alpha"));
+        strip.Shown.Should().BeEmpty("the window is hidden: TrayViewModel's balloon says it");
+
+        presence.IsShown = true;
+        link.Raise(IpcMessageType.SessionCompleted, new SessionCompletedEvent(Guid.NewGuid(), 8, "normal", 1, "saved", "TargetExited", 1, "Alpha"));
+        strip.Shown.Should().ContainSingle().Which.Kind.Should().Be("success");
+    }
+
+    private sealed class Presence : IShellPresence
+    {
+        public bool IsShown { get; set; }
+
+        public void Reveal()
+        {
+        }
+
+        public void Quit()
+        {
+        }
     }
 }
