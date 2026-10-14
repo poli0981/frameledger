@@ -46,7 +46,7 @@ public sealed class LogsViewModelTests : IDisposable
         Write("ui-20260914.log", "[12:00:00.000 INF] hello\n[12:00:00.001 WRN] careful\n");
         Write("agent-20260914.log", "[12:00:00.000 INF] agent here\n");
         var strip = new RecordingStrip();
-        using var vm = new LogsViewModel(new LogTail(_dir), new BugReportFlow(new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))), new PathSaver(null), new FakeAgentLink(), new ClosePreview(), new NoUrlOpener(), new NoClipboard(), strip), strip);
+        var vm = new LogsViewModel(new LogTail(_dir), new BugReportFlow(new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))), new PathSaver(null), new FakeAgentLink(), new ClosePreview(), new NoUrlOpener(), new NoClipboard(), strip), strip);
         Task pending1 = vm.Pending;
         await pending1;
 
@@ -69,11 +69,36 @@ public sealed class LogsViewModelTests : IDisposable
         vm.Text.Should().Contain("agent here");
     }
 
+    /// <summary>
+    /// beta.23: the tail's two-second tick re-read up to 2 MB and replaced the whole text while nothing had been written; it
+    /// reads again only when the newest file's length or write time changed.
+    /// </summary>
+    [Fact]
+    public async Task ATickReadsTheTailAgainOnlyWhenTheFileChanged()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        Write("ui-20260914.log", "[12:00:00.000 INF] one\n");
+        var strip = new RecordingStrip();
+        var vm = new LogsViewModel(new LogTail(_dir), new BugReportFlow(new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))), new PathSaver(null), new FakeAgentLink(), new ClosePreview(), new NoUrlOpener(), new NoClipboard(), strip), strip);
+        Task first = vm.Pending;
+        await first;
+        vm.Text.Should().Be("[12:00:00.000 INF] one");
+
+        vm.Text = "drawn";
+        await vm.RefreshIfChangedAsync();
+        vm.Text.Should().Be("drawn", "nothing was written since the last read: a tick reads nothing and redraws nothing");
+
+        await File.AppendAllTextAsync(Path.Combine(_dir, "ui-20260914.log"), "[12:00:01.000 INF] two\n", TestContext.Current.CancellationToken);
+        await vm.RefreshIfChangedAsync();
+        vm.Text.Should().Contain("two").And.Contain("one");
+        vm.TotalCount.Should().Be(2);
+    }
+
     [Fact]
     public async Task WithoutAFileTheStatusSaysSo()
     {
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
-        using var vm = new LogsViewModel(new LogTail(_dir), new BugReportFlow(new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))), new PathSaver(null), new FakeAgentLink(), new ClosePreview(), new NoUrlOpener(), new NoClipboard(), new RecordingStrip()), new RecordingStrip());
+        var vm = new LogsViewModel(new LogTail(_dir), new BugReportFlow(new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))), new PathSaver(null), new FakeAgentLink(), new ClosePreview(), new NoUrlOpener(), new NoClipboard(), new RecordingStrip()), new RecordingStrip());
         Task pending = vm.Pending;
         await pending;
 
@@ -91,7 +116,7 @@ public sealed class LogsViewModelTests : IDisposable
         Directory.CreateDirectory(Path.GetDirectoryName(zip)!);
         var saver = new PathSaver(zip);
         var strip = new RecordingStrip();
-        using var vm = new LogsViewModel(new LogTail(_dir), new BugReportFlow(new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))), saver, new FakeAgentLink(), new ClosePreview(), new NoUrlOpener(), new NoClipboard(), strip), strip);
+        var vm = new LogsViewModel(new LogTail(_dir), new BugReportFlow(new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))), saver, new FakeAgentLink(), new ClosePreview(), new NoUrlOpener(), new NoClipboard(), strip), strip);
         Task pending1 = vm.Pending;
         await pending1;
 
@@ -109,7 +134,7 @@ public sealed class LogsViewModelTests : IDisposable
     {
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
         var strip = new RecordingStrip();
-        using var vm = new LogsViewModel(new LogTail(_dir), new BugReportFlow(new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))), new PathSaver(null), new FakeAgentLink(), new ClosePreview(), new NoUrlOpener(), new NoClipboard(), strip), strip);
+        var vm = new LogsViewModel(new LogTail(_dir), new BugReportFlow(new BugBundleBuilder(_dir, new RegisteredSettings(new SqliteSettingsStore(s.Db))), new PathSaver(null), new FakeAgentLink(), new ClosePreview(), new NoUrlOpener(), new NoClipboard(), strip), strip);
 
         await vm.ExportBundleCommand.ExecuteAsync(null);
 

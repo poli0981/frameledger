@@ -13,6 +13,10 @@ public partial class DashboardPage : INavigableView<DashboardViewModel>
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         DataContext = this;
         InitializeComponent();
+
+        // beta.23: the view model hears the Agent while this page is on screen, never after (each visit makes a new one).
+        Loaded += (_, _) => ViewModel.Attach();
+        Unloaded += (_, _) => ViewModel.Detach();
     }
 
     public DashboardViewModel ViewModel { get; }

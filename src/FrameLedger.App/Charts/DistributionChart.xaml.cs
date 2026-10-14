@@ -18,7 +18,6 @@ namespace FrameLedger.App.Charts;
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime")]
 public partial class DistributionChart : UserControl
 {
-    private const int _bins = 60;
 
     public DistributionChart()
     {
@@ -51,7 +50,8 @@ public partial class DistributionChart : UserControl
         int outside = 0;
         if (series is { AppFrameTimesMs.Length: > 1 })
         {
-            FpsHistogram histogram = FpsHistogram.Of(series.AppFrameTimesMs, _bins);
+            // beta.23: the decoded series carries it, worked out off the UI thread (SeriesDigest).
+            FpsHistogram histogram = series.Digest?.Histogram ?? FpsHistogram.OfSorted(SeriesDigest.SortedOf(series), SeriesDigest.HistogramBins);
             if (histogram.Centers.Length > 0)
             {
                 BarPlot bars = plot.Add.Bars(histogram.Centers, histogram.Counts);
@@ -80,7 +80,8 @@ public partial class DistributionChart : UserControl
         plot.YLabel(Strings.Chart_Axis_Fps);
         if (series is { AppFrameTimesMs.Length: > 1 })
         {
-            (double[] xs, double[] ys) = PercentileCurve.Of(series.AppFrameTimesMs);
+            IReadOnlyList<double>? sorted = series.Digest is null ? SeriesDigest.SortedOf(series) : null;
+            (double[] xs, double[] ys) = series.Digest?.Percentiles ?? PercentileCurve.OfSorted(sorted!);
             if (xs.Length > 0)
             {
                 Scatter line = plot.Add.ScatterLine(xs, ys, ChartTheme.Current.Percentile);
@@ -88,7 +89,7 @@ public partial class DistributionChart : UserControl
                 line.LegendText = Strings.Chart_Series_Percentile;
             }
 
-            foreach ((double x, double fps, bool pointOne) in PercentileCurve.Lows(series.AppFrameTimesMs))
+            foreach ((double x, double fps, bool pointOne) in series.Digest?.Lows ?? PercentileCurve.LowsOfSorted(sorted!))
             {
                 Scatter low = plot.Add.ScatterPoints(new[] { x }, new[] { fps }, ChartTheme.Current.Stutter);
                 low.MarkerSize = 7;

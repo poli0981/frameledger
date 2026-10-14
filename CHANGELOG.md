@@ -30,6 +30,21 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Fixed
 
+- **A game's page opens and changes session without freezing the window** (owner request 2026-10-14). Measured on the
+  dev PC over a ledger shaped like the owner's (`docs/spike-notes.md` §21): a game with 100 sessions took 1.2–1.5 s to
+  open — its Sessions list built every row, now only the rows on screen (it scrolls itself and hands the wheel to the
+  page at its ends) — 0.37 s now; choosing a two-million-frame session froze the window 0.8–1.0 s — the session was read
+  and decoded on the UI thread, then sorted three times for the Distribution tab — 17 ms now: it is read on the thread
+  pool and what the charts need from all of it is worked out there once. The page also asks whether the game's `.exe` is
+  on disk off the UI thread (a USB drive that sleeps answered on it), and no longer summarises every game to show one.
+- **Each visit to the Dashboard or Logs no longer stays in memory.** Every Dashboard ever opened stayed alive and kept
+  listening to the capture agent, so at each session's end each one reloaded its lists and raised its own "Session
+  saved" notice — twenty visits, twenty notices, the last one shown. The Dashboard listens only while it is on screen,
+  and the notice has one home for the App's life, shown once whichever page is open; each Logs page kept its tail of up
+  to 2 MB, twice.
+- **The Logs page reads its file only when it changed**, not every two seconds, and filters it off the UI thread; **Play**
+  reads the stores' lists of installed games off the UI thread (Steam's manifests sit on whatever drive its libraries
+  are on). At Debug level the App now logs how long each page took to appear (`ui: page … shown … ms`).
 - **The native ring-buffer tests no longer pass or fail by the scheduler's luck** (developers only). The
   hammering-writer test required the reader to keep more than half of the stream, which measured how the operating
   system scheduled two threads: on a hybrid Intel processor it failed 5 of 200 runs with the ring correct every time.

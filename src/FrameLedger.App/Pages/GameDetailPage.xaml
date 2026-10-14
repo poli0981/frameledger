@@ -239,7 +239,12 @@
                                        Content="{x:Static vm:GameDetailViewModel.DeleteAllSessionsText}" Icon="{ui:SymbolIcon Delete24}"
                                        IsEnabled="{Binding ViewModel.ActsOnThisPc}" />
                         </StackPanel>
-                        <DataGrid x:Name="SessionsGrid" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column"
+                        <!--
+                            beta.23: bounded, as Compare's list is, so the grid scrolls itself and builds only the rows on screen. Inside
+                            the page's own scroller it was measured with no height limit and built every row — up to 500 rows of 17
+                            columns; 1.2 s to open a game with 100 sessions (spike-notes §21).
+                        -->
+                        <DataGrid x:Name="SessionsGrid" MaxHeight="520" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True" HeadersVisibility="Column"
                                   ItemsSource="{Binding ViewModel.Sessions}" SelectionMode="Extended" MouseDoubleClick="OnSessionDoubleClick"
                                   SelectedItem="{Binding ViewModel.SelectedSession, Mode=TwoWay}">
                             <DataGrid.Columns>

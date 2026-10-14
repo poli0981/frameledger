@@ -81,9 +81,15 @@ public sealed record SessionSeries
     /// </summary>
     public bool SensorsAligned { get; init; }
 
+    /// <summary>
+    /// What the charts derive from the whole session, worked out where it was decoded (beta.23); null on a series built by
+    /// hand, whose charts compute it themselves.
+    /// </summary>
+    public SeriesDigest? Digest { get; init; }
+
     public int Presents => TimesS.Length;
 
-    public bool HasGenerated => Generated.Any(static g => g);
+    public bool HasGenerated => Digest is { } digest ? digest.GeneratedCount > 0 : Generated.Any(static g => g);
 
     public double DurationS => TimesS.Length == 0 ? 0 : TimesS[^1];
 

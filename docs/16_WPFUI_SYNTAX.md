@@ -255,6 +255,15 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
   ignores Windows' *lines to scroll*, and a precision touchpad's small deltas each jump the whole step — a long document
   read as slow and jerky while its layout cost about a millisecond a step. `Controls/MarkdownView` handles
   `PreviewMouseWheel` itself (beta.21): the delta in proportion at Windows' lines, eased, unhandled at its ends.
+- [ ] **Microsoft.Data.Sqlite completes its "async" calls synchronously** (measured 2026-10-14, beta.23): a
+  `ConfigureAwait(false)` after a ledger read does not leave the thread that asked, so a view model's load, a session's
+  decode, a sort over its frames all ran on the UI thread. Work that must not run there goes in `Task.Run` —
+  `Charts.SessionSeriesLoader`, the game page's executable check (`spike-notes` §21).
+- [ ] **A transient page's view model is never `IDisposable`** (beta.23). Pages and their view models are transient, and
+  the root container keeps every transient disposable it makes until the App exits: every Dashboard and Logs page ever
+  opened stayed in memory, and each Dashboard stayed subscribed to the Agent — at a session's end every one reloaded its
+  lists on the UI thread and raised its own notice. Listen on Loaded and stop on Unloaded (`Attach`/`Detach`, as Games,
+  the game page and the Dashboard do); `DashboardViewModelTests.ADashboardOffScreenHearsNothing…`.
 - [ ] **ScottPlot 5 zooms on every wheel and never marks it handled.** Without `Charts/ChartWheel` a wheel over a chart
   zoomed it and scrolled the page at once; a plain wheel is the page's, Ctrl+wheel the chart's, for every plot that
   `ChartTheme.Attach` registers.

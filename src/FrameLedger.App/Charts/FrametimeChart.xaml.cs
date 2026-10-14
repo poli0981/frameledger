@@ -82,7 +82,7 @@ public partial class FrametimeChart : UserControl
             lines.Add(Strings.Chart_Note_PresentsTiming);
         }
 
-        int gaps = series.Gap.Skip(1).Count(static g => g);
+        int gaps = series.Digest?.GapsAfterFirst ?? series.Gap.Skip(1).Count(static g => g);
         if (sensors && series.SensorsAligned && gaps > 0)
         {
             lines.Add(string.Format(CultureInfo.CurrentCulture, Strings.Chart_Note_GapsClosed_Format, gaps));
@@ -128,9 +128,9 @@ public partial class FrametimeChart : UserControl
         Plot.Refresh();
     }
 
-    private void DrawSeries(ScottPlot.Plot plot, IReadOnlyList<double> xs, IReadOnlyList<double> ys, Color color, string label)
+    private void DrawSeries(ScottPlot.Plot plot, double[] xs, double[] ys, Color color, string label)
     {
-        if (xs.Count == 0)
+        if (xs.Length == 0)
         {
             return;
         }
@@ -145,17 +145,8 @@ public partial class FrametimeChart : UserControl
     /// <summary>Every present but those after a gap, whose stored interval is 0 — not a frame, and it was drawn as a 0 ms one.</summary>
     private void DrawPresents(ScottPlot.Plot plot, ChartPalette p)
     {
-        var xs = new List<double>(_series!.Presents);
-        var ys = new List<double>(_series.Presents);
-        for (int i = 0; i < _series.Presents; i++)
-        {
-            if (!_series.Gap[i])
-            {
-                xs.Add(_series.TimesS[i]);
-                ys.Add(_series.FrameTimesMs[i]);
-            }
-        }
-
+        // beta.23: the decoded series carries the line (SeriesDigest), so the Displayed toggle no longer walks every present.
+        (double[] xs, double[] ys) = _series!.Digest?.Presents ?? SeriesDigest.PresentsWithoutGaps(_series.TimesS, _series.FrameTimesMs, _series.Gap);
         DrawSeries(plot, xs, ys, p.Displayed, Strings.Chart_Series_Displayed);
     }
 

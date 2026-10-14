@@ -23,24 +23,52 @@ public sealed record FpsHistogram(double[] Centers, double[] Counts, double BinW
         ArgumentNullException.ThrowIfNull(appFrameTimesMs);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(bins);
         double[] fps = [.. appFrameTimesMs.Where(static f => f > 0).Select(static f => 1000.0 / f)];
-        if (fps.Length == 0)
+        return FromSortedRates(Percentile.Sorted(fps), bins);
+    }
+
+    /// <summary>
+    /// <see cref="Of"/> over frame times already sorted ascending (beta.23, <see cref="SeriesDigest"/>): the positive ones are
+    /// the tail, and their rates read backwards ascend — the same rates <see cref="Of"/> sorts, without a sort of its own.
+    /// </summary>
+    public static FpsHistogram OfSorted(IReadOnlyList<double> sortedAppFrameTimesMs, int bins = 60)
+    {
+        ArgumentNullException.ThrowIfNull(sortedAppFrameTimesMs);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(bins);
+        int count = sortedAppFrameTimesMs.Count;
+        int first = 0;
+        while (first < count && !(sortedAppFrameTimesMs[first] > 0))
+        {
+            first++;
+        }
+
+        var fps = new double[count - first];
+        for (int i = 0; i < fps.Length; i++)
+        {
+            fps[i] = 1000.0 / sortedAppFrameTimesMs[count - 1 - i];
+        }
+
+        return FromSortedRates(fps, bins);
+    }
+
+    private static FpsHistogram FromSortedRates(IReadOnlyList<double> sorted, int bins)
+    {
+        if (sorted.Count == 0)
         {
             return new FpsHistogram([], [], 0, 0);
         }
 
-        IReadOnlyList<double> sorted = Percentile.Sorted(fps);
         double lo = Percentile.Linear(sorted, TailFraction) ?? sorted[0];
         double hi = Percentile.Linear(sorted, 1 - TailFraction) ?? sorted[^1];
         if (hi - lo < 1e-9)
         {
             // Every frame at one rate: one bar, a frame per second wide, centred on it.
-            return new FpsHistogram([lo], [fps.Length], 1, 0);
+            return new FpsHistogram([lo], [sorted.Count], 1, 0);
         }
 
         double width = (hi - lo) / bins;
         var counts = new double[bins];
         int outside = 0;
-        foreach (double v in fps)
+        foreach (double v in sorted)
         {
             if (v < lo || v > hi)
             {

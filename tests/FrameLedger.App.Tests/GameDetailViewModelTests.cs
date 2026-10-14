@@ -1032,6 +1032,47 @@ public sealed class GameDetailViewModelTests
         vm.Sessions.Should().HaveCount(2, "the page left: nothing listens");
     }
 
+    /// <summary>
+    /// beta.23: whether the executable is on disk is asked off the UI thread — a USB drive that sleeps, or one that fails,
+    /// answered on the UI thread while the page opened (the library page has asked off it since beta.19) — and the bar says
+    /// why from that one answer, with no drive asked again by a property getter.
+    /// </summary>
+    [Fact]
+    public async Task TheExecutableIsLookedForOffTheThreadThatOpensThePage()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Alpha");
+        var asked = new List<int>();
+        bool Exists(string path)
+        {
+            lock (asked)
+            {
+                asked.Add(Environment.CurrentManagedThreadId);
+            }
+
+            return false;
+        }
+
+        int opener = 0;
+        GameDetailViewModel? vm = null;
+        var thread = new Thread(() =>
+        {
+            opener = Environment.CurrentManagedThreadId;
+            vm = new GameDetailViewModel(s.Library, new GameSelection { GameId = game.Id }, new HookingConsent(new FakeAgent(), new FakePrompt()), new FakeNavigator(),
+                new FakeConfirmations(RemoveGameChoice.Cancel), new FakeEdit(null), new FakeStrip(), new NoSummaries(),
+                new Charts.SessionSeriesLoader(s.Sessions), new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(),
+                new FakePicker(null), executableExists: Exists);
+        });
+        thread.Start();
+        thread.Join();
+        Task loaded = vm!.Pending;
+        await loaded;
+
+        asked.Should().ContainSingle().Which.Should().NotBe(opener, "the drive is asked on the thread pool, never on the thread that opens the page");
+        vm.ExecutableMissing.Should().BeTrue();
+        vm.ExecutableMissingMessage.Should().StartWith(GameDetailViewModel.ExecutableMissingText).And.Contain(Path.GetFileName(game.Fingerprint.ExePath));
+    }
+
     /// <summary>beta.8: a session that was not hooked has its sensors, and the Sensors tab draws them instead of saying "not hooked".</summary>
     [Fact]
     public async Task ATierTwoSessionsSensorsAreTheSensorsTabs()

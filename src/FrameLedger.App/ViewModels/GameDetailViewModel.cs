@@ -49,6 +49,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private readonly RegisteredSettings? _settings;
     private readonly AntiCheatExceptions? _exceptions;
     private readonly SessionDeletion? _deletion;
+    private readonly Func<string, bool> _exists;
     private readonly long? _gameId;
 
     // ui.hide_anticheat_hooking (2026-09-25), read at each load; on until the settings say otherwise, as its default is.
@@ -75,6 +76,17 @@ public sealed partial class GameDetailViewModel : ObservableObject
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(PlayCommand))]
     private bool _executableMissing;
+
+    /// <summary>
+    /// The missing executable's bar (beta.8): the page's sentence, then whether the DRIVE is not connected or the file is gone
+    /// from its path — the two need different things of the user. Worked out with the check, off the UI thread (beta.23): it
+    /// asked the drive from this property's getter, on the UI thread, at every read.
+    /// </summary>
+    [ObservableProperty]
+    private string _executableMissingMessage = ExecutableMissingText;
+
+    // Why the executable is missing, from the last load's check (beta.23); null while it was found.
+    private string? _executableMissingWhy;
 
     /// <summary>What Play will do, in the mode Settings ▸ Games has now (beta.21, D59).</summary>
     [ObservableProperty]
@@ -233,8 +245,11 @@ public sealed partial class GameDetailViewModel : ObservableObject
         IConfirmations confirmations, IEditGamePrompt edit, IMessageStrip strip, ISessionSummaryOpener summaries,
         SessionSeriesLoader loader, IHardwareSnapshotRepository hardware, SessionSelection sessionSelection, IGamePicker picker,
         RegisteredSettings? settings = null, IAgentLink? agent = null, AntiCheatExceptions? exceptions = null, SessionDeletion? deletion = null,
-        UiMode? mode = null, GamePlayer? player = null)
+        UiMode? mode = null, GamePlayer? player = null, Func<string, bool>? executableExists = null)
     {
+        // beta.23: whether the executable is on disk is a question for its drive, which can take seconds to answer (the
+        // owner's games are on a USB drive), so it is asked off the UI thread, as the library page has asked since beta.19.
+        _exists = executableExists ?? GameLibrary.ExecutableExists;
         // beta.15 (D52): a viewer over a copy has no Agent to ask; a composition without a mode (a test) is the profile's App.
         _player = player;
         _mode = mode ?? UiMode.Profile;
@@ -281,14 +296,6 @@ public sealed partial class GameDetailViewModel : ObservableObject
     public static string ChangeExecutableText => Strings.GameDetail_ChangeExe;
 
     public static string ExecutableMissingText => Strings.GameDetail_ExeMissing;
-
-    /// <summary>
-    /// The missing executable's bar (beta.8): the page's sentence, then whether the DRIVE is not connected or the file is gone
-    /// from its path — the two need different things of the user.
-    /// </summary>
-    public string ExecutableMissingMessage => Game is null
-        ? ExecutableMissingText
-        : ExecutableMissingText + " " + Formats.ExecutableMissingText(Game.Fingerprint.ExePath);
 
     public static string LifetimeLabel => Strings.GameDetail_LifetimeAvg;
 
@@ -454,6 +461,10 @@ public sealed partial class GameDetailViewModel : ObservableObject
             Game = null;
             return;
         }
+
+        string exePath = detail.Row.Fingerprint.ExePath;
+        Func<string, bool> exists = _exists;
+        _executableMissingWhy = await Task.Run(() => exists(exePath) ? null : Formats.ExecutableMissingText(exePath), ct).ConfigureAwait(true);
 
         Game = detail.Row;
         _detail = detail;
@@ -1019,7 +1030,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
             HookingConsentOutcome.Unanswered => (Strings.Agent_Unanswered, InfoBarSeverity.Warning),
             // The Agent could not read the executable (beta.8): say whether its drive or the file is missing, not the IPC code.
             HookingConsentOutcome.Failed when string.Equals(result.Detail, Shared.Ipc.IpcErrorCode.ExecutableUnreadable, StringComparison.Ordinal) && Game is not null
-                => (Formats.ExecutableMissingText(Game.Fingerprint.ExePath), InfoBarSeverity.Warning),
+                => (_executableMissingWhy ?? Formats.ExecutableMissingText(Game.Fingerprint.ExePath), InfoBarSeverity.Warning),
             HookingConsentOutcome.Failed => (result.Detail ?? Strings.Common_NotAvailable, InfoBarSeverity.Warning),
             _ => (null, InfoBarSeverity.Informational),
         };
@@ -1037,8 +1048,8 @@ public sealed partial class GameDetailViewModel : ObservableObject
             : [row.Publisher, row.GameVersion, Formats.Platform(row.Platform), EngineText(row)];
         Subtitle = string.Join(" · ", subtitle.Where(static s => !string.IsNullOrWhiteSpace(s)));
         ExecutableText = row.Fingerprint.ExePath;
-        ExecutableMissing = !GameLibrary.ExecutableExists(row.Fingerprint.ExePath);
-        OnPropertyChanged(nameof(ExecutableMissingMessage));
+        ExecutableMissing = _executableMissingWhy is not null;
+        ExecutableMissingMessage = _executableMissingWhy is { } why ? ExecutableMissingText + " " + why : ExecutableMissingText;
 
         SessionRow? last = detail.Sessions.Count > 0 ? detail.Sessions[0] : null;
         SessionRow? lastHooked = detail.Sessions.FirstOrDefault(static s => s.Tier == CaptureTier.Hooked && s.FrameCount > 0);
