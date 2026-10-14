@@ -9,8 +9,9 @@ the owner's review; sessions since 2026-09-27, and the game-memory figures beta.
 
 **The machine.** Every row below was run on one PC: an NVIDIA GeForce RTX 5080 (the only graphics card), an Intel Core
 i7-14700KF, 32 GB of DDR5, Windows 11 (Insider builds 26300 → 29648) and a 2560×1440, 240 Hz monitor. **No AMD or Intel
-graphics card and no second machine has been tested**, and **no real Vulkan or OpenGL game has been measured** — every
-measurement below is Direct3D 11 or 12. What the tiers mean and what FrameLedger cannot do: [LIMITATIONS.md](../LIMITATIONS.md).
+graphics card and no second machine has been tested**, and ~~**no real Vulkan or OpenGL game has been measured** — every
+measurement below is Direct3D 11 or 12~~ **one real Vulkan game has been measured (Everhex Demo, 2026-10-13) and no
+OpenGL game** — every other measurement below is Direct3D 11 or 12 *(corrected 2026-10-14)*. What the tiers mean and what FrameLedger cannot do: [LIMITATIONS.md](../LIMITATIONS.md).
 
 **Two periods.** From 2026-08-03 to 2026-09-06 the games were measured with the developer's capture tool, one run at a
 time against the game's own settings menu (reports in [spike-notes.md](spike-notes.md)). From 2026-09-16 the shipped
@@ -43,6 +44,7 @@ with the 2026-09-16 recovery and with library entries removed since.
 | 恋しかるべき (KOISHIKARUBEKI) | Unity 6000.3 | D3D11 | Presented 59.6 FPS | 2026-09-03 | [spike-notes §9](spike-notes.md) |
 | Flower in Us | RPG Maker MV/MZ (NW.js) | D3D11 | Presented 59.8 FPS over three swap chains, after two refusals that found the game's browser process ambiguous (fixed) | 2026-09-03 → 09-04 | [spike-notes §9](spike-notes.md) |
 | UMIGARI | Unreal Engine 5.5.4 | D3D12 | Presented 95–97 FPS, frame generation *none*, ray tracing *No* | 2026-09-05 → 09-06 | run reports only |
+| Everhex Demo | — | Vulkan | Presented 239.7 FPS (1 % low 213.5), 14,955 frames in 69 s, through FrameLedger's Vulkan layer — the first real Vulkan game measured; started by Play set to *Start directly* | 2026-10-13 | database *(row added 2026-10-14 from a copy of the database)* |
 
 ## Recorded without measurement (Tier 2)
 

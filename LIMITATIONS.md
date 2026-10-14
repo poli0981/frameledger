@@ -162,7 +162,8 @@ you accept the prompt. Turn it on only if you trust everything that runs under y
 - The games FrameLedger has actually been run with, and what was measured on each, are listed in
   [LIST_GAME_TESTED.md](docs/LIST_GAME_TESTED.md). Everything was measured on one machine (an NVIDIA
   GeForce RTX 5080 with an Intel Core i7-14700KF on Windows 11); other hardware is untested.
-- **No real Vulkan or OpenGL game has been measured yet** — only FrameLedger's own test program.
+- **One real Vulkan game has been measured** (Everhex Demo, 2026-10-13) **and no OpenGL game**, beyond FrameLedger's
+  own test program.
 - There is **no in-game overlay**; everything is shown in the FrameLedger window.
 - **FrameLedger does not tell whether a game is safe to run.** It reads a game's files to find its engine and its
   anti-cheat, never to judge it, and recording or measuring a game vouches for nothing. Four itch.io downloads this

@@ -392,7 +392,7 @@ engine compiled only, reads as not found. One Ren'Py install was measured.
 > `StoreLibrarySourcesTests.ItchSkipsAVerdictCandidateThatIsARuntimeHelper` (the verdict as stored),
 > `LibraryImporterTests.AStoreTitleAlreadyInTheLibraryAtAnotherExecutableIsNotOfferedAgain`.
 
-**Publisher/version order:** store manifest → PE `CompanyName`/`ProductVersion` → *(opt-in)* Steam `appdetails` lookup, cached 7 days. *(Since beta.8 the PE versions are stored beside the store's rather than instead of it — §What the files say about themselves; the page labels a store's value with its store, "Steam build 20374416".)*
+**Publisher/version order:** store manifest → PE `CompanyName`/`ProductVersion` ~~→ *(opt-in)* Steam `appdetails` lookup, cached 7 days~~ *(never built — FrameLedger makes no request to a store, `privacy.online_metadata` is reserved, and a game's artwork (beta.23, D60) is read from the store app's own files on the disk; struck 2026-10-14)*. *(Since beta.8 the PE versions are stored beside the store's rather than instead of it — §What the files say about themselves; the page labels a store's value with its store, "Steam build 20374416".)*
 
 ## Capability hints (explicitly labelled as such)
 

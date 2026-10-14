@@ -56,7 +56,8 @@ CREATE TABLE games (
   cover_path TEXT, notes TEXT,                 -- cover_path: written since beta.23 (D60) — the image the user chose, as
                                                --   covers\game-<id>-<unix ms>.png relative to the data folder (a PNG copy
                                                --   <= 1200 px); followed only when it is one of those names under covers\
-                                               --   (a viewer's copy could name a share); NULL = the store app's own artwork
+                                               --   and never through a junction or a symbolic link (a viewer's copy could
+                                               --   name a share); NULL = the store app's own artwork
   removed_at INTEGER,                          -- schema 0002 (P3 PR-3): FR-1.4 "remove, keep sessions" — the row stays
                                                -- (sessions.game_id is NOT NULL, ON DELETE CASCADE) but leaves the
                                                -- library; a later launch of the same exe restores it (removed_at = NULL)

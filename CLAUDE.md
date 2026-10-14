@@ -70,7 +70,8 @@ build.ps1                      # the quality gate; CI runs this identical script
 src/
   native/
     FrameLedger.Overlay/       # C++20 DLL injected into the game (hooks + ring writer + optional overlay)
-    FrameLedger.Injector/      # C++20 static lib: launch/attach injection, AC guard probe
+    FrameLedger.Injector/      # C++20 static lib: launch/attach injection, AC guard probe; also builds
+                               #   FrameLedger.Guard.dll, the guard's C ABI the Agent loads (line added 2026-10-14)
     FrameLedger.VkLayer/       # C++20 Vulkan implicit layer DLL + manifest JSON
     FrameLedger.Shm/           # header-only: ring buffer + record layout, shared by native & C# (mirrored)
     FrameLedger.NvapiBridge/   # C++ DLL loaded by the Agent (never a game): NVAPI telemetry, NGX state (P2 PR-E2)
