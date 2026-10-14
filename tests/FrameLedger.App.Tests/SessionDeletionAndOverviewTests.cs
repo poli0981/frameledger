@@ -81,7 +81,7 @@ public sealed class SessionDeletionAndOverviewTests
 
     private sealed class NoEdit : IEditGamePrompt
     {
-        public Task<GameMetadata?> EditAsync(GameMetadata current, string? provenanceJson, CancellationToken ct = default) => Task.FromResult<GameMetadata?>(null);
+        public Task<GameEdit?> EditAsync(GameMetadata current, string? provenanceJson, EditImage? image = null, CancellationToken ct = default) => Task.FromResult<GameEdit?>(null);
     }
 
     private sealed class NoSummaries : ISessionSummaryOpener

@@ -29,7 +29,9 @@ Japanese wait for a human reviewer, never a machine draft ([`docs/09_I18N.md`](.
 Colours come only from WPF UI's theme brushes, by `DynamicResource` — never a hex value, never `StaticResource` for a
 theme brush. Muted text uses the App's `SecondaryText` and `TertiaryText` styles (`src/FrameLedger.App/Styles/FrameLedger.xaml`),
 and every page sets the theme's text colour on its root.
-The chart palettes are the one place a colour is written out, once per theme.
+The chart palettes are the one place a colour is written out, once per theme. The game page's artwork band is the one
+colour worked out in code: the artwork's own, as strongly as every text on it still reads, recomputed when the theme
+changes.
 
 ## The traps of WPF UI 4.3.0
 

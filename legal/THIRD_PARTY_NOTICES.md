@@ -92,7 +92,7 @@ Any proposal to add a vendor SDK must first pass the checklist in `docs/18_GPU_V
 |---|---|---|
 | **PawnIO** | Optional kernel driver required by LibreHardwareMonitor for CPU/motherboard sensors; installed separately by the user from <https://pawnio.eu/> | Its own license and signing; not distributed by FrameLedger |
 | Windows ETW, DXGI, Event Log | OS facilities | Microsoft Windows license |
-| Steam / GOG Galaxy / Epic Games Launcher / itch.io | Local manifest files read for library import | Respective platform terms; read-only local access |
+| Steam / GOG Galaxy / Epic Games Launcher / itch.io | Local manifest files read for library import and Play; the artwork the Steam and GOG Galaxy apps keep on disk, shown on a game's page (beta.23) | Respective platform terms; read-only local access, nothing copied or downloaded |
 
 ## Trademarks
 

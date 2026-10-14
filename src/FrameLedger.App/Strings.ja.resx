@@ -4321,4 +4321,72 @@
     <value>キャプチャ エージェントが応答しなかったため、この操作が行われたかどうかは分かりません。エージェントが接続してから、もう一度確認してください。</value>
     <comment>review</comment>
   </data>
+  <data name="Settings_GameArt_Label" xml:space="preserve">
+    <value>ゲームのアートワークを表示</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_GameArt_Body" xml:space="preserve">
+    <value>ゲームのページに、そのゲームに選んだ画像、なければ Steam または GOG GALAXY のアプリがこの PC に保存しているカバーとバナーを表示します。何もダウンロードしません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_GameArtTint_Label" xml:space="preserve">
+    <value>アートワークの色でゲームのページを彩る</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_GameArtTint_Body" xml:space="preserve">
+    <value>ページ上部の帯がアートワークの主な色になります。その上の文字が読みにくくなるほど濃くはしません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Art_Source_Steam" xml:space="preserve">
+    <value>この PC の Steam アプリのアートワーク</value>
+    <comment>review</comment>
+  </data>
+  <data name="Art_Source_Gog" xml:space="preserve">
+    <value>この PC の GOG GALAXY アプリのアートワーク</value>
+    <comment>review</comment>
+  </data>
+  <data name="Art_Source_Yours" xml:space="preserve">
+    <value>このゲームに選んだ画像</value>
+    <comment>review</comment>
+  </data>
+  <data name="Art_Cover_Name" xml:space="preserve">
+    <value>カバーアート</value>
+    <comment>review</comment>
+  </data>
+  <data name="Art_Banner_Name" xml:space="preserve">
+    <value>バナーアート</value>
+    <comment>review</comment>
+  </data>
+  <data name="Art_ImportFailed" xml:space="preserve">
+    <value>この画像は使えません。Windows で読み込めません。ゲームの画像はそのままです。</value>
+    <comment>review</comment>
+  </data>
+  <data name="EditGame_Image" xml:space="preserve">
+    <value>画像</value>
+    <comment>review</comment>
+  </data>
+  <data name="EditGame_ChooseImage" xml:space="preserve">
+    <value>画像を選ぶ…</value>
+    <comment>review</comment>
+  </data>
+  <data name="EditGame_UseStoreImage" xml:space="preserve">
+    <value>ストアの画像を使う</value>
+    <comment>review</comment>
+  </data>
+  <data name="EditGame_ImageNone" xml:space="preserve">
+    <value>画像なし</value>
+    <comment>review</comment>
+  </data>
+  <data name="EditGame_ImageNote" xml:space="preserve">
+    <value>コピーが FrameLedger のデータ フォルダーに保存されるので、選んだファイルは移動や削除をしても構いません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="ImagePicker_Title" xml:space="preserve">
+    <value>ゲームの画像を選択</value>
+    <comment>review</comment>
+  </data>
+  <data name="ImagePicker_Filter" xml:space="preserve">
+    <value>画像 (*.png;*.jpg;*.jpeg;*.bmp;*.webp)|*.png;*.jpg;*.jpeg;*.bmp;*.webp</value>
+    <comment>review</comment>
+  </data>
 </root>

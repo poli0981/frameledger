@@ -155,6 +155,11 @@ Native `Menu`, `TabControl`, `ComboBox`, `Slider`~~, `ListView`~~ are fine — t
 - **Every `Page` root sets `Foreground="{DynamicResource TextFillColorPrimaryBrush}"`** (2026-10-07): the navigation's
   Frame passes no text colour into a page, and a text with none is black (§Gotchas).
 - Exception to the no-hex rule: the chart palette — defined once per theme in ~~`Styles/ChartPalette.xaml` (two dictionaries)~~ `Styles/ChartPalette.Dark.xaml` and `ChartPalette.Light.xaml` (corrected 2026-10-04), never inline.
+- Second exception (beta.23, D61): the game page's artwork band, `Controls/ArtTint` — a colour worked out in code from the
+  artwork and the theme's own text and fill colours, the strongest tint at which every text on it still reads (4.5:1,
+  tertiary 3:1). It follows a theme switch through a **resource reference on the band** (`SetResourceReference` on a
+  private attached property bound to `ApplicationBackgroundColor`), not through `ApplicationThemeManager.Changed`, which
+  only `ApplicationThemeManager.Apply` raises — a page made and switched in the tests' harness would never hear it.
 
 ## FlowDocument (rendered documents, beta.12)
 
@@ -236,6 +241,12 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
   reaches: the import list was white text on white in the dark theme (owner's screenshot, beta.14). Base it on
   `DefaultDataGridRowStyle`. `AccessibilityTests.NoStyleIsBasedOnAnImplicitStyleTheThemeDoesNotDefine` refuses any
   `BasedOn` a type the App's dictionaries hold no style for, and `ImportReviewRenderTests` measures the rendered rows.
+- [ ] **A style of the App's for a WPF UI control replaces the style that holds its template** (beta.23). WPF UI 4.3.0 gives
+  its controls their templates in its own styles (`DefaultImageStyle`, …), applied only to a control with no style of its
+  own: a local `<Style TargetType="ui:Image">` with no `BasedOn` leaves the control with no template, and it takes its
+  place and draws nothing — the game page's cover was an empty space beside the name while the banner above it, with no
+  style, drew (caught in a render before it shipped). Base it on WPF UI's (`BasedOn="{StaticResource DefaultImageStyle}"`).
+  `AccessibilityTests.NoStyleOfAWpfUiControlLeavesOutItsTemplate`, `PagesLoadTests.TheGamePagesArtworkIsDrawn`.
 - [ ] **WPF UI's `CheckBox` is `MinWidth` 120 with an 11 px padding**: in a narrow grid column it draws a sliver of the box.
   `MinWidth="0" Padding="0"` there. A `DataGridCheckBoxColumn` uses WPF's own element style, an Aero2 box — use a template
   column (`AccessibilityTests.NoDataGridCheckBoxColumn`).

@@ -15,6 +15,9 @@ public partial class GameDetailPage : INavigableView<GameDetailViewModel>
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         DataContext = this;
         InitializeComponent();
+
+        // beta.23 (D60): the banner fades into the band below it — an alpha mask, set here because it is no theme colour.
+        Hero.OpacityMask = Controls.ArtTint.Fade;
         ViewModel.SelectionPresented += OnSelectionPresented;
         ViewModel.TrendPresented += OnTrendPresented;
         Overview.SessionClicked += OnOverviewClicked;

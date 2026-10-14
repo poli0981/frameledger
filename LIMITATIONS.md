@@ -177,6 +177,15 @@ you accept the prompt. Turn it on only if you trust everything that runs under y
   that one from its store or its own shortcut — nor a game whose recording is off: FrameLedger starts only what it
   records. While FrameLedger itself runs as administrator, Play starts every game directly, with your standard rights.
 
+## Game artwork
+
+- **Only the Steam and GOG GALAXY apps keep pictures FrameLedger can show** (since 0.1.0-beta.23). A game's page shows
+  the cover and banner those apps keep on your PC for a game they installed, read where they keep them — nothing is
+  downloaded or copied. A game from itch, the Epic Games Launcher or another store, or one whose `.exe` is outside a
+  store's own folder, shows a picture only once you choose one (**Edit… ▸ Choose image…**). A GOG picture needs Windows'
+  WebP support, which Windows 11 and most Windows 10 installs have. ([Game page](docs/08_UI.md))
+- The pictures belong to the games' owners; FrameLedger ships none ([names and trademarks](legal/TRADEMARKS.md)).
+
 ## Your data
 
 - Everything stays on your computer (`%LOCALAPPDATA%\FrameLedger`). FrameLedger sends no telemetry; its only

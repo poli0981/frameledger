@@ -107,7 +107,8 @@ public sealed class SteamLibrarySource(string? steamRoot = null) : IStoreLibrary
         return new StoreGame("steam", appId, name, Path.Combine(steamapps, "common", installDir), ExePath: null, state.Value("buildid"));
     }
 
-    private static string? InstalledRoot()
+    /// <summary>Steam's folder as its own registry value names it (<c>HKCU\Software\Valve\Steam\SteamPath</c>), or null; the artwork reads it too (beta.23).</summary>
+    internal static string? InstalledRoot()
     {
         try
         {

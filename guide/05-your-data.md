@@ -11,7 +11,9 @@ nothing is uploaded. The only network requests are the update check and the upda
 
 Your game library; your sessions — frame times when a game was measured, the statistics, your PC's sensors, the game's
 own memory use, how the game's window was shown; a short description of your hardware for each session; your tags and
-notes; your settings. The [Privacy Policy](../legal/PRIVACY_POLICY.md) lists all of it.
+notes; your settings; and, in the `covers` folder, a copy of each picture you chose for a game. The pictures the Steam and
+GOG GALAXY apps keep for your games are shown from where those apps keep them, never copied. The
+[Privacy Policy](../legal/PRIVACY_POLICY.md) lists all of it.
 
 ## How much is kept
 
@@ -21,7 +23,8 @@ in **Settings ▸ Recording ▸ Raw series kept per game** (0 keeps everything).
 ## Back it up
 
 **Tools ▸ Database maintenance… ▸ Back up…** writes a consistent copy of the database to a file you choose, even while
-a game is being recorded. Backing up is up to you — FrameLedger does not do it by itself.
+a game is being recorded. The pictures you chose for games are not in it: copy the data folder's `covers` folder too.
+Backing up is up to you — FrameLedger does not do it by itself.
 
 ## Delete it
 

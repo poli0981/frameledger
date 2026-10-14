@@ -160,6 +160,41 @@ public sealed class AccessibilityTests
         return names;
     }
 
+    /// <summary>
+    /// A WPF UI control's template is in WPF UI's own style for it (<c>DefaultImageStyle</c>, …), applied only when the
+    /// control has no style of its own. A style of the App's that targets the control without being based on WPF UI's leaves
+    /// it with no template: it takes its place and draws nothing — the game page's cover was an empty space beside the
+    /// name (beta.23), which no colour or text check can see. Every such style is based on WPF UI's or brings a template.
+    /// </summary>
+    [Fact]
+    public void NoStyleOfAWpfUiControlLeavesOutItsTemplate()
+    {
+        XNamespace wpfUi = "http://schemas.lepo.co/wpfui/2022/xaml";
+        var targetType = new Regex(@"^(?:\{x:Type\s+)?(?<prefix>\w+):(?<type>\w+)\}?$", RegexOptions.ExplicitCapture | RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
+        var found = new List<string>();
+        foreach ((string file, XDocument xaml) in AppXaml())
+        {
+            foreach (XElement style in xaml.Descendants().Where(static e => string.Equals(e.Name.LocalName, "Style", StringComparison.Ordinal)))
+            {
+                Match match = targetType.Match(style.Attribute("TargetType")?.Value.Trim() ?? string.Empty);
+                if (style.Attribute("BasedOn") is not null || !match.Success || style.GetNamespaceOfPrefix(match.Groups["prefix"].Value) != wpfUi)
+                {
+                    continue;
+                }
+
+                Type? control = typeof(Wpf.Ui.Controls.Image).Assembly.GetType("Wpf.Ui.Controls." + match.Groups["type"].Value);
+                bool templated = control is not null && typeof(System.Windows.Controls.Control).IsAssignableFrom(control);
+                bool bringsTemplate = style.Elements().Any(static s => string.Equals((string?)s.Attribute("Property"), "Template", StringComparison.Ordinal));
+                if (templated && !bringsTemplate)
+                {
+                    found.Add($"{file}: a Style for ui:{match.Groups["type"].Value} with no BasedOn");
+                }
+            }
+        }
+
+        found.Should().BeEmpty("WPF UI's template is in its own style; base the App's on it (BasedOn=\"{StaticResource DefaultImageStyle}\", …)");
+    }
+
     /// <summary>A <c>DataGridCheckBoxColumn</c>'s box is WPF's own element style — an Aero2 box on the Fluent grid (beta.14).</summary>
     [Fact]
     public void NoDataGridCheckBoxColumn()

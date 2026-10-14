@@ -7,7 +7,7 @@ Requirement IDs (`FR-x`, `NFR-x`) are referenced by other docs, commits, and tes
 ### FR-1 Game library
 - FR-1.1 Add game by picking an `.exe`, or drag-dropping an exe/shortcut.
 - FR-1.2 Auto-import from Steam, GOG Galaxy, Epic, itch.io with a review checklist. **Import never enables hooking for anything.**
-- FR-1.3 Editable metadata (name, cover, publisher, version, notes); auto-detected fields badged and overridable.
+- FR-1.3 Editable metadata (name, cover, publisher, version, notes); auto-detected fields badged and overridable. *(The cover is built since beta.23, D60: the user's own image, else the Steam or GOG GALAXY app's artwork on this PC — `08_UI` §Games.)*
 - FR-1.4 Remove game (asks whether to keep or delete its sessions).
 - FR-1.5 "Supports" row shows shipped-capability hints (DLSS/FSR/XeSS/FG) — visually distinct from measured per-session values (`05_DETECTION` §Capability hints).
 - FR-1.7 Delete all sessions (beta.11, owner decision D40): of one game from its page, or of every game from Settings ▸ Data, after a confirmation that says how many — with their frame and sensor series and notes; the library, the settings and every consent stay. The Agent deletes them (the rows are its, `06_DATA_MODEL` §Writer ownership) and refuses while a session it would delete under is being recorded.

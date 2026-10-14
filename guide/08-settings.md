@@ -48,6 +48,8 @@ The link under them, *Read what the hook does and does not do*, opens the safety
 
 | Setting | What it does | Default |
 |---|---|---|
+| **Show game artwork** | A game's page shows a picture of the game: the image you chose for it (**Edit…**), or else the cover and banner the Steam or GOG GALAXY app already keeps on your PC. Nothing is downloaded; a game from another store shows a picture only once you choose one. | On |
+| **Colour the game page from its artwork** | The band at the top of a game's page takes the picture's main colour — never so strongly that a text on it gets hard to read. Off, the band keeps the plain card colour. | On |
 | **Play button** | What **Play** does, on a game's page and on each game in the library. *Through the store*: Steam or the Epic Games Launcher starts the game, GOG GALAXY runs it, and the itch app asks which copy to launch — each store's app does what it does when you start a game from it. A game no store installed, and a GOG game without GOG GALAXY, is started by FrameLedger instead; so is every game while FrameLedger itself runs as administrator, so that the game does not. *Start directly*: FrameLedger's agent starts the game, recorded from its first frame, with your standard rights; it does not start a game whose recording is off, or one that asks to run as administrator. | Through the store |
 
 ## Window

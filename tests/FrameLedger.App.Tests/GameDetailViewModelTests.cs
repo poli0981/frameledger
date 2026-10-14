@@ -82,9 +82,16 @@ public sealed class GameDetailViewModelTests
         }
     }
 
-    private sealed class FakeEdit(GameMetadata? answer) : IEditGamePrompt
+    private sealed class FakeEdit(GameMetadata? answer, string? picked = null) : IEditGamePrompt
     {
-        public Task<GameMetadata?> EditAsync(GameMetadata current, string? provenanceJson, CancellationToken ct = default) => Task.FromResult(answer);
+        /// <summary>The image the page handed the dialog (beta.23), for a test to look at.</summary>
+        public EditImage? Image { get; private set; }
+
+        public Task<GameEdit?> EditAsync(GameMetadata current, string? provenanceJson, EditImage? image = null, CancellationToken ct = default)
+        {
+            Image = image;
+            return Task.FromResult(answer is null ? null : new GameEdit(answer, picked));
+        }
     }
 
     private sealed class NoSummaries : ISessionSummaryOpener
@@ -1071,6 +1078,67 @@ public sealed class GameDetailViewModelTests
         asked.Should().ContainSingle().Which.Should().NotBe(opener, "the drive is asked on the thread pool, never on the thread that opens the page");
         vm.ExecutableMissing.Should().BeTrue();
         vm.ExecutableMissingMessage.Should().StartWith(GameDetailViewModel.ExecutableMissingText).And.Contain(Path.GetFileName(game.Fingerprint.ExePath));
+    }
+
+    /// <summary>An image picker the page hands the edit dialog; the fake dialog answers the pick itself.</summary>
+    private sealed class NoImagePicker : IImagePicker
+    {
+        public string? PickImage() => null;
+    }
+
+    /// <summary>
+    /// beta.23 (D60): the page shows the store's artwork; an image picked in Edit is copied on Save and becomes the page's,
+    /// the one it replaced is deleted, and removing the game with its sessions deletes the last.
+    /// </summary>
+    [Fact]
+    public async Task ThePagesArtworkFollowsTheImageChosenInEditAndGoesWithTheGame()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        string dir = Path.Combine(Path.GetTempPath(), "fl-detail-art-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            string install = Path.Combine(dir, "Steam", "steamapps", "common", "Alpha");
+            GameRow game = await s.GameAsync("Alpha", Path.Combine(install, "Alpha.exe"));
+            string storeCover = TestImages.Write(Path.Combine(dir, "cache", "library_600x900.jpg"), TestImages.Png(30, 45, System.Windows.Media.Color.FromRgb(200, 40, 40)));
+            var store = new TestImages.Store("steam", new Application.Import.StoreGame("steam", "374320", "Alpha", install, null, null));
+            var cache = new TestImages.ArtCache("steam", "374320", new Application.Art.GameArtFiles(storeCover, null, null));
+            var mode = new UiMode(false, Path.Combine(dir, "data"));
+            var art = new GameArt(new RegisteredSettings(new MemorySettings()), new StoreRecordsReader([store]), [cache], mode);
+            var covers = new CoverStore(mode, s.Games);
+            string first = TestImages.Write(Path.Combine(dir, "first.png"), TestImages.Png(40, 60, System.Windows.Media.Color.FromRgb(20, 160, 60)));
+            string second = TestImages.Write(Path.Combine(dir, "second.png"), TestImages.Png(40, 60, System.Windows.Media.Color.FromRgb(20, 60, 160)));
+
+            GameDetailViewModel Page(string? picked, RemoveGameChoice remove = RemoveGameChoice.Cancel) => new(s.Library, new GameSelection { GameId = game.Id },
+                new HookingConsent(new FakeAgent(), new FakePrompt()), new FakeNavigator(), new FakeConfirmations(remove), new FakeEdit(GameMetadata.Of(game), picked),
+                new FakeStrip(), new NoSummaries(), new Charts.SessionSeriesLoader(s.Sessions), new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db),
+                new SessionSelection(), new FakePicker(null), art: art, covers: covers, images: new NoImagePicker());
+
+            GameDetailViewModel vm = Page(first);
+            await vm.Pending;
+            vm.HasArt.Should().BeTrue();
+            vm.ArtSource.Should().Be(Strings.Art_Source_Steam);
+            vm.ArtTint.Should().NotBeNull();
+
+            await vm.EditCommand.ExecuteAsync(null);
+            string? firstCopy = vm.Game!.CoverPath;
+            firstCopy.Should().StartWith(@"covers\game-" + game.Id + "-");
+            vm.ArtSource.Should().Be(Strings.Art_Source_Yours, "the page reloads with the image just chosen");
+            File.Exists(CoverStore.Resolve(mode.DataDirectory, firstCopy)).Should().BeTrue();
+
+            GameDetailViewModel again = Page(second, RemoveGameChoice.DeleteSessions);
+            await again.Pending;
+            await again.EditCommand.ExecuteAsync(null);
+            string? secondCopy = again.Game!.CoverPath;
+            secondCopy.Should().NotBe(firstCopy);
+            Directory.EnumerateFiles(Path.Combine(mode.DataDirectory, "covers")).Should().ContainSingle("the image it replaced is deleted once the row names the new one");
+
+            await again.RemoveCommand.ExecuteAsync(null);
+            Directory.EnumerateFiles(Path.Combine(mode.DataDirectory, "covers")).Should().BeEmpty("a game removed with its sessions takes its image with it");
+        }
+        finally
+        {
+            Directory.Delete(dir, recursive: true);
+        }
     }
 
     /// <summary>beta.8: a session that was not hooked has its sensors, and the Sensors tab draws them instead of saying "not hooked".</summary>

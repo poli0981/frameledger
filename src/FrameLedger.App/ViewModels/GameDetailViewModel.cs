@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Text.Json;
+using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FrameLedger.App.Charts;
@@ -50,6 +51,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private readonly AntiCheatExceptions? _exceptions;
     private readonly SessionDeletion? _deletion;
     private readonly Func<string, bool> _exists;
+    private readonly GameArt? _art;
+    private readonly CoverStore? _covers;
+    private readonly IImagePicker? _images;
     private readonly long? _gameId;
 
     // ui.hide_anticheat_hooking (2026-09-25), read at each load; on until the settings say otherwise, as its default is.
@@ -87,6 +91,37 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
     // Why the executable is missing, from the last load's check (beta.23); null while it was found.
     private string? _executableMissingWhy;
+
+    /// <summary>
+    /// beta.23 (D60): the game's artwork — the image the user chose, else the store's own cover, else its landscape header;
+    /// null with none. Shown in the header band beside the name.
+    /// </summary>
+    [ObservableProperty]
+    private ImageSource? _artCover;
+
+    /// <summary>The cover slot holds the store's landscape header (no portrait cover): drawn wider and shorter.</summary>
+    [ObservableProperty]
+    private bool _artCoverIsLandscape;
+
+    /// <summary>The store's wide banner, above the header band; null without one.</summary>
+    [ObservableProperty]
+    private ImageSource? _artHero;
+
+    /// <summary>D61: the colour the header band takes from the artwork; null leaves it the card's own fill.</summary>
+    [ObservableProperty]
+    private Color? _artTint;
+
+    /// <summary>The page shows artwork: the band, the cover, the banner.</summary>
+    [ObservableProperty]
+    private bool _hasArt;
+
+    /// <summary>Where the artwork came from, for its tooltip.</summary>
+    [ObservableProperty]
+    private string? _artSource;
+
+    // What the edit dialog needs: whether the cover is the user's own, and the store's own cover to go back to.
+    private bool _artCoverIsOwn;
+    private ImageSource? _artStoreCover;
 
     /// <summary>What Play will do, in the mode Settings ▸ Games has now (beta.21, D59).</summary>
     [ObservableProperty]
@@ -245,8 +280,12 @@ public sealed partial class GameDetailViewModel : ObservableObject
         IConfirmations confirmations, IEditGamePrompt edit, IMessageStrip strip, ISessionSummaryOpener summaries,
         SessionSeriesLoader loader, IHardwareSnapshotRepository hardware, SessionSelection sessionSelection, IGamePicker picker,
         RegisteredSettings? settings = null, IAgentLink? agent = null, AntiCheatExceptions? exceptions = null, SessionDeletion? deletion = null,
-        UiMode? mode = null, GamePlayer? player = null, Func<string, bool>? executableExists = null)
+        UiMode? mode = null, GamePlayer? player = null, Func<string, bool>? executableExists = null, GameArt? art = null, CoverStore? covers = null,
+        IImagePicker? images = null)
     {
+        _art = art;
+        _covers = covers;
+        _images = images;
         // beta.23: whether the executable is on disk is a question for its drive, which can take seconds to answer (the
         // owner's games are on a USB drive), so it is asked off the UI thread, as the library page has asked since beta.19.
         _exists = executableExists ?? GameLibrary.ExecutableExists;
@@ -483,7 +522,24 @@ public sealed partial class GameDetailViewModel : ObservableObject
         Present(detail);
         AnyLatency = detail.Sessions.Any(static s => s.ReflexActive == true);
         ChooseDefaultMetric(detail);
+
+        // beta.23 (D60): the artwork is looked for and decoded on the thread pool while the trend is drawn; the page's text is
+        // already there, and a reload keeps the picture it has until the new one is ready.
+        Task<GameArtView?> art = _art?.ForAsync(detail.Row, ct) ?? Task.FromResult<GameArtView?>(null);
         await RebuildTrendAsync(ct).ConfigureAwait(true);
+        PresentArt(await art.ConfigureAwait(true));
+    }
+
+    private void PresentArt(GameArtView? view)
+    {
+        ArtCover = view?.Cover;
+        ArtCoverIsLandscape = view?.CoverIsLandscape ?? false;
+        ArtHero = view?.Hero;
+        ArtTint = view?.Tint;
+        ArtSource = view?.Source;
+        _artCoverIsOwn = view?.CoverIsOwn ?? false;
+        _artStoreCover = view?.StoreCover;
+        HasArt = view is not null;
     }
 
     partial void OnSelectedSessionChanged(SessionItemViewModel? value)
@@ -853,13 +909,39 @@ public sealed partial class GameDetailViewModel : ObservableObject
             return;
         }
 
-        GameMetadata? edited = await _edit.EditAsync(GameMetadata.Of(Game), Game.FieldProvenanceJson).ConfigureAwait(true);
-        if (edited is null)
+        // beta.23 (D60): the dialog's image row, when this page has artwork to show and somewhere to keep a chosen image.
+        GameArt? art = _art;
+        EditImage? image = art is not null && _covers is not null && _images is not null
+            ? new EditImage(ArtCover, _artCoverIsOwn, _artStoreCover, _images, async path => await art.PreviewAsync(path, 192).ConfigureAwait(true))
+            : null;
+        GameEdit? edit = await _edit.EditAsync(GameMetadata.Of(Game), Game.FieldProvenanceJson, image).ConfigureAwait(true);
+        if (edit is null)
         {
             return;
         }
 
+        GameMetadata edited = edit.Metadata;
+        string? before = Game.CoverPath;
+        if (edit.PickedImage is { } picked && _covers is not null)
+        {
+            // Copied only now that the dialog closed with Save; a file that cannot be used leaves the image the game had.
+            if (await _covers.ImportAsync(Game.Id, picked).ConfigureAwait(true) is { } copied)
+            {
+                edited = edited with { CoverPath = copied };
+            }
+            else
+            {
+                edited = edited with { CoverPath = before };
+                _strip.Warn(Strings.EditGame_Title, Strings.Art_ImportFailed);
+            }
+        }
+
         await _library.UpdateMetadataAsync(Game.Id, edited).ConfigureAwait(true);
+        if (before is not null && !string.Equals(before, edited.CoverPath, StringComparison.OrdinalIgnoreCase))
+        {
+            _covers?.Delete(before);
+        }
+
         _strip.Success(Strings.EditGame_Title, Strings.EditGame_Saved);
         await LoadAsync().ConfigureAwait(true);
     }
@@ -955,7 +1037,17 @@ public sealed partial class GameDetailViewModel : ObservableObject
         }
 
         string name = Game.Name;
-        await _library.RemoveAsync(Game.Id, keepSessions: choice == RemoveGameChoice.KeepSessions).ConfigureAwait(true);
+        string? cover = Game.CoverPath;
+        bool keepSessions = choice == RemoveGameChoice.KeepSessions;
+        bool removed = await _library.RemoveAsync(Game.Id, keepSessions).ConfigureAwait(true);
+
+        // beta.23 (D60): a game removed with its sessions is gone, and its own image with it; one removed with its sessions
+        // kept comes back with them when it is added again, and keeps its image.
+        if (removed && !keepSessions)
+        {
+            _covers?.Delete(cover);
+        }
+
         _strip.Info(Strings.Games_Header, string.Format(CultureInfo.CurrentCulture, Strings.RemoveGame_Removed_Format, name));
         _navigator.Navigate<GamesPage>();
     }

@@ -28,6 +28,18 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **A game's page shows its artwork** (owner request 2026-10-14, decisions D60/D61). At the top of the page: the
+  banner and the cover the Steam or GOG GALAXY app already keeps on your PC for the game it installed — read where that
+  app keeps them, never downloaded and never copied — or an image you choose yourself in **Edit… ▸ Choose image…** (a
+  copy is kept in the data folder's `covers` folder; **Use the store's image** goes back). The band they sit in takes the
+  picture's main colour, never so strongly that a text on it gets hard to read (primary and secondary text keep 4.5:1,
+  the faintest 3:1, in both themes), and follows a theme switch. A game from itch, the Epic Games Launcher or another
+  store has a picture only once you choose one, because those apps keep no image files. **Settings ▸ Games** has *Show
+  game artwork* and *Colour the game page from its artwork*, both on. **Privacy Policy 2.11** names the images read and
+  the copies kept; FrameLedger still makes no request to any store.
+
 ### Fixed
 
 - **A game's page opens and changes session without freezing the window** (owner request 2026-10-14). Measured on the

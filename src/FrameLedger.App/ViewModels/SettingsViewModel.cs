@@ -120,6 +120,14 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _onlineMetadata;
 
+    /// <summary><c>ui.game_art</c> (beta.23, D60): a game's page shows its artwork — the user's image, else the store app's own.</summary>
+    [ObservableProperty]
+    private bool _gameArt = true;
+
+    /// <summary><c>ui.game_art_tint</c> (beta.23, D61): the page's header band takes the artwork's colour, as far as its text stays readable.</summary>
+    [ObservableProperty]
+    private bool _gameArtTint = true;
+
     [ObservableProperty]
     private string _updateChannel = "stable";
 
@@ -491,6 +499,10 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     partial void OnOnlineMetadataChanged(bool value) => Persist(SettingsRegistry.PrivacyOnlineMetadata, value);
 
+    partial void OnGameArtChanged(bool value) => Persist(SettingsRegistry.UiGameArt, value);
+
+    partial void OnGameArtTintChanged(bool value) => Persist(SettingsRegistry.UiGameArtTint, value);
+
     partial void OnUpdateChannelChanged(string value) => Persist(SettingsRegistry.UpdateChannel, value);
 
     partial void OnPlayModeChanged(string value) => Persist(SettingsRegistry.UiPlayMode, value);
@@ -562,6 +574,8 @@ public sealed partial class SettingsViewModel : ObservableObject
             FpsTwoDecimals = await _settings.GetBooleanAsync(SettingsRegistry.UiFpsDecimals).ConfigureAwait(true);
             HideScrollBars = await _settings.GetBooleanAsync(SettingsRegistry.UiHideScrollBars).ConfigureAwait(true);
             OnlineMetadata = await _settings.GetBooleanAsync(SettingsRegistry.PrivacyOnlineMetadata).ConfigureAwait(true);
+            GameArt = await _settings.GetBooleanAsync(SettingsRegistry.UiGameArt).ConfigureAwait(true);
+            GameArtTint = await _settings.GetBooleanAsync(SettingsRegistry.UiGameArtTint).ConfigureAwait(true);
             UpdateChannel = await _settings.GetAsync(SettingsRegistry.UpdateChannel).ConfigureAwait(true);
             PlayMode = await _settings.GetAsync(SettingsRegistry.UiPlayMode).ConfigureAwait(true);
             AutoCheckUpdates = await _settings.GetBooleanAsync(SettingsRegistry.UpdateAutoCheck).ConfigureAwait(true);

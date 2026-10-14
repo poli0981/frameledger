@@ -27,6 +27,9 @@ companies, by any game's developer or publisher, or by any anti-cheat vendor, an
   into a game protected by them; the list says nothing else about them.
 - The games named in `docs/LIST_GAME_TESTED.md` are games the developer ran FrameLedger with, on one machine; the list is
   not a benchmark claim and not a recommendation.
+- **A game's artwork belongs to its owners.** FrameLedger ships none and downloads none: a game's page shows the image you
+  chose for it, or the cover and banner the Steam or GOG GALAXY app already keeps on your PC, read from where that app
+  keeps it and never copied (since 0.1.0-beta.23).
 
 ## The name FrameLedger
 

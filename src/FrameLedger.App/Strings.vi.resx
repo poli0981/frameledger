@@ -3246,4 +3246,55 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="Agent_Unanswered" xml:space="preserve">
     <value>Capture agent không trả lời, nên không biết việc này đã được thực hiện hay chưa. Hãy kiểm tra lại khi agent đã kết nối.</value>
   </data>
+  <data name="Settings_GameArt_Label" xml:space="preserve">
+    <value>Hiện ảnh của game</value>
+  </data>
+  <data name="Settings_GameArt_Body" xml:space="preserve">
+    <value>Trang của game hiện ảnh bạn đã chọn cho nó, nếu không có thì ảnh bìa và banner mà ứng dụng Steam hoặc GOG GALAXY lưu sẵn trên máy này. Không tải gì về.</value>
+  </data>
+  <data name="Settings_GameArtTint_Label" xml:space="preserve">
+    <value>Tô màu trang game theo ảnh</value>
+  </data>
+  <data name="Settings_GameArtTint_Body" xml:space="preserve">
+    <value>Dải đầu trang lấy màu chủ đạo của ảnh, không bao giờ đậm tới mức chữ trên đó khó đọc.</value>
+  </data>
+  <data name="Art_Source_Steam" xml:space="preserve">
+    <value>Ảnh từ ứng dụng Steam trên máy này</value>
+  </data>
+  <data name="Art_Source_Gog" xml:space="preserve">
+    <value>Ảnh từ ứng dụng GOG GALAXY trên máy này</value>
+  </data>
+  <data name="Art_Source_Yours" xml:space="preserve">
+    <value>Ảnh bạn đã chọn cho game này</value>
+  </data>
+  <data name="Art_Cover_Name" xml:space="preserve">
+    <value>Ảnh bìa</value>
+  </data>
+  <data name="Art_Banner_Name" xml:space="preserve">
+    <value>Ảnh banner</value>
+  </data>
+  <data name="Art_ImportFailed" xml:space="preserve">
+    <value>Không dùng được ảnh này: Windows không đọc được nó. Game giữ ảnh cũ.</value>
+  </data>
+  <data name="EditGame_Image" xml:space="preserve">
+    <value>Ảnh</value>
+  </data>
+  <data name="EditGame_ChooseImage" xml:space="preserve">
+    <value>Chọn ảnh…</value>
+  </data>
+  <data name="EditGame_UseStoreImage" xml:space="preserve">
+    <value>Dùng ảnh của store</value>
+  </data>
+  <data name="EditGame_ImageNone" xml:space="preserve">
+    <value>Không có ảnh</value>
+  </data>
+  <data name="EditGame_ImageNote" xml:space="preserve">
+    <value>Một bản sao được giữ trong thư mục dữ liệu của FrameLedger, nên tệp bạn chọn có thể dời đi hoặc xoá.</value>
+  </data>
+  <data name="ImagePicker_Title" xml:space="preserve">
+    <value>Chọn ảnh cho game</value>
+  </data>
+  <data name="ImagePicker_Filter" xml:space="preserve">
+    <value>Ảnh (*.png;*.jpg;*.jpeg;*.bmp;*.webp)|*.png;*.jpg;*.jpeg;*.bmp;*.webp</value>
+  </data>
 </root>

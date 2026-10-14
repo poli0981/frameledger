@@ -53,7 +53,10 @@ CREATE TABLE games (
   --   beta.20 renpy_vc_version; or the
   --   rule's extractor type); NULL for a version the user typed. Written with the version only (05_DETECTION §Engine version)
   publisher TEXT, game_version TEXT,
-  cover_path TEXT, notes TEXT,
+  cover_path TEXT, notes TEXT,                 -- cover_path: written since beta.23 (D60) — the image the user chose, as
+                                               --   covers\game-<id>-<unix ms>.png relative to the data folder (a PNG copy
+                                               --   <= 1200 px); followed only when it is one of those names under covers\
+                                               --   (a viewer's copy could name a share); NULL = the store app's own artwork
   removed_at INTEGER,                          -- schema 0002 (P3 PR-3): FR-1.4 "remove, keep sessions" — the row stays
                                                -- (sessions.game_id is NOT NULL, ON DELETE CASCADE) but leaves the
                                                -- library; a later launch of the same exe restores it (removed_at = NULL)
@@ -436,6 +439,8 @@ switch's rule); integers are invariant-culture within an inclusive range; choice
 | `ui.fps_decimals` | bool | `0` | | UI (beta.8, 2026-09-25): every FPS figure with two decimals ("62.40") instead of a whole number |
 | `ui.hide_scrollbars` | bool | `0` | | UI (beta.14, 2026-10-05): no scroll bar drawn anywhere; every scroller still scrolls with the wheel, the keyboard and touch (`App.Services.ScrollBarHiding`, `08_UI` §Settings) |
 | `ui.library_view` | choice `grid`\|`list` | `grid` | | UI (beta.11, 2026-10-03): the Games library as a grid of cards that fills the width, or as a list; written by the page's own switch, no Settings row (`08_UI` §Games) |
+| `ui.game_art` | bool | `1` | | UI (beta.23, owner decision D60): a game's page shows its artwork — the image the user chose, else what the Steam or GOG GALAXY app keeps on this PC; nothing is downloaded. Settings ▸ Games (`08_UI` §Games) |
+| `ui.game_art_tint` | bool | `1` | | UI (beta.23, owner decision D61): the page's header band takes the artwork's colour, at the strongest opacity that keeps its text readable. Settings ▸ Games |
 | `ui.play_mode` | choice `store`\|`direct` | `store` | | UI (beta.21, owner decision D59): what Play does — `store` hands the game to the app of the store whose own records name its folder, and the agent starts it where none does; `direct` has the agent start it (`LaunchGame`, launch mode). Settings ▸ Games (`08_UI` §Games) |
 | `capture.background` | bool | `1` | | ~~Agent~~ nobody *(corrected 2026-10-04: no Agent code ever read it, so the watcher recorded every tracked game whatever it said; beta.12 removed its switch from Settings and reserved the key — `SettingsRegistry.CaptureBackground`. Since beta.21 the App can start a game (Play), and the key stays reserved: a game Play starts is recorded as any other start)* |
 | `hooking.kill_switch` | bool | `0` | | Agent (FR-2.4, since P2 PR-F) |
