@@ -2810,6 +2810,7 @@ visual on this PC — and the remaining cost of the game page is its grid's rows
 one that grows with the data: 275 ms at 48 games, about 5.7 ms a card, so about 0.6 s at 100. Its grid is a
 non-virtualizing panel by decision (beta.11, `Controls/UniformWrapPanel`: cards an equal share of the width, each row as
 tall as its tallest card); a virtualizing one builds only the cards on screen but makes every card one height and the
-grid scroll under a fixed header — a change to how the page looks, offered to the owner instead of made here. Nor was a
+grid scroll under a fixed header — a change to how the page looks, offered to the owner instead of made here. *(The
+owner's answer, 2026-10-15: the library stays as it is.)* Nor was a
 schema migration added for an index on `sessions.started_at` (the Dashboard sorts the table): at the owner's 41 sessions
 it costs nothing measurable, and a new schema version locks the ledger out of every earlier build.

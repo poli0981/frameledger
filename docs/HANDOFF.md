@@ -2327,7 +2327,8 @@ On top of #308 (PR-1): #309 (the pages, measured first), #310 (the artwork), #31
 - **The pages' speed was judged by a bar written before the first measurement** (`spike-notes` §21): fix what keeps the
   UI thread busy 50 ms or more, can block on I/O, or grows with each visit. Recorded, not fixed: page builds of 85–370 ms,
   and **the library grid (275 ms at 48 games) — non-virtualizing by the beta.11 decision; a virtualizing one changes the
-  page's look, which is the owner's call**; no `sessions.started_at` index (a schema version locks out every earlier
+  page's look, which is the owner's call** *(answered 2026-10-15: it stays as it is — §After the release below)*; no
+  `sessions.started_at` index (a schema version locks out every earlier
   build, and nothing measured asked for it).
 - `LIST_GAME_TESTED`: the Everhex Demo row and the corrected Vulkan sentence, approved by the owner under D35.
 
@@ -2349,7 +2350,15 @@ On top of #308 (PR-1): #309 (the pages, measured first), #310 (the artwork), #31
 - **`Directory.Delete(…, recursive: true)` over a junction throws without elevation** (it asks Windows to unmount a
   volume, and the link is removed anyway): a test deletes its junction itself first.
 
-**Owner-only, added to the list below:** item 19.
+**Owner-only, added to the list below:** item 19 — **passed 2026-10-15**.
+
+**After the release (owner, 2026-10-15):** "Item 19 hiện đã đạt 100% yêu cầu. Phần chip sẽ đi kèm với phiên bản tiếp
+theo. Bạn có thể cập nhật và đóng phiên, thư viện vẫn giữ như cũ." — item 19 passed; the chip the release tree's local
+gate left goes with the next pre-release (`fl_guard`'s native-log test, red under load: after the stop, the last
+`UNHOOK_RESTORED` lines were not in the file within its 10-second wait — known since beta.9, and no native code changed
+in beta.23; green on the re-run); and **the library grid stays as it is**: the beta.11 decision
+(`Controls/UniformWrapPanel`, non-virtualizing — cards an equal share of the width, each row as tall as its tallest
+card) holds, at 275 ms for 48 games (`spike-notes` §21). Recorded with no release: nothing a user runs changed.
 
 ## Owner-only — no PR can close these
 
@@ -2486,14 +2495,16 @@ On top of #308 (PR-1): #309 (the pages, measured first), #310 (the artwork), #31
    string marked `review` (`Agent_Unanswered`). (b) Nothing else to run: the change answers a request the agent drops
    mid-way, which the tests make happen and a person can only meet by chance — if a notice ever says the capture agent
    did not answer, the page beside it shows what was stored.
-19. **beta.23 on real hardware.** (a) **Artwork:** open the page of a Steam game (one on the D: drive) and of a GOG game
-   — the banner, the cover beside the name, the band's colour; an itch game shows none. With a page open, switch Dark →
-   Light → Dark: the band changes with the theme and every text on it stays readable. (b) **Your own image:** *Edit… ▸
-   Choose image…* then Save — the page shows it; *Edit… ▸ Use the store's image* — the store's again; choosing an image
-   and pressing Cancel leaves nothing new in `%LOCALAPPDATA%\FrameLedger\covers`. (c) **Settings ▸ Games:** *Show game
-   artwork* and *Colour the game page from its artwork* off, then on. (d) **Speed:** open WALTO's page and choose its
-   longest session, switch the page's tabs; visit the Dashboard a few times, then end a session — one "Session saved".
-   (e) The Privacy Policy 2.11 is shown once after the update. (f) The `ja` strings marked `review`.
+19. ~~**beta.23 on real hardware.**~~ **Passed 2026-10-15** — the owner: "Item 19 hiện đã đạt 100% yêu cầu" (the item
+   met every requirement). *(The item as written:)* (a) **Artwork:** open the page of a Steam game (one on the D: drive)
+   and of a GOG game — the banner, the cover beside the name, the band's colour; an itch game shows none. With a page
+   open, switch Dark → Light → Dark: the band changes with the theme and every text on it stays readable. (b) **Your own
+   image:** *Edit… ▸ Choose image…* then Save — the page shows it; *Edit… ▸ Use the store's image* — the store's again;
+   choosing an image and pressing Cancel leaves nothing new in `%LOCALAPPDATA%\FrameLedger\covers`. (c) **Settings ▸
+   Games:** *Show game artwork* and *Colour the game page from its artwork* off, then on. (d) **Speed:** open WALTO's
+   page and choose its longest session, switch the page's tabs; visit the Dashboard a few times, then end a session —
+   one "Session saved". (e) The Privacy Policy 2.11 is shown once after the update. (f) The `ja` strings marked
+   `review`.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
