@@ -28,6 +28,17 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+## [0.1.0-beta.23] - 2026-10-14
+
+**The twenty-third pre-release: a game's artwork on its page, in a band that takes the picture's colour, and pages
+that open and change session without freezing.** The same unsigned installer: verify its hash against
+`SHA256SUMS.txt`, then *More info → Run anyway*.
+
+**Updating from `0.1.0-beta.22`:** Help ▸ Check for updates, then *Restart to update* with no game running. The
+Privacy Policy (2.11) is shown once for you to accept. No game is read again: the detection rules (`2026.10.4`) are
+beta.22's. The artwork shows by itself for the games Steam or GOG GALAXY installed; **Settings ▸ Games** turns it, or
+its colour, off.
+
 ### Added
 
 - **A game's page shows its artwork** (owner request 2026-10-14, decisions D60/D61). At the top of the page: the
