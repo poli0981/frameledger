@@ -2277,7 +2277,7 @@ Privacy Policy 2.10 — then the release.*
 
 **Owner-only, added to the list below:** item 17.
 
-## **START HERE** — 2026-10-13, 0.1.0-beta.22: a request the capture agent never answered
+## ~~**START HERE**~~ — 2026-10-13, 0.1.0-beta.22: a request the capture agent never answered *(struck 2026-10-14: the head is §beta.23 below)*
 
 *Status is `CHANGELOG.md` `[0.1.0-beta.22]`; this is what no other file carries.* The owner, during the beta.21
 train: "Bạn xử lý chip thành 1 pr mới sau release và thành 1 phiên bản mới nhé" — the chip beta.21's review of Play
@@ -2304,6 +2304,52 @@ cần), cập nhật, rồi đóng phiên nhé" — items 16, 17 and 18 passed; 
 hammering-writer guard, red on a correct ring) became beta.23 PR-1, #308: both concurrency cases guard on drains that
 overlapped the writer (§Traps, the native-test entry). Merged for the next pre-release; no release, since nothing a
 user runs changed.
+
+## **START HERE** — 2026-10-14, 0.1.0-beta.23: a game's artwork, pages that do not freeze, the documents that drifted
+
+*Status is `CHANGELOG.md` `[0.1.0-beta.23]`; this is what no other file carries.* The owner, 2026-10-14: "Bạn phân tích
+và lên plan cho phần tiếp theo gồm những nội dung sau: 1. Thêm ảnh bìa/hero/cover của game từ các nền tảng đó - Đặt trong
+detail của game. (Nếu được); Tuỳ chọn: có thể sync màu cùa cover với màu của detail; 2. Cập nhật, sync docs; 3. Kiểm tra
+hiệu suất khi chuyển giữa các tab (nếu có vấn đề hiệu năng)" — then the whole train to the release without asking again.
+On top of #308 (PR-1): #309 (the pages, measured first), #310 (the artwork), #311 (the drift), then this release.
+
+**Decisions:**
+
+- **D60 — a game's artwork is what is already on the PC.** The image the user chose (*Edit… ▸ Choose image…*), else
+  what the Steam or GOG GALAXY app keeps for the game it installed — found through the stores' own records as Play finds
+  them (`StoreRecords.Owning`, never the row's platform alone). Nothing is downloaded: `privacy.online_metadata` stays
+  reserved. A chosen image is a PNG copy, `<data>\covers\game-<id>-<unix ms>.png`, named relative in `cover_path`; only
+  those names are followed — never a rooted, share or `..` path, never through a junction or a symbolic link, because a
+  viewer's copy of a ledger may come from anywhere (D52).
+- **D61 — the band takes the artwork's colour as far as every text on it reads**: primary and secondary 4.5:1, tertiary
+  3:1, the pills' and the warning's text 4.5:1 on their own fills; at most 30 % on the dark theme, 22 % on the light. On
+  by default (the owner's choice); never in high contrast; it follows a theme switch by resource reference.
+- **The pages' speed was judged by a bar written before the first measurement** (`spike-notes` §21): fix what keeps the
+  UI thread busy 50 ms or more, can block on I/O, or grows with each visit. Recorded, not fixed: page builds of 85–370 ms,
+  and **the library grid (275 ms at 48 games) — non-virtualizing by the beta.11 decision; a virtualizing one changes the
+  page's look, which is the owner's call**; no `sessions.started_at` index (a schema version locks out every earlier
+  build, and nothing measured asked for it).
+- `LIST_GAME_TESTED`: the Everhex Demo row and the corrected Vulkan sentence, approved by the owner under D35.
+
+**Traps met on the way:**
+
+- **Microsoft.Data.Sqlite completes its "async" calls synchronously**: after a ledger read, `ConfigureAwait(false)` is
+  still on the UI thread — the session decode, the sorts and the stutter detection all ran there (`16_WPFUI_SYNTAX`
+  §Gotchas).
+- **A transient view model that is `IDisposable` lives until the App exits** (the root container keeps it), and every
+  Dashboard ever opened stayed subscribed. FR-3.8's "Session saved" lived in that view model and reached every page only
+  through the leak — it is `Services.SessionNotices` now.
+- **A `ui:Image` given a `Style` of its own that is not based on `DefaultImageStyle` has no template** and draws nothing
+  in the place it takes. Only a render showed it; `AccessibilityTests.NoStyleOfAWpfUiControlLeavesOutItsTemplate`
+  refuses it now.
+- **A page just navigated to is mid-fade**: a `RenderTargetBitmap` of it reads every colour washed out unless the
+  presenter's `Transition` is `None`.
+- **The Bash tool's heredocs halve backslashes**: `covers\game-` became an invalid C# escape, and `\r\n` in a Python
+  heredoc became real line breaks. Write such files with the editor tools.
+- **`Directory.Delete(…, recursive: true)` over a junction throws without elevation** (it asks Windows to unmount a
+  volume, and the link is removed anyway): a test deletes its junction itself first.
+
+**Owner-only, added to the list below:** item 19.
 
 ## Owner-only — no PR can close these
 
@@ -2440,6 +2486,14 @@ user runs changed.
    string marked `review` (`Agent_Unanswered`). (b) Nothing else to run: the change answers a request the agent drops
    mid-way, which the tests make happen and a person can only meet by chance — if a notice ever says the capture agent
    did not answer, the page beside it shows what was stored.
+19. **beta.23 on real hardware.** (a) **Artwork:** open the page of a Steam game (one on the D: drive) and of a GOG game
+   — the banner, the cover beside the name, the band's colour; an itch game shows none. With a page open, switch Dark →
+   Light → Dark: the band changes with the theme and every text on it stays readable. (b) **Your own image:** *Edit… ▸
+   Choose image…* then Save — the page shows it; *Edit… ▸ Use the store's image* — the store's again; choosing an image
+   and pressing Cancel leaves nothing new in `%LOCALAPPDATA%\FrameLedger\covers`. (c) **Settings ▸ Games:** *Show game
+   artwork* and *Colour the game page from its artwork* off, then on. (d) **Speed:** open WALTO's page and choose its
+   longest session, switch the page's tabs; visit the Dashboard a few times, then end a session — one "Session saved".
+   (e) The Privacy Policy 2.11 is shown once after the update. (f) The `ja` strings marked `review`.
 
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
