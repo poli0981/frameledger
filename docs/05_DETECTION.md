@@ -318,6 +318,14 @@ engine compiled only, reads as not found. One Ren'Py install was measured.
 | itch.io | `.itch\receipt.json.gz` | **`%APPDATA%\itch\db\butler.db`** (`install_locations` + `caves`, butler's `verdict` names the executable) since 2026-09-16, then the receipt JSON: title, id |
 | None/Manual | fallback | PE VersionInfo |
 
+> **The stores' artwork on this PC (beta.23, owner decision D60).** A game's page shows the cover and banner the Steam and
+> GOG GALAXY apps already keep — Steam's `appcache\librarycache\<appid>\` (files flat or in hash-named folders), GOG
+> GALAXY's `webcache\<user>\gog\<productId>\` — found for the store whose own records own the game's folder
+> (`StoreRecords.Owning`, as Play finds it). `Infrastructure.Art.SteamArtCache` and `GogArtCache` read them; nothing is
+> downloaded, so the *(opt-in)* online lookup in the publisher/version order below still does not exist. Epic, itch and
+> other stores keep no image files: their games show the image the user chooses, or none. The detail: `08_UI` §Games ›
+> Game detail, *The header's cover*.
+
 **Auto-import (FR-1.2):** Steam via `libraryfolders.vdf` → all `appmanifest_*.acf` except `SteamLibrarySource.KnownTools` (2026-09-22: Steamworks Common Redistributables, Borderless Gaming, Wallpaper Engine, SteamVR, the Proton and Steam Linux Runtime entries, Blender — tools Steam's manifests do not distinguish from games, and which became library rows the watcher recorded); GOG via `HKLM\SOFTWARE\WOW6432Node\GOG.com\Games\*`; Epic via `Manifests\*.item`; itch by receipt scan. Import presents a review checklist; nothing is launched, nothing is hooked on import.
 
 > **Built 2026-09-14 (P4 PR-4).** `Application.Import.LibraryImporter` over four `IStoreLibrarySource` adapters in

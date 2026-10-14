@@ -79,7 +79,8 @@ harness, run `hook-harness.exe --real --hold-presenting N`, then the Agent's `--
 SQLite's online backup, which is consistent while the Agent writes — in Python,
 `sqlite3.connect("file:C:/Users/<you>/AppData/Local/FrameLedger/ledger.db?mode=ro", uri=True).backup(sqlite3.connect(r"<copy>\ledger.db"))`
 — or copy the whole folder with every FrameLedger process stopped
-(closing the App does not stop the Agent). The App opens the copy, migrating it if your build is newer, which is exactly
+(closing the App does not stop the Agent). A copy of the database alone has no `covers\`: the games whose image the user
+chose show the store's artwork instead (beta.23), and choosing one in the viewer writes into the copy's own `covers\`. The App opens the copy, migrating it if your build is newer, which is exactly
 why it must be a copy, and writes its log and crash dumps beside it. It is a viewer: no Agent is started or contacted and
 nothing on the PC is changed (`08_UI` §Shell). It refuses the profile's own folder however it is spelled, and a folder
 that does not exist.

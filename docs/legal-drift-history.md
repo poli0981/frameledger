@@ -63,6 +63,15 @@ are kept because they record what each version changed and why (owner decision D
 >
 > Version 2.5 (2026-09-27, 0.1.0-beta.10) adds how a tracked game's window is shown — read from Windows — and the engine build name read from an Unreal Engine game's executable. It is also the first version to say two things the software already did: it reads the **content** of a library game's executable (markers in its first 8 MB and its import table, since the detection of engines and features; and, when a session starts, the graphics-library markers in the whole file), and it reads the processor load and the memory in use (since 0.1.0-beta.3). Nothing here leaves your device, as before.
 
+### What version 2.11 of the Privacy Policy changed (0.1.0-beta.23)
+
+A game's page shows its artwork (beta.23 PR-3, owner decisions D60/D61; the wording approved with the plan). §1 adds the
+images a user chooses for a game, kept as a copy in the data folder's `covers` folder and deleted when the store's image
+is chosen again or the game is removed with its sessions. §4 adds the cover and banner images the Steam and GOG GALAXY apps
+keep on the disk for a library game, read to show them on its page and never copied or sent, and says that Steam's and
+GOG GALAXY's lists of installed games are now also read when a game's page opens, to find that artwork. §2 is unchanged:
+nothing is downloaded, and the software still looks nothing up on any store. Nothing here leaves your device, as before.
+
 ### What version 2.10 of the Privacy Policy changed (0.1.0-beta.21)
 
 §4 names the lists of installed games the Steam, GOG GALAXY, Epic Games and itch apps keep on the disk, and where GOG

@@ -80,6 +80,12 @@ public static class Strings
         nameof(Arch_Unknown),
         nameof(Arch_X64),
         nameof(Arch_X86),
+        nameof(Art_Banner_Name),
+        nameof(Art_Cover_Name),
+        nameof(Art_ImportFailed),
+        nameof(Art_Source_Gog),
+        nameof(Art_Source_Steam),
+        nameof(Art_Source_Yours),
         nameof(Blocked_Directory_Format),
         nameof(Blocked_Executable_Format),
         nameof(Blocked_File_Format),
@@ -260,13 +266,18 @@ public static class Strings
         nameof(Display_WindowOnMonitorHz_Format),
         nameof(Document_OnGitHub),
         nameof(Document_Pages),
+        nameof(EditGame_ChooseImage),
         nameof(EditGame_Detected),
+        nameof(EditGame_Image),
+        nameof(EditGame_ImageNone),
+        nameof(EditGame_ImageNote),
         nameof(EditGame_Name),
         nameof(EditGame_Notes),
         nameof(EditGame_Publisher),
         nameof(EditGame_Save),
         nameof(EditGame_Saved),
         nameof(EditGame_Title),
+        nameof(EditGame_UseStoreImage),
         nameof(EditGame_Version),
         nameof(End_AttachRefused),
         nameof(End_ExecutableUnreadable),
@@ -556,6 +567,8 @@ public static class Strings
         nameof(Guard_TargetIsWow64),
         nameof(Guide_Title),
         nameof(Hooking_NotX64_Format),
+        nameof(ImagePicker_Filter),
+        nameof(ImagePicker_Title),
         nameof(Import_Add),
         nameof(Import_Column_Exe),
         nameof(Import_Column_Name),
@@ -836,6 +849,10 @@ public static class Strings
         nameof(Settings_Exceptions_Withdraw),
         nameof(Settings_FpsDecimals_Body),
         nameof(Settings_FpsDecimals_Label),
+        nameof(Settings_GameArt_Body),
+        nameof(Settings_GameArt_Label),
+        nameof(Settings_GameArtTint_Body),
+        nameof(Settings_GameArtTint_Label),
         nameof(Settings_Games_Header),
         nameof(Settings_Header),
         nameof(Settings_HideAntiCheatHooking_Body),
@@ -1205,6 +1222,18 @@ public static class Strings
 
     public static string Arch_X86 => ResourceManager.GetString(nameof(Arch_X86), Culture) ?? nameof(Arch_X86);
 
+    public static string Art_Banner_Name => ResourceManager.GetString(nameof(Art_Banner_Name), Culture) ?? nameof(Art_Banner_Name);
+
+    public static string Art_Cover_Name => ResourceManager.GetString(nameof(Art_Cover_Name), Culture) ?? nameof(Art_Cover_Name);
+
+    public static string Art_ImportFailed => ResourceManager.GetString(nameof(Art_ImportFailed), Culture) ?? nameof(Art_ImportFailed);
+
+    public static string Art_Source_Gog => ResourceManager.GetString(nameof(Art_Source_Gog), Culture) ?? nameof(Art_Source_Gog);
+
+    public static string Art_Source_Steam => ResourceManager.GetString(nameof(Art_Source_Steam), Culture) ?? nameof(Art_Source_Steam);
+
+    public static string Art_Source_Yours => ResourceManager.GetString(nameof(Art_Source_Yours), Culture) ?? nameof(Art_Source_Yours);
+
     public static string Blocked_Directory_Format => ResourceManager.GetString(nameof(Blocked_Directory_Format), Culture) ?? nameof(Blocked_Directory_Format);
 
     public static string Blocked_Executable_Format => ResourceManager.GetString(nameof(Blocked_Executable_Format), Culture) ?? nameof(Blocked_Executable_Format);
@@ -1565,7 +1594,15 @@ public static class Strings
 
     public static string Document_Pages => ResourceManager.GetString(nameof(Document_Pages), Culture) ?? nameof(Document_Pages);
 
+    public static string EditGame_ChooseImage => ResourceManager.GetString(nameof(EditGame_ChooseImage), Culture) ?? nameof(EditGame_ChooseImage);
+
     public static string EditGame_Detected => ResourceManager.GetString(nameof(EditGame_Detected), Culture) ?? nameof(EditGame_Detected);
+
+    public static string EditGame_Image => ResourceManager.GetString(nameof(EditGame_Image), Culture) ?? nameof(EditGame_Image);
+
+    public static string EditGame_ImageNone => ResourceManager.GetString(nameof(EditGame_ImageNone), Culture) ?? nameof(EditGame_ImageNone);
+
+    public static string EditGame_ImageNote => ResourceManager.GetString(nameof(EditGame_ImageNote), Culture) ?? nameof(EditGame_ImageNote);
 
     public static string EditGame_Name => ResourceManager.GetString(nameof(EditGame_Name), Culture) ?? nameof(EditGame_Name);
 
@@ -1578,6 +1615,8 @@ public static class Strings
     public static string EditGame_Saved => ResourceManager.GetString(nameof(EditGame_Saved), Culture) ?? nameof(EditGame_Saved);
 
     public static string EditGame_Title => ResourceManager.GetString(nameof(EditGame_Title), Culture) ?? nameof(EditGame_Title);
+
+    public static string EditGame_UseStoreImage => ResourceManager.GetString(nameof(EditGame_UseStoreImage), Culture) ?? nameof(EditGame_UseStoreImage);
 
     public static string EditGame_Version => ResourceManager.GetString(nameof(EditGame_Version), Culture) ?? nameof(EditGame_Version);
 
@@ -2157,6 +2196,10 @@ public static class Strings
 
     public static string Hooking_NotX64_Format => ResourceManager.GetString(nameof(Hooking_NotX64_Format), Culture) ?? nameof(Hooking_NotX64_Format);
 
+    public static string ImagePicker_Filter => ResourceManager.GetString(nameof(ImagePicker_Filter), Culture) ?? nameof(ImagePicker_Filter);
+
+    public static string ImagePicker_Title => ResourceManager.GetString(nameof(ImagePicker_Title), Culture) ?? nameof(ImagePicker_Title);
+
     public static string Import_Add => ResourceManager.GetString(nameof(Import_Add), Culture) ?? nameof(Import_Add);
 
     public static string Import_Column_Exe => ResourceManager.GetString(nameof(Import_Column_Exe), Culture) ?? nameof(Import_Column_Exe);
@@ -2716,6 +2759,14 @@ public static class Strings
     public static string Settings_FpsDecimals_Body => ResourceManager.GetString(nameof(Settings_FpsDecimals_Body), Culture) ?? nameof(Settings_FpsDecimals_Body);
 
     public static string Settings_FpsDecimals_Label => ResourceManager.GetString(nameof(Settings_FpsDecimals_Label), Culture) ?? nameof(Settings_FpsDecimals_Label);
+
+    public static string Settings_GameArt_Body => ResourceManager.GetString(nameof(Settings_GameArt_Body), Culture) ?? nameof(Settings_GameArt_Body);
+
+    public static string Settings_GameArt_Label => ResourceManager.GetString(nameof(Settings_GameArt_Label), Culture) ?? nameof(Settings_GameArt_Label);
+
+    public static string Settings_GameArtTint_Body => ResourceManager.GetString(nameof(Settings_GameArtTint_Body), Culture) ?? nameof(Settings_GameArtTint_Body);
+
+    public static string Settings_GameArtTint_Label => ResourceManager.GetString(nameof(Settings_GameArtTint_Label), Culture) ?? nameof(Settings_GameArtTint_Label);
 
     public static string Settings_Games_Header => ResourceManager.GetString(nameof(Settings_Games_Header), Culture) ?? nameof(Settings_Games_Header);
 

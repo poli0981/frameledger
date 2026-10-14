@@ -316,6 +316,27 @@
                           SelectedValue="{Binding ViewModel.PlayMode, Mode=TwoWay}"
                           SelectedValuePath="Value" />
             </ui:CardControl>
+            <!-- beta.23 (owner decisions D60/D61): a game page's artwork — local files only, nothing downloaded — and its colour. -->
+            <ui:CardControl Margin="0,8,0,0" Icon="{ui:SymbolIcon Image24}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_GameArt_Label}" />
+                        <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" TextWrapping="Wrap"
+                                      Text="{x:Static res:Strings.Settings_GameArt_Body}" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_GameArt_Label}" IsChecked="{Binding ViewModel.GameArt, Mode=TwoWay}" />
+            </ui:CardControl>
+            <ui:CardControl Margin="0,8,0,0" Icon="{ui:SymbolIcon ColorBackground24}" IsEnabled="{Binding ViewModel.GameArt}">
+                <ui:CardControl.Header>
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_GameArtTint_Label}" />
+                        <ui:TextBlock MaxWidth="520" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" TextWrapping="Wrap"
+                                      Text="{x:Static res:Strings.Settings_GameArtTint_Body}" />
+                    </StackPanel>
+                </ui:CardControl.Header>
+                <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_GameArtTint_Label}" IsChecked="{Binding ViewModel.GameArtTint, Mode=TwoWay}" />
+            </ui:CardControl>
 
             <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Window_Header}" />
             <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Power24}">

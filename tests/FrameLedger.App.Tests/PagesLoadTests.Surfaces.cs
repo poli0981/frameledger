@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using System.IO;
 using System.Windows;
 using FrameLedger.App.Charts;
 using FrameLedger.App.Controls;
@@ -86,8 +87,19 @@ public sealed partial class PagesLoadTests
             Games = new GamesViewModel(s.Library, selection, nav, new AddGameFlow(s.Library, new NoPicker(), selection, nav, strip));
             Task pending2 = Games.Pending;
             await pending2.ConfigureAwait(false);
+            // beta.23 (D60/D61): the game page with artwork — a banner and a saturated cover — so every text on the tinted band is
+            // measured in both themes and through a switch; the store app's folder is one this test draws.
+            string artDirectory = Path.Combine(Path.GetTempPath(), "fl-surfaces-art-" + Guid.NewGuid().ToString("N"));
+            Own(new DeletesOnDispose(artDirectory));
+            GameRow game = (await s.Games.FindByIdAsync(gameId).ConfigureAwait(false))!;
+            string cover = TestImages.Write(Path.Combine(artDirectory, "library_600x900.jpg"), TestImages.Png(30, 45, System.Windows.Media.Color.FromRgb(230, 200, 20)));
+            string hero = TestImages.Write(Path.Combine(artDirectory, "library_hero.jpg"), TestImages.Png(96, 31, System.Windows.Media.Color.FromRgb(30, 60, 210)));
+            var art = new GameArt(new RegisteredSettings(new MemorySettings()),
+                new StoreRecordsReader([new TestImages.Store("steam", new Application.Import.StoreGame("steam", "374320", "Alpha", Path.GetDirectoryName(game.Fingerprint.ExePath)!, null, null))]),
+                [new TestImages.ArtCache("steam", "374320", new Application.Art.GameArtFiles(cover, hero, null))],
+                new UiMode(false, artDirectory));
             Detail = new GameDetailViewModel(s.Library, selection, consent, nav, new NoConfirm(), new NoEdit(), strip, new NoSummaries(),
-                new SessionSeriesLoader(s.Sessions), new SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(), new NoPicker());
+                new SessionSeriesLoader(s.Sessions), new SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(), new NoPicker(), art: art);
             Task pending3 = Detail.Pending;
             await pending3.ConfigureAwait(false);
             Compare = new CompareViewModel(s.Library, new SessionSeriesLoader(s.Sessions), new NoMixed(), new NoSaver(), strip);
@@ -130,6 +142,11 @@ public sealed partial class PagesLoadTests
             ("Bug report preview", () => new BugReportPreviewContent(new BugReportPreviewViewModel(new BugReportPreviewModel(@"C:\data\bug-report.zip",
                 ["logs/ui-20261007.log", "system.txt"], new Uri("https://github.com/poli0981/frameledger/issues/new"), "## What happened")))),
             ("Edit game", () => new EditGameContent(new EditGameViewModel(new GameMetadata { Name = "Alpha" }, provenanceJson: null))),
+            // beta.23 (D60): the image row, with no image (its caption shows) and with the user's own (the store's button shows).
+            ("Edit game, no image", () => new EditGameContent(new EditGameViewModel(new GameMetadata { Name = "Alpha" }, provenanceJson: null,
+                new EditImage(null, CurrentIsOwn: false, null, new NoImages(), static _ => Task.FromResult<System.Windows.Media.ImageSource?>(null))))),
+            ("Edit game, own image", () => new EditGameContent(new EditGameViewModel(new GameMetadata { Name = "Alpha" }, provenanceJson: null,
+                new EditImage(Detail.ArtCover, CurrentIsOwn: true, Detail.ArtCover, new NoImages(), static _ => Task.FromResult<System.Windows.Media.ImageSource?>(null))))),
             ("Override", () => new TriStateOverrideContent(new TriStateOverrideViewModel(new TriStateChipModel("RT", Tri.Yes, TriStateSource.Measured)))),
             ("Bug bundle options", () => new BugBundleOptionsContent(new BugBundleOptionsViewModel(new BugBundleOffer(
                 new CrashDumpInfo(@"C:\data\crashdumps\ui-20261007-010203-42.dmp", DateTimeOffset.UtcNow, 2 * 1024 * 1024), new LastSessionInfo(1, "Alpha", DateTimeOffset.UtcNow))))),
@@ -166,6 +183,21 @@ public sealed partial class PagesLoadTests
         {
             _owned.Add(disposable);
             return disposable;
+        }
+    }
+
+    /// <summary>A folder the test made, deleted with the surfaces.</summary>
+    private sealed class DeletesOnDispose(string directory) : IDisposable
+    {
+        public void Dispose()
+        {
+            try
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+            }
         }
     }
 }

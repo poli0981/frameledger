@@ -3251,4 +3251,55 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="Agent_Unanswered" xml:space="preserve">
     <value>The capture agent did not answer, so whether this was done is not known. Check again once it is connected.</value>
   </data>
+  <data name="Settings_GameArt_Label" xml:space="preserve">
+    <value>Show game artwork</value>
+  </data>
+  <data name="Settings_GameArt_Body" xml:space="preserve">
+    <value>A game's page shows the image you chose for it, or else the cover and banner the Steam or GOG GALAXY app keeps on this PC. Nothing is downloaded.</value>
+  </data>
+  <data name="Settings_GameArtTint_Label" xml:space="preserve">
+    <value>Colour the game page from its artwork</value>
+  </data>
+  <data name="Settings_GameArtTint_Body" xml:space="preserve">
+    <value>The band at the top of the page takes the artwork's main colour, never so strongly that a text on it stops being easy to read.</value>
+  </data>
+  <data name="Art_Source_Steam" xml:space="preserve">
+    <value>Artwork from the Steam app on this PC</value>
+  </data>
+  <data name="Art_Source_Gog" xml:space="preserve">
+    <value>Artwork from the GOG GALAXY app on this PC</value>
+  </data>
+  <data name="Art_Source_Yours" xml:space="preserve">
+    <value>The image you chose for this game</value>
+  </data>
+  <data name="Art_Cover_Name" xml:space="preserve">
+    <value>Cover art</value>
+  </data>
+  <data name="Art_Banner_Name" xml:space="preserve">
+    <value>Banner art</value>
+  </data>
+  <data name="Art_ImportFailed" xml:space="preserve">
+    <value>The image could not be used: Windows cannot read it. The game keeps the image it had.</value>
+  </data>
+  <data name="EditGame_Image" xml:space="preserve">
+    <value>Image</value>
+  </data>
+  <data name="EditGame_ChooseImage" xml:space="preserve">
+    <value>Choose image…</value>
+  </data>
+  <data name="EditGame_UseStoreImage" xml:space="preserve">
+    <value>Use the store's image</value>
+  </data>
+  <data name="EditGame_ImageNone" xml:space="preserve">
+    <value>No image</value>
+  </data>
+  <data name="EditGame_ImageNote" xml:space="preserve">
+    <value>A copy is kept in FrameLedger's data folder, so the file you pick can move or go.</value>
+  </data>
+  <data name="ImagePicker_Title" xml:space="preserve">
+    <value>Choose an image for the game</value>
+  </data>
+  <data name="ImagePicker_Filter" xml:space="preserve">
+    <value>Images (*.png;*.jpg;*.jpeg;*.bmp;*.webp)|*.png;*.jpg;*.jpeg;*.bmp;*.webp</value>
+  </data>
 </root>

@@ -104,6 +104,29 @@ public static class SettingsRegistry
     };
 
     /// <summary>
+    /// Whether a game's page shows its artwork (beta.23, owner decision D60): the image the user chose for it, else the one
+    /// the app of the store that installed it keeps on this PC — Steam's and GOG GALAXY's; nothing is downloaded. On by
+    /// default. Settings ▸ Games; the Agent never reads it.
+    /// </summary>
+    public static readonly SettingDefinition UiGameArt = new()
+    {
+        Key = "ui.game_art",
+        Kind = SettingKind.Boolean,
+        Default = "1",
+    };
+
+    /// <summary>
+    /// Whether the band at the top of a game's page takes the colour of its artwork (beta.23, owner decision D61), at the
+    /// strongest opacity that keeps every text on it readable. On by default (owner's choice). Settings ▸ Games.
+    /// </summary>
+    public static readonly SettingDefinition UiGameArtTint = new()
+    {
+        Key = "ui.game_art_tint",
+        Kind = SettingKind.Boolean,
+        Default = "1",
+    };
+
+    /// <summary>
     /// Whether the Agent's watcher records tracked games that the App did not launch (FR-3.1/FR-3.3). <b>Reserved since
     /// beta.12:</b> the App showed a switch for it ("Record games launched outside FrameLedger") and no Agent code ever read
     /// it, so turning it off recorded every game anyway; and the App had no way to start a game, so "off" could only have
@@ -245,7 +268,7 @@ public static class SettingsRegistry
     public static IReadOnlyList<SettingDefinition> All { get; } =
     [
         UiLanguage, UiTheme, UiStartWithWindows, UiMinimizeToTray, UiHideAntiCheatHooking, UiFpsDecimals, UiHideScrollBars, UiLibraryView, UiPlayMode,
-        CaptureBackground, HookingKillSwitch, HookingUserModeExceptions, CaptureRunElevated, CaptureMinSessionSeconds, TelemetryIntervalMs, RetentionRawSessionsPerGame,
+        UiGameArt, UiGameArtTint, CaptureBackground, HookingKillSwitch, HookingUserModeExceptions, CaptureRunElevated, CaptureMinSessionSeconds, TelemetryIntervalMs, RetentionRawSessionsPerGame,
         RetentionRemoveUninstalledGames, UpdateChannel, UpdateAutoCheck, PrivacyOnlineMetadata, LogDebug,
     ];
 

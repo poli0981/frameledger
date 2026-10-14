@@ -135,7 +135,8 @@ logs\ui-*.log, agent-*.log, overlay-<pid>-*.log   (native log flushed at session
 crashdumps\*.dmp
 breadcrumbs\<pid>.json       (corrected 2026-10-04: never created — the breadcrumb is the .partial file's header and notes)
 tmp\<sessionGuid>.partial    crash-safety flush of raw buffers, every 60 s (04_CAPTURE §Ring draining)
-covers\*.jpg                 (corrected 2026-10-04: never created — nothing writes games.cover_path)
+covers\game-<id>-<ms>.png    the images users chose for their games (beta.23, D60) — ~~covers\*.jpg, never created~~;
+                             a store app's own artwork is shown from where that app keeps it, never copied here
 ```
 
 *(beta.15, D52: `FrameLedger.exe --data-dir <folder>` reads a COPY of this folder instead — a viewer that starts and

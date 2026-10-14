@@ -70,9 +70,12 @@ stopped, hooking turned off — each with one button that only says you have rea
 
 ## A game's page
 
-- **At the top:** the name, publisher, version, store and engine, the `.exe` path, the last session, the last measured
-  session's frame rate and its ray-tracing chips. **Play** starts the game: through the store that installed it, or
-  directly — **Settings ▸ Games ▸ Play button** chooses. **Edit…** changes the name, publisher, version and notes. **Change
+- **At the top:** the game's picture — a banner and its cover, from the Steam or GOG GALAXY app on your PC or the image
+  you chose — in a band that takes the picture's colour; then the name, publisher, version, store and engine, the `.exe`
+  path, the last session, the last measured session's frame rate and its ray-tracing chips. A game with no picture shows
+  none (**Settings ▸ Games** turns the picture and its colour off). **Play** starts the game: through the store that
+  installed it, or directly — **Settings ▸ Games ▸ Play button** chooses. **Edit…** changes the name, publisher, version
+  and notes, and the picture: **Choose image…** (kept as a copy once you save) or **Use the store's image**. **Change
   executable…** points the entry at another `.exe` and turns hooking back off; its file dialog opens in the game's own
   folder. **Remove…** asks whether to keep the game's sessions.
 - **Recording** — off, FrameLedger ignores the program completely: for a launcher or a tool that is not a game.

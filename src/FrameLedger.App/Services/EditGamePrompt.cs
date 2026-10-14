@@ -17,9 +17,9 @@ public sealed class EditGamePrompt : IEditGamePrompt
 
     public EditGamePrompt(IContentDialogService dialogs) => _dialogs = dialogs ?? throw new ArgumentNullException(nameof(dialogs));
 
-    public async Task<GameMetadata?> EditAsync(GameMetadata current, string? provenanceJson, CancellationToken ct = default)
+    public async Task<GameEdit?> EditAsync(GameMetadata current, string? provenanceJson, EditImage? image = null, CancellationToken ct = default)
     {
-        var viewModel = new EditGameViewModel(current, provenanceJson);
+        var viewModel = new EditGameViewModel(current, provenanceJson, image);
         var dialog = new ContentDialog
         {
             Title = EditGameViewModel.Title,
@@ -31,6 +31,6 @@ public sealed class EditGamePrompt : IEditGamePrompt
         _ = dialog.SetBinding(ContentDialog.IsPrimaryButtonEnabledProperty, new Binding(nameof(EditGameViewModel.CanSave)) { Source = viewModel, Mode = BindingMode.OneWay });
 
         ContentDialogResult result = await _dialogs.ShowAsync(dialog, ct).ConfigureAwait(true);
-        return result == ContentDialogResult.Primary && viewModel.CanSave ? viewModel.Result() : null;
+        return result == ContentDialogResult.Primary && viewModel.CanSave ? viewModel.Edit() : null;
     }
 }

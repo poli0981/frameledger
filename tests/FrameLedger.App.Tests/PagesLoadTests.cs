@@ -3,6 +3,7 @@
 
 using System.IO;
 using System.Windows;
+using System.Windows.Automation;
 using FluentAssertions;
 using FrameLedger.App.Charts;
 using FrameLedger.App.Controls;
@@ -82,7 +83,7 @@ public sealed partial class PagesLoadTests
 
     private sealed class NoEdit : IEditGamePrompt
     {
-        public Task<GameMetadata?> EditAsync(GameMetadata current, string? provenanceJson, CancellationToken ct = default) => Task.FromResult<GameMetadata?>(null);
+        public Task<GameEdit?> EditAsync(GameMetadata current, string? provenanceJson, EditImage? image = null, CancellationToken ct = default) => Task.FromResult<GameEdit?>(null);
     }
 
     private sealed class NoStrip : IMessageStrip
@@ -130,6 +131,11 @@ public sealed partial class PagesLoadTests
     private sealed class NoPicker : IGamePicker
     {
         public string? PickExecutable(string? initialDirectory = null) => null;
+    }
+
+    private sealed class NoImages : IImagePicker
+    {
+        public string? PickImage() => null;
     }
 
     private sealed class NoTheme : IThemeApplier
@@ -531,6 +537,38 @@ public sealed partial class PagesLoadTests
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// beta.23 (D60): the game page's artwork is drawn — the banner and the cover are each a WPF UI <c>Image</c>, whose
+    /// template holds the picture. A <c>ui:Image</c> given a Style of its own that is not based on WPF UI's
+    /// <c>DefaultImageStyle</c> has no template: it takes its place and draws nothing. The cover did exactly that — an empty
+    /// space beside the game's name, the banner above it drawn — and no text check can see a picture.
+    /// </summary>
+    [Fact]
+    public async Task TheGamePagesArtworkIsDrawn()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        using Surfaces surfaces = await Surfaces.LoadAsync(s);
+
+        List<string> images = await OnStaAsync(() =>
+        {
+            (Window host, FrameworkElement root) = Hosted(() => new GameDetailPage(surfaces.Detail));
+            try
+            {
+                Lay(root);
+                return Visuals.FindAll<Wpf.Ui.Controls.Image>(root)
+                    .Select(static image => AutomationProperties.GetName(image) + (Visuals.Find<System.Windows.Controls.Image>(image) is { Source: not null, ActualWidth: > 0, ActualHeight: > 0 }
+                        ? ": drawn" : ": nothing drawn"))
+                    .ToList();
+            }
+            finally
+            {
+                host.Close();
+            }
+        });
+
+        images.Should().Equal([Strings.Art_Banner_Name + ": drawn", Strings.Art_Cover_Name + ": drawn"], "the surfaces' game has a banner and a cover, and both are on its page");
     }
 
     [Fact]

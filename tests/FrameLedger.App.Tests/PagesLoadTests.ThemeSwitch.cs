@@ -206,4 +206,53 @@ public sealed partial class PagesLoadTests
     private readonly record struct DrawnText(string Path, string Text, string Colour, bool Shown);
 
     private static Color Solid(Brush brush) => brush is SolidColorBrush solid ? solid.Color : throw new InvalidOperationException("a text whose foreground is not a solid colour");
+
+    /// <summary>
+    /// beta.23 (D61): the artwork band's colour is worked out from the theme's own colours and follows a switch — a band made
+    /// under Dark and switched to Light is the band a page made under Light draws. The text check above cannot see it: it
+    /// compares texts' colours, and a band left in the old theme keeps every text's colour and loses its contrast.
+    /// </summary>
+    [Fact]
+    public async Task TheArtworkBandFollowsAThemeSwitch()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        using Surfaces surfaces = await Surfaces.LoadAsync(s);
+        surfaces.Detail.HasArt.Should().BeTrue("the surfaces' game has a cover and a banner");
+        surfaces.Detail.ArtTint.Should().NotBeNull();
+
+        (Color Dark, Color Switched, Color Fresh) bands = await OnStaAsync(() =>
+        {
+            (Window host, FrameworkElement switched) = Hosted(() => new Pages.GameDetailPage(surfaces.Detail));
+            try
+            {
+                Lay(switched);
+                Color dark = BandOf(switched);
+                return Visuals.UnderTheme(ApplicationTheme.Light, () =>
+                {
+                    Lay(switched);
+                    (Window freshHost, FrameworkElement fresh) = Hosted(() => new Pages.GameDetailPage(surfaces.Detail));
+                    try
+                    {
+                        Lay(fresh);
+                        return (dark, BandOf(switched), BandOf(fresh));
+                    }
+                    finally
+                    {
+                        freshHost.Close();
+                    }
+                });
+            }
+            finally
+            {
+                host.Close();
+            }
+        });
+
+        bands.Switched.Should().Be(bands.Fresh, "the switched band is the one a fresh page draws under the new theme");
+        bands.Switched.Should().NotBe(bands.Dark, "the band changed with the theme");
+    }
+
+    /// <summary>The artwork band's colour, under the frame a page is hosted in.</summary>
+    private static Color BandOf(FrameworkElement root) =>
+        Solid(Visuals.FindAll<System.Windows.Controls.Border>(root).First(static b => string.Equals(b.Name, "ArtBand", StringComparison.Ordinal)).Background);
 }

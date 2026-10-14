@@ -46,5 +46,36 @@
 
         <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:EditGameViewModel.NotesLabel}" />
         <ui:TextBox Margin="0,4,0,0" MinHeight="72" AutomationProperties.Name="{x:Static vm:EditGameViewModel.NotesLabel}" AcceptsReturn="True" TextWrapping="Wrap" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" />
+
+        <!-- beta.23 (D60): the game's image — the user's own, copied on Save, or the store's; a preview here, nothing written before Save. -->
+        <StackPanel Margin="0,12,0,0" Visibility="{Binding ImageEditable, Converter={StaticResource BoolToVis}}">
+            <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:EditGameViewModel.ImageLabel}" />
+            <Grid Margin="0,4,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Width="64" Height="96" CornerRadius="4" Background="{DynamicResource ControlFillColorDefaultBrush}">
+                    <Grid>
+                        <ui:TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource TertiaryText}" FontTypography="Caption" TextAlignment="Center" TextWrapping="Wrap"
+                                      Text="{x:Static vm:EditGameViewModel.ImageNoneText}"
+                                      Visibility="{Binding HasImagePreview, Converter={StaticResource InverseBoolToVis}}" />
+                        <ui:Image CornerRadius="4" Stretch="UniformToFill" Source="{Binding ImagePreview}" RenderOptions.BitmapScalingMode="HighQuality"
+                                  AutomationProperties.Name="{x:Static vm:EditGameViewModel.CoverName}"
+                                  Visibility="{Binding HasImagePreview, Converter={StaticResource BoolToVis}}" />
+                    </Grid>
+                </Border>
+                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <ui:Button Command="{Binding ChooseImageCommand}" Content="{x:Static vm:EditGameViewModel.ChooseImageText}" Icon="{ui:SymbolIcon Image24}" />
+                        <ui:Button Margin="8,0,0,0" Appearance="Secondary" Command="{Binding UseStoreImageCommand}" Content="{x:Static vm:EditGameViewModel.UseStoreImageText}"
+                                   Visibility="{Binding CanUseStoreImage, Converter={StaticResource BoolToVis}}" />
+                    </StackPanel>
+                    <ui:TextBlock Margin="0,6,0,0" MaxWidth="300" HorizontalAlignment="Left" Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{x:Static vm:EditGameViewModel.ImageNote}" />
+                    <ui:TextBlock Margin="0,4,0,0" MaxWidth="300" HorizontalAlignment="Left" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ImageError}"
+                                  Visibility="{Binding ImageError, Converter={StaticResource NullToCollapsed}}" />
+                </StackPanel>
+            </Grid>
+        </StackPanel>
     </StackPanel>
 </UserControl>

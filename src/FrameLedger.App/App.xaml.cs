@@ -13,6 +13,7 @@ using FrameLedger.Application.Import;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Settings;
 using FrameLedger.Application.Watch;
+using FrameLedger.Infrastructure.Art;
 using FrameLedger.Infrastructure.Diagnostics;
 using FrameLedger.Infrastructure.Import;
 using FrameLedger.Infrastructure.Persistence;
@@ -112,10 +113,7 @@ public partial class App : System.Windows.Application
             Log.Information("ui: started ({Version}), ledger {Ledger}", UiIdentity.Version, UiPaths.Database);
             // beta.21: tier 0 is software rendering (a VM without a GPU, Remote Desktop) - every scroll drawn on the CPU.
             Log.Information("ui: render tier {Tier} (2 = the GPU draws; 0 = software)", System.Windows.Media.RenderCapability.Tier >> 16);
-            if (UiPaths.IsViewer)
-            {
-                Log.Warning("ui: a VIEWER over {Folder} (--data-dir, D52): no Agent is started or contacted, nothing on this PC is changed", UiPaths.DataDirectory);
-            }
+            NoteTheFolder(_host);
 
             // A second start of the App hands over to this one: bring the window forward, from the tray too.
             if (Instance is not null)
@@ -207,6 +205,41 @@ public partial class App : System.Windows.Application
         }
 
         Shutdown(exitCode);
+    }
+
+    /// <summary>
+    /// A viewer says what it is (D52); the App over its own folder tidies its covers (beta.23, D60) — the images no row names
+    /// any more, a game deleted or removed by the agent (D55) — in the background.
+    /// </summary>
+    private static void NoteTheFolder(IHost host)
+    {
+        if (UiPaths.IsViewer)
+        {
+            Log.Warning("ui: a VIEWER over {Folder} (--data-dir, D52): no Agent is started or contacted, nothing on this PC is changed", UiPaths.DataDirectory);
+            return;
+        }
+
+        _ = PruneCoversAsync(host.Services.GetRequiredService<CoverStore>());
+    }
+
+    /// <summary>
+    /// beta.23 (D60): deletes the chosen images no row names any more, on the thread pool; a failure is logged and nothing
+    /// else — the images are a convenience, never a reason for the App to stop.
+    /// </summary>
+    private static async Task PruneCoversAsync(CoverStore covers)
+    {
+        try
+        {
+            int deleted = await Task.Run(() => covers.PruneAsync()).ConfigureAwait(false);
+            if (deleted > 0)
+            {
+                Log.Information("art: {Count} image(s) no game names any more deleted from {Folder}", deleted, covers.Folder);
+            }
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            Log.Warning(ex, "art: the covers folder could not be tidied");
+        }
     }
 
     /// <summary>
@@ -440,6 +473,19 @@ public partial class App : System.Windows.Application
         // beta.11: the Games page on screen reloads when an import adds games (navigating to itself does nothing).
         services.AddSingleton<LibraryChanges>();
         services.AddSingleton<ImportLibraryFlow>();
+
+        // beta.23 (owner decisions D60/D61): a game's artwork — the image the user chose (kept in the data folder's covers),
+        // else what the Steam and GOG GALAXY apps keep on this PC, found through the same store records Play reads.
+        services.AddSingleton<Application.Art.IStoreArtCache>(static _ => new SteamArtCache());
+        services.AddSingleton<Application.Art.IStoreArtCache>(static _ => new GogArtCache());
+        services.AddSingleton(static sp => new StoreRecordsReader(sp.GetServices<IStoreLibrarySource>()));
+        services.AddSingleton(static sp => new GameArt(
+            sp.GetRequiredService<Application.Settings.RegisteredSettings>(),
+            sp.GetRequiredService<StoreRecordsReader>(),
+            sp.GetServices<Application.Art.IStoreArtCache>(),
+            sp.GetRequiredService<UiMode>()));
+        services.AddSingleton(static sp => new CoverStore(sp.GetRequiredService<UiMode>(), sp.GetRequiredService<IGameRepository>()));
+        services.AddSingleton<IImagePicker, ImagePicker>();
     }
 
     /// <summary><c>10_LOGGING</c> §Serilog configuration: <c>logs/ui-.log</c>, daily, 7 kept, 10 MB, the one template; the level follows <c>log.debug</c> at runtime.</summary>
