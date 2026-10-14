@@ -40,6 +40,12 @@ numeric core and does not move; the heading is the full version — corrected 20
   game artwork* and *Colour the game page from its artwork*, both on. **Privacy Policy 2.11** names the images read and
   the copies kept; FrameLedger still makes no request to any store.
 
+### Changed
+
+- **The list of tested games has its first Vulkan game**: Everhex Demo, measured through FrameLedger's Vulkan layer on
+  2026-10-13 when Play started it directly (`docs/LIST_GAME_TESTED.md`, `LIMITATIONS.md`). Four places in the developer
+  documents that described something never built, or kept a count that went stale, are corrected in place.
+
 ### Fixed
 
 - **A game's page opens and changes session without freezing the window** (owner request 2026-10-14). Measured on the
