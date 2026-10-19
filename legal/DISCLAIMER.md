@@ -1,6 +1,6 @@
 # FrameLedger — Disclaimer
 
-**Version:** 2.10 · **Effective:** {{RELEASE_DATE}}
+**Version:** 2.11 · **Effective:** {{RELEASE_DATE}}
 
 ## 0. This is pre-release (beta) software
 
@@ -138,9 +138,11 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 >   was measured. Intel XeSS is **not** read (its SDK licence
 >   forbids it), and neither is an upscaler compiled into the game: those read `N/A`, or "Unknown
 >   upscaler" when another vendor's hook ran in the game. Vulkan and OpenGL titles read `N/A`.
-> - **Quality preset:** not reported on any title measured. The one route this software may use — the
->   DLSS options a Streamline title passes with its per-frame call — has not been seen on a real
->   title, and AMD's per-frame call carries no preset.
+> - **Quality mode:** shown only when it is known. When the NVIDIA App overrides DLSS Super Resolution for
+>   the game and the NVIDIA driver reports that the override applied in the session, the override's mode is
+>   shown and marked as the NVIDIA App's. Otherwise the mode the game itself passed: the DLSS options a
+>   Streamline title passes with its per-frame call (not yet seen on a real title). In every other case no
+>   mode is shown.
 > - **Render → output resolution:** measured where the vendor's own per-frame call carries the render
 >   size (AMD FidelityFX dispatches, and Streamline titles whose resource tags state it); `N/A` where it
 >   does not: DLSS titles that bypass Streamline, Streamline titles whose tags carry no size, and Vulkan

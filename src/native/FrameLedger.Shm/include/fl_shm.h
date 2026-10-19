@@ -552,7 +552,9 @@ enum FlMeasured : uint16_t {
     // exports only the parameter-object FACTORIES -- so a writer hooking
     // CreateFeature/EvaluateFeature knows WHICH upscaler ran and nothing about
     // quality, sharpness or render size. One bit for both published
-    // upscalerQuality = 0 -- NGX MaxPerf, "DLSS Performance" -- as a measurement.
+    // upscalerQuality = 0 as a measurement -- in the byte's numbering
+    // (sl::DLSSMode) 0 is eOff, not a quality; "NGX MaxPerf" until beta.24 named
+    // NGX's own numbering, which the byte does not use.
     FL_MEASURED_UPSCALER_PARAMS = 1u << 8,
 
     // syncInterval + presentFlags.

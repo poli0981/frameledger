@@ -3,9 +3,9 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using System.Text.Json;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Recording;
+using FrameLedger.Domain.Metrics;
 using S = FrameLedger.Application.Capture.NvidiaDriverSettings;
 
 namespace FrameLedger.App.Services;
@@ -163,16 +163,7 @@ public static class NvidiaOverrides
             return null;
         }
 
-        NgxDriverWords? words;
-        try
-        {
-            words = JsonSerializer.Deserialize(ngxDriverWordsJson, RecordingJsonContext.Default.NgxDriverWords);
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-
+        NgxDriverWords? words = NgxDriverWords.Parse(ngxDriverWordsJson);
         if (words is null || !string.Equals(words.Outcome, nameof(NgxProbeOutcome.Answered), StringComparison.Ordinal))
         {
             return null;
@@ -191,7 +182,10 @@ public static class NvidiaOverrides
             parts.Add(preset);
         }
 
-        if ((sr & NgxOverrideFlags.PerfMode) != 0 && Mode(words.Mode, ratio: null) is { } mode)
+        // NGX's own numbering, not the profile's (beta.24: until then this read the report through Mode below, so a DLAA
+        // override's 5 printed "Ultra Performance" and Ultra Performance's 3 printed nothing).
+        if ((sr & NgxOverrideFlags.PerfMode) != 0 && UpscalerNames.FromDriverReport(words.Mode) is { } reported
+            && Formats.QualityName(new ResolvedQuality(reported, QualitySource.NvidiaApp)) is { } mode)
         {
             parts.Add(mode);
         }

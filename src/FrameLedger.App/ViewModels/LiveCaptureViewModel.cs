@@ -162,7 +162,7 @@ public sealed partial class LiveCaptureViewModel : ObservableObject
         ElapsedText = string.Format(CultureInfo.CurrentCulture, Strings.Dashboard_Live_Elapsed_Format, Formats.Duration(progress.ElapsedS));
         Readout = FpsPresentation.FromProgress(progress);
         ResolutionText = Formats.Resolution(progress.RenderW, progress.RenderH, progress.OutputW, progress.OutputH);
-        UpscalerText = Formats.Upscaler(progress.Upscaler, progress.UpscalerQuality, progress.UpscalerDriverReported);
+        UpscalerText = Formats.UpscalerOf(progress);
         FgText = FpsPresentation.FrameGenerationLabel(Readout, progress.FgMode);
         RtActive = progress.RtActive == true;
         GpuTempText = progress.GpuTempC is double g ? string.Format(CultureInfo.CurrentCulture, Strings.Dashboard_Live_GpuTemp_Format, Math.Round(g)) : string.Empty;

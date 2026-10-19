@@ -727,6 +727,7 @@ public static class Strings
         nameof(Nv_Mode_Performance),
         nameof(Nv_Mode_Quality),
         nameof(Nv_Mode_UltraPerformance),
+        nameof(Nv_Mode_UltraQuality),
         nameof(Nv_Override_Fg),
         nameof(Nv_Override_None),
         nameof(Nv_Override_Rr),
@@ -1139,7 +1140,10 @@ public static class Strings
         nameof(Update_Unsigned_Footer),
         nameof(Update_UpToDate_Format),
         nameof(Upscaler_DriverReported_Format),
+        nameof(Upscaler_Mode_App_Format),
+        nameof(Upscaler_Mode_Format),
         nameof(Upscaler_None),
+        nameof(Upscaler_Override_App_Format),
         nameof(Upscaler_Unknown),
         nameof(Viewer_Banner_Body_Format),
         nameof(Viewer_Banner_Title),
@@ -2542,6 +2546,8 @@ public static class Strings
 
     public static string Nv_Mode_UltraPerformance => ResourceManager.GetString(nameof(Nv_Mode_UltraPerformance), Culture) ?? nameof(Nv_Mode_UltraPerformance);
 
+    public static string Nv_Mode_UltraQuality => ResourceManager.GetString(nameof(Nv_Mode_UltraQuality), Culture) ?? nameof(Nv_Mode_UltraQuality);
+
     public static string Nv_Override_Fg => ResourceManager.GetString(nameof(Nv_Override_Fg), Culture) ?? nameof(Nv_Override_Fg);
 
     public static string Nv_Override_None => ResourceManager.GetString(nameof(Nv_Override_None), Culture) ?? nameof(Nv_Override_None);
@@ -3366,7 +3372,13 @@ public static class Strings
 
     public static string Upscaler_DriverReported_Format => ResourceManager.GetString(nameof(Upscaler_DriverReported_Format), Culture) ?? nameof(Upscaler_DriverReported_Format);
 
+    public static string Upscaler_Mode_App_Format => ResourceManager.GetString(nameof(Upscaler_Mode_App_Format), Culture) ?? nameof(Upscaler_Mode_App_Format);
+
+    public static string Upscaler_Mode_Format => ResourceManager.GetString(nameof(Upscaler_Mode_Format), Culture) ?? nameof(Upscaler_Mode_Format);
+
     public static string Upscaler_None => ResourceManager.GetString(nameof(Upscaler_None), Culture) ?? nameof(Upscaler_None);
+
+    public static string Upscaler_Override_App_Format => ResourceManager.GetString(nameof(Upscaler_Override_App_Format), Culture) ?? nameof(Upscaler_Override_App_Format);
 
     public static string Upscaler_Unknown => ResourceManager.GetString(nameof(Upscaler_Unknown), Culture) ?? nameof(Upscaler_Unknown);
 

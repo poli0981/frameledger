@@ -4493,4 +4493,20 @@
     <value>×{0:0.0} · {1:0}%</value>
     <comment>review</comment>
   </data>
+  <data name="Upscaler_Mode_Format" xml:space="preserve">
+    <value>{0} {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Upscaler_Mode_App_Format" xml:space="preserve">
+    <value>{0} {1} · NVIDIA App</value>
+    <comment>review</comment>
+  </data>
+  <data name="Upscaler_Override_App_Format" xml:space="preserve">
+    <value>{0} · NVIDIA App による上書き</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nv_Mode_UltraQuality" xml:space="preserve">
+    <value>ウルトラ クオリティ</value>
+    <comment>review</comment>
+  </data>
 </root>

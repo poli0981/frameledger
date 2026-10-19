@@ -260,6 +260,14 @@ public sealed record SessionProgressEvent
     /// </summary>
     public string? UpscalerDriverReported { get; init; }
 
+    /// <summary>
+    /// The quality mode an NVIDIA App override set, when the driver reports it applied in the target and DLSS super
+    /// resolution ran there (beta.24, D63): <c>performance</c>, <c>balanced</c>, <c>quality</c>, <c>ultra_performance</c>,
+    /// <c>ultra_quality</c> or <c>dlaa</c>. From the driver's report alone — the profile is the stored session's — so a
+    /// value the report cannot settle is absent here and named by the summary. An older client ignores it (<c>07_IPC</c> §C).
+    /// </summary>
+    public string? UpscalerQualityOverride { get; init; }
+
     public int? RenderW { get; init; }
 
     public int? RenderH { get; init; }

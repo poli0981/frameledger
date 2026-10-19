@@ -38,7 +38,7 @@ public sealed class SessionItemViewModel
         FpsTooltip = FpsPresentation.ColumnTooltip(row);
         P1LowText = IsHooked ? Formats.Fps(row.P1LowFps) : Strings.Common_NotAvailable;
         P01LowText = IsHooked ? Formats.Fps(row.P01LowFps) : Strings.Common_NotAvailable;
-        ResolutionText = IsHooked ? Formats.Resolution(row.RenderW, row.RenderH, row.OutputW, row.OutputH) + " · " + Formats.Upscaler(row.Upscaler, row.UpscalerQuality, row.UpscalerDriverReported) : Strings.Common_NotAvailable;
+        ResolutionText = IsHooked ? Formats.Resolution(row.RenderW, row.RenderH, row.OutputW, row.OutputH) + " · " + Formats.UpscalerOf(row) : Strings.Common_NotAvailable;
         GpuTempText = Formats.Temperature(row.MaxGpuTemp);
         // beta.12 (D43), both tiers: the game's own memory, median · peak, the rest in the tooltip.
         IReadOnlyDictionary<string, Application.Recording.SensorSeriesStats> stats = Application.Recording.SensorSeriesStats.Parse(row.SensorStatsJson);

@@ -87,8 +87,12 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
   FidelityFX libraries. **Intel XeSS is not read** (its licence forbids it), FSR 2 and upscalers built into the
   game are not identified, and Vulkan and OpenGL games read N/A. Where no hook saw DLSS but the NVIDIA driver
   reports it, the page says it is the driver's report.
-- **The quality preset** (Quality, Balanced, …) has not been reported on any game yet, and the render
-  resolution is N/A where the game's own calls do not carry it (DLSS without Streamline, for one).
+- **The quality mode** (Quality, Balanced, DLAA, …) is shown only when it is known: the NVIDIA App's override
+  where the NVIDIA driver reports it applied (marked *· NVIDIA App*, since 0.1.0-beta.24), or the mode the game
+  passed to a call FrameLedger reads — which no game has done yet. The mode chosen in a game's own menu is not
+  readable for DLSS without Streamline, and is not inferred from the render scale. How the driver numbers DLAA in
+  its report is NVIDIA's documented value, not yet seen on a real game. The render resolution is N/A where the
+  game's own calls do not carry it (DLSS without Streamline, for one). ([Metrics](docs/03_METRICS.md))
 - **Ray tracing** is *Yes*, *No* or *N/A* — measured from the game's ray-tracing calls on Direct3D 12, and
   N/A where FrameLedger could not look. **Path tracing is never stated as a fact**: there is no API signal
   for it. You can correct any of these by hand, and your correction is labelled as yours.

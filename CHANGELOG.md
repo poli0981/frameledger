@@ -49,6 +49,15 @@ numeric core and does not move; the heading is the full version — corrected 20
   column's two formats are translated strings now, and the driver-profile line's automatic dynamic target reads as the
   NVIDIA App says it: *max refresh rate*.
 
+- **The quality mode the NVIDIA App set, on every page that names the upscaler** (owner request 2026-10-19, decision
+  D63). Where the NVIDIA App overrides DLSS Super Resolution for a game and the NVIDIA driver reports that the
+  override applied in the session, the summary, the Sessions tab, the game page and the live card say so:
+  *DLSS (driver-reported) Quality · NVIDIA App*. It is read from what every session already stores, so sessions
+  recorded before read the same; when the profile and the driver disagree, or the driver's report alone cannot settle
+  the mode, the session reads *· NVIDIA App override* with no mode — never the game's own value in its place. The CSV
+  export gains a `# quality_mode:` line. `legal/ACCURACY.md`'s *Quality mode* bullet says so, in the words approved
+  with the plan; **the Disclaimer is 2.11** and the Legal Gate shows it once.
+
 ### Changed
 
 - **SonarCloud analyses only FrameLedger's own code** (developers only; owner request 2026-10-19, decision D67). A
@@ -73,6 +82,11 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Fixed
 
+- **The NVIDIA driver line read the driver's mode in the wrong numbering.** The driver reports the mode an override
+  set in NGX's own numbering, not the driver profile's: the owner's Silent Hill 2 session ran under the NVIDIA App's
+  Ultra Performance (profile value 5) and the driver reported 3 — which the line printed as nothing, and a DLAA
+  override's 5 would have printed as "Ultra Performance". Five comments in the native code called a quality byte of
+  0 "NGX MaxPerf" — in the numbering that byte carries, 0 is "DLSS off" (comments only, no code changes).
 - **Opening a folder in Explorer** — the logs, the data folder, the licences, a bug report's zip and the folder named
   after a failed start — starts `explorer.exe` from the Windows folder by its full path, never a program of that name
   found on the search path, and always hands it the path in quotes (three of the five places passed it bare).
