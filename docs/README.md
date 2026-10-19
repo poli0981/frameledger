@@ -71,6 +71,8 @@ are safety items, and something listed there as unresolved should not be built t
 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) | Every unresolved question, defect and measurement, with its status marker |
 | [`HANDOFF.md`](HANDOFF.md) | Sequencing, the open owner-only items, the index of the owner's decisions |
 | [`handoff/`](handoff/) | Since beta.24 (D66): the history of every train and phase, the passed owner-only items, the traps — moved out of `HANDOFF.md` verbatim |
+| [`open-questions/`](open-questions/) | Since beta.24 (D66): the entries §S24 marks resolved, moved out of `20_OPEN_QUESTIONS.md` verbatim — a table there lists them |
+| [`spike-notes/`](spike-notes/) | Since beta.24 (D66): one file per measurement section; `spike-notes.md` is the index that resolves `spike-notes §N` |
 | [`changelog/`](changelog/) | Since beta.24 (D66): each release's notes in its own file, and the ledger kept before the first tag; `../CHANGELOG.md` keeps `[Unreleased]` and the list |
 | [`spike-notes.md`](spike-notes.md) | What was measured, how, on which machine, and what each result decided |
 | [`LIST_GAME_TESTED.md`](LIST_GAME_TESTED.md) | The real games FrameLedger has been run with, and what each session measured (changes need the owner's review) |
