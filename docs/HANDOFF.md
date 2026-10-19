@@ -63,6 +63,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.21` | [`handoff/history/0.1.0-beta.21.md`](handoff/history/0.1.0-beta.21.md) |
 | `§beta.22` | [`handoff/history/0.1.0-beta.22.md`](handoff/history/0.1.0-beta.22.md) |
 | `§beta.23` | [`handoff/history/0.1.0-beta.23.md`](handoff/history/0.1.0-beta.23.md) |
+| `§beta.24` | [`handoff/history/0.1.0-beta.24.md`](handoff/history/0.1.0-beta.24.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -70,72 +71,44 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-10-19, 0.1.0-beta.24: every frame-generation state, the NVIDIA App's quality mode, which DLSS ran, SonarCloud, the documents split
+## **START HERE** — 2026-10-19, 0.1.0-beta.25: FSR's quality mode
 
-*Status is `docs/changelog/0.1.0-beta.24.md`; this is what no other file carries.* The owner, 2026-10-19: "Bạn xem xét,
-đánh giá và lên plan cho bản beta mới với những nội dung như sau:" — six items: the mix of frame-generation modes inside
-one session, shown in the App; the upscaler's quality mode (Ultra Performance … DLAA, FSR's too) only when captured, the
-NVIDIA App's override as the standard where there is one; SonarCloud fixed and its false positives marked; a SonarCloud
-configuration that keeps third-party headers out; which DLSS is in use (3, 4, 4.5, 5), if it can be found; the long
-documents split — then, with the plan approved, the whole train to the release without asking again. Later the same
-day: "Bạn có thể xét tới trường framegen chỉnh trong setting in-game nếu chưa có" (the frame generation chosen in the
-game's own menu). Answers that set the decisions below, given before the plan: the mix as a share bar and a table; the
-owner marks Sonar's false positives in its UI from a list we write; all four long documents split; the override is the
-standard only where the driver confirms it applied; DLSS labels bound to evidence; FSR's mode through `ffxQuery` as a
-separate PR that may slip; owner-only items 7–11 and 13 not yet run; Dependabot #314 rebased and merged in the train.
+*Status is `docs/changelog/0.1.0-beta.25.md`; this is what no other file carries.* The owner, 2026-10-19, while the
+beta.24 train was merging: "Bạn có thể publish beta24 xong, làm phần pr9 thành beta25 luôn nếu được nhé." — publish
+beta.24, then the train's PR-9, FSR's quality mode, as beta.25. One feature PR (#325) and this release, the whole
+way without asking again.
 
 **Decisions:**
 
-- **D62 — the mix.** Every frame-generation state a session held, each with its own factor, Native → Displayed and its
-  share of the presenting time, then *no frame generation* (only where a counted `none` is allowed) and *not
-  classified*; never an average across states (CLAUDE.md rule 6, amended). Computed at finalize over the steady state's
-  own five-second windows and stored (`sessions.fg_mix`, schema 0020); sessions recorded before have none and are not
-  rebuilt. Above the rows, how frame generation was set — the NVIDIA App's Dynamic / Fixed from the stored driver
-  profile, or the game — as configuration, never as a row. The multiplier chosen in a game's menu is not read (§2b's
-  refusal stands); the measured row is its evidence.
-- **D63 — the NVIDIA App's override is the quality mode where the driver reports it applied** (`03_METRICS`
-  §Upscaling, amended; `QualityResolver`, read at display time, so sessions recorded before resolve alike). Otherwise
-  the mode the game passed to a hooked call; otherwise none; never the game's own value under an override.
-- **D64 — DLSS labels are evidence-bound** (`05_DETECTION` §DLSS generation): each library's version and folder class
-  (`sessions.runtime_module_sources`, schema 0021 — never the path), the preset the driver reports applied, DLSS 4 /
-  4.5 only from a preset or a measured multi-frame factor, DLSS 5 only as "runtime loaded".
-- **D65 — FSR's quality mode through `ffxQuery`: deferred to the next beta.** The plan allowed it to slip, and it was
-  kept out of this train — a new hook on four FidelityFX modules, a hook-family bit in the shared layout, a new byte
-  encoding, the stubs and the harness, on the hook path rule 5 guards — rather than written against the release.
-  ACCURACY's FSR clause did not ship with it. The design stands in the plan: query → the five (mode, size) pairs → the
-  mode whose size the game then dispatched. The owner asked for it as 0.1.0-beta.25 the same day.
-- **D66 — the long documents are split**, every original path kept as the index of its parts, moved byte for byte
-  (`tools/docs-split-check.ps1`; `release-notes.ps1` reads `docs/changelog/<version>.md`).
-- **D67 — SonarCloud stays on Automatic Analysis** with `.sonarcloud.properties`; the by-design rules and false
-  positives are listed in `13_CI_CD` §SonarCloud for the owner to mark in its UI.
+- **D65 — FSR's quality mode through `ffxQuery`: built** (deferred from beta.24,
+  [`handoff/history/0.1.0-beta.24.md`](handoff/history/0.1.0-beta.24.md)). The query is hooked on the four modules
+  `ffxDispatch` is, each answer the vendor returned is kept (one slot per mode), and an UPSCALE dispatch whose sizes fit
+  exactly one answer names it as `0x10 + mode` (`03_METRICS` §Upscaling, `17_HOOK_ENGINE` §Hook inventory). **One rule
+  the plan did not have:** a session, a segment or the live window names FSR's mode only when no FSR frame was rendered
+  at a size no named frame has (`Domain.Metrics.QualityByte`). Without it a dynamic-resolution session whose top of
+  range matched an answer would have named the mode, against the clause approved with the plan ("FSR at a dynamic
+  resolution among them — no mode is shown"). The clause shipped in those words; the Disclaimer stays 2.11, as the
+  accuracy statement's additions did in beta.19 and beta.20.
 
-**Measured on the owner's ledger** (a read-only SQLite backup copy — never the data folder): **the NVIDIA driver's
-`performanceMode` is in NGX's own numbering, not the profile's** — Silent Hill 2 (2026-10-13) ran under the App's Ultra
-Performance (profile value 5) and the driver reported 3; `NvidiaOverrides.DriverLine` had read it through the profile's
-table since beta.8 and dropped the mode. The same session's SR word has no `CREATED | EVALUATE` (no mode is claimed),
-its FG word applied ×6 and the session measured a ×6.0 steady state, and **none of the override's libraries carried a
-census name** — the module snapshot now records everything under `%ProgramData%\NVIDIA\NGX`. Bit 19 is set on a working
-override (Expedition 33's `0x8067F`) and bit 1 with no override at all (`0x60F`): only `PERF_MODE`, `SR_DLAA_MODE` and
-`SCALING_RATIO` say an override applied. The App's global profile stores `NGX_DLSSG_DYNAMIC_MULTI_FRAME_COUNT_MAX = 5`.
+**Measured:** on the hook harness, with the vendor stub answering as the SDK documents (`fl_guard` "FSR's quality
+mode", 44 assertions): Quality named on every params record but at most one — the test allows the window's first —
+through the SDK 2.x loader by size and through the 1.1.x monolith by ratio, and no record named any other mode; the
+same five FFX cases ran five more times green. The added cost, from a copy of the two bodies built with the
+Overlay's flags (`/O2 /guard:cf /Qspectre /MT`, 20 M calls × 3, every slot holding a size and a ratio — the worst
+case): 7.6–8.2 ns per UPSCALE dispatch, 1.6 ns per query beside the trampoline. Nothing on a real title yet: item 21.
 
 **Traps met on the way:**
 
-- **`gh pr merge --squash --delete-branch` on a stacked PR closes the PR based on it** (#319), and a closed PR cannot be
-  reopened once its head was force-pushed. Recovery: push the base back, push the head back to the SHA it closed at,
-  reopen, retarget to `main`, push the rebased head, delete the base. Instead: retarget the next PR to `main` first,
-  merge without `--delete-branch`, rebase the rest (`git rebase --update-refs --onto origin/main <old tip>`, in a
-  temporary `git worktree` when the checkout is busy), then delete the merged branch.
-- **Dependabot closed #314 itself** after `@dependabot rebase` ("updatable in another way") and did not answer
-  `@dependabot reopen`; the two analyzer versions it proposed went into the release PR by hand.
-- **SonarCloud's PR gate fails on new `cpp:S8417`** (explicit memory orders, by design): not a required check; the
-  optional ignore row in `13_CI_CD` §SonarCloud stops it.
-- **A Domain.Metrics enum must be listed in `MetricEnumMirrorTests`** (mirrored or explicitly local), **every enum needs
-  a zero member** (CA1008), **private consts in tests take the `_` prefix** (IDE1006 is `dotnet format`'s, not the
-  build's), and **`null` literals make overloads ambiguous** across a `string?` and a record parameter.
-- **Python strings in the scratch scripts read `\N` as an escape** — a Windows path in a C# comment written through a
-  Python script needs its backslashes doubled, and a Bash heredoc halves them (the beta.23 trap again).
+- **`git rebase --update-refs` skips a branch checked out in another worktree.** The beta.25 branch sat on beta.24's
+  PR-8 tip in its own worktree; the rebase of beta.24's train after its first merge left it where it was, and it was
+  moved by hand (`git rebase --onto <new tip> <old tip>`) onto the release PR, then onto `main` as beta.24 merged.
+- **A new `.cs` file written as LF fails `dotnet format`'s `ENDOFLINE`** although it builds and its tests pass —
+  convert it to CRLF before the gate (the checkout is CRLF).
+- **A per-frame byte is not a session's answer.** The modal of the told bytes was right for Streamline's byte and wrong
+  for one that is told only on the frames whose size matches; read every surface's rule against the sentence the user
+  is promised before writing the byte.
 
-**Owner-only, added to the list below:** item 20.
+**Owner-only, added to the list below:** item 21.
 
 
 ## Owner-only — no PR can close these
@@ -244,6 +217,16 @@ override (Expedition 33's `0x8067F`) and bit 1 with no override at all (`0x60F`)
    (e) **SonarCloud (D67):** bulk-mark per `13_CI_CD` §SonarCloud; optionally its *Ignore issues on multiple criteria*
    rows; close PR #315. (f) The Legal Gate shows **Disclaimer 2.11** and **Privacy Policy 2.12** once. (g) The `ja`
    strings marked `review`.
+21. **beta.25 on real hardware — FSR's quality mode (D65), decision table written before the run.** Lies of P (FSR
+   through AMD's FidelityFX libraries) launched by FrameLedger, not attached, with the game's own *FSR* at *Quality*,
+   then a second session at *Performance* → the summary's header reads *FSR 3 Quality*, then *FSR 3 Performance* (or
+   *FSR Quality* where the SDK 2.x libraries name no version), and the CSV export's `# quality_mode:` says
+   `quality (game)`. Then: **no mode on both** → the title sizes its frames without asking, or asked before the hook
+   was in: record the session's render → output resolution and the *Loaded:* line in `spike-notes`, and D65 stays built
+   and silent for that title. **A wrong mode** (the Quality session reading Balanced) → the answers this title receives
+   are not the vendor's documented ratios: record the stored `upscaler_quality` and the render size in `spike-notes`,
+   and the match is withdrawn until it is explained. **With the game's dynamic resolution on** (if it offers one) → no
+   mode.
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
@@ -319,12 +302,12 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D59 | [`handoff/history/0.1.0-beta.21.md`](handoff/history/0.1.0-beta.21.md) | Play, in two modes switched in Settings: "1: press Play → the platform opens → it runs;… |
 | D60 | [`handoff/history/0.1.0-beta.23.md`](handoff/history/0.1.0-beta.23.md) | a game's artwork is what is already on the PC |
 | D61 | [`handoff/history/0.1.0-beta.23.md`](handoff/history/0.1.0-beta.23.md) | the band takes the artwork's colour as far as every text on it reads: primary and secon… |
-| D62 | this file, §START HERE | the mix: every frame-generation state a session held, with its share, never averaged |
-| D63 | this file, §START HERE | the NVIDIA App's override is the quality mode where the driver reports it applied |
-| D64 | this file, §START HERE | DLSS labels are evidence-bound: versions and folder class, DLSS 4/4.5 only when shown, 5 only loaded |
-| D65 | this file, §START HERE | FSR's quality mode through ffxQuery — deferred to the next beta |
-| D66 | this file, §START HERE | the long documents are split; every original path stays as the index of its parts |
-| D67 | this file, §START HERE | SonarCloud stays on Automatic Analysis with .sonarcloud.properties; the owner marks in its UI |
+| D62 | [`handoff/history/0.1.0-beta.24.md`](handoff/history/0.1.0-beta.24.md) | the mix: every frame-generation state a session held, with its share, never averaged |
+| D63 | [`handoff/history/0.1.0-beta.24.md`](handoff/history/0.1.0-beta.24.md) | the NVIDIA App's override is the quality mode where the driver reports it applied |
+| D64 | [`handoff/history/0.1.0-beta.24.md`](handoff/history/0.1.0-beta.24.md) | DLSS labels are evidence-bound: versions and folder class, DLSS 4/4.5 only when shown, 5 only loaded |
+| D65 | this file, §START HERE | FSR's quality mode through ffxQuery — deferred from beta.24, built in beta.25; none at a dynamic resolution |
+| D66 | [`handoff/history/0.1.0-beta.24.md`](handoff/history/0.1.0-beta.24.md) | the long documents are split; every original path stays as the index of its parts |
+| D67 | [`handoff/history/0.1.0-beta.24.md`](handoff/history/0.1.0-beta.24.md) | SonarCloud stays on Automatic Analysis with .sonarcloud.properties; the owner marks in its UI |
 
 ---
 
