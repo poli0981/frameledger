@@ -35,28 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Added
-
-- **FSR's quality mode** (owner decision D65, planned for beta.24 and moved to this release). For a game that runs FSR
-  through AMD's FidelityFX libraries, the summary, the Sessions tab, the game page and the live card name the mode —
-  *FSR 3 Quality*, *FSR Performance*, *FSR Native AA* — when the game asked AMD's library what render size that mode
-  gives and then rendered at that size. A game at a dynamic resolution, one that sizes its frames without asking, and
-  one FrameLedger joined after it asked show none. FrameLedger reads one more call in those libraries (`ffxQuery`,
-  beside the `ffxDispatch` it already reads): the size or ratio AMD's library answered, nothing else — about 8 ns per
-  upscaled frame. The CSV export's `# quality_mode:` carries it (`native_aa (game)` for Native AA).
-  `legal/ACCURACY.md`'s *Quality mode* bullet gains its FSR clause, in the words approved with the beta.24 plan; the
-  Disclaimer stays 2.11, as it did for the accuracy statement's additions in beta.19 and beta.20. Checked with AMD's
-  interface on the test program; a real game is owner-only item 21. Developers: the hook has its own family bit
-  (`FL_HOOK_UPSCALER_QUALITY`, bit 11 of `hooksInstalledMask`), the byte is `0x10 + FfxApiUpscaleQualityMode`, the
-  harness asks with `--ffx-query sizes|ratios`, and `Domain.Metrics.QualityByte` is the one rule a session, its
-  segments and the live card read.
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.25` | 2026-10-19 | [`docs/changelog/0.1.0-beta.25.md`](docs/changelog/0.1.0-beta.25.md) |
 | `0.1.0-beta.24` | 2026-10-19 | [`docs/changelog/0.1.0-beta.24.md`](docs/changelog/0.1.0-beta.24.md) |
 | `0.1.0-beta.23` | 2026-10-14 | [`docs/changelog/0.1.0-beta.23.md`](docs/changelog/0.1.0-beta.23.md) |
 | `0.1.0-beta.22` | 2026-10-13 | [`docs/changelog/0.1.0-beta.22.md`](docs/changelog/0.1.0-beta.22.md) |
