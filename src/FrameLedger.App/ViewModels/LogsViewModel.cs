@@ -2,7 +2,6 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
@@ -120,7 +119,7 @@ public sealed partial class LogsViewModel : ObservableObject
     {
         try
         {
-            using Process? _ = Process.Start(new ProcessStartInfo("explorer.exe", UiPaths.Logs) { UseShellExecute = true });
+            Explorer.OpenFolder(UiPaths.Logs);
         }
         catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
         {

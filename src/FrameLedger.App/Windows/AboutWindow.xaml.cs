@@ -2,7 +2,6 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
@@ -81,7 +80,7 @@ public partial class AboutWindow : FluentWindow
 
         try
         {
-            using Process? _ = Process.Start(new ProcessStartInfo("explorer.exe", "\"" + LicencesFolder + "\"") { UseShellExecute = true });
+            Explorer.OpenFolder(LicencesFolder);
         }
         catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
         {

@@ -53,8 +53,10 @@ using TargetFn = int(__stdcall*)(int);
 // function body with enough bytes to patch.
 __declspec(noinline) int __stdcall TargetFunction(int x) {
     volatile int acc = x;
-    acc += 1;
-    acc *= 2;
+    // Plain assignments, not += / *=: a compound assignment to a volatile is deprecated in C++20 (SonarCloud
+    // cpp:S6191, beta.24). Same loads and stores, so the body MinHook patches is unchanged in kind.
+    acc = acc + 1;
+    acc = acc * 2;
     return acc;
 }
 

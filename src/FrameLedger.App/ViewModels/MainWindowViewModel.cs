@@ -2,7 +2,6 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -191,7 +190,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
     {
         try
         {
-            using Process? _ = Process.Start(new ProcessStartInfo("explorer.exe", UiPaths.DataDirectory) { UseShellExecute = true });
+            Explorer.OpenFolder(UiPaths.DataDirectory);
         }
         catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
         {

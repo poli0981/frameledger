@@ -36,6 +36,22 @@ numeric core and does not move; the heading is the full version — corrected 20
   records the triage of the 341 issues the last analysis left — the rules this project breaks by design and why, the
   false positives, and the ones the next change fixes — with the steps to mark them in SonarCloud.
 
+### Fixed
+
+- **Opening a folder in Explorer** — the logs, the data folder, the licences, a bug report's zip and the folder named
+  after a failed start — starts `explorer.exe` from the Windows folder by its full path, never a program of that name
+  found on the search path, and always hands it the path in quotes (three of the five places passed it bare).
+- **What SonarCloud found that was real** (developers only): the one third-party GitHub Action is pinned to its
+  commit; two string reads in native code are bounded by their buffer (the guard's rules-file path handed to the Agent,
+  and the driver's branch name the NVAPI bridge copies); the pipe server's accept loop states that it ends only when
+  cancelled; a launch's own session names its absent stop token (`CancellationToken.None`, with the reason) where it
+  wrote `default` — the same value, now said on purpose; an unused overload of
+  the process launcher that hid the other is gone; the identifier `module` (a C++20 keyword in some positions) is
+  renamed in the hook layer — a rename only, no code changes; and a hook-overhead probe no longer uses a compound
+  assignment on a `volatile`, which C++20 deprecates. The analyzers Dependabot updates in #314 flag the first-start
+  window's own answer task and one test fake's synchronous wait; both are suppressed with their reasons, so that update
+  can merge.
+
 ## [0.1.0-beta.23] - 2026-10-14
 
 **The twenty-third pre-release: a game's artwork on its page, in a band that takes the picture's colour, and pages

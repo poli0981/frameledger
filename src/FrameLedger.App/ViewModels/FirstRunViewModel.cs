@@ -80,6 +80,7 @@ public sealed partial class FirstRunViewModel : ObservableObject, IDisposable
     public IUrlOpener Urls => _urls;
 
     /// <summary>True when the user accepted (and the rows are written), false when they declined or closed the window.</summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "VSTHRD003:Avoid awaiting foreign Tasks", Justification = "the task of this view model's own TaskCompletionSource, completed by the window's buttons on the dispatcher; FirstRunFlow awaits it for the user's answer, and RunContinuationsAsynchronously keeps the completion from running the waiter inline (VS Threading Analyzers 18.12 flag it; Dependabot #314)")]
     public Task<bool> Outcome => _outcome.Task;
 
     public bool IsLegalStep => Step == LegalStep;

@@ -388,6 +388,7 @@ public sealed class GameDetailViewModelTests
         // The fake Agent answers Written; the real one would have stamped the row — mirror that here so the reload shows it.
         agent.Answer = r =>
         {
+#pragma warning disable VSTHRD002 // the fake Agent's answer is synchronous by its interface, and Microsoft.Data.Sqlite completes this write synchronously anyway
             _ = new Infrastructure.Persistence.SqliteGameConsentStore(s.Db).RecordOperatorAcknowledgementAsync(new Application.Consent.OperatorAcknowledgement
             {
                 Fingerprint = game.Fingerprint,
@@ -395,6 +396,7 @@ public sealed class GameDetailViewModelTests
                 AcknowledgedAt = DateTimeOffset.UtcNow,
                 Provenance = Domain.Consent.ConsentProvenance.ConsentDialog,
             }, Ct).AsTask().GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002
             return IpcCodec.Decode(IpcCodec.Encode(IpcMessageType.HookEnabledAck, "1", new HookEnabledAck(r.GameId, true, "Written", "clean")));
         };
         vm.ToggleHookingCommand.Execute(null);

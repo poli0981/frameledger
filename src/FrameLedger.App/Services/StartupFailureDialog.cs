@@ -2,7 +2,6 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Windows;
@@ -26,7 +25,7 @@ internal static class StartupFailureDialog
 
         try
         {
-            using Process? _ = Process.Start(new ProcessStartInfo("explorer.exe", logsDirectory) { UseShellExecute = true });
+            Explorer.OpenFolder(logsDirectory);
         }
         catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
         {

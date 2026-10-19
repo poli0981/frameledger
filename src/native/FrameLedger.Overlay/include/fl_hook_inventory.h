@@ -278,9 +278,9 @@ constexpr bool SameA(const char* a, const char* b) noexcept {
 }
 
 // Which leaf slot a row's module is, exactly as spelled in the table. -1 if none.
-constexpr int FfxLeafOfExact(const wchar_t* module) noexcept {
+constexpr int FfxLeafOfExact(const wchar_t* moduleName) noexcept {
     for (uint32_t i = 0; i < kFfxLeafCount; ++i) {
-        if (SameW(module, kFfxLeafModules[i])) {
+        if (SameW(moduleName, kFfxLeafModules[i])) {
             return static_cast<int>(i);
         }
     }
@@ -289,12 +289,12 @@ constexpr int FfxLeafOfExact(const wchar_t* module) noexcept {
 
 // The runtime twin: the loader is case-insensitive about module names, so this is
 // too. dllmain's installer indexes its per-leaf storage with the result.
-inline int FfxLeafOf(const wchar_t* module) noexcept {
-    if (module == nullptr) {
+inline int FfxLeafOf(const wchar_t* moduleName) noexcept {
+    if (moduleName == nullptr) {
         return -1;
     }
     for (uint32_t i = 0; i < kFfxLeafCount; ++i) {
-        if (_wcsicmp(module, kFfxLeafModules[i]) == 0) {
+        if (_wcsicmp(moduleName, kFfxLeafModules[i]) == 0) {
             return static_cast<int>(i);
         }
     }
@@ -353,9 +353,9 @@ inline constexpr const wchar_t* kModuleSlInterposer = L"sl.interposer.dll";
 inline constexpr const char*    kSymbolSlSetTag = "slSetTag";
 inline constexpr const char*    kSymbolSlSetTagForFrame = "slSetTagForFrame";
 
-constexpr bool InventoryHasRow(const wchar_t* module, const char* symbol) noexcept {
+constexpr bool InventoryHasRow(const wchar_t* moduleName, const char* symbol) noexcept {
 #define FL_ROW_HAS(mod, sym, family)                                                                                   \
-    if (SameW(mod, module) && SameA(sym, symbol)) {                                                                    \
+    if (SameW(mod, moduleName) && SameA(sym, symbol)) {                                                                \
         return true;                                                                                                   \
     }
     FL_HOOK_INVENTORY(FL_ROW_HAS)
@@ -374,9 +374,9 @@ static_assert(InventoryHasRow(kModuleFfxFsr3Host, kSymbolFfxFsr3DispatchUpscale)
 // without a leaf would resolve, reach InstallByFamily, and find no slot -- and the
 // installer's answer to that is to install nothing, silently, which is the shape
 // this whole file exists to make loud.
-constexpr bool FfxDispatchRowExistsFor(const wchar_t* module) noexcept {
+constexpr bool FfxDispatchRowExistsFor(const wchar_t* moduleName) noexcept {
 #define FL_FFX_ROW_FOR(mod, sym, family)                                                                               \
-    if (SameW(mod, module) && SameA(sym, "ffxDispatch")) {                                                             \
+    if (SameW(mod, moduleName) && SameA(sym, "ffxDispatch")) {                                                         \
         return true;                                                                                                   \
     }
     FL_HOOK_INVENTORY(FL_FFX_ROW_FOR)
@@ -392,9 +392,9 @@ constexpr bool EveryFfxDispatchRowIsALeaf() noexcept {
 #undef FL_FFX_ROW_IS_LEAF
     return true;
 }
-constexpr bool AnyRowNames(const wchar_t* module) noexcept {
+constexpr bool AnyRowNames(const wchar_t* moduleName) noexcept {
 #define FL_ANY_ROW_NAMES(mod, sym, family)                                                                             \
-    if (SameW(mod, module)) {                                                                                          \
+    if (SameW(mod, moduleName)) {                                                                                      \
         return true;                                                                                                   \
     }
     FL_HOOK_INVENTORY(FL_ANY_ROW_NAMES)
@@ -511,20 +511,20 @@ inline bool SpeaksFsr3Host(HMODULE h) noexcept {
            GetProcAddress(h, "ffxFsr3SkipPresent") != nullptr;
 }
 
-inline bool SpeaksExpectedAbi(const wchar_t* module, HMODULE h) noexcept {
-    if (module == nullptr) {
+inline bool SpeaksExpectedAbi(const wchar_t* moduleName, HMODULE h) noexcept {
+    if (moduleName == nullptr) {
         return false;
     }
-    if (_wcsicmp(module, L"sl.interposer.dll") == 0) {
+    if (_wcsicmp(moduleName, L"sl.interposer.dll") == 0) {
         return SpeaksStreamline2(h);
     }
-    if (_wcsicmp(module, kModuleFfxFsr3Host) == 0) {
+    if (_wcsicmp(moduleName, kModuleFfxFsr3Host) == 0) {
         return SpeaksFsr3Host(h);
     }
     // THE AMD ARM, by leaf name, for the same reason the Streamline arm is by name:
     // the loader also exports all five and is not a leaf, so a prefix test would
     // approve a module the inventory deliberately does not hook.
-    if (FfxLeafOf(module) >= 0) {
+    if (FfxLeafOf(moduleName) >= 0) {
         return SpeaksFfxApi(h);
     }
     return true;
@@ -549,19 +549,19 @@ inline bool SpeaksExpectedAbi(const wchar_t* module, HMODULE h) noexcept {
 // would do the same thing irreversibly; a plain reference is the smaller claim.
 //
 // Allocation-free and syscall-cheap: two documented calls, no enumeration.
-inline void* ResolveScoped(const wchar_t* module, const char* symbol) noexcept {
-    if (module == nullptr || symbol == nullptr) {
+inline void* ResolveScoped(const wchar_t* moduleName, const char* symbol) noexcept {
+    if (moduleName == nullptr || symbol == nullptr) {
         return nullptr;
     }
     HMODULE h = nullptr;
-    if (!GetModuleHandleExW(0, module, &h) || h == nullptr) {
+    if (!GetModuleHandleExW(0, moduleName, &h) || h == nullptr) {
         return nullptr;    // the game has not loaded it; that is an answer, not a failure
     }
     // A module of the right NAME whose ABI is not ours is the same answer as no
     // module: we cannot read its arguments, so we do not hook it. See
     // SpeaksExpectedAbi -- this is the Witcher 3 case, and refusing here is what
     // keeps a wrong upscaler name out of the record.
-    if (!SpeaksExpectedAbi(module, h)) {
+    if (!SpeaksExpectedAbi(moduleName, h)) {
         return nullptr;
     }
     return reinterpret_cast<void*>(GetProcAddress(h, symbol));
@@ -606,9 +606,9 @@ inline void* ResolveScoped(const wchar_t* module, const char* symbol) noexcept {
 // Is a module of this name in the process right now? UNCHANGED_REFCOUNT, unlike
 // ResolveScoped: the census patches nothing, so it has no reason to keep the
 // module alive and takes the smaller claim. Allocation-free, one documented call.
-inline bool IsModuleLoaded(const wchar_t* module) noexcept {
+inline bool IsModuleLoaded(const wchar_t* moduleName) noexcept {
     HMODULE h = nullptr;
-    return GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, module, &h) && h != nullptr;
+    return GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, moduleName, &h) && h != nullptr;
 }
 
 // One census pass. Always carries FL_CENSUS_RAN, so a word without it means the
