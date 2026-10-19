@@ -132,7 +132,7 @@ public sealed class DlssTextTests
     });
 
     /// <summary>
-    /// beta.26: the owner's Silent Hill 2 session (2026-10-19) stored a ×1336.0 "state" — a loading screen at one token
+    /// beta.26: the owner's Silent Hill 2 session (2026-10-19) stored a ×1336.0 "state" — ten seconds at one token
     /// per window — and the line read "DLSS 4.5 (a ×1336.0 frame-generation state)". Read by today's rule, the evidence is
     /// the ×6.1 state the session really held.
     /// </summary>

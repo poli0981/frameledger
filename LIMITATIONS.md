@@ -68,7 +68,8 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
 - **The mix of frame-generation states** in a session's summary (since 0.1.0-beta.24) is read over five-second
   windows: frame generation that changes faster than that — the NVIDIA App's *Dynamic* mode can — reads partly as
   *Not classified*, and a state shorter than 10 seconds is not listed. A stretch the game presents with almost no frame
-  count of its own — a loading screen or a menu drawn outside frame generation — reads as *Not classified* too. The
+  count of its own — shaders compiling at start, a loading screen, a menu drawn outside frame generation — reads as
+  *Not classified* too. The
   multiplier chosen in a game's own menu is not read; the measured factor is its evidence. How the NVIDIA App's
   *Dynamic* ceiling and *Max refresh rate* target are stored by the driver is read from NVIDIA's own setting names,
   and has been checked against the App on one game. Sessions recorded before 0.1.0-beta.24 have no mix.

@@ -208,7 +208,9 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
   writes a footer naming the tag. The same assembly is `build.ps1`'s `wiki-check` gate (`12_BUILD` §Local quality gate,
   13d), so a dead link is red on the pull request, never on the published wiki.
 - **When:** `workflow_run` on `Release`, completed — the job runs only when that run succeeded and was started by a
-  pushed `v*` tag, so a `workflow_dispatch` rehearsal of `release.yml` never publishes. It checks out the run's
+  pushed `v*` tag in this repository (`head_repository` is checked since beta.26: a fork cannot start the Release run,
+  and the condition now says so — SonarCloud `githubactions:S7631`), so a `workflow_dispatch` rehearsal of
+  `release.yml` never publishes. It checks out the run's
   `head_sha` (a `workflow_run` job runs `main`'s copy of this file) and links at `head_branch`, the tag. By hand:
   `gh workflow run wiki.yml -f ref=main -f publish=false` builds, checks and uploads the pages as an artifact; with
   `publish=true` it publishes them.
@@ -275,6 +277,17 @@ the comment below; the rest are fixed in the same train (beta.24 PR-2).
 - `layer.cpp:99` (the Vulkan layer) — a leaf of `GetModuleFileNameA`'s result, which the line above has already
   checked is shorter than `MAX_PATH`, so it is terminated.
 - `fl-baseline-probe/main.cpp:55` — a literal (a developer probe, not shipped).
+
+**The six left open after the trains (2026-10-19, beta.26)** — the analysis of `main` at `e35b971` (0.1.0-beta.25),
+after the owner's marking: 366 issues resolved (284 fixed — the exclusions and beta.24 PR-2 —, 49 accepted, 33 false
+positives) and six open, all in the new-code period, which is why its quality gate read C for reliability and security.
+Five were written after the analysis of `372389c` the table above was built from.
+
+| Rule | Issues | Verdict | Comment for the UI |
+|---|---|---|---|
+| `csharpsquid:S3869` `DangerousGetHandle` | 1 | **Accept** — the row above; not marked yet | as above |
+| `csharpsquid:S1244` floating-point equality | 4 | **False positive** | Exact on purpose. `ColorMath.Hsv` compares `max` with `r` and `g` — `Math.Max` returned one of them, the same double; `MarkdownView`'s `next == _wheelTarget` is true only when `next` was assigned `_wheelTarget` (the snap that ends the easing); `SensorsChart.Line`'s `scale == 1.0` compares a parameter with its own default literal to skip a copy. |
+| `githubactions:S7631` untrusted code from a fork | 1 | **Fixed** in beta.26 | `wiki.yml` checks out `workflow_run.head_sha` only after a successful Release run started by a pushed `v*` tag, and now also only when `workflow_run.head_repository` is this repository. If the analysis still raises it, mark it *Safe* with that sentence. |
 
 **The owner's steps** after the next analysis of `main`: for each rule above, open
 `https://sonarcloud.io/project/issues?id=poli0981_frameledger&resolved=false&rules=<rule>`, select all, *Bulk change*,
