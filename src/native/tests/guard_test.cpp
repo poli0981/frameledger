@@ -2950,18 +2950,24 @@ TEST_CASE("the native log: written at init, on the Agent's request, and on the s
         Sleep(50);
     }
     REQUIRE(r.st->status == fl::FL_STATUS_UNHOOKED);
-    // POLL for the LAST line the stop writes rather than sleeping a fixed 1500 ms. The watchdog flushes the ring-buffer
-    // log on its own cadence, so a fixed sleep read the file BETWEEN two UNHOOK_RESTORED lines on a loaded CI runner
-    // (2026-09-21, PR #209: the dxgi line was there, the kernelbase one was not yet). Bounded at 10 s; the checks below
-    // still fail, with the text, if the line never comes.
+    // POLL for the line the watchdog writes LAST after a stop, rather than for the stop's own last line or a fixed
+    // sleep. A fixed sleep read the file BETWEEN two UNHOOK_RESTORED lines on a loaded CI runner (2026-09-21, PR #209);
+    // polling for the kernelbase line still failed under load (beta.9 to beta.23), because the stop ran on the
+    // harness's presenting thread and the watchdog's one final flush raced it -- the line reached the ring after the
+    // last flush ever made. Since beta.24 that flush waits for the stop to finish and writes STOP_FLUSHED last, with
+    // a = 1 when it did. Bounded at 10 s; the checks below still fail, with the text, if the line never comes.
     for (int i = 0; i < 100; ++i) {
         text = ReadWholeFile(log);
-        if (text.find("UNHOOK_RESTORED  kernelbase!LoadLibraryExW") != std::string::npos) {
+        if (text.find("STOP_FLUSHED") != std::string::npos) {
             break;
         }
         Sleep(100);
     }
     INFO("after the stop:\n" << text);
+    const std::size_t flushed = text.find("STOP_FLUSHED");
+    REQUIRE(flushed != std::string::npos);
+    const std::size_t flushedEnd = text.find('\n', flushed);
+    CHECK(text.substr(flushed, flushedEnd - flushed).find(" a=1 ") != std::string::npos);    // the stop had finished
     CHECK(text.find("STOP") != std::string::npos);
     CHECK(text.find("UNHOOK_RESTORED  dxgi!IDXGISwapChain::Present") != std::string::npos);
     CHECK(text.find("UNHOOK_RESTORED  kernelbase!LoadLibraryExW") != std::string::npos);

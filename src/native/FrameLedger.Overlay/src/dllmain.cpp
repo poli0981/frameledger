@@ -144,6 +144,7 @@ enum FlLogCode : uint32_t {
     kLogLoaderDetour,
     kLogSupervisionLost,
     kLogTolerance,
+    kLogStopFlushed,
 };
 
 const char* LogCodeName(uint32_t code) noexcept {
@@ -170,6 +171,8 @@ const char* LogCodeName(uint32_t code) noexcept {
         return "SUPERVISION_LOST";
     case kLogTolerance:
         return "TOLERANCE";
+    case kLogStopFlushed:
+        return "STOP_FLUSHED";
     default:
         return "?";
     }
@@ -186,8 +189,14 @@ struct FlLogEvent {
 constexpr uint32_t    kLogCapacity = 256;
 FlLogEvent            g_log[kLogCapacity]{};
 std::atomic<uint32_t> g_logNext{0};
-uint32_t              g_logFlushed = 0;      // watchdog / init thread only
-uint32_t              g_logFlushSeen = 0;    // last logFlushRequested acted on
+// SLOT n IS COMMITTED WHEN g_logCommit[n % capacity] == n + 1 (beta.24). LogNote claims its slot with one fetch_add and
+// fills it afterwards, so a flush running on another thread could print a slot still being written -- or an older
+// lap's event -- and then skip it for good. The commit word is stored last, with release; FlushLog prints a slot only
+// once it reads its own index there, and stops at the first one that does not, for the next flush to pick up.
+std::atomic<uint32_t> g_logCommit[kLogCapacity]{};
+uint32_t              g_logFlushed = 0;              // watchdog / init thread only
+bool                  g_logHeaderWritten = false;    // watchdog / init thread only
+uint32_t              g_logFlushSeen = 0;            // last logFlushRequested acted on
 uint64_t              g_logEpochQpc = 0;
 uint64_t              g_logQpcFreq = 1;
 wchar_t               g_logPath[512]{};
@@ -208,6 +217,7 @@ void LogNote(uint32_t code, const char* text, uint32_t a = 0, uint64_t b = 0) no
         }
     }
     e.text[i] = '\0';
+    g_logCommit[idx % kLogCapacity].store(idx + 1u, std::memory_order_release);
 }
 
 // Narrow ASCII copy of a module name for the log; anything outside ASCII is '?'.
@@ -254,8 +264,10 @@ bool EnsureLogPath() noexcept {
     return true;
 }
 
-// Init / watchdog thread ONLY. Appends what has not been written yet.
-void FlushLog() noexcept {
+// Init / watchdog thread ONLY. Appends what has not been written yet. An ordinary flush stops at the first slot whose
+// writer has not committed it yet (the next flush starts there); the FINAL flush -- the watchdog's last, after a stop
+// -- says so in a `#` line and moves on, because nothing flushes after it.
+void FlushLog(bool final = false) noexcept {
     if (!EnsureLogPath()) {
         return;
     }
@@ -266,7 +278,8 @@ void FlushLog() noexcept {
     }
     static char buf[65536];
     int         used = 0;
-    if (g_logFlushed == 0) {
+    if (!g_logHeaderWritten) {
+        g_logHeaderWritten = true;
         char image[MAX_PATH]{};
         GetModuleFileNameA(nullptr, image, MAX_PATH);
         used += _snprintf_s(buf, sizeof(buf), _TRUNCATE, "# FrameLedger.Overlay build %s pid %lu layout v%u image %s\n",
@@ -281,6 +294,18 @@ void FlushLog() noexcept {
         from = next - kLogCapacity;
     }
     for (; from != next; ++from) {
+        const uint32_t committed = g_logCommit[from % kLogCapacity].load(std::memory_order_acquire);
+        if (committed != from + 1u) {
+            if (static_cast<int32_t>(committed - (from + 1u)) > 0) {
+                continue;    // a later lap's event already took the slot: counted as overwritten above, or soon
+            }
+            if (!final) {
+                break;    // still being written: the next flush starts here
+            }
+            used += _snprintf_s(buf + used, sizeof(buf) - static_cast<size_t>(used), _TRUNCATE,
+                                "# event %u was still being written at the last flush\n", from);
+            continue;
+        }
         const FlLogEvent& e = g_log[from % kLogCapacity];
         const double      t = (e.qpc >= g_logEpochQpc && g_logQpcFreq != 0)
                                   ? static_cast<double>(e.qpc - g_logEpochQpc) / static_cast<double>(g_logQpcFreq)
@@ -294,7 +319,7 @@ void FlushLog() noexcept {
                             "+%10.3fs  %-16s %-40s a=%u b=0x%llx\n", t, LogCodeName(e.code), e.text, e.a,
                             static_cast<unsigned long long>(e.b));
     }
-    g_logFlushed = next;
+    g_logFlushed = from;
     if (used > 0) {
         DWORD written = 0;
         WriteFile(h, buf, static_cast<DWORD>(used), &written, nullptr);
@@ -802,6 +827,10 @@ constexpr DWORD kWatchdogIntervalMs = 1000;
 // only thing that holds if MH_DisableHook ever fails -- but "the flag is
 // necessary" is NOT a property this suite verifies, and saying so is cheaper than
 // letting a reader assume it does.
+// Set by the stop once every line it writes is in the ring; read by the watchdog before its final flush (beta.24).
+std::atomic<uint32_t> g_stopLogged{0};
+void                  WakeWatchdog() noexcept;
+
 void StopObserving(uint32_t reason) noexcept {
     // Compare-exchange, not a plain check-then-set: the watchdog and a game
     // thread inside a hook body can both arrive here, and MH_DisableHook must run
@@ -835,6 +864,10 @@ void StopObserving(uint32_t reason) noexcept {
         std::atomic_ref<uint32_t> status{g_state->status};
         status.store(reason, std::memory_order_release);
     }
+    // Every STOP / UNHOOK_* line is in the ring now. The watchdog may already be waiting to flush them: when this stop
+    // ran on a presenting thread (MayObserve), g_observing read 0 before the first line was written.
+    g_stopLogged.store(1u, std::memory_order_release);
+    WakeWatchdog();
 }
 
 // Returns false when we must not record this present.
@@ -2473,9 +2506,27 @@ DWORD WatchdogLoop() noexcept {
 
 // The thread itself: the loop, then ONE flush of everything the stop wrote, on
 // this thread, after the last hook body that could have logged has had its say.
+//
+// THE STOP MAY STILL BE WRITING (beta.24). The loop returns as soon as g_observing reads 0, and StopObserving sets it
+// to 0 FIRST -- before its STOP and UNHOOK_* lines. When the stop runs on a presenting thread (MayObserve's one-frame
+// safety stop), that thread can still be in its loop when this one flushes: fl_guard's native-log case read the file
+// with the dxgi line in it and the kernelbase line -- the last patch -- missing for good, under load. So the flush
+// waits for the stop to say it is done, bounded, and writes STOP_FLUSHED (a = 1 when the stop finished) last.
+constexpr ULONGLONG kStopLogWaitMs = 2000;
+
 DWORD WINAPI WatchdogThread(LPVOID) noexcept {
-    const DWORD r = WatchdogLoop();
-    FlushLog();
+    const DWORD     r = WatchdogLoop();
+    const ULONGLONG deadline = GetTickCount64() + kStopLogWaitMs;
+    while (g_stopLogged.load(std::memory_order_acquire) == 0u && GetTickCount64() < deadline) {
+        if (g_watchdogWake != nullptr) {
+            WaitForSingleObject(g_watchdogWake, 10);
+        } else {
+            Sleep(10);
+        }
+    }
+    const bool complete = g_stopLogged.load(std::memory_order_acquire) != 0u;
+    LogNote(kLogStopFlushed, complete ? "every stop line is above" : "the stop was still writing", complete ? 1u : 0u);
+    FlushLog(true);
     return r;
 }
 

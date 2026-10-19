@@ -705,11 +705,23 @@ No logging in hook bodies. A small fixed-size in-memory ring of structured event
 > `__func__` — never from a hook body. Codes: `RING_CREATED`, `PRESENT_HOOKS`, `HOOK_INSTALLED` (one per
 > patch, with the target address), `SYMBOL_MISSING` (once per pair, and only when the module IS mapped),
 > `FAULT`, `STOP` (the reason), `UNHOOK_RESTORED` / `UNHOOK_DECLINED` (one per patch), `LOADER_DETOUR`,
-> `SUPERVISION_LOST`. **Three flush points, none on a present path:** the end of `InitThread` (so the
+> `SUPERVISION_LOST`, and since beta.24 `STOP_FLUSHED` (the last line after a stop: `a=1` when the stop had finished
+> writing). **Three flush points, none on a present path:** the end of `InitThread` (so the
 > file exists from the start of the session and a crash mid-session still leaves it), the watchdog when
 > `FlControlBlock.logFlushRequested` changes (a counter the Agent bumps at session end; nothing clears it),
 > and the watchdog on its way out after any stop. Appended, never recreated; events overwritten before a
-> flush are counted in a `#` line. Path: `%LOCALAPPDATA%\FrameLedger\logs\overlay-<pid>-<yyyymmdd-hhmmss>.log`,
+> flush are counted in a `#` line.
+>
+> **The stop and the last flush, beta.24 (`fl_guard`'s native-log case, red under load since beta.9).** A stop sets
+> `g_observing` to 0 first and writes its `STOP` / `UNHOOK_*` lines after, and the watchdog's loop returns the moment
+> it reads 0. When the stop ran on a presenting thread — `MayObserve`'s one-frame safety stop — the watchdog's one
+> final flush could run while that thread was still writing, and the lines after it (the kernelbase loader detour is
+> the last patch) reached the ring after the last flush ever made. The stop now says when its last line is in, and
+> wakes the watchdog; the final flush waits for that, bounded at 2 s, then writes `STOP_FLUSHED`. And each slot has a
+> commit word written after its fields: `LogNote` claims a slot with one `fetch_add` and fills it afterwards, so a
+> flush on another thread could print a slot still being filled. A flush now prints only slots whose writer has
+> finished — an ordinary flush stops at the first that is not, for the next one; the final flush names it in a `#`
+> line. Nothing on a present path changed. Path: `%LOCALAPPDATA%\FrameLedger\logs\overlay-<pid>-<yyyymmdd-hhmmss>.log`,
 > resolved by `SHGetKnownFolderPath` (§S21's rule, not the environment). No allocation: static ring,
 > static 64 KiB format buffer, static path. The CaptureHost prints the file and its `FAULT` / `STOP` /
 > `UNHOOK_*` / `SYMBOL_MISSING` / `SUPERVISION_LOST` lines at the end of every session
