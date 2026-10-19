@@ -35,96 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Added
-
-- **Every frame-generation state a session held, in its summary** (owner request 2026-10-19, decision D62). Under the
-  figures, *Frame generation in this session* lists each state — `×2.0`, `×3.0`, `×4.0`, `×6.0`… — with its own
-  Native → Displayed and its share of the time to two decimals, then the time with no frame generation and the time no
-  state explains (*Not classified*: switching, loading, a multiplier that changed faster than five seconds), above a bar
-  of those shares. A line above them says how frame generation was set: in the NVIDIA App (*Dynamic, up to ×6, target:
-  max refresh rate*, *Fixed ×4*, from the driver profile stored with the session) or in the game. Each state is read
-  over the same five-second windows as the steady state and lasts at least 10 seconds; nothing is averaged across
-  states (rule 6). Stored with the session (schema 0020, `sessions.fg_mix`): a session recorded before has none, and
-  its summary says so in one line. The CSV export gains a `# fg_mix:` line; the JSON carries the column. The FG×
-  column's two formats are translated strings now, and the driver-profile line's automatic dynamic target reads as the
-  NVIDIA App says it: *max refresh rate*.
-
-- **The quality mode the NVIDIA App set, on every page that names the upscaler** (owner request 2026-10-19, decision
-  D63). Where the NVIDIA App overrides DLSS Super Resolution for a game and the NVIDIA driver reports that the
-  override applied in the session, the summary, the Sessions tab, the game page and the live card say so:
-  *DLSS (driver-reported) Quality · NVIDIA App*. It is read from what every session already stores, so sessions
-  recorded before read the same; when the profile and the driver disagree, or the driver's report alone cannot settle
-  the mode, the session reads *· NVIDIA App override* with no mode — never the game's own value in its place. The CSV
-  export gains a `# quality_mode:` line. `legal/ACCURACY.md`'s *Quality mode* bullet says so, in the words approved
-  with the plan; **the Disclaimer is 2.11** and the Legal Gate shows it once.
-
-- **Which DLSS a session ran** (owner request 2026-10-19, decision D64). The summary's DLSS line gives each DLSS
-  library's version and whether it was loaded from the game or from the graphics driver (the NVIDIA App's override
-  loads the driver's own copy), the model preset the NVIDIA driver reports, and *DLSS 4* or *DLSS 4.5* only where the
-  session shows it — the preset (L or M: 4.5; J or K: 4) or a measured multi-frame factor (×5–×6: 4.5; ×3–×4: 4) —;
-  DLSS 2 and 3 from their libraries; *DLSS 5 runtime loaded* when its library is. The game page repeats the label and
-  the CSV export gains `# dlss:`. The module snapshot now records every library under the NVIDIA override folder,
-  whatever its name, and each module's folder class (schema 0021, `sessions.runtime_module_sources` — never the path),
-  plus five more libraries by name (`sl.dlss_d.dll`, `sl.common.dll`, `sl.reflex.dll`, `amd_fidelityfx_loader_dx12.dll`,
-  `nvngx_dlssnr.dll`). **Privacy Policy 2.12** says so, in the words approved with the plan; `legal/ACCURACY.md` gains
-  the *DLSS version* bullet.
-
-### Changed
-
-- **SonarCloud analyses only FrameLedger's own code** (developers only; owner request 2026-10-19, decision D67). A
-  `.sonarcloud.properties` at the root keeps the vendored SDK headers, generated files, test fixtures, licence texts and
-  the SQLite migrations out of the analysis and reports the native code against C++20; `docs/13_CI_CD.md` §SonarCloud
-  records the triage of the 341 issues the last analysis left — the rules this project breaks by design and why, the
-  false positives, and the ones the next change fixes — with the steps to mark them in SonarCloud.
-- **The long documents are split** (developers only; owner request 2026-10-19, decision D66). `CHANGELOG.md`
-  keeps `[Unreleased]` and a table of the releases; each release's section now lives in its own file,
-  `docs/changelog/<version>.md`, and the ledger kept before the first tag in five parts — moved verbatim: the notes
-  `tools/release-notes.ps1` takes for each of the 23 releases are byte for byte what they were, and it reads the
-  version's own file. `docs/HANDOFF.md` (2,844 lines, now 299) keeps what to do next, the open owner-only items and an
-  index of every owner decision; the history of each phase and train, the passed owner-only items and the traps
-  moved to `docs/handoff/`, and a table there resolves every section the code and the documents cite. A new gate,
-  `tools/docs-split-check.ps1`, keeps each index and its files naming each other.
-- **The open questions and the measurement notes are split too** (developers only, D66). `docs/20_OPEN_QUESTIONS.md`
-  (4,467 lines, now 2,008) keeps its rules, §S24 and every entry not resolved; the 30 entries §S24 marks resolved
-  moved, with their reasoning and in their order, to `docs/open-questions/closed-s.md` and `closed-h.md`, and a table
-  at the end of each series lists them. `docs/spike-notes.md` (2,816 lines) is now the index of its 24 sections, each
-  in its own file under `docs/spike-notes/`; a new measurement gets the next number, its own file and a row. Both
-  rebuild their originals byte for byte, and the same gate holds their indexes to their files.
-
-### Fixed
-
-- **The NVIDIA driver line read the driver's mode in the wrong numbering.** The driver reports the mode an override
-  set in NGX's own numbering, not the driver profile's: the owner's Silent Hill 2 session ran under the NVIDIA App's
-  Ultra Performance (profile value 5) and the driver reported 3 — which the line printed as nothing, and a DLAA
-  override's 5 would have printed as "Ultra Performance". Five comments in the native code called a quality byte of
-  0 "NGX MaxPerf" — in the numbering that byte carries, 0 is "DLSS off" (comments only, no code changes).
-- **Opening a folder in Explorer** — the logs, the data folder, the licences, a bug report's zip and the folder named
-  after a failed start — starts `explorer.exe` from the Windows folder by its full path, never a program of that name
-  found on the search path, and always hands it the path in quotes (three of the five places passed it bare).
-- **What SonarCloud found that was real** (developers only): the one third-party GitHub Action is pinned to its
-  commit; two string reads in native code are bounded by their buffer (the guard's rules-file path handed to the Agent,
-  and the driver's branch name the NVAPI bridge copies); the pipe server's accept loop states that it ends only when
-  cancelled; a launch's own session names its absent stop token (`CancellationToken.None`, with the reason) where it
-  wrote `default` — the same value, now said on purpose; an unused overload of
-  the process launcher that hid the other is gone; the identifier `module` (a C++20 keyword in some positions) is
-  renamed in the hook layer — a rename only, no code changes; and a hook-overhead probe no longer uses a compound
-  assignment on a `volatile`, which C++20 deprecates. The analyzers Dependabot updates in #314 flag the first-start
-  window's own answer task and one test fake's synchronous wait; both are suppressed with their reasons, so that update
-  can merge.
-- **The game-side log keeps every line a stop writes.** When hooking stopped on a game's own drawing thread — the
-  capture agent's safety stop takes effect within one frame there — the Overlay's last write of its log could happen
-  while that thread was still listing the hooks it removed, and the last of them never reached the file
-  (`overlay-*.log`, the file a bug report carries). The last write now waits, at most two seconds, for the stop to
-  finish and ends with a `STOP_FLUSHED` line; a line still being written is never printed half-done. Nothing changes
-  on the per-frame path. This was the native test that went red under load since beta.9 (`fl_guard`'s log case),
-  now run 20 times with every processor busy.
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.24` | 2026-10-19 | [`docs/changelog/0.1.0-beta.24.md`](docs/changelog/0.1.0-beta.24.md) |
 | `0.1.0-beta.23` | 2026-10-14 | [`docs/changelog/0.1.0-beta.23.md`](docs/changelog/0.1.0-beta.23.md) |
 | `0.1.0-beta.22` | 2026-10-13 | [`docs/changelog/0.1.0-beta.22.md`](docs/changelog/0.1.0-beta.22.md) |
 | `0.1.0-beta.21` | 2026-10-13 | [`docs/changelog/0.1.0-beta.21.md`](docs/changelog/0.1.0-beta.21.md) |

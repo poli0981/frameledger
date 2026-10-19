@@ -76,8 +76,8 @@
 
   <ItemGroup Label="Analyzers (build-time only)">
     <PackageVersion Include="Roslynator.Analyzers" Version="5.0.1" />
-    <PackageVersion Include="Meziantou.Analyzer" Version="3.0.299" />
-    <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.7.23" />
+    <PackageVersion Include="Meziantou.Analyzer" Version="3.0.307" />
+    <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.12.1" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">

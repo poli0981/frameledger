@@ -62,6 +62,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.20` | [`handoff/history/0.1.0-beta.20.md`](handoff/history/0.1.0-beta.20.md) |
 | `§beta.21` | [`handoff/history/0.1.0-beta.21.md`](handoff/history/0.1.0-beta.21.md) |
 | `§beta.22` | [`handoff/history/0.1.0-beta.22.md`](handoff/history/0.1.0-beta.22.md) |
+| `§beta.23` | [`handoff/history/0.1.0-beta.23.md`](handoff/history/0.1.0-beta.23.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -69,60 +70,73 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-10-14, 0.1.0-beta.23: a game's artwork, pages that do not freeze, the documents that drifted
+## **START HERE** — 2026-10-19, 0.1.0-beta.24: every frame-generation state, the NVIDIA App's quality mode, which DLSS ran, SonarCloud, the documents split
 
-*Status is `CHANGELOG.md` `[0.1.0-beta.23]`; this is what no other file carries.* The owner, 2026-10-14: "Bạn phân tích
-và lên plan cho phần tiếp theo gồm những nội dung sau: 1. Thêm ảnh bìa/hero/cover của game từ các nền tảng đó - Đặt trong
-detail của game. (Nếu được); Tuỳ chọn: có thể sync màu cùa cover với màu của detail; 2. Cập nhật, sync docs; 3. Kiểm tra
-hiệu suất khi chuyển giữa các tab (nếu có vấn đề hiệu năng)" — then the whole train to the release without asking again.
-On top of #308 (PR-1): #309 (the pages, measured first), #310 (the artwork), #311 (the drift), then this release.
+*Status is `docs/changelog/0.1.0-beta.24.md`; this is what no other file carries.* The owner, 2026-10-19: "Bạn xem xét,
+đánh giá và lên plan cho bản beta mới với những nội dung như sau:" — six items: the mix of frame-generation modes inside
+one session, shown in the App; the upscaler's quality mode (Ultra Performance … DLAA, FSR's too) only when captured, the
+NVIDIA App's override as the standard where there is one; SonarCloud fixed and its false positives marked; a SonarCloud
+configuration that keeps third-party headers out; which DLSS is in use (3, 4, 4.5, 5), if it can be found; the long
+documents split — then, with the plan approved, the whole train to the release without asking again. Later the same
+day: "Bạn có thể xét tới trường framegen chỉnh trong setting in-game nếu chưa có" (the frame generation chosen in the
+game's own menu). Answers that set the decisions below, given before the plan: the mix as a share bar and a table; the
+owner marks Sonar's false positives in its UI from a list we write; all four long documents split; the override is the
+standard only where the driver confirms it applied; DLSS labels bound to evidence; FSR's mode through `ffxQuery` as a
+separate PR that may slip; owner-only items 7–11 and 13 not yet run; Dependabot #314 rebased and merged in the train.
 
 **Decisions:**
 
-- **D60 — a game's artwork is what is already on the PC.** The image the user chose (*Edit… ▸ Choose image…*), else
-  what the Steam or GOG GALAXY app keeps for the game it installed — found through the stores' own records as Play finds
-  them (`StoreRecords.Owning`, never the row's platform alone). Nothing is downloaded: `privacy.online_metadata` stays
-  reserved. A chosen image is a PNG copy, `<data>\covers\game-<id>-<unix ms>.png`, named relative in `cover_path`; only
-  those names are followed — never a rooted, share or `..` path, never through a junction or a symbolic link, because a
-  viewer's copy of a ledger may come from anywhere (D52).
-- **D61 — the band takes the artwork's colour as far as every text on it reads**: primary and secondary 4.5:1, tertiary
-  3:1, the pills' and the warning's text 4.5:1 on their own fills; at most 30 % on the dark theme, 22 % on the light. On
-  by default (the owner's choice); never in high contrast; it follows a theme switch by resource reference.
-- **The pages' speed was judged by a bar written before the first measurement** (`spike-notes` §21): fix what keeps the
-  UI thread busy 50 ms or more, can block on I/O, or grows with each visit. Recorded, not fixed: page builds of 85–370 ms,
-  and **the library grid (275 ms at 48 games) — non-virtualizing by the beta.11 decision; a virtualizing one changes the
-  page's look, which is the owner's call** *(answered 2026-10-15: it stays as it is — §After the release below)*; no
-  `sessions.started_at` index (a schema version locks out every earlier
-  build, and nothing measured asked for it).
-- `LIST_GAME_TESTED`: the Everhex Demo row and the corrected Vulkan sentence, approved by the owner under D35.
+- **D62 — the mix.** Every frame-generation state a session held, each with its own factor, Native → Displayed and its
+  share of the presenting time, then *no frame generation* (only where a counted `none` is allowed) and *not
+  classified*; never an average across states (CLAUDE.md rule 6, amended). Computed at finalize over the steady state's
+  own five-second windows and stored (`sessions.fg_mix`, schema 0020); sessions recorded before have none and are not
+  rebuilt. Above the rows, how frame generation was set — the NVIDIA App's Dynamic / Fixed from the stored driver
+  profile, or the game — as configuration, never as a row. The multiplier chosen in a game's menu is not read (§2b's
+  refusal stands); the measured row is its evidence.
+- **D63 — the NVIDIA App's override is the quality mode where the driver reports it applied** (`03_METRICS`
+  §Upscaling, amended; `QualityResolver`, read at display time, so sessions recorded before resolve alike). Otherwise
+  the mode the game passed to a hooked call; otherwise none; never the game's own value under an override.
+- **D64 — DLSS labels are evidence-bound** (`05_DETECTION` §DLSS generation): each library's version and folder class
+  (`sessions.runtime_module_sources`, schema 0021 — never the path), the preset the driver reports applied, DLSS 4 /
+  4.5 only from a preset or a measured multi-frame factor, DLSS 5 only as "runtime loaded".
+- **D65 — FSR's quality mode through `ffxQuery`: deferred to the next beta.** The plan allowed it to slip, and it was
+  kept out of this train — a new hook on four FidelityFX modules, a hook-family bit in the shared layout, a new byte
+  encoding, the stubs and the harness, on the hook path rule 5 guards — rather than written against the release.
+  ACCURACY's FSR clause did not ship with it. The design stands in the plan: query → the five (mode, size) pairs → the
+  mode whose size the game then dispatched. The owner asked for it as 0.1.0-beta.25 the same day.
+- **D66 — the long documents are split**, every original path kept as the index of its parts, moved byte for byte
+  (`tools/docs-split-check.ps1`; `release-notes.ps1` reads `docs/changelog/<version>.md`).
+- **D67 — SonarCloud stays on Automatic Analysis** with `.sonarcloud.properties`; the by-design rules and false
+  positives are listed in `13_CI_CD` §SonarCloud for the owner to mark in its UI.
+
+**Measured on the owner's ledger** (a read-only SQLite backup copy — never the data folder): **the NVIDIA driver's
+`performanceMode` is in NGX's own numbering, not the profile's** — Silent Hill 2 (2026-10-13) ran under the App's Ultra
+Performance (profile value 5) and the driver reported 3; `NvidiaOverrides.DriverLine` had read it through the profile's
+table since beta.8 and dropped the mode. The same session's SR word has no `CREATED | EVALUATE` (no mode is claimed),
+its FG word applied ×6 and the session measured a ×6.0 steady state, and **none of the override's libraries carried a
+census name** — the module snapshot now records everything under `%ProgramData%\NVIDIA\NGX`. Bit 19 is set on a working
+override (Expedition 33's `0x8067F`) and bit 1 with no override at all (`0x60F`): only `PERF_MODE`, `SR_DLAA_MODE` and
+`SCALING_RATIO` say an override applied. The App's global profile stores `NGX_DLSSG_DYNAMIC_MULTI_FRAME_COUNT_MAX = 5`.
 
 **Traps met on the way:**
 
-- **Microsoft.Data.Sqlite completes its "async" calls synchronously**: after a ledger read, `ConfigureAwait(false)` is
-  still on the UI thread — the session decode, the sorts and the stutter detection all ran there (`16_WPFUI_SYNTAX`
-  §Gotchas).
-- **A transient view model that is `IDisposable` lives until the App exits** (the root container keeps it), and every
-  Dashboard ever opened stayed subscribed. FR-3.8's "Session saved" lived in that view model and reached every page only
-  through the leak — it is `Services.SessionNotices` now.
-- **A `ui:Image` given a `Style` of its own that is not based on `DefaultImageStyle` has no template** and draws nothing
-  in the place it takes. Only a render showed it; `AccessibilityTests.NoStyleOfAWpfUiControlLeavesOutItsTemplate`
-  refuses it now.
-- **A page just navigated to is mid-fade**: a `RenderTargetBitmap` of it reads every colour washed out unless the
-  presenter's `Transition` is `None`.
-- **The Bash tool's heredocs halve backslashes**: `covers\game-` became an invalid C# escape, and `\r\n` in a Python
-  heredoc became real line breaks. Write such files with the editor tools.
-- **`Directory.Delete(…, recursive: true)` over a junction throws without elevation** (it asks Windows to unmount a
-  volume, and the link is removed anyway): a test deletes its junction itself first.
+- **`gh pr merge --squash --delete-branch` on a stacked PR closes the PR based on it** (#319), and a closed PR cannot be
+  reopened once its head was force-pushed. Recovery: push the base back, push the head back to the SHA it closed at,
+  reopen, retarget to `main`, push the rebased head, delete the base. Instead: retarget the next PR to `main` first,
+  merge without `--delete-branch`, rebase the rest (`git rebase --update-refs --onto origin/main <old tip>`, in a
+  temporary `git worktree` when the checkout is busy), then delete the merged branch.
+- **Dependabot closed #314 itself** after `@dependabot rebase` ("updatable in another way") and did not answer
+  `@dependabot reopen`; the two analyzer versions it proposed went into the release PR by hand.
+- **SonarCloud's PR gate fails on new `cpp:S8417`** (explicit memory orders, by design): not a required check; the
+  optional ignore row in `13_CI_CD` §SonarCloud stops it.
+- **A Domain.Metrics enum must be listed in `MetricEnumMirrorTests`** (mirrored or explicitly local), **every enum needs
+  a zero member** (CA1008), **private consts in tests take the `_` prefix** (IDE1006 is `dotnet format`'s, not the
+  build's), and **`null` literals make overloads ambiguous** across a `string?` and a record parameter.
+- **Python strings in the scratch scripts read `\N` as an escape** — a Windows path in a C# comment written through a
+  Python script needs its backslashes doubled, and a Bash heredoc halves them (the beta.23 trap again).
 
-**Owner-only, added to the list below:** item 19 — **passed 2026-10-15**.
+**Owner-only, added to the list below:** item 20.
 
-**After the release (owner, 2026-10-15):** "Item 19 hiện đã đạt 100% yêu cầu. Phần chip sẽ đi kèm với phiên bản tiếp
-theo. Bạn có thể cập nhật và đóng phiên, thư viện vẫn giữ như cũ." — item 19 passed; the chip the release tree's local
-gate left goes with the next pre-release (`fl_guard`'s native-log test, red under load: after the stop, the last
-`UNHOOK_RESTORED` lines were not in the file within its 10-second wait — known since beta.9, and no native code changed
-in beta.23; green on the re-run); and **the library grid stays as it is**: the beta.11 decision
-(`Controls/UniformWrapPanel`, non-virtualizing — cards an equal share of the width, each row as tall as its tallest
-card) holds, at 275 ms for 48 games (`spike-notes` §21). Recorded with no release: nothing a user runs changed.
 
 ## Owner-only — no PR can close these
 
@@ -207,6 +221,29 @@ card) holds, at 275 ms for 48 games (`spike-notes` §21). Recorded with no relea
    halves and a footer naming `v0.1.0-beta.17` — then tick *Restrict editing to collaborators only* (Settings ▸ General
    ▸ Features ▸ Wikis), or anyone can change a page until the next release overwrites it. (e) The `ja` strings marked
    `review`.
+20. **beta.24 on real hardware — decision tables written before the runs.** (a) **The mix (D62):** a DLSS 4 title
+   (Cyberpunk 2077 or Hell Is Us) with the NVIDIA App's *Frame Generation Mode* on *Use 3D app setting*, one session of
+   about two minutes each at ×2, ×3 and ×4 chosen in the game's menu, plus its menus → the summary's *Frame generation in
+   this session* lists ×2.0 / ×3.0 / ×4.0 with shares near the time spent, each with its own Native → Displayed, and the
+   line *Set in the game — no NVIDIA App frame-generation override*. Then the MFG title with the App's *Fixed ×6* → a
+   ×6.0 row and *Set in the NVIDIA App: Fixed ×6*. Then *Dynamic, Target FPS = Max refresh rate, Multiplier = Up to 6x*
+   → several rows or *Not classified*, and *Set in the NVIDIA App: Dynamic, up to ×6, target: max refresh rate*. Record
+   the stored `driver_profile` values for the Dynamic run: `NGX_DLSSG_DYNAMIC_MULTI_FRAME_COUNT_MAX` 5 and the target
+   `0x01000000` confirm the decode; anything else corrects `NvidiaOverrides.FrameGenerationContext`.
+   (b) **The quality mode (D63) on Expedition 33:** the App's Super Resolution mode *Quality*, then *DLAA*, *Ultra
+   Performance*, *Performance*, one short session each → the header reads *DLSS (driver-reported) Quality · NVIDIA App*
+   and so on. Stored `performanceMode`: Ultra Performance 3 (already measured on Silent Hill 2) and DLAA 5 confirm NGX's
+   numbering; DLAA 4 would mean the report follows the profile's numbering above 3 — then
+   `UpscalerNames.FromDriverReport` changes, and the row goes into `spike-notes`.
+   (c) **The libraries (D64):** the same sessions' DLSS line names the super-resolution library and *from the graphics
+   driver* when the override's copy is loaded; preset L → *DLSS 4.5 (preset L)*. With *Model Presets* on *Use 3D app
+   setting*, the game's own library and no generation beyond what was observed. Record the names the override loads
+   under `%ProgramData%\NVIDIA\NGX` (the summary's *Loaded:* line) — they correct `05_DETECTION` §Shipped is not loaded.
+   (d) **DLSS 5** on the owner's DLSS 5 title: *DLSS 5 runtime loaded*. If it is not shown, record the module names it
+   loads (*Loaded:* line); `nvngx_dlssnr.dll` is then corrected in `CensusNames` and `05_DETECTION`.
+   (e) **SonarCloud (D67):** bulk-mark per `13_CI_CD` §SonarCloud; optionally its *Ignore issues on multiple criteria*
+   rows; close PR #315. (f) The Legal Gate shows **Disclaimer 2.11** and **Privacy Policy 2.12** once. (g) The `ja`
+   strings marked `review`.
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
@@ -280,8 +317,14 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D57 | [`handoff/history/0.1.0-beta.21.md`](handoff/history/0.1.0-beta.21.md) | the four itch "launchers" are malware: the documentation is corrected, the import is no… |
 | D58 | [`handoff/history/0.1.0-beta.21.md`](handoff/history/0.1.0-beta.21.md) | Wuthering Waves is on the title list (Steam 3513350, Anti-Cheat Expert), beside the fix… |
 | D59 | [`handoff/history/0.1.0-beta.21.md`](handoff/history/0.1.0-beta.21.md) | Play, in two modes switched in Settings: "1: press Play → the platform opens → it runs;… |
-| D60 | this file, §START HERE | a game's artwork is what is already on the PC |
-| D61 | this file, §START HERE | the band takes the artwork's colour as far as every text on it reads: primary and secon… |
+| D60 | [`handoff/history/0.1.0-beta.23.md`](handoff/history/0.1.0-beta.23.md) | a game's artwork is what is already on the PC |
+| D61 | [`handoff/history/0.1.0-beta.23.md`](handoff/history/0.1.0-beta.23.md) | the band takes the artwork's colour as far as every text on it reads: primary and secon… |
+| D62 | this file, §START HERE | the mix: every frame-generation state a session held, with its share, never averaged |
+| D63 | this file, §START HERE | the NVIDIA App's override is the quality mode where the driver reports it applied |
+| D64 | this file, §START HERE | DLSS labels are evidence-bound: versions and folder class, DLSS 4/4.5 only when shown, 5 only loaded |
+| D65 | this file, §START HERE | FSR's quality mode through ffxQuery — deferred to the next beta |
+| D66 | this file, §START HERE | the long documents are split; every original path stays as the index of its parts |
+| D67 | this file, §START HERE | SonarCloud stays on Automatic Analysis with .sonarcloud.properties; the owner marks in its UI |
 
 ---
 
