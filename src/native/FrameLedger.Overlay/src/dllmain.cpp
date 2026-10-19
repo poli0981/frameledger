@@ -267,7 +267,7 @@ bool EnsureLogPath() noexcept {
 // Init / watchdog thread ONLY. Appends what has not been written yet. An ordinary flush stops at the first slot whose
 // writer has not committed it yet (the next flush starts there); the FINAL flush -- the watchdog's last, after a stop
 // -- says so in a `#` line and moves on, because nothing flushes after it.
-void FlushLog(bool final = false) noexcept {
+void FlushLog(bool lastFlush = false) noexcept {
     if (!EnsureLogPath()) {
         return;
     }
@@ -299,7 +299,7 @@ void FlushLog(bool final = false) noexcept {
             if (static_cast<int32_t>(committed - (from + 1u)) > 0) {
                 continue;    // a later lap's event already took the slot: counted as overwritten above, or soon
             }
-            if (!final) {
+            if (!lastFlush) {
                 break;    // still being written: the next flush starts here
             }
             used += _snprintf_s(buf + used, sizeof(buf) - static_cast<size_t>(used), _TRUNCATE,
