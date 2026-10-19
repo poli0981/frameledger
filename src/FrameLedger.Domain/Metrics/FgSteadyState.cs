@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
-using System.Runtime.InteropServices;
-
 namespace FrameLedger.Domain.Metrics;
 
 /// <summary>
@@ -53,15 +51,6 @@ public sealed record FgSteadyState(double Factor, double NativeFps, double Displ
     /// <summary>A state covering less of the presenting time than this does not speak for the session.</summary>
     public const double MinShare = 0.10;
 
-    [StructLayout(LayoutKind.Auto)]
-    private readonly record struct Slice(long Displayed, long Tokens, int Samples, double Seconds)
-    {
-        /// <summary>Read only on active slices, which have tokens.</summary>
-        public double Factor => Displayed / (double)Tokens;
-
-        public bool IsActive => Samples >= FgWindow.MinPerBucket && Tokens > 0 && Displayed >= Tokens * FgWindow.ActiveThreshold;
-    }
-
     /// <summary>The dominant active state over <paramref name="all"/> from <paramref name="start"/>, or null when none qualifies.</summary>
     public static FgSteadyState? From(IReadOnlyList<FrameSample> all, int start, long qpcFrequency)
     {
@@ -70,31 +59,16 @@ public sealed record FgSteadyState(double Factor, double NativeFps, double Displ
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(start, all.Count);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(qpcFrequency);
 
-        List<Slice> slices = Cut(all, start, qpcFrequency);
-        List<Slice> active = [.. slices.Where(static s => s.IsActive)];
+        List<FgSlices.Slice> slices = FgSlices.Cut(all, start, qpcFrequency);
+        List<FgSlices.Slice> active = [.. slices.Where(static s => s.IsActive)];
         if (active.Count == 0)
         {
             return null;
         }
 
-        // The state is the set of mutually agreeing windows holding the most time. Every active window is tried as
-        // the centre; the winner is pooled and the set re-drawn once around the pooled factor, so the centre's own
-        // noise does not decide membership.
-        double centre = active[0].Factor;
-        double best = -1;
-        foreach (Slice candidate in active)
-        {
-            double seconds = Within(active, candidate.Factor).Sum(static s => s.Seconds);
-            if (seconds > best)
-            {
-                best = seconds;
-                centre = candidate.Factor;
-            }
-        }
-
-        // Never empty: the pooled factor is a weighted mean of members within 10 % of the centre, and a mean always has a
-        // member within 10 % of itself (a member below it and one above it cannot both be further than that).
-        List<Slice> state = [.. Within(active, Pooled([.. Within(active, centre)]))];
+        // The state is the set of mutually agreeing windows holding the most time (FgSlices.DominantState, which
+        // FgMix applies again to what is left).
+        List<FgSlices.Slice> state = FgSlices.DominantState(active);
         long displayed = state.Sum(static s => s.Displayed);
         long tokens = state.Sum(static s => s.Tokens);
         double stateSeconds = state.Sum(static s => s.Seconds);
@@ -102,60 +76,5 @@ public sealed record FgSteadyState(double Factor, double NativeFps, double Displ
         return stateSeconds < MinSeconds || share < MinShare
             ? null
             : new FgSteadyState(displayed / (double)tokens, tokens / stateSeconds, displayed / stateSeconds, stateSeconds, share, state.Count);
-    }
-
-    private static IEnumerable<Slice> Within(List<Slice> active, double factor) =>
-        active.Where(s => Math.Abs(s.Factor - factor) <= factor * StateTolerance);
-
-    private static double Pooled(List<Slice> slices) =>
-        slices.Sum(static s => s.Displayed) / (double)Math.Max(1, slices.Sum(static s => s.Tokens));
-
-    /// <summary>
-    /// Fixed wall-clock windows from the first claimed sample. A window's seconds are its nominal length, except the
-    /// last, which ends at the last sample; a window with no sample in it (the title minimised) is not a window.
-    /// </summary>
-    private static List<Slice> Cut(IReadOnlyList<FrameSample> all, int start, long qpcFrequency)
-    {
-        ulong origin = all[start].Qpc;
-        ulong last = all[^1].Qpc;
-        double ticksPerWindow = WindowSeconds * qpcFrequency;
-        var slices = new List<Slice>();
-        long index = -1;
-        long displayed = 0;
-        long tokens = 0;
-        int samples = 0;
-
-        void Close()
-        {
-            if (samples == 0)
-            {
-                return;
-            }
-
-            // A window's length is nominal, except the last, which ends at the last sample (and may be zero long).
-            double windowStart = origin + (index * ticksPerWindow);
-            slices.Add(new Slice(displayed, tokens, samples, Math.Clamp((last - windowStart) / qpcFrequency, 0, WindowSeconds)));
-        }
-
-        for (int i = start; i < all.Count; i++)
-        {
-            FrameSample s = all[i];
-            long at = (long)(Math.Max(0d, (double)s.Qpc - origin) / ticksPerWindow);
-            if (at != index)
-            {
-                Close();
-                index = at;
-                displayed = 0;
-                tokens = 0;
-                samples = 0;
-            }
-
-            displayed += 1 + (s.Claims(MeasuredFields.DxgiPresents) ? s.DxgiUnseen : 0);
-            tokens += s.FgEvaluations;
-            samples++;
-        }
-
-        Close();
-        return slices;
     }
 }

@@ -35,6 +35,20 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **Every frame-generation state a session held, in its summary** (owner request 2026-10-19, decision D62). Under the
+  figures, *Frame generation in this session* lists each state — `×2.0`, `×3.0`, `×4.0`, `×6.0`… — with its own
+  Native → Displayed and its share of the time to two decimals, then the time with no frame generation and the time no
+  state explains (*Not classified*: switching, loading, a multiplier that changed faster than five seconds), above a bar
+  of those shares. A line above them says how frame generation was set: in the NVIDIA App (*Dynamic, up to ×6, target:
+  max refresh rate*, *Fixed ×4*, from the driver profile stored with the session) or in the game. Each state is read
+  over the same five-second windows as the steady state and lasts at least 10 seconds; nothing is averaged across
+  states (rule 6). Stored with the session (schema 0020, `sessions.fg_mix`): a session recorded before has none, and
+  its summary says so in one line. The CSV export gains a `# fg_mix:` line; the JSON carries the column. The FG×
+  column's two formats are translated strings now, and the driver-profile line's automatic dynamic target reads as the
+  NVIDIA App says it: *max refresh rate*.
+
 ### Changed
 
 - **SonarCloud analyses only FrameLedger's own code** (developers only; owner request 2026-10-19, decision D67). A

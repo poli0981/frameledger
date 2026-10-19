@@ -9,6 +9,7 @@ using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FrameLedger.App.Charts;
+using FrameLedger.App.Controls;
 using FrameLedger.App.Services;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.TriState;
@@ -130,6 +131,30 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
     [ObservableProperty]
     private string? _sensorStatsMissing;
 
+    /// <summary>beta.24 (D62): the session stored a mix of two rows or more, so the block is shown.</summary>
+    [ObservableProperty]
+    private bool _hasFgMix;
+
+    /// <summary>The mix as the bar draws it, in the table's order.</summary>
+    [ObservableProperty]
+    private IReadOnlyList<FgMixSegment> _fgMixSegments = [];
+
+    /// <summary>The bar's spoken name: every row with its share.</summary>
+    [ObservableProperty]
+    private string _fgMixName = string.Empty;
+
+    /// <summary>How frame generation was set — in the NVIDIA App, or in the game — when an NVIDIA profile was read; null otherwise.</summary>
+    [ObservableProperty]
+    private string? _fgMixContext;
+
+    /// <summary>What "not classified" means, when the mix has such a row; null otherwise.</summary>
+    [ObservableProperty]
+    private string? _fgMixUnclassifiedNote;
+
+    /// <summary>Why a session that counted frame generation shows no mix (<see cref="FgMixPresentation.Missing"/>); null otherwise.</summary>
+    [ObservableProperty]
+    private string? _fgMixMissing;
+
     [ObservableProperty]
     private string _tags = string.Empty;
 
@@ -192,6 +217,16 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
 
     public static string ShowSensorsText => Strings.Summary_Show_Sensors;
 
+    public static string FgMixHeader => Strings.FgMix_Header;
+
+    public static string FgMixStateHeader => Strings.FgMix_Col_State;
+
+    public static string FgMixShareHeader => Strings.FgMix_Col_Share;
+
+    public static string FgMixRatesHeader => Strings.FgMix_Col_Rates;
+
+    public static string FgMixTimeHeader => Strings.FgMix_Col_Time;
+
     public static string AnnotationsHeader => Strings.Summary_Annotations_Header;
 
     public static string TagsPlaceholder => Strings.Summary_Tags_Placeholder;
@@ -221,6 +256,9 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
     public ObservableCollection<SensorStatRowModel> SensorStats { get; } = [];
 
     public ObservableCollection<TriStateChipModel> Chips { get; } = [];
+
+    /// <summary>beta.24 (D62): every frame-generation state the session held, then no frame generation, then the time no state claims.</summary>
+    public ObservableCollection<FgMixRowModel> FgMix { get; } = [];
 
     /// <summary>The action in flight, for a test to await.</summary>
     public Task Pending { get; private set; } = Task.CompletedTask;
@@ -388,8 +426,27 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         HasSensorCharts = SensorSeries is { Sensors.Count: > 0 };
         DecimationNote = Series is null ? string.Empty : string.Format(CultureInfo.CurrentCulture, Strings.Chart_Decimated_Format, Series.Presents, Math.Min(Series.Presents, Decimator.DefaultBuckets * 2));
         PresentStats(row);
+        PresentFgMix(row);
         PresentChips();
         Presented?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>beta.24 (D62): the stored mix as rows and a bar, the setting that framed it, and why a session has none.</summary>
+    private void PresentFgMix(SessionRow row)
+    {
+        IReadOnlyList<FgMixRowModel> rows = FgMixPresentation.Rows(row);
+        FgMix.Clear();
+        foreach (FgMixRowModel line in rows)
+        {
+            FgMix.Add(line);
+        }
+
+        HasFgMix = rows.Count > 0;
+        FgMixSegments = [.. rows.Select(static r => r.Segment)];
+        FgMixName = HasFgMix ? FgMixPresentation.AccessibleName(rows) : string.Empty;
+        FgMixContext = HasFgMix ? NvidiaOverrides.FrameGenerationContext(row.DriverProfileJson) : null;
+        FgMixUnclassifiedNote = rows.Any(static r => r.Segment.Kind == Domain.Metrics.FgMixKind.Unclassified) ? Strings.FgMix_Unclassified_Note : null;
+        FgMixMissing = FgMixPresentation.Missing(row);
     }
 
     private void PresentStats(SessionRow row)

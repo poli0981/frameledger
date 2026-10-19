@@ -315,6 +315,11 @@ CREATE TABLE sessions (
   power_limit_pct REAL, thermal_limit_pct REAL,       -- shares of the ticks that carried reasons: NVIDIA (L3) only
   app_frames_per_joule REAL,            -- application FPS / average GPU board power; never displayed frames (rule 6)
 
+  -- schema 0020 (2026-10-19, beta.24, D62): every frame-generation state the session held — 03_METRICS §The mix
+  fg_mix TEXT,                          -- {"Rows":[{"Kind":"generated","Factor":4.0,"NativeFps":…,"DisplayedFps":…,
+                                        --   "Seconds":…,"Share":…,"Windows":…}, …]}: states by rising factor, then
+                                        --   "none", then "unclassified"; NULL with no state, and before 0020
+
   -- schema 0016 (2026-09-27, beta.10): the display mode, both tiers (03_METRICS §Display mode). Milliseconds per mode,
   -- each sample standing for the time until the next (100 ms hooked, 1 s at Tier 2), a pause not counted; nowindow is
   -- outside every share. NULL before, on a session recovered from its .partial file, and where the loop never sampled —
@@ -670,6 +675,17 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > value is computed after the fact. The `.partial` needs no change: the six new sensor series are fields every sample
 > already carried. `LatestVersion` is 19; `LedgerDatabaseTests.ScriptNineteenAddsThePacingAndCardColumnsAndAnEarlierSessionHasNone`,
 > `SqliteSessionRepositoryTests.ASessionRoundTripsColumnForColumn`. **A beta.13 cannot open a ledger beta.14 migrated.**
+
+> **`0020_fg_mix.sql` (beta.24, 2026-10-19, owner decision D62) — every frame-generation state a session held.** One
+> TEXT column, ADD COLUMN only: `fg_mix`, `Application.Recording.FgMixRecord`'s JSON of `Domain.Metrics.FgMix` — each
+> state's pooled factor, its own Native and Displayed rates, its seconds, its share of the presenting time and its
+> five-second windows; then the time with no frame generation and the time no state claims (`03_METRICS` §The mix).
+> Written by the recorder's aggregation (`SessionAggregator.ApplyFg`, beside the steady state) for a hooked session whose
+> frame generation was named and whose count stood or was refused only as `non_uniform` / `ambiguous_band`; NULL
+> otherwise. A session before it has none and is **never rebuilt** from its `frame_blobs` (one Generated bit per frame,
+> the DXGI-counted presents lost). The `.partial` needs no change: a recovered session is aggregated from its records
+> like any other. `LatestVersion` is 20; `LedgerDatabaseTests.ScriptTwentyAddsTheFgMixColumnAndAnEarlierSessionHasNone`,
+> `SqliteSessionRepositoryTests.ASessionRoundTripsColumnForColumn`. **A beta.23 cannot open a ledger beta.24 migrated.**
 
 > **Every open used to migrate, and one that should not have did — 2026-09-16.** The Agent's `--console sessions`,
 > a verb that prints, was run against the owner's ledger while the file on disk was at schema 2 and applied 0003 and

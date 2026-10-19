@@ -470,6 +470,49 @@ F_app   = Σ fgEvaluations                  (APPLICATION frames, counted at the 
 > *(Settled 2026-08-20 with the RT hooks — §RT/PT/RR, "The denominator": `rt_frame_pct` is a share of presents
 > and says so, and the tri-state is unaffected. Marked here 2026-10-04.)*
 
+> ### The mix — owner decision 2026-10-19 (D62)
+>
+> **The steady state names one state; a session can hold several.** A player who tries ×2, ×3 and ×4 in one session,
+> or whose NVIDIA App runs frame generation as *Dynamic*, got the longest state alone. Since beta.24 **every** state is
+> stored beside it: `Domain.Metrics.FgMix`, over the same five-second windows the steady state is read over (one cut,
+> `FgSlices.Cut`), from where `FgWindow` starts (the claimed suffix).
+>
+> **The rule.** Each window is classified by its own `presents ÷ tokens`: **active** (≥ 1.5, with ≥ 8 samples and
+> tokens), **no frame generation** (≤ 1.05, with ≥ 8 samples and tokens — and only where a counted `none` is allowed:
+> not on the shape `FgLadder.WithholdNone` withholds, §Frame Generation), else **not classified** (too few samples, no
+> tokens, the band between 1.05 and 1.5, or a withheld `none`). The active windows are grouped by repeating the steady
+> state's own extraction on what is left — the ±10 % cluster holding the most time, pooled, redrawn once — until no
+> cluster remains; a cluster under **10 s** returns its windows to *not classified*. A state's factor, Native and
+> Displayed are its own (Σ presents ÷ Σ tokens over its windows; each rate over its own seconds); a row's share is its
+> seconds over every window's, so the rows sum to 100 % and the longest state's share is `fg_steady_share` when the
+> session has one. Rows: the states by rising factor, then *no frame generation*, then *not classified*. **Never an
+> average across states** (CLAUDE.md rule 6), and ×5 and ×6 are 20 % apart and never pool.
+>
+> **When there is a mix.** Only where the session's frame generation was named (`Named` / `ActiveUnidentified`) and the
+> session-wide count either stood or was refused as `NonUniform` / `AmbiguousBand` — a change of state is exactly what a
+> mix describes. Every other refusal (not counted, unattributed, interleaved streams, either saturation, no
+> evaluations, too short, no batches) gets none — slicing does not make a refused record set trustworthy, the steady
+> state's rule — and so does a session in which no state formed.
+>
+> **Stored, never replayed.** `sessions.fg_mix` (schema 0020) holds the rows as JSON (`FgMixRecord`), written by the
+> recorder's aggregation beside the steady state. A session recorded before has none and is not rebuilt: `frame_blobs`
+> keep one Generated bit per frame and lose the presents only DXGI counted, so a mix rebuilt from them would be wrong on
+> exactly the titles that need one. The summary says so in one line for a session that counted frame generation and has
+> no mix.
+>
+> **What it shows, and what it cannot.** The summary's block (`08_UI` §Session summary): a bar of the shares, then a
+> row per state — `×4.0 frame generation · 35.33% · 70 → 282 FPS · 2m 05s` —, *No frame generation* with its one rate,
+> *Not classified* with its time; shown when the mix has two rows or more (one state throughout is the readout's own
+> number). Frame generation that changes faster than the five-second windows — the NVIDIA App's *Dynamic* mode can —
+> reads partly as *not classified* rather than as a factor nobody held. Above the rows, how frame generation was SET:
+> the NVIDIA App's Frame Generation Mode from the driver profile stored with the session (*Dynamic, up to ×6, target:
+> max refresh rate*; *Fixed ×4*), or that the profile sets none — the game's own menu chose
+> (`NvidiaOverrides.FrameGenerationContext`). That line is configuration, never one of the rows. The multiplier chosen
+> in a game's menu is not read — it reaches the runtime through `sl::DLSSGOptions`, the route `HANDOFF` §2b refused —
+> so the measured row is its evidence. The dynamic ceiling (`NGX_DLSSG_DYNAMIC_MULTI_FRAME_COUNT_MAX`) is decoded as
+> `NGX_DLSSG_MULTI_FRAME_COUNT` is (frames generated per rendered frame) and the automatic target as "max refresh
+> rate"; NVIDIA's header names neither, and owner-only item 20(a) checks both against the App.
+
 `fgEvaluations` is recorded per present by ~~the NGX/Streamline/FFX/XeSS FG hooks~~ the `slGetNewFrameToken`
 detour; where Streamline never issued a token, by the FidelityFX dispatches — new PREPARE `frameID`s, else UPSCALE
 dispatches, the FSR 3.0 host's included *(corrected 2026-10-04: NGX and XeSS have no hook)*

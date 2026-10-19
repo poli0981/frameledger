@@ -67,8 +67,11 @@ public sealed record DriverProfileRecord
     }
 
     /// <summary>The value the profile gives <paramref name="id"/>, or null when it is set in no profile or was not read.</summary>
-    public uint? ValueOf(uint id) =>
-        Settings.FirstOrDefault(s => string.Equals(s.Id, Hex(id), StringComparison.OrdinalIgnoreCase))?.Value;
+    public uint? ValueOf(uint id) => SettingOf(id)?.Value;
+
+    /// <summary>The stored setting for <paramref name="id"/> — its value, where it comes from, whether it is the driver's own — or null when it was not read.</summary>
+    public DriverSettingRecord? SettingOf(uint id) =>
+        Settings.FirstOrDefault(s => string.Equals(s.Id, Hex(id), StringComparison.OrdinalIgnoreCase));
 
     private static string Hex(uint id) => "0x" + id.ToString("X8", CultureInfo.InvariantCulture);
 }

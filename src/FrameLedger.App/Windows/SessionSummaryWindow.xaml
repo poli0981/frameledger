@@ -91,6 +91,56 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
+                <!-- beta.24 (D62): every frame-generation state the session held, each with its share of the presenting time and its
+                     own Native to Displayed (CLAUDE.md rule 6): the stored fg_mix, never recomputed. The bar draws in the chart
+                     palette's colours from code (FgMixBar); the table carries every number in text. -->
+                <StackPanel Margin="0,8,0,0" Visibility="{Binding ViewModel.HasFgMix, Converter={StaticResource BoolToVis}}">
+                    <ui:TextBlock FontTypography="Subtitle" Text="{x:Static vm:SessionSummaryViewModel.FgMixHeader}" />
+                    <ui:TextBlock Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.FgMixContext}"
+                                  Visibility="{Binding ViewModel.FgMixContext, Converter={StaticResource NullToCollapsed}}" />
+                    <controls:FgMixBar Margin="0,6,0,0" Height="14" Segments="{Binding ViewModel.FgMixSegments}"
+                                       AutomationProperties.Name="{Binding ViewModel.FgMixName}" />
+                    <StackPanel Margin="0,8,0,0" Grid.IsSharedSizeScope="True">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="MixSwatch" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="MixState" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="MixShare" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="MixRates" />
+                                <ColumnDefinition Width="Auto" SharedSizeGroup="MixTime" />
+                            </Grid.ColumnDefinitions>
+                            <ui:TextBlock Grid.Column="1" Margin="0,0,24,4" FontTypography="BodyStrong" Text="{x:Static vm:SessionSummaryViewModel.FgMixStateHeader}" />
+                            <ui:TextBlock Grid.Column="2" Margin="0,0,24,4" FontTypography="BodyStrong" TextAlignment="Right" Text="{x:Static vm:SessionSummaryViewModel.FgMixShareHeader}" />
+                            <ui:TextBlock Grid.Column="3" Margin="0,0,24,4" FontTypography="BodyStrong" TextAlignment="Right" Text="{x:Static vm:SessionSummaryViewModel.FgMixRatesHeader}" />
+                            <ui:TextBlock Grid.Column="4" Margin="0,0,0,4" FontTypography="BodyStrong" TextAlignment="Right" Text="{x:Static vm:SessionSummaryViewModel.FgMixTimeHeader}" />
+                        </Grid>
+                        <ItemsControl ItemsSource="{Binding ViewModel.FgMix}" Focusable="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:FgMixRowModel}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="MixSwatch" />
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="MixState" />
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="MixShare" />
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="MixRates" />
+                                            <ColumnDefinition Width="Auto" SharedSizeGroup="MixTime" />
+                                        </Grid.ColumnDefinitions>
+                                        <controls:FgMixBar Grid.Column="0" Width="12" Height="12" Margin="0,0,8,0" VerticalAlignment="Center" Segments="{Binding Swatch}" />
+                                        <ui:TextBlock Grid.Column="1" Margin="0,2,24,2" Text="{Binding Label}" />
+                                        <ui:TextBlock Grid.Column="2" Margin="0,2,24,2" TextAlignment="Right" Text="{Binding Share}" />
+                                        <ui:TextBlock Grid.Column="3" Margin="0,2,24,2" TextAlignment="Right" Text="{Binding Rates}" />
+                                        <ui:TextBlock Grid.Column="4" Margin="0,2,0,2" Style="{StaticResource SecondaryText}" TextAlignment="Right" Text="{Binding Duration}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                    <ui:TextBlock Margin="0,4,0,0" Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.FgMixUnclassifiedNote}"
+                                  Visibility="{Binding ViewModel.FgMixUnclassifiedNote, Converter={StaticResource NullToCollapsed}}" />
+                </StackPanel>
+                <ui:TextBlock Margin="0,8,0,0" Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.FgMixMissing}"
+                              Visibility="{Binding ViewModel.FgMixMissing, Converter={StaticResource NullToCollapsed}}" />
+
                 <ui:TextBlock Margin="0,8,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{x:Static vm:SessionSummaryViewModel.Tier2Text}"
                               Visibility="{Binding ViewModel.IsHooked, Converter={StaticResource InverseBoolToVis}}" />
                 <ui:TextBlock Margin="0,4,0,0" TextWrapping="Wrap" Text="{Binding ViewModel.Tier2Reason}"

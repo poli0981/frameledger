@@ -97,6 +97,62 @@ public static class NvidiaOverrides
     }
 
     /// <summary>
+    /// The frame-generation block's context line (beta.24, D62): how frame generation was set for the game, in the NVIDIA
+    /// App's own terms (its Frame Generation Mode dialog — Dynamic with its multiplier ceiling and target, Fixed with its
+    /// multiplier), or that the profile sets none — the game's own menu decided. Configuration, never a measurement: the
+    /// rows beneath it are what was counted. Null when no profile was read (no NVIDIA driver, a row from before beta.8).
+    /// </summary>
+    /// <remarks>
+    /// The dynamic ceiling (<c>NGX_DLSSG_DYNAMIC_MULTI_FRAME_COUNT_MAX</c>) is decoded as <c>NGX_DLSSG_MULTI_FRAME_COUNT</c> is —
+    /// frames generated per rendered frame, so 5 is "up to ×6" — and the automatic target as the App's "Max refresh rate";
+    /// NVIDIA's header names neither, and owner-only item 20(a) checks both against the App's own words. A value outside the
+    /// header's ranges is left out, never guessed.
+    /// </remarks>
+    public static string? FrameGenerationContext(string? driverProfileJson)
+    {
+        DriverProfileRecord? profile = DriverProfileRecord.Parse(driverProfileJson);
+        if (profile is null || !IsRead(profile))
+        {
+            return null;
+        }
+
+        string? set = FrameGenerationSetting(profile);
+        if (set is null)
+        {
+            return Strings.FgMix_Context_Game;
+        }
+
+        // A value the driver ships in its own profile for the game is not one the user chose in the App.
+        bool shipped = new[] { S.DlssgMode, S.DlssgMultiFrameCount, S.DlssgDynamicMultiFrameCountMax, S.DlssgDynamicTargetFrameRate }
+            .Select(profile.SettingOf).Where(static s => s?.Value is > 0).All(static s => s!.Predefined);
+        return string.Format(CultureInfo.CurrentCulture, shipped ? Strings.FgMix_Context_Driver_Format : Strings.FgMix_Context_App_Format, set);
+    }
+
+    private static string? FrameGenerationSetting(DriverProfileRecord profile)
+    {
+        string? multiplier = Multiplier(profile.ValueOf(S.DlssgMultiFrameCount));
+        string? fixedCount = multiplier is null ? null : string.Format(CultureInfo.CurrentCulture, Strings.FgMix_Context_Fixed_Format, multiplier);
+        return profile.ValueOf(S.DlssgMode) switch
+        {
+            4 => string.Join(", ", new[]
+            {
+                Strings.FgMix_Context_Dynamic,
+                Multiplier(profile.ValueOf(S.DlssgDynamicMultiFrameCountMax)) is { } ceiling ? string.Format(CultureInfo.CurrentCulture, Strings.FgMix_Context_UpTo_Format, ceiling) : null,
+                profile.ValueOf(S.DlssgDynamicTargetFrameRate) switch
+                {
+                    S.DynamicTargetAuto => Strings.FgMix_Context_Target_Auto,
+                    uint fps and > 0 and < S.DynamicTargetAuto => string.Format(CultureInfo.CurrentCulture, Strings.FgMix_Context_Target_Format, fps),
+                    _ => null,
+                },
+            }.Where(static p => p is not null)),
+            1 => Strings.FgMix_Context_Off,
+            2 => fixedCount ?? Strings.FgMix_Context_On,
+            3 => multiplier is null ? Strings.FgMix_Context_Auto : Strings.FgMix_Context_Auto + ", " + multiplier,
+            _ => fixedCount,
+        };
+    }
+
+    /// <summary>
     /// The session summary's line for the driver's own report on the game's process (<c>NvAPI_NGX_GetNGXOverrideState</c>):
     /// what its override bits say it applied. Null when it answered nothing, or reported no override.
     /// </summary>
