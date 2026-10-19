@@ -193,6 +193,7 @@ public static class FpsPresentation
             "multiple_streams" => string.Format(culture, Strings.Fg_RefusalDetail_MultipleStreams_Format, detail.Count),
             "too_short" => string.Format(culture, Strings.Fg_RefusalDetail_TooShort_Format, detail.Count, FgWindow.MinSamplesToCheck),
             "ambiguous_band" => string.Format(culture, Strings.Fg_RefusalDetail_AmbiguousBand_Format, Ratio(detail.Overall), Ratio(FgWindow.NoneCeiling), Ratio(FgWindow.ActiveThreshold)),
+            "beyond_generation" => string.Format(culture, Strings.Fg_RefusalDetail_BeyondGeneration_Format, Ratio(detail.Overall), Ratio(FgWindow.GenerationCeiling)),
             "unattributed" or "count_saturated" or "dxgi_saturated" => string.Format(culture, Strings.Fg_RefusalDetail_Records_Format, detail.Count),
             _ => null,
         };
@@ -213,6 +214,7 @@ public static class FpsPresentation
         "non_uniform" => Strings.Fg_Refusal_NonUniform,
         "ambiguous_band" => Strings.Fg_Refusal_AmbiguousBand,
         "no_batches" => Strings.Fg_Refusal_NoBatches,
+        "beyond_generation" => Strings.Fg_Refusal_BeyondGeneration,
         _ => Strings.Fg_Refusal_Unknown,
     };
 

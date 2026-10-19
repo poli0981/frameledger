@@ -3438,4 +3438,10 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="Fsr_Mode_NativeAa" xml:space="preserve">
     <value>Native AA</value>
   </data>
+  <data name="Fg_Refusal_BeyondGeneration" xml:space="preserve">
+    <value>tỷ lệ vượt quá mức mọi công nghệ tạo khung có thể sinh ra</value>
+  </data>
+  <data name="Fg_RefusalDetail_BeyondGeneration_Format" xml:space="preserve">
+    <value>presents ÷ tokens = {0}, vượt {1} — mức cao nhất mọi công nghệ tạo khung sinh ra.</value>
+  </data>
 </root>

@@ -63,6 +63,10 @@ internal static class FgRefusalText
                 + $"cadence threshold ({FgWindow.ActiveThreshold.ToString("0.0", CultureInfo.InvariantCulture)}) — not "
                 + "a configuration this consumer can name",
             FgRefusalKind.NoBatches => "no present drained a Streamline batch, so there is no ratio to read",
+            FgRefusalKind.BeyondGeneration =>
+                $"presents/tokens = {refusal.Overall.ToString("0.00", CultureInfo.InvariantCulture)} is above "
+                + $"{FgWindow.GenerationCeiling.ToString("0.0", CultureInfo.InvariantCulture)}, more presents per application "
+                + "frame than any frame generation produces — the count does not describe these presents",
             _ => refusal.Kind.ToString(),
         };
     }

@@ -135,6 +135,36 @@ public sealed class FgMixTests
         }
     }
 
+    /// <summary>
+    /// beta.26: Silent Hill 2 (2026-10-19) presented 1,336 times per token for ten seconds — a loading screen drawn outside
+    /// the vendor's frame count — and the mix listed it as a ×1336.0 state, which the DLSS line then cited. A window needs
+    /// application frames, not only presents, and a ratio frame generation can produce.
+    /// </summary>
+    [Fact]
+    public void AWindowWithOneTokenOrARatioNoFrameGenerationProducesIsNotAState()
+    {
+        // One token per 1,200 presents: one per five-second window, for ten seconds.
+        List<FrameSample> loading = FgStream(appFrames: 2, k: 1200);
+        // Twelve tokens per window at ×100: frames enough to read, a ratio no frame generation produces.
+        List<FrameSample> beyond = FgStream(appFrames: 15 * _presentsPerSecond / 100, k: 100);
+
+        FgMix mix = FgMix.From(Concat(Play(30, 3), loading, beyond, Play(20, 6)), Frequency, noneAllowed: true)!;
+
+        mix.Rows.Select(static r => r.Kind).Should().Equal(FgMixKind.Generated, FgMixKind.Generated, FgMixKind.Unclassified);
+        mix.Rows.Where(static r => r.Kind == FgMixKind.Generated).Select(static r => Math.Round(r.Factor!.Value)).Should().Equal(3, 6);
+        mix.Rows[2].Seconds.Should().BeApproximately(25, 2, "the ten seconds of one-token windows and the fifteen at ×100");
+        mix.Rows.Should().OnlyContain(static r => r.Factor == null || r.Factor <= FgWindow.GenerationCeiling);
+        AddsUpToTheWhole(mix);
+    }
+
+    [Fact]
+    public void ARatioAtTheCeilingIsStillAState()
+    {
+        FgMix mix = FgMix.From(Concat(Play(20, 2), Play(20, 8)), Frequency, noneAllowed: true)!;
+
+        mix.Rows.Where(static r => r.Kind == FgMixKind.Generated).Select(static r => Math.Round(r.Factor!.Value)).Should().Equal(2, 8);
+    }
+
     [Fact]
     public void ASessionWithNoStateHasNoMix()
     {

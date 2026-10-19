@@ -4577,4 +4577,12 @@
     <value>ネイティブ AA</value>
     <comment>review</comment>
   </data>
+  <data name="Fg_Refusal_BeyondGeneration" xml:space="preserve">
+    <value>比率がどのフレーム生成の上限も超えています</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fg_RefusalDetail_BeyondGeneration_Format" xml:space="preserve">
+    <value>presents ÷ tokens = {0}。フレーム生成の上限 {1} を超えています。</value>
+    <comment>review</comment>
+  </data>
 </root>

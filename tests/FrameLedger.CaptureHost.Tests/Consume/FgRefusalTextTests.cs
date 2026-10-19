@@ -60,5 +60,7 @@ public sealed class FgRefusalTextTests
             .Should().Contain("the presents-per-batch ratio changed during the session — bucket 1 of 8 measures no evaluations against 2 overall");
         FgRefusalText.Describe(new FgRefusal(FgRefusalKind.AmbiguousBand, FgRefusalSubject.Factor, Overall: 1.25))
             .Should().Be("presents/tokens = 1.25 sits between the `none` ceiling (1.05) and the cadence threshold (1.5) — not a configuration this consumer can name");
+        FgRefusalText.Describe(new FgRefusal(FgRefusalKind.BeyondGeneration, FgRefusalSubject.Factor, Overall: 1336))
+            .Should().Be("presents/tokens = 1336.00 is above 8.0, more presents per application frame than any frame generation produces — the count does not describe these presents");
     }
 }

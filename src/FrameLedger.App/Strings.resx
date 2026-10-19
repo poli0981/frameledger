@@ -3443,4 +3443,10 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="Fsr_Mode_NativeAa" xml:space="preserve">
     <value>Native AA</value>
   </data>
+  <data name="Fg_Refusal_BeyondGeneration" xml:space="preserve">
+    <value>the ratio is beyond what any frame generation produces</value>
+  </data>
+  <data name="Fg_RefusalDetail_BeyondGeneration_Format" xml:space="preserve">
+    <value>presents ÷ tokens = {0}, above {1}, the most any frame generation produces.</value>
+  </data>
 </root>

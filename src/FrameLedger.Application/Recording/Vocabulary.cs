@@ -65,6 +65,7 @@ public static class Vocabulary
         FgRefusalKind.NonUniform => "non_uniform",
         FgRefusalKind.AmbiguousBand => "ambiguous_band",
         FgRefusalKind.NoBatches => "no_batches",
+        FgRefusalKind.BeyondGeneration => "beyond_generation",
         _ => null,
     };
 

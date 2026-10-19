@@ -216,7 +216,10 @@ case): 7.6–8.2 ns per UPSCALE dispatch, 1.6 ns per query beside the trampoline
    loads (*Loaded:* line); `nvngx_dlssnr.dll` is then corrected in `CensusNames` and `05_DETECTION`.
    (e) **SonarCloud (D67):** bulk-mark per `13_CI_CD` §SonarCloud; optionally its *Ignore issues on multiple criteria*
    rows; close PR #315. (f) The Legal Gate shows **Disclaimer 2.11** and **Privacy Policy 2.12** once. (g) The `ja`
-   strings marked `review`.
+   strings marked `review`. *(2026-10-19, the owner's first runs — `spike-notes` §22: (a) the Dynamic context line
+   reads the App's own words, and the mix found ×2.0 / ×3.0 / ×6.1 — plus a ×1336.0 row that was a defect, fixed in
+   beta.26; (c) the override loads `160_E658700.bin` 310.9.16.0 and `1B0_E658703.dll` 2.14.16.0 from the NGX folder.
+   The rest is not run yet.)*
 21. **beta.25 on real hardware — FSR's quality mode (D65), decision table written before the run.** Lies of P (FSR
    through AMD's FidelityFX libraries) launched by FrameLedger, not attached, with the game's own *FSR* at *Quality*,
    then a second session at *Performance* → the summary's header reads *FSR 3 Quality*, then *FSR 3 Performance* (or
@@ -226,7 +229,9 @@ case): 7.6–8.2 ns per UPSCALE dispatch, 1.6 ns per query beside the trampoline
    and silent for that title. **A wrong mode** (the Quality session reading Balanced) → the answers this title receives
    are not the vendor's documented ratios: record the stored `upscaler_quality` and the render size in `spike-notes`,
    and the match is withdrawn until it is explained. **With the game's dynamic resolution on** (if it offers one) → no
-   mode.
+   mode. *(2026-10-19, `spike-notes` §22: the Quality session read **no mode** with the query hooked — the first
+   branch; 1707×961 is the engine's own rounding of 66.67 %, not the size answer, so the title asked before the hook
+   was in or never asked. D65 stays built and silent for Lies of P. The Performance session is not run.)*
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —

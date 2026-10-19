@@ -211,6 +211,15 @@ public sealed class FpsPresentationTests
         InEnglish(() => FpsPresentation.IdentifiedTooltip("DLSS-G", "non_uniform", "not json")).Should().Be(InEnglish(() => FpsPresentation.IdentifiedTooltip("DLSS-G", "non_uniform")), "an unparsable detail is the old tooltip, never an exception");
     }
 
+    /// <summary>beta.26: a ratio above what any frame generation produces has its own words, and its numbers in the tooltip.</summary>
+    [Fact]
+    public void ARatioBeyondAnyFrameGenerationIsSaidSo()
+    {
+        InEnglish(() => FpsPresentation.RefusalText("beyond_generation")).Should().Be("the ratio is beyond what any frame generation produces");
+        InEnglish(() => FpsPresentation.IdentifiedTooltip("DLSS-G", "beyond_generation", "{\"Kind\":\"beyond_generation\",\"Subject\":\"factor\",\"Count\":0,\"BucketIndex\":0,\"BucketCount\":0,\"BucketValue\":null,\"Overall\":1336}"))
+            .Should().Contain("presents ÷ tokens = 1336.00, above 8.00, the most any frame generation produces.");
+    }
+
     /// <summary>
     /// 2026-09-17: a steady-state factor (<c>fg_factor_scope = steady</c>) is the generated shape — Native, Displayed and
     /// the factor together, as rule 6 asks — and its chip ALWAYS says how much of the session it describes; the tooltip
