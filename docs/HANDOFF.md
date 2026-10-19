@@ -64,6 +64,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.22` | [`handoff/history/0.1.0-beta.22.md`](handoff/history/0.1.0-beta.22.md) |
 | `§beta.23` | [`handoff/history/0.1.0-beta.23.md`](handoff/history/0.1.0-beta.23.md) |
 | `§beta.24` | [`handoff/history/0.1.0-beta.24.md`](handoff/history/0.1.0-beta.24.md) |
+| `§beta.25` | [`handoff/history/0.1.0-beta.25.md`](handoff/history/0.1.0-beta.25.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -71,44 +72,39 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-10-19, 0.1.0-beta.25: FSR's quality mode
+## **START HERE** — 2026-10-19, 0.1.0-beta.26: a ×1336 frame-generation state, fixed
 
-*Status is `docs/changelog/0.1.0-beta.25.md`; this is what no other file carries.* The owner, 2026-10-19, while the
-beta.24 train was merging: "Bạn có thể publish beta24 xong, làm phần pr9 thành beta25 luôn nếu được nhé." — publish
-beta.24, then the train's PR-9, FSR's quality mode, as beta.25. One feature PR (#325) and this release, the whole
-way without asking again.
+*Status is `docs/changelog/0.1.0-beta.26.md`; this is what no other file carries.* The owner ran the installed
+beta.25 the evening it shipped and sent screenshots: "Bạn có thể thử kiểm tra kết quả (fix nếu cần), cập nhật docs,
+làm chip và trigger lại sonarcloud thử nhé." Silent Hill 2's summary listed a ×1336.0 frame-generation state; the owner
+pointed at the cause ("có khoảng thời gian đầu game đang biên dịch shader") and then: "Bạn có thể cân nhắc (nếu thực sự
+cần) bản beta26 fix lỗi nhé." It was needed: every beta.25 session of a title that compiles its shaders under a loaded
+frame-generation runtime can store such a row, and the summary and the DLSS line print it. #327 (the fix and the
+owner's runs), #328 (the SonarCloud chip — the owner marked the last six issues the same day, and `main`'s quality
+gate passes) and this release.
 
-**Decisions:**
+**No new owner decision.** The fix makes the window rule say what `03_METRICS` already promised ("windows with too few
+frames to read") about APPLICATION frames, not presents, and bounds the ratio at ×8 (`FgWindow.GenerationCeiling`) —
+no shipping frame generation passes ×6; the bound is raised only with a title measured above it. A stored mix is read
+by the same rule, so no session is rewritten and none keeps the row.
 
-- **D65 — FSR's quality mode through `ffxQuery`: built** (deferred from beta.24,
-  [`handoff/history/0.1.0-beta.24.md`](handoff/history/0.1.0-beta.24.md)). The query is hooked on the four modules
-  `ffxDispatch` is, each answer the vendor returned is kept (one slot per mode), and an UPSCALE dispatch whose sizes fit
-  exactly one answer names it as `0x10 + mode` (`03_METRICS` §Upscaling, `17_HOOK_ENGINE` §Hook inventory). **One rule
-  the plan did not have:** a session, a segment or the live window names FSR's mode only when no FSR frame was rendered
-  at a size no named frame has (`Domain.Metrics.QualityByte`). Without it a dynamic-resolution session whose top of
-  range matched an answer would have named the mode, against the clause approved with the plan ("FSR at a dynamic
-  resolution among them — no mode is shown"). The clause shipped in those words; the Disclaimer stays 2.11, as the
-  accuracy statement's additions did in beta.19 and beta.20.
-
-**Measured:** on the hook harness, with the vendor stub answering as the SDK documents (`fl_guard` "FSR's quality
-mode", 44 assertions): Quality named on every params record but at most one — the test allows the window's first —
-through the SDK 2.x loader by size and through the 1.1.x monolith by ratio, and no record named any other mode; the
-same five FFX cases ran five more times green. The added cost, from a copy of the two bodies built with the
-Overlay's flags (`/O2 /guard:cf /Qspectre /MT`, 20 M calls × 3, every slot holding a size and a ratio — the worst
-case): 7.6–8.2 ns per UPSCALE dispatch, 1.6 ns per query beside the trampoline. Nothing on a real title yet: item 21.
+**Measured on the owner's ledger** (a read-only backup copy, decoded with the App's own loader in a scratch test): the
+×1336.0 row was Silent Hill 2's first fifteen seconds — 1,369, 4,877 and 1,303 presents with 1, 0 and 1 application
+frames per five seconds, then a 13,348 ms frame: the game compiling its shaders at start (the owner). The only stored
+value above ×8 in 60 sessions. Lies of P read no FSR mode with `ffxQuery` hooked (bit 11 in `hooks_installed_mask`):
+item 21's first branch (`spike-notes` §22).
 
 **Traps met on the way:**
 
-- **`git rebase --update-refs` skips a branch checked out in another worktree.** The beta.25 branch sat on beta.24's
-  PR-8 tip in its own worktree; the rebase of beta.24's train after its first merge left it where it was, and it was
-  moved by hand (`git rebase --onto <new tip> <old tip>`) onto the release PR, then onto `main` as beta.24 merged.
-- **A new `.cs` file written as LF fails `dotnet format`'s `ENDOFLINE`** although it builds and its tests pass —
-  convert it to CRLF before the gate (the checkout is CRLF).
-- **A per-frame byte is not a session's answer.** The modal of the told bytes was right for Streamline's byte and wrong
-  for one that is told only on the frames whose size matches; read every surface's rule against the sentence the user
-  is promised before writing the byte.
+- **A row written by a released build is read by every later one.** Changing what makes a state changes nothing on a
+  stored session unless its reader applies the rule too (`FgMixRecord.Parse`); the row would keep the old meaning.
+- **A session's timeline is one scratch test away**: `SessionSeriesLoader` over a ledger copy prints presents,
+  generated and application frames per five seconds (a `PagesLoadTests` partial, never committed). Decoding the blobs
+  by hand is not needed.
+- **SonarCloud's PR analysis lists only issues new in the PR**: whether a change clears a finding on `main` shows only
+  in `main`'s next analysis.
 
-**Owner-only, added to the list below:** item 21.
+**Owner-only:** items 20 and 21 annotated (`spike-notes` §22); nothing added.
 
 
 ## Owner-only — no PR can close these
@@ -219,8 +215,8 @@ case): 7.6–8.2 ns per UPSCALE dispatch, 1.6 ns per query beside the trampoline
    strings marked `review`. *(2026-10-19, the owner's first runs — `spike-notes` §22: (a) the Dynamic context line
    reads the App's own words, and the mix found ×2.0 / ×3.0 / ×6.1 — plus a ×1336.0 row that was a defect, fixed in
    beta.26; (c) the override loads `160_E658700.bin` 310.9.16.0 and `1B0_E658703.dll` 2.14.16.0 from the NGX folder;
-   (e) most issues marked — the six left open on `main` are triaged in `13_CI_CD` §SonarCloud (beta.26). The rest is
-   not run yet.)*
+   (e) **done** — every issue marked; the last six, triaged in `13_CI_CD` §SonarCloud (beta.26), the same day, and
+   `main`'s quality gate passes. The rest is not run yet.)*
 21. **beta.25 on real hardware — FSR's quality mode (D65), decision table written before the run.** Lies of P (FSR
    through AMD's FidelityFX libraries) launched by FrameLedger, not attached, with the game's own *FSR* at *Quality*,
    then a second session at *Performance* → the summary's header reads *FSR 3 Quality*, then *FSR 3 Performance* (or
@@ -311,7 +307,7 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D62 | [`handoff/history/0.1.0-beta.24.md`](handoff/history/0.1.0-beta.24.md) | the mix: every frame-generation state a session held, with its share, never averaged |
 | D63 | [`handoff/history/0.1.0-beta.24.md`](handoff/history/0.1.0-beta.24.md) | the NVIDIA App's override is the quality mode where the driver reports it applied |
 | D64 | [`handoff/history/0.1.0-beta.24.md`](handoff/history/0.1.0-beta.24.md) | DLSS labels are evidence-bound: versions and folder class, DLSS 4/4.5 only when shown, 5 only loaded |
-| D65 | this file, §START HERE | FSR's quality mode through ffxQuery — deferred from beta.24, built in beta.25; none at a dynamic resolution |
+| D65 | [`handoff/history/0.1.0-beta.25.md`](handoff/history/0.1.0-beta.25.md) | FSR's quality mode through ffxQuery — deferred from beta.24, built in beta.25; none at a dynamic resolution |
 | D66 | [`handoff/history/0.1.0-beta.24.md`](handoff/history/0.1.0-beta.24.md) | the long documents are split; every original path stays as the index of its parts |
 | D67 | [`handoff/history/0.1.0-beta.24.md`](handoff/history/0.1.0-beta.24.md) | SonarCloud stays on Automatic Analysis with .sonarcloud.properties; the owner marks in its UI |
 
