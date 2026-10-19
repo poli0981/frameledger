@@ -326,7 +326,9 @@ FL_NV_API int32_t FlNvDriverVersion(uint32_t* version, char* branch, uint32_t br
     }
     *version = v;
     if (branch != nullptr && branchCapacity > 0u) {
-        const size_t n = std::strlen(b);
+        // Bounded by the buffer, not by the terminator: the string is the driver's, and a driver that filled all
+        // NVAPI_SHORT_STRING_MAX bytes without one must not send this read past it (SonarCloud cpp:S5813, beta.24).
+        const size_t n = strnlen(b, sizeof(b));
         const size_t copy = n < branchCapacity - 1u ? n : branchCapacity - 1u;
         std::memcpy(branch, b, copy);
         branch[copy] = '\0';

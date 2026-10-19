@@ -93,7 +93,7 @@ public sealed class PipeServer : IIpcEventPublisher, IDisposable
     public async Task RunAsync(CancellationToken ct)
     {
         var failures = new AcceptFailures(_log);
-        while (true)
+        while (!ct.IsCancellationRequested)
         {
             await _slots.WaitAsync(ct).ConfigureAwait(false);
             NamedPipeServerStream? stream = null;
@@ -123,6 +123,10 @@ public sealed class PipeServer : IIpcEventPublisher, IDisposable
             _clients[id] = client;
             client.Start(ct);
         }
+
+        // The loop's only way out is cancellation, and the task ends cancelled as it did when the wait threw
+        // (SonarCloud csharpsquid:S2190 read the old while (true) as a loop that never ends).
+        ct.ThrowIfCancellationRequested();
     }
 
     public void Publish<T>(string type, T payload)

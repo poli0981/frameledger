@@ -7,7 +7,7 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 ## Workflows (`.github/workflows/`)
 
 ### `ci.yml` — push to `main` + all PRs + `workflow_dispatch` (added 2026-10-04) · **repo-local**
-- `runs-on: windows-latest`, .NET SDK pinned by `global.json` via `actions/setup-dotnet`, MSVC via `ilammy/msvc-dev-cmd`, NuGet cached.
+- `runs-on: windows-latest`, .NET SDK pinned by `global.json` via `actions/setup-dotnet`, MSVC via `ilammy/msvc-dev-cmd` (pinned to its v1.13.0 commit since beta.24 — the one third-party action, SonarCloud `githubactions:S7637`; Dependabot moves the pin), NuGet cached.
 - Single step of substance: **`./build.ps1 check`** — the same script, with the same switches (none), a developer runs before pushing. The gate list lives in `12_BUILD` §Local quality gate, **once**, rather than being restated here where it goes stale.
 - ~~**`-SkipIntegration` is the one place local and CI deliberately differ**~~ — **gone since 2026-09-06.** From 2026-08-05 CI passed it for a measured reason: §S16 puts the injecting process's ancestors in the scan set, a .NET test host loads `System.Security.Cryptography.ProtectedData.dll`, and the guard's `protect` fragment refused our own harness (§S19(b)). The signer half now verifies that module's embedded signature offline and reads `O=Microsoft Corporation` on the compiled-in bound, so the `Category=Integration` cases run here — **nine** when this was written, **20 across six classes** as of 2026-09-13 (Agent 6, CaptureHost 7, Infrastructure 7); count them with `grep -rl 'Category", "Integration' tests` rather than trusting either number — and a green CI IS evidence for the managed drain and the capture host's end-to-end behaviour. The switch remains in `build.ps1`, loud, for a developer who must.
 - **The hosted runner refuses guard scans intermittently — THREE failures in eight gate runs, measured
@@ -251,13 +251,30 @@ the comment below; the rest are fixed in the same train (beta.24 PR-2).
 | `cpp:S8417` atomics should be sequentially consistent | 225 | **Accept** — by design | The SPSC ring and the hook counters use explicit acquire/release and relaxed orders on purpose (`07_IPC`); sequential consistency would add fences on the per-present path. |
 | `csharpsquid:S6640` unsafe code blocks | 31 | **Accept** — by design | Interop with the native layer and the shared-memory mirror, confined to `Infrastructure` and `Shared` (CLAUDE.md: the native layer is reachable only through `Infrastructure`). |
 | `cpp:S6232` union type-punning | 24 | **False positive** | `LARGE_INTEGER.QuadPart` is how the Windows API returns the value. |
-| `cpp:S5813` bounds when computing string length | 19 | **Accept** where the string is a literal or the API guarantees its terminator; fixed where a buffer bound is at hand | Each site is listed in beta.24 PR-2. |
+| `cpp:S5813` bounds when computing string length | 19 | **Accept** for the 17 below; the 2 with a buffer bound at hand were bounded (beta.24 PR-2: `FlGuardRulesFilePath` reads `wcsnlen(out, cap)`, the NVAPI bridge `strnlen` over the driver's `NvAPI_ShortString`) | Every string measured is NUL-terminated by construction — see the list under this table. |
 | `csharpsquid:S2077` dynamic SQL | 3 | **False positive** | A `PRAGMA` argument cannot be bound; the values are an `int` and closed sets of constants (`wal_checkpoint` mode, the tri-state column), never user text. |
 | `cpp:S935` `FlGetBuildId` returns no value | 1 | **False positive** | `FL_BUILD_ID` is defined by the build (`12_BUILD` §Version); the analysis compiles without it. |
 | `cpp:S3519` out-of-bounds `memcpy` | 1 | **False positive** | `fl_patch_check.h` reads the prologue of a function this DLL hooked, under SEH, by design (`17_HOOK_ENGINE` §Unhooking). |
 | `cpp:S836` garbage value returned | 1 | **False positive** | `hook-harness`'s `VtableOf` reads the vtable of a COM object it created itself. |
 | `csharpsquid:S3869` `DangerousGetHandle` | 1 | **Accept** | `ParentDump` passes the dump file's handle to `MiniDumpWriteDump` inside the `using` that owns the stream, on the same thread, so it cannot be released during the call; CsWin32 generates no `SafeHandle` overload here (`NativeMethods.json`: `useSafeHandles: false`). |
 | `cpp:S1669`, `cpp:S6191`, `csharpsquid:S4036`, `githubactions:S7637`, `csharpsquid:S2190`, `S3427`, `S8949` | 35 | **Fixed** in beta.24 PR-2 — 5 of the 23 `S1669` were in the vendored Vulkan headers and leave with the exclusions | — |
+
+**`cpp:S5813`, the 17 accepted, and why each string is terminated** (lines as of beta.24):
+
+- `fl_ac_rules.cpp` — `IStartsWith`/`IContains` (`:38`, `:43-44`) and `TokenIs` (`:74`) measure rule fragments and
+  literals the guard itself holds; `:151` and `:288` measure a value `CopyToken` has just written, which refuses a token
+  that does not fit and always writes the terminator; `CopyLiteral` (`:176`) measures a compiled literal; `:834`
+  measures `SHGetKnownFolderPath`'s answer, terminated by the API.
+- `fl_guard.cpp:109` — the guard's own DLL path, built and terminated by its caller before injection.
+- `fl_guard_sources.cpp` — `:345` measures the executable's path the guard read itself and walked to its terminator
+  in the loop just above; `:753` the install root the guard resolved from it; `VdfValue` (`:582`) measures the
+  compiled keys its callers pass (`"installdir"`, `"appid"`), and `AllDigits` (`:617`) a value `VdfValue` copied with
+  its own bound.
+- `fl_prescan.cpp` — `IsKernelDriverName` (`:40`) measures a name the directory walk handed over terminated;
+  `SegmentIs` (`:181`) a literal; `:337` the executable's folder the pre-scan built itself.
+- `layer.cpp:99` (the Vulkan layer) — a leaf of `GetModuleFileNameA`'s result, which the line above has already
+  checked is shorter than `MAX_PATH`, so it is terminated.
+- `fl-baseline-probe/main.cpp:55` — a literal (a developer probe, not shipped).
 
 **The owner's steps** after the next analysis of `main`: for each rule above, open
 `https://sonarcloud.io/project/issues?id=poli0981_frameledger&resolved=false&rules=<rule>`, select all, *Bulk change*,

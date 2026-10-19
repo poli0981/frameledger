@@ -88,7 +88,8 @@ std::int32_t FlGuardRulesFilePath(wchar_t* out, std::int32_t cap) {
         out[0] = L'\0';    // never hand back a partial path: it names a different file
         return 0;
     }
-    return static_cast<std::int32_t>(wcslen(out));
+    // Bounded by the caller's buffer, never only by the terminator (SonarCloud cpp:S5813, beta.24).
+    return static_cast<std::int32_t>(wcsnlen(out, static_cast<std::size_t>(cap)));
 }
 
 std::int32_t FlGuardBuildId(char* out, std::int32_t cap) {

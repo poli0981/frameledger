@@ -2,7 +2,6 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using CommunityToolkit.Mvvm.Input;
@@ -36,7 +35,7 @@ public sealed partial class BugReportPreviewViewModel
     {
         try
         {
-            using Process? _ = Process.Start(new ProcessStartInfo("explorer.exe", "/select,\"" + _model.ZipPath + "\"") { UseShellExecute = true });
+            Explorer.ShowFile(_model.ZipPath);
         }
         catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
         {

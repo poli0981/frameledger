@@ -343,7 +343,10 @@ public sealed class CaptureOrchestrator
             _log($"election: pid {elected.Value.Pid} ({path}) is the newest tracked descendant; attaching");
             if (current is not null && current.SessionGuid == launched.SessionGuid)
             {
-                session = _recorder.RecordAsync(Attach(path, row?.Name, null, default), ct);
+                // No stop token: this session runs under the launch's own entry and StopSession cannot address it
+                // (its summary above). CancellationToken.None says so: ct, the host's shutdown, is the recording's own
+                // token (RecordAsync's second argument), and as the stop token it would turn a shutdown into a user stop.
+                session = _recorder.RecordAsync(Attach(path, row?.Name, null, CancellationToken.None), ct);
             }
             else
             {

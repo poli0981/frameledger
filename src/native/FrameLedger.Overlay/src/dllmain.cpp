@@ -1990,9 +1990,9 @@ void PublishSlTagCensus() noexcept {
 // that is not there is the ordinary case, a mapped module without the export is
 // the one a bug report needs to say.
 const char* g_symbolMissingSeen[16]{};
-void        NoteSymbolMissingOnce(const wchar_t* module, const char* symbol) noexcept {
+void        NoteSymbolMissingOnce(const wchar_t* moduleName, const char* symbol) noexcept {
     HMODULE h = nullptr;
-    if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, module, &h) || h == nullptr) {
+    if (!GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, moduleName, &h) || h == nullptr) {
         return;
     }
     for (const char*& seen : g_symbolMissingSeen) {
@@ -2007,18 +2007,18 @@ void        NoteSymbolMissingOnce(const wchar_t* module, const char* symbol) noe
     }
 }
 
-bool InstallRow(const wchar_t* module, const char* symbol, uint32_t family, void* detour, void** original,
+bool InstallRow(const wchar_t* moduleName, const char* symbol, uint32_t family, void* detour, void** original,
                 std::atomic<uint32_t>& live) noexcept {
     if (live.load(std::memory_order_acquire) != 0) {
         return true;
     }
 
-    void* target = fl::inventory::ResolveScoped(module, symbol);
+    void* target = fl::inventory::ResolveScoped(moduleName, symbol);
     if (target == nullptr) {
         // The game has not loaded Streamline, or loaded a generation whose ABI we
         // do not speak (#71). An answer, not a failure -- logged once when the
         // module IS there and the symbol is not, which is the shape worth reading.
-        NoteSymbolMissingOnce(module, symbol);
+        NoteSymbolMissingOnce(moduleName, symbol);
         return false;
     }
 
@@ -2036,13 +2036,13 @@ bool InstallRow(const wchar_t* module, const char* symbol, uint32_t family, void
 // is the safe direction: an unbound row is a table entry somebody added without
 // writing its hook, and hooking it with a neighbour's body is exactly what this
 // function exists to stop.
-bool InstallByFamily(const wchar_t* module, const char* symbol, uint32_t family) noexcept {
+bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t family) noexcept {
     // EQUALITY AGAINST THE COMPOUND CONSTANT, not `& FL_HOOK_UPSCALER_IDENTITY`. A
     // bit test would bind any future row that happens to include identity to THIS
     // detour -- which is the neighbour's-body defect this function exists to stop,
     // and it would arrive silently because the row would still install.
     if (family == fl::inventory::kFamilyEvaluateFeature) {
-        return InstallRow(module, symbol, family, reinterpret_cast<void*>(&Hook_SlEvaluateFeature),
+        return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlEvaluateFeature),
                           reinterpret_cast<void**>(&g_origSlEvaluateFeature), g_upscalerIdentityLive);
     }
     if (family == static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_PARAMS)) {
@@ -2060,7 +2060,7 @@ bool InstallByFamily(const wchar_t* module, const char* symbol, uint32_t family)
         if (patched.load(std::memory_order_acquire) != 0) {
             return true;
         }
-        void* target = fl::inventory::ResolveScoped(module, symbol);
+        void* target = fl::inventory::ResolveScoped(moduleName, symbol);
         if (target == nullptr) {
             return false;    // not loaded, a generation without this export, or an ABI we do not speak
         }
@@ -2075,7 +2075,7 @@ bool InstallByFamily(const wchar_t* module, const char* symbol, uint32_t family)
         return true;
     }
     if (family == static_cast<uint32_t>(fl::FL_HOOK_FG_EVALUATIONS)) {
-        return InstallRow(module, symbol, family, reinterpret_cast<void*>(&Hook_SlGetNewFrameToken),
+        return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlGetNewFrameToken),
                           reinterpret_cast<void**>(&g_origSlGetNewFrameToken), g_frameTokensLive);
     }
     if (family == fl::inventory::kFamilyFfxDispatch) {
@@ -2096,15 +2096,15 @@ bool InstallByFamily(const wchar_t* module, const char* symbol, uint32_t family)
         // nothing: fl_hook_inventory.h's static_asserts make the latter unreachable for
         // the rows as written, and installing nothing is the safe direction for a row
         // somebody adds later.
-        const int leaf = fl::inventory::FfxLeafOf(module);
+        const int leaf = fl::inventory::FfxLeafOf(moduleName);
         if (leaf < 0) {
-            if (_wcsicmp(module, fl::inventory::kModuleFfxFsr3Host) != 0) {
+            if (_wcsicmp(moduleName, fl::inventory::kModuleFfxFsr3Host) != 0) {
                 return false;
             }
             if (g_fsr3HostPatched.load(std::memory_order_acquire) != 0) {
                 return true;
             }
-            void* target = fl::inventory::ResolveScoped(module, symbol);
+            void* target = fl::inventory::ResolveScoped(moduleName, symbol);
             if (target == nullptr) {
                 return false;    // not loaded, or a module of the name that does not speak the 3.0 host ABI
             }
@@ -2119,7 +2119,7 @@ bool InstallByFamily(const wchar_t* module, const char* symbol, uint32_t family)
         if (g_ffxPatched[slot].load(std::memory_order_acquire) != 0) {
             return true;
         }
-        void* target = fl::inventory::ResolveScoped(module, symbol);
+        void* target = fl::inventory::ResolveScoped(moduleName, symbol);
         if (target == nullptr) {
             return false;    // not loaded, or a module of the name that does not speak ffx-api
         }
@@ -3386,12 +3386,12 @@ __declspec(dllexport) void FlRequestUnhook() {
 
 }    // extern "C"
 
-BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID) {
+BOOL APIENTRY DllMain(HMODULE self, DWORD reason, LPVOID) {
     if (reason == DLL_PROCESS_ATTACH) {
         // ONLY these two calls. Everything else -- mapping creation, MinHook,
         // dummy-device creation, hook installation -- happens on the init thread,
         // outside the loader lock.
-        DisableThreadLibraryCalls(module);
+        DisableThreadLibraryCalls(self);
         g_initThread = CreateThread(nullptr, 0, InitThread, nullptr, 0, nullptr);
     }
     // No DLL_PROCESS_DETACH teardown: 17_HOOK_ENGINE §Unhooking is explicit that

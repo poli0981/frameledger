@@ -60,23 +60,11 @@ public sealed class ProcessLauncher : IProcessLauncher
     }
 
     /// <inheritdoc />
-    public (int Pid, ITargetLiveness Alive)? Start(string exePath, string arguments) => Start(exePath, arguments, _environment, _enableVulkanLayer);
+    public (int Pid, ITargetLiveness Alive)? Start(string exePath, string arguments) => StartCore(exePath, arguments, _environment, _enableVulkanLayer, out _);
 
     /// <inheritdoc />
     public (int Pid, ITargetLiveness Alive)? Start(string exePath, string arguments, out int? win32Error) =>
         StartCore(exePath, arguments, _environment, _enableVulkanLayer, out win32Error);
-
-    /// <summary>Start <paramref name="exePath"/> with <paramref name="arguments"/>; null when it could not be started or pinned.</summary>
-    /// <param name="exePath">The consented executable.</param>
-    /// <param name="arguments">Its own command line, verbatim.</param>
-    /// <param name="environment">
-    /// Variables added to the child's environment — the Vulkan layer's, from
-    /// <c>VkLayerLaunchEnvironment</c>, when the layer is staged beside this host (P1 item 3).
-    /// </param>
-    /// <param name="enableVulkanLayer">False leaves <see cref="VkLayerLaunchEnvironment.EnableVariable"/> unset (the kill switch, decision D7).</param>
-    public static (int Pid, ITargetLiveness Alive)? Start(string exePath, string arguments,
-        IReadOnlyDictionary<string, string>? environment = null, bool enableVulkanLayer = true) =>
-        StartCore(exePath, arguments, environment, enableVulkanLayer, out _);
 
     /// <summary>The start, keeping the Win32 error of one that failed (beta.8: it was swallowed, and the user read only "could not start").</summary>
     private static (int Pid, ITargetLiveness Alive)? StartCore(string exePath, string arguments,
