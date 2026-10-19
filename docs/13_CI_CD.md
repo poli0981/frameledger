@@ -285,9 +285,13 @@ Five were written after the analysis of `372389c` the table above was built from
 
 | Rule | Issues | Verdict | Comment for the UI |
 |---|---|---|---|
-| `csharpsquid:S3869` `DangerousGetHandle` | 1 | **Accept** — the row above; not marked yet | as above |
+| `csharpsquid:S3869` `DangerousGetHandle` | 1 | **Accept** — the row above | as above |
 | `csharpsquid:S1244` floating-point equality | 4 | **False positive** | Exact on purpose. `ColorMath.Hsv` compares `max` with `r` and `g` — `Math.Max` returned one of them, the same double; `MarkdownView`'s `next == _wheelTarget` is true only when `next` was assigned `_wheelTarget` (the snap that ends the easing); `SensorsChart.Line`'s `scale == 1.0` compares a parameter with its own default literal to skip a copy. |
-| `githubactions:S7631` untrusted code from a fork | 1 | **Fixed** in beta.26 | `wiki.yml` checks out `workflow_run.head_sha` only after a successful Release run started by a pushed `v*` tag, and now also only when `workflow_run.head_repository` is this repository. If the analysis still raises it, mark it *Safe* with that sentence. |
+| `githubactions:S7631` untrusted code from a fork | 1 | **False positive**, and hardened in beta.26 | `wiki.yml` checks out `workflow_run.head_sha` only after a successful Release run started by a pushed `v*` tag, which a fork cannot start; since beta.26 it also requires `workflow_run.head_repository` to be this repository. |
+
+**Marked by the owner the same day** (2026-10-19, 14:27–14:29 UTC), each as the table says: the four `S1244` and
+`S7631` as false positives, `S3869` accepted. `main`'s next analysis (`6b07eb2`) has no open issue and its quality gate
+passes.
 
 **The owner's steps** after the next analysis of `main`: for each rule above, open
 `https://sonarcloud.io/project/issues?id=poli0981_frameledger&resolved=false&rules=<rule>`, select all, *Bulk change*,
