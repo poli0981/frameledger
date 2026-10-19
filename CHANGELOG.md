@@ -28,6 +28,14 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Changed
+
+- **SonarCloud analyses only FrameLedger's own code** (developers only; owner request 2026-10-19, decision D67). A
+  `.sonarcloud.properties` at the root keeps the vendored SDK headers, generated files, test fixtures, licence texts and
+  the SQLite migrations out of the analysis and reports the native code against C++20; `docs/13_CI_CD.md` §SonarCloud
+  records the triage of the 341 issues the last analysis left — the rules this project breaks by design and why, the
+  false positives, and the ones the next change fixes — with the steps to mark them in SonarCloud.
+
 ## [0.1.0-beta.23] - 2026-10-14
 
 **The twenty-third pre-release: a game's artwork on its page, in a band that takes the picture's colour, and pages
