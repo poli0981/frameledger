@@ -226,6 +226,46 @@ public sealed class LedgerDatabaseTests
     }
 
     /// <summary>
+    /// Schema 0020 (2026-10-19, beta.24, D62): <c>sessions.fg_mix</c>, every frame-generation state a session held, as JSON
+    /// — ADD COLUMN only; a session written before has none and is never rebuilt from its stored frames.
+    /// </summary>
+    [Fact]
+    public async Task ScriptTwentyAddsTheFgMixColumnAndAnEarlierSessionHasNone()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(20);
+        long gameId = (await new SqliteGameRepository(f.Db).EnsureAsync(
+            new() { ExePath = @"C:\Games\M\m.exe", SizeBytes = 1, MtimeUnixMs = 2 }, "M", Ct).ConfigureAwait(true)).Id;
+        long snapshotId = await new SqliteHardwareSnapshotRepository(f.Db).EnsureAsync(new HardwareSnapshot { GpuName = "g" }, DateTimeOffset.UnixEpoch, Ct)
+            .ConfigureAwait(true);
+        string path = f.Path;
+        await f.Db.DisposeAsync().ConfigureAwait(true);
+        var c19 = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        await using (c19.ConfigureAwait(true))
+        {
+            await c19.OpenAsync(Ct).ConfigureAwait(true);
+            await RewindToAsync(c19, 19).ConfigureAwait(true);
+            await c19.ExecuteAsync(new CommandDefinition(
+                "INSERT INTO sessions (session_guid, game_id, snapshot_id, started_at, ended_at, duration_s, qpc_epoch, qpc_frequency, capture_tier, capture_mode, exit_status, frame_count, app_frame_count, displayed_frame_count, dropped_frames, fg_mode, fg_factor, fg_factor_scope, fg_steady_share) "
+                + "VALUES ('00000000-0000-0000-0000-000000000020', @gameId, @snapshotId, 0, 60000, 60, 0, 10000000, 1, 'attach', 'normal', 6000, 1500, 6000, 0, 'dlssg', 4.0, 'steady', 0.75)",
+                new { gameId, snapshotId }, cancellationToken: Ct)).ConfigureAwait(true);
+        }
+
+        LedgerDatabase migrated = await LedgerDatabase.OpenAsync(path, ct: Ct).ConfigureAwait(true);
+        await using (migrated.ConfigureAwait(true))
+        {
+            migrated.SchemaVersion.Should().Be(MigrationRunner.LatestVersion);
+            IReadOnlyList<string> added = await migrated.ReadAsync(async (c, ct) => (IReadOnlyList<string>)[.. await c.QueryAsync<string>(new CommandDefinition(
+                "SELECT name FROM pragma_table_info('sessions') WHERE name = 'fg_mix' AND type = 'TEXT'", cancellationToken: ct)).ConfigureAwait(false)], Ct).ConfigureAwait(true);
+            added.Should().ContainSingle();
+            SessionRow before = (await new SqliteSessionRepository(migrated).FindAsync(Guid.Parse("00000000-0000-0000-0000-000000000020"), Ct).ConfigureAwait(true))!;
+            before.FgFactor.Should().Be(4.0, "the row keeps everything it had");
+            before.FgSteadyShare.Should().Be(0.75);
+            before.FgMixJson.Should().BeNull("a session recorded before beta.24 has no mix, and is not rebuilt from its frames");
+        }
+    }
+
+    /// <summary>
     /// Schema 0017 (2026-10-03, beta.11, D38): <c>games.ac_exception_trial_failed_at</c>, NULL on every row written before — a
     /// grant made under D33 keeps everything it had and carries no failed trial.
     /// </summary>

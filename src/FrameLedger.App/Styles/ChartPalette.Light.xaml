@@ -20,4 +20,7 @@
     <Color x:Key="Chart_Percentile">#FF795548</Color>
     <!-- beta.14: the seventh line on the temperatures plot (the card's memory temperature). -->
     <Color x:Key="Chart_SensorTertiary">#FFBE008C</Color>
+    <!-- beta.24 (D62): the frame-generation mix bar — no frame generation solid, the time no state claims faint. -->
+    <Color x:Key="Chart_MixNone">#FF6E6E6E</Color>
+    <Color x:Key="Chart_MixUnclassified">#33000000</Color>
 </ResourceDictionary>

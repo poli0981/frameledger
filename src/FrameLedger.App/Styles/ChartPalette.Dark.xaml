@@ -25,4 +25,8 @@
     <!-- beta.14: the seventh line on the temperatures plot (the card's memory temperature) — no colour above is 60 apart
          from all six beside it. -->
     <Color x:Key="Chart_SensorTertiary">#FFE6E6E6</Color>
+    <!-- beta.24 (D62): the frame-generation mix bar. A state takes its multiplier's series colour (ChartPalette.MixFill);
+         no frame generation is a solid neutral, and the time no state claims a dim one, so the two never read as one. -->
+    <Color x:Key="Chart_MixNone">#FFA0A0A0</Color>
+    <Color x:Key="Chart_MixUnclassified">#40FFFFFF</Color>
 </ResourceDictionary>

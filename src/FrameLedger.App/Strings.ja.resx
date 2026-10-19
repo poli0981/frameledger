@@ -3122,7 +3122,7 @@
     <comment>review</comment>
   </data>
   <data name="Nv_DynamicTarget_Auto" xml:space="preserve">
-    <value>動的ターゲットは自動</value>
+    <value>動的ターゲット: 最大リフレッシュレート</value>
     <comment>review</comment>
   </data>
   <data name="Nv_Driver_Format" xml:space="preserve">
@@ -4387,6 +4387,110 @@
   </data>
   <data name="ImagePicker_Filter" xml:space="preserve">
     <value>画像 (*.png;*.jpg;*.jpeg;*.bmp;*.webp)|*.png;*.jpg;*.jpeg;*.bmp;*.webp</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Header" xml:space="preserve">
+    <value>このセッションのフレーム生成</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Col_State" xml:space="preserve">
+    <value>状態</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Col_Share" xml:space="preserve">
+    <value>時間の割合</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Col_Rates" xml:space="preserve">
+    <value>ネイティブ → 表示</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Col_Time" xml:space="preserve">
+    <value>時間</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_State_Format" xml:space="preserve">
+    <value>フレーム生成 ×{0:0.0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_None" xml:space="preserve">
+    <value>フレーム生成なし</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Unclassified" xml:space="preserve">
+    <value>分類なし</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Rates_Format" xml:space="preserve">
+    <value>{0} → {1} FPS</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Rate_Format" xml:space="preserve">
+    <value>{0} FPS</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Bar_Name_Format" xml:space="preserve">
+    <value>フレーム生成の状態ごとのセッション時間の割合: {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Unclassified_Note" xml:space="preserve">
+    <value>分類なし: 10 秒以上続いたどの状態にも属さない時間 — 切り替えや読み込み、読み取りに使う 5 秒の区間より速く変わった倍率、または読み取るにはフレームが少なすぎる区間です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_NotStored" xml:space="preserve">
+    <value>フレーム生成の状態の内訳は、0.1.0-beta.24 以降で記録し、ある状態が 10 秒以上続いたセッションに保存されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Context_App_Format" xml:space="preserve">
+    <value>NVIDIA App で設定: {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Context_Driver_Format" xml:space="preserve">
+    <value>NVIDIA ドライバー独自のゲーム用プロファイルで設定: {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Context_Game" xml:space="preserve">
+    <value>ゲーム内で設定 — NVIDIA App によるフレーム生成の上書きなし</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Context_Dynamic" xml:space="preserve">
+    <value>Dynamic（動的）</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Context_Fixed_Format" xml:space="preserve">
+    <value>Fixed（固定）{0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Context_UpTo_Format" xml:space="preserve">
+    <value>最大 {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Context_Target_Auto" xml:space="preserve">
+    <value>目標: 最大リフレッシュレート</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Context_Target_Format" xml:space="preserve">
+    <value>目標 {0} FPS</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Context_Off" xml:space="preserve">
+    <value>フレーム生成オフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Context_On" xml:space="preserve">
+    <value>フレーム生成オン</value>
+    <comment>review</comment>
+  </data>
+  <data name="FgMix_Context_Auto" xml:space="preserve">
+    <value>自動</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Fg_Column_Format" xml:space="preserve">
+    <value>×{0:0.0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Fps_Fg_Column_Steady_Format" xml:space="preserve">
+    <value>×{0:0.0} · {1:0}%</value>
     <comment>review</comment>
   </data>
 </root>

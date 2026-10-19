@@ -93,7 +93,7 @@ internal sealed class ScratchLedger : IAsyncDisposable
     ]);
 
     /// <summary>A hooked session WITH blobs: <paramref name="frames"/> presents at 60 fps, a 4× spike every <paramref name="spikeEvery"/> frames, one segment, a gpu_temp series.</summary>
-    public async Task<long> SessionWithFramesAsync(long gameId, DateTimeOffset startedAt, int frames, int spikeEvery)
+    public async Task<long> SessionWithFramesAsync(long gameId, DateTimeOffset startedAt, int frames, int spikeEvery, Func<SessionRow, SessionRow>? shape = null)
     {
         long snapshotId = await new SqliteHardwareSnapshotRepository(Db).EnsureAsync(new HardwareSnapshot { GpuName = "G" }, startedAt, TestContext.Current.CancellationToken).ConfigureAwait(false);
         var frametimes = new float[frames];
@@ -108,6 +108,7 @@ internal sealed class ScratchLedger : IAsyncDisposable
 
         double seconds = frametimes.Sum() / 1000.0;
         SessionRow row = HookedRow(gameId, snapshotId, startedAt, frames, spikeEvery, seconds);
+        row = shape is null ? row : shape(row);
         return await Sessions.InsertFinalizedAsync(new FinalizedSession
         {
             Row = row,

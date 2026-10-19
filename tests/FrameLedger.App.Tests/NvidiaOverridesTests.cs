@@ -105,4 +105,68 @@ public sealed class NvidiaOverridesTests
     [InlineData(0u)]
     [InlineData(27u)]
     public void AnOffOrUnknownPresetSaysNothing(uint value) => NvidiaOverrides.Preset(value).Should().BeNull();
+
+    /// <summary>
+    /// beta.24 (D62): the frame-generation block's context line, in the NVIDIA App's own terms (its Frame Generation Mode
+    /// dialog, owner's screenshot 2026-10-19: Dynamic with Target FPS and Multiplier "Up to 6x", or Fixed) — configuration
+    /// above the measured rows, never one of them.
+    /// </summary>
+    [Fact]
+    public void TheFrameGenerationContextSaysHowTheNvidiaAppSetItInItsOwnTerms() => InEnglish(() =>
+    {
+        NvidiaOverrides.FrameGenerationContext(Profile(DriverProfileOutcome.Application,
+            (S.DlssgMode, 4), (S.DlssgDynamicMultiFrameCountMax, 5), (S.DlssgDynamicTargetFrameRate, S.DynamicTargetAuto)))
+            .Should().Be("Set in the NVIDIA App: Dynamic, up to ×6, target: max refresh rate", "5 generated frames per rendered one is the App's \"Up to 6x\"");
+        NvidiaOverrides.FrameGenerationContext(Profile(DriverProfileOutcome.Application,
+            (S.DlssgMode, 4), (S.DlssgDynamicTargetFrameRate, 120)))
+            .Should().Be("Set in the NVIDIA App: Dynamic, target 120 FPS", "no ceiling stored: none is named");
+        NvidiaOverrides.FrameGenerationContext(Profile(DriverProfileOutcome.Application,
+            (S.DlssgMode, 4), (S.DlssgDynamicMultiFrameCountMax, 16), (S.DlssgDynamicTargetFrameRate, 0x0200_0000)))
+            .Should().Be("Set in the NVIDIA App: Dynamic", "a value outside the header's ranges is left out, never guessed");
+        NvidiaOverrides.FrameGenerationContext(Profile(DriverProfileOutcome.Application, (S.DlssgMode, 2), (S.DlssgMultiFrameCount, 3)))
+            .Should().Be("Set in the NVIDIA App: Fixed ×4");
+        NvidiaOverrides.FrameGenerationContext(Profile(DriverProfileOutcome.Global, (S.DlssgMultiFrameCount, 5)))
+            .Should().Be("Set in the NVIDIA App: Fixed ×6", "a multiplier with the mode unset is the Fixed one");
+        NvidiaOverrides.FrameGenerationContext(Profile(DriverProfileOutcome.Application, (S.DlssgMode, 2)))
+            .Should().Be("Set in the NVIDIA App: frame generation on");
+        NvidiaOverrides.FrameGenerationContext(Profile(DriverProfileOutcome.Application, (S.DlssgMode, 1), (S.DlssgMultiFrameCount, 3)))
+            .Should().Be("Set in the NVIDIA App: frame generation off");
+        NvidiaOverrides.FrameGenerationContext(Profile(DriverProfileOutcome.Application, (S.DlssgMode, 3)))
+            .Should().Be("Set in the NVIDIA App: automatic");
+        NvidiaOverrides.FrameGenerationContext(Profile(DriverProfileOutcome.Application, (S.DlssgMode, 3), (S.DlssgMultiFrameCount, 2)))
+            .Should().Be("Set in the NVIDIA App: automatic, ×3");
+        return 0;
+    });
+
+    [Fact]
+    public void WithNoFrameGenerationSettingTheGameDecidedAndWithNoProfileNothingIsSaid() => InEnglish(() =>
+    {
+        NvidiaOverrides.FrameGenerationContext(Profile(DriverProfileOutcome.Application, (S.DlssgMode, 0), (S.DlssgMultiFrameCount, null), (S.DlssSrOverride, 1)))
+            .Should().Be("Set in the game — no NVIDIA App frame-generation override", "Use 3D app setting: the game's own menu chose");
+        NvidiaOverrides.FrameGenerationContext(Profile(DriverProfileOutcome.Degraded)).Should().BeNull("no NVIDIA driver answered");
+        NvidiaOverrides.FrameGenerationContext(null).Should().BeNull("a row from before beta.8");
+        NvidiaOverrides.FrameGenerationContext("{broken").Should().BeNull();
+        return 0;
+    });
+
+    [Fact]
+    public void AValueTheDriverShipsInItsOwnProfileIsNotCalledTheUsersChoice() => InEnglish(() =>
+    {
+        string shipped = DriverProfileRecord.Serialize(new DriverProfileReading
+        {
+            Outcome = DriverProfileOutcome.Application,
+            ProfileName = "A game NVIDIA profiles",
+            Settings = [new DriverSettingReading(S.DlssgMode, 2, DriverSettingLocation.Profile, true), new DriverSettingReading(S.DlssgMultiFrameCount, 1, DriverSettingLocation.Profile, true)],
+        })!;
+        NvidiaOverrides.FrameGenerationContext(shipped).Should().Be("Set by the NVIDIA driver's own profile for the game: Fixed ×2");
+
+        string mixed = DriverProfileRecord.Serialize(new DriverProfileReading
+        {
+            Outcome = DriverProfileOutcome.Application,
+            ProfileName = "A game NVIDIA profiles",
+            Settings = [new DriverSettingReading(S.DlssgMode, 2, DriverSettingLocation.Profile, true), new DriverSettingReading(S.DlssgMultiFrameCount, 3, DriverSettingLocation.Profile, false)],
+        })!;
+        NvidiaOverrides.FrameGenerationContext(mixed).Should().Be("Set in the NVIDIA App: Fixed ×4", "one value someone set makes it the user's");
+        return 0;
+    });
 }

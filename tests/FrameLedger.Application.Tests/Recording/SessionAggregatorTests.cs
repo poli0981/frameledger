@@ -118,11 +118,27 @@ public sealed class SessionAggregatorTests
         row.FgRefusalDetail.Should().NotBeNull();
         row.DisplayedCountedBy.Should().Be("hook");
 
+        // beta.24 (D62): beside the steady state, every state the session held, each with its share.
+        FgMixRecord mix = FgMixRecord.Parse(row.FgMixJson)!;
+        FgMixRecordRow generated = mix.Rows.Should().ContainSingle(static r => r.Kind == "generated").Subject;
+        generated.Factor.Should().BeApproximately(2.0, 0.01);
+        generated.Share.Should().BeApproximately(row.FgSteadyShare!.Value, 1e-9, "the longest state of the mix is the steady state");
+        mix.Rows.Sum(static r => r.Share).Should().BeApproximately(1.0, 1e-9);
+        mix.Rows.Should().HaveCountGreaterThan(1, "the menu's time is a row of its own");
+
         // A uniform session is scoped 'session' and carries no share.
         SessionRow uniform = SessionAggregator.Aggregate(SessionFixtures.Skeleton(), SessionFixtures.Hooked(SessionFixtures.Stream(2_000, claims, fgPerBatch: 2), writer)).Row;
         uniform.FgFactorScope.Should().Be("session");
         uniform.FgSteadyShare.Should().BeNull();
         uniform.FgRefusal.Should().BeNull();
+        FgMixRecord.Parse(uniform.FgMixJson)!.Rows[0].Kind.Should().Be("generated", "a uniform session's mix is its one state");
+
+        // Nothing counted: no mix, as no factor.
+        SessionRow uncounted = SessionAggregator.Aggregate(SessionFixtures.Skeleton(), SessionFixtures.Hooked(SessionFixtures.Stream(2_000, _presentOnly, fgPerBatch: 2), writer)).Row;
+        uncounted.FgMixJson.Should().BeNull();
+        FgMixRecord.Parse("not json").Should().BeNull("a hand-edited column reads as none, never as an exception");
+        FgMixRecord.Parse(null).Should().BeNull();
+        FgMixRecord.ToJson(null).Should().BeNull();
     }
 
     [Fact]

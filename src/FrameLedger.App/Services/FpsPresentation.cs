@@ -74,8 +74,9 @@ public static class FpsPresentation
         return m.Kind switch
         {
             // A steady-state factor carries its share in the grid too (rule 6; beta.8 — the column was the one place it did not).
-            FpsReadoutKind.Generated when m.Factor is double f && m.SteadyShare is double share => string.Format(CultureInfo.CurrentCulture, "×{0:0.0} · {1:0}%", f, share * 100),
-            FpsReadoutKind.Generated when m.Factor is double f => string.Format(CultureInfo.CurrentCulture, "×{0:0.0}", f),
+            // The formats are resources since beta.24, like every other text the column shows.
+            FpsReadoutKind.Generated when m.Factor is double f && m.SteadyShare is double share => string.Format(CultureInfo.CurrentCulture, Strings.Fps_Fg_Column_Steady_Format, f, share * 100),
+            FpsReadoutKind.Generated when m.Factor is double f => string.Format(CultureInfo.CurrentCulture, Strings.Fps_Fg_Column_Format, f),
             FpsReadoutKind.None => Strings.Common_Dash,
             _ => Strings.Common_NotAvailable,
         };

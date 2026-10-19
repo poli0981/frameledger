@@ -28,6 +28,8 @@ What the words on FrameLedger's screens mean, in alphabetical order. How each fi
 - **Ledger** — the one database file that holds your library and sessions, `%LOCALAPPDATA%\FrameLedger\ledger.db`.
 - **N/A** — not measured. Never 0, and never an estimate.
 - **Native FPS** — the frames the game rendered itself.
+- **Not classified** — in a session's frame-generation mix, time in no state that lasted at least 10 seconds:
+  switching, loading, or a multiplier that changed faster than FrameLedger reads it.
 - **Overlay build** — the version of the component that hooking loads into a game. It draws nothing on your screen.
 - **Override** — your own Yes, No or N/A for a ray-tracing chip. The measured value is kept, and yours is marked as
   yours.

@@ -58,7 +58,8 @@ public sealed class MetricEnumMirrorTests
         // A new enum in Domain.Metrics that mirrors nothing is fine; one that mirrors a Shared enum and is
         // not in the table above would be a mirror nobody checks. Enumerate Domain.Metrics' enums and
         // require each to be either paired or explicitly local.
-        string[] local = [nameof(Tri), nameof(FgRefusalKind), nameof(FgRefusalSubject)];
+        // FgMixKind (beta.24, D62): a row of the stored mix — Domain's own, read by no native code.
+        string[] local = [nameof(Tri), nameof(FgRefusalKind), nameof(FgRefusalSubject), nameof(FgMixKind)];
         IEnumerable<string> enums = typeof(FrameSample).Assembly.GetTypes()
             .Where(t => t.IsEnum && string.Equals(t.Namespace, typeof(FrameSample).Namespace, StringComparison.Ordinal))
             .Select(t => t.Name);

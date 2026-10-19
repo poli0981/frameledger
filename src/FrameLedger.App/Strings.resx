@@ -2352,7 +2352,7 @@ The documents below are the full terms; this summary does not replace them.</val
     <value>dynamic target {0} FPS</value>
   </data>
   <data name="Nv_DynamicTarget_Auto" xml:space="preserve">
-    <value>dynamic target automatic</value>
+    <value>dynamic target: max refresh rate</value>
   </data>
   <data name="Nv_Driver_Format" xml:space="preserve">
     <value>NVIDIA driver, for this game's process: {0}</value>
@@ -3301,5 +3301,83 @@ The documents below are the full terms; this summary does not replace them.</val
   </data>
   <data name="ImagePicker_Filter" xml:space="preserve">
     <value>Images (*.png;*.jpg;*.jpeg;*.bmp;*.webp)|*.png;*.jpg;*.jpeg;*.bmp;*.webp</value>
+  </data>
+  <data name="FgMix_Header" xml:space="preserve">
+    <value>Frame generation in this session</value>
+  </data>
+  <data name="FgMix_Col_State" xml:space="preserve">
+    <value>State</value>
+  </data>
+  <data name="FgMix_Col_Share" xml:space="preserve">
+    <value>Share of the time</value>
+  </data>
+  <data name="FgMix_Col_Rates" xml:space="preserve">
+    <value>Native → Displayed</value>
+  </data>
+  <data name="FgMix_Col_Time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="FgMix_State_Format" xml:space="preserve">
+    <value>×{0:0.0} frame generation</value>
+  </data>
+  <data name="FgMix_None" xml:space="preserve">
+    <value>No frame generation</value>
+  </data>
+  <data name="FgMix_Unclassified" xml:space="preserve">
+    <value>Not classified</value>
+  </data>
+  <data name="FgMix_Rates_Format" xml:space="preserve">
+    <value>{0} → {1} FPS</value>
+  </data>
+  <data name="FgMix_Rate_Format" xml:space="preserve">
+    <value>{0} FPS</value>
+  </data>
+  <data name="FgMix_Bar_Name_Format" xml:space="preserve">
+    <value>Share of the session's time by frame-generation state: {0}</value>
+  </data>
+  <data name="FgMix_Unclassified_Note" xml:space="preserve">
+    <value>Not classified: time in no state that held for at least 10 seconds — switching, loading, a factor that changed faster than the five-second windows it is read over, or windows with too few frames to read.</value>
+  </data>
+  <data name="FgMix_NotStored" xml:space="preserve">
+    <value>The mix of frame-generation states is stored for sessions recorded with 0.1.0-beta.24 or later, when a state held for at least 10 seconds.</value>
+  </data>
+  <data name="FgMix_Context_App_Format" xml:space="preserve">
+    <value>Set in the NVIDIA App: {0}</value>
+  </data>
+  <data name="FgMix_Context_Driver_Format" xml:space="preserve">
+    <value>Set by the NVIDIA driver's own profile for the game: {0}</value>
+  </data>
+  <data name="FgMix_Context_Game" xml:space="preserve">
+    <value>Set in the game — no NVIDIA App frame-generation override</value>
+  </data>
+  <data name="FgMix_Context_Dynamic" xml:space="preserve">
+    <value>Dynamic</value>
+  </data>
+  <data name="FgMix_Context_Fixed_Format" xml:space="preserve">
+    <value>Fixed {0}</value>
+  </data>
+  <data name="FgMix_Context_UpTo_Format" xml:space="preserve">
+    <value>up to {0}</value>
+  </data>
+  <data name="FgMix_Context_Target_Auto" xml:space="preserve">
+    <value>target: max refresh rate</value>
+  </data>
+  <data name="FgMix_Context_Target_Format" xml:space="preserve">
+    <value>target {0} FPS</value>
+  </data>
+  <data name="FgMix_Context_Off" xml:space="preserve">
+    <value>frame generation off</value>
+  </data>
+  <data name="FgMix_Context_On" xml:space="preserve">
+    <value>frame generation on</value>
+  </data>
+  <data name="FgMix_Context_Auto" xml:space="preserve">
+    <value>automatic</value>
+  </data>
+  <data name="Fps_Fg_Column_Format" xml:space="preserve">
+    <value>×{0:0.0}</value>
+  </data>
+  <data name="Fps_Fg_Column_Steady_Format" xml:space="preserve">
+    <value>×{0:0.0} · {1:0}%</value>
   </data>
 </root>

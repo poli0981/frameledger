@@ -145,6 +145,7 @@ public static class SessionAggregator
             DisplayedFps = usable ? fg!.DisplayedFps : steady?.DisplayedFps,
             FgFactorScope = usable && fg!.Factor is not null ? "session" : steady is not null ? "steady" : null,
             FgSteadyShare = steady?.Share,
+            FgMixJson = FgMixRecord.ToJson(Mix(c)),
             DisplayedP1LowFps = usable && c.Verdict is FgVerdict.Named or FgVerdict.ActiveUnidentified ? c.PresentStats.P1LowFps : null,
             DisplayedCountedBy = usable || steady is not null ? (fg!.DxgiCounted ? "dxgi" : "hook") : null,
             FgNoneWithheldReason = c.Withheld,
@@ -159,6 +160,19 @@ public static class SessionAggregator
             SlInterposerVersion = c.Input.Modules.VersionOf(FgLadder.SlInterposerFileName)?.ToString(),
         };
     }
+
+    /// <summary>
+    /// Every frame-generation state the session held (beta.24, D62): only where the session generated frames and its
+    /// count is one a window can be read from — a whole-session factor, or one refused as non-uniform or in the band
+    /// between none and generating. Unattributed, interleaved or saturated records are not made trustworthy by slicing
+    /// them (03_METRICS §The steady state).
+    /// </summary>
+    private static FgMix? Mix(Context c) =>
+        c.Verdict is FgVerdict.Named or FgVerdict.ActiveUnidentified
+        && c.Fg is { } fg
+        && (fg.Refusal is null || fg.Refusal is { Subject: FgRefusalSubject.Factor, Kind: FgRefusalKind.NonUniform or FgRefusalKind.AmbiguousBand })
+            ? FgMix.From(c.All, c.Input.QpcFrequency, c.NoneAllowed)
+            : null;
 
     /// <summary>The qualifier the one number that stands alone must carry (CLAUDE.md rule 6, as amended); the ladder's, shared with the live card (P3 PR-1).</summary>
     private static string PresentedQualifier(Context c) => FgLadder.PresentedQualifier(c.Input.Writer, c.Withheld);
@@ -434,6 +448,8 @@ public static class SessionAggregator
             FgCounted = FgLadder.FgHookRan(input.Records);
             var census = (FlRuntimeCensus)input.Writer.RuntimeCensus;
             Withheld = Fg?.IsNone == true ? FgLadder.WithholdNone(census, input.Modules, input.Writer) : null;
+            // The mix (beta.24, D62) asks the same question of every window, whatever the session factor was.
+            NoneAllowed = FgLadder.WithholdNone(census, input.Modules, input.Writer) is null;
             FgIdentity = FgLadder.Identity(dominantRecords);
             Verdict = FgLadder.Resolve(FgIdentity, Fg, Withheld);
             FgUsable = Fg is { Refusal: null } && Verdict is FgVerdict.Named or FgVerdict.ActiveUnidentified or FgVerdict.None or FgVerdict.NoneInputsTagged;
@@ -470,6 +486,9 @@ public static class SessionAggregator
         public bool FgCounted { get; }
 
         public string? Withheld { get; }
+
+        /// <summary>Whether a window that counted no generated frame may read as none in the mix (not FgLadder's withheld shape).</summary>
+        public bool NoneAllowed { get; }
 
         public FlFgMode? FgIdentity { get; }
 

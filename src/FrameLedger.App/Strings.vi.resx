@@ -2347,7 +2347,7 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
     <value>mục tiêu động {0} FPS</value>
   </data>
   <data name="Nv_DynamicTarget_Auto" xml:space="preserve">
-    <value>mục tiêu động tự động</value>
+    <value>mục tiêu động: tần số quét tối đa</value>
   </data>
   <data name="Nv_Driver_Format" xml:space="preserve">
     <value>Driver NVIDIA, cho tiến trình của game này: {0}</value>
@@ -3296,5 +3296,83 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   </data>
   <data name="ImagePicker_Filter" xml:space="preserve">
     <value>Ảnh (*.png;*.jpg;*.jpeg;*.bmp;*.webp)|*.png;*.jpg;*.jpeg;*.bmp;*.webp</value>
+  </data>
+  <data name="FgMix_Header" xml:space="preserve">
+    <value>Tạo khung hình trong phiên này</value>
+  </data>
+  <data name="FgMix_Col_State" xml:space="preserve">
+    <value>Trạng thái</value>
+  </data>
+  <data name="FgMix_Col_Share" xml:space="preserve">
+    <value>Tỷ lệ thời gian</value>
+  </data>
+  <data name="FgMix_Col_Rates" xml:space="preserve">
+    <value>Gốc → Hiển thị</value>
+  </data>
+  <data name="FgMix_Col_Time" xml:space="preserve">
+    <value>Thời gian</value>
+  </data>
+  <data name="FgMix_State_Format" xml:space="preserve">
+    <value>Tạo khung hình ×{0:0.0}</value>
+  </data>
+  <data name="FgMix_None" xml:space="preserve">
+    <value>Không tạo khung hình</value>
+  </data>
+  <data name="FgMix_Unclassified" xml:space="preserve">
+    <value>Không phân loại</value>
+  </data>
+  <data name="FgMix_Rates_Format" xml:space="preserve">
+    <value>{0} → {1} FPS</value>
+  </data>
+  <data name="FgMix_Rate_Format" xml:space="preserve">
+    <value>{0} FPS</value>
+  </data>
+  <data name="FgMix_Bar_Name_Format" xml:space="preserve">
+    <value>Tỷ lệ thời gian của phiên theo trạng thái tạo khung hình: {0}</value>
+  </data>
+  <data name="FgMix_Unclassified_Note" xml:space="preserve">
+    <value>Không phân loại: thời gian không thuộc trạng thái nào kéo dài ít nhất 10 giây — lúc chuyển đổi, lúc tải, hệ số thay đổi nhanh hơn các khoảng năm giây dùng để đọc, hoặc những khoảng có quá ít khung hình để đọc.</value>
+  </data>
+  <data name="FgMix_NotStored" xml:space="preserve">
+    <value>Tỷ lệ các trạng thái tạo khung hình được lưu cho các phiên ghi bằng 0.1.0-beta.24 trở lên, khi có một trạng thái kéo dài ít nhất 10 giây.</value>
+  </data>
+  <data name="FgMix_Context_App_Format" xml:space="preserve">
+    <value>Đặt trong NVIDIA App: {0}</value>
+  </data>
+  <data name="FgMix_Context_Driver_Format" xml:space="preserve">
+    <value>Do hồ sơ riêng của driver NVIDIA cho game này đặt: {0}</value>
+  </data>
+  <data name="FgMix_Context_Game" xml:space="preserve">
+    <value>Đặt trong game — NVIDIA App không ghi đè tạo khung hình</value>
+  </data>
+  <data name="FgMix_Context_Dynamic" xml:space="preserve">
+    <value>Dynamic (động)</value>
+  </data>
+  <data name="FgMix_Context_Fixed_Format" xml:space="preserve">
+    <value>Fixed (cố định) {0}</value>
+  </data>
+  <data name="FgMix_Context_UpTo_Format" xml:space="preserve">
+    <value>tối đa {0}</value>
+  </data>
+  <data name="FgMix_Context_Target_Auto" xml:space="preserve">
+    <value>mục tiêu: tần số quét tối đa</value>
+  </data>
+  <data name="FgMix_Context_Target_Format" xml:space="preserve">
+    <value>mục tiêu {0} FPS</value>
+  </data>
+  <data name="FgMix_Context_Off" xml:space="preserve">
+    <value>tắt tạo khung hình</value>
+  </data>
+  <data name="FgMix_Context_On" xml:space="preserve">
+    <value>bật tạo khung hình</value>
+  </data>
+  <data name="FgMix_Context_Auto" xml:space="preserve">
+    <value>tự động</value>
+  </data>
+  <data name="Fps_Fg_Column_Format" xml:space="preserve">
+    <value>×{0:0.0}</value>
+  </data>
+  <data name="Fps_Fg_Column_Steady_Format" xml:space="preserve">
+    <value>×{0:0.0} · {1:0}%</value>
   </data>
 </root>

@@ -2,6 +2,7 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.Windows;
+using FrameLedger.Domain.Metrics;
 using ScottPlot;
 using Wpf.Ui.Appearance;
 
@@ -26,14 +27,16 @@ public sealed record ChartPalette(
     Color Segment,
     Color Histogram,
     Color Percentile,
-    Color SensorTertiary)
+    Color SensorTertiary,
+    Color MixNone,
+    Color MixUnclassified)
 {
     /// <summary>The keys both dictionaries must carry, in the record's order.</summary>
     public static readonly IReadOnlyList<string> Keys =
     [
         "Chart_Figure", "Chart_Data", "Chart_Axis", "Chart_Grid", "Chart_Native", "Chart_Displayed", "Chart_Stutter",
         "Chart_StutterPso", "Chart_Sensor", "Chart_SensorSecondary", "Chart_Segment", "Chart_Histogram", "Chart_Percentile",
-        "Chart_SensorTertiary",
+        "Chart_SensorTertiary", "Chart_MixNone", "Chart_MixUnclassified",
     ];
 
     private static readonly Dictionary<ApplicationTheme, ChartPalette> _cache = [];
@@ -59,7 +62,7 @@ public sealed record ChartPalette(
     {
         ArgumentNullException.ThrowIfNull(dictionary);
         Color[] c = [.. Keys.Select(k => Convert(dictionary, k))];
-        return new ChartPalette(c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8], c[9], c[10], c[11], c[12], c[13]);
+        return new ChartPalette(c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8], c[9], c[10], c[11], c[12], c[13], c[14], c[15]);
     }
 
     /// <summary>The colour a key names — how a chart that assigns palette entries to series by name reads them (<c>SensorsChart</c>).</summary>
@@ -79,7 +82,29 @@ public sealed record ChartPalette(
         "Chart_Histogram" => Histogram,
         "Chart_Percentile" => Percentile,
         "Chart_SensorTertiary" => SensorTertiary,
+        "Chart_MixNone" => MixNone,
+        "Chart_MixUnclassified" => MixUnclassified,
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, "not a chart palette key"),
+    };
+
+    /// <summary>
+    /// The fill of a frame-generation mix segment (beta.24, D62): a state by its multiplier, so ×4 reads the same colour in
+    /// every session — the series colours, never the stutter reds —, and no frame generation and the time no state claims
+    /// each a colour of their own.
+    /// </summary>
+    public Color MixFill(FgMixKind kind, double? factor) => kind switch
+    {
+        FgMixKind.None => MixNone,
+        FgMixKind.Unclassified => MixUnclassified,
+        _ => (int)Math.Round(factor ?? 0, MidpointRounding.AwayFromZero) switch
+        {
+            <= 2 => Native,
+            3 => Sensor,
+            4 => Displayed,
+            5 => SensorSecondary,
+            6 => Percentile,
+            _ => SensorTertiary,
+        },
     };
 
     private static ChartPalette Load(ApplicationTheme theme)

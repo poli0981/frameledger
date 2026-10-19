@@ -107,6 +107,7 @@ public sealed class SqliteSessionRepositoryTests
         PowerLimitPct = 33.25,
         ThermalLimitPct = 2.5,
         AppFramesPerJoule = 0.3125,
+        FgMixJson = "{\"Rows\":[{\"Kind\":\"generated\",\"Factor\":3.99,\"NativeFps\":70.5,\"DisplayedFps\":281.3,\"Seconds\":120,\"Share\":0.75,\"Windows\":24}]}",
     };
 
     private static FrameBlobs Frames(int n) => new()

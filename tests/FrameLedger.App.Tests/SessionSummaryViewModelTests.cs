@@ -164,6 +164,73 @@ public sealed class SessionSummaryViewModelTests
         }
     }
 
+    /// <summary>
+    /// beta.24 (D62): the stored mix as a block — a row per state with its own Native → Displayed and its share, the time with
+    /// no frame generation, the time no state claims —, the NVIDIA App setting above it, and for a session that counted frame
+    /// generation before the mix was stored, one line saying so rather than an empty block.
+    /// </summary>
+    [Fact]
+    public async Task TheStoredMixIsShownWithItsSettingAndAnOlderSessionSaysItHasNone()
+    {
+        CultureInfo? previous = Strings.Culture;
+        CultureInfo previousCulture = CultureInfo.CurrentCulture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow game = await s.GameAsync("Gamma");
+            string mix = Application.Recording.FgMixRecord.ToJson(new FgMix(
+            [
+                new FgMixRow(FgMixKind.Generated, 2.0, 62, 124, 120, 0.2, 24),
+                new FgMixRow(FgMixKind.Generated, 6.0, 48, 288, 360, 0.6, 72),
+                new FgMixRow(FgMixKind.Unclassified, null, null, null, 120, 0.2, 24),
+            ]))!;
+            string profile = Application.Recording.DriverProfileRecord.Serialize(new Application.Capture.DriverProfileReading
+            {
+                Outcome = Application.Capture.DriverProfileOutcome.Application,
+                ProfileName = "Gamma",
+                Settings =
+                [
+                    new Application.Capture.DriverSettingReading(Application.Capture.NvidiaDriverSettings.DlssgMode, 4, Application.Capture.DriverSettingLocation.Profile, false),
+                    new Application.Capture.DriverSettingReading(Application.Capture.NvidiaDriverSettings.DlssgDynamicMultiFrameCountMax, 5, Application.Capture.DriverSettingLocation.Profile, false),
+                ],
+            })!;
+            long withMix = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow, fgMode: "dlssg", native: 48, displayed: 288, factor: 6.0, shape: r => r with
+            {
+                FgFactorScope = "steady",
+                FgSteadyShare = 0.6,
+                FgMixJson = mix,
+                DriverProfileJson = profile,
+            });
+            long older = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-1), fgMode: "dlssg", native: 60, displayed: 118, factor: 1.97);
+
+            SessionSummaryViewModel vm = Build(s);
+            await vm.LoadAsync(withMix, Ct);
+            vm.HasFgMix.Should().BeTrue();
+            vm.FgMix.Select(static r => r.Label).Should().Equal("×2.0 frame generation", "×6.0 frame generation", "Not classified");
+            vm.FgMix.Select(static r => r.Share).Should().Equal("20.00%", "60.00%", "20.00%");
+            vm.FgMixSegments.Select(static g => g.Share).Should().Equal(0.2, 0.6, 0.2);
+            vm.FgMixContext.Should().Be("Set in the NVIDIA App: Dynamic, up to ×6");
+            vm.FgMixUnclassifiedNote.Should().Be(Strings.FgMix_Unclassified_Note);
+            vm.FgMixName.Should().StartWith("Share of the session's time by frame-generation state: ×2.0 frame generation 20.00%");
+            vm.FgMixMissing.Should().BeNull();
+
+            await vm.LoadAsync(older, Ct);
+            vm.HasFgMix.Should().BeFalse("the block is cleared, not left from the session before");
+            vm.FgMix.Should().BeEmpty();
+            vm.FgMixSegments.Should().BeEmpty();
+            vm.FgMixContext.Should().BeNull();
+            vm.FgMixUnclassifiedNote.Should().BeNull();
+            vm.FgMixMissing.Should().Be(Strings.FgMix_NotStored, "it counted frame generation before the mix was stored");
+        }
+        finally
+        {
+            Strings.Culture = previous;
+            CultureInfo.CurrentCulture = previousCulture;
+        }
+    }
+
     /// <summary>A session recorded before beta.14 has none of schema 0019's values: every new card reads N/A, never a zero.</summary>
     [Fact]
     public async Task ARowRecordedBeforeBetaFourteenReadsNotAvailableOnTheNewCards()

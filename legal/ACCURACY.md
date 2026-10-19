@@ -11,7 +11,7 @@
   that changes what FrameLedger.Overlay or the capture host does; date the change.
   HTML comments are not part of the block.
 -->
-> ⚠ **What FrameLedger actually measures today — 2026-10-13.** The software is a beta; its latest
+> ⚠ **What FrameLedger actually measures today — 2026-10-19.** The software is a beta; its latest
 > **pre-release is `0.1.0-beta.23`** (2026-10-14), an unsigned installer built from that tag with its
 > checksums published beside it. The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
@@ -50,12 +50,13 @@
 >   (menus, loading screens, a settings change), no session-wide factor is shown: the factor, Native and
 >   Displayed are those of the state that held longest — five-second windows whose ratios agree within
 >   10 %, covering at least 10 s and 10 % of the time the game was presenting — and are always shown with
->   the share of the session they cover; with no such state, the reason is shown instead. DLSS-G and FSR
->   FG are named from the calls the game makes; any other generator (XeSS-FG, one compiled into the game)
->   is shown only as active with the technology not identified, and is never named. Where a technology is
->   named but its frames could not be counted, or frame generation is not measured, the software shows
->   **Presented FPS** with a note on what it may include — never a Native figure. Where generated frames
->   were counted, the lows, median and stutter are taken over application frames only.
+>   the share of the session they cover; with no such state, the reason is shown instead. The session
+>   summary lists each state it held, with its share of the time and its own Native → Displayed rates.
+>   DLSS-G and FSR FG are named from the calls the game makes; any other generator (XeSS-FG, one compiled
+>   into the game) is shown only as active with the technology not identified, and is never named. Where a
+>   technology is named but its frames could not be counted, or frame generation is not measured, the
+>   software shows **Presented FPS** with a note on what it may include — never a Native figure. Where generated
+>   frames were counted, the lows, median and stutter are taken over application frames only.
 > - **Ray tracing:** Yes/No measured on Direct3D 12 from ray-dispatch and acceleration-structure-build
 >   calls; the technique and path tracing are `N/A`, and so is ray tracing on other APIs.
 > - **Display mode:** how each game's window was shown — exclusive full-screen, borderless, windowed or

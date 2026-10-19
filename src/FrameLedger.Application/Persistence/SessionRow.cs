@@ -140,6 +140,13 @@ public sealed record SessionRow
     /// <summary>The fraction (0..1) of the presenting time the steady state covers; null unless <see cref="FgFactorScope"/> is <c>steady</c>.</summary>
     public double? FgSteadyShare { get; init; }
 
+    /// <summary>
+    /// <c>fg_mix</c> (schema 0020, beta.24, D62): every frame-generation state the session held, each with its factor, its
+    /// Native and Displayed rates and its share of the presenting time, as <c>FgMixRecord</c>'s JSON. Null on a session
+    /// that generated no state, and on every session recorded before it — never rebuilt from stored frames.
+    /// </summary>
+    public string? FgMixJson { get; init; }
+
     public double? PresentedFps { get; init; }
 
     public string? PresentedQualifier { get; init; }

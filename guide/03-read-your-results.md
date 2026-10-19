@@ -13,6 +13,11 @@ A value FrameLedger could not measure reads **N/A** — never 0, and never an es
 - **When frame generation was measured**, the game's own frames and the frames you saw are shown together:
   `62 → 118 FPS (×1.9 FG)`. If frame generation changed during the session (menus, loading screens, a settings change),
   the figures are for the state that lasted longest, with the share of the session it covers: `(×1.9 FG · 75%)`.
+- **Frame generation in this session** (sessions recorded with 0.1.0-beta.24 or later) lists every frame-generation
+  state the session held — `×2.0`, `×4.0`… — each with its own frame rates and its share of the time, then the time
+  without frame generation, and *Not classified* for time in no state that lasted at least 10 seconds: switching,
+  loading, or a multiplier that changed faster than FrameLedger reads it. Above the list, whether the NVIDIA App set
+  frame generation (*Dynamic*, *Fixed*) or the game did.
 - **When it could not be measured**, you see **Presented FPS** with a sentence saying whether generated frames could be
   included in it. FrameLedger never shows a single number that may count generated frames as the game's own.
 - **1% low** and **0.1% low** are the frame rate of the slowest 1% and 0.1% of frames: the further they fall below the

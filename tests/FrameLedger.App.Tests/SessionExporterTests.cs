@@ -8,6 +8,8 @@ using FluentAssertions;
 using FrameLedger.App.Charts;
 using FrameLedger.App.Services;
 using FrameLedger.Application.Persistence;
+using FrameLedger.Application.Recording;
+using FrameLedger.Domain.Metrics;
 using FrameLedger.Domain.Sessions;
 
 namespace FrameLedger.App.Tests;
@@ -75,6 +77,7 @@ public sealed class SessionExporterTests
         lines.Should().Contain("# display: N/A (not recorded: a session recorded before beta.10, or recovered from its crash file)");
         lines.Should().Contain("# game_memory: vram_dedicated_mb avg=1000 median=1024 max=2048; vram_shared_mb max=N/A; ram_private_ws_mb avg=N/A median=N/A max=N/A; ram_ws_mb max=N/A; commit_mb max=N/A; processes=1; source=counters",
             "a Tier-2 session has the game's memory too (beta.12): a header line, the session's figure, never a per-frame column");
+        lines.Should().Contain("# fg_mix: N/A", "beta.24: a session with no stored mix says so");
 
         SessionExportDocument doc = SessionExporter.Document(row, game, null, [], await s.Annotations.FindAsync(id, Ct));
         using var stream = new MemoryStream();
@@ -88,6 +91,30 @@ public sealed class SessionExporterTests
         json.RootElement.GetProperty("aggregates").TryGetProperty("native_fps", out _).Should().BeFalse("N/A is omitted, never written as 0");
         json.RootElement.GetProperty("game").GetString().Should().Be("Alpha");
         _ = CaptureTier.NotHooked;
+    }
+
+    /// <summary>beta.24 (D62): the CSV's <c># fg_mix:</c> line is every stored row, invariant; the JSON's aggregates carry the column.</summary>
+    [Fact]
+    public async Task TheFgMixHeaderLineIsEveryStoredRowAndTheJsonCarriesTheColumn()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Alpha");
+        string mix = FgMixRecord.ToJson(new FgMix([
+            new FgMixRow(FgMixKind.Generated, 4.0, 70.5, 282, 90, 0.75, 18),
+            new FgMixRow(FgMixKind.None, null, 118, 118, 30, 0.25, 6),
+        ]))!;
+        long id = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow, fgMode: "dlssg", native: 70.5, displayed: 282, factor: 4.0, shape: r => r with { FgMixJson = mix });
+        SessionRow row = (await s.Sessions.FindByIdAsync(id, Ct))!;
+
+        using var writer = new StringWriter();
+        SessionExporter.WriteCsv(writer, row, game, null, [], null);
+        writer.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+            .Should().Contain("# fg_mix: generated x4.00 75.00% native 70.5 displayed 282.0 90.0 s; none 25.00% native 118.0 displayed 118.0 30.0 s");
+
+        using var stream = new MemoryStream();
+        SessionExporter.WriteJson(stream, SessionExporter.Document(row, game, null, [], null));
+        using JsonDocument json = JsonDocument.Parse(stream.ToArray());
+        json.RootElement.GetProperty("aggregates").GetProperty("fg_mix_json").GetString().Should().Be(mix);
     }
 
     /// <summary>beta.10: the CSV's <c># display:</c> line is the stored milliseconds by name, invariant in every UI language.</summary>

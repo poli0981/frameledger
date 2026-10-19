@@ -96,6 +96,8 @@ It opens from a session row, from the Dashboard, and from the notice when a sess
 - The **Ray Tracing**, **Path Tracing** and **Ray Reconstruction** chips: click one to correct it by hand, for this
   session or as the game's default. Your correction is labelled as yours.
 - The figures, the charts and **Statistics per series** — [Read your results](03-read-your-results.md) explains each.
+- **Frame generation in this session** — a bar and a table of every frame-generation state the session held, when it
+  held more than one, with how frame generation was set.
 - **Tags and notes** with **Save**, and **Export CSV**, **Export JSON**, **Export PNG**.
 
 ## Compare

@@ -375,6 +375,30 @@ public static class Strings
         nameof(Fg_RefusalDetail_Records_Format),
         nameof(Fg_RefusalDetail_TooShort_Format),
         nameof(Fg_Unknown),
+        nameof(FgMix_Bar_Name_Format),
+        nameof(FgMix_Col_Rates),
+        nameof(FgMix_Col_Share),
+        nameof(FgMix_Col_State),
+        nameof(FgMix_Col_Time),
+        nameof(FgMix_Context_App_Format),
+        nameof(FgMix_Context_Auto),
+        nameof(FgMix_Context_Driver_Format),
+        nameof(FgMix_Context_Dynamic),
+        nameof(FgMix_Context_Fixed_Format),
+        nameof(FgMix_Context_Game),
+        nameof(FgMix_Context_Off),
+        nameof(FgMix_Context_On),
+        nameof(FgMix_Context_Target_Auto),
+        nameof(FgMix_Context_Target_Format),
+        nameof(FgMix_Context_UpTo_Format),
+        nameof(FgMix_Header),
+        nameof(FgMix_None),
+        nameof(FgMix_NotStored),
+        nameof(FgMix_Rate_Format),
+        nameof(FgMix_Rates_Format),
+        nameof(FgMix_State_Format),
+        nameof(FgMix_Unclassified),
+        nameof(FgMix_Unclassified_Note),
         nameof(FirstRun_Accept),
         nameof(FirstRun_Agent_Body),
         nameof(FirstRun_Agent_Header),
@@ -427,6 +451,8 @@ public static class Strings
         nameof(Fps_Census_Withheld_Tooltip),
         nameof(Fps_Fg_Chip_Format),
         nameof(Fps_Fg_Chip_Steady_Format),
+        nameof(Fps_Fg_Column_Format),
+        nameof(Fps_Fg_Column_Steady_Format),
         nameof(Fps_Fg_Format),
         nameof(Fps_Fg_Identified_Format),
         nameof(Fps_Fg_Identified_Tooltip_Format),
@@ -1812,6 +1838,54 @@ public static class Strings
 
     public static string Fg_Unknown => ResourceManager.GetString(nameof(Fg_Unknown), Culture) ?? nameof(Fg_Unknown);
 
+    public static string FgMix_Bar_Name_Format => ResourceManager.GetString(nameof(FgMix_Bar_Name_Format), Culture) ?? nameof(FgMix_Bar_Name_Format);
+
+    public static string FgMix_Col_Rates => ResourceManager.GetString(nameof(FgMix_Col_Rates), Culture) ?? nameof(FgMix_Col_Rates);
+
+    public static string FgMix_Col_Share => ResourceManager.GetString(nameof(FgMix_Col_Share), Culture) ?? nameof(FgMix_Col_Share);
+
+    public static string FgMix_Col_State => ResourceManager.GetString(nameof(FgMix_Col_State), Culture) ?? nameof(FgMix_Col_State);
+
+    public static string FgMix_Col_Time => ResourceManager.GetString(nameof(FgMix_Col_Time), Culture) ?? nameof(FgMix_Col_Time);
+
+    public static string FgMix_Context_App_Format => ResourceManager.GetString(nameof(FgMix_Context_App_Format), Culture) ?? nameof(FgMix_Context_App_Format);
+
+    public static string FgMix_Context_Auto => ResourceManager.GetString(nameof(FgMix_Context_Auto), Culture) ?? nameof(FgMix_Context_Auto);
+
+    public static string FgMix_Context_Driver_Format => ResourceManager.GetString(nameof(FgMix_Context_Driver_Format), Culture) ?? nameof(FgMix_Context_Driver_Format);
+
+    public static string FgMix_Context_Dynamic => ResourceManager.GetString(nameof(FgMix_Context_Dynamic), Culture) ?? nameof(FgMix_Context_Dynamic);
+
+    public static string FgMix_Context_Fixed_Format => ResourceManager.GetString(nameof(FgMix_Context_Fixed_Format), Culture) ?? nameof(FgMix_Context_Fixed_Format);
+
+    public static string FgMix_Context_Game => ResourceManager.GetString(nameof(FgMix_Context_Game), Culture) ?? nameof(FgMix_Context_Game);
+
+    public static string FgMix_Context_Off => ResourceManager.GetString(nameof(FgMix_Context_Off), Culture) ?? nameof(FgMix_Context_Off);
+
+    public static string FgMix_Context_On => ResourceManager.GetString(nameof(FgMix_Context_On), Culture) ?? nameof(FgMix_Context_On);
+
+    public static string FgMix_Context_Target_Auto => ResourceManager.GetString(nameof(FgMix_Context_Target_Auto), Culture) ?? nameof(FgMix_Context_Target_Auto);
+
+    public static string FgMix_Context_Target_Format => ResourceManager.GetString(nameof(FgMix_Context_Target_Format), Culture) ?? nameof(FgMix_Context_Target_Format);
+
+    public static string FgMix_Context_UpTo_Format => ResourceManager.GetString(nameof(FgMix_Context_UpTo_Format), Culture) ?? nameof(FgMix_Context_UpTo_Format);
+
+    public static string FgMix_Header => ResourceManager.GetString(nameof(FgMix_Header), Culture) ?? nameof(FgMix_Header);
+
+    public static string FgMix_None => ResourceManager.GetString(nameof(FgMix_None), Culture) ?? nameof(FgMix_None);
+
+    public static string FgMix_NotStored => ResourceManager.GetString(nameof(FgMix_NotStored), Culture) ?? nameof(FgMix_NotStored);
+
+    public static string FgMix_Rate_Format => ResourceManager.GetString(nameof(FgMix_Rate_Format), Culture) ?? nameof(FgMix_Rate_Format);
+
+    public static string FgMix_Rates_Format => ResourceManager.GetString(nameof(FgMix_Rates_Format), Culture) ?? nameof(FgMix_Rates_Format);
+
+    public static string FgMix_State_Format => ResourceManager.GetString(nameof(FgMix_State_Format), Culture) ?? nameof(FgMix_State_Format);
+
+    public static string FgMix_Unclassified => ResourceManager.GetString(nameof(FgMix_Unclassified), Culture) ?? nameof(FgMix_Unclassified);
+
+    public static string FgMix_Unclassified_Note => ResourceManager.GetString(nameof(FgMix_Unclassified_Note), Culture) ?? nameof(FgMix_Unclassified_Note);
+
     public static string FirstRun_Accept => ResourceManager.GetString(nameof(FirstRun_Accept), Culture) ?? nameof(FirstRun_Accept);
 
     public static string FirstRun_Agent_Body => ResourceManager.GetString(nameof(FirstRun_Agent_Body), Culture) ?? nameof(FirstRun_Agent_Body);
@@ -1915,6 +1989,10 @@ public static class Strings
     public static string Fps_Fg_Chip_Format => ResourceManager.GetString(nameof(Fps_Fg_Chip_Format), Culture) ?? nameof(Fps_Fg_Chip_Format);
 
     public static string Fps_Fg_Chip_Steady_Format => ResourceManager.GetString(nameof(Fps_Fg_Chip_Steady_Format), Culture) ?? nameof(Fps_Fg_Chip_Steady_Format);
+
+    public static string Fps_Fg_Column_Format => ResourceManager.GetString(nameof(Fps_Fg_Column_Format), Culture) ?? nameof(Fps_Fg_Column_Format);
+
+    public static string Fps_Fg_Column_Steady_Format => ResourceManager.GetString(nameof(Fps_Fg_Column_Steady_Format), Culture) ?? nameof(Fps_Fg_Column_Steady_Format);
 
     public static string Fps_Fg_Format => ResourceManager.GetString(nameof(Fps_Fg_Format), Culture) ?? nameof(Fps_Fg_Format);
 
