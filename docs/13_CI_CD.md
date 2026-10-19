@@ -222,6 +222,50 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 - `permissions: contents: write` — the repository's default workflow token is read-only (read from the API,
   2026-10-07), and pushing to the wiki repository needs write.
 
+## SonarCloud — Automatic Analysis, no workflow (beta.24, owner decision D67)
+
+The project `poli0981_frameledger` is analysed by SonarCloud's GitHub app in **Automatic Analysis** mode: on every
+push to `main` and on every pull request, with no workflow in this repository and no logs published. Its check on a
+pull request (*SonarCloud Code Analysis*) is advisory — it is not a required status.
+
+**What it reads is set by `.sonarcloud.properties`** at the root, the only file Automatic Analysis reads, from the
+default branch. It excludes what is not FrameLedger's code or not code: the vendored SDK headers under
+`src/native/third_party/` (51 headers, 66 thousand lines — before this file they were 41.7 thousand of the project's
+94 thousand counted lines, classed C), the generated `Strings.Designer.cs` and `dxr_raygen_dxil.h`, the vendor stubs
+(fixtures that carry the vendors' export names on purpose), `tests/fixtures/`, the licence texts, the generated
+`docs/vendor-exports.json` and the SQLite migrations (a SQL analyser reads them as another dialect). It reports C++
+against C++20, the standard `src/native/CMakeLists.txt` sets. `build/`, `bin/`, `obj/` and `presentmon/` are
+git-ignored and never reach it.
+
+**What it cannot do.** `sonar.issue.ignore.*` is not read by Automatic Analysis, so a rule this project breaks by
+design is recorded here and marked in SonarCloud's own UI — by the owner, who holds the account. A CI-based scan (the
+only way to import coverage or analyse one build variant of the C++) would mean turning Automatic Analysis off, a
+`SONAR_TOKEN` secret, OpenCover output beside today's Cobertura and a full-depth checkout; it is not done.
+
+**The triage of 2026-10-19** — the analysis of `main` at `372389c` (2026-09-28; nothing had been analysed since),
+341 open issues, none resolved. Rules broken by design are *Accept*ed and false positives marked as such, each with
+the comment below; the rest are fixed in the same train (beta.24 PR-2).
+
+| Rule | Issues | Verdict | Comment for the UI |
+|---|---|---|---|
+| `cpp:S8417` atomics should be sequentially consistent | 225 | **Accept** — by design | The SPSC ring and the hook counters use explicit acquire/release and relaxed orders on purpose (`07_IPC`); sequential consistency would add fences on the per-present path. |
+| `csharpsquid:S6640` unsafe code blocks | 31 | **Accept** — by design | Interop with the native layer and the shared-memory mirror, confined to `Infrastructure` and `Shared` (CLAUDE.md: the native layer is reachable only through `Infrastructure`). |
+| `cpp:S6232` union type-punning | 24 | **False positive** | `LARGE_INTEGER.QuadPart` is how the Windows API returns the value. |
+| `cpp:S5813` bounds when computing string length | 19 | **Accept** where the string is a literal or the API guarantees its terminator; fixed where a buffer bound is at hand | Each site is listed in beta.24 PR-2. |
+| `csharpsquid:S2077` dynamic SQL | 3 | **False positive** | A `PRAGMA` argument cannot be bound; the values are an `int` and closed sets of constants (`wal_checkpoint` mode, the tri-state column), never user text. |
+| `cpp:S935` `FlGetBuildId` returns no value | 1 | **False positive** | `FL_BUILD_ID` is defined by the build (`12_BUILD` §Version); the analysis compiles without it. |
+| `cpp:S3519` out-of-bounds `memcpy` | 1 | **False positive** | `fl_patch_check.h` reads the prologue of a function this DLL hooked, under SEH, by design (`17_HOOK_ENGINE` §Unhooking). |
+| `cpp:S836` garbage value returned | 1 | **False positive** | `hook-harness`'s `VtableOf` reads the vtable of a COM object it created itself. |
+| `csharpsquid:S3869` `DangerousGetHandle` | 1 | **Accept** | `ParentDump` passes the dump file's handle to `MiniDumpWriteDump` inside the `using` that owns the stream, on the same thread, so it cannot be released during the call; CsWin32 generates no `SafeHandle` overload here (`NativeMethods.json`: `useSafeHandles: false`). |
+| `cpp:S1669`, `cpp:S6191`, `csharpsquid:S4036`, `githubactions:S7637`, `csharpsquid:S2190`, `S3427`, `S8949` | 35 | **Fixed** in beta.24 PR-2 — 5 of the 23 `S1669` were in the vendored Vulkan headers and leave with the exclusions | — |
+
+**The owner's steps** after the next analysis of `main`: for each rule above, open
+`https://sonarcloud.io/project/issues?id=poli0981_frameledger&resolved=false&rules=<rule>`, select all, *Bulk change*,
+choose *Accept* or *False positive* and paste the comment. Optionally, *Administration ▸ General Settings ▸ Analysis
+Scope ▸ Ignore issues on multiple criteria*: `cpp:S8417` and `cpp:S6232` on `src/native/**/*`, `csharpsquid:S6640`
+on `src/FrameLedger.Infrastructure/**/*` and `src/FrameLedger.Shared/**/*`, so new instances of the by-design rules
+stop reappearing on pull requests.
+
 ## Dependabot (`.github/dependabot.yml`)
 
 ```yaml
