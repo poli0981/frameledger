@@ -41,11 +41,14 @@ concurrency:
 jobs:
   wiki:
     # A rehearsal of release.yml (workflow_dispatch) never publishes the wiki: only a run started by a pushed v* tag
-    # that succeeded.
+    # that succeeded - in THIS repository. A fork cannot start this repository's Release run (it runs on a tag push or by
+    # hand), so the head checked out below is always the owner's; the repository check says so in the condition rather
+    # than leaving it to release.yml's triggers (SonarCloud githubactions:S7631, beta.26).
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository &&
        startsWith(github.event.workflow_run.head_branch, 'v'))
     runs-on: windows-latest
     timeout-minutes: 10

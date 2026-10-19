@@ -22,7 +22,7 @@ internal static class FgSlices
         /// <summary>
         /// A window a ratio can be read from: <see cref="FgWindow.MinPerBucket"/> presents AND as many application frames
         /// (beta.26). Presents alone let a window with ONE token through, and its ratio was the presents themselves: Silent
-        /// Hill 2's loading screen read ×1336.0, a state the mix listed and the DLSS line cited.
+        /// Hill 2's ten seconds at one token a window read ×1336.0, a state the mix listed and the DLSS line cited.
         /// </summary>
         public bool IsReadable => Samples >= FgWindow.MinPerBucket && Tokens >= FgWindow.MinPerBucket;
 

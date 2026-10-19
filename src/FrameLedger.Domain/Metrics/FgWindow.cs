@@ -178,9 +178,9 @@ public sealed record FgWindow
     /// Above this, a ratio is not frame generation. No shipping technology generates more than five frames per application
     /// frame (DLSS 4.5 multi frame generation, ×6; measured ×6.06 with DXGI's count, 2026-10-19), and ×8 leaves room for a
     /// window's edges. A ratio above it is a stretch the title presented through with almost no application-frame token —
-    /// a loading screen or a menu drawn outside the vendor's frame count: Silent Hill 2 (2026-10-19) presented 1,336 times
-    /// per token for ten seconds under the NVIDIA App's Dynamic multi frame generation, and the mix listed it as a ×1336.0
-    /// state. Raised only with a title measured above it (beta.26).
+    /// shaders compiling, a loading screen or a menu, drawn outside the vendor's frame count: Silent Hill 2 (2026-10-19)
+    /// presented 1,336 times per token for the first ten seconds of the session, compiling its shaders, under the NVIDIA
+    /// App's Dynamic multi frame generation, and the mix listed it as a ×1336.0 state. Raised only with a title measured above it (beta.26).
     /// </summary>
     public const double GenerationCeiling = 8.0;
 

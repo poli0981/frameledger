@@ -136,9 +136,10 @@ public sealed class FgMixTests
     }
 
     /// <summary>
-    /// beta.26: Silent Hill 2 (2026-10-19) presented 1,336 times per token for ten seconds — a loading screen drawn outside
-    /// the vendor's frame count — and the mix listed it as a ×1336.0 state, which the DLSS line then cited. A window needs
-    /// application frames, not only presents, and a ratio frame generation can produce.
+    /// beta.26: Silent Hill 2 (2026-10-19) presented 1,336 times per token for ten seconds — its first seconds, compiling
+    /// shaders outside the vendor's frame count — and the mix listed it as a ×1336.0 state, which the DLSS line then
+    /// cited. A window needs application frames, not only presents, and a ratio frame generation can
+    /// produce.
     /// </summary>
     [Fact]
     public void AWindowWithOneTokenOrARatioNoFrameGenerationProducesIsNotAState()

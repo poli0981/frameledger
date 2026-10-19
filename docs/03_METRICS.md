@@ -490,8 +490,8 @@ F_app   = Σ fgEvaluations                  (APPLICATION frames, counted at the 
 >
 > **Amended 2026-10-19 (beta.26): a window needs application frames, and a ratio frame generation can produce.**
 > "≥ 8 samples and tokens" was built as eight presents and ONE token, and the owner's Silent Hill 2 session listed a
-> ×1336.0 state — ten seconds the title presented through with one token per window (`spike-notes` §22); the DLSS line
-> cited it. A window is now read only with ≥ 8 presents AND ≥ 8 application frames (`FgSlices.Slice.IsReadable`, both
+> ×1336.0 state — the session's first ten seconds, the game compiling its shaders, presented with one token per window
+> (`spike-notes` §22); the DLSS line cited it. A window is now read only with ≥ 8 presents AND ≥ 8 application frames (`FgSlices.Slice.IsReadable`, both
 > active and *no frame generation*), and is active only up to **×8** (`FgWindow.GenerationCeiling`: no shipping
 > technology generates more than five frames per application frame, DLSS 4.5's ×6); every other window is *not
 > classified*. The steady state reads the same windows, so it can no longer pick such a stretch either. A session-wide
