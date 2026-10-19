@@ -1905,7 +1905,8 @@ bool ProbeSlInputs() {
         // THE COLLISION THIS MAPPING EXISTS FOR. DLSSMode::eOff is 0, and
         // upscalerQuality reserves 0 for "nobody looked" -- so a verbatim copy
         // would make "the title turned DLSS off" indistinguishable from an
-        // unhooked writer, and 0 would decode as NGX MaxPerf, "DLSS Performance".
+        // unhooked writer. (Until beta.24 this added that 0 would decode as NGX
+        // MaxPerf: NGX's own numbering, which this byte does not use.)
         sl::DLSSOptions off;
         off.mode = sl::DLSSMode::eOff;
         const sl::BaseStructure* one[] = {&off};

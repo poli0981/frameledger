@@ -71,6 +71,61 @@ public sealed class FormatsTests
         InEnglish(() => Formats.Upscaler(null, null, null)).Should().Be("N/A");
     }
 
+    /// <summary>
+    /// D63 (beta.24): a session's mode on every surface — the NVIDIA App's override where the driver reports it applied,
+    /// marked as the App's; the game's own hooked mode otherwise; an override whose mode is not settled says so and never
+    /// shows the game's value instead. The driver words are the owner's Expedition 33 session's (2026-09-06).
+    /// </summary>
+    [Fact]
+    public void ASessionsModeIsTheNvidiaAppsWhereTheDriverConfirmsItsOverride()
+    {
+        const string quality = "{\"Outcome\":\"Answered\",\"Sr\":\"0x8067F\",\"Mode\":2,\"Preset\":11,\"Readings\":3,\"Answered\":3}";
+        const string disagreeing = "{\"Outcome\":\"Answered\",\"Sr\":\"0x8067F\",\"Mode\":0,\"Readings\":3,\"Answered\":3}";
+        string profile = Application.Recording.DriverProfileRecord.Serialize(new Application.Capture.DriverProfileReading
+        {
+            Outcome = Application.Capture.DriverProfileOutcome.Application,
+            ProfileName = "Clair Obscur: Expedition 33",
+            Settings = [new Application.Capture.DriverSettingReading(Application.Capture.NvidiaDriverSettings.DlssSrMode, 2, Application.Capture.DriverSettingLocation.Profile, false)],
+        })!;
+
+        InEnglish(() => Formats.UpscalerOf(Row("unknown", null, "dlss", quality, profile))).Should().Be("DLSS (driver-reported) Quality · NVIDIA App");
+        InEnglish(() => Formats.UpscalerOf(Row("dlss", "1", null, quality, null))).Should().Be("DLSS Quality · NVIDIA App", "the override replaces what the game passed");
+        InEnglish(() => Formats.UpscalerOf(Row("unknown", null, "dlss", disagreeing, profile))).Should().Be("DLSS (driver-reported) · NVIDIA App override", "two NVIDIA sources disagree: no mode");
+        InEnglish(() => Formats.UpscalerOf(Row("dlss", "3", null, null, null))).Should().Be("DLSS Quality", "no override: the game's own");
+        InEnglish(() => Formats.UpscalerOf(Row("dlss", "9", null, null, null))).Should().Be("DLSS 9");
+        InEnglish(() => Formats.UpscalerOf(Row("unknown", null, null, quality, profile))).Should().Be("Upscaler not identified", "the driver never saw super resolution run");
+
+        InEnglish(() => Formats.UpscalerOf(new Shared.Ipc.SessionProgressEvent { SessionGuid = Guid.Empty, Presents5s = 500, ElapsedS = 5, PresentedQualifier = "census_not_run", FgMode = "na", Upscaler = "unknown", UpscalerDriverReported = "dlss", UpscalerQualityOverride = "dlaa" }))
+            .Should().Be("DLSS (driver-reported) DLAA · NVIDIA App");
+        InEnglish(() => Formats.UpscalerOf(new Shared.Ipc.SessionProgressEvent { SessionGuid = Guid.Empty, Presents5s = 500, ElapsedS = 5, PresentedQualifier = "census_not_run", FgMode = "na", Upscaler = "dlss", UpscalerQuality = "2", UpscalerQualityOverride = "override" }))
+            .Should().Be("DLSS · NVIDIA App override", "live, an override the report alone cannot settle");
+        InEnglish(() => Formats.UpscalerOf(new Shared.Ipc.SessionProgressEvent { SessionGuid = Guid.Empty, Presents5s = 500, ElapsedS = 5, PresentedQualifier = "census_not_run", FgMode = "na", Upscaler = "dlss", UpscalerQuality = "2" }))
+            .Should().Be("DLSS Balanced");
+        InEnglish(() => Formats.QualityName(new Application.Recording.ResolvedQuality(Domain.Metrics.UpscalerQualityMode.Custom, Application.Recording.QualitySource.NvidiaApp, 77)))
+            .Should().Be("custom 77%");
+        InEnglish(() => Formats.QualityName(new Application.Recording.ResolvedQuality(Domain.Metrics.UpscalerQualityMode.UltraQuality, Application.Recording.QualitySource.Game)))
+            .Should().Be("Ultra Quality");
+    }
+
+    private static Application.Persistence.SessionRow Row(string? upscaler, string? quality, string? driverReported, string? words, string? profile) => new()
+    {
+        SessionGuid = Guid.NewGuid(),
+        GameId = 1,
+        SnapshotId = 1,
+        StartedAt = DateTimeOffset.UnixEpoch,
+        EndedAt = DateTimeOffset.UnixEpoch.AddMinutes(5),
+        QpcEpoch = 0,
+        QpcFrequency = 1,
+        Tier = Domain.Sessions.CaptureTier.Hooked,
+        Mode = Domain.Sessions.CaptureMode.Launch,
+        ExitStatus = Domain.Sessions.ExitStatus.Normal,
+        Upscaler = upscaler,
+        UpscalerQuality = quality,
+        UpscalerDriverReported = driverReported,
+        NgxDriverWordsJson = words,
+        DriverProfileJson = profile,
+    };
+
     [Fact]
     public void ResolutionsUpscalersAndFrameGeneration()
     {

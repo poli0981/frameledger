@@ -13,6 +13,9 @@ A value FrameLedger could not measure reads **N/A** — never 0, and never an es
 - **When frame generation was measured**, the game's own frames and the frames you saw are shown together:
   `62 → 118 FPS (×1.9 FG)`. If frame generation changed during the session (menus, loading screens, a settings change),
   the figures are for the state that lasted longest, with the share of the session it covers: `(×1.9 FG · 75%)`.
+- **The upscaler's quality mode** — Quality, Balanced, Performance, Ultra Performance, DLAA — is shown only when it is
+  known. *· NVIDIA App* after it means the NVIDIA App overrode DLSS for this game and the NVIDIA driver reported that
+  the override applied; *· NVIDIA App override* alone means it applied and its mode could not be settled.
 - **Frame generation in this session** (sessions recorded with 0.1.0-beta.24 or later) lists every frame-generation
   state the session held — `×2.0`, `×4.0`… — each with its own frame rates and its share of the time, then the time
   without frame generation, and *Not classified* for time in no state that lasted at least 10 seconds: switching,

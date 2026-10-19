@@ -4664,8 +4664,9 @@ TEST_CASE("the injected Overlay measures an upscaler it can identify", "[guard][
             ++claimedParams;
             // THE HONESTY INVARIANT, checked on every record that claims the bit
             // rather than once at the end. fl_shm.h has no in-band "not measured"
-            // for upscalerQuality -- 0 is NGX MaxPerf, a real preset -- so 0 here
-            // would publish "DLSS Performance" as a measurement. Sharpness is
+            // for upscalerQuality -- 0 is sl::DLSSMode::eOff, not a quality (it
+            // said "NGX MaxPerf" until beta.24) -- so 0 here would publish a mode
+            // nobody measured. Sharpness is
             // 0xFF permanently: DLSSOptions::sharpness is deprecated as
             // unsupported, so there is no in-policy route to what a title applied.
             if (r.upscalerQuality == 0u || r.upscalerSharpness != 0xFFu) {

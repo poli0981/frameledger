@@ -53,6 +53,25 @@ public sealed class SessionProgressCalculatorTests
             .UpscalerDriverReported.Should().BeNull("no probe ran: AMD, Intel, or no bridge beside the Agent");
     }
 
+    /// <summary>D63 (beta.24): the live card names an NVIDIA App override's mode when the driver's report alone settles it.</summary>
+    [Fact]
+    public void AnOverridesModeTravelsToTheLiveCardWhenTheDriverReportsItApplied()
+    {
+        List<FlFrameRecord> records = SessionFixtures.Stream(1000, FlMeasured.OutputRes | FlMeasured.PresentArgs);
+        NgxDriverState ultraPerformance = NgxDriverState.Parse("NGXSTATE status=ANSWERED sr=0x8067F rr=0x1 fg=0x5 ratio=0.0000 mode=3 preset=12 fgcount=0 fgpreset=0 fgmode=0 driver=61664");
+        NgxDriverState noOverride = NgxDriverState.Parse("NGXSTATE status=ANSWERED sr=0x60F rr=0x1 fg=0x5 ratio=0.0000 mode=0 preset=0 fgcount=0 fgpreset=0 fgmode=0 driver=61664");
+        NgxDriverState notSeenRunning = NgxDriverState.Parse("NGXSTATE status=ANSWERED sr=0x8007F rr=0x1 fg=0x5 ratio=0.0000 mode=3 preset=12 fgcount=0 fgpreset=0 fgmode=0 driver=61664");
+
+        SessionProgressCalculator.Compute(_guid, Progress(records) with { NgxDriver = ultraPerformance }, SessionFixtures.QpcFrequency, 12.5, gpu: null)
+            .UpscalerQualityOverride.Should().Be("ultra_performance", "the override applied and the driver saw super resolution run");
+        SessionProgressCalculator.Compute(_guid, Progress(records) with { NgxDriver = noOverride }, SessionFixtures.QpcFrequency, 12.5, gpu: null)
+            .UpscalerQualityOverride.Should().BeNull("no override bit");
+        SessionProgressCalculator.Compute(_guid, Progress(records) with { NgxDriver = notSeenRunning }, SessionFixtures.QpcFrequency, 12.5, gpu: null)
+            .UpscalerQualityOverride.Should().BeNull("an override on a feature nobody saw run");
+        SessionProgressCalculator.Compute(_guid, Progress(records), SessionFixtures.QpcFrequency, 12.5, gpu: null)
+            .UpscalerQualityOverride.Should().BeNull("no probe ran");
+    }
+
     [Fact]
     public void TheMachinesLatestReadingIsOnTheLiveCardAndAbsentWhenNothingReadIt()
     {

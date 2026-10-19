@@ -15,8 +15,11 @@ namespace FrameLedger.Application.Capture;
 /// (CLAUDE.md rule 4) nor a static hint (<c>05_DETECTION</c>): the driver says a feature was created and
 /// evaluated in this process, and this host repeats that with the attribution. What it may stand in for is
 /// the super-resolution IDENTITY on a session where no hook saw an evaluation (<c>03_METRICS</c> §Upscaling,
-/// the driver-reported rung, owner decision 2026-09-06). What it may not stand in for: a quality, a ratio, a
-/// render size, a frame-generation mode or a multiplier — measured 2026-09-06 to be override fields or blind.
+/// the driver-reported rung, owner decision 2026-09-06). What it may not stand in for: a ratio, a render size,
+/// a frame-generation mode or a multiplier — measured 2026-09-06 to be override fields or blind. Nor a quality the
+/// GAME chose; but since beta.24 (owner decision D63) the mode an NVIDIA App override set, when the report says the
+/// override applied in this process, is the session's quality mode, marked as the App's
+/// (<c>Recording.QualityResolver</c>).
 /// </para>
 /// <para>
 /// The last ANSWERED reading is the state; <see cref="Readings"/> counts probe runs, <see cref="Answered"/> the

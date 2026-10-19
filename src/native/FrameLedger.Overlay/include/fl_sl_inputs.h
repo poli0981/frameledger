@@ -94,8 +94,9 @@ struct ScanResult {
 
     // The vendor's own DLSSMode value, or 0xFF for "a hook ran and could not
     // tell". NEVER 0: fl_shm.h has no in-band "not measured" for
-    // upscalerQuality, so 0 would publish DLSSMode::eMaxPerformance -- "DLSS
-    // Performance" -- as a measurement.
+    // upscalerQuality, and 0 is DLSSMode::eOff -- "DLSS is off", not a quality
+    // -- so 0 would publish a mode nobody measured. (Until beta.24 this said 0
+    // was eMaxPerformance; that is 1 in the numbering this byte carries.)
     uint8_t quality = 0xFFu;
     bool    qualityFound = false;
 };

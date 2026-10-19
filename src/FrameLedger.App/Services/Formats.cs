@@ -5,10 +5,12 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using FrameLedger.Application.Capture;
+using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
 using FrameLedger.Domain.Detection;
 using FrameLedger.Domain.Metrics;
 using FrameLedger.Domain.Sessions;
+using FrameLedger.Shared.Ipc;
 
 namespace FrameLedger.App.Services;
 
@@ -126,27 +128,86 @@ public static class Formats
     };
 
     /// <summary>
-    /// The upscaler as the UI states it, down <c>03_METRICS</c> §Upscaling's ladder: a name a HOOK produced outranks
-    /// everything and takes its measured preset; where no hook named one (<c>unknown</c>: a hook ran and saw nothing —
-    /// every NGX-direct DLSS title, since no NGX hook may exist — or no claim at all) and the NVIDIA driver reports the
-    /// feature created and evaluated in the process, the name is the driver's and SAYS so; otherwise what the token
-    /// says. The driver's word is identity only: it never takes a quality, even when a byte is on the row.
+    /// A session's upscaler with its quality mode, as every surface states it (beta.24, D63): the mode the NVIDIA App's
+    /// override set where the driver reports it applied in the game's process — marked as the App's —, else the mode the
+    /// game passed to a hooked call, else none (<see cref="QualityResolver"/>). The summary, the Sessions tab and the game
+    /// page call this one, so they resolve alike.
+    /// </summary>
+    public static string UpscalerOf(SessionRow row)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        return UpscalerText(row.Upscaler, row.UpscalerDriverReported,
+            QualityResolver.Of(row.Upscaler, row.UpscalerQuality, row.UpscalerDriverReported, row.NgxDriverWordsJson, row.DriverProfileJson));
+    }
+
+    /// <summary>
+    /// The live card's: an override's mode travels as <c>upscalerQualityOverride</c>, from the driver's report alone (the
+    /// profile is the stored session's), so a mode that report cannot settle reads as the App's override with no mode.
+    /// </summary>
+    public static string UpscalerOf(SessionProgressEvent progress)
+    {
+        ArgumentNullException.ThrowIfNull(progress);
+        return UpscalerText(progress.Upscaler, progress.UpscalerDriverReported,
+            QualityResolver.FromToken(progress.UpscalerQualityOverride)
+                ?? QualityResolver.Of(progress.Upscaler, progress.UpscalerQuality, progress.UpscalerDriverReported, ngxDriverWordsJson: null, driverProfileJson: null));
+    }
+
+    /// <summary>
+    /// The upscaler as the UI states it, down <c>03_METRICS</c> §Upscaling's ladder, from what the hooks saw alone — a
+    /// segment's, which carries no driver report. A name a HOOK produced outranks everything and takes its measured mode;
+    /// where no hook named one (<c>unknown</c>: a hook ran and saw nothing — every NGX-direct DLSS title, since no NGX hook
+    /// may exist — or no claim at all) and the NVIDIA driver reports the feature created and evaluated in the process, the
+    /// name is the driver's and SAYS so; otherwise what the token says.
     /// </summary>
     /// <remarks>
     /// The row has stored <c>upscaler_driver_reported</c> since P2 and the capture host has printed it since 2026-09-06;
     /// the App never read it, which is why DLSS read "Unknown upscaler" on most titles while FSR, whose dispatch the
-    /// hook does see, was named (owner's report, 2026-09-21).
+    /// hook does see, was named (owner's report, 2026-09-21). The driver's word alone is identity: a mode comes with it
+    /// only from an override the driver reports applied (<see cref="UpscalerOf(SessionRow)"/>).
     /// </remarks>
-    public static string Upscaler(string? token, string? quality, string? driverReported)
+    public static string Upscaler(string? token, string? quality, string? driverReported) =>
+        UpscalerText(token, driverReported, QualityResolver.Of(token, quality, driverReported, ngxDriverWordsJson: null, driverProfileJson: null));
+
+    /// <summary>The name, then the mode when one is known, then "· NVIDIA App" when the App's override set it.</summary>
+    internal static string UpscalerText(string? token, string? driverReported, ResolvedQuality? resolved)
     {
         bool hookNamed = token is { Length: > 0 } and not "unknown";
-        if (!hookNamed && driverReported is { Length: > 0 })
+        string name = !hookNamed && driverReported is { Length: > 0 }
+            ? string.Format(CultureInfo.CurrentCulture, Strings.Upscaler_DriverReported_Format, Upscaler(driverReported))
+            : Upscaler(token);
+        if (resolved is null)
         {
-            return string.Format(CultureInfo.CurrentCulture, Strings.Upscaler_DriverReported_Format, Upscaler(driverReported));
+            return name;
         }
 
-        string name = Upscaler(token);
-        return hookNamed && UpscalerNames.Quality(token, quality) is { } preset ? name + " " + preset : name;
+        string? mode = QualityName(resolved);
+        if (resolved.Source == QualitySource.NvidiaApp)
+        {
+            return mode is null
+                ? string.Format(CultureInfo.CurrentCulture, Strings.Upscaler_Override_App_Format, name)
+                : string.Format(CultureInfo.CurrentCulture, Strings.Upscaler_Mode_App_Format, name, mode);
+        }
+
+        return mode is null ? name : string.Format(CultureInfo.CurrentCulture, Strings.Upscaler_Mode_Format, name, mode);
+    }
+
+    /// <summary>A resolved mode by the name its menu uses, in the reader's language; a hooked value no table names, as stored.</summary>
+    public static string? QualityName(ResolvedQuality resolved)
+    {
+        ArgumentNullException.ThrowIfNull(resolved);
+        return resolved.Mode switch
+        {
+            UpscalerQualityMode.Performance => Strings.Nv_Mode_Performance,
+            UpscalerQualityMode.Balanced => Strings.Nv_Mode_Balanced,
+            UpscalerQualityMode.Quality => Strings.Nv_Mode_Quality,
+            UpscalerQualityMode.UltraPerformance => Strings.Nv_Mode_UltraPerformance,
+            UpscalerQualityMode.UltraQuality => Strings.Nv_Mode_UltraQuality,
+            UpscalerQualityMode.Dlaa => Strings.Nv_Mode_Dlaa,
+            UpscalerQualityMode.Custom => resolved.CustomPercent is uint percent
+                ? string.Format(CultureInfo.CurrentCulture, Strings.Nv_Mode_Custom_Format, percent)
+                : Strings.Nv_Mode_Custom,
+            _ => resolved.Stored,
+        };
     }
 
     /// <summary>The row's fg_mode token as its product name.</summary>

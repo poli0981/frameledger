@@ -3375,4 +3375,16 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="Fps_Fg_Column_Steady_Format" xml:space="preserve">
     <value>×{0:0.0} · {1:0}%</value>
   </data>
+  <data name="Upscaler_Mode_Format" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="Upscaler_Mode_App_Format" xml:space="preserve">
+    <value>{0} {1} · NVIDIA App</value>
+  </data>
+  <data name="Upscaler_Override_App_Format" xml:space="preserve">
+    <value>{0} · ghi đè từ NVIDIA App</value>
+  </data>
+  <data name="Nv_Mode_UltraQuality" xml:space="preserve">
+    <value>Ultra Quality</value>
+  </data>
 </root>

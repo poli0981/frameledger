@@ -93,6 +93,20 @@ public sealed class NvidiaOverridesTests
         return 0;
     });
 
+    /// <summary>
+    /// The driver reports its mode in NGX's own numbering, not the profile's (beta.24): the owner's Silent Hill 2 session of
+    /// 2026-10-13 ran under the NVIDIA App's Ultra Performance — profile value 5 — and the driver reported 3. Read through the
+    /// profile's table, 3 said nothing and a DLAA override's 5 would have printed "Ultra Performance".
+    /// </summary>
+    [Fact]
+    public void TheDriversModeIsReadInNgxsNumbering() => InEnglish(() =>
+    {
+        const string silentHill2 = "{\"Outcome\":\"Answered\",\"Sr\":\"0x8007F\",\"Rr\":\"0x0\",\"Fg\":\"0xA03F\",\"Mode\":3,\"Preset\":12,\"FgCount\":5,\"Readings\":3,\"Answered\":3}";
+        NvidiaOverrides.DriverLine(silentHill2).Should().Be("NVIDIA driver, for this game's process: DLSS DLL chosen by the driver · preset L · Ultra Performance · Frame Generation override (×6)");
+        NvidiaOverrides.DriverLine(silentHill2.Replace("\"Mode\":3", "\"Mode\":5", StringComparison.Ordinal)).Should().Contain("DLAA").And.NotContain("Ultra Performance");
+        return 0;
+    });
+
     [Theory]
     [InlineData(1u, "preset A")]
     [InlineData(15u, "preset O")]

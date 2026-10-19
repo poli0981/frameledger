@@ -2779,9 +2779,11 @@ void RecordPresent(IDXGISwapChain* sc, UINT syncInterval, UINT flags) noexcept {
             rec.renderH = static_cast<uint16_t>((tag >> 16) & 0xFFFFu);
 
             // 0xFF, NEVER 0, and for two different reasons that land on the same
-            // byte. upscalerQuality has no in-band "not measured" sentinel -- 0 is
-            // NGX MaxPerf, a real preset -- so 0 here would publish "DLSS
-            // Performance" as a measurement (fl_shm.h §FL_MEASURED_UPSCALER_PARAMS).
+            // byte. upscalerQuality has no in-band "not measured" sentinel, and 0
+            // in the numbering it carries (sl::DLSSMode) is eOff -- not a quality --
+            // so 0 here would publish a mode nobody measured (fl_shm.h
+            // §FL_MEASURED_UPSCALER_PARAMS). Until beta.24 this said "NGX MaxPerf":
+            // NGX's own numbering, which this byte does not use.
             // 0xFF is the defined "a hook ran and could not tell", and it stays
             // the value for the many titles that set the preset out of band
             // through slDLSSSetOptions and never pass sl::DLSSOptions to us.

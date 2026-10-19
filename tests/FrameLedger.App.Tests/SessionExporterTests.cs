@@ -78,6 +78,7 @@ public sealed class SessionExporterTests
         lines.Should().Contain("# game_memory: vram_dedicated_mb avg=1000 median=1024 max=2048; vram_shared_mb max=N/A; ram_private_ws_mb avg=N/A median=N/A max=N/A; ram_ws_mb max=N/A; commit_mb max=N/A; processes=1; source=counters",
             "a Tier-2 session has the game's memory too (beta.12): a header line, the session's figure, never a per-frame column");
         lines.Should().Contain("# fg_mix: N/A", "beta.24: a session with no stored mix says so");
+        lines.Should().Contain("# quality_mode: N/A", "beta.24 (D63): no mode was known");
 
         SessionExportDocument doc = SessionExporter.Document(row, game, null, [], await s.Annotations.FindAsync(id, Ct));
         using var stream = new MemoryStream();

@@ -593,8 +593,27 @@ carries the three shapes.
 > or memory, CLAUDE.md rule 4) and the driver's own per-process override report in full (`ngx_driver_words`: preset,
 > mode, ratio beside the masks). Both are shown as what the driver was set to do and what it says it did — "NVIDIA
 > profile …: DLSS override (preset K, Quality)" — and neither changes a measured value, a rung of the upscaler ladder or
-> the frame-generation factor: those stay what the hooks saw. A profile override the hooks contradict is two true
-> statements about different things, and the page shows both.
+> the frame-generation factor: those stay what the hooks saw. ~~A profile override the hooks contradict is two true
+> statements about different things, and the page shows both.~~ *(Struck 2026-10-19 for the quality mode only — the
+> amendment below; render size, ratio and the frame-generation factor are unchanged.)*
+>
+> **Amended 2026-10-19 (owner decision D63): the override is the standard for the quality MODE — when the driver
+> confirms it applied.** The owner, shown the note above: an NVIDIA App override is what the game ran at, so it is the
+> mode a session states. `Application.Recording.QualityResolver`, read at display time from what every session already
+> stores (`ngx_driver_words` since P2, `driver_profile` since beta.8 — so a session recorded before reads alike): when
+> DLSS super resolution ran (a hook named it, or the driver reports the feature created and evaluated) and the driver's
+> per-process report says the override applied (`ENABLED` with `PERF_MODE`, `SR_DLAA_MODE` or `SCALING_RATIO`), the mode
+> is the profile's `NGX_DLSS_SR_MODE` (documented: 0 Performance, 1 Balanced, 2 Quality, 4 DLAA, 5 Ultra Performance,
+> 6 a custom ratio with `NGX_DLSS_SR_OVERRIDE_SCALING_RATIO`), checked against the report's `performanceMode`; DLAA from
+> its bit. **The report is in NGX's own numbering, not the profile's** — measured on the owner's ledger: Silent Hill 2
+> (2026-10-13) under the App's *Ultra Performance* (profile 5) was reported as **3**, NGX's Ultra Performance, where the
+> profile's 3 is "the game's own" (Expedition 33's Quality was 2 in both). When the two disagree, or the report alone
+> carries a value that does not settle, the session reads as overridden with no mode — never the game's own value,
+> which the override replaced. Otherwise the mode the game passed to a hooked call (the Streamline byte); otherwise
+> none. Every surface says it the same way (`Formats.UpscalerOf`): *DLSS (driver-reported) Quality · NVIDIA App*,
+> *DLSS · NVIDIA App override*, *DLSS Quality*. The live card names what the report settles by itself
+> (`upscalerQualityOverride`, `07_IPC`). Nothing infers a mode from the render scale (`HANDOFF` §7a). Silent Hill 2's
+> own session reads no mode: its word lacks `CREATED | EVALUATE`, so no super resolution ran that the driver saw.
 
 From the upscaler hooks we get, per frame:
 
@@ -657,7 +676,9 @@ Tier 2 has none of this: `upscaler = unknown`, ratio `N/A`.
 >
 > **What it may claim: the vendor and the feature, attributed to the driver.** What it may NOT claim,
 > each one measured: a quality (`performanceMode` / `renderPreset` are populated only under an
-> NVIDIA-app override and are then the OVERRIDE's values), a ratio or render size (`scalingRatio` is
+> NVIDIA-app override and are then the OVERRIDE's values — *which is why, since 2026-10-19 (D63), the
+> override's mode IS the session's mode where the report says it applied: §Upscaling's amendment above*),
+> a ratio or render size (`scalingRatio` is
 > 0 even under the override), a frame-generation multiplier (`FG_MODE` / `FG_MULTI_FRAME` stay clear
 > and `frameGenerationCount` is 0 at ×4 — it is the override target). **Corrected the same day, on the
 > loop's own readings:** the FG word DOES follow DLSS-G once the feature exists — `CREATED | EVALUATE`

@@ -8,6 +8,7 @@ using System.Text.Json;
 using FrameLedger.App.Charts;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
+using FrameLedger.Domain.Metrics;
 using FrameLedger.Domain.Sessions;
 
 namespace FrameLedger.App.Services;
@@ -119,6 +120,9 @@ public sealed class SessionExporter
         w.WriteLine("# game_memory: " + GameMemoryText.ExportLine(row));
         w.WriteLine("# hardware: " + (hardware is null ? "N/A" : string.Join("; ", new[] { hardware.CpuName, hardware.GpuName, hardware.GpuDriver, hardware.OsBuild, hardware.DisplayRes }.Where(static s => !string.IsNullOrEmpty(s)))));
         w.WriteLine("# rt: " + row.RtFlag + " (" + (row.RtSource ?? "n/a") + "); pt: " + row.PtFlag + " (" + (row.PtSource ?? "n/a") + "); rr: " + row.RrFlag + " (" + (row.RrSource ?? "n/a") + ")");
+        // beta.24 (D63): the session's quality mode and whose it is: the NVIDIA App's override the driver reported applied
+        // ("nvidia_app"), or the game's own call ("game"); the per-frame upscaler_quality column stays the hooked byte.
+        w.WriteLine("# quality_mode: " + QualityExport(row));
         w.WriteLine("# fg_mode: " + row.FgMode + "; fg_source: " + (row.FgSource ?? "n/a") + "; presented_qualifier: " + (row.PresentedQualifier ?? "n/a"));
         // beta.24 (D62): every frame-generation state the session held, each with its share and its own rates: the session's, not a frame's.
         w.WriteLine("# fg_mix: " + FgMixPresentation.ExportLine(row));
@@ -129,6 +133,24 @@ public sealed class SessionExporter
 
         w.WriteLine("# note: vram_mb is the in-game per-present figure, which this build does not produce (empty); the game's memory is the game_memory line; qpc_ms is relative to the first present");
         w.WriteLine("# note: one swapchain's presents, the stream the statistics are over; qpc_ms closes up every gap (frametime_ms 0)");
+    }
+
+    private static string QualityExport(SessionRow row)
+    {
+        ResolvedQuality? resolved = QualityResolver.Of(row.Upscaler, row.UpscalerQuality, row.UpscalerDriverReported, row.NgxDriverWordsJson, row.DriverProfileJson);
+        if (resolved is null)
+        {
+            return "N/A";
+        }
+
+        string source = resolved.Source == QualitySource.NvidiaApp ? "nvidia_app" : "game";
+        string mode = resolved.Mode switch
+        {
+            null => resolved.Stored is { } stored ? "stored " + stored : "not settled",
+            UpscalerQualityMode.Custom => resolved.CustomPercent is uint percent ? "custom " + percent.ToString(_inv) + "%" : "custom",
+            { } named => QualityResolver.ModeToken(named) ?? named.ToString(),
+        };
+        return mode + " (" + source + ")";
     }
 
     private static SegmentRow? SegmentAt(SegmentRow[] byFrame, uint frameIndex)
