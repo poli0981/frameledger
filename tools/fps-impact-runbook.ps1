@@ -222,6 +222,6 @@ foreach ($r in $on) {
 Write-Host ''
 Write-Host ($lines -join [Environment]::NewLine)
 Write-Host ''
-Write-Host 'Paste the block above into docs/spike-notes.md §14, fill in the benchmark and driver, and update' -ForegroundColor Cyan
+Write-Host 'Paste the block above into docs/spike-notes/14-p2-milestone-fps.md (spike-notes §14), fill in the benchmark and driver, and update' -ForegroundColor Cyan
 Write-Host '14_TESTING §Hook overhead item 2 with the delta. The consent record is left REVOKED — grant it again' -ForegroundColor Cyan
 Write-Host 'if you want the title hooked from here on.' -ForegroundColor Cyan

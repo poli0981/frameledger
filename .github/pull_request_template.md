@@ -38,4 +38,6 @@ review questions from `docs/19_SAFETY_AND_ANTICHEAT.md` §Review checklist.
 ## Notes for the reviewer
 
 <!-- Anything that would be hard to see from the diff. If you resolved an item
-     in docs/20_OPEN_QUESTIONS.md, say which one and delete it from that file. -->
+     in docs/20_OPEN_QUESTIONS.md, say which one, mark it resolved in §S24, and move
+     the entry verbatim to docs/open-questions/closed-*.md with its row in the table
+     at the end of its series (beta.24, D66). -->

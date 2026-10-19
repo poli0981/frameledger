@@ -21,6 +21,8 @@
                     CHANGELOG.md, so a link relative to docs/changelog/ would resolve wrongly there;
                   - CHANGELOG.md's links to docs/changelog/ and the files there name each other, both ways.
       HANDOFF     - docs/HANDOFF.md's links into handoff/ and the files under docs/handoff/ name each other, both ways.
+      OPEN QUESTIONS, SPIKE NOTES (beta.24 PR-5) - docs/20_OPEN_QUESTIONS.md and docs/open-questions/ (the closed
+                    entries), docs/spike-notes.md and docs/spike-notes/ (one file per section) likewise.
 
     -SelfTest proves every rule in both directions on a temporary tree.
 #>
@@ -102,16 +104,19 @@ function Test-Changelog([string]$Root) {
     return , $problems.ToArray()
 }
 
-function Test-Handoff([string]$Root) {
+# An index under docs/ and the folder of its parts (links relative to docs/) name each other, both ways.
+function Test-IndexedFolder([string]$Root, [string]$Index, [string]$Folder) {
     $problems = [System.Collections.Generic.List[string]]::new()
-    $text = Get-Content -LiteralPath (Join-Path $Root 'docs/HANDOFF.md') -Raw
-    $parts = @(Get-MarkdownFile -Root $Root -Dir 'docs/handoff' | ForEach-Object { $_ -replace '^docs/', '' })
-    $linked = Get-LinkedPath -Text $text -Prefix 'handoff/'
+    $indexPath = Join-Path $Root "docs/$Index"
+    if (-not (Test-Path -LiteralPath $indexPath -PathType Leaf)) { return , @("docs/$Index is missing") }
+    $text = Get-Content -LiteralPath $indexPath -Raw
+    $parts = @(Get-MarkdownFile -Root $Root -Dir "docs/$Folder" | ForEach-Object { $_ -replace '^docs/', '' })
+    $linked = Get-LinkedPath -Text $text -Prefix "$Folder/"
     foreach ($link in $linked) {
-        if ($parts -notcontains $link) { $problems.Add("docs/HANDOFF.md links $link, which does not exist") }
+        if ($parts -notcontains $link) { $problems.Add("docs/$Index links $link, which does not exist") }
     }
     foreach ($part in $parts) {
-        if ($linked -notcontains $part) { $problems.Add("docs/$part is not linked from docs/HANDOFF.md") }
+        if ($linked -notcontains $part) { $problems.Add("docs/$part is not linked from docs/$Index") }
     }
     return , $problems.ToArray()
 }
@@ -119,7 +124,9 @@ function Test-Handoff([string]$Root) {
 function Invoke-Check([string]$Root) {
     $all = @()
     $all += Test-Changelog $Root
-    $all += Test-Handoff $Root
+    $all += Test-IndexedFolder $Root 'HANDOFF.md' 'handoff'
+    $all += Test-IndexedFolder $Root '20_OPEN_QUESTIONS.md' 'open-questions'
+    $all += Test-IndexedFolder $Root 'spike-notes.md' 'spike-notes'
     return , $all
 }
 
@@ -140,6 +147,12 @@ if ($SelfTest) {
             "| traps | [``handoff/traps.md``](handoff/traps.md) |`n")
         Set-Content -LiteralPath (Join-Path $root 'docs/handoff/history/p2.md') -NoNewline -Value "# HANDOFF history - P2`n"
         Set-Content -LiteralPath (Join-Path $root 'docs/handoff/traps.md') -NoNewline -Value "# traps`n"
+        New-Item -ItemType Directory -Path (Join-Path $root 'docs/open-questions') -Force | Out-Null
+        New-Item -ItemType Directory -Path (Join-Path $root 'docs/spike-notes') -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $root 'docs/20_OPEN_QUESTIONS.md') -NoNewline -Value "| S2 | [``open-questions/closed-s.md``](open-questions/closed-s.md) |`n"
+        Set-Content -LiteralPath (Join-Path $root 'docs/open-questions/closed-s.md') -NoNewline -Value "# closed`n"
+        Set-Content -LiteralPath (Join-Path $root 'docs/spike-notes.md') -NoNewline -Value "| §0 | [``spike-notes/00-licence-checks.md``](spike-notes/00-licence-checks.md) |`n"
+        Set-Content -LiteralPath (Join-Path $root 'docs/spike-notes/00-licence-checks.md') -NoNewline -Value "## 0`n"
         return $root
     }
     $cases = @(
@@ -151,7 +164,9 @@ if ($SelfTest) {
         @{ Name = 'a release file nothing links is red'; Expect = 1; Break = { param($r) Set-Content -LiteralPath (Join-Path $r 'docs/changelog/0.1.0.md') -Value "## [0.1.0] - 2026-09-16`n" } },
         @{ Name = 'a link to a release file that is gone is red'; Expect = 1; Break = { param($r) Remove-Item -LiteralPath (Join-Path $r 'docs/changelog/ledger-before-0.1.0-beta.1/part-1.md') } },
         @{ Name = 'a handoff part nothing links is red'; Expect = 1; Break = { param($r) Set-Content -LiteralPath (Join-Path $r 'docs/handoff/history/p3.md') -Value "# P3`n" } },
-        @{ Name = 'a handoff link to a part that is gone is red'; Expect = 1; Break = { param($r) Remove-Item -LiteralPath (Join-Path $r 'docs/handoff/traps.md') } }
+        @{ Name = 'a handoff link to a part that is gone is red'; Expect = 1; Break = { param($r) Remove-Item -LiteralPath (Join-Path $r 'docs/handoff/traps.md') } },
+        @{ Name = 'a closed-entries file nothing links is red'; Expect = 1; Break = { param($r) Set-Content -LiteralPath (Join-Path $r 'docs/open-questions/closed-h.md') -Value "# closed H`n" } },
+        @{ Name = 'a spike-notes section that is gone is red'; Expect = 1; Break = { param($r) Remove-Item -LiteralPath (Join-Path $r 'docs/spike-notes/00-licence-checks.md') } }
     )
     foreach ($c in $cases) {
         $root = New-Tree

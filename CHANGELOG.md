@@ -50,6 +50,12 @@ numeric core and does not move; the heading is the full version — corrected 20
   index of every owner decision; the history of each phase and train, the passed owner-only items and the traps
   moved to `docs/handoff/`, and a table there resolves every section the code and the documents cite. A new gate,
   `tools/docs-split-check.ps1`, keeps each index and its files naming each other.
+- **The open questions and the measurement notes are split too** (developers only, D66). `docs/20_OPEN_QUESTIONS.md`
+  (4,467 lines, now 2,008) keeps its rules, §S24 and every entry not resolved; the 30 entries §S24 marks resolved
+  moved, with their reasoning and in their order, to `docs/open-questions/closed-s.md` and `closed-h.md`, and a table
+  at the end of each series lists them. `docs/spike-notes.md` (2,816 lines) is now the index of its 24 sections, each
+  in its own file under `docs/spike-notes/`; a new measurement gets the next number, its own file and a row. Both
+  rebuild their originals byte for byte, and the same gate holds their indexes to their files.
 
 ### Fixed
 

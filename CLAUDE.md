@@ -217,7 +217,8 @@ The version handshake is wired end to end as of 2026-08-05: `FlGuardBuildId` giv
     PR (D36, 2026-09-27). **`docs/LIST_GAME_TESTED.md`** — the real games FrameLedger has been run with and what each
     session measured, from a copy of the owner's ledger and the repository's own evidence (D35).
 
-**Before writing native or capture code, read `docs/20_OPEN_QUESTIONS.md`.** It
+**Before writing native or capture code, read `docs/20_OPEN_QUESTIONS.md`** (its open entries; since beta.24 the
+resolved ones are in `docs/open-questions/`, a table at the end of each series lists them). It
 lists the defects and gaps that survived the doc audit — things the other
 documents cannot answer because they need an empirical result or a decision. The
 S-series items are safety items and block the first real injection. If you are
