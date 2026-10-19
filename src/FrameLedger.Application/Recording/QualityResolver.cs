@@ -83,6 +83,7 @@ public static class QualityResolver
         UpscalerQualityMode.UltraQuality => "ultra_quality",
         UpscalerQualityMode.Dlaa => "dlaa",
         UpscalerQualityMode.Custom => "custom",
+        UpscalerQualityMode.NativeAa => "native_aa",
         _ => null,
     };
 
@@ -98,6 +99,7 @@ public static class QualityResolver
             "ultra_quality" => UpscalerQualityMode.UltraQuality,
             "dlaa" => UpscalerQualityMode.Dlaa,
             "custom" => UpscalerQualityMode.Custom,
+            "native_aa" => UpscalerQualityMode.NativeAa,
             _ => null,
         };
         return mode is not null || string.Equals(token, OverrideToken, StringComparison.Ordinal) ? new ResolvedQuality(mode, QualitySource.NvidiaApp) : null;

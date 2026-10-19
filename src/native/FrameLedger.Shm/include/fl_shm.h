@@ -375,6 +375,10 @@ enum FlHookFamily : uint32_t {
     FL_HOOK_COLOR_SPACE = 1u << 8,
     FL_HOOK_REFLEX = 1u << 9,
     FL_HOOK_VRAM = 1u << 10,
+    // The FidelityFX quality QUERY (beta.25, owner decision D65): ffxQuery on the modules ffxDispatch is hooked on.
+    // It measures nothing by itself; it is what lets an UPSCALE dispatch's renderSize name the mode the title asked
+    // for, so "hooked, and the title never asked" can be told from "not hooked".
+    FL_HOOK_UPSCALER_QUALITY = 1u << 11,
 };
 
 // FlWriterState::runtimeCensus -- which vendor RUNTIME MODULES the loader reported
@@ -555,6 +559,10 @@ enum FlMeasured : uint16_t {
     // upscalerQuality = 0 as a measurement -- in the byte's numbering
     // (sl::DLSSMode) 0 is eOff, not a quality; "NGX MaxPerf" until beta.24 named
     // NGX's own numbering, which the byte does not use.
+    //
+    // THE BYTE'S NUMBERING IS THE VENDOR'S, PER UPSCALER: sl::DLSSMode (1..6) for DLSS; for FSR since beta.25,
+    // 0x10 plus FfxApiUpscaleQualityMode (0x10..0x14) -- offset, because FSR's NativeAA is 0 and 0 is "nobody
+    // looked" (D65: the mode whose ffxQuery answer is the size the UPSCALE dispatch was handed).
     FL_MEASURED_UPSCALER_PARAMS = 1u << 8,
 
     // syncInterval + presentFlags.

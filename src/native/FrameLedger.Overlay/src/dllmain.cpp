@@ -41,6 +41,7 @@
 #include <d3d12.h>
 #include <dxgi1_2.h>
 
+#include <bit>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
@@ -1150,6 +1151,61 @@ PFN_FfxDispatch g_origFfxDispatch[fl::inventory::kFfxLeafCount] = {};
 std::atomic<uint32_t> g_ffxPatched[fl::inventory::kFfxLeafCount] = {};
 std::atomic<uint32_t> g_ffxLive{0};
 
+// --- The FidelityFX quality query: ffxQuery on the same four modules (beta.25, owner decision D65) ---------------
+//
+// THE DISPATCH CARRIES NO QUALITY MODE, AND THE QUERY IS WHERE A TITLE NAMES ONE. FfxApiUpscaleQualityMode is an input
+// to a query the title makes -- "what render size (or ratio) does this mode give at this display size?" -- before it
+// sizes its targets; the per-frame UPSCALE dispatch then carries the size alone. So every answer the vendor returned
+// is kept, one slot per mode, and an UPSCALE dispatch whose renderSize (and upscaleSize, where the title states it)
+// fits exactly ONE kept answer names that answer's mode. A title that sizes its targets without asking, a title that
+// asked before this DLL was loaded (attach), and a dynamic-resolution title dispatching sizes no answer gave all keep
+// 0xFF -- "a hook ran and could not tell" -- which is the answer, not a gap.
+//
+// WHAT IS READ (CLAUDE.md rule 4): the descriptor the title passed to a hooked export -- its type, the display size
+// and the mode -- and, after the original returned FFX_API_RETURN_OK, the values the vendor wrote through the title's
+// own out pointers, which are arguments of the hooked call. Under the hook's SEH guard like every other argument;
+// nothing of the title's is written, and nothing beyond those fields is read.
+constexpr uint32_t kFfxQualityModes = 5;    // FFX_UPSCALE_QUALITY_MODE_NATIVEAA .. _ULTRA_PERFORMANCE
+constexpr uint32_t kFfxQualityNone = 0xFFu;
+constexpr uint32_t kFfxQualityBase = 0x10u;    // the byte FSR's mode is published as: 0x10 + mode (fl_shm.h)
+// displayW | displayH << 16 | renderW << 32 | renderH << 48; 0 = no answer (every field is non-zero when kept).
+std::atomic<uint64_t> g_ffxQualitySizes[kFfxQualityModes] = {};
+// A ratio answer's float bits; 0 = no answer (a kept ratio is at least 1.0).
+std::atomic<uint32_t> g_ffxQualityRatios[kFfxQualityModes] = {};
+// The last UPSCALE dispatch's mode, as the byte publishes it. RecordPresent reads it only on a present that drained an
+// UPSCALE, so it cannot outlive the frame it describes -- g_ffxExtent's rule.
+std::atomic<uint32_t> g_ffxQuality{kFfxQualityNone};
+
+using PFN_FfxQuery = ::PfnFfxQuery;
+PFN_FfxQuery g_origFfxQuery[fl::inventory::kFfxLeafCount] = {};
+// Per leaf, patched; the family is published once every loaded leaf is (PublishFfxQueryFamilyIfWhole), for the reason
+// g_ffxPatched gives.
+std::atomic<uint32_t> g_ffxQueryPatched[fl::inventory::kFfxLeafCount] = {};
+std::atomic<uint32_t> g_ffxQueryLive{0};
+
+// THE VALUES AND LAYOUTS THE QUERY ARM READS, PINNED TO LITERALS. Identical at FidelityFX SDK v1.1.4 (the monolith's
+// generation) and v2.3.0 (the vendored headers), checked against both on 2026-10-19: the two type ids, the mode enum,
+// and both query descriptors -- a re-vendoring that moved a field fails here, not on a title's own descriptor.
+static_assert(FFX_API_QUERY_DESC_TYPE_UPSCALE_GETUPSCALERATIOFROMQUALITYMODE == 0x00010002u,
+              "the ratio query's type id (SDK 1.1.4 and 2.3.0)");
+static_assert(FFX_API_QUERY_DESC_TYPE_UPSCALE_GETRENDERRESOLUTIONFROMQUALITYMODE == 0x00010003u,
+              "the render-size query's type id (SDK 1.1.4 and 2.3.0)");
+static_assert(FFX_UPSCALE_QUALITY_MODE_NATIVEAA == 0 && FFX_UPSCALE_QUALITY_MODE_ULTRA_PERFORMANCE == 4 &&
+                  kFfxQualityModes == FFX_UPSCALE_QUALITY_MODE_ULTRA_PERFORMANCE + 1,
+              "one slot per vendor quality mode, NativeAA (0) through Ultra Performance (4)");
+static_assert(offsetof(ffxQueryDescUpscaleGetRenderResolutionFromQualityMode, displayWidth) == 16u &&
+                  offsetof(ffxQueryDescUpscaleGetRenderResolutionFromQualityMode, displayHeight) == 20u &&
+                  offsetof(ffxQueryDescUpscaleGetRenderResolutionFromQualityMode, qualityMode) == 24u &&
+                  offsetof(ffxQueryDescUpscaleGetRenderResolutionFromQualityMode, pOutRenderWidth) == 32u &&
+                  offsetof(ffxQueryDescUpscaleGetRenderResolutionFromQualityMode, pOutRenderHeight) == 40u,
+              "the render-size query's layout after its 16-byte header");
+static_assert(offsetof(ffxQueryDescUpscaleGetUpscaleRatioFromQualityMode, qualityMode) == 16u &&
+                  offsetof(ffxQueryDescUpscaleGetUpscaleRatioFromQualityMode, pOutUpscaleRatio) == 24u,
+              "the ratio query's layout after its 16-byte header");
+static_assert(offsetof(ffxDispatchDescUpscale, upscaleSize) ==
+                  offsetof(ffxDispatchDescUpscale, renderSize) + sizeof(FfxApiDimensions2D),
+              "upscaleSize follows renderSize in the UPSCALE descriptor (SDK 1.1.4 and 2.3.0)");
+
 // --- The FSR 3.0 HOST API: ffx_fsr3_x64.dll!ffxFsr3ContextDispatchUpscale ----------
 //
 // The fifth AMD target, and NOT a leaf: a different export with a different signature,
@@ -1731,6 +1787,82 @@ void NoteFfxExtent(const FfxApiDimensions2D& size) noexcept {
     NoteFfxExtent(size.width, size.height);
 }
 
+// The answer one query returned, kept for the dispatch arm. Read only after the vendor answered OK; a mode, a size or a
+// ratio the byte or the match cannot carry is not kept.
+void ObserveFfxQuery(const ffxQueryDescHeader* desc) noexcept {
+    if (desc == nullptr) {
+        return;
+    }
+    if (desc->type == FFX_API_QUERY_DESC_TYPE_UPSCALE_GETRENDERRESOLUTIONFROMQUALITYMODE) {
+        const auto* q = reinterpret_cast<const ffxQueryDescUpscaleGetRenderResolutionFromQualityMode*>(desc);
+        if (q->qualityMode >= kFfxQualityModes || q->pOutRenderWidth == nullptr || q->pOutRenderHeight == nullptr) {
+            return;
+        }
+        const uint64_t dw = q->displayWidth;
+        const uint64_t dh = q->displayHeight;
+        const uint64_t rw = *q->pOutRenderWidth;
+        const uint64_t rh = *q->pOutRenderHeight;
+        if (dw == 0u || dh == 0u || rw == 0u || rh == 0u || dw > 0xFFFFu || dh > 0xFFFFu || rw > 0xFFFFu ||
+            rh > 0xFFFFu) {
+            return;
+        }
+        g_ffxQualitySizes[q->qualityMode].store(dw | (dh << 16) | (rw << 32) | (rh << 48), std::memory_order_release);
+        return;
+    }
+    if (desc->type == FFX_API_QUERY_DESC_TYPE_UPSCALE_GETUPSCALERATIOFROMQUALITYMODE) {
+        const auto* q = reinterpret_cast<const ffxQueryDescUpscaleGetUpscaleRatioFromQualityMode*>(desc);
+        if (q->qualityMode >= kFfxQualityModes || q->pOutUpscaleRatio == nullptr) {
+            return;
+        }
+        const float ratio = *q->pOutUpscaleRatio;
+        if (!(ratio >= 1.0f && ratio <= 16.0f)) {    // a NaN fails both
+            return;
+        }
+        g_ffxQualityRatios[q->qualityMode].store(std::bit_cast<uint32_t>(ratio), std::memory_order_release);
+    }
+}
+
+// Whether a ratio answer gives this render dimension at this display dimension: the vendor truncates
+// display / ratio, and a title sizing its own targets from the ratio may round instead -- one pixel either way.
+bool RatioFits(uint32_t display, float ratio, uint32_t render) noexcept {
+    const auto    expected = static_cast<int64_t>(static_cast<float>(display) / ratio);
+    const int64_t diff = expected - static_cast<int64_t>(render);
+    return diff >= -1 && diff <= 1;
+}
+
+// The byte an UPSCALE dispatch's sizes name: 0x10 + the ONE mode whose kept answer fits them, else 0xFF. A size
+// answer fits when its render size is the dispatched one and its display size the dispatched upscaleSize (or the
+// title stated none -- the field is optional); a ratio answer fits within RatioFits, and only with a stated
+// upscaleSize, which it needs to be a size at all. Two modes that fit name nothing.
+uint32_t FfxQualityOf(uint32_t renderW, uint32_t renderH, uint32_t displayW, uint32_t displayH) noexcept {
+    if (renderW == 0u || renderH == 0u) {
+        return kFfxQualityNone;
+    }
+    const bool displayStated = displayW != 0u && displayH != 0u;
+    uint32_t   found = kFfxQualityNone;
+    for (uint32_t mode = 0; mode < kFfxQualityModes; ++mode) {
+        bool           fits = false;
+        const uint64_t sizes = g_ffxQualitySizes[mode].load(std::memory_order_acquire);
+        if (sizes != 0u) {
+            const bool sameDisplay =
+                !displayStated || ((sizes & 0xFFFFu) == displayW && ((sizes >> 16) & 0xFFFFu) == displayH);
+            fits = sameDisplay && ((sizes >> 32) & 0xFFFFu) == renderW && ((sizes >> 48) & 0xFFFFu) == renderH;
+        }
+        const uint32_t bits = g_ffxQualityRatios[mode].load(std::memory_order_acquire);
+        if (!fits && bits != 0u && displayStated) {
+            const float ratio = std::bit_cast<float>(bits);
+            fits = RatioFits(displayW, ratio, renderW) && RatioFits(displayH, ratio, renderH);
+        }
+        if (fits) {
+            if (found != kFfxQualityNone) {
+                return kFfxQualityNone;    // two modes fit these sizes: neither is named
+            }
+            found = kFfxQualityBase + mode;
+        }
+    }
+    return found;
+}
+
 void ObserveFfxDispatch(uint32_t leaf, const ffxDispatchDescHeader* desc) noexcept {
     if (desc == nullptr) {
         return;
@@ -1739,6 +1871,10 @@ void ObserveFfxDispatch(uint32_t leaf, const ffxDispatchDescHeader* desc) noexce
     case FFX_API_DISPATCH_DESC_TYPE_UPSCALE: {
         const auto* up = reinterpret_cast<const ffxDispatchDescUpscale*>(desc);
         NoteFfxExtent(up->renderSize);
+        // beta.25 (D65): the mode a kept query answer names for these sizes, or 0xFF.
+        g_ffxQuality.store(
+            FfxQualityOf(up->renderSize.width, up->renderSize.height, up->upscaleSize.width, up->upscaleSize.height),
+            std::memory_order_release);
         g_ffxUpscaleLeaf.store(leaf + 1u, std::memory_order_relaxed);
         g_ffxSeen.fetch_add(fl::slseen::kCountOne, std::memory_order_relaxed);
         break;
@@ -1815,6 +1951,35 @@ void* FfxDispatchDetour(uint32_t leaf) noexcept {
         return reinterpret_cast<void*>(&Hook_FfxDispatchT<fl::inventory::kFfxLeafFrameGeneration>);
     case fl::inventory::kFfxLeafLoader:
         return reinterpret_cast<void*>(&Hook_FfxDispatchT<fl::inventory::kFfxLeafLoader>);
+    default:
+        return nullptr;
+    }
+}
+
+// The query's trampolines, one per leaf for the reason Hook_FfxDispatchT gives. The ORIGINAL RUNS FIRST, exactly once,
+// on every path: the answer is read from what it wrote, and only when it said OK. Every argument forwarded untouched.
+template <uint32_t Leaf>
+ffxReturnCode_t Hook_FfxQueryT(ffxContext* context, ffxQueryDescHeader* desc) {
+    static_assert(Leaf < fl::inventory::kFfxLeafCount, "a trampoline per leaf, and no more");
+    const ffxReturnCode_t rc = g_origFfxQuery[Leaf](context, desc);
+    FL_HOOK_GUARD({
+        if (rc == FFX_API_RETURN_OK && MayObserve()) {
+            ObserveFfxQuery(desc);
+        }
+    })
+    return rc;
+}
+
+void* FfxQueryDetour(uint32_t leaf) noexcept {
+    switch (leaf) {
+    case fl::inventory::kFfxLeafMonolith:
+        return reinterpret_cast<void*>(&Hook_FfxQueryT<fl::inventory::kFfxLeafMonolith>);
+    case fl::inventory::kFfxLeafUpscaler:
+        return reinterpret_cast<void*>(&Hook_FfxQueryT<fl::inventory::kFfxLeafUpscaler>);
+    case fl::inventory::kFfxLeafFrameGeneration:
+        return reinterpret_cast<void*>(&Hook_FfxQueryT<fl::inventory::kFfxLeafFrameGeneration>);
+    case fl::inventory::kFfxLeafLoader:
+        return reinterpret_cast<void*>(&Hook_FfxQueryT<fl::inventory::kFfxLeafLoader>);
     default:
         return nullptr;
     }
@@ -2162,6 +2327,27 @@ bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t fam
         g_ffxPatched[slot].store(1, std::memory_order_release);
         return true;
     }
+    if (family == fl::inventory::kFamilyFfxQuery) {
+        // FOUR ROWS, ONE ARM, the dispatch arm's shape: the row's MODULE picks the trampoline and the latch slot.
+        // Published in PublishFfxQueryFamilyIfWhole, once every loaded leaf is in.
+        const int leaf = fl::inventory::FfxLeafOf(moduleName);
+        if (leaf < 0) {
+            return false;    // the static_asserts make this unreachable for the rows as written
+        }
+        const auto slot = static_cast<uint32_t>(leaf);
+        if (g_ffxQueryPatched[slot].load(std::memory_order_acquire) != 0) {
+            return true;
+        }
+        void* target = fl::inventory::ResolveScoped(moduleName, symbol);
+        if (target == nullptr) {
+            return false;    // not loaded, or a module of the name that does not speak ffx-api
+        }
+        if (!PatchTarget(target, FfxQueryDetour(slot), reinterpret_cast<void**>(&g_origFfxQuery[slot]))) {
+            return false;
+        }
+        g_ffxQueryPatched[slot].store(1, std::memory_order_release);
+        return true;
+    }
     return false;
 }
 
@@ -2198,6 +2384,28 @@ void PublishFfxFamilyIfWhole() noexcept {
     }
     if (anyPatched) {
         PublishHookFamily(fl::inventory::kFamilyFfxDispatch, g_ffxLive);
+    }
+}
+
+// Publish kFamilyFfxQuery once every ffx leaf the process has loaded has its query patched, and at least one does --
+// PublishFfxFamilyIfWhole's rule, for its reason: a family published on the first leaf would claim a hook the second
+// leaf does not have yet.
+void PublishFfxQueryFamilyIfWhole() noexcept {
+    if (g_ffxQueryLive.load(std::memory_order_acquire) != 0) {
+        return;
+    }
+    bool anyPatched = false;
+    for (uint32_t i = 0; i < fl::inventory::kFfxLeafCount; ++i) {
+        if (g_ffxQueryPatched[i].load(std::memory_order_acquire) != 0) {
+            anyPatched = true;
+            continue;
+        }
+        if (fl::inventory::IsModuleLoaded(fl::inventory::kFfxLeafModules[i])) {
+            return;    // loaded and not yet patched: the family is not whole
+        }
+    }
+    if (anyPatched) {
+        PublishHookFamily(fl::inventory::kFamilyFfxQuery, g_ffxQueryLive);
     }
 }
 
@@ -2239,6 +2447,7 @@ bool InstallUpscalerHooks() noexcept {
 #undef FL_INSTALL_ROW
     PublishParamsFamilyIfWhole();
     PublishFfxFamilyIfWhole();
+    PublishFfxQueryFamilyIfWhole();
     return any;
 }
 
@@ -2814,13 +3023,16 @@ void RecordPresent(IDXGISwapChain* sc, UINT syncInterval, UINT flags) noexcept {
         if ((ext & kTagValid) != 0u) {
             rec.renderW = static_cast<uint16_t>(ext & 0xFFFFu);
             rec.renderH = static_cast<uint16_t>((ext >> 16) & 0xFFFFu);
-            // 0xFF for both, and for this vendor it is the TRUE value rather than a
-            // gap: the ffx-api dispatch carries no quality mode at all -- the
-            // FfxApiUpscaleQualityMode enum is an input to a QUERY the title makes
-            // before creating its context, never to the per-frame dispatch -- and no
-            // sharpness travels here either. A preset label derived from the measured
-            // ratio is HANDOFF item 7a's owner decision, not this byte's.
-            rec.upscalerQuality = 0xFFu;
+            // The ffx-api dispatch carries no quality mode at all -- the
+            // FfxApiUpscaleQualityMode enum is an input to a QUERY the title makes,
+            // never to the per-frame dispatch. Since beta.25 (D65) the query's kept
+            // answers name it: the mode whose answer is the size this present's
+            // UPSCALE dispatched, as 0x10 + mode -- else 0xFF, the TRUE value for a
+            // title that never asked, and the only value on a present that drained a
+            // PREPARE alone. A label derived from the measured ratio is HANDOFF item
+            // 7a's owner decision, not this byte's; no sharpness travels here either.
+            rec.upscalerQuality =
+                ffxUpscales != 0u ? static_cast<uint8_t>(g_ffxQuality.load(std::memory_order_acquire)) : 0xFFu;
             rec.upscalerSharpness = 0xFFu;
             rec.measuredMask = static_cast<uint16_t>(rec.measuredMask | FL_MEASURED_UPSCALER_PARAMS);
         }

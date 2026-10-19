@@ -44,6 +44,9 @@ static_assert(fl::inventory::FfxLeafOfExact(FL_STUB_FFX_MODULE) >= 0,
 static_assert(fl::stub::InventoryHasRow(FL_STUB_FFX_MODULE, "ffxDispatch"),
               "fl_hook_inventory.h has no ffxDispatch row for this module, so the fixture would exercise a name the "
               "Overlay does not install (20_OPEN_QUESTIONS S29(b), with a vendor's name on it)");
+static_assert(fl::stub::InventoryHasRow(FL_STUB_FFX_MODULE, "ffxQuery"),
+              "fl_hook_inventory.h has no ffxQuery row for this module (beta.25, D65), so the quality fixture would "
+              "exercise a name the Overlay does not install");
 
 namespace {
 
@@ -117,9 +120,35 @@ FFX_API_ENTRY ffxReturnCode_t ffxConfigure(ffxContext* context, const ffxConfigu
     return desc != nullptr ? FFX_API_RETURN_OK : FFX_API_RETURN_ERROR_PARAMETER;
 }
 
+// THE QUALITY QUERY'S ANSWERS (beta.25, D65), deterministic so a test knows which size names which mode: the
+// per-dimension ratios the vendor documents (NativeAA 1.0, Quality 1.5, Balanced 1.7, Performance 2.0, Ultra
+// Performance 3.0) and render = display / ratio, truncated as the vendor does -- written through the caller's own
+// pointers, which is where the Overlay reads them after this returns. Any other query is answered OK and touched not.
 FFX_API_ENTRY ffxReturnCode_t ffxQuery(ffxContext* context, ffxQueryDescHeader* desc) {
     (void)context;
-    return desc != nullptr ? FFX_API_RETURN_OK : FFX_API_RETURN_ERROR_PARAMETER;
+    if (desc == nullptr) {
+        return FFX_API_RETURN_ERROR_PARAMETER;
+    }
+    static constexpr float kRatios[] = {1.0f, 1.5f, 1.7f, 2.0f, 3.0f};
+    if (desc->type == FFX_API_QUERY_DESC_TYPE_UPSCALE_GETRENDERRESOLUTIONFROMQUALITYMODE) {
+        auto* q = reinterpret_cast<ffxQueryDescUpscaleGetRenderResolutionFromQualityMode*>(desc);
+        if (q->qualityMode > FFX_UPSCALE_QUALITY_MODE_ULTRA_PERFORMANCE || q->pOutRenderWidth == nullptr ||
+            q->pOutRenderHeight == nullptr) {
+            return FFX_API_RETURN_ERROR_PARAMETER;
+        }
+        *q->pOutRenderWidth = static_cast<uint32_t>(static_cast<float>(q->displayWidth) / kRatios[q->qualityMode]);
+        *q->pOutRenderHeight = static_cast<uint32_t>(static_cast<float>(q->displayHeight) / kRatios[q->qualityMode]);
+        return FFX_API_RETURN_OK;
+    }
+    if (desc->type == FFX_API_QUERY_DESC_TYPE_UPSCALE_GETUPSCALERATIOFROMQUALITYMODE) {
+        auto* q = reinterpret_cast<ffxQueryDescUpscaleGetUpscaleRatioFromQualityMode*>(desc);
+        if (q->qualityMode > FFX_UPSCALE_QUALITY_MODE_ULTRA_PERFORMANCE || q->pOutUpscaleRatio == nullptr) {
+            return FFX_API_RETURN_ERROR_PARAMETER;
+        }
+        *q->pOutUpscaleRatio = kRatios[q->qualityMode];
+        return FFX_API_RETURN_OK;
+    }
+    return FFX_API_RETURN_OK;
 }
 
 // THE ROW'S TARGET. Counts by head type and does nothing else -- the descriptor's

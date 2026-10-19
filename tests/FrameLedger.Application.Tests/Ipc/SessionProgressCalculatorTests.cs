@@ -124,6 +124,20 @@ public sealed class SessionProgressCalculatorTests
     }
 
     [Fact]
+    public void TheLiveCardReadsFsrsByteByTheSessionsRule()
+    {
+        FlMeasured claims = FlMeasured.OutputRes | FlMeasured.PresentArgs | FlMeasured.Upscaler | FlMeasured.UpscalerParams;
+        List<FlFrameRecord> told = [.. SessionFixtures.Stream(1000, claims, upscaler: FlUpscaler.FsrUnversioned)
+            .Select(static r => r with { UpscalerQuality = 0x13, RenderW = 960, RenderH = 540 })];
+        List<FlFrameRecord> dynamic = [.. told.Select(static (r, i) => i % 2 == 0 ? r : r with { UpscalerQuality = 0xFF, RenderW = 900, RenderH = 506 })];
+
+        SessionProgressCalculator.Compute(_guid, Progress(told), SessionFixtures.QpcFrequency, 12.5, gpu: null)
+            .UpscalerQuality.Should().Be("19", "beta.25 (D65): 0x10 + FFX_UPSCALE_QUALITY_MODE_PERFORMANCE");
+        SessionProgressCalculator.Compute(_guid, Progress(dynamic), SessionFixtures.QpcFrequency, 12.5, gpu: null)
+            .UpscalerQuality.Should().BeNull("a size no answer gave: QualityByte withholds the mode, live as in the row");
+    }
+
+    [Fact]
     public void AMeasuredFrameGenerationFactorSplitsNativeFromDisplayed()
     {
         List<FlFrameRecord> records = SessionFixtures.Stream(800, FlMeasured.OutputRes | FlMeasured.Fg | FlMeasured.FgCounts, fgPerBatch: 2);

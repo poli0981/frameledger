@@ -89,8 +89,12 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
   reports it, the page says it is the driver's report.
 - **The quality mode** (Quality, Balanced, DLAA, …) is shown only when it is known: the NVIDIA App's override
   where the NVIDIA driver reports it applied (marked *· NVIDIA App*, since 0.1.0-beta.24), or the mode the game
-  passed to a call FrameLedger reads — which no game has done yet. The mode chosen in a game's own menu is not
-  readable for DLSS without Streamline, and is not inferred from the render scale. How the driver numbers DLAA in
+  passed to a call FrameLedger reads. For FSR through AMD's FidelityFX libraries (since 0.1.0-beta.25) that is the
+  mode whose render size the game asked AMD's library for and then rendered at — checked on a test program, not yet
+  on a real game; a game at a dynamic resolution, one that sizes its frames without asking, and a game FrameLedger
+  joined after it asked show none. For DLSS it is the options a Streamline game passes, which no game has done yet.
+  The mode chosen in a game's own menu is not readable for DLSS without Streamline, and is not inferred from the
+  render scale. How the driver numbers DLAA in
   its report is NVIDIA's documented value, not yet seen on a real game. The render resolution is N/A where the
   game's own calls do not carry it (DLSS without Streamline, for one). ([Metrics](docs/03_METRICS.md))
 - **Which DLSS ran** (since 0.1.0-beta.24) is named only from what the session showed: the model preset the NVIDIA

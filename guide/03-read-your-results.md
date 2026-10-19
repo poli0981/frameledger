@@ -13,9 +13,11 @@ A value FrameLedger could not measure reads **N/A** — never 0, and never an es
 - **When frame generation was measured**, the game's own frames and the frames you saw are shown together:
   `62 → 118 FPS (×1.9 FG)`. If frame generation changed during the session (menus, loading screens, a settings change),
   the figures are for the state that lasted longest, with the share of the session it covers: `(×1.9 FG · 75%)`.
-- **The upscaler's quality mode** — Quality, Balanced, Performance, Ultra Performance, DLAA — is shown only when it is
-  known. *· NVIDIA App* after it means the NVIDIA App overrode DLSS for this game and the NVIDIA driver reported that
-  the override applied; *· NVIDIA App override* alone means it applied and its mode could not be settled.
+- **The upscaler's quality mode** — Quality, Balanced, Performance, Ultra Performance, DLAA, and FSR's Native AA — is
+  shown only when it is known. *· NVIDIA App* after it means the NVIDIA App overrode DLSS for this game and the NVIDIA
+  driver reported that the override applied; *· NVIDIA App override* alone means it applied and its mode could not be
+  settled. For FSR it is the mode the game asked AMD's library about and then rendered at; at a dynamic resolution
+  none is shown.
 - **The DLSS line** names the DLSS the game ran: *DLSS 4.5* or *DLSS 4* only when the session showed it (the model
   preset the NVIDIA driver reports, or a frame-generation multiplier of ×3 and above), each DLSS library's version and
   whether it came from the game or from the graphics driver (the NVIDIA App can swap in the driver's copy), and *DLSS 5

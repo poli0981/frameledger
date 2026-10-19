@@ -53,7 +53,8 @@ public readonly record struct FrameSample
 
     /// <summary>
     /// <see cref="UpscalerQuality"/>'s "a hook ran and could not tell" (<c>fl_shm.h</c> <c>upscalerQuality</c>): not a preset,
-    /// so it is never a value in a row. Every AMD dispatch carries it, because that call has no preset.
+    /// so it is never a value in a row. An AMD dispatch carries it unless the vendor's own query answer names the size it
+    /// was handed (beta.25, D65; <see cref="QualityByte"/>), because that call has no preset.
     /// </summary>
     public const byte QualityNotTold = 0xFF;
 

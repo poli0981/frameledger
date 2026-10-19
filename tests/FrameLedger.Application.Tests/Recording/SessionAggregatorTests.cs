@@ -263,6 +263,36 @@ public sealed class SessionAggregatorTests
         m.Segments[0].UpscalerQuality.Should().Be("3");
     }
 
+    /// <summary>
+    /// FSR's byte (beta.25, D65): a session rendered at the size the vendor's query gave for Quality names Quality, and a
+    /// dynamic-resolution session — most frames at sizes no answer gave, the top of the range still matching — names
+    /// nothing, as <c>legal/ACCURACY.md</c> promises, in the row and in its segment alike.
+    /// </summary>
+    [Fact]
+    public void FsrNamesTheModeItsQueryGaveAndNoneAtADynamicResolution()
+    {
+        FlMeasured claims = _presentOnly | FlMeasured.Upscaler | FlMeasured.UpscalerParams;
+        var writer = new FlWriterState { Status = 1, HooksInstalledMask = 0x7 };
+        List<FlFrameRecord> fixedQuality = [.. SessionFixtures.Stream(500, claims, upscaler: FlUpscaler.Fsr3)
+            .Select(static r => r with { UpscalerQuality = 0x11, RenderW = 1280, RenderH = 720 })];
+
+        AggregationResult q = SessionAggregator.Aggregate(SessionFixtures.Skeleton(), SessionFixtures.Hooked(fixedQuality, writer));
+
+        q.Row.Upscaler.Should().Be("fsr3");
+        q.Row.UpscalerQuality.Should().Be("17", "0x10 + FFX_UPSCALE_QUALITY_MODE_QUALITY");
+        q.Segments.Should().ContainSingle().Which.UpscalerQuality.Should().Be("17");
+
+        List<FlFrameRecord> dynamic = [.. SessionFixtures.Stream(500, claims, upscaler: FlUpscaler.Fsr3)
+            .Select(static (r, i) => i % 3 == 0
+                ? r with { UpscalerQuality = 0x11, RenderW = 1280, RenderH = 720 }
+                : r with { UpscalerQuality = 0xFF, RenderW = (ushort)(1100 + (i % 7)), RenderH = (ushort)(619 + (i % 7)) })];
+
+        AggregationResult d = SessionAggregator.Aggregate(SessionFixtures.Skeleton(), SessionFixtures.Hooked(dynamic, writer));
+
+        d.Row.UpscalerQuality.Should().BeNull("the game rendered at sizes no answer gave: a dynamic resolution names no mode");
+        d.Segments.Should().ContainSingle().Which.UpscalerQuality.Should().BeNull();
+    }
+
     [Fact]
     public void AnUpscalerHookThatSawOnlyUnknownIsUnknownNotNull()
     {

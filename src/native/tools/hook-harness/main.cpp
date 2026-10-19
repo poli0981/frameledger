@@ -107,6 +107,9 @@
 //                    (ffx_fsr3_x64.dll!ffxFsr3ContextDispatchUpscale, no PREPARE,
 //                    no frame generation), fsr3host+mono Cyberpunk's shape: the host
 //                    upscales while the 1.1.x monolith prepares and generates
+//   --ffx-query sizes|ratios  before every UPSCALE, ask the entry module ffxQuery for all five quality modes at
+//                    the 1920x1080 display -- the render size each mode gives, or its ratio (beta.25, D65); the
+//                    tagged 1280x720 extent is Quality's answer, so the record must name Quality and nothing else.
 //   --ffx-no-prepare drop the PREPARE dispatch: the frame-generation-OFF shape, where
 //                    the Overlay must count UPSCALE dispatches instead
 //
@@ -2618,7 +2621,39 @@ enum class FfxTopology { Monolith, Loader, Ue, Fsr3Host, Fsr3HostMonolith };
 
 using PfnFsr3DispatchUpscale = decltype(&fsr3host::ffxFsr3ContextDispatchUpscale);
 
-int HoldPresentingFfx(Gfx& g, int seconds, bool real, int presentsPerEval, FfxTopology topology, bool prepare) {
+// What --ffx-query asks before each UPSCALE: nothing, the render size each mode gives, or each mode's ratio.
+enum class FfxQuery { None, Sizes, Ratios };
+
+// Every mode, at the display the UPSCALE descriptor states -- the way a settings menu enumerates them. The answers
+// are written through the descriptors' own pointers; nothing here checks them, because the Overlay's reading of them
+// is what the test asserts.
+void AskQuality(PfnFfxQuery query, FfxQuery what) {
+    for (uint32_t mode = FFX_UPSCALE_QUALITY_MODE_NATIVEAA; mode <= FFX_UPSCALE_QUALITY_MODE_ULTRA_PERFORMANCE;
+         ++mode) {
+        if (what == FfxQuery::Sizes) {
+            uint32_t                                              w = 0;
+            uint32_t                                              h = 0;
+            ffxQueryDescUpscaleGetRenderResolutionFromQualityMode q{};
+            q.header.type = FFX_API_QUERY_DESC_TYPE_UPSCALE_GETRENDERRESOLUTIONFROMQUALITYMODE;
+            q.displayWidth = 1920u;
+            q.displayHeight = 1080u;
+            q.qualityMode = mode;
+            q.pOutRenderWidth = &w;
+            q.pOutRenderHeight = &h;
+            query(nullptr, &q.header);
+        } else if (what == FfxQuery::Ratios) {
+            float                                             ratio = 0.0f;
+            ffxQueryDescUpscaleGetUpscaleRatioFromQualityMode q{};
+            q.header.type = FFX_API_QUERY_DESC_TYPE_UPSCALE_GETUPSCALERATIOFROMQUALITYMODE;
+            q.qualityMode = mode;
+            q.pOutUpscaleRatio = &ratio;
+            query(nullptr, &q.header);
+        }
+    }
+}
+
+int HoldPresentingFfx(Gfx& g, int seconds, bool real, int presentsPerEval, FfxTopology topology, bool prepare,
+                      FfxQuery ask) {
     HMODULE upEntry = nullptr;      // where UPSCALE goes (an ffx-api module)
     HMODULE fgEntry = nullptr;      // where PREPARE and FRAMEGENERATION go
     HMODULE hostEntry = nullptr;    // where UPSCALE goes on the FSR 3.0 host topologies
@@ -2689,6 +2724,14 @@ int HoldPresentingFfx(Gfx& g, int seconds, bool real, int presentsPerEval, FfxTo
         Check(false, "the entry module(s) export their dispatch entry point");
         return 1;
     }
+    // The quality query goes where the UPSCALE goes: the same module a title sizes its targets through.
+    const auto query = upEntry != nullptr && ask != FfxQuery::None
+                           ? reinterpret_cast<PfnFfxQuery>(reinterpret_cast<void*>(GetProcAddress(upEntry, "ffxQuery")))
+                           : nullptr;
+    if (ask != FfxQuery::None && query == nullptr) {
+        Check(false, "the UPSCALE entry module exports ffxQuery for --ffx-query");
+        return 1;
+    }
     // The pre-V2 PREPARE is the 1.1.x monolith's, on both topologies that use it.
     const bool  topology2x = topology == FfxTopology::Loader || topology == FfxTopology::Ue;
     const char* topologyName = topology == FfxTopology::Monolith   ? "SDK 1.1.x (monolith)"
@@ -2741,6 +2784,9 @@ int HoldPresentingFfx(Gfx& g, int seconds, bool real, int presentsPerEval, FfxTo
     uint64_t        frameId = 0;
     while (GetTickCount64() < until) {
         ++frameId;
+        if (query != nullptr) {
+            AskQuality(query, ask);
+        }
         if (dispatchHost != nullptr) {
             dispatchHost(nullptr, &hostUp);
         } else {
@@ -2930,6 +2976,7 @@ int main(int argc, char** argv) {
     // hold mode drives every combination and the tests assert one expression.
     FfxTopology ffxTopology = FfxTopology::Loader;
     bool        ffxPrepare = true;
+    FfxQuery    ffxQuery = FfxQuery::None;
     bool        slTagForFrame = false;
     bool        slTagWholeResource = false;
     bool        slTagDlssgInputs = false;
@@ -2966,6 +3013,11 @@ int main(int argc, char** argv) {
                                                                  : FfxTopology::Loader;
         } else if (std::strcmp(argv[i], "--ffx-no-prepare") == 0) {
             ffxPrepare = false;
+        } else if (std::strcmp(argv[i], "--ffx-query") == 0 && i + 1 < argc) {
+            const char* q = argv[++i];
+            ffxQuery = std::strcmp(q, "sizes") == 0    ? FfxQuery::Sizes
+                       : std::strcmp(q, "ratios") == 0 ? FfxQuery::Ratios
+                                                       : FfxQuery::None;
         } else if (std::strcmp(argv[i], "--sl-tag-for-frame") == 0) {
             slTagForFrame = true;
         } else if (std::strcmp(argv[i], "--sl-tag-whole-resource") == 0) {
@@ -3007,12 +3059,13 @@ int main(int argc, char** argv) {
             std::strcmp(argv[i], "--opengl") == 0 || std::strcmp(argv[i], "--plus-ui") == 0 ||
             std::strcmp(argv[i], "--present-interval-ms") == 0 || std::strcmp(argv[i], "--presents-per-eval") == 0 ||
             std::strcmp(argv[i], "--ffx-topology") == 0 || std::strcmp(argv[i], "--ffx-no-prepare") == 0 ||
-            std::strcmp(argv[i], "--sl-tag-for-frame") == 0 || std::strcmp(argv[i], "--sl-tag-whole-resource") == 0 ||
+            std::strcmp(argv[i], "--ffx-query") == 0 || std::strcmp(argv[i], "--sl-tag-for-frame") == 0 ||
+            std::strcmp(argv[i], "--sl-tag-whole-resource") == 0 ||
             std::strcmp(argv[i], "--sl-tag-dlssg-inputs") == 0 || std::strcmp(argv[i], "--load") == 0 ||
             std::strcmp(argv[i], "--load-after-ms") == 0) {
             if (std::strcmp(argv[i], "--plus-ui") == 0 || std::strcmp(argv[i], "--present-interval-ms") == 0 ||
                 std::strcmp(argv[i], "--presents-per-eval") == 0 || std::strcmp(argv[i], "--ffx-topology") == 0 ||
-                std::strcmp(argv[i], "--load") == 0) {
+                std::strcmp(argv[i], "--ffx-query") == 0 || std::strcmp(argv[i], "--load") == 0) {
                 ++i;
             }
             if (std::strcmp(argv[i], "--load-after-ms") == 0) {
@@ -3026,7 +3079,9 @@ int main(int argc, char** argv) {
             ok = HoldPresentingFg(g, std::atoi(argv[++i]), real, presentsPerEval) == 0 && ok;
             ranSomething = true;
         } else if (std::strcmp(argv[i], "--hold-presenting-ffx") == 0 && i + 1 < argc) {
-            ok = HoldPresentingFfx(g, std::atoi(argv[++i]), real, presentsPerEval, ffxTopology, ffxPrepare) == 0 && ok;
+            ok = HoldPresentingFfx(g, std::atoi(argv[++i]), real, presentsPerEval, ffxTopology, ffxPrepare, ffxQuery) ==
+                     0 &&
+                 ok;
             ranSomething = true;
         } else if (std::strcmp(argv[i], "--hold-presenting-upscaled") == 0 && i + 1 < argc) {
             ok = HoldPresentingUpscaled(g, std::atoi(argv[++i]), real, sl::kFeatureDLSS, slTagForFrame,

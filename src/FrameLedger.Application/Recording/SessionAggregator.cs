@@ -183,11 +183,10 @@ public static class SessionAggregator
         FlUpscaler? identity = FgLadder.UpscalerIdentity(c.Input.Records);
         bool hookRan = FgLadder.UpscalerHookRan(c.Input.Records);
         IReadOnlyList<FrameSample> withParams = [.. c.Dominant.Where(static s => s.Claims(MeasuredFields.UpscalerParams))];
-        IReadOnlyList<FrameSample> withQuality = [.. withParams.Where(static s => s.UpscalerQuality != FrameSample.QualityNotTold)];
         return row with
         {
             Upscaler = identity is { } u ? Vocabulary.Upscaler(u) : hookRan ? "unknown" : null,
-            UpscalerQuality = Modal(withQuality, static s => s.UpscalerQuality)?.ToString(CultureInfo.InvariantCulture),
+            UpscalerQuality = QualityByte.Of(withParams)?.ToString(CultureInfo.InvariantCulture),
             UpscalerSharpness = Modal(withParams, static s => s.UpscalerSharpness),
             UpscalerDriverReported = c.Input.Ngx.SrCreatedAndEvaluated ? "dlss" : null,
             RenderW = extent?.RenderW,
@@ -419,8 +418,7 @@ public static class SessionAggregator
                 OutputW = seg.OutputW == 0 ? null : seg.OutputW,
                 OutputH = seg.OutputH == 0 ? null : seg.OutputH,
                 Upscaler = upscaler is { } u && u != UpscalerKind.NotReported ? Vocabulary.Upscaler(u) : null,
-                UpscalerQuality = Modal([.. seg.Samples.Where(static s => s.Claims(MeasuredFields.UpscalerParams) && s.UpscalerQuality != FrameSample.QualityNotTold)], static s => s.UpscalerQuality)
-                    ?.ToString(CultureInfo.InvariantCulture),
+                UpscalerQuality = QualityByte.Of([.. seg.Samples.Where(static s => s.Claims(MeasuredFields.UpscalerParams))])?.ToString(CultureInfo.InvariantCulture),
                 FgMode = null,
                 NativeFps = null,
                 DisplayedFps = series.AverageFps,

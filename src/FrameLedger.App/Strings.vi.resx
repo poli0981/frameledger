@@ -3435,4 +3435,7 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="Dlss_NeuralRendering_Loaded" xml:space="preserve">
     <value>đã nạp runtime DLSS 5</value>
   </data>
+  <data name="Fsr_Mode_NativeAa" xml:space="preserve">
+    <value>Native AA</value>
+  </data>
 </root>

@@ -477,6 +477,7 @@ public static class Strings
         nameof(Fps_Native_Tooltip),
         nameof(Fps_None_Tooltip),
         nameof(Fps_Presented_Format),
+        nameof(Fsr_Mode_NativeAa),
         nameof(GameDetail_AntiCheat_Exceptionable_Format),
         nameof(GameDetail_AntiCheat_Format),
         nameof(GameDetail_AntiCheat_Header),
@@ -2061,6 +2062,8 @@ public static class Strings
     public static string Fps_None_Tooltip => ResourceManager.GetString(nameof(Fps_None_Tooltip), Culture) ?? nameof(Fps_None_Tooltip);
 
     public static string Fps_Presented_Format => ResourceManager.GetString(nameof(Fps_Presented_Format), Culture) ?? nameof(Fps_Presented_Format);
+
+    public static string Fsr_Mode_NativeAa => ResourceManager.GetString(nameof(Fsr_Mode_NativeAa), Culture) ?? nameof(Fsr_Mode_NativeAa);
 
     public static string GameDetail_AntiCheat_Exceptionable_Format => ResourceManager.GetString(nameof(GameDetail_AntiCheat_Exceptionable_Format), Culture) ?? nameof(GameDetail_AntiCheat_Exceptionable_Format);
 

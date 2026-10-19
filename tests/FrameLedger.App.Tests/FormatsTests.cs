@@ -105,6 +105,8 @@ public sealed class FormatsTests
             .Should().Be("custom 77%");
         InEnglish(() => Formats.QualityName(new Application.Recording.ResolvedQuality(Domain.Metrics.UpscalerQualityMode.UltraQuality, Application.Recording.QualitySource.Game)))
             .Should().Be("Ultra Quality");
+        InEnglish(() => Formats.UpscalerOf(Row("fsr3", "17", null, null, null))).Should().Be("FSR 3 Quality", "beta.25 (D65): the mode FSR's query named");
+        InEnglish(() => Formats.UpscalerOf(Row("fsr", "16", null, null, null))).Should().Be("FSR Native AA");
     }
 
     private static Application.Persistence.SessionRow Row(string? upscaler, string? quality, string? driverReported, string? words, string? profile) => new()
