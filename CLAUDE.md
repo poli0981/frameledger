@@ -141,7 +141,8 @@ tools/                         # accuracy-check, changelog-check, chokepoint-che
                                # release-notes, rules-validate, test-artifacts-check, vendor-exports,
                                # versioninfo-check, vklayer-blastradius, fps-impact-runbook,
                                # wiki-build (beta.17: builds and checks the wiki; the wiki-check gate),
-                               # buildid-check (beta.18: the release's build id in the shipped natives)
+                               # buildid-check (beta.18: the release's build id in the shipped natives),
+                               # docs-split-check (beta.24, D66: CHANGELOG/HANDOFF and their parts agree)
                                # (six names added 2026-10-04)
                                # (PowerShell). This line used to name three, one of which
                                # — resx-audit — ~~does not exist~~ exists since 2026-09-13 with
@@ -197,7 +198,10 @@ The version handshake is wired end to end as of 2026-08-05: `FlGuardBuildId` giv
 0. **`docs/HANDOFF.md` — what to do next and in what order.** It carries sequencing,
    decisions that live in no other file, and the traps that cost a cycle each. It
    deliberately carries **no status**: it points at the four files that do. Start there
-   if you are picking up work; start at 1 if you are learning the system.
+   if you are picking up work; start at 1 if you are learning the system. *(Since beta.24, D66, the history of every
+   train, the passed owner-only items and the traps live in `docs/handoff/`; HANDOFF.md's §How this file is split and
+   §Decisions index resolve every old citation. CHANGELOG.md likewise keeps `[Unreleased]` and links each release's
+   file under `docs/changelog/`.)*
 1. `docs/19_SAFETY_AND_ANTICHEAT.md` — the guard, the refusal list, what we will not build
 2. `docs/01_ARCHITECTURE.md` — processes, injection flow, lifecycle
 3. `docs/02_SPEC.md` — FR/NFR ids used everywhere
