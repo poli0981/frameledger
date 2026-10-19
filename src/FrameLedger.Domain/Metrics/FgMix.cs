@@ -24,6 +24,11 @@ namespace FrameLedger.Domain.Metrics;
 /// denominator — and every window lands in exactly one row. States come first, by rising factor, then
 /// <see cref="FgMixKind.None"/>, then <see cref="FgMixKind.Unclassified"/>.
 /// </para>
+/// <para>
+/// <b>A window the count does not describe is not classified</b> (beta.26): fewer than <see cref="FgWindow.MinPerBucket"/>
+/// application frames, or a ratio above <see cref="FgWindow.GenerationCeiling"/> (<see cref="FgSlices.Slice.IsReadable"/>,
+/// <see cref="FgSlices.Slice.IsActive"/>).
+/// </para>
 /// </remarks>
 public sealed record FgMix(IReadOnlyList<FgMixRow> Rows)
 {
@@ -61,7 +66,7 @@ public sealed record FgMix(IReadOnlyList<FgMixRow> Rows)
         foreach (FgSlices.Slice s in slices)
         {
             List<FgSlices.Slice> into = s.IsActive ? active
-                : noneAllowed && s.Samples >= FgWindow.MinPerBucket && s.Tokens > 0 && s.Factor <= FgWindow.NoneCeiling ? none
+                : noneAllowed && s.IsReadable && s.Factor <= FgWindow.NoneCeiling ? none
                 : unclassified;
             into.Add(s);
         }

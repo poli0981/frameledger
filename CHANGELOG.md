@@ -35,6 +35,22 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Fixed
+
+- **A frame-generation "state" of ×1336.0.** The owner's Silent Hill 2 session (0.1.0-beta.25, the NVIDIA App's
+  *Dynamic* multi frame generation) listed a ×1336.0 state — 0.20 → 267.20 FPS for ten seconds — under *Frame
+  generation in this session*, and the DLSS line cited it: *DLSS 4.5 (a ×1336.0 frame-generation state)*. Those ten
+  seconds were presented with one application frame counted per five-second window (a loading screen), and a window
+  needed eight presents but only one counted frame to be read. A window now needs eight application frames and a
+  ratio no higher than ×8 — more than any frame generation produces (DLSS 4.5's ×6 is the most); every other window is
+  *Not classified*, and the steady state reads the same windows. A session-wide or live ratio that held above ×8 is
+  refused and says why (*the ratio is beyond what any frame generation produces*), in en/vi/ja. Sessions already
+  recorded are read by the same rule, so that session now lists ×2.0, ×3.0, ×6.1, no frame generation and 30 seconds
+  not classified, and its DLSS line cites ×6.1. The owner's runs of beta.24 and beta.25 are recorded in
+  `docs/spike-notes/22-owner-runs-2026-10-19.md`: the *Dynamic* settings line matched the NVIDIA App's own words, the
+  override's two library names are written down, and Lies of P read no FSR mode with the query hooked — the title
+  rounds its own render size and asked nothing the hook kept.
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

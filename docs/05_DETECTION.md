@@ -445,7 +445,9 @@ App's DLSS override loads the driver's `nvngx_dlss.dll` from the driver store un
 2026-10-19: unmeasured, and the one measurement says otherwise — the owner's Silent Hill 2 session ran ×6 frame
 generation through the NVIDIA App's override and no module with a census name was loaded. Since beta.24 every module
 under `%ProgramData%\NVIDIA\NGX` is recorded whatever its name, with its folder class — §DLSS generation below —, and
-owner-only item 20(c) records what the override loads.)* The session summary prints the loaded list and names such a
+owner-only item 20(c) records what the override loads.)* *(Measured 2026-10-19, `spike-notes` §22: under the
+override, Silent Hill 2 loaded `160_E658700.bin` 310.9.16.0 and `1B0_E658703.dll` 2.14.16.0 from the NGX folder —
+names no census lists; which feature each serves is not established.)* The session summary prints the loaded list and names such a
 difference ("the game ships 3.7.10.0: another copy was loaded"); since beta.24 the DLSS line says where each DLSS
 library was loaded from (the game, the graphics driver, Windows) — by folder, never who put it there.
 

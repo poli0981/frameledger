@@ -252,7 +252,8 @@ CREATE TABLE sessions (
   fg_source TEXT,                              -- api|cadence|manual (`etw` removed 2026-08-28: no producer, no tier)
   fg_factor REAL,
   -- schema 0003 (2026-09-14): why fg_factor is NULL while fg_mode names a technology — FgRefusalKind as
-  -- Vocabulary.FgRefusal spells it (not_counted, no_evaluations, non_uniform, dxgi_saturated, …). NULL when a
+  -- Vocabulary.FgRefusal spells it (not_counted, no_evaluations, non_uniform, dxgi_saturated, …; beyond_generation
+  -- since beta.26: a ratio above FgWindow.GenerationCeiling that held throughout). NULL when a
   -- factor stands or the writer predates the column. A REASON for the UI, never an input to fg_mode or a number.
   fg_refusal TEXT,
   -- FlWriterState.runtimeCensus, raw (FlRuntimeCensus bits). Which vendor runtime modules
@@ -688,7 +689,9 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > frame generation was named and whose count stood or was refused only as `non_uniform` / `ambiguous_band`; NULL
 > otherwise. A session before it has none and is **never rebuilt** from its `frame_blobs` (one Generated bit per frame,
 > the DXGI-counted presents lost). The `.partial` needs no change: a recovered session is aggregated from its records
-> like any other. `LatestVersion` is 20; `LedgerDatabaseTests.ScriptTwentyAddsTheFgMixColumnAndAnEarlierSessionHasNone`,
+> like any other. **Read by today's rule since beta.26:** `FgMixRecord.Parse` folds a stored state no window of the build
+> would form (above ×8, or under eight application frames a window) into the not-classified time — beta.24 and beta.25
+> stored one (`spike-notes` §22). `LatestVersion` is 20; `LedgerDatabaseTests.ScriptTwentyAddsTheFgMixColumnAndAnEarlierSessionHasNone`,
 > `SqliteSessionRepositoryTests.ASessionRoundTripsColumnForColumn`. **A beta.23 cannot open a ledger beta.24 migrated.**
 
 > **`0021_runtime_module_sources.sql` (beta.24, 2026-10-19, owner decision D64) — where each loaded module lived.** One

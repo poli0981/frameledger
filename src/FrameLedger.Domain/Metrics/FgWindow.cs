@@ -174,6 +174,16 @@ public sealed record FgWindow
     /// </summary>
     public const double NoneCeiling = 1.05;
 
+    /// <summary>
+    /// Above this, a ratio is not frame generation. No shipping technology generates more than five frames per application
+    /// frame (DLSS 4.5 multi frame generation, ×6; measured ×6.06 with DXGI's count, 2026-10-19), and ×8 leaves room for a
+    /// window's edges. A ratio above it is a stretch the title presented through with almost no application-frame token —
+    /// a loading screen or a menu drawn outside the vendor's frame count: Silent Hill 2 (2026-10-19) presented 1,336 times
+    /// per token for ten seconds under the NVIDIA App's Dynamic multi frame generation, and the mix listed it as a ×1336.0
+    /// state. Raised only with a title measured above it (beta.26).
+    /// </summary>
+    public const double GenerationCeiling = 8.0;
+
     /// <summary><c>none</c>, reached by counting: a published factor at or below <see cref="NoneCeiling"/>.</summary>
     public bool IsNone => Factor is double f && f <= NoneCeiling;
 
@@ -428,7 +438,7 @@ public sealed record FgWindow
         return null;
     }
 
-    /// <summary>The refusals that need the ratio itself: uniformity, then the unnameable band.</summary>
+    /// <summary>The refusals that need the ratio itself: uniformity, then a ratio no frame generation produces, then the unnameable band.</summary>
     private static FgRefusal? RefusalForRatio(FgWindow w)
     {
         double factor = w.DisplayedPresents / (double)w.Evaluations;
@@ -436,6 +446,14 @@ public sealed record FgWindow
         if (nonUniform is not null)
         {
             return nonUniform;
+        }
+
+        // AFTER uniformity (beta.26): a session that changed state is refused as non-uniform and keeps its steady state
+        // and its mix; only a ratio that held throughout and is no configuration is refused here — the live card's five
+        // seconds of a loading screen, or a session that never left one.
+        if (factor > GenerationCeiling)
+        {
+            return new FgRefusal(FgRefusalKind.BeyondGeneration, FgRefusalSubject.Factor, Overall: factor);
         }
 
         // A ratio near 1 is publishable since 2026-09-04 (20_OPEN_QUESTIONS §S31 row P1): 1.0 means every

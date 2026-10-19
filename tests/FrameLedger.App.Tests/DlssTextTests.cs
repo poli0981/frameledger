@@ -130,4 +130,22 @@ public sealed class DlssTextTests
         DlssText.Label(Row(upscaler: "dlss", fgMode: "fsrfg", factor: 4.0)).Should().BeNull("only DLSS Frame Generation names a DLSS generation");
         return 0;
     });
+
+    /// <summary>
+    /// beta.26: the owner's Silent Hill 2 session (2026-10-19) stored a ×1336.0 "state" — a loading screen at one token
+    /// per window — and the line read "DLSS 4.5 (a ×1336.0 frame-generation state)". Read by today's rule, the evidence is
+    /// the ×6.1 state the session really held.
+    /// </summary>
+    [Fact]
+    public void AStoredStateNoFrameGenerationProducesIsNotTheEvidence() => InEnglish(() =>
+    {
+        const string mix = "{\"Rows\":[" +
+            "{\"Kind\":\"generated\",\"Factor\":2.999266324284666,\"NativeFps\":95.75,\"DisplayedFps\":287.18,\"Seconds\":42.7,\"Share\":0.5,\"Windows\":9}," +
+            "{\"Kind\":\"generated\",\"Factor\":6.057471264367816,\"NativeFps\":23.2,\"DisplayedFps\":140.53,\"Seconds\":15,\"Share\":0.3,\"Windows\":3}," +
+            "{\"Kind\":\"generated\",\"Factor\":1336,\"NativeFps\":0.2,\"DisplayedFps\":267.2,\"Seconds\":10,\"Share\":0.2,\"Windows\":2}]}";
+        SessionRow silentHill2 = Row("{\"sl.interposer.dll\":\"2,4,0,0\"}", upscaler: "unknown", fgMode: "dlssg", factor: 2.999266324284666, mix: mix);
+
+        DlssText.Label(silentHill2).Should().Be("DLSS 4.5 (a ×6.1 frame-generation state)");
+        return 0;
+    });
 }

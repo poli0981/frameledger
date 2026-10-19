@@ -64,6 +64,26 @@ public sealed class FgWindowTests
         w.Refusal.Overall.Should().BeApproximately(1.25, 0.01);
     }
 
+    /// <summary>
+    /// beta.26: a ratio that held throughout and is above <see cref="FgWindow.GenerationCeiling"/> is no configuration —
+    /// the live card's five seconds of a loading screen presented with a token every hundred presents, or a session that
+    /// never left one. At the ceiling it is still a factor.
+    /// </summary>
+    [Fact]
+    public void ASteadyRatioAboveWhatAnyFrameGenerationProducesIsRefused()
+    {
+        FgWindow beyond = FgWindow.From(FgStream(appFrames: 80, k: 100), Frequency);
+
+        beyond.Factor.Should().BeNull();
+        beyond.Refusal!.Kind.Should().Be(FgRefusalKind.BeyondGeneration);
+        beyond.Refusal.Overall.Should().BeApproximately(100, 0.5);
+        beyond.Steady.Should().BeNull("the ratio held throughout: there is no other state to keep");
+
+        FgWindow atCeiling = FgWindow.From(FgStream(appFrames: 80, k: 8), Frequency);
+        atCeiling.Refusal.Should().BeNull();
+        atCeiling.Factor.Should().BeApproximately(8.0, 0.01);
+    }
+
     [Fact]
     public void AFactorIsPublishedWhenEveryRefusalPasses()
     {

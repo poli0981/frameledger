@@ -45,3 +45,4 @@ Each section below lives in its own file under `docs/spike-notes/`, moved verbat
 | §19 | Anti-cheat beside the executable — Wuthering Waves (2026-10-13, beta.21, owner decision D58) | [`spike-notes/19-wuthering-waves.md`](spike-notes/19-wuthering-waves.md) |
 | §20 | The launcher in front of four itch installs is malware (2026-10-13, beta.21, owner decision D57) | [`spike-notes/20-itch-malware.md`](spike-notes/20-itch-malware.md) |
 | §21 | Opening pages and switching tabs in the App (2026-10-14, beta.23) | [`spike-notes/21-app-pages-and-tabs.md`](spike-notes/21-app-pages-and-tabs.md) |
+| §22 | The owner's runs of beta.24 and beta.25 on real hardware (2026-10-19) | [`spike-notes/22-owner-runs-2026-10-19.md`](spike-notes/22-owner-runs-2026-10-19.md) |

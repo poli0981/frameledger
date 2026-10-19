@@ -19,8 +19,9 @@ namespace FrameLedger.Domain.Metrics;
 /// </para>
 /// <para>
 /// <b>What it is.</b> The claimed span cut into <see cref="WindowSeconds"/>-second windows — the live card's own window —
-/// each classified by its own <c>presents ÷ tokens</c>; the ACTIVE windows (≥ <see cref="FgWindow.ActiveThreshold"/>)
-/// that agree with one another within <see cref="StateTolerance"/> form a state, and the state holding the most time
+/// each classified by its own <c>presents ÷ tokens</c>; the ACTIVE windows (≥ <see cref="FgWindow.ActiveThreshold"/>,
+/// ≤ <see cref="FgWindow.GenerationCeiling"/>, with at least <see cref="FgWindow.MinPerBucket"/> application frames since
+/// beta.26) that agree with one another within <see cref="StateTolerance"/> form a state, and the state holding the most time
 /// is this record, with the share of the presenting time it covers. ×3 and ×4 are 25 % apart and never pool; a
 /// factor that wanders (a dynamic multiplier) forms no state long enough and the refusal stands alone.
 /// </para>

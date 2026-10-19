@@ -374,6 +374,7 @@ public static class Strings
         nameof(Fg_Factor_NotCounted),
         nameof(Fg_None),
         nameof(Fg_Refusal_AmbiguousBand),
+        nameof(Fg_Refusal_BeyondGeneration),
         nameof(Fg_Refusal_CountSaturated),
         nameof(Fg_Refusal_DxgiSaturated),
         nameof(Fg_Refusal_MultipleStreams),
@@ -385,6 +386,7 @@ public static class Strings
         nameof(Fg_Refusal_Unattributed),
         nameof(Fg_Refusal_Unknown),
         nameof(Fg_RefusalDetail_AmbiguousBand_Format),
+        nameof(Fg_RefusalDetail_BeyondGeneration_Format),
         nameof(Fg_RefusalDetail_MultipleStreams_Format),
         nameof(Fg_RefusalDetail_NonUniform_Format),
         nameof(Fg_RefusalDetail_NoTokens),
@@ -1857,6 +1859,8 @@ public static class Strings
 
     public static string Fg_Refusal_AmbiguousBand => ResourceManager.GetString(nameof(Fg_Refusal_AmbiguousBand), Culture) ?? nameof(Fg_Refusal_AmbiguousBand);
 
+    public static string Fg_Refusal_BeyondGeneration => ResourceManager.GetString(nameof(Fg_Refusal_BeyondGeneration), Culture) ?? nameof(Fg_Refusal_BeyondGeneration);
+
     public static string Fg_Refusal_CountSaturated => ResourceManager.GetString(nameof(Fg_Refusal_CountSaturated), Culture) ?? nameof(Fg_Refusal_CountSaturated);
 
     public static string Fg_Refusal_DxgiSaturated => ResourceManager.GetString(nameof(Fg_Refusal_DxgiSaturated), Culture) ?? nameof(Fg_Refusal_DxgiSaturated);
@@ -1878,6 +1882,8 @@ public static class Strings
     public static string Fg_Refusal_Unknown => ResourceManager.GetString(nameof(Fg_Refusal_Unknown), Culture) ?? nameof(Fg_Refusal_Unknown);
 
     public static string Fg_RefusalDetail_AmbiguousBand_Format => ResourceManager.GetString(nameof(Fg_RefusalDetail_AmbiguousBand_Format), Culture) ?? nameof(Fg_RefusalDetail_AmbiguousBand_Format);
+
+    public static string Fg_RefusalDetail_BeyondGeneration_Format => ResourceManager.GetString(nameof(Fg_RefusalDetail_BeyondGeneration_Format), Culture) ?? nameof(Fg_RefusalDetail_BeyondGeneration_Format);
 
     public static string Fg_RefusalDetail_MultipleStreams_Format => ResourceManager.GetString(nameof(Fg_RefusalDetail_MultipleStreams_Format), Culture) ?? nameof(Fg_RefusalDetail_MultipleStreams_Format);
 

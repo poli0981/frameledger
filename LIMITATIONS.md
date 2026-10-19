@@ -67,10 +67,12 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
   ([Metrics](docs/03_METRICS.md))
 - **The mix of frame-generation states** in a session's summary (since 0.1.0-beta.24) is read over five-second
   windows: frame generation that changes faster than that — the NVIDIA App's *Dynamic* mode can — reads partly as
-  *Not classified*, and a state shorter than 10 seconds is not listed. The multiplier chosen in a game's own menu is
-  not read; the measured factor is its evidence. How the NVIDIA App's *Dynamic* ceiling and *Max refresh rate* target
-  are stored by the driver is read from NVIDIA's own setting names and not yet checked against the App on a real
-  game. Sessions recorded before 0.1.0-beta.24 have no mix. ([Metrics](docs/03_METRICS.md))
+  *Not classified*, and a state shorter than 10 seconds is not listed. A stretch the game presents with almost no frame
+  count of its own — a loading screen or a menu drawn outside frame generation — reads as *Not classified* too. The
+  multiplier chosen in a game's own menu is not read; the measured factor is its evidence. How the NVIDIA App's
+  *Dynamic* ceiling and *Max refresh rate* target are stored by the driver is read from NVIDIA's own setting names,
+  and has been checked against the App on one game. Sessions recorded before 0.1.0-beta.24 have no mix.
+  ([Metrics](docs/03_METRICS.md))
 - **Time below 30, 60 FPS and below the refresh rate** (since 0.1.0-beta.14) leaves out the small wobble of a game
   held at its limit: a frame counts as below 60 when it took 10 % longer than 1/60 s, or when the frames around it ran
   2 % slower. So a game running steadily just under the line — 59 FPS against 60 — reads partly as at it. Time below

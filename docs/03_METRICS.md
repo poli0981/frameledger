@@ -488,10 +488,23 @@ F_app   = Σ fgEvaluations                  (APPLICATION frames, counted at the 
 > session has one. Rows: the states by rising factor, then *no frame generation*, then *not classified*. **Never an
 > average across states** (CLAUDE.md rule 6), and ×5 and ×6 are 20 % apart and never pool.
 >
+> **Amended 2026-10-19 (beta.26): a window needs application frames, and a ratio frame generation can produce.**
+> "≥ 8 samples and tokens" was built as eight presents and ONE token, and the owner's Silent Hill 2 session listed a
+> ×1336.0 state — ten seconds the title presented through with one token per window (`spike-notes` §22); the DLSS line
+> cited it. A window is now read only with ≥ 8 presents AND ≥ 8 application frames (`FgSlices.Slice.IsReadable`, both
+> active and *no frame generation*), and is active only up to **×8** (`FgWindow.GenerationCeiling`: no shipping
+> technology generates more than five frames per application frame, DLSS 4.5's ×6); every other window is *not
+> classified*. The steady state reads the same windows, so it can no longer pick such a stretch either. A session-wide
+> or live ratio that held above ×8 is refused as **`beyond_generation`** (after uniformity: a session that changed
+> state stays `non_uniform` and keeps its steady state and its mix). **A stored mix is read by today's rule**
+> (`FgMixRecord.Parse`): a row above ×8, or whose windows averaged fewer than eight application frames, joins the
+> not-classified time — so the session stored with the ×1336.0 row reads ×2.0, ×3.0, ×6.1, no frame generation and
+> 30 s not classified, and its shares still add up.
+>
 > **When there is a mix.** Only where the session's frame generation was named (`Named` / `ActiveUnidentified`) and the
 > session-wide count either stood or was refused as `NonUniform` / `AmbiguousBand` — a change of state is exactly what a
 > mix describes. Every other refusal (not counted, unattributed, interleaved streams, either saturation, no
-> evaluations, too short, no batches) gets none — slicing does not make a refused record set trustworthy, the steady
+> evaluations, too short, no batches, and since beta.26 a ratio beyond any frame generation) gets none — slicing does not make a refused record set trustworthy, the steady
 > state's rule — and so does a session in which no state formed.
 >
 > **Stored, never replayed.** `sessions.fg_mix` (schema 0020) holds the rows as JSON (`FgMixRecord`), written by the

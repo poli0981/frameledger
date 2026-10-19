@@ -38,4 +38,10 @@ public enum FgRefusalKind
 
     /// <summary>No present drained a Streamline batch, so there is no presents-per-batch ratio to read.</summary>
     NoBatches,
+
+    /// <summary>
+    /// The ratio is above <see cref="FgWindow.GenerationCeiling"/> — more presents per application frame than any frame
+    /// generation produces: the count does not describe these presents (beta.26).
+    /// </summary>
+    BeyondGeneration,
 }

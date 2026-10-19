@@ -22,6 +22,21 @@ public sealed class FgSteadyStateTests
     private static List<FrameSample> Play(int seconds, int k, uint swapchain = 1) =>
         FgStream(appFrames: seconds * _presentsPerSecond / k, k: k, swapchain: swapchain);
 
+    /// <summary>
+    /// beta.26: thirty seconds of a loading screen at one token per window held more time than the fifteen seconds of ×2
+    /// gameplay, and every one of its windows read ×1200 alike — the longest "state" of the session was no state at all.
+    /// </summary>
+    [Fact]
+    public void WindowsWithOneTokenEachAreNotTheSteadyState()
+    {
+        List<FrameSample> session = Concat(Play(15, 2), FgStream(appFrames: 6, k: 1200));
+
+        FgSteadyState steady = FgSteadyState.From(session, 0, Frequency)!;
+
+        steady.Factor.Should().BeApproximately(2.0, 0.02);
+        steady.Share.Should().BeApproximately(15.0 / 45, 0.03);
+    }
+
     /// <summary><paramref name="seconds"/> of presents with the count claimed and no token at all: a splash, a video, a loading screen.</summary>
     private static List<FrameSample> NoTokens(int seconds) =>
         FgStream(appFrames: seconds * _presentsPerSecond, k: 1, evalsPerFrame: 0);

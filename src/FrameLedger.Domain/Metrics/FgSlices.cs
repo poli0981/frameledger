@@ -19,8 +19,18 @@ internal static class FgSlices
         /// <summary>Read only on windows that have tokens.</summary>
         public double Factor => Displayed / (double)Tokens;
 
-        /// <summary>Generating: enough samples to judge, tokens counted, and at least <see cref="FgWindow.ActiveThreshold"/>.</summary>
-        public bool IsActive => Samples >= FgWindow.MinPerBucket && Tokens > 0 && Displayed >= Tokens * FgWindow.ActiveThreshold;
+        /// <summary>
+        /// A window a ratio can be read from: <see cref="FgWindow.MinPerBucket"/> presents AND as many application frames
+        /// (beta.26). Presents alone let a window with ONE token through, and its ratio was the presents themselves: Silent
+        /// Hill 2's loading screen read ×1336.0, a state the mix listed and the DLSS line cited.
+        /// </summary>
+        public bool IsReadable => Samples >= FgWindow.MinPerBucket && Tokens >= FgWindow.MinPerBucket;
+
+        /// <summary>
+        /// Generating: readable, at least <see cref="FgWindow.ActiveThreshold"/>, and no more than
+        /// <see cref="FgWindow.GenerationCeiling"/> — above it the ratio is no frame generation's.
+        /// </summary>
+        public bool IsActive => IsReadable && Displayed >= Tokens * FgWindow.ActiveThreshold && Factor <= FgWindow.GenerationCeiling;
     }
 
     /// <summary>
