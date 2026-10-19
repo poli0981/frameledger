@@ -69,7 +69,9 @@ are safety items, and something listed there as unresolved should not be built t
 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) | Telemetry layers (DXGI/PDH, LibreHardwareMonitor, NVAPI), the game process's memory, licences |
 | [`19_SAFETY_AND_ANTICHEAT.md`](19_SAFETY_AND_ANTICHEAT.md) | The anti-cheat guard, what a finding does, the user-mode exception, what will never be built |
 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) | Every unresolved question, defect and measurement, with its status marker |
-| [`HANDOFF.md`](HANDOFF.md) | Sequencing, the owner's decisions, traps |
+| [`HANDOFF.md`](HANDOFF.md) | Sequencing, the open owner-only items, the index of the owner's decisions |
+| [`handoff/`](handoff/) | Since beta.24 (D66): the history of every train and phase, the passed owner-only items, the traps — moved out of `HANDOFF.md` verbatim |
+| [`changelog/`](changelog/) | Since beta.24 (D66): each release's notes in its own file, and the ledger kept before the first tag; `../CHANGELOG.md` keeps `[Unreleased]` and the list |
 | [`spike-notes.md`](spike-notes.md) | What was measured, how, on which machine, and what each result decided |
 | [`LIST_GAME_TESTED.md`](LIST_GAME_TESTED.md) | The real games FrameLedger has been run with, and what each session measured (changes need the owner's review) |
 | [`legal-drift-history.md`](legal-drift-history.md) | How the legal documents once drifted from the software, and the maintainers' notes moved out of them |

@@ -6,7 +6,8 @@ The words the code and the documents use. The player's glossary is [Words FrameL
   developer's.
 - **Census** — the frame-generation runtimes found loaded in a game; it decides the qualifier beside Presented FPS.
 - **Consent** — a user's per-game agreement to hooking, typed in the consent dialog, stamped with where it came from.
-- **D-numbers** (D1, D2, …) — the owner's decisions, recorded in [`docs/HANDOFF.md`](../docs/HANDOFF.md).
+- **D-numbers** (D1, D2, …) — the owner's decisions, indexed in [`docs/HANDOFF.md`](../docs/HANDOFF.md) (§Decisions
+  index) and recorded where each was taken.
 - **Drain** — the agent reading the ring, every 100 ms.
 - **FR-x / NFR-x** — requirement ids from [`docs/02_SPEC.md`](../docs/02_SPEC.md).
 - **Guard** — the native anti-cheat check that runs before every injection and every 30 seconds after; one

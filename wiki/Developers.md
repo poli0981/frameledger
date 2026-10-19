@@ -12,8 +12,9 @@ The full set is [`docs/`](../docs/README.md), and the rules every AI-assisted ch
 2. [Architecture](Architecture.md), then [Repository map](Repository-map.md).
 3. [Build and test](Build-and-test.md) — `./build.ps1 check` is the whole gate, the same one CI runs.
 
-Picking up work where it stopped: [`docs/HANDOFF.md`](../docs/HANDOFF.md) has the sequencing, the owner's decisions
-and the traps that each cost a cycle.
+Picking up work where it stopped: [`docs/HANDOFF.md`](../docs/HANDOFF.md) has the sequencing, the open owner-only
+items and an index of the owner's decisions; the history of each release and the traps that each cost a cycle are
+under `docs/handoff/`.
 
 ## Where status lives
 

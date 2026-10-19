@@ -473,6 +473,14 @@ function Invoke-ProjectGates {
     Invoke-Checked 'wiki-check (self-test)' { & $wikiTool -RepoRoot $repo -SelfTest }
     Invoke-Checked 'wiki-check' { & $wikiTool -RepoRoot $repo -Check }
 
+    # beta.24 (D66): CHANGELOG.md and docs/HANDOFF.md keep their paths as the index of their parts under docs/changelog/
+    # and docs/handoff/. A released section left in CHANGELOG.md, a release file whose heading is not its name or that
+    # links relatively, or an index and its files that do not name each other both ways is red here.
+    Write-Step 'docs-split-check'
+    $splitTool = Join-Path $repo 'tools/docs-split-check.ps1'
+    Invoke-Checked 'docs-split-check (self-test)' { & $splitTool -SelfTest }
+    Invoke-Checked 'docs-split-check' { & $splitTool -RepoRoot $repo }
+
     Write-Step 'changelog-check'
     $changelogTool = Join-Path $repo 'tools/changelog-check.ps1'
     if (Test-Path $changelogTool) {

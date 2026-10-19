@@ -14,8 +14,9 @@ The full documents are [`docs/13_CI_CD.md`](../docs/13_CI_CD.md) and [`docs/11_U
 
 ## Cutting a release
 
-1. One pull request moves the `[Unreleased]` entries of [`CHANGELOG.md`](../CHANGELOG.md) under a `## [x.y.z]` or
-   `## [x.y.z-beta.N]` heading with an *Updating from* note, and updates the release lines in `README.md`, the accuracy
+1. One pull request moves the `[Unreleased]` entries of [`CHANGELOG.md`](../CHANGELOG.md) into a new file,
+   `docs/changelog/<version>.md`, under a `## [x.y.z]` or `## [x.y.z-beta.N]` heading with an *Updating from* note,
+   adds its row to the Releases table in `CHANGELOG.md`, and updates the release lines in `README.md`, the accuracy
    statement (`legal/ACCURACY.md` and its copies) and `LIMITATIONS.md`. `VERSION` changes only with the numeric core.
 2. After it merges, a signed tag `vx.y.z` (or `vx.y.z-beta.N`) on the merge commit starts `release.yml`:
    - it checks the tag against `VERSION` and that the changelog has the section;
