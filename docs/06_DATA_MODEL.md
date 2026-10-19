@@ -235,7 +235,8 @@ CREATE TABLE sessions (
 
   -- upscaling / FG (measured at tier 1)
   upscaler TEXT,                               -- none|dlss|fsr2|fsr3|fsr4|xess|nis|unknown, and fsr since 2026-09-04 (FL_UPSCALER_FSR_UNVERSIONED; added 2026-10-04)
-  upscaler_quality TEXT,
+  upscaler_quality TEXT,                       -- the hooked byte, invariant: dlss 1-6 (sl::DLSSMode); fsr/fsr3 16-20 =
+                                               --   0x10 + FfxApiUpscaleQualityMode since beta.25 (D65); NULL when none told
   upscaler_sharpness INTEGER,                  -- percent; NULL when the API reports none
   render_w INTEGER, render_h INTEGER,          -- dominant segment
   output_w INTEGER, output_h INTEGER,

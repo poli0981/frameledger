@@ -23,4 +23,7 @@ public enum UpscalerQualityMode
 
     /// <summary>An override's custom render-scale ratio; its percentage travels beside it.</summary>
     Custom = 7,
+
+    /// <summary>FSR at a per-dimension ratio of 1.0: anti-aliasing at native resolution (beta.25, D65).</summary>
+    NativeAa = 8,
 }

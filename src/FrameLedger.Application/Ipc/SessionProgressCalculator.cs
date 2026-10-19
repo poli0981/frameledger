@@ -64,7 +64,7 @@ public static class SessionProgressCalculator
             FgRefusal = usable ? null : fg?.Refusal is { } refusal ? Vocabulary.FgRefusal(refusal.Kind) : null,
             FgRuntimeCensus = progress.WriterState.RuntimeCensus,
             Upscaler = upscaler is { } u ? Vocabulary.Upscaler(u) : FgLadder.UpscalerHookRan(progress.Records) ? "unknown" : null,
-            UpscalerQuality = Modal([.. withParams.Where(static s => s.UpscalerQuality != FrameSample.QualityNotTold)])?.ToString(CultureInfo.InvariantCulture),
+            UpscalerQuality = QualityByte.Of(withParams)?.ToString(CultureInfo.InvariantCulture),
             UpscalerDriverReported = progress.NgxDriver.SrCreatedAndEvaluated ? "dlss" : null,
             UpscalerQualityOverride = QualityResolver.Token(QualityResolver.Live(
                 upscaler == FlUpscaler.Dlss || (upscaler is null && progress.NgxDriver.SrCreatedAndEvaluated),
@@ -119,11 +119,6 @@ public static class SessionProgressCalculator
 
         return null;
     }
-
-    private static int? Modal(IReadOnlyList<FrameSample> samples) =>
-        samples.Count == 0
-            ? null
-            : samples.GroupBy(static s => s.UpscalerQuality).OrderByDescending(static g => g.Count()).ThenBy(static g => g.Key).First().Key;
 
     /// <summary>The last <see cref="WindowSeconds"/> of records, and the dominant stream within them with its gaps.</summary>
     private sealed class Window

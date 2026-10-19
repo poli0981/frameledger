@@ -5238,6 +5238,8 @@ struct FfxObservation {
     std::size_t   valueWithoutBit = 0;
     std::size_t   dishonestParams = 0;
     std::size_t   fsrFgRecords = 0;
+    std::size_t   qualityNamed = 0;    // params records carrying Quality's byte, 0x11 (beta.25, D65)
+    std::size_t   qualityOther = 0;    // params records carrying any byte but 0x11 and 0xFF
 };
 
 // Inject into an ffx-api target and drain a post-install window.
@@ -5247,11 +5249,12 @@ struct FfxObservation {
 // tolerance the other does not have, and the pair stops discriminating the moment
 // they differ.
 bool ObserveFfx(int presentsPerEval, const wchar_t* topology, bool prepare, fl::FlUpscaler expected,
-                FfxObservation& out) {
+                FfxObservation& out, const wchar_t* query = nullptr) {
     Child        child;
-    std::wstring cmd = std::wstring(L"\"") + FL_HARNESS_EXE + L"\" --real --presents-per-eval " +
-                       std::to_wstring(presentsPerEval) + L" --ffx-topology " + topology +
-                       (prepare ? L"" : L" --ffx-no-prepare") + L" --hold-presenting-ffx 14";
+    std::wstring cmd =
+        std::wstring(L"\"") + FL_HARNESS_EXE + L"\" --real --presents-per-eval " + std::to_wstring(presentsPerEval) +
+        L" --ffx-topology " + topology + (prepare ? L"" : L" --ffx-no-prepare") +
+        (query != nullptr ? std::wstring(L" --ffx-query ") + query : std::wstring()) + L" --hold-presenting-ffx 14";
     STARTUPINFOW si{};
     si.cb = sizeof(si);
     if (!CreateProcessW(FL_HARNESS_EXE, cmd.data(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW, nullptr, nullptr, &si,
@@ -5299,8 +5302,11 @@ bool ObserveFfx(int presentsPerEval, const wchar_t* topology, bool prepare, fl::
     // ONE ROW PUBLISHES ALL THREE FAMILIES, so the FG_EVALUATIONS wait is the same wait
     // as identity's -- kept anyway, so the assertion is about the family the count is
     // entitled by rather than about which bit happened to be set first.
+    // With the quality query asked, the window opens only once ITS family is published too: a record drained before
+    // the query was hooked carries 0xFF honestly, and the window is about what a hooked query names.
     bool ok = st->status == fl::FL_STATUS_READY && WaitForIdentityHook(st) &&
-              WaitForHookFamily(st, static_cast<uint32_t>(fl::FL_HOOK_FG_EVALUATIONS));
+              WaitForHookFamily(st, static_cast<uint32_t>(fl::FL_HOOK_FG_EVALUATIONS)) &&
+              (query == nullptr || WaitForHookFamily(st, static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY)));
     if (ok) {
         fl::RingReader rd;
         ok = rd.Init(base, FL_SHM_DEFAULT_CAPACITY);
@@ -5339,6 +5345,11 @@ bool ObserveFfx(int presentsPerEval, const wchar_t* topology, bool prepare, fl::
                     if (r.renderW != FL_TAGGED_RENDER_W || r.renderH != FL_TAGGED_RENDER_H) {
                         ++out.wrongExtent;
                     }
+                    if (r.upscalerQuality == 0x11u) {    // 0x10 + FFX_UPSCALE_QUALITY_MODE_QUALITY (1)
+                        ++out.qualityNamed;
+                    } else if (r.upscalerQuality != 0xFFu) {
+                        ++out.qualityOther;
+                    }
                 } else if (r.renderW != 0u || r.renderH != 0u) {
                     ++out.valueWithoutBit;
                 }
@@ -5356,7 +5367,7 @@ bool ObserveFfx(int presentsPerEval, const wchar_t* topology, bool prepare, fl::
 
 // The assertions every combination shares. Catch2's CHECK works from a helper, and
 // one helper is what keeps the four runs asserting ONE expression.
-void AssertFfxWindow(const FfxObservation& obs, int k) {
+void AssertFfxWindow(const FfxObservation& obs, int k, bool asked = false) {
     CAPTURE(obs.drained);
     CAPTURE(obs.sigma);
     CAPTURE(obs.measured);
@@ -5397,6 +5408,13 @@ void AssertFfxWindow(const FfxObservation& obs, int k) {
     CHECK(obs.valueWithoutBit == 0u);
     CHECK(obs.dishonestParams == 0u);
 
+    // THE QUALITY BYTE (beta.25, D65): never a mode nobody asked for. Unasked, every params record carries 0xFF -- the
+    // dispatch names no mode by itself; asked, Quality's 0x11 and nothing else, four answers that do not fit beside it.
+    CHECK(obs.qualityOther == 0u);
+    if (!asked) {
+        CHECK(obs.qualityNamed == 0u);
+    }
+
     // FSR_FG is named on the presents that drained a FRAMEGENERATION dispatch -- one
     // per application frame at K > 1, none at all at K = 1. The K = 1 half is what
     // stops a writer from naming frame generation off the PREPARE alone.
@@ -5408,8 +5426,15 @@ void AssertFfxWindow(const FfxObservation& obs, int k) {
 
     // EQUALITY, not a bit test, for the reason the token test gives: the compound
     // family constant is the one value no gate reads.
-    CHECK(obs.hooks == static_cast<std::uint32_t>(fl::FL_HOOK_PRESENT | fl::FL_HOOK_UPSCALER_IDENTITY |
-                                                  fl::FL_HOOK_UPSCALER_PARAMS | fl::FL_HOOK_FG_EVALUATIONS));
+    //
+    // The quality query's family joins wherever an ffx-api LEAF is loaded -- every leaf exports ffxQuery and every one
+    // has a row (beta.25, D65) -- and NOT on the FSR 3.0 host alone, which has no ffxQuery and no row.
+    const bool anyLeaf = (obs.census & (fl::FL_CENSUS_AMD_FFX_DX12 | fl::FL_CENSUS_AMD_FFX_UPSCALER |
+                                        fl::FL_CENSUS_AMD_FFX_FRAMEGENERATION)) != 0u;
+    const auto query = anyLeaf ? static_cast<std::uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY) : 0u;
+    CHECK(obs.hooks == (static_cast<std::uint32_t>(fl::FL_HOOK_PRESENT | fl::FL_HOOK_UPSCALER_IDENTITY |
+                                                   fl::FL_HOOK_UPSCALER_PARAMS | fl::FL_HOOK_FG_EVALUATIONS) |
+                        query));
     CHECK((obs.census & fl::FL_CENSUS_RAN) != 0u);
     CHECK((obs.census & fl::FL_CENSUS_SL_INTERPOSER) == 0u);
 }
@@ -5497,6 +5522,31 @@ TEST_CASE("the FSR 3.0 host facade: Fsr3 identity and the count from its upscale
         CHECK((obs.census & fl::FL_CENSUS_FFX_FSR3) != 0u);
         CHECK((obs.census & fl::FL_CENSUS_AMD_FFX_DX12) != 0u);
         CHECK((obs.census & fl::FL_CENSUS_AMD_FFX_UPSCALER) == 0u);
+    }
+}
+
+TEST_CASE("FSR's quality mode (beta.25, D65): the mode the title asked for names the dispatch, by its size and by "
+          "its ratio",
+          "[guard][inject][shm][ffx]") {
+    // THE TAGGED EXTENT IS QUALITY'S ANSWER. Before every UPSCALE the harness asks all five modes at the 1920x1080
+    // display the descriptor states, the stub answers display / ratio as the vendor does, and 1280x720 is 1920x1080 /
+    // 1.5 -- so every record that claims the params bit must carry 0x11 (0x10 + FFX_UPSCALE_QUALITY_MODE_QUALITY) and
+    // none any other byte: the four answers that do not fit sit in the table beside the one that does. Through the
+    // 2.x loader by size -- the loader passes the query on to the leaf's export, so the answer is kept twice, which is
+    // harmless (nothing is counted) -- and through the 1.1.x monolith by ratio, within the vendor's truncation.
+    {
+        FfxObservation obs;
+        REQUIRE(ObserveFfx(1, L"2x", /*prepare=*/true, fl::FL_UPSCALER_FSR_UNVERSIONED, obs, L"sizes"));
+        AssertFfxWindow(obs, 1, /*asked=*/true);
+        CHECK(obs.qualityNamed + 1 >= obs.paramsRecords);
+        CHECK(obs.qualityNamed > 0u);
+    }
+    {
+        FfxObservation obs;
+        REQUIRE(ObserveFfx(1, L"1x", /*prepare=*/false, fl::FL_UPSCALER_FSR3, obs, L"ratios"));
+        AssertFfxWindow(obs, 1, /*asked=*/true);
+        CHECK(obs.qualityNamed + 1 >= obs.paramsRecords);
+        CHECK(obs.qualityNamed > 0u);
     }
 }
 

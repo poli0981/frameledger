@@ -3440,4 +3440,7 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="Dlss_NeuralRendering_Loaded" xml:space="preserve">
     <value>DLSS 5 runtime loaded</value>
   </data>
+  <data name="Fsr_Mode_NativeAa" xml:space="preserve">
+    <value>Native AA</value>
+  </data>
 </root>

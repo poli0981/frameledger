@@ -4573,4 +4573,8 @@
     <value>DLSS 5 ランタイムを読み込み済み</value>
     <comment>review</comment>
   </data>
+  <data name="Fsr_Mode_NativeAa" xml:space="preserve">
+    <value>ネイティブ AA</value>
+    <comment>review</comment>
+  </data>
 </root>

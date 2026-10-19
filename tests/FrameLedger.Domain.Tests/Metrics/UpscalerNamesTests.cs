@@ -6,7 +6,10 @@ using FrameLedger.Domain.Metrics;
 
 namespace FrameLedger.Domain.Tests.Metrics;
 
-/// <summary>Three numberings, one table each (beta.24, D63): the hooked byte, the driver's report and the App's profile value.</summary>
+/// <summary>
+/// Four numberings, one table each: the hooked DLSS byte, the driver's report and the App's profile value (beta.24, D63),
+/// and FSR's byte (beta.25, D65).
+/// </summary>
 public sealed class UpscalerNamesTests
 {
     [Theory]
@@ -22,7 +25,6 @@ public sealed class UpscalerNamesTests
     [Theory]
     [InlineData("dlss", "7")]
     [InlineData("dlss", "0")]
-    [InlineData("fsr3", "2")]
     [InlineData("xess", "3")]
     [InlineData(null, "2")]
     [InlineData("dlss", null)]
@@ -30,6 +32,23 @@ public sealed class UpscalerNamesTests
     [InlineData("dlss", " ")]
     public void AValueNoTableNamesIsNoMode(string? upscaler, string? stored) =>
         UpscalerNames.Mode(upscaler, stored).Should().BeNull("the App prints a stored number nobody can name as it is");
+
+    [Theory]
+    [InlineData("fsr3", "16", UpscalerQualityMode.NativeAa)]
+    [InlineData("fsr3", "17", UpscalerQualityMode.Quality)]
+    [InlineData("fsr", "18", UpscalerQualityMode.Balanced)]
+    [InlineData("fsr", "19", UpscalerQualityMode.Performance)]
+    [InlineData("fsr4", "20", UpscalerQualityMode.UltraPerformance)]
+    public void AnFsrByteIsTheModeItsQueryAnswerNamed(string upscaler, string stored, UpscalerQualityMode mode) =>
+        UpscalerNames.Mode(upscaler, stored).Should().Be(mode, "0x10 + FfxApiUpscaleQualityMode, beta.25 (D65)");
+
+    [Theory]
+    [InlineData("fsr3", "15")]
+    [InlineData("fsr3", "21")]
+    [InlineData("fsr3", "1")]
+    [InlineData("fsr2", "17")]
+    public void AnFsrByteNoTableNamesIsNoMode(string upscaler, string stored) =>
+        UpscalerNames.Mode(upscaler, stored).Should().BeNull("FSR 2 has no query hook, and a value outside 16..20 is no FSR mode");
 
     [Theory]
     [InlineData(0u, UpscalerQualityMode.Performance)]

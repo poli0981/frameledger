@@ -38,8 +38,9 @@ What the words on FrameLedger's screens mean, in alphabetical order. How each fi
 - **Presented FPS** — every frame the game handed to Windows, shown when frame generation could not be measured, with a
   note saying whether generated frames could be among them.
 - **RAM (this game)** — the game's own memory, what Task Manager's Details tab shows as its private working set.
-- **Quality mode** — the upscaler's setting (Quality, Balanced, Performance, Ultra Performance, DLAA). *· NVIDIA App*
-  marks one the NVIDIA App set for the game, which the NVIDIA driver reported applied.
+- **Quality mode** — the upscaler's setting (Quality, Balanced, Performance, Ultra Performance, DLAA; FSR's Native AA
+  renders at full resolution). *· NVIDIA App* marks one the NVIDIA App set for the game, which the NVIDIA driver
+  reported applied.
 - **Ray tracing, Path tracing, Ray reconstruction** — read *Yes*, *No* or *N/A*. Ray tracing is measured on DirectX 12
   games; path tracing is never stated as a fact.
 - **Render scale** — the share of the screen's resolution the game drew at before upscaling. 100% means no upscaling.

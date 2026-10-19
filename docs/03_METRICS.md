@@ -634,6 +634,29 @@ From the upscaler hooks we get, per frame:
   > `eOff` and anything past `eCount` never reach a row). The ffx-api dispatch carries no quality and XeSS has no hook,
   > so there is nothing of theirs to name. A value the table does not know is shown as stored. It names the MEASURED
   > byte only — a label derived from the render/output ratio is `HANDOFF` §7a's owner decision, still not taken.
+  > *(Corrected 2026-10-19, beta.25: the ffx-api dispatch still carries no quality, and FSR's mode now comes from the
+  > vendor's own query — the next note. XeSS still has no hook.)*
+
+  > **A second producer since beta.25 (2026-10-19, owner decision D65): FSR's mode, from the vendor's own query.**
+  > `FfxApiUpscaleQualityMode` is an input to `ffxQuery`, which a title calls before it sizes its targets — "what
+  > render size (`…GETRENDERRESOLUTIONFROMQUALITYMODE`) or ratio (`…GETUPSCALERATIOFROMQUALITYMODE`) does this mode
+  > give at this display size?" — never to the per-frame dispatch, which carries the size alone. The Overlay hooks
+  > `ffxQuery` on the four modules it hooks `ffxDispatch` on (`17_HOOK_ENGINE` §Hook inventory), keeps each answer the
+  > vendor returned (one slot per mode), and an UPSCALE dispatch whose `renderSize` (and `upscaleSize`, where the title
+  > states it) fits exactly ONE kept answer — a size answer exactly, a ratio answer within one pixel of
+  > `display / ratio`, the vendor truncating and an engine perhaps rounding — publishes `0x10 + mode`: 16 Native AA ·
+  > 17 Quality · 18 Balanced · 19 Performance · 20 Ultra Performance (offset so FSR's Native AA, 0, can never be read
+  > as Streamline's `eOff`). No fit, two fits, or no query seen → `0xFF`. **A session, its segments and the live card
+  > read one rule (`Domain.Metrics.QualityByte`)**: the most common told byte, and for FSR none when any FSR record
+  > was rendered at a size no FSR-named record has. A dynamic resolution still matches an answer at the top of its
+  > range, so the plain modal would name a mode the session mostly did not render at; `legal/ACCURACY.md` promises
+  > none ("FSR at a dynamic resolution among them — no mode is shown"). A "not told" record at a named size — a
+  > present that drained a frame-generation PREPARE alone, a frame before the title asked — is not that evidence. A
+  > title that sizes its targets without asking, or asked before the Overlay was loaded, reads none: the honest
+  > answer, not a gap. `Domain.Metrics.UpscalerNames` decodes the byte for the `fsr`, `fsr3` and `fsr4` tokens.
+  > Measured on the hook harness with the vendor stub answering as the SDK documents (`fl_guard` "FSR's quality
+  > mode", by size through the SDK 2.x loader and by ratio through the 1.1.x monolith); a real title is owner-only
+  > item 21 (Lies of P at Quality, then Performance).
 - Resolution changes mid-session (user changed settings, or dynamic resolution scaling) produce **segments**: the session stores a segment list `(startFrame, renderW/H, outputW/H, upscaler, quality)`. Aggregates report the dominant segment plus a "settings changed during session" flag — averaging across a settings change is the classic way benchmark numbers become meaningless.
 
   > **Two segmentation axes exist, they compose in ONE order, and neither document said so until

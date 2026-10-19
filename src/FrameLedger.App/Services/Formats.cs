@@ -203,6 +203,7 @@ public static class Formats
             UpscalerQualityMode.UltraPerformance => Strings.Nv_Mode_UltraPerformance,
             UpscalerQualityMode.UltraQuality => Strings.Nv_Mode_UltraQuality,
             UpscalerQualityMode.Dlaa => Strings.Nv_Mode_Dlaa,
+            UpscalerQualityMode.NativeAa => Strings.Fsr_Mode_NativeAa,
             UpscalerQualityMode.Custom => resolved.CustomPercent is uint percent
                 ? string.Format(CultureInfo.CurrentCulture, Strings.Nv_Mode_Custom_Format, percent)
                 : Strings.Nv_Mode_Custom,

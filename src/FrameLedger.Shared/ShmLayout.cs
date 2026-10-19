@@ -255,6 +255,9 @@ public enum FlHookFamily : uint
     ColorSpace = 1u << 8,
     Reflex = 1u << 9,
     Vram = 1u << 10,
+
+    /// <summary>The FidelityFX quality query, <c>ffxQuery</c> (beta.25, D65): what lets a dispatch's size name its mode.</summary>
+    UpscalerQuality = 1u << 11,
 }
 
 /// <summary>

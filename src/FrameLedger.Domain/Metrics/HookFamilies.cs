@@ -23,4 +23,7 @@ public enum HookFamilies
     ColorSpace = 1 << 8,
     Reflex = 1 << 9,
     Vram = 1 << 10,
+
+    /// <summary>The FidelityFX quality query (beta.25, D65).</summary>
+    UpscalerQuality = 1 << 11,
 }

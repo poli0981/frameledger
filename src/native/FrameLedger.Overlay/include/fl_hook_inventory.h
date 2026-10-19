@@ -117,7 +117,8 @@ inline constexpr uint32_t kFamiliesEvaluateFeatureDoesNotImplement =
     static_cast<uint32_t>(fl::FL_HOOK_FG_EVALUATIONS) | static_cast<uint32_t>(fl::FL_HOOK_RT_DISPATCH) |
     static_cast<uint32_t>(fl::FL_HOOK_RT_AS_BUILD) | static_cast<uint32_t>(fl::FL_HOOK_RT_PSO) |
     static_cast<uint32_t>(fl::FL_HOOK_PSO) | static_cast<uint32_t>(fl::FL_HOOK_COLOR_SPACE) |
-    static_cast<uint32_t>(fl::FL_HOOK_REFLEX) | static_cast<uint32_t>(fl::FL_HOOK_VRAM);
+    static_cast<uint32_t>(fl::FL_HOOK_REFLEX) | static_cast<uint32_t>(fl::FL_HOOK_VRAM) |
+    static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY);
 
 static_assert((kFamilyEvaluateFeature & kFamiliesEvaluateFeatureDoesNotImplement) == 0u,
               "the slEvaluateFeature row claims a family its detour does not implement -- hookinventory-check "
@@ -188,7 +189,8 @@ inline constexpr uint32_t kFamiliesFfxDispatchDoesNotImplement =
     static_cast<uint32_t>(fl::FL_HOOK_PRESENT) | static_cast<uint32_t>(fl::FL_HOOK_RT_DISPATCH) |
     static_cast<uint32_t>(fl::FL_HOOK_RT_AS_BUILD) | static_cast<uint32_t>(fl::FL_HOOK_RT_PSO) |
     static_cast<uint32_t>(fl::FL_HOOK_PSO) | static_cast<uint32_t>(fl::FL_HOOK_COLOR_SPACE) |
-    static_cast<uint32_t>(fl::FL_HOOK_REFLEX) | static_cast<uint32_t>(fl::FL_HOOK_VRAM);
+    static_cast<uint32_t>(fl::FL_HOOK_REFLEX) | static_cast<uint32_t>(fl::FL_HOOK_VRAM) |
+    static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY);
 
 static_assert((kFamilyFfxDispatch & kFamiliesFfxDispatchDoesNotImplement) == 0u,
               "the ffxDispatch rows claim a family their detour does not implement -- hookinventory-check reads "
@@ -236,6 +238,28 @@ inline constexpr uint32_t kFamilyFsr3Host = kFamilyFfxDispatch;
 static_assert(kFamilyFsr3Host == kFamilyFfxDispatch,
               "one family, one publish point, one live latch: the host row shares the ffx-api rows' drain word and "
               "must share their claims, or fgEvaluations would be fed by a row that does not claim FG_EVALUATIONS");
+
+// --- AMD FidelityFX: ffxQuery on the same four modules (beta.25, owner decision D65) ---
+//
+// THE QUALITY MODE IS AN ARGUMENT OF A QUERY, NEVER OF THE DISPATCH. FfxApiUpscaleQualityMode reaches the vendor
+// only through ffxQuery -- "what render size (or ratio) does this mode give at this display size?" -- which a title
+// asks before it sizes its targets; the UPSCALE dispatch then carries the size alone. So the answers the vendor
+// returned are kept, and the dispatch arm names the mode whose answer is the size it was handed (dllmain.cpp). The
+// rows are the four modules ffxDispatch is hooked on, for the reason those rows give -- whatever module the game
+// calls -- and a query a loader passed on to a leaf's export would only refresh one kept answer twice: nothing is
+// counted, so nothing can be counted twice.
+//
+// ITS OWN BIT, NOT A SHARE OF kFamilyFfxDispatch. The query entitles no measured field by itself -- the mode rides
+// in the byte FL_MEASURED_UPSCALER_PARAMS already covers, from the dispatch arm -- and the bit says only that the
+// query was hooked, so "the title never asked" can be told from "nobody could have seen it ask".
+inline constexpr uint32_t kFamilyFfxQuery = static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY);
+static_assert(kFamilyFfxQuery != kFamilyFfxDispatch && kFamilyFfxQuery != kFamilyEvaluateFeature &&
+                  kFamilyFfxQuery != static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_PARAMS) &&
+                  kFamilyFfxQuery != static_cast<uint32_t>(fl::FL_HOOK_FG_EVALUATIONS),
+              "InstallByFamily binds a row by EQUALITY on this value -- a collision would hand the query's detour "
+              "body to a dispatch export, whose signature it does not share");
+static_assert((kFamilyFfxDispatch & kFamilyFfxQuery) == 0u,
+              "the dispatch rows must not claim the query's bit: they do not hook ffxQuery");
 
 // The leaves, in the order dllmain's per-leaf trampoline and latch arrays are indexed.
 enum FfxLeaf : uint32_t {
@@ -336,6 +360,10 @@ inline int FfxLeafOf(const wchar_t* moduleName) noexcept {
     X(L"amd_fidelityfx_upscaler_dx12.dll", "ffxDispatch", fl::inventory::kFamilyFfxDispatch)                           \
     X(L"amd_fidelityfx_framegeneration_dx12.dll", "ffxDispatch", fl::inventory::kFamilyFfxDispatch)                    \
     X(L"amd_fidelityfx_loader_dx12.dll", "ffxDispatch", fl::inventory::kFamilyFfxDispatch)                             \
+    X(L"amd_fidelityfx_dx12.dll", "ffxQuery", fl::inventory::kFamilyFfxQuery)                                          \
+    X(L"amd_fidelityfx_upscaler_dx12.dll", "ffxQuery", fl::inventory::kFamilyFfxQuery)                                 \
+    X(L"amd_fidelityfx_framegeneration_dx12.dll", "ffxQuery", fl::inventory::kFamilyFfxQuery)                          \
+    X(L"amd_fidelityfx_loader_dx12.dll", "ffxQuery", fl::inventory::kFamilyFfxQuery)                                   \
     X(L"ffx_fsr3_x64.dll", "ffxFsr3ContextDispatchUpscale", fl::inventory::kFamilyFsr3Host)
 
 // The FSR 3.0 host module and the one symbol dllmain's ffx arm keys on for it. Named
@@ -424,6 +452,39 @@ static_assert(FfxLeafOfExact(kModuleFfxFsr3Host) < 0,
               "the FSR 3.0 host facade is not an ffxDispatch leaf; the installer keys it by module name");
 static_assert(!FfxDispatchRowExistsFor(kModuleFfxFsr3Host),
               "the host exports no ffxDispatch; a row claiming one would resolve nothing and install nothing");
+
+// The ffxQuery rows, bound to the leaf table the same way (beta.25, D65): a leaf without its query row is a
+// trampoline slot nothing installs into; a query row on a module the table does not know would install nothing.
+inline constexpr const char* kSymbolFfxQuery = "ffxQuery";
+
+constexpr bool FfxQueryRowExistsFor(const wchar_t* moduleName) noexcept {
+#define FL_FFX_QUERY_ROW_FOR(mod, sym, family)                                                                         \
+    if (SameW(mod, moduleName) && SameA(sym, kSymbolFfxQuery)) {                                                       \
+        return true;                                                                                                   \
+    }
+    FL_HOOK_INVENTORY(FL_FFX_QUERY_ROW_FOR)
+#undef FL_FFX_QUERY_ROW_FOR
+    return false;
+}
+constexpr bool EveryFfxQueryRowIsALeaf() noexcept {
+#define FL_FFX_QUERY_ROW_IS_LEAF(mod, sym, family)                                                                     \
+    if (SameA(sym, kSymbolFfxQuery) && FfxLeafOfExact(mod) < 0) {                                                      \
+        return false;                                                                                                  \
+    }
+    FL_HOOK_INVENTORY(FL_FFX_QUERY_ROW_IS_LEAF)
+#undef FL_FFX_QUERY_ROW_IS_LEAF
+    return true;
+}
+static_assert(FfxQueryRowExistsFor(kFfxLeafModules[kFfxLeafMonolith]) &&
+                  FfxQueryRowExistsFor(kFfxLeafModules[kFfxLeafUpscaler]) &&
+                  FfxQueryRowExistsFor(kFfxLeafModules[kFfxLeafFrameGeneration]) &&
+                  FfxQueryRowExistsFor(kFfxLeafModules[kFfxLeafLoader]),
+              "every ffx leaf needs its ffxQuery row, spelled identically -- the query reaches whatever module the "
+              "game calls, as the dispatch does");
+static_assert(EveryFfxQueryRowIsALeaf(),
+              "an ffxQuery row names a module the leaf table does not know -- InstallByFamily would find no slot");
+static_assert(!FfxQueryRowExistsFor(kModuleFfxFsr3Host),
+              "the FSR 3.0 host has its own query API, not ffxQuery; a row claiming one would resolve nothing");
 
 // Does this module speak the Streamline 2 ABI the vendored headers describe?
 //

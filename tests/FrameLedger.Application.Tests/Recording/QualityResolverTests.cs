@@ -94,6 +94,8 @@ public sealed class QualityResolverTests
         QualityResolver.Of("dlss", "3", null, Words(_plainSr, 0), driverProfileJson: null).Should().Be(new ResolvedQuality(UpscalerQualityMode.Quality, QualitySource.Game));
         QualityResolver.Of("dlss", "9", null, null, null).Should().Be(new ResolvedQuality(null, QualitySource.Game, Stored: "9"), "a number nobody can name is still what was measured");
         QualityResolver.Of("fsr3", "2", null, Words(_expeditionSr, 2), null).Should().Be(new ResolvedQuality(null, QualitySource.Game, Stored: "2"), "a DLSS override does not apply to FSR");
+        QualityResolver.Of("fsr3", "17", null, Words(_expeditionSr, 2), null).Should().Be(new ResolvedQuality(UpscalerQualityMode.Quality, QualitySource.Game),
+            "beta.25 (D65): FSR's byte, the mode its query answer named");
         QualityResolver.Of("dlss", null, null, null, null).Should().BeNull();
         QualityResolver.Of("unknown", "3", null, null, null).Should().BeNull("a quality without a name to hang it on");
         QualityResolver.Of(null, null, "dlss", Words(_plainSr, 0), null).Should().BeNull("the driver's word alone is identity");

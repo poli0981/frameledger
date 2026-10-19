@@ -141,8 +141,9 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 > - **Quality mode:** shown only when it is known. When the NVIDIA App overrides DLSS Super Resolution for
 >   the game and the NVIDIA driver reports that the override applied in the session, the override's mode is
 >   shown and marked as the NVIDIA App's. Otherwise the mode the game itself passed: the DLSS options a
->   Streamline title passes with its per-frame call (not yet seen on a real title). In every other case no
->   mode is shown.
+>   Streamline title passes with its per-frame call (not yet seen on a real title), or, for FSR through
+>   AMD's FidelityFX libraries, the mode whose render size the game asked for and then rendered at. In
+>   every other case — FSR at a dynamic resolution among them — no mode is shown.
 > - **DLSS version:** the version of each DLSS library the game loaded and whether it came from the game or from
 >   the NVIDIA driver; "DLSS 4" or "DLSS 4.5" only when the session shows it (the model preset the driver reports,
 >   or a measured multi-frame factor); DLSS 5 only as "runtime loaded".
