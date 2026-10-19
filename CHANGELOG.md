@@ -51,6 +51,13 @@ numeric core and does not move; the heading is the full version — corrected 20
   assignment on a `volatile`, which C++20 deprecates. The analyzers Dependabot updates in #314 flag the first-start
   window's own answer task and one test fake's synchronous wait; both are suppressed with their reasons, so that update
   can merge.
+- **The game-side log keeps every line a stop writes.** When hooking stopped on a game's own drawing thread — the
+  capture agent's safety stop takes effect within one frame there — the Overlay's last write of its log could happen
+  while that thread was still listing the hooks it removed, and the last of them never reached the file
+  (`overlay-*.log`, the file a bug report carries). The last write now waits, at most two seconds, for the stop to
+  finish and ends with a `STOP_FLUSHED` line; a line still being written is never printed half-done. Nothing changes
+  on the per-frame path. This was the native test that went red under load since beta.9 (`fl_guard`'s log case),
+  now run 20 times with every processor busy.
 
 ## [0.1.0-beta.23] - 2026-10-14
 
