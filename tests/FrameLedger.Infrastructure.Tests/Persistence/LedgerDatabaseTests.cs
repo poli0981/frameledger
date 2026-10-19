@@ -266,6 +266,45 @@ public sealed class LedgerDatabaseTests
     }
 
     /// <summary>
+    /// Schema 0021 (2026-10-19, beta.24, D64): <c>sessions.runtime_module_sources</c>, each loaded module's folder class — ADD
+    /// COLUMN only; a session written before has none.
+    /// </summary>
+    [Fact]
+    public async Task ScriptTwentyOneAddsTheModuleSourcesColumnAndAnEarlierSessionHasNone()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(21);
+        long gameId = (await new SqliteGameRepository(f.Db).EnsureAsync(
+            new() { ExePath = @"C:\Games\N\n.exe", SizeBytes = 1, MtimeUnixMs = 2 }, "N", Ct).ConfigureAwait(true)).Id;
+        long snapshotId = await new SqliteHardwareSnapshotRepository(f.Db).EnsureAsync(new HardwareSnapshot { GpuName = "g" }, DateTimeOffset.UnixEpoch, Ct)
+            .ConfigureAwait(true);
+        string path = f.Path;
+        await f.Db.DisposeAsync().ConfigureAwait(true);
+        var c20 = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        await using (c20.ConfigureAwait(true))
+        {
+            await c20.OpenAsync(Ct).ConfigureAwait(true);
+            await RewindToAsync(c20, 20).ConfigureAwait(true);
+            await c20.ExecuteAsync(new CommandDefinition(
+                "INSERT INTO sessions (session_guid, game_id, snapshot_id, started_at, ended_at, duration_s, qpc_epoch, qpc_frequency, capture_tier, capture_mode, exit_status, frame_count, app_frame_count, displayed_frame_count, dropped_frames, runtime_modules) "
+                + "VALUES ('00000000-0000-0000-0000-000000000021', @gameId, @snapshotId, 0, 60000, 60, 0, 10000000, 1, 'attach', 'normal', 6000, 6000, 6000, 0, '{\"nvngx_dlss.dll\":\"310,9,1,0\"}')",
+                new { gameId, snapshotId }, cancellationToken: Ct)).ConfigureAwait(true);
+        }
+
+        LedgerDatabase migrated = await LedgerDatabase.OpenAsync(path, ct: Ct).ConfigureAwait(true);
+        await using (migrated.ConfigureAwait(true))
+        {
+            migrated.SchemaVersion.Should().Be(MigrationRunner.LatestVersion);
+            IReadOnlyList<string> added = await migrated.ReadAsync(async (c, ct) => (IReadOnlyList<string>)[.. await c.QueryAsync<string>(new CommandDefinition(
+                "SELECT name FROM pragma_table_info('sessions') WHERE name = 'runtime_module_sources' AND type = 'TEXT'", cancellationToken: ct)).ConfigureAwait(false)], Ct).ConfigureAwait(true);
+            added.Should().ContainSingle();
+            SessionRow before = (await new SqliteSessionRepository(migrated).FindAsync(Guid.Parse("00000000-0000-0000-0000-000000000021"), Ct).ConfigureAwait(true))!;
+            before.RuntimeModulesJson.Should().Be("{\"nvngx_dlss.dll\":\"310,9,1,0\"}", "the row keeps everything it had");
+            before.RuntimeModuleSourcesJson.Should().BeNull("a session recorded before beta.24 has no folder classes");
+        }
+    }
+
+    /// <summary>
     /// Schema 0017 (2026-10-03, beta.11, D38): <c>games.ac_exception_trial_failed_at</c>, NULL on every row written before — a
     /// grant made under D33 keeps everything it had and carries no failed trial.
     /// </summary>

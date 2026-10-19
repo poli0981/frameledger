@@ -58,6 +58,17 @@ numeric core and does not move; the heading is the full version — corrected 20
   export gains a `# quality_mode:` line. `legal/ACCURACY.md`'s *Quality mode* bullet says so, in the words approved
   with the plan; **the Disclaimer is 2.11** and the Legal Gate shows it once.
 
+- **Which DLSS a session ran** (owner request 2026-10-19, decision D64). The summary's DLSS line gives each DLSS
+  library's version and whether it was loaded from the game or from the graphics driver (the NVIDIA App's override
+  loads the driver's own copy), the model preset the NVIDIA driver reports, and *DLSS 4* or *DLSS 4.5* only where the
+  session shows it — the preset (L or M: 4.5; J or K: 4) or a measured multi-frame factor (×5–×6: 4.5; ×3–×4: 4) —;
+  DLSS 2 and 3 from their libraries; *DLSS 5 runtime loaded* when its library is. The game page repeats the label and
+  the CSV export gains `# dlss:`. The module snapshot now records every library under the NVIDIA override folder,
+  whatever its name, and each module's folder class (schema 0021, `sessions.runtime_module_sources` — never the path),
+  plus five more libraries by name (`sl.dlss_d.dll`, `sl.common.dll`, `sl.reflex.dll`, `amd_fidelityfx_loader_dx12.dll`,
+  `nvngx_dlssnr.dll`). **Privacy Policy 2.12** says so, in the words approved with the plan; `legal/ACCURACY.md` gains
+  the *DLSS version* bullet.
+
 ### Changed
 
 - **SonarCloud analyses only FrameLedger's own code** (developers only; owner request 2026-10-19, decision D67). A

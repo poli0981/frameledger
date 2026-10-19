@@ -123,6 +123,8 @@ public sealed class SessionExporter
         // beta.24 (D63): the session's quality mode and whose it is: the NVIDIA App's override the driver reported applied
         // ("nvidia_app"), or the game's own call ("game"); the per-frame upscaler_quality column stays the hooked byte.
         w.WriteLine("# quality_mode: " + QualityExport(row));
+        // beta.24 (D64): the DLSS generation where the session established one, each DLSS library's version and folder class.
+        w.WriteLine("# dlss: " + DlssText.ExportLine(row));
         w.WriteLine("# fg_mode: " + row.FgMode + "; fg_source: " + (row.FgSource ?? "n/a") + "; presented_qualifier: " + (row.PresentedQualifier ?? "n/a"));
         // beta.24 (D62): every frame-generation state the session held, each with its share and its own rates: the session's, not a frame's.
         w.WriteLine("# fg_mix: " + FgMixPresentation.ExportLine(row));

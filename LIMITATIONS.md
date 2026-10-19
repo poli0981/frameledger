@@ -93,6 +93,11 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
   readable for DLSS without Streamline, and is not inferred from the render scale. How the driver numbers DLAA in
   its report is NVIDIA's documented value, not yet seen on a real game. The render resolution is N/A where the
   game's own calls do not carry it (DLSS without Streamline, for one). ([Metrics](docs/03_METRICS.md))
+- **Which DLSS ran** (since 0.1.0-beta.24) is named only from what the session showed: the model preset the NVIDIA
+  driver reports (L or M: DLSS 4.5; J or K: DLSS 4), a measured multi-frame factor (×5 or ×6: DLSS 4.5; ×3 or ×4:
+  DLSS 4), or a library whose major version names one (2.x, 3.x). A 310 library with no such evidence shows its
+  version only. DLSS 5 is shown only as *runtime loaded*, by a library name not yet seen on a real game. Where each
+  library was loaded from is read from its folder, for sessions recorded since 0.1.0-beta.24.
 - **Ray tracing** is *Yes*, *No* or *N/A* — measured from the game's ray-tracing calls on Direct3D 12, and
   N/A where FrameLedger could not look. **Path tracing is never stated as a fact**: there is no API signal
   for it. You can correct any of these by hand, and your correction is labelled as yours.

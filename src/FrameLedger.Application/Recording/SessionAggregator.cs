@@ -360,6 +360,11 @@ public static class SessionAggregator
             RuntimeModulesJson = c.Input.Modules.Snapshots == 0 ? null : JsonSerializer.Serialize(
                 c.Input.Modules.Modules.ToDictionary(static m => m.FileName, static m => m.FileVersion, StringComparer.OrdinalIgnoreCase),
                 RecordingJsonContext.Default.DictionaryStringString),
+            // beta.24 (D64): where each module's file lived, by class — never the path.
+            RuntimeModuleSourcesJson = c.Input.Modules.Snapshots == 0 ? null : JsonSerializer.Serialize(
+                c.Input.Modules.Modules.Where(static m => RuntimeModuleSources.Token(m.Source) is not null)
+                    .ToDictionary(static m => m.FileName, static m => RuntimeModuleSources.Token(m.Source)!, StringComparer.OrdinalIgnoreCase),
+                RecordingJsonContext.Default.DictionaryStringString),
             ExecutableMarkersJson = !c.Input.Markers.Scanned ? null : JsonSerializer.Serialize(
                 c.Input.Markers.Markers.ToDictionary(static m => m.Name, static m => m.Hits, StringComparer.Ordinal),
                 RecordingJsonContext.Default.DictionaryStringInt32),

@@ -3387,4 +3387,52 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="Nv_Mode_UltraQuality" xml:space="preserve">
     <value>Ultra Quality</value>
   </data>
+  <data name="Dlss_Label_Format" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="Dlss_Basis_Factor_Format" xml:space="preserve">
+    <value>trạng thái tạo khung hình ×{0:0.0}</value>
+  </data>
+  <data name="Dlss_Basis_Library_Format" xml:space="preserve">
+    <value>thư viện {0}</value>
+  </data>
+  <data name="Dlss_Feature_SuperResolution" xml:space="preserve">
+    <value>Super Resolution</value>
+  </data>
+  <data name="Dlss_Feature_RayReconstruction" xml:space="preserve">
+    <value>Ray Reconstruction</value>
+  </data>
+  <data name="Dlss_Feature_FrameGeneration" xml:space="preserve">
+    <value>Frame Generation</value>
+  </data>
+  <data name="Dlss_Library_Format" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="Dlss_From_Game" xml:space="preserve">
+    <value>từ game</value>
+  </data>
+  <data name="Dlss_From_GraphicsDriver" xml:space="preserve">
+    <value>từ driver đồ họa</value>
+  </data>
+  <data name="Dlss_From_Windows" xml:space="preserve">
+    <value>từ Windows</value>
+  </data>
+  <data name="Dlss_Preset_Format" xml:space="preserve">
+    <value>preset {0} ({1})</value>
+  </data>
+  <data name="Dlss_Model_Cnn" xml:space="preserve">
+    <value>mô hình CNN</value>
+  </data>
+  <data name="Dlss_Model_Transformer" xml:space="preserve">
+    <value>mô hình transformer</value>
+  </data>
+  <data name="Dlss_Model_SecondGenerationTransformer" xml:space="preserve">
+    <value>mô hình transformer thế hệ 2</value>
+  </data>
+  <data name="Dlss_Model_Unknown" xml:space="preserve">
+    <value>mô hình chưa xác định</value>
+  </data>
+  <data name="Dlss_NeuralRendering_Loaded" xml:space="preserve">
+    <value>đã nạp runtime DLSS 5</value>
+  </data>
 </root>

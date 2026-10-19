@@ -56,6 +56,13 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
     private string? _librariesLine;
 
     /// <summary>
+    /// beta.24 (D64): the DLSS the session ran — a generation only where the session shows one, each DLSS library's version
+    /// and where it was loaded from, the preset the driver reports, DLSS 5's runtime when loaded; null with no DLSS at all.
+    /// </summary>
+    [ObservableProperty]
+    private string? _dlssLine;
+
+    /// <summary>
     /// The NVIDIA driver profile the game ran under and what it overrides (<c>sessions.driver_profile</c>, beta.8) — the
     /// NVIDIA App's DLSS and frame-generation overrides; null where no NVIDIA driver was there to ask.
     /// </summary>
@@ -416,6 +423,7 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
             ? string.Empty
             : string.Join(" · ", SystemInfoViewModel.Describe(_snapshot).Where(static l => !string.Equals(l.Value, Strings.Common_NotAvailable, StringComparison.Ordinal)).Select(static l => l.Value));
         LibrariesLine = LoadedLibraries(row.RuntimeModulesJson, Game.Libraries);
+        DlssLine = IsHooked ? DlssText.Line(row) : null;
         DriverProfileLine = NvidiaOverrides.ProfileLine(row.DriverProfileJson);
         DriverStateLine = NvidiaOverrides.DriverLine(row.NgxDriverWordsJson);
         DisplayLine = DisplayText.Line(DisplayText.Of(row));

@@ -360,6 +360,13 @@ public sealed class SessionAggregatorTests
         SessionRow row = SessionAggregator.Aggregate(SessionFixtures.Skeleton(), input).Row;
 
         row.RuntimeModulesJson.Should().Be("{\"sl.interposer.dll\":\"2,8,0,0\"}");
+        row.RuntimeModuleSourcesJson.Should().Be("{}", "beta.24 (D64): a module read before its folder was classified stores no class");
+        RuntimeModuleSet classified = new([
+            new RuntimeModuleInfo("nvngx_dlss.dll", @"C:\g\nvngx_dlss.dll", "310,9,1,0", new Version(310, 9, 1, 0)) { Source = RuntimeModuleSource.Game },
+            new RuntimeModuleInfo("160_e658700.bin", @"C:\ProgramData\NVIDIA\NGX\models\160_e658700.bin", null, null) { Source = RuntimeModuleSource.GraphicsDriver },
+        ], 1, 0);
+        SessionAggregator.Aggregate(SessionFixtures.Skeleton(), input with { Modules = classified }).Row.RuntimeModuleSourcesJson
+            .Should().Be("{\"nvngx_dlss.dll\":\"game\",\"160_e658700.bin\":\"graphics_driver\"}", "the class is stored, never the path");
         row.SlInterposerVersion.Should().Be("2.8.0.0");
         row.ExecutableMarkersJson.Should().Be("{\"ffxFsr3\":12}");
         row.NgxDriverWordsJson.Should().Contain("\"Outcome\":\"Answered\"").And.Contain("\"Sr\":\"0x600\"").And.Contain("\"Driver\":61664");
