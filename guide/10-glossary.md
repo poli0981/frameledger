@@ -15,6 +15,8 @@ What the words on FrameLedger's screens mean, in alphabetical order. How each fi
 - **Disable all hooking** — the switch that stops every game from being hooked at once, whatever each game's own switch
   says. Sessions are still recorded.
 - **Displayed FPS** — the frames you saw, generated frames included.
+- **DLSS 4, DLSS 4.5** — NVIDIA's DLSS generations. FrameLedger names one only when the session shows it: the model
+  preset the NVIDIA driver reports, or a frame-generation multiplier of ×3 and above.
 - **FG factor** — Displayed FPS divided by Native FPS, shown as `×1.9 FG`.
 - **FPS** — frames per second over the time measured.
 - **Frame generation** — the technology (DLSS Frame Generation, FSR Frame Generation) that inserts frames the game did

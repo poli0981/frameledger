@@ -40,11 +40,19 @@ public static class CensusNames
     ];
 
     /// <summary>
-    /// Every module FILE name the census can answer for — the <c>a / b</c> pairs above split into
-    /// their members — so a module snapshot asks about exactly the set the census names.
+    /// Modules the snapshot records though the in-process census has no bit for them (beta.24, D64): DLSS's Ray
+    /// Reconstruction and DLSS 5's runtime, Streamline's other plugins, and AMD's FidelityFX loader. The name of DLSS 5's
+    /// runtime, <c>nvngx_dlssnr.dll</c>, is from community sources until owner-only item 20(d) sees it load.
+    /// </summary>
+    private static readonly string[] _snapshotOnly =
+        ["sl.dlss_d.dll", "sl.common.dll", "sl.reflex.dll", "amd_fidelityfx_loader_dx12.dll", "nvngx_dlssnr.dll"];
+
+    /// <summary>
+    /// Every module FILE name a snapshot answers for — the census's, the <c>a / b</c> pairs above split into their
+    /// members, then the names only the snapshot records.
     /// </summary>
     public static IReadOnlyList<string> ModuleFileNames { get; } =
-        _names.SelectMany(n => n.Name.Split(" / ", StringSplitOptions.RemoveEmptyEntries)).ToArray();
+        [.. _names.SelectMany(n => n.Name.Split(" / ", StringSplitOptions.RemoveEmptyEntries)), .. _snapshotOnly];
 
     /// <summary>Comma-separated module names for the set family bits; <c>-</c> when none.</summary>
     public static string Describe(FlRuntimeCensus bits)

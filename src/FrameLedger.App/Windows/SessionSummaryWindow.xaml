@@ -47,6 +47,9 @@
                 <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.DisplayLine}"
                               Visibility="{Binding ViewModel.DisplayLine, Converter={StaticResource NullToCollapsed}}" />
                 <ui:TextBlock Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.HardwareLine}" />
+                <!-- beta.24 (D64): the DLSS the session ran, each library with its version and where it was loaded from -->
+                <ui:TextBlock Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.DlssLine}"
+                              Visibility="{Binding ViewModel.DlssLine, Converter={StaticResource NullToCollapsed}}" />
                 <ui:TextBlock Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.LibrariesLine}"
                               Visibility="{Binding ViewModel.LibrariesLine, Converter={StaticResource NullToCollapsed}}" />
                 <ui:TextBlock Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.DriverProfileLine}"

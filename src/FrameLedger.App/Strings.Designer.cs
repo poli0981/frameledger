@@ -264,6 +264,22 @@ public static class Strings
         nameof(Display_Window_Format),
         nameof(Display_WindowOnMonitor_Format),
         nameof(Display_WindowOnMonitorHz_Format),
+        nameof(Dlss_Basis_Factor_Format),
+        nameof(Dlss_Basis_Library_Format),
+        nameof(Dlss_Feature_FrameGeneration),
+        nameof(Dlss_Feature_RayReconstruction),
+        nameof(Dlss_Feature_SuperResolution),
+        nameof(Dlss_From_Game),
+        nameof(Dlss_From_GraphicsDriver),
+        nameof(Dlss_From_Windows),
+        nameof(Dlss_Label_Format),
+        nameof(Dlss_Library_Format),
+        nameof(Dlss_Model_Cnn),
+        nameof(Dlss_Model_SecondGenerationTransformer),
+        nameof(Dlss_Model_Transformer),
+        nameof(Dlss_Model_Unknown),
+        nameof(Dlss_NeuralRendering_Loaded),
+        nameof(Dlss_Preset_Format),
         nameof(Document_OnGitHub),
         nameof(Document_Pages),
         nameof(EditGame_ChooseImage),
@@ -1619,6 +1635,38 @@ public static class Strings
     public static string Display_WindowOnMonitor_Format => ResourceManager.GetString(nameof(Display_WindowOnMonitor_Format), Culture) ?? nameof(Display_WindowOnMonitor_Format);
 
     public static string Display_WindowOnMonitorHz_Format => ResourceManager.GetString(nameof(Display_WindowOnMonitorHz_Format), Culture) ?? nameof(Display_WindowOnMonitorHz_Format);
+
+    public static string Dlss_Basis_Factor_Format => ResourceManager.GetString(nameof(Dlss_Basis_Factor_Format), Culture) ?? nameof(Dlss_Basis_Factor_Format);
+
+    public static string Dlss_Basis_Library_Format => ResourceManager.GetString(nameof(Dlss_Basis_Library_Format), Culture) ?? nameof(Dlss_Basis_Library_Format);
+
+    public static string Dlss_Feature_FrameGeneration => ResourceManager.GetString(nameof(Dlss_Feature_FrameGeneration), Culture) ?? nameof(Dlss_Feature_FrameGeneration);
+
+    public static string Dlss_Feature_RayReconstruction => ResourceManager.GetString(nameof(Dlss_Feature_RayReconstruction), Culture) ?? nameof(Dlss_Feature_RayReconstruction);
+
+    public static string Dlss_Feature_SuperResolution => ResourceManager.GetString(nameof(Dlss_Feature_SuperResolution), Culture) ?? nameof(Dlss_Feature_SuperResolution);
+
+    public static string Dlss_From_Game => ResourceManager.GetString(nameof(Dlss_From_Game), Culture) ?? nameof(Dlss_From_Game);
+
+    public static string Dlss_From_GraphicsDriver => ResourceManager.GetString(nameof(Dlss_From_GraphicsDriver), Culture) ?? nameof(Dlss_From_GraphicsDriver);
+
+    public static string Dlss_From_Windows => ResourceManager.GetString(nameof(Dlss_From_Windows), Culture) ?? nameof(Dlss_From_Windows);
+
+    public static string Dlss_Label_Format => ResourceManager.GetString(nameof(Dlss_Label_Format), Culture) ?? nameof(Dlss_Label_Format);
+
+    public static string Dlss_Library_Format => ResourceManager.GetString(nameof(Dlss_Library_Format), Culture) ?? nameof(Dlss_Library_Format);
+
+    public static string Dlss_Model_Cnn => ResourceManager.GetString(nameof(Dlss_Model_Cnn), Culture) ?? nameof(Dlss_Model_Cnn);
+
+    public static string Dlss_Model_SecondGenerationTransformer => ResourceManager.GetString(nameof(Dlss_Model_SecondGenerationTransformer), Culture) ?? nameof(Dlss_Model_SecondGenerationTransformer);
+
+    public static string Dlss_Model_Transformer => ResourceManager.GetString(nameof(Dlss_Model_Transformer), Culture) ?? nameof(Dlss_Model_Transformer);
+
+    public static string Dlss_Model_Unknown => ResourceManager.GetString(nameof(Dlss_Model_Unknown), Culture) ?? nameof(Dlss_Model_Unknown);
+
+    public static string Dlss_NeuralRendering_Loaded => ResourceManager.GetString(nameof(Dlss_NeuralRendering_Loaded), Culture) ?? nameof(Dlss_NeuralRendering_Loaded);
+
+    public static string Dlss_Preset_Format => ResourceManager.GetString(nameof(Dlss_Preset_Format), Culture) ?? nameof(Dlss_Preset_Format);
 
     public static string Document_OnGitHub => ResourceManager.GetString(nameof(Document_OnGitHub), Culture) ?? nameof(Document_OnGitHub);
 

@@ -440,10 +440,40 @@ detection (`DetectionWrite`, `games.exe_machine` / `exe_file_version` / `exe_pro
   "FSR 2.2" number: the DLL's version is the SDK's, and no table of that mapping has been measured.
 
 **Shipped is not loaded.** `library_versions` is what the game folder holds. What the process loaded is
-`sessions.runtime_modules` (Tier 1), and the two differ exactly when something else supplied the DLL — the NVIDIA
-App's DLSS override loads the driver's `nvngx_dlss.dll` from the driver store under the same name. The session
-summary prints the loaded list and names such a difference ("the game ships 3.7.10.0: another copy was loaded");
-it does not claim who loaded it.
+`sessions.runtime_modules` (Tier 1), and the two differ exactly when something else supplied the DLL. ~~— the NVIDIA
+App's DLSS override loads the driver's `nvngx_dlss.dll` from the driver store under the same name.~~ *(Struck
+2026-10-19: unmeasured, and the one measurement says otherwise — the owner's Silent Hill 2 session ran ×6 frame
+generation through the NVIDIA App's override and no module with a census name was loaded. Since beta.24 every module
+under `%ProgramData%\NVIDIA\NGX` is recorded whatever its name, with its folder class — §DLSS generation below —, and
+owner-only item 20(c) records what the override loads.)* The session summary prints the loaded list and names such a
+difference ("the game ships 3.7.10.0: another copy was loaded"); since beta.24 the DLSS line says where each DLSS
+library was loaded from (the game, the graphics driver, Windows) — by folder, never who put it there.
+
+## DLSS generation — evidence-bound (beta.24, owner decision D64)
+
+**What a session can say about which DLSS ran, and nothing more.** `Domain.Detection.DlssGeneration` names a
+generation only from something the session observed, strongest first; `App.Services.DlssText` prints it with what it
+rests on, every DLSS library's version and folder class (`sessions.runtime_module_sources`, schema 0021 — the class,
+never the path), and the super-resolution preset the driver reports applied:
+
+| Evidence (strongest first) | Label | Where it comes from |
+|---|---|---|
+| Super-resolution render preset **L or M** that the NVIDIA driver reports applied, in a session where super resolution ran | DLSS 4.5 (2nd-gen transformer) | `ngx_driver_words` — the SR word's `PRESET` bit and `renderPreset`; presets L/M arrived with DLL 310.5.0 (NVIDIA's DLSS 4.5 release, driver 591.74) |
+| A DLSS Frame Generation state measured at **×5 or more** | DLSS 4.5 (Dynamic / 6× multi-frame generation) | `fg_mix` / `fg_factor` with `fg_mode = dlssg` |
+| Preset **J or K** reported applied | DLSS 4 (transformer) | as above |
+| A DLSS Frame Generation state at **×3 or ×4** | DLSS 4 (multi-frame generation) | as above |
+| `nvngx_dlss.dll` **2.x** | DLSS 2 | `runtime_modules` |
+| `nvngx_dlss.dll` **3.x**, or `nvngx_dlssg.dll` **1.x–3.x** | DLSS 3 | `runtime_modules` |
+| A **310.x** library alone, a CNN preset (A–F), ×2 | *no label* — the versions are shown | DLSS 4 and 4.5 ship the same major number; the preset is what names the model |
+| `nvngx_dlssnr.dll` loaded | "DLSS 5 runtime loaded" — never a generation of these features | the module name is community-sourced until owner-only item 20(d) sees it load |
+
+Never a default preset inferred from a version: what a DLL "would" run by default is the game's and the driver's to
+decide. A preset the driver applied to a super resolution it never saw created and evaluated names the model of
+nothing and is not used (the owner's Silent Hill 2 session: preset L applied, no SR feature created — its label is
+the ×6.0 state's). **Sources:** NVAPI's `NV_NGX_DLSS_OVERRIDE_GET_STATE_PARAMS_V1` (the vendored
+`src/native/third_party/nvapi/nvapi.h`); presets L/M with DLL 310.5.0 — PCGH's DLSS 4.5 test and NVIDIA's driver
+591.74 release notes; DLSS 4.5's Dynamic MFG and 6× — NVIDIA's announcement (driver 595, RTX 50); DLSS 5 — NVIDIA's
+GTC 2026 announcement and its 2026-09-03 launch; `nvngx_dlssnr.dll` — community reports only.
 
 ## Anti-cheat pre-scan (static)
 

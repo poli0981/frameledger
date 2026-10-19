@@ -41,6 +41,9 @@ pages.
 >   shown and marked as the NVIDIA App's. Otherwise the mode the game itself passed: the DLSS options a
 >   Streamline title passes with its per-frame call (not yet seen on a real title). In every other case no
 >   mode is shown.
+> - **DLSS version:** the version of each DLSS library the game loaded and whether it came from the game or from
+>   the NVIDIA driver; "DLSS 4" or "DLSS 4.5" only when the session shows it (the model preset the driver reports,
+>   or a measured multi-frame factor); DLSS 5 only as "runtime loaded".
 > - **Render → output resolution:** measured where the vendor's own per-frame call carries the render
 >   size (AMD FidelityFX dispatches, and Streamline titles whose resource tags state it); `N/A` where it
 >   does not: DLSS titles that bypass Streamline, Streamline titles whose tags carry no size, and Vulkan

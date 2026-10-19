@@ -147,6 +147,12 @@ public sealed record SessionRow
     /// </summary>
     public string? FgMixJson { get; init; }
 
+    /// <summary>
+    /// <c>runtime_module_sources</c> (schema 0021, beta.24, D64): each loaded runtime module's folder class —
+    /// <c>game</c>, <c>graphics_driver</c> or <c>windows</c> — as <c>{file: class}</c>; never a path. Null before.
+    /// </summary>
+    public string? RuntimeModuleSourcesJson { get; init; }
+
     public double? PresentedFps { get; init; }
 
     public string? PresentedQualifier { get; init; }

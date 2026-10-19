@@ -10,4 +10,11 @@ namespace FrameLedger.Application.Capture;
 /// performs on every target before injecting — and the path it names is then opened as a file.
 /// CLAUDE.md rule 4 is untouched: no game memory, no vendor object, no hook.
 /// </remarks>
-public sealed record RuntimeModuleInfo(string FileName, string Path, string? FileVersion, Version? Parsed);
+public sealed record RuntimeModuleInfo(string FileName, string Path, string? FileVersion, Version? Parsed)
+{
+    /// <summary>
+    /// Where the file lives, by folder class (beta.24, D64): the game's, the graphics driver's own copy, or Windows'. The
+    /// class is stored with the session; <see cref="Path"/> never is.
+    /// </summary>
+    public RuntimeModuleSource Source { get; init; }
+}

@@ -4509,4 +4509,68 @@
     <value>ウルトラ クオリティ</value>
     <comment>review</comment>
   </data>
+  <data name="Dlss_Label_Format" xml:space="preserve">
+    <value>{0}（{1}）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dlss_Basis_Factor_Format" xml:space="preserve">
+    <value>フレーム生成 ×{0:0.0} の状態</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dlss_Basis_Library_Format" xml:space="preserve">
+    <value>ライブラリ {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dlss_Feature_SuperResolution" xml:space="preserve">
+    <value>Super Resolution</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dlss_Feature_RayReconstruction" xml:space="preserve">
+    <value>Ray Reconstruction</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dlss_Feature_FrameGeneration" xml:space="preserve">
+    <value>Frame Generation</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dlss_Library_Format" xml:space="preserve">
+    <value>{0} {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dlss_From_Game" xml:space="preserve">
+    <value>ゲームから</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dlss_From_GraphicsDriver" xml:space="preserve">
+    <value>グラフィックス ドライバーから</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dlss_From_Windows" xml:space="preserve">
+    <value>Windows から</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dlss_Preset_Format" xml:space="preserve">
+    <value>プリセット {0}（{1}）</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dlss_Model_Cnn" xml:space="preserve">
+    <value>CNN モデル</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dlss_Model_Transformer" xml:space="preserve">
+    <value>Transformer モデル</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dlss_Model_SecondGenerationTransformer" xml:space="preserve">
+    <value>第 2 世代 Transformer モデル</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dlss_Model_Unknown" xml:space="preserve">
+    <value>モデル不明</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dlss_NeuralRendering_Loaded" xml:space="preserve">
+    <value>DLSS 5 ランタイムを読み込み済み</value>
+    <comment>review</comment>
+  </data>
 </root>

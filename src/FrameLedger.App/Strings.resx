@@ -3392,4 +3392,52 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="Nv_Mode_UltraQuality" xml:space="preserve">
     <value>Ultra Quality</value>
   </data>
+  <data name="Dlss_Label_Format" xml:space="preserve">
+    <value>{0} ({1})</value>
+  </data>
+  <data name="Dlss_Basis_Factor_Format" xml:space="preserve">
+    <value>a ×{0:0.0} frame-generation state</value>
+  </data>
+  <data name="Dlss_Basis_Library_Format" xml:space="preserve">
+    <value>library {0}</value>
+  </data>
+  <data name="Dlss_Feature_SuperResolution" xml:space="preserve">
+    <value>Super Resolution</value>
+  </data>
+  <data name="Dlss_Feature_RayReconstruction" xml:space="preserve">
+    <value>Ray Reconstruction</value>
+  </data>
+  <data name="Dlss_Feature_FrameGeneration" xml:space="preserve">
+    <value>Frame Generation</value>
+  </data>
+  <data name="Dlss_Library_Format" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="Dlss_From_Game" xml:space="preserve">
+    <value>from the game</value>
+  </data>
+  <data name="Dlss_From_GraphicsDriver" xml:space="preserve">
+    <value>from the graphics driver</value>
+  </data>
+  <data name="Dlss_From_Windows" xml:space="preserve">
+    <value>from Windows</value>
+  </data>
+  <data name="Dlss_Preset_Format" xml:space="preserve">
+    <value>preset {0} ({1})</value>
+  </data>
+  <data name="Dlss_Model_Cnn" xml:space="preserve">
+    <value>CNN model</value>
+  </data>
+  <data name="Dlss_Model_Transformer" xml:space="preserve">
+    <value>transformer model</value>
+  </data>
+  <data name="Dlss_Model_SecondGenerationTransformer" xml:space="preserve">
+    <value>2nd-gen transformer model</value>
+  </data>
+  <data name="Dlss_Model_Unknown" xml:space="preserve">
+    <value>model not placed</value>
+  </data>
+  <data name="Dlss_NeuralRendering_Loaded" xml:space="preserve">
+    <value>DLSS 5 runtime loaded</value>
+  </data>
 </root>

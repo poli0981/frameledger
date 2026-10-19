@@ -315,6 +315,9 @@ CREATE TABLE sessions (
   power_limit_pct REAL, thermal_limit_pct REAL,       -- shares of the ticks that carried reasons: NVIDIA (L3) only
   app_frames_per_joule REAL,            -- application FPS / average GPU board power; never displayed frames (rule 6)
 
+  -- schema 0021 (2026-10-19, beta.24, D64): each loaded runtime module's folder class — 05_DETECTION §DLSS generation
+  runtime_module_sources TEXT,          -- {"nvngx_dlss.dll":"graphics_driver", …}: game | graphics_driver | windows; never a path
+
   -- schema 0020 (2026-10-19, beta.24, D62): every frame-generation state the session held — 03_METRICS §The mix
   fg_mix TEXT,                          -- {"Rows":[{"Kind":"generated","Factor":4.0,"NativeFps":…,"DisplayedFps":…,
                                         --   "Seconds":…,"Share":…,"Windows":…}, …]}: states by rising factor, then
@@ -686,6 +689,15 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > the DXGI-counted presents lost). The `.partial` needs no change: a recovered session is aggregated from its records
 > like any other. `LatestVersion` is 20; `LedgerDatabaseTests.ScriptTwentyAddsTheFgMixColumnAndAnEarlierSessionHasNone`,
 > `SqliteSessionRepositoryTests.ASessionRoundTripsColumnForColumn`. **A beta.23 cannot open a ledger beta.24 migrated.**
+
+> **`0021_runtime_module_sources.sql` (beta.24, 2026-10-19, owner decision D64) — where each loaded module lived.** One
+> TEXT column, ADD COLUMN only: `runtime_module_sources`, `{file: class}` beside `runtime_modules` — `game`,
+> `graphics_driver` (Windows' driver store or `%ProgramData%\NVIDIA`) or `windows`, from the path the module snapshot
+> read (`Application.Capture.RuntimeModuleSources`). The class is stored; **the path never is** (Privacy Policy 2.12).
+> Since the same release the snapshot also records every module under `%ProgramData%\NVIDIA\NGX` whatever its name.
+> Written by the recorder's aggregation (`SessionAggregator.ApplyWitnesses`); NULL before, and on a session recovered
+> from its crash file (which carries no module list). `LatestVersion` is 21;
+> `LedgerDatabaseTests.ScriptTwentyOneAddsTheModuleSourcesColumnAndAnEarlierSessionHasNone`, the repository round trip.
 
 > **Every open used to migrate, and one that should not have did — 2026-09-16.** The Agent's `--console sessions`,
 > a verb that prints, was run against the owner's ledger while the file on disk was at schema 2 and applied 0003 and

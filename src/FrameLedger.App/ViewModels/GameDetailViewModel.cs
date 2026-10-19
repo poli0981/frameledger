@@ -1254,6 +1254,12 @@ public sealed partial class GameDetailViewModel : ObservableObject
         MeasuredEmptyText = string.Empty;
         string upscaler = Formats.UpscalerOf(lastHooked);
         Measured.Add(upscaler + " · " + Formats.Resolution(lastHooked.RenderW, lastHooked.RenderH, lastHooked.OutputW, lastHooked.OutputH));
+        if (DlssText.Label(lastHooked) is { } dlss)
+        {
+            // beta.24 (D64): a DLSS generation only where the session showed one, with what it rests on.
+            Measured.Add(dlss);
+        }
+
         Measured.Add(FpsPresentation.FrameGenerationLabel(FpsPresentation.FromRow(lastHooked), lastHooked.FgMode));
         foreach (TriStateChipModel chip in Chips.Where(static c => !c.IsNotApplicable))
         {
