@@ -10,7 +10,7 @@ using FrameLedger.Shared.Ipc;
 namespace FrameLedger.App.ViewModels;
 
 /// <summary>
-/// The Dashboard's live capture card (<c>08_UI</c> §Dashboard), fed by <c>SessionStarted</c> / <c>SessionProgress</c> /
+/// One of the Dashboard's live capture cards (<c>08_UI</c> §Dashboard), fed by <c>SessionStarted</c> / <c>SessionProgress</c> /
 /// <c>SessionHeld</c> / <c>SessionCompleted</c>. Tier 1 shows measured settings as facts; the readout follows the FPS
 /// display rule at 1 Hz, qualifier included, and since beta.12 the game's own memory. There is no sparkline: this said it
 /// was PR-6's, and PR-6 shipped without one (<c>08_UI</c> §Dashboard).
@@ -19,7 +19,9 @@ namespace FrameLedger.App.ViewModels;
 /// <b>A session that is not measured is shown too (2026-09-23).</b> Its name, its tier, how long it has run, the machine's
 /// temperatures, and why nothing is measured — the same words its summary will use — with no readout at all. Until this
 /// date the Agent announced only hooked sessions, and a hooking-off or refused game read "Nothing is being captured." for
-/// as long as it ran. When two sessions run, a hooked one takes the card.
+/// as long as it ran. <b>A card is one session's (beta.28):</b> the Dashboard keeps one per running session
+/// (<see cref="DashboardViewModel.LiveCards"/>); until then there was one card, which a hooked session took from an
+/// unhooked one, and a second game was shown nowhere.
 /// </remarks>
 [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime")]
 public sealed partial class LiveCaptureViewModel : ObservableObject
@@ -77,6 +79,14 @@ public sealed partial class LiveCaptureViewModel : ObservableObject
     [ObservableProperty]
     private string _memoryText = string.Empty;
 
+    /// <summary>A card for no session yet; its first start, seed or tick says whose it is.</summary>
+    public LiveCaptureViewModel()
+    {
+    }
+
+    /// <summary>A card for <paramref name="sessionGuid"/> (beta.28): an event of another session leaves it alone.</summary>
+    public LiveCaptureViewModel(Guid sessionGuid) => SessionGuid = sessionGuid;
+
     public Guid? SessionGuid { get; private set; }
 
     public static string Header => Strings.Dashboard_Live_Header;
@@ -120,8 +130,8 @@ public sealed partial class LiveCaptureViewModel : ObservableObject
 
     private void Show(Guid sessionGuid, string? gameName, int tier, SessionHold? hold)
     {
-        // A hooked session takes the card from an unhooked one, never the other way round.
-        if (IsActive && SessionGuid is Guid shown && shown != sessionGuid && (Tier == 1 || tier != 1))
+        // A card is one session's (beta.28): another session has a card of its own.
+        if (SessionGuid is Guid shown && shown != sessionGuid)
         {
             return;
         }

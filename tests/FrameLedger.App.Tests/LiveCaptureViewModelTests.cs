@@ -10,8 +10,8 @@ namespace FrameLedger.App.Tests;
 
 /// <summary>
 /// The live card's two kinds of session (2026-09-23): a hooked one reads its readout; one held without measuring reads its
-/// name, its tier, its elapsed time and why — never a readout — and a hooked session takes the card from it, never the
-/// reverse. In the culture collection because it compares against the resources it reads.
+/// name, its tier, its elapsed time and why — never a readout. Since beta.28 a card is one session's, and another session's
+/// events leave it alone. In the culture collection because it compares against the resources it reads.
 /// </summary>
 [Collection(StringsCultureCollection.Name)]
 public sealed class LiveCaptureViewModelTests
@@ -71,21 +71,27 @@ public sealed class LiveCaptureViewModelTests
         card.WaitingForFrames.Should().BeTrue();
     }
 
+    /// <summary>beta.28: the Dashboard keeps a card per session, so a card never changes hands — until then a hooked session took the one card from a held one.</summary>
     [Fact]
-    public void AHookedSessionTakesTheCardFromAHeldOneNeverTheReverse()
+    public void ACardIsOneSessionsAndAnotherSessionsEventsLeaveItAlone()
     {
-        var card = new LiveCaptureViewModel();
-        var hooked = Guid.NewGuid();
+        var guid = Guid.NewGuid();
+        var card = new LiveCaptureViewModel(guid);
 
-        card.Start(Started(Guid.NewGuid(), 2, "Held", new SessionHold("RefusedHookNotEnabled")));
-        card.Start(Started(hooked, 1, "Hooked"));
-        card.SessionGuid.Should().Be(hooked);
-        card.IsHeld.Should().BeFalse();
+        card.Start(Started(Guid.NewGuid(), 1, "Another"));
+        card.IsActive.Should().BeFalse("another session's start is that session's card's");
 
-        card.Start(Started(Guid.NewGuid(), 2, "Another held", new SessionHold("RefusedHookNotEnabled")));
+        card.Start(Started(guid, 2, "Held", new SessionHold("RefusedHookNotEnabled")));
+        card.Start(Started(Guid.NewGuid(), 1, "Hooked elsewhere"));
         card.Seed(new RunningSession(Guid.NewGuid(), 9, "Another hooked", 1, DateTimeOffset.UnixEpoch, Hold: null));
+        card.Update(new SessionProgressEvent { SessionGuid = Guid.NewGuid(), ElapsedS = 5, Presents5s = 10, PresentedQualifier = "census_not_run", FgMode = "na" });
 
-        card.SessionGuid.Should().Be(hooked, "the card keeps a hooked session until it ends");
-        card.GameName.Should().Be("Hooked");
+        card.SessionGuid.Should().Be(guid);
+        card.GameName.Should().Be("Held");
+        card.IsHeld.Should().BeTrue();
+
+        card.Start(Started(guid, 1, "Held"));
+        card.Tier.Should().Be(1, "its own session attached");
+        card.IsHeld.Should().BeFalse();
     }
 }

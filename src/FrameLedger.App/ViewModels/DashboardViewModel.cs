@@ -14,7 +14,7 @@ namespace FrameLedger.App.ViewModels;
 /// <summary>
 /// The Dashboard (08_UI §Dashboard): the Agent status card (what <c>HelloAck</c> and <c>StatusAck</c> said, every
 /// value <c>N/A</c> until the Agent answered — never a placeholder that reads as a measurement), the live capture
-/// card fed by the pipe's events, the recent sessions, and the totals strip.
+/// cards fed by the pipe's events — one per running session since beta.28 —, the recent sessions, and the totals strip.
 /// </summary>
 /// <remarks>
 /// <b>It listens only while its page is on screen (beta.23):</b> <see cref="Attach"/> on Loaded, <see cref="Detach"/> on
@@ -22,6 +22,7 @@ namespace FrameLedger.App.ViewModels;
 /// the root container kept every Dashboard ever opened, each answering every event and reloading its lists on the UI thread
 /// at every session's end. FR-3.8's notice, which it raised, is <see cref="SessionNotices"/>'s.
 /// </remarks>
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime")]
 public sealed partial class DashboardViewModel : ObservableObject
 {
     private readonly IAgentLink _agent;
@@ -92,7 +93,24 @@ public sealed partial class DashboardViewModel : ObservableObject
 
     public static string TotalsThisWeek => Strings.Dashboard_Totals_ThisWeek;
 
-    public LiveCaptureViewModel Live { get; } = new();
+    /// <summary>
+    /// The live capture cards: one per session the Agent is running (beta.28 — the owner, 2026-10-20: the Dashboard when two
+    /// or more games run at once), hooked sessions first and each kind in the order it started. Until beta.28 there was one
+    /// card, which a hooked session took from an unhooked one, and a second game showed only as the status card's count.
+    /// </summary>
+    public ObservableCollection<LiveCaptureViewModel> LiveCards { get; } = [];
+
+    /// <summary>No session is running: one card says nothing is being captured.</summary>
+    [ObservableProperty]
+    private bool _liveIdle = true;
+
+    /// <summary>"2 games recording" beside the header from two sessions on; null for one or none.</summary>
+    [ObservableProperty]
+    private string? _liveCountText;
+
+    /// <summary>The cards side by side from two sessions on, two to a row.</summary>
+    [ObservableProperty]
+    private int _liveColumns = 1;
 
     public ObservableCollection<RecentSessionViewModel> Recent { get; } = [];
 
@@ -188,43 +206,104 @@ public sealed partial class DashboardViewModel : ObservableObject
     });
 
     /// <summary>
-    /// A session already running takes the idle card (2026-09-23): the Dashboard is rebuilt on every visit, so one that
-    /// started while another page was open had no start event here and read "Nothing is being captured.". A hooked
-    /// session is preferred over one recorded without measuring.
+    /// Every session already running has its card (2026-09-23; one card each since beta.28): the Dashboard is rebuilt on
+    /// every visit, so one that started while another page was open had no start event here and read "Nothing is being
+    /// captured.". A card with no name yet — made by a tick that came before the session was known — gets its name here.
     /// </summary>
     private void SeedLive()
     {
-        if (Live.IsActive || _sessions?.Current is not { Count: > 0 } running)
+        foreach (RunningSession session in _sessions?.Current ?? [])
         {
-            return;
+            if (Find(session.SessionGuid) is { } card)
+            {
+                if (card.GameName.Length == 0)
+                {
+                    card.Seed(session);
+                }
+
+                continue;
+            }
+
+            var seeded = new LiveCaptureViewModel(session.SessionGuid);
+            seeded.Seed(session);
+            LiveCards.Add(seeded);
         }
 
-        Live.Seed(running.FirstOrDefault(static s => s.Tier == 1) ?? running[0]);
+        Arrange();
     }
 
-    /// <summary>The three session events drive the live card; a completed session reloads the lists (07_IPC §Client behavior: the row is in SQLite).</summary>
+    /// <summary>The four session events drive the cards, each its own session's; a completed session reloads the lists (07_IPC §Client behavior: the row is in SQLite).</summary>
     private void Dispatch(IpcEnvelope envelope)
     {
         switch (envelope.Type)
         {
             case IpcMessageType.SessionStarted when IpcCodec.Payload<SessionStartedEvent>(envelope) is { } started:
-                Live.Start(started);
+                CardFor(started.SessionGuid).Start(started);
+                Arrange();
                 break;
             case IpcMessageType.SessionProgress when IpcCodec.Payload<SessionProgressEvent>(envelope) is { } progress:
-                Live.Update(progress);
+                // A tick is hooked: a session that attached since it started moves among the hooked ones.
+                CardFor(progress.SessionGuid).Update(progress);
+                Arrange();
                 break;
             case IpcMessageType.SessionHeld when IpcCodec.Payload<SessionHeldEvent>(envelope) is { } held:
-                Live.Hold(held);
+                CardFor(held.SessionGuid).Hold(held);
                 break;
             case IpcMessageType.SessionCompleted when IpcCodec.Payload<SessionCompletedEvent>(envelope) is { } completed:
-                // FR-3.8's notice is SessionNotices' (beta.23); the card and the lists are this page's.
-                Live.Stop(completed);
-                SeedLive();
+                // FR-3.8's notice is SessionNotices' (beta.23); the cards and the lists are this page's.
+                if (Find(completed.SessionGuid) is { } ended)
+                {
+                    ended.Stop(completed);
+                    LiveCards.Remove(ended);
+                }
+
+                Arrange();
                 Pending = LoadAsync();
                 break;
             default:
                 break;
         }
+    }
+
+    private LiveCaptureViewModel? Find(Guid sessionGuid) => LiveCards.FirstOrDefault(c => c.SessionGuid == sessionGuid);
+
+    /// <summary>
+    /// The card of <paramref name="sessionGuid"/>, made when its first event arrives: named from the running sessions when
+    /// they know it, else by its seed when they do (<see cref="SeedLive"/>).
+    /// </summary>
+    private LiveCaptureViewModel CardFor(Guid sessionGuid)
+    {
+        if (Find(sessionGuid) is { } card)
+        {
+            return card;
+        }
+
+        card = new LiveCaptureViewModel(sessionGuid);
+        if (_sessions?.Current.FirstOrDefault(s => s.SessionGuid == sessionGuid) is { } running)
+        {
+            card.Seed(running);
+        }
+
+        LiveCards.Add(card);
+        return card;
+    }
+
+    /// <summary>Hooked sessions first, each kind in the order it came — moved, never rebuilt, so a card keeps its bindings.</summary>
+    private void Arrange()
+    {
+        List<LiveCaptureViewModel> ordered = [.. LiveCards.OrderBy(static c => c.Tier == 1 ? 0 : 1)];
+        for (int i = 0; i < ordered.Count; i++)
+        {
+            int at = LiveCards.IndexOf(ordered[i]);
+            if (at != i)
+            {
+                LiveCards.Move(at, i);
+            }
+        }
+
+        LiveIdle = LiveCards.Count == 0;
+        LiveColumns = LiveCards.Count >= 2 ? 2 : 1;
+        LiveCountText = LiveCards.Count >= 2 ? string.Format(CultureInfo.CurrentCulture, Strings.Dashboard_Live_Count_Format, LiveCards.Count) : null;
     }
 
     private void Refresh()

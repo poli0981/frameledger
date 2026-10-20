@@ -15,6 +15,7 @@ using FrameLedger.Application.Settings;
 using FrameLedger.Application.TriState;
 using FrameLedger.Domain.Metrics;
 using FrameLedger.Infrastructure.Persistence;
+using FrameLedger.Shared.Ipc;
 
 namespace FrameLedger.App.Tests;
 
@@ -88,8 +89,16 @@ public sealed partial class PagesLoadTests
             var strip = new NoStrip();
             var consent = new HookingConsent(new NoAgent(), new NoPrompt());
 
-            // The view models load off the STA thread; the pages bind to them on it.
-            Dashboard = new DashboardViewModel(new NoAgent(), s.Library, selection, nav, new NoSummaries());
+            // The view models load off the STA thread; the pages bind to them on it. beta.28: two games recording at once, a
+            // hooked one and one held, so the Dashboard's two cards are drawn and read in both themes.
+            var recording = new RecordingAgent(
+            [
+                new ActiveSession(Guid.NewGuid(), gameId, "Alpha", 41, 1, DateTimeOffset.UtcNow.AddMinutes(-2), null),
+                new ActiveSession(Guid.NewGuid(), gameId, "Beta", 42, 2, DateTimeOffset.UtcNow.AddMinutes(-1), new SessionHold("RefusedHookNotEnabled")),
+            ]);
+            LiveSessions live = Own(new LiveSessions(recording));
+            Dashboard = new DashboardViewModel(recording, s.Library, selection, nav, new NoSummaries(), sessions: live);
+            Dashboard.Attach();
             Task pending1 = Dashboard.Pending;
             await pending1.ConfigureAwait(false);
             Games = new GamesViewModel(s.Library, selection, nav, new AddGameFlow(s.Library, new NoPicker(), selection, nav, strip));
@@ -191,6 +200,37 @@ public sealed partial class PagesLoadTests
         {
             _owned.Add(disposable);
             return disposable;
+        }
+    }
+
+    /// <summary>An Agent that answers with the sessions it is recording and says nothing else (beta.28's two live cards).</summary>
+    private sealed class RecordingAgent(IReadOnlyList<ActiveSession> sessions) : IAgentLink
+    {
+        public AgentConnectionState State => AgentConnectionState.Connected;
+
+        public StatusAck? Status { get; } = new("recording", null, null, sessions);
+
+        public HelloAck? Hello => null;
+
+        public bool IsConnected => true;
+
+        public event EventHandler? Changed
+        {
+            add { }
+            remove { }
+        }
+
+        public event EventHandler<AgentEventArgs>? EventReceived
+        {
+            add { }
+            remove { }
+        }
+
+        public Task<IpcEnvelope> RequestAsync<TRequest>(string type, TRequest payload, CancellationToken ct = default)
+            where TRequest : class => throw new NotSupportedException();
+
+        public void SetLaunchHold(bool hold)
+        {
         }
     }
 

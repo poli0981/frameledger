@@ -9,8 +9,9 @@ using FrameLedger.Shared.Ipc;
 
 namespace FrameLedger.App.Tests;
 
-/// <summary>The Dashboard over a scratch ledger and a fake link: totals and recent from the tables; the live card driven by the three session events; a completed session reloads.</summary>
+/// <summary>The Dashboard over a scratch ledger and a fake link: totals and recent from the tables; the live cards — one per running session since beta.28 — driven by the session events; a completed session reloads.</summary>
 [Collection(StringsCultureCollection.Name)]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the expected texts are resources that follow the UI culture")]
 public sealed class DashboardViewModelTests
 {
     private sealed class FakeLink : IAgentLink
@@ -101,15 +102,16 @@ public sealed class DashboardViewModelTests
         vm.Attach();
         Task pending2 = vm.Pending;
         await pending2;
-        vm.Live.IsActive.Should().BeFalse();
+        vm.LiveCards.Should().BeEmpty();
         vm.RecentEmpty.Should().BeTrue();
-
         var guid = Guid.NewGuid();
         link.Raise(IpcMessageType.SessionStarted, new SessionStartedEvent(guid, game.Id, "Alpha", 4242, 1, DateTimeOffset.UtcNow));
-        vm.Live.IsActive.Should().BeTrue();
-        vm.Live.WaitingForFrames.Should().BeTrue();
-        vm.Live.GameName.Should().Be("Alpha");
-        vm.Live.TierText.Should().Be(Strings.Tier_Hooked);
+        LiveCaptureViewModel card = vm.LiveCards.Should().ContainSingle().Subject;
+        vm.LiveCountText.Should().BeNull("one game needs no count");
+        card.IsActive.Should().BeTrue();
+        card.WaitingForFrames.Should().BeTrue();
+        card.GameName.Should().Be("Alpha");
+        card.TierText.Should().Be(Strings.Tier_Hooked);
 
         link.Raise(IpcMessageType.SessionProgress, new SessionProgressEvent
         {
@@ -130,22 +132,26 @@ public sealed class DashboardViewModelTests
             GameVramDedicatedMb = 4100,
             GameRamPrivateMb = 2048,
         });
-        vm.Live.WaitingForFrames.Should().BeFalse();
-        vm.Live.Readout.Kind.Should().Be(FpsReadoutKind.Presented);
-        vm.Live.UpscalerText.Should().Be("DLSS Quality");
-        vm.Live.RtActive.Should().BeTrue();
-        vm.Live.GpuTempText.Should().Contain("71");
-        vm.Live.MemoryText.Should().Be(GameMemoryText.Live(4100, 2048), "the game's own memory from the newest tick (beta.12)");
+        card.WaitingForFrames.Should().BeFalse();
+        card.Readout.Kind.Should().Be(FpsReadoutKind.Presented);
+        card.UpscalerText.Should().Be("DLSS Quality");
+        card.RtActive.Should().BeTrue();
+        card.GpuTempText.Should().Contain("71");
+        card.MemoryText.Should().Be(GameMemoryText.Live(4100, 2048), "the game's own memory from the newest tick (beta.12)");
 
-        // A progress for another session is ignored; the completion of ours ends the card and reloads the lists.
-        link.Raise(IpcMessageType.SessionProgress, new SessionProgressEvent { SessionGuid = Guid.NewGuid(), ElapsedS = 1, Presents5s = 10, PresentedQualifier = "census_not_run", FgMode = "na", RtActive = false });
-        vm.Live.RtActive.Should().BeTrue();
+        // A progress for another session is that session's card (beta.28) and leaves this one alone; the completion of ours
+        // ends our card and reloads the lists.
+        var other = Guid.NewGuid();
+        link.Raise(IpcMessageType.SessionProgress, new SessionProgressEvent { SessionGuid = other, ElapsedS = 1, Presents5s = 10, PresentedQualifier = "census_not_run", FgMode = "na", RtActive = false });
+        card.RtActive.Should().BeTrue();
+        vm.LiveCards.Select(static c => c.SessionGuid).Should().Equal(guid, other);
 
         long id = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddMinutes(-2), seconds: 65);
         link.Raise(IpcMessageType.SessionCompleted, new SessionCompletedEvent(guid, id, "normal", 1, "saved", "TargetExited"));
         Task pending3 = vm.Pending;
         await pending3;
-        vm.Live.IsActive.Should().BeFalse();
+        card.IsActive.Should().BeFalse();
+        vm.LiveCards.Should().ContainSingle().Which.SessionGuid.Should().Be(other);
         vm.Recent.Should().ContainSingle();
     }
 
@@ -171,20 +177,22 @@ public sealed class DashboardViewModelTests
         Task loaded = vm.Pending;
         await loaded;
 
-        vm.Live.IsActive.Should().BeTrue("until 2026-09-23 this read \"Nothing is being captured.\" for as long as the game ran");
-        vm.Live.IsHeld.Should().BeTrue();
-        vm.Live.GameName.Should().Be("Alpha");
+        LiveCaptureViewModel card = vm.LiveCards.Should().ContainSingle("until 2026-09-23 this read \"Nothing is being captured.\" for as long as the game ran").Subject;
+        card.IsActive.Should().BeTrue();
+        card.IsHeld.Should().BeTrue();
+        card.GameName.Should().Be("Alpha");
         vm.RunningSessions.Should().Be("1");
 
         link.Raise(IpcMessageType.SessionHeld, new SessionHeldEvent(guid, 30));
-        vm.Live.ElapsedText.Should().NotBeEmpty();
+        card.ElapsedText.Should().NotBeEmpty();
 
         long id = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddMinutes(-1), seconds: 30);
         link.Raise(IpcMessageType.SessionCompleted, new SessionCompletedEvent(guid, id, "normal", 2, "saved", "RefusedHookNotEnabled", game.Id, "Alpha"));
         Task reloaded = vm.Pending;
         await reloaded;
 
-        vm.Live.IsActive.Should().BeFalse();
+        vm.LiveCards.Should().BeEmpty();
+        vm.LiveIdle.Should().BeTrue();
         strip.Shown.Should().ContainSingle().Which.Body.Should().Contain("Alpha");
         vm.RunningSessions.Should().Be("0");
     }
@@ -205,19 +213,109 @@ public sealed class DashboardViewModelTests
         var held = Guid.NewGuid();
         link.Raise(IpcMessageType.SessionStarted, new SessionStartedEvent(hooked, 1, "Hooked", 1, 1, DateTimeOffset.UtcNow));
         link.Raise(IpcMessageType.SessionStarted, new SessionStartedEvent(held, 2, "Held", 2, 2, DateTimeOffset.UtcNow, new SessionHold("RefusedHookNotEnabled")));
-        vm.Live.GameName.Should().Be("Hooked", "a hooked session keeps the card");
+        vm.LiveCards.Select(static c => c.GameName).Should().Equal(["Hooked", "Held"], "each game its card since beta.28, a hooked one first");
 
         link.Raise(IpcMessageType.SessionCompleted, new SessionCompletedEvent(held, null, "normal", 2, "discarded", "RefusedHookNotEnabled", 2, "Held"));
         Task first = vm.Pending;
         await first;
-        strip.Shown.Should().ContainSingle().Which.Body.Should().Contain("Held", "the completed session's own name, not the card's");
-        vm.Live.GameName.Should().Be("Hooked");
+        strip.Shown.Should().ContainSingle().Which.Body.Should().Contain("Held", "the completed session's own name, not a card's");
+        vm.LiveCards.Should().ContainSingle().Which.GameName.Should().Be("Hooked");
 
         link.Raise(IpcMessageType.SessionCompleted, new SessionCompletedEvent(hooked, null, "interrupted", 1, "faulted", "SessionFaulted", 1, "Hooked"));
         Task second = vm.Pending;
         await second;
         strip.Shown.Should().ContainSingle("a faulted session is the strip's CaptureError already; \"discarded\" would say what did not happen");
-        vm.Live.IsActive.Should().BeFalse();
+        vm.LiveCards.Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// beta.28 (the owner, 2026-10-20: the Dashboard when two or more games run at once): each running session has its card,
+    /// hooked ones first and each kind in the order it started; each event reaches its own session's card; the header counts
+    /// the games from two on, and the cards stand two to a row.
+    /// </summary>
+    [Fact]
+    public async Task TwoGamesRecordingAtOnceEachHaveTheirOwnCardAndTheirOwnEvents()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        (FakeLink link, LiveSessions sessions, Guid held, Guid hooked) = TwoRecording();
+        using LiveSessions owned = sessions;
+        DashboardViewModel vm = await AttachedAsync(s, link, sessions);
+
+        vm.LiveCards.Select(static c => c.GameName).Should().Equal(["Hooked second", "Held first"], "a hooked session first");
+        vm.LiveCountText.Should().Be(string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.Dashboard_Live_Count_Format, 2));
+        vm.LiveColumns.Should().Be(2);
+        vm.LiveIdle.Should().BeFalse();
+
+        link.Raise(IpcMessageType.SessionProgress, new SessionProgressEvent { SessionGuid = hooked, ElapsedS = 60, Presents5s = 600, PresentedFps5s = 120, PresentedQualifier = "no_fg_runtime", FgMode = "na", RtActive = true });
+        link.Raise(IpcMessageType.SessionHeld, new SessionHeldEvent(held, 300, GpuTempC: 66));
+        LiveCaptureViewModel hookedCard = vm.LiveCards[0];
+        LiveCaptureViewModel heldCard = vm.LiveCards[1];
+        hookedCard.RtActive.Should().BeTrue();
+        hookedCard.Readout.Kind.Should().Be(FpsReadoutKind.Presented);
+        hookedCard.ElapsedText.Should().Contain(Formats.Duration(60));
+        heldCard.IsHeld.Should().BeTrue("a tick of the other session does not reach this card");
+        heldCard.ElapsedText.Should().Contain(Formats.Duration(300));
+        heldCard.RtActive.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task AThirdGameHasACardAndEachEndLeavesTheOthersInTheOrderTheyStarted()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        (FakeLink link, LiveSessions sessions, Guid held, Guid hooked) = TwoRecording();
+        using LiveSessions owned = sessions;
+        DashboardViewModel vm = await AttachedAsync(s, link, sessions);
+        LiveCaptureViewModel heldCard = vm.LiveCards[1];
+
+        var third = Guid.NewGuid();
+        link.Raise(IpcMessageType.SessionStarted, new SessionStartedEvent(third, 3, "Third", 43, 2, DateTimeOffset.UtcNow, new SessionHold("RefusedHookNotEnabled")));
+        vm.LiveCards.Select(static c => c.GameName).Should().Equal(["Hooked second", "Held first", "Third"]);
+        vm.LiveCountText.Should().Be(string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.Dashboard_Live_Count_Format, 3));
+
+        await CompleteAsync(vm, link, hooked, 1, "Hooked second");
+        vm.LiveCards.Select(static c => c.GameName).Should().Equal(["Held first", "Third"]);
+        vm.LiveCards[0].Should().BeSameAs(heldCard, "a card is moved, never rebuilt");
+
+        await CompleteAsync(vm, link, held, 2, "Held first");
+        vm.LiveCountText.Should().BeNull("one game left");
+        vm.LiveColumns.Should().Be(1);
+
+        await CompleteAsync(vm, link, third, 2, "Third");
+        vm.LiveCards.Should().BeEmpty();
+        vm.LiveIdle.Should().BeTrue();
+    }
+
+    /// <summary>A held game that started first and a hooked one that started after it, as the Agent's status lists them.</summary>
+    private static (FakeLink Link, LiveSessions Sessions, Guid Held, Guid Hooked) TwoRecording()
+    {
+        var held = Guid.NewGuid();
+        var hooked = Guid.NewGuid();
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        var link = new FakeLink
+        {
+            Status = new StatusAck("recording", null, null,
+            [
+                new ActiveSession(held, 1, "Held first", 41, 2, now.AddMinutes(-5), new SessionHold("RefusedHookNotEnabled")),
+                new ActiveSession(hooked, 2, "Hooked second", 42, 1, now.AddMinutes(-1), null),
+            ]),
+        };
+        return (link, new LiveSessions(link), held, hooked);
+    }
+
+    private static async Task<DashboardViewModel> AttachedAsync(ScratchLedger s, FakeLink link, LiveSessions sessions)
+    {
+        var vm = new DashboardViewModel(link, s.Library, new GameSelection(), new FakeNavigator(), new NoSummaries(), sessions: sessions);
+        vm.Attach();
+        Task loaded = vm.Pending;
+        await loaded.ConfigureAwait(true);
+        return vm;
+    }
+
+    private static async Task CompleteAsync(DashboardViewModel vm, FakeLink link, Guid session, int tier, string name)
+    {
+        link.Raise(IpcMessageType.SessionCompleted, new SessionCompletedEvent(session, null, "normal", tier, "discarded", "TargetExited", 0, name));
+        Task reloaded = vm.Pending;
+        await reloaded.ConfigureAwait(true);
     }
     /// <summary>
     /// beta.23: a Dashboard hears the Agent only while its page is on screen. Every visit made a new one and none went
@@ -246,8 +344,8 @@ public sealed class DashboardViewModelTests
 
         var guid = Guid.NewGuid();
         link.Raise(IpcMessageType.SessionStarted, new SessionStartedEvent(guid, game.Id, "Alpha", 4242, 1, DateTimeOffset.UtcNow));
-        visits[^1].Live.IsActive.Should().BeTrue("the Dashboard on screen follows the session");
-        visits.Take(4).Should().OnlyContain(static v => !v.Live.IsActive, "a Dashboard that was navigated away from hears nothing");
+        visits[^1].LiveCards.Should().ContainSingle("the Dashboard on screen follows the session");
+        visits.Take(4).Should().OnlyContain(static v => v.LiveCards.Count == 0, "a Dashboard that was navigated away from hears nothing");
 
         long id = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddMinutes(-2), seconds: 65);
         link.Raise(IpcMessageType.SessionCompleted, new SessionCompletedEvent(guid, id, "normal", 1, "saved", "TargetExited"));
