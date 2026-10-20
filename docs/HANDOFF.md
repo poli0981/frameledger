@@ -65,6 +65,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.23` | [`handoff/history/0.1.0-beta.23.md`](handoff/history/0.1.0-beta.23.md) |
 | `§beta.24` | [`handoff/history/0.1.0-beta.24.md`](handoff/history/0.1.0-beta.24.md) |
 | `§beta.25` | [`handoff/history/0.1.0-beta.25.md`](handoff/history/0.1.0-beta.25.md) |
+| `§beta.26` | [`handoff/history/0.1.0-beta.26.md`](handoff/history/0.1.0-beta.26.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -72,39 +73,51 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-10-19, 0.1.0-beta.26: a ×1336 frame-generation state, fixed
+## **START HERE** — 2026-10-20, 0.1.0-beta.27: the owner's eight sessions of 2026-10-20
 
-*Status is `docs/changelog/0.1.0-beta.26.md`; this is what no other file carries.* The owner ran the installed
-beta.25 the evening it shipped and sent screenshots: "Bạn có thể thử kiểm tra kết quả (fix nếu cần), cập nhật docs,
-làm chip và trigger lại sonarcloud thử nhé." Silent Hill 2's summary listed a ×1336.0 frame-generation state; the owner
-pointed at the cause ("có khoảng thời gian đầu game đang biên dịch shader") and then: "Bạn có thể cân nhắc (nếu thực sự
-cần) bản beta26 fix lỗi nhé." It was needed: every beta.25 session of a title that compiles its shaders under a loaded
-frame-generation runtime can store such a row, and the summary and the DLSS line print it. #327 (the fix and the
-owner's runs), #328 (the SonarCloud chip — the owner marked the last six issues the same day, and `main`'s quality
-gate passes) and this release.
+*Status is `docs/changelog/0.1.0-beta.27.md`; this is what no other file carries.* The owner ran the installed
+beta.26 the morning after it shipped: "Bạn có thể kiểm tra kết quả ở khoảng 8 kết quả gần nhất. Sửa luôn 2 test flake
+luôn trong phiên này và fix bug, publish bản mới nếu có bug." — and, mid-way: "1. cyberpunk 2077 là switch in-game.
+2. Fix bug mở xem 1 session nhiều lần ra nhiều cửa sổ." — then, on the Steam hand-off: "bạn có thể lựa chọn: note vào
+giao diện UI là các game trên Steam sẽ tự trigger Steam trước / Thêm Setting cố định trên game Steam là luôn chạy qua
+steam client". #330 (six fixes, the Steam note, the two flaky tests, `spike-notes` §23) and this release.
 
-**No new owner decision.** The fix makes the window rule say what `03_METRICS` already promised ("windows with too few
-frames to read") about APPLICATION frames, not presents, and bounds the ratio at ×8 (`FgWindow.GenerationCeiling`) —
-no shipping frame generation passes ×6; the bound is raised only with a title measured above it. A stored mix is read
-by the same rule, so no session is rewritten and none keeps the row.
+**No new owner decision.** Each fix makes the code do what a document already said: a state is a frame generation's
+whole multiplier (`03_METRICS` §The mix), the driver's report is the session's and not the dead pid's (§The
+driver-reported rung), a game started again is recorded (`04_CAPTURE`, beta.15) — after a launch too —, a summary is
+one window, the display sizes are the ones seen.
 
-**Measured on the owner's ledger** (a read-only backup copy, decoded with the App's own loader in a scratch test): the
-×1336.0 row was Silent Hill 2's first fifteen seconds — 1,369, 4,877 and 1,303 presents with 1, 0 and 1 application
-frames per five seconds, then a 13,348 ms frame: the game compiling its shaders at start (the owner). The only stored
-value above ×8 in 60 sessions. Lies of P read no FSR mode with `ffxQuery` hooked (bit 11 in `hooks_installed_mask`):
-item 21's first branch (`spike-notes` §22).
+**The owner's two ways for Steam games, and the one taken.** The owner offered a note in the UI or a fixed rule that
+Steam's games always go through the Steam client, and left the choice open. The note was taken (`08_UI` §Games, Play):
+the rule would have cost what *Start directly* exists for — three of the five Steam games started directly on
+2026-10-20 ran and were measured from their first frame, and a Vulkan game is measured only when FrameLedger starts it
+(Everhex Demo, a Steam game). Not every Steam game hands itself to Steam: Lies of P did, Expedition 33 closed instead.
+
+**One question for the owner, not taken:** the crash safety counts a direct start's early exit — Lies of P handing
+itself to Steam, Expedition 33 closing within five seconds even unhooked — and two such starts turn hooking off for
+the game (`19_SAFETY` §Crash & stability safety, measured `spike-notes` §23). The policy cannot tell a hand-off from
+the hang it exists for, so it stands, and users are told to start such a game through its store. An exemption — an
+exit followed by the same executable within seconds — would loosen a safety rule and is the owner's to decide.
+
+**Measured on the owner's ledger** (a read-only backup copy, the App's own loader in a scratch test): of 70 sessions,
+the ×2.52 row was the only stored state between two multipliers; none of the 14 sessions the driver answered kept
+`CREATED | EVALUATE` (Expedition 33: `0x8067F` while it ran on 2026-09-06, `0x8007F` stored); two Lies of P and three
+Dark Souls III sessions stored no window size.
 
 **Traps met on the way:**
 
-- **A row written by a released build is read by every later one.** Changing what makes a state changes nothing on a
-  stored session unless its reader applies the rule too (`FgMixRecord.Parse`); the row would keep the old meaning.
-- **A session's timeline is one scratch test away**: `SessionSeriesLoader` over a ledger copy prints presents,
-  generated and application frames per five seconds (a `PagesLoadTests` partial, never committed). Decoding the blobs
-  by hand is not needed.
-- **SonarCloud's PR analysis lists only issues new in the PR**: whether a change clears a finding on `main` shows only
-  in `main`'s next analysis.
+- **A probe taken after the target exits is not the session's.** NVIDIA's driver still answers for a dead pid, with
+  the bits that say a feature ran cleared; any per-process question asked at a session's end must check that the game
+  still lives (`CaptureSession`'s last snapshot), or the last answer erases the session's.
+- **A launch's own process reaches the watcher after the launch began**, so it lands among the processes turned away
+  "one at a time"; whatever acts on those must leave out the launch's own pids (`Running.Targets`).
+- **The logs are the timeline of what the owner did**: `ui-*.log`'s `play:` lines say *through the agent* (Start
+  directly) or *through steam*; `agent-*.log` has every session's end, a discarded one included — the ledger keeps no
+  row for it. A hooking switch the user flips leaves no line: say what the logs show, not why hooking was off.
+- **Decode the windows before naming a cause**: the ×2.52 windows' runs — 251 application frames followed by one
+  generated frame, 270 by two — showed the stepping at a glance.
 
-**Owner-only:** items 20 and 21 annotated (`spike-notes` §22); nothing added.
+**Owner-only:** items 20 and 21 annotated (§23); item 22 added.
 
 
 ## Owner-only — no PR can close these
@@ -242,6 +255,15 @@ item 21's first branch (`spike-notes` §22).
    matched: the title did not ask while the hook was in. It cannot be launched by FrameLedger as this item asks — started
    directly it hands itself to Steam within seconds, and before beta.27 the game Steam started was not recorded at
    all.)*
+22. **beta.27 on real hardware.** (a) **The driver's report, and item 20(b):** Expedition 33 under the NVIDIA App's
+   DLSS override → the header reads *DLSS (driver-reported)* with the override's mode and *· NVIDIA App* (*Balanced*
+   as set on 2026-10-20); then 20(b)'s four modes. Still *Upscaler not identified* → record the session's stored
+   `ngx_driver_words`: no reading while the game ran said the feature was created and evaluated. (b) **Start directly
+   on Lies of P:** the notice says a Steam game may hand itself to Steam first, and the game Steam starts is recorded —
+   `agent-*.log` says *started while the last session of its executable was ending; recording it now*. The crash safety
+   counts the hand-off: after two such starts hooking is off again (`19_SAFETY`). (c) **One window per session:** open a session from a Sessions tab, then again from the game
+   page or its notification → the same window comes forward, restored if minimised. (d) **A game in exclusive
+   full-screen** (Dark Souls III, Lies of P) → its summary's Display card shows the window size.
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
