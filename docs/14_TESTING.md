@@ -125,6 +125,21 @@ own work item on the STA thread and puts back — and with the keys a parameter,
   `AnotherHookHarnessRunningBesideTheSuiteDoesNotMakeTheTargetAmbiguous` runs a second harness beside the capture (red
   against the shared name: `TargetAmbiguous`). A suite that attaches by pid (`ShmDrainIntegrationTests`, the native
   `fl_guard_test`) is not exposed and keeps the staged name.
+- **Test readiness: an injection test waits for the harness to say it presents** (beta.27). The suites that start
+  hook-harness and then inject into it or look for it — `ShmDrainIntegrationTests`, `CaptureHostEndToEndTests`,
+  `AgentEndToEndTests`, `PartialRecoveryEndToEndTests` — slept 800 ms after starting it, a guess at when it presents.
+  They now wait, bounded at 30 s, for the line the harness prints and flushes right before its present loop
+  (`tests/Shared/HarnessReady.cs`, compiled in by `FrameLedger.DrainFixtures.targets`), and the pause case — which read
+  the writer's status as INIT once under a full gate on 2026-10-19 — waits for the writer's READY
+  (`WaitUntilInitFinishedAsync`) before it pauses.
+- **The guard reads the test host too** (beta.27). The guard's scan set is the target and its ancestors up to a platform
+  launcher, so for an injection test it includes the test host that started the harness, `dotnet test` and the shell
+  above them. Under a full gate the test host is still starting its other test classes, and a module it releases
+  between the guard's list and the module's name refuses as `ModuleScanFailed` — measured 2026-10-20, once in the gate
+  and once in twelve runs of `FrameLedger.Infrastructure.Tests` with coverage, never in a run of the class alone;
+  `ProcessUnreadable` (2026-10-19, twice) is the same race met at the list. `ShmDrainIntegrationTests.InjectAsync` asks
+  again, four times at most, on those two reasons only. The end-to-end suites inject through the Agent or the capture
+  host, which records such a session as Tier 2; they have the same exposure and have not shown it.
 - Guard integration: harness loads a **dummy DLL named like an anti-cheat module** → injection refused pre-launch; loaded late → safety unhook. (A renamed harmless DLL, not real anti-cheat software.)
 
 ## Hook overhead measurement (NFR-1, per release)

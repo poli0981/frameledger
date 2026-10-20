@@ -46,7 +46,10 @@ public static class DlssText
     /// <summary>
     /// The summary's DLSS line: the label first when one is established, then each library with its version, where it was
     /// loaded from and — for super resolution — the preset the driver reports, then DLSS 5's runtime when it was loaded.
-    /// Null for a session with no DLSS library, no DLSS upscaler and no DLSS Frame Generation.
+    /// Null for a session with no DLSS library, no DLSS upscaler and no DLSS Frame Generation — and, since beta.27, where it
+    /// would say only "DLSS": the header already names the upscaler. The NVIDIA App's override loads its libraries under
+    /// names no census lists (Witcher 3, 2026-10-20: <c>160_E658700.bin</c>, which the loaded-libraries line prints), and an
+    /// unreadable module list names none.
     /// </summary>
     public static string? Line(SessionRow row)
     {
@@ -61,7 +64,8 @@ public static class DlssText
         }
 
         DlssEvidence evidence = Evidence(row);
-        var parts = new List<string> { DlssGeneration.Of(evidence) is { } generation ? LabelOf(generation, evidence) : "DLSS" };
+        string? label = DlssGeneration.Of(evidence) is { } generation ? LabelOf(generation, evidence) : null;
+        var parts = new List<string> { label ?? "DLSS" };
         AddLibrary(parts, modules, sources, _superResolutionFile, Strings.Dlss_Feature_SuperResolution, PresetText(evidence.Preset));
         AddLibrary(parts, modules, sources, _rayReconstructionFile, Strings.Dlss_Feature_RayReconstruction, detail: null);
         AddLibrary(parts, modules, sources, _frameGenerationFile, Strings.Dlss_Feature_FrameGeneration, detail: null);
@@ -75,7 +79,7 @@ public static class DlssText
             parts.Add(Strings.Dlss_NeuralRendering_Loaded);
         }
 
-        return string.Join(" · ", parts);
+        return label is null && parts.Count == 1 ? null : string.Join(" · ", parts);
     }
 
     /// <summary>The CSV header's line, InvariantCulture: the generation and its basis, each DLSS library with its version and source, the preset.</summary>

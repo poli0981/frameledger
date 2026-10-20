@@ -10,6 +10,7 @@ using FrameLedger.Infrastructure.AntiCheat;
 using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Infrastructure.Rules;
 using FrameLedger.Shared;
+using FrameLedger.Testing;
 
 namespace FrameLedger.Infrastructure.Tests;
 
@@ -110,7 +111,7 @@ public sealed class ShmDrainIntegrationTests
         outcome.Should().NotBe(RulesSeedOutcome.PackagedSeedUnusable);
     }
 
-    private static Process StartHarness(string arguments)
+    private static async Task<Process> StartHarnessAsync(string arguments)
     {
         File.Exists(Harness).Should().BeTrue(
             "hook-harness.exe must be staged beside the test binary (FrameLedger.DrainFixtures.targets). "
@@ -126,9 +127,40 @@ public sealed class ShmDrainIntegrationTests
             RedirectStandardOutput = true,
         })!;
 
-        Thread.Sleep(800);    // let it create its device and start presenting
+        bool presenting = await HarnessReady.WaitUntilPresentingAsync(process, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        if (!presenting && !process.HasExited)
+        {
+            process.Kill(entireProcessTree: true);
+        }
+
+        presenting.Should().BeTrue("the harness must reach its present loop before anything looks for it or is injected into it (HarnessReady)");
         process.HasExited.Should().BeFalse("the harness must still be running when we inject");
         return process;
+    }
+
+    /// <summary>
+    /// The real guard over the harness, which carries no anti-cheat (beta.27): a refusal names its reason, and one that says
+    /// the guard could not read the scan set whole is asked again — four more times at most, 250 ms apart.
+    /// </summary>
+    /// <remarks>
+    /// The scan set is the harness and its ancestors up to a platform launcher — here this test host, <c>dotnet test</c> and
+    /// the shell above them. Under a full gate the test host is still starting its other test classes, loading and releasing
+    /// modules while the guard reads its list, and a module released between the list and its name refuses as
+    /// <c>ModuleScanFailed</c>: measured 2026-10-20, once in the gate and once in twelve runs of this assembly with coverage,
+    /// never in a run of this class alone. <c>ProcessUnreadable</c> (twice on 2026-10-19) is the same race met at the list
+    /// itself. Both are the guard working, about this machine's tooling rather than the harness — D48's one re-read covers
+    /// a process still starting, not a list in motion. Every other refusal fails at once, and so does one that lasts.
+    /// </remarks>
+    private static async Task InjectAsync(NativeAntiCheatGuard guard, Process harness)
+    {
+        AntiCheatVerdict verdict = await guard.GuardedInjectAsync(harness.Id, Payload, toleratedFamily: null, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        for (int again = 0; again < 4 && verdict.Reason is (AntiCheatRefusalReason.ModuleScanFailed or AntiCheatRefusalReason.ProcessUnreadable); again++)
+        {
+            await Task.Delay(250, TestContext.Current.CancellationToken).ConfigureAwait(false);
+            verdict = await guard.GuardedInjectAsync(harness.Id, Payload, toleratedFamily: null, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        }
+
+        verdict.IsAllowed.Should().BeTrue($"the guard refused our own harness: {verdict.Reason} {verdict.Family} {verdict.Signal}");
     }
 
     private static void Kill(Process p)
@@ -316,16 +348,15 @@ public sealed class ShmDrainIntegrationTests
     {
         await SeedRulesAsync();
 
-        Process harness = StartHarness("--real --hold-presenting 12");
+        Process harness = await StartHarnessAsync("--real --hold-presenting 12");
         try
         {
             var guard = new NativeAntiCheatGuard();
 
             // The REAL guard with REAL sources — no test seam. The harness carries no anti-cheat, so a
-            // refusal here is a genuine finding about this machine, not a fixture problem.
-            AntiCheatVerdict verdict = await guard.GuardedInjectAsync(harness.Id, Payload, toleratedFamily: null, TestContext.Current.CancellationToken);
-            verdict.IsAllowed.Should().BeTrue(
-                $"the guard refused our own harness: {verdict.Reason} {verdict.Family} {verdict.Signal}");
+            // refusal here is a genuine finding about this machine, not a fixture problem — save the one
+            // InjectAsync asks again about: this test host's own module list, read while it changes.
+            await InjectAsync(guard, harness);
 
             string ownBuildId = NativeAntiCheatGuard.BuildId();
             using (ShmRingReader reader = await AttachAsync(harness.Id, ownBuildId))
@@ -524,12 +555,11 @@ public sealed class ShmDrainIntegrationTests
     {
         await SeedRulesAsync();
 
-        Process harness = StartHarness("--real --hold-presenting 25");
+        Process harness = await StartHarnessAsync("--real --hold-presenting 25");
         try
         {
             var guard = new NativeAntiCheatGuard();
-            (await guard.GuardedInjectAsync(harness.Id, Payload, toleratedFamily: null, TestContext.Current.CancellationToken))
-                .IsAllowed.Should().BeTrue();
+            await InjectAsync(guard, harness);
 
             using ShmRingReader reader = await AttachAsync(harness.Id, NativeAntiCheatGuard.BuildId());
 
@@ -537,6 +567,9 @@ public sealed class ShmDrainIntegrationTests
             var tick = new Ref<uint>();
             await EstablishRecordingAsync(reader, buffer, tick);
 
+            // The writer's init thread reaches its READY store after the present hook already records (WaitUntilInitFinishedAsync's
+            // remarks): under load the status below read INIT once (2026-10-19), which says nothing about pausing.
+            await WaitUntilInitFinishedAsync(reader);
             reader.SetPaused(true);
             ulong atPause = await SettleAsync(reader, buffer, tick);
             await Task.Delay(1200, TestContext.Current.CancellationToken);
@@ -616,12 +649,11 @@ public sealed class ShmDrainIntegrationTests
     {
         await SeedRulesAsync();
 
-        Process harness = StartHarness("--real --hold-presenting 20 --present-interval-ms 0");
+        Process harness = await StartHarnessAsync("--real --hold-presenting 20 --present-interval-ms 0");
         try
         {
             var guard = new NativeAntiCheatGuard();
-            (await guard.GuardedInjectAsync(harness.Id, Payload, toleratedFamily: null, TestContext.Current.CancellationToken))
-                .IsAllowed.Should().BeTrue();
+            await InjectAsync(guard, harness);
 
             using ShmRingReader reader = await AttachAsync(harness.Id, NativeAntiCheatGuard.BuildId());
 
@@ -679,11 +711,11 @@ public sealed class ShmDrainIntegrationTests
         // in the capture layer.
         await SeedRulesAsync();
 
-        Process harness = StartHarness("--real --hold-presenting 15");
+        Process harness = await StartHarnessAsync("--real --hold-presenting 15");
         try
         {
             var guard = new NativeAntiCheatGuard();
-            (await guard.GuardedInjectAsync(harness.Id, Payload, toleratedFamily: null, TestContext.Current.CancellationToken)).IsAllowed.Should().BeTrue();
+            await InjectAsync(guard, harness);
 
             string ownBuildId = NativeAntiCheatGuard.BuildId();
             using (ShmRingReader reader = await AttachAsync(harness.Id, ownBuildId))

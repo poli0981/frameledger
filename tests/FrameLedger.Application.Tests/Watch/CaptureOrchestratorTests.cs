@@ -525,6 +525,64 @@ public sealed class CaptureOrchestratorTests
         recorder.Requests.Should().ContainSingle();
     }
 
+    /// <summary>
+    /// beta.27: Lies of P, started directly (2026-10-19), handed itself to Steam within seconds, and Steam started the game
+    /// again while the launch's session was ending. The watcher turned that process away ("one at a time") and, a launch
+    /// never saying it had ended on its own, it went unrecorded — twice. It is recorded when the launch ends, as after a
+    /// watched session.
+    /// </summary>
+    [Fact]
+    public async Task AGameSteamStartsAgainAfterADirectStartIsRecordedWhenTheLaunchEnds()
+    {
+        var launchRecorder = new FakeRecorder();
+        using var launches = new FakeLaunches(launchRecorder);
+        (CaptureOrchestrator o, FakeRecorder attach, FakeSnapshots processes, List<string> log, _, long id) = await BuildWithLibraryAsync(launches).ConfigureAwait(true);
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        (await o.LaunchAsync(id, "", ct).ConfigureAwait(true)).Outcome.Should().Be(LaunchOutcome.Accepted);
+        await WaitForRequestsAsync(launchRecorder, 1).ConfigureAwait(true);
+
+        // The process the launch started, then the one Steam starts once that one has left.
+        processes.Processes.Add(new ProcessSnapshot(100, 1, "game.exe", _game, DateTimeOffset.UnixEpoch));
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+        processes.Processes.Clear();
+        processes.Processes.Add(new ProcessSnapshot(200, 7, "game.exe", _game, DateTimeOffset.UnixEpoch.AddSeconds(6)));
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+        attach.Requests.Should().BeEmpty("one session per executable at a time");
+
+        launchRecorder.Pending[0].SetResult(GameExited(targetPid: 100));
+        await WaitUntilAsync(() => o.RunningSessions == 0).ConfigureAwait(true);
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+        await WaitForRequestsAsync(attach, 1).ConfigureAwait(true);
+
+        attach.Requests.Should().ContainSingle("the game Steam started is recorded once the launch has ended").Which.Mode.Should().Be(CaptureMode.Attach);
+        log.Should().Contain(l => l.Contains("pid 200", StringComparison.Ordinal) && l.Contains("recording it now", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// beta.27: the process a launch started appears to the watcher after the launch began and is turned away like any other;
+    /// a launch the user stopped does not start again on the game it stopped recording.
+    /// </summary>
+    [Fact]
+    public async Task ALaunchTheUserStoppedDoesNotStartAgainOnItsOwnProcess()
+    {
+        var launchRecorder = new FakeRecorder();
+        using var launches = new FakeLaunches(launchRecorder);
+        (CaptureOrchestrator o, FakeRecorder attach, FakeSnapshots processes, _, _, long id) = await BuildWithLibraryAsync(launches).ConfigureAwait(true);
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        LaunchResult launched = await o.LaunchAsync(id, "", ct).ConfigureAwait(true);
+        await WaitForRequestsAsync(launchRecorder, 1).ConfigureAwait(true);
+        processes.Processes.Add(new ProcessSnapshot(100, 1, "game.exe", _game, DateTimeOffset.UnixEpoch));
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+
+        o.StopSession(launched.SessionGuid!.Value).Should().BeTrue();
+        launchRecorder.Pending[0].SetResult(GameExited(targetPid: 100) with { Outcome = new CaptureOutcome { Reason = SessionEndReason.StoppedByUser, TargetPid = 100 } });
+        await WaitUntilAsync(() => o.RunningSessions == 0).ConfigureAwait(true);
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+        await o.PollOnceAsync(ct).ConfigureAwait(true);
+
+        attach.Requests.Should().BeEmpty("the game still running is the one the stopped launch recorded");
+    }
+
     private static RecordedSession LauncherExited(int launcherPid) => new()
     {
         SessionGuid = Guid.NewGuid(),

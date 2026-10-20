@@ -52,10 +52,11 @@ public sealed class FgMixRecordTests
     }
 
     [Theory]
+    [InlineData(2.524, 30.0)]
     [InlineData(8.01, 30.0)]
     [InlineData(4.0, 1.5)]
     [InlineData(null, 30.0)]
-    public void AGeneratedRowAboveTheCeilingOrWithTooFewFramesIsFoldedEvenWithNoUnclassifiedRow(double? factor, double nativeFps)
+    public void AGeneratedRowNoWindowWouldFormIsFoldedEvenWithNoUnclassifiedRow(double? factor, double nativeFps)
     {
         string json = "{\"Rows\":[" +
             "{\"Kind\":\"generated\",\"Factor\":2.0,\"NativeFps\":60,\"DisplayedFps\":120,\"Seconds\":40,\"Share\":0.8,\"Windows\":8}," +

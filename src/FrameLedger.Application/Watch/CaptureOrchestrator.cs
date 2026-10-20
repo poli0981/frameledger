@@ -290,7 +290,7 @@ public sealed class CaptureOrchestrator
             }
 
             var running = new Running(Guid.NewGuid(), game.Id);
-            running.Task = RunLaunchAsync(game, arguments, running.SessionGuid, running.Stop.Token, ct);
+            running.Task = RunLaunchAsync(game, arguments, running, ct);
             _running[path] = running;
             return new LaunchResult(LaunchOutcome.Accepted, running.SessionGuid);
         }
@@ -433,8 +433,9 @@ public sealed class CaptureOrchestrator
     private static string SessionId(RecordRequest request) => request.SessionGuid?.ToString("N") ?? "(unnamed)";
 
     /// <summary>Launch mode on its own task: the environment, the session, the election, each reported.</summary>
-    private async Task RunLaunchAsync(GameRow game, string arguments, Guid sessionGuid, CancellationToken stop, CancellationToken ct)
+    private async Task RunLaunchAsync(GameRow game, string arguments, Running running, CancellationToken ct)
     {
+        Guid sessionGuid = running.SessionGuid;
         try
         {
             string path = game.Fingerprint.ExePath;
@@ -449,7 +450,7 @@ public sealed class CaptureOrchestrator
                 Arguments = arguments,
                 GameName = game.Name,
                 SessionGuid = sessionGuid,
-                StopToken = stop,
+                StopToken = running.Stop.Token,
             };
             RecordedSession r = await Task.Run(() => launch.Recorder.RecordAsync(request, ct), ct).ConfigureAwait(false);
             Report(r, game.Name);
@@ -459,6 +460,13 @@ public sealed class CaptureOrchestrator
             {
                 Report(elected, $"elected after {game.Name}");
             }
+
+            // beta.27: what Reap needs to record a game started again when this launch ends — that it ended on its own, and
+            // the processes it recorded. Until now a launch never said so, and a process turned away while it ran was never
+            // recorded: Lies of P (2026-10-19), started directly, handed itself to Steam within seconds, and the game Steam
+            // started went unrecorded, twice.
+            running.Targets = elected is null ? [r.Outcome.TargetPid] : [r.Outcome.TargetPid, elected.Outcome.TargetPid];
+            running.Recorded = elected ?? r;
         }
         catch (OperationCanceledException)
         {
@@ -553,13 +561,15 @@ public sealed class CaptureOrchestrator
     /// only if the session ended on its own (a cancelled or faulted one — the host stopping — starts nothing), the process
     /// is still the same one (pid and start time), and it is then the executable's ONLY process: a game started again has
     /// replaced the old one, where a helper of a multi-process game (NW.js, Electron — one executable, many processes)
-    /// still has the game beside it, or several of its kind.
+    /// still has the game beside it, or several of its kind. Never a process the session itself recorded (beta.27): the one
+    /// a launch started appears to the watcher after the launch began, and is turned away like any other — a launch the user
+    /// stopped must not start again on the game it stopped recording.
     /// </summary>
     private sealed record Deferred(TrackedProcessAppeared Appeared, DateTimeOffset? StartedAt)
     {
         public bool StartsAfter(Running ended, IReadOnlyList<ProcessSnapshot> snapshot)
         {
-            if (ended.Recorded is null)
+            if (ended.Recorded is null || ended.Targets.Contains(Appeared.Pid))
             {
                 return false;
             }
@@ -583,6 +593,9 @@ public sealed class CaptureOrchestrator
 
         /// <summary>The session as recorded; null until it ended, and for one cancelled or faulted. Written before <see cref="Task"/> completes.</summary>
         public RecordedSession? Recorded { get; set; }
+
+        /// <summary>The processes a launch and its election recorded (beta.27); written with <see cref="Recorded"/>, empty for a watched session.</summary>
+        public IReadOnlyCollection<int> Targets { get; set; } = [];
 
         public void Dispose() => Stop.Dispose();
     }

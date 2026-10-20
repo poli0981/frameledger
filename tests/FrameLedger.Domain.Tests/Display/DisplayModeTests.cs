@@ -107,6 +107,40 @@ public sealed class DisplayModeTests
         s.ExclusivityKnown.Should().BeTrue();
     }
 
+    /// <summary>
+    /// beta.27: a game leaving exclusive fullscreen destroys its window while its swap chain's last word is still fresh,
+    /// so its last samples are exclusive with no window; five Lies of P and Dark Souls III sessions stored no sizes.
+    /// </summary>
+    [Fact]
+    public void TheSizesAreTheLastOnesTheModeSaw()
+    {
+        var tally = new DisplayTally();
+        tally.Add(DisplayModeClassifier.Classify(Chain(exclusive: true), Window(_monitor)), 60_000);
+        tally.Add(DisplayModeClassifier.Classify(Chain(exclusive: true), null), 100);    // the window is gone
+        tally.Add(DisplayModeClassifier.Classify(Chain(exclusive: true, fresh: false), null), 1_500);
+
+        DisplaySummary s = tally.Summary();
+        s.Dominant.Should().Be(DisplayMode.ExclusiveFullscreen);
+        s.WindowWidth.Should().Be(2560, "the exclusive samples saw the window before it was destroyed");
+        s.WindowHeight.Should().Be(1440);
+        s.MonitorWidth.Should().Be(2560);
+        s.MonitorHz.Should().Be(144);
+        s.BufferWidth.Should().Be(2560u);
+    }
+
+    [Fact]
+    public void AModeThatNeverSawItsWindowStoresTheChainsSizesAlone()
+    {
+        var tally = new DisplayTally();
+        tally.Add(DisplayModeClassifier.Classify(Chain(exclusive: true), null), 5_000);
+
+        DisplaySummary s = tally.Summary();
+        s.Dominant.Should().Be(DisplayMode.ExclusiveFullscreen);
+        s.WindowWidth.Should().BeNull("no sample of the mode saw a window");
+        s.MonitorHz.Should().BeNull();
+        s.BufferWidth.Should().Be(2560u, "the swap chain said its own size");
+    }
+
     [Fact]
     public void ASessionWhoseExclusivityWasUnknownForAMomentSaysSo()
     {

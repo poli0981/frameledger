@@ -87,4 +87,27 @@ public sealed class NgxDriverStateTests
         same.Changed.Should().BeFalse();
         same.Describe().Should().Contain("answered 2 of 2 probe(s); driver 616.64");
     }
+
+    /// <summary>
+    /// beta.27: Expedition 33 read <c>0x8067F</c> while it ran (2026-09-06) and every stored session of it <c>0x8007F</c> — the
+    /// same word without CREATED | EVALUATE, read after the game had released its features. The two bits stand once read;
+    /// every other bit is still the last reading's.
+    /// </summary>
+    [Fact]
+    public void AFeatureThatRanStaysRunWhenALaterReadingClearsIt()
+    {
+        NgxDriverState released = NgxDriverState.Parse(
+            "NGXSTATE status=ANSWERED sr=0x000000000008007F rr=0x0000000000080005 fg=0x000000000000001F ratio=0.0000 mode=1 preset=12 fgcount=0 fgpreset=0 fgmode=0 driver=61742");
+
+        NgxDriverState merged = NgxDriverState.NotRun.Merge(NgxDriverState.Parse(_expedition33Override)).Merge(released);
+
+        merged.Sr.Should().Be(0x8067FUL);
+        merged.SrCreatedAndEvaluated.Should().BeTrue("the feature ran in this session");
+        merged.PerformanceMode.Should().Be(1u, "every other field is the last reading's");
+        merged.RenderPreset.Should().Be(12u);
+        merged.Changed.Should().BeTrue();
+
+        NgxDriverState never = NgxDriverState.NotRun.Merge(released).Merge(released);
+        never.SrCreatedAndEvaluated.Should().BeFalse("no reading said the feature ran");
+    }
 }

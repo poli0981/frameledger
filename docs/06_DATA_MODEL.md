@@ -337,7 +337,7 @@ CREATE TABLE sessions (
   display_nowindow_ms INTEGER,                 -- no window could be read
   display_changes INTEGER,                     -- mode changes between samples
   display_source TEXT,                         -- swapchain | opengl | window: the strongest witness any sample had
-  display_window_w INTEGER, display_window_h INTEGER,     -- client area, in the mode that lasted longest
+  display_window_w INTEGER, display_window_h INTEGER,     -- client area, in the mode that lasted longest (the last seen, beta.27)
   display_buffer_w INTEGER, display_buffer_h INTEGER,     -- the swap chain's back buffer, same mode
   display_monitor_w INTEGER, display_monitor_h INTEGER, display_monitor_hz INTEGER
 );

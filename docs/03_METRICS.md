@@ -501,6 +501,17 @@ F_app   = Σ fgEvaluations                  (APPLICATION frames, counted at the 
 > not-classified time — so the session stored with the ×1336.0 row reads ×2.0, ×3.0, ×6.1, no frame generation and
 > 30 s not classified, and its shares still add up.
 >
+> **Amended 2026-10-20 (beta.27): a state is near a whole multiplier.** Every frame generation that ships multiplies by
+> a whole number — ×2 for FSR, XeSS and DLSS 3, up to ×4 for DLSS 4, up to ×6 for DLSS 4.5 — and its windows read near
+> one: 1.98, 3.01, 6.06. The owner's Silent Hill 2 session of 2026-10-20 under the NVIDIA App's *Dynamic* mode listed
+> a **×2.52** state for 12.8 s: windows in which the multiplier stepped between ×2 and ×3 read ×2.21–×2.70 — at 135 s,
+> 251 application frames followed by one generated frame and 270 by two — and three of them pooled into a state nobody
+> held (`spike-notes` §23). A window is now active only within **10 %** of a whole multiplier of two or more
+> (`FgWindow.IsNearWholeMultiplier`: ×1.8–×2.2, ×2.7–×3.3, … ×5.4–×6.6); a window between two is *not classified*, and
+> the steady state reads the same windows. A stored mix is read by the same rule (`FgMixRecord.Parse`): that session
+> reads ×2.0 27.30 %, ×3.0 62.41 %, no frame generation 2.93 % and 7.36 % not classified. Of the 70 sessions in the
+> owner's ledger copy it was the only stored row between two multipliers.
+>
 > **When there is a mix.** Only where the session's frame generation was named (`Named` / `ActiveUnidentified`) and the
 > session-wide count either stood or was refused as `NonUniform` / `AmbiguousBand` — a change of state is exactly what a
 > mix describes. Every other refusal (not counted, unattributed, interleaved streams, either saturation, no
@@ -627,6 +638,9 @@ carries the three shapes.
 > *DLSS · NVIDIA App override*, *DLSS Quality*. The live card names what the report settles by itself
 > (`upscalerQualityOverride`, `07_IPC`). Nothing infers a mode from the render scale (`HANDOFF` §7a). Silent Hill 2's
 > own session reads no mode: its word lacks `CREATED | EVALUATE`, so no super resolution ran that the driver saw.
+> *(Corrected 2026-10-20: it lacked them because the word stored had been read after the game closed — §The
+> driver-reported rung. A session recorded from beta.27 keeps them; one recorded before, on a title no hook names, never
+> reads the override's mode.)*
 
 From the upscaler hooks we get, per frame:
 
@@ -739,6 +753,16 @@ Tier 2 has none of this: `upscaler = unknown`, ratio `N/A`.
 > same word through `SessionProgress.upscalerDriverReported` (`07_IPC`). Segments carry no driver word: the driver's
 > bookkeeping is per process, not per settings change. **Nothing native changed and no NGX hook was added**: the
 > licence bar in `20_OPEN_QUESTIONS` stands.
+>
+> **Corrected 2026-10-20 (beta.27): every stored word had lost the rung.** The loop asked the driver once more after its
+> last drain — on a session that ended because the game closed, after the game had gone — and that answer, the last,
+> was the state (`NgxDriverState`: "the last ANSWERED reading is the state"). The driver still answers for the pid,
+> with `CREATED | EVALUATE` cleared: Expedition 33 read `0x8067F` while it ran (2026-09-06) and its stored sessions
+> `0x8007F`, the same word without the two bits. Of the 14 sessions in the owner's ledger copy in which the driver
+> answered, none kept them — so no stored session reads *DLSS (driver-reported)*, and none on an NGX-direct title under
+> an NVIDIA App override reads its mode (D63). Since beta.27 the driver is not asked once the game has gone, and the
+> two bits stand once a reading carried them: a game releasing its features on its way out no longer unsays them, and
+> every other bit is still the last reading's. Sessions recorded before keep what they stored (`spike-notes` §23).
 
 **The render scale over time (beta.14, D49).** The session summary draws `100 × √(render pixels / output pixels)` — the
 per-axis scale, `100 / upscale_ratio` — as steps over the session: from the `render_res` blob where the resolution
@@ -868,7 +892,11 @@ and how much of the time". Schema 0016 (`06_DATA_MODEL`), shared-memory region 4
 excludes a pause to within one tick at each edge, as the frame series' gap does. A mode's **share** is its milliseconds
 over the observed time (every mode but *No window*). `display_changes` counts samples whose mode differs from the one
 before, no-window samples skipped. The sizes — `display_window_*` (client area), `display_buffer_*` (back buffer),
-`display_monitor_*` and `display_monitor_hz` — are the ones seen in the mode that lasted longest; `display_source` is the
+`display_monitor_*` and `display_monitor_hz` — are the ones seen in the mode that lasted longest *(corrected 2026-10-20,
+beta.27: the last ones a sample of that mode SAW — a game leaving exclusive fullscreen closes its window while its swap
+chain's last word is under 2 s old, and those last samples, exclusive with no window, had replaced every size: two Lies
+of P and three Dark Souls III sessions stored none. A mode no sample of which saw its window keeps the back buffer
+alone)*; `display_source` is the
 strongest witness any sample had (`swapchain` > `opengl` > `window`). `sessions.swap_effect`, a column since 0001 with no
 writer, is written from region 4.
 

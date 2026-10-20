@@ -1145,6 +1145,13 @@ outlives a rules change, a game update and *Change executable*; §What a finding
 ## Crash & stability safety
 
 - Two crashes of the same game within 60 s of injection ⇒ hooking auto-disabled for that game, UI explains, Tier-2 takes over. Recorded in `games.hook_autodisabled_reason`. *"Crash" here is any abnormal end: since beta.8 a session whose exit code is not an exception's (End task's 1) is `normal` on its row, and this policy still counts it inside the window — a hang our hook caused, ended by the user, is the case it exists for. The row's reason says "ended abnormally twice within 60 s of injection" (`04_CAPTURE` §Crash & exit classification).*
+- **Measured 2026-10-19/20 (`spike-notes` §23): direct starts turned hooking off for exits no hook caused.** Lies of P
+  started by **Play** ▸ *Start directly* hands itself to Steam within seconds — its process leaves with nothing
+  presented and Steam starts the game again —, and Clair Obscur: Expedition 33 started directly closes within five
+  seconds and reads *crashed*, hooked or not (its third start, refused and unhooked, closed the same way). Each was a
+  hooked session's early abnormal end; the policy counted them, and two turned hooking off. It cannot tell either from
+  the hang it exists for, so it stands as written; whether a witness — the same executable started again within
+  seconds — may exempt a hand-off is the owner's decision, not taken. Users are told in `LIMITATIONS.md` §Play.
 - **What reads as a crash changed in beta.14, in both directions** (`04_CAPTURE` §Crash & exit classification): a
   Windows report that is not a crash (a memory-leak or hang report) no longer makes one, and an engine's crash reporter
   started by a game that then left does — Unreal's crash ended with exit code 3 and read `normal`. Both feed this policy,

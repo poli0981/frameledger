@@ -32,6 +32,7 @@ While the game runs, a notice may say *hooking refused*.
 | **Disable all hooking** is on. | Switch it off in Settings ▸ Capture. |
 | The game was already running when FrameLedger was updated. | Close the game and start it again. |
 | Hooking was switched off after the game crashed twice soon after it started. | Switch it on again in the game's page if the cause may be gone — after a driver update, for example. |
+| Hooking was switched off after **Play** started the game directly twice, and each time the game handed itself to Steam or closed at once. | Switch it on again, and set Settings ▸ Games ▸ **Play button** to *Through the store*: some Steam games will not start any other way. |
 | The game's file is gone. | If only its drive letter changed, FrameLedger follows it within about 15 seconds; otherwise **Change executable…** on the game's page. |
 | The component could not be loaded into the game. | [Report a problem](#report-a-problem). |
 

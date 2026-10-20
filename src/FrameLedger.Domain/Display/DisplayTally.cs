@@ -22,7 +22,15 @@ public sealed class DisplayTally
     {
         long ms = Math.Max(0, elapsedMs);
         _ms[observation.Mode] = _ms.GetValueOrDefault(observation.Mode) + ms;
-        _last[observation.Mode] = observation;
+
+        // The sizes are those of the mode's last sample that SAW the window (beta.27). A game leaving exclusive fullscreen
+        // destroys its window while its swap chain's last word is still fresh, and those last samples — exclusive, no
+        // window — replaced every size: five Lies of P and Dark Souls III sessions (2026-10-18 to 20) stored none.
+        if (observation.Client is not null || !_last.TryGetValue(observation.Mode, out DisplayObservation kept) || kept.Client is null)
+        {
+            _last[observation.Mode] = observation;
+        }
+
         if (DisplaySource.Strength(observation.Source) > DisplaySource.Strength(_source))
         {
             _source = observation.Source;

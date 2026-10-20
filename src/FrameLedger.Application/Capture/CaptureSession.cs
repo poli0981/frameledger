@@ -557,8 +557,8 @@ public sealed class CaptureSession(
 
         // ONE LAST SNAPSHOT before the last drain, so a module that loaded after the final scan is
         // still named; on TargetExited it reads nothing, which the tally counts rather than hides. The last
-        // display sample stands until here (beta.10).
-        state.Loaded.Take(pid);
+        // display sample stands until here (beta.10). The driver is not asked once the game has gone (Take, beta.27).
+        state.Loaded.Take(pid, askDriver: !(alive.HasExited || end == SessionEndReason.TargetExited));
         state.Display.Finish(state.Paused);
 
         // ONE LAST DRAIN ON EVERY PATH, including the faulted one — that is the whole point of catching
@@ -647,7 +647,14 @@ public sealed class CaptureSession(
         /// </summary>
         public List<long> TouchQpc { get; } = [];
 
-        public void Take(int pid)
+        /// <summary>One touch: the module snapshot, and the driver's NGX word unless <paramref name="askDriver"/> is false.</summary>
+        /// <param name="pid">The target.</param>
+        /// <param name="askDriver">
+        /// False once the game has gone (beta.27): the driver still answers for its pid, with the bits that say a feature ran
+        /// cleared, and that answer — the last — replaced every reading taken while the game ran. No session the owner
+        /// stored from 2026-10-04 to 2026-10-20 kept CREATED | EVALUATE.
+        /// </param>
+        public void Take(int pid, bool askDriver = true)
         {
             TouchQpc.Add(System.Diagnostics.Stopwatch.GetTimestamp());
             if (source is not null)
@@ -655,7 +662,7 @@ public sealed class CaptureSession(
                 Set = Set.Merge(source.Take(pid));
             }
 
-            if (ngxSource is not null)
+            if (ngxSource is not null && askDriver)
             {
                 Ngx = Ngx.Merge(ngxSource.Run(pid));
             }

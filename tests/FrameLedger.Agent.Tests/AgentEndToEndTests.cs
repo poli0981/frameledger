@@ -127,12 +127,18 @@ public sealed class AgentEndToEndTests : IDisposable
         }
     }
 
-    private Process StartHarness(string arguments)
+    private async Task<Process> StartHarnessAsync(string arguments)
     {
         StageTarget();
         File.Exists(Agent).Should().BeTrue("the Agent must be built and copied beside this test");
         var p = Process.Start(new ProcessStartInfo(ConsentedExecutable, arguments) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true })!;
-        Thread.Sleep(800);
+        bool presenting = await HarnessReady.WaitUntilPresentingAsync(p, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        if (!presenting && !p.HasExited)
+        {
+            p.Kill(entireProcessTree: true);
+        }
+
+        presenting.Should().BeTrue("the harness must reach its present loop before anything looks for it or is injected into it (HarnessReady)");
         p.HasExited.Should().BeFalse("the harness must be running before the Agent looks for it");
         return p;
     }
@@ -181,7 +187,7 @@ public sealed class AgentEndToEndTests : IDisposable
         // THE MILESTONE'S TECHNICAL HALF, from outside the process: the shipped Agent, our harness, one row.
         (await GrantConsentAsync()).Should().Be(ConsentWriteOutcome.Written);
 
-        Process harness = StartHarness("--real --hold-presenting 40");
+        Process harness = await StartHarnessAsync("--real --hold-presenting 40");
         try
         {
             using Process agent = StartAgent("capture", "--exe", ConsentedExecutable, "--seconds", "8");
@@ -225,7 +231,7 @@ public sealed class AgentEndToEndTests : IDisposable
         (await GrantConsentAsync()).Should().Be(ConsentWriteOutcome.Written);
         await SetKillSwitchAsync(engaged: true);
 
-        Process harness = StartHarness("--real --hold-presenting 20");
+        Process harness = await StartHarnessAsync("--real --hold-presenting 20");
         try
         {
             using Process agent = StartAgent("capture", "--exe", ConsentedExecutable, "--seconds", "3");
@@ -255,7 +261,7 @@ public sealed class AgentEndToEndTests : IDisposable
     {
         (await GrantConsentAsync()).Should().Be(ConsentWriteOutcome.Written);
         Process stranger = Process.Start(new ProcessStartInfo(Harness, "--real --hold-presenting 30") { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true })!;
-        Process harness = StartHarness("--real --hold-presenting 30");
+        Process harness = await StartHarnessAsync("--real --hold-presenting 30");
         try
         {
             using Process agent = StartAgent("capture", "--exe", ConsentedExecutable, "--seconds", "3");
