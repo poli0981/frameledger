@@ -35,27 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Added
-
-- **The Dashboard shows every game being recorded.** Two games running at once are two sessions, and until now the
-  Dashboard's *Live capture* card showed one of them — a measured one first — while the other appeared only as
-  *Running sessions: 2*. Each running game now has its own card, side by side, with its own frame rate, settings,
-  elapsed time and memory, or why it is recorded without being measured; measured games come first, and the title
-  says how many games are being recorded (*2 games recording*). In en/vi/ja (ja marked for review).
-
-### Fixed
-
-- **A native injection test that failed under load** (developers only). Two `fl_guard_test` cases — the OpenGL hook,
-  and a swap chain on a real window — waited 4 seconds for twenty frames, and on a loaded CI runner (the suite took
-  115 s) the OpenGL hook, installed, had recorded none. They now wait up to 12 seconds, the harness presenting for 16,
-  and a failure says the writer's state.
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.28` | 2026-10-20 | [`docs/changelog/0.1.0-beta.28.md`](docs/changelog/0.1.0-beta.28.md) |
 | `0.1.0-beta.27` | 2026-10-20 | [`docs/changelog/0.1.0-beta.27.md`](docs/changelog/0.1.0-beta.27.md) |
 | `0.1.0-beta.26` | 2026-10-19 | [`docs/changelog/0.1.0-beta.26.md`](docs/changelog/0.1.0-beta.26.md) |
 | `0.1.0-beta.25` | 2026-10-19 | [`docs/changelog/0.1.0-beta.25.md`](docs/changelog/0.1.0-beta.25.md) |

@@ -66,6 +66,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.24` | [`handoff/history/0.1.0-beta.24.md`](handoff/history/0.1.0-beta.24.md) |
 | `§beta.25` | [`handoff/history/0.1.0-beta.25.md`](handoff/history/0.1.0-beta.25.md) |
 | `§beta.26` | [`handoff/history/0.1.0-beta.26.md`](handoff/history/0.1.0-beta.26.md) |
+| `§beta.27` | [`handoff/history/0.1.0-beta.27.md`](handoff/history/0.1.0-beta.27.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -73,51 +74,33 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-10-20, 0.1.0-beta.27: the owner's eight sessions of 2026-10-20
+## **START HERE** — 2026-10-20, 0.1.0-beta.28: the Dashboard with two or more games
 
-*Status is `docs/changelog/0.1.0-beta.27.md`; this is what no other file carries.* The owner ran the installed
-beta.26 the morning after it shipped: "Bạn có thể kiểm tra kết quả ở khoảng 8 kết quả gần nhất. Sửa luôn 2 test flake
-luôn trong phiên này và fix bug, publish bản mới nếu có bug." — and, mid-way: "1. cyberpunk 2077 là switch in-game.
-2. Fix bug mở xem 1 session nhiều lần ra nhiều cửa sổ." — then, on the Steam hand-off: "bạn có thể lựa chọn: note vào
-giao diện UI là các game trên Steam sẽ tự trigger Steam trước / Thêm Setting cố định trên game Steam là luôn chạy qua
-steam client". #330 (six fixes, the Steam note, the two flaky tests, `spike-notes` §23) and this release.
+*Status is `docs/changelog/0.1.0-beta.28.md`; this is what no other file carries.* The owner, while beta.27 was being
+released: "Thêm cơ chế hiển thị UI/UX Dashboard khi chạy >=2 game trong cùng 1 thời điểm nếu được nhé." and "Bạn có thể
+chờ beta27 xong xử lý tiếp luôn bản 28 nếu được." #332 (the cards) and this release, the same day as beta.27 — whose
+section, with the open crash-safety question, is `handoff/history/0.1.0-beta.27.md`.
 
-**No new owner decision.** Each fix makes the code do what a document already said: a state is a frame generation's
-whole multiplier (`03_METRICS` §The mix), the driver's report is the session's and not the dead pid's (§The
-driver-reported rung), a game started again is recorded (`04_CAPTURE`, beta.15) — after a launch too —, a summary is
-one window, the display sizes are the ones seen.
+**No new owner decision.** The Agent always recorded one session per executable, so two games were two sessions; the
+Dashboard's one live card went to a hooked session and kept it, and the other game read only as *Running sessions: 2*.
+Each running session now has its card (`08_UI` §Dashboard).
 
-**The owner's two ways for Steam games, and the one taken.** The owner offered a note in the UI or a fixed rule that
-Steam's games always go through the Steam client, and left the choice open. The note was taken (`08_UI` §Games, Play):
-the rule would have cost what *Start directly* exists for — three of the five Steam games started directly on
-2026-10-20 ran and were measured from their first frame, and a Vulkan game is measured only when FrameLedger starts it
-(Everhex Demo, a Steam game). Not every Steam game hands itself to Steam: Lies of P did, Expedition 33 closed instead.
-
-**One question for the owner, not taken:** the crash safety counts a direct start's early exit — Lies of P handing
-itself to Steam, Expedition 33 closing within five seconds even unhooked — and two such starts turn hooking off for
-the game (`19_SAFETY` §Crash & stability safety, measured `spike-notes` §23). The policy cannot tell a hand-off from
-the hang it exists for, so it stands, and users are told to start such a game through its store. An exemption — an
-exit followed by the same executable within seconds — would loosen a safety rule and is the owner's to decide.
-
-**Measured on the owner's ledger** (a read-only backup copy, the App's own loader in a scratch test): of 70 sessions,
-the ×2.52 row was the only stored state between two multipliers; none of the 14 sessions the driver answered kept
-`CREATED | EVALUATE` (Expedition 33: `0x8067F` while it ran on 2026-09-06, `0x8007F` stored); two Lies of P and three
-Dark Souls III sessions stored no window size.
+**Choices made here** — the owner asked for a way to show them, not for a layout: a card per session, each read the
+way the one card was, rather than one large card and a list of the rest; hooked sessions first, each kind in the order
+it started, a card moved rather than rebuilt when its place changes; two to a row from two on; the header counts the
+games from two on. The machine's temperatures repeat on every card: each session's tick carries them.
 
 **Traps met on the way:**
 
-- **A probe taken after the target exits is not the session's.** NVIDIA's driver still answers for a dead pid, with
-  the bits that say a feature ran cleared; any per-process question asked at a session's end must check that the game
-  still lives (`CaptureSession`'s last snapshot), or the last answer erases the session's.
-- **A launch's own process reaches the watcher after the launch began**, so it lands among the processes turned away
-  "one at a time"; whatever acts on those must leave out the launch's own pids (`Running.Targets`).
-- **The logs are the timeline of what the owner did**: `ui-*.log`'s `play:` lines say *through the agent* (Start
-  directly) or *through steam*; `agent-*.log` has every session's end, a discarded one included — the ledger keeps no
-  row for it. A hooking switch the user flips leaves no line: say what the logs show, not why hooking was off.
-- **Decode the windows before naming a cause**: the ×2.52 windows' runs — 251 application frames followed by one
-  generated frame, 270 by two — showed the stepping at a glance.
+- **C# written from a Python string**: `@"D:\another\…"` in a non-raw Python string turned `\a` into BEL inside a test,
+  and the test still passed — both of its paths were mangled alike. Write C# through raw strings, and scan a diff for
+  control characters before committing.
+- **An items panel binds to the page**: inside an `ItemsPanelTemplate`, `{Binding ViewModel.LiveColumns}` reads the
+  ItemsControl's DataContext — the page — so the panel's column count is the page view model's.
+- **A page rendered for a look has no background of its own**: under the dark theme the light text is drawn on
+  transparency. Read the light render, or put the page on a `Border` with `ApplicationBackgroundBrush`.
 
-**Owner-only:** items 20 and 21 annotated (§23); item 22 added.
+**Owner-only:** item 23 added; beta.27's item 22 and the crash-safety question stand.
 
 
 ## Owner-only — no PR can close these
@@ -264,6 +247,11 @@ Dark Souls III sessions stored no window size.
    counts the hand-off: after two such starts hooking is off again (`19_SAFETY`). (c) **One window per session:** open a session from a Sessions tab, then again from the game
    page or its notification → the same window comes forward, restored if minimised. (d) **A game in exclusive
    full-screen** (Dark Souls III, Lies of P) → its summary's Display card shows the window size.
+23. **beta.28 on real hardware.** Two games at once — one hooked, one with hooking off (or refused) → the Dashboard
+   shows two cards side by side, the hooked one first, and *2 games recording* beside *Live capture*; each card's
+   numbers are its own game's; closing one leaves the other's card where it is, and the count goes. A third game → a
+   third card on the next row and *3 games recording*. (The `ja` string `Dashboard_Live_Count_Format` is marked
+   `review`.)
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
