@@ -767,6 +767,7 @@ public static class Strings
         nameof(Play_AlreadyRunning_Format),
         nameof(Play_Button),
         nameof(Play_Elevated_Format),
+        nameof(Play_Elevated_Steam_Format),
         nameof(Play_Epic_Format),
         nameof(Play_Failed_Format),
         nameof(Play_Gog_Format),
@@ -778,6 +779,7 @@ public static class Strings
         nameof(Play_RecordingOff_Fallback_Format),
         nameof(Play_RecordingOff_Format),
         nameof(Play_Started_Format),
+        nameof(Play_Started_Steam_Format),
         nameof(Play_Steam_Format),
         nameof(Play_Title),
         nameof(Play_ToolTip_Direct),
@@ -2645,6 +2647,8 @@ public static class Strings
 
     public static string Play_Elevated_Format => ResourceManager.GetString(nameof(Play_Elevated_Format), Culture) ?? nameof(Play_Elevated_Format);
 
+    public static string Play_Elevated_Steam_Format => ResourceManager.GetString(nameof(Play_Elevated_Steam_Format), Culture) ?? nameof(Play_Elevated_Steam_Format);
+
     public static string Play_Epic_Format => ResourceManager.GetString(nameof(Play_Epic_Format), Culture) ?? nameof(Play_Epic_Format);
 
     public static string Play_Failed_Format => ResourceManager.GetString(nameof(Play_Failed_Format), Culture) ?? nameof(Play_Failed_Format);
@@ -2666,6 +2670,8 @@ public static class Strings
     public static string Play_RecordingOff_Format => ResourceManager.GetString(nameof(Play_RecordingOff_Format), Culture) ?? nameof(Play_RecordingOff_Format);
 
     public static string Play_Started_Format => ResourceManager.GetString(nameof(Play_Started_Format), Culture) ?? nameof(Play_Started_Format);
+
+    public static string Play_Started_Steam_Format => ResourceManager.GetString(nameof(Play_Started_Steam_Format), Culture) ?? nameof(Play_Started_Steam_Format);
 
     public static string Play_Steam_Format => ResourceManager.GetString(nameof(Play_Steam_Format), Culture) ?? nameof(Play_Steam_Format);
 

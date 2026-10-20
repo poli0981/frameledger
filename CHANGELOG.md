@@ -35,6 +35,15 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Changed
+
+- **Play ▸ *Start directly* says what a Steam game may do.** Some Steam games hand themselves to Steam when
+  FrameLedger starts them — Lies of P closes within seconds and Steam starts it again. Starting a game Steam installed,
+  the notice now says it may hand itself to Steam first and that the game Steam then starts is recorded; the *Start
+  directly* tooltip and Settings ▸ Games ▸ *Play button* say so too, adding that a few will not start outside Steam at
+  all. Steam games keep *Start directly*: three of the five started directly on 2026-10-20 ran and were measured from
+  their first frame, and a Vulkan game is measured only when FrameLedger starts it. In en/vi/ja (ja marked for review).
+
 ### Fixed
 
 - **A frame-generation "state" of ×2.52.** The owner's Silent Hill 2 session under the NVIDIA App's *Dynamic* multi

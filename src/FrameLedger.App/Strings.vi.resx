@@ -3178,7 +3178,13 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
     <value>Chơi qua store đã cài game: Steam hoặc Epic Games Launcher sẽ chạy game, GOG GALAXY chạy game, app itch hỏi trước. Game không do store nào cài thì FrameLedger tự chạy.</value>
   </data>
   <data name="Play_ToolTip_Direct" xml:space="preserve">
-    <value>Chơi: FrameLedger tự chạy game, ghi lại từ khung hình đầu tiên, với quyền thường của bạn.</value>
+    <value>Chơi: FrameLedger tự chạy game, ghi lại từ khung hình đầu tiên, với quyền thường của bạn. Game Steam có thể tự chuyển sang Steam trước; game do Steam chạy sau đó vẫn được ghi lại.</value>
+  </data>
+  <data name="Play_Started_Steam_Format" xml:space="preserve">
+    <value>FrameLedger đang chạy {0}. Game Steam có thể tự chuyển sang Steam trước; game do Steam chạy sau đó vẫn được ghi lại.</value>
+  </data>
+  <data name="Play_Elevated_Steam_Format" xml:space="preserve">
+    <value>FrameLedger đang chạy với quyền quản trị, nên capture agent sẽ chạy {0} với quyền thường của bạn thay vì qua store. Game Steam có thể tự chuyển sang Steam trước; game do Steam chạy sau đó vẫn được ghi lại.</value>
   </data>
   <data name="Play_Title" xml:space="preserve">
     <value>Chơi</value>
@@ -3229,7 +3235,7 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
     <value>Nút Chơi</value>
   </data>
   <data name="Settings_PlayMode_Body" xml:space="preserve">
-    <value>Qua store: Steam và Epic Games Launcher chạy game, GOG GALAXY chạy game, app itch hỏi trước; game không do store nào cài thì FrameLedger tự chạy. Chạy trực tiếp: FrameLedger tự chạy game — ghi lại từ khung hình đầu tiên, với quyền thường của bạn.</value>
+    <value>Qua store: Steam và Epic Games Launcher chạy game, GOG GALAXY chạy game, app itch hỏi trước; game không do store nào cài thì FrameLedger tự chạy. Chạy trực tiếp: FrameLedger tự chạy game — ghi lại từ khung hình đầu tiên, với quyền thường của bạn. Một số game Steam tự chuyển sang Steam khi được chạy trực tiếp — game do Steam chạy sau đó vẫn được ghi lại — và vài game không chạy được ngoài Steam: hãy chạy chúng qua store.</value>
   </data>
   <data name="Settings_PlayMode_Store" xml:space="preserve">
     <value>Qua store</value>

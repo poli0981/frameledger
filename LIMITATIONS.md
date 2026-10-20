@@ -209,7 +209,8 @@ you accept the prompt. Turn it on only if you trust everything that runs under y
   directly*, hands itself to Steam within seconds — since 0.1.0-beta.27 the game Steam then starts is recorded —, and
   Clair Obscur: Expedition 33 closes within seconds, with or without FrameLedger's hook. Each such start ends a
   measured session early, which the crash safety counts: two turn hooking off for the game. Start such a game through
-  its store (Settings ▸ Games ▸ *Play button*). ([details](docs/spike-notes/23-owner-runs-2026-10-20.md))
+  its store (Settings ▸ Games ▸ *Play button*); the notice after Play says when a Steam game may hand itself to Steam.
+  ([details](docs/spike-notes/23-owner-runs-2026-10-20.md))
 
 ## Game artwork
 
