@@ -2778,8 +2778,11 @@ TEST_CASE("OpenGL: the injected Overlay hooks opengl32!wglSwapBuffers and record
           "[guard][inject][shm][opengl]") {
     // The harness's --opengl mode calls gdi32's SwapBuffers -- the route a real title
     // takes -- and the Overlay's hook must see it through opengl32!wglSwapBuffers.
+    // Held 16 s and waited on for up to 12 (beta.28): the CI runner of 2026-10-20 ran this suite in 115 s and the hook,
+    // installed (apiMask said OpenGL), had recorded nothing in the 4 s the loop used to wait. The wait ends at the 20th
+    // record either way; the child is terminated when the case ends, so the longer hold costs nothing.
     Child child;
-    if (!StartHarness(child, L"--opengl --hold-presenting 8")) {
+    if (!StartHarness(child, L"--opengl --hold-presenting 16")) {
         DWORD code = 0;
         GetExitCodeProcess(child.pi.hProcess, &code);
         if (code == 77u) {
@@ -2795,11 +2798,13 @@ TEST_CASE("OpenGL: the injected Overlay hooks opengl32!wglSwapBuffers and record
 
     MappedRing r;
     REQUIRE(OpenRingFor(child.pi.dwProcessId, r));
-    for (int i = 0; i < 80 && r.st->writeIndex < 20; ++i) {
+    for (int i = 0; i < 240 && r.st->writeIndex < 20; ++i) {
         ++r.ctl->guardTicks;
         Sleep(50);
     }
-    INFO("writeIndex " << r.st->writeIndex << " apiMask 0x" << std::hex << r.st->apiMask);
+    INFO("writeIndex " << r.st->writeIndex << " apiMask 0x" << std::hex << r.st->apiMask << " hooks 0x"
+                       << r.st->hooksInstalledMask << std::dec << " status " << r.st->status << " harness "
+                       << (WaitForSingleObject(child.pi.hProcess, 0) == WAIT_TIMEOUT ? "running" : "gone"));
     REQUIRE(r.st->writeIndex >= 20u);
     CHECK((r.st->apiMask & (1u << fl::FL_API_OPENGL)) != 0u);
     CHECK((r.st->hooksInstalledMask & fl::FL_HOOK_PRESENT) != 0u);
@@ -2833,8 +2838,10 @@ TEST_CASE("region 4 describes a swap chain on a real window: its window, its bac
     // this one binds a D3D11 chain to a real (hidden, windowed) window. Exclusive fullscreen needs a real output and is
     // the owner's measurement on real hardware -- here the claim is the one a runner can check: the swap chain SAID
     // windowed.
+    // Held 16 s and waited on for up to 12, as the OpenGL case beside it (beta.28): the same 4 s wait, under the
+    // same load.
     Child child;
-    if (!StartHarness(child, L"--hold-presenting-hwnd 8")) {
+    if (!StartHarness(child, L"--hold-presenting-hwnd 16")) {
         DWORD code = 0;
         GetExitCodeProcess(child.pi.hProcess, &code);
         if (code == 77u) {
@@ -2850,10 +2857,11 @@ TEST_CASE("region 4 describes a swap chain on a real window: its window, its bac
 
     MappedRing r;
     REQUIRE(OpenRingFor(child.pi.dwProcessId, r));
-    for (int i = 0; i < 80 && r.st->writeIndex < 20; ++i) {
+    for (int i = 0; i < 240 && r.st->writeIndex < 20; ++i) {
         ++r.ctl->guardTicks;
         Sleep(50);
     }
+    INFO("writeIndex " << r.st->writeIndex << " status " << r.st->status);
     REQUIRE(r.st->writeIndex >= 20u);
     const auto* ring =
         reinterpret_cast<const fl::FlFrameRecord*>(static_cast<unsigned char*>(r.base) + FL_SHM_RING_OFFSET);

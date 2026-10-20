@@ -43,6 +43,13 @@ numeric core and does not move; the heading is the full version — corrected 20
   elapsed time and memory, or why it is recorded without being measured; measured games come first, and the title
   says how many games are being recorded (*2 games recording*). In en/vi/ja (ja marked for review).
 
+### Fixed
+
+- **A native injection test that failed under load** (developers only). Two `fl_guard_test` cases — the OpenGL hook,
+  and a swap chain on a real window — waited 4 seconds for twenty frames, and on a loaded CI runner (the suite took
+  115 s) the OpenGL hook, installed, had recorded none. They now wait up to 12 seconds, the harness presenting for 16,
+  and a failure says the writer's state.
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
