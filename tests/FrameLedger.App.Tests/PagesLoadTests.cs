@@ -667,4 +667,50 @@ public sealed partial class PagesLoadTests
         drawn.Should().BeGreaterThan(0).And.BeLessThanOrEqualTo(Decimator.DefaultBuckets * 2 + 2100, "FR-5.3: decimated per draw (the series, the markers, the sensors)");
         series.Stutter!.Count(static f => f).Should().Be(7);
     }
+
+    /// <summary>
+    /// beta.27: the owner opened one session twice from the dashboard and had two summary windows of it side by side
+    /// (2026-10-20). A session has one summary window — opening it again brings that one forward —, another session gets
+    /// its own, and a closed window lets the next open build a new one.
+    /// </summary>
+    [Fact]
+    public async Task OpeningAnOpenSessionAgainBringsItsOneWindowForward()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Silent Hill 2");
+        long first = await s.SessionWithFramesAsync(game.Id, DateTimeOffset.UtcNow.AddMinutes(-10), frames: 120, spikeEvery: 60);
+        long second = await s.SessionWithFramesAsync(game.Id, DateTimeOffset.UtcNow, frames: 120, spikeEvery: 60);
+        await using ServiceProvider services = new ServiceCollection()
+            .AddSingleton<ISessionRepository>(s.Sessions)
+            .AddSingleton<IGameRepository>(s.Games)
+            .AddSingleton<ISessionAnnotationRepository>(s.Annotations)
+            .AddSingleton<IHardwareSnapshotRepository>(new SqliteHardwareSnapshotRepository(s.Db))
+            .AddSingleton(new SessionSeriesLoader(s.Sessions))
+            .AddSingleton<IFileSaver>(new NoSaver())
+            .AddSingleton<IMessageStrip>(new NoStrip())
+            .AddSingleton<IThemeApplier>(new NoTheme())
+            .AddSingleton(new AppearanceSettings(new MemorySettings()))
+            .BuildServiceProvider();
+
+        (IReadOnlyList<long> Twice, int Windows, IReadOnlyList<long> AfterClose) seen = await OnStaAsync(() =>
+        {
+            var shell = new ShellHost(new ServiceCollection().BuildServiceProvider(), null!, null!, new WindowClosePolicy());
+            var opener = new SessionSummaryOpener(services, shell, new SessionSelection());
+            opener.Open(first);
+            opener.Open(first);
+            opener.Open(second);
+            opener.Open(first);
+            IReadOnlyList<long> twice = opener.OpenSessions;
+            List<Windows.SessionSummaryWindow> shown = [.. System.Windows.Application.Current.Windows.OfType<Windows.SessionSummaryWindow>()];
+            shown.ForEach(static w => w.Close());
+            opener.Open(first);
+            IReadOnlyList<long> afterClose = opener.OpenSessions;
+            System.Windows.Application.Current.Windows.OfType<Windows.SessionSummaryWindow>().ToList().ForEach(static w => w.Close());
+            return (twice, shown.Count, afterClose);
+        });
+
+        seen.Twice.Should().Equal([first, second], "a session's second open brings its window forward instead of a copy");
+        seen.Windows.Should().Be(2);
+        seen.AfterClose.Should().Equal([first], "a closed window is forgotten, and the next open builds a new one");
+    }
 }

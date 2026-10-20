@@ -67,7 +67,9 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
   ([Metrics](docs/03_METRICS.md))
 - **The mix of frame-generation states** in a session's summary (since 0.1.0-beta.24) is read over five-second
   windows: frame generation that changes faster than that — the NVIDIA App's *Dynamic* mode can — reads partly as
-  *Not classified*, and a state shorter than 10 seconds is not listed. A stretch the game presents with almost no frame
+  *Not classified*: a window in which the multiplier stepped reads between two whole multipliers and, since
+  0.1.0-beta.27, is never a state of its own. A state shorter than 10 seconds is not listed. A stretch the game
+  presents with almost no frame
   count of its own — shaders compiling at start, a loading screen, a menu drawn outside frame generation — reads as
   *Not classified* too. The
   multiplier chosen in a game's own menu is not read; the measured factor is its evidence. How the NVIDIA App's
@@ -99,7 +101,9 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
   The mode chosen in a game's own menu is not readable for DLSS without Streamline, and is not inferred from the
   render scale. How the driver numbers DLAA in
   its report is NVIDIA's documented value, not yet seen on a real game. The render resolution is N/A where the
-  game's own calls do not carry it (DLSS without Streamline, for one). ([Metrics](docs/03_METRICS.md))
+  game's own calls do not carry it (DLSS without Streamline, for one). Sessions recorded before 0.1.0-beta.27 kept
+  the NVIDIA driver's answer from after the game had closed, which never says DLSS ran: on a game no hook names, they
+  show neither the driver's report nor the NVIDIA App's mode. ([Metrics](docs/03_METRICS.md))
 - **Which DLSS ran** (since 0.1.0-beta.24) is named only from what the session showed: the model preset the NVIDIA
   driver reports (L or M: DLSS 4.5; J or K: DLSS 4), a measured multi-frame factor (×5 or ×6: DLSS 4.5; ×3 or ×4:
   DLSS 4), or a library whose major version names one (2.x, 3.x). A 310 library with no such evidence shows its
@@ -134,7 +138,9 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
   "Fullscreen". FrameLedger reports what the game asked for.
 - The mode is sampled ten times a second in a measured session and once a second in an unmeasured one; very
   short switches can be missed. A session recovered after a crash, and every session recorded before
-  beta.10, read N/A. ([Display mode](docs/03_METRICS.md#display-mode--both-tiers-beta10))
+  beta.10, read N/A. Some sessions recorded before 0.1.0-beta.27 of a game in exclusive full-screen show no window or
+  monitor size: the game's last moments, after its window had closed, replaced them.
+  ([Display mode](docs/03_METRICS.md#display-mode--both-tiers-beta10))
 
 ## Engine version
 
@@ -199,6 +205,12 @@ you accept the prompt. Turn it on only if you trust everything that runs under y
 - **FrameLedger never starts a game as administrator.** *Start directly* does not start a game that asks for it — start
   that one from its store or its own shortcut — nor a game whose recording is off: FrameLedger starts only what it
   records. While FrameLedger itself runs as administrator, Play starts every game directly, with your standard rights.
+- **Some games will not start directly** (seen on two Steam games, 2026-10-19 and 20). Lies of P, started by *Start
+  directly*, hands itself to Steam within seconds — since 0.1.0-beta.27 the game Steam then starts is recorded —, and
+  Clair Obscur: Expedition 33 closes within seconds, with or without FrameLedger's hook. Each such start ends a
+  measured session early, which the crash safety counts: two turn hooking off for the game. Start such a game through
+  its store (Settings ▸ Games ▸ *Play button*); the notice after Play says when a Steam game may hand itself to Steam.
+  ([details](docs/spike-notes/23-owner-runs-2026-10-20.md))
 
 ## Game artwork
 

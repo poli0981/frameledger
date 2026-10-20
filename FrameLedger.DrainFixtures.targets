@@ -49,6 +49,8 @@
   -->
   <ItemGroup Condition="'$(IsTestProject)' == 'true'">
     <Compile Include="$(MSBuildThisFileDirectory)tests\Shared\HarnessOverlayLogSweep.cs" Link="Shared\HarnessOverlayLogSweep.cs" />
+    <!-- When a started harness is really up (beta.27): the injection tests wait for its own "presenting" line. -->
+    <Compile Include="$(MSBuildThisFileDirectory)tests\Shared\HarnessReady.cs" Link="Shared\HarnessReady.cs" />
   </ItemGroup>
 
   <!--

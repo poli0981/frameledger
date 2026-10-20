@@ -184,6 +184,20 @@ public sealed record FgWindow
     /// </summary>
     public const double GenerationCeiling = 8.0;
 
+    /// <summary>
+    /// Whether <paramref name="factor"/> sits within <see cref="BucketTolerance"/> of a whole multiplier of two or more
+    /// (beta.27). Every frame generation that ships multiplies by a whole number — ×2 for FSR, XeSS and DLSS 3, ×2 to ×4
+    /// for DLSS 4, up to ×6 for DLSS 4.5 —, and its windows read 1.98, 3.01, 6.06. A five-second window that reads
+    /// between two changed state inside itself: Silent Hill 2 (2026-10-20) read ×2.53 where the NVIDIA App's Dynamic
+    /// multiplier stepped from ×2 to ×3 — half its application frames followed by one generated frame, half by two —,
+    /// and three such windows formed a ×2.52 "state" nobody held.
+    /// </summary>
+    public static bool IsNearWholeMultiplier(double factor)
+    {
+        double whole = Math.Max(2, Math.Round(factor, MidpointRounding.AwayFromZero));
+        return Math.Abs(factor - whole) <= (whole * BucketTolerance) + 1e-9;    // the edge is in: 2.2 - 2 is 0.2000000000000002
+    }
+
     /// <summary><c>none</c>, reached by counting: a published factor at or below <see cref="NoneCeiling"/>.</summary>
     public bool IsNone => Factor is double f && f <= NoneCeiling;
 

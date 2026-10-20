@@ -170,7 +170,7 @@ public sealed class CaptureHostEndToEndTests : IDisposable
         File.Copy(Harness, ConsentedExecutable);
     }
 
-    private Process StartHarness(string arguments)
+    private async Task<Process> StartHarnessAsync(string arguments)
     {
         StageTarget();
         File.Exists(Host).Should().BeTrue("the host must be built and copied beside this test");
@@ -182,7 +182,13 @@ public sealed class CaptureHostEndToEndTests : IDisposable
             RedirectStandardOutput = true,
         })!;
 
-        Thread.Sleep(800);
+        bool presenting = await HarnessReady.WaitUntilPresentingAsync(p, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        if (!presenting && !p.HasExited)
+        {
+            p.Kill(entireProcessTree: true);
+        }
+
+        presenting.Should().BeTrue("the harness must reach its present loop before anything looks for it or is injected into it (HarnessReady)");
         p.HasExited.Should().BeFalse("the harness must be running before the host looks for it");
         return p;
     }
@@ -255,7 +261,7 @@ public sealed class CaptureHostEndToEndTests : IDisposable
                 "this case is about an ABSENT record; a leftover one from a sibling test would make the "
                 + "host refuse for a different reason and the assertions below would say nothing");
 
-        Process harness = StartHarness("--real --hold-presenting 20");
+        Process harness = await StartHarnessAsync("--real --hold-presenting 20");
         try
         {
             using Process host = StartHost("capture", "--exe", ConsentedExecutable);
@@ -290,7 +296,7 @@ public sealed class CaptureHostEndToEndTests : IDisposable
         // self-constraint above pins WHICH executable it may stand in for.
         (await GrantConsentAsync()).Should().Be(ConsentWriteOutcome.Written);
 
-        Process harness = StartHarness("--real --hold-presenting 40");
+        Process harness = await StartHarnessAsync("--real --hold-presenting 40");
         Process? host = null;
         try
         {
@@ -404,7 +410,7 @@ public sealed class CaptureHostEndToEndTests : IDisposable
         Directory.CreateDirectory(PartialDirectory);
         HashSet<string> before = [.. Directory.EnumerateFiles(PartialDirectory, "*.partial")];
 
-        Process harness = StartHarness("--real --hold-presenting 40");
+        Process harness = await StartHarnessAsync("--real --hold-presenting 40");
         Process? host = null;
         string? file = null;
         try
@@ -528,7 +534,7 @@ public sealed class CaptureHostEndToEndTests : IDisposable
         // longer than the hold found the harness gone and ended TargetNotRunning — #286's first CI run, as on 2026-09-21
         // and before. The host prints nothing until its session ends, so there is no "attached" to wait for; the hold is
         // the margin, and the case's run time with it.
-        Process harness = StartHarness("--real --hold-presenting 15");
+        Process harness = await StartHarnessAsync("--real --hold-presenting 15");
         Process? host = null;
         try
         {

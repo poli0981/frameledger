@@ -27,10 +27,13 @@ internal static class FgSlices
         public bool IsReadable => Samples >= FgWindow.MinPerBucket && Tokens >= FgWindow.MinPerBucket;
 
         /// <summary>
-        /// Generating: readable, at least <see cref="FgWindow.ActiveThreshold"/>, and no more than
-        /// <see cref="FgWindow.GenerationCeiling"/> — above it the ratio is no frame generation's.
+        /// Generating: readable, at least <see cref="FgWindow.ActiveThreshold"/>, no more than
+        /// <see cref="FgWindow.GenerationCeiling"/> — above it the ratio is no frame generation's — and near a whole
+        /// multiplier (<see cref="FgWindow.IsNearWholeMultiplier"/>, beta.27): a window between two changed state inside
+        /// itself, and is no state's.
         /// </summary>
-        public bool IsActive => IsReadable && Displayed >= Tokens * FgWindow.ActiveThreshold && Factor <= FgWindow.GenerationCeiling;
+        public bool IsActive => IsReadable && Displayed >= Tokens * FgWindow.ActiveThreshold && Factor <= FgWindow.GenerationCeiling
+            && FgWindow.IsNearWholeMultiplier(Factor);
     }
 
     /// <summary>

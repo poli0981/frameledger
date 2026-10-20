@@ -53,6 +53,7 @@ public sealed class GamePlayer
     {
         ArgumentNullException.ThrowIfNull(game);
         PlayFallback fallback = PlayFallback.None;
+        StoreGame? record = null;
         if (!await IsDirectAsync(ct).ConfigureAwait(false))
         {
             if (_elevated())
@@ -61,7 +62,7 @@ public sealed class GamePlayer
             }
             else
             {
-                StoreGame? record = StoreRecords.Owning(game.Fingerprint.ExePath, game.StoreId, await _stores.ReadAsync("play", ct: ct).ConfigureAwait(false));
+                record = await OwningAsync(game, ct).ConfigureAwait(false);
                 if (record is null)
                 {
                     fallback = PlayFallback.NoStore;
@@ -79,7 +80,16 @@ public sealed class GamePlayer
             }
         }
 
-        return await StartDirectlyAsync(game, fallback, ct).ConfigureAwait(false);
+        // beta.27: a game Steam installed may hand itself to Steam when something else starts it (Lies of P, 2026-10-19:
+        // its process left within seconds and Steam started the game again), and the notice says so. No store's records
+        // name a game that fell back for want of one, so they are read only where they were not already.
+        if (fallback is PlayFallback.None or PlayFallback.Elevated)
+        {
+            record = await OwningAsync(game, ct).ConfigureAwait(false);
+        }
+
+        bool steamGame = string.Equals(record?.Platform, "steam", StringComparison.Ordinal);
+        return await StartDirectlyAsync(game, fallback, steamGame, ct).ConfigureAwait(false);
     }
 
     /// <summary>The notice a result is said with: its text, and whether it is a warning.</summary>
@@ -99,8 +109,9 @@ public sealed class GamePlayer
             {
                 PlayFallback.NoStore => string.Format(CultureInfo.CurrentCulture, Strings.Play_NoStore_Format, gameName),
                 PlayFallback.NoGalaxy => string.Format(CultureInfo.CurrentCulture, Strings.Play_NoGalaxy_Format, gameName),
-                PlayFallback.Elevated => string.Format(CultureInfo.CurrentCulture, Strings.Play_Elevated_Format, gameName),
-                _ => string.Format(CultureInfo.CurrentCulture, Strings.Play_Started_Format, gameName),
+                PlayFallback.Elevated => string.Format(CultureInfo.CurrentCulture,
+                    result.SteamGame ? Strings.Play_Elevated_Steam_Format : Strings.Play_Elevated_Format, gameName),
+                _ => string.Format(CultureInfo.CurrentCulture, result.SteamGame ? Strings.Play_Started_Steam_Format : Strings.Play_Started_Format, gameName),
             }, false),
             PlayOutcome.AgentUnavailable => (string.Format(CultureInfo.CurrentCulture, Strings.Play_AgentUnavailable_Format, gameName), true),
             PlayOutcome.Unanswered => (Strings.Agent_Unanswered, true),
@@ -113,6 +124,10 @@ public sealed class GamePlayer
             _ => (string.Format(CultureInfo.CurrentCulture, Strings.Play_Failed_Format, gameName, result.Detail), true),
         };
     }
+
+    /// <summary>The record of the store that installed <paramref name="game"/>, if any store's own records name its folder.</summary>
+    private async Task<StoreGame?> OwningAsync(GameRow game, CancellationToken ct) =>
+        StoreRecords.Owning(game.Fingerprint.ExePath, game.StoreId, await _stores.ReadAsync("play", ct: ct).ConfigureAwait(false));
 
     private PlayResult HandOff(GameRow game, StoreLaunch launch)
     {
@@ -139,7 +154,7 @@ public sealed class GamePlayer
         return PlayFallback.NoLink;
     }
 
-    private async Task<PlayResult> StartDirectlyAsync(GameRow game, PlayFallback fallback, CancellationToken ct)
+    private async Task<PlayResult> StartDirectlyAsync(GameRow game, PlayFallback fallback, bool steamGame, CancellationToken ct)
     {
         if (!_agent.IsConnected)
         {
@@ -180,7 +195,7 @@ public sealed class GamePlayer
         Log.Information("play: {Game} (id {Id}) through the agent: {Outcome}", game.Name, game.Id, ack.Outcome);
         return ack.Outcome switch
         {
-            _ when ack.Accepted => new PlayResult(PlayOutcome.StartedByAgent, Fallback: fallback),
+            _ when ack.Accepted => new PlayResult(PlayOutcome.StartedByAgent, Fallback: fallback, SteamGame: steamGame),
             "RecordingOff" => new PlayResult(PlayOutcome.RecordingOff, Fallback: fallback),
             "SessionRunning" => new PlayResult(PlayOutcome.AlreadyRunning, Fallback: fallback),
             "UnknownGame" => new PlayResult(PlayOutcome.NotInLibrary, Fallback: fallback),

@@ -107,13 +107,34 @@ public sealed class DlssTextTests
         DlssText.Line(Row("{\"nvngx_dlss.dll\":\"310.9.1.0\",\"nvngx_dlssnr.dll\":\"1.0.0.0\"}", upscaler: "dlss"))
             .Should().Be("DLSS · Super Resolution 310.9.1 · DLSS 5 runtime loaded");
         DlssText.Line(Row("{\"sl.interposer.dll\":\"2,8,0,0\"}", upscaler: "fsr3")).Should().BeNull("no DLSS at all");
-        DlssText.Line(Row("{broken", upscaler: "dlss")).Should().Be("DLSS", "an unreadable module list still says DLSS ran");
+        DlssText.Line(Row("{broken", upscaler: "dlss")).Should().BeNull("a line that would say only DLSS says nothing the header does not (beta.27)");
         DlssText.ExportLine(Row()).Should().Be("N/A");
         DlssText.Parse("310,9,1,0").Should().Be(new Version(310, 9, 1, 0));
         DlssText.Parse("3.7").Should().Be(new Version(3, 7));
         DlssText.Parse("1.0.3").Should().Be(new Version(1, 0, 3));
         DlssText.Parse("v3").Should().BeNull();
         DlssText.Parse(null).Should().BeNull();
+        return 0;
+    });
+
+    /// <summary>
+    /// beta.27: Witcher 3 under the NVIDIA App's override (2026-10-20) loaded the driver's libraries under names no census
+    /// lists, so its DLSS line said only "DLSS" beneath a header that already did; the loaded-libraries line prints them.
+    /// </summary>
+    [Fact]
+    public void ALineThatWouldSayOnlyDlssIsNotShown() => InEnglish(() =>
+    {
+        SessionRow witcher = Row(
+            "{\"160_E658700.bin\":\"310,9,16,0\",\"1B0_E658700.dll\":\"2,14,16,0\",\"_nvngx.dll\":\"32.0.16.1742\",\"sl.interposer.dll\":\"2,14,1,0\"}",
+            "{\"160_E658700.bin\":\"graphics_driver\",\"1B0_E658700.dll\":\"graphics_driver\",\"_nvngx.dll\":\"graphics_driver\",\"sl.interposer.dll\":\"game\"}",
+            upscaler: "dlss",
+            words: "{\"Outcome\":\"Answered\",\"Sr\":\"0x1F\",\"Rr\":\"0x3F\",\"Fg\":\"0xA03F\",\"Driver\":61742,\"Ratio\":0,\"Mode\":0,\"Preset\":6,\"FgCount\":5,\"FgPreset\":2,\"FgMode\":1,\"Readings\":17,\"Answered\":16,\"Changed\":true,\"Detail\":null}",
+            fgMode: "dlssg",
+            factor: 2.0);
+
+        DlssText.Line(witcher).Should().BeNull();
+        DlssText.Line(Row("{\"160_E658700.bin\":\"310,9,16,0\"}", upscaler: "dlss", fgMode: "dlssg", factor: 3.0))
+            .Should().Be("DLSS 4 (a ×3.0 frame-generation state)", "a label is something to say");
         return 0;
     });
 

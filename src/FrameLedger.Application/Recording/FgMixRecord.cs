@@ -21,8 +21,9 @@ public sealed record FgMixRecord(IReadOnlyList<FgMixRecordRow> Rows)
     /// <summary>The column's text back, or null for a null/empty/unparsable column (a writer that predates it, or a hand edit).</summary>
     /// <remarks>
     /// <b>Read by today's rule</b> (beta.26): a stored state no window of this build would form — a factor above
-    /// <see cref="FgWindow.GenerationCeiling"/>, or windows that averaged fewer than <see cref="FgWindow.MinPerBucket"/>
-    /// application frames — is time no state claims, and joins the not-classified row. beta.24 and beta.25 stored such a
+    /// <see cref="FgWindow.GenerationCeiling"/>, windows that averaged fewer than <see cref="FgWindow.MinPerBucket"/>
+    /// application frames, or since beta.27 a factor between two whole multipliers (Silent Hill 2, 2026-10-20: ×2.52) — is
+    /// time no state claims, and joins the not-classified row. beta.24 and beta.25 stored such a
     /// row for a stretch presented through with one token per window (Silent Hill 2, 2026-10-19: ×1336.0,
     /// 0.20 → 267.20 FPS), and the summary listed it and the DLSS line cited it. Every other row is as stored, and the
     /// shares still add up to the whole.
@@ -75,6 +76,6 @@ public sealed record FgMixRecord(IReadOnlyList<FgMixRecordRow> Rows)
 
     private static bool IsUnreadableState(FgMixRecordRow row) =>
         FgMixRecordRow.KindOf(row.Kind) == FgMixKind.Generated
-        && (row.Factor is not double factor || factor > FgWindow.GenerationCeiling
+        && (row.Factor is not double factor || factor > FgWindow.GenerationCeiling || !FgWindow.IsNearWholeMultiplier(factor)
             || row.NativeFps is not double native || native * FgSteadyState.WindowSeconds < FgWindow.MinPerBucket);
 }

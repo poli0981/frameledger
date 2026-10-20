@@ -164,8 +164,8 @@ public sealed class GamePlayerTests
 
         var shell = new Shell();
         var agent = new Agent();
-        (await Player(s, shell, agent, steam).PlayAsync(game, Ct)).Should().Be(new PlayResult(PlayOutcome.StartedByAgent));
-        shell.Opened.Should().BeEmpty("direct never asks the store, even for a store's game");
+        (await Player(s, shell, agent, steam).PlayAsync(game, Ct)).Should().Be(new PlayResult(PlayOutcome.StartedByAgent, SteamGame: true));
+        shell.Opened.Should().BeEmpty("direct never asks the store's app to start it, even for a store's game");
 
         (await Player(s, new Shell(), new Agent(connected: false), steam).PlayAsync(game, Ct)).Outcome.Should().Be(PlayOutcome.AgentUnavailable);
         (await Player(s, new Shell(), new Agent(outcome: "RecordingOff"), steam).PlayAsync(game, Ct)).Outcome.Should().Be(PlayOutcome.RecordingOff);
@@ -213,7 +213,7 @@ public sealed class GamePlayerTests
         // A Steam record whose id is not a Steam id builds no link — and is not "GOG GALAXY is not installed".
         var odd = new Stores(new StoreGame("steam", "not-an-app-id", "W", _steam, null, null));
         PlayResult noLink = await Player(s, new Shell(), new Agent(), odd).PlayAsync(Game(_steam + @"\game.exe", null), Ct);
-        noLink.Should().Be(new PlayResult(PlayOutcome.StartedByAgent, Fallback: PlayFallback.NoLink));
+        noLink.Should().Be(new PlayResult(PlayOutcome.StartedByAgent, Fallback: PlayFallback.NoLink, SteamGame: true));
         GamePlayer.Describe(noLink, "W").Text.Should().NotContain("GOG").And.NotContain("store");
 
         // The store mode fell back and recording is off: switching Play to the store is no advice.
@@ -228,6 +228,37 @@ public sealed class GamePlayerTests
         gone.Outcome.Should().Be(PlayOutcome.NotInLibrary);
         GamePlayer.Describe(gone, "W").Text.Should().NotContain("UnknownGame").And.Contain("W");
         GamePlayer.Describe(new PlayResult(PlayOutcome.AgentUnavailable, Fallback: PlayFallback.NoStore), "W").Text.Should().NotContain("its store");
+    }
+
+    /// <summary>
+    /// beta.27: a game Steam installed may hand itself to Steam when the agent starts it (Lies of P, 2026-10-19: its process
+    /// left within seconds and Steam started the game again), and the notice says so — started directly, or by an App
+    /// running as administrator. Any other game's notice is unchanged.
+    /// </summary>
+    [Fact]
+    public async Task ASteamGameTheAgentStartsSaysItMayHandItselfToSteam()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        var steam = new Stores(new StoreGame("steam", "1627720", "Lies of P", _steam, null, null));
+        GameRow game = Game(_steam + @"\game.exe", "1627720");
+
+        PlayResult elevated = await Player(s, new Shell(), new Agent(), steam, elevated: true).PlayAsync(game, Ct);
+        elevated.Should().Be(new PlayResult(PlayOutcome.StartedByAgent, Fallback: PlayFallback.Elevated, SteamGame: true));
+        GamePlayer.Describe(elevated, "Lies of P").Text.Should().Contain("administrator").And.Contain("hand itself to Steam");
+
+        await new RegisteredSettings(new SqliteSettingsStore(s.Db)).SetAsync(SettingsRegistry.UiPlayMode, PlayMode.Direct, Ct);
+        PlayResult direct = await Player(s, new Shell(), new Agent(), steam).PlayAsync(game, Ct);
+        direct.SteamGame.Should().BeTrue();
+        GamePlayer.Describe(direct, "Lies of P").Should().Be(
+            ("FrameLedger is starting Lies of P. A Steam game may hand itself to Steam first; the game Steam then starts is recorded.", false));
+
+        PlayResult loose = await Player(s, new Shell(), new Agent(), steam).PlayAsync(Game(@"D:\Games\Loose\game.exe", null), Ct);
+        loose.SteamGame.Should().BeFalse("no store's records name its folder");
+        GamePlayer.Describe(loose, "W").Text.Should().Be("FrameLedger is starting W.");
+
+        var gog = new Stores(new StoreGame("gog", "1125815775", "A Space for the Unbound", @"D:\another\gog\A Space", null, null));
+        (await Player(s, new Shell(), new Agent(), gog).PlayAsync(Game(@"D:\another\gog\A Space\game.exe", "1125815775"), Ct))
+            .SteamGame.Should().BeFalse("only Steam's games hand themselves to their store");
     }
 
     [Fact]

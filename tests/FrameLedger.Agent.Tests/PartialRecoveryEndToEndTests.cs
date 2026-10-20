@@ -129,11 +129,17 @@ public sealed class PartialRecoveryEndToEndTests : IDisposable
         File.Copy(Harness, ConsentedExecutable);
     }
 
-    private Process StartHarness(string arguments)
+    private async Task<Process> StartHarnessAsync(string arguments)
     {
         StageTarget();
         var p = Process.Start(new ProcessStartInfo(ConsentedExecutable, arguments) { UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true })!;
-        Thread.Sleep(800);
+        bool presenting = await HarnessReady.WaitUntilPresentingAsync(p, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        if (!presenting && !p.HasExited)
+        {
+            p.Kill(entireProcessTree: true);
+        }
+
+        presenting.Should().BeTrue("the harness must reach its present loop before anything looks for it or is injected into it (HarnessReady)");
         p.HasExited.Should().BeFalse("the harness must be running before the Agent looks for it");
         return p;
     }
@@ -220,7 +226,7 @@ public sealed class PartialRecoveryEndToEndTests : IDisposable
         await GrantConsentAsync().ConfigureAwait(true);
 
         // Long enough to outlive the 30 s threshold, the flush after it and the kill.
-        Process harness = StartHarness("--real --hold-presenting 90");
+        Process harness = await StartHarnessAsync("--real --hold-presenting 90").ConfigureAwait(true);
         try
         {
             // Disposed by the using even after Kill disposes it: Process.Dispose is idempotent, and the

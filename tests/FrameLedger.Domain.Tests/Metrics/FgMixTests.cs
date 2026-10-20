@@ -158,6 +158,42 @@ public sealed class FgMixTests
         AddsUpToTheWhole(mix);
     }
 
+    /// <summary>
+    /// beta.27: Silent Hill 2 (2026-10-20) under the NVIDIA App's Dynamic multi frame generation held ×2 and ×3, and the
+    /// windows where the multiplier stepped read ×2.21–×2.70; three of them formed a ×2.52 "state" nobody held. A window
+    /// between two whole multipliers changed state inside itself, and is not classified.
+    /// </summary>
+    [Fact]
+    public void WindowsBetweenTwoMultipliersAreNotAState()
+    {
+        // Thirty seconds stepping between ×2 and ×3 every second: every five-second window reads 2.3–2.5.
+        List<FrameSample> stepping = Play(1, 2);
+        for (int s = 1; s < 30; s++)
+        {
+            stepping = SampleFixtures.Concat(stepping, Play(1, s % 2 == 0 ? 2 : 3));
+        }
+
+        FgMix mix = FgMix.From(Concat(Play(20, 2), stepping, Play(20, 3)), Frequency, noneAllowed: true)!;
+
+        mix.Rows.Select(static r => r.Kind).Should().Equal(FgMixKind.Generated, FgMixKind.Generated, FgMixKind.Unclassified);
+        mix.Rows.Where(static r => r.Kind == FgMixKind.Generated).Select(static r => Math.Round(r.Factor!.Value)).Should().Equal(2, 3);
+        mix.Rows[2].Seconds.Should().BeApproximately(30, 2);
+        mix.Rows.Should().OnlyContain(static r => r.Factor == null || FgWindow.IsNearWholeMultiplier(r.Factor.Value));
+        AddsUpToTheWhole(mix);
+    }
+
+    [Theory]
+    [InlineData(1.79, false)]
+    [InlineData(1.8, true)]
+    [InlineData(2.2, true)]
+    [InlineData(2.21, false)]
+    [InlineData(2.52, false)]
+    [InlineData(2.7, true)]
+    [InlineData(6.06, true)]
+    [InlineData(8.0, true)]
+    public void AWholeMultiplierIsWithinTenPercent(double factor, bool near) =>
+        FgWindow.IsNearWholeMultiplier(factor).Should().Be(near);
+
     [Fact]
     public void ARatioAtTheCeilingIsStillAState()
     {

@@ -4230,7 +4230,15 @@
     <comment>review</comment>
   </data>
   <data name="Play_ToolTip_Direct" xml:space="preserve">
-    <value>プレイ: FrameLedger がゲームを自分で起動します。最初のフレームから記録し、通常の権限で実行します。</value>
+    <value>プレイ: FrameLedger がゲームを自分で起動します。最初のフレームから記録し、通常の権限で実行します。Steam のゲームは先に Steam へ起動を引き継ぐことがあります。その場合は Steam が起動したゲームを記録します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_Started_Steam_Format" xml:space="preserve">
+    <value>FrameLedger が {0} を起動しています。Steam のゲームは先に Steam へ起動を引き継ぐことがあります。その場合は Steam が起動したゲームを記録します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Play_Elevated_Steam_Format" xml:space="preserve">
+    <value>FrameLedger が管理者として実行されているため、ストアではなくキャプチャ エージェントが通常の権限で {0} を起動しています。Steam のゲームは先に Steam へ起動を引き継ぐことがあります。その場合は Steam が起動したゲームを記録します。</value>
     <comment>review</comment>
   </data>
   <data name="Play_Title" xml:space="preserve">
@@ -4298,7 +4306,7 @@
     <comment>review</comment>
   </data>
   <data name="Settings_PlayMode_Body" xml:space="preserve">
-    <value>ストア経由: Steam と Epic Games Launcher がゲームを起動し、GOG GALAXY が実行し、itch アプリは先に確認します。どのストアからもインストールされていないゲームは FrameLedger が起動します。直接: FrameLedger がゲームを自分で起動します。最初のフレームから記録し、通常の権限で実行します。</value>
+    <value>ストア経由: Steam と Epic Games Launcher がゲームを起動し、GOG GALAXY が実行し、itch アプリは先に確認します。どのストアからもインストールされていないゲームは FrameLedger が起動します。直接: FrameLedger がゲームを自分で起動します。最初のフレームから記録し、通常の権限で実行します。一部の Steam ゲームは直接起動すると Steam へ起動を引き継ぎます (その後 Steam が起動したゲームを記録します)。Steam 以外からは起動できないゲームもあるため、それらはストア経由で起動してください。</value>
     <comment>review</comment>
   </data>
   <data name="Settings_PlayMode_Store" xml:space="preserve">

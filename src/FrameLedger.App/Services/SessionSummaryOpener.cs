@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using System.Windows;
 using FrameLedger.App.Charts;
 using FrameLedger.App.ViewModels;
 using FrameLedger.App.Windows;
@@ -14,7 +15,8 @@ namespace FrameLedger.App.Services;
 /// Builds a summary window per open: the view model's override prompt is bound to THAT window's dialog host,
 /// which is why the window is composed here rather than resolved whole from DI. The load runs after
 /// <c>Show()</c> so the window appears at once and fills in. It keeps the windows it opened, so that Delete all sessions
-/// can close the ones whose session is gone (<see cref="ISessionWindows"/>, beta.11).
+/// can close the ones whose session is gone (<see cref="ISessionWindows"/>, beta.11), and so that a session has ONE summary
+/// window: opening it again brings that window forward (beta.27 — the owner had two of the same session side by side).
 /// </summary>
 public sealed class SessionSummaryOpener : ISessionSummaryOpener, ISessionWindows
 {
@@ -32,9 +34,21 @@ public sealed class SessionSummaryOpener : ISessionSummaryOpener, ISessionWindow
         _selection = selection ?? throw new ArgumentNullException(nameof(selection));
     }
 
+    /// <summary>The sessions whose summary is open, in the order they were opened (tests read it).</summary>
+    internal IReadOnlyList<long> OpenSessions => [.. _open.Select(static o => o.SessionId)];
+
     public void Open(long sessionId)
     {
         _selection.Set(sessionId);    // File ▸ Export follows the window the user opened last (P4 PR-3)
+        foreach ((long SessionId, SessionSummaryWindow Window) existing in _open)
+        {
+            if (existing.SessionId == sessionId)
+            {
+                BringForward(existing.Window);
+                return;
+            }
+        }
+
         SessionSummaryWindow? window = null;
         var viewModel = new SessionSummaryViewModel(
             _services.GetRequiredService<ISessionRepository>(),
@@ -67,6 +81,17 @@ public sealed class SessionSummaryOpener : ISessionSummaryOpener, ISessionWindow
                 open.Window.Close();
             }
         }
+    }
+
+    /// <summary>The open window, back in front of the user: out of the taskbar first if it was minimised.</summary>
+    private static void BringForward(Window window)
+    {
+        if (window.WindowState == WindowState.Minimized)
+        {
+            window.WindowState = WindowState.Normal;
+        }
+
+        window.Activate();
     }
 
     private static async Task LoadAsync(SessionSummaryViewModel viewModel, long sessionId)

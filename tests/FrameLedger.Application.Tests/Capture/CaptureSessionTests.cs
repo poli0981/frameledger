@@ -672,6 +672,49 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// beta.27: the driver still answers for a pid whose game has gone, with the bits that say a feature ran cleared. Read
+    /// before the last drain, that answer replaced every reading taken while the game ran, and no session the owner stored
+    /// from 2026-10-04 to 2026-10-20 kept CREATED | EVALUATE. The driver is not asked after the game left, and a reading
+    /// that clears the two bits — a game releasing its features on its way out — does not unsay them.
+    /// </summary>
+    [Fact]
+    public async Task TheDriverIsNotAskedAfterTheGameLeftAndAFeatureThatRanStaysRun()
+    {
+        var guard = new CountingGuard();
+        using var sink = new FakeSink();
+        using var liveness = new FakeLiveness { ExitAfterChecks = 30 };
+        int probes = 0;
+        var loop = new CaptureSession(
+            await StoreWithAsync(), new HookedCaptureGate(guard), guard, new FixedResolver(_pid, SessionEndReason.Running),
+            new DelegateLivenessSource(_ => liveness),
+            new DelegateRingAttacher(_ => (sink, ShmAttachRefusal.Ok)),
+            new CaptureOptions
+            {
+                DrainInterval = TimeSpan.FromMilliseconds(1),
+                ScanInterval = TimeSpan.FromMilliseconds(1),
+                AttachBudget = TimeSpan.FromMilliseconds(50),
+                MaxDuration = TimeSpan.FromSeconds(30),
+                HoldInterval = TimeSpan.FromMilliseconds(1),
+                LogFlushGrace = TimeSpan.FromMilliseconds(1),
+            },
+            modules: null,
+            ngx: new DelegateNgxProbe(_ =>
+            {
+                // Created and evaluated at the second reading only: before it, not yet; after it, released on the way out.
+                ulong sr = ++probes == 2 ? NgxOverrideFlags.Initialized | NgxOverrideFlags.DllExists | NgxOverrideFlags.CreatedAndEvaluated
+                                         : NgxOverrideFlags.Initialized | NgxOverrideFlags.DllExists;
+                return NgxDriverState.Parse($"NGXSTATE status=ANSWERED sr=0x{sr:X16} rr=0x1 fg=0x5 ratio=0.0000 mode=0 preset=0 fgcount=0 fgpreset=0 fgmode=0 driver=61742");
+            }));
+
+        CaptureOutcome r = await loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        r.Reason.Should().Be(SessionEndReason.TargetExited);
+        probes.Should().BeGreaterThan(2, "readings after the one that saw the feature ran, as on the owner's sessions");
+        probes.Should().Be(sink.Published.Count, "one per scan, and none once the game had left");
+        r.NgxDriver.SrCreatedAndEvaluated.Should().BeTrue("a feature that ran in the session stays run");
+    }
+
     [Fact]
     public async Task NoRecordRefusesConsentAndNothingIsEverInjected()
     {

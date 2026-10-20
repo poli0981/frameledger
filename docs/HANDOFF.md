@@ -216,7 +216,15 @@ item 21's first branch (`spike-notes` §22).
    reads the App's own words, and the mix found ×2.0 / ×3.0 / ×6.1 — plus a ×1336.0 row that was a defect, fixed in
    beta.26; (c) the override loads `160_E658700.bin` 310.9.16.0 and `1B0_E658703.dll` 2.14.16.0 from the NGX folder;
    (e) **done** — every issue marked; the last six, triaged in `13_CI_CD` §SonarCloud (beta.26), the same day, and
-   `main`'s quality gate passes. The rest is not run yet.)*
+   `main`'s quality gate passes. The rest is not run yet.)* *(2026-10-20, the owner's runs of beta.26 — `spike-notes`
+   §23: (a) **done** — ×2, ×3 and ×4 chosen in Cyberpunk 2077's menu read ×1.9 (ten seconds), ×3.0 and ×4.0, each with
+   its own rates, under "Set in the game — no NVIDIA App frame-generation override"; **Fixed ×6** on Expedition 33 read
+   ×6.0 under "Set in the NVIDIA App: Fixed ×6"; *Dynamic* on Silent Hill 2 read ×2.0 and ×3.0, plus a ×2.52 row that
+   was a defect, fixed in beta.27. The Witcher 3 under **Fixed ×6** presented ×2.0 throughout: the rows are the frames,
+   the line is the setting. (b) **could not pass before beta.27**: every stored driver word had lost
+   `CREATED | EVALUATE`, read after the game had closed, so an NGX-direct title under the override never read its mode
+   — run it on beta.27. (c) The Witcher 3 under the override loaded `160_E658700.bin` 310.9.16.0 and `1B0_E658700.dll` 2.14.16.0;
+   Silent Hill 2 and Expedition 33 loaded `1B0_E658703.dll`.)*
 21. **beta.25 on real hardware — FSR's quality mode (D65), decision table written before the run.** Lies of P (FSR
    through AMD's FidelityFX libraries) launched by FrameLedger, not attached, with the game's own *FSR* at *Quality*,
    then a second session at *Performance* → the summary's header reads *FSR 3 Quality*, then *FSR 3 Performance* (or
@@ -229,6 +237,11 @@ item 21's first branch (`spike-notes` §22).
    mode. *(2026-10-19, `spike-notes` §22: the Quality session read **no mode** with the query hooked — the first
    branch; 1707×961 is the engine's own rounding of 66.67 %, not the size answer, so the title asked before the hook
    was in or never asked. D65 stays built and silent for Lies of P. The Performance session is not run.)*
+   *(2026-10-20, §23: the Performance session, started through Steam, read "FSR 3 · 1280×720 → 2560×1440" and no mode —
+   the first branch on both. 1280×720 is exactly the vendor's Performance size, so a query the hook met would have
+   matched: the title did not ask while the hook was in. It cannot be launched by FrameLedger as this item asks — started
+   directly it hands itself to Steam within seconds, and before beta.27 the game Steam started was not recorded at
+   all.)*
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —

@@ -35,6 +35,49 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Changed
+
+- **Play ▸ *Start directly* says what a Steam game may do.** Some Steam games hand themselves to Steam when
+  FrameLedger starts them — Lies of P closes within seconds and Steam starts it again. Starting a game Steam installed,
+  the notice now says it may hand itself to Steam first and that the game Steam then starts is recorded; the *Start
+  directly* tooltip and Settings ▸ Games ▸ *Play button* say so too, adding that a few will not start outside Steam at
+  all. Steam games keep *Start directly*: three of the five started directly on 2026-10-20 ran and were measured from
+  their first frame, and a Vulkan game is measured only when FrameLedger starts it. In en/vi/ja (ja marked for review).
+
+### Fixed
+
+- **A frame-generation "state" of ×2.52.** The owner's Silent Hill 2 session under the NVIDIA App's *Dynamic* multi
+  frame generation listed ×2.52 for 13 seconds beside ×2.0 and ×3.0: the five-second windows in which the multiplier
+  stepped from ×2 to ×3 read in between, and three of them formed a state nobody held. Every frame generation that
+  ships multiplies by a whole number, so a window now counts toward a state only within 10 % of one; the others are
+  *Not classified*. Sessions already recorded are read by the same rule: that session lists ×2.0, ×3.0, no frame
+  generation and 7.36 % not classified. The owner's runs of 2026-10-20 are recorded in
+  `docs/spike-notes/23-owner-runs-2026-10-20.md`.
+- **The NVIDIA driver's DLSS report was lost from every stored session.** FrameLedger asked the driver one last time
+  after the game had closed, and that answer — which no longer says DLSS ran — replaced the ones read while the game
+  ran. So no session said *DLSS (driver-reported)* where no hook saw DLSS, and none named the NVIDIA App's quality mode
+  on such a game: Clair Obscur: Expedition 33 under the App's override read *Upscaler not identified*. The driver is no
+  longer asked once the game has closed, and once it reports that DLSS ran, the session keeps it. Sessions recorded
+  before keep what they stored.
+- **Play ▸ *Start directly* recorded nothing of a game that hands itself to Steam.** Lies of P, started directly, closes
+  within seconds and Steam starts it again; the game Steam started was turned away while the first session ended and
+  never recorded. It is now recorded once that session ends, as a game started again already was. Each such start
+  still counts toward the two early exits that turn hooking off for a game, so Limitations ▸ Play advises starting such
+  a game through its store.
+- **Opening a session's summary twice opened two windows.** The open window comes forward instead, restored if
+  minimised.
+- **No window or monitor size for a game in exclusive full-screen.** A game leaving exclusive full-screen closes its
+  window a moment before its swap chain says so, and those last samples replaced the sizes: two Lies of P and three
+  Dark Souls III sessions show none. The sizes are now the last ones the mode saw.
+- **A DLSS line that said only "DLSS"**, under a header that already did, is no longer shown: the NVIDIA App's override
+  loads its libraries under names FrameLedger does not list (The Witcher 3), and the *Loaded:* line prints them.
+- **Two integration tests that failed under load** (developers only). The guard reads every process above the test
+  harness too, the test host among them, and under a full `build.ps1 check` the test host is still starting its other
+  test classes: a module it released while the guard read its list refused the injection (`ModuleScanFailed`, and
+  `ProcessUnreadable` on 2026-10-19). The drain suite asks the guard again on those two reasons, four times at most;
+  the pause case, which once read the writer still starting, waits for it to be ready; and every injection test waits
+  for the harness's own "presenting" line instead of 800 ms (`tests/Shared/HarnessReady.cs`).
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

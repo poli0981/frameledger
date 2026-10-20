@@ -26,6 +26,13 @@ namespace FrameLedger.Application.Capture;
 /// ones the driver answered, and <see cref="Changed"/> whether two answered readings disagreed on a mask — a
 /// title switching DLSS on mid-session would show as a change, and the report prints it rather than averaging.
 /// </para>
+/// <para>
+/// <b>Except the two bits that say a feature ran</b> (beta.27): <see cref="NgxOverrideFlags.Created"/> and
+/// <see cref="NgxOverrideFlags.Evaluate"/>, once an answered reading carried them, stand for the session. The driver clears
+/// them when the game releases the feature — on its way out, at a settings change —, and the reading taken after a game
+/// had gone was the last one: Expedition 33 read <c>0x8067F</c> while it ran (2026-09-06) and every stored session of it
+/// <c>0x8007F</c>, the same word without them.
+/// </para>
 /// </remarks>
 public sealed record NgxDriverState(
     NgxProbeOutcome Outcome,
@@ -142,6 +149,15 @@ public sealed record NgxDriverState(
         }
 
         bool changed = Changed || (Outcome == NgxProbeOutcome.Answered && (Sr != later.Sr || Rr != later.Rr || Fg != later.Fg));
-        return later with { Readings = readings, Answered = answered, Changed = changed };
+        ulong ran = Outcome == NgxProbeOutcome.Answered ? NgxOverrideFlags.CreatedAndEvaluated : 0;
+        return later with
+        {
+            Sr = later.Sr | (Sr & ran),
+            Rr = later.Rr | (Rr & ran),
+            Fg = later.Fg | (Fg & ran),
+            Readings = readings,
+            Answered = answered,
+            Changed = changed,
+        };
     }
 }

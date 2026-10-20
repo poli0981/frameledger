@@ -160,7 +160,12 @@ which makes the notification more important than it was, not less.
 > now remembers the newest such process per executable and starts its session when the running one ends, if that one
 > ended on its own (not cancelled with the host), the process is the same (pid and start time) and it is then the
 > executable's ONLY process — a helper of a game still running has the game beside it and stays turned away, as before
-> (`CaptureOrchestratorTests`: the restart recorded, the helper not, a process that left meanwhile not). **Behaviour change:** a game whose folder moved (not its drive letter) records nothing until
+> (`CaptureOrchestratorTests`: the restart recorded, the helper not, a process that left meanwhile not). *(beta.27,
+> 2026-10-20:)* a launch never said it had ended on its own, so after **Play** ▸ *Start directly* nothing turned away
+> while it ran was ever recorded — Lies of P hands itself to Steam within seconds, and twice on 2026-10-19 the game
+> Steam started went unrecorded (`spike-notes` §23). A launch now says so, with the processes it and its election
+> recorded: the one it started appears to the watcher after the launch began and is turned away like any other, and a
+> launch the user stopped does not start again on it. **Behaviour change:** a game whose folder moved (not its drive letter) records nothing until
 > *Change executable* points its entry at the new file. `ProcessTree` reads ppid chains with the one rule that defeats pid
 > reuse: a child that started before its parent is not its child. `DescendantElection` picks the newest-started
 > descendant whose image is tracked — a launcher's consent does not extend to what it spawns, so the elected image
