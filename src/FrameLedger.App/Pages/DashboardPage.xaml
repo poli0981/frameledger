@@ -15,44 +15,62 @@
         <StackPanel Style="{StaticResource PageRoot}">
             <ui:TextBlock FontTypography="Title" Text="{x:Static vm:DashboardViewModel.Header}" />
 
-            <!-- 08_UI §Dashboard: the live capture card, fed by SessionStarted / SessionProgress / SessionHeld / SessionCompleted.
-                 A session recorded without measuring (Tier 2) shows why, and no readout (2026-09-23). -->
-            <ui:Card Margin="0,16,0,0" HorizontalAlignment="Stretch">
-                <StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <ui:TextBlock FontTypography="Subtitle" Text="{x:Static vm:LiveCaptureViewModel.Header}" />
-                        <Border Style="{StaticResource Pill}" Visibility="{Binding ViewModel.Live.IsActive, Converter={StaticResource BoolToVis}}">
-                            <TextBlock Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding ViewModel.Live.TierText}" />
-                        </Border>
-                    </StackPanel>
-                    <ui:TextBlock Margin="0,8,0,0" Style="{StaticResource SecondaryText}" Text="{x:Static vm:LiveCaptureViewModel.IdleText}"
-                                  Visibility="{Binding ViewModel.Live.IsActive, Converter={StaticResource InverseBoolToVis}}" />
-                    <StackPanel Margin="0,8,0,0" Visibility="{Binding ViewModel.Live.IsActive, Converter={StaticResource BoolToVis}}">
-                        <ui:TextBlock FontTypography="BodyStrong" Text="{Binding ViewModel.Live.GameName}" />
-                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.Live.ElapsedText}" />
-                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:LiveCaptureViewModel.WaitingText}"
-                                      Visibility="{Binding ViewModel.Live.WaitingForFrames, Converter={StaticResource BoolToVis}}" />
-                        <StackPanel Margin="0,8,0,0" Visibility="{Binding ViewModel.Live.IsHeld, Converter={StaticResource BoolToVis}}">
-                            <ui:TextBlock Text="{x:Static vm:LiveCaptureViewModel.HeldText}" TextWrapping="Wrap" />
-                            <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.Live.HeldReason}" TextWrapping="Wrap" />
-                        </StackPanel>
-                        <controls:FpsReadout Margin="0,8,0,0" Model="{Binding ViewModel.Live.Readout}"
-                                             Visibility="{Binding ViewModel.Live.IsHeld, Converter={StaticResource InverseBoolToVis}}" />
-                        <WrapPanel Margin="0,8,0,0">
-                            <ui:TextBlock Margin="0,0,16,0" Text="{Binding ViewModel.Live.ResolutionText}" />
-                            <ui:TextBlock Margin="0,0,16,0" Text="{Binding ViewModel.Live.UpscalerText}" />
-                            <ui:TextBlock Margin="0,0,16,0" Text="{Binding ViewModel.Live.FgText}" />
-                            <Border Style="{StaticResource Pill}" Margin="0,0,16,0" Background="{DynamicResource AccentFillColorDefaultBrush}" BorderThickness="0"
-                                    Visibility="{Binding ViewModel.Live.RtActive, Converter={StaticResource BoolToVis}}">
-                                <TextBlock Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" Text="{x:Static vm:LiveCaptureViewModel.RtOnText}" />
-                            </Border>
-                            <ui:TextBlock Margin="0,0,16,0" Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.Live.GpuTempText}" />
-                            <ui:TextBlock Margin="0,0,16,0" Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.Live.CpuTempText}" />
-                            <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.Live.MemoryText}" />
-                        </WrapPanel>
-                    </StackPanel>
-                </StackPanel>
+            <!-- 08_UI §Dashboard: the live capture cards — one per running session since beta.28 (the owner, 2026-10-20: two or
+                 more games at once), hooked sessions first — fed by SessionStarted / SessionProgress / SessionHeld /
+                 SessionCompleted. A session recorded without measuring (Tier 2) shows why, and no readout (2026-09-23). -->
+            <StackPanel Margin="0,16,0,0" Orientation="Horizontal">
+                <ui:TextBlock FontTypography="Subtitle" Text="{x:Static vm:LiveCaptureViewModel.Header}" />
+                <Border Style="{StaticResource Pill}" Visibility="{Binding ViewModel.LiveCountText, Converter={StaticResource NullToCollapsed}}">
+                    <TextBlock Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding ViewModel.LiveCountText}" />
+                </Border>
+            </StackPanel>
+            <ui:Card Margin="0,8,0,0" HorizontalAlignment="Stretch" Visibility="{Binding ViewModel.LiveIdle, Converter={StaticResource BoolToVis}}">
+                <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:LiveCaptureViewModel.IdleText}" />
             </ui:Card>
+            <!-- The right margin of the last column is taken back here, so the cards line up with the cards below. -->
+            <ItemsControl Margin="0,0,-8,0" Focusable="False" ItemsSource="{Binding ViewModel.LiveCards}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="{Binding ViewModel.LiveColumns}" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:LiveCaptureViewModel}">
+                        <ui:Card Margin="0,8,8,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" VerticalContentAlignment="Top"
+                                 AutomationProperties.Name="{Binding GameName}">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <ui:TextBlock FontTypography="BodyStrong" Text="{Binding GameName}" TextTrimming="CharacterEllipsis" />
+                                    <Border Style="{StaticResource Pill}" Visibility="{Binding TierText, Converter={StaticResource NullToCollapsed}}">
+                                        <TextBlock Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding TierText}" />
+                                    </Border>
+                                </StackPanel>
+                                <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding ElapsedText}" />
+                                <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:LiveCaptureViewModel.WaitingText}"
+                                              Visibility="{Binding WaitingForFrames, Converter={StaticResource BoolToVis}}" />
+                                <StackPanel Margin="0,8,0,0" Visibility="{Binding IsHeld, Converter={StaticResource BoolToVis}}">
+                                    <ui:TextBlock Text="{x:Static vm:LiveCaptureViewModel.HeldText}" TextWrapping="Wrap" />
+                                    <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding HeldReason}" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <controls:FpsReadout Margin="0,8,0,0" Model="{Binding Readout}"
+                                                     Visibility="{Binding IsHeld, Converter={StaticResource InverseBoolToVis}}" />
+                                <WrapPanel Margin="0,8,0,0">
+                                    <ui:TextBlock Margin="0,0,16,0" Text="{Binding ResolutionText}" />
+                                    <ui:TextBlock Margin="0,0,16,0" Text="{Binding UpscalerText}" />
+                                    <ui:TextBlock Margin="0,0,16,0" Text="{Binding FgText}" />
+                                    <Border Style="{StaticResource Pill}" Margin="0,0,16,0" Background="{DynamicResource AccentFillColorDefaultBrush}" BorderThickness="0"
+                                            Visibility="{Binding RtActive, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" Text="{x:Static vm:LiveCaptureViewModel.RtOnText}" />
+                                    </Border>
+                                    <ui:TextBlock Margin="0,0,16,0" Style="{StaticResource SecondaryText}" Text="{Binding GpuTempText}" />
+                                    <ui:TextBlock Margin="0,0,16,0" Style="{StaticResource SecondaryText}" Text="{Binding CpuTempText}" />
+                                    <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding MemoryText}" />
+                                </WrapPanel>
+                            </StackPanel>
+                        </ui:Card>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
             <!-- totals strip -->
             <UniformGrid Margin="0,12,0,0" Columns="3">

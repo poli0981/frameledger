@@ -35,6 +35,14 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **The Dashboard shows every game being recorded.** Two games running at once are two sessions, and until now the
+  Dashboard's *Live capture* card showed one of them — a measured one first — while the other appeared only as
+  *Running sessions: 2*. Each running game now has its own card, side by side, with its own frame rate, settings,
+  elapsed time and memory, or why it is recorded without being measured; measured games come first, and the title
+  says how many games are being recorded (*2 games recording*). In en/vi/ja (ja marked for review).
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

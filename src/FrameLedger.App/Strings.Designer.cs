@@ -214,6 +214,7 @@ public static class Strings
         nameof(Dashboard_Agent_Version),
         nameof(Dashboard_Empty),
         nameof(Dashboard_Header),
+        nameof(Dashboard_Live_Count_Format),
         nameof(Dashboard_Live_CpuTemp_Format),
         nameof(Dashboard_Live_Elapsed_Format),
         nameof(Dashboard_Live_GameMemory_Format),
@@ -1540,6 +1541,8 @@ public static class Strings
     public static string Dashboard_Empty => ResourceManager.GetString(nameof(Dashboard_Empty), Culture) ?? nameof(Dashboard_Empty);
 
     public static string Dashboard_Header => ResourceManager.GetString(nameof(Dashboard_Header), Culture) ?? nameof(Dashboard_Header);
+
+    public static string Dashboard_Live_Count_Format => ResourceManager.GetString(nameof(Dashboard_Live_Count_Format), Culture) ?? nameof(Dashboard_Live_Count_Format);
 
     public static string Dashboard_Live_CpuTemp_Format => ResourceManager.GetString(nameof(Dashboard_Live_CpuTemp_Format), Culture) ?? nameof(Dashboard_Live_CpuTemp_Format);
 

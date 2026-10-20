@@ -489,6 +489,10 @@
     <value>—</value>
     <comment>review</comment>
   </data>
+  <data name="Dashboard_Live_Count_Format" xml:space="preserve">
+    <value>{0} 本のゲームを記録中</value>
+    <comment>review</comment>
+  </data>
   <data name="Dashboard_Live_CpuTemp_Format" xml:space="preserve">
     <value>CPU {0} °C</value>
     <comment>review</comment>

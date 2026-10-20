@@ -44,10 +44,11 @@ stopped, hooking turned off — each with one button that only says you have rea
 
 ## Dashboard
 
-- **Live capture** — the game being recorded right now: its name, **T1** (measured) or **T2** (recorded only), and the
-  time so far. While it is measured: the frame rate, the resolution, the upscaler, frame generation, ray tracing, the GPU
-  and CPU temperatures and the game's memory. *Attached — waiting for the first frames…* means hooking worked and the
-  first frames are on their way.
+- **Live capture** — each game being recorded right now, one card per game (two games side by side, and *2 games
+  recording* beside the title): its name, **T1** (measured) or **T2** (recorded only), and the time so far. While it is
+  measured: the frame rate, the resolution, the upscaler, frame generation, ray tracing, the GPU and CPU temperatures and
+  the game's memory. *Attached — waiting for the first frames…* means hooking worked and the first frames are on their
+  way.
 - **Games tracked**, **Total playtime**, **Sessions this week**.
 - **Capture agent** — *State*, *Agent version*, *Telemetry source* (which sensor readers work on this PC: `l1` is
   Windows itself, `lhm` is LibreHardwareMonitor, `nvapi` is NVIDIA's own and only on NVIDIA cards), *Overlay build* (the

@@ -367,6 +367,9 @@
   <data name="Common_Dash" xml:space="preserve">
     <value>—</value>
   </data>
+  <data name="Dashboard_Live_Count_Format" xml:space="preserve">
+    <value>Đang ghi {0} game</value>
+  </data>
   <data name="Dashboard_Live_CpuTemp_Format" xml:space="preserve">
     <value>CPU {0} °C</value>
   </data>
