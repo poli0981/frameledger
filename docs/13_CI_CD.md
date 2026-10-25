@@ -281,11 +281,12 @@ native code would be the runner's Visual Studio coverage tool and `sonar.cfamily
 **The version, and so the new code.** The project's new-code period is SonarCloud's *Previous version*. Until now
 every analysis was "not provided", so the new code was everything since the first analysis (2026-09-27): 34,268 lines
 on 2026-10-20. The job now passes `/v:` the newest `v*` tag the commit descends from, so new code is everything
-since the last release; the first analysis with a version is the first from CI, whose new code is therefore this
-change alone. ~~An issue the CI analysis raises on an older line is dated by that line's blame and is not new code.~~
-*Wrong, measured on `main`'s first analysis from CI (below): the 34 issues it raised on older lines were all new code.*
-The gate is *Sonar way*: its coverage condition (80 % on new code) was skipped while no analysis had coverage, and
-applies from the first analysis from CI.
+since the last release — **from the second analysis with a version on**, measured on `main` (below): the first,
+`main`'s first from CI, still counted from before any version existed; the second set the start at the last analysis
+without one (2026-10-20 05:11; 257 new lines on 2026-10-25). An issue the CI analysis raises on an older line is
+dated by blame — the newest line of its path — and is new code only when that line is. The gate is *Sonar way*: its
+coverage condition (80 % on new code) was skipped while no analysis had coverage, and applies from the first analysis
+from CI.
 
 **What it reads** — `SonarQube.Analysis.xml`: the exclusions of `.sonarcloud.properties` (below) and what a build
 writes into the checkout, since the scanner walks all of it (`build/`, with the sources CMake fetches there, `out/`,
@@ -317,12 +318,14 @@ A dispatch of the branch (40148544753) analysed it and was refused the gate, whi
 
 **`main`'s first analysis from CI (run 40160302893, the merge of #334).** The gate failed on one condition, a C
 reliability rating on new code, and passed the others (84.7 % coverage on new code). The 34 open issues were all C++,
-every one on a line older than the release, and every one counted as new code: SonarCloud dates a new issue by its
-line's blame only in the cases its issues page lists — a first analysis, a rule new to the profile, an analyser just
-upgraded, an external rule — and a different compilation database is none of them, so what the real MSVC flags let
-CFamily see for the first time is new. (A pull request's analysis never showed them: it reports no new issue on an
-old line.) The C# had none open. Beta.29 PR-3 settled them — fixed where the code was wrong, `// NOSONAR` with its
-reason above it where the analyser was (five):
+raised there for the first time — the real MSVC flags let CFamily see them — and each dated by blame, 2026-08-02 to
+2026-10-19. Two were new code: `hook-harness`'s null dereferences, whose paths reach lines changed on 2026-10-19 — two
+MAJOR bugs, so C; the BLOCKERs were older lines. (A pull request's analysis never showed any of them: it reports no new
+issue on an old line.) The next analysis, the merge of #335 at 05:20, moved the new code's start to 2026-10-20 05:11
+and turned the gate green with nothing fixed; the merge of #336 at 06:17 closed 33 of the 34. The 34th, `S3519` in
+`fl_patch_check.h`, stayed open: its `NOSONAR` sat on `p -= 5`, and SonarCloud reports the read on the line after —
+moved there by the release pull request. The C# had none open. Beta.29 PR-3 settled them — fixed where the code was
+wrong, `// NOSONAR` with its reason above it where the analyser was (five):
 
 | Rule | Where | n | What it was | Done |
 |---|---|---|---|---|

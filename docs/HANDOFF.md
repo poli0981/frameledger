@@ -116,9 +116,9 @@ scanner's 12.0.0 source, not its documentation, answered the three design questi
 whole checkout. CFamily analysed 32 of the compilation database's 181 units, all in full. SonarCloud counts a file's
 executable lines as uncovered when no report names it, PowerShell's included (`build.ps1`: 232). The organisation's
 plan analyses pull requests and `main` and refuses any other branch. `main`'s first analysis from CI failed on a C
-reliability rating: 34 C++ issues on older lines, all counted as new code (a different compilation database is not one
-of SonarCloud's backdating cases), one of them a real defect — `hook-harness --opengl`, or `--vulkan` beside a D3D11
-mode, crashed through a null swapchain (`0xC0000005`, measured on `main`; exit 1 with a message after #336). The
+reliability rating: 34 C++ issues on older lines, each dated by blame, of which two — on lines changed since the new
+code began — were new code. Those two were a real defect: `hook-harness --opengl`, or `--vulkan` beside a D3D11 mode,
+crashed through a null swapchain (`0xC0000005`, measured on `main`; exit 1 with a message after #336). The
 Overlay built from either side of #336, in one folder with one `FL_BUILD_ID`, has a byte-identical `.text`, its two
 `LARGE_INTEGER` initialisers changed included.
 
@@ -143,7 +143,13 @@ Overlay built from either side of #336, in one folder with one `FL_BUILD_ID`, ha
   from the coverage figures, or a pull request touching a script fails the gate.
 - **The free organisation analyses only pull requests and `main`**: a `workflow_dispatch` of a feature branch uploads,
   then fails on "not allowed to access data from non main branches". A pull request's analysis lists only its own
-  lines, so the older code's findings wait for `main` — and, raised by a configuration change, they are new code there.
+  lines, so the older code's findings wait for `main`, where they are dated by blame and count against the gate only
+  on lines changed since the new code began.
+- **The first analysis with a version keeps the old new-code start**: `main`'s went red on code changed 2026-10-19,
+  and the next one moved the start to the last analysis without a version and went green with nothing fixed. Judge a
+  fix by the issues it closes (`api/issues/search … resolved=false`), not by the gate turning.
+- **A `NOSONAR` goes on the line the issue names**: `S3519`'s `NOSONAR` sat on `p -= 5`, the cause, while SonarCloud
+  reports the read on the next line, so the issue stayed open after #336 merged; the release pull request moved it.
 - **Bisect a CI-only test failure with CI's own settings**: #335's `NoSecondMatcherTests` failed in CI only, and the
   first run blamed CsWin32; a local run without coverage passed, so the CsWin32 bump was dropped for nothing. With
   `--collect:"XPlat Code Coverage"` the failure was local too and followed `coverlet.collector` 10.1.0, whose injected
