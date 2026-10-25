@@ -260,6 +260,18 @@ bool CreateGfx(Gfx& g) {
     return true;
 }
 
+// --vulkan and --opengl create no D3D11 objects (main says why), so every mode that drives the D3D11 swapchain asks
+// first. Until 2026-10-25 none did: `--opengl` alone ran the default probes through a null swapchain, which is what
+// the first CI analysis by SonarCloud reported (cpp:S2259, three paths).
+bool HaveD3D11(const Gfx& g, const char* mode) {
+    if (g.device != nullptr && g.swapChain != nullptr && g.swapChain1 != nullptr) {
+        return true;
+    }
+    std::printf("  [FAIL] %s drives the D3D11 swapchain, which --vulkan and --opengl do not create\n", mode);
+    ++g_failures;
+    return false;
+}
+
 // --- vtable entry swap ------------------------------------------------------
 // 17_HOOK_ENGINE prefers patching the vtable ENTRY over inline-patching for COM
 // methods. The vtable lives in read-only data, so it needs VirtualProtect.
@@ -352,6 +364,9 @@ HRESULT STDMETHODCALLTYPE HookResizeBuffers(IDXGISwapChain* sc, UINT count, UINT
 // ---------------------------------------------------------------------------
 bool ProbeH4_VtableIndices(Gfx& g) {
     std::printf("\nH4 — vtable slot identity, proved by behaviour\n");
+    if (!HaveD3D11(g, "H4")) {
+        return false;
+    }
 
     void** vtbl = VtableOf(g.swapChain);
 
@@ -426,6 +441,9 @@ bool ProbeH4_VtableIndices(Gfx& g) {
 // ---------------------------------------------------------------------------
 bool ProbeH5_ProxySwapChain(Gfx& g) {
     std::printf("\nH5 — present issued through a proxy swapchain\n");
+    if (!HaveD3D11(g, "H5")) {
+        return false;
+    }
 
     auto* proxy = new fl::harness::ProxySwapChain(g.swapChain);
 
@@ -491,6 +509,9 @@ HRESULT STDMETHODCALLTYPE ForeignHookPresent(IDXGISwapChain* sc, UINT sync, UINT
 
 bool ProbeH7_UnhookPreservesForeign(Gfx& g) {
     std::printf("\nH7 - unhooking must not clobber an overlay that hooked after us\n");
+    if (!HaveD3D11(g, "H7")) {
+        return false;
+    }
 
     void** vtbl = VtableOf(g.swapChain);
     void*  pristine = vtbl[kPresentIndex];
@@ -564,6 +585,9 @@ double TimePresents(Gfx& g, int iterations) {
 
 bool ProbeCost_PerPresent(Gfx& g) {
     std::printf("\nPer-present hook cost (NFR-1: <= 1 us)\n");
+    if (!HaveD3D11(g, "--probe-cost")) {
+        return false;
+    }
 
     constexpr int kIterations = 20000;
     constexpr int kRuns = 5;
@@ -638,6 +662,9 @@ DWORD WINAPI LateLoadThread(LPVOID arg) {
 }
 
 int PresentLoop(Gfx& g, int frames, bool real) {
+    if (!HaveD3D11(g, "--present and --hold")) {
+        return 1;
+    }
     const UINT flags = real ? 0u : DXGI_PRESENT_TEST;
     for (int i = 0; i < frames; ++i) {
         g.swapChain->Present(0, flags);
@@ -652,6 +679,9 @@ int PresentLoop(Gfx& g, int frames, bool real) {
 // today, which is how "N presents -> N records" can pass while the frame count
 // is inflated. This is the fixture that case needs; nothing consumes it yet.
 IDXGISwapChain* CreateSecondSwapChain(Gfx& g) {
+    if (!HaveD3D11(g, "--plus-ui and --hold-presenting-overflow")) {
+        return nullptr;
+    }
     IDXGIDevice* dxgiDevice = nullptr;
     if (FAILED(g.device->QueryInterface(__uuidof(IDXGIDevice), reinterpret_cast<void**>(&dxgiDevice)))) {
         return nullptr;
@@ -2392,6 +2422,9 @@ alignas(16) unsigned char g_dummyFrameToken[64]{};
 
 int HoldPresentingUpscaled(Gfx& g, int seconds, bool real, sl::Feature feature, bool tagForFrame, bool wholeResource,
                            bool dlssgInputs) {
+    if (!HaveD3D11(g, "the upscaled hold")) {
+        return 1;
+    }
     const HMODULE stub = LoadStubExactly(FL_STUB_SL_INTERPOSER);
     if (stub == nullptr) {
         Check(false, "the sl.interposer.dll stub loaded for the upscaled hold");
@@ -2511,6 +2544,9 @@ int HoldPresentingUpscaled(Gfx& g, int seconds, bool real, sl::Feature feature, 
 // Those zeros are the point — a consumer that filtered them would recover
 // presents == Σ, i.e. fg_factor 1.0.
 int HoldPresentingFg(Gfx& g, int seconds, bool real, int presentsPerEval) {
+    if (!HaveD3D11(g, "--hold-presenting-fg")) {
+        return 1;
+    }
     const HMODULE stub = LoadStubExactly(FL_STUB_SL_INTERPOSER);
     if (stub == nullptr) {
         Check(false, "the sl.interposer.dll stub loaded for the frame-generation hold");
@@ -2654,6 +2690,9 @@ void AskQuality(PfnFfxQuery query, FfxQuery what) {
 
 int HoldPresentingFfx(Gfx& g, int seconds, bool real, int presentsPerEval, FfxTopology topology, bool prepare,
                       FfxQuery ask) {
+    if (!HaveD3D11(g, "--hold-presenting-ffx")) {
+        return 1;
+    }
     HMODULE upEntry = nullptr;      // where UPSCALE goes (an ffx-api module)
     HMODULE fgEntry = nullptr;      // where PREPARE and FRAMEGENERATION go
     HMODULE hostEntry = nullptr;    // where UPSCALE goes on the FSR 3.0 host topologies
@@ -2824,6 +2863,9 @@ int HoldPresentingFfx(Gfx& g, int seconds, bool real, int presentsPerEval, FfxTo
 // each wrong in one of them.
 bool ProbeFrameIdentity(Gfx& g) {
     std::printf("\n[frames] what counts as a frame\n");
+    if (!HaveD3D11(g, "--probe-frames")) {
+        return false;
+    }
 
     UINT before = 0;
     if (FAILED(g.swapChain1->GetLastPresentCount(&before))) {
@@ -2947,8 +2989,6 @@ int main(int argc, char** argv) {
     bool ranSomething = false;
     // --real applies to --present and --hold, wherever it appears on the line.
     bool real = false;
-    bool vulkan = false;
-    bool opengl = false;
     int  plusUi = 0;
 
     // MILLISECONDS BETWEEN PRESENTS in the --hold-presenting modes. 8 is ~120/s and is the default for
@@ -2984,10 +3024,6 @@ int main(int argc, char** argv) {
     for (int i = 1; i < argc; ++i) {
         if (std::strcmp(argv[i], "--real") == 0) {
             real = true;
-        } else if (std::strcmp(argv[i], "--vulkan") == 0) {
-            vulkan = true;
-        } else if (std::strcmp(argv[i], "--opengl") == 0) {
-            opengl = true;
         } else if (std::strcmp(argv[i], "--plus-ui") == 0 && i + 1 < argc) {
             plusUi = std::atoi(argv[++i]);
         } else if (std::strcmp(argv[i], "--present-interval-ms") == 0 && i + 1 < argc) {
@@ -3236,13 +3272,13 @@ int main(int argc, char** argv) {
                 return code;
             }
             ranSomething = true;
-        } else if (std::strcmp(argv[i], "--hold-presenting") == 0 && i + 1 < argc && opengl) {
+        } else if (std::strcmp(argv[i], "--hold-presenting") == 0 && i + 1 < argc && openglMode) {
             const int code = HoldPresentingOpenGl(std::atoi(argv[++i]), presentIntervalMs);
             if (code != 0) {
                 return code;
             }
             ranSomething = true;
-        } else if (std::strcmp(argv[i], "--hold-presenting") == 0 && i + 1 < argc && vulkan) {
+        } else if (std::strcmp(argv[i], "--hold-presenting") == 0 && i + 1 < argc && vulkanMode) {
             // The Vulkan mode: its own file, its own exit codes (77 = cannot run here).
             const int code = HoldPresentingVulkan(std::atoi(argv[++i]), presentIntervalMs);
             if (code != 0) {

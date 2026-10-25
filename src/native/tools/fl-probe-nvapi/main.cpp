@@ -133,7 +133,7 @@ int NgxState(unsigned long pid) {
     NvU32             driverVersion = 0;
     NvAPI_ShortString branch = {};
     if (NvAPI_SYS_GetDriverAndBranchVersion(&driverVersion, branch) == NVAPI_OK) {
-        std::printf("  driver %u.%02u (%s)\n", driverVersion / 100, driverVersion % 100, branch);
+        std::printf("  driver %lu.%02lu (%s)\n", driverVersion / 100, driverVersion % 100, branch);
     }
 
     NV_NGX_DLSS_OVERRIDE_GET_STATE_PARAMS params = {};
@@ -157,20 +157,20 @@ int NgxState(unsigned long pid) {
     PrintMask("RR", params.feedbackMaskRR);
     PrintMask("FG", params.feedbackMaskFG);
     std::printf("  scalingRatio          %.4f\n", static_cast<double>(params.scalingRatio));
-    std::printf("  performanceMode       %u\n", params.performanceMode);
-    std::printf("  renderPreset          %u\n", params.renderPreset);
-    std::printf("  frameGenerationCount  %u   (\"FG Override Frame Count Target\" per nvapi.h -- whether this is the "
+    std::printf("  performanceMode       %lu\n", params.performanceMode);
+    std::printf("  renderPreset          %lu\n", params.renderPreset);
+    std::printf("  frameGenerationCount  %lu   (\"FG Override Frame Count Target\" per nvapi.h -- whether this is the "
                 "title's multiplier is what this run measures)\n",
                 params.frameGenerationCount);
-    std::printf("  frameGenerationPreset %u\n", params.frameGenerationPreset);
-    std::printf("  frameGenerationMode   %u\n", params.frameGenerationMode);
-    std::printf("  reserved              %u %u\n", params.reserved[0], params.reserved[1]);
+    std::printf("  frameGenerationPreset %lu\n", params.frameGenerationPreset);
+    std::printf("  frameGenerationMode   %lu\n", params.frameGenerationMode);
+    std::printf("  reserved              %lu %lu\n", params.reserved[0], params.reserved[1]);
     // THE MACHINE LINE. FrameLedger.CaptureHost spawns this probe beside each module snapshot
     // (NgxDriverProbe) and reads exactly this line; everything above is for a human. One line,
     // key=value, hex masks, so a parser cannot mistake a decoded name for a field.
     std::printf(
-        "NGXSTATE status=ANSWERED sr=0x%016llX rr=0x%016llX fg=0x%016llX ratio=%.4f mode=%u preset=%u fgcount=%u "
-        "fgpreset=%u fgmode=%u driver=%u\n",
+        "NGXSTATE status=ANSWERED sr=0x%016llX rr=0x%016llX fg=0x%016llX ratio=%.4f mode=%lu preset=%lu fgcount=%lu "
+        "fgpreset=%lu fgmode=%lu driver=%lu\n",
         static_cast<unsigned long long>(params.feedbackMaskSR), static_cast<unsigned long long>(params.feedbackMaskRR),
         static_cast<unsigned long long>(params.feedbackMaskFG), static_cast<double>(params.scalingRatio),
         params.performanceMode, params.renderPreset, params.frameGenerationCount, params.frameGenerationPreset,
@@ -223,7 +223,7 @@ int main(int argc, char** argv) {
     const NvAPI_Status verStatus = NvAPI_SYS_GetDriverAndBranchVersion(&driverVersion, branch);
     Check(verStatus == NVAPI_OK, "NvAPI_SYS_GetDriverAndBranchVersion");
     if (verStatus == NVAPI_OK) {
-        std::printf("         driver %u.%02u, branch %s\n", driverVersion / 100, driverVersion % 100, branch);
+        std::printf("         driver %lu.%02lu, branch %s\n", driverVersion / 100, driverVersion % 100, branch);
     }
 
     NvPhysicalGpuHandle gpus[NVAPI_MAX_PHYSICAL_GPUS] = {};
@@ -236,14 +236,14 @@ int main(int argc, char** argv) {
     // the "a filter that selected nothing exits 0" defect this project has hit
     // before (docs/20_OPEN_QUESTIONS.md §S29, gates-that-cannot-fail).
     Check(enumStatus != NVAPI_OK || gpuCount > 0, "at least one physical GPU enumerated");
-    std::printf("         %u physical GPU(s)\n", gpuCount);
+    std::printf("         %lu physical GPU(s)\n", gpuCount);
 
     for (NvU32 i = 0; i < gpuCount; ++i) {
         NvAPI_ShortString  name = {};
         const NvAPI_Status nameStatus = NvAPI_GPU_GetFullName(gpus[i], name);
         Check(nameStatus == NVAPI_OK, "NvAPI_GPU_GetFullName");
         if (nameStatus == NVAPI_OK) {
-            std::printf("         gpu[%u] %s\n", i, name);
+            std::printf("         gpu[%lu] %s\n", i, name);
         }
     }
 

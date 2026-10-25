@@ -140,7 +140,9 @@ bool ThisProcessIsEnabled() {
         return false;    // absent or unreadable — not invited
     }
 
-    LARGE_INTEGER size{};
+    // Initialised through QuadPart, the member read below: `size{}` would make the first member - the LowPart/HighPart
+    // struct - the active one, and every read of QuadPart a read of a member that is not (SonarCloud's cpp:S6232).
+    LARGE_INTEGER size{.QuadPart = 0};
     if (!GetFileSizeEx(h, &size) || size.QuadPart <= 0 || size.QuadPart > kMaxEnableListBytes) {
         CloseHandle(h);
         return false;    // oversized reads as corrupt, never as permissive
@@ -151,10 +153,12 @@ bool ThisProcessIsEnabled() {
         CloseHandle(h);
         return false;
     }
+    const auto toRead = static_cast<DWORD>(size.QuadPart);
     DWORD      read = 0;
-    const BOOL ok = ReadFile(h, buf, static_cast<DWORD>(size.QuadPart), &read, nullptr);
+    const BOOL ok = ReadFile(h, buf, toRead, &read, nullptr);
     CloseHandle(h);
-    if (!ok) {
+    // ReadFile never reads more than it was asked for; the second test is the bound the terminator relies on.
+    if (!ok || read > toRead) {
         HeapFree(GetProcessHeap(), 0, buf);
         return false;
     }

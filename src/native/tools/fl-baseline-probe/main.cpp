@@ -103,7 +103,7 @@ bool LoadCapabilities(const char* path) {
     static char  text[1 << 20];
     const size_t n = std::fread(text, 1, sizeof(text) - 1, f);
     std::fclose(f);
-    if (n == 0) {
+    if (n == 0 || n >= sizeof(text)) {    // the second never happens; it is the bound the index below relies on
         return false;
     }
     text[n] = '\0';
@@ -327,7 +327,10 @@ int SelfTest() {
     if (!detected) {
         return Fail("the planted capability module was NOT detected as loaded");
     }
-    std::printf("[PASS] the planted module '%s' is reported LOADED for capability '%s'\n", signal, g_caps[capIndex].id);
+    // The names printed here and in Report are the seed rules file's own (FL_SEED_RULES, fixed at build time), for
+    // the developer reading the console - not a log anything parses (SonarCloud's cppsecurity:S5145).
+    std::printf("[PASS] the planted module '%s' is reported LOADED for capability '%s'\n",    // NOSONAR(S5145)
+                signal, g_caps[capIndex].id);
 
     // And it flips back, so the answer tracks reality rather than latching.
     for (int i = 0; i < 40; ++i) {
@@ -345,8 +348,8 @@ void Report(unsigned pid, fl::guard::Collected c) {
     std::printf("\n  pid %u — module scan %s\n", pid, CollectedName(c));
     std::printf("  %-12s %-22s %-8s %s\n", "id", "name", "on disk", "loaded");
     for (int i = 0; i < g_capCount; ++i) {
-        std::printf("  %-12s %-22s %-8s %s\n", g_caps[i].id, g_caps[i].name, g_caps[i].onDisk ? "yes" : "no",
-                    g_caps[i].loaded ? "yes" : "no");
+        std::printf("  %-12s %-22s %-8s %s\n",    // NOSONAR(S5145), see SelfTest
+                    g_caps[i].id, g_caps[i].name, g_caps[i].onDisk ? "yes" : "no", g_caps[i].loaded ? "yes" : "no");
     }
     if (c != fl::guard::Collected::kOk) {
         std::printf("\n  NOT A CLEAN RESULT. An incomplete or failed module list must never be\n"

@@ -2407,7 +2407,8 @@ TEST_CASE("the LoadLibrary detour stops the Overlay by itself when an anti-cheat
             ++index;
             for (std::size_t v = 0; v < f.valueCount && expected == 0; ++v) {
                 if (f.match == fl::guard::MatchKind::kPrefix &&
-                    _strnicmp("EasyAntiCheat_fl_fixture.dll", f.values[v], std::strlen(f.values[v])) == 0) {
+                    _strnicmp("EasyAntiCheat_fl_fixture.dll", f.values[v],
+                              strnlen(f.values[v], fl::guard::kMaxValueLen)) == 0) {
                     expected = index;
                 }
             }
@@ -5857,12 +5858,10 @@ TEST_CASE("the harness log sweep removes this run's harness logs and nothing els
     // One second before now: the files below are created within the same clock tick as the start.
     FILETIME since{};
     GetSystemTimeAsFileTime(&since);
-    ULARGE_INTEGER t{};
-    t.LowPart = since.dwLowDateTime;
-    t.HighPart = since.dwHighDateTime;
-    t.QuadPart -= 10000000ULL;
-    since.dwLowDateTime = t.LowPart;
-    since.dwHighDateTime = t.HighPart;
+    const std::uint64_t ticks =
+        ((static_cast<std::uint64_t>(since.dwHighDateTime) << 32) | since.dwLowDateTime) - 10000000ULL;
+    since.dwLowDateTime = static_cast<DWORD>(ticks);
+    since.dwHighDateTime = static_cast<DWORD>(ticks >> 32);
 
     // The image as the Overlay spells it: GetModuleFileNameA, backslashes, while CMake names the harness with '/'.
     std::wstring harness = FL_HARNESS_EXE;

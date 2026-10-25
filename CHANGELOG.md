@@ -65,6 +65,20 @@ numeric core and does not move; the heading is the full version — corrected 20
   coverage collected locally the failure followed coverlet, and 10.0.1 passes (`Directory.Packages.props` says so
   beside it).
 
+### Fixed
+
+- **The 34 C++ issues of `main`'s first SonarCloud analysis from CI** (developers only). Read with MSVC's real flags,
+  the native code showed issues Automatic Analysis had not, on older lines, and SonarCloud counted them as new code,
+  so `main`'s gate failed on reliability. One was a defect in a test tool: `hook-harness --opengl` or `--vulkan` beside
+  a D3D11 mode — or `--opengl` alone, which ran the default probes — called through a null swapchain; every mode that
+  drives the D3D11 swapchain now asks first. The rest: `NvU32` printed with `%u` in `fl-probe-nvapi` (`%lu`; its
+  machine line reads the same), a union and a `strlen` in the guard's tests, a `LARGE_INTEGER` read through
+  `QuadPart` after `{}` had made its other member the active one (the Overlay's clock epoch, and the Vulkan layer's
+  once-per-process enable-list read — now initialised through `QuadPart`), two terminators written after a read whose
+  bound is now tested first, and five marked `// NOSONAR` with the reason above each. The Overlay compiles to the same
+  instructions: built from either side, in one folder with one build id, its `.text` is byte-identical
+  (`docs/13_CI_CD.md` §SonarCloud has the table).
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
