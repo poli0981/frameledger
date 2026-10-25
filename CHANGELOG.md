@@ -55,12 +55,15 @@ numeric core and does not move; the heading is the full version — corrected 20
   so the libraries fell behind with nothing to say so (`docs/13_CI_CD.md` §Dependabot and the NuGet audit). Updated by
   hand, each release at least seven days old (the cooldown Dependabot now keeps): the October .NET servicing release of
   `Microsoft.Extensions.Hosting`, `Microsoft.Data.Sqlite` and `System.Diagnostics.EventLog` (10.0.13) and `Dapper`
-  2.1.89, which ship; for developers, the test SDK 18.11.0, `coverlet.collector` 10.1.0 and xunit 4.0.2. The licence
-  texts under `legal/licenses/nuget/` name the new versions; no licence changed. Not taken: Markdig 1.5.0 (published
-  the day before, and its licence is a reviewed copy at the packaged commit), Velopack 1.2.161 (the updater itself — a
-  change to how updates install is the owner's to try), FluentAssertions 8 (its licence) and CsWin32 0.3.363 (with it
-  the CI run's `NoSecondMatcherTests` could not read a generated constant — "Literal value was not found" — which a
-  local run did not reproduce; it stays at 0.3.333 until that is understood).
+  2.1.89, which ship; the CsWin32 source generator 0.3.363, which writes the Win32 declarations the shipped code calls;
+  for developers, the test SDK 18.11.0 and xunit 4.0.2. The licence texts under `legal/licenses/nuget/` name the new
+  versions; no licence changed. Not taken: Markdig 1.5.0 (published the day before, and its licence is a reviewed copy
+  at the packaged commit), Velopack 1.2.161 (the updater itself — a change to how updates install is the owner's to
+  try), FluentAssertions 8 (its licence) and `coverlet.collector` 10.1.0: the tracker it adds to each assembly it
+  instruments declares a constant whose value reflection cannot read ("Literal value was not found"), and
+  `NoSecondMatcherTests` reads every string constant in three of ours. The first CI run blamed CsWin32 for it; with
+  coverage collected locally the failure followed coverlet, and 10.0.1 passes (`Directory.Packages.props` says so
+  beside it).
 
 ## Releases
 

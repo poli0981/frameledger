@@ -65,7 +65,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Interop, telemetry and packaging">
-    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.333" />
+    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.363" />
     <PackageVersion Include="Velopack" Version="1.2.0" />
     <!-- MPL-2.0. docs/18_GPU_VENDOR_APIS.md §L2 requires >= 0.9.6, and
          legal/THIRD_PARTY_NOTICES.md has a release-gate check that no
@@ -111,7 +111,13 @@
     -->
     <PackageVersion Include="FluentAssertions" Version="[7.2.2]" />
     <PackageVersion Include="NSubstitute" Version="6.2.0" />
-    <PackageVersion Include="coverlet.collector" Version="10.1.0" />
+    <!--
+      10.1.0 not taken (2026-10-25): the tracker it injects into each instrumented assembly declares a constant,
+      ModuleTrackerRegistryKey, whose value reflection cannot read ("Literal value was not found"), and
+      NoSecondMatcherTests reads every string constant in Application, Domain and Infrastructure. The same test passes
+      with 10.0.1, and with 10.1.0 when no coverage is collected.
+    -->
+    <PackageVersion Include="coverlet.collector" Version="10.0.1" />
   </ItemGroup>
 
 </Project>
