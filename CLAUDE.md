@@ -69,6 +69,8 @@ NOTICE                         # copyright + the GPLv3 section 7 additional term
 CONTRIBUTING.md  FORKING.md  CODE_OF_CONDUCT.md   # for people who build, contribute or redistribute
 global.json                    # pins the SDK band — see 12_BUILD
 build.ps1                      # the quality gate; CI runs this identical script
+SonarQube.Analysis.xml         # SonarCloud's settings for ci.yml's sonarcloud job (D68, 2026-10-25; it replaced
+.config/dotnet-tools.json      #   .sonarcloud.properties) and the scanner it runs — 13_CI_CD §SonarCloud
 src/
   native/
     FrameLedger.Overlay/       # C++20 DLL injected into the game (hooks + ring writer + optional overlay)
@@ -173,7 +175,7 @@ Dependency direction: `App/Agent → Application → Domain`; **`Application →
 
 **C# —** `Nullable enable`, `TreatWarningsAsErrors`, `AnalysisLevel latest-all`, file-scoped namespaces, Roslynator + Meziantou + VS Threading analyzers, `dotnet format` clean. Async suffixed `Async`, `ConfigureAwait(false)` off the UI. All user-visible strings from `.resx`. Timestamps UTC (unix-ms in SQLite); QPC ticks only inside the capture pipeline.
 
-**C++ —** `clang-format` (LLVM base, 4-space, 120 col) enforced in CI. No STL containers that allocate in hook paths. No `std::mutex` in hook paths. `-D_HAS_EXCEPTIONS=0` in the Overlay target. Every hook entry point wrapped per the `FL_HOOK_GUARD` macro (`17_HOOK_ENGINE`). Static analysis: ~~`/analyze` + clang-tidy (`bugprone-*`, `cert-*`, `concurrency-*`)~~ CodeQL (`codeql.yml`, a required check); `/analyze` and clang-tidy are not configured *(corrected 2026-10-04)*.
+**C++ —** `clang-format` (LLVM base, 4-space, 120 col) enforced in CI. No STL containers that allocate in hook paths. No `std::mutex` in hook paths. `-D_HAS_EXCEPTIONS=0` in the Overlay target. Every hook entry point wrapped per the `FL_HOOK_GUARD` macro (`17_HOOK_ENGINE`). Static analysis: ~~`/analyze` + clang-tidy (`bugprone-*`, `cert-*`, `concurrency-*`)~~ CodeQL (`codeql.yml`, a required check); `/analyze` and clang-tidy are not configured *(corrected 2026-10-04)*. SonarCloud analyses the C++ too, from CMake's compilation database, in `ci.yml`'s advisory `sonarcloud` job *(since 2026-10-25, D68 — `13_CI_CD` §SonarCloud)*.
 
 **Licence header —** every first-party source file (`.cs .cpp .h .inl .ps1 .xaml`) opens with two comment lines, `SPDX-License-Identifier: GPL-3.0-only` and `Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE` (beta.12, owner decision D45). GPLv3 §7 requires additional terms to be named in the source files, and `NOTICE` holds them — (b) preserve the notices, (c) mark modified versions, (e) no trademark rights in the name. `tools/notice-check.ps1` is a `build.ps1` gate; `-Fix` writes a missing header. `src/native/third_party/` is excluded.
 
