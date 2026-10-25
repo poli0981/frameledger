@@ -155,9 +155,10 @@ TEST_CASE("the rules file that SHIPS parses in the guard", "[rules][seed]") {
     CHECK(rules.familyCount <= kMaxFamilies);
 
     // sizeof(Rules) is printed because the Vulkan layer heap-allocates one inside a game's process at init
-    // (layer.cpp RunSelfScan), and its comment quotes the figure.
-    std::printf("[seed] %zu bytes, %zu families of %zu, sizeof(Rules) %zu\n", seed.size(), rules.familyCount,
-                kMaxFamilies, sizeof(Rules));
+    // (layer.cpp RunSelfScan), and its comment quotes the figure. Four numbers, which nothing in the file can turn
+    // into another line (SonarCloud's cppsecurity:S5145 sees the parsed count as the file's text).
+    std::printf("[seed] %zu bytes, %zu families of %zu, sizeof(Rules) %zu\n",    // NOSONAR(S5145)
+                seed.size(), rules.familyCount, kMaxFamilies, sizeof(Rules));
 }
 
 // §S21. The floor is generated from rules/detection-rules.json, so it cannot be

@@ -77,7 +77,9 @@ public:
         const std::uint64_t idx = next_++;
         FlFrameRecord*      slot = &ring_[idx & mask_];
 
-        std::atomic_ref<std::uint32_t> seq{slot->seq};
+        // Never null here: every caller publishes through a writer whose Init succeeded. The null path SonarCloud
+        // reports (cpp:S2259) runs on past a failed REQUIRE(w.Init(...)) in ring_test, which ends its test case.
+        std::atomic_ref<std::uint32_t> seq{slot->seq};    // NOSONAR(S2259)
 
         // Sole writer of seq, so a relaxed read of our own last value is exact.
         // MONOTONIC AND NEVER RESET: a reader stalled exactly one full lap must

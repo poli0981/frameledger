@@ -282,9 +282,10 @@ native code would be the runner's Visual Studio coverage tool and `sonar.cfamily
 every analysis was "not provided", so the new code was everything since the first analysis (2026-09-27): 34,268 lines
 on 2026-10-20. The job now passes `/v:` the newest `v*` tag the commit descends from, so new code is everything
 since the last release; the first analysis with a version is the first from CI, whose new code is therefore this
-change alone. An issue the CI analysis raises on an older line is dated by that line's blame and is not new code. The
-gate is *Sonar way*: its coverage condition (80 % on new code) was skipped while no analysis had coverage, and applies
-from the first analysis from CI.
+change alone. ~~An issue the CI analysis raises on an older line is dated by that line's blame and is not new code.~~
+*Wrong, measured on `main`'s first analysis from CI (below): the 34 issues it raised on older lines were all new code.*
+The gate is *Sonar way*: its coverage condition (80 % on new code) was skipped while no analysis had coverage, and
+applies from the first analysis from CI.
 
 **What it reads** — `SonarQube.Analysis.xml`: the exclusions of `.sonarcloud.properties` (below) and what a build
 writes into the checkout, since the scanner walks all of it (`build/`, with the sources CMake fetches there, `out/`,
@@ -313,6 +314,33 @@ files indexed (a `.h` is C to SonarCloud) — and the
 gate failed on two conditions, both fixed the same day: `githubactions:S8264` (a C security rating: workflow-level
 permissions reaching both jobs) and 0 % coverage on new code (`build.ps1`'s lines, before the coverage exclusions).
 A dispatch of the branch (40148544753) analysed it and was refused the gate, which is how the plan's limit was found.
+
+**`main`'s first analysis from CI (run 40160302893, the merge of #334).** The gate failed on one condition, a C
+reliability rating on new code, and passed the others (84.7 % coverage on new code). The 34 open issues were all C++,
+every one on a line older than the release, and every one counted as new code: SonarCloud dates a new issue by its
+line's blame only in the cases its issues page lists — a first analysis, a rule new to the profile, an analyser just
+upgraded, an external rule — and a different compilation database is none of them, so what the real MSVC flags let
+CFamily see for the first time is new. (A pull request's analysis never showed them: it reports no new issue on an
+old line.) The C# had none open. Beta.29 PR-3 settled them — fixed where the code was wrong, `// NOSONAR` with its
+reason above it where the analyser was (five):
+
+| Rule | Where | n | What it was | Done |
+|---|---|---|---|---|
+| `cpp:S2275` format/argument | `fl-probe-nvapi` | 19 | `%u` for `NvU32`, an `unsigned long` (32 bits on Windows, so nothing printed was wrong) | `%lu`; the machine line `CaptureHost` parses prints the same |
+| `cpp:S2259` null dereference | `hook-harness` `main.cpp` ×2, `proxy_swapchain.h` | 3 | **real:** `--vulkan` and `--opengl` create no D3D11 objects, and `--opengl` alone ran the default probes through a null swapchain, as did any D3D11 mode beside either flag | `HaveD3D11`, asked first by every mode that drives the D3D11 swapchain; the duplicate mode flags are one |
+| `cpp:S2259` | `fl_ring.h` `Publish` | 1 | the path runs on past a failed `REQUIRE(w.Init(...))` in `ring_test`, which ends the test case; every real caller publishes through a writer whose `Init` succeeded, before any hook is installed | `NOSONAR` — a comment on the per-present path, no code |
+| `cpp:S3519` negative offset | `fl_patch_check.h` | 1 | by design: the 5 bytes before a hot-patchable function are its patch area, which the check reads under `StillOurs`' SEH guard | `NOSONAR`, no code |
+| `cpp:S6232` union pun | `dllmain.cpp`, the log's QPC epoch | 2 | `LARGE_INTEGER f{}` makes the union's first member, the `LowPart`/`HighPart` struct, the active one, so reading `QuadPart` reads a member that is not — undefined in C++, whatever `QueryPerformanceFrequency` wrote | initialised through the member read, `{.QuadPart = 0}` |
+| `cpp:S6232` | `guard_test.cpp` | 2 | a `ULARGE_INTEGER` to take a second off a `FILETIME` | 64-bit arithmetic on the two halves |
+| `cpp:S5813` `strlen` | `guard_test.cpp` | 1 | `strlen` of a fixed-size rules value | `strnlen(…, kMaxValueLen)` |
+| `cppsecurity:S9340` index from input | `layer.cpp`, `fl-baseline-probe` | 2 | the terminator written at the count `ReadFile` / `fread` returned, which never exceeds the request | the bound tested first (in the layer, its once-per-process enable-list read — whose `LARGE_INTEGER size{}` drew this PR's own `S6232` twice, and is initialised through `QuadPart` too) |
+| `cppsecurity:S5145` log injection | `rules_budget_test.cpp`, `fl-baseline-probe` ×2 | 3 | console output of a test and a probe: four numbers, and the ids of the seed rules file fixed at build time | `NOSONAR` |
+
+**The C# gate is the server's profile, not the analyser's defaults.** SonarCloud applies *Sonar way core* here (166 C#
+rules, 176 C++). A local build with the `SonarAnalyzer.CSharp` package and its own default rules reports about 240
+findings in this code, nearly all from rules that profile does not activate (`S3358`, `S6667`, `S3267`, `S108`,
+`S3236`, `S2094`, `S927` among them); chasing them changes code for nothing the gate reads. What counts is
+`api/issues/search` for `main` or the pull request.
 
 ### Until 2026-10-25 — Automatic Analysis, no workflow (beta.24, owner decision D67)
 
@@ -428,9 +456,13 @@ Central package management makes Dependabot PRs single-file diffs.
   run list`, event `dynamic`), and the run of 2026-10-18 (39134906593) logs the test projects' resolution failing —
   `Requested dependency resolution to include coverlet.collector/10.1.0 but it was instead resolved to 10.0.1`, `The
   package FluentAssertions.7.2.2 is not compatible. Incompatible project frameworks: net10.0-windows10.0.22621` — and
-  opens nothing for them. Why its resolver reads a package that targets `netstandard2.0` as incompatible with this
-  framework is **unmeasured**. So a quiet Dependabot is not evidence that the packages are current: `dotnet list
-  FrameLedger.slnx package --outdated` is, and the updates it had missed were made by hand in beta.29 PR-2.
+  opens nothing for them. The run of 2026-10-25 (40160307095), the first with the cooldown, says it of the shipped
+  libraries too, the versions in use among them — `The package Dapper.2.1.86 is not compatible. Incompatible project
+  frameworks: net10.0-windows10.0.22621`, and the same of Hosting, Sqlite, EventLog, Markdig and Velopack. Why its
+  resolver reads a package that targets `netstandard2.0` as incompatible with this framework is **unmeasured**. So a
+  quiet Dependabot is not evidence that the packages are current: `dotnet list FrameLedger.slnx package --outdated` is,
+  and the updates it had missed were made by hand in beta.29 PR-2 (#335) — `coverlet.collector` 10.1.0 excepted,
+  whose reason `Directory.Packages.props` gives beside it.
 - **The NuGet audit** (`Directory.Build.props`, written down 2026-10-25): `NuGetAudit` on, `NuGetAuditMode` `all`
   (transitive packages too), `NuGetAuditLevel` `low` — the SDK's defaults for net10.0, stated so that a later SDK's
   defaults cannot move them. With `TreatWarningsAsErrors` a vulnerable package is NU1901–NU1904 and the restore, so

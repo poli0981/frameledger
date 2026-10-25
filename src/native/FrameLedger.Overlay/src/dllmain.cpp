@@ -3531,8 +3531,9 @@ DWORD WINAPI InitThread(LPVOID) noexcept {
         return 1;
     }
     {
-        LARGE_INTEGER f{};
-        LARGE_INTEGER q{};
+        // Initialised through QuadPart, the member read below, so that it is the active one (SonarCloud's cpp:S6232).
+        LARGE_INTEGER f{.QuadPart = 0};
+        LARGE_INTEGER q{.QuadPart = 0};
         QueryPerformanceFrequency(&f);
         QueryPerformanceCounter(&q);
         g_logQpcFreq = static_cast<uint64_t>(f.QuadPart);

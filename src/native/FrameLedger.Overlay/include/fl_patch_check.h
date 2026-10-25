@@ -42,9 +42,10 @@ namespace detail {
 
 inline bool ReadJumpChainEndsAt(const void* target, const void* detour) noexcept {
     const auto* p = static_cast<const std::uint8_t*>(target);
-    // patchAbove: a short jump back over the 5-byte jump placed in the hot-patch area.
+    // patchAbove: a short jump back over the 5-byte jump placed in the hot-patch area. Those 5 bytes precede the
+    // function, so reading them is the point, not an overrun (SonarCloud's cpp:S3519); a fault is StillOurs' to catch.
     if (p[0] == 0xEB && p[1] == 0xF9) {
-        p -= 5;
+        p -= 5;    // NOSONAR(S3519)
     }
     if (p[0] != 0xE9) {
         return false;
