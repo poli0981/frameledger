@@ -1,5 +1,16 @@
 # Central package management makes NuGet PRs single-file diffs
 # (docs/12_BUILD.md, docs/13_CI_CD.md).
+#
+# The nuget entry also covers .config/dotnet-tools.json (the SonarScanner for
+# .NET, since 2026-10-25). No dotnet-sdk entry, on purpose: global.json is a
+# floor (10.0.100) with rollForward latestFeature, so every machine and the CI
+# runner already build with the newest 10.0 SDK they have; raising the floor is
+# a decision, not an update (docs/12_BUILD.md).
+#
+# COOLDOWN (2026-10-25): a version update waits seven days after a release is
+# published, so a release that is pulled or found compromised in its first
+# week never reaches a pull request here. Security updates do not wait — the
+# option does not apply to them.
 version: 2
 updates:
   - package-ecosystem: nuget
@@ -7,6 +18,8 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
     groups:
       minor-and-patch:
         update-types: [minor, patch]
@@ -21,7 +34,14 @@ updates:
       - dependency-name: FluentAssertions
         update-types: [version-update:semver-major]
 
+  # One pull request a week for the actions' minor and patch releases; a new
+  # major still comes alone, because it is the one that changes inputs.
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions-minor-and-patch:
+        update-types: [minor, patch]

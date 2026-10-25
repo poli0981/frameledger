@@ -45,6 +45,23 @@
     <EmbeddedResource Include="Persistence\Migrations\*.sql" LogicalName="FrameLedger.Infrastructure.Persistence.Migrations.%(Filename)%(Extension)" />
   </ItemGroup>
 
+  <!--
+    SonarCloud's CI analysis (docs/13_CI_CD.md §SonarCloud, D68). The SonarScanner for .NET analyses only the files an
+    MSBuild project names, and the native code is CMake's - so this project, the one that reaches the native layer,
+    names it. FlNativeSource is an item type MSBuild does nothing with; the scanner's targets read it through
+    SQAdditionalAnalysisFileItemTypes, and because the files lie outside this folder it analyses them at the root, with
+    the compilation database SonarQube.Analysis.xml names. The items exist only in a build the scanner instruments
+    (its ImportBefore targets set SonarQubeTempPath; items are evaluated after every property, so the condition sees
+    it), so an ordinary build, an IDE and a publish never see them. The property cannot wait for it: the scanner's
+    targets read it while properties are still being evaluated, after this file's body, and nothing else reads it.
+  -->
+  <PropertyGroup>
+    <SQAdditionalAnalysisFileItemTypes>FlNativeSource</SQAdditionalAnalysisFileItemTypes>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(SonarQubeTempPath)' != ''">
+    <FlNativeSource Include="..\native\**\*.cpp;..\native\**\*.h" Exclude="..\native\third_party\**" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Data.Sqlite" />
     <PackageReference Include="Dapper" />

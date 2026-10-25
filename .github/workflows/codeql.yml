@@ -7,6 +7,12 @@
 # Repo-local for now. The ops repo has codeql-mixed.yml, but C++ needs manual
 # build mode driven by the CMake preset, and that input surface has not been
 # verified. Switch to a caller stub once it has.
+#
+# AND the workflows themselves, since 2026-10-25: CodeQL's `actions` language
+# reads .github/workflows for injection from event data, untrusted checkouts
+# and over-broad tokens — the same class of finding SonarCloud raised once
+# (githubactions:S7631, wiki.yml, beta.26). Its context, `analyze (actions,
+# none)`, is not one of main's required checks.
 
 name: CodeQL
 
@@ -22,6 +28,14 @@ permissions:
   contents: read
   security-events: write
 
+# A new push to a pull request replaces its run. A push to main and the weekly
+# scan each get a group of their own (the run id), so none of them is ever
+# cancelled or left pending behind another, and the default branch's alerts
+# always come from a finished analysis.
+concurrency:
+  group: codeql-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   analyze:
     runs-on: windows-latest
@@ -35,6 +49,8 @@ jobs:
             build-mode: none
           - language: cpp
             build-mode: manual
+          - language: actions
+            build-mode: none
 
     steps:
       - uses: actions/checkout@v7
