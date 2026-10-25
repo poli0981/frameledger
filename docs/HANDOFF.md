@@ -67,6 +67,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.25` | [`handoff/history/0.1.0-beta.25.md`](handoff/history/0.1.0-beta.25.md) |
 | `§beta.26` | [`handoff/history/0.1.0-beta.26.md`](handoff/history/0.1.0-beta.26.md) |
 | `§beta.27` | [`handoff/history/0.1.0-beta.27.md`](handoff/history/0.1.0-beta.27.md) |
+| `§beta.28` | [`handoff/history/0.1.0-beta.28.md`](handoff/history/0.1.0-beta.28.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -74,33 +75,95 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-10-20, 0.1.0-beta.28: the Dashboard with two or more games
+## **START HERE** — 2026-10-25, 0.1.0-beta.29: SonarCloud from CI, and the libraries Dependabot never updated
 
-*Status is `docs/changelog/0.1.0-beta.28.md`; this is what no other file carries.* The owner, while beta.27 was being
-released: "Thêm cơ chế hiển thị UI/UX Dashboard khi chạy >=2 game trong cùng 1 thời điểm nếu được nhé." and "Bạn có thể
-chờ beta27 xong xử lý tiếp luôn bản 28 nếu được." #332 (the cards) and this release, the same day as beta.27 — whose
-section, with the open crash-safety question, is `handoff/history/0.1.0-beta.27.md`.
+*Status is `docs/changelog/0.1.0-beta.29.md`; this is what no other file carries.* The owner, 2026-10-25: "Bạn phân tích
+và bắt đầu cho chuyển từ automatic sang ci analysis sonarcloud (ver mới nhất) cho repo, bạn có thể bắt đầu 1 mạch cho
+đến khi kết thúc, nếu có issue hay coverage chưa đạt, tiếp tục cho đến khi xong nhé." and "Cập nhật
+depenabot/audit/code scanner nếu có." — `SONAR_TOKEN` set and Automatic Analysis off beforehand; with the plan approved,
+the whole train to the release without asking again. #334 (SonarCloud from CI, Dependabot, the audit, CodeQL), #335
+(the libraries), #336 (the 34 C++ issues `main`'s first analysis from CI raised) and this release.
 
-**No new owner decision.** The Agent always recorded one session per executable, so two games were two sessions; the
-Dashboard's one live card went to a hooked session and kept it, and the other game read only as *Running sessions: 2*.
-Each running session now has its card (`08_UI` §Dashboard).
+**Decisions:**
 
-**Choices made here** — the owner asked for a way to show them, not for a layout: a card per session, each read the
-way the one card was, rather than one large card and a list of the rest; hooked sessions first, each kind in the order
-it started, a card moved rather than rebuilt when its place changes; two to a row from two on; the header counts the
-games from two on. The machine's temperatures repeat on every card: each session's tick carries them.
+- **D68 — SonarCloud is analysed from CI** (`13_CI_CD` §SonarCloud): `ci.yml`'s `sonarcloud` job after `check`,
+  advisory, waiting for the gate; SonarScanner for .NET 12.0.0 as a local tool; `SonarQube.Analysis.xml` instead of
+  `.sonarcloud.properties`; the gate's own coverage (OpenCover beside Cobertura); the C++ through CMake's compilation
+  database; `sonar.projectVersion` the newest release tag, so new code is everything since the last release; `S8417`
+  and `S6640` ignored where they apply by design. Replaces D67.
+
+**Choices made here** — the owner asked for the switch, not for a design:
+
+- **A job after `check`, not steps inside it**: the scanner turns warnings-as-errors off in the build it wraps, and a
+  required `check` should not go red on a SonarCloud outage. The coverage is the gate's own (an artifact), not a
+  second test run.
+- **The C++ through MSBuild items, not a second SonarCloud project**: one project keeps the history and the owner's
+  marks of both languages; the items exist only under the scanner.
+- **The version is the newest release tag**, so the project's own *Previous version* setting means "since the last
+  release"; no setting in SonarCloud's UI changed.
+- **The two by-design rules became configuration** (`S8417`, `S6640`), as the optional row of the old owner's steps
+  proposed. The 34 C++ issues of `main`'s first analysis from CI were settled line by line instead (#336): fixed where
+  the code was wrong, `// NOSONAR` with its reason above it where the analyser was — five of them; no rule was
+  switched off for them.
+- **Dependabot's missed updates by hand, under the cooldown it now keeps**: CsWin32 0.3.363 rather than the three-day-old
+  0.3.367; Meziantou left to Dependabot, which does propose analyzers; Markdig, Velopack and FluentAssertions 8 not
+  taken; `coverlet.collector` kept at 10.0.1 (below).
+- **CodeQL reads the workflows** (`actions`), not required.
+
+**Measured on the way** (`13_CI_CD` §SonarCloud, *The first analyses* and *`main`'s first analysis from CI*): the
+scanner's 12.0.0 source, not its documentation, answered the three design questions — it forces
+`TreatWarningsAsErrors=false`, it drops `sonar.sources`, and its scan of non-project files has no C/C++ and walks the
+whole checkout. CFamily analysed 32 of the compilation database's 181 units, all in full. SonarCloud counts a file's
+executable lines as uncovered when no report names it, PowerShell's included (`build.ps1`: 232). The organisation's
+plan analyses pull requests and `main` and refuses any other branch. `main`'s first analysis from CI failed on a C
+reliability rating: 34 C++ issues on older lines, each dated by blame, of which two — on lines changed since the new
+code began — were new code. Those two were a real defect: `hook-harness --opengl`, or `--vulkan` beside a D3D11 mode,
+crashed through a null swapchain (`0xC0000005`, measured on `main`; exit 1 with a message after #336). The
+Overlay built from either side of #336, in one folder with one `FL_BUILD_ID`, has a byte-identical `.text`, its two
+`LARGE_INTEGER` initialisers changed included.
 
 **Traps met on the way:**
 
-- **C# written from a Python string**: `@"D:\another\…"` in a non-raw Python string turned `\a` into BEL inside a test,
-  and the test still passed — both of its paths were mangled alike. Write C# through raw strings, and scan a diff for
-  control characters before committing.
-- **An items panel binds to the page**: inside an `ItemsPanelTemplate`, `{Binding ViewModel.LiveColumns}` reads the
-  ItemsControl's DataContext — the page — so the panel's column count is the page view model's.
-- **A page rendered for a look has no background of its own**: under the dark theme the light text is drawn on
-  transparency. Read the light render, or put the page on a `Border` with `ApplicationBackgroundBrush`.
+- **The scanner weakens the build it wraps**: SonarScanner for .NET's targets set `TreatWarningsAsErrors=false` and
+  empty `WarningsAsErrors` in every build they instrument. Never `begin` before the gate's build; the analysis has a
+  build of its own.
+- **A configure-only compilation database breaks CFamily under C++20 + Ninja**: CMake 3.28+ adds `@<object>.modmap`
+  response files that only the build writes, and CFamily 6.85 stops with `unexpanded response file`. Configure with
+  `-DCMAKE_CXX_SCAN_FOR_MODULES=OFF` (no module is used here), or build first.
+- **A property condition cannot see `SonarQubeTempPath`**: the scanner's ImportBefore targets define it after the
+  project body, so only an item condition (evaluated after every property) sees it; the scanner reads
+  `SQAdditionalAnalysisFileItemTypes` during property evaluation, so that one is set unconditionally.
+- **The scanner walks the whole checkout** for PowerShell/YAML/JSON (obj/*.json included) and drops `sonar.sources`;
+  SonarCloud also drops what `.gitignore` names.
+- **A quiet Dependabot is not a current one**: its NuGet runs succeeded and proposed analyzers only, for ten weeks —
+  the run of 2026-10-25 calls even the shipped libraries, at the versions in use, incompatible with the framework.
+- **A second job makes a workflow-level permission a vulnerability**: `githubactions:S8264` (security rating C on the
+  pull request) — grant per job, `permissions: {}` at the top.
+- **A file with no coverage report is 0 % covered, not "not measured"**, for PowerShell too: exclude what has no report
+  from the coverage figures, or a pull request touching a script fails the gate.
+- **The free organisation analyses only pull requests and `main`**: a `workflow_dispatch` of a feature branch uploads,
+  then fails on "not allowed to access data from non main branches". A pull request's analysis lists only its own
+  lines, so the older code's findings wait for `main`, where they are dated by blame and count against the gate only
+  on lines changed since the new code began.
+- **The first analysis with a version keeps the old new-code start**: `main`'s went red on code changed 2026-10-19,
+  and the next one moved the start to the last analysis without a version and went green with nothing fixed. Judge a
+  fix by the issues it closes (`api/issues/search … resolved=false`), not by the gate turning.
+- **A `NOSONAR` goes on the line the issue names**: `S3519`'s `NOSONAR` sat on `p -= 5`, the cause, while SonarCloud
+  reports the read on the next line, so the issue stayed open after #336 merged; the release pull request moved it.
+- **Bisect a CI-only test failure with CI's own settings**: #335's `NoSecondMatcherTests` failed in CI only, and the
+  first run blamed CsWin32; a local run without coverage passed, so the CsWin32 bump was dropped for nothing. With
+  `--collect:"XPlat Code Coverage"` the failure was local too and followed `coverlet.collector` 10.1.0, whose injected
+  tracker declares a constant reflection cannot read.
+- **Read the flow of an S6232 before fixing it**: `LARGE_INTEGER x{}` makes the union's first member (the
+  `LowPart`/`HighPart` struct) the active one, so every later `x.QuadPart` read is the finding — wherever it moves. The
+  issue's flow says *last active member "" is assigned here* at the declaration; #336 moved the read first, drew the
+  same issue on its new line, and only then initialised through `QuadPart` (`{.QuadPart = 0}`).
+- **A local SonarAnalyzer is not SonarCloud's gate**: the `SonarAnalyzer.CSharp` package with its own defaults reports
+  about 240 C# findings here; the server's *Sonar way core* profile had none open. Read `api/issues/search`.
+- **`sed -i` from Git Bash writes LF**: in this CRLF repository it rewrote whole files' line endings (git normalises
+  them on commit, but the working copy changed); edit with the editor tools, or restore CRLF before formatting.
 
-**Owner-only:** item 23 added; beta.27's item 22 and the crash-safety question stand.
+**Owner-only:** item 24 added.
 
 
 ## Owner-only — no PR can close these
@@ -252,6 +315,16 @@ games from two on. The machine's temperatures repeat on every card: each session
    numbers are its own game's; closing one leaves the other's card where it is, and the count goes. A third game → a
    third card on the next row and *3 games recording*. (The `ja` string `Dashboard_Live_Count_Format` is marked
    `review`.)
+24. **beta.29 — SonarCloud from CI (D68), the owner's settings.** None blocks anything. (a) *Optional:* add
+   `SONAR_TOKEN` to the repository's **Dependabot secrets** (Settings ▸ Secrets and variables ▸ Dependabot) if
+   Dependabot's pull requests should be analysed too; until then `ci.yml`'s `sonarcloud` job is skipped for them, as it
+   is for a fork's. (b) *Optional:* SonarCloud's branch list holds `beta29/pr1-sonarcloud-ci`, left by a dispatch of
+   that branch the plan then refused (`13_CI_CD` §SonarCloud, *The first analyses*); delete it under *Branches*, or let
+   SonarCloud remove it after 30 days without an analysis. (c) *Optional:* `analyze (actions, none)` (CodeQL over the
+   workflows) and `sonarcloud` are not required checks; making either one required is the owner's setting. (d) Velopack
+   1.2.161 and Markdig 1.5.0 were not taken by #335 (`docs/changelog/0.1.0-beta.29.md`, *The libraries Dependabot
+   never updated*): the first changes how updates install and wants a run of the update path on the owner's machine,
+   the second its licence copy re-read.
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
