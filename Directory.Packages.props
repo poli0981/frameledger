@@ -3,7 +3,9 @@
   <!--
     Central package management (docs/12_BUILD.md). Every version is pinned here
     and nowhere else, which also makes Dependabot PRs single-file diffs.
-    All versions verified against nuget.org on 2026-08-02; re-verified and bumped 2026-09-21.
+    All versions verified against nuget.org on 2026-08-02; re-verified and bumped 2026-09-21; bumped again
+    2026-10-25 (beta.29 PR-2) with the updates Dependabot had never proposed (docs/13_CI_CD.md §Dependabot and
+    the NuGet audit).
   -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -35,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Hosting and logging">
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.13" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.Extensions.Hosting" Version="10.0.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
@@ -44,8 +46,8 @@
 
   <ItemGroup Label="Storage">
     <!-- No EF: Dapper over Microsoft.Data.Sqlite (CLAUDE.md pinned stack). -->
-    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.12" />
-    <PackageVersion Include="Dapper" Version="2.1.86" />
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.13" />
+    <PackageVersion Include="Dapper" Version="2.1.89" />
     <!--
       Transitive pin, not a direct dependency.
 
@@ -63,7 +65,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Interop, telemetry and packaging">
-    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.333" />
+    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.363" />
     <PackageVersion Include="Velopack" Version="1.2.0" />
     <!-- MPL-2.0. docs/18_GPU_VENDOR_APIS.md §L2 requires >= 0.9.6, and
          legal/THIRD_PARTY_NOTICES.md has a release-gate check that no
@@ -71,7 +73,7 @@
     <PackageVersion Include="LibreHardwareMonitorLib" Version="0.9.6" />
     <!-- The crash witness (04_CAPTURE §Crash & exit classification): Application log events 1000/1001. In-box
          for WPF apps, a package for a class library on the Windows TFM. Microsoft, MIT. -->
-    <PackageVersion Include="System.Diagnostics.EventLog" Version="10.0.12" />
+    <PackageVersion Include="System.Diagnostics.EventLog" Version="10.0.13" />
   </ItemGroup>
 
   <ItemGroup Label="Analyzers (build-time only)">
@@ -81,7 +83,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Testing">
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
     <!--
       xUnit.net v3, 4.x line (2026-09-21). 4.0 made Microsoft Testing Platform v2 the default of the plain
       `xunit.v3` package and dropped MTP v1. build.ps1's gates are VSTest-shaped on purpose - the
@@ -89,8 +91,8 @@
       so the projects reference the SAME 4.x framework through its `mtp-off` variant, the one xunit publishes
       for exactly this. Moving to MTP v2 is a build.ps1 change, not a version bump; do them together or not at all.
     -->
-    <PackageVersion Include="xunit.v3.mtp-off" Version="4.0.1" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.0" />
+    <PackageVersion Include="xunit.v3.mtp-off" Version="4.0.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="4.0.1" />
     <!--
       FluentAssertions is pinned to the 7.x line ON PURPOSE, and must not be
       bumped to 8.x without redoing the licence analysis.
@@ -109,6 +111,12 @@
     -->
     <PackageVersion Include="FluentAssertions" Version="[7.2.2]" />
     <PackageVersion Include="NSubstitute" Version="6.2.0" />
+    <!--
+      10.1.0 not taken (2026-10-25): the tracker it injects into each instrumented assembly declares a constant,
+      ModuleTrackerRegistryKey, whose value reflection cannot read ("Literal value was not found"), and
+      NoSecondMatcherTests reads every string constant in Application, Domain and Infrastructure. The same test passes
+      with 10.0.1, and with 10.1.0 when no coverage is collected.
+    -->
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
   </ItemGroup>
 
