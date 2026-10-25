@@ -6,8 +6,8 @@ The full documents are [`docs/13_CI_CD.md`](../docs/13_CI_CD.md) and [`docs/11_U
 
 | Workflow | Runs on | Does |
 |---|---|---|
-| `.github/workflows/ci.yml` | pushes to `main`, pull requests | `./build.ps1 check`, and on a pull request the changelog check. |
-| `.github/workflows/codeql.yml` | pushes and pull requests to `main`, weekly | CodeQL for C# and C++. |
+| `.github/workflows/ci.yml` | pushes to `main`, pull requests | `./build.ps1 check`, and on a pull request the changelog check; then, in a job of its own, the SonarCloud analysis with the gate's coverage (settings: `SonarQube.Analysis.xml`). |
+| `.github/workflows/codeql.yml` | pushes and pull requests to `main`, weekly | CodeQL for C#, C++ and the workflows themselves. |
 | `.github/workflows/rules-publish.yml` | a change to the detection rules or their validator | Fails when an anti-cheat entry is removed. |
 | `.github/workflows/release.yml` | a pushed `v*` tag; by hand, a rehearsal | Builds, gates and publishes a release. |
 | `.github/workflows/wiki.yml` | a successful release; by hand | Builds this wiki from `wiki/` and `guide/` and publishes it to the Wiki tab. |
