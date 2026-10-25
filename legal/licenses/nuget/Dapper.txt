@@ -1,4 +1,4 @@
-Dapper 2.1.86
+Dapper 2.1.89
 
 Licence declared: Apache-2.0
 Text below: the shared Apache-2.0 text; the package ships no licence file

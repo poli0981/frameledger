@@ -456,7 +456,7 @@ Central package management makes Dependabot PRs single-file diffs.
 
 - [x] Repo-local `ci.yml`, `codeql.yml`, `release.yml`, `rules-publish.yml` (all four repo-local by decision, §Workflows); ~~caller stubs pointing at `poli0981/.github`~~ — never the design, see the first paragraph *(and `wiki.yml` since beta.17, repo-local too: five)*
 - [x] Issue forms `bug_report.yml`, `feature_request.yml`, `safety_gap.yml`; `ISSUE_TEMPLATE/config.yml` pointing a vulnerability at private reporting; PR template referencing CLAUDE.md's definition of done
-- [x] `.github/dependabot.yml` (nuget + github-actions, weekly)
+- [x] `.github/dependabot.yml` (nuget + github-actions, weekly; a seven-day cooldown and the actions grouped since 2026-10-25 — and a NuGet library update it never proposed is `dotnet list package --outdated`'s to find, §Dependabot and the NuGet audit)
 - [x] `SECURITY.md` — the private route for a vulnerability, the public route for a safety gap, and the honest response intent (2026-09-16)
 - [x] A release rehearsal: `release.yml` `workflow_dispatch` runs every step but the Release itself (§release.yml)
 
