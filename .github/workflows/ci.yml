@@ -266,11 +266,17 @@ jobs:
       # Configure only, plus the one header the build generates: the analysis
       # reads the sources with the flags and defines CMake gives each one, and
       # needs nothing built. FetchContent's sources land in build/, excluded.
+      #
+      # CMAKE_CXX_SCAN_FOR_MODULES=OFF: with C++20 and Ninja, CMake (3.28 on)
+      # scans every source for modules and gives each compile command an
+      # `@<object>.modmap` response file that only the BUILD writes, and the
+      # C/C++ analyser stops on a response file it cannot open ("unexpanded
+      # response file", the first run, 2026-10-25). Nothing here uses a module.
       - name: Native compilation database
         shell: pwsh
         working-directory: src/native
         run: |
-          cmake --preset x64-release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --preset x64-release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_SCAN_FOR_MODULES=OFF
           if ($LASTEXITCODE -ne 0) { throw 'cmake configure failed' }
           cmake --build --preset x64-release --target fl_ac_floor_gen
           if ($LASTEXITCODE -ne 0) { throw 'generating the blocklist floor failed' }

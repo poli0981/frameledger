@@ -240,8 +240,11 @@ repository, every push to `main` and `workflow_dispatch`:
 1. a full-depth checkout (blame dates the new code; the tags name the version), .NET, MSVC, the NuGet and
    `~/.sonar/cache` caches;
 2. the gate's coverage — the `coverage` artifact `check` uploaded, not a second test run;
-3. `cmake --preset x64-release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON` and the one header the build generates
-   (`fl_ac_floor_gen`) — the compilation database, with nothing compiled;
+3. `cmake --preset x64-release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_SCAN_FOR_MODULES=OFF` and the one
+   header the build generates (`fl_ac_floor_gen`) — the compilation database, with nothing compiled. *Scanning off
+   because the first run failed on it:* with C++20 and Ninja, CMake gives every compile command an
+   `@<object>.modmap` response file that only the build writes, and the C/C++ analyser (CFamily 6.85) stops with
+   `IllegalStateException: unexpanded response file`; no source here uses a module;
 4. **SonarScanner for .NET 12.0.0** (2026-10-15, the newest), a local tool (`.config/dotnet-tools.json`, `dotnet tool
    restore`; Dependabot's nuget entry moves it), which provisions its own JRE: `begin` with `/s:SonarQube.Analysis.xml`
    → `dotnet build FrameLedger.slnx -c Release` → `end`.
