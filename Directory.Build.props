@@ -69,6 +69,17 @@
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 
+  <!-- The NuGet audit (2026-10-25, docs/13_CI_CD.md §Dependabot and the NuGet audit): every restore checks the WHOLE
+       package graph, transitive packages included, against the advisory database, at every severity. These are the
+       SDK's defaults for net10.0, written down so that a later SDK's defaults cannot move them. With
+       TreatWarningsAsErrors, a vulnerable package is NU1901-NU1904 and the restore - and so the gate - is red, which
+       is what happened with SQLitePCLRaw 2.1.11 (Directory.Packages.props). -->
+  <PropertyGroup>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <NuGetAuditLevel>low</NuGetAuditLevel>
+  </PropertyGroup>
+
   <!-- beta.14 (D50): every managed binary names the product and who wrote it, as the native ones always have
        (19_SAFETY: a binary says plainly what it is). Explorer's Properties > Details and Task Manager read these. Until
        beta.14 the SDK's defaults stood: the Agent's Company and Product read "FrameLedger.Agent", each library's its own

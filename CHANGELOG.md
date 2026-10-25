@@ -35,6 +35,23 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Changed
+
+- **SonarCloud analyses the repository from CI** (developers only; owner decision D68). The owner turned SonarCloud's
+  Automatic Analysis off and set the `SONAR_TOKEN` secret; `ci.yml`'s new `sonarcloud` job runs the SonarScanner for
+  .NET 12.0.0 (a local tool, `.config/dotnet-tools.json`) after `check`, in a build of its own — the scanner turns
+  warnings-as-errors off in the build it instruments, so it cannot wrap the gate's — with the gate's own test coverage
+  (`build.ps1` now writes OpenCover beside Cobertura; the C# only, since the PowerShell tools and the native code have
+  no coverage report) and CMake's compilation database for the C++, which
+  `FrameLedger.Infrastructure.csproj` names to the scanner only in that build. `SonarQube.Analysis.xml` replaces
+  `.sonarcloud.properties`. The job is advisory, not a required check, and waits for the quality gate, so a failed gate
+  is a red job (`docs/13_CI_CD.md` §SonarCloud).
+- **Dependabot, the NuGet audit and CodeQL** (developers only). Dependabot's version updates wait seven days after a
+  release (security updates do not), and the actions' minor and patch releases come as one pull request a week. The
+  NuGet audit is written down in `Directory.Build.props` (the whole graph, every severity — the SDK's defaults for
+  net10.0), so a later SDK cannot move it. CodeQL also reads the workflows (`analyze (actions, none)`, not required),
+  and a new push to a pull request replaces its CodeQL run.
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

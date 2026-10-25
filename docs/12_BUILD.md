@@ -299,7 +299,10 @@ would not fit).
    `release.yml` call `./build.ps1 check` with no switches since 2026-09-06, as the paragraph after this list says;
    only `-SkipIntegration`, which nobody passes, leaves them out, loudly)*
 7. `tools/coverage-gate.ps1` — reads this run's cobertura reports; self-arming, and armed today for
-   `FrameLedger.Domain` and `FrameLedger.Application`
+   `FrameLedger.Domain` and `FrameLedger.Application`. *(Since 2026-10-25 step 6 writes OpenCover beside each
+   Cobertura report — `--collect:"XPlat Code Coverage;Format=cobertura,opencover"` — for SonarCloud, whose C# importer
+   reads no Cobertura; `ci.yml`'s `sonarcloud` job takes them from the gate's artifact, `13_CI_CD` §SonarCloud. This
+   gate still reads Cobertura only.)*
 8. `tools/rules-validate.ps1` (schema + `anticheat` block sanity — a malformed or empty blocklist is a safety bug)
 9. `tools/versioninfo-check.ps1` — reads the built binary, because what ships is what an anti-cheat vendor sees; since P4 PR-5 it also compares every `FileVersion` against the `VERSION` file (§Version); **since beta.14 (D50) both halves run — the self-test, then the native five and the managed eight from the App's and the Agent's build output** (`-ManagedDir`, `-ExpectedProductVersion` = `VERSION`), one copyright across all of them (§Version, *Identity*). Under `-SkipNative` the managed half still runs
 10. `tools/chokepoint-check.ps1` — injection and evasion primitives confined to one file, native **and** managed, plus the `FL_GUARD_TESTABLE` symbol check against the shipped artifacts

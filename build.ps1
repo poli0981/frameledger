@@ -285,8 +285,11 @@ function Invoke-Managed([bool]$FixFormat) {
     # the hosted runner); the mini dump goes to TestResults beside the trx.
     # --blame-hang did NOT stop the deadlocked xUnit v3 executable it was added for (measured 2026-09-17); the
     # wall-clock limit of Invoke-TestsWithin is what bounds a hang now. The suite takes 4-5 minutes on the runner.
-    $testArgs = @('test', "`"$solution`"", '-c', $Configuration, '--no-build', '--collect:"XPlat Code Coverage"',
-        '--logger', 'trx;LogFileName=results.trx')
+    #
+    # Two coverage formats from the one run (2026-10-25, D68): Cobertura for the coverage gate below, OpenCover for
+    # SonarCloud, whose C# importer reads no Cobertura. ci.yml's sonarcloud job takes them from this run's artifact.
+    $testArgs = @('test', "`"$solution`"", '-c', $Configuration, '--no-build',
+        '--collect:"XPlat Code Coverage;Format=cobertura,opencover"', '--logger', 'trx;LogFileName=results.trx')
     if ($SkipIntegration) {
         Skip-Gate 'integration tests' 'the guard refuses a .NET test host that loads a `protect`-matching module (20_OPEN_QUESTIONS §S19(b)) — run ./build.ps1 check with no switches to include them'
         Invoke-TestsWithin 25 ($testArgs + @('--filter', 'Category!=Integration'))

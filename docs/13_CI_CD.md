@@ -8,7 +8,7 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 
 ### `ci.yml` — push to `main` + all PRs + `workflow_dispatch` (added 2026-10-04) · **repo-local**
 - `runs-on: windows-latest`, .NET SDK pinned by `global.json` via `actions/setup-dotnet`, MSVC via `ilammy/msvc-dev-cmd` (pinned to its v1.13.0 commit since beta.24 — the one third-party action, SonarCloud `githubactions:S7637`; Dependabot moves the pin), NuGet cached.
-- Single step of substance: **`./build.ps1 check`** — the same script, with the same switches (none), a developer runs before pushing. The gate list lives in `12_BUILD` §Local quality gate, **once**, rather than being restated here where it goes stale.
+- Single step of substance: **`./build.ps1 check`** — the same script, with the same switches (none), a developer runs before pushing. The gate list lives in `12_BUILD` §Local quality gate, **once**, rather than being restated here where it goes stale. *(That is the `check` job. Since 2026-10-25 a second job, `sonarcloud`, runs after it — §SonarCloud below; it is not the gate and not a required context.)*
 - ~~**`-SkipIntegration` is the one place local and CI deliberately differ**~~ — **gone since 2026-09-06.** From 2026-08-05 CI passed it for a measured reason: §S16 puts the injecting process's ancestors in the scan set, a .NET test host loads `System.Security.Cryptography.ProtectedData.dll`, and the guard's `protect` fragment refused our own harness (§S19(b)). The signer half now verifies that module's embedded signature offline and reads `O=Microsoft Corporation` on the compiled-in bound, so the `Category=Integration` cases run here — **nine** when this was written, **20 across six classes** as of 2026-09-13 (Agent 6, CaptureHost 7, Infrastructure 7); count them with `grep -rl 'Category", "Integration' tests` rather than trusting either number — and a green CI IS evidence for the managed drain and the capture host's end-to-end behaviour. The switch remains in `build.ps1`, loud, for a developer who must.
 - **The hosted runner refuses guard scans intermittently — THREE failures in eight gate runs, measured
   2026-09-10 while merging P2's stack.** Every one was an `Category=Integration` case, every one passed on
@@ -80,7 +80,7 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
   The next Integration failure is the measurement: read the probe step *before* re-running. Struck rather
   than deleted because a session planned a workflow change on this bullet's word.
 - **Signer probe step** (2026-09-06): `fl-probe-signer` runs as its own step after the gate — `continue-on-error`, a measurement and not a gate — because `ctest fl_signer_probe` passes on a regular expression and prints nothing, so §S19(b)'s CI leg was never readable from the log. Its answers are read off this step.
-- Uploads coverage artifacts.
+- Uploads coverage artifacts — ~~Cobertura~~ Cobertura and OpenCover since 2026-10-25, one pair per test project, as the `coverage` artifact the `sonarcloud` job reads (§SonarCloud).
 - **Changelog gate**, on pull requests only: the changed-file list comes from GitHub's own view of the PR — not `git diff`, so a shallow checkout cannot silently produce a short one — and an empty list is refused rather than read as "no `src/` changes". It is a **step of the required `check` job** and deliberately not a job of its own: `main`'s required contexts are exactly `check` and the two `analyze` jobs, so a new job would go red while the merge button stayed green, which is what already makes `Rules / validate` advisory (§S23-2).
 
 > **Three claims in this section were false and are corrected 2026-08-06.** There is no Vulkan SDK
@@ -93,7 +93,7 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 > corrected with it; restating the gate list in two documents is what let one of them rot.
 - **Licence guard:** `tools/license-check` fails the build if a vendored dependency is missing its licence copy, or if Intel IGCL / AMD ADLX headers appear anywhere in the tree (`docs/18_GPU_VENDOR_APIS.md` §Vendor SDKs we deliberately do not use), or — since P4 PR-6 — if `legal/licenses/nuget/` is not what `tools/license-gather.ps1` writes for the NuGet packages this build ships. A Dependabot bump therefore goes red until someone re-runs the script and commits the texts, which is the point: the new version's licence is read by a person before it ships. Licensing regressions are silent and hard to unwind later — catch them at PR time.
 - **Placeholder guard:** fails if any `{{` token survives in `README.md` or `legal/*.md` *(other than `{{RELEASE_DATE}}`, which `release.yml` substitutes — added 2026-10-04)*. Those are shipped, legally operative documents (FR-11 displays them in the first-run Legal Gate); an unsubstituted `{{DEVELOPER_NAME}}` in an EULA is not a cosmetic defect.
-- ~~`permissions: contents: read`.~~ `permissions: contents: read, pull-requests: read` — the second for the Changelog step's list of a pull request's files, read-only *(corrected 2026-10-04)*.
+- ~~`permissions: contents: read`.~~ `permissions: contents: read, pull-requests: read` — the second for the Changelog step's list of a pull request's files, read-only *(corrected 2026-10-04)*. *Since 2026-10-25 per job:* the workflow grants nothing (`permissions: {}`), `check` holds those two and `sonarcloud` `contents: read` alone — a workflow-level grant reaches every job (SonarCloud `githubactions:S8264` on the first analysis from CI).
 
 ### `codeql.yml` — push, PR, weekly cron · **repo-local**
 
@@ -102,6 +102,8 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 > CMake preset and that input surface has not been verified. The paragraph below already anticipated
 > exactly this outcome; the heading was never updated when it happened.
 - Languages: `csharp` **and `cpp`** (manual build mode for C++, driven by the CMake preset). The native layer is where memory-safety bugs would live; excluding it would defeat the purpose. Verify the mixed template exposes a C++ build-command input; if it does not, this one goes repo-local too.
+- **And `actions`, since 2026-10-25** (build mode `none`): CodeQL reads `.github/workflows` for injection from event data, untrusted checkouts and over-broad tokens — the class of finding SonarCloud raised once (`githubactions:S7631`, `wiki.yml`, beta.26). Its context, `analyze (actions, none)`, is not one of `main`'s required checks; adding it to them is the owner's setting.
+- **Concurrency, since 2026-10-25:** a new push to a pull request cancels that pull request's run; a push to `main` and the weekly scan each run in a group of their own (the run id), so none is cancelled or left pending, and the default branch's alerts come from a finished analysis.
 - `permissions: security-events: write, contents: read`.
 
 ### `release.yml` — on tag `v*` · **repo-local, built 2026-09-14 (P4 PR-5)**
@@ -224,9 +226,99 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 - `permissions: contents: write` — the repository's default workflow token is read-only (read from the API,
   2026-10-07), and pushing to the wiki repository needs write.
 
-## SonarCloud — Automatic Analysis, no workflow (beta.24, owner decision D67)
+## SonarCloud — from CI, `ci.yml`'s `sonarcloud` job (owner decision D68, 2026-10-25)
 
-The project `poli0981_frameledger` is analysed by SonarCloud's GitHub app in **Automatic Analysis** mode: on every
+**D68 — SonarCloud is analysed from CI.** The owner turned SonarCloud's Automatic Analysis off and set the
+`SONAR_TOKEN` secret (2026-10-24), and asked for the CI-based analysis with the newest scanner, run until its quality
+gate passed on issues and coverage both. It replaces D67 (the subsection below, as it stood): `.sonarcloud.properties`
+is gone, `SonarQube.Analysis.xml` holds what it held, and the two rules broken by design everywhere are configuration
+rather than marks in the UI.
+
+**How it runs.** A second job of `ci.yml`, after `check` (`needs: check`), on every pull request from this
+repository and every push to `main` (or a `workflow_dispatch` of `main`) — never another branch: the organisation's
+plan refuses a branch analysis ("Organization is not allowed to access data from non main branches", a dispatch of
+the feature branch, 2026-10-25), so a dispatch of any other branch runs `check` alone:
+
+1. a full-depth checkout (blame dates the new code; the tags name the version), .NET, MSVC, the NuGet and
+   `~/.sonar/cache` caches;
+2. the gate's coverage — the `coverage` artifact `check` uploaded, not a second test run;
+3. `cmake --preset x64-release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_SCAN_FOR_MODULES=OFF` and the one
+   header the build generates (`fl_ac_floor_gen`) — the compilation database, with nothing compiled. *Scanning off
+   because the first run failed on it:* with C++20 and Ninja, CMake gives every compile command an
+   `@<object>.modmap` response file that only the build writes, and the C/C++ analyser (CFamily 6.85) stops with
+   `IllegalStateException: unexpanded response file`; no source here uses a module;
+4. **SonarScanner for .NET 12.0.0** (2026-10-15, the newest), a local tool (`.config/dotnet-tools.json`, `dotnet tool
+   restore`; Dependabot's nuget entry moves it), which provisions its own JRE: `begin` with `/s:SonarQube.Analysis.xml`
+   → `dotnet build FrameLedger.slnx -c Release` → `end`.
+
+**Why a job of its own, and a build of its own.** The scanner's targets turn `TreatWarningsAsErrors` off and empty
+`WarningsAsErrors` in every build they instrument (`SonarQube.Integration.targets`, read in 12.0.0's source), so
+wrapping the gate's build would quietly weaken the gate. And the job is **advisory**: `main`'s required contexts stay
+`check`, `analyze (csharp, none)` and `analyze (cpp, manual)`. It waits for the quality gate
+(`sonar.qualitygate.wait`), so a failed gate — or a SonarCloud outage — is a red job beside a green `check`, never a
+blocked merge, and SonarCloud's app still posts its own *SonarCloud Code Analysis* check on the pull request.
+
+**The C++.** The SonarScanner for .NET analyses only files an MSBuild project names: it drops `sonar.sources`, and
+its scan of the files outside the projects (`sonar.scanner.scanAll`: PowerShell, YAML, JSON and a dozen more) has no
+C or C++ in its list (`AdditionalFilesService`, 12.0.0). So `FrameLedger.Infrastructure.csproj` — the project that
+reaches the native layer — names `src/native`'s `.cpp` and `.h` files, `third_party` excepted, as `FlNativeSource`
+items, read through the scanner's `SQAdditionalAnalysisFileItemTypes`. The items exist only in a build the scanner
+instruments (its ImportBefore targets set `SonarQubeTempPath`), so a normal build, an IDE and a publish never see them;
+because they lie outside the project's folder, the scanner analyses them at the root, with the compilation database:
+MSVC's own flags and defines, where Automatic Analysis guessed them. Native code has no coverage report (below).
+
+**Coverage.** `build.ps1` collects `"XPlat Code Coverage;Format=cobertura,opencover"`: Cobertura for
+`tools/coverage-gate.ps1`, as before, and OpenCover for SonarCloud, whose C# importer reads no Cobertura. The
+reports' paths are absolute, and every hosted Windows runner checks out to the same path, so the reports `check`
+wrote name the sources this job reads. Only `tests/*/TestResults/<guid>/` is read; the trx logger's second copy under
+`In/` is not. **Coverage is the C#'s alone** (`sonar.coverage.exclusions`): SonarCloud counts the executable lines of
+a file no report covers as uncovered — the first pull request analysis read `build.ps1`'s 232 lines to cover, every
+one uncovered, and failed the gate at 0 % on the two it changed — so the PowerShell tools (proven by their own
+`-SelfTest` cases, which no coverage tool reads) and the native code (Catch2 and the injection tests, with no coverage
+collector) are left out of the coverage figures; they are analysed for issues as everything else is. Measuring the
+native code would be the runner's Visual Studio coverage tool and `sonar.cfamily.*` coverage paths — not done.
+
+**The version, and so the new code.** The project's new-code period is SonarCloud's *Previous version*. Until now
+every analysis was "not provided", so the new code was everything since the first analysis (2026-09-27): 34,268 lines
+on 2026-10-20. The job now passes `/v:` the newest `v*` tag the commit descends from, so new code is everything
+since the last release; the first analysis with a version is the first from CI, whose new code is therefore this
+change alone. An issue the CI analysis raises on an older line is dated by that line's blame and is not new code. The
+gate is *Sonar way*: its coverage condition (80 % on new code) was skipped while no analysis had coverage, and applies
+from the first analysis from CI.
+
+**What it reads** — `SonarQube.Analysis.xml`: the exclusions of `.sonarcloud.properties` (below) and what a build
+writes into the checkout, since the scanner walks all of it (`build/`, with the sources CMake fetches there, `out/`,
+every `bin/` and `obj/`, `TestResults/`) — SonarCloud also drops what `.gitignore` names (the first run: "63 files
+ignored because of scm ignore settings"), and the patterns say it in the file rather than rely on that; the same
+duplication exclusions; C++20; UTF-8; the OpenCover paths; the compilation database;
+**`sonar.cs.roslyn.ignoreIssues`** — Roslynator, Meziantou, the VS threading and the .NET
+analyzers already gate the build, warnings as errors, and what they report at a lower severity is this project's
+choice, so only SonarCloud's own rules are imported; and **two rules ignored where they apply by design** — `S8417`
+(sequentially consistent atomics) in `src/native`, any repository because a header is indexed as C, and
+`csharpsquid:S6640` (unsafe code) in Infrastructure and Shared. Those are the optional rows of the owner's steps below,
+which the UI's *Ignore issues on multiple criteria* would have held; a pull request adding atomics no longer fails the
+gate on them.
+
+**What it does not cover.** A fork's pull request and Dependabot's get no secrets, so the job is skipped for them;
+Dependabot's would run if the owner added `SONAR_TOKEN` to the repository's *Dependabot secrets*. A pull request's
+analysis lists only the issues on the lines it changed, and no other branch can be analysed (above), so what the
+analysis from CI finds in the older code shows on `main`'s first analysis from CI and nowhere before it.
+
+**The first analyses (2026-10-25, PR #334).** Run 40147463349: the scanner began, the build ran, the C# coverage was
+imported (635 files) — and CFamily stopped on the `.modmap` response files (step 3). Run 40148541525, with scanning
+off: everything analysed — 1,300 files indexed, 249 left out by the exclusions and 63 by `.gitignore`; of the
+compilation database's 181 units, 32 analysed in full (none partly; 118 whose sources are not analysed — the vendor
+stubs and what CMake fetched, Catch2 and MinHook —, 18 duplicates, 13 it does not support) in 139 s; 21 C and 32 C++
+files indexed (a `.h` is C to SonarCloud) — and the
+gate failed on two conditions, both fixed the same day: `githubactions:S8264` (a C security rating: workflow-level
+permissions reaching both jobs) and 0 % coverage on new code (`build.ps1`'s lines, before the coverage exclusions).
+A dispatch of the branch (40148544753) analysed it and was refused the gate, which is how the plan's limit was found.
+
+### Until 2026-10-25 — Automatic Analysis, no workflow (beta.24, owner decision D67)
+
+*The text from here to the end of this section stood as written; what changed is marked.* ~~The project
+`poli0981_frameledger` is analysed by SonarCloud's GitHub app in **Automatic Analysis** mode: on every~~ The project
+`poli0981_frameledger` was analysed by SonarCloud's GitHub app in **Automatic Analysis** mode: on every
 push to `main` and on every pull request, with no workflow in this repository and no logs published. Its check on a
 pull request (*SonarCloud Code Analysis*) is advisory — it is not a required status.
 
@@ -242,7 +334,8 @@ git-ignored and never reach it.
 **What it cannot do.** `sonar.issue.ignore.*` is not read by Automatic Analysis, so a rule this project breaks by
 design is recorded here and marked in SonarCloud's own UI — by the owner, who holds the account. A CI-based scan (the
 only way to import coverage or analyse one build variant of the C++) would mean turning Automatic Analysis off, a
-`SONAR_TOKEN` secret, OpenCover output beside today's Cobertura and a full-depth checkout; it is not done.
+`SONAR_TOKEN` secret, OpenCover output beside today's Cobertura and a full-depth checkout; ~~it is not done~~ *done
+2026-10-25 (D68, above)*.
 
 **The triage of 2026-10-19** — the analysis of `main` at `372389c` (2026-09-28; nothing had been analysed since),
 341 open issues, none resolved. Rules broken by design are *Accept*ed and false positives marked as such, each with
@@ -298,23 +391,53 @@ passes.
 choose *Accept* or *False positive* and paste the comment. Optionally, *Administration ▸ General Settings ▸ Analysis
 Scope ▸ Ignore issues on multiple criteria*: `cpp:S8417` and `cpp:S6232` on `src/native/**/*`, `csharpsquid:S6640`
 on `src/FrameLedger.Infrastructure/**/*` and `src/FrameLedger.Shared/**/*`, so new instances of the by-design rules
-stop reappearing on pull requests.
+stop reappearing on pull requests. *(Since D68 the `S8417` and `S6640` rows are `SonarQube.Analysis.xml`'s, in the
+repository; `S6232`'s are not — a union read outside `LARGE_INTEGER` would be a finding — and its 24 stay marked.)*
 
-## Dependabot (`.github/dependabot.yml`)
+## Dependabot (`.github/dependabot.yml`) and the NuGet audit
 
 ```yaml
 version: 2
 updates:
-  - package-ecosystem: nuget
+  - package-ecosystem: nuget              # also .config/dotnet-tools.json (the SonarScanner, since 2026-10-25)
     directory: /
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 }         # since 2026-10-25
     groups: { minor-and-patch: { update-types: [minor, patch] } }
+    # ignore: WPF-UI*, FluentAssertions majors — the file says why
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 }         # since 2026-10-25
+    groups: { actions-minor-and-patch: { update-types: [minor, patch] } }
 ```
 
 Central package management makes Dependabot PRs single-file diffs.
+
+- **Cooldown (2026-10-25):** a version update waits seven days after its release is published, so a release that is
+  pulled or found compromised in its first week never becomes a pull request here. Security updates do not wait — the
+  option does not apply to them. The actions' minor and patch releases come as one pull request; a new major comes
+  alone, because it is the one that changes inputs.
+- **No `dotnet-sdk` entry, on purpose:** `global.json` is a floor (10.0.100) with `rollForward: latestFeature`, so a
+  developer's machine and the runner already build with the newest 10.0 SDK they have (the runner installed 10.0.402
+  on 2026-10-20). Raising the floor is a decision about what a contributor must install, not an update.
+- **Dependabot has never proposed a NuGet library update here — measured 2026-10-25.** Every NuGet pull request it
+  opened, #66 (2026-08-09) through #314 (2026-10-18), updated analyzers only (Meziantou, Roslynator, the VS threading
+  analyzers), while Dapper 2.1.89 (published 2026-09-23), coverlet 10.1.0 (09-27), xunit.v3.mtp-off 4.0.2 (10-09) and
+  the 10.0.13 servicing packages (10-13) were never proposed. Its update runs are GitHub Actions runs of their own (`gh
+  run list`, event `dynamic`), and the run of 2026-10-18 (39134906593) logs the test projects' resolution failing —
+  `Requested dependency resolution to include coverlet.collector/10.1.0 but it was instead resolved to 10.0.1`, `The
+  package FluentAssertions.7.2.2 is not compatible. Incompatible project frameworks: net10.0-windows10.0.22621` — and
+  opens nothing for them. Why its resolver reads a package that targets `netstandard2.0` as incompatible with this
+  framework is **unmeasured**. So a quiet Dependabot is not evidence that the packages are current: `dotnet list
+  FrameLedger.slnx package --outdated` is, and the updates it had missed were made by hand in beta.29 PR-2.
+- **The NuGet audit** (`Directory.Build.props`, written down 2026-10-25): `NuGetAudit` on, `NuGetAuditMode` `all`
+  (transitive packages too), `NuGetAuditLevel` `low` — the SDK's defaults for net10.0, stated so that a later SDK's
+  defaults cannot move them. With `TreatWarningsAsErrors` a vulnerable package is NU1901–NU1904 and the restore, so
+  the gate, is red — what `SQLitePCLRaw` 2.1.11 did (`Directory.Packages.props`). `dotnet list FrameLedger.slnx
+  package --vulnerable --include-transitive` read none on 2026-10-25.
+- **The repository's own alerts:** Dependabot alerts and security updates are enabled, and so are secret scanning and
+  its push protection (read from the API, 2026-10-25); no alert of either kind, and no code-scanning alert, was open.
 
 ## Branch & release policy
 
@@ -341,7 +464,7 @@ Central package management makes Dependabot PRs single-file diffs.
 
 - [x] Branch protection as §Branch & release policy states *(marked 2026-10-04, read from the API: required checks `check`, `analyze (csharp, none)` and `analyze (cpp, manual)`; linear history; a pull request required; force pushes off; enforced for admins)*
 - [ ] `Rules / validate` as a required check (§S23-2, after its skip-shim)
-- [ ] Dependabot alerts + security updates (the manifest is in the tree; the alerts are a setting)
+- [x] Dependabot alerts + security updates (the manifest is in the tree; the alerts are a setting) *(marked 2026-10-25, read from the API: both enabled, with secret scanning and its push protection)*
 - [x] Private vulnerability reporting enabled (Settings ▸ Security), so `config.yml`'s link resolves *(marked 2026-10-04: GitHub reports it enabled)*
 - [ ] Wiki editing restricted to collaborators (Settings ▸ General ▸ Features ▸ Wikis ▸ *Restrict editing to collaborators only*): otherwise anyone with a GitHub account can change a page until the next release overwrites it (§wiki.yml, beta.17)
 - [ ] Repo topics: `windows`, `wpf`, `benchmark`, `fps`, `game-performance` (~~`presentmon`~~ — dropped 2026-08-27, §G)
