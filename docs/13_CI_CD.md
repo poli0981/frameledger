@@ -300,7 +300,19 @@ which the UI's *Ignore issues on multiple criteria* would have held; a pull requ
 gate on them.
 
 **What it does not cover.** A fork's pull request and Dependabot's get no secrets, so the job is skipped for them;
-Dependabot's would run if the owner added `SONAR_TOKEN` to the repository's *Dependabot secrets*.
+Dependabot's would run if the owner added `SONAR_TOKEN` to the repository's *Dependabot secrets*. A pull request's
+analysis lists only the issues on the lines it changed, and no other branch can be analysed (above), so what the
+analysis from CI finds in the older code shows on `main`'s first analysis from CI and nowhere before it.
+
+**The first analyses (2026-10-25, PR #334).** Run 40147463349: the scanner began, the build ran, the C# coverage was
+imported (635 files) — and CFamily stopped on the `.modmap` response files (step 3). Run 40148541525, with scanning
+off: everything analysed — 1,300 files indexed, 249 left out by the exclusions and 63 by `.gitignore`; of the
+compilation database's 181 units, 32 analysed in full (none partly; 118 whose sources are not analysed — the vendor
+stubs and what CMake fetched, Catch2 and MinHook —, 18 duplicates, 13 it does not support) in 139 s; 21 C and 32 C++
+files indexed (a `.h` is C to SonarCloud) — and the
+gate failed on two conditions, both fixed the same day: `githubactions:S8264` (a C security rating: workflow-level
+permissions reaching both jobs) and 0 % coverage on new code (`build.ps1`'s lines, before the coverage exclusions).
+A dispatch of the branch (40148544753) analysed it and was refused the gate, which is how the plan's limit was found.
 
 ### Until 2026-10-25 — Automatic Analysis, no workflow (beta.24, owner decision D67)
 
