@@ -46,6 +46,15 @@
   <Property Name="sonar.cs.opencover.reportsPaths">tests/*/TestResults/*/coverage.opencover.xml</Property>
 
   <!--
+    Coverage is measured for the C# only. SonarCloud counts the executable lines of a file no report covers as
+    uncovered - the first analysis read build.ps1's 232 lines to cover, every one uncovered, and failed the gate on the
+    two a pull request changed - so the PowerShell tools (tested by their own -SelfTest cases, which no coverage tool
+    reads) and the native code (Catch2 suites and the injection tests, with no coverage collector) are left out of the
+    coverage figures. They are analysed for issues as everything else is.
+  -->
+  <Property Name="sonar.coverage.exclusions">**/*.ps1,**/*.psm1,src/native/**</Property>
+
+  <!--
     Roslynator, Meziantou, the VS threading analyzers and the .NET analyzers already gate the build (warnings as
     errors); what they report at a lower severity is the project's choice. Only SonarCloud's own rules are imported.
   -->

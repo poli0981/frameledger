@@ -41,7 +41,8 @@ numeric core and does not move; the heading is the full version — corrected 20
   Automatic Analysis off and set the `SONAR_TOKEN` secret; `ci.yml`'s new `sonarcloud` job runs the SonarScanner for
   .NET 12.0.0 (a local tool, `.config/dotnet-tools.json`) after `check`, in a build of its own — the scanner turns
   warnings-as-errors off in the build it instruments, so it cannot wrap the gate's — with the gate's own test coverage
-  (`build.ps1` now writes OpenCover beside Cobertura) and CMake's compilation database for the C++, which
+  (`build.ps1` now writes OpenCover beside Cobertura; the C# only, since the PowerShell tools and the native code have
+  no coverage report) and CMake's compilation database for the C++, which
   `FrameLedger.Infrastructure.csproj` names to the scanner only in that build. `SonarQube.Analysis.xml` replaces
   `.sonarcloud.properties`. The job is advisory, not a required check, and waits for the quality gate, so a failed gate
   is a red job (`docs/13_CI_CD.md` §SonarCloud).

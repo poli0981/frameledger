@@ -93,7 +93,7 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 > corrected with it; restating the gate list in two documents is what let one of them rot.
 - **Licence guard:** `tools/license-check` fails the build if a vendored dependency is missing its licence copy, or if Intel IGCL / AMD ADLX headers appear anywhere in the tree (`docs/18_GPU_VENDOR_APIS.md` §Vendor SDKs we deliberately do not use), or — since P4 PR-6 — if `legal/licenses/nuget/` is not what `tools/license-gather.ps1` writes for the NuGet packages this build ships. A Dependabot bump therefore goes red until someone re-runs the script and commits the texts, which is the point: the new version's licence is read by a person before it ships. Licensing regressions are silent and hard to unwind later — catch them at PR time.
 - **Placeholder guard:** fails if any `{{` token survives in `README.md` or `legal/*.md` *(other than `{{RELEASE_DATE}}`, which `release.yml` substitutes — added 2026-10-04)*. Those are shipped, legally operative documents (FR-11 displays them in the first-run Legal Gate); an unsubstituted `{{DEVELOPER_NAME}}` in an EULA is not a cosmetic defect.
-- ~~`permissions: contents: read`.~~ `permissions: contents: read, pull-requests: read` — the second for the Changelog step's list of a pull request's files, read-only *(corrected 2026-10-04)*.
+- ~~`permissions: contents: read`.~~ `permissions: contents: read, pull-requests: read` — the second for the Changelog step's list of a pull request's files, read-only *(corrected 2026-10-04)*. *Since 2026-10-25 per job:* the workflow grants nothing (`permissions: {}`), `check` holds those two and `sonarcloud` `contents: read` alone — a workflow-level grant reaches every job (SonarCloud `githubactions:S8264` on the first analysis from CI).
 
 ### `codeql.yml` — push, PR, weekly cron · **repo-local**
 
@@ -235,7 +235,9 @@ is gone, `SonarQube.Analysis.xml` holds what it held, and the two rules broken b
 rather than marks in the UI.
 
 **How it runs.** A second job of `ci.yml`, after `check` (`needs: check`), on every pull request from this
-repository, every push to `main` and `workflow_dispatch`:
+repository and every push to `main` (or a `workflow_dispatch` of `main`) — never another branch: the organisation's
+plan refuses a branch analysis ("Organization is not allowed to access data from non main branches", a dispatch of
+the feature branch, 2026-10-25), so a dispatch of any other branch runs `check` alone:
 
 1. a full-depth checkout (blame dates the new code; the tags name the version), .NET, MSVC, the NuGet and
    `~/.sonar/cache` caches;
@@ -263,13 +265,18 @@ reaches the native layer — names `src/native`'s `.cpp` and `.h` files, `third_
 items, read through the scanner's `SQAdditionalAnalysisFileItemTypes`. The items exist only in a build the scanner
 instruments (its ImportBefore targets set `SonarQubeTempPath`), so a normal build, an IDE and a publish never see them;
 because they lie outside the project's folder, the scanner analyses them at the root, with the compilation database:
-MSVC's own flags and defines, where Automatic Analysis guessed them. Native code has no coverage report.
+MSVC's own flags and defines, where Automatic Analysis guessed them. Native code has no coverage report (below).
 
 **Coverage.** `build.ps1` collects `"XPlat Code Coverage;Format=cobertura,opencover"`: Cobertura for
 `tools/coverage-gate.ps1`, as before, and OpenCover for SonarCloud, whose C# importer reads no Cobertura. The
 reports' paths are absolute, and every hosted Windows runner checks out to the same path, so the reports `check`
 wrote name the sources this job reads. Only `tests/*/TestResults/<guid>/` is read; the trx logger's second copy under
-`In/` is not.
+`In/` is not. **Coverage is the C#'s alone** (`sonar.coverage.exclusions`): SonarCloud counts the executable lines of
+a file no report covers as uncovered — the first pull request analysis read `build.ps1`'s 232 lines to cover, every
+one uncovered, and failed the gate at 0 % on the two it changed — so the PowerShell tools (proven by their own
+`-SelfTest` cases, which no coverage tool reads) and the native code (Catch2 and the injection tests, with no coverage
+collector) are left out of the coverage figures; they are analysed for issues as everything else is. Measuring the
+native code would be the runner's Visual Studio coverage tool and `sonar.cfamily.*` coverage paths — not done.
 
 **The version, and so the new code.** The project's new-code period is SonarCloud's *Previous version*. Until now
 every analysis was "not provided", so the new code was everything since the first analysis (2026-09-27): 34,268 lines
@@ -283,8 +290,8 @@ from the first analysis from CI.
 writes into the checkout, since the scanner walks all of it (`build/`, with the sources CMake fetches there, `out/`,
 every `bin/` and `obj/`, `TestResults/`) — SonarCloud also drops what `.gitignore` names (the first run: "63 files
 ignored because of scm ignore settings"), and the patterns say it in the file rather than rely on that; the same
-duplication exclusions; C++20; UTF-8; the OpenCover paths; the
-compilation database; **`sonar.cs.roslyn.ignoreIssues`** — Roslynator, Meziantou, the VS threading and the .NET
+duplication exclusions; C++20; UTF-8; the OpenCover paths; the compilation database;
+**`sonar.cs.roslyn.ignoreIssues`** — Roslynator, Meziantou, the VS threading and the .NET
 analyzers already gate the build, warnings as errors, and what they report at a lower severity is this project's
 choice, so only SonarCloud's own rules are imported; and **two rules ignored where they apply by design** — `S8417`
 (sequentially consistent atomics) in `src/native`, any repository because a header is indexed as C, and

@@ -25,13 +25,11 @@ on:
   workflow_dispatch:
 
 # Permissions do not inherit into reusable workflows, and defaults are broader
-# than this job needs either way (docs/13_CI_CD.md).
-permissions:
-  contents: read
-  # For the Changelog step below only: listing a pull request's changed files is
-  # the Pull Requests API, and an explicit `permissions:` block grants nothing it
-  # does not name. Read-only, and the job writes nothing back.
-  pull-requests: read
+# than this job needs either way (docs/13_CI_CD.md). Since the second job
+# (2026-10-25) they are granted per job and the workflow grants none: a grant at
+# this level reaches every job, so `sonarcloud` would have held `check`'s
+# pull-requests read for nothing (SonarCloud githubactions:S8264).
+permissions: {}
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -41,6 +39,12 @@ jobs:
   check:
     runs-on: windows-latest
     timeout-minutes: 40
+    permissions:
+      contents: read
+      # For the Changelog step below only: listing a pull request's changed files is
+      # the Pull Requests API, and an explicit `permissions:` block grants nothing it
+      # does not name. Read-only, and the job writes nothing back.
+      pull-requests: read
 
     steps:
       - uses: actions/checkout@v7
@@ -212,12 +216,17 @@ jobs:
   # Settings: SonarQube.Analysis.xml. The scanner: .config/dotnet-tools.json.
   sonarcloud:
     needs: check
-    # SONAR_TOKEN reaches neither a fork's pull request nor Dependabot's, and the
-    # scanner cannot start without it.
+    # A pull request from this repository, or main. SONAR_TOKEN reaches neither a
+    # fork's pull request nor Dependabot's, and the scanner cannot start without
+    # it. Any other branch is refused by the organisation's plan - "Organization
+    # is not allowed to access data from non main branches", measured on a
+    # workflow_dispatch run of a feature branch, 2026-10-25 - so a dispatch on
+    # one runs `check` alone.
     if: >-
-      github.event_name != 'pull_request' ||
-      (github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.user.login != 'dependabot[bot]')
+      (github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]') ||
+      (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
     runs-on: windows-latest
     timeout-minutes: 40
     permissions:
