@@ -281,7 +281,9 @@ from the first analysis from CI.
 
 **What it reads** — `SonarQube.Analysis.xml`: the exclusions of `.sonarcloud.properties` (below) and what a build
 writes into the checkout, since the scanner walks all of it (`build/`, with the sources CMake fetches there, `out/`,
-every `bin/` and `obj/`, `TestResults/`); the same duplication exclusions; C++20; UTF-8; the OpenCover paths; the
+every `bin/` and `obj/`, `TestResults/`) — SonarCloud also drops what `.gitignore` names (the first run: "63 files
+ignored because of scm ignore settings"), and the patterns say it in the file rather than rely on that; the same
+duplication exclusions; C++20; UTF-8; the OpenCover paths; the
 compilation database; **`sonar.cs.roslyn.ignoreIssues`** — Roslynator, Meziantou, the VS threading and the .NET
 analyzers already gate the build, warnings as errors, and what they report at a lower severity is this project's
 choice, so only SonarCloud's own rules are imported; and **two rules ignored where they apply by design** — `S8417`
