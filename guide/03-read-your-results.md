@@ -65,7 +65,9 @@ correct it by hand — your correction is labelled as yours.
 - **Sensors** — temperatures, load and power; video memory; memory; and the card's clocks and fan, with the moments it
   was held back shaded. The game's own line and the whole card's or the whole PC's are drawn separately.
 - **Trend** (on the game's page) — one point per session over time, for example before and after a driver update.
-  Changes to your hardware or driver are marked on it.
+  Each day your graphics driver, graphics card, processor, display or Windows changed is a dashed line with a number
+  above the chart, 1 for the oldest; the list under the chart says what changed that day, and pointing at the line
+  shows the same. *Sessions at a glance* numbers the same days the same way.
 - **Compare** (in the navigation on the left) — pick sessions, even of different games, and see them side by side.
 
 To look closer, hold **Ctrl** and turn the mouse wheel over a chart to zoom, drag to pan, and double-click to reset. The

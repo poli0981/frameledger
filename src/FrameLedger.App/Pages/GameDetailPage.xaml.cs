@@ -48,8 +48,8 @@ public partial class GameDetailPage : INavigableView<GameDetailViewModel>
     /// <summary>The Trend tab's lines (beta.11: several metrics at once) and the Sessions tab's overview, from one rebuild.</summary>
     private void OnTrendPresented(object? sender, EventArgs e)
     {
-        Trend.Show(ViewModel.TrendLines, ViewModel.HardwareChanges);
-        Overview.Show(ViewModel.OverviewLines, ViewModel.HardwareChanges);
+        Trend.Show(ViewModel.TrendLines, ViewModel.ChangeMarkers);
+        Overview.Show(ViewModel.OverviewLines, ViewModel.ChangeMarkers);
     }
 
     /// <summary>beta.11 (D39): a session picked on the overview is selected in the grid below it, and scrolled to.</summary>

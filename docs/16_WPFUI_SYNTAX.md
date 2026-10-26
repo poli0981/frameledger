@@ -160,6 +160,10 @@ Native `Menu`, `TabControl`, `ComboBox`, `Slider`~~, `ListView`~~ are fine — t
   tertiary 3:1). It follows a theme switch through a **resource reference on the band** (`SetResourceReference` on a
   private attached property bound to `ApplicationBackgroundColor`), not through `ApplicationThemeManager.Changed`, which
   only `ApplicationThemeManager.Apply` raises — a page made and switched in the tests' harness would never hear it.
+- The change markers (beta.30, D70) take the palette's `Chart_StutterPso` under `ChartTheme.TextOn` — black or white by
+  WCAG contrast, black in both themes. The chart reads `ChartTheme.Current` at every render; the WPF chip in the list
+  (`Controls/ChangeBadge`) follows a switch through the same resource reference as `ArtTint` and `FgMixBar`
+  (`ChartPalette.ForBackground`). No colour in XAML.
 
 ## FlowDocument (rendered documents, beta.12)
 
@@ -182,6 +186,9 @@ Native `Menu`, `TabControl`, `ComboBox`, `Slider`~~, `ListView`~~ are fine — t
 - `TriStateChip`: `Border` CornerRadius 12, states — Yes: `AccentFillColorDefaultBrush` bg + on-accent text; No: transparent bg + `ControlStrokeColorDefaultBrush` 1px border; N/A: dashed `StrokeDashArray="2 2"` border + `TextFillColorTertiaryBrush` text.
 - **Built 2026-09-14 (P3 PR-5):** both derive from `Control` with one dependency property, `Model` (`FpsReadoutModel` / `TriStateChipModel`, decided by `Services.FpsPresentation` and the view models — the control renders, it never decides), templates in `Styles/FrameLedger.xaml` with `DataTrigger`s on the model's flags; the dashed N/A outline is a `Rectangle` behind the `Border` (a `Border` cannot dash). The source suffix icon became the tooltip: the Fluent System Icons names for 🔍/✎/↧ are not certain in this pinned version and a wrong `SymbolRegular` is a build error. The override flyout is PR-6's.
 - No `SystemColors.*` anywhere.
+- `ChangeBadge` (beta.30): a `Control` with one `Text` property, not focusable (the row's text carries the meaning), its
+  template a `Border` and a `TextBlock` bound to `Background`/`Foreground`, which the control sets in code from the chart
+  palette (`Styles/FrameLedger.xaml` writes no colour).
 
 ## Dialogs & notifications
 
@@ -216,10 +223,27 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
 > Pinned `ScottPlot.WPF` 5.1.59: `Add.SignalXY` for the decimated series, `Add.Scatter` (no line) for markers,
 > `Add.HorizontalSpan` for the ribbon, `Add.Bars` over `Statistics.Histogram.WithBinCount`, `Add.ScatterLine`
 > for the percentile curve, a series' `Axes.YAxis = plot.Axes.Right` for the sensor overlay.
+>
+> **The trend's change markers, beta.30 (D70):** `Charts/ChangeMarkerPlottable`, an `IPlottable` + `IRenderLast` added
+> with `Add.Plottable` (which assigns no axes: the chart sets `Axes.XAxis`/`YAxis` itself), draws the dashed lines in
+> `Render` — clipped to the data area — and the numbered badges in `RenderLast`, after the panels and unclipped, in a
+> band kept with `plot.Axes.Top.MinimumSize` (the top axis is unused and measures 15 px; `MinimumSize` clamps it up, and
+> `Clear` keeps it, so `Show` sets it every time — 0 with no marker). `LabelStyle.Measure` sizes a badge with a
+> `Paint.NewDisposablePaint()`; `Charts/ChangeBadgeLayout` places them. `GetAxisLimits` returns
+> `AxisLimits.HorizontalOnly`, so the markers count toward the date axis's autoscale as `VerticalLine`s did.
 
 ## Gotchas checklist
 
 - [ ] Dictionaries order: `ThemesDictionary` → `ControlsDictionary` → app styles. Wrong order = default-looking controls.
+- [ ] **A ScottPlot `VerticalLine` label grows into a panel nothing sizes for it (5.1.59).** With `LabelOppositeAxis` it is
+  anchored 5 px above the data area, its box (text + 5 px padding each side) growing up into the top-axis panel, which
+  an unused axis measures at 15 px; clipping is off, so the control's edge cut it — the owner's "Driver GPU: … → …",
+  beta.30. `LabelAlignment` is overwritten each frame (only `ManualLabelAlignment` holds), and
+  `LabelStyle.LastRenderPixelRect` includes the 3 px default `ShadowOffset` even with no shadow. The trend draws its
+  own badges now (§ScottPlot theme sync).
+- [ ] **`WpfPlot.DisplayScale` is read once, in the constructor**, from `VisualTreeHelper.GetDpi` before the control has
+  a window. Read a pointer with `GetPlotPixelPosition(e)` (the element's DPI now); ScottPlot's pixels are device
+  pixels while no `Plot.ScaleFactor` is set, and none is.
 - [ ] `SystemThemeWatcher.Watch` after HWND exists (`Loaded`), not in the constructor — but `ApplicationThemeManager.Apply(…, updateAccent: true)` BEFORE the first window's XAML loads, or the accent resources are missing at first Measure (§App bootstrap).
 - [ ] Menu row lives **outside** `ui:TitleBar` (its area is the drag region; a Menu inside becomes undraggable/unclickable territory).
 - [ ] Don't set `AllowsTransparency`/`WindowStyle` on `FluentWindow` — it manages its own chrome.

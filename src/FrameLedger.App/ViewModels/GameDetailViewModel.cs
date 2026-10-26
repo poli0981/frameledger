@@ -267,7 +267,16 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private bool _includeMidSession;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TrendChangesVisible))]
     private bool _trendEmpty = true;
+
+    /// <summary>
+    /// FR-6.3 since beta.30 (owner decision D70): one marker per day that changed, numbered oldest first — the badges on both
+    /// charts and the lists under them, so a number means the same day everywhere on the page.
+    /// </summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasChangeMarkers), nameof(TrendChangesVisible))]
+    private IReadOnlyList<ChangeMarker> _changeMarkers = [];
 
     /// <summary>beta.11 (D39): whether the Sessions tab's overview has anything to draw.</summary>
     [ObservableProperty]
@@ -467,6 +476,11 @@ public sealed partial class GameDetailViewModel : ObservableObject
     public static string DeleteAllSessionsText => Strings.GameDetail_DeleteSessions;
 
     public IReadOnlyList<HardwareChange> HardwareChanges { get; private set; } = [];
+
+    public bool HasChangeMarkers => ChangeMarkers.Count > 0;
+
+    /// <summary>The Trend tab's list stands with its chart: no point drawn, no chart, no badge to number.</summary>
+    public bool TrendChangesVisible => HasChangeMarkers && !TrendEmpty;
 
     public string TrendMetricText => TrendMetrics.First(c => c.Value == TrendMetric).Label;
 
@@ -668,6 +682,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         }
 
         HardwareChanges = TrendSeriesBuilder.Changes(_detail.Sessions, id => snapshots.GetValueOrDefault(id));
+        ChangeMarkers = TrendSeriesBuilder.Markers(HardwareChanges);
         RebuildTrendPoints();
     }
 

@@ -1,0 +1,38 @@
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+<!-- Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE -->
+
+<UserControl x:Class="FrameLedger.App.Charts.ChangeMarkerList"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:res="clr-namespace:FrameLedger.App"
+             xmlns:charts="clr-namespace:FrameLedger.App.Charts"
+             xmlns:controls="clr-namespace:FrameLedger.App.Controls"
+             x:Name="Root">
+    <!--
+        08_UI §Games › Trend (beta.30, owner decision D70): the numbered change markers in full, under the chart whose badges
+        carry the numbers — the day, then every change of that day, wrapping, never cut. An ItemsControl, not a ListBox: a
+        list's own scroller would take the page's wheel (16_WPFUI_SYNTAX §Gotchas).
+    -->
+    <StackPanel>
+        <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Trend_Changes_Header}" />
+        <ItemsControl Margin="0,4,0,0" Focusable="False" Grid.IsSharedSizeScope="True"
+                      AutomationProperties.Name="{x:Static res:Strings.Trend_Changes_Header}"
+                      ItemsSource="{Binding Markers, ElementName=Root}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="{x:Type charts:ChangeMarker}">
+                    <Grid Margin="0,2,0,2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Number" />
+                            <ColumnDefinition Width="Auto" SharedSizeGroup="Day" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <controls:ChangeBadge VerticalAlignment="Top" Text="{Binding NumberText}" />
+                        <ui:TextBlock Grid.Column="1" Margin="10,0,16,0" Style="{StaticResource SecondaryText}" Text="{Binding DateText}" />
+                        <ui:TextBlock Grid.Column="2" TextWrapping="Wrap" Text="{Binding Text}" />
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </StackPanel>
+</UserControl>

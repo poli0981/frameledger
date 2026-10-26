@@ -3,5 +3,8 @@
 
 namespace FrameLedger.App.Charts;
 
-/// <summary>FR-6.3: a hardware-snapshot difference between two consecutive sessions, as a marker on the trend line ("GPU driver 572.16 → 576.02").</summary>
+/// <summary>
+/// FR-6.3: a hardware-snapshot difference between two consecutive sessions ("GPU driver: 572.16 → 576.02") — since beta.30
+/// one line of its day's <see cref="ChangeMarker"/>.
+/// </summary>
 public sealed record HardwareChange(DateTimeOffset At, string Text);

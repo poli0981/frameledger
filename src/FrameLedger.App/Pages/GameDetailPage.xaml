@@ -287,6 +287,9 @@
                             <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static vm:GameDetailViewModel.OverviewHeader}" />
                             <ui:TextBlock Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Text="{x:Static vm:GameDetailViewModel.OverviewNote}" />
                             <charts:TrendChart x:Name="Overview" Height="220" MinHeight="200" Margin="0,4,0,8" />
+                            <!-- beta.30 (D70): the numbered change markers in full, the same numbers as the chart's badges. -->
+                            <charts:ChangeMarkerList x:Name="OverviewChanges" Margin="0,0,0,12" Markers="{Binding ViewModel.ChangeMarkers}"
+                                                     Visibility="{Binding ViewModel.HasChangeMarkers, Converter={StaticResource BoolToVis}}" />
                         </StackPanel>
                         <!-- beta.11 (D40): the game, its settings and its consent stay; the confirmation says how many go. -->
                         <StackPanel Margin="0,0,0,8" Orientation="Horizontal" HorizontalAlignment="Right"
@@ -445,6 +448,8 @@
                         <ui:TextBlock Margin="0,12,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{Binding ViewModel.TrendEmptyMessage}"
                                       Visibility="{Binding ViewModel.TrendEmpty, Converter={StaticResource BoolToVis}}" />
                         <charts:TrendChart x:Name="Trend" Height="320" Visibility="{Binding ViewModel.TrendEmpty, Converter={StaticResource InverseBoolToVis}}" />
+                        <charts:ChangeMarkerList x:Name="TrendChanges" Margin="0,8,0,0" Markers="{Binding ViewModel.ChangeMarkers}"
+                                                 Visibility="{Binding ViewModel.TrendChangesVisible, Converter={StaticResource BoolToVis}}" />
                     </StackPanel>
                 </TabItem>
                 <TabItem Header="{x:Static vm:GameDetailViewModel.TabSensors}">

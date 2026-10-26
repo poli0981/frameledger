@@ -57,6 +57,14 @@ public sealed record ChartPalette(
         }
     }
 
+    /// <summary>
+    /// The palette of the theme whose window colour is <paramref name="background"/> — dark under half luminance. How a WPF
+    /// element drawn in the chart colours follows a theme switch: a resource reference to <c>ApplicationBackgroundColor</c>,
+    /// read here (<c>FgMixBar</c>, <c>ChangeBadge</c>).
+    /// </summary>
+    public static ChartPalette ForBackground(System.Windows.Media.Color background) =>
+        For(Services.ColorMath.Luminance(background) < 0.5 ? ApplicationTheme.Dark : ApplicationTheme.Light);
+
     /// <summary>A palette from any dictionary carrying the keys (the tests hand in a parsed file).</summary>
     public static ChartPalette FromDictionary(ResourceDictionary dictionary)
     {

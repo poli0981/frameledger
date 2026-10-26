@@ -1721,8 +1721,16 @@
     <value>GPU ドライバー</value>
     <comment>review</comment>
   </data>
+  <data name="Trend_Change_Heading_Format" xml:space="preserve">
+    <value>{0} · {1}</value>
+    <comment>review</comment>
+  </data>
   <data name="Trend_Change_Os" xml:space="preserve">
     <value>OS</value>
+    <comment>review</comment>
+  </data>
+  <data name="Trend_Changes_Header" xml:space="preserve">
+    <value>ハードウェアとシステムの変更</value>
     <comment>review</comment>
   </data>
   <data name="Trend_Empty" xml:space="preserve">

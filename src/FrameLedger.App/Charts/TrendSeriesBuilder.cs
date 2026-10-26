@@ -211,14 +211,17 @@ public static class TrendSeriesBuilder
     }
 
     /// <summary>
-    /// One marker per day that changed (beta.8): every difference found on that day in one label, line after line — two
-    /// labels at one position were drawn over each other.
+    /// One marker per day that changed (beta.8: two labels at one position were drawn over each other), numbered oldest first
+    /// since beta.30 (owner decision D70) — the number the charts' badges and the lists under them share. A day's changes in
+    /// the order they were found, each once; the marker stands at the day's first change.
     /// </summary>
-    public static IReadOnlyList<HardwareChange> MergedByDay(IReadOnlyList<HardwareChange> changes)
+    public static IReadOnlyList<ChangeMarker> Markers(IReadOnlyList<HardwareChange> changes)
     {
         ArgumentNullException.ThrowIfNull(changes);
         return [.. changes.GroupBy(static c => c.At.LocalDateTime.Date)
-            .Select(static g => new HardwareChange(g.First().At, string.Join(Environment.NewLine, g.Select(static c => c.Text).Distinct(StringComparer.Ordinal))))];
+            .OrderBy(static g => g.Key)
+            .Select(static (g, i) => new ChangeMarker(i + 1, g.Min(static c => c.At),
+                [.. g.OrderBy(static c => c.At).Select(static c => c.Text).Distinct(StringComparer.Ordinal)]))];
     }
 
     /// <summary>Markers between consecutive sessions (oldest first) whose snapshots differ; <paramref name="snapshotOf"/> resolves a row's snapshot id.</summary>

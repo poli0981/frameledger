@@ -648,7 +648,7 @@ public sealed partial class PagesLoadTests
             Render(distribution);
             using ScottPlot.Image histogram = distribution.HistogramPlot.GetImage(320, 240);
             var trend = new TrendChart();
-            trend.Show([new TrendPoint(DateTimeOffset.UtcNow.AddDays(-1), 60, 1, false), new TrendPoint(DateTimeOffset.UtcNow, 65, 2, false)], [new HardwareChange(DateTimeOffset.UtcNow, "GPU driver: a → b")], "avg");
+            trend.Show([new TrendPoint(DateTimeOffset.UtcNow.AddDays(-1), 60, 1, false), new TrendPoint(DateTimeOffset.UtcNow, 65, 2, false)], [new ChangeMarker(1, DateTimeOffset.UtcNow, ["GPU driver: a → b"])], "avg");
             Render(trend);
             using ScottPlot.Image trendImage = trend.ScottPlot.GetImage(640, 320);
             var sensors = new SensorsChart();

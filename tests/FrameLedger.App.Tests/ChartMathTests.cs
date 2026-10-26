@@ -141,6 +141,26 @@ public sealed class ChartMathTests
         SensorsChart.SystemMemorySeries(wsOnly, "ram_mb").Should().Be("ram_mb");
     }
 
+    /// <summary>
+    /// beta.30 (owner decision D70): a change badge's text reads on the palette's orange in both themes — black — where the
+    /// white ScottPlot gave its line labels did not (the owner's report: "Driver GPU: … → …" unreadable and cut off).
+    /// </summary>
+    [Theory]
+    [InlineData("ChartPalette.Dark.xaml")]
+    [InlineData("ChartPalette.Light.xaml")]
+    public void AChangeBadgesTextReadsOnItsOrangeInEachTheme(string file)
+    {
+        (int r, int g, int b) = Palette(file)["Chart_StutterPso"];
+        var fill = new ScottPlot.Color((byte)r, (byte)g, (byte)b);
+        System.Windows.Media.Color under = ChartTheme.ToWpf(fill);
+        System.Windows.Media.Color text = ChartTheme.ToWpf(ChartTheme.TextOn(fill));
+        System.Windows.Media.Color other = text == System.Windows.Media.Colors.Black ? System.Windows.Media.Colors.White : System.Windows.Media.Colors.Black;
+
+        Wcag.Ratio(text, under).Should().BeGreaterThanOrEqualTo(Wcag.AA);
+        Wcag.Ratio(text, under).Should().BeGreaterThanOrEqualTo(Wcag.Ratio(other, under), "the better of black and white");
+        Wcag.Ratio(System.Windows.Media.Colors.White, under).Should().BeLessThan(Wcag.AA, "the pair ScottPlot drew, which the owner could not read");
+    }
+
     private static readonly XNamespace _x = "http://schemas.microsoft.com/winfx/2006/xaml";
     private static readonly XNamespace _p = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
 

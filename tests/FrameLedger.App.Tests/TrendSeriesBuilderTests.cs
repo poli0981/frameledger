@@ -157,20 +157,59 @@ public sealed class TrendSeriesBuilderTests
         TrendSeriesBuilder.ExcludedCount([hooked, steady], TrendMetric.PresentedFps).Should().Be(0, "a steady session has no presented point to exclude");
     }
 
-    /// <summary>beta.8: two differences on one day are one marker with both lines; two labels at one place were drawn over each other.</summary>
+    /// <summary>
+    /// beta.8: two differences on one day are one marker with both lines — two labels at one place were drawn over each other.
+    /// beta.30 (owner decision D70): the markers are numbered oldest first whatever order the changes arrive in, a marker
+    /// stands at its day's first change, and a change met twice is one line.
+    /// </summary>
     [Fact]
-    public void ChangesOnOneDayAreOneMarker()
+    public void ChangesOnOneDayAreOneNumberedMarkerOldestFirst()
     {
-        DateTimeOffset day = new(2026, 9, 20, 18, 0, 0, TimeSpan.Zero);
-        IReadOnlyList<HardwareChange> merged = TrendSeriesBuilder.MergedByDay(
+        var day = new DateTimeOffset(new DateTime(2026, 9, 20, 18, 0, 0, DateTimeKind.Local));
+        IReadOnlyList<ChangeMarker> markers = TrendSeriesBuilder.Markers(
         [
+            new HardwareChange(day.AddDays(3), "GPU: A → B"),
+            new HardwareChange(day.AddMinutes(1), "OS: 26100 → 26200"),
             new HardwareChange(day, "GPU driver: 572.16 → 576.02"),
             new HardwareChange(day.AddMinutes(1), "OS: 26100 → 26200"),
-            new HardwareChange(day.AddDays(3), "GPU: A → B"),
         ]);
 
-        merged.Should().HaveCount(2);
-        merged[0].Text.Should().Be("GPU driver: 572.16 → 576.02" + Environment.NewLine + "OS: 26100 → 26200");
+        markers.Select(static m => m.Number).Should().Equal(1, 2);
+        markers[0].At.Should().Be(day, "a day's marker stands at its first change");
+        markers[0].Lines.Should().Equal("GPU driver: 572.16 → 576.02", "OS: 26100 → 26200");
+        markers[0].Text.Should().Be("GPU driver: 572.16 → 576.02" + Environment.NewLine + "OS: 26100 → 26200");
+        markers[1].Lines.Should().Equal("GPU: A → B");
+        TrendSeriesBuilder.Markers([]).Should().BeEmpty();
+    }
+
+    /// <summary>
+    /// beta.30: a marker reads as its row of the list — the day as Windows' regional format writes a short date (the Sessions
+    /// grid's dates are the same format with the time), the number in digits, and the tooltip's first line both together.
+    /// </summary>
+    [Fact]
+    public void AMarkerReadsAsItsRowOfTheList()
+    {
+        CultureInfo regional = CultureInfo.CurrentCulture;
+        CultureInfo? previous = Strings.Culture;
+        try
+        {
+            Strings.Culture = CultureInfo.GetCultureInfo("en");
+            var marker = new ChangeMarker(1, new DateTimeOffset(new DateTime(2026, 10, 24, 12, 0, 0, DateTimeKind.Local)), ["GPU driver: 32.0.16.1742 → 32.0.16.2101"]);
+
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("vi-VN");
+            marker.DateText.Should().Be("24/10/2026");
+            marker.ToolTipText.Should().Be("1 · 24/10/2026" + Environment.NewLine + "GPU driver: 32.0.16.1742 → 32.0.16.2101");
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
+            marker.DateText.Should().Be("10/24/2026");
+            CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("ja-JP");
+            marker.DateText.Should().Be("2026/10/24");
+            marker.NumberText.Should().Be("1");
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = regional;
+            Strings.Culture = previous;
+        }
     }
 
     [Fact]

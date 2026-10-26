@@ -61,7 +61,10 @@ public sealed partial class PagesLoadTests
         {
             ArgumentNullException.ThrowIfNull(s);
             GameRow game = await s.GameAsync("Alpha").ConfigureAwait(false);
-            await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-1), fgMode: "dlssg", native: 62, displayed: 118, factor: 1.9).ConfigureAwait(false);
+            // beta.30 (D70): the newest session under another GPU driver, so the game page lists a numbered change under its overview
+            // and the readable and theme-switch sweeps measure that list and its badge.
+            long driver = await new SqliteHardwareSnapshotRepository(s.Db).EnsureAsync(new HardwareSnapshot { GpuName = "G", GpuDriver = "576.02" }, DateTimeOffset.UtcNow.AddHours(-1)).ConfigureAwait(false);
+            await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-1), fgMode: "dlssg", native: 62, displayed: 118, factor: 1.9, shape: r => r with { SnapshotId = driver }).ConfigureAwait(false);
             await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-3), hooked: false).ConfigureAwait(false);
             // beta.24 (D62): the summary's session carries a frame-generation mix, so its block is drawn and read in both themes.
             string mix = Application.Recording.FgMixRecord.ToJson(new Domain.Metrics.FgMix(
@@ -185,6 +188,7 @@ public sealed partial class PagesLoadTests
             ("Safety InfoBar", NoticeWithAction),
             ("FPS readout", () => new FpsReadout { Model = FpsPresentation.FromRow(Detail.Sessions[0].Row) }),
             ("Tri-state chip", () => new TriStateChip { Model = new TriStateChipModel("RT", Tri.NotApplicable, TriStateSource.Measured) }),
+            ("Change badge", () => new ChangeBadge { Text = "1" }),
         ];
 
         public void Dispose()

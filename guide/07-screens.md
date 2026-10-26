@@ -87,8 +87,9 @@ stopped, hooking turned off — each with one button that only says you have rea
   appears when the game qualifies for the one exception.
 - **Supports** and **Details** — what the game's own files contain, as far as FrameLedger can tell.
 - **Tabs:** **Sessions** (every session: double-click a row or press **Open**; **Delete all sessions…** at the top),
-  **Frametime**, **Distribution**, **Trend** (one point per session for a figure you choose, with changes to your
-  hardware or driver marked), **Sensors**, and **Latency** when the game reported it.
+  **Frametime**, **Distribution**, **Trend** (one point per session for a figure you choose; each day your hardware,
+  driver, display or Windows changed is numbered on the chart and listed under it), **Sensors**, and **Latency** when
+  the game reported it.
 
 ## A session's summary
 
