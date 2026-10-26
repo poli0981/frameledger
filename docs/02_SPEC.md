@@ -57,7 +57,8 @@ Requirement IDs (`FR-x`, `NFR-x`) are referenced by other docs, commits, and tes
 ### FR-6 History & comparison
 - FR-6.1 Sessions table per game: date, duration, tier badge, Native, Displayed, FG×, lows, resolution + upscaler, RT/PT/RR chips, crash badge, tags.
 - FR-6.2 Compare 2–5 sessions; **mixed-tier comparisons require explicit acknowledgement** and are marked on the chart.
-- FR-6.3 Hardware snapshot per session; trend charts mark changes ("GPU driver 572.16 → 576.02").
+- FR-6.3 Hardware snapshot per session; trend charts mark changes ("GPU driver 572.16 → 576.02") — since beta.30 a
+  numbered badge per day that changed, its changes listed under the chart (owner decision D70).
 - FR-6.6 Charts across a game's sessions (beta.11, owner decision D39): the Sessions tab opens with an overview of every hooked session's rate and lows (Presented FPS, or Native and Displayed where frame generation was measured; 1% and 0.1% lows), a click selecting the session; and the Trend draws more metrics beside the selected one, two units at most (the second against the right axis).
 - FR-6.4 Sessions with mid-session settings changes are excluded from trends by default, with a toggle.
 - FR-6.5 Session tags and notes.

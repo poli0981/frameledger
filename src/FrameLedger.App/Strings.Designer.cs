@@ -1084,7 +1084,9 @@ public static class Strings
         nameof(Trend_Change_Format),
         nameof(Trend_Change_Gpu),
         nameof(Trend_Change_GpuDriver),
+        nameof(Trend_Change_Heading_Format),
         nameof(Trend_Change_Os),
+        nameof(Trend_Changes_Header),
         nameof(Trend_Empty),
         nameof(Trend_Empty_Format),
         nameof(Trend_Excluded_Format),
@@ -3282,7 +3284,11 @@ public static class Strings
 
     public static string Trend_Change_GpuDriver => ResourceManager.GetString(nameof(Trend_Change_GpuDriver), Culture) ?? nameof(Trend_Change_GpuDriver);
 
+    public static string Trend_Change_Heading_Format => ResourceManager.GetString(nameof(Trend_Change_Heading_Format), Culture) ?? nameof(Trend_Change_Heading_Format);
+
     public static string Trend_Change_Os => ResourceManager.GetString(nameof(Trend_Change_Os), Culture) ?? nameof(Trend_Change_Os);
+
+    public static string Trend_Changes_Header => ResourceManager.GetString(nameof(Trend_Changes_Header), Culture) ?? nameof(Trend_Changes_Header);
 
     public static string Trend_Empty => ResourceManager.GetString(nameof(Trend_Empty), Culture) ?? nameof(Trend_Empty);
 

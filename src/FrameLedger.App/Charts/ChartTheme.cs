@@ -60,6 +60,22 @@ public static class ChartTheme
         }
     }
 
+    /// <summary>
+    /// Black or white, whichever reads better on the opaque <paramref name="fill"/> by WCAG 2.1's contrast ratio (beta.30): the
+    /// change markers' badges — black on both themes' orange, 11.79:1 and 8.00:1, where ScottPlot's white read 1.78:1 and
+    /// 2.63:1.
+    /// </summary>
+    internal static Color TextOn(Color fill)
+    {
+        System.Windows.Media.Color under = ToWpf(fill);
+        return Services.ColorMath.Contrast(System.Windows.Media.Colors.Black, under) >= Services.ColorMath.Contrast(System.Windows.Media.Colors.White, under)
+            ? Colors.Black
+            : Colors.White;
+    }
+
+    /// <summary>A chart colour as WPF's.</summary>
+    internal static System.Windows.Media.Color ToWpf(Color c) => System.Windows.Media.Color.FromArgb(c.A, c.R, c.G, c.B);
+
     /// <summary>Source-over: <paramref name="top"/> composited on an opaque <paramref name="under"/>.</summary>
     internal static Color Over(Color top, Color under)
     {

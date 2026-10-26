@@ -1296,8 +1296,14 @@
   <data name="Trend_Change_GpuDriver" xml:space="preserve">
     <value>GPU driver</value>
   </data>
+  <data name="Trend_Change_Heading_Format" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
   <data name="Trend_Change_Os" xml:space="preserve">
     <value>OS</value>
+  </data>
+  <data name="Trend_Changes_Header" xml:space="preserve">
+    <value>Hardware and system changes</value>
   </data>
   <data name="Trend_Empty" xml:space="preserve">
     <value>No hooked session yet — the trend needs measured sessions.</value>

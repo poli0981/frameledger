@@ -313,4 +313,20 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <!-- ChangeBadge (beta.30, D70): a change marker's number beside its row, in the chart badge's colours, set in code. -->
+    <Style TargetType="{x:Type controls:ChangeBadge}">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type controls:ChangeBadge}">
+                    <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="6,0,6,1" MinWidth="22">
+                        <TextBlock HorizontalAlignment="Center" FontWeight="SemiBold" Foreground="{TemplateBinding Foreground}"
+                                   Text="{TemplateBinding Text}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>

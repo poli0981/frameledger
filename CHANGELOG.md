@@ -47,6 +47,15 @@ numeric core and does not move; the heading is the full version — corrected 20
   click: a click that changed nothing — the dialog declined, a refusal, no agent running — left the switch on while the
   text beside it said off, and the next click asked to enable again (`docs/19_SAFETY_AND_ANTICHEAT.md` §User-facing
   consent, `docs/08_UI.md` §Keyboard).
+- **A hardware change on a game's charts was cut off and hard to read** (owner decision D70). *Sessions at a glance* and
+  the *Trend* marked each day the GPU driver, GPU, CPU, display or Windows changed with a dashed line labelled with the
+  change itself — white on orange, its top cut off by the chart's edge, and a day with several changes showed one at
+  most. Each such day now carries a number — 1 for the oldest, the same on both charts — in a band kept above the chart,
+  dark on the orange in both themes, never cut off and never over another: badges too close for their lines stand aside,
+  joined to them, and a run that still cannot stand side by side is one badge (*3–5*). The list under each chart gives
+  each number's day and every change in full, and pointing at a line or a badge shows the same text. In en/vi/ja (ja
+  marked for review). A click on *Sessions at a glance* now reads the pointer at the monitor's own scale
+  (`docs/08_UI.md` §Games, §DPI).
 
 ## Releases
 

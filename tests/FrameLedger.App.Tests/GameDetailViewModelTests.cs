@@ -1019,6 +1019,46 @@ public sealed class GameDetailViewModelTests
         missing.NotFound.Should().BeTrue();
     }
 
+    /// <summary>
+    /// beta.30 (owner decision D70): the page numbers the days that changed, oldest first — the badges on both charts and the
+    /// lists under them share the numbers — and the Trend's list stands with its chart.
+    /// </summary>
+    [Fact]
+    public async Task TheHardwareChangesAreNumberedOldestFirstOnePerDay()
+    {
+        CultureInfo? previous = Strings.Culture;
+        Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            await using ScratchLedger s = await ScratchLedger.OpenAsync();
+            GameRow game = await s.GameAsync("Alpha");
+            var hardware = new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db);
+            var day = new DateTimeOffset(new DateTime(2026, 10, 20, 12, 0, 0, DateTimeKind.Local));
+            long before = await hardware.EnsureAsync(new HardwareSnapshot { GpuName = "G", GpuDriver = "572.16", OsBuild = "26100" }, day, Ct);
+            long updated = await hardware.EnsureAsync(new HardwareSnapshot { GpuName = "G", GpuDriver = "576.02", OsBuild = "26200" }, day, Ct);
+            long display = await hardware.EnsureAsync(new HardwareSnapshot { GpuName = "G", GpuDriver = "576.02", OsBuild = "26200", DisplayRes = "3840x2160" }, day, Ct);
+            await s.SessionAsync(game.Id, day.AddDays(-2), shape: r => r with { SnapshotId = before });
+            await s.SessionAsync(game.Id, day, shape: r => r with { SnapshotId = updated });
+            await s.SessionAsync(game.Id, day.AddDays(3), shape: r => r with { SnapshotId = display });
+            (GameDetailViewModel vm, _, _, _, _) = await BuildAsync(s, game.Id);
+
+            vm.ChangeMarkers.Select(static m => m.Number).Should().Equal(1, 2);
+            vm.ChangeMarkers[0].Lines.Should().Equal("GPU driver: 572.16 → 576.02", "OS: 26100 → 26200");
+            vm.ChangeMarkers[1].Lines.Should().ContainSingle().Which.Should().StartWith("Display: ");
+            vm.HasChangeMarkers.Should().BeTrue();
+            vm.TrendChangesVisible.Should().Be(!vm.TrendEmpty);
+
+            vm.TrendMetric = Charts.TrendMetric.Displayed;
+            vm.TrendEmpty.Should().BeTrue("no frame generation in these sessions: no displayed rate");
+            vm.TrendChangesVisible.Should().BeFalse("no chart, no badges for the list to number");
+            vm.HasChangeMarkers.Should().BeTrue("the Sessions tab's overview still has them");
+        }
+        finally
+        {
+            Strings.Culture = previous;
+        }
+    }
+
     [Fact]
     public async Task SelectingASessionLoadsItsSeriesAndTheTrendFollowsTheToggle()
     {

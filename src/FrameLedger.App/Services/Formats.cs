@@ -57,6 +57,9 @@ public static class Formats
 
     public static string Date(DateTimeOffset at) => at.ToLocalTime().ToString("g", CultureInfo.CurrentCulture);
 
+    /// <summary>A day as <see cref="Date"/> writes it, without the time (beta.30: the change markers' list).</summary>
+    public static string Day(DateTimeOffset at) => at.ToLocalTime().ToString("d", CultureInfo.CurrentCulture);
+
     public static string Temperature(double? celsius) => celsius is double c ? string.Format(CultureInfo.CurrentCulture, Strings.Format_Temperature_Format, c) : Strings.Common_NotAvailable;
 
     /// <summary>A 0–100 load as <c>42%</c>; null → N/A, never 0%.</summary>

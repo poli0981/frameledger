@@ -78,9 +78,7 @@ public sealed class FgMixBar : FrameworkElement
     }
 
     /// <summary>The palette for the theme the element's resources hold now; the applied theme's when none is reachable.</summary>
-    internal ChartPalette Palette() => GetValue(_themeProperty) is Color background
-        ? ChartPalette.For(ColorMath.Luminance(background) < 0.5 ? ApplicationTheme.Dark : ApplicationTheme.Light)
-        : ChartTheme.Current;
+    internal ChartPalette Palette() => GetValue(_themeProperty) is Color background ? ChartPalette.ForBackground(background) : ChartTheme.Current;
 
     protected override void OnRender(DrawingContext drawingContext)
     {
