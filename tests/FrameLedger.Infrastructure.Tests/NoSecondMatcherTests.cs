@@ -39,7 +39,10 @@ public sealed class NoSecondMatcherTests
 
         foreach (Assembly asm in assemblies)
         {
-            foreach (Type type in asm.GetTypes())
+            // Not the types a coverage run adds: coverlet.collector 10.1.0 injects Coverlet.Core.Instrumentation.Tracker.* into
+            // every assembly it instruments, and one of its constants has a value reflection cannot read ("Literal value
+            // was not found") — which kept coverlet at 10.0.1 in beta.29. Those types are the collector's, not a matcher of ours.
+            foreach (Type type in asm.GetTypes().Where(static t => t.Namespace?.StartsWith("Coverlet.", StringComparison.Ordinal) != true))
             {
                 foreach (FieldInfo field in type.GetFields(BindingFlags.Public | BindingFlags.NonPublic |
                                                            BindingFlags.Static | BindingFlags.Instance))
