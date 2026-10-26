@@ -41,6 +41,39 @@ public sealed class ConsentDialogKeysTests
         public void Raise() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(On)));
     }
 
+    /// <summary>The shell's dialog service, answering at once: the phrase typed (or not) as a user would, then the button.</summary>
+    private sealed class AnsweringDialogs(ContentDialogResult answer, string? typed) : Wpf.Ui.IContentDialogService
+    {
+        public ContentDialog? Shown { get; private set; }
+
+        public Task<ContentDialogResult> ShowAsync(ContentDialog dialog, CancellationToken cancellationToken)
+        {
+            Shown = dialog;
+            if (typed is not null)
+            {
+                ((ConsentDialogContent)dialog.Content).ViewModel.Typed = typed;
+            }
+
+            return Task.FromResult(answer);
+        }
+
+        public void SetDialogHost(ContentDialogHost dialogHost) => throw new NotSupportedException();
+
+        public ContentDialogHost? GetDialogHostEx() => null;
+
+        [Obsolete("WPF UI's own obsolete member, not called")]
+        public void SetContentPresenter(System.Windows.Controls.ContentPresenter contentPresenter) => throw new NotSupportedException();
+
+        [Obsolete("WPF UI's own obsolete member, not called")]
+        public System.Windows.Controls.ContentPresenter? GetContentPresenter() => null;
+
+        [Obsolete("WPF UI's own obsolete member, not called")]
+        public void SetDialogHost(System.Windows.Controls.ContentPresenter dialogHost) => throw new NotSupportedException();
+
+        [Obsolete("WPF UI's own obsolete member, not called")]
+        public System.Windows.Controls.ContentPresenter? GetDialogHost() => null;
+    }
+
     /// <summary>What the dialog's template and content do with the keys, read at one moment.</summary>
     private readonly record struct Keys(bool PrimaryIsDefault, bool PrimaryIsEnabled, Visibility PrimaryVisibility, bool CloseIsDefault, bool EnterSwallowed, bool ImeSwallowed);
 
@@ -101,6 +134,38 @@ public sealed class ConsentDialogKeysTests
             before.ImeSwallowed.Should().BeFalse("an IME committing the phrase's diacritics is never taken for Enter");
             after.Should().Be(new Keys(PrimaryIsDefault: true, PrimaryIsEnabled: true, Visibility.Visible, CloseIsDefault: false, EnterSwallowed: false, ImeSwallowed: false),
                 "the phrase typed exactly: Enter reaches the enabled primary button, the default, as a click would");
+        }
+        finally
+        {
+            Shared.Strings.Culture = previous;
+        }
+    }
+
+    /// <summary>
+    /// What <see cref="ConsentPrompt.ShowAsync"/> makes of the dialog's answer: enabling needs the primary button AND the
+    /// phrase — the binding is the gate on the button, and the prompt reads the same rule once more when the dialog closes.
+    /// </summary>
+    [Theory]
+    [InlineData(ContentDialogResult.Primary, true, true)]
+    [InlineData(ContentDialogResult.Primary, false, false)]
+    [InlineData(ContentDialogResult.None, true, false)]
+    public async Task OnlyThePrimaryButtonWithThePhraseTypedEnables(ContentDialogResult answer, bool typed, bool enabled)
+    {
+        CultureInfo? previous = Shared.Strings.Culture;
+        Shared.Strings.Culture = CultureInfo.GetCultureInfo("en");
+        try
+        {
+            (bool result, ContentDialogButton defaultButton) = await PagesLoadTests.OnStaAsync(() =>
+            {
+                var dialogs = new AnsweringDialogs(answer, typed ? "I ACCEPT THE INJECTION RISK" : null);
+#pragma warning disable VSTHRD002 // the fake answers synchronously, so the prompt's task has completed on this thread
+                bool shown = new ConsentPrompt(dialogs).ShowAsync("Alpha").GetAwaiter().GetResult();
+#pragma warning restore VSTHRD002
+                return (shown, dialogs.Shown!.DefaultButton);
+            });
+
+            result.Should().Be(enabled);
+            defaultButton.Should().Be(ContentDialogButton.Primary);
         }
         finally
         {

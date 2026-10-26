@@ -35,45 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Changed
-
-- **Updated libraries, and a version conflict removed** (owner decision D71 for the updater). Velopack, the installer
-  and updater, 1.2.0 → 1.2.161 with its packing tool: the update from beta.29 to this release is still installed by
-  beta.29's updater, and the next one is the first this one installs. Markdig, which draws the documents the App shows,
-  1.4.0 → 1.4.2 (parser fixes; its licence text is unchanged). The database's `SQLitePCLRaw` is again the version
-  `Microsoft.Data.Sqlite` declares, 2.1.13: a pin kept since August for a security issue fixed since had put it on
-  another major version with nothing to say so; the SQLite engine is 3.53.3 (it was 3.53.4). Not taken, each with its
-  reason in `docs/13_CI_CD.md` §Dependabot and the NuGet audit: the .NET 10.0.14 packages (a day old), Markdig 1.5.0,
-  CsWin32 0.3.366 and 0.3.367, `coverlet.collector` 10.1.0 and FluentAssertions 8.
-
-### Fixed
-
-- **Enter in the consent dialog declined, and the hooking switch then showed on beside "off"** (owner decision D69).
-  The dialog's default button was *Keep hooking off* — the rule was "Enter never enables" — and WPF UI's template sends
-  Enter to the default button, so typing `I ACCEPT THE INJECTION RISK` and pressing Enter kept hooking off without a
-  word. Asked with that, the owner chose: Enter enables once the phrase is typed exactly, as a click on *Enable hooking*
-  does, and does nothing before it; Esc and *Keep hooking off* still decline. The typed phrase is still the gate — the
-  button Enter reaches stays disabled and hidden until the phrase matches — and no text of the dialog changed
-  (`consent-dialog/1`). The game page's two switches, Hooking and Recording, now read their row again after every
-  click: a click that changed nothing — the dialog declined, a refusal, no agent running — left the switch on while the
-  text beside it said off, and the next click asked to enable again (`docs/19_SAFETY_AND_ANTICHEAT.md` §User-facing
-  consent, `docs/08_UI.md` §Keyboard).
-- **A hardware change on a game's charts was cut off and hard to read** (owner decision D70). *Sessions at a glance* and
-  the *Trend* marked each day the GPU driver, GPU, CPU, display or Windows changed with a dashed line labelled with the
-  change itself — white on orange, its top cut off by the chart's edge, and a day with several changes showed one at
-  most. Each such day now carries a number — 1 for the oldest, the same on both charts — in a band kept above the chart,
-  dark on the orange in both themes, never cut off and never over another: badges too close for their lines stand aside,
-  joined to them, and a run that still cannot stand side by side is one badge (*3–5*). The list under each chart gives
-  each number's day and every change in full, and pointing at a line or a badge shows the same text. In en/vi/ja (ja
-  marked for review). A click on *Sessions at a glance* now reads the pointer at the monitor's own scale
-  (`docs/08_UI.md` §Games, §DPI).
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.30` | 2026-10-26 | [`docs/changelog/0.1.0-beta.30.md`](docs/changelog/0.1.0-beta.30.md) |
 | `0.1.0-beta.29` | 2026-10-25 | [`docs/changelog/0.1.0-beta.29.md`](docs/changelog/0.1.0-beta.29.md) |
 | `0.1.0-beta.28` | 2026-10-20 | [`docs/changelog/0.1.0-beta.28.md`](docs/changelog/0.1.0-beta.28.md) |
 | `0.1.0-beta.27` | 2026-10-20 | [`docs/changelog/0.1.0-beta.27.md`](docs/changelog/0.1.0-beta.27.md) |
