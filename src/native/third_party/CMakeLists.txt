@@ -65,7 +65,7 @@ target_compile_definitions(fl_jsmn INTERFACE JSMN_STATIC JSMN_PARENT_LINKS)
 FetchContent_Declare(
     catch2
     GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG        fa43b77429ba76c462b1898d6cd2f2d7a9416b14    # v3.7.1
+    GIT_TAG        08092139210881f01a34e60c5f2fd6afa0ea4024    # v3.16.1
     GIT_SHALLOW    FALSE
 )
 FetchContent_MakeAvailable(catch2)

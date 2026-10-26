@@ -477,6 +477,16 @@ Central package management makes Dependabot PRs single-file diffs.
   (2026-10-24), CsWin32 0.3.366 (it changes how SafeHandles are generated; 0.3.367, its fix, is from 2026-10-22), and,
   as before, `coverlet.collector` 10.1.0 and FluentAssertions 8. Catch2 3.16, NVAPI R615 (its licence file changed),
   the Vulkan and Streamline headers and clang-format (paired with Visual Studio's) were read and not needed.
+- **beta.31 (2026-10-26), the owner's request — inside the cooldown, on purpose** ("làm thêm bản beta 31 với các deps
+  còn lại (.net 10.0.14) và 1 số thư viện khác"; owner decision D72): `Microsoft.Extensions.Hosting`,
+  `Microsoft.Data.Sqlite` and `System.Diagnostics.EventLog` 10.0.14 (published the day before; `Microsoft.Data.Sqlite`
+  10.0.14 still declares `SQLitePCLRaw` 2.1.13), Markdig 1.5.0 (its licence text again byte-identical at the packaged
+  commit), CsWin32 0.3.367 (0.3.366 changed how SafeHandles are generated, 0.3.367 fixed its overflow; nothing here
+  needed a change), Meziantou.Analyzer 3.0.317 (no new finding), Catch2 3.16.1 for the native tests (clean under
+  `/W4 /WX`, the `/EHsc` fix kept), and `coverlet.collector` 10.1.0 — `NoSecondMatcherTests` now leaves out the
+  `Coverlet.*` types the collector injects, whose constant reflection cannot read; they were never ours. Still not
+  taken: FluentAssertions 8 (its licence), and the vendored native SDKs (NVAPI R615's licence file changed; the Vulkan
+  and Streamline headers follow the measured loader and titles).
 - **The NuGet audit** (`Directory.Build.props`, written down 2026-10-25): `NuGetAudit` on, `NuGetAuditMode` `all`
   (transitive packages too), `NuGetAuditLevel` `low` — the SDK's defaults for net10.0, stated so that a later SDK's
   defaults cannot move them. With `TreatWarningsAsErrors` a vulnerable package is NU1901–NU1904 and the restore, so

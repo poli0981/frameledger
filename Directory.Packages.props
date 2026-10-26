@@ -5,7 +5,8 @@
     and nowhere else, which also makes Dependabot PRs single-file diffs.
     All versions verified against nuget.org on 2026-08-02; re-verified and bumped 2026-09-21; bumped again
     2026-10-25 (beta.29 PR-2) with the updates Dependabot had never proposed (docs/13_CI_CD.md §Dependabot and
-    the NuGet audit), and 2026-10-26 (beta.30 PR-3): Velopack and Markdig, the SQLitePCLRaw pin dropped.
+    the NuGet audit), and 2026-10-26 (beta.30 PR-3): Velopack and Markdig, the SQLitePCLRaw pin dropped; and again
+    2026-10-26 (beta.31, the owner's request): the .NET 10.0.14 servicing packages and the updates beta.30 had left.
   -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -33,11 +34,11 @@
       net10.0. The package ships no licence file, so its text is a reviewed override
       (tools/license-overrides/Markdig.txt). HTML is disabled in the pipeline (App/Markdown/MarkdownRenderer.cs).
     -->
-    <PackageVersion Include="Markdig" Version="1.4.2" />
+    <PackageVersion Include="Markdig" Version="1.5.0" />
   </ItemGroup>
 
   <ItemGroup Label="Hosting and logging">
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.14" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.Extensions.Hosting" Version="10.0.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
@@ -46,7 +47,7 @@
 
   <ItemGroup Label="Storage">
     <!-- No EF: Dapper over Microsoft.Data.Sqlite (CLAUDE.md pinned stack). -->
-    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.13" />
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.14" />
     <PackageVersion Include="Dapper" Version="2.1.89" />
     <!--
       No transitive pin on SQLitePCLRaw since beta.30 (2026-10-26). From the scaffold (2026-08-02) to beta.29 this held
@@ -60,7 +61,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Interop, telemetry and packaging">
-    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.363" />
+    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.367" />
     <PackageVersion Include="Velopack" Version="1.2.161" />
     <!-- MPL-2.0. docs/18_GPU_VENDOR_APIS.md §L2 requires >= 0.9.6, and
          legal/THIRD_PARTY_NOTICES.md has a release-gate check that no
@@ -68,12 +69,12 @@
     <PackageVersion Include="LibreHardwareMonitorLib" Version="0.9.6" />
     <!-- The crash witness (04_CAPTURE §Crash & exit classification): Application log events 1000/1001. In-box
          for WPF apps, a package for a class library on the Windows TFM. Microsoft, MIT. -->
-    <PackageVersion Include="System.Diagnostics.EventLog" Version="10.0.13" />
+    <PackageVersion Include="System.Diagnostics.EventLog" Version="10.0.14" />
   </ItemGroup>
 
   <ItemGroup Label="Analyzers (build-time only)">
     <PackageVersion Include="Roslynator.Analyzers" Version="5.0.1" />
-    <PackageVersion Include="Meziantou.Analyzer" Version="3.0.307" />
+    <PackageVersion Include="Meziantou.Analyzer" Version="3.0.317" />
     <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.12.1" />
   </ItemGroup>
 
@@ -107,12 +108,12 @@
     <PackageVersion Include="FluentAssertions" Version="[7.2.2]" />
     <PackageVersion Include="NSubstitute" Version="6.2.0" />
     <!--
-      10.1.0 not taken (2026-10-25): the tracker it injects into each instrumented assembly declares a constant,
+      10.1.0 not taken on 2026-10-25: the tracker it injects into each instrumented assembly declares a constant,
       ModuleTrackerRegistryKey, whose value reflection cannot read ("Literal value was not found"), and
-      NoSecondMatcherTests reads every string constant in Application, Domain and Infrastructure. The same test passes
-      with 10.0.1, and with 10.1.0 when no coverage is collected.
+      NoSecondMatcherTests reads every string constant in Application, Domain and Infrastructure. Taken in beta.31
+      (2026-10-26): that test now leaves out the types coverlet adds (namespace Coverlet.*), which are not ours.
     -->
-    <PackageVersion Include="coverlet.collector" Version="10.0.1" />
+    <PackageVersion Include="coverlet.collector" Version="10.1.0" />
   </ItemGroup>
 
 </Project>
