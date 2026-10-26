@@ -35,23 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Changed
-
-- **The remaining library updates** (the owner's request after beta.30, owner decision D72 — inside the seven-day wait
-  the project otherwise keeps). The .NET 10.0.14 servicing packages the App and the agent use
-  (`Microsoft.Extensions.Hosting`, `Microsoft.Data.Sqlite`, `System.Diagnostics.EventLog`; beta.30 already carried the
-  10.0.14 runtime) and Markdig 1.5.0 (its licence text unchanged); for developers, the CsWin32 generator 0.3.367,
-  Meziantou.Analyzer 3.0.317, `coverlet.collector` 10.1.0 — a test that reads every constant of three assemblies now
-  leaves out the types the coverage tool adds to them — and Catch2 3.16.1 for the native tests. The SQLite engine stays
-  3.53.3 (`SQLitePCLRaw` 2.1.13, which `Microsoft.Data.Sqlite` 10.0.14 still declares). Still not taken: FluentAssertions
-  8, for its licence (`docs/13_CI_CD.md` §Dependabot and the NuGet audit).
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.31` | 2026-10-26 | [`docs/changelog/0.1.0-beta.31.md`](docs/changelog/0.1.0-beta.31.md) |
 | `0.1.0-beta.30` | 2026-10-26 | [`docs/changelog/0.1.0-beta.30.md`](docs/changelog/0.1.0-beta.30.md) |
 | `0.1.0-beta.29` | 2026-10-25 | [`docs/changelog/0.1.0-beta.29.md`](docs/changelog/0.1.0-beta.29.md) |
 | `0.1.0-beta.28` | 2026-10-20 | [`docs/changelog/0.1.0-beta.28.md`](docs/changelog/0.1.0-beta.28.md) |
