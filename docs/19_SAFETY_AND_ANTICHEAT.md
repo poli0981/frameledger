@@ -1036,7 +1036,8 @@ Consent is stored per game (`games.hook_consent_at`), **stamped by the Agent, ne
 > neither choice), what is injected and why, **Tier 1 and Tier 2 as two paragraphs of the same shape** (each
 > enumerating what the session records; Tier 2 is described by what it does, never as less), the anti-cheat
 > statement including the 30 s unhook, the terms-of-service statement, and the typed acknowledgement — the
-> primary button is disabled until the phrase is typed exactly, and Enter never enables. `en` and `vi` are
+> primary button is disabled until the phrase is typed exactly~~, and Enter never enables~~ *(Enter enables once the
+> phrase matches since beta.30, owner decision D69 — below)*. `en` and `vi` are
 > written (the owner reviews `vi`); **`ja` is the English verbatim, marked `safety: human review required`**,
 > which the resx audit enforces (`09_I18N` §Safety-critical strings). The wording carries a version
 > (`Shared.Safety.SafetyDisclosure.Version = consent-dialog/1`; bump on any change of meaning in any
@@ -1047,6 +1048,18 @@ Consent is stored per game (`games.hook_consent_at`), **stamped by the Agent, ne
 > nothing written. `HookingConsentTests` (App), `AgentCommandHandlerTests` (Agent side) and
 > `PipeEndToEndTests` (the real pipe, the real pre-scan, the row read back) pin each half. The toggle that opens
 > it is the game page's, PR-5.
+
+> **Amended 2026-10-26 (beta.30, owner decision D69): Enter enables once the phrase is typed exactly.** "Enter never
+> enables" was built as `DefaultButton = Close`, and WPF UI 4.3.0's template sends Enter to the default button (each
+> button's `IsDefault` follows `DefaultButton`, read at the tag) — so the owner typed the phrase, pressed Enter and
+> declined without a word, while the game page's switch went on showing *on* beside *off*. Asked with that, the owner
+> chose: the primary button is the default; while the phrase does not match, the dialog's content keeps Enter
+> (`ConsentDialogContent.SwallowsEnter`) and nothing happens; once it matches, Enter enables, as a click on the
+> then-visible *Enable hooking* does. **The typed phrase is still the gate**: the button Enter reaches is disabled — and
+> hidden — until the phrase is typed exactly, so a reflexive Enter cannot enable; Esc and *Keep hooking off* still
+> decline. No `Safety_Consent_*` string changed, so `consent-dialog/1` stands. `ConsentDialogKeysTests` holds both
+> halves on the real template. The tick-box dialogs (D33's exception, D34's admin mode) are unchanged: Enter keeps them
+> declined.
 
 > **The Agent stamps one since 2026-09-10 (P2 PR-F, HANDOFF §P2 decision D4):** `FrameLedger.Agent --console
 > consent grant` shows `OperatorDisclosure` (the same four statements, first line naming the surface), requires

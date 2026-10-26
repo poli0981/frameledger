@@ -35,6 +35,19 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Fixed
+
+- **Enter in the consent dialog declined, and the hooking switch then showed on beside "off"** (owner decision D69).
+  The dialog's default button was *Keep hooking off* — the rule was "Enter never enables" — and WPF UI's template sends
+  Enter to the default button, so typing `I ACCEPT THE INJECTION RISK` and pressing Enter kept hooking off without a
+  word. Asked with that, the owner chose: Enter enables once the phrase is typed exactly, as a click on *Enable hooking*
+  does, and does nothing before it; Esc and *Keep hooking off* still decline. The typed phrase is still the gate — the
+  button Enter reaches stays disabled and hidden until the phrase matches — and no text of the dialog changed
+  (`consent-dialog/1`). The game page's two switches, Hooking and Recording, now read their row again after every
+  click: a click that changed nothing — the dialog declined, a refusal, no agent running — left the switch on while the
+  text beside it said off, and the next click asked to enable again (`docs/19_SAFETY_AND_ANTICHEAT.md` §User-facing
+  consent, `docs/08_UI.md` §Keyboard).
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

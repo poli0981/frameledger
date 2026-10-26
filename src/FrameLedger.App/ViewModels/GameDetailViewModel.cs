@@ -781,10 +781,10 @@ public sealed partial class GameDetailViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private Task ToggleHookingAsync() => RunAsync(HookEnabled ? DisableAsync : EnableAsync);
+    private Task ToggleHookingAsync() => RunAsync(() => ThenShowStoredAsync(HookEnabled ? DisableAsync : EnableAsync, nameof(HookEnabled)));
 
     [RelayCommand]
-    private Task ToggleRecordingAsync() => RunAsync(ToggleRecordingCoreAsync);
+    private Task ToggleRecordingAsync() => RunAsync(() => ThenShowStoredAsync(ToggleRecordingCoreAsync, nameof(RecordSessions)));
 
     /// <summary>D33: the exception's disclosure, then the request; the Agent gathers the facts and grants or refuses.</summary>
     [RelayCommand]
@@ -843,6 +843,25 @@ public sealed partial class GameDetailViewModel : ObservableObject
         Task running = work();
         Pending = running;
         await running.ConfigureAwait(true);
+    }
+
+    /// <summary>
+    /// A switch's command, then the switch's property raised whatever happened (beta.30, the owner's report). The switch's
+    /// <c>IsChecked</c> is OneWay from the row, and the click has already flipped it through <c>SetCurrentValue</c>; when the
+    /// command leaves the row as it was — a declined dialog, a refusal, no Agent — the property is set to the value it
+    /// already held and raises nothing, so the switch went on showing the click: on while the text beside it said off, and
+    /// the next click asked to enable again. Raised unchanged, the binding reads the row again and drops the click's value.
+    /// </summary>
+    private async Task ThenShowStoredAsync(Func<Task> work, string property)
+    {
+        try
+        {
+            await work().ConfigureAwait(true);
+        }
+        finally
+        {
+            OnPropertyChanged(property);
+        }
     }
 
     private async Task EnableAsync()

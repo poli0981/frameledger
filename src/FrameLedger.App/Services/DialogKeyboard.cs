@@ -10,10 +10,13 @@ namespace FrameLedger.App.Services;
 
 /// <summary>
 /// <c>08_UI</c> §Accessibility: Esc closes the open dialog with no result — the same as its Close or Cancel button.
-/// WPF UI 4.3.0 handles no key in <c>ContentDialog</c> or <c>MessageBox</c> (both sources at the 4.3.0 tag, read
+/// WPF UI 4.3.0's code handles no key in <c>ContentDialog</c> or <c>MessageBox</c> (both sources at the 4.3.0 tag, read
 /// 2026-09-15), so one class handler on <see cref="Window"/> does it for every window this app opens: a
 /// <c>MessageBox</c> closes itself; any other window hides the <c>ContentDialog</c> its <see cref="ContentDialogHost"/>
-/// is showing.
+/// is showing. *(Corrected 2026-10-26, beta.30: the <c>ContentDialog</c>'s TEMPLATE does route keys — its buttons'
+/// <c>IsDefault</c> follows <c>DefaultButton</c> and the close button is <c>IsCancel</c>, so WPF sends Enter to the default
+/// button, which is how Enter in the consent dialog's box declined (the owner's report); Esc reaches this handler first,
+/// on the bubbling key event, before WPF's access keys run.)*
 /// </summary>
 /// <remarks>
 /// The BUBBLING key event, not the preview: a control that uses Esc itself — a dropdown closing its list, a text box
