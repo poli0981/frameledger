@@ -5,7 +5,7 @@
     and nowhere else, which also makes Dependabot PRs single-file diffs.
     All versions verified against nuget.org on 2026-08-02; re-verified and bumped 2026-09-21; bumped again
     2026-10-25 (beta.29 PR-2) with the updates Dependabot had never proposed (docs/13_CI_CD.md §Dependabot and
-    the NuGet audit).
+    the NuGet audit), and 2026-10-26 (beta.30 PR-3): Velopack and Markdig, the SQLitePCLRaw pin dropped.
   -->
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -33,7 +33,7 @@
       net10.0. The package ships no licence file, so its text is a reviewed override
       (tools/license-overrides/Markdig.txt). HTML is disabled in the pipeline (App/Markdown/MarkdownRenderer.cs).
     -->
-    <PackageVersion Include="Markdig" Version="1.4.0" />
+    <PackageVersion Include="Markdig" Version="1.4.2" />
   </ItemGroup>
 
   <ItemGroup Label="Hosting and logging">
@@ -49,24 +49,19 @@
     <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.13" />
     <PackageVersion Include="Dapper" Version="2.1.89" />
     <!--
-      Transitive pin, not a direct dependency.
-
-      Microsoft.Data.Sqlite 10.0.10 resolves SQLitePCLRaw.lib.e_sqlite3 2.1.11,
-      which carries GHSA-2m69-gcr7-jv3q (high severity, vulnerable range
-      <= 2.1.11) via its bundled SQLite. With TreatWarningsAsErrors that is
-      NU1903 and the build fails — correctly. Pinning the bundle forward to the
-      3.x line pulls a patched native library.
-
-      CentralPackageTransitivePinningEnabled is what makes this work from here.
-      Revisit when Microsoft.Data.Sqlite ships a build that resolves a patched
-      version on its own, and drop this pin rather than carrying it forever.
+      No transitive pin on SQLitePCLRaw since beta.30 (2026-10-26). From the scaffold (2026-08-02) to beta.29 this held
+      SQLitePCLRaw.bundle_e_sqlite3 at 3.0.5: Microsoft.Data.Sqlite 10.0.10 resolved SQLitePCLRaw.lib.e_sqlite3 2.1.11,
+      which carries GHSA-2m69-gcr7-jv3q (vulnerable range <= 2.1.11) through its bundled SQLite, NU1903 under
+      TreatWarningsAsErrors. Its own comment said to drop it once Microsoft.Data.Sqlite resolved a patched version on
+      its own; 10.0.13 declares SQLitePCLRaw 2.1.13, and the pin had become a conflict NuGet does not report - it put a
+      package built against the 2.x line on SQLitePCLRaw's 3.x line. The NuGet audit (Directory.Build.props) still
+      turns a vulnerable SQLite red (docs/13_CI_CD.md §Dependabot and the NuGet audit).
     -->
-    <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.5" />
   </ItemGroup>
 
   <ItemGroup Label="Interop, telemetry and packaging">
     <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.363" />
-    <PackageVersion Include="Velopack" Version="1.2.0" />
+    <PackageVersion Include="Velopack" Version="1.2.161" />
     <!-- MPL-2.0. docs/18_GPU_VENDOR_APIS.md §L2 requires >= 0.9.6, and
          legal/THIRD_PARTY_NOTICES.md has a release-gate check that no
          depended-upon file carries MPL-2.0 Exhibit B. Consume UNMODIFIED. -->

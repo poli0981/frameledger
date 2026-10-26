@@ -35,6 +35,17 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Changed
+
+- **Updated libraries, and a version conflict removed** (owner decision D71 for the updater). Velopack, the installer
+  and updater, 1.2.0 → 1.2.161 with its packing tool: the update from beta.29 to this release is still installed by
+  beta.29's updater, and the next one is the first this one installs. Markdig, which draws the documents the App shows,
+  1.4.0 → 1.4.2 (parser fixes; its licence text is unchanged). The database's `SQLitePCLRaw` is again the version
+  `Microsoft.Data.Sqlite` declares, 2.1.13: a pin kept since August for a security issue fixed since had put it on
+  another major version with nothing to say so; the SQLite engine is 3.53.3 (it was 3.53.4). Not taken, each with its
+  reason in `docs/13_CI_CD.md` §Dependabot and the NuGet audit: the .NET 10.0.14 packages (a day old), Markdig 1.5.0,
+  CsWin32 0.3.366 and 0.3.367, `coverlet.collector` 10.1.0 and FluentAssertions 8.
+
 ### Fixed
 
 - **Enter in the consent dialog declined, and the hooking switch then showed on beside "off"** (owner decision D69).
