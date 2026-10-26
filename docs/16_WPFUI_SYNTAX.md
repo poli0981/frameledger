@@ -298,6 +298,12 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
   such overload is public; the Close button's own path is `TemplateButtonCommand.Execute(MessageBoxButton.Close)`.
   `Services/DialogKeyboard` registers one class handler on `Window` (bubbling `KeyDown`, so a dropdown's Esc wins) and
   closes through those paths; `AccessibilityTests.EscapeClosesTheOpenDialogWithNoResult` holds it (`08_UI` §Accessibility).
+  *(Corrected 2026-10-26, beta.30: the CODE handles no key, but `ContentDialog.xaml` does route them — each template
+  button's `IsDefault` follows `DefaultButton`, Close is `IsCancel`, and while the primary is disabled a trigger makes
+  Close the default. Enter therefore clicks the default button from a single-line text box: the consent dialog's
+  `DefaultButton = Close` declined a typed phrase on Enter (the owner's report; D69 made the primary the default and the
+  content keeps Enter until the phrase matches). Esc through `IsCancel` is read from the template, not measured —
+  `DialogKeyboard` handles it first.)*
 - [ ] **`ui:TextBlock Appearance` keeps the theme a text was made under (4.3.0).** `TextBlock.OnAppearanceChanged` stores
   `TryFindResource(…)` in the internal `AppearanceForeground`, and `TextBlockMetadata` coerces every TextBlock's `Foreground`
   to it — the brush found when the element was made, never looked up again (read at tag 4.3.0, 2026-10-07; `main` is the

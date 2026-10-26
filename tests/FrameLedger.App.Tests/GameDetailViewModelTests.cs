@@ -441,6 +441,56 @@ public sealed class GameDetailViewModelTests
     }
 
     /// <summary>
+    /// beta.30 (the owner's report, 2026-10-26): the switches' IsChecked is OneWay from the row and a click has already flipped
+    /// it. A command that left the row as it was — the dialog declined, the Agent refusing, no Agent — set the property to the
+    /// value it held, which raises nothing, and the switch showed on beside "off". Whatever happened, the property is raised,
+    /// so the binding reads the row again (<c>SwitchesShowTheRowAgainTests</c> drives the real control).
+    /// </summary>
+    [Fact]
+    public async Task ASwitchCommandThatChangedNothingStillRaisesItsProperty()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow game = await s.GameAsync("Alpha");
+        (GameDetailViewModel vm, FakeAgent agent, FakePrompt prompt, _, _) = await BuildAsync(s, game.Id);
+        var raised = new List<string?>();
+        vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName);
+
+        prompt.Accepts = false;
+        vm.ToggleHookingCommand.Execute(null);
+        Task declined = vm.Pending;
+        await declined;
+        vm.HookEnabled.Should().BeFalse();
+        agent.Sent.Should().BeEmpty("a declined dialog sends nothing");
+        raised.Should().Contain(nameof(GameDetailViewModel.HookEnabled), "the dialog was declined and the row is unchanged");
+
+        raised.Clear();
+        prompt.Accepts = true;
+        agent.Answer = static r => IpcCodec.Decode(IpcCodec.Encode(IpcMessageType.Refused, "1", new RefusedAck(r.GameId, "BlockedModule", "eac", "EasyAntiCheat_EOS.dll")));
+        vm.ToggleHookingCommand.Execute(null);
+        Task refused = vm.Pending;
+        await refused;
+        vm.HookEnabled.Should().BeFalse();
+        raised.Should().Contain(nameof(GameDetailViewModel.HookEnabled), "the Agent refused and the row is unchanged");
+
+        raised.Clear();
+        agent.IsConnected = false;
+        vm.ToggleHookingCommand.Execute(null);
+        Task unavailable = vm.Pending;
+        await unavailable;
+        vm.HookEnabled.Should().BeFalse();
+        raised.Should().Contain(nameof(GameDetailViewModel.HookEnabled), "no Agent was there to ask");
+
+        // The recording switch: the row went away under the page (a removal elsewhere), so the write changed nothing.
+        raised.Clear();
+        (await s.Library.RemoveAsync(game.Id, keepSessions: false, Ct)).Should().BeTrue();
+        vm.ToggleRecordingCommand.Execute(null);
+        Task gone = vm.Pending;
+        await gone;
+        vm.RecordSessions.Should().BeTrue("nothing was written");
+        raised.Should().Contain(nameof(GameDetailViewModel.RecordSessions));
+    }
+
+    /// <summary>
     /// beta.8 (owner request 2026-09-25): an anti-cheat game's Hooking card — a switch that can never be turned on — gives
     /// way to the finding alone while <c>ui.hide_anticheat_hooking</c> is on, its default; off, the card is back with the
     /// finding under its disabled switch. Either way the finding is on the page (FR-2.2), in words, and a game nothing was

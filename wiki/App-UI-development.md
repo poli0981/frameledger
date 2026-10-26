@@ -46,7 +46,8 @@ Each of these cost a release; the full list, with the tests that hold each, is Â
 - A scroll bar is hidden through its scroller's own `ScrollBarVisibility`, never a style on the bar.
 - `ui:InfoBar` draws no content (the App's copy of its template does); `ui:Badge` palette appearances are not theme
   colours; WPF UI's DataGrid parts have keyed styles only; its CheckBox is 120 px wide at least.
-- No dialog closes on Esc by itself (`Services/DialogKeyboard` does it); ScottPlot zooms on every wheel unless told not to.
+- Esc in a dialog is `Services/DialogKeyboard`'s; Enter goes to a `ContentDialog`'s default button (its template's
+  `IsDefault` follows `DefaultButton`), so choose it on purpose; ScottPlot zooms on every wheel unless told not to.
 - Apply the theme before the first window loads; watch the system theme only once the window has a handle.
 
 ## Testing the UI

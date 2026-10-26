@@ -80,7 +80,8 @@ stopped, hooking turned off — each with one button that only says you have rea
   executable…** points the entry at another `.exe` and turns hooking back off; its file dialog opens in the game's own
   folder. **Remove…** asks whether to keep the game's sessions.
 - **Recording** — off, FrameLedger ignores the program completely: for a launcher or a tool that is not a game.
-- **Hooking** — on, the game is measured. A warning comes first, and you type `I ACCEPT THE INJECTION RISK` to go on.
+- **Hooking** — on, the game is measured. A warning comes first: type `I ACCEPT THE INJECTION RISK` exactly, then press
+  **Enable hooking** or Enter.
   Read [Anti-cheat and safety](04-anti-cheat-and-safety.md) before you do.
 - **Anti-cheat** — shown in its place when anti-cheat was found: what was found, and where. **User-mode exception**
   appears when the game qualifies for the one exception.
