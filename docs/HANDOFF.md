@@ -69,6 +69,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.27` | [`handoff/history/0.1.0-beta.27.md`](handoff/history/0.1.0-beta.27.md) |
 | `§beta.28` | [`handoff/history/0.1.0-beta.28.md`](handoff/history/0.1.0-beta.28.md) |
 | `§beta.29` | [`handoff/history/0.1.0-beta.29.md`](handoff/history/0.1.0-beta.29.md) |
+| `§beta.30` | [`handoff/history/0.1.0-beta.30.md`](handoff/history/0.1.0-beta.30.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -76,78 +77,41 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-10-26, 0.1.0-beta.30: Enter in the consent dialog, the hardware-change markers, the libraries
+## **START HERE** — 2026-10-26, 0.1.0-beta.31: the remaining library updates
 
-*Status is `docs/changelog/0.1.0-beta.30.md`; this is what no other file carries.* The owner, 2026-10-26, with a
-screenshot of a game page: "Fix: sau khi gõ câu: "I ACCEPT..." -> Nhấn Enter -> Nút được bật, Text lại ghi "off", thoát
-ra, vào lại vẫn tắt.", "Kiểm tra dependcies, conflict và sửa code, cập nhật (nếu cần)" and "Fix(UI/UX): Mốc đổi phiên bản
-driver card hiện không rõ (Như trong hình)" — and, with the plan approved, the whole train to the release without asking
-again. #338 (the consent dialog's Enter, the two switches), #339 (the markers), #340 (the libraries) and this release.
+*Status is `docs/changelog/0.1.0-beta.31.md`; this is what no other file carries.* The owner, while beta.30 was being
+released: "Sau bản beta 30, bạn làm thêm bản beta 31 với các deps còn lại (.net 10.0.14) và 1 số thư viện khác. Sau khi
+kết thúc bản beta 31, bạn có thể cập nhật và đóng phiên." #342 (the libraries) and this release.
 
-**Decisions** (asked while planning, each with the rule or the screenshot in front of the owner):
+**Decision:**
 
-- **D69 — Enter enables once the consent phrase is typed exactly** (`19_SAFETY` §User-facing consent, amended): the
-  primary button is the dialog's default, and until the phrase matches the content keeps Enter, so nothing happens; Esc
-  and *Keep hooking off* still decline. No `Safety_Consent_*` string changed: `consent-dialog/1` stands. The tick-box
-  dialogs (D33's exception, D34's admin mode) are unchanged.
-- **D70 — the hardware-change markers are numbered** — a badge per day that changed, the day's changes in the list under
-  each chart, the same text in a tooltip ("Số + danh sách", chosen over a full label kept on the chart) (`08_UI` §Games ›
-  Trend).
-- **D71 — Velopack 1.2.161 now**, the library and `vpk` together: item 24(d)'s Velopack half. The first update the new
-  updater installs is beta.30 → beta.31 (item 25(c)).
+- **D72 — the remaining updates, inside the seven-day cooldown on purpose** (`13_CI_CD` §Dependabot and the NuGet
+  audit): the .NET 10.0.14 packages (a day old), Markdig 1.5.0 (two days), CsWin32 0.3.367 (four days),
+  Meziantou.Analyzer 3.0.317, and the two beta.30 had set aside for other reasons — `coverlet.collector` 10.1.0 and
+  Catch2 3.16.1. The cooldown still holds for Dependabot and for every update the owner has not asked for.
 
-**Choices made here** — the owner asked for the fixes, not for these:
+**Choices made here:**
 
-- **The switches stay OneWay and re-read their row**: the command raises the property whatever happened
-  (`ThenShowStoredAsync`). A TwoWay binding would write the click into the view model before the dialog answered; a
-  code-behind `UpdateTarget` would leave the view model unable to say so in a test.
-- **The markers draw their own badges** (`ChangeMarkerPlottable`), not ScottPlot's `VerticalLine` label with offsets:
-  the label's anchor is its own line, nothing could stop two from overlapping, and its colours were fixed when it was
-  made. A run of days too crowded to stand side by side becomes one badge (*3–5*) rather than a badge that is not drawn.
-- **The `SQLitePCLRaw` pin dropped, not moved to 2.1.14**: the pin's own comment said to drop it once
-  `Microsoft.Data.Sqlite` resolved a patched version, and 2.1.14 (SQLite 3.54.0) would be a new pin to carry; it comes
-  with Microsoft's next servicing.
-- **No 10.0.14 packages**: published the day before, and the out-of-band fix is in the runtime, which the release
-  ships from the SDK it builds with.
+- **coverlet 10.1.0 by fixing the test, not by keeping the pin**: `NoSecondMatcherTests` reads every string constant of
+  three assemblies, and under coverage those assemblies also carry the collector's `Coverlet.*` types — not ours, and one
+  of their constants is unreadable to reflection. The test leaves that namespace out; what it guards is unchanged.
+- **FluentAssertions stays at 7.2.2** (Xceed's licence), and the vendored native SDKs stay as measured: NVAPI R615
+  changed its licence file, and the Vulkan and Streamline headers follow the loader and the titles they were measured
+  against.
 
 **Measured on the way:**
 
-- **WPF drops a click's value when the source is raised unchanged**: `BindingExpression.TransferValue` re-transfers
-  outside a source update and calls `DependencyObject.InvalidateProperty(dp)`, which is `preserveCurrentValue: false`
-  (dotnet/wpf `main`); `ConsentDialogKeysTests` shows it on a real `ToggleSwitch`.
-- **WPF UI 4.3.0's `ContentDialog.xaml`** binds each button's `IsDefault` to `DefaultButton`, makes Close `IsCancel`,
-  hides a disabled primary, and while the primary is disabled a trigger makes Close the default — so `DefaultButton =
-  Primary` alone would still have declined on an early Enter.
-- **ScottPlot 5.1.59's `VerticalLine` label** is anchored 5 px above the data area and grows into the top-axis panel,
-  15 px for an unused axis; `Add.Plottable` assigns no axes; `LabelStyle.LastRenderPixelRect` includes a 3 px shadow
-  offset even without a shadow.
-- **SQLite in each `SQLitePCLRaw`**, read from the native libraries: 2.1.13 → 3.53.3, the 3.0.5 pin → 3.53.4, 2.1.14 →
-  3.54.0.
-- **The release rehearsal** (run 40303218479, `workflow_dispatch` on the deps branch): the runner installed SDK
-  **10.0.403** and runtime 10.0.14 (`setup-dotnet` resolves `global.json`'s `latestFeature` to the newest), and the
-  published package's `FrameLedger.deps.json` names `runtimepack.Microsoft.NETCore.App.Runtime.win-x64/10.0.14` and the
-  WindowsDesktop pack 10.0.14 — so the release carries the out-of-band security runtime with no change to `global.json`.
-  `vpk` 1.2.161 produced the same seven assets as 1.2.0 (Setup 115 MB, Portable and full 108 MB) and a delta from
-  beta.29 of 5.1 MB.
+- Catch2 3.16.1 builds clean under `/W4 /WX` with the `/EHsc` fix kept; 32 of 32 native suites pass.
+- `Microsoft.Data.Sqlite` 10.0.14 still declares `SQLitePCLRaw` 2.1.13: the engine stays SQLite 3.53.3.
+- CsWin32 0.3.367 and Meziantou 3.0.317 changed nothing in the build: no new generated signature, no new finding.
 
 **Traps met on the way:**
 
-- **A Visual Studio update strands CMake's cache**: Insiders moved MSVC 14.51 → 14.52 and `cmake configure failed`
-  ("CMAKE_CXX_COMPILER … is not a full path to an existing compiler tool"). Delete `build/native/x64-release/CMakeCache.txt`
-  and `CMakeFiles`; the next gate configures afresh.
-- **A fresh worktree cannot fetch MinHook or Catch2 on this machine**: CMake caches `GIT_EXECUTABLE` as Git's
-  `ucrt64\bin\git.exe`, which cannot run the `git-submodule` shell script without Git's `usr\bin` on the PATH
-  ("'submodule' appears to be a git command, but we were not able to execute it"). Point the cache at
-  `C:\Program Files\Git\cmd\git.exe`, or run the gate in the main checkout (detached at the branch's commit), whose
-  `_deps` are already there. CI is not affected.
-- **A `private const` in a test takes the `_` prefix** — IDE1006 in `dotnet format`, which the build does not report.
-- **FluentAssertions' `OnlyContain` fails on an empty collection**, and `^1` cannot appear in its expression (CS8790).
-- **ScottPlot's `Add.Plottable` assigns no axes** to a custom plottable; set `Axes.XAxis`/`YAxis` after
-  `DateTimeTicksBottom` has replaced the bottom axis.
-- **SonarCloud counts a prompt's `ShowAsync` as new code**: #338's gate read 70 % (four lines of `ConsentPrompt`); the
-  release pull request tests it through a fake `IContentDialogService` so `main`'s gate does not inherit the gap.
+- **A Catch2 bump re-runs FetchContent's submodule step**: on this machine CMake's cached `GIT_EXECUTABLE` (Git's
+  `ucrt64\bin\git.exe`) cannot run `git-submodule` — point it at `C:/Program Files/Git/cmd/git.exe` in
+  `build/native/x64-release/CMakeCache.txt` before the gate (beta.30's START HERE has the first sighting).
 
-**Owner-only:** item 25 added; item 24(d) updated.
+**Owner-only:** no new item — item 25(c) is this update, the first that beta.30's Velopack 1.2.161 installs.
 
 
 ## Owner-only — no PR can close these
@@ -406,6 +370,7 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D69 | [`19_SAFETY_AND_ANTICHEAT.md`](19_SAFETY_AND_ANTICHEAT.md) §User-facing consent | Enter enables once the consent phrase is typed exactly; before it Enter does nothing |
 | D70 | [`08_UI.md`](08_UI.md) §Games › Trend | the hardware-change markers are numbered badges, their changes listed under each chart, with a tooltip |
 | D71 | [`13_CI_CD.md`](13_CI_CD.md) §Dependabot and the NuGet audit | Velopack and vpk 1.2.161 in beta.30 (item 24(d)'s Velopack half) |
+| D72 | [`13_CI_CD.md`](13_CI_CD.md) §Dependabot and the NuGet audit | beta.31 takes the remaining updates inside the seven-day cooldown: .NET 10.0.14 packages, Markdig 1.5.0, CsWin32, Meziantou, coverlet 10.1.0, Catch2 3.16.1 |
 
 ---
 
