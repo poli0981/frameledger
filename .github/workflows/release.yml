@@ -244,7 +244,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $ErrorActionPreference = 'Stop'
-          dotnet tool install -g vpk --version 1.2.0
+          dotnet tool install -g vpk --version 1.2.161
           if ($LASTEXITCODE -ne 0) { throw 'vpk install failed' }
           $v = '${{ steps.version.outputs.version }}'
           New-Item -ItemType Directory out/release -Force | Out-Null

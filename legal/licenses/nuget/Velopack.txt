@@ -1,4 +1,4 @@
-Velopack 1.2.0
+Velopack 1.2.161
 
 Licence declared: MIT
 Text below: the standard MIT text; the package ships no licence file

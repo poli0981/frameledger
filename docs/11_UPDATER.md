@@ -52,7 +52,7 @@ SemVer `MAJOR.MINOR.PATCH`. Tag `vX.Y.Z` triggers the release workflow (13_CI_CD
 ## Built 2026-09-14 (P4 PR-5) — what exists, and where it deviates from the above
 
 `src/FrameLedger.App/Update/`. Velopack 1.2.0 (`Directory.Packages.props`, pinned since P0, referenced since
-this PR) behind the `IUpdateClient` port — `VelopackUpdateClient` is the one implementation, `UpdateService` the
+this PR; **1.2.161 since beta.30**, owner decision D71 — the library and `vpk` together) behind the `IUpdateClient` port — `VelopackUpdateClient` is the one implementation, `UpdateService` the
 flow, and the tests run the flow over a fake client because nothing here may touch the network in a test.
 
 - **Startup silent check:** `UpdateHostedService`, 5 s after the host starts (the "5 s after UI idle" above —

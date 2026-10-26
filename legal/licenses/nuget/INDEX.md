@@ -18,7 +18,7 @@ from the runtime packs the publish used.
 | HarfBuzzSharp.NativeAssets.Win32 | 8.3.1.1 | MIT | App | [HarfBuzzSharp.NativeAssets.Win32.txt](HarfBuzzSharp.NativeAssets.Win32.txt) |
 | HidSharp | 2.6.4 | the file LICENSE.txt in the package | Agent, App | [HidSharp.txt](HidSharp.txt) |
 | LibreHardwareMonitorLib | 0.9.6 | MPL-2.0 | Agent, App | [LibreHardwareMonitorLib.txt](LibreHardwareMonitorLib.txt) |
-| Markdig | 1.4.0 | BSD-2-Clause | App | [Markdig.txt](Markdig.txt) |
+| Markdig | 1.4.2 | BSD-2-Clause | App | [Markdig.txt](Markdig.txt) |
 | Microsoft.Data.Sqlite.Core | 10.0.13 | MIT | Agent, App | [Microsoft.Data.Sqlite.Core.txt](Microsoft.Data.Sqlite.Core.txt) |
 | Microsoft.Extensions.Configuration | 10.0.13 | MIT | Agent, App | [Microsoft.Extensions.Configuration.txt](Microsoft.Extensions.Configuration.txt) |
 | Microsoft.Extensions.Configuration.Abstractions | 10.0.13 | MIT | Agent, App | [Microsoft.Extensions.Configuration.Abstractions.txt](Microsoft.Extensions.Configuration.Abstractions.txt) |
@@ -72,16 +72,16 @@ from the runtime packs the publish used.
 | SkiaSharp.NativeAssets.Win32 | 3.119.0 | MIT | App | [SkiaSharp.NativeAssets.Win32.txt](SkiaSharp.NativeAssets.Win32.txt) |
 | SkiaSharp.Views.Desktop.Common | 3.119.0 | MIT | App | [SkiaSharp.Views.Desktop.Common.txt](SkiaSharp.Views.Desktop.Common.txt) |
 | SkiaSharp.Views.WPF | 3.119.0 | MIT | App | [SkiaSharp.Views.WPF.txt](SkiaSharp.Views.WPF.txt) |
-| SQLite | 3.53.4 | the file LICENSE.txt in the package | Agent, App | [SQLite.txt](SQLite.txt) |
-| SQLitePCLRaw.config.e_sqlite3 | 3.0.5 | Apache-2.0 | Agent, App | [SQLitePCLRaw.config.e_sqlite3.txt](SQLitePCLRaw.config.e_sqlite3.txt) |
-| SQLitePCLRaw.core | 3.0.5 | Apache-2.0 | Agent, App | [SQLitePCLRaw.core.txt](SQLitePCLRaw.core.txt) |
-| SQLitePCLRaw.provider.e_sqlite3 | 3.0.5 | Apache-2.0 | Agent, App | [SQLitePCLRaw.provider.e_sqlite3.txt](SQLitePCLRaw.provider.e_sqlite3.txt) |
+| SQLitePCLRaw.bundle_e_sqlite3 | 2.1.13 | Apache-2.0 | Agent, App | [SQLitePCLRaw.bundle_e_sqlite3.txt](SQLitePCLRaw.bundle_e_sqlite3.txt) |
+| SQLitePCLRaw.core | 2.1.13 | Apache-2.0 | Agent, App | [SQLitePCLRaw.core.txt](SQLitePCLRaw.core.txt) |
+| SQLitePCLRaw.lib.e_sqlite3 | 2.1.13 | Apache-2.0 | Agent, App | [SQLitePCLRaw.lib.e_sqlite3.txt](SQLitePCLRaw.lib.e_sqlite3.txt) |
+| SQLitePCLRaw.provider.e_sqlite3 | 2.1.13 | Apache-2.0 | Agent, App | [SQLitePCLRaw.provider.e_sqlite3.txt](SQLitePCLRaw.provider.e_sqlite3.txt) |
 | System.CodeDom | 10.0.2 | MIT | Agent | [System.CodeDom.txt](System.CodeDom.txt) |
 | System.Diagnostics.EventLog | 10.0.13 | MIT | Agent | [System.Diagnostics.EventLog.txt](System.Diagnostics.EventLog.txt) |
 | System.IO.FileSystem.AccessControl | 5.0.0 | MIT | Agent, App | [System.IO.FileSystem.AccessControl.txt](System.IO.FileSystem.AccessControl.txt) |
 | System.IO.Ports | 10.0.3 | MIT | Agent, App | [System.IO.Ports.txt](System.IO.Ports.txt) |
 | System.Management | 10.0.2 | MIT | Agent, App | [System.Management.txt](System.Management.txt) |
-| Velopack | 1.2.0 | MIT | App | [Velopack.txt](Velopack.txt) |
+| Velopack | 1.2.161 | MIT | App | [Velopack.txt](Velopack.txt) |
 | WPF-UI | 4.3.0 | MIT | App | [WPF-UI.txt](WPF-UI.txt) |
 | WPF-UI.Abstractions | 4.3.0 | MIT | App | [WPF-UI.Abstractions.txt](WPF-UI.Abstractions.txt) |
 | WPF-UI.DependencyInjection | 4.3.0 | MIT | App | [WPF-UI.DependencyInjection.txt](WPF-UI.DependencyInjection.txt) |

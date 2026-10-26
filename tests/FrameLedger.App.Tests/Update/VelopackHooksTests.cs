@@ -9,7 +9,7 @@ using Velopack;
 namespace FrameLedger.App.Tests.Update;
 
 /// <summary>
-/// beta.14 (the update audit): what <see cref="VelopackHooks.Configure"/> hands Velopack. Read through Velopack 1.2.0's private
+/// beta.14 (the update audit): what <see cref="VelopackHooks.Configure"/> hands Velopack. Read through Velopack 1.2.0's (1.2.161's since beta.30 — the same five fields) private
 /// fields, because the builder exposes no getters — pinned to that version (<c>Directory.Packages.props</c>): an upgrade that
 /// renames them turns this red rather than letting the apply-at-start come back unseen.
 /// </summary>

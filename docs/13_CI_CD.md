@@ -161,7 +161,7 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
   package) moves to `out/previous`, the feed and `RELEASES` are filtered to this build, and a downloaded previous package
   with no delta beside it fails the job. A failed download is a warning: the release is full-only, as every one before it
   was (`11_UPDATER` §Built).
-- `vpk pack --packId FrameLedger.App` (the `vpk` tool pinned to the library's 1.2.0) with the release notes;
+- `vpk pack --packId FrameLedger.App` (the `vpk` tool pinned to the library's ~~1.2.0~~ 1.2.161 since beta.30, D71) with the release notes;
   `FrameLedger.App-win-Setup.exe` must come out, because README §Install names it. **Not `--packId FrameLedger`**:
   Velopack installs into and uninstalls `%LOCALAPPDATA%\<packId>`, which with that id is the data folder
   (`12_BUILD` §Publish & package). No `--icon` until `assets/icon.ico` exists.
@@ -466,6 +466,17 @@ Central package management makes Dependabot PRs single-file diffs.
   quiet Dependabot is not evidence that the packages are current: `dotnet list FrameLedger.slnx package --outdated` is,
   and the updates it had missed were made by hand in beta.29 PR-2 (#335) — `coverlet.collector` 10.1.0 excepted,
   whose reason `Directory.Packages.props` gives beside it.
+- **beta.30 (2026-10-26), by hand under the same cooldown** (the owner: "check the dependencies and conflicts, update if
+  needed"): Velopack and `vpk` 1.2.0 → 1.2.161 (the owner's decision, D71 — never 1.2.158, NuGet-deprecated), Markdig
+  1.4.0 → 1.4.2 (parser fixes; its licence text unchanged at the packaged commit), and **the `SQLitePCLRaw` pin
+  dropped**: `Microsoft.Data.Sqlite` 10.0.13 declares the patched 2.1.13, and the 3.0.5 pin had put it on SQLitePCLRaw's
+  3.x line — a cross-major resolution NuGet does not report, because the declared range has no upper bound. The engine
+  is now 2.1.13's, SQLite 3.53.3 (it was 3.53.4 under the pin; 2.1.14 carries 3.54.0 and comes with Microsoft's next
+  servicing). Not taken: the 10.0.14 servicing packages (published 2026-10-25, the out-of-band Brotli fix — which is
+  the RUNTIME's, shipped by the SDK the release builds with, not in a package referenced here), Markdig 1.5.0
+  (2026-10-24), CsWin32 0.3.366 (it changes how SafeHandles are generated; 0.3.367, its fix, is from 2026-10-22), and,
+  as before, `coverlet.collector` 10.1.0 and FluentAssertions 8. Catch2 3.16, NVAPI R615 (its licence file changed),
+  the Vulkan and Streamline headers and clang-format (paired with Visual Studio's) were read and not needed.
 - **The NuGet audit** (`Directory.Build.props`, written down 2026-10-25): `NuGetAudit` on, `NuGetAuditMode` `all`
   (transitive packages too), `NuGetAuditLevel` `low` — the SDK's defaults for net10.0, stated so that a later SDK's
   defaults cannot move them. With `TreatWarningsAsErrors` a vulnerable package is NU1901–NU1904 and the restore, so

@@ -1,9 +1,9 @@
-Reviewed override for Markdig 1.4.0 (tools/license-gather.ps1).
+Reviewed override for Markdig 1.4.2 (tools/license-gather.ps1).
 
 The package declares <license type="expression">BSD-2-Clause</license> and ships no licence file. The text
 below is the project's own license.txt at the commit the package names (<repository commit=
-"56e9c238584a44a169f174c881855c049768634c">), fetched on 2026-10-03 from
-https://raw.githubusercontent.com/xoofx/markdig/56e9c238584a44a169f174c881855c049768634c/license.txt,
+"6a410393ba74c5da30e21202a3a4ea463216829d">), fetched on 2026-10-26 from
+https://raw.githubusercontent.com/xoofx/markdig/6a410393ba74c5da30e21202a3a4ea463216829d/license.txt,
 verbatim. The package's <copyright> field is "Alexandre Mutel"; the file names the same holder.
 
 Used by the App since beta.12 to render the documents it shows (the Legal Gate, Help, About, the user guide);
