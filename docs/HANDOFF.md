@@ -68,6 +68,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.26` | [`handoff/history/0.1.0-beta.26.md`](handoff/history/0.1.0-beta.26.md) |
 | `§beta.27` | [`handoff/history/0.1.0-beta.27.md`](handoff/history/0.1.0-beta.27.md) |
 | `§beta.28` | [`handoff/history/0.1.0-beta.28.md`](handoff/history/0.1.0-beta.28.md) |
+| `§beta.29` | [`handoff/history/0.1.0-beta.29.md`](handoff/history/0.1.0-beta.29.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -75,95 +76,78 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-10-25, 0.1.0-beta.29: SonarCloud from CI, and the libraries Dependabot never updated
+## **START HERE** — 2026-10-26, 0.1.0-beta.30: Enter in the consent dialog, the hardware-change markers, the libraries
 
-*Status is `docs/changelog/0.1.0-beta.29.md`; this is what no other file carries.* The owner, 2026-10-25: "Bạn phân tích
-và bắt đầu cho chuyển từ automatic sang ci analysis sonarcloud (ver mới nhất) cho repo, bạn có thể bắt đầu 1 mạch cho
-đến khi kết thúc, nếu có issue hay coverage chưa đạt, tiếp tục cho đến khi xong nhé." and "Cập nhật
-depenabot/audit/code scanner nếu có." — `SONAR_TOKEN` set and Automatic Analysis off beforehand; with the plan approved,
-the whole train to the release without asking again. #334 (SonarCloud from CI, Dependabot, the audit, CodeQL), #335
-(the libraries), #336 (the 34 C++ issues `main`'s first analysis from CI raised) and this release.
+*Status is `docs/changelog/0.1.0-beta.30.md`; this is what no other file carries.* The owner, 2026-10-26, with a
+screenshot of a game page: "Fix: sau khi gõ câu: "I ACCEPT..." -> Nhấn Enter -> Nút được bật, Text lại ghi "off", thoát
+ra, vào lại vẫn tắt.", "Kiểm tra dependcies, conflict và sửa code, cập nhật (nếu cần)" and "Fix(UI/UX): Mốc đổi phiên bản
+driver card hiện không rõ (Như trong hình)" — and, with the plan approved, the whole train to the release without asking
+again. #338 (the consent dialog's Enter, the two switches), #339 (the markers), #340 (the libraries) and this release.
 
-**Decisions:**
+**Decisions** (asked while planning, each with the rule or the screenshot in front of the owner):
 
-- **D68 — SonarCloud is analysed from CI** (`13_CI_CD` §SonarCloud): `ci.yml`'s `sonarcloud` job after `check`,
-  advisory, waiting for the gate; SonarScanner for .NET 12.0.0 as a local tool; `SonarQube.Analysis.xml` instead of
-  `.sonarcloud.properties`; the gate's own coverage (OpenCover beside Cobertura); the C++ through CMake's compilation
-  database; `sonar.projectVersion` the newest release tag, so new code is everything since the last release; `S8417`
-  and `S6640` ignored where they apply by design. Replaces D67.
+- **D69 — Enter enables once the consent phrase is typed exactly** (`19_SAFETY` §User-facing consent, amended): the
+  primary button is the dialog's default, and until the phrase matches the content keeps Enter, so nothing happens; Esc
+  and *Keep hooking off* still decline. No `Safety_Consent_*` string changed: `consent-dialog/1` stands. The tick-box
+  dialogs (D33's exception, D34's admin mode) are unchanged.
+- **D70 — the hardware-change markers are numbered** — a badge per day that changed, the day's changes in the list under
+  each chart, the same text in a tooltip ("Số + danh sách", chosen over a full label kept on the chart) (`08_UI` §Games ›
+  Trend).
+- **D71 — Velopack 1.2.161 now**, the library and `vpk` together: item 24(d)'s Velopack half. The first update the new
+  updater installs is beta.30 → beta.31 (item 25(c)).
 
-**Choices made here** — the owner asked for the switch, not for a design:
+**Choices made here** — the owner asked for the fixes, not for these:
 
-- **A job after `check`, not steps inside it**: the scanner turns warnings-as-errors off in the build it wraps, and a
-  required `check` should not go red on a SonarCloud outage. The coverage is the gate's own (an artifact), not a
-  second test run.
-- **The C++ through MSBuild items, not a second SonarCloud project**: one project keeps the history and the owner's
-  marks of both languages; the items exist only under the scanner.
-- **The version is the newest release tag**, so the project's own *Previous version* setting means "since the last
-  release"; no setting in SonarCloud's UI changed.
-- **The two by-design rules became configuration** (`S8417`, `S6640`), as the optional row of the old owner's steps
-  proposed. The 34 C++ issues of `main`'s first analysis from CI were settled line by line instead (#336): fixed where
-  the code was wrong, `// NOSONAR` with its reason above it where the analyser was — five of them; no rule was
-  switched off for them.
-- **Dependabot's missed updates by hand, under the cooldown it now keeps**: CsWin32 0.3.363 rather than the three-day-old
-  0.3.367; Meziantou left to Dependabot, which does propose analyzers; Markdig, Velopack and FluentAssertions 8 not
-  taken; `coverlet.collector` kept at 10.0.1 (below).
-- **CodeQL reads the workflows** (`actions`), not required.
+- **The switches stay OneWay and re-read their row**: the command raises the property whatever happened
+  (`ThenShowStoredAsync`). A TwoWay binding would write the click into the view model before the dialog answered; a
+  code-behind `UpdateTarget` would leave the view model unable to say so in a test.
+- **The markers draw their own badges** (`ChangeMarkerPlottable`), not ScottPlot's `VerticalLine` label with offsets:
+  the label's anchor is its own line, nothing could stop two from overlapping, and its colours were fixed when it was
+  made. A run of days too crowded to stand side by side becomes one badge (*3–5*) rather than a badge that is not drawn.
+- **The `SQLitePCLRaw` pin dropped, not moved to 2.1.14**: the pin's own comment said to drop it once
+  `Microsoft.Data.Sqlite` resolved a patched version, and 2.1.14 (SQLite 3.54.0) would be a new pin to carry; it comes
+  with Microsoft's next servicing.
+- **No 10.0.14 packages**: published the day before, and the out-of-band fix is in the runtime, which the release
+  ships from the SDK it builds with.
 
-**Measured on the way** (`13_CI_CD` §SonarCloud, *The first analyses* and *`main`'s first analysis from CI*): the
-scanner's 12.0.0 source, not its documentation, answered the three design questions — it forces
-`TreatWarningsAsErrors=false`, it drops `sonar.sources`, and its scan of non-project files has no C/C++ and walks the
-whole checkout. CFamily analysed 32 of the compilation database's 181 units, all in full. SonarCloud counts a file's
-executable lines as uncovered when no report names it, PowerShell's included (`build.ps1`: 232). The organisation's
-plan analyses pull requests and `main` and refuses any other branch. `main`'s first analysis from CI failed on a C
-reliability rating: 34 C++ issues on older lines, each dated by blame, of which two — on lines changed since the new
-code began — were new code. Those two were a real defect: `hook-harness --opengl`, or `--vulkan` beside a D3D11 mode,
-crashed through a null swapchain (`0xC0000005`, measured on `main`; exit 1 with a message after #336). The
-Overlay built from either side of #336, in one folder with one `FL_BUILD_ID`, has a byte-identical `.text`, its two
-`LARGE_INTEGER` initialisers changed included.
+**Measured on the way:**
+
+- **WPF drops a click's value when the source is raised unchanged**: `BindingExpression.TransferValue` re-transfers
+  outside a source update and calls `DependencyObject.InvalidateProperty(dp)`, which is `preserveCurrentValue: false`
+  (dotnet/wpf `main`); `ConsentDialogKeysTests` shows it on a real `ToggleSwitch`.
+- **WPF UI 4.3.0's `ContentDialog.xaml`** binds each button's `IsDefault` to `DefaultButton`, makes Close `IsCancel`,
+  hides a disabled primary, and while the primary is disabled a trigger makes Close the default — so `DefaultButton =
+  Primary` alone would still have declined on an early Enter.
+- **ScottPlot 5.1.59's `VerticalLine` label** is anchored 5 px above the data area and grows into the top-axis panel,
+  15 px for an unused axis; `Add.Plottable` assigns no axes; `LabelStyle.LastRenderPixelRect` includes a 3 px shadow
+  offset even without a shadow.
+- **SQLite in each `SQLitePCLRaw`**, read from the native libraries: 2.1.13 → 3.53.3, the 3.0.5 pin → 3.53.4, 2.1.14 →
+  3.54.0.
+- **The release rehearsal** (run 40303218479, `workflow_dispatch` on the deps branch): the runner installed SDK
+  **10.0.403** and runtime 10.0.14 (`setup-dotnet` resolves `global.json`'s `latestFeature` to the newest), and the
+  published package's `FrameLedger.deps.json` names `runtimepack.Microsoft.NETCore.App.Runtime.win-x64/10.0.14` and the
+  WindowsDesktop pack 10.0.14 — so the release carries the out-of-band security runtime with no change to `global.json`.
+  `vpk` 1.2.161 produced the same seven assets as 1.2.0 (Setup 115 MB, Portable and full 108 MB) and a delta from
+  beta.29 of 5.1 MB.
 
 **Traps met on the way:**
 
-- **The scanner weakens the build it wraps**: SonarScanner for .NET's targets set `TreatWarningsAsErrors=false` and
-  empty `WarningsAsErrors` in every build they instrument. Never `begin` before the gate's build; the analysis has a
-  build of its own.
-- **A configure-only compilation database breaks CFamily under C++20 + Ninja**: CMake 3.28+ adds `@<object>.modmap`
-  response files that only the build writes, and CFamily 6.85 stops with `unexpanded response file`. Configure with
-  `-DCMAKE_CXX_SCAN_FOR_MODULES=OFF` (no module is used here), or build first.
-- **A property condition cannot see `SonarQubeTempPath`**: the scanner's ImportBefore targets define it after the
-  project body, so only an item condition (evaluated after every property) sees it; the scanner reads
-  `SQAdditionalAnalysisFileItemTypes` during property evaluation, so that one is set unconditionally.
-- **The scanner walks the whole checkout** for PowerShell/YAML/JSON (obj/*.json included) and drops `sonar.sources`;
-  SonarCloud also drops what `.gitignore` names.
-- **A quiet Dependabot is not a current one**: its NuGet runs succeeded and proposed analyzers only, for ten weeks —
-  the run of 2026-10-25 calls even the shipped libraries, at the versions in use, incompatible with the framework.
-- **A second job makes a workflow-level permission a vulnerability**: `githubactions:S8264` (security rating C on the
-  pull request) — grant per job, `permissions: {}` at the top.
-- **A file with no coverage report is 0 % covered, not "not measured"**, for PowerShell too: exclude what has no report
-  from the coverage figures, or a pull request touching a script fails the gate.
-- **The free organisation analyses only pull requests and `main`**: a `workflow_dispatch` of a feature branch uploads,
-  then fails on "not allowed to access data from non main branches". A pull request's analysis lists only its own
-  lines, so the older code's findings wait for `main`, where they are dated by blame and count against the gate only
-  on lines changed since the new code began.
-- **The first analysis with a version keeps the old new-code start**: `main`'s went red on code changed 2026-10-19,
-  and the next one moved the start to the last analysis without a version and went green with nothing fixed. Judge a
-  fix by the issues it closes (`api/issues/search … resolved=false`), not by the gate turning.
-- **A `NOSONAR` goes on the line the issue names**: `S3519`'s `NOSONAR` sat on `p -= 5`, the cause, while SonarCloud
-  reports the read on the next line, so the issue stayed open after #336 merged; the release pull request moved it.
-- **Bisect a CI-only test failure with CI's own settings**: #335's `NoSecondMatcherTests` failed in CI only, and the
-  first run blamed CsWin32; a local run without coverage passed, so the CsWin32 bump was dropped for nothing. With
-  `--collect:"XPlat Code Coverage"` the failure was local too and followed `coverlet.collector` 10.1.0, whose injected
-  tracker declares a constant reflection cannot read.
-- **Read the flow of an S6232 before fixing it**: `LARGE_INTEGER x{}` makes the union's first member (the
-  `LowPart`/`HighPart` struct) the active one, so every later `x.QuadPart` read is the finding — wherever it moves. The
-  issue's flow says *last active member "" is assigned here* at the declaration; #336 moved the read first, drew the
-  same issue on its new line, and only then initialised through `QuadPart` (`{.QuadPart = 0}`).
-- **A local SonarAnalyzer is not SonarCloud's gate**: the `SonarAnalyzer.CSharp` package with its own defaults reports
-  about 240 C# findings here; the server's *Sonar way core* profile had none open. Read `api/issues/search`.
-- **`sed -i` from Git Bash writes LF**: in this CRLF repository it rewrote whole files' line endings (git normalises
-  them on commit, but the working copy changed); edit with the editor tools, or restore CRLF before formatting.
+- **A Visual Studio update strands CMake's cache**: Insiders moved MSVC 14.51 → 14.52 and `cmake configure failed`
+  ("CMAKE_CXX_COMPILER … is not a full path to an existing compiler tool"). Delete `build/native/x64-release/CMakeCache.txt`
+  and `CMakeFiles`; the next gate configures afresh.
+- **A fresh worktree cannot fetch MinHook or Catch2 on this machine**: CMake caches `GIT_EXECUTABLE` as Git's
+  `ucrt64\bin\git.exe`, which cannot run the `git-submodule` shell script without Git's `usr\bin` on the PATH
+  ("'submodule' appears to be a git command, but we were not able to execute it"). Point the cache at
+  `C:\Program Files\Git\cmd\git.exe`, or run the gate in the main checkout (detached at the branch's commit), whose
+  `_deps` are already there. CI is not affected.
+- **A `private const` in a test takes the `_` prefix** — IDE1006 in `dotnet format`, which the build does not report.
+- **FluentAssertions' `OnlyContain` fails on an empty collection**, and `^1` cannot appear in its expression (CS8790).
+- **ScottPlot's `Add.Plottable` assigns no axes** to a custom plottable; set `Axes.XAxis`/`YAxis` after
+  `DateTimeTicksBottom` has replaced the bottom axis.
+- **SonarCloud counts a prompt's `ShowAsync` as new code**: #338's gate read 70 % (four lines of `ConsentPrompt`); the
+  release pull request tests it through a fake `IContentDialogService` so `main`'s gate does not inherit the gap.
 
-**Owner-only:** item 24 added.
+**Owner-only:** item 25 added; item 24(d) updated.
 
 
 ## Owner-only — no PR can close these
@@ -324,7 +308,19 @@ Overlay built from either side of #336, in one folder with one `FL_BUILD_ID`, ha
    workflows) and `sonarcloud` are not required checks; making either one required is the owner's setting. (d) Velopack
    1.2.161 and Markdig 1.5.0 were not taken by #335 (`docs/changelog/0.1.0-beta.29.md`, *The libraries Dependabot
    never updated*): the first changes how updates install and wants a run of the update path on the owner's machine,
-   the second its licence copy re-read.
+   the second its licence copy re-read. *(2026-10-26, beta.30: Velopack 1.2.161 taken — the owner's decision D71, its
+   update path is item 25(c); Markdig went to 1.4.2, its licence text re-read and unchanged; 1.5.0 waits for the
+   cooldown.)*
+25. **beta.30 on real hardware.** (a) **Enter in the consent dialog** (D69): on a game whose hooking is off, turn the
+   switch on, type the phrase exactly and press Enter → hooking is on, and the switch and its text agree; Enter before
+   the phrase is complete → nothing happens; Esc → the switch is back off beside *off*, and leaving the page and coming
+   back shows the same. (b) **The numbered markers** (D70): the game whose GPU driver changed on 2026-10-24 — *Sessions at
+   a glance* and the *Trend* show a badge *1* above the chart, whole, in both themes; the list under each chart names
+   that day and *Driver GPU: 32.0.16.1742 → 32.0.16.2101*; pointing at the dashed line shows the same; a narrow window
+   keeps every badge whole. (c) **The updater** (D71): Help ▸ Check for updates on beta.29 installs beta.30 (beta.29's
+   updater, a delta); the update to beta.31, when it comes, is the first Velopack 1.2.161 installs — say whether it
+   downloaded the delta or the full package, and whether it came back. (d) The `ja` strings marked `review`
+   (`Trend_Changes_Header`, `Trend_Change_Heading_Format`).
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
@@ -407,6 +403,9 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D66 | [`handoff/history/0.1.0-beta.24.md`](handoff/history/0.1.0-beta.24.md) | the long documents are split; every original path stays as the index of its parts |
 | D67 | [`handoff/history/0.1.0-beta.24.md`](handoff/history/0.1.0-beta.24.md) | SonarCloud stays on Automatic Analysis with .sonarcloud.properties; the owner marks in its UI |
 | D68 | [`13_CI_CD.md`](13_CI_CD.md) §SonarCloud | SonarCloud is analysed from CI (ci.yml's sonarcloud job, SonarQube.Analysis.xml), with coverage; replaces D67 |
+| D69 | [`19_SAFETY_AND_ANTICHEAT.md`](19_SAFETY_AND_ANTICHEAT.md) §User-facing consent | Enter enables once the consent phrase is typed exactly; before it Enter does nothing |
+| D70 | [`08_UI.md`](08_UI.md) §Games › Trend | the hardware-change markers are numbered badges, their changes listed under each chart, with a tooltip |
+| D71 | [`13_CI_CD.md`](13_CI_CD.md) §Dependabot and the NuGet audit | Velopack and vpk 1.2.161 in beta.30 (item 24(d)'s Velopack half) |
 
 ---
 
