@@ -742,7 +742,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
             }
 
             TrendMetricOptionViewModel[] ticked = [.. TrendExtras.Where(static o => o.IsSelected)];
-            HashSet<string> units = [primaryUnit, .. ticked.Select(static o => o.Unit)];
+            HashSet<string> units = new([primaryUnit, .. ticked.Select(static o => o.Unit)], StringComparer.Ordinal);
             foreach (TrendMetricOptionViewModel option in TrendExtras)
             {
                 option.IsEnabled = option.Metric != TrendMetric && (option.IsSelected || units.Count < 2 || units.Contains(option.Unit));
@@ -1432,9 +1432,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
 
         try
         {
-            IEnumerable<string> tokens = json.TrimStart().StartsWith('[')
+            IEnumerable<string> tokens = json.AsSpan().TrimStart().StartsWith('[')
                 ? JsonSerializer.Deserialize(json, AppJsonContext.Default.StringArray) ?? []
-                : (JsonSerializer.Deserialize(json, AppJsonContext.Default.DictionaryStringBoolean) ?? []).Where(static kv => kv.Value).Select(static kv => kv.Key);
+                : (JsonSerializer.Deserialize(json, AppJsonContext.Default.DictionaryStringBoolean) ?? new Dictionary<string, bool>(StringComparer.Ordinal)).Where(static kv => kv.Value).Select(static kv => kv.Key);
             return [.. tokens.Select(CapabilityName).Where(static n => n.Length > 0)];
         }
         catch (JsonException)

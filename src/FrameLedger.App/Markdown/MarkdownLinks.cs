@@ -29,7 +29,7 @@ public static class MarkdownLinks
             return link.Length > 1 ? new MarkdownLinkTarget { Anchor = NormaliseAnchor(link[1..]) } : MarkdownLinkTarget.Refused;
         }
 
-        if (Uri.TryCreate(link, UriKind.Absolute, out Uri? absolute) && !link.StartsWith('/'))
+        if (Uri.TryCreate(link, UriKind.Absolute, out Uri? absolute) && !link.AsSpan().StartsWith('/'))
         {
             return absolute.Scheme is "http" or "https" or "mailto" ? new MarkdownLinkTarget { External = absolute } : MarkdownLinkTarget.Refused;
         }
@@ -91,7 +91,7 @@ public static class MarkdownLinks
     private static string? Combine(string? documentPath, string target)
     {
         var parts = new List<string>();
-        if (!target.StartsWith('/') && documentPath is { Length: > 0 })
+        if (!target.AsSpan().StartsWith('/') && documentPath is { Length: > 0 })
         {
             string[] folder = documentPath.Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries);
             parts.AddRange(folder.Take(folder.Length - 1));

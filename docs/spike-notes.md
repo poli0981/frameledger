@@ -47,3 +47,4 @@ Each section below lives in its own file under `docs/spike-notes/`, moved verbat
 | §21 | Opening pages and switching tabs in the App (2026-10-14, beta.23) | [`spike-notes/21-app-pages-and-tabs.md`](spike-notes/21-app-pages-and-tabs.md) |
 | §22 | The owner's runs of beta.24 and beta.25 on real hardware (2026-10-19) | [`spike-notes/22-owner-runs-2026-10-19.md`](spike-notes/22-owner-runs-2026-10-19.md) |
 | §23 | The owner's runs of beta.26 on real hardware (2026-10-20) | [`spike-notes/23-owner-runs-2026-10-20.md`](spike-notes/23-owner-runs-2026-10-20.md) |
+| §24 | The whole gate on .NET 11 RC3 — what the alpha line's SDK asks of the source (2026-10-31, beta.32, D73–D76) | [`spike-notes/24-dotnet11-probe.md`](spike-notes/24-dotnet11-probe.md) |

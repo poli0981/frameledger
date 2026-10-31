@@ -86,7 +86,7 @@ public sealed class GameFileProbe : IGameFileProbe
 
         // One bounded read serves both the rules' strings questions and the Vulkan fact below.
         string? text = TryReadBounded(exePath);
-        HashSet<string> needles = [];
+        HashSet<string> needles = new(StringComparer.Ordinal);
         Dictionary<string, string> captures = new(StringComparer.Ordinal);
         if (!TryScanStrings(text, rules, needles, captures))
         {
@@ -178,7 +178,7 @@ public sealed class GameFileProbe : IGameFileProbe
         int bestDepth = int.MaxValue;
         foreach (string relative in snapshot.RelativeFiles)
         {
-            int slash = relative.LastIndexOf('/');
+            int slash = relative.AsSpan().LastIndexOf('/');
             if (!named(relative[(slash + 1)..]))
             {
                 continue;
@@ -267,7 +267,7 @@ public sealed class GameFileProbe : IGameFileProbe
 
         (string FullPath, string RelativePath)? best = null;
         long bestSize = -1;
-        foreach (string relative in snapshot.RelativeFiles.Where(static f => IsShipping(f[(f.LastIndexOf('/') + 1)..])))
+        foreach (string relative in snapshot.RelativeFiles.Where(static f => IsShipping(f[(f.AsSpan().LastIndexOf('/') + 1)..])))
         {
             string full = snapshot.GameDirectory.TrimEnd('/') + "/" + relative;
             long size = SizeOf(full);

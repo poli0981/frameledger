@@ -31,7 +31,7 @@ public static class MigrationRunner
     /// </summary>
     public static string LockNameFor(string? databasePath)
     {
-        string key = databasePath is { Length: > 0 } path && !path.StartsWith(':')
+        string key = databasePath is { Length: > 0 } path && !path.AsSpan().StartsWith(':')
             ? Path.GetFullPath(path).ToUpperInvariant()
             : databasePath ?? string.Empty;
         return _mutexPrefix + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(key)), 0, 16);
