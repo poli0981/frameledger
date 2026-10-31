@@ -45,10 +45,11 @@
         <ui:TitleBar Grid.Row="0" Title="{Binding ViewModel.Title}">
             <ui:TitleBar.TrailingContent>
                 <StackPanel Orientation="Horizontal">
-                    <!-- D74 (2026-10-31): an alpha build says so for as long as it runs; the tooltip names the runtime. -->
+                    <!-- D74 (2026-10-31): an alpha build says so for as long as it runs; the tooltip names the runtime. Primary, the
+                         accent and its own text colour: the palette appearances paint outside the theme (08_UI §Contrast). -->
                     <ui:Badge Margin="0,0,8,0"
                               VerticalAlignment="Center"
-                              Appearance="Danger"
+                              Appearance="Primary"
                               Content="{x:Static res:Strings.Alpha_Badge}"
                               ToolTip="{Binding ViewModel.AlphaBadgeTooltip}"
                               Visibility="{Binding ViewModel.IsAlpha, Mode=OneTime, Converter={StaticResource BoolToVis}}" />

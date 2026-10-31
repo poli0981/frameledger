@@ -46,7 +46,7 @@ public sealed class DocumentWindowsTests
             }
         });
 
-        facts.legal.Should().Equal("legal/EULA.md", "LICENSE", "legal/DISCLAIMER.md", "legal/PRIVACY_POLICY.md", "NOTICE", "legal/TRADEMARKS.md");
+        facts.legal.Should().Equal("legal/EULA.md", "LICENSE", "legal/DISCLAIMER.md", "legal/PRIVACY_POLICY.md", "legal/ALPHA_NOTICE.md", "NOTICE", "legal/TRADEMARKS.md");
         facts.thirdParty.Should().Equal(EmbeddedDocuments.ThirdPartyNotices, EmbeddedDocuments.PackageIndex);
         facts.notice.Should().Be((AboutWindow.LegalTab, "NOTICE", true), "NOTICE is shown as written");
         facts.licence.Should().Be("LICENSE");
