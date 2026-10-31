@@ -23,6 +23,7 @@
 // it; declined, it serves as before and says so. Decided before the folder is claimed or anything is written.
 
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using FrameLedger.Agent.Cli;
 using FrameLedger.Agent.Composition;
 using FrameLedger.Agent.Hosting;
@@ -32,6 +33,7 @@ using FrameLedger.Infrastructure.Diagnostics;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Infrastructure.Rules;
 using FrameLedger.Infrastructure.Startup;
+using FrameLedger.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -45,6 +47,7 @@ internal static class Program
     private const int _exitNotImplemented = 2;
     private const int _exitRulesFailed = 3;
     private const int _exitLedgerRefused = 7;
+    private const int _exitAlphaNoticeNotAccepted = 8;
 
     private static int _crashReported;
 
@@ -98,6 +101,8 @@ internal static class Program
         // Before anything else. The guard reads this file on every evaluation and refuses every title
         // when it is absent, so a capture started before the seed lands would fail for a reason that
         // has nothing to do with the game (§S20).
+        // D73: which line this build is, on which runtime - an alpha's prerelease .NET is the first thing its log says.
+        Log.Information("agent: release line {Line}, {Runtime}", BuildLine.Current, RuntimeInformation.FrameworkDescription);
         RulesSeedOutcome seeded = await new RulesSeeder(new FileSystemRulesStore()).EnsureSeededAsync().ConfigureAwait(false);
         AgentConsole.Line($"rules: {Describe(seeded)}");
         Log.Information("rules: {Outcome}", seeded);
@@ -114,6 +119,16 @@ internal static class Program
 
         await using (db.ConfigureAwait(false))
         {
+            // D74: an alpha build's --serve waits for the Alpha notice the App's Legal Gate shows; the maintenance verbs
+            // (the uninstaller's, the updater's) do not.
+            if (cmd.Verb == AgentVerb.Serve && !await AlphaNoticeGate.AllowsServingAsync(BuildLine.Current, new SqliteLegalAcceptanceStore(db)).ConfigureAwait(false))
+            {
+                AgentConsole.Problem($"this alpha build serves once its Alpha notice {AlphaNotice.Version} is accepted in the App");
+                Log.Warning("agent: the Alpha notice {Version} is not accepted; an alpha's Agent does not serve until the App's Legal Gate records it (exit {Exit})",
+                    AlphaNotice.Version, _exitAlphaNoticeNotAccepted);
+                return _exitAlphaNoticeNotAccepted;
+            }
+
             return cmd.Verb switch
             {
                 AgentVerb.Serve => await ServeAsync(db, paths, elevationOutcome).ConfigureAwait(false),
@@ -280,18 +295,22 @@ internal static class Program
         {
             LedgerDatabase db = PrintsOnly(verb)
                 ? await LedgerDatabase.OpenReadOnlyAsync(paths.Database).ConfigureAwait(false)
-                : await LedgerDatabase.OpenAsync(paths.Database, diagnostics: static line => Log.Information("{Line}", line)).ConfigureAwait(false);
+                : await LedgerDatabase.OpenAsync(paths.Database, diagnostics: static line => Log.Information("{Line}", line), backupFirst: AlphaBackup(paths)).ConfigureAwait(false);
             Log.Information("ledger: {Path} (schema {Schema}, migration {Migration}{ReadOnly})", db.Path, db.SchemaVersion, db.Migration,
                 db.IsReadOnly ? ", read-only" : string.Empty);
             return db;
         }
-        catch (Exception ex) when (ex is LedgerSchemaException or FileNotFoundException)
+        catch (Exception ex) when (ex is LedgerSchemaException or LedgerBackupException or FileNotFoundException)
         {
             AgentConsole.Problem(ex.Message);
             Log.Warning("ledger: {Message}", ex.Message);
             return null;
         }
     }
+
+    /// <summary>D73: an alpha build copies the ledger before it first opens it for writing, once per alpha version.</summary>
+    private static LedgerBackupRequest? AlphaBackup(AgentPaths paths) =>
+        BuildLine.Current.IsAlpha ? new LedgerBackupRequest(LedgerPaths.BackupsDirectoryOf(paths.Database), AgentIdentityFactory.Version()) : null;
 
     private static void ConfigureLogging(AgentPaths paths)
     {

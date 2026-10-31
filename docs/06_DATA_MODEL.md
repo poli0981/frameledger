@@ -420,7 +420,9 @@ CREATE TABLE settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE legal_acceptance (doc TEXT PRIMARY KEY, version TEXT NOT NULL, accepted_at INTEGER NOT NULL);
 ```
 
-> **Written since 2026-09-14 (P3 PR-9).** `doc` is one of `eula` / `gpl` / `disclaimer` / `privacy`
+> **Written since 2026-09-14 (P3 PR-9).** `doc` is one of `eula` / `gpl` / `disclaimer` / `privacy` *(and `alpha` since
+> 2026-10-31, D74: the Alpha notice, written by an alpha build's gate only and read by an alpha's Agent before it serves;
+> a beta never reads that row)*
 > (`App.Services.LegalDocuments.Keys`); `version` is the document's own `**Version:**` line as embedded in the
 > App at build (`GPL-3.0-only` for the licence text) — the App is the only writer, one row per document per
 > Accept, re-recorded when the embedded version differs from the row's. `20_OPEN_QUESTIONS` §G "Legal doc
@@ -543,6 +545,16 @@ Default: raw blobs for the **last 20 sessions per game** (configurable N or unli
 > these statements only.
 
 ## Migrations
+
+> **The alpha's copy before it opens the ledger (D73, 2026-10-31).** An alpha build shares this file with the beta, so
+> before it first opens it — the App or the Agent, whichever comes first — `LedgerDatabase.OpenAsync(backupFirst:)`
+> copies it whole with SQLite's online backup into `backups\ledger-before-<version>.db` beside it
+> (`Infrastructure.Persistence.LedgerBackup`), once per alpha version, under a lock of its own
+> (`Local\FrameLedger.Ledger.Backup.<hash of the path>`, waited on for five minutes — the migration lock gives a waiter
+> 30 s). The newest three copies are kept and only files so named are deleted. A copy that cannot be made — no room, the
+> folder unwritable — throws `LedgerBackupException` and the ledger is not opened: the App says so in its start-failure
+> dialog, the Agent exits 7 (*ledger refused*) with the reason in its log. The main line passes no request and copies
+> nothing; a viewer (D52) reads a copy and makes none. Every case is `LedgerBackupTests`', in scratch folders.
 
 Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied at startup by whichever process opens the DB first, guarded by `schema_migrations` + a named mutex. Never edit an applied script; only append.
 

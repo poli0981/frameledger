@@ -4,7 +4,7 @@ FrameLedger records how your games run on this PC — frame rate, frame times, t
 with, temperatures, and how much memory the game uses — and keeps every session so you can compare them later.
 Everything stays on your PC.
 
-Each page below takes a minute or two to read. The first six are the guide; the next four are there to look things up.
+Each page below takes a minute or two to read. The first six are the guide; the next five are there to look things up.
 
 1. [Install and first start](01-install.md)
 2. [Record a game](02-record-a-game.md)
@@ -16,7 +16,8 @@ Each page below takes a minute or two to read. The first six are the guide; the 
 8. [Every setting](08-settings.md)
 9. [When something goes wrong](09-troubleshooting.md)
 10. [Words FrameLedger uses](10-glossary.md)
-11. [The terms, in plain words](terms-in-plain-words.md)
+11. [Alpha builds](11-alpha-builds.md) — the experimental builds on a new .NET, and how to go back
+12. [The terms, in plain words](terms-in-plain-words.md)
 
 What FrameLedger cannot do is listed on its own page: [Limitations](../LIMITATIONS.md) (in the app: Help ▸
 Limitations).

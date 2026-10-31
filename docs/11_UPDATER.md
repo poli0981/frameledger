@@ -95,8 +95,8 @@ flow, and the tests run the flow over a fake client because nothing here may tou
   `releases.alpha.json`, and an installed copy reads only its own channel's feed — `VelopackUpdateClient` passes no
   `ExplicitChannel`, so the channel is the one the installed package was built for (its `sq.version` names it). Velopack's
   `GithubSource` merges the assets of every release that carries that feed, so a beta never sees an alpha and an alpha
-  never sees a beta, under either setting of `update.channel`. **One limit follows from the source, read from Velopack's
-  code 2026-10-31:** it asks
+  never sees a beta, under either setting of `update.channel` — and in an alpha build that picker is locked, its line
+  saying so (`08_UI` §Settings). **One limit follows from the source, read from Velopack's code 2026-10-31:** it asks
   GitHub for one page of ten releases, newest first, so ten releases of one line in a row would hide the other line's
   newest from its update check. The cadence is one alpha per beta (`13_CI_CD` §The alpha line). Moving between the lines
   is a deliberate install, never an update: the other line's `Setup.exe` over the installed copy, which Velopack answers

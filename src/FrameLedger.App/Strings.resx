@@ -3464,4 +3464,43 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="Fg_RefusalDetail_BeyondGeneration_Format" xml:space="preserve">
     <value>presents ÷ tokens = {0}, above {1}, the most any frame generation produces.</value>
   </data>
+  <data name="App_Title_Alpha" xml:space="preserve">
+    <value>FrameLedger Alpha</value>
+  </data>
+  <data name="Alpha_Badge" xml:space="preserve">
+    <value>ALPHA</value>
+  </data>
+  <data name="Alpha_Badge_Tooltip_Format" xml:space="preserve">
+    <value>Experimental alpha build on {0}. You use it at your own risk.</value>
+  </data>
+  <data name="Alpha_Banner_Title" xml:space="preserve">
+    <value>Alpha build</value>
+  </data>
+  <data name="Alpha_Banner_Body_Format" xml:space="preserve">
+    <value>Experimental: it runs on {0}, a prerelease .NET. Results can be wrong and it can crash; you use it at your own risk. The beta is the dependable build.</value>
+  </data>
+  <data name="Alpha_Banner_Read" xml:space="preserve">
+    <value>Read the alpha notice</value>
+  </data>
+  <data name="FirstRun_Doc_Alpha" xml:space="preserve">
+    <value>Alpha notice</value>
+  </data>
+  <data name="FirstRun_Alpha_Summary" xml:space="preserve">
+    <value>This is an ALPHA build:
+• It is a beta's source built on a prerelease .NET. Expect more problems than in a beta, wrong measurements and crashes among them.
+• It replaces the beta on this PC and shares its data. Before it first opens your ledger it copies it to the backups folder, and it does not open it if that copy cannot be made.
+• You use it entirely at your own risk. The Alpha notice in the list below is the text you accept; tick the box to say you have read it.</value>
+  </data>
+  <data name="FirstRun_Alpha_Tick" xml:space="preserve">
+    <value>I understand that this is an experimental build and I use it at my own risk.</value>
+  </data>
+  <data name="Settings_UpdateChannel_AlphaBody" xml:space="preserve">
+    <value>An alpha build updates only to newer alphas, whatever is chosen here. To go back to the beta, install it from GitHub Releases over this build.</value>
+  </data>
+  <data name="About_Runtime_Format" xml:space="preserve">
+    <value>Runs on {0}</value>
+  </data>
+  <data name="About_Runtime_Alpha_Format" xml:space="preserve">
+    <value>Alpha build — runs on {0}, a prerelease .NET</value>
+  </data>
 </root>

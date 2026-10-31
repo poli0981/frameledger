@@ -2,6 +2,7 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.IO;
+using FrameLedger.Shared;
 
 namespace FrameLedger.App.Services;
 
@@ -23,7 +24,8 @@ public static class EmbeddedDocuments
     /// <summary>
     /// The user guide's pages in reading order (beta.12, D44; <c>guide/</c> in the repository). Each page's title is its
     /// first heading; <see cref="LimitationsDocument"/> closes the list, so the guide's links to it open in the window.
-    /// beta.17 (D54): the four reference pages after the FAQ make the guide the wiki's End-user part too.
+    /// beta.17 (D54): the four reference pages after the FAQ make the guide the wiki's End-user part too; the alpha builds'
+    /// page joins them in beta.32 (D73).
     /// </summary>
     public static IReadOnlyList<string> GuidePages { get; } =
     [
@@ -38,6 +40,7 @@ public static class EmbeddedDocuments
         "guide/08-settings.md",
         "guide/09-troubleshooting.md",
         "guide/10-glossary.md",
+        "guide/11-alpha-builds.md",
         "guide/terms-in-plain-words.md",
     ];
 
@@ -55,10 +58,14 @@ public static class EmbeddedDocuments
     /// <summary>One embedded document as a page.</summary>
     public static DocumentPage Page(string title, string path, bool plainText = false) => new(title, Read(path), path, plainText);
 
-    /// <summary>About ▸ Legal documents: the three texts the Legal Gate shows, the GPL as written, <c>NOTICE</c>, the trademark note.</summary>
+    /// <summary>
+    /// About ▸ Legal documents: the three texts the Legal Gate shows, the GPL as written, the Alpha notice (on every line
+    /// since 2026-10-31, D74: EULA §2B names it), <c>NOTICE</c>, the trademark note.
+    /// </summary>
     public static IReadOnlyList<DocumentPage> Legal() =>
     [
-        .. LegalDocuments.Load().Select(static d => new DocumentPage(d.Title, d.Text, d.Path, d.IsPlainText)),
+        .. LegalDocuments.Load(BuildLine.Main).Append(LegalDocuments.AlphaNoticeDocument(requiresAcceptance: false))
+            .Select(static d => new DocumentPage(d.Title, d.Text, d.Path, d.IsPlainText)),
         Page(Strings.About_Doc_Notice, Notice, plainText: true),
         Page(Strings.About_Doc_Trademarks, Trademarks),
     ];

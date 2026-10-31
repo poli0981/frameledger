@@ -13,6 +13,7 @@ using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Settings;
 using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Infrastructure.Startup;
+using FrameLedger.Shared;
 using FrameLedger.Shared.Ipc;
 
 namespace FrameLedger.App.ViewModels;
@@ -47,6 +48,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly IMaintenanceState _maintenance;
     private readonly IAgentTool _tool;
     private readonly UiMode _mode;
+    private readonly BuildLine _line;
     private readonly WindowClosePolicy _closePolicy;
     private readonly IFirstRunFlow _firstRun;
     private readonly AntiCheatExceptions? _exceptions;
@@ -178,8 +180,11 @@ public sealed partial class SettingsViewModel : ObservableObject
         Func<bool>? agentHeld = null,
         IConfirmations? confirmations = null,
         SessionDeletion? deletion = null,
-        UiMode? mode = null)
+        UiMode? mode = null,
+        BuildLine? line = null)
     {
+        // D73: the release line this build was stamped with; a composition without one (a test) is this build's.
+        _line = line ?? BuildLine.Current;
         // beta.15 (D52): a viewer over a copy disables what asks the Agent or changes this PC; a composition without a mode
         // (a test) is the profile's App.
         _mode = mode ?? UiMode.Profile;
@@ -302,6 +307,14 @@ public sealed partial class SettingsViewModel : ObservableObject
     /// viewer over a copy, which has no Agent and is not this PC's FrameLedger.
     /// </summary>
     public bool ActsOnThisPc => _mode.ActsOnThisPc;
+
+    /// <summary>
+    /// D73 (2026-10-31): an alpha updates only to newer alphas, whatever this says — its packages are on Velopack's own
+    /// channel (<c>11_UPDATER</c> §Channels) — so in an alpha build the picker is locked and its line says why.
+    /// </summary>
+    public bool CanChooseUpdateChannel => ActsOnThisPc && !_line.IsAlpha;
+
+    public string UpdateChannelBody => _line.IsAlpha ? Strings.Settings_UpdateChannel_AlphaBody : Strings.Settings_UpdateChannel_Body;
 
     /// <summary>A pending load or write, for a test to await; the UI does not.</summary>
     public Task Pending { get; private set; } = Task.CompletedTask;

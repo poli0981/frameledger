@@ -18,6 +18,7 @@ using FrameLedger.Infrastructure.Diagnostics;
 using FrameLedger.Infrastructure.Import;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Infrastructure.Watch;
+using FrameLedger.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -97,7 +98,8 @@ public partial class App : System.Windows.Application
         int exitCode = 0;
         try
         {
-            _db = await LedgerDatabase.OpenAsync(UiPaths.Database, diagnostics: static line => Log.Information("{Line}", line)).ConfigureAwait(true);
+            _db = await LedgerDatabase.OpenAsync(UiPaths.Database, diagnostics: static line => Log.Information("{Line}", line),
+                backupFirst: AlphaBackup()).ConfigureAwait(true);
             var store = new SqliteSettingsStore(_db);
             var appearance = new AppearanceSettings(store);
             await appearance.LoadAsync().ConfigureAwait(true);
@@ -109,6 +111,7 @@ public partial class App : System.Windows.Application
             var closePolicy = new WindowClosePolicy { MinimizeToTray = await registered.GetBooleanAsync(SettingsRegistry.UiMinimizeToTray).ConfigureAwait(true) };
 
             _host = BuildHost(_db, appearance, registered, closePolicy);
+            await HoldTheAgentForTheAlphaNoticeAsync(_host).ConfigureAwait(true);
             await _host.StartAsync().ConfigureAwait(true);
             Log.Information("ui: started ({Version}), ledger {Ledger}", UiIdentity.Version, UiPaths.Database);
             // beta.21: tier 0 is software rendering (a VM without a GPU, Remote Desktop) - every scroll drawn on the CPU.
@@ -296,6 +299,33 @@ public partial class App : System.Windows.Application
         Shared.Strings.Culture = culture;
     }
 
+    /// <summary>
+    /// D73 (2026-10-31): an alpha build copies the ledger it shares with the beta into <c>backups\</c> before it first opens
+    /// it, once per alpha version (<c>06_DATA_MODEL</c> §Migrations, the alpha's backup). Not a viewer's: it reads a copy.
+    /// </summary>
+    private static LedgerBackupRequest? AlphaBackup() =>
+        BuildLine.Current.IsAlpha && !UiPaths.IsViewer ? new LedgerBackupRequest(LedgerPaths.BackupsDirectoryOf(UiPaths.Database), UiIdentity.Version) : null;
+
+    /// <summary>
+    /// D74: while an alpha's Legal Gate waits for the Alpha notice, the Agent connection must not start the Agent — it
+    /// would refuse to serve and exit, round after round. Set before the host starts, because the connection's first round
+    /// runs while the first-run window is up (<c>ApplicationHostService</c>); the gate's Accept releases it.
+    /// </summary>
+    private static async Task HoldTheAgentForTheAlphaNoticeAsync(IHost host)
+    {
+        if (!host.Services.GetRequiredService<BuildLine>().IsAlpha)
+        {
+            return;
+        }
+
+        IReadOnlyList<LegalDocument> outstanding = await host.Services.GetRequiredService<LegalGate>().OutstandingAsync().ConfigureAwait(true);
+        if (outstanding.Any(static d => string.Equals(d.Key, LegalDocuments.Alpha, StringComparison.Ordinal)))
+        {
+            host.Services.GetRequiredService<IAgentLink>().SetNoticeHold(true);
+            Log.Information("ui: the Alpha notice {Version} is not accepted yet; the Agent waits for the Legal Gate", AlphaNotice.Version);
+        }
+    }
+
     private static IHost BuildHost(LedgerDatabase db, AppearanceSettings appearance, RegisteredSettings registered, WindowClosePolicy closePolicy)
     {
         HostApplicationBuilder builder = Host.CreateApplicationBuilder();
@@ -306,6 +336,9 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton<INavigationService, NavigationService>();
         builder.Services.AddSingleton<ISnackbarService, SnackbarService>();
         builder.Services.AddSingleton<IContentDialogService, ContentDialogService>();
+
+        // The release line this build was stamped with (D73): read once here, handed to what acts on it.
+        builder.Services.AddSingleton(BuildLine.Current);
 
         // The ledger and the App's own settings (06_DATA_MODEL §Writer ownership: the App writes `settings`).
         builder.Services.AddSingleton(db);

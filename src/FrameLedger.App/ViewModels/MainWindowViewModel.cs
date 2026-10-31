@@ -4,12 +4,14 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using FrameLedger.App.Pages;
 using FrameLedger.App.Services;
 using FrameLedger.App.Update;
 using FrameLedger.Infrastructure.Ipc;
+using FrameLedger.Shared;
 using FrameLedger.Shared.Ipc;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
@@ -21,6 +23,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
 {
     private readonly IAgentLink _agent;
     private readonly UiMode _mode;
+    private readonly BuildLine _line;
     private readonly ISnackbarService _snackbar;
     private readonly IShellPresence _shell;
     private readonly IPageNavigator _navigator;
@@ -63,9 +66,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
 
     public MainWindowViewModel(IAgentLink agent, ISnackbarService snackbar, IShellPresence shell, IPageNavigator navigator, AddGameFlow addGame, SafetyNotices notices,
         BugReportFlow bugReports, IUrlOpener urls, SessionSelection selection, SessionExportService exports, ISessionSummaryOpener summaries, ImportLibraryFlow import,
-        UpdateService updates, IDatabaseMaintenancePrompts maintenance, IDocumentWindows documents, UiMode? mode = null)
+        UpdateService updates, IDatabaseMaintenancePrompts maintenance, IDocumentWindows documents, UiMode? mode = null, BuildLine? line = null)
     {
         _mode = mode ?? UiMode.Profile;
+        _line = line ?? BuildLine.Current;
+        _isAlphaBannerOpen = _line.IsAlpha;
         _documents = documents ?? throw new ArgumentNullException(nameof(documents));
         _maintenance = maintenance ?? throw new ArgumentNullException(nameof(maintenance));
         Notices = notices ?? throw new ArgumentNullException(nameof(notices));
@@ -87,7 +92,23 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
         RefreshUpdate();
     }
 
-    public static string Title => Strings.App_Title;
+    /// <summary>The window's title; an alpha says so in the taskbar too (D74).</summary>
+    public string Title => _line.IsAlpha ? Strings.App_Title_Alpha : Strings.App_Title;
+
+    /// <summary>
+    /// D74 (2026-10-31): an alpha build carries the ALPHA badge in the title bar for as long as it runs, and its banner above
+    /// every page at every start — the banner closable for that run, the badge not.
+    /// </summary>
+    public bool IsAlpha => _line.IsAlpha;
+
+    [ObservableProperty]
+    private bool _isAlphaBannerOpen;
+
+    [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format string is a resource that follows the UI culture")]
+    public string AlphaBadgeTooltip => _line.IsAlpha ? string.Format(CultureInfo.CurrentCulture, Strings.Alpha_Badge_Tooltip_Format, RuntimeInformation.FrameworkDescription) : string.Empty;
+
+    [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format string is a resource that follows the UI culture")]
+    public string AlphaBannerBody => _line.IsAlpha ? string.Format(CultureInfo.CurrentCulture, Strings.Alpha_Banner_Body_Format, RuntimeInformation.FrameworkDescription) : string.Empty;
 
     /// <summary>
     /// The menu entries that ask the Agent or change this PC (Update detection rules, Check for updates) are live everywhere
@@ -146,7 +167,14 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
         Refresh();
         RefreshUpdate();
         OnPropertyChanged(nameof(ViewerBannerBody));
+        OnPropertyChanged(nameof(Title));
+        OnPropertyChanged(nameof(AlphaBadgeTooltip));
+        OnPropertyChanged(nameof(AlphaBannerBody));
     }
+
+    /// <summary>The alpha banner's button: the notice this build's user accepted (D74).</summary>
+    [RelayCommand]
+    private void AlphaNotice() => _documents.ShowAlphaNotice();
 
     private void Refresh()
     {

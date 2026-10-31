@@ -6,7 +6,7 @@ The full documents are [`docs/13_CI_CD.md`](../docs/13_CI_CD.md) and [`docs/11_U
 
 | Workflow | Runs on | Does |
 |---|---|---|
-| `.github/workflows/ci.yml` | pushes to `main`, pull requests | `./build.ps1 check`, and on a pull request the changelog check; then, in a job of its own, the SonarCloud analysis with the gate's coverage (settings: `SonarQube.Analysis.xml`). |
+| `.github/workflows/ci.yml` | pushes to `main` and `alpha`, pull requests | `./build.ps1 check`, and on a pull request the changelog check; then, in a job of its own, the SonarCloud analysis with the gate's coverage (settings: `SonarQube.Analysis.xml`). |
 | `.github/workflows/codeql.yml` | pushes and pull requests to `main`, weekly | CodeQL for C#, C++ and the workflows themselves. |
 | `.github/workflows/rules-publish.yml` | a change to the detection rules or their validator | Fails when an anti-cheat entry is removed. |
 | `.github/workflows/release.yml` | a pushed `v*` tag; by hand, a rehearsal | Builds, gates and publishes a release. |
@@ -33,8 +33,23 @@ The full documents are [`docs/13_CI_CD.md`](../docs/13_CI_CD.md) and [`docs/11_U
 
 Releases are not code-signed, so every release says so and publishes its checksums.
 
+## Cutting an alpha
+
+An alpha is a beta's source built on a prerelease .NET, from the long-lived `alpha` branch — which differs from `main`
+only where [`docs/12_BUILD.md`](../docs/12_BUILD.md) §The alpha line lists (its `RELEASE_LINE` says `alpha`). One alpha
+follows each beta, never several in a row ([`docs/13_CI_CD.md`](../docs/13_CI_CD.md) §The alpha line):
+
+1. A pull request on `main` adds the alpha's notes, `docs/changelog/<version>.md`, opening with the experimental-build
+   warning and naming the beta it is cut from, and its row in the Releases table. No release line moves: README, the
+   accuracy statement and `LIMITATIONS.md` keep naming the beta.
+2. A pull request merges `main` into `alpha` with a merge commit; CI runs the gate there on the prerelease SDK.
+3. A rehearsal of `release.yml` on `alpha`, then a signed tag `vx.y.z-alpha.N` on its head. The workflow refuses any
+   other tag on that branch, and an alpha's tag anywhere else; it packs on Velopack's `alpha` channel, so no beta is
+   offered the alpha and no alpha a beta.
+4. The wiki does not change: it shows the newest beta.
+
 ## How users get it
 
 Velopack reads GitHub Releases. Settings ▸ Updates ▸ Channel is *Automatic* by default: a pre-release looks for
-pre-releases, a release for releases. A new version downloads in the background and installs only when FrameLedger
+pre-releases, a release for releases. An alpha reads only alphas, and its channel is locked. A new version downloads in the background and installs only when FrameLedger
 restarts — never while a game is being recorded.

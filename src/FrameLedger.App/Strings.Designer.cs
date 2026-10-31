@@ -45,6 +45,8 @@ public static class Strings
         nameof(About_Notices_Warranty),
         nameof(About_OpenLicencesFolder),
         nameof(About_OpenSource),
+        nameof(About_Runtime_Alpha_Format),
+        nameof(About_Runtime_Format),
         nameof(About_Tab_App),
         nameof(About_Tab_Legal),
         nameof(About_Tab_ThirdParty),
@@ -71,7 +73,13 @@ public static class Strings
         nameof(Agent_State_Starting),
         nameof(Agent_State_Viewer),
         nameof(Agent_Unanswered),
+        nameof(Alpha_Badge),
+        nameof(Alpha_Badge_Tooltip_Format),
+        nameof(Alpha_Banner_Body_Format),
+        nameof(Alpha_Banner_Read),
+        nameof(Alpha_Banner_Title),
         nameof(App_Title),
+        nameof(App_Title_Alpha),
         nameof(Arch_AnyCpu),
         nameof(Arch_AnyCpu32),
         nameof(Arch_Arm),
@@ -421,6 +429,8 @@ public static class Strings
         nameof(FirstRun_Accept),
         nameof(FirstRun_Agent_Body),
         nameof(FirstRun_Agent_Header),
+        nameof(FirstRun_Alpha_Summary),
+        nameof(FirstRun_Alpha_Tick),
         nameof(FirstRun_Back),
         nameof(FirstRun_Cap_CpuTemp),
         nameof(FirstRun_Cap_Elevated),
@@ -429,6 +439,7 @@ public static class Strings
         nameof(FirstRun_Cap_Telemetry),
         nameof(FirstRun_Cap_Version),
         nameof(FirstRun_Decline),
+        nameof(FirstRun_Doc_Alpha),
         nameof(FirstRun_Doc_Disclaimer),
         nameof(FirstRun_Doc_Eula),
         nameof(FirstRun_Doc_Gpl),
@@ -954,6 +965,7 @@ public static class Strings
         nameof(Settings_Theme_System),
         nameof(Settings_Tool_Done_Format),
         nameof(Settings_Tool_Failed_Format),
+        nameof(Settings_UpdateChannel_AlphaBody),
         nameof(Settings_UpdateChannel_Body),
         nameof(Settings_UpdateChannel_Label),
         nameof(Settings_Updates_Header),
@@ -1206,6 +1218,10 @@ public static class Strings
 
     public static string About_OpenSource => ResourceManager.GetString(nameof(About_OpenSource), Culture) ?? nameof(About_OpenSource);
 
+    public static string About_Runtime_Alpha_Format => ResourceManager.GetString(nameof(About_Runtime_Alpha_Format), Culture) ?? nameof(About_Runtime_Alpha_Format);
+
+    public static string About_Runtime_Format => ResourceManager.GetString(nameof(About_Runtime_Format), Culture) ?? nameof(About_Runtime_Format);
+
     public static string About_Tab_App => ResourceManager.GetString(nameof(About_Tab_App), Culture) ?? nameof(About_Tab_App);
 
     public static string About_Tab_Legal => ResourceManager.GetString(nameof(About_Tab_Legal), Culture) ?? nameof(About_Tab_Legal);
@@ -1258,7 +1274,19 @@ public static class Strings
 
     public static string Agent_Unanswered => ResourceManager.GetString(nameof(Agent_Unanswered), Culture) ?? nameof(Agent_Unanswered);
 
+    public static string Alpha_Badge => ResourceManager.GetString(nameof(Alpha_Badge), Culture) ?? nameof(Alpha_Badge);
+
+    public static string Alpha_Badge_Tooltip_Format => ResourceManager.GetString(nameof(Alpha_Badge_Tooltip_Format), Culture) ?? nameof(Alpha_Badge_Tooltip_Format);
+
+    public static string Alpha_Banner_Body_Format => ResourceManager.GetString(nameof(Alpha_Banner_Body_Format), Culture) ?? nameof(Alpha_Banner_Body_Format);
+
+    public static string Alpha_Banner_Read => ResourceManager.GetString(nameof(Alpha_Banner_Read), Culture) ?? nameof(Alpha_Banner_Read);
+
+    public static string Alpha_Banner_Title => ResourceManager.GetString(nameof(Alpha_Banner_Title), Culture) ?? nameof(Alpha_Banner_Title);
+
     public static string App_Title => ResourceManager.GetString(nameof(App_Title), Culture) ?? nameof(App_Title);
+
+    public static string App_Title_Alpha => ResourceManager.GetString(nameof(App_Title_Alpha), Culture) ?? nameof(App_Title_Alpha);
 
     public static string Arch_AnyCpu => ResourceManager.GetString(nameof(Arch_AnyCpu), Culture) ?? nameof(Arch_AnyCpu);
 
@@ -1958,6 +1986,10 @@ public static class Strings
 
     public static string FirstRun_Agent_Header => ResourceManager.GetString(nameof(FirstRun_Agent_Header), Culture) ?? nameof(FirstRun_Agent_Header);
 
+    public static string FirstRun_Alpha_Summary => ResourceManager.GetString(nameof(FirstRun_Alpha_Summary), Culture) ?? nameof(FirstRun_Alpha_Summary);
+
+    public static string FirstRun_Alpha_Tick => ResourceManager.GetString(nameof(FirstRun_Alpha_Tick), Culture) ?? nameof(FirstRun_Alpha_Tick);
+
     public static string FirstRun_Back => ResourceManager.GetString(nameof(FirstRun_Back), Culture) ?? nameof(FirstRun_Back);
 
     public static string FirstRun_Cap_CpuTemp => ResourceManager.GetString(nameof(FirstRun_Cap_CpuTemp), Culture) ?? nameof(FirstRun_Cap_CpuTemp);
@@ -1973,6 +2005,8 @@ public static class Strings
     public static string FirstRun_Cap_Version => ResourceManager.GetString(nameof(FirstRun_Cap_Version), Culture) ?? nameof(FirstRun_Cap_Version);
 
     public static string FirstRun_Decline => ResourceManager.GetString(nameof(FirstRun_Decline), Culture) ?? nameof(FirstRun_Decline);
+
+    public static string FirstRun_Doc_Alpha => ResourceManager.GetString(nameof(FirstRun_Doc_Alpha), Culture) ?? nameof(FirstRun_Doc_Alpha);
 
     public static string FirstRun_Doc_Disclaimer => ResourceManager.GetString(nameof(FirstRun_Doc_Disclaimer), Culture) ?? nameof(FirstRun_Doc_Disclaimer);
 
@@ -3023,6 +3057,8 @@ public static class Strings
     public static string Settings_Tool_Done_Format => ResourceManager.GetString(nameof(Settings_Tool_Done_Format), Culture) ?? nameof(Settings_Tool_Done_Format);
 
     public static string Settings_Tool_Failed_Format => ResourceManager.GetString(nameof(Settings_Tool_Failed_Format), Culture) ?? nameof(Settings_Tool_Failed_Format);
+
+    public static string Settings_UpdateChannel_AlphaBody => ResourceManager.GetString(nameof(Settings_UpdateChannel_AlphaBody), Culture) ?? nameof(Settings_UpdateChannel_AlphaBody);
 
     public static string Settings_UpdateChannel_Body => ResourceManager.GetString(nameof(Settings_UpdateChannel_Body), Culture) ?? nameof(Settings_UpdateChannel_Body);
 

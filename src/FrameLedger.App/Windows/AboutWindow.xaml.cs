@@ -34,7 +34,9 @@ public partial class AboutWindow : FluentWindow
         _urls = urls ?? throw new ArgumentNullException(nameof(urls));
         theme.Apply(appearance.Theme, null);
         InitializeComponent();
-        VersionText.Text = string.Format(CultureInfo.CurrentCulture, Strings.About_Version_Format, UiIdentity.Version);
+        VersionText.Text = string.Format(CultureInfo.CurrentCulture, Strings.About_Version_Format, UiIdentity.Version) + Environment.NewLine
+            + string.Format(CultureInfo.CurrentCulture, Shared.BuildLine.Current.IsAlpha ? Strings.About_Runtime_Alpha_Format : Strings.About_Runtime_Format,
+                System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription);
         SourceText.Text = string.Format(CultureInfo.CurrentCulture, Strings.About_Notices_Source_Format, SourceCode.AbsoluteUri);
         ThirdParty.UrlOpener = urls;
         ThirdParty.Pages = EmbeddedDocuments.ThirdParty();

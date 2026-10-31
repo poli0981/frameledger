@@ -35,7 +35,8 @@ internal static class AgentIdentityFactory
             ElevationOutcome: elevationOutcome);
     }
 
-    private static string Version()
+    /// <summary>This build's version as About and <c>HelloAck</c> state it; the alpha's ledger copy is named with it (D73).</summary>
+    internal static string Version()
     {
         Assembly assembly = typeof(AgentIdentityFactory).Assembly;
         return assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion

@@ -391,13 +391,13 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_UpdateChannel_Label}" />
-                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Settings_UpdateChannel_Body}" />
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.UpdateChannelBody, Mode=OneTime}" TextWrapping="Wrap" />
                     </StackPanel>
                 </ui:CardControl.Header>
                 <ComboBox MinWidth="140"
                           AutomationProperties.Name="{x:Static res:Strings.Settings_UpdateChannel_Label}"
                           DisplayMemberPath="Label"
-                          IsEnabled="{Binding ViewModel.ActsOnThisPc}"
+                          IsEnabled="{Binding ViewModel.CanChooseUpdateChannel}"
                           ItemsSource="{Binding ViewModel.UpdateChannels}"
                           SelectedValue="{Binding ViewModel.UpdateChannel, Mode=TwoWay}"
                           SelectedValuePath="Value" />

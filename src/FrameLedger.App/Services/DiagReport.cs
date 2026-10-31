@@ -34,7 +34,9 @@ public static class DiagReport
         sb.AppendLine(CultureInfo.InvariantCulture, $"FrameLedger --diag  {now.ToString("O", CultureInfo.InvariantCulture)}");
         sb.AppendLine(CultureInfo.InvariantCulture, $"app_version: {appVersion}");
         sb.AppendLine(CultureInfo.InvariantCulture, $"os: {Environment.OSVersion.VersionString} ({(Environment.Is64BitOperatingSystem ? "x64" : "x86")}), process {(Environment.Is64BitProcess ? "x64" : "x86")}");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"runtime: {Environment.Version}");
+        // D73: the release line and the runtime's own description - an alpha's prerelease .NET reads ".NET 11.0.0-rc.3...".
+        sb.AppendLine(CultureInfo.InvariantCulture, $"release_line: {Shared.BuildLine.Current}");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"runtime: {System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription} ({Environment.Version})");
         sb.AppendLine(CultureInfo.InvariantCulture, $"locale: {CultureInfo.CurrentUICulture.Name}");
         sb.AppendLine(CultureInfo.InvariantCulture, $"elevated: {Environment.IsPrivilegedProcess}");
         sb.AppendLine(CultureInfo.InvariantCulture, $"data_dir: {dataDirectory}");

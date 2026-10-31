@@ -45,6 +45,20 @@ numeric core and does not move; the heading is the full version — corrected 20
   `alpha` branch, and no wiki publish for an alpha (`docs/12_BUILD.md` §The alpha line, `docs/13_CI_CD.md` §The alpha
   line, `docs/11_UPDATER.md` §Channels). Whether the main line ever leaves .NET 10 is an open question whose decision
   table is written before the evidence (`docs/20_OPEN_QUESTIONS.md` §G, *The main line's .NET*).
+- **An alpha says what it is, and asks first** (owner decisions D73 and D74; none of it shows in a beta). Its terms window
+  shows the **Alpha notice** (`legal/ALPHA_NOTICE.md` 1.0) with the other documents and a box of its own to tick — *I
+  understand that this is an experimental build and I use it at my own risk* — and Accept waits for it; until it is
+  accepted the alpha's capture agent does not run. The title bar carries an **ALPHA** badge, a banner says what the build
+  is at every start, Help ▸ About and `--diag` name the .NET it runs on, and its update channel is locked: an alpha updates
+  only to newer alphas. It replaces the beta and shares its data, so before it first opens the database it copies it to
+  `backups\ledger-before-<version>.db` (the newest three are kept) and does not open it if the copy cannot be made. The
+  user guide has a page for it, *Alpha builds*, and `LIMITATIONS.md` a section.
+
+### Changed
+
+- **The EULA (1.6) and the Disclaimer (2.12) say the builds are pre-releases — betas, and alphas** (owner decision D75):
+  they said every build was a beta, which an alpha would make untrue. Nothing else in them moved; the terms window shows
+  them once more after the update. About ▸ Legal documents lists the Alpha notice on every build, for information.
 
 ## Releases
 

@@ -178,6 +178,36 @@ public sealed class AgentConnectionTests : IAsyncDisposable
         launcher.Starts.Should().Be(1);
     }
 
+    /// <summary>
+    /// D74 (2026-10-31): an alpha's Legal Gate holds the start until its notice is accepted, on a hold of its own — the
+    /// updater's release, which runs on its own schedule, must not let an Agent start under an open gate.
+    /// </summary>
+    [Fact]
+    public async Task TheNoticeHoldIsItsOwnAndTheUpdatersReleaseDoesNotLiftIt()
+    {
+        FakeLauncher? launcher = null;
+        launcher = new FakeLauncher(() =>
+        {
+            StartServer();
+            return true;
+        })
+        { CanLaunch = true };
+        AgentConnection c = Start(launcher, holdLaunches: true);
+        c.SetNoticeHold(true);
+
+        c.SetLaunchHold(false);
+        c.RetryNow();
+        await WaitForAsync(() => c.Rounds >= 2, "rounds ran with the notice still held").ConfigureAwait(true);
+        launcher.Starts.Should().Be(0, "the gate is still open");
+        c.NoticeHeld.Should().BeTrue();
+        c.LaunchesHeld.Should().BeFalse();
+
+        c.SetNoticeHold(false);
+        c.RetryNow();
+        await WaitForAsync(() => c.State == AgentConnectionState.Connected, "accepted: started, then connected").ConfigureAwait(true);
+        launcher.Starts.Should().Be(1);
+    }
+
     [Fact]
     public async Task WithNoAgentBesideTheAppTheStateIsMissingAndNothingIsStarted()
     {

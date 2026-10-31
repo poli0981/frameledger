@@ -14,6 +14,7 @@ public sealed class DocumentWindows(IUrlOpener urls, IThemeApplier theme, Appear
 {
     private DocumentWindow? _guide;
     private DocumentWindow? _limitations;
+    private DocumentWindow? _alphaNotice;
     private AboutWindow? _about;
 
     public void ShowGuide()
@@ -41,6 +42,22 @@ public sealed class DocumentWindows(IUrlOpener urls, IThemeApplier theme, Appear
         };
         _limitations.Closed += (_, _) => _limitations = null;
         _limitations.Show();
+    }
+
+    public void ShowAlphaNotice()
+    {
+        if (Reveal(_alphaNotice))
+        {
+            return;
+        }
+
+        LegalDocument notice = LegalDocuments.AlphaNoticeDocument(requiresAcceptance: false);
+        _alphaNotice = new DocumentWindow(notice.Title, [new DocumentPage(notice.Title, notice.Text, notice.Path)], urls, theme, appearance)
+        {
+            Owner = shell.Current,
+        };
+        _alphaNotice.Closed += (_, _) => _alphaNotice = null;
+        _alphaNotice.Show();
     }
 
     public void ShowAbout()

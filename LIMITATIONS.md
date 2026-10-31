@@ -241,3 +241,20 @@ administrator prompt names an unknown publisher. Each release publishes SHA-256 
 loaded until the game exits, and Windows will not let the update replace it; *Restart to update* says which file is held
 until you close that game ([details](docs/11_UPDATER.md)). Copies older than 0.1.0-beta.14 look only for stable
 releases unless you choose *Beta* in Settings ▸ Updates, and apply a downloaded update the next time they start.
+
+## Alpha builds
+
+*Only for an alpha — a version ending in `-alpha.N`, an experimental build on a new .NET
+([Alpha builds](guide/11-alpha-builds.md)).*
+
+- **It runs on a .NET that Microsoft has not finished** — .NET 11's release candidate first — and has not been tested
+  the way a beta is: everything on this page applies to it, and so can problems no beta has shown
+  ([Alpha notice](legal/ALPHA_NOTICE.md)).
+- **Windows 10 22H2 Home and Pro are not supported** by Microsoft for .NET 11; an alpha may run there, but nobody
+  supports it. It does not start at all on a processor without SSE4.2 and POPCNT.
+- **A failure in the capture agent's own background work ends the agent with a crash report** on an alpha, where a
+  beta's agent stops and exits quietly: .NET 11 reports it that way.
+- **It shares the beta's data folder.** It copies the database into `backups` before it first opens it, and does not
+  open it if the copy cannot be made; the newest three copies are kept and older ones it made are deleted.
+- **It updates only to newer alphas**, and its update channel is locked; going back to the beta means installing the
+  beta over it.

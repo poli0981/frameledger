@@ -99,6 +99,11 @@ Guard re-runs every 30 s for the life of the session; anti-cheat appearing late 
 - The DLL is **not unloaded** from a live process after unhooking (threads may still be inside trampolines). It disables its hooks, stops writing, and goes dormant until the process exits. Documented, deliberate.
 - ~~UI exit does not stop the Agent when background capture is enabled; otherwise UI sends `Shutdown`.~~ *(Corrected 2026-10-04: closing the UI never stops the Agent. `Shutdown` is sent only for an update, by the uninstall hook and for the admin mode's restart; the background-capture setting was read by nothing, and its switch is gone since beta.12 — `06_DATA_MODEL` §Settings registry.)*
 - Single instance via named mutexes; the ring name is per-PID so multiple games can be captured simultaneously (rare but supported).
+- **An alpha build's `--serve` waits for the Alpha notice (D74, 2026-10-31):** it reads `legal_acceptance` after opening the
+  ledger and, until the App's Legal Gate has recorded the notice at the version the build carries (`Shared.AlphaNotice`),
+  logs why and exits **8** — the logon task or the admin mode's prompt can start it before the App ever showed the notice.
+  The App holds its own start of the Agent while the gate is open and starts it at the Accept; the maintenance verbs
+  (`--register-vklayer`, `--install-task` and their reverses) are not held. The main line serves as before.
 
   > **The single instance was specified here and not built until 2026-09-17**, and 0.1.0-beta.1 ran four Agents: an
   > App started as administrator was refused by the pipe of the Agent already serving (`07_IPC` §C, amended the same
@@ -137,6 +142,8 @@ breadcrumbs\<pid>.json       (corrected 2026-10-04: never created — the breadc
 tmp\<sessionGuid>.partial    crash-safety flush of raw buffers, every 60 s (04_CAPTURE §Ring draining)
 covers\game-<id>-<ms>.png    the images users chose for their games (beta.23, D60) — ~~covers\*.jpg, never created~~;
                              a store app's own artwork is shown from where that app keeps it, never copied here
+backups\ledger-before-<v>.db an alpha build's copy of ledger.db before it first opened it, newest three (D73,
+                             2026-10-31; 06_DATA_MODEL §Migrations) — the alpha shares this folder with the beta
 ```
 
 *(beta.15, D52: `FrameLedger.exe --data-dir <folder>` reads a COPY of this folder instead — a viewer that starts and

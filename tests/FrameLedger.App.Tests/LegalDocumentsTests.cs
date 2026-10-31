@@ -3,6 +3,7 @@
 
 using FluentAssertions;
 using FrameLedger.App.Services;
+using FrameLedger.Shared;
 
 namespace FrameLedger.App.Tests;
 
@@ -12,7 +13,7 @@ public sealed class LegalDocumentsTests
     [Fact]
     public void TheFourDocumentsLoadWithTheirVersions()
     {
-        IReadOnlyList<LegalDocument> docs = LegalDocuments.Load();
+        IReadOnlyList<LegalDocument> docs = LegalDocuments.Load(BuildLine.Main);
 
         docs.Select(static d => d.Key).Should().Equal(LegalDocuments.Keys);
         docs.Should().OnlyContain(static d => d.Text.Length > 200);
@@ -29,10 +30,28 @@ public sealed class LegalDocumentsTests
         docs.Where(static d => !d.RequiresAcceptance).Select(static d => d.Key).Should().Equal([LegalDocuments.Gpl], "the GPL is shown for information (GPLv3 section 9)");
     }
 
+    /// <summary>
+    /// D74 (2026-10-31): the alpha line's gate shows the Alpha notice after the four, to be accepted with them, at the version
+    /// the Agent checks before it serves — the constant and the document's own line are one number.
+    /// </summary>
+    [Fact]
+    public void TheAlphaLinesGateAddsTheNoticeAtTheVersionTheAgentChecks()
+    {
+        IReadOnlyList<LegalDocument> docs = LegalDocuments.Load(BuildLine.Alpha);
+
+        docs.Select(static d => d.Key).Should().Equal([.. LegalDocuments.Keys, LegalDocuments.Alpha]);
+        LegalDocument notice = docs[^1];
+        notice.RequiresAcceptance.Should().BeTrue();
+        notice.Version.Should().Be(AlphaNotice.Version, "Shared.AlphaNotice.Version is the version an alpha's Agent waits for");
+        notice.Path.Should().Be("legal/ALPHA_NOTICE.md");
+        notice.Text.Should().Contain("entirely at your own risk");
+        LegalDocuments.AlphaNoticeDocument(requiresAcceptance: false).RequiresAcceptance.Should().BeFalse("About shows it on every line, for information");
+    }
+
     [Fact]
     public void AuthoringCommentsAreStrippedAndTheOnlySurvivingPlaceholderIsTheReleaseDate()
     {
-        foreach (LegalDocument d in LegalDocuments.Load())
+        foreach (LegalDocument d in LegalDocuments.Load(BuildLine.Alpha))
         {
             d.Text.Should().NotContain("<!--", d.Key);
             d.Text.Replace("{{RELEASE_DATE}}", string.Empty, StringComparison.Ordinal).Should().NotContain("{{", "12_BUILD §Release-time token substitution");
