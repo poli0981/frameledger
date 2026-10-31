@@ -141,7 +141,7 @@ is the beta's package set.
 
 ### 0.1.0-alpha.1 — the first alpha, the same day
 
-The `alpha` branch was cut at `v0.1.0-beta.32` and carries the switch alone (`12_BUILD` §The alpha line): `RELEASE_LINE`,
+The `alpha` branch was cut from main at this pull request — `v0.1.0-beta.32` and these notes, no other change — and carries the switch alone (`12_BUILD` §The alpha line): `RELEASE_LINE`,
 `global.json` (SDK `11.0.100-rc.3.26522.148`), the TFM, three packages at `11.0.0-rc.3.26522.148`, and the NuGet licence
 texts of that package set (69 packages). Its gate on the 11 SDK passed whole before the pull request into `alpha`; the
 release ran from the signed tag `v0.1.0-alpha.1` on `alpha`, on Velopack's `alpha` channel. Its notes are
