@@ -46,6 +46,15 @@ numeric core and does not move; the heading is the full version — corrected 20
   line, `docs/11_UPDATER.md` §Channels). Whether the main line ever leaves .NET 10 is an open question whose decision
   table is written before the evidence (`docs/20_OPEN_QUESTIONS.md` §G, *The main line's .NET*).
 
+### Changed
+
+- **What .NET 11's SDK asks of the source, taken where .NET 10 can take it too** (owner decisions D73–D76): the whole
+  gate run on .NET 11 RC3 before the alpha line was cut found 21 places its analyzers flag — `LastIndexOf`,
+  `StartsWith` and `EndsWith` of a single character, which .NET 11 overloads with a comparison; string sets and maps
+  built with `[]`, which C# 15 can give a comparer; one undisposed `JsonDocument` in a test. Each is rewritten in a form
+  both SDKs compile and that answers exactly as before (ordinal, as it was). Every test suite passed on .NET 11 with no
+  change of answer (`docs/spike-notes/24-dotnet11-probe.md`).
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

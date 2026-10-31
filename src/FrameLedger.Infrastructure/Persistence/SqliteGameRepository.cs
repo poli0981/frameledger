@@ -459,7 +459,7 @@ public sealed class SqliteGameRepository : IGameRepository
             try
             {
                 return new Dictionary<string, string>(
-                    JsonSerializer.Deserialize(json, LedgerJsonContext.Default.DictionaryStringString) ?? [], StringComparer.Ordinal);
+                    JsonSerializer.Deserialize(json, LedgerJsonContext.Default.DictionaryStringString) ?? new Dictionary<string, string>(StringComparer.Ordinal), StringComparer.Ordinal);
             }
             catch (JsonException)
             {

@@ -408,7 +408,7 @@ public sealed class CaptureHostEndToEndTests : IDisposable
         // the guard tick is polled for, and the kill comes after two flushes have had time to land.
         (await GrantConsentAsync()).Should().Be(ConsentWriteOutcome.Written);
         Directory.CreateDirectory(PartialDirectory);
-        HashSet<string> before = [.. Directory.EnumerateFiles(PartialDirectory, "*.partial")];
+        HashSet<string> before = new(Directory.EnumerateFiles(PartialDirectory, "*.partial"), StringComparer.Ordinal);
 
         Process harness = await StartHarnessAsync("--real --hold-presenting 40");
         Process? host = null;

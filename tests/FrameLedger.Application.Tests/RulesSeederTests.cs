@@ -25,7 +25,7 @@ public sealed class RulesSeederTests
         public byte[] Packaged { get; set; } = Bytes("packaged");
         public byte[]? Installed { get; set; }
         public string? Marker { get; set; }
-        public HashSet<string> Unusable { get; } = [];
+        public HashSet<string> Unusable { get; } = new(StringComparer.Ordinal);
         public RulesWriteOutcome WriteResult { get; set; } = RulesWriteOutcome.Written;
 
         public byte[]? Written { get; private set; }

@@ -162,7 +162,7 @@ public sealed class GameDetailViewModelTests
 
             vm.Lifetime.Kind.Should().Be(FpsReadoutKind.IdentifiedUncounted);
             vm.Lifetime.Line.Should().Be("304 FPS");
-            vm.Measured.Should().Contain("DLSS-G · factor not counted").And.NotContain(static m => m.EndsWith(' '));
+            vm.Measured.Should().Contain("DLSS-G · factor not counted").And.NotContain(static m => m.Length > 0 && m[m.Length - 1] == ' ');
             SessionItemViewModel row = vm.Sessions.Single();
             row.NativeText.Should().Be("304", "the Presented figure carries the Native column");
             row.DisplayedText.Should().Be("N/A");

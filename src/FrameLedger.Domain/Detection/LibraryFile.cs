@@ -16,5 +16,5 @@ namespace FrameLedger.Domain.Detection;
 public sealed record LibraryFile(string CapabilityId, string RelativePath, string? FileVersion, string? ProductVersion)
 {
     /// <summary>The file's name without its folders.</summary>
-    public string FileName => RelativePath[(RelativePath.LastIndexOf('/') + 1)..];
+    public string FileName => RelativePath[(RelativePath.AsSpan().LastIndexOf('/') + 1)..];
 }
