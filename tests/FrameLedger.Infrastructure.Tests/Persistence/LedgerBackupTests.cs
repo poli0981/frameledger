@@ -128,6 +128,16 @@ public sealed class LedgerBackupTests : IDisposable
         Directory.Exists(Backups).Should().BeFalse("the main line opens as it always has");
     }
 
+    [Fact]
+    public void TheExceptionCarriesItsMessageAndCause()
+    {
+        var cause = new IOException("disk");
+
+        new LedgerBackupException().Message.Should().NotBeNullOrEmpty();
+        new LedgerBackupException("no copy").Message.Should().Be("no copy");
+        new LedgerBackupException("no copy", cause).InnerException.Should().BeSameAs(cause);
+    }
+
     [Theory]
     [InlineData("0.1.0-alpha.1", "ledger-before-0.1.0-alpha.1.db")]
     [InlineData("1.2.3", "ledger-before-1.2.3.db")]

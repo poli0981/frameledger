@@ -99,7 +99,7 @@ public partial class App : System.Windows.Application
         try
         {
             _db = await LedgerDatabase.OpenAsync(UiPaths.Database, diagnostics: static line => Log.Information("{Line}", line),
-                backupFirst: AlphaBackup()).ConfigureAwait(true);
+                backupFirst: AlphaStart.BackupFor(BuildLine.Current, UiPaths.IsViewer, UiPaths.Database, UiIdentity.Version)).ConfigureAwait(true);
             var store = new SqliteSettingsStore(_db);
             var appearance = new AppearanceSettings(store);
             await appearance.LoadAsync().ConfigureAwait(true);
@@ -299,29 +299,12 @@ public partial class App : System.Windows.Application
         Shared.Strings.Culture = culture;
     }
 
-    /// <summary>
-    /// D73 (2026-10-31): an alpha build copies the ledger it shares with the beta into <c>backups\</c> before it first opens
-    /// it, once per alpha version (<c>06_DATA_MODEL</c> §Migrations, the alpha's backup). Not a viewer's: it reads a copy.
-    /// </summary>
-    private static LedgerBackupRequest? AlphaBackup() =>
-        BuildLine.Current.IsAlpha && !UiPaths.IsViewer ? new LedgerBackupRequest(LedgerPaths.BackupsDirectoryOf(UiPaths.Database), UiIdentity.Version) : null;
-
-    /// <summary>
-    /// D74: while an alpha's Legal Gate waits for the Alpha notice, the Agent connection must not start the Agent — it
-    /// would refuse to serve and exit, round after round. Set before the host starts, because the connection's first round
-    /// runs while the first-run window is up (<c>ApplicationHostService</c>); the gate's Accept releases it.
-    /// </summary>
+    /// <summary>D74: the Agent waits while an alpha's Legal Gate waits for the Alpha notice (<see cref="AlphaStart"/>).</summary>
     private static async Task HoldTheAgentForTheAlphaNoticeAsync(IHost host)
     {
-        if (!host.Services.GetRequiredService<BuildLine>().IsAlpha)
+        if (await AlphaStart.HoldTheAgentForTheNoticeAsync(host.Services.GetRequiredService<BuildLine>(), host.Services.GetRequiredService<LegalGate>(),
+                host.Services.GetRequiredService<IAgentLink>()).ConfigureAwait(true))
         {
-            return;
-        }
-
-        IReadOnlyList<LegalDocument> outstanding = await host.Services.GetRequiredService<LegalGate>().OutstandingAsync().ConfigureAwait(true);
-        if (outstanding.Any(static d => string.Equals(d.Key, LegalDocuments.Alpha, StringComparison.Ordinal)))
-        {
-            host.Services.GetRequiredService<IAgentLink>().SetNoticeHold(true);
             Log.Information("ui: the Alpha notice {Version} is not accepted yet; the Agent waits for the Legal Gate", AlphaNotice.Version);
         }
     }

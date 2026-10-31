@@ -203,7 +203,7 @@ public sealed partial class FirstRunViewModel : ObservableObject, IDisposable
             if (AlphaTickRequired)
             {
                 // D74: an alpha's Agent waits for the notice, and the App held its start while the gate was open
-                // (App.HoldTheAgentForTheAlphaNoticeAsync); the row is written, so start it now rather than at the next round.
+                // (AlphaStart.HoldTheAgentForTheNoticeAsync); the row is written, so start it now rather than at the next round.
                 _agent.SetNoticeHold(false);
                 _agent.RetryNow();
             }

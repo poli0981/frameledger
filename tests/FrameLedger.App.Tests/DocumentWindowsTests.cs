@@ -5,6 +5,7 @@ using System.Windows;
 using FluentAssertions;
 using FrameLedger.App.Services;
 using FrameLedger.App.Windows;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FrameLedger.App.Tests;
 
@@ -91,6 +92,35 @@ public sealed class DocumentWindowsTests
         facts.ListShown.Should().BeTrue();
         facts.Unknown.Should().BeFalse("a file the window does not hold opens on GitHub instead");
         urls.Opened.Should().BeEmpty();
+    }
+
+    /// <summary>D74: the alpha banner's button opens the Alpha notice in one window, and asking again brings that window forward.</summary>
+    [Fact]
+    public async Task TheAlphaNoticeOpensInOneWindowAndAskingAgainRevealsIt()
+    {
+        var facts = await PagesLoadTests.OnStaAsync(() =>
+        {
+            var shell = new ShellHost(new ServiceCollection().BuildServiceProvider(), null!, null!, new WindowClosePolicy());
+            var documents = new DocumentWindows(new NoUrlOpener(), new NoTheme(), new AppearanceSettings(new MemorySettings()), shell);
+            documents.ShowAlphaNotice();
+            documents.ShowAlphaNotice();
+            DocumentWindow[] open = [.. System.Windows.Application.Current.Windows.OfType<DocumentWindow>()];
+            try
+            {
+                return new { Count = open.Length, Title = open.Length > 0 ? open[0].Title : null, Path = open.Length > 0 ? open[0].Pages.SelectedPage?.Path : null };
+            }
+            finally
+            {
+                foreach (DocumentWindow window in open)
+                {
+                    window.Close();
+                }
+            }
+        });
+
+        facts.Count.Should().Be(1, "asking again brings the open window forward rather than stacking a copy");
+        facts.Title.Should().Be(Strings.FirstRun_Doc_Alpha);
+        facts.Path.Should().Be("legal/ALPHA_NOTICE.md");
     }
 
     [Fact]
