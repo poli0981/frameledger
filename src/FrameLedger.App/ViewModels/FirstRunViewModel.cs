@@ -58,7 +58,13 @@ public sealed partial class FirstRunViewModel : ObservableObject, IDisposable
     private string _elevated = Strings.Common_NotAvailable;
 
     [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(AcceptCommand))]
     private bool _isBusy;
+
+    /// <summary>The Alpha notice's own tick box (D74): Accept waits for it whenever an alpha's gate is shown.</summary>
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(AcceptCommand))]
+    private bool _alphaAcknowledged;
 
     public FirstRunViewModel(LegalGate gate, IAgentLink agent, bool readOnly, IUrlOpener? urls = null)
     {
@@ -66,6 +72,7 @@ public sealed partial class FirstRunViewModel : ObservableObject, IDisposable
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _urls = urls ?? new ShellUrlOpener();
         ReadOnly = readOnly;
+        AlphaTickRequired = !readOnly && gate.Documents.Any(static d => d.RequiresAcceptance && string.Equals(d.Key, LegalDocuments.Alpha, StringComparison.Ordinal));
         SelectedDocument = gate.Documents.Count > 0 ? gate.Documents[0] : null;
         _agent.Changed += OnAgentChanged;
         Refresh();
@@ -73,6 +80,18 @@ public sealed partial class FirstRunViewModel : ObservableObject, IDisposable
 
     /// <summary>Settings ▸ Reopen: the documents only, nothing written.</summary>
     public bool ReadOnly { get; }
+
+    /// <summary>
+    /// An alpha build's gate (D74, 2026-10-31): the Alpha notice is among the documents to accept, so its own warning and
+    /// tick box are shown above them, and Accept waits for the tick — every time an alpha's gate is shown, not only the
+    /// first, because the user is accepting the notice again with whatever moved.
+    /// </summary>
+    public bool AlphaTickRequired { get; }
+
+    /// <summary>The alpha's warning, in the user's language; it summarises, the notice is the text accepted.</summary>
+    public static string AlphaSummary => Strings.FirstRun_Alpha_Summary;
+
+    public static string AlphaTick => Strings.FirstRun_Alpha_Tick;
 
     public IReadOnlyList<LegalDocument> Documents => _gate.Documents;
 
@@ -126,8 +145,10 @@ public sealed partial class FirstRunViewModel : ObservableObject, IDisposable
     /// <summary>The window closed without a decision: a decline (FR-11 blocks until accepted).</summary>
     public void Abandon() => _outcome.TrySetResult(false);
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanAccept))]
     private Task AcceptAsync() => Pending = AcceptCoreAsync();
+
+    private bool CanAccept() => !IsBusy && (!AlphaTickRequired || AlphaAcknowledged);
 
     [RelayCommand]
     private void Decline() => _outcome.TrySetResult(false);
@@ -179,6 +200,14 @@ public sealed partial class FirstRunViewModel : ObservableObject, IDisposable
         try
         {
             await _gate.AcceptAllAsync().ConfigureAwait(true);
+            if (AlphaTickRequired)
+            {
+                // D74: an alpha's Agent waits for the notice, and the App held its start while the gate was open
+                // (AlphaStart.HoldTheAgentForTheNoticeAsync); the row is written, so start it now rather than at the next round.
+                _agent.SetNoticeHold(false);
+                _agent.RetryNow();
+            }
+
             Step = AgentStep;
         }
         finally

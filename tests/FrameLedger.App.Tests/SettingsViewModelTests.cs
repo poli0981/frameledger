@@ -12,6 +12,7 @@ using FrameLedger.Application.Settings;
 using FrameLedger.Domain.Consent;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Infrastructure.Startup;
+using FrameLedger.Shared;
 using FrameLedger.Shared.Ipc;
 using FrameLedger.Shared.Safety;
 using Microsoft.Extensions.DependencyInjection;
@@ -131,7 +132,7 @@ public sealed class SettingsViewModelTests
     }
 
     private static async Task<Harness> OpenAsync(ScratchLedger s, FakeAgentLink? agent = null, FakeRun? run = null, FakeMaintenance? maintenance = null, FakeTool? tool = null,
-        IAgentAdminPrompt? adminPrompt = null, IConfirmations? confirmations = null, SessionDeletion? deletion = null, UiMode? mode = null)
+        IAgentAdminPrompt? adminPrompt = null, IConfirmations? confirmations = null, SessionDeletion? deletion = null, UiMode? mode = null, BuildLine? line = null)
     {
         maintenance ??= new FakeMaintenance();
         tool ??= new FakeTool();
@@ -147,10 +148,27 @@ public sealed class SettingsViewModelTests
         var shell = new ShellHost(new ServiceCollection().BuildServiceProvider(), null!, null!, closePolicy);
         // The instance-lock probe is the test's (never the real folder's): no Agent holds it, so a restart never waits.
         var vm = new SettingsViewModel(appearance, new NoTheme(), shell, settings, s.Library, new HookingConsent(agent, new NoPrompt()), agent, run, strip, maintenance, tool, closePolicy, firstRun,
-            adminPrompt: adminPrompt, agentHeld: static () => false, confirmations: confirmations, deletion: deletion, mode: mode);
+            adminPrompt: adminPrompt, agentHeld: static () => false, confirmations: confirmations, deletion: deletion, mode: mode, line: line ?? BuildLine.Main);
         Task pending = vm.Pending;
         await pending.ConfigureAwait(false);
         return new Harness { Ledger = s, Settings = settings, Agent = agent, Run = run, Strip = strip, Vm = vm, Maintenance = maintenance, Tool = tool, ClosePolicy = closePolicy, FirstRun = firstRun };
+    }
+
+    /// <summary>
+    /// D73 (2026-10-31): an alpha updates only to newer alphas whatever <c>update.channel</c> says, so its picker is locked and
+    /// its line says why; the main line's picker is what it was.
+    /// </summary>
+    [Fact]
+    public async Task AnAlphasUpdateChannelPickerIsLockedAndSaysWhy()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        Harness main = await OpenAsync(s);
+        main.Vm.CanChooseUpdateChannel.Should().BeTrue();
+        main.Vm.UpdateChannelBody.Should().Be(Strings.Settings_UpdateChannel_Body);
+
+        Harness alpha = await OpenAsync(s, line: BuildLine.Alpha);
+        alpha.Vm.CanChooseUpdateChannel.Should().BeFalse();
+        alpha.Vm.UpdateChannelBody.Should().Be(Strings.Settings_UpdateChannel_AlphaBody);
     }
 
     /// <summary>beta.11 (D40): Settings ▸ Data asks with the total, deletes nothing on a no, and deletes every game's through the Agent on a yes.</summary>

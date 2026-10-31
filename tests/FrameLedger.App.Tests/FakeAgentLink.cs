@@ -24,6 +24,11 @@ internal sealed class FakeAgentLink : IAgentLink
 
     public void SetLaunchHold(bool hold) => Holds.Add(hold);
 
+    /// <summary>Every <see cref="SetNoticeHold"/> call, in order (D74: an alpha's gate holds, its Accept releases).</summary>
+    public List<bool> NoticeHolds { get; } = [];
+
+    public void SetNoticeHold(bool hold) => NoticeHolds.Add(hold);
+
     /// <summary>How many times a round was asked to run now (beta.10: the admin mode's restart).</summary>
     public int Retries { get; private set; }
 

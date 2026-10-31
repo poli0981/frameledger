@@ -26,6 +26,59 @@ public sealed class FirstRunViewModelTests
         new("privacy", "Privacy", "2.0", "text", new Uri("https://github.com/x/p")),
     ];
 
+    /// <summary>The main line's four and an alpha's notice after them (D74), as <c>LegalDocuments.Load(BuildLine.Alpha)</c> orders them.</summary>
+    private static IReadOnlyList<LegalDocument> AlphaDocs { get; } =
+    [
+        .. Docs,
+        new(LegalDocuments.Alpha, "Alpha notice", Shared.AlphaNotice.Version, "text", new Uri("https://github.com/x/a")),
+    ];
+
+    [Fact]
+    public async Task AnAlphasGateWaitsForTheTickAndItsAcceptStartsTheAgent()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        var store = new SqliteLegalAcceptanceStore(s.Db);
+        var link = new FakeAgentLink();
+        using var vm = new FirstRunViewModel(new LegalGate(store, AlphaDocs), link, readOnly: false);
+
+        vm.AlphaTickRequired.Should().BeTrue("the Alpha notice is among the documents to accept");
+        vm.AcceptCommand.CanExecute(null).Should().BeFalse("D74: Accept waits for the alpha's own tick box");
+
+        vm.AlphaAcknowledged = true;
+        vm.AcceptCommand.CanExecute(null).Should().BeTrue();
+        await vm.AcceptCommand.ExecuteAsync(null);
+
+        (await store.ListAsync(Ct)).Select(static r => (r.Document, r.Version)).Should().Contain((LegalDocuments.Alpha, Shared.AlphaNotice.Version));
+        link.NoticeHolds.Should().Equal([false], "the Agent the App held for the gate is let go");
+        link.Retries.Should().Be(1, "and started now rather than at the next round");
+        vm.IsAgentStep.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task TheMainLinesGateHasNoTickAndTouchesNoHold()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        var link = new FakeAgentLink();
+        using var vm = new FirstRunViewModel(new LegalGate(new SqliteLegalAcceptanceStore(s.Db), Docs), link, readOnly: false);
+
+        vm.AlphaTickRequired.Should().BeFalse();
+        vm.AcceptCommand.CanExecute(null).Should().BeTrue();
+        await vm.AcceptCommand.ExecuteAsync(null);
+
+        link.NoticeHolds.Should().BeEmpty();
+        link.Retries.Should().Be(0, "a beta's Accept is what it always was");
+    }
+
+    [Fact]
+    public async Task ReadOnlyModeAsksForNoTickEvenOnAnAlpha()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        using var vm = new FirstRunViewModel(new LegalGate(new SqliteLegalAcceptanceStore(s.Db), AlphaDocs), new FakeAgentLink(), readOnly: true);
+
+        vm.AlphaTickRequired.Should().BeFalse("Settings ▸ Reopen shows the documents and records nothing");
+        vm.AcceptCommand.CanExecute(null).Should().BeTrue();
+    }
+
     [Fact]
     public async Task RequiredOnAnEmptyLedgerAndSatisfiedByOneAccept()
     {

@@ -1,6 +1,6 @@
 # FrameLedger — End User License Agreement (EULA)
 
-**Version:** 1.5 · **Effective:** {{RELEASE_DATE}}
+**Version:** 1.6 · **Effective:** {{RELEASE_DATE}}
 
 This End User License Agreement ("Agreement") applies to **FrameLedger** ("the Software"), developed and published by **poli0981** ("the Developer"), contactable at <contact@poli0981.dev> — see <https://poli0981.dev/> for other contact channels.
 
@@ -32,9 +32,10 @@ The Software records without injecting unless you enable injection for a specifi
 
 ## 2B. Pre-release software, and your PC
 
-The Software is currently distributed only as **pre-release (beta) builds**, which certainly still contain defects
-(Disclaimer §0). You use a pre-release build at your own risk, and the Developer is not responsible for any incident
-that results.
+The Software is currently distributed only as **pre-release builds** — **betas**, and **alphas**: a beta's source built
+on a prerelease version of .NET, with the further risks the Alpha notice describes (`legal/ALPHA_NOTICE.md`) — which
+certainly still contain defects (Disclaimer §0). You use a pre-release build at your own risk, and the Developer is not
+responsible for any incident that results.
 
 You are responsible for making sure your PC meets at least the minimum system requirements published by the developer
 or publisher of each game you measure. Problems that arise from running a game below its minimum requirements, or on

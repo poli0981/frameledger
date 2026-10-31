@@ -4605,4 +4605,55 @@
     <value>presents ÷ tokens = {0}。フレーム生成の上限 {1} を超えています。</value>
     <comment>review</comment>
   </data>
+  <data name="App_Title_Alpha" xml:space="preserve">
+    <value>FrameLedger Alpha</value>
+    <comment>review</comment>
+  </data>
+  <data name="Alpha_Badge" xml:space="preserve">
+    <value>ALPHA</value>
+    <comment>review</comment>
+  </data>
+  <data name="Alpha_Badge_Tooltip_Format" xml:space="preserve">
+    <value>{0} で動作する試験的なアルファ版です。ご利用は自己責任でお願いします。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Alpha_Banner_Title" xml:space="preserve">
+    <value>アルファ版</value>
+    <comment>review</comment>
+  </data>
+  <data name="Alpha_Banner_Body_Format" xml:space="preserve">
+    <value>試験版：プレリリース版の .NET である {0} で動作しています。結果が誤っていたり、クラッシュしたりすることがあります。ご利用は自己責任です。安定して使えるのはベータ版です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Alpha_Banner_Read" xml:space="preserve">
+    <value>アルファ版の通知を読む</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Doc_Alpha" xml:space="preserve">
+    <value>アルファ版に関する通知</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Alpha_Summary" xml:space="preserve">
+    <value>これはアルファ版です:
+• ベータ版のソースをプレリリース版の .NET でビルドしたものです。測定値の誤りやクラッシュを含め、ベータ版より多くの問題が起こることを想定してください。
+• この PC のベータ版を置き換え、そのデータを共有します。初めて台帳を開く前に backups フォルダーへコピーし、コピーできない場合は開きません。
+• ご利用は完全に自己責任です。下の一覧にあるアルファ版に関する通知が同意する文書です。読んだことを示すためにチェックを入れてください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="FirstRun_Alpha_Tick" xml:space="preserve">
+    <value>これが試験的なビルドであることを理解し、自己責任で使用します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_UpdateChannel_AlphaBody" xml:space="preserve">
+    <value>ここで何を選んでも、アルファ版は新しいアルファ版にのみ更新されます。ベータ版に戻すには、GitHub Releases からベータ版をこのビルドの上にインストールしてください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Runtime_Format" xml:space="preserve">
+    <value>{0} で動作</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Runtime_Alpha_Format" xml:space="preserve">
+    <value>アルファ版 — プレリリース版の .NET である {0} で動作</value>
+    <comment>review</comment>
+  </data>
 </root>

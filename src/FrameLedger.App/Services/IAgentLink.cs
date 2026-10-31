@@ -26,6 +26,16 @@ public interface IAgentLink : IAgentRequests
     /// </summary>
     void SetLaunchHold(bool hold);
 
+    /// <summary>
+    /// The alpha line's hold (D74, 2026-10-31), beside <see cref="SetLaunchHold"/> and never cleared by it: an alpha's Agent
+    /// does not serve until the Alpha notice is accepted, so while the Legal Gate waits for it a round that finds no Agent
+    /// does not start one — it would exit at once, round after round, each start a Windows prompt under the admin mode.
+    /// The gate's Accept releases it. A link that starts nothing (a viewer's, a test's) has nothing to hold.
+    /// </summary>
+    void SetNoticeHold(bool hold)
+    {
+    }
+
     /// <summary>Skip the wait before the next connect round (the banner's Retry; the admin mode's restart, beta.10).</summary>
     void RetryNow()
     {

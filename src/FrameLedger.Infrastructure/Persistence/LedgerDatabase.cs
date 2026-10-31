@@ -85,14 +85,21 @@ public sealed class LedgerDatabase : IAsyncDisposable
     /// Opens (creating the file and its directory if needed), sets the pragmas, migrates. A path is
     /// REQUIRED: <see cref="LedgerPaths.DefaultDatabase"/> is the Agent's; anything else says why.
     /// <paramref name="diagnostics"/> receives one line per checkpoint (open and close) when given.
+    /// <paramref name="backupFirst"/>, an alpha build's (D73), copies the ledger before anything opens it for writing —
+    /// <see cref="LedgerBackup"/>; a copy that cannot be made throws <see cref="LedgerBackupException"/> and nothing is opened.
     /// </summary>
     public static async Task<LedgerDatabase> OpenAsync(string path, int busyTimeoutMs = DefaultBusyTimeoutMs,
-        Action<string>? diagnostics = null, CancellationToken ct = default)
+        Action<string>? diagnostics = null, LedgerBackupRequest? backupFirst = null, CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         ArgumentOutOfRangeException.ThrowIfNegative(busyTimeoutMs);
 
         string full = System.IO.Path.GetFullPath(path);
+        if (backupFirst is not null)
+        {
+            _ = LedgerBackup.EnsureCopied(full, backupFirst, diagnostics);
+        }
+
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(full)!);
 
         SqliteConnection connection = Connect(full, SqliteOpenMode.ReadWriteCreate);

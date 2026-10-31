@@ -391,16 +391,19 @@
                 <ui:CardControl.Header>
                     <StackPanel>
                         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Settings_UpdateChannel_Label}" />
-                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Settings_UpdateChannel_Body}" />
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.UpdateChannelBody, Mode=OneTime}" TextWrapping="Wrap" />
                     </StackPanel>
                 </ui:CardControl.Header>
-                <ComboBox MinWidth="140"
-                          AutomationProperties.Name="{x:Static res:Strings.Settings_UpdateChannel_Label}"
-                          DisplayMemberPath="Label"
-                          IsEnabled="{Binding ViewModel.ActsOnThisPc}"
-                          ItemsSource="{Binding ViewModel.UpdateChannels}"
-                          SelectedValue="{Binding ViewModel.UpdateChannel, Mode=TwoWay}"
-                          SelectedValuePath="Value" />
+                <!-- D73: locked on the alpha line, whose channel is its package's (11_UPDATER §Channels); the viewer switch stays on the control. -->
+                <Grid IsEnabled="{Binding ViewModel.CanChooseUpdateChannel}">
+                    <ComboBox MinWidth="140"
+                              AutomationProperties.Name="{x:Static res:Strings.Settings_UpdateChannel_Label}"
+                              DisplayMemberPath="Label"
+                              IsEnabled="{Binding ViewModel.ActsOnThisPc}"
+                              ItemsSource="{Binding ViewModel.UpdateChannels}"
+                              SelectedValue="{Binding ViewModel.UpdateChannel, Mode=TwoWay}"
+                              SelectedValuePath="Value" />
+                </Grid>
             </ui:CardControl>
             <!-- 11_UPDATER §Flow (P4 PR-5): the startup silent check, "if enabled" — the one request rule 8 permits, and the user's to turn off. -->
             <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon CloudArrowDown24}">

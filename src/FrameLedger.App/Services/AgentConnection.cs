@@ -31,6 +31,7 @@ public sealed class AgentConnection : IAgentLink, IAsyncDisposable
     private long _rounds;
     private long _launches;
     private volatile bool _holdLaunches;
+    private volatile bool _holdForNotice;
     private volatile string? _lastFailure;
     private string? _reported;
 
@@ -73,6 +74,12 @@ public sealed class AgentConnection : IAgentLink, IAsyncDisposable
 
     /// <inheritdoc />
     public void SetLaunchHold(bool hold) => _holdLaunches = hold;
+
+    /// <summary>True while an alpha's Legal Gate waits for the Alpha notice (D74).</summary>
+    public bool NoticeHeld => _holdForNotice;
+
+    /// <inheritdoc />
+    public void SetNoticeHold(bool hold) => _holdForNotice = hold;
 
     /// <summary>Loop until cancelled.</summary>
     public async Task RunAsync(CancellationToken ct)
@@ -168,7 +175,7 @@ public sealed class AgentConnection : IAgentLink, IAsyncDisposable
         Set(AgentConnectionState.Connecting, null, null);
         PipeClient? client = await TryConnectAsync(ct).ConfigureAwait(false);
         string? running = null;
-        if (client is null && _launcher.CanLaunch && !_holdLaunches)
+        if (client is null && _launcher.CanLaunch && !_holdLaunches && !_holdForNotice)
         {
             // Never a second Agent (2026-09-17): one that is up and does not answer this App is reported, not duplicated.
             running = _launcher.RunningAgent;

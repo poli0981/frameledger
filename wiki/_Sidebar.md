@@ -13,6 +13,7 @@
 - [Every setting](../guide/08-settings.md)
 - [When something goes wrong](../guide/09-troubleshooting.md)
 - [Words FrameLedger uses](../guide/10-glossary.md)
+- [Alpha builds](../guide/11-alpha-builds.md)
 - [The terms, in plain words](../guide/terms-in-plain-words.md)
 - [Limitations](../LIMITATIONS.md)
 

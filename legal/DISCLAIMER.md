@@ -1,10 +1,12 @@
 # FrameLedger — Disclaimer
 
-**Version:** 2.11 · **Effective:** {{RELEASE_DATE}}
+**Version:** 2.12 · **Effective:** {{RELEASE_DATE}}
 
-## 0. This is pre-release (beta) software
+## 0. This is pre-release software
 
-**FrameLedger is a beta.** Every build published so far is a pre-release. It has been tested on a small number of
+**FrameLedger is pre-release software.** Every build published so far is a pre-release: a beta, or an alpha — a beta's
+source built on a prerelease version of .NET, with the further risks set out in the Alpha notice
+(`legal/ALPHA_NOTICE.md`, shown before an alpha build runs). It has been tested on a small number of
 machines and games — the games are listed in `docs/LIST_GAME_TESTED.md` in the project's repository, and what the software
 cannot do is listed in `LIMITATIONS.md` there and in the app under Help ▸ Limitations — and **it certainly still contains
 bugs — some of them not yet known to anyone.** Features can

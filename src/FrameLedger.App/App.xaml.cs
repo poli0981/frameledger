@@ -18,6 +18,7 @@ using FrameLedger.Infrastructure.Diagnostics;
 using FrameLedger.Infrastructure.Import;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Infrastructure.Watch;
+using FrameLedger.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -97,7 +98,8 @@ public partial class App : System.Windows.Application
         int exitCode = 0;
         try
         {
-            _db = await LedgerDatabase.OpenAsync(UiPaths.Database, diagnostics: static line => Log.Information("{Line}", line)).ConfigureAwait(true);
+            _db = await LedgerDatabase.OpenAsync(UiPaths.Database, diagnostics: static line => Log.Information("{Line}", line),
+                backupFirst: AlphaStart.BackupFor(BuildLine.Current, UiPaths.IsViewer, UiPaths.Database, UiIdentity.Version)).ConfigureAwait(true);
             var store = new SqliteSettingsStore(_db);
             var appearance = new AppearanceSettings(store);
             await appearance.LoadAsync().ConfigureAwait(true);
@@ -109,6 +111,7 @@ public partial class App : System.Windows.Application
             var closePolicy = new WindowClosePolicy { MinimizeToTray = await registered.GetBooleanAsync(SettingsRegistry.UiMinimizeToTray).ConfigureAwait(true) };
 
             _host = BuildHost(_db, appearance, registered, closePolicy);
+            await HoldTheAgentForTheAlphaNoticeAsync(_host).ConfigureAwait(true);
             await _host.StartAsync().ConfigureAwait(true);
             Log.Information("ui: started ({Version}), ledger {Ledger}", UiIdentity.Version, UiPaths.Database);
             // beta.21: tier 0 is software rendering (a VM without a GPU, Remote Desktop) - every scroll drawn on the CPU.
@@ -296,6 +299,16 @@ public partial class App : System.Windows.Application
         Shared.Strings.Culture = culture;
     }
 
+    /// <summary>D74: the Agent waits while an alpha's Legal Gate waits for the Alpha notice (<see cref="AlphaStart"/>).</summary>
+    private static async Task HoldTheAgentForTheAlphaNoticeAsync(IHost host)
+    {
+        if (await AlphaStart.HoldTheAgentForTheNoticeAsync(host.Services.GetRequiredService<BuildLine>(), host.Services.GetRequiredService<LegalGate>(),
+                host.Services.GetRequiredService<IAgentLink>()).ConfigureAwait(true))
+        {
+            Log.Information("ui: the Alpha notice {Version} is not accepted yet; the Agent waits for the Legal Gate", AlphaNotice.Version);
+        }
+    }
+
     private static IHost BuildHost(LedgerDatabase db, AppearanceSettings appearance, RegisteredSettings registered, WindowClosePolicy closePolicy)
     {
         HostApplicationBuilder builder = Host.CreateApplicationBuilder();
@@ -306,6 +319,9 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton<INavigationService, NavigationService>();
         builder.Services.AddSingleton<ISnackbarService, SnackbarService>();
         builder.Services.AddSingleton<IContentDialogService, ContentDialogService>();
+
+        // The release line this build was stamped with (D73): read once here, handed to what acts on it.
+        builder.Services.AddSingleton(BuildLine.Current);
 
         // The ledger and the App's own settings (06_DATA_MODEL §Writer ownership: the App writes `settings`).
         builder.Services.AddSingleton(db);

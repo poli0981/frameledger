@@ -183,8 +183,10 @@ Velopack's `alpha` channel (`13_CI_CD` §The alpha line, `11_UPDATER` §Channels
 - **Everything else lives on main**, dormant on the main line. `RELEASE_LINE` is read like `VERSION` and stamped into
   every assembly as the `FrameLedger.ReleaseLine` metadata (`Directory.Build.props` refuses any value but `main` and
   `alpha`); `Shared.BuildLine` reads it back for the App and the Agent, which compose with it rather than reading it
-  where they act, so a test hands either line to the code it tests. What the alpha's SDK asks of the source and .NET 10
-  can also take lands on main.
+  where they act, so a test hands either line to the code it tests. On the alpha line they act on it (D74): the Alpha
+  notice in the Legal Gate with its own tick box, the Agent's wait for it, the ALPHA badge and banner, the locked update
+  channel (`08_UI`), and the ledger's copy before an alpha first opens it (D73, `06_DATA_MODEL` §Migrations). What the
+  alpha's SDK asks of the source and .NET 10 can also take lands on main.
 - **The native layer does not change.** MSVC builds it from the same source; only its build id differs (the alpha's
   tag). The hook, the guard and the Vulkan layer in an alpha are the beta's.
 - **Sync, and the cadence.** After each beta release a pull request merges main into `alpha` with a merge commit (the

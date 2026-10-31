@@ -44,6 +44,9 @@ startup**, and check by hand with Help ▸ Check for updates.
 far) looks for test versions, a release looks for releases. Choose *Stable* or *Beta* to decide yourself. Before
 0.1.0-beta.14 the channel was *Stable* by default and found no version at all — on an older copy, choose *Beta* to update.
 
+An **alpha** — an experimental build on a new .NET — updates only to newer alphas, and its channel is locked; a beta
+never updates to an alpha. Installing one, and going back: [Alpha builds](11-alpha-builds.md).
+
 ## Uninstall
 
 Uninstall FrameLedger from Windows Settings ▸ Apps. It asks before it deletes your recordings folder.

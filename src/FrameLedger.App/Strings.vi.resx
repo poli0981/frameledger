@@ -3459,4 +3459,43 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="Fg_RefusalDetail_BeyondGeneration_Format" xml:space="preserve">
     <value>presents ÷ tokens = {0}, vượt {1} — mức cao nhất mọi công nghệ tạo khung sinh ra.</value>
   </data>
+  <data name="App_Title_Alpha" xml:space="preserve">
+    <value>FrameLedger Alpha</value>
+  </data>
+  <data name="Alpha_Badge" xml:space="preserve">
+    <value>ALPHA</value>
+  </data>
+  <data name="Alpha_Badge_Tooltip_Format" xml:space="preserve">
+    <value>Bản alpha thử nghiệm chạy trên {0}. Bạn dùng nó và tự chịu rủi ro.</value>
+  </data>
+  <data name="Alpha_Banner_Title" xml:space="preserve">
+    <value>Bản alpha</value>
+  </data>
+  <data name="Alpha_Banner_Body_Format" xml:space="preserve">
+    <value>Thử nghiệm: bản này chạy trên {0}, một phiên bản .NET chưa phát hành chính thức. Kết quả có thể sai và ứng dụng có thể gặp sự cố; bạn dùng nó và tự chịu rủi ro. Bản beta mới là bản đáng tin cậy.</value>
+  </data>
+  <data name="Alpha_Banner_Read" xml:space="preserve">
+    <value>Đọc thông báo bản alpha</value>
+  </data>
+  <data name="FirstRun_Doc_Alpha" xml:space="preserve">
+    <value>Thông báo bản alpha</value>
+  </data>
+  <data name="FirstRun_Alpha_Summary" xml:space="preserve">
+    <value>Đây là một bản ALPHA:
+• Đây là mã nguồn của một bản beta, được build trên một phiên bản .NET chưa phát hành chính thức. Hãy chờ đợi nhiều vấn đề hơn bản beta, trong đó có số đo sai và ứng dụng gặp sự cố.
+• Bản này thay bản beta trên máy và dùng chung dữ liệu. Trước khi mở ledger lần đầu, nó chép ledger vào thư mục backups, và sẽ không mở nếu không chép được.
+• Bạn dùng bản này và hoàn toàn tự chịu rủi ro. Thông báo bản alpha trong danh sách bên dưới là văn bản bạn chấp nhận; hãy đánh dấu ô để xác nhận bạn đã đọc.</value>
+  </data>
+  <data name="FirstRun_Alpha_Tick" xml:space="preserve">
+    <value>Tôi hiểu đây là bản thử nghiệm và tôi tự chịu rủi ro khi dùng nó.</value>
+  </data>
+  <data name="Settings_UpdateChannel_AlphaBody" xml:space="preserve">
+    <value>Bản alpha chỉ cập nhật lên bản alpha mới hơn, dù chọn gì ở đây. Muốn quay lại bản beta, hãy cài bản beta từ GitHub Releases đè lên bản này.</value>
+  </data>
+  <data name="About_Runtime_Format" xml:space="preserve">
+    <value>Chạy trên {0}</value>
+  </data>
+  <data name="About_Runtime_Alpha_Format" xml:space="preserve">
+    <value>Bản alpha — chạy trên {0}, một phiên bản .NET chưa phát hành chính thức</value>
+  </data>
 </root>

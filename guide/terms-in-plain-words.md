@@ -10,7 +10,8 @@ Legal documents**.
 - It records performance data **on your PC**.
 - It hooks a game **only if you switch that on for that game**, after a warning. If anti-cheat bans your account for
   it, **that risk is yours**, and the developer cannot undo a ban.
-- It is **beta** software, provided **without warranty**, and the developer is not liable for damage it causes — as
+- It is **pre-release** software — a beta, or an [alpha](11-alpha-builds.md) on a new .NET, which carries more risk and
+  asks you to accept that first — provided **without warranty**, and the developer is not liable for damage it causes — as
   far as the law allows. Rights the law gives you as a consumer, which no agreement can take away, stay yours.
 - Read it: [EULA](../legal/EULA.md).
 

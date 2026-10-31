@@ -21,4 +21,14 @@ public static class LedgerPaths
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "FrameLedger");
 
     public static string DefaultDatabase => Path.Combine(DefaultDirectory, DatabaseFileName);
+
+    /// <summary>
+    /// <c>backups\</c> beside a ledger: where an alpha build copies it before it first opens it (D73, 2026-10-31;
+    /// <see cref="LedgerBackup"/>). Beside the ledger it protects, so a developer's scratch ledger keeps its copies there too.
+    /// </summary>
+    public static string BackupsDirectoryOf(string databasePath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(databasePath);
+        return Path.Combine(Path.GetDirectoryName(Path.GetFullPath(databasePath))!, "backups");
+    }
 }

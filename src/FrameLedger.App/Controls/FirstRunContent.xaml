@@ -33,6 +33,21 @@
                 <Border Padding="12" CornerRadius="6" Background="{DynamicResource SystemFillColorCautionBackgroundBrush}">
                     <ui:TextBlock Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{x:Static vm:FirstRunViewModel.LegalSummary}" TextWrapping="Wrap" />
                 </Border>
+                <!-- D74 (2026-10-31): an alpha build's warning and the tick box Accept waits for; the Alpha notice in the list is the text accepted. -->
+                <Border Margin="0,8,0,0"
+                        Padding="12"
+                        CornerRadius="6"
+                        Background="{DynamicResource SystemFillColorCriticalBackgroundBrush}"
+                        Visibility="{Binding ViewModel.AlphaTickRequired, Converter={StaticResource BoolToVis}}">
+                    <StackPanel>
+                        <ui:TextBlock Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{x:Static vm:FirstRunViewModel.AlphaSummary}" TextWrapping="Wrap" />
+                        <CheckBox Margin="0,8,0,0"
+                                  AutomationProperties.Name="{x:Static vm:FirstRunViewModel.AlphaTick}"
+                                  IsChecked="{Binding ViewModel.AlphaAcknowledged, Mode=TwoWay}">
+                            <ui:TextBlock Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{x:Static vm:FirstRunViewModel.AlphaTick}" TextWrapping="Wrap" />
+                        </CheckBox>
+                    </StackPanel>
+                </Border>
                 <ui:TextBlock Margin="0,10,0,0" Style="{StaticResource SecondaryText}" Text="{x:Static vm:FirstRunViewModel.LegalBody}" TextWrapping="Wrap" />
             </StackPanel>
             <ListBox Grid.Row="1"

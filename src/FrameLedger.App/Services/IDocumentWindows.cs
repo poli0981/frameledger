@@ -14,4 +14,9 @@ public interface IDocumentWindows
 
     /// <summary>Help ▸ About: the legal notices, the third-party licences and the legal documents.</summary>
     void ShowAbout();
+
+    /// <summary>The alpha banner's button (D74): <c>legal/ALPHA_NOTICE.md</c>, rendered.</summary>
+    void ShowAlphaNotice()
+    {
+    }
 }
