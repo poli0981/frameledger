@@ -44,12 +44,15 @@ jobs:
     # that succeeded - in THIS repository. A fork cannot start this repository's Release run (it runs on a tag push or by
     # hand), so the head checked out below is always the owner's; the repository check says so in the condition rather
     # than leaving it to release.yml's triggers (SonarCloud githubactions:S7631, beta.26).
+    # Nor does an alpha's release (D73, 2026-10-31): the wiki shows the newest beta, and an alpha's tag is on the `alpha`
+    # branch, whose guide is the beta's it was cut from - publishing it would only move the wiki's links off main's line.
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
        github.event.workflow_run.event == 'push' &&
        github.event.workflow_run.head_repository.full_name == github.repository &&
-       startsWith(github.event.workflow_run.head_branch, 'v'))
+       startsWith(github.event.workflow_run.head_branch, 'v') &&
+       !contains(github.event.workflow_run.head_branch, '-alpha.'))
     runs-on: windows-latest
     timeout-minutes: 10
     env:

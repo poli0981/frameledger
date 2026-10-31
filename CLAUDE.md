@@ -42,7 +42,7 @@ A C++ DLL (`FrameLedger.Overlay.dll`) is injected into games the user explicitly
 
 | Concern | Choice |
 |---|---|
-| Managed runtime | .NET 10 (LTS, pinned via `global.json`), C# 14, TFM `net10.0-windows10.0.22621.0` with `SupportedOSPlatformVersion=10.0.19045.0` (Win10 22H2 floor, NFR-8), x64 only — `docs/12_BUILD.md` |
+| Managed runtime | .NET 10 (LTS, pinned via `global.json`), C# 14, TFM `net10.0-windows10.0.22621.0` with `SupportedOSPlatformVersion=10.0.19045.0` (Win10 22H2 floor, NFR-8), x64 only — `docs/12_BUILD.md`. **The `alpha` branch** (D73–D76, 2026-10-31) builds the same source on a prerelease .NET — .NET 11 RC3, C# 15 — and differs from main only where `docs/12_BUILD.md` §The alpha line lists; code on main must keep compiling as C# 14 on .NET 10, so no C# 15 syntax |
 | Native | **C++20, MSVC v143+, `/MT` static CRT, `/GS`, `/guard:cf`, no RTTI, no C++ exceptions in hook paths** |
 | Hooking | **MinHook** (BSD-2-Clause) for inline hooks; direct vtable-entry swap for COM interfaces |
 | Vulkan | **Implicit Vulkan layer** (`VK_LAYER_FRAMELEDGER_overlay`), not hooking — `17_HOOK_ENGINE` §Vulkan |
@@ -68,6 +68,7 @@ FrameLedger.slnx               # XML solution format (SDK default since .NET 10)
 NOTICE                         # copyright + the GPLv3 section 7 additional terms (beta.12, D45)
 CONTRIBUTING.md  FORKING.md  CODE_OF_CONDUCT.md   # for people who build, contribute or redistribute
 global.json                    # pins the SDK band — see 12_BUILD
+RELEASE_LINE                   # `main`, or `alpha` on the alpha branch (D73, 2026-10-31) — 12_BUILD §The alpha line
 build.ps1                      # the quality gate; CI runs this identical script
 SonarQube.Analysis.xml         # SonarCloud's settings for ci.yml's sonarcloud job (D68, 2026-10-25; it replaced
 .config/dotnet-tools.json      #   .sonarcloud.properties) and the scanner it runs — 13_CI_CD §SonarCloud

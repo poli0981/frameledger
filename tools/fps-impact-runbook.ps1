@@ -71,12 +71,19 @@ param(
 
     [string]$DataDir,
 
-    [string]$Agent = (Join-Path (Split-Path $PSScriptRoot -Parent) 'src/FrameLedger.Agent/bin/Release/net10.0-windows10.0.22621.0/win-x64/FrameLedger.Agent.exe')
+    # Empty: the Release build's, whichever target framework built it (the alpha line builds another, D73).
+    [string]$Agent = ''
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+if (-not $Agent) {
+    $bin = Join-Path (Split-Path $PSScriptRoot -Parent) 'src/FrameLedger.Agent/bin/Release'
+    $Agent = @(Get-ChildItem -Path $bin -Filter FrameLedger.Agent.exe -Recurse -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Directory.Name -eq 'win-x64' } | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1 -ExpandProperty FullName) -join ''
+    if (-not $Agent) { $Agent = Join-Path $bin '<tfm>/win-x64/FrameLedger.Agent.exe' }
+}
 if (-not (Test-Path -LiteralPath $Agent)) {
     throw "FrameLedger.Agent.exe not found at $Agent. Build it first (./build.ps1 check) or pass -Agent."
 }

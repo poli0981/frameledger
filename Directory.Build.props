@@ -67,7 +67,24 @@
     <FrameLedgerVersionFile>$(MSBuildThisFileDirectory)VERSION</FrameLedgerVersionFile>
     <Version Condition="'$(Version)' == '' And Exists('$(FrameLedgerVersionFile)')">$([System.IO.File]::ReadAllText('$(FrameLedgerVersionFile)').Trim())</Version>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+
+    <!-- D73 (2026-10-31): the RELEASE LINE, from the RELEASE_LINE file beside VERSION - `main`, the betas and releases on
+         the .NET that global.json pins, or `alpha`, a beta's source built on a prerelease .NET from the long-lived `alpha`
+         branch, where this file and global.json are two of the few lines that differ (docs/12_BUILD.md §The alpha line).
+         Not a property a command line sets: the file is the one source, release.yml refuses a tag that disagrees with it,
+         and the target below refuses a value that is neither line. Every assembly carries it (the ItemGroup below), and
+         Shared.BuildLine reads it at run time. -->
+    <FrameLedgerReleaseLineFile>$(MSBuildThisFileDirectory)RELEASE_LINE</FrameLedgerReleaseLineFile>
+    <FlReleaseLine Condition="Exists('$(FrameLedgerReleaseLineFile)')">$([System.IO.File]::ReadAllText('$(FrameLedgerReleaseLineFile)').Trim())</FlReleaseLine>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyMetadata Include="FrameLedger.ReleaseLine" Value="$(FlReleaseLine)" />
+  </ItemGroup>
+
+  <Target Name="FrameLedgerReleaseLineCheck" BeforeTargets="BeforeBuild" Condition="'$(FlReleaseLine)' != 'main' And '$(FlReleaseLine)' != 'alpha'">
+    <Error Text="RELEASE_LINE at the repository root must say 'main' or 'alpha', and it says '$(FlReleaseLine)' (docs/12_BUILD.md §The alpha line)" />
+  </Target>
 
   <!-- The NuGet audit (2026-10-25, docs/13_CI_CD.md §Dependabot and the NuGet audit): every restore checks the WHOLE
        package graph, transitive packages included, against the advisory database, at every severity. These are the

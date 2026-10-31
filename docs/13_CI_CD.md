@@ -6,7 +6,7 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 
 ## Workflows (`.github/workflows/`)
 
-### `ci.yml` — push to `main` + all PRs + `workflow_dispatch` (added 2026-10-04) · **repo-local**
+### `ci.yml` — push to `main` *(and to `alpha` since 2026-10-31, D73 — §The alpha line)* + all PRs + `workflow_dispatch` (added 2026-10-04) · **repo-local**
 - `runs-on: windows-latest`, .NET SDK pinned by `global.json` via `actions/setup-dotnet`, MSVC via `ilammy/msvc-dev-cmd` (pinned to its v1.13.0 commit since beta.24 — the one third-party action, SonarCloud `githubactions:S7637`; Dependabot moves the pin), NuGet cached.
 - Single step of substance: **`./build.ps1 check`** — the same script, with the same switches (none), a developer runs before pushing. The gate list lives in `12_BUILD` §Local quality gate, **once**, rather than being restated here where it goes stale. *(That is the `check` job. Since 2026-10-25 a second job, `sonarcloud`, runs after it — §SonarCloud below; it is not the gate and not a required context.)*
 - ~~**`-SkipIntegration` is the one place local and CI deliberately differ**~~ — **gone since 2026-09-06.** From 2026-08-05 CI passed it for a measured reason: §S16 puts the injecting process's ancestors in the scan set, a .NET test host loads `System.Security.Cryptography.ProtectedData.dll`, and the guard's `protect` fragment refused our own harness (§S19(b)). The signer half now verifies that module's embedded signature offline and reads `O=Microsoft Corporation` on the compiled-in bound, so the `Category=Integration` cases run here — **nine** when this was written, **20 across six classes** as of 2026-09-13 (Agent 6, CaptureHost 7, Infrastructure 7); count them with `grep -rl 'Category", "Integration' tests` rather than trusting either number — and a green CI IS evidence for the managed drain and the capture host's end-to-end behaviour. The switch remains in `build.ps1`, loud, for a developer who must.
@@ -168,6 +168,12 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 - `SHA256SUMS.txt` over every asset, published beside them and printed into the release body (`11_UPDATER`
   §Unsigned releases).
 - `gh release create` with the assets, `--verify-tag`, and `--prerelease` for a `-beta.N` tag.
+- **The alpha line (D73, 2026-10-31):** the version gate reads `RELEASE_LINE` beside `VERSION` and refuses a tag that
+  disagrees with it — on the `alpha` line only `vX.Y.Z-alpha.N`, and an `-alpha.` tag nowhere else. An alpha's download
+  and pack take `--channel alpha`, so the feed, the asset list, the legacy index and the installer are named for that
+  channel (`releases.alpha.json`, `assets.alpha.json`, `RELEASES-alpha`, `FrameLedger.App-alpha-Setup.exe`) and its delta
+  is made from the previous alpha; the main line's pack is unchanged. The release is titled *(experimental alpha)*, and
+  its notes — the alpha's own file, `docs/changelog/x.y.z-alpha.N.md` — open with the warning (§The alpha line).
 - The assets and the notes are also uploaded as a workflow artifact for the smoke checklist (`14_TESTING`
   §Release smoke).
 - ~~Optional final step: submit installer hash to VirusTotal~~ — not built; an upload of the installer to a third
@@ -213,7 +219,8 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
   pushed `v*` tag in this repository (`head_repository` is checked since beta.26: a fork cannot start the Release run,
   and the condition now says so — SonarCloud `githubactions:S7631`), so a `workflow_dispatch` rehearsal of
   `release.yml` never publishes. It checks out the run's
-  `head_sha` (a `workflow_run` job runs `main`'s copy of this file) and links at `head_branch`, the tag. By hand:
+  `head_sha` (a `workflow_run` job runs `main`'s copy of this file) and links at `head_branch`, the tag. **Not after an
+  alpha's release** (D73, 2026-10-31: a `-alpha.` tag is skipped): the wiki shows the newest beta. By hand:
   `gh workflow run wiki.yml -f ref=main -f publish=false` builds, checks and uploads the pages as an artifact; with
   `publish=true` it publishes them.
 - **Why not a step of `release.yml`:** the release stays as it was, its rehearsal stays a pure rehearsal, and a wiki
@@ -225,6 +232,29 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
   page edited on the Wiki tab is overwritten at the next release: edit `wiki/` or `guide/`.
 - `permissions: contents: write` — the repository's default workflow token is read-only (read from the API,
   2026-10-07), and pushing to the wiki repository needs write.
+
+## The alpha line — the `alpha` branch (owner decisions D73–D76, 2026-10-31)
+
+What it is and what differs on the branch: `12_BUILD` §The alpha line. What CI and the release do with it:
+
+- **`ci.yml`** runs `check` on a push to `alpha` and on every pull request into it, under the branch's own `global.json`
+  — `setup-dotnet` installs the exact prerelease SDK it names whatever the `rollForward`. The `sonarcloud` job does not
+  run for the branch (the organisation's plan analyses main alone, §SonarCloud), and neither does the `Changelog` step:
+  what an alpha changes is written in its release's own file on main, never in an `[Unreleased]` entry on `alpha`, which
+  would collide with main's at every sync.
+- **`codeql.yml`** stays on main: the source is main's, and CodeQL's extractor reads C# 14 (CodeQL 2.25.6, June 2026)
+  while the alpha's compiler is C# 15.
+- **The branch is not protected** (an owner's setting; none was asked for): pull requests into it are how changes land
+  (squash), and the sync from main is a pull request merged with a merge commit — main's linear rule is main's alone.
+- **A release of the line**, in order: the alpha's notes on main (`docs/changelog/x.y.z-alpha.N.md` opening with the
+  warning, its row in `CHANGELOG.md`'s Releases table, a line in HANDOFF's START HERE) → the sync pull request into
+  `alpha` → a `release.yml` dispatch on `alpha` (`gh workflow run release.yml --ref alpha -f version=x.y.z-alpha.N`) →
+  the signed tag on `alpha`'s head → the run (§release.yml: the line's tag rule, `--channel alpha`). **No wiki publish**
+  (`wiki.yml` skips an `-alpha.` tag) and **no release line moves**: README, ACCURACY, the Disclaimer's copy and
+  LIMITATIONS keep naming the newest beta.
+- **The cadence:** one alpha per beta, cut from it. Velopack's GitHub source reads the newest ten releases (one page,
+  `perPage` 10), so ten alphas in a row would hide every beta from the betas' own update check, and the other way round
+  (`11_UPDATER` §Channels).
 
 ## SonarCloud — from CI, `ci.yml`'s `sonarcloud` job (owner decision D68, 2026-10-25)
 
@@ -500,6 +530,8 @@ Central package management makes Dependabot PRs single-file diffs.
 - `main` protected: CI + CodeQL required, linear history, no direct pushes.
 - Release: in ONE commit, bump `VERSION` and move the `[Unreleased]` entries of `CHANGELOG.md` under `## [X.Y.Z] - date` (Keep a Changelog format) *(since beta.24, D66: into their own file, `docs/changelog/X.Y.Z.md`, which opens with that heading, plus its row in `CHANGELOG.md`'s Releases table — `release-notes.ps1` reads the version's own file)* → tag `vX.Y.Z` → `release.yml` does the rest (and refuses a tag that disagrees with either file) *(corrected 2026-10-04: for a pre-release tag `vX.Y.Z-beta.N`, do not bump `VERSION` — it already holds the numeric core the gate compares, and it read `0.1.0` through eleven betas; the section is `## [X.Y.Z-beta.N] - date`, the full version. Bump `VERSION` only when the numeric core moves)* → smoke-test the produced installer on a clean Win 10 VM + Win 11 (manual checklist in 14_TESTING §Release smoke).
 - Pre-releases: `vX.Y.Z-beta.N` tags mark the GitHub release as pre-release; the App's `stable` channel ignores them and its `beta` channel (Settings ▸ Updates, `update.channel`) includes them — built with P4 PR-5, so ~~explicit beta channel is v2 backlog~~ is struck. The managed assemblies carry the full tag version; the native VERSIONINFO blocks carry the numeric core (`12_BUILD` §Version).
+- **Alphas (D73, 2026-10-31):** `vX.Y.Z-alpha.N`, tagged on the `alpha` branch only — `release.yml` refuses one anywhere
+  else, and any other tag there — published as GitHub pre-releases on Velopack's `alpha` channel. §The alpha line above.
 
 ## Repo hygiene checklist
 

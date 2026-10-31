@@ -22,6 +22,13 @@
 # -p:Version; the native blocks keep the numeric core (CMake's project() accepts
 # nothing else).
 #
+# THE ALPHA LINE (2026-10-31, owner decisions D73-D76; 12_BUILD §The alpha line): the
+# RELEASE_LINE file says `alpha` on the long-lived `alpha` branch, where the same source
+# builds on a prerelease .NET. Its tags are `vX.Y.Z-alpha.N` and nothing else, no other
+# line may carry one, and its packages go to Velopack's `alpha` channel
+# (releases.alpha.json) - which no beta reads, as no alpha reads releases.win.json
+# (11_UPDATER §Channels). The version gate below enforces all three.
+#
 # A DRY RUN (2026-09-16, P5 prep): `workflow_dispatch` with a version runs every
 # step below — the gate, the publish, the tree assertion, vpk, the checksums — and
 # uploads the result as a workflow artifact, but creates no tag and no Release.
@@ -101,6 +108,14 @@ jobs:
           $pre = if ($m.Groups[2].Success) { 'true' } else { 'false' }
           $file = (Get-Content VERSION -Raw).Trim()
           if ($core -ne $file) { throw "tag $tag has numeric core $core but VERSION says $file — bump VERSION in the same commit as the changelog section, then tag" }
+          # D73: the release line this commit builds (Directory.Build.props refuses any other value too) and the tags it may
+          # carry - an alpha's on the alpha line only, and nothing else there.
+          $line = (Get-Content RELEASE_LINE -Raw).Trim()
+          if ($line -cnotin @('main', 'alpha')) { throw "RELEASE_LINE says '$line'; it must be main or alpha" }
+          $suffix = $m.Groups[2].Value
+          if ($line -eq 'alpha' -and $suffix -cnotmatch '^-alpha\.\d+$') { throw "this commit is on the alpha line (RELEASE_LINE); its tag must be vX.Y.Z-alpha.N, not $tag" }
+          if ($line -ne 'alpha' -and $suffix -match 'alpha') { throw "tag $tag names an alpha, but RELEASE_LINE says '$line': an alpha is tagged on the alpha branch, nowhere else" }
+          $channel = if ($line -eq 'alpha') { 'alpha' } else { 'win' }
           New-Item -ItemType Directory -Force out | Out-Null
           ./tools/release-notes.ps1 -Version $full -OutFile out/notes.md
           if ($LASTEXITCODE -ne 0) {
@@ -113,8 +128,9 @@ jobs:
           }
           "version=$full" >> $env:GITHUB_OUTPUT
           "prerelease=$pre" >> $env:GITHUB_OUTPUT
+          "channel=$channel" >> $env:GITHUB_OUTPUT
           "dry_run=$($dry.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
-          Write-Host "$(if ($dry) { 'DRY RUN of' } else { 'releasing' }) $full (pre-release: $pre)"
+          Write-Host "$(if ($dry) { 'DRY RUN of' } else { 'releasing' }) $full (pre-release: $pre; line: $line; Velopack channel: $channel)"
 
       # The Overlay's build id is `git describe --dirty` at CMake's configure
       # (src/native/FrameLedger.Shm/CMakeLists.txt), and the next step edits tracked
@@ -247,32 +263,42 @@ jobs:
           dotnet tool install -g vpk --version 1.2.161
           if ($LASTEXITCODE -ne 0) { throw 'vpk install failed' }
           $v = '${{ steps.version.outputs.version }}'
+          # D73: `win` (Velopack's default on Windows) for the main line, `alpha` for the alpha line - each release's feed
+          # and the previous release its delta is made from are its own line's. The main line's pack keeps its exact
+          # command (no --channel), so a beta is packed as every beta before the alpha line existed.
+          $channel = '${{ steps.version.outputs.channel }}'
           New-Item -ItemType Directory out/release -Force | Out-Null
-          vpk download github --repoUrl "https://github.com/${{ github.repository }}" --channel win --pre --token $env:GH_TOKEN --outputDir out/release
+          vpk download github --repoUrl "https://github.com/${{ github.repository }}" --channel $channel --pre --token $env:GH_TOKEN --outputDir out/release
           if ($LASTEXITCODE -ne 0) { Write-Host '::warning::the previous release could not be downloaded - this release carries a full package only' }
           Write-Host 'previous release:'
           Get-ChildItem out/release -File | ForEach-Object { Write-Host ("  {0,-48} {1,12:N0}" -f $_.Name, $_.Length) }
-          vpk pack --packId FrameLedger.App --packVersion $v --packDir out/app --mainExe FrameLedger.exe --packTitle FrameLedger --packAuthors FrameLedger --releaseNotes out/notes.md --outputDir out/release
+          $pack = @('pack', '--packId', 'FrameLedger.App', '--packVersion', $v, '--packDir', 'out/app', '--mainExe', 'FrameLedger.exe', '--packTitle', 'FrameLedger', '--packAuthors', 'FrameLedger', '--releaseNotes', 'out/notes.md', '--outputDir', 'out/release')
+          if ($channel -ne 'win') { $pack += @('--channel', $channel) }
+          vpk @pack
           if ($LASTEXITCODE -ne 0) { throw 'vpk pack failed' }
 
-          $built = @((Get-Content out/release/assets.win.json -Raw | ConvertFrom-Json) | ForEach-Object { $_.RelativeFileName })
-          if ($built.Count -eq 0) { throw 'vpk pack wrote no assets.win.json entries' }
-          $keep = $built + @('releases.win.json', 'assets.win.json', 'RELEASES')
+          $assets = "assets.$channel.json"
+          $index = "releases.$channel.json"
+          $legacyName = if ($channel -eq 'win') { 'RELEASES' } else { "RELEASES-$channel" }
+          $built = @((Get-Content "out/release/$assets" -Raw | ConvertFrom-Json) | ForEach-Object { $_.RelativeFileName })
+          if ($built.Count -eq 0) { throw "vpk pack wrote no $assets entries" }
+          $keep = $built + @($index, $assets, $legacyName)
           New-Item -ItemType Directory out/previous -Force | Out-Null
           Get-ChildItem out/release -File | Where-Object { $keep -notcontains $_.Name } | Move-Item -Destination out/previous
-          $feed = Get-Content out/release/releases.win.json -Raw | ConvertFrom-Json
+          $feed = Get-Content "out/release/$index" -Raw | ConvertFrom-Json
           $feed.Assets = @($feed.Assets | Where-Object { $built -contains $_.FileName })
           if ($feed.Assets.Count -eq 0) { throw 'the feed lists none of this build''s packages' }
-          [System.IO.File]::WriteAllText((Join-Path $PWD 'out/release/releases.win.json'), ($feed | ConvertTo-Json -Depth 8 -Compress), [System.Text.UTF8Encoding]::new($false))
-          if (Test-Path out/release/RELEASES) {
-            $legacy = @(Get-Content out/release/RELEASES | Where-Object { $built -contains ($_ -split ' ')[1] })
-            [System.IO.File]::WriteAllLines((Join-Path $PWD 'out/release/RELEASES'), [string[]]$legacy, [System.Text.UTF8Encoding]::new($false))
+          [System.IO.File]::WriteAllText((Join-Path $PWD "out/release/$index"), ($feed | ConvertTo-Json -Depth 8 -Compress), [System.Text.UTF8Encoding]::new($false))
+          if (Test-Path "out/release/$legacyName") {
+            $legacy = @(Get-Content "out/release/$legacyName" | Where-Object { $built -contains ($_ -split ' ')[1] })
+            [System.IO.File]::WriteAllLines((Join-Path $PWD "out/release/$legacyName"), [string[]]$legacy, [System.Text.UTF8Encoding]::new($false))
           }
 
           Write-Host 'this release:'
           Get-ChildItem out/release | ForEach-Object { Write-Host ("  {0,-48} {1,12:N0}" -f $_.Name, $_.Length) }
           Write-Host ('feed: ' + (($feed.Assets | ForEach-Object { '{0} {1} {2}' -f $_.Type, $_.Version, $_.FileName }) -join '; '))
-          if (-not (Test-Path out/release/FrameLedger.App-win-Setup.exe)) { throw 'vpk did not produce FrameLedger.App-win-Setup.exe (README §Install names it)' }
+          $setup = "FrameLedger.App-$channel-Setup.exe"
+          if (-not (Test-Path "out/release/$setup")) { throw "vpk did not produce $setup (README §Install names the beta's, guide/11-alpha-builds.md the alpha's)" }
           $delta = "out/release/FrameLedger.App-$v-delta.nupkg"
           if (Get-ChildItem out/previous -Filter '*-full.nupkg' -ErrorAction SilentlyContinue) {
             if (-not (Test-Path $delta)) { throw "the previous full package was downloaded, but vpk produced no delta ($delta)" }
@@ -301,7 +327,9 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $v = '${{ steps.version.outputs.version }}'
-          $ghArgs = @('release', 'create', $env:GITHUB_REF_NAME, '--title', "FrameLedger $v", '--notes-file', 'out/notes.md', '--verify-tag')
+          # An alpha says what it is in the list of releases too, not only in its notes (D74).
+          $title = if ('${{ steps.version.outputs.channel }}' -eq 'alpha') { "FrameLedger $v (experimental alpha)" } else { "FrameLedger $v" }
+          $ghArgs = @('release', 'create', $env:GITHUB_REF_NAME, '--title', $title, '--notes-file', 'out/notes.md', '--verify-tag')
           if ('${{ steps.version.outputs.prerelease }}' -eq 'true') { $ghArgs += '--prerelease' }
           $ghArgs += Get-ChildItem out/release -File | ForEach-Object { $_.FullName }
           gh @ghArgs
