@@ -35,6 +35,17 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **The alpha line** (the owner's request of 2026-10-31, owner decisions D73–D76): an `alpha` branch builds this source
+  on a prerelease .NET — .NET 11 RC3 first — and publishes it as `x.y.z-alpha.N` pre-releases on an update channel of
+  their own, so a beta never updates to an alpha and an alpha never to a beta. What the line needs on main changes nothing
+  in a beta: the `RELEASE_LINE` file and the line every assembly is stamped with (`Shared.BuildLine`), `release.yml`'s
+  rule that an alpha is tagged on the alpha line and nowhere else and packed on Velopack's `alpha` channel, CI on the
+  `alpha` branch, and no wiki publish for an alpha (`docs/12_BUILD.md` §The alpha line, `docs/13_CI_CD.md` §The alpha
+  line, `docs/11_UPDATER.md` §Channels). Whether the main line ever leaves .NET 10 is an open question whose decision
+  table is written before the evidence (`docs/20_OPEN_QUESTIONS.md` §G, *The main line's .NET*).
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

@@ -1,6 +1,6 @@
 # 11 — Updater
 
-Velopack, feeding from GitHub Releases of `https://github.com/poli0981/frameledger`. ~~Stable channel only in v1.~~ *(Corrected 2026-10-04: two channels since P4 PR-5 — `update.channel`, ~~stable by default~~ or beta, which adds pre-releases. Every release so far is a pre-release; see §Built, Channels.)* *(Corrected 2026-10-05: the default is `auto` since beta.14, which follows the running copy — §The update audit, beta.14.)*
+Velopack, feeding from GitHub Releases of `https://github.com/poli0981/frameledger`. ~~Stable channel only in v1.~~ *(Corrected 2026-10-04: two channels since P4 PR-5 — `update.channel`, ~~stable by default~~ or beta, which adds pre-releases. Every release so far is a pre-release; see §Built, Channels.)* *(Corrected 2026-10-05: the default is `auto` since beta.14, which follows the running copy — §The update audit, beta.14.)* *(2026-10-31, D73: an **alpha line** beside them, on Velopack's `alpha` channel — §Built, Channels.)*
 
 ## Flow
 
@@ -90,7 +90,17 @@ flow, and the tests run the flow over a fake client because nothing here may tou
   log — the "re-validated after update" above. Velopack keeps `current` stable, so `Installed` is the expectation.
 - **Channels:** `stable` = releases GitHub does not mark pre-release; `beta` = those too (`GithubSource(prerelease)`).
   Not Velopack's own `--channel` mechanism — one package set per tag, the GitHub flag decides. `13_CI_CD` §Branch &
-  release policy.
+  release policy. *(Corrected 2026-10-31, D73: true of the main line, whose packages are on Velopack's default `win`
+  channel. **The alpha line uses Velopack's channels**: an alpha is packed with `--channel alpha`, so its feed is
+  `releases.alpha.json`, and an installed copy reads only its own channel's feed — `VelopackUpdateClient` passes no
+  `ExplicitChannel`, so the channel is the one the installed package was built for (its `sq.version` names it). Velopack's
+  `GithubSource` merges the assets of every release that carries that feed, so a beta never sees an alpha and an alpha
+  never sees a beta, under either setting of `update.channel`. **One limit follows from the source, read from Velopack's
+  code 2026-10-31:** it asks
+  GitHub for one page of ten releases, newest first, so ten releases of one line in a row would hide the other line's
+  newest from its update check. The cadence is one alpha per beta (`13_CI_CD` §The alpha line). Moving between the lines
+  is a deliberate install, never an update: the other line's `Setup.exe` over the installed copy, which Velopack answers
+  with its overwrite prompt — the packId, the install folder and the data folder are the same.)*
 - **Hooks** (`VelopackHooks`, in the hand-written `Program.Main` so `VelopackApp.Run()` precedes any window):
   install registers nothing; uninstall = `UninstallHook` (`12_BUILD` §Publish & package). `Run()` in a copy the
   installer did not lay down returns at once and runs no hook (probed on 1.2.0); it does append a line to Velopack's

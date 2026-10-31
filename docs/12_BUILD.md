@@ -48,7 +48,7 @@ Compiler/linker flags (enforced in CMake, not per-target ad hoc): `/std:c++20 /M
 
 ## Managed build & native integration
 
-- **`global.json` pins the SDK band** (`10.0.x`, `rollForward: latestFeature`). Without it `dotnet build` picks the newest installed SDK — on a machine with a .NET 11 preview installed that silently changes analyzer behaviour under `TreatWarningsAsErrors`, and makes local and CI disagree for reasons nobody can see in a diff.
+- **`global.json` pins the SDK band** (`10.0.x`, `rollForward: latestFeature`). Without it `dotnet build` picks the newest installed SDK — on a machine with a .NET 11 preview installed that silently changes analyzer behaviour under `TreatWarningsAsErrors`, and makes local and CI disagree for reasons nobody can see in a diff. *(On the `alpha` branch it pins the prerelease SDK instead, on purpose — §The alpha line, 2026-10-31.)*
 - `Directory.Build.props`:
   - **`TargetFramework` = `net10.0-windows10.0.22621.0`** and **`SupportedOSPlatformVersion` = `10.0.19045.0`**. These are two different knobs and must not be conflated: the TFM platform version selects which Windows API projections are available to compile against, while the supported version is the floor CA1416 enforces. NFR-8 requires Windows 10 **22H2** = build **19045**; letting the supported version default to the TFM's would silently accept installs below the stated floor. Two constraints pin the target to 22621 rather than something closer to the floor: the SDK rejects `SupportedOSPlatformVersion` above `TargetPlatformVersion` (NETSDK1135), and 19045 is not a targeting-pack version in any case — the packs are cut at 19041, 20348, 22000, 22621, 26100. The Windows 11 SDK ≥ 10.0.22621 is already a prerequisite above, so this costs nothing. A bare `net10.0-windows` is wrong for a different reason: it resolves to `net10.0-windows7.0`, and CA1416 would then error on Mica, `MiniDumpWriteDump` and `QueryVideoMemoryInfo` — every Windows-10-era API this app is built on.
   - `Platforms`/`PlatformTarget` = `x64`. "x64 only" is asserted in CLAUDE.md and NFR-8 but was previously enforced nowhere except an ad-hoc `-r win-x64` on the publish command.
@@ -162,6 +162,43 @@ repairs state, it does not grant machine-wide reach on its own).
 > after every sweep; the flag and the button run the same rule. The uninstall hook is still the updater's
 > (P4, Velopack).
 
+## The alpha line (owner decisions D73–D76, 2026-10-31)
+
+The owner, 2026-10-31: an alpha build, "a place where new .NET versions are tried", with code updated where needed and a
+warning that it is an experiment used at one's own risk. **The alpha line** is the source of a released beta built on a
+prerelease .NET — .NET 11 RC3 first (SDK `11.0.100-rc.3.26522.148`, runtime and Windows Desktop
+`11.0.0-rc.3.26522.148`) — from the long-lived `alpha` branch, published as `vX.Y.Z-alpha.N` GitHub pre-releases on
+Velopack's `alpha` channel (`13_CI_CD` §The alpha line, `11_UPDATER` §Channels).
+
+- **What differs from main, and nothing else** — `git diff main...alpha` is the whole difference: `RELEASE_LINE`
+  (`alpha`); `global.json` (the prerelease SDK, `allowPrerelease: true`); the TFM in `Directory.Build.props`
+  (`net11.0-windows10.0.22621.0` — `SupportedOSPlatformVersion` stays `10.0.19045.0`, so CA1416 still holds the code to
+  Windows 10 22H2 although Microsoft does not support .NET 11 on its Home and Pro editions); the three Microsoft packages
+  in `Directory.Packages.props` that are serviced with the runtime (`Microsoft.Extensions.Hosting`,
+  `System.Diagnostics.EventLog`, `Microsoft.Data.Sqlite`, each `11.0.0-rc.3.26522.148` — the last declares SQLitePCLRaw
+  3.0.5, SQLite 3.53.4, where main's 10.0.14 declares 2.1.13, SQLite 3.53.3); `legal/licenses/nuget/` regenerated for
+  that package set; and a fix only .NET 11 can take, if one is ever forced. C# is what `LangVersion latest` gives the
+  SDK — C# 15 on the 11 SDK — and the source uses none of its syntax: **main must keep building on .NET 10** (D76: retarget
+  only, no preview feature, no runtime-async).
+- **Everything else lives on main**, dormant on the main line. `RELEASE_LINE` is read like `VERSION` and stamped into
+  every assembly as the `FrameLedger.ReleaseLine` metadata (`Directory.Build.props` refuses any value but `main` and
+  `alpha`); `Shared.BuildLine` reads it back for the App and the Agent, which compose with it rather than reading it
+  where they act, so a test hands either line to the code it tests. What the alpha's SDK asks of the source and .NET 10
+  can also take lands on main.
+- **The native layer does not change.** MSVC builds it from the same source; only its build id differs (the alpha's
+  tag). The hook, the guard and the Vulkan layer in an alpha are the beta's.
+- **Sync, and the cadence.** After each beta release a pull request merges main into `alpha` with a merge commit (the
+  repository allows them; the linear rule is main's) and the next alpha is cut from it — **one alpha per beta, never
+  several in a row**, because Velopack reads only the newest ten releases (`11_UPDATER` §Channels). A conflict in
+  `legal/licenses/nuget/` is resolved by regenerating it on `alpha` (`tools/license-gather.ps1`). An alpha older than the
+  ledger's schema refuses to open it (`LedgerSchemaException`), so a beta that adds a migration is followed by an alpha
+  soon.
+- **Building it locally:** check out `alpha` with the prerelease SDK installed — `global.json` selects it — and run
+  `./build.ps1 check` as on main.
+- **The next .NET build** (an RC, the GA on 2026-11-10, a servicing release) is one line of `global.json` and three
+  package versions on `alpha`; RC3's support ends at the GA.
+- **Whether the main line follows** is not decided here: `20_OPEN_QUESTIONS` §G, *The main line's .NET*.
+
 ## Version
 
 **One source: the `VERSION` file at the repository root** (`MAJOR.MINOR.PATCH`, nothing else — P4 PR-5,
@@ -216,6 +253,10 @@ dotnet publish src/FrameLedger.Agent -c Release -r win-x64 --self-contained -p:P
 vpk download github --repoUrl https://github.com/poli0981/frameledger --channel win --pre --outputDir out/release   # beta.13: the previous release, for a delta
 vpk pack --packId FrameLedger.App --packVersion {ver} --packDir out/app --mainExe FrameLedger.exe --packTitle FrameLedger --packAuthors FrameLedger --releaseNotes out/notes.md --outputDir out/release
 ```
+
+> **On the alpha line (D73, 2026-10-31) both vpk commands take `--channel alpha`** — the download, so an alpha's delta
+> is made from the previous alpha, and the pack, so its feed is `releases.alpha.json`, which no beta reads. The main
+> line's pack keeps the command above exactly (no `--channel`: Velopack's default on Windows is `win`). §The alpha line.
 
 > **Run by `release.yml` since 2026-09-14 (P4 PR-5)** — `13_CI_CD` §release.yml carries the steps around it
 > (the version gate, `{{RELEASE_DATE}}`, the published-tree assertion, checksums, the release). Both publishes

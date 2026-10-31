@@ -67,6 +67,9 @@ public sealed class AssemblyIdentityTests
             // The repository every assembly names is the one the App sends issues and document links to.
             (assembly.GetCustomAttributes<AssemblyMetadataAttribute>().FirstOrDefault(static a => string.Equals(a.Key, "RepositoryUrl", StringComparison.Ordinal))?.Value)
                 .Should().Be(IssueLink.Repository, name);
+            // D73: one release line per build, the one RELEASE_LINE names — every shipped assembly says the same.
+            (assembly.GetCustomAttributes<AssemblyMetadataAttribute>().FirstOrDefault(static a => string.Equals(a.Key, Shared.BuildLine.MetadataKey, StringComparison.Ordinal))?.Value)
+                .Should().Be(Shared.BuildLine.Current.Name, name);
         }
     }
 

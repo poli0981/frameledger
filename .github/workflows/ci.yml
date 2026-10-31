@@ -20,7 +20,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # `alpha` since 2026-10-31 (D73, docs/13_CI_CD.md §The alpha line): the same source on a prerelease .NET, whose
+    # merges and syncs from main need the same gate under its own global.json.
+    branches: [main, alpha]
   pull_request:
   workflow_dispatch:
 
@@ -176,8 +178,11 @@ jobs:
           Write-Host ("vulkaninfo.exe on PATH: {0}" -f ($(if ($cmd) { $cmd.Source } else { 'no' })))
           Write-Host ("HKLM:\SOFTWARE\Khronos\Vulkan\Drivers present: {0}" -f (Test-Path 'HKLM:\SOFTWARE\Khronos\Vulkan\Drivers'))
 
+      # Not for a pull request into `alpha` (D73): what the alpha line changes is written in its release's own file on
+      # main (docs/changelog/x.y.z-alpha.N.md), and an [Unreleased] entry on the alpha branch would collide with main's
+      # at every sync.
       - name: Changelog
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.base_ref != 'alpha'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -221,9 +226,11 @@ jobs:
     # it. Any other branch is refused by the organisation's plan - "Organization
     # is not allowed to access data from non main branches", measured on a
     # workflow_dispatch run of a feature branch, 2026-10-25 - so a dispatch on
-    # one runs `check` alone.
+    # one runs `check` alone. The same plan is why a pull request INTO `alpha`
+    # (D73) and a push to it run `check` alone: SonarCloud analyses main's line.
     if: >-
       (github.event_name == 'pull_request' &&
+      github.base_ref != 'alpha' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.user.login != 'dependabot[bot]') ||
       (github.event_name != 'pull_request' && github.ref == 'refs/heads/main')
