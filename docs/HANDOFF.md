@@ -70,6 +70,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.28` | [`handoff/history/0.1.0-beta.28.md`](handoff/history/0.1.0-beta.28.md) |
 | `§beta.29` | [`handoff/history/0.1.0-beta.29.md`](handoff/history/0.1.0-beta.29.md) |
 | `§beta.30` | [`handoff/history/0.1.0-beta.30.md`](handoff/history/0.1.0-beta.30.md) |
+| `§beta.31` | [`handoff/history/0.1.0-beta.31.md`](handoff/history/0.1.0-beta.31.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -77,41 +78,66 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-10-26, 0.1.0-beta.31: the remaining library updates
+## **START HERE** — 2026-10-31, 0.1.0-beta.32: the alpha line — .NET 11 RC3 / C# 15 beside the betas
 
-*Status is `docs/changelog/0.1.0-beta.31.md`; this is what no other file carries.* The owner, while beta.30 was being
-released: "Sau bản beta 30, bạn làm thêm bản beta 31 với các deps còn lại (.net 10.0.14) và 1 số thư viện khác. Sau khi
-kết thúc bản beta 31, bạn có thể cập nhật và đóng phiên." #342 (the libraries) and this release.
+*Status is `docs/changelog/0.1.0-beta.32.md` (and, for the first alpha, `docs/changelog/0.1.0-alpha.1.md`); this is what
+no other file carries.* The owner: "Bạn có thể phân tích, tìm kiếm sự khác biệt so với .NET 10, đánh giá, lên plan và tạo
+thêm bản alpha, nơi thử nghiệm các dotnet mới, cập nhật code (nếu cần) cho .NET 11 RC3/c# 15 để chuẩn bị cho .NET 11 ra
+mắt, thêm cảnh báo đây là bản thử nghiệm, yêu cầu tự chịu trách nhiệm nếu cần nhé." — an analysis of .NET 11 against
+.NET 10, an evaluation, a plan, and an alpha build where new .NET versions are tried, code updated where needed, with an
+experimental-build, own-risk warning. #344 (the line's plumbing), #346 (the warning, the backup, the legal text), #345
+(what .NET 11's SDK asks of the source) and this release; the `alpha` branch and `0.1.0-alpha.1` follow.
 
-**Decision:**
+**Decisions (asked while planning, do not re-ask):**
 
-- **D72 — the remaining updates, inside the seven-day cooldown on purpose** (`13_CI_CD` §Dependabot and the NuGet
-  audit): the .NET 10.0.14 packages (a day old), Markdig 1.5.0 (two days), CsWin32 0.3.367 (four days),
-  Meziantou.Analyzer 3.0.317, and the two beta.30 had set aside for other reasons — `coverlet.collector` 10.1.0 and
-  Catch2 3.16.1. The cooldown still holds for Dependabot and for every update the owner has not asked for.
+- **D73 — the alpha line** (`12_BUILD` §The alpha line, `13_CI_CD` §The alpha line, `11_UPDATER` §Channels): the source of a
+  released beta built on a prerelease .NET from the long-lived `alpha` branch, tagged `vX.Y.Z-alpha.N`, packed on
+  Velopack's `alpha` channel. An alpha **replaces** the beta on the PC (same packId, install folder and data folder — the
+  native layer reads that folder by fixed path) and **copies the ledger before it first opens it**, once per alpha
+  version, newest three kept (`06_DATA_MODEL` §Migrations).
+- **D74 — the warning** (`08_UI` §First-run flow and §Settings, `01_ARCHITECTURE` §Lifecycle): `legal/ALPHA_NOTICE.md`
+  in an alpha's Legal Gate with a tick box of its own that Accept waits for; the alpha's Agent does not serve until it is
+  accepted (exit 8); an ALPHA badge, a banner at every start, the update channel locked.
+- **D75 — the legal text made true**: EULA 1.6 §2B and Disclaimer 2.12 §0 name alphas beside betas; the owner approved
+  the Alpha notice 1.0 and both sentences with the plan.
+- **D76 — alpha.1 is a retarget only**: `net11.0`, C# 15 by `LangVersion latest`, the three runtime-serviced packages
+  `11.0.0-rc.3.26522.148`; no preview feature (no runtime-async), no C# 15 syntax — main must keep building as C# 14 on
+  .NET 10.
+
+**The evaluation, as given to the owner:** .NET 11 is STS — supported to about 2028-11, no later than .NET 10 LTS
+(2028-11-14) — so moving the main line buys no support time; Microsoft's supported-OS list for .NET 11 has Windows 10
+only in its LTSC and IoT editions, against NFR-8's Windows 10 22H2 floor; C# 15's unions and closed hierarchies would suit
+the tri-states and refusal reasons once the main line compiles C# 15. Recommendation: the main line stays on .NET 10;
+the alpha line gathers the evidence; `20_OPEN_QUESTIONS` §G *The main line's .NET* holds the decision table.
 
 **Choices made here:**
 
-- **coverlet 10.1.0 by fixing the test, not by keeping the pin**: `NoSecondMatcherTests` reads every string constant of
-  three assemblies, and under coverage those assemblies also carry the collector's `Coverlet.*` types — not ours, and one
-  of their constants is unreadable to reflection. The test leaves that namespace out; what it guards is unchanged.
-- **FluentAssertions stays at 7.2.2** (Xceed's licence), and the vendored native SDKs stay as measured: NVAPI R615
-  changed its licence file, and the Vulkan and Streamline headers follow the loader and the titles they were measured
-  against.
+- **One alpha per beta, never several in a row**: Velopack's `GithubSource` asks GitHub for one page of ten releases, so
+  ten of one line in a row would hide the other line's newest from its update check (read from Velopack's code).
+- **Every alpha-only behaviour lives on main, dormant**: `Shared.BuildLine` is composed and injected, so the alpha's
+  gate, banner, hold, Agent wait and backup are tested on main; the branch differs only by `RELEASE_LINE`, `global.json`,
+  the TFM, three package versions and `legal/licenses/nuget/`.
+- **The App holds the Agent while an alpha's gate is open** on a hold of its own: the connection's first round runs under
+  the first-run window, and a held-back Agent started anyway would exit 8 and be started again every round — under the
+  admin mode a Windows prompt each time.
+- **The backup has its own lock**, five minutes, not the migration lock: that one gives a waiter 30 s and throws.
+- **.NET 11's `IHost` rethrow is accepted on the alpha**: a failed background service ends an alpha's Agent through the
+  crash path with a minidump, where .NET 10 exits 0 — said in `LIMITATIONS.md`.
 
-**Measured on the way:**
-
-- Catch2 3.16.1 builds clean under `/W4 /WX` with the `/EHsc` fix kept; 32 of 32 native suites pass.
-- `Microsoft.Data.Sqlite` 10.0.14 still declares `SQLitePCLRaw` 2.1.13: the engine stays SQLite 3.53.3.
-- CsWin32 0.3.367 and Meziantou 3.0.317 changed nothing in the build: no new generated signature, no new finding.
+**Measured on the way:** the whole gate on .NET 11 RC3 in a throwaway worktree (`spike-notes` §24): native 32/32, every
+test suite green with no change of answer, coverage and format clean; 21 analyzer sites in 14 files (CA1307 ×13, MA0002
+×7, CA2026 ×1), all fixed on main in forms .NET 10 also compiles; license-check red only because `legal/licenses/nuget/`
+is the beta's package set.
 
 **Traps met on the way:**
 
-- **A Catch2 bump re-runs FetchContent's submodule step**: on this machine CMake's cached `GIT_EXECUTABLE` (Git's
-  `ucrt64\bin\git.exe`) cannot run `git-submodule` — point it at `C:/Program Files/Git/cmd/git.exe` in
-  `build/native/x64-release/CMakeCache.txt` before the gate (beta.30's START HERE has the first sighting).
+- **`sed -i` in Git Bash rewrites a CRLF file as LF** (seen on the probe's props files); edit CRLF files with the Edit tool
+  or Python with `newline=''`, and `unix2dos` a file the Write tool created.
+- **The keyboxd I/O error at signing came back**: `gpgconf --kill keyboxd` (the Windows GnuPG's), then commit again.
+- **A CMake configure in a fresh worktree works when the gate is started from PowerShell**, whose `git` is
+  `Git\cmd\git.exe`; from Git Bash, CMake caches `ucrt64\bin\git.exe` and the submodule step fails.
 
-**Owner-only:** no new item — item 25(c) is this update, the first that beta.30's Velopack 1.2.161 installs.
+**Owner-only:** item 26 — beta.32 on real hardware.
 
 
 ## Owner-only — no PR can close these
@@ -285,6 +311,13 @@ kết thúc bản beta 31, bạn có thể cập nhật và đóng phiên." #342
    updater, a delta); the update to beta.31, when it comes, is the first Velopack 1.2.161 installs — say whether it
    downloaded the delta or the full package, and whether it came back. (d) The `ja` strings marked `review`
    (`Trend_Changes_Header`, `Trend_Change_Heading_Format`).
+26. **beta.32 on real hardware.** (a) **The update from beta.31**: Help ▸ Check for updates, *Restart to update* — the
+   terms window shows the EULA 1.6 and the Disclaimer 2.12 once, with no tick box, and nothing else of the alpha appears:
+   no ALPHA badge, no banner, the title *FrameLedger*, Settings ▸ Updates ▸ Channel as before. (b) About ▸ Legal documents
+   lists the Alpha notice, and its version line reads *Runs on .NET 10.0.x*; Help ▸ User guide has *Alpha builds*.
+   (c) Whether the update downloaded the delta or the whole package. (d) The `ja` strings marked `review`: `About_Runtime_*`
+   here; `Alpha_*`, `FirstRun_Alpha_*`, `FirstRun_Doc_Alpha`, `App_Title_Alpha` and `Settings_UpdateChannel_AlphaBody`
+   show only in an alpha.
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
@@ -371,6 +404,10 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D70 | [`08_UI.md`](08_UI.md) §Games › Trend | the hardware-change markers are numbered badges, their changes listed under each chart, with a tooltip |
 | D71 | [`13_CI_CD.md`](13_CI_CD.md) §Dependabot and the NuGet audit | Velopack and vpk 1.2.161 in beta.30 (item 24(d)'s Velopack half) |
 | D72 | [`13_CI_CD.md`](13_CI_CD.md) §Dependabot and the NuGet audit | beta.31 takes the remaining updates inside the seven-day cooldown: .NET 10.0.14 packages, Markdig 1.5.0, CsWin32, Meziantou, coverlet 10.1.0, Catch2 3.16.1 |
+| D73 | [`12_BUILD.md`](12_BUILD.md) §The alpha line | the alpha line: a released beta's source on a prerelease .NET (.NET 11 RC3 first), on the `alpha` branch and Velopack's `alpha` channel; it replaces the beta, shares its data folder and copies the ledger before it first opens it |
+| D74 | [`08_UI.md`](08_UI.md) §First-run flow | the alpha's warning: the Alpha notice with its own tick box in the Legal Gate, the alpha's Agent waiting for it, an ALPHA badge and a banner, the update channel locked |
+| D75 | [`../legal/EULA.md`](../legal/EULA.md) §2B | EULA 1.6 and Disclaimer 2.12 name alphas beside betas; the Alpha notice 1.0 approved with the plan |
+| D76 | [`12_BUILD.md`](12_BUILD.md) §The alpha line | alpha.1 is a retarget only: `net11.0`, C# 15 by `LangVersion latest`, three runtime-serviced packages; no preview feature, no C# 15 syntax |
 
 ---
 
