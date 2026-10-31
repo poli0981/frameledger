@@ -507,7 +507,7 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
         h.RulesUpdates.Should().Be(1);
 
         // A payload naming a path is ignored: the rules SOURCE is not a parameter (07_IPC §The pipe is not a trust boundary).
-        byte[] withPath = IpcCodec.Encode(new IpcEnvelope { Type = IpcMessageType.UpdateRules, Id = "2", Payload = System.Text.Json.JsonDocument.Parse("{\"path\":\"C:\\\\evil\\\\rules.json\"}").RootElement });
+        byte[] withPath = IpcCodec.Encode(new IpcEnvelope { Type = IpcMessageType.UpdateRules, Id = "2", Payload = System.Text.Json.JsonElement.Parse("{\"path\":\"C:\\\\evil\\\\rules.json\"}") });
         (await h.Handler.HandleAsync(IpcCodec.Decode(withPath), Ct).ConfigureAwait(true)).Should().NotBeNull();
         h.RulesUpdates.Should().Be(2, "answered as the same bare trigger");
 

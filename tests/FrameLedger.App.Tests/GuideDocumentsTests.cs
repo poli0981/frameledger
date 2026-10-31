@@ -51,7 +51,7 @@ public sealed class GuideDocumentsTests
     public void EveryLinkInTheGuideLeadsSomewhere()
     {
         string root = RepoRoot();
-        HashSet<string> inWindow = [.. EmbeddedDocuments.Guide().Select(static p => p.Path)];
+        HashSet<string> inWindow = new(EmbeddedDocuments.Guide().Select(static p => p.Path), StringComparer.Ordinal);
         var dead = new List<string>();
         foreach (string page in EmbeddedDocuments.GuidePages)
         {

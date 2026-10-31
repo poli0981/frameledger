@@ -40,9 +40,9 @@ public sealed class SessionExporterTests
             lines.Should().Contain(static l => l.StartsWith("# capture_tier: 1", StringComparison.Ordinal));
             lines.Should().Contain(static l => l.StartsWith("# hardware: RTX 5080", StringComparison.Ordinal));
             lines.Should().Contain(static l => l.StartsWith("# segment: frames 0-39", StringComparison.Ordinal));
-            string header = lines.First(static l => !l.StartsWith('#'));
+            string header = lines.First(static l => !l.AsSpan().StartsWith('#'));
             header.Should().Be(SessionExporter.CsvColumns);
-            string[] rows = [.. lines.SkipWhile(static l => l.StartsWith('#')).Skip(1)];
+            string[] rows = [.. lines.SkipWhile(static l => l.AsSpan().StartsWith('#')).Skip(1)];
             rows.Should().HaveCount(40);
             string[] second = rows[1].Split(',');
             second.Should().HaveCount(16);

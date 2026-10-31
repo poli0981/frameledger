@@ -305,7 +305,7 @@ public sealed class RuleEvaluator
 
     private static string LeafOf(string path)
     {
-        int slash = path.LastIndexOf('/');
+        int slash = path.AsSpan().LastIndexOf('/');
         return slash < 0 ? path : path[(slash + 1)..];
     }
 
