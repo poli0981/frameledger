@@ -139,6 +139,20 @@ is the beta's package set.
 
 **Owner-only:** item 26 — beta.32 on real hardware.
 
+### 0.1.0-alpha.1 — the first alpha, the same day
+
+The `alpha` branch was cut at `v0.1.0-beta.32` and carries the switch alone (`12_BUILD` §The alpha line): `RELEASE_LINE`,
+`global.json` (SDK `11.0.100-rc.3.26522.148`), the TFM, three packages at `11.0.0-rc.3.26522.148`, and the NuGet licence
+texts of that package set (69 packages). Its gate on the 11 SDK passed whole before the pull request into `alpha`; the
+release ran from the signed tag `v0.1.0-alpha.1` on `alpha`, on Velopack's `alpha` channel. Its notes are
+`docs/changelog/0.1.0-alpha.1.md`, which open with the experimental-build warning.
+
+- **The next alpha** follows the next beta: merge main into `alpha` (a merge commit), regenerate `legal/licenses/nuget/`
+  there if it conflicts, then the same steps (`13_CI_CD` §The alpha line). **.NET 11 ships on 2026-11-10**: from then the
+  switch is SDK `11.0.100` and the packages `11.0.0`, and RC3 is out of support — move the alpha even if no beta comes.
+
+**Owner-only:** item 27 — the first alpha on real hardware.
+
 
 ## Owner-only — no PR can close these
 
@@ -318,6 +332,16 @@ is the beta's package set.
    (c) Whether the update downloaded the delta or the whole package. (d) The `ja` strings marked `review`: `About_Runtime_*`
    here; `Alpha_*`, `FirstRun_Alpha_*`, `FirstRun_Doc_Alpha`, `App_Title_Alpha` and `Settings_UpdateChannel_AlphaBody`
    show only in an alpha.
+27. **0.1.0-alpha.1 on real hardware** (D73, D74). (a) **Installing it over beta.32**: `FrameLedger.App-alpha-Setup.exe` from
+   its release page — Velopack asks whether to replace the installed FrameLedger; the terms window shows the Alpha notice
+   with its warning box, and Accept stays off until the box is ticked; *Decline* closes the App. (b) **While it runs**: the
+   ALPHA badge (its tooltip names .NET 11.0.0-rc.3), the title *FrameLedger Alpha*, the banner at start (closable; its
+   button opens the notice); About reads *Alpha build — runs on .NET 11.0.0-rc.3…*; Settings ▸ Updates ▸ Channel is locked
+   with its line. (c) `%LOCALAPPDATA%\FrameLedger\backups\ledger-before-0.1.0-alpha.1.db` exists and opens. (d) One
+   hooked (Tier-1) session of a game measured before records as on the beta; the Agent's log names the release line and
+   .NET 11. (e) **Going back**: the beta's `FrameLedger.App-win-Setup.exe` over it — the beta shows the alpha's session.
+   (f) The `ja` strings marked `review` that only an alpha shows (`Alpha_*`, `FirstRun_Alpha_*`, `FirstRun_Doc_Alpha`,
+   `App_Title_Alpha`, `About_Runtime_Alpha_Format`, `Settings_UpdateChannel_AlphaBody`).
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
