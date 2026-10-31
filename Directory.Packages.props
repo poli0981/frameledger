@@ -38,7 +38,8 @@
   </ItemGroup>
 
   <ItemGroup Label="Hosting and logging">
-    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.14" />
+    <!-- THE ALPHA BRANCH (D76): the three packages serviced with the runtime follow it (docs/12_BUILD.md §The alpha line). -->
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Serilog" Version="4.4.0" />
     <PackageVersion Include="Serilog.Extensions.Hosting" Version="10.0.0" />
     <PackageVersion Include="Serilog.Sinks.Console" Version="6.1.1" />
@@ -47,7 +48,7 @@
 
   <ItemGroup Label="Storage">
     <!-- No EF: Dapper over Microsoft.Data.Sqlite (CLAUDE.md pinned stack). -->
-    <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="11.0.0-rc.3.26522.148" />
     <PackageVersion Include="Dapper" Version="2.1.89" />
     <!--
       No transitive pin on SQLitePCLRaw since beta.30 (2026-10-26). From the scaffold (2026-08-02) to beta.29 this held
@@ -57,6 +58,8 @@
       its own; 10.0.13 declares SQLitePCLRaw 2.1.13, and the pin had become a conflict NuGet does not report - it put a
       package built against the 2.x line on SQLitePCLRaw's 3.x line. The NuGet audit (Directory.Build.props) still
       turns a vulnerable SQLite red (docs/13_CI_CD.md §Dependabot and the NuGet audit).
+      THE ALPHA BRANCH (D76): Microsoft.Data.Sqlite 11 declares SQLitePCLRaw 3.0.5 itself - the 3.x line, built for it this
+      time, whose engine is SourceGear's SQLite package (SQLite 3.53.4); still no pin here.
     -->
   </ItemGroup>
 
@@ -69,7 +72,7 @@
     <PackageVersion Include="LibreHardwareMonitorLib" Version="0.9.6" />
     <!-- The crash witness (04_CAPTURE §Crash & exit classification): Application log events 1000/1001. In-box
          for WPF apps, a package for a class library on the Windows TFM. Microsoft, MIT. -->
-    <PackageVersion Include="System.Diagnostics.EventLog" Version="10.0.14" />
+    <PackageVersion Include="System.Diagnostics.EventLog" Version="11.0.0-rc.3.26522.148" />
   </ItemGroup>
 
   <ItemGroup Label="Analyzers (build-time only)">
