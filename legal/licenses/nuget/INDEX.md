@@ -19,34 +19,26 @@ from the runtime packs the publish used.
 | HidSharp | 2.6.4 | the file LICENSE.txt in the package | Agent, App | [HidSharp.txt](HidSharp.txt) |
 | LibreHardwareMonitorLib | 0.9.6 | MPL-2.0 | Agent, App | [LibreHardwareMonitorLib.txt](LibreHardwareMonitorLib.txt) |
 | Markdig | 1.5.0 | BSD-2-Clause | App | [Markdig.txt](Markdig.txt) |
-| Microsoft.Data.Sqlite.Core | 10.0.14 | MIT | Agent, App | [Microsoft.Data.Sqlite.Core.txt](Microsoft.Data.Sqlite.Core.txt) |
-| Microsoft.Extensions.Configuration | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Configuration.txt](Microsoft.Extensions.Configuration.txt) |
-| Microsoft.Extensions.Configuration.Abstractions | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Configuration.Abstractions.txt](Microsoft.Extensions.Configuration.Abstractions.txt) |
-| Microsoft.Extensions.Configuration.Binder | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Configuration.Binder.txt](Microsoft.Extensions.Configuration.Binder.txt) |
-| Microsoft.Extensions.Configuration.CommandLine | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Configuration.CommandLine.txt](Microsoft.Extensions.Configuration.CommandLine.txt) |
-| Microsoft.Extensions.Configuration.EnvironmentVariables | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Configuration.EnvironmentVariables.txt](Microsoft.Extensions.Configuration.EnvironmentVariables.txt) |
-| Microsoft.Extensions.Configuration.FileExtensions | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Configuration.FileExtensions.txt](Microsoft.Extensions.Configuration.FileExtensions.txt) |
-| Microsoft.Extensions.Configuration.Json | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Configuration.Json.txt](Microsoft.Extensions.Configuration.Json.txt) |
-| Microsoft.Extensions.Configuration.UserSecrets | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Configuration.UserSecrets.txt](Microsoft.Extensions.Configuration.UserSecrets.txt) |
-| Microsoft.Extensions.DependencyInjection | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.DependencyInjection.txt](Microsoft.Extensions.DependencyInjection.txt) |
-| Microsoft.Extensions.DependencyInjection.Abstractions | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.DependencyInjection.Abstractions.txt](Microsoft.Extensions.DependencyInjection.Abstractions.txt) |
-| Microsoft.Extensions.Diagnostics | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Diagnostics.txt](Microsoft.Extensions.Diagnostics.txt) |
-| Microsoft.Extensions.Diagnostics.Abstractions | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Diagnostics.Abstractions.txt](Microsoft.Extensions.Diagnostics.Abstractions.txt) |
-| Microsoft.Extensions.FileProviders.Abstractions | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.FileProviders.Abstractions.txt](Microsoft.Extensions.FileProviders.Abstractions.txt) |
-| Microsoft.Extensions.FileProviders.Physical | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.FileProviders.Physical.txt](Microsoft.Extensions.FileProviders.Physical.txt) |
-| Microsoft.Extensions.FileSystemGlobbing | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.FileSystemGlobbing.txt](Microsoft.Extensions.FileSystemGlobbing.txt) |
-| Microsoft.Extensions.Hosting | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Hosting.txt](Microsoft.Extensions.Hosting.txt) |
-| Microsoft.Extensions.Hosting.Abstractions | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Hosting.Abstractions.txt](Microsoft.Extensions.Hosting.Abstractions.txt) |
-| Microsoft.Extensions.Logging | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Logging.txt](Microsoft.Extensions.Logging.txt) |
-| Microsoft.Extensions.Logging.Abstractions | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Logging.Abstractions.txt](Microsoft.Extensions.Logging.Abstractions.txt) |
-| Microsoft.Extensions.Logging.Configuration | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Logging.Configuration.txt](Microsoft.Extensions.Logging.Configuration.txt) |
-| Microsoft.Extensions.Logging.Console | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Logging.Console.txt](Microsoft.Extensions.Logging.Console.txt) |
-| Microsoft.Extensions.Logging.Debug | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Logging.Debug.txt](Microsoft.Extensions.Logging.Debug.txt) |
-| Microsoft.Extensions.Logging.EventLog | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Logging.EventLog.txt](Microsoft.Extensions.Logging.EventLog.txt) |
-| Microsoft.Extensions.Logging.EventSource | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Logging.EventSource.txt](Microsoft.Extensions.Logging.EventSource.txt) |
-| Microsoft.Extensions.Options | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Options.txt](Microsoft.Extensions.Options.txt) |
-| Microsoft.Extensions.Options.ConfigurationExtensions | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Options.ConfigurationExtensions.txt](Microsoft.Extensions.Options.ConfigurationExtensions.txt) |
-| Microsoft.Extensions.Primitives | 10.0.14 | MIT | Agent, App | [Microsoft.Extensions.Primitives.txt](Microsoft.Extensions.Primitives.txt) |
+| Microsoft.Data.Sqlite.Core | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Data.Sqlite.Core.txt](Microsoft.Data.Sqlite.Core.txt) |
+| Microsoft.Extensions.Configuration | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.Configuration.txt](Microsoft.Extensions.Configuration.txt) |
+| Microsoft.Extensions.Configuration.Binder | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.Configuration.Binder.txt](Microsoft.Extensions.Configuration.Binder.txt) |
+| Microsoft.Extensions.Configuration.CommandLine | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.Configuration.CommandLine.txt](Microsoft.Extensions.Configuration.CommandLine.txt) |
+| Microsoft.Extensions.Configuration.EnvironmentVariables | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.Configuration.EnvironmentVariables.txt](Microsoft.Extensions.Configuration.EnvironmentVariables.txt) |
+| Microsoft.Extensions.Configuration.FileExtensions | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.Configuration.FileExtensions.txt](Microsoft.Extensions.Configuration.FileExtensions.txt) |
+| Microsoft.Extensions.Configuration.Json | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.Configuration.Json.txt](Microsoft.Extensions.Configuration.Json.txt) |
+| Microsoft.Extensions.Configuration.UserSecrets | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.Configuration.UserSecrets.txt](Microsoft.Extensions.Configuration.UserSecrets.txt) |
+| Microsoft.Extensions.DependencyInjection | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.DependencyInjection.txt](Microsoft.Extensions.DependencyInjection.txt) |
+| Microsoft.Extensions.Diagnostics | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.Diagnostics.txt](Microsoft.Extensions.Diagnostics.txt) |
+| Microsoft.Extensions.FileProviders.Physical | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.FileProviders.Physical.txt](Microsoft.Extensions.FileProviders.Physical.txt) |
+| Microsoft.Extensions.FileSystemGlobbing | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.FileSystemGlobbing.txt](Microsoft.Extensions.FileSystemGlobbing.txt) |
+| Microsoft.Extensions.Hosting | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.Hosting.txt](Microsoft.Extensions.Hosting.txt) |
+| Microsoft.Extensions.Logging | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.Logging.txt](Microsoft.Extensions.Logging.txt) |
+| Microsoft.Extensions.Logging.Configuration | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.Logging.Configuration.txt](Microsoft.Extensions.Logging.Configuration.txt) |
+| Microsoft.Extensions.Logging.Console | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.Logging.Console.txt](Microsoft.Extensions.Logging.Console.txt) |
+| Microsoft.Extensions.Logging.Debug | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.Logging.Debug.txt](Microsoft.Extensions.Logging.Debug.txt) |
+| Microsoft.Extensions.Logging.EventLog | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.Logging.EventLog.txt](Microsoft.Extensions.Logging.EventLog.txt) |
+| Microsoft.Extensions.Logging.EventSource | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.Logging.EventSource.txt](Microsoft.Extensions.Logging.EventSource.txt) |
+| Microsoft.Extensions.Options.ConfigurationExtensions | 11.0.0-rc.3.26522.148 | MIT | Agent, App | [Microsoft.Extensions.Options.ConfigurationExtensions.txt](Microsoft.Extensions.Options.ConfigurationExtensions.txt) |
 | Mono.Posix.NETStandard | 1.0.0 | a URL only: https://go.microsoft.com/fwlink/?linkid=869050 | Agent, App | [Mono.Posix.NETStandard.txt](Mono.Posix.NETStandard.txt) |
 | OpenTK.Audio.OpenAL | 4.9.4 | MIT | App | [OpenTK.Audio.OpenAL.txt](OpenTK.Audio.OpenAL.txt) |
 | OpenTK.Compute | 4.9.4 | MIT | App | [OpenTK.Compute.txt](OpenTK.Compute.txt) |
@@ -72,13 +64,12 @@ from the runtime packs the publish used.
 | SkiaSharp.NativeAssets.Win32 | 3.119.0 | MIT | App | [SkiaSharp.NativeAssets.Win32.txt](SkiaSharp.NativeAssets.Win32.txt) |
 | SkiaSharp.Views.Desktop.Common | 3.119.0 | MIT | App | [SkiaSharp.Views.Desktop.Common.txt](SkiaSharp.Views.Desktop.Common.txt) |
 | SkiaSharp.Views.WPF | 3.119.0 | MIT | App | [SkiaSharp.Views.WPF.txt](SkiaSharp.Views.WPF.txt) |
-| SQLitePCLRaw.bundle_e_sqlite3 | 2.1.13 | Apache-2.0 | Agent, App | [SQLitePCLRaw.bundle_e_sqlite3.txt](SQLitePCLRaw.bundle_e_sqlite3.txt) |
-| SQLitePCLRaw.core | 2.1.13 | Apache-2.0 | Agent, App | [SQLitePCLRaw.core.txt](SQLitePCLRaw.core.txt) |
-| SQLitePCLRaw.lib.e_sqlite3 | 2.1.13 | Apache-2.0 | Agent, App | [SQLitePCLRaw.lib.e_sqlite3.txt](SQLitePCLRaw.lib.e_sqlite3.txt) |
-| SQLitePCLRaw.provider.e_sqlite3 | 2.1.13 | Apache-2.0 | Agent, App | [SQLitePCLRaw.provider.e_sqlite3.txt](SQLitePCLRaw.provider.e_sqlite3.txt) |
+| SQLite | 3.53.4 | the file LICENSE.txt in the package | Agent, App | [SQLite.txt](SQLite.txt) |
+| SQLitePCLRaw.config.e_sqlite3 | 3.0.5 | Apache-2.0 | Agent, App | [SQLitePCLRaw.config.e_sqlite3.txt](SQLitePCLRaw.config.e_sqlite3.txt) |
+| SQLitePCLRaw.core | 3.0.5 | Apache-2.0 | Agent, App | [SQLitePCLRaw.core.txt](SQLitePCLRaw.core.txt) |
+| SQLitePCLRaw.provider.e_sqlite3 | 3.0.5 | Apache-2.0 | Agent, App | [SQLitePCLRaw.provider.e_sqlite3.txt](SQLitePCLRaw.provider.e_sqlite3.txt) |
 | System.CodeDom | 10.0.2 | MIT | Agent | [System.CodeDom.txt](System.CodeDom.txt) |
-| System.Diagnostics.EventLog | 10.0.14 | MIT | Agent | [System.Diagnostics.EventLog.txt](System.Diagnostics.EventLog.txt) |
-| System.IO.FileSystem.AccessControl | 5.0.0 | MIT | Agent, App | [System.IO.FileSystem.AccessControl.txt](System.IO.FileSystem.AccessControl.txt) |
+| System.Diagnostics.EventLog | 11.0.0-rc.3.26522.148 | MIT | Agent | [System.Diagnostics.EventLog.txt](System.Diagnostics.EventLog.txt) |
 | System.IO.Ports | 10.0.3 | MIT | Agent, App | [System.IO.Ports.txt](System.IO.Ports.txt) |
 | System.Management | 10.0.2 | MIT | Agent, App | [System.Management.txt](System.Management.txt) |
 | Velopack | 1.2.161 | MIT | App | [Velopack.txt](Velopack.txt) |
