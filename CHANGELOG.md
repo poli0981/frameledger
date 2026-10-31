@@ -35,6 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Fixed
+
+- **The second alpha's release would have stopped at its delta check** (for developers): Velopack names a non-default
+  channel's packages with the channel (`FrameLedger.App-<version>-alpha-delta.nupkg`), and `release.yml` looked for the
+  default channel's name. It now takes the delta the pack listed in `assets.<channel>.json`; the betas' packages are named
+  as before (seen on the `0.1.0-alpha.1` rehearsal, which had no delta to make).
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
