@@ -59,9 +59,6 @@ numeric core and does not move; the heading is the full version — corrected 20
 - **The EULA (1.6) and the Disclaimer (2.12) say the builds are pre-releases — betas, and alphas** (owner decision D75):
   they said every build was a beta, which an alpha would make untrue. Nothing else in them moved; the terms window shows
   them once more after the update. About ▸ Legal documents lists the Alpha notice on every build, for information.
-
-### Changed
-
 - **What .NET 11's SDK asks of the source, taken where .NET 10 can take it too** (owner decisions D73–D76): the whole
   gate run on .NET 11 RC3 before the alpha line was cut found 21 places its analyzers flag — `LastIndexOf`,
   `StartsWith` and `EndsWith` of a single character, which .NET 11 overloads with a comparison; string sets and maps
