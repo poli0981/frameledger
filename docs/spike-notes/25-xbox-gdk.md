@@ -53,9 +53,11 @@ Every one also has `gamelaunchhelper.exe` (100,808–113,096 bytes) at the root 
   first ACE is `(XA;;0x1200a9;;;BU;(WIN://SYSAPPID Contains "<family name>"))`, then `(A;;FR;;;BU)`, and
   `READ_ATTRIBUTES` and `READ_CONTROL` work (size, times and security descriptor read). `gamelaunchhelper.exe` (which
   carries an extra explicit Users ACE), every `.dll`, the images and the XML files read. What refuses — most likely the
-  Gaming Services file-system filter — is not established. Consequences: no `CreateProcess` of a GDK game from outside
-  its package, and nothing of FrameLedger may need an executable's bytes (its PE header, version resource, imports or
-  strings) — `PeImports` already answers `unknown` for a file it cannot open, without throwing.
+  Gaming Services file-system filter — is not established. Consequences: ~~no `CreateProcess` of a GDK game from outside
+  its package~~ *(corrected the same day by the run below: `CreateProcess` of one does start a process — never the game
+  in its package, so it is still not how FrameLedger starts one)*, and nothing of FrameLedger may need an executable's
+  bytes (its PE header, version resource, imports or strings) — `PeImports` already answers `unknown` for a file it
+  cannot open, without throwing.
 - **Windows' own names for them.** `PackageFamilyNameFromId(Name, Publisher)` computes the family name;
   `GetPackagesByPackageFamily` lists the installed full name; `GetPackagePathByFullName` answers the WindowsApps path —
   all unelevated, documented `appmodel.h` calls. `<family name>!<the appxmanifest Application Id>` is exactly the
@@ -108,6 +110,42 @@ Plus, once each: `explorer.exe shell:AppsFolder\<AUMID>` for FINAL FANTASY (the 
 | The graphics runtime mapped before a 1 Hz watcher can see the process | yes | the session is `late_attach`, as for a game Steam starts; `dxgiPresentsBeforeHook` says how much |
 | `CreateProcess` of a game executable by path | error 5 | D80 stands: Play activates the package in both modes |
 
-### What the run found
+### What the run found *(2026-11-03, 03:57–04:09 UTC)*
 
-*Not run yet — this section is filled when it has.*
+Every activation answered `S_OK` with the pid of `gamelaunchhelper.exe`. The chain, each time: `gamelaunchhelper.exe`
+(in the package; its parent the activating process) → `gamingservicesui.exe` (Gaming Services' own UI, no package,
+appearing 0.1–0.8 s after the press and gone again) → `XboxPcTray.exe` (the Xbox app's tray, when not already running)
+→ the package's launch executable 6.2–14.4 s after the press → for Unreal, the shipping executable 0.25–0.37 s later as
+its child.
+`gamelaunchhelper.exe` had exited before the 30 s were up in every run, while the game ran on.
+
+| Title | Launch executable at | Process that presents | Graphics runtime mapped |
+|---|---|---|---|
+| A Game About Digging A Hole | `DiggingGame.exe` +14.4 s | `DiggingGame-WinGDK-Shipping.exe` +14.7 s | `dxgi` + `opengl32` at its first poll, `d3d11` 2.4 s later |
+| Ascend to ZERO | `AscendtoZERO.exe` +8.7 s | `AscendtoZERO-WinGDK-Shipping.exe` +8.9 s | `dxgi` + `opengl32` at once, `d3d12` + `D3D12Core` 2.7 s later |
+| Valor Mortis | `ValorMortisMSG.exe` +6.8 s | `ValorMortisMSG-Win64-Shipping.exe` +7.2 s | `dxgi` + `opengl32` at once, `d3d12` + `D3D12Core` 3.1 s later, `d3d11` 3.7 s |
+| FINAL FANTASY | `FINAL FANTASY.exe` +8.8 s | the same (+ `UnityCrashHandler64.exe`) | `opengl32` 0.4 s, `d3d11` + `dxgi` 1.2 s |
+| inKONBINI | `inKONBINI.exe` +6.8 s | the same (+ `UnityCrashHandler64.exe`) | `dxgi` + `d3d11` + `opengl32` at its first poll |
+| Microsoft Jewel | `Microsoft Jewel.exe` +6.6 s | the same (+ six `msedgewebview2.exe` children in its package) | `dxgi` + `d3d11` at once, `d3d12` + `D3D12Core` 0.6 s later |
+
+Against the table above:
+
+| Measured | Outcome | So |
+|---|---|---|
+| The game process's image path | **`<root>\<Game>\Content\…`** for all six, the C: game included (`C:\XboxGames\…\Content\…`) | the entry is that path; the watcher matches as today |
+| The loader's main-module path | **the same string** as the image path, for every process of every chain | no mismatch on these titles; `TargetResolver` still moves to `QueryFullProcessImageNameW` (one source) |
+| The chain | GameLaunchHelper → the game (→ the shipping executable); GameLaunchHelper gone before the game is | nothing to add: the watcher matches the entry by path |
+| GameLaunchHelper's parent | the activating process: `pwsh.exe` (the probe's `ActivateApplication`), `explorer.exe` (`explorer.exe shell:AppsFolder\<AUMID>`), `dllhost.exe` (below). From the Xbox app itself: not measured | started as Play starts it, the scan set stops at `explorer.exe`; the launcher list is unchanged |
+| Chain members the guard's rights cannot open | **none**: every process of every chain — GameLaunchHelper while it lived, the stubs, the shipping executables, the Unity players and crash handlers, Jewel's WebView2 children (two of them at low and untrusted integrity) — opened with `QUERY_LIMITED_INFORMATION \| VM_READ` as the standard user | nothing to add |
+| Fuzzy-fragment module names in a chain member | **none** (the Unreal games load `xgameruntime.dll`, `XCurl.dll`, `libHttpClient.GDK.dll`, `GameChat2.dll`, `gameplatformservices.dll`, `gamingservicesproxy_17.dll`, `XblAuthManagerProxy.dll`) | nothing to add |
+| The token | every game process: in its package, **not an AppContainer**, medium integrity | the Tier-1 path; the session's object namespace |
+| Mitigations | none of the four on any game process: signature `0x0`, dynamic code `0x0`, user shadow stack `0x100` (only `CetDynamicApisOutOfProcOnly`), CFG `0x0`/`0x1` (no strict mode), image load `0x0`. Jewel's WebView2 sandboxes carry signed-only `0x5` and dynamic code `0x1` — children, never a target | inject; the `TargetMitigation` refusal is built for the titles that do |
+| The graphics runtime before a 1 Hz watcher sees the process | the Unreal shipping executables import `dxgi.dll` statically and create their D3D device 2.4–3.7 s later; the Unity players have it within 0.1–1.2 s | an attach within the watcher's second is before the Unreal device and around the Unity one: `late_attach`, as for a game Steam starts |
+| `CreateProcess` by path | **not error 5.** `FINAL FANTASY.exe` (the package's launch executable): Windows started **`gamelaunchhelper.exe`, outside the package, in its place** (that process's image path and main module both `gamelaunchhelper.exe`), which activated the package — a second, packaged `gamelaunchhelper.exe` (its parent `dllhost.exe`) started `FINAL FANTASY.exe` 6.2 s after the press; the process the caller holds is never the game, and the game is not its descendant. `DiggingGame-WinGDK-Shipping.exe` (not a launch executable): ran **as itself, outside its package** (`GetPackageFullName`: no package), its window up, until closed | D80 stands on two measured grounds instead of the one assumed: a start by path either hands itself to the package within seconds (an early exit the crash safety counts, and a launch whose game it never sees) or runs the game outside its package — which FrameLedger must never cause. The Agent refuses to start an executable under a GDK package root |
+
+**Closing.** Five of the six closed on `CloseMainWindow`; Valor Mortis' window went at once and its two processes
+about 40 s later, by themselves. Microsoft Jewel ignored it and was left open for the owner, as agreed.
+
+**Not measured:** a start from inside the Xbox app (GameLaunchHelper's parent there); a package that keeps write
+virtualization on (all 11 turn it off), so where the Overlay's log would land in one; any GDK title with anti-cheat;
+any Vulkan GDK title; the ring from a packaged process (first seen in the owner's hooked session).
