@@ -594,6 +594,10 @@ const char* ReasonName(Reason r) noexcept {
         return "KillSwitchEngaged";
     case Reason::kAllowedUserModeException:
         return "AllowedUnderUserModeException";
+    case Reason::kTargetAppContainer:
+        return "TargetAppContainer";
+    case Reason::kTargetMitigation:
+        return "TargetMitigation";
     case Reason::kCount:
         break;    // not a reason; falls through to the guard below
     }
@@ -717,6 +721,50 @@ Verdict EvaluateImpl(std::uint32_t targetPid, const Sources& sources, const char
 // A refusal returns here, and there is no argument that changes that (the `acknowledged` flag of 2026-09-21 was
 // withdrawn on 2026-09-22 with the bypass it served). Everything below -- the payload's existence, the payload's
 // identity, the primitive, the bitness answer -- runs only for a target the full evaluation allowed.
+// beta.33 (D78) -- the first policy in `facts` the Overlay cannot live under, named for the refusal's signal; null
+// when there is none. Which one names a refusal changes nothing a user can do, so the order is just winnt.h's.
+const char* BlockingMitigation(const TargetIsolation& facts) noexcept {
+    if (facts.microsoftSignedOnly) {
+        return "signature policy: Microsoft-signed images only";
+    }
+    if (facts.storeSignedOnly) {
+        return "signature policy: Store-signed images only";
+    }
+    if (facts.dynamicCodeProhibited) {
+        return "dynamic code policy: dynamic code prohibited";
+    }
+    if (facts.shadowStackStrict) {
+        return "user shadow stack policy: strict mode";
+    }
+    if (facts.shadowStackBlocksNonCet) {
+        return "user shadow stack policy: images not marked CET-compatible are blocked";
+    }
+    if (facts.cfgStrict) {
+        return "Control Flow Guard policy: strict mode";
+    }
+    return nullptr;
+}
+
+// beta.33 (D78) -- can the target take the Overlay at all? kAllow, or the refusal. "Could not tell" refuses as
+// kProcessUnreadable, the module check's own word for a process it could not read: it never reads as "clear".
+Verdict TargetIsolationVerdict(std::uint32_t targetPid, const Sources& sources) noexcept {
+    if (sources.TargetIsolationFacts == nullptr) {
+        return Refuse(Reason::kProcessUnreadable, nullptr, "no target isolation source");
+    }
+    TargetIsolation facts;
+    if (sources.TargetIsolationFacts(targetPid, &facts) != Collected::kOk) {
+        return Refuse(Reason::kProcessUnreadable, nullptr,
+                      "the target's token or code-protection policies could not be read");
+    }
+    if (facts.appContainer) {
+        return Refuse(Reason::kTargetAppContainer, nullptr, "the target's token is an AppContainer's");
+    }
+    if (const char* mitigation = BlockingMitigation(facts); mitigation != nullptr) {
+        return Refuse(Reason::kTargetMitigation, nullptr, mitigation);
+    }
+    return Allow();
+}
+
 Verdict GuardedInjectImpl(std::uint32_t targetPid, const wchar_t* dllPath, const Sources& sources,
                           const char* toleratedFamilies) noexcept {
     const Verdict v = EvaluateImpl(targetPid, sources, toleratedFamilies);
@@ -766,6 +814,15 @@ Verdict GuardedInjectImpl(std::uint32_t targetPid, const wchar_t* dllPath, const
     }
     if (!payloadIsOurs) {
         return Refuse(Reason::kPayloadNotOurs, nullptr, "the payload is not one of FrameLedger's own binaries");
+    }
+
+    // beta.33 (D78) -- the last question before the primitive: can the target take the Overlay at all? Its token and
+    // its mitigation policies answer, and a refusal names which. AFTER the payload checks, so a misuse of the exported
+    // ABI is reported as one whatever the target; BEFORE the primitive, which still answers bitness itself -- a 32-bit
+    // target under none of these policies reaches it and is kTargetIsWow64 as before.
+    const Verdict isolation = TargetIsolationVerdict(targetPid, sources);
+    if (!isolation.Allowed()) {
+        return isolation;
     }
 
     // Injection failing is not a guard refusal — the gate passed — but it is

@@ -8,6 +8,7 @@
 #include <cstring>
 #include <cwchar>
 #include <fl_prescan.h>
+#include <string_view>
 
 namespace fl::guard {
 namespace {
@@ -276,17 +277,17 @@ Verdict PreScanGameWith(const wchar_t* exePath, const Sources& s, const char* to
 // as files. `folder` is the first `len` characters of a path; the probe path is built on the stack. A probe that fails
 // — too long, absent, a directory, unreadable — is not a root.
 bool IsGdkPackageRoot(const wchar_t* folder, std::size_t len) noexcept {
-    static const wchar_t* const kFiles[] = {L"MicrosoftGame.config", L"appxmanifest.xml"};
-    for (const wchar_t* file : kFiles) {
-        wchar_t           probe[kMaxPreScanPathLen] = {};
-        const std::size_t fileLen = wcslen(file);
-        if (len + 1 + fileLen + 1 > kMaxPreScanPathLen) {
+    // Lengths known at compile time: no strlen-family call on a name (SonarCloud cpp:S5813, PR-1).
+    static constexpr std::wstring_view kFiles[] = {L"MicrosoftGame.config", L"appxmanifest.xml"};
+    for (const std::wstring_view file : kFiles) {
+        wchar_t probe[kMaxPreScanPathLen] = {};
+        if (len + 1 + file.size() + 1 > kMaxPreScanPathLen) {
             return false;
         }
         std::wmemcpy(probe, folder, len);
         probe[len] = L'\\';
-        std::wmemcpy(probe + len + 1, file, fileLen);
-        probe[len + 1 + fileLen] = L'\0';
+        std::wmemcpy(probe + len + 1, file.data(), file.size());
+        probe[len + 1 + file.size()] = L'\0';
         const DWORD attrs = GetFileAttributesW(probe);
         if (attrs == INVALID_FILE_ATTRIBUTES || (attrs & FILE_ATTRIBUTE_DIRECTORY) != 0) {
             return false;

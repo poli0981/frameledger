@@ -102,6 +102,21 @@ public sealed class GameArtTests : IDisposable
         view.Tint!.Value.B.Should().BeGreaterThan(view.Tint.Value.R, "the band takes the logo's colour, the cover slot's image");
     }
 
+    [Fact]
+    public async Task AGogGamesArtIsSaidAsGalaxys()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        string install = Path.Combine(_dir, "gog", "A Space for the Unbound");
+        GameRow game = await s.GameAsync("A Space for the Unbound", Path.Combine(install, "A Space for the Unbound.exe"));
+        string cover = TestImages.Write(Path.Combine(_dir, "galaxy", "cover.png"), TestImages.Png(30, 45, Color.FromRgb(40, 160, 40)));
+        var store = new TestImages.Store("gog", new StoreGame("gog", "1125815775", "A Space for the Unbound", install, null, null));
+
+        GameArtView view = (await Art(new MemorySettings(), store, new TestImages.ArtCache("gog", "1125815775", new GameArtFiles(cover, null, null))).ForAsync(game, Ct))!;
+
+        view.Source.Should().Be(Strings.Art_Source_Gog);
+        view.CoverIsSquare.Should().BeFalse();
+    }
+
     [Theory]
     [InlineData("C:\\Windows\\Web\\Wallpaper\\img0.jpg")]
     [InlineData("\\\\server\\share\\x.png")]

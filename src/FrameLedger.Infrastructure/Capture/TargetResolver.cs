@@ -31,6 +31,10 @@ namespace FrameLedger.Infrastructure.Capture;
 /// exactly one candidate carries it (<see cref="ChromiumGpuProcess"/>). Measured on
 /// <i>Flower in Us</i>: three <c>Game.exe</c>, one path, <c>TargetAmbiguous</c>.
 /// </para>
+/// <para>
+/// <b>A candidate's path is the watcher's own spelling</b> (beta.33): <see cref="ProcessImagePath"/>, the kernel's image
+/// name, which the watcher keys the game on. It was the loader's (<c>Process.MainModule</c>) until then.
+/// </para>
 /// </remarks>
 public sealed class TargetResolver : ITargetResolver
 {
@@ -146,35 +150,28 @@ public sealed class TargetResolver : ITargetResolver
         {
             try
             {
-                // MainModule needs rights we may not have for another user's or an elevated process.
-                // A process we cannot read is NOT a match — "could not look" must not widen the set —
-                // but it is counted below so it cannot narrow one either.
-                string? image = p.MainModule?.FileName;
+                // THE WATCHER'S OWN SPELLING (beta.33): the kernel's image name, normalised as the watcher normalises
+                // it, where this read the loader's (MainModule) until then and a game started through a junction could
+                // come back spelled differently from the path the watcher had just matched (ProcessImagePath).
+                //
+                // Opened with the guard's rights, which MainModule's open also needed: a process an anti-cheat driver
+                // closes, or an elevated game to an unelevated Agent, is NOT a match -- "could not look" must not widen
+                // the set -- but it is counted below so it cannot narrow one either (D21: TargetUnreadable).
+                string? image = ProcessImagePath.Read(p.Id, ProcessImagePath.GuardRights, out int error);
                 if (image is null)
                 {
-                    // A process that is in the snapshot with NO main module yet -- it exists and has
-                    // not finished mapping its image. Measured on the hosted runner 2026-09-04, twice
-                    // in one hour, on a single freshly started instance: the resolver skipped it here
-                    // without counting it and answered TargetNotRunning about a process it had just
-                    // enumerated. "Could not look" must not narrow the set, and that includes this
-                    // shape; it is counted like a process we lack the rights to read.
+                    // Exited between enumeration and the read, not ours to read, or a name that would not
+                    // normalise. Either way we did not establish whether it is our target.
                     unreadable++;
-                    why.Add($"pid {p.Id}: no main module yet");
+                    string because = error == 0 ? "its image path would not normalise" : new System.ComponentModel.Win32Exception(error).Message;
+                    why.Add($"pid {p.Id}: {because}");
                     continue;
                 }
 
-                if (string.Equals(ExecutableIdentity.Normalise(image), normalisedExePath,
-                        StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(image, normalisedExePath, StringComparison.OrdinalIgnoreCase))
                 {
                     matches.Add(p.Id);
                 }
-            }
-            catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
-            {
-                // Exited between enumeration and the read, or not ours to read. Either way we did not
-                // establish whether it is our target.
-                unreadable++;
-                why.Add($"pid {p.Id}: {ex.Message}");
             }
             finally
             {

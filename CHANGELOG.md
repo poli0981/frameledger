@@ -51,6 +51,18 @@ numeric core and does not move; the heading is the full version — corrected 20
   platform, first in the list — a GDK FINAL FANTASY ships Steam's DLL and read *Steam* — decided by a new signal,
   `root_file`, from the install folder's own listing, so a very large install whose deep walk ran short still reads as
   its store (`docs/05_DETECTION.md`).
+- **Play starts a game from the Xbox app or the Microsoft Store through Windows** (D80), in either Play mode and from an
+  App running as administrator: the user's shell activates the game's package as its Start-menu tile does
+  (`explorer.exe shell:AppsFolder\<AUMID>`), because started by its path such a game is never the game in its package —
+  measured on the owner's titles (`docs/spike-notes/25-xbox-gdk.md`). The capture agent refuses to start one by its path
+  (`LaunchGame` answers `PackagedGame`), and the game is recorded once it appears, a few seconds after its start
+  (`docs/04_CAPTURE.md`, `docs/08_UI.md`, `LIMITATIONS.md`).
+- **The anti-cheat guard says when a game cannot take the hook at all** (D78), read from the game's own token and code-protection
+  settings just before the injection: `TargetAppContainer` — an older Microsoft Store app (UWP) — and `TargetMitigation` —
+  only Microsoft- or Store-signed code, no generated code, a strict or non-CET-blocking user shadow stack, or strict Control
+  Flow Guard. Neither is a finding: nothing is written to the game, and the session keeps its duration, the sensors and the
+  reason. Each ended before as a failed injection, a hook that installed nothing, or a risk of ending the game, so no game
+  that measured before is refused now (`docs/19_SAFETY_AND_ANTICHEAT.md`).
 
 ### Changed
 
@@ -59,6 +71,11 @@ numeric core and does not move; the heading is the full version — corrected 20
   pictures a game ships in its own folder — that Play asks Windows to start such a game, and that before any injection
   FrameLedger reads whether a game runs in an app container and which of Windows' code protections it runs under. The
   EULA and the Disclaimer do not change.
+- **The capture path reads a game's executable path one way** (for developers): `TargetResolver`, which finds the game again
+  just before the guard, read the loader's spelling (`Process.MainModule`) where the watcher had the kernel's, so a game
+  started through a junction could end `TargetNotRunning` about a process the watcher had just matched. Both read
+  `ProcessImagePath` now, and the resolver still opens a candidate with the guard's own rights, so a process an anti-cheat
+  driver closes stays `TargetUnreadable` (`docs/04_CAPTURE.md` §Process watcher).
 
 ### Fixed
 

@@ -201,6 +201,25 @@ enum class Reason : std::uint8_t {
     // checks read exactly as before.
     kAllowedUserModeException,
 
+    // THE TARGET CANNOT TAKE THE OVERLAY AT ALL (beta.33, owner decision D78; spike-notes §25). Both are read from the
+    // target itself -- its token and its process mitigation policies, through Sources::TargetIsolationFacts -- as the
+    // last question before the primitive, after every check above and the payload's identity passed. Neither is a
+    // finding about anti-cheat: nothing is written to the game's row, and the session is Tier 2 with this reason. Each
+    // ended before as a failed injection, an Overlay that installed no hooks, or a risk of killing the game, and never
+    // as a working session -- so no game that measured before is refused now.
+    //
+    // The token is an AppContainer's: a Microsoft Store app of the UWP kind, not a desktop game. The Overlay's shared
+    // memory, its `Local\` names and the rules file it reads live in the user's session namespace and profile, which an
+    // AppContainer cannot open. GDK games from the Xbox app are full trust and are not this (D78).
+    kTargetAppContainer,
+
+    // Windows runs the target under a code-protection policy the Overlay cannot live under: images signed by Microsoft
+    // or the Store only (the Overlay is neither), no dynamic code (MinHook's trampolines are dynamic code), a user
+    // shadow stack in strict mode or one that refuses images not marked CET-compatible (the Overlay is not), or Control
+    // Flow Guard in strict mode (native/CMakeLists.txt H1: a host in strict mode could still __fastfail on the
+    // trampolines, which no fault policy can catch). The policy is the signal, and an audit-only flag is not one.
+    kTargetMitigation,
+
     // NOT A REASON. The count, so appending above it updates the exported
     // FlGuardReasonCount by construction.
     //
@@ -287,6 +306,19 @@ using ModuleSink = bool (*)(void* ctx, const char* name, const wchar_t* path);
 // directories and files against different blocklist groups, and guessing from
 // the name would be a second, weaker classifier.
 using DirEntrySink = bool (*)(void* ctx, const char* name, bool isDirectory);
+
+// What the target's own token and mitigation policies say about loading the Overlay (beta.33, D78) -- read by
+// Sources::TargetIsolationFacts, judged by the guard (kTargetAppContainer, kTargetMitigation). Each field is one
+// Windows flag, named as winnt.h names it, so a refusal's signal can say which one it was.
+struct TargetIsolation {
+    bool appContainer = false;               // TokenIsAppContainer
+    bool microsoftSignedOnly = false;        // ProcessSignaturePolicy.MicrosoftSignedOnly
+    bool storeSignedOnly = false;            // ProcessSignaturePolicy.StoreSignedOnly
+    bool dynamicCodeProhibited = false;      // ProcessDynamicCodePolicy.ProhibitDynamicCode
+    bool shadowStackStrict = false;          // ProcessUserShadowStackPolicy: enabled, EnableUserShadowStackStrictMode
+    bool shadowStackBlocksNonCet = false;    // ProcessUserShadowStackPolicy.BlockNonCetBinaries(NonEhcont)
+    bool cfgStrict = false;                  // ProcessControlFlowGuardPolicy.StrictMode
+};
 
 struct Sources {
     // Loaded modules of one process, by base name and load path.
@@ -455,6 +487,17 @@ struct Sources {
     //     Same trust base as above: that swap needs write access we have already
     //     conceded.
     Collected (*PayloadIsOurOwn)(const wchar_t* dllPath, bool* isOurs) = nullptr;
+
+    // beta.33 (D78) -- can the target take the Overlay at all? Its token (TokenIsAppContainer) and four of its
+    // process mitigation policies, read through a PROCESS_QUERY_LIMITED_INFORMATION handle, which answers both
+    // (measured 2026-11-03 on Windows 11: GetProcessMitigationPolicy needs no more). A policy this Windows does not
+    // know (ERROR_INVALID_PARAMETER, which is what an unknown policy answers -- measured) cannot be in effect, and
+    // reads as clear; any other failure is kFailed.
+    //
+    // kFailed and a null seam refuse, as kProcessUnreadable: "could not tell" never reads as "clear". Asked by
+    // GuardedInjectImpl only, never by EvaluateImpl -- the 30 s re-scan runs inside a process the Overlay is already
+    // in, where the question has been answered.
+    Collected (*TargetIsolationFacts)(std::uint32_t pid, TargetIsolation* out) = nullptr;
 };
 
 // TWO SEAMS, ONE IMPLEMENTATION. SystemSources() wires both ModuleIsOurOwn and

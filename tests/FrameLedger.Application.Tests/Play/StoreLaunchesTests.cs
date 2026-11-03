@@ -63,6 +63,47 @@ public sealed class StoreLaunchesTests
             .Should().Be("itch://install?game_id=5015466&launch");
     }
 
+    /// <summary>
+    /// beta.33 (D80): an Xbox game is activated through its package, as its Start-menu tile does — the command §25 ran on
+    /// FINAL FANTASY, where the game came up in its package. Started by its path, a GDK game never is.
+    /// </summary>
+    [Fact]
+    public void XboxActivatesThePackageThroughTheUsersShell()
+    {
+        const string family = "39EA002F.FF1DF_n746a19ndrrjg";
+        StoreGame record = Record("xbox", family, @"D:\xbox\FINAL FANTASY\Content") with { LaunchKey = family + "!Game" };
+
+        StoreLaunch? launch = StoreLaunches.For(record, _galaxy);
+
+        launch.Should().Be(new StoreLaunch("xbox", StoreLaunchKind.RunProgram, StoreLaunches.ExplorerPath, @"shell:AppsFolder\" + family + "!Game"));
+        StoreLaunches.ExplorerPath.Should().EndWith(@"\explorer.exe").And.StartWith(Environment.GetFolderPath(Environment.SpecialFolder.Windows));
+    }
+
+    [Fact]
+    public void AnXboxKeyThatIsNotThisPackagesBuildsNothing()
+    {
+        StoreGame record = Record("xbox", "LyricalGamesLLC.ValorMortis_72fag5ekhk96y", @"D:\xbox\Valor Mortis\Content");
+
+        StoreLaunches.For(record with { LaunchKey = "LyricalGamesLLC.ValorMortis_72fag5ekhk96y!AppValorMortisShipping" }, null).Should().NotBeNull();
+        StoreLaunches.For(record with { LaunchKey = "Another.Game_72fag5ekhk96y!AppValorMortisShipping" }, null).Should().BeNull("the key must activate this record's own package");
+        StoreLaunches.For(record with { LaunchKey = null }, null).Should().BeNull("an entry with no application id has nothing to activate");
+    }
+
+    [Theory]
+    [InlineData("LyricalGamesLLC.ValorMortis_72fag5ekhk96y!AppValorMortisShipping", true)]
+    [InlineData("Microsoft.MicrosoftJewel_8wekyb3d8bbwe!Game", true)]
+    [InlineData("Microsoft.MicrosoftJewel_8wekyb3d8bbwe", false)]
+    [InlineData("Microsoft.MicrosoftJewel_8wekyb3d8bbw!Game", false)]
+    [InlineData("Microsoft.MicrosoftJewel_8WEKYB3D8BBWE!Game", false)]
+    [InlineData("Microsoft.MicrosoftJewel_8wekyb3d8bbwe!1Game", false)]
+    [InlineData("Microsoft.MicrosoftJewel_8wekyb3d8bbwe!Game /x", false)]
+    [InlineData("Microsoft.MicrosoftJewel_8wekyb3d8bbwe!Game\\..", false)]
+    [InlineData("..\\Jewel_8wekyb3d8bbwe!Game", false)]
+    [InlineData("MJ_8wekyb3d8bbwe!Game", false)]
+    [InlineData("!Game", false)]
+    public void AnAumidIsCheckedAgainstTheShapeWindowsGivesOne(string aumid, bool valid) =>
+        StoreLaunches.IsAumid(aumid).Should().Be(valid);
+
     [Theory]
     [InlineData("steam", "730&evil=1")]
     [InlineData("steam", "")]

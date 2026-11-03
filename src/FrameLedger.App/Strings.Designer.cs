@@ -621,8 +621,10 @@ public static class Strings
         nameof(Guard_RulesUnreadable),
         nameof(Guard_ServiceQueryFailed),
         nameof(Guard_SuspiciousUnsigned),
+        nameof(Guard_TargetAppContainer),
         nameof(Guard_TargetIsVulkanLayered),
         nameof(Guard_TargetIsWow64),
+        nameof(Guard_TargetMitigation),
         nameof(Guide_Title),
         nameof(Hooking_NotX64_Format),
         nameof(ImagePicker_Filter),
@@ -789,6 +791,7 @@ public static class Strings
         nameof(Play_NoGalaxy_Format),
         nameof(Play_NoStore_Format),
         nameof(Play_NotInLibrary_Format),
+        nameof(Play_PackagedGame_Format),
         nameof(Play_RecordingOff_Fallback_Format),
         nameof(Play_RecordingOff_Format),
         nameof(Play_Started_Format),
@@ -797,6 +800,8 @@ public static class Strings
         nameof(Play_Title),
         nameof(Play_ToolTip_Direct),
         nameof(Play_ToolTip_Store),
+        nameof(Play_Xbox_Format),
+        nameof(Play_Xbox_NotStarted_Format),
         nameof(RemoveGame_Body),
         nameof(RemoveGame_Delete),
         nameof(RemoveGame_Keep),
@@ -2372,9 +2377,13 @@ public static class Strings
 
     public static string Guard_SuspiciousUnsigned => ResourceManager.GetString(nameof(Guard_SuspiciousUnsigned), Culture) ?? nameof(Guard_SuspiciousUnsigned);
 
+    public static string Guard_TargetAppContainer => ResourceManager.GetString(nameof(Guard_TargetAppContainer), Culture) ?? nameof(Guard_TargetAppContainer);
+
     public static string Guard_TargetIsVulkanLayered => ResourceManager.GetString(nameof(Guard_TargetIsVulkanLayered), Culture) ?? nameof(Guard_TargetIsVulkanLayered);
 
     public static string Guard_TargetIsWow64 => ResourceManager.GetString(nameof(Guard_TargetIsWow64), Culture) ?? nameof(Guard_TargetIsWow64);
+
+    public static string Guard_TargetMitigation => ResourceManager.GetString(nameof(Guard_TargetMitigation), Culture) ?? nameof(Guard_TargetMitigation);
 
     public static string Guide_Title => ResourceManager.GetString(nameof(Guide_Title), Culture) ?? nameof(Guide_Title);
 
@@ -2708,6 +2717,8 @@ public static class Strings
 
     public static string Play_NotInLibrary_Format => ResourceManager.GetString(nameof(Play_NotInLibrary_Format), Culture) ?? nameof(Play_NotInLibrary_Format);
 
+    public static string Play_PackagedGame_Format => ResourceManager.GetString(nameof(Play_PackagedGame_Format), Culture) ?? nameof(Play_PackagedGame_Format);
+
     public static string Play_RecordingOff_Fallback_Format => ResourceManager.GetString(nameof(Play_RecordingOff_Fallback_Format), Culture) ?? nameof(Play_RecordingOff_Fallback_Format);
 
     public static string Play_RecordingOff_Format => ResourceManager.GetString(nameof(Play_RecordingOff_Format), Culture) ?? nameof(Play_RecordingOff_Format);
@@ -2723,6 +2734,10 @@ public static class Strings
     public static string Play_ToolTip_Direct => ResourceManager.GetString(nameof(Play_ToolTip_Direct), Culture) ?? nameof(Play_ToolTip_Direct);
 
     public static string Play_ToolTip_Store => ResourceManager.GetString(nameof(Play_ToolTip_Store), Culture) ?? nameof(Play_ToolTip_Store);
+
+    public static string Play_Xbox_Format => ResourceManager.GetString(nameof(Play_Xbox_Format), Culture) ?? nameof(Play_Xbox_Format);
+
+    public static string Play_Xbox_NotStarted_Format => ResourceManager.GetString(nameof(Play_Xbox_NotStarted_Format), Culture) ?? nameof(Play_Xbox_NotStarted_Format);
 
     public static string RemoveGame_Body => ResourceManager.GetString(nameof(RemoveGame_Body), Culture) ?? nameof(RemoveGame_Body);
 

@@ -2510,6 +2510,12 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="Guard_TargetIsVulkanLayered" xml:space="preserve">
     <value>the game renders with Vulkan, which the Vulkan layer measures instead</value>
   </data>
+  <data name="Guard_TargetAppContainer" xml:space="preserve">
+    <value>the game runs in an app container (a Microsoft Store app, not a desktop game), which FrameLedger does not load into</value>
+  </data>
+  <data name="Guard_TargetMitigation" xml:space="preserve">
+    <value>Windows protects the game in a way FrameLedger's component can neither load into nor hook</value>
+  </data>
   <data name="Guard_SuspiciousUnsigned" xml:space="preserve">
     <value>an unsigned module with an anti-cheat-like name was loaded</value>
   </data>
@@ -3192,10 +3198,10 @@ The documents below are the full terms; this summary does not replace them.</val
     <value>Play</value>
   </data>
   <data name="Play_ToolTip_Store" xml:space="preserve">
-    <value>Play through the store that installed the game: Steam or the Epic Games Launcher starts it, GOG GALAXY runs it, the itch app asks first. A game no store installed is started by FrameLedger.</value>
+    <value>Play through the store that installed the game: Steam or the Epic Games Launcher starts it, GOG GALAXY runs it, the itch app asks first; a game from the Xbox app or the Microsoft Store starts through Windows. A game no store installed is started by FrameLedger.</value>
   </data>
   <data name="Play_ToolTip_Direct" xml:space="preserve">
-    <value>Play: FrameLedger starts the game itself, recorded from its first frame, with your standard rights. A Steam game may hand itself to Steam first; the game Steam then starts is recorded.</value>
+    <value>Play: FrameLedger starts the game itself, recorded from its first frame, with your standard rights. A Steam game may hand itself to Steam first; the game Steam then starts is recorded. A game from the Xbox app or the Microsoft Store always starts through Windows instead.</value>
   </data>
   <data name="Play_Started_Steam_Format" xml:space="preserve">
     <value>FrameLedger is starting {0}. A Steam game may hand itself to Steam first; the game Steam then starts is recorded.</value>
@@ -3217,6 +3223,15 @@ The documents below are the full terms; this summary does not replace them.</val
   </data>
   <data name="Play_Itch_Format" xml:space="preserve">
     <value>The itch app asks which copy of {0} to launch — confirm there.</value>
+  </data>
+  <data name="Play_Xbox_Format" xml:space="preserve">
+    <value>Windows is starting {0} through its package, as its Start-menu tile does — a game from the Xbox app always starts this way. FrameLedger records it once it appears.</value>
+  </data>
+  <data name="Play_Xbox_NotStarted_Format" xml:space="preserve">
+    <value>Windows could not start {0} through its package. Start it from the Xbox app or the Start menu; FrameLedger records it once it appears.</value>
+  </data>
+  <data name="Play_PackagedGame_Format" xml:space="preserve">
+    <value>{0} is a game from the Xbox app or the Microsoft Store, which starts only through Windows. Start it from the Xbox app or the Start menu; FrameLedger records it once it appears.</value>
   </data>
   <data name="Play_Started_Format" xml:space="preserve">
     <value>FrameLedger is starting {0}.</value>
@@ -3252,7 +3267,7 @@ The documents below are the full terms; this summary does not replace them.</val
     <value>Play button</value>
   </data>
   <data name="Settings_PlayMode_Body" xml:space="preserve">
-    <value>Through the store: Steam and the Epic Games Launcher start the game, GOG GALAXY runs it, the itch app asks first; a game no store installed is started by FrameLedger. Directly: FrameLedger starts the game itself — recorded from its first frame, with your standard rights. Some Steam games hand themselves to Steam when started directly — the game Steam then starts is recorded — and a few will not start outside Steam at all: start those through the store.</value>
+    <value>Through the store: Steam and the Epic Games Launcher start the game, GOG GALAXY runs it, the itch app asks first; a game no store installed is started by FrameLedger. Directly: FrameLedger starts the game itself — recorded from its first frame, with your standard rights. Some Steam games hand themselves to Steam when started directly — the game Steam then starts is recorded — and a few will not start outside Steam at all: start those through the store. A game from the Xbox app or the Microsoft Store always starts through Windows, as its Start-menu tile does, in either mode.</value>
   </data>
   <data name="Settings_PlayMode_Store" xml:space="preserve">
     <value>Through the store</value>

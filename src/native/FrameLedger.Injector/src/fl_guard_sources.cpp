@@ -938,6 +938,71 @@ Collected ModuleSignerOrganisationImpl(const wchar_t* modulePath, char* out, std
     return ReadSignerOrganisation(modulePath, out, cap) ? Collected::kOk : Collected::kFailed;
 }
 
+// beta.33 (D78) -- one mitigation policy, read into its winnt.h structure. A policy this Windows does not know answers
+// ERROR_INVALID_PARAMETER (measured 2026-11-03 with a value no Windows defines) and cannot be in effect: the structure
+// stays zero and the read counts as answered. Every other failure is a failure.
+template <typename Policy>
+bool ReadMitigation(HANDLE proc, PROCESS_MITIGATION_POLICY which, Policy* policy) noexcept {
+    *policy = Policy{};
+    if (GetProcessMitigationPolicy(proc, which, policy, sizeof(Policy))) {
+        return true;
+    }
+    return GetLastError() == ERROR_INVALID_PARAMETER;
+}
+
+// beta.33 (D78) -- the target's own token and four of its mitigation policies. spike-notes §25 read them on the owner's
+// eleven GDK titles and every process of their launch chains: full trust, none of the four. One
+// PROCESS_QUERY_LIMITED_INFORMATION handle answers both questions (measured: GetProcessMitigationPolicy needs no more,
+// and OpenProcessToken asks exactly that right).
+Collected TargetIsolationFactsImpl(std::uint32_t pid, TargetIsolation* out) noexcept {
+    if (out == nullptr) {
+        return Collected::kFailed;
+    }
+    *out = TargetIsolation{};
+
+    HANDLE proc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    if (proc == nullptr) {
+        return Collected::kFailed;    // ACCESS_DENIED on a protected target, or gone: cannot determine
+    }
+
+    bool   read = false;
+    HANDLE token = nullptr;
+    if (OpenProcessToken(proc, TOKEN_QUERY, &token)) {
+        DWORD isAppContainer = 0;
+        DWORD returned = 0;
+        read = GetTokenInformation(token, TokenIsAppContainer, &isAppContainer, sizeof(isAppContainer), &returned) &&
+               returned == sizeof(isAppContainer);
+        out->appContainer = isAppContainer != 0;
+        CloseHandle(token);
+    }
+
+    PROCESS_MITIGATION_BINARY_SIGNATURE_POLICY   signature{};
+    PROCESS_MITIGATION_DYNAMIC_CODE_POLICY       dynamicCode{};
+    PROCESS_MITIGATION_USER_SHADOW_STACK_POLICY  shadowStack{};
+    PROCESS_MITIGATION_CONTROL_FLOW_GUARD_POLICY cfg{};
+    read = read && ReadMitigation(proc, ProcessSignaturePolicy, &signature) &&
+           ReadMitigation(proc, ProcessDynamicCodePolicy, &dynamicCode) &&
+           ReadMitigation(proc, ProcessUserShadowStackPolicy, &shadowStack) &&
+           ReadMitigation(proc, ProcessControlFlowGuardPolicy, &cfg);
+    CloseHandle(proc);
+    if (!read) {
+        *out = TargetIsolation{};
+        return Collected::kFailed;
+    }
+
+    // The enforcing flags only. Audit* records what WOULD be refused and refuses nothing, and SetContextIpValidation
+    // without strict mode is what every CET-compatible process carries (measured: pwsh.exe 0x105) -- refusing on it
+    // would refuse games that work today.
+    out->microsoftSignedOnly = signature.MicrosoftSignedOnly != 0;
+    out->storeSignedOnly = signature.StoreSignedOnly != 0;
+    out->dynamicCodeProhibited = dynamicCode.ProhibitDynamicCode != 0;
+    out->shadowStackStrict = shadowStack.EnableUserShadowStack != 0 && shadowStack.EnableUserShadowStackStrictMode != 0;
+    out->shadowStackBlocksNonCet =
+        shadowStack.BlockNonCetBinaries != 0 || shadowStack.BlockNonCetBinariesNonEhcont != 0;
+    out->cfgStrict = cfg.StrictMode != 0;
+    return Collected::kOk;
+}
+
 }    // namespace
 
 std::uint64_t ProcessCreatedAt(std::uint32_t pid) noexcept {
@@ -975,6 +1040,7 @@ Sources SystemSources() noexcept {
     // §S19(b), the embedded half only. The catalog half is a deferral with a
     // written rationale, not a gap nobody noticed.
     s.ModuleSignerOrganisation = &ModuleSignerOrganisationImpl;
+    s.TargetIsolationFacts = &TargetIsolationFactsImpl;
     return s;
 }
 

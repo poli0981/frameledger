@@ -18,6 +18,9 @@ namespace FrameLedger.Application.Play;
 /// the game shortcut GALAXY made there; GALAXY starts the game.</item>
 /// <item><b>itch</b>: <c>itch://install?game_id=&lt;id&gt;&amp;launch</c>, which the itch app (26.22.0, read from its own code)
 /// answers by asking which installed copy to launch — the user confirms there.</item>
+/// <item><b>Xbox</b> (beta.33, D80): <c>explorer.exe shell:AppsFolder\&lt;AUMID&gt;</c> — Windows activates the game's
+/// package as its Start-menu tile does, the command measured on FINAL FANTASY (<c>spike-notes</c> §25: GameLaunchHelper's
+/// parent was the user's shell, the game in its package). Started by its path, a GDK game is never that.</item>
 /// </list>
 /// Every id is checked against what that store's ids look like before it is put in a link the shell will open.
 /// </summary>
@@ -40,8 +43,36 @@ public static class StoreLaunches
                     Path.GetDirectoryName(galaxyClientPath)),
             "itch" when IsDigits(record.StoreId) =>
                 new StoreLaunch("itch", StoreLaunchKind.OpenLink, "itch://install?game_id=" + record.StoreId + "&launch"),
+            "xbox" when record.LaunchKey is { } aumid && IsAumid(aumid) && aumid.StartsWith(record.StoreId + "!", StringComparison.Ordinal) =>
+                new StoreLaunch("xbox", StoreLaunchKind.RunProgram, ExplorerPath, "shell:AppsFolder\\" + aumid),
             _ => null,
         };
+    }
+
+    /// <summary>The user's shell, which activates a package for an elevated caller too (it runs unelevated itself).</summary>
+    public static string ExplorerPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
+
+    /// <summary>
+    /// An AppUserModelID of the shape Windows gives a packaged app: <c>&lt;Name&gt;_&lt;13-character publisher id&gt;!&lt;Application
+    /// Id&gt;</c> — the name 3–50 letters, digits, '.' or '-'; the id 1–64 letters, digits or '.', starting with a letter. Nothing
+    /// that could be read as another argument or path.
+    /// </summary>
+    public static bool IsAumid(string aumid)
+    {
+        ArgumentNullException.ThrowIfNull(aumid);
+        int bang = aumid.IndexOf('!', StringComparison.Ordinal);
+        int underscore = bang < 0 ? -1 : aumid.AsSpan(0, bang).LastIndexOf('_');
+        if (bang < 0 || underscore < 0 || bang - underscore - 1 != 13)
+        {
+            return false;
+        }
+
+        string name = aumid[..underscore];
+        string publisherId = aumid[(underscore + 1)..bang];
+        string appId = aumid[(bang + 1)..];
+        return name.Length is >= 3 and <= 50 && name.All(static c => char.IsAsciiLetterOrDigit(c) || c is '.' or '-')
+            && publisherId.All(static c => char.IsAsciiDigit(c) || char.IsAsciiLetterLower(c))
+            && appId.Length is >= 1 and <= 64 && char.IsAsciiLetter(appId[0]) && appId.All(static c => char.IsAsciiLetterOrDigit(c) || c == '.');
     }
 
     private static StoreLaunch? Epic(StoreGame record)

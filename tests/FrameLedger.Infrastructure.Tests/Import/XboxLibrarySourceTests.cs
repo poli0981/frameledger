@@ -161,6 +161,48 @@ public sealed class XboxLibrarySourceTests : IDisposable
         XboxArtCache.Image(content, @"C:\Windows\System32\shell32.dll").Should().BeNull();
     }
 
+    /// <summary>
+    /// beta.33 (D80): the agent's test before a <c>LaunchGame</c> — an executable whose install root is a GDK package root is
+    /// a game Windows starts through its package, never by its path. The Unreal shipping executable three levels down is in
+    /// its package; a Steam game's is not, even beside a stray package file.
+    /// </summary>
+    [Fact]
+    public void AnExecutableAnywhereInAPackageIsInItAndAStoresGameIsNot()
+    {
+        string content = Game("Valor Mortis", _valorConfig, _valorManifest);
+        string shipping = Path.Combine(content, "ValorMortis", "Binaries", "Win64", "ValorMortisMSG-Win64-Shipping.exe");
+        Directory.CreateDirectory(Path.GetDirectoryName(shipping)!);
+
+        GdkPackageFiles.IsInPackage(shipping).Should().BeTrue();
+        GdkPackageFiles.IsInPackage(Path.Combine(content, "ValorMortisMSG.exe")).Should().BeTrue();
+
+        string steam = Path.Combine(_root, "steamapps", "common", "FINAL FANTASY");
+        Directory.CreateDirectory(steam);
+        File.WriteAllText(Path.Combine(steam, GdkPackageFiles.ManifestFileName), _valorManifest);
+        GdkPackageFiles.IsInPackage(Path.Combine(steam, "FINAL FANTASY.exe")).Should().BeFalse("a Steam root is the boundary, and it holds no package config");
+        GdkPackageFiles.IsInPackage(Path.Combine(_root, "Loose", "game.exe")).Should().BeFalse();
+    }
+
+    [Fact]
+    public void WhatIsNotAPackageCostsNothing()
+    {
+        GdkPackageFiles.IsPackageRoot(" ").Should().BeFalse();
+        GdkPackageFiles.NearestPackageRoot(" ").Should().BeNull();
+        GdkPackageFiles.NearestPackageRoot(_root).Should().BeNull("no folder at or above it holds a package's two files");
+        GdkPackageFiles.IsInPackage(Path.Combine(_root, "a\0b", "game.exe")).Should().BeFalse("a path that is no path is in no package");
+
+        string big = Game("Big", _valorConfig + new string(' ', (int)GdkPackageFiles.MaxFileBytes), _valorManifest);
+        GdkPackageFiles.Read(big).Should().BeNull("a description file over the cap is not read");
+
+        new XboxLibrarySource([_root], new Packages()).Platform.Should().Be("xbox");
+        var art = new XboxArtCache();
+        art.Platform.Should().Be("xbox");
+        art.Find(new StoreGame("xbox", "Gone.Game_0000000000000", "Gone", Path.Combine(_root, "Gone", "Content"), null, null))
+            .Should().Be(Application.Art.GameArtFiles.None, "a folder that is not a package has no pictures to show");
+        XboxArtCache.Image(_root, " ").Should().BeNull();
+        XboxArtCache.Image(_root, "a\0b.png").Should().BeNull();
+    }
+
     /// <summary>Windows' package answers, stubbed: the family name is the one listed whose name part matches; installed = listed.</summary>
     private sealed class Packages(params string[] installed) : IInstalledPackages
     {

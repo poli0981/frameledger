@@ -21,7 +21,9 @@ namespace FrameLedger.App.Services;
 /// instead, and the notice says why. <c>direct</c> has the capture agent start it (<c>LaunchGame</c>, launch mode): recorded
 /// from its first frame, never as administrator (<c>UnelevatedProcess</c>), hooked only where the gate allows exactly as for any
 /// start (CLAUDE.md rule 1). FrameLedger itself connects to nothing (rule 8): a store's app does what it does when a game is
-/// started from it.
+/// started from it. A game the Xbox app or the Microsoft Store installed (beta.33, D80) is handed to Windows in either mode —
+/// <c>explorer.exe shell:AppsFolder\&lt;AUMID&gt;</c>, as its Start-menu tile starts it — because started by its path it is never
+/// the game in its package (<c>spike-notes</c> §25).
 /// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime")]
 public sealed class GamePlayer
@@ -52,42 +54,42 @@ public sealed class GamePlayer
     public async Task<PlayResult> PlayAsync(GameRow game, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(game);
+        StoreGame? record = await OwningAsync(game, ct).ConfigureAwait(false);
+
+        // beta.33 (D80): a game the Xbox app or the Microsoft Store installed starts through Windows in either mode, and from
+        // an elevated App too — the user's shell activates it, unelevated. Started by its path it is never the game in its
+        // package (spike-notes §25: Windows hands the launch executable back to the package; an Unreal shipping binary runs
+        // outside it).
+        if (record is { Platform: "xbox" })
+        {
+            return StoreLaunches.For(record, galaxyClientPath: null) is { } windows ? HandOff(game, windows) : NotActivated(game);
+        }
+
         PlayFallback fallback = PlayFallback.None;
-        StoreGame? record = null;
         if (!await IsDirectAsync(ct).ConfigureAwait(false))
         {
             if (_elevated())
             {
                 fallback = PlayFallback.Elevated;
             }
+            else if (record is null)
+            {
+                fallback = PlayFallback.NoStore;
+            }
             else
             {
-                record = await OwningAsync(game, ct).ConfigureAwait(false);
-                if (record is null)
+                string? galaxy = string.Equals(record.Platform, "gog", StringComparison.Ordinal) ? _galaxy.ClientPath() : null;
+                if (StoreLaunches.For(record, galaxy) is { } launch)
                 {
-                    fallback = PlayFallback.NoStore;
+                    return HandOff(game, launch);
                 }
-                else
-                {
-                    string? galaxy = string.Equals(record.Platform, "gog", StringComparison.Ordinal) ? _galaxy.ClientPath() : null;
-                    if (StoreLaunches.For(record, galaxy) is { } launch)
-                    {
-                        return HandOff(game, launch);
-                    }
 
-                    fallback = WhyNoHandOff(game, record, galaxy);
-                }
+                fallback = WhyNoHandOff(game, record, galaxy);
             }
         }
 
         // beta.27: a game Steam installed may hand itself to Steam when something else starts it (Lies of P, 2026-10-19:
-        // its process left within seconds and Steam started the game again), and the notice says so. No store's records
-        // name a game that fell back for want of one, so they are read only where they were not already.
-        if (fallback is PlayFallback.None or PlayFallback.Elevated)
-        {
-            record = await OwningAsync(game, ct).ConfigureAwait(false);
-        }
-
+        // its process left within seconds and Steam started the game again), and the notice says so.
         bool steamGame = string.Equals(record?.Platform, "steam", StringComparison.Ordinal);
         return await StartDirectlyAsync(game, fallback, steamGame, ct).ConfigureAwait(false);
     }
@@ -103,8 +105,12 @@ public sealed class GamePlayer
                 "steam" => string.Format(CultureInfo.CurrentCulture, Strings.Play_Steam_Format, gameName),
                 "epic" => string.Format(CultureInfo.CurrentCulture, Strings.Play_Epic_Format, gameName),
                 "gog" => string.Format(CultureInfo.CurrentCulture, Strings.Play_Gog_Format, gameName),
+                "xbox" => string.Format(CultureInfo.CurrentCulture, Strings.Play_Xbox_Format, gameName),
                 _ => string.Format(CultureInfo.CurrentCulture, Strings.Play_Itch_Format, gameName),
             }, false),
+            PlayOutcome.Failed when string.Equals(result.Store, "xbox", StringComparison.Ordinal) =>
+                (string.Format(CultureInfo.CurrentCulture, Strings.Play_Xbox_NotStarted_Format, gameName), true),
+            PlayOutcome.PackagedGame => (string.Format(CultureInfo.CurrentCulture, Strings.Play_PackagedGame_Format, gameName), true),
             PlayOutcome.StartedByAgent => (result.Fallback switch
             {
                 PlayFallback.NoStore => string.Format(CultureInfo.CurrentCulture, Strings.Play_NoStore_Format, gameName),
@@ -136,6 +142,16 @@ public sealed class GamePlayer
             : _shell.OpenLink(launch.Target);
         Log.Information("play: {Game} (id {Id}) through {Store}: {Handed}", game.Name, game.Id, launch.Platform, handed ? "handed to its app" : "Windows did not take it");
         return handed ? new PlayResult(PlayOutcome.HandedToStore, launch.Platform) : new PlayResult(PlayOutcome.Failed, launch.Platform);
+    }
+
+    /// <summary>
+    /// An Xbox game whose package names nothing Windows can activate (no application id of the AUMID's shape): FrameLedger
+    /// cannot start it by its path either (D80), so the notice says to start it from the Xbox app or the Start menu.
+    /// </summary>
+    private static PlayResult NotActivated(GameRow game)
+    {
+        Log.Warning("play: {Game} (id {Id}): its Xbox package names nothing Windows can activate; not started", game.Name, game.Id);
+        return new PlayResult(PlayOutcome.Failed, "xbox");
     }
 
     /// <summary>
@@ -199,6 +215,7 @@ public sealed class GamePlayer
             "RecordingOff" => new PlayResult(PlayOutcome.RecordingOff, Fallback: fallback),
             "SessionRunning" => new PlayResult(PlayOutcome.AlreadyRunning, Fallback: fallback),
             "UnknownGame" => new PlayResult(PlayOutcome.NotInLibrary, Fallback: fallback),
+            "PackagedGame" => new PlayResult(PlayOutcome.PackagedGame, Fallback: fallback),
             _ => new PlayResult(PlayOutcome.Failed, Fallback: fallback, Detail: ack.Outcome),
         };
     }

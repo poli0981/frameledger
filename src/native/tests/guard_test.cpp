@@ -209,6 +209,15 @@ struct Fake {
         kCannotTell,    // force kFailed
     };
     Payload payload = Payload::kReal;
+
+    // beta.33 (D78) — the target isolation seam. DEFAULTS TO THE REAL IMPLEMENTATION, as the payload seam does and for
+    // its reason: every injection case in this file then also proves the real seam reads a plain process — the harness,
+    // a 32-bit cmd, this test — as clear, which is the green direction of kTargetAppContainer and kTargetMitigation for
+    // free. `isolationReal = false` answers with `isolation` and `isolationResult` instead.
+    bool            isolationReal = true;
+    TargetIsolation isolation;
+    Collected       isolationResult = Collected::kOk;
+    int             isolationCalls = 0;
 };
 
 Fake g;
@@ -432,6 +441,15 @@ Collected FakePayloadIsOurOwn(const wchar_t* dllPath, bool* isOurs) {
     }
 }
 
+Collected FakeTargetIsolationFacts(std::uint32_t pid, TargetIsolation* out) {
+    ++g.isolationCalls;
+    if (g.isolationReal) {
+        return SystemSources().TargetIsolationFacts(pid, out);
+    }
+    *out = g.isolation;
+    return g.isolationResult;
+}
+
 Sources FakeSources() {
     Sources s;
     s.ReadRulesFile = &FakeReadRules;
@@ -447,6 +465,7 @@ Sources FakeSources() {
     s.ModuleIsOurOwn = &FakeModuleIsOurOwn;
     s.PayloadIsOurOwn = &FakePayloadIsOurOwn;
     s.ModuleSignerOrganisation = &FakeModuleSignerOrganisation;
+    s.TargetIsolationFacts = &FakeTargetIsolationFacts;
     return s;
 }
 
@@ -3698,6 +3717,205 @@ TEST_CASE("the payload check can PASS — the staged Overlay is accepted", "[gua
     CHECK(SystemSources().PayloadIsOurOwn(nullptr, &n) == Collected::kFailed);
     CHECK(SystemSources().PayloadIsOurOwn(L"", &n) == Collected::kFailed);
     CHECK(SystemSources().PayloadIsOurOwn(FL_OVERLAY_DLL, nullptr) == Collected::kFailed);
+}
+
+// ===========================================================================
+// beta.33 (D78) — can the target take the Overlay at all? Its token and its
+// mitigation policies, asked as the last question before the primitive
+// (kTargetAppContainer, kTargetMitigation). Neither is a finding: no family, and
+// nothing is loaded.
+// ===========================================================================
+namespace {
+
+// A child of this test started under the creation-time mitigation policies in `policy`, suspended and inert. cmd.exe
+// is Microsoft-signed, so a signature policy lets it start. Child's destructor ends it.
+bool StartMitigatedChild(Child& child, DWORD64 policy) {
+    SIZE_T size = 0;
+    InitializeProcThreadAttributeList(nullptr, 1, 0, &size);
+    std::vector<unsigned char> buffer(size);
+    auto*                      list = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(buffer.data());
+    if (size == 0 || !InitializeProcThreadAttributeList(list, 1, 0, &size)) {
+        return false;
+    }
+    bool started = false;
+    if (UpdateProcThreadAttribute(list, 0, PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY, &policy, sizeof(policy), nullptr,
+                                  nullptr)) {
+        wchar_t sys[MAX_PATH]{};
+        GetSystemDirectoryW(sys, MAX_PATH);
+        const std::wstring cmd = std::wstring(sys) + L"\\cmd.exe";
+        std::wstring       line = L"\"" + cmd + L"\" /c pause";
+        STARTUPINFOEXW     si{};
+        si.StartupInfo.cb = sizeof(si);
+        si.lpAttributeList = list;
+        started = CreateProcessW(cmd.c_str(), line.data(), nullptr, nullptr, FALSE,
+                                 CREATE_SUSPENDED | CREATE_NO_WINDOW | EXTENDED_STARTUPINFO_PRESENT, nullptr, nullptr,
+                                 &si.StartupInfo, &child.pi) != 0;
+    }
+    DeleteProcThreadAttributeList(list);
+    return started;
+}
+
+}    // namespace
+
+TEST_CASE("an AppContainer target is refused by its own reason, and nothing is loaded", "[guard][inject][isolation]") {
+    Child child;
+    REQUIRE(StartHarness(child));
+
+    ResetFake();
+    g.modules = {"kernel32.dll"};
+    g.scanSet = {child.pi.dwProcessId};
+    g.isolationReal = false;
+    g.isolation.appContainer = true;
+
+    const Verdict v = GuardedInjectWithSources(child.pi.dwProcessId, FL_OVERLAY_DLL, FakeSources());
+    INFO("reason " << ReasonName(v.reason) << " signal=" << v.signal);
+    CHECK_FALSE(v.Allowed());
+    CHECK(v.reason == Reason::kTargetAppContainer);
+    CHECK(v.family[0] == '\0');    // not an anti-cheat finding: no family, so nothing is written to the game
+    CHECK_FALSE(TargetHasModule(child.pi.dwProcessId, L"FrameLedger.Overlay.dll"));
+}
+
+TEST_CASE("each blocking mitigation refuses as kTargetMitigation and names its policy", "[guard][inject][isolation]") {
+    // One target for every case: a refusal here never touches the target, which the last line checks.
+    Child child;
+    REQUIRE(StartHarness(child));
+
+    struct Case {
+        bool TargetIsolation::* flag;
+        const char*             named;
+    };
+    const Case cases[] = {
+        {&TargetIsolation::microsoftSignedOnly, "Microsoft-signed"},
+        {&TargetIsolation::storeSignedOnly, "Store-signed"},
+        {&TargetIsolation::dynamicCodeProhibited, "dynamic code prohibited"},
+        {&TargetIsolation::shadowStackStrict, "shadow stack policy: strict mode"},
+        {&TargetIsolation::shadowStackBlocksNonCet, "CET-compatible"},
+        {&TargetIsolation::cfgStrict, "Control Flow Guard policy: strict mode"},
+    };
+    for (const Case& c : cases) {
+        ResetFake();
+        g.modules = {"kernel32.dll"};
+        g.scanSet = {child.pi.dwProcessId};
+        g.isolationReal = false;
+        g.isolation.*(c.flag) = true;
+
+        const Verdict v = GuardedInjectWithSources(child.pi.dwProcessId, FL_OVERLAY_DLL, FakeSources());
+        INFO("expected '" << c.named << "', got " << ReasonName(v.reason) << " signal=" << v.signal);
+        CHECK(v.reason == Reason::kTargetMitigation);
+        CHECK(std::string(v.signal).find(c.named) != std::string::npos);
+        CHECK(v.family[0] == '\0');
+    }
+    CHECK_FALSE(TargetHasModule(child.pi.dwProcessId, L"FrameLedger.Overlay.dll"));
+}
+
+TEST_CASE("an isolation seam that cannot answer refuses, and so does a guard wired without one",
+          "[guard][inject][isolation][failclosed]") {
+    Child child;
+    REQUIRE(StartHarness(child));
+
+    // Every fact clear beside a failed result: the result is what is honoured, never the facts next to it.
+    for (const Collected bad : {Collected::kFailed, Collected::kIncomplete, Collected::kRetry}) {
+        ResetFake();
+        g.modules = {"kernel32.dll"};
+        g.scanSet = {child.pi.dwProcessId};
+        g.isolationReal = false;
+        g.isolationResult = bad;
+
+        const Verdict v = GuardedInjectWithSources(child.pi.dwProcessId, FL_OVERLAY_DLL, FakeSources());
+        INFO("reason " << ReasonName(v.reason) << " signal=" << v.signal);
+        CHECK(v.reason == Reason::kProcessUnreadable);
+    }
+
+    // Sources members default to nullptr: forgetting to wire this must refuse, never load.
+    ResetFake();
+    g.modules = {"kernel32.dll"};
+    g.scanSet = {child.pi.dwProcessId};
+    Sources s = FakeSources();
+    s.TargetIsolationFacts = nullptr;
+    const Verdict unwired = GuardedInjectWithSources(child.pi.dwProcessId, FL_OVERLAY_DLL, s);
+    CHECK(unwired.reason == Reason::kProcessUnreadable);
+    CHECK(std::string(unwired.signal) == "no target isolation source");
+
+    CHECK_FALSE(TargetHasModule(child.pi.dwProcessId, L"FrameLedger.Overlay.dll"));
+}
+
+TEST_CASE("the isolation check comes after the guard and the payload, and the re-scan never asks it",
+          "[guard][inject][isolation]") {
+    // A blocked target outranks it: anti-cheat in the target is the fact that matters.
+    ResetFake();
+    g.modules = {"kernel32.dll", "BEClient_x64.dll"};
+    g.scanSet = {GetCurrentProcessId()};
+    g.isolationReal = false;
+    g.isolation.appContainer = true;
+    CHECK(GuardedInjectWithSources(GetCurrentProcessId(), FL_OVERLAY_DLL, FakeSources()).reason ==
+          Reason::kBlockedModule);
+    CHECK(g.isolationCalls == 0);
+
+    // So does a foreign payload: a misuse of the exported ABI is reported as one, whatever the target.
+    ResetFake();
+    g.modules = {"kernel32.dll"};
+    g.scanSet = {GetCurrentProcessId()};
+    g.payload = Fake::Payload::kForeign;
+    g.isolationReal = false;
+    g.isolation.appContainer = true;
+    CHECK(GuardedInjectWithSources(GetCurrentProcessId(), FL_OVERLAY_DLL, FakeSources()).reason ==
+          Reason::kPayloadNotOurs);
+    CHECK(g.isolationCalls == 0);
+
+    // The 30 s re-scan evaluates a process the Overlay is already in: the question was answered before it loaded.
+    ResetFake();
+    g.isolationReal = false;
+    g.isolation.appContainer = true;
+    CHECK(EvaluateWithSources(1234, FakeSources()).Allowed());
+    CHECK(g.isolationCalls == 0);
+}
+
+TEST_CASE("the real isolation seam reads a plain desktop process as clear", "[guard][inject][isolation]") {
+    // This test: full trust, not CET-compatible, Control Flow Guard on but not strict.
+    TargetIsolation facts;
+    facts.appContainer = true;    // the seam writes every field, not only the ones it finds set
+    REQUIRE(SystemSources().TargetIsolationFacts(GetCurrentProcessId(), &facts) == Collected::kOk);
+    CHECK_FALSE(facts.appContainer);
+    CHECK_FALSE(facts.microsoftSignedOnly);
+    CHECK_FALSE(facts.storeSignedOnly);
+    CHECK_FALSE(facts.dynamicCodeProhibited);
+    CHECK_FALSE(facts.shadowStackStrict);
+    CHECK_FALSE(facts.shadowStackBlocksNonCet);
+    CHECK_FALSE(facts.cfgStrict);
+
+    // A process that does not exist cannot be answered, and a null out-param is the caller getting it wrong.
+    TargetIsolation none;
+    CHECK(SystemSources().TargetIsolationFacts(0x7FFFFFFCu, &none) == Collected::kFailed);
+    CHECK(SystemSources().TargetIsolationFacts(GetCurrentProcessId(), nullptr) == Collected::kFailed);
+}
+
+TEST_CASE("the real isolation seam reads the policies a process was started under", "[guard][inject][isolation]") {
+    // Against Windows, not a fake: a child started with "no dynamic code" and "Microsoft-signed images only" -- two
+    // policies every supported Windows can start a process under, unlike strict CFG or a shadow stack, which need a
+    // newer build or CET hardware -- reads as exactly those two.
+    Child child;
+    REQUIRE(StartMitigatedChild(child, PROCESS_CREATION_MITIGATION_POLICY_PROHIBIT_DYNAMIC_CODE_ALWAYS_ON |
+                                           PROCESS_CREATION_MITIGATION_POLICY_BLOCK_NON_MICROSOFT_BINARIES_ALWAYS_ON));
+
+    TargetIsolation facts;
+    REQUIRE(SystemSources().TargetIsolationFacts(child.pi.dwProcessId, &facts) == Collected::kOk);
+    CHECK(facts.dynamicCodeProhibited);
+    CHECK(facts.microsoftSignedOnly);
+    CHECK_FALSE(facts.appContainer);
+    CHECK_FALSE(facts.storeSignedOnly);
+    CHECK_FALSE(facts.shadowStackStrict);
+    CHECK_FALSE(facts.shadowStackBlocksNonCet);
+    CHECK_FALSE(facts.cfgStrict);
+
+    // ...and the guard, through the seam it ships with, refuses it by that reason, naming the first policy.
+    ResetFake();
+    g.modules = {"kernel32.dll"};
+    g.scanSet = {child.pi.dwProcessId};
+    const Verdict v = GuardedInjectWithSources(child.pi.dwProcessId, FL_OVERLAY_DLL, FakeSources());
+    INFO("reason " << ReasonName(v.reason) << " signal=" << v.signal);
+    CHECK(v.reason == Reason::kTargetMitigation);
+    CHECK(std::string(v.signal).find("Microsoft-signed") != std::string::npos);
+    CHECK(v.family[0] == '\0');
 }
 
 #endif    // FL_HARNESS_EXE && FL_OVERLAY_DLL

@@ -29,6 +29,7 @@ While the game runs, a notice may say *hooking refused*.
 | FrameLedger could not check the game's files. | It checks again by itself; Tools ▸ Update detection rules checks now. |
 | The game runs as administrator. | Settings ▸ Capture agent ▸ *Run the agent as administrator* — read its risk in [Limitations](../LIMITATIONS.md#running-the-agent-as-administrator) first. A game protected by an anti-cheat driver cannot be measured either way. |
 | The game is 32-bit, uses DirectX 9, or uses Vulkan. | Nothing: these are recorded, not measured ([Limitations](../LIMITATIONS.md#games-it-will-not-measure)). |
+| The game runs in an app container, or Windows protects it in a way the component can neither load into nor hook. | Nothing: an older Microsoft Store app (UWP), or a game under code protection, is recorded, not measured ([Limitations](../LIMITATIONS.md#xbox-app-and-microsoft-store-games)). |
 | **Disable all hooking** is on. | Switch it off in Settings ▸ Capture. |
 | The game was already running when FrameLedger was updated. | Close the game and start it again. |
 | Hooking was switched off after the game crashed twice soon after it started. | Switch it on again in the game's page if the cause may be gone — after a driver update, for example. |

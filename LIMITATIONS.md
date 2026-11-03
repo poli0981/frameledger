@@ -224,6 +224,14 @@ you accept the prompt. Turn it on only if you trust everything that runs under y
 - **The anti-cheat list's per-game entries know Steam ids only.** An Xbox copy of a game listed there by its Steam id is
   checked like any other game — its files, its executables, the anti-cheat drivers and services on your PC — but not
   by that entry. ([Safety](docs/19_SAFETY_AND_ANTICHEAT.md), [open question](docs/20_OPEN_QUESTIONS.md))
+- **Play starts them through Windows, in either Play mode** — as their Start-menu tile does — because Windows starts
+  such a game only through its package: *Start directly* cannot start one, so it is recorded once it appears, a few
+  seconds after its start, and the first frames before then are not measured. ([Play](docs/08_UI.md),
+  [capture](docs/04_CAPTURE.md))
+- **An older Store app (UWP), and a game Windows runs under code protection the hook cannot live under** — only
+  Microsoft-signed code, no generated code, strict stack or control-flow protection — **is never hooked**: its session
+  keeps its duration, your PC's sensors and the reason. Measuring a game from the Xbox app with the Vulkan graphics API
+  has not been tried. ([Safety](docs/19_SAFETY_AND_ANTICHEAT.md), [open question](docs/20_OPEN_QUESTIONS.md))
 
 ## Game artwork
 

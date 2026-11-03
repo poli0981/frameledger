@@ -225,4 +225,26 @@ public enum AntiCheatRefusalReason
     /// one (<c>19_SAFETY</c> §The user-mode exception).
     /// </remarks>
     AllowedUnderUserModeException = 28,
+
+    /// <summary>
+    /// The game runs in an AppContainer — a Microsoft Store app of the UWP kind, not a desktop game — which the Overlay
+    /// cannot load into (beta.33, owner decision D78). Read from the game's own token just before the injection.
+    /// </summary>
+    /// <remarks>
+    /// Not a finding: nothing is written to the game, and the session is Tier 2 with this reason. The Overlay's shared
+    /// memory, its <c>Local\</c> names and the rules it reads live where an AppContainer cannot reach. A GDK game from the
+    /// Xbox app is full trust and is not this (<c>spike-notes</c> §25).
+    /// </remarks>
+    TargetAppContainer = 29,
+
+    /// <summary>
+    /// Windows runs the game under a code-protection policy the Overlay cannot live under (beta.33, D78): images signed
+    /// by Microsoft or the Store only, no dynamic code, a strict or non-CET-blocking user shadow stack, or strict Control
+    /// Flow Guard. Read from the game's own mitigation policies just before the injection; the signal names the policy.
+    /// </summary>
+    /// <remarks>
+    /// Not a finding, and Tier 2 like <see cref="TargetIsWow64"/>. Each of these ended before as a failed injection, an
+    /// Overlay that installed no hooks, or a risk of ending the game that no fault policy can catch.
+    /// </remarks>
+    TargetMitigation = 30,
 }
