@@ -35,68 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Added
-
-- **Games from the Xbox app and the Microsoft Store** (the owner's request of 2026-11-03, owner decisions D77–D81; PC Game
-  Pass games included): **Import library** finds the games those apps installed into a games folder — each drive's
-  `.GamingRoot` names the folders, each game's own `MicrosoftGame.config` and `appxmanifest.xml` say what it is, and
-  Windows says whether its package is installed for you — and lists them as **Xbox**, with the process that actually
-  draws (an Unreal title's shipping executable, not the stub its package launches; never the GDK's `gamelaunchhelper.exe`).
-  A game's page shows its own square logo and splash image, read from its folder, and its package version (*Xbox version
-  1.3.5124.0*). Only games built on Microsoft's GDK are listed; an older Store app (UWP) is not (`docs/05_DETECTION.md`
-  §Platform signatures & metadata, `LIMITATIONS.md`, the user guide). Everything was measured first, on the owner's eleven
-  titles: the layout, and what Windows lets another program read there — every game executable refuses to be read, so no
-  Unreal Engine version is shown for these games (`docs/spike-notes/25-xbox-gdk.md`).
-- **The detection rules know Xbox games** (rules `2026.11.1`, so every game in the library is read again once): an `xbox`
-  platform, first in the list — a GDK FINAL FANTASY ships Steam's DLL and read *Steam* — decided by a new signal,
-  `root_file`, from the install folder's own listing, so a very large install whose deep walk ran short still reads as
-  its store (`docs/05_DETECTION.md`).
-- **Play starts a game from the Xbox app or the Microsoft Store through Windows** (D80), in either Play mode and from an
-  App running as administrator: the user's shell activates the game's package as its Start-menu tile does
-  (`explorer.exe shell:AppsFolder\<AUMID>`), because started by its path such a game is never the game in its package —
-  measured on the owner's titles (`docs/spike-notes/25-xbox-gdk.md`). The capture agent refuses to start one by its path
-  (`LaunchGame` answers `PackagedGame`), and the game is recorded once it appears, a few seconds after its start
-  (`docs/04_CAPTURE.md`, `docs/08_UI.md`, `LIMITATIONS.md`).
-- **The anti-cheat guard says when a game cannot take the hook at all** (D78), read from the game's own token and code-protection
-  settings just before the injection: `TargetAppContainer` — an older Microsoft Store app (UWP) — and `TargetMitigation` —
-  only Microsoft- or Store-signed code, no generated code, a strict or non-CET-blocking user shadow stack, or strict Control
-  Flow Guard. Neither is a finding: nothing is written to the game, and the session keeps its duration, the sensors and the
-  reason. Each ended before as a failed injection, a hook that installed nothing, or a risk of ending the game, so no game
-  that measured before is refused now (`docs/19_SAFETY_AND_ANTICHEAT.md`).
-
-### Changed
-
-- **The Privacy Policy is 2.13**, shown once at the next start: it names what the Xbox library reads — the games folders
-  `.GamingRoot` names, each game's package files, Windows' answer whether its package is installed for you, and the
-  pictures a game ships in its own folder — that Play asks Windows to start such a game, and that before any injection
-  FrameLedger reads whether a game runs in an app container and which of Windows' code protections it runs under. The
-  EULA and the Disclaimer do not change.
-- **The capture path reads a game's executable path one way** (for developers): `TargetResolver`, which finds the game again
-  just before the guard, read the loader's spelling (`Process.MainModule`) where the watcher had the kernel's, so a game
-  started through a junction could end `TargetNotRunning` about a process the watcher had just matched. Both read
-  `ProcessImagePath` now, and the resolver still opens a candidate with the guard's own rights, so a process an anti-cheat
-  driver closes stays `TargetUnreadable` (`docs/04_CAPTURE.md` §Process watcher).
-
-### Fixed
-
-- **The anti-cheat check saw only part of an Xbox game's folder** (safety): no install-root boundary matched the
-  `<games folder>\<Game>\Content\` layout, so for an Unreal title's executable, three levels down, check 4 walked only its
-  `Binaries\WinGDK` folder, and anti-cheat at the root of `Content` would have read clean. A GDK package root — the folder
-  holding `MicrosoftGame.config` beside `appxmanifest.xml` — is now a boundary for the guard and for detection alike, used
-  only where no store boundary matched, so it can only widen what is walked. The guard also gained `GamesInstalled\<X>`,
-  which detection had had alone since #17; one case list read by both test suites now holds the two resolvers together
-  (`docs/19_SAFETY_AND_ANTICHEAT.md`, `tests/fixtures/install-roots/cases.txt`).
-- **The second alpha's release would have stopped at its delta check** (for developers): Velopack names a non-default
-  channel's packages with the channel (`FrameLedger.App-<version>-alpha-delta.nupkg`), and `release.yml` looked for the
-  default channel's name. It now takes the delta the pack listed in `assets.<channel>.json`; the betas' packages are named
-  as before (seen on the `0.1.0-alpha.1` rehearsal, which had no delta to make).
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.33` | 2026-11-03 | [`docs/changelog/0.1.0-beta.33.md`](docs/changelog/0.1.0-beta.33.md) |
 | `0.1.0-alpha.1` | 2026-10-31 | [`docs/changelog/0.1.0-alpha.1.md`](docs/changelog/0.1.0-alpha.1.md) |
 | `0.1.0-beta.32` | 2026-10-31 | [`docs/changelog/0.1.0-beta.32.md`](docs/changelog/0.1.0-beta.32.md) |
 | `0.1.0-beta.31` | 2026-10-26 | [`docs/changelog/0.1.0-beta.31.md`](docs/changelog/0.1.0-beta.31.md) |
