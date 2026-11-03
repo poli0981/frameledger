@@ -146,6 +146,21 @@ refuses `FILE_READ_DATA`/`FILE_EXECUTE` outside its package, so no Unreal versio
 
 **Owner-only:** item 28 — the Xbox titles on real hardware.
 
+### 0.1.0-alpha.2 — the second alpha, the same day (D82)
+
+`alpha` took main at this pull request — `v0.1.0-beta.33` and these notes, no other change — by a merge commit, as
+`13_CI_CD` §The alpha line says: no file the switch holds had moved on main, so nothing conflicted and the switch is the
+first alpha's (SDK `11.0.100-rc.3.26522.148`, the three packages at `11.0.0-rc.3.26522.148`, the same NuGet licence
+texts). Its gate on the 11 SDK must pass before the pull request into `alpha` is merged by hand (the branch has no
+auto-merge); the release runs from the signed tag `v0.1.0-alpha.2` on `alpha`, and its delta from alpha.1 is the first
+an alpha's release has to find — #350's lookup, by the name the pack lists. Its notes are
+`docs/changelog/0.1.0-alpha.2.md`, which open with the experimental-build warning.
+
+- **The next alpha moves to .NET 11's release**: from 2026-11-10 the switch is SDK `11.0.100` and the packages `11.0.0`,
+  and RC3 is out of support — move the alpha even if no beta comes.
+
+**Owner-only:** item 29 — the second alpha on real hardware.
+
 
 ## Owner-only — no PR can close these
 
@@ -347,6 +362,12 @@ refuses `FILE_READ_DATA`/`FILE_EXECUTE` outside its package, so no Unreal versio
    `Play_Xbox_NotStarted_Format`, `Play_PackagedGame_Format`, `Play_ToolTip_Store`, `Play_ToolTip_Direct`,
    `Settings_PlayMode_Body`, `Guard_TargetAppContainer`, `Guard_TargetMitigation`. Then
    `docs/LIST_GAME_TESTED.md` gains the Xbox titles from a ledger copy (D35), approved before the commit.
+29. **0.1.0-alpha.2 on real hardware** (D73, D82). (a) **The update from alpha.1**: Help ▸ Check for updates offers
+   alpha.2 — the first update an alpha's updater has found — and *Restart to update* installs it; say whether it
+   downloaded the delta or the whole package. (b) The terms window shows the Privacy Policy 2.13 and the Alpha notice
+   with its box again, and Accept waits for the tick. (c)
+   `%LOCALAPPDATA%\FrameLedger\backups\ledger-before-0.1.0-alpha.2.db` exists beside alpha.1's, and opens. (d) Item 28's
+   Xbox checks, on the alpha.
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
