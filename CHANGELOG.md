@@ -35,6 +35,22 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Changed
+
+- **The guard's source reads in order again** (developers only; no behaviour changes): the note that says what runs only
+  for a target the anti-cheat evaluation allowed sits above the function it describes again — beta.33's two isolation
+  checks had come between them — and names that isolation check among what runs
+  (`src/native/FrameLedger.Injector/src/fl_guard.cpp`).
+
+### Fixed
+
+- **An Xbox game's page no longer fails on a strange picture name** in the game's own `MicrosoftGame.config` (beta.33's):
+  a name that points at a stream of a file (`a:b.png`) made the search for its scaled variants throw — the page then
+  showed no picture and logged an error, and an action on the page that reloads it could end in the crash report. Such a
+  name is no picture a package ships, so it is passed over like a name outside the package
+  (`src/FrameLedger.Infrastructure/Art/XboxArtCache.cs`). Found by a self-review of #351 and #352 after their gates
+  passed; no install of the owner's eleven titles has such a name.
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

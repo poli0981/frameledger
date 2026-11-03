@@ -159,6 +159,8 @@ public sealed class XboxLibrarySourceTests : IDisposable
         files.Cover.Should().BeNull("a GDK package ships no portrait cover");
         XboxArtCache.Image(content, @"..\..\outside.png").Should().BeNull("a name that escapes the package is not the package's picture");
         XboxArtCache.Image(content, @"C:\Windows\System32\shell32.dll").Should().BeNull();
+        XboxArtCache.Image(content, @"Resources\a:b.png").Should().BeNull("a file's stream is not a picture, and its scale search threw (beta.34)");
+        XboxArtCache.Image(content, @"Resources\Square480x480Logo.png:Zone.Identifier").Should().BeNull();
     }
 
     /// <summary>

@@ -67,6 +67,13 @@ public sealed class XboxArtCache : IStoreArtCache
             return null;    // a name that escapes the package is not the package's picture
         }
 
+        if (Path.GetFileName(full).Contains(':', StringComparison.Ordinal))
+        {
+            // A file's stream (name:stream) is no picture a package ships, and the scale search below would throw on one
+            // named like a drive ("a:b.png" makes the pattern "a:b.scale-*.png", which EnumerateFiles refuses; beta.34).
+            return null;
+        }
+
         var plain = new FileInfo(full);
         if (plain.Exists && plain.Length > 0)
         {
