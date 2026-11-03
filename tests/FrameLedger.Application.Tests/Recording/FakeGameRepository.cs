@@ -146,6 +146,14 @@ internal sealed class FakeGameRepository : IGameRepository
 
     public ValueTask<bool> ApplyStoreMetadataAsync(long gameId, StoreMetadata store, CancellationToken ct = default)
     {
+        // The real repository's contract (beta.33): a store id that is not in games.platform's vocabulary throws there, so it
+        // throws here too — an importer test must not pass with a platform the ledger would refuse.
+        ArgumentNullException.ThrowIfNull(store);
+        if (!GameMetadata.Platforms.Contains(store.Platform, StringComparer.Ordinal) || string.Equals(store.Platform, "none", StringComparison.Ordinal))
+        {
+            throw new ArgumentException($"'{store.Platform}' is not a store", nameof(store));
+        }
+
         Stores.Add((gameId, store));
         foreach ((string key, GameRow row) in Rows)
         {

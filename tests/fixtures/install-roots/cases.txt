@@ -1,0 +1,39 @@
+# The install-root cases BOTH resolvers must answer the same way (beta.33): InstallRoot.Resolve in C#
+# (FrameLedger.Infrastructure.Tests, InstallRootCasesTests) and ResolveInstallRoot in C++ (fl_guard_test, "the shared
+# install-root cases ..."). They had drifted once already: the managed list carried `GamesInstalled` from #17 and the
+# native one never did, so detection and the guard's check 4 walked different folders for a game under one.
+#
+# Each test makes the listed files under a fresh temporary folder T, resolves the executable T\<exe>, and requires
+# T\<root>. One case per line, three fields split by '|':
+#   <files to create, ';'-separated, may be empty; a trailing '\' makes a folder> | <the executable> | <the root>
+# Every path is relative to T. Lines starting with '#' and blank lines are ignored. ASCII only.
+
+# Store boundaries (the layouts measured 2026-08-03; `GamesInstalled` native since beta.33).
+|SteamLibrary\steamapps\common\Lies of P\LiesofP\Binaries\Win64\LOP-Win64-Shipping.exe|SteamLibrary\steamapps\common\Lies of P
+|SteamLibrary\steamapps\common\Lies of P\LOP.exe|SteamLibrary\steamapps\common\Lies of P
+|SteamLibrary\steamapps\common\Deadly Heart Gambit\DeadlyHeartGambit.exe|SteamLibrary\steamapps\common\Deadly Heart Gambit
+|Epic Games\SomeTitle\Sub\game.exe|Epic Games\SomeTitle
+|GOG Galaxy\Games\SomeTitle\bin\game.exe|GOG Galaxy\Games\SomeTitle
+|GamesInstalled\SomeTitle\bin\game.exe|GamesInstalled\SomeTitle
+
+# No boundary and no package root: the executable's own folder (Alan Wake 2 as installed).
+|another\epic\AlanWake2\AlanWake2.exe|another\epic\AlanWake2
+
+# A GDK package root (spike-notes section 25): MicrosoftGame.config beside appxmanifest.xml marks it. The Unreal shipping
+# executable three levels below, its stub at the root, and the FINAL FANTASY spelling of the config's name.
+xbox\Digging\Content\MicrosoftGame.config;xbox\Digging\Content\appxmanifest.xml|xbox\Digging\Content\DiggingGame\Binaries\WinGDK\DiggingGame-WinGDK-Shipping.exe|xbox\Digging\Content
+xbox\Digging\Content\MicrosoftGame.config;xbox\Digging\Content\appxmanifest.xml|xbox\Digging\Content\DiggingGame.exe|xbox\Digging\Content
+xbox\Valor\Content\MicrosoftGame.config;xbox\Valor\Content\appxmanifest.xml|xbox\Valor\Content\ValorMortis\Binaries\Win64\ValorMortisMSG-Win64-Shipping.exe|xbox\Valor\Content
+xbox\FF\Content\MicrosoftGame.Config;xbox\FF\Content\appxmanifest.xml|xbox\FF\Content\FINAL FANTASY.exe|xbox\FF\Content
+
+# Not a package root: one of the two files only, or a folder that carries the config's name.
+xbox\Half\Content\MicrosoftGame.config|xbox\Half\Content\Bin\x.exe|xbox\Half\Content\Bin
+xbox\Odd\Content\MicrosoftGame.config\;xbox\Odd\Content\appxmanifest.xml|xbox\Odd\Content\Bin\x.exe|xbox\Odd\Content\Bin
+
+# A store boundary wins over package files below it: the rule only ever widens what is walked.
+SteamLibrary\steamapps\common\Both\Game\Binaries\WinGDK\MicrosoftGame.config;SteamLibrary\steamapps\common\Both\Game\Binaries\WinGDK\appxmanifest.xml|SteamLibrary\steamapps\common\Both\Game\Binaries\WinGDK\Both-WinGDK-Shipping.exe|SteamLibrary\steamapps\common\Both
+
+# The nearest package root wins; eight levels up is the reach, nine is out of it.
+outer\MicrosoftGame.config;outer\appxmanifest.xml;outer\inner\Content\MicrosoftGame.config;outer\inner\Content\appxmanifest.xml|outer\inner\Content\bin\x.exe|outer\inner\Content
+deep8\Content\MicrosoftGame.config;deep8\Content\appxmanifest.xml|deep8\Content\a\b\c\d\e\f\g\h\x.exe|deep8\Content
+deep9\Content\MicrosoftGame.config;deep9\Content\appxmanifest.xml|deep9\Content\a\b\c\d\e\f\g\h\i\x.exe|deep9\Content\a\b\c\d\e\f\g\h\i

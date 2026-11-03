@@ -48,3 +48,4 @@ Each section below lives in its own file under `docs/spike-notes/`, moved verbat
 | §22 | The owner's runs of beta.24 and beta.25 on real hardware (2026-10-19) | [`spike-notes/22-owner-runs-2026-10-19.md`](spike-notes/22-owner-runs-2026-10-19.md) |
 | §23 | The owner's runs of beta.26 on real hardware (2026-10-20) | [`spike-notes/23-owner-runs-2026-10-20.md`](spike-notes/23-owner-runs-2026-10-20.md) |
 | §24 | The whole gate on .NET 11 RC3 — what the alpha line's SDK asks of the source (2026-10-31, beta.32, D73–D76) | [`spike-notes/24-dotnet11-probe.md`](spike-notes/24-dotnet11-probe.md) |
+| §25 | Xbox app / Microsoft Store (GDK) titles — the layout, the launch chain, the image paths (2026-11-03, beta.33, D77–D82) | [`spike-notes/25-xbox-gdk.md`](spike-notes/25-xbox-gdk.md) |

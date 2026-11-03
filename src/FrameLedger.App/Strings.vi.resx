@@ -221,7 +221,7 @@
     <value>Thêm mục đã chọn</value>
   </data>
   <data name="Import_NothingFound" xml:space="preserve">
-    <value>Không tìm thấy game nào đã cài trong Steam, GOG Galaxy, Epic hay itch.io trên máy này.</value>
+    <value>Không tìm thấy game nào đã cài trong Steam, GOG Galaxy, Epic, itch.io hay Xbox app trên máy này.</value>
   </data>
   <data name="Import_NothingNew" xml:space="preserve">
     <value>Không có game mới: mọi game các store đã cài đều đã có trong thư viện.</value>
@@ -1733,7 +1733,7 @@
     <value>Hoàn tất</value>
   </data>
   <data name="FirstRun_Import_Body" xml:space="preserve">
-    <value>FrameLedger có thể đọc những gì Steam, GOG Galaxy, Epic và itch.io đã cài và thêm chúng từ một danh sách chọn — Tệp ▸ Nhập thư viện…, khi bạn đã vào trong. Mọi game nhập vào đều bắt đầu với hooking tắt, đúng như game bạn thêm thủ công.</value>
+    <value>FrameLedger có thể đọc những gì Steam, GOG Galaxy, Epic, itch.io và Xbox app đã cài và thêm chúng từ một danh sách chọn — Tệp ▸ Nhập thư viện…, khi bạn đã vào trong. Mọi game nhập vào đều bắt đầu với hooking tắt, đúng như game bạn thêm thủ công.</value>
   </data>
   <data name="FirstRun_Import_Header" xml:space="preserve">
     <value>Thư viện của bạn</value>
@@ -2189,6 +2189,9 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   </data>
   <data name="Store_Epic_Format" xml:space="preserve">
     <value>Epic phiên bản {0}</value>
+  </data>
+  <data name="Store_Xbox_Format" xml:space="preserve">
+    <value>Xbox phiên bản {0}</value>
   </data>
   <data name="GameDetail_Details_Header" xml:space="preserve">
     <value>Chi tiết</value>
@@ -3265,7 +3268,7 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
     <value>Hiện ảnh của game</value>
   </data>
   <data name="Settings_GameArt_Body" xml:space="preserve">
-    <value>Trang của game hiện ảnh bạn đã chọn cho nó, nếu không có thì ảnh bìa và banner mà ứng dụng Steam hoặc GOG GALAXY lưu sẵn trên máy này. Không tải gì về.</value>
+    <value>Trang của game hiện ảnh bạn đã chọn cho nó, nếu không có thì ảnh bìa và banner mà ứng dụng Steam hoặc GOG GALAXY lưu sẵn trên máy này, hoặc logo và ảnh splash mà game Xbox kèm sẵn trong thư mục của nó. Không tải gì về.</value>
   </data>
   <data name="Settings_GameArtTint_Label" xml:space="preserve">
     <value>Tô màu trang game theo ảnh</value>
@@ -3278,6 +3281,9 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   </data>
   <data name="Art_Source_Gog" xml:space="preserve">
     <value>Ảnh từ ứng dụng GOG GALAXY trên máy này</value>
+  </data>
+  <data name="Art_Source_Xbox" xml:space="preserve">
+    <value>Ảnh từ chính các tệp của game (Xbox app)</value>
   </data>
   <data name="Art_Source_Yours" xml:space="preserve">
     <value>Ảnh bạn đã chọn cho game này</value>

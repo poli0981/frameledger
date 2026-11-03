@@ -294,7 +294,7 @@
     <comment>review</comment>
   </data>
   <data name="Import_NothingFound" xml:space="preserve">
-    <value>このマシンの Steam、GOG Galaxy、Epic、itch.io にインストール済みのゲームは見つかりませんでした。</value>
+    <value>このマシンの Steam、GOG Galaxy、Epic、itch.io、Xbox アプリにインストール済みのゲームは見つかりませんでした。</value>
     <comment>review</comment>
   </data>
   <data name="Import_NothingNew" xml:space="preserve">
@@ -2310,7 +2310,7 @@
     <comment>review</comment>
   </data>
   <data name="FirstRun_Import_Body" xml:space="preserve">
-    <value>FrameLedger は Steam、GOG Galaxy、Epic、itch.io のインストール済みゲームを読み取り、チェックリストから追加できます — 入った後、「ファイル ▸ ライブラリをインポート…」から。取り込んだゲームはどれも、手動で追加したものと同じくフック無効で始まります。</value>
+    <value>FrameLedger は Steam、GOG Galaxy、Epic、itch.io、Xbox アプリのインストール済みゲームを読み取り、チェックリストから追加できます — 入った後、「ファイル ▸ ライブラリをインポート…」から。取り込んだゲームはどれも、手動で追加したものと同じくフック無効で始まります。</value>
     <comment>review</comment>
   </data>
   <data name="FirstRun_Import_Header" xml:space="preserve">
@@ -2911,6 +2911,10 @@
   </data>
   <data name="Store_Epic_Format" xml:space="preserve">
     <value>Epic バージョン {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Store_Xbox_Format" xml:space="preserve">
+    <value>Xbox バージョン {0}</value>
     <comment>review</comment>
   </data>
   <data name="GameDetail_Details_Header" xml:space="preserve">
@@ -4346,7 +4350,7 @@
     <comment>review</comment>
   </data>
   <data name="Settings_GameArt_Body" xml:space="preserve">
-    <value>ゲームのページに、そのゲームに選んだ画像、なければ Steam または GOG GALAXY のアプリがこの PC に保存しているカバーとバナーを表示します。何もダウンロードしません。</value>
+    <value>ゲームのページに、そのゲームに選んだ画像、なければ Steam または GOG GALAXY のアプリがこの PC に保存しているカバーとバナー、または Xbox のゲームが自分のフォルダーに同梱しているロゴとスプラッシュ画像を表示します。何もダウンロードしません。</value>
     <comment>review</comment>
   </data>
   <data name="Settings_GameArtTint_Label" xml:space="preserve">
@@ -4363,6 +4367,10 @@
   </data>
   <data name="Art_Source_Gog" xml:space="preserve">
     <value>この PC の GOG GALAXY アプリのアートワーク</value>
+    <comment>review</comment>
+  </data>
+  <data name="Art_Source_Xbox" xml:space="preserve">
+    <value>ゲーム自身のファイルのアートワーク (Xbox アプリ)</value>
     <comment>review</comment>
   </data>
   <data name="Art_Source_Yours" xml:space="preserve">

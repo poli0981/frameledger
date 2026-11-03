@@ -226,7 +226,7 @@
     <value>Add selected</value>
   </data>
   <data name="Import_NothingFound" xml:space="preserve">
-    <value>No installed games were found in Steam, GOG Galaxy, Epic or itch.io on this machine.</value>
+    <value>No installed games were found in Steam, GOG Galaxy, Epic, itch.io or the Xbox app on this machine.</value>
   </data>
   <data name="Import_NothingNew" xml:space="preserve">
     <value>No new games: every game your stores have installed is already in the library.</value>
@@ -1738,7 +1738,7 @@
     <value>Finish</value>
   </data>
   <data name="FirstRun_Import_Body" xml:space="preserve">
-    <value>FrameLedger can read what Steam, GOG Galaxy, Epic and itch.io have installed and add them from a checklist — File ▸ Import library…, once you are in. Every imported game starts with hooking off, exactly like one you add by hand.</value>
+    <value>FrameLedger can read what Steam, GOG Galaxy, Epic, itch.io and the Xbox app have installed and add them from a checklist — File ▸ Import library…, once you are in. Every imported game starts with hooking off, exactly like one you add by hand.</value>
   </data>
   <data name="FirstRun_Import_Header" xml:space="preserve">
     <value>Your library</value>
@@ -2194,6 +2194,9 @@ The documents below are the full terms; this summary does not replace them.</val
   </data>
   <data name="Store_Epic_Format" xml:space="preserve">
     <value>Epic version {0}</value>
+  </data>
+  <data name="Store_Xbox_Format" xml:space="preserve">
+    <value>Xbox version {0}</value>
   </data>
   <data name="GameDetail_Details_Header" xml:space="preserve">
     <value>Details</value>
@@ -3270,7 +3273,7 @@ The documents below are the full terms; this summary does not replace them.</val
     <value>Show game artwork</value>
   </data>
   <data name="Settings_GameArt_Body" xml:space="preserve">
-    <value>A game's page shows the image you chose for it, or else the cover and banner the Steam or GOG GALAXY app keeps on this PC. Nothing is downloaded.</value>
+    <value>A game's page shows the image you chose for it, or else the cover and banner the Steam or GOG GALAXY app keeps on this PC, or the logo and splash image an Xbox game ships in its own folder. Nothing is downloaded.</value>
   </data>
   <data name="Settings_GameArtTint_Label" xml:space="preserve">
     <value>Colour the game page from its artwork</value>
@@ -3283,6 +3286,9 @@ The documents below are the full terms; this summary does not replace them.</val
   </data>
   <data name="Art_Source_Gog" xml:space="preserve">
     <value>Artwork from the GOG GALAXY app on this PC</value>
+  </data>
+  <data name="Art_Source_Xbox" xml:space="preserve">
+    <value>Artwork from the game's own files (Xbox app)</value>
   </data>
   <data name="Art_Source_Yours" xml:space="preserve">
     <value>The image you chose for this game</value>

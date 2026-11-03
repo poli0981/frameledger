@@ -463,12 +463,14 @@ public partial class App : System.Windows.Application
     /// <summary>FR-1.2's library import (P4 PR-4): the stores, the executable guess, the importer over the games port, the review checklist behind a port.</summary>
     private static void AddImport(IServiceCollection services)
     {
-        // FR-1.2's library import (P4 PR-4): the four stores read from their own local files and keys, the executable
-        // guess for the two that name none, the importer over the games port, the review checklist behind a port.
+        // FR-1.2's library import (P4 PR-4): the stores read from their own local files and keys (five since beta.33), the
+        // executable guess for those that name none, the importer over the games port, the review checklist behind a port.
         services.AddSingleton<IStoreLibrarySource>(static _ => new SteamLibrarySource());
         services.AddSingleton<IStoreLibrarySource>(static _ => new GogLibrarySource());
         services.AddSingleton<IStoreLibrarySource>(static _ => new EpicLibrarySource());
         services.AddSingleton<IStoreLibrarySource>(static _ => new ItchLibrarySource(log: static line => Serilog.Log.Information("{Line}", line)));
+        // beta.33 (D79): the Xbox app's and the Microsoft Store's games, from the drives' .GamingRoot folders and each package's own files.
+        services.AddSingleton<IStoreLibrarySource>(static _ => new XboxLibrarySource());
         services.AddSingleton<IExecutableLocator, ExecutableLocator>();
         // beta.21 (D59): Play reads the same records to find the store that installed a game, and GOG GALAXY's program.
         services.AddSingleton<Application.Play.IGogGalaxyLocator>(static _ => new GogGalaxyLocator());
@@ -491,9 +493,11 @@ public partial class App : System.Windows.Application
         services.AddSingleton<ImportLibraryFlow>();
 
         // beta.23 (owner decisions D60/D61): a game's artwork — the image the user chose (kept in the data folder's covers),
-        // else what the Steam and GOG GALAXY apps keep on this PC, found through the same store records Play reads.
+        // else what the Steam and GOG GALAXY apps keep on this PC (and, since beta.33, what an Xbox game ships in its own
+        // package folder), found through the same store records Play reads.
         services.AddSingleton<Application.Art.IStoreArtCache>(static _ => new SteamArtCache());
         services.AddSingleton<Application.Art.IStoreArtCache>(static _ => new GogArtCache());
+        services.AddSingleton<Application.Art.IStoreArtCache>(static _ => new XboxArtCache());
         services.AddSingleton(static sp => new StoreRecordsReader(sp.GetServices<IStoreLibrarySource>()));
         services.AddSingleton(static sp => new GameArt(
             sp.GetRequiredService<Application.Settings.RegisteredSettings>(),

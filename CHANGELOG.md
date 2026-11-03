@@ -35,8 +35,40 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **Games from the Xbox app and the Microsoft Store** (the owner's request of 2026-11-03, owner decisions D77–D81; PC Game
+  Pass games included): **Import library** finds the games those apps installed into a games folder — each drive's
+  `.GamingRoot` names the folders, each game's own `MicrosoftGame.config` and `appxmanifest.xml` say what it is, and
+  Windows says whether its package is installed for you — and lists them as **Xbox**, with the process that actually
+  draws (an Unreal title's shipping executable, not the stub its package launches; never the GDK's `gamelaunchhelper.exe`).
+  A game's page shows its own square logo and splash image, read from its folder, and its package version (*Xbox version
+  1.3.5124.0*). Only games built on Microsoft's GDK are listed; an older Store app (UWP) is not (`docs/05_DETECTION.md`
+  §Platform signatures & metadata, `LIMITATIONS.md`, the user guide). Everything was measured first, on the owner's eleven
+  titles: the layout, and what Windows lets another program read there — every game executable refuses to be read, so no
+  Unreal Engine version is shown for these games (`docs/spike-notes/25-xbox-gdk.md`).
+- **The detection rules know Xbox games** (rules `2026.11.1`, so every game in the library is read again once): an `xbox`
+  platform, first in the list — a GDK FINAL FANTASY ships Steam's DLL and read *Steam* — decided by a new signal,
+  `root_file`, from the install folder's own listing, so a very large install whose deep walk ran short still reads as
+  its store (`docs/05_DETECTION.md`).
+
+### Changed
+
+- **The Privacy Policy is 2.13**, shown once at the next start: it names what the Xbox library reads — the games folders
+  `.GamingRoot` names, each game's package files, Windows' answer whether its package is installed for you, and the
+  pictures a game ships in its own folder — that Play asks Windows to start such a game, and that before any injection
+  FrameLedger reads whether a game runs in an app container and which of Windows' code protections it runs under. The
+  EULA and the Disclaimer do not change.
+
 ### Fixed
 
+- **The anti-cheat check saw only part of an Xbox game's folder** (safety): no install-root boundary matched the
+  `<games folder>\<Game>\Content\` layout, so for an Unreal title's executable, three levels down, check 4 walked only its
+  `Binaries\WinGDK` folder, and anti-cheat at the root of `Content` would have read clean. A GDK package root — the folder
+  holding `MicrosoftGame.config` beside `appxmanifest.xml` — is now a boundary for the guard and for detection alike, used
+  only where no store boundary matched, so it can only widen what is walked. The guard also gained `GamesInstalled\<X>`,
+  which detection had had alone since #17; one case list read by both test suites now holds the two resolvers together
+  (`docs/19_SAFETY_AND_ANTICHEAT.md`, `tests/fixtures/install-roots/cases.txt`).
 - **The second alpha's release would have stopped at its delta check** (for developers): Velopack names a non-default
   channel's packages with the channel (`FrameLedger.App-<version>-alpha-delta.nupkg`), and `release.yml` looked for the
   default channel's name. It now takes the delta the pack listed in `assets.<channel>.json`; the betas' packages are named

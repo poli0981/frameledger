@@ -3961,6 +3961,145 @@ TEST_CASE("an unrecognised layout keeps the exe's own directory", "[guard][presc
     CHECK_FALSE(ResolveInstallRoot(nullptr, out, kMaxPreScanPathLen));
 }
 
+// ===========================================================================
+// The shared install-root cases (beta.33): tests/fixtures/install-roots/cases.txt, read here and by the managed
+// InstallRootCasesTests, so ResolveInstallRoot and InstallRoot.Resolve cannot drift apart again — they had, over
+// `GamesInstalled`, since #17. A GDK package root is marked by FILES, so each case builds its tree in a temp folder.
+// ===========================================================================
+namespace {
+
+struct InstallRootCase {
+    std::wstring files;
+    std::wstring exe;
+    std::wstring root;
+};
+
+// The case file is ASCII (its own header says so); Narrow, its inverse, is the log tests' above.
+std::wstring Widen(const std::string& ascii) {
+    std::wstring w;
+    for (char ch : ascii) {
+        w.push_back(static_cast<wchar_t>(static_cast<unsigned char>(ch)));
+    }
+    return w;
+}
+
+std::vector<InstallRootCase> ReadInstallRootCases() {
+    FILE* f = nullptr;
+    REQUIRE(_wfopen_s(&f, FL_INSTALL_ROOT_CASES, L"rb") == 0);
+    REQUIRE(f != nullptr);
+    std::string text;
+    char        chunk[4096];
+    std::size_t got = 0;
+    while ((got = std::fread(chunk, 1, sizeof(chunk), f)) > 0) {
+        text.append(chunk, got);
+    }
+    std::fclose(f);
+
+    std::vector<InstallRootCase> cases;
+    std::size_t                  start = 0;
+    while (start < text.size()) {
+        std::size_t end = text.find('\n', start);
+        if (end == std::string::npos) {
+            end = text.size();
+        }
+        std::string line = text.substr(start, end - start);
+        start = end + 1;
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+        const std::size_t a = line.find('|');
+        const std::size_t b = (a == std::string::npos) ? std::string::npos : line.find('|', a + 1);
+        INFO("case line: " << line);
+        REQUIRE(b != std::string::npos);
+        cases.push_back({Widen(line.substr(0, a)), Widen(line.substr(a + 1, b - a - 1)), Widen(line.substr(b + 1))});
+    }
+    return cases;
+}
+
+void MakeFolders(const std::wstring& dir) {
+    for (std::size_t i = 3; i <= dir.size(); ++i) {    // past "C:\"
+        if (i == dir.size() || dir[i] == L'\\') {
+            static_cast<void>(CreateDirectoryW(dir.substr(0, i).c_str(), nullptr));
+        }
+    }
+}
+
+void RemoveFolderTree(const std::wstring& dir) {
+    WIN32_FIND_DATAW fd{};
+    HANDLE           h = FindFirstFileW((dir + L"\\*").c_str(), &fd);
+    if (h != INVALID_HANDLE_VALUE) {
+        do {
+            const std::wstring name = fd.cFileName;
+            if (name == L"." || name == L"..") {
+                continue;
+            }
+            const std::wstring path = dir + L"\\" + name;
+            if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) {
+                RemoveFolderTree(path);
+            } else {
+                static_cast<void>(DeleteFileW(path.c_str()));
+            }
+        } while (FindNextFileW(h, &fd) != 0);
+        FindClose(h);
+    }
+    static_cast<void>(RemoveDirectoryW(dir.c_str()));
+}
+
+void WriteEmptyFile(const std::wstring& path) {
+    HANDLE h = CreateFileW(path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    REQUIRE(h != INVALID_HANDLE_VALUE);
+    CloseHandle(h);
+}
+
+}    // namespace
+
+TEST_CASE("the shared install-root cases resolve as the managed resolver resolves them", "[guard][prescan]") {
+    const std::vector<InstallRootCase> cases = ReadInstallRootCases();
+    REQUIRE(cases.size() >= 10);    // an empty list is a green test that compared nothing
+
+    wchar_t base[MAX_PATH] = {};
+    REQUIRE(GetTempPathW(MAX_PATH, base) > 0);
+    int index = 0;
+    for (const InstallRootCase& c : cases) {
+        const std::wstring temp = std::wstring(base) + L"fl_roots_" + std::to_wstring(GetCurrentProcessId()) + L"_" +
+                                  std::to_wstring(index++);
+        RemoveFolderTree(temp);
+        MakeFolders(temp);
+
+        std::size_t start = 0;
+        while (start < c.files.size()) {
+            std::size_t end = c.files.find(L';', start);
+            if (end == std::wstring::npos) {
+                end = c.files.size();
+            }
+            const std::wstring item = c.files.substr(start, end - start);
+            start = end + 1;
+            if (item.empty()) {
+                continue;
+            }
+            const std::wstring path = temp + L"\\" + item;
+            if (path.back() == L'\\') {
+                MakeFolders(path.substr(0, path.size() - 1));
+            } else {
+                MakeFolders(path.substr(0, path.rfind(L'\\')));
+                WriteEmptyFile(path);
+            }
+        }
+
+        const std::wstring exe = temp + L"\\" + c.exe;
+        const std::wstring exeDir = exe.substr(0, exe.rfind(L'\\'));
+        wchar_t            out[kMaxPreScanPathLen] = {};
+        INFO("case " << index << ": " << Narrow(c.exe));
+        const bool resolved = ResolveInstallRoot(exeDir.c_str(), out, kMaxPreScanPathLen);
+        RemoveFolderTree(temp);
+        REQUIRE(resolved);
+        CHECK(Narrow(out) == Narrow(temp + L"\\" + c.root));
+    }
+}
+
 TEST_CASE("the advisory pre-scan reaches the same verdict as the one inside the guard", "[guard][prescan]") {
     // FR-2.2's UI question. Same matcher, same polarity — the only difference is
     // that it takes the executable's path instead of a pid.

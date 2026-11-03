@@ -67,10 +67,11 @@ internal static class TestImages
 
         public List<string> Asked { get; } = [];
 
-        public GameArtFiles Find(string id)
+        public GameArtFiles Find(StoreGame record)
         {
-            Asked.Add(id);
-            return string.Equals(id, storeId, StringComparison.Ordinal) ? files : GameArtFiles.None;
+            ArgumentNullException.ThrowIfNull(record);
+            Asked.Add(record.StoreId);
+            return string.Equals(record.StoreId, storeId, StringComparison.Ordinal) ? files : GameArtFiles.None;
         }
     }
 }

@@ -2,6 +2,7 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using FrameLedger.Application.Art;
+using FrameLedger.Application.Import;
 using FrameLedger.Infrastructure.Import;
 
 namespace FrameLedger.Infrastructure.Art;
@@ -24,8 +25,10 @@ public sealed class SteamArtCache(string? steamRoot = null) : IStoreArtCache
 
     public string Platform => "steam";
 
-    public GameArtFiles Find(string storeId)
+    public GameArtFiles Find(StoreGame record)
     {
+        ArgumentNullException.ThrowIfNull(record);
+        string storeId = record.StoreId;
         if (!IsNumericId(storeId) || (steamRoot ?? SteamLibrarySource.InstalledRoot()) is not { } root)
         {
             return GameArtFiles.None;

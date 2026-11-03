@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
-// windows.h stays in its own block above the sorted group, as fl_ac_rules.cpp does: WideCharToMultiByte (the one
-// Win32 call here, for the executable's leaf name) needs it.
+// windows.h stays in its own block above the sorted group, as fl_ac_rules.cpp does: WideCharToMultiByte (for the
+// executable's leaf name) and GetFileAttributesW (a GDK package root's two files, beta.33) need it.
 #include <windows.h>
 
 #include <cstring>
@@ -272,6 +272,29 @@ Verdict PreScanGameWith(const wchar_t* exePath, const Sources& s, const char* to
     return finding.seen ? ToleratedVerdict(finding) : Passed();
 }
 
+// A GDK package root (beta.33, spike-notes §25): the folder holding both `MicrosoftGame.config` and `appxmanifest.xml`
+// as files. `folder` is the first `len` characters of a path; the probe path is built on the stack. A probe that fails
+// — too long, absent, a directory, unreadable — is not a root.
+bool IsGdkPackageRoot(const wchar_t* folder, std::size_t len) noexcept {
+    static const wchar_t* const kFiles[] = {L"MicrosoftGame.config", L"appxmanifest.xml"};
+    for (const wchar_t* file : kFiles) {
+        wchar_t           probe[kMaxPreScanPathLen] = {};
+        const std::size_t fileLen = wcslen(file);
+        if (len + 1 + fileLen + 1 > kMaxPreScanPathLen) {
+            return false;
+        }
+        std::wmemcpy(probe, folder, len);
+        probe[len] = L'\\';
+        std::wmemcpy(probe + len + 1, file, fileLen);
+        probe[len + 1 + fileLen] = L'\0';
+        const DWORD attrs = GetFileAttributesW(probe);
+        if (attrs == INVALID_FILE_ATTRIBUTES || (attrs & FILE_ATTRIBUTE_DIRECTORY) != 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
 }    // namespace
 
 bool ResolveInstallRoot(const wchar_t* exeDir, wchar_t* out, std::size_t cap) noexcept {
@@ -306,10 +329,13 @@ bool ResolveInstallRoot(const wchar_t* exeDir, wchar_t* out, std::size_t cap) no
         const wchar_t* seg[2];
         std::size_t    len;
     };
+    // `GamesInstalled` joined on 2026-11-03 (beta.33): the managed resolver had it since #17 and this one never did, so
+    // detection and check 4 walked different folders for a game under one. More is walked here now, never less.
     static const Boundary kBoundaries[] = {
         {{L"steamapps", L"common"}, 2},
         {{L"GOG Galaxy", L"Games"}, 2},
         {{L"Epic Games", nullptr}, 1},
+        {{L"GamesInstalled", nullptr}, 1},
     };
 
     for (const Boundary& b : kBoundaries) {
@@ -333,7 +359,26 @@ bool ResolveInstallRoot(const wchar_t* exeDir, wchar_t* out, std::size_t cap) no
         }
     }
 
-    // No boundary recognised: the executable's own directory, unchanged.
+    // No string boundary: a GDK package root at or above the executable's folder (beta.33, spike-notes §25). The Xbox
+    // app installs to <games folder>\<Game>\Content\ under a folder the user names, so no string bounds it; the package
+    // marks its own root. Asked only here — after every string boundary missed — so it widens the walk relative to the
+    // exe's own folder, never narrows it; the nearest one wins, at most kMaxGdkLevelsUp levels up, and never a drive's
+    // root (two segments at least). Without it an Unreal title's Content\<Project>\Binaries\WinGDK was all check 4 saw.
+    constexpr std::size_t kMaxGdkLevelsUp = 8;
+    for (std::size_t up = 0; up <= kMaxGdkLevelsUp && up + 2 <= count; ++up) {
+        const auto n = static_cast<std::size_t>(ends[count - 1 - up] - exeDir);
+        if (!IsGdkPackageRoot(exeDir, n)) {
+            continue;
+        }
+        if (n + 1 > cap) {
+            return false;    // a truncated path is a path to somewhere else
+        }
+        std::wmemcpy(out, exeDir, n);
+        out[n] = L'\0';
+        return true;
+    }
+
+    // Nothing recognised: the executable's own directory, unchanged.
     if (wcslen(exeDir) + 1 > cap) {
         return false;
     }

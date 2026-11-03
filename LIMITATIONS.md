@@ -212,13 +212,27 @@ you accept the prompt. Turn it on only if you trust everything that runs under y
   its store (Settings ▸ Games ▸ *Play button*); the notice after Play says when a Steam game may hand itself to Steam.
   ([details](docs/spike-notes/23-owner-runs-2026-10-20.md))
 
+## Xbox app and Microsoft Store games
+
+- **Only games built on Microsoft's GDK** (since 0.1.0-beta.33) — what the Xbox app and the Microsoft Store install into
+  a games folder you chose, PC Game Pass games included — are found by **Import library**. An older Store app (UWP) is
+  not listed, and a game Windows has not installed for you, such as one left behind on a drive, is not offered.
+  ([details](docs/spike-notes/25-xbox-gdk.md))
+- **Their executables cannot be read by other programs** — Windows refuses it to anything outside the game's own
+  package — so FrameLedger shows no Unreal Engine version and no *Runs as* for them, and says what it could not read
+  rather than guessing. A Unity game's version still reads, from its player library.
+- **The anti-cheat list's per-game entries know Steam ids only.** An Xbox copy of a game listed there by its Steam id is
+  checked like any other game — its files, its executables, the anti-cheat drivers and services on your PC — but not
+  by that entry. ([Safety](docs/19_SAFETY_AND_ANTICHEAT.md), [open question](docs/20_OPEN_QUESTIONS.md))
+
 ## Game artwork
 
-- **Only the Steam and GOG GALAXY apps keep pictures FrameLedger can show** (since 0.1.0-beta.23). A game's page shows
-  the cover and banner those apps keep on your PC for a game they installed, read where they keep them — nothing is
-  downloaded or copied. A game from itch, the Epic Games Launcher or another store, or one whose `.exe` is outside a
-  store's own folder, shows a picture only once you choose one (**Edit… ▸ Choose image…**). A GOG picture needs Windows'
-  WebP support, which Windows 11 and most Windows 10 installs have. ([Game page](docs/08_UI.md))
+- **Only the Steam and GOG GALAXY apps keep pictures FrameLedger can show** (since 0.1.0-beta.23) — **and, since
+  0.1.0-beta.33, an Xbox game ships its own**: its square logo and its splash image, shown from its own folder. A game's
+  page shows the cover and banner those apps keep on your PC for a game they installed, read where they keep them —
+  nothing is downloaded or copied. A game from itch, the Epic Games Launcher or another store, or one whose `.exe` is
+  outside a store's own folder, shows a picture only once you choose one (**Edit… ▸ Choose image…**). A GOG picture needs
+  Windows' WebP support, which Windows 11 and most Windows 10 installs have. ([Game page](docs/08_UI.md))
 - The pictures belong to the games' owners; FrameLedger ships none ([names and trademarks](legal/TRADEMARKS.md)).
 
 ## Your data

@@ -226,6 +226,27 @@ public sealed class SqliteGameRepositoryTests
         (await repo.ApplyStoreMetadataAsync(row.Id + 99, new StoreMetadata { Platform = "steam" }, Ct)).Should().BeFalse();
     }
 
+    /// <summary>
+    /// beta.33 (D79): an Xbox game's import is a store write the REAL repository takes, and the user's Edit… keeps it — the
+    /// fake used by the importer's tests validated nothing, so an "xbox" those tests accepted would have thrown here.
+    /// </summary>
+    [Fact]
+    public async Task AnXboxImportIsAStoreTheLedgerTakesAndEditKeeps()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        var repo = new SqliteGameRepository(f.Db);
+        GameRow row = await repo.EnsureAsync(_exe, "Valor Mortis", Ct);
+
+        (await repo.ApplyStoreMetadataAsync(row.Id, new StoreMetadata { Platform = "xbox", StoreId = "LyricalGamesLLC.ValorMortis_72fag5ekhk96y", GameVersion = "1.3.5124.0" }, Ct))
+            .Should().BeTrue();
+        GameRow imported = (await repo.FindByIdAsync(row.Id, Ct))!;
+        imported.Platform.Should().Be("xbox");
+        imported.StoreId.Should().Be("LyricalGamesLLC.ValorMortis_72fag5ekhk96y");
+
+        (await repo.UpdateMetadataAsync(row.Id, GameMetadata.Of(imported) with { Notes = "a note" }, Ct)).Should().BeTrue("Edit… passes the row's platform through");
+        (await repo.FindByIdAsync(row.Id, Ct))!.Platform.Should().Be("xbox");
+    }
+
     private static async Task<long> AddSessionAsync(LedgerFixture f, long gameId)
     {
         long snapshotId = await new SqliteHardwareSnapshotRepository(f.Db).EnsureAsync(new HardwareSnapshot { GpuName = "G" }, DateTimeOffset.UnixEpoch, Ct).ConfigureAwait(false);

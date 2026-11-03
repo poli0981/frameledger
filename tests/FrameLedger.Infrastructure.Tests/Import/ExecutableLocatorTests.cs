@@ -69,6 +69,39 @@ public sealed class ExecutableLocatorTests : IDisposable
     }
 
     [Fact]
+    public async Task AGdkUnrealPackagePicksTheWinGdkShippingBinaryOverTheStubAndTheLaunchHelper()
+    {
+        // A Game About Digging A Hole from the Xbox app (spike-notes §25), its real sizes: the package launches the 233,984-byte
+        // stub, the stub starts the shipping binary, and gamelaunchhelper.exe is the GDK's own launcher.
+        string content = Sub("A Game About Digging A Hole", "Content");
+        string bin = Sub("A Game About Digging A Hole", "Content", "DiggingGame", "Binaries", "WinGDK");
+        await File.WriteAllBytesAsync(Path.Combine(content, "MicrosoftGame.config"), [], Ct);
+        await File.WriteAllBytesAsync(Path.Combine(content, "appxmanifest.xml"), [], Ct);
+        await File.WriteAllBytesAsync(Path.Combine(content, "DiggingGame.exe"), new byte[233_984], Ct);
+        await File.WriteAllBytesAsync(Path.Combine(content, "gamelaunchhelper.exe"), new byte[113_096], Ct);
+        await File.WriteAllBytesAsync(Path.Combine(bin, "DiggingGame-WinGDK-Shipping.exe"), new byte[2_000], Ct);
+
+        new ExecutableLocator().PickPrimary(content).Should().Be(Path.Combine(bin, "DiggingGame-WinGDK-Shipping.exe"),
+            "the WinGDK shipping binary is the process that presents; the stub and the GDK's launcher are not the game");
+    }
+
+    [Fact]
+    public async Task TheGdkLaunchHelperIsNeverTheGameEvenWhenItIsTheLargest()
+    {
+        // A GDK title of no engine the locator knows: only the name of the package's parent folder and the sizes say anything.
+        string content = Sub("Microsoft Jewel", "Content");
+        await File.WriteAllBytesAsync(Path.Combine(content, "MicrosoftGame.config"), [], Ct);
+        await File.WriteAllBytesAsync(Path.Combine(content, "appxmanifest.xml"), [], Ct);
+        await File.WriteAllBytesAsync(Path.Combine(content, "gamelaunchhelper.exe"), new byte[900_000], Ct);
+        await File.WriteAllBytesAsync(Path.Combine(content, "ToolKit.exe"), new byte[800_000], Ct);
+        await File.WriteAllBytesAsync(Path.Combine(content, "MicrosoftJewel.exe"), new byte[239_936], Ct);
+
+        new ExecutableLocator().PickPrimary(content).Should().Be(Path.Combine(content, "MicrosoftJewel.exe"),
+            "a package root's name is the folder above Content, so the executable named after the game outranks a larger stranger; " +
+            "the launcher is never the game");
+    }
+
+    [Fact]
     public async Task AnExecutableNamedAfterTheInstallBeatsALargerStranger()
     {
         string game = Sub("Cyberpunk 2077");

@@ -3,6 +3,7 @@
 
 using FluentAssertions;
 using FrameLedger.Application.Art;
+using FrameLedger.Application.Import;
 using FrameLedger.Infrastructure.Art;
 
 namespace FrameLedger.Infrastructure.Tests.Import;
@@ -19,6 +20,9 @@ public sealed class StoreArtCachesTests : IDisposable
     public StoreArtCachesTests() => Directory.CreateDirectory(_dir);
 
     public void Dispose() => Directory.Delete(_dir, recursive: true);
+
+    /// <summary>A store's record of a game with <paramref name="id"/> (beta.33: the caches take the whole record).</summary>
+    private static StoreGame Record(string id) => new("steam", id, "Game", @"C:\Games\Game", ExePath: null, Version: null);
 
     private string Touch(DateTime writtenUtc, params string[] parts)
     {
@@ -40,7 +44,7 @@ public sealed class StoreArtCachesTests : IDisposable
         _ = Steam("374320", "library_hero_blur.jpg");
         _ = Steam("374320", "logo.png");
 
-        GameArtFiles files = new SteamArtCache(Path.Combine(_dir, "Steam")).Find("374320");
+        GameArtFiles files = new SteamArtCache(Path.Combine(_dir, "Steam")).Find(Record("374320"));
 
         files.Should().Be(new GameArtFiles(cover, hero, header));
     }
@@ -54,14 +58,14 @@ public sealed class StoreArtCachesTests : IDisposable
         string capsule = Steam("1091500", "cccc", "library_capsule.jpg");
         string header = Steam("1091500", "dddd", "library_header.jpg");
 
-        GameArtFiles files = new SteamArtCache(Path.Combine(_dir, "Steam")).Find("1091500");
+        GameArtFiles files = new SteamArtCache(Path.Combine(_dir, "Steam")).Find(Record("1091500"));
 
         files.Cover.Should().Be(capsule);
         files.Hero.Should().Be(newerHero, "an asset Steam replaced has a newer copy in a new folder");
         files.Header.Should().Be(header);
 
         string portrait = Steam("1091500", "library_600x900.jpg");
-        new SteamArtCache(Path.Combine(_dir, "Steam")).Find("1091500").Cover.Should().Be(portrait, "the 600x900 portrait is preferred over the capsule");
+        new SteamArtCache(Path.Combine(_dir, "Steam")).Find(Record("1091500")).Cover.Should().Be(portrait, "the 600x900 portrait is preferred over the capsule");
     }
 
     [Theory]
@@ -73,17 +77,17 @@ public sealed class StoreArtCachesTests : IDisposable
     public void AnIdThatIsNotTheStoresOwnShapeNamesNoFolder(string id)
     {
         _ = Steam("374320", "library_600x900.jpg");
-        new SteamArtCache(Path.Combine(_dir, "Steam")).Find(id).Should().Be(GameArtFiles.None);
-        new GogArtCache(Path.Combine(_dir, "webcache")).Find(id).Should().Be(GameArtFiles.None);
+        new SteamArtCache(Path.Combine(_dir, "Steam")).Find(Record(id)).Should().Be(GameArtFiles.None);
+        new GogArtCache(Path.Combine(_dir, "webcache")).Find(Record(id)).Should().Be(GameArtFiles.None);
     }
 
     [Fact]
     public void NothingThereIsNoneNeverAnError()
     {
-        new SteamArtCache(Path.Combine(_dir, "no-steam")).Find("374320").Should().Be(GameArtFiles.None);
-        new GogArtCache(Path.Combine(_dir, "no-galaxy")).Find("1125815775").Should().Be(GameArtFiles.None);
+        new SteamArtCache(Path.Combine(_dir, "no-steam")).Find(Record("374320")).Should().Be(GameArtFiles.None);
+        new GogArtCache(Path.Combine(_dir, "no-galaxy")).Find(Record("1125815775")).Should().Be(GameArtFiles.None);
         _ = Directory.CreateDirectory(Path.Combine(_dir, "Steam", "appcache", "librarycache", "220"));
-        new SteamArtCache(Path.Combine(_dir, "Steam")).Find("220").IsEmpty.Should().BeTrue("Steam keeps a folder with no artwork in it for some apps");
+        new SteamArtCache(Path.Combine(_dir, "Steam")).Find(Record("220")).IsEmpty.Should().BeTrue("Steam keeps a folder with no artwork in it for some apps");
     }
 
     [Fact]
@@ -95,7 +99,7 @@ public sealed class StoreArtCachesTests : IDisposable
         _ = Touch(DateTime.UtcNow, "webcache", "222", "gog", "1125815775", "33dd_glx_square_icon_v2.webp");
         _ = Directory.CreateDirectory(Path.Combine(_dir, "webcache", "common"));
 
-        GameArtFiles files = new GogArtCache(Path.Combine(_dir, "webcache")).Find("1125815775");
+        GameArtFiles files = new GogArtCache(Path.Combine(_dir, "webcache")).Find(Record("1125815775"));
 
         files.Should().Be(new GameArtFiles(cover, banner, null), "the newest copy wins across users, and GOG keeps no header");
     }

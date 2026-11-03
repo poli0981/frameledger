@@ -120,7 +120,7 @@
     },
 
     "signalType": {
-      "$comment": "Closed enum. `path_contains` is used by the seed (platforms/steam) but is ABSENT from the 05_DETECTION signal-type list, and `strings_regex` is used as a version extractor but is likewise absent - 05_DETECTION needs the same edit as this schema.",
+      "$comment": "Closed enum. `path_contains` is used by the seed (platforms/steam) but is ABSENT from the 05_DETECTION signal-type list, and `strings_regex` is used as a version extractor but is likewise absent - 05_DETECTION needs the same edit as this schema. `root_file` (beta.33, platforms/xbox): an exact file name directly in the install root, answered from that one folder's listing, so a deep walk that ran short cannot make its miss Unknown.",
       "enum": [
         "file_exists",
         "dir_exists",
@@ -129,7 +129,8 @@
         "pe_company_contains",
         "pe_product_contains",
         "strings_contains",
-        "manifest_field"
+        "manifest_field",
+        "root_file"
       ]
     },
 

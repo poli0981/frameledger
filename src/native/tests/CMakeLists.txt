@@ -120,6 +120,9 @@ add_custom_target(fl_stage_overlay_payload DEPENDS "${FL_STAGED_OVERLAY}")
 
 target_compile_definitions(fl_guard_test PRIVATE
     FL_HARNESS_EXE=L"$<TARGET_FILE:hook-harness>"
+    # The install-root cases the managed InstallRootCasesTests read too (beta.33): one list, so the two resolvers
+    # cannot answer a layout differently without one of the two suites going red.
+    FL_INSTALL_ROOT_CASES=L"${CMAKE_SOURCE_DIR}/../../tests/fixtures/install-roots/cases.txt"
     # The extent hook-harness tags, from src/native/CMakeLists.txt. Shared rather
     # than retyped: a fixture and its assertion holding separate copies of the
     # number under test is how a test starts proving something else.

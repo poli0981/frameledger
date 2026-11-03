@@ -387,6 +387,20 @@ Implemented in `FrameLedger.Injector` and reached from managed code through a th
    > appeal. A nested executable outside a recognised store layout is therefore
    > still scanned narrowly; that residual is stated, not closed.
    >
+   > **Amended 2026-11-03 (beta.33, `spike-notes` §25): a GDK package root is a boundary too, and `GamesInstalled`
+   > is one natively.** The Xbox app and the Microsoft Store install to `<games folder>\<Game>\Content\` under a
+   > folder the user names, which no string can bound — so for the executable the import picks there (an Unreal
+   > title's `Content\<Project>\Binaries\WinGDK\…-Shipping.exe`), check 4 walked `Binaries\WinGDK` alone, and an
+   > `EasyAntiCheat\` at `Content`'s root would have read clean: the residual above, on a whole store. The package
+   > marks its own root — `MicrosoftGame.config` beside `appxmanifest.xml`, both files — so **only when no string
+   > boundary matched**, the nearest folder at or above the executable's that holds both is the root (at most eight
+   > levels up, never a drive's root; `ResolveInstallRoot` and the managed `InstallRoot`). Not a blind walk up: a
+   > marker the package writes, measured as exactly one per package at `Content`'s root on the owner's 11 titles; and
+   > only ever a widening relative to the executable's folder — a Steam build carrying GDK files keeps its Steam root.
+   > The native list also gains `GamesInstalled\<X>`, which the managed one had since #17 and the native one never
+   > did; one case list (`tests/fixtures/install-roots/cases.txt`), read by both suites, holds the two resolvers
+   > together from now on.
+   >
    > **Amended 2026-10-13: the root AND the executable's folder.** The root replaced the executable's folder, and
    > that was half the answer. The walk reaches three levels below where it starts, and an Unreal executable is
    > already three below its root, so a folder **beside** the executable is four: MEASURED on Wuthering Waves, whose

@@ -133,7 +133,7 @@ Most tools tell you your frame rate. FrameLedger tells you **what produced that 
 - **Shader-compilation stutter attribution** — which frame spikes were pipeline compiles.
 - **PC latency** when the game uses Reflex.
 
-Plus the usual: Avg / Min / Max / Median FPS, 1% Low, 0.1% Low, frametime distributions, stutter metrics, CPU/GPU temperatures, session history, cross-session comparison, and Steam/GOG/Epic/itch.io library import. UI in **English / Tiếng Việt / 日本語**.
+Plus the usual: Avg / Min / Max / Median FPS, 1% Low, 0.1% Low, frametime distributions, stutter metrics, CPU/GPU temperatures, session history, cross-session comparison, and Steam/GOG/Epic/itch.io/Xbox library import. UI in **English / Tiếng Việt / 日本語**.
 
 ## How it works — and the trade-off, stated plainly
 
