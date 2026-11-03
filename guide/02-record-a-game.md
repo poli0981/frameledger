@@ -3,8 +3,8 @@
 ## 1. Add the game
 
 - **File ▸ Add game…** — pick the game's `.exe` file.
-- **File ▸ Import library…** — FrameLedger lists the games installed through Steam, GOG, Epic and itch.io, and you
-  tick the ones to add.
+- **File ▸ Import library…** — FrameLedger lists the games installed through Steam, GOG, Epic, itch.io and the Xbox app
+  (or the Microsoft Store — PC Game Pass games included), and you tick the ones to add.
 
 Every game is added with **hooking off**.
 
@@ -33,6 +33,8 @@ why it was not measured.
 - **It found anti-cheat.** FrameLedger then turns hooking off for that game and says why on the game's page.
 - **The game is 32-bit or uses DirectX 9.**
 - **It is a Vulkan game** you started yourself.
+- **It is an older Microsoft Store app (UWP)**, or Windows runs the game under code protection the component cannot
+  live under.
 - **The game runs as administrator.** Settings ▸ Capture agent ▸ *Run the agent as administrator* can help (off by
   default; Windows asks every time the agent starts). Read its risk in [Limitations](../LIMITATIONS.md) first.
 - **The game was already running when FrameLedger was updated** — restart the game once.

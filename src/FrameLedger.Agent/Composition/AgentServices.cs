@@ -17,6 +17,7 @@ using FrameLedger.Infrastructure.AntiCheat;
 using FrameLedger.Infrastructure.Blobs;
 using FrameLedger.Infrastructure.Capture;
 using FrameLedger.Infrastructure.Detection;
+using FrameLedger.Infrastructure.Import;
 using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Infrastructure.Recording;
@@ -262,7 +263,7 @@ internal static class AgentServices
             sp.GetRequiredService<IGameRepository>(),
             sp.GetRequiredService<IProcessSnapshotSource>(),
             sp.GetRequiredService<IExecutableIdentitySource>(),
-            new OrchestratorOptions { PayloadPath = AgentPaths.Payload },
+            new OrchestratorOptions { PayloadPath = AgentPaths.Payload, IsPackaged = static exe => GdkPackageFiles.IsInPackage(exe) },
             static line => Serilog.Log.Information("{Line}", line),
             sp.GetRequiredService<ILaunchRecorderFactory>(),
             sp.GetRequiredService<ExecutableRelocator>(),

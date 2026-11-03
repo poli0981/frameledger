@@ -43,7 +43,7 @@ CREATE TABLE games (
   exe_path TEXT NOT NULL UNIQUE,               -- where the executable lives; rewritten by ExecutableRelocator when the
                                                -- SAME bytes (exe_size_bytes, exe_mtime_ms) turn up under another drive
                                                -- letter (2026-09-22), and by Change executable for a DIFFERENT binary
-  platform TEXT NOT NULL DEFAULT 'none',       -- steam|gog|epic|itch|none
+  platform TEXT NOT NULL DEFAULT 'none',       -- steam|gog|epic|itch|xbox|none (xbox since beta.33, D79; no CHECK constraint, so no migration)
   store_id TEXT,
   engine TEXT, engine_version TEXT,
   -- (schema 0015, ALTERed last) engine_version_source TEXT: where engine_version came from — a

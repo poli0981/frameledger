@@ -80,13 +80,21 @@ public sealed class GameArt
         string? platform = null;
         if (StoreRecords.Owning(game.Fingerprint.ExePath, game.StoreId, records) is { } record && _caches.TryGetValue(record.Platform, out IStoreArtCache? cache))
         {
-            files = cache.Find(record.StoreId);
+            files = cache.Find(record);
             platform = record.Platform;
         }
 
-        // The cover slot: the user's image, else the store's portrait cover, else its landscape header.
+        // The cover slot: the user's image, else the store's portrait cover, else its square logo (an Xbox game's, beta.33),
+        // else its landscape header.
         BitmapSource? storeCover = Decode(files.Cover, 0, 450);
         bool landscape = false;
+        bool square = false;
+        if (storeCover is null && Decode(files.Square, 0, 300) is { } logo)
+        {
+            storeCover = logo;
+            square = true;
+        }
+
         if (storeCover is null && Decode(files.Header, 460, 0) is { } header)
         {
             storeCover = header;
@@ -102,10 +110,13 @@ public sealed class GameArt
         }
 
         Color? colour = tint ? DominantOf(cover ?? hero!) : null;
-        string source = own is not null ? Strings.Art_Source_Yours
-            : string.Equals(platform, "gog", StringComparison.Ordinal) ? Strings.Art_Source_Gog
-            : Strings.Art_Source_Steam;
-        return new GameArtView(cover, own is not null, own is null && landscape, storeCover, hero, colour, source);
+        string source = own is not null ? Strings.Art_Source_Yours : platform switch
+        {
+            "gog" => Strings.Art_Source_Gog,
+            "xbox" => Strings.Art_Source_Xbox,
+            _ => Strings.Art_Source_Steam,
+        };
+        return new GameArtView(cover, own is not null, own is null && landscape, storeCover, hero, colour, source, own is null && square);
     }
 
     private async Task<IReadOnlyList<StoreGame>> RecordsAsync()

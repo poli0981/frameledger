@@ -70,7 +70,7 @@ Rules are **data, not code**: `rules/detection-rules.json`, bundled ~~and updata
 
 The `anticheat` block is the same file that feeds the hard guard in `19_SAFETY` — shipping it as updatable data is what lets a newly-protected game be blocked without waiting for an app release. ~~**Rules updates that touch the `anticheat` block are treated as security updates:** applied on next check regardless of the user's auto-update preference for other rules.~~ *(Corrected 2026-10-04: there is no feed and no auto-update preference, so today a newly-protected game waits for a release; the sentence is what a feed must do once built, §S20.)*
 
-Signal types evaluated by `RuleEvaluator` (Domain): `file_exists`, `dir_exists`, `sibling_glob`, **`path_contains`**, `pe_company_contains`, `pe_product_contains`, `strings_contains` (bounded 8 MB scan), `manifest_field`. Combine with `all` / `any` — **not nested**, which schemaVersion 2 forbids. Version extractors: `pe_file_version` (of the sibling its `from` names, not of the executable), `pe_product_version_regex`, **`strings_regex`**, `manifest_field`, and since 2026-09-27 **`unreal_build`** (no parameter; decided in code, §Engine version). A regex extractor must capture exactly **one** group — the evaluator returns the first — and `rules-validate.ps1` refuses any other count and any pattern that does not compile (both promised by the rules file's `$comment` and enforced by nothing until beta.10).
+Signal types evaluated by `RuleEvaluator` (Domain): `file_exists`, `dir_exists`, `sibling_glob`, **`path_contains`**, `pe_company_contains`, `pe_product_contains`, `strings_contains` (bounded 8 MB scan), `manifest_field`, and since beta.33 **`root_file`** — an exact file name directly in the install root, answered from that one folder's own listing (`GameFileSnapshot.RootFiles`), so a deep walk that ran short makes its miss no less certain; a root that could not be listed makes it `Unknown`. Combine with `all` / `any` — **not nested**, which schemaVersion 2 forbids. Version extractors: `pe_file_version` (of the sibling its `from` names, not of the executable), `pe_product_version_regex`, **`strings_regex`**, `manifest_field`, and since 2026-09-27 **`unreal_build`** (no parameter; decided in code, §Engine version). A regex extractor must capture exactly **one** group — the evaluator returns the first — and `rules-validate.ps1` refuses any other count and any pattern that does not compile (both promised by the rules file's `$comment` and enforced by nothing until beta.10).
 
 > `path_contains` and `strings_regex` were in the shipped data and the schema
 > and missing from this list; the schema's own `$comment` said so and nobody had
@@ -312,6 +312,7 @@ engine compiled only, reads as not found. One Ren'Py install was measured.
 
 | Platform | Signals | Metadata |
 |---|---|---|
+| Xbox *(beta.33, D79; first in the array)* | **both** `MicrosoftGame.config` and `appxmanifest.xml` directly in the install root (`root_file`, `all`): a GDK package root. First because a GDK build can ship Steam's DLL — every FINAL FANTASY Pixel Remaster from the Xbox app carries `Plugins\x86_64\steam_api64.dll` (`spike-notes` §25) — and a `root_file` miss is never `Unknown` for want of a deep walk, so a large Steam install behind it still reads *steam* | each drive's `.GamingRoot` → `<games folder>\<Game>\Content\`: `MicrosoftGame.config` (Identity, ShellVisuals, ExecutableList, StoreId) and `appxmanifest.xml` (the Application id); the package family name and its registration from Windows (`PackageFamilyNameFromId`, `GetPackagesByPackageFamily`) |
 | Steam | `steam_api64.dll`/`steam_api.dll` sibling, or path contains `steamapps\common` | nearest `steamapps/appmanifest_<id>.acf` (walk up): `appid`, `name`, `buildid` → version |
 | GOG | `goggame-<id>.info` sibling, or `Galaxy64.dll` | `.info` JSON: `gameId`, `name`, `version` |
 | Epic | `EOSSDK-Win64-Shipping.dll`~~, or path under an Epic install~~ *(corrected 2026-10-04: the rule has no path signal)* | `%ProgramData%\Epic\EpicGamesLauncher\Data\Manifests\*.item` matched by `InstallLocation` |
@@ -324,9 +325,12 @@ engine compiled only, reads as not found. One Ren'Py install was measured.
 > (`StoreRecords.Owning`, as Play finds it). `Infrastructure.Art.SteamArtCache` and `GogArtCache` read them; nothing is
 > downloaded, so the *(opt-in)* online lookup in the publisher/version order below still does not exist. Epic, itch and
 > other stores keep no image files: their games show the image the user chooses, or none. The detail: `08_UI` §Games ›
-> Game detail, *The header's cover*.
+> Game detail, *The header's cover*. *(beta.33: an Xbox game ships its own — `Infrastructure.Art.XboxArtCache` reads the
+> `Square480x480Logo` (else `Square150x150Logo`) and the `SplashScreenImage` its `MicrosoftGame.config` names, inside
+> the package root only, as a square cover and the banner; `IStoreArtCache.Find` takes the owning record rather than the
+> id, because those pictures live in the install folder.)*
 
-**Auto-import (FR-1.2):** Steam via `libraryfolders.vdf` → all `appmanifest_*.acf` except `SteamLibrarySource.KnownTools` (2026-09-22: Steamworks Common Redistributables, Borderless Gaming, Wallpaper Engine, SteamVR, the Proton and Steam Linux Runtime entries, Blender — tools Steam's manifests do not distinguish from games, and which became library rows the watcher recorded); GOG via `HKLM\SOFTWARE\WOW6432Node\GOG.com\Games\*`; Epic via `Manifests\*.item`; itch by receipt scan. Import presents a review checklist; nothing is launched, nothing is hooked on import.
+**Auto-import (FR-1.2):** Steam via `libraryfolders.vdf` → all `appmanifest_*.acf` except `SteamLibrarySource.KnownTools` (2026-09-22: Steamworks Common Redistributables, Borderless Gaming, Wallpaper Engine, SteamVR, the Proton and Steam Linux Runtime entries, Blender — tools Steam's manifests do not distinguish from games, and which became library rows the watcher recorded); GOG via `HKLM\SOFTWARE\WOW6432Node\GOG.com\Games\*`; Epic via `Manifests\*.item`; itch by receipt scan; *(beta.33)* Xbox by each drive's `.GamingRoot` and each game's package files. Import presents a review checklist; nothing is launched, nothing is hooked on import.
 
 > **Built 2026-09-14 (P4 PR-4).** `Application.Import.LibraryImporter` over four `IStoreLibrarySource` adapters in
 > `Infrastructure.Import` — `SteamLibrarySource` (`libraryfolders.vdf` + `appmanifest_*.acf` through
@@ -362,6 +366,22 @@ engine compiled only, reads as not found. One Ren'Py install was measured.
 > **Privacy:** local files and registry keys the launchers already wrote, read-only; no process is touched, nothing
 > is fetched (CLAUDE.md rule 8's "opt-in store metadata" is the online lookup, which does not exist). First-run
 > step 4 now points at File ▸ Import library… rather than saying "later build".
+
+> **beta.33 (owner decisions D78/D79, `spike-notes` §25): the Xbox app's and the Microsoft Store's games.**
+> `XboxLibrarySource` reads each ready fixed or removable drive's `.GamingRoot` (`GamingRoots`: `RGBX`, a count, UTF-16
+> folder names relative to the drive), lists the `<games folder>\<Game>\Content\` folders that are GDK package roots
+> (`GdkPackageFiles`: `MicrosoftGame.config` beside `appxmanifest.xml`, read with DTDs prohibited and a 1 MB cap), and
+> keeps those whose package Windows says is installed for this user (`PackageFamilyNameFromId`, then
+> `GetPackagesByPackageFamily`). The record: the store id is the package family name, the install directory is `Content`
+> (the spelling the game's own process reports — never the `C:\Program Files\WindowsApps` junction, whose name carries
+> the version), the launch key is the AUMID `<family name>!<Application Id>` that Play activates, the version is the
+> package's. It names no executable, so `ExecutableLocator` ranks: the WinGDK or Win64 shipping binary over the stub the
+> package launches, the Unity player over its crash handler, never `gamelaunchhelper.exe` (a runtime helper since
+> beta.33), with the folder above `Content` as the install's name. **What cannot be read:** every game `.exe` under
+> `Content` refuses `FILE_READ_DATA` to a process outside its package, so its PE header, version resource, imports and
+> strings are not read — the architecture reads `unknown` (never "not x64", so nothing is turned off for it), no Unreal
+> version is shown, and the Unity version still reads, from `UnityPlayer.dll`. A UWP app has no `MicrosoftGame.config`
+> and is not listed (D78).
 
 > **beta.19 (owner report 2026-10-12): a store's own pick can be a helper, and a launcher is not the game.** The owner's
 > A Doll's Locket - Remake (itch 5085165, RPG Maker MZ) was imported as `Dolls Locket\notification_helper.exe` — NW.js's

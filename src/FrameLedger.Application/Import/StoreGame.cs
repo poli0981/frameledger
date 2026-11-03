@@ -11,7 +11,9 @@ namespace FrameLedger.Application.Import;
 /// </summary>
 /// <remarks>
 /// <c>LaunchKey</c> (beta.21, Play, D59): what the store's own launch link names where that is more than the store id —
-/// the Epic Games Launcher's <c>CatalogNamespace:CatalogItemId:AppName</c>; null for every other store.
+/// the Epic Games Launcher's <c>CatalogNamespace:CatalogItemId:AppName</c>, and since beta.33 an Xbox game's
+/// AppUserModelID <c>&lt;package family name&gt;!&lt;application id&gt;</c>, which Windows activates (D80); null for every
+/// other store.
 /// </remarks>
 public sealed record StoreGame(string Platform, string StoreId, string Name, string InstallDirectory, string? ExePath, string? Version,
     string? LaunchKey = null);

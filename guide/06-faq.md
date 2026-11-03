@@ -8,7 +8,8 @@ FrameLedger cannot measure. The session's summary says which. See [Record a game
 ## I switched hooking on, and the game is still not measured.
 
 FrameLedger refuses a game where it finds anti-cheat, and cannot measure 32-bit games, DirectX 9 games, Vulkan games you
-start yourself, or a game that runs as administrator (unless the agent does too). A game that was already running when
+start yourself, or a game that runs as administrator (unless the agent does too). A game from the Xbox app is measured from a few
+seconds after it starts, because Windows starts it. A game that was already running when
 FrameLedger updated needs one restart. The game's page and the session's summary say what happened.
 
 ## Why "Presented FPS" and not the game's own frame rate?

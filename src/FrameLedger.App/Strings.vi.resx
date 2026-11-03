@@ -221,7 +221,7 @@
     <value>Thêm mục đã chọn</value>
   </data>
   <data name="Import_NothingFound" xml:space="preserve">
-    <value>Không tìm thấy game nào đã cài trong Steam, GOG Galaxy, Epic hay itch.io trên máy này.</value>
+    <value>Không tìm thấy game nào đã cài trong Steam, GOG Galaxy, Epic, itch.io hay Xbox app trên máy này.</value>
   </data>
   <data name="Import_NothingNew" xml:space="preserve">
     <value>Không có game mới: mọi game các store đã cài đều đã có trong thư viện.</value>
@@ -1733,7 +1733,7 @@
     <value>Hoàn tất</value>
   </data>
   <data name="FirstRun_Import_Body" xml:space="preserve">
-    <value>FrameLedger có thể đọc những gì Steam, GOG Galaxy, Epic và itch.io đã cài và thêm chúng từ một danh sách chọn — Tệp ▸ Nhập thư viện…, khi bạn đã vào trong. Mọi game nhập vào đều bắt đầu với hooking tắt, đúng như game bạn thêm thủ công.</value>
+    <value>FrameLedger có thể đọc những gì Steam, GOG Galaxy, Epic, itch.io và Xbox app đã cài và thêm chúng từ một danh sách chọn — Tệp ▸ Nhập thư viện…, khi bạn đã vào trong. Mọi game nhập vào đều bắt đầu với hooking tắt, đúng như game bạn thêm thủ công.</value>
   </data>
   <data name="FirstRun_Import_Header" xml:space="preserve">
     <value>Thư viện của bạn</value>
@@ -2190,6 +2190,9 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="Store_Epic_Format" xml:space="preserve">
     <value>Epic phiên bản {0}</value>
   </data>
+  <data name="Store_Xbox_Format" xml:space="preserve">
+    <value>Xbox phiên bản {0}</value>
+  </data>
   <data name="GameDetail_Details_Header" xml:space="preserve">
     <value>Chi tiết</value>
   </data>
@@ -2501,6 +2504,12 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   </data>
   <data name="Guard_TargetIsVulkanLayered" xml:space="preserve">
     <value>game kết xuất bằng Vulkan, thứ mà Vulkan layer đo thay</value>
+  </data>
+  <data name="Guard_TargetAppContainer" xml:space="preserve">
+    <value>game này chạy trong app container (một app Microsoft Store, không phải game desktop), FrameLedger không nạp vào đó</value>
+  </data>
+  <data name="Guard_TargetMitigation" xml:space="preserve">
+    <value>Windows bảo vệ game này theo cách mà thành phần của FrameLedger không thể nạp hay hook</value>
   </data>
   <data name="Guard_SuspiciousUnsigned" xml:space="preserve">
     <value>một mô-đun không ký số có tên giống anti-cheat đã được nạp</value>
@@ -3184,10 +3193,10 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
     <value>Chơi</value>
   </data>
   <data name="Play_ToolTip_Store" xml:space="preserve">
-    <value>Chơi qua store đã cài game: Steam hoặc Epic Games Launcher sẽ chạy game, GOG GALAXY chạy game, app itch hỏi trước. Game không do store nào cài thì FrameLedger tự chạy.</value>
+    <value>Chơi qua store đã cài game: Steam hoặc Epic Games Launcher sẽ chạy game, GOG GALAXY chạy game, app itch hỏi trước; game từ Xbox app hoặc Microsoft Store chạy qua Windows. Game không do store nào cài thì FrameLedger tự chạy.</value>
   </data>
   <data name="Play_ToolTip_Direct" xml:space="preserve">
-    <value>Chơi: FrameLedger tự chạy game, ghi lại từ khung hình đầu tiên, với quyền thường của bạn. Game Steam có thể tự chuyển sang Steam trước; game do Steam chạy sau đó vẫn được ghi lại.</value>
+    <value>Chơi: FrameLedger tự chạy game, ghi lại từ khung hình đầu tiên, với quyền thường của bạn. Game Steam có thể tự chuyển sang Steam trước; game do Steam chạy sau đó vẫn được ghi lại. Game từ Xbox app hoặc Microsoft Store luôn chạy qua Windows thay vào đó.</value>
   </data>
   <data name="Play_Started_Steam_Format" xml:space="preserve">
     <value>FrameLedger đang chạy {0}. Game Steam có thể tự chuyển sang Steam trước; game do Steam chạy sau đó vẫn được ghi lại.</value>
@@ -3209,6 +3218,15 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   </data>
   <data name="Play_Itch_Format" xml:space="preserve">
     <value>App itch sẽ hỏi chạy bản nào của {0} — hãy xác nhận ở đó.</value>
+  </data>
+  <data name="Play_Xbox_Format" xml:space="preserve">
+    <value>Windows đang chạy {0} qua gói của nó, như khi bấm ô của nó trong Start menu — game từ Xbox app luôn chạy theo cách này. FrameLedger ghi lại khi game xuất hiện.</value>
+  </data>
+  <data name="Play_Xbox_NotStarted_Format" xml:space="preserve">
+    <value>Windows không chạy được {0} qua gói của nó. Hãy chạy từ Xbox app hoặc Start menu; FrameLedger ghi lại khi game xuất hiện.</value>
+  </data>
+  <data name="Play_PackagedGame_Format" xml:space="preserve">
+    <value>{0} là game từ Xbox app hoặc Microsoft Store, chỉ chạy được qua Windows. Hãy chạy từ Xbox app hoặc Start menu; FrameLedger ghi lại khi game xuất hiện.</value>
   </data>
   <data name="Play_Started_Format" xml:space="preserve">
     <value>FrameLedger đang chạy {0}.</value>
@@ -3244,7 +3262,7 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
     <value>Nút Chơi</value>
   </data>
   <data name="Settings_PlayMode_Body" xml:space="preserve">
-    <value>Qua store: Steam và Epic Games Launcher chạy game, GOG GALAXY chạy game, app itch hỏi trước; game không do store nào cài thì FrameLedger tự chạy. Chạy trực tiếp: FrameLedger tự chạy game — ghi lại từ khung hình đầu tiên, với quyền thường của bạn. Một số game Steam tự chuyển sang Steam khi được chạy trực tiếp — game do Steam chạy sau đó vẫn được ghi lại — và vài game không chạy được ngoài Steam: hãy chạy chúng qua store.</value>
+    <value>Qua store: Steam và Epic Games Launcher chạy game, GOG GALAXY chạy game, app itch hỏi trước; game không do store nào cài thì FrameLedger tự chạy. Chạy trực tiếp: FrameLedger tự chạy game — ghi lại từ khung hình đầu tiên, với quyền thường của bạn. Một số game Steam tự chuyển sang Steam khi được chạy trực tiếp — game do Steam chạy sau đó vẫn được ghi lại — và vài game không chạy được ngoài Steam: hãy chạy chúng qua store. Game từ Xbox app hoặc Microsoft Store luôn chạy qua Windows, như khi bấm ô của nó trong Start menu, ở cả hai chế độ.</value>
   </data>
   <data name="Settings_PlayMode_Store" xml:space="preserve">
     <value>Qua store</value>
@@ -3265,7 +3283,7 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
     <value>Hiện ảnh của game</value>
   </data>
   <data name="Settings_GameArt_Body" xml:space="preserve">
-    <value>Trang của game hiện ảnh bạn đã chọn cho nó, nếu không có thì ảnh bìa và banner mà ứng dụng Steam hoặc GOG GALAXY lưu sẵn trên máy này. Không tải gì về.</value>
+    <value>Trang của game hiện ảnh bạn đã chọn cho nó, nếu không có thì ảnh bìa và banner mà ứng dụng Steam hoặc GOG GALAXY lưu sẵn trên máy này, hoặc logo và ảnh splash mà game Xbox kèm sẵn trong thư mục của nó. Không tải gì về.</value>
   </data>
   <data name="Settings_GameArtTint_Label" xml:space="preserve">
     <value>Tô màu trang game theo ảnh</value>
@@ -3278,6 +3296,9 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   </data>
   <data name="Art_Source_Gog" xml:space="preserve">
     <value>Ảnh từ ứng dụng GOG GALAXY trên máy này</value>
+  </data>
+  <data name="Art_Source_Xbox" xml:space="preserve">
+    <value>Ảnh từ chính các tệp của game (Xbox app)</value>
   </data>
   <data name="Art_Source_Yours" xml:space="preserve">
     <value>Ảnh bạn đã chọn cho game này</value>

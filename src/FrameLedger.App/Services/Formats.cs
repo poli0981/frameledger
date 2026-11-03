@@ -313,9 +313,10 @@ public static class Formats
     };
 
     /// <summary>
-    /// <c>games.game_version</c> said as what it is (beta.8): a store import writes a Steam build id or a GOG / Epic
-    /// version string, and a bare "20374416" in the subtitle said nothing. Labelled with the store when a store wrote it
-    /// (<paramref name="detected"/>); a version the user typed is shown as typed. Null when there is none.
+    /// <c>games.game_version</c> said as what it is (beta.8): a store import writes a Steam build id, a GOG / Epic
+    /// version string or an Xbox package's version (beta.33), and a bare "20374416" in the subtitle said nothing.
+    /// Labelled with the store when a store wrote it (<paramref name="detected"/>); a version the user typed is shown as
+    /// typed. Null when there is none.
     /// </summary>
     public static string? StoreVersion(string? platform, string? version, bool detected)
     {
@@ -329,6 +330,7 @@ public static class Formats
             "steam" => Strings.Store_Steam_Format,
             "gog" => Strings.Store_Gog_Format,
             "epic" => Strings.Store_Epic_Format,
+            "xbox" => Strings.Store_Xbox_Format,
             _ => null,
         };
         return format is null ? version : string.Format(CultureInfo.CurrentCulture, format, version);
@@ -393,6 +395,7 @@ public static class Formats
         "gog" => "GOG",
         "epic" => "Epic Games",
         "itch" => "itch.io",
+        "xbox" => "Xbox",
         _ => string.Empty,
     };
 
@@ -515,6 +518,8 @@ public static class Formats
         "LaunchTargetExited" => Strings.Guard_LaunchTargetExited,
         "LaunchNoPresentationRuntime" => Strings.Guard_LaunchNoPresentationRuntime,
         "TargetIsVulkanLayered" => Strings.Guard_TargetIsVulkanLayered,
+        "TargetAppContainer" => Strings.Guard_TargetAppContainer,
+        "TargetMitigation" => Strings.Guard_TargetMitigation,
         "SuspiciousUnsigned" => Strings.Guard_SuspiciousUnsigned,
         _ => string.Format(CultureInfo.CurrentCulture, Strings.Guard_Other_Format, reason),
     };

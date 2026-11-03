@@ -299,9 +299,12 @@ jobs:
           Write-Host ('feed: ' + (($feed.Assets | ForEach-Object { '{0} {1} {2}' -f $_.Type, $_.Version, $_.FileName }) -join '; '))
           $setup = "FrameLedger.App-$channel-Setup.exe"
           if (-not (Test-Path "out/release/$setup")) { throw "vpk did not produce $setup (README §Install names the beta's, guide/11-alpha-builds.md the alpha's)" }
-          $delta = "out/release/FrameLedger.App-$v-delta.nupkg"
+          # The delta is the one this pack listed, not a name built here: Velopack puts a non-default channel in its packages'
+          # names (FrameLedger.App-<v>-alpha-full.nupkg - measured on the 0.1.0-alpha.1 rehearsal, 2026-10-31), so the name
+          # this step built for the default channel would have failed the second alpha.
+          $delta = @($built | Where-Object { $_ -like '*-delta.nupkg' })
           if (Get-ChildItem out/previous -Filter '*-full.nupkg' -ErrorAction SilentlyContinue) {
-            if (-not (Test-Path $delta)) { throw "the previous full package was downloaded, but vpk produced no delta ($delta)" }
+            if ($delta.Count -ne 1) { throw "the previous full package was downloaded, but vpk produced no delta ($assets lists: $($built -join ', '))" }
           } else {
             Write-Host '::warning::no previous full package - this release carries no delta'
           }

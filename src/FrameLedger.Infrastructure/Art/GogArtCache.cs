@@ -2,6 +2,7 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using FrameLedger.Application.Art;
+using FrameLedger.Application.Import;
 
 namespace FrameLedger.Infrastructure.Art;
 
@@ -18,8 +19,10 @@ public sealed class GogArtCache(string? webcacheRoot = null) : IStoreArtCache
 
     public string Platform => "gog";
 
-    public GameArtFiles Find(string storeId)
+    public GameArtFiles Find(StoreGame record)
     {
+        ArgumentNullException.ThrowIfNull(record);
+        string storeId = record.StoreId;
         if (!SteamArtCache.IsNumericId(storeId))
         {
             return GameArtFiles.None;

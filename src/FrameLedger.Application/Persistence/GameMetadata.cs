@@ -13,7 +13,7 @@ public sealed record GameMetadata
 {
     public required string Name { get; init; }
 
-    /// <summary><c>steam|gog|epic|itch|none</c>.</summary>
+    /// <summary><c>steam|gog|epic|itch|xbox|none</c> (<c>xbox</c> since beta.33: the Xbox app and the Microsoft Store, D79).</summary>
     public string Platform { get; init; } = "none";
 
     public string? StoreId { get; init; }
@@ -30,7 +30,7 @@ public sealed record GameMetadata
 
     public string? Notes { get; init; }
 
-    public static readonly IReadOnlyList<string> Platforms = ["steam", "gog", "epic", "itch", "none"];
+    public static readonly IReadOnlyList<string> Platforms = ["steam", "gog", "epic", "itch", "xbox", "none"];
 
     public static GameMetadata Of(GameRow row)
     {

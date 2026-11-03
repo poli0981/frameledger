@@ -209,6 +209,15 @@ struct Fake {
         kCannotTell,    // force kFailed
     };
     Payload payload = Payload::kReal;
+
+    // beta.33 (D78) — the target isolation seam. DEFAULTS TO THE REAL IMPLEMENTATION, as the payload seam does and for
+    // its reason: every injection case in this file then also proves the real seam reads a plain process — the harness,
+    // a 32-bit cmd, this test — as clear, which is the green direction of kTargetAppContainer and kTargetMitigation for
+    // free. `isolationReal = false` answers with `isolation` and `isolationResult` instead.
+    bool            isolationReal = true;
+    TargetIsolation isolation;
+    Collected       isolationResult = Collected::kOk;
+    int             isolationCalls = 0;
 };
 
 Fake g;
@@ -432,6 +441,15 @@ Collected FakePayloadIsOurOwn(const wchar_t* dllPath, bool* isOurs) {
     }
 }
 
+Collected FakeTargetIsolationFacts(std::uint32_t pid, TargetIsolation* out) {
+    ++g.isolationCalls;
+    if (g.isolationReal) {
+        return SystemSources().TargetIsolationFacts(pid, out);
+    }
+    *out = g.isolation;
+    return g.isolationResult;
+}
+
 Sources FakeSources() {
     Sources s;
     s.ReadRulesFile = &FakeReadRules;
@@ -447,6 +465,7 @@ Sources FakeSources() {
     s.ModuleIsOurOwn = &FakeModuleIsOurOwn;
     s.PayloadIsOurOwn = &FakePayloadIsOurOwn;
     s.ModuleSignerOrganisation = &FakeModuleSignerOrganisation;
+    s.TargetIsolationFacts = &FakeTargetIsolationFacts;
     return s;
 }
 
@@ -3700,6 +3719,205 @@ TEST_CASE("the payload check can PASS — the staged Overlay is accepted", "[gua
     CHECK(SystemSources().PayloadIsOurOwn(FL_OVERLAY_DLL, nullptr) == Collected::kFailed);
 }
 
+// ===========================================================================
+// beta.33 (D78) — can the target take the Overlay at all? Its token and its
+// mitigation policies, asked as the last question before the primitive
+// (kTargetAppContainer, kTargetMitigation). Neither is a finding: no family, and
+// nothing is loaded.
+// ===========================================================================
+namespace {
+
+// A child of this test started under the creation-time mitigation policies in `policy`, suspended and inert. cmd.exe
+// is Microsoft-signed, so a signature policy lets it start. Child's destructor ends it.
+bool StartMitigatedChild(Child& child, DWORD64 policy) {
+    SIZE_T size = 0;
+    InitializeProcThreadAttributeList(nullptr, 1, 0, &size);
+    std::vector<unsigned char> buffer(size);
+    auto*                      list = reinterpret_cast<LPPROC_THREAD_ATTRIBUTE_LIST>(buffer.data());
+    if (size == 0 || !InitializeProcThreadAttributeList(list, 1, 0, &size)) {
+        return false;
+    }
+    bool started = false;
+    if (UpdateProcThreadAttribute(list, 0, PROC_THREAD_ATTRIBUTE_MITIGATION_POLICY, &policy, sizeof(policy), nullptr,
+                                  nullptr)) {
+        wchar_t sys[MAX_PATH]{};
+        GetSystemDirectoryW(sys, MAX_PATH);
+        const std::wstring cmd = std::wstring(sys) + L"\\cmd.exe";
+        std::wstring       line = L"\"" + cmd + L"\" /c pause";
+        STARTUPINFOEXW     si{};
+        si.StartupInfo.cb = sizeof(si);
+        si.lpAttributeList = list;
+        started = CreateProcessW(cmd.c_str(), line.data(), nullptr, nullptr, FALSE,
+                                 CREATE_SUSPENDED | CREATE_NO_WINDOW | EXTENDED_STARTUPINFO_PRESENT, nullptr, nullptr,
+                                 &si.StartupInfo, &child.pi) != 0;
+    }
+    DeleteProcThreadAttributeList(list);
+    return started;
+}
+
+}    // namespace
+
+TEST_CASE("an AppContainer target is refused by its own reason, and nothing is loaded", "[guard][inject][isolation]") {
+    Child child;
+    REQUIRE(StartHarness(child));
+
+    ResetFake();
+    g.modules = {"kernel32.dll"};
+    g.scanSet = {child.pi.dwProcessId};
+    g.isolationReal = false;
+    g.isolation.appContainer = true;
+
+    const Verdict v = GuardedInjectWithSources(child.pi.dwProcessId, FL_OVERLAY_DLL, FakeSources());
+    INFO("reason " << ReasonName(v.reason) << " signal=" << v.signal);
+    CHECK_FALSE(v.Allowed());
+    CHECK(v.reason == Reason::kTargetAppContainer);
+    CHECK(v.family[0] == '\0');    // not an anti-cheat finding: no family, so nothing is written to the game
+    CHECK_FALSE(TargetHasModule(child.pi.dwProcessId, L"FrameLedger.Overlay.dll"));
+}
+
+TEST_CASE("each blocking mitigation refuses as kTargetMitigation and names its policy", "[guard][inject][isolation]") {
+    // One target for every case: a refusal here never touches the target, which the last line checks.
+    Child child;
+    REQUIRE(StartHarness(child));
+
+    struct Case {
+        bool TargetIsolation::* flag;
+        const char*             named;
+    };
+    const Case cases[] = {
+        {&TargetIsolation::microsoftSignedOnly, "Microsoft-signed"},
+        {&TargetIsolation::storeSignedOnly, "Store-signed"},
+        {&TargetIsolation::dynamicCodeProhibited, "dynamic code prohibited"},
+        {&TargetIsolation::shadowStackStrict, "shadow stack policy: strict mode"},
+        {&TargetIsolation::shadowStackBlocksNonCet, "CET-compatible"},
+        {&TargetIsolation::cfgStrict, "Control Flow Guard policy: strict mode"},
+    };
+    for (const Case& c : cases) {
+        ResetFake();
+        g.modules = {"kernel32.dll"};
+        g.scanSet = {child.pi.dwProcessId};
+        g.isolationReal = false;
+        g.isolation.*(c.flag) = true;
+
+        const Verdict v = GuardedInjectWithSources(child.pi.dwProcessId, FL_OVERLAY_DLL, FakeSources());
+        INFO("expected '" << c.named << "', got " << ReasonName(v.reason) << " signal=" << v.signal);
+        CHECK(v.reason == Reason::kTargetMitigation);
+        CHECK(std::string(v.signal).find(c.named) != std::string::npos);
+        CHECK(v.family[0] == '\0');
+    }
+    CHECK_FALSE(TargetHasModule(child.pi.dwProcessId, L"FrameLedger.Overlay.dll"));
+}
+
+TEST_CASE("an isolation seam that cannot answer refuses, and so does a guard wired without one",
+          "[guard][inject][isolation][failclosed]") {
+    Child child;
+    REQUIRE(StartHarness(child));
+
+    // Every fact clear beside a failed result: the result is what is honoured, never the facts next to it.
+    for (const Collected bad : {Collected::kFailed, Collected::kIncomplete, Collected::kRetry}) {
+        ResetFake();
+        g.modules = {"kernel32.dll"};
+        g.scanSet = {child.pi.dwProcessId};
+        g.isolationReal = false;
+        g.isolationResult = bad;
+
+        const Verdict v = GuardedInjectWithSources(child.pi.dwProcessId, FL_OVERLAY_DLL, FakeSources());
+        INFO("reason " << ReasonName(v.reason) << " signal=" << v.signal);
+        CHECK(v.reason == Reason::kProcessUnreadable);
+    }
+
+    // Sources members default to nullptr: forgetting to wire this must refuse, never load.
+    ResetFake();
+    g.modules = {"kernel32.dll"};
+    g.scanSet = {child.pi.dwProcessId};
+    Sources s = FakeSources();
+    s.TargetIsolationFacts = nullptr;
+    const Verdict unwired = GuardedInjectWithSources(child.pi.dwProcessId, FL_OVERLAY_DLL, s);
+    CHECK(unwired.reason == Reason::kProcessUnreadable);
+    CHECK(std::string(unwired.signal) == "no target isolation source");
+
+    CHECK_FALSE(TargetHasModule(child.pi.dwProcessId, L"FrameLedger.Overlay.dll"));
+}
+
+TEST_CASE("the isolation check comes after the guard and the payload, and the re-scan never asks it",
+          "[guard][inject][isolation]") {
+    // A blocked target outranks it: anti-cheat in the target is the fact that matters.
+    ResetFake();
+    g.modules = {"kernel32.dll", "BEClient_x64.dll"};
+    g.scanSet = {GetCurrentProcessId()};
+    g.isolationReal = false;
+    g.isolation.appContainer = true;
+    CHECK(GuardedInjectWithSources(GetCurrentProcessId(), FL_OVERLAY_DLL, FakeSources()).reason ==
+          Reason::kBlockedModule);
+    CHECK(g.isolationCalls == 0);
+
+    // So does a foreign payload: a misuse of the exported ABI is reported as one, whatever the target.
+    ResetFake();
+    g.modules = {"kernel32.dll"};
+    g.scanSet = {GetCurrentProcessId()};
+    g.payload = Fake::Payload::kForeign;
+    g.isolationReal = false;
+    g.isolation.appContainer = true;
+    CHECK(GuardedInjectWithSources(GetCurrentProcessId(), FL_OVERLAY_DLL, FakeSources()).reason ==
+          Reason::kPayloadNotOurs);
+    CHECK(g.isolationCalls == 0);
+
+    // The 30 s re-scan evaluates a process the Overlay is already in: the question was answered before it loaded.
+    ResetFake();
+    g.isolationReal = false;
+    g.isolation.appContainer = true;
+    CHECK(EvaluateWithSources(1234, FakeSources()).Allowed());
+    CHECK(g.isolationCalls == 0);
+}
+
+TEST_CASE("the real isolation seam reads a plain desktop process as clear", "[guard][inject][isolation]") {
+    // This test: full trust, not CET-compatible, Control Flow Guard on but not strict.
+    TargetIsolation facts;
+    facts.appContainer = true;    // the seam writes every field, not only the ones it finds set
+    REQUIRE(SystemSources().TargetIsolationFacts(GetCurrentProcessId(), &facts) == Collected::kOk);
+    CHECK_FALSE(facts.appContainer);
+    CHECK_FALSE(facts.microsoftSignedOnly);
+    CHECK_FALSE(facts.storeSignedOnly);
+    CHECK_FALSE(facts.dynamicCodeProhibited);
+    CHECK_FALSE(facts.shadowStackStrict);
+    CHECK_FALSE(facts.shadowStackBlocksNonCet);
+    CHECK_FALSE(facts.cfgStrict);
+
+    // A process that does not exist cannot be answered, and a null out-param is the caller getting it wrong.
+    TargetIsolation none;
+    CHECK(SystemSources().TargetIsolationFacts(0x7FFFFFFCu, &none) == Collected::kFailed);
+    CHECK(SystemSources().TargetIsolationFacts(GetCurrentProcessId(), nullptr) == Collected::kFailed);
+}
+
+TEST_CASE("the real isolation seam reads the policies a process was started under", "[guard][inject][isolation]") {
+    // Against Windows, not a fake: a child started with "no dynamic code" and "Microsoft-signed images only" -- two
+    // policies every supported Windows can start a process under, unlike strict CFG or a shadow stack, which need a
+    // newer build or CET hardware -- reads as exactly those two.
+    Child child;
+    REQUIRE(StartMitigatedChild(child, PROCESS_CREATION_MITIGATION_POLICY_PROHIBIT_DYNAMIC_CODE_ALWAYS_ON |
+                                           PROCESS_CREATION_MITIGATION_POLICY_BLOCK_NON_MICROSOFT_BINARIES_ALWAYS_ON));
+
+    TargetIsolation facts;
+    REQUIRE(SystemSources().TargetIsolationFacts(child.pi.dwProcessId, &facts) == Collected::kOk);
+    CHECK(facts.dynamicCodeProhibited);
+    CHECK(facts.microsoftSignedOnly);
+    CHECK_FALSE(facts.appContainer);
+    CHECK_FALSE(facts.storeSignedOnly);
+    CHECK_FALSE(facts.shadowStackStrict);
+    CHECK_FALSE(facts.shadowStackBlocksNonCet);
+    CHECK_FALSE(facts.cfgStrict);
+
+    // ...and the guard, through the seam it ships with, refuses it by that reason, naming the first policy.
+    ResetFake();
+    g.modules = {"kernel32.dll"};
+    g.scanSet = {child.pi.dwProcessId};
+    const Verdict v = GuardedInjectWithSources(child.pi.dwProcessId, FL_OVERLAY_DLL, FakeSources());
+    INFO("reason " << ReasonName(v.reason) << " signal=" << v.signal);
+    CHECK(v.reason == Reason::kTargetMitigation);
+    CHECK(std::string(v.signal).find("Microsoft-signed") != std::string::npos);
+    CHECK(v.family[0] == '\0');
+}
+
 #endif    // FL_HARNESS_EXE && FL_OVERLAY_DLL
 
 // ===========================================================================
@@ -3959,6 +4177,145 @@ TEST_CASE("an unrecognised layout keeps the exe's own directory", "[guard][presc
     wchar_t tiny[8] = {};
     CHECK_FALSE(ResolveInstallRoot(LR"(D:\SteamLibrary\steamapps\common\Some Title\Bin)", tiny, 8));
     CHECK_FALSE(ResolveInstallRoot(nullptr, out, kMaxPreScanPathLen));
+}
+
+// ===========================================================================
+// The shared install-root cases (beta.33): tests/fixtures/install-roots/cases.txt, read here and by the managed
+// InstallRootCasesTests, so ResolveInstallRoot and InstallRoot.Resolve cannot drift apart again — they had, over
+// `GamesInstalled`, since #17. A GDK package root is marked by FILES, so each case builds its tree in a temp folder.
+// ===========================================================================
+namespace {
+
+struct InstallRootCase {
+    std::wstring files;
+    std::wstring exe;
+    std::wstring root;
+};
+
+// The case file is ASCII (its own header says so); Narrow, its inverse, is the log tests' above.
+std::wstring Widen(const std::string& ascii) {
+    std::wstring w;
+    for (char ch : ascii) {
+        w.push_back(static_cast<wchar_t>(static_cast<unsigned char>(ch)));
+    }
+    return w;
+}
+
+std::vector<InstallRootCase> ReadInstallRootCases() {
+    FILE* f = nullptr;
+    REQUIRE(_wfopen_s(&f, FL_INSTALL_ROOT_CASES, L"rb") == 0);
+    REQUIRE(f != nullptr);
+    std::string text;
+    char        chunk[4096];
+    std::size_t got = 0;
+    while ((got = std::fread(chunk, 1, sizeof(chunk), f)) > 0) {
+        text.append(chunk, got);
+    }
+    std::fclose(f);
+
+    std::vector<InstallRootCase> cases;
+    std::size_t                  start = 0;
+    while (start < text.size()) {
+        std::size_t end = text.find('\n', start);
+        if (end == std::string::npos) {
+            end = text.size();
+        }
+        std::string line = text.substr(start, end - start);
+        start = end + 1;
+        if (!line.empty() && line.back() == '\r') {
+            line.pop_back();
+        }
+        if (line.empty() || line[0] == '#') {
+            continue;
+        }
+        const std::size_t a = line.find('|');
+        const std::size_t b = (a == std::string::npos) ? std::string::npos : line.find('|', a + 1);
+        INFO("case line: " << line);
+        REQUIRE(b != std::string::npos);
+        cases.push_back({Widen(line.substr(0, a)), Widen(line.substr(a + 1, b - a - 1)), Widen(line.substr(b + 1))});
+    }
+    return cases;
+}
+
+void MakeFolders(const std::wstring& dir) {
+    for (std::size_t i = 3; i <= dir.size(); ++i) {    // past "C:\"
+        if (i == dir.size() || dir[i] == L'\\') {
+            static_cast<void>(CreateDirectoryW(dir.substr(0, i).c_str(), nullptr));
+        }
+    }
+}
+
+void RemoveFolderTree(const std::wstring& dir) {
+    WIN32_FIND_DATAW fd{};
+    HANDLE           h = FindFirstFileW((dir + L"\\*").c_str(), &fd);
+    if (h != INVALID_HANDLE_VALUE) {
+        do {
+            const std::wstring name = fd.cFileName;
+            if (name == L"." || name == L"..") {
+                continue;
+            }
+            const std::wstring path = dir + L"\\" + name;
+            if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) {
+                RemoveFolderTree(path);
+            } else {
+                static_cast<void>(DeleteFileW(path.c_str()));
+            }
+        } while (FindNextFileW(h, &fd) != 0);
+        FindClose(h);
+    }
+    static_cast<void>(RemoveDirectoryW(dir.c_str()));
+}
+
+void WriteEmptyFile(const std::wstring& path) {
+    HANDLE h = CreateFileW(path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    REQUIRE(h != INVALID_HANDLE_VALUE);
+    CloseHandle(h);
+}
+
+}    // namespace
+
+TEST_CASE("the shared install-root cases resolve as the managed resolver resolves them", "[guard][prescan]") {
+    const std::vector<InstallRootCase> cases = ReadInstallRootCases();
+    REQUIRE(cases.size() >= 10);    // an empty list is a green test that compared nothing
+
+    wchar_t base[MAX_PATH] = {};
+    REQUIRE(GetTempPathW(MAX_PATH, base) > 0);
+    int index = 0;
+    for (const InstallRootCase& c : cases) {
+        const std::wstring temp = std::wstring(base) + L"fl_roots_" + std::to_wstring(GetCurrentProcessId()) + L"_" +
+                                  std::to_wstring(index++);
+        RemoveFolderTree(temp);
+        MakeFolders(temp);
+
+        std::size_t start = 0;
+        while (start < c.files.size()) {
+            std::size_t end = c.files.find(L';', start);
+            if (end == std::wstring::npos) {
+                end = c.files.size();
+            }
+            const std::wstring item = c.files.substr(start, end - start);
+            start = end + 1;
+            if (item.empty()) {
+                continue;
+            }
+            const std::wstring path = temp + L"\\" + item;
+            if (path.back() == L'\\') {
+                MakeFolders(path.substr(0, path.size() - 1));
+            } else {
+                MakeFolders(path.substr(0, path.rfind(L'\\')));
+                WriteEmptyFile(path);
+            }
+        }
+
+        const std::wstring exe = temp + L"\\" + c.exe;
+        const std::wstring exeDir = exe.substr(0, exe.rfind(L'\\'));
+        wchar_t            out[kMaxPreScanPathLen] = {};
+        INFO("case " << index << ": " << Narrow(c.exe));
+        const bool resolved = ResolveInstallRoot(exeDir.c_str(), out, kMaxPreScanPathLen);
+        RemoveFolderTree(temp);
+        REQUIRE(resolved);
+        CHECK(Narrow(out) == Narrow(temp + L"\\" + c.root));
+    }
 }
 
 TEST_CASE("the advisory pre-scan reaches the same verdict as the one inside the guard", "[guard][prescan]") {

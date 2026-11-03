@@ -84,8 +84,9 @@ inline constexpr std::size_t kMaxPreScanPathLen = 1024;
 // anti-cheat SDK. For exactly the layout most likely to carry EAC, check 4 was
 // looking in the wrong place.
 //
-// Walks up to a hardcoded platform boundary (`steamapps\common\<X>` and
-// friends) and returns that game's folder. Boundaries are hardcoded for the same
+// Walks up to a hardcoded platform boundary (`steamapps\common\<X>`,
+// `GOG Galaxy\Games\<X>`, `Epic Games\<X>`, `GamesInstalled\<X>`) and returns
+// that game's folder. Boundaries are hardcoded for the same
 // reason IsPlatformLauncher is: a data-driven boundary would let a rules update
 // move where the hard gate looks.
 //
@@ -93,6 +94,15 @@ inline constexpr std::size_t kMaxPreScanPathLen = 1024;
 // blindly is worse than staying put — one level above a game installed loose in
 // `D:\games\Title\` is a folder of other games, and refusing this title because
 // a sibling ships anti-cheat is a false refusal with no appeal.
+//
+// EXCEPT AT A GDK PACKAGE ROOT (beta.33, spike-notes §25). The Xbox app installs
+// to `<games folder>\<Game>\Content\` under a folder the user names; the package
+// marks its own root with `MicrosoftGame.config` beside `appxmanifest.xml`. Only
+// when no string boundary matched, the nearest folder at or above `exeDir` (at
+// most 8 levels up, never a drive's root) holding both FILES is the root — not a
+// blind walk up, a marker the package itself writes, and only ever a widening of
+// the walk relative to `exeDir`. The managed InstallRoot answers the same; the
+// case list tests/fixtures/install-roots/cases.txt holds both to it.
 //
 // The root REPLACED the executable's folder as check 4's one walk on 2026-09-25,
 // and that was half right: what sits at the root (Lies of P's EasyAntiCheat/) is

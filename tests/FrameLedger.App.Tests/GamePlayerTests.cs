@@ -261,6 +261,76 @@ public sealed class GamePlayerTests
             .SteamGame.Should().BeFalse("only Steam's games hand themselves to their store");
     }
 
+    /// <summary>
+    /// beta.33 (D80): a game the Xbox app installed starts through Windows — its package activated as its Start-menu tile
+    /// does — in either mode, and from an App running as administrator too: the user's shell activates it, unelevated. The
+    /// agent is never asked to start it by its path, which is never the game in its package (spike-notes §25).
+    /// </summary>
+    [Fact]
+    public async Task AnXboxGameStartsThroughWindowsInEitherModeAndFromAnAdministrator()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        const string content = @"D:\xbox\FINAL FANTASY\Content";
+        const string family = "39EA002F.FF1DF_n746a19ndrrjg";
+        var xbox = new Stores(new StoreGame("xbox", family, "FINAL FANTASY", content, null, "1.2.3.0", family + "!Game"));
+        GameRow game = Game(content + @"\FINAL FANTASY.exe", family);
+        var agent = new Agent();
+
+        var shell = new Shell();
+        PlayResult result = await Player(s, shell, agent, xbox).PlayAsync(game, Ct);
+        result.Should().Be(new PlayResult(PlayOutcome.HandedToStore, "xbox"));
+        shell.Started.Should().ContainSingle().Which.Should().Be((StoreLaunches.ExplorerPath, @"shell:AppsFolder\" + family + "!Game", (string?)null));
+        GamePlayer.Describe(result, "FINAL FANTASY").Should().Be(
+            ("Windows is starting FINAL FANTASY through its package, as its Start-menu tile does — a game from the Xbox app always starts this way. FrameLedger records it once it appears.", false));
+
+        var elevated = new Shell();
+        (await Player(s, elevated, agent, xbox, elevated: true).PlayAsync(game, Ct)).Should().Be(new PlayResult(PlayOutcome.HandedToStore, "xbox"));
+        elevated.Started.Should().ContainSingle();
+
+        await new RegisteredSettings(new SqliteSettingsStore(s.Db)).SetAsync(SettingsRegistry.UiPlayMode, PlayMode.Direct, Ct);
+        var direct = new Shell();
+        (await Player(s, direct, agent, xbox).PlayAsync(game, Ct)).Should().Be(new PlayResult(PlayOutcome.HandedToStore, "xbox"));
+        direct.Started.Should().ContainSingle();
+        agent.Sent.Should().BeEmpty("no mode starts an Xbox game by its path");
+    }
+
+    [Fact]
+    public async Task AnXboxGameWindowsDidNotStartSaysWhereToStartIt()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        const string content = @"D:\xbox\Valor Mortis\Content";
+        const string family = "LyricalGamesLLC.ValorMortis_72fag5ekhk96y";
+        GameRow game = Game(content + @"\ValorMortis\Binaries\Win64\ValorMortisMSG-Win64-Shipping.exe", family);
+        var agent = new Agent();
+
+        PlayResult refused = await Player(s, new Shell(takes: false), agent,
+            new Stores(new StoreGame("xbox", family, "Valor Mortis", content, null, null, family + "!AppValorMortisShipping"))).PlayAsync(game, Ct);
+        refused.Should().Be(new PlayResult(PlayOutcome.Failed, "xbox"));
+        (string text, bool warning) = GamePlayer.Describe(refused, "Valor Mortis");
+        warning.Should().BeTrue();
+        text.Should().Contain("Valor Mortis").And.Contain("Xbox app");
+
+        PlayResult nothing = await Player(s, new Shell(), agent, new Stores(new StoreGame("xbox", family, "Valor Mortis", content, null, null))).PlayAsync(game, Ct);
+        nothing.Should().Be(new PlayResult(PlayOutcome.Failed, "xbox"), "a package that names no application has nothing to activate, and its path starts nothing");
+        agent.Sent.Should().BeEmpty();
+    }
+
+    /// <summary>beta.33: the agent refuses to start a game in an Xbox package by its path, and says so — reached only when no record named it.</summary>
+    [Fact]
+    public async Task TheAgentsPackagedGameAnswerSaysWhereToStartIt()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        await new RegisteredSettings(new SqliteSettingsStore(s.Db)).SetAsync(SettingsRegistry.UiPlayMode, PlayMode.Direct, Ct);
+
+        PlayResult result = await Player(s, new Shell(), new Agent(outcome: "PackagedGame"), new Stores())
+            .PlayAsync(Game(@"D:\xbox\inKONBINI\Content\inKONBINI.exe", null), Ct);
+
+        result.Should().Be(new PlayResult(PlayOutcome.PackagedGame));
+        (string text, bool warning) = GamePlayer.Describe(result, "inKONBINI");
+        warning.Should().BeTrue();
+        text.Should().Contain("inKONBINI").And.Contain("Xbox app").And.NotContain("PackagedGame");
+    }
+
     [Fact]
     public async Task AStoreAppWindowsWillNotOpenIsAFailureNamedAsSuch()
     {

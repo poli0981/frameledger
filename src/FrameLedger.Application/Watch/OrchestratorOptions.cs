@@ -11,4 +11,11 @@ public sealed record OrchestratorOptions
 
     /// <summary>The watcher's cadence; <c>01_ARCHITECTURE</c> §Lifecycle says 1 Hz and ~0 % CPU.</summary>
     public TimeSpan PollInterval { get; init; } = TimeSpan.FromSeconds(1);
+
+    /// <summary>
+    /// True for an executable whose install root is a GDK package root (beta.33, D80): <c>LaunchGame</c> answers
+    /// <see cref="LaunchOutcome.PackagedGame"/> for it rather than start it by its path — started that way it is never the game
+    /// in its package (<c>spike-notes</c> §25). Null: nothing is treated as packaged (tests, the console's election).
+    /// </summary>
+    public Func<string, bool>? IsPackaged { get; init; }
 }

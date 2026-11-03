@@ -80,6 +80,43 @@ public sealed class GameArtTests : IDisposable
         gone.Source.Should().Be(Strings.Art_Source_Steam);
     }
 
+    [Fact]
+    public async Task AnXboxGamesSquareLogoIsItsCoverDrawnSquareAndItsSplashTheBanner()
+    {
+        // beta.33: what an Xbox game ships in its own package folder (spike-notes §25) — a 480x480 logo, a 1920x1080 splash.
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        string content = Path.Combine(_dir, "xbox", "Valor Mortis", "Content");
+        GameRow game = await s.GameAsync("Valor Mortis", Path.Combine(content, "ValorMortis", "Binaries", "Win64", "ValorMortisMSG-Win64-Shipping.exe"));
+        string logo = TestImages.Write(Path.Combine(content, "Resources", "Square480x480Logo.png"), TestImages.Png(48, 48, Color.FromRgb(30, 30, 160)));
+        string splash = TestImages.Write(Path.Combine(content, "Resources", "SplashScreen.png"), TestImages.Png(96, 54, Color.FromRgb(160, 30, 30)));
+        var store = new TestImages.Store("xbox", new StoreGame("xbox", "LyricalGamesLLC.ValorMortis_72fag5ekhk96y", "Valor Mortis", content, null, null));
+        var cache = new TestImages.ArtCache("xbox", "LyricalGamesLLC.ValorMortis_72fag5ekhk96y", new GameArtFiles(null, splash, splash, logo));
+
+        GameArtView view = (await Art(new MemorySettings(), store, cache).ForAsync(game, Ct))!;
+
+        view.Cover.Should().NotBeNull();
+        view.CoverIsSquare.Should().BeTrue("the logo is drawn whole in a square slot, never cropped to a portrait");
+        view.CoverIsLandscape.Should().BeFalse("the splash is the banner; the square logo comes before the landscape header");
+        view.Hero.Should().NotBeNull();
+        view.Source.Should().Be(Strings.Art_Source_Xbox);
+        view.Tint!.Value.B.Should().BeGreaterThan(view.Tint.Value.R, "the band takes the logo's colour, the cover slot's image");
+    }
+
+    [Fact]
+    public async Task AGogGamesArtIsSaidAsGalaxys()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        string install = Path.Combine(_dir, "gog", "A Space for the Unbound");
+        GameRow game = await s.GameAsync("A Space for the Unbound", Path.Combine(install, "A Space for the Unbound.exe"));
+        string cover = TestImages.Write(Path.Combine(_dir, "galaxy", "cover.png"), TestImages.Png(30, 45, Color.FromRgb(40, 160, 40)));
+        var store = new TestImages.Store("gog", new StoreGame("gog", "1125815775", "A Space for the Unbound", install, null, null));
+
+        GameArtView view = (await Art(new MemorySettings(), store, new TestImages.ArtCache("gog", "1125815775", new GameArtFiles(cover, null, null))).ForAsync(game, Ct))!;
+
+        view.Source.Should().Be(Strings.Art_Source_Gog);
+        view.CoverIsSquare.Should().BeFalse();
+    }
+
     [Theory]
     [InlineData("C:\\Windows\\Web\\Wallpaper\\img0.jpg")]
     [InlineData("\\\\server\\share\\x.png")]

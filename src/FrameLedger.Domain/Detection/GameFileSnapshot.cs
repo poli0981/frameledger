@@ -63,6 +63,13 @@ public sealed record GameFileSnapshot
     /// </remarks>
     public required bool FileListingComplete { get; init; }
 
+    /// <summary>
+    /// The names of the files directly in <see cref="GameDirectory"/>, from a listing of that one folder (beta.33); null
+    /// when it could not be listed. What a <see cref="DetectionSignalType.RootFile"/> signal is answered from: a complete
+    /// listing of the root decides its miss as surely as its hit, whatever the deep walk did.
+    /// </summary>
+    public IReadOnlySet<string>? RootFiles { get; init; }
+
     /// <summary>PE <c>CompanyName</c>, or null if it could not be read.</summary>
     public string? PeCompanyName { get; init; }
 

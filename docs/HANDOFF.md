@@ -71,6 +71,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.29` | [`handoff/history/0.1.0-beta.29.md`](handoff/history/0.1.0-beta.29.md) |
 | `§beta.30` | [`handoff/history/0.1.0-beta.30.md`](handoff/history/0.1.0-beta.30.md) |
 | `§beta.31` | [`handoff/history/0.1.0-beta.31.md`](handoff/history/0.1.0-beta.31.md) |
+| `§beta.32` | [`handoff/history/0.1.0-beta.32.md`](handoff/history/0.1.0-beta.32.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -78,80 +79,87 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-10-31, 0.1.0-beta.32: the alpha line — .NET 11 RC3 / C# 15 beside the betas
+## **START HERE** — 2026-11-03, 0.1.0-beta.33: games from the Xbox app and the Microsoft Store
 
-*Status is `docs/changelog/0.1.0-beta.32.md` (and, for the first alpha, `docs/changelog/0.1.0-alpha.1.md`); this is what
-no other file carries.* The owner: "Bạn có thể phân tích, tìm kiếm sự khác biệt so với .NET 10, đánh giá, lên plan và tạo
-thêm bản alpha, nơi thử nghiệm các dotnet mới, cập nhật code (nếu cần) cho .NET 11 RC3/c# 15 để chuẩn bị cho .NET 11 ra
-mắt, thêm cảnh báo đây là bản thử nghiệm, yêu cầu tự chịu trách nhiệm nếu cần nhé." — an analysis of .NET 11 against
-.NET 10, an evaluation, a plan, and an alpha build where new .NET versions are tried, code updated where needed, with an
-experimental-build, own-risk warning. #344 (the line's plumbing), #346 (the warning, the backup, the legal text), #345
-(what .NET 11's SDK asks of the source) and this release; the `alpha` branch and `0.1.0-alpha.1` follow.
+*Status is `docs/changelog/0.1.0-beta.33.md`; this is what no other file carries.* The owner: "Trong phiên này, ta sẽ tập
+trung xử lý, đánh giá, phân tích cho các game thuộc MS Store/ Xbox App/Game Pass cho (các) phiên bản tiếp theo nhé. Quy
+trình vẫn như mọi lần." — handle, evaluate and analyse the games of the Microsoft Store, the Xbox app and Game Pass for the
+next versions, the usual train; the owner's games are in `C:\XboxGames` and `D:\xbox`. #351 (the library, the install
+root, detection, the art, Privacy 2.13), #352 (Play, the guard's two refusals, one exe-path reader) and this release;
+`0.1.0-alpha.2` follows (D82).
 
 **Decisions (asked while planning, do not re-ask):**
 
-- **D73 — the alpha line** (`12_BUILD` §The alpha line, `13_CI_CD` §The alpha line, `11_UPDATER` §Channels): the source of a
-  released beta built on a prerelease .NET from the long-lived `alpha` branch, tagged `vX.Y.Z-alpha.N`, packed on
-  Velopack's `alpha` channel. An alpha **replaces** the beta on the PC (same packId, install folder and data folder — the
-  native layer reads that folder by fixed path) and **copies the ledger before it first opens it**, once per alpha
-  version, newest three kept (`06_DATA_MODEL` §Migrations).
-- **D74 — the warning** (`08_UI` §First-run flow and §Settings, `01_ARCHITECTURE` §Lifecycle): `legal/ALPHA_NOTICE.md`
-  in an alpha's Legal Gate with a tick box of its own that Accept waits for; the alpha's Agent does not serve until it is
-  accepted (exit 8); an ALPHA badge, a banner at every start, the update channel locked.
-- **D75 — the legal text made true**: EULA 1.6 §2B and Disclaimer 2.12 §0 name alphas beside betas; the owner approved
-  the Alpha notice 1.0 and both sentences with the plan.
-- **D76 — alpha.1 is a retarget only**: `net11.0`, C# 15 by `LangVersion latest`, the three runtime-serviced packages
-  `11.0.0-rc.3.26522.148`; no preview feature (no runtime-async), no C# 15 syntax — main must keep building as C# 14 on
-  .NET 10.
+- **D77 — measure first, on the owner's titles**: the launch chain was measured by activating six of the eleven packages
+  with no FrameLedger hook, read-only, each game closed by its window and never killed, with the decision table committed
+  before the run (`spike-notes` §25, its two commits in #351).
+- **D78 — GDK only**: an app-container (UWP) process is refused with a reason of its own, `TargetAppContainer`, Tier 2
+  (`19_SAFETY` §The target must be able to take the Overlay); `LIMITATIONS.md` says so.
+- **D79 — the platform is "Xbox"** (id `xbox`), full scope: import, art, Play, Tier-1 capture, detection, docs and legal.
+- **D80 — Play on an Xbox game always activates its package**, in both D59 modes (`08_UI` §Games): started by its path a
+  GDK game is never the game in its package — the run corrected the plan's premise that `CreateProcess` fails with error 5
+  (it hands the launch executable back to the package, so the game is not the launcher's descendant; an Unreal shipping
+  executable runs outside it). The Agent records such a game in attach mode.
+- **D81 — title lists stay keyed by Steam id**: an Xbox copy is matched by everything but that entry; the gap is
+  `20_OPEN_QUESTIONS` §G *Xbox app / Microsoft Store titles*.
+- **D82 — alpha.2 right after beta.33** (the owner runs `0.1.0-alpha.1`, and the alpha's channel is locked): on RC3; if
+  the train reaches the alpha after .NET 11's release on 2026-11-10, the standing rule applies (SDK 11.0.100, packages
+  11.0.0) — no new decision.
 
-**The evaluation, as given to the owner:** .NET 11 is STS — supported to about 2028-11, no later than .NET 10 LTS
-(2028-11-14) — so moving the main line buys no support time; Microsoft's supported-OS list for .NET 11 has Windows 10
-only in its LTSC and IoT editions, against NFR-8's Windows 10 22H2 floor; C# 15's unions and closed hierarchies would suit
-the tri-states and refusal reasons once the main line compiles C# 15. Recommendation: the main line stays on .NET 10;
-the alpha line gathers the evidence; `20_OPEN_QUESTIONS` §G *The main line's .NET* holds the decision table.
+The Privacy Policy 2.13's wording was approved with the plan (D36).
 
 **Choices made here:**
 
-- **One alpha per beta, never several in a row**: Velopack's `GithubSource` asks GitHub for one page of ten releases, so
-  ten of one line in a row would hide the other line's newest from its update check (read from Velopack's code).
-- **Every alpha-only behaviour lives on main, dormant**: `Shared.BuildLine` is composed and injected, so the alpha's
-  gate, banner, hold, Agent wait and backup are tested on main; the branch differs only by `RELEASE_LINE`, `global.json`,
-  the TFM, three package versions and `legal/licenses/nuget/`.
-- **The App holds the Agent while an alpha's gate is open** on a hold of its own: the connection's first round runs under
-  the first-run window, and a held-back Agent started anyway would exit 8 and be started again every round — under the
-  admin mode a Windows prompt each time.
-- **The backup has its own lock**, five minutes, not the migration lock: that one gives a waiter 30 s and throws.
-- **.NET 11's `IHost` rethrow is accepted on the alpha**: a failed background service ends an alpha's Agent through the
-  crash path with a minidump, where .NET 10 exits 0 — said in `LIMITATIONS.md`.
+- **A GDK package root is an install-root boundary**, for the guard's check 4 and for detection alike, and only where no
+  store boundary matched — so it can only widen what is walked (`19_SAFETY` §Pre-injection checks, amended 2026-11-03).
+  The guard gained `GamesInstalled\<X>` with it, and one case list read by both test suites
+  (`tests/fixtures/install-roots/cases.txt`) holds the two resolvers together.
+- **`root_file`, a new detection signal**, answered from the install root's own listing, so the `xbox` platform rule —
+  first, because a GDK FINAL FANTASY ships Steam's DLL — is decidable even where a very large install's walk ran short.
+- **The two refusals read the target once, before the primitive**, never at the 30 s re-scan; "could not tell" refuses as
+  `ProcessUnreadable`, and only enforcing flags count (`SetContextIpValidation` without strict mode is on every
+  CET-compatible process: `pwsh.exe` reads `0x105`).
+- **`TargetResolver` reads the watcher's spelling** (`ProcessImagePath`) but keeps the guard's rights, so D21's
+  `TargetUnreadable` is unchanged.
 
-**Measured on the way:** the whole gate on .NET 11 RC3 in a throwaway worktree (`spike-notes` §24): native 32/32, every
-test suite green with no change of answer, coverage and format clean; 21 analyzer sites in 14 files (CA1307 ×13, MA0002
-×7, CA2026 ×1), all fixed on main in forms .NET 10 also compiles; license-check red only because `legal/licenses/nuget/`
-is the beta's package set.
+**Measured on the way** (`spike-notes` §25): eleven GDK packages, full trust, the user's token, medium integrity, none of
+the four mitigations; the image path and the loader's main module both in the `Content` spelling; every game `.exe`
+refuses `FILE_READ_DATA`/`FILE_EXECUTE` outside its package, so no Unreal version and no *Runs as* for these titles;
+`GetProcessMitigationPolicy` answers through `PROCESS_QUERY_LIMITED_INFORMATION`, and an unknown policy answers
+`ERROR_INVALID_PARAMETER`.
 
 **Traps met on the way:**
 
-- **`sed -i` in Git Bash rewrites a CRLF file as LF** (seen on the probe's props files); edit CRLF files with the Edit tool
-  or Python with `newline=''`, and `unix2dos` a file the Write tool created.
-- **The keyboxd I/O error at signing came back**: `gpgconf --kill keyboxd` (the Windows GnuPG's), then commit again.
-- **A CMake configure in a fresh worktree works when the gate is started from PowerShell**, whose `git` is
-  `Git\cmd\git.exe`; from Git Bash, CMake caches `ucrt64\bin\git.exe` and the submodule step fails.
+- **Malwarebytes quarantines `fl_guard_test.exe`** (`Malware.Heuristic.108256`, records in
+  `C:\ProgramData\Malwarebytes\MBAMService\RtpDetections`) on some builds and not others: ctest then reports `fl_guard` as
+  passed in 0.5 s with no output and `fl_prescan` with an empty command. Read `LastTest.log` for the assertion count before
+  believing a native pass; an exclusion for `E:\frameledger\build\` is the owner's to add (a security setting), and CI runs
+  both suites.
+- **`build.ps1` finds the x64 clang-format; `Get-ChildItem … clang-format.exe` finds the ARM64 one first**, which will not
+  start on this PC.
+- **SonarCloud's quality gate on #351 was 77.7 % new-code coverage** (≥ 80 % wanted) and one `cpp:S5813` (`wcslen`): both
+  closed in #352 — its own gate 95.4 %, main's after the merge 86.5 % on the code since beta.32 with no open issue. The
+  job is advisory, so a merge on green does not wait for it — read its verdict after each merge.
+- **FluentAssertions' `OnlyContain` fails an empty collection**: a test of what this PC holds (`GamingRoots.OnThisPc()`)
+  passed here and failed on the hosted runner, which has no `.GamingRoot` (#352's first CI run) — assert that nothing
+  is wrong rather than that everything is right.
 
-**Owner-only:** item 26 — beta.32 on real hardware.
+**Owner-only:** item 28 — the Xbox titles on real hardware.
 
-### 0.1.0-alpha.1 — the first alpha, the same day
+### 0.1.0-alpha.2 — the second alpha, the same day (D82)
 
-The `alpha` branch was cut from main at this pull request — `v0.1.0-beta.32` and these notes, no other change — and carries the switch alone (`12_BUILD` §The alpha line): `RELEASE_LINE`,
-`global.json` (SDK `11.0.100-rc.3.26522.148`), the TFM, three packages at `11.0.0-rc.3.26522.148`, and the NuGet licence
-texts of that package set (69 packages). Its gate on the 11 SDK passed whole before the pull request into `alpha`; the
-release ran from the signed tag `v0.1.0-alpha.1` on `alpha`, on Velopack's `alpha` channel. Its notes are
-`docs/changelog/0.1.0-alpha.1.md`, which open with the experimental-build warning.
+`alpha` took main at this pull request — `v0.1.0-beta.33` and these notes, no other change — by a merge commit, as
+`13_CI_CD` §The alpha line says: no file the switch holds had moved on main, so nothing conflicted and the switch is the
+first alpha's (SDK `11.0.100-rc.3.26522.148`, the three packages at `11.0.0-rc.3.26522.148`, the same NuGet licence
+texts). Its gate on the 11 SDK must pass before the pull request into `alpha` is merged by hand (the branch has no
+auto-merge); the release runs from the signed tag `v0.1.0-alpha.2` on `alpha`, and its delta from alpha.1 is the first
+an alpha's release has to find — #350's lookup, by the name the pack lists. Its notes are
+`docs/changelog/0.1.0-alpha.2.md`, which open with the experimental-build warning.
 
-- **The next alpha** follows the next beta: merge main into `alpha` (a merge commit), regenerate `legal/licenses/nuget/`
-  there if it conflicts, then the same steps (`13_CI_CD` §The alpha line). **.NET 11 ships on 2026-11-10**: from then the
-  switch is SDK `11.0.100` and the packages `11.0.0`, and RC3 is out of support — move the alpha even if no beta comes.
+- **The next alpha moves to .NET 11's release**: from 2026-11-10 the switch is SDK `11.0.100` and the packages `11.0.0`,
+  and RC3 is out of support — move the alpha even if no beta comes.
 
-**Owner-only:** item 27 — the first alpha on real hardware.
+**Owner-only:** item 29 — the second alpha on real hardware.
 
 
 ## Owner-only — no PR can close these
@@ -342,6 +350,24 @@ release ran from the signed tag `v0.1.0-alpha.1` on `alpha`, on Velopack's `alph
    .NET 11. (e) **Going back**: the beta's `FrameLedger.App-win-Setup.exe` over it — the beta shows the alpha's session.
    (f) The `ja` strings marked `review` that only an alpha shows (`Alpha_*`, `FirstRun_Alpha_*`, `FirstRun_Doc_Alpha`,
    `App_Title_Alpha`, `About_Runtime_Alpha_Format`, `Settings_UpdateChannel_AlphaBody`).
+28. **beta.33 on real hardware: the Xbox titles** (D77–D81). (a) **The update from beta.32** (or alpha.2's, item 29): the
+   terms window shows the Privacy Policy 2.13 once. (b) **Import library** offers the eleven Xbox titles as *Xbox* — the
+   Unreal titles with their shipping executables (`…-WinGDK-Shipping.exe`, `ValorMortisMSG-Win64-Shipping.exe`), the Unity
+   titles with their players, never `gamelaunchhelper.exe` — each with its package version (*Xbox version 1.3.5124.0*).
+   (c) Each game's page shows its square logo whole in a square slot and its splash image as the banner, captioned
+   *Xbox*. (d) **Play** starts Valor Mortis and FINAL FANTASY through Windows in both Play modes, and from an App run as
+   administrator — the notice says Windows is starting it. (e) With consent given, one hooked session of each: Tier 1,
+   frames, *late attach*, the engine and platform on the game page. (f) The `ja` strings marked `review`: `Store_Xbox_Format`,
+   `Art_Source_Xbox`, `Import_NothingFound`, `FirstRun_Import_Body`, `Settings_GameArt_Body`, `Play_Xbox_Format`,
+   `Play_Xbox_NotStarted_Format`, `Play_PackagedGame_Format`, `Play_ToolTip_Store`, `Play_ToolTip_Direct`,
+   `Settings_PlayMode_Body`, `Guard_TargetAppContainer`, `Guard_TargetMitigation`. Then
+   `docs/LIST_GAME_TESTED.md` gains the Xbox titles from a ledger copy (D35), approved before the commit.
+29. **0.1.0-alpha.2 on real hardware** (D73, D82). (a) **The update from alpha.1**: Help ▸ Check for updates offers
+   alpha.2 — the first update an alpha's updater has found — and *Restart to update* installs it; say whether it
+   downloaded the delta or the whole package. (b) The terms window shows the Privacy Policy 2.13 and the Alpha notice
+   with its box again, and Accept waits for the tick. (c)
+   `%LOCALAPPDATA%\FrameLedger\backups\ledger-before-0.1.0-alpha.2.db` exists beside alpha.1's, and opens. (d) Item 28's
+   Xbox checks, on the alpha.
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
@@ -432,6 +458,12 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D74 | [`08_UI.md`](08_UI.md) §First-run flow | the alpha's warning: the Alpha notice with its own tick box in the Legal Gate, the alpha's Agent waiting for it, an ALPHA badge and a banner, the update channel locked |
 | D75 | [`../legal/EULA.md`](../legal/EULA.md) §2B | EULA 1.6 and Disclaimer 2.12 name alphas beside betas; the Alpha notice 1.0 approved with the plan |
 | D76 | [`12_BUILD.md`](12_BUILD.md) §The alpha line | alpha.1 is a retarget only: `net11.0`, C# 15 by `LangVersion latest`, three runtime-serviced packages; no preview feature, no C# 15 syntax |
+| D77 | [`spike-notes/25-xbox-gdk.md`](spike-notes/25-xbox-gdk.md) | the Xbox titles measured first, by package activation, read-only, each closed by its window; the decision table before the run |
+| D78 | [`19_SAFETY_AND_ANTICHEAT.md`](19_SAFETY_AND_ANTICHEAT.md) §The target must be able to take the Overlay | GDK games only; an app-container (UWP) process is refused as `TargetAppContainer`, Tier 2 |
+| D79 | [`05_DETECTION.md`](05_DETECTION.md) §Platform signatures & metadata | the platform is "Xbox" (`xbox`), in full: import, artwork, Play, capture, detection, docs and legal |
+| D80 | [`08_UI.md`](08_UI.md) §Games | Play on an Xbox game always activates its package, in both modes; the Agent answers `PackagedGame` and records it in attach mode |
+| D81 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §G | title lists stay keyed by Steam id; an Xbox copy is matched by everything but that entry |
+| D82 | [`HANDOFF.md`](HANDOFF.md) §START HERE | alpha.2 right after beta.33; on RC3 unless the train reaches it after .NET 11 ships (then SDK 11.0.100, packages 11.0.0) |
 
 ---
 

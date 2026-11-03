@@ -387,6 +387,20 @@ Implemented in `FrameLedger.Injector` and reached from managed code through a th
    > appeal. A nested executable outside a recognised store layout is therefore
    > still scanned narrowly; that residual is stated, not closed.
    >
+   > **Amended 2026-11-03 (beta.33, `spike-notes` §25): a GDK package root is a boundary too, and `GamesInstalled`
+   > is one natively.** The Xbox app and the Microsoft Store install to `<games folder>\<Game>\Content\` under a
+   > folder the user names, which no string can bound — so for the executable the import picks there (an Unreal
+   > title's `Content\<Project>\Binaries\WinGDK\…-Shipping.exe`), check 4 walked `Binaries\WinGDK` alone, and an
+   > `EasyAntiCheat\` at `Content`'s root would have read clean: the residual above, on a whole store. The package
+   > marks its own root — `MicrosoftGame.config` beside `appxmanifest.xml`, both files — so **only when no string
+   > boundary matched**, the nearest folder at or above the executable's that holds both is the root (at most eight
+   > levels up, never a drive's root; `ResolveInstallRoot` and the managed `InstallRoot`). Not a blind walk up: a
+   > marker the package writes, measured as exactly one per package at `Content`'s root on the owner's 11 titles; and
+   > only ever a widening relative to the executable's folder — a Steam build carrying GDK files keeps its Steam root.
+   > The native list also gains `GamesInstalled\<X>`, which the managed one had since #17 and the native one never
+   > did; one case list (`tests/fixtures/install-roots/cases.txt`), read by both suites, holds the two resolvers
+   > together from now on.
+   >
    > **Amended 2026-10-13: the root AND the executable's folder.** The root replaced the executable's folder, and
    > that was half the answer. The walk reaches three levels below where it starts, and an Unreal executable is
    > already three below its root, so a folder **beside** the executable is four: MEASURED on Wuthering Waves, whose
@@ -461,6 +475,41 @@ the injection primitive, not a fifth question about the title.
 
 > **There is no override.** ~~There is one, since 2026-09-21, and it is none of the things this paragraph named~~ *(one day; withdrawn 2026-09-22)*: still no hidden setting, no config-file flag, no CLI switch, no "advanced users" escape hatch, no global form. If a user disagrees with a specific entry, the path is still a GitHub issue against the rules file, reviewed in public. What exists is below — and since 2026-09-26 (D33), one narrow, evidence-bound exception for anti-cheat that is user-mode throughout, which lets a named family through while every check still runs (§The user-mode exception).
 
+### The target must be able to take the Overlay — beta.33 (D78)
+
+The last question before the primitive, after checks 1–4 and the payload's identity passed: **can this process take the
+Overlay at all?** The guard reads it from the target itself (`Sources::TargetIsolationFacts`, one
+`PROCESS_QUERY_LIMITED_INFORMATION` handle — measured 2026-11-03 to answer both questions, `GetProcessMitigationPolicy`
+needing no more):
+
+| Read | Refusal | Why it cannot work |
+|---|---|---|
+| `TokenIsAppContainer` | `kTargetAppContainer` | a Microsoft Store app of the UWP kind: the Overlay's shared memory, its `Local\` names and the rules file live in the user's session namespace and profile, which an AppContainer cannot open. D78: GDK games are in, UWP apps are out |
+| `ProcessSignaturePolicy`: `MicrosoftSignedOnly` or `StoreSignedOnly` | `kTargetMitigation` | the Overlay is neither (CLAUDE.md rule 9: unsigned): the remote `LoadLibraryW` fails |
+| `ProcessDynamicCodePolicy`: `ProhibitDynamicCode` | `kTargetMitigation` | MinHook's trampolines are dynamic code: the Overlay would load and hook nothing |
+| `ProcessUserShadowStackPolicy`: strict mode, or `BlockNonCetBinaries` / `BlockNonCetBinariesNonEhcont` | `kTargetMitigation` | the Overlay is not marked CET-compatible: refused at load, or a violation ends the game |
+| `ProcessControlFlowGuardPolicy`: `StrictMode` | `kTargetMitigation` | `native/CMakeLists.txt` H1: measured safe with strict mode off only; a host in strict mode could still `__fastfail` on the trampolines, which no fault policy can catch (rule 5) |
+
+**The policy is the signal**, and only the enforcing flags count: an `Audit*` flag refuses nothing, and
+`SetContextIpValidation` without strict mode is what every CET-compatible process carries (measured: `pwsh.exe`
+`0x105`). A policy the running Windows does not know answers `ERROR_INVALID_PARAMETER` (measured) and cannot be in
+effect. **"Could not tell" refuses** — a seam that fails, or none wired — as `kProcessUnreadable`, the module check's word
+for a process it could not read. ctest `fl_guard` `[isolation]` holds each refusal through fakes, and two of them against
+Windows itself: a child started under "no dynamic code" and "Microsoft-signed images only".
+
+**Neither is a finding.** Nothing is written to the game's row and no family is named; the session is Tier 2 with the
+reason, as for a 32-bit game. **No game that measured before is refused now**: each of these ended as a failed injection,
+an Overlay that installed no hooks, or a risk of ending the game. It is asked once, before the injection — never by the 30 s
+re-scan, which runs inside a process the Overlay is already in — and, like the payload check, it is not numbered as a
+check: it is a precondition of the primitive, not a question about the title.
+
+**A GDK game's tree, measured (`spike-notes` §25, six titles activated through their packages):** the chain is
+`GameLaunchHelper.exe` → `gamingservicesui.exe` → `XboxPcTray.exe` → the launch executable (→ an Unreal title's shipping
+executable), `GameLaunchHelper` exits first, and its parent is the activator — the user's shell when **Play** starts it,
+which is where the scan set already stops. Every member opened with the guard's rights as a standard user, none is an
+AppContainer, none runs under any of the policies above, and no member's module matched a fuzzy fragment or a blocklist
+name. So the scan set needs nothing new for these titles; an Xbox title that ships anti-cheat is unmeasured
+(`20_OPEN_QUESTIONS` §G).
 ### What a finding does to the game — owner decision 2026-09-22
 
 **The per-game override of 2026-09-21 is withdrawn.** It shipped in `0.1.0-beta.3` and `beta.4`. Its first real use

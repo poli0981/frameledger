@@ -6,6 +6,7 @@ using FluentAssertions;
 using FrameLedger.Application.Capture;
 using FrameLedger.Infrastructure.Capture;
 using FrameLedger.Infrastructure.Io;
+using FrameLedger.Infrastructure.Watch;
 
 namespace FrameLedger.Infrastructure.Tests.Capture;
 
@@ -160,6 +161,33 @@ public sealed class TargetResolverTests : IDisposable
 
         new TargetResolver().IsRunning(ExecutableIdentity.Normalise(_exe)).Should().BeTrue("the console verbs, where nothing polls, keep the name");
         new TargetResolver(latest: new Application.Watch.LatestProcessSnapshot()).IsRunning(ExecutableIdentity.Normalise(_exe)).Should().BeTrue("no snapshot published yet");
+    }
+
+    /// <summary>
+    /// beta.33: the path the watcher keys a game on is the path the resolver re-finds it by — one reader
+    /// (<see cref="ProcessImagePath"/>), so a game started through a junction cannot come back spelled otherwise.
+    /// </summary>
+    [Fact]
+    public void TheWatchersSpellingIsTheOneTheResolverFindsAGameBy()
+    {
+        Process only = Start("/c ping -n 30 127.0.0.1 > nul");
+        WaitUntilAllVisible();
+
+        string? watched = new ToolhelpProcessSnapshotSource().Take().Single(s => s.Pid == only.Id).ImagePath;
+
+        watched.Should().Be(ProcessImagePath.Read(only.Id, ProcessImagePath.GuardRights, out _));
+        watched.Should().Be(ExecutableIdentity.Normalise(_exe));
+        new TargetResolver().Resolve(watched!, out SessionEndReason reason).Should().Be(only.Id);
+        reason.Should().Be(SessionEndReason.Running);
+    }
+
+    [Fact]
+    public void ProcessImagePathCannotBeReadForAProcessThatIsNotThere()
+    {
+        ProcessImagePath.Read(0, ProcessImagePath.QueryLimited, out int none).Should().BeNull();
+        none.Should().Be(0, "no process is opened for a pid that cannot name one");
+        ProcessImagePath.Read(int.MaxValue - 3, ProcessImagePath.QueryLimited, out int error).Should().BeNull();
+        error.Should().NotBe(0);
     }
 
     [Fact]

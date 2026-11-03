@@ -42,7 +42,7 @@
     "level, which made it a check that could not fire."
   ],
   "schemaVersion": 2,
-  "rulesVersion": "2026.10.4",
+  "rulesVersion": "2026.11.1",
 
   "engines": [
     {
@@ -146,6 +146,14 @@
   ],
 
   "platforms": [
+    {
+      "id": "xbox",
+      "name": "Xbox",
+      "signals": { "all": [
+        { "type": "root_file", "value": "MicrosoftGame.config" },
+        { "type": "root_file", "value": "appxmanifest.xml" }
+      ] }
+    },
     {
       "id": "steam",
       "name": "Steam",

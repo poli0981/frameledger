@@ -27,7 +27,7 @@ stopped, hooking turned off — each with one button that only says you have rea
 | Menu | Item | What it does |
 |---|---|---|
 | **File** | **Add game…** | Pick a game's `.exe` file. It is added with hooking off, and its page opens. |
-| | **Import library…** | A checklist of the games installed through Steam, GOG Galaxy, Epic and itch.io. |
+| | **Import library…** | A checklist of the games installed through Steam, GOG Galaxy, Epic, itch.io and the Xbox app (or the Microsoft Store). |
 | | **Export** ▸ **Session CSV** · **Session JSON** · **Chart PNG** | Saves the session you last selected or opened. Read [Your data](05-your-data.md) before you share a file. |
 | | **Exit** | Quits FrameLedger, even when *Minimize to tray on close* is on. |
 | **Tools** | **Agent status…** | Opens the Dashboard, where the agent's card is. |
@@ -71,11 +71,12 @@ stopped, hooking turned off — each with one button that only says you have rea
 
 ## A game's page
 
-- **At the top:** the game's picture — a banner and its cover, from the Steam or GOG GALAXY app on your PC or the image
-  you chose — in a band that takes the picture's colour; then the name, publisher, version, store and engine, the `.exe`
+- **At the top:** the game's picture — a banner and its cover, from the Steam or GOG GALAXY app on your PC, the logo and
+  splash image an Xbox game ships in its own folder, or the image you chose — in a band that takes the picture's colour; then the name, publisher, version, store and engine, the `.exe`
   path, the last session, the last measured session's frame rate and its ray-tracing chips. A game with no picture shows
   none (**Settings ▸ Games** turns the picture and its colour off). **Play** starts the game: through the store that
-  installed it, or directly — **Settings ▸ Games ▸ Play button** chooses. **Edit…** changes the name, publisher, version
+  installed it, or directly — **Settings ▸ Games ▸ Play button** chooses; a game from the Xbox app always starts through
+  Windows. **Edit…** changes the name, publisher, version
   and notes, and the picture: **Choose image…** (kept as a copy once you save) or **Use the store's image**. **Change
   executable…** points the entry at another `.exe` and turns hooking back off; its file dialog opens in the game's own
   folder. **Remove…** asks whether to keep the game's sessions.

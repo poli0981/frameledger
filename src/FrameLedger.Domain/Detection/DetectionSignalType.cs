@@ -35,4 +35,10 @@ public enum DetectionSignalType
 
     /// <summary>A field in a store manifest. Not collected this phase.</summary>
     ManifestField,
+
+    /// <summary>
+    /// A file of exactly this name directly in the install root (beta.33, the <c>xbox</c> platform): answered from the
+    /// root's own listing, so a deep walk that ran short cannot make its miss Unknown — a root that could not be listed can.
+    /// </summary>
+    RootFile,
 }

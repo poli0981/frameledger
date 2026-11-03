@@ -310,6 +310,32 @@ public sealed class CaptureOrchestratorTests
         (await noLaunch.LaunchAsync(game.Id, "", ct).ConfigureAwait(true)).Outcome.Should().Be(LaunchOutcome.Unavailable);
     }
 
+    /// <summary>
+    /// beta.33 (D80): a game in an Xbox package is started by Windows through its package, never by its path — started
+    /// that way it is not the game in its package (spike-notes §25) — so the agent answers <c>PackagedGame</c> and starts
+    /// nothing. Reached only when the App found no package record for it; the watcher records it once Windows starts it.
+    /// </summary>
+    [Fact]
+    public async Task AGameInAnXboxPackageIsNeverStartedByItsPath()
+    {
+        CancellationToken ct = TestContext.Current.CancellationToken;
+        var games = new FakeGameRepository();
+        GameRow game = await games.EnsureAsync(new ExecutableFingerprint { ExePath = _game, SizeBytes = 1, MtimeUnixMs = 1 }, "Title", ct).ConfigureAwait(true);
+        var launchRecorder = new FakeRecorder();
+        using var launches = new FakeLaunches(launchRecorder);
+        List<string> log = [];
+        var o = new CaptureOrchestrator(new FakeRecorder(), games, new FakeSnapshots(), new FakeIdentity(),
+            new OrchestratorOptions { PayloadPath = @"C:\FL\FrameLedger.Overlay.dll", IsPackaged = exe => string.Equals(exe, _game, StringComparison.OrdinalIgnoreCase) },
+            log.Add, launches);
+
+        LaunchResult result = await o.LaunchAsync(game.Id, "", ct).ConfigureAwait(true);
+
+        result.Outcome.Should().Be(LaunchOutcome.PackagedGame);
+        result.SessionGuid.Should().BeNull();
+        launchRecorder.Requests.Should().BeEmpty("nothing is started by its path");
+        log.Should().ContainSingle(l => l.Contains("starts through Windows", StringComparison.Ordinal));
+    }
+
     [Fact]
     public async Task RunAsyncPollsUntilCancelledAndThenReportsWhatWasRunning()
     {

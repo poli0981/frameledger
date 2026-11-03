@@ -23,4 +23,11 @@ public enum LaunchOutcome
 
     /// <summary>The entry's recording is switched off (schema 0009, 2026-09-23): FrameLedger does not start what it will not record.</summary>
     RecordingOff,
+
+    /// <summary>
+    /// The entry's executable is in a game the Xbox app or the Microsoft Store installed (beta.33, D80): started by its path it
+    /// is either handed back to its package by Windows or runs outside it (<c>spike-notes</c> §25), so FrameLedger never starts
+    /// it that way; Windows starts it, from Play or its Start-menu tile, and the watcher records it.
+    /// </summary>
+    PackagedGame,
 }

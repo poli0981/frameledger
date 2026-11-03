@@ -171,7 +171,9 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 - **The alpha line (D73, 2026-10-31):** the version gate reads `RELEASE_LINE` beside `VERSION` and refuses a tag that
   disagrees with it — on the `alpha` line only `vX.Y.Z-alpha.N`, and an `-alpha.` tag nowhere else. An alpha's download
   and pack take `--channel alpha`, so the feed, the asset list, the legacy index and the installer are named for that
-  channel (`releases.alpha.json`, `assets.alpha.json`, `RELEASES-alpha`, `FrameLedger.App-alpha-Setup.exe`) and its delta
+  channel (`releases.alpha.json`, `assets.alpha.json`, `RELEASES-alpha`, `FrameLedger.App-alpha-Setup.exe`, and the
+  packages themselves, `FrameLedger.App-<version>-alpha-full.nupkg` / `-alpha-delta.nupkg` — measured on the first alpha's
+  rehearsal, after which the delta check reads the name from `assets.<channel>.json` rather than building it) and its delta
   is made from the previous alpha; the main line's pack is unchanged. The release is titled *(experimental alpha)*, and
   its notes — the alpha's own file, `docs/changelog/x.y.z-alpha.N.md` — open with the warning (§The alpha line).
 - The assets and the notes are also uploaded as a workflow artifact for the smoke checklist (`14_TESTING`
