@@ -31,7 +31,8 @@ public sealed class GamingRootsTests
     /// </summary>
     [Fact]
     public void ThisPcsGamesFoldersAreFullPathsWhereverThereAreAny() =>
-        GamingRoots.OnThisPc().Should().OnlyContain(static root => Path.IsPathFullyQualified(root));
+        // Not OnlyContain: it fails an empty list, which is exactly the hosted runner's answer (seen on #352's first CI run).
+        GamingRoots.OnThisPc().Where(static root => !Path.IsPathFullyQualified(root)).Should().BeEmpty();
 
     [Fact]
     public void TheOwnersTwoFilesNameTheirGamesFolders()
