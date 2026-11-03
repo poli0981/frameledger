@@ -128,6 +128,8 @@ public sealed class AntiCheatVerdictTests
     [InlineData(AntiCheatRefusalReason.PayloadNotOurs, false)]
     [InlineData(AntiCheatRefusalReason.KillSwitchEngaged, false)]
     [InlineData(AntiCheatRefusalReason.HookNotEnabled, false)]
+    [InlineData(AntiCheatRefusalReason.TargetAppContainer, false)]
+    [InlineData(AntiCheatRefusalReason.TargetMitigation, false)]
     public void AFindingAboutTheGameIsWhatTurnsItsHookingOff(AntiCheatRefusalReason reason, bool finding) =>
         AntiCheatVerdict.Refused(reason, "Easy Anti-Cheat", "EasyAntiCheat_EOS.dll").IsFindingAboutTheGame.Should().Be(finding);
 

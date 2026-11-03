@@ -32,4 +32,10 @@ public enum PlayOutcome
 
     /// <summary>Windows would not open the store's app, or the agent refused for another reason (<see cref="PlayResult.Detail"/>).</summary>
     Failed,
+
+    /// <summary>
+    /// beta.33 (D80): the agent was asked to start a game the Xbox app or the Microsoft Store installed (<c>PackagedGame</c>) —
+    /// reached only when no store's records name its package, since Play hands such a game to Windows itself.
+    /// </summary>
+    PackagedGame,
 }

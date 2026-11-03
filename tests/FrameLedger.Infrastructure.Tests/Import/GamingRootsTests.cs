@@ -25,6 +25,14 @@ public sealed class GamingRootsTests
         return [.. bytes];
     }
 
+    /// <summary>
+    /// This PC's drives, read as the import reads them: whatever they name is a full path, and a PC with no
+    /// <c>.GamingRoot</c> anywhere — the hosted runner — names none, without an error.
+    /// </summary>
+    [Fact]
+    public void ThisPcsGamesFoldersAreFullPathsWhereverThereAreAny() =>
+        GamingRoots.OnThisPc().Should().OnlyContain(static root => Path.IsPathFullyQualified(root));
+
     [Fact]
     public void TheOwnersTwoFilesNameTheirGamesFolders()
     {

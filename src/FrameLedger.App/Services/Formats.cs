@@ -518,6 +518,8 @@ public static class Formats
         "LaunchTargetExited" => Strings.Guard_LaunchTargetExited,
         "LaunchNoPresentationRuntime" => Strings.Guard_LaunchNoPresentationRuntime,
         "TargetIsVulkanLayered" => Strings.Guard_TargetIsVulkanLayered,
+        "TargetAppContainer" => Strings.Guard_TargetAppContainer,
+        "TargetMitigation" => Strings.Guard_TargetMitigation,
         "SuspiciousUnsigned" => Strings.Guard_SuspiciousUnsigned,
         _ => string.Format(CultureInfo.CurrentCulture, Strings.Guard_Other_Format, reason),
     };

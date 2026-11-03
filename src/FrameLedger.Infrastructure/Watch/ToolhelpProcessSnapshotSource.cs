@@ -34,8 +34,6 @@ namespace FrameLedger.Infrastructure.Watch;
 public sealed class ToolhelpProcessSnapshotSource : IProcessSnapshotSource
 {
     private const uint _snapProcess = 0x00000002;
-    private const uint _queryLimitedInformation = 0x1000;
-    private const int _maxPath = 32_767;
     private static readonly IntPtr _invalidHandle = new(-1);
 
     /// <inheritdoc />
@@ -80,37 +78,18 @@ public sealed class ToolhelpProcessSnapshotSource : IProcessSnapshotSource
 
     private static (string? Path, DateTimeOffset? StartedAt) Describe(int pid)
     {
-        using SafeProcessHandle handle = OpenProcess(_queryLimitedInformation, false, unchecked((uint)pid));
+        using SafeProcessHandle handle = OpenProcess(ProcessImagePath.QueryLimited, false, unchecked((uint)pid));
         if (handle.IsInvalid)
         {
             return (null, null);
         }
 
-        string? path = ImagePathOf(handle);
+        // The same reader TargetResolver re-finds the game with (beta.33): one spelling for the whole capture path.
+        string? path = ProcessImagePath.Of(handle, out _);
         DateTimeOffset? started = GetProcessTimes(handle, out long creation, out _, out _, out _)
             ? DateTimeOffset.FromFileTime(creation)
             : null;
         return (path, started);
-    }
-
-    private static string? ImagePathOf(SafeProcessHandle handle)
-    {
-        char[] buffer = new char[_maxPath];
-        uint size = (uint)buffer.Length;
-        if (!QueryFullProcessImageNameW(handle, 0, buffer, ref size) || size == 0)
-        {
-            return null;
-        }
-
-        string raw = new(buffer, 0, checked((int)size));
-        try
-        {
-            return ExecutableIdentity.Normalise(raw);
-        }
-        catch (ArgumentException)
-        {
-            return null;
-        }
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
@@ -153,12 +132,6 @@ public sealed class ToolhelpProcessSnapshotSource : IProcessSnapshotSource
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern SafeProcessHandle OpenProcess(uint desiredAccess,
         [MarshalAs(UnmanagedType.Bool)] bool inheritHandle, uint processId);
-
-    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
-    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool QueryFullProcessImageNameW(SafeProcessHandle process, uint flags,
-        [Out] char[] exeName, ref uint size);
 
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [DllImport("kernel32.dll", SetLastError = true)]

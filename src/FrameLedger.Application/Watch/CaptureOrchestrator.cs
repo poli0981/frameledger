@@ -282,6 +282,13 @@ public sealed class CaptureOrchestrator
         }
 
         string path = game.Fingerprint.ExePath;
+        if (_options.IsPackaged?.Invoke(path) == true)
+        {
+            // beta.33 (D80): a GDK game is started by Windows through its package, never by its path (spike-notes §25).
+            _log($"launch: {game.Name} is a game the Xbox app or the Microsoft Store installed; it starts through Windows, not by its path");
+            return LaunchResult.Of(LaunchOutcome.PackagedGame);
+        }
+
         lock (_table)
         {
             if (_running.TryGetValue(path, out Running? current) && !current.Task.IsCompleted)

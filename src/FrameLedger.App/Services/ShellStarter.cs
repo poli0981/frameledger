@@ -8,7 +8,11 @@ using Serilog;
 
 namespace FrameLedger.App.Services;
 
-/// <summary>The shell's own hand-off. The App runs with the user's standard rights; an elevated App never reaches here (<see cref="GamePlayer"/>).</summary>
+/// <summary>
+/// The shell's own hand-off. The App runs with the user's standard rights; an elevated App reaches here only for an Xbox game
+/// (beta.33, D80), whose hand-off is <c>explorer.exe shell:AppsFolder\&lt;AUMID&gt;</c>: the running shell activates the package,
+/// unelevated (<see cref="GamePlayer"/>).
+/// </summary>
 public sealed class ShellStarter : IShellStarter
 {
     public bool OpenLink(string link)

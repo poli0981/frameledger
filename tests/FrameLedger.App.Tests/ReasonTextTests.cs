@@ -90,6 +90,17 @@ public sealed class ReasonTextTests
         return 0;
     });
 
+    /// <summary>beta.33 (D78): a game the Overlay cannot load into at all is said as that — never as a failure the user could fix.</summary>
+    [Fact]
+    public void AnAppContainerOrAProtectedGameIsSaidAsWhatItIs() => InEnglish(() =>
+    {
+        Formats.Tier2Reason("end=RefusedByGuard; tier2: attach=NotEvaluated; guard=TargetAppContainer||the target's token is an AppContainer's")
+            .Should().Be("The anti-cheat guard did not hook this game: the game runs in an app container (a Microsoft Store app, not a desktop game), which FrameLedger does not load into.");
+        Formats.Tier2Reason("end=RefusedByGuard; tier2: attach=NotEvaluated; guard=TargetMitigation||dynamic code policy: dynamic code prohibited")
+            .Should().Be("The anti-cheat guard did not hook this game: Windows protects the game in a way FrameLedger's component can neither load into nor hook.");
+        return 0;
+    });
+
     [Fact]
     public void ACrashNamesItsExceptionAndEndTasksCodeIsAnOrdinaryEnd() => InEnglish(() =>
     {

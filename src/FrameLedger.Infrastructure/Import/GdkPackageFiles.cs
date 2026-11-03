@@ -95,6 +95,23 @@ public static class GdkPackageFiles
         return null;
     }
 
+    /// <summary>
+    /// True when <paramref name="exePath"/>'s install root (<c>Detection.InstallRoot</c>) is a GDK package root — a game the
+    /// Xbox app or the Microsoft Store installed, which FrameLedger never starts by its path (beta.33, D80, §25).
+    /// </summary>
+    public static bool IsInPackage(string exePath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(exePath);
+        try
+        {
+            return IsPackageRoot(Detection.InstallRoot.Resolve(exePath));
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>The package <paramref name="contentFolder"/> is the root of, or null when it is not one or its files will not parse.</summary>
     public static GdkPackage? Read(string contentFolder)
     {
