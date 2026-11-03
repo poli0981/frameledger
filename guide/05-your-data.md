@@ -12,7 +12,8 @@ nothing is uploaded. The only network requests are the update check and the upda
 Your game library; your sessions — frame times when a game was measured, the statistics, your PC's sensors, the game's
 own memory use, how the game's window was shown; a short description of your hardware for each session; your tags and
 notes; your settings; and, in the `covers` folder, a copy of each picture you chose for a game. The pictures the Steam and
-GOG GALAXY apps keep for your games are shown from where those apps keep them, never copied. The
+GOG GALAXY apps keep for your games, and those an Xbox game ships in its own folder, are shown from where they are, never
+copied. The
 [Privacy Policy](../legal/PRIVACY_POLICY.md) lists all of it.
 
 ## How much is kept

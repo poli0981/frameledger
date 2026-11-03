@@ -157,6 +157,7 @@ public sealed class FormatsTests
         InEnglish(() => Formats.ExitStatusText(ExitStatus.Crashed)).Should().Be("crashed");
         InEnglish(() => Formats.ExitStatusText(ExitStatus.UnhookedSafety)).Should().Be("unhooked (safety)");
         Formats.Platform("steam").Should().Be("Steam");
+        Formats.Platform("xbox").Should().Be("Xbox", "beta.33, D79: the Xbox app and the Microsoft Store");
         Formats.Platform("none").Should().BeEmpty();
     }
 
@@ -183,6 +184,7 @@ public sealed class FormatsTests
         Formats.StoreVersion("steam", "20374416", detected: true).Should().Be("Steam build 20374416");
         Formats.StoreVersion("gog", "1.2.3", detected: true).Should().Be("GOG version 1.2.3");
         Formats.StoreVersion("epic", "++Fortnite+Release-31.10", detected: true).Should().Be("Epic version ++Fortnite+Release-31.10");
+        Formats.StoreVersion("xbox", "1.3.5124.0", detected: true).Should().Be("Xbox version 1.3.5124.0", "the package version an import read");
         Formats.StoreVersion("itch", "0.9", detected: true).Should().Be("0.9", "itch has no store version to label");
         Formats.StoreVersion("steam", "1.04 (my patch)", detected: false).Should().Be("1.04 (my patch)", "the user's words are theirs");
         Formats.StoreVersion("steam", "  ", detected: true).Should().BeNull();

@@ -7,7 +7,8 @@ documents the app asks you to accept.
 
 ## Other companies' names
 
-Microsoft, Windows, DirectX, Direct3D and DXGI are trademarks of Microsoft Corporation. NVIDIA, GeForce, RTX, DLSS,
+Microsoft, Windows, DirectX, Direct3D, DXGI, Xbox, Xbox Game Pass, PC Game Pass and Microsoft Store are trademarks of
+Microsoft Corporation. NVIDIA, GeForce, RTX, DLSS,
 Reflex, NVAPI and Streamline are trademarks of NVIDIA Corporation. AMD, Radeon, FSR and FidelityFX are trademarks of
 Advanced Micro Devices, Inc. Intel, Arc and XeSS are trademarks of Intel Corporation. Vulkan is a registered trademark
 of the Khronos Group Inc.; OpenGL is a registered trademark of Hewlett Packard Enterprise, used under licence by the
@@ -29,7 +30,8 @@ companies, by any game's developer or publisher, or by any anti-cheat vendor, an
   not a benchmark claim and not a recommendation.
 - **A game's artwork belongs to its owners.** FrameLedger ships none and downloads none: a game's page shows the image you
   chose for it, or the cover and banner the Steam or GOG GALAXY app already keeps on your PC, read from where that app
-  keeps it and never copied (since 0.1.0-beta.23).
+  keeps it and never copied (since 0.1.0-beta.23) — or, for a game the Xbox app installed, the logo and splash image the
+  game ships in its own folder, read from there in the same way (since 0.1.0-beta.33).
 
 ## The name FrameLedger
 

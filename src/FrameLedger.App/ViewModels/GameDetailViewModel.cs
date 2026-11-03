@@ -103,6 +103,10 @@ public sealed partial class GameDetailViewModel : ObservableObject
     [ObservableProperty]
     private bool _artCoverIsLandscape;
 
+    /// <summary>The cover slot holds an Xbox game's square logo (beta.33): drawn square, never cropped to a portrait.</summary>
+    [ObservableProperty]
+    private bool _artCoverIsSquare;
+
     /// <summary>The store's wide banner, above the header band; null without one.</summary>
     [ObservableProperty]
     private ImageSource? _artHero;
@@ -548,6 +552,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
     {
         ArtCover = view?.Cover;
         ArtCoverIsLandscape = view?.CoverIsLandscape ?? false;
+        ArtCoverIsSquare = view?.CoverIsSquare ?? false;
         ArtHero = view?.Hero;
         ArtTint = view?.Tint;
         ArtSource = view?.Source;
@@ -1168,7 +1173,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         GameRow row = detail.Row;
         Name = row.Name;
         // A store's version is said as one ("Steam build 20374416", beta.8), and then names the store itself.
-        bool storeVersion = EditGameViewModel.IsDetectedField(row.FieldProvenanceJson, "game_version") && row.Platform is "steam" or "gog" or "epic";
+        bool storeVersion = EditGameViewModel.IsDetectedField(row.FieldProvenanceJson, "game_version") && row.Platform is "steam" or "gog" or "epic" or "xbox";
         string?[] subtitle = storeVersion
             ? [row.Publisher, Formats.StoreVersion(row.Platform, row.GameVersion, detected: true) ?? Formats.Platform(row.Platform), EngineText(row)]
             : [row.Publisher, row.GameVersion, Formats.Platform(row.Platform), EngineText(row)];

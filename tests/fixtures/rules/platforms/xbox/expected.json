@@ -1,0 +1,1 @@
+{ "engine": null, "platform": "xbox", "capabilities": [], "$why": "MicrosoftGame.config and appxmanifest.xml both directly in the install root (root_file): a GDK package root, spike-notes section 25." }

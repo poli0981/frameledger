@@ -62,6 +62,11 @@ public sealed class RuleEvaluator
                 Found(snapshot.RelativeDirectories, needle, snapshot.FileListingComplete),
             DetectionSignalType.PathContains => Outcome(
                 snapshot.GameDirectory.Contains(needle.Replace('\\', '/'), StringComparison.OrdinalIgnoreCase)),
+
+            // beta.33: one folder's own listing, so its miss is as certain as its hit — unless the folder was not listed.
+            DetectionSignalType.RootFile => snapshot.RootFiles is { } root
+                ? Outcome(root.Contains(needle))
+                : SignalOutcome.Unknown,
             DetectionSignalType.PeCompanyContains => Contains(snapshot.PeCompanyName, needle),
             DetectionSignalType.PeProductContains => Contains(snapshot.PeProductName, needle),
             DetectionSignalType.StringsContains => Outcome(snapshot.MatchedStringNeedles.Contains(signal.Value)),

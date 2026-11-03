@@ -93,6 +93,7 @@ public static class Strings
         nameof(Art_ImportFailed),
         nameof(Art_Source_Gog),
         nameof(Art_Source_Steam),
+        nameof(Art_Source_Xbox),
         nameof(Art_Source_Yours),
         nameof(Blocked_Directory_Format),
         nameof(Blocked_Executable_Format),
@@ -983,6 +984,7 @@ public static class Strings
         nameof(Store_Epic_Format),
         nameof(Store_Gog_Format),
         nameof(Store_Steam_Format),
+        nameof(Store_Xbox_Format),
         nameof(Summary_Annotations_Header),
         nameof(Summary_Crash_Body),
         nameof(Summary_Crash_Title),
@@ -1313,6 +1315,8 @@ public static class Strings
     public static string Art_Source_Gog => ResourceManager.GetString(nameof(Art_Source_Gog), Culture) ?? nameof(Art_Source_Gog);
 
     public static string Art_Source_Steam => ResourceManager.GetString(nameof(Art_Source_Steam), Culture) ?? nameof(Art_Source_Steam);
+
+    public static string Art_Source_Xbox => ResourceManager.GetString(nameof(Art_Source_Xbox), Culture) ?? nameof(Art_Source_Xbox);
 
     public static string Art_Source_Yours => ResourceManager.GetString(nameof(Art_Source_Yours), Culture) ?? nameof(Art_Source_Yours);
 
@@ -3093,6 +3097,8 @@ public static class Strings
     public static string Store_Gog_Format => ResourceManager.GetString(nameof(Store_Gog_Format), Culture) ?? nameof(Store_Gog_Format);
 
     public static string Store_Steam_Format => ResourceManager.GetString(nameof(Store_Steam_Format), Culture) ?? nameof(Store_Steam_Format);
+
+    public static string Store_Xbox_Format => ResourceManager.GetString(nameof(Store_Xbox_Format), Culture) ?? nameof(Store_Xbox_Format);
 
     public static string Summary_Annotations_Header => ResourceManager.GetString(nameof(Summary_Annotations_Header), Culture) ?? nameof(Summary_Annotations_Header);
 

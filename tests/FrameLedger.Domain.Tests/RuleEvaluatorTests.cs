@@ -60,6 +60,32 @@ public sealed class RuleEvaluatorTests
     }
 
     [Fact]
+    public void RootFile_IsDecidedByTheRootsOwnListing_EvenWhenTheDeepWalkRanShort()
+    {
+        // beta.33, the xbox platform: a GDK package root's two files. The deep walk stopped on a bound
+        // (FileListingComplete false), which would make a sibling_glob miss Unknown; the root's own listing decides.
+        GameFileSnapshot gdk = Snapshot(files: [], listingComplete: false) with
+        {
+            RootFiles = new HashSet<string>(["MicrosoftGame.Config", "appxmanifest.xml"], StringComparer.OrdinalIgnoreCase),
+        };
+        GameFileSnapshot steam = Snapshot(files: ["steam_api64.dll"], listingComplete: false) with
+        {
+            RootFiles = new HashSet<string>(["Game.exe", "steam_api64.dll"], StringComparer.OrdinalIgnoreCase),
+        };
+
+        RuleEvaluator.Evaluate(Signal(DetectionSignalType.RootFile, "MicrosoftGame.config"), gdk).Should().Be(SignalOutcome.Match);
+        RuleEvaluator.Evaluate(Signal(DetectionSignalType.RootFile, "MicrosoftGame.config"), steam).Should().Be(SignalOutcome.NoMatch,
+            "a complete listing of the root is evidence of absence there, whatever the deep walk did");
+        RuleEvaluator.Evaluate(Signal(DetectionSignalType.SiblingGlob, "MicrosoftGame.config"), steam).Should().Be(SignalOutcome.Unknown,
+            "the contrast: a walk-based miss on an incomplete walk is Unknown");
+    }
+
+    [Fact]
+    public void RootFile_IsUnknownWhenTheRootWasNotListed() =>
+        RuleEvaluator.Evaluate(Signal(DetectionSignalType.RootFile, "MicrosoftGame.config"), Snapshot(files: ["MicrosoftGame.config"]))
+            .Should().Be(SignalOutcome.Unknown, "no listing of the root (RootFiles null) is not a miss");
+
+    [Fact]
     public void PathContains_IsCaseInsensitiveAndSeparatorAgnostic()
     {
         GameFileSnapshot s = Snapshot(gameDir: "D:/SteamLibrary/steamapps/common/Example");

@@ -3,8 +3,8 @@
 ## 1. Add the game
 
 - **File ▸ Add game…** — pick the game's `.exe` file.
-- **File ▸ Import library…** — FrameLedger lists the games installed through Steam, GOG, Epic and itch.io, and you
-  tick the ones to add.
+- **File ▸ Import library…** — FrameLedger lists the games installed through Steam, GOG, Epic, itch.io and the Xbox app
+  (or the Microsoft Store — PC Game Pass games included), and you tick the ones to add.
 
 Every game is added with **hooking off**.
 

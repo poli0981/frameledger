@@ -184,7 +184,7 @@ public sealed class SqliteGameRepository : IGameRepository
         ArgumentException.ThrowIfNullOrWhiteSpace(metadata.Name, nameof(metadata));
         if (!GameMetadata.Platforms.Contains(metadata.Platform, StringComparer.Ordinal))
         {
-            throw new ArgumentException($"'{metadata.Platform}' is not a platform (steam|gog|epic|itch|none)", nameof(metadata));
+            throw new ArgumentException($"'{metadata.Platform}' is not a platform ({string.Join('|', GameMetadata.Platforms)})", nameof(metadata));
         }
 
         return _db.WriteAsync(async (c, tx, token) =>
@@ -295,7 +295,7 @@ public sealed class SqliteGameRepository : IGameRepository
         ArgumentNullException.ThrowIfNull(store);
         if (!GameMetadata.Platforms.Contains(store.Platform, StringComparer.Ordinal) || string.Equals(store.Platform, "none", StringComparison.Ordinal))
         {
-            throw new ArgumentException($"'{store.Platform}' is not a store (steam|gog|epic|itch)", nameof(store));
+            throw new ArgumentException($"'{store.Platform}' is not a store ({string.Join('|', GameMetadata.Platforms.Where(static p => !string.Equals(p, "none", StringComparison.Ordinal)))})", nameof(store));
         }
 
         return _db.WriteAsync(async (c, tx, token) =>

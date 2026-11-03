@@ -1,0 +1,1 @@
+{ "engine": null, "platform": "xbox", "capabilities": [], "$why": "The FINAL FANTASY Pixel Remaster layout from the Xbox app: a GDK package root that also ships steam_api64.dll in a plugin folder. xbox is first in the platforms array, so it wins over steam." }

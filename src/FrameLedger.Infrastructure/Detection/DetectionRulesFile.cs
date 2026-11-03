@@ -191,6 +191,7 @@ public sealed class DetectionRulesFile : IDetectionRulesSource
             "pe_product_contains" => DetectionSignalType.PeProductContains,
             "strings_contains" => DetectionSignalType.StringsContains,
             "manifest_field" => DetectionSignalType.ManifestField,
+            "root_file" => DetectionSignalType.RootFile,
             _ => throw new InvalidOperationException($"'{owner}' has unknown signal type '{d.Type}'"),
         };
 

@@ -81,6 +81,11 @@
                                     <Setter Property="Width" Value="230" />
                                     <Setter Property="Height" Value="107" />
                                 </DataTrigger>
+                                <!-- An Xbox game's square logo (beta.33): whole, never cropped to a portrait. -->
+                                <DataTrigger Binding="{Binding ViewModel.ArtCoverIsSquare}" Value="True">
+                                    <Setter Property="Width" Value="150" />
+                                    <Setter Property="Height" Value="150" />
+                                </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </ui:Image.Style>

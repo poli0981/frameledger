@@ -71,6 +71,9 @@ public sealed class ExecutableLocator : IExecutableLocator
     public static readonly IReadOnlySet<string> RuntimeHelperNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
         "notification_helper", "crashpad_handler", "UnityCrashHandler64", "UnityCrashHandler32", "CrashReportClient", "nwjc", "chromedriver",
+        // beta.33: the GDK's launcher at every Xbox game's package root (spike-notes §25) — it activates the package and
+        // exits; the game is what it starts.
+        "gamelaunchhelper",
     };
 
     /// <summary>True for a name in <see cref="RuntimeHelperNames"/>.</summary>
@@ -145,14 +148,14 @@ public sealed class ExecutableLocator : IExecutableLocator
             return null;
         }
 
-        string installName = Squash(Path.GetFileName(Path.TrimEndingDirectorySeparator(installDirectory)));
+        string installName = Squash(InstallName(installDirectory));
         string? best = null;
         int bestRank = -1;
         long bestSize = -1;
         foreach (string exe in Walk(installDirectory, 0))
         {
             string name = Path.GetFileNameWithoutExtension(exe);
-            if (IsHelper(name) || IsUnderPluginFolder(installDirectory, exe))
+            if (IsHelper(name) || IsRuntimeHelper(name) || IsUnderPluginFolder(installDirectory, exe))
             {
                 continue;
             }
@@ -201,6 +204,19 @@ public sealed class ExecutableLocator : IExecutableLocator
         bool named = squashed.Length >= _minimumNameLength && installName.Length >= _minimumNameLength
             && (installName.Contains(squashed, StringComparison.Ordinal) || squashed.Contains(installName, StringComparison.Ordinal));
         return named ? _rankNamedAfterTheInstall : 0;
+    }
+
+    /// <summary>
+    /// The install's own name: its folder's, except for a GDK package root (beta.33), whose folder is always
+    /// <c>Content</c> and whose game's name is the folder above it (<c>D:\xbox\Valor Mortis\Content</c>).
+    /// </summary>
+    private static string InstallName(string installDirectory)
+    {
+        string folder = Path.TrimEndingDirectorySeparator(installDirectory);
+        return string.Equals(Path.GetFileName(folder), XboxLibrarySource.ContentFolder, StringComparison.OrdinalIgnoreCase)
+               && GdkPackageFiles.IsPackageRoot(folder) && Path.GetDirectoryName(folder) is { } parent
+            ? Path.GetFileName(parent)
+            : Path.GetFileName(folder);
     }
 
     /// <summary>Letters and digits, lower-cased: "Cyberpunk 2077" and "Cyberpunk2077" are the same name.</summary>

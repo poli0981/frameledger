@@ -595,11 +595,13 @@ $liveIds = @()
 foreach ($section in 'engines', 'platforms', 'capabilities') {
     if (Test-Member $rules $section) { $liveIds += @($rules.$section | ForEach-Object { $_.id }) }
 }
-# Directories that are deliberately not rule ids: the ordering case and the two
-# canaries are named for what they PROVE, not for a rule — and since rules
-# 2026.09.5 the globs FSR 3 and XeSS DX11 added to two existing ids.
+# Directories that are deliberately not rule ids: the ordering cases and the two
+# canaries are named for what they PROVE, not for a rule — since rules 2026.09.5
+# the globs FSR 3 and XeSS DX11 added to two existing ids, and since 2026.11.1
+# (beta.33) the xbox platform's precedence over the steam_api64.dll a GDK
+# FINAL FANTASY ships.
 $nonRuleFixtures = @('unity_markers_with_ue_structure', 'no_engine', 'every_engine_marker',
-    'dlss_stack', 'fsr_globs', 'fsr3_xess_dx11')
+    'dlss_stack', 'fsr_globs', 'fsr3_xess_dx11', 'xbox_beats_steam_api')
 foreach ($name in $fixtureNames) {
     if ($name -notin $liveIds -and $name -notin $nonRuleFixtures) {
         $errors.Add("fixture '$name' matches no live rule id and is not a named special case — stale fixtures report green forever")

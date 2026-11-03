@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using FrameLedger.Infrastructure.Import;
+
 namespace FrameLedger.Infrastructure.Detection;
 
 /// <summary>
@@ -26,6 +28,19 @@ namespace FrameLedger.Infrastructure.Detection;
 /// Going up blindly is worse than staying put: one level above
 /// <c>D:\another\epic\AlanWake2</c> is a folder of unrelated games, and scanning
 /// a sibling title's anti-cheat would be a false refusal with no appeal.
+/// </para>
+/// <para>
+/// <strong>Except at a GDK package root (beta.33).</strong> The Xbox app installs to
+/// <c>&lt;games folder&gt;\&lt;Game&gt;\Content\</c> under a folder the user names, so no
+/// string can bound it; the package marks its own root instead, with
+/// <c>MicrosoftGame.config</c> beside <c>appxmanifest.xml</c>. Only when no string
+/// boundary matched, the nearest folder at or above the executable's that holds
+/// both is the root (<see cref="GdkPackageFiles.NearestPackageRoot"/>) — which can
+/// only widen the walk relative to the exe's own directory, never narrow it. Without
+/// it, an Unreal title's <c>Content\…\Binaries\WinGDK</c> was all check 4 saw
+/// (<c>spike-notes</c> §25). The native <c>ResolveInstallRoot</c> answers the same,
+/// and a shared case list (<c>tests/fixtures/install-roots/cases.txt</c>) holds the
+/// two to it.
 /// </para>
 /// </remarks>
 public static class InstallRoot
@@ -81,6 +96,6 @@ public static class InstallRoot
             }
         }
 
-        return exeDir;
+        return GdkPackageFiles.NearestPackageRoot(exeDir) ?? exeDir;
     }
 }

@@ -344,7 +344,7 @@ CI/CD with the native build (`release.yml` exists since P4 PR-5, 2026-09-14 — 
 - ~~PresentMon Service + API2 for a richer Tier 2~~ — **struck 2026-08-27**, and the shape hardened 2026-08-28: v1's ladder has two rungs and Tier 2 is not a measurement. What v2 may want is **a no-injection measurement at all** — which would restore two things at once: the FG oracle §S31 spent four attempts looking for, and `14_TESTING`'s Tier-1 accuracy cross-check, which is struck for the same reason (§G)
 - **YouTube overlay export**: frametime/FPS graph as transparent PNG sequence for DaVinci Resolve benchmark videos (SkullMute workflow)
 - CapFrameX-compatible CSV import/export
-- Microsoft Store / Game Pass titles (packaged-app injection constraints)
+- ~~Microsoft Store / Game Pass titles (packaged-app injection constraints)~~ *(struck 2026-11-03: GDK titles from the Xbox app and the Microsoft Store are imported, played and measured since beta.33, D77–D82, `spike-notes` §25; UWP apps stay out, refused with a reason of their own)*
 - AFK segmentation via `GetLastInputInfo`
 - GPU frame time via timestamp queries (needs care: injecting queries into the game's command lists is more invasive than anything in v1 — needs its own risk review)
 - ~~Beta update channel;~~ ARM64 *(struck 2026-10-04: the beta channel shipped with P4 PR-5 — `update.channel`, Settings ▸ Updates; `13_CI_CD` §Branch & release policy)*

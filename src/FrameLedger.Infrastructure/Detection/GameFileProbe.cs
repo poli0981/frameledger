@@ -101,6 +101,7 @@ public sealed class GameFileProbe : IGameFileProbe
             RelativeFiles = files,
             RelativeDirectories = dirs,
             FileListingComplete = listingComplete,
+            RootFiles = ListRootFiles(dir),
             PeCompanyName = pe.Company,
             PeProductName = pe.Product,
             PeFileVersion = pe.FileVersion,
@@ -331,6 +332,38 @@ public sealed class GameFileProbe : IGameFileProbe
         }
 
         return found;
+    }
+
+    /// <summary>
+    /// The names of the files directly in <paramref name="root"/> — what a <c>root_file</c> signal is answered from (beta.33)
+    /// — or null when that one folder could not be listed or holds more than <see cref="MaxEntries"/> files.
+    /// </summary>
+    private static HashSet<string>? ListRootFiles(string root)
+    {
+        if (string.IsNullOrEmpty(root))
+        {
+            return null;
+        }
+
+        try
+        {
+            var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string file in Directory.EnumerateFiles(root))
+            {
+                if (names.Count >= MaxEntries)
+                {
+                    return null;
+                }
+
+                names.Add(Path.GetFileName(file));
+            }
+
+            return names;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
     }
 
     /// <summary>Breadth-first, bounded. Returns false if the walk did not complete.</summary>
