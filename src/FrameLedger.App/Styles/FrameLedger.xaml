@@ -11,6 +11,11 @@
         Our styles, merged LAST (16_WPFUI_SYNTAX §App bootstrap). Colours only through theme brushes with
         DynamicResource; the chart palette (16 §Theming) arrives with the charts (P3 PR-6) as its own dictionary.
     -->
+    <ResourceDictionary.MergedDictionaries>
+        <!-- beta.34: the pane item's sizes (FlLeftFluentNavigationViewItemTemplate, below), as WPF UI's own template reads them. -->
+        <ResourceDictionary Source="pack://application:,,,/Wpf.Ui;component/Controls/NavigationView/NavigationViewConstants.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
     <BooleanToVisibilityConverter x:Key="BoolToVis" />
     <converters:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis" />
     <converters:NullToCollapsedConverter x:Key="NullToCollapsed" />
@@ -329,4 +334,113 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <!--
+        The navigation pane's item, beta.34 (owner request 2026-11-06, D86): WPF UI 4.3.0's LeftFluentNavigationViewItemTemplate
+        (lepoco/wpfui, MIT - src/Wpf.Ui/Controls/NavigationView/NavigationLeftFluent.xaml at tag 4.3.0), copied with ONE
+        change: its IsActive trigger animated the label's ContentGrid to height 0 and opacity 0, so the selected page lost its
+        name - the owner's screenshot of Compare, and every other page the same while it was selected. The selected item keeps
+        the accent bar, the selected background, the accent icon and the border animation. Set as RootNavigation.ItemTemplate
+        (MainWindow.xaml): a local value outranks the default style's PaneDisplayMode=LeftFluent trigger.
+    -->
+    <ControlTemplate x:Key="FlLeftFluentNavigationViewItemTemplate" TargetType="{x:Type ui:NavigationViewItem}">
+        <Border x:Name="MainBorder"
+                MinWidth="{StaticResource PaneFluentButtonWidth}"
+                Height="{StaticResource PaneFluentButtonHeight}"
+                Padding="4"
+                HorizontalAlignment="Stretch"
+                Background="Transparent"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="4">
+            <Grid>
+                <Rectangle x:Name="ActiveRectangle"
+                           Width="3"
+                           Height="24"
+                           Margin="-4,0,0,0"
+                           HorizontalAlignment="Left"
+                           VerticalAlignment="Center"
+                           Fill="{DynamicResource NavigationViewSelectionIndicatorForeground}"
+                           Opacity="0.0"
+                           RadiusX="2"
+                           RadiusY="2" />
+                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <ContentPresenter x:Name="IconContentPresenter"
+                                      Grid.Row="0"
+                                      Margin="0"
+                                      Content="{TemplateBinding Icon}"
+                                      TextElement.FontSize="{StaticResource NavigationViewFluentIconSize}"
+                                      TextElement.Foreground="{DynamicResource NavigationViewItemForegroundLeftFluent}" />
+                    <Grid x:Name="ContentGrid"
+                          Grid.Row="1"
+                          Height="{StaticResource NavigationViewFluentIconSize}"
+                          Margin="0,2,0,0">
+                        <ContentPresenter x:Name="ElementContentPresenter"
+                                          HorizontalAlignment="Center"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          RecognizesAccessKey="True"
+                                          TextElement.FontSize="{TemplateBinding FontSize}"
+                                          TextElement.Foreground="{DynamicResource NavigationViewItemForegroundLeftFluent}" />
+                    </Grid>
+                    <ContentPresenter x:Name="PART_InfoBadge"
+                                      Grid.Row="0"
+                                      Margin="0"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Top"
+                                      Content="{TemplateBinding InfoBadge}" />
+                </Grid>
+            </Grid>
+        </Border>
+        <ControlTemplate.Triggers>
+            <Trigger Property="IsActive" Value="True">
+                <Setter TargetName="ActiveRectangle" Property="Opacity" Value="1.0" />
+                <Setter TargetName="MainBorder" Property="Background" Value="{DynamicResource NavigationViewItemBackgroundSelectedLeftFluent}" />
+                <Setter TargetName="IconContentPresenter" Property="TextElement.Foreground" Value="{DynamicResource NavigationViewSelectionIndicatorForeground}" />
+                <Setter TargetName="ElementContentPresenter" Property="Margin" Value="0" />
+                <Trigger.EnterActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="MainBorder"
+                                             Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Opacity)"
+                                             From="0" To="1" Duration="0:0:.16" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                    <BeginStoryboard>
+                        <Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="MainBorder"
+                                             Storyboard.TargetProperty="(Border.BorderBrush).(SolidColorBrush.Opacity)"
+                                             From="1" To="0" Duration="0:0:.16" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </Trigger.ExitActions>
+            </Trigger>
+            <Trigger Property="Icon" Value="{x:Null}">
+                <Setter TargetName="IconContentPresenter" Property="Visibility" Value="Collapsed" />
+            </Trigger>
+            <Trigger Property="InfoBadge" Value="{x:Null}">
+                <Setter TargetName="PART_InfoBadge" Property="Margin" Value="0" />
+                <Setter TargetName="PART_InfoBadge" Property="Visibility" Value="Collapsed" />
+            </Trigger>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="MainBorder" Property="Background" Value="{DynamicResource NavigationViewItemBackgroundSelectedLeftFluent}" />
+            </Trigger>
+            <MultiTrigger>
+                <MultiTrigger.Conditions>
+                    <Condition Property="IsMouseOver" Value="True" />
+                    <Condition Property="IsActive" Value="False" />
+                </MultiTrigger.Conditions>
+                <MultiTrigger.Setters>
+                    <Setter TargetName="IconContentPresenter" Property="TextElement.Foreground" Value="{DynamicResource NavigationViewItemForegroundPointerOverLeftFluent}" />
+                    <Setter TargetName="ContentGrid" Property="TextElement.Foreground" Value="{DynamicResource NavigationViewItemForegroundPointerOverLeftFluent}" />
+                </MultiTrigger.Setters>
+            </MultiTrigger>
+        </ControlTemplate.Triggers>
+    </ControlTemplate>
 </ResourceDictionary>

@@ -36,8 +36,25 @@ public sealed class DlssTextTests
         }
     }
 
+    // Phantom Blade Zero, 2026-11-05 (the owner's ledger, session 129): the NVIDIA App's Dynamic frame generation, up to ×3,
+    // target the maximum refresh rate — the profile's NGX_DLSSG_MODE 4, and the driver's FG word with FG_MODE (bit 13) set.
+    private const string _dynamicUpToThree = "{\"Outcome\":\"Application\",\"Profile\":\"Phantom Blade Zero\",\"NvapiStatus\":0,\"Settings\":[" +
+        "{\"Id\":\"0x10E41E01\",\"Value\":1,\"Location\":\"Profile\",\"Predefined\":false}," +
+        "{\"Id\":\"0x104D6667\",\"Value\":0,\"Location\":\"Profile\",\"Predefined\":false}," +
+        "{\"Id\":\"0x10308298\",\"Value\":4,\"Location\":\"Profile\",\"Predefined\":false}," +
+        "{\"Id\":\"0x10562D0F\",\"Value\":2,\"Location\":\"Profile\",\"Predefined\":false}," +
+        "{\"Id\":\"0x10CF4125\",\"Value\":16777216,\"Location\":\"Profile\",\"Predefined\":false}]}";
+
+    private const string _dynamicApplied = "{\"Outcome\":\"Answered\",\"Sr\":\"0x1F\",\"Rr\":\"0x605\",\"Fg\":\"0x263F\",\"Driver\":62101,\"Ratio\":0,\"Mode\":0," +
+        "\"Preset\":0,\"FgCount\":0,\"FgPreset\":3,\"FgMode\":3,\"Readings\":203,\"Answered\":201,\"Changed\":true,\"Detail\":null}";
+
+    private const string _upToThreeMix = "{\"Rows\":[" +
+        "{\"Kind\":\"generated\",\"Factor\":1.9954505429997065,\"NativeFps\":85.175,\"DisplayedFps\":169.9625,\"Seconds\":80,\"Share\":0.013,\"Windows\":16}," +
+        "{\"Kind\":\"generated\",\"Factor\":2.9986416215642575,\"NativeFps\":72.64,\"DisplayedFps\":217.83,\"Seconds\":4540,\"Share\":0.746,\"Windows\":908}," +
+        "{\"Kind\":\"none\",\"Factor\":null,\"NativeFps\":61.68,\"DisplayedFps\":61.69,\"Seconds\":1203.9,\"Share\":0.198,\"Windows\":241}]}";
+
     private static SessionRow Row(string? modules = null, string? sources = null, string? upscaler = null, string? driverReported = null, string? words = null,
-        string fgMode = "na", double? factor = null, string? mix = null) => new()
+        string fgMode = "na", double? factor = null, string? mix = null, string? profile = null, double? neural = null) => new()
         {
             SessionGuid = Guid.NewGuid(),
             GameId = 1,
@@ -58,7 +75,69 @@ public sealed class DlssTextTests
             FgMode = fgMode,
             FgFactor = factor,
             FgMixJson = mix,
+            DriverProfileJson = profile,
+            DlssNrPct = neural,
         };
+
+    /// <summary>
+    /// beta.34, owner decision D84: Hogwarts Legacy with Neural Rendering on (the owner's session 132, 2026-11-06) loaded DLSS
+    /// 5's runtime, 310.9.16.0 from the game's folder, and could say only that. Measured running, DLSS 5 is the generation;
+    /// measured not running, it says so; with nothing able to tell, it stays "loaded".
+    /// </summary>
+    [Fact]
+    public void Dlss5IsTheGenerationWhereItsNeuralRenderingWasSeenRunning() => InEnglish(() =>
+    {
+        const string modules = "{\"sl.interposer.dll\":\"2,14,16,0\",\"nvngx_dlss.dll\":\"310,9,16,0\",\"nvngx_dlssg.dll\":\"310,9,16,0\"," +
+            "\"nvngx_dlssd.dll\":\"310,9,16,0\",\"nvngx_dlssnr.dll\":\"310,9,16,0\"}";
+        const string sources = "{\"nvngx_dlss.dll\":\"game\",\"nvngx_dlssg.dll\":\"game\",\"nvngx_dlssd.dll\":\"game\",\"nvngx_dlssnr.dll\":\"game\"}";
+        SessionRow hogwarts = Row(modules, sources, upscaler: "unknown", driverReported: "dlss", fgMode: "dlssg", neural: 97.31,
+            words: "{\"Outcome\":\"Answered\",\"Sr\":\"0x80605\",\"Rr\":\"0x5\",\"Fg\":\"0x5\",\"Readings\":5,\"Answered\":4}");
+
+        DlssText.Label(hogwarts).Should().Be("DLSS 5 (neural rendering on 97.3% of rendered frames)");
+        DlssText.Line(hogwarts).Should().Be("DLSS 5 (neural rendering on 97.3% of rendered frames) · Super Resolution 310.9.16, from the game"
+            + " · Ray Reconstruction 310.9.16, from the game · Frame Generation 310.9.16, from the game · Neural Rendering 310.9.16, from the game");
+        DlssText.ExportLine(hogwarts).Should().Be("generation=DLSS 5 basis=neural_rendering; nvngx_dlss.dll=310,9,16,0 game; nvngx_dlssd.dll=310,9,16,0 game;"
+            + " nvngx_dlssg.dll=310,9,16,0 game; nvngx_dlssnr.dll=310,9,16,0 game; neural_rendering_pct=97.3");
+
+        SessionRow off = hogwarts with { DlssNrPct = 0 };
+        DlssText.Label(off).Should().BeNull("not running, and the rest names no generation");
+        DlssText.Line(off).Should().EndWith("Neural Rendering 310.9.16, from the game · DLSS 5 runtime loaded, not seen running");
+
+        SessionRow unknown = hogwarts with { DlssNrPct = null };
+        DlssText.Line(unknown).Should().EndWith("Neural Rendering 310.9.16, from the game · DLSS 5 runtime loaded",
+            "an Overlay before beta.34, or a title outside Streamline: nothing could tell, so never \"not running\"");
+        return 0;
+    });
+
+    /// <summary>
+    /// beta.34, owner decision D83: Phantom Blade Zero under the NVIDIA App's Dynamic frame generation, up to ×3, held ×2.0
+    /// and ×3.0 and read "DLSS 4 (a ×3.0 frame-generation state)" — Dynamic exists only in DLSS 4.5. Evidence is the
+    /// profile's Dynamic AND the driver's report that the override applied AND DLSS Frame Generation identified — its
+    /// factor need not have been counted.
+    /// </summary>
+    [Fact]
+    public void TheNvidiaAppsDynamicFrameGenerationTheDriverAppliedIsDlss45() => InEnglish(() =>
+    {
+        const string modules = "{\"sl.interposer.dll\":\"2,14,1,0\",\"1B0_E658700.dll\":\"2,14,16,0\",\"160_E658700.bin\":\"310,9,16,0\",\"nvngx_dlssd.dll\":\"310,9,1,0\"}";
+        SessionRow phantomBlade = Row(modules, upscaler: "unknown", fgMode: "dlssg", factor: 2.9986416215642575, mix: _upToThreeMix,
+            words: _dynamicApplied, profile: _dynamicUpToThree);
+
+        DlssText.Label(phantomBlade).Should().Be("DLSS 4.5 (Dynamic multi frame generation, set in the NVIDIA App)");
+        DlssText.Line(phantomBlade).Should().Be("DLSS 4.5 (Dynamic multi frame generation, set in the NVIDIA App) · Ray Reconstruction 310.9.1");
+        DlssText.ExportLine(phantomBlade).Should().StartWith("generation=DLSS 4.5 basis=dynamic_frame_generation; ");
+
+        DlssText.Label(phantomBlade with { NgxDriverWordsJson = _dynamicApplied.Replace("0x263F", "0x63F", StringComparison.Ordinal) })
+            .Should().Be("DLSS 4 (a ×3.0 frame-generation state)", "a profile set to Dynamic that the driver never reports applying is a setting, not evidence");
+        DlssText.Label(phantomBlade with { DriverProfileJson = _dynamicUpToThree.Replace("\"Value\":4,", "\"Value\":2,", StringComparison.Ordinal) })
+            .Should().Be("DLSS 4 (a ×3.0 frame-generation state)", "Fixed is not Dynamic: Witcher 3 under Fixed ×6 still presented ×2.0");
+        DlssText.Label(phantomBlade with { FgMode = "na", FgFactor = null, FgMixJson = null })
+            .Should().BeNull("no DLSS Frame Generation was identified");
+        DlssText.Label(phantomBlade with { FgFactor = null, FgMixJson = null, FgRefusal = "non_uniform" })
+            .Should().Be("DLSS 4.5 (Dynamic multi frame generation, set in the NVIDIA App)",
+                "DLSS Frame Generation identified is the evidence; a factor the count refused takes nothing from it");
+        DlssText.Label(phantomBlade with { NgxDriverWordsJson = null }).Should().Be("DLSS 4 (a ×3.0 frame-generation state)", "no driver report, no evidence");
+        return 0;
+    });
 
     [Fact]
     public void WitchersLibrariesAreVersionsAndNameNoGenerationAtTimesTwo() => InEnglish(() =>
@@ -105,7 +184,8 @@ public sealed class DlssTextTests
         DlssText.Label(Row("{\"nvngx_dlss.dll\":\"3.7.10.0\"}", upscaler: "dlss")).Should().Be("DLSS 3 (library 3.7.10)");
         DlssText.Label(Row("{\"nvngx_dlss.dll\":\"2.5.1.0\"}", upscaler: "dlss")).Should().Be("DLSS 2 (library 2.5.1)");
         DlssText.Line(Row("{\"nvngx_dlss.dll\":\"310.9.1.0\",\"nvngx_dlssnr.dll\":\"1.0.0.0\"}", upscaler: "dlss"))
-            .Should().Be("DLSS · Super Resolution 310.9.1 · DLSS 5 runtime loaded");
+            .Should().Be("DLSS · Super Resolution 310.9.1 · Neural Rendering 1.0.0 · DLSS 5 runtime loaded",
+                "since beta.34 DLSS 5's library is listed like the others; loaded, with nothing measured, it is only loaded");
         DlssText.Line(Row("{\"sl.interposer.dll\":\"2,8,0,0\"}", upscaler: "fsr3")).Should().BeNull("no DLSS at all");
         DlssText.Line(Row("{broken", upscaler: "dlss")).Should().BeNull("a line that would say only DLSS says nothing the header does not (beta.27)");
         DlssText.ExportLine(Row()).Should().Be("N/A");

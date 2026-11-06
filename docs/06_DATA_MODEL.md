@@ -320,6 +320,9 @@ CREATE TABLE sessions (
   -- schema 0021 (2026-10-19, beta.24, D64): each loaded runtime module's folder class — 05_DETECTION §DLSS generation
   runtime_module_sources TEXT,          -- {"nvngx_dlss.dll":"graphics_driver", …}: game | graphics_driver | windows; never a path
 
+  -- schema 0022 (2026-11-06, beta.34, D84): DLSS 5's neural rendering — 05_DETECTION §DLSS generation
+  dlss_nr_pct REAL,                     -- 0–100 of the Streamline batches that evaluated kFeatureDLSS_NR; NULL = nothing could tell
+
   -- schema 0020 (2026-10-19, beta.24, D62): every frame-generation state the session held — 03_METRICS §The mix
   fg_mix TEXT,                          -- {"Rows":[{"Kind":"generated","Factor":4.0,"NativeFps":…,"DisplayedFps":…,
                                         --   "Seconds":…,"Share":…,"Windows":…}, …]}: states by rising factor, then
@@ -714,6 +717,16 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > Written by the recorder's aggregation (`SessionAggregator.ApplyWitnesses`); NULL before, and on a session recovered
 > from its crash file (which carries no module list). `LatestVersion` is 21;
 > `LedgerDatabaseTests.ScriptTwentyOneAddsTheModuleSourcesColumnAndAnEarlierSessionHasNone`, the repository round trip.
+
+> **`0022_dlss_nr.sql` (beta.34, 2026-11-06, owner decision D84) — DLSS 5's neural rendering, measured.** One REAL column,
+> ADD COLUMN only: `dlss_nr_pct`, the share (0–100) of the presents that drained a Streamline evaluation on which the game
+> evaluated `kFeatureDLSS_NR` (`Domain.Metrics.NeuralRendering`). Written by the recorder's aggregation
+> (`SessionAggregator.ApplyRt`) **only when the writer published `FL_HOOK_SL_NEURAL_RENDERING`** — an Overlay older than
+> the script drains the same batches and never sets the bit, so its NULL is "could not tell", never 0. NULL before, and
+> never rebuilt (`frame_blobs` keep no feature byte); a session recovered from its crash file is re-aggregated from its
+> raw records and keeps it. `LatestVersion` is 22;
+> `LedgerDatabaseTests.ScriptTwentyTwoAddsTheNeuralRenderingColumnAndAnEarlierSessionHasNone`, the repository round trip.
+> **A beta.33 or alpha.2 cannot open a ledger beta.34 migrated** (the alpha keeps its copy first, D73).
 
 > **Every open used to migrate, and one that should not have did — 2026-09-16.** The Agent's `--console sessions`,
 > a verb that prints, was run against the owner's ledger while the file on disk was at schema 2 and applied 0003 and

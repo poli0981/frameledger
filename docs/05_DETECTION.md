@@ -482,12 +482,27 @@ never the path), and the super-resolution preset the driver reports applied:
 |---|---|---|
 | Super-resolution render preset **L or M** that the NVIDIA driver reports applied, in a session where super resolution ran | DLSS 4.5 (2nd-gen transformer) | `ngx_driver_words` — the SR word's `PRESET` bit and `renderPreset`; presets L/M arrived with DLL 310.5.0 (NVIDIA's DLSS 4.5 release, driver 591.74) |
 | A DLSS Frame Generation state measured at **×5 or more** | DLSS 4.5 (Dynamic / 6× multi-frame generation) | `fg_mix` / `fg_factor` with `fg_mode = dlssg` |
+| The NVIDIA App's **Dynamic** frame generation — set in the game's profile and reported applied by the driver — in a session where DLSS Frame Generation was identified *(beta.34, owner decision D83)* | DLSS 4.5 (Dynamic multi frame generation, set in the NVIDIA App) | `driver_profile`'s `NGX_DLSSG_MODE` = 4 (dynamic), `ngx_driver_words`' FG word with `FG_MODE` (bit 13), `fg_mode = dlssg` |
 | Preset **J or K** reported applied | DLSS 4 (transformer) | as above |
 | A DLSS Frame Generation state at **×3 or ×4** | DLSS 4 (multi-frame generation) | as above |
 | `nvngx_dlss.dll` **2.x** | DLSS 2 | `runtime_modules` |
 | `nvngx_dlss.dll` **3.x**, or `nvngx_dlssg.dll` **1.x–3.x** | DLSS 3 | `runtime_modules` |
 | A **310.x** library alone, a CNN preset (A–F), ×2 | *no label* — the versions are shown | DLSS 4 and 4.5 ship the same major number; the preset is what names the model |
-| `nvngx_dlssnr.dll` loaded | "DLSS 5 runtime loaded" — never a generation of these features | the module name is community-sourced until owner-only item 20(d) sees it load |
+| ~~`nvngx_dlssnr.dll` loaded~~ | ~~"DLSS 5 runtime loaded" — never a generation of these features~~ | ~~the module name is community-sourced until owner-only item 20(d) sees it load~~ *(replaced 2026-11-06 by the two rows below, D84)* |
+| DLSS 5's neural rendering **evaluated** — `kFeatureDLSS_NR` (Streamline 2.14) on some of the frames the game rendered through Streamline, seen by an Overlay that decodes it *(beta.34, owner decision D84)* | DLSS 5 (neural rendering on N % of rendered frames) — **heads the table** | `dlss_nr_pct` (schema 0022), from `FL_FEAT_SL_NEURAL_RENDERING` under `FL_HOOK_SL_NEURAL_RENDERING` |
+| `nvngx_dlssnr.dll` loaded, neural rendering not seen evaluated | "DLSS 5 runtime loaded" — and "…, not seen running" where an Overlay that decodes it drained Streamline batches and none carried it (0 %); never a generation | `runtime_modules` (the name seen on Hogwarts Legacy, 2026-11-06) and `dlss_nr_pct` |
+
+**Amended 2026-11-06 (beta.34, owner decision D83): Dynamic is DLSS 4.5's.** The NVIDIA App's *Dynamic* frame
+generation and its ×6 mode exist only in DLSS 4.5, so a session the driver reports running Dynamic is DLSS 4.5 whatever
+multiplier the mode chose: the owner's Phantom Blade Zero under *Dynamic, up to ×3* held ×2.0 and ×3.0 — nine hooked sessions
+from 2026-11-03 to 11-05 — and read *DLSS 4 (a ×3.0 frame-generation state)* until then. The row needs all three: the
+profile's Dynamic (`NGX_DLSSG_MODE` = 4, NVIDIA's own name for the value), the driver's report that its frame-generation
+override applied in the game's process (the FG word's `FG_MODE` bit), and DLSS Frame Generation identified in the session
+(`fg_mode = dlssg`; its factor need not have been counted) —
+a profile set to Dynamic that the driver never applied is a setting, not evidence. The driver's own mode number is not
+read: it answers 3 under Dynamic and 1 under *Fixed* on every stored session (`spike-notes` §26), and NVIDIA's header
+names neither. A *Fixed* ×5 or ×6 is not this row — Witcher 3 under the App's Fixed ×6 still presented ×2.0 — and
+names DLSS 4.5 only where a state is measured at ×5 or more, which ranks above it.
 
 Never a default preset inferred from a version: what a DLL "would" run by default is the game's and the driver's to
 decide. A preset the driver applied to a super resolution it never saw created and evaluated names the model of
@@ -495,7 +510,21 @@ nothing and is not used (the owner's Silent Hill 2 session: preset L applied, no
 the ×6.0 state's). **Sources:** NVAPI's `NV_NGX_DLSS_OVERRIDE_GET_STATE_PARAMS_V1` (the vendored
 `src/native/third_party/nvapi/nvapi.h`); presets L/M with DLL 310.5.0 — PCGH's DLSS 4.5 test and NVIDIA's driver
 591.74 release notes; DLSS 4.5's Dynamic MFG and 6× — NVIDIA's announcement (driver 595, RTX 50); DLSS 5 — NVIDIA's
-GTC 2026 announcement and its 2026-09-03 launch; `nvngx_dlssnr.dll` — community reports only.
+GTC 2026 announcement and its 2026-09-03 launch; ~~`nvngx_dlssnr.dll` — community reports only~~ `nvngx_dlssnr.dll` —
+loaded by the owner's Hogwarts Legacy with Neural Rendering on, 310.9.16.0 from the game's folder (2026-11-06,
+`spike-notes` §26), beside its Streamline plugin `sl.dlss_nr.dll`; `kFeatureDLSS_NR = 1004` — Streamline `v2.14.16`'s
+public `sl_core_types.h` (re-vendored for it, `src/native/third_party/streamline/README.md`).
+
+**Amended 2026-11-06 (beta.34, owner decision D84): DLSS 5 is named where it ran.** Until then a session could say only
+that DLSS 5's runtime was LOADED — and Hogwarts Legacy, Neural Rendering on, loaded it. The Overlay's
+`slEvaluateFeature` detour now decodes `kFeatureDLSS_NR` into its own per-frame fact (`FL_FEAT_SL_NEURAL_RENDERING`,
+the feature byte's last bit, under the condition every Streamline fact shares) and publishes
+`FL_HOOK_SL_NEURAL_RENDERING` with the detour; the Agent stores the share of Streamline batches that carried it
+(`dlss_nr_pct`) **only from a writer that published that family** — an older Overlay drains the same batches and never
+sets the bit, and its silence must not read as 0 %. Above every other row because DLSS 5 is named for that feature as
+DLSS 4.5 is for its own: the session's super resolution, ray reconstruction and frame generation are the libraries the
+line lists after it. Whether the game routes neural rendering through `slEvaluateFeature` at all is owner-only item
+30(a)'s run; a title that does not reads *runtime loaded*, never *not running*.
 
 ## Anti-cheat pre-scan (static)
 
@@ -529,7 +558,7 @@ Three things this section previously implied that are not true, and are worth st
   > the user's and stays; a `detected` entry is refreshed; **an empty field with no entry has nothing to protect
   > and is filled and badged `detected`** — without that clause a freshly added game could never receive an
   > engine at all, since `EnsureAsync` writes no provenance. A null detected value erases nothing.
-  > `capability_flags` is written whole every run (a JSON array of the rule ids — `dlss`, `dlss_g`, `dlss_rr`,
+  > `capability_flags` is written whole every run (a JSON array of the rule ids — `dlss`, `dlss_g`, `dlss_rr`, `dlss_nr` (beta.34),
   > `streamline`, `fsr`, `xess`, `xefg`) because the Supports row has no user-edit surface and a stale "Supports
   > DLSS-G" after the DLL left is the confusion §Capability hints exists to prevent.
 - Strings scans bounded to 8 MB, local only.

@@ -17,13 +17,22 @@ namespace FrameLedger.App.ViewModels;
 /// open by click. Since beta.11 (owner requests 2026-10-03): shown as a grid of cards that fills the width or as a list
 /// (<c>ui.library_view</c>), with the count in the header; <b>Refresh</b> reloads the library, looks in the stores for games
 /// installed since and offers only those, and marks entries whose executable is gone ("Not installed"); and the page
-/// reloads by itself when a session ends or an import adds games while it is on screen.
+/// reloads by itself when a session ends or an import adds games while it is on screen. Since beta.34 (owner request
+/// 2026-11-06, "Games stalls 0.5–1.5 s"; <c>spike-notes</c> §27) the page is kept by its window (<see cref="WindowPageCache"/>)
+/// and reads the library again each time it is shown; the library is read on the thread pool, the cards appear before
+/// the executables are checked, and a read keeps every card that would look the same.
 /// </summary>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime")]
 public sealed partial class GamesViewModel : ObservableObject
 {
     private const string _listValue = "list";
     private const string _gridValue = "grid";
+
+    /// <summary>The store and engine filters' "everything" (beta.34, D85); no store or engine token is empty.</summary>
+    public const string AnyToken = "";
+
+    /// <summary>The engine filter's "not identified".</summary>
+    public const string UnknownEngineToken = "?";
 
     /// <summary>How many removed games one notice names; the rest are counted (<c>Games_Removed_More_Format</c>).</summary>
     private const int _removedNamed = 5;
@@ -43,10 +52,11 @@ public sealed partial class GamesViewModel : ObservableObject
     private readonly Func<string, bool> _exists;
     private readonly UiThread _ui = new();
     private readonly List<string> _removed = [];
-    private IReadOnlyList<GameCardViewModel> _all = [];
+    private List<GameCardViewModel> _all = [];
     private int _reads;
     private bool _viewRead;
     private bool _attached;
+    private bool _shownBefore;
 
     [ObservableProperty]
     private string _search = string.Empty;
@@ -66,6 +76,27 @@ public sealed partial class GamesViewModel : ObservableObject
     /// <summary>The list instead of the grid (<c>ui.library_view</c>); remembered when the user changes it.</summary>
     [ObservableProperty]
     private bool _listView;
+
+    /// <summary>beta.34 (D85): the store filter — a store token, or <see cref="AnyToken"/>.</summary>
+    [ObservableProperty]
+    private string _storeFilter = AnyToken;
+
+    /// <summary>beta.34 (D85): the engine filter — an engine id, <see cref="UnknownEngineToken"/>, or <see cref="AnyToken"/>.</summary>
+    [ObservableProperty]
+    private string _engineFilter = AnyToken;
+
+    [ObservableProperty]
+    private GamesStateFilter _stateFilter;
+
+    [ObservableProperty]
+    private YesNoFilter _installedFilter;
+
+    [ObservableProperty]
+    private YesNoFilter _playedFilter;
+
+    /// <summary>A filter or the search narrows the list; the header then counts what is shown of all.</summary>
+    [ObservableProperty]
+    private bool _isFiltered;
 
     /// <summary>What Play will do, in the mode Settings ▸ Games has now (beta.21, D59).</summary>
     [ObservableProperty]
@@ -128,6 +159,39 @@ public sealed partial class GamesViewModel : ObservableObject
 
     public ObservableCollection<GameCardViewModel> Games { get; } = [];
 
+    /// <summary>beta.34 (D85): the stores the library holds, "All stores" first — rebuilt when the library changes them.</summary>
+    public ObservableCollection<Choice<string>> Stores { get; } = [];
+
+    /// <summary>beta.34 (D85): the engines the library holds, "All engines" first, "Engine not identified" last when any is.</summary>
+    public ObservableCollection<Choice<string>> Engines { get; } = [];
+
+    /// <summary>The states, labelled in the language the page opened in, as the pills say them.</summary>
+    public IReadOnlyList<Choice<GamesStateFilter>> States { get; } =
+    [
+        new(GamesStateFilter.All, Strings.Games_Filter_State_All),
+        new(GamesStateFilter.HookingOn, Strings.Games_Card_HookOn),
+        new(GamesStateFilter.HookingOff, Strings.Games_Card_HookOff),
+        new(GamesStateFilter.AntiCheat, Strings.Games_Card_AntiCheat),
+        new(GamesStateFilter.Exception, Strings.Games_Card_Exception),
+        new(GamesStateFilter.NotRecorded, Strings.Games_Card_NotRecorded),
+    ];
+
+    public IReadOnlyList<Choice<YesNoFilter>> InstalledChoices { get; } =
+    [
+        new(YesNoFilter.All, Strings.Games_Filter_Installed_All),
+        new(YesNoFilter.Yes, Strings.Games_Filter_Installed_Yes),
+        new(YesNoFilter.No, Strings.Games_Card_NotInstalled),
+    ];
+
+    public IReadOnlyList<Choice<YesNoFilter>> PlayedChoices { get; } =
+    [
+        new(YesNoFilter.All, Strings.Games_Filter_Played_All),
+        new(YesNoFilter.Yes, Strings.Games_Filter_Played_Yes),
+        new(YesNoFilter.No, Strings.Games_Card_NeverPlayed),
+    ];
+
+    public static string ClearFiltersText => Strings.Filter_Clear;
+
     /// <summary>The load in flight, for a test to await.</summary>
     public Task Pending { get; private set; }
 
@@ -145,20 +209,73 @@ public sealed partial class GamesViewModel : ObservableObject
             PlayToolTip = await _player.IsDirectAsync(ct).ConfigureAwait(true) ? Strings.Play_ToolTip_Direct : Strings.Play_ToolTip_Store;
         }
 
-        IReadOnlyList<GameCard> cards = await _library.ListCardsAsync(ct).ConfigureAwait(true);
-        // Whether each executable is on disk is a file-system question per entry — a drive that is gone can take a moment
-        // to say so — so it is asked off the UI thread, the game page's own way (GameLibrary.ExecutableExists).
-        Func<string, bool> exists = _exists;
-        bool[] installed = await Task.Run(() => cards.Select(c => exists(c.Row.Fingerprint.ExePath)).ToArray(), ct)
-            .ConfigureAwait(true);
+        // beta.34: the library on the thread pool — Microsoft.Data.Sqlite completes its asynchronous calls synchronously,
+        // so on the UI thread the read was the page's to wait for.
+        GameLibrary library = _library;
+        IReadOnlyList<GameCard> cards = await Task.Run(() => library.ListCardsAsync(ct), ct).ConfigureAwait(true);
         if (read != Volatile.Read(ref _reads))
         {
             return;
         }
 
-        _all = [.. cards.Select((c, i) => new GameCardViewModel(c, installed[i]))];
-        HeaderText = string.Format(CultureInfo.CurrentCulture, Strings.Games_Header_Count_Format, _all.Count);
+        // The cards first — each as the card it was, where it would look the same — and only then whether each executable
+        // is on disk: a file-system question per entry that a sleeping drive answers in a second or more (39 of the owner's
+        // 41 Steam games are on a USB drive), and no card was shown until every one had answered (spike-notes §27).
+        _all = Merge(_all, cards);
+        RefreshChoices();
         Apply();
+
+        Func<string, bool> exists = _exists;
+        (bool Installed, string? WhyNot)[] checks = await Task.Run(() => cards.Select(c =>
+        {
+            string path = c.Row.Fingerprint.ExePath;
+            bool installed = exists(path);
+            return (installed, installed ? null : Formats.ExecutableMissingText(path));
+        }).ToArray(), ct).ConfigureAwait(true);
+        if (read != Volatile.Read(ref _reads))
+        {
+            return;
+        }
+
+        var byId = _all.ToDictionary(static c => c.Id);
+        for (int i = 0; i < cards.Count; i++)
+        {
+            if (byId.TryGetValue(cards[i].Row.Id, out GameCardViewModel? card))
+            {
+                card.SetInstalled(checks[i].Installed, checks[i].WhyNot);
+            }
+        }
+
+        Apply();
+        PlayCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// The library read again, as cards: an entry that would look the same keeps the card it has — its place on screen and
+    /// its installed state until the check answers again — and only an entry that changed, or is new, gets a new one.
+    /// </summary>
+    private static List<GameCardViewModel> Merge(IReadOnlyList<GameCardViewModel> shown, IReadOnlyList<GameCard> cards)
+    {
+        var old = shown.ToDictionary(static c => c.Id);
+        var merged = new List<GameCardViewModel>(cards.Count);
+        foreach (GameCard card in cards)
+        {
+            var fresh = new GameCardViewModel(card);
+            if (old.TryGetValue(card.Row.Id, out GameCardViewModel? kept))
+            {
+                if (kept.LooksLike(fresh))
+                {
+                    merged.Add(kept);
+                    continue;
+                }
+
+                fresh.SetInstalled(!kept.NotInstalled, kept.NotInstalledToolTip);
+            }
+
+            merged.Add(fresh);
+        }
+
+        return merged;
     }
 
     /// <summary>
@@ -184,6 +301,16 @@ public sealed partial class GamesViewModel : ObservableObject
         }
 
         _attached = true;
+
+        // beta.34: the page is kept by its window and shown again on a later visit (WindowPageCache), so what happened while
+        // it was away — a session that ended, a game removed, renamed or added on another page — is read now, behind the
+        // cards already on screen. Its first Loaded follows the constructor's own read.
+        if (_shownBefore)
+        {
+            Pending = LoadAsync();
+        }
+
+        _shownBefore = true;
     }
 
     public void Detach()
@@ -281,6 +408,82 @@ public sealed partial class GamesViewModel : ObservableObject
 
     partial void OnSortChanged(GamesSort value) => Apply();
 
+    partial void OnStoreFilterChanged(string value) => Apply();
+
+    partial void OnEngineFilterChanged(string value) => Apply();
+
+    partial void OnStateFilterChanged(GamesStateFilter value) => Apply();
+
+    partial void OnInstalledFilterChanged(YesNoFilter value) => Apply();
+
+    partial void OnPlayedFilterChanged(YesNoFilter value) => Apply();
+
+    /// <summary>beta.34 (D85): every filter back to everything; the search stays (it has its own box).</summary>
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        StoreFilter = AnyToken;
+        EngineFilter = AnyToken;
+        StateFilter = GamesStateFilter.All;
+        InstalledFilter = YesNoFilter.All;
+        PlayedFilter = YesNoFilter.All;
+    }
+
+    /// <summary>
+    /// The store and engine choices from what the library holds — rebuilt only when that set changes, so an open list does not
+    /// lose its selection on every read. A filter whose store or engine left the library goes back to everything.
+    /// </summary>
+    private void RefreshChoices()
+    {
+        Choice<string>[] stores =
+        [
+            new(AnyToken, Strings.Games_Filter_Store_All),
+            .. _all.Select(static c => c.PlatformToken).Distinct(StringComparer.Ordinal)
+                .Select(static t => new Choice<string>(t, Formats.Platform(t) is { Length: > 0 } name ? name : Strings.Games_Filter_Store_Manual))
+                .OrderBy(static c => c.Label, StringComparer.CurrentCultureIgnoreCase),
+        ];
+        Choice<string>[] engines =
+        [
+            new(AnyToken, Strings.Games_Filter_Engine_All),
+            .. _all.Select(static c => c.EngineToken).OfType<string>().Distinct(StringComparer.Ordinal)
+                .Select(static t => new Choice<string>(t, Formats.Engine(t) is { Length: > 0 } name ? name : t))
+                .OrderBy(static c => c.Label, StringComparer.CurrentCultureIgnoreCase),
+            .. _all.Any(static c => c.EngineToken is null) ? new[] { new Choice<string>(UnknownEngineToken, Strings.Games_Filter_Engine_Unknown) } : Array.Empty<Choice<string>>(),
+        ];
+        Replace(Stores, stores);
+        Replace(Engines, engines);
+        if (!Stores.Any(c => string.Equals(c.Value, StoreFilter, StringComparison.Ordinal)))
+        {
+            StoreFilter = AnyToken;
+        }
+
+        if (!Engines.Any(c => string.Equals(c.Value, EngineFilter, StringComparison.Ordinal)))
+        {
+            EngineFilter = AnyToken;
+        }
+    }
+
+    private static void Replace(ObservableCollection<Choice<string>> target, Choice<string>[] wanted)
+    {
+        if (target.SequenceEqual(wanted))
+        {
+            return;
+        }
+
+        target.Clear();
+        foreach (Choice<string> choice in wanted)
+        {
+            target.Add(choice);
+        }
+    }
+
+    private bool Passes(GameCardViewModel c) =>
+        (StoreFilter.Length == 0 || string.Equals(c.PlatformToken, StoreFilter, StringComparison.Ordinal))
+        && (EngineFilter.Length == 0 || string.Equals(c.EngineToken ?? UnknownEngineToken, EngineFilter, StringComparison.Ordinal))
+        && (StateFilter == GamesStateFilter.All || c.State == StateFilter)
+        && InstalledFilter switch { YesNoFilter.Yes => !c.NotInstalled, YesNoFilter.No => c.NotInstalled, _ => true }
+        && PlayedFilter switch { YesNoFilter.Yes => c.SessionCount > 0, YesNoFilter.No => c.SessionCount == 0, _ => true };
+
     partial void OnListViewChanged(bool value)
     {
         if (_viewRead && _settings is not null)
@@ -354,7 +557,7 @@ public sealed partial class GamesViewModel : ObservableObject
 
     private void Apply()
     {
-        IEnumerable<GameCardViewModel> shown = _all;
+        IEnumerable<GameCardViewModel> shown = _all.Where(Passes);
         string q = Search.Trim();
         if (q.Length > 0)
         {
@@ -368,13 +571,47 @@ public sealed partial class GamesViewModel : ObservableObject
             _ => shown.OrderBy(static c => c.Name, StringComparer.CurrentCultureIgnoreCase),
         };
 
-        Games.Clear();
-        foreach (GameCardViewModel card in shown)
-        {
-            Games.Add(card);
-        }
-
+        Sync(Games, [.. shown]);
         IsEmpty = _all.Count == 0;
         NoMatch = _all.Count > 0 && Games.Count == 0;
+        IsFiltered = q.Length > 0 || StoreFilter.Length > 0 || EngineFilter.Length > 0 || StateFilter != GamesStateFilter.All
+            || InstalledFilter != YesNoFilter.All || PlayedFilter != YesNoFilter.All;
+        HeaderText = IsFiltered
+            ? string.Format(CultureInfo.CurrentCulture, Strings.Games_Header_Filtered_Format, Games.Count, _all.Count)
+            : string.Format(CultureInfo.CurrentCulture, Strings.Games_Header_Count_Format, _all.Count);
+    }
+
+    /// <summary>
+    /// Makes <paramref name="target"/> list <paramref name="wanted"/>, in its order, by removing, moving and inserting —
+    /// never clearing (beta.34): a card that stays is the element already on screen, and the panel builds only the new.
+    /// </summary>
+    internal static void Sync(ObservableCollection<GameCardViewModel> target, IReadOnlyList<GameCardViewModel> wanted)
+    {
+        var keep = new HashSet<GameCardViewModel>(wanted);
+        for (int i = target.Count - 1; i >= 0; i--)
+        {
+            if (!keep.Contains(target[i]))
+            {
+                target.RemoveAt(i);
+            }
+        }
+
+        for (int i = 0; i < wanted.Count; i++)
+        {
+            if (i < target.Count && ReferenceEquals(target[i], wanted[i]))
+            {
+                continue;
+            }
+
+            int at = target.IndexOf(wanted[i]);
+            if (at >= 0)
+            {
+                target.Move(at, i);
+            }
+            else
+            {
+                target.Insert(i, wanted[i]);
+            }
+        }
     }
 }

@@ -718,9 +718,6 @@ Verdict EvaluateImpl(std::uint32_t targetPid, const Sources& sources, const char
     return Allow();
 }
 
-// A refusal returns here, and there is no argument that changes that (the `acknowledged` flag of 2026-09-21 was
-// withdrawn on 2026-09-22 with the bypass it served). Everything below -- the payload's existence, the payload's
-// identity, the primitive, the bitness answer -- runs only for a target the full evaluation allowed.
 // beta.33 (D78) -- the first policy in `facts` the Overlay cannot live under, named for the refusal's signal; null
 // when there is none. Which one names a refusal changes nothing a user can do, so the order is just winnt.h's.
 const char* BlockingMitigation(const TargetIsolation& facts) noexcept {
@@ -765,6 +762,10 @@ Verdict TargetIsolationVerdict(std::uint32_t targetPid, const Sources& sources) 
     return Allow();
 }
 
+// A refusal returns here, and there is no argument that changes that (the `acknowledged` flag of 2026-09-21 was
+// withdrawn on 2026-09-22 with the bypass it served). Everything below -- the payload's existence, the payload's
+// identity, the target's isolation, the primitive, the bitness answer -- runs only for a target the full evaluation
+// allowed.
 Verdict GuardedInjectImpl(std::uint32_t targetPid, const wchar_t* dllPath, const Sources& sources,
                           const char* toleratedFamilies) noexcept {
     const Verdict v = EvaluateImpl(targetPid, sources, toleratedFamilies);

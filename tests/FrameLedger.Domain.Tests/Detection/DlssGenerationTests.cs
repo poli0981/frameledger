@@ -37,6 +37,43 @@ public sealed class DlssGenerationTests
             "the driver's override can run a newer model than the game's library");
     }
 
+    /// <summary>
+    /// beta.34, owner decision D83: the NVIDIA App's Dynamic frame generation exists only in DLSS 4.5, so a session the
+    /// driver reports running it is DLSS 4.5 whatever multiplier it settled on — the owner's Phantom Blade Zero under
+    /// "up to ×3" held ×2.0 and ×3.0 and read DLSS 4 until then. A measured ×5 or more stays the stronger evidence.
+    /// </summary>
+    [Fact]
+    public void DynamicFrameGenerationIsDlss45BelowAMeasuredTimesFiveAndAboveEveryDlss4Row()
+    {
+        DlssGeneration.Of(new DlssEvidence(null, _dlss4Library, null, 3.0, DynamicFrameGeneration: true))
+            .Should().Be(new DlssGeneration(DlssGenerationKind.Dlss45, DlssBasis.DynamicFrameGeneration), "Phantom Blade Zero under up to ×3");
+        DlssGeneration.Of(new DlssEvidence(_dlss4Library, _dlss4Library, 11, 2.0, DynamicFrameGeneration: true))
+            .Should().Be(new DlssGeneration(DlssGenerationKind.Dlss45, DlssBasis.DynamicFrameGeneration), "above a DLSS 4 preset");
+        DlssGeneration.Of(new DlssEvidence(null, _dlss4Library, null, 6.0, DynamicFrameGeneration: true))
+            .Should().Be(new DlssGeneration(DlssGenerationKind.Dlss45, DlssBasis.FrameGenerationFactor), "a measured ×6 is the stronger evidence");
+        DlssGeneration.Of(new DlssEvidence(_dlss4Library, null, 12, 3.0, DynamicFrameGeneration: true))
+            .Should().Be(new DlssGeneration(DlssGenerationKind.Dlss45, DlssBasis.Preset));
+        DlssGeneration.Of(new DlssEvidence(null, _dlss4Library, null, 3.0))
+            .Should().Be(new DlssGeneration(DlssGenerationKind.Dlss4, DlssBasis.FrameGenerationFactor), "without Dynamic a ×3 state is DLSS 4's");
+    }
+
+    /// <summary>
+    /// beta.34, owner decision D84: DLSS 5 heads the table where its neural rendering was measured running, above every
+    /// other row — the session's other DLSS features are the libraries the line lists after it. Measured not running, or
+    /// not measurable, it names nothing.
+    /// </summary>
+    [Fact]
+    public void Dlss5IsTheGenerationWhereItsNeuralRenderingRanAndNowhereElse()
+    {
+        DlssGeneration.Of(new DlssEvidence(_dlss4Library, _dlss4Library, 12, 6.0, DynamicFrameGeneration: true, NeuralRenderingPct: 97.3))
+            .Should().Be(new DlssGeneration(DlssGenerationKind.Dlss5, DlssBasis.NeuralRendering), "it outranks every DLSS 4.5 row");
+        DlssGeneration.Of(new DlssEvidence(_dlss4Library, _dlss4Library, null, null, NeuralRenderingPct: 0.4))
+            .Should().Be(new DlssGeneration(DlssGenerationKind.Dlss5, DlssBasis.NeuralRendering), "running on any frame is running");
+        DlssGeneration.Of(new DlssEvidence(_dlss4Library, _dlss4Library, null, null, NeuralRenderingPct: 0)).Should().BeNull("seen not running");
+        DlssGeneration.Of(new DlssEvidence(_dlss4Library, _dlss4Library, 12, null, NeuralRenderingPct: 0))
+            .Should().Be(new DlssGeneration(DlssGenerationKind.Dlss45, DlssBasis.Preset), "without it, the rest of the table speaks");
+    }
+
     [Fact]
     public void ALibraryVersionNamesAGenerationOnlyWhereItsMajorNumberDoes()
     {

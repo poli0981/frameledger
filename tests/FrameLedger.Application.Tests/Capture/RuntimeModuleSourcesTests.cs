@@ -40,7 +40,7 @@ public sealed class RuntimeModuleSourcesTests
 
         RuntimeModuleSources.Token(RuntimeModuleSource.Unknown).Should().BeNull();
         RuntimeModuleSources.FromToken("cloud").Should().Be(RuntimeModuleSource.Unknown);
-        CensusNames.ModuleFileNames.Should().Contain(["nvngx_dlssnr.dll", "sl.dlss_d.dll", "sl.common.dll", "sl.reflex.dll", "amd_fidelityfx_loader_dx12.dll"],
+        CensusNames.ModuleFileNames.Should().Contain(["nvngx_dlssnr.dll", "sl.dlss_nr.dll", "sl.dlss_d.dll", "sl.common.dll", "sl.reflex.dll", "amd_fidelityfx_loader_dx12.dll"],
             "the snapshot records them though the census has no bit");
     }
 }

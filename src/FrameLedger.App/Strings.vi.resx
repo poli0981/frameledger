@@ -841,6 +841,39 @@
   <data name="Games_Sort_Label" xml:space="preserve">
     <value>Sắp xếp theo</value>
   </data>
+  <data name="Games_Filter_Store_All" xml:space="preserve">
+    <value>Mọi cửa hàng</value>
+  </data>
+  <data name="Games_Filter_Store_Manual" xml:space="preserve">
+    <value>Thêm thủ công</value>
+  </data>
+  <data name="Games_Filter_Engine_All" xml:space="preserve">
+    <value>Mọi engine</value>
+  </data>
+  <data name="Games_Filter_Engine_Unknown" xml:space="preserve">
+    <value>Chưa nhận diện engine</value>
+  </data>
+  <data name="Games_Filter_State_All" xml:space="preserve">
+    <value>Mọi trạng thái</value>
+  </data>
+  <data name="Games_Filter_Installed_All" xml:space="preserve">
+    <value>Đã cài hoặc chưa</value>
+  </data>
+  <data name="Games_Filter_Installed_Yes" xml:space="preserve">
+    <value>Đã cài</value>
+  </data>
+  <data name="Games_Filter_Played_All" xml:space="preserve">
+    <value>Đã chơi hoặc chưa</value>
+  </data>
+  <data name="Games_Filter_Played_Yes" xml:space="preserve">
+    <value>Có phiên</value>
+  </data>
+  <data name="Games_Header_Filtered_Format" xml:space="preserve">
+    <value>Game · {0} / {1}</value>
+  </data>
+  <data name="Filter_Clear" xml:space="preserve">
+    <value>Bỏ lọc</value>
+  </data>
   <data name="Games_Sort_LastPlayed" xml:space="preserve">
     <value>Chơi gần nhất</value>
   </data>
@@ -1206,6 +1239,39 @@
   </data>
   <data name="Compare_Selected_Format" xml:space="preserve">
     <value>Đã chọn {0}</value>
+  </data>
+  <data name="Compare_Filter_Game_All" xml:space="preserve">
+    <value>Mọi game</value>
+  </data>
+  <data name="Compare_Filter_Tier_All" xml:space="preserve">
+    <value>Mọi tier</value>
+  </data>
+  <data name="Compare_Filter_Tier_Measured" xml:space="preserve">
+    <value>Có đo (Tier 1)</value>
+  </data>
+  <data name="Compare_Filter_Tier_NotMeasured" xml:space="preserve">
+    <value>Không đo (Tier 2)</value>
+  </data>
+  <data name="Compare_Filter_Fg_All" xml:space="preserve">
+    <value>Có hoặc không tạo khung hình</value>
+  </data>
+  <data name="Compare_Filter_Fg_With" xml:space="preserve">
+    <value>Có tạo khung hình</value>
+  </data>
+  <data name="Compare_Filter_Fg_Without" xml:space="preserve">
+    <value>Không tạo khung hình</value>
+  </data>
+  <data name="Compare_Count_Format" xml:space="preserve">
+    <value>{0} phiên</value>
+  </data>
+  <data name="Compare_Count_Filtered_Format" xml:space="preserve">
+    <value>{0} / {1} phiên</value>
+  </data>
+  <data name="Compare_ClearSelection" xml:space="preserve">
+    <value>Bỏ chọn</value>
+  </data>
+  <data name="Compare_MidSession_Changed" xml:space="preserve">
+    <value>Đổi giữa phiên</value>
   </data>
   <data name="Compare_Table_Header" xml:space="preserve">
     <value>Thống kê</value>
@@ -1941,6 +2007,30 @@
   </data>
   <data name="A11y_Games_Sort" xml:space="preserve">
     <value>Sắp xếp game</value>
+  </data>
+  <data name="A11y_Games_Filter_Store" xml:space="preserve">
+    <value>Lọc game theo cửa hàng</value>
+  </data>
+  <data name="A11y_Games_Filter_Engine" xml:space="preserve">
+    <value>Lọc game theo engine</value>
+  </data>
+  <data name="A11y_Games_Filter_State" xml:space="preserve">
+    <value>Lọc game theo trạng thái</value>
+  </data>
+  <data name="A11y_Games_Filter_Installed" xml:space="preserve">
+    <value>Lọc game theo tình trạng cài đặt</value>
+  </data>
+  <data name="A11y_Games_Filter_Played" xml:space="preserve">
+    <value>Lọc game theo phiên</value>
+  </data>
+  <data name="A11y_Compare_Filter_Game" xml:space="preserve">
+    <value>Lọc phiên theo game</value>
+  </data>
+  <data name="A11y_Compare_Filter_Tier" xml:space="preserve">
+    <value>Lọc phiên theo tier</value>
+  </data>
+  <data name="A11y_Compare_Filter_Fg" xml:space="preserve">
+    <value>Lọc phiên theo tạo khung hình</value>
   </data>
   <data name="A11y_Logs_Source" xml:space="preserve">
     <value>Nguồn log</value>
@@ -3432,6 +3522,9 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="Dlss_Basis_Library_Format" xml:space="preserve">
     <value>thư viện {0}</value>
   </data>
+  <data name="Dlss_Basis_Dynamic" xml:space="preserve">
+    <value>tạo nhiều khung hình Dynamic, đặt trong NVIDIA App</value>
+  </data>
   <data name="Dlss_Feature_SuperResolution" xml:space="preserve">
     <value>Super Resolution</value>
   </data>
@@ -3470,6 +3563,15 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   </data>
   <data name="Dlss_NeuralRendering_Loaded" xml:space="preserve">
     <value>đã nạp runtime DLSS 5</value>
+  </data>
+  <data name="Dlss_NeuralRendering_NotSeen" xml:space="preserve">
+    <value>đã nạp runtime DLSS 5, không thấy chạy</value>
+  </data>
+  <data name="Dlss_Feature_NeuralRendering" xml:space="preserve">
+    <value>Neural Rendering</value>
+  </data>
+  <data name="Dlss_Basis_NeuralRendering_Format" xml:space="preserve">
+    <value>neural rendering trên {0} khung hình đã kết xuất</value>
   </data>
   <data name="Fsr_Mode_NativeAa" xml:space="preserve">
     <value>Native AA</value>

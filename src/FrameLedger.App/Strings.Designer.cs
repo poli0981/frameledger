@@ -29,6 +29,14 @@ public static class Strings
     /// <summary>Every key, for an audit that walks them.</summary>
     public static IReadOnlyList<string> Keys { get; } =
     [
+        nameof(A11y_Compare_Filter_Fg),
+        nameof(A11y_Compare_Filter_Game),
+        nameof(A11y_Compare_Filter_Tier),
+        nameof(A11y_Games_Filter_Engine),
+        nameof(A11y_Games_Filter_Installed),
+        nameof(A11y_Games_Filter_Played),
+        nameof(A11y_Games_Filter_State),
+        nameof(A11y_Games_Filter_Store),
         nameof(A11y_Games_Sort),
         nameof(A11y_Logs_Level),
         nameof(A11y_Logs_Source),
@@ -161,14 +169,24 @@ public static class Strings
         nameof(Common_NotAvailable),
         nameof(Common_Ok),
         nameof(Common_Yes),
+        nameof(Compare_ClearSelection),
         nameof(Compare_Col_Date),
         nameof(Compare_Col_Fps),
         nameof(Compare_Col_Game),
         nameof(Compare_Col_MidSession),
         nameof(Compare_Col_Tier),
+        nameof(Compare_Count_Filtered_Format),
+        nameof(Compare_Count_Format),
         nameof(Compare_Curves_Header),
         nameof(Compare_Empty),
         nameof(Compare_Export_Png),
+        nameof(Compare_Filter_Fg_All),
+        nameof(Compare_Filter_Fg_With),
+        nameof(Compare_Filter_Fg_Without),
+        nameof(Compare_Filter_Game_All),
+        nameof(Compare_Filter_Tier_All),
+        nameof(Compare_Filter_Tier_Measured),
+        nameof(Compare_Filter_Tier_NotMeasured),
         nameof(Compare_Header),
         nameof(Compare_Legend_Format),
         nameof(Compare_Metric_AvgCpuLoad),
@@ -199,6 +217,7 @@ public static class Strings
         nameof(Compare_Metric_TimeBelowRefresh),
         nameof(Compare_Metric_Vsync),
         nameof(Compare_Metric_Window),
+        nameof(Compare_MidSession_Changed),
         nameof(Compare_Mixed_Body),
         nameof(Compare_Mixed_Legend),
         nameof(Compare_Mixed_Proceed),
@@ -274,9 +293,12 @@ public static class Strings
         nameof(Display_Window_Format),
         nameof(Display_WindowOnMonitor_Format),
         nameof(Display_WindowOnMonitorHz_Format),
+        nameof(Dlss_Basis_Dynamic),
         nameof(Dlss_Basis_Factor_Format),
         nameof(Dlss_Basis_Library_Format),
+        nameof(Dlss_Basis_NeuralRendering_Format),
         nameof(Dlss_Feature_FrameGeneration),
+        nameof(Dlss_Feature_NeuralRendering),
         nameof(Dlss_Feature_RayReconstruction),
         nameof(Dlss_Feature_SuperResolution),
         nameof(Dlss_From_Game),
@@ -289,6 +311,7 @@ public static class Strings
         nameof(Dlss_Model_Transformer),
         nameof(Dlss_Model_Unknown),
         nameof(Dlss_NeuralRendering_Loaded),
+        nameof(Dlss_NeuralRendering_NotSeen),
         nameof(Dlss_Preset_Format),
         nameof(Document_OnGitHub),
         nameof(Document_Pages),
@@ -427,6 +450,7 @@ public static class Strings
         nameof(FgMix_State_Format),
         nameof(FgMix_Unclassified),
         nameof(FgMix_Unclassified_Note),
+        nameof(Filter_Clear),
         nameof(FirstRun_Accept),
         nameof(FirstRun_Agent_Body),
         nameof(FirstRun_Agent_Header),
@@ -579,8 +603,18 @@ public static class Strings
         nameof(Games_Card_Playtime_Format),
         nameof(Games_Card_Sessions_Format),
         nameof(Games_Empty),
+        nameof(Games_Filter_Engine_All),
+        nameof(Games_Filter_Engine_Unknown),
+        nameof(Games_Filter_Installed_All),
+        nameof(Games_Filter_Installed_Yes),
+        nameof(Games_Filter_Played_All),
+        nameof(Games_Filter_Played_Yes),
+        nameof(Games_Filter_State_All),
+        nameof(Games_Filter_Store_All),
+        nameof(Games_Filter_Store_Manual),
         nameof(Games_Header),
         nameof(Games_Header_Count_Format),
+        nameof(Games_Header_Filtered_Format),
         nameof(Games_List_Engine),
         nameof(Games_List_LastPlayed),
         nameof(Games_List_Name),
@@ -1193,6 +1227,22 @@ public static class Strings
         nameof(Viewer_ChangesThisPc_Off),
     ];
 
+    public static string A11y_Compare_Filter_Fg => ResourceManager.GetString(nameof(A11y_Compare_Filter_Fg), Culture) ?? nameof(A11y_Compare_Filter_Fg);
+
+    public static string A11y_Compare_Filter_Game => ResourceManager.GetString(nameof(A11y_Compare_Filter_Game), Culture) ?? nameof(A11y_Compare_Filter_Game);
+
+    public static string A11y_Compare_Filter_Tier => ResourceManager.GetString(nameof(A11y_Compare_Filter_Tier), Culture) ?? nameof(A11y_Compare_Filter_Tier);
+
+    public static string A11y_Games_Filter_Engine => ResourceManager.GetString(nameof(A11y_Games_Filter_Engine), Culture) ?? nameof(A11y_Games_Filter_Engine);
+
+    public static string A11y_Games_Filter_Installed => ResourceManager.GetString(nameof(A11y_Games_Filter_Installed), Culture) ?? nameof(A11y_Games_Filter_Installed);
+
+    public static string A11y_Games_Filter_Played => ResourceManager.GetString(nameof(A11y_Games_Filter_Played), Culture) ?? nameof(A11y_Games_Filter_Played);
+
+    public static string A11y_Games_Filter_State => ResourceManager.GetString(nameof(A11y_Games_Filter_State), Culture) ?? nameof(A11y_Games_Filter_State);
+
+    public static string A11y_Games_Filter_Store => ResourceManager.GetString(nameof(A11y_Games_Filter_Store), Culture) ?? nameof(A11y_Games_Filter_Store);
+
     public static string A11y_Games_Sort => ResourceManager.GetString(nameof(A11y_Games_Sort), Culture) ?? nameof(A11y_Games_Sort);
 
     public static string A11y_Logs_Level => ResourceManager.GetString(nameof(A11y_Logs_Level), Culture) ?? nameof(A11y_Logs_Level);
@@ -1457,6 +1507,8 @@ public static class Strings
 
     public static string Common_Yes => ResourceManager.GetString(nameof(Common_Yes), Culture) ?? nameof(Common_Yes);
 
+    public static string Compare_ClearSelection => ResourceManager.GetString(nameof(Compare_ClearSelection), Culture) ?? nameof(Compare_ClearSelection);
+
     public static string Compare_Col_Date => ResourceManager.GetString(nameof(Compare_Col_Date), Culture) ?? nameof(Compare_Col_Date);
 
     public static string Compare_Col_Fps => ResourceManager.GetString(nameof(Compare_Col_Fps), Culture) ?? nameof(Compare_Col_Fps);
@@ -1467,11 +1519,29 @@ public static class Strings
 
     public static string Compare_Col_Tier => ResourceManager.GetString(nameof(Compare_Col_Tier), Culture) ?? nameof(Compare_Col_Tier);
 
+    public static string Compare_Count_Filtered_Format => ResourceManager.GetString(nameof(Compare_Count_Filtered_Format), Culture) ?? nameof(Compare_Count_Filtered_Format);
+
+    public static string Compare_Count_Format => ResourceManager.GetString(nameof(Compare_Count_Format), Culture) ?? nameof(Compare_Count_Format);
+
     public static string Compare_Curves_Header => ResourceManager.GetString(nameof(Compare_Curves_Header), Culture) ?? nameof(Compare_Curves_Header);
 
     public static string Compare_Empty => ResourceManager.GetString(nameof(Compare_Empty), Culture) ?? nameof(Compare_Empty);
 
     public static string Compare_Export_Png => ResourceManager.GetString(nameof(Compare_Export_Png), Culture) ?? nameof(Compare_Export_Png);
+
+    public static string Compare_Filter_Fg_All => ResourceManager.GetString(nameof(Compare_Filter_Fg_All), Culture) ?? nameof(Compare_Filter_Fg_All);
+
+    public static string Compare_Filter_Fg_With => ResourceManager.GetString(nameof(Compare_Filter_Fg_With), Culture) ?? nameof(Compare_Filter_Fg_With);
+
+    public static string Compare_Filter_Fg_Without => ResourceManager.GetString(nameof(Compare_Filter_Fg_Without), Culture) ?? nameof(Compare_Filter_Fg_Without);
+
+    public static string Compare_Filter_Game_All => ResourceManager.GetString(nameof(Compare_Filter_Game_All), Culture) ?? nameof(Compare_Filter_Game_All);
+
+    public static string Compare_Filter_Tier_All => ResourceManager.GetString(nameof(Compare_Filter_Tier_All), Culture) ?? nameof(Compare_Filter_Tier_All);
+
+    public static string Compare_Filter_Tier_Measured => ResourceManager.GetString(nameof(Compare_Filter_Tier_Measured), Culture) ?? nameof(Compare_Filter_Tier_Measured);
+
+    public static string Compare_Filter_Tier_NotMeasured => ResourceManager.GetString(nameof(Compare_Filter_Tier_NotMeasured), Culture) ?? nameof(Compare_Filter_Tier_NotMeasured);
 
     public static string Compare_Header => ResourceManager.GetString(nameof(Compare_Header), Culture) ?? nameof(Compare_Header);
 
@@ -1532,6 +1602,8 @@ public static class Strings
     public static string Compare_Metric_Vsync => ResourceManager.GetString(nameof(Compare_Metric_Vsync), Culture) ?? nameof(Compare_Metric_Vsync);
 
     public static string Compare_Metric_Window => ResourceManager.GetString(nameof(Compare_Metric_Window), Culture) ?? nameof(Compare_Metric_Window);
+
+    public static string Compare_MidSession_Changed => ResourceManager.GetString(nameof(Compare_MidSession_Changed), Culture) ?? nameof(Compare_MidSession_Changed);
 
     public static string Compare_Mixed_Body => ResourceManager.GetString(nameof(Compare_Mixed_Body), Culture) ?? nameof(Compare_Mixed_Body);
 
@@ -1683,11 +1755,17 @@ public static class Strings
 
     public static string Display_WindowOnMonitorHz_Format => ResourceManager.GetString(nameof(Display_WindowOnMonitorHz_Format), Culture) ?? nameof(Display_WindowOnMonitorHz_Format);
 
+    public static string Dlss_Basis_Dynamic => ResourceManager.GetString(nameof(Dlss_Basis_Dynamic), Culture) ?? nameof(Dlss_Basis_Dynamic);
+
     public static string Dlss_Basis_Factor_Format => ResourceManager.GetString(nameof(Dlss_Basis_Factor_Format), Culture) ?? nameof(Dlss_Basis_Factor_Format);
 
     public static string Dlss_Basis_Library_Format => ResourceManager.GetString(nameof(Dlss_Basis_Library_Format), Culture) ?? nameof(Dlss_Basis_Library_Format);
 
+    public static string Dlss_Basis_NeuralRendering_Format => ResourceManager.GetString(nameof(Dlss_Basis_NeuralRendering_Format), Culture) ?? nameof(Dlss_Basis_NeuralRendering_Format);
+
     public static string Dlss_Feature_FrameGeneration => ResourceManager.GetString(nameof(Dlss_Feature_FrameGeneration), Culture) ?? nameof(Dlss_Feature_FrameGeneration);
+
+    public static string Dlss_Feature_NeuralRendering => ResourceManager.GetString(nameof(Dlss_Feature_NeuralRendering), Culture) ?? nameof(Dlss_Feature_NeuralRendering);
 
     public static string Dlss_Feature_RayReconstruction => ResourceManager.GetString(nameof(Dlss_Feature_RayReconstruction), Culture) ?? nameof(Dlss_Feature_RayReconstruction);
 
@@ -1712,6 +1790,8 @@ public static class Strings
     public static string Dlss_Model_Unknown => ResourceManager.GetString(nameof(Dlss_Model_Unknown), Culture) ?? nameof(Dlss_Model_Unknown);
 
     public static string Dlss_NeuralRendering_Loaded => ResourceManager.GetString(nameof(Dlss_NeuralRendering_Loaded), Culture) ?? nameof(Dlss_NeuralRendering_Loaded);
+
+    public static string Dlss_NeuralRendering_NotSeen => ResourceManager.GetString(nameof(Dlss_NeuralRendering_NotSeen), Culture) ?? nameof(Dlss_NeuralRendering_NotSeen);
 
     public static string Dlss_Preset_Format => ResourceManager.GetString(nameof(Dlss_Preset_Format), Culture) ?? nameof(Dlss_Preset_Format);
 
@@ -1988,6 +2068,8 @@ public static class Strings
     public static string FgMix_Unclassified => ResourceManager.GetString(nameof(FgMix_Unclassified), Culture) ?? nameof(FgMix_Unclassified);
 
     public static string FgMix_Unclassified_Note => ResourceManager.GetString(nameof(FgMix_Unclassified_Note), Culture) ?? nameof(FgMix_Unclassified_Note);
+
+    public static string Filter_Clear => ResourceManager.GetString(nameof(Filter_Clear), Culture) ?? nameof(Filter_Clear);
 
     public static string FirstRun_Accept => ResourceManager.GetString(nameof(FirstRun_Accept), Culture) ?? nameof(FirstRun_Accept);
 
@@ -2293,9 +2375,29 @@ public static class Strings
 
     public static string Games_Empty => ResourceManager.GetString(nameof(Games_Empty), Culture) ?? nameof(Games_Empty);
 
+    public static string Games_Filter_Engine_All => ResourceManager.GetString(nameof(Games_Filter_Engine_All), Culture) ?? nameof(Games_Filter_Engine_All);
+
+    public static string Games_Filter_Engine_Unknown => ResourceManager.GetString(nameof(Games_Filter_Engine_Unknown), Culture) ?? nameof(Games_Filter_Engine_Unknown);
+
+    public static string Games_Filter_Installed_All => ResourceManager.GetString(nameof(Games_Filter_Installed_All), Culture) ?? nameof(Games_Filter_Installed_All);
+
+    public static string Games_Filter_Installed_Yes => ResourceManager.GetString(nameof(Games_Filter_Installed_Yes), Culture) ?? nameof(Games_Filter_Installed_Yes);
+
+    public static string Games_Filter_Played_All => ResourceManager.GetString(nameof(Games_Filter_Played_All), Culture) ?? nameof(Games_Filter_Played_All);
+
+    public static string Games_Filter_Played_Yes => ResourceManager.GetString(nameof(Games_Filter_Played_Yes), Culture) ?? nameof(Games_Filter_Played_Yes);
+
+    public static string Games_Filter_State_All => ResourceManager.GetString(nameof(Games_Filter_State_All), Culture) ?? nameof(Games_Filter_State_All);
+
+    public static string Games_Filter_Store_All => ResourceManager.GetString(nameof(Games_Filter_Store_All), Culture) ?? nameof(Games_Filter_Store_All);
+
+    public static string Games_Filter_Store_Manual => ResourceManager.GetString(nameof(Games_Filter_Store_Manual), Culture) ?? nameof(Games_Filter_Store_Manual);
+
     public static string Games_Header => ResourceManager.GetString(nameof(Games_Header), Culture) ?? nameof(Games_Header);
 
     public static string Games_Header_Count_Format => ResourceManager.GetString(nameof(Games_Header_Count_Format), Culture) ?? nameof(Games_Header_Count_Format);
+
+    public static string Games_Header_Filtered_Format => ResourceManager.GetString(nameof(Games_Header_Filtered_Format), Culture) ?? nameof(Games_Header_Filtered_Format);
 
     public static string Games_List_Engine => ResourceManager.GetString(nameof(Games_List_Engine), Culture) ?? nameof(Games_List_Engine);
 

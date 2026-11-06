@@ -5,7 +5,7 @@ hooking on for — and reading the graphics calls the game makes. That is why it
 resolution, the upscaler, frame generation and ray tracing apart. It is also where its limits come from. This
 page lists them in plain words; each item links to the document that has the details.
 
-*Beta software: this page describes version 0.1.0-beta.33.*
+*Beta software: this page describes version 0.1.0-beta.34.*
 
 ## Games it will not measure
 
@@ -106,8 +106,13 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
   show neither the driver's report nor the NVIDIA App's mode. ([Metrics](docs/03_METRICS.md))
 - **Which DLSS ran** (since 0.1.0-beta.24) is named only from what the session showed: the model preset the NVIDIA
   driver reports (L or M: DLSS 4.5; J or K: DLSS 4), a measured multi-frame factor (×5 or ×6: DLSS 4.5; ×3 or ×4:
-  DLSS 4), or a library whose major version names one (2.x, 3.x). A 310 library with no such evidence shows its
-  version only. DLSS 5 is shown only as *runtime loaded*, by a library name not yet seen on a real game. Where each
+  DLSS 4), the NVIDIA App's *Dynamic* frame generation that the driver reports applied (DLSS 4.5, whatever multiplier
+  it chose — since 0.1.0-beta.34), or a library whose major version names one (2.x, 3.x). A *Fixed* ×5 or ×6 set in
+  the App names DLSS 4.5 only when the frames show it. A 310 library with no such evidence shows its
+  version only. ~~DLSS 5 is shown only as *runtime loaded*, by a library name not yet seen on a real game.~~ **DLSS 5**
+  (since 0.1.0-beta.34) is named where the game was seen running its neural rendering through Streamline, with the share
+  of rendered frames; its library loaded and nothing seen reads *runtime loaded* — *not seen running* only where the
+  Overlay looked. A game that runs neural rendering outside Streamline is not seen. Where each
   library was loaded from is read from its folder, for sessions recorded since 0.1.0-beta.24.
 - **Ray tracing** is *Yes*, *No* or *N/A* — measured from the game's ray-tracing calls on Direct3D 12, and
   N/A where FrameLedger could not look. **Path tracing is never stated as a fact**: there is no API signal

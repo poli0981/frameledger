@@ -11,8 +11,8 @@ guide, Help ▸ Limitations), and on the project's [wiki](https://github.com/pol
 pages.
 
 <!-- accuracy-block:begin -->
-> ⚠ **What FrameLedger actually measures today — 2026-10-19.** The software is a beta; its latest
-> **beta is `0.1.0-beta.33`** (2026-11-03), an unsigned installer built from that tag with its
+> ⚠ **What FrameLedger actually measures today — 2026-11-06.** The software is a beta; its latest
+> **beta is `0.1.0-beta.34`** (2026-11-06), an unsigned installer built from that tag with its
 > checksums published beside it (alphas — experimental builds on a prerelease .NET — are published apart). The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
 > game in the library runs (unless you switched its recording off), injects only into games you enabled
@@ -44,7 +44,9 @@ pages.
 >   every other case — FSR at a dynamic resolution among them — no mode is shown.
 > - **DLSS version:** the version of each DLSS library the game loaded and whether it came from the game or from
 >   the NVIDIA driver; "DLSS 4" or "DLSS 4.5" only when the session shows it (the model preset the driver reports,
->   or a measured multi-frame factor); DLSS 5 only as "runtime loaded".
+>   a measured multi-frame factor, or the NVIDIA App's Dynamic frame generation that the driver reports applied);
+>   "DLSS 5" only when the game was seen running its neural rendering, otherwise "runtime loaded" when its library was
+>   loaded.
 > - **Render → output resolution:** measured where the vendor's own per-frame call carries the render
 >   size (AMD FidelityFX dispatches, and Streamline titles whose resource tags state it); `N/A` where it
 >   does not: DLSS titles that bypass Streamline, Streamline titles whose tags carry no size, and Vulkan
@@ -174,7 +176,7 @@ Elevation is **optional — for everything.** Hooked capture is the normal path 
 
 ## Install
 
-> **The latest beta is `v0.1.0-beta.33` (2026-11-03); before it `v0.1.0-beta.32` (2026-10-31), `v0.1.0-beta.31` (2026-10-26), `v0.1.0-beta.30` (2026-10-26), `v0.1.0-beta.29` (2026-10-25), `v0.1.0-beta.28` (2026-10-20), `v0.1.0-beta.27` (2026-10-20), `v0.1.0-beta.26` (2026-10-19), `v0.1.0-beta.25` (2026-10-19), `v0.1.0-beta.24` (2026-10-19), `v0.1.0-beta.23` (2026-10-14), `v0.1.0-beta.22` (2026-10-13), `v0.1.0-beta.21` (2026-10-13), `v0.1.0-beta.20` (2026-10-12), `v0.1.0-beta.19` (2026-10-12), `v0.1.0-beta.18` (2026-10-07), `v0.1.0-beta.17` (2026-10-07), `v0.1.0-beta.16` (2026-10-06), `v0.1.0-beta.15` (2026-10-06), `v0.1.0-beta.14` (2026-10-06), `v0.1.0-beta.13` (2026-10-04), `v0.1.0-beta.12` (2026-10-04), `v0.1.0-beta.11` (2026-10-03), `v0.1.0-beta.10` (2026-09-28), `v0.1.0-beta.9` (2026-09-26), `v0.1.0-beta.8` (2026-09-25), `v0.1.0-beta.7` (2026-09-23), `v0.1.0-beta.6` (2026-09-23), `v0.1.0-beta.5` (2026-09-22), `v0.1.0-beta.4` (2026-09-21), `v0.1.0-beta.3` (2026-09-21), `v0.1.0-beta.2` (2026-09-17) and `v0.1.0-beta.1` (2026-09-16).** They are pre-releases: read the notes of the one you install — `CHANGELOG.md` links each release's own file under `docs/changelog/` — for what it measures, what it does not yet, and how to update, before installing. A source build is `docs/12_BUILD.md`.
+> **The latest beta is `v0.1.0-beta.34` (2026-11-06); before it `v0.1.0-beta.33` (2026-11-03), `v0.1.0-beta.32` (2026-10-31), `v0.1.0-beta.31` (2026-10-26), `v0.1.0-beta.30` (2026-10-26), `v0.1.0-beta.29` (2026-10-25), `v0.1.0-beta.28` (2026-10-20), `v0.1.0-beta.27` (2026-10-20), `v0.1.0-beta.26` (2026-10-19), `v0.1.0-beta.25` (2026-10-19), `v0.1.0-beta.24` (2026-10-19), `v0.1.0-beta.23` (2026-10-14), `v0.1.0-beta.22` (2026-10-13), `v0.1.0-beta.21` (2026-10-13), `v0.1.0-beta.20` (2026-10-12), `v0.1.0-beta.19` (2026-10-12), `v0.1.0-beta.18` (2026-10-07), `v0.1.0-beta.17` (2026-10-07), `v0.1.0-beta.16` (2026-10-06), `v0.1.0-beta.15` (2026-10-06), `v0.1.0-beta.14` (2026-10-06), `v0.1.0-beta.13` (2026-10-04), `v0.1.0-beta.12` (2026-10-04), `v0.1.0-beta.11` (2026-10-03), `v0.1.0-beta.10` (2026-09-28), `v0.1.0-beta.9` (2026-09-26), `v0.1.0-beta.8` (2026-09-25), `v0.1.0-beta.7` (2026-09-23), `v0.1.0-beta.6` (2026-09-23), `v0.1.0-beta.5` (2026-09-22), `v0.1.0-beta.4` (2026-09-21), `v0.1.0-beta.3` (2026-09-21), `v0.1.0-beta.2` (2026-09-17) and `v0.1.0-beta.1` (2026-09-16).** They are pre-releases: read the notes of the one you install — `CHANGELOG.md` links each release's own file under `docs/changelog/` — for what it measures, what it does not yet, and how to update, before installing. A source build is `docs/12_BUILD.md`.
 
 1. Download the latest `FrameLedger.App-win-Setup.exe` from [Releases](https://github.com/poli0981/frameledger/releases). It installs into `%LOCALAPPDATA%\FrameLedger.App`; your data stays in `%LOCALAPPDATA%\FrameLedger`, and uninstalling asks before touching it.
 2. SmartScreen may warn — releases are not code-signed (free, open-source project). Verify the SHA-256 checksum published with each release, then **More info → Run anyway**.

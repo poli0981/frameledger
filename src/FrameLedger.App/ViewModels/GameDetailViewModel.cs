@@ -1453,6 +1453,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
         "dlss" => "DLSS",
         "dlssg" or "dlss_g" => "DLSS-G",
         "dlssd" or "dlss_rr" => "DLSS Ray Reconstruction",
+        "dlss_nr" => "DLSS 5 Neural Rendering",
         "streamline" => "Streamline",
         "vulkan" => "Vulkan",
         "fsr" => "FSR",

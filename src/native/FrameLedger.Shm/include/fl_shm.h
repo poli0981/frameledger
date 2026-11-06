@@ -291,7 +291,19 @@ enum FlFeatureFlags : uint8_t {
     FL_FEAT_RAY_RECONSTRUCTION_OBSERVED = 1u << 4,
     FL_FEAT_REFLEX_OBSERVED = 1u << 5,
     FL_FEAT_SL_UNDECODED_OBSERVED = 1u << 6,
-    // bit 7 free, and must pair with the fact bit four places below
+
+    // DLSS 5'S NEURAL RENDERING -- kFeatureDLSS_NR (1004, Streamline 2.14) was evaluated this frame
+    // (beta.34, owner decision D84). The byte's last free bit, and a FACT in the companions' half:
+    // this line said "bit 7 free, and must pair with the fact bit four places below", and bit 3
+    // took no companion for the reason it gives above -- every Streamline fact here is published
+    // under one condition, an evaluation drained, so its OBSERVED is
+    // FL_FEAT_RAY_RECONSTRUCTION_OBSERVED. This one is the same kind of fact and takes the same
+    // companion. Until it existed DLSS 5's evaluations fell to FL_FEAT_SL_UNDECODED, and a session
+    // could say only that the runtime was LOADED (spike-notes §26).
+    //
+    // AN ENUMERATOR, NOT A FIELD: no struct changes, so no FL_SHM_LAYOUT_VERSION bump, no
+    // ShmLayout.cs struct edit and no fl-layout-dump entry -- the mirror's enum gains the member.
+    FL_FEAT_SL_NEURAL_RENDERING = 1u << 7,
 };
 
 // bits in FlFrameRecord::rtFlags — POLARITY FLIPPED IN v3.
@@ -379,6 +391,12 @@ enum FlHookFamily : uint32_t {
     // It measures nothing by itself; it is what lets an UPSCALE dispatch's renderSize name the mode the title asked
     // for, so "hooked, and the title never asked" can be told from "not hooked".
     FL_HOOK_UPSCALER_QUALITY = 1u << 11,
+    // DLSS 5's neural rendering (beta.34, owner decision D84): the slEvaluateFeature detour that publishes this decodes
+    // kFeatureDLSS_NR into FL_FEAT_SL_NEURAL_RENDERING. Published with the detour, never by itself, it is what tells a
+    // writer that LOOKED for neural rendering from one built before it could: an Overlay older than beta.34 sets
+    // FL_FEAT_RAY_RECONSTRUCTION_OBSERVED and never bit 7, and without this family its silence would read as a
+    // measured "not running" -- a fabricated negative of the kind 03_METRICS §RT/PT/RR forbids for ray reconstruction.
+    FL_HOOK_SL_NEURAL_RENDERING = 1u << 12,
 };
 
 // FlWriterState::runtimeCensus -- which vendor RUNTIME MODULES the loader reported

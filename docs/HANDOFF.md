@@ -72,6 +72,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.30` | [`handoff/history/0.1.0-beta.30.md`](handoff/history/0.1.0-beta.30.md) |
 | `§beta.31` | [`handoff/history/0.1.0-beta.31.md`](handoff/history/0.1.0-beta.31.md) |
 | `§beta.32` | [`handoff/history/0.1.0-beta.32.md`](handoff/history/0.1.0-beta.32.md) |
+| `§beta.33` | [`handoff/history/0.1.0-beta.33.md`](handoff/history/0.1.0-beta.33.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -79,87 +80,92 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-11-03, 0.1.0-beta.33: games from the Xbox app and the Microsoft Store
+## **START HERE** — 2026-11-06, 0.1.0-beta.34: DLSS 5 and DLSS 4.5 from what the game and the driver did; filters; Games at once
 
-*Status is `docs/changelog/0.1.0-beta.33.md`; this is what no other file carries.* The owner: "Trong phiên này, ta sẽ tập
-trung xử lý, đánh giá, phân tích cho các game thuộc MS Store/ Xbox App/Game Pass cho (các) phiên bản tiếp theo nhé. Quy
-trình vẫn như mọi lần." — handle, evaluate and analyse the games of the Microsoft Store, the Xbox app and Game Pass for the
-next versions, the usual train; the owner's games are in `C:\XboxGames` and `D:\xbox`. #351 (the library, the install
-root, detection, the art, Privacy 2.13), #352 (Play, the guard's two refusals, one exe-path reader) and this release;
-`0.1.0-alpha.2` follows (D82).
+*Status is `docs/changelog/0.1.0-beta.34.md`; this is what no other file carries.* The owner asked for seven things, the
+usual train: (1) how DLSS 5 Neural Rendering is detected on Hogwarts Legacy (Neural Rendering on in the game), and its
+version; (2) under the NVIDIA App's *Dynamic* multi frame generation the label read DLSS 4, though Dynamic and ×6 exist
+only in DLSS 4.5 (Phantom Blade Zero); (3) filters on Games and Compare; (4) the Compare page's layout, from a
+screenshot; (5) the documents and the tested-games list, from the database; (6) switching to Games stalled 0.5–1.5 s;
+(7) a language change landed on the last content page instead of Settings. And while planning: "Bạn check Streamline các
+bản gần đây có gì thay đổi và sửa luôn nếu thật sự cần nhé." — check what changed in recent Streamline versions and fix it
+if really needed. #356 (two fixes from a self-review of #351 and #352), #357 (D83), #358 (D84, Streamline `v2.14.16`),
+#359 (items 6 and 7), #360 (items 3 and 4, D85, D86), #361 (item 5) and this release; `0.1.0-alpha.3` follows (D87) —
+the owner's screenshot is of an alpha, so the alpha is how these reach the owner's PC.
 
 **Decisions (asked while planning, do not re-ask):**
 
-- **D77 — measure first, on the owner's titles**: the launch chain was measured by activating six of the eleven packages
-  with no FrameLedger hook, read-only, each game closed by its window and never killed, with the decision table committed
-  before the run (`spike-notes` §25, its two commits in #351).
-- **D78 — GDK only**: an app-container (UWP) process is refused with a reason of its own, `TargetAppContainer`, Tier 2
-  (`19_SAFETY` §The target must be able to take the Overlay); `LIMITATIONS.md` says so.
-- **D79 — the platform is "Xbox"** (id `xbox`), full scope: import, art, Play, Tier-1 capture, detection, docs and legal.
-- **D80 — Play on an Xbox game always activates its package**, in both D59 modes (`08_UI` §Games): started by its path a
-  GDK game is never the game in its package — the run corrected the plan's premise that `CreateProcess` fails with error 5
-  (it hands the launch executable back to the package, so the game is not the launcher's descendant; an Unreal shipping
-  executable runs outside it). The Agent records such a game in attach mode.
-- **D81 — title lists stay keyed by Steam id**: an Xbox copy is matched by everything but that entry; the gap is
-  `20_OPEN_QUESTIONS` §G *Xbox app / Microsoft Store titles*.
-- **D82 — alpha.2 right after beta.33** (the owner runs `0.1.0-alpha.1`, and the alpha's channel is locked): on RC3; if
-  the train reaches the alpha after .NET 11's release on 2026-11-10, the standing rule applies (SDK 11.0.100, packages
-  11.0.0) — no new decision.
+- **D83 — Dynamic frame generation is DLSS 4.5's**: the owner's rule, "Dynamic and ×6 exist only in DLSS 4.5". The
+  evidence is the game's driver profile setting Dynamic (`NGX_DLSSG_MODE` = 4) **and** the driver reporting its
+  frame-generation override applied in the game's process (`FG_MODE` in its FG word), in a session where DLSS
+  Frame Generation was identified (`fg_mode = dlssg`; its factor need not have been counted); a state measured at ×5 or more still ranks first, and a *Fixed* multiplier names nothing by itself
+  (amends D64). The driver's `frameGenerationMode` — 3 under Dynamic and 1 under Fixed in every session read, and unnamed
+  by NVIDIA — is recorded in `spike-notes` §26, not keyed on.
+- **D84 — DLSS 5 is the session's generation where its neural rendering was measured running**: the Overlay decodes
+  `kFeatureDLSS_NR` in its `slEvaluateFeature` detour and the Agent keeps its share of the Streamline batches
+  (`sessions.dlss_nr_pct`, schema 0022) — *DLSS 5 (neural rendering on N % of rendered frames)*; loaded and seen not
+  running, *runtime loaded, not seen running*; where nothing could tell, *runtime loaded*, as before (amends D64).
+- **D85 — the filters**: Games — store, engine, state, installed, played; Compare — game, tier, frame generation, no
+  period; Compare lists every session (it listed the newest 200).
+- **D86 — the left pane's selected item keeps its label**: our copy of WPF UI 4.3.0's LeftFluent item template, whose
+  `IsActive` trigger animated it away.
+- **D87 — alpha.3 right after beta.34**, on RC3: the train reaches it before .NET 11's release on 2026-11-10.
 
-The Privacy Policy 2.13's wording was approved with the plan (D36).
+Streamline was re-vendored at `v2.14.16` on the owner's instruction above, not as a decision of its own. The wording of
+the Disclaimer 2.13 and the Privacy Policy 2.14, and the tested-games list (D35), were approved with the plan (D36).
 
 **Choices made here:**
 
-- **A GDK package root is an install-root boundary**, for the guard's check 4 and for detection alike, and only where no
-  store boundary matched — so it can only widen what is walked (`19_SAFETY` §Pre-injection checks, amended 2026-11-03).
-  The guard gained `GamesInstalled\<X>` with it, and one case list read by both test suites
-  (`tests/fixtures/install-roots/cases.txt`) holds the two resolvers together.
-- **`root_file`, a new detection signal**, answered from the install root's own listing, so the `xbox` platform rule —
-  first, because a GDK FINAL FANTASY ships Steam's DLL — is decidable even where a very large install's walk ran short.
-- **The two refusals read the target once, before the primitive**, never at the 30 s re-scan; "could not tell" refuses as
-  `ProcessUnreadable`, and only enforcing flags count (`SetContextIpValidation` without strict mode is on every
-  CET-compatible process: `pwsh.exe` reads `0x105`).
-- **`TargetResolver` reads the watcher's spelling** (`ProcessImagePath`) but keeps the guard's rights, so D21's
-  `TargetUnreadable` is unchanged.
+- **Neural rendering's share is over the Streamline batches**, not every present: a generated frame evaluates nothing,
+  and a title that never drains a batch reads *nothing could tell* (null), never 0 %.
+- **A writer older than beta.34 is told apart by its family bit**, `FL_HOOK_SL_NEURAL_RENDERING` (bit 12), published with
+  the detour — an old Overlay's silence leaves `dlss_nr_pct` null instead of a measured 0 %; no layout change.
+- **The Games page is the window's**, kept by our own page provider (`WindowPageCache`), not `NavigationCacheMode`: WPF UI
+  4.3.0 reads that only when neither a service provider nor a page provider is set, and `SetNavigationControl` sets one
+  (`16_WPFUI_SYNTAX` §Navigation). One per window, so a language change's window builds its own.
+- **The cards come before the executable checks** — 39 of the owner's 41 Steam games are on a USB drive that sleeps — and
+  each card gets its *Not installed* pill when its check answers.
+- **The pane's item template is a copy changed in one place**, reading WPF UI's own `NavigationViewConstants.xaml`: before
+  the WPF UI pin moves, the upstream template is read again.
 
-**Measured on the way** (`spike-notes` §25): eleven GDK packages, full trust, the user's token, medium integrity, none of
-the four mitigations; the image path and the loader's main module both in the `Content` spelling; every game `.exe`
-refuses `FILE_READ_DATA`/`FILE_EXECUTE` outside its package, so no Unreal version and no *Runs as* for these titles;
-`GetProcessMitigationPolicy` answers through `PROCESS_QUERY_LIMITED_INFORMATION`, and an unknown policy answers
-`ERROR_INVALID_PARAMETER`.
+**Measured on the way:** the owner's DLSS sessions of 2026-11-01 → 11-06, the driver's frame-generation numbering and
+Streamline's `v2.12.0` → `v2.14.16` changes are `spike-notes` §26 (the ledger read read-only; the vendored copy was
+`v2.12.0` byte for byte); the Games page before and after is §27 (first cards 822–830 ms → 10–15 ms with the first
+executable check held 800 ms; a revisit 181–215 ms → 15–16 ms). The neural-rendering decode costs nothing measurable in
+the detour and 0.14–0.19 ns on the present's feature byte (#358's body; NFR-1's budget is 1 µs per present).
 
 **Traps met on the way:**
 
-- **Malwarebytes quarantines `fl_guard_test.exe`** (`Malware.Heuristic.108256`, records in
-  `C:\ProgramData\Malwarebytes\MBAMService\RtpDetections`) on some builds and not others: ctest then reports `fl_guard` as
-  passed in 0.5 s with no output and `fl_prescan` with an empty command. Read `LastTest.log` for the assertion count before
-  believing a native pass; an exclusion for `E:\frameledger\build\` is the owner's to add (a security setting), and CI runs
-  both suites.
-- **`build.ps1` finds the x64 clang-format; `Get-ChildItem … clang-format.exe` finds the ARM64 one first**, which will not
-  start on this PC.
-- **SonarCloud's quality gate on #351 was 77.7 % new-code coverage** (≥ 80 % wanted) and one `cpp:S5813` (`wcslen`): both
-  closed in #352 — its own gate 95.4 %, main's after the merge 86.5 % on the code since beta.32 with no open issue. The
-  job is advisory, so a merge on green does not wait for it — read its verdict after each merge.
-- **FluentAssertions' `OnlyContain` fails an empty collection**: a test of what this PC holds (`GamingRoots.OnThisPc()`)
-  passed here and failed on the hosted runner, which has no `.GamingRoot` (#352's first CI run) — assert that nothing
-  is wrong rather than that everything is right.
+- **`notice-check` reads the tracked tree**: a file deleted from the working tree but not from the index fails it with
+  *Could not find file* — after every build and test had passed (#360's first local gate). Stage the change
+  (`git add -A`) before the gate.
+- **A new hook family bit belongs in the native token test's exact mask** (`guard_test.cpp`), and a new Streamline fact
+  in the 0xF00D case's list of facts it must not light — #358's first gate (`0x100f` against `15`).
+- **WPF UI 4.3.0**: `NavigationCacheMode` is ignored once a page provider is set; `INavigationService.SetNavigationControl`
+  hands the NavigationView the container's provider, so ours is set after it; LeftFluent's item template collapses the
+  selected item's label.
+- **Microsoft.Data.Sqlite's async methods run synchronously**: a read awaited on the UI thread blocks it — `Task.Run` it.
 
-**Owner-only:** item 28 — the Xbox titles on real hardware.
+**Owner-only:** item 30 — beta.34 on real hardware.
 
-### 0.1.0-alpha.2 — the second alpha, the same day (D82)
+### 0.1.0-alpha.3 — the third alpha, the same day (D87)
 
-`alpha` took main at this pull request — `v0.1.0-beta.33` and these notes, no other change — by a merge commit, as
-`13_CI_CD` §The alpha line says: no file the switch holds had moved on main, so nothing conflicted and the switch is the
-first alpha's (SDK `11.0.100-rc.3.26522.148`, the three packages at `11.0.0-rc.3.26522.148`, the same NuGet licence
-texts). Its gate on the 11 SDK must pass before the pull request into `alpha` is merged by hand (the branch has no
-auto-merge); the release runs from the signed tag `v0.1.0-alpha.2` on `alpha`, and its delta from alpha.1 is the first
-an alpha's release has to find — #350's lookup, by the name the pack lists. Its notes are
-`docs/changelog/0.1.0-alpha.2.md`, which open with the experimental-build warning.
+`alpha` takes main at this pull request — `v0.1.0-beta.34` and these notes, no other change — by a merge commit, as
+`13_CI_CD` §The alpha line says. One file the switch holds moved on main — `legal/THIRD_PARTY_NOTICES.md`, its
+Streamline row (#358) — on a line the switch does not touch (the switch changes the *Transitive* row), so the merge
+takes both without a conflict (`git merge-tree` before the pull request); main's package set did not move, and the
+switch stays the first alpha's (SDK `11.0.100-rc.3.26522.148`, the three packages at `11.0.0-rc.3.26522.148`, the same
+NuGet licence texts) — the train reached it before .NET 11's release. Its gate on the 11 SDK must pass before the pull
+request into `alpha` is merged by
+hand (the branch has no auto-merge); the release runs from the signed tag `v0.1.0-alpha.3` on `alpha`, with its delta
+from alpha.2. Its notes are `docs/changelog/0.1.0-alpha.3.md`, which open with the experimental-build warning. It is
+the first alpha whose ledger moves (schema 22): the copy it makes first is the database as alpha.2 left it, and going
+back is to the newest beta, which opens schema 22.
 
 - **The next alpha moves to .NET 11's release**: from 2026-11-10 the switch is SDK `11.0.100` and the packages `11.0.0`,
   and RC3 is out of support — move the alpha even if no beta comes.
 
-**Owner-only:** item 29 — the second alpha on real hardware.
+**Owner-only:** item 31 — the third alpha on real hardware.
 
 
 ## Owner-only — no PR can close these
@@ -264,7 +270,9 @@ an alpha's release has to find — #350's lookup, by the name the pack lists. It
    setting*, the game's own library and no generation beyond what was observed. Record the names the override loads
    under `%ProgramData%\NVIDIA\NGX` (the summary's *Loaded:* line) — they correct `05_DETECTION` §Shipped is not loaded.
    (d) **DLSS 5** on the owner's DLSS 5 title: *DLSS 5 runtime loaded*. If it is not shown, record the module names it
-   loads (*Loaded:* line); `nvngx_dlssnr.dll` is then corrected in `CensusNames` and `05_DETECTION`.
+   loads (*Loaded:* line); `nvngx_dlssnr.dll` is then corrected in `CensusNames` and `05_DETECTION`. *(2026-11-06, `spike-notes` §26:
+   Hogwarts Legacy, Neural Rendering on, loaded `nvngx_dlssnr.dll` 310.9.16.0 from the game's folder — the name holds;
+   whether it ran is what beta.34 measures, item 30(a).)*
    (e) **SonarCloud (D67):** bulk-mark per `13_CI_CD` §SonarCloud; optionally its *Ignore issues on multiple criteria*
    rows; close PR #315. (f) The Legal Gate shows **Disclaimer 2.11** and **Privacy Policy 2.12** once. (g) The `ja`
    strings marked `review`. *(2026-10-19, the owner's first runs — `spike-notes` §22: (a) the Dynamic context line
@@ -361,13 +369,33 @@ an alpha's release has to find — #350's lookup, by the name the pack lists. It
    `Art_Source_Xbox`, `Import_NothingFound`, `FirstRun_Import_Body`, `Settings_GameArt_Body`, `Play_Xbox_Format`,
    `Play_Xbox_NotStarted_Format`, `Play_PackagedGame_Format`, `Play_ToolTip_Store`, `Play_ToolTip_Direct`,
    `Settings_PlayMode_Body`, `Guard_TargetAppContainer`, `Guard_TargetMitigation`. Then
-   `docs/LIST_GAME_TESTED.md` gains the Xbox titles from a ledger copy (D35), approved before the commit.
+   `docs/LIST_GAME_TESTED.md` gains the Xbox titles from a ledger copy (D35), approved before the commit. *(2026-11-06,
+   beta.34: done — inKONBINI and Valor Mortis, with the refresh the owner approved with the plan.)*
 29. **0.1.0-alpha.2 on real hardware** (D73, D82). (a) **The update from alpha.1**: Help ▸ Check for updates offers
    alpha.2 — the first update an alpha's updater has found — and *Restart to update* installs it; say whether it
    downloaded the delta or the whole package. (b) The terms window shows the Privacy Policy 2.13 and the Alpha notice
    with its box again, and Accept waits for the tick. (c)
    `%LOCALAPPDATA%\FrameLedger\backups\ledger-before-0.1.0-alpha.2.db` exists beside alpha.1's, and opens. (d) Item 28's
    Xbox checks, on the alpha.
+30. **beta.34 on real hardware** (D83–D86). (a) **The update from beta.33** (or alpha.3's, item 31): the terms window
+   shows the Disclaimer 2.13 and the Privacy Policy 2.14 once. (b) **Hogwarts Legacy with Neural Rendering on**, one
+   hooked session → *DLSS 5 (neural rendering on N % of rendered frames)*; then **off** — `spike-notes` §26's table,
+   written before the run, decides (on and 0 %: neural rendering runs outside `slEvaluateFeature`, the line stays
+   *runtime loaded, not seen running*, and the session's `sl_tag_census` is recorded before anything is named).
+   (c) **Phantom Blade Zero** under the NVIDIA App's *Dynamic, up to ×3* → *DLSS 4.5 (Dynamic multi frame generation, set
+   in the NVIDIA App)*; the game's own ×3 with no override from the App → *DLSS 4*. (d) **Games** from any page: the
+   cards at once, a second visit at once; the Debug line `ui: page … shown … ms after its navigation`. (e) **Settings →
+   change the language** → the window comes back on Settings. (f) The filters on Games and Compare, the Compare columns
+   and selection bar, the selected page's label in the pane, in both themes. (g) The 34 `ja` strings this release adds,
+   all marked `review`: `Dlss_Basis_Dynamic`, `Dlss_NeuralRendering_NotSeen`, `Dlss_Feature_NeuralRendering`,
+   `Dlss_Basis_NeuralRendering_Format`, `Games_Filter_*`, `Games_Header_Filtered_Format`, `Filter_Clear`,
+   `Compare_Filter_*`, `Compare_Count_Format`, `Compare_Count_Filtered_Format`, `Compare_ClearSelection`,
+   `Compare_MidSession_Changed`, `A11y_Games_Filter_*`, `A11y_Compare_Filter_*`.
+31. **0.1.0-alpha.3 on real hardware** (D73, D87). (a) **The update from alpha.2**: Help ▸ Check for updates offers
+   alpha.3 and *Restart to update* installs it; say whether it downloaded the delta or the whole package. (b) The terms
+   window shows the Disclaimer 2.13, the Privacy Policy 2.14 and the Alpha notice with its box again, and Accept waits for
+   the tick. (c) `%LOCALAPPDATA%\FrameLedger\backups\ledger-before-0.1.0-alpha.3.db` exists beside alpha.2's, and opens;
+   the ledger it left is at schema 22. (d) Item 30's checks, on the alpha.
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
@@ -464,6 +492,11 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D80 | [`08_UI.md`](08_UI.md) §Games | Play on an Xbox game always activates its package, in both modes; the Agent answers `PackagedGame` and records it in attach mode |
 | D81 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §G | title lists stay keyed by Steam id; an Xbox copy is matched by everything but that entry |
 | D82 | [`HANDOFF.md`](HANDOFF.md) §START HERE | alpha.2 right after beta.33; on RC3 unless the train reaches it after .NET 11 ships (then SDK 11.0.100, packages 11.0.0) |
+| D83 | [`05_DETECTION.md`](05_DETECTION.md) §DLSS generation | the NVIDIA App's Dynamic frame generation, reported applied by the driver in a session where DLSS Frame Generation was identified, is DLSS 4.5 (amends D64) |
+| D84 | [`05_DETECTION.md`](05_DETECTION.md) §DLSS generation | DLSS 5 heads the DLSS line where its neural rendering was measured running (`kFeatureDLSS_NR`, `dlss_nr_pct`); loaded only reads "runtime loaded" (amends D64) |
+| D85 | [`08_UI.md`](08_UI.md) §Games, §Compare | filters: Games — store, engine, state, installed, played; Compare — game, tier, frame generation (no period); Compare lists every session |
+| D86 | [`08_UI.md`](08_UI.md) (the shell) | the left pane's selected item keeps its label: our copy of WPF UI 4.3.0's LeftFluent item template |
+| D87 | [`HANDOFF.md`](HANDOFF.md) §START HERE | alpha.3 right after beta.34, on RC3 (before .NET 11's release, 2026-11-10) |
 
 ---
 

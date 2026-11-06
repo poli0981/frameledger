@@ -18,18 +18,44 @@
             <ui:TextBlock Margin="0,16,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" Text="{x:Static vm:CompareViewModel.EmptyText}"
                           Visibility="{Binding ViewModel.IsEmpty, Converter={StaticResource BoolToVis}}" />
 
-            <Grid Margin="0,16,0,0" Visibility="{Binding ViewModel.IsEmpty, Converter={StaticResource InverseBoolToVis}}">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <ui:TextBlock Grid.Column="0" FontTypography="Subtitle" Text="{x:Static vm:CompareViewModel.PickHeader}" />
-                <ui:TextBlock Grid.Column="1" Margin="0,0,16,0" VerticalAlignment="Center" Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.SelectedText}" />
-                <ui:Button Grid.Column="2" Appearance="Primary" Command="{Binding ViewModel.CompareCommand}" IsEnabled="{Binding ViewModel.CanCompare}"
-                           Content="{x:Static vm:CompareViewModel.RunText}" Icon="{ui:SymbolIcon ArrowSwap24}" />
-            </Grid>
+            <!-- beta.34 (owner request 2026-11-06, D85): the filters - game, tier, frame generation - over every session, and how
+                 many the list holds; a ticked session stays listed whatever they say. -->
+            <WrapPanel Margin="0,16,0,0" Orientation="Horizontal"
+                       Visibility="{Binding ViewModel.IsEmpty, Converter={StaticResource InverseBoolToVis}}">
+                <ComboBox MinWidth="220" Margin="0,0,8,8" VerticalAlignment="Center"
+                          AutomationProperties.Name="{x:Static res:Strings.A11y_Compare_Filter_Game}"
+                          DisplayMemberPath="Label" ItemsSource="{Binding ViewModel.Games}"
+                          SelectedValue="{Binding ViewModel.GameFilter, Mode=TwoWay}" SelectedValuePath="Value" />
+                <ComboBox MinWidth="180" Margin="0,0,8,8" VerticalAlignment="Center"
+                          AutomationProperties.Name="{x:Static res:Strings.A11y_Compare_Filter_Tier}"
+                          DisplayMemberPath="Label" ItemsSource="{Binding ViewModel.Tiers}"
+                          SelectedValue="{Binding ViewModel.TierFilter, Mode=TwoWay}" SelectedValuePath="Value" />
+                <ComboBox MinWidth="240" Margin="0,0,8,8" VerticalAlignment="Center"
+                          AutomationProperties.Name="{x:Static res:Strings.A11y_Compare_Filter_Fg}"
+                          DisplayMemberPath="Label" ItemsSource="{Binding ViewModel.FrameGenerationChoices}"
+                          SelectedValue="{Binding ViewModel.FrameGenerationFilter, Mode=TwoWay}" SelectedValuePath="Value" />
+                <ui:Button Margin="0,0,16,8" VerticalAlignment="Center" Appearance="Secondary"
+                           Command="{Binding ViewModel.ClearFiltersCommand}"
+                           Content="{x:Static vm:CompareViewModel.ClearFiltersText}" Icon="{ui:SymbolIcon FilterDismiss24}" />
+                <ui:TextBlock Margin="0,0,0,8" VerticalAlignment="Center" Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.CountText}" />
+            </WrapPanel>
 
+            <!-- beta.34: the selection bar beside what it acts on - it sat at the window's far right, a full width away from the list. -->
+            <StackPanel Margin="0,8,0,0" Orientation="Horizontal"
+                        Visibility="{Binding ViewModel.IsEmpty, Converter={StaticResource InverseBoolToVis}}">
+                <ui:TextBlock Margin="0,0,16,0" VerticalAlignment="Center" FontTypography="Subtitle" Text="{x:Static vm:CompareViewModel.PickHeader}" />
+                <ui:TextBlock Margin="0,0,16,0" VerticalAlignment="Center" Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.SelectedText}" />
+                <ui:Button Margin="0,0,8,0" Appearance="Secondary" Command="{Binding ViewModel.ClearSelectionCommand}"
+                           Content="{x:Static vm:CompareViewModel.ClearSelectionText}" />
+                <ui:Button Appearance="Primary" Command="{Binding ViewModel.CompareCommand}" IsEnabled="{Binding ViewModel.CanCompare}"
+                           Content="{x:Static vm:CompareViewModel.RunText}" Icon="{ui:SymbolIcon ArrowSwap24}" />
+            </StackPanel>
+
+            <!--
+                beta.34: columns sized to what they hold, and one filler column after them - three star columns spread a wide
+                window into gaps, and the Tier column was exactly its header's width, so "Tier" and "FPS" touched. The date sorts
+                by when, not by its text; the settings-changed cell says so in words, or shows a dash.
+            -->
             <DataGrid Margin="0,8,0,0" MaxHeight="320" AutoGenerateColumns="False" CanUserAddRows="False" HeadersVisibility="Column"
                       ItemsSource="{Binding ViewModel.Candidates}" SelectionMode="Single"
                       Visibility="{Binding ViewModel.IsEmpty, Converter={StaticResource InverseBoolToVis}}">
@@ -44,18 +70,23 @@
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
-                    <DataGridTextColumn Header="{x:Static res:Strings.Compare_Col_Game}" Binding="{Binding GameName}" IsReadOnly="True" Width="2*" />
-                    <DataGridTextColumn Header="{x:Static res:Strings.Compare_Col_Date}" Binding="{Binding DateText}" IsReadOnly="True" Width="*" />
-                    <DataGridTextColumn Header="{x:Static res:Strings.Compare_Col_Tier}" Binding="{Binding TierText}" IsReadOnly="True" Width="Auto" />
-                    <DataGridTextColumn Header="{x:Static res:Strings.Compare_Col_Fps}" Binding="{Binding ReadoutLine}" IsReadOnly="True" Width="2*" />
-                    <DataGridTemplateColumn Header="{x:Static res:Strings.Compare_Col_MidSession}" IsReadOnly="True">
+                    <DataGridTextColumn Header="{x:Static res:Strings.Compare_Col_Game}" Binding="{Binding GameName}" IsReadOnly="True" Width="Auto" MinWidth="220" />
+                    <DataGridTextColumn Header="{x:Static res:Strings.Compare_Col_Date}" Binding="{Binding DateText}" SortMemberPath="StartedAt" IsReadOnly="True" Width="Auto" MinWidth="150" />
+                    <DataGridTextColumn Header="{x:Static res:Strings.Compare_Col_Tier}" Binding="{Binding TierText}" IsReadOnly="True" Width="Auto" MinWidth="64" />
+                    <DataGridTextColumn Header="{x:Static res:Strings.Compare_Col_Fps}" Binding="{Binding ReadoutLine}" IsReadOnly="True" Width="Auto" MinWidth="220" />
+                    <DataGridTemplateColumn Header="{x:Static res:Strings.Compare_Col_MidSession}" IsReadOnly="True" Width="Auto" MinWidth="150" SortMemberPath="SettingsChangedMidSession">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate DataType="{x:Type vm:CompareCandidateViewModel}">
-                                <ui:SymbolIcon Symbol="Warning24" Foreground="{DynamicResource SystemFillColorCautionBrush}"
-                                               Visibility="{Binding SettingsChangedMidSession, Converter={StaticResource BoolToVis}}" />
+                                <StackPanel Margin="4,0" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <ui:SymbolIcon Margin="0,0,6,0" Symbol="Warning24" Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                                                   Visibility="{Binding SettingsChangedMidSession, Converter={StaticResource BoolToVis}}" />
+                                    <TextBlock VerticalAlignment="Center" Text="{Binding SettingsChangedText}" />
+                                </StackPanel>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
+                    <!-- the filler: the width the columns above do not need, so they stay together on a wide window -->
+                    <DataGridTemplateColumn Width="*" CanUserSort="False" CanUserResize="False" IsReadOnly="True" />
                 </DataGrid.Columns>
             </DataGrid>
 
@@ -75,19 +106,25 @@
                 <charts:CompareChart x:Name="Chart" Margin="0,6,0,0" Height="340" />
 
                 <ui:TextBlock Margin="0,16,0,0" FontTypography="Subtitle" Text="{x:Static vm:CompareViewModel.TableHeader}" />
-                <!-- the header row: one label per compared session -->
-                <ItemsControl Margin="0,6,0,0" ItemsSource="{Binding ViewModel.Compared}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <UniformGrid Rows="1" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type vm:CompareCandidateViewModel}">
-                            <ui:TextBlock Margin="4,0" Style="{StaticResource SecondaryText}" FontTypography="Caption" TextWrapping="Wrap" Text="{Binding Label}" />
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+                <!-- the header row: the metric column's own header, then one label per compared session - laid out as every row
+                     below is (a 140-px metric cell, then the sessions sharing the rest), so each label sits over its column;
+                     beta.34: it spread over the whole width, the 140 px included, and drifted left of its values. -->
+                <DockPanel Margin="0,6,0,0">
+                    <ui:TextBlock DockPanel.Dock="Left" Width="140" Style="{StaticResource SecondaryText}" FontTypography="Caption"
+                                  Text="{x:Static vm:CompareViewModel.MetricHeader}" />
+                    <ItemsControl ItemsSource="{Binding ViewModel.Compared}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="1" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:CompareCandidateViewModel}">
+                                <ui:TextBlock Margin="4,0" Style="{StaticResource SecondaryText}" FontTypography="Caption" TextWrapping="Wrap" Text="{Binding Label}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </DockPanel>
                 <ItemsControl ItemsSource="{Binding ViewModel.Rows}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type vm:CompareRowViewModel}">

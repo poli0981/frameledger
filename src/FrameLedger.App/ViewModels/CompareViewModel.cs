@@ -51,6 +51,21 @@ public sealed partial class CompareViewModel : ObservableObject
     [ObservableProperty]
     private string? _tierLegend;
 
+    /// <summary>beta.34 (D85): one game's sessions, or 0 for every game's.</summary>
+    [ObservableProperty]
+    private long _gameFilter;
+
+    [ObservableProperty]
+    private CompareTierFilter _tierFilter;
+
+    [ObservableProperty]
+    private YesNoFilter _frameGenerationFilter;
+
+    [ObservableProperty]
+    private string _countText = string.Empty;
+
+    private List<CompareCandidateViewModel> _pool = [];
+
     public CompareViewModel(GameLibrary library, SessionSeriesLoader loader, IMixedTierPrompt mixed, IFileSaver saver, IMessageStrip strip)
     {
         _library = library ?? throw new ArgumentNullException(nameof(library));
@@ -77,6 +92,27 @@ public sealed partial class CompareViewModel : ObservableObject
 
     public static string MetricHeader => Strings.Compare_Table_Metric;
 
+    public static string ClearFiltersText => Strings.Filter_Clear;
+
+    public static string ClearSelectionText => Strings.Compare_ClearSelection;
+
+    /// <summary>beta.34 (D85): the games the sessions are of, "All games" first.</summary>
+    public ObservableCollection<Choice<long>> Games { get; } = [];
+
+    public IReadOnlyList<Choice<CompareTierFilter>> Tiers { get; } =
+    [
+        new(CompareTierFilter.All, Strings.Compare_Filter_Tier_All),
+        new(CompareTierFilter.Measured, Strings.Compare_Filter_Tier_Measured),
+        new(CompareTierFilter.NotMeasured, Strings.Compare_Filter_Tier_NotMeasured),
+    ];
+
+    public IReadOnlyList<Choice<YesNoFilter>> FrameGenerationChoices { get; } =
+    [
+        new(YesNoFilter.All, Strings.Compare_Filter_Fg_All),
+        new(YesNoFilter.Yes, Strings.Compare_Filter_Fg_With),
+        new(YesNoFilter.No, Strings.Compare_Filter_Fg_Without),
+    ];
+
     public ObservableCollection<CompareCandidateViewModel> Candidates { get; } = [];
 
     public ObservableCollection<CompareCandidateViewModel> Compared { get; } = [];
@@ -93,25 +129,96 @@ public sealed partial class CompareViewModel : ObservableObject
     /// <summary>Raised when <see cref="Curves"/> and <see cref="Rows"/> were rebuilt, so the page redraws.</summary>
     public event EventHandler? Compared2;
 
+    /// <summary>
+    /// Every session, newest first (beta.34: it was the newest 200), read on the thread pool — Microsoft.Data.Sqlite completes
+    /// its asynchronous calls synchronously, and the page waited for it — and then filtered (D85).
+    /// </summary>
     public async Task LoadAsync(CancellationToken ct = default)
     {
-        IReadOnlyList<RecentSession> recent = await _library.RecentAsync(200, ct).ConfigureAwait(true);
-        foreach (CompareCandidateViewModel old in Candidates)
+        GameLibrary library = _library;
+        IReadOnlyList<RecentSession> recent = await Task.Run(() => library.RecentAsync(int.MaxValue, ct), ct).ConfigureAwait(true);
+        foreach (CompareCandidateViewModel old in _pool)
         {
             old.PropertyChanged -= OnCandidateChanged;
         }
 
-        Candidates.Clear();
+        var pool = new List<CompareCandidateViewModel>(recent.Count);
         foreach (RecentSession r in recent)
         {
             var candidate = new CompareCandidateViewModel(r);
             candidate.PropertyChanged += OnCandidateChanged;
-            Candidates.Add(candidate);
+            pool.Add(candidate);
         }
 
-        IsEmpty = Candidates.Count == 0;
+        _pool = pool;
+        Choice<long>[] games =
+        [
+            new(0, Strings.Compare_Filter_Game_All),
+            .. pool.GroupBy(static c => c.GameId).Select(static g => new Choice<long>(g.Key, g.First().GameName))
+                .OrderBy(static c => c.Label, StringComparer.CurrentCultureIgnoreCase),
+        ];
+        Games.Clear();
+        foreach (Choice<long> game in games)
+        {
+            Games.Add(game);
+        }
+
+        if (!Games.Any(g => g.Value == GameFilter))
+        {
+            GameFilter = 0;
+        }
+
+        IsEmpty = _pool.Count == 0;
+        ApplyFilters();
         Recount();
     }
+
+    partial void OnGameFilterChanged(long value) => ApplyFilters();
+
+    partial void OnTierFilterChanged(CompareTierFilter value) => ApplyFilters();
+
+    partial void OnFrameGenerationFilterChanged(YesNoFilter value) => ApplyFilters();
+
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        GameFilter = 0;
+        TierFilter = CompareTierFilter.All;
+        FrameGenerationFilter = YesNoFilter.All;
+    }
+
+    [RelayCommand]
+    private void ClearSelection()
+    {
+        foreach (CompareCandidateViewModel c in _pool.Where(static c => c.IsSelected))
+        {
+            c.IsSelected = false;
+        }
+    }
+
+    /// <summary>
+    /// The list the filters leave (beta.34, D85), newest first — and every ticked session whatever they say: a pick is never
+    /// hidden from the one who made it, so what Compare runs on is always on screen.
+    /// </summary>
+    private void ApplyFilters()
+    {
+        CompareCandidateViewModel[] shown = [.. _pool.Where(c => c.IsSelected || Passes(c))];
+        Candidates.Clear();
+        foreach (CompareCandidateViewModel c in shown)
+        {
+            Candidates.Add(c);
+        }
+
+        bool filtered = GameFilter != 0 || TierFilter != CompareTierFilter.All || FrameGenerationFilter != YesNoFilter.All;
+        CountText = filtered
+            ? string.Format(CultureInfo.CurrentCulture, Strings.Compare_Count_Filtered_Format, shown.Length, _pool.Count)
+            : string.Format(CultureInfo.CurrentCulture, Strings.Compare_Count_Format, _pool.Count);
+    }
+
+    private bool Passes(CompareCandidateViewModel c) =>
+        (GameFilter == 0 || c.GameId == GameFilter)
+        && TierFilter switch { CompareTierFilter.Measured => c.IsHooked, CompareTierFilter.NotMeasured => !c.IsHooked, _ => true }
+        && FrameGenerationFilter switch { YesNoFilter.Yes => c.HasFrameGeneration is true, YesNoFilter.No => c.HasFrameGeneration is false, _ => true };
 
     [RelayCommand]
     private Task CompareAsync() => Run(CompareCoreAsync);
@@ -141,7 +248,7 @@ public sealed partial class CompareViewModel : ObservableObject
 
     private async Task CompareCoreAsync()
     {
-        CompareCandidateViewModel[] picked = [.. Candidates.Where(static c => c.IsSelected)];
+        CompareCandidateViewModel[] picked = [.. _pool.Where(static c => c.IsSelected)];
         if (picked.Length < MinSessions || picked.Length > MaxSessions)
         {
             return;
@@ -284,7 +391,7 @@ public sealed partial class CompareViewModel : ObservableObject
 
     private void Recount()
     {
-        SelectedCount = Candidates.Count(static c => c.IsSelected);
+        SelectedCount = _pool.Count(static c => c.IsSelected);
         CanCompare = SelectedCount is >= MinSessions and <= MaxSessions;
         OnPropertyChanged(nameof(SelectedText));
     }

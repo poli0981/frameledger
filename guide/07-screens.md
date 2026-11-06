@@ -59,6 +59,9 @@ stopped, hooking turned off — each with one button that only says you have rea
 ## Games
 
 - **Search games**; sort by **Name**, **Last played** or **Playtime**; **Show as a list** or **Show as a grid**.
+- **Filters** (since 0.1.0-beta.34): by **store**, **engine**, **state** (Hooking on, Hooking off, Anti-cheat, Exception,
+  Not recorded), **installed** and **played**; the title then says how many of your games are shown. **Clear filters**
+  shows them all again.
 - **Refresh** reads your library again: it offers games newly installed through a store, and marks a game whose `.exe`
   is gone as *Not installed*. The agent removes such a game by itself after ten minutes when it has no sessions and its
   drive is connected — never one where anti-cheat was found (**Settings ▸ Data ▸ Remove uninstalled games** turns this
@@ -108,7 +111,8 @@ It opens from a session row, from the Dashboard, and from the notice when a sess
 
 Tick **2 to 5 sessions**, from any of your games, and press **Compare**: one frame-rate curve per measured session, and
 a table with the best value of each row in bold. Comparing a measured session with an unmeasured one asks first,
-because they measured different things.
+because they measured different things. The list holds every session; narrow it by **game**, **tier** (measured or
+not) and **frame generation** — a session you ticked stays in the list. **Clear selection** unticks them all.
 
 ## Logs
 

@@ -846,6 +846,39 @@
   <data name="Games_Sort_Label" xml:space="preserve">
     <value>Sort by</value>
   </data>
+  <data name="Games_Filter_Store_All" xml:space="preserve">
+    <value>All stores</value>
+  </data>
+  <data name="Games_Filter_Store_Manual" xml:space="preserve">
+    <value>Added by hand</value>
+  </data>
+  <data name="Games_Filter_Engine_All" xml:space="preserve">
+    <value>All engines</value>
+  </data>
+  <data name="Games_Filter_Engine_Unknown" xml:space="preserve">
+    <value>Engine not identified</value>
+  </data>
+  <data name="Games_Filter_State_All" xml:space="preserve">
+    <value>Any state</value>
+  </data>
+  <data name="Games_Filter_Installed_All" xml:space="preserve">
+    <value>Installed or not</value>
+  </data>
+  <data name="Games_Filter_Installed_Yes" xml:space="preserve">
+    <value>Installed</value>
+  </data>
+  <data name="Games_Filter_Played_All" xml:space="preserve">
+    <value>Played or not</value>
+  </data>
+  <data name="Games_Filter_Played_Yes" xml:space="preserve">
+    <value>With sessions</value>
+  </data>
+  <data name="Games_Header_Filtered_Format" xml:space="preserve">
+    <value>Games · {0} of {1}</value>
+  </data>
+  <data name="Filter_Clear" xml:space="preserve">
+    <value>Clear filters</value>
+  </data>
   <data name="Games_Sort_LastPlayed" xml:space="preserve">
     <value>Last played</value>
   </data>
@@ -1211,6 +1244,39 @@
   </data>
   <data name="Compare_Selected_Format" xml:space="preserve">
     <value>{0} selected</value>
+  </data>
+  <data name="Compare_Filter_Game_All" xml:space="preserve">
+    <value>All games</value>
+  </data>
+  <data name="Compare_Filter_Tier_All" xml:space="preserve">
+    <value>Any tier</value>
+  </data>
+  <data name="Compare_Filter_Tier_Measured" xml:space="preserve">
+    <value>Measured (Tier 1)</value>
+  </data>
+  <data name="Compare_Filter_Tier_NotMeasured" xml:space="preserve">
+    <value>Not measured (Tier 2)</value>
+  </data>
+  <data name="Compare_Filter_Fg_All" xml:space="preserve">
+    <value>With or without frame generation</value>
+  </data>
+  <data name="Compare_Filter_Fg_With" xml:space="preserve">
+    <value>With frame generation</value>
+  </data>
+  <data name="Compare_Filter_Fg_Without" xml:space="preserve">
+    <value>Without frame generation</value>
+  </data>
+  <data name="Compare_Count_Format" xml:space="preserve">
+    <value>{0} sessions</value>
+  </data>
+  <data name="Compare_Count_Filtered_Format" xml:space="preserve">
+    <value>{0} of {1} sessions</value>
+  </data>
+  <data name="Compare_ClearSelection" xml:space="preserve">
+    <value>Clear selection</value>
+  </data>
+  <data name="Compare_MidSession_Changed" xml:space="preserve">
+    <value>Changed mid-session</value>
   </data>
   <data name="Compare_Table_Header" xml:space="preserve">
     <value>Statistics</value>
@@ -1946,6 +2012,30 @@
   </data>
   <data name="A11y_Games_Sort" xml:space="preserve">
     <value>Sort games</value>
+  </data>
+  <data name="A11y_Games_Filter_Store" xml:space="preserve">
+    <value>Filter games by store</value>
+  </data>
+  <data name="A11y_Games_Filter_Engine" xml:space="preserve">
+    <value>Filter games by engine</value>
+  </data>
+  <data name="A11y_Games_Filter_State" xml:space="preserve">
+    <value>Filter games by state</value>
+  </data>
+  <data name="A11y_Games_Filter_Installed" xml:space="preserve">
+    <value>Filter games by installed</value>
+  </data>
+  <data name="A11y_Games_Filter_Played" xml:space="preserve">
+    <value>Filter games by sessions</value>
+  </data>
+  <data name="A11y_Compare_Filter_Game" xml:space="preserve">
+    <value>Filter sessions by game</value>
+  </data>
+  <data name="A11y_Compare_Filter_Tier" xml:space="preserve">
+    <value>Filter sessions by tier</value>
+  </data>
+  <data name="A11y_Compare_Filter_Fg" xml:space="preserve">
+    <value>Filter sessions by frame generation</value>
   </data>
   <data name="A11y_Logs_Source" xml:space="preserve">
     <value>Log source</value>
@@ -3437,6 +3527,9 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="Dlss_Basis_Library_Format" xml:space="preserve">
     <value>library {0}</value>
   </data>
+  <data name="Dlss_Basis_Dynamic" xml:space="preserve">
+    <value>Dynamic multi frame generation, set in the NVIDIA App</value>
+  </data>
   <data name="Dlss_Feature_SuperResolution" xml:space="preserve">
     <value>Super Resolution</value>
   </data>
@@ -3475,6 +3568,15 @@ The documents below are the full terms; this summary does not replace them.</val
   </data>
   <data name="Dlss_NeuralRendering_Loaded" xml:space="preserve">
     <value>DLSS 5 runtime loaded</value>
+  </data>
+  <data name="Dlss_NeuralRendering_NotSeen" xml:space="preserve">
+    <value>DLSS 5 runtime loaded, not seen running</value>
+  </data>
+  <data name="Dlss_Feature_NeuralRendering" xml:space="preserve">
+    <value>Neural Rendering</value>
+  </data>
+  <data name="Dlss_Basis_NeuralRendering_Format" xml:space="preserve">
+    <value>neural rendering on {0} of rendered frames</value>
   </data>
   <data name="Fsr_Mode_NativeAa" xml:space="preserve">
     <value>Native AA</value>

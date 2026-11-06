@@ -1,6 +1,6 @@
 # FrameLedger — Disclaimer
 
-**Version:** 2.12 · **Effective:** {{RELEASE_DATE}}
+**Version:** 2.13 · **Effective:** {{RELEASE_DATE}}
 
 ## 0. This is pre-release software
 
@@ -115,8 +115,8 @@ Software running inside another process can, in principle, destabilize it. Frame
 Frame timing is derived from high-resolution timestamps taken at the moment the game presents each frame; upscaling, frame-generation and ray-tracing state are read from the parameters the game passes to those APIs. This is substantially more accurate than inferring settings from files on disk, but **no measurement is guaranteed to be exact**:
 
 <!-- accuracy-block:begin -->
-> ⚠ **What FrameLedger actually measures today — 2026-10-19.** The software is a beta; its latest
-> **beta is `0.1.0-beta.33`** (2026-11-03), an unsigned installer built from that tag with its
+> ⚠ **What FrameLedger actually measures today — 2026-11-06.** The software is a beta; its latest
+> **beta is `0.1.0-beta.34`** (2026-11-06), an unsigned installer built from that tag with its
 > checksums published beside it (alphas — experimental builds on a prerelease .NET — are published apart). The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
 > game in the library runs (unless you switched its recording off), injects only into games you enabled
@@ -148,7 +148,9 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 >   every other case — FSR at a dynamic resolution among them — no mode is shown.
 > - **DLSS version:** the version of each DLSS library the game loaded and whether it came from the game or from
 >   the NVIDIA driver; "DLSS 4" or "DLSS 4.5" only when the session shows it (the model preset the driver reports,
->   or a measured multi-frame factor); DLSS 5 only as "runtime loaded".
+>   a measured multi-frame factor, or the NVIDIA App's Dynamic frame generation that the driver reports applied);
+>   "DLSS 5" only when the game was seen running its neural rendering, otherwise "runtime loaded" when its library was
+>   loaded.
 > - **Render → output resolution:** measured where the vendor's own per-frame call carries the render
 >   size (AMD FidelityFX dispatches, and Streamline titles whose resource tags state it); `N/A` where it
 >   does not: DLSS titles that bypass Streamline, Streamline titles whose tags carry no size, and Vulkan

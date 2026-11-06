@@ -134,7 +134,7 @@ public static class NvidiaOverrides
         string? fixedCount = multiplier is null ? null : string.Format(CultureInfo.CurrentCulture, Strings.FgMix_Context_Fixed_Format, multiplier);
         return profile.ValueOf(S.DlssgMode) switch
         {
-            4 => string.Join(", ", new[]
+            S.DlssgModeDynamic => string.Join(", ", new[]
             {
                 Strings.FgMix_Context_Dynamic,
                 Multiplier(profile.ValueOf(S.DlssgDynamicMultiFrameCountMax)) is { } ceiling ? string.Format(CultureInfo.CurrentCulture, Strings.FgMix_Context_UpTo_Format, ceiling) : null,
@@ -250,7 +250,7 @@ public static class NvidiaOverrides
         1 => Strings.Nv_FgMode_Off,
         2 => Strings.Nv_FgMode_On,
         3 => Strings.Nv_FgMode_Auto,
-        4 => Strings.Nv_FgMode_Dynamic,
+        S.DlssgModeDynamic => Strings.Nv_FgMode_Dynamic,
         _ => null,
     };
 
