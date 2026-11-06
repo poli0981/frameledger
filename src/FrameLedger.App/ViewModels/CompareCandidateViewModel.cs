@@ -18,17 +18,37 @@ public sealed partial class CompareCandidateViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(recent);
         Row = recent.Row;
         Id = recent.Row.Id;
+        GameId = recent.Row.GameId;
+        StartedAt = recent.Row.StartedAt;
         GameName = recent.GameName;
         DateText = Formats.Date(recent.Row.StartedAt);
         IsHooked = recent.Row.Tier == CaptureTier.Hooked;
         TierText = IsHooked ? Strings.Tier_Hooked : Strings.Tier_NotHooked;
         ReadoutLine = FpsPresentation.FromRow(recent.Row).Line;
         SettingsChangedMidSession = recent.Row.SettingsChangedMidSession;
+        SettingsChangedText = SettingsChangedMidSession ? Strings.Compare_MidSession_Changed : "—";
+        HasFrameGeneration = recent.Row.FgMode switch
+        {
+            "none" => false,
+            "na" or null => null,
+            _ => true,
+        };
     }
 
     public Application.Persistence.SessionRow Row { get; }
 
     public long Id { get; }
+
+    public long GameId { get; }
+
+    /// <summary>The date column sorts by this, not by its text (beta.34).</summary>
+    public DateTimeOffset StartedAt { get; }
+
+    /// <summary>beta.34 (D85): frame generation in the session — true, false (measured none), or null (not measured: Tier 2).</summary>
+    public bool? HasFrameGeneration { get; }
+
+    /// <summary>The Settings-changed cell's words beside its icon, or a dash — the column was blank for every unchanged session.</summary>
+    public string SettingsChangedText { get; }
 
     public string GameName { get; }
 

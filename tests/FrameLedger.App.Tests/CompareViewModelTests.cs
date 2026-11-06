@@ -214,4 +214,50 @@ public sealed class CompareViewModelTests
             CultureInfo.CurrentCulture = previousCulture;
         }
     }
+
+    /// <summary>
+    /// beta.34 (owner request 2026-11-06, D85): Compare lists every session — it was the newest 200 — and filters them by game,
+    /// tier and frame generation; a ticked session stays listed whatever the filters say, and the count says how many of how
+    /// many are shown.
+    /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture")]
+    [Fact]
+    public async Task TheFiltersNarrowTheListAndATickedSessionStaysOnIt()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow a = await s.GameAsync("Alpha");
+        GameRow b = await s.GameAsync("Beta");
+        DateTimeOffset now = DateTimeOffset.UtcNow;
+        _ = await s.SessionAsync(a.Id, now.AddHours(-5), fgMode: "dlssg", native: 60, displayed: 180, factor: 3);
+        _ = await s.SessionAsync(a.Id, now.AddHours(-4), fgMode: "none");
+        _ = await s.SessionAsync(b.Id, now.AddHours(-3), fgMode: "none");
+        _ = await s.SessionAsync(b.Id, now.AddHours(-2), hooked: false);
+        CompareViewModel vm = await BuildAsync(s, new ScriptedMixed(answer: true));
+
+        vm.Candidates.Should().HaveCount(4);
+        vm.CountText.Should().Be(string.Format(CultureInfo.CurrentCulture, Strings.Compare_Count_Format, 4));
+        vm.Games.Select(static g => g.Label).Should().Equal([Strings.Compare_Filter_Game_All, "Alpha", "Beta"]);
+
+        vm.GameFilter = a.Id;
+        vm.Candidates.Should().HaveCount(2).And.OnlyContain(c => c.GameId == a.Id);
+        vm.CountText.Should().Be(string.Format(CultureInfo.CurrentCulture, Strings.Compare_Count_Filtered_Format, 2, 4));
+
+        vm.FrameGenerationFilter = YesNoFilter.Yes;
+        vm.Candidates.Should().ContainSingle().Which.HasFrameGeneration.Should().BeTrue();
+        vm.Candidates[0].IsSelected = true;
+
+        vm.GameFilter = b.Id;
+        vm.FrameGenerationFilter = YesNoFilter.All;
+        vm.TierFilter = CompareTierFilter.NotMeasured;
+        vm.Candidates.Should().HaveCount(2, "Beta's unmeasured session, and the ticked one, which a filter never hides");
+        vm.Candidates.Count(static c => c.IsSelected).Should().Be(1);
+        vm.SelectedCount.Should().Be(1);
+
+        vm.ClearSelectionCommand.Execute(null);
+        vm.SelectedCount.Should().Be(0);
+        vm.ClearFiltersCommand.Execute(null);
+        vm.Candidates.Should().HaveCount(4);
+        vm.Candidates.Single(static c => c.HasFrameGeneration is null).TierText.Should().Be(Strings.Tier_NotHooked);
+        vm.Candidates.Should().OnlyContain(static c => c.SettingsChangedText.Length > 0, "a dash where nothing changed — the column was blank");
+    }
 }

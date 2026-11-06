@@ -713,4 +713,27 @@ public sealed partial class PagesLoadTests
         seen.Windows.Should().Be(2);
         seen.AfterClose.Should().Equal([first], "a closed window is forgotten, and the next open builds a new one");
     }
+
+    /// <summary>
+    /// beta.34 (owner request 2026-11-06, D86): the selected page keeps its name in the pane. WPF UI's LeftFluent template
+    /// animates the label to height 0 when an item becomes active; ours is the same template without that.
+    /// </summary>
+    [Fact]
+    public async Task TheSelectedPaneItemKeepsItsLabel()
+    {
+        (double Height, double Opacity, double LabelHeight) seen = await OnStaAsync(() =>
+        {
+            var template = (System.Windows.Controls.ControlTemplate)System.Windows.Application.Current.FindResource("FlLeftFluentNavigationViewItemTemplate");
+            var item = new Wpf.Ui.Controls.NavigationViewItem { Content = "Compare", Template = template };
+            item.SetValue(Wpf.Ui.Controls.NavigationViewItem.IsActiveProperty, true);
+            Render(item);
+            var grid = (FrameworkElement)template.FindName("ContentGrid", item);
+            var label = (FrameworkElement)template.FindName("ElementContentPresenter", item);
+            return (grid.ActualHeight, grid.Opacity, label.ActualHeight);
+        });
+
+        seen.Height.Should().BeGreaterThan(0, "the label's row keeps its height while the item is selected");
+        seen.Opacity.Should().Be(1);
+        seen.LabelHeight.Should().BeGreaterThan(0);
+    }
 }

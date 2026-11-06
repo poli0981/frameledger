@@ -62,6 +62,36 @@
                            Icon="{ui:SymbolIcon Add24}" />
             </Grid>
 
+            <!-- beta.34 (owner request 2026-11-06, D85): the filters - store, engine, state, installed, played - beside the search
+                 and sort above; each list names its "everything" first, and the stores and engines are the library's own. -->
+            <WrapPanel Margin="0,12,0,0" Orientation="Horizontal"
+                       Visibility="{Binding ViewModel.IsEmpty, Converter={StaticResource InverseBoolToVis}}">
+                <ComboBox MinWidth="150" Margin="0,0,8,8" VerticalAlignment="Center"
+                          AutomationProperties.Name="{x:Static res:Strings.A11y_Games_Filter_Store}"
+                          DisplayMemberPath="Label" ItemsSource="{Binding ViewModel.Stores}"
+                          SelectedValue="{Binding ViewModel.StoreFilter, Mode=TwoWay}" SelectedValuePath="Value" />
+                <ComboBox MinWidth="170" Margin="0,0,8,8" VerticalAlignment="Center"
+                          AutomationProperties.Name="{x:Static res:Strings.A11y_Games_Filter_Engine}"
+                          DisplayMemberPath="Label" ItemsSource="{Binding ViewModel.Engines}"
+                          SelectedValue="{Binding ViewModel.EngineFilter, Mode=TwoWay}" SelectedValuePath="Value" />
+                <ComboBox MinWidth="150" Margin="0,0,8,8" VerticalAlignment="Center"
+                          AutomationProperties.Name="{x:Static res:Strings.A11y_Games_Filter_State}"
+                          DisplayMemberPath="Label" ItemsSource="{Binding ViewModel.States}"
+                          SelectedValue="{Binding ViewModel.StateFilter, Mode=TwoWay}" SelectedValuePath="Value" />
+                <ComboBox MinWidth="150" Margin="0,0,8,8" VerticalAlignment="Center"
+                          AutomationProperties.Name="{x:Static res:Strings.A11y_Games_Filter_Installed}"
+                          DisplayMemberPath="Label" ItemsSource="{Binding ViewModel.InstalledChoices}"
+                          SelectedValue="{Binding ViewModel.InstalledFilter, Mode=TwoWay}" SelectedValuePath="Value" />
+                <ComboBox MinWidth="150" Margin="0,0,8,8" VerticalAlignment="Center"
+                          AutomationProperties.Name="{x:Static res:Strings.A11y_Games_Filter_Played}"
+                          DisplayMemberPath="Label" ItemsSource="{Binding ViewModel.PlayedChoices}"
+                          SelectedValue="{Binding ViewModel.PlayedFilter, Mode=TwoWay}" SelectedValuePath="Value" />
+                <ui:Button Margin="0,0,0,8" VerticalAlignment="Center" Appearance="Secondary"
+                           Command="{Binding ViewModel.ClearFiltersCommand}"
+                           Content="{x:Static vm:GamesViewModel.ClearFiltersText}"
+                           Icon="{ui:SymbolIcon FilterDismiss24}" />
+            </WrapPanel>
+
             <ui:TextBlock Margin="0,16,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap"
                           Text="{x:Static vm:GamesViewModel.EmptyText}"
                           Visibility="{Binding ViewModel.IsEmpty, Converter={StaticResource BoolToVis}}" />

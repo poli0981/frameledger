@@ -35,8 +35,20 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **Filters on Games and Compare** (owner request 2026-11-06, decision D85). Games: store, engine, state, installed and
+  played, beside the search and sort, with *Clear filters*; the title counts what is shown of all. Compare: game, tier
+  and frame generation over every session (it listed the newest 200), with a count; a ticked session stays listed.
+
 ### Changed
 
+- **The Compare page's layout** (the owner's screenshot): the selection bar beside the list instead of a window's width
+  away, with *Clear selection*; columns sized to what they hold — *Tier* and *FPS* touched, and wide gaps split the rest —;
+  the date sorts by when; the settings-changed column says so in words or shows a dash (it was blank); the result
+  table's session labels sit over their columns.
+- **The selected page keeps its name in the left pane** (D86): WPF UI's pane animates the selected item's label away
+  (Compare's, in the screenshot — every page's while selected); FrameLedger uses a copy of its template without that.
 - **Games opens at once from any page** (owner request 2026-11-06: switching to Games stalled 0.5–1.5 s). The window
   keeps the library page it built and shows it again on every later visit, reading the library again behind it; the
   library is read off the UI thread; the cards appear before the executables are checked — a USB drive that sleeps

@@ -28,6 +28,12 @@ public sealed partial class GamesViewModel : ObservableObject
     private const string _listValue = "list";
     private const string _gridValue = "grid";
 
+    /// <summary>The store and engine filters' "everything" (beta.34, D85); no store or engine token is empty.</summary>
+    public const string AnyToken = "";
+
+    /// <summary>The engine filter's "not identified".</summary>
+    public const string UnknownEngineToken = "?";
+
     /// <summary>How many removed games one notice names; the rest are counted (<c>Games_Removed_More_Format</c>).</summary>
     private const int _removedNamed = 5;
 
@@ -70,6 +76,27 @@ public sealed partial class GamesViewModel : ObservableObject
     /// <summary>The list instead of the grid (<c>ui.library_view</c>); remembered when the user changes it.</summary>
     [ObservableProperty]
     private bool _listView;
+
+    /// <summary>beta.34 (D85): the store filter — a store token, or <see cref="AnyToken"/>.</summary>
+    [ObservableProperty]
+    private string _storeFilter = AnyToken;
+
+    /// <summary>beta.34 (D85): the engine filter — an engine id, <see cref="UnknownEngineToken"/>, or <see cref="AnyToken"/>.</summary>
+    [ObservableProperty]
+    private string _engineFilter = AnyToken;
+
+    [ObservableProperty]
+    private GamesStateFilter _stateFilter;
+
+    [ObservableProperty]
+    private YesNoFilter _installedFilter;
+
+    [ObservableProperty]
+    private YesNoFilter _playedFilter;
+
+    /// <summary>A filter or the search narrows the list; the header then counts what is shown of all.</summary>
+    [ObservableProperty]
+    private bool _isFiltered;
 
     /// <summary>What Play will do, in the mode Settings ▸ Games has now (beta.21, D59).</summary>
     [ObservableProperty]
@@ -132,6 +159,39 @@ public sealed partial class GamesViewModel : ObservableObject
 
     public ObservableCollection<GameCardViewModel> Games { get; } = [];
 
+    /// <summary>beta.34 (D85): the stores the library holds, "All stores" first — rebuilt when the library changes them.</summary>
+    public ObservableCollection<Choice<string>> Stores { get; } = [];
+
+    /// <summary>beta.34 (D85): the engines the library holds, "All engines" first, "Engine not identified" last when any is.</summary>
+    public ObservableCollection<Choice<string>> Engines { get; } = [];
+
+    /// <summary>The states, labelled in the language the page opened in, as the pills say them.</summary>
+    public IReadOnlyList<Choice<GamesStateFilter>> States { get; } =
+    [
+        new(GamesStateFilter.All, Strings.Games_Filter_State_All),
+        new(GamesStateFilter.HookingOn, Strings.Games_Card_HookOn),
+        new(GamesStateFilter.HookingOff, Strings.Games_Card_HookOff),
+        new(GamesStateFilter.AntiCheat, Strings.Games_Card_AntiCheat),
+        new(GamesStateFilter.Exception, Strings.Games_Card_Exception),
+        new(GamesStateFilter.NotRecorded, Strings.Games_Card_NotRecorded),
+    ];
+
+    public IReadOnlyList<Choice<YesNoFilter>> InstalledChoices { get; } =
+    [
+        new(YesNoFilter.All, Strings.Games_Filter_Installed_All),
+        new(YesNoFilter.Yes, Strings.Games_Filter_Installed_Yes),
+        new(YesNoFilter.No, Strings.Games_Card_NotInstalled),
+    ];
+
+    public IReadOnlyList<Choice<YesNoFilter>> PlayedChoices { get; } =
+    [
+        new(YesNoFilter.All, Strings.Games_Filter_Played_All),
+        new(YesNoFilter.Yes, Strings.Games_Filter_Played_Yes),
+        new(YesNoFilter.No, Strings.Games_Card_NeverPlayed),
+    ];
+
+    public static string ClearFiltersText => Strings.Filter_Clear;
+
     /// <summary>The load in flight, for a test to await.</summary>
     public Task Pending { get; private set; }
 
@@ -162,7 +222,7 @@ public sealed partial class GamesViewModel : ObservableObject
         // is on disk: a file-system question per entry that a sleeping drive answers in a second or more (39 of the owner's
         // 41 Steam games are on a USB drive), and no card was shown until every one had answered (spike-notes §27).
         _all = Merge(_all, cards);
-        HeaderText = string.Format(CultureInfo.CurrentCulture, Strings.Games_Header_Count_Format, _all.Count);
+        RefreshChoices();
         Apply();
 
         Func<string, bool> exists = _exists;
@@ -348,6 +408,82 @@ public sealed partial class GamesViewModel : ObservableObject
 
     partial void OnSortChanged(GamesSort value) => Apply();
 
+    partial void OnStoreFilterChanged(string value) => Apply();
+
+    partial void OnEngineFilterChanged(string value) => Apply();
+
+    partial void OnStateFilterChanged(GamesStateFilter value) => Apply();
+
+    partial void OnInstalledFilterChanged(YesNoFilter value) => Apply();
+
+    partial void OnPlayedFilterChanged(YesNoFilter value) => Apply();
+
+    /// <summary>beta.34 (D85): every filter back to everything; the search stays (it has its own box).</summary>
+    [RelayCommand]
+    private void ClearFilters()
+    {
+        StoreFilter = AnyToken;
+        EngineFilter = AnyToken;
+        StateFilter = GamesStateFilter.All;
+        InstalledFilter = YesNoFilter.All;
+        PlayedFilter = YesNoFilter.All;
+    }
+
+    /// <summary>
+    /// The store and engine choices from what the library holds — rebuilt only when that set changes, so an open list does not
+    /// lose its selection on every read. A filter whose store or engine left the library goes back to everything.
+    /// </summary>
+    private void RefreshChoices()
+    {
+        Choice<string>[] stores =
+        [
+            new(AnyToken, Strings.Games_Filter_Store_All),
+            .. _all.Select(static c => c.PlatformToken).Distinct(StringComparer.Ordinal)
+                .Select(static t => new Choice<string>(t, Formats.Platform(t) is { Length: > 0 } name ? name : Strings.Games_Filter_Store_Manual))
+                .OrderBy(static c => c.Label, StringComparer.CurrentCultureIgnoreCase),
+        ];
+        Choice<string>[] engines =
+        [
+            new(AnyToken, Strings.Games_Filter_Engine_All),
+            .. _all.Select(static c => c.EngineToken).OfType<string>().Distinct(StringComparer.Ordinal)
+                .Select(static t => new Choice<string>(t, Formats.Engine(t) is { Length: > 0 } name ? name : t))
+                .OrderBy(static c => c.Label, StringComparer.CurrentCultureIgnoreCase),
+            .. _all.Any(static c => c.EngineToken is null) ? new[] { new Choice<string>(UnknownEngineToken, Strings.Games_Filter_Engine_Unknown) } : Array.Empty<Choice<string>>(),
+        ];
+        Replace(Stores, stores);
+        Replace(Engines, engines);
+        if (!Stores.Any(c => string.Equals(c.Value, StoreFilter, StringComparison.Ordinal)))
+        {
+            StoreFilter = AnyToken;
+        }
+
+        if (!Engines.Any(c => string.Equals(c.Value, EngineFilter, StringComparison.Ordinal)))
+        {
+            EngineFilter = AnyToken;
+        }
+    }
+
+    private static void Replace(ObservableCollection<Choice<string>> target, Choice<string>[] wanted)
+    {
+        if (target.SequenceEqual(wanted))
+        {
+            return;
+        }
+
+        target.Clear();
+        foreach (Choice<string> choice in wanted)
+        {
+            target.Add(choice);
+        }
+    }
+
+    private bool Passes(GameCardViewModel c) =>
+        (StoreFilter.Length == 0 || string.Equals(c.PlatformToken, StoreFilter, StringComparison.Ordinal))
+        && (EngineFilter.Length == 0 || string.Equals(c.EngineToken ?? UnknownEngineToken, EngineFilter, StringComparison.Ordinal))
+        && (StateFilter == GamesStateFilter.All || c.State == StateFilter)
+        && InstalledFilter switch { YesNoFilter.Yes => !c.NotInstalled, YesNoFilter.No => c.NotInstalled, _ => true }
+        && PlayedFilter switch { YesNoFilter.Yes => c.SessionCount > 0, YesNoFilter.No => c.SessionCount == 0, _ => true };
+
     partial void OnListViewChanged(bool value)
     {
         if (_viewRead && _settings is not null)
@@ -421,7 +557,7 @@ public sealed partial class GamesViewModel : ObservableObject
 
     private void Apply()
     {
-        IEnumerable<GameCardViewModel> shown = _all;
+        IEnumerable<GameCardViewModel> shown = _all.Where(Passes);
         string q = Search.Trim();
         if (q.Length > 0)
         {
@@ -438,6 +574,11 @@ public sealed partial class GamesViewModel : ObservableObject
         Sync(Games, [.. shown]);
         IsEmpty = _all.Count == 0;
         NoMatch = _all.Count > 0 && Games.Count == 0;
+        IsFiltered = q.Length > 0 || StoreFilter.Length > 0 || EngineFilter.Length > 0 || StateFilter != GamesStateFilter.All
+            || InstalledFilter != YesNoFilter.All || PlayedFilter != YesNoFilter.All;
+        HeaderText = IsFiltered
+            ? string.Format(CultureInfo.CurrentCulture, Strings.Games_Header_Filtered_Format, Games.Count, _all.Count)
+            : string.Format(CultureInfo.CurrentCulture, Strings.Games_Header_Count_Format, _all.Count);
     }
 
     /// <summary>
