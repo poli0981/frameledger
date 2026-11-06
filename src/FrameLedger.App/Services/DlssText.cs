@@ -201,12 +201,13 @@ public static class DlssText
     }
 
     /// <summary>
-    /// The NVIDIA App's Dynamic frame generation ran in the session (beta.34, D83): DLSS Frame Generation was counted, the
+    /// The NVIDIA App's Dynamic frame generation ran in the session (beta.34, D83): DLSS Frame Generation was identified, the
     /// game's driver profile sets <c>NGX_DLSSG_MODE</c> to Dynamic, and the driver's frame-generation word reports the mode
     /// override applied in the game's process (<see cref="NgxOverrideFlags.FgMode"/>). The driver's own mode number —
     /// 3 under Dynamic and 1 under Fixed on every stored session (<c>spike-notes</c> §26) — is not what is read: NVIDIA's
     /// header names the profile's values and not the report's. A profile that sets Dynamic the driver never applied, or a
-    /// session where no DLSS Frame Generation was counted, is not evidence.
+    /// session where no DLSS Frame Generation was identified, is not evidence; a factor the count refused takes nothing
+    /// from it.
     /// </summary>
     private static bool DynamicFrameGeneration(SessionRow row) =>
         Is(row.FgMode, "dlssg")
