@@ -148,6 +148,25 @@ the detour and 0.14–0.19 ns on the present's feature byte (#358's body; NFR-1'
 
 **Owner-only:** item 30 — beta.34 on real hardware.
 
+### 0.1.0-alpha.3 — the third alpha, the same day (D87)
+
+`alpha` takes main at this pull request — `v0.1.0-beta.34` and these notes, no other change — by a merge commit, as
+`13_CI_CD` §The alpha line says. One file the switch holds moved on main — `legal/THIRD_PARTY_NOTICES.md`, its
+Streamline row (#358) — on a line the switch does not touch (the switch changes the *Transitive* row), so the merge
+takes both without a conflict (`git merge-tree` before the pull request); main's package set did not move, and the
+switch stays the first alpha's (SDK `11.0.100-rc.3.26522.148`, the three packages at `11.0.0-rc.3.26522.148`, the same
+NuGet licence texts) — the train reached it before .NET 11's release. Its gate on the 11 SDK must pass before the pull
+request into `alpha` is merged by
+hand (the branch has no auto-merge); the release runs from the signed tag `v0.1.0-alpha.3` on `alpha`, with its delta
+from alpha.2. Its notes are `docs/changelog/0.1.0-alpha.3.md`, which open with the experimental-build warning. It is
+the first alpha whose ledger moves (schema 22): the copy it makes first is the database as alpha.2 left it, and going
+back is to the newest beta, which opens schema 22.
+
+- **The next alpha moves to .NET 11's release**: from 2026-11-10 the switch is SDK `11.0.100` and the packages `11.0.0`,
+  and RC3 is out of support — move the alpha even if no beta comes.
+
+**Owner-only:** item 31 — the third alpha on real hardware.
+
 
 ## Owner-only — no PR can close these
 
@@ -372,6 +391,11 @@ the detour and 0.14–0.19 ns on the present's feature byte (#358's body; NFR-1'
    `Dlss_Basis_NeuralRendering_Format`, `Games_Filter_*`, `Games_Header_Filtered_Format`, `Filter_Clear`,
    `Compare_Filter_*`, `Compare_Count_Format`, `Compare_Count_Filtered_Format`, `Compare_ClearSelection`,
    `Compare_MidSession_Changed`, `A11y_Games_Filter_*`, `A11y_Compare_Filter_*`.
+31. **0.1.0-alpha.3 on real hardware** (D73, D87). (a) **The update from alpha.2**: Help ▸ Check for updates offers
+   alpha.3 and *Restart to update* installs it; say whether it downloaded the delta or the whole package. (b) The terms
+   window shows the Disclaimer 2.13, the Privacy Policy 2.14 and the Alpha notice with its box again, and Accept waits for
+   the tick. (c) `%LOCALAPPDATA%\FrameLedger\backups\ledger-before-0.1.0-alpha.3.db` exists beside alpha.2's, and opens;
+   the ledger it left is at schema 22. (d) Item 30's checks, on the alpha.
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
