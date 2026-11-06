@@ -35,80 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Added
-
-- **Filters on Games and Compare** (owner request 2026-11-06, decision D85). Games: store, engine, state, installed and
-  played, beside the search and sort, with *Clear filters*; the title counts what is shown of all. Compare: game, tier
-  and frame generation over every session (it listed the newest 200), with a count; a ticked session stays listed.
-
-### Changed
-
-- **The list of games FrameLedger has been run with is current again** (`docs/LIST_GAME_TESTED.md`, decision D35's
-  method): refreshed from a copy of the owner's database taken 2026-11-06 and reviewed by the owner — fifteen more
-  games measured hooked, among them Phantom Blade Zero under the NVIDIA App's *Dynamic* mode, Hogwarts Legacy loading
-  DLSS 5's runtime and the first two Xbox app games — and the sessions recorded without measurement or refused by the
-  guard since 2026-09-27. The guide's Settings page says a language change stays on Settings; the closed §S30 notes the
-  fifth Streamline id decoded (`docs/open-questions/closed-s.md`).
-- **The Compare page's layout** (the owner's screenshot): the selection bar beside the list instead of a window's width
-  away, with *Clear selection*; columns sized to what they hold — *Tier* and *FPS* touched, and wide gaps split the rest —;
-  the date sorts by when; the settings-changed column says so in words or shows a dash (it was blank); the result
-  table's session labels sit over their columns.
-- **The selected page keeps its name in the left pane** (D86): WPF UI's pane animates the selected item's label away
-  (Compare's, in the screenshot — every page's while selected); FrameLedger uses a copy of its template without that.
-- **Games opens at once from any page** (owner request 2026-11-06: switching to Games stalled 0.5–1.5 s). The window
-  keeps the library page it built and shows it again on every later visit, reading the library again behind it; the
-  library is read off the UI thread; the cards appear before the executables are checked — a USB drive that sleeps
-  took a second or more to answer, and no card was shown until every one had — and each card gets its *Not installed*
-  pill when its check answers; a read keeps every card that would look the same instead of rebuilding them all; the
-  list view builds only the rows on screen (`spike-notes` §27).
-- **Changing the language keeps the page you are on** — Settings, after a change made there. The App remembered only
-  the pages it opened from code, so the language changed on Settings came back on the last game page opened
-  (`src/FrameLedger.App/Services/ShellHost.cs`).
-- **DLSS 5 is named where the game ran it** (owner decision D84, amending D64). The owner's Hogwarts Legacy, Neural
-  Rendering on, loaded DLSS 5's runtime (`nvngx_dlssnr.dll` 310.9.16.0, from the game's folder) and the session could say
-  only *DLSS 5 runtime loaded* — nothing measured whether it ran. The Overlay's Streamline hook now decodes DLSS 5's
-  feature (`kFeatureDLSS_NR`, Streamline 2.14) into its own per-frame fact, and the Agent keeps the share of the frames
-  the game rendered through Streamline that carried it (`sessions.dlss_nr_pct`, **schema 0022** — a ledger this build
-  migrated no longer opens in an earlier one). Seen running, the DLSS line reads *DLSS 5 (neural rendering on 97.3% of
-  rendered frames)*, above every other generation; loaded and seen not running, *DLSS 5 runtime loaded, not seen
-  running*; where nothing could tell (an earlier Overlay, a title outside Streamline), *DLSS 5 runtime loaded*, as
-  before. Its library is listed with its version and source like the others, its Streamline plugin `sl.dlss_nr.dll`
-  is recorded when loaded, and a game shipping either file shows *Supports DLSS 5 Neural Rendering* (rules
-  `2026.11.2`, capability `dlss_nr`). The **Privacy Policy 2.14** names neural-rendering libraries among those whose
-  versions are read; the **Disclaimer 2.13**'s accuracy block says when DLSS 5 is named. One hook-path change: one more
-  compare in the `slEvaluateFeature` detour and one more test where a present is recorded (`spike-notes` §26).
-- **Streamline's headers are `v2.14.16`'s** (developers): the vendored copy was `v2.12.0`, byte for byte; three of its
-  eleven files change — `kFeatureDLSS_NR`, the uplift buffer types 70–72, `kStructVersion7`, the version — and
-  nothing FrameLedger consumed otherwise (`src/native/third_party/streamline/README.md`).
-- **A session under the NVIDIA App's *Dynamic* frame generation reads DLSS 4.5** (owner decision D83, amending D64).
-  Dynamic and its ×6 mode exist only in DLSS 4.5, and the DLSS line named a generation from the measured multiplier
-  alone: the owner's Phantom Blade Zero under *Dynamic, up to ×3* held ×2.0 and ×3.0 and read *DLSS 4 (a ×3.0
-  frame-generation state)*. It reads *DLSS 4.5 (Dynamic multi frame generation, set in the NVIDIA App)* where the game's
-  driver profile sets Dynamic, the driver reports its frame-generation override applied in the game's process, and DLSS
-  Frame Generation was counted; a state measured at ×5 or more still ranks first, and a *Fixed* multiplier names nothing
-  by itself (The Witcher 3 under Fixed ×6 still presented ×2.0). The game page's chip and the CSV's `# dlss:` line
-  (`basis=dynamic_frame_generation`) follow; the **Disclaimer 2.13** says so in its accuracy block
-  (`src/FrameLedger.Domain/Detection/DlssGeneration.cs`, `src/FrameLedger.App/Services/DlssText.cs`; `spike-notes` §26).
-- **The guard's source reads in order again** (developers only; no behaviour changes): the note that says what runs only
-  for a target the anti-cheat evaluation allowed sits above the function it describes again — beta.33's two isolation
-  checks had come between them — and names that isolation check among what runs
-  (`src/native/FrameLedger.Injector/src/fl_guard.cpp`).
-
-### Fixed
-
-- **An Xbox game's page no longer fails on a strange picture name** in the game's own `MicrosoftGame.config` (beta.33's):
-  a name that points at a stream of a file (`a:b.png`) made the search for its scaled variants throw — the page then
-  showed no picture and logged an error, and an action on the page that reloads it could end in the crash report. Such a
-  name is no picture a package ships, so it is passed over like a name outside the package
-  (`src/FrameLedger.Infrastructure/Art/XboxArtCache.cs`). Found by a self-review of #351 and #352 after their gates
-  passed; no install of the owner's eleven titles has such a name.
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.34` | 2026-11-06 | [`docs/changelog/0.1.0-beta.34.md`](docs/changelog/0.1.0-beta.34.md) |
 | `0.1.0-alpha.2` | 2026-11-03 | [`docs/changelog/0.1.0-alpha.2.md`](docs/changelog/0.1.0-alpha.2.md) |
 | `0.1.0-beta.33` | 2026-11-03 | [`docs/changelog/0.1.0-beta.33.md`](docs/changelog/0.1.0-beta.33.md) |
 | `0.1.0-alpha.1` | 2026-10-31 | [`docs/changelog/0.1.0-alpha.1.md`](docs/changelog/0.1.0-alpha.1.md) |

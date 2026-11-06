@@ -27,7 +27,8 @@ are `NvAPI_NGX_GetNGXOverrideState`'s, from `ngx_driver_words`. Bits: `0x1F` ini
 So the driver reports `FG_MODE` applied under both of the App's modes and its own mode number tells them apart — 3 under
 Dynamic, 1 under Fixed, on all sixteen sessions — but NVIDIA's header names neither number. **What D83 reads is the
 profile's value, which the header does name (4, `NGX_DLSSG_MODE_DYNAMIC`), with the report's `FG_MODE` bit as proof the
-driver applied it**, and DLSS Frame Generation counted in the session. The ceiling's decode (frames generated per
+driver applied it**, and DLSS Frame Generation identified in the session (`fg_mode = dlssg`, whether or not its factor
+was counted). The ceiling's decode (frames generated per
 rendered frame, `03_METRICS` §The mix) held: a ceiling of 5 reached ×6.0, a ceiling of 2 never passed ×3.0.
 
 **Decided (D83):** a session the driver reports running the App's Dynamic mode is **DLSS 4.5**, below a measured ×5 and
@@ -41,7 +42,7 @@ Session 132 (2026-11-06 13:56, hooked, attached, 141 s, Neural Rendering on in t
 `nvngx_dlssg.dll` 310.9.16.0 and Streamline 2.14.16 (`sl.interposer.dll`, `sl.common.dll`, `sl.dlss_g.dll`,
 `sl.reflex.dll`). The install ships the matching Streamline plugin, `Engine\Plugins\Runtime\Nvidia\StreamlineCore\
 Binaries\ThirdParty\Win64\sl.dlss_nr.dll` (402,048 bytes; `nvngx_dlssnr.dll` is 266,424,944), which no list asked about.
-The driver's super-resolution word read `0x80605` (created and evaluated, no override); the session counted DLSS Frame
+The driver's super-resolution word read `0x80605` (created and evaluated, no override); the session identified DLSS Frame
 Generation but refused a factor (non-uniform, ×1.97 overall); 140.2 FPS presented.
 
 What the App made of it: *DLSS · Super Resolution 310.9.16, from the game · … · DLSS 5 runtime loaded* — loaded, never

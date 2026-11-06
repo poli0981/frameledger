@@ -482,7 +482,7 @@ never the path), and the super-resolution preset the driver reports applied:
 |---|---|---|
 | Super-resolution render preset **L or M** that the NVIDIA driver reports applied, in a session where super resolution ran | DLSS 4.5 (2nd-gen transformer) | `ngx_driver_words` — the SR word's `PRESET` bit and `renderPreset`; presets L/M arrived with DLL 310.5.0 (NVIDIA's DLSS 4.5 release, driver 591.74) |
 | A DLSS Frame Generation state measured at **×5 or more** | DLSS 4.5 (Dynamic / 6× multi-frame generation) | `fg_mix` / `fg_factor` with `fg_mode = dlssg` |
-| The NVIDIA App's **Dynamic** frame generation — set in the game's profile and reported applied by the driver — in a session where DLSS Frame Generation was counted *(beta.34, owner decision D83)* | DLSS 4.5 (Dynamic multi frame generation, set in the NVIDIA App) | `driver_profile`'s `NGX_DLSSG_MODE` = 4 (dynamic), `ngx_driver_words`' FG word with `FG_MODE` (bit 13), `fg_mode = dlssg` |
+| The NVIDIA App's **Dynamic** frame generation — set in the game's profile and reported applied by the driver — in a session where DLSS Frame Generation was identified *(beta.34, owner decision D83)* | DLSS 4.5 (Dynamic multi frame generation, set in the NVIDIA App) | `driver_profile`'s `NGX_DLSSG_MODE` = 4 (dynamic), `ngx_driver_words`' FG word with `FG_MODE` (bit 13), `fg_mode = dlssg` |
 | Preset **J or K** reported applied | DLSS 4 (transformer) | as above |
 | A DLSS Frame Generation state at **×3 or ×4** | DLSS 4 (multi-frame generation) | as above |
 | `nvngx_dlss.dll` **2.x** | DLSS 2 | `runtime_modules` |
@@ -497,7 +497,8 @@ generation and its ×6 mode exist only in DLSS 4.5, so a session the driver repo
 multiplier the mode chose: the owner's Phantom Blade Zero under *Dynamic, up to ×3* held ×2.0 and ×3.0 — nine hooked sessions
 from 2026-11-03 to 11-05 — and read *DLSS 4 (a ×3.0 frame-generation state)* until then. The row needs all three: the
 profile's Dynamic (`NGX_DLSSG_MODE` = 4, NVIDIA's own name for the value), the driver's report that its frame-generation
-override applied in the game's process (the FG word's `FG_MODE` bit), and DLSS Frame Generation counted in the session —
+override applied in the game's process (the FG word's `FG_MODE` bit), and DLSS Frame Generation identified in the session
+(`fg_mode = dlssg`; its factor need not have been counted) —
 a profile set to Dynamic that the driver never applied is a setting, not evidence. The driver's own mode number is not
 read: it answers 3 under Dynamic and 1 under *Fixed* on every stored session (`spike-notes` §26), and NVIDIA's header
 names neither. A *Fixed* ×5 or ×6 is not this row — Witcher 3 under the App's Fixed ×6 still presented ×2.0 — and

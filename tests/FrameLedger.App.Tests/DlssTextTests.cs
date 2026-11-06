@@ -112,7 +112,8 @@ public sealed class DlssTextTests
     /// <summary>
     /// beta.34, owner decision D83: Phantom Blade Zero under the NVIDIA App's Dynamic frame generation, up to ×3, held ×2.0
     /// and ×3.0 and read "DLSS 4 (a ×3.0 frame-generation state)" — Dynamic exists only in DLSS 4.5. Evidence is the
-    /// profile's Dynamic AND the driver's report that the override applied AND DLSS Frame Generation counted.
+    /// profile's Dynamic AND the driver's report that the override applied AND DLSS Frame Generation identified — its
+    /// factor need not have been counted.
     /// </summary>
     [Fact]
     public void TheNvidiaAppsDynamicFrameGenerationTheDriverAppliedIsDlss45() => InEnglish(() =>
@@ -130,7 +131,10 @@ public sealed class DlssTextTests
         DlssText.Label(phantomBlade with { DriverProfileJson = _dynamicUpToThree.Replace("\"Value\":4,", "\"Value\":2,", StringComparison.Ordinal) })
             .Should().Be("DLSS 4 (a ×3.0 frame-generation state)", "Fixed is not Dynamic: Witcher 3 under Fixed ×6 still presented ×2.0");
         DlssText.Label(phantomBlade with { FgMode = "na", FgFactor = null, FgMixJson = null })
-            .Should().BeNull("no DLSS Frame Generation was counted");
+            .Should().BeNull("no DLSS Frame Generation was identified");
+        DlssText.Label(phantomBlade with { FgFactor = null, FgMixJson = null, FgRefusal = "non_uniform" })
+            .Should().Be("DLSS 4.5 (Dynamic multi frame generation, set in the NVIDIA App)",
+                "DLSS Frame Generation identified is the evidence; a factor the count refused takes nothing from it");
         DlssText.Label(phantomBlade with { NgxDriverWordsJson = null }).Should().Be("DLSS 4 (a ×3.0 frame-generation state)", "no driver report, no evidence");
         return 0;
     });
