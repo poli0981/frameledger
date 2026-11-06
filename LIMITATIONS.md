@@ -106,7 +106,9 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
   show neither the driver's report nor the NVIDIA App's mode. ([Metrics](docs/03_METRICS.md))
 - **Which DLSS ran** (since 0.1.0-beta.24) is named only from what the session showed: the model preset the NVIDIA
   driver reports (L or M: DLSS 4.5; J or K: DLSS 4), a measured multi-frame factor (×5 or ×6: DLSS 4.5; ×3 or ×4:
-  DLSS 4), or a library whose major version names one (2.x, 3.x). A 310 library with no such evidence shows its
+  DLSS 4), the NVIDIA App's *Dynamic* frame generation that the driver reports applied (DLSS 4.5, whatever multiplier
+  it chose — since 0.1.0-beta.34), or a library whose major version names one (2.x, 3.x). A *Fixed* ×5 or ×6 set in
+  the App names DLSS 4.5 only when the frames show it. A 310 library with no such evidence shows its
   version only. DLSS 5 is shown only as *runtime loaded*, by a library name not yet seen on a real game. Where each
   library was loaded from is read from its folder, for sessions recorded since 0.1.0-beta.24.
 - **Ray tracing** is *Yes*, *No* or *N/A* — measured from the game's ray-tracing calls on Direct3D 12, and

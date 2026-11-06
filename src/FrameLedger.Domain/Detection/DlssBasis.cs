@@ -17,4 +17,7 @@ public enum DlssBasis
 
     /// <summary>A loaded library's major version.</summary>
     LibraryVersion = 3,
+
+    /// <summary>The NVIDIA App's Dynamic frame generation, which the driver reported applied (beta.34, D83).</summary>
+    DynamicFrameGeneration = 4,
 }

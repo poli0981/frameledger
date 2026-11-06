@@ -53,6 +53,12 @@ public static class NvidiaDriverSettings
     /// <summary><c>NGX_DLSSG_MODE</c>: 0 not set (the default), 1 off, 2 on, 3 auto, 4 dynamic.</summary>
     public const uint DlssgMode = 0x10308298;
 
+    /// <summary>
+    /// <see cref="DlssgMode"/>'s <c>NGX_DLSSG_MODE_DYNAMIC</c> — the NVIDIA App's <i>Dynamic</i> frame generation, which
+    /// exists only in DLSS 4.5 (beta.34, D83).
+    /// </summary>
+    public const uint DlssgModeDynamic = 4;
+
     /// <summary><c>NGX_DLSSG_DYNAMIC_MULTI_FRAME_COUNT_MAX</c>: 0 off, else the dynamic mode's ceiling.</summary>
     public const uint DlssgDynamicMultiFrameCountMax = 0x10562D0F;
 

@@ -37,6 +37,15 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Changed
 
+- **A session under the NVIDIA App's *Dynamic* frame generation reads DLSS 4.5** (owner decision D83, amending D64).
+  Dynamic and its ×6 mode exist only in DLSS 4.5, and the DLSS line named a generation from the measured multiplier
+  alone: the owner's Phantom Blade Zero under *Dynamic, up to ×3* held ×2.0 and ×3.0 and read *DLSS 4 (a ×3.0
+  frame-generation state)*. It reads *DLSS 4.5 (Dynamic multi frame generation, set in the NVIDIA App)* where the game's
+  driver profile sets Dynamic, the driver reports its frame-generation override applied in the game's process, and DLSS
+  Frame Generation was counted; a state measured at ×5 or more still ranks first, and a *Fixed* multiplier names nothing
+  by itself (The Witcher 3 under Fixed ×6 still presented ×2.0). The game page's chip and the CSV's `# dlss:` line
+  (`basis=dynamic_frame_generation`) follow; the **Disclaimer 2.13** says so in its accuracy block
+  (`src/FrameLedger.Domain/Detection/DlssGeneration.cs`, `src/FrameLedger.App/Services/DlssText.cs`; `spike-notes` §26).
 - **The guard's source reads in order again** (developers only; no behaviour changes): the note that says what runs only
   for a target the anti-cheat evaluation allowed sits above the function it describes again — beta.33's two isolation
   checks had come between them — and names that isolation check among what runs

@@ -274,6 +274,7 @@ public static class Strings
         nameof(Display_Window_Format),
         nameof(Display_WindowOnMonitor_Format),
         nameof(Display_WindowOnMonitorHz_Format),
+        nameof(Dlss_Basis_Dynamic),
         nameof(Dlss_Basis_Factor_Format),
         nameof(Dlss_Basis_Library_Format),
         nameof(Dlss_Feature_FrameGeneration),
@@ -1682,6 +1683,8 @@ public static class Strings
     public static string Display_WindowOnMonitor_Format => ResourceManager.GetString(nameof(Display_WindowOnMonitor_Format), Culture) ?? nameof(Display_WindowOnMonitor_Format);
 
     public static string Display_WindowOnMonitorHz_Format => ResourceManager.GetString(nameof(Display_WindowOnMonitorHz_Format), Culture) ?? nameof(Display_WindowOnMonitorHz_Format);
+
+    public static string Dlss_Basis_Dynamic => ResourceManager.GetString(nameof(Dlss_Basis_Dynamic), Culture) ?? nameof(Dlss_Basis_Dynamic);
 
     public static string Dlss_Basis_Factor_Format => ResourceManager.GetString(nameof(Dlss_Basis_Factor_Format), Culture) ?? nameof(Dlss_Basis_Factor_Format);
 

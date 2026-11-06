@@ -18,6 +18,14 @@ namespace FrameLedger.Domain.Detection;
 /// model it runs is the preset's to say. Never a default preset inferred from a version.
 /// </para>
 /// <para>
+/// <b>The NVIDIA App's Dynamic frame generation is DLSS 4.5's</b> (beta.34, owner decision D83): Dynamic and the ×6 mode
+/// exist only in DLSS 4.5, so a session the driver reports running Dynamic is DLSS 4.5 even where the multiplier it chose
+/// stayed at ×3 — the owner's Phantom Blade Zero under "up to ×3" held ×2.0 and ×3.0 and read "DLSS 4" until then. It
+/// ranks below the ×5 state (a measured multiplier is stronger evidence than a setting the driver confirms) and above
+/// every DLSS 4 row. A Fixed multiplier the App sets is not this row: Witcher 3 under Fixed ×6 still presented ×2.0, so a
+/// Fixed ×5 or ×6 names DLSS 4.5 only where the frames show it.
+/// </para>
+/// <para>
 /// DLSS 5's neural rendering is not a generation of these features and is not in this table: a session states only that
 /// its runtime was loaded.
 /// </para>
@@ -38,6 +46,11 @@ public sealed record DlssGeneration(DlssGenerationKind Kind, DlssBasis Basis)
         if (evidence.LargestFrameGenerationFactor is >= 4.5)
         {
             return new DlssGeneration(DlssGenerationKind.Dlss45, DlssBasis.FrameGenerationFactor);
+        }
+
+        if (evidence.DynamicFrameGeneration)
+        {
+            return new DlssGeneration(DlssGenerationKind.Dlss45, DlssBasis.DynamicFrameGeneration);
         }
 
         if (evidence.Preset is 10 or 11)

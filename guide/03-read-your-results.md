@@ -19,7 +19,8 @@ A value FrameLedger could not measure reads **N/A** — never 0, and never an es
   settled. For FSR it is the mode the game asked AMD's library about and then rendered at; at a dynamic resolution
   none is shown.
 - **The DLSS line** names the DLSS the game ran: *DLSS 4.5* or *DLSS 4* only when the session showed it (the model
-  preset the NVIDIA driver reports, or a frame-generation multiplier of ×3 and above), each DLSS library's version and
+  preset the NVIDIA driver reports, a frame-generation multiplier of ×3 and above, or the NVIDIA App's *Dynamic* frame
+  generation, which is DLSS 4.5's), each DLSS library's version and
   whether it came from the game or from the graphics driver (the NVIDIA App can swap in the driver's copy), and *DLSS 5
   runtime loaded* when it was. With nothing to add to the header's *DLSS*, it is not shown.
 - **Frame generation in this session** (sessions recorded with 0.1.0-beta.24 or later) lists every frame-generation

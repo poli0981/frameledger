@@ -464,6 +464,7 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D80 | [`08_UI.md`](08_UI.md) §Games | Play on an Xbox game always activates its package, in both modes; the Agent answers `PackagedGame` and records it in attach mode |
 | D81 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §G | title lists stay keyed by Steam id; an Xbox copy is matched by everything but that entry |
 | D82 | [`HANDOFF.md`](HANDOFF.md) §START HERE | alpha.2 right after beta.33; on RC3 unless the train reaches it after .NET 11 ships (then SDK 11.0.100, packages 11.0.0) |
+| D83 | [`05_DETECTION.md`](05_DETECTION.md) §DLSS generation | the NVIDIA App's Dynamic frame generation, reported applied by the driver in a session that counted DLSS Frame Generation, is DLSS 4.5 (amends D64) |
 
 ---
 
