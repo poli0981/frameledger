@@ -43,6 +43,12 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Changed
 
+- **The list of games FrameLedger has been run with is current again** (`docs/LIST_GAME_TESTED.md`, decision D35's
+  method): refreshed from a copy of the owner's database taken 2026-11-06 and reviewed by the owner — fifteen more
+  games measured hooked, among them Phantom Blade Zero under the NVIDIA App's *Dynamic* mode, Hogwarts Legacy loading
+  DLSS 5's runtime and the first two Xbox app games — and the sessions recorded without measurement or refused by the
+  guard since 2026-09-27. The guide's Settings page says a language change stays on Settings; the closed §S30 notes the
+  fifth Streamline id decoded (`docs/open-questions/closed-s.md`).
 - **The Compare page's layout** (the owner's screenshot): the selection bar beside the list instead of a window's width
   away, with *Clear selection*; columns sized to what they hold — *Tier* and *FPS* touched, and wide gaps split the rest —;
   the date sorts by when; the settings-changed column says so in words or shows a dash (it was blank); the result

@@ -363,7 +363,8 @@ an alpha's release has to find — #350's lookup, by the name the pack lists. It
    `Art_Source_Xbox`, `Import_NothingFound`, `FirstRun_Import_Body`, `Settings_GameArt_Body`, `Play_Xbox_Format`,
    `Play_Xbox_NotStarted_Format`, `Play_PackagedGame_Format`, `Play_ToolTip_Store`, `Play_ToolTip_Direct`,
    `Settings_PlayMode_Body`, `Guard_TargetAppContainer`, `Guard_TargetMitigation`. Then
-   `docs/LIST_GAME_TESTED.md` gains the Xbox titles from a ledger copy (D35), approved before the commit.
+   `docs/LIST_GAME_TESTED.md` gains the Xbox titles from a ledger copy (D35), approved before the commit. *(2026-11-06,
+   beta.34: done — inKONBINI and Valor Mortis, with the refresh the owner approved with the plan.)*
 29. **0.1.0-alpha.2 on real hardware** (D73, D82). (a) **The update from alpha.1**: Help ▸ Check for updates offers
    alpha.2 — the first update an alpha's updater has found — and *Restart to update* installs it; say whether it
    downloaded the delta or the whole package. (b) The terms window shows the Privacy Policy 2.13 and the Alpha notice

@@ -121,6 +121,15 @@ rather than of an instance.
 > `spike-notes` §8 and §H5 — so item 3's counter has nothing to count on this route. That is
 > a separate finding with its own consequences for HANDOFF item 3, and it does not belong to
 > this entry.
+>
+> **2026-11-06 (beta.34, D84): a fifth id is decoded, and not by guess.** `kFeatureDLSS_NR` (1004),
+> DLSS 5's neural rendering, comes from Streamline `v2.14.16`'s own `sl_core_types.h`, re-vendored for it
+> (`src/native/third_party/streamline/README.md`) — row O4's warning holds: no id is mapped from a number seen
+> arriving. Until then an evaluation of it fell to `FL_FEAT_SL_UNDECODED`, which the Agent does not store. It
+> is its own fact (`FL_FEAT_SL_NEURAL_RENDERING`, from the drain word, never from the decoded `upscaler`
+> byte — the rule above), never an upscaler; the census counts it in a bucket of its own
+> (`SlCensus.WithNeuralRendering`), so the buckets still add up. Whether a real game evaluates it through
+> `slEvaluateFeature` is owner-only item 30(a), with its table in `spike-notes` §26.
 
 <details>
 <summary>The entry as it stood while it was open, including the pre-committed table with its two holes</summary>
