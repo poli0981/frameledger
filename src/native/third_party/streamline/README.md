@@ -1,7 +1,8 @@
 # NVIDIA Streamline headers (vendored)
 
-Copied from <https://github.com/NVIDIA-RTX/Streamline>, `main`, on 2026-08-09.
-**Headers only. No `.lib`, no `.dll`, no source, and deliberately not the whole
+Copied from <https://github.com/NVIDIA-RTX/Streamline>, `main`, on 2026-08-09 — which was tag `v2.12.0`, byte for byte —
+and **re-vendored at tag `v2.14.16` on 2026-11-06** (beta.34, the owner: "check what changed in recent Streamline
+versions and fix it if really needed"). **Headers only. No `.lib`, no `.dll`, no source, and deliberately not the whole
 `include/` directory** — see §What is here, and what is not.
 
 **Licence:** MIT. `license.txt` is the upstream file, verbatim, and it opens with
@@ -18,6 +19,24 @@ the index blob is CRLF too, so unlike the NVAPI case — where upstream is LF an
 `.gitattributes` normalisation was the thing that needed explaining — no
 transformation happens here in either direction. The bytes under version control
 are the upstream bytes.
+
+## 2026-11-06: v2.12.0 → v2.14.16, and why
+
+Compared with the upstream tags through GitHub's API, all eleven files byte for byte: the copy of 2026-08-09 equals
+`v2.12.0`; `v2.14.16` (2026-10-16) — the Streamline that Hogwarts Legacy ships and the NVIDIA App's DLSS override loads
+— changes three of them, and the three are now its bytes (CRLF, as upstream):
+
+- `sl_core_types.h` — **`kFeatureDLSS_NR = 1004`**, DLSS 5's neural rendering, which the Overlay's `slEvaluateFeature`
+  detour now decodes (`spike-notes` §26, owner decision D84); buffer types 70–72, reserved until then, become
+  `kBufferTypeUpliftInputColor`, `kBufferTypeUpliftOutputColor` and `kBufferTypeUpliftControlMask` (the tag census still
+  counts them as *other*); `Resource::reserved` (32 bits) becomes `internalFlags` + `reserved` (16 bits each — the
+  struct's size is unchanged, and nothing here reads either).
+- `sl_struct.h` — `kStructVersion7`.
+- `sl_version.h` — 2.14.16, so `kSDKVersion` is 2.14.16's: the dev probe `tools/fl-probe-interposer` passes it to `slInit`.
+
+`sl.h`, `sl_core_api.h` (`PFun_slEvaluateFeature` — `hookinventory-check` Pass A's signature), `sl_dlss.h` and
+`license.txt` are identical in both tags, and the closure is still the same ten headers. Re-checked on the new bytes:
+no `throw`, `try` or `catch` in code (one "try" in a comment), and none of the four licence needles.
 
 ## Why this could be vendored at all
 

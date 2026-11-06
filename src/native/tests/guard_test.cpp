@@ -5339,6 +5339,95 @@ TEST_CASE("an upscaler the Overlay cannot identify is UNKNOWN, never NONE", "[gu
     CHECK(undecoded == static_cast<int>(all.size()));
     CHECK(superResolution == 0);
 
+    // And 0xF00D is not DLSS 5 either (beta.34): the neural-rendering fact belongs to kFeatureDLSS_NR alone.
+    int neural = 0;
+    for (const auto& r : all) {
+        if ((r.featureFlags & fl::FL_FEAT_SL_NEURAL_RENDERING) != 0u) {
+            ++neural;
+        }
+    }
+    CHECK(neural == 0);
+
+    UnmapViewOfFile(base);
+    CloseHandle(mapping);
+}
+
+TEST_CASE("DLSS 5's neural rendering is its own fact, never an undecoded id and never an upscaler",
+          "[guard][inject][shm][upscaler]") {
+    // beta.34, owner decision D84. The target evaluates kFeatureDLSS_NR (1004, Streamline 2.14's sl_core_types.h) once
+    // per present. Until this build the id fell to FL_SL_SEEN_OTHER, and the owner's Hogwarts Legacy -- DLSS 5's
+    // runtime loaded, Neural Rendering on -- could only be said to have LOADED it. Three things are asserted, each by
+    // count: the fact on every record; UNDECODED on none (the id is decoded now); and the upscaler UNKNOWN, as for any
+    // id that names no upscaler -- neural rendering is not one, and naming DLSS for it would be the decode inventing an
+    // answer. And the family the Agent keys the session's share on is published with the detour, so a measured 0 % can
+    // only come from a writer that looked.
+    Child        child;
+    std::wstring cmd = std::wstring(L"\"") + FL_HARNESS_EXE + L"\" --real --hold-presenting-upscaled-nr 12";
+    STARTUPINFOW si{};
+    si.cb = sizeof(si);
+    REQUIRE(CreateProcessW(FL_HARNESS_EXE, cmd.data(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW, nullptr, nullptr, &si,
+                           &child.pi));
+    Sleep(800);
+    REQUIRE(WaitForSingleObject(child.pi.hProcess, 0) == WAIT_TIMEOUT);
+
+    ResetFake();
+    g.modules = {"kernel32.dll"};
+    g.scanSet = {child.pi.dwProcessId};
+    REQUIRE(GuardedInjectWithSources(child.pi.dwProcessId, FL_OVERLAY_DLL, FakeSources()).Allowed());
+
+    wchar_t name[128]{};
+    REQUIRE(_snwprintf_s(name, _TRUNCATE, L"Local\\FrameLedger.Ring.%lu", child.pi.dwProcessId) > 0);
+    HANDLE mapping = nullptr;
+    for (int i = 0; i < 100 && mapping == nullptr; ++i) {
+        mapping = OpenFileMappingW(FILE_MAP_READ, FALSE, name);
+        if (mapping == nullptr) {
+            Sleep(50);
+        }
+    }
+    REQUIRE(mapping != nullptr);
+    const void* base = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
+    REQUIRE(base != nullptr);
+
+    const auto* st =
+        reinterpret_cast<const fl::FlWriterState*>(static_cast<const unsigned char*>(base) + FL_SHM_WRITER_OFFSET);
+    REQUIRE(WaitForIdentityHook(st));
+    CHECK((st->hooksInstalledMask & static_cast<uint32_t>(fl::FL_HOOK_SL_NEURAL_RENDERING)) != 0u);
+
+    fl::RingReader rd;
+    REQUIRE(rd.Init(base, FL_SHM_DEFAULT_CAPACITY));
+    DiscardBacklog(rd);
+    const std::vector<fl::FlFrameRecord> all = DrainAtLeast(rd, 40, 8000);
+    REQUIRE(all.size() > 20);
+
+    int neural = 0;
+    int observed = 0;
+    int undecoded = 0;
+    int superResolution = 0;
+    int unknown = 0;
+    for (const auto& r : all) {
+        if ((r.featureFlags & fl::FL_FEAT_SL_NEURAL_RENDERING) != 0u) {
+            ++neural;
+        }
+        if ((r.featureFlags & fl::FL_FEAT_RAY_RECONSTRUCTION_OBSERVED) != 0u) {
+            ++observed;
+        }
+        if ((r.featureFlags & fl::FL_FEAT_SL_UNDECODED) != 0u) {
+            ++undecoded;
+        }
+        if ((r.featureFlags & fl::FL_FEAT_SL_SUPER_RESOLUTION) != 0u) {
+            ++superResolution;
+        }
+        if (r.upscaler == fl::FL_UPSCALER_UNKNOWN) {
+            ++unknown;
+        }
+    }
+    CHECK(neural == static_cast<int>(all.size()));      // one evaluation per present, so every record
+    CHECK(observed == static_cast<int>(all.size()));    // under the condition every Streamline fact shares
+    CHECK(undecoded == 0);                              // decoded now -- not "an id we do not know"
+    CHECK(superResolution == 0);                        // and not a super-resolution id
+    CHECK(unknown == static_cast<int>(all.size()));     // neural rendering names no upscaler
+    CHECK(st->faultCount == 0);
+
     UnmapViewOfFile(base);
     CloseHandle(mapping);
 }
@@ -5533,8 +5622,11 @@ TEST_CASE("application-frame tokens are COUNTED, and the count tracks the fixtur
         // UPSCALER_PARAMS is in the expected set because the stub exports slSetTag as
         // well, so the watchdog installs BOTH inventory rows regardless of whether
         // this fixture ever calls the second one. Installing is what the mask records.
+        // SL_NEURAL_RENDERING since beta.34 (D84): the evaluate row's compound family
+        // carries it, published with the detour, so a writer that could see DLSS 5 says so.
         CHECK(obs.hooks == static_cast<std::uint32_t>(fl::FL_HOOK_PRESENT | fl::FL_HOOK_UPSCALER_IDENTITY |
-                                                      fl::FL_HOOK_UPSCALER_PARAMS | fl::FL_HOOK_FG_EVALUATIONS));
+                                                      fl::FL_HOOK_UPSCALER_PARAMS | fl::FL_HOOK_FG_EVALUATIONS |
+                                                      fl::FL_HOOK_SL_NEURAL_RENDERING));
 
         // THE CENSUS SEES THE STUB BY NAME. The interposer stub is loaded by absolute
         // path and is still called sl.interposer.dll, so the loader answers yes for

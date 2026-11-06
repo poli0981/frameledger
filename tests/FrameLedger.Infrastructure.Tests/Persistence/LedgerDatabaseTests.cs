@@ -305,6 +305,45 @@ public sealed class LedgerDatabaseTests
     }
 
     /// <summary>
+    /// Schema 0022 (2026-11-06, beta.34, D84): <c>sessions.dlss_nr_pct</c>, DLSS 5's neural rendering measured — ADD COLUMN
+    /// only; a session written before has none, and is not rebuilt (its frames keep no feature byte).
+    /// </summary>
+    [Fact]
+    public async Task ScriptTwentyTwoAddsTheNeuralRenderingColumnAndAnEarlierSessionHasNone()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(22);
+        long gameId = (await new SqliteGameRepository(f.Db).EnsureAsync(
+            new() { ExePath = @"C:\Games\H\h.exe", SizeBytes = 1, MtimeUnixMs = 2 }, "H", Ct).ConfigureAwait(true)).Id;
+        long snapshotId = await new SqliteHardwareSnapshotRepository(f.Db).EnsureAsync(new HardwareSnapshot { GpuName = "g" }, DateTimeOffset.UnixEpoch, Ct)
+            .ConfigureAwait(true);
+        string path = f.Path;
+        await f.Db.DisposeAsync().ConfigureAwait(true);
+        var c21 = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        await using (c21.ConfigureAwait(true))
+        {
+            await c21.OpenAsync(Ct).ConfigureAwait(true);
+            await RewindToAsync(c21, 21).ConfigureAwait(true);
+            await c21.ExecuteAsync(new CommandDefinition(
+                "INSERT INTO sessions (session_guid, game_id, snapshot_id, started_at, ended_at, duration_s, qpc_epoch, qpc_frequency, capture_tier, capture_mode, exit_status, frame_count, app_frame_count, displayed_frame_count, dropped_frames, runtime_modules) "
+                + "VALUES ('00000000-0000-0000-0000-000000000022', @gameId, @snapshotId, 0, 60000, 60, 0, 10000000, 1, 'attach', 'normal', 6000, 6000, 6000, 0, '{\"nvngx_dlssnr.dll\":\"310,9,16,0\"}')",
+                new { gameId, snapshotId }, cancellationToken: Ct)).ConfigureAwait(true);
+        }
+
+        LedgerDatabase migrated = await LedgerDatabase.OpenAsync(path, ct: Ct).ConfigureAwait(true);
+        await using (migrated.ConfigureAwait(true))
+        {
+            migrated.SchemaVersion.Should().Be(MigrationRunner.LatestVersion);
+            IReadOnlyList<string> added = await migrated.ReadAsync(async (c, ct) => (IReadOnlyList<string>)[.. await c.QueryAsync<string>(new CommandDefinition(
+                "SELECT name FROM pragma_table_info('sessions') WHERE name = 'dlss_nr_pct' AND type = 'REAL'", cancellationToken: ct)).ConfigureAwait(false)], Ct).ConfigureAwait(true);
+            added.Should().ContainSingle();
+            SessionRow before = (await new SqliteSessionRepository(migrated).FindAsync(Guid.Parse("00000000-0000-0000-0000-000000000022"), Ct).ConfigureAwait(true))!;
+            before.RuntimeModulesJson.Should().Be("{\"nvngx_dlssnr.dll\":\"310,9,16,0\"}", "the row keeps everything it had");
+            before.DlssNrPct.Should().BeNull("a session recorded before beta.34 says only that DLSS 5's runtime was loaded");
+        }
+    }
+
+    /// <summary>
     /// Schema 0017 (2026-10-03, beta.11, D38): <c>games.ac_exception_trial_failed_at</c>, NULL on every row written before — a
     /// grant made under D33 keeps everything it had and carries no failed trial.
     /// </summary>

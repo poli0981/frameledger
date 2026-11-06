@@ -3134,6 +3134,14 @@ int main(int argc, char** argv) {
                                         slTagWholeResource, slTagDlssgInputs) == 0 &&
                  ok;
             ranSomething = true;
+        } else if (std::strcmp(argv[i], "--hold-presenting-upscaled-nr") == 0 && i + 1 < argc) {
+            // The SAME target, evaluating DLSS 5's neural rendering (kFeatureDLSS_NR, Streamline 2.14 -- beta.34, D84)
+            // once per present. It is not an upscaler: the record must say UNKNOWN for the upscaler, as for any id
+            // that names none, and carry FL_FEAT_SL_NEURAL_RENDERING rather than FL_FEAT_SL_UNDECODED.
+            ok = HoldPresentingUpscaled(g, std::atoi(argv[++i]), real, sl::kFeatureDLSS_NR, slTagForFrame,
+                                        slTagWholeResource, slTagDlssgInputs) == 0 &&
+                 ok;
+            ranSomething = true;
         } else if (std::strcmp(argv[i], "--probe-upscaler-resolve") == 0) {
             ok = ProbeUpscalerResolve() && ok;
             ranSomething = true;

@@ -20,4 +20,7 @@ public enum DlssBasis
 
     /// <summary>The NVIDIA App's Dynamic frame generation, which the driver reported applied (beta.34, D83).</summary>
     DynamicFrameGeneration = 4,
+
+    /// <summary>DLSS 5's neural rendering, seen evaluated on some of the session's frames (beta.34, D84).</summary>
+    NeuralRendering = 5,
 }

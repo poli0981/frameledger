@@ -303,6 +303,33 @@ public sealed class SessionAggregatorTests
         row.Upscaler.Should().Be("unknown", "a hook ran and could not identify what it saw: coverage short, not N/A");
     }
 
+    /// <summary>
+    /// beta.34, owner decision D84: DLSS 5's neural rendering is stored as its share of the Streamline batches — and only
+    /// from a writer whose detour decodes it (<see cref="FlHookFamily.SlNeuralRendering"/>). An Overlay built before it
+    /// drains the same batches and never sets the bit; storing its silence as 0 % would be a measured "not running" nobody
+    /// measured.
+    /// </summary>
+    [Fact]
+    public void NeuralRenderingIsAShareOfTheBatchesOnlyFromAWriterThatDecodesIt()
+    {
+        List<FlFrameRecord> records = SessionFixtures.Stream(400, _presentOnly | FlMeasured.Upscaler);
+        for (int i = 0; i < records.Count; i++)
+        {
+            FlFrameRecord r = records[i];
+            r.FeatureFlags = (byte)(FlFeatureFlags.RayReconstructionObserved | (i % 4 == 0 ? FlFeatureFlags.None : FlFeatureFlags.SlNeuralRendering));
+            records[i] = r;
+        }
+
+        const uint decodes = (uint)(FlHookFamily.Present | FlHookFamily.UpscalerIdentity | FlHookFamily.SlNeuralRendering);
+        SessionRow row = SessionAggregator.Aggregate(SessionFixtures.Skeleton(),
+            SessionFixtures.Hooked(records, new FlWriterState { Status = 1, HooksInstalledMask = decodes })).Row;
+        row.DlssNrPct.Should().BeApproximately(75, 0.01);
+
+        SessionRow older = SessionAggregator.Aggregate(SessionFixtures.Skeleton(),
+            SessionFixtures.Hooked(records, new FlWriterState { Status = 1, HooksInstalledMask = decodes & ~(uint)FlHookFamily.SlNeuralRendering })).Row;
+        older.DlssNrPct.Should().BeNull("a writer built before it could look says nothing, never 0 %");
+    }
+
     [Fact]
     public void RayTracingVramLatencyAndSensorsAggregateWhereMeasured()
     {

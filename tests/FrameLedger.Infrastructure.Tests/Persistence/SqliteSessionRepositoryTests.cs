@@ -108,6 +108,7 @@ public sealed class SqliteSessionRepositoryTests
         ThermalLimitPct = 2.5,
         AppFramesPerJoule = 0.3125,
         RuntimeModuleSourcesJson = "{\"nvngx_dlss.dll\":\"graphics_driver\"}",
+        DlssNrPct = 97.25,
         FgMixJson = "{\"Rows\":[{\"Kind\":\"generated\",\"Factor\":3.99,\"NativeFps\":70.5,\"DisplayedFps\":281.3,\"Seconds\":120,\"Share\":0.75,\"Windows\":24}]}",
     };
 

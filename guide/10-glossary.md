@@ -18,6 +18,7 @@ What the words on FrameLedger's screens mean, in alphabetical order. How each fi
 - **DLSS 4, DLSS 4.5** — NVIDIA's DLSS generations. FrameLedger names one only when the session shows it: the model
   preset the NVIDIA driver reports, a frame-generation multiplier of ×3 and above, or the NVIDIA App's *Dynamic*
   frame generation (DLSS 4.5 only).
+- **DLSS 5** — NVIDIA's neural rendering. Named only when the game was seen running it (since 0.1.0-beta.34).
 - **FG factor** — Displayed FPS divided by Native FPS, shown as `×1.9 FG`.
 - **FPS** — frames per second over the time measured.
 - **Frame generation** — the technology (DLSS Frame Generation, FSR Frame Generation) that inserts frames the game did

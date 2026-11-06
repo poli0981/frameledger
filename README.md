@@ -45,7 +45,8 @@ pages.
 > - **DLSS version:** the version of each DLSS library the game loaded and whether it came from the game or from
 >   the NVIDIA driver; "DLSS 4" or "DLSS 4.5" only when the session shows it (the model preset the driver reports,
 >   a measured multi-frame factor, or the NVIDIA App's Dynamic frame generation that the driver reports applied);
->   DLSS 5 only as "runtime loaded".
+>   "DLSS 5" only when the game was seen running its neural rendering, otherwise "runtime loaded" when its library was
+>   loaded.
 > - **Render → output resolution:** measured where the vendor's own per-frame call carries the render
 >   size (AMD FidelityFX dispatches, and Streamline titles whose resource tags state it); `N/A` where it
 >   does not: DLSS titles that bypass Streamline, Streamline titles whose tags carry no size, and Vulkan

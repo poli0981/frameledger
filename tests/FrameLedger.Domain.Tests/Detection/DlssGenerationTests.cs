@@ -57,6 +57,23 @@ public sealed class DlssGenerationTests
             .Should().Be(new DlssGeneration(DlssGenerationKind.Dlss4, DlssBasis.FrameGenerationFactor), "without Dynamic a ×3 state is DLSS 4's");
     }
 
+    /// <summary>
+    /// beta.34, owner decision D84: DLSS 5 heads the table where its neural rendering was measured running, above every
+    /// other row — the session's other DLSS features are the libraries the line lists after it. Measured not running, or
+    /// not measurable, it names nothing.
+    /// </summary>
+    [Fact]
+    public void Dlss5IsTheGenerationWhereItsNeuralRenderingRanAndNowhereElse()
+    {
+        DlssGeneration.Of(new DlssEvidence(_dlss4Library, _dlss4Library, 12, 6.0, DynamicFrameGeneration: true, NeuralRenderingPct: 97.3))
+            .Should().Be(new DlssGeneration(DlssGenerationKind.Dlss5, DlssBasis.NeuralRendering), "it outranks every DLSS 4.5 row");
+        DlssGeneration.Of(new DlssEvidence(_dlss4Library, _dlss4Library, null, null, NeuralRenderingPct: 0.4))
+            .Should().Be(new DlssGeneration(DlssGenerationKind.Dlss5, DlssBasis.NeuralRendering), "running on any frame is running");
+        DlssGeneration.Of(new DlssEvidence(_dlss4Library, _dlss4Library, null, null, NeuralRenderingPct: 0)).Should().BeNull("seen not running");
+        DlssGeneration.Of(new DlssEvidence(_dlss4Library, _dlss4Library, 12, null, NeuralRenderingPct: 0))
+            .Should().Be(new DlssGeneration(DlssGenerationKind.Dlss45, DlssBasis.Preset), "without it, the rest of the table speaks");
+    }
+
     [Fact]
     public void ALibraryVersionNamesAGenerationOnlyWhereItsMajorNumberDoes()
     {

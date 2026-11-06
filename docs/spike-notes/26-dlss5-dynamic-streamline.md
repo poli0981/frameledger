@@ -66,3 +66,19 @@ App's override loads (`1B0_E658700.dll` 2.14.16.0). From `v2.12.0` to `v2.14.16`
 `sl_core_api.h` (`PFun_slEvaluateFeature`), `sl_dlss.h`, `sl.h` and `license.txt` are unchanged, and nothing of
 FrameLedger reads `Resource::reserved`. **Decided:** re-vendor at `v2.14.16` (the owner: "check what changed … and fix it
 if really needed") so the Overlay decodes DLSS 5's evaluations by the vendor's own constant (D84).
+
+### What beta.34 builds on it, and owner-only item 30(a)'s decision table — written before the run
+
+Built (D84): the Overlay decodes `kFeatureDLSS_NR` into `FL_FEAT_SL_NEURAL_RENDERING` and publishes
+`FL_HOOK_SL_NEURAL_RENDERING` with the detour; the Agent stores `dlss_nr_pct` — the share of the Streamline batches that
+carried it — only from a writer that published the family. The harness drives the id through an injected Overlay
+(`guard_test`, *DLSS 5's neural rendering is its own fact*). What no fixture can say is whether Hogwarts Legacy evaluates
+neural rendering through `slEvaluateFeature` at all; one short hooked session each:
+
+| Neural Rendering in the game | `dlss_nr_pct` | What it means, and what follows |
+|---|---|---|
+| On | above 0 | the game evaluates it through Streamline: *DLSS 5 (neural rendering on N % of rendered frames)* — D84 holds as built |
+| On | 0 | Streamline batches drained and none carried 1004: neural rendering runs another way (NGX directly, or another id). The line reads *runtime loaded, not seen running*; record the session's `sl_tag_census`, and the decode is revisited before anything is named |
+| On | NULL | no Streamline batch drained, or the family is missing from `hooks_installed_mask` (bit 12): the detour never installed — record which |
+| Off | 0, the runtime loaded | the runtime loads with the feature off: "loaded" never meant "on", which is why D84 waits for the evaluation |
+| Off | NULL, the runtime not loaded | the game loads it only when on — recorded, nothing changes |

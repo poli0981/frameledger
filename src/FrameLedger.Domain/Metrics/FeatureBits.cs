@@ -27,4 +27,10 @@ public enum FeatureBits
     RayReconstructionObserved = 1 << 4,
     ReflexObserved = 1 << 5,
     SlUndecodedObserved = 1 << 6,
+
+    /// <summary>
+    /// DLSS 5's neural rendering was evaluated (beta.34, D84) — a fact whose OBSERVED is <see cref="RayReconstructionObserved"/>,
+    /// read only from a writer that published <see cref="HookFamilies.SlNeuralRendering"/>.
+    /// </summary>
+    SlNeuralRendering = 1 << 7,
 }

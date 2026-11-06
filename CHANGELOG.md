@@ -37,6 +37,22 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Changed
 
+- **DLSS 5 is named where the game ran it** (owner decision D84, amending D64). The owner's Hogwarts Legacy, Neural
+  Rendering on, loaded DLSS 5's runtime (`nvngx_dlssnr.dll` 310.9.16.0, from the game's folder) and the session could say
+  only *DLSS 5 runtime loaded* — nothing measured whether it ran. The Overlay's Streamline hook now decodes DLSS 5's
+  feature (`kFeatureDLSS_NR`, Streamline 2.14) into its own per-frame fact, and the Agent keeps the share of the frames
+  the game rendered through Streamline that carried it (`sessions.dlss_nr_pct`, **schema 0022** — a ledger this build
+  migrated no longer opens in an earlier one). Seen running, the DLSS line reads *DLSS 5 (neural rendering on 97.3% of
+  rendered frames)*, above every other generation; loaded and seen not running, *DLSS 5 runtime loaded, not seen
+  running*; where nothing could tell (an earlier Overlay, a title outside Streamline), *DLSS 5 runtime loaded*, as
+  before. Its library is listed with its version and source like the others, its Streamline plugin `sl.dlss_nr.dll`
+  is recorded when loaded, and a game shipping either file shows *Supports DLSS 5 Neural Rendering* (rules
+  `2026.11.2`, capability `dlss_nr`). The **Privacy Policy 2.14** names neural-rendering libraries among those whose
+  versions are read; the **Disclaimer 2.13**'s accuracy block says when DLSS 5 is named. One hook-path change: one more
+  compare in the `slEvaluateFeature` detour and one more test where a present is recorded (`spike-notes` §26).
+- **Streamline's headers are `v2.14.16`'s** (developers): the vendored copy was `v2.12.0`, byte for byte; three of its
+  eleven files change — `kFeatureDLSS_NR`, the uplift buffer types 70–72, `kStructVersion7`, the version — and
+  nothing FrameLedger consumed otherwise (`src/native/third_party/streamline/README.md`).
 - **A session under the NVIDIA App's *Dynamic* frame generation reads DLSS 4.5** (owner decision D83, amending D64).
   Dynamic and its ×6 mode exist only in DLSS 4.5, and the DLSS line named a generation from the measured multiplier
   alone: the owner's Phantom Blade Zero under *Dynamic, up to ×3* held ×2.0 and ×3.0 and read *DLSS 4 (a ×3.0

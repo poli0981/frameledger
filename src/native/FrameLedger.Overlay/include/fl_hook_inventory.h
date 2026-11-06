@@ -99,7 +99,13 @@ namespace fl::inventory {
 // ones that never evaluate anything through this export. The family bit moved with
 // the count, so EntitledBy still binds FL_MEASURED_FG_COUNTS to the detour that
 // actually produces it.
-inline constexpr uint32_t kFamilyEvaluateFeature = static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_IDENTITY);
+//
+// AND NEURAL RENDERING SINCE beta.34 (owner decision D84): the same detour decodes kFeatureDLSS_NR (Streamline 2.14's
+// sl_core_types.h, re-vendored for it) into FL_FEAT_SL_NEURAL_RENDERING, so the row claims FL_HOOK_SL_NEURAL_RENDERING
+// beside identity -- the family is what separates "this writer looked and DLSS 5 did not run" from "this writer was
+// built before it could look".
+inline constexpr uint32_t kFamilyEvaluateFeature =
+    static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_IDENTITY) | static_cast<uint32_t>(fl::FL_HOOK_SL_NEURAL_RENDERING);
 
 // EVERY FAMILY THIS DETOUR DOES NOT IMPLEMENT, NAMED. The obvious assertion --
 // `kFamilyEvaluateFeature == (IDENTITY | FG_EVALUATIONS)` -- is a TAUTOLOGY against
@@ -126,6 +132,10 @@ static_assert((kFamilyEvaluateFeature & kFamiliesEvaluateFeatureDoesNotImplement
               "verdict available");
 static_assert((kFamilyEvaluateFeature & static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_IDENTITY)) != 0u,
               "the detour decodes sl::Feature, so it must claim upscaler identity");
+static_assert(
+    (kFamilyEvaluateFeature & static_cast<uint32_t>(fl::FL_HOOK_SL_NEURAL_RENDERING)) != 0u,
+    "the detour decodes kFeatureDLSS_NR, so it must say so -- without the family an Agent cannot tell a writer "
+    "that saw no neural rendering from one that could not have seen it");
 static_assert((kFamilyEvaluateFeature & static_cast<uint32_t>(fl::FL_HOOK_FG_EVALUATIONS)) == 0u,
               "the evaluate detour no longer produces the application-frame count -- slGetNewFrameToken does -- "
               "so claiming FG_EVALUATIONS here would entitle FL_MEASURED_FG_COUNTS to a detour that writes "
@@ -190,7 +200,7 @@ inline constexpr uint32_t kFamiliesFfxDispatchDoesNotImplement =
     static_cast<uint32_t>(fl::FL_HOOK_RT_AS_BUILD) | static_cast<uint32_t>(fl::FL_HOOK_RT_PSO) |
     static_cast<uint32_t>(fl::FL_HOOK_PSO) | static_cast<uint32_t>(fl::FL_HOOK_COLOR_SPACE) |
     static_cast<uint32_t>(fl::FL_HOOK_REFLEX) | static_cast<uint32_t>(fl::FL_HOOK_VRAM) |
-    static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY);
+    static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY) | static_cast<uint32_t>(fl::FL_HOOK_SL_NEURAL_RENDERING);
 
 static_assert((kFamilyFfxDispatch & kFamiliesFfxDispatchDoesNotImplement) == 0u,
               "the ffxDispatch rows claim a family their detour does not implement -- hookinventory-check reads "

@@ -41,6 +41,7 @@ public sealed class SlCensusTests
 
         c.Batches.Should().Be(20);
         c.WithUndecoded.Should().Be(20, "the undecoded fact must survive co-occurring with a count");
+        c.WithNeuralRendering.Should().Be(0, "no record carried DLSS 5's fact");
         c.WithFrameGeneration.Should().Be(20);
         c.FgWithoutSuperResolution.Should().Be(20, "this is §S30's exact shape");
     }

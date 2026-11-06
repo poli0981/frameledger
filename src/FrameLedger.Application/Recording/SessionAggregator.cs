@@ -219,6 +219,10 @@ public static class SessionAggregator
             RtTier = c.Input.Writer.RtTier == (uint)RtTierValue.NotQueried ? null : c.Input.Writer.RtTier,
             HooksInstalledMask = c.Input.Writer.HooksInstalledMask,
             RasterPsoCount = hooks.HasFlag(FlHookFamily.Pso) ? c.Input.Writer.RasterPsoCreated : null,
+
+            // beta.34 (D84): DLSS 5's neural rendering, only from a writer whose Streamline detour decodes it — an older
+            // Overlay drains the same batches and never sets the bit, and its silence must not be stored as 0 %.
+            DlssNrPct = hooks.HasFlag(FlHookFamily.SlNeuralRendering) ? NeuralRendering.SharePct(c.Dominant) : null,
         };
     }
 

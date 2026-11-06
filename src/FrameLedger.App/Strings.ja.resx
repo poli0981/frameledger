@@ -4625,6 +4625,18 @@
     <value>DLSS 5 ランタイムを読み込み済み</value>
     <comment>review</comment>
   </data>
+  <data name="Dlss_NeuralRendering_NotSeen" xml:space="preserve">
+    <value>DLSS 5 ランタイムを読み込み済み、実行は確認されず</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dlss_Feature_NeuralRendering" xml:space="preserve">
+    <value>Neural Rendering</value>
+    <comment>review</comment>
+  </data>
+  <data name="Dlss_Basis_NeuralRendering_Format" xml:space="preserve">
+    <value>描画フレームの {0} でニューラルレンダリング</value>
+    <comment>review</comment>
+  </data>
   <data name="Fsr_Mode_NativeAa" xml:space="preserve">
     <value>ネイティブ AA</value>
     <comment>review</comment>

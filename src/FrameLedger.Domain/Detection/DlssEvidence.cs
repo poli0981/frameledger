@@ -13,5 +13,9 @@ namespace FrameLedger.Domain.Detection;
 /// Dynamic mode, the driver reports its frame-generation override applied in the game's process, and DLSS Frame Generation
 /// was counted. Dynamic exists only in DLSS 4.5, whatever multiplier it settled on.
 /// </param>
+/// <param name="NeuralRenderingPct">
+/// On how many of the frames the game rendered through Streamline DLSS 5's neural rendering was evaluated, 0–100
+/// (<c>sessions.dlss_nr_pct</c>, beta.34, D84); null where nothing could tell.
+/// </param>
 public sealed record DlssEvidence(Version? SuperResolution, Version? FrameGeneration, uint? Preset, double? LargestFrameGenerationFactor,
-    bool DynamicFrameGeneration = false);
+    bool DynamicFrameGeneration = false, double? NeuralRenderingPct = null);
