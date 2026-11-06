@@ -987,6 +987,14 @@ enum FlSlSeen : uint32_t {
     FL_SL_SEEN_RETIRED_DLSS_G = 1u << 3,
 
     FL_SL_SEEN_OTHER = 1u << 4,    // an id we do not decode -- coverage is short, and we say so
+
+    // kFeatureDLSS_NR (1004, Streamline 2.14's sl_core_types.h): DLSS 5's neural rendering, which is neither an
+    // upscaler nor frame generation, so it moves no decoded byte -- RecordPresent turns it into
+    // FL_FEAT_SL_NEURAL_RENDERING and nothing else. Until beta.34 it fell to FL_SL_SEEN_OTHER: the owner's Hogwarts
+    // Legacy loaded DLSS 5's runtime with Neural Rendering on and the session could say only that it was LOADED
+    // (spike-notes §26, owner decision D84). Bit 5 sits inside fl::slseen::kFeatureMask (8 bits, derived), below the
+    // frame-generation count.
+    FL_SL_SEEN_DLSS_NR = 1u << 5,
 };
 
 std::atomic<uint32_t> g_slSeen{0};
@@ -1628,6 +1636,8 @@ sl::Result STDMETHODCALLTYPE Hook_SlEvaluateFeature(sl::Feature feature, const s
                 bit = FL_SL_SEEN_NIS;
             } else if (feature == sl::kFeatureDLSS_RR) {
                 bit = FL_SL_SEEN_DLSS_RR;
+            } else if (feature == sl::kFeatureDLSS_NR) {
+                bit = FL_SL_SEEN_DLSS_NR;
             } else if (feature == sl::kFeatureDLSS_G) {
                 bit = 0u;    // carried as a COUNT below, not as a bit
             }
@@ -3089,9 +3099,22 @@ void RecordPresent(IDXGISwapChain* sc, UINT syncInterval, UINT flags) noexcept {
         // repo keeps catching -- `a != b` passes when one side is absent. The fixture is
         // cheap: --hold-presenting-fg already drives a chosen sl::Feature, so a mode
         // passing an id outside the four decoded constants would settle it.
+        // (Settled since, and this paragraph predates it -- noted 2026-11-06: guard_test's
+        // "an upscaler the Overlay cannot identify is UNKNOWN, never NONE" drives 0xF00D
+        // through an injected Overlay and finds UNDECODED on every record.)
         feat = static_cast<uint8_t>(feat | FL_FEAT_SL_UNDECODED_OBSERVED);
         if ((seen & FL_SL_SEEN_OTHER) != 0u) {
             feat = static_cast<uint8_t>(feat | FL_FEAT_SL_UNDECODED);
+        }
+
+        // DLSS 5'S NEURAL RENDERING RAN THIS FRAME (beta.34, D84): kFeatureDLSS_NR was evaluated.
+        // Under the same condition as the facts above -- an evaluation was drained -- so its
+        // OBSERVED companion is FL_FEAT_RAY_RECONSTRUCTION_OBSERVED, as it is for the
+        // super-resolution fact below, and for the same reason: a second companion would be
+        // equal to it bit for bit. Never inferred from the module being loaded: Hogwarts Legacy
+        // loads nvngx_dlssnr.dll, and a load is not an evaluation.
+        if ((seen & FL_SL_SEEN_DLSS_NR) != 0u) {
+            feat = static_cast<uint8_t>(feat | FL_FEAT_SL_NEURAL_RENDERING);
         }
 
         // THE RAW SUPER-RESOLUTION FACT, kept apart from the decoded `upscaler` byte.

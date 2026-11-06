@@ -277,7 +277,9 @@ public static class Strings
         nameof(Dlss_Basis_Dynamic),
         nameof(Dlss_Basis_Factor_Format),
         nameof(Dlss_Basis_Library_Format),
+        nameof(Dlss_Basis_NeuralRendering_Format),
         nameof(Dlss_Feature_FrameGeneration),
+        nameof(Dlss_Feature_NeuralRendering),
         nameof(Dlss_Feature_RayReconstruction),
         nameof(Dlss_Feature_SuperResolution),
         nameof(Dlss_From_Game),
@@ -290,6 +292,7 @@ public static class Strings
         nameof(Dlss_Model_Transformer),
         nameof(Dlss_Model_Unknown),
         nameof(Dlss_NeuralRendering_Loaded),
+        nameof(Dlss_NeuralRendering_NotSeen),
         nameof(Dlss_Preset_Format),
         nameof(Document_OnGitHub),
         nameof(Document_Pages),
@@ -1690,7 +1693,11 @@ public static class Strings
 
     public static string Dlss_Basis_Library_Format => ResourceManager.GetString(nameof(Dlss_Basis_Library_Format), Culture) ?? nameof(Dlss_Basis_Library_Format);
 
+    public static string Dlss_Basis_NeuralRendering_Format => ResourceManager.GetString(nameof(Dlss_Basis_NeuralRendering_Format), Culture) ?? nameof(Dlss_Basis_NeuralRendering_Format);
+
     public static string Dlss_Feature_FrameGeneration => ResourceManager.GetString(nameof(Dlss_Feature_FrameGeneration), Culture) ?? nameof(Dlss_Feature_FrameGeneration);
+
+    public static string Dlss_Feature_NeuralRendering => ResourceManager.GetString(nameof(Dlss_Feature_NeuralRendering), Culture) ?? nameof(Dlss_Feature_NeuralRendering);
 
     public static string Dlss_Feature_RayReconstruction => ResourceManager.GetString(nameof(Dlss_Feature_RayReconstruction), Culture) ?? nameof(Dlss_Feature_RayReconstruction);
 
@@ -1715,6 +1722,8 @@ public static class Strings
     public static string Dlss_Model_Unknown => ResourceManager.GetString(nameof(Dlss_Model_Unknown), Culture) ?? nameof(Dlss_Model_Unknown);
 
     public static string Dlss_NeuralRendering_Loaded => ResourceManager.GetString(nameof(Dlss_NeuralRendering_Loaded), Culture) ?? nameof(Dlss_NeuralRendering_Loaded);
+
+    public static string Dlss_NeuralRendering_NotSeen => ResourceManager.GetString(nameof(Dlss_NeuralRendering_NotSeen), Culture) ?? nameof(Dlss_NeuralRendering_NotSeen);
 
     public static string Dlss_Preset_Format => ResourceManager.GetString(nameof(Dlss_Preset_Format), Culture) ?? nameof(Dlss_Preset_Format);
 

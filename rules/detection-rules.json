@@ -42,7 +42,7 @@
     "level, which made it a check that could not fire."
   ],
   "schemaVersion": 2,
-  "rulesVersion": "2026.11.1",
+  "rulesVersion": "2026.11.2",
 
   "engines": [
     {
@@ -191,6 +191,7 @@
     { "id": "dlss",    "name": "DLSS",              "signals": [ "nvngx_dlss.dll" ] },
     { "id": "dlss_g",  "name": "DLSS Frame Gen",    "signals": [ "nvngx_dlssg.dll", "sl.dlss_g.dll" ] },
     { "id": "dlss_rr", "name": "Ray Reconstruction","signals": [ "nvngx_dlssd.dll" ] },
+    { "id": "dlss_nr", "name": "DLSS 5 Neural Rendering", "signals": [ "nvngx_dlssnr.dll", "sl.dlss_nr.dll" ] },
     { "id": "streamline", "name": "Streamline",     "signals": [ "sl.interposer.dll", "sl.reflex.dll" ] },
     { "id": "fsr",     "name": "FSR",               "signals": [ "ffx_fsr2_*.dll", "ffx_fsr3*.dll", "ffx_frameinterpolation_*.dll", "amd_fidelityfx_*.dll", "ffx_api*.dll" ] },
     { "id": "xess",    "name": "XeSS",              "signals": [ "libxess.dll", "libxess_dx11.dll" ] },

@@ -153,6 +153,13 @@ public sealed record SessionRow
     /// </summary>
     public string? RuntimeModuleSourcesJson { get; init; }
 
+    /// <summary>
+    /// <c>dlss_nr_pct</c> (schema 0022, beta.34, D84): on how many of the frames the game rendered through Streamline DLSS 5's
+    /// neural rendering was evaluated, 0–100 (<c>Domain.Metrics.NeuralRendering</c>). Null where nothing could tell — an
+    /// Overlay that does not decode it, a title that never routed through Streamline — and on every session before.
+    /// </summary>
+    public double? DlssNrPct { get; init; }
+
     public double? PresentedFps { get; init; }
 
     public string? PresentedQualifier { get; init; }

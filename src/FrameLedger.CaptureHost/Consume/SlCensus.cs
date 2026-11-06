@@ -56,6 +56,13 @@ internal sealed record SlCensus
     public required int WithUndecoded { get; init; }
 
     /// <summary>
+    /// Batches that carried DLSS 5's <c>kFeatureDLSS_NR</c> (beta.34, D84). Until that build the id fell to
+    /// <see cref="WithUndecoded"/>, so the two buckets are read together across builds: a writer older than beta.34
+    /// counted DLSS 5 as undecoded.
+    /// </summary>
+    public required int WithNeuralRendering { get; init; }
+
+    /// <summary>
     /// <b><see cref="WithFrameGeneration"/> IS NOT AN ID OBSERVATION, and must never be quoted
     /// as one beside <c>fgEvaluations</c>.</b>
     /// </summary>
@@ -64,7 +71,7 @@ internal sealed record SlCensus
     /// It is <c>fgEvaluations &gt; 0</c> restated — the same byte read twice — because
     /// <c>FL_SL_SEEN_RETIRED_DLSS_G</c> was retired deliberately so frame generation travels
     /// only as the count (<c>dllmain.cpp</c> §FlSlSeen), and <see cref="FlFeatureFlags"/> has
-    /// no free fact bit left to carry a raw one. So "the census says zero" and "every record
+    /// no free fact bit left to carry a raw one (since beta.34 its last one is DLSS 5's). So "the census says zero" and "every record
     /// says zero" are ONE measurement with one provenance, and a ledger entry citing them as
     /// two corroborating lines would be manufacturing agreement out of a single fact.
     /// </para>
@@ -101,10 +108,11 @@ internal sealed record SlCensus
     private const int _idxFg = 3;
     private const int _idxUndecoded = 4;
     private const int _idxFgOnly = 5;
+    private const int _idxNeural = 6;
 
     private static SlCensus Tally(IReadOnlyList<FlFrameRecord> stream, int start)
     {
-        int[] n = new int[6];
+        int[] n = new int[7];
         int batches = 0;
         for (int i = start; i < stream.Count; i++)
         {
@@ -129,6 +137,7 @@ internal sealed record SlCensus
             n[_idxNis] += superResolution && upscaler == FlUpscaler.Nis ? 1 : 0;
             n[_idxRr] += flags.HasFlag(FlFeatureFlags.RayReconstruction) ? 1 : 0;
             n[_idxUndecoded] += flags.HasFlag(FlFeatureFlags.SlUndecoded) ? 1 : 0;
+            n[_idxNeural] += flags.HasFlag(FlFeatureFlags.SlNeuralRendering) ? 1 : 0;
             n[_idxFg] += r.FgEvaluations > 0 ? 1 : 0;
             n[_idxFgOnly] += r.FgEvaluations > 0 && !superResolution ? 1 : 0;
         }
@@ -142,6 +151,7 @@ internal sealed record SlCensus
             WithRayReconstruction = n[_idxRr],
             WithFrameGeneration = n[_idxFg],
             WithUndecoded = n[_idxUndecoded],
+            WithNeuralRendering = n[_idxNeural],
             FgWithoutSuperResolution = n[_idxFgOnly],
         };
     }
@@ -155,6 +165,7 @@ internal sealed record SlCensus
         WithRayReconstruction = 0,
         WithFrameGeneration = 0,
         WithUndecoded = 0,
+        WithNeuralRendering = 0,
         FgWithoutSuperResolution = 0,
     };
 
@@ -172,6 +183,7 @@ internal sealed record SlCensus
         sb.Append("    kFeatureDLSS=").Append(N(WithDlss))
           .Append("  kFeatureNIS=").Append(N(WithNis))
           .Append("  kFeatureDLSS_RR=").Append(N(WithRayReconstruction))
+          .Append("  kFeatureDLSS_NR=").Append(N(WithNeuralRendering))
           .Append("  UNDECODED=").AppendLine(N(WithUndecoded));
 
         // NOT ON THE ID LINE. Every other column there is a distinct bit decoded from the

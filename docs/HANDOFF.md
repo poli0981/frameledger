@@ -264,7 +264,9 @@ an alpha's release has to find — #350's lookup, by the name the pack lists. It
    setting*, the game's own library and no generation beyond what was observed. Record the names the override loads
    under `%ProgramData%\NVIDIA\NGX` (the summary's *Loaded:* line) — they correct `05_DETECTION` §Shipped is not loaded.
    (d) **DLSS 5** on the owner's DLSS 5 title: *DLSS 5 runtime loaded*. If it is not shown, record the module names it
-   loads (*Loaded:* line); `nvngx_dlssnr.dll` is then corrected in `CensusNames` and `05_DETECTION`.
+   loads (*Loaded:* line); `nvngx_dlssnr.dll` is then corrected in `CensusNames` and `05_DETECTION`. *(2026-11-06, `spike-notes` §26:
+   Hogwarts Legacy, Neural Rendering on, loaded `nvngx_dlssnr.dll` 310.9.16.0 from the game's folder — the name holds;
+   whether it ran is what beta.34 measures, item 30(a).)*
    (e) **SonarCloud (D67):** bulk-mark per `13_CI_CD` §SonarCloud; optionally its *Ignore issues on multiple criteria*
    rows; close PR #315. (f) The Legal Gate shows **Disclaimer 2.11** and **Privacy Policy 2.12** once. (g) The `ja`
    strings marked `review`. *(2026-10-19, the owner's first runs — `spike-notes` §22: (a) the Dynamic context line
@@ -465,6 +467,7 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D81 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §G | title lists stay keyed by Steam id; an Xbox copy is matched by everything but that entry |
 | D82 | [`HANDOFF.md`](HANDOFF.md) §START HERE | alpha.2 right after beta.33; on RC3 unless the train reaches it after .NET 11 ships (then SDK 11.0.100, packages 11.0.0) |
 | D83 | [`05_DETECTION.md`](05_DETECTION.md) §DLSS generation | the NVIDIA App's Dynamic frame generation, reported applied by the driver in a session that counted DLSS Frame Generation, is DLSS 4.5 (amends D64) |
+| D84 | [`05_DETECTION.md`](05_DETECTION.md) §DLSS generation | DLSS 5 heads the DLSS line where its neural rendering was measured running (`kFeatureDLSS_NR`, `dlss_nr_pct`); loaded only reads "runtime loaded" (amends D64) |
 
 ---
 

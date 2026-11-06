@@ -3479,6 +3479,15 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="Dlss_NeuralRendering_Loaded" xml:space="preserve">
     <value>DLSS 5 runtime loaded</value>
   </data>
+  <data name="Dlss_NeuralRendering_NotSeen" xml:space="preserve">
+    <value>DLSS 5 runtime loaded, not seen running</value>
+  </data>
+  <data name="Dlss_Feature_NeuralRendering" xml:space="preserve">
+    <value>Neural Rendering</value>
+  </data>
+  <data name="Dlss_Basis_NeuralRendering_Format" xml:space="preserve">
+    <value>neural rendering on {0} of rendered frames</value>
+  </data>
   <data name="Fsr_Mode_NativeAa" xml:space="preserve">
     <value>Native AA</value>
   </data>

@@ -14,4 +14,7 @@ public enum DlssGenerationKind
 
     /// <summary>DLSS 4.5.</summary>
     Dlss45 = 45,
+
+    /// <summary>DLSS 5 — its neural rendering measured running (beta.34, D84).</summary>
+    Dlss5 = 5,
 }

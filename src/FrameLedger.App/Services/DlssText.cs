@@ -16,7 +16,8 @@ namespace FrameLedger.App.Services;
 /// The DLSS a session ran, in words (beta.24, owner decision D64; <c>05_DETECTION</c> §DLSS generation): each DLSS
 /// library's version and where it was loaded from, the model preset the NVIDIA driver reports, and a generation only
 /// where the session shows one (<see cref="DlssGeneration"/>, strongest evidence first) — since beta.34 (D83) also the
-/// NVIDIA App's Dynamic frame generation the driver reports applied. DLSS 5 only as "runtime loaded".
+/// NVIDIA App's Dynamic frame generation the driver reports applied, and (D84) DLSS 5 where its neural rendering was seen
+/// running; a DLSS 5 runtime that was only loaded says so, and whether the Overlay looked.
 /// </summary>
 /// <remarks>Read from what the row stores; nothing here infers a generation from a version that does not name one.</remarks>
 [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime")]
@@ -34,7 +35,7 @@ public static class DlssText
         ArgumentNullException.ThrowIfNull(row);
         Dictionary<string, string?> modules = Modules(row.RuntimeModulesJson);
         return new DlssEvidence(VersionOf(modules, _superResolutionFile), VersionOf(modules, _frameGenerationFile), ReportedPreset(row), LargestFrameGenerationFactor(row),
-            DynamicFrameGeneration(row));
+            DynamicFrameGeneration(row), row.DlssNrPct);
     }
 
     /// <summary>The generation the row establishes, as a label with what it rests on (<c>DLSS 4.5 (preset L)</c>), or null.</summary>
@@ -47,7 +48,8 @@ public static class DlssText
 
     /// <summary>
     /// The summary's DLSS line: the label first when one is established, then each library with its version, where it was
-    /// loaded from and — for super resolution — the preset the driver reports, then DLSS 5's runtime when it was loaded.
+    /// loaded from and — for super resolution — the preset the driver reports, then DLSS 5's runtime when it was loaded —
+    /// since beta.34 (D84) listed as a library too, and, where it is not the label, whether it was seen running.
     /// Null for a session with no DLSS library, no DLSS upscaler and no DLSS Frame Generation — and, since beta.27, where it
     /// would say only "DLSS": the header already names the upscaler. The NVIDIA App's override loads its libraries under
     /// names no census lists (Witcher 3, 2026-10-20: <c>160_E658700.bin</c>, which the loaded-libraries line prints), and an
@@ -76,9 +78,12 @@ public static class DlssText
             parts.Add(preset);
         }
 
-        if (modules.ContainsKey(_neuralRenderingFile))
+        AddLibrary(parts, modules, sources, _neuralRenderingFile, Strings.Dlss_Feature_NeuralRendering, detail: null);
+        if (modules.ContainsKey(_neuralRenderingFile) && evidence.NeuralRenderingPct is not > 0)
         {
-            parts.Add(Strings.Dlss_NeuralRendering_Loaded);
+            // Loaded, and not the label: a writer that decodes it saw it evaluate nowhere (0 %), or nothing could tell
+            // (null: an Overlay before beta.34, or a title that never went through Streamline) — never "off".
+            parts.Add(evidence.NeuralRenderingPct is null ? Strings.Dlss_NeuralRendering_Loaded : Strings.Dlss_NeuralRendering_NotSeen);
         }
 
         return label is null && parts.Count == 1 ? null : string.Join(" · ", parts);
@@ -110,6 +115,11 @@ public static class DlssText
             parts.Add("preset=" + letter.ToString(_inv));
         }
 
+        if (row.DlssNrPct is double neural)
+        {
+            parts.Add("neural_rendering_pct=" + neural.ToString("0.0", _inv));
+        }
+
         return parts.Count == 0 ? "N/A" : string.Join("; ", parts);
     }
 
@@ -119,6 +129,7 @@ public static class DlssText
             DlssBasis.Preset => string.Format(CultureInfo.CurrentCulture, Strings.Nv_Preset_Format, DlssGeneration.PresetLetter(evidence.Preset)),
             DlssBasis.FrameGenerationFactor => string.Format(CultureInfo.CurrentCulture, Strings.Dlss_Basis_Factor_Format, evidence.LargestFrameGenerationFactor),
             DlssBasis.DynamicFrameGeneration => Strings.Dlss_Basis_Dynamic,
+            DlssBasis.NeuralRendering => string.Format(CultureInfo.CurrentCulture, Strings.Dlss_Basis_NeuralRendering_Format, Formats.Share(evidence.NeuralRenderingPct)),
             _ => string.Format(CultureInfo.CurrentCulture, Strings.Dlss_Basis_Library_Format, Short(evidence.SuperResolution is { Major: 2 or 3 } ? evidence.SuperResolution : evidence.FrameGeneration)),
         });
 
@@ -127,6 +138,7 @@ public static class DlssText
         DlssBasis.Preset => "preset",
         DlssBasis.FrameGenerationFactor => "frame_generation_factor",
         DlssBasis.DynamicFrameGeneration => "dynamic_frame_generation",
+        DlssBasis.NeuralRendering => "neural_rendering",
         _ => "library_version",
     };
 
@@ -136,6 +148,7 @@ public static class DlssText
         DlssGenerationKind.Dlss3 => "DLSS 3",
         DlssGenerationKind.Dlss4 => "DLSS 4",
         DlssGenerationKind.Dlss45 => "DLSS 4.5",
+        DlssGenerationKind.Dlss5 => "DLSS 5",
         _ => "DLSS",
     };
 

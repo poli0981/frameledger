@@ -3474,6 +3474,15 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="Dlss_NeuralRendering_Loaded" xml:space="preserve">
     <value>đã nạp runtime DLSS 5</value>
   </data>
+  <data name="Dlss_NeuralRendering_NotSeen" xml:space="preserve">
+    <value>đã nạp runtime DLSS 5, không thấy chạy</value>
+  </data>
+  <data name="Dlss_Feature_NeuralRendering" xml:space="preserve">
+    <value>Neural Rendering</value>
+  </data>
+  <data name="Dlss_Basis_NeuralRendering_Format" xml:space="preserve">
+    <value>neural rendering trên {0} khung hình đã kết xuất</value>
+  </data>
   <data name="Fsr_Mode_NativeAa" xml:space="preserve">
     <value>Native AA</value>
   </data>

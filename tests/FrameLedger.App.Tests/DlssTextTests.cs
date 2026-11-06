@@ -54,7 +54,7 @@ public sealed class DlssTextTests
         "{\"Kind\":\"none\",\"Factor\":null,\"NativeFps\":61.68,\"DisplayedFps\":61.69,\"Seconds\":1203.9,\"Share\":0.198,\"Windows\":241}]}";
 
     private static SessionRow Row(string? modules = null, string? sources = null, string? upscaler = null, string? driverReported = null, string? words = null,
-        string fgMode = "na", double? factor = null, string? mix = null, string? profile = null) => new()
+        string fgMode = "na", double? factor = null, string? mix = null, string? profile = null, double? neural = null) => new()
         {
             SessionGuid = Guid.NewGuid(),
             GameId = 1,
@@ -76,7 +76,38 @@ public sealed class DlssTextTests
             FgFactor = factor,
             FgMixJson = mix,
             DriverProfileJson = profile,
+            DlssNrPct = neural,
         };
+
+    /// <summary>
+    /// beta.34, owner decision D84: Hogwarts Legacy with Neural Rendering on (the owner's session 132, 2026-11-06) loaded DLSS
+    /// 5's runtime, 310.9.16.0 from the game's folder, and could say only that. Measured running, DLSS 5 is the generation;
+    /// measured not running, it says so; with nothing able to tell, it stays "loaded".
+    /// </summary>
+    [Fact]
+    public void Dlss5IsTheGenerationWhereItsNeuralRenderingWasSeenRunning() => InEnglish(() =>
+    {
+        const string modules = "{\"sl.interposer.dll\":\"2,14,16,0\",\"nvngx_dlss.dll\":\"310,9,16,0\",\"nvngx_dlssg.dll\":\"310,9,16,0\"," +
+            "\"nvngx_dlssd.dll\":\"310,9,16,0\",\"nvngx_dlssnr.dll\":\"310,9,16,0\"}";
+        const string sources = "{\"nvngx_dlss.dll\":\"game\",\"nvngx_dlssg.dll\":\"game\",\"nvngx_dlssd.dll\":\"game\",\"nvngx_dlssnr.dll\":\"game\"}";
+        SessionRow hogwarts = Row(modules, sources, upscaler: "unknown", driverReported: "dlss", fgMode: "dlssg", neural: 97.31,
+            words: "{\"Outcome\":\"Answered\",\"Sr\":\"0x80605\",\"Rr\":\"0x5\",\"Fg\":\"0x5\",\"Readings\":5,\"Answered\":4}");
+
+        DlssText.Label(hogwarts).Should().Be("DLSS 5 (neural rendering on 97.3% of rendered frames)");
+        DlssText.Line(hogwarts).Should().Be("DLSS 5 (neural rendering on 97.3% of rendered frames) · Super Resolution 310.9.16, from the game"
+            + " · Ray Reconstruction 310.9.16, from the game · Frame Generation 310.9.16, from the game · Neural Rendering 310.9.16, from the game");
+        DlssText.ExportLine(hogwarts).Should().Be("generation=DLSS 5 basis=neural_rendering; nvngx_dlss.dll=310,9,16,0 game; nvngx_dlssd.dll=310,9,16,0 game;"
+            + " nvngx_dlssg.dll=310,9,16,0 game; nvngx_dlssnr.dll=310,9,16,0 game; neural_rendering_pct=97.3");
+
+        SessionRow off = hogwarts with { DlssNrPct = 0 };
+        DlssText.Label(off).Should().BeNull("not running, and the rest names no generation");
+        DlssText.Line(off).Should().EndWith("Neural Rendering 310.9.16, from the game · DLSS 5 runtime loaded, not seen running");
+
+        SessionRow unknown = hogwarts with { DlssNrPct = null };
+        DlssText.Line(unknown).Should().EndWith("Neural Rendering 310.9.16, from the game · DLSS 5 runtime loaded",
+            "an Overlay before beta.34, or a title outside Streamline: nothing could tell, so never \"not running\"");
+        return 0;
+    });
 
     /// <summary>
     /// beta.34, owner decision D83: Phantom Blade Zero under the NVIDIA App's Dynamic frame generation, up to ×3, held ×2.0
@@ -149,7 +180,8 @@ public sealed class DlssTextTests
         DlssText.Label(Row("{\"nvngx_dlss.dll\":\"3.7.10.0\"}", upscaler: "dlss")).Should().Be("DLSS 3 (library 3.7.10)");
         DlssText.Label(Row("{\"nvngx_dlss.dll\":\"2.5.1.0\"}", upscaler: "dlss")).Should().Be("DLSS 2 (library 2.5.1)");
         DlssText.Line(Row("{\"nvngx_dlss.dll\":\"310.9.1.0\",\"nvngx_dlssnr.dll\":\"1.0.0.0\"}", upscaler: "dlss"))
-            .Should().Be("DLSS · Super Resolution 310.9.1 · DLSS 5 runtime loaded");
+            .Should().Be("DLSS · Super Resolution 310.9.1 · Neural Rendering 1.0.0 · DLSS 5 runtime loaded",
+                "since beta.34 DLSS 5's library is listed like the others; loaded, with nothing measured, it is only loaded");
         DlssText.Line(Row("{\"sl.interposer.dll\":\"2,8,0,0\"}", upscaler: "fsr3")).Should().BeNull("no DLSS at all");
         DlssText.Line(Row("{broken", upscaler: "dlss")).Should().BeNull("a line that would say only DLSS says nothing the header does not (beta.27)");
         DlssText.ExportLine(Row()).Should().Be("N/A");

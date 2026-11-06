@@ -26,8 +26,12 @@ namespace FrameLedger.Domain.Detection;
 /// Fixed ×5 or ×6 names DLSS 4.5 only where the frames show it.
 /// </para>
 /// <para>
-/// DLSS 5's neural rendering is not a generation of these features and is not in this table: a session states only that
-/// its runtime was loaded.
+/// Until beta.34 this read "DLSS 5's neural rendering is not a generation of these features and is not in this table: a
+/// session states only that its runtime was loaded". <b>Since beta.34 (owner decision D84) DLSS 5 heads the table where its
+/// neural rendering was measured running</b> — the game evaluated <c>kFeatureDLSS_NR</c> on some of its frames — because DLSS 5 is named for that
+/// feature as DLSS 4.5 is for its second-generation model and Dynamic frame generation: the session's other DLSS
+/// features are the libraries the line lists after it. A runtime that was only loaded still names nothing (Hogwarts Legacy
+/// loads it; whether it ran is the evaluation's to say).
 /// </para>
 /// </remarks>
 /// <param name="Kind">The generation established.</param>
@@ -38,6 +42,11 @@ public sealed record DlssGeneration(DlssGenerationKind Kind, DlssBasis Basis)
     public static DlssGeneration? Of(DlssEvidence evidence)
     {
         ArgumentNullException.ThrowIfNull(evidence);
+        if (evidence.NeuralRenderingPct is > 0)
+        {
+            return new DlssGeneration(DlssGenerationKind.Dlss5, DlssBasis.NeuralRendering);
+        }
+
         if (evidence.Preset is 12 or 13)
         {
             return new DlssGeneration(DlssGenerationKind.Dlss45, DlssBasis.Preset);

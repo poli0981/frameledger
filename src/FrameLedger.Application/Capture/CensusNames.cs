@@ -41,11 +41,13 @@ public static class CensusNames
 
     /// <summary>
     /// Modules the snapshot records though the in-process census has no bit for them (beta.24, D64): DLSS's Ray
-    /// Reconstruction and DLSS 5's runtime, Streamline's other plugins, and AMD's FidelityFX loader. The name of DLSS 5's
-    /// runtime, <c>nvngx_dlssnr.dll</c>, is from community sources until owner-only item 20(d) sees it load.
+    /// Reconstruction and DLSS 5's runtime, Streamline's other plugins, and AMD's FidelityFX loader. DLSS 5's runtime,
+    /// <c>nvngx_dlssnr.dll</c>, was a community-sourced name until 2026-11-06, when the owner's Hogwarts Legacy loaded it
+    /// (310.9.16.0, from the game's folder, Neural Rendering on — <c>spike-notes</c> §26); its Streamline plugin,
+    /// <c>sl.dlss_nr.dll</c>, ships beside it and is recorded since beta.34.
     /// </summary>
     private static readonly string[] _snapshotOnly =
-        ["sl.dlss_d.dll", "sl.common.dll", "sl.reflex.dll", "amd_fidelityfx_loader_dx12.dll", "nvngx_dlssnr.dll"];
+        ["sl.dlss_d.dll", "sl.common.dll", "sl.reflex.dll", "amd_fidelityfx_loader_dx12.dll", "nvngx_dlssnr.dll", "sl.dlss_nr.dll"];
 
     /// <summary>
     /// Every module FILE name a snapshot answers for — the census's, the <c>a / b</c> pairs above split into their

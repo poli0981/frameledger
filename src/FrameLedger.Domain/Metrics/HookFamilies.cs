@@ -26,4 +26,7 @@ public enum HookFamilies
 
     /// <summary>The FidelityFX quality query (beta.25, D65).</summary>
     UpscalerQuality = 1 << 11,
+
+    /// <summary>The Streamline detour decodes DLSS 5's neural rendering (beta.34, D84).</summary>
+    SlNeuralRendering = 1 << 12,
 }

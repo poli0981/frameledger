@@ -232,6 +232,16 @@ public enum FlFeatureFlags : byte
     RayReconstructionObserved = 1 << 4,
     ReflexObserved = 1 << 5,
     SlUndecodedObserved = 1 << 6,
+
+    /// <summary>
+    /// DLSS 5's neural rendering — <c>kFeatureDLSS_NR</c> — was evaluated this frame (beta.34, D84).
+    /// </summary>
+    /// <remarks>
+    /// A fact in the companions' half, the byte's last free bit: like <see cref="SlSuperResolution"/> it is published only
+    /// where an evaluation drained, so <see cref="RayReconstructionObserved"/> is its OBSERVED; and only a writer that
+    /// published <see cref="FlHookFamily.SlNeuralRendering"/> could set it — an older one's silence is not a "No".
+    /// </remarks>
+    SlNeuralRendering = 1 << 7,
 }
 
 /// <summary>Which hook families a writer installed. Bits in <see cref="FlWriterState.HooksInstalledMask"/>.</summary>
@@ -258,6 +268,12 @@ public enum FlHookFamily : uint
 
     /// <summary>The FidelityFX quality query, <c>ffxQuery</c> (beta.25, D65): what lets a dispatch's size name its mode.</summary>
     UpscalerQuality = 1u << 11,
+
+    /// <summary>
+    /// The <c>slEvaluateFeature</c> detour decodes DLSS 5's <c>kFeatureDLSS_NR</c> (beta.34, D84) — published with it, so a
+    /// writer that looked for neural rendering is told from one built before it could (<see cref="FlFeatureFlags.SlNeuralRendering"/>).
+    /// </summary>
+    SlNeuralRendering = 1u << 12,
 }
 
 /// <summary>
