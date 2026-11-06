@@ -37,6 +37,15 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Changed
 
+- **Games opens at once from any page** (owner request 2026-11-06: switching to Games stalled 0.5–1.5 s). The window
+  keeps the library page it built and shows it again on every later visit, reading the library again behind it; the
+  library is read off the UI thread; the cards appear before the executables are checked — a USB drive that sleeps
+  took a second or more to answer, and no card was shown until every one had — and each card gets its *Not installed*
+  pill when its check answers; a read keeps every card that would look the same instead of rebuilding them all; the
+  list view builds only the rows on screen (`spike-notes` §27).
+- **Changing the language keeps the page you are on** — Settings, after a change made there. The App remembered only
+  the pages it opened from code, so the language changed on Settings came back on the last game page opened
+  (`src/FrameLedger.App/Services/ShellHost.cs`).
 - **DLSS 5 is named where the game ran it** (owner decision D84, amending D64). The owner's Hogwarts Legacy, Neural
   Rendering on, loaded DLSS 5's runtime (`nvngx_dlssnr.dll` 310.9.16.0, from the game's folder) and the session could say
   only *DLSS 5 runtime loaded* — nothing measured whether it ran. The Overlay's Streamline hook now decodes DLSS 5's

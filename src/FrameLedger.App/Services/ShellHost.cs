@@ -35,6 +35,10 @@ public sealed class ShellHost(IServiceProvider services, INavigationService navi
         MainWindow window = services.GetRequiredService<MainWindow>();
         window.Closing += OnClosing;
         window.Closed += OnClosed;
+        // beta.34 (owner request 2026-11-06): every page the window shows is the one a rebuild opens on — a click in the pane
+        // included, which never went through PageNavigator. A language changed on Settings stays on Settings; it came back
+        // on the last page opened from code (a game's page, typically).
+        window.RootNavigation.Navigated += (_, e) => NoteShown(ReferenceEquals(window, _current), e.Page);
         _current = window;
         window.Show();
         Interlocked.Exchange(ref _handle, new System.Windows.Interop.WindowInteropHelper(window).Handle);
@@ -70,6 +74,21 @@ public sealed class ShellHost(IServiceProvider services, INavigationService navi
 
     /// <summary>The page the shell will open on, kept across a rebuild.</summary>
     public void Remember(Type page) => _page = page;
+
+    /// <summary>The page a rebuild opens on (beta.34: the page on screen).</summary>
+    internal Type Page => _page;
+
+    /// <summary>
+    /// A page the live window shows (beta.34): remembered whichever way it was reached — the pane, the keyboard, a link, code.
+    /// The old window of a rebuild, closing, changes nothing.
+    /// </summary>
+    internal void NoteShown(bool live, object? page)
+    {
+        if (live && page is not null)
+        {
+            _page = page.GetType();
+        }
+    }
 
     /// <summary>
     /// A new window in the current UI culture; the old one closes after the new one is up. The long-lived pieces that

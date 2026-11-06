@@ -317,6 +317,109 @@ public sealed class GamesViewModelTests
         vm.HeaderText.Should().EndWith("2");
     }
 
+    /// <summary>
+    /// beta.34 (owner request 2026-11-06, "Games stalls 0.5–1.5 s"): the cards are listed before any executable is checked —
+    /// a sleeping USB drive took a second or more to answer, and no card was shown until every one had — and each card
+    /// gets its pill when its check answers.
+    /// </summary>
+    [Fact]
+    public async Task TheCardsComeBeforeTheExecutableChecksAndThePillAfter()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        _ = await s.GameAsync("Alpha");
+        _ = await s.GameAsync("Bravo");
+        var bound = TimeSpan.FromSeconds(30);
+        using var checking = new ManualResetEventSlim();
+        using var mayAnswer = new ManualResetEventSlim();
+        bool Asleep(string path)
+        {
+            checking.Set();
+            _ = mayAnswer.Wait(bound, Ct);
+            return false;
+        }
+
+        var selection = new GameSelection();
+        var nav = new NoNavigation();
+        var vm = new GamesViewModel(s.Library, selection, nav, new AddGameFlow(s.Library, new NoPicker(), selection, nav, new NoStrip()), executableExists: Asleep);
+        Task load = vm.Pending;
+        try
+        {
+            checking.Wait(bound, Ct).Should().BeTrue("the checks begin once the cards are listed");
+            vm.Games.Should().HaveCount(2, "the cards are on the page while the drive is still answering");
+            vm.Games.Should().OnlyContain(static g => !g.NotInstalled, "not known yet, so no pill");
+        }
+        finally
+        {
+            mayAnswer.Set();
+        }
+
+        await load;
+        vm.Games.Should().OnlyContain(static g => g.NotInstalled, "the answer came, and each card has its pill");
+        vm.Games.Should().OnlyContain(static g => g.NotInstalledToolTip != null && g.StatusText.Contains(Strings.Games_Card_NotInstalled, StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// beta.34: the page is kept by its window and shown again on a later visit, so it reads the library again then — what
+    /// happened while it was away appears — and a read keeps every card that would look the same, so the cards on screen are
+    /// not built again.
+    /// </summary>
+    [Fact]
+    public async Task APageShownAgainReadsTheLibraryAndKeepsTheCardsThatLookTheSame()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow alpha = await s.GameAsync("Alpha");
+        _ = await s.GameAsync("Bravo");
+        var selection = new GameSelection();
+        var nav = new NoNavigation();
+        var vm = new GamesViewModel(s.Library, selection, nav, new AddGameFlow(s.Library, new NoPicker(), selection, nav, new NoStrip()));
+        Task first = vm.Pending;
+        await first;
+        vm.Attach();
+        vm.Pending.Should().BeSameAs(first, "the first Loaded follows the constructor's own read");
+        GameCardViewModel alphaCard = vm.Games.Single(static g => string.Equals(g.Name, "Alpha", StringComparison.Ordinal));
+        GameCardViewModel bravoCard = vm.Games.Single(static g => string.Equals(g.Name, "Bravo", StringComparison.Ordinal));
+
+        vm.Detach();
+        _ = await s.GameAsync("Charlie");
+        _ = await s.SessionAsync(alpha.Id, DateTimeOffset.UtcNow);
+        vm.Attach();
+        Task again = vm.Pending;
+        again.Should().NotBeSameAs(first, "shown again, the page reads the library again");
+        await again;
+
+        vm.Games.Select(static g => g.Name).Should().Equal(["Alpha", "Bravo", "Charlie"]);
+        vm.HeaderText.Should().EndWith("3");
+        vm.Games.Single(static g => string.Equals(g.Name, "Bravo", StringComparison.Ordinal)).Should().BeSameAs(bravoCard, "it looks the same, so it is the card on screen");
+        GameCardViewModel alphaNow = vm.Games.Single(static g => string.Equals(g.Name, "Alpha", StringComparison.Ordinal));
+        alphaNow.Should().NotBeSameAs(alphaCard, "its session count changed");
+        alphaNow.SessionCount.Should().Be(1);
+    }
+
+    private static GameRow Row(long id) => new()
+    {
+        Id = id,
+        Name = "G" + id.ToString(CultureInfo.InvariantCulture),
+        Fingerprint = new() { ExePath = @"C:\Games\g.exe", SizeBytes = 1, MtimeUnixMs = 2 },
+        HookEnabled = false,
+        HookCrashCount = 0,
+        AddedAt = DateTimeOffset.UnixEpoch,
+        UpdatedAt = DateTimeOffset.UnixEpoch,
+    };
+
+    [Fact]
+    public void SyncRemovesMovesAndInsertsWithoutClearing()
+    {
+        GameCardViewModel[] c = [.. Enumerable.Range(1, 5).Select(static i => new GameCardViewModel(new GameCard(Row(i), null)))];
+        var shown = new System.Collections.ObjectModel.ObservableCollection<GameCardViewModel>([c[0], c[1], c[2], c[3]]);
+        int resets = 0;
+        shown.CollectionChanged += (_, e) => resets += e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Reset ? 1 : 0;
+
+        GamesViewModel.Sync(shown, [c[3], c[0], c[4], c[2]]);
+
+        shown.Should().Equal([c[3], c[0], c[4], c[2]]);
+        resets.Should().Be(0, "never a Reset: the cards that stay keep their elements");
+    }
+
     [Theory]
     [InlineData(1200, 3)]
     [InlineData(1248, 4)]

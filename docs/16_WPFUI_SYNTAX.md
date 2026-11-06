@@ -115,6 +115,14 @@ Code-behind wires services once: `navigationService.SetNavigationControl(RootNav
 - Navigate **only** via `INavigationService.Navigate(typeof(SomePage))` — never manipulate `Frame` directly, never `new` a Page.
 - Pages implement `INavigableView<TViewModel>` with `ViewModel` injected via constructor DI; `DataContext = this` in the page constructor (WPF UI template idiom) so bindings read `ViewModel.*`.
 - Page state: pages are Transient; anything that must survive navigation lives in the ViewModel-backing services/DB, not the Page.
+  **Except the library, since beta.34** (owner request 2026-11-06, "Games stalls 0.5–1.5 s"; `spike-notes` §27): the window
+  keeps the `GamesPage` it built — `Services.WindowPageCache`, the window's own `INavigationViewPageProvider`, set after
+  `INavigationService.SetNavigationControl` (which hands the NavigationView the container's provider) — and its view model
+  reads the library again each time the page is shown (`GamesViewModel.Attach`). Still Transient in the container; one
+  instance per window, so a language change's new window builds its own in the new language. **Not**
+  `NavigationViewItem.NavigationCacheMode`: WPF UI 4.3.0 reads it only when the NavigationView has neither a service
+  provider nor a page provider (`NavigationView.Navigation.cs`, `GetNavigationItemInstance`), and this App sets one — the
+  attribute would have changed nothing.
 
 ## Control mapping (always prefer these)
 
