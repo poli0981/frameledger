@@ -3,6 +3,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using CommunityToolkit.Mvvm.ComponentModel;
 using FrameLedger.App.Services;
 
 namespace FrameLedger.App.ViewModels;
@@ -12,17 +13,28 @@ namespace FrameLedger.App.ViewModels;
 /// playtime, last played, hooking state — or, since 2026-09-23, "Not recorded" in its place for an entry whose recording is
 /// off, and since 2026-09-25 "Anti-cheat" for one the guard found anti-cheat in; since beta.11 "Not installed" beside it
 /// when its executable is not on disk (<see cref="GameLibrary.ExecutableExists"/>, read when the library is listed, never
-/// stored), with the game page's own words for why (<see cref="Formats.ExecutableMissingText"/>).
+/// stored), with the game page's own words for why (<see cref="Formats.ExecutableMissingText"/>). Since beta.34 a card is
+/// shown before its executable is checked and gets the pill when the check answers (<see cref="SetInstalled"/>): a drive
+/// that sleeps took a second to say, and no card appeared until every one had.
 /// </summary>
 [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime")]
-public sealed class GameCardViewModel
+public sealed partial class GameCardViewModel : ObservableObject
 {
+    /// <summary>beta.11: the "Not installed" pill shows — the file, or the drive it was on, is not there now.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(StatusText))]
+    private bool _notInstalled;
+
+    /// <summary>What the pill means here — the drive that is not connected, or the path the file is gone from; null when installed.</summary>
+    [ObservableProperty]
+    private string? _notInstalledToolTip;
+
     public GameCardViewModel(GameCard card, bool installed = true)
     {
         ArgumentNullException.ThrowIfNull(card);
         Card = card;
-        NotInstalled = !installed;
-        NotInstalledToolTip = installed ? null : Formats.ExecutableMissingText(card.Row.Fingerprint.ExePath);
+        _notInstalled = !installed;
+        _notInstalledToolTip = installed ? null : Formats.ExecutableMissingText(card.Row.Fingerprint.ExePath);
         Id = card.Row.Id;
         Name = card.Row.Name;
         PlatformText = Formats.Platform(card.Row.Platform);
@@ -99,12 +111,33 @@ public sealed class GameCardViewModel
     /// <summary>The list view's last-played cell: the date alone, or "not played yet".</summary>
     public string LastPlayedValue { get; }
 
-    /// <summary>beta.11: the "Not installed" pill shows — the file, or the drive it was on, is not there now.</summary>
-    public bool NotInstalled { get; }
-
-    /// <summary>What the pill means here — the drive that is not connected, or the path the file is gone from; null when installed.</summary>
-    public string? NotInstalledToolTip { get; }
-
     /// <summary>The list view's status cell: what the hook pill says, and "Not installed" after it when that is so.</summary>
     public string StatusText => NotInstalled ? HookText + " · " + Strings.Games_Card_NotInstalled : HookText;
+
+    /// <summary>The executable check's answer, when it comes (beta.34) — with the reason, read off the UI thread with it.</summary>
+    public void SetInstalled(bool installed, string? whyNot)
+    {
+        NotInstalled = !installed;
+        NotInstalledToolTip = installed ? null : whyNot;
+    }
+
+    /// <summary>
+    /// Whether <paramref name="other"/> — the same game read again — would look the same on its card and in its row, and
+    /// play the same executable (beta.34): a reload keeps the card it already has, and rebuilds only one that changed.
+    /// </summary>
+    public bool LooksLike(GameCardViewModel other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+        return Id == other.Id
+            && string.Equals(Name, other.Name, StringComparison.Ordinal)
+            && string.Equals(PlatformText, other.PlatformText, StringComparison.Ordinal)
+            && string.Equals(EngineText, other.EngineText, StringComparison.Ordinal)
+            && string.Equals(HookText, other.HookText, StringComparison.Ordinal)
+            && string.Equals(SessionsText, other.SessionsText, StringComparison.Ordinal)
+            && string.Equals(PlaytimeText, other.PlaytimeText, StringComparison.Ordinal)
+            && string.Equals(LastPlayedText, other.LastPlayedText, StringComparison.Ordinal)
+            && string.Equals(Card.Row.Fingerprint.ExePath, other.Card.Row.Fingerprint.ExePath, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(Card.Row.Platform, other.Card.Row.Platform, StringComparison.Ordinal)
+            && string.Equals(Card.Row.StoreId, other.Card.Row.StoreId, StringComparison.Ordinal);
+    }
 }

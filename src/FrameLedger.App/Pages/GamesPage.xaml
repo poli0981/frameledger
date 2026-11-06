@@ -123,8 +123,10 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <!-- The list: one row per game across the width; double-click or Enter opens it. -->
-            <DataGrid x:Name="GameList" Margin="0,16,0,0" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+            <!-- The list: one row per game across the width; double-click or Enter opens it. Bounded since beta.34, as the
+                 Sessions grid is since beta.23: inside the page's scroller it was measured with no height limit and built every
+                 row, a Play button each (spike-notes §21, §27). -->
+            <DataGrid x:Name="GameList" Margin="0,16,0,0" MaxHeight="640" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                       CanUserSortColumns="False" HeadersVisibility="Column" IsReadOnly="True" SelectionMode="Single"
                       ItemsSource="{Binding ViewModel.Games}"
                       MouseDoubleClick="OnListDoubleClick" KeyDown="OnListKeyDown"

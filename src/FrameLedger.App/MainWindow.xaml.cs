@@ -45,8 +45,11 @@ public partial class MainWindow : FluentWindow
         theme.Apply(appearance.Theme, null);
         InitializeComponent();
 
-        RootNavigation.SetPageProviderService(pages);
         navigation.SetNavigationControl(RootNavigation);
+        // beta.34: this window's own provider, set AFTER SetNavigationControl — which hands the NavigationView the
+        // container's provider (upstream 4.3.0 NavigationService.SetNavigationControl) and would replace one set before it.
+        // It keeps the library page for the window's life (WindowPageCache); every other page is the container's.
+        RootNavigation.SetPageProviderService(new WindowPageCache(pages));
         snackbar.SetSnackbarPresenter(SnackbarPresenter);
         dialogs.SetDialogHost(DialogHost);
 
