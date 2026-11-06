@@ -464,4 +464,50 @@ public sealed class GamesViewModelTests
             Strings.Culture = previous;
         }
     }
+
+    /// <summary>
+    /// beta.34 (owner request 2026-11-06, D85): the library filters by store, engine, state, installed and played; the stores
+    /// and engines are the ones the library holds; the header counts what is shown of all; Clear filters undoes them.
+    /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture")]
+    [Fact]
+    public async Task TheFiltersNarrowTheLibraryAndTheHeaderCountsWhatIsShown()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        GameRow alpha = await s.GameAsync("Alpha");
+        _ = await s.GameAsync("Bravo");
+        _ = await s.GameAsync("Charlie");
+        _ = await s.SessionAsync(alpha.Id, DateTimeOffset.UtcNow);
+        var selection = new GameSelection();
+        var nav = new NoNavigation();
+        var vm = new GamesViewModel(s.Library, selection, nav, new AddGameFlow(s.Library, new NoPicker(), selection, nav, new NoStrip()),
+            executableExists: p => !p.Contains("Charlie", StringComparison.OrdinalIgnoreCase));
+        Task load = vm.Pending;
+        await load;
+
+        vm.Stores.Should().NotBeEmpty();
+        vm.Stores[0].Value.Should().Be(GamesViewModel.AnyToken);
+        vm.Engines[0].Value.Should().Be(GamesViewModel.AnyToken);
+        vm.IsFiltered.Should().BeFalse();
+        vm.HeaderText.Should().EndWith("3");
+
+        vm.PlayedFilter = YesNoFilter.Yes;
+        vm.Games.Select(static g => g.Name).Should().Equal(["Alpha"]);
+        vm.IsFiltered.Should().BeTrue();
+        vm.HeaderText.Should().Be(string.Format(CultureInfo.CurrentCulture, Strings.Games_Header_Filtered_Format, 1, 3));
+
+        vm.PlayedFilter = YesNoFilter.No;
+        vm.InstalledFilter = YesNoFilter.No;
+        vm.Games.Select(static g => g.Name).Should().Equal(["Charlie"], "never played, and its executable is not on disk");
+
+        vm.InstalledFilter = YesNoFilter.All;
+        vm.StateFilter = GamesStateFilter.HookingOn;
+        vm.Games.Should().BeEmpty("hooking is off for every scratch entry");
+        vm.NoMatch.Should().BeTrue();
+
+        vm.ClearFiltersCommand.Execute(null);
+        vm.Games.Should().HaveCount(3);
+        vm.IsFiltered.Should().BeFalse();
+        vm.HeaderText.Should().EndWith("3");
+    }
 }

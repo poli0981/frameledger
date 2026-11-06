@@ -1121,6 +1121,50 @@
     <value>並べ替え</value>
     <comment>review</comment>
   </data>
+  <data name="Games_Filter_Store_All" xml:space="preserve">
+    <value>すべてのストア</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Filter_Store_Manual" xml:space="preserve">
+    <value>手動で追加</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Filter_Engine_All" xml:space="preserve">
+    <value>すべてのエンジン</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Filter_Engine_Unknown" xml:space="preserve">
+    <value>エンジン不明</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Filter_State_All" xml:space="preserve">
+    <value>すべての状態</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Filter_Installed_All" xml:space="preserve">
+    <value>インストール済みかを問わない</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Filter_Installed_Yes" xml:space="preserve">
+    <value>インストール済み</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Filter_Played_All" xml:space="preserve">
+    <value>プレイ済みかを問わない</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Filter_Played_Yes" xml:space="preserve">
+    <value>セッションあり</value>
+    <comment>review</comment>
+  </data>
+  <data name="Games_Header_Filtered_Format" xml:space="preserve">
+    <value>ゲーム · {0} / {1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Filter_Clear" xml:space="preserve">
+    <value>フィルターを解除</value>
+    <comment>review</comment>
+  </data>
   <data name="Games_Sort_LastPlayed" xml:space="preserve">
     <value>最後にプレイ</value>
     <comment>review</comment>
@@ -1607,6 +1651,50 @@
   </data>
   <data name="Compare_Selected_Format" xml:space="preserve">
     <value>{0} 件選択</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Filter_Game_All" xml:space="preserve">
+    <value>すべてのゲーム</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Filter_Tier_All" xml:space="preserve">
+    <value>すべての Tier</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Filter_Tier_Measured" xml:space="preserve">
+    <value>計測あり (Tier 1)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Filter_Tier_NotMeasured" xml:space="preserve">
+    <value>計測なし (Tier 2)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Filter_Fg_All" xml:space="preserve">
+    <value>フレーム生成の有無を問わない</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Filter_Fg_With" xml:space="preserve">
+    <value>フレーム生成あり</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Filter_Fg_Without" xml:space="preserve">
+    <value>フレーム生成なし</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Count_Format" xml:space="preserve">
+    <value>{0} 件のセッション</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_Count_Filtered_Format" xml:space="preserve">
+    <value>{1} 件中 {0} 件のセッション</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_ClearSelection" xml:space="preserve">
+    <value>選択を解除</value>
+    <comment>review</comment>
+  </data>
+  <data name="Compare_MidSession_Changed" xml:space="preserve">
+    <value>セッション中に変更</value>
     <comment>review</comment>
   </data>
   <data name="Compare_Table_Header" xml:space="preserve">
@@ -2586,6 +2674,38 @@
   </data>
   <data name="A11y_Games_Sort" xml:space="preserve">
     <value>ゲームの並べ替え</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Games_Filter_Store" xml:space="preserve">
+    <value>ストアでゲームを絞り込む</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Games_Filter_Engine" xml:space="preserve">
+    <value>エンジンでゲームを絞り込む</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Games_Filter_State" xml:space="preserve">
+    <value>状態でゲームを絞り込む</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Games_Filter_Installed" xml:space="preserve">
+    <value>インストール状態でゲームを絞り込む</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Games_Filter_Played" xml:space="preserve">
+    <value>セッションでゲームを絞り込む</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Compare_Filter_Game" xml:space="preserve">
+    <value>ゲームでセッションを絞り込む</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Compare_Filter_Tier" xml:space="preserve">
+    <value>Tier でセッションを絞り込む</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Compare_Filter_Fg" xml:space="preserve">
+    <value>フレーム生成でセッションを絞り込む</value>
     <comment>review</comment>
   </data>
   <data name="A11y_Logs_Source" xml:space="preserve">

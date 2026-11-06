@@ -108,14 +108,9 @@ public sealed class GameLibrary
             return [];
         }
 
-        var names = new Dictionary<long, string>();
-        foreach (long gameId in rows.Select(static r => r.GameId).Distinct())
-        {
-            GameRow? game = await _games.FindByIdAsync(gameId, ct).ConfigureAwait(false);
-            names[gameId] = game?.Name ?? Strings.Common_NotAvailable;
-        }
-
-        return [.. rows.Select(r => new RecentSession(r, names[r.GameId]))];
+        // One read of the library's names (beta.34): Compare now lists every session, and a read per game was a query each.
+        Dictionary<long, string> names = (await _games.ListAsync(ct).ConfigureAwait(false)).ToDictionary(static g => g.Id, static g => g.Name);
+        return [.. rows.Select(r => new RecentSession(r, names.GetValueOrDefault(r.GameId) ?? Strings.Common_NotAvailable))];
     }
 
     public async Task<LibraryTotals> TotalsAsync(CancellationToken ct = default)

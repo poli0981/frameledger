@@ -163,10 +163,12 @@
             </ItemsControl>
         </StackPanel>
 
+        <!-- beta.34 (D86): our copy of WPF UI's LeftFluent item template, so the selected page keeps its label (Styles/FrameLedger.xaml). -->
         <ui:NavigationView x:Name="RootNavigation"
                            Grid.Row="3"
                            IsBackButtonVisible="Collapsed"
                            IsPaneToggleVisible="False"
+                           ItemTemplate="{StaticResource FlLeftFluentNavigationViewItemTemplate}"
                            PaneDisplayMode="LeftFluent">
             <ui:NavigationView.MenuItems>
                 <ui:NavigationViewItem Content="{x:Static res:Strings.Nav_Dashboard}"

@@ -37,6 +37,8 @@ public sealed partial class GameCardViewModel : ObservableObject
         _notInstalledToolTip = installed ? null : Formats.ExecutableMissingText(card.Row.Fingerprint.ExePath);
         Id = card.Row.Id;
         Name = card.Row.Name;
+        PlatformToken = card.Row.Platform;
+        EngineToken = card.Row.Engine;
         PlatformText = Formats.Platform(card.Row.Platform);
         EngineText = Formats.Engine(card.Row.Engine, card.Row.EngineVersionSource);
         Recorded = card.Row.RecordSessions;
@@ -70,6 +72,18 @@ public sealed partial class GameCardViewModel : ObservableObject
     public string Name { get; }
 
     public string PlatformText { get; }
+
+    /// <summary>The store's token (<c>steam</c>, <c>gog</c>, <c>epic</c>, <c>itch</c>, <c>xbox</c>; <c>none</c> for a game added by hand) — the store filter's key.</summary>
+    public string PlatformToken { get; }
+
+    /// <summary>The detected engine's id, or null — the engine filter's key.</summary>
+    public string? EngineToken { get; }
+
+    /// <summary>The card's one state, as its pill says it (beta.34, D85).</summary>
+    public GamesStateFilter State => !Recorded ? GamesStateFilter.NotRecorded
+        : Excepted ? GamesStateFilter.Exception
+        : AntiCheat ? GamesStateFilter.AntiCheat
+        : HookOn ? GamesStateFilter.HookingOn : GamesStateFilter.HookingOff;
 
     public bool HasPlatform => PlatformText.Length > 0;
 
