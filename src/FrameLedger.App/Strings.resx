@@ -3437,6 +3437,9 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="Dlss_Basis_Library_Format" xml:space="preserve">
     <value>library {0}</value>
   </data>
+  <data name="Dlss_Basis_Dynamic" xml:space="preserve">
+    <value>Dynamic multi frame generation, set in the NVIDIA App</value>
+  </data>
   <data name="Dlss_Feature_SuperResolution" xml:space="preserve">
     <value>Super Resolution</value>
   </data>

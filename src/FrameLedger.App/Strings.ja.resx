@@ -4569,6 +4569,10 @@
     <value>ライブラリ {0}</value>
     <comment>review</comment>
   </data>
+  <data name="Dlss_Basis_Dynamic" xml:space="preserve">
+    <value>NVIDIA App で設定した Dynamic マルチフレーム生成</value>
+    <comment>review</comment>
+  </data>
   <data name="Dlss_Feature_SuperResolution" xml:space="preserve">
     <value>Super Resolution</value>
     <comment>review</comment>

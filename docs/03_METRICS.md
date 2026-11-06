@@ -535,7 +535,10 @@ F_app   = Σ fgEvaluations                  (APPLICATION frames, counted at the 
 > in a game's menu is not read — it reaches the runtime through `sl::DLSSGOptions`, the route `HANDOFF` §2b refused —
 > so the measured row is its evidence. The dynamic ceiling (`NGX_DLSSG_DYNAMIC_MULTI_FRAME_COUNT_MAX`) is decoded as
 > `NGX_DLSSG_MULTI_FRAME_COUNT` is (frames generated per rendered frame) and the automatic target as "max refresh
-> rate"; NVIDIA's header names neither, and owner-only item 20(a) checks both against the App.
+> rate"; NVIDIA's header names neither, and owner-only item 20(a) checks both against the App. *(2026-11-06, beta.34:
+> the ceiling's decode held on the owner's Phantom Blade Zero — a ceiling of 5 held states up to ×6.0, a ceiling of 2
+> nothing above ×3.0 — `spike-notes` §26. And the context line is no longer the only place the Dynamic mode shows: the
+> DLSS line names DLSS 4.5 where the driver reports Dynamic applied, D83, `05_DETECTION` §DLSS generation.)*
 
 `fgEvaluations` is recorded per present by ~~the NGX/Streamline/FFX/XeSS FG hooks~~ the `slGetNewFrameToken`
 detour; where Streamline never issued a token, by the FidelityFX dispatches — new PREPARE `frameID`s, else UPSCALE

@@ -3432,6 +3432,9 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="Dlss_Basis_Library_Format" xml:space="preserve">
     <value>thư viện {0}</value>
   </data>
+  <data name="Dlss_Basis_Dynamic" xml:space="preserve">
+    <value>tạo nhiều khung hình Dynamic, đặt trong NVIDIA App</value>
+  </data>
   <data name="Dlss_Feature_SuperResolution" xml:space="preserve">
     <value>Super Resolution</value>
   </data>

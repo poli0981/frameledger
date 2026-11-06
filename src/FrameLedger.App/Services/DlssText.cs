@@ -15,7 +15,8 @@ namespace FrameLedger.App.Services;
 /// <summary>
 /// The DLSS a session ran, in words (beta.24, owner decision D64; <c>05_DETECTION</c> §DLSS generation): each DLSS
 /// library's version and where it was loaded from, the model preset the NVIDIA driver reports, and a generation only
-/// where the session shows one (<see cref="DlssGeneration"/>, strongest evidence first). DLSS 5 only as "runtime loaded".
+/// where the session shows one (<see cref="DlssGeneration"/>, strongest evidence first) — since beta.34 (D83) also the
+/// NVIDIA App's Dynamic frame generation the driver reports applied. DLSS 5 only as "runtime loaded".
 /// </summary>
 /// <remarks>Read from what the row stores; nothing here infers a generation from a version that does not name one.</remarks>
 [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime")]
@@ -32,7 +33,8 @@ public static class DlssText
     {
         ArgumentNullException.ThrowIfNull(row);
         Dictionary<string, string?> modules = Modules(row.RuntimeModulesJson);
-        return new DlssEvidence(VersionOf(modules, _superResolutionFile), VersionOf(modules, _frameGenerationFile), ReportedPreset(row), LargestFrameGenerationFactor(row));
+        return new DlssEvidence(VersionOf(modules, _superResolutionFile), VersionOf(modules, _frameGenerationFile), ReportedPreset(row), LargestFrameGenerationFactor(row),
+            DynamicFrameGeneration(row));
     }
 
     /// <summary>The generation the row establishes, as a label with what it rests on (<c>DLSS 4.5 (preset L)</c>), or null.</summary>
@@ -116,6 +118,7 @@ public static class DlssText
         {
             DlssBasis.Preset => string.Format(CultureInfo.CurrentCulture, Strings.Nv_Preset_Format, DlssGeneration.PresetLetter(evidence.Preset)),
             DlssBasis.FrameGenerationFactor => string.Format(CultureInfo.CurrentCulture, Strings.Dlss_Basis_Factor_Format, evidence.LargestFrameGenerationFactor),
+            DlssBasis.DynamicFrameGeneration => Strings.Dlss_Basis_Dynamic,
             _ => string.Format(CultureInfo.CurrentCulture, Strings.Dlss_Basis_Library_Format, Short(evidence.SuperResolution is { Major: 2 or 3 } ? evidence.SuperResolution : evidence.FrameGeneration)),
         });
 
@@ -123,6 +126,7 @@ public static class DlssText
     {
         DlssBasis.Preset => "preset",
         DlssBasis.FrameGenerationFactor => "frame_generation_factor",
+        DlssBasis.DynamicFrameGeneration => "dynamic_frame_generation",
         _ => "library_version",
     };
 
@@ -182,6 +186,21 @@ public static class DlssText
             ? words.Preset
             : null;
     }
+
+    /// <summary>
+    /// The NVIDIA App's Dynamic frame generation ran in the session (beta.34, D83): DLSS Frame Generation was counted, the
+    /// game's driver profile sets <c>NGX_DLSSG_MODE</c> to Dynamic, and the driver's frame-generation word reports the mode
+    /// override applied in the game's process (<see cref="NgxOverrideFlags.FgMode"/>). The driver's own mode number —
+    /// 3 under Dynamic and 1 under Fixed on every stored session (<c>spike-notes</c> §26) — is not what is read: NVIDIA's
+    /// header names the profile's values and not the report's. A profile that sets Dynamic the driver never applied, or a
+    /// session where no DLSS Frame Generation was counted, is not evidence.
+    /// </summary>
+    private static bool DynamicFrameGeneration(SessionRow row) =>
+        Is(row.FgMode, "dlssg")
+        && DriverProfileRecord.Parse(row.DriverProfileJson) is { } profile && NvidiaOverrides.IsRead(profile)
+        && profile.ValueOf(NvidiaDriverSettings.DlssgMode) == NvidiaDriverSettings.DlssgModeDynamic
+        && NgxDriverWords.Parse(row.NgxDriverWordsJson) is { Outcome: nameof(NgxProbeOutcome.Answered) } words
+        && (Mask(words.Fg) & NgxOverrideFlags.FgMode) != 0;
 
     /// <summary>The largest DLSS Frame Generation state the session measured: the mix's states, else its one factor.</summary>
     private static double? LargestFrameGenerationFactor(SessionRow row)

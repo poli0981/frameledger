@@ -36,8 +36,25 @@ public sealed class DlssTextTests
         }
     }
 
+    // Phantom Blade Zero, 2026-11-05 (the owner's ledger, session 129): the NVIDIA App's Dynamic frame generation, up to ×3,
+    // target the maximum refresh rate — the profile's NGX_DLSSG_MODE 4, and the driver's FG word with FG_MODE (bit 13) set.
+    private const string _dynamicUpToThree = "{\"Outcome\":\"Application\",\"Profile\":\"Phantom Blade Zero\",\"NvapiStatus\":0,\"Settings\":[" +
+        "{\"Id\":\"0x10E41E01\",\"Value\":1,\"Location\":\"Profile\",\"Predefined\":false}," +
+        "{\"Id\":\"0x104D6667\",\"Value\":0,\"Location\":\"Profile\",\"Predefined\":false}," +
+        "{\"Id\":\"0x10308298\",\"Value\":4,\"Location\":\"Profile\",\"Predefined\":false}," +
+        "{\"Id\":\"0x10562D0F\",\"Value\":2,\"Location\":\"Profile\",\"Predefined\":false}," +
+        "{\"Id\":\"0x10CF4125\",\"Value\":16777216,\"Location\":\"Profile\",\"Predefined\":false}]}";
+
+    private const string _dynamicApplied = "{\"Outcome\":\"Answered\",\"Sr\":\"0x1F\",\"Rr\":\"0x605\",\"Fg\":\"0x263F\",\"Driver\":62101,\"Ratio\":0,\"Mode\":0," +
+        "\"Preset\":0,\"FgCount\":0,\"FgPreset\":3,\"FgMode\":3,\"Readings\":203,\"Answered\":201,\"Changed\":true,\"Detail\":null}";
+
+    private const string _upToThreeMix = "{\"Rows\":[" +
+        "{\"Kind\":\"generated\",\"Factor\":1.9954505429997065,\"NativeFps\":85.175,\"DisplayedFps\":169.9625,\"Seconds\":80,\"Share\":0.013,\"Windows\":16}," +
+        "{\"Kind\":\"generated\",\"Factor\":2.9986416215642575,\"NativeFps\":72.64,\"DisplayedFps\":217.83,\"Seconds\":4540,\"Share\":0.746,\"Windows\":908}," +
+        "{\"Kind\":\"none\",\"Factor\":null,\"NativeFps\":61.68,\"DisplayedFps\":61.69,\"Seconds\":1203.9,\"Share\":0.198,\"Windows\":241}]}";
+
     private static SessionRow Row(string? modules = null, string? sources = null, string? upscaler = null, string? driverReported = null, string? words = null,
-        string fgMode = "na", double? factor = null, string? mix = null) => new()
+        string fgMode = "na", double? factor = null, string? mix = null, string? profile = null) => new()
         {
             SessionGuid = Guid.NewGuid(),
             GameId = 1,
@@ -58,7 +75,34 @@ public sealed class DlssTextTests
             FgMode = fgMode,
             FgFactor = factor,
             FgMixJson = mix,
+            DriverProfileJson = profile,
         };
+
+    /// <summary>
+    /// beta.34, owner decision D83: Phantom Blade Zero under the NVIDIA App's Dynamic frame generation, up to ×3, held ×2.0
+    /// and ×3.0 and read "DLSS 4 (a ×3.0 frame-generation state)" — Dynamic exists only in DLSS 4.5. Evidence is the
+    /// profile's Dynamic AND the driver's report that the override applied AND DLSS Frame Generation counted.
+    /// </summary>
+    [Fact]
+    public void TheNvidiaAppsDynamicFrameGenerationTheDriverAppliedIsDlss45() => InEnglish(() =>
+    {
+        const string modules = "{\"sl.interposer.dll\":\"2,14,1,0\",\"1B0_E658700.dll\":\"2,14,16,0\",\"160_E658700.bin\":\"310,9,16,0\",\"nvngx_dlssd.dll\":\"310,9,1,0\"}";
+        SessionRow phantomBlade = Row(modules, upscaler: "unknown", fgMode: "dlssg", factor: 2.9986416215642575, mix: _upToThreeMix,
+            words: _dynamicApplied, profile: _dynamicUpToThree);
+
+        DlssText.Label(phantomBlade).Should().Be("DLSS 4.5 (Dynamic multi frame generation, set in the NVIDIA App)");
+        DlssText.Line(phantomBlade).Should().Be("DLSS 4.5 (Dynamic multi frame generation, set in the NVIDIA App) · Ray Reconstruction 310.9.1");
+        DlssText.ExportLine(phantomBlade).Should().StartWith("generation=DLSS 4.5 basis=dynamic_frame_generation; ");
+
+        DlssText.Label(phantomBlade with { NgxDriverWordsJson = _dynamicApplied.Replace("0x263F", "0x63F", StringComparison.Ordinal) })
+            .Should().Be("DLSS 4 (a ×3.0 frame-generation state)", "a profile set to Dynamic that the driver never reports applying is a setting, not evidence");
+        DlssText.Label(phantomBlade with { DriverProfileJson = _dynamicUpToThree.Replace("\"Value\":4,", "\"Value\":2,", StringComparison.Ordinal) })
+            .Should().Be("DLSS 4 (a ×3.0 frame-generation state)", "Fixed is not Dynamic: Witcher 3 under Fixed ×6 still presented ×2.0");
+        DlssText.Label(phantomBlade with { FgMode = "na", FgFactor = null, FgMixJson = null })
+            .Should().BeNull("no DLSS Frame Generation was counted");
+        DlssText.Label(phantomBlade with { NgxDriverWordsJson = null }).Should().Be("DLSS 4 (a ×3.0 frame-generation state)", "no driver report, no evidence");
+        return 0;
+    });
 
     [Fact]
     public void WitchersLibrariesAreVersionsAndNameNoGenerationAtTimesTwo() => InEnglish(() =>

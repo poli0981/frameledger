@@ -11,7 +11,7 @@ guide, Help ▸ Limitations), and on the project's [wiki](https://github.com/pol
 pages.
 
 <!-- accuracy-block:begin -->
-> ⚠ **What FrameLedger actually measures today — 2026-10-19.** The software is a beta; its latest
+> ⚠ **What FrameLedger actually measures today — 2026-11-06.** The software is a beta; its latest
 > **beta is `0.1.0-beta.33`** (2026-11-03), an unsigned installer built from that tag with its
 > checksums published beside it (alphas — experimental builds on a prerelease .NET — are published apart). The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
@@ -44,7 +44,8 @@ pages.
 >   every other case — FSR at a dynamic resolution among them — no mode is shown.
 > - **DLSS version:** the version of each DLSS library the game loaded and whether it came from the game or from
 >   the NVIDIA driver; "DLSS 4" or "DLSS 4.5" only when the session shows it (the model preset the driver reports,
->   or a measured multi-frame factor); DLSS 5 only as "runtime loaded".
+>   a measured multi-frame factor, or the NVIDIA App's Dynamic frame generation that the driver reports applied);
+>   DLSS 5 only as "runtime loaded".
 > - **Render → output resolution:** measured where the vendor's own per-frame call carries the render
 >   size (AMD FidelityFX dispatches, and Streamline titles whose resource tags state it); `N/A` where it
 >   does not: DLSS titles that bypass Streamline, Streamline titles whose tags carry no size, and Vulkan
