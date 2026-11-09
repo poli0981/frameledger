@@ -13,13 +13,13 @@
       ScrollViewer.CanContentScroll="False">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Style="{StaticResource PageRoot}">
-            <ui:TextBlock FontTypography="Title" Text="{x:Static vm:DashboardViewModel.Header}" />
+            <ui:TextBlock FontTypography="Title" AutomationProperties.HeadingLevel="Level1" Text="{x:Static vm:DashboardViewModel.Header}" />
 
             <!-- 08_UI §Dashboard: the live capture cards — one per running session since beta.28 (the owner, 2026-10-20: two or
                  more games at once), hooked sessions first — fed by SessionStarted / SessionProgress / SessionHeld /
                  SessionCompleted. A session recorded without measuring (Tier 2) shows why, and no readout (2026-09-23). -->
             <StackPanel Margin="0,16,0,0" Orientation="Horizontal">
-                <ui:TextBlock FontTypography="Subtitle" Text="{x:Static vm:LiveCaptureViewModel.Header}" />
+                <ui:TextBlock FontTypography="Subtitle" AutomationProperties.HeadingLevel="Level2" Text="{x:Static vm:LiveCaptureViewModel.Header}" />
                 <Border Style="{StaticResource Pill}" Visibility="{Binding ViewModel.LiveCountText, Converter={StaticResource NullToCollapsed}}">
                     <TextBlock Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding ViewModel.LiveCountText}" />
                 </Border>
@@ -77,19 +77,19 @@
                 <ui:Card Margin="0,0,6,0">
                     <StackPanel>
                         <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:DashboardViewModel.TotalsGames}" />
-                        <ui:TextBlock FontTypography="Subtitle" Text="{Binding ViewModel.GamesTrackedText}" />
+                        <ui:TextBlock FontTypography="Subtitle" AutomationProperties.HeadingLevel="None" Text="{Binding ViewModel.GamesTrackedText}" />
                     </StackPanel>
                 </ui:Card>
                 <ui:Card Margin="6,0,6,0">
                     <StackPanel>
                         <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:DashboardViewModel.TotalsPlaytime}" />
-                        <ui:TextBlock FontTypography="Subtitle" Text="{Binding ViewModel.PlaytimeText}" />
+                        <ui:TextBlock FontTypography="Subtitle" AutomationProperties.HeadingLevel="None" Text="{Binding ViewModel.PlaytimeText}" />
                     </StackPanel>
                 </ui:Card>
                 <ui:Card Margin="6,0,0,0">
                     <StackPanel>
                         <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static vm:DashboardViewModel.TotalsThisWeek}" />
-                        <ui:TextBlock FontTypography="Subtitle" Text="{Binding ViewModel.ThisWeekText}" />
+                        <ui:TextBlock FontTypography="Subtitle" AutomationProperties.HeadingLevel="None" Text="{Binding ViewModel.ThisWeekText}" />
                     </StackPanel>
                 </ui:Card>
             </UniformGrid>
@@ -97,7 +97,7 @@
             <!-- 08_UI §Dashboard: the Agent status card. Every value reads N/A until the Agent answered. -->
             <ui:Card Margin="0,12,0,0" HorizontalAlignment="Stretch">
                 <StackPanel>
-                    <ui:TextBlock FontTypography="Subtitle" Margin="0,0,0,12" Text="{x:Static vm:DashboardViewModel.AgentHeader}" />
+                    <ui:TextBlock FontTypography="Subtitle" AutomationProperties.HeadingLevel="Level2" Margin="0,0,0,12" Text="{x:Static vm:DashboardViewModel.AgentHeader}" />
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -128,7 +128,7 @@
             </ui:Card>
 
             <!-- recent sessions -->
-            <ui:TextBlock Margin="0,20,0,0" FontTypography="Subtitle" Text="{x:Static vm:DashboardViewModel.RecentHeader}" />
+            <ui:TextBlock Margin="0,20,0,0" FontTypography="Subtitle" AutomationProperties.HeadingLevel="Level2" Text="{x:Static vm:DashboardViewModel.RecentHeader}" />
             <ui:TextBlock Margin="0,8,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap"
                           Text="{x:Static vm:DashboardViewModel.EmptyText}"
                           Visibility="{Binding ViewModel.RecentEmpty, Converter={StaticResource BoolToVis}}" />

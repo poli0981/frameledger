@@ -6,11 +6,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:res="clr-namespace:FrameLedger.App"
-             xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF">
+             xmlns:charts="clr-namespace:FrameLedger.App.Charts">
     <!-- 08_UI §Session summary (beta.14, D49): the render scale over the session, as steps; a line saying it was not measured
          where the upscaler's parameters never were. -->
     <Grid>
-        <sp:WpfPlot x:Name="Plot" />
+        <charts:ChartPlot x:Name="Plot" AutomationProperties.Name="{x:Static res:Strings.A11y_Chart_RenderScale}" AutomationProperties.HelpText="{x:Static res:Strings.A11y_ChartData_Summary}" />
         <ui:TextBlock x:Name="NotMeasured" Style="{StaticResource SecondaryText}" TextWrapping="Wrap" VerticalAlignment="Center" HorizontalAlignment="Center"
                       Text="{x:Static res:Strings.Chart_RenderScale_NotMeasured}" Visibility="Collapsed" />
     </Grid>

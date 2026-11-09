@@ -3672,4 +3672,55 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="A11y_Update_Downloading_Format" xml:space="preserve">
     <value>Đang tải phiên bản {0}.</value>
   </data>
+  <data name="A11y_Chart_ControlType" xml:space="preserve">
+    <value>biểu đồ</value>
+  </data>
+  <data name="A11y_Chart_Keys" xml:space="preserve">
+    <value>Phím mũi tên di chuyển khung nhìn, Ctrl kèm phím mũi tên để phóng to/thu nhỏ, A hoặc nhấp đúp để xem toàn bộ.</value>
+  </data>
+  <data name="A11y_Chart_Frametime" xml:space="preserve">
+    <value>Biểu đồ thời gian khung hình</value>
+  </data>
+  <data name="A11y_Chart_Histogram" xml:space="preserve">
+    <value>Biểu đồ phân bố FPS</value>
+  </data>
+  <data name="A11y_Chart_Percentiles" xml:space="preserve">
+    <value>Tốc độ khung hình theo bách phân vị</value>
+  </data>
+  <data name="A11y_Chart_Temps" xml:space="preserve">
+    <value>Biểu đồ nhiệt độ, tải và công suất</value>
+  </data>
+  <data name="A11y_Chart_Vram" xml:space="preserve">
+    <value>Biểu đồ bộ nhớ video</value>
+  </data>
+  <data name="A11y_Chart_Ram" xml:space="preserve">
+    <value>Biểu đồ bộ nhớ</value>
+  </data>
+  <data name="A11y_Chart_Clocks" xml:space="preserve">
+    <value>Biểu đồ xung nhịp và quạt</value>
+  </data>
+  <data name="A11y_Chart_Compare" xml:space="preserve">
+    <value>Tốc độ khung hình theo bách phân vị, mỗi phiên một đường</value>
+  </data>
+  <data name="A11y_Chart_Latency" xml:space="preserve">
+    <value>Biểu đồ độ trễ</value>
+  </data>
+  <data name="A11y_Chart_Trend" xml:space="preserve">
+    <value>Biểu đồ xu hướng, mỗi phiên một điểm</value>
+  </data>
+  <data name="A11y_Chart_RenderScale" xml:space="preserve">
+    <value>Biểu đồ tỉ lệ render</value>
+  </data>
+  <data name="A11y_ChartData_Summary" xml:space="preserve">
+    <value>Các số liệu của phiên và mục Thống kê theo chuỗi ghi các số này thành chữ; Tệp ▸ Xuất ▸ Session CSV lưu mọi điểm.</value>
+  </data>
+  <data name="A11y_ChartData_Sessions" xml:space="preserve">
+    <value>Bảng ở thẻ Phiên liệt kê số liệu của từng phiên, các thay đổi được liệt kê dưới biểu đồ.</value>
+  </data>
+  <data name="A11y_ChartData_Compare" xml:space="preserve">
+    <value>Bảng dưới biểu đồ liệt kê số liệu của từng phiên.</value>
+  </data>
+  <data name="A11y_ChartData_Latency" xml:space="preserve">
+    <value>Giá trị trung bình và bách phân vị 95 được ghi phía trên biểu đồ.</value>
+  </data>
 </root>

@@ -16,7 +16,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TextBlock Grid.Row="0" FontTypography="Title" Text="{Binding ViewModel.StepText}" />
+        <ui:TextBlock Grid.Row="0" FontTypography="Title" AutomationProperties.HeadingLevel="Level1" Text="{Binding ViewModel.StepText}" />
 
         <!-- Step 1: the Legal Gate. -->
         <Grid Grid.Row="1" Margin="0,12,0,0" Visibility="{Binding ViewModel.IsLegalStep, Converter={StaticResource BoolToVis}}">

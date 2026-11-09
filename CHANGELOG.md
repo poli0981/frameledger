@@ -66,6 +66,17 @@ numeric core and does not move; the heading is the full version — corrected 20
   FrameLedger's window is the active one, so a game that has the screen is never interrupted. The database line's live
   region, which announced nothing, is gone.
 
+- **Headings and charts a screen reader can use** (owner decision D90). Every page's title is a first-level heading and
+  each section title a second-level one, so a screen reader's heading keys move between sections. Every chart says what
+  it is and where its numbers are written as text; its keys — arrows to move, Ctrl with an arrow to zoom, A to see all of
+  it — now stay with the chart instead of also scrolling the page or moving the focus on, and its focus is drawn. No
+  chart tells two series apart by colour alone any more: Compare's five sessions, the GPU's temperature and its hot spot,
+  the two kinds of stutter, the two lows and the two limits each have their own line pattern, marker or hatch.
+
+### Fixed
+
+- **A double-click on a chart shows all of it again**, as the user guide said; it toggled ScottPlot's render-time overlay.
+
 ### Changed
 
 - **Documents corrected**: charts do take focus and keys (`docs/08_UI.md` said neither — `ChartKeyboardTests` measures

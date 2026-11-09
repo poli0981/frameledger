@@ -94,6 +94,7 @@ public partial class DistributionChart : UserControl
                 Scatter low = plot.Add.ScatterPoints(new[] { x }, new[] { fps }, ChartTheme.Current.Stutter);
                 low.MarkerSize = 7;
                 low.LegendText = pointOne ? Strings.Summary_Stat_P01Low : Strings.Summary_Stat_P1Low;
+                ChartPatterns.Points(low, pointOne ? 2 : 0);   // beta.35 (D90): the 1% low a circle, the 0.1% low a square
             }
 
             // The axis is 0–100 whatever the curve covers: AutoScale first, then the X limits (AutoScale afterwards undid them).

@@ -3677,4 +3677,55 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="A11y_Update_Downloading_Format" xml:space="preserve">
     <value>Downloading version {0}.</value>
   </data>
+  <data name="A11y_Chart_ControlType" xml:space="preserve">
+    <value>chart</value>
+  </data>
+  <data name="A11y_Chart_Keys" xml:space="preserve">
+    <value>Arrow keys move the view, Ctrl with an arrow key zooms, and A or a double-click shows all of it.</value>
+  </data>
+  <data name="A11y_Chart_Frametime" xml:space="preserve">
+    <value>Frame time chart</value>
+  </data>
+  <data name="A11y_Chart_Histogram" xml:space="preserve">
+    <value>FPS histogram</value>
+  </data>
+  <data name="A11y_Chart_Percentiles" xml:space="preserve">
+    <value>Frame rate by percentile</value>
+  </data>
+  <data name="A11y_Chart_Temps" xml:space="preserve">
+    <value>Temperatures, load and power chart</value>
+  </data>
+  <data name="A11y_Chart_Vram" xml:space="preserve">
+    <value>Video memory chart</value>
+  </data>
+  <data name="A11y_Chart_Ram" xml:space="preserve">
+    <value>Memory chart</value>
+  </data>
+  <data name="A11y_Chart_Clocks" xml:space="preserve">
+    <value>Clocks and fan chart</value>
+  </data>
+  <data name="A11y_Chart_Compare" xml:space="preserve">
+    <value>Frame rate by percentile, one curve per session</value>
+  </data>
+  <data name="A11y_Chart_Latency" xml:space="preserve">
+    <value>Latency chart</value>
+  </data>
+  <data name="A11y_Chart_Trend" xml:space="preserve">
+    <value>Trend chart, one point per session</value>
+  </data>
+  <data name="A11y_Chart_RenderScale" xml:space="preserve">
+    <value>Render scale chart</value>
+  </data>
+  <data name="A11y_ChartData_Summary" xml:space="preserve">
+    <value>The session's figures and Statistics per series write these numbers out; File ▸ Export ▸ Session CSV saves every point.</value>
+  </data>
+  <data name="A11y_ChartData_Sessions" xml:space="preserve">
+    <value>The Sessions tab's table lists each session's figures, and the changes are listed under the chart.</value>
+  </data>
+  <data name="A11y_ChartData_Compare" xml:space="preserve">
+    <value>The table under the chart lists each session's figures.</value>
+  </data>
+  <data name="A11y_ChartData_Latency" xml:space="preserve">
+    <value>The average and the 95th percentile are written above the chart.</value>
+  </data>
 </root>

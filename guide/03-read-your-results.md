@@ -72,7 +72,8 @@ correct it by hand — your correction is labelled as yours.
   shows the same. *Sessions at a glance* numbers the same days the same way.
 - **Compare** (in the navigation on the left) — pick sessions, even of different games, and see them side by side.
 
-To look closer, hold **Ctrl** and turn the mouse wheel over a chart to zoom, drag to pan, and double-click to reset. The
+To look closer, hold **Ctrl** and turn the mouse wheel over a chart to zoom, drag to pan, and double-click to see all of
+it again — or Tab to the chart and use the arrow keys, **Ctrl** with an arrow to zoom, and **A**. The
 wheel alone scrolls the page.
 
 ## Export

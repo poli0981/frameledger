@@ -4888,4 +4888,72 @@
     <value>バージョン {0} をダウンロードしています。</value>
     <comment>review</comment>
   </data>
+  <data name="A11y_Chart_ControlType" xml:space="preserve">
+    <value>グラフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Keys" xml:space="preserve">
+    <value>矢印キーで表示範囲を移動、Ctrl と矢印キーで拡大・縮小、A キーまたはダブルクリックで全体を表示します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Frametime" xml:space="preserve">
+    <value>フレーム時間のグラフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Histogram" xml:space="preserve">
+    <value>FPS のヒストグラム</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Percentiles" xml:space="preserve">
+    <value>パーセンタイル別のフレームレート</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Temps" xml:space="preserve">
+    <value>温度・負荷・電力のグラフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Vram" xml:space="preserve">
+    <value>ビデオメモリのグラフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Ram" xml:space="preserve">
+    <value>メモリのグラフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Clocks" xml:space="preserve">
+    <value>クロックとファンのグラフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Compare" xml:space="preserve">
+    <value>パーセンタイル別のフレームレート（セッションごとに 1 本）</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Latency" xml:space="preserve">
+    <value>レイテンシのグラフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Trend" xml:space="preserve">
+    <value>推移のグラフ（セッションごとに 1 点）</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_RenderScale" xml:space="preserve">
+    <value>レンダースケールのグラフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_ChartData_Summary" xml:space="preserve">
+    <value>セッションの数値と「系列ごとの統計」にこれらの数値が書かれています。ファイル ▸ エクスポート ▸ Session CSV ですべての点を保存できます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_ChartData_Sessions" xml:space="preserve">
+    <value>「セッション」タブの表に各セッションの数値があり、変更はグラフの下に一覧されています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_ChartData_Compare" xml:space="preserve">
+    <value>グラフの下の表に各セッションの数値があります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_ChartData_Latency" xml:space="preserve">
+    <value>平均と 95 パーセンタイルはグラフの上に書かれています。</value>
+    <comment>review</comment>
+  </data>
 </root>

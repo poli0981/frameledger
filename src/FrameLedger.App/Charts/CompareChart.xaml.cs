@@ -42,6 +42,7 @@ public partial class CompareChart : UserControl
             Scatter line = plot.Add.ScatterLine(curve.Xs, curve.Ys, palette[DrawnCurves % palette.Length]);
             line.LineWidth = 2;
             line.LegendText = curve.Label;
+            ChartPatterns.Line(line, DrawnCurves);   // beta.35 (D90): five sessions, five patterns — never colour alone
             DrawnCurves++;
         }
 

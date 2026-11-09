@@ -153,6 +153,9 @@ public partial class SensorsChart : UserControl
         {
             VerticalSpan span = plot.Add.VerticalSpan(from, to, color.WithAlpha(0.18));
             span.LineWidth = 0;
+            // beta.35 (D90): the power limit striped, the thermal limit dotted — they were red and orange shading only.
+            span.FillHatch = ChartPatterns.Hatch(string.Equals(name, SensorSeriesCatalog.GpuPowerLimit, StringComparison.Ordinal) ? 0 : 1);
+            span.FillHatchColor = color.WithAlpha(0.55);
             if (drawn++ == 0)
             {
                 span.LegendText = label;
@@ -278,6 +281,8 @@ public partial class SensorsChart : UserControl
         Scatter line = plot.Add.ScatterLine(xs, ys, color);
         line.LineWidth = 1;
         line.LegendText = label;
+        // beta.35 (D90): the plot's lines in turn take the patterns — the GPU's temperature and its hot spot were green and red.
+        ChartPatterns.Line(line, plot.GetPlottables().OfType<Scatter>().Count() - 1);
         if (axis is not null)
         {
             line.Axes.YAxis = axis;

@@ -115,7 +115,7 @@ public partial class FrametimeChart : UserControl
             DrawPresents(plot, p);
         }
 
-        DrawSeries(plot, _series.AppTimesS, _series.AppFrameTimesMs, p.Native, generating ? Strings.Chart_Series_AppFrames : Strings.Chart_Series_Presents);
+        DrawSeries(plot, _series.AppTimesS, _series.AppFrameTimesMs, p.Native, generating ? Strings.Chart_Series_AppFrames : Strings.Chart_Series_Presents, 0);
         DrawStutter(plot, p);
         if (_sensors && _series.SensorsAligned)
         {
@@ -128,7 +128,7 @@ public partial class FrametimeChart : UserControl
         Plot.Refresh();
     }
 
-    private void DrawSeries(ScottPlot.Plot plot, double[] xs, double[] ys, Color color, string label)
+    private void DrawSeries(ScottPlot.Plot plot, double[] xs, double[] ys, Color color, string label, int index)
     {
         if (xs.Length == 0)
         {
@@ -140,6 +140,7 @@ public partial class FrametimeChart : UserControl
         SignalXY line = plot.Add.SignalXY(dx, dy, color);
         line.LineWidth = 1;
         line.LegendText = label;
+        ChartPatterns.Line(line, index);   // beta.35 (D90): the frames solid, the displayed ones dashed
     }
 
     /// <summary>Every present but those after a gap, whose stored interval is 0 — not a frame, and it was drawn as a 0 ms one.</summary>
@@ -147,7 +148,7 @@ public partial class FrametimeChart : UserControl
     {
         // beta.23: the decoded series carries the line (SeriesDigest), so the Displayed toggle no longer walks every present.
         (double[] xs, double[] ys) = _series!.Digest?.Presents ?? SeriesDigest.PresentsWithoutGaps(_series.TimesS, _series.FrameTimesMs, _series.Gap);
-        DrawSeries(plot, xs, ys, p.Displayed, Strings.Chart_Series_Displayed);
+        DrawSeries(plot, xs, ys, p.Displayed, Strings.Chart_Series_Displayed, 1);
     }
 
     private void DrawStutter(ScottPlot.Plot plot, ChartPalette p)
@@ -174,11 +175,11 @@ public partial class FrametimeChart : UserControl
             (pso ? psoYs : ys).Add(_series.AppFrameTimesMs[i]);
         }
 
-        AddMarkers(plot, xs, ys, p.Stutter, Strings.Chart_Series_Stutter);
-        AddMarkers(plot, psoXs, psoYs, p.StutterPso, Strings.Chart_Series_StutterPso);
+        AddMarkers(plot, xs, ys, p.Stutter, Strings.Chart_Series_Stutter, 0);
+        AddMarkers(plot, psoXs, psoYs, p.StutterPso, Strings.Chart_Series_StutterPso, 1);
     }
 
-    private void AddMarkers(ScottPlot.Plot plot, List<double> xs, List<double> ys, Color color, string label)
+    private void AddMarkers(ScottPlot.Plot plot, List<double> xs, List<double> ys, Color color, string label, int index)
     {
         if (xs.Count == 0)
         {
@@ -191,6 +192,7 @@ public partial class FrametimeChart : UserControl
         markers.LineWidth = 0;
         markers.MarkerSize = 5;
         markers.LegendText = label;
+        ChartPatterns.Points(markers, index);   // beta.35 (D90): a stutter a circle, a shader-compile stutter a triangle
     }
 
     private void DrawSegments(ScottPlot.Plot plot, ChartPalette p)
