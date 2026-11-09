@@ -27,6 +27,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
     private readonly ShellAnnouncements _said;
     private readonly IShellPresence _shell;
     private readonly IPageNavigator _navigator;
+    private readonly PageFocus? _pageFocus;
     private readonly UiThread _ui = new();
 
     [ObservableProperty]
@@ -67,8 +68,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
     public MainWindowViewModel(IAgentLink agent, IMessageStrip strip, IShellPresence shell, IPageNavigator navigator, AddGameFlow addGame, SafetyNotices notices,
         BugReportFlow bugReports, IUrlOpener urls, SessionSelection selection, SessionExportService exports, ISessionSummaryOpener summaries, ImportLibraryFlow import,
         UpdateService updates, IDatabaseMaintenancePrompts maintenance, IDocumentWindows documents, UiMode? mode = null, BuildLine? line = null,
-        IAnnouncer? announcer = null)
+        IAnnouncer? announcer = null, PageFocus? pageFocus = null)
     {
+        _pageFocus = pageFocus;
         _mode = mode ?? UiMode.Profile;
         _line = line ?? BuildLine.Current;
         _isAlphaBannerOpen = _line.IsAlpha;
@@ -205,9 +207,18 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
     [RelayCommand]
     private void Exit() => _shell.Quit();
 
-    /// <summary>08_UI §Accessibility: Ctrl+1…5 (and the keypad) — the NavigationView's pages in its order.</summary>
+    /// <summary>
+    /// 08_UI §Accessibility: Ctrl+1…5 (and the keypad) — the NavigationView's pages in its order; since beta.35 the page then
+    /// takes the keyboard and its title is said (<see cref="PageFocus"/>).
+    /// </summary>
     [RelayCommand]
-    private void NavigateTo(string? key) => _ = ShellShortcuts.Navigate(_navigator, key);
+    private void NavigateTo(string? key)
+    {
+        if (ShellShortcuts.Navigate(_navigator, key))
+        {
+            _pageFocus?.Request();
+        }
+    }
 
     /// <summary>Tools ▸ Agent status… is the Dashboard's Agent card.</summary>
     [RelayCommand]

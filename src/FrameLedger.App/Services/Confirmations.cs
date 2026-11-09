@@ -22,7 +22,7 @@ public sealed class Confirmations : IConfirmations
             SecondaryButtonAppearance = ControlAppearance.Danger,
             CloseButtonText = Strings.Common_Cancel,
         };
-        MessageBoxResult result = await box.ShowDialogAsync(cancellationToken: ct).ConfigureAwait(true);
+        MessageBoxResult result = await MessageBoxes.ShowAsync(box, ct).ConfigureAwait(true);
         return result switch
         {
             MessageBoxResult.Primary => RemoveGameChoice.KeepSessions,
@@ -45,6 +45,6 @@ public sealed class Confirmations : IConfirmations
             PrimaryButtonAppearance = ControlAppearance.Danger,
             CloseButtonText = Strings.Common_Cancel,
         };
-        return await box.ShowDialogAsync(cancellationToken: ct).ConfigureAwait(true) == MessageBoxResult.Primary;
+        return await MessageBoxes.ShowAsync(box, ct).ConfigureAwait(true) == MessageBoxResult.Primary;
     }
 }

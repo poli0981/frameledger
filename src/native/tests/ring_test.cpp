@@ -340,9 +340,13 @@ TEST_CASE("a tiny ring, so the writer laps the reader constantly", "[ring]") {
     constexpr std::uint32_t kTotal = 200000;
 
     std::uint64_t mostOverlapped = 0;
-    std::uint64_t dropped = 0;    // the last attempt's: the one that overlapped, when one did
+    std::uint64_t overlappedLast = 0;    // the last attempt's two counts: the one that overlapped AND was lapped,
+    std::uint64_t dropped = 0;           // when one was
     int           attempts = 0;
-    while (mostOverlapped < kMinOverlappedDrains && attempts < kMaxAttempts) {
+    // Repeated until one attempt both overlapped the writer and was lapped by it (2026-11-09: CI's attempt overlapped
+    // 167058 drains and the reader still kept up with all 200000 records, dropping none). A reader that never counts a
+    // drop fails all eight attempts, so the retry keeps the check's power.
+    while ((overlappedLast < kMinOverlappedDrains || dropped == 0) && attempts < kMaxAttempts) {
         ++attempts;
         Mapping    m{kTiny};
         RingWriter w;
@@ -392,6 +396,7 @@ TEST_CASE("a tiny ring, so the writer laps the reader constantly", "[ring]") {
         }
         producer.join();
         dropped = lost;
+        overlappedLast = overlapped;
 
         INFO("attempt " << attempts << ": accepted " << accepted << ", overlapped drains " << overlapped << " of "
                         << kTotal);
@@ -400,11 +405,12 @@ TEST_CASE("a tiny ring, so the writer laps the reader constantly", "[ring]") {
         mostOverlapped = std::max(mostOverlapped, overlapped);
     }
 
-    INFO("attempts " << attempts << ", most overlapped drains " << mostOverlapped << ", dropped " << dropped);
+    INFO("attempts " << attempts << ", most overlapped drains " << mostOverlapped << ", the last attempt's "
+                     << overlappedLast << ", dropped " << dropped);
     // Not vacuous: the reader read the ring while the writer was writing it. `dropped > 0` alone could not say so — a
-    // reader that started after the writer had finished drops nearly everything — and with eight slots the attempt
-    // that overlapped (the last one) is lapped, which the second check holds it to.
-    CHECK(mostOverlapped >= kMinOverlappedDrains);
+    // reader that started after the writer had finished drops nearly everything — so both hold in the same attempt, the
+    // last one: it overlapped and, with eight slots, was lapped.
+    CHECK(overlappedLast >= kMinOverlappedDrains);
     CHECK(dropped > 0);
 }
 

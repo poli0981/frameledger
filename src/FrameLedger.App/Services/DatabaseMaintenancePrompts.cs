@@ -59,7 +59,7 @@ public sealed class DatabaseMaintenancePrompts : IDatabaseMaintenancePrompts
             PrimaryButtonAppearance = ControlAppearance.Danger,
             CloseButtonText = Strings.Common_Cancel,
         };
-        MessageBoxResult result = await box.ShowDialogAsync(cancellationToken: ct).ConfigureAwait(true);
+        MessageBoxResult result = await MessageBoxes.ShowAsync(box, ct).ConfigureAwait(true);
         return result == MessageBoxResult.Primary;
     }
 }

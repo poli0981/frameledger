@@ -83,8 +83,17 @@ numeric core and does not move; the heading is the full version — corrected 20
   theme's own button; a pressed menu item is no longer white on white; nothing is drawn translucent, and a game's picture
   lends its page no colour, as before.
 
+- **The keyboard follows a page shortcut.** **Ctrl+1** … **Ctrl+5** now move the focus into the page they open — its
+  first control — and a screen reader hears the page's title; before, the focus stayed where it was, often on the page
+  that had just gone, and Tab began again at the top of the window.
+- **Pages no longer slide in while Windows' animation effects are off** (Settings ▸ Accessibility ▸ Visual effects),
+  followed as the setting changes.
+
 ### Fixed
 
+- **A message box opens over FrameLedger's window** — Remove game, Delete sessions, the database's and the update's
+  questions. It had no owner, so it could fall behind the window it came from and, closing, give the focus to another
+  program; it is owned by the window that opened it now, and the focus comes back there.
 - **A double-click on a chart shows all of it again**, as the user guide said; it toggled ScottPlot's render-time overlay.
 - **The capture agent's state in the title bar reads in the light theme.** It was drawn on WPF UI's fixed green, blue,
   orange and red under white — 2.78, 2.63, 2.16 and 3.68:1 — and is on the theme's own success, caution and critical
