@@ -32,6 +32,23 @@ public static class Strings
         nameof(A11y_Agent_Connected),
         nameof(A11y_Change_Format),
         nameof(A11y_ChangeMarker_Format),
+        nameof(A11y_Chart_Clocks),
+        nameof(A11y_Chart_Compare),
+        nameof(A11y_Chart_ControlType),
+        nameof(A11y_Chart_Frametime),
+        nameof(A11y_Chart_Histogram),
+        nameof(A11y_Chart_Keys),
+        nameof(A11y_Chart_Latency),
+        nameof(A11y_Chart_Percentiles),
+        nameof(A11y_Chart_Ram),
+        nameof(A11y_Chart_RenderScale),
+        nameof(A11y_Chart_Temps),
+        nameof(A11y_Chart_Trend),
+        nameof(A11y_Chart_Vram),
+        nameof(A11y_ChartData_Compare),
+        nameof(A11y_ChartData_Latency),
+        nameof(A11y_ChartData_Sessions),
+        nameof(A11y_ChartData_Summary),
         nameof(A11y_Chip_Format),
         nameof(A11y_Compare_Best_Format),
         nameof(A11y_Compare_Filter_Fg),
@@ -1249,6 +1266,40 @@ public static class Strings
     public static string A11y_Change_Format => ResourceManager.GetString(nameof(A11y_Change_Format), Culture) ?? nameof(A11y_Change_Format);
 
     public static string A11y_ChangeMarker_Format => ResourceManager.GetString(nameof(A11y_ChangeMarker_Format), Culture) ?? nameof(A11y_ChangeMarker_Format);
+
+    public static string A11y_Chart_Clocks => ResourceManager.GetString(nameof(A11y_Chart_Clocks), Culture) ?? nameof(A11y_Chart_Clocks);
+
+    public static string A11y_Chart_Compare => ResourceManager.GetString(nameof(A11y_Chart_Compare), Culture) ?? nameof(A11y_Chart_Compare);
+
+    public static string A11y_Chart_ControlType => ResourceManager.GetString(nameof(A11y_Chart_ControlType), Culture) ?? nameof(A11y_Chart_ControlType);
+
+    public static string A11y_Chart_Frametime => ResourceManager.GetString(nameof(A11y_Chart_Frametime), Culture) ?? nameof(A11y_Chart_Frametime);
+
+    public static string A11y_Chart_Histogram => ResourceManager.GetString(nameof(A11y_Chart_Histogram), Culture) ?? nameof(A11y_Chart_Histogram);
+
+    public static string A11y_Chart_Keys => ResourceManager.GetString(nameof(A11y_Chart_Keys), Culture) ?? nameof(A11y_Chart_Keys);
+
+    public static string A11y_Chart_Latency => ResourceManager.GetString(nameof(A11y_Chart_Latency), Culture) ?? nameof(A11y_Chart_Latency);
+
+    public static string A11y_Chart_Percentiles => ResourceManager.GetString(nameof(A11y_Chart_Percentiles), Culture) ?? nameof(A11y_Chart_Percentiles);
+
+    public static string A11y_Chart_Ram => ResourceManager.GetString(nameof(A11y_Chart_Ram), Culture) ?? nameof(A11y_Chart_Ram);
+
+    public static string A11y_Chart_RenderScale => ResourceManager.GetString(nameof(A11y_Chart_RenderScale), Culture) ?? nameof(A11y_Chart_RenderScale);
+
+    public static string A11y_Chart_Temps => ResourceManager.GetString(nameof(A11y_Chart_Temps), Culture) ?? nameof(A11y_Chart_Temps);
+
+    public static string A11y_Chart_Trend => ResourceManager.GetString(nameof(A11y_Chart_Trend), Culture) ?? nameof(A11y_Chart_Trend);
+
+    public static string A11y_Chart_Vram => ResourceManager.GetString(nameof(A11y_Chart_Vram), Culture) ?? nameof(A11y_Chart_Vram);
+
+    public static string A11y_ChartData_Compare => ResourceManager.GetString(nameof(A11y_ChartData_Compare), Culture) ?? nameof(A11y_ChartData_Compare);
+
+    public static string A11y_ChartData_Latency => ResourceManager.GetString(nameof(A11y_ChartData_Latency), Culture) ?? nameof(A11y_ChartData_Latency);
+
+    public static string A11y_ChartData_Sessions => ResourceManager.GetString(nameof(A11y_ChartData_Sessions), Culture) ?? nameof(A11y_ChartData_Sessions);
+
+    public static string A11y_ChartData_Summary => ResourceManager.GetString(nameof(A11y_ChartData_Summary), Culture) ?? nameof(A11y_ChartData_Summary);
 
     public static string A11y_Chip_Format => ResourceManager.GetString(nameof(A11y_Chip_Format), Culture) ?? nameof(A11y_Chip_Format);
 

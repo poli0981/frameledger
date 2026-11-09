@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Automation;
 using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -104,14 +105,14 @@ public sealed partial class PagesLoadTests
         {
             foreach (UIElement element in Reachable(root).Where(IsTabStop))
             {
-                if (UIElementAutomationPeer.CreatePeerForElement(element) is null && !string.Equals(element.GetType().Name, "WpfPlot", StringComparison.Ordinal))
+                if (UIElementAutomationPeer.CreatePeerForElement(element) is null)
                 {
                     found.Add(Describe(name, element));
                 }
             }
         }));
 
-        string.Join(Environment.NewLine, silent).Should().BeEmpty("a Tab stop with no automation peer says nothing to a screen reader (ScottPlot's plot is beta.35 PR-4's)");
+        string.Join(Environment.NewLine, silent).Should().BeEmpty("a Tab stop with no automation peer says nothing to a screen reader - a chart included since beta.35 PR-4 (Charts/ChartPlot)");
     }
 
     /// <summary>
@@ -264,6 +265,81 @@ public sealed partial class PagesLoadTests
 
         string.Join(Environment.NewLine, twins).Should().BeEmpty("a button repeated on each row names its row");
     }
+
+    /// <summary>
+    /// beta.35 (D90): every page, the first run and About have exactly one first-level heading, their title, so a screen
+    /// reader's heading keys start a page where the eye does.
+    /// </summary>
+    [Fact]
+    public async Task EveryPageHasOneFirstLevelHeadingItsTitle()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        using Surfaces surfaces = await Surfaces.LoadAsync(s);
+
+        List<string> wrong = await OnStaAsync(() =>
+        {
+            var found = new List<string>();
+            foreach ((string name, Func<FrameworkElement> build) in surfaces.Pages().Concat(surfaces.Windows().Where(static w => w.Name is "First run" or "About")))
+            {
+                (Window host, FrameworkElement root) = Hosted(build);
+                try
+                {
+                    Lay(root);
+                    string[] firsts = [.. ShownTexts(root).Where(static t => AutomationProperties.GetHeadingLevel(t) == AutomationHeadingLevel.Level1).Select(static t => t.Text)];
+                    if (firsts.Length != 1)
+                    {
+                        found.Add($"{name}: {firsts.Length} first-level headings ({string.Join(", ", firsts)})");
+                    }
+                }
+                finally
+                {
+                    host.Close();
+                }
+            }
+
+            return found;
+        });
+
+        string.Join(Environment.NewLine, wrong).Should().BeEmpty("a page has one title, and it is the first-level heading");
+    }
+
+    /// <summary>
+    /// beta.35 (D90; WCAG 2.2 1.4.1): no two series of one chart differ by colour alone. Every chart a surface draws is read
+    /// through its legend: two entries with different names and the same pattern, marker and hatch are told apart only by
+    /// their colour - the Compare chart's five sessions, the GPU's temperature and its hot spot, the two stutters, the two lows.
+    /// </summary>
+    [Fact]
+    public async Task NoChartTellsTwoSeriesApartByColourAlone()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        using Surfaces surfaces = await Surfaces.LoadAsync(s);
+
+        List<string> twins = await OnStaAsync(() =>
+        {
+            List<string> found = SweepEverySurface(surfaces, static (name, root, list) =>
+            {
+                foreach (ScottPlot.WPF.WpfPlot plot in Reachable(root).OfType<ScottPlot.WPF.WpfPlot>())
+                {
+                    list.AddRange(ColourOnlyTwins(plot.Plot, $"{name}: {plot.Name}"));
+                }
+            });
+
+            // Compare draws only after a choice: five sessions, the most it takes.
+            var compare = new Charts.CompareChart();
+            compare.Show([.. Enumerable.Range(1, 5).Select(static i => new Charts.CompareCurve("Session " + i.ToString(CultureInfo.InvariantCulture), [0, 50, 100], [i, i + 1, i + 2]))], tierLegend: null);
+            found.AddRange(ColourOnlyTwins(compare.Plot.Plot, "Compare, five sessions"));
+            return found;
+        });
+
+        string.Join(Environment.NewLine, twins).Should().BeEmpty("a series is told apart by its pattern, marker or hatch too (Charts/ChartPatterns)");
+    }
+
+    private static IEnumerable<string> ColourOnlyTwins(ScottPlot.Plot plot, string where) =>
+        plot.GetPlottables().Where(static p => p.IsVisible).SelectMany(static p => p.LegendItems)
+            .Where(static i => i.IsVisible && !string.IsNullOrEmpty(i.LabelText))
+            .GroupBy(static i => (i.LinePattern.Name, Line: i.LineWidth > 0, Marker: i.MarkerSize > 0 ? i.MarkerShape : ScottPlot.MarkerShape.None, Hatch: i.FillHatch?.GetType().Name))
+            .Where(static g => g.Select(static i => i.LabelText).Distinct(StringComparer.Ordinal).Count() > 1)
+            .Select(g => $"{where}: {string.Join(" / ", g.Select(static i => i.LabelText).Distinct(StringComparer.Ordinal))} differ by colour only");
 
     private static string Shorten(string text) => text.Length <= 80 ? text : text[..77] + "...";
 }

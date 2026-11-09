@@ -36,6 +36,7 @@ notices Windows shows for it. It draws nothing inside a game, so it cannot make 
 | **Enter** or **Space** | Press the button, switch or box that has the focus. **Enter** on a game in the list opens its page. |
 | **Esc** | Closes a dialog the way its **Close** or **Cancel** button does: nothing is changed. A dialog that has no Close button waits for an answer, and the terms window has its own **Decline** and **Accept**. |
 | **Enter** in the hooking warning | Switches hooking on once the phrase is typed exactly; before that it does nothing. |
+| On a chart: the **arrow keys**, **Ctrl** with an arrow, **A** | Tab reaches every chart. The arrows move its view, Ctrl with an arrow zooms, A shows all of it again (so does a double-click); the page around it stays put. |
 
 The same keys are in the user guide, [The screens](guide/07-screens.md#keyboard-and-mouse).
 
@@ -43,6 +44,9 @@ The same keys are in the user guide, [The screens](guide/07-screens.md#keyboard-
 
 - **Every page, menu, dialog and setting can be reached and used with Narrator.** The owner checked this on
   2026-11-09, keyboard only with the mouse disconnected, on 0.1.0-beta.34 and 0.1.0-alpha.3, and found no fault.
+- **Every page has headings**: its title is a heading of the first level, each section one of the second, so a screen
+  reader's heading keys move from section to section.
+- **Every chart says what it is and where its numbers are written as text**, and which keys move it.
 - **Every button, switch and box that shows no text of its own has a name**, from the same translations as the screen.
 - **Lists, drop-down options and table cells are read by the words they show**, and a button repeated on each row names
   its row — *Open: 11/9/2026 14:03*, *Play: Cyberpunk 2077*, *Turn off: Cyberpunk 2077*.
@@ -69,6 +73,8 @@ The same keys are in the user guide, [The screens](guide/07-screens.md#keyboard-
   program.
 - Labels such as *Hooking on* and *Not installed*, and the ray-tracing chips, always carry their words; a chip that reads
   *N/A* is also drawn with a dashed edge.
+- **No chart tells two series apart by colour alone**: its lines are solid, dashed or dotted, its points circles,
+  triangles or squares, its shaded stretches striped or dotted.
 
 ### Languages
 
@@ -79,7 +85,9 @@ from the same translations. The documents — the user guide, this page, the leg
 
 - **On every build**, by the project's own tests: what a screen reader is given for every page, window and dialog —
   every place Tab stops has a name, no list or table item is read by its program name, no text is hidden from a screen
-  reader inside a control, no two buttons in a list share a name; each thing that appears is said once, in its words; every control that shows no text has a name; no colour is written
+  reader inside a control, no two buttons in a list share a name; each thing that appears is said once, in its words;
+  every page has one first-level heading and every section title a level; no chart tells two series apart by colour
+  alone; a chart's keys move it and stay its own; every control that shows no text has a name; no colour is written
   into a screen; every text reads against its background in both themes and after a theme switch; **Esc** closes the
   open dialog without an answer; **Ctrl+1** … **Ctrl+5** open the pages in their order; the program declares it follows
   each screen's scaling.
@@ -91,12 +99,11 @@ from the same translations. The documents — the user guide, this page, the leg
 
 Each one with what to do instead. A barrier that is not on this list is worth reporting.
 
-- **Charts are pictures.** Tab reaches a chart, but its keys do not work reliably yet and a screen reader cannot read
-  its points or its name. The numbers are written out elsewhere: a session's figures and *Statistics per series* in its
-  summary, the table under the Compare chart, the list of changes under a trend chart, and **File ▸ Export ▸ Session
-  CSV** or **Session JSON**.
-- **Headings are not marked as headings**, so a screen reader's heading keys do not move between the sections of a
-  page.
+- **A chart's points cannot be read one by one.** A screen reader hears the chart's name and where its numbers are:
+  a session's figures and *Statistics per series* in its summary, the table under the Compare chart, the Sessions table
+  and the list of changes under a trend chart, and **File ▸ Export ▸ Session CSV** or **Session JSON**.
+- **In the user guide and the other documents the app shows, headings are read as ordinary text**: Windows' document
+  view gives them no heading role. Their links and their order work as on any page.
 - **Windows contrast themes are not followed.** With Settings ▸ Theme on *System*, a contrast theme can give parts of
   the window the wrong colours. Choose **Light** or **Dark** there: both keep their contrast.
 - **The short messages at the bottom of the window close after four seconds**, and cannot be read again once closed. A

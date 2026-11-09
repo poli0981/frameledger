@@ -290,7 +290,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:FpsReadout}">
                     <StackPanel Orientation="Horizontal" ToolTip="{Binding Model.QualifierTooltip, RelativeSource={RelativeSource TemplatedParent}}">
-                        <ui:TextBlock FontTypography="Subtitle" VerticalAlignment="Center" Text="{Binding Model.Line, RelativeSource={RelativeSource TemplatedParent}}" />
+                        <ui:TextBlock FontTypography="Subtitle" AutomationProperties.HeadingLevel="None" VerticalAlignment="Center" Text="{Binding Model.Line, RelativeSource={RelativeSource TemplatedParent}}" />
                         <Border x:Name="Factor" Style="{StaticResource Pill}" Background="{DynamicResource AccentFillColorDefaultBrush}" BorderThickness="0"
                                 Visibility="Collapsed">
                             <TextBlock Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" Text="{Binding Model.FactorChip, RelativeSource={RelativeSource TemplatedParent}}" />

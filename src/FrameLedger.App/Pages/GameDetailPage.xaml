@@ -93,7 +93,7 @@
                     </ui:Image.Style>
                 </ui:Image>
                 <StackPanel Grid.Column="1">
-                    <ui:TextBlock FontTypography="Title" Text="{Binding ViewModel.Name}" />
+                    <ui:TextBlock FontTypography="Title" AutomationProperties.HeadingLevel="Level1" Text="{Binding ViewModel.Name}" />
                     <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.Subtitle}" />
                     <ui:TextBlock Style="{StaticResource TertiaryText}" TextTrimming="CharacterEllipsis" Text="{Binding ViewModel.ExecutableText}" ToolTip="{Binding ViewModel.ExecutableText}" />
                     <ui:InfoBar Margin="0,6,0,0" IsClosable="False" Severity="Warning"

@@ -237,6 +237,13 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
 > `Add.HorizontalSpan` for the ribbon, `Add.Bars` over `Statistics.Histogram.WithBinCount`, `Add.ScatterLine`
 > for the percentile curve, a series' `Axes.YAxis = plot.Axes.Right` for the sensor overlay.
 >
+> **Accessible charts, beta.35 (D90).** Every plot in XAML is `charts:ChartPlot` (a `WpfPlot` subclass; ScottPlot's
+> default style and input stay) with `AutomationProperties.Name` and `HelpText` from `A11y_Chart_*` / `A11y_ChartData_*`.
+> `ChartTheme.Attach` adds `Charts/ChartKeys` (arrows and A marked handled after ScottPlot's class handler has acted — an
+> instance handler runs after it) and `ResetOnDoubleClick` (`DoubleLeftClickBenchmark(false)` and a `DoubleClickResponse` on
+> the left button that autoscales). A series takes `ChartPatterns.Line` / `Points` / `Hatch` by its index — a new series
+> without one is red in `NoChartTellsTwoSeriesApartByColourAlone`.
+>
 > **The trend's change markers, beta.30 (D70):** `Charts/ChangeMarkerPlottable`, an `IPlottable` + `IRenderLast` added
 > with `Add.Plottable` (which assigns no axes: the chart sets `Axes.XAxis`/`YAxis` itself), draws the dashed lines in
 > `Render` — clipped to the data area — and the numbered badges in `RenderLast`, after the panels and unclipped, in a

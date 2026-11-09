@@ -207,8 +207,8 @@ you accept the prompt. Turn it on only if you trust everything that runs under y
 What works with the keyboard alone, a screen reader, a contrast theme or Magnifier, what does not yet, and how to report
 a barrier is on its own page: [Accessibility](ACCESSIBILITY.md) (in the app: Help ▸ Accessibility). The largest limits:
 
-- **Charts are pictures.** A screen reader cannot read their points; the numbers are in the session's figures, the
-  tables and **File ▸ Export**.
+- **A chart's points cannot be read one by one.** A screen reader hears its name and where its numbers are written —
+  the session's figures, the tables, **File ▸ Export**; its keys move it.
 - **Windows' text size setting is not followed** — use display scaling or Magnifier.
 - **Windows contrast themes are not followed yet** — choose **Light** or **Dark** in Settings ▸ Theme.
 

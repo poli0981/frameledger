@@ -2,6 +2,8 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using ScottPlot;
+using ScottPlot.Interactivity;
+using ScottPlot.Interactivity.UserActionResponses;
 using ScottPlot.WPF;
 using Wpf.Ui.Appearance;
 
@@ -94,6 +96,8 @@ public static class ChartTheme
     {
         ArgumentNullException.ThrowIfNull(control);
         ChartWheel.Attach(control);
+        ChartKeys.Attach(control);
+        ResetOnDoubleClick(control);
         lock (_lock)
         {
             _live.RemoveAll(static w => !w.TryGetTarget(out _));
@@ -106,6 +110,24 @@ public static class ChartTheme
         }
 
         Apply(control.Plot);
+    }
+
+    /// <summary>
+    /// beta.35 (D90): a double-click shows all of the chart, as the guide always said. ScottPlot's left double-click toggled
+    /// its render-time overlay — a developer's benchmark — and A and a middle click were the only ways back.
+    /// </summary>
+    internal static void ResetOnDoubleClick(WpfPlot control)
+    {
+        ArgumentNullException.ThrowIfNull(control);
+        control.UserInputProcessor.DoubleLeftClickBenchmark(false);
+        if (!control.UserInputProcessor.UserActionResponses.OfType<DoubleClickResponse>().Any())
+        {
+            control.UserInputProcessor.UserActionResponses.Add(new DoubleClickResponse(StandardMouseButtons.Left, static (plotControl, _) =>
+            {
+                plotControl.Plot.Axes.AutoScale();
+                plotControl.Refresh();
+            }));
+        }
     }
 
     private static void OnThemeChanged(ApplicationTheme theme, System.Windows.Media.Color accent)

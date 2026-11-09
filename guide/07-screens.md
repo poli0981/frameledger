@@ -137,8 +137,10 @@ is ready.
 - **Alt** or **F10** moves to the menus; **Alt** with a menu's underlined letter opens it (**Alt+F**, **Alt+T** and
   **Alt+H** for File, Tools and Help in English).
 - **Esc** closes a dialog the way its Close or Cancel button does.
-- Over a chart, **Ctrl** and the mouse wheel zoom, dragging pans, and a double-click resets. The wheel alone scrolls the
-  page.
+- Over a chart, **Ctrl** and the mouse wheel zoom, dragging pans, and a double-click shows all of it again. The wheel
+  alone scrolls the page.
+- **Tab** reaches a chart; then the **arrow keys** move its view, **Ctrl** with an arrow zooms, and **A** shows all of it
+  again.
 
 What works with the keyboard alone, a screen reader or a contrast theme — and what does not yet — is on its own page:
 [Accessibility](../ACCESSIBILITY.md) (Help ▸ Accessibility).

@@ -146,7 +146,7 @@ public partial class TrendChart : UserControl
                 continue;
             }
 
-            hollow += AddLine(plot, line, palette[i % palette.Length], p.Data, isRight);
+            hollow += AddLine(plot, line, palette[i % palette.Length], p.Data, isRight, i);
             onRight += isRight ? 1 : 0;
             drawn.AddRange(line.Points);
         }
@@ -171,7 +171,7 @@ public partial class TrendChart : UserControl
     }
 
     /// <summary>One line, its hollow points, against the left or the right axis; how many were hollow.</summary>
-    private static int AddLine(ScottPlot.Plot plot, TrendLine line, Color color, Color hollowColor, bool isRight)
+    private static int AddLine(ScottPlot.Plot plot, TrendLine line, Color color, Color hollowColor, bool isRight, int index)
     {
         double[] xs = [.. line.Points.Select(static t => t.At.LocalDateTime.ToOADate())];
         double[] ys = [.. line.Points.Select(static t => t.Value)];
@@ -179,6 +179,9 @@ public partial class TrendChart : UserControl
         scatter.LineWidth = 2;
         scatter.MarkerSize = 7;
         scatter.LegendText = isRight ? line.Label + " ▸" : line.Label;
+        // beta.35 (D90): each metric its own pattern and, since every trend line shows its points, its own marker
+        ChartPatterns.Line(scatter, index);
+        ChartPatterns.Points(scatter, index);
         if (isRight)
         {
             scatter.Axes.YAxis = plot.Axes.Right;
