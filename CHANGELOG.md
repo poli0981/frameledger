@@ -60,6 +60,12 @@ numeric core and does not move; the heading is the full version — corrected 20
   …*, *Turn off: …*). Tab no longer stops on pictures, lists, Settings' rows, the FPS readout, the chips or the dialog
   host, where it found nothing to say; an expander's button is named after its header.
 
+- **A screen reader is told what appears** (owner decision D89): a safety notice as it arrives, the capture agent going
+  offline and coming back, an update's steps (not each percent), every short message at the bottom of the window, a
+  notice on a game's page and each result of Tools ▸ Database maintenance — in the words shown, and only while
+  FrameLedger's window is the active one, so a game that has the screen is never interrupted. The database line's live
+  region, which announced nothing, is gone.
+
 ### Changed
 
 - **Documents corrected**: charts do take focus and keys (`docs/08_UI.md` said neither — `ChartKeyboardTests` measures

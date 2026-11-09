@@ -398,6 +398,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IGamePicker, GamePicker>();
         services.AddSingleton<IConfirmations, Confirmations>();
         services.AddSingleton<AddGameFlow>();
+        services.AddSingleton<IAnnouncer, UiaAnnouncer>(); // beta.35 (D89): what appears is said to a screen reader
         services.AddSingleton<IMessageStrip, SnackbarStrip>();
         services.AddSingleton<IEditGamePrompt, EditGamePrompt>();
 

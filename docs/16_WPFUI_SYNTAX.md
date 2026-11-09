@@ -215,7 +215,12 @@ var result = await box.ShowDialogAsync(); // Wpf.Ui.Controls.MessageBoxResult.Pr
 
   ⚠ Name clash with `System.Windows.MessageBox` — in App code, `using MessageBox = Wpf.Ui.Controls.MessageBox;` ~~and ban the System one (BannedSymbols/analyzer note)~~ *(corrected 2026-10-04: nothing bans it. Three paths use the Win32 box on purpose — the crash dialog, the startup-failure dialog and the uninstall question — because they run when the shell's dialog host cannot be trusted. Use the WPF UI one everywhere else.)*
 - Rich in-flow dialogs: `IContentDialogService` (host wired in MainWindow — a `ui:ContentDialogHost`, since 4.3.0 marks `SetDialogHost(ContentPresenter)` obsolete).
-- Transient in-app: `ISnackbarService.Show(title, message, ControlAppearance.Success, new SymbolIcon(SymbolRegular.Checkmark24), TimeSpan.FromSeconds(4))`.
+- Transient in-app: ~~`ISnackbarService.Show(title, message, ControlAppearance.Success, new SymbolIcon(SymbolRegular.Checkmark24), TimeSpan.FromSeconds(4))`~~
+  `IMessageStrip` (`Info` / `Success` / `Warn`) — `Services/SnackbarStrip` is the one caller of `ISnackbarService.Show`, and
+  says each message to a screen reader (beta.35, D89). A view model never holds `ISnackbarService`.
+- A change a screen reader must hear goes through `IAnnouncer` (`Services/UiaAnnouncer`, UI Automation's notification
+  event). **`AutomationProperties.LiveSetting` alone says nothing in WPF**: the app must raise `LiveRegionChanged` itself,
+  and no XAML of the App's sets one (beta.35).
 - System/tray notifications: H.NotifyIcon only (08_UI §Notifications policy).
 
 ## ScottPlot theme sync

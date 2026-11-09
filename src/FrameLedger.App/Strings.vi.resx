@@ -3666,4 +3666,10 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="A11y_ToggleSection_Format" xml:space="preserve">
     <value>Hiện hoặc ẩn: {0}</value>
   </data>
+  <data name="A11y_Agent_Connected" xml:space="preserve">
+    <value>Capture agent đã kết nối lại.</value>
+  </data>
+  <data name="A11y_Update_Downloading_Format" xml:space="preserve">
+    <value>Đang tải phiên bản {0}.</value>
+  </data>
 </root>
