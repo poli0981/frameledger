@@ -4880,4 +4880,12 @@
     <value>表示/非表示：{0}</value>
     <comment>review</comment>
   </data>
+  <data name="A11y_Agent_Connected" xml:space="preserve">
+    <value>キャプチャエージェントに再接続しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Update_Downloading_Format" xml:space="preserve">
+    <value>バージョン {0} をダウンロードしています。</value>
+    <comment>review</comment>
+  </data>
 </root>

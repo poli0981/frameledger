@@ -3671,4 +3671,10 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="A11y_ToggleSection_Format" xml:space="preserve">
     <value>Show or hide: {0}</value>
   </data>
+  <data name="A11y_Agent_Connected" xml:space="preserve">
+    <value>The capture agent is connected again.</value>
+  </data>
+  <data name="A11y_Update_Downloading_Format" xml:space="preserve">
+    <value>Downloading version {0}.</value>
+  </data>
 </root>

@@ -49,6 +49,11 @@ The same keys are in the user guide, [The screens](guide/07-screens.md#keyboard-
 - **The frame-rate readout says the game's own frames, the displayed frames and the frame-generation factor together**
   (*Native 62 FPS, displayed 118 FPS, frame generation ×1.9*) — never the larger number alone; a ray-tracing chip says its
   value and where it came from (*Ray Tracing: Yes, measured*).
+- **What appears is said as it appears**: a safety notice (hooking refused, measuring stopped, hooking turned off), the
+  capture agent going away and coming back, an update's steps, a short message at the bottom of the window, a notice on a
+  game's page and a result of **Tools ▸ Database maintenance** — in the words shown, while FrameLedger's window is the
+  active one. While a game has the screen nothing interrupts it; the notice stays in the window, and Windows' own
+  notifications from the icon by the clock are read by the screen reader itself.
 - **The notices above the page can be read where they are shown**, and the button that answers one says which notice it
   answers.
 - **Tab goes from control to control**: pictures, lists and the rows of Settings are not stops of their own.
@@ -74,7 +79,7 @@ from the same translations. The documents — the user guide, this page, the leg
 
 - **On every build**, by the project's own tests: what a screen reader is given for every page, window and dialog —
   every place Tab stops has a name, no list or table item is read by its program name, no text is hidden from a screen
-  reader inside a control, no two buttons in a list share a name; every control that shows no text has a name; no colour is written
+  reader inside a control, no two buttons in a list share a name; each thing that appears is said once, in its words; every control that shows no text has a name; no colour is written
   into a screen; every text reads against its background in both themes and after a theme switch; **Esc** closes the
   open dialog without an answer; **Ctrl+1** … **Ctrl+5** open the pages in their order; the program declares it follows
   each screen's scaling.
@@ -90,13 +95,12 @@ Each one with what to do instead. A barrier that is not on this list is worth re
   its points or its name. The numbers are written out elsewhere: a session's figures and *Statistics per series* in its
   summary, the table under the Compare chart, the list of changes under a trend chart, and **File ▸ Export ▸ Session
   CSV** or **Session JSON**.
-- **Nothing is announced when it appears** — a safety notice, a banner, a short message at the bottom of the window or
-  the result of **Tools ▸ Database maintenance**. A safety notice stays above the page until you answer it.
 - **Headings are not marked as headings**, so a screen reader's heading keys do not move between the sections of a
   page.
 - **Windows contrast themes are not followed.** With Settings ▸ Theme on *System*, a contrast theme can give parts of
   the window the wrong colours. Choose **Light** or **Dark** there: both keep their contrast.
-- **The short messages at the bottom of the window close after four seconds.**
+- **The short messages at the bottom of the window close after four seconds**, and cannot be read again once closed. A
+  screen reader is told each one as it appears.
 - **Windows' text size setting** (Settings ▸ Accessibility ▸ Text size) **is not followed.** Use display scaling
   (Settings ▸ System ▸ Display ▸ Scale) or Magnifier.
 - **Page changes slide in** even when Windows' animation effects are off.

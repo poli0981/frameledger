@@ -13,7 +13,6 @@ using FrameLedger.App.Update;
 using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Shared;
 using FrameLedger.Shared.Ipc;
-using Wpf.Ui;
 using Wpf.Ui.Controls;
 
 namespace FrameLedger.App.ViewModels;
@@ -24,7 +23,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
     private readonly IAgentLink _agent;
     private readonly UiMode _mode;
     private readonly BuildLine _line;
-    private readonly ISnackbarService _snackbar;
+    private readonly IMessageStrip _strip;
+    private readonly ShellAnnouncements _said;
     private readonly IShellPresence _shell;
     private readonly IPageNavigator _navigator;
     private readonly UiThread _ui = new();
@@ -64,9 +64,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
     private readonly ISessionSummaryOpener _summaries;
     private readonly ImportLibraryFlow _import;
 
-    public MainWindowViewModel(IAgentLink agent, ISnackbarService snackbar, IShellPresence shell, IPageNavigator navigator, AddGameFlow addGame, SafetyNotices notices,
+    public MainWindowViewModel(IAgentLink agent, IMessageStrip strip, IShellPresence shell, IPageNavigator navigator, AddGameFlow addGame, SafetyNotices notices,
         BugReportFlow bugReports, IUrlOpener urls, SessionSelection selection, SessionExportService exports, ISessionSummaryOpener summaries, ImportLibraryFlow import,
-        UpdateService updates, IDatabaseMaintenancePrompts maintenance, IDocumentWindows documents, UiMode? mode = null, BuildLine? line = null)
+        UpdateService updates, IDatabaseMaintenancePrompts maintenance, IDocumentWindows documents, UiMode? mode = null, BuildLine? line = null,
+        IAnnouncer? announcer = null)
     {
         _mode = mode ?? UiMode.Profile;
         _line = line ?? BuildLine.Current;
@@ -82,7 +83,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
         _exports = exports ?? throw new ArgumentNullException(nameof(exports));
         _summaries = summaries ?? throw new ArgumentNullException(nameof(summaries));
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
-        _snackbar = snackbar ?? throw new ArgumentNullException(nameof(snackbar));
+        _strip = strip ?? throw new ArgumentNullException(nameof(strip));
+        _said = new ShellAnnouncements(announcer ?? NoAnnouncer.Instance);
         _shell = shell ?? throw new ArgumentNullException(nameof(shell));
         _navigator = navigator ?? throw new ArgumentNullException(nameof(navigator));
         _addGame = addGame ?? throw new ArgumentNullException(nameof(addGame));
@@ -148,6 +150,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
             UpdateStage.Applying => (true, string.Format(CultureInfo.CurrentCulture, Strings.Update_Banner_Applying_Format, version), false),
             _ => (false, string.Empty, false),
         };
+        _said.Update(_updates.Stage, _updates.Version, UpdateBannerBody);
     }
 
     /// <summary>Help ▸ Check for updates (P4 PR-5): <c>11_UPDATER</c> §Flow, "Manual check".</summary>
@@ -184,6 +187,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
         string? banner = AgentStatusPresentation.Banner(_agent.State);
         AgentBannerBody = banner ?? string.Empty;
         IsAgentBannerVisible = banner is not null;
+        _said.Agent(_agent.State, banner);
     }
 
     [RelayCommand]
@@ -244,7 +248,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
     {
         if (!_agent.IsConnected)
         {
-            _snackbar.Show(Strings.Rules_Update_Title, Strings.Rules_Update_NoAgent, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.Warning24), TimeSpan.FromSeconds(4));
+            _strip.Warn(Strings.Rules_Update_Title, Strings.Rules_Update_NoAgent);
             return;
         }
 
@@ -252,13 +256,12 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
         {
             IpcEnvelope ack = await _agent.RequestAsync(IpcMessageType.UpdateRules, new UpdateRulesRequest()).ConfigureAwait(true);
             string outcome = IpcCodec.Payload<UpdateRulesAck>(ack)?.Outcome ?? string.Empty;
-            _snackbar.Show(Strings.Rules_Update_Title, string.Format(CultureInfo.CurrentCulture, Strings.Rules_Update_Done_Format, outcome),
-                ControlAppearance.Secondary, new SymbolIcon(SymbolRegular.Info24), TimeSpan.FromSeconds(4));
+            _strip.Info(Strings.Rules_Update_Title, string.Format(CultureInfo.CurrentCulture, Strings.Rules_Update_Done_Format, outcome));
         }
         catch (Exception ex) when (ex is IpcRequestException or TimeoutException or System.IO.IOException or InvalidOperationException)
         {
             Serilog.Log.Warning(ex, "ui: update rules did not complete");
-            _snackbar.Show(Strings.Rules_Update_Title, Strings.Rules_Update_Failed, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.Warning24), TimeSpan.FromSeconds(4));
+            _strip.Warn(Strings.Rules_Update_Title, Strings.Rules_Update_Failed);
         }
     }
 
@@ -279,7 +282,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
     {
         if (!_urls.Open(IssueLink.Documentation))
         {
-            _snackbar.Show(Strings.Menu_Help_Documentation, Strings.BugReport_BrowserRefused, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.Warning24), TimeSpan.FromSeconds(4));
+            _strip.Warn(Strings.Menu_Help_Documentation, Strings.BugReport_BrowserRefused);
         }
     }
 
@@ -336,7 +339,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
         if (_selection.SessionId is { } id)
         {
             _summaries.Open(id);
-            _snackbar.Show(Strings.Menu_File_Export, Strings.Export_Png_Body, ControlAppearance.Secondary, new SymbolIcon(SymbolRegular.Info24), TimeSpan.FromSeconds(4));
+            _strip.Info(Strings.Menu_File_Export, Strings.Export_Png_Body);
         }
         else
         {
@@ -344,8 +347,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
         }
     }
 
-    private void NoSelection() =>
-        _snackbar.Show(Strings.Menu_File_Export, Strings.Export_NoSelection_Body, ControlAppearance.Caution, new SymbolIcon(SymbolRegular.Info24), TimeSpan.FromSeconds(4));
+    private void NoSelection() => _strip.Warn(Strings.Menu_File_Export, Strings.Export_NoSelection_Body);
 
     /// <summary>
     /// Tools ▸ Database maintenance… (P4 PR-7): integrity check, backup, the retention sweep (the Agent's) and compaction.

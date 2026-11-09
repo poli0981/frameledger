@@ -22,13 +22,15 @@ public sealed class SafetyNotices : IDisposable
     private readonly IAgentLink _agent;
     private readonly IMessageStrip _strip;
     private readonly TimeProvider _clock;
+    private readonly IAnnouncer _announcer;
     private readonly UiThread _ui = new();
 
-    public SafetyNotices(IAgentLink agent, IMessageStrip strip, TimeProvider? clock = null)
+    public SafetyNotices(IAgentLink agent, IMessageStrip strip, TimeProvider? clock = null, IAnnouncer? announcer = null)
     {
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
         _strip = strip ?? throw new ArgumentNullException(nameof(strip));
         _clock = clock ?? TimeProvider.System;
+        _announcer = announcer ?? NoAnnouncer.Instance;
         _agent.EventReceived += OnEvent;
     }
 
@@ -128,7 +130,12 @@ public sealed class SafetyNotices : IDisposable
         SafetyNotice? notice = Translate(envelope);
         if (notice is not null)
         {
-            _ui.Post(() => Items.Insert(0, notice));
+            // beta.35 (D89): said as it arrives — a notice above the page is never where a screen reader's focus is.
+            _ui.Post(() =>
+            {
+                Items.Insert(0, notice);
+                _announcer.Announce(notice.AccessibleName, AnnouncementKind.Alert, "Notice");
+            });
         }
     }
 }

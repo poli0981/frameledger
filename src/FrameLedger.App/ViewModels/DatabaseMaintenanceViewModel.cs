@@ -35,6 +35,7 @@ public sealed partial class DatabaseMaintenanceViewModel : ObservableObject
     private readonly IDatabaseMaintenancePrompts _prompts;
     private readonly RegisteredSettings _settings;
     private readonly TimeProvider _clock;
+    private readonly IAnnouncer _announcer;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(CheckIntegrityCommand), nameof(BackUpCommand), nameof(SweepCommand), nameof(CompactCommand))]
@@ -44,7 +45,7 @@ public sealed partial class DatabaseMaintenanceViewModel : ObservableObject
     private string _status = Strings.Maintenance_Status_Ready;
 
     public DatabaseMaintenanceViewModel(LedgerMaintenance ledger, string ledgerPath, IAgentRequests agent, IFileSaver files, IDatabaseMaintenancePrompts prompts,
-        RegisteredSettings settings, TimeProvider? clock = null)
+        RegisteredSettings settings, TimeProvider? clock = null, IAnnouncer? announcer = null)
     {
         _ledger = ledger ?? throw new ArgumentNullException(nameof(ledger));
         ArgumentException.ThrowIfNullOrWhiteSpace(ledgerPath);
@@ -54,9 +55,16 @@ public sealed partial class DatabaseMaintenanceViewModel : ObservableObject
         _prompts = prompts ?? throw new ArgumentNullException(nameof(prompts));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _clock = clock ?? TimeProvider.System;
+        _announcer = announcer ?? NoAnnouncer.Instance;
     }
 
     private bool CanRun => !IsBusy;
+
+    /// <summary>
+    /// beta.35 (D89): each action's result line is said as it appears — the line's <c>LiveSetting</c> said nothing, since WPF
+    /// raises a live region only when the app does.
+    /// </summary>
+    partial void OnStatusChanged(string value) => _announcer.Announce(value, AnnouncementKind.Status, "Maintenance");
 
     /// <summary><c>PRAGMA integrity_check</c>: "no problems", or the count and SQLite's first line.</summary>
     [RelayCommand(CanExecute = nameof(CanRun))]

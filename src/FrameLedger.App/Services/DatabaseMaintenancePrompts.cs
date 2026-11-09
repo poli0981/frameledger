@@ -23,9 +23,11 @@ public sealed class DatabaseMaintenancePrompts : IDatabaseMaintenancePrompts
     private readonly IAgentRequests _agent;
     private readonly IFileSaver _files;
     private readonly RegisteredSettings _settings;
+    private readonly IAnnouncer? _announcer;
 
-    public DatabaseMaintenancePrompts(IContentDialogService dialogs, LedgerDatabase db, IAgentRequests agent, IFileSaver files, RegisteredSettings settings)
+    public DatabaseMaintenancePrompts(IContentDialogService dialogs, LedgerDatabase db, IAgentRequests agent, IFileSaver files, RegisteredSettings settings, IAnnouncer? announcer = null)
     {
+        _announcer = announcer;
         _dialogs = dialogs ?? throw new ArgumentNullException(nameof(dialogs));
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));
@@ -35,7 +37,7 @@ public sealed class DatabaseMaintenancePrompts : IDatabaseMaintenancePrompts
 
     public async Task ShowAsync(CancellationToken ct = default)
     {
-        var viewModel = new DatabaseMaintenanceViewModel(new LedgerMaintenance(_db), _db.Path, _agent, _files, this, _settings);
+        var viewModel = new DatabaseMaintenanceViewModel(new LedgerMaintenance(_db), _db.Path, _agent, _files, this, _settings, announcer: _announcer);
         var dialog = new ContentDialog
         {
             Title = Strings.Maintenance_Title,

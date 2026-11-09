@@ -29,6 +29,7 @@ public static class Strings
     /// <summary>Every key, for an audit that walks them.</summary>
     public static IReadOnlyList<string> Keys { get; } =
     [
+        nameof(A11y_Agent_Connected),
         nameof(A11y_Change_Format),
         nameof(A11y_ChangeMarker_Format),
         nameof(A11y_Chip_Format),
@@ -54,6 +55,7 @@ public static class Strings
         nameof(A11y_SensorStat_Format),
         nameof(A11y_TitleAndBody_Format),
         nameof(A11y_ToggleSection_Format),
+        nameof(A11y_Update_Downloading_Format),
         nameof(About_Doc_Notice),
         nameof(About_Doc_Packages),
         nameof(About_Doc_ThirdParty),
@@ -1242,6 +1244,8 @@ public static class Strings
         nameof(Viewer_ChangesThisPc_Off),
     ];
 
+    public static string A11y_Agent_Connected => ResourceManager.GetString(nameof(A11y_Agent_Connected), Culture) ?? nameof(A11y_Agent_Connected);
+
     public static string A11y_Change_Format => ResourceManager.GetString(nameof(A11y_Change_Format), Culture) ?? nameof(A11y_Change_Format);
 
     public static string A11y_ChangeMarker_Format => ResourceManager.GetString(nameof(A11y_ChangeMarker_Format), Culture) ?? nameof(A11y_ChangeMarker_Format);
@@ -1291,6 +1295,8 @@ public static class Strings
     public static string A11y_TitleAndBody_Format => ResourceManager.GetString(nameof(A11y_TitleAndBody_Format), Culture) ?? nameof(A11y_TitleAndBody_Format);
 
     public static string A11y_ToggleSection_Format => ResourceManager.GetString(nameof(A11y_ToggleSection_Format), Culture) ?? nameof(A11y_ToggleSection_Format);
+
+    public static string A11y_Update_Downloading_Format => ResourceManager.GetString(nameof(A11y_Update_Downloading_Format), Culture) ?? nameof(A11y_Update_Downloading_Format);
 
     public static string About_Doc_Notice => ResourceManager.GetString(nameof(About_Doc_Notice), Culture) ?? nameof(About_Doc_Notice);
 
