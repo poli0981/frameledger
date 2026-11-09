@@ -296,7 +296,7 @@ public sealed class ScrollBarHidingTests
     }
 
     /// <summary>A window shown where nobody sees it and never activated, small enough that the surfaces overflow it.</summary>
-    private static Window OffScreen(Window window)
+    internal static Window OffScreen(Window window)
     {
         window.Width = 1000;
         window.Height = 420;

@@ -6,9 +6,10 @@
 
 **New here? Start with the [user guide](guide/README.md)** — install, record a game, read your results, stay safe with
 anti-cheat, and look after your data, a page each, then every screen, every setting and what to do when something goes
-wrong. What FrameLedger cannot do is on one page: [Limitations](LIMITATIONS.md). Both are in the app too (Help ▸ User
-guide, Help ▸ Limitations), and on the project's [wiki](https://github.com/poli0981/frameledger/wiki) with the developer
-pages.
+wrong. What FrameLedger cannot do is on one page: [Limitations](LIMITATIONS.md). How it works with the keyboard alone, a
+screen reader or a contrast theme, and how to report a barrier: [Accessibility](ACCESSIBILITY.md). All three are in the
+app too (Help ▸ User guide, Help ▸ Limitations, Help ▸ Accessibility), and on the project's
+[wiki](https://github.com/poli0981/frameledger/wiki) with the developer pages.
 
 <!-- accuracy-block:begin -->
 > ⚠ **What FrameLedger actually measures today — 2026-11-06.** The software is a beta; its latest
@@ -203,7 +204,8 @@ FrameLedger is GPL-3.0-only free software, and you are welcome to build it, chan
 - **Build it:** [`docs/12_BUILD.md`](docs/12_BUILD.md) — `./build.ps1 check` is the whole quality gate, the same one CI runs.
 - **Contribute:** [`CONTRIBUTING.md`](CONTRIBUTING.md) — the definition of done, what will not be merged, and that a
   contribution is licensed GPL-3.0-only with the [`NOTICE`](NOTICE) terms (no CLA). Conduct:
-  [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). Security reports: [`SECURITY.md`](SECURITY.md).
+  [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). Security reports: [`SECURITY.md`](SECURITY.md). Accessibility — the goal,
+  the checks and how a barrier is reported: [`ACCESSIBILITY.md`](ACCESSIBILITY.md).
 - **Fork or redistribute:** [`FORKING.md`](FORKING.md) — what the GPL asks of anyone who distributes builds, and the names
   a fork must change so it does not share FrameLedger's update feed, install folder, data, pipe or Vulkan layer.
 - **Find your way around:** the [wiki](https://github.com/poli0981/frameledger/wiki)'s developer pages are short, and each

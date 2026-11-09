@@ -58,3 +58,7 @@ Each of these cost a release; the full list, with the tests that hold each, is �
 (`PagesLoadTests.OnStaAsync`): contrast in both themes, a theme switch while a surface is on screen, scroll bars with the
 option on in a real window, keyboard and automation names. Each surface is hosted as the App hosts it — a page in WPF UI's
 navigation presenter, not straight in a window. A rendered check is run red against the unfixed XAML first.
+
+What the App promises a user of the keyboard, a screen reader or a contrast theme is
+[`ACCESSIBILITY.md`](../ACCESSIBILITY.md); the design and the checks that hold it are §Accessibility of
+[`docs/08_UI.md`](../docs/08_UI.md#accessibility). A change that moves one changes both.

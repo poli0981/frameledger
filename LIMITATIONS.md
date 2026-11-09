@@ -109,7 +109,7 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
   DLSS 4), the NVIDIA App's *Dynamic* frame generation that the driver reports applied (DLSS 4.5, whatever multiplier
   it chose — since 0.1.0-beta.34), or a library whose major version names one (2.x, 3.x). A *Fixed* ×5 or ×6 set in
   the App names DLSS 4.5 only when the frames show it. A 310 library with no such evidence shows its
-  version only. ~~DLSS 5 is shown only as *runtime loaded*, by a library name not yet seen on a real game.~~ **DLSS 5**
+  version only. **DLSS 5**
   (since 0.1.0-beta.34) is named where the game was seen running its neural rendering through Streamline, with the share
   of rendered frames; its library loaded and nothing seen reads *runtime loaded* — *not seen running* only where the
   Overlay looked. A game that runs neural rendering outside Streamline is not seen. Where each
@@ -201,6 +201,16 @@ you accept the prompt. Turn it on only if you trust everything that runs under y
 - **FrameLedger does not tell whether a game is safe to run.** It reads a game's files to find its engine and its
   anti-cheat, never to judge it, and recording or measuring a game vouches for nothing. Four itch.io downloads this
   project once used as examples turned out to carry malware ([details](docs/spike-notes.md)).
+
+## Accessibility
+
+What works with the keyboard alone, a screen reader, a contrast theme or Magnifier, what does not yet, and how to report
+a barrier is on its own page: [Accessibility](ACCESSIBILITY.md) (in the app: Help ▸ Accessibility). The largest limits:
+
+- **Charts are pictures.** A screen reader cannot read their points; the numbers are in the session's figures, the
+  tables and **File ▸ Export**.
+- **Windows' text size setting is not followed** — use display scaling or Magnifier.
+- **Windows contrast themes are not followed yet** — choose **Light** or **Dark** in Settings ▸ Theme.
 
 ## Play
 

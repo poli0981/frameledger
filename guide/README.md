@@ -20,7 +20,8 @@ Each page below takes a minute or two to read. The first six are the guide; the 
 12. [The terms, in plain words](terms-in-plain-words.md)
 
 What FrameLedger cannot do is listed on its own page: [Limitations](../LIMITATIONS.md) (in the app: Help ▸
-Limitations).
+Limitations). How it works with the keyboard alone, a screen reader or a contrast theme, and how to report a problem:
+[Accessibility](../ACCESSIBILITY.md) (Help ▸ Accessibility).
 
 **FrameLedger is beta software.** It certainly still has bugs. If something goes wrong, Help ▸ Report a bug… builds a
 report on your PC that you can look at before you decide to share it.

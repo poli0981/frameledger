@@ -113,7 +113,7 @@ Draw live FPS/frametime/upscaler info inside the game. Only for games already ho
 - **NFR-6 Accuracy:** per `03_METRICS` §Accuracy budget, stated per tier.
 - **NFR-7 Resilience:** power loss loses at most the last 60 s of raw data; DB never corrupts (WAL + transactions); Agent restart recovers `.partial` sessions as `interrupted`.
 - **NFR-8 OS support:** Windows 10 22H2+ and Windows 11, x64. No ARM64 in v1.
-- **NFR-9 Accessibility:** full keyboard navigation, adequate contrast in both Fluent themes, Per-Monitor V2 DPI awareness. *(What each clause means for this app, and the check that holds it: `08_UI` §Accessibility, P4 PR-8.)*
+- **NFR-9 Accessibility:** full keyboard navigation, adequate contrast in both Fluent themes, Per-Monitor V2 DPI awareness. *(What each clause means for this app, and the check that holds it: `08_UI` §Accessibility, P4 PR-8.)* *(Widened 2026-11-09, beta.35, owner decisions D88–D91: and a screen reader reads every control and value and is told what changes; Windows contrast themes are followed; nothing is shown by colour alone. The goal behind all of it is WCAG 2.2 AA as W3C's WCAG2ICT applies it to desktop software — a goal, not a conformance claim — stated to users in `ACCESSIBILITY.md`.)*
 - **NFR-10 Offline-first:** everything except updates and opt-in metadata works with zero connectivity.
 - **NFR-11 Auditability:** the entire set of hooks is enumerable in `17_HOOK_ENGINE` §Hook inventory and matches the code; a reviewer must be able to verify in minutes that nothing reads game memory.
 

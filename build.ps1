@@ -467,7 +467,7 @@ function Invoke-ProjectGates {
     Invoke-Checked 'notice-check (self-test)' { & $noticeTool -SelfTest }
     Invoke-Checked 'notice-check' { & $noticeTool -RepoRoot $repo }
 
-    # beta.17 (D53/D54): the GitHub Wiki is built from wiki/, guide/ and LIMITATIONS.md, and wiki.yml publishes it when a
+    # beta.17 (D53/D54): the GitHub Wiki is built from wiki/, guide/, LIMITATIONS.md and (beta.35) ACCESSIBILITY.md, and wiki.yml publishes it when a
     # release is made. A link or a section that leads nowhere, a page nothing leads to, a sidebar out of the guide's
     # order, a path that names nothing or a version written into a page is red here, not on the published wiki.
     # Self-test first (nine cases, both directions), then the live assembly into a temporary folder.

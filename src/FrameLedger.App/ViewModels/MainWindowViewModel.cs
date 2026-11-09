@@ -291,6 +291,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
     [RelayCommand]
     private void Limitations() => _documents.ShowLimitations();
 
+    /// <summary>
+    /// Help ▸ Accessibility (beta.35, D88): <c>ACCESSIBILITY.md</c> as this build embeds it — the accessibility statement, in a
+    /// window of its own like Limitations. Information, not terms — nothing is recorded.
+    /// </summary>
+    [RelayCommand]
+    private void Accessibility() => _documents.ShowAccessibility();
+
     /// <summary>Help ▸ Report a bug… (P4 PR-3): <c>10_LOGGING</c> §Bug report flow steps 2–4, the same flow the Logs page's button runs.</summary>
     [RelayCommand]
     private async Task ReportBugAsync() => _ = await _bugReports.RunAsync().ConfigureAwait(true);

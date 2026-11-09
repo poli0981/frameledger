@@ -5,7 +5,8 @@
 <#
 .SYNOPSIS
     Builds the GitHub Wiki from the repository - wiki/ (Home, the sidebar, the developer pages), guide/ (the user
-    guide, which is the wiki's End-user part) and LIMITATIONS.md - and refuses a wiki with a link that leads nowhere.
+    guide, which is the wiki's End-user part), LIMITATIONS.md and ACCESSIBILITY.md - and refuses a wiki with a link that
+    leads nowhere.
 
 .DESCRIPTION
     D53/D54 (the owner, 2026-10-07): the wiki's source lives in the repository and the Wiki tab is a copy of it, written
@@ -15,7 +16,8 @@
     Assembling:
       - wiki/*.md keeps its file name, which GitHub turns into the page's title (Build-and-test.md: "Build and test").
       - A guide page becomes the page its first heading names (guide/README.md is User-guide, LIMITATIONS.md is
-        Limitations). Every page's first heading is dropped: the wiki prints the page's name above it.
+        Limitations, ACCESSIBILITY.md - beta.35, D88 - is Accessibility). Every page's first heading is dropped: the wiki
+        prints the page's name above it.
       - A link to one of those pages becomes the page's name; a link to any other file or folder of the repository
         becomes its address on GitHub at -Ref, the release being published; anchors are kept.
       - _Footer.md is written here, naming -Ref and where to edit.
@@ -43,9 +45,9 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $repoUrl = 'https://github.com/poli0981/frameledger'
-$special = @{ 'guide/README.md' = 'User-guide'; 'LIMITATIONS.md' = 'Limitations' }
+$special = @{ 'guide/README.md' = 'User-guide'; 'LIMITATIONS.md' = 'Limitations'; 'ACCESSIBILITY.md' = 'Accessibility' }
 $pathPrefixes = @('src/', 'docs/', 'tools/', 'tests/', 'guide/', 'legal/', 'wiki/', 'rules/', '.github/')
-$rootFiles = @('README.md', 'CLAUDE.md', 'CHANGELOG.md', 'LIMITATIONS.md', 'CONTRIBUTING.md', 'FORKING.md', 'SECURITY.md',
+$rootFiles = @('README.md', 'CLAUDE.md', 'CHANGELOG.md', 'LIMITATIONS.md', 'ACCESSIBILITY.md', 'CONTRIBUTING.md', 'FORKING.md', 'SECURITY.md',
     'CODE_OF_CONDUCT.md', 'NOTICE', 'LICENSE', 'VERSION', 'build.ps1', 'global.json', 'FrameLedger.slnx', 'Directory.Build.props')
 
 if ($Ref -notmatch '^[A-Za-z0-9][A-Za-z0-9._/-]*$') { throw "-Ref '$Ref' is not a branch, tag or commit name" }
@@ -103,6 +105,7 @@ function Get-Sources([string]$SourceRoot) {
     foreach ($f in Get-ChildItem (Join-Path $SourceRoot 'wiki') -Filter *.md -File | Sort-Object Name) { & $add "wiki/$($f.Name)" $f.FullName }
     foreach ($f in Get-ChildItem (Join-Path $SourceRoot 'guide') -Filter *.md -File | Sort-Object Name) { & $add "guide/$($f.Name)" $f.FullName }
     & $add 'LIMITATIONS.md' (Join-Path $SourceRoot 'LIMITATIONS.md')
+    & $add 'ACCESSIBILITY.md' (Join-Path $SourceRoot 'ACCESSIBILITY.md')
     return , $sources
 }
 
@@ -281,6 +284,7 @@ if ($SelfTest) {
         Copy-Item (Join-Path $RepoRoot 'wiki') (Join-Path $tmp 'wiki') -Recurse
         Copy-Item (Join-Path $RepoRoot 'guide') (Join-Path $tmp 'guide') -Recurse
         Copy-Item (Join-Path $RepoRoot 'LIMITATIONS.md') $tmp
+        Copy-Item (Join-Path $RepoRoot 'ACCESSIBILITY.md') $tmp
         $cases = 0
         $expect = {
             param([string]$What, [string]$Pattern)
@@ -306,6 +310,7 @@ if ($SelfTest) {
         & $mutate 'wiki/Home.md' { param($t) $t + "`n[gone](../guide/01-install.md#no-such-section)`n" } 'a link to a missing section' 'no-such-section.*names no section'
         & $mutate 'wiki/Home.md' { param($t) $t + "`n[out](../../outside.md)`n" } 'a link out of the repository' 'leaves the repository'
         & $mutate 'wiki/Limitations.md' { param($t) "Same name as LIMITATIONS.md.`n" } 'two sources for one page' "both make the page 'Limitations'"
+        & $mutate 'wiki/Accessibility.md' { param($t) "Same name as ACCESSIBILITY.md.`n" } 'two sources for the statement''s page' "both make the page 'Accessibility'"
         & $mutate 'wiki/Orphan.md' { param($t) "Nothing links here.`n" } 'a page nothing leads to' "leads to 'Orphan'"
         & $mutate 'wiki/_Sidebar.md' { param($t) ($t -replace '(?m)^- \[Questions and answers\]\(\.\./guide/06-faq\.md\)\r?\n', '') + "- [Questions and answers](../guide/06-faq.md)`n" } 'a sidebar out of the guide''s order' 'lists the guide as'
         & $mutate 'wiki/Home.md' { param($t) $t + "`nSee ``src/FrameLedger.App/NoSuchFile.cs``.`n" } 'a backticked path that names nothing' 'NoSuchFile\.cs.*names nothing'
@@ -322,7 +327,7 @@ $result = Invoke-Assembly $RepoRoot $RepoRoot $Ref
 if ($result.Problems.Count -ne 0) {
     Write-Host 'WIKI CHECK FAILED:' -ForegroundColor Red
     foreach ($p in $result.Problems) { Write-Host "  $p" -ForegroundColor Red }
-    Write-Host '  The wiki is built from wiki/, guide/ and LIMITATIONS.md (docs/13_CI_CD.md, wiki.yml).' -ForegroundColor Red
+    Write-Host '  The wiki is built from wiki/, guide/, LIMITATIONS.md and ACCESSIBILITY.md (docs/13_CI_CD.md, wiki.yml).' -ForegroundColor Red
     exit 1
 }
 if ($Check) {

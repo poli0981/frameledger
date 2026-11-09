@@ -1,5 +1,5 @@
 # The GitHub Wiki is a copy of the repository's own pages (D53/D54, the owner, 2026-10-07): wiki/ (Home, the sidebar,
-# the developer pages) and guide/ (the user guide, which is the End-user part) with LIMITATIONS.md, assembled and checked
+# the developer pages) and guide/ (the user guide, which is the End-user part) with LIMITATIONS.md and ACCESSIBILITY.md, assembled and checked
 # by tools/wiki-build.ps1 - the check build.ps1 runs as `wiki-check`. A page edited on the Wiki tab is overwritten here;
 # edit wiki/ or guide/ instead (docs/13_CI_CD.md §wiki.yml).
 #

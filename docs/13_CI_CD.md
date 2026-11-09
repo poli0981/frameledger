@@ -211,9 +211,9 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 
 ### `wiki.yml` — after a successful Release run, and by hand · **repo-local, built 2026-10-07 (beta.17, D53/D54)**
 - **What:** the GitHub Wiki is a copy of the repository's own pages — `wiki/` (Home, the sidebar, the developer pages)
-  and `guide/` (the user guide: the End-user part, the same pages the App shows) with `LIMITATIONS.md`.
-  `tools/wiki-build.ps1` names each page (a guide page after its first heading, `guide/README.md` as *User-guide*,
-  `LIMITATIONS.md` as *Limitations*), rewrites links between pages to page names and every other repository link to
+  and `guide/` (the user guide: the End-user part, the same pages the App shows) with `LIMITATIONS.md` and, since
+  beta.35 (D88), `ACCESSIBILITY.md`. `tools/wiki-build.ps1` names each page (a guide page after its first heading,
+  `guide/README.md` as *User-guide*, `LIMITATIONS.md` as *Limitations*, `ACCESSIBILITY.md` as *Accessibility*), rewrites links between pages to page names and every other repository link to
   its address on GitHub **at the release's tag**, drops each page's first heading (the wiki prints the page name), and
   writes a footer naming the tag. The same assembly is `build.ps1`'s `wiki-check` gate (`12_BUILD` §Local quality gate,
   13d), so a dead link is red on the pull request, never on the published wiki.
@@ -252,8 +252,8 @@ What it is and what differs on the branch: `12_BUILD` §The alpha line. What CI 
   warning, its row in `CHANGELOG.md`'s Releases table, a line in HANDOFF's START HERE) → the sync pull request into
   `alpha` → a `release.yml` dispatch on `alpha` (`gh workflow run release.yml --ref alpha -f version=x.y.z-alpha.N`) →
   the signed tag on `alpha`'s head → the run (§release.yml: the line's tag rule, `--channel alpha`). **No wiki publish**
-  (`wiki.yml` skips an `-alpha.` tag) and **no release line moves**: README, ACCURACY, the Disclaimer's copy and
-  LIMITATIONS keep naming the newest beta.
+  (`wiki.yml` skips an `-alpha.` tag) and **no release line moves**: README, ACCURACY, the Disclaimer's copy,
+  LIMITATIONS and ACCESSIBILITY keep naming the newest beta.
 - **The cadence:** one alpha per beta, cut from it. Velopack's GitHub source reads the newest ten releases (one page,
   `perPage` 10), so ten alphas in a row would hide every beta from the betas' own update check, and the other way round
   (`11_UPDATER` §Channels).
@@ -545,7 +545,9 @@ Central package management makes Dependabot PRs single-file diffs.
 **In the tree — done:**
 
 - [x] Repo-local `ci.yml`, `codeql.yml`, `release.yml`, `rules-publish.yml` (all four repo-local by decision, §Workflows); ~~caller stubs pointing at `poli0981/.github`~~ — never the design, see the first paragraph *(and `wiki.yml` since beta.17, repo-local too: five)*
-- [x] Issue forms `bug_report.yml`, `feature_request.yml`, `safety_gap.yml`; `ISSUE_TEMPLATE/config.yml` pointing a vulnerability at private reporting; PR template referencing CLAUDE.md's definition of done
+- [x] Issue forms `bug_report.yml`, `feature_request.yml`, `safety_gap.yml`; `ISSUE_TEMPLATE/config.yml` pointing a vulnerability at private reporting; PR template referencing CLAUDE.md's definition of done *(and since 2026-11-09, beta.35, D88: `accessibility.yml`, the form `ACCESSIBILITY.md` sends a barrier to, and the PR template's user-interface section)*
+- [x] The labels the forms apply exist *(2026-11-09: `accessibility`, and `safety` and `priority-high`, which `safety_gap.yml` had named since it was written (2026-08-02) while the repository had neither — GitHub applies only a label that exists, so no Safety gap report was ever labelled)*
+- [x] `ACCESSIBILITY.md` — the accessibility statement: WCAG 2.2 AA through WCAG2ICT as a goal, never a claim; how a barrier is reported and handled (2026-11-09, D88)
 - [x] `.github/dependabot.yml` (nuget + github-actions, weekly; a seven-day cooldown and the actions grouped since 2026-10-25 — and a NuGet library update it never proposed is `dotnet list package --outdated`'s to find, §Dependabot and the NuGet audit)
 - [x] `SECURITY.md` — the private route for a vulnerability, the public route for a safety gap, and the honest response intent (2026-09-16)
 - [x] A release rehearsal: `release.yml` `workflow_dispatch` runs every step but the Release itself (§release.yml)

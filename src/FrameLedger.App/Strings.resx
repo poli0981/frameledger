@@ -255,6 +255,12 @@
   <data name="Limitations_Title" xml:space="preserve">
     <value>What FrameLedger cannot do</value>
   </data>
+  <data name="Menu_Help_Accessibility" xml:space="preserve">
+    <value>Accessibility</value>
+  </data>
+  <data name="Accessibility_Title" xml:space="preserve">
+    <value>Accessibility</value>
+  </data>
   <data name="Menu_Help_ReportBug" xml:space="preserve">
     <value>Report a bug…</value>
   </data>

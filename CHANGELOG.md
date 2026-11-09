@@ -35,6 +35,29 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **An accessibility statement** (owner request 2026-11-09, decision D88). `ACCESSIBILITY.md` says what FrameLedger aims
+  for — WCAG 2.2 at level AA as W3C's WCAG2ICT applies it to desktop software, a goal and not a claim of conformance —
+  what works with the keyboard alone, a screen reader, a contrast theme or Magnifier, how it is checked (the project's
+  tests, and the owner's pass of 2026-11-09: keyboard only and Narrator on 0.1.0-beta.34 and 0.1.0-alpha.3, no fault),
+  what does not work yet and what to do instead, and how a barrier is reported and handled — by severity, with no
+  promised times. The app shows it under **Help ▸ Accessibility**, and after Limitations in the user guide's window; the
+  wiki gets an *Accessibility* page.
+- **An *Accessibility problem* issue form** (`.github/ISSUE_TEMPLATE/accessibility.yml`) asking what was tried, what
+  happened and what the reporter uses — never anything about the reporter themself — and a user-interface section in the
+  pull-request template. The `accessibility` label exists, and so do `safety` and `priority-high`, which the *Safety gap*
+  form had named since its first day without either existing — so GitHub had never applied them.
+
+### Changed
+
+- **Documents corrected**: charts do take focus and keys (`docs/08_UI.md` said neither — `ChartKeyboardTests` measures
+  it); the database-maintenance result's live region announced nothing, since WPF raises one only when the app does; the
+  "no Narrator pass" gap is the owner's pass now, beside what that pass could not show; the open question "Accessibility
+  / DPI: no design anywhere" is closed; NFR-9 names screen readers and contrast themes (D88–D91). `LIMITATIONS.md` gains an
+  *Accessibility* section and loses its one struck sentence — a screen reader reads struck text as current, so no page
+  the app shows strikes text through. The guide's menu table names its menu on every row, read one row at a time.
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

@@ -86,6 +86,7 @@
                 <MenuItem Header="{x:Static res:Strings.Menu_Help_ReportBug}" Command="{Binding ViewModel.ReportBugCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_Help_Documentation}" Command="{Binding ViewModel.DocumentationCommand}" />
                 <MenuItem Header="{x:Static res:Strings.Menu_Help_Limitations}" Command="{Binding ViewModel.LimitationsCommand}" />
+                <MenuItem Header="{x:Static res:Strings.Menu_Help_Accessibility}" Command="{Binding ViewModel.AccessibilityCommand}" />
                 <Separator />
                 <MenuItem Header="{x:Static res:Strings.Menu_Help_About}" Command="{Binding ViewModel.AboutCommand}" />
             </MenuItem>

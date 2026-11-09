@@ -209,9 +209,14 @@ that it was checked against anything.
 | Mode | launch mode · attach mode · mid-session settings change |
 | Safety | game with anti-cheat → toggle disabled · simulated late AC load → unhook · double-crash → auto-disable |
 | Tier | forced Tier 2 (records duration, available sensors and the reason — and nothing else) · Tier 1 → Tier 2 degradation notice |
+| Accessibility *(added 2026-11-09, beta.35, D88)* | **keyboard only** with the mouse disconnected — every page, menu and dialog, Ctrl+1…5, Esc · **Narrator** — names, values, headings, the notices as they appear · a **contrast theme** on and off (Aquatic, Desert) · Windows **animation effects** off · a large **display scale**. The owner's first pass: 2026-11-09, keyboard only and Narrator on 0.1.0-beta.34 and 0.1.0-alpha.3, no fault (`ACCESSIBILITY.md` §How it is checked; the automated half is `08_UI` §Accessibility) |
 | Update | Velopack delta; update deferred while a game is hooked (FR-12) — *a delta needs a previous release, so this row is reachable from the second release, not the first* *(corrected 2026-10-04: no release has carried a delta — `release.yml` never fetches the previous release before `vpk pack`, `11_UPDATER` §Built — so the update leg is a full package; **since beta.13** a release carries a delta against the previous one, and the first
 update that can use it is beta.12 → beta.13 — HANDOFF owner-only item 10)* |
 
 ## Release smoke
 
 Clean-VM install → Legal Gate → Agent setup (unelevated) → add a game → consent dialog → hooked 2-min session → charts render → CSV opens in Excel → Vulkan layer registered/unregistered cleanly → uninstall removes layer registration, task, and asks about data.
+
+*(Added 2026-11-09, beta.35, D88:)* and an **accessibility smoke**, the same build: the Legal Gate, the consent dialog and
+the session summary reached and answered with the keyboard alone; Narrator reads the notice a refused game raises; the
+window readable under one contrast theme. The release's owner-only item in `HANDOFF` lists what that release moved.

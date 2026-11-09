@@ -19,4 +19,9 @@ public interface IDocumentWindows
     void ShowAlphaNotice()
     {
     }
+
+    /// <summary>Help ▸ Accessibility (beta.35, D88): <c>ACCESSIBILITY.md</c>, rendered.</summary>
+    void ShowAccessibility()
+    {
+    }
 }

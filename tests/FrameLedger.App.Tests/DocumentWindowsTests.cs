@@ -85,7 +85,7 @@ public sealed class DocumentWindowsTests
             }
         });
 
-        facts.Pages.Should().Be(EmbeddedDocuments.GuidePages.Count + 1);
+        facts.Pages.Should().Be(EmbeddedDocuments.GuidePages.Count + 2, "the guide's pages, then Limitations and Accessibility");
         facts.First.Should().Be("guide/README.md");
         facts.Shown.Should().BeTrue();
         facts.Now.Should().Be("guide/01-install.md");
@@ -121,6 +121,46 @@ public sealed class DocumentWindowsTests
         facts.Count.Should().Be(1, "asking again brings the open window forward rather than stacking a copy");
         facts.Title.Should().Be(Strings.FirstRun_Doc_Alpha);
         facts.Path.Should().Be("legal/ALPHA_NOTICE.md");
+    }
+
+    /// <summary>D88: Help ▸ Accessibility opens the statement in one window — one page, no list — and asking again brings it forward.</summary>
+    [Fact]
+    public async Task TheAccessibilityStatementOpensInOneWindowAndAskingAgainRevealsIt()
+    {
+        var facts = await PagesLoadTests.OnStaAsync(() =>
+        {
+            var shell = new ShellHost(new ServiceCollection().BuildServiceProvider(), null!, null!, new WindowClosePolicy());
+            var documents = new DocumentWindows(new NoUrlOpener(), new NoTheme(), new AppearanceSettings(new MemorySettings()), shell);
+            documents.ShowAccessibility();
+            documents.ShowAccessibility();
+            DocumentWindow[] open = [.. System.Windows.Application.Current.Windows.OfType<DocumentWindow>()];
+            try
+            {
+                return new
+                {
+                    Count = open.Length,
+                    Title = open.Length > 0 ? open[0].Title : null,
+                    Pages = open.Length > 0 ? open[0].Pages.Pages.Count : 0,
+                    Path = open.Length > 0 ? open[0].Pages.SelectedPage?.Path : null,
+                    ListShown = open.Length > 0 && open[0].Pages.FindName("PageList") is UIElement { Visibility: Visibility.Visible },
+                    Anchors = open.Length > 0 ? open[0].Pages.Viewer.Anchors.Count : 0,
+                };
+            }
+            finally
+            {
+                foreach (DocumentWindow window in open)
+                {
+                    window.Close();
+                }
+            }
+        });
+
+        facts.Count.Should().Be(1, "asking again brings the open window forward rather than stacking a copy");
+        facts.Title.Should().Be(Strings.Accessibility_Title);
+        facts.Pages.Should().Be(1);
+        facts.Path.Should().Be(AccessibilityDocument.ResourceName);
+        facts.ListShown.Should().BeFalse("one page needs no list");
+        facts.Anchors.Should().BeGreaterThan(5, "every section of the statement is a heading a link can scroll to");
     }
 
     [Fact]

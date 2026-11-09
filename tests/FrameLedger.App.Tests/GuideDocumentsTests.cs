@@ -34,14 +34,15 @@ public sealed class GuideDocumentsTests
     }
 
     [Fact]
-    public void EveryPageIsEmbeddedTitledAndListedAndLimitationsClosesTheList()
+    public void EveryPageIsEmbeddedTitledAndListedAndLimitationsAndAccessibilityCloseTheList()
     {
         IReadOnlyList<DocumentPage> pages = EmbeddedDocuments.Guide();
 
-        pages.Should().HaveCount(EmbeddedDocuments.GuidePages.Count + 1);
+        pages.Should().HaveCount(EmbeddedDocuments.GuidePages.Count + 2);
         pages[0].Title.Should().Be("FrameLedger user guide");
         pages.Take(EmbeddedDocuments.GuidePages.Count).Should().OnlyContain(static p => p.Text.Length > 300 && !p.Title.EndsWith(".md", StringComparison.Ordinal));
-        pages[^1].Path.Should().Be(LimitationsDocument.ResourceName);
+        pages[^2].Path.Should().Be(LimitationsDocument.ResourceName);
+        pages[^1].Path.Should().Be(AccessibilityDocument.ResourceName, "beta.35 (D88): the guide's links to the statement open in the window");
 
         string[] onDisk = [.. Directory.EnumerateFiles(Path.Combine(RepoRoot(), "guide"), "*.md").Select(static f => "guide/" + Path.GetFileName(f)).Order(StringComparer.Ordinal)];
         EmbeddedDocuments.GuidePages.Order(StringComparer.Ordinal).Should().Equal(onDisk, "a page in guide/ that the App does not list could never be read in the App");
@@ -110,10 +111,13 @@ public sealed class GuideDocumentsTests
             {
                 if (!anchors.TryGetValue(target, out IReadOnlyDictionary<string, System.Windows.Documents.Block>? known))
                 {
-                    bool limitations = string.Equals(target, LimitationsDocument.ResourceName, StringComparison.Ordinal);
-                    string text = limitations ? LimitationsDocument.Load()
-                        : target.StartsWith("guide/", StringComparison.Ordinal) ? EmbeddedDocuments.Read(target)
-                        : File.ReadAllText(Path.Combine(root, target.Replace('/', Path.DirectorySeparatorChar)));
+                    string text = target switch
+                    {
+                        LimitationsDocument.ResourceName => LimitationsDocument.Load(),
+                        AccessibilityDocument.ResourceName => AccessibilityDocument.Load(),
+                        _ when target.StartsWith("guide/", StringComparison.Ordinal) => EmbeddedDocuments.Read(target),
+                        _ => File.ReadAllText(Path.Combine(root, target.Replace('/', Path.DirectorySeparatorChar))),
+                    };
                     known = MarkdownRenderer.Render(text, target).Anchors;
                     anchors[target] = known;
                 }
