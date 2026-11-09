@@ -29,6 +29,15 @@ public sealed record TriStateChipModel(string Label, Tri Value, TriStateSource S
 
     public string Text => Label + ": " + ValueText;
 
+    /// <summary>
+    /// The chip as a screen reader reads it (beta.35, D88): its label, its value and where the value came from — the source
+    /// is the tooltip's to the eye, and a tooltip on a chip that takes no focus never reaches the ear.
+    /// </summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format string is a resource that follows the UI culture, which changes at runtime")]
+    public string AccessibleName => string.Format(System.Globalization.CultureInfo.CurrentCulture, Strings.A11y_Chip_Format, Label, ValueText, SourceText);
+
+    public override string ToString() => AccessibleName;
+
     public bool IsYes => Value == Tri.Yes;
 
     public bool IsNo => Value == Tri.No;

@@ -40,4 +40,9 @@ public sealed class RecentSessionViewModel
     public FpsReadoutModel Readout { get; }
 
     public bool IsCrashed { get; }
+
+    /// <summary>The Dashboard's recent session as a screen reader reads it (beta.35, D88).</summary>
+    public string AccessibleName => SpokenText.List(GameName, DateText, DurationText, TierText, Readout.SpokenText);
+
+    public override string ToString() => AccessibleName;
 }

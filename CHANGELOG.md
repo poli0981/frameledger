@@ -49,6 +49,17 @@ numeric core and does not move; the heading is the full version — corrected 20
   pull-request template. The `accessibility` label exists, and so do `safety` and `priority-high`, which the *Safety gap*
   form had named since its first day without either existing — so GitHub had never applied them.
 
+- **A screen reader reads what the window shows** (decision D88's goal; measured in the UI Automation tree WPF builds on
+  every page, window and dialog, every tab — `PagesLoadTests.Automation`). Drop-down options were read as an internal
+  record (*Choice { Value = dark, Label = Dark }*), lists and table rows by their program names, table cells drawn by a
+  template as *Item: …, Column Display Index: n*, and the terms window's list by each document's whole text; each now
+  reads the words it shows, and an empty cell reads *empty*. The frame-rate readout says Native, Displayed and the
+  factor together (CLAUDE.md rule 6, in speech), a ray-tracing chip its value and where it came from, a change badge its
+  number. The safety notices' title and message reach a screen reader (they were hidden inside the notice's template),
+  and the notice's button says which notice it answers. A button repeated on each row names its row (*Open: …*, *Play:
+  …*, *Turn off: …*). Tab no longer stops on pictures, lists, Settings' rows, the FPS readout, the chips or the dialog
+  host, where it found nothing to say; an expander's button is named after its header.
+
 ### Changed
 
 - **Documents corrected**: charts do take focus and keys (`docs/08_UI.md` said neither — `ChartKeyboardTests` measures

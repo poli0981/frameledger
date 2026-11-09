@@ -3632,4 +3632,43 @@ The documents below are the full terms; this summary does not replace them.</val
   <data name="About_Runtime_Alpha_Format" xml:space="preserve">
     <value>Alpha build — runs on {0}, a prerelease .NET</value>
   </data>
+  <data name="A11y_Pair_Format" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="A11y_TitleAndBody_Format" xml:space="preserve">
+    <value>{0}. {1}</value>
+  </data>
+  <data name="A11y_List_Separator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="A11y_Empty" xml:space="preserve">
+    <value>empty</value>
+  </data>
+  <data name="A11y_Chip_Format" xml:space="preserve">
+    <value>{0}: {1}, {2}</value>
+  </data>
+  <data name="A11y_Change_Format" xml:space="preserve">
+    <value>Change {0}</value>
+  </data>
+  <data name="A11y_ChangeMarker_Format" xml:space="preserve">
+    <value>Change {0}, {1}: {2}</value>
+  </data>
+  <data name="A11y_Compare_Best_Format" xml:space="preserve">
+    <value>{0}, the best</value>
+  </data>
+  <data name="A11y_SensorStat_Format" xml:space="preserve">
+    <value>{0}: mean {1}, median {2}, lowest {3}, highest {4}, over {5} readings</value>
+  </data>
+  <data name="A11y_Fps_Generated_Format" xml:space="preserve">
+    <value>Native {0} FPS, displayed {1} FPS, frame generation ×{2:0.0}</value>
+  </data>
+  <data name="A11y_Fps_GeneratedSteady_Format" xml:space="preserve">
+    <value>Native {0} FPS, displayed {1} FPS, frame generation ×{2:0.0} for {3:0}% of the session</value>
+  </data>
+  <data name="A11y_Fps_Presented_Format" xml:space="preserve">
+    <value>{0} presented FPS. {1}</value>
+  </data>
+  <data name="A11y_ToggleSection_Format" xml:space="preserve">
+    <value>Show or hide: {0}</value>
+  </data>
 </root>

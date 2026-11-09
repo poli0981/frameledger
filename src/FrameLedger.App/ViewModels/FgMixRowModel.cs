@@ -19,4 +19,7 @@ public sealed record FgMixRowModel(string Label, string Share, string Rates, str
 {
     /// <summary>The row's colour, as a one-segment bar beside its label.</summary>
     public IReadOnlyList<FgMixSegment> Swatch { get; } = [Segment with { Share = 1 }];
+
+    /// <summary>The row in one line (beta.35, D88): the state, its share, its own rates and its time — never a factor alone.</summary>
+    public override string ToString() => Services.SpokenText.Pair(Label, Services.SpokenText.List(Share, Rates, Duration));
 }

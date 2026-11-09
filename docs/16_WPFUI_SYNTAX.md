@@ -266,6 +266,21 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
   bar with no exit, which is exactly how the safety notices shipped (2026-09-14). `Styles/FrameLedger.xaml` carries
   the upstream template plus one presenter column; `PagesLoadTests.TheInfoBarTemplateRendersItsContent` renders both
   templates and turns red when upstream gains a presenter, which is when the copy comes out.
+- [ ] **What a screen reader is given is the UI Automation tree, and WPF builds it with four holes** (beta.35, D88;
+  `PagesLoadTests.Automation` sweeps every surface for each). (1) **A control with no automation peer** — a plain `Control`
+  or `ContentControl`, WPF UI's `Image`, `Card`, `Badge`, `InfoBar` (measured on .NET 10.0.14) — is skipped by the tree; if
+  it is also focusable (a `Control` is, by default) it is a Tab stop Narrator says nothing about. Give a display-only
+  control a peer (`Controls/SpokenTextAutomationPeer`) and take it out of the tab order; `ui:CardControl` has a peer with an
+  empty name even with a string `Header` — the App's implicit style takes it out of the tab order. (2) **A list's,
+  drop-down's or grid row's item is named by its `ToString()`**: a record's is its printed form (`Choice { Value = dark,
+  Label = Dark }`), a class's its full type name. Every item type overrides it (`Services/SpokenText` builds the words).
+  (3) **A `TextBlock` written straight into a `ControlTemplate` is no control element** (`TextBlockAutomationPeer`: not when
+  its templated parent is something other than a `ContentPresenter`): draw a template's text through a `ContentPresenter`
+  (the App's InfoBar template), or give the control a peer that says it. (4) **A `DataGridTemplateColumn`'s cell has no text
+  of its own**, so WPF names it `Item: <row>, Column Display Index: n`: name it with `controls:CellName.Path` (a cell style
+  based on `DefaultDataGridCellStyle`, the one WPF UI's grid gives every cell). Also: a plain `ItemsControl` is focusable
+  (the App's implicit style says no), and WPF UI's `CardExpander` leaves its expand button (`ExpanderToggleButton`)
+  unnamed (`Controls/ExpanderToggleName`, set by the App's implicit CardExpander style).
 - [ ] **WPF UI 4.3.0 keys its DataGrid parts' styles and defines no implicit one** (`DefaultDataGridRowStyle`,
   `DefaultDataGridCellStyle`, `DefaultDataGridColumnHeaderStyle`, handed to the grid by its implicit `DataGrid` style's
   `RowStyle`/`CellStyle`/`ColumnHeaderStyle` setters). A local `RowStyle` replaces WPF UI's; based on

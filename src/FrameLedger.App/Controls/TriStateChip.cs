@@ -2,6 +2,7 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using FrameLedger.App.ViewModels;
 
@@ -24,4 +25,7 @@ public sealed class TriStateChip : Control
         get => (TriStateChipModel?)GetValue(ModelProperty);
         set => SetValue(ModelProperty, value);
     }
+
+    /// <summary>beta.35 (D88): the chip in words, with where its value came from — the tooltip's to the eye.</summary>
+    protected override AutomationPeer OnCreateAutomationPeer() => new SpokenTextAutomationPeer(this, () => Model?.AccessibleName);
 }

@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using System.Globalization;
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Media;
 using FrameLedger.App.Charts;
@@ -39,6 +41,10 @@ public sealed class ChangeBadge : Control
         get => (string)GetValue(TextProperty);
         set => SetValue(TextProperty, value);
     }
+
+    /// <summary>beta.35 (D88): the badge in words — "Change 1" — the number that links the row to the chart's badge.</summary>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format string is a resource that follows the UI culture, which changes at runtime")]
+    protected override AutomationPeer OnCreateAutomationPeer() => new SpokenTextAutomationPeer(this, () => string.Format(CultureInfo.CurrentCulture, Strings.A11y_Change_Format, Text));
 
     /// <summary>The palette for the theme the element's resources hold now; the applied theme's when none is reachable.</summary>
     internal ChartPalette Palette() => GetValue(_themeProperty) is Color background ? ChartPalette.ForBackground(background) : ChartTheme.Current;

@@ -4828,4 +4828,56 @@
     <value>アルファ版 — プレリリース版の .NET である {0} で動作</value>
     <comment>review</comment>
   </data>
+  <data name="A11y_Pair_Format" xml:space="preserve">
+    <value>{0}：{1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_TitleAndBody_Format" xml:space="preserve">
+    <value>{0}。{1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_List_Separator" xml:space="preserve">
+    <value>、</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Empty" xml:space="preserve">
+    <value>空欄</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chip_Format" xml:space="preserve">
+    <value>{0}：{1}（{2}）</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Change_Format" xml:space="preserve">
+    <value>変更 {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_ChangeMarker_Format" xml:space="preserve">
+    <value>変更 {0}、{1}：{2}</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Compare_Best_Format" xml:space="preserve">
+    <value>{0}（最良）</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_SensorStat_Format" xml:space="preserve">
+    <value>{0}：平均 {1}、中央値 {2}、最小 {3}、最大 {4}（{5} 回の読み取り）</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Fps_Generated_Format" xml:space="preserve">
+    <value>ネイティブ {0} FPS、表示 {1} FPS、フレーム生成 ×{2:0.0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Fps_GeneratedSteady_Format" xml:space="preserve">
+    <value>ネイティブ {0} FPS、表示 {1} FPS、フレーム生成 ×{2:0.0}（セッションの {3:0}%）</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Fps_Presented_Format" xml:space="preserve">
+    <value>表示された {0} FPS（Presented）。{1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_ToggleSection_Format" xml:space="preserve">
+    <value>表示/非表示：{0}</value>
+    <comment>review</comment>
+  </data>
 </root>

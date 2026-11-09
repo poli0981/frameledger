@@ -29,18 +29,31 @@ public static class Strings
     /// <summary>Every key, for an audit that walks them.</summary>
     public static IReadOnlyList<string> Keys { get; } =
     [
+        nameof(A11y_Change_Format),
+        nameof(A11y_ChangeMarker_Format),
+        nameof(A11y_Chip_Format),
+        nameof(A11y_Compare_Best_Format),
         nameof(A11y_Compare_Filter_Fg),
         nameof(A11y_Compare_Filter_Game),
         nameof(A11y_Compare_Filter_Tier),
+        nameof(A11y_Empty),
+        nameof(A11y_Fps_Generated_Format),
+        nameof(A11y_Fps_GeneratedSteady_Format),
+        nameof(A11y_Fps_Presented_Format),
         nameof(A11y_Games_Filter_Engine),
         nameof(A11y_Games_Filter_Installed),
         nameof(A11y_Games_Filter_Played),
         nameof(A11y_Games_Filter_State),
         nameof(A11y_Games_Filter_Store),
         nameof(A11y_Games_Sort),
+        nameof(A11y_List_Separator),
         nameof(A11y_Logs_Level),
         nameof(A11y_Logs_Source),
         nameof(A11y_Logs_Tail),
+        nameof(A11y_Pair_Format),
+        nameof(A11y_SensorStat_Format),
+        nameof(A11y_TitleAndBody_Format),
+        nameof(A11y_ToggleSection_Format),
         nameof(About_Doc_Notice),
         nameof(About_Doc_Packages),
         nameof(About_Doc_ThirdParty),
@@ -1229,11 +1242,27 @@ public static class Strings
         nameof(Viewer_ChangesThisPc_Off),
     ];
 
+    public static string A11y_Change_Format => ResourceManager.GetString(nameof(A11y_Change_Format), Culture) ?? nameof(A11y_Change_Format);
+
+    public static string A11y_ChangeMarker_Format => ResourceManager.GetString(nameof(A11y_ChangeMarker_Format), Culture) ?? nameof(A11y_ChangeMarker_Format);
+
+    public static string A11y_Chip_Format => ResourceManager.GetString(nameof(A11y_Chip_Format), Culture) ?? nameof(A11y_Chip_Format);
+
+    public static string A11y_Compare_Best_Format => ResourceManager.GetString(nameof(A11y_Compare_Best_Format), Culture) ?? nameof(A11y_Compare_Best_Format);
+
     public static string A11y_Compare_Filter_Fg => ResourceManager.GetString(nameof(A11y_Compare_Filter_Fg), Culture) ?? nameof(A11y_Compare_Filter_Fg);
 
     public static string A11y_Compare_Filter_Game => ResourceManager.GetString(nameof(A11y_Compare_Filter_Game), Culture) ?? nameof(A11y_Compare_Filter_Game);
 
     public static string A11y_Compare_Filter_Tier => ResourceManager.GetString(nameof(A11y_Compare_Filter_Tier), Culture) ?? nameof(A11y_Compare_Filter_Tier);
+
+    public static string A11y_Empty => ResourceManager.GetString(nameof(A11y_Empty), Culture) ?? nameof(A11y_Empty);
+
+    public static string A11y_Fps_Generated_Format => ResourceManager.GetString(nameof(A11y_Fps_Generated_Format), Culture) ?? nameof(A11y_Fps_Generated_Format);
+
+    public static string A11y_Fps_GeneratedSteady_Format => ResourceManager.GetString(nameof(A11y_Fps_GeneratedSteady_Format), Culture) ?? nameof(A11y_Fps_GeneratedSteady_Format);
+
+    public static string A11y_Fps_Presented_Format => ResourceManager.GetString(nameof(A11y_Fps_Presented_Format), Culture) ?? nameof(A11y_Fps_Presented_Format);
 
     public static string A11y_Games_Filter_Engine => ResourceManager.GetString(nameof(A11y_Games_Filter_Engine), Culture) ?? nameof(A11y_Games_Filter_Engine);
 
@@ -1247,11 +1276,21 @@ public static class Strings
 
     public static string A11y_Games_Sort => ResourceManager.GetString(nameof(A11y_Games_Sort), Culture) ?? nameof(A11y_Games_Sort);
 
+    public static string A11y_List_Separator => ResourceManager.GetString(nameof(A11y_List_Separator), Culture) ?? nameof(A11y_List_Separator);
+
     public static string A11y_Logs_Level => ResourceManager.GetString(nameof(A11y_Logs_Level), Culture) ?? nameof(A11y_Logs_Level);
 
     public static string A11y_Logs_Source => ResourceManager.GetString(nameof(A11y_Logs_Source), Culture) ?? nameof(A11y_Logs_Source);
 
     public static string A11y_Logs_Tail => ResourceManager.GetString(nameof(A11y_Logs_Tail), Culture) ?? nameof(A11y_Logs_Tail);
+
+    public static string A11y_Pair_Format => ResourceManager.GetString(nameof(A11y_Pair_Format), Culture) ?? nameof(A11y_Pair_Format);
+
+    public static string A11y_SensorStat_Format => ResourceManager.GetString(nameof(A11y_SensorStat_Format), Culture) ?? nameof(A11y_SensorStat_Format);
+
+    public static string A11y_TitleAndBody_Format => ResourceManager.GetString(nameof(A11y_TitleAndBody_Format), Culture) ?? nameof(A11y_TitleAndBody_Format);
+
+    public static string A11y_ToggleSection_Format => ResourceManager.GetString(nameof(A11y_ToggleSection_Format), Culture) ?? nameof(A11y_ToggleSection_Format);
 
     public static string About_Doc_Notice => ResourceManager.GetString(nameof(About_Doc_Notice), Culture) ?? nameof(About_Doc_Notice);
 

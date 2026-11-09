@@ -123,6 +123,27 @@
         when there is no content. PagesLoadTests.TheInfoBarTemplateRendersItsContent renders both templates and
         fails the day upstream gains a ContentPresenter, so this copy is removed rather than kept out of habit.
     -->
+    <!--
+        beta.35 (D88): what a screen reader is given. A plain ItemsControl is a Tab stop that holds nothing to say (WPF makes it
+        focusable; its items' own controls take the focus); WPF UI's Image and CardControl take the focus with no automation
+        peer or with an empty name - a Tab stop Narrator says nothing about; a CardExpander's expand button has no name. The
+        App's lists, pictures and setting rows are not stops; an expander's button is named after its header
+        (Controls/ExpanderToggleName). PagesLoadTests.Automation holds all four.
+    -->
+    <Style TargetType="ItemsControl">
+        <Setter Property="Focusable" Value="False" />
+    </Style>
+    <Style TargetType="{x:Type ui:Image}" BasedOn="{StaticResource DefaultImageStyle}">
+        <Setter Property="Focusable" Value="False" />
+    </Style>
+    <Style TargetType="{x:Type ui:CardControl}" BasedOn="{StaticResource {x:Type ui:CardControl}}">
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
+    </Style>
+    <Style TargetType="{x:Type ui:CardExpander}" BasedOn="{StaticResource {x:Type ui:CardExpander}}">
+        <Setter Property="controls:ExpanderToggleName.IsEnabled" Value="True" />
+    </Style>
+
     <Style TargetType="{x:Type ui:InfoBar}">
         <Setter Property="Background">
             <Setter.Value>
@@ -165,12 +186,28 @@
                                 <Border Margin="0,2,14,0" VerticalAlignment="Top">
                                     <ui:SymbolIcon x:Name="SymbolIcon" VerticalAlignment="Top" Filled="True" FontSize="16" />
                                 </Border>
+                                <!--
+                                    beta.35 (D88): the title and the message through ContentPresenters. A TextBlock written straight
+                                    into a template is hidden from the control view of the UI Automation tree (its templated parent is
+                                    the InfoBar, which has no peer), so a safety notice's words reached no screen reader; a text a
+                                    ContentPresenter makes is a control element.
+                                -->
                                 <WrapPanel Grid.Column="1" VerticalAlignment="Top">
-                                    <TextBlock x:Name="TitleText" Margin="0,0,14,0" ScrollViewer.CanContentScroll="False"
-                                               Text="{TemplateBinding Title}" TextElement.FontSize="{TemplateBinding FontSize}"
-                                               TextElement.FontWeight="SemiBold" TextWrapping="Wrap" />
-                                    <TextBlock Margin="0" ScrollViewer.CanContentScroll="False" Text="{TemplateBinding Message}"
-                                               TextElement.FontSize="{TemplateBinding FontSize}" TextWrapping="Wrap" />
+                                    <ContentPresenter x:Name="TitleText" Margin="0,0,14,0" Content="{TemplateBinding Title}"
+                                                      TextElement.FontSize="{TemplateBinding FontSize}" TextElement.FontWeight="SemiBold">
+                                        <ContentPresenter.ContentTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                                            </DataTemplate>
+                                        </ContentPresenter.ContentTemplate>
+                                    </ContentPresenter>
+                                    <ContentPresenter Margin="0" Content="{TemplateBinding Message}" TextElement.FontSize="{TemplateBinding FontSize}">
+                                        <ContentPresenter.ContentTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding}" TextWrapping="Wrap" />
+                                            </DataTemplate>
+                                        </ContentPresenter.ContentTemplate>
+                                    </ContentPresenter>
                                 </WrapPanel>
                                 <!-- The one addition: the InfoBar's Content, which is where the action button goes. -->
                                 <ContentPresenter x:Name="ActionContent" Grid.Column="2" Margin="12,0,0,0" VerticalAlignment="Center"
@@ -246,6 +283,9 @@
         when a frame-generation runtime was loaded / the counted none was withheld.
     -->
     <Style TargetType="{x:Type controls:FpsReadout}">
+        <!-- beta.35 (D88): shown, not operated - read through its peer (SpokenTextAutomationPeer), no Tab stop. -->
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:FpsReadout}">
@@ -290,6 +330,9 @@
     <!-- TriStateChip (08_UI §Tri-state feature chips): Yes filled accent · No outlined · N/A dashed, muted. -->
     <Style TargetType="{x:Type controls:TriStateChip}">
         <Setter Property="Margin" Value="0,0,8,0" />
+        <!-- beta.35 (D88): read through its peer; where a chip can be changed, the button around it is the stop. -->
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsTabStop" Value="False" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type controls:TriStateChip}">

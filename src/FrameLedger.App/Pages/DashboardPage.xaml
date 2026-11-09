@@ -135,7 +135,7 @@
             <ItemsControl Margin="0,8,0,0" ItemsSource="{Binding ViewModel.Recent}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:RecentSessionViewModel}">
-                        <ui:CardAction Margin="0,0,0,6" IsChevronVisible="True"
+                        <ui:CardAction Margin="0,0,0,6" IsChevronVisible="True" AutomationProperties.Name="{Binding AccessibleName}"
                                        Command="{Binding DataContext.ViewModel.OpenSessionCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                        CommandParameter="{Binding}">
                             <Grid>
