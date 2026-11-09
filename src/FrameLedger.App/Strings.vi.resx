@@ -319,6 +319,9 @@
   <data name="Settings_Theme_Label" xml:space="preserve">
     <value>Chủ đề</value>
   </data>
+  <data name="Settings_Theme_ContrastOn" xml:space="preserve">
+    <value>Một contrast theme của Windows đang bật nên FrameLedger dùng màu của nó. Lựa chọn ở đây sẽ áp dụng lại khi tắt contrast theme.</value>
+  </data>
   <data name="Settings_Theme_Light" xml:space="preserve">
     <value>Sáng</value>
   </data>

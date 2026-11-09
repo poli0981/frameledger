@@ -20,8 +20,8 @@ public static class ChartTheme
     private static readonly Lock _lock = new();
     private static bool _subscribed;
 
-    /// <summary>The palette of the theme WPF UI has applied.</summary>
-    public static ChartPalette Current => ChartPalette.For(ApplicationThemeManager.GetAppTheme());
+    /// <summary>The palette of the theme WPF UI has applied — or, under a Windows contrast theme, of its colours (beta.35, D91).</summary>
+    public static ChartPalette Current => Services.ContrastTheme.Active is { } contrast ? ChartPalette.ForContrast(contrast) : ChartPalette.For(ApplicationThemeManager.GetAppTheme());
 
     /// <summary>Colours one plot for the current theme; the series keep their own palette colours.</summary>
     public static void Apply(Plot plot)
@@ -48,7 +48,8 @@ public static class ChartTheme
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
         Color figure = plot.FigureBackground.Color;
         Color data = plot.DataBackground.Color;
-        Color window = ApplicationThemeManager.GetAppTheme() == ApplicationTheme.Light ? Color.FromHex("#F3F3F3") : Color.FromHex("#202020");
+        Color window = Services.ContrastTheme.Active is { } contrast ? ToScottPlot(contrast.Window)
+            : ApplicationThemeManager.GetAppTheme() == ApplicationTheme.Light ? Color.FromHex("#F3F3F3") : Color.FromHex("#202020");
         try
         {
             plot.FigureBackground.Color = Over(figure, window);
@@ -70,6 +71,12 @@ public static class ChartTheme
     internal static Color TextOn(Color fill)
     {
         System.Windows.Media.Color under = ToWpf(fill);
+        if (Services.ContrastTheme.Active is { } contrast)
+        {
+            // beta.35 (D91): under a contrast theme the text is one of its colours too — the one that reads best on the fill.
+            return ToScottPlot(contrast.Colors.MaxBy(c => Services.ColorMath.Contrast(c, under)));
+        }
+
         return Services.ColorMath.Contrast(System.Windows.Media.Colors.Black, under) >= Services.ColorMath.Contrast(System.Windows.Media.Colors.White, under)
             ? Colors.Black
             : Colors.White;
@@ -77,6 +84,9 @@ public static class ChartTheme
 
     /// <summary>A chart colour as WPF's.</summary>
     internal static System.Windows.Media.Color ToWpf(Color c) => System.Windows.Media.Color.FromArgb(c.A, c.R, c.G, c.B);
+
+    /// <summary>A WPF colour as ScottPlot draws it (a contrast theme's colours, beta.35).</summary>
+    internal static Color ToScottPlot(System.Windows.Media.Color c) => new(c.R, c.G, c.B, c.A);
 
     /// <summary>Source-over: <paramref name="top"/> composited on an opaque <paramref name="under"/>.</summary>
     internal static Color Over(Color top, Color under)

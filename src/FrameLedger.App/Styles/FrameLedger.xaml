@@ -6,6 +6,7 @@
                     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                     xmlns:controls="clr-namespace:FrameLedger.App.Controls"
                     xmlns:converters="clr-namespace:FrameLedger.App.Converters"
+                    xmlns:services="clr-namespace:FrameLedger.App.Services"
                     xmlns:res="clr-namespace:FrameLedger.App">
     <!--
         Our styles, merged LAST (16_WPFUI_SYNTAX §App bootstrap). Colours only through theme brushes with
@@ -21,6 +22,20 @@
     <converters:NullToCollapsedConverter x:Key="NullToCollapsed" />
     <converters:NotNullConverter x:Key="NotNull" />
     <converters:ZeroToVisibleConverter x:Key="ZeroToVisible" />
+
+    <!--
+        beta.35 (D91): a destructive button. WPF UI 4.3.0's Danger appearance paints a fixed #F44336 — a value in its button
+        style, not a resource the contrast overlay can reach — so under a Windows contrast theme the button is the theme's own
+        button, as every button there is; its words and its icon still say what it does.
+    -->
+    <Style x:Key="DangerButton" TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+        <Setter Property="Appearance" Value="Danger" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Path=(services:ContrastTheme.IsOn)}" Value="True">
+                <Setter Property="Appearance" Value="Secondary" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
 
     <Style x:Key="PageRoot" TargetType="StackPanel">
         <Setter Property="Margin" Value="28,20,28,20" />

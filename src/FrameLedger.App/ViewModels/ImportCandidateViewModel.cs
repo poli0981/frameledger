@@ -34,6 +34,12 @@ public sealed partial class ImportCandidateViewModel : ObservableObject
     /// </summary>
     public bool IsExisting => Candidate.AlreadyInLibrary || Candidate.MovedFrom is not null;
 
+    /// <summary>
+    /// The row is drawn dimmed: one already in the library, except under a Windows contrast theme (beta.35, D91), where a
+    /// translucent row is no theme colour and the note column says it already is.
+    /// </summary>
+    public bool IsDimmed => IsExisting && Services.ContrastTheme.Active is null;
+
     public string PlatformText => Formats.Platform(Candidate.Game.Platform);
 
     public string Name => Candidate.Game.Name;

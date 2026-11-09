@@ -62,6 +62,7 @@ private static readonly IHost _host = Host.CreateDefaultBuilder()
 Theme rules:
 - Manual Light/Dark: `ApplicationThemeManager.Apply(ApplicationTheme.Dark)`.
 - System: `SystemThemeWatcher.Watch(mainWindow)` — call it in the window's `Loaded` handler (needs an HWND), and unwatch when switching to manual.
+- A Windows contrast theme (beta.35, D91): wins over all three while it is on, and is never left to the watcher, which would apply WPF UI's own high-contrast files (§Gotchas). `Services/ThemePlan.For` is the table, `Services/WpfThemeApplier` applies it.
 - Persist the choice in `settings`; re-apply before the main window shows to avoid a flash. **Measured 2026-09-13: this is a correctness rule, not a cosmetic one** — `ApplicationThemeManager.Apply(theme, backdrop, updateAccent: true)` is what registers the `SystemAccentColor*` resources the control templates `StaticResource` at first Measure; a `FluentWindow` shown before any `Apply` throws `XamlParseException: Cannot find resource named 'SystemAccentColorPrimary'`. The shell applies the theme in its constructor before `InitializeComponent()` and again from `Loaded` for the watcher.
 - Subscribe `ApplicationThemeManager.Changed` once, centrally, to re-theme ScottPlot (below).
 
@@ -172,6 +173,15 @@ Native `Menu`, `TabControl`, `ComboBox`, `Slider`~~, `ListView`~~ are fine — t
   WCAG contrast, black in both themes. The chart reads `ChartTheme.Current` at every render; the WPF chip in the list
   (`Controls/ChangeBadge`) follows a switch through the same resource reference as `ArtTint` and `FgMixBar`
   (`ChartPalette.ForBackground`). No colour in XAML.
+- Third exception (beta.35, D91): **a Windows contrast theme's colours**, read from `SystemColors` in one place
+  (`Services/ContrastPalette.FromSystem`) and laid over the theme by `Services/ContrastOverlay` — never written in XAML. A
+  colour the App works out itself reads `Services.ContrastTheme.Active` first (the charts, the badges, the artwork band);
+  XAML that must change with it binds `{Binding Path=(services:ContrastTheme.IsOn)}`, a static property WPF hears through
+  its `StaticPropertyChanged` event.
+- **`ui:Button Appearance="Danger"` / `Info` / `Success` / `Caution` / `Dark` / `Light` paint fixed colours** — values in
+  WPF UI 4.3.0's button style (`#F44336` for Danger), not resources, so no theme and no contrast theme reaches them. A
+  destructive button takes `Style="{StaticResource DangerButton}"`: Danger, and the theme's own button under a contrast
+  theme. `ContrastThemeTests.NoButtonAppearanceThatPaintsAFixedColourIsSetOutsideTheDangerButtonStyle` refuses the rest.
 
 ## FlowDocument (rendered documents, beta.12)
 
@@ -242,7 +252,9 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
 > `ChartTheme.Attach` adds `Charts/ChartKeys` (arrows and A marked handled after ScottPlot's class handler has acted — an
 > instance handler runs after it) and `ResetOnDoubleClick` (`DoubleLeftClickBenchmark(false)` and a `DoubleClickResponse` on
 > the left button that autoscales). A series takes `ChartPatterns.Line` / `Points` / `Hatch` by its index — a new series
-> without one is red in `NoChartTellsTwoSeriesApartByColourAlone`.
+> without one is red in `NoChartTellsTwoSeriesApartByColourAlone`. Under a Windows contrast theme `ChartTheme.Current` is
+> `ChartPalette.ForContrast(ContrastTheme.Active)` — the theme's window under every plot, its text, link, highlight,
+> button text and disabled text for the rest — and the patterns carry the series apart (D91).
 >
 > **The trend's change markers, beta.30 (D70):** `Charts/ChangeMarkerPlottable`, an `IPlottable` + `IRenderLast` added
 > with `Add.Plottable` (which assigns no axes: the chart sets `Axes.XAxis`/`YAxis` itself), draws the dashed lines in
@@ -264,6 +276,13 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
 - [ ] **`WpfPlot.DisplayScale` is read once, in the constructor**, from `VisualTreeHelper.GetDpi` before the control has
   a window. Read a pointer with `GetPlotPixelPosition(e)` (the element's DPI now); ScottPlot's pixels are device
   pixels while no `Plot.ScaleFactor` is set, and none is.
+- [ ] **WPF UI 4.3.0's high-contrast theme cannot be applied as it is** (beta.35, D91). `ApplicationTheme.HighContrast` has
+  no dictionary (the watcher picks HC1/HC2/HCBlack/HCWhite by Windows' theme name); each of those holds 84 `#FFFF0000`
+  placeholders among 97 colours and 17 brushes (`SystemFillColor*Brush`, `MenuBar*`) that throw when the file is read
+  alone — inside the App their forward references fall back to the application's resources and read as the Fluent
+  theme's fills; their colours are Windows 11's defaults, not the user's; their text on the accent is the window text.
+  Never let `SystemThemeWatcher` watch while a contrast theme is on: it would apply them. The App reads them for each
+  key's role only (§Theming & brushes; `08_UI` §Contrast).
 - [ ] `SystemThemeWatcher.Watch` after HWND exists (`Loaded`), not in the constructor — but `ApplicationThemeManager.Apply(…, updateAccent: true)` BEFORE the first window's XAML loads, or the accent resources are missing at first Measure (§App bootstrap).
 - [ ] Menu row lives **outside** `ui:TitleBar` (its area is the drag region; a Menu inside becomes undraggable/unclickable territory).
 - [ ] Don't set `AllowsTransparency`/`WindowStyle` on `FluentWindow` — it manages its own chrome.
