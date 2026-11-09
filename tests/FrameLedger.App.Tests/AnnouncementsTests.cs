@@ -37,6 +37,26 @@ public sealed class AnnouncementsTests
         public void Show(string title, string message, ControlAppearance appearance, IconElement? icon, TimeSpan timeout) => Shown.Add((title, message, appearance));
     }
 
+    /// <summary>
+    /// beta.35: every message is drawn in the theme's colours, its icon saying which kind it is — WPF UI's Success and Caution
+    /// snackbars are white on fixed green and orange, 2.78:1 and 2.16:1 in both themes, and no contrast theme reaches them.
+    /// </summary>
+    [Fact]
+    public async Task EveryMessageOfTheStripIsDrawnInTheThemesOwnColours()
+    {
+        var snackbar = new FakeSnackbar();
+        await PagesLoadTests.OnStaAsync(() =>
+        {
+            var strip = new SnackbarStrip(snackbar);
+            strip.Info("a", "b");
+            strip.Success("c", "d");
+            strip.Warn("e", "f");
+            return 0;
+        });
+
+        snackbar.Shown.Select(static s => s.Appearance).Should().Equal(ControlAppearance.Secondary, ControlAppearance.Secondary, ControlAppearance.Secondary);
+    }
+
     [Fact]
     public async Task EveryMessageOfTheStripIsSaidAsItIsShownAndAWarningIsAnAlert()
     {

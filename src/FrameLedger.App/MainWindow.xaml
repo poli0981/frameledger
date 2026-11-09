@@ -53,10 +53,10 @@
                               Content="{x:Static res:Strings.Alpha_Badge}"
                               ToolTip="{Binding ViewModel.AlphaBadgeTooltip}"
                               Visibility="{Binding ViewModel.IsAlpha, Mode=OneTime, Converter={StaticResource BoolToVis}}" />
-                    <ui:Badge Margin="0,0,12,0"
-                              VerticalAlignment="Center"
-                              Appearance="{Binding ViewModel.AgentStatusAppearance}"
-                              Content="{Binding ViewModel.AgentStatusText}" />
+                    <!-- beta.35: the theme's own fills under its text, never WPF UI's palette badge (Styles/FrameLedger.xaml, AgentPill). -->
+                    <Border DataContext="{Binding ViewModel}" Style="{StaticResource AgentPill}">
+                        <TextBlock Foreground="{DynamicResource TextFillColorPrimaryBrush}" Text="{Binding AgentStatusText}" />
+                    </Border>
                 </StackPanel>
             </ui:TitleBar.TrailingContent>
         </ui:TitleBar>

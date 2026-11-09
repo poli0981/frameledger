@@ -179,9 +179,16 @@ Native `Menu`, `TabControl`, `ComboBox`, `Slider`~~, `ListView`~~ are fine — t
   XAML that must change with it binds `{Binding Path=(services:ContrastTheme.IsOn)}`, a static property WPF hears through
   its `StaticPropertyChanged` event.
 - **`ui:Button Appearance="Danger"` / `Info` / `Success` / `Caution` / `Dark` / `Light` paint fixed colours** — values in
-  WPF UI 4.3.0's button style (`#F44336` for Danger), not resources, so no theme and no contrast theme reaches them. A
-  destructive button takes `Style="{StaticResource DangerButton}"`: Danger, and the theme's own button under a contrast
-  theme. `ContrastThemeTests.NoButtonAppearanceThatPaintsAFixedColourIsSetOutsideTheDangerButtonStyle` refuses the rest.
+  WPF UI 4.3.0's button style (`#F44336` for Danger), not resources, so no theme and no contrast theme reaches them, under
+  the theme's button text (white on the red in the dark theme, 3.68:1). Danger is the one the App uses: its implicit
+  `ui:Button` style (`Styles/FrameLedger.xaml`) puts the theme's dark text on the red, and the theme's own button under a
+  contrast theme — message boxes' buttons included. The other five are refused
+  (`ContrastThemeTests.NoButtonOrBadgeTakesAnAppearanceThatPaintsAFixedColour`).
+- **A snackbar's appearances are fixed colours too** (`ISnackbarService.Show`): Success, Caution, Info, Danger, Primary,
+  Dark and Light are values under white or black text — Success 2.78:1, Caution 2.16:1 in both themes. Only Secondary is
+  the theme's: `Services/SnackbarStrip`, the one place a snackbar is shown, uses it for every message.
+- **A `ui:Badge` with a BOUND palette appearance** is the same hole as a literal one, and no XAML scan of literals sees it
+  (the agent's pill, beta.35: `AgentPill` now). A bound badge appearance is refused by the same test.
 
 ## FlowDocument (rendered documents, beta.12)
 

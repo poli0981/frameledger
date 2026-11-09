@@ -19,7 +19,8 @@ namespace FrameLedger.App.Tests;
 /// <summary>What the App draws itself under a contrast theme (beta.35, D91): the badges, the mix bar, the Remove button.</summary>
 public sealed partial class ContrastThemeTests
 {
-    private static readonly string[] _fixedColourAppearances = ["Danger", "Info", "Success", "Caution", "Dark", "Light"];
+    // Danger is not here: the App's implicit button style makes it read, and the theme's own button under a contrast theme.
+    private static readonly string[] _fixedColourAppearances = ["Info", "Success", "Caution", "Dark", "Light"];
 
     /// <summary>
     /// The change badge and the frame-generation bar repaint when a contrast theme comes on even if its window colour is the
@@ -71,71 +72,165 @@ public sealed partial class ContrastThemeTests
     }
 
     /// <summary>
-    /// WPF UI 4.3.0 paints its Danger, Info, Success, Caution, Dark and Light buttons a fixed colour no theme resource reaches;
-    /// the App's one destructive button goes through <c>DangerButton</c>, which is the theme's own button under a contrast theme.
+    /// WPF UI 4.3.0 paints its Info, Success, Caution, Dark and Light buttons a fixed colour under white text that no theme
+    /// reaches, and a badge with a bound appearance escapes <c>ContrastTests</c>' look at the literal ones — the agent's pill was
+    /// one, 2.16:1 in the light theme. Danger is allowed: the App's own button style makes it read (below).
     /// </summary>
     [Fact]
-    public void NoButtonAppearanceThatPaintsAFixedColourIsSetOutsideTheDangerButtonStyle()
+    public void NoButtonOrBadgeTakesAnAppearanceThatPaintsAFixedColour()
     {
         var offenders = new List<string>();
         foreach ((string file, XDocument xaml) in AccessibilityTests.AppXaml())
         {
-            foreach (XElement button in xaml.Descendants().Where(static e => e.Name.LocalName.EndsWith("Button", StringComparison.Ordinal)))
+            foreach (XElement element in xaml.Descendants())
             {
-                if (button.Attribute("Appearance")?.Value is { } appearance && _fixedColourAppearances.Contains(appearance, StringComparer.Ordinal))
+                string name = element.Name.LocalName;
+                string? appearance = element.Attribute("Appearance")?.Value;
+                if (appearance is null)
                 {
-                    offenders.Add($"{file}: {button.Name.LocalName} Appearance=\"{appearance}\"");
+                    continue;
+                }
+
+                if (name.EndsWith("Button", StringComparison.Ordinal) && _fixedColourAppearances.Contains(appearance, StringComparer.Ordinal))
+                {
+                    offenders.Add($"{file}: {name} Appearance=\"{appearance}\"");
+                }
+
+                if (string.Equals(name, "Badge", StringComparison.Ordinal) && appearance.StartsWith('{'))
+                {
+                    offenders.Add($"{file}: a Badge whose appearance is bound, {appearance}");
                 }
             }
 
             foreach (XElement setter in xaml.Descendants().Where(static e => string.Equals(e.Name.LocalName, "Setter", StringComparison.Ordinal)
                                                                               && string.Equals(e.Attribute("Property")?.Value, "Appearance", StringComparison.Ordinal)))
             {
-                string? style = setter.Ancestors().FirstOrDefault(static a => string.Equals(a.Name.LocalName, "Style", StringComparison.Ordinal))
-                    ?.Attribute(XName.Get("Key", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value;
-                if (setter.Attribute("Value")?.Value is { } value && _fixedColourAppearances.Contains(value, StringComparer.Ordinal) && !string.Equals(style, "DangerButton", StringComparison.Ordinal))
+                if (setter.Attribute("Value")?.Value is { } value && _fixedColourAppearances.Contains(value, StringComparer.Ordinal))
                 {
                     offenders.Add($"{file}: a style sets Appearance=\"{value}\"");
                 }
             }
         }
 
-        offenders.Should().BeEmpty("a fixed colour is no contrast theme's colour; a destructive button uses Style=\"{StaticResource DangerButton}\"");
+        offenders.Should().BeEmpty("a fixed colour under white text reads below 3:1 in a theme and is no contrast theme's colour");
     }
 
+    /// <summary>
+    /// A Danger button — the game page's Remove, the message boxes' Delete — reads in both themes (the App's implicit button
+    /// style puts the theme's dark text on WPF UI's fixed red, where its own white read 3.68:1 in the dark theme) and is the
+    /// theme's own button while a contrast theme is on, changing at once.
+    /// </summary>
     [Fact]
-    public async Task TheRemoveButtonIsTheThemesOwnButtonWhileAContrastThemeIsOn()
+    public async Task ADangerButtonReadsInBothThemesAndIsTheThemesOwnButtonUnderAContrastTheme()
     {
-        // Under the dark theme so the accent the overlay writes is put back after.
-        var facts = await PagesLoadTests.OnStaAsync(() => Visuals.UnderTheme(ApplicationTheme.Dark, () =>
+        var facts = await PagesLoadTests.OnStaAsync(() =>
         {
-            ResourceDictionary resources = System.Windows.Application.Current.Resources;
-            var button = new Wpf.Ui.Controls.Button { Content = "Remove…", Style = (Style)System.Windows.Application.Current.FindResource("DangerButton") };
-            var host = new FluentWindow { Content = button, Width = 200, Height = 120, ShowActivated = false, WindowStartupLocation = WindowStartupLocation.Manual, Left = -10000, Top = -10000 };
-            host.Show();
-            try
+            static (Color Face, Color Text) Drawn(Wpf.Ui.Controls.Button b) => (((SolidColorBrush)b.Background).Color, ((SolidColorBrush)b.Foreground).Color);
+            (Color Face, Color Text) Under(ApplicationTheme theme, Func<Wpf.Ui.Controls.Button, (Color, Color)> read) => Visuals.UnderTheme(theme, () =>
             {
-                Visuals.Pump();
-                ControlAppearance off = button.Appearance;
-                ContrastOverlay.Install(resources, EditedDark);
-                Visuals.Pump();
-                ControlAppearance on = button.Appearance;
-                Color face = ((SolidColorBrush)button.Background).Color;
-                ContrastOverlay.Remove(resources);
-                Visuals.Pump();
-                return (off, on, face, Again: button.Appearance);
-            }
-            finally
-            {
-                ContrastOverlay.Remove(resources);
-                host.Close();
-            }
-        }));
+                var button = new Wpf.Ui.Controls.Button { Content = "Remove…", Appearance = ControlAppearance.Danger };
+                var host = new FluentWindow { Content = button, Width = 200, Height = 120, ShowActivated = false, WindowStartupLocation = WindowStartupLocation.Manual, Left = -10000, Top = -10000 };
+                host.Show();
+                try
+                {
+                    Visuals.Pump();
+                    return read(button);
+                }
+                finally
+                {
+                    ContrastOverlay.Remove(System.Windows.Application.Current.Resources);
+                    host.Close();
+                }
+            });
 
-        facts.off.Should().Be(ControlAppearance.Danger);
-        facts.on.Should().Be(ControlAppearance.Secondary, "turned on while the page is shown, the button changes at once");
-        facts.face.Should().Be(EditedDark.ButtonFace);
-        facts.Again.Should().Be(ControlAppearance.Danger);
+            (Color Face, Color Text) dark = Under(ApplicationTheme.Dark, Drawn);
+            (Color Face, Color Text) light = Under(ApplicationTheme.Light, Drawn);
+            (Color, Color) on = default;
+            (Color, Color) off = Under(ApplicationTheme.Dark, b =>
+            {
+                ContrastOverlay.Install(System.Windows.Application.Current.Resources, EditedDark);
+                Visuals.Pump();
+                on = Drawn(b);
+                ContrastOverlay.Remove(System.Windows.Application.Current.Resources);
+                Visuals.Pump();
+                return Drawn(b);
+            });
+            return (dark, light, on, off);
+        });
+
+        ColorMath.Contrast(facts.dark.Text, facts.dark.Face).Should().BeGreaterThanOrEqualTo(4.5, "the dark theme's white read 3.68:1 on #F44336");
+        ColorMath.Contrast(facts.light.Text, facts.light.Face).Should().BeGreaterThanOrEqualTo(4.5);
+        facts.on.Should().Be((EditedDark.ButtonFace, EditedDark.ButtonText), "turned on while the button is shown, it is the theme's button at once");
+        facts.off.Should().Be(facts.dark, "and turned off, the red one again");
+    }
+
+    /// <summary>
+    /// The title bar's two marks read in every state, in both themes and under a contrast theme: the agent's state on the
+    /// theme's own fills (<c>AgentPill</c>, which replaced a palette badge: 2.78, 2.63, 2.16 and 3.68:1 in the light theme)
+    /// and the alpha build's badge, the accent under its own text.
+    /// </summary>
+    [Theory]
+    [InlineData("Dark")]
+    [InlineData("Light")]
+    [InlineData("HC1")]
+    [InlineData("HCWhite")]
+    [InlineData("EditedLight")]
+    public async Task TheTitleBarsMarksReadInEveryState(string name)
+    {
+        ControlAppearance[] states = [ControlAppearance.Success, ControlAppearance.Info, ControlAppearance.Caution, ControlAppearance.Danger];
+        var facts = await PagesLoadTests.OnStaAsync(() =>
+        {
+            ContrastPalette? palette = name is "Dark" or "Light" ? null : Named(name);
+            List<(string Mark, Color Text, Color Under)> Measure()
+            {
+                var panel = new System.Windows.Controls.StackPanel();
+                var marks = new List<(string Mark, System.Windows.Controls.TextBlock Text)>();
+                foreach (ControlAppearance state in states)
+                {
+                    var text = new System.Windows.Controls.TextBlock { Text = state.ToString() };
+                    text.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, "TextFillColorPrimaryBrush");
+                    panel.Children.Add(new System.Windows.Controls.Border
+                    {
+                        Style = (Style)System.Windows.Application.Current.FindResource("AgentPill"),
+                        DataContext = new { AgentStatusAppearance = state },
+                        Child = text,
+                    });
+                    marks.Add(("agent " + state, text));
+                }
+
+                var alpha = new Badge { Appearance = ControlAppearance.Primary, Content = "Alpha" };
+                panel.Children.Add(alpha);
+                var host = new FluentWindow { Content = panel, Width = 300, Height = 300, ShowActivated = false, WindowStartupLocation = WindowStartupLocation.Manual, Left = -10000, Top = -10000 };
+                host.Show();
+                try
+                {
+                    Visuals.Pump();
+                    marks.Add(("alpha badge", Visuals.FindAll<System.Windows.Controls.TextBlock>(alpha).Single()));
+                    Color window = (Color)System.Windows.Application.Current.FindResource("ApplicationBackgroundColor");
+                    return [.. marks.Select(m =>
+                    {
+                        Color under = Visuals.PaintedUnder(m.Text, panel, window);
+                        return (m.Mark, Visuals.TextOver(m.Text, under), under);
+                    })];
+                }
+                finally
+                {
+                    host.Close();
+                }
+            }
+
+            if (palette is null)
+            {
+                return Visuals.UnderTheme(Enum.Parse<ApplicationTheme>(name), Measure);
+            }
+
+            List<(string Mark, Color Text, Color Under)> drawn = Visuals.UnderContrast(palette, Measure);
+            return [.. drawn.Select(m => (palette.Colors.Contains(m.Text) && palette.Colors.Contains(m.Under) ? m.Mark : m.Mark + " (not the theme's colours)", m.Text, m.Under))];
+        });
+
+        facts.Should().HaveCount(5);
+        facts.Where(static m => ColorMath.Contrast(m.Text, m.Under) < 4.5 || m.Mark.EndsWith(')')).Select(static m => $"{m.Mark}: {m.Text} on {m.Under}, {ColorMath.Contrast(m.Text, m.Under):0.00}:1")
+            .Should().BeEmpty($"every mark in the title bar reads at 4.5:1 under {name}");
     }
 
     [Fact]
