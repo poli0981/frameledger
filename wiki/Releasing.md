@@ -17,7 +17,8 @@ The full documents are [`docs/13_CI_CD.md`](../docs/13_CI_CD.md) and [`docs/11_U
 1. One pull request moves the `[Unreleased]` entries of [`CHANGELOG.md`](../CHANGELOG.md) into a new file,
    `docs/changelog/<version>.md`, under a `## [x.y.z]` or `## [x.y.z-beta.N]` heading with an *Updating from* note,
    adds its row to the Releases table in `CHANGELOG.md`, and updates the release lines in `README.md`, the accuracy
-   statement (`legal/ACCURACY.md` and its copies) and `LIMITATIONS.md`. `VERSION` changes only with the numeric core.
+   statement (`legal/ACCURACY.md` and its copies), `LIMITATIONS.md` and `ACCESSIBILITY.md`. `VERSION` changes only with
+   the numeric core.
 2. After it merges, a signed tag `vx.y.z` (or `vx.y.z-beta.N`) on the merge commit starts `release.yml`:
    - it checks the tag against `VERSION` and that the changelog has the section;
    - reads the build id from the clean checkout, before anything is edited;
@@ -41,7 +42,7 @@ follows each beta, never several in a row ([`docs/13_CI_CD.md`](../docs/13_CI_CD
 
 1. A pull request on `main` adds the alpha's notes, `docs/changelog/<version>.md`, opening with the experimental-build
    warning and naming the beta it is cut from, and its row in the Releases table. No release line moves: README, the
-   accuracy statement and `LIMITATIONS.md` keep naming the beta.
+   accuracy statement, `LIMITATIONS.md` and `ACCESSIBILITY.md` keep naming the beta.
 2. A pull request merges `main` into `alpha` with a merge commit; CI runs the gate there on the prerelease SDK.
 3. A rehearsal of `release.yml` on `alpha`, then a signed tag `vx.y.z-alpha.N` on its head. The workflow refuses any
    other tag on that branch, and an alpha's tag anywhere else; it packs on Velopack's `alpha` channel, so no beta is

@@ -11,7 +11,7 @@ This folder is for people who build, change or review FrameLedger. **If you only
 | Find your way around first | The [wiki](https://github.com/poli0981/frameledger/wiki)'s developer pages (source: [`../wiki/`](../wiki/), beta.17) — a short page per part, each linking here |
 | Learn the system | [`../CLAUDE.md`](../CLAUDE.md) (the rules and the layout), then the reading order below |
 | Build it | [`12_BUILD.md`](12_BUILD.md) — `./build.ps1 check` is the whole gate, the same one CI runs |
-| Contribute or fork | [`../CONTRIBUTING.md`](../CONTRIBUTING.md), [`../FORKING.md`](../FORKING.md), [`../NOTICE`](../NOTICE) |
+| Contribute or fork | [`../CONTRIBUTING.md`](../CONTRIBUTING.md), [`../FORKING.md`](../FORKING.md), [`../NOTICE`](../NOTICE), [`../CODE_OF_CONDUCT.md`](../CODE_OF_CONDUCT.md) *(it and `SECURITY.md`, below, added 2026-11-09: the index named neither)* |
 
 **Status lives in four places, and nowhere else** — check a status claim against the code before you plan on it:
 
@@ -87,5 +87,9 @@ are safety items, and something listed there as unresolved should not be built t
 - [`../legal/`](../legal/) — the documents a user accepts, the accuracy statement, the third-party notices and licence
   texts, the trademark note.
 - [`../LIMITATIONS.md`](../LIMITATIONS.md) — what the whole software cannot do, in a player's words.
+- [`../ACCESSIBILITY.md`](../ACCESSIBILITY.md) — the accessibility statement (beta.35, D88): the goal, what works with the
+  keyboard, a screen reader and contrast themes, the known limits and how a barrier is reported; shown in the App under
+  Help ▸ Accessibility. Its checks are [`08_UI.md`](08_UI.md) §Accessibility.
+- [`../SECURITY.md`](../SECURITY.md) — the private route for a vulnerability, and why the guard has no override.
 - [`../rules/detection-rules.json`](../rules/detection-rules.json) — engine, platform and capability signatures and the
   anti-cheat blocklist, validated by `tools/rules-validate.ps1`.

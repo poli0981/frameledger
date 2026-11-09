@@ -333,6 +333,14 @@
     <value>FrameLedger にできないこと</value>
     <comment>review</comment>
   </data>
+  <data name="Menu_Help_Accessibility" xml:space="preserve">
+    <value>アクセシビリティ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Accessibility_Title" xml:space="preserve">
+    <value>アクセシビリティ</value>
+    <comment>review</comment>
+  </data>
   <data name="Menu_Help_ReportBug" xml:space="preserve">
     <value>不具合を報告…</value>
     <comment>review</comment>

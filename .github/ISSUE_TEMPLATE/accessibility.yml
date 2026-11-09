@@ -1,0 +1,100 @@
+# ACCESSIBILITY.md (beta.35, D88) sends every accessibility barrier here. It is its own form rather than part of the bug
+# report because a barrier needs different facts: what the reporter uses to read or operate the screen, and how far it
+# stops them. Nothing here asks about the reporter themself.
+name: Accessibility problem
+description: Something in FrameLedger cannot be reached, read or seen — with the keyboard, a screen reader, a contrast theme, Magnifier or another aid
+labels: [accessibility]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for telling us. **You never need to tell us anything about yourself or a disability** — what you use
+        and what happened is enough. Screenshots and recordings help but are optional.
+
+        If FrameLedger refused to hook a game, stopped measuring or turned hooking off **without your knowing** — a
+        safety notice you could not perceive — say so below: it is a safety problem too, and it is handled first.
+
+        What FrameLedger aims for and what it cannot do yet: [ACCESSIBILITY.md](https://github.com/poli0981/frameledger/blob/main/ACCESSIBILITY.md).
+
+  - type: textarea
+    id: task
+    attributes:
+      label: What were you trying to do?
+      placeholder: 'e.g. switch hooking on for a game, read a session''s frame rate, answer the terms window'
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened instead?
+      description: What you heard, saw or could not do — and what you expected.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to get there
+      placeholder: |
+        1. Open Games (Ctrl+2)
+        2. Tab to …
+        3. …
+
+  - type: input
+    id: app-version
+    attributes:
+      label: FrameLedger version
+      description: Help ▸ About
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Windows version
+      placeholder: 'Windows 11 26100.2314'
+    validations:
+      required: true
+
+  - type: dropdown
+    id: aid
+    attributes:
+      label: What do you use?
+      multiple: true
+      options:
+        - Keyboard only
+        - Narrator
+        - NVDA
+        - JAWS
+        - Windows Magnifier
+        - A Windows contrast theme
+        - Voice Access or other speech input
+        - Display scaling or a large text size
+        - Something else (say below)
+    validations:
+      required: true
+
+  - type: input
+    id: aid-version
+    attributes:
+      label: Its version, if you know it
+      placeholder: 'e.g. NVDA 2026.1'
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: How much does it stop you?
+      description: Optional — the maintainer sets it when reading the report (ACCESSIBILITY.md, How serious it is).
+      options:
+        - Not sure
+        - Critical — I cannot do the task at all
+        - Serious — only with great difficulty or a workaround
+        - Moderate — it is tiring or inconsistent
+        - Minor — it barely gets in the way
+
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else
+      description: A screenshot, a recording, or a diagnostic file from Help ▸ Report a bug (built on your PC; you choose what to attach).

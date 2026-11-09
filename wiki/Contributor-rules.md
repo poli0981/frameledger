@@ -48,5 +48,8 @@ The checklist is [`.github/pull_request_template.md`](../.github/pull_request_te
 - A change to the hook layer states its measured overhead, lists any new hook in the inventory
   ([`docs/17_HOOK_ENGINE.md`](../docs/17_HOOK_ENGINE.md)) and answers the safety review questions in the template.
 - A user-visible limit that moves updates [`LIMITATIONS.md`](../LIMITATIONS.md) in the same pull request.
+- A change to what the App shows keeps [`ACCESSIBILITY.md`](../ACCESSIBILITY.md#for-contributors) — a name for every
+  control that shows no text, theme colours only, nothing shown by colour alone, everything reachable by keyboard — says
+  in the pull request what was checked with the keyboard and Narrator, and updates the page when what works moves.
 
 How to contribute and how contributions are licensed: [`CONTRIBUTING.md`](../CONTRIBUTING.md).

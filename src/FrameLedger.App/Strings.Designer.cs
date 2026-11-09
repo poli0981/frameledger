@@ -64,6 +64,7 @@ public static class Strings
         nameof(About_Version_Format),
         nameof(About_ViewLicence),
         nameof(About_ViewNotice),
+        nameof(Accessibility_Title),
         nameof(AddGame_Added_Format),
         nameof(AddGame_Dialog_Title),
         nameof(AddGame_Failed_Format),
@@ -753,6 +754,7 @@ public static class Strings
         nameof(Menu_File_ImportLibrary),
         nameof(Menu_Help),
         nameof(Menu_Help_About),
+        nameof(Menu_Help_Accessibility),
         nameof(Menu_Help_CheckUpdates),
         nameof(Menu_Help_Documentation),
         nameof(Menu_Help_Guide),
@@ -1296,6 +1298,8 @@ public static class Strings
     public static string About_ViewLicence => ResourceManager.GetString(nameof(About_ViewLicence), Culture) ?? nameof(About_ViewLicence);
 
     public static string About_ViewNotice => ResourceManager.GetString(nameof(About_ViewNotice), Culture) ?? nameof(About_ViewNotice);
+
+    public static string Accessibility_Title => ResourceManager.GetString(nameof(Accessibility_Title), Culture) ?? nameof(Accessibility_Title);
 
     public static string AddGame_Added_Format => ResourceManager.GetString(nameof(AddGame_Added_Format), Culture) ?? nameof(AddGame_Added_Format);
 
@@ -2674,6 +2678,8 @@ public static class Strings
     public static string Menu_Help => ResourceManager.GetString(nameof(Menu_Help), Culture) ?? nameof(Menu_Help);
 
     public static string Menu_Help_About => ResourceManager.GetString(nameof(Menu_Help_About), Culture) ?? nameof(Menu_Help_About);
+
+    public static string Menu_Help_Accessibility => ResourceManager.GetString(nameof(Menu_Help_Accessibility), Culture) ?? nameof(Menu_Help_Accessibility);
 
     public static string Menu_Help_CheckUpdates => ResourceManager.GetString(nameof(Menu_Help_CheckUpdates), Culture) ?? nameof(Menu_Help_CheckUpdates);
 
