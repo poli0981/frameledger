@@ -210,7 +210,6 @@ a barrier is on its own page: [Accessibility](ACCESSIBILITY.md) (in the app: Hel
 - **A chart's points cannot be read one by one.** A screen reader hears its name and where its numbers are written —
   the session's figures, the tables, **File ▸ Export**; its keys move it.
 - **Windows' text size setting is not followed** — use display scaling or Magnifier.
-- **Windows contrast themes are not followed yet** — choose **Light** or **Dark** in Settings ▸ Theme.
 
 ## Play
 

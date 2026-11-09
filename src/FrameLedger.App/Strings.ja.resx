@@ -425,6 +425,10 @@
     <value>テーマ</value>
     <comment>review</comment>
   </data>
+  <data name="Settings_Theme_ContrastOn" xml:space="preserve">
+    <value>Windows のコントラスト テーマがオンのため、FrameLedger はその色を使います。ここでの選択は、テーマをオフにすると再び適用されます。</value>
+    <comment>review</comment>
+  </data>
   <data name="Settings_Theme_Light" xml:space="preserve">
     <value>ライト</value>
     <comment>review</comment>

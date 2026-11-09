@@ -6,6 +6,7 @@
                     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                     xmlns:controls="clr-namespace:FrameLedger.App.Controls"
                     xmlns:converters="clr-namespace:FrameLedger.App.Converters"
+                    xmlns:services="clr-namespace:FrameLedger.App.Services"
                     xmlns:res="clr-namespace:FrameLedger.App">
     <!--
         Our styles, merged LAST (16_WPFUI_SYNTAX §App bootstrap). Colours only through theme brushes with
@@ -21,6 +22,47 @@
     <converters:NullToCollapsedConverter x:Key="NullToCollapsed" />
     <converters:NotNullConverter x:Key="NotNull" />
     <converters:ZeroToVisibleConverter x:Key="ZeroToVisible" />
+
+    <!--
+        Every ui:Button: WPF UI's style and two changes (beta.35). WPF UI 4.3.0's Danger appearance paints a fixed #F44336 — a
+        value in its button style, not a resource — under the button's own text, white in the dark theme: 3.68:1. A Danger
+        button's text is the theme's dark text on that red instead, 5.3:1 and 5.7:1 in the two themes. Under a Windows contrast
+        theme (D91), where no resource reaches that red, it is the theme's own button, as every button there is; its words and
+        its icon still say what it does. Implicit, so the buttons of WPF UI's message boxes get it too (Remove game, Delete
+        sessions, Database maintenance).
+    -->
+    <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+        <Style.Triggers>
+            <Trigger Property="Appearance" Value="Danger">
+                <Setter Property="Foreground" Value="{DynamicResource TextFillColorDarkPrimaryBrush}" />
+                <Setter Property="PressedForeground" Value="{DynamicResource TextFillColorDarkPrimaryBrush}" />
+            </Trigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding Appearance, RelativeSource={RelativeSource Self}}" Value="Danger" />
+                    <Condition Binding="{Binding Path=(services:ContrastTheme.IsOn)}" Value="True" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="Background" Value="{DynamicResource ButtonBackground}" />
+                <Setter Property="MouseOverBackground" Value="{DynamicResource ButtonBackgroundPointerOver}" />
+                <Setter Property="PressedBackground" Value="{DynamicResource ButtonBackgroundPressed}" />
+                <Setter Property="Foreground" Value="{DynamicResource ButtonForeground}" />
+                <Setter Property="PressedForeground" Value="{DynamicResource ButtonForegroundPressed}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
+                <Setter Property="MouseOverBorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
+                <Setter Property="PressedBorderBrush" Value="{DynamicResource ButtonBorderBrushPressed}" />
+            </MultiDataTrigger>
+            <MultiDataTrigger>
+                <MultiDataTrigger.Conditions>
+                    <Condition Binding="{Binding Appearance, RelativeSource={RelativeSource Self}}" Value="Danger" />
+                    <Condition Binding="{Binding Path=(services:ContrastTheme.IsOn)}" Value="True" />
+                    <Condition Binding="{Binding IsEnabled, RelativeSource={RelativeSource Self}}" Value="False" />
+                </MultiDataTrigger.Conditions>
+                <Setter Property="Background" Value="{DynamicResource ButtonBackgroundDisabled}" />
+                <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundDisabled}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource ButtonBorderBrushDisabled}" />
+            </MultiDataTrigger>
+        </Style.Triggers>
+    </Style>
 
     <Style x:Key="PageRoot" TargetType="StackPanel">
         <Setter Property="Margin" Value="28,20,28,20" />
@@ -110,6 +152,27 @@
             </DataTrigger>
             <DataTrigger Binding="{Binding AntiCheat}" Value="True">
                 <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--
+        The agent's state in the title bar (beta.35). It was a ui:Badge with the Success, Info, Caution and Danger appearances,
+        WPF UI's fixed Material palette under the badge's own text: in the light theme 2.78, 2.63, 2.16 and 3.68:1. Now the
+        theme's own fills — success, caution, critical, and the neutral one while it is on its way — under the theme's text,
+        as the InfoBars are; under a contrast theme those are the theme's colours too. Its words say the state.
+    -->
+    <Style x:Key="AgentPill" TargetType="Border" BasedOn="{StaticResource Pill}">
+        <Setter Property="Margin" Value="0,0,12,0" />
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding AgentStatusAppearance}" Value="Success">
+                <Setter Property="Background" Value="{DynamicResource SystemFillColorSuccessBackgroundBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding AgentStatusAppearance}" Value="Caution">
+                <Setter Property="Background" Value="{DynamicResource SystemFillColorCautionBackgroundBrush}" />
+            </DataTrigger>
+            <DataTrigger Binding="{Binding AgentStatusAppearance}" Value="Danger">
+                <Setter Property="Background" Value="{DynamicResource SystemFillColorCriticalBackgroundBrush}" />
             </DataTrigger>
         </Style.Triggers>
     </Style>

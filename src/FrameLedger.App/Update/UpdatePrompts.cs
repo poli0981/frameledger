@@ -37,7 +37,10 @@ public sealed class UpdatePrompts(IUrlOpener urls, BugReportFlow bugReports) : I
             body.Children.Add(notes);
         }
 
-        body.Children.Add(new System.Windows.Controls.TextBlock { Text = Strings.Update_Unsigned_Footer, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 12, 0, 0), Opacity = 0.7 });
+        // beta.35 (D91): the muted text style, not an opacity — under a contrast theme a translucent text is no theme colour.
+        var footer = new System.Windows.Controls.TextBlock { Text = Strings.Update_Unsigned_Footer, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 12, 0, 0) };
+        footer.SetResourceReference(FrameworkElement.StyleProperty, "SecondaryText");
+        body.Children.Add(footer);
         var box = new MessageBox
         {
             Title = string.Format(CultureInfo.CurrentCulture, Strings.Update_Available_Title_Format, candidate.Version),

@@ -1033,6 +1033,7 @@ public static class Strings
         nameof(Settings_System_Copy),
         nameof(Settings_System_Header),
         nameof(Settings_System_Note),
+        nameof(Settings_Theme_ContrastOn),
         nameof(Settings_Theme_Dark),
         nameof(Settings_Theme_Label),
         nameof(Settings_Theme_Light),
@@ -3268,6 +3269,8 @@ public static class Strings
     public static string Settings_System_Header => ResourceManager.GetString(nameof(Settings_System_Header), Culture) ?? nameof(Settings_System_Header);
 
     public static string Settings_System_Note => ResourceManager.GetString(nameof(Settings_System_Note), Culture) ?? nameof(Settings_System_Note);
+
+    public static string Settings_Theme_ContrastOn => ResourceManager.GetString(nameof(Settings_Theme_ContrastOn), Culture) ?? nameof(Settings_Theme_ContrastOn);
 
     public static string Settings_Theme_Dark => ResourceManager.GetString(nameof(Settings_Theme_Dark), Culture) ?? nameof(Settings_Theme_Dark);
 

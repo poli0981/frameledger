@@ -73,9 +73,26 @@ numeric core and does not move; the heading is the full version — corrected 20
   chart tells two series apart by colour alone any more: Compare's five sessions, the GPU's temperature and its hot spot,
   the two kinds of stutter, the two lows and the two limits each have their own line pattern, marker or hatch.
 
+- **Windows contrast themes are followed** (owner decision D91). With a contrast theme on — Aquatic, Desert, Dusk, Night
+  sky, or one whose colours were edited, on Windows 10 or 11 — every colour in FrameLedger's windows is one of that
+  theme's, whatever Settings ▸ Theme says, and it changes the moment the theme is turned on, edited or turned off;
+  Settings ▸ Theme says so under its box. Before, *System* could apply WPF UI's own high-contrast files, most of whose
+  colours are a red placeholder, and the next window opened put the light or the dark theme back. The charts draw in the
+  theme's colours, their patterns telling the series apart; the frame-generation, ray-tracing and upscaler chips are the
+  theme's highlight and its text (WPF UI's files put the window text there, 1.26–1.78:1); a destructive button is the
+  theme's own button; a pressed menu item is no longer white on white; nothing is drawn translucent, and a game's picture
+  lends its page no colour, as before.
+
 ### Fixed
 
 - **A double-click on a chart shows all of it again**, as the user guide said; it toggled ScottPlot's render-time overlay.
+- **The capture agent's state in the title bar reads in the light theme.** It was drawn on WPF UI's fixed green, blue,
+  orange and red under white — 2.78, 2.63, 2.16 and 3.68:1 — and is on the theme's own success, caution and critical
+  fills now, as the notices are; its words say the state.
+- **The short messages at the bottom of the window read.** A *done* or a *warning* message was white on a fixed green or
+  orange, 2.78:1 and 2.16:1 in both themes; every message is in the theme's colours now, its icon saying which kind.
+- **A destructive button's label reads in the dark theme** — Remove on a game's page, Delete in the confirmations: the
+  theme's dark text on the red, 5.3:1 and 5.7:1, where white read 3.68:1.
 
 ### Changed
 

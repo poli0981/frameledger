@@ -67,6 +67,10 @@ The same keys are in the user guide, [The screens](guide/07-screens.md#keyboard-
 
 - **Light, dark, or the same as Windows** (Settings ▸ Theme). FrameLedger takes every colour from the theme, and every
   text is measured against what is painted under it, in both themes.
+- **Windows contrast themes** (Settings ▸ Accessibility ▸ Contrast themes) — Aquatic, Desert, Dusk, Night sky, or one
+  whose colours you changed: every colour in the window becomes one of the theme's, whatever Settings ▸ Theme says, as
+  soon as you turn one on, edit it or turn it off. The charts draw in its colours too, their lines and marks still told
+  apart by pattern, and Settings ▸ Theme says a contrast theme is in use.
 - **The colour a game's picture lends its page** is used only as far as every text on it still reads, and never under a
   contrast theme.
 - **Windows display scaling** at any size, on every screen; **Magnifier** (Windows logo key + Plus) works as with any
@@ -88,12 +92,14 @@ from the same translations. The documents — the user guide, this page, the leg
   reader inside a control, no two buttons in a list share a name; each thing that appears is said once, in its words;
   every page has one first-level heading and every section title a level; no chart tells two series apart by colour
   alone; a chart's keys move it and stay its own; every control that shows no text has a name; no colour is written
-  into a screen; every text reads against its background in both themes and after a theme switch; **Esc** closes the
+  into a screen; every text reads against its background in both themes and after a theme switch, and under Windows'
+  four contrast themes and two edited ones is drawn in the theme's own colours at 4.5:1 or better; **Esc** closes the
   open dialog without an answer; **Ctrl+1** … **Ctrl+5** open the pages in their order; the program declares it follows
   each screen's scaling.
 - **By hand**: the owner's pass of 2026-11-09 above, repeated for each release that changes a screen.
 - **Not tested yet**: NVDA, JAWS, Voice Access, touch, Windows 10, and other people's PCs. They should work through the
-  same Windows interface Narrator uses, but nobody has checked.
+  same Windows interface Narrator uses, but nobody has checked. Contrast themes are checked by the tests above and have
+  not yet been looked at on a screen.
 
 ## Known limitations
 
@@ -104,8 +110,6 @@ Each one with what to do instead. A barrier that is not on this list is worth re
   and the list of changes under a trend chart, and **File ▸ Export ▸ Session CSV** or **Session JSON**.
 - **In the user guide and the other documents the app shows, headings are read as ordinary text**: Windows' document
   view gives them no heading role. Their links and their order work as on any page.
-- **Windows contrast themes are not followed.** With Settings ▸ Theme on *System*, a contrast theme can give parts of
-  the window the wrong colours. Choose **Light** or **Dark** there: both keep their contrast.
 - **The short messages at the bottom of the window close after four seconds**, and cannot be read again once closed. A
   screen reader is told each one as it appears.
 - **Windows' text size setting** (Settings ▸ Accessibility ▸ Text size) **is not followed.** Use display scaling

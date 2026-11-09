@@ -42,7 +42,7 @@
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow" BasedOn="{StaticResource DefaultDataGridRowStyle}">
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsExisting}" Value="True">
+                        <DataTrigger Binding="{Binding IsDimmed}" Value="True">
                             <Setter Property="Opacity" Value="0.55" />
                         </DataTrigger>
                     </Style.Triggers>

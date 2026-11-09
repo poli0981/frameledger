@@ -329,6 +329,7 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton(appearance);
         builder.Services.AddSingleton(registered);
         builder.Services.AddSingleton(closePolicy);
+        builder.Services.AddSingleton<IContrastSource, SystemContrastSource>(); // beta.35 (D91): a contrast theme wins
         builder.Services.AddSingleton<IThemeApplier, WpfThemeApplier>();
 
         // The Agent link, the Run entry, the Agent's maintenance flags and the updater: a viewer's composition holds none of

@@ -122,6 +122,29 @@ internal static class Visuals
     }
 
     /// <summary>
+    /// Runs <paramref name="work"/> under a Windows contrast theme the way the App follows one (beta.35, D91): the light or
+    /// the dark Fluent theme as the contrast theme is, under <c>ContrastOverlay</c> with its colours, and <c>ContrastTheme.Active</c>
+    /// set — then everything put back as <see cref="UnderTheme{T}"/> puts it back.
+    /// </summary>
+    public static T UnderContrast<T>(FrameLedger.App.Services.ContrastPalette palette, Func<T> work)
+    {
+        ArgumentNullException.ThrowIfNull(palette);
+        return UnderTheme(palette.IsDark ? ApplicationTheme.Dark : ApplicationTheme.Light, () =>
+        {
+            ResourceDictionary resources = System.Windows.Application.Current.Resources;
+            FrameLedger.App.Services.ContrastOverlay.Install(resources, palette);
+            try
+            {
+                return work();
+            }
+            finally
+            {
+                FrameLedger.App.Services.ContrastOverlay.Remove(resources);
+            }
+        });
+    }
+
+    /// <summary>
     /// The colour painted under <paramref name="element"/>: every Border's and Panel's background from <paramref name="root"/>
     /// down to the element, composited over <paramref name="window"/> — what a template's parts draw, which is what the eye sees.
     /// </summary>

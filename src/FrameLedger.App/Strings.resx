@@ -324,6 +324,9 @@
   <data name="Settings_Theme_Label" xml:space="preserve">
     <value>Theme</value>
   </data>
+  <data name="Settings_Theme_ContrastOn" xml:space="preserve">
+    <value>A Windows contrast theme is on, so FrameLedger uses its colours. The choice here applies again when it is off.</value>
+  </data>
   <data name="Settings_Theme_Light" xml:space="preserve">
     <value>Light</value>
   </data>

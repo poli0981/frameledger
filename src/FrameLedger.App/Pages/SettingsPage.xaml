@@ -6,6 +6,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:res="clr-namespace:FrameLedger.App"
+      xmlns:services="clr-namespace:FrameLedger.App.Services"
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
       Title="{x:Static res:Strings.Settings_Header}"
       Foreground="{DynamicResource TextFillColorPrimaryBrush}"
@@ -290,6 +291,10 @@
                           SelectedValue="{Binding ViewModel.SelectedTheme, Mode=TwoWay}"
                           SelectedValuePath="Value" />
             </ui:CardControl>
+            <!-- beta.35 (D91): a Windows contrast theme's colours win; this says so while one is on, and goes when it is off. -->
+            <ui:TextBlock Margin="12,4,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap"
+                          Text="{x:Static res:Strings.Settings_Theme_ContrastOn}"
+                          Visibility="{Binding Path=(services:ContrastTheme.IsOn), Converter={StaticResource BoolToVis}}" />
             <ui:CardControl Margin="0,8,0,0" Header="{x:Static vm:SettingsViewModel.LanguageLabel}" Icon="{ui:SymbolIcon LocalLanguage24}">
                 <ComboBox MinWidth="180"
                           AutomationProperties.Name="{x:Static vm:SettingsViewModel.LanguageLabel}"
