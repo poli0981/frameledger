@@ -7,6 +7,7 @@
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:res="clr-namespace:FrameLedger.App"
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
+      xmlns:controls="clr-namespace:FrameLedger.App.Controls"
       xmlns:charts="clr-namespace:FrameLedger.App.Charts"
       Title="{x:Static res:Strings.Compare_Header}"
       Foreground="{DynamicResource TextFillColorPrimaryBrush}"
@@ -62,7 +63,7 @@
                 <DataGrid.Columns>
                     <!-- A template column, not DataGridCheckBoxColumn: that one's element style is WPF's own, an Aero2 box on the Fluent grid; MinWidth 0
                          and no padding, or WPF UI's CheckBox (MinWidth 120, padding 11) draws a sliver of the box in 40 px (beta.14). -->
-                    <DataGridTemplateColumn Width="40">
+                    <DataGridTemplateColumn Width="40" controls:CellName.Path="Label">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate DataType="{x:Type vm:CompareCandidateViewModel}">
                                 <CheckBox MinWidth="0" Padding="0" HorizontalAlignment="Center" AutomationProperties.Name="{Binding Label}"
@@ -74,7 +75,7 @@
                     <DataGridTextColumn Header="{x:Static res:Strings.Compare_Col_Date}" Binding="{Binding DateText}" SortMemberPath="StartedAt" IsReadOnly="True" Width="Auto" MinWidth="150" />
                     <DataGridTextColumn Header="{x:Static res:Strings.Compare_Col_Tier}" Binding="{Binding TierText}" IsReadOnly="True" Width="Auto" MinWidth="64" />
                     <DataGridTextColumn Header="{x:Static res:Strings.Compare_Col_Fps}" Binding="{Binding ReadoutLine}" IsReadOnly="True" Width="Auto" MinWidth="220" />
-                    <DataGridTemplateColumn Header="{x:Static res:Strings.Compare_Col_MidSession}" IsReadOnly="True" Width="Auto" MinWidth="150" SortMemberPath="SettingsChangedMidSession">
+                    <DataGridTemplateColumn Header="{x:Static res:Strings.Compare_Col_MidSession}" IsReadOnly="True" Width="Auto" MinWidth="150" SortMemberPath="SettingsChangedMidSession" controls:CellName.Path="SettingsChangedText">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate DataType="{x:Type vm:CompareCandidateViewModel}">
                                 <StackPanel Margin="4,0" Orientation="Horizontal" VerticalAlignment="Center">
@@ -86,7 +87,7 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                     <!-- the filler: the width the columns above do not need, so they stay together on a wide window -->
-                    <DataGridTemplateColumn Width="*" CanUserSort="False" CanUserResize="False" IsReadOnly="True" />
+                    <DataGridTemplateColumn Width="*" CanUserSort="False" CanUserResize="False" IsReadOnly="True" controls:CellName.Path="Label" />
                 </DataGrid.Columns>
             </DataGrid>
 

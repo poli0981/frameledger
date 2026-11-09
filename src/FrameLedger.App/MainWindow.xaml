@@ -155,6 +155,7 @@
                                     Severity="{Binding Severity}"
                                     Title="{Binding Title}">
                             <ui:Button Appearance="Secondary"
+                                       AutomationProperties.HelpText="{Binding AccessibleName}"
                                        Command="{Binding DataContext.ViewModel.DismissNoticeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                        CommandParameter="{Binding}"
                                        Content="{Binding ActionText}" />
@@ -193,6 +194,6 @@
         </ui:NavigationView>
 
         <ui:SnackbarPresenter x:Name="SnackbarPresenter" Grid.Row="3" VerticalAlignment="Bottom" />
-        <ui:ContentDialogHost x:Name="DialogHost" Grid.Row="3" />
+        <ui:ContentDialogHost x:Name="DialogHost" Grid.Row="3" Focusable="False" />
     </Grid>
 </ui:FluentWindow>

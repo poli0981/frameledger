@@ -110,7 +110,7 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:GameCardViewModel}">
                         <Grid>
-                            <ui:CardAction IsChevronVisible="False" VerticalAlignment="Stretch" VerticalContentAlignment="Top"
+                            <ui:CardAction IsChevronVisible="False" VerticalAlignment="Stretch" VerticalContentAlignment="Top" AutomationProperties.Name="{Binding AccessibleName}"
                                            Command="{Binding DataContext.ViewModel.OpenCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                            CommandParameter="{Binding}"
                                            Icon="{ui:SymbolIcon Games24}">
@@ -142,7 +142,7 @@
                             </ui:CardAction>
                             <!-- beta.21 (D59): Play, over the card's corner rather than inside it, so the card stays one button. -->
                             <ui:Button Margin="0,10,10,0" Padding="6,4" HorizontalAlignment="Right" VerticalAlignment="Top"
-                                       AutomationProperties.Name="{x:Static res:Strings.Play_Button}"
+                                       AutomationProperties.Name="{Binding PlayName}"
                                        Command="{Binding DataContext.ViewModel.PlayCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                        CommandParameter="{Binding}"
                                        Icon="{ui:SymbolIcon Play24}"
@@ -163,11 +163,11 @@
                       Visibility="{Binding ViewModel.ListView, Converter={StaticResource BoolToVis}}">
                 <DataGrid.Columns>
                     <!-- beta.21 (D59): Play, as on the cards. -->
-                    <DataGridTemplateColumn Header="{x:Static res:Strings.Play_Button}" Width="Auto">
+                    <DataGridTemplateColumn Header="{x:Static res:Strings.Play_Button}" Width="Auto" controls:CellName.Path="PlayName">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <ui:Button Margin="2,0" Padding="6,2" Appearance="Transparent"
-                                           AutomationProperties.Name="{x:Static res:Strings.Play_Button}"
+                                           AutomationProperties.Name="{Binding PlayName}"
                                            Command="{Binding DataContext.ViewModel.PlayCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                                            CommandParameter="{Binding}"
                                            Icon="{ui:SymbolIcon Play24}"
@@ -179,7 +179,7 @@
                     <DataGridTextColumn Header="{x:Static res:Strings.Games_List_Name}" Binding="{Binding Name}" Width="3*" />
                     <DataGridTextColumn Header="{x:Static res:Strings.Games_List_Store}" Binding="{Binding PlatformText}" Width="Auto" />
                     <DataGridTextColumn Header="{x:Static res:Strings.Games_List_Engine}" Binding="{Binding EngineText}" Width="*" />
-                    <DataGridTemplateColumn Header="{x:Static res:Strings.Games_List_Status}" Width="*">
+                    <DataGridTemplateColumn Header="{x:Static res:Strings.Games_List_Status}" Width="*" controls:CellName.Path="StatusText">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBlock Margin="4,0" VerticalAlignment="Center" Text="{Binding StatusText}" ToolTip="{Binding NotInstalledToolTip}" />

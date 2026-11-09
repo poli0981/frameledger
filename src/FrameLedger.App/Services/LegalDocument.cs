@@ -10,4 +10,8 @@ namespace FrameLedger.App.Services;
 /// whether it is a plain text shown as written rather than Markdown (the GPL's <c>LICENSE</c>) — and, since beta.12 (D45),
 /// whether Accept covers it: the GPL is shown for information and needs no acceptance (GPLv3 §9).
 /// </summary>
-public sealed record LegalDocument(string Key, string Title, string Version, string Text, Uri Url, string Path = "", bool IsPlainText = false, bool RequiresAcceptance = true);
+public sealed record LegalDocument(string Key, string Title, string Version, string Text, Uri Url, string Path = "", bool IsPlainText = false, bool RequiresAcceptance = true)
+{
+    /// <summary>The terms window's list item as a screen reader reads it (beta.35, D88): the title, never the whole document.</summary>
+    public override string ToString() => Title;
+}

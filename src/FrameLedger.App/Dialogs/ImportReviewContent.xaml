@@ -6,6 +6,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
+             xmlns:controls="clr-namespace:FrameLedger.App.Controls"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              d:DataContext="{d:DesignInstance Type=vm:ImportReviewViewModel}"
@@ -48,7 +49,7 @@
                 </Style>
             </DataGrid.RowStyle>
             <DataGrid.Columns>
-                <DataGridTemplateColumn Width="40">
+                <DataGridTemplateColumn Width="40" controls:CellName.Path="Name">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <CheckBox MinWidth="0" Padding="0" HorizontalAlignment="Center" IsEnabled="{Binding CanImport}"
@@ -60,7 +61,7 @@
                 <DataGridTextColumn Header="{x:Static vm:ImportReviewViewModel.ColumnPlatform}" Binding="{Binding PlatformText}" IsReadOnly="True" Width="Auto" />
                 <DataGridTextColumn Header="{x:Static vm:ImportReviewViewModel.ColumnName}" Binding="{Binding Name}" IsReadOnly="True" Width="2*" />
                 <DataGridTextColumn Header="{x:Static vm:ImportReviewViewModel.ColumnExe}" Binding="{Binding ExeText}" IsReadOnly="True" Width="3*" />
-                <DataGridTextColumn Header="{x:Static vm:ImportReviewViewModel.ColumnNote}" Binding="{Binding Note}" IsReadOnly="True" Width="Auto" />
+                <DataGridTextColumn Header="{x:Static vm:ImportReviewViewModel.ColumnNote}" Binding="{Binding Note}" IsReadOnly="True" Width="Auto" controls:CellName.Path="Note" />
             </DataGrid.Columns>
         </DataGrid>
         <DockPanel Grid.Row="3">

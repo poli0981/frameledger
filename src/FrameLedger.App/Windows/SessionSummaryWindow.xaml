@@ -65,7 +65,7 @@
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="{x:Type vm:TriStateChipModel}">
                             <!-- FR-8.3: click → the override dialog -->
-                            <Button Padding="0" Background="Transparent" BorderThickness="0"
+                            <Button Padding="0" Background="Transparent" BorderThickness="0" AutomationProperties.Name="{Binding AccessibleName}"
                                     Command="{Binding DataContext.ViewModel.OverrideCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                     CommandParameter="{Binding}">
                                 <controls:TriStateChip Model="{Binding}" />
@@ -244,6 +244,6 @@
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>
-        <ui:ContentDialogHost x:Name="DialogHost" Grid.Row="1" />
+        <ui:ContentDialogHost x:Name="DialogHost" Grid.Row="1" Focusable="False" />
     </Grid>
 </ui:FluentWindow>

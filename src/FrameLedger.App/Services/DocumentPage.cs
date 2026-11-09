@@ -12,4 +12,7 @@ public sealed record DocumentPage(string Title, string Text, string Path, bool I
 {
     /// <summary>The same file on GitHub, at this build's source.</summary>
     public Uri Url => RepositoryLinks.Blob(Path);
+
+    /// <summary>The page list's item as a screen reader reads it (beta.35): the title, never the page's whole text.</summary>
+    public override string ToString() => Title;
 }

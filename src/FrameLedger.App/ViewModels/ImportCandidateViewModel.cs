@@ -42,4 +42,7 @@ public sealed partial class ImportCandidateViewModel : ObservableObject
 
     /// <summary>Already in the library (under this drive letter or, since 2026-09-23, another), no executable found, or a guessed executable the user should check.</summary>
     public string Note { get; }
+
+    /// <summary>The row as a screen reader reads it (beta.35, D88).</summary>
+    public override string ToString() => Name;
 }

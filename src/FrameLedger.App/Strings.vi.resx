@@ -3627,4 +3627,43 @@ Các văn bản bên dưới là điều khoản đầy đủ; bản tóm tắt 
   <data name="About_Runtime_Alpha_Format" xml:space="preserve">
     <value>Bản alpha — chạy trên {0}, một phiên bản .NET chưa phát hành chính thức</value>
   </data>
+  <data name="A11y_Pair_Format" xml:space="preserve">
+    <value>{0}: {1}</value>
+  </data>
+  <data name="A11y_TitleAndBody_Format" xml:space="preserve">
+    <value>{0}. {1}</value>
+  </data>
+  <data name="A11y_List_Separator" xml:space="preserve">
+    <value>, </value>
+  </data>
+  <data name="A11y_Empty" xml:space="preserve">
+    <value>trống</value>
+  </data>
+  <data name="A11y_Chip_Format" xml:space="preserve">
+    <value>{0}: {1}, {2}</value>
+  </data>
+  <data name="A11y_Change_Format" xml:space="preserve">
+    <value>Thay đổi {0}</value>
+  </data>
+  <data name="A11y_ChangeMarker_Format" xml:space="preserve">
+    <value>Thay đổi {0}, {1}: {2}</value>
+  </data>
+  <data name="A11y_Compare_Best_Format" xml:space="preserve">
+    <value>{0}, tốt nhất</value>
+  </data>
+  <data name="A11y_SensorStat_Format" xml:space="preserve">
+    <value>{0}: trung bình {1}, trung vị {2}, thấp nhất {3}, cao nhất {4}, trên {5} lần đọc</value>
+  </data>
+  <data name="A11y_Fps_Generated_Format" xml:space="preserve">
+    <value>FPS gốc (Native) {0}, FPS hiển thị {1}, tạo khung hình ×{2:0.0}</value>
+  </data>
+  <data name="A11y_Fps_GeneratedSteady_Format" xml:space="preserve">
+    <value>FPS gốc (Native) {0}, FPS hiển thị {1}, tạo khung hình ×{2:0.0} trong {3:0}% phiên</value>
+  </data>
+  <data name="A11y_Fps_Presented_Format" xml:space="preserve">
+    <value>{0} FPS được trình chiếu (Presented). {1}</value>
+  </data>
+  <data name="A11y_ToggleSection_Format" xml:space="preserve">
+    <value>Hiện hoặc ẩn: {0}</value>
+  </data>
 </root>
