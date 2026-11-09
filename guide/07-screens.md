@@ -133,7 +133,7 @@ is ready.
 
 ## Keyboard and mouse
 
-- **Ctrl+1** … **Ctrl+5** open Dashboard, Games, Compare, Logs and Settings.
+- **Ctrl+1** … **Ctrl+5** open Dashboard, Games, Compare, Logs and Settings, and put the keyboard in that page.
 - **Alt** or **F10** moves to the menus; **Alt** with a menu's underlined letter opens it (**Alt+F**, **Alt+T** and
   **Alt+H** for File, Tools and Help in English).
 - **Esc** closes a dialog the way its Close or Cancel button does.

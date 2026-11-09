@@ -29,7 +29,7 @@ notices Windows shows for it. It draws nothing inside a game, so it cannot make 
 
 | Keys | What they do |
 |---|---|
-| **Ctrl+1** … **Ctrl+5** (also with the numeric keypad) | Open Dashboard, Games, Compare, Logs and Settings. |
+| **Ctrl+1** … **Ctrl+5** (also with the numeric keypad) | Open Dashboard, Games, Compare, Logs and Settings, and move the keyboard into that page; a screen reader hears its title. |
 | **Alt** or **F10**, then the arrow keys and **Enter** | Move to the menus. **Alt** with a menu's underlined letter opens it (*File*, *Tools*, *Help* in English). |
 | **Tab** and **Shift+Tab** | Move through a page or a dialog in reading order. |
 | The **arrow keys**, **Home**, **End**, **Page Up**, **Page Down** | Move inside a list or a table — a game's sessions, the games list, the Compare list, the import checklist. |
@@ -61,7 +61,8 @@ The same keys are in the user guide, [The screens](guide/07-screens.md#keyboard-
 - **The notices above the page can be read where they are shown**, and the button that answers one says which notice it
   answers.
 - **Tab goes from control to control**: pictures, lists and the rows of Settings are not stops of their own.
-- **Dialogs say they are dialogs** and keep the focus inside them until they close.
+- **Dialogs say they are dialogs**, keep the focus inside them until they close, and then give it back to the control
+  that opened them. A message box opens over FrameLedger's window, never behind it.
 
 ### Seeing the screen
 
@@ -94,7 +95,8 @@ from the same translations. The documents — the user guide, this page, the leg
   alone; a chart's keys move it and stay its own; every control that shows no text has a name; no colour is written
   into a screen; every text reads against its background in both themes and after a theme switch, and under Windows'
   four contrast themes and two edited ones is drawn in the theme's own colours at 4.5:1 or better; **Esc** closes the
-  open dialog without an answer; **Ctrl+1** … **Ctrl+5** open the pages in their order; the program declares it follows
+  open dialog without an answer and a dialog gives the focus back; **Ctrl+1** … **Ctrl+5** open the pages in their order
+  and move the keyboard into them; a page slides in only while Windows' animation effects are on; the program declares it follows
   each screen's scaling.
 - **By hand**: the owner's pass of 2026-11-09 above, repeated for each release that changes a screen.
 - **Not tested yet**: NVDA, JAWS, Voice Access, touch, Windows 10, and other people's PCs. They should work through the
@@ -114,7 +116,6 @@ Each one with what to do instead. A barrier that is not on this list is worth re
   screen reader is told each one as it appears.
 - **Windows' text size setting** (Settings ▸ Accessibility ▸ Text size) **is not followed.** Use display scaling
   (Settings ▸ System ▸ Display ▸ Scale) or Magnifier.
-- **Page changes slide in** even when Windows' animation effects are off.
 - **Pausing capture is only in the menu of the icon by the clock.**
 - **The windows Windows itself shows** — choosing a file, the administrator prompt — are Windows', not FrameLedger's.
 

@@ -379,6 +379,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<TrayViewModel>();
         services.AddSingleton<TrayHost>();
         services.AddTransient<MainWindow>();
+        services.AddSingleton<PageFocus>(); // beta.35: Ctrl+1…5 put the keyboard in the page they open
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<ILanguageFollower>(static sp => sp.GetRequiredService<TrayHost>());
         services.AddSingleton<ILanguageFollower>(static sp => sp.GetRequiredService<MainWindowViewModel>());

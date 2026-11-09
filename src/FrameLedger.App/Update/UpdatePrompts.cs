@@ -49,7 +49,7 @@ public sealed class UpdatePrompts(IUrlOpener urls, BugReportFlow bugReports) : I
             CloseButtonText = Strings.Update_Later,
             MaxWidth = 640,
         };
-        MessageBoxResult result = await box.ShowDialogAsync(cancellationToken: ct).ConfigureAwait(true);
+        MessageBoxResult result = await MessageBoxes.ShowAsync(box, ct).ConfigureAwait(true);
         return result == MessageBoxResult.Primary;
     }
 
@@ -101,7 +101,7 @@ public sealed class UpdatePrompts(IUrlOpener urls, BugReportFlow bugReports) : I
                 break;
         }
 
-        MessageBoxResult result = await box.ShowDialogAsync(cancellationToken: ct).ConfigureAwait(true);
+        MessageBoxResult result = await MessageBoxes.ShowAsync(box, ct).ConfigureAwait(true);
         if (result != MessageBoxResult.Primary)
         {
             return;
@@ -137,6 +137,6 @@ public sealed class UpdatePrompts(IUrlOpener urls, BugReportFlow bugReports) : I
             CloseButtonText = Strings.Common_Ok,
             MaxWidth = 560,
         };
-        await box.ShowDialogAsync(cancellationToken: ct).ConfigureAwait(true);
+        await MessageBoxes.ShowAsync(box, ct).ConfigureAwait(true);
     }
 }
