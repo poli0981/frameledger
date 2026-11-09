@@ -95,9 +95,9 @@ from the same translations. The documents — the user guide, this page, the leg
   alone; a chart's keys move it and stay its own; every control that shows no text has a name; no colour is written
   into a screen; every text reads against its background in both themes and after a theme switch, and under Windows'
   four contrast themes and two edited ones is drawn in the theme's own colours at 4.5:1 or better; **Esc** closes the
-  open dialog without an answer and a dialog gives the focus back; **Ctrl+1** … **Ctrl+5** open the pages in their order
-  and move the keyboard into them; a page slides in only while Windows' animation effects are on; the program declares it follows
-  each screen's scaling.
+  open dialog without an answer, and a dialog gives the focus back; **Ctrl+1** … **Ctrl+5** open the pages in their
+  order and move the keyboard into them; a page slides in only while Windows' animation effects are on; the program
+  declares it follows each screen's scaling.
 - **By hand**: the owner's pass of 2026-11-09 above, repeated for each release that changes a screen.
 - **Not tested yet**: NVDA, JAWS, Voice Access, touch, Windows 10, and other people's PCs. They should work through the
   same Windows interface Narrator uses, but nobody has checked. Contrast themes are checked by the tests above and have

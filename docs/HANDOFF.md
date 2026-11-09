@@ -73,6 +73,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.31` | [`handoff/history/0.1.0-beta.31.md`](handoff/history/0.1.0-beta.31.md) |
 | `§beta.32` | [`handoff/history/0.1.0-beta.32.md`](handoff/history/0.1.0-beta.32.md) |
 | `§beta.33` | [`handoff/history/0.1.0-beta.33.md`](handoff/history/0.1.0-beta.33.md) |
+| `§beta.34` | [`handoff/history/0.1.0-beta.34.md`](handoff/history/0.1.0-beta.34.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -80,92 +81,76 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-11-06, 0.1.0-beta.34: DLSS 5 and DLSS 4.5 from what the game and the driver did; filters; Games at once
+## **START HERE** — 2026-11-09, 0.1.0-beta.35: accessibility — a statement, what a screen reader is given and told, headings and charts, contrast themes, focus
 
-*Status is `docs/changelog/0.1.0-beta.34.md`; this is what no other file carries.* The owner asked for seven things, the
-usual train: (1) how DLSS 5 Neural Rendering is detected on Hogwarts Legacy (Neural Rendering on in the game), and its
-version; (2) under the NVIDIA App's *Dynamic* multi frame generation the label read DLSS 4, though Dynamic and ×6 exist
-only in DLSS 4.5 (Phantom Blade Zero); (3) filters on Games and Compare; (4) the Compare page's layout, from a
-screenshot; (5) the documents and the tested-games list, from the database; (6) switching to Games stalled 0.5–1.5 s;
-(7) a language change landed on the last content page instead of Settings. And while planning: "Bạn check Streamline các
-bản gần đây có gì thay đổi và sửa luôn nếu thật sự cần nhé." — check what changed in recent Streamline versions and fix it
-if really needed. #356 (two fixes from a self-review of #351 and #352), #357 (D83), #358 (D84, Streamline `v2.14.16`),
-#359 (items 6 and 7), #360 (items 3 and 4, D85, D86), #361 (item 5) and this release; `0.1.0-alpha.3` follows (D87) —
-the owner's screenshot is of an alpha, so the alpha is how these reach the owner's PC.
+*Status is `docs/changelog/0.1.0-beta.35.md`; this is what no other file carries.* The owner: "Bạn lên plan và thêm
+phiên bản mới (nếu thực sự cần) cho mục accessibility: 1. đọc docs, check, sync và sửa, cập nhật thêm file
+ACCESSIBILITY.md vào đúng vị trí. 2. Check các Accessibility đã có, đề xuất thêm accessibility nếu cần. 3. Đã dùng: bàn
+phím only (tắt chuột) và narrators, không lỗi." — plan accessibility, with a new version if it is really needed: read,
+check, sync and fix the documents and add `ACCESSIBILITY.md` where it belongs; check what exists and propose more; the
+owner had used the keyboard alone, mouse disconnected, and Narrator, with no fault. With opensource.guide's
+accessibility practices and the open-source-accessibility toolkit's `ACCESSIBILITY.md` template (MIT: its structure,
+not its text). #366 (the statement, D88), #367 (names and peers), #368 (announcements, D89), #369 (headings and charts,
+D90), #370 (contrast themes, D91, and three contrast holes outside them), #371 (focus and motion) and this release; no alpha (D92).
 
 **Decisions (asked while planning, do not re-ask):**
 
-- **D83 — Dynamic frame generation is DLSS 4.5's**: the owner's rule, "Dynamic and ×6 exist only in DLSS 4.5". The
-  evidence is the game's driver profile setting Dynamic (`NGX_DLSSG_MODE` = 4) **and** the driver reporting its
-  frame-generation override applied in the game's process (`FG_MODE` in its FG word), in a session where DLSS
-  Frame Generation was identified (`fg_mode = dlssg`; its factor need not have been counted); a state measured at ×5 or more still ranks first, and a *Fixed* multiplier names nothing by itself
-  (amends D64). The driver's `frameGenerationMode` — 3 under Dynamic and 1 under Fixed in every session read, and unnamed
-  by NVIDIA — is recorded in `spike-notes` §26, not keyed on.
-- **D84 — DLSS 5 is the session's generation where its neural rendering was measured running**: the Overlay decodes
-  `kFeatureDLSS_NR` in its `slEvaluateFeature` detour and the Agent keeps its share of the Streamline batches
-  (`sessions.dlss_nr_pct`, schema 0022) — *DLSS 5 (neural rendering on N % of rendered frames)*; loaded and seen not
-  running, *runtime loaded, not seen running*; where nothing could tell, *runtime loaded*, as before (amends D64).
-- **D85 — the filters**: Games — store, engine, state, installed, played; Compare — game, tier, frame generation, no
-  period; Compare lists every session (it listed the newest 200).
-- **D86 — the left pane's selected item keeps its label**: our copy of WPF UI 4.3.0's LeftFluent item template, whose
-  `IsActive` trigger animated it away.
-- **D87 — alpha.3 right after beta.34**, on RC3: the train reaches it before .NET 11's release on 2026-11-10.
-
-Streamline was re-vendored at `v2.14.16` on the owner's instruction above, not as a decision of its own. The wording of
-the Disclaimer 2.13 and the Privacy Policy 2.14, and the tested-games list (D35), were approved with the plan (D36).
+- **D88 — the accessibility statement**: `ACCESSIBILITY.md` at the repository's root, in the App under Help ▸
+  Accessibility and on the wiki. WCAG 2.2 at level AA, as W3C's WCAG2ICT applies it to desktop software, is a goal and
+  never a claim; a report is handled by severity, with no promised times; the owner's pass of 2026-11-09 — keyboard only
+  and Narrator, on 0.1.0-beta.34 and 0.1.0-alpha.3, no fault — is its first evidence by hand.
+- **D89 — what appears is said to a screen reader**: UI Automation notifications for a safety notice, the agent's and
+  the update's banners, every snackbar, a game page's notice and Database maintenance's results, only while
+  FrameLedger's window is the active one.
+- **D90 — headings and charts**: a page's title is a heading of level 1, a section's title level 2; every chart is
+  named with where its numbers are written; no chart tells two series apart by colour alone.
+- **D91 — Windows contrast themes are followed**, whatever Settings ▸ Theme says.
+- **D92 — beta.35 in this train and no alpha**; alpha.4 is the move to .NET 11's release (SDK `11.0.100`, packages
+  `11.0.0`), a task of its own after 2026-11-10.
 
 **Choices made here:**
 
-- **Neural rendering's share is over the Streamline batches**, not every present: a generated frame evaluates nothing,
-  and a title that never drains a batch reads *nothing could tell* (null), never 0 %.
-- **A writer older than beta.34 is told apart by its family bit**, `FL_HOOK_SL_NEURAL_RENDERING` (bit 12), published with
-  the detour — an old Overlay's silence leaves `dlss_nr_pct` null instead of a measured 0 %; no layout change.
-- **The Games page is the window's**, kept by our own page provider (`WindowPageCache`), not `NavigationCacheMode`: WPF UI
-  4.3.0 reads that only when neither a service provider nor a page provider is set, and `SetNavigationControl` sets one
-  (`16_WPFUI_SYNTAX` §Navigation). One per window, so a language change's window builds its own.
-- **The cards come before the executable checks** — 39 of the owner's 41 Steam games are on a USB drive that sleeps — and
-  each card gets its *Not installed* pill when its check answers.
-- **The pane's item template is a copy changed in one place**, reading WPF UI's own `NavigationViewConstants.xaml`: before
-  the WPF UI pin moves, the upstream template is read again.
+- **A contrast theme is the user's colours by role**, not WPF UI's high-contrast files (84 red placeholders among 97
+  colours, 17 brushes that throw, Windows 11's defaults) and not a hand list of keys: every key of the four files takes
+  the colour of the role it has in all of them, opaque colours only (`ContrastRoles`), over the light or the dark Fluent
+  theme as the contrast theme is; the text on the accent is the highlight's text, the App's choice.
+- **What must change while it is shown binds `ContrastTheme.IsOn`**, a static property WPF hears through
+  `StaticPropertyChanged`: the implicit button style, the Settings line. The charts, the badges and the artwork band read
+  `ContrastTheme.Active` when they draw.
+- **The snackbars lost their green and orange** (white on fixed colours, 2.16–2.78:1 in both themes): every message is
+  Secondary, its icon saying the kind. **The agent's pill is a `Pill` on the theme's fills**, no longer a badge.
+- **A content dialog's focus is WPF UI's**: its host stores and restores the focused element; a test pins it. Message
+  boxes get the App's active window as owner (`MessageBoxes`), which WPF UI's leaves null.
+- **A page shortcut focuses the page's first control and says its first level-1 heading** (`PageFocus`); a click in the
+  pane leaves the focus where WPF UI puts it.
+- **Left as limitations, with what to do instead** (`ACCESSIBILITY.md` §Known limitations): a chart's points one by
+  one, headings inside the documents the App shows (a FlowDocument paragraph has no peer), the snackbars' four seconds,
+  Windows' text size, pausing only from the tray.
 
-**Measured on the way:** the owner's DLSS sessions of 2026-11-01 → 11-06, the driver's frame-generation numbering and
-Streamline's `v2.12.0` → `v2.14.16` changes are `spike-notes` §26 (the ledger read read-only; the vendored copy was
-`v2.12.0` byte for byte); the Games page before and after is §27 (first cards 822–830 ms → 10–15 ms with the first
-executable check held 800 ms; a revisit 181–215 ms → 15–16 ms). The neural-rendering decode costs nothing measurable in
-the detour and 0.14–0.19 ns on the present's feature byte (#358's body; NFR-1's budget is 1 µs per present).
+**Measured on the way:** the UI Automation tree WPF builds, on .NET 10.0.14 — items named by `ToString()`, peerless
+focusable controls, a template's text hidden from the control view, template cells read as *Item: …* (`16_WPFUI_SYNTAX`
+§Gotchas); WPF UI 4.3.0's high-contrast files, its Button, Badge and Snackbar appearances (fixed colours, the ratios
+above), its message box's missing owner and its content dialog host's focus restore; ScottPlot 5.1.59's keys (focusable,
+none marked handled) and its double-click benchmark.
 
 **Traps met on the way:**
 
-- **`notice-check` reads the tracked tree**: a file deleted from the working tree but not from the index fails it with
-  *Could not find file* — after every build and test had passed (#360's first local gate). Stage the change
-  (`git add -A`) before the gate.
-- **A new hook family bit belongs in the native token test's exact mask** (`guard_test.cpp`), and a new Streamline fact
-  in the 0xF00D case's list of facts it must not light — #358's first gate (`0x100f` against `15`).
-- **WPF UI 4.3.0**: `NavigationCacheMode` is ignored once a page provider is set; `INavigationService.SetNavigationControl`
-  hands the NavigationView the container's provider, so ours is set after it; LeftFluent's item template collapses the
-  selected item's label.
-- **Microsoft.Data.Sqlite's async methods run synchronously**: a read awaited on the UI thread blocks it — `Task.Run` it.
+- **A `ContentDialog` test needs the dispatcher's context.** `ContentDialog.ShowAsync` takes the dialog out of its host
+  in a `finally` after an await; on a test thread with no `DispatcherSynchronizationContext` that never resumes on the UI
+  thread, the dialog stays in its host and the focus on its button — a first measurement concluded WPF UI kept the focus
+  there; it does not.
+- **A test that listens to a static event hears every test's**: subscribe inside the one STA work item.
+- **Inside the App, a brush that throws when WPF UI's file is read alone falls back to the application's resources**, the
+  Fluent theme's translucent fills: `MenuBarItemBackgroundPressed` read as the window text's white. Count only opaque
+  colours as evidence.
+- **WPF calls a resource reference's callback when a merged dictionary changes, even for an equal value** (Aquatic's
+  window is the dark theme's `#202020`): no second signal was needed, measured and pinned.
+- **A forward `StaticResource` in a style dictionary fails only when that resource is first used** — `AgentPill`
+  `BasedOn` `Pill`, placed above it: the dictionary loaded, the style threw when found.
+- **Python's `"\b"` in a non-raw string is a backspace** — it went into a C# regex twice; write regexes raw.
+- **`RenderTargetBitmap.Render(child)` draws the child at its offset**: sample a child's pixel through its parent.
 
-**Owner-only:** item 30 — beta.34 on real hardware.
-
-### 0.1.0-alpha.3 — the third alpha, the same day (D87)
-
-`alpha` takes main at this pull request — `v0.1.0-beta.34` and these notes, no other change — by a merge commit, as
-`13_CI_CD` §The alpha line says. One file the switch holds moved on main — `legal/THIRD_PARTY_NOTICES.md`, its
-Streamline row (#358) — on a line the switch does not touch (the switch changes the *Transitive* row), so the merge
-takes both without a conflict (`git merge-tree` before the pull request); main's package set did not move, and the
-switch stays the first alpha's (SDK `11.0.100-rc.3.26522.148`, the three packages at `11.0.0-rc.3.26522.148`, the same
-NuGet licence texts) — the train reached it before .NET 11's release. Its gate on the 11 SDK must pass before the pull
-request into `alpha` is merged by
-hand (the branch has no auto-merge); the release runs from the signed tag `v0.1.0-alpha.3` on `alpha`, with its delta
-from alpha.2. Its notes are `docs/changelog/0.1.0-alpha.3.md`, which open with the experimental-build warning. It is
-the first alpha whose ledger moves (schema 22): the copy it makes first is the database as alpha.2 left it, and going
-back is to the newest beta, which opens schema 22.
-
-- **The next alpha moves to .NET 11's release**: from 2026-11-10 the switch is SDK `11.0.100` and the packages `11.0.0`,
-  and RC3 is out of support — move the alpha even if no beta comes.
-
-**Owner-only:** item 31 — the third alpha on real hardware.
+**Owner-only:** item 32 — beta.35 on real hardware.
 
 
 ## Owner-only — no PR can close these
@@ -396,6 +381,20 @@ back is to the newest beta, which opens schema 22.
    window shows the Disclaimer 2.13, the Privacy Policy 2.14 and the Alpha notice with its box again, and Accept waits for
    the tick. (c) `%LOCALAPPDATA%\FrameLedger\backups\ledger-before-0.1.0-alpha.3.db` exists beside alpha.2's, and opens;
    the ledger it left is at schema 22. (d) Item 30's checks, on the alpha.
+32. **beta.35 on real hardware** (D88–D91). (a) **The update from beta.34** (or alpha.3's): no terms window, the ledger
+   unchanged. (b) **Narrator**: a safety notice is read as it appears; the agent's banner going and coming; Tools ▸
+   Database maintenance ▸ Check reads its result; a short message at the bottom is read; **H** moves between each page's
+   title and its sections; Settings ▸ Theme's options read their words; the Sessions table's cells read their values;
+   Tab to a chart says its name and where its numbers are, and its arrows, Ctrl+arrows and A move it without scrolling
+   the page; a double-click shows all of it. (c) **Contrast themes**: Aquatic and Desert, and one with an edited colour
+   (Windows 10 if at hand) — every page, a dialog, the title bar's agent pill, a short message, a chart; turned on and
+   off with FrameLedger open, it follows at once; Settings ▸ Theme shows its line. (d) **Ctrl+1 … Ctrl+5** put the
+   keyboard in the page and Narrator says its title. (e) **Animation effects off** (Settings ▸ Accessibility ▸ Visual
+   effects): no page slides in. (f) **Remove** on a game's page: the box opens over the window, its Cancel puts the focus
+   back on Remove; the light theme's agent pill and a *done* message read clearly. (g) Help ▸ Accessibility shows the
+   statement. (h) The 35 `ja` strings this release adds, all marked `review`: `Menu_Help_Accessibility`,
+   `Accessibility_Title`, `Settings_Theme_ContrastOn` and 32 `A11y_*` (the names, the chart names and keys, the
+   announcements).
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
@@ -491,12 +490,17 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D79 | [`05_DETECTION.md`](05_DETECTION.md) §Platform signatures & metadata | the platform is "Xbox" (`xbox`), in full: import, artwork, Play, capture, detection, docs and legal |
 | D80 | [`08_UI.md`](08_UI.md) §Games | Play on an Xbox game always activates its package, in both modes; the Agent answers `PackagedGame` and records it in attach mode |
 | D81 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §G | title lists stay keyed by Steam id; an Xbox copy is matched by everything but that entry |
-| D82 | [`HANDOFF.md`](HANDOFF.md) §START HERE | alpha.2 right after beta.33; on RC3 unless the train reaches it after .NET 11 ships (then SDK 11.0.100, packages 11.0.0) |
+| D82 | [`handoff/history/0.1.0-beta.33.md`](handoff/history/0.1.0-beta.33.md) | alpha.2 right after beta.33; on RC3 unless the train reaches it after .NET 11 ships (then SDK 11.0.100, packages 11.0.0) |
 | D83 | [`05_DETECTION.md`](05_DETECTION.md) §DLSS generation | the NVIDIA App's Dynamic frame generation, reported applied by the driver in a session where DLSS Frame Generation was identified, is DLSS 4.5 (amends D64) |
 | D84 | [`05_DETECTION.md`](05_DETECTION.md) §DLSS generation | DLSS 5 heads the DLSS line where its neural rendering was measured running (`kFeatureDLSS_NR`, `dlss_nr_pct`); loaded only reads "runtime loaded" (amends D64) |
 | D85 | [`08_UI.md`](08_UI.md) §Games, §Compare | filters: Games — store, engine, state, installed, played; Compare — game, tier, frame generation (no period); Compare lists every session |
 | D86 | [`08_UI.md`](08_UI.md) (the shell) | the left pane's selected item keeps its label: our copy of WPF UI 4.3.0's LeftFluent item template |
-| D87 | [`HANDOFF.md`](HANDOFF.md) §START HERE | alpha.3 right after beta.34, on RC3 (before .NET 11's release, 2026-11-10) |
+| D87 | [`handoff/history/0.1.0-beta.34.md`](handoff/history/0.1.0-beta.34.md) | alpha.3 right after beta.34, on RC3 (before .NET 11's release, 2026-11-10) |
+| D88 | [`../ACCESSIBILITY.md`](../ACCESSIBILITY.md) | the accessibility statement at the root, under Help ▸ Accessibility and on the wiki: WCAG 2.2 AA through WCAG2ICT is a goal, never a claim; reports by severity, no promised times |
+| D89 | [`08_UI.md`](08_UI.md) §Screen readers | what appears is said to a screen reader — notices, the agent's and the update's banners, the snackbars, a game page's notice, Database maintenance's results — while FrameLedger's window is active |
+| D90 | [`08_UI.md`](08_UI.md) §Screen readers | page titles heading 1, section titles heading 2; every chart named with where its numbers are; no series told apart by colour alone |
+| D91 | [`08_UI.md`](08_UI.md) §Contrast | Windows contrast themes are followed, whatever Settings ▸ Theme says |
+| D92 | [`HANDOFF.md`](HANDOFF.md) §START HERE | beta.35 in this train, no alpha; alpha.4 is the move to .NET 11's release (SDK 11.0.100, packages 11.0.0), a task of its own after 2026-11-10 |
 
 ---
 
