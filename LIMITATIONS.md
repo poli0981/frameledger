@@ -289,9 +289,13 @@ releases unless you choose *Beta* in Settings ▸ Updates, and apply a downloade
 *Only for an alpha — a version ending in `-alpha.N`, an experimental build on a new .NET
 ([Alpha builds](guide/11-alpha-builds.md)).*
 
-- **It runs on a .NET that Microsoft has not finished** — .NET 11's release candidate first — and has not been tested
-  the way a beta is: everything on this page applies to it, and so can problems no beta has shown
+- **It is built to try a newer .NET — at times one Microsoft has not finished** — and has not been tested the way a
+  beta is: everything on this page applies to it, and so can problems no beta has shown
   ([Alpha notice](legal/ALPHA_NOTICE.md)).
+- **The alphas are paused since 0.1.0-alpha.4, and a paused alpha gets no updates** — the list of anti-cheat software
+  it refuses included, which arrives only inside an update. The betas run on the same .NET 11 since 0.1.0-beta.37:
+  install the latest beta over the alpha. Once ten betas have followed 0.1.0-alpha.4, an older alpha no longer finds
+  it as an update ([Updater](docs/11_UPDATER.md)).
 - **It shares the beta's data folder.** It copies the database into `backups` before it first opens it, and does not
   open it if the copy cannot be made; the newest three copies are kept and older ones it made are deleted.
 - **It updates only to newer alphas**, and its update channel is locked; going back to the beta means installing the

@@ -4798,7 +4798,15 @@
     <comment>review</comment>
   </data>
   <data name="Alpha_Banner_Body_Format" xml:space="preserve">
+    <value>試験版：{0} で動作するアルファ版です。結果が誤っていたり、クラッシュしたりすることがあります。ご利用は自己責任です。安定して使えるのはベータ版です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Alpha_Banner_Body_Prerelease_Format" xml:space="preserve">
     <value>試験版：プレリリース版の .NET である {0} で動作しています。結果が誤っていたり、クラッシュしたりすることがあります。ご利用は自己責任です。安定して使えるのはベータ版です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Alpha_Banner_Body_Resting_Format" xml:space="preserve">
+    <value>アルファ版の提供は一時停止中です。ベータ版も {0} で動作するようになり、更新を受け取るのはベータ版だけです（アンチチートのリストも含みます）。最新のベータ版をこのアルファ版に上書きインストールしてください。データはそのまま残ります。</value>
     <comment>review</comment>
   </data>
   <data name="Alpha_Banner_Read" xml:space="preserve">
@@ -4811,7 +4819,7 @@
   </data>
   <data name="FirstRun_Alpha_Summary" xml:space="preserve">
     <value>これはアルファ版です:
-• ベータ版のソースをプレリリース版の .NET でビルドしたものです。測定値の誤りやクラッシュを含め、ベータ版より多くの問題が起こることを想定してください。
+• ベータ版のソースを、より新しい .NET（プレリリース版の場合もあります）を試すためにビルドしたものです。測定値の誤りやクラッシュを含め、ベータ版より多くの問題が起こることを想定してください。
 • この PC のベータ版を置き換え、そのデータを共有します。初めて台帳を開く前に backups フォルダーへコピーし、コピーできない場合は開きません。
 • ご利用は完全に自己責任です。下の一覧にあるアルファ版に関する通知が同意する文書です。読んだことを示すためにチェックを入れてください。</value>
     <comment>review</comment>
@@ -4829,6 +4837,10 @@
     <comment>review</comment>
   </data>
   <data name="About_Runtime_Alpha_Format" xml:space="preserve">
+    <value>アルファ版 — {0} で動作</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Runtime_Alpha_Prerelease_Format" xml:space="preserve">
     <value>アルファ版 — プレリリース版の .NET である {0} で動作</value>
     <comment>review</comment>
   </data>
