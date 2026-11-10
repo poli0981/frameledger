@@ -106,6 +106,15 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 - **Concurrency, since 2026-10-25:** a new push to a pull request cancels that pull request's run; a push to `main` and the weekly scan each run in a group of their own (the run id), so none is cancelled or left pending, and the default branch's alerts come from a finished analysis.
 - `permissions: security-events: write, contents: read`.
 
+### `qodana.yml` — push to `main`, pull requests into `main`, `workflow_dispatch` · **repo-local, built 2026-11-10 (D93)**
+- One job, `qodana`, on `ubuntu-latest` — the only Linux job in this repository, because the linter is a Linux
+  container: `JetBrains/qodana-action` (pinned to `v2026.2.2`'s commit; Dependabot moves the pin) runs Qodana Community
+  for .NET over `FrameLedger.slnx` with `qodana.yaml`'s settings. §Qodana below says what it reads, what was changed
+  from JetBrains' template and where an inspection is switched off.
+- **Advisory, with a gate of zero problems:** one problem turns the job red; it is not a required context.
+- `permissions: contents: read, checks: write, pull-requests: write` — the annotations and the one comment; granted to
+  the job, the workflow grants none.
+
 ### `release.yml` — on tag `v*` · **repo-local, built 2026-09-14 (P4 PR-5)**
 
 > **Exercised by a tag on 2026-09-16 — `v0.1.0-beta.1`, run 35111939019 — and the first attempt did not finish.**
@@ -457,6 +466,129 @@ on `src/FrameLedger.Infrastructure/**/*` and `src/FrameLedger.Shared/**/*`, so n
 stop reappearing on pull requests. *(Since D68 the `S8417` and `S6640` rows are `SonarQube.Analysis.xml`'s, in the
 repository; `S6232`'s are not — a union read outside `LARGE_INTEGER` would be a finding — and its 24 stay marked.)*
 
+## Qodana — `qodana.yml`, a workflow of its own (owner decision D93, 2026-11-10)
+
+**D93 — Qodana reads the C# and the XAML from CI.** The owner made the project on Qodana Cloud, set the `QODANA_TOKEN`
+secret (2026-11-10) and asked for Qodana in CI from the workflow JetBrains gives, changed where it had to be, with what
+it reports fixed. Asked which licence the Qodana Cloud organisation holds, the owner answered: a 30-day trial. So the
+linter is **Qodana Community for .NET** (`qodana-cdnet`) — ReSharper's InspectCode in a Linux container, which runs
+under every licence — and not Qodana for .NET (`qodana-dotnet`, Rider), which needs Ultimate and would turn the job red
+the day the trial ends. JetBrains calls the Community linter Early Access.
+
+**How it runs.** `.github/workflows/qodana.yml`, on every pull request into `main` from this repository, every push to
+`main`, and by hand: a full-depth checkout of the pull request's own commit, then `JetBrains/qodana-action` pinned to
+the commit of `v2026.2.2` (the newest; the template names `v2026.1`, and every action that is not GitHub's own is pinned
+by commit here). The action brings the Qodana CLI of its own version, the CLI the linter's image
+(`jetbrains/qodana-cdnet:2026.2` — InspectCode 2026.2.3.1 on the image's .NET SDK 10.0.403), and the linter reads
+`qodana.yaml`: the solution (`FrameLedger.slnx`), the configuration (Release), the gate. It builds the solution itself,
+then inspects it — the whole solution every time (`pr-mode: false`), so a pull request and `main` are judged by one
+list. The report goes to Qodana Cloud, a summary to the pull request as a comment and annotations, and the SARIF and
+the linter's logs to the run as the `qodana-report` artifact.
+
+**What had to change from the template, and why.**
+
+- **`EnableWindowsTargeting=true`, passed to the container** (`env-vars-to-linter`). Every project here targets
+  `net10.0-windows`, and the .NET SDK on Linux refuses such a project unless that property is set. With it, the
+  container restores, builds and loads all thirteen projects — WPF's markup compiler and CsWin32's generator are managed
+  code — which the first run showed (below). It is the workflow's, not `Directory.Build.props`': no build of the product
+  is meant to run anywhere but Windows. JetBrains' own page says a project with an OS-specific target needs Qodana for
+  .NET in native mode; that is the Ultimate linter, and the Community one did the work.
+- **`ubuntu-latest`, the one Linux job here** — the Community linter ships as a Linux image only.
+- **Permissions:** `contents: read`, `checks: write` (the annotations), `pull-requests: write` (the comment). The
+  template's `contents: write` is for pushing quick-fixes, an Ultimate feature this job never uses.
+- **`main` only.** The `alpha` branch builds on a prerelease .NET the image does not carry (§The alpha line).
+- **Not a fork's pull request, nor Dependabot's:** neither gets the secret or a token that can write the comment.
+- **Caches are saved from `main` only** (`cache-default-branch-only`); a pull request reads them.
+
+**What it reads, and what it does not.** The C# of the thirteen projects, their XAML and `.resx`. **Not the C++:**
+`src/native` is a CMake tree no solution names, and it is MSVC-only, which no Linux container compiles — CodeQL and
+SonarCloud read it. The native DLLs are absent in the container, so the `.targets` that copy them warn and the build
+goes on, as on a fresh clone (measured here the same day: `dotnet build` of a clean worktree, 15 warnings, 0 errors).
+
+**The gate is zero, and it is advisory.** `qodana.yaml` sets `failureConditions.severityThresholds.any: 0`: one
+problem and the job is red. `main`'s required contexts stay `check`, `analyze (csharp, none)` and
+`analyze (cpp, manual)`, so a problem Qodana finds — or a Qodana Cloud outage — is a red job beside a green `check`,
+never a blocked merge. That it can fail was shown before it was
+relied on: run 42847369329 had the settings and none of the fixes, found 409 problems and ended red — "Detected 409
+problems across all severities, fail threshold 0".
+
+**Where an inspection is switched off: `.editorconfig`, never `qodana.yaml`.** InspectCode reads its severities from
+`.editorconfig`'s `resharper_*_highlighting` keys, and so do Rider and ReSharper in the editor — one list for the job
+and for the person at the keyboard, beside the analyzer severities already kept there, and testable without CI. Each
+key has its reason on the line above it. The rule: **what Qodana reports is fixed, unless the inspection argues with a
+choice this project made** — then it is off, and the reason says which choice. Sixty-three keys, in these groups:
+
+| Group | Inspections | The choice it argues with |
+|---|---|---|
+| The compiler's missing-XML-comment warning | `CS1591` | already a suggestion in this file; InspectCode reports suggestions — 2,050 of the first run's 3,679 |
+| Naming | `InconsistentNaming` | names follow this file's rule and the .NET analyzers'; ReSharper's scheme renames `OpenGL`, `XeSS`, `Presents5s` and every `Chart_*` resource key |
+| Unwrapping a nullable | `ConvertTypeCheckPatternToNullCheck`, `PatternAlwaysMatches` | `x is long v` and `x is > 0 and int v` name the type, as `csharp_style_var_for_built_in_types = false` asks |
+| What a guard is for | three `…AccordingToAPIContract` inspections | the compiler's nullable analysis is the gate; a dependency property, a JSON document and a WPF event hand over null whatever an annotation promises |
+| Said on purpose | `RedundantExtendsListEntry`, `RedundantArgumentDefaultValue`, `RedundantEmptySwitchSection`, `MemberHidesStaticFromOuterClass`, `CompareOfFloatsByEqualityOperator` | a code-behind names its base; an argument repeats a default it relies on; `default: break;` says the rest is left alone; exact float comparisons are with a copied value or a sentinel |
+| Not this code's to change | `UnusedParameterInPartialMethod`, `Xaml.StaticResourceNotResolved`, `Xaml.PossibleNullReferenceException`, `LocalizableElement` | CommunityToolkit's generated signatures; WPF UI's run-time resources (`PagesLoadTests` fails a wrong key); a binding through null shows nothing, by design; exception and log text is English (`09_I18N`), and `resx-audit` gates what a user reads |
+| Records | `NotAccessedPositionalProperty.*` | a positional property is part of equality and of what the record prints |
+| Style proposals | twenty, from `ConvertToPrimaryConstructor` to `UseAwaitUsing` | the style is this file, `dotnet format` and the analyzers; `await using` under CA2007 reads worse than what it replaces |
+| Accessibility proposals | `MemberCanBePrivate.*`, `PropertyCanBeMadeInitOnly.*`, `AutoPropertyCanBeMadeGetOnly.*` | a member's accessibility is what its type offers, not a count of today's callers |
+| "Never used" across the solution | eight `.Global` inspections | enum values mirror the native layout and stored columns, exception types carry CA1032's constructors, rows and messages are read by Dapper and System.Text.Json; the private kind (`.Local`) stays on — and what this group named on 2026-11-10 is listed below |
+| In `tests/` only | eleven | an assertion lambda runs inside the `using` it captures from; a test that dereferences null fails, which is its job; a test double keeps the shape of what it stands for |
+
+Five places carry a `// ReSharper disable once …` comment with its reason instead, where the inspection is right in
+general and wrong once: the tolerance channel closed early in `CaptureSession`, the volatile read in
+`SessionEventPublisher`, the awaited `Task.Run` in `CaptureOrchestrator`, the window read lazily in
+`SessionSummaryOpener`, and a test row that is never on.
+
+**The first run, and what was done (2026-11-10, PR #373).** Run 42842741359, the template's shape with no settings:
+the container built the solution and inspected it in under six minutes, and reported **3,679 problems** — 858 warnings
+and 2,821 suggestions, in 93 inspections. About 400 were fixed in the code, in 181 files, none changing what the
+software does:
+
+| What | n | Done |
+|---|---|---|
+| Redundant qualifiers, casts, `using` directives, `!` suppressions, `unsafe` modifiers, tuple names | 290 | removed, by script from the report's own positions; the build (warnings as errors, Release and Debug) and `dotnet format` held every one — one cast of a pair in `SqliteGameMerge` was needed after all, and stayed |
+| `var` for a built-in type, a block body for a one-line method | 52 | this file's own style (`csharp_style_var_for_built_in_types`, `…expression_bodied_methods`), applied by `dotnet format` |
+| XAML bindings the inspection could not resolve | 35 | every item template names its `DataType`; a binding that reached the page through `DataContext.ViewModel` with `AncestorType=Page` names the page's type and its `ViewModel` — the same object at run time, and now navigable in the editor (`ViewerModeTests` pins the new text) |
+| Left over in the code | 12 | `LogsViewModel`'s unread `_strip` field and `PipeServer.Client`'s unread `_run`; two initialisers a constructor overwrote; `GameFileProbe.UnityDataFile`'s unused parameter; `SpokenTextAutomationPeer` no longer assumes `GetNameCore` returns a string; a redundant setter and two grid positions in XAML; a `$` on a string with no hole; `!Any(==)` as `All(!=)`; a `foreach` variable's type |
+| In the tests | 14 | unused variables, lambda parameters and an accessor; a linear `Contains` on a set; three simplifications |
+
+The rest was settled by the settings above — 2,050 of it the one inspection the project had already made a
+suggestion. A suggestion to use `m[^1]` inside an expression tree was wrong (CS8790) and its inspection is off.
+
+**The runs (PR #373).** 42842741359 — the template's shape, no settings: 3,679 problems, the job green (no gate yet).
+42847369329 — the settings and the gate, none of the fixes: 409 problems, every one in an inspection left on, the job
+red; so `.editorconfig`'s keys are read in the container as they are on Windows, and the 3,270 others were the
+settings'. A job takes about ten minutes.
+
+**Named by the "never used" group and left as it is (2026-11-10).** Nothing in the solution, its tests included, uses
+these; whether each is vocabulary, a piece not wired yet, or dead is the owner's to say, so none was removed:
+`AtomicFileWrite` (the class and `PublishAsync`), `ExecutableMarkerScan` and `IExecutableMarkerScan.Scan`,
+`FpsPresentation.GeneratedLine`, `IPageNavigator.GoBack`, `OperatorDisclosure.VersionOf` and `ProvenanceOf`,
+`CrashReporterCatalog.AlwaysOn`, `ProcessWatcher.Tracked`, `LedgerWalCheckpoint.Complete`,
+`LhmTelemetryOptions.EnableCpuAndMemory`, `MeasuredFacts.StreamlineNoneWithheldFrom`, `ILegalAcceptanceStore.ListAsync`
+and `ITelemetryPoller.Dropped` (only their implementations are called), `DocumentBrowser.PageChanged` and
+`UrlOpener`'s getter, the charts' `PercentilePlot`, `NoteText` and `TempsPlotView`, `GameDetailViewModel`'s
+`TrendEmptyText`, `LatencyHeader` and `SensorsEmptyText`, `GamesViewModel.SortLabel`, `TriStateChipModel.IsNo`,
+`AboutWindow`'s `AppTab` and `ThirdPartyTab`, `NvapiNgxWords.Degraded`, `IpcMessages`' `TelemetryUnavailable` and
+`DbWriteFailed`, `IpcProtocol.Keepalive`, `ShmLayout.GuardTickDeadlineMs`, `HarnessOverlayLogSweep.Own`; and the
+getters of 49 auto-properties, among them view-model texts no page binds and columns of stored rows. The list is
+`UnusedMember.Global` and its siblings in run 42842741359's report.
+
+**Running it on a developer's PC.** The same InspectCode is a .NET tool:
+`dotnet tool install JetBrains.ReSharper.GlobalTools --version 2026.2.3.1 --tool-path <somewhere>`, then, after
+`dotnet build FrameLedger.slnx -c Release`:
+`jb inspectcode FrameLedger.slnx --no-build --format=Sarif --output=<file> --caches-home=<folder> --properties:Configuration=Release --toolset-path="C:\Program Files\dotnet\sdk\<10.0.x>\MSBuild.dll" --dotnetcore="C:\Program Files\dotnet\dotnet.exe"`.
+Two things measured on the owner's PC: without `--toolset-path` it picked Visual Studio 18 Insiders' MSBuild, which
+crashed at start ("No files to inspect were found"); and a `--caches-home` a failed run had written left one project
+unloaded on the next (2,875 false compile errors, all in `Infrastructure.Tests`) — a fresh folder loaded all thirteen.
+A clean run there reports what the container does, to within a handful of findings that differ between Windows and
+Linux (3,679 in the container, the same inspections on Windows with counts a few apart).
+
+**What it does not cover, and what would change it.** No C++ (above); no `alpha`; no pull request from a fork or from
+Dependabot; no quick-fixes, coverage or licence audit (Ultimate). **If the organisation gets an Ultimate licence** —
+JetBrains has a programme for open-source projects — Qodana for .NET runs natively on Windows: `linter: qodana-dotnet` in
+`qodana.yaml`, `runs-on: windows-latest`, `args: --within-docker false`, .NET set up from `global.json` first, and
+`EnableWindowsTargeting` dropped. Until then the trial's end changes nothing here: the token only names the project
+the report is sent to.
+
 ## Dependabot (`.github/dependabot.yml`) and the NuGet audit
 
 ```yaml
@@ -544,7 +676,7 @@ Central package management makes Dependabot PRs single-file diffs.
 
 **In the tree — done:**
 
-- [x] Repo-local `ci.yml`, `codeql.yml`, `release.yml`, `rules-publish.yml` (all four repo-local by decision, §Workflows); ~~caller stubs pointing at `poli0981/.github`~~ — never the design, see the first paragraph *(and `wiki.yml` since beta.17, repo-local too: five)*
+- [x] Repo-local `ci.yml`, `codeql.yml`, `release.yml`, `rules-publish.yml` (all four repo-local by decision, §Workflows); ~~caller stubs pointing at `poli0981/.github`~~ — never the design, see the first paragraph *(and `wiki.yml` since beta.17, repo-local too: five; and `qodana.yml` since 2026-11-10, D93: six)*
 - [x] Issue forms `bug_report.yml`, `feature_request.yml`, `safety_gap.yml`; `ISSUE_TEMPLATE/config.yml` pointing a vulnerability at private reporting; PR template referencing CLAUDE.md's definition of done *(and since 2026-11-09, beta.35, D88: `accessibility.yml`, the form `ACCESSIBILITY.md` sends a barrier to, and the PR template's user-interface section)*
 - [x] The labels the forms apply exist *(2026-11-09: `accessibility`, and `safety` and `priority-high`, which `safety_gap.yml` had named since it was written (2026-08-02) while the repository had neither — GitHub applies only a label that exists, so no Safety gap report was ever labelled)*
 - [x] `ACCESSIBILITY.md` — the accessibility statement: WCAG 2.2 AA through WCAG2ICT as a goal, never a claim; how a barrier is reported and handled (2026-11-09, D88)

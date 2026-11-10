@@ -23,7 +23,7 @@ public sealed class SpokenTextAutomationPeer(FrameworkElement owner, Func<string
 
     protected override string GetNameCore()
     {
-        string own = base.GetNameCore();
+        string own = base.GetNameCore() ?? string.Empty;
         return own.Length > 0 ? own : name() ?? string.Empty;
     }
 

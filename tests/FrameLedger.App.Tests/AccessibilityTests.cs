@@ -182,7 +182,7 @@ public sealed class AccessibilityTests
                     continue;
                 }
 
-                Type? control = typeof(Wpf.Ui.Controls.Image).Assembly.GetType("Wpf.Ui.Controls." + match.Groups["type"].Value);
+                Type? control = typeof(Image).Assembly.GetType("Wpf.Ui.Controls." + match.Groups["type"].Value);
                 bool templated = control is not null && typeof(System.Windows.Controls.Control).IsAssignableFrom(control);
                 bool bringsTemplate = style.Elements().Any(static s => string.Equals((string?)s.Attribute("Property"), "Template", StringComparison.Ordinal));
                 if (templated && !bringsTemplate)

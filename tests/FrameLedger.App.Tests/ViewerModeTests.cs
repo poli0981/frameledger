@@ -11,7 +11,6 @@ using FrameLedger.Shared.Ipc;
 using FrameLedger.Shared.Safety;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Xunit;
 
 namespace FrameLedger.App.Tests;
 
@@ -133,13 +132,13 @@ public sealed class ViewerModeTests
     [Fact]
     public void EveryPlayOnTheLibraryIsOffInAViewer()
     {
-        const string Through = ", RelativeSource={RelativeSource AncestorType=Page}}";
+        const string Through = ", RelativeSource={RelativeSource AncestorType={x:Type pages:GamesPage}}}";
         XDocument xaml = AccessibilityTests.AppXaml().Single(static x => string.Equals(x.File, Path.Combine("Pages", "GamesPage.xaml"), StringComparison.Ordinal)).Xaml;
 
-        List<XElement> plays = [.. xaml.Descendants().Where(static e => string.Equals((string?)e.Attribute("Command"), "{Binding DataContext.ViewModel.PlayCommand" + Through, StringComparison.Ordinal))];
+        List<XElement> plays = [.. xaml.Descendants().Where(static e => string.Equals((string?)e.Attribute("Command"), "{Binding ViewModel.PlayCommand" + Through, StringComparison.Ordinal))];
 
         plays.Should().HaveCount(2, "the card's and the row's");
-        plays.Should().AllSatisfy(static e => ((string?)e.Attribute("IsEnabled")).Should().Be("{Binding DataContext.ViewModel.ActsOnThisPc" + Through));
+        plays.Should().AllSatisfy(static e => ((string?)e.Attribute("IsEnabled")).Should().Be("{Binding ViewModel.ActsOnThisPc" + Through));
     }
 
     /// <summary>
@@ -163,7 +162,7 @@ public sealed class ViewerModeTests
         XDocument xaml = AccessibilityTests.AppXaml().Single(static x => string.Equals(x.File, Path.Combine("Pages", "SettingsPage.xaml"), StringComparison.Ordinal)).Xaml;
 
         List<string> live = [.. controls
-            .Select(c => (Key: c.Key, Control: xaml.Descendants().Single(e => string.Equals((string?)e.Attribute(c.Value.Attribute), "{Binding ViewModel." + c.Value.Binding + "}", StringComparison.Ordinal))))
+            .Select(c => (c.Key, Control: xaml.Descendants().Single(e => string.Equals((string?)e.Attribute(c.Value.Attribute), "{Binding ViewModel." + c.Value.Binding + "}", StringComparison.Ordinal))))
             .Where(static c => !string.Equals((string?)c.Control.Attribute("IsEnabled"), "{Binding ViewModel.ActsOnThisPc}", StringComparison.Ordinal))
             .Select(static c => c.Key)];
 

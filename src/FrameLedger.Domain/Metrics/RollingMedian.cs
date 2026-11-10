@@ -34,7 +34,7 @@ public static class RollingMedian
         }
 
         int maxHalf = (window - 1) / 2;
-        var result = new double[n];
+        double[] result = new double[n];
         double[] scratch = new double[window];
         for (int i = 0; i < n; i++)
         {

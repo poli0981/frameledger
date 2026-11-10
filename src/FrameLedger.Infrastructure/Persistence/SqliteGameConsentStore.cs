@@ -220,7 +220,7 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
                 var p = new
                 {
                     path = fp.ExePath,
-                    name = System.IO.Path.GetFileNameWithoutExtension(fp.ExePath),
+                    name = Path.GetFileNameWithoutExtension(fp.ExePath),
                     size = fp.SizeBytes,
                     mtime = fp.MtimeUnixMs,
                     at,
@@ -289,7 +289,7 @@ public sealed class SqliteGameConsentStore : IGameConsentStore
                 var p = new
                 {
                     path = fingerprint.ExePath,
-                    name = System.IO.Path.GetFileNameWithoutExtension(fingerprint.ExePath),
+                    name = Path.GetFileNameWithoutExtension(fingerprint.ExePath),
                     size = fingerprint.SizeBytes,
                     mtime = fingerprint.MtimeUnixMs,
                     // Forced to 0 on a real block (19_SAFETY); an unverified pre-scan does NOT disable the toggle.

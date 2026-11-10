@@ -186,7 +186,7 @@ public sealed class DatabaseMaintenanceViewModelTests
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
         var agent = new FakeAgentLink
         {
-            Answer = static (type, _) => FakeAgentLink.Envelope(IpcMessageType.SweepRetentionAck, new SweepRetentionAck(20, 4, 9)),
+            Answer = static (_, _) => FakeAgentLink.Envelope(IpcMessageType.SweepRetentionAck, new SweepRetentionAck(20, 4, 9)),
         };
         DatabaseMaintenanceViewModel vm = Vm(s, agent);
 
@@ -218,7 +218,7 @@ public sealed class DatabaseMaintenanceViewModelTests
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
         var agent = new FakeAgentLink
         {
-            Answer = static (type, _) => FakeAgentLink.Envelope(IpcMessageType.StatusAck, new StatusAck("capturing", null, 1, [])),
+            Answer = static (_, _) => FakeAgentLink.Envelope(IpcMessageType.StatusAck, new StatusAck("capturing", null, 1, [])),
         };
         DatabaseMaintenanceViewModel vm = Vm(s, agent);
 

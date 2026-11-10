@@ -19,7 +19,7 @@ public sealed class CaptureNotesTests
         (n.End, n.GuardReason, n.GuardFamily, n.GuardSignal).Should().Be(("RefusedByGuard", "BlockedModule", "Easy Anti-Cheat", "EasyAntiCheat_EOS.dll"));
 
         CaptureNotes familyless = CaptureNotes.Parse("end=RefusedByGuard; guard=ProcessUnreadable||Access is denied, twice");
-        (familyless.GuardReason, familyless.GuardFamily, familyless.GuardSignal).Should().Be(("ProcessUnreadable", (string?)null, "Access is denied, twice"));
+        (familyless.GuardReason, familyless.GuardFamily, familyless.GuardSignal).Should().Be(("ProcessUnreadable", null, "Access is denied, twice"));
 
         CaptureNotes blocked = CaptureNotes.Parse("end=RefusedHookNotEnabled; guard=PreviouslyBlocked||AntiCheatDirectory|Easy Anti-Cheat|EasyAntiCheat");
         blocked.GuardSignal.Should().Be("AntiCheatDirectory|Easy Anti-Cheat|EasyAntiCheat", "the signal is the last slot and keeps its own bars");
@@ -30,9 +30,9 @@ public sealed class CaptureNotesTests
     {
         // beta.14: the reporter that made the session crashed, and one that was only seen.
         CaptureNotes counted = CaptureNotes.Parse("end=TargetExited; exit_code=3; crash_reporter=CrashReportClient.exe");
-        (counted.CrashReporter, counted.CrashReporterSeen).Should().Be(("CrashReportClient.exe", (string?)null));
+        (counted.CrashReporter, counted.CrashReporterSeen).Should().Be(("CrashReportClient.exe", null));
         CaptureNotes seen = CaptureNotes.Parse("end=TargetExited; exit_code=0; crash_reporter_seen=CrashReporter.exe");
-        (seen.CrashReporter, seen.CrashReporterSeen).Should().Be(((string?)null, "CrashReporter.exe"));
+        (seen.CrashReporter, seen.CrashReporterSeen).Should().Be((null, "CrashReporter.exe"));
     }
 
     [Fact]
@@ -49,7 +49,7 @@ public sealed class CaptureNotesTests
     {
         CaptureNotes.GuardSlot("PreScanFailed", null, "could not list; access denied").Should().Be("guard=PreScanFailed||could not list, access denied");
         CaptureNotes round = CaptureNotes.Parse("end=RefusedByGuard; " + CaptureNotes.GuardSlot("PreScanFailed", "", "could not list; access denied"));
-        (round.GuardReason, round.GuardFamily, round.GuardSignal).Should().Be(("PreScanFailed", (string?)null, "could not list, access denied"));
+        (round.GuardReason, round.GuardFamily, round.GuardSignal).Should().Be(("PreScanFailed", null, "could not list, access denied"));
     }
 
     /// <summary>
@@ -60,14 +60,14 @@ public sealed class CaptureNotesTests
     public void ARowFromBeforeReadsTheSecondPartAsTheSignalUnlessTheReasonNamesAFamily()
     {
         CaptureNotes unreadable = CaptureNotes.Parse("end=RefusedByGuard; tier2: attach=NotEvaluated; guard=ProcessUnreadable/Access is denied");
-        (unreadable.GuardReason, unreadable.GuardFamily, unreadable.GuardSignal).Should().Be(("ProcessUnreadable", (string?)null, "Access is denied"),
+        (unreadable.GuardReason, unreadable.GuardFamily, unreadable.GuardSignal).Should().Be(("ProcessUnreadable", null, "Access is denied"),
             "until beta.8 this read as a family called 'Access is denied'");
 
         CaptureNotes bare = CaptureNotes.Parse("end=RefusedHookNotEnabled; tier2: attach=NotEvaluated; guard=HookNotEnabled/not enabled");
-        (bare.GuardFamily, bare.GuardSignal).Should().Be(("not enabled", (string?)null), "the gate's own label sits in the family slot");
+        (bare.GuardFamily, bare.GuardSignal).Should().Be(("not enabled", null), "the gate's own label sits in the family slot");
 
         CaptureNotes finding = CaptureNotes.Parse("end=RefusedByGuard; guard=BlockedDriver/Riot Vanguard");
-        (finding.GuardFamily, finding.GuardSignal).Should().Be(("Riot Vanguard", (string?)null));
+        (finding.GuardFamily, finding.GuardSignal).Should().Be(("Riot Vanguard", null));
 
         CaptureNotes path = CaptureNotes.Parse("end=SafetyUnhook; guard=AntiCheatFile/BattlEye/C:/Games/BEService/BEService.exe");
         path.GuardSignal.Should().Be("C:/Games/BEService/BEService.exe", "only the first two slashes split");
@@ -85,6 +85,6 @@ public sealed class CaptureNotesTests
         (n.ExitCode, n.CrashEvent).Should().Be((-1073741819, true));
 
         CaptureNotes launch = CaptureNotes.Parse("end=LaunchCannotStart; launch_error=740");
-        (launch.LaunchError, launch.ExitCode, launch.CrashEvent).Should().Be((740, (int?)null, false));
+        (launch.LaunchError, launch.ExitCode, launch.CrashEvent).Should().Be((740, null, false));
     }
 }

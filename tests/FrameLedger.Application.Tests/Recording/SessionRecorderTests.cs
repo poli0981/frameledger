@@ -517,7 +517,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         entry = FindEntry(h, r.SessionGuid);
 
         entry.Should().NotBeNull();
-        entry!.Notes.Select(n => n.Text).Should().ContainInOrder("started Attach", $"attached pid={_pid} layout=0 build=", "ended Running", "finalizing Normal");
+        entry.Notes.Select(n => n.Text).Should().ContainInOrder("started Attach", $"attached pid={_pid} layout=0 build=", "ended Running", "finalizing Normal");
         entry.Ticks.Should().BeGreaterThan(1, "a 10 s interval against a clock stepping 5 s per drain flushes several times");
         entry.Records.Should().HaveCount(3_000, "the final forced flush wrote everything");
         entry.Sensors.Should().NotBeEmpty();
@@ -525,7 +525,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
     }
 
     private static FakePartialSessionStore.Entry? FindEntry(Harness h, Guid guid) =>
-        h.Partials.Created.TryGetValue(guid, out FakePartialSessionStore.Entry? e) ? e : null;
+        h.Partials.Created.GetValueOrDefault(guid);
 
     [Fact]
     public async Task ARefusedSessionIsATierTwoRowWithTheReasonAndNothingInjected()

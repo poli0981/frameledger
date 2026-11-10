@@ -122,8 +122,5 @@ public sealed class GameConsentRecordTests
     }
 
     [Fact]
-    public void PathComparisonIsCaseInsensitiveBecauseWindowsPathsAre()
-    {
-        Fingerprint().Matches(Fingerprint(@"c:\games\title\GAME.EXE")).Should().BeTrue();
-    }
+    public void PathComparisonIsCaseInsensitiveBecauseWindowsPathsAre() => Fingerprint().Matches(Fingerprint(@"c:\games\title\GAME.EXE")).Should().BeTrue();
 }

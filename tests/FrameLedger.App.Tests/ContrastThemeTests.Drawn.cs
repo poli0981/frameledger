@@ -125,10 +125,10 @@ public sealed partial class ContrastThemeTests
     {
         var facts = await PagesLoadTests.OnStaAsync(() =>
         {
-            static (Color Face, Color Text) Drawn(Wpf.Ui.Controls.Button b) => (((SolidColorBrush)b.Background).Color, ((SolidColorBrush)b.Foreground).Color);
-            (Color Face, Color Text) Under(ApplicationTheme theme, Func<Wpf.Ui.Controls.Button, (Color, Color)> read) => Visuals.UnderTheme(theme, () =>
+            static (Color Face, Color Text) Drawn(Button b) => (((SolidColorBrush)b.Background).Color, ((SolidColorBrush)b.Foreground).Color);
+            (Color Face, Color Text) Under(ApplicationTheme theme, Func<Button, (Color, Color)> read) => Visuals.UnderTheme(theme, () =>
             {
-                var button = new Wpf.Ui.Controls.Button { Content = "Remove…", Appearance = ControlAppearance.Danger };
+                var button = new Button { Content = "Remove…", Appearance = ControlAppearance.Danger };
                 var host = new FluentWindow { Content = button, Width = 200, Height = 120, ShowActivated = false, WindowStartupLocation = WindowStartupLocation.Manual, Left = -10000, Top = -10000 };
                 host.Show();
                 try

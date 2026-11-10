@@ -81,7 +81,7 @@ public sealed class PartialRecoveryEndToEndTests : IDisposable
         byte[] target = await File.ReadAllBytesAsync(ConsentedExecutable, TestContext.Current.CancellationToken).ConfigureAwait(false);
         byte[] harness = await File.ReadAllBytesAsync(Harness, TestContext.Current.CancellationToken).ConfigureAwait(false);
         target.Should().Equal(harness, "this suite injects into nothing but hook-harness, under a run-unique name");
-        ExecutableFingerprint fingerprint = FrameLedger.Infrastructure.Io.ExecutableIdentity.Read(ConsentedExecutable)!.Value;
+        ExecutableFingerprint fingerprint = Infrastructure.Io.ExecutableIdentity.Read(ConsentedExecutable)!.Value;
         Directory.CreateDirectory(_dataDir);
         LedgerDatabase db = await LedgerDatabase.OpenAsync(Ledger, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         await using (db.ConfigureAwait(false))
@@ -261,7 +261,7 @@ public sealed class PartialRecoveryEndToEndTests : IDisposable
                     SessionRow? row = await new SqliteSessionRepository(db)
                         .FindAsync(Guid.ParseExact(guid, "N"), TestContext.Current.CancellationToken).ConfigureAwait(true);
                     row.Should().NotBeNull();
-                    row!.ExitStatus.Should().Be(ExitStatus.Interrupted, "nobody finalized it; the Agent died");
+                    row.ExitStatus.Should().Be(ExitStatus.Interrupted, "nobody finalized it; the Agent died");
                     row.DurationSeconds.Should().BeGreaterThanOrEqualTo(30, "shorter than that and recovery would DISCARD it, correctly");
                     row.Tier.Should().Be(CaptureTier.Hooked);
                     row.FrameCount.Should().Be(recordsOnDisk, "the prefix IS the session");

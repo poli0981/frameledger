@@ -501,6 +501,7 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D90 | [`08_UI.md`](08_UI.md) §Screen readers | page titles heading 1, section titles heading 2; every chart named with where its numbers are; no series told apart by colour alone |
 | D91 | [`08_UI.md`](08_UI.md) §Contrast | Windows contrast themes are followed, whatever Settings ▸ Theme says |
 | D92 | [`HANDOFF.md`](HANDOFF.md) §START HERE | beta.35 in this train, no alpha; alpha.4 is the move to .NET 11's release (SDK 11.0.100, packages 11.0.0), a task of its own after 2026-11-10 |
+| D93 | [`13_CI_CD.md`](13_CI_CD.md) §Qodana | Qodana Community for .NET from a workflow of its own (the organisation's licence is a 30-day trial, so not the Rider linter): a gate of zero problems, advisory; an inspection is switched off only in `.editorconfig`, with its reason |
 
 ---
 

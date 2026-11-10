@@ -163,7 +163,7 @@ public sealed partial class CompareViewModel : ObservableObject
             Games.Add(game);
         }
 
-        if (!Games.Any(g => g.Value == GameFilter))
+        if (Games.All(g => g.Value != GameFilter))
         {
             GameFilter = 0;
         }
@@ -234,7 +234,7 @@ public sealed partial class CompareViewModel : ObservableObject
                 return;
             }
 
-            await Task.Run(() => Charts.ChartTheme.SavePng(plot, path, 1600, 800)).ConfigureAwait(true);
+            await Task.Run(() => ChartTheme.SavePng(plot, path, 1600, 800)).ConfigureAwait(true);
             _strip.Success(Strings.Compare_Header, string.Format(CultureInfo.CurrentCulture, Strings.Summary_Exported_Format, path));
         });
     }

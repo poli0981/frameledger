@@ -13,7 +13,7 @@ public static class RenderResCodec
     {
         ArgumentNullException.ThrowIfNull(frames);
 
-        var flat = new ushort[frames.Count * 4];
+        ushort[] flat = new ushort[frames.Count * 4];
         for (int i = 0; i < frames.Count; i++)
         {
             flat[i * 4] = frames[i].RenderW;

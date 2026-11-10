@@ -317,7 +317,7 @@ public sealed partial class SettingsViewModel : ObservableObject
     public string UpdateChannelBody => _line.IsAlpha ? Strings.Settings_UpdateChannel_AlphaBody : Strings.Settings_UpdateChannel_Body;
 
     /// <summary>A pending load or write, for a test to await; the UI does not.</summary>
-    public Task Pending { get; private set; } = Task.CompletedTask;
+    public Task Pending { get; private set; }
 
     /// <summary>Re-reads the hook-enabled list and the Agent's facts (a revoke elsewhere, a reconnect).</summary>
     public Task RefreshAsync() => Pending = RefreshCoreAsync();
@@ -617,7 +617,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(HasHookedGames));
         _sessionTotal = cards.Sum(static c => c.Summary?.SessionCount ?? 0);
 
-        Shared.Ipc.HelloAck? hello = _agent.Hello;
+        HelloAck? hello = _agent.Hello;
         ElevationText = ElevationTextOf(_agent.State, hello);
         MaintenanceSnapshot = await _maintenance.ReadAsync().ConfigureAwait(true);
         OnPropertyChanged(nameof(CanRegisterLayer));

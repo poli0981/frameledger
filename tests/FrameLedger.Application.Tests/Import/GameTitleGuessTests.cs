@@ -16,10 +16,7 @@ public sealed class GameTitleGuessTests
     [InlineData(@"D:\another\it\996IR version 1.2.2 (Windows)\996ir\Game.exe", "996ir")]
     [InlineData(@"C:\Games\Some Title\bin\x64\launcher.exe", "Some Title")]
     [InlineData(@"C:\Game.exe", "Game")]
-    public void AGenericExecutableIsNamedByTheNearestFolderThatIsNotARuntimeFolder(string exe, string expected)
-    {
-        GameTitleGuess.Guess(exe).Should().Be(expected);
-    }
+    public void AGenericExecutableIsNamedByTheNearestFolderThatIsNotARuntimeFolder(string exe, string expected) => GameTitleGuess.Guess(exe).Should().Be(expected);
 
     [Fact]
     public void TheEngineTitleWinsForAGenericNameAndIsNotAskedForOne()

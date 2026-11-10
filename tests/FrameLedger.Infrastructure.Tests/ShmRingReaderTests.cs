@@ -116,7 +116,7 @@ public sealed class ShmRingReaderTests
         }
 
         var buffer = new FlFrameRecord[16];
-        DrainResult r = reader!.Drain(buffer);
+        DrainResult r = reader.Drain(buffer);
 
         r.Copied.Should().Be(5);
         r.Gaps.Should().Be(0);

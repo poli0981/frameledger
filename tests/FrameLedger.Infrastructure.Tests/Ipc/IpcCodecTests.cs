@@ -60,7 +60,7 @@ public sealed class IpcCodecTests
                                 + "\"vulkanLayerRegistered\":false,\"cpuTempAvailable\":false,\"gpuName\":\"future\"}}";
         HelloAck? ack = IpcCodec.Payload<HelloAck>(IpcCodec.Decode(Encoding.UTF8.GetBytes(newerAck)));
         ack.Should().NotBeNull();
-        ack!.AgentVersion.Should().Be("9.9");
+        ack.AgentVersion.Should().Be("9.9");
         ack.OverlayBuildId.Should().BeNull("absent is null");
 
         // A newer client adds a field: the older Agent must still read the request.

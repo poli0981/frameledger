@@ -437,7 +437,7 @@ public sealed class LedgerDatabaseTests
         {
             await c14.OpenAsync(Ct).ConfigureAwait(true);
             await RewindToAsync(c14, 14).ConfigureAwait(true);
-            foreach ((string exe, string engine, string version, string? provenance) in new (string, string, string, string?)[]
+            foreach ((string exe, string engine, string version, string? provenance) in new[]
             {
                 (@"C:\a\A-Win64-Shipping.exe", "unreal", "5", "{\"engine\":\"detected\",\"engine_version\":\"detected\"}"),
                 (@"C:\b\B-Win64-Shipping.exe", "unreal", "4", "{\"engine_version\":\"user\"}"),
@@ -587,7 +587,7 @@ public sealed class LedgerDatabaseTests
             (string? Machine, string? File, string? Product, string? Libraries) facts = await migrated.ReadAsync((c, ct) =>
                 c.QuerySingleAsync<(string?, string?, string?, string?)>(new CommandDefinition(
                     "SELECT exe_machine, exe_file_version, exe_product_version, library_versions FROM games", cancellationToken: ct)), Ct).ConfigureAwait(true);
-            facts.Should().Be(((string?)null, (string?)null, (string?)null, (string?)null));
+            facts.Should().Be((null, null, null, null));
         }
     }
 
@@ -620,7 +620,7 @@ public sealed class LedgerDatabaseTests
             (string? Rules, long? Size, long? Mtime) key = await migrated.ReadAsync((c, ct) => c.QuerySingleAsync<(string?, long?, long?)>(
                 new CommandDefinition("SELECT hook_prescan_rules_version, hook_prescan_exe_size_bytes, hook_prescan_exe_mtime_ms FROM games",
                     cancellationToken: ct)), Ct).ConfigureAwait(true);
-            key.Should().Be(((string?)null, (long?)null, (long?)null));
+            key.Should().Be((null, null, null));
         }
     }
 
@@ -667,7 +667,7 @@ public sealed class LedgerDatabaseTests
         using var reader = new StreamReader(script);
         string text = reader.ReadToEnd();
         string list = text[text.IndexOf("store_id IN", StringComparison.Ordinal)..];
-        List<string> ids = [.. System.Text.RegularExpressions.Regex.Matches(list, @"'(?<id>\d+)'", System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(1))
+        List<string> ids = [.. Regex.Matches(list, @"'(?<id>\d+)'", RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(1))
             .Select(static m => m.Groups["id"].Value)];
 
         ids.Should().NotBeEmpty().And.OnlyHaveUniqueItems().And.Contain("388080", "Borderless Gaming, the owner's case");

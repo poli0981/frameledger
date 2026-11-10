@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
-using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using FluentAssertions;
@@ -83,7 +82,7 @@ public sealed class ColorMathTests
                 Color tinted = ArtTint.BandColour(band, dominant)!.Value;
                 foreach ((string text, string? fill, double floor) in new[]
                 {
-                    ("TextFillColorPrimary", (string?)null, 4.5), ("TextFillColorSecondary", null, 4.5), ("TextFillColorTertiary", null, 3.0),
+                    ("TextFillColorPrimary", null, 4.5), ("TextFillColorSecondary", null, 4.5), ("TextFillColorTertiary", null, 3.0),
                     ("TextFillColorSecondary", "ControlFillColorDefault", 4.5), ("TextFillColorPrimary", "SystemFillColorCautionBackground", 4.5),
                 })
                 {

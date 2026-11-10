@@ -3,7 +3,6 @@
 
 using System.Globalization;
 using System.IO;
-using System.Text;
 using System.Text.Json;
 using FrameLedger.App.Charts;
 using FrameLedger.Application.Persistence;

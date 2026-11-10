@@ -235,14 +235,14 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
     {
         byte[]? ack = await handler.HandleAsync(IpcCodec.Decode(IpcCodec.Encode(type, "1", payload)), Ct).ConfigureAwait(false);
         ack.Should().NotBeNull($"{type} is a command");
-        return IpcCodec.Decode(ack!);
+        return IpcCodec.Decode(ack);
     }
 
     private static async Task<IpcEnvelope> AskAsync(AgentCommandHandler handler, string type)
     {
         byte[]? ack = await handler.HandleAsync(IpcCodec.Decode(IpcCodec.Encode(type, "1")), Ct).ConfigureAwait(false);
         ack.Should().NotBeNull($"{type} is a command");
-        return IpcCodec.Decode(ack!);
+        return IpcCodec.Decode(ack);
     }
 
     [Fact]
@@ -325,11 +325,11 @@ public sealed class AgentCommandHandlerTests : IAsyncDisposable
 
         ack.Type.Should().Be(IpcMessageType.Refused);
         RefusedAck refused = IpcCodec.Payload<RefusedAck>(ack)!;
-        (refused.Reason, refused.Family, refused.Signal).Should().Be((AgentCommandHandler.NotX64Reason, (string?)null, ExecutableArchitecture.X86));
+        (refused.Reason, refused.Family, refused.Signal).Should().Be((AgentCommandHandler.NotX64Reason, null, ExecutableArchitecture.X86));
         x86.Read.Should().ContainSingle().Which.Should().Be(_exe);
         h.Guard.Scanned.Should().BeEmpty("nothing is scanned for a process the hook can never enter");
         GameConsentRecord record = await h.Consent.FindAsync(_exe, Ct).ConfigureAwait(true);
-        (record.HookEnabled, record.ConsentedAt, record.BlockedReason).Should().Be((false, (DateTimeOffset?)null, (string?)null),
+        (record.HookEnabled, record.ConsentedAt, record.BlockedReason).Should().Be((false, null, null),
             "nothing is written: this is not a block, and a 64-bit build of the game could be hooked");
 
         Harness x64 = await BuildAsync(consented: false, architecture: new ScriptedArchitecture(ExecutableArchitecture.X64)).ConfigureAwait(true);

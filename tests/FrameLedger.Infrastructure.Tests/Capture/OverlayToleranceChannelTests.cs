@@ -92,7 +92,7 @@ public sealed class OverlayToleranceChannelTests
     [Fact]
     public void TheGuardIsHandedOneTerminatedNameOrNone()
     {
-        NativeAntiCheatGuard.ToleranceBytes("NetEase Yidun").Should().Equal([.. Encoding.UTF8.GetBytes("NetEase Yidun"), (byte)0]);
+        NativeAntiCheatGuard.ToleranceBytes("NetEase Yidun").Should().Equal([.. Encoding.UTF8.GetBytes("NetEase Yidun"), 0]);
         NativeAntiCheatGuard.ToleranceBytes(null).Should().BeNull();
         NativeAntiCheatGuard.ToleranceBytes(" ").Should().BeNull();
         NativeAntiCheatGuard.ToleranceBytes("NetEase Yidun\nEasy Anti-Cheat").Should().BeNull("a newline would name a second family nobody granted");

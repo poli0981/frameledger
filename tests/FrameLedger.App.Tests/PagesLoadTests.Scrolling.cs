@@ -24,7 +24,7 @@ namespace FrameLedger.App.Tests;
 public sealed partial class PagesLoadTests
 {
     /// <summary>A page navigated in WPF UI's presenter and laid out in an area the size of the window's.</summary>
-    private static NavigationViewContentPresenter Navigated(System.Windows.Controls.Page page, double height)
+    private static NavigationViewContentPresenter Navigated(Page page, double height)
     {
         var presenter = new NavigationViewContentPresenter();
         var area = new Grid { Width = 1000, Height = height, Children = { presenter } };
@@ -50,13 +50,13 @@ public sealed partial class PagesLoadTests
     {
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
         var consent = new HookingConsent(new NoAgent(), new NoPrompt());
-        (SettingsViewModel settings, LogsViewModel logs) = await SettingsAndLogsAsync(s, consent, new NoStrip());
+        (SettingsViewModel settings, _) = await SettingsAndLogsAsync(s, consent, new NoStrip());
 
         (bool Wrapped, double Offset) result = await OnStaAsync(() =>
         {
             var page = new SettingsPage(settings, new SystemInfoViewModel(new FixedHardware(), new NoClipboard(), new NoStrip()));
             NavigationViewContentPresenter presenter = Navigated(page, 500);
-            System.Windows.Controls.ScrollViewer root = Visuals.Find<System.Windows.Controls.ScrollViewer>(page)!;
+            ScrollViewer root = Visuals.Find<ScrollViewer>(page)!;
             Wheel(Visuals.Leaf((UIElement)root.Content), -120);
             presenter.UpdateLayout();
             return (presenter.IsDynamicScrollViewerEnabled, root.VerticalOffset);
@@ -114,8 +114,8 @@ public sealed partial class PagesLoadTests
             NavigationViewContentPresenter presenter = Navigated(page, 900);
             int rows = Visuals.FindAll<DataGridRow>(page).Count();
             System.Windows.Controls.DataGrid grid = Visuals.Find<System.Windows.Controls.DataGrid>(page)!;
-            System.Windows.Controls.ScrollViewer gridScroller = Visuals.Find<System.Windows.Controls.ScrollViewer>(grid)!;
-            System.Windows.Controls.ScrollViewer root = Visuals.Find<System.Windows.Controls.ScrollViewer>(page)!;
+            ScrollViewer gridScroller = Visuals.Find<ScrollViewer>(grid)!;
+            ScrollViewer root = Visuals.Find<ScrollViewer>(page)!;
             gridScroller.ScrollToEnd();
             presenter.UpdateLayout();
             double before = root.VerticalOffset;

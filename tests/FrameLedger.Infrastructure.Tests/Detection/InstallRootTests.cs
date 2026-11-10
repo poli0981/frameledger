@@ -38,14 +38,12 @@ public sealed class InstallRootTests
     [InlineData(@"D:\another\epic\AlanWake2\AlanWake2.exe", @"D:\another\epic\AlanWake2")]
     // A trailing `steamapps` is not a boundary — a boundary needs a child.
     [InlineData(@"D:\backup\steamapps\stray.exe", @"D:\backup\steamapps")]
-    public void AnUnrecognisedLayoutKeepsTheExeDirectory(string exe, string expected)
-    {
+    public void AnUnrecognisedLayoutKeepsTheExeDirectory(string exe, string expected) =>
         // Walking up blindly would be worse than staying put: one level above
         // D:\another\epic\AlanWake2 is a folder of unrelated games, and refusing
         // this title because a sibling ships anti-cheat is a false refusal with
         // no appeal.
         InstallRoot.Resolve(exe).Should().Be(expected);
-    }
 
     [Fact]
     public void BothExecutablesOfAnUnrealTitleResolveToTheSameRoot()

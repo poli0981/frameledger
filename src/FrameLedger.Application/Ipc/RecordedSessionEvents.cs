@@ -139,8 +139,8 @@ public static class RecordedSessionEvents
     public static SessionHold HoldOf(CaptureOutcome outcome)
     {
         ArgumentNullException.ThrowIfNull(outcome);
-        Domain.AntiCheat.AntiCheatVerdict v = outcome.Verdict;
-        bool guardSpoke = v.Reason != Domain.AntiCheat.AntiCheatRefusalReason.Allow;
+        AntiCheatVerdict v = outcome.Verdict;
+        bool guardSpoke = v.Reason != AntiCheatRefusalReason.Allow;
         return new SessionHold(
             outcome.Reason.ToString(),
             guardSpoke ? v.Reason.ToString() : null,

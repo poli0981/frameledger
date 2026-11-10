@@ -5,6 +5,7 @@
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 xmlns:services="clr-namespace:FrameLedger.App.Services"
                  xmlns:pages="clr-namespace:FrameLedger.App.Pages"
                  xmlns:res="clr-namespace:FrameLedger.App"
                  Title="{Binding ViewModel.Title}"
@@ -147,7 +148,7 @@
             -->
             <ItemsControl ItemsSource="{Binding ViewModel.Notices.Items}">
                 <ItemsControl.ItemTemplate>
-                    <DataTemplate>
+                    <DataTemplate DataType="{x:Type services:SafetyNotice}">
                         <ui:InfoBar Margin="12,4,12,0"
                                     IsClosable="False"
                                     IsOpen="True"
@@ -156,7 +157,7 @@
                                     Title="{Binding Title}">
                             <ui:Button Appearance="Secondary"
                                        AutomationProperties.HelpText="{Binding AccessibleName}"
-                                       Command="{Binding DataContext.ViewModel.DismissNoticeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                       Command="{Binding ViewModel.DismissNoticeCommand, RelativeSource={RelativeSource AncestorType={x:Type res:MainWindow}}}"
                                        CommandParameter="{Binding}"
                                        Content="{Binding ActionText}" />
                         </ui:InfoBar>

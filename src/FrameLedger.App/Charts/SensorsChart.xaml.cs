@@ -86,7 +86,7 @@ public partial class SensorsChart : UserControl
     public int DrawnSeries { get; private set; }
 
     /// <summary>The temperatures plot, for a test's look at its axes.</summary>
-    public ScottPlot.Plot TempsPlotView => Temps.Plot;
+    public Plot TempsPlotView => Temps.Plot;
 
     public void Show(SessionSeries? series)
     {
@@ -104,7 +104,7 @@ public partial class SensorsChart : UserControl
     /// </summary>
     private void DrawClocks(SessionSeries? series)
     {
-        ScottPlot.Plot plot = Clocks.Plot;
+        Plot plot = Clocks.Plot;
         plot.Clear();
         ChartTheme.Apply(plot);
         plot.XLabel(TimeAxisLabel(series));
@@ -140,7 +140,7 @@ public partial class SensorsChart : UserControl
     }
 
     /// <summary>Shades every run of ticks whose value is 100 (held back) in <paramref name="name"/>; how many spans it drew.</summary>
-    private static int Spans(ScottPlot.Plot plot, SessionSeries series, string name, string label, Color color)
+    private static int Spans(Plot plot, SessionSeries series, string name, string label, Color color)
     {
         SensorSeries? limit = series.Sensors.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.Ordinal));
         if (limit is null)
@@ -203,7 +203,7 @@ public partial class SensorsChart : UserControl
 
     private void DrawTemps(SessionSeries? series)
     {
-        ScottPlot.Plot plot = Temps.Plot;
+        Plot plot = Temps.Plot;
         plot.Clear();
         ChartTheme.Apply(plot);
         plot.XLabel(TimeAxisLabel(series));
@@ -229,7 +229,7 @@ public partial class SensorsChart : UserControl
     /// <summary>One memory plot in GB (MiB stored, 1 GB = 1024 MiB as Task Manager counts it), every line labelled with whose memory it is.</summary>
     private void DrawMemory(WpfPlot view, SessionSeries? series, IReadOnlyList<(string Series, string PaletteKey)> lines)
     {
-        ScottPlot.Plot plot = view.Plot;
+        Plot plot = view.Plot;
         plot.Clear();
         ChartTheme.Apply(plot);
         plot.XLabel(TimeAxisLabel(series));
@@ -268,7 +268,7 @@ public partial class SensorsChart : UserControl
     private static string Label(string series) => SensorStatsTable.Label(series);
 
     /// <summary>Draws one sensor series if the session has it, its values times <paramref name="scale"/>; whether it did.</summary>
-    private bool Line(ScottPlot.Plot plot, SessionSeries series, string name, string label, Color color, IYAxis? axis, double scale = 1.0)
+    private bool Line(Plot plot, SessionSeries series, string name, string label, Color color, IYAxis? axis, double scale = 1.0)
     {
         SensorSeries? sensor = series.Sensors.FirstOrDefault(s => string.Equals(s.Name, name, StringComparison.Ordinal));
         if (sensor is null || sensor.TimesS.Length == 0)

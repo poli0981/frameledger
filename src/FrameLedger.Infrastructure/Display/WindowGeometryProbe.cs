@@ -41,7 +41,7 @@ public sealed class WindowGeometryProbe : IDisplayProbe
     private static readonly DPI_AWARENESS_CONTEXT _perMonitorAwareV2 = new(-4);
 
     /// <inheritdoc />
-    public unsafe WindowView? Observe(IReadOnlyCollection<int> pids, ulong hwnd)
+    public WindowView? Observe(IReadOnlyCollection<int> pids, ulong hwnd)
     {
         ArgumentNullException.ThrowIfNull(pids);
         if (pids.Count == 0)
@@ -94,7 +94,7 @@ public sealed class WindowGeometryProbe : IDisplayProbe
         GCHandle handle = GCHandle.Alloc(search);
         try
         {
-            PInvoke.EnumWindows(&Visit, (LPARAM)GCHandle.ToIntPtr(handle));
+            PInvoke.EnumWindows(&Visit, GCHandle.ToIntPtr(handle));
         }
         finally
         {

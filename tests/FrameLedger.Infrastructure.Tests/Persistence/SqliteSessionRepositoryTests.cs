@@ -207,7 +207,7 @@ public sealed class SqliteSessionRepositoryTests
         back.Upscaler.Should().BeNull();
         back.CaptureNotes.Should().Be("RefusedHookNotEnabled");
         (back.DisplayCoversMs, back.DisplayMinimizedMs, back.DisplayChanges, back.DisplaySource).Should().Be((118_000L, 2_000L, 2L, "window"));
-        (back.DisplayWindowW, back.DisplayBufferW, back.DisplayMonitorHz).Should().Be((1920, (int?)null, (int?)null));
+        (back.DisplayWindowW, back.DisplayBufferW, back.DisplayMonitorHz).Should().Be((1920, null, null));
         (await repo.FindFramesAsync(back.Id, Ct)).Should().BeNull();
     }
 

@@ -122,18 +122,18 @@ public sealed class SessionExporterTests
     [Fact]
     public async Task TheDisplayHeaderLineIsTheStoredMillisecondsByName()
     {
-        CultureInfo? previous = CultureInfo.CurrentCulture;
+        CultureInfo previous = CultureInfo.CurrentCulture;
         CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("vi-VN");
         try
         {
             await using ScratchLedger s = await ScratchLedger.OpenAsync();
             GameRow game = await s.GameAsync("Alpha");
-            long id = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow, display: new FrameLedger.Domain.Display.DisplaySummary
+            long id = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow, display: new Domain.Display.DisplaySummary
             {
                 ExclusiveMs = 1_500,
                 BorderlessMs = 60_000,
                 Changes = 2,
-                Source = FrameLedger.Domain.Display.DisplaySource.SwapChain,
+                Source = Domain.Display.DisplaySource.SwapChain,
                 WindowWidth = 2560,
                 WindowHeight = 1440,
                 BufferWidth = 2560,

@@ -425,7 +425,7 @@ public sealed class SessionSummaryViewModelTests
             line.Should().Contain("nvngx_dlss.dll 310.2.1.0 (the game ships 3.7.10.0: another copy was loaded");
             line.Should().Contain("sl.interposer.dll 2,8,0,0").And.NotContain("sl.interposer.dll 2,8,0,0 (", "the same four numbers");
             line.Should().Contain("ffx_fsr3_x64.dll " + Strings.Common_NotAvailable, "a module with no version resource");
-            line!.IndexOf("ffx_fsr3", StringComparison.Ordinal).Should().BeLessThan(line.IndexOf("nvngx", StringComparison.Ordinal), "sorted by name");
+            line.IndexOf("ffx_fsr3", StringComparison.Ordinal).Should().BeLessThan(line.IndexOf("nvngx", StringComparison.Ordinal), "sorted by name");
             SessionSummaryViewModel.LoadedLibraries(null, shipped).Should().BeNull();
             SessionSummaryViewModel.LoadedLibraries("{}", shipped).Should().BeNull();
             SessionSummaryViewModel.LoadedLibraries("not json", shipped).Should().BeNull();
@@ -450,13 +450,13 @@ public sealed class SessionSummaryViewModelTests
         {
             await using ScratchLedger s = await ScratchLedger.OpenAsync();
             GameRow game = await s.GameAsync("Alpha");
-            long tier2 = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow, hooked: false, display: new FrameLedger.Domain.Display.DisplaySummary
+            long tier2 = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow, hooked: false, display: new Domain.Display.DisplaySummary
             {
                 CoversMs = 90_000,
                 MinimizedMs = 10_000,
                 NoWindowMs = 5_000,
                 Changes = 1,
-                Source = FrameLedger.Domain.Display.DisplaySource.Window,
+                Source = Domain.Display.DisplaySource.Window,
                 WindowWidth = 1920,
                 WindowHeight = 1080,
                 MonitorWidth = 1920,

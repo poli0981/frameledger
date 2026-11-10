@@ -38,7 +38,7 @@ public sealed class NvapiDriverProfileSourceTests
         IReadOnlyList<uint>? asked = null;
         using var bridge = new FakeNvapiBridge
         {
-            Profile = (path, ids) =>
+            Profile = (_, ids) =>
             {
                 asked = ids;
                 return new NvapiDriverProfile

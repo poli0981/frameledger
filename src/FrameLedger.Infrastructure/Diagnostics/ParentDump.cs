@@ -2,7 +2,6 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.Diagnostics;
-using System.IO;
 using System.Runtime.InteropServices;
 using FrameLedger.Application.Watch;
 using FrameLedger.Infrastructure.Watch;
@@ -94,7 +93,7 @@ public static class ParentDump
     }
 
     /// <summary>Writes a minidump of <paramref name="target"/> — another process — into <paramref name="file"/>.</summary>
-    public static unsafe bool WriteDump(Process target, string file, Action<string> problem)
+    public static bool WriteDump(Process target, string file, Action<string> problem)
     {
         ArgumentNullException.ThrowIfNull(target);
         ArgumentException.ThrowIfNullOrWhiteSpace(file);

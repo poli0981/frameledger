@@ -214,7 +214,7 @@ public sealed class FgMixTests
     public void AWindowThatLastsNoTimeMakesNoRow()
     {
         List<FrameSample> session = Play(60, 2);
-        ulong boundary = session[0].Qpc + (ulong)(60 * Frequency);
+        ulong boundary = session[0].Qpc + (60 * Frequency);
         // One sample opening a new window, and eight at one instant that read none: both last no time.
         session.Add(session[^1] with { Qpc = boundary, FgEvaluations = 1 });
         FgMix lonely = FgMix.From(session, Frequency, noneAllowed: true)!;

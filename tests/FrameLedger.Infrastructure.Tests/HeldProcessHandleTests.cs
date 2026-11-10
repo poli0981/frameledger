@@ -39,7 +39,7 @@ public sealed class HeldProcessHandleTests
             using HeldProcessHandle? held = HeldProcessHandle.TryOpen(p.Id);
 
             held.Should().NotBeNull();
-            held!.HasExited.Should().BeFalse();
+            held.HasExited.Should().BeFalse();
         }
         finally
         {
@@ -64,12 +64,12 @@ public sealed class HeldProcessHandleTests
         await p.WaitForExitAsync(TestContext.Current.CancellationToken);
         p.Dispose();
 
-        for (int i = 0; i < 50 && !held!.HasExited; i++)
+        for (int i = 0; i < 50 && !held.HasExited; i++)
         {
             await Task.Delay(20, TestContext.Current.CancellationToken);
         }
 
-        held!.HasExited.Should().BeTrue();
+        held.HasExited.Should().BeTrue();
 
         Action resolve = () => Process.GetProcessById(pid).Dispose();
         resolve.Should().Throw<ArgumentException>(
@@ -77,9 +77,7 @@ public sealed class HeldProcessHandleTests
     }
 
     [Fact]
-    public void APidThatIsNotThereCannotBeOpened()
-    {
+    public void APidThatIsNotThereCannotBeOpened() =>
         // The refusal the capture loop turns into TargetCannotBePinned rather than proceeding to inject.
         HeldProcessHandle.TryOpen(0x7FFFFFFE).Should().BeNull();
-    }
 }

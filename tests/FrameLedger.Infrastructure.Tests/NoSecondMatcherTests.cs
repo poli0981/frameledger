@@ -33,8 +33,8 @@ public sealed class NoSecondMatcherTests
         Assembly[] assemblies =
         [
             typeof(IAntiCheatGuard).Assembly,                       // Application
-            typeof(Domain.AntiCheat.AntiCheatVerdict).Assembly,     // Domain
-            typeof(Infrastructure.AntiCheat.NativeAntiCheatGuard).Assembly,
+            typeof(AntiCheatVerdict).Assembly,     // Domain
+            typeof(AntiCheat.NativeAntiCheatGuard).Assembly,
         ];
 
         foreach (Assembly asm in assemblies)

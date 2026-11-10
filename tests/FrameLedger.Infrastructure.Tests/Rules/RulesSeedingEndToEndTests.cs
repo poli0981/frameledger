@@ -105,13 +105,11 @@ public sealed class RulesSeedingEndToEndTests
     }
 
     [Fact]
-    public void TheStoreWritesWhereTheGUARDReads()
-    {
+    public void TheStoreWritesWhereTheGUARDReads() =>
         // The parameterless store resolves its destination from the guard's own
         // exported path, so a seeder that writes where the gate does not read is
         // impossible by construction rather than by assertion.
         Assert.Equal(NativeAntiCheatGuard.NativeRulesFilePath(), new FileSystemRulesStore().Destination);
-    }
 
     private static string RepoRoot()
     {
@@ -121,6 +119,6 @@ public sealed class RulesSeedingEndToEndTests
             dir = dir.Parent;
         }
         Assert.NotNull(dir);
-        return dir!.FullName;
+        return dir.FullName;
     }
 }

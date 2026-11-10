@@ -75,7 +75,7 @@ internal static class VelopackHooks
                 return true;
             },
             askDeleteData: static () => UninstallHook.AreSeparate(UiPaths.DataDirectory, AppContext.BaseDirectory)
-                ? System.Windows.MessageBox.Show(Strings.Uninstall_DataFolder_Body, Strings.Uninstall_DataFolder_Title, MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes
+                ? MessageBox.Show(Strings.Uninstall_DataFolder_Body, Strings.Uninstall_DataFolder_Title, MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes
                 : throw new InvalidOperationException($"the install ({AppContext.BaseDirectory}) and the data folder ({UiPaths.DataDirectory}) overlap; nothing is deleted"),
             deleteData: static () => Directory.Delete(UiPaths.DataDirectory, recursive: true),
             log: static line => Log("uninstall.log", line));

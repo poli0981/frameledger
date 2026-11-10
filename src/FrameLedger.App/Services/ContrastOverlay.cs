@@ -130,7 +130,7 @@ public static class ContrastOverlay
     // The overlays only: a palette replaced by another is never "off" in between.
     private static void TakeOff(ResourceDictionary resources)
     {
-        foreach (ResourceDictionary overlay in resources.MergedDictionaries.OfType<Overlay>().ToList())
+        foreach (Overlay overlay in resources.MergedDictionaries.OfType<Overlay>().ToList())
         {
             _ = resources.MergedDictionaries.Remove(overlay);
         }

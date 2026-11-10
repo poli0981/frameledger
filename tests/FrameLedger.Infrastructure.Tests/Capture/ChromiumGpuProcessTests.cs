@@ -125,8 +125,5 @@ public sealed class ChromiumGpuProcessTests
     [InlineData("--type=gpu", false)]
     [InlineData("--gpu-process", false)]
     [InlineData("x --type=gpu-processy", false)]
-    public void TheMarkerIsAWholeArgument(string commandLine, bool expected)
-    {
-        ChromiumGpuProcess.HasMarker(commandLine).Should().Be(expected);
-    }
+    public void TheMarkerIsAWholeArgument(string commandLine, bool expected) => ChromiumGpuProcess.HasMarker(commandLine).Should().Be(expected);
 }

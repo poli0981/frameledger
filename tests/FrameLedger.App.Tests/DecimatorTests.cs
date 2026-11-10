@@ -13,8 +13,8 @@ public sealed class DecimatorTests
     public void HalfAMillionPointsKeepTheirExtremesInABoundedOutput()
     {
         const int n = 500_000;
-        var xs = new double[n];
-        var ys = new double[n];
+        double[] xs = new double[n];
+        double[] ys = new double[n];
         for (int i = 0; i < n; i++)
         {
             xs[i] = i / 100.0;

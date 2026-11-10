@@ -16,14 +16,14 @@ public partial class CompareChart : UserControl
         ChartTheme.Attach(Plot);
     }
 
-    public ScottPlot.Plot ScottPlot => Plot.Plot;
+    public Plot ScottPlot => Plot.Plot;
 
     public int DrawnCurves { get; private set; }
 
     public void Show(IReadOnlyList<CompareCurve> curves, string? tierLegend)
     {
         ArgumentNullException.ThrowIfNull(curves);
-        ScottPlot.Plot plot = Plot.Plot;
+        Plot plot = Plot.Plot;
         plot.Clear();
         ChartTheme.Apply(plot);
         plot.XLabel(Strings.Chart_Axis_Percentile);

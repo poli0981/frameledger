@@ -96,7 +96,7 @@ public sealed class ImportLibraryFlowTests : IDisposable
         ImportReport? report = await flow.RunAsync(ct: Ct);
 
         report.Should().NotBeNull();
-        report!.Added.Should().Be(1);
+        report.Added.Should().Be(1);
         review.Shown.Should().ContainSingle().Which.Should().HaveCount(3, "every title the store named reaches the review, importable or not");
         review.Shown[0].Single(static c => string.Equals(c.Game.StoreId, "gone", StringComparison.Ordinal)).CanImport.Should().BeFalse("its executable is not on disk");
         GameRow row = (await s.Games.ListAsync(Ct)).Should().ContainSingle().Subject;

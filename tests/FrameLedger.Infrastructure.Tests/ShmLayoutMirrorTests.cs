@@ -171,13 +171,11 @@ public sealed class ShmLayoutMirrorTests
     }
 
     [Fact]
-    public void TheLayoutVersionMatches()
-    {
+    public void TheLayoutVersionMatches() =>
         // The version the Agent compares against the handshake before attaching. If this drifts, the
         // Agent refuses every session or accepts an incompatible one — and 11_UPDATER makes it a SemVer
         // MAJOR, so it must never move by accident.
         _nativeLayout.Value.GetProperty("layoutVersion").GetUInt32().Should().Be(ShmLayout.LayoutVersion);
-    }
 
     [Fact]
     public void TheRegionOffsetsMatch()
@@ -288,6 +286,6 @@ public sealed class ShmLayoutMirrorTests
         int recordSize = StructOf("FlFrameRecord").GetProperty("size").GetInt32();
         ShmLayout.SizeForCapacity(ShmLayout.DefaultCapacity)
             .Should()
-            .Be(ShmLayout.RingOffset + ((long)ShmLayout.DefaultCapacity * recordSize));
+            .Be(ShmLayout.RingOffset + (ShmLayout.DefaultCapacity * recordSize));
     }
 }

@@ -2,7 +2,6 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using FluentAssertions;
-using FrameLedger.Application.AntiCheat;
 using FrameLedger.Application.Consent;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Tests.Recording;

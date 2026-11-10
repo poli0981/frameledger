@@ -52,7 +52,7 @@ public sealed class PartialRecoveryTests
         outcomes.Should().ContainSingle();
         outcomes[0].Status.Should().Be(RecoveryStatus.Recovered);
         outcomes[0].Detail.Should().Contain("4000 record(s)").And.Contain("truncated");
-        FrameLedger.Application.Persistence.SessionRow row = repo.Stored.Single().Row;
+        Persistence.SessionRow row = repo.Stored.Single().Row;
         row.SessionGuid.Should().Be(guid);
         row.ExitStatus.Should().Be(ExitStatus.Interrupted);
         row.Tier.Should().Be(CaptureTier.Hooked);
@@ -111,7 +111,7 @@ public sealed class PartialRecoveryTests
 
         await recovery.RecoverAsync(TestContext.Current.CancellationToken);
 
-        FrameLedger.Application.Persistence.SessionRow row = repo.Stored.Single().Row;
+        Persistence.SessionRow row = repo.Stored.Single().Row;
         row.Tier.Should().Be(CaptureTier.NotHooked);
         row.EndedAt.Should().Be(SessionFixtures.StartedAt.AddSeconds(44), "the last sensor sample is the only clock a Tier-2 file kept");
         row.FrameCount.Should().Be(0);

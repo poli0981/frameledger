@@ -5,6 +5,7 @@
                  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 xmlns:windows="clr-namespace:FrameLedger.App.Windows"
                  xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
                  xmlns:controls="clr-namespace:FrameLedger.App.Controls"
                  xmlns:charts="clr-namespace:FrameLedger.App.Charts"
@@ -66,7 +67,7 @@
                         <DataTemplate DataType="{x:Type vm:TriStateChipModel}">
                             <!-- FR-8.3: click → the override dialog -->
                             <Button Padding="0" Background="Transparent" BorderThickness="0" AutomationProperties.Name="{Binding AccessibleName}"
-                                    Command="{Binding DataContext.ViewModel.OverrideCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                    Command="{Binding ViewModel.OverrideCommand, RelativeSource={RelativeSource AncestorType={x:Type windows:SessionSummaryWindow}}}"
                                     CommandParameter="{Binding}">
                                 <controls:TriStateChip Model="{Binding}" />
                             </Button>

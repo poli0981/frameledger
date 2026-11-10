@@ -102,7 +102,7 @@ public sealed class AgentEndToEndTests : IDisposable
     private async Task<ConsentWriteOutcome> GrantConsentAsync()
     {
         StageTarget();
-        ExecutableFingerprint fingerprint = FrameLedger.Infrastructure.Io.ExecutableIdentity.Read(ConsentedExecutable)!.Value;
+        ExecutableFingerprint fingerprint = Infrastructure.Io.ExecutableIdentity.Read(ConsentedExecutable)!.Value;
         Directory.CreateDirectory(_dataDir);
         LedgerDatabase db = await LedgerDatabase.OpenAsync(Ledger, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         await using (db.ConfigureAwait(false))
@@ -212,7 +212,7 @@ public sealed class AgentEndToEndTests : IDisposable
                 row.TelemetrySource.Should().Contain("l1", "the Agent composes L1 + L2 + L3 for every session");
                 FrameBlobs? frames = await sessions.FindFramesAsync(row.Id, TestContext.Current.CancellationToken).ConfigureAwait(true);
                 frames.Should().NotBeNull();
-                frames!.SampleCount.Should().Be(row.FrameCount);
+                frames.SampleCount.Should().Be(row.FrameCount);
             }
 
             Directory.EnumerateFiles(Path.Combine(_dataDir, "tmp"), "*.partial").Should().BeEmpty("finalize deletes the .partial");
