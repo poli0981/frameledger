@@ -105,6 +105,16 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 - **And `actions`, since 2026-10-25** (build mode `none`): CodeQL reads `.github/workflows` for injection from event data, untrusted checkouts and over-broad tokens — the class of finding SonarCloud raised once (`githubactions:S7631`, `wiki.yml`, beta.26). Its context, `analyze (actions, none)`, is not one of `main`'s required checks; adding it to them is the owner's setting.
 - **Concurrency, since 2026-10-25:** a new push to a pull request cancels that pull request's run; a push to `main` and the weekly scan each run in a group of their own (the run id), so none is cancelled or left pending, and the default branch's alerts come from a finished analysis.
 - `permissions: security-events: write, contents: read`.
+- **On .NET 11 since beta.37 (D94) — measured on the pull request that moved the line (#376, run 42916491104, CodeQL
+  2.27.4).** CodeQL's documentation lists C# up to 14 and .NET up to 10, and `analyze (csharp, none)`, a required
+  context, had never met `net11.0`. With build mode `none` the extractor reads the source with its own compiler front
+  end and uses a `dotnet` only for references: it found the 11.0.100 SDK `setup-dotnet` had installed and used that (on
+  .NET 10 it downloaded 10.0.100 for itself), restored, and reported 363 resolved references and none unresolved, 9
+  types it could not resolve (main's last run on .NET 10, 42862718138: 23, in three `Windows.Win32` namespaces), and
+  **`CodeQL scanned 1220 out of 1220 C# files`** — main's line, word for word — in 4 min 5 s. The source it read used
+  no C# 15 construct. **What it reads of C# 15 is measured construct by construct before one is used** (D96): a
+  construct in whose file the extractor reports an error is not used on main until CodeQL reads it, and the same holds
+  for Qodana's engine (§Qodana).
 
 ### `qodana.yml` — push to `main`, pull requests into `main`, `workflow_dispatch` · **repo-local, built 2026-11-10 (D93)**
 - One job, `qodana`, on `ubuntu-latest` — the only Linux job in this repository, because the linter is a Linux
@@ -504,7 +514,10 @@ the linter's logs to the run as the `qodana-report` artifact.
 - **Interim since beta.37 (D94, 2026-11-11): the .NET 11 SDK is installed into the container first.** Main builds on
   .NET 11 and the image carries the SDKs 8 to 10, so `qodana.yaml` has the `bootstrap` line JetBrains' page gives for
   an SDK the image lacks — `dotnet-install.sh` with `global.json`, into `/usr/share/dotnet`. It lasts until the
-  Ultimate linter's pull request replaces this job with one on Windows, where `setup-dotnet` does it.
+  Ultimate linter's pull request replaces this job with one on Windows, where `setup-dotnet` does it. Measured on its
+  first run (#376, run 42916491047): the script installed SDK 11.0.100 beside the image's own, InspectCode 2026.2.3.1
+  loaded and inspected all thirteen `net11.0-windows` projects, and it reported one problem — a redundant `!` in the
+  test that pull request added, fixed there. So the 63 keys and the zero held across the move.
 - **Not a fork's pull request, nor Dependabot's:** neither gets the secret or a token that can write the comment.
 - **Caches are saved from `main` only** (`cache-default-branch-only`); a pull request reads them.
 

@@ -27,18 +27,17 @@ public sealed class HostBackgroundFailureTests
 
         // Bounded: a runtime that stopped the host without failing it would complete here, and one that did neither
         // would otherwise hang the suite.
-        InvalidOperationException? thrown = null;
+        string? failure = null;
         try
         {
             await host.RunAsync(Ct).WaitAsync(TimeSpan.FromSeconds(30), Ct);
         }
         catch (InvalidOperationException ex)
         {
-            thrown = ex;
+            failure = ex.Message;
         }
 
-        thrown.Should().NotBeNull("the host stops and fails when a background service throws");
-        thrown!.Message.Should().Be("the watcher broke");
+        failure.Should().Be("the watcher broke", "the host stops and fails when a background service throws");
     }
 
     private sealed class Failing : BackgroundService
