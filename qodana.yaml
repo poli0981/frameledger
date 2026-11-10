@@ -15,3 +15,10 @@ linter: qodana-cdnet
 dotnet:
   solution: FrameLedger.slnx
   configuration: Release
+
+# The gate: no problem at all. What the linter reports is settled where it is found - fixed, or its inspection
+# switched off in .editorconfig with the reason beside it (InspectCode reads its severities there, and so does
+# Rider) - so a count above zero is something new.
+failureConditions:
+  severityThresholds:
+    any: 0
