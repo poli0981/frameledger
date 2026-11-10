@@ -74,6 +74,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.32` | [`handoff/history/0.1.0-beta.32.md`](handoff/history/0.1.0-beta.32.md) |
 | `§beta.33` | [`handoff/history/0.1.0-beta.33.md`](handoff/history/0.1.0-beta.33.md) |
 | `§beta.34` | [`handoff/history/0.1.0-beta.34.md`](handoff/history/0.1.0-beta.34.md) |
+| `§beta.35` | [`handoff/history/0.1.0-beta.35.md`](handoff/history/0.1.0-beta.35.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -81,76 +82,68 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-11-09, 0.1.0-beta.35: accessibility — a statement, what a screen reader is given and told, headings and charts, contrast themes, focus
+## **START HERE** — 2026-11-10, 0.1.0-beta.36: Qodana in CI, and what its first run reported settled
 
-*Status is `docs/changelog/0.1.0-beta.35.md`; this is what no other file carries.* The owner: "Bạn lên plan và thêm
-phiên bản mới (nếu thực sự cần) cho mục accessibility: 1. đọc docs, check, sync và sửa, cập nhật thêm file
-ACCESSIBILITY.md vào đúng vị trí. 2. Check các Accessibility đã có, đề xuất thêm accessibility nếu cần. 3. Đã dùng: bàn
-phím only (tắt chuột) và narrators, không lỗi." — plan accessibility, with a new version if it is really needed: read,
-check, sync and fix the documents and add `ACCESSIBILITY.md` where it belongs; check what exists and propose more; the
-owner had used the keyboard alone, mouse disconnected, and Narrator, with no fault. With opensource.guide's
-accessibility practices and the open-source-accessibility toolkit's `ACCESSIBILITY.md` template (MIT: its structure,
-not its text). #366 (the statement, D88), #367 (names and peers), #368 (announcements, D89), #369 (headings and charts,
-D90), #370 (contrast themes, D91, and three contrast holes outside them), #371 (focus and motion) and this release; no alpha (D92).
+*Status is `docs/changelog/0.1.0-beta.36.md`; this is what no other file carries.* The owner: "Bạn có thể thêm vào,
+trigger Qodana vào CI/CD và sửa lỗi, release (nếu có) với mẫu mà jetbrains cung cấp, có thể tuỳ biến (nếu cần)" — add
+Qodana to CI from the workflow JetBrains gives (the Qodana Scan action on `ubuntu-latest`, `pr-mode: false`,
+`QODANA_TOKEN`), changed where needed, fix what it reports, release if there is something to release; the usual train.
+The owner had made the project on Qodana Cloud and set the `QODANA_TOKEN` secret the same day. #373 (the workflow, the
+settings, the fixes and the documents, D93) and this release; no alpha (D92 stands: alpha.4 is the move to .NET 11's
+release).
 
 **Decisions (asked while planning, do not re-ask):**
 
-- **D88 — the accessibility statement**: `ACCESSIBILITY.md` at the repository's root, in the App under Help ▸
-  Accessibility and on the wiki. WCAG 2.2 at level AA, as W3C's WCAG2ICT applies it to desktop software, is a goal and
-  never a claim; a report is handled by severity, with no promised times; the owner's pass of 2026-11-09 — keyboard only
-  and Narrator, on 0.1.0-beta.34 and 0.1.0-alpha.3, no fault — is its first evidence by hand.
-- **D89 — what appears is said to a screen reader**: UI Automation notifications for a safety notice, the agent's and
-  the update's banners, every snackbar, a game page's notice and Database maintenance's results, only while
-  FrameLedger's window is the active one.
-- **D90 — headings and charts**: a page's title is a heading of level 1, a section's title level 2; every chart is
-  named with where its numbers are written; no chart tells two series apart by colour alone.
-- **D91 — Windows contrast themes are followed**, whatever Settings ▸ Theme says.
-- **D92 — beta.35 in this train and no alpha**; alpha.4 is the move to .NET 11's release (SDK `11.0.100`, packages
-  `11.0.0`), a task of its own after 2026-11-10.
+- **D93 — Qodana Community for .NET, from a workflow of its own.** Asked which licence the Qodana Cloud organisation
+  holds — it decides the linter — the owner answered "Dùng thử 30 ngày", a 30-day trial. So not the Rider-based linter
+  (Ultimate; the job would turn red when the trial ends) but the Community one, which runs under every licence. A gate
+  of zero problems, advisory; `docs/13_CI_CD.md` §Qodana.
 
 **Choices made here:**
 
-- **A contrast theme is the user's colours by role**, not WPF UI's high-contrast files (84 red placeholders among 97
-  colours, 17 brushes that throw, Windows 11's defaults) and not a hand list of keys: every key of the four files takes
-  the colour of the role it has in all of them, opaque colours only (`ContrastRoles`), over the light or the dark Fluent
-  theme as the contrast theme is; the text on the accent is the highlight's text, the App's choice.
-- **What must change while it is shown binds `ContrastTheme.IsOn`**, a static property WPF hears through
-  `StaticPropertyChanged`: the implicit button style, the Settings line. The charts, the badges and the artwork band read
-  `ContrastTheme.Active` when they draw.
-- **The snackbars lost their green and orange** (white on fixed colours, 2.16–2.78:1 in both themes): every message is
-  Secondary, its icon saying the kind. **The agent's pill is a `Pill` on the theme's fills**, no longer a badge.
-- **A content dialog's focus is WPF UI's**: its host stores and restores the focused element; a test pins it. Message
-  boxes get the App's active window as owner (`MessageBoxes`), which WPF UI's leaves null.
-- **A page shortcut focuses the page's first control and says its first level-1 heading** (`PageFocus`); a click in the
-  pane leaves the focus where WPF UI puts it.
-- **Left as limitations, with what to do instead** (`ACCESSIBILITY.md` §Known limitations): a chart's points one by
-  one, headings inside the documents the App shows (a FlowDocument paragraph has no peer), the snackbars' four seconds,
-  Windows' text size, pausing only from the tray.
+- **An inspection is switched off in `.editorconfig`, never in `qodana.yaml`**: InspectCode reads its severities there
+  and so does Rider, so the job and the editor show one list, and a change to it is tested on a developer's PC without
+  CI. Sixty-three keys, each with its reason; the rule is CLAUDE.md §Coding conventions'.
+- **What Qodana reports is fixed unless the inspection argues with a choice the project made.** The suggestions
+  (ReSharper's lowest reported level) that propose another style are off as a group: the style is `.editorconfig`,
+  `dotnet format` and the analyzers.
+- **The members nothing in the solution uses were listed, not removed** (`13_CI_CD` §Qodana): whether each is
+  vocabulary, a piece not wired yet, or dead is the owner's to say (owner-only item 33).
+- **One pull request, the gate shown red first**: the settings and the gate were pushed before the fixes, so the run
+  between them (42847369329) is the gate failing on the 409 problems the settings did not cover.
+- **A release although nothing a user sees changes**: the fixes are in the shipped assemblies, so the version says
+  which code is installed; the changelog says in its first line that nothing visible moved.
+- **The XAML bindings were re-pointed, not only annotated**: `{Binding DataContext.ViewModel.X, RelativeSource
+  AncestorType=Page}` became `{Binding ViewModel.X, RelativeSource AncestorType={x:Type pages:GamesPage}}` — the same
+  object, since each page and window sets `DataContext = this` (read in the five code-behinds) — because the inspection
+  resolves a typed ancestor and not `DataContext`.
 
-**Measured on the way:** the UI Automation tree WPF builds, on .NET 10.0.14 — items named by `ToString()`, peerless
-focusable controls, a template's text hidden from the control view, template cells read as *Item: …* (`16_WPFUI_SYNTAX`
-§Gotchas); WPF UI 4.3.0's high-contrast files, its Button, Badge and Snackbar appearances (fixed colours, the ratios
-above), its message box's missing owner and its content dialog host's focus restore; ScottPlot 5.1.59's keys (focusable,
-none marked handled) and its double-click benchmark.
+**Measured on the way:** the Community linter's container builds and loads all thirteen `net10.0-windows` projects on
+Linux once `EnableWindowsTargeting` is set, though JetBrains' page sends such projects to the Ultimate linter's native
+mode; a clean worktree with no native DLLs builds with 15 warnings and no error; InspectCode 2026.2.3.1 on Windows and
+in the container agree to within a handful of findings; `.editorconfig`'s `resharper_*` keys are read in the container.
 
 **Traps met on the way:**
 
-- **A `ContentDialog` test needs the dispatcher's context.** `ContentDialog.ShowAsync` takes the dialog out of its host
-  in a `finally` after an await; on a test thread with no `DispatcherSynchronizationContext` that never resumes on the UI
-  thread, the dialog stays in its host and the focus on its button — a first measurement concluded WPF UI kept the focus
-  there; it does not.
-- **A test that listens to a static event hears every test's**: subscribe inside the one STA work item.
-- **Inside the App, a brush that throws when WPF UI's file is read alone falls back to the application's resources**, the
-  Fluent theme's translucent fills: `MenuBarItemBackgroundPressed` read as the window text's white. Count only opaque
-  colours as evidence.
-- **WPF calls a resource reference's callback when a merged dictionary changes, even for an equal value** (Aquatic's
-  window is the dark theme's `#202020`): no second signal was needed, measured and pinned.
-- **A forward `StaticResource` in a style dictionary fails only when that resource is first used** — `AgentPill`
-  `BasedOn` `Pill`, placed above it: the dictionary loaded, the style threw when found.
-- **Python's `"\b"` in a non-raw string is a backspace** — it went into a C# regex twice; write regexes raw.
-- **`RenderTargetBitmap.Render(child)` draws the child at its offset**: sample a child's pixel through its parent.
+- **InspectCode on the owner's PC picks Visual Studio 18 Insiders' MSBuild and dies** ("No files to inspect were
+  found"): pass `--toolset-path` to the .NET SDK's `MSBuild.dll` and `--dotnetcore`. And **a `--caches-home` a failed
+  run wrote leaves a project unloaded** on the next run — 2,875 false compile errors in `Infrastructure.Tests`, and
+  hundreds of false "never used" — use a fresh folder.
+- **A fix scripted from the report's positions needs the build as its judge**: a redundant tuple name's region stops
+  before its colon; two casts in one lambda (`SqliteGameMerge`) are each redundant alone and not together; a suggested
+  `m[^1]` sat in an expression tree (CS8790); `public bool On => false` on a bound row is CA1822.
+- **`dotnet format style --diagnostics IDE0008 IDE0022 --severity info`** applies `.editorconfig`'s suggestion-level
+  style, which the gate's `--verify-no-changes` (warnings and up) never asks for.
+- **`CrashDumpHelperTests.TheWriterHasTheAgentDumpThisProcessFromOutside` failed once on the hosted runner** (#373's
+  first run, two YAML files changed): "the dumper did not finish within 30 s". Green on the next runs; not looked into.
+- **SonarCloud's gate failed on #373, on one condition: coverage on new code, 77 %** — 19 of the 87 changed lines it
+  counts were old lines no test ever ran (the update prompts, `App.xaml.cs`, chart code-behind), and a line a fix
+  touches is new code. No issue, no hotspot; the job is advisory and #373 merged on its required checks. `main`'s new
+  code is "since the previous version", so its gate reads the same until the first analysis after the tag — a
+  `workflow_dispatch` of `ci.yml` on `main`, run once the tag is there, is that analysis.
+- **A shell `cd` in a tool call stays** for the next one: use absolute paths.
 
-**Owner-only:** item 32 — beta.35 on real hardware.
+**Owner-only:** item 33 — Qodana's settings on the owner's side, the never-used list, and beta.36 on real hardware.
 
 
 ## Owner-only — no PR can close these
@@ -395,6 +388,16 @@ none marked handled) and its double-click benchmark.
    statement. (h) The 35 `ja` strings this release adds, all marked `review`: `Menu_Help_Accessibility`,
    `Accessibility_Title`, `Settings_Theme_ContrastOn` and 32 `A11y_*` (the names, the chart names and keys, the
    announcements).
+33. **Qodana, and beta.36 on real hardware** (D93). (a) **The update from beta.35**: no terms window, the ledger
+   unchanged. (b) **The re-pointed bindings, by hand** — the tests pin their text, not a click: on Games, a card opens
+   its game and both Play buttons (card and list) start it, greyed in a viewer; on the Dashboard a recent session
+   opens; on a game's page a session row's *Open* opens its summary; in a session's summary a Yes/No/N/A chip opens the
+   override dialog; a safety notice's button dismisses it; Settings lists the hooked games with *Revoke*, the
+   exception rows with *Grant*/*Withdraw*, and the system information lines. (c) **Qodana Cloud**: the trial's end
+   changes nothing in CI (the Community linter needs no licence; the token names the project the report goes to). If
+   an Ultimate licence is wanted — JetBrains has a programme for open-source projects — `13_CI_CD` §Qodana says what
+   moves. (d) **`qodana` as a required check, or not**: advisory today, like `sonarcloud`. (e) **The members nothing
+   uses** (`13_CI_CD` §Qodana, 34 and 49 getters): say which are dead, and a pull request removes them.
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
@@ -500,7 +503,7 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D89 | [`08_UI.md`](08_UI.md) §Screen readers | what appears is said to a screen reader — notices, the agent's and the update's banners, the snackbars, a game page's notice, Database maintenance's results — while FrameLedger's window is active |
 | D90 | [`08_UI.md`](08_UI.md) §Screen readers | page titles heading 1, section titles heading 2; every chart named with where its numbers are; no series told apart by colour alone |
 | D91 | [`08_UI.md`](08_UI.md) §Contrast | Windows contrast themes are followed, whatever Settings ▸ Theme says |
-| D92 | [`HANDOFF.md`](HANDOFF.md) §START HERE | beta.35 in this train, no alpha; alpha.4 is the move to .NET 11's release (SDK 11.0.100, packages 11.0.0), a task of its own after 2026-11-10 |
+| D92 | [`handoff/history/0.1.0-beta.35.md`](handoff/history/0.1.0-beta.35.md) | beta.35 in this train, no alpha; alpha.4 is the move to .NET 11's release (SDK 11.0.100, packages 11.0.0), a task of its own after 2026-11-10 |
 | D93 | [`13_CI_CD.md`](13_CI_CD.md) §Qodana | Qodana Community for .NET from a workflow of its own (the organisation's licence is a 30-day trial, so not the Rider linter): a gate of zero problems, advisory; an inspection is switched off only in `.editorconfig`, with its reason |
 
 ---

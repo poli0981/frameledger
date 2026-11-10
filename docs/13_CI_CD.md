@@ -556,7 +556,8 @@ suggestion. A suggestion to use `m[^1]` inside an expression tree was wrong (CS8
 **The runs (PR #373).** 42842741359 — the template's shape, no settings: 3,679 problems, the job green (no gate yet).
 42847369329 — the settings and the gate, none of the fixes: 409 problems, every one in an inspection left on, the job
 red; so `.editorconfig`'s keys are read in the container as they are on Windows, and the 3,270 others were the
-settings'. A job takes about ten minutes.
+settings'. 42849331796 — the fixes: **0 problems**, the job green; and `main`'s first run, the merge of #373
+(run 42852304026): 0 problems. A job takes about ten minutes.
 
 **Named by the "never used" group and left as it is (2026-11-10).** Nothing in the solution, its tests included, uses
 these; whether each is vocabulary, a piece not wired yet, or dead is the owner's to say, so none was removed:

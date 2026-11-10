@@ -35,34 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Changed
-
-- **Qodana reads the C# and the XAML from CI** (developers only; owner decision D93). The owner made the project on
-  Qodana Cloud and set the `QODANA_TOKEN` secret; `.github/workflows/qodana.yml` is JetBrains' workflow for its Qodana
-  Scan action, changed where FrameLedger differs: the linter is Qodana Community for .NET — ReSharper's inspections in
-  a Linux container, which runs under every licence, where the Rider-based linter needs the Ultimate licence the
-  organisation holds only as a 30-day trial — over `FrameLedger.slnx`, with `EnableWindowsTargeting` passed to the
-  container so that the Windows-only projects build and load there; the action is pinned to a commit; the job's
-  permissions are the ones it uses. It reads no C++ (CodeQL and SonarCloud do). Its gate is zero problems
-  (`qodana.yaml`), and it is advisory: a red job beside a green `check`, never a blocked merge. An inspection that
-  argues with a choice this project made is switched off in `.editorconfig`, where Rider reads it too, with the reason
-  on the line above — sixty-three keys (`docs/13_CI_CD.md` §Qodana).
-- **What Qodana's first run reported is settled** — 3,679 problems, 2,050 of them the missing-XML-comment warning the
-  project had already made a suggestion. About 400 were fixed in the code, in 181 files, none changing what the
-  software does: redundant qualifiers, casts, `using` directives, `!` suppressions and `unsafe` modifiers removed (290);
-  `var` for built-in types and one-line block bodies brought to `.editorconfig`'s own style (52); every XAML item
-  template names its `DataType`, and a binding that reached its page through `DataContext.ViewModel` names the page's
-  type (35), so the editor resolves them; two fields nothing read (`LogsViewModel`, `PipeServer.Client`), two
-  initialisers a constructor overwrote and an unused parameter removed; `SpokenTextAutomationPeer` no longer assumes
-  the base peer's name is a string. The members nothing in the solution uses are listed in `docs/13_CI_CD.md` §Qodana
-  and left as they are.
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.36` | 2026-11-10 | [`docs/changelog/0.1.0-beta.36.md`](docs/changelog/0.1.0-beta.36.md) |
 | `0.1.0-beta.35` | 2026-11-09 | [`docs/changelog/0.1.0-beta.35.md`](docs/changelog/0.1.0-beta.35.md) |
 | `0.1.0-alpha.3` | 2026-11-06 | [`docs/changelog/0.1.0-alpha.3.md`](docs/changelog/0.1.0-alpha.3.md) |
 | `0.1.0-beta.34` | 2026-11-06 | [`docs/changelog/0.1.0-beta.34.md`](docs/changelog/0.1.0-beta.34.md) |
