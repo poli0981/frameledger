@@ -35,7 +35,7 @@
       net10.0. The package ships no licence file, so its text is a reviewed override
       (tools/license-overrides/Markdig.txt). HTML is disabled in the pipeline (App/Markdown/MarkdownRenderer.cs).
     -->
-    <PackageVersion Include="Markdig" Version="1.5.0" />
+    <PackageVersion Include="Markdig" Version="1.5.1" />
   </ItemGroup>
 
   <ItemGroup Label="Hosting and logging">
@@ -80,7 +80,7 @@
 
   <ItemGroup Label="Analyzers (build-time only)">
     <PackageVersion Include="Roslynator.Analyzers" Version="5.0.1" />
-    <PackageVersion Include="Meziantou.Analyzer" Version="3.0.319" />
+    <PackageVersion Include="Meziantou.Analyzer" Version="3.0.320" />
     <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.12.1" />
   </ItemGroup>
 
