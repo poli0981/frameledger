@@ -42,7 +42,7 @@ A C++ DLL (`FrameLedger.Overlay.dll`) is injected into games the user explicitly
 
 | Concern | Choice |
 |---|---|
-| Managed runtime | .NET 10 (LTS, pinned via `global.json`), C# 14, TFM `net10.0-windows10.0.22621.0` with `SupportedOSPlatformVersion=10.0.19045.0` (Win10 22H2 floor, NFR-8), x64 only — `docs/12_BUILD.md`. **The `alpha` branch** (D73–D76, 2026-10-31) builds the same source on a prerelease .NET — .NET 11 RC3, C# 15 — and differs from main only where `docs/12_BUILD.md` §The alpha line lists; code on main must keep compiling as C# 14 on .NET 10, so no C# 15 syntax |
+| Managed runtime | .NET 11 (STS, pinned via `global.json`: the 11.0 SDK band) and C# 15 since 0.1.0-beta.37 (owner decisions D94 and D96, 2026-11-11; .NET 10 and C# 14 until beta.36), TFM `net11.0-windows10.0.22621.0` with `SupportedOSPlatformVersion=10.0.19045.0` (NFR-8 as D95 amended it: Windows 11 is the supported platform; Windows 10 22H2 is not blocked, and is neither tested nor supported), x64 only — `docs/12_BUILD.md` §The main line's .NET. No preview feature (`runtime-async`, the updated memory-safety rules), and a C# 15 construct only where the required checks read it (`docs/13_CI_CD.md` §`codeql.yml`). **The `alpha` branch** (D73–D76, 2026-10-31) builds a released beta's source to try a newer .NET; it rests since 0.1.0-alpha.4 (D98) and then differs from main in `RELEASE_LINE` alone — `docs/12_BUILD.md` §The alpha line |
 | Native | **C++20, MSVC v143+, `/MT` static CRT, `/GS`, `/guard:cf`, no RTTI, no C++ exceptions in hook paths** |
 | Hooking | **MinHook** (BSD-2-Clause) for inline hooks; direct vtable-entry swap for COM interfaces |
 | Vulkan | **Implicit Vulkan layer** (`VK_LAYER_FRAMELEDGER_overlay`), not hooking — `17_HOOK_ENGINE` §Vulkan |

@@ -35,6 +35,30 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Changed
+
+- **FrameLedger runs on .NET 11** (owner decisions D94 and D95, 2026-11-11). The betas are built on .NET 11.0.0 —
+  released 2026-11-10 — where they were built on .NET 10: SDK 11.0.100, `net11.0-windows10.0.22621.0`, and the three
+  libraries serviced with the runtime (`Microsoft.Extensions.Hosting`, `Microsoft.Data.Sqlite`,
+  `System.Diagnostics.EventLog`) at 11.0.0. The runtime is inside the package as before; nothing is installed beside
+  it. **What a user should know:** Microsoft supports .NET 11 on Windows 11, and on Windows 10 only in its LTSC and
+  IoT editions — FrameLedger does not block Windows 10 22H2, and it is untested and unsupported there; **on a
+  processor without SSE4.2 and POPCNT it no longer starts** (every processor Windows 11 accepts has them); the
+  ledger's schema is unchanged, so installing 0.1.0-beta.36 again is a way back. The part of FrameLedger loaded into
+  a game is native code and does not change. `docs/12_BUILD.md` §The main line's .NET says what decided the move
+  and what was set aside.
+- **The capture agent ends with a crash report when a piece of its own background work fails**, where it used to
+  stop and exit as if nothing had happened: .NET 11 passes that failure on, and the Agent's existing crash path — a
+  Fatal log entry and a crash dump — takes it. Nothing was added for it (`docs/10_LOGGING_AND_BUG_REPORTS.md` §Crash
+  handling).
+- **The NuGet licence texts follow the package set** (`legal/licenses/nuget/`, 69 packages where there were 78):
+  nine `Microsoft.Extensions.*` libraries are part of the .NET 11 runtime, and SQLite's engine is SourceGear's
+  `SQLite` package through SQLitePCLRaw 3.0.5.
+- **For developers:** `release.yml` installs a .NET 10 runtime beside the SDK for `vpk` 1.2.161, which has no build
+  that runs on .NET 11 alone; Qodana's container installs the .NET 11 SDK before it builds (an interim, until the
+  Ultimate linter); two `string.StartsWith`/`EndsWith(char)` calls in the App's tests name the comparison .NET 11's
+  analyzer asks for; `HostBackgroundFailureTests` holds .NET 11's `IHost.RunAsync` behaviour.
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

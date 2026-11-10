@@ -1,7 +1,7 @@
 # App UI development
 
 The screens are specified, and described as built, in [`docs/08_UI.md`](../docs/08_UI.md); the rules for the UI library
-are [`docs/16_WPFUI_SYNTAX.md`](../docs/16_WPFUI_SYNTAX.md). The App is `src/FrameLedger.App`: WPF on .NET 10 with
+are [`docs/16_WPFUI_SYNTAX.md`](../docs/16_WPFUI_SYNTAX.md). The App is `src/FrameLedger.App`: WPF on .NET 11 with
 WPF UI 4.3.0 (pinned), CommunityToolkit.Mvvm, ScottPlot for charts and Markdig for documents.
 
 ## How it is put together

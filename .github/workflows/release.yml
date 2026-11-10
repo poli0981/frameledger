@@ -24,7 +24,7 @@
 #
 # THE ALPHA LINE (2026-10-31, owner decisions D73-D76; 12_BUILD §The alpha line): the
 # RELEASE_LINE file says `alpha` on the long-lived `alpha` branch, where the same source
-# builds on a prerelease .NET. Its tags are `vX.Y.Z-alpha.N` and nothing else, no other
+# builds on the .NET the line is trying. Its tags are `vX.Y.Z-alpha.N` and nothing else, no other
 # line may carry one, and its packages go to Velopack's `alpha` channel
 # (releases.alpha.json) - which no beta reads, as no alpha reads releases.win.json
 # (11_UPDATER §Channels). The version gate below enforces all three.
@@ -67,10 +67,15 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      # The SDK global.json names builds everything. The .NET 10 line beside it is for `vpk` (the Pack step): 1.2.161
+      # ships net8.0, net9.0 and net10.0 builds and none that rolls forward to another major, so on a machine with
+      # .NET 11 alone the tool would not start. The alphas were packed under an 11 SDK because the hosted image
+      # happened to carry a .NET 10 runtime; this states the dependency (2026-11-11, beta.37, D94).
       - name: Set up .NET
         uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
+          dotnet-version: 10.0.x
 
       - name: Set up MSVC (x64)
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0

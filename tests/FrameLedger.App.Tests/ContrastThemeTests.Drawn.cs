@@ -96,7 +96,7 @@ public sealed partial class ContrastThemeTests
                     offenders.Add($"{file}: {name} Appearance=\"{appearance}\"");
                 }
 
-                if (string.Equals(name, "Badge", StringComparison.Ordinal) && appearance.StartsWith('{'))
+                if (string.Equals(name, "Badge", StringComparison.Ordinal) && appearance.StartsWith('{', StringComparison.Ordinal))
                 {
                     offenders.Add($"{file}: a Badge whose appearance is bound, {appearance}");
                 }
@@ -229,7 +229,7 @@ public sealed partial class ContrastThemeTests
         });
 
         facts.Should().HaveCount(5);
-        facts.Where(static m => ColorMath.Contrast(m.Text, m.Under) < 4.5 || m.Mark.EndsWith(')')).Select(static m => $"{m.Mark}: {m.Text} on {m.Under}, {ColorMath.Contrast(m.Text, m.Under):0.00}:1")
+        facts.Where(static m => ColorMath.Contrast(m.Text, m.Under) < 4.5 || m.Mark.EndsWith(')', StringComparison.Ordinal)).Select(static m => $"{m.Mark}: {m.Text} on {m.Under}, {ColorMath.Contrast(m.Text, m.Under):0.00}:1")
             .Should().BeEmpty($"every mark in the title bar reads at 4.5:1 under {name}");
     }
 

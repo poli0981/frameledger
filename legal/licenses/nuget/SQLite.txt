@@ -1,0 +1,15 @@
+SQLite 3.53.4
+
+Licence declared: the file LICENSE.txt in the package
+Text below: LICENSE.txt, verbatim from the package
+Copyright: Copyright 2014-2026 SourceGear, LLC
+Authors: Eric Sink
+Project: https://sqlite.org/
+Ships in: Agent, App
+
+-------------------------------------------------------------------------------
+
+
+SQLite is Public Domain
+
+https://sqlite.org/copyright.html

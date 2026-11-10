@@ -191,7 +191,13 @@ you accept the prompt. Turn it on only if you trust everything that runs under y
 
 ## Platform and what has been tested
 
-- **Windows 10 22H2 or Windows 11, 64-bit only.**
+- **Windows 11, 64-bit only.** FrameLedger is built on .NET 11 since 0.1.0-beta.37, which Microsoft supports on
+  Windows 11 and, on Windows 10, only in its LTSC and IoT editions. **Windows 10 22H2 Home and Pro are not blocked,
+  not tested and not supported**: FrameLedger may run there, and nobody has checked that it does
+  ([Build](docs/12_BUILD.md)).
+- **It does not start at all on a processor without SSE4.2 and POPCNT** — .NET 11's requirement, which every
+  processor Windows 11 accepts meets. On such a PC an update from 0.1.0-beta.36 or older installs and then does not
+  start; installing 0.1.0-beta.36 again brings FrameLedger back, with your data as it was.
 - The games FrameLedger has actually been run with, and what was measured on each, are listed in
   [LIST_GAME_TESTED.md](docs/LIST_GAME_TESTED.md). Everything was measured on one machine (an NVIDIA
   GeForce RTX 5080 with an Intel Core i7-14700KF on Windows 11); other hardware is untested.
@@ -286,10 +292,6 @@ releases unless you choose *Beta* in Settings ▸ Updates, and apply a downloade
 - **It runs on a .NET that Microsoft has not finished** — .NET 11's release candidate first — and has not been tested
   the way a beta is: everything on this page applies to it, and so can problems no beta has shown
   ([Alpha notice](legal/ALPHA_NOTICE.md)).
-- **Windows 10 22H2 Home and Pro are not supported** by Microsoft for .NET 11; an alpha may run there, but nobody
-  supports it. It does not start at all on a processor without SSE4.2 and POPCNT.
-- **A failure in the capture agent's own background work ends the agent with a crash report** on an alpha, where a
-  beta's agent stops and exits quietly: .NET 11 reports it that way.
 - **It shares the beta's data folder.** It copies the database into `backups` before it first opens it, and does not
   open it if the copy cannot be made; the newest three copies are kept and older ones it made are deleted.
 - **It updates only to newer alphas**, and its update channel is locked; going back to the beta means installing the

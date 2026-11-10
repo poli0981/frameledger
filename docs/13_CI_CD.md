@@ -244,17 +244,19 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 - `permissions: contents: write` — the repository's default workflow token is read-only (read from the API,
   2026-10-07), and pushing to the wiki repository needs write.
 
-## The alpha line — the `alpha` branch (owner decisions D73–D76, 2026-10-31)
+## The alpha line — the `alpha` branch (owner decisions D73–D76, 2026-10-31; resting since D98, 2026-11-11)
 
-What it is and what differs on the branch: `12_BUILD` §The alpha line. What CI and the release do with it:
+What it is, what differs on the branch and why it rests since 0.1.0-alpha.4: `12_BUILD` §The alpha line. What CI and the
+release do with it:
 
 - **`ci.yml`** runs `check` on a push to `alpha` and on every pull request into it, under the branch's own `global.json`
-  — `setup-dotnet` installs the exact prerelease SDK it names whatever the `rollForward`. The `sonarcloud` job does not
-  run for the branch (the organisation's plan analyses main alone, §SonarCloud), and neither does the `Changelog` step:
-  what an alpha changes is written in its release's own file on main, never in an `[Unreleased]` entry on `alpha`, which
-  would collide with main's at every sync.
-- **`codeql.yml`** stays on main: the source is main's, and CodeQL's extractor reads C# 14 (CodeQL 2.25.6, June 2026)
-  while the alpha's compiler is C# 15.
+  — `setup-dotnet` installs the exact SDK it names whatever the `rollForward`, a prerelease one included. The
+  `sonarcloud` job does not run for the branch (the organisation's plan analyses main alone, §SonarCloud), and neither
+  does the `Changelog` step: what an alpha changes is written in its release's own file on main, never in an
+  `[Unreleased]` entry on `alpha`, which would collide with main's at every sync.
+- **`codeql.yml` and `qodana.yml`** stay on main: the source is main's, and it is analysed there. *(Until beta.37 the
+  reason given here was the alpha's compiler — C# 15, where CodeQL's extractor read C# 14. Main compiles C# 15 since
+  beta.37; what CodeQL reads of it is §`codeql.yml`'s to say.)*
 - **The branch is not protected** (an owner's setting; none was asked for): pull requests into it are how changes land
   (squash), and the sync from main is a pull request merged with a merge commit — main's linear rule is main's alone.
 - **A release of the line**, in order: the alpha's notes on main (`docs/changelog/x.y.z-alpha.N.md` opening with the
@@ -263,9 +265,10 @@ What it is and what differs on the branch: `12_BUILD` §The alpha line. What CI 
   the signed tag on `alpha`'s head → the run (§release.yml: the line's tag rule, `--channel alpha`). **No wiki publish**
   (`wiki.yml` skips an `-alpha.` tag) and **no release line moves**: README, ACCURACY, the Disclaimer's copy,
   LIMITATIONS and ACCESSIBILITY keep naming the newest beta.
-- **The cadence:** one alpha per beta, cut from it. Velopack's GitHub source reads the newest ten releases (one page,
-  `perPage` 10), so ten alphas in a row would hide every beta from the betas' own update check, and the other way round
-  (`11_UPDATER` §Channels).
+- **The cadence while the line tries a .NET:** one alpha per beta, cut from it. Velopack's GitHub source reads the
+  newest ten releases (one page, `perPage` 10), so ten alphas in a row would hide every beta from the betas' own update
+  check, and the other way round (`11_UPDATER` §Channels). **While it rests** no alpha is cut, and that limit has a
+  consequence the alpha's notes state: once ten betas have followed alpha.4, a copy of alpha.3 no longer finds it.
 
 ## SonarCloud — from CI, `ci.yml`'s `sonarcloud` job (owner decision D68, 2026-10-25)
 
@@ -496,7 +499,12 @@ the linter's logs to the run as the `qodana-report` artifact.
 - **`ubuntu-latest`, the one Linux job here** — the Community linter ships as a Linux image only.
 - **Permissions:** `contents: read`, `checks: write` (the annotations), `pull-requests: write` (the comment). The
   template's `contents: write` is for pushing quick-fixes, an Ultimate feature this job never uses.
-- **`main` only.** The `alpha` branch builds on a prerelease .NET the image does not carry (§The alpha line).
+- **`main` only.** The `alpha` branch is main's source under another release line (§The alpha line); main's is what
+  is analysed. *(Until beta.37 the reason was the alpha's prerelease .NET, which the image does not carry.)*
+- **Interim since beta.37 (D94, 2026-11-11): the .NET 11 SDK is installed into the container first.** Main builds on
+  .NET 11 and the image carries the SDKs 8 to 10, so `qodana.yaml` has the `bootstrap` line JetBrains' page gives for
+  an SDK the image lacks — `dotnet-install.sh` with `global.json`, into `/usr/share/dotnet`. It lasts until the
+  Ultimate linter's pull request replaces this job with one on Windows, where `setup-dotnet` does it.
 - **Not a fork's pull request, nor Dependabot's:** neither gets the secret or a token that can write the comment.
 - **Caches are saved from `main` only** (`cache-default-branch-only`); a pull request reads them.
 
@@ -576,7 +584,7 @@ getters of 49 auto-properties, among them view-model texts no page binds and col
 **Running it on a developer's PC.** The same InspectCode is a .NET tool:
 `dotnet tool install JetBrains.ReSharper.GlobalTools --version 2026.2.3.1 --tool-path <somewhere>`, then, after
 `dotnet build FrameLedger.slnx -c Release`:
-`jb inspectcode FrameLedger.slnx --no-build --format=Sarif --output=<file> --caches-home=<folder> --properties:Configuration=Release --toolset-path="C:\Program Files\dotnet\sdk\<10.0.x>\MSBuild.dll" --dotnetcore="C:\Program Files\dotnet\dotnet.exe"`.
+`jb inspectcode FrameLedger.slnx --no-build --format=Sarif --output=<file> --caches-home=<folder> --properties:Configuration=Release --toolset-path="C:\Program Files\dotnet\sdk\<11.0.x>\MSBuild.dll" --dotnetcore="C:\Program Files\dotnet\dotnet.exe"`.
 Two things measured on the owner's PC: without `--toolset-path` it picked Visual Studio 18 Insiders' MSBuild, which
 crashed at start ("No files to inspect were found"); and a `--caches-home` a failed run had written left one project
 unloaded on the next (2,875 false compile errors, all in `Infrastructure.Tests`) — a fresh folder loaded all thirteen.
@@ -614,9 +622,10 @@ Central package management makes Dependabot PRs single-file diffs.
   pulled or found compromised in its first week never becomes a pull request here. Security updates do not wait — the
   option does not apply to them. The actions' minor and patch releases come as one pull request; a new major comes
   alone, because it is the one that changes inputs.
-- **No `dotnet-sdk` entry, on purpose:** `global.json` is a floor (10.0.100) with `rollForward: latestFeature`, so a
-  developer's machine and the runner already build with the newest 10.0 SDK they have (the runner installed 10.0.402
-  on 2026-10-20). Raising the floor is a decision about what a contributor must install, not an update.
+- **No `dotnet-sdk` entry, on purpose:** `global.json` is a floor (11.0.100 since beta.37, D94; 10.0.100 before) with
+  `rollForward: latestFeature`, so a developer's machine and the runner already build with the newest SDK of that band
+  they have (the runner installed 10.0.402 on 2026-10-20, 10.0.404 on 2026-11-10). Raising the floor is a decision
+  about what a contributor must install, not an update — the owner's, as D94 was.
 - **Dependabot has never proposed a NuGet library update here — measured 2026-10-25.** Every NuGet pull request it
   opened, #66 (2026-08-09) through #314 (2026-10-18), updated analyzers only (Meziantou, Roslynator, the VS threading
   analyzers), while Dapper 2.1.89 (published 2026-09-23), coverlet 10.1.0 (09-27), xunit.v3.mtp-off 4.0.2 (10-09) and
@@ -653,8 +662,8 @@ Central package management makes Dependabot PRs single-file diffs.
   taken: FluentAssertions 8 (its licence), and the vendored native SDKs (NVAPI R615's licence file changed; the Vulkan
   and Streamline headers follow the measured loader and titles).
 - **The NuGet audit** (`Directory.Build.props`, written down 2026-10-25): `NuGetAudit` on, `NuGetAuditMode` `all`
-  (transitive packages too), `NuGetAuditLevel` `low` — the SDK's defaults for net10.0, stated so that a later SDK's
-  defaults cannot move them. With `TreatWarningsAsErrors` a vulnerable package is NU1901–NU1904 and the restore, so
+  (transitive packages too), `NuGetAuditLevel` `low` — the SDK's defaults for net10.0 when they were written down,
+  stated so that a later SDK's defaults cannot move them (and net11.0's did not). With `TreatWarningsAsErrors` a vulnerable package is NU1901–NU1904 and the restore, so
   the gate, is red — what `SQLitePCLRaw` 2.1.11 did (`Directory.Packages.props`). `dotnet list FrameLedger.slnx
   package --vulnerable --include-transitive` read none on 2026-10-25.
 - **The repository's own alerts:** Dependabot alerts and security updates are enabled, and so are secret scanning and

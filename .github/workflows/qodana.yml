@@ -17,8 +17,12 @@
 # - A workflow of its own, as JetBrains advises, and ADVISORY: `main`'s required
 #   contexts stay `check` and the two `analyze` jobs. A problem Qodana finds, or a
 #   Qodana Cloud outage, is a red job beside a green `check`, never a blocked merge.
-# - `main` only: the `alpha` branch builds on a prerelease .NET the linter's image
-#   does not carry (docs/13_CI_CD.md §The alpha line).
+# - `main` only: the `alpha` branch is main's source under another release line
+#   (docs/13_CI_CD.md §The alpha line), and main's is what is analysed.
+# - INTERIM since beta.37 (D94, 2026-11-11): main builds on .NET 11, which the
+#   linter's image does not carry (SDKs 8 to 10), so qodana.yaml's `bootstrap`
+#   installs the SDK global.json names into the container first. The Ultimate
+#   linter's pull request replaces this job with one on Windows.
 
 name: Qodana
 

@@ -2,7 +2,10 @@
 
 ## What you need
 
-- **Windows 10 (22H2) or Windows 11, 64-bit.**
+- **Windows 11, 64-bit.** FrameLedger may also run on Windows 10 (22H2), but it has not been tested there and nobody
+  supports it: it is built on .NET 11, which Microsoft supports on Windows 11.
+- **A processor Windows 11 accepts.** On an older one, without the SSE4.2 and POPCNT instructions, FrameLedger does
+  not start.
 - Games FrameLedger can measure: **64-bit DirectX 11, DirectX 12 and OpenGL games.** Other games — 32-bit games,
   DirectX 9 games, and Vulkan games you start yourself — are still recorded (how long you played, your PC's sensors,
   the game's memory use), but not measured. [Limitations](../LIMITATIONS.md) has the full list.

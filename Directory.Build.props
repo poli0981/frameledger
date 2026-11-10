@@ -8,12 +8,14 @@
       - TargetFramework's platform version selects which Windows API
         projections are available to compile against.
       - SupportedOSPlatformVersion is the floor CA1416 enforces.
-    NFR-8 requires Windows 10 22H2 = build 19045. Letting the supported version
-    default to the TFM's 19041 would silently accept installs three releases
-    below the stated floor.
+    NFR-8 names Windows 10 22H2 = build 19045 as the oldest Windows the code is
+    held to (since 2026-11-11, D95: not blocked there, and neither tested nor
+    supported - Microsoft supports .NET 11 on Windows 11). Letting the supported
+    version default to the TFM's 19041 would silently accept installs three
+    releases below that floor.
 
-    A bare `net10.0-windows` is wrong for a different reason: it resolves to
-    net10.0-windows7.0, and CA1416 would then error on Mica, MiniDumpWriteDump
+    A bare `net11.0-windows` is wrong for a different reason: it resolves to
+    net11.0-windows7.0, and CA1416 would then error on Mica, MiniDumpWriteDump
     and IDXGIAdapter3::QueryVideoMemoryInfo — every Windows-10-era API this
     application is built on.
 
@@ -25,7 +27,9 @@
     nothing and CA1416 still enforces the 19045 floor at the API level.
   -->
   <PropertyGroup>
-    <TargetFramework>net10.0-windows10.0.22621.0</TargetFramework>
+    <!-- .NET 11 since 0.1.0-beta.37 (owner decision D94, 2026-11-11; docs/12_BUILD.md). net10.0 until then, and
+         net11.0 on the alpha branch from 2026-10-31. -->
+    <TargetFramework>net11.0-windows10.0.22621.0</TargetFramework>
     <SupportedOSPlatformVersion>10.0.19045.0</SupportedOSPlatformVersion>
 
     <!-- x64 only (CLAUDE.md pinned stack, NFR-8). Previously asserted in prose
@@ -87,7 +91,7 @@
   </Target>
 
   <!-- The NuGet audit (2026-10-25, docs/13_CI_CD.md §Dependabot and the NuGet audit): every restore checks the WHOLE
-       package graph, transitive packages included, against the advisory database, at every severity. These are the
+       package graph, transitive packages included, against the advisory database, at every severity. These were the
        SDK's defaults for net10.0, written down so that a later SDK's defaults cannot move them. With
        TreatWarningsAsErrors, a vulnerable package is NU1901-NU1904 and the restore - and so the gate - is red, which
        is what happened with SQLitePCLRaw 2.1.11 (Directory.Packages.props). -->
