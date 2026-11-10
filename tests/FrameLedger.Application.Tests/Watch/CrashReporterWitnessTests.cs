@@ -35,8 +35,8 @@ public sealed class CrashReporterWitnessTests
         CrashReporterSighting? s = await witness.FindAsync(Query(), TestContext.Current.CancellationToken);
 
         s.Should().NotBeNull();
-        s!.Image.Should().Be("CrashReportClient.exe");
-        (s.ParentImagePath, s.ParentStartedAt).Should().Be((_game, (DateTimeOffset?)_t0));
+        s.Image.Should().Be("CrashReportClient.exe");
+        (s.ParentImagePath, s.ParentStartedAt).Should().Be((_game, _t0));
     }
 
     [Fact]

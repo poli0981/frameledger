@@ -114,9 +114,7 @@
         white boxes beside a readable hooking pill. The hooking pill was readable because it sets its own foreground; so
         does this. ContrastTests measures the pair in both themes and refuses Secondary badges in App XAML.
     -->
-    <Style x:Key="TagPill" TargetType="Border" BasedOn="{StaticResource Pill}">
-        <Setter Property="Margin" Value="8,0,0,0" />
-    </Style>
+    <Style x:Key="TagPill" TargetType="Border" BasedOn="{StaticResource Pill}" />
 
     <Style x:Key="TagPillText" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />

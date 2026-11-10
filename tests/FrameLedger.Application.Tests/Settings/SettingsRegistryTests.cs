@@ -68,7 +68,7 @@ public sealed class SettingsRegistryTests
         d.Key.Should().Be("capture.run_elevated");
         d.Default.Should().Be("0");
         d.Kind.Should().Be(SettingKind.Boolean);
-        FrameLedger.Infrastructure.Startup.RunElevatedSetting.Key.Should().Be(d.Key);
+        Infrastructure.Startup.RunElevatedSetting.Key.Should().Be(d.Key);
     }
 
     [Fact]
@@ -92,10 +92,7 @@ public sealed class SettingsRegistryTests
     [InlineData("2001", "2001 is outside 500..2000")]
     [InlineData("fast", "'fast' is not an integer")]
     [InlineData(null, "no value")]
-    public void AnIntegerIsBoundedInclusive(string? value, string? problem)
-    {
-        SettingsRegistry.TelemetryIntervalMs.Validate(value).Should().Be(problem);
-    }
+    public void AnIntegerIsBoundedInclusive(string? value, string? problem) => SettingsRegistry.TelemetryIntervalMs.Validate(value).Should().Be(problem);
 
     [Fact]
     public void ABooleanIsExactlyZeroOrOneAndAChoiceIsOneOfItsChoices()

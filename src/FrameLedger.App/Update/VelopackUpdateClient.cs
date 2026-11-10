@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
-using FrameLedger.App.Services;
 using Velopack;
 using Velopack.Sources;
 
@@ -116,10 +115,7 @@ public sealed class VelopackUpdateClient : IUpdateClient
     private static bool IsFailure(Exception ex, CancellationToken ct) =>
         ex is not OutOfMemoryException && !(ex is OperationCanceledException && ct.IsCancellationRequested);
 
-    private static UpdateManager Create(bool includePrereleases)
-    {
-        return new UpdateManager(new GithubSource(RepositoryUrl, string.Empty, includePrereleases, new FrameLedgerFileDownloader()));
-    }
+    private static UpdateManager Create(bool includePrereleases) => new UpdateManager(new GithubSource(RepositoryUrl, string.Empty, includePrereleases, new FrameLedgerFileDownloader()));
 
     /// <summary>A manager is cheap to build and never touches the network until asked; the two properties read its locator only.</summary>
     private static T Probe<T>(Func<UpdateManager, T> read, T fallback)

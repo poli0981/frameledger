@@ -310,7 +310,7 @@ public static class PartialSessionFile
                 return;
             }
 
-            var payload = new byte[8 + records.Length * _recordBytes];
+            byte[] payload = new byte[8 + records.Length * _recordBytes];
             BinaryPrimitives.WriteInt64LittleEndian(payload, firstOrdinal);
             MemoryMarshal.AsBytes(records).CopyTo(payload.AsSpan(8));
             Append(PartialChunkType.Records, payload);
@@ -323,7 +323,7 @@ public static class PartialSessionFile
                 return;
             }
 
-            var payload = new byte[gapBefore.Length * 4];
+            byte[] payload = new byte[gapBefore.Length * 4];
             for (int i = 0; i < gapBefore.Length; i++)
             {
                 BinaryPrimitives.WriteInt32LittleEndian(payload.AsSpan(i * 4), gapBefore[i]);
@@ -345,7 +345,7 @@ public static class PartialSessionFile
                 size += SensorSampleCodec.SizeOf(in s);
             }
 
-            var payload = new byte[size];
+            byte[] payload = new byte[size];
             int at = 0;
             foreach (ref readonly TelemetrySample s in samples)
             {
@@ -358,7 +358,7 @@ public static class PartialSessionFile
         public void AppendTick(PartialTick tick)
         {
             FlWriterState state = tick.WriterState;
-            var payload = new byte[8 * 5 + 4 + Marshal.SizeOf<FlWriterState>()];
+            byte[] payload = new byte[8 * 5 + 4 + Marshal.SizeOf<FlWriterState>()];
             BinaryPrimitives.WriteInt64LittleEndian(payload, tick.DrainTicks);
             BinaryPrimitives.WriteInt64LittleEndian(payload.AsSpan(8), tick.ForegroundTicks);
             BinaryPrimitives.WriteInt64LittleEndian(payload.AsSpan(16), tick.TotalDropped);
@@ -376,7 +376,7 @@ public static class PartialSessionFile
                 return;
             }
 
-            var payload = new byte[touchQpc.Length * 8];
+            byte[] payload = new byte[touchQpc.Length * 8];
             for (int i = 0; i < touchQpc.Length; i++)
             {
                 BinaryPrimitives.WriteInt64LittleEndian(payload.AsSpan(i * 8), touchQpc[i]);
@@ -389,7 +389,7 @@ public static class PartialSessionFile
         {
             ArgumentNullException.ThrowIfNull(text);
             byte[] utf8 = Encoding.UTF8.GetBytes(text);
-            var payload = new byte[8 + utf8.Length];
+            byte[] payload = new byte[8 + utf8.Length];
             BinaryPrimitives.WriteInt64LittleEndian(payload, at.ToUnixTimeMilliseconds());
             utf8.CopyTo(payload, 8);
             Append(PartialChunkType.Note, payload);

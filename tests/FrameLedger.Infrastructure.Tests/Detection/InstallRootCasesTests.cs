@@ -26,7 +26,7 @@ public sealed class InstallRootCasesTests : IDisposable
         }
 
         dir.Should().NotBeNull("the cases live in the repository");
-        return dir!.FullName;
+        return dir.FullName;
     }
 
     public static TheoryData<string, string, string> Cases()

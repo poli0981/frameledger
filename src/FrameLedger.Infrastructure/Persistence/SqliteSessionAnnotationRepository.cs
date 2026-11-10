@@ -22,7 +22,7 @@ public sealed class SqliteSessionAnnotationRepository : ISessionAnnotationReposi
     private const string _selectOne = $"SELECT {_columns} FROM session_annotations WHERE session_id = @sessionId";
 
     private const string _selectByGame =
-        $"SELECT a.session_id, a.tags, a.notes, a.rt_override, a.pt_override, a.rr_override FROM session_annotations a "
+        "SELECT a.session_id, a.tags, a.notes, a.rt_override, a.pt_override, a.rr_override FROM session_annotations a "
         + "JOIN sessions s ON s.id = a.session_id WHERE s.game_id = @gameId ORDER BY s.started_at DESC, s.id DESC";
 
     private const string _upsert =

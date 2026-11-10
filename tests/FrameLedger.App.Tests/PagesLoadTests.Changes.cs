@@ -60,7 +60,7 @@ public sealed partial class PagesLoadTests
         {
             var chart = new TrendChart();
             chart.Show(points, markers, "FPS");
-            using ScottPlot.Image image = chart.ScottPlot.GetImage(640, 320);
+            using Image image = chart.ScottPlot.GetImage(640, 320);
             PixelRect data = chart.ScottPlot.LastRender.DataRect;
             float line = chart.ScottPlot.GetPixel(new Coordinates(markers[1].At.LocalDateTime.ToOADate(), 0)).X;
             return (
@@ -88,7 +88,7 @@ public sealed partial class PagesLoadTests
             chart.ScottPlot.Axes.SetLimitsX(points[0].At.LocalDateTime.ToOADate(), points[^1].At.LocalDateTime.ToOADate());
         }
 
-        using ScottPlot.Image image = chart.ScottPlot.GetImage(width, height);
+        using Image image = chart.ScottPlot.GetImage(width, height);
         return new Drawn([.. chart.Badges.Select(static b => b.Rect)], [.. chart.Badges.Select(static b => b.Label)], chart.ScottPlot.LastRender.DataRect, chart.Markers);
     }
 

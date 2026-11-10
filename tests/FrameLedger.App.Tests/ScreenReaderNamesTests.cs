@@ -159,7 +159,7 @@ public sealed class ScreenReaderNamesTests
                 style.TargetType,
                 BasedOnWpfUi = ReferenceEquals(style.BasedOn, System.Windows.Application.Current.TryFindResource(CellName.WpfUiCellStyleKey)),
                 setter.Property,
-                Path = ((Binding)setter.Value).Path.Path,
+                ((Binding)setter.Value).Path.Path,
                 Again = CellName.Named("X", basedOn: null).BasedOn,
             };
         });

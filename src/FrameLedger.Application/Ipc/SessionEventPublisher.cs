@@ -51,6 +51,7 @@ public sealed class SessionEventPublisher : ISessionObserver
     }
 
     /// <summary>The sessions running now; read from any thread.</summary>
+    // ReSharper disable once InconsistentlySynchronizedField - a volatile read of what the writers replace under the lock.
     public AgentStatus Status => Volatile.Read(ref _status);
 
     /// <summary><c>SessionProgress</c> events published so far.</summary>

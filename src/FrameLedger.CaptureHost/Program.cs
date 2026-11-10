@@ -14,7 +14,6 @@
 
 using System.Diagnostics;
 using System.Globalization;
-using FrameLedger.Application.AntiCheat;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Consent;
 using FrameLedger.Application.Metrics;
@@ -28,7 +27,6 @@ using FrameLedger.Domain.Metrics;
 using FrameLedger.Domain.Sessions;
 using FrameLedger.Infrastructure.Capture;
 using FrameLedger.Infrastructure.Io;
-using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Infrastructure.Rules;
 using FrameLedger.Infrastructure.Vulkan;
@@ -519,7 +517,7 @@ internal static class Program
         int dispatch = stream.Count(r => ((FlRtFlags)r.RtFlags).HasFlag(FlRtFlags.DispatchObserved));
         int either = stream.Count(r => ((FlRtFlags)r.RtFlags & (FlRtFlags.AsBuildObserved | FlRtFlags.DispatchObserved))
                                        != FlRtFlags.None);
-        long volume = stream.Sum(r => (long)r.DispatchRaysVolume);
+        long volume = stream.Sum(r => r.DispatchRaysVolume);
 
         // OVER THE CLAIMING WINDOW, not over every record, and the difference is the whole
         // reading. The RT hooks install on a watchdog tick, so the first second of a session

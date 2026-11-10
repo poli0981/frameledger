@@ -67,12 +67,12 @@ public sealed partial class PagesLoadTests
             await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-1), fgMode: "dlssg", native: 62, displayed: 118, factor: 1.9, shape: r => r with { SnapshotId = driver }).ConfigureAwait(false);
             await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-3), hooked: false).ConfigureAwait(false);
             // beta.24 (D62): the summary's session carries a frame-generation mix, so its block is drawn and read in both themes.
-            string mix = Application.Recording.FgMixRecord.ToJson(new Domain.Metrics.FgMix(
+            string mix = Application.Recording.FgMixRecord.ToJson(new FgMix(
             [
-                new Domain.Metrics.FgMixRow(Domain.Metrics.FgMixKind.Generated, 2.0, 62, 124, 2, 0.2, 1),
-                new Domain.Metrics.FgMixRow(Domain.Metrics.FgMixKind.Generated, 4.0, 60, 240, 5, 0.5, 1),
-                new Domain.Metrics.FgMixRow(Domain.Metrics.FgMixKind.None, null, 118, 118, 2, 0.2, 1),
-                new Domain.Metrics.FgMixRow(Domain.Metrics.FgMixKind.Unclassified, null, null, null, 1, 0.1, 1),
+                new FgMixRow(FgMixKind.Generated, 2.0, 62, 124, 2, 0.2, 1),
+                new FgMixRow(FgMixKind.Generated, 4.0, 60, 240, 5, 0.5, 1),
+                new FgMixRow(FgMixKind.None, null, 118, 118, 2, 0.2, 1),
+                new FgMixRow(FgMixKind.Unclassified, null, null, null, 1, 0.1, 1),
             ]))!;
             long withFrames = await s.SessionWithFramesAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-5), frames: 600, spikeEvery: 200, shape: r => r with { FgMixJson = mix }).ConfigureAwait(false);
             var surfaces = new Surfaces(s);

@@ -107,10 +107,7 @@ public sealed class BugBundleBuilderTests : IDisposable
     }
 
     [Fact]
-    public void TheSuggestedNameIsTheDocsFormat()
-    {
-        BugBundleBuilder.SuggestedName(new DateTimeOffset(2026, 9, 14, 12, 34, 0, TimeSpan.Zero).ToLocalTime()).Should().MatchRegex(@"^FrameLedger-bugreport-\d{8}-\d{4}\.zip$");
-    }
+    public void TheSuggestedNameIsTheDocsFormat() => BugBundleBuilder.SuggestedName(new DateTimeOffset(2026, 9, 14, 12, 34, 0, TimeSpan.Zero).ToLocalTime()).Should().MatchRegex(@"^FrameLedger-bugreport-\d{8}-\d{4}\.zip$");
 
     [Fact]
     public async Task TheCrashDumpGoesInOnlyWhenPassedAndOnlyFromTheDumpDirectory()
@@ -155,7 +152,7 @@ public sealed class BugBundleBuilderTests : IDisposable
         CrashDumpInfo? latest = new BugBundleBuilder(_dir, settings, clock, dumps).LatestCrashDump();
 
         latest.Should().NotBeNull();
-        Path.GetFileName(latest!.Path).Should().Be("ui-newest.dmp", "the newest dump of either process; a .txt is not a dump");
+        Path.GetFileName(latest.Path).Should().Be("ui-newest.dmp", "the newest dump of either process; a .txt is not a dump");
         latest.WrittenAt.Should().Be(new DateTimeOffset(now.AddHours(-1), TimeSpan.Zero));
         latest.Bytes.Should().Be(30);
     }

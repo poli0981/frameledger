@@ -24,7 +24,7 @@ public sealed class SingleInstanceTests
         {
             first.Should().NotBeNull();
             using var revealed = new ManualResetEventSlim(false);
-            first!.RevealRequested += (_, _) => revealed.Set();
+            first.RevealRequested += (_, _) => revealed.Set();
 
             SingleInstance.Claim later = SingleInstance.TryClaim(key, out SingleInstance? second);
             using (second)

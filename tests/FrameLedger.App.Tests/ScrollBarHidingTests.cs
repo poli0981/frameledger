@@ -32,7 +32,7 @@ public sealed class ScrollBarHidingTests
             Height = 120,
             AcceptsReturn = true,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            Text = string.Join(Environment.NewLine, Enumerable.Range(1, 60).Select(static i => "line " + i.ToString(System.Globalization.CultureInfo.InvariantCulture))),
+            Text = string.Join(Environment.NewLine, Enumerable.Range(1, 60).Select(static i => "line " + i.ToString(CultureInfo.InvariantCulture))),
         };
         var document = new FlowDocumentScrollViewer { Height = 120, Document = new FlowDocument(new Paragraph(new Run(string.Join(" ", Enumerable.Repeat("word", 600))))) };
         var root = new StackPanel { Width = 600, Children = { plain, disabled, grid, text, document } };

@@ -144,10 +144,10 @@ public sealed class SessionFinalizer
     {
         int n = samples.Count;
         var gaps = new HashSet<int>(gapBefore);
-        var frametimes = new float[n];
-        var flags = new byte[n];
-        var frameIndex = new uint[n];
-        var swapchains = new uint[n];
+        float[] frametimes = new float[n];
+        byte[] flags = new byte[n];
+        uint[] frameIndex = new uint[n];
+        uint[] swapchains = new uint[n];
         var lastQpc = new Dictionary<uint, ulong>();
         for (int i = 0; i < n; i++)
         {
@@ -218,7 +218,7 @@ public sealed class SessionFinalizer
             return null;
         }
 
-        var pairs = new ushort[samples.Count * 4];
+        ushort[] pairs = new ushort[samples.Count * 4];
         bool varies = false;
         (ushort, ushort, ushort, ushort)? first = null;
         for (int i = 0; i < samples.Count; i++)

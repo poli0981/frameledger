@@ -21,7 +21,7 @@ public sealed class ShmHandshakeValidatorTests
     private const string _ours = "v0.1.0-42-gabc123def456";
 
     /// <summary>A mapping big enough for the default ring, i.e. what the shipped writer creates.</summary>
-    private const long _mapped = ShmLayout.RingOffset + ((long)ShmLayout.DefaultCapacity * 64L);
+    private const long _mapped = ShmLayout.RingOffset + (ShmLayout.DefaultCapacity * 64L);
 
     private static unsafe FlShmHandshake Handshake(
         string buildId,
@@ -46,12 +46,10 @@ public sealed class ShmHandshakeValidatorTests
     }
 
     [Fact]
-    public void AMatchingHandshakeIsAccepted()
-    {
+    public void AMatchingHandshakeIsAccepted() =>
         // The GREEN direction, asserted separately and first. A validator that refuses everything
         // carries exactly as much information as one that accepts everything.
         ShmHandshakeValidator.Validate(Handshake(_ours), _ours, _mapped).Should().Be(ShmAttachRefusal.Ok);
-    }
 
     [Fact]
     public void ADifferentBuildIdIsRefused()
@@ -113,20 +111,16 @@ public sealed class ShmHandshakeValidatorTests
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    public void NoBuildIdOfOurOwnRefusesRatherThanMatching(string? mine)
-    {
+    public void NoBuildIdOfOurOwnRefusesRatherThanMatching(string? mine) =>
         // THE STATE THAT MADE THIS CHECK UNIMPLEMENTABLE. Before FlGuardBuildId existed the managed
         // side had no value here, and the obvious implementation — compare two strings — would have
         // compared "" with "" and reported a match forever. A gate that cannot fail, guarding the ABI.
         ShmHandshakeValidator.Validate(Handshake(_ours), mine, _mapped).Should().Be(ShmAttachRefusal.Incomplete);
-    }
 
     [Fact]
-    public void AnEmptyBuildIdInTheHandshakeRefuses()
-    {
+    public void AnEmptyBuildIdInTheHandshakeRefuses() =>
         // The other half of the same trap: a producer that never wrote the field.
         ShmHandshakeValidator.Validate(Handshake(string.Empty), _ours, _mapped).Should().Be(ShmAttachRefusal.Incomplete);
-    }
 
     [Fact]
     public void TwoEmptyBuildIdsDoNotMatchEachOther()

@@ -56,6 +56,7 @@ public sealed class SessionSummaryOpener : ISessionSummaryOpener, ISessionWindow
             _services.GetRequiredService<ISessionAnnotationRepository>(),
             _services.GetRequiredService<IHardwareSnapshotRepository>(),
             _services.GetRequiredService<SessionSeriesLoader>(),
+            // ReSharper disable once AccessToModifiedClosure - read when a dialog opens, after the window below exists.
             new TriStateOverridePrompt(() => window!.Dialogs),
             _services.GetRequiredService<IFileSaver>(),
             _services.GetRequiredService<IMessageStrip>());

@@ -37,7 +37,7 @@ public sealed class LastSessionSummaryTests
         json.Should().NotBeNull();
         using JsonDocument doc = JsonDocument.Parse(json!);
         doc.RootElement.GetProperty("game").GetString().Should().Be("Newer");
-        System.Text.Encoding.UTF8.GetString(json!).Should().NotContain("private note").And.NotContain("mine");
+        System.Text.Encoding.UTF8.GetString(json).Should().NotContain("private note").And.NotContain("mine");
         (await summary.JsonAsync(id + 1000, Ct)).Should().BeNull("a session that is gone writes nothing");
     }
 }

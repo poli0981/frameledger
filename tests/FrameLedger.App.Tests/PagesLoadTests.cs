@@ -375,7 +375,7 @@ public sealed partial class PagesLoadTests
             new { id = game.Id }, tx, cancellationToken: ct)), TestContext.Current.CancellationToken);
         var detail = new GameDetailViewModel(s.Library, new GameSelection { GameId = game.Id }, new HookingConsent(new NoAgent(), new NoPrompt()),
             new NoNavigation(), new NoConfirm(), new NoEdit(), new NoStrip(), new NoSummaries(), new SessionSeriesLoader(s.Sessions),
-            new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(), new NoPicker(),
+            new SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(), new NoPicker(),
             new RegisteredSettings(new MemorySettings()));
         Task pending = detail.Pending;
         await pending;
@@ -428,7 +428,7 @@ public sealed partial class PagesLoadTests
         await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddDays(-1), native: 64);
         var detail = new GameDetailViewModel(s.Library, new GameSelection { GameId = game.Id }, new HookingConsent(new NoAgent(), new NoPrompt()),
             new NoNavigation(), new NoConfirm(), new NoEdit(), new NoStrip(), new NoSummaries(), new SessionSeriesLoader(s.Sessions),
-            new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(), new NoPicker());
+            new SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(), new NoPicker());
         Task pending = detail.Pending;
         await pending;
 
@@ -592,7 +592,7 @@ public sealed partial class PagesLoadTests
         Task pending2 = games.Pending;
         await pending2;
         var detail = new GameDetailViewModel(s.Library, selection, consent, nav, new NoConfirm(), new NoEdit(), strip, new NoSummaries(),
-            new SessionSeriesLoader(s.Sessions), new Infrastructure.Persistence.SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(), new NoPicker());
+            new SessionSeriesLoader(s.Sessions), new SqliteHardwareSnapshotRepository(s.Db), new SessionSelection(), new NoPicker());
         var compare = new CompareViewModel(s.Library, new SessionSeriesLoader(s.Sessions), new NoMixed(), new NoSaver(), strip);
         Task pending3 = detail.Pending;
         await pending3;

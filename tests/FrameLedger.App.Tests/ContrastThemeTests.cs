@@ -226,7 +226,7 @@ public sealed partial class ContrastThemeTests
         {
             var resources = new ResourceDictionary();
             ContrastOverlay.Install(resources, EditedDark);
-            var on = (Installed: ContrastOverlay.IsInstalled(resources), Active: ContrastTheme.Active, Accent: ColourOf(resources["AccentFillColorDefaultBrush"]),
+            var on = (Installed: ContrastOverlay.IsInstalled(resources), ContrastTheme.Active, Accent: ColourOf(resources["AccentFillColorDefaultBrush"]),
                 OnAccent: ColourOf(resources["TextOnAccentFillColorPrimary"]), Merged: resources.MergedDictionaries.Count);
             ContrastOverlay.Install(resources, EditedLight);
             int again = resources.MergedDictionaries.Count;
@@ -304,7 +304,7 @@ public sealed partial class ContrastThemeTests
             source.IsOn = false;
             source.Raise();
             Visuals.Pump();
-            return (on, under, chart.Figure, Off: ContrastOverlay.IsInstalled(resources), Active: ContrastTheme.Active, After: ApplicationThemeManager.GetAppTheme());
+            return (on, under, chart.Figure, Off: ContrastOverlay.IsInstalled(resources), ContrastTheme.Active, After: ApplicationThemeManager.GetAppTheme());
         }));
 
         facts.on.Should().BeTrue();

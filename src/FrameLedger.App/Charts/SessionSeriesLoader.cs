@@ -64,9 +64,9 @@ public sealed class SessionSeriesLoader
         float[] frametimes = Pick(allFrametimes, keep);
         byte[] flags = Pick(allFlags, keep);
         int n = keep.Length;
-        var times = new double[n];
-        var generated = new bool[n];
-        var gap = new bool[n];
+        double[] times = new double[n];
+        bool[] generated = new bool[n];
+        bool[] gap = new bool[n];
         double t = 0;
         for (int i = 0; i < n; i++)
         {

@@ -16,10 +16,7 @@ public sealed class AlphaNoticeGateTests
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
-    public async Task TheMainLineServesWithNoRowAtAll()
-    {
-        (await AlphaNoticeGate.AllowsServingAsync(BuildLine.Main, new Store(), Ct)).Should().BeTrue();
-    }
+    public async Task TheMainLineServesWithNoRowAtAll() => (await AlphaNoticeGate.AllowsServingAsync(BuildLine.Main, new Store(), Ct)).Should().BeTrue();
 
     [Fact]
     public async Task AnAlphaWaitsUntilTheNoticeIsAcceptedAtThisBuildsVersion()

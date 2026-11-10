@@ -15,10 +15,7 @@ public sealed class GpuSampleTests
     private static GpuSample Empty() => new() { TakenAt = DateTimeOffset.UnixEpoch, Layer = TelemetryLayer.Lhm };
 
     [Fact]
-    public void AnEmptySampleHasNoFields()
-    {
-        Empty().PresentFields.Should().Be(GpuCapabilities.None);
-    }
+    public void AnEmptySampleHasNoFields() => Empty().PresentFields.Should().Be(GpuCapabilities.None);
 
     [Fact]
     public void EveryFieldHasExactlyOneBitAndAZeroIsAValue()

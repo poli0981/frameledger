@@ -55,10 +55,7 @@ public sealed class StringsTests
     /// phase — so a definition xUnit did not find would fail here rather than bring the races back silently.
     /// </summary>
     [Fact]
-    public void TheCultureCollectionIsBoundToTheDefinitionThatRunsItAlone()
-    {
-        TestContext.Current.TestCollection!.TestCollectionClassName.Should().Be(typeof(StringsCultureDefinition).FullName);
-    }
+    public void TheCultureCollectionIsBoundToTheDefinitionThatRunsItAlone() => TestContext.Current.TestCollection!.TestCollectionClassName.Should().Be(typeof(StringsCultureDefinition).FullName);
 
     [Fact]
     public void TheCulturePropertyOverridesTheThread()

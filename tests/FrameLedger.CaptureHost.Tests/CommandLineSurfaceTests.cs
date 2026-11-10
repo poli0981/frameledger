@@ -2,9 +2,7 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using FluentAssertions;
-using FrameLedger.Application.Capture;
 using FrameLedger.Application.Consent;
-using FrameLedger.CaptureHost;
 
 namespace FrameLedger.CaptureHost.Tests;
 
@@ -20,8 +18,7 @@ namespace FrameLedger.CaptureHost.Tests;
 public sealed class CommandLineSurfaceTests
 {
     [Fact]
-    public void TheAcceptedOptionsAreExactlyThese()
-    {
+    public void TheAcceptedOptionsAreExactlyThese() =>
         // TWO, and adding the second was a deliberate, reviewed act -- this assertion is what
         // made it one. `--seconds` bounds how long an already-consented, already-guarded
         // session runs; it cannot widen WHAT is injected or skip a check, which is the
@@ -32,7 +29,6 @@ public sealed class CommandLineSurfaceTests
         // nothing about injection -- payload, target and evidence are exactly what they were -- so it
         // has the same property `--seconds` has: it cannot widen what is injected or skip a check.
         CommandLine.AcceptedOptions.Should().BeEquivalentTo(["--exe", "--seconds", "--args"]);
-    }
 
     [Fact]
     public void LaunchTakesTheExecutableItsArgumentsAndABound()
@@ -92,10 +88,7 @@ public sealed class CommandLineSurfaceTests
     [InlineData("--pid")]
     [InlineData("--force")]
     [InlineData("--payload")]
-    public void AnUnknownOptionIsRefusedRatherThanIgnored(string option)
-    {
-        CommandLine.Parse(["capture", option, "1234"]).Error.Should().NotBeNull();
-    }
+    public void AnUnknownOptionIsRefusedRatherThanIgnored(string option) => CommandLine.Parse(["capture", option, "1234"]).Error.Should().NotBeNull();
 
     [Fact]
     public void CaptureNeedsAnExecutable()

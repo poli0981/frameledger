@@ -19,8 +19,8 @@
             <ColumnDefinition Width="12" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <charts:ChartPlot x:Name="Histogram" AutomationProperties.Name="{x:Static res:Strings.A11y_Chart_Histogram}" AutomationProperties.HelpText="{x:Static res:Strings.A11y_ChartData_Summary}" Grid.Column="0" />
-        <charts:ChartPlot x:Name="Percentiles" AutomationProperties.Name="{x:Static res:Strings.A11y_Chart_Percentiles}" AutomationProperties.HelpText="{x:Static res:Strings.A11y_ChartData_Summary}" Grid.Column="2" />
-        <ui:TextBlock x:Name="Note" Grid.Row="1" Grid.ColumnSpan="3" Margin="0,4,0,0" Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Visibility="Collapsed" />
+        <charts:ChartPlot x:Name="Histogram" AutomationProperties.Name="{x:Static res:Strings.A11y_Chart_Histogram}" AutomationProperties.HelpText="{x:Static res:Strings.A11y_ChartData_Summary}" Grid.Row="0" Grid.Column="0" />
+        <charts:ChartPlot x:Name="Percentiles" AutomationProperties.Name="{x:Static res:Strings.A11y_Chart_Percentiles}" AutomationProperties.HelpText="{x:Static res:Strings.A11y_ChartData_Summary}" Grid.Row="0" Grid.Column="2" />
+        <ui:TextBlock x:Name="Note" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,4,0,0" Style="{StaticResource TertiaryText}" TextWrapping="Wrap" Visibility="Collapsed" />
     </Grid>
 </UserControl>

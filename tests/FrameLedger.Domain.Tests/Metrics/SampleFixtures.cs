@@ -69,7 +69,7 @@ internal static class SampleFixtures
                     FgMode = drains ? FgKind.DlssG : FgKind.Unknown,
                     Features = drains ? FeatureBits.RayReconstructionObserved : FeatureBits.None,
                 });
-                qpc += (ulong)Step;
+                qpc += Step;
             }
         }
 
@@ -83,7 +83,7 @@ internal static class SampleFixtures
         ulong qpc = all[^1].Qpc;
         foreach (FrameSample s in second)
         {
-            qpc += (ulong)Step;
+            qpc += Step;
             all.Add(s with { Qpc = qpc });
         }
 

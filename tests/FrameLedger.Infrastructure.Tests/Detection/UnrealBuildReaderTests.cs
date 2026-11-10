@@ -112,7 +112,7 @@ public sealed class UnrealBuildReaderTests
             UnrealBuildFacts? facts = UnrealBuildReader.Read(path, "Game-Win64-Shipping.exe", Ct);
 
             facts.Should().NotBeNull();
-            UnrealVersion.Decide(facts!).Should().Be(EngineVersionReading.None);
+            UnrealVersion.Decide(facts).Should().Be(EngineVersionReading.None);
         }
         finally
         {

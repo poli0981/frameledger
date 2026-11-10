@@ -459,6 +459,7 @@ public sealed class CaptureOrchestrator
                 SessionGuid = sessionGuid,
                 StopToken = running.Stop.Token,
             };
+            // ReSharper disable once AccessToDisposedClosure - the task is awaited here, inside the scope that disposes it.
             RecordedSession r = await Task.Run(() => launch.Recorder.RecordAsync(request, ct), ct).ConfigureAwait(false);
             Report(r, game.Name);
 
@@ -596,7 +597,7 @@ public sealed class CaptureOrchestrator
 
         public CancellationTokenSource Stop { get; } = new();
 
-        public Task Task { get; set; } = System.Threading.Tasks.Task.CompletedTask;
+        public Task Task { get; set; } = Task.CompletedTask;
 
         /// <summary>The session as recorded; null until it ended, and for one cancelled or faulted. Written before <see cref="Task"/> completes.</summary>
         public RecordedSession? Recorded { get; set; }

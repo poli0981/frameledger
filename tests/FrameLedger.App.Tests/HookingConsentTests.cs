@@ -105,7 +105,7 @@ public sealed class HookingConsentTests
 
         result.Outcome.Should().Be(HookingConsentOutcome.Enabled);
         result.Detail.Should().Be("Written");
-        agent.Sent.Should().ContainSingle().Which.Should().Be((IpcMessageType.SetHookEnabled, (object)new SetHookEnabledRequest(7, true, SafetyDisclosure.Version)));
+        agent.Sent.Should().ContainSingle().Which.Should().Be((IpcMessageType.SetHookEnabled, new SetHookEnabledRequest(7, true, SafetyDisclosure.Version)));
     }
 
     [Fact]

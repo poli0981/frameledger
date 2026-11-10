@@ -49,13 +49,13 @@ public sealed partial class WindowGeometryProbeTests
             }
 
             fixture.Should().NotBeNull("the harness prints the window it made before it starts presenting");
-            ulong hwnd = ulong.Parse(fixture!.Groups["hwnd"].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+            ulong hwnd = ulong.Parse(fixture.Groups["hwnd"].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
             var probe = new WindowGeometryProbe();
 
             WindowView? view = probe.Observe([harness.Id], hwnd);
 
             Assert.SkipWhen(view is null, "no monitor to place the window on in this session");
-            view!.Value.Minimized.Should().BeFalse();
+            view.Value.Minimized.Should().BeFalse();
             view.Value.Client.IsEmpty.Should().BeFalse("the harness's window has a client area");
             view.Value.Monitor.IsEmpty.Should().BeFalse();
             view.Value.CoversMonitor.Should().BeFalse("a 320×200 window covers no monitor");

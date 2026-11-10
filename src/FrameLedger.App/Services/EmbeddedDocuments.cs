@@ -94,7 +94,7 @@ public static class EmbeddedDocuments
         ArgumentNullException.ThrowIfNull(markdown);
         ArgumentNullException.ThrowIfNull(path);
         string? heading = markdown.Split('\n').Select(static l => l.Trim()).FirstOrDefault(static l => l.StartsWith("# ", StringComparison.Ordinal));
-        return heading is null ? System.IO.Path.GetFileNameWithoutExtension(path) : heading[2..].Trim();
+        return heading is null ? Path.GetFileNameWithoutExtension(path) : heading[2..].Trim();
     }
 
     /// <summary>About ▸ Third-party licences: the notices and the index of every shipped package with its version and licence.</summary>

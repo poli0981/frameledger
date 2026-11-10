@@ -1,0 +1,24 @@
+# Qodana's settings for .github/workflows/qodana.yml (owner decision D93, 2026-11-10; docs/13_CI_CD.md §Qodana).
+#
+# The linter is Qodana Community for .NET (ReSharper's InspectCode in a Linux container), and not Qodana for .NET
+# (Rider): that one needs an Ultimate licence, and the Qodana Cloud organisation holds a 30-day trial, so a job
+# built on it would turn red the day the trial ends. The Community linter runs under every licence.
+#
+# It analyses the C# of FrameLedger.slnx - and its XAML and .resx - and nothing native: src/native is a CMake
+# tree no solution names, and it is MSVC-only, which no Linux container compiles. CodeQL and SonarCloud read the C++.
+#
+# The linter's image is the action's own version (the action pins the CLI, the CLI its image), so the one pin is the
+# action's commit in the workflow.
+version: "1.0"
+linter: qodana-cdnet
+
+dotnet:
+  solution: FrameLedger.slnx
+  configuration: Release
+
+# The gate: no problem at all. What the linter reports is settled where it is found - fixed, or its inspection
+# switched off in .editorconfig with the reason beside it (InspectCode reads its severities there, and so does
+# Rider) - so a count above zero is something new.
+failureConditions:
+  severityThresholds:
+    any: 0

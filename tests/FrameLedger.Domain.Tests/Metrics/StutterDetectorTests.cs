@@ -22,7 +22,7 @@ public sealed class StutterDetectorTests
         StutterResult? r = StutterDetector.Detect(series);
 
         r.Should().NotBeNull();
-        r!.Count.Should().Be(1);
+        r.Count.Should().Be(1);
         r.IsStutter[20].Should().BeTrue();
         r.IsStutter[30].Should().BeFalse();
         r.TimePct.Should().BeApproximately(21.0 / (38 * 10 + 21 + 20) * 100, 1e-9);
@@ -44,10 +44,7 @@ public sealed class StutterDetectorTests
     }
 
     [Fact]
-    public void FewerThanNineteenFramesIsNotApplicable()
-    {
-        StutterDetector.Detect([.. Enumerable.Repeat(10.0, 18)]).Should().BeNull();
-    }
+    public void FewerThanNineteenFramesIsNotApplicable() => StutterDetector.Detect([.. Enumerable.Repeat(10.0, 18)]).Should().BeNull();
 
     [Fact]
     public void AnAllZeroSeriesHasNoStutterTime()

@@ -255,7 +255,7 @@ public sealed class SessionRecorder : ISessionRecorder
         string notes = ExitStatusMapper.Describe(o.Reason, o.ExitCode, crash.ApplicationLog, crash.Reporter, crash.ReporterCounted);
         if (o.LaunchError is { } launchError)
         {
-            notes += "; launch_error=" + launchError.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            notes += "; launch_error=" + launchError.ToString(CultureInfo.InvariantCulture);
         }
 
         if (!hooked)

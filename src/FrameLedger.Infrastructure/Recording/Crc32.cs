@@ -23,7 +23,7 @@ internal static class Crc32
 
     private static uint[] BuildTable()
     {
-        var table = new uint[256];
+        uint[] table = new uint[256];
         for (uint i = 0; i < 256; i++)
         {
             uint c = i;

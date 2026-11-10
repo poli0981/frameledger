@@ -38,7 +38,7 @@ public sealed partial class ImportCandidateViewModel : ObservableObject
     /// The row is drawn dimmed: one already in the library, except under a Windows contrast theme (beta.35, D91), where a
     /// translucent row is no theme colour and the note column says it already is.
     /// </summary>
-    public bool IsDimmed => IsExisting && Services.ContrastTheme.Active is null;
+    public bool IsDimmed => IsExisting && ContrastTheme.Active is null;
 
     public string PlatformText => Formats.Platform(Candidate.Game.Platform);
 

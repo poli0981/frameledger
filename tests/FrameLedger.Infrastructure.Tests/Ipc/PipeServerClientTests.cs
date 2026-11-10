@@ -57,7 +57,7 @@ public sealed class PipeServerClientTests : IAsyncDisposable
         _stop.Dispose();
     }
 
-    private PipeServer Start(Func<System.IO.Pipes.NamedPipeServerStream, SecurityIdentifier?>? clientUserOf = null, int maxClients = IpcProtocol.MaxClients)
+    private PipeServer Start(Func<NamedPipeServerStream, SecurityIdentifier?>? clientUserOf = null, int maxClients = IpcProtocol.MaxClients)
     {
         var handler = new AgentRequestHandler(_identity, static () => "l1+lhm", () => _status);
         _server = new PipeServer(new PipeServerOptions { PipeName = _pipeName, MaxClients = maxClients }, handler, _log.Add, clientUserOf);
@@ -113,7 +113,7 @@ public sealed class PipeServerClientTests : IAsyncDisposable
             .Should().BeNull("the user's own Agent, reached from an elevated App");
         UnauthorizedAccessException? refused = await ConnectToAPipeOwnedByAsync(administrators).ConfigureAwait(true);
         refused.Should().NotBeNull("a pipe the user does not own is not the user's Agent, elevated or not");
-        refused!.Message.Should().Contain(administrators.Value);
+        refused.Message.Should().Contain(administrators.Value);
     }
 
     [Fact]

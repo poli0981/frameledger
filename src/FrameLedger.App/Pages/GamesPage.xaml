@@ -5,6 +5,7 @@
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:pages="clr-namespace:FrameLedger.App.Pages"
       xmlns:res="clr-namespace:FrameLedger.App"
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
       xmlns:controls="clr-namespace:FrameLedger.App.Controls"
@@ -111,7 +112,7 @@
                     <DataTemplate DataType="{x:Type vm:GameCardViewModel}">
                         <Grid>
                             <ui:CardAction IsChevronVisible="False" VerticalAlignment="Stretch" VerticalContentAlignment="Top" AutomationProperties.Name="{Binding AccessibleName}"
-                                           Command="{Binding DataContext.ViewModel.OpenCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                           Command="{Binding ViewModel.OpenCommand, RelativeSource={RelativeSource AncestorType={x:Type pages:GamesPage}}}"
                                            CommandParameter="{Binding}"
                                            Icon="{ui:SymbolIcon Games24}">
                                 <StackPanel>
@@ -143,11 +144,11 @@
                             <!-- beta.21 (D59): Play, over the card's corner rather than inside it, so the card stays one button. -->
                             <ui:Button Margin="0,10,10,0" Padding="6,4" HorizontalAlignment="Right" VerticalAlignment="Top"
                                        AutomationProperties.Name="{Binding PlayName}"
-                                       Command="{Binding DataContext.ViewModel.PlayCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                       Command="{Binding ViewModel.PlayCommand, RelativeSource={RelativeSource AncestorType={x:Type pages:GamesPage}}}"
                                        CommandParameter="{Binding}"
                                        Icon="{ui:SymbolIcon Play24}"
-                                       IsEnabled="{Binding DataContext.ViewModel.ActsOnThisPc, RelativeSource={RelativeSource AncestorType=Page}}"
-                                       ToolTip="{Binding DataContext.ViewModel.PlayToolTip, RelativeSource={RelativeSource AncestorType=Page}}" />
+                                       IsEnabled="{Binding ViewModel.ActsOnThisPc, RelativeSource={RelativeSource AncestorType={x:Type pages:GamesPage}}}"
+                                       ToolTip="{Binding ViewModel.PlayToolTip, RelativeSource={RelativeSource AncestorType={x:Type pages:GamesPage}}}" />
                         </Grid>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -165,14 +166,14 @@
                     <!-- beta.21 (D59): Play, as on the cards. -->
                     <DataGridTemplateColumn Header="{x:Static res:Strings.Play_Button}" Width="Auto" controls:CellName.Path="PlayName">
                         <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
+                            <DataTemplate DataType="{x:Type vm:GameCardViewModel}">
                                 <ui:Button Margin="2,0" Padding="6,2" Appearance="Transparent"
                                            AutomationProperties.Name="{Binding PlayName}"
-                                           Command="{Binding DataContext.ViewModel.PlayCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                           Command="{Binding ViewModel.PlayCommand, RelativeSource={RelativeSource AncestorType={x:Type pages:GamesPage}}}"
                                            CommandParameter="{Binding}"
                                            Icon="{ui:SymbolIcon Play24}"
-                                           IsEnabled="{Binding DataContext.ViewModel.ActsOnThisPc, RelativeSource={RelativeSource AncestorType=Page}}"
-                                           ToolTip="{Binding DataContext.ViewModel.PlayToolTip, RelativeSource={RelativeSource AncestorType=Page}}" />
+                                           IsEnabled="{Binding ViewModel.ActsOnThisPc, RelativeSource={RelativeSource AncestorType={x:Type pages:GamesPage}}}"
+                                           ToolTip="{Binding ViewModel.PlayToolTip, RelativeSource={RelativeSource AncestorType={x:Type pages:GamesPage}}}" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -181,7 +182,7 @@
                     <DataGridTextColumn Header="{x:Static res:Strings.Games_List_Engine}" Binding="{Binding EngineText}" Width="*" />
                     <DataGridTemplateColumn Header="{x:Static res:Strings.Games_List_Status}" Width="*" controls:CellName.Path="StatusText">
                         <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
+                            <DataTemplate DataType="{x:Type vm:GameCardViewModel}">
                                 <TextBlock Margin="4,0" VerticalAlignment="Center" Text="{Binding StatusText}" ToolTip="{Binding NotInstalledToolTip}" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>

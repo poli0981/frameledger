@@ -403,16 +403,16 @@ public static class Formats
     /// Why a Tier-2 session measured nothing, from <c>capture_notes</c> (2026-09-22): hooking off, a block on the row,
     /// the guard's refusal by family, a process that could not be opened, or the end reason by name.
     /// </summary>
-    public static string Tier2Reason(string? captureNotes) => Tier2Reason(Application.Recording.CaptureNotes.Parse(captureNotes));
+    public static string Tier2Reason(string? captureNotes) => Tier2Reason(CaptureNotes.Parse(captureNotes));
 
     /// <summary>The same words for a session still running (2026-09-23): the hold its <c>SessionStarted</c> carried.</summary>
-    public static string Tier2HoldReason(Shared.Ipc.SessionHold hold)
+    public static string Tier2HoldReason(SessionHold hold)
     {
         ArgumentNullException.ThrowIfNull(hold);
-        return Tier2Reason(new Application.Recording.CaptureNotes(hold.Reason, hold.GuardReason, hold.Family, hold.Signal));
+        return Tier2Reason(new CaptureNotes(hold.Reason, hold.GuardReason, hold.Family, hold.Signal));
     }
 
-    private static string Tier2Reason(Application.Recording.CaptureNotes n)
+    private static string Tier2Reason(CaptureNotes n)
     {
         switch (n.End)
         {

@@ -37,7 +37,7 @@ public sealed class DxgiCountedWindowTests
                 Features = FeatureBits.RayReconstructionObserved,
                 DxgiUnseen = inRange ? unseen : (byte)0,
             });
-            qpc += (ulong)(Frequency / 70);
+            qpc += (Frequency / 70);
         }
 
         return stream;

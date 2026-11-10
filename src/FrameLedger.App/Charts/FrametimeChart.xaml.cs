@@ -32,7 +32,7 @@ public partial class FrametimeChart : UserControl
     }
 
     /// <summary>The plot, for a PNG export.</summary>
-    public ScottPlot.Plot ScottPlot => Plot.Plot;
+    public Plot ScottPlot => Plot.Plot;
 
     /// <summary>How many points the last draw put on the axes (a test's window into the decimation).</summary>
     public int DrawnPoints { get; private set; }
@@ -93,7 +93,7 @@ public partial class FrametimeChart : UserControl
 
     private void Redraw()
     {
-        ScottPlot.Plot plot = Plot.Plot;
+        Plot plot = Plot.Plot;
         plot.Clear();
         DrawnPoints = 0;
         ChartTheme.Apply(plot);
@@ -128,7 +128,7 @@ public partial class FrametimeChart : UserControl
         Plot.Refresh();
     }
 
-    private void DrawSeries(ScottPlot.Plot plot, double[] xs, double[] ys, Color color, string label, int index)
+    private void DrawSeries(Plot plot, double[] xs, double[] ys, Color color, string label, int index)
     {
         if (xs.Length == 0)
         {
@@ -144,14 +144,14 @@ public partial class FrametimeChart : UserControl
     }
 
     /// <summary>Every present but those after a gap, whose stored interval is 0 — not a frame, and it was drawn as a 0 ms one.</summary>
-    private void DrawPresents(ScottPlot.Plot plot, ChartPalette p)
+    private void DrawPresents(Plot plot, ChartPalette p)
     {
         // beta.23: the decoded series carries the line (SeriesDigest), so the Displayed toggle no longer walks every present.
         (double[] xs, double[] ys) = _series!.Digest?.Presents ?? SeriesDigest.PresentsWithoutGaps(_series.TimesS, _series.FrameTimesMs, _series.Gap);
         DrawSeries(plot, xs, ys, p.Displayed, Strings.Chart_Series_Displayed, 1);
     }
 
-    private void DrawStutter(ScottPlot.Plot plot, ChartPalette p)
+    private void DrawStutter(Plot plot, ChartPalette p)
     {
         if (_series?.Stutter is null)
         {
@@ -179,7 +179,7 @@ public partial class FrametimeChart : UserControl
         AddMarkers(plot, psoXs, psoYs, p.StutterPso, Strings.Chart_Series_StutterPso, 1);
     }
 
-    private void AddMarkers(ScottPlot.Plot plot, List<double> xs, List<double> ys, Color color, string label, int index)
+    private void AddMarkers(Plot plot, List<double> xs, List<double> ys, Color color, string label, int index)
     {
         if (xs.Count == 0)
         {
@@ -195,7 +195,7 @@ public partial class FrametimeChart : UserControl
         ChartPatterns.Points(markers, index);   // beta.35 (D90): a stutter a circle, a shader-compile stutter a triangle
     }
 
-    private void DrawSegments(ScottPlot.Plot plot, ChartPalette p)
+    private void DrawSegments(Plot plot, ChartPalette p)
     {
         if (_series is null || _series.Segments.Count < 2)
         {
@@ -218,7 +218,7 @@ public partial class FrametimeChart : UserControl
     /// Each segment's settings at its top-left corner (beta.8: the label was computed for every segment and drawn for none),
     /// where the segment is wide enough to hold it. Placed after the axes are scaled, at their top.
     /// </summary>
-    private void LabelSegments(ScottPlot.Plot plot, ChartPalette p)
+    private void LabelSegments(Plot plot, ChartPalette p)
     {
         if (_series is null || _series.Segments.Count < 2)
         {
@@ -242,7 +242,7 @@ public partial class FrametimeChart : UserControl
     /// GPU temperature and load on the right axis, over the frames' span only: the sensors sit on the frames' axis when the
     /// blob said where the first present is (schema 0013), and ticks before it are the launch and the loading screen.
     /// </summary>
-    private void DrawSensors(ScottPlot.Plot plot, ChartPalette p)
+    private void DrawSensors(Plot plot, ChartPalette p)
     {
         if (_series is null)
         {

@@ -41,7 +41,7 @@ public static class SeriesCodec
     public static float[] DecodeFloat32(byte[] blob)
     {
         byte[] raw = Inflate(blob, sizeof(float));
-        var values = new float[raw.Length / sizeof(float)];
+        float[] values = new float[raw.Length / sizeof(float)];
         for (int i = 0; i < values.Length; i++)
         {
             values[i] = BinaryPrimitives.ReadSingleLittleEndian(raw.AsSpan(i * sizeof(float)));
@@ -66,7 +66,7 @@ public static class SeriesCodec
     public static ushort[] DecodeUInt16(byte[] blob)
     {
         byte[] raw = Inflate(blob, sizeof(ushort));
-        var values = new ushort[raw.Length / sizeof(ushort)];
+        ushort[] values = new ushort[raw.Length / sizeof(ushort)];
         for (int i = 0; i < values.Length; i++)
         {
             values[i] = BinaryPrimitives.ReadUInt16LittleEndian(raw.AsSpan(i * sizeof(ushort)));
@@ -91,7 +91,7 @@ public static class SeriesCodec
     public static uint[] DecodeUInt32(byte[] blob)
     {
         byte[] raw = Inflate(blob, sizeof(uint));
-        var values = new uint[raw.Length / sizeof(uint)];
+        uint[] values = new uint[raw.Length / sizeof(uint)];
         for (int i = 0; i < values.Length; i++)
         {
             values[i] = BinaryPrimitives.ReadUInt32LittleEndian(raw.AsSpan(i * sizeof(uint)));

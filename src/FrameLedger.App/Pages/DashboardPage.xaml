@@ -5,6 +5,7 @@
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:pages="clr-namespace:FrameLedger.App.Pages"
       xmlns:res="clr-namespace:FrameLedger.App"
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
       xmlns:controls="clr-namespace:FrameLedger.App.Controls"
@@ -136,7 +137,7 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="{x:Type vm:RecentSessionViewModel}">
                         <ui:CardAction Margin="0,0,0,6" IsChevronVisible="True" AutomationProperties.Name="{Binding AccessibleName}"
-                                       Command="{Binding DataContext.ViewModel.OpenSessionCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                       Command="{Binding ViewModel.OpenSessionCommand, RelativeSource={RelativeSource AncestorType={x:Type pages:DashboardPage}}}"
                                        CommandParameter="{Binding}">
                             <Grid>
                                 <!-- The readout is sized to its content and the game's name trims first (2026-09-16). -->

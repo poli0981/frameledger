@@ -17,10 +17,7 @@ public sealed class LatestProcessSnapshotTests
     private static ProcessSnapshot Proc(int pid, string? path, string name = "Game.exe") => new(pid, 1, name, path, DateTimeOffset.UnixEpoch);
 
     [Fact]
-    public void BeforeTheFirstPollThereIsNoAnswer()
-    {
-        new LatestProcessSnapshot().Contains(_game).Should().BeNull("the console verbs never poll, and keep the name check");
-    }
+    public void BeforeTheFirstPollThereIsNoAnswer() => new LatestProcessSnapshot().Contains(_game).Should().BeNull("the console verbs never poll, and keep the name check");
 
     [Fact]
     public void AnotherGamesGameExeDoesNotKeepThisOneRunning()

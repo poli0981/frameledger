@@ -90,7 +90,7 @@ public sealed class PartialSessionFileTests : IDisposable
         PartialSession? p = PartialSessionFile.Read(path);
 
         p.Should().NotBeNull();
-        p!.Truncated.Should().BeFalse();
+        p.Truncated.Should().BeFalse();
         p.Header.Should().Be(Header(guid));
         p.Records.Select(r => r.FrameIndex).Should().Equal(0u, 1u, 2u, 3u, 4u);
         p.Records[4].Qpc.Should().Be(Record(4).Qpc);
@@ -129,11 +129,11 @@ public sealed class PartialSessionFileTests : IDisposable
         }
 
         // A narrow (type 4) chunk as beta.11 wrote it: qpc, wall clock, layer, a 16-bit mask (core temperature, system RAM).
-        var narrow = new byte[8 + 8 + 1 + 2 + 16];
+        byte[] narrow = new byte[8 + 8 + 1 + 2 + 16];
         BinaryPrimitives.WriteInt64LittleEndian(narrow, 1_300_000);
         BinaryPrimitives.WriteInt64LittleEndian(narrow.AsSpan(8), _t0.ToUnixTimeMilliseconds());
         narrow[16] = (byte)TelemetryLayer.Lhm;
-        BinaryPrimitives.WriteUInt16LittleEndian(narrow.AsSpan(17), (ushort)((1 << 0) | (1 << 13)));
+        BinaryPrimitives.WriteUInt16LittleEndian(narrow.AsSpan(17), ((1 << 0) | (1 << 13)));
         BinaryPrimitives.WriteDoubleLittleEndian(narrow.AsSpan(19), 55.0);
         BinaryPrimitives.WriteDoubleLittleEndian(narrow.AsSpan(27), 8000.0);
         AppendRawChunk(path, 4, narrow);
@@ -158,7 +158,7 @@ public sealed class PartialSessionFileTests : IDisposable
     /// <summary>One chunk framed as the file frames it: type, length, payload, CRC-32 (IEEE) over the frame and payload.</summary>
     private static void AppendRawChunk(string path, uint type, byte[] payload)
     {
-        var frame = new byte[8];
+        byte[] frame = new byte[8];
         BinaryPrimitives.WriteUInt32LittleEndian(frame, type);
         BinaryPrimitives.WriteUInt32LittleEndian(frame.AsSpan(4), (uint)payload.Length);
         uint crc = 0xFFFFFFFFu;
@@ -171,7 +171,7 @@ public sealed class PartialSessionFileTests : IDisposable
             }
         }
 
-        var trailer = new byte[4];
+        byte[] trailer = new byte[4];
         BinaryPrimitives.WriteUInt32LittleEndian(trailer, crc ^ 0xFFFFFFFFu);
         using var stream = new FileStream(path, FileMode.Append, FileAccess.Write);
         stream.Write(frame);
@@ -211,7 +211,7 @@ public sealed class PartialSessionFileTests : IDisposable
             }
 
             p.Should().NotBeNull($"cut at {cut}");
-            p!.Truncated.Should().Be(cut != whole.Length && boundaries.Contains(cut) == false || (cut != whole.Length && cut < whole.Length && !boundaries.Contains(cut)),
+            p.Truncated.Should().Be(cut != whole.Length && boundaries.Contains(cut) == false || (cut != whole.Length && cut < whole.Length && !boundaries.Contains(cut)),
                 $"cut at {cut}: mid-chunk is truncated, on a boundary is not");
             // Everything before the cut that was complete is present; nothing after it is.
             int recordsExpected = complete >= 3 ? 3 : 0;
@@ -239,7 +239,7 @@ public sealed class PartialSessionFileTests : IDisposable
         PartialSession? p = PartialSessionFile.Parse(whole);
 
         p.Should().NotBeNull();
-        p!.Truncated.Should().BeTrue();
+        p.Truncated.Should().BeTrue();
         p.Notes.Should().ContainSingle();
         p.Records.Should().BeEmpty("the check on the records chunk failed, and nothing after a failed chunk is trusted");
     }
@@ -269,7 +269,7 @@ public sealed class PartialSessionFileTests : IDisposable
         PartialSessionFile.Parse(new byte[7]).Should().BeNull();
 
         string path = Path.Combine(_dir, "v99.partial");
-        using (IPartialSessionWriter w = PartialSessionFile.Create(path, Header(Guid.NewGuid()) with { FormatVersion = 99 }))
+        using (PartialSessionFile.Create(path, Header(Guid.NewGuid()) with { FormatVersion = 99 }))
         {
         }
 

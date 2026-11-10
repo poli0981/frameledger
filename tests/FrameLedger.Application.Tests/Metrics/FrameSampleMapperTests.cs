@@ -51,7 +51,7 @@ public sealed class FrameSampleMapperTests
         s.Api.Should().Be(FrameApi.D3D12);
         s.PresentFlags.Should().Be(0x200);
         s.SyncInterval.Should().Be(1);
-        (s.RenderW, s.RenderH, s.OutputW, s.OutputH).Should().Be(((ushort)1485, (ushort)835, (ushort)2560, (ushort)1440));
+        (s.RenderW, s.RenderH, s.OutputW, s.OutputH).Should().Be((1485, 835, 2560, 1440));
         s.Upscaler.Should().Be(UpscalerKind.Dlss);
         s.UpscalerQuality.Should().Be(0xFF);
         s.UpscalerSharpness.Should().Be(0xFF);

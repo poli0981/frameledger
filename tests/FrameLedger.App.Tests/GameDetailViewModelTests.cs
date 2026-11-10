@@ -10,7 +10,6 @@ using FrameLedger.App.ViewModels;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Settings;
 using FrameLedger.Domain.Detection;
-using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Shared.Ipc;
 using FrameLedger.Shared.Safety;
 
@@ -188,8 +187,8 @@ public sealed class GameDetailViewModelTests
             await using ScratchLedger s = await ScratchLedger.OpenAsync();
             GameRow game = await s.GameAsync("Expedition");
             DateTimeOffset t0 = DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_000_000);
-            await s.SessionAsync(game.Id, t0, hooked: false, display: new FrameLedger.Domain.Display.DisplaySummary { WindowedMs = 60_000, WindowWidth = 1280, WindowHeight = 720 });
-            await s.SessionAsync(game.Id, t0.AddHours(1), display: new FrameLedger.Domain.Display.DisplaySummary
+            await s.SessionAsync(game.Id, t0, hooked: false, display: new Domain.Display.DisplaySummary { WindowedMs = 60_000, WindowWidth = 1280, WindowHeight = 720 });
+            await s.SessionAsync(game.Id, t0.AddHours(1), display: new Domain.Display.DisplaySummary
             {
                 BorderlessMs = 92_000,
                 ExclusiveMs = 8_000,

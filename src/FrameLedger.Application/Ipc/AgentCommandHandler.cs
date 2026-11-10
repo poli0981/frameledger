@@ -12,7 +12,6 @@ using FrameLedger.Domain.AntiCheat;
 using FrameLedger.Domain.Consent;
 using FrameLedger.Domain.Detection;
 using FrameLedger.Shared.Ipc;
-using FrameLedger.Shared.Safety;
 
 namespace FrameLedger.Application.Ipc;
 

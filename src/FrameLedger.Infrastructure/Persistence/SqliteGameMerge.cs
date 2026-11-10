@@ -101,7 +101,7 @@ public sealed class SqliteGameMerge : IGameMerge
                     .ConfigureAwait(false);
             }
 
-            return (int?)sessions;
+            return sessions;
         }, ct);
     }
 

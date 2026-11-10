@@ -66,7 +66,7 @@ public sealed partial class UpdateService : ObservableObject, IDisposable
         TimeSpan? agentStopTimeout = null, Func<bool>? agentHeld = null, Func<string?>? payloadInUse = null)
     {
         _agentStopTimeout = agentStopTimeout ?? DefaultAgentStopTimeout;
-        _agentHeld = agentHeld ?? (static () => AgentHolds(Services.UiPaths.DataDirectory));
+        _agentHeld = agentHeld ?? (static () => AgentHolds(UiPaths.DataDirectory));
         _payloadInUse = payloadInUse ?? (static () => PayloadInUse.Find(AppContext.BaseDirectory));
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _agent = agent ?? throw new ArgumentNullException(nameof(agent));

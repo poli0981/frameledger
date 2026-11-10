@@ -37,10 +37,7 @@ public sealed class RtVerdictTests
         RtVerdict.RayTracing(RtStream(40, _ => RtEvidenceBits.DispatchObserved), _capable).Should().Be(Tri.Yes);
 
     [Fact]
-    public void ACapableDeviceWithTheAsBuildHookAndNoEvidenceIsNo()
-    {
-        RtVerdict.RayTracing(RtStream(40, _ => RtEvidenceBits.None), _capable).Should().Be(Tri.No);
-    }
+    public void ACapableDeviceWithTheAsBuildHookAndNoEvidenceIsNo() => RtVerdict.RayTracing(RtStream(40, _ => RtEvidenceBits.None), _capable).Should().Be(Tri.No);
 
     [Fact]
     public void NoIsUnreachableWithoutEachOfItsThreeConjuncts()

@@ -57,6 +57,6 @@ public sealed class StoreRecordsTests
         StoreGame? owner = StoreRecords.Owning(@"D:\another\it\some-game\Game\Game.exe", "5015466", [itch]);
 
         owner.Should().BeSameAs(itch);
-        StoreLaunches.For(owner!, null)!.Target.Should().StartWith("itch://");
+        StoreLaunches.For(owner, null)!.Target.Should().StartWith("itch://");
     }
 }
