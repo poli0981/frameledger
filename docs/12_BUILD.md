@@ -190,8 +190,8 @@ serviced with the runtime (`Microsoft.Extensions.Hosting`, `System.Diagnostics.E
   (`10_LOGGING` §Crash handling; `HostBackgroundFailureTests` holds it); `Microsoft.Data.Sqlite` 11 declares SQLitePCLRaw
   3.0.5, whose engine is SourceGear's `SQLite` package; nine `Microsoft.Extensions.*` libraries are part of the runtime
   and no longer packages beside it (`legal/licenses/nuget/`: 78 packages became 69).
-- **C# 15 (D96)** is the main line's language: CLAUDE.md §Coding conventions, and `13_CI_CD` §`codeql.yml` for what the
-  required analysis reads of it.
+- **C# 15 (D96)** is the language the main line compiles, and none of its constructs is used yet: the analyses do not
+  read them (`13_CI_CD` §C# 15 and the analyses, `spike-notes` §29). What beta.37 takes from .NET 11 is API.
 - **Going back** is installing 0.1.0-beta.36 over a later build: the ledger's schema did not move with the runtime.
 
 ## The alpha line (owner decisions D73–D76, 2026-10-31; resting since D98, 2026-11-11)

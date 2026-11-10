@@ -71,6 +71,17 @@ numeric core and does not move; the heading is the full version — corrected 20
   shows, above every page, that the line is paused and to install the latest beta; the words "a prerelease .NET" now
   appear only in an alpha that really runs on one. For developers: `FlAlphaLineRests` in `Directory.Build.props`,
   stamped into every assembly, `Shared.AlphaLine`, `App/Services/AlphaTexts`; three new strings in en, vi and ja.
+- **.NET 11's API where it reads better, and no C# 15 syntax yet** (developers only; owner decision D96). Sixteen
+  `char` searches name their comparison through the `string` overloads .NET 11 adds
+  (`StartsWith`/`EndsWith`/`LastIndexOf(char, StringComparison)`) where they went through a span to satisfy both .NET
+  10 and 11, and the App finds the Agent it started with `Process.TryGetProcessById` instead of a caught exception;
+  nothing changes in what the software does. **C# 15's constructs were asked for and are not used**: each was tried in
+  a file of its own, and ReSharper's engine — what Qodana runs — reads none of the four (it does not parse `closed`
+  or `union`, and calls collection expression arguments and labeled jumps preview features), so every file using one
+  would be an error on a gate of zero; a union also draws a warning from the SDK's own analyzers.
+  `docs/13_CI_CD.md` §C# 15 and the analyses holds the table and what unblocks each; `docs/spike-notes/29-…` where
+  each would go. `codeql.yml` takes `workflow_dispatch`, so a branch can have a full analysis — a pull request's C#
+  analysis is an overlay on `main`'s database.
 
 ## Releases
 

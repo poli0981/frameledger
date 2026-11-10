@@ -53,7 +53,7 @@ internal static class OverlayLog
             yield break;
         }
 
-        int events = lines.Count(l => l.AsSpan().StartsWith('+'));
+        int events = lines.Count(l => l.StartsWith('+', StringComparison.Ordinal));
         yield return $"  overlay log: {path} ({events.ToString(CultureInfo.InvariantCulture)} event(s))";
         foreach (string line in lines.Where(IsWorthPrinting))
         {
@@ -77,7 +77,7 @@ internal static class OverlayLog
 
     /// <summary>Faults, the stop, unhook decisions, a missing symbol, supervision loss — never the routine installs.</summary>
     private static bool IsWorthPrinting(string line) =>
-        line.AsSpan().StartsWith('+')
+        line.StartsWith('+', StringComparison.Ordinal)
         && (line.Contains(" FAULT ", StringComparison.Ordinal)
             || line.Contains(" STOP ", StringComparison.Ordinal)
             || line.Contains(" UNHOOK_", StringComparison.Ordinal)

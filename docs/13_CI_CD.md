@@ -95,7 +95,7 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 - **Placeholder guard:** fails if any `{{` token survives in `README.md` or `legal/*.md` *(other than `{{RELEASE_DATE}}`, which `release.yml` substitutes — added 2026-10-04)*. Those are shipped, legally operative documents (FR-11 displays them in the first-run Legal Gate); an unsubstituted `{{DEVELOPER_NAME}}` in an EULA is not a cosmetic defect.
 - ~~`permissions: contents: read`.~~ `permissions: contents: read, pull-requests: read` — the second for the Changelog step's list of a pull request's files, read-only *(corrected 2026-10-04)*. *Since 2026-10-25 per job:* the workflow grants nothing (`permissions: {}`), `check` holds those two and `sonarcloud` `contents: read` alone — a workflow-level grant reaches every job (SonarCloud `githubactions:S8264` on the first analysis from CI).
 
-### `codeql.yml` — push, PR, weekly cron · **repo-local**
+### `codeql.yml` — push, PR, weekly cron, `workflow_dispatch` (since 2026-11-11) · **repo-local**
 
 > **Not a caller stub, which this heading said until 2026-08-06.** `codeql.yml`'s own header says
 > the opposite: the ops repo has `codeql-mixed.yml`, but C++ needs manual build mode driven by the
@@ -115,6 +115,14 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
   no C# 15 construct. **What it reads of C# 15 is measured construct by construct before one is used** (D96): a
   construct in whose file the extractor reports an error is not used on main until CodeQL reads it, and the same holds
   for Qodana's engine (§Qodana).
+  *(Corrected the same day, two pull requests later: that run was an **overlay** — on a pull request the C# analysis
+  extracts the files it changed on top of the database cached from `main`, then a .NET 10 one — so its "1220 out of
+  1220" was `main`'s baseline figure and its other numbers the changed files'. The whole source on `net11.0` was first
+  read by `main`'s own run after the merge (42921492229, "Overlay mode not enabled"): 1,221 source files, 363
+  references resolved and none unresolved, 23 types unresolved in the three `Windows.Win32` namespaces — the figure it
+  had on .NET 10 — and "CodeQL scanned 1221 out of 1221 C# files", in 4 min 45 s. So CodeQL reads `net11.0` as it
+  read `net10.0`; and for a construct it has not met, a pull request's run is not the evidence — a
+  `workflow_dispatch` on the branch is, §C# 15 and the analyses.)*
 
 ### `qodana.yml` — push to `main`, pull requests into `main`, `workflow_dispatch` · **repo-local, built 2026-11-10 (D93)**
 - One job, `qodana`, on `ubuntu-latest` — the only Linux job in this repository, because the linter is a Linux
@@ -610,6 +618,32 @@ JetBrains has a programme for open-source projects — Qodana for .NET runs nati
 `qodana.yaml`, `runs-on: windows-latest`, `args: --within-docker false`, .NET set up from `global.json` first, and
 `EnableWindowsTargeting` dropped. Until then the trial's end changes nothing here: the token only names the project
 the report is sent to.
+
+## C# 15 and the analyses (owner decision D96, 2026-11-11)
+
+The main line compiles C# 15 since beta.37 — `LangVersion latest` on the .NET 11 SDK — and the owner asked for its
+constructs to be used. **None is used yet, and this section is why.** The rule the plan was approved with: a construct
+is used on main only where (1) the build, its analyzers and `dotnet format` take it with no analyzer switched off,
+(2) CodeQL extracts its file without an error, and (3) Qodana reports nothing that is only its engine not knowing the
+syntax — the first two are required checks, and Qodana's gate is zero. Each construct was written once, in a file of its
+own, and shown to each tool (`spike-notes` §29, the canary):
+
+| Construct | Build and analyzers | ReSharper's engine — InspectCode 2026.2.3.1, which Qodana 2026.2 runs, and 2026.3.0 | Used on main |
+|---|---|---|---|
+| Collection expression arguments, `[with(…), …]` | taken | an error: "Feature 'collection expression arguments' is not available. Please use language version 'preview'." | no |
+| Closed hierarchies, `closed` | taken | not parsed ("Cannot resolve symbol 'closed'") | no |
+| Unions, `union` | CA1815, from the SDK's own rules, on every union | not parsed ("Cannot resolve symbol 'union'") | no |
+| Labeled `break` / `continue` | taken; `dotnet format` moves the label one indent to the left | not parsed by 2026.2.3.1; "not available… language version 'preview'" in 2026.3.0 | no |
+
+**CodeQL's reading of them is not established**: its documentation lists C# up to 14, and a pull request's C# analysis
+is an overlay that prints no per-file result (§`codeql.yml`). A full analysis of a branch is a `workflow_dispatch` of
+`codeql.yml` on it.
+
+**What moves this:** a ReSharper engine that reads C# 15 as a released language, in the Qodana linter this repository
+runs; then the canary again, and a dispatched CodeQL run. `spike-notes` §29 lists where each construct would go.
+**What main does take from .NET 11:** its API — the `string` overloads that name the comparison of a `char` search, and
+`Process.TryGetProcessById`. The two preview features (runtime-async, the updated memory-safety rules) stay out, as D76
+kept them out of the alphas.
 
 ## Dependabot (`.github/dependabot.yml`) and the NuGet audit
 

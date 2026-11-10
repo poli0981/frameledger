@@ -62,7 +62,7 @@ public sealed class InstallRootCasesTests : IDisposable
         foreach (string item in files.Split(';', StringSplitOptions.RemoveEmptyEntries))
         {
             string path = Path.Combine(_temp, item);
-            if (item.AsSpan().EndsWith('\\'))
+            if (item.EndsWith('\\', StringComparison.Ordinal))
             {
                 Directory.CreateDirectory(path);
             }
