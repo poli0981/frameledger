@@ -12,6 +12,11 @@
 version: "1.0"
 linter: qodana-cdnet
 
+# INTERIM, from beta.37's move to .NET 11 (D94, 2026-11-11) until the Ultimate linter's pull request replaces this
+# file: the linter's image carries the .NET SDKs 8 to 10, and main builds on 11. The SDK global.json names is installed
+# into the container before the build, with the line JetBrains' page gives for an SDK the image lacks.
+bootstrap: curl -fsSL https://dot.net/v1/dotnet-install.sh | bash -s -- --jsonfile /data/project/global.json -i /usr/share/dotnet
+
 dotnet:
   solution: FrameLedger.slnx
   configuration: Release

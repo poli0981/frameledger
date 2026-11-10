@@ -201,7 +201,7 @@ that it was checked against anything.
 
 | Axis | Values |
 |---|---|
-| OS | Win 10 22H2 VM · Win 11 dev machine |
+| OS | Win 11 dev machine · a Win 10 22H2 VM where one exists — since beta.37 (D95) Windows 10 is not blocked and is neither tested nor supported, so a run there is information, not a gate |
 | GPU vendor | NVIDIA (primary) · AMD or Intel if available, else document as untested |
 | API | D3D11 · D3D12 · Vulkan (layer path) · OpenGL · **a 32-bit title, asserting it is correctly refused and recorded as Tier 2 with the reason** |
 | Upscaler | DLSS SR · DLSS-G · DLSS-RR · FSR2/3 · XeSS · none |

@@ -64,6 +64,16 @@
 > and never the Agent's usage code 1. The catch exists because an exception escaping `Main` runs `Main`'s `finally`
 > first, which closes the logger; the AppDomain handler alone would dump with no Fatal line.
 >
+> **A background service that fails, since 0.1.0-beta.37 (.NET 11, D94).** `--serve` awaits the Generic Host's
+> `RunAsync` and catches nothing. On .NET 10 a `BackgroundService` whose `ExecuteAsync` threw stopped the host and
+> `RunAsync` completed, so the Agent exited 0 with the fault in the log alone (the host's own line, in `agent-*.log`
+> since 2026-09-23). On .NET 11 `RunAsync` rethrows that exception — an `AggregateException` when several services
+> failed — so it reaches `Main`'s catch above: Fatal, the dump, and the runtime's exit code. Nothing was changed to get
+> this and nothing wraps it: an Agent that stopped because a piece of it broke should not report success. The App
+> hosts with `StartAsync` and `StopAsync` inside its own try/catch and is not affected. `HostBackgroundFailureTests`
+> holds the runtime's behaviour — a host with one throwing service fails `RunAsync` with that exception; the three
+> alphas shipped with it unobserved (`spike-notes` §24).
+>
 > Tests: `CrashDumpWriterTests` (a real dump of the test process starts `MDMP` and carries the UTC time in its name; the
 > prune keeps five and touches no other file; an unusable directory is null and one line), `CrashReporterTests` (the
 > order, no report on No, three further exceptions show nothing and are counted, a failed dump still asks, a failed

@@ -2,7 +2,7 @@
 
 The layout with its history is in [`CLAUDE.md`](../CLAUDE.md) §Solution layout.
 
-## Managed code (`src/`, .NET 10, C#)
+## Managed code (`src/`, .NET 11, C#)
 
 | Project | What it holds |
 |---|---|

@@ -169,7 +169,8 @@ The tier is recorded on every session and shown in the UI. Metrics unavailable a
 
 ## Requirements
 
-- Windows 10 (22H2) or Windows 11, 64-bit
+- Windows 11, 64-bit. Windows 10 (22H2) is not blocked, but FrameLedger is built on .NET 11 since 0.1.0-beta.37, which Microsoft does not support on Windows 10 Home or Pro, and FrameLedger has never been tested there
+- A processor with SSE4.2 and POPCNT — any that Windows 11 accepts. Without them FrameLedger does not start
 - A 64-bit DirectX 11/12 or OpenGL game, or a Vulkan game FrameLedger starts, for hooked (Tier-1) capture. **32-bit games — including most DirectX 9 titles — cannot be measured at all**: the component FrameLedger loads is x64 and an x64 DLL cannot enter a 32-bit process. Such a title records duration and hardware telemetry and nothing else. *(This line previously said "supported at Tier 2 only", which meant frame times without injection. That tier no longer exists.)*
 - Optional: [PawnIO](https://pawnio.eu/) for CPU temperature, read only when the Agent runs as administrator (since 0.1.0-beta.3; not yet checked on real hardware). CPU load, memory in use and all GPU telemetry work without it
 

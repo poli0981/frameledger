@@ -51,3 +51,4 @@ Each section below lives in its own file under `docs/spike-notes/`, moved verbat
 | §25 | Xbox app / Microsoft Store (GDK) titles — the layout, the launch chain, the image paths (2026-11-03, beta.33, D77–D82) | [`spike-notes/25-xbox-gdk.md`](spike-notes/25-xbox-gdk.md) |
 | §26 | DLSS 5 on Hogwarts Legacy, Dynamic frame generation on Phantom Blade Zero, and Streamline 2.12 → 2.14.16 (2026-11-06, beta.34, D83, D84) | [`spike-notes/26-dlss5-dynamic-streamline.md`](spike-notes/26-dlss5-dynamic-streamline.md) |
 | §27 | Switching to Games, and a language change that lands elsewhere (2026-11-06, beta.34) | [`spike-notes/27-games-page-2026-11-06.md`](spike-notes/27-games-page-2026-11-06.md) |
+| §28 | The main line on .NET 11's release — the whole gate, and what the analyses read (2026-11-11, beta.37, D94–D96) | [`spike-notes/28-dotnet11-main.md`](spike-notes/28-dotnet11-main.md) |

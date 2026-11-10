@@ -2,8 +2,8 @@
 
 **FrameLedger** records how your games run on this PC — frame rate and frame times, the settings a game really renders
 with, ray tracing, temperatures, and the game's own memory — and keeps every session so you can compare them later.
-Everything stays on your PC: no account, no telemetry. It is free software under the GNU GPL v3, for 64-bit Windows 10
-(22H2) and Windows 11, and it is in beta.
+Everything stays on your PC: no account, no telemetry. It is free software under the GNU GPL v3, for 64-bit Windows 11
+(it may run on Windows 10 22H2, untested and unsupported), and it is in beta.
 
 Download it from the [Releases page](https://github.com/poli0981/frameledger/releases).
 

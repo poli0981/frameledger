@@ -428,7 +428,8 @@ because a layer cannot leave a running game's loader chain.
 > - **Recovery never throws.** A file it cannot finalize is set aside as `<guid>.partial.failed` (never retried, kept for
 >   a bug report) and reported `Failed`; the next file is recovered, and the watcher starts either way.
 > - The Agent's host logs through Serilog since the same day: a background service that stops the host is now in
->   `agent-*.log`, where before it was in no file at all.
+>   `agent-*.log`, where before it was in no file at all. *(Since beta.37, on .NET 11, that service's exception also
+>   ends the Agent through its crash report instead of an exit 0 — `10_LOGGING` §Crash handling.)*
 
 > **Built 2026-09-10 (P2 PR-D): `Application.Recording`.** The state machine above is the intent; what
 > runs is one class per box. `SessionRecorder` owns a session end to end — the row's identity and time

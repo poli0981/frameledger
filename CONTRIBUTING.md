@@ -17,8 +17,9 @@ merged, and under what licence your contribution is accepted.
 
 ## Building
 
-You need Windows 10 22H2 or later (x64), Visual Studio 2022 with the C++ workload (MSVC v143), CMake 3.28 or later,
-PowerShell 7, and the .NET SDK that `global.json` pins. Then:
+You need Windows 11 (x64), Visual Studio 2022 or later with the C++ workload (MSVC v143 or later), CMake 3.28 or later,
+PowerShell 7, and the .NET SDK that `global.json` pins — .NET 11 since 0.1.0-beta.37, which Microsoft does not support
+on Windows 10 Home or Pro. Then:
 
 ```powershell
 ./build.ps1 check

@@ -112,7 +112,12 @@ Draw live FPS/frametime/upscaler info inside the game. Only for games already ho
 - **NFR-5 Storage:** raw series ≤ 3 MB per hour compressed; 50 games × 50 sessions ≤ 500 MB at default retention.
 - **NFR-6 Accuracy:** per `03_METRICS` §Accuracy budget, stated per tier.
 - **NFR-7 Resilience:** power loss loses at most the last 60 s of raw data; DB never corrupts (WAL + transactions); Agent restart recovers `.partial` sessions as `interrupted`.
-- **NFR-8 OS support:** Windows 10 22H2+ and Windows 11, x64. No ARM64 in v1.
+- **NFR-8 OS support:** ~~Windows 10 22H2+ and Windows 11, x64.~~ **Windows 11, x64** — the Windows that Microsoft
+  supports .NET 11 on, which FrameLedger is built on since 0.1.0-beta.37. **Windows 10 22H2 is not blocked** (the code
+  is still held to it: `SupportedOSPlatformVersion` 10.0.19045.0, CA1416) **and is neither tested nor supported**
+  there; a processor needs SSE4.2 and POPCNT (x86-64-v2), without which .NET 11 does not start. No ARM64 in v1.
+  *(Amended 2026-11-11, owner decisions D94 and D95 — `12_BUILD` §The main line's .NET. Windows 10 was never tested
+  on any version: `ACCESSIBILITY.md`, `08_UI` §Accessibility.)*
 - **NFR-9 Accessibility:** full keyboard navigation, adequate contrast in both Fluent themes, Per-Monitor V2 DPI awareness. *(What each clause means for this app, and the check that holds it: `08_UI` §Accessibility, P4 PR-8.)* *(Widened 2026-11-09, beta.35, owner decisions D88–D91: and a screen reader reads every control and value and is told what changes; Windows contrast themes are followed; nothing is shown by colour alone. The goal behind all of it is WCAG 2.2 AA as W3C's WCAG2ICT applies it to desktop software — a goal, not a conformance claim — stated to users in `ACCESSIBILITY.md`.)*
 - **NFR-10 Offline-first:** everything except updates and opt-in metadata works with zero connectivity.
 - **NFR-11 Auditability:** the entire set of hooks is enumerable in `17_HOOK_ENGINE` §Hook inventory and matches the code; a reviewer must be able to verify in minutes that nothing reads game memory.

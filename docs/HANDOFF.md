@@ -518,6 +518,10 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D91 | [`08_UI.md`](08_UI.md) §Contrast | Windows contrast themes are followed, whatever Settings ▸ Theme says |
 | D92 | [`handoff/history/0.1.0-beta.35.md`](handoff/history/0.1.0-beta.35.md) | beta.35 in this train, no alpha; alpha.4 is the move to .NET 11's release (SDK 11.0.100, packages 11.0.0), a task of its own after 2026-11-10 |
 | D93 | [`13_CI_CD.md`](13_CI_CD.md) §Qodana | Qodana Community for .NET from a workflow of its own (the organisation's licence is a 30-day trial, so not the Rider linter): a gate of zero problems, advisory; an inspection is switched off only in `.editorconfig`, with its reason |
+| D94 | [`12_BUILD.md`](12_BUILD.md) §The main line's .NET | the main line moves to .NET 11 with 0.1.0-beta.37, the day after it shipped; condition (a) of `20_OPEN_QUESTIONS` §G's table — two alphas on the released runtime — set aside by the owner, not met |
+| D95 | [`02_SPEC.md`](02_SPEC.md) NFR-8 | Windows 10 22H2 is not blocked, and is stated as untested and unsupported (Microsoft supports .NET 11 on Windows 11); a processor needs SSE4.2 and POPCNT |
+| D96 | [`12_BUILD.md`](12_BUILD.md) §The main line's .NET | C# 15 on the main line from beta.37, a construct only where the required checks read it; no preview feature |
+| D98 | [`12_BUILD.md`](12_BUILD.md) §The alpha line | alpha.4 is beta.37's source on .NET 11.0.0, and then the alpha line rests until a newer .NET has a preview; a resting alpha tells its user to install the beta |
 
 ---
 
