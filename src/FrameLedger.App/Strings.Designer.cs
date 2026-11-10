@@ -86,6 +86,7 @@ public static class Strings
         nameof(About_OpenLicencesFolder),
         nameof(About_OpenSource),
         nameof(About_Runtime_Alpha_Format),
+        nameof(About_Runtime_Alpha_Prerelease_Format),
         nameof(About_Runtime_Format),
         nameof(About_Tab_App),
         nameof(About_Tab_Legal),
@@ -117,6 +118,8 @@ public static class Strings
         nameof(Alpha_Badge),
         nameof(Alpha_Badge_Tooltip_Format),
         nameof(Alpha_Banner_Body_Format),
+        nameof(Alpha_Banner_Body_Prerelease_Format),
+        nameof(Alpha_Banner_Body_Resting_Format),
         nameof(Alpha_Banner_Read),
         nameof(Alpha_Banner_Title),
         nameof(App_Title),
@@ -1376,6 +1379,8 @@ public static class Strings
 
     public static string About_Runtime_Alpha_Format => ResourceManager.GetString(nameof(About_Runtime_Alpha_Format), Culture) ?? nameof(About_Runtime_Alpha_Format);
 
+    public static string About_Runtime_Alpha_Prerelease_Format => ResourceManager.GetString(nameof(About_Runtime_Alpha_Prerelease_Format), Culture) ?? nameof(About_Runtime_Alpha_Prerelease_Format);
+
     public static string About_Runtime_Format => ResourceManager.GetString(nameof(About_Runtime_Format), Culture) ?? nameof(About_Runtime_Format);
 
     public static string About_Tab_App => ResourceManager.GetString(nameof(About_Tab_App), Culture) ?? nameof(About_Tab_App);
@@ -1437,6 +1442,10 @@ public static class Strings
     public static string Alpha_Badge_Tooltip_Format => ResourceManager.GetString(nameof(Alpha_Badge_Tooltip_Format), Culture) ?? nameof(Alpha_Badge_Tooltip_Format);
 
     public static string Alpha_Banner_Body_Format => ResourceManager.GetString(nameof(Alpha_Banner_Body_Format), Culture) ?? nameof(Alpha_Banner_Body_Format);
+
+    public static string Alpha_Banner_Body_Prerelease_Format => ResourceManager.GetString(nameof(Alpha_Banner_Body_Prerelease_Format), Culture) ?? nameof(Alpha_Banner_Body_Prerelease_Format);
+
+    public static string Alpha_Banner_Body_Resting_Format => ResourceManager.GetString(nameof(Alpha_Banner_Body_Resting_Format), Culture) ?? nameof(Alpha_Banner_Body_Resting_Format);
 
     public static string Alpha_Banner_Read => ResourceManager.GetString(nameof(Alpha_Banner_Read), Culture) ?? nameof(Alpha_Banner_Read);
 

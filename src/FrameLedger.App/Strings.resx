@@ -3609,7 +3609,13 @@ The documents below are the full terms; this summary does not replace them.</val
     <value>Alpha build</value>
   </data>
   <data name="Alpha_Banner_Body_Format" xml:space="preserve">
+    <value>Experimental: an alpha build on {0}. Results can be wrong and it can crash; you use it at your own risk. The beta is the dependable build.</value>
+  </data>
+  <data name="Alpha_Banner_Body_Prerelease_Format" xml:space="preserve">
     <value>Experimental: it runs on {0}, a prerelease .NET. Results can be wrong and it can crash; you use it at your own risk. The beta is the dependable build.</value>
+  </data>
+  <data name="Alpha_Banner_Body_Resting_Format" xml:space="preserve">
+    <value>The alpha line is paused: the betas now run on {0} too, and only they get updates — the anti-cheat list included. Install the latest beta over this alpha; your data stays.</value>
   </data>
   <data name="Alpha_Banner_Read" xml:space="preserve">
     <value>Read the alpha notice</value>
@@ -3619,7 +3625,7 @@ The documents below are the full terms; this summary does not replace them.</val
   </data>
   <data name="FirstRun_Alpha_Summary" xml:space="preserve">
     <value>This is an ALPHA build:
-• It is a beta's source built on a prerelease .NET. Expect more problems than in a beta, wrong measurements and crashes among them.
+• It is a beta's source built to try a newer .NET, at times a prerelease one. Expect more problems than in a beta, wrong measurements and crashes among them.
 • It replaces the beta on this PC and shares its data. Before it first opens your ledger it copies it to the backups folder, and it does not open it if that copy cannot be made.
 • You use it entirely at your own risk. The Alpha notice in the list below is the text you accept; tick the box to say you have read it.</value>
   </data>
@@ -3633,6 +3639,9 @@ The documents below are the full terms; this summary does not replace them.</val
     <value>Runs on {0}</value>
   </data>
   <data name="About_Runtime_Alpha_Format" xml:space="preserve">
+    <value>Alpha build — runs on {0}</value>
+  </data>
+  <data name="About_Runtime_Alpha_Prerelease_Format" xml:space="preserve">
     <value>Alpha build — runs on {0}, a prerelease .NET</value>
   </data>
   <data name="A11y_Pair_Format" xml:space="preserve">

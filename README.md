@@ -14,7 +14,7 @@ app too (Help ▸ User guide, Help ▸ Limitations, Help ▸ Accessibility), and
 <!-- accuracy-block:begin -->
 > ⚠ **What FrameLedger actually measures today — 2026-11-06.** The software is a beta; its latest
 > **beta is `0.1.0-beta.36`** (2026-11-10), an unsigned installer built from that tag with its
-> checksums published beside it (alphas — experimental builds on a prerelease .NET — are published apart). The source holds the desktop app
+> checksums published beside it (alphas — experimental builds that try a newer .NET — are published apart). The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
 > game in the library runs (unless you switched its recording off), injects only into games you enabled
 > and only past the safety guard, and

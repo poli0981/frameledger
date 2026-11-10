@@ -111,8 +111,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable,
     [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format string is a resource that follows the UI culture")]
     public string AlphaBadgeTooltip => _line.IsAlpha ? string.Format(CultureInfo.CurrentCulture, Strings.Alpha_Badge_Tooltip_Format, RuntimeInformation.FrameworkDescription) : string.Empty;
 
-    [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format string is a resource that follows the UI culture")]
-    public string AlphaBannerBody => _line.IsAlpha ? string.Format(CultureInfo.CurrentCulture, Strings.Alpha_Banner_Body_Format, RuntimeInformation.FrameworkDescription) : string.Empty;
+    /// <summary>What the banner says follows the runtime and whether the alpha line rests (D97, D98): <see cref="AlphaTexts"/>.</summary>
+    public string AlphaBannerBody => _line.IsAlpha ? AlphaTexts.BannerBody(AlphaLine.Rests, RuntimeInformation.FrameworkDescription) : string.Empty;
 
     /// <summary>
     /// The menu entries that ask the Agent or change this PC (Update detection rules, Check for updates) are live everywhere

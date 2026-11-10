@@ -208,13 +208,18 @@ Release Candidate 3 in alpha.1 to alpha.3 (2026-10-31 to 2026-11-06), the releas
   until a newer .NET has a preview to try (.NET 12's, expected in 2027). While the line rests, the `alpha` branch differs
   from main in **`RELEASE_LINE` alone** (`git diff main alpha --name-only` prints that one name), and a resting alpha
   gets no update: its anti-cheat list, which reaches a user only inside a release (`13_CI_CD` §rules-publish.yml), stays
-  the one it shipped with. Its notes, the guide and the Alpha notice tell its user to install the beta.
+  the one it shipped with. Its notes, the guide and the Alpha notice tell its user to install the beta — **and the build
+  itself does**: `Directory.Build.props` stamps its `FlAlphaLineRests` property (true on main since beta.37) into every
+  assembly, `Shared.AlphaLine.Rests` reads it, and an alpha cut while it is true shows a banner that says the line is
+  paused and to install the beta, in place of the experimental-build one (`App/Services/AlphaTexts`; D97: the words
+  "a prerelease .NET" appear only where the runtime's own description is a prerelease's).
 - **The switch — what `alpha` differs from main in while it tries a newer .NET, and nothing else:** `RELEASE_LINE`
   (`alpha`); `global.json` (that SDK, with `allowPrerelease: true` when it is a prerelease); the TFM in
   `Directory.Build.props` (`SupportedOSPlatformVersion` stays `10.0.19045.0`); the three Microsoft packages in
   `Directory.Packages.props` that are serviced with the runtime (`Microsoft.Extensions.Hosting`,
   `System.Diagnostics.EventLog`, `Microsoft.Data.Sqlite`); `legal/licenses/nuget/` regenerated for that package set and
-  the *Transitive* row of `legal/THIRD_PARTY_NOTICES.md`; and a fix only the newer .NET can take, if one is ever forced.
+  the *Transitive* row of `legal/THIRD_PARTY_NOTICES.md`; `FlAlphaLineRests` set to `false` in `Directory.Build.props`;
+  and a fix only the newer .NET can take, if one is ever forced.
   As it stood for .NET 11 RC3: SDK `11.0.100-rc.3.26522.148`, `net11.0-windows10.0.22621.0`, the three packages at
   `11.0.0-rc.3.26522.148` (`spike-notes` §24). **No newer language syntax and no preview feature on `alpha`** (D76): the
   source is main's, and main compiles with its own SDK.

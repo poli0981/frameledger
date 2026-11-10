@@ -98,7 +98,7 @@ flow, and the tests run the flow over a fake client because nothing here may tou
   never sees a beta, under either setting of `update.channel` — and in an alpha build that picker is locked, its line
   saying so (`08_UI` §Settings). **One limit follows from the source, read from Velopack's code 2026-10-31:** it asks
   GitHub for one page of ten releases, newest first, so ten releases of one line in a row would hide the other line's
-  newest from its update check. The cadence is one alpha per beta (`13_CI_CD` §The alpha line). Moving between the lines
+  newest from its update check. The cadence is one alpha per beta (`13_CI_CD` §The alpha line) — *while the line tries a .NET; it rests since 0.1.0-alpha.4 (D98, 2026-11-11), betas then follow one another with no alpha between, and once ten of them have been published after alpha.4 a copy of alpha.3 or older no longer finds it: the alpha's notes, the guide and its banner say to install the beta.* Moving between the lines
   is a deliberate install, never an update: the other line's `Setup.exe` over the installed copy, which Velopack answers
   with its overwrite prompt — the packId, the install folder and the data folder are the same.)*
 - **Hooks** (`VelopackHooks`, in the hand-written `Program.Main` so `VelopackApp.Run()` precedes any window):
