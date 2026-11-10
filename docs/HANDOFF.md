@@ -139,9 +139,22 @@ in the container agree to within a handful of findings; `.editorconfig`'s `resha
 - **SonarCloud's gate failed on #373, on one condition: coverage on new code, 77 %** — 19 of the 87 changed lines it
   counts were old lines no test ever ran (the update prompts, `App.xaml.cs`, chart code-behind), and a line a fix
   touches is new code. No issue, no hotspot; the job is advisory and #373 merged on its required checks. `main`'s new
-  code is "since the previous version", so its gate reads the same until the first analysis after the tag — a
-  `workflow_dispatch` of `ci.yml` on `main`, run once the tag is there, is that analysis.
+  code is "since the previous version", so its gate reads the same until the first analysis after the tag — which
+  was the release commit's own (its `sonarcloud` job started after the tag was pushed, read version 0.1.0-beta.36 and
+  passed); had the tag come later, a `workflow_dispatch` of `ci.yml` on `main` would have been that analysis.
+- **A release's delta says what the notes forgot**: read "Delta processed … patched" in the tag's log before
+  calling a release verified — 343 patched files was the runtime, which no line of the notes named.
 - **A shell `cd` in a tool call stays** for the next one: use absolute paths.
+
+**The release (the tag, 2026-11-10):** `v0.1.0-beta.36` on `deaa8f3`, a rehearsal of `release.yml` first (run
+42853812423, on the release branch), the tag's run 42856948658 green; the seven digests of `SHA256SUMS.txt` are
+GitHub's; the wiki published. **The package carries the .NET runtime 10.0.15, not beta.35's 10.0.14**: the hosted
+runner installed SDK 10.0.404 that day, 10.0.403 the day before (`global.json` rolls forward within 10.0), so the delta patched 343
+of 456 files (5,756,432 bytes) where a release with these changes alone would have patched a few dozen. The notes at
+the tag did not say so; the changelog file and the release's text were corrected the same day, marked. Still open
+from it: the 10.0.15 servicing packages (`Microsoft.Extensions.Hosting`, `Microsoft.Data.Sqlite`,
+`System.Diagnostics.EventLog` are at 10.0.14) — Dependabot's cooldown holds them a week. `main` after the tag: `check`
+green, Qodana 0 problems, SonarCloud's gate OK again (its first analysis with version 0.1.0-beta.36).
 
 **Owner-only:** item 33 — Qodana's settings on the owner's side, the never-used list, and beta.36 on real hardware.
 
