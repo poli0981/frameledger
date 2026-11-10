@@ -58,6 +58,19 @@ numeric core and does not move; the heading is the full version — corrected 20
   that runs on .NET 11 alone; Qodana's container installs the .NET 11 SDK before it builds (an interim, until the
   Ultimate linter); two `string.StartsWith`/`EndsWith(char)` calls in the App's tests name the comparison .NET 11's
   analyzer asks for; `HostBackgroundFailureTests` holds .NET 11's `IHost.RunAsync` behaviour.
+- **What an alpha is, now that .NET 11 has shipped** (owner decisions D97 and D98). Until 0.1.0-alpha.3 an alpha was
+  "a beta's source built on a prerelease .NET", and every text said so. 0.1.0-alpha.4 runs on .NET 11's release — the
+  betas' own from this version — so an alpha is now described as *a beta's source built to try a newer version of
+  .NET, at times a prerelease one*: **EULA 1.7** (§2B), **Disclaimer 2.14** (§0, which also gains a paragraph on
+  Windows and the processor), **Alpha notice 1.1** (what an alpha is, the hardware, and a new part on the pause), the
+  accuracy statement's line, the guide and `LIMITATIONS.md`. The terms window shows the EULA and the Disclaimer once
+  more; an alpha asks for its notice's tick again.
+- **The alphas pause after 0.1.0-alpha.4, and a paused alpha says so** (D98). With the betas on the same .NET there is
+  nothing for an alpha to try, so none is published until a newer .NET has a preview — and a paused alpha gets no
+  update, the anti-cheat list included, which reaches FrameLedger only inside one. An alpha cut while the line rests
+  shows, above every page, that the line is paused and to install the latest beta; the words "a prerelease .NET" now
+  appear only in an alpha that really runs on one. For developers: `FlAlphaLineRests` in `Directory.Build.props`,
+  stamped into every assembly, `Shared.AlphaLine`, `App/Services/AlphaTexts`; three new strings in en, vi and ja.
 
 ## Releases
 

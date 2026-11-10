@@ -37,7 +37,7 @@ public static partial class LegalDocuments
 
     /// <summary>
     /// The four documents, in the order the gate shows them — and on the alpha line the Alpha notice after them, accepted
-    /// with them (D74, 2026-10-31): an alpha is a beta's source on a prerelease .NET, and its user accepts that first.
+    /// with them (D74, 2026-10-31): an alpha is a beta's source built to try a newer .NET, and its user accepts that first.
     /// </summary>
     public static IReadOnlyList<LegalDocument> Load(BuildLine line)
     {

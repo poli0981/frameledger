@@ -2,14 +2,25 @@
 
 ## What an alpha is
 
-Besides the betas, FrameLedger publishes **alphas**: the same program as a beta, built on a version of .NET that
-Microsoft has not finished yet — .NET 11's release candidate first. They exist so that a new .NET can be tried before the
-betas move to it. An alpha's version ends in `-alpha.N` (`0.1.0-alpha.1`), its page on GitHub says *experimental alpha*,
-and its installer is `FrameLedger.App-alpha-Setup.exe`.
+Besides the betas, FrameLedger publishes **alphas**: the same program as a beta, built to try a newer version of .NET —
+sometimes one Microsoft has not finished yet. They exist so that a new .NET can be tried before the betas rely on it. An
+alpha's version ends in `-alpha.N` (`0.1.0-alpha.1`), its page on GitHub says *experimental alpha*, and its installer is
+`FrameLedger.App-alpha-Setup.exe`.
 
 **If you want results you can rely on, use the beta.** An alpha can crash, record wrongly or fail to update in ways no
 beta has. The part of FrameLedger that goes into a game is the beta's own and does not use .NET; everything that starts
-it, reads it and stores what it measured runs on the new .NET.
+it, reads it and stores what it measured runs on the alpha's .NET.
+
+## Right now: the alphas are paused
+
+The alphas tried .NET 11. Since 0.1.0-beta.37 the betas run on .NET 11 too, so **0.1.0-alpha.4 is the last alpha for
+now**: it brings an installed alpha onto the finished .NET 11, and after it no alpha is published until there is a newer
+.NET to try.
+
+A paused alpha gets **no updates** — no fixes, and not the list of anti-cheat software FrameLedger refuses to touch, which
+only arrives inside an update. Its banner tells you so. **Install the latest beta over it** (below); your data stays.
+One more thing: once ten betas have been published after 0.1.0-alpha.4, an older alpha can no longer find it as an
+update, and installing the beta by hand is the only way forward.
 
 ## Before it runs
 
@@ -18,7 +29,8 @@ tick: *I understand that this is an experimental build and I use it at my own ri
 Until you accept, the alpha's capture agent does not run at all. The notice is shown again whenever its text changes.
 
 While an alpha runs, the title bar carries an **ALPHA** badge (hover it to see the .NET version), and a yellow banner
-above every page says what it is each time it starts; you can close the banner for that run. **Help ▸ About** names the
+above every page says what it is each time it starts — while the alphas are paused, that they are, and to install the
+beta; you can close the banner for that run. **Help ▸ About** names the
 .NET it runs on.
 
 ## Your data
@@ -45,9 +57,9 @@ alpha.
 
 ## Windows and your PC
 
-Microsoft supports .NET 11 on Windows 11 24H2 and later; on Windows 10 only in its LTSC and IoT editions. An alpha may
-work on Windows 10 22H2 Home or Pro, but nobody supports it there. .NET 11 also needs a processor with SSE4.2 and POPCNT,
-which every processor Windows 11 accepts has; on an older one the alpha does not start at all.
+An alpha needs what a beta needs since 0.1.0-beta.37 ([Install](01-install.md)): Microsoft supports .NET 11 on
+Windows 11; on Windows 10 (22H2) FrameLedger may run, but it is not tested there and nobody supports it; and on a
+processor without SSE4.2 and POPCNT it does not start at all.
 
-A release candidate stops being supported by Microsoft when the final version ships — for .NET 11's, 10 November 2026 —
-and the next alpha moves to the final version.
+When an alpha runs on a .NET Microsoft has not finished, Microsoft stops supporting that version when the finished one
+ships, and the next alpha moves to the finished one.

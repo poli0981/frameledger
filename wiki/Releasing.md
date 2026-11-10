@@ -37,14 +37,16 @@ Releases are not code-signed, so every release says so and publishes its checksu
 
 ## Cutting an alpha
 
-An alpha is a beta's source built on a prerelease .NET, from the long-lived `alpha` branch — which differs from `main`
-only where [`docs/12_BUILD.md`](../docs/12_BUILD.md) §The alpha line lists (its `RELEASE_LINE` says `alpha`). One alpha
-follows each beta, never several in a row ([`docs/13_CI_CD.md`](../docs/13_CI_CD.md) §The alpha line):
+An alpha is a beta's source built to try a newer .NET — at times a prerelease — from the long-lived `alpha` branch, which
+differs from `main` only where [`docs/12_BUILD.md`](../docs/12_BUILD.md) §The alpha line lists (its `RELEASE_LINE` says
+`alpha`). **The line rests since its first alpha on .NET 11's release** (2026-11-11): the betas build on the same .NET 11, the branch differs
+from `main` in `RELEASE_LINE` alone, and no alpha is cut until a newer .NET has a preview. While the line tries a .NET,
+one alpha follows each beta, never several in a row ([`docs/13_CI_CD.md`](../docs/13_CI_CD.md) §The alpha line):
 
 1. A pull request on `main` adds the alpha's notes, `docs/changelog/<version>.md`, opening with the experimental-build
    warning and naming the beta it is cut from, and its row in the Releases table. No release line moves: README, the
    accuracy statement, `LIMITATIONS.md` and `ACCESSIBILITY.md` keep naming the beta.
-2. A pull request merges `main` into `alpha` with a merge commit; CI runs the gate there on the prerelease SDK.
+2. A pull request merges `main` into `alpha` with a merge commit; CI runs the gate there on the SDK the branch pins.
 3. A rehearsal of `release.yml` on `alpha`, then a signed tag `vx.y.z-alpha.N` on its head. The workflow refuses any
    other tag on that branch, and an alpha's tag anywhere else; it packs on Velopack's `alpha` channel, so no beta is
    offered the alpha and no alpha a beta.
