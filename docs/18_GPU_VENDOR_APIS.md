@@ -580,7 +580,7 @@ states here what it built.
   a command argument — the colour and info-frame controls — is refused like a writer: the check reads names, not
   arguments, and nothing on the list is one. *(Built with ABI 3: `tools/nvapi-readonly-check.ps1`.)*
 
-### The reader (built 2026-11-11; composed by nothing yet)
+### The reader (built 2026-11-11; composed by the Agent since the switch)
 
 `Application.Advanced.IAdvancedHardware` is the port: `Acquire()` keeps the reader running until the handle is let
 go, `Latest` is the last tick without waiting, `ReadSessionFacts` reads one session's facts on the caller's thread.
@@ -611,7 +611,7 @@ and labelled with the hardware's words. A sensor with no family is not read.
   sensor has no reading — its last value is not repeated. The same refresh is what the L2 telemetry layer does once
   a second in every session: that cost is not this feature's, and is `20_OPEN_QUESTIONS` §M16.
 
-### From the reader to the ledger (built 2026-11-11; produced by nothing yet)
+### From the reader to the ledger (built 2026-11-11; fed since the switch)
 
 - **The poller attaches, it does not read.** `TelemetryPoller` takes an optional `IAdvancedHardware`, holds it from
   `Start` to `Dispose`, and at each poll takes `Latest` — a read of one reference. A snapshot it has not taken yet
@@ -624,6 +624,35 @@ and labelled with the hardware's words. A sensor with no family is not read.
 - **The finalizer** (`AdvancedSessionBuilder`, both tiers) turns the samples' readings into one series each,
   aligned to `t_ms` with NaN for a tick with none, and builds the session's row: facts, sources, statistics,
   directory. Schema 0023 and the rule for NaN are `06_DATA_MODEL` §Blob encoding and §Migrations.
+
+### The switch (built 2026-11-11, Advanced PR-5)
+
+`telemetry.advanced` (`SettingsRegistry.TelemetryAdvanced`, Boolean, default `0`, read by the Agent) becomes
+`RecorderOptions.AdvancedMetrics` through `SettingsRecorderPolicy`, at each session's start like the other recording
+settings; exactly `1` is on. From there:
+
+- **The Agent has one reader** — `AgentServices` registers `AdvancedHardwareHub` as `IAdvancedHardware`, a tick a
+  second and a linger of ten — and nothing starts it but a holder. `SessionRecorder` holds it for a session's length
+  **only when the option is on**, and `AgentRecording` gives the session's `TelemetryPoller` the reader on the same
+  condition. Off: not held, not asked, no chunk 9 or 10, no row (`SessionRecorderTests.WithAdvancedMetricsOff…`).
+- **A session's facts are read once, off the capture loop.** Fifteen seconds after the game's process is known — by
+  then it has a window — or at the session's end if that comes first, `IAdvancedHardware.ReadSessionFacts` runs on a
+  pool thread: asking the driver for a profile takes some hundred milliseconds. The finalize waits at most five
+  seconds for a read still in flight and stores the session without its facts rather than hold it. A read that
+  throws costs the facts, never the session.
+- **Which display is the game's** comes from Windows, not from the game: `WindowGeometryProbe.MonitorDeviceOf` — the
+  monitor the process's largest visible window is on, as its GDI device name — which the reader hands to
+  `FlNvSessionDisplay`. No window, or a display another adapter drives: the session's display facts are absent.
+- **The context reaches the crash file as it changes** (chunk 10), from `IAdvancedHardware.Latest` — a read of one
+  reference on the capture loop's task — so a recovered session keeps its machine facts, its sources and its
+  directory of series.
+- **A session recorded with the option on always stores a row**, if only one that says every source is `Unknown`:
+  no row means "the option was off when this was recorded", which the page (PR-7) shows as such.
+
+What elevation adds changed with this: an Agent running as administrator with PawnIO reads the processor, memory
+and motherboard groups in a session with the option on. The texts that state what the admin mode adds say so —
+Disclaimer 2.15 §5 and §5A (the owner's answer of 2026-11-11), the admin mode's disclosure (`agent-admin-dialog/2`),
+Settings, the first run, the guide and `LIMITATIONS.md` — and Privacy Policy 2.15 names what is read and stored.
 
 ### What belongs to what
 

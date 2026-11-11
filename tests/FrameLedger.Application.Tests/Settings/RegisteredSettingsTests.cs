@@ -77,6 +77,7 @@ public sealed class RegisteredSettingsTests
         defaults.RetentionKeep.Should().Be(20);
         defaults.TelemetryInterval.Should().Be(TimeSpan.FromSeconds(1));
         defaults.PartialFlushInterval.Should().Be(baseline.PartialFlushInterval, "not a setting");
+        defaults.AdvancedMetrics.Should().BeFalse("D101: off by default, and off means nothing more is read or stored");
 
         store.Rows["capture.min_session_s"] = "45";
         store.Rows["retention.raw_sessions_per_game"] = "0";
@@ -85,6 +86,13 @@ public sealed class RegisteredSettingsTests
         set.MinimumSessionLength.Should().Be(TimeSpan.FromSeconds(45));
         set.RetentionKeep.Should().Be(int.MaxValue, "0 is unlimited: a sweep that keeps everything, never one that keeps nothing");
         set.TelemetryInterval.Should().Be(TimeSpan.FromMilliseconds(500));
+        set.AdvancedMetrics.Should().BeFalse();
+
+        // telemetry.advanced (D101): exactly "1" is on, read like the others at each session's start.
+        store.Rows["telemetry.advanced"] = "1";
+        (await policy.ResolveAsync(baseline, Ct)).AdvancedMetrics.Should().BeTrue();
+        store.Rows["telemetry.advanced"] = "yes";
+        (await policy.ResolveAsync(baseline, Ct)).AdvancedMetrics.Should().BeFalse("a row that is not 0 or 1 reads as the default, never as on");
 
         // An operator's bounded capture (--seconds 8 lowers the minimum to 8 s) keeps its bound under any setting.
         RecorderOptions bounded = await policy.ResolveAsync(baseline with { MinimumSessionLength = TimeSpan.FromSeconds(8) }, Ct);

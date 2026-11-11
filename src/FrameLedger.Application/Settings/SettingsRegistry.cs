@@ -190,6 +190,22 @@ public static class SettingsRegistry
         AgentReads = true,
     };
 
+    /// <summary>
+    /// "Advanced metrics" (owner decision D101, 2026-11-11): whether the Agent reads, and a session stores, what the
+    /// vendor interfaces make available beyond the fixed sensors — NVAPI's facts and figures, every sensor
+    /// LibreHardwareMonitor has for the card and, as administrator with PawnIO, for the processor, memory and
+    /// motherboard (<c>18_GPU_VENDOR_APIS</c> §Advanced metrics). <b>Off by default, and off means nothing more is
+    /// read or stored</b>; a session recorded while it was off is never filled in afterwards. Read at each session's
+    /// start like every key the Agent reads. Exactly "1" is on.
+    /// </summary>
+    public static readonly SettingDefinition TelemetryAdvanced = new()
+    {
+        Key = "telemetry.advanced",
+        Kind = SettingKind.Boolean,
+        Default = "0",
+        AgentReads = true,
+    };
+
     /// <summary>FR-3.5: telemetry at 1 Hz, configurable 0.5–2 s. Milliseconds.</summary>
     public static readonly SettingDefinition TelemetryIntervalMs = new()
     {
@@ -268,7 +284,7 @@ public static class SettingsRegistry
     public static IReadOnlyList<SettingDefinition> All { get; } =
     [
         UiLanguage, UiTheme, UiStartWithWindows, UiMinimizeToTray, UiHideAntiCheatHooking, UiFpsDecimals, UiHideScrollBars, UiLibraryView, UiPlayMode,
-        UiGameArt, UiGameArtTint, CaptureBackground, HookingKillSwitch, HookingUserModeExceptions, CaptureRunElevated, CaptureMinSessionSeconds, TelemetryIntervalMs, RetentionRawSessionsPerGame,
+        UiGameArt, UiGameArtTint, CaptureBackground, HookingKillSwitch, HookingUserModeExceptions, CaptureRunElevated, CaptureMinSessionSeconds, TelemetryIntervalMs, TelemetryAdvanced, RetentionRawSessionsPerGame,
         RetentionRemoveUninstalledGames, UpdateChannel, UpdateAutoCheck, PrivacyOnlineMetadata, LogDebug,
     ];
 

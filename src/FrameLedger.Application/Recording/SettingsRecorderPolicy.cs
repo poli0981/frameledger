@@ -24,6 +24,7 @@ public sealed class SettingsRecorderPolicy : IRecorderPolicy
         int minimumSeconds = await _settings.GetIntegerAsync(SettingsRegistry.CaptureMinSessionSeconds, ct).ConfigureAwait(false);
         int keep = await _settings.GetIntegerAsync(SettingsRegistry.RetentionRawSessionsPerGame, ct).ConfigureAwait(false);
         int intervalMs = await _settings.GetIntegerAsync(SettingsRegistry.TelemetryIntervalMs, ct).ConfigureAwait(false);
+        bool advanced = await _settings.GetBooleanAsync(SettingsRegistry.TelemetryAdvanced, ct).ConfigureAwait(false);
 
         TimeSpan minimum = baseline.MinimumSessionLength < SessionFinalizer.MinimumSessionLength
             ? baseline.MinimumSessionLength
@@ -33,6 +34,7 @@ public sealed class SettingsRecorderPolicy : IRecorderPolicy
             MinimumSessionLength = minimum,
             RetentionKeep = keep == 0 ? int.MaxValue : keep,
             TelemetryInterval = TimeSpan.FromMilliseconds(intervalMs),
+            AdvancedMetrics = advanced,
         };
     }
 }

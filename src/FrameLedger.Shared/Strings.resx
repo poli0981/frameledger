@@ -59,7 +59,7 @@
     <value>The capture agent normally runs with your standard rights, and every capture tier works that way. This option asks Windows to start it as administrator instead.</value>
   </data>
   <data name="Safety_AdminMode_Adds" xml:space="preserve">
-    <value>What it adds: FrameLedger can open and measure a game that itself runs as administrator, and it can read the CPU temperature where PawnIO is installed.</value>
+    <value>What it adds: FrameLedger can open and measure a game that itself runs as administrator, and, where PawnIO is installed, it can read the CPU temperature and - with Advanced metrics on - the processor's, the memory's and the motherboard's sensors.</value>
   </data>
   <data name="Safety_AdminMode_Unchanged" xml:space="preserve">
     <value>What it does not change: a game with anti-cheat is still refused, and a process Windows protects stays unreadable. A Vulkan game that runs as administrator is still not measured, because Windows does not load FrameLedger's Vulkan layer into it. Games you start from FrameLedger still run with your standard rights.</value>

@@ -127,6 +127,37 @@ public sealed class WindowGeometryProbe : IDisplayProbe
         return true;
     }
 
+    /// <summary>
+    /// The GDI device name of the monitor the game's main window is on (<c>\\.\DISPLAY1</c>), or null when the game has
+    /// no window yet. Advanced metrics (owner decision D101) asks the driver about that display; the name is the
+    /// monitor's place in Windows' list — not an identity of the monitor, and never stored.
+    /// </summary>
+    public static unsafe string? MonitorDeviceOf(IReadOnlyCollection<int> pids)
+    {
+        ArgumentNullException.ThrowIfNull(pids);
+        if (pids.Count == 0)
+        {
+            return null;
+        }
+
+        HWND window = Largest(pids);
+        if (window.IsNull)
+        {
+            return null;
+        }
+
+        HMONITOR monitor = PInvoke.MonitorFromWindow(window, MONITOR_FROM_FLAGS.MONITOR_DEFAULTTONEAREST);
+        var info = new MONITORINFOEXW();
+        info.monitorInfo.cbSize = (uint)sizeof(MONITORINFOEXW);
+        if (monitor.IsNull || !PInvoke.GetMonitorInfo(monitor, (MONITORINFO*)&info))
+        {
+            return null;
+        }
+
+        string device = info.szDevice.ToString();
+        return device.Length == 0 ? null : device;
+    }
+
     private static bool IsToolWindow(HWND window) =>
         ((WINDOW_EX_STYLE)(nuint)PInvoke.GetWindowLongPtr(window, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE)).HasFlag(WINDOW_EX_STYLE.WS_EX_TOOLWINDOW);
 

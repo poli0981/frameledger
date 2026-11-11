@@ -22,6 +22,7 @@ The link under them, *Read what the hook does and does not do*, opens the safety
 | **Minimum session length (s)** | A shorter session is not kept. 5 to 600 seconds. *Agent.* | 30 |
 | **Sensor interval (ms)** | How often the PC's sensors are read during a session. 500 to 2000 ms. *Agent.* | 1000 |
 | **Raw series kept per game** | How many of each game's newest sessions keep their per-frame data; older ones keep their statistics. 0 keeps everything. *Agent.* | 20 |
+| **Advanced metrics** | Reads more from the graphics driver and the hardware sensors during a session — the graphics card's memory and load in detail, each fan and voltage, what your display can do, the driver's settings for the game — and stores it with the session. Off: nothing more is read or stored. It applies from the next session; a session recorded while it was off is not filled in later. *Agent.* | Off |
 
 ## Data
 
@@ -34,7 +35,7 @@ The link under them, *Read what the hook does and does not do*, opens the safety
 
 | Setting | What it does | Default |
 |---|---|---|
-| **Run the agent as administrator** | Lets FrameLedger measure games that run as administrator, and read CPU temperature with PawnIO installed. Windows asks every time the agent starts, at logon too. A warning explains the risk first; read [Limitations](../LIMITATIONS.md#running-the-agent-as-administrator). The agent restarts to apply it, or at its next start if a game is being recorded. | Off |
+| **Run the agent as administrator** | Lets FrameLedger measure games that run as administrator, and — with PawnIO installed — read CPU temperature and, when *Advanced metrics* is on, the processor's, the memory's and the motherboard's sensors. Windows asks every time the agent starts, at logon too. A warning explains the risk first; read [Limitations](../LIMITATIONS.md#running-the-agent-as-administrator). The agent restarts to apply it, or at its next start if a game is being recorded. | Off |
 | **Start the agent at logon** | **Register**, **Repair** or **Remove** a task that starts the agent when you log on, for your user only and without administrator rights. Without it, FrameLedger starts the agent when you open it. | Not installed |
 
 ## Appearance

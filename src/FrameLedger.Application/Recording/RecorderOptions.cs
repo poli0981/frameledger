@@ -17,4 +17,11 @@ public sealed record RecorderOptions
 
     /// <summary>FR-3.5: the sensor poll interval (<c>telemetry.interval_ms</c>, 500–2000).</summary>
     public TimeSpan TelemetryInterval { get; init; } = TimeSpan.FromSeconds(1);
+
+    /// <summary>
+    /// <c>telemetry.advanced</c> (owner decision D101): whether this session holds the shared advanced reader, carries
+    /// its readings and stores them. False — the default, and every recorder with no such reader — reads and stores
+    /// nothing more than a session always did.
+    /// </summary>
+    public bool AdvancedMetrics { get; init; }
 }

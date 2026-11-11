@@ -51,6 +51,7 @@ public sealed class AdvancedHardwareReader : IAdvancedHardwareReader
     private readonly bool? _pawnIoInstalled;
     private readonly TimeProvider _time;
     private readonly Action<string> _note;
+    private readonly Func<uint, string?>? _monitorOf;
 
     private NvapiAdvancedReader? _nvapi;
     private LhmAdvancedReader? _lhm;
@@ -72,14 +73,17 @@ public sealed class AdvancedHardwareReader : IAdvancedHardwareReader
     /// <param name="pawnIoInstalled">Whether PawnIO is installed; null when that could not be told, which is not a yes.</param>
     /// <param name="time">The clock a snapshot is stamped with.</param>
     /// <param name="note">Told, in one line, when a source is given up or initialised again — the Agent's log.</param>
+    /// <param name="monitorOf">Finds the GDI device name of the monitor a process's window is on, for a session that did not name one; null finds none.</param>
     public AdvancedHardwareReader(
         Func<NvapiAdvancedReader> nvapi,
         Func<LhmGroups, LhmAdvancedReader> lhm,
         bool elevated,
         bool? pawnIoInstalled,
         TimeProvider time,
-        Action<string>? note = null)
+        Action<string>? note = null,
+        Func<uint, string?>? monitorOf = null)
     {
+        _monitorOf = monitorOf;
         ArgumentNullException.ThrowIfNull(nvapi);
         ArgumentNullException.ThrowIfNull(lhm);
         ArgumentNullException.ThrowIfNull(time);
@@ -99,7 +103,8 @@ public sealed class AdvancedHardwareReader : IAdvancedHardwareReader
             LhmEnvironment.IsElevated,
             LhmEnvironment.IsPawnIoInstalled,
             time,
-            note);
+            note,
+            static pid => Display.WindowGeometryProbe.MonitorDeviceOf([(int)pid]));
 
     public void Open()
     {
@@ -151,7 +156,10 @@ public sealed class AdvancedHardwareReader : IAdvancedHardwareReader
 
             try
             {
-                return _nvapi.ReadSessionFacts(target.GdiDeviceName, target.ProcessId, target.ExecutablePath);
+                // A session that names no monitor is asked about the one its window is on now - found from outside
+                // the game, by a user32 question about a top-level window (WindowGeometryProbe).
+                string? device = target.GdiDeviceName ?? _monitorOf?.Invoke(target.ProcessId);
+                return _nvapi.ReadSessionFacts(device, target.ProcessId, target.ExecutablePath);
             }
             catch (Exception e) when (e is not OperationCanceledException)
             {

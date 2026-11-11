@@ -309,6 +309,12 @@
   <data name="Rules_Update_Failed" xml:space="preserve">
     <value>The agent did not answer the rules update.</value>
   </data>
+  <data name="Settings_Advanced_Body" xml:space="preserve">
+    <value>Read more from the graphics driver and the hardware sensors during a session - the graphics card's memory and load in detail, each fan and voltage, what your display can do, the driver's settings for the game - and store it with the session. Off: nothing more is read or stored. It applies from the next session, and a session recorded while it was off is not filled in later.</value>
+  </data>
+  <data name="Settings_Advanced_Label" xml:space="preserve">
+    <value>Advanced metrics</value>
+  </data>
   <data name="Settings_Appearance_Header" xml:space="preserve">
     <value>Appearance</value>
   </data>
@@ -1492,7 +1498,7 @@
     <value>Running elevated.</value>
   </data>
   <data name="Settings_Agent_Elevation_Body" xml:space="preserve">
-    <value>Elevation is not required by any capture tier. It optionally unlocks CPU temperature (through PawnIO) and attaching to games that run elevated themselves. Everything else — hooking, measuring, recording — works without it.</value>
+    <value>Elevation is not required by any capture tier. It optionally unlocks CPU temperature and, with Advanced metrics on, the processor's, the memory's and the motherboard's sensors (both through PawnIO), and attaching to games that run elevated themselves. Everything else — hooking, measuring, recording — works without it.</value>
   </data>
   <data name="Settings_Agent_Elevation_Label" xml:space="preserve">
     <value>Elevation</value>
@@ -1759,7 +1765,7 @@
     <value>Accept</value>
   </data>
   <data name="FirstRun_Agent_Body" xml:space="preserve">
-    <value>FrameLedger starts a small capture agent beside itself, as a standard user — not elevated. Elevation is optional and is not required by any capture tier: it only unlocks CPU temperature (through PawnIO) and attaching to games that run elevated themselves. Below is what the agent reports about this machine.</value>
+    <value>FrameLedger starts a small capture agent beside itself, as a standard user — not elevated. Elevation is optional and is not required by any capture tier: it only unlocks CPU temperature and, with Advanced metrics on, the processor's, the memory's and the motherboard's sensors (both through PawnIO), and attaching to games that run elevated themselves. Below is what the agent reports about this machine.</value>
   </data>
   <data name="FirstRun_Agent_Header" xml:space="preserve">
     <value>The capture agent</value>

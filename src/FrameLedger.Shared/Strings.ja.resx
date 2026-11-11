@@ -56,7 +56,7 @@
     <comment>safety: human review required</comment>
   </data>
   <data name="Safety_AdminMode_Adds" xml:space="preserve">
-    <value>What it adds: FrameLedger can open and measure a game that itself runs as administrator, and it can read the CPU temperature where PawnIO is installed.</value>
+    <value>What it adds: FrameLedger can open and measure a game that itself runs as administrator, and, where PawnIO is installed, it can read the CPU temperature and - with Advanced metrics on - the processor's, the memory's and the motherboard's sensors.</value>
     <comment>safety: human review required</comment>
   </data>
   <data name="Safety_AdminMode_Unchanged" xml:space="preserve">

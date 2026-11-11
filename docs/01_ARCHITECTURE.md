@@ -162,7 +162,7 @@ The profile's own folder is refused there.)*
 - **ADR-8:** **No evasion, ever** (`19_SAFETY` §What we will never build). This is an architectural constraint, not a preference — it defines what "correct" means for this codebase.
 - **ADR-9:** Elevation demoted from required to optional; the Agent runs as a standard user by default.
   **Chosen, not inherited, since beta.10 (owner decision D34, 2026-09-27):** Settings ▸ Capture agent ▸ *Run the agent as
-  administrator* (`capture.run_elevated`, off by default, a versioned disclosure — `agent-admin-dialog/1` — before it turns
+  administrator* (`capture.run_elevated`, off by default, a versioned disclosure — `agent-admin-dialog/2` *(`/1` until 2026-11-11, when Advanced metrics widened what the option adds — D101)* — before it turns
   on). With it on, **Windows is asked every time the Agent starts** — a UAC prompt owned by the App's window when the App
   starts it, flashing on the taskbar when the logon task does — and there is no silent path: no "highest privileges" task,
   no service. The elevated Agent is started for one user (`--serve --for-user <SID>`) and refuses to run as another
