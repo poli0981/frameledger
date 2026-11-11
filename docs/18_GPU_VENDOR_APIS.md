@@ -715,9 +715,9 @@ every `nvapi.` row; nothing is estimated in its place (FR-4.9).
 | Train | Release | What | Its gate |
 |---|---|---|---|
 | A | 0.1.0-beta.39 | read by the Agent only — NVAPI and LibreHardwareMonitor — storage, the page. **Nothing changes in code loaded into a game** | this section |
-| B | 0.1.0-beta.40, .41, .42 *(three releases since D113, 2026-11-11; one was planned)* | inside the game: more fields of the Streamline and FidelityFX calls already hooked, and new hooks on functions `sl.interposer.dll` **exports** (`17_HOOK_ENGINE` §Hook inventory's ⏳ rows); shared-memory layout 5 — §Train B below | a plan of its own; overhead measured; each release after the first waits for the owner's run of the one before |
-| C | ~~0.1.0-beta.41~~ 0.1.0-beta.43 | Reflex latency per frame | a spike, then the owner's go or no |
-| D | ~~0.1.0-beta.42~~ 0.1.0-beta.44 | the Streamline feature state behind `slGetFeatureFunction` — DLSS frame generation's, DLSS's, Reflex's | a spike, then the owner's go or no |
+| B | 0.1.0-beta.40, ~~.41, .42~~ .42, .43 *(three releases since D113, 2026-11-11; one was planned. Renumbered 2026-11-12, D118: 0.1.0-beta.41 is a fix release for the sensor library, not part of the train)* | inside the game: more fields of the Streamline and FidelityFX calls already hooked, and new hooks on functions `sl.interposer.dll` **exports** (`17_HOOK_ENGINE` §Hook inventory's ⏳ rows); shared-memory layout 5 — §Train B below | a plan of its own; overhead measured; each release after the first waits for the owner's run of the one before |
+| C | ~~0.1.0-beta.41~~ ~~0.1.0-beta.43~~ 0.1.0-beta.44 *(D118)* | Reflex latency per frame | a spike, then the owner's go or no |
+| D | ~~0.1.0-beta.42~~ ~~0.1.0-beta.44~~ 0.1.0-beta.45 *(D118)* | the Streamline feature state behind `slGetFeatureFunction` — DLSS frame generation's, DLSS's, Reflex's | a spike, then the owner's go or no |
 
 Rules 4 and 5, the hook inventory, the measured overhead and the anti-cheat guard bind B, C and D exactly as they bind
 every hook. `sl::Constants` is read without its camera position, axes and matrices: where the camera is, is where the
@@ -768,9 +768,17 @@ planning, the design reviewed against the code before it was approved.
   anti-cheat exception's trial ends that exception for good (D38), and every release already means restarting the
   game. **beta.40**: more fields of calls *already* hooked — `sl::DLSSOptions` where the game chains it into
   `slEvaluateFeature`, the FSR upscale dispatch, the FSR memory query — shared-memory layout 5, the Agent and the
-  page; **no new patch site**. **beta.41**: `slSetConstants` and `ffxConfigure`. **beta.42**:
-  `slGetFeatureVersion` and `slGetFeatureRequirements` — the owner's words: a release of their own, still hooked.
-  Each starts when the owner says the one before passed its owner-only item.
+  page; **no new patch site**. **~~beta.41~~ beta.42**: `slSetConstants` and `ffxConfigure`. **~~beta.42~~
+  beta.43**: `slGetFeatureVersion` and `slGetFeatureRequirements` — the owner's words: a release of their own, still
+  hooked. Each starts when the owner says the one before passed its owner-only item.
+- **D118 — 0.1.0-beta.41 is a fix release, and the train's numbers move by one** (owner decision 2026-11-12). The
+  owner's first evening with beta.40 showed the sensor library being closed under its other users (the paragraph on
+  `LhmLibrary` below; `20_OPEN_QUESTIONS` §M13); told that the fix would take the number D113 had given the train's
+  second release, the owner chose to release it at once. So: second release beta.42, third beta.43, train C
+  beta.44, train D beta.45. Text written before that day says beta.41 and beta.42 for the second and third — in
+  the released changelogs and the moved HANDOFF sections, which are not edited, and in the comments of `fl_shm.h`
+  and `ShmLayout.cs`, which the release that fills each member rewrites (they were left so that the code loaded
+  into a game stayed 0.1.0-beta.40's, line for line, in a release that fixes something else).
 - **D112 — `slInit` is not hooked in train B.** A game calls it before FrameLedger attaches, so its preferences
   would almost never be seen. If it is ever hooked: `applicationId`, `projectId` and the paths are never read.
 - **D114 — the field of view is a session's range**, lowest to highest, never a series: a series would say when the
