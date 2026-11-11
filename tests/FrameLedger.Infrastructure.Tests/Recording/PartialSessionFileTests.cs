@@ -211,7 +211,7 @@ public sealed class PartialSessionFileTests : IDisposable
             }
 
             p.Should().NotBeNull($"cut at {cut}");
-            p.Truncated.Should().Be(cut != whole.Length && boundaries.Contains(cut) == false || (cut != whole.Length && cut < whole.Length && !boundaries.Contains(cut)),
+            p.Truncated.Should().Be(cut != whole.Length && !boundaries.Contains(cut),
                 $"cut at {cut}: mid-chunk is truncated, on a boundary is not");
             // Everything before the cut that was complete is present; nothing after it is.
             int recordsExpected = complete >= 3 ? 3 : 0;

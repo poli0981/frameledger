@@ -492,12 +492,18 @@ public sealed class ShmDrainIntegrationTests
     /// one site, on the far side of a returned verdict — a timer-shaped tick is what
     /// <c>fl_shm.h</c> spends sixteen lines forbidding, and a loop-owned counter here
     /// would be one.
+    /// <para>
+    /// <b>It supervises at least twice, whatever the first drain holds</b> (2026-11-11). The floor alone
+    /// ended the loop after one evaluation whenever the first scan was slow enough for fifty presents to
+    /// be waiting — a busy machine — and the caller's "supervised more than once" then failed on a run
+    /// in which nothing was wrong (seen once in a local gate: <c>CompletedEvaluations</c> was 1).
+    /// </para>
     /// </remarks>
     private static async Task DrainUnderSupervisionAsync(ShmRingReader reader, GuardSupervisor supervisor,
         int pid, FlFrameRecord[] buffer, IList<ulong> gaps, List<FlFrameRecord> records, int floor)
     {
         DateTimeOffset until = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(10);
-        while (records.Count <= floor && DateTimeOffset.UtcNow < until)
+        while ((records.Count <= floor || supervisor.CompletedEvaluations < 2) && DateTimeOffset.UtcNow < until)
         {
             bool mayContinue = await supervisor.ScanOnceAsync(pid, TestContext.Current.CancellationToken)
                 .ConfigureAwait(false);

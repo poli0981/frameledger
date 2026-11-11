@@ -1,29 +1,113 @@
-# Qodana's settings for .github/workflows/qodana.yml (owner decision D93, 2026-11-10; docs/13_CI_CD.md §Qodana).
+# Qodana's settings for the `managed` job of .github/workflows/qodana.yml (owner decisions D93, 2026-11-10, and D99,
+# 2026-11-11; docs/13_CI_CD.md §Qodana).
 #
-# The linter is Qodana Community for .NET (ReSharper's InspectCode in a Linux container), and not Qodana for .NET
-# (Rider): that one needs an Ultimate licence, and the Qodana Cloud organisation holds a 30-day trial, so a job
-# built on it would turn red the day the trial ends. The Community linter runs under every licence.
+# The linter is Qodana for .NET (qodana-dotnet: Rider's engine), in NATIVE mode - on the job's own Windows runner, with
+# the .NET SDK global.json names, no container. It needs the Ultimate licence the Qodana Cloud organisation holds since
+# 2026-11-10; the Community linter (qodana-cdnet, InspectCode in a Linux container) ran here until then, and is the way
+# back if the subscription ever lapses - `linter: qodana-cdnet`, and the job on ubuntu-latest again.
 #
-# It analyses the C# of FrameLedger.slnx - and its XAML and .resx - and nothing native: src/native is a CMake
-# tree no solution names, and it is MSVC-only, which no Linux container compiles. CodeQL and SonarCloud read the C++.
+# It reads the solution's C#, XAML and .resx, and what Rider's own plugins read of the repository around it (Markdown,
+# XML, and JetBrains' security rules over the C#). Not the C++: that is qodana-native.yaml's report, over the Visual
+# Studio solution CMake generates, sent to a Qodana Cloud project of its own.
 #
-# The linter's image is the action's own version (the action pins the CLI, the CLI its image), so the one pin is the
-# action's commit in the workflow.
+# Everything a run needs to know is here and nothing is an action argument, so `qodana scan` on a developer's PC reads
+# the same settings. The linter's version is the action's (the action pins the CLI, the CLI its linter), so the one pin
+# is the action's commit in the workflow.
 version: "1.0"
-linter: qodana-cdnet
+linter: qodana-dotnet
+withinDocker: false
 
-# INTERIM, from beta.37's move to .NET 11 (D94, 2026-11-11) until the Ultimate linter's pull request replaces this
-# file: the linter's image carries the .NET SDKs 8 to 10, and main builds on 11. The SDK global.json names is installed
-# into the container before the build, with the line JetBrains' page gives for an SDK the image lacks.
-bootstrap: curl -fsSL https://dot.net/v1/dotnet-install.sh | bash -s -- --jsonfile /data/project/global.json -i /usr/share/dotnet
+# WHERE AN INSPECTION IS SWITCHED OFF (docs/13_CI_CD.md §Qodana, CLAUDE.md §Coding conventions): one of ReSharper's -
+# C#, XAML, .resx - in .editorconfig, where Rider reads it too. Here only what has no key there: a whole severity and
+# the IntelliJ platform's own inspections (Markdown, XML) under `profile`; and, under `exclude` further down, the files
+# JetBrains' security rules were read in, and one file the linter itself fails on. Each with its reason above it.
+profile:
+  base:
+    name: qodana.recommended
+  groups:
+    # A HINT is what the editor offers without underlining anything (ReSharper's lowest level; this linter files it as
+    # TYPO, Qodana as Low): "invert if", "convert to LINQ", a trailing comma, and every Roslyn analyzer message below
+    # the level this build makes an error. The Community linter never reported them, and the rule D93 set is about
+    # warnings and suggestions. 3,607 of this job's first 3,953 results were hints (run 42923079119).
+    - groupId: Hints
+      groups:
+        - "severity:TYPO"
+  inspections:
+    - group: Hints
+      enabled: false
+    # Rider wants a table's columns padded to one width. The tables here are written to be diffed: a cell's text changes
+    # and its row alone moves.
+    - inspection: MarkdownIncorrectTableFormatting
+      enabled: false
+    # It computes a heading's anchor its own way; the documents are read on GitHub, whose anchors these links follow
+    # (`#display-mode--both-tiers-beta10` for "Display mode — both tiers (beta.10)"), and tools/wiki-build.ps1 checks
+    # the links of every page it publishes. All three it reported resolve on GitHub.
+    - inspection: MarkdownUnresolvedHeaderReference
+      enabled: false
+    # A Windows application manifest: the linter has no schema for urn:schemas-microsoft-com:asm.v1 and reports every
+    # element of the file as undeclared.
+    - inspection: XmlHighlighting
+      ignore:
+        - "src/FrameLedger.App/app.manifest"
 
 dotnet:
   solution: FrameLedger.slnx
   configuration: Release
 
+# What is not FrameLedger's code, or not code at all - SonarQube.Analysis.xml's list, for its reasons - and what the
+# other report reads.
+exclude:
+  - name: All
+    paths:
+      - src/native
+      - src/FrameLedger.App/Strings.Designer.cs
+      - tests/fixtures
+      - legal/licenses
+      - docs/vendor-exports.json
+      - src/FrameLedger.Infrastructure/Persistence/Migrations
+      - build
+      - out
+  # JETBRAINS' SECURITY RULES (the OpenGrep plugin: pattern rules, several hundred of them) stay on, and the files
+  # their results were READ in are listed here - so a new file that starts a process, or builds an SQL text, is
+  # reported. Two rules fired, 36 times, on 2026-11-11: "a process is started with something that is not a literal"
+  # (35) - and starting processes is part of what FrameLedger is: the Agent beside the App, the game the user added,
+  # Explorer on a folder, the browser on a link - and the same for an SQL text (1: a constant field, every value a
+  # parameter). docs/13_CI_CD.md §Qodana has each place, what it starts and where that comes from.
+  #
+  # The name is the PLUGIN'S ONE INSPECTION, not a rule's: every rule's result is produced by OpenGrepInspection, and
+  # a rule's own id is honoured nowhere - not by `ignore`, not by an `exclude` path, not by `enabled: false` (three
+  # runs, 42932842462, 42935752891 and 42938295264: all 36 stood each time; the server is handed every rule file
+  # whatever the profile says). So a file listed here is left out of ALL of the plugin's rules, which is the price.
+  # ProcessStartSitesTests, in the gate, names the same files and fails on a new one.
+  - name: OpenGrepInspection
+    paths:
+      - src/FrameLedger.App/Services/AgentLauncher.cs
+      - src/FrameLedger.App/Services/AgentTool.cs
+      - src/FrameLedger.App/Services/Explorer.cs
+      - src/FrameLedger.App/Services/ShellStarter.cs
+      - src/FrameLedger.App/Services/ShellUrlOpener.cs
+      - src/FrameLedger.App/ViewModels/SettingsViewModel.cs
+      - src/FrameLedger.Infrastructure/Capture/ProcessLauncher.cs
+      - src/FrameLedger.Infrastructure/Diagnostics/CrashDumpWriter.cs
+      - src/FrameLedger.Infrastructure/Startup/AgentElevation.cs
+      - src/FrameLedger.Infrastructure/Startup/LogonTask.cs
+      - src/FrameLedger.Infrastructure/Persistence/SqliteSessionRepository.cs
+      # The tests start what they test - the harness, the Agent, a process to hold a handle on (24 of the 35).
+      - tests
+  # THE LINTER'S OWN FAULT, not the file's: resolving `PInvoke.EnumDisplaySettings(null, ...)` - the `null` to PCWSTR
+  # conversion - the engine of this linter's build (QDNET-262.12299) fails an internal assertion
+  # ("IsStandardImplicitConversionFromExpression(conversion.Kind)", in its log), loses the method, and reports its
+  # three locals and the file's three usings as unused. The compiler builds it with warnings as errors, and
+  # InspectCode 2026.2.3.1 and 2026.3.0 report nothing there. To be removed when a linter build reads the file.
+  - name: UnusedVariable.Compiler
+    paths:
+      - src/FrameLedger.Infrastructure/Recording/PrimaryDisplay.cs
+  - name: RedundantUsingDirective
+    paths:
+      - src/FrameLedger.Infrastructure/Recording/PrimaryDisplay.cs
+
 # The gate: no problem at all. What the linter reports is settled where it is found - fixed, or its inspection
-# switched off in .editorconfig with the reason beside it (InspectCode reads its severities there, and so does
-# Rider) - so a count above zero is something new.
+# switched off with the reason beside it - so a count above zero is something new.
 failureConditions:
   severityThresholds:
     any: 0

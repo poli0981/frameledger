@@ -1,28 +1,25 @@
-# Qodana (owner decision D93, 2026-11-10; docs/13_CI_CD.md §Qodana).
+# Qodana (owner decisions D93, 2026-11-10, and D99, 2026-11-11; docs/13_CI_CD.md §Qodana).
 #
 # JetBrains' template for the Qodana Scan action, changed where FrameLedger differs
 # and each change said here:
 #
-# - The linter is Qodana Community for .NET (qodana.yaml names it and says why): a
-#   Linux container, which is why this job alone runs on ubuntu-latest in a
-#   Windows-only project. EnableWindowsTargeting lets the .NET SDK there build and
-#   load projects whose target is Windows; it is passed to the container rather than
-#   written into Directory.Build.props, because no build of the product is meant to
-#   run anywhere but Windows.
-# - The action is pinned to a commit (v2026.2.2, the newest; the template names
-#   v2026.1), as every action that is not GitHub's own is here.
+# - The linter is Qodana for .NET (Rider's engine) in NATIVE mode, on a Windows
+#   runner: the projects target Windows, and the linter then builds and loads them
+#   with the SDK this job installs from global.json - no container, and no
+#   EnableWindowsTargeting. qodana.yaml names the linter and the mode; nothing is
+#   passed as an action argument. (Until beta.37 this was the Community linter in a
+#   Linux container, the one Linux job this repository had.)
+# - The action is pinned to a commit, as every action that is not GitHub's own is
+#   here.
 # - Permissions are the ones the job uses: it reads the repository, writes a check
 #   run with the annotations and one comment on the pull request. The template's
 #   `contents: write` is for pushing quick-fixes, which this job never does.
 # - A workflow of its own, as JetBrains advises, and ADVISORY: `main`'s required
-#   contexts stay `check` and the two `analyze` jobs. A problem Qodana finds, or a
-#   Qodana Cloud outage, is a red job beside a green `check`, never a blocked merge.
+#   contexts stay `check` and the two `analyze` jobs. A problem Qodana finds, a
+#   Qodana Cloud outage or a lapsed licence is a red job beside a green `check`,
+#   never a blocked merge.
 # - `main` only: the `alpha` branch is main's source under another release line
 #   (docs/13_CI_CD.md §The alpha line), and main's is what is analysed.
-# - INTERIM since beta.37 (D94, 2026-11-11): main builds on .NET 11, which the
-#   linter's image does not carry (SDKs 8 to 10), so qodana.yaml's `bootstrap`
-#   installs the SDK global.json names into the container first. The Ultimate
-#   linter's pull request replaces this job with one on Windows.
 
 name: Qodana
 
@@ -40,7 +37,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  qodana:
+  managed:
+    name: Qodana (managed)
     # A pull request from this repository, or a push or a dispatch. QODANA_TOKEN
     # reaches neither a fork's pull request nor Dependabot's, and their token cannot
     # write the check run or the comment.
@@ -48,7 +46,7 @@ jobs:
       github.event_name != 'pull_request' ||
       (github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.user.login != 'dependabot[bot]')
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     timeout-minutes: 60
     permissions:
       contents: read
@@ -64,19 +62,48 @@ jobs:
           # A full history is required for pull request analysis.
           fetch-depth: 0
 
+      # Native mode runs the linter in this job's environment, so the SDK it loads
+      # the projects with is this one. No MSVC step here on purpose: it exports
+      # Platform=x64, which MSBuild reads as a solution platform (build.ps1's
+      # Clear-VcxprojPlatform).
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      # Restored only: `check` saves this cache, under the same key.
+      - name: Restore the NuGet cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      # Built before it is inspected: a build that fails is then one red step with
+      # the compiler's own message, not a report of thousands of unresolved symbols.
+      # The native DLLs are absent here, so the .targets that copy them warn and the
+      # build goes on, as on a fresh clone.
+      - name: Build what the linter loads
+        shell: pwsh
+        run: |
+          dotnet build FrameLedger.slnx -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'the build failed' }
+
       # pr-mode false: the whole solution every time, so a pull request and `main`
       # are judged by the same list. upload-result: the SARIF and the linter's log
       # as an artifact of the run, for a reader with no Qodana Cloud account.
-      # Caches are saved from `main` only (a pull request reads them): one per
-      # branch would crowd the repository's cache quota, which NuGet's share.
+      # Caches are saved from `main` only (a pull request reads them), under keys of
+      # this job's own: one per branch would crowd the repository's cache quota,
+      # which NuGet's share.
       - name: Qodana Scan
         uses: JetBrains/qodana-action@3e8d76ff0e0241618abd808682f426afe84bab3f # v2026.2.2
         with:
           pr-mode: false
           upload-result: true
+          artifact-name: qodana-report
           cache-default-branch-only: true
-          env-vars-to-linter: EnableWindowsTargeting
+          primary-cache-key: qodana-managed-${{ github.ref_name }}-${{ github.sha }}
+          additional-cache-key: qodana-managed-main
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
           QODANA_ENDPOINT: 'https://qodana.cloud'
-          EnableWindowsTargeting: 'true'

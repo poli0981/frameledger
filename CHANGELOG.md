@@ -35,6 +35,43 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Changed
+
+- **Qodana for .NET, on the Ultimate licence, reads the managed code** (developers only; owner decisions D99 and D100).
+  The owner took an Ultimate licence for the Qodana Cloud organisation and asked for Qodana over every language. The
+  job — `managed`, *Qodana (managed)* in a pull request's checks — now runs Qodana for .NET (Rider's engine) in native
+  mode on a Windows runner, after a `dotnet build`, where the Community linter ran in a Linux container. Besides the
+  C#, the XAML and the `.resx` it reads the Markdown and XML around the solution, and JetBrains' security rules read
+  the C#. Its first run reported 3,953 problems, 3,607 of them **hints** — the level an editor offers without
+  underlining anything, which the Community linter never reported; hints are off as a severity. Of the 347 left: a vi
+  or ja string equal to the English one (271) is off in `.editorconfig` for `.resx` files — names, units and format
+  strings are not translated; two Markdown inspections (table padding, and anchors computed otherwise than GitHub
+  does) and the application manifest's XML are off in `qodana.yaml`; six results in `PrimaryDisplay.cs` are the
+  linter's own fault (an internal assertion, in its log) and are excluded for that file; one test expression was
+  simplified. The gate stays zero problems and the job stays advisory. An inspection is now switched off **where the
+  engine that raised it reads** — one of ReSharper's in `.editorconfig`, what has no key there in `qodana.yaml` — which
+  amends D93's "never in `qodana.yaml`" (`docs/13_CI_CD.md` §Qodana). The C++ goes to a second report, the next pull
+  request's.
+- **Every place that starts a process was read, and the App now opens web and mail links only.** JetBrains' rule for
+  "a process started with something that is not a literal" reported 35 places — 11 in the product, 24 in tests. Each
+  was read: what it starts, and where the path and the arguments come from (the table in `docs/13_CI_CD.md` §Qodana).
+  None takes a value from outside the PC or from a file FrameLedger did not write, except the path and arguments of
+  the game the user added. One was hardened: `ShellUrlOpener` — what opens a link in the browser or the mail client —
+  now refuses any address that is not `http`, `https` or `mailto` itself, where it trusted each caller to have
+  checked; the shell runs whatever it is handed, and a `file:` address is a program. Every caller already passed one
+  of the project's own pages or a link held to those schemes, so no link you could click before stops working. The
+  rule stays on: the files its results were read in are listed in `qodana.yaml`, so a new file that starts a
+  process is reported — by path on the plugin's one inspection, since a rule's own id is honoured nowhere (three
+  runs measured it). And a test of the repository's own, `ProcessStartSitesTests`, in the gate, fails on a new file
+  that starts a process, or registers a scheduled task, until it has been read and listed.
+
+### Fixed
+
+- **A test that failed on a busy machine** (developers only). `ShmDrainIntegrationTests`' drain under supervision
+  ended after one guard evaluation whenever the first scan was slow enough for fifty presents to be waiting, and
+  then failed its own "supervised more than once"; the loop now supervises at least twice whatever the first
+  drain holds.
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

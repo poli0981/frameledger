@@ -73,9 +73,10 @@ RELEASE_LINE                   # `main`, or `alpha` on the alpha branch (D73, 20
 build.ps1                      # the quality gate; CI runs this identical script
 SonarQube.Analysis.xml         # SonarCloud's settings for ci.yml's sonarcloud job (D68, 2026-10-25; it replaced
 .config/dotnet-tools.json      #   .sonarcloud.properties) and the scanner it runs — 13_CI_CD §SonarCloud
-qodana.yaml                    # Qodana's settings for .github/workflows/qodana.yml (D93, 2026-11-10): the linter, the
-                               #   solution, a gate of zero problems; the inspections' severities are .editorconfig's
-                               #   resharper_* keys — 13_CI_CD §Qodana
+qodana.yaml                    # Qodana's settings for the managed job of .github/workflows/qodana.yml (D93; Qodana for
+                               #   .NET on the Ultimate licence since 2026-11-11, D99): the linter, the solution, a gate
+                               #   of zero problems, and what is switched off that .editorconfig has no key for —
+                               #   ReSharper's inspections are .editorconfig's resharper_* keys (D100) — 13_CI_CD §Qodana
 src/
   native/
     FrameLedger.Overlay/       # C++20 DLL injected into the game (hooks + ring writer + optional overlay)
@@ -178,7 +179,7 @@ Dependency direction: `App/Agent → Application → Domain`; **`Application →
 
 ## Coding conventions
 
-**C# —** `Nullable enable`, `TreatWarningsAsErrors`, `AnalysisLevel latest-all`, file-scoped namespaces, Roslynator + Meziantou + VS Threading analyzers, `dotnet format` clean. Qodana Community for .NET (ReSharper's inspections) reads the C# and the XAML in an advisory workflow of its own, with a gate of zero problems *(since 2026-11-10, D93 — `13_CI_CD` §Qodana)*: fix what it reports, or switch the inspection off in `.editorconfig` with the reason beside it — never in `qodana.yaml`, never without one. Async suffixed `Async`, `ConfigureAwait(false)` off the UI. All user-visible strings from `.resx`. Timestamps UTC (unix-ms in SQLite); QPC ticks only inside the capture pipeline.
+**C# —** `Nullable enable`, `TreatWarningsAsErrors`, `AnalysisLevel latest-all`, file-scoped namespaces, Roslynator + Meziantou + VS Threading analyzers, `dotnet format` clean. Qodana reads the C# and the XAML in an advisory workflow of its own, with a gate of zero problems *(since 2026-11-10, D93; Qodana for .NET on the Ultimate licence since 2026-11-11, D99 — `13_CI_CD` §Qodana)*: fix what it reports, or switch the inspection off with the reason on the line above, **in the place the engine that raised it reads** *(D100)* — one of ReSharper's (C#, XAML, `.resx`, the C++) in `.editorconfig`; what has no key there (the hints as a severity, the Markdown and XML inspections, the files JetBrains' security rules were read in) in `qodana.yaml` — never anywhere else, never without a reason. A new file that starts a process fails `ProcessStartSitesTests`, and Qodana's security rule reports it: read what it starts and where the path and the arguments come from, then list it in the test, in `qodana.yaml` and in `13_CI_CD` §Qodana. Async suffixed `Async`, `ConfigureAwait(false)` off the UI. All user-visible strings from `.resx`. Timestamps UTC (unix-ms in SQLite); QPC ticks only inside the capture pipeline.
 
 **C++ —** `clang-format` (LLVM base, 4-space, 120 col) enforced in CI. No STL containers that allocate in hook paths. No `std::mutex` in hook paths. `-D_HAS_EXCEPTIONS=0` in the Overlay target. Every hook entry point wrapped per the `FL_HOOK_GUARD` macro (`17_HOOK_ENGINE`). Static analysis: ~~`/analyze` + clang-tidy (`bugprone-*`, `cert-*`, `concurrency-*`)~~ CodeQL (`codeql.yml`, a required check); `/analyze` and clang-tidy are not configured *(corrected 2026-10-04)*. SonarCloud analyses the C++ too, from CMake's compilation database, in `ci.yml`'s advisory `sonarcloud` job *(since 2026-10-25, D68 — `13_CI_CD` §SonarCloud)*.
 
