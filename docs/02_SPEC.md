@@ -53,6 +53,7 @@ Requirement IDs (`FR-x`, `NFR-x`) are referenced by other docs, commits, and tes
 - FR-5.3 Charts handle ≥ 500k points via min/max decimation; zoom/pan; PNG export.
 - FR-5.4 Native/Displayed toggle wherever FG data exists.
 - FR-5.5 Stutter markers annotated with cause when known (`PSO compile`, `VRAM budget exceeded`).
+- FR-5.6 *(owner decision D101, 2026-11-11)* **Advanced metrics**: an option, off by default, and a page of its own that shows what the vendor interfaces make available — NVAPI, LibreHardwareMonitor through PawnIO, and in later releases Streamline and FidelityFX inside the game — each value under what it belongs to, the PC or one session, and each value that is not read listed with the reason. Off means nothing more is read or stored. `18_GPU_VENDOR_APIS` §Advanced metrics is the design and the inventory. *(Not built: the catalog exists, nothing reads it yet.)*
 
 ### FR-6 History & comparison
 - FR-6.1 Sessions table per game: date, duration, tier badge, Native, Displayed, FG×, lows, resolution + upscaler, RT/PT/RR chips, crash badge, tags.
@@ -104,7 +105,7 @@ Draw live FPS/frametime/upscaler info inside the game. Only for games already ho
 ## Non-functional requirements
 
 - **NFR-1 Game-side overhead:** ≤ 1 µs per present, ≤ 8 MB resident, measured game FPS impact ≤ 0.5% vs uninstrumented.
-- **NFR-2 Agent overhead:** ≤ 1% of one core during capture, ≤ 150 MB working set, ~0% idle.
+- **NFR-2 Agent overhead:** ≤ 1% of one core during capture, ≤ 150 MB working set, ~0% idle. *(D101, 2026-11-11: the limits hold with Advanced metrics on — FR-5.6. Its reads run on a thread of their own, the slow ones seldom, and with no game running only while its page is open (D107), so "~0% idle" is not spent on it. **Unmeasured** until the owner's run with the option on and off, `HANDOFF` §Owner-only.)*
 - **NFR-3 Stability:** faults **originating in our own hook bodies** are contained by `FL_HOOK_GUARD`, counted, and self-disable the Overlay after 3 occurrences; the safety-unhook path completes within one frame. The Overlay adds no allocation, lock, syscall or logging to the present path.
 
   > This deliberately does **not** say "must never crash a game" (`20_OPEN_QUESTIONS` §H8). SEH containment cannot reliably catch stack overflow, cannot intercept `__fastfail` — and `-D_HAS_EXCEPTIONS=0` converts a would-be STL throw into exactly that (`spike-notes.md` §H3) — and does not help when the game installs a vectored exception handler that runs first. An absolute promise the mechanism cannot support does not belong in a requirement, and must stay out of user-facing text: the Disclaimer already says injection carries risk, and that wording is the honest one.

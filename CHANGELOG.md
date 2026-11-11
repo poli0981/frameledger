@@ -35,6 +35,28 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **"Advanced metrics" is planned, and its inventory is written — nothing reads it yet.** The owner asked for a
+  setting, *Thông số nâng cao*, with a navigation item of its own that shows as much as the NVAPI and Streamline
+  headers and PawnIO make available, each value under what it belongs to: one game session, or the PC. This pull
+  request is the first of that train and changes nothing you can see or record. It adds the list everything else in
+  the train reads — `AdvancedMetricCatalog`, 137 entries: what the Agent will read from NVAPI and
+  LibreHardwareMonitor (the card's firmware, architecture and cores; its memory with evictions and promotions; its
+  utilisation by domain; what a display can do with HDR and variable refresh; the driver's profile; and, as
+  administrator with PawnIO, the processor per core, the motherboard, the memory modules and the drives'
+  temperatures), what can only be read inside a game and waits for a later release, **and what is never read with the
+  reason** — a serial number, a display's EDID, the list of programs that are encoding, the camera's position, what
+  a vendor's licence closes. `docs/18_GPU_VENDOR_APIS.md` §Advanced metrics holds the design, the owner's decisions
+  D101–D108 and the same list as a table; a test fails when the table and the catalog differ in either direction.
+
+### Fixed
+
+- **A sentence in the documents that kept a function from being called.** `docs/18_GPU_VENDOR_APIS.md` said the
+  vendored NVAPI headers do not declare `NvAPI_GPU_GetMemoryInfoEx`. They do — in `nvapi_lite_common.h`, which
+  `nvapi.h` includes; the search that found nothing had looked in `nvapi.h` alone. The row is corrected, and the
+  bridge will call it for the advanced memory rows. Nothing about the memory figures FrameLedger shows today changes.
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
