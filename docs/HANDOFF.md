@@ -136,8 +136,14 @@ the traps — is [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta
 
 ### Left open by this session
 
-- **This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
-  after this text. Record them in the next pull request.
+- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
+  after this text. Record them in the next pull request.~~ **Recorded 2026-11-12: 0.1.0-beta.41 was released
+  2026-11-11T22:38:39Z** (05:38 on the 12th in the owner's time zone) from the signed tag on `a6b95e8` (#402), by
+  run 43111028661 — green at the first attempt, one run for the one tag push. Eight assets; the seven digests of
+  `SHA256SUMS.txt` equal the ones GitHub computed; the shipped natives carry `FL_BUILD_ID v0.1.0-beta.41`. The delta
+  from beta.40 is 807,692 bytes beside a full package of 110,708,416 — "Delta processed 0452 files. 0022 patched,
+  0430 unchanged". The wiki was published by run 43113525941. The rehearsal on the release branch (run 43108189693)
+  had made a delta of 841,038 bytes with the same file counts.
 - **The fix has not been seen to work.** It was written from the log's timing; the fault needs an elevated Agent with
   PawnIO. Item 39 is the check, and `20_OPEN_QUESTIONS` §M13 stays open until then.
 - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
