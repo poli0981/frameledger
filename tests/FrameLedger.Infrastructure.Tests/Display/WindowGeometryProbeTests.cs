@@ -65,6 +65,11 @@ public sealed partial class WindowGeometryProbeTests
             // one that belongs to someone else is not the game's — and this test process shows no window of its own.
             probe.Observe([Environment.ProcessId], hwnd).Should().BeNull();
             probe.Observe([], hwnd).Should().BeNull("no process, no window");
+
+            // Advanced metrics (D101) asks the driver about the display the game's window is on: its GDI device name, from
+            // Windows. The same rule for whose window it is - and a name, never an identity of the monitor.
+            WindowGeometryProbe.MonitorDeviceOf([harness.Id], hwnd).Should().StartWith(@"\\.\DISPLAY", "the window is on a monitor, and Windows names the monitor's place in its list");
+            WindowGeometryProbe.MonitorDeviceOf([Environment.ProcessId], hwnd).Should().BeNull("a window another process owns is not this one's, and this test process shows none");
         }
         finally
         {
@@ -80,6 +85,14 @@ public sealed partial class WindowGeometryProbeTests
                 // Exited between the check and the kill.
             }
         }
+    }
+
+    [Fact]
+    public void WithNoProcessOrNoWindowThereIsNoMonitorToName()
+    {
+        WindowGeometryProbe.MonitorDeviceOf([]).Should().BeNull("no process, no window");
+        WindowGeometryProbe.MonitorDeviceOf([Environment.ProcessId]).Should().BeNull("this test process shows no window");
+        WindowGeometryProbe.MonitorDeviceOf([Environment.ProcessId], 0xDEAD_0000_BEEF).Should().BeNull("a handle that is no window names no monitor");
     }
 
     [Fact]

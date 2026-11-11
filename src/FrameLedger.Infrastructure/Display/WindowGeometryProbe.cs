@@ -132,7 +132,12 @@ public sealed class WindowGeometryProbe : IDisplayProbe
     /// no window yet. Advanced metrics (owner decision D101) asks the driver about that display; the name is the
     /// monitor's place in Windows' list — not an identity of the monitor, and never stored.
     /// </summary>
-    public static unsafe string? MonitorDeviceOf(IReadOnlyCollection<int> pids)
+    /// <param name="pids">The game's processes.</param>
+    /// <param name="hwnd">
+    /// A window to ask about instead of searching, as <see cref="Observe"/> takes one: used only when one of
+    /// <paramref name="pids"/> owns it. 0 searches for the largest visible window of those processes.
+    /// </param>
+    public static unsafe string? MonitorDeviceOf(IReadOnlyCollection<int> pids, ulong hwnd = 0)
     {
         ArgumentNullException.ThrowIfNull(pids);
         if (pids.Count == 0)
@@ -140,7 +145,12 @@ public sealed class WindowGeometryProbe : IDisplayProbe
             return null;
         }
 
-        HWND window = Largest(pids);
+        HWND window = hwnd != 0 ? Root(new HWND((nint)hwnd), pids) : default;
+        if (window.IsNull)
+        {
+            window = Largest(pids);
+        }
+
         if (window.IsNull)
         {
             return null;
