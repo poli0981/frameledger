@@ -256,11 +256,18 @@ internal static class AgentServices
         services.AddSingleton<CapturePause>();
         services.TryAddSingleton<IAgentLifetime, NoAgentLifetime>();
         services.AddSingleton(static sp => CommandHandler(sp));
+        // GetAdvancedMachine (D101/D107): the App's page asks once a second while it is open, and each request is its
+        // hold on the shared reader for a few seconds - so nothing has to tell the Agent that the page closed.
+        services.AddSingleton(static sp => new AdvancedMachineResponder(
+            sp.GetRequiredService<IAdvancedHardware>(),
+            ct => sp.GetRequiredService<RegisteredSettings>().GetBooleanAsync(SettingsRegistry.TelemetryAdvanced, ct),
+            TimeProvider.System));
         services.AddSingleton<IIpcRequestHandler>(static sp => new AgentRequestHandler(
             AgentIdentityFactory.OfThisProcess(sp.GetRequiredService<AgentPaths>().VkLayerDirectory, sp.GetService<AgentElevationState>()?.Outcome),
             TelemetryDescriptor(),
             () => sp.GetRequiredService<SessionEventPublisher>().Status,
-            () => sp.GetRequiredService<AgentCommandHandler>()));
+            () => sp.GetRequiredService<AgentCommandHandler>(),
+            sp.GetRequiredService<AdvancedMachineResponder>()));
         services.AddSingleton(static sp => new PipeServer(
             sp.GetRequiredService<PipeServerOptions>(),
             sp.GetRequiredService<IIpcRequestHandler>(),

@@ -67,6 +67,15 @@ public static class IpcMessageType
     public const string DeleteSessions = "DeleteSessions";
     public const string DeleteSessionsAck = "DeleteSessionsAck";
 
+    /// <summary>
+    /// Advanced metrics (owner decisions D101 and D107, 2026-11-11): what the Agent's shared advanced reader last read
+    /// about this PC, asked once a second by the App's page while it is open - and each request keeps that reader
+    /// running a few seconds more. Answered <see cref="AdvancedMachineAck"/>, or <see cref="Error"/>
+    /// <see cref="IpcErrorCode.AdvancedOff"/> while the option is off.
+    /// </summary>
+    public const string GetAdvancedMachine = "GetAdvancedMachine";
+    public const string AdvancedMachineAck = "AdvancedMachineAck";
+
     public const string SessionStarted = "SessionStarted";
     public const string SessionProgress = "SessionProgress";
 
@@ -115,6 +124,9 @@ public static class IpcErrorCode
 
     /// <summary>beta.11: <c>DeleteSessions</c> while a session of that game (or of any game, for all) is being recorded — nothing is deleted.</summary>
     public const string SessionRunning = "SessionRunning";
+
+    /// <summary>D101: <c>GetAdvancedMachine</c> while <c>telemetry.advanced</c> is off - nothing is read, so there is nothing to answer.</summary>
+    public const string AdvancedOff = "AdvancedOff";
 }
 
 /// <summary>Codes a <see cref="CaptureErrorEvent"/> carries (<c>07_IPC</c> §Messages, <c>CaptureError</c>).</summary>
@@ -424,3 +436,34 @@ public sealed record DeleteSessionsRequest(long? GameId);
 
 /// <summary>What was deleted: the sessions, and how many games they belonged to.</summary>
 public sealed record DeleteSessionsAck(long? GameId, int Games, int Sessions);
+
+/// <summary>
+/// <c>GetAdvancedMachine</c> (D101/D107). <paramref name="FactsHash"/> is the hash of the facts the client already
+/// holds: when it is the Agent's own, the answer leaves the facts out - they change when the hardware does.
+/// </summary>
+public sealed record GetAdvancedMachineRequest(string? FactsHash = null);
+
+/// <summary>One value the reader read on its last tick: a series name of the catalog (<c>adv.</c>…) and its value.</summary>
+public sealed record AdvancedReadingValue(string Series, double Value);
+
+/// <summary>A member of a family - one fan, one core - with the catalog entry it belongs to and the hardware's own label.</summary>
+public sealed record AdvancedSeriesLabel(string Series, string MetricId, string Label);
+
+/// <summary>
+/// The Agent's last advanced snapshot. <paramref name="Ready"/> false: the reader is held and has not read yet, and
+/// every other member is empty. <paramref name="Readings"/> are what was read on THAT tick - a slow source is read
+/// every few, so the client keeps the last value it saw. <paramref name="FactsJson"/> is the PC's facts in the form the
+/// ledger stores them, absent when the request named <paramref name="FactsHash"/>. The three states are
+/// <c>AdvancedSourceStatus</c> names: why a source answers nothing is part of the answer.
+/// </summary>
+public sealed record AdvancedMachineAck(
+    bool Ready,
+    long TakenAtUnixMs,
+    string? FactsHash,
+    string? FactsJson,
+    IReadOnlyList<AdvancedReadingValue> Readings,
+    IReadOnlyList<AdvancedSeriesLabel> Series,
+    string Nvapi,
+    int? NvapiCode,
+    string Sensors,
+    string ElevatedSensors);
