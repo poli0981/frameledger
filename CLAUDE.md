@@ -113,7 +113,9 @@ src/
                                #   NvapiAdvancedReader (the bridge's ABI 3) and LhmAdvancedReader (LhmGroups:
                                #   the card; as administrator with PawnIO the processor, memory and board -
                                #   never storage, D103). The Agent composes it since the switch, `telemetry.advanced`
-                               #   (PR-5, 2026-11-11: off by default; on, a session holds the hub). Recording/
+                               #   (PR-5, 2026-11-11: off by default; on, a session holds the hub), and
+                               #   Ipc/AdvancedMachineResponder answers GetAdvancedMachine from the hub's last
+                               #   snapshot - each request is the page's hold on it (PR-6, D107). Recording/
                                #   AdvancedSessionBuilder stores what a session's samples carried (schema 0023:
                                #   machine_profiles + session_advanced, adv.* series with NaN for a gap, D102).
   FrameLedger.Infrastructure/  # SQLite, shm reader, vendor APIs, injector interop, parsers,

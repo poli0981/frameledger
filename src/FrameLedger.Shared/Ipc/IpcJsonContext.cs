@@ -58,6 +58,8 @@ namespace FrameLedger.Shared.Ipc;
 [JsonSerializable(typeof(SweepRetentionAck))]
 [JsonSerializable(typeof(DeleteSessionsRequest))]
 [JsonSerializable(typeof(DeleteSessionsAck))]
+[JsonSerializable(typeof(GetAdvancedMachineRequest))]
+[JsonSerializable(typeof(AdvancedMachineAck))]
 public sealed partial class IpcJsonContext : JsonSerializerContext
 {
 }

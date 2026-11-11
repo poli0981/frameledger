@@ -654,6 +654,22 @@ and motherboard groups in a session with the option on. The texts that state wha
 Disclaimer 2.15 §5 and §5A (the owner's answer of 2026-11-11), the admin mode's disclosure (`agent-admin-dialog/2`),
 Settings, the first run, the guide and `LIMITATIONS.md` — and Privacy Policy 2.15 names what is read and stored.
 
+### The page's feed (built 2026-11-11, Advanced PR-6; shown by nothing yet)
+
+With no game running the Agent reads sensors **only while the page is open** (D107), and nothing tells the Agent
+that a page opened or closed:
+
+- **`GetAdvancedMachine`** (`07_IPC` §Messages) is answered by `Application.Ipc.AdvancedMachineResponder` from
+  `IAdvancedHardware.Latest` alone. The first request acquires the shared reader and each one renews a five-second
+  lease; a lease after the last request the hold is let go, and the reader closes its sources ten seconds later
+  unless a session holds it. A page that closes, an App that exits and a pipe that drops all look the same: no
+  request. With the option off the answer is `Error AdvancedOff`, and nothing is held.
+- **`App.Services.AdvancedMachineFeed`** asks once a second while a page holds `Watch()`, and keeps the facts (asked
+  for once, by their hash), **the last value of every series with the tick it was read on** — a sensor read every
+  fifth tick is "1400, as of then", never shown as new — five minutes of each series for the live charts, and the
+  sources' states. It stores nothing. Its states are the page's own words for why there is nothing to show: waiting
+  for the first read, off, no agent (a viewer never has one), an older agent.
+
 ### What belongs to what
 
 | Scope | What it is | Stored | Shown |

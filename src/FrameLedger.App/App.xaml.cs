@@ -483,6 +483,9 @@ public partial class App : System.Windows.Application
             sp.GetRequiredService<Application.Play.IGogGalaxyLocator>(),
             sp.GetRequiredService<IShellStarter>(),
             sp.GetRequiredService<IAgentRequests>()));
+        // Advanced metrics (D101/D107): "this PC, now" for its page. It asks the Agent only while a page watches it, and a
+        // viewer's link is never connected - so it says "no agent" there.
+        services.AddSingleton(static sp => new AdvancedMachineFeed(sp.GetRequiredService<IAgentRequests>(), TimeProvider.System));
         services.AddSingleton<IExecutableIdentitySource, ExecutableIdentitySource>();
         services.AddSingleton(static sp => new LibraryImporter(
             sp.GetServices<IStoreLibrarySource>(),

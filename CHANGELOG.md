@@ -93,6 +93,13 @@ numeric core and does not move; the heading is the full version — corrected 20
   a session recorded while it was off is not filled in later. NVIDIA's figures are read once a second, the sensors
   every five. **No page shows what is stored yet** — that is the next pull requests' — and none of it is in an
   export or a bug report.
+- **The App can ask the agent what this PC reads right now — and no page asks yet.** A new request,
+  `GetAdvancedMachine`, answers what the agent's shared reader last read: the PC's facts, the newest value of every
+  series, and which sources answer or why they do not. It never touches a sensor itself, so it cannot hold up the
+  pipe. Each request also keeps the reader running for five seconds, which is how "with no game running, sensors are
+  read only while the page is open" works without anything telling the agent that a page closed. With Advanced
+  metrics off it answers that it is off, and nothing is read. On the App's side `AdvancedMachineFeed` asks once a
+  second while a page watches it and keeps each value with the moment it was read.
 - **The terms window shows the Privacy Policy 2.15 and the Disclaimer 2.15 once.** The Privacy Policy names what
   Advanced metrics reads and stores, only while it is on, and what it never reads: a serial number, a display's
   identification data, a list of other programs. The Disclaimer's two sentences about PawnIO and about running the

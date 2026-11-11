@@ -6,7 +6,8 @@ using FrameLedger.Shared.Ipc;
 namespace FrameLedger.Application.Ipc;
 
 /// <summary>
-/// The read half of <c>07_IPC</c> §Messages — <c>Hello</c>, <c>GetStatus</c>, <c>Ping</c> — and the front door
+/// The read half of <c>07_IPC</c> §Messages — <c>Hello</c>, <c>GetStatus</c>, <c>Ping</c>, and
+/// <c>GetAdvancedMachine</c> where an <see cref="AdvancedMachineResponder"/> is composed — and the front door
 /// for the command half: anything else is offered to <see cref="AgentCommandHandler"/> when one is composed, and
 /// answered <c>Error UnknownType</c> otherwise.
 /// </summary>
@@ -20,18 +21,26 @@ public sealed class AgentRequestHandler : IIpcRequestHandler
     private readonly Func<string?> _telemetryDescriptor;
     private readonly Func<AgentStatus> _status;
     private readonly Func<AgentCommandHandler?> _commands;
+    private readonly AdvancedMachineResponder? _advanced;
 
     /// <summary>
     /// <c>commands</c> is a function, resolved on the first command rather than at construction: the command
     /// handler reaches the orchestrator, which reaches the recorder, whose observer publishes through the pipe
     /// server that owns this handler — a cycle a container cannot build eagerly, and one a request can walk lazily.
     /// </summary>
-    public AgentRequestHandler(AgentIdentity identity, Func<string?> telemetryDescriptor, Func<AgentStatus> status, Func<AgentCommandHandler?>? commands = null)
+    /// <param name="identity">What this Agent is, for <c>HelloAck</c>.</param>
+    /// <param name="telemetryDescriptor">The telemetry layers' descriptor, composed on demand.</param>
+    /// <param name="status">The Agent's status now.</param>
+    /// <param name="commands">The command half, resolved lazily; null answers every command <c>UnknownType</c>.</param>
+    /// <param name="advanced">Answers <c>GetAdvancedMachine</c> (D101); null — a host with no advanced reader — leaves it an unknown type.</param>
+    public AgentRequestHandler(AgentIdentity identity, Func<string?> telemetryDescriptor, Func<AgentStatus> status, Func<AgentCommandHandler?>? commands = null,
+        AdvancedMachineResponder? advanced = null)
     {
         _identity = identity ?? throw new ArgumentNullException(nameof(identity));
         _telemetryDescriptor = telemetryDescriptor ?? throw new ArgumentNullException(nameof(telemetryDescriptor));
         _status = status ?? throw new ArgumentNullException(nameof(status));
         _commands = commands ?? (static () => null);
+        _advanced = advanced;
     }
 
     public async ValueTask<byte[]> HandleAsync(IpcEnvelope request, CancellationToken ct)
@@ -45,6 +54,8 @@ public sealed class AgentRequestHandler : IIpcRequestHandler
                 return IpcCodec.Encode(IpcMessageType.StatusAck, request.Id, _status().ToAck(_commands()?.IsPaused ?? false));
             case IpcMessageType.Ping:
                 return IpcCodec.Encode(IpcMessageType.Pong, request.Id, new PongAck());
+            case IpcMessageType.GetAdvancedMachine when _advanced is not null:
+                return await _advanced.AnswerAsync(request, ct).ConfigureAwait(false);
             default:
                 AgentCommandHandler? commands = _commands();
                 byte[]? command = commands is null ? null : await commands.HandleAsync(request, ct).ConfigureAwait(false);
