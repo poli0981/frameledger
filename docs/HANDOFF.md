@@ -75,6 +75,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.33` | [`handoff/history/0.1.0-beta.33.md`](handoff/history/0.1.0-beta.33.md) |
 | `§beta.34` | [`handoff/history/0.1.0-beta.34.md`](handoff/history/0.1.0-beta.34.md) |
 | `§beta.35` | [`handoff/history/0.1.0-beta.35.md`](handoff/history/0.1.0-beta.35.md) |
+| `§beta.36` | [`handoff/history/0.1.0-beta.36.md`](handoff/history/0.1.0-beta.36.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -82,81 +83,80 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-11-10, 0.1.0-beta.36: Qodana in CI, and what its first run reported settled
+## **START HERE** — 2026-11-11, 0.1.0-beta.37: the main line on .NET 11, what an alpha is now, and why no C# 15 yet
 
-*Status is `docs/changelog/0.1.0-beta.36.md`; this is what no other file carries.* The owner: "Bạn có thể thêm vào,
-trigger Qodana vào CI/CD và sửa lỗi, release (nếu có) với mẫu mà jetbrains cung cấp, có thể tuỳ biến (nếu cần)" — add
-Qodana to CI from the workflow JetBrains gives (the Qodana Scan action on `ubuntu-latest`, `pr-mode: false`,
-`QODANA_TOKEN`), changed where needed, fix what it reports, release if there is something to release; the usual train.
-The owner had made the project on Qodana Cloud and set the `QODANA_TOKEN` secret the same day. #373 (the workflow, the
-settings, the fixes and the documents, D93) and this release; no alpha (D92 stands: alpha.4 is the move to .NET 11's
-release).
+*Status is `docs/changelog/0.1.0-beta.37.md`; this is what no other file carries.* The owner, with two screenshots — a
+Qodana Ultimate licence in the JetBrains console, and the Qodana Cloud project's setup page: "Bạn có thể bắt đầu với phiên
+cải tiến cho .net 11 và set up cho qodana cho tất cả ngôn ngữ (gói ultimate) nhé." The session D92 had left for after
+.NET 11's release (2026-11-10), and Qodana for every language on the Ultimate licence. One plan, approved whole, in
+three parts: **beta.37** (#376 the move, #379 what an alpha is, #380 .NET 11's API and the C# 15 finding, and this
+release) → **alpha.4** → **Qodana Ultimate in two reports**. This section is the first part; the other two follow it on
+`main` the same way.
 
 **Decisions (asked while planning, do not re-ask):**
 
-- **D93 — Qodana Community for .NET, from a workflow of its own.** Asked which licence the Qodana Cloud organisation
-  holds — it decides the linter — the owner answered "Dùng thử 30 ngày", a 30-day trial. So not the Rider-based linter
-  (Ultimate; the job would turn red when the trial ends) but the Community one, which runs under every licence. A gate
-  of zero problems, advisory; `docs/13_CI_CD.md` §Qodana.
+- **D94 — the main line moves to .NET 11 now.** Asked whether the betas move or only alpha.4 — with
+  `20_OPEN_QUESTIONS` §G's table quoted: two alphas on the released runtime and an owner's run of a hooked title first —
+  the owner chose "Chuyển main sang .NET 11 ngay". Condition (a) of that table was **set aside, not met**;
+  `12_BUILD` §The main line's .NET says what stood in for it, and owner-only item 34 is the run it asked for.
+- **D95 — Windows 10 22H2 is not blocked, and is stated as untested and unsupported** ("Vẫn chạy, ghi rõ không được hỗ
+  trợ"). NFR-8 is amended; a processor needs SSE4.2 and POPCNT.
+- **D96 — C# 15 in the same release** ("Áp dụng cả C# 15 ngay trong beta.37"). The plan narrowed it in writing, and was
+  approved with that: a construct only where the build, CodeQL and Qodana all read it.
+- **D97 — all three legal texts reworded** ("Sửa cả ba văn bản"): EULA 1.7, Disclaimer 2.14, Alpha notice 1.1. Their
+  text was in the plan and approved with it.
+- **D98 — alpha.4, then the alpha line rests** until a newer .NET has a preview ("alpha.4 rồi nghỉ tới .NET 12
+  Preview").
+- **The order**: beta.37 → alpha.4 first, Qodana after; and Qodana in **two reports from the start** (the third part's
+  decision, D99).
 
 **Choices made here:**
 
-- **An inspection is switched off in `.editorconfig`, never in `qodana.yaml`**: InspectCode reads its severities there
-  and so does Rider, so the job and the editor show one list, and a change to it is tested on a developer's PC without
-  CI. Sixty-three keys, each with its reason; the rule is CLAUDE.md §Coding conventions'.
-- **What Qodana reports is fixed unless the inspection argues with a choice the project made.** The suggestions
-  (ReSharper's lowest reported level) that propose another style are off as a group: the style is `.editorconfig`,
-  `dotnet format` and the analyzers.
-- **The members nothing in the solution uses were listed, not removed** (`13_CI_CD` §Qodana): whether each is
-  vocabulary, a piece not wired yet, or dead is the owner's to say (owner-only item 33).
-- **One pull request, the gate shown red first**: the settings and the gate were pushed before the fixes, so the run
-  between them (42847369329) is the gate failing on the 409 problems the settings did not cover.
-- **A release although nothing a user sees changes**: the fixes are in the shipped assemblies, so the version says
-  which code is installed; the changelog says in its first line that nothing visible moved.
-- **The XAML bindings were re-pointed, not only annotated**: `{Binding DataContext.ViewModel.X, RelativeSource
-  AncestorType=Page}` became `{Binding ViewModel.X, RelativeSource AncestorType={x:Type pages:GamesPage}}` — the same
-  object, since each page and window sets `DataContext = this` (read in the five code-behinds) — because the inspection
-  resolves a typed ancestor and not `DataContext`.
+- **No C# 15 construct is used, although the owner asked for them.** The rule decided it, not a preference:
+  ReSharper's engine, which Qodana runs, reads none of the four (`13_CI_CD` §C# 15 and the analyses, `spike-notes`
+  §29). Unions would not have been the form in any case — the SDK's own CA1815 asks every union to hand-write its
+  equality, and the shapes that wanted one are closed record hierarchies. What the release takes is API.
+- **.NET 11's `IHost.RunAsync` is accepted, not wrapped**: a failed background service now ends the Agent through its
+  crash report. A catch there would hide a fault, and could not reproduce .NET 10's exit exactly either.
+- **A resting alpha says so in the build, not only in its notes**: the anti-cheat list reaches a user only inside a
+  release, so an alpha nobody updates carries an ageing one. `FlAlphaLineRests` is stamped on both lines; the `alpha`
+  branch sets it to false when it next tries a .NET.
+- **"A prerelease .NET" is said only by a build that runs on one**, read from the runtime's own description — the next
+  preview alpha says it again with no change to the code.
+- **`release.yml` names the .NET 10 runtime `vpk` needs**, rather than relying on the hosted image carrying one.
+- **The Community Qodana job was kept alive across the move** by installing the SDK into its container — an interim;
+  the Ultimate linter replaces the job in the third part.
+- **The 2026-10-31 forms stay where they read as well** (`json.AsSpan().TrimStart().StartsWith('[')` avoids a string):
+  .NET 11's `char` overloads replaced a span only where the span was there for .NET 10's sake.
 
-**Measured on the way:** the Community linter's container builds and loads all thirteen `net10.0-windows` projects on
-Linux once `EnableWindowsTargeting` is set, though JetBrains' page sends such projects to the Ultimate linter's native
-mode; a clean worktree with no native DLLs builds with 15 warnings and no error; InspectCode 2026.2.3.1 on Windows and
-in the container agree to within a handful of findings; `.editorconfig`'s `resharper_*` keys are read in the container.
+**Measured on the way** (`spike-notes` §28 and §29): the gate on SDK 11.0.100 — two analyzer sites beyond RC3's
+twenty-one, both in tests written after the last alpha; `IHost.RunAsync` rethrowing, observed for the first time; the
+first delta across two runtime majors (372 of 443 files patched, 72.6 MB on the rehearsal); `main`'s first full CodeQL
+C# analysis on `net11.0` (1,221 of 1,221 files, the same 23 unresolved `Windows.Win32` types as on .NET 10); the
+SonarScanner 12.0.0 on the 11.0 runtime; InspectCode 2026.2.3.1 and 2026.3.0 against each C# 15 construct.
 
 **Traps met on the way:**
 
-- **InspectCode on the owner's PC picks Visual Studio 18 Insiders' MSBuild and dies** ("No files to inspect were
-  found"): pass `--toolset-path` to the .NET SDK's `MSBuild.dll` and `--dotnetcore`. And **a `--caches-home` a failed
-  run wrote leaves a project unloaded** on the next run — 2,875 false compile errors in `Infrastructure.Tests`, and
-  hundreds of false "never used" — use a fresh folder.
-- **A fix scripted from the report's positions needs the build as its judge**: a redundant tuple name's region stops
-  before its colon; two casts in one lambda (`SqliteGameMerge`) are each redundant alone and not together; a suggested
-  `m[^1]` sat in an expression tree (CS8790); `public bool On => false` on a bound row is CA1822.
-- **`dotnet format style --diagnostics IDE0008 IDE0022 --severity info`** applies `.editorconfig`'s suggestion-level
-  style, which the gate's `--verify-no-changes` (warnings and up) never asks for.
-- **`CrashDumpHelperTests.TheWriterHasTheAgentDumpThisProcessFromOutside` failed once on the hosted runner** (#373's
-  first run, two YAML files changed): "the dumper did not finish within 30 s". Green on the next runs; not looked into.
-- **SonarCloud's gate failed on #373, on one condition: coverage on new code, 77 %** — 19 of the 87 changed lines it
-  counts were old lines no test ever ran (the update prompts, `App.xaml.cs`, chart code-behind), and a line a fix
-  touches is new code. No issue, no hotspot; the job is advisory and #373 merged on its required checks. `main`'s new
-  code is "since the previous version", so its gate reads the same until the first analysis after the tag — which
-  was the release commit's own (its `sonarcloud` job started after the tag was pushed, read version 0.1.0-beta.36 and
-  passed); had the tag come later, a `workflow_dispatch` of `ci.yml` on `main` would have been that analysis.
-- **A release's delta says what the notes forgot**: read "Delta processed … patched" in the tag's log before
-  calling a release verified — 343 patched files was the runtime, which no line of the notes named.
-- **A shell `cd` in a tool call stays** for the next one: use absolute paths.
+- **A pull request's CodeQL C# run is an overlay analysis**: it extracts the changed files on top of `main`'s cached
+  database, and its "scanned N out of N" is `main`'s baseline. #376 wrote "CodeQL reads `net11.0` whole" from one and
+  was corrected, dated, two pull requests later with `main`'s own run. For anything the extractor has not met, dispatch
+  `codeql.yml` on the branch (it takes `workflow_dispatch` since #380).
+- **`ShmDrainIntegrationTests.TheGuardInjectsTheOverlayAndTheReaderDrainsRealFrames` failed once on the dev box** —
+  "our own harness must not start matching the blocklist mid-run": the guard's re-scan refused the harness in one gate
+  run of five. The class passed three times in a row straight after and no guard code had changed; not looked into.
+- **A wiki page names no version** (`wiki-check`): "since 0.1.0-alpha.4" in `wiki/Releasing.md` was red. The guide's
+  pages may.
+- **The runner queue**: with three workflows per pull request and a probe's pull request open beside the train,
+  `check` waited about 25 minutes for a runner. Cancel a probe's runs once it has told what it can.
+- **A Bash heredoc halves the backslashes** of an inline Python regex — write the script with the Write tool.
+- **`x.Should().NotBeNull(); x!.Member`**: ReSharper reads the `!` as redundant (Qodana's one finding on #376) and the
+  compiler wants it. Keep the value the assertion needs, not the object.
+- **CA2025** on a lambda that captures a `using` variable in a test: await inside a `try`, assert after.
+- **A local gate reseeds `%LOCALAPPDATA%\FrameLedger\rules`** while the owner's installed copy runs beside it: the
+  files were hashed before and after every gate (identical each time — the repository's rules were the installed ones).
 
-**The release (the tag, 2026-11-10):** `v0.1.0-beta.36` on `deaa8f3`, a rehearsal of `release.yml` first (run
-42853812423, on the release branch), the tag's run 42856948658 green; the seven digests of `SHA256SUMS.txt` are
-GitHub's; the wiki published. **The package carries the .NET runtime 10.0.15, not beta.35's 10.0.14**: the hosted
-runner installed SDK 10.0.404 that day, 10.0.403 the day before (`global.json` rolls forward within 10.0), so the delta patched 343
-of 456 files (5,756,432 bytes) where a release with these changes alone would have patched a few dozen. The notes at
-the tag did not say so; the changelog file and the release's text were corrected the same day, marked. Still open
-from it: the 10.0.15 servicing packages (`Microsoft.Extensions.Hosting`, `Microsoft.Data.Sqlite`,
-`System.Diagnostics.EventLog` are at 10.0.14) — Dependabot's cooldown holds them a week. `main` after the tag: `check`
-green, Qodana 0 problems, SonarCloud's gate OK again (its first analysis with version 0.1.0-beta.36).
-
-**Owner-only:** item 33 — Qodana's settings on the owner's side, the never-used list, and beta.36 on real hardware.
+**Owner-only:** item 34 — beta.37 on real hardware, a hooked session on .NET 11.0.0, and Windows 10 if a PC with it is
+at hand.
 
 
 ## Owner-only — no PR can close these
@@ -411,6 +411,18 @@ green, Qodana 0 problems, SonarCloud's gate OK again (its first analysis with ve
    an Ultimate licence is wanted — JetBrains has a programme for open-source projects — `13_CI_CD` §Qodana says what
    moves. (d) **`qodana` as a required check, or not**: advisory today, like `sonarcloud`. (e) **The members nothing
    uses** (`13_CI_CD` §Qodana, 34 and 49 getters): say which are dead, and a pull request removes them.
+34. **beta.37 on real hardware — the first build on .NET 11's release** (D94–D98). (a) **The update from beta.36**:
+   Help ▸ Check for updates offers beta.37 and *Restart to update* installs it — a download of about 70 MB, not a few;
+   the terms window shows the **EULA 1.7 and the Disclaimer 2.14** once and nothing else; the ledger stays at schema 22.
+   (b) **A hooked session on .NET 11.0.0**: one title you measure often, Tier 1 — frame times, the upscaler and frame
+   generation as before; the Agent's log opens with `release line main, .NET 11.0.0`, and Help ▸ About reads *Runs on
+   .NET 11.0.0*. This is the run `20_OPEN_QUESTIONS` §G's table asked for before the move and did not get (D94).
+   (c) **The Agent in admin mode and the logon task** still start it — the publish is self-contained on a new runtime.
+   (d) **Windows 10 22H2, if a PC or a VM with it is at hand**: does it install and start? No version has ever been run
+   there; D95 states it as untested, and one run would be the first evidence either way. (e) **The Japanese** of the
+   three alpha strings that changed or are new (`Alpha_Banner_Body_Format`, `Alpha_Banner_Body_Resting_Format`,
+   `About_Runtime_Alpha_Format`) and of the first-run summary's first line. (f) **Going back** — only if something is
+   wrong: install beta.36 over it; the ledger opens.
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
