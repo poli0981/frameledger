@@ -7,7 +7,9 @@ namespace FrameLedger.Shared.Safety;
 /// The version of the admin mode's disclosure this build carries (beta.10, owner decision D34) — the
 /// <c>Safety_AdminMode_*</c> strings in <c>Strings.resx</c> beside this file, shown before <c>capture.run_elevated</c> is
 /// turned on. The same discipline as <see cref="SafetyDisclosure"/>: bump it whenever a <c>Safety_AdminMode_*</c> string
-/// changes MEANING in any language.
+/// changes MEANING in any language. <c>/2</c> since 2026-11-11 (owner decision D101): with Advanced metrics on, an Agent
+/// running as administrator with PawnIO also reads the processor's, the memory's and the motherboard's sensors, and
+/// "what it adds" says so.
 /// </summary>
 /// <remarks>
 /// Nothing records an acceptance of it: the option being on is the acceptance, turning it on always shows the text, and
@@ -15,5 +17,5 @@ namespace FrameLedger.Shared.Safety;
 /// </remarks>
 public static class AgentAdminDisclosure
 {
-    public const string Version = "agent-admin-dialog/1";
+    public const string Version = "agent-admin-dialog/2";
 }

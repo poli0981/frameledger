@@ -405,6 +405,14 @@
     <value>エージェントがルール更新に応答しませんでした。</value>
     <comment>review</comment>
   </data>
+  <data name="Settings_Advanced_Body" xml:space="preserve">
+    <value>セッション中にグラフィックス ドライバーとハードウェア センサーからさらに多くを読み取り、セッションと一緒に保存します - グラフィックス カードのメモリと負荷の詳細、各ファンと電圧、ディスプレイの対応機能、ゲームに対するドライバーの設定など。オフ: 追加の読み取りも保存も行いません。次のセッションから適用され、オフの間に記録したセッションが後から補われることはありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Advanced_Label" xml:space="preserve">
+    <value>詳細メトリクス</value>
+    <comment>review</comment>
+  </data>
   <data name="Settings_Appearance_Header" xml:space="preserve">
     <value>外観</value>
     <comment>review</comment>
@@ -1982,7 +1990,7 @@
     <comment>review</comment>
   </data>
   <data name="Settings_Agent_Elevation_Body" xml:space="preserve">
-    <value>昇格はどのキャプチャティアにも必須ではありません。CPU 温度 (PawnIO 経由) と、昇格して動作するゲームへのアタッチを任意で有効にするだけです。フック・実測・記録はすべて昇格なしで動作します。</value>
+    <value>昇格はどのキャプチャティアにも必須ではありません。CPU 温度と、詳細メトリクスがオンの場合はプロセッサ・メモリ・マザーボードのセンサー (いずれも PawnIO 経由)、および昇格して動作するゲームへのアタッチを任意で有効にするだけです。フック・実測・記録はすべて昇格なしで動作します。</value>
     <comment>review</comment>
   </data>
   <data name="Settings_Agent_Elevation_Label" xml:space="preserve">
@@ -2338,7 +2346,7 @@
     <comment>review</comment>
   </data>
   <data name="FirstRun_Agent_Body" xml:space="preserve">
-    <value>FrameLedger は小さなキャプチャエージェントを標準ユーザーとして (昇格せずに) 起動します。昇格は任意で、どのキャプチャティアにも必須ではありません。CPU 温度 (PawnIO 経由) と、昇格して動作するゲームへのアタッチを有効にするだけです。以下はエージェントがこのマシンについて報告した内容です。</value>
+    <value>FrameLedger は小さなキャプチャエージェントを標準ユーザーとして (昇格せずに) 起動します。昇格は任意で、どのキャプチャティアにも必須ではありません。CPU 温度と、詳細メトリクスがオンの場合はプロセッサ・メモリ・マザーボードのセンサー (いずれも PawnIO 経由)、および昇格して動作するゲームへのアタッチを有効にするだけです。以下はエージェントがこのマシンについて報告した内容です。</value>
     <comment>review</comment>
   </data>
   <data name="FirstRun_Agent_Header" xml:space="preserve">

@@ -11,7 +11,7 @@
   that changes what FrameLedger.Overlay or the capture host does; date the change.
   HTML comments are not part of the block.
 -->
-> ⚠ **What FrameLedger actually measures today — 2026-11-06.** The software is a beta; its latest
+> ⚠ **What FrameLedger actually measures today — 2026-11-11.** The software is a beta; its latest
 > **beta is `0.1.0-beta.38`** (2026-11-11), an unsigned installer built from that tag with its
 > checksums published beside it (alphas — experimental builds that try a newer .NET — are published apart). The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
@@ -101,6 +101,13 @@
 >   Windows once a second and charted. Processor temperature is read only when the Agent runs as
 >   administrator — an option, off by default, for which Windows asks at every start of the Agent — with
 >   PawnIO installed, and that reading has not yet been checked on real hardware; everywhere else it is `N/A`.
+> - **Advanced metrics (since beta.39; off unless you switch it on in Settings):** with it on, a session also stores
+>   what the graphics driver and the sensor library report about the hardware — the graphics card's memory, load,
+>   clocks, fans, voltages and power in detail, what a display can do, the driver's settings for the game — as they
+>   report it: NVIDIA's figures once a second, the sensor library's every five seconds. None of these readings has
+>   been checked against another tool. The processor's, the memory's and the motherboard's need the Agent as
+>   administrator with PawnIO and have never been read on real hardware; a drive's temperature is not read. No
+>   screen of the App shows them yet.
 > - **Safety:** every pre-injection check runs before injection, including the signed-by-a-known-vendor
 >   half of the suspicious-module rule. During every capture the Agent re-runs the checks every 30 s and
 >   stops capturing on a refusal: a Direct3D or OpenGL game's hooks are removed, and the Vulkan layer

@@ -1027,7 +1027,7 @@ injected or layered**.
 If `OpenProcess` with the needed rights fails (protected process, higher integrity), do **not** escalate creatively. Report "cannot attach" and offer Tier-2. Never attempt to acquire privileges beyond running the Agent elevated at the user's explicit request.
 
 > **The explicit request exists since beta.10 (owner decision D34, 2026-09-27): the admin mode.** An option off by default,
-> turned on through a versioned disclosure (`Safety_AdminMode_*`, `agent-admin-dialog/1`) that states what it adds, what it
+> turned on through a versioned disclosure (`Safety_AdminMode_*`, `agent-admin-dialog/2` *(`/1` until 2026-11-11, when Advanced metrics widened what the option adds — D101)*) that states what it adds, what it
 > does not change, how Windows asks and the risk of a per-user install; then **Windows asks at every start of the Agent**
 > (`01_ARCHITECTURE` ADR-9). What it does NOT do, each held by code rather than by this paragraph:
 >

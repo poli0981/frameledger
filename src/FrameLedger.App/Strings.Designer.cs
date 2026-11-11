@@ -942,6 +942,8 @@ public static class Strings
         nameof(Sessions_GameRamWs_Cell_Format),
         nameof(Sessions_GameRamWs_Tooltip_Format),
         nameof(Sessions_GameVram_Tooltip_Format),
+        nameof(Settings_Advanced_Body),
+        nameof(Settings_Advanced_Label),
         nameof(Settings_Agent_Elevated),
         nameof(Settings_Agent_Elevation_Body),
         nameof(Settings_Agent_Elevation_Label),
@@ -3090,6 +3092,10 @@ public static class Strings
     public static string Sessions_GameRamWs_Tooltip_Format => ResourceManager.GetString(nameof(Sessions_GameRamWs_Tooltip_Format), Culture) ?? nameof(Sessions_GameRamWs_Tooltip_Format);
 
     public static string Sessions_GameVram_Tooltip_Format => ResourceManager.GetString(nameof(Sessions_GameVram_Tooltip_Format), Culture) ?? nameof(Sessions_GameVram_Tooltip_Format);
+
+    public static string Settings_Advanced_Body => ResourceManager.GetString(nameof(Settings_Advanced_Body), Culture) ?? nameof(Settings_Advanced_Body);
+
+    public static string Settings_Advanced_Label => ResourceManager.GetString(nameof(Settings_Advanced_Label), Culture) ?? nameof(Settings_Advanced_Label);
 
     public static string Settings_Agent_Elevated => ResourceManager.GetString(nameof(Settings_Agent_Elevated), Culture) ?? nameof(Settings_Agent_Elevated);
 

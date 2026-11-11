@@ -2,6 +2,7 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.Globalization;
+using FrameLedger.Application.Advanced;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Telemetry;
@@ -49,13 +50,17 @@ public sealed class SessionRecorder : ISessionRecorder
     private readonly IDriverProfileSource? _profiles;
     private readonly UserModeExceptionLapsePolicy? _exceptionLapse;
     private readonly ICrashReporterSightings? _reporters;
+    private readonly IAdvancedHardware? _advanced;
 
     public SessionRecorder(ICaptureSessionFactory sessions, IGameRepository games, IHardwareSnapshotRepository snapshots,
         IHardwareSnapshotSource hardware, IPartialSessionStore partials, SessionFinalizer finalizer, ICrashEventSource crashes,
         Func<RecorderOptions, ITelemetryPoller?> pollers, TimeProvider clock, RecorderOptions? options = null, ISessionObserver? observer = null,
         IRecorderPolicy? policy = null, IDriverProfileSource? profiles = null, UserModeExceptionLapsePolicy? exceptionLapse = null,
-        ICrashReporterSightings? reporters = null)
+        ICrashReporterSightings? reporters = null, IAdvancedHardware? advanced = null)
     {
+        // Advanced metrics (owner decision D101): the Agent's one shared reader, held by a session only when the option
+        // is on (RecorderOptions.AdvancedMetrics); null in every recorder that has none (the tests, the unshipped host).
+        _advanced = advanced;
         // beta.14: the engine crash reporters the watcher saw the game start; null where nothing watches (the tests, the console).
         _reporters = reporters;
         // D33: ends a game's user-mode exception when a session under it ends badly; null in every recorder that has no
@@ -116,6 +121,11 @@ public sealed class SessionRecorder : ISessionRecorder
         long qpcEpoch, long snapshotId, RecorderOptions options, CancellationToken ct)
     {
         ITelemetryPoller? poller = _pollers(options);
+
+        // Held for the whole session - the poller holds it too, and lets go before the finalize reads the last snapshot.
+        // With the option off nothing is held, and the shared reader is not started for this session (D101).
+        IAdvancedHardware? advanced = options.AdvancedMetrics ? _advanced : null;
+        using IDisposable? advancedHold = advanced?.Acquire();
         // The driver profile, read BESIDE the session rather than before it (beta.8): a DRS load takes tens of milliseconds
         // and a launch must not wait on it. The profile the driver applies is fixed when the process starts, so a read that
         // starts here and is awaited at the end describes the run.
@@ -138,10 +148,11 @@ public sealed class SessionRecorder : ISessionRecorder
             };
 
             using var writer = new PartialSessionWriter(_partials.Create(header), _clock, options.PartialFlushInterval);
-            var run = new Run(writer, poller, _clock, _observer, guid);
+            var run = new Run(writer, poller, _clock, _observer, guid, advanced, request.NormalisedExePath);
             writer.Note("started " + request.Mode);
             CaptureOutcome outcome = await RunLoopAsync(request, run, ct).ConfigureAwait(false);
             DateTimeOffset endedAt = _clock.GetUtcNow();
+            await run.CompleteAdvancedAsync().ConfigureAwait(false);
             run.FinalFlush();
             writer.Note("ended " + outcome.Reason);
 
@@ -207,6 +218,7 @@ public sealed class SessionRecorder : ISessionRecorder
             Skeleton = skeleton,
             Hooked = hooked ? Hooked(outcome, header.QpcFrequency) : null,
             Sensors = writer.Sensors,
+            Advanced = writer.Advanced,
             RetentionKeep = options.RetentionKeep,
             MinimumSessionLength = options.MinimumSessionLength,
             ExePath = request.NormalisedExePath,
@@ -335,11 +347,28 @@ public sealed class SessionRecorder : ISessionRecorder
     /// The recorder's ears on the loop: the flush and the telemetry drain, on the loop's task — and, after
     /// each of those, the outside observer's turn with the same tick.
     /// </summary>
-    private sealed class Run(PartialSessionWriter writer, ITelemetryPoller? poller, TimeProvider clock, ISessionObserver? observer, Guid guid) : ICaptureObserver
+    private sealed class Run(PartialSessionWriter writer, ITelemetryPoller? poller, TimeProvider clock, ISessionObserver? observer, Guid guid,
+        IAdvancedHardware? advanced, string exePath) : ICaptureObserver
     {
+        /// <summary>
+        /// How long after the game's process is known its session facts are asked for (owner decision D101): by then
+        /// it has a window, so the monitor it presents on can be found. A session shorter than the minimum is discarded
+        /// anyway; one that ends before this asks at its end.
+        /// </summary>
+        private static readonly TimeSpan _sessionFactsAfter = TimeSpan.FromSeconds(15);
+
+        /// <summary>The longest the finalize waits for a session-facts read still in flight.</summary>
+        private static readonly TimeSpan _sessionFactsWait = TimeSpan.FromSeconds(5);
+
         private readonly List<TelemetrySample> _drained = [];
         private CaptureProgress? _last;
         private ulong _adapter;
+
+        private uint? _gamePid;
+        private long _gameSince;
+        private Task? _sessionFactsRead;
+        private volatile IReadOnlyList<AdvancedFact>? _sessionFacts;
+        private (IReadOnlyList<AdvancedFact>? Machine, IReadOnlyList<AdvancedSeriesInfo>? Series, AdvancedSources? Sources, IReadOnlyList<AdvancedFact>? Session) _context;
 
         public DateTimeOffset? AttachedAt { get; private set; }
 
@@ -357,6 +386,12 @@ public sealed class SessionRecorder : ISessionRecorder
         public void Measuring(GameProcess target)
         {
             poller?.Follow(target);
+            if (advanced is not null && PidOf(target) is uint game && game != _gamePid)
+            {
+                _gamePid = game;
+                _gameSince = clock.GetTimestamp();
+            }
+
             writer.Note(target.IsNone
                 ? "memory: none"
                 : target.Pid is int pid
@@ -369,8 +404,91 @@ public sealed class SessionRecorder : ISessionRecorder
             _last = progress;
             FollowAdapter(progress.AdapterLuid);
             DrainTelemetry();
+            UpdateAdvancedContext(atEnd: false);
             writer.OnTick(progress);
             observer?.Tick(guid, progress, _drained);
+        }
+
+        /// <summary>
+        /// Before the last flush (owner decision D101): the session's facts are asked for if they were not yet, a read in
+        /// flight is given a few seconds, and the context is set once more — so a session recorded with the option on
+        /// always stores a row, if only to say that nothing answered. Does nothing with the option off.
+        /// </summary>
+        public async Task CompleteAdvancedAsync()
+        {
+            if (advanced is null)
+            {
+                return;
+            }
+
+            UpdateAdvancedContext(atEnd: true);
+            if (_sessionFactsRead is { IsCompleted: false } pending)
+            {
+                try
+                {
+                    await pending.WaitAsync(_sessionFactsWait, clock).ConfigureAwait(false);
+                }
+                catch (TimeoutException)
+                {
+                    // The driver did not answer in time: the session is stored without its facts rather than held up.
+                }
+            }
+
+            UpdateAdvancedContext(atEnd: true);
+            if (writer.Advanced is null)
+            {
+                writer.SetAdvancedContext(new AdvancedSessionData([], [], [], AdvancedSources.Unknown));
+            }
+        }
+
+        /// <summary>
+        /// Keeps the writer's advanced context current — from the shared reader's latest snapshot, which is a read of
+        /// one reference, and from the session's facts once they were read. The facts are read OFF this task: asking
+        /// the driver for a profile takes some hundred milliseconds, and this is the capture loop's.
+        /// </summary>
+        private void UpdateAdvancedContext(bool atEnd)
+        {
+            if (advanced is null)
+            {
+                return;
+            }
+
+            if (_sessionFactsRead is null && _gamePid is uint pid && (atEnd || clock.GetElapsedTime(_gameSince) >= _sessionFactsAfter))
+            {
+                var target = new AdvancedSessionTarget(pid, exePath, GdiDeviceName: null);
+                _sessionFactsRead = Task.Run(() => _sessionFacts = ReadSessionFacts(advanced, target));
+            }
+
+            AdvancedSnapshot? snapshot = advanced.Latest;
+            IReadOnlyList<AdvancedFact>? session = _sessionFacts;
+            (IReadOnlyList<AdvancedFact>?, IReadOnlyList<AdvancedSeriesInfo>?, AdvancedSources?, IReadOnlyList<AdvancedFact>?) now = (snapshot?.MachineFacts, snapshot?.Series, snapshot?.Sources, session);
+            if ((snapshot is null && session is null)
+                || (ReferenceEquals(now.Item1, _context.Machine) && ReferenceEquals(now.Item2, _context.Series) && Equals(now.Item3, _context.Sources) && ReferenceEquals(now.Item4, _context.Session)))
+            {
+                return;
+            }
+
+            _context = now;
+            writer.SetAdvancedContext(new AdvancedSessionData(snapshot?.MachineFacts ?? [], session ?? [], snapshot?.Series ?? [], snapshot?.Sources ?? AdvancedSources.Unknown));
+        }
+
+        private static IReadOnlyList<AdvancedFact> ReadSessionFacts(IAdvancedHardware advanced, AdvancedSessionTarget target)
+        {
+            try
+            {
+                return advanced.ReadSessionFacts(target);
+            }
+            catch (Exception e) when (e is not OperationCanceledException)
+            {
+                // The reader guards its sources; a throw here is a defect in it, and it costs the session its facts, not itself.
+                return [];
+            }
+        }
+
+        private static uint? PidOf(GameProcess target)
+        {
+            int? pid = target.IsNone ? null : target.Pid ?? (target.Processes.Count > 0 ? target.Processes[0].Pid : null);
+            return pid is > 0 ? (uint)pid.Value : null;
         }
 
         /// <summary>

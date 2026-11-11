@@ -63,6 +63,20 @@ are kept because they record what each version changed and why (owner decision D
 >
 > Version 2.5 (2026-09-27, 0.1.0-beta.10) adds how a tracked game's window is shown — read from Windows — and the engine build name read from an Unreal Engine game's executable. It is also the first version to say two things the software already did: it reads the **content** of a library game's executable (markers in its first 8 MB and its import table, since the detection of engines and features; and, when a session starts, the graphics-library markers in the whole file), and it reads the processor load and the memory in use (since 0.1.0-beta.3). Nothing here leaves your device, as before.
 
+### What version 2.15 of the Privacy Policy and of the Disclaimer changed (0.1.0-beta.39)
+
+**Advanced metrics** (owner decisions D101–D108; the Privacy Policy's content approved with the plan, the Disclaimer's
+two sentences by the owner's answer of 2026-11-11). Privacy Policy §1 gains one item — what a session stores **only
+while the option is on**: more sensor series of the graphics card, and of the processor, the memory and the motherboard
+when the Agent runs as administrator with PawnIO; a description of the hardware; what each display can do and what the
+game's display did; the graphics driver's settings, global and for the game — and what is never read: a serial
+number, a display's EDID, a list of other programs. §3A says an export and a bug report do not carry it. §4 names the
+same as things the software can observe, only while the option is on. The Disclaimer's §5 and §5A said PawnIO and the
+admin mode were for the CPU temperature alone; both now name the processor's, the memory's and the motherboard's
+sensors with the option on. The accuracy block gains an item that says none of these readings has been checked
+against another tool. §2 is unchanged: nothing is sent, as before. (Versions 2.12 to 2.14 of the Privacy Policy and
+2.12 to 2.14 of the Disclaimer are recorded in the changelog of the release that carried each.)
+
 ### What version 2.11 of the Privacy Policy changed (0.1.0-beta.23)
 
 A game's page shows its artwork (beta.23 PR-3, owner decisions D60/D61; the wording approved with the plan). §1 adds the

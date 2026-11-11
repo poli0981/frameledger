@@ -449,6 +449,31 @@ public sealed class SettingsViewModelTests
     }
 
     [Fact]
+    public async Task AdvancedMetricsIsOffByDefaultAndItsToggleIsPersisted()
+    {
+        // Owner decision D101 (2026-11-11): telemetry.advanced, default 0. The Agent reads it at the next session's
+        // start, so nothing here applies it at once - the row is what moves.
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        Harness h = await OpenAsync(s);
+        h.Vm.AdvancedMetrics.Should().BeFalse();
+        (await h.Settings.GetBooleanAsync(SettingsRegistry.TelemetryAdvanced, Ct)).Should().BeFalse();
+
+        h.Vm.AdvancedMetrics = true;
+        Task on = h.Vm.Pending;
+        await on;
+
+        (await h.Settings.GetBooleanAsync(SettingsRegistry.TelemetryAdvanced, Ct)).Should().BeTrue();
+        Harness reopened = await OpenAsync(s);
+        reopened.Vm.AdvancedMetrics.Should().BeTrue("the page shows what the row holds");
+
+        reopened.Vm.AdvancedMetrics = false;
+        Task off = reopened.Vm.Pending;
+        await off;
+
+        (await reopened.Settings.GetBooleanAsync(SettingsRegistry.TelemetryAdvanced, Ct)).Should().BeFalse();
+    }
+
+    [Fact]
     public async Task HidingScrollBarsIsOffByDefaultAndItsToggleIsPersistedAndAppliedAtOnce()
     {
         // beta.14 (owner request 2026-10-05): ui.hide_scrollbars, default 0; the scrollers on screen follow it at once.

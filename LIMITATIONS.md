@@ -173,6 +173,27 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
 - **CPU temperature** needs *Run the agent as administrator* and the separately installed PawnIO driver, and
   has not been verified on real hardware yet. CPU load is the time the processor was busy — not Task
   Manager's "utility" figure, which can exceed 100%. ([Telemetry](docs/18_GPU_VENDOR_APIS.md))
+- **Advanced metrics** (since 0.1.0-beta.39; Settings ▸ Recording, off by default) stores more of what the graphics
+  driver and the sensors report with each session. Its limits:
+  - **A session recorded while it was off is not filled in later**, and switching it on applies from the next session.
+  - **The driver's own figures** — the card's firmware and architecture, its memory in detail, what a display can do
+    with HDR and variable refresh, the driver's settings for the game — exist on **NVIDIA** cards only. On other cards
+    they read N/A; the card's sensors (fans, voltages, loads) are read on every brand, and none has been tested on an
+    AMD or Intel card.
+  - **The sensors are read every five seconds**, NVIDIA's figures every second; between two readings a sensor has no
+    value, and its last one is not repeated.
+  - **The processor's, the memory's and the motherboard's sensors** need *Run the agent as administrator* and the
+    separately installed PawnIO driver, and **have never been read on real hardware**. Without them they read N/A
+    with the reason.
+  - **A drive's temperature is not read at all**: the sensor library cannot list drives without touching removable
+    ones. Power supplies, fan controllers and batteries are not read either.
+  - **No serial number and no display identification data (EDID) is read**, so two PCs with the same parts look the
+    same.
+  - **None of these readings has been checked against another tool**, and they are **not in an export or a bug
+    report**.
+  - **No screen shows them yet** — the page comes with the release.
+
+  ([Telemetry](docs/18_GPU_VENDOR_APIS.md#advanced-metrics-owner-decisions-d101d108-2026-11-11))
 - **Whether the graphics card was held back by its power limit or by heat** (since 0.1.0-beta.14) is known only on
   NVIDIA cards, and only as it was at each once-a-second reading. On other cards it reads N/A.
 - **Frames per watt** (since 0.1.0-beta.14) counts the game's own frames — never generated ones — against the graphics
@@ -183,7 +204,8 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
 
 Off by default. When on, **Windows asks every time the agent starts** and names an unknown publisher, because
 FrameLedger is not signed. It lets FrameLedger open games that run as administrator and read the CPU
-temperature; it does not bypass anti-cheat, does not open protected processes, and does not make games you
+temperature — with Advanced metrics on, also the processor's, the memory's and the motherboard's sensors — where
+PawnIO is installed; it does not bypass anti-cheat, does not open protected processes, and does not make games you
 start from FrameLedger run as administrator. **The risk:** FrameLedger is installed in your user folder, so a
 program running under your account could replace its files and would then run as administrator the next time
 you accept the prompt. Turn it on only if you trust everything that runs under your account.

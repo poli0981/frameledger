@@ -84,6 +84,22 @@ numeric core and does not move; the heading is the full version — corrected 20
   was not read. One hour of them is about 0.2 MB. **A session recorded with the option off stores nothing of this**,
   and the option does not exist yet. *A 0.1.0-beta.38 cannot open a ledger a later build has migrated.*
 
+- **Settings ▸ Recording ▸ Advanced metrics — the switch exists, off by default.** On, the capture agent reads more
+  from the graphics driver and the hardware sensors during a session and stores it with the session: the graphics
+  card's memory, load, clocks, fans, voltages and power in detail, what each display can do with HDR and variable
+  refresh and what the game's display did, the driver's settings for the game — and, when the agent runs as
+  administrator with PawnIO installed, the processor per core, the memory and the motherboard's sensors. **Off,
+  nothing more is read or stored**, and the shared reader is not even started. It applies from the next session, and
+  a session recorded while it was off is not filled in later. NVIDIA's figures are read once a second, the sensors
+  every five. **No page shows what is stored yet** — that is the next pull requests' — and none of it is in an
+  export or a bug report.
+- **The terms window shows the Privacy Policy 2.15 and the Disclaimer 2.15 once.** The Privacy Policy names what
+  Advanced metrics reads and stores, only while it is on, and what it never reads: a serial number, a display's
+  identification data, a list of other programs. The Disclaimer's two sentences about PawnIO and about running the
+  agent as administrator said "the CPU temperature"; they now also name the processor's, the memory's and the
+  motherboard's sensors, read with Advanced metrics on. The same sentence changed in Settings, the first run, the
+  administrator dialog, the guide and `LIMITATIONS.md`.
+
 ### Changed
 
 - **A crash file from a newer build no longer loses its tail in an older one.** The file a session writes as it goes

@@ -112,7 +112,8 @@ src/
                                #   (one reader for the Agent, on its own thread, only while held - D107) over
                                #   NvapiAdvancedReader (the bridge's ABI 3) and LhmAdvancedReader (LhmGroups:
                                #   the card; as administrator with PawnIO the processor, memory and board -
-                               #   never storage, D103). No Agent code composes it yet. Recording/
+                               #   never storage, D103). The Agent composes it since the switch, `telemetry.advanced`
+                               #   (PR-5, 2026-11-11: off by default; on, a session holds the hub). Recording/
                                #   AdvancedSessionBuilder stores what a session's samples carried (schema 0023:
                                #   machine_profiles + session_advanced, adv.* series with NaN for a gap, D102).
   FrameLedger.Infrastructure/  # SQLite, shm reader, vendor APIs, injector interop, parsers,

@@ -3,6 +3,7 @@
 
 using System.Diagnostics;
 using FluentAssertions;
+using FrameLedger.Application.Advanced;
 using FrameLedger.Application.AntiCheat;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Consent;
@@ -303,7 +304,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
 
     private async Task<Harness> MakeAsync(bool consented = true, AntiCheatVerdict? verdict = null, int records = 3_000, FakeLiveness? liveness = null, bool poller = true,
         bool clockStepsOnDrain = false, IDriverProfileSource? profiles = null, bool excepted = false, IDisplayProbe? display = null, ulong adapterLuid = 0,
-        AntiCheatVerdict? rescan = null, ICrashReporterSightings? reporters = null)
+        AntiCheatVerdict? rescan = null, ICrashReporterSightings? reporters = null, IAdvancedHardware? advanced = null, bool advancedOn = false)
     {
         _db ??= await LedgerDatabase.OpenAsync(Path.Combine(_dir, LedgerPaths.DatabaseFileName), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         var store = new SqliteGameConsentStore(_db);
@@ -333,8 +334,8 @@ public sealed class SessionRecorderTests : IAsyncDisposable
             games, new FakeSnapshots(), new FixedHardware(), partials,
             new SessionFinalizer(sessions, new RawSeriesCodec()), new NoCrashEvents(),
             _ => fakePoller, clock,
-            new RecorderOptions { PartialFlushInterval = TimeSpan.FromSeconds(10), MinimumSessionLength = SteppingClock.Step }, profiles: profiles,
-            exceptionLapse: new UserModeExceptionLapsePolicy(store, sessions), reporters: reporters);
+            new RecorderOptions { PartialFlushInterval = TimeSpan.FromSeconds(10), MinimumSessionLength = SteppingClock.Step, AdvancedMetrics = advancedOn }, profiles: profiles,
+            exceptionLapse: new UserModeExceptionLapsePolicy(store, sessions), reporters: reporters, advanced: advanced);
         return new Harness { Recorder = recorder, Games = games, Sessions = sessions, Partials = partials, Clock = clock, Store = store, Poller = fakePoller };
     }
 
@@ -736,5 +737,117 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         SessionRow plain = without.Sessions.Stored.Single().Row;
         plain.DisplayWindowedMs.Should().BeNull("no reader, no display facts — N/A, never a zero");
         SessionDisplayColumns.DisplayOf(plain).Should().BeNull();
+    }
+
+    /// <summary>The Agent's shared advanced reader (owner decision D101), scripted: what it last read, and what it answers about a session.</summary>
+    private sealed class FakeAdvanced : IAdvancedHardware
+    {
+        private int _acquired;
+        private int _released;
+
+        public int Acquired => Volatile.Read(ref _acquired);
+
+        public int Released => Volatile.Read(ref _released);
+
+        public AdvancedSnapshot? Latest { get; set; }
+
+        public List<AdvancedSessionTarget> Asked { get; } = [];
+
+        public bool Throws { get; init; }
+
+        public IDisposable Acquire()
+        {
+            Interlocked.Increment(ref _acquired);
+            return new Hold(this);
+        }
+
+        public IReadOnlyList<AdvancedFact> ReadSessionFacts(AdvancedSessionTarget target)
+        {
+            lock (Asked)
+            {
+                Asked.Add(target);
+            }
+
+            return Throws
+                ? throw new InvalidOperationException("the driver did not answer")
+                : [new AdvancedFact("nvapi.session.vrr_enabled", Instance: null, AdvancedValue.Of(true))];
+        }
+
+        public static AdvancedSnapshot Snapshot() => new(
+            DateTimeOffset.UnixEpoch,
+            [],
+            [new AdvancedFact("nvapi.gpu.rt_cores", Instance: null, AdvancedValue.Of(84))],
+            [],
+            new AdvancedSources(AdvancedSourceStatus.Reading, NvapiCode: null, AdvancedSourceStatus.Reading, AdvancedSourceStatus.NotElevated));
+
+        private sealed class Hold(FakeAdvanced hub) : IDisposable
+        {
+            public void Dispose() => Interlocked.Increment(ref hub._released);
+        }
+    }
+
+    [Fact]
+    public async Task WithAdvancedMetricsOffTheSharedReaderIsNeverHeldAndTheSessionStoresNothingOfThem()
+    {
+        // D101: off means nothing more is read or stored - not held, not asked, no chunk, no row.
+        var hub = new FakeAdvanced { Latest = FakeAdvanced.Snapshot() };
+        Harness h = await MakeAsync(advanced: hub, advancedOn: false);
+
+        RecordedSession r = await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        hub.Acquired.Should().Be(0);
+        hub.Asked.Should().BeEmpty();
+        h.Sessions.Stored.Single().Advanced.Should().BeNull();
+        h.Partials.Created[r.Row.SessionGuid].AdvancedContexts.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task WithAdvancedMetricsOnTheSessionHoldsTheReaderAsksItsFactsOnceAndStoresItsRow()
+    {
+        var hub = new FakeAdvanced { Latest = FakeAdvanced.Snapshot() };
+        Harness h = await MakeAsync(advanced: hub, advancedOn: true);
+
+        RecordedSession r = await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        hub.Acquired.Should().Be(1);
+        hub.Released.Should().Be(1, "the session lets go when it is over, and the shared reader closes some seconds after the last holder");
+        AdvancedSessionTarget asked = hub.Asked.Should().ContainSingle("a session's facts are read once").Subject;
+        asked.ExecutablePath.Should().Be(_exe);
+        asked.ProcessId.Should().Be(_pid);
+        AdvancedSessionRow row = h.Sessions.Stored.Single().Advanced.Should().BeOfType<AdvancedSessionRow>().Subject;
+        row.MachineFactsJson.Should().Contain("nvapi.gpu.rt_cores");
+        (IReadOnlyList<AdvancedFact> facts, AdvancedSources sources) = AdvancedJson.ParseSession(row.FactsJson);
+        facts.Should().ContainSingle().Which.Id.Should().Be("nvapi.session.vrr_enabled");
+        sources.ElevatedSensors.Should().Be(AdvancedSourceStatus.NotElevated);
+        h.Partials.Created[r.Row.SessionGuid].AdvancedContexts.Should().NotBeEmpty("the crash file carries the context, so a recovered session keeps it");
+        r.Row.Tier.Should().Be(CaptureTier.Hooked, "and the session itself is what it always was");
+    }
+
+    [Fact]
+    public async Task ASessionWithTheOptionOnWhoseReaderNeverAnsweredStillStoresARowThatSaysSo()
+    {
+        // Nothing was read: no snapshot, and the facts read threw. The row is there with every source unknown, which the
+        // page shows as N/A with its reason - where no row at all would read as "the option was off".
+        var hub = new FakeAdvanced { Latest = null, Throws = true };
+        Harness h = await MakeAsync(advanced: hub, advancedOn: true);
+
+        await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        AdvancedSessionRow row = h.Sessions.Stored.Single().Advanced.Should().BeOfType<AdvancedSessionRow>().Subject;
+        row.MachineFactsJson.Should().BeNull();
+        (IReadOnlyList<AdvancedFact> facts, AdvancedSources sources) = AdvancedJson.ParseSession(row.FactsJson);
+        facts.Should().BeEmpty("a read that threw costs the session its facts, not itself");
+        sources.Should().Be(AdvancedSources.Unknown);
+        hub.Released.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task ARecorderWithNoSharedReaderRecordsAsBeforeWhateverTheOptionSays()
+    {
+        Harness h = await MakeAsync(advanced: null, advancedOn: true);
+
+        await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        h.Sessions.Stored.Single().Advanced.Should().BeNull("the unshipped host and the tests have no reader to hold");
     }
 }

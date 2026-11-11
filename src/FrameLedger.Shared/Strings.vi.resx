@@ -53,7 +53,7 @@
     <value>Capture agent bình thường chạy với quyền người dùng thường của bạn, và mọi tier ghi nhận đều hoạt động như vậy. Tuỳ chọn này yêu cầu Windows khởi động nó với quyền quản trị thay vào đó.</value>
   </data>
   <data name="Safety_AdminMode_Adds" xml:space="preserve">
-    <value>Điều nó thêm vào: FrameLedger có thể mở và đo một game tự chạy với quyền quản trị, và có thể đọc nhiệt độ CPU ở máy đã cài PawnIO.</value>
+    <value>Điều nó thêm vào: FrameLedger có thể mở và đo một game tự chạy với quyền quản trị, và, ở máy đã cài PawnIO, có thể đọc nhiệt độ CPU cùng - khi bật Thông số nâng cao - cảm biến của bộ xử lý, bộ nhớ và bo mạch.</value>
   </data>
   <data name="Safety_AdminMode_Unchanged" xml:space="preserve">
     <value>Điều nó không thay đổi: game có anti-cheat vẫn bị từ chối, và tiến trình được Windows bảo vệ vẫn không đọc được. Game Vulkan chạy với quyền quản trị vẫn không được đo, vì Windows không nạp Vulkan layer của FrameLedger vào nó. Game bạn khởi động từ FrameLedger vẫn chạy với quyền người dùng thường.</value>

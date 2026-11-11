@@ -304,6 +304,12 @@
   <data name="Rules_Update_Failed" xml:space="preserve">
     <value>Agent không phản hồi yêu cầu cập nhật quy tắc.</value>
   </data>
+  <data name="Settings_Advanced_Body" xml:space="preserve">
+    <value>Đọc thêm từ driver đồ hoạ và các cảm biến phần cứng trong lúc ghi phiên - bộ nhớ và tải của card đồ hoạ ở mức chi tiết, từng quạt và điện áp, khả năng của màn hình, thiết lập của driver cho game - và lưu cùng phiên. Tắt: không đọc và không lưu thêm gì. Áp dụng từ phiên kế tiếp; phiên đã ghi lúc tắt sẽ không được bổ sung về sau.</value>
+  </data>
+  <data name="Settings_Advanced_Label" xml:space="preserve">
+    <value>Thông số nâng cao</value>
+  </data>
   <data name="Settings_Appearance_Header" xml:space="preserve">
     <value>Giao diện</value>
   </data>
@@ -1487,7 +1493,7 @@
     <value>Đang chạy với quyền quản trị.</value>
   </data>
   <data name="Settings_Agent_Elevation_Body" xml:space="preserve">
-    <value>Không tier nào cần quyền quản trị. Nó chỉ tuỳ chọn mở khoá nhiệt độ CPU (qua PawnIO) và gắn vào game tự chạy với quyền quản trị. Mọi thứ khác — hook, đo, ghi — đều chạy không cần.</value>
+    <value>Không tier nào cần quyền quản trị. Nó chỉ tuỳ chọn mở khoá nhiệt độ CPU và, khi bật Thông số nâng cao, cảm biến của bộ xử lý, bộ nhớ và bo mạch (đều qua PawnIO), cùng việc gắn vào game tự chạy với quyền quản trị. Mọi thứ khác — hook, đo, ghi — đều chạy không cần.</value>
   </data>
   <data name="Settings_Agent_Elevation_Label" xml:space="preserve">
     <value>Quyền quản trị</value>
@@ -1754,7 +1760,7 @@
     <value>Chấp nhận</value>
   </data>
   <data name="FirstRun_Agent_Body" xml:space="preserve">
-    <value>FrameLedger khởi động một capture agent nhỏ bên cạnh nó, với quyền người dùng thường — không nâng quyền. Nâng quyền là tuỳ chọn và không tier thu thập nào yêu cầu: nó chỉ mở khoá nhiệt độ CPU (qua PawnIO) và gắn vào game tự chạy với quyền quản trị. Bên dưới là những gì agent báo cáo về máy này.</value>
+    <value>FrameLedger khởi động một capture agent nhỏ bên cạnh nó, với quyền người dùng thường — không nâng quyền. Nâng quyền là tuỳ chọn và không tier thu thập nào yêu cầu: nó chỉ mở khoá nhiệt độ CPU và, khi bật Thông số nâng cao, cảm biến của bộ xử lý, bộ nhớ và bo mạch (đều qua PawnIO), cùng việc gắn vào game tự chạy với quyền quản trị. Bên dưới là những gì agent báo cáo về máy này.</value>
   </data>
   <data name="FirstRun_Agent_Header" xml:space="preserve">
     <value>Capture agent</value>

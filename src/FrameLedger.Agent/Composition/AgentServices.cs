@@ -2,6 +2,7 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using FrameLedger.Agent.Hosting;
+using FrameLedger.Application.Advanced;
 using FrameLedger.Application.AntiCheat;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Consent;
@@ -120,6 +121,15 @@ internal static class AgentServices
         services.AddSingleton<ISeriesCodec, DeflateSeriesCodec>();
         services.AddSingleton<SessionFinalizer>();
         services.AddSingleton(static sp => new PartialRecovery(sp.GetRequiredService<IPartialSessionStore>(), sp.GetRequiredService<SessionFinalizer>()));
+        // Advanced metrics (owner decisions D101 and D107): ONE reader for the whole Agent, on a thread of its own, that
+        // runs only while a session recorded with the option on - or the App's page - holds it, and closes ten seconds
+        // after the last lets go. Constructing it opens nothing; a PC idling with the Agent in the tray reads no sensor
+        // for this. The container disposes it with the host.
+        services.AddSingleton<IAdvancedHardware>(static _ => new AdvancedHardwareHub(
+            static () => AdvancedHardwareReader.OverThisPc(TimeProvider.System, static line => Serilog.Log.Information("{Line}", line)),
+            interval: TimeSpan.FromSeconds(1),
+            linger: TimeSpan.FromSeconds(10),
+            static line => Serilog.Log.Information("{Line}", line)));
         services.AddSingleton<AgentRecording>();
     }
 

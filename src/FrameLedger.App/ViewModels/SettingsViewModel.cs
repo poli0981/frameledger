@@ -80,6 +80,13 @@ public sealed partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _removeUninstalledGames;
 
+    /// <summary>
+    /// "Advanced metrics" (owner decision D101, <c>telemetry.advanced</c>, off by default): the Agent reads more from the
+    /// graphics driver and the sensors during a session and stores it; off, nothing more is read or stored.
+    /// </summary>
+    [ObservableProperty]
+    private bool _advancedMetrics;
+
     [ObservableProperty]
     private int _minSessionSeconds;
 
@@ -425,6 +432,8 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     partial void OnRemoveUninstalledGamesChanged(bool value) => Persist(SettingsRegistry.RetentionRemoveUninstalledGames, value);
 
+    partial void OnAdvancedMetricsChanged(bool value) => Persist(SettingsRegistry.TelemetryAdvanced, value);
+
     partial void OnHideAntiCheatHookingChanged(bool value) => Persist(SettingsRegistry.UiHideAntiCheatHooking, value);
 
     /// <summary>D33: the option is one settings row the Agent reads at every session start and command; the list follows it.</summary>
@@ -580,6 +589,7 @@ public sealed partial class SettingsViewModel : ObservableObject
             TelemetryIntervalMs = await _settings.GetIntegerAsync(SettingsRegistry.TelemetryIntervalMs).ConfigureAwait(true);
             RetentionRawSessions = await _settings.GetIntegerAsync(SettingsRegistry.RetentionRawSessionsPerGame).ConfigureAwait(true);
             RemoveUninstalledGames = await _settings.GetBooleanAsync(SettingsRegistry.RetentionRemoveUninstalledGames).ConfigureAwait(true);
+            AdvancedMetrics = await _settings.GetBooleanAsync(SettingsRegistry.TelemetryAdvanced).ConfigureAwait(true);
             MinimizeToTray = await _settings.GetBooleanAsync(SettingsRegistry.UiMinimizeToTray).ConfigureAwait(true);
             HideAntiCheatHooking = await _settings.GetBooleanAsync(SettingsRegistry.UiHideAntiCheatHooking).ConfigureAwait(true);
             UserModeExceptions = await _settings.GetBooleanAsync(SettingsRegistry.HookingUserModeExceptions).ConfigureAwait(true);
