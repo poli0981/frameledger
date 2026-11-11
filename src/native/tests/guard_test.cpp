@@ -6751,6 +6751,9 @@ TEST_CASE("region 5 stays empty until the Agent asks, then carries what an FSR t
 
     MappedRing r;
     REQUIRE(OpenRingFor(child.pi.dwProcessId, r));
+    if (r.st == nullptr || r.ctl == nullptr) {
+        return;    // not reached after the REQUIRE; said in the form a static analyser follows (cpp:S2259)
+    }
     REQUIRE(WaitForIdentityHook(r.st));
     REQUIRE(WaitForHookFamily(r.st, static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY)));    // ffxQuery is hooked
 
@@ -6840,6 +6843,9 @@ TEST_CASE("region 5 carries the DLSS options a title chains into its evaluation,
 
     MappedRing r;
     REQUIRE(OpenRingFor(child.pi.dwProcessId, r));
+    if (r.st == nullptr || r.ctl == nullptr) {
+        return;    // not reached after the REQUIRE; said in the form a static analyser follows (cpp:S2259)
+    }
     REQUIRE(WaitForIdentityHook(r.st));
 
     // Not asked: the evaluation is hooked, the options are chained into every one, and none of it is kept.

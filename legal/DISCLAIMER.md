@@ -217,6 +217,12 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 >   been checked against another tool. The processor's, the memory's and the motherboard's need the Agent as
 >   administrator with PawnIO and have never been read on real hardware; a drive's temperature is not read. The
 >   Advanced page shows them as they were stored, and what the PC reads at the moment only while that page is open.
+> - **What a game tells its upscaler (since beta.40; only with Advanced metrics on, only for a game measured from
+>   inside):** the output size, presets and exposure a game hands DLSS, and the sharpening, jitter, exposure, depth
+>   range, field-of-view range, flags and frame time it hands FSR, are read from the arguments of the calls
+>   FrameLedger intercepts and shown as the game stated them — not checked against what the upscaler did. Most games
+>   set their DLSS options through a call that cannot be intercepted and show none; the FSR values need FSR 3.1 or
+>   later through AMD's own library. None of it has been read from a real game yet.
 > - **Safety:** every pre-injection check runs before injection, including the signed-by-a-known-vendor
 >   half of the suspicious-module rule. During every capture the Agent re-runs the checks every 30 s and
 >   stops capturing on a refusal: a Direct3D or OpenGL game's hooks are removed, and the Vulkan layer

@@ -370,6 +370,16 @@ public sealed class SessionRecorder : ISessionRecorder
         private volatile IReadOnlyList<AdvancedFact>? _sessionFacts;
         private (IReadOnlyList<AdvancedFact>? Machine, IReadOnlyList<AdvancedSeriesInfo>? Series, AdvancedSources? Sources, IReadOnlyList<AdvancedFact>? Session) _context;
 
+        // What the game told its upscaler (train B): read inside the game by the Overlay, only for a session that
+        // records Advanced metrics - the same condition the shared reader is held under.
+        private readonly InGameAdvancedSampler? _inGame = advanced is null ? null : new InGameAdvancedSampler();
+        private IReadOnlyList<AdvancedReading>? _inGamePending;
+        private (IReadOnlyList<AdvancedFact> Facts, AdvancedInGameStatus Status) _inGameContext = ([], AdvancedInGameStatus.Unknown);
+        private IReadOnlyList<AdvancedFact> _sessionWithGame = [];
+
+        /// <summary>A session that records Advanced metrics asks the Overlay for what the game tells its upscaler (D111).</summary>
+        public bool WantsInGameAdvanced => advanced is not null;
+
         public DateTimeOffset? AttachedAt { get; private set; }
 
         public void Attached(int pid, FlShmHandshake handshake)
@@ -403,6 +413,12 @@ public sealed class SessionRecorder : ISessionRecorder
         {
             _last = progress;
             FollowAdapter(progress.AdapterLuid);
+            if (_inGame?.Take(progress.InGameAdvanced) is { } fresh)
+            {
+                // The newest stands until a telemetry sample carries it: both arrive once a second, out of step.
+                _inGamePending = fresh;
+            }
+
             DrainTelemetry();
             UpdateAdvancedContext(atEnd: false);
             writer.OnTick(progress);
@@ -437,7 +453,7 @@ public sealed class SessionRecorder : ISessionRecorder
             UpdateAdvancedContext(atEnd: true);
             if (writer.Advanced is null)
             {
-                writer.SetAdvancedContext(new AdvancedSessionData([], [], [], AdvancedSources.Unknown));
+                writer.SetAdvancedContext(new AdvancedSessionData([], [], [], AdvancedSources.Unknown with { InGame = InGameStatus() }));
             }
         }
 
@@ -461,16 +477,36 @@ public sealed class SessionRecorder : ISessionRecorder
 
             AdvancedSnapshot? snapshot = advanced.Latest;
             IReadOnlyList<AdvancedFact>? session = _sessionFacts;
+            IReadOnlyList<AdvancedFact> game = _inGame?.Facts ?? [];
+            AdvancedInGameStatus status = InGameStatus();
             (IReadOnlyList<AdvancedFact>?, IReadOnlyList<AdvancedSeriesInfo>?, AdvancedSources?, IReadOnlyList<AdvancedFact>?) now = (snapshot?.MachineFacts, snapshot?.Series, snapshot?.Sources, session);
-            if ((snapshot is null && session is null)
-                || (ReferenceEquals(now.Item1, _context.Machine) && ReferenceEquals(now.Item2, _context.Series) && Equals(now.Item3, _context.Sources) && ReferenceEquals(now.Item4, _context.Session)))
+            bool sameGame = ReferenceEquals(game, _inGameContext.Facts) && status == _inGameContext.Status;
+            if ((snapshot is null && session is null && game.Count == 0)
+                || (sameGame && ReferenceEquals(now.Item1, _context.Machine) && ReferenceEquals(now.Item2, _context.Series) && Equals(now.Item3, _context.Sources) && ReferenceEquals(now.Item4, _context.Session)))
             {
                 return;
             }
 
+            if (!ReferenceEquals(now.Item4, _context.Session) || !ReferenceEquals(game, _inGameContext.Facts))
+            {
+                // The driver's facts of the session, then what the game said: one list, rebuilt when either moved.
+                _sessionWithGame = game.Count == 0 ? session ?? [] : [.. session ?? [], .. game];
+            }
+
             _context = now;
-            writer.SetAdvancedContext(new AdvancedSessionData(snapshot?.MachineFacts ?? [], session ?? [], snapshot?.Series ?? [], snapshot?.Sources ?? AdvancedSources.Unknown));
+            _inGameContext = (game, status);
+            writer.SetAdvancedContext(new AdvancedSessionData(
+                snapshot?.MachineFacts ?? [],
+                _sessionWithGame,
+                snapshot?.Series ?? [],
+                (snapshot?.Sources ?? AdvancedSources.Unknown) with { InGame = status }));
         }
+
+        /// <summary>
+        /// What the row says of the entries read inside the game: read, measured inside the game with none of their
+        /// calls seen, or not measured inside the game at all.
+        /// </summary>
+        private AdvancedInGameStatus InGameStatus() => _inGame?.Status(hooked: AttachedAt is not null) ?? AdvancedInGameStatus.Unknown;
 
         private static IReadOnlyList<AdvancedFact> ReadSessionFacts(IAdvancedHardware advanced, AdvancedSessionTarget target)
         {
@@ -526,6 +562,15 @@ public sealed class SessionRecorder : ISessionRecorder
 
             _drained.Clear();
             poller.Drain(_drained);
+            if (_inGamePending is { } pending && _drained.Count > 0)
+            {
+                // What the game said rides the newest sample of this drain, beside whatever the Agent's own reader
+                // gave it: one tick, one set of readings.
+                TelemetrySample newest = _drained[^1];
+                _drained[^1] = newest with { Advanced = newest.Advanced is { Count: > 0 } own ? [.. own, .. pending] : pending };
+                _inGamePending = null;
+            }
+
             writer.AddSensors(_drained);
         }
     }

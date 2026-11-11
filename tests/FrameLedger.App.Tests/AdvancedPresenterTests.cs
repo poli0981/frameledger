@@ -6,6 +6,7 @@ using FluentAssertions;
 using FrameLedger.App.Charts;
 using FrameLedger.App.ViewModels;
 using FrameLedger.Application.Advanced;
+using FrameLedger.Application.Capture;
 using FrameLedger.Application.Recording;
 
 namespace FrameLedger.App.Tests;
@@ -50,6 +51,20 @@ public sealed class AdvancedPresenterTests
         }
 
         foreach (string token in Infrastructure.Telemetry.NvapiAdvancedTokens.All)
+        {
+            Need("AdvToken_" + token);
+        }
+
+        // Train B: what a session says of the entries read inside the game, and the words its facts carry.
+        Need("AdvReach_" + AdvancedReach.Game);
+        Need(nameof(Strings.Advanced_Status_InGame));
+        Need(nameof(Strings.Advanced_InGameLine));
+        foreach (AdvancedInGameStatus status in Enum.GetValues<AdvancedInGameStatus>())
+        {
+            Need("AdvInGame_" + status);
+        }
+
+        foreach (string token in InGameAdvancedSampler.Tokens)
         {
             Need("AdvToken_" + token);
         }
@@ -216,7 +231,54 @@ public sealed class AdvancedPresenterTests
         At(live, "nvapi.gpu.board_serial").Should().Be(new AdvancedSourceRow(
             Label("nvapi.gpu.board_serial"), AdvancedLabels.Scope(AdvancedScope.MachineFact), "NVAPI", AdvancedLabels.Reach(AdvancedReach.Identifier), IsRead: false));
         At(live, "sl.constants.camera").Status.Should().Be(AdvancedLabels.Reach(AdvancedReach.PlayerState));
+
+        // Train B: read inside a game being measured, when the game makes the call - which is not a state of this PC,
+        // so the row says the same with the page live and with nobody asking.
+        foreach (string id in new[] { "sl.dlss.presets", "ffx.upscale.depth", "ffx.memory_usage" })
+        {
+            At(unknown, id).Should().Be(new AdvancedSourceRow(
+                Label(id), AdvancedLabels.Scope(AdvancedMetricCatalog.Find(id)!.Scope), AdvancedLabels.Source(AdvancedMetricCatalog.Find(id)!.Source), Strings.Advanced_Status_InGame, IsRead: true));
+            At(live, id).Status.Should().Be(Strings.Advanced_Status_InGame);
+        }
+
+        At(live, "ffx.framegen.config").Status.Should().Be(AdvancedLabels.Reach(AdvancedReach.NewHook), "a hook that is not built is still a later release");
         live.Where(static r => r.IsRead).Should().HaveCount(AdvancedMetricCatalog.All.Count(static m => m.IsRead));
+    }
+
+    [Fact]
+    public void WhatTheGameToldItsUpscalerIsShownInTheVendorsWordsWithTheSwitchTranslated()
+    {
+        AdvancedFact[] said =
+        [
+            new("sl.dlss.presets", Instance: null, AdvancedValue.OfRows([new AdvancedRow("DLAA", "K"), new AdvancedRow("Quality", "Default")])),
+            new("sl.dlss.hdr_input", Instance: null, AdvancedValue.Of(false)),
+            new("ffx.upscale.sharpening", Instance: null, AdvancedValue.OfRows([new AdvancedRow("enableSharpening", "on", "on"), new AdvancedRow("sharpness", "0.35")])),
+            new("ffx.upscale.flags", Instance: null, AdvancedValue.OfTokens("non_linear_color_pq", "bit_5")),
+        ];
+
+        AdvancedFactGroup group = AdvancedPresenter.Groups(said).Should().ContainSingle("all four stand under Upscaling").Subject;
+
+        group.Title.Should().Be(AdvancedLabels.Group(AdvancedGroup.Upscaling));
+        group.Rows.Select(static r => r.Label).Should().Equal(Label("sl.dlss.presets"), Label("sl.dlss.hdr_input"), Label("ffx.upscale.sharpening"), Label("ffx.upscale.flags"));
+        group.Rows[0].Details.Should().Equal(new AdvancedDetailRow("DLAA", "K"), new AdvancedDetailRow("Quality", "Default"));
+        group.Rows[1].Value.Should().Be(Strings.Common_No);
+        group.Rows[2].Details.Should().Equal(new AdvancedDetailRow("enableSharpening", Strings.AdvToken_on), new AdvancedDetailRow("sharpness", "0.35"));
+        group.Rows[3].Value.Should().Be(Strings.AdvToken_non_linear_color_pq + ", bit_5", "a flag nobody named is shown as it is");
+    }
+
+    [Fact]
+    public void ASessionsSourcesLineSaysWhatBecameOfTheInGameEntriesAndAnOlderRowsDoesNot()
+    {
+        string before = AdvancedPresenter.SourcesLine(AdvancedFixtures.Sources);
+        before.Should().NotContain(AdvancedLabels.InGame(AdvancedInGameStatus.NothingSeen)).And.NotContain(AdvancedLabels.InGame(AdvancedInGameStatus.Reading));
+
+        foreach (AdvancedInGameStatus status in new[] { AdvancedInGameStatus.Reading, AdvancedInGameStatus.NothingSeen, AdvancedInGameStatus.NotHooked })
+        {
+            string line = AdvancedPresenter.SourcesLine(AdvancedFixtures.Sources with { InGame = status });
+
+            line.Should().StartWith(before, "the three sources are said as before");
+            line.Should().EndWith(string.Format(CultureInfo.CurrentCulture, Strings.Advanced_InGameLine, AdvancedLabels.InGame(status)));
+        }
     }
 
     [Fact]

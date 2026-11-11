@@ -47,6 +47,9 @@ public static class AdvancedLabels
 
     public static string Status(AdvancedSourceStatus status) => Lookup("AdvSource_" + status) ?? status.ToString();
 
+    /// <summary>What became, in one session, of the entries read inside the game (0.1.0-beta.40).</summary>
+    public static string InGame(AdvancedInGameStatus status) => Lookup("AdvInGame_" + status) ?? status.ToString();
+
     /// <summary>A token the driver's answer was mapped to; the token itself where this build has no word for it.</summary>
     public static string Token(string token) => Lookup("AdvToken_" + token) ?? token;
 

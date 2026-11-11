@@ -32,4 +32,11 @@ public interface ICaptureObserver
     void Measuring(GameProcess target)
     {
     }
+
+    /// <summary>
+    /// Whether this session records Advanced metrics, and so asks the Overlay to read what the game tells its
+    /// upscaler (train B, owner decision D111). Asked once, as the ring is attached; false for every observer that
+    /// does not say otherwise - and then the Overlay reads and hooks exactly what it did before the option existed.
+    /// </summary>
+    bool WantsInGameAdvanced => false;
 }

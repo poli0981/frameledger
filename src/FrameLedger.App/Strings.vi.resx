@@ -35,7 +35,7 @@
     <value>Bộ nhớ video của riêng FSR, khi game hỏi</value>
   </data>
   <data name="Adv_ffx_upscale_depth" xml:space="preserve">
-    <value>Mặt phẳng gần, xa và góc nhìn đưa cho FSR</value>
+    <value>Mặt phẳng gần, xa và khoảng góc nhìn đưa cho FSR</value>
   </data>
   <data name="Adv_ffx_upscale_exposure" xml:space="preserve">
     <value>Tiền phơi sáng đưa cho FSR</value>
@@ -47,7 +47,7 @@
     <value>Thời gian khung hình game báo cho FSR</value>
   </data>
   <data name="Adv_ffx_upscale_jitter" xml:space="preserve">
-    <value>Độ lệch jitter game đưa cho FSR</value>
+    <value>Độ lệch jitter lớn nhất game đưa cho FSR</value>
   </data>
   <data name="Adv_ffx_upscale_sharpening" xml:space="preserve">
     <value>Làm nét của FSR: bật hay tắt, và cường độ</value>
@@ -490,6 +490,9 @@
   <data name="Advanced_Header" xml:space="preserve">
     <value>Thông số nâng cao</value>
   </data>
+  <data name="Advanced_InGameLine" xml:space="preserve">
+    <value>Bên trong game: {0}.</value>
+  </data>
   <data name="Advanced_Machine_Intro" xml:space="preserve">
     <value>Những gì driver đồ hoạ và các cảm biến phần cứng cho biết về máy này lúc này. Chỉ được đọc khi trang này đang mở hoặc đang ghi một game, và những gì hiện ở đây không được lưu.</value>
   </data>
@@ -547,6 +550,9 @@
   <data name="Advanced_State_Waiting" xml:space="preserve">
     <value>Capture agent đang mở các nguồn đọc…</value>
   </data>
+  <data name="Advanced_Status_InGame" xml:space="preserve">
+    <value>Được đọc bên trong game mà FrameLedger đo, khi game thực hiện lời gọi đó</value>
+  </data>
   <data name="Advanced_Status_Read" xml:space="preserve">
     <value>Đang đọc</value>
   </data>
@@ -598,8 +604,23 @@
   <data name="AdvGroup_Upscaling" xml:space="preserve">
     <value>Nâng cấp hình ảnh</value>
   </data>
+  <data name="AdvInGame_NotHooked" xml:space="preserve">
+    <value>phiên này không được đo bên trong game</value>
+  </data>
+  <data name="AdvInGame_NothingSeen" xml:space="preserve">
+    <value>game không thực hiện lời gọi nào để đọc các mục này</value>
+  </data>
+  <data name="AdvInGame_Reading" xml:space="preserve">
+    <value>đã đọc từ chính các lời gọi của game</value>
+  </data>
+  <data name="AdvInGame_Unknown" xml:space="preserve">
+    <value>không rõ</value>
+  </data>
   <data name="AdvReach_Deferred" xml:space="preserve">
     <value>Không đọc trong bản phát hành này</value>
+  </data>
+  <data name="AdvReach_Game" xml:space="preserve">
+    <value>Bên trong game mà FrameLedger đo</value>
   </data>
   <data name="AdvReach_HookedCall" xml:space="preserve">
     <value>Bên trong game - sẽ có ở bản phát hành sau</value>
@@ -676,6 +697,9 @@
   <data name="AdvToken_driver_default" xml:space="preserve">
     <value>Mặc định của driver</value>
   </data>
+  <data name="AdvToken_draw_debug_view" xml:space="preserve">
+    <value>Chế độ xem gỡ lỗi</value>
+  </data>
   <data name="AdvToken_edr" xml:space="preserve">
     <value>EDR</value>
   </data>
@@ -706,11 +730,29 @@
   <data name="AdvToken_no_profile_for_game" xml:space="preserve">
     <value>Driver không có profile cho game này</value>
   </data>
+  <data name="AdvToken_non_linear_color_pq" xml:space="preserve">
+    <value>Màu phi tuyến, PQ</value>
+  </data>
+  <data name="AdvToken_non_linear_color_srgb" xml:space="preserve">
+    <value>Màu phi tuyến, sRGB</value>
+  </data>
+  <data name="AdvToken_none" xml:space="preserve">
+    <value>Không có</value>
+  </data>
   <data name="AdvToken_not_a_number" xml:space="preserve">
     <value>Không phải số</value>
   </data>
   <data name="AdvToken_not_supported" xml:space="preserve">
     <value>Không hỗ trợ</value>
+  </data>
+  <data name="AdvToken_off" xml:space="preserve">
+    <value>Tắt</value>
+  </data>
+  <data name="AdvToken_on" xml:space="preserve">
+    <value>Bật</value>
+  </data>
+  <data name="AdvToken_on_and_off" xml:space="preserve">
+    <value>Lúc bật, lúc tắt</value>
   </data>
   <data name="AdvToken_pci" xml:space="preserve">
     <value>PCI</value>
@@ -1037,7 +1079,7 @@
     <value>Agent không phản hồi yêu cầu cập nhật quy tắc.</value>
   </data>
   <data name="Settings_Advanced_Body" xml:space="preserve">
-    <value>Đọc thêm từ driver đồ hoạ và các cảm biến phần cứng trong lúc ghi phiên - bộ nhớ và tải của card đồ hoạ ở mức chi tiết, từng quạt và điện áp, khả năng của màn hình, thiết lập của driver cho game - và lưu cùng phiên. Tắt: không đọc và không lưu thêm gì. Áp dụng từ phiên kế tiếp; phiên đã ghi lúc tắt sẽ không được bổ sung về sau.</value>
+    <value>Đọc thêm từ driver đồ hoạ và các cảm biến phần cứng trong lúc ghi phiên - bộ nhớ và tải của card đồ hoạ ở mức chi tiết, từng quạt và điện áp, khả năng của màn hình, thiết lập của driver cho game - và, với game mà FrameLedger đo từ bên trong, những gì game đưa cho DLSS và FSR (kích thước, preset, làm nét, phơi sáng - không bao giờ là vị trí camera). Tất cả được lưu cùng phiên. Tắt: không đọc và không lưu thêm gì, kể cả bên trong game. Áp dụng từ phiên kế tiếp; phiên đã ghi lúc tắt sẽ không được bổ sung về sau.</value>
   </data>
   <data name="Settings_Advanced_Label" xml:space="preserve">
     <value>Thông số nâng cao</value>

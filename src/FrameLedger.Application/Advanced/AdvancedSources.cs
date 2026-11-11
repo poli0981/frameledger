@@ -16,6 +16,12 @@ public sealed record AdvancedSources(
     AdvancedSourceStatus Sensors,
     AdvancedSourceStatus ElevatedSensors)
 {
+    /// <summary>
+    /// What became of the entries read inside the game in the session this describes (0.1.0-beta.40); null where
+    /// that is not a question — the machine's live state — and in every row stored before it existed.
+    /// </summary>
+    public AdvancedInGameStatus? InGame { get; init; }
+
     /// <summary>Nothing asked yet.</summary>
     public static AdvancedSources Unknown { get; } = new(AdvancedSourceStatus.Unknown, NvapiCode: null, AdvancedSourceStatus.Unknown, AdvancedSourceStatus.Unknown);
 }

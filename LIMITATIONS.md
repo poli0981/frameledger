@@ -176,6 +176,13 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
 - **Advanced metrics** (since 0.1.0-beta.39; Settings ▸ Recording, off by default) stores more of what the graphics
   driver and the sensors report with each session. Its limits:
   - **A session recorded while it was off is not filled in later**, and switching it on applies from the next session.
+  - **What a game tells DLSS and FSR** (since 0.1.0-beta.40) is kept only for a game FrameLedger measures from
+    inside, and only where the game hands it over in a call FrameLedger intercepts. **Most games set their DLSS
+    options through a call it cannot see and show nothing**; the FSR rows need FSR 3.1 or later through AMD's own
+    library. The session says which it was — nothing seen, or not measured inside the game — and neither means the
+    game uses no upscaler. They are the game's words, not a check of what the upscaler did; the field of view is a
+    lowest and highest value, never a line over time; FSR's memory is a point where the game asked, so most sessions
+    have none. **None of it has been read from a real game yet.**
   - **The driver's own figures** — the card's firmware and architecture, its memory in detail, what a display can do
     with HDR and variable refresh, the driver's settings for the game — exist on **NVIDIA** cards only. On other cards
     they read N/A; the card's sensors (fans, voltages, loads) are read on every brand, and none has been tested on an

@@ -45,4 +45,10 @@ public enum AdvancedReach
 
     /// <summary>The vendor's public headers do not declare it.</summary>
     NotInHeaders = 11,
+
+    /// <summary>
+    /// Read inside a game FrameLedger measures, from the arguments of a call the Overlay hooks, while the session
+    /// records Advanced metrics (train B, owner decision D111) — and only when the game makes that call.
+    /// </summary>
+    Game = 12,
 }

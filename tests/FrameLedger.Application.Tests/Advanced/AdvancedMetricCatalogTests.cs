@@ -84,10 +84,10 @@ public sealed partial class AdvancedMetricCatalogTests
     }
 
     [Fact]
-    public void OnlyWhatTheAgentReadsCountsAsRead()
+    public void OnlyWhatTheAgentOrTheOverlayReadsCountsAsRead()
     {
-        _all.Where(static m => m.IsRead).Should().OnlyContain(static m => m.Reach == AdvancedReach.Agent || m.Reach == AdvancedReach.AgentElevated);
-        _all.Where(static m => !m.IsRead).Should().NotContain(static m => m.Reach == AdvancedReach.Agent || m.Reach == AdvancedReach.AgentElevated);
+        _all.Where(static m => m.IsRead).Should().OnlyContain(static m => m.Reach == AdvancedReach.Agent || m.Reach == AdvancedReach.AgentElevated || m.Reach == AdvancedReach.Game);
+        _all.Where(static m => !m.IsRead).Should().NotContain(static m => m.Reach == AdvancedReach.Agent || m.Reach == AdvancedReach.AgentElevated || m.Reach == AdvancedReach.Game);
         _all.Should().Contain(static m => m.IsRead);
         _all.Should().Contain(static m => !m.IsRead);
     }
@@ -102,11 +102,23 @@ public sealed partial class AdvancedMetricCatalogTests
     }
 
     [Fact]
-    public void WhatIsReadInsideAGameIsNeverReadByThisBuild()
+    public void WhatIsReadInsideAGameIsWhatTheOverlayOfThisBuildReadsAndNothingMore()
     {
-        // Train A changes nothing in code loaded into a game: Streamline and FidelityFX entries are named, not read.
+        // Train B, 0.1.0-beta.40: thirteen entries, each a member of a call the Overlay already hooked - and each
+        // matched by a name on tools/overlay-allowed-fields.txt, which a build gate holds to the Overlay's own code.
+        // Everything else of Streamline and FidelityFX is still named, not read; NGX and XeSS are never read.
+        string[] inGame = [.. _all.Where(static m => m.Reach == AdvancedReach.Game).Select(static m => m.Id)];
+        inGame.Should().Equal(
+            "sl.dlss.output_size", "sl.dlss.presets", "sl.dlss.hdr_input", "sl.dlss.auto_exposure", "sl.dlss.alpha_upscaling", "sl.dlss.exposure",
+            "ffx.upscale.sharpening", "ffx.upscale.jitter", "ffx.upscale.exposure", "ffx.upscale.depth", "ffx.upscale.flags",
+            "ffx.upscale.frame_time_delta", "ffx.memory_usage");
+
+        _all.Where(static m => m.Reach == AdvancedReach.Game).Should().OnlyContain(static m => m.Source == AdvancedSource.Streamline || m.Source == AdvancedSource.FidelityFx);
+        _all.Where(static m => m.Reach == AdvancedReach.Game).Should().OnlyContain(static m => m.Scope != AdvancedScope.MachineFact, "what a game says is of a session, never of the PC");
         _all.Where(static m => m.Source is AdvancedSource.Streamline or AdvancedSource.FidelityFx or AdvancedSource.Ngx or AdvancedSource.Xess)
+            .Where(static m => m.Reach != AdvancedReach.Game)
             .Should().OnlyContain(static m => !m.IsRead);
+        _all.Where(static m => m.Source is AdvancedSource.Ngx or AdvancedSource.Xess).Should().OnlyContain(static m => !m.IsRead);
     }
 
     [Theory]

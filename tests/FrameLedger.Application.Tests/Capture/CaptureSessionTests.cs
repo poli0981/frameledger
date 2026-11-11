@@ -188,6 +188,20 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         {
         }
 
+        /// <summary>Region 5 as the Overlay would publish it for this session's request (train B); null until it did.</summary>
+        public FlAdvancedState? Advanced { get; set; }
+
+        public FlAdvancedState? AdvancedState => Advanced;
+
+        /// <summary>Every word the loop wrote for <c>advancedRequested</c>, in order.</summary>
+        public List<bool> AdvancedRequests { get; } = [];
+
+        public void SetAdvancedRequested(bool requested)
+        {
+            AdvancedRequests.Add(requested);
+            Events.Add(requested ? "advanced:on" : "advanced:off");
+        }
+
         public int LogFlushRequests { get; private set; }
 
         public void RequestLogFlush() => LogFlushRequests++;
@@ -330,7 +344,8 @@ public sealed class CaptureSessionTests : IAsyncDisposable
     private static CaptureSession Loop(IGameConsentStore store, CountingGuard guard, FakeSink? sink,
         FakeLiveness? alive = null, int? pid = _pid, SessionEndReason resolveReason = SessionEndReason.Running,
         CaptureOptions? options = null, IKillSwitch? killSwitch = null, ICapturePauseSource? pause = null,
-        IUserModeExceptionSwitch? exceptions = null, IOverlayToleranceChannel? tolerance = null, IDisplayProbe? display = null) =>
+        IUserModeExceptionSwitch? exceptions = null, IOverlayToleranceChannel? tolerance = null, IDisplayProbe? display = null,
+        ICaptureObserver? observer = null) =>
         new(store,
             new HookedCaptureGate(guard),
             guard,
@@ -350,7 +365,8 @@ public sealed class CaptureSessionTests : IAsyncDisposable
             pause: pause,
             exceptions: exceptions,
             tolerance: tolerance,
-            display: display);
+            display: display,
+            observer: observer);
 
     /// <summary>
     /// <see cref="Loop"/>'s options with a 30 s ceiling instead of 120 ms, for a test whose session must end on something
@@ -787,12 +803,63 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         // THE ORDERING, OBSERVED. Asserting `Published[0].Ticks == 1` alone was decoration: it holds
         // whether the first scan runs before the drain loop or is deferred to the first 30 s boundary,
         // because either way the first tick published is the first tick counted.
-        sink.Events.Should().NotBeEmpty();
-        sink.Events[0].Should().Be("publish",
+        // The word for Advanced metrics is written first (train B) - one store, no scan - and the guard result next.
+        sink.Events.Should().HaveCountGreaterThan(1);
+        sink.Events[0].Should().Be("advanced:off");
+        sink.Events[1].Should().Be("publish",
             "the Overlay's 65 s supervision clock starts when the mapping is published, not when we "
             + "adopt it, so a first scan deferred by 30 s is already half way to a supervision stop");
         sink.Published[0].Ticks.Should().Be(1u);
         r.GuardTicksPublished.Should().BeGreaterThanOrEqualTo(1u);
+    }
+
+    [Fact]
+    public async Task ASessionThatDoesNotRecordAdvancedMetricsWritesTheWordOffBeforeItsFirstGuardResultAndReadsNothing()
+    {
+        // D111. The control block outlives a session: "off" is a word that is WRITTEN - and written first, so the
+        // Overlay never acts on the request the session before left standing.
+        using var sink = new FakeSink(recordsToServe: 3) { Advanced = InGameStates.Ffx() };
+        var ticks = new InGameObserver(wants: false);
+        CaptureSession loop = Loop(await StoreWithAsync(), new CountingGuard(), sink, observer: ticks);
+
+        await loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        sink.AdvancedRequests.Should().Equal(false);
+        sink.Events[0].Should().Be("advanced:off", "before the first guard result, which is the first thing the Overlay acts on");
+        ticks.Seen.Should().NotBeEmpty().And.OnlyContain(static p => p == null, "a region that happens to hold something is not read by a session that did not ask");
+    }
+
+    [Fact]
+    public async Task ASessionThatRecordsAdvancedMetricsAsksOnceAndHandsEachPublicationOverAsOneInstance()
+    {
+        using var sink = new FakeSink(recordsToServe: 3) { Advanced = InGameStates.Ffx(samples: 4) };
+        var ticks = new InGameObserver(wants: true);
+        CaptureSession loop = Loop(await StoreWithAsync(), new CountingGuard(), sink, observer: ticks);
+
+        await loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        sink.AdvancedRequests.Should().Equal(true);
+        sink.Events[0].Should().Be("advanced:on");
+        ticks.Seen.Should().HaveCountGreaterThan(1);
+        ticks.Seen.Should().OnlyContain(static p => p != null);
+        ticks.Seen.Should().OnlyContain(p => ReferenceEquals(p, ticks.Seen[0]), "one publication is one instance on every tick, so nobody copies or compares it");
+        ticks.Seen[0]!.State.Samples.Should().Be(4u);
+        ticks.Seen[0]!.State.FfxFovMaxBits.Should().Be(InGameStates.Bits(1.1f));
+    }
+
+    [Fact]
+    public async Task ANewPublicationIsANewInstanceAndAnAskedSessionWithNothingPublishedSeesNone()
+    {
+        using var sink = new FakeSink(recordsToServe: 3);
+        var ticks = new InGameObserver(wants: true) { OnTick = n => sink.Advanced = n < 3 ? null : InGameStates.Ffx(samples: (uint)(n / 3)) };
+        CaptureSession loop = Loop(await StoreWithAsync(), new CountingGuard(), sink, observer: ticks);
+
+        await loop.RunAsync(_exe, Fingerprint, "payload.dll", TestContext.Current.CancellationToken);
+
+        ticks.Seen[0].Should().BeNull("the watchdog publishes within a second of the request, not before it");
+        InGameAdvanced[] published = [.. ticks.Seen.OfType<InGameAdvanced>().Distinct()];
+        published.Should().HaveCountGreaterThan(1, "the fake publishes again every third tick");
+        published.Select(static p => p.State.Samples).Should().BeInAscendingOrder().And.OnlyHaveUniqueItems();
     }
 
     [Fact]
@@ -1285,6 +1352,27 @@ public sealed class CaptureSessionTests : IAsyncDisposable
             h.Verdict.Family.Should().Be("Riot Vanguard");
             h.TargetPid.Should().Be(_pid, "the pipe's start names the process the loop holds");
         });
+    }
+
+    /// <summary>An observer that says whether its session records Advanced metrics, and keeps what each tick carried of region 5.</summary>
+    private sealed class InGameObserver(bool wants) : ICaptureObserver
+    {
+        public List<InGameAdvanced?> Seen { get; } = [];
+
+        /// <summary>Called with the tick's number after it was kept, so a test can change what the sink publishes next.</summary>
+        public Action<int>? OnTick { get; init; }
+
+        public bool WantsInGameAdvanced => wants;
+
+        public void Attached(int pid, FlShmHandshake handshake)
+        {
+        }
+
+        public void Tick(CaptureProgress progress)
+        {
+            Seen.Add(progress.InGameAdvanced);
+            OnTick?.Invoke(Seen.Count);
+        }
     }
 
     /// <summary>What the loop told the observer to read the game's memory of (beta.12, D43), in order.</summary>

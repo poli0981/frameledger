@@ -38,6 +38,13 @@ public sealed record CaptureProgress
     public ulong AdapterLuid { get; init; }
 
     /// <summary>
+    /// What the hooked game told its upscaler, as the Overlay last published it for this session's request (region 5;
+    /// train B) - the same instance until a new publication arrives. Null when the session did not ask
+    /// (<see cref="ICaptureObserver.WantsInGameAdvanced"/>), before the first publication, and on every Tier-2 tick.
+    /// </summary>
+    public InGameAdvanced? InGameAdvanced { get; init; }
+
+    /// <summary>
     /// On a held session's tick (2026-09-23): the refusal it is held under — its reason, and the guard's verdict when the
     /// guard spoke — so the pipe can say, while the game runs, why nothing is measured. Null on every hooked tick.
     /// </summary>

@@ -4,9 +4,11 @@
 using System.Diagnostics;
 using System.IO.MemoryMappedFiles;
 using FluentAssertions;
+using FrameLedger.Application.Advanced;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Consent;
 using FrameLedger.Application.Persistence;
+using FrameLedger.Application.Settings;
 using FrameLedger.Domain.Consent;
 using FrameLedger.Domain.Sessions;
 using FrameLedger.Infrastructure.Persistence;
@@ -117,6 +119,16 @@ public sealed class AgentEndToEndTests : IDisposable
         }
     }
 
+    private async Task SetAdvancedMetricsAsync(bool on)
+    {
+        Directory.CreateDirectory(_dataDir);
+        LedgerDatabase db = await LedgerDatabase.OpenAsync(Ledger, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
+        await using (db.ConfigureAwait(false))
+        {
+            await new RegisteredSettings(new SqliteSettingsStore(db)).SetAsync(SettingsRegistry.TelemetryAdvanced, on, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        }
+    }
+
     private async Task SetKillSwitchAsync(bool engaged)
     {
         Directory.CreateDirectory(_dataDir);
@@ -221,6 +233,80 @@ public sealed class AgentEndToEndTests : IDisposable
         {
             Kill(harness);
         }
+    }
+
+    [Fact]
+    public async Task WhatTheGameTellsFsrIsStoredOnlyByASessionThatRecordsAdvancedMetrics()
+    {
+        // ADVANCED METRICS INSIDE THE GAME, end to end (train B, 0.1.0-beta.40): the shipped Agent, the real Overlay,
+        // and a target that hands FSR everything on every frame and asks it for its memory. ONE target, TWO sessions,
+        // which is the order that matters: the first does not record Advanced metrics and must store nothing of it
+        // though the game says it all; the second asks - in a game that kept running - and stores what the game said.
+        (await GrantConsentAsync()).Should().Be(ConsentWriteOutcome.Written);
+
+        Process harness = await StartHarnessAsync("--real --ffx-topology 2x --advanced --ffx-memory-query v2 --hold-presenting-ffx 90");
+        try
+        {
+            using (Process off = StartAgent("capture", "--exe", ConsentedExecutable, "--seconds", "6"))
+            {
+                (string output, int exit) = await FinishAsync(off);
+                exit.Should().Be(0, output);
+            }
+
+            await SetAdvancedMetricsAsync(on: true);
+            using (Process on = StartAgent("capture", "--exe", ConsentedExecutable, "--seconds", "10"))
+            {
+                (string output, int exit) = await FinishAsync(on);
+                exit.Should().Be(0, output);
+            }
+
+            LedgerDatabase db = await LedgerDatabase.OpenAsync(Ledger, ct: TestContext.Current.CancellationToken).ConfigureAwait(true);
+            await using (db.ConfigureAwait(true))
+            {
+                var sessions = new SqliteSessionRepository(db);
+                IReadOnlyList<SessionRow> rows = await sessions.ListRecentAsync(2, TestContext.Current.CancellationToken).ConfigureAwait(true);
+                rows.Should().HaveCount(2);
+                SessionRow second = rows[0];
+                SessionRow first = rows[1];
+                first.Tier.Should().Be(CaptureTier.Hooked);
+                second.Tier.Should().Be(CaptureTier.Hooked);
+
+                // OFF: no row, and no series under the advanced prefix - the game said it all, and none of it was kept.
+                (await sessions.FindAdvancedAsync(first.Id, TestContext.Current.CancellationToken).ConfigureAwait(true)).Should().BeNull();
+                (await sessions.FindAdvancedSensorsAsync(first.Id, TestContext.Current.CancellationToken).ConfigureAwait(true))
+                    .Should().NotContain(static b => b.Series.StartsWith(AdvancedMetric.SeriesPrefix, StringComparison.Ordinal));
+
+                // ON: the values hook-harness --advanced sends (main.cpp, kAdv*), as fl_guard asserts them natively.
+                AdvancedSessionRow row = (await sessions.FindAdvancedAsync(second.Id, TestContext.Current.CancellationToken).ConfigureAwait(true)).Should().BeOfType<AdvancedSessionRow>().Subject;
+                AssertWhatTheHarnessToldFsr(row);
+                (await sessions.FindAdvancedSensorsAsync(second.Id, TestContext.Current.CancellationToken).ConfigureAwait(true))
+                    .Select(static b => b.Series).Should().Contain([InGameAdvancedSampler.FrameTimeSeries, InGameAdvancedSampler.MemorySeries]);
+            }
+        }
+        finally
+        {
+            Kill(harness);
+        }
+    }
+
+    /// <summary>The stored row of a session that asked, against what <c>hook-harness --advanced --ffx-memory-query</c> sends and the FSR stub answers.</summary>
+    private static void AssertWhatTheHarnessToldFsr(AdvancedSessionRow row)
+    {
+        (IReadOnlyList<AdvancedFact> facts, AdvancedSources sources) = AdvancedJson.ParseSession(row.FactsJson);
+        sources.InGame.Should().Be(AdvancedInGameStatus.Reading, row.FactsJson);
+        string[] Rows(string id) => [.. facts.Single(f => string.Equals(f.Id, id, StringComparison.Ordinal)).Value.Rows!.Select(static r => r.Name + "=" + r.Value)];
+        Rows("ffx.upscale.sharpening").Should().Equal("enableSharpening=on", "sharpness=0.35");
+        Rows("ffx.upscale.jitter").Should().Equal("jitterOffset.x=≤ 0.3", "jitterOffset.y=≤ 0.4");
+        Rows("ffx.upscale.depth").Should().Equal("cameraNear=0.1", "cameraFar=1000", "cameraFovAngleVertical=0.9 – 1.1 rad (51.6° – 63°)");
+        facts.Single(static f => string.Equals(f.Id, "ffx.upscale.exposure", StringComparison.Ordinal)).Value.Text.Should().Be("1.25");
+        facts.Single(static f => string.Equals(f.Id, "ffx.upscale.flags", StringComparison.Ordinal)).Value.Tokens.Should().Equal("non_linear_color_pq");
+        facts.Should().NotContain(static f => f.Id.StartsWith("sl.", StringComparison.Ordinal), "this target chains no DLSS options");
+
+        IReadOnlyDictionary<string, Application.Recording.SensorSeriesStats> stats = AdvancedJson.ParseStats(row.StatsJson);
+        stats.Should().ContainKey(InGameAdvancedSampler.FrameTimeSeries, row.StatsJson);
+        stats[InGameAdvancedSampler.FrameTimeSeries].Mean.Should().BeApproximately(16.0, 0.01, "every dispatch states 16 ms");
+        stats.Should().ContainKey(InGameAdvancedSampler.MemorySeries, row.StatsJson);
+        stats[InGameAdvancedSampler.MemorySeries].Max.Should().BeApproximately(123456789 / (1024.0 * 1024.0), 0.01, "what the FSR stub answers the memory query with");
     }
 
     [Fact]

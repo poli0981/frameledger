@@ -179,12 +179,18 @@ public static class AdvancedPresenter
     public static string SourcesLine(AdvancedSources sources)
     {
         ArgumentNullException.ThrowIfNull(sources);
-        return string.Format(
+        string line = string.Format(
             CultureInfo.CurrentCulture,
             Strings.Advanced_SourcesLine,
             AdvancedLabels.Status(sources.Nvapi),
             AdvancedLabels.Status(sources.Sensors),
             AdvancedLabels.Status(sources.ElevatedSensors));
+
+        // A session's row also says what became of the entries read inside the game; the machine's live state and a
+        // row stored before 0.1.0-beta.40 do not, and then the sentence is not there.
+        return sources.InGame is { } inGame
+            ? line + " " + string.Format(CultureInfo.CurrentCulture, Strings.Advanced_InGameLine, AdvancedLabels.InGame(inGame))
+            : line;
     }
 
     private static string StatusOf(AdvancedMetric metric, AdvancedSources? now)
@@ -192,6 +198,12 @@ public static class AdvancedPresenter
         if (!metric.IsRead)
         {
             return AdvancedLabels.Reach(metric.Reach);
+        }
+
+        if (metric.Reach == AdvancedReach.Game)
+        {
+            // Not a state of the PC: it is read inside a game being measured, when that game makes the call.
+            return Strings.Advanced_Status_InGame;
         }
 
         AdvancedSourceStatus? state = now is null ? null : (metric.Source, metric.Reach) switch

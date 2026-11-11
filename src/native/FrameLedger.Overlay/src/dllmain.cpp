@@ -2690,7 +2690,8 @@ DWORD WatchdogLoop() noexcept {
         }
         g_advancedRequested.store(advancedNow != 0u ? 1u : 0u, std::memory_order_relaxed);
         if (advancedNow != 0u) {
-            LARGE_INTEGER advancedQpc{};
+            // Initialised through QuadPart, the member read below, so that it is the active one (cpp:S6232).
+            LARGE_INTEGER advancedQpc{.QuadPart = 0};
             QueryPerformanceCounter(&advancedQpc);
             fl::adv::Publish(g_adv, g_advanced, advancedNow, static_cast<uint64_t>(advancedQpc.QuadPart));
         }
