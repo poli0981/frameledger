@@ -45,7 +45,7 @@ public static class LedgerBackup
     public static string LockNameFor(string databasePath)
     {
         string migration = MigrationRunner.LockNameFor(databasePath);
-        return _mutexPrefix + migration[(migration.AsSpan().LastIndexOf('.') + 1)..];
+        return _mutexPrefix + migration[(migration.LastIndexOf('.', StringComparison.Ordinal) + 1)..];
     }
 
     /// <summary>

@@ -152,7 +152,7 @@ public sealed class LedgerBackupTests : IDisposable
         name.Should().StartWith(@"Local\FrameLedger.Ledger.Backup.");
         name.Should().NotBe(MigrationRunner.LockNameFor(Ledger));
         string migration = MigrationRunner.LockNameFor(Ledger);
-        name[(name.AsSpan().LastIndexOf('.') + 1)..].Should().Be(migration[(migration.AsSpan().LastIndexOf('.') + 1)..], "keyed by the same file");
+        name[(name.LastIndexOf('.', StringComparison.Ordinal) + 1)..].Should().Be(migration[(migration.LastIndexOf('.', StringComparison.Ordinal) + 1)..], "keyed by the same file");
     }
 
     private async Task CreateLedgerWithARowAsync()

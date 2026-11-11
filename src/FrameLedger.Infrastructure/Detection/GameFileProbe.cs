@@ -179,7 +179,7 @@ public sealed class GameFileProbe : IGameFileProbe
         int bestDepth = int.MaxValue;
         foreach (string relative in snapshot.RelativeFiles)
         {
-            int slash = relative.AsSpan().LastIndexOf('/');
+            int slash = relative.LastIndexOf('/', StringComparison.Ordinal);
             if (!named(relative[(slash + 1)..]))
             {
                 continue;
@@ -268,7 +268,7 @@ public sealed class GameFileProbe : IGameFileProbe
 
         (string FullPath, string RelativePath)? best = null;
         long bestSize = -1;
-        foreach (string relative in snapshot.RelativeFiles.Where(static f => IsShipping(f[(f.AsSpan().LastIndexOf('/') + 1)..])))
+        foreach (string relative in snapshot.RelativeFiles.Where(static f => IsShipping(f[(f.LastIndexOf('/', StringComparison.Ordinal) + 1)..])))
         {
             string full = snapshot.GameDirectory.TrimEnd('/') + "/" + relative;
             long size = SizeOf(full);
