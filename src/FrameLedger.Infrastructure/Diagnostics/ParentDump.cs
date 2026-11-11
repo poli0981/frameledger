@@ -134,6 +134,9 @@ public static class ParentDump
     private static bool TryWriteOnce(Process target, string file, out int error)
     {
         using var stream = new FileStream(file, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
+        // The file's raw handle, inside the `using` that owns the stream and on the same thread, so it cannot be
+        // released during the call. CsWin32 generates no SafeHandle overload here (NativeMethods.json:
+        // useSafeHandles false) - csharpsquid:S3869 is accepted for this one call (13_CI_CD §SonarCloud).
         bool written = PInvoke.MiniDumpWriteDump(new HANDLE(target.Handle), (uint)target.Id, new HANDLE(stream.SafeFileHandle.DangerousGetHandle()), _kind, null, null, null);
         // At once, and the SYSTEM error: CsWin32 0.3.298 declares MiniDumpWriteDump without SetLastError, so
         // GetLastPInvokeError() is whatever an earlier call left (0 when measured on CreateNamedPipeW, 2026-09-17). The

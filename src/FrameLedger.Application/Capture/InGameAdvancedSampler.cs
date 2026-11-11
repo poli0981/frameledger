@@ -198,7 +198,8 @@ public sealed class InGameAdvancedSampler
         // A range, lowest to highest - never a series, which would say when the player aimed (D114).
         if (Number(s.FfxFovMinBits) is double low && Number(s.FfxFovMaxBits) is double high)
         {
-            depth.Add(new AdvancedRow("cameraFovAngleVertical", low == high
+            // One value or two: told by the bits, which is what "the same float" means (and what csharpsquid:S1244 asks).
+            depth.Add(new AdvancedRow("cameraFovAngleVertical", s.FfxFovMinBits == s.FfxFovMaxBits
                 ? string.Create(CultureInfo.InvariantCulture, $"{low:0.####} rad ({Degrees(low):0.#}°)")
                 : string.Create(CultureInfo.InvariantCulture, $"{low:0.####} – {high:0.####} rad ({Degrees(low):0.#}° – {Degrees(high):0.#}°)")));
         }
@@ -257,7 +258,7 @@ public sealed class InGameAdvancedSampler
 
     private static string? Range(uint minBits, uint maxBits) =>
         Number(minBits) is double low && Number(maxBits) is double high
-            ? low == high ? Text(low) : Text(low) + " – " + Text(high)
+            ? minBits == maxBits ? Text(low) : Text(low) + " – " + Text(high)
             : null;
 
     private static double? Number(uint bits)

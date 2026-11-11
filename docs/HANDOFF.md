@@ -143,15 +143,29 @@ None of these is an owner decision; each was found while building, and is writte
 
 ### Left open by this session
 
-- **This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
-  after this text. Record them in the next pull request, as beta.39's were in #395.
+- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
+  after this text. Record them in the next pull request, as beta.39's were in #395.~~ **Recorded 2026-11-12, in the
+  pull request after the release: 0.1.0-beta.40 was released 2026-11-11T19:30:13Z** (02:30 on the 12th in the
+  owner's time zone, which is the date the changelog carries; the legal documents' *Effective* date is the UTC one,
+  2026-11-11 — the fifth release to straddle midnight that way, after beta.9, .10, .12 and .14) from the signed tag
+  on `5268332` (#399), by run 43085044822 — green at the first attempt, one run for the one tag push. Eight assets;
+  the seven digests of `SHA256SUMS.txt` equal the ones GitHub computed; the shipped natives carry `FL_BUILD_ID
+  v0.1.0-beta.40`. The delta from beta.39 is 2,413,166 bytes beside a full package of 110,707,319 — "Delta processed
+  0452 files. 0025 patched, 0427 unchanged". The wiki was published by run 43087844607. The rehearsal on the release
+  branch (run 43082208739) had made a delta of 2,426,184 bytes with the same file counts.
 - **Nothing here was read from a real game, and nothing was seen in the running App.** The values come from
   `hook-harness --advanced` and the FidelityFX stub; the page's new rows were loaded by its tests and looked at by
   nobody. All of it is owner-only item 38.
 - **Whether any shipping title chains `sl::DLSSOptions` into `slEvaluateFeature`** is not known. If none of the
   owner's games does, the six `sl.dlss.*` entries read N/A everywhere until train D, and the page already says why.
 - **The aliasable part of FSR's memory** is read and published and not shown: the catalog has one memory entry.
-- **SonarCloud on #398** had not answered when this was written; #397's three findings are fixed in #398.
+- ~~**SonarCloud on #398** had not answered when this was written; #397's three findings are fixed in #398.~~
+  **It answered after the merge, with three findings on new code**, handled in the pull request after the release:
+  two `csharpsquid:S1244` in `InGameAdvancedSampler` — a lowest and a highest float compared with `==` to tell one
+  value from a range; they are now told apart by their bits, which is what was meant — and one
+  `csharpsquid:S3869`, a blocker, on `ParentDump`'s `DangerousGetHandle`. That one is **not new and not fixed**: the
+  owner accepted it in beta.24 (`13_CI_CD` §SonarCloud), #398 moved the same expression into a new method, and
+  SonarCloud tracks an issue by its place. It needs the owner's *Accept* again — item 38 (j).
 - **The `vi` strings were written by the assistant and the `ja` ones are marked `review`** — fourteen more keys and
   the reworded Settings text.
 - **`LogNoteW`** is still there (owner-only item 36 (d)), item 37 is still unrun, and the alpha line still rests
@@ -509,7 +523,10 @@ a game that kept running, a game under the user-mode anti-cheat exception, and w
    exception**, the option on: it runs, the session is hooked, and its trial is not ended by anything new. (h) **What
    it costs**: the game's own frame rate with the option on and off, and the Agent's processor time in a hooked
    session (NFR-2: 2.5 % of one core). (i) **The words**: the fourteen new `vi` strings and the Settings text; the
-   `ja` ones are marked `review`.
+   `ja` ones are marked `review`. (j) **SonarCloud**: accept `csharpsquid:S3869` on
+   `src/FrameLedger.Infrastructure/Diagnostics/ParentDump.cs` again — the same call the acceptance of beta.24 covers,
+   raised anew because #398 moved it (`13_CI_CD` §SonarCloud says why it is safe); until then `main`'s reliability
+   rating on new code shows E for that one line.
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
