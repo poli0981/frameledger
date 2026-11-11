@@ -158,6 +158,25 @@ SonarScanner 12.0.0 on the 11.0 runtime; InspectCode 2026.2.3.1 and 2026.3.0 aga
 **Owner-only:** item 34 — beta.37 on real hardware, a hooked session on .NET 11.0.0, and Windows 10 if a PC with it is
 at hand.
 
+### 0.1.0-alpha.4 — the fourth alpha, the same day, and the last for now (D98)
+
+`alpha` takes main at this pull request — `v0.1.0-beta.37` and these notes, no other change — by a merge commit. **This
+sync is not like the three before it**: main now holds what the switch held (`global.json`, the TFM, the three
+packages, `legal/licenses/nuget/`, the *Transitive* row), so every switch file conflicts, and each is resolved by
+taking main's — the branch's RC3 lines go, `RELEASE_LINE` stays `alpha`, and `git diff --name-only origin/main` on the
+merged tree must print that one name. Its gate must pass on `alpha` before the pull request is merged by hand (the
+branch has no auto-merge); the release runs from the signed tag `v0.1.0-alpha.4` on `alpha`, with its delta from
+alpha.3. Its notes are `docs/changelog/0.1.0-alpha.4.md`: the warning, and that it is the last alpha for now.
+
+- **After it the line rests** (`12_BUILD` §The alpha line): no sync follows a beta and no alpha is cut until a newer
+  .NET has a preview. `FlAlphaLineRests` in `Directory.Build.props` says so to the build; the next trial sets it to
+  `false` on `alpha` with the rest of the switch.
+- **What a resting alpha costs its user** is in its notes, the guide and its banner: no update, the anti-cheat list
+  included; and once ten betas have followed it, a copy of alpha.3 or older no longer finds alpha.4 (Velopack reads
+  the newest ten releases).
+
+**Owner-only:** item 35 — the fourth alpha on real hardware, and the beta installed over it.
+
 
 ## Owner-only — no PR can close these
 
@@ -423,6 +442,14 @@ at hand.
    three alpha strings that changed or are new (`Alpha_Banner_Body_Format`, `Alpha_Banner_Body_Resting_Format`,
    `About_Runtime_Alpha_Format`) and of the first-run summary's first line. (f) **Going back** — only if something is
    wrong: install beta.36 over it; the ledger opens.
+35. **alpha.4 on real hardware — the last alpha for now** (D98). (a) **The update from alpha.3**: Help ▸ Check for
+   updates offers alpha.4 and *Restart to update* installs it — a large download, the runtime moving from the release
+   candidate to 11.0.0. (b) The terms window shows the **EULA 1.7, the Disclaimer 2.14 and the Alpha notice 1.1** and
+   waits for the notice's box; `…\backups\ledger-before-0.1.0-alpha.4.db` exists beside the older copies, and opens;
+   the ledger stays at schema 22. (c) **The banner says the alpha line is paused** and to install the beta — not the
+   experimental-build warning — and Help ▸ About reads *Alpha build — runs on .NET 11.0.0*, with no "prerelease".
+   (d) **Then install beta.37 over it**: the installer asks to replace it; the beta opens the ledger, shows no Alpha
+   notice, and its update channel is no longer locked.
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
