@@ -234,7 +234,7 @@ Still resolve **entry points defensively at runtime**: `nvapi64.dll` may be abse
 | Temperatures | `NvAPI_GPU_GetThermalSettings` (+ extended thermal query for hotspot/memory where available). **Bridge (2026-09-10):** the public enumeration only — core is the `GPU` target; memory is the `MEMORY` target when the driver lists one, and on the RTX 5080 it does not (bit clear → `null`); hotspot is not read |
 | Utilisation | `NvAPI_GPU_GetDynamicPstatesInfoEx` (GPU / FB / VID / BUS domains). **Bridge (2026-09-10):** the GPU domain only, as `loadPct` |
 | Clocks | `NvAPI_GPU_GetAllClockFrequencies` — **bridge (2026-09-10):** current graphics and memory clocks |
-| Memory | `NvAPI_GPU_GetMemoryInfoEx` — **not `NvAPI_GPU_GetMemoryInfo`**, which this table named until 2026-08-05. The vendored headers mark it `__nvapi_deprecated_function` ("deprecated in release 520"), so under `/W4 /WX` a call to it fails the native build. **Neither is called (2026-09-10):** the vendored `nvapi.h` (`cd6918f6`) does not declare `GetMemoryInfoEx` at all — the deprecation message names a function the same header set does not ship — so the bridge's `vram` field is **reserved**, its bit is never set, and VRAM stays L1's PDH adapter counter. Taking a newer header set is the way to change that, not a call to the deprecated one |
+| Memory | `NvAPI_GPU_GetMemoryInfoEx` — **not `NvAPI_GPU_GetMemoryInfo`**, which this table named until 2026-08-05. The vendored headers mark it `__nvapi_deprecated_function` ("deprecated in release 520"), so under `/W4 /WX` a call to it fails the native build. **Neither is called (2026-09-10):** ~~the vendored `nvapi.h` (`cd6918f6`) does not declare `GetMemoryInfoEx` at all — the deprecation message names a function the same header set does not ship~~ — so the bridge's `vram` field is **reserved**, its bit is never set, and VRAM stays L1's PDH adapter counter. ~~Taking a newer header set is the way to change that, not a call to the deprecated one~~ **Corrected 2026-11-11: the vendored set does declare it** — `nvapi_lite_common.h:600`, which `nvapi.h` includes, with `NV_GPU_MEMORY_INFO_EX_V1` above it and its id in `nvapi_interface.h`; the search that found nothing looked in `nvapi.h` alone. It was not called because of that sentence, from 2026-09-10 until now. The bridge calls it from ABI 3 for the advanced memory rows (§Advanced metrics); `FlNvSample.vram` stays reserved, so which layer fills the base `vram_adapter` series does not change |
 | **Throttle reasons** | `NvAPI_GPU_GetPerfDecreaseInfo` — not available from L1 or L2. **Bridge (2026-09-10):** the raw reason mask, and 0 is a measurement (no reason), not a clear bit |
 | Driver version | `NvAPI_SYS_GetDriverAndBranchVersion` — **bridge (2026-09-10):** `FlNvDriverVersion`, surfaced as `616.64 (r616_41)` |
 | **NGX per-process state** | `NvAPI_NGX_GetNGXOverrideState` (R570+) — the driver's feedback word per DLSS feature for a PID, read OUT OF PROCESS by `fl-probe-nvapi --ngx-state` and, since 2026-09-06, by the capture host beside each module snapshot — **in-process through the bridge since 2026-09-10** (`NvapiNgxStateProbe`; the spawn is retired and the words, the merge and the printed block are unchanged). Measured: the SR word's `CREATED \| EVALUATE` is set without an NVIDIA-app override; the FG word follows DLSS-G once created (`CREATED \| EVALUATE` at ×4, corrected the same day — the first reading was blind because it was early), the multiplier bits stay clear; `scalingRatio` is 0 even under an override. Identity only, SR and FG (`03_METRICS` §Upscaling) — and, since beta.24 (D63), the mode an NVIDIA App override set where the word says it applied; its `performanceMode` is in NGX's own numbering (Silent Hill 2, 2026-10-13: the App's Ultra Performance, profile value 5, reported as 3). *(Beta.27: never read after the game has gone — that reading, the last, had cleared `CREATED \| EVALUATE` on every stored session — and the two bits stand once a reading carried them: `03_METRICS` §The driver-reported rung.)* |
@@ -493,3 +493,300 @@ alone could never catch.
 > (`NvapiTelemetrySource` over `FrameLedger.NvapiBridge.dll`, §L3). §M5 in particular (do LHM GPU
 > sensors work unelevated, without PawnIO?) decided whether the default unelevated
 > Agent has temperatures at all — **it does, on NVIDIA; row R1 above.**
+
+## Advanced metrics (owner decisions D101–D108, 2026-11-11)
+
+The owner asked for a setting, *"Thông số nâng cao"* (Advanced metrics), with a navigation item of its own, that shows
+as much as the Streamline and NVAPI headers and PawnIO make available — numbers, tables, charts — **with each value
+assigned to what it belongs to: one game session, or the PC**. Asked while planning, the owner chose: everything
+that can be reached inside a game as well, in stages, the route refused on 2026-08-09 re-examined; stored in full with
+the session; off by default, and off means nothing more is read; and the page never asks for administrator rights
+itself. This section is the design those answers gave, the decisions taken with it, and the inventory.
+
+**Nothing here is built by the pull request that wrote it** except the catalog
+(`FrameLedger.Application.Advanced.AdvancedMetricCatalog`) and this section. Each later pull request of the train
+states here what it built.
+
+### The decisions
+
+- **D101 — the option.** `telemetry.advanced`, off by default, read by the Agent at each session's start. **Off means
+  not read**: no additional call to NVAPI or LibreHardwareMonitor, nothing more stored, and the navigation item is
+  hidden. A session recorded while it was off shows N/A for everything here — it is not filled in afterwards.
+- **D102 — where it is stored.** In two tables of their own (schema 0023), not in new columns of `sessions`: every
+  read of a `sessions` row, the JSON export and the bug bundle carry the whole row, and a driver profile does not
+  belong in a bug bundle. `machine_profiles` holds the facts of the PC, one row per distinct set, and a session points
+  to the row that was true when it ran — the trend's hardware-change markers and `hardware_snapshots` are untouched.
+  `session_advanced` holds one session's facts, its series' statistics and their directory. The series themselves go
+  to `sensor_blobs` under names that start with `adv.`, **with NaN for a tick that has no reading**: the fixed series
+  store −1 there and their readers drop every negative value, which would silently eat a −12 V rail.
+- **D103 — LibreHardwareMonitor's other groups.** CPU, memory, motherboard (its sensor chip and embedded controller)
+  and storage are opened **only when the Agent already runs as administrator and PawnIO is installed** — the existing
+  admin mode (D34); the page says what is missing and links to that setting. Storage is temperature only, internal
+  drives only, and no more than once a minute. **Refused**: the power-supply and fan-controller groups, which make
+  the library search every USB HID device. **Deferred**: the battery group. This amends §L2's "nothing else, ever"
+  from the pull request that opens them.
+- **D104 — identifiers are never read.** The card's board serial number and unique id, a display's EDID, and the list
+  of programs that are encoding. They are named in the inventory so the page can say so; a test holds that no stored
+  JSON has their keys. This is the only part of "everything" left out on purpose.
+- **D105 — the navigation item** is the last of the pane's items; Ctrl+1 to Ctrl+5 keep their pages and **Ctrl+6**
+  opens it only while the option is on.
+- **D106 — the `.partial` file skips what it does not know.** A chunk of an unknown type whose checksum is right is
+  passed over; until now it ended the read, so a build one release older lost everything after the first new chunk.
+- **D107 — with no game running**, the Agent reads sensors only while the page is open, through one reader shared
+  with the sessions, closed again some seconds after the last use. A PC idling with FrameLedger in the tray reads
+  nothing (NFR-2's "~0% idle").
+- **D108 — read-only, by a gate.** §Runtime policy's "never call a setter" becomes a build check: every `NvAPI_*`
+  call in the bridge's source is compared with a committed list, and the entry points that both read and write are
+  allowed with their read command only.
+
+### What belongs to what
+
+| Scope | What it is | Stored | Shown |
+|---|---|---|---|
+| `MachineFact` | true of the PC whatever is running: the card's firmware and architecture, the driver's package, what a display can do | `machine_profiles`, once per distinct set; a session points to its row | This PC |
+| `SessionFact` | true of one session: the game's display state, the settings the driver's profile for that game sets | `session_advanced.facts_json` | Session |
+| `Series`, during a session | a sensor of the PC sampled while the game ran | `sensor_blobs` (`adv.*`), statistics in `session_advanced.stats_json` | Session |
+| `Series`, with no session | the same sensor, read because the page is open | nowhere | This PC |
+
+A third tab, **Sources**, lists every row of the inventory with its state on this PC — read, or N/A with the reason:
+not an NVIDIA card, the Agent is not administrator, PawnIO is not installed, the option was off when the session was
+recorded, the hook is not built, the route is refused, a vendor's licence. A PC without an NVIDIA card shows N/A for
+every `nvapi.` row; nothing is estimated in its place (FR-4.9).
+
+### The trains
+
+| Train | Release | What | Its gate |
+|---|---|---|---|
+| A | 0.1.0-beta.39 | read by the Agent only — NVAPI and LibreHardwareMonitor — storage, the page. **Nothing changes in code loaded into a game** | this section |
+| B | 0.1.0-beta.40 | inside the game: more fields of the Streamline and FidelityFX calls already hooked, and new hooks on functions `sl.interposer.dll` **exports** (`17_HOOK_ENGINE` §Hook inventory's ⏳ rows); shared-memory layout 5 | a plan of its own; overhead measured |
+| C | 0.1.0-beta.41 | Reflex latency per frame | a spike, then the owner's go or no |
+| D | 0.1.0-beta.42 | the Streamline feature state behind `slGetFeatureFunction` — DLSS frame generation's, DLSS's, Reflex's | a spike, then the owner's go or no |
+
+Rules 4 and 5, the hook inventory, the measured overhead and the anti-cheat guard bind B, C and D exactly as they bind
+every hook. `sl::Constants` is read without its camera position, axes and matrices: where the camera is, is where the
+player is (rule 4). NGX stays closed by its licence (`17_HOOK_ENGINE` §NGX).
+
+**Train D re-examines a refusal; it does not lift it.** `handoff/history/p0-queue-1-6.md` refused, on five grounds,
+hooking `slGetFeatureFunction` and patching the function it returns. The route to try is a different one:
+`slGetFeatureFunction` is itself an export (`vendor-exports.json`), so its hook is an ordinary inventory row, and
+what it hands back could be a wrapper for a fixed list of names instead of a patch at an address learned at run time
+— which would answer grounds 1 to 4, and turn ground 5 into "measured only when injected at launch". Two things it
+raises are the owner's: replacing the pointer the game receives is a **write**, which rule 4 forbids as written; and
+a wrapper must outlive the Overlay's own unhook. If the spike cannot answer all of it, the route stays refused and
+the page says so.
+
+### Left out, by name
+
+Present in the vendored `nvapi.h`, readable from the Agent, and not in the inventory — each is either not a
+measurement of how a game runs or exists on professional cards only: ECC status and errors, NVLINK, illumination
+(the card's lighting zones), licensable features, virtualization and GSP information, Quadro status, VR-ready data,
+the IRQ and bus slot numbers, logical GPUs and SLI state, HDCP support, scan-out configuration, the colour and
+info-frame controls. `NvAPI_DISP_GetTiming` calculates a timing from an input and reads nothing.
+`NV_GET_ADAPTIVE_SYNC_DATA`'s last-flip count and timestamp mean nothing sampled once a second.
+`NvAPI_GPU_ClientRegisterForUtilizationSampleUpdates` registers a callback, which is not a read.
+
+### The inventory
+
+One row per entry of `AdvancedMetricCatalog`, in its order; `AdvancedMetricCatalogTests` fails when this table and
+the catalog differ in either direction. **Reach** is where a value can be read from, or why it is not read: `Agent`
+(the Agent's own process), `AgentElevated` (the same, as administrator with PawnIO), `HookedCall` (an argument of a
+call the Overlay already hooks — Train B), `NewHook` (a hook that is not built — Train B), `Spike` (Trains C and D),
+`Refused`, `Deferred`, `Identifier` (D104), `PlayerState` (rule 4), `Licence`, `NotInHeaders`. Only the first two are
+read by a build of Train A.
+
+**NVAPI, the graphics card: facts**
+
+| Id | What it is | Scope | Source | Reach | Unit |
+|---|---|---|---|---|---|
+| `nvapi.gpu.type` | Integrated or discrete graphics | MachineFact | Nvapi | Agent | Text |
+| `nvapi.gpu.system_type` | Laptop or desktop, as the driver sees the PC | MachineFact | Nvapi | Agent | Text |
+| `nvapi.gpu.external` | The card is an external one | MachineFact | Nvapi | Agent | Flag |
+| `nvapi.gpu.bus_type` | The bus the card sits on | MachineFact | Nvapi | Agent | Text |
+| `nvapi.gpu.pci_ids` | PCI device, subsystem and revision ids - the model, not the unit | MachineFact | Nvapi | Agent | Text |
+| `nvapi.gpu.vbios_version` | Video BIOS version | MachineFact | Nvapi | Agent | Text |
+| `nvapi.gpu.architecture` | Chip architecture, implementation and revision | MachineFact | Nvapi | Agent | Text |
+| `nvapi.gpu.core_count` | Graphics cores | MachineFact | Nvapi | Agent | Count |
+| `nvapi.gpu.rt_cores` | Ray-tracing cores | MachineFact | Nvapi | Agent | Count |
+| `nvapi.gpu.tensor_cores` | Tensor cores | MachineFact | Nvapi | Agent | Count |
+| `nvapi.gpu.ram_bus_width` | Width of the card's memory bus | MachineFact | Nvapi | Agent | Bits |
+| `nvapi.gpu.clock_base_core` | Base core clock | MachineFact | Nvapi | Agent | Megahertz |
+| `nvapi.gpu.clock_base_memory` | Base memory clock | MachineFact | Nvapi | Agent | Megahertz |
+| `nvapi.gpu.clock_boost_core` | Boost core clock | MachineFact | Nvapi | Agent | Megahertz |
+| `nvapi.gpu.clock_boost_memory` | Boost memory clock | MachineFact | Nvapi | Agent | Megahertz |
+| `nvapi.gpu.temp_default_max` | The core sensor's default maximum temperature | MachineFact | Nvapi | Agent | Celsius |
+
+**NVAPI, the card's memory**
+
+| Id | What it is | Scope | Source | Reach | Unit |
+|---|---|---|---|---|---|
+| `nvapi.vram.dedicated` | Dedicated video memory on the card | MachineFact | Nvapi | Agent | Mebibytes |
+| `nvapi.vram.dedicated_available` | Dedicated video memory available for surfaces | MachineFact | Nvapi | Agent | Mebibytes |
+| `nvapi.vram.system` | System memory the driver reserved at load | MachineFact | Nvapi | Agent | Mebibytes |
+| `nvapi.vram.shared` | Shared system memory the driver may commit | MachineFact | Nvapi | Agent | Mebibytes |
+| `nvapi.vram.framebuffer_physical` | Physical frame buffer size | MachineFact | Nvapi | Agent | Mebibytes |
+| `nvapi.vram.framebuffer_virtual` | Virtual frame buffer size | MachineFact | Nvapi | Agent | Mebibytes |
+| `nvapi.vram.available` | Dedicated video memory available now, all programs | Series | Nvapi | Agent | Mebibytes |
+| `nvapi.vram.in_use` | Dedicated video memory in use now, all programs: available for surfaces less available now | Series | Nvapi | Agent | Mebibytes |
+| `nvapi.vram.evictions_size` | Memory released by evictions since the driver loaded | Series | Nvapi | Agent | Mebibytes |
+| `nvapi.vram.eviction_count` | Evictions from dedicated video memory since the driver loaded | Series | Nvapi | Agent | Count |
+| `nvapi.vram.promotions_size` | Memory moved in by promotions since the driver loaded | Series | Nvapi | Agent | Mebibytes |
+| `nvapi.vram.promotion_count` | Promotions into dedicated video memory since the driver loaded | Series | Nvapi | Agent | Count |
+
+**NVAPI, the card over time**
+
+| Id | What it is | Scope | Source | Reach | Unit |
+|---|---|---|---|---|---|
+| `nvapi.load.framebuffer` | Frame-buffer (memory controller) utilisation | Series | Nvapi | Agent | Percent |
+| `nvapi.load.video` | Video-engine utilisation | Series | Nvapi | Agent | Percent |
+| `nvapi.load.bus` | Bus-interface utilisation | Series | Nvapi | Agent | Percent |
+| `nvapi.clock.video` | Video clock | Series | Nvapi | Agent | Megahertz |
+| `nvapi.pstate` | The card's current performance state (P-state id) | Series | Nvapi | Agent | Count |
+| `nvapi.temp.board` | Board ambient temperature, where the card has the sensor | Series | Nvapi | Agent | Celsius |
+| `nvapi.temp.power_supply` | The card's power-supply temperature, where it has the sensor | Series | Nvapi | Agent | Celsius |
+| `nvapi.limit.ac_battery` | Held back by a switch to battery on the tick: 100 or 0 | Series | Nvapi | Agent | Percent |
+| `nvapi.limit.api` | Held back at a program's request on the tick: 100 or 0 | Series | Nvapi | Agent | Percent |
+| `nvapi.limit.insufficient_power` | Held back by a missing power connector on the tick: 100 or 0 | Series | Nvapi | Agent | Percent |
+| `nvapi.encoder.sessions` | Active hardware-encoder sessions, all programs | Series | Nvapi | Agent | Count |
+| `nvapi.encoder.fps` | Average encoding rate of the active sessions | Series | Nvapi | Agent | FramesPerSecond |
+| `nvapi.encoder.latency` | Average encoding latency | Series | Nvapi | Agent | Microseconds |
+
+**NVAPI, the driver**
+
+| Id | What it is | Scope | Source | Reach | Unit |
+|---|---|---|---|---|---|
+| `nvapi.driver.package` | Game Ready, Studio or an RTX enterprise branch | MachineFact | Nvapi | Agent | Text |
+| `nvapi.driver.dch` | The driver is a DCH package | MachineFact | Nvapi | Agent | Flag |
+| `nvapi.driver.base_branch` | The driver's base branch | MachineFact | Nvapi | Agent | Text |
+| `nvapi.driver.interface_version` | NVAPI's own interface version | MachineFact | Nvapi | Agent | Text |
+| `nvapi.driver.chipset` | Chipset vendor and name, as the driver reports them | MachineFact | Nvapi | Agent | Text |
+| `nvapi.driver.global_profile` | Every setting of the driver's global profile, read-only | MachineFact | Nvapi | Agent | Table |
+| `nvapi.session.driver_profile` | The settings the driver's profile for this game sets itself, read-only | SessionFact | Nvapi | Agent | Table |
+
+**NVAPI, displays**
+
+| Id | What it is | Scope | Source | Reach | Unit |
+|---|---|---|---|---|---|
+| `nvapi.display.hdr_formats` | HDR formats a display accepts: HDR10, HDR10+, HDR10+ Gaming, Dolby Vision, EDR | MachineFact, one per device | Nvapi | Agent | Text |
+| `nvapi.display.luminance_max` | A display's maximum luminance for HDR content | MachineFact, one per device | Nvapi | Agent | Nits |
+| `nvapi.display.luminance_min` | Its minimum luminance | MachineFact, one per device | Nvapi | Agent | Nits |
+| `nvapi.display.luminance_max_frame_average` | Its maximum frame-average light level | MachineFact, one per device | Nvapi | Agent | Nits |
+| `nvapi.display.vrr_support` | Variable refresh: supported, G-SYNC module or adaptive sync, ULMB, usable at the current mode | MachineFact, one per device | Nvapi | Agent | Text |
+| `nvapi.display.adaptive_sync_off` | Adaptive sync is switched off on the display | MachineFact, one per device | Nvapi | Agent | Flag |
+| `nvapi.display.max_frame_interval` | The longest frame interval adaptive sync is set to hold | MachineFact, one per device | Nvapi | Agent | Microseconds |
+| `nvapi.session.vrr_enabled` | Variable refresh was active on the game's display | SessionFact | Nvapi | Agent | Flag |
+| `nvapi.session.vrr_requested` | Variable refresh was requested for it | SessionFact | Nvapi | Agent | Flag |
+| `nvapi.session.vrr_possible` | Variable refresh was possible on it | SessionFact | Nvapi | Agent | Flag |
+| `nvapi.session.vrr_display_mode` | The display itself was in variable-refresh mode | SessionFact | Nvapi | Agent | Flag |
+| `nvapi.session.source_colorspace` | The colour space the game presented in, as the driver reports it for the process | SessionFact | Nvapi | Agent | Text |
+
+**LibreHardwareMonitor, the graphics card (every vendor, unelevated)**
+
+| Id | What it is | Scope | Source | Reach | Unit |
+|---|---|---|---|---|---|
+| `lhm.gpu.temperature` | Every temperature sensor of the card | Series, one per device | Lhm | Agent | Celsius |
+| `lhm.gpu.load` | Every load of the card: its engines, its bus, its memory controller | Series, one per device | Lhm | Agent | Percent |
+| `lhm.gpu.memory` | The card's memory counters: total, free, used, Direct3D dedicated and shared | Series, one per device | Lhm | Agent | Mebibytes |
+| `lhm.gpu.clock` | Every clock of the card | Series, one per device | Lhm | Agent | Megahertz |
+| `lhm.gpu.power` | Every power reading of the card | Series, one per device | Lhm | Agent | Watts |
+| `lhm.gpu.fan` | Every fan of the card | Series, one per device | Lhm | Agent | Rpm |
+| `lhm.gpu.fan_control` | Each fan's duty | Series, one per device | Lhm | Agent | Percent |
+| `lhm.gpu.voltage` | Every voltage of the card | Series, one per device | Lhm | Agent | Volts |
+| `lhm.gpu.current` | Every current of the card | Series, one per device | Lhm | Agent | Amperes |
+| `lhm.gpu.throughput` | PCI Express traffic to and from the card | Series, one per device | Lhm | Agent | BytesPerSecond |
+
+**LibreHardwareMonitor through PawnIO (the Agent as administrator, D103)**
+
+| Id | What it is | Scope | Source | Reach | Unit |
+|---|---|---|---|---|---|
+| `lhm.cpu.temperature` | Processor temperatures: the package and each core | Series, one per device | Lhm | AgentElevated | Celsius |
+| `lhm.cpu.load` | Processor load: the total and each core | Series, one per device | Lhm | AgentElevated | Percent |
+| `lhm.cpu.clock` | Each core's clock, and the bus clock | Series, one per device | Lhm | AgentElevated | Megahertz |
+| `lhm.cpu.power` | Processor power: the package, the cores | Series, one per device | Lhm | AgentElevated | Watts |
+| `lhm.cpu.voltage` | Processor voltages | Series, one per device | Lhm | AgentElevated | Volts |
+| `lhm.board.model` | The motherboard's maker and model | MachineFact | Lhm | AgentElevated | Text |
+| `lhm.board.sensor_chip` | The board's sensor chip | MachineFact | Lhm | AgentElevated | Text |
+| `lhm.board.temperature` | The board's temperature sensors | Series, one per device | Lhm | AgentElevated | Celsius |
+| `lhm.board.fan` | Each fan header's speed | Series, one per device | Lhm | AgentElevated | Rpm |
+| `lhm.board.fan_control` | Each fan header's duty | Series, one per device | Lhm | AgentElevated | Percent |
+| `lhm.board.voltage` | The board's voltage rails | Series, one per device | Lhm | AgentElevated | Volts |
+| `lhm.memory.modules` | The memory modules: size, speed, maker's part name - never a serial number | MachineFact | Lhm | AgentElevated | Table |
+| `lhm.memory.load` | Memory in use: physical and virtual | Series, one per device | Lhm | AgentElevated | Percent |
+| `lhm.memory.temperature` | Each memory module's temperature, where it has a sensor | Series, one per device | Lhm | AgentElevated | Celsius |
+| `lhm.storage.models` | The internal drives' model names - never a serial number | MachineFact | Lhm | AgentElevated | Table |
+| `lhm.storage.temperature` | Each internal drive's temperature, read no more than once a minute | Series, one per device | Lhm | AgentElevated | Celsius |
+
+**What the Agent could reach and does not**
+
+| Id | What it is | Scope | Source | Reach | Unit |
+|---|---|---|---|---|---|
+| `lhm.psu` | Power-supply sensors: reading them makes the library search every USB device | MachineFact | Lhm | Refused | Table |
+| `lhm.controller` | Fan-controller sensors: the same search of USB devices | MachineFact | Lhm | Refused | Table |
+| `lhm.battery` | Battery sensors | MachineFact | Lhm | Deferred | Table |
+| `nvapi.gpu.board_serial` | The card's board serial number | MachineFact | Nvapi | Identifier | Text |
+| `nvapi.gpu.uuid` | The card's unique id | MachineFact | Nvapi | Identifier | Text |
+| `nvapi.display.edid` | A display's EDID block, which carries its serial number | MachineFact, one per device | Nvapi | Identifier | Text |
+| `nvapi.encoder.session_processes` | Which programs are encoding | Series | Nvapi | Identifier | Table |
+| `nvapi.gpu.power` | Card power through NVAPI (LibreHardwareMonitor reads it) | Series | Nvapi | NotInHeaders | Watts |
+| `nvapi.gpu.fan_duty` | Fan duty through NVAPI (LibreHardwareMonitor reads it) | Series | Nvapi | NotInHeaders | Percent |
+| `nvapi.gpu.voltage` | Card voltage through NVAPI (LibreHardwareMonitor reads it) | Series | Nvapi | NotInHeaders | Volts |
+| `nvapi.gpu.ram_type` | The card's memory type | MachineFact | Nvapi | NotInHeaders | Text |
+
+**Inside the game: calls the Overlay already hooks**
+
+| Id | What it is | Scope | Source | Reach | Unit |
+|---|---|---|---|---|---|
+| `sl.dlss.output_size` | The output size the game gave DLSS | SessionFact | Streamline | HookedCall | Text |
+| `sl.dlss.presets` | The DLSS model preset per quality mode | SessionFact | Streamline | HookedCall | Text |
+| `sl.dlss.hdr_input` | The game told DLSS its colour buffers are HDR | SessionFact | Streamline | HookedCall | Flag |
+| `sl.dlss.auto_exposure` | DLSS auto-exposure | SessionFact | Streamline | HookedCall | Flag |
+| `sl.dlss.alpha_upscaling` | DLSS upscales the alpha channel | SessionFact | Streamline | HookedCall | Flag |
+| `sl.dlss.exposure` | Pre-exposure and exposure scale given to DLSS | SessionFact | Streamline | HookedCall | Text |
+| `ffx.upscale.sharpening` | FSR sharpening: on or off, and its strength | SessionFact | FidelityFx | HookedCall | Text |
+| `ffx.upscale.jitter` | The jitter offsets the game gave FSR | SessionFact | FidelityFx | HookedCall | Text |
+| `ffx.upscale.exposure` | Pre-exposure given to FSR | SessionFact | FidelityFx | HookedCall | Text |
+| `ffx.upscale.depth` | Near and far planes and field of view given to FSR | SessionFact | FidelityFx | HookedCall | Text |
+| `ffx.upscale.flags` | The flags of the game's FSR dispatch | SessionFact | FidelityFx | HookedCall | Text |
+| `ffx.upscale.frame_time_delta` | The frame time the game reported to FSR | Series | FidelityFx | HookedCall | Milliseconds |
+| `ffx.memory_usage` | FSR's own video memory, when the game asks it | Series | FidelityFx | HookedCall | Mebibytes |
+
+**Inside the game: hooks that are not built**
+
+| Id | What it is | Scope | Source | Reach | Unit |
+|---|---|---|---|---|---|
+| `sl.constants.jitter` | The jitter offsets the game gave Streamline | SessionFact | Streamline | NewHook | Text |
+| `sl.constants.motion_vectors` | Motion-vector scale, and whether they are 3D, dilated, jittered | SessionFact | Streamline | NewHook | Text |
+| `sl.constants.depth` | Near and far planes, and whether depth is inverted | SessionFact | Streamline | NewHook | Text |
+| `sl.constants.projection` | Field of view, aspect ratio, orthographic or not | SessionFact | Streamline | NewHook | Text |
+| `sl.constants.resets` | How often the game reset the upscaler's history | SessionFact | Streamline | NewHook | Count |
+| `sl.feature.versions` | Each Streamline feature's version and its NGX model version | SessionFact | Streamline | NewHook | Table |
+| `sl.feature.requirements` | What each Streamline feature requires: operating system, driver, buffers | SessionFact | Streamline | NewHook | Table |
+| `sl.init.preferences` | The preferences the game started Streamline with | SessionFact | Streamline | NewHook | Text |
+| `ffx.framegen.config` | The game's FSR frame-generation configuration | SessionFact | FidelityFx | NewHook | Text |
+| `sl.constants.camera` | Camera position, axes and matrices | SessionFact | Streamline | PlayerState | Text |
+
+**Inside the game: routes a spike decides**
+
+| Id | What it is | Scope | Source | Reach | Unit |
+|---|---|---|---|---|---|
+| `nvapi.reflex.mode` | Reflex: low-latency mode, boost, the frame-rate limit | SessionFact | Nvapi | Spike | Text |
+| `nvapi.reflex.sleep_status` | What the driver's low-latency state is | SessionFact | Nvapi | Spike | Text |
+| `nvapi.reflex.frame_report` | Latency per frame: simulation, render submit, present, driver, OS queue, GPU render | Series, one per device | Nvapi | Spike | Microseconds |
+| `sl.dlss.optimal_settings` | The render size and sharpness DLSS recommends | SessionFact | Streamline | Spike | Text |
+| `sl.dlss.vram_estimate` | DLSS's own estimate of its video memory | Series | Streamline | Spike | Mebibytes |
+| `sl.dlssg.options` | DLSS frame generation: mode, frames to generate | SessionFact | Streamline | Spike | Text |
+| `sl.dlssg.state` | DLSS frame generation: status, the most frames it can generate | SessionFact | Streamline | Spike | Text |
+| `sl.dlssg.frames_presented` | Frames DLSS frame generation presented, by its own count | Series | Streamline | Spike | Count |
+| `sl.dlssg.vram_estimate` | DLSS frame generation's estimate of its video memory | Series | Streamline | Spike | Mebibytes |
+| `sl.dlssd.options` | Ray reconstruction's options | SessionFact | Streamline | Spike | Text |
+| `sl.nis.options` | NVIDIA Image Scaling's options | SessionFact | Streamline | Spike | Text |
+| `sl.deepdvc.options` | RTX Dynamic Vibrance's options | SessionFact | Streamline | Spike | Text |
+| `sl.reflex.state` | Reflex through Streamline: availability and its frame reports | SessionFact | Streamline | Spike | Table |
+| `sl.pcl.markers` | PC-latency markers the game sets | Series | Streamline | Spike | Count |
+
+**Closed by a licence**
+
+| Id | What it is | Scope | Source | Reach | Unit |
+|---|---|---|---|---|---|
+| `ngx.parameters` | NGX parameters: the quality value, the DLSS hints | SessionFact | Ngx | Licence | Table |
+| `xess.options` | XeSS's options | SessionFact | Xess | Licence | Table |
+| `sl.nvperf` | Streamline's performance counters (NSight Perf SDK licence) | Series | Streamline | Licence | Table |

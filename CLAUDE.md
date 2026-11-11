@@ -103,7 +103,10 @@ src/
                                #   composes it from, SessionEndReason, the census/NGX/marker facts;
                                #   and Recording/ since 2026-09-10 (PR-D): SessionRecorder,
                                #   SessionAggregator + FgLadder, SessionFinalizer, the .partial
-                               #   writer and PartialRecovery, ExitStatusMapper, the crash policy
+                               #   writer and PartialRecovery, ExitStatusMapper, the crash policy;
+                               #   and Advanced/ since 2026-11-11 (D101): AdvancedMetricCatalog, the one
+                               #   list "Advanced metrics" reads - what is read, and what is not with the
+                               #   reason (18_GPU_VENDOR_APIS §Advanced metrics). Nothing reads it yet.
   FrameLedger.Infrastructure/  # SQLite, shm reader, vendor APIs, injector interop, parsers,
                                #   and Capture/ (PR-C): ShmRingAttacher/ShmCaptureSink over the
                                #   reader, HeldProcessLivenessSource, TargetResolver (path only,

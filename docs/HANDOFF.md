@@ -124,15 +124,53 @@ the owner's decisions asked while planning. What follows is this session's readi
 - **What a new page owes**: strings in `en`, `vi`, `ja`; `ACCESSIBILITY.md` §For contributors for the page and each
   chart; `LIMITATIONS.md` and the guide; `08_UI`.
 
+#### Planned 2026-11-11, and approved by the owner — four trains, the first begun
+
+The plan was made the same day, the owner's decisions asked while planning. **The design, the decisions D101–D108 and
+the inventory are [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Advanced metrics**; what follows is only what that
+section does not carry — the order, and what was asked.
+
+- **The owner's four answers.** (1) Inside the game: **everything, in stages — and the refusal of 2026-08-09 is
+  re-examined**, not taken as final. (2) **Stored in full with the session.** (3) **Off by default, and off means
+  nothing more is read or stored**; the navigation item is hidden. (4) PawnIO: **the page says what is missing and
+  links to the admin mode's setting** (D34); it never asks for the rights itself.
+- **Four trains, one release each, in this order**: **A** (0.1.0-beta.39) what the Agent can read — NVAPI,
+  LibreHardwareMonitor — with storage and the page, **and nothing changed in code loaded into a game**; **B**
+  (beta.40) inside the game, on calls already hooked and on functions Streamline exports, shared-memory layout 5;
+  **C** (beta.41) Reflex latency, after a spike; **D** (beta.42) the Streamline state behind `slGetFeatureFunction`,
+  after a spike. **Why this order**: A needs no hook, so it ships the page, the storage and the option first and
+  every later train only fills rows; B is hooks of a kind already built; C and D are routes nobody has proven safe,
+  and each ends in the owner's go or no.
+- **The approval covers train A whole** — its eight pull requests through the release. **B, C and D each begin with a
+  plan of their own**, their decisions asked then. For D the owner will be asked one thing nothing else has needed:
+  handing the game a wrapper in place of the function it asked for is a write, and rule 4 as written forbids it.
+- **Train A's pull requests**: (1) decisions, inventory, the catalog; (2) the NVAPI bridge's ABI 3 and the read-only
+  gate; (3) LibreHardwareMonitor's groups and the shared reader, not yet composed; (4) the `.partial` chunks and
+  schema 0023, produced by nobody yet; (5) the option goes live, with Privacy 2.15; (6) the pipe request and the
+  App's feed; (7) the page, the navigation item, Ctrl+6; (8) the release. A setting and its guide text, a navigation
+  item and its guide text, a schema script and its writer each land in ONE pull request — the guide tests, the
+  viewer-mode test and the registry test are red otherwise.
+- **What the owner will be asked to run** (the release's owner-only item): the NVAPI rows on the RTX 5080 — CI has no
+  driver and never takes that branch; one run as administrator with PawnIO, which is also the first there has ever
+  been (`20_OPEN_QUESTIONS` §M10); the Agent's processor time and memory with the option on and off (NFR-2).
+- **A trap already paid for**: LibreHardwareMonitor's storage group may touch every drive when it opens, and this
+  PC once had a failing USB drive. If the group cannot be opened without touching removable drives, storage stays
+  N/A in beta.39 — decided before the first run, not after it.
+
 ### Left open by this session
 
 - **`LogNoteW`** (`src/native/FrameLedger.Overlay/src/dllmain.cpp`): a function nothing calls, found by the native
   report and **not removed** — D100 changes code loaded into a game for a defect only, and dead code is not one. The
   owner says whether it goes (owner-only item 36 (d)); `.editorconfig` has a section, naming it, that goes with it.
-- **This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
-  after this text. Record them in the next pull request, as beta.37's and alpha.4's were in #384. What is known
-  before the tag: the rehearsal on the release branch (run 42944533749) made a delta from beta.37 of 727,036
-  bytes — "Delta processed 0452 files. 0022 patched, 0430 unchanged, 0000 new, 0000 removed".
+- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
+  after this text. Record them in the next pull request, as beta.37's and alpha.4's were in #384.~~ **Recorded
+  2026-11-11, in the first pull request of the Advanced-metrics train: 0.1.0-beta.38 was released
+  2026-11-11T02:56:51Z** from the signed tag on `b7d6550`, by run 42947853293 — one run for the one tag push, where
+  alpha.4's push had started two. Eight assets; the seven digests of `SHA256SUMS.txt` equal the ones GitHub computed;
+  the shipped natives carry `FL_BUILD_ID v0.1.0-beta.38`. The delta from beta.37 is 699,201 bytes beside a full
+  package of 110,325,438 — "Delta processed 0452 files. 0022 patched, 0430 unchanged". The wiki was published by run
+  42949461191. The rehearsal on the release branch (run 42944533749) had made a delta of 727,036 bytes with the same
+  file counts.
 - **The Qodana licence** is read from the job's log (*Qodana license plan: Ultimate*, and the day the subscription is
   active until). When it lapses both jobs are red and advisory; `qodana.yaml`'s first comment is the way back.
 - **C# 15's constructs** wait for a ReSharper engine that reads them (`20_OPEN_QUESTIONS` §G, the row added with
@@ -537,6 +575,14 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D98 | [`12_BUILD.md`](12_BUILD.md) §The alpha line | alpha.4 is beta.37's source on .NET 11.0.0, and then the alpha line rests until a newer .NET has a preview; a resting alpha tells its user to install the beta |
 | D99 | [`13_CI_CD.md`](13_CI_CD.md) §Qodana | Qodana for .NET on the Ultimate licence, in two reports from the start: the managed code to the Qodana Cloud project `frameledger`, the C++ to `frameledger-cpp` |
 | D100 | [`13_CI_CD.md`](13_CI_CD.md) §Qodana | an inspection is switched off where the engine that raised it reads — ReSharper's in `.editorconfig`, the rest in `qodana.yaml` (amends D93); hints are off as a severity; in code loaded into a game only defects are fixed |
+| D101 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Advanced metrics | "Thông số nâng cao" — Advanced metrics: the option `telemetry.advanced`, off by default, and off means nothing more is read or stored and the navigation item is hidden; everything reachable inside a game follows in stages, four trains A–D |
+| D102 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Advanced metrics | stored in full with the session, in tables of their own (`machine_profiles`, `session_advanced`, schema 0023) and not in columns of `sessions`; series under `adv.` names with NaN, not −1, for a tick with no reading |
+| D103 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Advanced metrics | LibreHardwareMonitor's CPU, memory, motherboard and storage groups only when the Agent already runs as administrator with PawnIO — the page links to that setting and never asks; power-supply and fan-controller groups refused, battery deferred |
+| D104 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Advanced metrics | identifiers are never read: the card's serial number and unique id, a display's EDID, the list of programs that are encoding |
+| D105 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Advanced metrics | the navigation item is the pane's last; Ctrl+1–5 keep their pages and Ctrl+6 opens it only while the option is on |
+| D106 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Advanced metrics | a `.partial` chunk of an unknown type with a right checksum is skipped, where it ended the read |
+| D107 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Advanced metrics | with no game running the Agent reads sensors only while the page is open |
+| D108 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Advanced metrics | "never call a setter" is a build gate: every `NvAPI_*` call of the bridge is held to a committed list |
 
 ---
 
