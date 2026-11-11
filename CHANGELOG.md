@@ -55,6 +55,22 @@ numeric core and does not move; the heading is the full version — corrected 20
   the component inside the game does exactly what it did before. **A game that is running when you update must be
   restarted before FrameLedger measures it again**, as after every update.
 
+- **The component inside a game can read what the game tells its upscaler — and only when asked.** For a game
+  FrameLedger injects into, and only while the agent asks for it (nothing asks yet: that is the next pull request,
+  and then only with Advanced metrics on), the calls FrameLedger already intercepts are read a little further: the
+  options a game hands DLSS with each evaluation (output size, presets, exposure, three switches), what it hands
+  FSR with each upscale (sharpening, the jitter's size, exposure, the depth range, the field of view as a range,
+  flags, the frame time it reports), and FSR's own memory when the game itself asks for it. **No new hook**, and
+  with the request off the same code as before runs: a test injects into a window that sends all of it and finds
+  the new memory region empty to the last byte. **Never the camera's position, its axes or its matrices** — a
+  build check now refuses those names anywhere in the code loaded into a game (`tools/overlay-fields-check.ps1`).
+  Many games set their DLSS options through a call that cannot be intercepted, and will show nothing here.
+  Measured cost while asked: 22–23 billionths of a second per frame for FSR, 10–12 for DLSS; not measurable when
+  not asked.
+- **A second session of a game that kept running starts its summaries afresh.** The ranges and counts kept inside the
+  game belong to the session that asked for them: each session asks with a request of its own, and the agent reads
+  only what answers it.
+
 ### Changed
 
 - **The agent's processor budget says what was measured.** The specification promised that the capture agent uses

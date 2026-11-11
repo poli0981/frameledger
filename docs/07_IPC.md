@@ -74,7 +74,7 @@ struct alignas(64) FlControlBlock {  // Agent-written
     uint32_t overlayEnabled;     // @8  in-game overlay draw toggle (v1.1)
     uint32_t guardTicks;         // @12 completed guard evaluations, NOT a timer
     uint32_t logFlushRequested;  // @16 a COUNTER: bumped by the Agent at session end; the watchdog flushes the native log on a change (17_HOOK_ENGINE §Native logging, 2026-09-06)
-    uint32_t advancedRequested;  // @20 1 while this session records Advanced metrics (D111); written 0 or 1 at attach, either way
+    uint32_t advancedRequested;  // @20 0, or this session's request for Advanced metrics (D111): non-zero, new to this ring; written at attach, either way
     uint32_t reserved[10];       // @24..63 must be zero
 };
 
@@ -101,17 +101,26 @@ static_assert(FL_SHM_DISPLAY_OFFSET == 0xC0 && FL_SHM_ADVANCED_OFFSET == 0x100 &
 ```
 
 **Region 5 — what a hooked game told its upscaler (layout 5, 2026-11-11; Advanced metrics train B, owner decisions
-D111 and D113; written by nobody until the Overlay of 0.1.0-beta.40).** `18_GPU_VENDOR_APIS` §Train B is the design.
+D111 and D113; written by the Overlay's watchdog since 0.1.0-beta.40).** `18_GPU_VENDOR_APIS` §Train B is the design.
 What the region is, as a contract between the two sides:
 
-- **Off means zero.** `FlControlBlock.advancedRequested` is the Agent's word that this session records Advanced
-  metrics — written 0 or 1 at attach, either way, because the control block outlives a session
+- **Off means nothing is read and nothing is written.** `FlControlBlock.advancedRequested` is the Agent's word that
+  this session records Advanced metrics — written at attach, either way, because the control block outlives a session
   (`ShmRingReader.SetAdvancedRequested`). While it is 0 the Overlay reads no field and installs no hook beyond what
-  it did before, and writes nothing here: the region is zero from end to end, and `validMask == 0` means "nothing
-  was read", never "the game used none of it".
+  it did before, and writes nothing here: a ring nobody ever asked is zero from end to end (`fl_guard` checks every
+  byte, with a target that sends everything), and `validMask == 0` means "nothing was read", never "the game used
+  none of it".
+- **"On" is a request, not a 1** *(2026-11-12)*. A game outlives a session, and so do the summaries the Overlay keeps
+  inside it — a range, a count, a mask of what was ever seen. So the word is a value no session of this ring used
+  before (above the word as it stands and above the request the region last answered; never 0), the watchdog starts
+  its summaries afresh at a value it has not seen, and every publication names the request it answers
+  (`FlAdvancedState.request`, the word that was `reserved0`). The reader returns only a publication that names the
+  value it wrote: what a second session of the same game finds in the region before the first tick is the first
+  session's, and is not read. After an "off" the region keeps its last publication, untouched.
 - **One writer, once a second.** The detours keep process-local accumulators; the watchdog copies them here at its
   tick. No game thread writes the region, so the seqlock has a single writer: `seq` odd, the fields, `seq` even.
-- **The reader keeps its last consistent copy** (`ShmRingReader.AdvancedState`): null until something was published;
+- **The reader keeps its last consistent copy** (`ShmRingReader.AdvancedState`): null until something was published
+  for its request;
   the same copy while `seq` has not moved, without copying 1472 bytes again; and that copy still when the writer is
   inside on every attempt — a watchdog killed with its process leaves `seq` odd for good, and what it published
   before is still what the game said.

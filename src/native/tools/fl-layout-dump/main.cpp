@@ -113,7 +113,7 @@ int main() {
     FL_ADV_FIELD(seq);
     FL_ADV_FIELD(validMask);
     FL_ADV_FIELD(samples);
-    FL_ADV_FIELD(reserved0);
+    FL_ADV_FIELD(request);
     FL_ADV_FIELD(sampleQpc);
     FL_ADV_FIELD(reservedHeader);
     FL_ADV_FIELD(dlssStructVersion);

@@ -489,6 +489,16 @@ function Invoke-ProjectGates {
     Invoke-Checked 'nvapi-readonly-check (self-test)' { & $nvapiTool -SelfTest }
     Invoke-Checked 'nvapi-readonly-check' { & $nvapiTool -RepoRoot $repo }
 
+    # 2026-11-12 (D116): the same for the code loaded into a game. Advanced metrics, train B, reads more members of
+    # the vendors' structs than the frame record ever needed, and the same structs hold where the player's camera is.
+    # Every such read is in one header, each member on tools/overlay-allowed-fields.txt in both directions; a camera's
+    # position, axes and matrices are named nowhere in the Overlay or the Vulkan layer, whatever the list says. Text
+    # only.
+    Write-Step 'overlay-fields-check'
+    $fieldsTool = Join-Path $repo 'tools/overlay-fields-check.ps1'
+    Invoke-Checked 'overlay-fields-check (self-test)' { & $fieldsTool -SelfTest }
+    Invoke-Checked 'overlay-fields-check' { & $fieldsTool -RepoRoot $repo }
+
     Write-Step 'docs-split-check'
     $splitTool = Join-Path $repo 'tools/docs-split-check.ps1'
     Invoke-Checked 'docs-split-check (self-test)' { & $splitTool -SelfTest }

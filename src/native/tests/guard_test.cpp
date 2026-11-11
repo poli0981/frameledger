@@ -16,6 +16,8 @@
 #include <windows.h>
 
 #include <algorithm>
+#include <atomic>
+#include <bit>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/reporters/catch_reporter_event_listener.hpp>
 #include <catch2/reporters/catch_reporter_registrars.hpp>
@@ -6638,4 +6640,243 @@ TEST_CASE("D33 -- the excepted family's module loading late does not stop the Ov
     }    // each child is gone before its module file is deleted
     DeleteFileW(decoy.c_str());
     RemoveDirectoryW(dir.c_str());
+}
+
+// ===========================================================================
+// Advanced metrics, train B (0.1.0-beta.40; owner decisions D111 and D115): region 5.
+//
+// THE CLAIM IS THE OFF HALF. That the Overlay can read a few more members of a descriptor it already reads is a small
+// thing; that it reads NONE of them while the Agent has not asked is what the owner decided, and no test of the header
+// alone can show it - the gate is a word in the control block, consulted in the detours of an injected DLL. So each
+// case below runs a target that SENDS everything (--advanced, the memory query) and looks at the region with the word
+// at zero first.
+// ===========================================================================
+namespace {
+
+// What hook-harness sends under --advanced (main.cpp, kAdv*) and what the ffx stub answers the memory query with
+// (stub_ffx_leaf.inl). Stated again rather than shared: a value changed on one side alone must fail here.
+constexpr uint32_t kAdvDlssOutputW = 2560u;
+constexpr uint32_t kAdvDlssOutputH = 1440u;
+constexpr float    kAdvDlssPreExposure = 1.5f;
+constexpr float    kAdvDlssExposureScale = 0.75f;
+constexpr float    kAdvFfxSharpness = 0.35f;
+constexpr float    kAdvFfxPreExposure = 1.25f;
+constexpr float    kAdvFfxNear = 0.1f;
+constexpr float    kAdvFfxFar = 1000.0f;
+constexpr float    kAdvFfxFovLow = 0.9f;
+constexpr float    kAdvFfxFovHigh = 1.1f;
+constexpr uint32_t kAdvFfxFrameTimeUs = 16000u;
+constexpr uint64_t kAdvMemoryTotal = 123456789ull;
+constexpr uint64_t kAdvMemoryAliasable = 23456789ull;
+
+fl::FlAdvancedState* RegionFive(const MappedRing& r) {
+    return reinterpret_cast<fl::FlAdvancedState*>(static_cast<unsigned char*>(r.base) + FL_SHM_ADVANCED_OFFSET);
+}
+
+// Every byte of the region, not the fields a test thought to name.
+bool RegionFiveIsZero(const MappedRing& r) {
+    const auto* p = static_cast<const unsigned char*>(r.base) + FL_SHM_ADVANCED_OFFSET;
+    for (size_t i = 0; i < sizeof(fl::FlAdvancedState); ++i) {
+        if (p[i] != 0u) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// A consistent copy of region 5 that answers `request`, the way the Agent takes one - waited for (bounded), because
+// the watchdog publishes once a second: newer than `afterSamples`, and carrying every bit of `wantMask`.
+bool ReadAdvanced(const MappedRing& r, uint32_t request, fl::FlAdvancedState& out, uint32_t afterSamples = 0u,
+                  uint32_t wantMask = 0u) {
+    fl::FlAdvancedState* region = RegionFive(r);
+    for (int i = 0; i < 200; ++i) {
+        ++r.ctl->guardTicks;
+        std::atomic_ref<uint32_t> seq{region->seq};
+        const uint32_t            before = seq.load(std::memory_order_acquire);
+        if (before != 0u && (before & 1u) == 0u) {
+            fl::FlAdvancedState copy{};
+            std::memcpy(&copy, region, sizeof(copy));
+            std::atomic_thread_fence(std::memory_order_seq_cst);
+            if (seq.load(std::memory_order_acquire) == before && copy.request == request &&
+                copy.samples > afterSamples && (copy.validMask & wantMask) == wantMask) {
+                out = copy;
+                return true;
+            }
+        }
+        Sleep(50);
+    }
+    return false;
+}
+
+void SetAdvancedRequest(const MappedRing& r, uint32_t request) {
+    std::atomic_ref<uint32_t>{r.ctl->advancedRequested}.store(request, std::memory_order_release);
+}
+
+// Keeps the supervision clock alive for `ms`, the way a session's loop does.
+void TickFor(const MappedRing& r, int ms) {
+    for (int waited = 0; waited < ms; waited += 50) {
+        ++r.ctl->guardTicks;
+        Sleep(50);
+    }
+}
+
+uint32_t BitsOf(float v) {
+    return std::bit_cast<uint32_t>(v);
+}
+
+// What 0.1.0-beta.41 and beta.42 fill: declared now, written by nothing in this release.
+bool LaterGroupsAreZero(const fl::FlAdvancedState& a) {
+    bool zero = a.ffxFgConfigures == 0u && a.ffxFgEnabledSeen == 0u && a.ffxFgFlagsSeen == 0u &&
+                a.slConstantsCalls == 0u && a.slResets == 0u && a.slFlagsSeenTrue == 0u && a.slFlagsSeenFalse == 0u;
+    for (uint32_t i = 0; i < FL_ADV_FEATURE_SLOTS * FL_ADV_FEATURE_WORDS; ++i) {
+        zero = zero && a.features[i] == 0u;
+    }
+    return zero;
+}
+
+}    // namespace
+
+TEST_CASE("region 5 stays empty until the Agent asks, then carries what an FSR title told its upscaler, per request",
+          "[guard][inject][shm][advanced]") {
+    // ONE TARGET, FOUR STRETCHES, because the claims are about transitions: not asked -> asked -> not asked -> asked
+    // again. The target sends the same thing throughout - every extra member of the UPSCALE descriptor and a memory
+    // query before each dispatch - so whatever differs between two stretches is the Overlay's doing.
+    Child child;
+    REQUIRE(StartHarness(child, L"--real --ffx-topology 2x --advanced --ffx-memory-query v2 --hold-presenting-ffx 60"));
+
+    ResetFake();
+    g.modules = {"kernel32.dll"};
+    g.scanSet = {child.pi.dwProcessId};
+    REQUIRE(GuardedInjectWithSources(child.pi.dwProcessId, FL_OVERLAY_DLL, FakeSources()).Allowed());
+
+    MappedRing r;
+    REQUIRE(OpenRingFor(child.pi.dwProcessId, r));
+    REQUIRE(WaitForIdentityHook(r.st));
+    REQUIRE(WaitForHookFamily(r.st, static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY)));    // ffxQuery is hooked
+
+    // ---- 1. NOT ASKED. Three watchdog ticks with both hooks live and the target sending everything.
+    const std::uint64_t atHooks = r.st->writeIndex;
+    TickFor(r, 3200);
+    INFO("writeIndex " << r.st->writeIndex << " (was " << atHooks << ") status " << r.st->status << " faults "
+                       << r.st->faultCount);
+    REQUIRE(r.st->writeIndex > atHooks + 30u);    // the hooks ran: this is not a target that sent nothing
+    CHECK(r.ctl->advancedRequested == 0u);
+    CHECK(RegionFiveIsZero(r));
+
+    // ---- 2. ASKED. Within a tick or two the region answers THIS request with what the descriptor carried.
+    SetAdvancedRequest(r, 7u);
+    fl::FlAdvancedState a{};
+    REQUIRE(ReadAdvanced(r, 7u, a, 0u, fl::FL_ADV_VALID_FFX_UPSCALE | fl::FL_ADV_VALID_FFX_MEMORY));
+    // A few seconds of it, so the count is one a restart can be told from.
+    for (int i = 0; i < 20 && a.ffxDispatches < 300u; ++i) {
+        REQUIRE(ReadAdvanced(r, 7u, a, a.samples, fl::FL_ADV_VALID_FFX_UPSCALE | fl::FL_ADV_VALID_FFX_MEMORY));
+    }
+    INFO("mask 0x" << std::hex << a.validMask << std::dec << " dispatches " << a.ffxDispatches << " queries "
+                   << a.ffxMemoryQueries << " frameTime " << a.ffxFrameTimeCount << "/" << a.ffxFrameTimeSumUs
+                   << " samples " << a.samples);
+    REQUIRE(a.ffxDispatches >= 300u);
+    CHECK((a.validMask & fl::FL_ADV_VALID_DLSS_OPTIONS) == 0u);    // an FSR title chains no DLSSOptions
+    CHECK(a.dlssOptionsSeen == 0u);
+    CHECK(a.sampleQpc != 0u);
+    CHECK(a.ffxSharpenSeen == 2u);    // bit 1: seen ON, and never off
+    CHECK(a.ffxSharpnessMinBits == BitsOf(kAdvFfxSharpness));
+    CHECK(a.ffxSharpnessMaxBits == BitsOf(kAdvFfxSharpness));
+    CHECK(a.ffxJitterMaxXBits == BitsOf(0.3f));    // the largest magnitude of -0.25 and 0.3
+    CHECK(a.ffxJitterMaxYBits == BitsOf(0.4f));    // ... and of 0.4 and -0.1
+    CHECK(a.ffxPreExposureMinBits == BitsOf(kAdvFfxPreExposure));
+    CHECK(a.ffxPreExposureMaxBits == BitsOf(kAdvFfxPreExposure));
+    CHECK(a.ffxNearBits == BitsOf(kAdvFfxNear));
+    CHECK(a.ffxFarBits == BitsOf(kAdvFfxFar));
+    CHECK(a.ffxFovMinBits == BitsOf(kAdvFfxFovLow));    // a range, never a series (D114)
+    CHECK(a.ffxFovMaxBits == BitsOf(kAdvFfxFovHigh));
+    CHECK(a.ffxFlagsSeen == (1u << 2));    // FFX_UPSCALE_FLAG_NON_LINEAR_COLOR_PQ, the one flag the target sets
+    CHECK(a.ffxResets == 0u);
+    // The frame time: what was dispatched since the publication before, each one the 16 ms the target states.
+    CHECK(a.ffxFrameTimeCount != 0u);
+    CHECK(a.ffxFrameTimeSumUs == a.ffxFrameTimeCount * kAdvFfxFrameTimeUs);
+    // The memory the stub wrote through the target's own pointer - and counted once per query, though the loader
+    // hands the same query on to the leaf and both are hooked.
+    CHECK(a.ffxMemoryTotalBytes == kAdvMemoryTotal);
+    CHECK(a.ffxMemoryAliasableBytes == kAdvMemoryAliasable);
+    CHECK(a.ffxMemoryQueries != 0u);
+    CHECK(a.ffxMemoryQueries <= a.ffxDispatches + 2u);
+    CHECK(LaterGroupsAreZero(a));
+
+    // ---- 3. NOT ASKED AGAIN. Nothing more is read, and nothing more is written: the region is what it was.
+    SetAdvancedRequest(r, 0u);
+    TickFor(r, 2200);    // the watchdog has seen the zero
+    fl::FlAdvancedState held{};
+    std::memcpy(&held, RegionFive(r), sizeof(held));
+    TickFor(r, 2500);
+    CHECK(std::memcmp(&held, RegionFive(r), sizeof(held)) == 0);
+    CHECK((held.seq & 1u) == 0u);
+    CHECK(held.request == 7u);    // still naming the request it answered, which is how the next reader knows
+
+    // ---- 4. A SECOND SESSION of a target that kept running: a request the Overlay has not seen. Its first
+    // publication is its own - a count that starts again, not the three hundred and more of the session before.
+    SetAdvancedRequest(r, 8u);
+    fl::FlAdvancedState b{};
+    REQUIRE(ReadAdvanced(r, 8u, b));
+    INFO("second request: dispatches " << b.ffxDispatches << " samples " << b.samples << " after " << held.samples);
+    CHECK(b.samples > held.samples);
+    CHECK(b.ffxDispatches < 300u);
+    REQUIRE(ReadAdvanced(r, 8u, b, b.samples, fl::FL_ADV_VALID_FFX_UPSCALE | fl::FL_ADV_VALID_FFX_MEMORY));
+    CHECK(b.ffxFovMinBits == BitsOf(kAdvFfxFovLow));
+    CHECK(b.ffxMemoryTotalBytes == kAdvMemoryTotal);
+
+    CHECK(r.st->faultCount == 0u);
+    CHECK(r.st->status == fl::FL_STATUS_READY);
+}
+
+TEST_CASE("region 5 carries the DLSS options a title chains into its evaluation, and only while asked",
+          "[guard][inject][shm][advanced]") {
+    Child child;
+    REQUIRE(StartHarness(child, L"--real --advanced --hold-presenting-upscaled 30"));
+
+    ResetFake();
+    g.modules = {"kernel32.dll"};
+    g.scanSet = {child.pi.dwProcessId};
+    REQUIRE(GuardedInjectWithSources(child.pi.dwProcessId, FL_OVERLAY_DLL, FakeSources()).Allowed());
+
+    MappedRing r;
+    REQUIRE(OpenRingFor(child.pi.dwProcessId, r));
+    REQUIRE(WaitForIdentityHook(r.st));
+
+    // Not asked: the evaluation is hooked, the options are chained into every one, and none of it is kept.
+    const std::uint64_t atHooks = r.st->writeIndex;
+    TickFor(r, 2500);
+    REQUIRE(r.st->writeIndex > atHooks + 30u);
+    CHECK(RegionFiveIsZero(r));
+
+    SetAdvancedRequest(r, 1u);
+    fl::FlAdvancedState a{};
+    REQUIRE(ReadAdvanced(r, 1u, a, 0u, fl::FL_ADV_VALID_DLSS_OPTIONS));
+    INFO("mask 0x" << std::hex << a.validMask << std::dec << " version " << a.dlssStructVersion << " seen "
+                   << a.dlssOptionsSeen << " output " << a.dlssOutputWidth << "x" << a.dlssOutputHeight);
+    CHECK(a.validMask == static_cast<uint32_t>(fl::FL_ADV_VALID_DLSS_OPTIONS));    // no ffx call in this target
+    CHECK(a.dlssStructVersion == 3u);    // the version these headers declare, which is what entitles the tail
+    CHECK(a.dlssOptionsSeen != 0u);
+    CHECK(a.dlssOutputWidth == kAdvDlssOutputW);
+    CHECK(a.dlssOutputHeight == kAdvDlssOutputH);
+    CHECK(a.dlssPreExposureBits == BitsOf(kAdvDlssPreExposure));
+    CHECK(a.dlssExposureScaleBits == BitsOf(kAdvDlssExposureScale));
+    // Presets as the vendor's value PLUS ONE, so the vendor's own 0 ("default") is told from "not read": DLAA K (11),
+    // Quality J (10), Balanced default (0), Performance M (13), Ultra Performance L (12), Ultra Quality default (0).
+    CHECK(a.dlssPresets[0] == 12u);
+    CHECK(a.dlssPresets[1] == 11u);
+    CHECK(a.dlssPresets[2] == 1u);
+    CHECK(a.dlssPresets[3] == 14u);
+    CHECK(a.dlssPresets[4] == 13u);
+    CHECK(a.dlssPresets[5] == 1u);
+    // Booleans likewise: eFalse is 1, eTrue 2.
+    CHECK(a.dlssColorBuffersHdr == 1u);
+    CHECK(a.dlssAutoExposure == 2u);
+    CHECK(a.dlssAlphaUpscaling == 2u);
+    CHECK(a.ffxDispatches == 0u);
+    CHECK(a.ffxSharpnessMinBits == FL_ADV_FLOAT_NONE);    // a float nobody saw is "none", never 0.0
+    CHECK(a.ffxMemoryQueries == 0u);
+    CHECK(LaterGroupsAreZero(a));
+
+    CHECK(r.st->faultCount == 0u);
+    CHECK(r.st->status == fl::FL_STATUS_READY);
 }

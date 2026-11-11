@@ -829,11 +829,15 @@ struct alignas(64) FlControlBlock {
     // last acted on, so the Agent never has to clear anything in a block it is the
     // sole writer of. Took reserved[0]; additive, no layout bump.
     uint32_t logFlushRequested;    // @16
-    // ADVANCED METRICS REQUESTED (2026-11-11, owner decision D111). 1 while the session this ring belongs to records
-    // Advanced metrics, 0 otherwise - and the Agent writes it UNCONDITIONALLY at attach, before its first guard
-    // result, because this block outlives a session and a value left by the last one would be a request nobody
-    // made. While it is 0 the Overlay reads no field and installs no hook beyond what it did before the option
-    // existed, and region 5 stays zero. Took reserved[0]; additive within the block.
+    // ADVANCED METRICS REQUESTED (2026-11-11, owner decision D111). 0 while the session this ring belongs to does not
+    // record Advanced metrics; otherwise THAT SESSION'S REQUEST, a non-zero value no session of this ring used before
+    // - and the Agent writes it UNCONDITIONALLY at attach, before its first guard result, because this block outlives
+    // a session and a value left by the last one would be a request nobody made. While it is 0 the Overlay reads no
+    // field and installs no hook beyond what it did before the option existed, and writes nothing to region 5. A
+    // value the watchdog has not seen before is a NEW request: the summaries start afresh, so a session's ranges and
+    // counts are its own, and every publication names the request it answers (FlAdvancedState::request) - which is
+    // how a reader tells its session's region from the one the session before left. Took reserved[0]; additive
+    // within the block.
     uint32_t advancedRequested;    // @20
     uint32_t reserved[10];         // @24..63  must be zero
 };
@@ -901,9 +905,14 @@ struct alignas(64) FlDisplayState {
 // (CLAUDE.md rule 4), by the rule of 17_HOOK_ENGINE §Which struct version carries which field: a member is read only
 // where the upstream tags prove the game's struct has it.
 //
-// OFF MEANS OFF (D111). Nothing here is written, and nothing more is read in any hook, unless
-// FlControlBlock.advancedRequested is 1. A ring whose session does not record Advanced metrics has this region zero
-// from end to end, and `validMask` zero says "nothing was read" - never "the game used none of it".
+// OFF MEANS OFF (D111). Nothing here is written, and nothing more is read in any hook, while
+// FlControlBlock.advancedRequested is 0. A ring nobody ever asked has this region zero from end to end, and
+// `validMask` zero says "nothing was read" - never "the game used none of it".
+//
+// A PUBLICATION ANSWERS ONE REQUEST (2026-11-12). The game outlives a session, and so would a range or a count kept
+// inside it: the watchdog starts its summaries afresh at a request it has not seen, and `request` names the one a
+// publication answers. After an "off" the region keeps its last publication, untouched - a reader that asks again
+// reads nothing until one names ITS request.
 //
 // ONE WRITER, ONCE A SECOND. The detours keep process-local accumulators (relaxed atomics); the WATCHDOG copies them
 // here at its 1 Hz tick. No game thread writes this region, so the seqlock has a single writer and needs no
@@ -950,7 +959,7 @@ struct alignas(64) FlAdvancedState {
     uint32_t seq;                   // @0    seqlock: odd while the watchdog is inside, +2 per publication
     uint32_t validMask;             // @4    FlAdvancedValid
     uint32_t samples;               // @8    publications (wraps)
-    uint32_t reserved0;             // @12   must be zero
+    uint32_t request;               // @12   the FlControlBlock::advancedRequested this publication answers
     uint64_t sampleQpc;             // @16   QueryPerformanceCounter at the last publication
     uint32_t reservedHeader[10];    // @24..63  must be zero
 

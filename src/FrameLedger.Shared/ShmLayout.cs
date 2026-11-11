@@ -664,9 +664,11 @@ public unsafe struct FlControlBlock
     public uint LogFlushRequested;
 
     /// <summary>
-    /// 1 while the session this ring belongs to records Advanced metrics, 0 otherwise (owner decision D111). Written
-    /// unconditionally at attach - the block outlives a session. While it is 0 the Overlay reads and hooks exactly what it
-    /// did before the option existed, and region 5 stays zero.
+    /// 0 while the session this ring belongs to does not record Advanced metrics; otherwise that session's request, a
+    /// non-zero value no session of this ring used before (owner decision D111). Written unconditionally at attach - the
+    /// block outlives a session. While it is 0 the Overlay reads and hooks exactly what it did before the option
+    /// existed and writes nothing to region 5; a value it has not seen starts its summaries afresh, and every
+    /// publication names the request it answers (<see cref="FlAdvancedState.Request"/>).
     /// </summary>
     public uint AdvancedRequested;
 
@@ -765,7 +767,7 @@ public enum FlAdvancedValid : uint
 
 /// <summary>
 /// Region 5 — Overlay-written by its watchdog, once a second, <b>only while <see cref="FlControlBlock.AdvancedRequested"/>
-/// is 1</b> (layout 5, 2026-11-11, Advanced metrics train B): what a hooked game told its upscaler, read from the arguments
+/// is not 0</b> (layout 5, 2026-11-11, Advanced metrics train B): what a hooked game told its upscaler, read from the arguments
 /// of calls the Overlay hooks. Sized once for the three releases of the train: a member a later release fills is here
 /// and stays zero until then.
 /// </summary>
@@ -800,8 +802,11 @@ public unsafe struct FlAdvancedState
     /// <summary>Publications (wraps).</summary>
     public uint Samples;
 
-    /// <summary>Must be zero.</summary>
-    public uint Reserved0;
+    /// <summary>
+    /// The <see cref="FlControlBlock.AdvancedRequested"/> this publication answers. A reader keeps a publication only
+    /// when this is the value it wrote: anything else is what the session before left in a game that kept running.
+    /// </summary>
+    public uint Request;
 
     /// <summary>QueryPerformanceCounter at the last publication.</summary>
     public ulong SampleQpc;

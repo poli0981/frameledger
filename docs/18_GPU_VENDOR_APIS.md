@@ -727,9 +727,16 @@ What the catalog marks `HookedCall` and `NewHook`. Planned the day train A shipp
 planning, the design reviewed against the code before it was approved.
 
 - **D111 — off means off inside the game too.** The Agent writes one word of the control block
-  (`advancedRequested`, 0 or 1, unconditionally at attach) when the session records Advanced metrics. The Overlay
+  (`advancedRequested`, ~~0 or 1~~ 0 or that session's request, unconditionally at attach) when the session records Advanced metrics. The Overlay
   reads a new field, and installs a new hook, only while it is set; with the option off it hooks and reads exactly
   what 0.1.0-beta.39's does.
+  **Built 2026-11-12 (0.1.0-beta.40, PR-3), with one thing the plan did not have:** "on" is not a 1 but a
+  *request* — a value no session of that ring used before. A game outlives a session, and the Overlay's summaries
+  with it; a second session of a game that kept running would have read the first one's field of view and counts.
+  The watchdog starts its summaries afresh at a request it has not seen and names the request in every publication;
+  the Agent reads only what answers its own (`07_IPC` §Region 5). The detours consult one process-local flag, the
+  watchdog is the region's one writer, and `fl_guard` shows the off half on a target that sends everything: every
+  byte of the region zero until asked, untouched after an "off", a count that starts again at the next request.
 - **D113 — three releases, because a new patch site cannot be proven in CI.** A crash in a game under the user-mode
   anti-cheat exception's trial ends that exception for good (D38), and every release already means restarting the
   game. **beta.40**: more fields of calls *already* hooked — `sl::DLSSOptions` where the game chains it into
@@ -745,7 +752,8 @@ planning, the design reviewed against the code before it was approved.
   carries which field): the table from the upstream tags, not the one header in the tree.
 - **D116 — "never the camera" is a build check**, as "never a setter" is (D108): `tools/overlay-fields-check.ps1` —
   every read of a vendor struct in one header, each allowed member named and used, the camera's names refused
-  anywhere in the Overlay and the Vulkan layer, no copy of `sl::Constants` by value.
+  anywhere in the Overlay and the Vulkan layer, no copy of `sl::Constants` by value. *(Built 2026-11-12:
+  twenty-eight members on `tools/overlay-allowed-fields.txt`; `12_BUILD` gate 14f.)*
 - **What will read N/A, and says why.** Many titles set their DLSS options through `slDLSSSetOptions`, which is not
   an export (train D), so `sl.dlss.*` is filled only for a title that passes its options with the evaluate call.
   `slGetFeatureVersion` and `slGetFeatureRequirements` are calls a game makes while starting.

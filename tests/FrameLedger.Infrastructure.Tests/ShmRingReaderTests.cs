@@ -271,11 +271,54 @@ public sealed class ShmRingReaderTests
         ring.Control->AdvancedRequested.Should().Be(0u, "off is a zero that is written");
 
         reader.SetAdvancedRequested(true);
-        ring.Control->AdvancedRequested.Should().Be(1u);
+        ring.Control->AdvancedRequested.Should().Be(1u, "the first request of a ring nobody asked before");
         ring.Control->UnhookRequested.Should().Be(0u, "asking for more readings is not the safety stop");
         ring.Control->PauseRequested.Should().Be(0u);
         ring.Control->LogFlushRequested.Should().Be(0u);
         ring.Control->GuardTicks.Should().Be(0u);
+    }
+
+    [Fact]
+    public unsafe void EachSessionAsksWithARequestOfItsOwnAndReadsOnlyWhatAnswersIt()
+    {
+        // A game outlives a session, and the Overlay's summaries with it. Three sessions on one ring: the first asks and
+        // is answered; the second does not ask; the third asks again - with a value neither the word nor the region ever
+        // held - and must not read the first one's publication, which is still lying in the region.
+        int pid = FakePid();
+        using var ring = new FakeRing(pid);
+
+        using (ShmRingReader? first = ShmRingReader.TryAttach(pid, _buildId, out _))
+        {
+            first!.SetAdvancedRequested(true);
+            ring.Control->AdvancedRequested.Should().Be(1u);
+            ring.Advanced->Request = 1u;
+            ring.Advanced->FfxDispatches = 500u;
+            ring.Advanced->Seq = 2u;
+            first.AdvancedState.Should().BeOfType<FlAdvancedState>().Which.FfxDispatches.Should().Be(500u);
+        }
+
+        using (ShmRingReader? second = ShmRingReader.TryAttach(pid, _buildId, out _))
+        {
+            second!.SetAdvancedRequested(false);
+            ring.Control->AdvancedRequested.Should().Be(0u);
+            second.AdvancedState.Should().BeNull("a session that did not ask reads nothing, whatever the region holds");
+        }
+
+        using ShmRingReader? third = ShmRingReader.TryAttach(pid, _buildId, out _);
+        third!.SetAdvancedRequested(true);
+        ring.Control->AdvancedRequested.Should().Be(2u, "above the request the region last answered, though the word was 0");
+        third.AdvancedState.Should().BeNull("what is in the region answers the first session's request");
+
+        ring.Advanced->Seq = 3u;
+        ring.Advanced->Request = 2u;
+        ring.Advanced->FfxDispatches = 7u;
+        ring.Advanced->Seq = 4u;
+        third.AdvancedState.Should().BeOfType<FlAdvancedState>().Which.FfxDispatches.Should().Be(7u);
+
+        // And the value that would wrap to "off" is never written.
+        ring.Control->AdvancedRequested = uint.MaxValue;
+        third.SetAdvancedRequested(true);
+        ring.Control->AdvancedRequested.Should().Be(1u);
     }
 
     [Fact]
@@ -286,6 +329,8 @@ public sealed class ShmRingReaderTests
         using ShmRingReader? reader = ShmRingReader.TryAttach(pid, _buildId, out _);
 
         reader!.AdvancedState.Should().BeNull("a region nobody published is not a game that used nothing");
+        reader.SetAdvancedRequested(true);
+        ring.Advanced->Request = ring.Control->AdvancedRequested;
 
         // One publication, as the watchdog writes it: odd, the fields, even.
         ring.Advanced->Seq = 1u;
