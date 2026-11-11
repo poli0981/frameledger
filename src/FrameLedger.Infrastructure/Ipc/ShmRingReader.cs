@@ -47,6 +47,8 @@ public sealed unsafe class ShmRingReader : IDisposable
     private ulong _readIndex;
     private bool _pointerHeld;
     private bool _disposed;
+    private FlAdvancedState? _advanced;
+    private uint _advancedSeq;
 
     private ShmRingReader(MemoryMappedFile mmf, MemoryMappedViewAccessor view, byte* basePtr, uint capacity)
     {
@@ -328,6 +330,67 @@ public sealed unsafe class ShmRingReader : IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
         var control = (FlControlBlock*)(_base + ShmLayout.ControlOffset);
         Volatile.Write(ref control->PauseRequested, paused ? 1u : 0u);
+    }
+
+    /// <summary>
+    /// Says whether the session this ring belongs to records Advanced metrics (owner decision D111; layout 5). Written
+    /// either way: the control block outlives a session, so "off" is a 0 that is stored, never a word that is left
+    /// alone - a 1 from the session before would be a request nobody made. While it is 0 the Overlay reads and hooks
+    /// exactly what it did before the option existed.
+    /// </summary>
+    public void SetAdvancedRequested(bool requested)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        var control = (FlControlBlock*)(_base + ShmLayout.ControlOffset);
+        Volatile.Write(ref control->AdvancedRequested, requested ? 1u : 0u);
+    }
+
+    /// <summary>
+    /// Region 5 (layout 5, Advanced metrics train B): what the hooked game told its upscaler, as the Overlay's
+    /// watchdog last published it - or null while it has published nothing, which is every ring whose session does not
+    /// record Advanced metrics.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>The last consistent copy, kept.</b> The watchdog writes once a second and this is read at the session's own
+    /// pace, so most reads find the same <c>Seq</c> as the copy already held and return it without copying 1472 bytes
+    /// again. A read that finds the writer inside on every attempt returns that copy too, rather than nothing: a
+    /// watchdog that died with its process leaves <c>Seq</c> odd for good, and what it published before is still what
+    /// the game said.
+    /// </para>
+    /// <para>Not for two threads at once: the copy is this instance's, and a session's loop is its one reader.</para>
+    /// </remarks>
+    public FlAdvancedState? AdvancedState
+    {
+        get
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            var region = (FlAdvancedState*)(_base + ShmLayout.AdvancedOffset);
+            for (int attempt = 0; attempt < DisplayStateAttempts; attempt++)
+            {
+                uint before = Volatile.Read(ref region->Seq);
+                if (before == 0u || (_advanced is not null && before == _advancedSeq))
+                {
+                    return _advanced;    // never published, or nothing newer than the copy held
+                }
+
+                if ((before & 1u) != 0u)
+                {
+                    continue;
+                }
+
+                FlAdvancedState copy = *region;
+                Interlocked.MemoryBarrier();
+                if (Volatile.Read(ref region->Seq) == before)
+                {
+                    _advanced = copy;
+                    _advancedSeq = before;
+                    return copy;
+                }
+            }
+
+            return _advanced;
+        }
     }
 
     /// <summary>

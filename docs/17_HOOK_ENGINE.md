@@ -622,7 +622,7 @@ Field notes — each of these was a defect in an earlier revision:
 - **SPSC lock-free ring**, capacity a power of two (default 8192 records = 512 KB), overwrite-oldest.
 - Writer/reader seqlock protocol, including the rule that the payload write must
   **exclude** the `seq` field and that `seq` is never reset: `07_IPC` §Protocol rules.
-- Header: ~~three~~ **four** separate 64-byte lines before the ring *(corrected 2026-10-04: since layout 4, 2026-09-27,
+- Header: ~~three~~ **four** separate 64-byte lines before the ring — and, since layout 5 (2026-11-11), region 5's twenty-three, which the watchdog alone writes and only while the Agent asks (`07_IPC` §Region 5) — *(corrected 2026-10-04: since layout 4, 2026-09-27,
   beta.10, `FlDisplayState` at 0xC0 — Overlay-written at most every 500 ms; the ring starts at 0x100)* — `FlShmHandshake` (write-once),
   `FlWriterState` (Overlay-written: `writeIndex`, `status`, `apiMask`, `faultCount`),
   and `FlControlBlock` (**Agent**-written: `pauseRequested`, `unhookRequested`,

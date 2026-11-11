@@ -48,6 +48,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 - **`tools/agent-cost.ps1`** (a developer tool): what the shipped capture agent costs while it records, measured on
   the real program against the project's own test window, with Advanced metrics off and on.
 
+- **The shared memory between a game and the agent has room for what a game tells its upscaler — and nothing
+  writes it yet.** Its layout is version 5: one new region, sized once for the three releases of this train, and
+  one new word by which the agent says "this session records Advanced metrics". With that word at zero — every
+  session, until the next pull request, and afterwards every session with the option off — the region stays empty and
+  the component inside the game does exactly what it did before. **A game that is running when you update must be
+  restarted before FrameLedger measures it again**, as after every update.
+
 ### Changed
 
 - **The agent's processor budget says what was measured.** The specification promised that the capture agent uses

@@ -29,7 +29,9 @@
 //   [0x0040] FlWriterState   64 B  Overlay-written (writeIndex every present)
 //   [0x0080] FlControlBlock  64 B  Agent-written
 //   [0x00C0] FlDisplayState  64 B  Overlay-written, at most every 500 ms (layout 4, beta.10)
-//   [0x0100] FlFrameRecord[capacity]
+//   [0x0100] FlAdvancedState 1472 B  Overlay-written by its watchdog, once a second, only while the Agent asks
+//                                    (layout 5, Advanced metrics train B)
+//   [0x06C0] FlFrameRecord[capacity]
 //
 // The header regions are separate cache lines on purpose. The Overlay
 // writes region 2 every frame while the Agent writes region 3 every second;
@@ -62,13 +64,19 @@
 // 0xC0 to 0x100 to make room for it. FlWriterState had no slack left
 // (dxgiPresentsBeforeHook took its last word), and the display facts are not
 // frame facts, so neither the writer state nor the record was the place.
-#define FL_SHM_LAYOUT_VERSION 4u
+//
+// 5 (2026-11-11, Advanced metrics train B, owner decisions D111 and D113): region 5, FlAdvancedState, and the ring
+// moved from 0x100 to 0x6C0 to make room for it. What a hooked game told its upscaler is neither a frame fact nor a
+// display fact, and no region had room. The region is sized ONCE for the three releases of train B (beta.40, .41,
+// .42): a member a later release fills is declared here and stays zero until then, so those releases bump nothing.
+#define FL_SHM_LAYOUT_VERSION 5u
 
 #define FL_SHM_HANDSHAKE_OFFSET 0x00u
 #define FL_SHM_WRITER_OFFSET 0x40u
 #define FL_SHM_CONTROL_OFFSET 0x80u
 #define FL_SHM_DISPLAY_OFFSET 0xC0u
-#define FL_SHM_RING_OFFSET 0x100u
+#define FL_SHM_ADVANCED_OFFSET 0x100u
+#define FL_SHM_RING_OFFSET 0x6C0u
 
 #define FL_SHM_DEFAULT_CAPACITY 8192u    // 8192 * 64 B = 512 KiB, ~16 s at 500 fps
 
@@ -821,7 +829,13 @@ struct alignas(64) FlControlBlock {
     // last acted on, so the Agent never has to clear anything in a block it is the
     // sole writer of. Took reserved[0]; additive, no layout bump.
     uint32_t logFlushRequested;    // @16
-    uint32_t reserved[11];         // @20..63  must be zero
+    // ADVANCED METRICS REQUESTED (2026-11-11, owner decision D111). 1 while the session this ring belongs to records
+    // Advanced metrics, 0 otherwise - and the Agent writes it UNCONDITIONALLY at attach, before its first guard
+    // result, because this block outlives a session and a value left by the last one would be a request nobody
+    // made. While it is 0 the Overlay reads no field and installs no hook beyond what it did before the option
+    // existed, and region 5 stays zero. Took reserved[0]; additive within the block.
+    uint32_t advancedRequested;    // @20
+    uint32_t reserved[10];         // @24..63  must be zero
 };
 
 // ---------------------------------------------------------------------------
@@ -876,6 +890,136 @@ struct alignas(64) FlDisplayState {
     uint32_t samples;        // @36  samples published (wraps); a reader tells "no new sample" from "same value"
     uint64_t sampleQpc;      // @40  QueryPerformanceCounter at the last sample
     uint32_t reserved[4];    // @48..63  must be zero
+};
+
+// ---------------------------------------------------------------------------
+// Region 5 — Overlay-written: what a hooked game told its upscaler (layout 5, 2026-11-11, Advanced metrics train B).
+// ---------------------------------------------------------------------------
+// The owner's "Advanced metrics" (18_GPU_VENDOR_APIS §Advanced metrics): the options a game hands DLSS and FSR, FSR's
+// own memory, and - in the two releases after this layout - the constants it hands Streamline, its frame-generation
+// configuration and the versions Streamline reports. All of it is read from the ARGUMENTS of calls the Overlay hooks
+// (CLAUDE.md rule 4), by the rule of 17_HOOK_ENGINE §Which struct version carries which field: a member is read only
+// where the upstream tags prove the game's struct has it.
+//
+// OFF MEANS OFF (D111). Nothing here is written, and nothing more is read in any hook, unless
+// FlControlBlock.advancedRequested is 1. A ring whose session does not record Advanced metrics has this region zero
+// from end to end, and `validMask` zero says "nothing was read" - never "the game used none of it".
+//
+// ONE WRITER, ONCE A SECOND. The detours keep process-local accumulators (relaxed atomics); the WATCHDOG copies them
+// here at its 1 Hz tick. No game thread writes this region, so the seqlock has a single writer and needs no
+// compare-exchange: `seq` goes odd, the fields are stored, `seq` goes even. A reader copies the region between two
+// reads of an even, unchanged `seq`. A watchdog killed with its process can leave `seq` odd for good - a reader that
+// keeps the last good copy loses nothing.
+//
+// VENDOR ZEROS AND SENTINELS (the trap HANDOFF records for rtTier, upscalerQuality and swapEffect). A Streamline
+// Boolean and a DLSS preset are stored as the vendor value PLUS ONE, so 0 is "not read" and never "false" or "the
+// default preset". A float is stored as its bits; FL_ADV_FLOAT_NONE means no value was seen - the vendors' own
+// sentinels (Streamline's INVALID_FLOAT is FLT_MAX) are refused in the detour and never reach here. A width or
+// height of 0 is "not given" (Streamline's INVALID_UINT is refused the same way).
+//
+// PER-FRAME VALUES ARE SUMMARISED WHERE THEY ARE SEEN, not sampled once a second: a flag is an "ever seen" mask, a
+// jitter is the largest magnitude seen, a field of view is its lowest and highest (D114: a session's range, never a
+// series), and the frame time the game reports is a count and a sum over the second, which the watchdog drains.
+
+// FlAdvancedState.validMask: which groups below were ever read. Additive: a reader ignores a bit it does not know.
+enum FlAdvancedValid : uint32_t {
+    FL_ADV_VALID_DLSS_OPTIONS = 1u << 0,     // sl::DLSSOptions seen chained into slEvaluateFeature's inputs
+    FL_ADV_VALID_FFX_UPSCALE = 1u << 1,      // an ffx upscale dispatch's extra fields were read
+    FL_ADV_VALID_FFX_MEMORY = 1u << 2,       // the game asked ffxQuery for the upscaler's memory, and it answered
+    FL_ADV_VALID_FFX_FG_CONFIG = 1u << 3,    // (0.1.0-beta.41) ffxConfigure with a frame-generation descriptor seen
+    FL_ADV_VALID_SL_CONSTANTS = 1u << 4,     // (0.1.0-beta.41) slSetConstants seen
+    FL_ADV_VALID_SL_FEATURES = 1u << 5,      // (0.1.0-beta.42) at least one feature slot filled
+};
+
+// A float nobody saw. An all-ones pattern is a NaN no detour stores: every value is checked finite first.
+#define FL_ADV_FLOAT_NONE 0xFFFFFFFFu
+
+// Feature slots (0.1.0-beta.42): FL_ADV_FEATURE_SLOTS slots of FL_ADV_FEATURE_WORDS uint32 each, in `features`.
+//   [0]      sl::Feature id PLUS ONE; 0 = an empty slot
+//   [1]      bit 0: slGetFeatureVersion answered; bit 1: slGetFeatureRequirements answered
+//   [2..4]   versionSL  major, minor, build        [5..7]   versionNGX
+//   [8]      FeatureRequirementFlags                [9]      maxNumCPUThreads
+//   [10]     maxNumViewports                        [11]     numRequiredTags
+//   [12..14] osVersionDetected                      [15..17] osVersionRequired
+//   [18..20] driverVersionDetected                  [21..23] driverVersionRequired
+#define FL_ADV_FEATURE_SLOTS 12u
+#define FL_ADV_FEATURE_WORDS 24u
+
+struct alignas(64) FlAdvancedState {
+    // ---- line 0: the header ------------------------------------------------------------------------------------
+    uint32_t seq;                   // @0    seqlock: odd while the watchdog is inside, +2 per publication
+    uint32_t validMask;             // @4    FlAdvancedValid
+    uint32_t samples;               // @8    publications (wraps)
+    uint32_t reserved0;             // @12   must be zero
+    uint64_t sampleQpc;             // @16   QueryPerformanceCounter at the last publication
+    uint32_t reservedHeader[10];    // @24..63  must be zero
+
+    // ---- line 1: sl::DLSSOptions as last seen in slEvaluateFeature's inputs -----------------------------------
+    uint32_t dlssStructVersion;        // @64   the structVersion the game's struct declared; 0 = none seen
+    uint32_t dlssOptionsSeen;          // @68   evaluates that chained a DLSSOptions (wraps)
+    uint32_t dlssOutputWidth;          // @72   0 = not given
+    uint32_t dlssOutputHeight;         // @76
+    uint32_t dlssPreExposureBits;      // @80   float bits, or FL_ADV_FLOAT_NONE
+    uint32_t dlssExposureScaleBits;    // @84
+    // sl::DLSSPreset PLUS ONE, in the header's order: DLAA, quality, balanced, performance, ultra performance,
+    // ultra quality (the last is struct version 2's - 0 where the game's struct is older).
+    uint8_t  dlssPresets[6];         // @88..93
+    uint8_t  dlssColorBuffersHdr;    // @94   sl::Boolean PLUS ONE; 0 = not read
+    uint8_t  dlssAutoExposure;       // @95   (struct version 2)
+    uint8_t  dlssAlphaUpscaling;     // @96   (struct version 3)
+    uint8_t  dlssPad[3];             // @97..99  must be zero
+    uint32_t reservedDlss[7];        // @100..127  must be zero
+
+    // ---- line 2: the ffx upscale dispatch, beyond its two sizes ---------------------------------------------------
+    uint32_t ffxDispatches;            // @128  upscale dispatches whose extras were read (wraps)
+    uint32_t ffxSharpenSeen;           // @132  bit 0: seen off; bit 1: seen on
+    uint32_t ffxSharpnessMinBits;      // @136  over the dispatches with sharpening on; float bits or NONE
+    uint32_t ffxSharpnessMaxBits;      // @140
+    uint32_t ffxJitterMaxXBits;        // @144  the largest |jitterOffset.x| seen
+    uint32_t ffxJitterMaxYBits;        // @148
+    uint32_t ffxPreExposureMinBits;    // @152
+    uint32_t ffxPreExposureMaxBits;    // @156
+    uint32_t ffxNearBits;              // @160  cameraNear, the last one seen
+    uint32_t ffxFarBits;               // @164
+    uint32_t ffxFovMinBits;            // @168  cameraFovAngleVertical, radians: the lowest and the highest (D114)
+    uint32_t ffxFovMaxBits;            // @172
+    uint32_t ffxFlagsSeen;             // @176  every FFX_UPSCALE_FLAG bit any dispatch carried
+    uint32_t ffxResets;                // @180  dispatches with `reset` set (wraps)
+    uint32_t ffxFrameTimeCount;        // @184  dispatches since the last publication...
+    uint32_t ffxFrameTimeSumUs;        // @188  ...and the sum of their frameTimeDelta, in microseconds
+
+    // ---- line 3: the ffx upscaler's memory, and its frame-generation configuration --------------------------------
+    uint64_t ffxMemoryTotalBytes;        // @192  FfxApiEffectMemoryUsage, as the last answered query gave it
+    uint64_t ffxMemoryAliasableBytes;    // @200
+    uint32_t ffxMemoryQueries;           // @208  answered memory queries (wraps)
+    uint32_t ffxFgConfigures;            // @212  (beta.41) ffxConfigure calls with a frame-generation descriptor
+    uint32_t ffxFgEnabledSeen;           // @216  (beta.41) bit 0: seen off; bit 1: seen on
+    uint32_t ffxFgAsyncSeen;             // @220  (beta.41) allowAsyncWorkloads, the same two bits
+    uint32_t ffxFgOnlyGeneratedSeen;     // @224  (beta.41) onlyPresentGenerated, the same two bits
+    uint32_t ffxFgFlagsSeen;             // @228  (beta.41) every dispatch flag any configure carried
+    int32_t  ffxFgRect[4];               // @232..247  (beta.41) generationRect: left, top, width, height - the last
+    uint32_t reservedFfx[2];             // @248..255  must be zero
+
+    // ---- line 4: sl::Constants, summarised (beta.41) - never the camera's position, axes or matrices -----------
+    uint32_t slConstantsCalls;    // @256  slSetConstants calls, every viewport together (wraps)
+    uint32_t slResets;            // @260  calls with `reset` true
+    uint32_t slJitterMaxXBits;    // @264
+    uint32_t slJitterMaxYBits;    // @268
+    uint32_t slMvecScaleXBits;    // @272  the last one seen
+    uint32_t slMvecScaleYBits;    // @276
+    uint32_t slNearBits;          // @280
+    uint32_t slFarBits;           // @284
+    uint32_t slFovMinBits;        // @288  radians: the lowest and the highest (D114)
+    uint32_t slFovMaxBits;        // @292
+    uint32_t slAspectBits;        // @296
+    // One bit per sl::Constants Boolean, in the header's order: depthInverted, cameraMotionIncluded, motionVectors3D,
+    // reset, orthographicProjection, motionVectorsDilated, motionVectorsJittered.
+    uint32_t slFlagsSeenTrue;     // @300
+    uint32_t slFlagsSeenFalse;    // @304
+    uint32_t reservedSl[3];       // @308..319  must be zero
+
+    // ---- lines 5..22: Streamline's features (beta.42) --------------------------------------------------------------
+    uint32_t features[FL_ADV_FEATURE_SLOTS * FL_ADV_FEATURE_WORDS];    // @320..1471
 };
 
 // ---------------------------------------------------------------------------
@@ -1065,6 +1209,8 @@ static_assert(offsetof(FlControlBlock, unhookRequested) == 4);
 static_assert(offsetof(FlControlBlock, overlayEnabled) == 8);
 static_assert(offsetof(FlControlBlock, guardTicks) == 12);
 static_assert(offsetof(FlControlBlock, logFlushRequested) == 16);
+static_assert(offsetof(FlControlBlock, advancedRequested) == 20);
+static_assert(offsetof(FlControlBlock, reserved) == 24);
 
 static_assert(offsetof(FlFrameRecord, qpc) == 0);
 static_assert(offsetof(FlFrameRecord, frameIndex) == 8);
@@ -1123,12 +1269,41 @@ static_assert(offsetof(FlDisplayState, sampleQpc) == 40);
 static_assert(offsetof(FlDisplayState, reserved) == 48);
 static_assert(offsetof(FlDisplayState, hwnd) % 8 == 0 && offsetof(FlDisplayState, sampleQpc) % 8 == 0);
 
+// Region 5 (layout 5): twenty-three cache lines, each group on its own line, every field naturally aligned.
+static_assert(sizeof(FlAdvancedState) == 1472);
+static_assert(sizeof(FlAdvancedState) % 64 == 0);
+static_assert(offsetof(FlAdvancedState, seq) == 0);
+static_assert(offsetof(FlAdvancedState, validMask) == 4);
+static_assert(offsetof(FlAdvancedState, samples) == 8);
+static_assert(offsetof(FlAdvancedState, sampleQpc) == 16);
+static_assert(offsetof(FlAdvancedState, reservedHeader) == 24);
+static_assert(offsetof(FlAdvancedState, dlssStructVersion) == 64);
+static_assert(offsetof(FlAdvancedState, dlssPreExposureBits) == 80);
+static_assert(offsetof(FlAdvancedState, dlssPresets) == 88);
+static_assert(offsetof(FlAdvancedState, dlssColorBuffersHdr) == 94);
+static_assert(offsetof(FlAdvancedState, dlssAlphaUpscaling) == 96);
+static_assert(offsetof(FlAdvancedState, reservedDlss) == 100);
+static_assert(offsetof(FlAdvancedState, ffxDispatches) == 128);
+static_assert(offsetof(FlAdvancedState, ffxFrameTimeSumUs) == 188);
+static_assert(offsetof(FlAdvancedState, ffxMemoryTotalBytes) == 192);
+static_assert(offsetof(FlAdvancedState, ffxMemoryQueries) == 208);
+static_assert(offsetof(FlAdvancedState, ffxFgRect) == 232);
+static_assert(offsetof(FlAdvancedState, reservedFfx) == 248);
+static_assert(offsetof(FlAdvancedState, slConstantsCalls) == 256);
+static_assert(offsetof(FlAdvancedState, slFlagsSeenFalse) == 304);
+static_assert(offsetof(FlAdvancedState, reservedSl) == 308);
+static_assert(offsetof(FlAdvancedState, features) == 320);
+static_assert(offsetof(FlAdvancedState, sampleQpc) % 8 == 0 && offsetof(FlAdvancedState, ffxMemoryTotalBytes) % 8 == 0);
+static_assert(FL_ADV_FEATURE_SLOTS * FL_ADV_FEATURE_WORDS * sizeof(uint32_t) == 1152);
+
 // The regions must not overlap, and the ring must stay 64-aligned.
 static_assert(FL_SHM_HANDSHAKE_OFFSET + sizeof(FlShmHandshake) <= FL_SHM_WRITER_OFFSET);
 static_assert(FL_SHM_WRITER_OFFSET + sizeof(FlWriterState) <= FL_SHM_CONTROL_OFFSET);
 static_assert(FL_SHM_CONTROL_OFFSET + sizeof(FlControlBlock) <= FL_SHM_DISPLAY_OFFSET);
-static_assert(FL_SHM_DISPLAY_OFFSET + sizeof(FlDisplayState) <= FL_SHM_RING_OFFSET);
+static_assert(FL_SHM_DISPLAY_OFFSET + sizeof(FlDisplayState) <= FL_SHM_ADVANCED_OFFSET);
+static_assert(FL_SHM_ADVANCED_OFFSET + sizeof(FlAdvancedState) <= FL_SHM_RING_OFFSET);
 static_assert(FL_SHM_DISPLAY_OFFSET % 64 == 0);
+static_assert(FL_SHM_ADVANCED_OFFSET % 64 == 0);
 static_assert(FL_SHM_RING_OFFSET % 64 == 0);
 
 constexpr size_t FlShmSizeForCapacity(uint32_t capacity) noexcept {

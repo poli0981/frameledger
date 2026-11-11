@@ -29,6 +29,21 @@ public interface ICaptureSink : IDisposable
     /// </summary>
     FlDisplayState? DisplayState { get; }
 
+    /// <summary>
+    /// Region 5 (layout 5, Advanced metrics train B): what the hooked game told its upscaler, as the Overlay last
+    /// published it - null while it has published nothing, which is every session that does not record Advanced
+    /// metrics, every Vulkan title (the layer never writes it), and a sink that has no such region.
+    /// </summary>
+    FlAdvancedState? AdvancedState => null;
+
+    /// <summary>
+    /// Says whether this session records Advanced metrics (owner decision D111): the one word that lets the Overlay
+    /// read more inside the game. Written either way at attach; a sink with no control block ignores it.
+    /// </summary>
+    void SetAdvancedRequested(bool requested)
+    {
+    }
+
     long TotalDropped { get; }
 
     long TotalGaps { get; }

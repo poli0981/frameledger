@@ -185,6 +185,7 @@ public sealed class ShmLayoutMirrorTests
         regions.GetProperty("writer").GetUInt32().Should().Be(ShmLayout.WriterOffset);
         regions.GetProperty("control").GetUInt32().Should().Be(ShmLayout.ControlOffset);
         regions.GetProperty("display").GetUInt32().Should().Be(ShmLayout.DisplayOffset);
+        regions.GetProperty("advanced").GetUInt32().Should().Be(ShmLayout.AdvancedOffset);
         regions.GetProperty("ring").GetUInt32().Should().Be(ShmLayout.RingOffset);
     }
 
@@ -200,6 +201,10 @@ public sealed class ShmLayoutMirrorTests
     /// <summary>Layout 4 (beta.10): region 4, the presenting swap chain's display facts.</summary>
     [Fact]
     public void TheDisplayStateMirrorMatches() => AssertMirror<FlDisplayState>("FlDisplayState");
+
+    /// <summary>Layout 5 (Advanced metrics train B): region 5, every member - the ones a later release fills included.</summary>
+    [Fact]
+    public void TheAdvancedStateMirrorMatches() => AssertMirror<FlAdvancedState>("FlAdvancedState", 1472, "twenty-three cache lines in fl_shm.h");
 
     [Fact]
     public void TheFrameRecordMirrorMatches() => AssertMirror<FlFrameRecord>("FlFrameRecord");
@@ -233,6 +238,7 @@ public sealed class ShmLayoutMirrorTests
             ("FlWriterState", typeof(FlWriterState)),
             ("FlControlBlock", typeof(FlControlBlock)),
             ("FlDisplayState", typeof(FlDisplayState)),
+            ("FlAdvancedState", typeof(FlAdvancedState)),
             ("FlFrameRecord", typeof(FlFrameRecord)),
             ("FlTolerance", typeof(FlTolerance)),
         ];
@@ -271,7 +277,7 @@ public sealed class ShmLayoutMirrorTests
     [Fact]
     public void EveryDumpedStructHasAMirror()
     {
-        string[] mirrored = ["FlShmHandshake", "FlWriterState", "FlControlBlock", "FlDisplayState", "FlFrameRecord", "FlTolerance"];
+        string[] mirrored = ["FlShmHandshake", "FlWriterState", "FlControlBlock", "FlDisplayState", "FlAdvancedState", "FlFrameRecord", "FlTolerance"];
 
         IEnumerable<string> dumped = _nativeLayout.Value.GetProperty("structs").EnumerateObject().Select(static p => p.Name);
 

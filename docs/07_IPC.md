@@ -14,15 +14,17 @@ in beta.9 without a row here)*:
 
 Created by the Overlay on init, opened by the Agent. Name is deliberately plain and identifiable (`19_SAFETY` — no obfuscated object names).
 
-Layout — **~~four~~ five regions, each exactly one 64-byte cache line before the ring** (layout 4 since
-2026-09-27, beta.10: region 4 is new and the ring moved from `0xC0` to `0x100`):
+Layout — **~~four~~ ~~five~~ six regions** (layout 4 since 2026-09-27, beta.10: region 4 is new and the ring moved
+from `0xC0` to `0x100`; **layout 5 since 2026-11-11**, Advanced metrics train B: region 5 is new — twenty-three cache
+lines, where the four before it are one each — and the ring moved from `0x100` to `0x6C0`):
 
 ```
 [0x0000] FlShmHandshake  64 B  write-once by the Overlay at init
 [0x0040] FlWriterState   64 B  Overlay-written (writeIndex touched every present)
 [0x0080] FlControlBlock  64 B  Agent-written
 [0x00C0] FlDisplayState  64 B  Overlay-written, at most every 500 ms per chain (layout 4)
-[0x0100] FlFrameRecord[capacity]   (64 B each, power-of-two capacity)
+[0x0100] FlAdvancedState 1472 B  Overlay-written by its watchdog, once a second, only while the Agent asks (layout 5)
+[0x06C0] FlFrameRecord[capacity]   (64 B each, power-of-two capacity)
 ```
 
 The header is split in two on purpose. The immutable handshake and the
@@ -72,7 +74,8 @@ struct alignas(64) FlControlBlock {  // Agent-written
     uint32_t overlayEnabled;     // @8  in-game overlay draw toggle (v1.1)
     uint32_t guardTicks;         // @12 completed guard evaluations, NOT a timer
     uint32_t logFlushRequested;  // @16 a COUNTER: bumped by the Agent at session end; the watchdog flushes the native log on a change (17_HOOK_ENGINE §Native logging, 2026-09-06)
-    uint32_t reserved[11];       // @20..63 must be zero
+    uint32_t advancedRequested;  // @20 1 while this session records Advanced metrics (D111); written 0 or 1 at attach, either way
+    uint32_t reserved[10];       // @24..63 must be zero
 };
 
 struct alignas(64) FlDisplayState {  // Overlay-written (layout 4, 2026-09-27, beta.10)
@@ -93,8 +96,34 @@ static_assert(sizeof(FlShmHandshake) == 64);
 static_assert(sizeof(FlWriterState)  == 64);
 static_assert(sizeof(FlControlBlock) == 64);
 static_assert(sizeof(FlDisplayState) == 64);
-static_assert(FL_SHM_DISPLAY_OFFSET == 0xC0 && FL_SHM_RING_OFFSET == 0x100 && FL_SHM_RING_OFFSET % 64 == 0);
+static_assert(sizeof(FlAdvancedState) == 1472);          // region 5: fl_shm.h is its declaration, member by member
+static_assert(FL_SHM_DISPLAY_OFFSET == 0xC0 && FL_SHM_ADVANCED_OFFSET == 0x100 && FL_SHM_RING_OFFSET == 0x6C0 && FL_SHM_RING_OFFSET % 64 == 0);
 ```
+
+**Region 5 — what a hooked game told its upscaler (layout 5, 2026-11-11; Advanced metrics train B, owner decisions
+D111 and D113; written by nobody until the Overlay of 0.1.0-beta.40).** `18_GPU_VENDOR_APIS` §Train B is the design.
+What the region is, as a contract between the two sides:
+
+- **Off means zero.** `FlControlBlock.advancedRequested` is the Agent's word that this session records Advanced
+  metrics — written 0 or 1 at attach, either way, because the control block outlives a session
+  (`ShmRingReader.SetAdvancedRequested`). While it is 0 the Overlay reads no field and installs no hook beyond what
+  it did before, and writes nothing here: the region is zero from end to end, and `validMask == 0` means "nothing
+  was read", never "the game used none of it".
+- **One writer, once a second.** The detours keep process-local accumulators; the watchdog copies them here at its
+  tick. No game thread writes the region, so the seqlock has a single writer: `seq` odd, the fields, `seq` even.
+- **The reader keeps its last consistent copy** (`ShmRingReader.AdvancedState`): null until something was published;
+  the same copy while `seq` has not moved, without copying 1472 bytes again; and that copy still when the writer is
+  inside on every attempt — a watchdog killed with its process leaves `seq` odd for good, and what it published
+  before is still what the game said.
+- **Zero is "not read", never a value.** A Streamline `Boolean` and a DLSS preset are stored as the vendor's value
+  plus one; a float as its bits, with `FL_ADV_FLOAT_NONE` for "none seen" — the vendors' own sentinels are refused in
+  the detour and never reach the region; a size of 0 is "not given".
+- **A per-frame value is summarised where it is seen**: a flag is an "ever seen" mask, a jitter the largest magnitude,
+  a field of view its lowest and highest (D114), the reported frame time a count and a sum the watchdog drains.
+- **Sized once for the train's three releases.** The members 0.1.0-beta.41 and beta.42 fill (`ffxFg*`, `sl*`,
+  `features`) are declared now and stay zero until then, so those releases bump no layout.
+- The Vulkan layer never writes it. `ShmLayoutMirrorTests.TheAdvancedStateMirrorMatches` checks every member's
+  offset against `fl-layout-dump`; `ShmRingReaderTests` the three reads and that the request is stored either way.
 
 **Region 4 — the presenting swap chain's display facts (layout 4, 2026-09-27, beta.10).** The owner asked for the game's
 window size and display mode (exclusive fullscreen / borderless / windowed) and the share of a session each took. The two

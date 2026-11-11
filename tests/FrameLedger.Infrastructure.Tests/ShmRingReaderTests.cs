@@ -68,6 +68,8 @@ public sealed class ShmRingReaderTests
 
         public FlControlBlock* Control => (FlControlBlock*)(_base + ShmLayout.ControlOffset);
 
+        public FlAdvancedState* Advanced => (FlAdvancedState*)(_base + ShmLayout.AdvancedOffset);
+
         public FlFrameRecord* Slot(ulong index) =>
             &((FlFrameRecord*)(_base + ShmLayout.RingOffset))[index & (_capacity - 1)];
 
@@ -252,6 +254,59 @@ public sealed class ShmRingReaderTests
 
         refusal.Should().Be(ShmAttachRefusal.Incomplete);
         reader.Should().BeNull();
+    }
+
+    [Fact]
+    public unsafe void TheAdvancedRequestIsWrittenEitherWayAndTouchesNoOtherWord()
+    {
+        // Owner decision D111 (layout 5): the one word that lets the Overlay read more inside a game. The control block
+        // outlives a session, so "off" must be STORED - a publisher that only ever wrote 1 would leave the last session's
+        // request standing for one that never asked.
+        int pid = FakePid();
+        using var ring = new FakeRing(pid);
+        using ShmRingReader? reader = ShmRingReader.TryAttach(pid, _buildId, out _);
+        ring.Control->AdvancedRequested = 1u;    // as the session before left it
+
+        reader!.SetAdvancedRequested(false);
+        ring.Control->AdvancedRequested.Should().Be(0u, "off is a zero that is written");
+
+        reader.SetAdvancedRequested(true);
+        ring.Control->AdvancedRequested.Should().Be(1u);
+        ring.Control->UnhookRequested.Should().Be(0u, "asking for more readings is not the safety stop");
+        ring.Control->PauseRequested.Should().Be(0u);
+        ring.Control->LogFlushRequested.Should().Be(0u);
+        ring.Control->GuardTicks.Should().Be(0u);
+    }
+
+    [Fact]
+    public unsafe void TheAdvancedRegionReadsNullUntilPublishedThenItsLastConsistentCopy()
+    {
+        int pid = FakePid();
+        using var ring = new FakeRing(pid);
+        using ShmRingReader? reader = ShmRingReader.TryAttach(pid, _buildId, out _);
+
+        reader!.AdvancedState.Should().BeNull("a region nobody published is not a game that used nothing");
+
+        // One publication, as the watchdog writes it: odd, the fields, even.
+        ring.Advanced->Seq = 1u;
+        ring.Advanced->ValidMask = FlAdvancedValid.DlssOptions;
+        ring.Advanced->DlssOutputWidth = 3840u;
+        ring.Advanced->Features[(FlAdvancedState.FeatureSlots * FlAdvancedState.FeatureWords) - 1] = 572u;
+        reader.AdvancedState.Should().BeNull("the writer is inside, and nothing was published before");
+        ring.Advanced->Seq = 2u;
+
+        FlAdvancedState first = reader.AdvancedState.Should().BeOfType<FlAdvancedState>().Subject;
+        first.ValidMask.Should().Be(FlAdvancedValid.DlssOptions);
+        first.DlssOutputWidth.Should().Be(3840u);
+        first.Features[(FlAdvancedState.FeatureSlots * FlAdvancedState.FeatureWords) - 1].Should().Be(572u, "the region is read to its last word");
+
+        // A second publication caught halfway: the reader keeps what it had rather than returning a torn copy or nothing.
+        ring.Advanced->Seq = 3u;
+        ring.Advanced->DlssOutputWidth = 2560u;
+        reader.AdvancedState.Should().BeOfType<FlAdvancedState>().Which.DlssOutputWidth.Should().Be(3840u,
+            "a watchdog killed with its process leaves the lock odd for good; what it published before still stands");
+        ring.Advanced->Seq = 4u;
+        reader.AdvancedState.Should().BeOfType<FlAdvancedState>().Which.DlssOutputWidth.Should().Be(2560u);
     }
 
     [Fact]
