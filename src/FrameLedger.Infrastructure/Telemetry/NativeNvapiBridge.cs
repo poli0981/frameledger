@@ -24,8 +24,11 @@ namespace FrameLedger.Infrastructure.Telemetry;
 /// words the guard's §S18 heuristic scans a launcher's ancestors for.
 /// </para>
 /// </remarks>
-public sealed class NativeNvapiBridge : INvapiBridge
+public sealed class NativeNvapiBridge : INvapiBridge, INvapiAdvancedBridge
 {
+    /// <summary>The most settings <see cref="ProfileSettings"/> lists of one profile. The global profile of the dev box holds 24.</summary>
+    public const int MaxProfileEntries = 512;
+
     /// <summary>What <see cref="Init"/> answers when the DLL is not beside this assembly at all.</summary>
     public const int Unavailable = -1999;
 
@@ -113,6 +116,87 @@ public sealed class NativeNvapiBridge : INvapiBridge
         return status;
     }
 
+    // ---- ABI 3 (D101). A DLL beside the Agent that predates it has no such export: that is Unavailable, the answer
+    // a missing DLL gives, and never an exception out of a read - the guard NativeProcessStats makes for its own. ----
+
+    public int ReadFacts(out NvapiFacts facts)
+    {
+        facts = new NvapiFacts { Size = (uint)Marshal.SizeOf<NvapiFacts>() };
+        try
+        {
+            return FlNvReadFacts(ref facts);
+        }
+        catch (Exception e) when (e is EntryPointNotFoundException or DllNotFoundException)
+        {
+            return Unavailable;
+        }
+    }
+
+    public int ReadLive(out NvapiLive live)
+    {
+        live = new NvapiLive { Size = (uint)Marshal.SizeOf<NvapiLive>() };
+        try
+        {
+            return FlNvReadLive(ref live);
+        }
+        catch (Exception e) when (e is EntryPointNotFoundException or DllNotFoundException)
+        {
+            return Unavailable;
+        }
+    }
+
+    public int ReadDisplays(out NvapiDisplays displays)
+    {
+        displays = new NvapiDisplays
+        {
+            Size = (uint)Marshal.SizeOf<NvapiDisplays>(),
+            Displays = new NvapiDisplay[NvapiDisplays.MaxDisplays],
+        };
+        try
+        {
+            return FlNvReadDisplays(ref displays);
+        }
+        catch (Exception e) when (e is EntryPointNotFoundException or DllNotFoundException)
+        {
+            return Unavailable;
+        }
+    }
+
+    public int SessionDisplay(string gdiDeviceName, uint pid, out NvapiSessionDisplay display)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(gdiDeviceName);
+        display = new NvapiSessionDisplay { Size = (uint)Marshal.SizeOf<NvapiSessionDisplay>() };
+        try
+        {
+            return FlNvSessionDisplay(gdiDeviceName, pid, ref display);
+        }
+        catch (Exception e) when (e is EntryPointNotFoundException or DllNotFoundException)
+        {
+            return Unavailable;
+        }
+    }
+
+    public int ProfileSettings(string? exePath, bool ownOnly, out NvapiProfileList list, out IReadOnlyList<NvapiProfileEntry> entries)
+    {
+        list = new NvapiProfileList { Size = (uint)Marshal.SizeOf<NvapiProfileList>(), ProfileName = string.Empty };
+        var buffer = new NvapiProfileEntry[MaxProfileEntries];
+        entries = [];
+        try
+        {
+            int status = FlNvProfileSettings(exePath, ownOnly ? 1u : 0u, buffer, (uint)buffer.Length, ref list);
+            if (status == 0)
+            {
+                entries = buffer.AsSpan(0, (int)Math.Min(list.Count, (uint)buffer.Length)).ToArray();
+            }
+
+            return status;
+        }
+        catch (Exception e) when (e is EntryPointNotFoundException or DllNotFoundException)
+        {
+            return Unavailable;
+        }
+    }
+
     public void Shutdown()
     {
         if (_live > 0)
@@ -141,6 +225,18 @@ public sealed class NativeNvapiBridge : INvapiBridge
     public static uint DriverProfileSize() => FlNvDriverProfileSize();
 
     public static uint AbiVersion() => FlNvAbiVersion();
+
+    public static uint FactsSize() => FlNvFactsSize();
+
+    public static uint LiveSize() => FlNvLiveSize();
+
+    public static uint DisplaysSize() => FlNvDisplaysSize();
+
+    public static uint SessionDisplaySize() => FlNvSessionDisplaySize();
+
+    public static uint ProfileEntrySize() => FlNvProfileEntrySize();
+
+    public static uint ProfileListSize() => FlNvProfileListSize();
 
     public void Dispose()
     {
@@ -199,4 +295,49 @@ public sealed class NativeNvapiBridge : INvapiBridge
     [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
     [DllImport(_dll, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr FlNvBuildId();
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [DllImport(_dll, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int FlNvReadFacts(ref NvapiFacts facts);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [DllImport(_dll, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int FlNvReadLive(ref NvapiLive live);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [DllImport(_dll, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int FlNvReadDisplays(ref NvapiDisplays displays);
+
+    // A GDI device name is ASCII ("\\.\DISPLAY1"); a character that is not is refused rather than best-fitted into one that is.
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [DllImport(_dll, CallingConvention = CallingConvention.Cdecl, CharSet = CharSet.Ansi, BestFitMapping = false, ThrowOnUnmappableChar = true)]
+    private static extern int FlNvSessionDisplay([MarshalAs(UnmanagedType.LPStr)] string gdiDeviceName, uint pid, ref NvapiSessionDisplay display);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [DllImport(_dll, CallingConvention = CallingConvention.Cdecl)]
+    private static extern int FlNvProfileSettings([MarshalAs(UnmanagedType.LPWStr)] string? exePath, uint ownOnly, [In, Out] NvapiProfileEntry[] entries, uint capacity, ref NvapiProfileList list);
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [DllImport(_dll, CallingConvention = CallingConvention.Cdecl)]
+    private static extern uint FlNvFactsSize();
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [DllImport(_dll, CallingConvention = CallingConvention.Cdecl)]
+    private static extern uint FlNvLiveSize();
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [DllImport(_dll, CallingConvention = CallingConvention.Cdecl)]
+    private static extern uint FlNvDisplaysSize();
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [DllImport(_dll, CallingConvention = CallingConvention.Cdecl)]
+    private static extern uint FlNvSessionDisplaySize();
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [DllImport(_dll, CallingConvention = CallingConvention.Cdecl)]
+    private static extern uint FlNvProfileEntrySize();
+
+    [DefaultDllImportSearchPaths(DllImportSearchPath.System32)]
+    [DllImport(_dll, CallingConvention = CallingConvention.Cdecl)]
+    private static extern uint FlNvProfileListSize();
 }
