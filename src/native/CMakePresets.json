@@ -25,11 +25,24 @@
       "inherits": "x64-base",
       "displayName": "x64 Release",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo" }
+    },
+    {
+      "name": "x64-vs-analysis",
+      "displayName": "x64, a Visual Studio solution for Qodana's native report (nothing is built from it but one generated header)",
+      "generator": "Visual Studio 18 2026",
+      "binaryDir": "${sourceDir}/../../build/native/${presetName}",
+      "architecture": { "value": "x64", "strategy": "set" },
+      "cacheVariables": {
+        "FL_BUILD_TESTS": "ON",
+        "FL_BUILD_TOOLS": "ON",
+        "CMAKE_CXX_SCAN_FOR_MODULES": "OFF"
+      }
     }
   ],
   "buildPresets": [
     { "name": "x64-debug", "configurePreset": "x64-debug" },
-    { "name": "x64-release", "configurePreset": "x64-release" }
+    { "name": "x64-release", "configurePreset": "x64-release" },
+    { "name": "x64-vs-analysis", "configurePreset": "x64-vs-analysis", "configuration": "RelWithDebInfo" }
   ],
   "testPresets": [
     {

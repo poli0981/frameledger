@@ -269,7 +269,6 @@ bool RunControl(Gfx& g) {
 using PFN_slInit = ::PFun_slInit*;
 using PFN_slSetD3DDevice = ::PFun_slSetD3DDevice*;
 using PFN_slIsFeatureLoaded = ::PFun_slIsFeatureLoaded*;
-using PFN_slShutdown = ::PFun_slShutdown*;
 using PFN_D3D12CreateDevice = HRESULT(WINAPI*)(IUnknown*, D3D_FEATURE_LEVEL, REFIID, void**);
 
 struct Gfx12 {

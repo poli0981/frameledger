@@ -126,7 +126,9 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
 
 ### `qodana.yml` — push to `main`, pull requests into `main`, `workflow_dispatch` · **repo-local, built 2026-11-10 (D93); Qodana for .NET since 2026-11-11 (D99)**
 - ~~One job, `qodana`, on `ubuntu-latest` — the only Linux job in this repository, because the linter is a Linux
-  container~~ The job `managed` (*Qodana (managed)*), on `windows-latest`: `JetBrains/qodana-action` (pinned to
+  container~~ Two jobs, on `windows-latest`, each a report of its own: **`native`** (*Qodana (native)*) has CMake
+  write a Visual Studio solution and reads the C++ of `src/native` with `qodana-native.yaml`'s settings; and
+  `managed` (*Qodana (managed)*): `JetBrains/qodana-action` (pinned to
   `v2026.2.2`'s commit; Dependabot moves the pin) runs **Qodana for .NET** in native mode over `FrameLedger.slnx`
   with `qodana.yaml`'s settings, after a `dotnet build`. No job here runs on Linux any more. §Qodana below says what
   it reads, what was changed from JetBrains' template and where an inspection is switched off.
@@ -505,7 +507,7 @@ is; below that is D93's own account, which is now history.
 
 **Two reports (D99).** Asked how to gather the C# and the C++, the owner chose two reports from the start, and made a
 second Qodana Cloud project (`frameledger-cpp`, the `QODANA_TOKEN_NATIVE` secret). The managed report leaves
-`src/native` out; the native one — the next pull request's — reads nothing else, so every file is in exactly one.
+`src/native` out; the native one (*The native report*, below) reads nothing else, so every file is in exactly one.
 
 **What is read, and by what.**
 
@@ -514,9 +516,9 @@ second Qodana Cloud project (`frameledger-cpp`, the `QODANA_TOKEN_NATIVE` secret
 | The C#, XAML and `.resx` of the thirteen projects | `managed` | ReSharper's engine, as under D93 |
 | Markdown and XML around the solution | `managed` | the IntelliJ platform's own inspections — 23 and 10 results on the first run |
 | JetBrains' security rules over the C# — pattern rules for a process start, an SQL text and the like | `managed` | new with this linter (its OpenGrep plugin) — 36 results on the first run, every one read; the files they were read in are listed in `qodana.yaml`, so a new one is reported |
-| The C++ of `src/native` | the `native` job | the pull request after this one |
+| The C++ of `src/native` | `native` | ReSharper's C++ engine and the clang-tidy checks it bundles, over a Visual Studio solution CMake writes for it |
 | JSON and YAML, the workflows among them | nothing reported | whether the profile inspects them and found nothing, or does not inspect them, was not established; CodeQL's `actions` language reads the workflows |
-| PowerShell (`build.ps1`, `tools/`) and CMake files | no linter of JetBrains' reads them here | SonarCloud reads the PowerShell |
+| PowerShell (`build.ps1`, `tools/`), CMake files, the HLSL shader | no linter of JetBrains' reads them here | SonarCloud reads the PowerShell |
 
 **The first runs on this linter, and what was done (2026-11-11).** Run 42923079119 — the job with no settings beyond the
 solution: **3,953 problems** in 92 inspections, and 3,607 of them **hints**: the lowest level an IDE has, which the
@@ -580,13 +582,75 @@ arguments come from.
 None takes a value from outside the PC or from a file FrameLedger did not write, except the game's own path and
 arguments — which starting the game the user chose is.
 
+**The native report — `qodana-native.yaml`, the job `native` (D99, 2026-11-11).** The C++ of `src/native`, read by
+the same linter — Qodana for .NET, whose C++ is ReSharper C++ — in native mode on a Windows runner. It is the only
+linter of JetBrains' that can: the native layer is MSVC-only, and the two C/C++ linters (`qodana-cpp`,
+`qodana-clang`) are Linux images. It reads C++ through a Visual Studio solution, and `src/native` is a CMake tree, so
+the job has CMake write one first: the preset **`x64-vs-analysis`** (generator "Visual Studio 18 2026", tests and
+tools on) puts `FrameLedgerNative.slnx` under `build/native/x64-vs-analysis`, and the job builds from it the one
+target whose output is a header (`fl_ac_floor_gen`, the blocklist floor). Nothing else is compiled, and nothing from
+that tree ships. Then the action, with `--config qodana-native.yaml`: the solution, `RelWithDebInfo` and `x64` — the
+flags the shipped binaries are built with — and, left out by path, what is not FrameLedger's code (the build tree,
+`third_party`, the vendor stubs, a compiled shader as a byte array). Its own results folder, cache keys and artifact
+(`qodana-report-native`), and the Qodana Cloud project `frameledger-cpp` through `QODANA_TOKEN_NATIVE`. It posts no
+comment and no annotations — a second job of the same linter would overwrite the managed job's — so its result is the
+job's own status and its report. Advisory, and a gate of zero, like the other.
+
+**What it runs** is ReSharper's C++ inspections and, through them, the clang-tidy checks and clang diagnostics that
+engine bundles. clang never builds this code — MSVC does, with `/W4 /WX` — so what clang says is read as advice. Every
+one of them has a key in `.editorconfig` (`resharper_cpp_…_highlighting`; a clang-tidy check's is
+`resharper_cpp_clang_tidy_<check>_highlighting`), so D100's rule holds without a second file: no `.clang-tidy`.
+
+**Its first runs, and what was done.** Run 42923079119: **4,695 problems**, 4,040 of them hints, which are off as on
+the managed side. Run 42928814104: **655** — **494 distinct**, because a source file compiled into three targets is
+reported three times.
+
+| What | distinct | Done |
+|---|---|---|
+| A choice this code made, off for the native tree: where the compiler pads a struct (46); MSVC's own keywords, `__try` among them (54); a function pointer got by name cast to its real type, through `void*` (55); `reinterpret_cast` where memory is read as something else (5); `std::cmp_less` proposed for comparisons that already cast (20); a `default:` under a full enum switch (3); a copied verdict (4); the moves of a type that owns a handle (11); a zeroed out-parameter enum (8); an enum's width (5); "can be made const / constexpr / static" (52); "possibly unused `#include`" (15) | 278 | off in `.editorconfig`, each with its reason. Of the fifteen includes two were unused and were removed; the others are a file including what it uses although another header already brings it |
+| A newer idiom proposed for working code — a range-for, `std::ranges`, `any_of`, `starts_with`, a raw string, an `if` with an initialiser | 53 | off: the native code is written to be read beside the hook path, an index and a plain loop |
+| **The engine misreading**: `std::atomic_ref<T>::fetch_or` as an expression without side effects (7); a Win32, D3D12 or ffx-api structure zero-initialised and then filled field by field as "always rewritten" and "assigned, never used" (15); a test of a `constexpr` function as a redundant argument (3) | 25 | off, with what the engine gets wrong written beside the keys |
+| Fields nothing names, in a structure Windows defines and the SDK's headers do not give (`RTL_PROCESS_MODULE_INFORMATION`, `PROCESS_MEMORY_COUNTERS_EX2`) and in a test's stand-in for a Vulkan object | 25 | off for those four files: the fields are what puts the others at their offsets |
+| `%lu` with an `NvU32`, in `fl-probe-nvapi` | 19 | off for that file: NVAPI's header makes `NvU32` an `unsigned int` under clang and an `unsigned long` under MSVC — the linter's compiler, not the build's |
+| The probes, the harness and the tests: an unchecked `printf` (35), `atoi` on the harness's own arguments (20), a `&pointer` handed to a `void*` parameter (7), a printf-shaped helper (4), a fake handle built from a number (4), a test's fixtures (4), `layout_test`'s run-time checks of compile-time facts (3), a macro that pastes a name (1) | 78 | off for `tools` and `tests` |
+| Code loaded into a game (below) | 7 | kept as it is, off for those files; one of them is dead code, recorded for the owner |
+| **Fixed**: `sizeof(a) / sizeof(a[0])` → `std::size(a)` (4); a multiplication done in a narrower type than the one it is stored in or compared with (2: a constant in the guard's sources, a test); a member function, and a type alias, nothing used (3) | 9 | in the code; none changes what a shipped binary does |
+
+With those settled, run 42942068024 — the first with these settings — reported **one** problem: `LogNoteW`, now by
+ReSharper's own inspection where clang's had said it before (below). And run 42943094415 (2026-11-11, this pull
+request's branch): **no problem reported** — the gate's zero, in the native report too.
+
+**Code loaded into a game — the Overlay, the Vulkan layer, the shared-memory headers, the guard's rule matcher.**
+D100: there only a defect is fixed, in a pull request of its own with the hook's overhead measured (rule 5,
+`14_TESTING` §Hook overhead), and a proposal about style is not acted on. About a quarter of the 655 results were in
+those files; nearly all of them are the tree-wide kinds above. **The report found no defect there.** What is
+particular to them, read and kept: two `if` chains whose arms have the same body and are different cases, each with
+its comment (`dllmain.cpp`); MinHook's `MH_ALL_HOOKS`, which is `NULL` by its header; a retired enumerator kept so
+that its bit is not reused; `slSetTag`, deprecated by a header whose replacement no measured module exports;
+`ResolveTolerance` clearing its out-parameter with `memset`, as `ResetRules` does — a `Tolerance` is flags whose
+default initialisers are zero. And one thing that is not as it should be: **`LogNoteW` in `dllmain.cpp`, which nothing
+calls** — dead code. It is not a defect, so D100 leaves its removal to the owner (HANDOFF); until then that one file
+is not read for an unused function (`.editorconfig` says so, in a section to be removed with it).
+
+**"Zero" has to mean "analysed".** A report with no problem cannot tell a clean tree from one the linter did not
+read. So the settings were proved on a branch that puts back three of the things fixed here — the unused alias, the
+unused member function, the narrow multiplication. Run 42942390715 reported exactly those three, each by the
+inspection that had found it the first time (`CppTypeAliasNeverUsed` in `tools/fl-probe-interposer/main.cpp`;
+`clang-diagnostic-unused-member-function` and `bugprone-implicit-widening-of-multiplication-result` in
+`tests/ring_test.cpp`), and `LogNoteW`, and nothing else. The branch was deleted. Do the same before trusting a
+zero after a change to the preset, the settings or the linter's version.
+
+**What it does not read.** CMake files and PowerShell have no inspection in this linter (SonarCloud reads the
+PowerShell); the HLSL shader and the `.def` file are not C++. CodeQL (`analyze (cpp, manual)`, a required check) and
+SonarCloud go on reading the C++ as before: this is a third reader, and the only one of the three that is ReSharper's.
+
 **Where an inspection is switched off: by the engine that raised it (D100, amending D93's "never in `qodana.yaml`").**
 What Qodana reports is fixed, unless the inspection argues with a choice this project made; then it is off, with the
 reason on the line above — in the place the engine that raised it reads:
 
-- **ReSharper's** — the C#, the XAML, the `.resx`, and the C++ of the native report — in **`.editorconfig`**
-  (`resharper_*_highlighting`), where Rider and ReSharper in the editor read it too. Sixty-four keys since this pull
-  request.
+- **ReSharper's** — the C#, the XAML, the `.resx`, and the C++ of the native report with the clang-tidy checks it
+  runs — in **`.editorconfig`** (`resharper_*_highlighting`), where Rider and ReSharper in the editor read it too:
+  sixty-four keys for the managed code, fifty-four lines for the C++, some of them for a folder or a file alone.
 - **What has no key there** — in **`qodana.yaml`**: a whole severity (the hints) and the IntelliJ platform's Markdown
   and XML inspections under `profile.inspections`; under `exclude`, by inspection and path, the files JetBrains'
   security rules were read in and a file the linter itself fails on.

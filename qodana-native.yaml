@@ -1,0 +1,45 @@
+# Qodana's settings for the `native` job of .github/workflows/qodana.yml (owner decision D99, 2026-11-11;
+# docs/13_CI_CD.md §Qodana).
+#
+# The C++ of src/native, read by Qodana for .NET (qodana-dotnet: Rider's engine, whose C++ is ReSharper C++) in native
+# mode on a Windows runner. That linter is the only one that can: the native layer is MSVC-only, and JetBrains' two
+# C/C++ linters (qodana-cpp, qodana-clang) are Linux images. It reads C++ through a Visual Studio solution, and
+# src/native is a CMake tree, so the job generates one first - the `x64-vs-analysis` preset - and builds from it only
+# the one header a build generates (the blocklist floor). Nothing else is compiled.
+#
+# A report of its own, in a Qodana Cloud project of its own (`frameledger-cpp`, the QODANA_TOKEN_NATIVE secret): the
+# managed report (qodana.yaml) leaves src/native out, so every file is in exactly one of the two.
+version: "1.0"
+linter: qodana-dotnet
+withinDocker: false
+
+profile:
+  base:
+    name: qodana.recommended
+  groups:
+    - groupId: Hints
+      groups:
+        - "severity:TYPO"
+  inspections:
+    - group: Hints
+      enabled: false
+
+dotnet:
+  solution: build/native/x64-vs-analysis/FrameLedgerNative.slnx
+  # The flags the shipped binaries are built with (the x64-release preset's build type).
+  configuration: RelWithDebInfo
+  platform: x64
+
+# What is not FrameLedger's code: what CMake generates and fetches (MinHook, Catch2, jsmn, the floor header), the
+# vendored SDK headers, the fixtures that carry the vendors' names on purpose, a compiled shader as a byte array.
+exclude:
+  - name: All
+    paths:
+      - build
+      - src/native/third_party
+      - src/native/tools/vendor-stubs
+      - src/native/tools/hook-harness/dxr_raygen_dxil.h
+
+failureConditions:
+  severityThresholds:
+    any: 0
