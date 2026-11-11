@@ -106,7 +106,10 @@ src/
                                #   writer and PartialRecovery, ExitStatusMapper, the crash policy;
                                #   and Advanced/ since 2026-11-11 (D101): AdvancedMetricCatalog, the one
                                #   list "Advanced metrics" reads - what is read, and what is not with the
-                               #   reason (18_GPU_VENDOR_APIS §Advanced metrics). Nothing reads it yet.
+                               #   reason (18_GPU_VENDOR_APIS §Advanced metrics) - and the value model
+                               #   (AdvancedValue / AdvancedFact / AdvancedReading). Infrastructure's
+                               #   NvapiAdvancedReader fills it from the bridge's ABI 3; no Agent code
+                               #   composes it yet.
   FrameLedger.Infrastructure/  # SQLite, shm reader, vendor APIs, injector interop, parsers,
                                #   and Capture/ (PR-C): ShmRingAttacher/ShmCaptureSink over the
                                #   reader, HeldProcessLivenessSource, TargetResolver (path only,
@@ -157,7 +160,9 @@ tools/                         # accuracy-check, changelog-check, chokepoint-che
                                # versioninfo-check, vklayer-blastradius, fps-impact-runbook,
                                # wiki-build (beta.17: builds and checks the wiki; the wiki-check gate),
                                # buildid-check (beta.18: the release's build id in the shipped natives),
-                               # docs-split-check (beta.24, D66: CHANGELOG/HANDOFF and their parts agree)
+                               # docs-split-check (beta.24, D66: CHANGELOG/HANDOFF and their parts agree),
+                               # nvapi-readonly-check (D108, 2026-11-11: every NVAPI call of the bridge is on
+                               #   nvapi-allowed-calls.txt, and none there writes or identifies)
                                # (six names added 2026-10-04)
                                # (PowerShell). This line used to name three, one of which
                                # — resx-audit — ~~does not exist~~ exists since 2026-09-13 with

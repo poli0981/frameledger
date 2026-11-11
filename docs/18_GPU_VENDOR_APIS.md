@@ -204,6 +204,8 @@ Still resolve **entry points defensively at runtime**: `nvapi64.dll` may be abse
 > **Not in this build, stated so nobody infers it from the table below:** VRAM (`FlNvSample.vram` is
 > reserved and its bit is never set — see the Memory row), power, hotspot temperature, per-domain
 > utilisation beyond the GPU domain, and anything Reflex (§M8: a hook fact, not a poller field).
+> *(2026-11-11: still true of `FlNvSample`, the 1 Hz telemetry layer's struct. The memory figures and the other
+> three utilisation domains are read since ABI 3 — below — into structs of their own, for Advanced metrics only.)*
 >
 > **ABI 2 (2026-09-25, beta.8): the driver profile, read-only.** The owner asked whether the NVIDIA App overrides a
 > game's DLSS (frame generation, ray reconstruction, the model preset). The NVIDIA App writes those overrides into the
@@ -221,6 +223,39 @@ Still resolve **entry points defensively at runtime**: `nvapi64.dll` may be abse
 > profile beside every session, both tiers, and stores it in `sessions.driver_profile` (schema 0012). Verified by
 > ctest `fl_nvapi_bridge` (argument refusals, DEGRADED before init, the global profile of the test's own executable on
 > a GPU machine) and `NvapiBridgeMirrorTests` (`FlNvDriverProfileSize`, ABI 2).
+>
+> **ABI 3 (2026-11-11, owner decision D101): what "Advanced metrics" reads.** Five reads, each a struct with its
+> size first and a `present` mask, and each call behind it a query: `FlNvReadFacts` (what is true of the card whatever
+> is running — its type, bus, PCI ids, VBIOS version, architecture, core counts, the base and boost clocks, the
+> sensor's range, `NvAPI_GPU_GetMemoryInfoEx`'s four sizes, the frame-buffer sizes, the driver's package and base
+> branch, NVAPI's interface version, the chipset), `FlNvReadLive` (the same memory call's free figure with evictions
+> and promotions, the frame-buffer, video and bus utilisation, the video clock, the P-state, the board and
+> power-supply temperatures where the card has them, the throttle word, the encoder's session count and averages),
+> `FlNvReadDisplays` (per connected display: HDR formats and luminances, variable-refresh support, the adaptive-sync
+> flags), `FlNvSessionDisplay` (the display a GDI device name names: its variable-refresh state and the colour space
+> the driver reports for one process) and `FlNvProfileSettings` (every setting of the global profile, or only what a
+> game's own profile sets — a game no profile names is answered `GLOBAL` with nothing listed, never with the PC's
+> settings). No struct of ABI 2 changed size; `FL_NV_FIELD_VRAM` stays clear.
+>
+> **No identifier has an entry point** (D104): not `NvAPI_GPU_GetBoardInfo`, `NvAPI_GPU_GetUUID`, an EDID read, or
+> `NvAPI_GPU_GetEncoderSessionsInfo`, which lists WHICH programs encode. A display is passed on by its place in the
+> driver's list; NVAPI's display id is a handle of this boot and is neither stored nor shown.
+>
+> **Read-only is now a gate** (D108): `tools/nvapi-readonly-check.ps1` holds every `NvAPI_*` call of the bridge's
+> source to `tools/nvapi-allowed-calls.txt` in both directions — forty-four names — and refuses a name that sets,
+> saves, restores, registers or controls something, or that returns an identifier, **even when the list names it**.
+> Managed: `INvapiAdvancedBridge` (a port of its own beside `INvapiBridge`; `NativeNvapiBridge` implements both, and a
+> DLL that predates ABI 3 answers `Unavailable` rather than throwing) and `NvapiAdvancedReader`, which turns the five
+> structs into the catalog's facts and readings — every `nvapi.` entry whose reach is `Agent`, and no other, held by
+> `NvapiAdvancedReaderTests` in both directions. **Nothing composes the reader yet**: no Agent code calls it.
+>
+> **Measured on the dev box the day it was written** (RTX 5080, a driver of base branch `R620`, ctest `fl_nvapi_bridge`'s
+> AVAILABLE branch — `20_OPEN_QUESTIONS` §M12): all twenty facts answer (`present = 0xFFFFF`: discrete, desktop, PCI
+> Express, 84 ray-tracing and 336 tensor cores, base 2295 / boost 2670 MHz, 16,303 MiB dedicated, a DCH Game Ready
+> driver); eight of the ten live groups answer (`0x33F`) — **the board and power-supply temperatures do not exist on
+> this card**, as the memory temperature does not, and read N/A; the one display answers all four groups; the global
+> profile lists 24 settings. One thing the header had wrong: it misspells `NV_ENCODER_STATISTICS_VER` as
+> `NNV_ENCODER_STATISTICS_VER`, so the bridge names `NV_ENCODER_STATISTICS_VER1`.
 >
 > **The ctest could not fail on a GPU machine until the same day.** `fl_nvapi_bridge` was registered with
 > `PASS_REGULAR_EXPRESSION` alone, which makes ctest ignore the exit code: the AVAILABLE branch's reference-counting
@@ -536,8 +571,10 @@ states here what it built.
   with the sessions, closed again some seconds after the last use. A PC idling with FrameLedger in the tray reads
   nothing (NFR-2's "~0% idle").
 - **D108 — read-only, by a gate.** §Runtime policy's "never call a setter" becomes a build check: every `NvAPI_*`
-  call in the bridge's source is compared with a committed list, and the entry points that both read and write are
-  allowed with their read command only.
+  call in the bridge's source is compared with a committed list, in both directions, and a name that changes
+  something or returns an identifier is refused whatever the list says. An entry point that both reads and writes by
+  a command argument — the colour and info-frame controls — is refused like a writer: the check reads names, not
+  arguments, and nothing on the list is one. *(Built with ABI 3: `tools/nvapi-readonly-check.ps1`.)*
 
 ### What belongs to what
 

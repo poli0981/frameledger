@@ -117,10 +117,9 @@ public sealed partial class AdvancedMetricCatalogTests
     public void AnIdentifierIsNamedAndNeverRead(string id)
     {
         // D104. The entry exists so the page can say "never read, and why"; a reach that reads it would be the defect.
-        AdvancedMetric? m = AdvancedMetricCatalog.Find(id);
+        AdvancedMetric m = AdvancedMetricCatalog.Find(id).Should().BeOfType<AdvancedMetric>("the catalog names '{0}'", id).Subject;
 
-        m.Should().NotBeNull();
-        m!.Reach.Should().Be(AdvancedReach.Identifier);
+        m.Reach.Should().Be(AdvancedReach.Identifier);
         m.IsRead.Should().BeFalse();
     }
 

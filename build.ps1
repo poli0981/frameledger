@@ -479,6 +479,16 @@ function Invoke-ProjectGates {
     # beta.24 (D66): CHANGELOG.md and docs/HANDOFF.md keep their paths as the index of their parts under docs/changelog/
     # and docs/handoff/. A released section left in CHANGELOG.md, a release file whose heading is not its name or that
     # links relatively, or an index and its files that do not name each other both ways is red here.
+    # 2026-11-11 (D108): "the bridge never calls a setter" was a sentence in docs/18 a reviewer checked by reading one
+    # file. With Advanced metrics the bridge calls forty-four NVAPI entry points, and the header declares a setter beside
+    # almost every getter: each call is held to tools/nvapi-allowed-calls.txt, in both directions, and a writer or a
+    # reader of an identifier (D104) is red even when the list names it. Text only - it runs with or without the native
+    # build.
+    Write-Step 'nvapi-readonly-check'
+    $nvapiTool = Join-Path $repo 'tools/nvapi-readonly-check.ps1'
+    Invoke-Checked 'nvapi-readonly-check (self-test)' { & $nvapiTool -SelfTest }
+    Invoke-Checked 'nvapi-readonly-check' { & $nvapiTool -RepoRoot $repo }
+
     Write-Step 'docs-split-check'
     $splitTool = Join-Path $repo 'tools/docs-split-check.ps1'
     Invoke-Checked 'docs-split-check (self-test)' { & $splitTool -SelfTest }

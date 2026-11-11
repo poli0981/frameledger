@@ -50,6 +50,20 @@ numeric core and does not move; the heading is the full version — corrected 20
   a vendor's licence closes. `docs/18_GPU_VENDOR_APIS.md` §Advanced metrics holds the design, the owner's decisions
   D101–D108 and the same list as a table; a test fails when the table and the catalog differ in either direction.
 
+- **The NVIDIA bridge can read what Advanced metrics will show — and nothing calls it yet.**
+  `FrameLedger.NvapiBridge.dll`, the library the Agent loads into its own process and never into a game, gains five
+  reads (its ABI 3): the card's facts — firmware version, architecture, ray-tracing and tensor core counts, base and
+  boost clocks, its memory sizes, the driver's package; what it says now — free and used video memory with evictions
+  and promotions, the frame-buffer, video and bus utilisation, the performance state, the encoder's load; what each
+  connected display can do with HDR and variable refresh; the state of the display a game presents on; and every
+  setting of a driver profile. On the development PC's RTX 5080 all twenty facts and eight of the ten live groups
+  answer — the card has no board or power-supply temperature sensor, so those two will read N/A.
+  **It reads no identifier**: no serial number, no unique id, no display EDID, and not which programs are encoding.
+- **"The bridge never calls a setter" is now a build check.** A new gate, `tools/nvapi-readonly-check.ps1`, compares
+  every NVAPI call in the bridge's source with a committed list of forty-four reads, in both directions, and refuses a
+  name that sets, saves, restores, registers or controls something — or returns an identifier — even when someone
+  adds it to the list.
+
 ### Fixed
 
 - **A sentence in the documents that kept a function from being called.** `docs/18_GPU_VENDOR_APIS.md` said the

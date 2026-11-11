@@ -1,0 +1,68 @@
+# Every NVAPI entry point FrameLedger.NvapiBridge calls - the whole of what a shipped FrameLedger binary asks the NVIDIA
+# driver (docs/18_GPU_VENDOR_APIS.md section Runtime policy; owner decision D108, 2026-11-11).
+#
+# tools/nvapi-readonly-check.ps1 holds src/native/FrameLedger.NvapiBridge/src/fl_nvapi_bridge.cpp to this list in both
+# directions, on every build: a call that is not here is red, and a name here that the bridge no longer calls is red.
+# A name that sets, saves, restores, registers or controls something is red even when it is listed, and so is one that
+# returns an identifier (D104) - so a writer cannot be let in by adding a line to this file.
+#
+# One name per line. To add a read: read what the entry point does in the vendored nvapi.h, add its name here, and say
+# in the pull request what it reads and why that is not an identifier.
+
+# Library lifetime
+NvAPI_Initialize
+NvAPI_Unload
+NvAPI_EnumPhysicalGPUs
+NvAPI_GetInterfaceVersionString
+
+# The card: what it is
+NvAPI_GPU_GetFullName
+NvAPI_GPU_GetGPUType
+NvAPI_GPU_GetSystemType
+NvAPI_GPU_GetGPUInfo
+NvAPI_GPU_GetBusType
+NvAPI_GPU_GetPCIIdentifiers
+NvAPI_GPU_GetVbiosVersionString
+NvAPI_GPU_GetArchInfo
+NvAPI_GPU_GetGpuCoreCount
+NvAPI_GPU_GetRamBusWidth
+NvAPI_GPU_GetPhysicalFrameBufferSize
+NvAPI_GPU_GetVirtualFrameBufferSize
+
+# The card: what it says now
+NvAPI_GPU_GetThermalSettings
+NvAPI_GPU_GetDynamicPstatesInfoEx
+NvAPI_GPU_GetAllClockFrequencies
+NvAPI_GPU_GetTachReading
+NvAPI_GPU_GetPerfDecreaseInfo
+NvAPI_GPU_GetCurrentPCIEDownstreamWidth
+NvAPI_GPU_GetMemoryInfoEx
+NvAPI_GPU_GetCurrentPstate
+NvAPI_GPU_GetEncoderStatistics
+
+# The driver and the PC
+NvAPI_SYS_GetDriverAndBranchVersion
+NvAPI_SYS_GetDisplayDriverInfo
+NvAPI_SYS_GetChipSetInfo
+NvAPI_NGX_GetNGXOverrideState
+
+# Displays: what each can do, and the state of the one a game presents on
+NvAPI_GPU_GetConnectedDisplayIds
+NvAPI_Disp_GetHdrCapabilities
+NvAPI_DISP_GetMonitorCapabilities
+NvAPI_Disp_GetVRRInfo
+NvAPI_DISP_GetAdaptiveSyncData
+NvAPI_DISP_GetDisplayIdByDisplayName
+NvAPI_Disp_GetSourceColorSpace
+
+# The driver's settings store, read: a session is opened, read from and closed. CreateSession and DestroySession - the
+# handle of a session that only ever reads - and NvAPI_SYS_GetChipSetInfo above ("ChipSet" is a noun) are the three
+# names here that the writer rule would refuse; the check names each of them, with its reason.
+NvAPI_DRS_CreateSession
+NvAPI_DRS_LoadSettings
+NvAPI_DRS_FindApplicationByName
+NvAPI_DRS_GetCurrentGlobalProfile
+NvAPI_DRS_GetProfileInfo
+NvAPI_DRS_GetSetting
+NvAPI_DRS_EnumSettings
+NvAPI_DRS_DestroySession
