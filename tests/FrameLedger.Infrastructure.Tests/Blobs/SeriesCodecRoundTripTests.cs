@@ -89,4 +89,33 @@ public sealed class SeriesCodecRoundTripTests
 
     [Fact]
     public void TheCodecTagIsTheOneTheSchemaStores() => SeriesCodec.Tag.Should().Be("deflate-le-v1");
+
+    [Fact]
+    public void ASparseSeriesKeepsItsGapsAsNaNAndItsNegativeValues()
+    {
+        // Owner decision D102: an advanced series has ticks with no reading, and may be negative, so -1 cannot mark a gap.
+        float[] rail = [-11.97f, float.NaN, float.NaN, -12.03f, 0f];
+
+        float[] back = SeriesCodec.DecodeFloat32(SeriesCodec.EncodeSparseFloat32(rail));
+
+        back.Should().HaveCount(5);
+        back[0].Should().Be(-11.97f);
+        float.IsNaN(back[1]).Should().BeTrue();
+        float.IsNaN(back[2]).Should().BeTrue();
+        back[3].Should().Be(-12.03f);
+        back[4].Should().Be(0f, "a zero is a reading");
+        new DeflateSeriesCodec().EncodeSparseFloat32(rail).Should().Equal(SeriesCodec.EncodeSparseFloat32(rail));
+    }
+
+    [Fact]
+    public void ASparseSeriesStillRefusesAnInfinityAndTheOrdinaryEncoderStillRefusesNaN()
+    {
+        Action infinite = () => SeriesCodec.EncodeSparseFloat32([1f, float.PositiveInfinity]);
+        Action nan = () => SeriesCodec.EncodeFloat32([1f, float.NaN]);
+
+        infinite.Should().Throw<ArgumentException>().WithMessage("*infinity at index 1*");
+        nan.Should().Throw<ArgumentException>("the rule for frame times is not relaxed by the second encoder");
+        SeriesCodec.DecodeFloat32(SeriesCodec.EncodeSparseFloat32([])).Should().BeEmpty();
+        FluentActions.Invoking(static () => SeriesCodec.EncodeSparseFloat32(null!)).Should().Throw<ArgumentNullException>();
+    }
 }

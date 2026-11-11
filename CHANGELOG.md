@@ -76,6 +76,20 @@ numeric core and does not move; the heading is the full version — corrected 20
   values a second — and showed that one refresh of the sensor library takes 14 ms of processor time, so the reader
   refreshes it every five seconds, where NVIDIA's own figures (0.4 ms) stay at one a second.
 
+- **The ledger can hold Advanced metrics — and holds none yet.** Schema 23 adds two tables: one for the facts of
+  the PC, stored once per distinct set, and one for what a session recorded with the option on knows — its own
+  facts, which sources answered and why the others did not, and the statistics of its extra series. Nothing is
+  added to the session row itself, so what the JSON export and a bug bundle carry does not grow. The extra series
+  are stored beside the others under names of their own, with a real "no reading" for a second in which a sensor
+  was not read. One hour of them is about 0.2 MB. **A session recorded with the option off stores nothing of this**,
+  and the option does not exist yet. *A 0.1.0-beta.38 cannot open a ledger a later build has migrated.*
+
+### Changed
+
+- **A crash file from a newer build no longer loses its tail in an older one.** The file a session writes as it goes
+  (so that a crash keeps what was recorded) is made of chunks; a reader that met a chunk of a kind it did not know
+  stopped there. It now passes over a whole chunk it does not know and reads on.
+
 ### Fixed
 
 - **A sentence in the documents that kept a function from being called.** `docs/18_GPU_VENDOR_APIS.md` said the

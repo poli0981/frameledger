@@ -2,6 +2,7 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.Collections.Concurrent;
+using FrameLedger.Application.Advanced;
 using FrameLedger.Application.Telemetry;
 
 namespace FrameLedger.Infrastructure.Telemetry;
@@ -41,6 +42,12 @@ public sealed class TelemetryPoller : ITelemetryPoller
 
     private readonly bool _ownsSource;
 
+    // Advanced metrics (owner decision D101): the Agent's one shared reader, held while this poller runs and never
+    // owned by it. Null when the option is off - then nothing below does anything, and a sample is what it always was.
+    private readonly IAdvancedHardware? _advanced;
+    private IDisposable? _advancedHold;
+    private AdvancedSnapshot? _lastAdvanced;
+
     private Thread? _thread;
     private int _queued;
     private long _dropped;
@@ -56,12 +63,14 @@ public sealed class TelemetryPoller : ITelemetryPoller
     /// </param>
     /// <param name="system">The machine beside the GPU, read on the same tick (2026-09-21); owned and disposed with <paramref name="source"/> when <paramref name="ownsSource"/> is set. Null composes none, and every sample's <see cref="TelemetrySample.System"/> is empty.</param>
     /// <param name="game">The game process's own memory (beta.12, D43), read on the same tick for the process <see cref="Follow"/> named; owned and disposed with the others when <paramref name="ownsSource"/> is set. Null composes none, and every sample's <see cref="TelemetrySample.Game"/> is empty.</param>
+    /// <param name="advanced">The Agent's shared reader of advanced metrics (owner decision D101), held while this poller runs and never owned by it: each of its ticks is attached to one sample. Null - the option is off - composes none, and every sample's <see cref="TelemetrySample.Advanced"/> is null.</param>
     public TelemetryPoller(IGpuTelemetrySource source, TelemetryPollerOptions options, TimeProvider clock, bool ownsSource = false,
-        ISystemTelemetrySource? system = null, IGameMemorySource? game = null)
+        ISystemTelemetrySource? system = null, IGameMemorySource? game = null, IAdvancedHardware? advanced = null)
     {
         _source = source ?? throw new ArgumentNullException(nameof(source));
         _system = system;
         _game = game;
+        _advanced = advanced;
         _ownsSource = ownsSource;
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _clock = clock ?? throw new ArgumentNullException(nameof(clock));
@@ -94,6 +103,9 @@ public sealed class TelemetryPoller : ITelemetryPoller
             return;
         }
 
+        // Held from here to Dispose: the shared reader runs while a session samples, and closes some seconds after
+        // the last session and the page have let go (D107).
+        _advancedHold = _advanced?.Acquire();
         _thread = new Thread(Loop)
         {
             IsBackground = true,
@@ -116,14 +128,15 @@ public sealed class TelemetryPoller : ITelemetryPoller
         bool machine = _system is not null && _system.TryRead(out system);
         ProcessReading game = default;
         bool measured = _game is not null && _game.TryRead(out game);
-        if (!gpu && !machine && !measured)
+        IReadOnlyList<AdvancedReading>? advanced = NewAdvancedReadings();
+        if (!gpu && !machine && !measured && advanced is null)
         {
             return;
         }
 
         // A tick only the machine or the game answered still carries them: the placeholder names no layer and no field.
         sample ??= new GpuSample { TakenAt = _clock.GetUtcNow(), Layer = TelemetryLayer.None };
-        _queue.Enqueue(new TelemetrySample(_clock.GetTimestamp(), sample, system, game));
+        _queue.Enqueue(new TelemetrySample(_clock.GetTimestamp(), sample, system, game, advanced));
         if (Interlocked.Increment(ref _queued) > _options.QueueCapacity && _queue.TryDequeue(out _))
         {
             Interlocked.Decrement(ref _queued);
@@ -132,6 +145,23 @@ public sealed class TelemetryPoller : ITelemetryPoller
     }
 
     /// <summary>The adapter the game presents on (beta.13): handed to the source, which points its layers at it.</summary>
+    /// <summary>
+    /// The readings of the shared advanced reader's latest tick, when that tick is one this poller has not taken yet:
+    /// a read of one reference, never a wait. Each of its ticks is attached to at most one sample — a reading is of
+    /// one tick, and is not repeated on the next because nothing newer arrived. The two run a second apart on their own
+    /// clocks, so now and then a tick of the reader falls between two polls and is not stored; none is stored twice.
+    /// </summary>
+    private IReadOnlyList<AdvancedReading>? NewAdvancedReadings()
+    {
+        if (_advanced?.Latest is not { } snapshot || ReferenceEquals(snapshot, _lastAdvanced))
+        {
+            return null;
+        }
+
+        _lastAdvanced = snapshot;
+        return snapshot.Readings.Count > 0 ? snapshot.Readings : null;
+    }
+
     public bool FollowAdapter(ulong luid) => _source is IGpuAdapterSelector selector && selector.SelectAdapter(luid);
 
     /// <summary>The game process whose memory the next ticks read (beta.12, D43); ignored without a game source.</summary>
@@ -166,6 +196,7 @@ public sealed class TelemetryPoller : ITelemetryPoller
         _stop.Set();
         _thread?.Join(TimeSpan.FromSeconds(2));
         _stop.Dispose();
+        _advancedHold?.Dispose();
         if (_ownsSource)
         {
             _source.Dispose();

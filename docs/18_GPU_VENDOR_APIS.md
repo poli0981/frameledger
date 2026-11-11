@@ -611,6 +611,20 @@ and labelled with the hardware's words. A sensor with no family is not read.
   sensor has no reading — its last value is not repeated. The same refresh is what the L2 telemetry layer does once
   a second in every session: that cost is not this feature's, and is `20_OPEN_QUESTIONS` §M16.
 
+### From the reader to the ledger (built 2026-11-11; produced by nothing yet)
+
+- **The poller attaches, it does not read.** `TelemetryPoller` takes an optional `IAdvancedHardware`, holds it from
+  `Start` to `Dispose`, and at each poll takes `Latest` — a read of one reference. A snapshot it has not taken yet
+  rides on that poll's `TelemetrySample.Advanced`; one it has already taken is not attached again, because a
+  reading is of one tick. Null — the option off — composes nothing, and a sample is what it always was.
+- **The `.partial`** carries those readings in a chunk of their own after the sensor chunk (type 9) and the
+  session's context in another (type 10), so a recovered session keeps both; with the option off neither is
+  written. An unknown chunk type is now skipped rather than the end of the file (D106). `06_DATA_MODEL` §The
+  `.partial` file.
+- **The finalizer** (`AdvancedSessionBuilder`, both tiers) turns the samples' readings into one series each,
+  aligned to `t_ms` with NaN for a tick with none, and builds the session's row: facts, sources, statistics,
+  directory. Schema 0023 and the rule for NaN are `06_DATA_MODEL` §Blob encoding and §Migrations.
+
 ### What belongs to what
 
 | Scope | What it is | Stored | Shown |

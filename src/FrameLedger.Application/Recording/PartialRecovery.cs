@@ -157,7 +157,9 @@ public sealed class PartialRecovery
             TotalDropped = partial.LastTick?.TotalDropped ?? 0,
         };
 
-        return new FinalizeInput { Skeleton = skeleton, Hooked = aggregation, Sensors = partial.Sensors };
+        // A session recorded with Advanced metrics on carries its context in the file (D101); one recorded with them
+        // off carries none, and stores none.
+        return new FinalizeInput { Skeleton = skeleton, Hooked = aggregation, Sensors = partial.Sensors, Advanced = Advanced.AdvancedJson.ParseContext(partial.AdvancedContextJson) };
     }
 
     /// <summary>The <c>build=…</c> word of the recorder's <c>attached</c> note, or null.</summary>

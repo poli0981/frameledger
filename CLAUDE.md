@@ -112,7 +112,9 @@ src/
                                #   (one reader for the Agent, on its own thread, only while held - D107) over
                                #   NvapiAdvancedReader (the bridge's ABI 3) and LhmAdvancedReader (LhmGroups:
                                #   the card; as administrator with PawnIO the processor, memory and board -
-                               #   never storage, D103). No Agent code composes it yet.
+                               #   never storage, D103). No Agent code composes it yet. Recording/
+                               #   AdvancedSessionBuilder stores what a session's samples carried (schema 0023:
+                               #   machine_profiles + session_advanced, adv.* series with NaN for a gap, D102).
   FrameLedger.Infrastructure/  # SQLite, shm reader, vendor APIs, injector interop, parsers,
                                #   and Capture/ (PR-C): ShmRingAttacher/ShmCaptureSink over the
                                #   reader, HeldProcessLivenessSource, TargetResolver (path only,

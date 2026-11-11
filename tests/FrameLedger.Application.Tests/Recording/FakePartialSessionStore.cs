@@ -95,6 +95,10 @@ internal sealed class FakePartialSessionStore : IPartialSessionStore
 
         public void AppendNote(DateTimeOffset at, string text) => Notes.Add(new PartialNote(at, text));
 
+        public List<string> AdvancedContexts { get; } = [];
+
+        public void AppendAdvancedContext(string json) => AdvancedContexts.Add(json);
+
         public void Dispose() => Disposed = true;
 
         public PartialSession ToSession() => new()
@@ -103,6 +107,7 @@ internal sealed class FakePartialSessionStore : IPartialSessionStore
             Records = Records,
             GapBefore = Gaps,
             Sensors = Sensors,
+            AdvancedContextJson = AdvancedContexts.Count == 0 ? null : AdvancedContexts[^1],
             TouchQpc = Touches,
             Notes = Notes,
             LastTick = LastTick,

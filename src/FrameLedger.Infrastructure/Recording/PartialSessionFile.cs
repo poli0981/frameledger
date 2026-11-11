@@ -5,6 +5,7 @@ using System.Buffers.Binary;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
+using FrameLedger.Application.Advanced;
 using FrameLedger.Application.Recording;
 using FrameLedger.Application.Telemetry;
 using FrameLedger.Shared;
@@ -145,6 +146,7 @@ public static class PartialSessionFile
         private readonly List<long> _touches = [];
         private readonly List<PartialNote> _notes = [];
         private PartialTick? _tick;
+        private string? _advancedContext;
 
         public bool Apply(PartialChunkType type, ReadOnlySpan<byte> payload)
         {
@@ -162,7 +164,15 @@ public static class PartialSessionFile
                 PartialChunkType.Tick => Tick(payload),
                 PartialChunkType.Note => Note(payload),
                 PartialChunkType.Touches => Int64s(payload, _touches),
-                _ => false,
+                PartialChunkType.SensorsAdvanced => AdvancedSensors(payload),
+                PartialChunkType.AdvancedContext => AdvancedContext(payload),
+
+                // A type this build does not know, in a chunk whose length and checksum are right (TryReadChunk has
+                // verified both): a newer build wrote it, and it is passed over (owner decision D106, 2026-11-11).
+                // Until then it ended the read, so a build one release older lost everything after the first new
+                // chunk - where a chunk it does know and cannot read still ends it, because that is a torn or a
+                // wrong file, not a newer one.
+                _ => true,
             };
         }
 
@@ -172,6 +182,7 @@ public static class PartialSessionFile
             Records = _records,
             GapBefore = _gaps,
             Sensors = _sensors,
+            AdvancedContextJson = _advancedContext,
             TouchQpc = _touches,
             Notes = _notes,
             LastTick = _tick,
@@ -260,6 +271,40 @@ public static class PartialSessionFile
                 at += used;
             }
 
+            return true;
+        }
+
+        /// <summary>
+        /// The advanced readings of samples already read: each is attached to the sample with its QPC — the last one
+        /// that has none yet, since the chunk follows the sensor chunk of the same flush. A reading whose sample is not
+        /// there is left out; it has no tick to belong to.
+        /// </summary>
+        private bool AdvancedSensors(ReadOnlySpan<byte> payload)
+        {
+            var read = new List<(long Qpc, IReadOnlyList<AdvancedReading> Readings)>();
+            if (!AdvancedSampleCodec.TryRead(payload, read))
+            {
+                return false;
+            }
+
+            foreach ((long qpc, IReadOnlyList<AdvancedReading> readings) in read)
+            {
+                for (int i = _sensors.Count - 1; i >= 0; i--)
+                {
+                    if (_sensors[i].QpcTicks == qpc && _sensors[i].Advanced is null)
+                    {
+                        _sensors[i] = _sensors[i] with { Advanced = readings };
+                        break;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private bool AdvancedContext(ReadOnlySpan<byte> payload)
+        {
+            _advancedContext = Encoding.UTF8.GetString(payload);
             return true;
         }
 
@@ -353,6 +398,19 @@ public static class PartialSessionFile
             }
 
             Append(PartialChunkType.SensorsWide, payload);
+
+            // The advanced readings of the same samples, in a chunk of their own after it - and only when there are
+            // any, so with the option off the file is byte for byte what it was (D101).
+            if (AdvancedSampleCodec.Write(samples) is byte[] advanced)
+            {
+                Append(PartialChunkType.SensorsAdvanced, advanced);
+            }
+        }
+
+        public void AppendAdvancedContext(string json)
+        {
+            ArgumentNullException.ThrowIfNull(json);
+            Append(PartialChunkType.AdvancedContext, Encoding.UTF8.GetBytes(json));
         }
 
         public void AppendTick(PartialTick tick)

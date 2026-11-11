@@ -2,6 +2,7 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.Runtime.InteropServices;
+using FrameLedger.Application.Advanced;
 
 namespace FrameLedger.Application.Telemetry;
 
@@ -26,5 +27,10 @@ namespace FrameLedger.Application.Telemetry;
 /// <param name="Sample">The GPU layers' composed sample; a placeholder with <see cref="TelemetryLayer.None"/> and no field on a tick only the system source answered.</param>
 /// <param name="System">The machine beside the GPU on the same tick (2026-09-21): CPU busy %, memory in use, CPU temperature where readable. Empty when no system source is composed, which is every sample recorded before that date.</param>
 /// <param name="Game">The game process's own memory on the same tick (beta.12, D43): read from outside the game. Empty when no game source is composed or nothing was followed yet — every sample recorded before beta.12.</param>
+/// <param name="Advanced">
+/// The advanced readings of the same tick (owner decision D101): the one snapshot of the shared advanced reader that
+/// was new at this poll, or null — the option is off, or that reader published nothing since the last poll. Null on
+/// every sample recorded before it existed. Never a repeat of an earlier tick's readings: a reading is of one tick.
+/// </param>
 [StructLayout(LayoutKind.Auto)]
-public readonly record struct TelemetrySample(long QpcTicks, GpuSample Sample, SystemReading System = default, ProcessReading Game = default);
+public readonly record struct TelemetrySample(long QpcTicks, GpuSample Sample, SystemReading System = default, ProcessReading Game = default, IReadOnlyList<AdvancedReading>? Advanced = null);
