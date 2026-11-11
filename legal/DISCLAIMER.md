@@ -1,17 +1,22 @@
 # FrameLedger — Disclaimer
 
-**Version:** 2.13 · **Effective:** {{RELEASE_DATE}}
+**Version:** 2.14 · **Effective:** {{RELEASE_DATE}}
 
 ## 0. This is pre-release software
 
 **FrameLedger is pre-release software.** Every build published so far is a pre-release: a beta, or an alpha — a beta's
-source built on a prerelease version of .NET, with the further risks set out in the Alpha notice
-(`legal/ALPHA_NOTICE.md`, shown before an alpha build runs). It has been tested on a small number of
+source built to try a newer version of .NET, at times a prerelease one, with the further risks set out in the Alpha
+notice (`legal/ALPHA_NOTICE.md`, shown before an alpha build runs). It has been tested on a small number of
 machines and games — the games are listed in `docs/LIST_GAME_TESTED.md` in the project's repository, and what the software
 cannot do is listed in `LIMITATIONS.md` there and in the app under Help ▸ Limitations — and **it certainly still contains
 bugs — some of them not yet known to anyone.** Features can
 change or disappear between builds, recorded data can turn out to be wrong, and an update can require your data to be
 migrated.
+
+**Windows and your processor.** From 0.1.0-beta.37 FrameLedger is built on .NET 11. Microsoft supports .NET 11 on
+Windows 11, and on Windows 10 only in its LTSC and IoT editions. FrameLedger has been run on Windows 11 only: on
+Windows 10 22H2 Home or Pro it may run, but it is untested there and nobody supports it. It does not start on a
+processor without SSE4.2 and POPCNT.
 
 By installing or running a pre-release build you accept that:
 
@@ -116,8 +121,8 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 
 <!-- accuracy-block:begin -->
 > ⚠ **What FrameLedger actually measures today — 2026-11-06.** The software is a beta; its latest
-> **beta is `0.1.0-beta.34`** (2026-11-06), an unsigned installer built from that tag with its
-> checksums published beside it (alphas — experimental builds on a prerelease .NET — are published apart). The source holds the desktop app
+> **beta is `0.1.0-beta.37`** (2026-11-11), an unsigned installer built from that tag with its
+> checksums published beside it (alphas — experimental builds that try a newer .NET — are published apart). The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
 > game in the library runs (unless you switched its recording off), injects only into games you enabled
 > and only past the safety guard, and

@@ -31,4 +31,7 @@ public sealed partial class TrendMetricOptionViewModel : ObservableObject
 
     /// <summary>The axis it is drawn against (<see cref="TrendSeriesBuilder.UnitOf"/>).</summary>
     public string Unit { get; }
+
+    /// <summary>The option as a screen reader reads it (beta.35, D88).</summary>
+    public override string ToString() => Label;
 }

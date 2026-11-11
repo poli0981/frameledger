@@ -101,7 +101,7 @@ internal static class Program
         // Before anything else. The guard reads this file on every evaluation and refuses every title
         // when it is absent, so a capture started before the seed lands would fail for a reason that
         // has nothing to do with the game (§S20).
-        // D73: which line this build is, on which runtime - an alpha's prerelease .NET is the first thing its log says.
+        // D73: which line this build is, on which runtime - the first thing the log says, an alpha's above all.
         Log.Information("agent: release line {Line}, {Runtime}", BuildLine.Current, RuntimeInformation.FrameworkDescription);
         RulesSeedOutcome seeded = await new RulesSeeder(new FileSystemRulesStore()).EnsureSeededAsync().ConfigureAwait(false);
         AgentConsole.Line($"rules: {Describe(seeded)}");
@@ -376,6 +376,9 @@ internal static class Program
 
         using IHost host = builder.Build();
         AgentConsole.Line($@"serve: ledger {paths.Database}; logs {paths.Logs}; pipe \.\pipe\{Shared.Ipc.IpcProtocol.PipeName}; Ctrl+C stops");
+        // .NET 11, the main line's runtime since beta.37: when a background service throws, the host stops and RunAsync
+        // rethrows. The exception leaves through Main's catch, so the exit is the crash report's and never _exitOk; on
+        // .NET 10 the host stopped and this returned 0 with the fault only in the log (HostBackgroundFailureTests).
         await host.RunAsync().ConfigureAwait(false);
         return _exitOk;
     }

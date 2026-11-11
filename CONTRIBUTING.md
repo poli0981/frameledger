@@ -11,12 +11,15 @@ merged, and under what licence your contribution is accepted.
 - **Open an issue before anything larger than a fix**, so the approach can be agreed before the work is done.
 - **A game with anti-cheat that FrameLedger fails to detect** is a safety bug: use the *Safety gap* issue form.
 - **A vulnerability in FrameLedger itself** goes the private route in `SECURITY.md`, never a public issue.
+- **Something that cannot be reached, read or seen** — with the keyboard, a screen reader, a contrast theme — uses the
+  *Accessibility problem* form; `ACCESSIBILITY.md` says what the App aims for.
 - Everyone who takes part follows the `CODE_OF_CONDUCT.md`.
 
 ## Building
 
-You need Windows 10 22H2 or later (x64), Visual Studio 2022 with the C++ workload (MSVC v143), CMake 3.28 or later,
-PowerShell 7, and the .NET SDK that `global.json` pins. Then:
+You need Windows 11 (x64), Visual Studio 2022 or later with the C++ workload (MSVC v143 or later), CMake 3.28 or later,
+PowerShell 7, and the .NET SDK that `global.json` pins — .NET 11 since 0.1.0-beta.37, which Microsoft does not support
+on Windows 10 Home or Pro. Then:
 
 ```powershell
 ./build.ps1 check
@@ -45,13 +48,17 @@ The definition of done is the one in `CLAUDE.md`:
 - a change to the hook path states its measured overhead in the PR (`docs/14_TESTING.md` §Hook overhead);
 - a new hook is listed in `docs/17_HOOK_ENGINE.md` §Hook inventory and justified against rule 4;
 - every new user-visible string exists in `en`, `vi` and `ja` (`docs/09_I18N.md`);
+- a change to what the App shows keeps `ACCESSIBILITY.md` §For contributors — a name for every control that shows no
+  text, theme colours only, nothing shown by colour alone, everything reachable by keyboard — and says in the PR what was
+  checked with the keyboard and Narrator; if it moves what works or what does not, `ACCESSIBILITY.md` changes with it;
 - a change that makes a document wrong updates that document in the same PR;
 - a change under `src/` adds an entry under `## [Unreleased]` in `CHANGELOG.md`;
 - every new source file carries the licence header — `./tools/notice-check.ps1 -Fix` writes it. A file you wrote
   yourself may name you in its second line instead, in the same form:
   `Copyright (C) <year> <your name> - additional terms under GPLv3 section 7: see NOTICE`.
 
-The pull-request template lists the safety checks for changes to the capture layer.
+The pull-request template lists the safety checks for changes to the capture layer, and the accessibility checks for
+changes to the user interface.
 
 ## What will not be merged
 

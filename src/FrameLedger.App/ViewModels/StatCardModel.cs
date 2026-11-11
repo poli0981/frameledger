@@ -4,4 +4,8 @@
 namespace FrameLedger.App.ViewModels;
 
 /// <summary>One stat card of the session summary: a label and its value as text (N/A where the tier has none).</summary>
-public sealed record StatCardModel(string Label, string Value, string? Suffix = null);
+public sealed record StatCardModel(string Label, string Value, string? Suffix = null)
+{
+    /// <summary>The card as a screen reader reads it (beta.35, D88): <c>Average: 62 FPS</c>.</summary>
+    public override string ToString() => Services.SpokenText.Pair(Label, string.IsNullOrEmpty(Suffix) ? Value : Value + " " + Suffix);
+}

@@ -24,7 +24,7 @@ public static class StutterDetector
             return null;
         }
 
-        var flags = new bool[frameTimesMs.Count];
+        bool[] flags = new bool[frameTimesMs.Count];
         double total = 0;
         double stuttered = 0;
         for (int i = 0; i < flags.Length; i++)

@@ -18,7 +18,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ui:TextBlock Grid.Row="0" FontTypography="Title" Text="{x:Static vm:LogsViewModel.Header}" />
+        <ui:TextBlock Grid.Row="0" FontTypography="Title" AutomationProperties.HeadingLevel="Level1" Text="{x:Static vm:LogsViewModel.Header}" />
 
         <!-- 08_UI §Logs: source toggle, level filter, search, pause-scroll; the two buttons. -->
         <WrapPanel Grid.Row="1" Margin="0,12,0,8" Orientation="Horizontal">

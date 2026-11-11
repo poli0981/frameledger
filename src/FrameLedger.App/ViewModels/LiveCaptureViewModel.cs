@@ -195,4 +195,7 @@ public sealed partial class LiveCaptureViewModel : ObservableObject
         IsHeld = false;
         HeldReason = GameName = TierText = ElapsedText = GpuTempText = CpuTempText = MemoryText = string.Empty;
     }
+
+    /// <summary>The live card as a screen reader reads it (beta.35, D88): the game, how it is recorded, for how long.</summary>
+    public override string ToString() => SpokenText.List(GameName, TierText, ElapsedText);
 }

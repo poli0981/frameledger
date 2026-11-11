@@ -157,7 +157,7 @@ public static class PeImports
                 continue;
             }
 
-            return (s.RawPointer, Math.Min((long)s.RawSize, file.Length - s.RawPointer));
+            return (s.RawPointer, Math.Min(s.RawSize, file.Length - s.RawPointer));
         }
 
         return null;

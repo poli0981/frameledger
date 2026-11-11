@@ -330,7 +330,6 @@ public sealed class PipeServer : IIpcEventPublisher, IDisposable
         private readonly NamedPipeServerStream _stream;
         private readonly Channel<byte[]> _outbound;
         private readonly CancellationTokenSource _lifetime = new();
-        private Task _run = Task.CompletedTask;
 
         public Client(PipeServer owner, long id, NamedPipeServerStream stream)
         {
@@ -342,7 +341,7 @@ public sealed class PipeServer : IIpcEventPublisher, IDisposable
                 _ => Interlocked.Increment(ref owner._dropped));
         }
 
-        public void Start(CancellationToken ct) => _run = RunAsync(ct);
+        public void Start(CancellationToken ct) => _ = RunAsync(ct);
 
         public void Enqueue(byte[] frame) => _outbound.Writer.TryWrite(frame);
 

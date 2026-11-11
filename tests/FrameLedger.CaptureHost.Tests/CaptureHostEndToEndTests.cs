@@ -76,7 +76,7 @@ public sealed class CaptureHostEndToEndTests : IDisposable
     private async Task<ConsentWriteOutcome> GrantConsentAsync()
     {
         StageTarget();
-        ExecutableFingerprint fingerprint = FrameLedger.Infrastructure.Io.ExecutableIdentity.Read(ConsentedExecutable)!.Value;
+        ExecutableFingerprint fingerprint = Infrastructure.Io.ExecutableIdentity.Read(ConsentedExecutable)!.Value;
         LedgerDatabase db = await LedgerDatabase.OpenAsync(HostLedger, ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         await using (db.ConfigureAwait(false))
         {
@@ -95,7 +95,7 @@ public sealed class CaptureHostEndToEndTests : IDisposable
         await using (db.ConfigureAwait(false))
         {
             return await new SqliteGameConsentStore(db).FindAsync(
-                FrameLedger.Infrastructure.Io.ExecutableIdentity.Normalise(ConsentedExecutable), TestContext.Current.CancellationToken).ConfigureAwait(false);
+                Infrastructure.Io.ExecutableIdentity.Normalise(ConsentedExecutable), TestContext.Current.CancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -370,10 +370,10 @@ public sealed class CaptureHostEndToEndTests : IDisposable
             row.LaunchWaitMs.Should().NotBeNull();
             row.OverlayBuildId.Should().NotBeNullOrEmpty("the handshake names the Overlay build");
             row.TelemetrySource.Should().Contain("l1", "the host composes L1 + L2 for every session");
-            row.QpcFrequency.Should().Be(System.Diagnostics.Stopwatch.Frequency);
+            row.QpcFrequency.Should().Be(Stopwatch.Frequency);
             FrameBlobs? frames = await sessions.FindFramesAsync(row.Id, TestContext.Current.CancellationToken).ConfigureAwait(true);
             frames.Should().NotBeNull("the blobs land in the same transaction as the row");
-            frames!.SampleCount.Should().Be(row.FrameCount);
+            frames.SampleCount.Should().Be(row.FrameCount);
             // THIS session's .partial is gone; a sibling case kills a host on purpose and leaves one behind.
             string guid = System.Text.RegularExpressions.Regex.Match(stdout, @"ledger: session (?<guid>[0-9a-f]{32}) SAVED",
                 System.Text.RegularExpressions.RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(1)).Groups["guid"].Value;
@@ -391,7 +391,7 @@ public sealed class CaptureHostEndToEndTests : IDisposable
         {
             SessionRow? row = await new SqliteSessionRepository(db).FindAsync(guid, TestContext.Current.CancellationToken).ConfigureAwait(false);
             row.Should().NotBeNull();
-            row!.ExitStatus.Should().Be(ExitStatus.Interrupted);
+            row.ExitStatus.Should().Be(ExitStatus.Interrupted);
             row.Tier.Should().Be(CaptureTier.Hooked);
             row.FrameCount.Should().Be(expectedFrames, "the prefix is the session");
             row.DurationSeconds.Should().BeGreaterThanOrEqualTo(5, "ended at the last flush, past the host's minimum");
@@ -424,7 +424,7 @@ public sealed class CaptureHostEndToEndTests : IDisposable
                 "the killed host left exactly one file, its own").Subject;
             PartialSession? partial = PartialSessionFile.Read(file);
             partial.Should().NotBeNull();
-            partial!.LastTick.Should().NotBeNull("two 3 s flushes fit inside 8 s");
+            partial.LastTick.Should().NotBeNull("two 3 s flushes fit inside 8 s");
             partial.Records.Should().NotBeEmpty();
 
             using Process recover = StartHost("recover");

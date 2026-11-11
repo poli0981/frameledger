@@ -14,6 +14,7 @@ public sealed class DocumentWindows(IUrlOpener urls, IThemeApplier theme, Appear
 {
     private DocumentWindow? _guide;
     private DocumentWindow? _limitations;
+    private DocumentWindow? _accessibility;
     private DocumentWindow? _alphaNotice;
     private AboutWindow? _about;
 
@@ -42,6 +43,21 @@ public sealed class DocumentWindows(IUrlOpener urls, IThemeApplier theme, Appear
         };
         _limitations.Closed += (_, _) => _limitations = null;
         _limitations.Show();
+    }
+
+    public void ShowAccessibility()
+    {
+        if (Reveal(_accessibility))
+        {
+            return;
+        }
+
+        _accessibility = new DocumentWindow(Strings.Accessibility_Title, [new DocumentPage(Strings.Accessibility_Title, AccessibilityDocument.Load(), AccessibilityDocument.ResourceName)], urls, theme, appearance)
+        {
+            Owner = shell.Current,
+        };
+        _accessibility.Closed += (_, _) => _accessibility = null;
+        _accessibility.Show();
     }
 
     public void ShowAlphaNotice()

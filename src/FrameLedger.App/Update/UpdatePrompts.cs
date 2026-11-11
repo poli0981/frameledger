@@ -22,14 +22,14 @@ public sealed class UpdatePrompts(IUrlOpener urls, BugReportFlow bugReports) : I
     {
         ArgumentNullException.ThrowIfNull(candidate);
         var body = new StackPanel();
-        body.Children.Add(new System.Windows.Controls.TextBlock
+        body.Children.Add(new TextBlock
         {
             Text = OfferText(candidate),
             TextWrapping = TextWrapping.Wrap,
         });
         if (!string.IsNullOrWhiteSpace(candidate.NotesMarkdown))
         {
-            body.Children.Add(new System.Windows.Controls.TextBlock { Text = Strings.Update_Notes_Header, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 12, 0, 4) });
+            body.Children.Add(new TextBlock { Text = Strings.Update_Notes_Header, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 12, 0, 4) });
             // beta.12: the release's notes are the CHANGELOG section, rendered rather than shown as raw Markdown; its relative
             // links resolve the way they do in the repository, against CHANGELOG.md at the root.
             var notes = new Controls.MarkdownView { MaxHeight = 260, MinHeight = 80, UrlOpener = urls, DocumentPath = "CHANGELOG.md", MarkdownText = candidate.NotesMarkdown };
@@ -37,7 +37,10 @@ public sealed class UpdatePrompts(IUrlOpener urls, BugReportFlow bugReports) : I
             body.Children.Add(notes);
         }
 
-        body.Children.Add(new System.Windows.Controls.TextBlock { Text = Strings.Update_Unsigned_Footer, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 12, 0, 0), Opacity = 0.7 });
+        // beta.35 (D91): the muted text style, not an opacity — under a contrast theme a translucent text is no theme colour.
+        var footer = new TextBlock { Text = Strings.Update_Unsigned_Footer, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 12, 0, 0) };
+        footer.SetResourceReference(FrameworkElement.StyleProperty, "SecondaryText");
+        body.Children.Add(footer);
         var box = new MessageBox
         {
             Title = string.Format(CultureInfo.CurrentCulture, Strings.Update_Available_Title_Format, candidate.Version),
@@ -46,7 +49,7 @@ public sealed class UpdatePrompts(IUrlOpener urls, BugReportFlow bugReports) : I
             CloseButtonText = Strings.Update_Later,
             MaxWidth = 640,
         };
-        MessageBoxResult result = await box.ShowDialogAsync(cancellationToken: ct).ConfigureAwait(true);
+        MessageBoxResult result = await MessageBoxes.ShowAsync(box, ct).ConfigureAwait(true);
         return result == MessageBoxResult.Primary;
     }
 
@@ -82,7 +85,7 @@ public sealed class UpdatePrompts(IUrlOpener urls, BugReportFlow bugReports) : I
         var box = new MessageBox
         {
             Title = Strings.Update_Err_Title,
-            Content = new System.Windows.Controls.TextBlock { Text = Text(failure), TextWrapping = TextWrapping.Wrap },
+            Content = new TextBlock { Text = Text(failure), TextWrapping = TextWrapping.Wrap },
             CloseButtonText = Strings.Common_Ok,
             MaxWidth = 560,
         };
@@ -98,7 +101,7 @@ public sealed class UpdatePrompts(IUrlOpener urls, BugReportFlow bugReports) : I
                 break;
         }
 
-        MessageBoxResult result = await box.ShowDialogAsync(cancellationToken: ct).ConfigureAwait(true);
+        MessageBoxResult result = await MessageBoxes.ShowAsync(box, ct).ConfigureAwait(true);
         if (result != MessageBoxResult.Primary)
         {
             return;
@@ -130,10 +133,10 @@ public sealed class UpdatePrompts(IUrlOpener urls, BugReportFlow bugReports) : I
         var box = new MessageBox
         {
             Title = title,
-            Content = new System.Windows.Controls.TextBlock { Text = body, TextWrapping = TextWrapping.Wrap },
+            Content = new TextBlock { Text = body, TextWrapping = TextWrapping.Wrap },
             CloseButtonText = Strings.Common_Ok,
             MaxWidth = 560,
         };
-        await box.ShowDialogAsync(cancellationToken: ct).ConfigureAwait(true);
+        await MessageBoxes.ShowAsync(box, ct).ConfigureAwait(true);
     }
 }

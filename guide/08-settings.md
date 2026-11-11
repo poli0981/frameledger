@@ -41,7 +41,7 @@ The link under them, *Read what the hook does and does not do*, opens the safety
 
 | Setting | What it does | Default |
 |---|---|---|
-| **Theme** | Follow system, Light or Dark. Applies at once. | Follow system |
+| **Theme** | Follow system, Light or Dark. Applies at once. While a Windows contrast theme is on, FrameLedger uses that theme's colours whatever you choose here, and says so under the box. | Follow system |
 | **Language** | English, Tiếng Việt or 日本語. The window is rebuilt in the new language at once, and stays on Settings (since 0.1.0-beta.34; before, it could open on the last game you looked at). | English |
 
 ## Games

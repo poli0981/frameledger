@@ -62,8 +62,26 @@ public sealed record ChartPalette(
     /// element drawn in the chart colours follows a theme switch: a resource reference to <c>ApplicationBackgroundColor</c>,
     /// read here (<c>FgMixBar</c>, <c>ChangeBadge</c>).
     /// </summary>
-    public static ChartPalette ForBackground(System.Windows.Media.Color background) =>
-        For(Services.ColorMath.Luminance(background) < 0.5 ? ApplicationTheme.Dark : ApplicationTheme.Light);
+    public static ChartPalette ForBackground(System.Windows.Media.Color background) => Services.ContrastTheme.Active is { } contrast
+        ? ForContrast(contrast)
+        : For(Services.ColorMath.Luminance(background) < 0.5 ? ApplicationTheme.Dark : ApplicationTheme.Light);
+
+    /// <summary>
+    /// The palette under a Windows contrast theme (beta.35, D91): only the theme's own colours — the window under every plot,
+    /// its text for the axes and the first series, then the link, the highlight, the button text and the disabled text in
+    /// turn — the series told apart by their patterns as well (<see cref="ChartPatterns"/>), since a contrast theme has few.
+    /// </summary>
+    public static ChartPalette ForContrast(Services.ContrastPalette contrast)
+    {
+        ArgumentNullException.ThrowIfNull(contrast);
+        Color window = ChartTheme.ToScottPlot(contrast.Window);
+        Color text = ChartTheme.ToScottPlot(contrast.WindowText);
+        Color link = ChartTheme.ToScottPlot(contrast.HotTrack);
+        Color highlight = ChartTheme.ToScottPlot(contrast.Highlight);
+        Color button = ChartTheme.ToScottPlot(contrast.ButtonText);
+        Color gray = ChartTheme.ToScottPlot(contrast.GrayText);
+        return new ChartPalette(window, window, text, gray, text, link, highlight, link, text, link, highlight, highlight, text, button, gray, button);
+    }
 
     /// <summary>A palette from any dictionary carrying the keys (the tests hand in a parsed file).</summary>
     public static ChartPalette FromDictionary(ResourceDictionary dictionary)

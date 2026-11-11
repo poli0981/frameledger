@@ -64,7 +64,7 @@ public sealed class ProcessTreeAndElectionTests
         ProcessSnapshot? elected = DescendantElection.Elect(snapshot, 10, tracked.Contains);
 
         elected.Should().NotBeNull();
-        elected!.Value.Pid.Should().Be(21, "the newest game.exe is the one presenting after a relaunch");
+        elected.Value.Pid.Should().Be(21, "the newest game.exe is the one presenting after a relaunch");
         DescendantElection.Elect(snapshot, 10, static _ => false).Should().BeNull("nothing tracked, nothing elected");
         DescendantElection.Elect(snapshot, 999, tracked.Contains).Should().BeNull();
     }

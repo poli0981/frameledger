@@ -78,4 +78,10 @@ public sealed record FpsReadoutModel
     public bool QualifierIsWarning => Kind == FpsReadoutKind.IdentifiedUncounted || Qualifier is FpsQualifier.RuntimeLoaded or FpsQualifier.Withheld;
 
     public string? FactorChip => Kind == FpsReadoutKind.Generated && Factor is double f ? FpsPresentation.FactorChip(f, SteadyShare) : null;
+
+    /// <summary>
+    /// The readout as a screen reader says it (beta.35, D88) — CLAUDE.md rule 6 holds for speech too: Native, Displayed and
+    /// the factor together, a steady factor with the share it covers; a stand-alone number with its qualifier.
+    /// </summary>
+    public string SpokenText => FpsPresentation.Spoken(this);
 }

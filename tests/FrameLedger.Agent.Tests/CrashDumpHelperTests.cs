@@ -44,7 +44,7 @@ public sealed class CrashDumpHelperTests : IDisposable
         path.Should().NotBeNull("the Agent dumps its parent, this test process: {0}", string.Join(" | ", lines));
         Path.GetFileName(path).Should().Be($"test-20260914-180203-{Environment.ProcessId}.dmp", "the name carries the UTC time and the crashing pid");
         byte[] head = new byte[4];
-        using (var file = new FileStream(path!, FileMode.Open, FileAccess.Read, FileShare.Read))
+        using (var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
         {
             file.ReadExactly(head);
         }

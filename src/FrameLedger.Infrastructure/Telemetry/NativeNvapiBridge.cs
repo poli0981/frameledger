@@ -106,7 +106,7 @@ public sealed class NativeNvapiBridge : INvapiBridge
 
     public int DriverVersion(out uint version, out string branch)
     {
-        var buffer = new byte[64];
+        byte[] buffer = new byte[64];
         int status = FlNvDriverVersion(out version, buffer, (uint)buffer.Length);
         int end = Array.IndexOf(buffer, (byte)0);
         branch = Encoding.ASCII.GetString(buffer, 0, end < 0 ? buffer.Length : end);

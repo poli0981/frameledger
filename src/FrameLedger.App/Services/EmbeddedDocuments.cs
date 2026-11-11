@@ -23,9 +23,9 @@ public static class EmbeddedDocuments
 
     /// <summary>
     /// The user guide's pages in reading order (beta.12, D44; <c>guide/</c> in the repository). Each page's title is its
-    /// first heading; <see cref="LimitationsDocument"/> closes the list, so the guide's links to it open in the window.
-    /// beta.17 (D54): the four reference pages after the FAQ make the guide the wiki's End-user part too; the alpha builds'
-    /// page joins them in beta.32 (D73).
+    /// first heading; <see cref="LimitationsDocument"/> and, since beta.35 (D88), <see cref="AccessibilityDocument"/> close
+    /// the list, so the guide's links to them open in the window. beta.17 (D54): the four reference pages after the FAQ make
+    /// the guide the wiki's End-user part too; the alpha builds' page joins them in beta.32 (D73).
     /// </summary>
     public static IReadOnlyList<string> GuidePages { get; } =
     [
@@ -70,10 +70,13 @@ public static class EmbeddedDocuments
         Page(Strings.About_Doc_Trademarks, Trademarks),
     ];
 
-    /// <summary>Help ▸ User guide: the guide's pages, each titled by its first heading, and the Limitations page after them.</summary>
+    /// <summary>
+    /// Help ▸ User guide: the guide's pages, each titled by its first heading, then the Limitations page and the
+    /// accessibility statement (beta.35, D88).
+    /// </summary>
     public static IReadOnlyList<DocumentPage> Guide()
     {
-        var pages = new List<DocumentPage>(GuidePages.Count + 1);
+        var pages = new List<DocumentPage>(GuidePages.Count + 2);
         foreach (string path in GuidePages)
         {
             string text = Read(path);
@@ -81,6 +84,7 @@ public static class EmbeddedDocuments
         }
 
         pages.Add(new DocumentPage(Strings.Limitations_Title, LimitationsDocument.Load(), LimitationsDocument.ResourceName));
+        pages.Add(new DocumentPage(Strings.Accessibility_Title, AccessibilityDocument.Load(), AccessibilityDocument.ResourceName));
         return pages;
     }
 
@@ -90,7 +94,7 @@ public static class EmbeddedDocuments
         ArgumentNullException.ThrowIfNull(markdown);
         ArgumentNullException.ThrowIfNull(path);
         string? heading = markdown.Split('\n').Select(static l => l.Trim()).FirstOrDefault(static l => l.StartsWith("# ", StringComparison.Ordinal));
-        return heading is null ? System.IO.Path.GetFileNameWithoutExtension(path) : heading[2..].Trim();
+        return heading is null ? Path.GetFileNameWithoutExtension(path) : heading[2..].Trim();
     }
 
     /// <summary>About ▸ Third-party licences: the notices and the index of every shipped package with its version and licence.</summary>

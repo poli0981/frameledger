@@ -5,7 +5,7 @@ hooking on for — and reading the graphics calls the game makes. That is why it
 resolution, the upscaler, frame generation and ray tracing apart. It is also where its limits come from. This
 page lists them in plain words; each item links to the document that has the details.
 
-*Beta software: this page describes version 0.1.0-beta.34.*
+*Beta software: this page describes version 0.1.0-beta.37.*
 
 ## Games it will not measure
 
@@ -109,7 +109,7 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
   DLSS 4), the NVIDIA App's *Dynamic* frame generation that the driver reports applied (DLSS 4.5, whatever multiplier
   it chose — since 0.1.0-beta.34), or a library whose major version names one (2.x, 3.x). A *Fixed* ×5 or ×6 set in
   the App names DLSS 4.5 only when the frames show it. A 310 library with no such evidence shows its
-  version only. ~~DLSS 5 is shown only as *runtime loaded*, by a library name not yet seen on a real game.~~ **DLSS 5**
+  version only. **DLSS 5**
   (since 0.1.0-beta.34) is named where the game was seen running its neural rendering through Streamline, with the share
   of rendered frames; its library loaded and nothing seen reads *runtime loaded* — *not seen running* only where the
   Overlay looked. A game that runs neural rendering outside Streamline is not seen. Where each
@@ -191,7 +191,13 @@ you accept the prompt. Turn it on only if you trust everything that runs under y
 
 ## Platform and what has been tested
 
-- **Windows 10 22H2 or Windows 11, 64-bit only.**
+- **Windows 11, 64-bit only.** FrameLedger is built on .NET 11 since 0.1.0-beta.37, which Microsoft supports on
+  Windows 11 and, on Windows 10, only in its LTSC and IoT editions. **Windows 10 22H2 Home and Pro are not blocked,
+  not tested and not supported**: FrameLedger may run there, and nobody has checked that it does
+  ([Build](docs/12_BUILD.md)).
+- **It does not start at all on a processor without SSE4.2 and POPCNT** — .NET 11's requirement, which every
+  processor Windows 11 accepts meets. On such a PC an update from 0.1.0-beta.36 or older installs and then does not
+  start; installing 0.1.0-beta.36 again brings FrameLedger back, with your data as it was.
 - The games FrameLedger has actually been run with, and what was measured on each, are listed in
   [LIST_GAME_TESTED.md](docs/LIST_GAME_TESTED.md). Everything was measured on one machine (an NVIDIA
   GeForce RTX 5080 with an Intel Core i7-14700KF on Windows 11); other hardware is untested.
@@ -201,6 +207,15 @@ you accept the prompt. Turn it on only if you trust everything that runs under y
 - **FrameLedger does not tell whether a game is safe to run.** It reads a game's files to find its engine and its
   anti-cheat, never to judge it, and recording or measuring a game vouches for nothing. Four itch.io downloads this
   project once used as examples turned out to carry malware ([details](docs/spike-notes.md)).
+
+## Accessibility
+
+What works with the keyboard alone, a screen reader, a contrast theme or Magnifier, what does not yet, and how to report
+a barrier is on its own page: [Accessibility](ACCESSIBILITY.md) (in the app: Help ▸ Accessibility). The largest limits:
+
+- **A chart's points cannot be read one by one.** A screen reader hears its name and where its numbers are written —
+  the session's figures, the tables, **File ▸ Export**; its keys move it.
+- **Windows' text size setting is not followed** — use display scaling or Magnifier.
 
 ## Play
 
@@ -274,13 +289,13 @@ releases unless you choose *Beta* in Settings ▸ Updates, and apply a downloade
 *Only for an alpha — a version ending in `-alpha.N`, an experimental build on a new .NET
 ([Alpha builds](guide/11-alpha-builds.md)).*
 
-- **It runs on a .NET that Microsoft has not finished** — .NET 11's release candidate first — and has not been tested
-  the way a beta is: everything on this page applies to it, and so can problems no beta has shown
+- **It is built to try a newer .NET — at times one Microsoft has not finished** — and has not been tested the way a
+  beta is: everything on this page applies to it, and so can problems no beta has shown
   ([Alpha notice](legal/ALPHA_NOTICE.md)).
-- **Windows 10 22H2 Home and Pro are not supported** by Microsoft for .NET 11; an alpha may run there, but nobody
-  supports it. It does not start at all on a processor without SSE4.2 and POPCNT.
-- **A failure in the capture agent's own background work ends the agent with a crash report** on an alpha, where a
-  beta's agent stops and exits quietly: .NET 11 reports it that way.
+- **The alphas are paused since 0.1.0-alpha.4, and a paused alpha gets no updates** — the list of anti-cheat software
+  it refuses included, which arrives only inside an update. The betas run on the same .NET 11 since 0.1.0-beta.37:
+  install the latest beta over the alpha. Once ten betas have followed 0.1.0-alpha.4, an older alpha no longer finds
+  it as an update ([Updater](docs/11_UPDATER.md)).
 - **It shares the beta's data folder.** It copies the database into `backups` before it first opens it, and does not
   open it if the copy cannot be made; the newest three copies are kept and older ones it made are deleted.
 - **It updates only to newer alphas**, and its update channel is locked; going back to the beta means installing the

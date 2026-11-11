@@ -323,7 +323,7 @@ public sealed class SqliteSessionRepository : ISessionRepository
             cmd.Parameters.AddWithValue("@PsoCreated", Optional(f.PsoCreated));
             cmd.Parameters.AddWithValue("@VramProc", Optional(f.VramProc));
             cmd.Parameters.AddWithValue("@LatencyUs", Optional(f.LatencyUs));
-            cmd.Parameters.AddWithValue("@FirstPresentMs", f.FirstPresentMs is double first ? first : (object)DBNull.Value);
+            cmd.Parameters.AddWithValue("@FirstPresentMs", f.FirstPresentMs is double first ? first : DBNull.Value);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
         }
     }

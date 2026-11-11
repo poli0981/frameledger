@@ -38,10 +38,7 @@ public sealed class ExitStatusMapperTests
     [InlineData(SessionEndReason.RefusedByGuard, null, false, ExitStatus.Normal)]
     [InlineData(SessionEndReason.StoppedByUser, null, false, ExitStatus.Normal)]
     [InlineData(SessionEndReason.KillSwitchEngaged, null, false, ExitStatus.Normal)]
-    public void MapsTheReasonTheExitCodeAndTheWitness(SessionEndReason reason, int? exitCode, bool witness, ExitStatus expected)
-    {
-        ExitStatusMapper.Map(reason, exitCode, witness).Should().Be(expected);
-    }
+    public void MapsTheReasonTheExitCodeAndTheWitness(SessionEndReason reason, int? exitCode, bool witness, ExitStatus expected) => ExitStatusMapper.Map(reason, exitCode, witness).Should().Be(expected);
 
     [Fact]
     public void TheNoteCarriesTheFineReasonTheCodeAndTheWitness()

@@ -97,7 +97,7 @@ public sealed class AntiCheatExceptionsTests
 
         result.Outcome.Should().Be(AntiCheatExceptionOutcome.Granted);
         agent.Sent.Should().ContainSingle().Which.Should().Be((IpcMessageType.SetAntiCheatException,
-            (object)new SetAntiCheatExceptionRequest(56, true, AntiCheatExceptionDisclosure.Version)));
+            new SetAntiCheatExceptionRequest(56, true, AntiCheatExceptionDisclosure.Version)));
     }
 
     [Fact]

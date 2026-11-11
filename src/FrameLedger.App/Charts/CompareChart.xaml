@@ -4,8 +4,9 @@
 <UserControl x:Class="FrameLedger.App.Charts.CompareChart"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF"
+             xmlns:charts="clr-namespace:FrameLedger.App.Charts"
+             xmlns:res="clr-namespace:FrameLedger.App"
              MinHeight="300">
     <!-- 08_UI §Compare: overlaid percentile curves; the tier legend is stamped on the plot when tiers are mixed (FR-6.2). -->
-    <sp:WpfPlot x:Name="Plot" />
+    <charts:ChartPlot x:Name="Plot" AutomationProperties.Name="{x:Static res:Strings.A11y_Chart_Compare}" AutomationProperties.HelpText="{x:Static res:Strings.A11y_ChartData_Compare}" />
 </UserControl>

@@ -7,8 +7,9 @@ namespace FrameLedger.Shared;
 
 /// <summary>
 /// The release line this build belongs to (owner decision D73, 2026-10-31): <see cref="Main"/>, the betas and releases on
-/// the .NET that <c>global.json</c> pins, or <see cref="Alpha"/>, a beta's source built on a prerelease .NET from the
-/// long-lived <c>alpha</c> branch (<c>docs/12_BUILD.md</c> §The alpha line). The <c>RELEASE_LINE</c> file at the repository
+/// the .NET that <c>global.json</c> pins, or <see cref="Alpha"/>, a beta's source built to try a newer .NET - at times a
+/// prerelease one (<see cref="AlphaLine"/>) - from the long-lived <c>alpha</c> branch (<c>docs/12_BUILD.md</c> §The alpha
+/// line). The <c>RELEASE_LINE</c> file at the repository
 /// root names it; <c>Directory.Build.props</c> stamps it into every assembly as the <see cref="MetadataKey"/> metadata and
 /// refuses any other value; <c>release.yml</c> refuses a tag that disagrees with it.
 /// </summary>
@@ -26,7 +27,7 @@ public sealed class BuildLine
     /// <summary>The betas and releases.</summary>
     public static BuildLine Main { get; } = new("main");
 
-    /// <summary>A beta's source on a prerelease .NET.</summary>
+    /// <summary>A beta's source built to try a newer .NET.</summary>
     public static BuildLine Alpha { get; } = new("alpha");
 
     /// <summary>The line this build was stamped with; <see cref="Main"/> for an assembly that carries no stamp.</summary>

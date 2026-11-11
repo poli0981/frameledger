@@ -46,8 +46,8 @@ public sealed class DatabaseMaintenanceViewModelTests
         }
     }
 
-    private static DatabaseMaintenanceViewModel Vm(ScratchLedger s, FakeAgentLink agent, IFileSaver? saver = null, Prompts? prompts = null, MemorySettings? store = null) =>
-        new(new LedgerMaintenance(s.Db), s.Db.Path, agent, saver ?? new Saver(null), prompts ?? new Prompts(true), new RegisteredSettings(store ?? new MemorySettings()));
+    private static DatabaseMaintenanceViewModel Vm(ScratchLedger s, FakeAgentLink agent, IFileSaver? saver = null, Prompts? prompts = null, MemorySettings? store = null, IAnnouncer? announcer = null) =>
+        new(new LedgerMaintenance(s.Db), s.Db.Path, agent, saver ?? new Saver(null), prompts ?? new Prompts(true), new RegisteredSettings(store ?? new MemorySettings()), announcer: announcer);
 
     private static string TempFile() => Path.Combine(Path.GetTempPath(), "fl-maint-" + Guid.NewGuid().ToString("N") + ".db");
 
@@ -68,6 +68,20 @@ public sealed class DatabaseMaintenanceViewModelTests
 
         vm.Status.Should().Be(Strings.Maintenance_Integrity_Ok);
         vm.IsBusy.Should().BeFalse();
+    }
+
+    /// <summary>beta.35 (D89): the result line is said as it appears; its LiveSetting announced nothing.</summary>
+    [Fact]
+    public async Task AResultIsSaidToAScreenReaderAsItAppears()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        var said = new RecordingAnnouncer();
+        DatabaseMaintenanceViewModel vm = Vm(s, new FakeAgentLink(), announcer: said);
+
+        await vm.CheckIntegrityCommand.ExecuteAsync(null);
+
+        said.Said.Should().OnlyContain(static s => s.Kind == AnnouncementKind.Status && s.Activity == "Maintenance", "a result is a status: a newer one replaces one not yet read");
+        said.Said[^1].Text.Should().Be(Strings.Maintenance_Integrity_Ok, "the result is the last thing said, after the working line");
     }
 
     [Fact]
@@ -172,7 +186,7 @@ public sealed class DatabaseMaintenanceViewModelTests
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
         var agent = new FakeAgentLink
         {
-            Answer = static (type, _) => FakeAgentLink.Envelope(IpcMessageType.SweepRetentionAck, new SweepRetentionAck(20, 4, 9)),
+            Answer = static (_, _) => FakeAgentLink.Envelope(IpcMessageType.SweepRetentionAck, new SweepRetentionAck(20, 4, 9)),
         };
         DatabaseMaintenanceViewModel vm = Vm(s, agent);
 
@@ -204,7 +218,7 @@ public sealed class DatabaseMaintenanceViewModelTests
         await using ScratchLedger s = await ScratchLedger.OpenAsync();
         var agent = new FakeAgentLink
         {
-            Answer = static (type, _) => FakeAgentLink.Envelope(IpcMessageType.StatusAck, new StatusAck("capturing", null, 1, [])),
+            Answer = static (_, _) => FakeAgentLink.Envelope(IpcMessageType.StatusAck, new StatusAck("capturing", null, 1, [])),
         };
         DatabaseMaintenanceViewModel vm = Vm(s, agent);
 

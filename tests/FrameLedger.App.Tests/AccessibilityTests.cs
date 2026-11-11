@@ -182,7 +182,7 @@ public sealed class AccessibilityTests
                     continue;
                 }
 
-                Type? control = typeof(Wpf.Ui.Controls.Image).Assembly.GetType("Wpf.Ui.Controls." + match.Groups["type"].Value);
+                Type? control = typeof(Image).Assembly.GetType("Wpf.Ui.Controls." + match.Groups["type"].Value);
                 bool templated = control is not null && typeof(System.Windows.Controls.Control).IsAssignableFrom(control);
                 bool bringsTemplate = style.Elements().Any(static s => string.Equals((string?)s.Attribute("Property"), "Template", StringComparison.Ordinal));
                 if (templated && !bringsTemplate)
@@ -248,6 +248,36 @@ public sealed class AccessibilityTests
         AppXaml().Where(static x => x.File.StartsWith("Dialogs" + Path.DirectorySeparatorChar, StringComparison.Ordinal))
             .SelectMany(static x => x.Xaml.Descendants().Where(static e => string.Equals(e.Name.LocalName, "ScrollViewer", StringComparison.Ordinal)).Select(_ => x.File))
             .Should().BeEmpty("use ui:PassiveScrollViewer inside a dialog");
+    }
+
+    /// <summary>
+    /// beta.35 (D90): a page's title is a first-level heading and a section's a second-level one, so a screen reader's heading
+    /// keys move through a page by its sections; a Subtitle that shows a value, not a section, says so with <c>None</c>.
+    /// </summary>
+    [Fact]
+    public void EveryTitleAndSubtitleDeclaresAHeadingLevel()
+    {
+        var undeclared = new List<string>();
+        foreach ((string file, XDocument xaml) in AppXaml())
+        {
+            foreach (XElement text in xaml.Descendants().Where(static e => string.Equals(e.Name.LocalName, "TextBlock", StringComparison.Ordinal)))
+            {
+                string? typography = text.Attribute("FontTypography")?.Value;
+                string? level = text.Attribute("AutomationProperties.HeadingLevel")?.Value;
+                bool wrong = typography switch
+                {
+                    "Title" => !string.Equals(level, "Level1", StringComparison.Ordinal),
+                    "Subtitle" => level is not ("Level2" or "None"),
+                    _ => false,
+                };
+                if (wrong)
+                {
+                    undeclared.Add($"{file}:{((System.Xml.IXmlLineInfo)text).LineNumber} FontTypography={typography} HeadingLevel={level ?? "(none)"}");
+                }
+            }
+        }
+
+        undeclared.Should().BeEmpty("08_UI §Accessibility: a Title is heading 1, a Subtitle heading 2 - or None, said on purpose, where it shows a value");
     }
 
     [Fact]

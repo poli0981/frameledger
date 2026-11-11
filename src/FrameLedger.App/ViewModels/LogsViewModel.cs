@@ -25,7 +25,6 @@ public sealed partial class LogsViewModel : ObservableObject
     private readonly LogTail _tail;
     private readonly BugReportFlow _bugReports;
     private readonly TimeProvider _clock;
-    private readonly IMessageStrip _strip;
     private readonly UiThread _ui = new();
     private IReadOnlyList<string> _lines = [];
     private ITimer? _timer;
@@ -58,7 +57,7 @@ public sealed partial class LogsViewModel : ObservableObject
     {
         _tail = tail ?? throw new ArgumentNullException(nameof(tail));
         _bugReports = bugReports ?? throw new ArgumentNullException(nameof(bugReports));
-        _strip = strip ?? throw new ArgumentNullException(nameof(strip));
+        ArgumentNullException.ThrowIfNull(strip);
         _clock = clock ?? TimeProvider.System;
         Pending = RefreshAsync();
     }
@@ -86,7 +85,7 @@ public sealed partial class LogsViewModel : ObservableObject
     public int TotalCount => _lines.Count;
 
     /// <summary>A pending refresh or export, for a test to await; the UI does not.</summary>
-    public Task Pending { get; private set; } = Task.CompletedTask;
+    public Task Pending { get; private set; }
 
     /// <summary>Starts the periodic refresh (the page's Loaded).</summary>
     public void Start()

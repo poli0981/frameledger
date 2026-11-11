@@ -63,4 +63,7 @@ public sealed partial class CompareCandidateViewModel : ObservableObject
     public bool SettingsChangedMidSession { get; }
 
     public string Label => GameName + " · " + DateText + " (" + TierText + ")";
+
+    /// <summary>The row as a screen reader reads it (beta.35, D88) — the same words as its tick box.</summary>
+    public override string ToString() => Label;
 }

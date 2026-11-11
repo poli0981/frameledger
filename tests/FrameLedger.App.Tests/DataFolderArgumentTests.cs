@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using FluentAssertions;
 using FrameLedger.App.Services;
-using Xunit;
 
 namespace FrameLedger.App.Tests;
 

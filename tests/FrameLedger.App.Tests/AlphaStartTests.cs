@@ -33,7 +33,7 @@ public sealed class AlphaStartTests
 
         LedgerBackupRequest? request = AlphaStart.BackupFor(BuildLine.Alpha, viewer: false, database, "0.1.0-alpha.1");
         request.Should().NotBeNull();
-        request!.Directory.Should().Be(LedgerPaths.BackupsDirectoryOf(database));
+        request.Directory.Should().Be(LedgerPaths.BackupsDirectoryOf(database));
         request.Version.Should().Be("0.1.0-alpha.1");
         request.Keep.Should().Be(3);
     }

@@ -144,7 +144,7 @@ public sealed class CaptureSessionTests : IAsyncDisposable
 
         public int DrainsWithoutGapList { get; private set; }
 
-        public FlWriterState State = new() { Status = (uint)FlStatus.Ready };
+        public readonly FlWriterState State = new() { Status = (uint)FlStatus.Ready };
 
         public FlWriterState WriterState => State;
 
@@ -237,7 +237,6 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         /// <summary>How many samples answer true before focus is lost. Default: every one.</summary>
         public int ForegroundFor
         {
-            get => _foregroundSamples;
             set => _foregroundSamples = value;
         }
 
@@ -1054,7 +1053,7 @@ public sealed class CaptureSessionTests : IAsyncDisposable
             new DelegateRingAttacher(_ =>
             {
                 attempts++;
-                return ((ICaptureSink?)null, ShmAttachRefusal.BuildIdMismatch);
+                return (null, ShmAttachRefusal.BuildIdMismatch);
             }),
             // The refused attach is held as Tier 2 until the target exits (2026-09-22); the fake never exits, so bound it.
             new CaptureOptions { AttachBudget = TimeSpan.FromMilliseconds(500), MaxDuration = TimeSpan.FromMilliseconds(50), HoldInterval = TimeSpan.FromMilliseconds(1) });
@@ -1224,7 +1223,7 @@ public sealed class CaptureSessionTests : IAsyncDisposable
         ticks.Holds.Should().AllSatisfy(static h =>
         {
             h.Should().NotBeNull("every held tick says why, so the pipe can say it while the game runs");
-            h!.Reason.Should().Be(SessionEndReason.RefusedHookNotEnabled);
+            h.Reason.Should().Be(SessionEndReason.RefusedHookNotEnabled);
             h.Verdict.Reason.Should().Be(AntiCheatRefusalReason.HookNotEnabled);
             h.TargetPid.Should().Be(0);
         });

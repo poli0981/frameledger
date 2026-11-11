@@ -23,6 +23,7 @@ public sealed partial class GameCardViewModel : ObservableObject
     /// <summary>beta.11: the "Not installed" pill shows — the file, or the drive it was on, is not there now.</summary>
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(StatusText))]
+    [NotifyPropertyChangedFor(nameof(AccessibleName))]
     private bool _notInstalled;
 
     /// <summary>What the pill means here — the drive that is not connected, or the path the file is gone from; null when installed.</summary>
@@ -154,4 +155,12 @@ public sealed partial class GameCardViewModel : ObservableObject
             && string.Equals(Card.Row.Platform, other.Card.Row.Platform, StringComparison.Ordinal)
             && string.Equals(Card.Row.StoreId, other.Card.Row.StoreId, StringComparison.Ordinal);
     }
+
+    /// <summary>The card and the list's row as a screen reader reads them (beta.35, D88): the game and its state.</summary>
+    public string AccessibleName => SpokenText.List(Name, StatusText);
+
+    /// <summary>The card's Play button, naming the game it starts.</summary>
+    public string PlayName => SpokenText.Pair(Strings.Play_Button, Name);
+
+    public override string ToString() => AccessibleName;
 }

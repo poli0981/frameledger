@@ -1,7 +1,7 @@
 # App UI development
 
 The screens are specified, and described as built, in [`docs/08_UI.md`](../docs/08_UI.md); the rules for the UI library
-are [`docs/16_WPFUI_SYNTAX.md`](../docs/16_WPFUI_SYNTAX.md). The App is `src/FrameLedger.App`: WPF on .NET 10 with
+are [`docs/16_WPFUI_SYNTAX.md`](../docs/16_WPFUI_SYNTAX.md). The App is `src/FrameLedger.App`: WPF on .NET 11 with
 WPF UI 4.3.0 (pinned), CommunityToolkit.Mvvm, ScottPlot for charts and Markdig for documents.
 
 ## How it is put together
@@ -58,3 +58,7 @@ Each of these cost a release; the full list, with the tests that hold each, is �
 (`PagesLoadTests.OnStaAsync`): contrast in both themes, a theme switch while a surface is on screen, scroll bars with the
 option on in a real window, keyboard and automation names. Each surface is hosted as the App hosts it — a page in WPF UI's
 navigation presenter, not straight in a window. A rendered check is run red against the unfixed XAML first.
+
+What the App promises a user of the keyboard, a screen reader or a contrast theme is
+[`ACCESSIBILITY.md`](../ACCESSIBILITY.md); the design and the checks that hold it are §Accessibility of
+[`docs/08_UI.md`](../docs/08_UI.md#accessibility). A change that moves one changes both.

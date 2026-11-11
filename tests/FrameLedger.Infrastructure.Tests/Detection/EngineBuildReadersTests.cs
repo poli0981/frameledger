@@ -57,7 +57,7 @@ public sealed class EngineBuildReadersTests : IDisposable
         UnityBuildReader.DataHeaderVersion(file).Should().Be(version);
         UnityBuildFacts? facts = UnityBuildReader.Read(playerPath: null, file);
         facts.Should().NotBeNull();
-        UnityVersion.Decide(facts!).Should().Be(new EngineVersionReading(version, EngineVersionSource.UnityData));
+        UnityVersion.Decide(facts).Should().Be(new EngineVersionReading(version, EngineVersionSource.UnityData));
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public sealed class EngineBuildReadersTests : IDisposable
         GodotBuildFacts? facts = GodotBuildReader.Read(exe, Path.Combine(game, "POB2v020beta5.pck"));
 
         facts.Should().NotBeNull();
-        facts!.PackVersion.Should().Equal([4, 2, 2]);
+        facts.PackVersion.Should().Equal([4, 2, 2]);
         facts.PackEmbedded.Should().BeFalse();
         GodotBuildReader.Read(exe, packPath: null).Should().BeNull("a zero-filled executable has no appended pack and no version resource");
     }
@@ -150,7 +150,7 @@ public sealed class EngineBuildReadersTests : IDisposable
         RpgMakerBuildReader.LibraryOf(Path.Combine(game, "Game.ini")).Should().Be(Path.Combine(system, "RGSS301.dll"));
         RpgMakerBuildFacts? facts = RpgMakerBuildReader.Read(Path.Combine(game, "CityofBones.exe"));
         facts.Should().Be(new RpgMakerBuildFacts { RgssLibrary = "RGSS301.dll" }, "a library with no version resource is named, and its name carries 3.0.1");
-        RpgMakerVersion.Decide(facts!).Should().Be(new EngineVersionReading("3.0.1", EngineVersionSource.Rgss3Library));
+        RpgMakerVersion.Decide(facts).Should().Be(new EngineVersionReading("3.0.1", EngineVersionSource.Rgss3Library));
     }
 
     [Fact]
@@ -187,7 +187,7 @@ public sealed class EngineBuildReadersTests : IDisposable
         await File.WriteAllTextAsync(versionFile, "branch = 'master'\nnightly = False\nofficial = True\nversion = '8.5.0.25111603'\nversion_name = 'In Good Health'\n", Ct);
         RenPyBuildFacts? facts = RenPyBuildReader.Read(exe);
         facts.Should().Be(new RenPyBuildFacts { VcVersion = "8.5.0.25111603" });
-        RenPyVersion.Decide(facts!).Should().Be(new EngineVersionReading("8.5.0", EngineVersionSource.RenPyVcVersion));
+        RenPyVersion.Decide(facts).Should().Be(new EngineVersionReading("8.5.0", EngineVersionSource.RenPyVcVersion));
 
         await File.WriteAllTextAsync(versionFile, "version_name = 'In Good Health'\nnightly = False\n", Ct);
         RenPyBuildReader.Read(exe).Should().BeNull("a version name is not a version");

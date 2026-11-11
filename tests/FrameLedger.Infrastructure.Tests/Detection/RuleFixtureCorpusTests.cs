@@ -56,7 +56,7 @@ public sealed class RuleFixtureCorpusTests
         }
 
         dir.Should().NotBeNull("the corpus cannot run without the repository it describes");
-        return dir!.FullName;
+        return dir.FullName;
     }
 
     private static string CorpusRoot() => Path.Combine(RepoRoot(), "tests", "fixtures", "rules");

@@ -48,7 +48,7 @@ public sealed class StoreLaunchesTests
         StoreLaunch? launch = StoreLaunches.For(record, _galaxy);
 
         launch.Should().NotBeNull();
-        launch!.Kind.Should().Be(StoreLaunchKind.RunProgram);
+        launch.Kind.Should().Be(StoreLaunchKind.RunProgram);
         launch.Target.Should().Be(_galaxy);
         launch.Arguments.Should().Be("/command=runGame /gameId=1125815775 /path=\"D:\\another\\gog\\A Space for the Unbound - Prologue\"",
             "GALAXY's shortcut on the owner's PC, and no trailing backslash to escape the closing quote");
@@ -114,10 +114,7 @@ public sealed class StoreLaunchesTests
     [InlineData("epic", "app name")]
     [InlineData("none", "730")]
     [InlineData("xbox", "730")]
-    public void AnIdThatIsNotThatStoresShapeBuildsNothing(string platform, string id)
-    {
-        StoreLaunches.For(Record(platform, id, @"D:\Games\Some Game"), _galaxy).Should().BeNull();
-    }
+    public void AnIdThatIsNotThatStoresShapeBuildsNothing(string platform, string id) => StoreLaunches.For(Record(platform, id, @"D:\Games\Some Game"), _galaxy).Should().BeNull();
 
     [Fact]
     public void AGogFolderThatCannotStandInsideQuotesBuildsNothing()

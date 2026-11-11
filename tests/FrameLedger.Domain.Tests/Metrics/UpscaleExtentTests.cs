@@ -33,7 +33,7 @@ public sealed class UpscaleExtentTests
         UpscaleExtent? e = UpscaleExtent.From(stream);
 
         e.Should().NotBeNull();
-        e!.Ratio.Should().BeApproximately(1.724, 0.001);
+        e.Ratio.Should().BeApproximately(1.724, 0.001);
         e.RenderScalePercent.Should().BeApproximately(58.0, 0.5);
         e.Records.Should().Be(40);
         e.Measured.Should().Be(40);
@@ -49,7 +49,7 @@ public sealed class UpscaleExtentTests
         UpscaleExtent? e = UpscaleExtent.From(stream);
 
         e.Should().NotBeNull();
-        e!.RenderW.Should().Be(1485);
+        e.RenderW.Should().Be(1485);
         e.RenderH.Should().Be(835);
         e.OutputW.Should().Be(2560);
         e.OutputH.Should().Be(1440);
@@ -77,7 +77,7 @@ public sealed class UpscaleExtentTests
         UpscaleExtent? e = UpscaleExtent.From(stream);
 
         e.Should().NotBeNull("one present in three carried both sizes, inside a live identity window");
-        e!.Records.Should().Be(30);
+        e.Records.Should().Be(30);
         e.Measured.Should().Be(30);
         e.DistinctGroups.Should().Be(1);
         e.RenderScalePercent.Should().BeApproximately(59.0, 0.5);
@@ -118,7 +118,7 @@ public sealed class UpscaleExtentTests
         UpscaleExtent? e = UpscaleExtent.From(stream);
 
         e.Should().NotBeNull();
-        e!.Ratio.Should().BeApproximately(2.0, 0.001);
+        e.Ratio.Should().BeApproximately(2.0, 0.001);
         e.RenderScalePercent.Should().BeApproximately(50.0, 0.001);
     }
 

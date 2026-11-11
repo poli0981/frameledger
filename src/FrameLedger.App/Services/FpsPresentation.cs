@@ -122,6 +122,25 @@ public static class FpsPresentation
 
     public static string PresentedLine(double? presented) => string.Format(CultureInfo.CurrentCulture, Strings.Fps_Presented_Format, Formats.Fps(presented));
 
+    /// <summary>
+    /// The readout in words, for a screen reader (beta.35, D88). CLAUDE.md rule 6 holds for speech as it does for the eye:
+    /// <c>Native 62 FPS, displayed 118 FPS, frame generation ×1.9</c> — the three together, never the displayed number alone —
+    /// a steady factor with the share of the session it covers, and a stand-alone number with its qualifier.
+    /// </summary>
+    public static string Spoken(FpsReadoutModel model)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+        return model.Kind switch
+        {
+            FpsReadoutKind.Generated when model.Factor is double factor => model.SteadyShare is double share
+                ? string.Format(CultureInfo.CurrentCulture, Strings.A11y_Fps_GeneratedSteady_Format, Formats.Fps(model.Native), Formats.Fps(model.Displayed), factor, share * 100)
+                : string.Format(CultureInfo.CurrentCulture, Strings.A11y_Fps_Generated_Format, Formats.Fps(model.Native), Formats.Fps(model.Displayed), factor),
+            FpsReadoutKind.Presented or FpsReadoutKind.IdentifiedUncounted when model.QualifierText is { } qualifier =>
+                string.Format(CultureInfo.CurrentCulture, Strings.A11y_Fps_Presented_Format, Formats.Fps(model.Presented), qualifier),
+            _ => model.Line,
+        };
+    }
+
     public static string FactorChip(double factor) => FactorChip(factor, steadyShare: null);
 
     /// <summary>The factor chip; a steady-state factor always carries the share of the session it describes: <c>×2.0 FG · 75%</c>.</summary>

@@ -7,4 +7,8 @@ namespace FrameLedger.App.ViewModels;
 
 /// <summary>One stated fact: what it is, and its value as text (N/A included).</summary>
 [StructLayout(LayoutKind.Auto)]
-public readonly record struct LabelledValue(string Label, string Value);
+public readonly record struct LabelledValue(string Label, string Value)
+{
+    /// <summary>The fact as a screen reader reads it (beta.35, D88).</summary>
+    public override string ToString() => Services.SpokenText.Pair(Label, Value);
+}

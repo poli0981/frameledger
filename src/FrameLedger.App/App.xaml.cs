@@ -185,7 +185,7 @@ public partial class App : System.Windows.Application
                 Log.Warning(ex, "diag: the ledger could not be opened; settings are reported at their defaults");
             }
 
-            Application.Persistence.HardwareSnapshot? hardware = null;
+            HardwareSnapshot? hardware = null;
             try
             {
                 hardware = new Infrastructure.Recording.HardwareSnapshotSource(new Infrastructure.Telemetry.DxgiAdapters()).Take();
@@ -329,6 +329,7 @@ public partial class App : System.Windows.Application
         builder.Services.AddSingleton(appearance);
         builder.Services.AddSingleton(registered);
         builder.Services.AddSingleton(closePolicy);
+        builder.Services.AddSingleton<IContrastSource, SystemContrastSource>(); // beta.35 (D91): a contrast theme wins
         builder.Services.AddSingleton<IThemeApplier, WpfThemeApplier>();
 
         // The Agent link, the Run entry, the Agent's maintenance flags and the updater: a viewer's composition holds none of
@@ -378,6 +379,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<TrayViewModel>();
         services.AddSingleton<TrayHost>();
         services.AddTransient<MainWindow>();
+        services.AddSingleton<PageFocus>(); // beta.35: Ctrl+1…5 put the keyboard in the page they open
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<ILanguageFollower>(static sp => sp.GetRequiredService<TrayHost>());
         services.AddSingleton<ILanguageFollower>(static sp => sp.GetRequiredService<MainWindowViewModel>());
@@ -398,6 +400,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IGamePicker, GamePicker>();
         services.AddSingleton<IConfirmations, Confirmations>();
         services.AddSingleton<AddGameFlow>();
+        services.AddSingleton<IAnnouncer, UiaAnnouncer>(); // beta.35 (D89): what appears is said to a screen reader
         services.AddSingleton<IMessageStrip, SnackbarStrip>();
         services.AddSingleton<IEditGamePrompt, EditGamePrompt>();
 
@@ -468,14 +471,14 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IStoreLibrarySource>(static _ => new SteamLibrarySource());
         services.AddSingleton<IStoreLibrarySource>(static _ => new GogLibrarySource());
         services.AddSingleton<IStoreLibrarySource>(static _ => new EpicLibrarySource());
-        services.AddSingleton<IStoreLibrarySource>(static _ => new ItchLibrarySource(log: static line => Serilog.Log.Information("{Line}", line)));
+        services.AddSingleton<IStoreLibrarySource>(static _ => new ItchLibrarySource(log: static line => Log.Information("{Line}", line)));
         // beta.33 (D79): the Xbox app's and the Microsoft Store's games, from the drives' .GamingRoot folders and each package's own files.
         services.AddSingleton<IStoreLibrarySource>(static _ => new XboxLibrarySource());
         services.AddSingleton<IExecutableLocator, ExecutableLocator>();
         // beta.21 (D59): Play reads the same records to find the store that installed a game, and GOG GALAXY's program.
         services.AddSingleton<Application.Play.IGogGalaxyLocator>(static _ => new GogGalaxyLocator());
         services.AddSingleton(static sp => new GamePlayer(
-            sp.GetRequiredService<Application.Settings.RegisteredSettings>(),
+            sp.GetRequiredService<RegisteredSettings>(),
             sp.GetServices<IStoreLibrarySource>(),
             sp.GetRequiredService<Application.Play.IGogGalaxyLocator>(),
             sp.GetRequiredService<IShellStarter>(),
@@ -486,7 +489,7 @@ public partial class App : System.Windows.Application
             sp.GetRequiredService<IGameRepository>(),
             sp.GetRequiredService<IExecutableIdentitySource>(),
             sp.GetRequiredService<IExecutableLocator>(),
-            static line => Serilog.Log.Information("{Line}", line)));
+            static line => Log.Information("{Line}", line)));
         services.AddSingleton<IImportReview, ImportReviewPrompt>();
         // beta.11: the Games page on screen reloads when an import adds games (navigating to itself does nothing).
         services.AddSingleton<LibraryChanges>();
@@ -500,7 +503,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<Application.Art.IStoreArtCache>(static _ => new XboxArtCache());
         services.AddSingleton(static sp => new StoreRecordsReader(sp.GetServices<IStoreLibrarySource>()));
         services.AddSingleton(static sp => new GameArt(
-            sp.GetRequiredService<Application.Settings.RegisteredSettings>(),
+            sp.GetRequiredService<RegisteredSettings>(),
             sp.GetRequiredService<StoreRecordsReader>(),
             sp.GetServices<Application.Art.IStoreArtCache>(),
             sp.GetRequiredService<UiMode>()));

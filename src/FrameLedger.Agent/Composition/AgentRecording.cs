@@ -6,7 +6,6 @@ using FrameLedger.Application.Capture;
 using FrameLedger.Application.Consent;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Recording;
-using FrameLedger.Application.Telemetry;
 using FrameLedger.Infrastructure.Display;
 using FrameLedger.Infrastructure.Telemetry;
 

@@ -36,6 +36,7 @@ public sealed class ConsentDialogKeysTests
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 
+        // ReSharper disable once UnassignedGetOnlyAutoProperty - never assigned on purpose: the row stays off.
         public bool On { get; }
 
         public void Raise() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(On)));

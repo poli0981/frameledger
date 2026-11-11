@@ -4,7 +4,7 @@ The full documents are [`docs/12_BUILD.md`](../docs/12_BUILD.md) and [`docs/14_T
 
 ## What you need
 
-- Windows 10 (22H2) or 11, 64-bit.
+- Windows 11, 64-bit (Microsoft does not support the .NET 11 SDK on Windows 10 Home or Pro).
 - Visual Studio with the C++ workload (MSVC v143 or later, a Windows SDK of 22621 or later) and CMake 3.28 or later.
 - The .NET SDK that [`global.json`](../global.json) pins.
 - PowerShell 7.

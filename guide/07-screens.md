@@ -27,20 +27,21 @@ stopped, hooking turned off — each with one button that only says you have rea
 | Menu | Item | What it does |
 |---|---|---|
 | **File** | **Add game…** | Pick a game's `.exe` file. It is added with hooking off, and its page opens. |
-| | **Import library…** | A checklist of the games installed through Steam, GOG Galaxy, Epic, itch.io and the Xbox app (or the Microsoft Store). |
-| | **Export** ▸ **Session CSV** · **Session JSON** · **Chart PNG** | Saves the session you last selected or opened. Read [Your data](05-your-data.md) before you share a file. |
-| | **Exit** | Quits FrameLedger, even when *Minimize to tray on close* is on. |
+| **File** | **Import library…** | A checklist of the games installed through Steam, GOG Galaxy, Epic, itch.io and the Xbox app (or the Microsoft Store). |
+| **File** | **Export** ▸ **Session CSV** · **Session JSON** · **Chart PNG** | Saves the session you last selected or opened. Read [Your data](05-your-data.md) before you share a file. |
+| **File** | **Exit** | Quits FrameLedger, even when *Minimize to tray on close* is on. |
 | **Tools** | **Agent status…** | Opens the Dashboard, where the agent's card is. |
-| | **Update detection rules** | The agent reads its detection rules again and checks your games again. |
-| | **Vulkan layer registration…** | Opens Settings, where the Vulkan layer is. |
-| | **Open data folder** | Opens `%LOCALAPPDATA%\FrameLedger` in Explorer. |
-| | **Database maintenance…** | **Check**, **Back up…**, **Sweep…** and **Compact** your database ([When something goes wrong](09-troubleshooting.md#the-database)). |
+| **Tools** | **Update detection rules** | The agent reads its detection rules again and checks your games again. |
+| **Tools** | **Vulkan layer registration…** | Opens Settings, where the Vulkan layer is. |
+| **Tools** | **Open data folder** | Opens `%LOCALAPPDATA%\FrameLedger` in Explorer. |
+| **Tools** | **Database maintenance…** | **Check**, **Back up…**, **Sweep…** and **Compact** your database ([When something goes wrong](09-troubleshooting.md#the-database)). |
 | **Help** | **User guide** | This guide. |
-| | **Check for updates** | Asks GitHub now. |
-| | **Report a bug…** | Builds a report on your PC ([When something goes wrong](09-troubleshooting.md#report-a-problem)). |
-| | **Online documentation** | The project's page on GitHub. |
-| | **Limitations** | What FrameLedger cannot do. |
-| | **About FrameLedger** | The version, the licences and the notices. |
+| **Help** | **Check for updates** | Asks GitHub now. |
+| **Help** | **Report a bug…** | Builds a report on your PC ([When something goes wrong](09-troubleshooting.md#report-a-problem)). |
+| **Help** | **Online documentation** | The project's page on GitHub. |
+| **Help** | **Limitations** | What FrameLedger cannot do. |
+| **Help** | **Accessibility** | What works with the keyboard alone, a screen reader or a contrast theme, what does not yet, and how to report a problem. |
+| **Help** | **About FrameLedger** | The version, the licences and the notices. |
 
 ## Dashboard
 
@@ -132,8 +133,14 @@ is ready.
 
 ## Keyboard and mouse
 
-- **Ctrl+1** … **Ctrl+5** open Dashboard, Games, Compare, Logs and Settings.
-- **Alt** or **F10** moves to the menus.
+- **Ctrl+1** … **Ctrl+5** open Dashboard, Games, Compare, Logs and Settings, and put the keyboard in that page.
+- **Alt** or **F10** moves to the menus; **Alt** with a menu's underlined letter opens it (**Alt+F**, **Alt+T** and
+  **Alt+H** for File, Tools and Help in English).
 - **Esc** closes a dialog the way its Close or Cancel button does.
-- Over a chart, **Ctrl** and the mouse wheel zoom, dragging pans, and a double-click resets. The wheel alone scrolls the
-  page.
+- Over a chart, **Ctrl** and the mouse wheel zoom, dragging pans, and a double-click shows all of it again. The wheel
+  alone scrolls the page.
+- **Tab** reaches a chart; then the **arrow keys** move its view, **Ctrl** with an arrow zooms, and **A** shows all of it
+  again.
+
+What works with the keyboard alone, a screen reader or a contrast theme — and what does not yet — is on its own page:
+[Accessibility](../ACCESSIBILITY.md) (Help ▸ Accessibility).

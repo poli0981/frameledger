@@ -6,7 +6,7 @@ Mandatory conventions for all XAML/C# in `FrameLedger.App`. WPF UI = lepoco's Fl
 
 | Package (NuGet id) | Pin | Notes |
 |---|---|---|
-| `WPF-UI` | **= 4.3.0** (exact; bump deliberately) | Assembly/namespace is `Wpf.Ui`. Targets `net8.0-windows` → resolves cleanly for our `net10.0-windows10.0.22621.0` TFM (`12_BUILD` §Managed build; this row said `19041` until 2026-09-21, which is no TFM this repository ever built — `Directory.Build.props` has been `22621` with a 19045 floor throughout) |
+| `WPF-UI` | **= 4.3.0** (exact; bump deliberately) | Assembly/namespace is `Wpf.Ui`. Targets `net8.0-windows` → resolves cleanly for our `net11.0-windows10.0.22621.0` TFM — `net10.0-…` until beta.36 — (`12_BUILD` §Managed build; this row said `19041` until 2026-09-21, which is no TFM this repository ever built — `Directory.Build.props` has been `22621` with a 19045 floor throughout) |
 | `WPF-UI.Abstractions` | ~~transitive~~ **= 4.3.0**, referenced directly (corrected 2026-10-04) | Navigation abstractions (`INavigationViewPageProvider`) |
 | `WPF-UI.DependencyInjection` | match `WPF-UI` | DI glue (`services.AddNavigationViewPageProvider()`); verify exact id/version at scaffold |
 | `WPF-UI.Tray` | **not used** | Tray stays on H.NotifyIcon.Wpf (CLAUDE.md stack table) |
@@ -62,6 +62,7 @@ private static readonly IHost _host = Host.CreateDefaultBuilder()
 Theme rules:
 - Manual Light/Dark: `ApplicationThemeManager.Apply(ApplicationTheme.Dark)`.
 - System: `SystemThemeWatcher.Watch(mainWindow)` — call it in the window's `Loaded` handler (needs an HWND), and unwatch when switching to manual.
+- A Windows contrast theme (beta.35, D91): wins over all three while it is on, and is never left to the watcher, which would apply WPF UI's own high-contrast files (§Gotchas). `Services/ThemePlan.For` is the table, `Services/WpfThemeApplier` applies it.
 - Persist the choice in `settings`; re-apply before the main window shows to avoid a flash. **Measured 2026-09-13: this is a correctness rule, not a cosmetic one** — `ApplicationThemeManager.Apply(theme, backdrop, updateAccent: true)` is what registers the `SystemAccentColor*` resources the control templates `StaticResource` at first Measure; a `FluentWindow` shown before any `Apply` throws `XamlParseException: Cannot find resource named 'SystemAccentColorPrimary'`. The shell applies the theme in its constructor before `InitializeComponent()` and again from `Loaded` for the watcher.
 - Subscribe `ApplicationThemeManager.Changed` once, centrally, to re-theme ScottPlot (below).
 
@@ -172,6 +173,22 @@ Native `Menu`, `TabControl`, `ComboBox`, `Slider`~~, `ListView`~~ are fine — t
   WCAG contrast, black in both themes. The chart reads `ChartTheme.Current` at every render; the WPF chip in the list
   (`Controls/ChangeBadge`) follows a switch through the same resource reference as `ArtTint` and `FgMixBar`
   (`ChartPalette.ForBackground`). No colour in XAML.
+- Third exception (beta.35, D91): **a Windows contrast theme's colours**, read from `SystemColors` in one place
+  (`Services/ContrastPalette.FromSystem`) and laid over the theme by `Services/ContrastOverlay` — never written in XAML. A
+  colour the App works out itself reads `Services.ContrastTheme.Active` first (the charts, the badges, the artwork band);
+  XAML that must change with it binds `{Binding Path=(services:ContrastTheme.IsOn)}`, a static property WPF hears through
+  its `StaticPropertyChanged` event.
+- **`ui:Button Appearance="Danger"` / `Info` / `Success` / `Caution` / `Dark` / `Light` paint fixed colours** — values in
+  WPF UI 4.3.0's button style (`#F44336` for Danger), not resources, so no theme and no contrast theme reaches them, under
+  the theme's button text (white on the red in the dark theme, 3.68:1). Danger is the one the App uses: its implicit
+  `ui:Button` style (`Styles/FrameLedger.xaml`) puts the theme's dark text on the red, and the theme's own button under a
+  contrast theme — message boxes' buttons included. The other five are refused
+  (`ContrastThemeTests.NoButtonOrBadgeTakesAnAppearanceThatPaintsAFixedColour`).
+- **A snackbar's appearances are fixed colours too** (`ISnackbarService.Show`): Success, Caution, Info, Danger, Primary,
+  Dark and Light are values under white or black text — Success 2.78:1, Caution 2.16:1 in both themes. Only Secondary is
+  the theme's: `Services/SnackbarStrip`, the one place a snackbar is shown, uses it for every message.
+- **A `ui:Badge` with a BOUND palette appearance** is the same hole as a literal one, and no XAML scan of literals sees it
+  (the agent's pill, beta.35: `AgentPill` now). A bound badge appearance is refused by the same test.
 
 ## FlowDocument (rendered documents, beta.12)
 
@@ -215,7 +232,12 @@ var result = await box.ShowDialogAsync(); // Wpf.Ui.Controls.MessageBoxResult.Pr
 
   ⚠ Name clash with `System.Windows.MessageBox` — in App code, `using MessageBox = Wpf.Ui.Controls.MessageBox;` ~~and ban the System one (BannedSymbols/analyzer note)~~ *(corrected 2026-10-04: nothing bans it. Three paths use the Win32 box on purpose — the crash dialog, the startup-failure dialog and the uninstall question — because they run when the shell's dialog host cannot be trusted. Use the WPF UI one everywhere else.)*
 - Rich in-flow dialogs: `IContentDialogService` (host wired in MainWindow — a `ui:ContentDialogHost`, since 4.3.0 marks `SetDialogHost(ContentPresenter)` obsolete).
-- Transient in-app: `ISnackbarService.Show(title, message, ControlAppearance.Success, new SymbolIcon(SymbolRegular.Checkmark24), TimeSpan.FromSeconds(4))`.
+- Transient in-app: ~~`ISnackbarService.Show(title, message, ControlAppearance.Success, new SymbolIcon(SymbolRegular.Checkmark24), TimeSpan.FromSeconds(4))`~~
+  `IMessageStrip` (`Info` / `Success` / `Warn`) — `Services/SnackbarStrip` is the one caller of `ISnackbarService.Show`, and
+  says each message to a screen reader (beta.35, D89). A view model never holds `ISnackbarService`.
+- A change a screen reader must hear goes through `IAnnouncer` (`Services/UiaAnnouncer`, UI Automation's notification
+  event). **`AutomationProperties.LiveSetting` alone says nothing in WPF**: the app must raise `LiveRegionChanged` itself,
+  and no XAML of the App's sets one (beta.35).
 - System/tray notifications: H.NotifyIcon only (08_UI §Notifications policy).
 
 ## ScottPlot theme sync
@@ -231,6 +253,15 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
 > Pinned `ScottPlot.WPF` 5.1.59: `Add.SignalXY` for the decimated series, `Add.Scatter` (no line) for markers,
 > `Add.HorizontalSpan` for the ribbon, `Add.Bars` over `Statistics.Histogram.WithBinCount`, `Add.ScatterLine`
 > for the percentile curve, a series' `Axes.YAxis = plot.Axes.Right` for the sensor overlay.
+>
+> **Accessible charts, beta.35 (D90).** Every plot in XAML is `charts:ChartPlot` (a `WpfPlot` subclass; ScottPlot's
+> default style and input stay) with `AutomationProperties.Name` and `HelpText` from `A11y_Chart_*` / `A11y_ChartData_*`.
+> `ChartTheme.Attach` adds `Charts/ChartKeys` (arrows and A marked handled after ScottPlot's class handler has acted — an
+> instance handler runs after it) and `ResetOnDoubleClick` (`DoubleLeftClickBenchmark(false)` and a `DoubleClickResponse` on
+> the left button that autoscales). A series takes `ChartPatterns.Line` / `Points` / `Hatch` by its index — a new series
+> without one is red in `NoChartTellsTwoSeriesApartByColourAlone`. Under a Windows contrast theme `ChartTheme.Current` is
+> `ChartPalette.ForContrast(ContrastTheme.Active)` — the theme's window under every plot, its text, link, highlight,
+> button text and disabled text for the rest — and the patterns carry the series apart (D91).
 >
 > **The trend's change markers, beta.30 (D70):** `Charts/ChangeMarkerPlottable`, an `IPlottable` + `IRenderLast` added
 > with `Add.Plottable` (which assigns no axes: the chart sets `Axes.XAxis`/`YAxis` itself), draws the dashed lines in
@@ -252,6 +283,13 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
 - [ ] **`WpfPlot.DisplayScale` is read once, in the constructor**, from `VisualTreeHelper.GetDpi` before the control has
   a window. Read a pointer with `GetPlotPixelPosition(e)` (the element's DPI now); ScottPlot's pixels are device
   pixels while no `Plot.ScaleFactor` is set, and none is.
+- [ ] **WPF UI 4.3.0's high-contrast theme cannot be applied as it is** (beta.35, D91). `ApplicationTheme.HighContrast` has
+  no dictionary (the watcher picks HC1/HC2/HCBlack/HCWhite by Windows' theme name); each of those holds 84 `#FFFF0000`
+  placeholders among 97 colours and 17 brushes (`SystemFillColor*Brush`, `MenuBar*`) that throw when the file is read
+  alone — inside the App their forward references fall back to the application's resources and read as the Fluent
+  theme's fills; their colours are Windows 11's defaults, not the user's; their text on the accent is the window text.
+  Never let `SystemThemeWatcher` watch while a contrast theme is on: it would apply them. The App reads them for each
+  key's role only (§Theming & brushes; `08_UI` §Contrast).
 - [ ] `SystemThemeWatcher.Watch` after HWND exists (`Loaded`), not in the constructor — but `ApplicationThemeManager.Apply(…, updateAccent: true)` BEFORE the first window's XAML loads, or the accent resources are missing at first Measure (§App bootstrap).
 - [ ] Menu row lives **outside** `ui:TitleBar` (its area is the drag region; a Menu inside becomes undraggable/unclickable territory).
 - [ ] Don't set `AllowsTransparency`/`WindowStyle` on `FluentWindow` — it manages its own chrome.
@@ -266,6 +304,21 @@ On startup and on `ApplicationThemeManager.Changed`: for every live plot set fig
   bar with no exit, which is exactly how the safety notices shipped (2026-09-14). `Styles/FrameLedger.xaml` carries
   the upstream template plus one presenter column; `PagesLoadTests.TheInfoBarTemplateRendersItsContent` renders both
   templates and turns red when upstream gains a presenter, which is when the copy comes out.
+- [ ] **What a screen reader is given is the UI Automation tree, and WPF builds it with four holes** (beta.35, D88;
+  `PagesLoadTests.Automation` sweeps every surface for each). (1) **A control with no automation peer** — a plain `Control`
+  or `ContentControl`, WPF UI's `Image`, `Card`, `Badge`, `InfoBar` (measured on .NET 10.0.14) — is skipped by the tree; if
+  it is also focusable (a `Control` is, by default) it is a Tab stop Narrator says nothing about. Give a display-only
+  control a peer (`Controls/SpokenTextAutomationPeer`) and take it out of the tab order; `ui:CardControl` has a peer with an
+  empty name even with a string `Header` — the App's implicit style takes it out of the tab order. (2) **A list's,
+  drop-down's or grid row's item is named by its `ToString()`**: a record's is its printed form (`Choice { Value = dark,
+  Label = Dark }`), a class's its full type name. Every item type overrides it (`Services/SpokenText` builds the words).
+  (3) **A `TextBlock` written straight into a `ControlTemplate` is no control element** (`TextBlockAutomationPeer`: not when
+  its templated parent is something other than a `ContentPresenter`): draw a template's text through a `ContentPresenter`
+  (the App's InfoBar template), or give the control a peer that says it. (4) **A `DataGridTemplateColumn`'s cell has no text
+  of its own**, so WPF names it `Item: <row>, Column Display Index: n`: name it with `controls:CellName.Path` (a cell style
+  based on `DefaultDataGridCellStyle`, the one WPF UI's grid gives every cell). Also: a plain `ItemsControl` is focusable
+  (the App's implicit style says no), and WPF UI's `CardExpander` leaves its expand button (`ExpanderToggleButton`)
+  unnamed (`Controls/ExpanderToggleName`, set by the App's implicit CardExpander style).
 - [ ] **WPF UI 4.3.0 keys its DataGrid parts' styles and defines no implicit one** (`DefaultDataGridRowStyle`,
   `DefaultDataGridCellStyle`, `DefaultDataGridColumnHeaderStyle`, handed to the grid by its implicit `DataGrid` style's
   `RowStyle`/`CellStyle`/`ColumnHeaderStyle` setters). A local `RowStyle` replaces WPF UI's; based on

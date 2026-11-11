@@ -96,7 +96,7 @@ public static class ArtTint
             return;
         }
 
-        if (GetColor(band) is { } dominant && !SystemParameters.HighContrast && BandColour(band, dominant) is { } colour)
+        if (GetColor(band) is { } dominant && !SystemParameters.HighContrast && ContrastTheme.Active is null && BandColour(band, dominant) is { } colour)
         {
             var brush = new SolidColorBrush(colour);
             brush.Freeze();

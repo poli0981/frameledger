@@ -251,7 +251,7 @@ public sealed class SqliteGameConsentStoreTests
         var games = new SqliteGameRepository(f.Db);
         await store.RecordOperatorAcknowledgementAsync(Ack(), Ct);
 
-        Application.Persistence.GameRow row = (await games.FindAsync(Fingerprint().ExePath, Ct))!;
+        GameRow row = (await games.FindAsync(Fingerprint().ExePath, Ct))!;
 
         row.HookEnabled.Should().BeTrue();
         row.Name.Should().Be("game");
@@ -350,7 +350,7 @@ public sealed class SqliteGameConsentStoreTests
         await store.RecordPreScanAsync(Fingerprint(), AntiCheatVerdict.Refused(AntiCheatRefusalReason.PreScanFailed, string.Empty, "could not be listed"), "2026.09.4", Ct);
 
         var row = await RowAsync(f, Fingerprint().ExePath);
-        (row.State, row.Reason, row.Enabled).Should().Be(("unverified", (string?)null, 1L));
+        (row.State, row.Reason, row.Enabled).Should().Be(("unverified", null, 1L));
     }
 
     [Fact]

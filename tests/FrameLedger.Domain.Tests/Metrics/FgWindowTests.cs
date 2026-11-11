@@ -52,7 +52,7 @@ public sealed class FgWindowTests
                     FgEvaluations = (byte)(p == 0 ? 1 : 0),
                     FgMode = FgKind.Unknown,
                 });
-                qpc += (ulong)Step;
+                qpc += Step;
             }
         }
 
@@ -128,7 +128,7 @@ public sealed class FgWindowTests
         ulong qpc = stream[^1].Qpc;
         for (int i = 0; i < 160; i++)
         {
-            qpc += (ulong)Step;
+            qpc += Step;
             stream.Add(new FrameSample
             {
                 Qpc = qpc,
@@ -176,7 +176,7 @@ public sealed class FgWindowTests
     public void TheWindowExcludesSamplesWrittenBeforeTheHookInstalled()
     {
         List<FrameSample> cold = FgStream(appFrames: 10, k: 4, counted: false);
-        List<FrameSample> warm = FgStream(appFrames: 40, k: 4, startQpc: cold[^1].Qpc + (ulong)Step);
+        List<FrameSample> warm = FgStream(appFrames: 40, k: 4, startQpc: cold[^1].Qpc + Step);
 
         FgWindow w = FgWindow.From([.. cold, .. warm], Frequency);
 
@@ -214,7 +214,7 @@ public sealed class FgWindowTests
     public void AnUnidentifiedSampleRefusesRatherThanBeingCountedAsAPresent()
     {
         List<FrameSample> stream = [.. FgStream(appFrames: 40, k: 4)];
-        stream.Add(stream[^1] with { SwapchainId = 0, Qpc = stream[^1].Qpc + (ulong)Step });
+        stream.Add(stream[^1] with { SwapchainId = 0, Qpc = stream[^1].Qpc + Step });
 
         FgWindow w = FgWindow.From(stream, Frequency);
 
@@ -299,7 +299,7 @@ public sealed class FgWindowTests
         w.BatchRefusal.Subject.Should().Be(FgRefusalSubject.PresentsPerBatch);
 
         List<FrameSample> orphaned = [.. FgStream(appFrames: 40, k: 4, evalsPerFrame: 0)];
-        orphaned.Add(orphaned[^1] with { SwapchainId = 0, Qpc = orphaned[^1].Qpc + (ulong)Step });
+        orphaned.Add(orphaned[^1] with { SwapchainId = 0, Qpc = orphaned[^1].Qpc + Step });
         FgWindow.From(orphaned, Frequency).BatchRefusal!.Kind.Should().Be(FgRefusalKind.Unattributed);
     }
 

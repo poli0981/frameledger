@@ -40,9 +40,9 @@ public sealed class SessionExporterTests
             lines.Should().Contain(static l => l.StartsWith("# capture_tier: 1", StringComparison.Ordinal));
             lines.Should().Contain(static l => l.StartsWith("# hardware: RTX 5080", StringComparison.Ordinal));
             lines.Should().Contain(static l => l.StartsWith("# segment: frames 0-39", StringComparison.Ordinal));
-            string header = lines.First(static l => !l.AsSpan().StartsWith('#'));
+            string header = lines.First(static l => !l.StartsWith('#', StringComparison.Ordinal));
             header.Should().Be(SessionExporter.CsvColumns);
-            string[] rows = [.. lines.SkipWhile(static l => l.AsSpan().StartsWith('#')).Skip(1)];
+            string[] rows = [.. lines.SkipWhile(static l => l.StartsWith('#', StringComparison.Ordinal)).Skip(1)];
             rows.Should().HaveCount(40);
             string[] second = rows[1].Split(',');
             second.Should().HaveCount(16);
@@ -122,18 +122,18 @@ public sealed class SessionExporterTests
     [Fact]
     public async Task TheDisplayHeaderLineIsTheStoredMillisecondsByName()
     {
-        CultureInfo? previous = CultureInfo.CurrentCulture;
+        CultureInfo previous = CultureInfo.CurrentCulture;
         CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("vi-VN");
         try
         {
             await using ScratchLedger s = await ScratchLedger.OpenAsync();
             GameRow game = await s.GameAsync("Alpha");
-            long id = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow, display: new FrameLedger.Domain.Display.DisplaySummary
+            long id = await s.SessionAsync(game.Id, DateTimeOffset.UtcNow, display: new Domain.Display.DisplaySummary
             {
                 ExclusiveMs = 1_500,
                 BorderlessMs = 60_000,
                 Changes = 2,
-                Source = FrameLedger.Domain.Display.DisplaySource.SwapChain,
+                Source = Domain.Display.DisplaySource.SwapChain,
                 WindowWidth = 2560,
                 WindowHeight = 1440,
                 BufferWidth = 2560,

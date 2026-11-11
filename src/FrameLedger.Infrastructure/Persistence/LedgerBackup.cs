@@ -45,7 +45,7 @@ public static class LedgerBackup
     public static string LockNameFor(string databasePath)
     {
         string migration = MigrationRunner.LockNameFor(databasePath);
-        return _mutexPrefix + migration[(migration.AsSpan().LastIndexOf('.') + 1)..];
+        return _mutexPrefix + migration[(migration.LastIndexOf('.', StringComparison.Ordinal) + 1)..];
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public static class LedgerBackup
         string partial = target + ".partial";
         try
         {
-            System.IO.Directory.CreateDirectory(request.Directory);
+            Directory.CreateDirectory(request.Directory);
             long needed = SizeWithWal(full);
             long free = new DriveInfo(Path.GetPathRoot(Path.GetFullPath(target))!).AvailableFreeSpace;
             if (free < needed + (needed / 4))

@@ -254,5 +254,5 @@ public sealed partial class PagesLoadTests
 
     /// <summary>The artwork band's colour, under the frame a page is hosted in.</summary>
     private static Color BandOf(FrameworkElement root) =>
-        Solid(Visuals.FindAll<System.Windows.Controls.Border>(root).First(static b => string.Equals(b.Name, "ArtBand", StringComparison.Ordinal)).Background);
+        Solid(Visuals.FindAll<Border>(root).First(static b => string.Equals(b.Name, "ArtBand", StringComparison.Ordinal)).Background);
 }

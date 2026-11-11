@@ -29,18 +29,50 @@ public static class Strings
     /// <summary>Every key, for an audit that walks them.</summary>
     public static IReadOnlyList<string> Keys { get; } =
     [
+        nameof(A11y_Agent_Connected),
+        nameof(A11y_Change_Format),
+        nameof(A11y_ChangeMarker_Format),
+        nameof(A11y_Chart_Clocks),
+        nameof(A11y_Chart_Compare),
+        nameof(A11y_Chart_ControlType),
+        nameof(A11y_Chart_Frametime),
+        nameof(A11y_Chart_Histogram),
+        nameof(A11y_Chart_Keys),
+        nameof(A11y_Chart_Latency),
+        nameof(A11y_Chart_Percentiles),
+        nameof(A11y_Chart_Ram),
+        nameof(A11y_Chart_RenderScale),
+        nameof(A11y_Chart_Temps),
+        nameof(A11y_Chart_Trend),
+        nameof(A11y_Chart_Vram),
+        nameof(A11y_ChartData_Compare),
+        nameof(A11y_ChartData_Latency),
+        nameof(A11y_ChartData_Sessions),
+        nameof(A11y_ChartData_Summary),
+        nameof(A11y_Chip_Format),
+        nameof(A11y_Compare_Best_Format),
         nameof(A11y_Compare_Filter_Fg),
         nameof(A11y_Compare_Filter_Game),
         nameof(A11y_Compare_Filter_Tier),
+        nameof(A11y_Empty),
+        nameof(A11y_Fps_Generated_Format),
+        nameof(A11y_Fps_GeneratedSteady_Format),
+        nameof(A11y_Fps_Presented_Format),
         nameof(A11y_Games_Filter_Engine),
         nameof(A11y_Games_Filter_Installed),
         nameof(A11y_Games_Filter_Played),
         nameof(A11y_Games_Filter_State),
         nameof(A11y_Games_Filter_Store),
         nameof(A11y_Games_Sort),
+        nameof(A11y_List_Separator),
         nameof(A11y_Logs_Level),
         nameof(A11y_Logs_Source),
         nameof(A11y_Logs_Tail),
+        nameof(A11y_Pair_Format),
+        nameof(A11y_SensorStat_Format),
+        nameof(A11y_TitleAndBody_Format),
+        nameof(A11y_ToggleSection_Format),
+        nameof(A11y_Update_Downloading_Format),
         nameof(About_Doc_Notice),
         nameof(About_Doc_Packages),
         nameof(About_Doc_ThirdParty),
@@ -54,6 +86,7 @@ public static class Strings
         nameof(About_OpenLicencesFolder),
         nameof(About_OpenSource),
         nameof(About_Runtime_Alpha_Format),
+        nameof(About_Runtime_Alpha_Prerelease_Format),
         nameof(About_Runtime_Format),
         nameof(About_Tab_App),
         nameof(About_Tab_Legal),
@@ -64,6 +97,7 @@ public static class Strings
         nameof(About_Version_Format),
         nameof(About_ViewLicence),
         nameof(About_ViewNotice),
+        nameof(Accessibility_Title),
         nameof(AddGame_Added_Format),
         nameof(AddGame_Dialog_Title),
         nameof(AddGame_Failed_Format),
@@ -84,6 +118,8 @@ public static class Strings
         nameof(Alpha_Badge),
         nameof(Alpha_Badge_Tooltip_Format),
         nameof(Alpha_Banner_Body_Format),
+        nameof(Alpha_Banner_Body_Prerelease_Format),
+        nameof(Alpha_Banner_Body_Resting_Format),
         nameof(Alpha_Banner_Read),
         nameof(Alpha_Banner_Title),
         nameof(App_Title),
@@ -753,6 +789,7 @@ public static class Strings
         nameof(Menu_File_ImportLibrary),
         nameof(Menu_Help),
         nameof(Menu_Help_About),
+        nameof(Menu_Help_Accessibility),
         nameof(Menu_Help_CheckUpdates),
         nameof(Menu_Help_Documentation),
         nameof(Menu_Help_Guide),
@@ -999,6 +1036,7 @@ public static class Strings
         nameof(Settings_System_Copy),
         nameof(Settings_System_Header),
         nameof(Settings_System_Note),
+        nameof(Settings_Theme_ContrastOn),
         nameof(Settings_Theme_Dark),
         nameof(Settings_Theme_Label),
         nameof(Settings_Theme_Light),
@@ -1227,11 +1265,63 @@ public static class Strings
         nameof(Viewer_ChangesThisPc_Off),
     ];
 
+    public static string A11y_Agent_Connected => ResourceManager.GetString(nameof(A11y_Agent_Connected), Culture) ?? nameof(A11y_Agent_Connected);
+
+    public static string A11y_Change_Format => ResourceManager.GetString(nameof(A11y_Change_Format), Culture) ?? nameof(A11y_Change_Format);
+
+    public static string A11y_ChangeMarker_Format => ResourceManager.GetString(nameof(A11y_ChangeMarker_Format), Culture) ?? nameof(A11y_ChangeMarker_Format);
+
+    public static string A11y_Chart_Clocks => ResourceManager.GetString(nameof(A11y_Chart_Clocks), Culture) ?? nameof(A11y_Chart_Clocks);
+
+    public static string A11y_Chart_Compare => ResourceManager.GetString(nameof(A11y_Chart_Compare), Culture) ?? nameof(A11y_Chart_Compare);
+
+    public static string A11y_Chart_ControlType => ResourceManager.GetString(nameof(A11y_Chart_ControlType), Culture) ?? nameof(A11y_Chart_ControlType);
+
+    public static string A11y_Chart_Frametime => ResourceManager.GetString(nameof(A11y_Chart_Frametime), Culture) ?? nameof(A11y_Chart_Frametime);
+
+    public static string A11y_Chart_Histogram => ResourceManager.GetString(nameof(A11y_Chart_Histogram), Culture) ?? nameof(A11y_Chart_Histogram);
+
+    public static string A11y_Chart_Keys => ResourceManager.GetString(nameof(A11y_Chart_Keys), Culture) ?? nameof(A11y_Chart_Keys);
+
+    public static string A11y_Chart_Latency => ResourceManager.GetString(nameof(A11y_Chart_Latency), Culture) ?? nameof(A11y_Chart_Latency);
+
+    public static string A11y_Chart_Percentiles => ResourceManager.GetString(nameof(A11y_Chart_Percentiles), Culture) ?? nameof(A11y_Chart_Percentiles);
+
+    public static string A11y_Chart_Ram => ResourceManager.GetString(nameof(A11y_Chart_Ram), Culture) ?? nameof(A11y_Chart_Ram);
+
+    public static string A11y_Chart_RenderScale => ResourceManager.GetString(nameof(A11y_Chart_RenderScale), Culture) ?? nameof(A11y_Chart_RenderScale);
+
+    public static string A11y_Chart_Temps => ResourceManager.GetString(nameof(A11y_Chart_Temps), Culture) ?? nameof(A11y_Chart_Temps);
+
+    public static string A11y_Chart_Trend => ResourceManager.GetString(nameof(A11y_Chart_Trend), Culture) ?? nameof(A11y_Chart_Trend);
+
+    public static string A11y_Chart_Vram => ResourceManager.GetString(nameof(A11y_Chart_Vram), Culture) ?? nameof(A11y_Chart_Vram);
+
+    public static string A11y_ChartData_Compare => ResourceManager.GetString(nameof(A11y_ChartData_Compare), Culture) ?? nameof(A11y_ChartData_Compare);
+
+    public static string A11y_ChartData_Latency => ResourceManager.GetString(nameof(A11y_ChartData_Latency), Culture) ?? nameof(A11y_ChartData_Latency);
+
+    public static string A11y_ChartData_Sessions => ResourceManager.GetString(nameof(A11y_ChartData_Sessions), Culture) ?? nameof(A11y_ChartData_Sessions);
+
+    public static string A11y_ChartData_Summary => ResourceManager.GetString(nameof(A11y_ChartData_Summary), Culture) ?? nameof(A11y_ChartData_Summary);
+
+    public static string A11y_Chip_Format => ResourceManager.GetString(nameof(A11y_Chip_Format), Culture) ?? nameof(A11y_Chip_Format);
+
+    public static string A11y_Compare_Best_Format => ResourceManager.GetString(nameof(A11y_Compare_Best_Format), Culture) ?? nameof(A11y_Compare_Best_Format);
+
     public static string A11y_Compare_Filter_Fg => ResourceManager.GetString(nameof(A11y_Compare_Filter_Fg), Culture) ?? nameof(A11y_Compare_Filter_Fg);
 
     public static string A11y_Compare_Filter_Game => ResourceManager.GetString(nameof(A11y_Compare_Filter_Game), Culture) ?? nameof(A11y_Compare_Filter_Game);
 
     public static string A11y_Compare_Filter_Tier => ResourceManager.GetString(nameof(A11y_Compare_Filter_Tier), Culture) ?? nameof(A11y_Compare_Filter_Tier);
+
+    public static string A11y_Empty => ResourceManager.GetString(nameof(A11y_Empty), Culture) ?? nameof(A11y_Empty);
+
+    public static string A11y_Fps_Generated_Format => ResourceManager.GetString(nameof(A11y_Fps_Generated_Format), Culture) ?? nameof(A11y_Fps_Generated_Format);
+
+    public static string A11y_Fps_GeneratedSteady_Format => ResourceManager.GetString(nameof(A11y_Fps_GeneratedSteady_Format), Culture) ?? nameof(A11y_Fps_GeneratedSteady_Format);
+
+    public static string A11y_Fps_Presented_Format => ResourceManager.GetString(nameof(A11y_Fps_Presented_Format), Culture) ?? nameof(A11y_Fps_Presented_Format);
 
     public static string A11y_Games_Filter_Engine => ResourceManager.GetString(nameof(A11y_Games_Filter_Engine), Culture) ?? nameof(A11y_Games_Filter_Engine);
 
@@ -1245,11 +1335,23 @@ public static class Strings
 
     public static string A11y_Games_Sort => ResourceManager.GetString(nameof(A11y_Games_Sort), Culture) ?? nameof(A11y_Games_Sort);
 
+    public static string A11y_List_Separator => ResourceManager.GetString(nameof(A11y_List_Separator), Culture) ?? nameof(A11y_List_Separator);
+
     public static string A11y_Logs_Level => ResourceManager.GetString(nameof(A11y_Logs_Level), Culture) ?? nameof(A11y_Logs_Level);
 
     public static string A11y_Logs_Source => ResourceManager.GetString(nameof(A11y_Logs_Source), Culture) ?? nameof(A11y_Logs_Source);
 
     public static string A11y_Logs_Tail => ResourceManager.GetString(nameof(A11y_Logs_Tail), Culture) ?? nameof(A11y_Logs_Tail);
+
+    public static string A11y_Pair_Format => ResourceManager.GetString(nameof(A11y_Pair_Format), Culture) ?? nameof(A11y_Pair_Format);
+
+    public static string A11y_SensorStat_Format => ResourceManager.GetString(nameof(A11y_SensorStat_Format), Culture) ?? nameof(A11y_SensorStat_Format);
+
+    public static string A11y_TitleAndBody_Format => ResourceManager.GetString(nameof(A11y_TitleAndBody_Format), Culture) ?? nameof(A11y_TitleAndBody_Format);
+
+    public static string A11y_ToggleSection_Format => ResourceManager.GetString(nameof(A11y_ToggleSection_Format), Culture) ?? nameof(A11y_ToggleSection_Format);
+
+    public static string A11y_Update_Downloading_Format => ResourceManager.GetString(nameof(A11y_Update_Downloading_Format), Culture) ?? nameof(A11y_Update_Downloading_Format);
 
     public static string About_Doc_Notice => ResourceManager.GetString(nameof(About_Doc_Notice), Culture) ?? nameof(About_Doc_Notice);
 
@@ -1277,6 +1379,8 @@ public static class Strings
 
     public static string About_Runtime_Alpha_Format => ResourceManager.GetString(nameof(About_Runtime_Alpha_Format), Culture) ?? nameof(About_Runtime_Alpha_Format);
 
+    public static string About_Runtime_Alpha_Prerelease_Format => ResourceManager.GetString(nameof(About_Runtime_Alpha_Prerelease_Format), Culture) ?? nameof(About_Runtime_Alpha_Prerelease_Format);
+
     public static string About_Runtime_Format => ResourceManager.GetString(nameof(About_Runtime_Format), Culture) ?? nameof(About_Runtime_Format);
 
     public static string About_Tab_App => ResourceManager.GetString(nameof(About_Tab_App), Culture) ?? nameof(About_Tab_App);
@@ -1296,6 +1400,8 @@ public static class Strings
     public static string About_ViewLicence => ResourceManager.GetString(nameof(About_ViewLicence), Culture) ?? nameof(About_ViewLicence);
 
     public static string About_ViewNotice => ResourceManager.GetString(nameof(About_ViewNotice), Culture) ?? nameof(About_ViewNotice);
+
+    public static string Accessibility_Title => ResourceManager.GetString(nameof(Accessibility_Title), Culture) ?? nameof(Accessibility_Title);
 
     public static string AddGame_Added_Format => ResourceManager.GetString(nameof(AddGame_Added_Format), Culture) ?? nameof(AddGame_Added_Format);
 
@@ -1336,6 +1442,10 @@ public static class Strings
     public static string Alpha_Badge_Tooltip_Format => ResourceManager.GetString(nameof(Alpha_Badge_Tooltip_Format), Culture) ?? nameof(Alpha_Badge_Tooltip_Format);
 
     public static string Alpha_Banner_Body_Format => ResourceManager.GetString(nameof(Alpha_Banner_Body_Format), Culture) ?? nameof(Alpha_Banner_Body_Format);
+
+    public static string Alpha_Banner_Body_Prerelease_Format => ResourceManager.GetString(nameof(Alpha_Banner_Body_Prerelease_Format), Culture) ?? nameof(Alpha_Banner_Body_Prerelease_Format);
+
+    public static string Alpha_Banner_Body_Resting_Format => ResourceManager.GetString(nameof(Alpha_Banner_Body_Resting_Format), Culture) ?? nameof(Alpha_Banner_Body_Resting_Format);
 
     public static string Alpha_Banner_Read => ResourceManager.GetString(nameof(Alpha_Banner_Read), Culture) ?? nameof(Alpha_Banner_Read);
 
@@ -2675,6 +2785,8 @@ public static class Strings
 
     public static string Menu_Help_About => ResourceManager.GetString(nameof(Menu_Help_About), Culture) ?? nameof(Menu_Help_About);
 
+    public static string Menu_Help_Accessibility => ResourceManager.GetString(nameof(Menu_Help_Accessibility), Culture) ?? nameof(Menu_Help_Accessibility);
+
     public static string Menu_Help_CheckUpdates => ResourceManager.GetString(nameof(Menu_Help_CheckUpdates), Culture) ?? nameof(Menu_Help_CheckUpdates);
 
     public static string Menu_Help_Documentation => ResourceManager.GetString(nameof(Menu_Help_Documentation), Culture) ?? nameof(Menu_Help_Documentation);
@@ -3166,6 +3278,8 @@ public static class Strings
     public static string Settings_System_Header => ResourceManager.GetString(nameof(Settings_System_Header), Culture) ?? nameof(Settings_System_Header);
 
     public static string Settings_System_Note => ResourceManager.GetString(nameof(Settings_System_Note), Culture) ?? nameof(Settings_System_Note);
+
+    public static string Settings_Theme_ContrastOn => ResourceManager.GetString(nameof(Settings_Theme_ContrastOn), Culture) ?? nameof(Settings_Theme_ContrastOn);
 
     public static string Settings_Theme_Dark => ResourceManager.GetString(nameof(Settings_Theme_Dark), Culture) ?? nameof(Settings_Theme_Dark);
 

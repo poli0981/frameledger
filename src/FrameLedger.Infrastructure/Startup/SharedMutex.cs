@@ -8,7 +8,6 @@ using FrameLedger.Infrastructure.Ipc;
 using Windows.Win32;
 using Windows.Win32.Foundation;
 using Windows.Win32.Security;
-using Windows.Win32.System.Threading;
 
 namespace FrameLedger.Infrastructure.Startup;
 

@@ -34,6 +34,12 @@ public sealed partial class ImportCandidateViewModel : ObservableObject
     /// </summary>
     public bool IsExisting => Candidate.AlreadyInLibrary || Candidate.MovedFrom is not null;
 
+    /// <summary>
+    /// The row is drawn dimmed: one already in the library, except under a Windows contrast theme (beta.35, D91), where a
+    /// translucent row is no theme colour and the note column says it already is.
+    /// </summary>
+    public bool IsDimmed => IsExisting && ContrastTheme.Active is null;
+
     public string PlatformText => Formats.Platform(Candidate.Game.Platform);
 
     public string Name => Candidate.Game.Name;
@@ -42,4 +48,7 @@ public sealed partial class ImportCandidateViewModel : ObservableObject
 
     /// <summary>Already in the library (under this drive letter or, since 2026-09-23, another), no executable found, or a guessed executable the user should check.</summary>
     public string Note { get; }
+
+    /// <summary>The row as a screen reader reads it (beta.35, D88).</summary>
+    public override string ToString() => Name;
 }

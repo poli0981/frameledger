@@ -20,17 +20,12 @@ public sealed class TriStateResolutionTests
     [InlineData(null, Tri.No, Tri.Yes, Tri.No, TriStateSource.Measured)]
     [InlineData(null, Tri.NotApplicable, Tri.Yes, Tri.Yes, TriStateSource.Inherited)]
     [InlineData(null, Tri.NotApplicable, Tri.NotApplicable, Tri.NotApplicable, TriStateSource.NotApplicable)]
-    public void TheRule(Tri? manual, Tri measured, Tri gameDefault, Tri expected, TriStateSource source)
-    {
-        TriStateResolution.Resolve(manual, measured, gameDefault).Should().Be(new ResolvedTriState(expected, source));
-    }
+    public void TheRule(Tri? manual, Tri measured, Tri gameDefault, Tri expected, TriStateSource source) => TriStateResolution.Resolve(manual, measured, gameDefault).Should().Be(new ResolvedTriState(expected, source));
 
     [Fact]
-    public void AnExplicitManualNotApplicableIsStillManualNotAFallThrough()
-    {
+    public void AnExplicitManualNotApplicableIsStillManualNotAFallThrough() =>
         // The user saying "N/A" is a statement (this title's RT is not classifiable), not the absence of one.
         TriStateResolution.Resolve(Tri.NotApplicable, Tri.Yes, Tri.Yes).Source.Should().Be(TriStateSource.Manual);
-    }
 
     [Fact]
     public void OverStoredRowsEachKindReadsItsOwnColumns()

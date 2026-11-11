@@ -14,4 +14,9 @@ public sealed record SafetyNotice(SafetyNoticeKind Kind, string Title, string Bo
 
     /// <summary>The one action FR-14 allows on a refusal — acknowledging that the session is recorded without measuring — and a plain Dismiss otherwise (no session is running for the others).</summary>
     public string ActionText => Kind == SafetyNoticeKind.Refused ? Shared.Strings.Safety_RecordWithoutMeasuring : Strings.Notice_Dismiss;
+
+    /// <summary>The notice in one sentence (beta.35, D88): the list item's name, and its button's help text — what it acknowledges.</summary>
+    public string AccessibleName => SpokenText.TitleAndBody(Title, Body);
+
+    public override string ToString() => AccessibleName;
 }

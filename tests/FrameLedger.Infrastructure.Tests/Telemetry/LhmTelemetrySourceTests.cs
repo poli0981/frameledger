@@ -6,7 +6,6 @@ using FrameLedger.Application.Telemetry;
 using FrameLedger.Infrastructure.Telemetry;
 using LibreHardwareMonitor.Hardware;
 using NSubstitute;
-using NSubstitute.ExceptionExtensions;
 
 namespace FrameLedger.Infrastructure.Tests.Telemetry;
 

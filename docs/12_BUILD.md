@@ -1,10 +1,11 @@
 # 12 — Build & development environment
 
-Mixed toolchain: .NET 10 for managed projects, MSVC for the native layer.
+Mixed toolchain: .NET 11 for managed projects *(since 0.1.0-beta.37, owner decision D94, 2026-11-11; .NET 10 until
+0.1.0-beta.36 — §The main line's .NET)*, MSVC for the native layer.
 
 ## Prerequisites
 
-- Windows 11 (dev), **.NET 10 SDK**, **Visual Studio 2026** with: .NET desktop development, **Desktop development with C++** (MSVC v143+, Windows 11 SDK ≥ 10.0.22621), C++ ATL not required.
+- Windows 11 (dev), **.NET 11 SDK** (11.0.100 or a later 11.0 feature band), **Visual Studio 2026** with: .NET desktop development, **Desktop development with C++** (MSVC v143+, Windows 11 SDK ≥ 10.0.22621), C++ ATL not required.
 - **Vulkan SDK** (~~for the layer +~~ validation layers during development, and to run `tools/vklayer-blastradius.ps1`) *(corrected 2026-10-04: the layer builds against the vendored `third_party/vulkan-headers`; CI installs no SDK)*.
 - CMake ≥ 3.28 (native projects use CMake; consumed by the solution via a build target — see below).
 - Optional: PawnIO for CPU-temperature testing; an NVIDIA GPU for the NVAPI/Reflex paths (dev machine: RTX 5080). AMD/Intel telemetry paths need no SDK — if you have such hardware, testing L1/L2 coverage there is valuable.
@@ -48,9 +49,9 @@ Compiler/linker flags (enforced in CMake, not per-target ad hoc): `/std:c++20 /M
 
 ## Managed build & native integration
 
-- **`global.json` pins the SDK band** (`10.0.x`, `rollForward: latestFeature`). Without it `dotnet build` picks the newest installed SDK — on a machine with a .NET 11 preview installed that silently changes analyzer behaviour under `TreatWarningsAsErrors`, and makes local and CI disagree for reasons nobody can see in a diff. *(On the `alpha` branch it pins the prerelease SDK instead, on purpose — §The alpha line, 2026-10-31.)*
+- **`global.json` pins the SDK band** (`11.0.x` since beta.37 — `10.0.x` before — `rollForward: latestFeature`, `allowPrerelease: false`). Without it `dotnet build` picks the newest installed SDK — on a machine with a preview of the next .NET installed that silently changes analyzer behaviour under `TreatWarningsAsErrors`, and makes local and CI disagree for reasons nobody can see in a diff. *(The `alpha` branch carries the same file while its line rests, and pins the SDK it is trying when it does not — §The alpha line.)*
 - `Directory.Build.props`:
-  - **`TargetFramework` = `net10.0-windows10.0.22621.0`** and **`SupportedOSPlatformVersion` = `10.0.19045.0`**. These are two different knobs and must not be conflated: the TFM platform version selects which Windows API projections are available to compile against, while the supported version is the floor CA1416 enforces. NFR-8 requires Windows 10 **22H2** = build **19045**; letting the supported version default to the TFM's would silently accept installs below the stated floor. Two constraints pin the target to 22621 rather than something closer to the floor: the SDK rejects `SupportedOSPlatformVersion` above `TargetPlatformVersion` (NETSDK1135), and 19045 is not a targeting-pack version in any case — the packs are cut at 19041, 20348, 22000, 22621, 26100. The Windows 11 SDK ≥ 10.0.22621 is already a prerequisite above, so this costs nothing. A bare `net10.0-windows` is wrong for a different reason: it resolves to `net10.0-windows7.0`, and CA1416 would then error on Mica, `MiniDumpWriteDump` and `QueryVideoMemoryInfo` — every Windows-10-era API this app is built on.
+  - **`TargetFramework` = `net11.0-windows10.0.22621.0`** *(`net10.0-…` until beta.36)* and **`SupportedOSPlatformVersion` = `10.0.19045.0`**. These are two different knobs and must not be conflated: the TFM platform version selects which Windows API projections are available to compile against, while the supported version is the floor CA1416 enforces. NFR-8 names Windows 10 **22H2** = build **19045** as the oldest Windows the code is held to *(since D95, 2026-11-11: not blocked there, and neither tested nor supported — Microsoft supports .NET 11 on Windows 11)*; letting the supported version default to the TFM's would silently accept installs below that floor. Two constraints pin the target to 22621 rather than something closer to the floor: the SDK rejects `SupportedOSPlatformVersion` above `TargetPlatformVersion` (NETSDK1135), and 19045 is not a targeting-pack version in any case — the packs are cut at 19041, 20348, 22000, 22621, 26100. The Windows 11 SDK ≥ 10.0.22621 is already a prerequisite above, so this costs nothing. A bare `net11.0-windows` is wrong for a different reason: it resolves to `net11.0-windows7.0`, and CA1416 would then error on Mica, `MiniDumpWriteDump` and `QueryVideoMemoryInfo` — every Windows-10-era API this app is built on.
   - `Platforms`/`PlatformTarget` = `x64`. "x64 only" is asserted in CLAUDE.md and NFR-8 but was previously enforced nowhere except an ad-hoc `-r win-x64` on the publish command.
 
     > **`RuntimeIdentifier` is NOT set here, and this bullet claimed it was until 2026-08-06.** The props file's own comment explains why: forcing a RID onto class libraries pulls RID-specific assets into their restore for no benefit, so each executable sets it — `FrameLedger.App`, `FrameLedger.Agent` and now `FrameLedger.CaptureHost`, plus its test project, which needs the same RID to reference a RID'd exe. A new project copying this document rather than the props file would have inherited nothing.
@@ -162,44 +163,89 @@ repairs state, it does not grant machine-wide reach on its own).
 > after every sweep; the flag and the button run the same rule. The uninstall hook is still the updater's
 > (P4, Velopack).
 
-## The alpha line (owner decisions D73–D76, 2026-10-31)
+## The main line's .NET (owner decisions D94 and D95, 2026-11-11)
+
+**The main line — the betas and the first release — builds on .NET 11 since 0.1.0-beta.37**: SDK `11.0.100` (the band
+`global.json` pins), runtime and Windows Desktop `11.0.0`, C# 15 by `LangVersion latest`, and the three packages that are
+serviced with the runtime (`Microsoft.Extensions.Hosting`, `System.Diagnostics.EventLog`, `Microsoft.Data.Sqlite`) at
+`11.0.0`. .NET 11 shipped on 2026-11-10; the owner moved the line the next day.
+
+- **What decided it, and what did not.** `20_OPEN_QUESTIONS` §G held a decision table written on 2026-10-31, before any
+  evidence: move only after (a) two alphas on the released runtime had passed the gate and an owner's run of a hooked
+  title, (b) the owner's word on Windows 10, and (c) something .NET 11 brings being wanted. **The owner set (a) aside** —
+  no alpha had run on the released runtime; three had run on Release Candidate 3 (alpha.1 to alpha.3, the gate green
+  each time) — decided (b) as D95, below, and for (c) asked for C# 15 in the same release (D96). What stands in for (a)
+  is this release's own gate on 11.0.100 (`spike-notes` §28) and owner-only item 34.
+- **Windows 10 (D95).** Microsoft supports .NET 11 on Windows 11, and on Windows 10 only in its LTSC and IoT editions.
+  FrameLedger does not block Windows 10 22H2: `SupportedOSPlatformVersion` stays `10.0.19045.0`, so CA1416 still holds
+  the code to it, and nothing checks the Windows version at start. It is **untested** there — it always was
+  (`ACCESSIBILITY.md`, `08_UI` §Accessibility) — and now **unsupported** too; NFR-8, `LIMITATIONS.md`, the README and the
+  guide say so.
+- **The processor.** .NET 11 needs x86-64-v2 — SSE4.2 and POPCNT among its instruction sets — and does not start without
+  it ("The current CPU is missing one or more of the baseline instruction sets"). Its ReadyToRun code targets x86-64-v3
+  (AVX2 among others); Microsoft says a processor that lacks those may pay for it at start-up, where that code is
+  compiled again. Every processor Windows 11 accepts has x86-64-v2.
+- **What .NET 11 changes in the software**, measured or read: `IHost.RunAsync` rethrows the exception of a
+  `BackgroundService` that failed, so the Agent's `--serve` leaves through its crash report where on .NET 10 it exited 0
+  (`10_LOGGING` §Crash handling; `HostBackgroundFailureTests` holds it); `Microsoft.Data.Sqlite` 11 declares SQLitePCLRaw
+  3.0.5, whose engine is SourceGear's `SQLite` package; nine `Microsoft.Extensions.*` libraries are part of the runtime
+  and no longer packages beside it (`legal/licenses/nuget/`: 78 packages became 69).
+- **C# 15 (D96)** is the language the main line compiles, and none of its constructs is used yet: the analyses do not
+  read them (`13_CI_CD` §C# 15 and the analyses, `spike-notes` §29). What beta.37 takes from .NET 11 is API.
+- **Going back** is installing 0.1.0-beta.36 over a later build: the ledger's schema did not move with the runtime.
+
+## The alpha line (owner decisions D73–D76, 2026-10-31; resting since D98, 2026-11-11)
 
 The owner, 2026-10-31: an alpha build, "a place where new .NET versions are tried", with code updated where needed and a
-warning that it is an experiment used at one's own risk. **The alpha line** is the source of a released beta built on a
-prerelease .NET — .NET 11 RC3 first (SDK `11.0.100-rc.3.26522.148`, runtime and Windows Desktop
-`11.0.0-rc.3.26522.148`) — from the long-lived `alpha` branch, published as `vX.Y.Z-alpha.N` GitHub pre-releases on
-Velopack's `alpha` channel (`13_CI_CD` §The alpha line, `11_UPDATER` §Channels).
+warning that it is an experiment used at one's own risk. **The alpha line** is the source of a released beta built to
+try a newer .NET — at times a prerelease one — from the long-lived `alpha` branch, published as `vX.Y.Z-alpha.N` GitHub
+pre-releases on Velopack's `alpha` channel (`13_CI_CD` §The alpha line, `11_UPDATER` §Channels). It tried .NET 11:
+Release Candidate 3 in alpha.1 to alpha.3 (2026-10-31 to 2026-11-06), the release itself in alpha.4.
 
-- **What differs from main, and nothing else** — `git diff main...alpha` is the whole difference: `RELEASE_LINE`
-  (`alpha`); `global.json` (the prerelease SDK, `allowPrerelease: true`); the TFM in `Directory.Build.props`
-  (`net11.0-windows10.0.22621.0` — `SupportedOSPlatformVersion` stays `10.0.19045.0`, so CA1416 still holds the code to
-  Windows 10 22H2 although Microsoft does not support .NET 11 on its Home and Pro editions); the three Microsoft packages
-  in `Directory.Packages.props` that are serviced with the runtime (`Microsoft.Extensions.Hosting`,
-  `System.Diagnostics.EventLog`, `Microsoft.Data.Sqlite`, each `11.0.0-rc.3.26522.148` — the last declares SQLitePCLRaw
-  3.0.5, SQLite 3.53.4, where main's 10.0.14 declares 2.1.13, SQLite 3.53.3); `legal/licenses/nuget/` regenerated for
-  that package set; and a fix only .NET 11 can take, if one is ever forced. C# is what `LangVersion latest` gives the
-  SDK — C# 15 on the 11 SDK — and the source uses none of its syntax: **main must keep building on .NET 10** (D76: retarget
-  only, no preview feature, no runtime-async).
+- **The line rests since 0.1.0-alpha.4 (D98, 2026-11-11).** The main line moved to .NET 11 the day after it shipped
+  (§The main line's .NET), so alpha.4 is 0.1.0-beta.37's source on the same .NET 11.0.0 — published so that a copy of
+  alpha.3 leaves the release candidate by an update, since an alpha never updates to a beta. After it no alpha is cut
+  until a newer .NET has a preview to try (.NET 12's, expected in 2027). While the line rests, the `alpha` branch differs
+  from main in **`RELEASE_LINE` alone** (`git diff main alpha --name-only` prints that one name), and a resting alpha
+  gets no update: its anti-cheat list, which reaches a user only inside a release (`13_CI_CD` §rules-publish.yml), stays
+  the one it shipped with. Its notes, the guide and the Alpha notice tell its user to install the beta — **and the build
+  itself does**: `Directory.Build.props` stamps its `FlAlphaLineRests` property (true on main since beta.37) into every
+  assembly, `Shared.AlphaLine.Rests` reads it, and an alpha cut while it is true shows a banner that says the line is
+  paused and to install the beta, in place of the experimental-build one (`App/Services/AlphaTexts`; D97: the words
+  "a prerelease .NET" appear only where the runtime's own description is a prerelease's).
+- **The switch — what `alpha` differs from main in while it tries a newer .NET, and nothing else:** `RELEASE_LINE`
+  (`alpha`); `global.json` (that SDK, with `allowPrerelease: true` when it is a prerelease); the TFM in
+  `Directory.Build.props` (`SupportedOSPlatformVersion` stays `10.0.19045.0`); the three Microsoft packages in
+  `Directory.Packages.props` that are serviced with the runtime (`Microsoft.Extensions.Hosting`,
+  `System.Diagnostics.EventLog`, `Microsoft.Data.Sqlite`); `legal/licenses/nuget/` regenerated for that package set and
+  the *Transitive* row of `legal/THIRD_PARTY_NOTICES.md`; `FlAlphaLineRests` set to `false` in `Directory.Build.props`;
+  and a fix only the newer .NET can take, if one is ever forced.
+  As it stood for .NET 11 RC3: SDK `11.0.100-rc.3.26522.148`, `net11.0-windows10.0.22621.0`, the three packages at
+  `11.0.0-rc.3.26522.148` (`spike-notes` §24). **No newer language syntax and no preview feature on `alpha`** (D76): the
+  source is main's, and main compiles with its own SDK.
 - **Everything else lives on main**, dormant on the main line. `RELEASE_LINE` is read like `VERSION` and stamped into
   every assembly as the `FrameLedger.ReleaseLine` metadata (`Directory.Build.props` refuses any value but `main` and
   `alpha`); `Shared.BuildLine` reads it back for the App and the Agent, which compose with it rather than reading it
   where they act, so a test hands either line to the code it tests. On the alpha line they act on it (D74): the Alpha
   notice in the Legal Gate with its own tick box, the Agent's wait for it, the ALPHA badge and banner, the locked update
   channel (`08_UI`), and the ledger's copy before an alpha first opens it (D73, `06_DATA_MODEL` §Migrations). What the
-  alpha's SDK asks of the source and .NET 10 can also take lands on main.
+  alpha's SDK asks of the source and main's can also take lands on main.
 - **The native layer does not change.** MSVC builds it from the same source; only its build id differs (the alpha's
   tag). The hook, the guard and the Vulkan layer in an alpha are the beta's.
-- **Sync, and the cadence.** After each beta release a pull request merges main into `alpha` with a merge commit (the
-  repository allows them; the linear rule is main's) and the next alpha is cut from it — **one alpha per beta, never
-  several in a row**, because Velopack reads only the newest ten releases (`11_UPDATER` §Channels). A conflict in
-  `legal/licenses/nuget/` is resolved by regenerating it on `alpha` (`tools/license-gather.ps1`). An alpha older than the
-  ledger's schema refuses to open it (`LedgerSchemaException`), so a beta that adds a migration is followed by an alpha
-  soon.
-- **Building it locally:** check out `alpha` with the prerelease SDK installed — `global.json` selects it — and run
-  `./build.ps1 check` as on main.
-- **The next .NET build** (an RC, the GA on 2026-11-10, a servicing release) is one line of `global.json` and three
-  package versions on `alpha`; RC3's support ends at the GA.
-- **Whether the main line follows** is not decided here: `20_OPEN_QUESTIONS` §G, *The main line's .NET*.
+- **Sync, and the cadence while it tries a .NET.** After each beta release a pull request merges main into `alpha` with
+  a merge commit (the repository allows them; the linear rule is main's) and the next alpha is cut from it — **one alpha
+  per beta, never several in a row**, because Velopack reads only the newest ten releases (`11_UPDATER` §Channels). A
+  conflict in a switch file is resolved for the switch; `legal/licenses/nuget/` by regenerating it on `alpha`
+  (`tools/license-gather.ps1`). An alpha older than the ledger's schema refuses to open it (`LedgerSchemaException`), so
+  a beta that adds a migration is followed by an alpha soon. **The sync that ended the .NET 11 trial** (alpha.4) went
+  the other way round: every switch file conflicted and main's version was taken for each, leaving `RELEASE_LINE`.
+- **Building it locally:** check out `alpha` with the SDK its `global.json` names installed and run `./build.ps1 check`
+  as on main.
+- **Starting the next trial** (a preview of the next .NET): the switch above on `alpha`, the whole gate in a throwaway
+  worktree first (`spike-notes` §24 is the pattern, with its decision table written before the run), and the Alpha
+  notice's sentence naming the .NET.
+- **Whether the main line follows a trial** is the owner's each time: `20_OPEN_QUESTIONS` §G, *The main line's .NET*,
+  holds the table and what happened to it for .NET 11.
 
 ## Version
 
@@ -355,7 +401,7 @@ would not fit).
 13b. `tools/accuracy-check.ps1 -SelfTest`, then live — the accuracy block is ONE text (`legal/ACCURACY.md`) embedded verbatim in `README.md` and `legal/DISCLAIMER.md` §4; a copy that drifted, a copy with no markers, or an empty source is red. Four self-test cases, both directions (§S23-6, 2026-09-06)
 13c. **`tools/notice-check.ps1 -SelfTest`, then live** (beta.12, owner decision D45, 2026-10-03) — every first-party source file (`.cs .cpp .h .inl .ps1 .xaml`, tracked or new, minus `src/native/third_party/`) opens with `SPDX-License-Identifier: GPL-3.0-only` and `Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE` in its own comment syntax, because GPLv3 §7 wants additional terms named "in the relevant source files" (`NOTICE` carries them); the second line may name another holder and year in the same form (a contributor's own file).
 Seven self-test cases, both directions; `./tools/notice-check.ps1 -Fix` writes a missing header, and `tools/resx-gen.ps1` generates the accessor with it
-13d. **`tools/wiki-build.ps1 -SelfTest`, then `-Check`** (beta.17, owner decisions D53/D54, 2026-10-07) — assembles the GitHub Wiki from `wiki/`, `guide/` and `LIMITATIONS.md` into a temporary folder, as `wiki.yml` does at a release (`13_CI_CD` §wiki.yml), and fails on a link to a file, folder or section that does not exist, two sources for one page, a page that neither Home nor the sidebar leads to, a sidebar that lists the guide in another order than `guide/README.md`, a backticked repository path in a `wiki/` page that names nothing, and a version number written into a `wiki/` page (the footer says which release the wiki shows). Nine self-test cases, both directions
+13d. **`tools/wiki-build.ps1 -SelfTest`, then `-Check`** (beta.17, owner decisions D53/D54, 2026-10-07) — assembles the GitHub Wiki from `wiki/`, `guide/`, `LIMITATIONS.md` and (beta.35) `ACCESSIBILITY.md` into a temporary folder, as `wiki.yml` does at a release (`13_CI_CD` §wiki.yml), and fails on a link to a file, folder or section that does not exist, two sources for one page, a page that neither Home nor the sidebar leads to, a sidebar that lists the guide in another order than `guide/README.md`, a backticked repository path in a `wiki/` page that names nothing, and a version number written into a `wiki/` page (the footer says which release the wiki shows). ~~Nine~~ Ten self-test cases since beta.35 (the statement's page, D88), both directions
 14. `tools/changelog-check.ps1 -SelfTest` — nine cases, five expected RED. The live half needs a pull request's changed-file list and is supplied by `ci.yml`
 14b. `tools/release-notes.ps1 -SelfTest` — five cases over a fixture changelog (a dated and an undated section, a missing one, a prefix that must not match, an empty one), and since beta.24 three over a temporary tree: a version with its own `docs/changelog/<version>.md` is read from it, one without from `CHANGELOG.md`, a prefix of a file name is not that file. The live half needs a tag's version and runs in `release.yml`, where a missing or empty section is a red release (P4 PR-5)
 14d. **`tools/docs-split-check.ps1 -SelfTest`, then live** (beta.24, owner decision D66) — `CHANGELOG.md` holds no released section beside `[Unreleased]`; each `docs/changelog/<version>.md` holds one `## ` heading, its own `## [<version>] - date`, and no relative link (the App renders release notes as `CHANGELOG.md`); `CHANGELOG.md` and the files under `docs/changelog/`, and `docs/HANDOFF.md` and the files under `docs/handoff/` — and since PR-5 `docs/20_OPEN_QUESTIONS.md` and `docs/open-questions/`, `docs/spike-notes.md` and `docs/spike-notes/` — name each other in both directions. Eleven self-test cases, both directions

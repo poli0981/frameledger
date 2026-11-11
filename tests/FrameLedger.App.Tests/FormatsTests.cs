@@ -118,9 +118,9 @@ public sealed class FormatsTests
         EndedAt = DateTimeOffset.UnixEpoch.AddMinutes(5),
         QpcEpoch = 0,
         QpcFrequency = 1,
-        Tier = Domain.Sessions.CaptureTier.Hooked,
-        Mode = Domain.Sessions.CaptureMode.Launch,
-        ExitStatus = Domain.Sessions.ExitStatus.Normal,
+        Tier = CaptureTier.Hooked,
+        Mode = CaptureMode.Launch,
+        ExitStatus = ExitStatus.Normal,
         Upscaler = upscaler,
         UpscalerQuality = quality,
         UpscalerDriverReported = driverReported,
@@ -271,7 +271,7 @@ public sealed class FormatsTests
         }
 
         dir.Should().NotBeNull("the check needs the repository's rules file");
-        using System.Text.Json.JsonDocument rules = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(dir!.FullName, "rules", "detection-rules.json")));
+        using System.Text.Json.JsonDocument rules = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(dir.FullName, "rules", "detection-rules.json")));
         List<(string Id, string Name)> engines = [.. rules.RootElement.GetProperty("engines").EnumerateArray()
             .Select(static e => (e.GetProperty("id").GetString()!, e.GetProperty("name").GetString()!))];
 

@@ -17,4 +17,9 @@ public sealed partial class HookedGameViewModel(long gameId, string name, Func<H
 
     [RelayCommand]
     private Task RevokeAsync() => revoke(this);
+
+    /// <summary>The row's button, naming the game whose hooking it turns off (beta.35, D88).</summary>
+    public string RevokeName => Services.SpokenText.Pair(Strings.Settings_HookedGames_Revoke, Name);
+
+    public override string ToString() => Name;
 }

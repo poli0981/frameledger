@@ -16,6 +16,7 @@
 - [Alpha builds](../guide/11-alpha-builds.md)
 - [The terms, in plain words](../guide/terms-in-plain-words.md)
 - [Limitations](../LIMITATIONS.md)
+- [Accessibility](../ACCESSIBILITY.md)
 
 **Build or change FrameLedger**
 

@@ -5,6 +5,7 @@
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:pages="clr-namespace:FrameLedger.App.Pages"
       xmlns:res="clr-namespace:FrameLedger.App"
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
       xmlns:controls="clr-namespace:FrameLedger.App.Controls"
@@ -74,6 +75,8 @@
                           Visibility="{Binding ViewModel.ArtCover, Converter={StaticResource NullToCollapsed}}">
                     <ui:Image.Style>
                         <Style TargetType="ui:Image" BasedOn="{StaticResource DefaultImageStyle}">
+                            <!-- beta.35 (D88): a picture, not a stop for Tab (the App's implicit ui:Image style says so for the others) -->
+                            <Setter Property="Focusable" Value="False" />
                             <Setter Property="Width" Value="120" />
                             <Setter Property="Height" Value="180" />
                             <Style.Triggers>
@@ -91,7 +94,7 @@
                     </ui:Image.Style>
                 </ui:Image>
                 <StackPanel Grid.Column="1">
-                    <ui:TextBlock FontTypography="Title" Text="{Binding ViewModel.Name}" />
+                    <ui:TextBlock FontTypography="Title" AutomationProperties.HeadingLevel="Level1" Text="{Binding ViewModel.Name}" />
                     <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.Subtitle}" />
                     <ui:TextBlock Style="{StaticResource TertiaryText}" TextTrimming="CharacterEllipsis" Text="{Binding ViewModel.ExecutableText}" ToolTip="{Binding ViewModel.ExecutableText}" />
                     <ui:InfoBar Margin="0,6,0,0" IsClosable="False" Severity="Warning"
@@ -314,7 +317,7 @@
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Date}" Binding="{Binding DateText}" />
                                 <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Duration}" Binding="{Binding DurationText}" />
-                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Tier}">
+                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Tier}" controls:CellName.Path="TierText">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
                                             <Border Style="{StaticResource Pill}" Margin="0" ToolTip="{Binding TierTooltip}">
@@ -323,21 +326,21 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Native}">
+                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Native}" controls:CellName.Path="NativeText">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
                                             <TextBlock Text="{Binding NativeText}" ToolTip="{Binding FpsTooltip}" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Displayed}">
+                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Displayed}" controls:CellName.Path="DisplayedText">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
                                             <TextBlock Text="{Binding DisplayedText}" ToolTip="{Binding FpsTooltip}" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Fg}">
+                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Fg}" controls:CellName.Path="FgText">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
                                             <TextBlock Text="{Binding FgText}" ToolTip="{Binding FpsTooltip}" />
@@ -349,14 +352,14 @@
                                 <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Resolution}" Binding="{Binding ResolutionText}" />
                                 <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_GpuTemp}" Binding="{Binding GpuTempText}" />
                                 <!-- beta.12 (D43): the game's own memory, both tiers; mean, the shared / working-set / commit peaks in the tooltip -->
-                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_GameVram}">
+                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_GameVram}" controls:CellName.Path="GameVramText">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
                                             <TextBlock Text="{Binding GameVramText}" ToolTip="{Binding GameVramTooltip}" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_GameRam}">
+                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_GameRam}" controls:CellName.Path="GameRamText">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
                                             <TextBlock Text="{Binding GameRamText}" ToolTip="{Binding GameRamTooltip}" />
@@ -365,14 +368,14 @@
                                 </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Api}" Binding="{Binding ApiText}" />
                                 <!-- beta.10: both tiers; the tooltip carries every share, the window, the back buffer and the source -->
-                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Display}">
+                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Display}" controls:CellName.Path="DisplayModeText">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
                                             <TextBlock Text="{Binding DisplayModeText}" ToolTip="{Binding DisplayModeTooltip}" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn>
+                                <DataGridTemplateColumn controls:CellName.Path="FeaturesText">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
                                             <StackPanel Orientation="Horizontal">
@@ -383,7 +386,7 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Exit}">
+                                <DataGridTemplateColumn Header="{x:Static res:Strings.Sessions_Col_Exit}" controls:CellName.Path="ExitText">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
                                             <StackPanel Orientation="Horizontal">
@@ -394,12 +397,12 @@
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>
                                 </DataGridTemplateColumn>
-                                <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Tags}" Binding="{Binding TagsText}" />
-                                <DataGridTemplateColumn>
+                                <DataGridTextColumn Header="{x:Static res:Strings.Sessions_Col_Tags}" Binding="{Binding TagsText}" controls:CellName.Path="TagsText" />
+                                <DataGridTemplateColumn controls:CellName.Path="OpenName">
                                     <DataGridTemplateColumn.CellTemplate>
                                         <DataTemplate DataType="{x:Type vm:SessionItemViewModel}">
-                                            <ui:Button Appearance="Secondary" Padding="8,2" Content="{x:Static res:Strings.Summary_Open}"
-                                                       Command="{Binding DataContext.ViewModel.OpenSessionCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                                            <ui:Button Appearance="Secondary" Padding="8,2" Content="{x:Static res:Strings.Summary_Open}" AutomationProperties.Name="{Binding OpenName}"
+                                                       Command="{Binding ViewModel.OpenSessionCommand, RelativeSource={RelativeSource AncestorType={x:Type pages:GameDetailPage}}}"
                                                        CommandParameter="{Binding}" />
                                         </DataTemplate>
                                     </DataGridTemplateColumn.CellTemplate>

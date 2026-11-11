@@ -39,7 +39,7 @@ public sealed class RulesSeederTests
         public ValueTask<string?> ReadInstalledMarkerAsync(CancellationToken ct = default) => new(Marker);
 
         public bool IsUsableByTheGuard(byte[] candidate) =>
-            !Unusable.Contains(System.Text.Encoding.UTF8.GetString(candidate), StringComparer.Ordinal);
+            !Unusable.Contains(System.Text.Encoding.UTF8.GetString(candidate));
 
         public ValueTask<RulesWriteOutcome> WriteAsync(byte[] content, bool replaceExisting,
             CancellationToken ct = default)

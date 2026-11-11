@@ -29,10 +29,10 @@
             <TabItem Header="{x:Static res:Strings.About_Tab_App}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="0,12,0,0" MaxWidth="760" HorizontalAlignment="Left">
-                        <ui:TextBlock FontTypography="Title" Text="{x:Static res:Strings.App_Title}" />
+                        <ui:TextBlock FontTypography="Title" AutomationProperties.HeadingLevel="Level1" Text="{x:Static res:Strings.App_Title}" />
                         <ui:TextBlock x:Name="VersionText" Style="{StaticResource SecondaryText}" />
                         <ui:TextBlock Margin="0,8,0,0" TextWrapping="Wrap" Text="{x:Static res:Strings.About_Tagline}" />
-                        <ui:TextBlock Margin="0,20,0,6" FontTypography="Subtitle" Text="{x:Static res:Strings.About_Notices_Header}" />
+                        <ui:TextBlock Margin="0,20,0,6" FontTypography="Subtitle" AutomationProperties.HeadingLevel="Level2" Text="{x:Static res:Strings.About_Notices_Header}" />
                         <ui:TextBlock TextWrapping="Wrap" Text="{x:Static res:Strings.About_Notices_Copyright}" />
                         <ui:TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Text="{x:Static res:Strings.About_Notices_Warranty}" />
                         <ui:TextBlock Margin="0,6,0,0" TextWrapping="Wrap" Text="{x:Static res:Strings.About_Notices_Licence}" />

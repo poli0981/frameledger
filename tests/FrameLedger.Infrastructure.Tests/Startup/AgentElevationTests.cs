@@ -159,9 +159,9 @@ public sealed class AgentElevationTests : IDisposable
             new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase), out int error);
 
         started.Should().NotBeNull($"the start failed with Win32 error {error}");
-        using (started!.Value.Process)
+        using (started.Value.Process)
         {
-            TokenPrivileges.IsElevated(started.Value.Pid).Should().Be(TokenPrivileges.IsElevated(shell!.Value),
+            TokenPrivileges.IsElevated(started.Value.Pid).Should().Be(TokenPrivileges.IsElevated(shell.Value),
                 "the game runs as a double-click would run it, never with the Agent's token");
             using Process child = Process.GetProcessById(started.Value.Pid);
             child.WaitForExit(10_000).Should().BeTrue();
