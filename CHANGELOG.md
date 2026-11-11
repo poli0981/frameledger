@@ -64,6 +64,18 @@ numeric core and does not move; the heading is the full version — corrected 20
   name that sets, saves, restores, registers or controls something — or returns an identifier — even when someone
   adds it to the list.
 
+- **The reader behind Advanced metrics exists, was measured on a real PC, and is still not switched on.** One
+  reader for the whole Agent, on a thread of its own, that runs only while a session or the page needs it: NVIDIA's
+  figures every second, and every sensor LibreHardwareMonitor has for the graphics card — each fan and its duty, the
+  core voltage, PCI Express traffic, the load of every engine. When the Agent runs as administrator with PawnIO
+  installed it will also read the processor per core, the memory and the motherboard's sensor chip.
+  **A drive's temperature is not read**: the library cannot list drives without touching removable ones, so that
+  group is never opened and the value will read N/A with that reason.
+- **`FrameLedger.CaptureHost probe-advanced`** (a developer tool, not shipped): runs that reader for a few seconds
+  on your own rights and prints everything it read and what it cost. On the development PC it read 35 facts and 58
+  values a second — and showed that one refresh of the sensor library takes 14 ms of processor time, so the reader
+  refreshes it every five seconds, where NVIDIA's own figures (0.4 ms) stay at one a second.
+
 ### Fixed
 
 - **A sentence in the documents that kept a function from being called.** `docs/18_GPU_VENDOR_APIS.md` said the

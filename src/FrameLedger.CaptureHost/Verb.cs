@@ -31,4 +31,11 @@ internal enum Verb
     /// Injects nothing, needs no consent record, and takes no <c>--exe</c>.
     /// </summary>
     ProbeLhm,
+
+    /// <summary>
+    /// The instrument of §M12 and §M13 (owner decision D101): run the reader "Advanced metrics" uses for a few ticks
+    /// on this process's own rights and print what it read and what reading it cost. Injects nothing, needs no
+    /// consent record, and takes no <c>--exe</c>.
+    /// </summary>
+    ProbeAdvanced,
 }

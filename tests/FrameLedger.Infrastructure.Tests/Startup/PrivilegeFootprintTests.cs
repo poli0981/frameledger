@@ -44,4 +44,31 @@ public sealed class PrivilegeFootprintTests
         newlyEnabled.Should().NotContain(_powerful,
             $"opening a target and the CPU sensors enabled a privilege (elevated run: {Environment.IsPrivilegedProcess}; enabled before: {string.Join(", ", before)})");
     }
+
+    [Fact]
+    public void OpeningTheGroupsOfAdvancedMetricsEnablesNoPowerfulPrivilege()
+    {
+        // D103 (2026-11-11): the advanced reader opens the motherboard group beside the processor's and the memory's.
+        // Every group this project can name is opened here whatever this process's rights - on the elevated CI runner
+        // that is the real thing - refreshed and read once. A privilege newly enabled by any of them is a question
+        // for the owner, and that group is then not opened (20_OPEN_QUESTIONS M13's outcome, written before the run).
+        IReadOnlyList<string> before = TokenPrivileges.Enabled();
+        before.Should().Contain("SeChangeNotifyPrivilege", "every token has it enabled; an empty answer would be a reader that read nothing");
+        LhmGroups all = LhmAdvancedReader.GroupsFor(elevated: true, pawnIoInstalled: true);
+        all.Should().Be(LhmGroups.Gpu | LhmGroups.Cpu | LhmGroups.Memory | LhmGroups.Motherboard);
+
+        using (var reader = new LhmAdvancedReader(new LhmComputerAdapter(all)))
+        {
+            if (reader.Open())
+            {
+                reader.Refresh();
+                _ = reader.Read();
+                _ = reader.ReadFacts();
+            }
+        }
+
+        string[] newlyEnabled = [.. TokenPrivileges.Enabled().Except(before, StringComparer.Ordinal)];
+        newlyEnabled.Should().NotContain(_powerful,
+            $"opening the advanced groups enabled a privilege (elevated run: {Environment.IsPrivilegedProcess}; enabled before: {string.Join(", ", before)})");
+    }
 }

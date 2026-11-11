@@ -155,7 +155,12 @@ section does not carry — the order, and what was asked.
   been (`20_OPEN_QUESTIONS` §M10); the Agent's processor time and memory with the option on and off (NFR-2).
 - **A trap already paid for**: LibreHardwareMonitor's storage group may touch every drive when it opens, and this
   PC once had a failing USB drive. If the group cannot be opened without touching removable drives, storage stays
-  N/A in beta.39 — decided before the first run, not after it.
+  N/A in beta.39 — decided before the first run, not after it. **It cannot (read in the library's source,
+  2026-11-11), so it is not opened**: a drive's temperature reads N/A in beta.39, and the reason is on the page.
+- **Measure before composing.** `FrameLedger.CaptureHost probe-advanced` ran the reader on this PC before any Agent
+  code used it, and found the sensor library's refresh at 14 ms of processor time — so the reader reads it every
+  fifth tick. The same number says the telemetry layer every session already uses costs more than NFR-2 allows
+  (`20_OPEN_QUESTIONS` §M16): **not this train's to fix, and the owner's to decide** — ask it when this train is out.
 
 ### Left open by this session
 

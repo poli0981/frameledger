@@ -145,7 +145,7 @@ L1 gives no temperatures on its own (unless the D3DKMT probe pans out). That is 
 
 `LibreHardwareMonitorLib` ≥ 0.9.6, consumed as an **unmodified NuGet package**. It already implements per-vendor GPU sensor access internally — which means the vendor-interop licensing problem is one LHM has solved upstream, under a licence that works for us. That is the entire reason this layer exists.
 
-- `Computer` opened with `IsGpuEnabled` always; ~~`IsCpuEnabled` + `IsMemoryEnabled` only when the Agent is elevated and PawnIO is available~~ nothing else, ever — the CPU temperature uses a separate `Computer` (below) (corrected 2026-10-04).
+- `Computer` opened with `IsGpuEnabled` always; ~~`IsCpuEnabled` + `IsMemoryEnabled` only when the Agent is elevated and PawnIO is available~~ nothing else, ever — the CPU temperature uses a separate `Computer` (below) (corrected 2026-10-04). *(2026-11-11: still true of THIS layer's `Computer`. Advanced metrics opens a third one, of its own — the graphics card, and as administrator with PawnIO the processor, memory and motherboard groups; D103, §Advanced metrics. Storage, the power supply, controllers, the battery and the network are opened by nothing.)*
 - Poll on a dedicated thread: `computer.Accept(updateVisitor)` then read mapped sensors. Never faster than 500 ms; default 1000 ms.
 - Sensor mapping by `SensorType` + name heuristics per vendor (`GPU Core`, `GPU Hot Spot`, `GPU Memory`, `GPU Package Power`, …), kept in `SensorMap.cs` with unit tests against captured sensor-tree fixtures.
 - **P0 verification items:** (a) which fields LHM actually returns per vendor on real hardware — fill the capability matrix below — **NVIDIA filled 2026-09-03, AMD/Intel deferred (§R5/§R6)**; (b) ~~whether GPU-only usage works **without** elevation and without PawnIO (expected yes, since GPU sensors go through user-mode vendor paths, but confirm — it determines whether the default unelevated Agent has temperatures at all)~~ — **confirmed 2026-09-03, §M5 row R1**: eight fields unelevated, the same eight elevated, PawnIO never opened; (c) ~~confirm LHM's sources are not marked with MPL-2.0 Exhibit B~~ — **done, 2026-08-02: clear.** No source file applies the notice; the only repository hit is the `LICENSE` template itself, and every file we depend on carries the permissive Exhibit A. Method and evidence in `docs/spike-notes.md` §0. Re-check on every version bump, and check *source headers*, never the LICENSE file — MPL-2.0's own text contains Exhibit B as a template, so grepping the licence finds it in every MPL project ever published.
@@ -554,12 +554,16 @@ states here what it built.
   `session_advanced` holds one session's facts, its series' statistics and their directory. The series themselves go
   to `sensor_blobs` under names that start with `adv.`, **with NaN for a tick that has no reading**: the fixed series
   store −1 there and their readers drop every negative value, which would silently eat a −12 V rail.
-- **D103 — LibreHardwareMonitor's other groups.** CPU, memory, motherboard (its sensor chip and embedded controller)
-  and storage are opened **only when the Agent already runs as administrator and PawnIO is installed** — the existing
-  admin mode (D34); the page says what is missing and links to that setting. Storage is temperature only, internal
-  drives only, and no more than once a minute. **Refused**: the power-supply and fan-controller groups, which make
-  the library search every USB HID device. **Deferred**: the battery group. This amends §L2's "nothing else, ever"
-  from the pull request that opens them.
+- **D103 — LibreHardwareMonitor's other groups.** CPU, memory and motherboard (its sensor chip and embedded
+  controller) are opened **only when the Agent already runs as administrator and PawnIO is installed** — the existing
+  admin mode (D34); the page says what is missing and links to that setting. **Refused**: the power-supply and
+  fan-controller groups, which make the library search every USB HID device. **Deferred**: the battery group — and
+  **storage**. The plan had storage in, temperature only and internal drives only, with one outcome written down
+  before any run: *if the group cannot be opened without touching removable drives, it stays closed*. It cannot: the
+  library's `StorageGroup` (0.9.6, read 2026-11-11) lists every drive through DiskInfoToolkit's `ReloadStorages` with
+  no filter by bus, and subscribes to drives being plugged in afterwards. So `lhm.storage.*` is `Deferred`, a drive's
+  temperature reads N/A, and `LhmGroups` — the only way this code can name a group to open — has no member for it
+  (`20_OPEN_QUESTIONS` §M13). This amends §L2's "nothing else, ever" from the pull request that opened the three.
 - **D104 — identifiers are never read.** The card's board serial number and unique id, a display's EDID, and the list
   of programs that are encoding. They are named in the inventory so the page can say so; a test holds that no stored
   JSON has their keys. This is the only part of "everything" left out on purpose.
@@ -575,6 +579,37 @@ states here what it built.
   something or returns an identifier is refused whatever the list says. An entry point that both reads and writes by
   a command argument — the colour and info-frame controls — is refused like a writer: the check reads names, not
   arguments, and nothing on the list is one. *(Built with ABI 3: `tools/nvapi-readonly-check.ps1`.)*
+
+### The reader (built 2026-11-11; composed by nothing yet)
+
+`Application.Advanced.IAdvancedHardware` is the port: `Acquire()` keeps the reader running until the handle is let
+go, `Latest` is the last tick without waiting, `ReadSessionFacts` reads one session's facts on the caller's thread.
+`Infrastructure.Telemetry.AdvancedHardwareHub` implements it — **one reader for the whole Agent, on a thread of its
+own (`fl-advanced`), running only while somebody holds it** and for a linger after, so that two sessions in a row,
+or a session ending as the page opens, do not close and reopen the sensors (D107). The Agent records several
+sessions at once, each with a poller; a reader per session would open the motherboard's sensor chip as many times.
+
+What runs on that thread is `AdvancedHardwareReader`: NVAPI through `NvapiAdvancedReader`, and
+`LhmAdvancedReader` over a `Computer` of its own, opened with `LhmAdvancedReader.GroupsFor(elevated, pawnIo)` —
+`LhmGroups`, an enum that has a member for the four groups this project may open and for no other. Each sensor is a
+member of a catalog family by the device at the top of its tree and its type (`LhmAdvancedMap.FamilyOf`); its series
+is named from the library's own identifier (`/lpc/nct6798d/0/voltage/3` → `adv.lhm.board.voltage.lpc_nct6798d_0_3`)
+and labelled with the hardware's words. A sensor with no family is not read.
+
+- **A source that is not there is a state** (`AdvancedSources`): no NVIDIA driver, not administrator, PawnIO
+  missing. Never an exception, and never a value in its place.
+- **A device that throws twice is left alone** until the reader opens again; the others go on. The library's own
+  traversal stops at the first exception, so each top-level device is refreshed in a guard of its own.
+- **NVAPI answering with no field, twice running, after it had answered**: released and initialised again, once
+  (`20_OPEN_QUESTIONS` §M12).
+- **The cadence was set by a measurement, before anything composed the reader.** `FrameLedger.CaptureHost
+  probe-advanced` runs this reader on the caller's own rights and prints what it read and what it cost. On the dev
+  box (RTX 5080, unelevated, 2026-11-11): 35 facts and 58 readings a tick — 17 from NVAPI, 41 from the card's sensors;
+  **one NVAPI live read costs 0.4 ms of processor time; one refresh of LibreHardwareMonitor's graphics-card group
+  costs 14 ms (62 ms elapsed)**. Once a second that refresh alone is 1.4% of one core, above NFR-2's 1% for the
+  whole Agent. So NVAPI is read every tick and **the sensor library every fifth** (0.28%), and on the ticks between a
+  sensor has no reading — its last value is not repeated. The same refresh is what the L2 telemetry layer does once
+  a second in every session: that cost is not this feature's, and is `20_OPEN_QUESTIONS` §M16.
 
 ### What belongs to what
 
@@ -749,8 +784,6 @@ read by a build of Train A.
 | `lhm.memory.modules` | The memory modules: size, speed, maker's part name - never a serial number | MachineFact | Lhm | AgentElevated | Table |
 | `lhm.memory.load` | Memory in use: physical and virtual | Series, one per device | Lhm | AgentElevated | Percent |
 | `lhm.memory.temperature` | Each memory module's temperature, where it has a sensor | Series, one per device | Lhm | AgentElevated | Celsius |
-| `lhm.storage.models` | The internal drives' model names - never a serial number | MachineFact | Lhm | AgentElevated | Table |
-| `lhm.storage.temperature` | Each internal drive's temperature, read no more than once a minute | Series, one per device | Lhm | AgentElevated | Celsius |
 
 **What the Agent could reach and does not**
 
@@ -759,6 +792,8 @@ read by a build of Train A.
 | `lhm.psu` | Power-supply sensors: reading them makes the library search every USB device | MachineFact | Lhm | Refused | Table |
 | `lhm.controller` | Fan-controller sensors: the same search of USB devices | MachineFact | Lhm | Refused | Table |
 | `lhm.battery` | Battery sensors | MachineFact | Lhm | Deferred | Table |
+| `lhm.storage.models` | The drives' model names: the library cannot list drives without touching removable ones | MachineFact | Lhm | Deferred | Table |
+| `lhm.storage.temperature` | Each drive's temperature: the same, so the storage group is not opened | Series, one per device | Lhm | Deferred | Celsius |
 | `nvapi.gpu.board_serial` | The card's board serial number | MachineFact | Nvapi | Identifier | Text |
 | `nvapi.gpu.uuid` | The card's unique id | MachineFact | Nvapi | Identifier | Text |
 | `nvapi.display.edid` | A display's EDID block, which carries its serial number | MachineFact, one per device | Nvapi | Identifier | Text |

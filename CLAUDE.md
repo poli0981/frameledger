@@ -107,9 +107,12 @@ src/
                                #   and Advanced/ since 2026-11-11 (D101): AdvancedMetricCatalog, the one
                                #   list "Advanced metrics" reads - what is read, and what is not with the
                                #   reason (18_GPU_VENDOR_APIS §Advanced metrics) - and the value model
-                               #   (AdvancedValue / AdvancedFact / AdvancedReading). Infrastructure's
-                               #   NvapiAdvancedReader fills it from the bridge's ABI 3; no Agent code
-                               #   composes it yet.
+                               #   (AdvancedValue / AdvancedFact / AdvancedReading / AdvancedSnapshot) and
+                               #   the port IAdvancedHardware. Infrastructure implements it: AdvancedHardwareHub
+                               #   (one reader for the Agent, on its own thread, only while held - D107) over
+                               #   NvapiAdvancedReader (the bridge's ABI 3) and LhmAdvancedReader (LhmGroups:
+                               #   the card; as administrator with PawnIO the processor, memory and board -
+                               #   never storage, D103). No Agent code composes it yet.
   FrameLedger.Infrastructure/  # SQLite, shm reader, vendor APIs, injector interop, parsers,
                                #   and Capture/ (PR-C): ShmRingAttacher/ShmCaptureSink over the
                                #   reader, HeldProcessLivenessSource, TargetResolver (path only,
