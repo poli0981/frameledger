@@ -46,6 +46,7 @@
 #include <cstdio>
 #include <cstring>
 #include <fl_ac_rules.h>
+#include <fl_adv_fields.h>
 #include <fl_d3d12_vtable.h>
 #include <fl_dxgi_count.h>
 #include <fl_dxgi_vtable.h>
@@ -444,6 +445,16 @@ struct SwapChainSlot {
 
 // Region 4 (fl_shm.h, layout 4, beta.10): set in InitThread beside g_state, written only through PublishDisplay.
 FlDisplayState* g_display = nullptr;
+
+// ADVANCED METRICS (fl_shm.h region 5, layout 5; owner decision D111). `g_advancedRequested` is the watchdog's copy of
+// FlControlBlock::advancedRequested, and the ONLY thing a detour consults: while it is 0 no hook reads one member more
+// than it did before the option existed, and the watchdog never writes the region. `g_adv` is what the detours
+// accumulate (fl_adv_fields.h); `g_advanced` is the region, written by the watchdog alone. `g_advancedSeen` is the
+// watchdog's own: the last non-zero request it acted on, so that a new one starts the summaries afresh.
+FlAdvancedState*      g_advanced = nullptr;
+std::atomic<uint32_t> g_advancedRequested{0u};
+uint32_t              g_advancedSeen = 0u;
+alignas(64) fl::adv::Accumulators g_adv;
 
 // Which chain region 4 describes: the largest back buffer, and one silent for 2 s gives way (fl_shm.h §Region 4).
 std::atomic<uint32_t> g_displayChain{0};
@@ -1690,6 +1701,12 @@ sl::Result STDMETHODCALLTYPE Hook_SlEvaluateFeature(sl::Feature feature, const s
             if (scan.qualityFound) {
                 g_dlssQuality.store(scan.quality, std::memory_order_release);
             }
+            // The rest of the options the title chained (output size, presets, exposure, the three Booleans) -
+            // Advanced metrics, and only while the Agent asked for them (D111). The same struct of the same
+            // argument, read at the version it declares (fl_adv_fields.h).
+            if (scan.options != nullptr && g_advancedRequested.load(std::memory_order_relaxed) != 0u) {
+                fl::adv::ObserveDlssOptions(*scan.options, g_adv);
+            }
         }
     })
     // ALWAYS exactly once, on every path including the fault path, with every
@@ -1799,9 +1816,13 @@ void NoteFfxExtent(const FfxApiDimensions2D& size) noexcept {
 
 // The answer one query returned, kept for the dispatch arm. Read only after the vendor answered OK; a mode, a size or a
 // ratio the byte or the match cannot carry is not kept.
-void ObserveFfxQuery(const ffxQueryDescHeader* desc) noexcept {
+void ObserveFfxQuery(uint32_t leaf, const ffxQueryDescHeader* desc) noexcept {
     if (desc == nullptr) {
         return;
+    }
+    // The upscaler's own memory, when the title asks for it - Advanced metrics, only while the Agent asked (D111).
+    if (g_advancedRequested.load(std::memory_order_relaxed) != 0u) {
+        fl::adv::ObserveFfxMemoryQuery(leaf, desc, g_adv);
     }
     if (desc->type == FFX_API_QUERY_DESC_TYPE_UPSCALE_GETRENDERRESOLUTIONFROMQUALITYMODE) {
         const auto* q = reinterpret_cast<const ffxQueryDescUpscaleGetRenderResolutionFromQualityMode*>(desc);
@@ -1887,6 +1908,13 @@ void ObserveFfxDispatch(uint32_t leaf, const ffxDispatchDescHeader* desc) noexce
             std::memory_order_release);
         g_ffxUpscaleLeaf.store(leaf + 1u, std::memory_order_relaxed);
         g_ffxSeen.fetch_add(fl::slseen::kCountOne, std::memory_order_relaxed);
+        // The rest of the same descriptor (sharpening, jitter, exposure, the depth range, the field of view, flags,
+        // the frame time) - Advanced metrics, only while the Agent asked (D111). Not on the FSR 3.0 host's route:
+        // its legacy descriptor is vouched for through renderSize and no further (17_HOOK_ENGINE §Which struct
+        // version carries which field).
+        if (g_advancedRequested.load(std::memory_order_relaxed) != 0u) {
+            fl::adv::ObserveFfxUpscale(leaf, *up, g_adv);
+        }
         break;
     }
     case FFX_API_DISPATCH_DESC_TYPE_FRAMEGENERATION_PREPARE:
@@ -1974,7 +2002,7 @@ ffxReturnCode_t Hook_FfxQueryT(ffxContext* context, ffxQueryDescHeader* desc) {
     const ffxReturnCode_t rc = g_origFfxQuery[Leaf](context, desc);
     FL_HOOK_GUARD({
         if (rc == FFX_API_RETURN_OK && MayObserve()) {
-            ObserveFfxQuery(desc);
+            ObserveFfxQuery(Leaf, desc);
         }
     })
     return rc;
@@ -2647,6 +2675,24 @@ DWORD WatchdogLoop() noexcept {
         if (const uint32_t req = flushReq.load(std::memory_order_acquire); req != g_logFlushSeen) {
             g_logFlushSeen = req;
             FlushLog();
+        }
+
+        // ADVANCED METRICS (owner decision D111; fl_shm.h region 5). The Agent's word, copied to the flag the detours
+        // read; and, only while it is set, what they accumulated copied into the region. This thread is the region's
+        // one writer. With the word at 0 nothing more is read in any hook and the region is never touched. A request
+        // not seen before is a new session's: the summaries start afresh BEFORE the detours are let in, so a range or
+        // a count never spans two sessions of a game that kept running.
+        std::atomic_ref<uint32_t> advancedReq{g_control->advancedRequested};
+        const uint32_t            advancedNow = advancedReq.load(std::memory_order_acquire);
+        if (advancedNow != 0u && advancedNow != g_advancedSeen) {
+            fl::adv::Reset(g_adv);
+            g_advancedSeen = advancedNow;
+        }
+        g_advancedRequested.store(advancedNow != 0u ? 1u : 0u, std::memory_order_relaxed);
+        if (advancedNow != 0u) {
+            LARGE_INTEGER advancedQpc{};
+            QueryPerformanceCounter(&advancedQpc);
+            fl::adv::Publish(g_adv, g_advanced, advancedNow, static_cast<uint64_t>(advancedQpc.QuadPart));
         }
 
         // The in-process stop, for a title that is NOT presenting (menu, hung,
@@ -3545,6 +3591,7 @@ DWORD WINAPI InitThread(LPVOID) noexcept {
     g_state = reinterpret_cast<FlWriterState*>(static_cast<unsigned char*>(g_base) + FL_SHM_WRITER_OFFSET);
     g_control = reinterpret_cast<FlControlBlock*>(static_cast<unsigned char*>(g_base) + FL_SHM_CONTROL_OFFSET);
     g_display = reinterpret_cast<FlDisplayState*>(static_cast<unsigned char*>(g_base) + FL_SHM_DISPLAY_OFFSET);
+    g_advanced = reinterpret_cast<FlAdvancedState*>(static_cast<unsigned char*>(g_base) + FL_SHM_ADVANCED_OFFSET);
     // The supervision clock starts HERE, when the mapping is published -- not at
     // first present. 07_IPC is explicit that a capture side no Agent ever adopts
     // is inert from the beginning rather than enjoying a grace window.

@@ -140,6 +140,12 @@ add_test(NAME fl_ffx_resolve COMMAND hook-harness --probe-ffx-resolve)
 # could only approximate these shapes. Here they are exact and cost microseconds.
 add_test(NAME fl_sl_inputs COMMAND hook-harness --probe-sl-inputs)
 
+# fl_adv_fields.h (Advanced metrics, train B): the members a hooked call's struct carries beyond what the frame
+# record holds. A unit probe for the same reason as fl_sl_inputs, and one more: the property that matters most -
+# a struct of an OLDER version than the vendored header declares must not have its tail read (owner decision D115,
+# 17_HOOK_ENGINE §Which struct version carries which field) - needs a struct no fixture title can be made to send.
+add_test(NAME fl_adv_fields COMMAND hook-harness --probe-adv-fields)
+
 # The word RecordPresent drains. Its FIELD BOUNDARIES are static_asserts inside
 # fl_sl_seen.h -- integer algebra, checked in every TU that includes the header, so
 # no test can forget them and a 16-million-iteration loop proving a carry cannot go

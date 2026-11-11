@@ -112,6 +112,15 @@
 //                    tagged 1280x720 extent is Quality's answer, so the record must name Quality and nothing else.
 //   --ffx-no-prepare drop the PREPARE dispatch: the frame-generation-OFF shape, where
 //                    the Overlay must count UPSCALE dispatches instead
+//   --advanced       send what Advanced metrics reads (train B, 0.1.0-beta.40): --hold-presenting-upscaled chains an
+//                    sl::DLSSOptions into slEvaluateFeature's inputs, --hold-presenting-ffx fills the rest of the
+//                    UPSCALE descriptor (sharpening, jitter, exposure, depth range, field of view, flags, frame time).
+//                    The values are the kAdv* constants below; the injected fl_guard cases assert them
+//   --ffx-memory-query v1|v2
+//                    before every UPSCALE, ask the entry module ffxQuery how much memory the upscaler holds, in
+//                    the descriptor of ffx-api 1.1.2 (v1) or 2.0 (v2); the stub answers kAdvMemory*
+//   --probe-adv-fields
+//                    fl_adv_fields.h alone: versions, sentinels, summaries, the publication (ctest fl_adv_fields)
 //
 // This list was incomplete for several modes before 2026-08-15 and is not the
 // authority: the strcmp chain in main() is. Kept in step because a reader looking
@@ -131,6 +140,7 @@
 #include <vector>
 
 #include "dxr_raygen_dxil.h"
+#include "fl_adv_fields.h"
 #include "fl_d3d12_vtable.h"
 #include "fl_dxgi_count.h"
 #include "fl_dxgi_vtable.h"
@@ -1982,6 +1992,268 @@ bool ProbeSlInputs() {
     return g_failures == 0;
 }
 
+// fl_adv_fields.h - what a hooked game told its upscaler (Advanced metrics, train B) - against the shapes a title can
+// send. A UNIT PROBE, as --probe-sl-inputs is: what matters here is a struct of an OLDER VERSION than these headers
+// declare, whose tail must not be read (owner decision D115), and the vendors' own sentinels and zeros, which must
+// never leave the header as values. No fixture title can be made to send a version-1 DLSSOptions; this can.
+bool ProbeAdvFields() {
+    g_failures = 0;
+    const auto bitsOf = [](float v) { return std::bit_cast<uint32_t>(v); };
+
+    Check(fl::adv::Usable(1.0f) && fl::adv::Usable(0.0f) && fl::adv::Usable(-12.5f), "ordinary values are usable");
+    Check(!fl::adv::Usable(sl::INVALID_FLOAT), "Streamline's INVALID_FLOAT - FLT_MAX - is nobody's value");
+    Check(!fl::adv::Usable(std::bit_cast<float>(0x7F800000u)) && !fl::adv::Usable(std::bit_cast<float>(0x7FC00000u)) &&
+              !fl::adv::Usable(std::bit_cast<float>(0xFF800000u)),
+          "an infinity of either sign and a NaN are not usable");
+
+    // --- sl::DLSSOptions at the version these headers declare -----------------------------------------------------
+    {
+        fl::adv::Accumulators a;
+        sl::DLSSOptions       opts;
+        opts.mode = sl::DLSSMode::eMaxQuality;
+        opts.outputWidth = 3840;
+        opts.outputHeight = 2160;
+        opts.preExposure = 1.5f;
+        opts.exposureScale = 0.25f;
+        opts.colorBuffersHDR = sl::Boolean::eTrue;
+        opts.dlaaPreset = sl::DLSSPreset::eDefault;
+        opts.qualityPreset = sl::DLSSPreset::ePresetK;
+        opts.ultraQualityPreset = sl::DLSSPreset::ePresetJ;
+        opts.useAutoExposure = sl::Boolean::eFalse;
+        opts.alphaUpscalingEnabled = sl::Boolean::eTrue;
+        fl::adv::ObserveDlssOptions(opts, a);
+
+        Check(a.validMask.load() == fl::FL_ADV_VALID_DLSS_OPTIONS && a.dlssOptionsSeen.load() == 1u,
+              "the group is marked read");
+        Check(a.dlssStructVersion.load() == sl::kStructVersion3, "the version the struct declared is kept");
+        Check(a.dlssOutputWidth.load() == 3840u && a.dlssOutputHeight.load() == 2160u, "the output size is kept");
+        Check(a.dlssPreExposureBits.load() == bitsOf(1.5f) && a.dlssExposureScaleBits.load() == bitsOf(0.25f),
+              "the exposure pair is kept as float bits");
+        const uint64_t p = a.dlssPresets.load();
+        Check((p & 0xFFu) == 1u, "preset eDefault is 0 at the vendor's and 1 here: zero stays 'not read'");
+        Check(((p >> 8) & 0xFFu) == static_cast<uint32_t>(sl::DLSSPreset::ePresetK) + 1u,
+              "a preset is its value plus one");
+        Check(((p >> 40) & 0xFFu) == static_cast<uint32_t>(sl::DLSSPreset::ePresetJ) + 1u,
+              "version 2's sixth preset is read at version 3");
+        const uint32_t b = a.dlssBooleans.load();
+        Check((b & 0xFFu) == 2u && ((b >> 8) & 0xFFu) == 1u && ((b >> 16) & 0xFFu) == 2u,
+              "a Boolean is its value plus one: true 2, false 1");
+    }
+
+    // --- THE TAIL OF AN OLDER STRUCT IS NOT READ (D115) ------------------------------------------------------------
+    {
+        // A title built against Streamline 2.0 allocates fourteen members. What lies where version 2 and 3 put
+        // theirs is the title's own memory; here it is loud values, so a read of them would show.
+        fl::adv::Accumulators a;
+        sl::DLSSOptions       v1;
+        v1.structVersion = sl::kStructVersion1;
+        v1.ultraQualityPreset = sl::DLSSPreset::ePresetM;
+        v1.useAutoExposure = sl::Boolean::eTrue;
+        v1.alphaUpscalingEnabled = sl::Boolean::eTrue;
+        fl::adv::ObserveDlssOptions(v1, a);
+        Check(((a.dlssPresets.load() >> 40) & 0xFFu) == 0u, "a version-1 struct's sixth preset is not read");
+        Check((a.dlssBooleans.load() >> 8) == 0u, "nor its auto-exposure, nor its alpha upscaling");
+        Check((a.dlssBooleans.load() & 0xFFu) == 2u,
+              "while version 1's own members are (colorBuffersHDR defaults to true)");
+
+        fl::adv::Accumulators a2;
+        sl::DLSSOptions       v2 = v1;
+        v2.structVersion = sl::kStructVersion2;
+        fl::adv::ObserveDlssOptions(v2, a2);
+        Check(((a2.dlssPresets.load() >> 40) & 0xFFu) == static_cast<uint32_t>(sl::DLSSPreset::ePresetM) + 1u &&
+                  ((a2.dlssBooleans.load() >> 8) & 0xFFu) == 2u,
+              "a version-2 struct's two members are read");
+        Check((a2.dlssBooleans.load() >> 16) == 0u, "and version 3's alpha upscaling still is not");
+
+        fl::adv::Accumulators a0;
+        sl::DLSSOptions       v0 = v1;
+        v0.structVersion = 0;
+        fl::adv::ObserveDlssOptions(v0, a0);
+        Check(a0.validMask.load() == 0u && a0.dlssOptionsSeen.load() == 0u,
+              "a struct declaring no version is not read at all");
+    }
+
+    // --- sentinels and vendor zeros never become values --------------------------------------------------------------
+    {
+        fl::adv::Accumulators a;
+        sl::DLSSOptions       unset;    // outputWidth/Height default to INVALID_UINT
+        unset.preExposure = sl::INVALID_FLOAT;
+        unset.exposureScale = std::bit_cast<float>(0x7FC00000u);
+        unset.colorBuffersHDR = sl::Boolean::eInvalid;
+        unset.qualityPreset = static_cast<sl::DLSSPreset>(100000u);
+        fl::adv::ObserveDlssOptions(unset, a);
+        Check(a.dlssOutputWidth.load() == 0u && a.dlssOutputHeight.load() == 0u,
+              "INVALID_UINT is 'not given', never a size");
+        Check(a.dlssPreExposureBits.load() == FL_ADV_FLOAT_NONE && a.dlssExposureScaleBits.load() == FL_ADV_FLOAT_NONE,
+              "INVALID_FLOAT and a NaN are 'no value'");
+        Check((a.dlssBooleans.load() & 0xFFu) == 0u, "a Boolean in its third state is 'not read'");
+        Check(((a.dlssPresets.load() >> 8) & 0xFFu) == 0u,
+              "a preset a byte cannot carry is 'not read', not a truncated one");
+
+        sl::DLSSOptions half;
+        half.outputWidth = 1920;    // a width with no height is not a size
+        fl::adv::ObserveDlssOptions(half, a);
+        Check(a.dlssOutputWidth.load() == 0u, "half a size is no size");
+    }
+
+    // --- the ffx upscale dispatch
+    // ------------------------------------------------------------------------------------------
+    {
+        fl::adv::Accumulators  a;
+        ffxDispatchDescUpscale d{};
+        d.header.type = FFX_API_DISPATCH_DESC_TYPE_UPSCALE;
+        d.enableSharpening = true;
+        d.sharpness = 0.5f;
+        d.jitterOffset = {-0.375f, 0.25f};
+        d.preExposure = 1.0f;
+        d.cameraNear = 0.1f;
+        d.cameraFar = 5000.0f;
+        d.cameraFovAngleVertical = 1.0f;
+        d.frameTimeDelta = 16.5f;
+        d.flags = FFX_UPSCALE_FLAG_NON_LINEAR_COLOR_PQ;
+        fl::adv::ObserveFfxUpscale(1u, d, a);
+
+        d.sharpness = 0.8f;
+        d.jitterOffset = {0.125f, -0.4375f};
+        d.cameraFovAngleVertical = 0.6f;    // the player aimed: a narrower field of view
+        d.frameTimeDelta = 8.25f;
+        d.reset = true;
+        d.flags = FFX_UPSCALE_FLAG_DRAW_DEBUG_VIEW;
+        fl::adv::ObserveFfxUpscale(1u, d, a);
+
+        Check(a.validMask.load() == fl::FL_ADV_VALID_FFX_UPSCALE && a.ffxDispatches.load() == 2u,
+              "two dispatches, counted");
+        Check(a.ffxSharpenSeen.load() == 2u && a.ffxSharpnessMinBits.load() == bitsOf(0.5f) &&
+                  a.ffxSharpnessMaxBits.load() == bitsOf(0.8f),
+              "sharpening seen on, its strength as a range");
+        Check(a.ffxJitterMaxXBits.load() == bitsOf(0.375f) && a.ffxJitterMaxYBits.load() == bitsOf(0.4375f),
+              "the jitter is the largest magnitude on each axis, whatever its sign");
+        Check(a.ffxFovMinBits.load() == bitsOf(0.6f) && a.ffxFovMaxBits.load() == bitsOf(1.0f),
+              "the field of view is a range - lowest and highest - not a last value (D114)");
+        Check(a.ffxNearBits.load() == bitsOf(0.1f) && a.ffxFarBits.load() == bitsOf(5000.0f),
+              "the depth range is kept");
+        Check(a.ffxFlagsSeen.load() == (FFX_UPSCALE_FLAG_NON_LINEAR_COLOR_PQ | FFX_UPSCALE_FLAG_DRAW_DEBUG_VIEW),
+              "flags are every bit any dispatch carried");
+        Check(a.ffxResets.load() == 1u, "a reset is counted");
+        Check(a.ffxFrameTimeCount.load() == 2u && a.ffxFrameTimeSumUs.load() == 16500u + 8250u,
+              "the frame time is a count and a sum in microseconds");
+
+        // The same dispatch arriving at a second hooked module - a loader in front of the leaf - is passed over.
+        fl::adv::ObserveFfxUpscale(3u, d, a);
+        Check(a.ffxDispatches.load() == 2u && a.ffxResets.load() == 1u,
+              "one module's dispatches are counted, not one per hook");
+
+        // Sharpening off: its strength is whatever the title left there, and is not kept.
+        fl::adv::Accumulators  off;
+        ffxDispatchDescUpscale quiet{};
+        quiet.sharpness = 0.9f;
+        quiet.jitterOffset = {std::bit_cast<float>(0x7FC00000u), 0.5f};
+        quiet.cameraFovAngleVertical = -1.0f;
+        quiet.frameTimeDelta = 0.0f;
+        fl::adv::ObserveFfxUpscale(0u, quiet, off);
+        Check(off.ffxSharpenSeen.load() == 1u && off.ffxSharpnessMaxBits.load() == FL_ADV_FLOAT_NONE,
+              "sharpening seen off, and no strength kept for it");
+        Check(off.ffxJitterMaxYBits.load() == FL_ADV_FLOAT_NONE, "a jitter with a NaN in it is not half-kept");
+        Check(off.ffxFovMinBits.load() == FL_ADV_FLOAT_NONE, "a field of view that is not positive is not one");
+        Check(off.ffxFrameTimeCount.load() == 0u, "a frame time of zero is not a frame time");
+        Check(off.ffxFlagsSeen.load() == 0u && off.ffxResets.load() == 0u, "nothing is invented");
+    }
+
+    // --- the ffx upscaler's memory, both query versions
+    // ------------------------------------------------------------------
+    {
+        fl::adv::Accumulators   a;
+        FfxApiEffectMemoryUsage usage{};
+        usage.totalUsageInBytes = 300ull * 1024ull * 1024ull;
+        usage.aliasableUsageInBytes = 40ull * 1024ull * 1024ull;
+
+        ffxQueryDescUpscaleGetGPUMemoryUsage q1{};
+        q1.header.type = FFX_API_QUERY_DESC_TYPE_UPSCALE_GPU_MEMORY_USAGE;
+        q1.gpuMemoryUsageUpscaler = &usage;
+        fl::adv::ObserveFfxMemoryQuery(1u, &q1.header, a);
+        Check(a.validMask.load() == fl::FL_ADV_VALID_FFX_MEMORY && a.ffxMemoryQueries.load() == 1u &&
+                  a.ffxMemoryTotalBytes.load() == usage.totalUsageInBytes &&
+                  a.ffxMemoryAliasableBytes.load() == usage.aliasableUsageInBytes,
+              "the answer the query wrote is kept");
+
+        usage.totalUsageInBytes = 512ull * 1024ull * 1024ull;
+        ffxQueryDescUpscaleGetGPUMemoryUsageV2 q2{};
+        q2.header.type = FFX_API_QUERY_DESC_TYPE_UPSCALE_GPU_MEMORY_USAGE_V2;
+        q2.gpuMemoryUsageUpscaler = &usage;
+        fl::adv::ObserveFfxMemoryQuery(1u, &q2.header, a);
+        Check(a.ffxMemoryQueries.load() == 2u && a.ffxMemoryTotalBytes.load() == usage.totalUsageInBytes,
+              "version 2 of the query is read the same way");
+
+        q1.gpuMemoryUsageUpscaler = nullptr;
+        fl::adv::ObserveFfxMemoryQuery(1u, &q1.header, a);
+        fl::adv::ObserveFfxMemoryQuery(1u, nullptr, a);
+        ffxQueryDescUpscaleGetUpscaleRatioFromQualityMode other{};
+        other.header.type = FFX_API_QUERY_DESC_TYPE_UPSCALE_GETUPSCALERATIOFROMQUALITYMODE;
+        fl::adv::ObserveFfxMemoryQuery(1u, &other.header, a);
+        Check(a.ffxMemoryQueries.load() == 2u,
+              "a null out-pointer, a null descriptor and another query are passed over");
+
+        // The loader's shape: the same query arrives at a second hooked module. One module's queries are counted.
+        q1.gpuMemoryUsageUpscaler = &usage;
+        fl::adv::ObserveFfxMemoryQuery(3u, &q1.header, a);
+        Check(a.ffxMemoryQueries.load() == 2u, "the same query seen at a second module is not a second query");
+    }
+
+    // --- the watchdog's publication
+    // ----------------------------------------------------------------------------------------
+    {
+        fl::adv::Accumulators a;
+        auto*                 region = new fl::FlAdvancedState{};
+        fl::adv::Publish(a, nullptr, 1u, 1u);    // a ring that mapped no region: nothing to write, nothing to fault on
+
+        sl::DLSSOptions opts;
+        opts.outputWidth = 2560;
+        opts.outputHeight = 1440;
+        fl::adv::ObserveDlssOptions(opts, a);
+        ffxDispatchDescUpscale d{};
+        d.frameTimeDelta = 10.0f;
+        fl::adv::ObserveFfxUpscale(0u, d, a);
+
+        fl::adv::Publish(a, region, 41u, 777u);
+        Check(region->seq == 2u && region->samples == 1u && region->sampleQpc == 777u,
+              "one publication: the lock even, at two");
+        Check(region->validMask == (fl::FL_ADV_VALID_DLSS_OPTIONS | fl::FL_ADV_VALID_FFX_UPSCALE),
+              "what was read is marked");
+        Check(region->dlssOutputWidth == 2560u && region->dlssOutputHeight == 1440u && region->dlssPresets[0] == 1u &&
+                  region->dlssColorBuffersHdr == 2u,
+              "the DLSS group lands where fl_shm.h puts it");
+        Check(region->ffxDispatches == 1u && region->ffxFrameTimeCount == 1u && region->ffxFrameTimeSumUs == 10000u,
+              "the ffx group lands, with the frame time of this interval");
+        Check(region->ffxSharpnessMinBits == FL_ADV_FLOAT_NONE && region->ffxFovMaxBits == FL_ADV_FLOAT_NONE,
+              "a float nobody saw is the 'none' pattern, never 0.0");
+
+        Check(region->request == 41u, "a publication names the request it answers");
+
+        fl::adv::Publish(a, region, 41u, 778u);
+        Check(region->seq == 4u && region->samples == 2u, "a second publication: plus two");
+        Check(region->ffxFrameTimeCount == 0u && region->ffxFrameTimeSumUs == 0u && region->ffxDispatches == 1u,
+              "the frame-time pair is drained by each publication; the counts are not");
+
+        bool untouched = region->ffxFgConfigures == 0u && region->slConstantsCalls == 0u;
+        for (uint32_t i = 0; i < FL_ADV_FEATURE_SLOTS * FL_ADV_FEATURE_WORDS; ++i) {
+            untouched = untouched && region->features[i] == 0u;
+        }
+        Check(untouched, "what a later release fills stays zero");
+
+        // A NEW REQUEST: a second session of a game that kept running. Its summaries are its own.
+        fl::adv::Reset(a);
+        fl::adv::Publish(a, region, 42u, 779u);
+        Check(region->request == 42u && region->seq == 6u && region->samples == 3u,
+              "the next session's publication carries the next request; the lock and the count go on");
+        Check(region->validMask == 0u && region->ffxDispatches == 0u && region->ffxFlagsSeen == 0u &&
+                  region->ffxFovMinBits == FL_ADV_FLOAT_NONE && region->ffxMemoryTotalBytes == 0u &&
+                  region->dlssOptionsSeen == 0u && region->dlssOutputWidth == 0u,
+              "and nothing of the session before: no mask, no count, no range, no size");
+        delete region;
+    }
+    return g_failures == 0;
+}
+
 // The word RecordPresent drains: features in the low byte, the frame-generation
 // count above them.
 //
@@ -2417,12 +2689,26 @@ using StubSetTagForFrameFn = sl::Result(STDMETHODCALLTYPE*)(const void*, const s
                                                             const sl::ResourceTag*, uint32_t, sl::CommandBuffer*);
 
 using StubEvaluateFn = sl::Result(STDMETHODCALLTYPE*)(sl::Feature, const void*, const void*, uint32_t, void*);
+
+// WHAT --advanced SENDS. One value of each kind Advanced metrics keeps, none of them a default of the vendor's
+// structs, so a region that carries them was read off the argument. guard_test.cpp states the same numbers.
+constexpr uint32_t kAdvDlssOutputW = 2560u;
+constexpr uint32_t kAdvDlssOutputH = 1440u;
+constexpr float    kAdvDlssPreExposure = 1.5f;
+constexpr float    kAdvDlssExposureScale = 0.75f;
+constexpr float    kAdvFfxSharpness = 0.35f;
+constexpr float    kAdvFfxPreExposure = 1.25f;
+constexpr float    kAdvFfxNear = 0.1f;
+constexpr float    kAdvFfxFar = 1000.0f;
+constexpr float    kAdvFfxFovLow = 0.9f;    // radians; the two alternate, frame by frame
+constexpr float    kAdvFfxFovHigh = 1.1f;
+constexpr float    kAdvFfxFrameTimeMs = 16.0f;
 using StubTokenFn = sl::Result(STDMETHODCALLTYPE*)(sl::FrameToken*&, const uint32_t*);
 
 alignas(16) unsigned char g_dummyFrameToken[64]{};
 
 int HoldPresentingUpscaled(Gfx& g, int seconds, bool real, sl::Feature feature, bool tagForFrame, bool wholeResource,
-                           bool dlssgInputs) {
+                           bool dlssgInputs, bool advanced) {
     if (!HaveD3D11(g, "the upscaled hold")) {
         return 1;
     }
@@ -2499,6 +2785,28 @@ int HoldPresentingUpscaled(Gfx& g, int seconds, bool real, sl::Feature feature, 
                 wholeResource ? "whole resource, Resource size" : "extent", kTaggedRenderW, kTaggedRenderH,
                 tagForFrame ? "slSetTagForFrame (Streamline 2.8, frame-based)" : "slSetTag",
                 dlssgInputs ? ", beside depth, motion vectors, HUD-less and UI (the DLSS-G inputs)" : "");
+
+    // --advanced: the options a title that configures DLSS through the evaluation chains into `inputs`, at the
+    // version these headers declare. Not every title does - most call slDLSSSetOptions, which has no export - and
+    // without the flag this hold stays the shape it always was: inputs = nullptr.
+    sl::DLSSOptions options;
+    options.mode = sl::DLSSMode::eMaxQuality;
+    options.outputWidth = kAdvDlssOutputW;
+    options.outputHeight = kAdvDlssOutputH;
+    options.preExposure = kAdvDlssPreExposure;
+    options.exposureScale = kAdvDlssExposureScale;
+    options.colorBuffersHDR = sl::Boolean::eFalse;
+    options.useAutoExposure = sl::Boolean::eTrue;
+    options.alphaUpscalingEnabled = sl::Boolean::eTrue;
+    options.dlaaPreset = sl::DLSSPreset::ePresetK;
+    options.qualityPreset = sl::DLSSPreset::ePresetJ;
+    options.performancePreset = sl::DLSSPreset::ePresetM;
+    options.ultraPerformancePreset = sl::DLSSPreset::ePresetL;
+    const sl::BaseStructure* advancedInputs[] = {&options};
+    if (advanced) {
+        std::printf("  --advanced: an sl::DLSSOptions (version %zu, output %ux%u) chained into every evaluation\n",
+                    options.structVersion, kAdvDlssOutputW, kAdvDlssOutputH);
+    }
     std::fflush(stdout);
 
     const ULONGLONG until = GetTickCount64() + static_cast<ULONGLONG>(seconds) * 1000ULL;
@@ -2515,7 +2823,7 @@ int HoldPresentingUpscaled(Gfx& g, int seconds, bool real, sl::Feature feature, 
         }
         // ONE EVALUATION PER PRESENT, which is what a real upscaled title does
         // and what makes the drained record's identity checkable frame by frame.
-        eval(feature, g_dummyFrameToken, nullptr, 0, nullptr);
+        eval(feature, g_dummyFrameToken, advanced ? advancedInputs : nullptr, advanced ? 1u : 0u, nullptr);
         ++evaluated;
         g.swapChain->Present(0, flags);
         ++presented;
@@ -2661,6 +2969,30 @@ using PfnFsr3DispatchUpscale = decltype(&fsr3host::ffxFsr3ContextDispatchUpscale
 // What --ffx-query asks before each UPSCALE: nothing, the render size each mode gives, or each mode's ratio.
 enum class FfxQuery { None, Sizes, Ratios };
 
+// What --ffx-memory-query asks before each UPSCALE: nothing, or the upscaler's memory in one of its two descriptors.
+enum class FfxMemoryQuery { None, V1, V2 };
+
+// The way a title with a memory overlay asks: a struct of its own, handed over by pointer, filled by the vendor.
+// Nothing here reads the answer - what the Overlay kept of it is what the test asserts.
+void AskMemory(PfnFfxQuery query, FfxMemoryQuery what) {
+    FfxApiEffectMemoryUsage usage{};
+    if (what == FfxMemoryQuery::V1) {
+        ffxQueryDescUpscaleGetGPUMemoryUsage q{};
+        q.header.type = FFX_API_QUERY_DESC_TYPE_UPSCALE_GPU_MEMORY_USAGE;
+        q.gpuMemoryUsageUpscaler = &usage;
+        query(nullptr, &q.header);
+    } else if (what == FfxMemoryQuery::V2) {
+        ffxQueryDescUpscaleGetGPUMemoryUsageV2 q{};
+        q.header.type = FFX_API_QUERY_DESC_TYPE_UPSCALE_GPU_MEMORY_USAGE_V2;
+        q.maxRenderSize.width = kTaggedRenderW;
+        q.maxRenderSize.height = kTaggedRenderH;
+        q.maxUpscaleSize.width = 1920u;
+        q.maxUpscaleSize.height = 1080u;
+        q.gpuMemoryUsageUpscaler = &usage;
+        query(nullptr, &q.header);
+    }
+}
+
 // Every mode, at the display the UPSCALE descriptor states -- the way a settings menu enumerates them. The answers
 // are written through the descriptors' own pointers; nothing here checks them, because the Overlay's reading of them
 // is what the test asserts.
@@ -2690,7 +3022,7 @@ void AskQuality(PfnFfxQuery query, FfxQuery what) {
 }
 
 int HoldPresentingFfx(Gfx& g, int seconds, bool real, int presentsPerEval, FfxTopology topology, bool prepare,
-                      FfxQuery ask) {
+                      FfxQuery ask, bool advanced, FfxMemoryQuery askMemory) {
     if (!HaveD3D11(g, "--hold-presenting-ffx")) {
         return 1;
     }
@@ -2765,11 +3097,12 @@ int HoldPresentingFfx(Gfx& g, int seconds, bool real, int presentsPerEval, FfxTo
         return 1;
     }
     // The quality query goes where the UPSCALE goes: the same module a title sizes its targets through.
-    const auto query = upEntry != nullptr && ask != FfxQuery::None
+    const bool asksAnything = ask != FfxQuery::None || askMemory != FfxMemoryQuery::None;
+    const auto query = upEntry != nullptr && asksAnything
                            ? reinterpret_cast<PfnFfxQuery>(reinterpret_cast<void*>(GetProcAddress(upEntry, "ffxQuery")))
                            : nullptr;
-    if (ask != FfxQuery::None && query == nullptr) {
-        Check(false, "the UPSCALE entry module exports ffxQuery for --ffx-query");
+    if (asksAnything && query == nullptr) {
+        Check(false, "the UPSCALE entry module exports ffxQuery for --ffx-query and --ffx-memory-query");
         return 1;
     }
     // The pre-V2 PREPARE is the 1.1.x monolith's, on both topologies that use it.
@@ -2787,6 +3120,13 @@ int HoldPresentingFfx(Gfx& g, int seconds, bool real, int presentsPerEval, FfxTo
                 k > 1 ? " + one FRAMEGENERATION" : "");
     std::printf("  renderSize %ux%u on every UPSCALE%s\n", kTaggedRenderW, kTaggedRenderH,
                 prepare ? " and PREPARE" : "");
+    if (advanced) {
+        std::printf("  --advanced: sharpening, jitter, exposure, depth range, field of view, flags and frame time on "
+                    "every UPSCALE\n");
+    }
+    if (askMemory != FfxMemoryQuery::None) {
+        std::printf("  --ffx-memory-query %s before every UPSCALE\n", askMemory == FfxMemoryQuery::V1 ? "v1" : "v2");
+    }
     std::fflush(stdout);
 
     // Built from the vendored structs, so the fixture and the detour agree about the
@@ -2797,6 +3137,16 @@ int HoldPresentingFfx(Gfx& g, int seconds, bool real, int presentsPerEval, FfxTo
     up.renderSize.height = kTaggedRenderH;
     up.upscaleSize.width = 1920u;
     up.upscaleSize.height = 1080u;
+    if (advanced) {
+        // The members that do not change with the frame; the jitter and the field of view are set in the loop.
+        up.enableSharpening = true;
+        up.sharpness = kAdvFfxSharpness;
+        up.preExposure = kAdvFfxPreExposure;
+        up.cameraNear = kAdvFfxNear;
+        up.cameraFar = kAdvFfxFar;
+        up.frameTimeDelta = kAdvFfxFrameTimeMs;
+        up.flags = FFX_UPSCALE_FLAG_NON_LINEAR_COLOR_PQ;
+    }
 
     // PREPARE in the shape each generation sends -- V2 for SDK 2.x, the original type
     // for the 1.1.x monolith -- built in the V2 struct either way, because the two
@@ -2824,8 +3174,19 @@ int HoldPresentingFfx(Gfx& g, int seconds, bool real, int presentsPerEval, FfxTo
     uint64_t        frameId = 0;
     while (GetTickCount64() < until) {
         ++frameId;
-        if (query != nullptr) {
+        if (query != nullptr && ask != FfxQuery::None) {
             AskQuality(query, ask);
+        }
+        if (query != nullptr && askMemory != FfxMemoryQuery::None) {
+            AskMemory(query, askMemory);
+        }
+        if (advanced) {
+            // A sub-pixel jitter that changes sign, and a field of view that moves between two values, as a zoom
+            // does: what is kept is the largest magnitude of the one and the range of the other.
+            const bool odd = (frameId & 1u) != 0u;
+            up.jitterOffset.x = odd ? -0.25f : 0.3f;
+            up.jitterOffset.y = odd ? 0.4f : -0.1f;
+            up.cameraFovAngleVertical = odd ? kAdvFfxFovLow : kAdvFfxFovHigh;
         }
         if (dispatchHost != nullptr) {
             dispatchHost(nullptr, &hostUp);
@@ -3018,6 +3379,8 @@ int main(int argc, char** argv) {
     FfxTopology ffxTopology = FfxTopology::Loader;
     bool        ffxPrepare = true;
     FfxQuery    ffxQuery = FfxQuery::None;
+    bool        advancedInputs = false;
+    auto        ffxMemoryQuery = FfxMemoryQuery::None;
     bool        slTagForFrame = false;
     bool        slTagWholeResource = false;
     bool        slTagDlssgInputs = false;
@@ -3055,6 +3418,10 @@ int main(int argc, char** argv) {
             ffxQuery = std::strcmp(q, "sizes") == 0    ? FfxQuery::Sizes
                        : std::strcmp(q, "ratios") == 0 ? FfxQuery::Ratios
                                                        : FfxQuery::None;
+        } else if (std::strcmp(argv[i], "--advanced") == 0) {
+            advancedInputs = true;
+        } else if (std::strcmp(argv[i], "--ffx-memory-query") == 0 && i + 1 < argc) {
+            ffxMemoryQuery = std::strcmp(argv[++i], "v1") == 0 ? FfxMemoryQuery::V1 : FfxMemoryQuery::V2;
         } else if (std::strcmp(argv[i], "--sl-tag-for-frame") == 0) {
             slTagForFrame = true;
         } else if (std::strcmp(argv[i], "--sl-tag-whole-resource") == 0) {
@@ -3096,12 +3463,14 @@ int main(int argc, char** argv) {
             std::strcmp(argv[i], "--present-interval-ms") == 0 || std::strcmp(argv[i], "--presents-per-eval") == 0 ||
             std::strcmp(argv[i], "--ffx-topology") == 0 || std::strcmp(argv[i], "--ffx-no-prepare") == 0 ||
             std::strcmp(argv[i], "--ffx-query") == 0 || std::strcmp(argv[i], "--sl-tag-for-frame") == 0 ||
+            std::strcmp(argv[i], "--advanced") == 0 || std::strcmp(argv[i], "--ffx-memory-query") == 0 ||
             std::strcmp(argv[i], "--sl-tag-whole-resource") == 0 ||
             std::strcmp(argv[i], "--sl-tag-dlssg-inputs") == 0 || std::strcmp(argv[i], "--load") == 0 ||
             std::strcmp(argv[i], "--load-after-ms") == 0) {
             if (std::strcmp(argv[i], "--plus-ui") == 0 || std::strcmp(argv[i], "--present-interval-ms") == 0 ||
                 std::strcmp(argv[i], "--presents-per-eval") == 0 || std::strcmp(argv[i], "--ffx-topology") == 0 ||
-                std::strcmp(argv[i], "--ffx-query") == 0 || std::strcmp(argv[i], "--load") == 0) {
+                std::strcmp(argv[i], "--ffx-query") == 0 || std::strcmp(argv[i], "--ffx-memory-query") == 0 ||
+                std::strcmp(argv[i], "--load") == 0) {
                 ++i;
             }
             if (std::strcmp(argv[i], "--load-after-ms") == 0) {
@@ -3115,13 +3484,13 @@ int main(int argc, char** argv) {
             ok = HoldPresentingFg(g, std::atoi(argv[++i]), real, presentsPerEval) == 0 && ok;
             ranSomething = true;
         } else if (std::strcmp(argv[i], "--hold-presenting-ffx") == 0 && i + 1 < argc) {
-            ok = HoldPresentingFfx(g, std::atoi(argv[++i]), real, presentsPerEval, ffxTopology, ffxPrepare, ffxQuery) ==
-                     0 &&
+            ok = HoldPresentingFfx(g, std::atoi(argv[++i]), real, presentsPerEval, ffxTopology, ffxPrepare, ffxQuery,
+                                   advancedInputs, ffxMemoryQuery) == 0 &&
                  ok;
             ranSomething = true;
         } else if (std::strcmp(argv[i], "--hold-presenting-upscaled") == 0 && i + 1 < argc) {
             ok = HoldPresentingUpscaled(g, std::atoi(argv[++i]), real, sl::kFeatureDLSS, slTagForFrame,
-                                        slTagWholeResource, slTagDlssgInputs) == 0 &&
+                                        slTagWholeResource, slTagDlssgInputs, advancedInputs) == 0 &&
                  ok;
             ranSomething = true;
         } else if (std::strcmp(argv[i], "--hold-presenting-upscaled-unknown") == 0 && i + 1 < argc) {
@@ -3131,7 +3500,7 @@ int main(int argc, char** argv) {
             // never report FL_UPSCALER_NONE, which is the only state that may be
             // aggregated as a negative. 0xF00D is not a Streamline feature.
             ok = HoldPresentingUpscaled(g, std::atoi(argv[++i]), real, static_cast<sl::Feature>(0xF00Du), slTagForFrame,
-                                        slTagWholeResource, slTagDlssgInputs) == 0 &&
+                                        slTagWholeResource, slTagDlssgInputs, advancedInputs) == 0 &&
                  ok;
             ranSomething = true;
         } else if (std::strcmp(argv[i], "--hold-presenting-upscaled-nr") == 0 && i + 1 < argc) {
@@ -3139,7 +3508,7 @@ int main(int argc, char** argv) {
             // once per present. It is not an upscaler: the record must say UNKNOWN for the upscaler, as for any id
             // that names none, and carry FL_FEAT_SL_NEURAL_RENDERING rather than FL_FEAT_SL_UNDECODED.
             ok = HoldPresentingUpscaled(g, std::atoi(argv[++i]), real, sl::kFeatureDLSS_NR, slTagForFrame,
-                                        slTagWholeResource, slTagDlssgInputs) == 0 &&
+                                        slTagWholeResource, slTagDlssgInputs, advancedInputs) == 0 &&
                  ok;
             ranSomething = true;
         } else if (std::strcmp(argv[i], "--probe-upscaler-resolve") == 0) {
@@ -3150,6 +3519,9 @@ int main(int argc, char** argv) {
             ranSomething = true;
         } else if (std::strcmp(argv[i], "--probe-sl-inputs") == 0) {
             ok = ProbeSlInputs() && ok;
+            ranSomething = true;
+        } else if (std::strcmp(argv[i], "--probe-adv-fields") == 0) {
+            ok = ProbeAdvFields() && ok;
             ranSomething = true;
         } else if (std::strcmp(argv[i], "--probe-sl-seen") == 0) {
             ok = ProbeSlSeen() && ok;

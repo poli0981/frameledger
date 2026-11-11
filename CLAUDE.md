@@ -174,7 +174,10 @@ tools/                         # accuracy-check, changelog-check, chokepoint-che
                                # agent-cost (D110, 2026-11-11: a developer tool, not a gate - what the shipped
                                #   Agent costs per second of session, Advanced metrics off and on),
                                # nvapi-readonly-check (D108, 2026-11-11: every NVAPI call of the bridge is on
-                               #   nvapi-allowed-calls.txt, and none there writes or identifies)
+                               #   nvapi-allowed-calls.txt, and none there writes or identifies),
+                               # overlay-fields-check (D116, 2026-11-12: every member of a vendor's struct the
+                               #   Overlay reads for Advanced metrics is in fl_adv_fields.h and on
+                               #   overlay-allowed-fields.txt; a camera's position, axes and matrices nowhere)
                                # (six names added 2026-10-04)
                                # (PowerShell). This line used to name three, one of which
                                # — resx-audit — ~~does not exist~~ exists since 2026-09-13 with

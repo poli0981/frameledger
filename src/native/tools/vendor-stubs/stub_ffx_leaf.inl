@@ -148,6 +148,22 @@ FFX_API_ENTRY ffxReturnCode_t ffxQuery(ffxContext* context, ffxQueryDescHeader* 
         *q->pOutUpscaleRatio = kRatios[q->qualityMode];
         return FFX_API_RETURN_OK;
     }
+    // THE UPSCALER'S MEMORY (Advanced metrics, train B), in both descriptors: two fixed numbers no real context
+    // would report, written through the caller's own pointer - which is where the Overlay reads them after this
+    // returns, and only while the Agent asked. guard_test.cpp states the same two.
+    if (desc->type == FFX_API_QUERY_DESC_TYPE_UPSCALE_GPU_MEMORY_USAGE ||
+        desc->type == FFX_API_QUERY_DESC_TYPE_UPSCALE_GPU_MEMORY_USAGE_V2) {
+        FfxApiEffectMemoryUsage* usage =
+            desc->type == FFX_API_QUERY_DESC_TYPE_UPSCALE_GPU_MEMORY_USAGE
+                ? reinterpret_cast<ffxQueryDescUpscaleGetGPUMemoryUsage*>(desc)->gpuMemoryUsageUpscaler
+                : reinterpret_cast<ffxQueryDescUpscaleGetGPUMemoryUsageV2*>(desc)->gpuMemoryUsageUpscaler;
+        if (usage == nullptr) {
+            return FFX_API_RETURN_ERROR_PARAMETER;
+        }
+        usage->totalUsageInBytes = 123456789ull;
+        usage->aliasableUsageInBytes = 23456789ull;
+        return FFX_API_RETURN_OK;
+    }
     return FFX_API_RETURN_OK;
 }
 

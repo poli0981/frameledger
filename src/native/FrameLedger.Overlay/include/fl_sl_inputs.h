@@ -99,6 +99,10 @@ struct ScanResult {
     // was eMaxPerformance; that is 1 in the numbering this byte carries.)
     uint8_t quality = 0xFFu;
     bool    qualityFound = false;
+
+    // The first readable sl::DLSSOptions of the walk - the struct `quality` came from - or null. Advanced metrics
+    // (fl_adv_fields.h) reads the rest of it, and only while the Agent asked; this walk reads `mode` and nothing more.
+    const sl::DLSSOptions* options = nullptr;
 };
 
 // DLSSMode -> the byte fl_shm.h carries. Never 0, for any input.
@@ -234,7 +238,8 @@ inline ScanResult FindScalingInputExtent(const sl::BaseStructure** inputs, uint3
                 // the one these headers describe -- which is what makes matching
                 // on `>=` correct here rather than optimistic. The struct is
                 // kStructVersion3 today and grew by appending.
-                out.quality = QualityFromMode(static_cast<const sl::DLSSOptions*>(s)->mode);
+                out.options = static_cast<const sl::DLSSOptions*>(s);
+                out.quality = QualityFromMode(out.options->mode);
                 out.qualityFound = true;
             }
         }

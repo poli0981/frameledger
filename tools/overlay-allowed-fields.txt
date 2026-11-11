@@ -1,0 +1,51 @@
+# Every member of a vendor's struct that the Overlay reads for Advanced metrics - the whole of what a hooked game's
+# arguments give up beyond the frame record (docs/18_GPU_VENDOR_APIS.md section Train B; owner decisions D111, D115 and
+# D116, 2026-11-11).
+#
+# tools/overlay-fields-check.ps1 holds src/native/FrameLedger.Overlay/include/fl_adv_fields.h to this list in both
+# directions, on every build: a member read there that is not here is red, and a name here that the header no longer
+# reads is red. A camera's position, axes or matrices are red even when they are listed - so one cannot be let in by
+# adding a line to this file.
+#
+# One `Struct::member` per line. To add a read: find the release of the vendor's SDK that introduced the member and add
+# it to the table in docs/17_HOOK_ENGINE.md section "Which struct version carries which field" (D115) - a member is read
+# only at a struct version proven to carry it - then add its name here, and say in the pull request what it tells and
+# why it is an argument of a call the Overlay hooks (rule 4).
+
+# sl::DLSSOptions, chained into slEvaluateFeature's inputs (parameter `o`)
+sl::DLSSOptions::structVersion
+sl::DLSSOptions::outputWidth
+sl::DLSSOptions::outputHeight
+sl::DLSSOptions::preExposure
+sl::DLSSOptions::exposureScale
+sl::DLSSOptions::colorBuffersHDR
+sl::DLSSOptions::dlaaPreset
+sl::DLSSOptions::qualityPreset
+sl::DLSSOptions::balancedPreset
+sl::DLSSOptions::performancePreset
+sl::DLSSOptions::ultraPerformancePreset
+# ... from struct version 2
+sl::DLSSOptions::ultraQualityPreset
+sl::DLSSOptions::useAutoExposure
+# ... from struct version 3
+sl::DLSSOptions::alphaUpscalingEnabled
+
+# ffxDispatchDescUpscale, the descriptor of an ffx-api upscale dispatch (parameter `d`). The two cameraX members are
+# the depth range and the vertical field of view - numbers a settings menu shows - not where the camera is.
+ffxDispatchDescUpscale::enableSharpening
+ffxDispatchDescUpscale::sharpness
+ffxDispatchDescUpscale::jitterOffset
+ffxDispatchDescUpscale::preExposure
+ffxDispatchDescUpscale::cameraNear
+ffxDispatchDescUpscale::cameraFar
+ffxDispatchDescUpscale::cameraFovAngleVertical
+ffxDispatchDescUpscale::flags
+ffxDispatchDescUpscale::reset
+ffxDispatchDescUpscale::frameTimeDelta
+
+# The upscaler's memory query: the header's type, the game's out-pointer in either version of the descriptor
+# (parameter `q`), and what ffxQuery wrote through it after answering OK (parameter `m`)
+ffxQueryDescHeader::type
+ffxQueryDescUpscaleGetGPUMemoryUsage::gpuMemoryUsageUpscaler
+FfxApiEffectMemoryUsage::totalUsageInBytes
+FfxApiEffectMemoryUsage::aliasableUsageInBytes

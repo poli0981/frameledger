@@ -49,6 +49,7 @@ public sealed unsafe class ShmRingReader : IDisposable
     private bool _disposed;
     private FlAdvancedState? _advanced;
     private uint _advancedSeq;
+    private uint _advancedRequest;
 
     private ShmRingReader(MemoryMappedFile mmf, MemoryMappedViewAccessor view, byte* basePtr, uint capacity)
     {
@@ -335,20 +336,40 @@ public sealed unsafe class ShmRingReader : IDisposable
     /// <summary>
     /// Says whether the session this ring belongs to records Advanced metrics (owner decision D111; layout 5). Written
     /// either way: the control block outlives a session, so "off" is a 0 that is stored, never a word that is left
-    /// alone - a 1 from the session before would be a request nobody made. While it is 0 the Overlay reads and hooks
+    /// alone - a request from the session before would be one nobody made. While it is 0 the Overlay reads and hooks
     /// exactly what it did before the option existed.
     /// </summary>
+    /// <remarks>
+    /// <b>"On" is a request of this session's own, not a 1.</b> A game outlives a session, and so do the summaries the
+    /// Overlay keeps inside it - a range, a count, a mask of what was ever seen. The value written is one no session of
+    /// this ring used: above the word as it stands and above the request the region last answered. The Overlay starts
+    /// its summaries afresh at a value it has not seen, and <see cref="AdvancedState"/> returns only a publication that
+    /// names this value - so a second session of the same game never reads the first one's field of view.
+    /// </remarks>
     public void SetAdvancedRequested(bool requested)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         var control = (FlControlBlock*)(_base + ShmLayout.ControlOffset);
-        Volatile.Write(ref control->AdvancedRequested, requested ? 1u : 0u);
+        var region = (FlAdvancedState*)(_base + ShmLayout.AdvancedOffset);
+        uint request = 0u;
+        if (requested)
+        {
+            // The region's word is read without its lock: any value it ever held is one to stay clear of, and the
+            // watchdog only ever stores values this word held.
+            uint used = Math.Max(Volatile.Read(ref control->AdvancedRequested), Volatile.Read(ref region->Request));
+            request = used == uint.MaxValue ? 1u : used + 1u;
+        }
+
+        _advancedRequest = request;
+        _advanced = null;
+        _advancedSeq = 0u;
+        Volatile.Write(ref control->AdvancedRequested, request);
     }
 
     /// <summary>
     /// Region 5 (layout 5, Advanced metrics train B): what the hooked game told its upscaler, as the Overlay's
-    /// watchdog last published it - or null while it has published nothing, which is every ring whose session does not
-    /// record Advanced metrics.
+    /// watchdog last published it <b>for this reader's request</b> - or null while it has published nothing for it, which
+    /// is every ring whose session does not record Advanced metrics, and the first second of one that does.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -369,9 +390,9 @@ public sealed unsafe class ShmRingReader : IDisposable
             for (int attempt = 0; attempt < DisplayStateAttempts; attempt++)
             {
                 uint before = Volatile.Read(ref region->Seq);
-                if (before == 0u || (_advanced is not null && before == _advancedSeq))
+                if (_advancedRequest == 0u || before == 0u || (_advanced is not null && before == _advancedSeq))
                 {
-                    return _advanced;    // never published, or nothing newer than the copy held
+                    return _advanced;    // never asked, never published, or nothing newer than the copy held
                 }
 
                 if ((before & 1u) != 0u)
@@ -383,6 +404,11 @@ public sealed unsafe class ShmRingReader : IDisposable
                 Interlocked.MemoryBarrier();
                 if (Volatile.Read(ref region->Seq) == before)
                 {
+                    if (copy.Request != _advancedRequest)
+                    {
+                        return _advanced;    // the session before's, in a game that kept running: not this one's
+                    }
+
                     _advanced = copy;
                     _advancedSeq = before;
                     return copy;
