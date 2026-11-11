@@ -99,7 +99,7 @@ The last thing P1 owes (§R4 moved it here because it needs P2's drain and recor
 | 2 | OFF | | | |
 | 3 | OFF | | | |
 
-Gates: FPS delta ≤ 0.5 %, Agent CPU ≤ 1 % of a core, Agent RSS ≤ 150 MB. **Overlay resident ≤ 8 MB is
+Gates: FPS delta ≤ 0.5 %, Agent CPU ≤ 1 % of a core *(≤ 2.5 % since 2026-11-11, D117)*, Agent RSS ≤ 150 MB. **Overlay resident ≤ 8 MB is
 not measured by the runbook** and is left blank rather than guessed: it is a module inside the game
 process, and reading the target's memory is what CLAUDE.md rule 4 forbids — an external tool that
 inspects module sizes is the way to fill it.

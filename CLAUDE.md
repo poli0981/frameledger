@@ -171,6 +171,8 @@ tools/                         # accuracy-check, changelog-check, chokepoint-che
                                # wiki-build (beta.17: builds and checks the wiki; the wiki-check gate),
                                # buildid-check (beta.18: the release's build id in the shipped natives),
                                # docs-split-check (beta.24, D66: CHANGELOG/HANDOFF and their parts agree),
+                               # agent-cost (D110, 2026-11-11: a developer tool, not a gate - what the shipped
+                               #   Agent costs per second of session, Advanced metrics off and on),
                                # nvapi-readonly-check (D108, 2026-11-11: every NVAPI call of the bridge is on
                                #   nvapi-allowed-calls.txt, and none there writes or identifies)
                                # (six names added 2026-10-04)

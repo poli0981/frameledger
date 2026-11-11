@@ -325,6 +325,11 @@ public sealed class ShmDrainIntegrationTests
         // The Overlay's own health, which the frame stream cannot report: a DLL that never hooked
         // anything, or self-disabled after three faults, produces an empty ring that looks exactly like
         // a game sitting in a loading screen.
+        // INIT IS "NOT YET", NOT A FAILURE (2026-11-11, red once in a local gate: Status was 0 with fifty records already
+        // drained). The Overlay installs its present hooks, then the loader's and OpenGL's, and only then publishes Ready
+        // (dllmain.cpp InitThread) - so on a loaded machine frames can be read before it. It is waited out, bounded; a
+        // DLL that never gets there still fails, on the line below.
+        SpinWait.SpinUntil(() => reader.WriterState.Status != (uint)FlStatus.Init, TimeSpan.FromSeconds(5));
         FlWriterState state = reader.WriterState;
         state.Status.Should().Be((uint)FlStatus.Ready);
         state.FaultCount.Should().Be(0u);
@@ -508,7 +513,8 @@ public sealed class ShmDrainIntegrationTests
             bool mayContinue = await supervisor.ScanOnceAsync(pid, TestContext.Current.CancellationToken)
                 .ConfigureAwait(false);
             reader.PublishGuardResult(supervisor.CompletedEvaluations, supervisor.UnhookRequested);
-            mayContinue.Should().BeTrue("our own harness must not start matching the blocklist mid-run");
+            // The verdict is in the message (2026-11-11): this was red once in a local gate with nothing but "false" to go on.
+            mayContinue.Should().BeTrue("our own harness must not start matching the blocklist mid-run (the verdict: {0})", supervisor.LastVerdict);
 
             DrainResult r = reader.Drain(buffer, gaps);
             records.AddRange(buffer.AsSpan(0, r.Copied).ToArray());

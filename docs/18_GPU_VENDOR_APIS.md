@@ -609,7 +609,8 @@ and labelled with the hardware's words. A sensor with no family is not read.
   costs 14 ms (62 ms elapsed)**. Once a second that refresh alone is 1.4% of one core, above NFR-2's 1% for the
   whole Agent. So NVAPI is read every tick and **the sensor library every fifth** (0.28%), and on the ticks between a
   sensor has no reading — its last value is not repeated. The same refresh is what the L2 telemetry layer does once
-  a second in every session: that cost is not this feature's, and is `20_OPEN_QUESTIONS` §M16.
+  a second in every session: that cost is not this feature's, and is `20_OPEN_QUESTIONS` §M16 — measured in a real
+  Agent on 2026-11-11 (1.93 % of one core off, 2.04 % on) and answered by amending NFR-2 to 2.5 % (D117).
 
 ### From the reader to the ledger (built 2026-11-11; fed since the switch)
 
@@ -703,9 +704,9 @@ every `nvapi.` row; nothing is estimated in its place (FR-4.9).
 | Train | Release | What | Its gate |
 |---|---|---|---|
 | A | 0.1.0-beta.39 | read by the Agent only — NVAPI and LibreHardwareMonitor — storage, the page. **Nothing changes in code loaded into a game** | this section |
-| B | 0.1.0-beta.40 | inside the game: more fields of the Streamline and FidelityFX calls already hooked, and new hooks on functions `sl.interposer.dll` **exports** (`17_HOOK_ENGINE` §Hook inventory's ⏳ rows); shared-memory layout 5 | a plan of its own; overhead measured |
-| C | 0.1.0-beta.41 | Reflex latency per frame | a spike, then the owner's go or no |
-| D | 0.1.0-beta.42 | the Streamline feature state behind `slGetFeatureFunction` — DLSS frame generation's, DLSS's, Reflex's | a spike, then the owner's go or no |
+| B | 0.1.0-beta.40, .41, .42 *(three releases since D113, 2026-11-11; one was planned)* | inside the game: more fields of the Streamline and FidelityFX calls already hooked, and new hooks on functions `sl.interposer.dll` **exports** (`17_HOOK_ENGINE` §Hook inventory's ⏳ rows); shared-memory layout 5 — §Train B below | a plan of its own; overhead measured; each release after the first waits for the owner's run of the one before |
+| C | ~~0.1.0-beta.41~~ 0.1.0-beta.43 | Reflex latency per frame | a spike, then the owner's go or no |
+| D | ~~0.1.0-beta.42~~ 0.1.0-beta.44 | the Streamline feature state behind `slGetFeatureFunction` — DLSS frame generation's, DLSS's, Reflex's | a spike, then the owner's go or no |
 
 Rules 4 and 5, the hook inventory, the measured overhead and the anti-cheat guard bind B, C and D exactly as they bind
 every hook. `sl::Constants` is read without its camera position, axes and matrices: where the camera is, is where the
@@ -719,6 +720,39 @@ what it hands back could be a wrapper for a fixed list of names instead of a pat
 raises are the owner's: replacing the pointer the game receives is a **write**, which rule 4 forbids as written; and
 a wrapper must outlive the Overlay's own unhook. If the spike cannot answer all of it, the route stays refused and
 the page says so.
+
+### Train B (planned 2026-11-11, owner decisions D110–D116)
+
+What the catalog marks `HookedCall` and `NewHook`. Planned the day train A shipped, the owner's decisions asked while
+planning, the design reviewed against the code before it was approved.
+
+- **D111 — off means off inside the game too.** The Agent writes one word of the control block
+  (`advancedRequested`, 0 or 1, unconditionally at attach) when the session records Advanced metrics. The Overlay
+  reads a new field, and installs a new hook, only while it is set; with the option off it hooks and reads exactly
+  what 0.1.0-beta.39's does.
+- **D113 — three releases, because a new patch site cannot be proven in CI.** A crash in a game under the user-mode
+  anti-cheat exception's trial ends that exception for good (D38), and every release already means restarting the
+  game. **beta.40**: more fields of calls *already* hooked — `sl::DLSSOptions` where the game chains it into
+  `slEvaluateFeature`, the FSR upscale dispatch, the FSR memory query — shared-memory layout 5, the Agent and the
+  page; **no new patch site**. **beta.41**: `slSetConstants` and `ffxConfigure`. **beta.42**:
+  `slGetFeatureVersion` and `slGetFeatureRequirements` — the owner's words: a release of their own, still hooked.
+  Each starts when the owner says the one before passed its owner-only item.
+- **D112 — `slInit` is not hooked in train B.** A game calls it before FrameLedger attaches, so its preferences
+  would almost never be seen. If it is ever hooked: `applicationId`, `projectId` and the paths are never read.
+- **D114 — the field of view is a session's range**, lowest to highest, never a series: a series would say when the
+  player aimed.
+- **D115 — a tail member is read only where it is proven to be there** (`17_HOOK_ENGINE` §Which struct version
+  carries which field): the table from the upstream tags, not the one header in the tree.
+- **D116 — "never the camera" is a build check**, as "never a setter" is (D108): `tools/overlay-fields-check.ps1` —
+  every read of a vendor struct in one header, each allowed member named and used, the camera's names refused
+  anywhere in the Overlay and the Vulkan layer, no copy of `sl::Constants` by value.
+- **What will read N/A, and says why.** Many titles set their DLSS options through `slDLSSSetOptions`, which is not
+  an export (train D), so `sl.dlss.*` is filled only for a title that passes its options with the evaluate call.
+  `slGetFeatureVersion` and `slGetFeatureRequirements` are calls a game makes while starting.
+- **Privacy Policy 2.16** at beta.40, once for the three releases: with Advanced metrics on, for a game FrameLedger
+  injects into, the parameters the game gives its upscaler and frame generation through the intercepted calls are
+  *stored* — sizes, presets, exposure, sharpening, the jitter's, the depth's and the field of view's ranges, flags,
+  versions — and never the camera's position, axes or matrices.
 
 ### Left out, by name
 

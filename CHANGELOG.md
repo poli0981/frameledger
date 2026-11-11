@@ -35,6 +35,28 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **Advanced metrics inside the game is planned — three releases, and nothing reads it yet.** The readings that
+  exist only inside a game — the options a game gives DLSS and FSR, FSR's own memory, later the constants a game
+  gives Streamline and its frame-generation configuration — come in three steps (owner decisions D110–D116):
+  first more fields of calls FrameLedger already intercepts, with no new hook; then two new hooks; then two more.
+  Each step waits for the one before to be run on real games. With Advanced metrics off, nothing more is read
+  inside a game either. This pull request changes nothing you can see or record: it records the decisions, and
+  **which version of each vendor struct carries which field**, compared across every upstream release of Streamline
+  2.x and of the FidelityFX API — a field is read only where it is proven to be there.
+- **`tools/agent-cost.ps1`** (a developer tool): what the shipped capture agent costs while it records, measured on
+  the real program against the project's own test window, with Advanced metrics off and on.
+
+### Changed
+
+- **The agent's processor budget says what was measured.** The specification promised that the capture agent uses
+  at most 1 % of one processor core while recording; nobody had measured it. Measured on the development PC it is
+  1.93 % — 2.04 % with Advanced metrics on — nearly all of it the once-a-second read of the graphics card's sensors
+  that every session has always made, and its memory is 113 MiB (119 with the option on) against a limit of 150.
+  The owner chose to keep the readings and amend the limit: **NFR-2 is now ≤ 2.5 % of one core** (D117). Nothing the
+  agent does changes.
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
