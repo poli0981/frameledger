@@ -52,6 +52,14 @@ public sealed partial class PagesLoadTests
 
         public LogsViewModel Logs { get; private set; } = null!;
 
+        /// <summary>
+        /// Settings' System card, loaded ONCE and awaited (2026-11-11). Until then every build of the page made a view model
+        /// of its own, whose lines arrive from the thread pool - so of two pages built a moment apart one could have its
+        /// "Processor" row and the other not, and the theme-switch comparison reported it as a text that "shows in a fresh
+        /// one only" (seen once on a hosted runner, never locally).
+        /// </summary>
+        public SystemInfoViewModel SystemInfo { get; private set; } = null!;
+
         public AdvancedViewModel Advanced { get; private set; } = null!;
 
         public SessionSummaryViewModel Summary { get; private set; } = null!;
@@ -132,6 +140,9 @@ public sealed partial class PagesLoadTests
             (SettingsViewModel settings, LogsViewModel logs) = await SettingsAndLogsAsync(s, consent, strip).ConfigureAwait(false);
             Settings = settings;
             Logs = logs;
+            SystemInfo = new SystemInfoViewModel(new FixedHardware(), new NoClipboard(), strip);
+            Task pending6 = SystemInfo.Pending;
+            await pending6.ConfigureAwait(false);
             // The Advanced page with this PC as the Agent last read it - facts, a table that unfolds, live rows, a chart - and
             // the session above; no feed loop runs, so nothing here waits on a clock.
             Advanced = new AdvancedViewModel(Own(new AdvancedMachineFeed(new NoAgent(), TimeProvider.System)), s.Sessions, s.Games, new SessionSeriesLoader(s.Sessions), new AdvancedSelection());
@@ -150,7 +161,7 @@ public sealed partial class PagesLoadTests
             ("Games", () => new GamesPage(Games)),
             ("Game detail", () => new GameDetailPage(Detail)),
             ("Compare", () => new ComparePage(Compare)),
-            ("Settings", () => new SettingsPage(Settings, new SystemInfoViewModel(new FixedHardware(), new NoClipboard(), new NoStrip()))),
+            ("Settings", () => new SettingsPage(Settings, SystemInfo)),
             ("Logs", () => new LogsPage(Logs)),
             ("Advanced", () => new AdvancedPage(Advanced)),
         ];

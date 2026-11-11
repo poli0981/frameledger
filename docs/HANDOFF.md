@@ -77,6 +77,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.35` | [`handoff/history/0.1.0-beta.35.md`](handoff/history/0.1.0-beta.35.md) |
 | `§beta.36` | [`handoff/history/0.1.0-beta.36.md`](handoff/history/0.1.0-beta.36.md) |
 | `§beta.37` | [`handoff/history/0.1.0-beta.37.md`](handoff/history/0.1.0-beta.37.md) |
+| `§beta.38`, `§NEXT` (the owner's request of 2026-11-11, the four trains) | [`handoff/history/0.1.0-beta.38.md`](handoff/history/0.1.0-beta.38.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -84,106 +85,95 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-11-11, 0.1.0-beta.38: Qodana Ultimate in two reports — and the next work is the owner's "Thông số nâng cao"
+## **START HERE** — 2026-11-11, 0.1.0-beta.39: Advanced metrics, train A — and train B begins with a plan of its own
 
-*Status is `docs/changelog/0.1.0-beta.38.md`; this is what no other file carries.* This release closes the plan of
-2026-11-11 — **beta.37** → **alpha.4** → **Qodana Ultimate in two reports**. The plan was one session's, and its START
-HERE was moved whole: all three parts, the decisions D94–D100, the choices and the traps are
-[`handoff/history/0.1.0-beta.37.md`](handoff/history/0.1.0-beta.37.md) — the two Qodana sections are its last two.
-#384 moved the managed job to Qodana for .NET and settled what it reports; #385 added the C++ as a second report; this
-release ships the one change to shipped code that came of it: the App's link opener refuses anything but a web or a
-mail address.
+*Status is `docs/changelog/0.1.0-beta.39.md`; this is what no other file carries.* The owner's request of 2026-11-11
+— a setting, *Thông số nâng cao*, with a navigation item of its own — was planned the same day, approved, and its
+**first train of four is this release**: what the Agent can read (NVAPI, LibreHardwareMonitor), stored with the
+session, shown on a page, and **nothing changed in code loaded into a game**. Seven pull requests and this one:
+#387 (decisions, inventory, the catalog), #388 (the NVAPI bridge's ABI 3, the read-only gate), #389 (the shared
+reader, measured before composed), #390 (schema 0023, the `.partial` chunks), #391 (the switch, Privacy 2.15,
+Disclaimer 2.15), #392 (the pipe request, the App's feed), #393 (the page, the navigation item, Ctrl+6). **The
+design, the decisions D101–D108 and the inventory are [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Advanced
+metrics; the screen is `08_UI` §Advanced.** The request as the owner wrote it, the four answers and the order of the
+four trains are [`handoff/history/0.1.0-beta.38.md`](handoff/history/0.1.0-beta.38.md) §NEXT.
 
-### NEXT — the owner's request of 2026-11-11, for the session(s) after this one
+### What this train decided that the plan had not
 
-Sent while this session was still running, and recorded here as it was written:
+- **D109 — the Disclaimer goes to 2.15 with the Privacy Policy.** The plan approved the Privacy Policy's content only.
+  Writing #391 found two sentences of the Disclaimer (§5, §5A) that said PawnIO and the admin mode were for the CPU
+  temperature alone, which the option makes false; the owner was asked with both quoted and chose to amend them. The
+  admin mode's own disclosure followed (`agent-admin-dialog/2`).
+- **Storage is not read at all** (D103's outcome, decided before the first run): LibreHardwareMonitor cannot list
+  drives without touching removable ones, so the group is never opened and a drive's temperature is N/A with that
+  reason. Power supplies and fan controllers are refused for the same kind of reason (a search of every USB device).
+- **The sensors are read every fifth second**, NVIDIA's figures every second — set by a measurement
+  (`CaptureHost probe-advanced`: 14 ms of processor time per refresh of the sensor library), not by taste.
+- **The page's hold on the reader is the request itself**: nothing tells the Agent that a page opened or closed
+  (`07_IPC` `GetAdvancedMachine`). A design with an "open" and a "close" message was not written, because a pipe
+  that drops would leave the reader running.
 
-> "Xong phiên này, bạn cập nhật (những) phiên tiếp theo với các phiên bản về Setting "Thông số nâng cao" hoặc tương tự
-> và hiển thị tại 1 navigation riêng, khai thác số liệu, dữ liệu, biểu đồ mức tối đa, toản bộ mà các header `.h` của
-> Streamline và NVAPI hoặc pawnIO có thể sử dụng và hiển thị nhé."
+### NEXT
 
-That is: once this session is done, the following session or sessions — and their versions — are about a setting
-called *"Thông số nâng cao"* (advanced metrics) or similar, shown in **a navigation item of its own**, that exploits
-to the maximum the numbers, the data and the charts that the `.h` headers of **Streamline** and **NVAPI**, or
-**PawnIO**, make available.
-
-**Nothing of it was designed or begun here.** It is a new task, and it starts the way every train does — a plan, with
-the owner's decisions asked while planning. What follows is this session's reading, not the owner's words:
-
-- **An inventory comes first, from the headers in the tree**: `src/native/third_party/streamline`, `nvapi`,
-  `fidelityfx`; and what LibreHardwareMonitorLib reads through PawnIO (CPU and board sensors — optional, elevated
-  only). For each item: what it is, and **where it can be read from** — the Agent's own process (NVAPI through
-  `FrameLedger.NvapiBridge`, LibreHardwareMonitor) or only inside the game, through a hook (Streamline).
-- **Anything read inside a game is a hook**, and the rules that govern hooks are not this feature's to bend: rules 4
-  and 5, `17_HOOK_ENGINE` §Hook inventory, the overhead stated, the open S-series of `20_OPEN_QUESTIONS`; the
-  anti-cheat guard and rule 2 untouched. Rule 6 governs any frame rate it shows beside frame generation, rule 7 any
-  Yes/No it shows, and rule 8 says it calls nothing on the network.
-- **Questions that are the owner's**: on or off by default; what is stored in the ledger (a schema change, the size
-  of a session) and what is shown live only; what a PC without an NVIDIA card shows (N/A, never a guess); whether
-  the page asks for the elevation PawnIO needs; how many releases, and in what order.
-- **What a new page owes**: strings in `en`, `vi`, `ja`; `ACCESSIBILITY.md` §For contributors for the page and each
-  chart; `LIMITATIONS.md` and the guide; `08_UI`.
-
-#### Planned 2026-11-11, and approved by the owner — four trains, the first begun
-
-The plan was made the same day, the owner's decisions asked while planning. **The design, the decisions D101–D108 and
-the inventory are [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Advanced metrics**; what follows is only what that
-section does not carry — the order, and what was asked.
-
-- **The owner's four answers.** (1) Inside the game: **everything, in stages — and the refusal of 2026-08-09 is
-  re-examined**, not taken as final. (2) **Stored in full with the session.** (3) **Off by default, and off means
-  nothing more is read or stored**; the navigation item is hidden. (4) PawnIO: **the page says what is missing and
-  links to the admin mode's setting** (D34); it never asks for the rights itself.
-- **Four trains, one release each, in this order**: **A** (0.1.0-beta.39) what the Agent can read — NVAPI,
-  LibreHardwareMonitor — with storage and the page, **and nothing changed in code loaded into a game**; **B**
-  (beta.40) inside the game, on calls already hooked and on functions Streamline exports, shared-memory layout 5;
-  **C** (beta.41) Reflex latency, after a spike; **D** (beta.42) the Streamline state behind `slGetFeatureFunction`,
-  after a spike. **Why this order**: A needs no hook, so it ships the page, the storage and the option first and
-  every later train only fills rows; B is hooks of a kind already built; C and D are routes nobody has proven safe,
-  and each ends in the owner's go or no.
-- **The approval covers train A whole** — its eight pull requests through the release. **B, C and D each begin with a
-  plan of their own**, their decisions asked then. For D the owner will be asked one thing nothing else has needed:
-  handing the game a wrapper in place of the function it asked for is a write, and rule 4 as written forbids it.
-- **Train A's pull requests**: (1) decisions, inventory, the catalog; (2) the NVAPI bridge's ABI 3 and the read-only
-  gate; (3) LibreHardwareMonitor's groups and the shared reader, not yet composed; (4) the `.partial` chunks and
-  schema 0023, produced by nobody yet; (5) the option goes live, with Privacy 2.15; (6) the pipe request and the
-  App's feed; (7) the page, the navigation item, Ctrl+6; (8) the release. A setting and its guide text, a navigation
-  item and its guide text, a schema script and its writer each land in ONE pull request — the guide tests, the
-  viewer-mode test and the registry test are red otherwise.
-- **What the owner will be asked to run** (the release's owner-only item): the NVAPI rows on the RTX 5080 — CI has no
-  driver and never takes that branch; one run as administrator with PawnIO, which is also the first there has ever
-  been (`20_OPEN_QUESTIONS` §M10); the Agent's processor time and memory with the option on and off (NFR-2).
-- **A trap already paid for**: LibreHardwareMonitor's storage group may touch every drive when it opens, and this
-  PC once had a failing USB drive. If the group cannot be opened without touching removable drives, storage stays
-  N/A in beta.39 — decided before the first run, not after it. **It cannot (read in the library's source,
-  2026-11-11), so it is not opened**: a drive's temperature reads N/A in beta.39, and the reason is on the page.
-- **Measure before composing.** `FrameLedger.CaptureHost probe-advanced` ran the reader on this PC before any Agent
-  code used it, and found the sensor library's refresh at 14 ms of processor time — so the reader reads it every
-  fifth tick. The same number says the telemetry layer every session already uses costs more than NFR-2 allows
-  (`20_OPEN_QUESTIONS` §M16): **not this train's to fix, and the owner's to decide** — ask it when this train is out.
+1. **Ask the owner `20_OPEN_QUESTIONS` §M16 before anything else.** The telemetry layer every session has always
+   used refreshes the sensor library once a second; measured on this PC that is about 1.4 % of one core, above
+   NFR-2's 1 % for the whole Agent. It is not this feature's cost and was not changed here. The choices are the
+   owner's: read it less often (and thin the fixed sensor series), keep it and amend NFR-2, or measure more first.
+2. **Train B (0.1.0-beta.40) starts with a plan of its own**, its decisions asked then: inside the game, on calls
+   already hooked (`DLSSOptions`, the FidelityFX dispatch) and on functions Streamline exports (`slSetConstants`,
+   `slGetFeatureVersion`, `slGetFeatureRequirements`, `slInit`), shared-memory layout 5. Every rule that governs a
+   hook applies — rules 4 and 5, `17_HOOK_ENGINE` §Hook inventory, the overhead measured, the open S-series — and
+   **`sl::Constants`' camera position, axes and matrices are never read** (the catalog's `PlayerState`). The page
+   needs no new screen: the catalog's `HookedCall` and `NewHook` rows become read, and Sources says so by itself.
+3. **Trains C and D** (Reflex latency; the Streamline state behind `slGetFeatureFunction`) each begin with a spike
+   and end in the owner's go or no. D needs an amendment of rule 4 if it goes ahead — handing the game a wrapper is
+   a write — and that question is put to the owner then, not assumed.
 
 ### Left open by this session
 
-- **`LogNoteW`** (`src/native/FrameLedger.Overlay/src/dllmain.cpp`): a function nothing calls, found by the native
-  report and **not removed** — D100 changes code loaded into a game for a defect only, and dead code is not one. The
-  owner says whether it goes (owner-only item 36 (d)); `.editorconfig` has a section, naming it, that goes with it.
-- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
-  after this text. Record them in the next pull request, as beta.37's and alpha.4's were in #384.~~ **Recorded
-  2026-11-11, in the first pull request of the Advanced-metrics train: 0.1.0-beta.38 was released
-  2026-11-11T02:56:51Z** from the signed tag on `b7d6550`, by run 42947853293 — one run for the one tag push, where
-  alpha.4's push had started two. Eight assets; the seven digests of `SHA256SUMS.txt` equal the ones GitHub computed;
-  the shipped natives carry `FL_BUILD_ID v0.1.0-beta.38`. The delta from beta.37 is 699,201 bytes beside a full
-  package of 110,325,438 — "Delta processed 0452 files. 0022 patched, 0430 unchanged". The wiki was published by run
-  42949461191. The rehearsal on the release branch (run 42944533749) had made a delta of 727,036 bytes with the same
-  file counts.
-- **The Qodana licence** is read from the job's log (*Qodana license plan: Ultimate*, and the day the subscription is
-  active until). When it lapses both jobs are red and advisory; `qodana.yaml`'s first comment is the way back.
-- **C# 15's constructs** wait for a ReSharper engine that reads them (`20_OPEN_QUESTIONS` §G, the row added with
-  beta.37): the linter is now Qodana for .NET, whose engine is the same one — re-run the canary (`spike-notes` §29)
-  when the action's pin moves.
-- **The alpha line rests** (D98). No sync and no alpha follow this release.
+- **This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
+  after this text. Record them in the next pull request, as beta.38's were in #387.
+- **Nothing here was seen in the running App.** The page was rendered to images from a test over fixture data and
+  looked at; a chart does not render into such an image. No real Agent answered a real App, no session was recorded
+  with the option on, and no value was compared with another tool. All of that is owner-only item 37.
+- **The first run as administrator with PawnIO is still to come** (`20_OPEN_QUESTIONS` §M10, §M13): the processor,
+  memory and motherboard groups have been opened on no PC. The reader leaves a device alone after two faults, and
+  runs on a thread of its own, so a sensor that hangs holds up neither a session's samples nor the pipe — that is
+  the design, and it has not been tried.
+- **The `vi` strings were written by the assistant and the `ja` ones are marked `review`** — 245 keys each, every
+  catalog entry among them.
+- **`LogNoteW`** is still there (owner-only item 36 (d)), and the alpha line still rests (D98): no alpha follows this
+  release.
 
-**Owner-only:** item 36 — beta.38 on real hardware, the links, the two Qodana Cloud projects, and `LogNoteW`.
+### Traps this train paid for
+
+- **A pull request whose workflows never start.** #390 was opened and GitHub started none of its three workflows —
+  `gh pr checks` said "no checks reported" ten minutes later, with nothing queued. Closing and reopening the pull
+  request starts them (`pull_request: reopened`); **closing drops auto-merge, so enable it again.** After every
+  `gh pr create`, ask the API for the runs of the head commit before walking away.
+- **`ShmDrainIntegrationTests.TheGuardInjectsTheOverlayAndTheReaderDrainsRealFrames` was red once** in a local gate
+  (#392's first run): the guard's re-scan refused the harness mid-run, under the gate's load. It passed alone and in
+  the rerun; nothing in that pull request is on its path; it was not diagnosed. If it shows again, read the verdict's
+  reason first — the assertion prints only that it was a refusal.
+- **`PagesLoadTests.EveryTextFollowsAThemeSwitch` was red once on a hosted runner** (#393's first run, green three
+  times locally): *Settings: "Processor" shows in a fresh one only*. Every build of the Settings page in that fixture
+  made a `SystemInfoViewModel` of its own, whose lines arrive from the thread pool, so two pages built a moment apart
+  could differ by a row. The fixture now loads one and awaits it (`Surfaces.SystemInfo`) — fixed in the release's
+  pull request, test code only. A surface whose view model loads by itself is loaded once, awaited, then shared.
+- **SonarCloud's coverage of new code** (advisory, 80 % asked) was 75.3 % on #391: the uncovered part was Win32
+  (`WindowGeometryProbe.MonitorDeviceOf`). A lookup that takes a named window, as `Observe` does, can be tested
+  against the harness's window; one that only searches for a visible window cannot, on a hosted runner.
+- **The App's own accessibility tests will refuse a page** that sets `AutomationProperties.LiveSetting` in XAML, that
+  names a page-local resource key, whose item types have no `ToString`, or whose grid has an unnamed filler column —
+  and a navigation item or a guide page that the guide's contents do not name. All of it is one test run away:
+  run `FrameLedger.App.Tests` whole before the gate.
+- **An image of a page from a test** (`RenderTargetBitmap` over the hosted frame) shows the layout and the text, and
+  costs a temporary test; ScottPlot draws nothing into it.
+- **`sed -i` on a file the Write tool made** is harmless only because both are LF until the normalising step; on a
+  CRLF file it is the trap `handoff/traps.md` already names.
+
+**Owner-only:** item 37 — beta.39 on real hardware: the update and its two terms, the switch and the page, a session
+with a real game, the first run as administrator with PawnIO, and what the Agent costs with the option on and off.
 
 ## Owner-only — no PR can close these
 
@@ -466,6 +456,25 @@ section does not carry — the order, and what was asked.
    and `qodana.yaml` says the way back. (d) **`LogNoteW`**: the Overlay has one function nothing calls
    (`src/native/FrameLedger.Overlay/src/dllmain.cpp`). Say whether it is removed — a pull request of its own, eleven
    lines — or kept; either way the `.editorconfig` section that names it is then removed or reworded.
+37. **beta.39, Advanced metrics on real hardware** (D101–D109). (a) **The update from beta.38**: the terms window
+   shows the **Privacy Policy 2.15** and the **Disclaimer 2.15** once; the ledger moves to schema 23 and every
+   earlier session opens as before. (b) **The switch**: Settings ▸ Recording ▸ *Advanced metrics* on — **Advanced**
+   appears as the last item on the left at once, **Ctrl+6** opens it; off — it goes, and Ctrl+6 does nothing.
+   (c) **This PC, on the RTX 5080**: the facts (firmware, cores, memory sizes, the display's HDR and variable
+   refresh), the *Right now* table beside the NVIDIA app or HWiNFO — the first comparison of any of these values
+   with another tool — and the chart moving; a fan's *Read at* a few seconds behind the memory's. Leave the page: the
+   Agent's log says the reader closes some fifteen seconds later, and opens again when the page does. (d) **A
+   session with a real game, the option on**: it is on *Session* with its statistics and its chart; its summary has
+   **Advanced metrics…** and the button opens it there; *variable refresh was active* and the colour space against
+   what the game and the display really did; the driver's settings for the game against the NVIDIA app. A session
+   recorded with the option off is not on the list. (e) **As administrator, with PawnIO installed** — the first run
+   there has ever been (`20_OPEN_QUESTIONS` §M10, §M13): the processor per core, the memory and the motherboard's
+   sensors appear on *This PC* and *Sources* says *Read*; watch for a pause or a hang when the page first opens,
+   and compare a few values with HWiNFO. Without it, *Sources* gives the reason in words. (f) **What it costs**: the
+   Agent's processor time and memory during a session with the option on and with it off (NFR-2: 1 % of one core,
+   150 MB) — and with that in hand, the answer to §M16. (g) **The words**: the `vi` strings read as a Vietnamese
+   speaker would write them; the `ja` strings marked `review`. (h) **A copy of the ledger** (`--data-dir`) that holds
+   such a session: the page is there, opens on *Session*, and *This PC* says it is a copy.
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
