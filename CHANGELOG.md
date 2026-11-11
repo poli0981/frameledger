@@ -35,77 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Added
-
-- **Advanced metrics inside the game is planned — three releases, and nothing reads it yet.** The readings that
-  exist only inside a game — the options a game gives DLSS and FSR, FSR's own memory, later the constants a game
-  gives Streamline and its frame-generation configuration — come in three steps (owner decisions D110–D116):
-  first more fields of calls FrameLedger already intercepts, with no new hook; then two new hooks; then two more.
-  Each step waits for the one before to be run on real games. With Advanced metrics off, nothing more is read
-  inside a game either. This pull request changes nothing you can see or record: it records the decisions, and
-  **which version of each vendor struct carries which field**, compared across every upstream release of Streamline
-  2.x and of the FidelityFX API — a field is read only where it is proven to be there.
-- **`tools/agent-cost.ps1`** (a developer tool): what the shipped capture agent costs while it records, measured on
-  the real program against the project's own test window, with Advanced metrics off and on.
-
-- **The shared memory between a game and the agent has room for what a game tells its upscaler — and nothing
-  writes it yet.** Its layout is version 5: one new region, sized once for the three releases of this train, and
-  one new word by which the agent says "this session records Advanced metrics". With that word at zero — every
-  session, until the next pull request, and afterwards every session with the option off — the region stays empty and
-  the component inside the game does exactly what it did before. **A game that is running when you update must be
-  restarted before FrameLedger measures it again**, as after every update.
-
-- **The component inside a game can read what the game tells its upscaler — and only when asked.** For a game
-  FrameLedger injects into, and only while the agent asks for it (nothing asks yet: that is the next pull request,
-  and then only with Advanced metrics on), the calls FrameLedger already intercepts are read a little further: the
-  options a game hands DLSS with each evaluation (output size, presets, exposure, three switches), what it hands
-  FSR with each upscale (sharpening, the jitter's size, exposure, the depth range, the field of view as a range,
-  flags, the frame time it reports), and FSR's own memory when the game itself asks for it. **No new hook**, and
-  with the request off the same code as before runs: a test injects into a window that sends all of it and finds
-  the new memory region empty to the last byte. **Never the camera's position, its axes or its matrices** — a
-  build check now refuses those names anywhere in the code loaded into a game (`tools/overlay-fields-check.ps1`).
-  Many games set their DLSS options through a call that cannot be intercepted, and will show nothing here.
-  Measured cost while asked: 22–23 billionths of a second per frame for FSR, 10–12 for DLSS; not measurable when
-  not asked.
-- **A second session of a game that kept running starts its summaries afresh.** The ranges and counts kept inside the
-  game belong to the session that asked for them: each session asks with a request of its own, and the agent reads
-  only what answers it.
-
-- **Advanced metrics: what the game tells DLSS and FSR, kept with the session.** With Advanced metrics on, a session
-  of a game FrameLedger measures from inside now also keeps what the game itself handed to its upscaler: for DLSS the
-  output size, the model preset for each quality mode, whether the game said its colour buffers are HDR,
-  auto-exposure, alpha upscaling and the exposure values; for FSR the sharpening, the largest jitter offset, the
-  exposure, the near and far planes, the **range** of the field of view, the flags, the frame time the game reported
-  (as a chart) and FSR's own video memory at the moments the game asked. The Advanced page shows them under the
-  session, in the vendor's own notation. **Many games will show nothing**, and the session says why — most games
-  set their DLSS options through a call FrameLedger cannot see, and the FSR rows need FSR 3.1 or later through AMD's
-  library; it never means the game uses no upscaler. **Never read:** where the camera is, which way it looks, its
-  matrices. With the option off nothing more is read inside a game, exactly as before. Not yet read from a real game.
-- **Privacy Policy 2.16** names the above: what is stored, only with the option on and only for a game FrameLedger
-  injects into, and what is never read. You are shown it once after updating.
-
-### Changed
-
-- **The agent's processor budget says what was measured.** The specification promised that the capture agent uses
-  at most 1 % of one processor core while recording; nobody had measured it. Measured on the development PC it is
-  1.93 % — 2.04 % with Advanced metrics on — nearly all of it the once-a-second read of the graphics card's sensors
-  that every session has always made, and its memory is 113 MiB (119 with the option on) against a limit of 150.
-  The owner chose to keep the readings and amend the limit: **NFR-2 is now ≤ 2.5 % of one core** (D117). Nothing the
-  agent does changes.
-
-### Fixed
-
-- **A crash dump is tried up to three times.** When FrameLedger or its agent stops on an error it never expected, a
-  small helper writes a dump of the program for a bug report - while the program's other threads are still
-  running. Windows can fail that once when the program changes under it, and one failure used to mean no dump at
-  all. It is now tried again, twice, a moment apart.
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.40` | 2026-11-12 | [`docs/changelog/0.1.0-beta.40.md`](docs/changelog/0.1.0-beta.40.md) |
 | `0.1.0-beta.39` | 2026-11-11 | [`docs/changelog/0.1.0-beta.39.md`](docs/changelog/0.1.0-beta.39.md) |
 | `0.1.0-beta.38` | 2026-11-11 | [`docs/changelog/0.1.0-beta.38.md`](docs/changelog/0.1.0-beta.38.md) |
 | `0.1.0-alpha.4` | 2026-11-11 | [`docs/changelog/0.1.0-alpha.4.md`](docs/changelog/0.1.0-alpha.4.md) |
