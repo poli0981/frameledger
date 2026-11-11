@@ -71,7 +71,7 @@ internal sealed record CommandLine
 
         if (verb == Verb.None)
         {
-            return new CommandLine { Error = "usage: consent list | consent grant --exe <path> | consent revoke --exe <path> | capture --exe <path> [--seconds <n>] | launch --exe <path> [--args \"<string>\"] [--seconds <n>] | recover | probe-lhm [--seconds <n>]" };
+            return new CommandLine { Error = "usage: consent list | consent grant --exe <path> | consent revoke --exe <path> | capture --exe <path> [--seconds <n>] | launch --exe <path> [--args \"<string>\"] [--seconds <n>] | recover | probe-lhm [--seconds <n>] | probe-advanced [--seconds <n>]" };
         }
 
         string? exe = null;
@@ -116,9 +116,9 @@ internal sealed record CommandLine
             }
         }
 
-        // probe-lhm touches no game: it opens a sensor library in THIS process and nothing
-        // else, so there is no executable to name and no consent record to look up.
-        if (verb is not (Verb.ConsentList or Verb.ProbeLhm or Verb.Recover) && string.IsNullOrWhiteSpace(exe))
+        // probe-lhm and probe-advanced touch no game: each opens sensor libraries in THIS process
+        // and nothing else, so there is no executable to name and no consent record to look up.
+        if (verb is not (Verb.ConsentList or Verb.ProbeLhm or Verb.ProbeAdvanced or Verb.Recover) && string.IsNullOrWhiteSpace(exe))
         {
             return new CommandLine { Error = "--exe <path> is required" };
         }
@@ -135,6 +135,7 @@ internal sealed record CommandLine
         ["launch", ..] => Verb.Launch,
         ["recover", ..] => Verb.Recover,
         ["probe-lhm", ..] => Verb.ProbeLhm,
+        ["probe-advanced", ..] => Verb.ProbeAdvanced,
         _ => Verb.None,
     };
 }

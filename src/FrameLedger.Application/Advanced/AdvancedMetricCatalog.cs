@@ -131,13 +131,13 @@ public static class AdvancedMetricCatalog
         Machine("lhm.memory.modules", Lhm, AgentElevated, Table, Memory, "The memory modules: size, speed, maker's part name - never a serial number"),
         SampledFamily("lhm.memory.load", Lhm, AgentElevated, Percent, Memory, "Memory in use: physical and virtual"),
         SampledFamily("lhm.memory.temperature", Lhm, AgentElevated, Celsius, Memory, "Each memory module's temperature, where it has a sensor"),
-        Machine("lhm.storage.models", Lhm, AgentElevated, Table, Storage, "The internal drives' model names - never a serial number"),
-        SampledFamily("lhm.storage.temperature", Lhm, AgentElevated, Celsius, Storage, "Each internal drive's temperature, read no more than once a minute"),
 
         // ---- What the Agent could reach and does not ------------------------------------------------------------
         Machine("lhm.psu", Lhm, Refused, Table, Board, "Power-supply sensors: reading them makes the library search every USB device"),
         Machine("lhm.controller", Lhm, Refused, Table, Board, "Fan-controller sensors: the same search of USB devices"),
         Machine("lhm.battery", Lhm, Deferred, Table, Board, "Battery sensors"),
+        Machine("lhm.storage.models", Lhm, Deferred, Table, Storage, "The drives' model names: the library cannot list drives without touching removable ones"),
+        SampledFamily("lhm.storage.temperature", Lhm, Deferred, Celsius, Storage, "Each drive's temperature: the same, so the storage group is not opened"),
         Machine("nvapi.gpu.board_serial", Nvapi, Identifier, Text, Gpu, "The card's board serial number"),
         Machine("nvapi.gpu.uuid", Nvapi, Identifier, Text, Gpu, "The card's unique id"),
         MachineFamily("nvapi.display.edid", Nvapi, Identifier, Text, Display, "A display's EDID block, which carries its serial number"),

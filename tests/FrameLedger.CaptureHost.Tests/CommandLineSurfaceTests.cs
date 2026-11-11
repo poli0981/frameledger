@@ -111,6 +111,17 @@ public sealed class CommandLineSurfaceTests
     }
 
     [Fact]
+    public void ProbeAdvancedNamesNoGameAndNeedsNoConsentRecord()
+    {
+        // The instrument of 20_OPEN_QUESTIONS M12 and M13 runs the advanced reader in THIS process: like probe-lhm it
+        // has nothing to inject into and nothing to consent to, and it shares the seconds bound.
+        CommandLine.Parse(["probe-advanced"]).Should().BeEquivalentTo(new CommandLine { Verb = Verb.ProbeAdvanced });
+        CommandLine.Parse(["probe-advanced", "--seconds", "30"]).Seconds.Should().Be(30);
+        CommandLine.Parse(["probe-advanced", "--seconds", "x"]).Error.Should().NotBeNull();
+        CommandLine.Parse(["probe-advanced", "--storage", "1"]).Error.Should().NotBeNull("no option opens a group the reader does not open");
+    }
+
+    [Fact]
     public void AnEmptyCommandLineIsAUsageError()
     {
         CommandLine.Parse([]).Error.Should().NotBeNull();

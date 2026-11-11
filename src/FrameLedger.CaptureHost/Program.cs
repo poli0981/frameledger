@@ -94,6 +94,7 @@ internal static class Program
             Verb.Launch => await LaunchAsync(db, store, cmd.ExePath!, cmd.Arguments, cmd.Seconds).ConfigureAwait(false),
             Verb.Recover => await RecoverAsync(db).ConfigureAwait(false),
             Verb.ProbeLhm => LhmProbe.Run(cmd.Seconds == 0 ? LhmProbe.DefaultSeconds : cmd.Seconds),
+            Verb.ProbeAdvanced => AdvancedProbe.Run(cmd.Seconds == 0 ? AdvancedProbe.DefaultSeconds : cmd.Seconds),
             _ => _exitUsage,
         };
     }
