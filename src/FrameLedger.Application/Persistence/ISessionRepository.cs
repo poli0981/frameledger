@@ -74,6 +74,23 @@ public interface ISessionRepository
     /// <summary>The session's segments in frame order (the ribbon, <c>08_UI</c> §Session summary).</summary>
     ValueTask<IReadOnlyList<SegmentRow>> FindSegmentsAsync(long sessionId, CancellationToken ct = default);
 
-    /// <summary>The session's sensor series, still encoded (the sensor strip decodes what it draws).</summary>
+    /// <summary>
+    /// The session's sensor series, still encoded (the sensor strip decodes what it draws). <b>The fixed series only</b>:
+    /// an advanced series (a name that starts with <c>adv.</c>, schema 0023) is not among them — it stores NaN for a
+    /// tick with no reading and may be negative, where every reader of these drops a negative value as "no reading",
+    /// and a session can hold a hundred of them that a summary never draws.
+    /// </summary>
     ValueTask<IReadOnlyList<SensorBlob>> FindSensorsAsync(long sessionId, CancellationToken ct = default);
+
+    /// <summary>
+    /// The session's advanced series (owner decision D102), still encoded, with <c>t_ms</c> — the clock every one of
+    /// them is aligned to — first. For a session that stored no advanced series that is <c>t_ms</c> alone, or nothing.
+    /// </summary>
+    ValueTask<IReadOnlyList<SensorBlob>> FindAdvancedSensorsAsync(long sessionId, CancellationToken ct = default);
+
+    /// <summary>
+    /// The session's row of <c>session_advanced</c> with the machine profile it points to, or null: it was recorded
+    /// with Advanced metrics off (or before they existed).
+    /// </summary>
+    ValueTask<AdvancedSessionRow?> FindAdvancedAsync(long sessionId, CancellationToken ct = default);
 }

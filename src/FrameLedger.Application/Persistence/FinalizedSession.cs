@@ -13,4 +13,10 @@ public sealed record FinalizedSession
     public FrameBlobs? Frames { get; init; }
 
     public IReadOnlyList<SensorBlob> Sensors { get; init; } = [];
+
+    /// <summary>
+    /// The session's row of <c>session_advanced</c> (owner decision D102, schema 0023), or null when it was recorded
+    /// with Advanced metrics off. Its series are among <see cref="Sensors"/>, under names that start with <c>adv.</c>.
+    /// </summary>
+    public AdvancedSessionRow? Advanced { get; init; }
 }

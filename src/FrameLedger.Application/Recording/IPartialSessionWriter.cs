@@ -24,4 +24,10 @@ public interface IPartialSessionWriter : IDisposable
     void AppendTouches(ReadOnlySpan<long> touchQpc);
 
     void AppendNote(DateTimeOffset at, string text);
+
+    /// <summary>
+    /// The session's advanced context as JSON (owner decision D101); a later one replaces an earlier one. Never
+    /// called for a session recorded with Advanced metrics off.
+    /// </summary>
+    void AppendAdvancedContext(string json);
 }

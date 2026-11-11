@@ -38,6 +38,30 @@ public static class SeriesCodec
         return Deflate(raw);
     }
 
+    /// <summary>
+    /// A float series in which NaN means "no reading on this tick" (owner decision D102: the advanced series, whose
+    /// values may be negative). The rule above is not relaxed by this — it is a second encoder, for a series that has
+    /// gaps by nature, and <see cref="EncodeFloat32"/> still throws on a NaN. An infinity is refused here as there:
+    /// no sensor reads one.
+    /// </summary>
+    public static byte[] EncodeSparseFloat32(IReadOnlyList<float> values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+
+        byte[] raw = new byte[values.Count * sizeof(float)];
+        for (int i = 0; i < values.Count; i++)
+        {
+            if (float.IsInfinity(values[i]))
+            {
+                throw new ArgumentException($"infinity at index {i}: a sparse series carries finite values and NaN for a gap (06_DATA_MODEL §Blob encoding)", nameof(values));
+            }
+
+            BinaryPrimitives.WriteSingleLittleEndian(raw.AsSpan(i * sizeof(float)), values[i]);
+        }
+
+        return Deflate(raw);
+    }
+
     public static float[] DecodeFloat32(byte[] blob)
     {
         byte[] raw = Inflate(blob, sizeof(float));

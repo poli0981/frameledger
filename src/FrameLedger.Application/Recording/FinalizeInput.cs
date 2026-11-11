@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using FrameLedger.Application.Advanced;
 using FrameLedger.Application.Persistence;
 using FrameLedger.Application.Telemetry;
 
@@ -16,6 +17,12 @@ public sealed record FinalizeInput
     public AggregationInput? Hooked { get; init; }
 
     public IReadOnlyList<TelemetrySample> Sensors { get; init; } = [];
+
+    /// <summary>
+    /// The session's advanced context (owner decision D101): the PC's facts, its own, its series' directory and the
+    /// state of each source. Null when it was recorded with Advanced metrics off — it then stores nothing of them.
+    /// </summary>
+    public AdvancedSessionData? Advanced { get; init; }
 
     /// <summary><c>06_DATA_MODEL</c> §Retention: raw blobs for the last N sessions per game.</summary>
     public int RetentionKeep { get; init; } = SessionFinalizer.DefaultRetentionKeep;

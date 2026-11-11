@@ -13,6 +13,8 @@ internal sealed class RawSeriesCodec : ISeriesCodec
 
     public byte[] EncodeFloat32(ReadOnlySpan<float> values) => MemoryMarshal.AsBytes(values).ToArray();
 
+    public byte[] EncodeSparseFloat32(ReadOnlySpan<float> values) => MemoryMarshal.AsBytes(values).ToArray();
+
     public byte[] EncodeUInt16(ReadOnlySpan<ushort> values) => MemoryMarshal.AsBytes(values).ToArray();
 
     public byte[] EncodeUInt32(ReadOnlySpan<uint> values) => MemoryMarshal.AsBytes(values).ToArray();

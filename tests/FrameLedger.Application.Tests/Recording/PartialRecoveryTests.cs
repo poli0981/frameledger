@@ -2,7 +2,9 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using FluentAssertions;
+using FrameLedger.Application.Advanced;
 using FrameLedger.Application.Recording;
+using FrameLedger.Application.Telemetry;
 using FrameLedger.Domain.Sessions;
 using FrameLedger.Shared;
 
@@ -209,5 +211,47 @@ public sealed class PartialRecoveryTests
 
         first.Should().BeEmpty();
         second.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ARecoveredSessionKeepsItsAdvancedReadingsAndItsContextAndOneWithoutAnyStoresNone()
+    {
+        // Owner decision D101: the file carries the readings beside each sample and the context in a chunk of its own,
+        // so an Agent that died mid-session loses neither. A file with no context was recorded with the option off.
+        (PartialRecovery recovery, FakePartialSessionStore store, FakeSessionRepository repo) = Make();
+        var on = Guid.NewGuid();
+        var off = Guid.NewGuid();
+        List<TelemetrySample> sensors = SessionFixtures.Sensors(40);
+        sensors[0] = sensors[0] with { Advanced = [new AdvancedReading("adv.nvapi.pstate", 0)] };
+        sensors[5] = sensors[5] with { Advanced = [new AdvancedReading("adv.nvapi.pstate", 8)] };
+        var data = new AdvancedSessionData(
+            [new AdvancedFact("nvapi.gpu.rt_cores", Instance: null, AdvancedValue.Of(84))],
+            [],
+            [],
+            new AdvancedSources(AdvancedSourceStatus.Reading, NvapiCode: null, AdvancedSourceStatus.Reading, AdvancedSourceStatus.NotElevated));
+        foreach (Guid guid in (Guid[])[on, off])
+        {
+            var entry = (FakePartialSessionStore.Entry)store.Create(Header(guid));
+            entry.AppendRecords(0, SessionFixtures.Stream(4_000, FlMeasured.OutputRes | FlMeasured.PresentArgs).ToArray());
+            entry.AppendSensors((guid == on ? sensors : SessionFixtures.Sensors(40)).ToArray());
+            if (guid == on)
+            {
+                entry.AppendAdvancedContext(AdvancedJson.OfContext(data));
+            }
+
+            entry.AppendTick(new PartialTick(400, 400, 0, 0, 2, SessionFixtures.StartedAt.AddSeconds(41).ToUnixTimeMilliseconds(),
+                new FlWriterState { Status = 1, HooksInstalledMask = 1, FaultCount = 0 }));
+        }
+
+        IReadOnlyList<RecoveryOutcome> outcomes = await recovery.RecoverAsync(TestContext.Current.CancellationToken);
+
+        outcomes.Should().HaveCount(2).And.OnlyContain(static o => o.Status == RecoveryStatus.Recovered);
+        Persistence.FinalizedSession withThem = repo.Stored.Single(s => s.Row.SessionGuid == on);
+        Persistence.FinalizedSession without = repo.Stored.Single(s => s.Row.SessionGuid == off);
+        withThem.Advanced.Should().NotBeNull();
+        withThem.Advanced!.MachineFactsJson.Should().Contain("nvapi.gpu.rt_cores");
+        withThem.Sensors.Should().Contain(static s => string.Equals(s.Series, "adv.nvapi.pstate", StringComparison.Ordinal));
+        without.Advanced.Should().BeNull();
+        without.Sensors.Should().NotContain(static s => s.Series.StartsWith("adv.", StringComparison.Ordinal));
     }
 }

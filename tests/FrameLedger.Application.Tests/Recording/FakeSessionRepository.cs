@@ -126,5 +126,15 @@ internal sealed class FakeSessionRepository : ISessionRepository
         ValueTask.FromResult(sessionId >= 1 && sessionId <= Stored.Count ? Stored[(int)sessionId - 1].Segments : []);
 
     public ValueTask<IReadOnlyList<SensorBlob>> FindSensorsAsync(long sessionId, CancellationToken ct = default) =>
-        ValueTask.FromResult(sessionId >= 1 && sessionId <= Stored.Count ? Stored[(int)sessionId - 1].Sensors : []);
+        ValueTask.FromResult<IReadOnlyList<SensorBlob>>(sessionId >= 1 && sessionId <= Stored.Count
+            ? [.. Stored[(int)sessionId - 1].Sensors.Where(static s => !s.Series.StartsWith("adv.", StringComparison.Ordinal))]
+            : []);
+
+    public ValueTask<IReadOnlyList<SensorBlob>> FindAdvancedSensorsAsync(long sessionId, CancellationToken ct = default) =>
+        ValueTask.FromResult<IReadOnlyList<SensorBlob>>(sessionId >= 1 && sessionId <= Stored.Count
+            ? [.. Stored[(int)sessionId - 1].Sensors.Where(static s => string.Equals(s.Series, "t_ms", StringComparison.Ordinal) || s.Series.StartsWith("adv.", StringComparison.Ordinal))]
+            : []);
+
+    public ValueTask<AdvancedSessionRow?> FindAdvancedAsync(long sessionId, CancellationToken ct = default) =>
+        ValueTask.FromResult(sessionId >= 1 && sessionId <= Stored.Count ? Stored[(int)sessionId - 1].Advanced : null);
 }

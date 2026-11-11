@@ -51,7 +51,28 @@ public sealed class SqliteSessionRepository : ISessionRepository
         "SELECT swapchain_id, start_frame, end_frame, render_w, render_h, output_w, output_h, upscaler, upscaler_quality, fg_mode, "
         + "native_fps, displayed_fps, p1_low_fps FROM session_segments WHERE session_id = @sessionId ORDER BY start_frame, swapchain_id";
 
-    private const string _selectSensors = "SELECT series, hz, codec, data FROM sensor_blobs WHERE session_id = @sessionId ORDER BY series";
+    // The fixed series; an advanced one (schema 0023) is a row of the same table under a name that starts with 'adv.'.
+    // In LIKE the dot is a literal and the only wildcard is the trailing %, so 'adv.%' is exactly that prefix.
+    private const string _selectSensors =
+        "SELECT series, hz, codec, data FROM sensor_blobs WHERE session_id = @sessionId AND series NOT LIKE 'adv.%' ORDER BY series";
+
+    private const string _selectAdvancedSensors =
+        "SELECT series, hz, codec, data FROM sensor_blobs WHERE session_id = @sessionId AND (series = 't_ms' OR series LIKE 'adv.%') "
+        + "ORDER BY CASE WHEN series = 't_ms' THEN 0 ELSE 1 END, series";
+
+    // One row per distinct set of facts: a second session with the same set finds the first one's row.
+    private const string _insertMachineProfile =
+        "INSERT INTO machine_profiles (hash, facts_json, captured_at) VALUES (@hash, @facts, @at) ON CONFLICT(hash) DO NOTHING";
+
+    private const string _selectMachineProfile = "SELECT id FROM machine_profiles WHERE hash = @hash";
+
+    private const string _insertAdvanced =
+        "INSERT INTO session_advanced (session_id, machine_profile_id, facts_json, stats_json, series_json) "
+        + "VALUES (@id, @profileId, @facts, @stats, @series)";
+
+    private const string _selectAdvanced =
+        "SELECT a.facts_json, a.stats_json, a.series_json, m.hash, m.facts_json FROM session_advanced a "
+        + "LEFT JOIN machine_profiles m ON m.id = a.machine_profile_id WHERE a.session_id = @sessionId";
 
     // One pass over the aggregate columns; SUM(capture_tier = 1) is SQLite's boolean-as-integer idiom.
     private const string _summarise =
@@ -111,6 +132,11 @@ public sealed class SqliteSessionRepository : ISessionRepository
             }
 
             await InsertSensorsAsync(c, tx, id, session.Sensors, token).ConfigureAwait(false);
+            if (session.Advanced is AdvancedSessionRow advanced)
+            {
+                await InsertAdvancedAsync(c, tx, id, advanced, session.Row.StartedAt, token).ConfigureAwait(false);
+            }
+
             return id;
         }, ct);
     }
@@ -185,6 +211,23 @@ public sealed class SqliteSessionRepository : ISessionRepository
         _db.ReadAsync((c, token) => SqliteReaders.ReadAllAsync(
             c, new CommandDefinition(_selectSensors, new { sessionId }, cancellationToken: token),
             static r => new SensorBlob { Series = r.GetString(0), Hz = r.GetDouble(1), Codec = r.GetString(2), Data = (byte[])r.GetValue(3) }), ct);
+
+    public ValueTask<IReadOnlyList<SensorBlob>> FindAdvancedSensorsAsync(long sessionId, CancellationToken ct = default) =>
+        _db.ReadAsync((c, token) => SqliteReaders.ReadAllAsync(
+            c, new CommandDefinition(_selectAdvancedSensors, new { sessionId }, cancellationToken: token),
+            static r => new SensorBlob { Series = r.GetString(0), Hz = r.GetDouble(1), Codec = r.GetString(2), Data = (byte[])r.GetValue(3) }), ct);
+
+    public ValueTask<AdvancedSessionRow?> FindAdvancedAsync(long sessionId, CancellationToken ct = default) =>
+        _db.ReadAsync((c, token) => SqliteReaders.ReadOneAsync(
+            c, new CommandDefinition(_selectAdvanced, new { sessionId }, cancellationToken: token),
+            static r => new AdvancedSessionRow
+            {
+                FactsJson = r.GetString(0),
+                StatsJson = r.IsDBNull(1) ? null : r.GetString(1),
+                SeriesJson = r.GetString(2),
+                MachineHash = r.IsDBNull(3) ? null : r.GetString(3),
+                MachineFactsJson = r.IsDBNull(4) ? null : r.GetString(4),
+            }), ct);
 
     public ValueTask<IReadOnlyList<SessionRow>> ListRecentAsync(int count, CancellationToken ct = default)
     {
@@ -329,6 +372,23 @@ public sealed class SqliteSessionRepository : ISessionRepository
     }
 
     private static object Optional(ReadOnlyMemory<byte>? blob) => blob is { } b ? b.ToArray() : DBNull.Value;
+
+    /// <summary>
+    /// The session's row of <c>session_advanced</c>, and the machine profile it points to — found by its hash when a
+    /// session before it had the same facts, inserted when none had. Inside the session's own transaction.
+    /// </summary>
+    private static async Task InsertAdvancedAsync(SqliteConnection c, SqliteTransaction tx, long id, AdvancedSessionRow advanced, DateTimeOffset startedAt, CancellationToken ct)
+    {
+        long? profileId = null;
+        if (advanced is { MachineHash: { } hash, MachineFactsJson: { } facts })
+        {
+            await c.ExecuteAsync(new CommandDefinition(_insertMachineProfile, new { hash, facts, at = startedAt.ToUnixTimeMilliseconds() }, tx, cancellationToken: ct)).ConfigureAwait(false);
+            profileId = await c.ExecuteScalarAsync<long>(new CommandDefinition(_selectMachineProfile, new { hash }, tx, cancellationToken: ct)).ConfigureAwait(false);
+        }
+
+        await c.ExecuteAsync(new CommandDefinition(
+            _insertAdvanced, new { id, profileId, facts = advanced.FactsJson, stats = advanced.StatsJson, series = advanced.SeriesJson }, tx, cancellationToken: ct)).ConfigureAwait(false);
+    }
 
     private static async Task InsertSensorsAsync(SqliteConnection c, SqliteTransaction tx, long id, IReadOnlyList<SensorBlob> sensors, CancellationToken ct)
     {

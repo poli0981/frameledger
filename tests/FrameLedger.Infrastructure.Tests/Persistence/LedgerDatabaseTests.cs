@@ -23,7 +23,7 @@ public sealed class LedgerDatabaseTests
     private static readonly string[] _tables =
     [
         "schema_migrations", "games", "hardware_snapshots", "sessions", "session_segments", "frame_blobs",
-        "sensor_blobs", "session_annotations", "settings", "legal_acceptance",
+        "sensor_blobs", "session_annotations", "settings", "legal_acceptance", "machine_profiles", "session_advanced",
     ];
 
     [Fact]
@@ -125,6 +125,19 @@ public sealed class LedgerDatabaseTests
     {
         foreach (string sql in MigrationRunner.Scripts().Where(p => p.Key > version).OrderByDescending(static p => p.Key).Select(static p => p.Value))
         {
+            // 0023 is the first script since 0001 that creates a table: what a later script created is dropped, an
+            // index before its table and the tables in the reverse of the order they were created in (the second one
+            // references the first).
+            foreach (Match m in Regex.Matches(sql, @"^CREATE\s+INDEX\s+(?<name>\w+)", RegexOptions.IgnoreCase | RegexOptions.Multiline, TimeSpan.FromSeconds(1)))
+            {
+                await c.ExecuteAsync(new CommandDefinition($"DROP INDEX IF EXISTS {m.Groups["name"].Value}", cancellationToken: Ct)).ConfigureAwait(false);
+            }
+
+            foreach (Match m in Regex.Matches(sql, @"^CREATE\s+TABLE\s+(?<name>\w+)", RegexOptions.IgnoreCase | RegexOptions.Multiline, TimeSpan.FromSeconds(1)).Reverse())
+            {
+                await c.ExecuteAsync(new CommandDefinition($"DROP TABLE IF EXISTS {m.Groups["name"].Value}", cancellationToken: Ct)).ConfigureAwait(false);
+            }
+
             foreach (Match m in Regex.Matches(sql, @"ALTER\s+TABLE\s+(?<table>\w+)\s+ADD\s+COLUMN\s+(?<column>\w+)", RegexOptions.IgnoreCase,
                          TimeSpan.FromSeconds(1)).Reverse())
             {
@@ -900,5 +913,66 @@ public sealed class LedgerDatabaseTests
         scripts.Keys.Should().StartWith(1);
         scripts.Keys.Should().BeInAscendingOrder().And.OnlyHaveUniqueItems();
         scripts[1].Should().Contain("CREATE TABLE games");
+    }
+
+    /// <summary>
+    /// Schema 0023 (2026-11-11, owner decisions D101 and D102): two tables of their own for Advanced metrics — the first
+    /// CREATE TABLE since 0001 — and nothing added to <c>sessions</c>. A session written before has no row in either.
+    /// </summary>
+    [Fact]
+    public async Task ScriptTwentyThreeCreatesTheTwoAdvancedTablesAndAnEarlierSessionHasNoRow()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        MigrationRunner.LatestVersion.Should().BeGreaterThanOrEqualTo(23);
+        long gameId = (await new SqliteGameRepository(f.Db).EnsureAsync(
+            new() { ExePath = @"C:\Games\A\a.exe", SizeBytes = 1, MtimeUnixMs = 2 }, "A", Ct).ConfigureAwait(true)).Id;
+        long snapshotId = await new SqliteHardwareSnapshotRepository(f.Db).EnsureAsync(new HardwareSnapshot { GpuName = "g" }, DateTimeOffset.UnixEpoch, Ct)
+            .ConfigureAwait(true);
+        string path = f.Path;
+        await f.Db.DisposeAsync().ConfigureAwait(true);
+        var c22 = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Pooling = false }.ToString());
+        await using (c22.ConfigureAwait(true))
+        {
+            await c22.OpenAsync(Ct).ConfigureAwait(true);
+            await RewindToAsync(c22, 22).ConfigureAwait(true);
+            (await c22.ExecuteScalarAsync<long>(new CommandDefinition(
+                "SELECT COUNT(*) FROM sqlite_master WHERE name IN ('machine_profiles', 'session_advanced', 'ix_session_advanced_profile')", cancellationToken: Ct)).ConfigureAwait(true))
+                .Should().Be(0, "a ledger at schema 22 has neither table");
+            await c22.ExecuteAsync(new CommandDefinition(
+                "INSERT INTO sessions (session_guid, game_id, snapshot_id, started_at, ended_at, duration_s, qpc_epoch, qpc_frequency, capture_tier, capture_mode, exit_status, frame_count, app_frame_count, displayed_frame_count, dropped_frames) "
+                + "VALUES ('00000000-0000-0000-0000-000000000023', @gameId, @snapshotId, 0, 60000, 60, 0, 10000000, 1, 'attach', 'normal', 6000, 6000, 6000, 0)",
+                new { gameId, snapshotId }, cancellationToken: Ct)).ConfigureAwait(true);
+        }
+
+        LedgerDatabase migrated = await LedgerDatabase.OpenAsync(path, ct: Ct).ConfigureAwait(true);
+        await using (migrated.ConfigureAwait(true))
+        {
+            migrated.SchemaVersion.Should().Be(MigrationRunner.LatestVersion);
+            IReadOnlyList<string> profileColumns = await migrated.ReadAsync(async (c, ct) => (IReadOnlyList<string>)[.. await c.QueryAsync<string>(new CommandDefinition(
+                "SELECT name FROM pragma_table_info('machine_profiles') ORDER BY cid", cancellationToken: ct)).ConfigureAwait(false)], Ct).ConfigureAwait(true);
+            IReadOnlyList<string> sessionColumns = await migrated.ReadAsync(async (c, ct) => (IReadOnlyList<string>)[.. await c.QueryAsync<string>(new CommandDefinition(
+                "SELECT name FROM pragma_table_info('session_advanced') ORDER BY cid", cancellationToken: ct)).ConfigureAwait(false)], Ct).ConfigureAwait(true);
+            profileColumns.Should().Equal("id", "hash", "facts_json", "captured_at");
+            sessionColumns.Should().Equal("session_id", "machine_profile_id", "facts_json", "stats_json", "series_json");
+
+            var sessions = new SqliteSessionRepository(migrated);
+            SessionRow before = (await sessions.FindAsync(Guid.Parse("00000000-0000-0000-0000-000000000023"), Ct).ConfigureAwait(true))!;
+            (await sessions.FindAdvancedAsync(before.Id, Ct).ConfigureAwait(true)).Should().BeNull("a session recorded before Advanced metrics existed has none, and is never given any");
+            (await sessions.FindAdvancedSensorsAsync(before.Id, Ct).ConfigureAwait(true)).Should().BeEmpty();
+        }
+    }
+
+    [Fact]
+    public void ScriptTwentyThreeAddsNoColumnToSessionsAndNamesNoIdentifier()
+    {
+        // D102: every read of a sessions row, the JSON export and the bug bundle carry the whole row. D104: neither
+        // table has a column for a serial number, a unique id, an EDID or another program's process id.
+        string sql = MigrationRunner.Scripts()[23];
+        string statements = string.Join('\n', sql.Split('\n').Where(static l => !l.TrimStart().StartsWith("--", StringComparison.Ordinal)).Select(static l => l.Split("--")[0]));
+
+        statements.Should().NotContain("ALTER TABLE");
+        statements.Should().NotContainAny("serial", "uuid", "edid", "pid");
+        Regex.Matches(statements, @"CREATE\s+TABLE\s+(?<name>\w+)", RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(1)).Select(static m => m.Groups["name"].Value)
+            .Should().Equal("machine_profiles", "session_advanced");
     }
 }

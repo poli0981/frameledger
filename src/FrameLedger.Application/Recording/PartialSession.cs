@@ -30,4 +30,10 @@ public sealed record PartialSession
 
     /// <summary>True when the file ended inside a chunk, or a chunk failed its check: the tail was lost.</summary>
     public required bool Truncated { get; init; }
+
+    /// <summary>
+    /// The session's advanced context as the file last carried it (<c>AdvancedJson.ParseContext</c> reads it), or null:
+    /// it was recorded with Advanced metrics off, or by a build before they existed.
+    /// </summary>
+    public string? AdvancedContextJson { get; init; }
 }

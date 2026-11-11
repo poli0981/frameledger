@@ -12,6 +12,8 @@ public sealed class DeflateSeriesCodec : ISeriesCodec
 
     public byte[] EncodeFloat32(ReadOnlySpan<float> values) => SeriesCodec.EncodeFloat32(values.ToArray());
 
+    public byte[] EncodeSparseFloat32(ReadOnlySpan<float> values) => SeriesCodec.EncodeSparseFloat32(values.ToArray());
+
     public byte[] EncodeUInt16(ReadOnlySpan<ushort> values) => SeriesCodec.EncodeUInt16(values.ToArray());
 
     public byte[] EncodeUInt32(ReadOnlySpan<uint> values) => SeriesCodec.EncodeUInt32(values.ToArray());

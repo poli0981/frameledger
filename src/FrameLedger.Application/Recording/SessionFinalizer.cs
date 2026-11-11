@@ -56,6 +56,10 @@ public sealed class SessionFinalizer
     {
         ArgumentNullException.ThrowIfNull(input);
         SessionRow row = input.Skeleton;
+
+        // Advanced metrics (D102), both tiers: they are read by the Agent, not by a hook, so a session that was not
+        // hooked has them all the same. Nothing when the option was off - no series, no row.
+        (IReadOnlyList<SensorBlob> advancedBlobs, AdvancedSessionRow? advanced) = AdvancedSessionBuilder.Build(input.Sensors, input.Advanced, _codec);
         if (input.Hooked is null)
         {
             // A Tier-2 row has no frames and every sensor the machine provided (2026-09-22): the same averages a
@@ -63,7 +67,8 @@ public sealed class SessionFinalizer
             return new FinalizedSession
             {
                 Row = SessionAggregator.WithSensorAggregates(row with { Tier = CaptureTier.NotHooked }, input.Sensors),
-                Sensors = EncodeSensors(input.Sensors, row.QpcEpoch, row.QpcFrequency),
+                Sensors = [.. EncodeSensors(input.Sensors, row.QpcEpoch, row.QpcFrequency), .. advancedBlobs],
+                Advanced = advanced,
             };
         }
 
@@ -77,7 +82,8 @@ public sealed class SessionFinalizer
             {
                 FirstPresentMs = FirstPresentMs(r.Dominant, row.QpcEpoch, row.QpcFrequency),
             },
-            Sensors = EncodeSensors(input.Sensors, row.QpcEpoch, row.QpcFrequency),
+            Sensors = [.. EncodeSensors(input.Sensors, row.QpcEpoch, row.QpcFrequency), .. advancedBlobs],
+            Advanced = advanced,
         };
     }
 

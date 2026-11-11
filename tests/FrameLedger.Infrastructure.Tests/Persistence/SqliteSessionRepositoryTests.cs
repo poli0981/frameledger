@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using System.Security.Cryptography;
+using System.Text;
 using Dapper;
 using FluentAssertions;
 using FrameLedger.Application.Persistence;
@@ -503,5 +505,109 @@ public sealed class SqliteSessionRepositoryTests
         (await repo.CountSuccessfulUnderGrantAsync(gameId, "NetEase Yidun", granted, Ct)).Should().Be(2);
         (await repo.CountSuccessfulUnderGrantAsync(gameId, "NetEase Yidun", granted.AddMinutes(30), Ct)).Should().Be(1, "a later grant starts its own trial");
         (await repo.CountSuccessfulUnderGrantAsync(gameId + 1, "NetEase Yidun", granted, Ct)).Should().Be(0);
+    }
+
+    private const string _advancedFacts = "{\"facts\":[{\"id\":\"nvapi.session.vrr_enabled\",\"number\":1}],\"sources\":{\"nvapi\":\"Reading\",\"sensors\":\"Reading\",\"elevatedSensors\":\"NotElevated\"}}";
+
+    private static AdvancedSessionRow Advanced(string? machineFacts = "[{\"id\":\"nvapi.gpu.rt_cores\",\"number\":84}]") => new()
+    {
+        MachineFactsJson = machineFacts,
+        MachineHash = machineFacts is null ? null : Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(machineFacts))),
+        FactsJson = _advancedFacts,
+        StatsJson = "{\"adv.nvapi.pstate\":{\"n\":2,\"mean\":0,\"median\":0,\"min\":0,\"max\":0}}",
+        SeriesJson = "{\"series\":[],\"dropped\":0}",
+    };
+
+    private static SensorBlob[] SensorsWithAdvanced() =>
+    [
+        new() { Series = "t_ms", Hz = 1, Codec = SeriesCodec.Tag, Data = SeriesCodec.EncodeFloat32([0f, 1000f, 2000f]) },
+        new() { Series = "gpu_temp", Hz = 1, Codec = SeriesCodec.Tag, Data = SeriesCodec.EncodeFloat32([60f, 61f, 62f]) },
+        new() { Series = "adv.nvapi.pstate", Hz = 1, Codec = SeriesCodec.Tag, Data = SeriesCodec.EncodeSparseFloat32([0f, float.NaN, 0f]) },
+        new() { Series = "adv.lhm.board.voltage.lpc_0_7", Hz = 1, Codec = SeriesCodec.Tag, Data = SeriesCodec.EncodeSparseFloat32([-11.97f, float.NaN, float.NaN]) },
+    ];
+
+    [Fact]
+    public async Task AnAdvancedSessionStoresItsRowAndItsSeriesAndTheFixedReadNeverSeesThem()
+    {
+        // Schema 0023 (owner decision D102). The advanced series are rows of sensor_blobs, and the read every summary
+        // and chart uses leaves them out: they hold NaN and may be negative, which those readers would misread.
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        (long gameId, long snapshotId) = await SeedAsync(f);
+        var repo = new SqliteSessionRepository(f.Db);
+        AdvancedSessionRow advanced = Advanced();
+
+        long id = await repo.InsertFinalizedAsync(new FinalizedSession { Row = Row(gameId, snapshotId), Sensors = SensorsWithAdvanced(), Advanced = advanced }, Ct);
+
+        (await repo.FindAdvancedAsync(id, Ct)).Should().Be(advanced);
+        (await repo.FindSensorsAsync(id, Ct)).Select(static s => s.Series).Should().Equal("gpu_temp", "t_ms");
+        IReadOnlyList<SensorBlob> series = await repo.FindAdvancedSensorsAsync(id, Ct);
+        series.Select(static s => s.Series).Should().Equal("t_ms", "adv.lhm.board.voltage.lpc_0_7", "adv.nvapi.pstate");
+        float[] rail = SeriesCodec.DecodeFloat32(series[1].Data.ToArray());
+        rail[0].Should().Be(-11.97f, "a negative reading is a reading");
+        float.IsNaN(rail[1]).Should().BeTrue("a tick with no reading is NaN");
+    }
+
+    [Fact]
+    public async Task ASessionRecordedWithTheOptionOffHasNoAdvancedRow()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        (long gameId, long snapshotId) = await SeedAsync(f);
+        var repo = new SqliteSessionRepository(f.Db);
+
+        long id = await repo.InsertFinalizedAsync(new FinalizedSession { Row = Row(gameId, snapshotId), Sensors = [.. SensorsWithAdvanced().Take(2)] }, Ct);
+
+        (await repo.FindAdvancedAsync(id, Ct)).Should().BeNull("that absence is how the App says the option was off when it was recorded");
+        (await repo.FindAdvancedSensorsAsync(id, Ct)).Select(static s => s.Series).Should().Equal("t_ms");
+        (await f.Db.ReadAsync((c, ct) => c.ExecuteScalarAsync<long>(new CommandDefinition("SELECT COUNT(*) FROM machine_profiles", cancellationToken: ct)), Ct)).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task TheFactsOfThePcAreStoredOncePerDistinctSet()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        (long gameId, long snapshotId) = await SeedAsync(f);
+        var repo = new SqliteSessionRepository(f.Db);
+        DateTimeOffset t0 = DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_000_000);
+
+        long first = await repo.InsertFinalizedAsync(new FinalizedSession { Row = Row(gameId, snapshotId, started: t0), Advanced = Advanced() }, Ct);
+        long second = await repo.InsertFinalizedAsync(new FinalizedSession { Row = Row(gameId, snapshotId, started: t0.AddHours(1)), Advanced = Advanced() }, Ct);
+        long changed = await repo.InsertFinalizedAsync(new FinalizedSession { Row = Row(gameId, snapshotId, started: t0.AddHours(2)), Advanced = Advanced("[{\"id\":\"nvapi.gpu.rt_cores\",\"number\":96}]") }, Ct);
+        long none = await repo.InsertFinalizedAsync(new FinalizedSession { Row = Row(gameId, snapshotId, started: t0.AddHours(3)), Advanced = Advanced(machineFacts: null) }, Ct);
+
+        IReadOnlyList<(long Session, long? Profile)> links = await f.Db.ReadAsync(async (c, ct) => (IReadOnlyList<(long, long?)>)[.. await c.QueryAsync<(long, long?)>(new CommandDefinition(
+            "SELECT session_id, machine_profile_id FROM session_advanced ORDER BY session_id", cancellationToken: ct)).ConfigureAwait(false)], Ct);
+        links.Select(static l => l.Session).Should().Equal(first, second, changed, none);
+        links[0].Profile.Should().NotBeNull().And.Be(links[1].Profile, "the same facts are one row");
+        links[2].Profile.Should().NotBeNull().And.NotBe(links[0].Profile, "a card with other facts is another row");
+        links[3].Profile.Should().BeNull("no source had a fact of the PC");
+        (await f.Db.ReadAsync((c, ct) => c.ExecuteScalarAsync<long>(new CommandDefinition("SELECT COUNT(*) FROM machine_profiles", cancellationToken: ct)), Ct)).Should().Be(2);
+        (await f.Db.ReadAsync((c, ct) => c.ExecuteScalarAsync<long>(new CommandDefinition("SELECT captured_at FROM machine_profiles ORDER BY id LIMIT 1", cancellationToken: ct)), Ct))
+            .Should().Be(t0.ToUnixTimeMilliseconds(), "the first session that had the set dates it");
+        (await repo.FindAdvancedAsync(none, Ct))!.MachineFactsJson.Should().BeNull();
+        (await repo.FindAdvancedAsync(second, Ct))!.MachineFactsJson.Should().Be(Advanced().MachineFactsJson);
+    }
+
+    [Fact]
+    public async Task DeletingASessionTakesItsAdvancedRowAndTheSweepTakesItsSeriesAndKeepsTheRow()
+    {
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        (long gameId, long snapshotId) = await SeedAsync(f);
+        var repo = new SqliteSessionRepository(f.Db);
+        DateTimeOffset t0 = DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_000_000);
+        long older = await repo.InsertFinalizedAsync(new FinalizedSession { Row = Row(gameId, snapshotId, started: t0), Sensors = SensorsWithAdvanced(), Advanced = Advanced() }, Ct);
+        long newer = await repo.InsertFinalizedAsync(new FinalizedSession { Row = Row(gameId, snapshotId, started: t0.AddHours(1)), Sensors = SensorsWithAdvanced(), Advanced = Advanced() }, Ct);
+
+        // Retention keeps the raw series of the last session only: the older one's advanced series go with its others,
+        // and its facts and statistics - aggregates - stay.
+        await repo.SweepRetentionAsync(gameId, keep: 1, Ct);
+
+        (await repo.FindAdvancedSensorsAsync(older, Ct)).Should().BeEmpty();
+        (await repo.FindAdvancedAsync(older, Ct)).Should().NotBeNull("the facts and the statistics outlive the raw series");
+        (await repo.FindAdvancedSensorsAsync(newer, Ct)).Should().HaveCount(3);
+
+        await repo.DeleteSessionsAsync(gameId, Ct);
+
+        (await f.Db.ReadAsync((c, ct) => c.ExecuteScalarAsync<long>(new CommandDefinition("SELECT COUNT(*) FROM session_advanced", cancellationToken: ct)), Ct)).Should().Be(0, "a session deleted takes its row with it");
+        (await f.Db.ReadAsync((c, ct) => c.ExecuteScalarAsync<long>(new CommandDefinition("SELECT COUNT(*) FROM machine_profiles", cancellationToken: ct)), Ct)).Should().Be(1, "a profile no session points to is left, as a hardware snapshot is");
     }
 }

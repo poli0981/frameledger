@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
+using FrameLedger.Application.Advanced;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Telemetry;
 using FrameLedger.Shared;
@@ -26,6 +27,8 @@ public sealed class PartialSessionWriter : IDisposable
     private readonly TimeSpan _interval;
     private readonly List<TelemetrySample> _sensors = [];
 
+    private string? _advancedContext;
+    private string? _advancedContextWritten;
     private int _recordsWritten;
     private int _gapsWritten;
     private int _sensorsWritten;
@@ -52,6 +55,21 @@ public sealed class PartialSessionWriter : IDisposable
         ArgumentNullException.ThrowIfNull(samples);
         _sensors.AddRange(samples);
     }
+
+    /// <summary>
+    /// The session's advanced context (owner decision D101), kept for the finalizer and written to the file with the
+    /// next flush — and again only when it has changed, so a context that stays the same is in the file once. Never
+    /// called for a session recorded with Advanced metrics off.
+    /// </summary>
+    public void SetAdvancedContext(AdvancedSessionData data)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        Advanced = data;
+        _advancedContext = AdvancedJson.OfContext(data);
+    }
+
+    /// <summary>The context last given to <see cref="SetAdvancedContext"/>, or null.</summary>
+    public AdvancedSessionData? Advanced { get; private set; }
 
     /// <summary>A state transition: written at once, never batched, because it is the breadcrumb.</summary>
     public void Note(string text)
@@ -93,6 +111,12 @@ public sealed class PartialSessionWriter : IDisposable
         {
             _file.AppendSensors([.. _sensors.Skip(_sensorsWritten)]);
             _sensorsWritten = _sensors.Count;
+        }
+
+        if (_advancedContext is not null && !string.Equals(_advancedContext, _advancedContextWritten, StringComparison.Ordinal))
+        {
+            _file.AppendAdvancedContext(_advancedContext);
+            _advancedContextWritten = _advancedContext;
         }
 
         if (progress.TouchQpc.Count > _touchesWritten)

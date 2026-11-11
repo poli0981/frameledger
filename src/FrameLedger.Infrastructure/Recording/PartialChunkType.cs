@@ -35,4 +35,18 @@ internal enum PartialChunkType
     /// read, so a beta.11 <c>.partial</c> recovers (without game memory, which it never had).
     /// </summary>
     SensorsWide = 8,
+
+    /// <summary>
+    /// The advanced readings of the samples of the <see cref="SensorsWide"/> chunk before it (owner decision D101):
+    /// <c>AdvancedSampleCodec</c> — the names used, then per sample its QPC and its (name, value) pairs. Written only
+    /// when a sample of the batch carries any, so a session recorded with the option off has none.
+    /// </summary>
+    SensorsAdvanced = 9,
+
+    /// <summary>
+    /// UTF-8 JSON of the session's advanced context — the PC's facts, its own, its series' directory, each source's
+    /// state (<c>Application.Advanced.AdvancedJson.OfContext</c>) — so a session that is recovered keeps them. The
+    /// last one wins.
+    /// </summary>
+    AdvancedContext = 10,
 }

@@ -15,6 +15,13 @@ public interface ISeriesCodec
 
     byte[] EncodeFloat32(ReadOnlySpan<float> values);
 
+    /// <summary>
+    /// A float series in which <b>NaN means "no reading on this tick"</b> — the advanced series only (owner decision
+    /// D102), whose values may be negative, so −1 cannot mark a gap. Every other value must be finite. It is read back
+    /// with the same decoder as <see cref="EncodeFloat32"/>, which still refuses NaN: a frame time has no gaps.
+    /// </summary>
+    byte[] EncodeSparseFloat32(ReadOnlySpan<float> values);
+
     byte[] EncodeUInt16(ReadOnlySpan<ushort> values);
 
     byte[] EncodeUInt32(ReadOnlySpan<uint> values);
