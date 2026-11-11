@@ -22,6 +22,49 @@ namespace FrameLedger.Infrastructure.Tests.Telemetry;
 public sealed class LhmRealHardwareTests
 {
     [Fact]
+    public void TwoUsersOfTheRealLibraryOneLetsGoAndTheOtherStillReads()
+    {
+        // The shape that failed on the owner's PC (2026-11-12): a session's source closes while the Advanced reader
+        // reads on. Unelevated this cannot show the fault itself - that needs PawnIO and the processor group - so it
+        // asserts what LhmLibrary promises of the real Computer: the second user's tree is still there and still
+        // updates, the first one's Computer is parked and handed to the next user, and the last close leaves nothing.
+        LhmLibrary library = LhmLibrary.Process;
+        int usersBefore = library.Users;
+        int parkedBefore = library.Parked;
+        var reader = new LhmComputerAdapter(LhmGroups.Gpu);
+        var session = new LhmComputerAdapter(LhmGroups.Gpu);
+        try
+        {
+            reader.Open();
+            session.Open();
+            int devices = reader.Hardware.Count;
+
+            session.Close();
+
+            library.Users.Should().Be(usersBefore + 1);
+            reader.Invoking(static r => r.Update()).Should().NotThrow("its library was not closed under it");
+            reader.Hardware.Should().HaveCount(devices);
+
+            var next = new LhmComputerAdapter(LhmGroups.Gpu);
+            next.Open();
+            library.Parked.Should().Be(parkedBefore, "the next session took the parked Computer rather than opening another");
+            next.Hardware.Should().HaveCount(devices);
+            next.Close();
+        }
+        finally
+        {
+            session.Close();
+            reader.Close();
+        }
+
+        library.Users.Should().Be(usersBefore);
+        if (usersBefore == 0)
+        {
+            library.Parked.Should().Be(0, "the last user's close closes every parked Computer with its own");
+        }
+    }
+
+    [Fact]
     public void TheRealLibraryEitherSamplesOrDisablesAndNeverClaimsAFieldItDidNotRead()
     {
         using var source = new LhmTelemetrySource(new LhmComputerAdapter(enableCpuAndMemory: false),

@@ -159,6 +159,31 @@ None of these is an owner decision; each was found while building, and is writte
 - **Whether any shipping title chains `sl::DLSSOptions` into `slEvaluateFeature`** is not known. If none of the
   owner's games does, the six `sl.dlss.*` entries read N/A everywhere until train D, and the page already says why.
 - **The aliasable part of FSR's memory** is read and published and not shown: the catalog has one memory entry.
+- **What the owner's first evening with it showed** (2026-11-12, read from a copy of the ledger and the Agent's log;
+  ten hooked sessions on eight games, no fault in any, the Overlay `Ready` at every end):
+  - **Read from a real game for the first time: Lies of P** (FSR 3 through `amd_fidelityfx_dx12.dll` 1.0.1, the
+    SDK 1.1.x monolith) — sharpening on at 0.5, jitter up to 0.48 / 0.49 of a pixel, pre-exposure 0.25–1, a vertical
+    field of view from 21.6° to 73.7°, no flag, and a reported frame time whose median is 16.67 ms beside a native
+    rate of 55.6 FPS. The series starts 83 seconds in and has no gap after. Whether these match the game's own
+    settings is still the owner's to say (item 38 (c)).
+  - **`cameraNear` is absent there and `cameraFar` is 10.** Most likely the game runs an inverted, infinite depth
+    and passes `FLT_MAX` for the plane at infinity, which the Overlay refuses as a value nobody set. "Infinite" would
+    be the true answer. It is a change in code loaded into a game: decide it in beta.41's plan, not before.
+  - **Every other game said *the game made none of the calls***, as expected: all ran DLSS. Dying Light: The Beast
+    evaluates DLSS through Streamline and chains no `DLSSOptions` — the first evidence on that open question, and
+    it is a no. Valor Mortis, Phantom Blade Zero, Clair Obscur and Kingdom Come: Deliverance II ship AMD's FSR 3.1+
+    libraries and did not upscale through them in these sessions, so **no FSR 3.1+ title has been read yet**.
+  - **The option off stored nothing** (Black Myth: Wukong, one session each way), and **a game under the user-mode
+    anti-cheat exception ran with it on** (Girls' Frontline 2, trial 1 of 2).
+  - **Valor Mortis ended with an access violation 51 seconds after injection, once**; the next launch ran fourteen
+    minutes on the same build. The Overlay counted no fault and Windows logged no application error. Not attributed
+    and not ruled out; its crash count stands at 1, and a second such end switches its hooking off.
+  - **The sensor library was closed under its other users** — a defect of train A that only an elevated Agent with
+    PawnIO can show. `20_OPEN_QUESTIONS` §M13 has what was seen; `LhmLibrary` is the fix; the owner's next sessions
+    say whether it holds.
+  - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
+    sensors "have never been read on real hardware".** They have now been read on one PC and compared with nothing.
+    The sentence is the owner's to reword.
 - ~~**SonarCloud on #398** had not answered when this was written; #397's three findings are fixed in #398.~~
   **It answered after the merge, with three findings on new code**, handled in the pull request after the release:
   two `csharpsquid:S1244` in `InGameAdvancedSampler` — a lowest and a highest float compared with `==` to tell one
@@ -173,6 +198,11 @@ None of these is an owner decision; each was found while building, and is writte
 
 ### Traps this train paid for
 
+- **A library that is "one object per user" may still be one per process underneath.** Three `Computer`s of
+  LibreHardwareMonitor shared a driver handle and mutexes; each was tested alone, unelevated, where the shared part
+  is never opened. Before composing a second instance of anything that talks to a driver, ask what its `Close`
+  closes. And `first ??= TryClose(x)` in a loop stops closing at the first throw — the test for "all are closed
+  even when one throws" caught it in the fix itself.
 - **A heredoc in the tool's shell breaks on an odd number of apostrophes** — a script with `game's` in it fails with
   "unexpected EOF while looking for matching `'`" before Python ever runs. Write the script to a file and run the
   file.
