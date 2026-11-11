@@ -79,6 +79,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.37` | [`handoff/history/0.1.0-beta.37.md`](handoff/history/0.1.0-beta.37.md) |
 | `§beta.38`, `§NEXT` (the owner's request of 2026-11-11, the four trains) | [`handoff/history/0.1.0-beta.38.md`](handoff/history/0.1.0-beta.38.md) |
 | `§beta.39`, train B's plan as approved (its `§NEXT`) | [`handoff/history/0.1.0-beta.39.md`](handoff/history/0.1.0-beta.39.md) |
+| `§beta.40`, what the owner's first sessions with it showed, train B's traps | [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta.40.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -86,150 +87,69 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-11-12, 0.1.0-beta.40: Advanced metrics inside the game, the first of train B's three releases
+## **START HERE** — 2026-11-12, 0.1.0-beta.41: one fix — the sensor library is no longer closed under its other users
 
-*Status is `docs/changelog/0.1.0-beta.40.md`; this is what no other file carries.* Train B of the owner's
-"Thông số nâng cao" was planned and approved on 2026-11-11 (D110–D117) as **three releases**, and this is the first:
-what a hooked game tells its upscaler, read from **calls the Overlay already hooked — no new patch site** — only
-while the session records Advanced metrics. Four pull requests and this one: #395 (the decisions, the struct-version
-table, §M16 measured, NFR-2 amended), #396 (shared-memory layout 5, region 5), #397 (the Overlay's reads, the
-`overlay-fields-check` gate, the overhead measured), #398 (the Agent's sampler, the catalog's reach `Game`, the
-page's words, Privacy Policy 2.16). **The design is [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B; the
-contract of the new region is [`07_IPC.md`](07_IPC.md) §Region 5; what each hooked call reads is
-[`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Hook inventory.** The plan as approved, the review that changed it and the
-order of the trains are [`handoff/history/0.1.0-beta.39.md`](handoff/history/0.1.0-beta.39.md) §NEXT.
+*Status is `docs/changelog/0.1.0-beta.41.md`; this is what no other file carries.* 0.1.0-beta.40 was released in the
+small hours of 2026-11-12 and the owner ran it that same night on eight games, as administrator with PawnIO — the
+first elevated run there has been. A copy of the ledger and the Agent's log showed the in-game readings working
+(Lies of P, the first real game read) and **a defect of train A that only that elevation can show**: three
+LibreHardwareMonitor `Computer`s in one Agent, and the library's per-process state closed by one under the others.
+This release is that fix and nothing else: #400 (0.1.0-beta.40's release facts; two comparisons SonarCloud flagged),
+#401 (`LhmLibrary`), and this one. **Everything about train B — what was built, what the owner's sessions showed,
+the traps — is [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta.40.md)**; the fix is
+[`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Advanced metrics and [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md)
+§M13.
 
-### What this train decided that the plan had not
+### What this release decided
 
-None of these is an owner decision; each was found while building, and is written where it binds.
-
-- **"On" is a request of the session's own, not a 1** (#397, `07_IPC` §Region 5). The plan had the control word as
-  0 or 1. A game outlives a session, and the Overlay's summaries with it — a second session of a game that kept
-  running would have read the first one's field-of-view range and counts. The Agent now writes a value no session of
-  that ring used, the watchdog starts its summaries afresh at a value it has not seen and names it in every
-  publication, and the reader keeps only a publication that names its own. Found while writing the injected test,
-  before anything shipped; layout 5 was changed in place (`reserved0` became `request`), which was possible only
-  because no release had carried it.
-- **One module's calls are counted**, for the memory query as for the dispatch: a loader that passes a call on to a
-  leaf's export is seen at two hooks.
-- **Five of the thirteen entries are tables**, not text (`sl.dlss.presets`, `sl.dlss.exposure`,
-  `ffx.upscale.sharpening`, `.jitter`, `.depth`): a row's name is the vendor's own member name, so nothing but a
-  switch's on/off and a flag's name needs translating. The catalog's unit and two summaries changed; no id did.
-- **What became of the in-game entries is stored with the session** (`AdvancedSources.InGame`): read, nothing seen,
-  not hooked. Without it a session whose game set its DLSS options through `slDLSSSetOptions` would look like a
-  game with no upscaler.
-- **The Disclaimer stays 2.15.** The accuracy statement gained an item, as in beta.19, beta.20 and beta.25, none of
-  which moved it; the Privacy Policy went to 2.16 with the content the plan approved.
-- **A crash dump is tried three times** (#398). Not this train's subject: `CrashDumpHelperTests` failed under the
-  full gate for the third time in two days, and the cause — `MiniDumpWriteDump` of a running process that changes
-  under it — costs a real crash its only dump in exactly the same way.
+- **D118 — the fix is released at once as 0.1.0-beta.41, and train B's numbers move by one.** D113 had named
+  beta.41 for the train's second release. Told so, the owner chose to release the fix now. The train's second
+  release is **beta.42**, its third **beta.43**, train C **beta.44**, train D **beta.45**. Released changelogs and
+  moved HANDOFF sections keep the numbers of their day; so do the comments in `fl_shm.h` and `ShmLayout.cs` (the
+  members "0.1.0-beta.41" and "beta.42" fill), **deliberately**: touching them would have changed source that is
+  loaded into a game in a release that says the game-side code is beta.40's line for line. The release that fills
+  a member rewrites its comment.
+- **The reads of the sensor library are not put under one lock**, only its opens and closes. A lock around every
+  read would have put a session's once-a-second poll behind the Advanced reader's, undoing the separate threads
+  that keep a hanging sensor from holding up the other reader.
 
 ### NEXT
 
-1. **The owner runs item 38** — this release on real games. **Nothing of train B is begun before that**: the wait
-   is what the split into three releases is for (D113).
-2. **0.1.0-beta.41, when the owner says item 38 passed**: two new hooks, `slSetConstants` and `ffxConfigure`. The
-   design is in `18` §Train B and the plan in [`handoff/history/0.1.0-beta.39.md`](handoff/history/0.1.0-beta.39.md)
-   §NEXT; region 5 already has their members (`sl*`, `ffxFg*`), so no layout changes. What to settle first, in a
-   plan of its own: `kMaxPatches = 48` against the patch count with the new rows; the window of `sl::Constants` that
-   is read, pinned by `static_assert` so that the camera members stay outside it; the overhead of a call made every
-   frame for every viewport, measured before the merge; `overlay-fields-check`'s list and its parameters for the two
-   new structs.
-3. **0.1.0-beta.42, when the owner says the one before passed**: `slGetFeatureVersion` and
-   `slGetFeatureRequirements` — calls a game makes while starting, so most sessions will say the game did not make
-   them after FrameLedger attached. The release notes and the page say so.
-4. **Trains C and D** (Reflex latency → beta.43; the Streamline state behind `slGetFeatureFunction` → beta.44) each
-   begin with a spike and end in the owner's go or no. D needs an amendment of rule 4 if it goes ahead.
+1. **The owner runs item 39** (this fix, on the PC that showed the fault) **and the rest of item 38** (an FSR 3.1+
+   title; two sessions of one running game; the cost; the values of Lies of P against the game's own settings).
+2. **0.1.0-beta.42 — train B's second release — when the owner says item 38 passed**: `slSetConstants` and
+   `ffxConfigure`. A plan of its own first. What it must settle, beside what
+   [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta.40.md) §NEXT lists (`kMaxPatches = 48`, the window
+   of `sl::Constants` pinned outside the camera members, the per-call overhead, the gate's list for the two new
+   structs):
+   - **`FLT_MAX` in an FSR depth plane.** Lies of P gave `cameraFar = 10` and no `cameraNear`; most likely the
+     plane at infinity is `FLT_MAX`, which the Overlay refuses as "nobody set this". Decide whether it is stored as
+     "infinite" — an Overlay change, with its overhead stated.
+   - **Valor Mortis.** One exit by access violation 51 seconds after injection under beta.40, none under an earlier
+     build, not attributed. Its crash count is 1; a second such end switches its hooking off. Before adding a hook
+     to that game's process, ask the owner whether it happened again.
+   - **The release numbers in the comments** of `fl_shm.h`, `ShmLayout.cs`, `hook-harness` and `guard_test.cpp` for
+     the members that release fills (D118).
+3. **0.1.0-beta.43 — the third — when the owner says the one before passed**: `slGetFeatureVersion` and
+   `slGetFeatureRequirements`.
+4. **Trains C and D** (beta.44, beta.45) each begin with a spike and end in the owner's go or no.
 
 ### Left open by this session
 
-- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
-  after this text. Record them in the next pull request, as beta.39's were in #395.~~ **Recorded 2026-11-12, in the
-  pull request after the release: 0.1.0-beta.40 was released 2026-11-11T19:30:13Z** (02:30 on the 12th in the
-  owner's time zone, which is the date the changelog carries; the legal documents' *Effective* date is the UTC one,
-  2026-11-11 — the fifth release to straddle midnight that way, after beta.9, .10, .12 and .14) from the signed tag
-  on `5268332` (#399), by run 43085044822 — green at the first attempt, one run for the one tag push. Eight assets;
-  the seven digests of `SHA256SUMS.txt` equal the ones GitHub computed; the shipped natives carry `FL_BUILD_ID
-  v0.1.0-beta.40`. The delta from beta.39 is 2,413,166 bytes beside a full package of 110,707,319 — "Delta processed
-  0452 files. 0025 patched, 0427 unchanged". The wiki was published by run 43087844607. The rehearsal on the release
-  branch (run 43082208739) had made a delta of 2,426,184 bytes with the same file counts.
-- **Nothing here was read from a real game, and nothing was seen in the running App.** The values come from
-  `hook-harness --advanced` and the FidelityFX stub; the page's new rows were loaded by its tests and looked at by
-  nobody. All of it is owner-only item 38.
-- **Whether any shipping title chains `sl::DLSSOptions` into `slEvaluateFeature`** is not known. If none of the
-  owner's games does, the six `sl.dlss.*` entries read N/A everywhere until train D, and the page already says why.
-- **The aliasable part of FSR's memory** is read and published and not shown: the catalog has one memory entry.
-- **What the owner's first evening with it showed** (2026-11-12, read from a copy of the ledger and the Agent's log;
-  ten hooked sessions on eight games, no fault in any, the Overlay `Ready` at every end):
-  - **Read from a real game for the first time: Lies of P** (FSR 3 through `amd_fidelityfx_dx12.dll` 1.0.1, the
-    SDK 1.1.x monolith) — sharpening on at 0.5, jitter up to 0.48 / 0.49 of a pixel, pre-exposure 0.25–1, a vertical
-    field of view from 21.6° to 73.7°, no flag, and a reported frame time whose median is 16.67 ms beside a native
-    rate of 55.6 FPS. The series starts 83 seconds in and has no gap after. Whether these match the game's own
-    settings is still the owner's to say (item 38 (c)).
-  - **`cameraNear` is absent there and `cameraFar` is 10.** Most likely the game runs an inverted, infinite depth
-    and passes `FLT_MAX` for the plane at infinity, which the Overlay refuses as a value nobody set. "Infinite" would
-    be the true answer. It is a change in code loaded into a game: decide it in beta.41's plan, not before.
-  - **Every other game said *the game made none of the calls***, as expected: all ran DLSS. Dying Light: The Beast
-    evaluates DLSS through Streamline and chains no `DLSSOptions` — the first evidence on that open question, and
-    it is a no. Valor Mortis, Phantom Blade Zero, Clair Obscur and Kingdom Come: Deliverance II ship AMD's FSR 3.1+
-    libraries and did not upscale through them in these sessions, so **no FSR 3.1+ title has been read yet**.
-  - **The option off stored nothing** (Black Myth: Wukong, one session each way), and **a game under the user-mode
-    anti-cheat exception ran with it on** (Girls' Frontline 2, trial 1 of 2).
-  - **Valor Mortis ended with an access violation 51 seconds after injection, once**; the next launch ran fourteen
-    minutes on the same build. The Overlay counted no fault and Windows logged no application error. Not attributed
-    and not ruled out; its crash count stands at 1, and a second such end switches its hooking off.
-  - **The sensor library was closed under its other users** — a defect of train A that only an elevated Agent with
-    PawnIO can show. `20_OPEN_QUESTIONS` §M13 has what was seen; `LhmLibrary` is the fix; the owner's next sessions
-    say whether it holds.
-  - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
-    sensors "have never been read on real hardware".** They have now been read on one PC and compared with nothing.
-    The sentence is the owner's to reword.
-- ~~**SonarCloud on #398** had not answered when this was written; #397's three findings are fixed in #398.~~
-  **It answered after the merge, with three findings on new code**, handled in the pull request after the release:
-  two `csharpsquid:S1244` in `InGameAdvancedSampler` — a lowest and a highest float compared with `==` to tell one
-  value from a range; they are now told apart by their bits, which is what was meant — and one
-  `csharpsquid:S3869`, a blocker, on `ParentDump`'s `DangerousGetHandle`. That one is **not new and not fixed**: the
-  owner accepted it in beta.24 (`13_CI_CD` §SonarCloud), #398 moved the same expression into a new method, and
-  SonarCloud tracks an issue by its place. It needs the owner's *Accept* again — item 38 (j).
-- **The `vi` strings were written by the assistant and the `ja` ones are marked `review`** — fourteen more keys and
-  the reworded Settings text.
-- **`LogNoteW`** is still there (owner-only item 36 (d)), item 37 is still unrun, and the alpha line still rests
-  (D98): no alpha follows this release.
+- **This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
+  after this text. Record them in the next pull request.
+- **The fix has not been seen to work.** It was written from the log's timing; the fault needs an elevated Agent with
+  PawnIO. Item 39 is the check, and `20_OPEN_QUESTIONS` §M13 stays open until then.
+- **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
+  sensors "have never been read on real hardware".** They have been read on one PC and compared with nothing. The
+  owner's to reword.
+- **SonarCloud's `csharpsquid:S3869` on `ParentDump.cs`** is open on `main` until the owner accepts it again (item 38
+  (j); the owner said on 2026-11-12 that they will). Until then `main`'s `sonarcloud` job is red on that one line.
+- **Items 36 (d) (`LogNoteW`) and 37 are still open**; the ledger shows part of 37 (e) happened — the elevated
+  groups opened and read — and nothing of it was compared with another tool. The alpha line still rests (D98).
 
-### Traps this train paid for
-
-- **A library that is "one object per user" may still be one per process underneath.** Three `Computer`s of
-  LibreHardwareMonitor shared a driver handle and mutexes; each was tested alone, unelevated, where the shared part
-  is never opened. Before composing a second instance of anything that talks to a driver, ask what its `Close`
-  closes. And `first ??= TryClose(x)` in a loop stops closing at the first throw — the test for "all are closed
-  even when one throws" caught it in the fix itself.
-- **A heredoc in the tool's shell breaks on an odd number of apostrophes** — a script with `game's` in it fails with
-  "unexpected EOF while looking for matching `'`" before Python ever runs. Write the script to a file and run the
-  file.
-- **A region that outlives its reader needs to say whose data it holds.** Region 4 never had the problem — it is
-  the swap chain's state, the same for any session. Region 5 holds summaries, and a summary has a beginning. Ask of
-  any new shared state: what does the second session of the same process read in its first second?
-- **SonarCloud's engine does not see a Catch2 `REQUIRE` end a path**: `REQUIRE(OpenRingFor(pid, r))` followed by
-  `r.st->…` is a null dereference to it (`cpp:S2259`, a failed gate on new code). An explicit `return` after the
-  `REQUIRE` is what it follows. And a `LARGE_INTEGER` read through `QuadPart` is initialised through `QuadPart`
-  (`cpp:S6232`) — `13_CI_CD` §SonarCloud has had the rule since #336; new code still forgot it.
-- **SonarCloud fails after the merge.** Its job is advisory and slower than the required checks, so auto-merge lands
-  the pull request first. Read its result on the merged pull request before building on it.
-- **`MA0051` counts sixty lines, comments included**, and `CaptureSession.SuperviseAsync` was at fifty-nine: one
-  line more is a build error. What a session asks once belongs where the session's state is made, not in the loop.
-- **`RCS1242` refuses `in` for a struct that is not `readonly`** — the mirror structs are not. Pass the object that
-  holds the struct and take `ref readonly` inside.
-- **`/W4 /WX` refuses `alignas` on a struct it then has to pad** (C4324): align the variable, not the type.
-- **The `.resx` files hold a literal apostrophe**, not `&apos;`: an edit script that searches for the entity finds
-  nothing and stops half-way through.
-- **`ISessionRepository.FindAdvancedSensorsAsync` returns `t_ms` too**: "no advanced series" is "no series under
-  `adv.`", not an empty list.
-- **PowerShell reads a backtick in a double-quoted string as an escape** (`` `r `` is a carriage return) and
-  `"$name: text"` as a scoped variable: in a gate's messages, quote names with apostrophes and write `${name}:`.
-
-**Owner-only:** item 38 — beta.40 on real games: the update and the Privacy Policy 2.16, a game that was running
-across the update, an FSR 3.1+ title and a DLSS title with the option on, the same with it off, a second session of
-a game that kept running, a game under the user-mode anti-cheat exception, and what the Agent costs.
+**Owner-only:** item 39 — beta.41 on the PC that showed the fault: several sessions as administrator with PawnIO,
+the Advanced page open and closed between them, and the Agent's log afterwards.
 
 ## Owner-only — no PR can close these
 
@@ -557,6 +477,18 @@ a game that kept running, a game under the user-mode anti-cheat exception, and w
    `src/FrameLedger.Infrastructure/Diagnostics/ParentDump.cs` again — the same call the acceptance of beta.24 covers,
    raised anew because #398 moved it (`13_CI_CD` §SonarCloud says why it is safe); until then `main`'s reliability
    rating on new code shows E for that one line.
+39. **beta.41, the sensor library on the PC that showed the fault** (D118; `20_OPEN_QUESTIONS` §M13). (a) **The
+   update from beta.40**: no terms window, the ledger opens as before; a game running across the update is refused
+   until restarted, as after every update. (b) **As administrator with PawnIO, Advanced metrics on**: five or more
+   sessions of different games, some with the Advanced page left open on *This PC* throughout, some with it closed,
+   one started within a few seconds of another ending. **Afterwards the Agent's log (Logs page, or
+   `agent-<date>.log`) holds no `advanced: a device is left alone` and no `advanced: the sensor library did not
+   open`**, and every one of those sessions has its processor, memory and motherboard readings on *Session* (about
+   two hundred series; a session with seventeen is the fault). (c) **The page after a session ends**: the
+   processor's rows on *This PC* are still there and still moving, without reopening the page. (d) **Not as
+   administrator**: nothing differs from beta.40 — the card's sensors and the driver's figures, and *Sources* says
+   why the rest is not read. (e) While there, the part of item 37 (e) nobody has done: a few of the processor's and
+   the motherboard's values beside HWiNFO.
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
@@ -687,6 +619,7 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D114 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B | the field of view is stored as a session's range, never as a series |
 | D115 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Which struct version carries which field | a tail member of a vendor struct is read only where the upstream tags prove it is there |
 | D116 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B | "never the camera" is a build gate: `tools/overlay-fields-check.ps1` |
+| D118 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B | told that the sensor-library fix would take the number D113 gave train B's second release, the owner chose to release it at once as 0.1.0-beta.41: the train's second and third releases are beta.42 and beta.43, train C beta.44, train D beta.45 |
 | D109 | [`../legal/DISCLAIMER.md`](../legal/DISCLAIMER.md) §5, §5A | asked on 2026-11-11 with both sentences quoted: the Disclaimer goes to 2.15 with the Privacy Policy — PawnIO and the admin mode are no longer "for the CPU temperature" alone; with Advanced metrics on they also read the processor's, the memory's and the motherboard's sensors. The admin mode's disclosure follows (`agent-admin-dialog/2`) |
 
 ---
