@@ -59,10 +59,12 @@ dotnet_diagnostic.MA0011.severity = warning
 # and GenerateDocumentationFile is on for the shipping ones.
 dotnet_diagnostic.CS1591.severity = suggestion
 
-# --- ReSharper inspections: what Qodana reads (docs/13_CI_CD.md §Qodana, D93) ---
-# Qodana Community for .NET is ReSharper's InspectCode, and InspectCode reads these keys - so does Rider or ReSharper
-# in the editor, which is why they are here and not in qodana.yaml: the same list everywhere. An inspection is off
-# only where it argues with a choice this project made; each line says which. Everything else it reports is fixed.
+# --- ReSharper inspections: what Qodana reads (docs/13_CI_CD.md §Qodana, D93 and D100) ---
+# Qodana's linters run ReSharper's engine - Qodana for .NET since 2026-11-11, the Community linter before it - and the
+# engine reads these keys; so does Rider or ReSharper in the editor, which is why they are here and not in
+# qodana.yaml: the same list everywhere. An inspection is off only where it argues with a choice this project made;
+# each line says which. Everything else it reports is fixed. (What is NOT ReSharper's - a whole severity, the
+# IntelliJ platform's Markdown and XML inspections, JetBrains' security rules - has no key here and is in qodana.yaml.)
 [*.{cs,xaml}]
 # The compiler's missing-XML-comment warning, already a suggestion above (CS1591): InspectCode reports suggestions.
 resharper_c_sharp_warnings_cs1591_highlighting = none
@@ -146,6 +148,12 @@ resharper_member_hides_static_from_outer_class_highlighting = none
 resharper_redundant_empty_switch_section_highlighting = none
 # A binding path through a null yields no value, and the template shows nothing: that is the design.
 resharper_xaml_possible_null_reference_exception_highlighting = none
+
+[*.resx]
+# A vi or ja value that equals the English one is deliberate: product and technology names, units and format strings
+# are not translated, and a ja safety string is the English verbatim until a reviewer signs it (docs/09_I18N.md;
+# tools/resx-audit.ps1 holds that rule). 271 results on Qodana for .NET's first run.
+resharper_overridden_with_same_value_highlighting = none
 
 [src/FrameLedger.App/**.cs]
 # WPF codegen constraints, not style choices. The generated App.g.cs and

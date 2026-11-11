@@ -155,6 +155,13 @@ SonarScanner 12.0.0 on the 11.0 runtime; InspectCode 2026.2.3.1 and 2026.3.0 aga
 - **A local gate reseeds `%LOCALAPPDATA%\FrameLedger\rules`** while the owner's installed copy runs beside it: the
   files were hashed before and after every gate (identical each time — the repository's rules were the installed ones).
 
+**The release (the tag, 2026-11-11).** Rehearsed first (`release.yml` dispatched on the release branch, run
+42926539241), then the signed tag `v0.1.0-beta.37` on `1a7fbf3`: run 42930394186, published 2026-11-11T00:36:54Z.
+Eight assets, the seven listed in `SHA256SUMS.txt` equal to the digests GitHub computed; `FL_BUILD_ID v0.1.0-beta.37`
+in the shipped natives. The delta across two major runtimes exists — the stop condition the plan had named: "Delta
+processed 0443 files. 0373 patched, 0070 unchanged, 0009 new, 0017 removed", 72,681,960 bytes beside a full package of
+110,325,368. The wiki was published by its own run (42932792575).
+
 **Owner-only:** item 34 — beta.37 on real hardware, a hooked session on .NET 11.0.0, and Windows 10 if a PC with it is
 at hand.
 
@@ -175,8 +182,71 @@ alpha.3. Its notes are `docs/changelog/0.1.0-alpha.4.md`: the warning, and that 
   included; and once ten betas have followed it, a copy of alpha.3 or older no longer finds alpha.4 (Velopack reads
   the newest ten releases).
 
+**The sync and the release (2026-11-11).** #382 put the notes on main (`428b723`); #383 merged main into `alpha` by
+hand (`134115b`): twenty-seven conflicts, every one resolved to main's side, and `git diff --name-only origin/main
+origin/alpha` prints `RELEASE_LINE` alone. Rehearsed on `alpha` (run 42933603983: channel `alpha`, a delta from
+alpha.3), then the signed tag `v0.1.0-alpha.4`: run 42935876535, published 2026-11-11T01:16:22Z as *FrameLedger
+0.1.0-alpha.4 (experimental alpha)*, a pre-release. Eight assets, seven of seven digests equal; "Delta processed 0448
+files. 0369 patched, 0079 unchanged, 0004 new, 0005 removed", 18,207,557 bytes; `FrameLedger.App-alpha-Setup.exe`,
+`releases.alpha.json`; the wiki run skipped, as it does for an alpha.
+
+- **One tag push started two release runs** (42935876535 and 42935878584, both `push`, created in the same second;
+  the tag was pushed once). `release.yml`'s concurrency group made the second wait for the first, and it then began
+  the whole build again. It was cancelled once the first had published: it could only have ended red, at
+  `gh release create` on a release that existed. If a tag ever shows two runs, let the first finish, verify the
+  release, then cancel the other.
+
 **Owner-only:** item 35 — the fourth alpha on real hardware, and the beta installed over it.
 
+
+### Qodana for .NET on the Ultimate licence — the managed report (D99, D100)
+
+*Status is `docs/13_CI_CD.md` §Qodana and `CHANGELOG.md`; this is what no other file carries.* The third part of the
+plan, in two pull requests: this one moves the existing job to Qodana for .NET (Rider's engine, native on a Windows
+runner) and settles what it reports over the managed code; the next adds the C++ as a second report.
+
+**Decisions:**
+
+- **D99 — two reports from the start** ("Hai báo cáo ngay từ đầu"). The owner made a second Qodana Cloud project,
+  `frameledger-cpp`, and the secret `QODANA_TOKEN_NATIVE`; the managed report goes to `frameledger` with
+  `QODANA_TOKEN`. Both secrets are the owner's; no token was ever read or handled here.
+- **D100 — where an inspection is switched off** (the plan's design, approved with it; it amends D93's "never in
+  `qodana.yaml`"): in the place the engine that raised it reads — one of ReSharper's in `.editorconfig`; what has no
+  key there in `qodana.yaml`. Hints are off as a severity. In code loaded into a game only defects are fixed.
+
+**Choices made here:**
+
+- **JetBrains' security rules stay on, scoped by path — which took four runs to find.** Every result was read first
+  (the table in `13_CI_CD` §Qodana), and one place hardened (`ShellUrlOpener` refuses anything but `http`, `https`
+  and `mailto`). Then the files read had to be told to the linter, and a rule's own id is honoured nowhere:
+  `ignore`, an `exclude` path and `enabled: false` each left all 36 results standing. The report's own
+  `log/effective.profile.xml` and `qodana_inspections_summary.csv` gave the answer — one inspection,
+  `OpenGrepInspection`, produces every rule's results, and it does take a path. Between the third run and the
+  fourth the rules were written as off, with a test in their place; the test stayed (`ProcessStartSitesTests`, in
+  the gate, and wider than the rule), the rules came back on.
+- **`PrimaryDisplay.cs` was not changed to please the linter.** Its six results come from an internal assertion in
+  this linter's build (in the job's `backend.log`), not from the file; the first guess — that the engine misreads an
+  `unsafe` tuple — was wrong, and a rewrite made on it was reverted. Two inspections are excluded for that one file,
+  to be removed when a linter build reads it.
+- **What the Ultimate licence offers and this job does not use**: quick-fixes (the job cannot push, on purpose), code
+  coverage in Qodana, FlexInspect. If the licence lapses the job is red and advisory; the way back is in `qodana.yaml`.
+
+**Traps:**
+
+- **A security rule's id is not an inspection.** The OpenGrep plugin's rules all report through
+  `OpenGrepInspection`; only that name works in `qodana.yaml`, and only by path. Read
+  `log/qodana_inspections_summary.csv` in the report artifact to see which inspection produced a result before
+  spending a run on a guess.
+- **A report artifact is a zip inside the download, with backslash paths**: `unzip` extracts it and exits non-zero
+  on the warnings, so do not chain on its exit code.
+- **A linter result can be the linter's fault**: read the job's log directory (the report artifact carries it) for an
+  `AssertionException` before changing the code it points at.
+- **A Qodana run of the managed job takes fifteen to seventeen minutes**, most of it the scan; a pull request's own run
+  reads the whole solution (`pr-mode: false`), so there is no quick partial run to iterate on.
+
+**Next:** the native report — a Visual Studio solution generated by CMake (`x64-vs-analysis`), `qodana-native.yaml`,
+the job `native`; 655 results on its first run with the hints off, 494 of them distinct (a file compiled into three
+targets is reported three times), about a quarter in code loaded into a game.
 
 ## Owner-only — no PR can close these
 
@@ -562,6 +632,8 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D96 | [`13_CI_CD.md`](13_CI_CD.md) §C# 15 and the analyses | C# 15 on the main line from beta.37, a construct only where the build, CodeQL and Qodana read it — none of the four yet (Qodana's engine reads none, 2026-11-11), so beta.37 takes .NET 11's API and no syntax; no preview feature |
 | D97 | [`../legal/ALPHA_NOTICE.md`](../legal/ALPHA_NOTICE.md) | an alpha is "a beta's source built to try a newer version of .NET, at times a prerelease one": EULA 1.7, Disclaimer 2.14 (with a paragraph on Windows and the processor), Alpha notice 1.1, approved with the plan; the App says "a prerelease .NET" only where the runtime is one |
 | D98 | [`12_BUILD.md`](12_BUILD.md) §The alpha line | alpha.4 is beta.37's source on .NET 11.0.0, and then the alpha line rests until a newer .NET has a preview; a resting alpha tells its user to install the beta |
+| D99 | [`13_CI_CD.md`](13_CI_CD.md) §Qodana | Qodana for .NET on the Ultimate licence, in two reports from the start: the managed code to the Qodana Cloud project `frameledger`, the C++ to `frameledger-cpp` |
+| D100 | [`13_CI_CD.md`](13_CI_CD.md) §Qodana | an inspection is switched off where the engine that raised it reads — ReSharper's in `.editorconfig`, the rest in `qodana.yaml` (amends D93); hints are off as a severity; in code loaded into a game only defects are fixed |
 
 ---
 

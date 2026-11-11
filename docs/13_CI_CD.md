@@ -124,11 +124,12 @@ FrameLedger uses the **`poli0981/.github` ops repo** where its templates fit, an
   read `net10.0`; and for a construct it has not met, a pull request's run is not the evidence — a
   `workflow_dispatch` on the branch is, §C# 15 and the analyses.)*
 
-### `qodana.yml` — push to `main`, pull requests into `main`, `workflow_dispatch` · **repo-local, built 2026-11-10 (D93)**
-- One job, `qodana`, on `ubuntu-latest` — the only Linux job in this repository, because the linter is a Linux
-  container: `JetBrains/qodana-action` (pinned to `v2026.2.2`'s commit; Dependabot moves the pin) runs Qodana Community
-  for .NET over `FrameLedger.slnx` with `qodana.yaml`'s settings. §Qodana below says what it reads, what was changed
-  from JetBrains' template and where an inspection is switched off.
+### `qodana.yml` — push to `main`, pull requests into `main`, `workflow_dispatch` · **repo-local, built 2026-11-10 (D93); Qodana for .NET since 2026-11-11 (D99)**
+- ~~One job, `qodana`, on `ubuntu-latest` — the only Linux job in this repository, because the linter is a Linux
+  container~~ The job `managed` (*Qodana (managed)*), on `windows-latest`: `JetBrains/qodana-action` (pinned to
+  `v2026.2.2`'s commit; Dependabot moves the pin) runs **Qodana for .NET** in native mode over `FrameLedger.slnx`
+  with `qodana.yaml`'s settings, after a `dotnet build`. No job here runs on Linux any more. §Qodana below says what
+  it reads, what was changed from JetBrains' template and where an inspection is switched off.
 - **Advisory, with a gate of zero problems:** one problem turns the job red; it is not a required context.
 - `permissions: contents: read, checks: write, pull-requests: write` — the annotations and the one comment; granted to
   the job, the workflow grants none.
@@ -487,7 +488,122 @@ on `src/FrameLedger.Infrastructure/**/*` and `src/FrameLedger.Shared/**/*`, so n
 stop reappearing on pull requests. *(Since D68 the `S8417` and `S6640` rows are `SonarQube.Analysis.xml`'s, in the
 repository; `S6232`'s are not — a union read outside `LARGE_INTEGER` would be a finding — and its 24 stay marked.)*
 
-## Qodana — `qodana.yml`, a workflow of its own (owner decision D93, 2026-11-10)
+## Qodana — `qodana.yml`, a workflow of its own (owner decisions D93, 2026-11-10; D99 and D100, 2026-11-11)
+
+**Since 2026-11-11 the linter is Qodana for .NET, on the Ultimate licence (D99).** The owner took an Ultimate licence for
+the Qodana Cloud organisation and asked for Qodana over every language. So the linter is **Qodana for .NET**
+(`qodana-dotnet`: Rider's engine) where it was the Community one, in **native mode** on a Windows runner: no container,
+the projects built and loaded with the SDK the job installs from `global.json`, and no `EnableWindowsTargeting`.
+`qodana.yaml` names the linter and the mode (`withinDocker: false`); nothing is an action argument, so `qodana scan` on
+a developer's PC reads the same file. The job is `managed` — *Qodana (managed)* in a pull request's checks: checkout,
+`setup-dotnet`, the NuGet cache restored, `dotnet build -c Release` first — so that a build that fails is one red step
+with the compiler's own message, not a report of unresolved symbols — then the action, pinned by commit. No MSVC step,
+on purpose: it exports `Platform=x64`, which MSBuild reads as a solution platform. The linter's log says what the token
+bought: "Qodana license plan: Ultimate", and the Qodana Cloud project it is linked to (`frameledger`). Still advisory,
+still a gate of zero, still `main` and its pull requests alone. From here down to *As it was built* is the job as it
+is; below that is D93's own account, which is now history.
+
+**Two reports (D99).** Asked how to gather the C# and the C++, the owner chose two reports from the start, and made a
+second Qodana Cloud project (`frameledger-cpp`, the `QODANA_TOKEN_NATIVE` secret). The managed report leaves
+`src/native` out; the native one — the next pull request's — reads nothing else, so every file is in exactly one.
+
+**What is read, and by what.**
+
+| What | Read by | |
+|---|---|---|
+| The C#, XAML and `.resx` of the thirteen projects | `managed` | ReSharper's engine, as under D93 |
+| Markdown and XML around the solution | `managed` | the IntelliJ platform's own inspections — 23 and 10 results on the first run |
+| JetBrains' security rules over the C# — pattern rules for a process start, an SQL text and the like | `managed` | new with this linter (its OpenGrep plugin) — 36 results on the first run, every one read; the files they were read in are listed in `qodana.yaml`, so a new one is reported |
+| The C++ of `src/native` | the `native` job | the pull request after this one |
+| JSON and YAML, the workflows among them | nothing reported | whether the profile inspects them and found nothing, or does not inspect them, was not established; CodeQL's `actions` language reads the workflows |
+| PowerShell (`build.ps1`, `tools/`) and CMake files | no linter of JetBrains' reads them here | SonarCloud reads the PowerShell |
+
+**The first runs on this linter, and what was done (2026-11-11).** Run 42923079119 — the job with no settings beyond the
+solution: **3,953 problems** in 92 inspections, and 3,607 of them **hints**: the lowest level an IDE has, which the
+editor offers without underlining anything (this linter files them as `TYPO`, Qodana as *Low*). Meziantou's "name the
+parameter" 1,084 times, a trailing comma 979, a XAML binding whose `DataContext` the engine cannot know 414, the MVVM
+Toolkit's partial-property proposal 224, "invert `if`" 114 — and every other Roslyn analyzer message below the level
+this build makes an error. **Hints are off as a severity**, one group in `qodana.yaml` (`severity:TYPO`): the Community
+linter never reported them, and D93's rule is about warnings and suggestions. With that, run 42928814104: **347**.
+
+| What | n | Done |
+|---|---|---|
+| `OverriddenWithSameValue` — a vi or ja value equal to the English one | 271 | off in `.editorconfig` (`[*.resx]`): product and technology names, units and format strings are not translated, and a ja safety string is the English verbatim until a reviewer signs it |
+| `csharp_injection_rule-CommandInjection` — a process started with something that is not a literal | 35 | **read, one by one** (below): 11 places in `src`, 24 in tests; one place was hardened. The rule stays on, and the files read are left out of the plugin's inspection by path in `qodana.yaml` (*How the security rules are scoped*, below), so a new file that starts a process is reported |
+| `MarkdownIncorrectTableFormatting` | 20 | off in `qodana.yaml`: Rider wants columns padded to one width; these tables are written to be diffed |
+| `XmlHighlighting` in `src/FrameLedger.App/app.manifest` | 10 | that file ignored for that inspection: the linter has no schema for a Windows application manifest |
+| `UnusedVariable.Compiler` and `RedundantUsingDirective` in `PrimaryDisplay.cs` | 6 | **the linter's own fault**, and the file is left as it is: resolving `PInvoke.EnumDisplaySettings(null, …)` — the `null`-to-`PCWSTR` conversion — the engine of this linter's build (QDNET-262.12299) fails an internal assertion (`IsStandardImplicitConversionFromExpression(conversion.Kind)`, in its `backend.log`), loses the method, and reports its three locals and the file's three usings as unused. The compiler builds the file with warnings as errors, and InspectCode 2026.2.3.1 and 2026.3.0 report nothing in it. Those two inspections are excluded for that one file in `qodana.yaml`, to be removed when a linter build reads it |
+| `MarkdownUnresolvedHeaderReference` | 3 | off in `qodana.yaml`: all three resolve on GitHub, whose anchor rule the linter does not follow (`#display-mode--both-tiers-beta10`) |
+| `csharp_injection_rule-SQLInjection` | 1 | the same: the one place assigns a constant command text and binds every value as a parameter, as every statement in this repository does; its file is listed with the others |
+| `RedundantBoolCompare`, in a test | 1 | fixed — the expression also carried a clause its first half implied |
+
+With those settled, run 42940926340 (2026-11-11, this pull request's branch, the whole solution): **no problem
+reported** — the gate's zero, on this linter.
+
+**How the security rules are scoped — by the plugin's one inspection, not by a rule.** Every result of the
+OpenGrep plugin's several hundred rules is produced by one inspection, `OpenGrepInspection`; a rule's own id
+(`csharp_injection_rule-CommandInjection`) is in the report and is honoured nowhere. Three runs measured it — a
+profile entry's `ignore` (42932842462), an `exclude` path under the rule's id (42935752891), `enabled: false`
+on the rule (42938295264): all 36 results stood each time, and the linter's log shows why — the plugin hands its
+server every rule file whatever the profile says. What the plugin's inspection does honour is a path: an
+`exclude` entry named `OpenGrepInspection` (its scopes are in the report's `log/effective.profile.xml`). So the
+eleven files of `src` the results were read in, and `tests`, are listed there — and in the run above the
+inspection was performed on 943 files, where it had been 1,308, and reported nothing: it is on, and it reads
+what is not listed. The price is stated in `qodana.yaml`: a listed file is left out of **all** of the plugin's
+rules, not only the one that fired. The plugin is also most of the job's time — about six of its fifteen
+minutes.
+
+**A second tripwire, in the gate: `ProcessStartSitesTests`.** Qodana is advisory, and its rule is a pattern for
+`Process.Start`. The test sweeps `src` for every way a process is started here — `Process.Start`, a
+`ProcessStartInfo`, `CreateProcessWithTokenW` through CsWin32, and the registration of the logon task — and fails
+on a file that is not in its list, until that file has been read and listed. `Startup/UnelevatedProcess`, which
+the rule never saw, is in it.
+
+**Every place that starts a process, as read on 2026-11-11.** The rule is a pattern, not a data flow: it reports any
+`Process.Start` whose argument is not a literal. What matters at each is what is started and where its path and
+arguments come from.
+
+| Place | What it starts | Where the path and the arguments come from |
+|---|---|---|
+| `App/Services/AgentLauncher` | `FrameLedger.Agent.exe` | the file beside the App (`AppContext.BaseDirectory`); arguments the App builds (`--serve`, the data folder) |
+| `App/Services/AgentTool` | the same Agent, with one maintenance flag | a constant at each of its two callers (`--install-task`, the Settings page's flags) |
+| `Infrastructure/Startup/AgentElevation` | the Agent, elevated (`runas`) | the Agent's own path; `--serve --for-user <this user's SID>` |
+| `Infrastructure/Startup/LogonTask` | nothing itself — it registers the logon task, whose action Windows starts at sign-in | the Agent's path and constant arguments (`--serve`), into a Task Scheduler definition for this user, at the lowest privileges |
+| `Infrastructure/Diagnostics/CrashDumpWriter` | this process's own executable, as the dumper | `Environment.ProcessPath`; an `ArgumentList`, no shell |
+| `Infrastructure/Capture/ProcessLauncher` | the game | the executable the user added and enabled hooking for, and the launch arguments the user wrote for it; no shell |
+| `App/Services/ShellStarter` | a game, directly or through its store (`steam://…`, `explorer.exe shell:AppsFolder\<AUMID>`) | the launch `GamePlayer` resolves from the record of a game the user added (D59, D80) |
+| `App/Services/Explorer` | `explorer.exe` on a folder or a file | a quoted path of FrameLedger's own: the data folder, the logs, a bug report's zip, the licences folder |
+| `App/Services/ShellUrlOpener` | the browser or the mail client | the project's own pages, or a Markdown link `MarkdownLinks` has already held to `http`, `https` and `mailto`. **Hardened here**: the opener now refuses any other scheme itself (`ShellUrlOpenerTests`) — the shell runs whatever it is handed, and a `file:` address is a program |
+| `App/ViewModels/SettingsViewModel` | the browser | one constant address |
+| `Infrastructure/Startup/UnelevatedProcess` | the Agent or a game with the shell's token, from an elevated process (`CreateProcessWithTokenW`) | its two callers above, `AgentLauncher` and `ProcessLauncher` — not a `Process.Start`, so the rule did not see it; the sweep does |
+
+None takes a value from outside the PC or from a file FrameLedger did not write, except the game's own path and
+arguments — which starting the game the user chose is.
+
+**Where an inspection is switched off: by the engine that raised it (D100, amending D93's "never in `qodana.yaml`").**
+What Qodana reports is fixed, unless the inspection argues with a choice this project made; then it is off, with the
+reason on the line above — in the place the engine that raised it reads:
+
+- **ReSharper's** — the C#, the XAML, the `.resx`, and the C++ of the native report — in **`.editorconfig`**
+  (`resharper_*_highlighting`), where Rider and ReSharper in the editor read it too. Sixty-four keys since this pull
+  request.
+- **What has no key there** — in **`qodana.yaml`**: a whole severity (the hints) and the IntelliJ platform's Markdown
+  and XML inspections under `profile.inspections`; under `exclude`, by inspection and path, the files JetBrains'
+  security rules were read in and a file the linter itself fails on.
+- **What is not FrameLedger's code** is left out by path (`exclude`): `SonarQube.Analysis.xml`'s list, for its reasons.
+
+**What it does not use, and what happens if the licence lapses.** Quick-fixes (the linter would push commits — the job
+has no `contents: write`, and a change nobody read is not wanted), code coverage in Qodana (the gate's coverage and
+SonarCloud's already read the same reports) and FlexInspect are Ultimate features this job leaves alone. Without a
+valid licence the linter does not start, so the job is red — advisory, never a blocked merge; the way back is
+`linter: qodana-cdnet` with the job on `ubuntu-latest`, as it ran until beta.37.
+
+**Running it on a developer's PC.** `qodana scan` in the repository root reads `qodana.yaml`, downloads the linter and
+needs the project's token in `QODANA_TOKEN` — the Ultimate linter checks the licence. Without a token, InspectCode
+still gives ReSharper's part (*As it was built*, below), with `--toolset-path` at the 11.0 SDK's `MSBuild.dll`; the
+Markdown, XML and security results are the Rider linter's alone.
+
+**As it was built — the Community linter, 2026-11-10 to beta.37 (D93).** Kept as written; where it says *is*, read *was*.
 
 **D93 — Qodana reads the C# and the XAML from CI.** The owner made the project on Qodana Cloud, set the `QODANA_TOKEN`
 secret (2026-11-10) and asked for Qodana in CI from the workflow JetBrains gives, changed where it had to be, with what
