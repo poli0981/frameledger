@@ -24,6 +24,12 @@ namespace FrameLedger.Infrastructure.Telemetry;
 /// reader that opens them counts faults per device and reads on a thread of its own.
 /// </para>
 /// <para>
+/// <b>Amended 2026-11-12: a user of <see cref="LhmLibrary"/>, not the owner of a <c>Computer</c>.</b> The library keeps
+/// part of its state per process, and closing one <c>Computer</c> took it from under the others — found in the first
+/// sessions recorded as administrator with PawnIO. Opening and closing now go through the process's one
+/// <see cref="LhmLibrary"/>, which serialises them and parks a closed <c>Computer</c> while another is in use.
+/// </para>
+/// <para>
 /// Consumed <b>unmodified</b>, as an ordinary NuGet package reference. MPL-2.0 §3.3 is what
 /// makes that combinable with GPLv3; modifying a file of it would change the obligation
 /// (<c>legal/THIRD_PARTY_NOTICES.md</c> §GPL-3.0 compatibility).
@@ -31,35 +37,43 @@ namespace FrameLedger.Infrastructure.Telemetry;
 /// </remarks>
 public sealed class LhmComputerAdapter : ILhmComputer
 {
-    private readonly Computer _computer;
+    private readonly LhmLibrary _library;
+    private readonly LhmGroups _groups;
+    private ILhmComputer? _computer;
 
     public LhmComputerAdapter(bool enableCpuAndMemory, bool enableGpu = true)
+        : this((enableGpu ? LhmGroups.Gpu : LhmGroups.None) | (enableCpuAndMemory ? LhmGroups.Cpu | LhmGroups.Memory : LhmGroups.None))
     {
-        _computer = new Computer
-        {
-            IsGpuEnabled = enableGpu,
-            IsCpuEnabled = enableCpuAndMemory,
-            IsMemoryEnabled = enableCpuAndMemory,
-        };
     }
 
     /// <summary>The groups <paramref name="groups"/> names, and no other (D103).</summary>
     public LhmComputerAdapter(LhmGroups groups)
+        : this(groups, LhmLibrary.Process)
     {
-        _computer = new Computer
-        {
-            IsGpuEnabled = groups.HasFlag(LhmGroups.Gpu),
-            IsCpuEnabled = groups.HasFlag(LhmGroups.Cpu),
-            IsMemoryEnabled = groups.HasFlag(LhmGroups.Memory),
-            IsMotherboardEnabled = groups.HasFlag(LhmGroups.Motherboard),
-        };
     }
 
-    public IReadOnlyList<IHardware> Hardware => [.. _computer.Hardware];
+    /// <summary>The same, over a library of the caller's: the tests', which opens no driver.</summary>
+    public LhmComputerAdapter(LhmGroups groups, LhmLibrary library)
+    {
+        _groups = groups;
+        _library = library ?? throw new ArgumentNullException(nameof(library));
+    }
 
-    public void Open() => _computer.Open();
+    /// <summary>The tree of the open <c>Computer</c>; empty before <see cref="Open"/> and after <see cref="Close"/>.</summary>
+    public IReadOnlyList<IHardware> Hardware => _computer?.Hardware ?? [];
 
-    public void Update() => _computer.Accept(new UpdateVisitor());
+    /// <summary>Opens once: a second call while open changes nothing.</summary>
+    public void Open() => _computer ??= _library.Open(_groups);
 
-    public void Close() => _computer.Close();
+    public void Update() => _computer?.Update();
+
+    /// <summary>Lets go once: the library decides whether the <c>Computer</c> is closed now or parked.</summary>
+    public void Close()
+    {
+        if (_computer is { } computer)
+        {
+            _computer = null;
+            _library.Close(_groups, computer);
+        }
+    }
 }

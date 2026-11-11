@@ -37,6 +37,15 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Fixed
 
+- **Advanced metrics: the processor's sensors no longer drop out after a session, and a session no longer loses its
+  sensors at the start.** With the agent running as administrator and PawnIO installed, the sensor library was being
+  closed by one part of the agent while another part was still reading it. After most sessions the Advanced page
+  lost the processor's readings until it was reopened, and one session in ten stored only the graphics driver's
+  seventeen series instead of two hundred and twelve. The agent now opens and closes the sensor library in one
+  place, and does not close it while anything is still reading. Found in the first sessions recorded that way; the
+  cause was read from the log and could not be reproduced without that setup, so the next sessions will show
+  whether it is gone — the agent's log should no longer say *a device is left alone* or *the sensor library did not
+  open*. Nothing changes in the code loaded into a game.
 - **Two comparisons in the Advanced-metrics code say what they mean.** Whether a game gave FSR one field of view or
   a range of them was decided by comparing two decimal numbers for equality; it is now decided by comparing the two
   stored values bit for bit. Nothing you see changes. (Found by SonarCloud after 0.1.0-beta.40 was merged.)

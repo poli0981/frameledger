@@ -632,6 +632,17 @@ and labelled with the hardware's words. A sensor with no family is not read.
 `RecorderOptions.AdvancedMetrics` through `SettingsRecorderPolicy`, at each session's start like the other recording
 settings; exactly `1` is on. From there:
 
+- **The process has one sensor library** *(2026-11-12)*. One *reader* was never the whole of it: a session's L2
+  source and its CPU-temperature reader each open a LibreHardwareMonitor `Computer` of their own beside the
+  Advanced reader's, and the library keeps part of its state — the driver it reads the processor through, its bus
+  mutexes — per process. `Computer.Close()` lets go of that part whoever else is still reading. The first sessions
+  recorded as administrator with PawnIO showed it (`20_OPEN_QUESTIONS` §M13): a processor device that faulted out
+  some seconds after each session's sources closed, and one session whose reader could not open at all. Every
+  `Computer` is now opened and closed through `Infrastructure.Telemetry.LhmLibrary` (`LhmComputerAdapter` is its
+  user): opens and closes never run at once, and a `Computer` closed while another is in use is **parked** — left
+  open, read by nobody, handed to the next user of the same groups — until the last user lets go, when all are
+  closed. The reads are not serialised: the readers keep their own threads, so a sensor that hangs in one still
+  holds up neither the other nor the pipe.
 - **The Agent has one reader** — `AgentServices` registers `AdvancedHardwareHub` as `IAdvancedHardware`, a tick a
   second and a linger of ten — and nothing starts it but a holder. `SessionRecorder` holds it for a session's length
   **only when the option is on**, and `AgentRecording` gives the session's `TelemetryPoller` the reader on the same
