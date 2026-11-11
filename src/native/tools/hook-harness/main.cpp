@@ -127,6 +127,7 @@
 #include <atomic>
 #include <cstdio>
 #include <cstring>
+#include <iterator>
 #include <vector>
 
 #include "dxr_raygen_dxil.h"
@@ -3065,7 +3066,7 @@ int main(int argc, char** argv) {
                 LateLoad& l = g_lateLoads[g_lateLoadCount];
                 l.delayMs = static_cast<DWORD>(std::atoi(argv[++i]));
                 const char* path = argv[++i];
-                MultiByteToWideChar(CP_ACP, 0, path, -1, l.path, static_cast<int>(sizeof(l.path) / sizeof(l.path[0])));
+                MultiByteToWideChar(CP_ACP, 0, path, -1, l.path, static_cast<int>(std::size(l.path)));
                 HANDLE t = CreateThread(nullptr, 0, &LateLoadThread, &l, 0, nullptr);
                 if (t != nullptr) {
                     CloseHandle(t);
@@ -3080,9 +3081,8 @@ int main(int argc, char** argv) {
             // stays loaded for the life of the process so the scan sees it.
             const char* path = argv[++i];
             wchar_t     wide[MAX_PATH * 2]{};
-            const int   n =
-                MultiByteToWideChar(CP_ACP, 0, path, -1, wide, static_cast<int>(sizeof(wide) / sizeof(wide[0])));
-            HMODULE h = n > 0 ? LoadLibraryW(wide) : nullptr;
+            const int   n = MultiByteToWideChar(CP_ACP, 0, path, -1, wide, static_cast<int>(std::size(wide)));
+            HMODULE     h = n > 0 ? LoadLibraryW(wide) : nullptr;
             std::printf("  --load %s -> %s\n", path, h != nullptr ? "loaded" : "FAILED");
             if (h == nullptr) {
                 return 3;

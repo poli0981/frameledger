@@ -18,6 +18,12 @@
 #   contexts stay `check` and the two `analyze` jobs. A problem Qodana finds, a
 #   Qodana Cloud outage or a lapsed licence is a red job beside a green `check`,
 #   never a blocked merge.
+# - Two jobs, two reports (D99): `managed` reads the solution - the C#, the XAML and
+#   what Rider's plugins read around it - and reports to the Qodana Cloud project
+#   `frameledger`; `native` reads the C++ of src/native through a Visual Studio
+#   solution CMake generates for it, with settings of its own (qodana-native.yaml),
+#   and reports to `frameledger-cpp`. Neither reads what the other does. The pull
+#   request's comment and annotations are the managed job's alone.
 # - `main` only: the `alpha` branch is main's source under another release line
 #   (docs/13_CI_CD.md §The alpha line), and main's is what is analysed.
 
@@ -106,4 +112,67 @@ jobs:
           additional-cache-key: qodana-managed-main
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
+          QODANA_ENDPOINT: 'https://qodana.cloud'
+
+  native:
+    name: Qodana (native)
+    # The same condition as `managed`, for the same reason: QODANA_TOKEN_NATIVE
+    # reaches neither a fork's pull request nor Dependabot's.
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]')
+    runs-on: windows-latest
+    timeout-minutes: 60
+    # No annotations and no comment from this job (below), so it writes nothing.
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      # global.json sits above the solution, and the linter resolves it.
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      # The Visual Studio generator finds the toolset itself: no MSVC step. Configure
+      # fetches MinHook, Catch2 and jsmn into the build tree, as the gate's does.
+      - name: Generate the solution and the one generated header
+        shell: pwsh
+        working-directory: src/native
+        run: |
+          cmake --version
+          cmake --preset x64-vs-analysis
+          if ($LASTEXITCODE -ne 0) { throw 'cmake configure failed' }
+          cmake --build --preset x64-vs-analysis --target fl_ac_floor_gen
+          if ($LASTEXITCODE -ne 0) { throw 'generating the blocklist floor failed' }
+          if (-not (Test-Path ../../build/native/x64-vs-analysis/FrameLedgerNative.slnx)) {
+            Get-ChildItem ../../build/native/x64-vs-analysis -Filter 'FrameLedgerNative.*' | ForEach-Object { Write-Host $_.Name }
+            throw 'CMake did not write FrameLedgerNative.slnx (qodana-native.yaml names it)'
+          }
+
+      # A report of its own: its own settings file, results folder, artifact, cache
+      # keys and Qodana Cloud project. The pull request's comment and annotations are
+      # the managed job's; a second job of the same linter would overwrite them.
+      - name: Qodana Scan
+        uses: JetBrains/qodana-action@3e8d76ff0e0241618abd808682f426afe84bab3f # v2026.2.2
+        with:
+          args: --config qodana-native.yaml
+          results-dir: ${{ runner.temp }}/qodana-native/results
+          cache-dir: ${{ runner.temp }}/qodana-native/caches
+          pr-mode: false
+          upload-result: true
+          artifact-name: qodana-report-native
+          cache-default-branch-only: true
+          primary-cache-key: qodana-native-${{ github.ref_name }}-${{ github.sha }}
+          additional-cache-key: qodana-native-main
+          post-pr-comment: false
+          use-annotations: false
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_NATIVE }}
           QODANA_ENDPOINT: 'https://qodana.cloud'

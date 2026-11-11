@@ -71,7 +71,6 @@
 
 #include <cstdarg>
 #include <cstdio>
-#include <cstring>
 #include <iterator>
 #include <string>
 #include <vector>
@@ -342,8 +341,6 @@ struct NetCensus {
     bool winhttp = false;
     bool wininet = false;
     bool dnsapi = false;
-
-    bool Any() const { return cryptnet || winhttp || wininet || dnsapi; }
 };
 
 NetCensus TakeCensus() {

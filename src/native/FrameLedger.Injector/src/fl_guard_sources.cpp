@@ -574,7 +574,7 @@ Collected EnumerateDirEntriesImpl(const wchar_t* dir, DirEntrySink sink, void* c
 // Bounds, all REFUSALS rather than truncations, like check 4's: a Steam library whose manifests we could not all read
 // is a library whose answer we do not know.
 constexpr std::size_t kMaxSteamManifests = 4096;
-constexpr std::size_t kMaxManifestBytes = 256 * 1024;
+constexpr std::size_t kMaxManifestBytes = std::size_t{256} * 1024;
 
 // The quoted value that follows `"key"` in Valve's KeyValues text, ASCII case-insensitive on the key, with the
 // format's two escapes (\" and \\) undone. False when the key is absent or its value does not fit.

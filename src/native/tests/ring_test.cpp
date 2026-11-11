@@ -36,7 +36,6 @@
 #include <algorithm>
 #include <atomic>
 #include <catch2/catch_test_macros.hpp>
-#include <cstring>
 #include <fl_ring.h>
 #include <thread>
 #include <vector>
@@ -54,7 +53,6 @@ struct Mapping {
 
     explicit Mapping(std::uint32_t capacity) : bytes(FlShmSizeForCapacity(capacity), 0) {}
     void*          base() { return bytes.data(); }
-    const void*    base() const { return bytes.data(); }
     FlFrameRecord* slot(std::uint32_t i) {
         return reinterpret_cast<FlFrameRecord*>(bytes.data() + FL_SHM_RING_OFFSET) + i;
     }
@@ -163,7 +161,7 @@ TEST_CASE("seq is monotonic per slot and never reset across laps", "[ring]") {
     }
     // Slot 0 was written three times: 2, 4, 6.
     CHECK(m.slot(0)->seq == 6u);
-    CHECK(m.writer()->writeIndex == kCap * 3);
+    CHECK(m.writer()->writeIndex == std::uint64_t{kCap} * 3);
 }
 
 TEST_CASE("a torn record is reported as a GAP, not silently skipped", "[ring]") {

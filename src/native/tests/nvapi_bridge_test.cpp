@@ -12,6 +12,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cstdio>
 #include <cstring>
+#include <iterator>
 
 #include "fl_nvapi_bridge.h"
 
@@ -47,10 +48,10 @@ TEST_CASE("a wrong struct size is refused before anything is read", "[nvapi][abi
 
 TEST_CASE("a path longer than NVAPI's string is refused, never truncated into another program's", "[nvapi][abi]") {
     static uint16_t long_path[4096];
-    for (size_t i = 0; i + 1u < sizeof(long_path) / sizeof(long_path[0]); ++i) {
+    for (size_t i = 0; i + 1u < std::size(long_path); ++i) {
         long_path[i] = u'a';
     }
-    long_path[sizeof(long_path) / sizeof(long_path[0]) - 1u] = 0u;
+    long_path[std::size(long_path) - 1u] = 0u;
     FlNvDriverProfileRead p{};
     p.size = sizeof(FlNvDriverProfileRead);
     CHECK(FlNvDriverProfile(long_path, nullptr, 0u, &p) == FL_NV_BAD_ARGUMENT);

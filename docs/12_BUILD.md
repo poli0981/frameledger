@@ -20,6 +20,11 @@ cmake --preset x64-release
 cmake --build --preset x64-release
 ```
 
+A third preset, **`x64-vs-analysis`** *(2026-11-11)*, builds nothing that ships: it has CMake write a Visual Studio
+solution (`build/native/x64-vs-analysis/FrameLedgerNative.slnx`, generator "Visual Studio 18 2026", tests and tools
+on) for Qodana's native report, which reads C++ through a solution (`13_CI_CD` §Qodana). It needs Visual Studio 18;
+the gate and the release never use it.
+
 Targets:
 - `FrameLedger.Overlay` → `FrameLedger.Overlay.dll`
 - `FrameLedger.VkLayer` → `FrameLedger.VkLayer.dll` + `VkLayer_FRAMELEDGER_overlay.json`

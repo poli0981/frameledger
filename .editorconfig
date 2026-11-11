@@ -184,3 +184,142 @@ resharper_collection_never_updated_local_highlighting = none
 resharper_unused_method_return_value_local_highlighting = none
 resharper_redundant_assignment_highlighting = none
 resharper_return_type_can_be_not_nullable_highlighting = none
+
+# --- ReSharper C++ inspections: what Qodana's native report reads (docs/13_CI_CD.md §Qodana, D99 and D100) ---
+# The native report runs ReSharper's C++ engine, and with it the clang-tidy checks and clang diagnostics that engine
+# bundles (the keys that say clang_tidy). The native code is built by MSVC alone, with /W4 /WX; what clang says about
+# code it never compiles is read here as advice. An inspection is off only where it argues with a choice this project
+# made, and each line says which; everything else the report found was fixed.
+[src/native/**.{cpp,h,inl}]
+# Where the compiler pads a struct. Information, not a fault: the layouts that matter are asserted (static_assert on
+# sizes and offsets in fl_shm.h, and the mirror test against fl-layout-dump).
+resharper_cpp_clang_tidy_clang_diagnostic_padded_highlighting = none
+# MSVC's own keywords - __try/__except (rule 5's guard around every hook body), __declspec, __stdcall. This code is
+# built by MSVC and by nothing else.
+resharper_cpp_clang_tidy_clang_diagnostic_language_extension_token_highlighting = none
+# A function looked up by name - GetProcAddress, vkGetInstanceProcAddr, a vtable slot - comes back as a pointer to
+# another function type and is cast to its real one: that is the API. Through void* is how the cast says it is meant.
+resharper_cpp_clang_tidy_clang_diagnostic_cast_function_type_strict_highlighting = none
+resharper_cpp_clang_tidy_bugprone_casting_through_void_highlighting = none
+# Memory read as something else - a COM object as its vtable, a relay's bytes as an address - says reinterpret_cast,
+# also where static_cast from void* would compile.
+resharper_cpp_reinterpret_cast_from_void_ptr_highlighting = none
+# It proposes std::cmp_less for a comparison whose sides differ in sign. The comparisons it found cast one side
+# explicitly, and the compiler's own sign warnings (C4018, C4388, C4389) are errors in this build.
+resharper_cpp_clang_tidy_modernize_use_integer_sign_comparison_highlighting = none
+# A `default:` under a switch that names every enumerator is deliberate: a value outside the enumeration - a corrupt
+# one, a future one - takes the refusing arm instead of falling out of the switch.
+resharper_cpp_clang_tidy_clang_diagnostic_covered_switch_default_highlighting = none
+# "Not eliding copy on return": a verdict returned from a const local is copied. It is a few words wide.
+resharper_cpp_clang_tidy_clang_diagnostic_nrvo_highlighting = none
+# A type that owns a handle deletes its copies or declares none; the moves are then not generated either, which is
+# what is wanted. Four more `= delete` lines would say nothing the destructor did not.
+resharper_cpp_clang_tidy_cppcoreguidelines_special_member_functions_highlighting = none
+# An enumeration zero-initialised (`D3D_FEATURE_LEVEL got{}`) is an out parameter cleared before the call that fills it.
+resharper_cpp_clang_tidy_bugprone_invalid_enum_default_initialization_highlighting = none
+# An enumeration's width is part of a layout or of the atomic word it is stored in, not a size to be minimised.
+resharper_cpp_clang_tidy_performance_enum_size_highlighting = none
+# "Possibly unused #include": a file that calls std::memset includes <cstring>, also when <windows.h> already brought
+# it in. What it reported was of that kind, or a header named again inside a conditional block, but for two that
+# nothing used; those were removed.
+resharper_cpp_unused_include_directive_highlighting = none
+# A function another file calls by a declaration of its own (the harness's Hold* functions), an entry point the
+# loader calls by name (DllMain), a placeholder a target links: "can be made static" reads one file.
+resharper_cpp_use_internal_linkage_highlighting = none
+# "Can be made const": a parameter or a method through which the code acts on a device, a ring or a handle is not
+# const because the type system would allow it; and a local that is already const gains nothing from constexpr - for a
+# std::string it would hold only while the text fits the small-string buffer.
+resharper_cpp_parameter_may_be_const_ptr_or_ref_highlighting = none
+resharper_cpp_member_function_may_be_const_highlighting = none
+resharper_cpp_variable_can_be_made_constexpr_highlighting = none
+# THE ENGINE MISREADS THESE. (1) `std::atomic_ref<T>{x}.fetch_or(bit)` is reported as an expression without side
+# effects; the side effect is the call. (2) A Win32, D3D12 or ffx-api structure is zero-initialised and then filled
+# field by field - the reserved fields must stay zero - and is handed to the API by its address or its header's: the
+# engine reports the initialiser as always rewritten and the fields as assigned and never used. (3) A test of a
+# constexpr function (`Check(F(a) == b && G(a) == c, ...)`) has the engine evaluate it and call one side redundant.
+resharper_cpp_expression_without_side_effects_highlighting = none
+resharper_cpp_initialized_value_is_always_rewritten_highlighting = none
+resharper_cpp_assigned_value_is_never_used_highlighting = none
+resharper_cpp_redundant_boolean_expression_argument_highlighting = none
+# Proposals to restate working code in a newer idiom - a range-for, std::ranges, any_of, starts_with, std::min, a raw
+# string, an if with an initialiser, emplace_back. The native code is written to be read beside the hook path: an
+# index and a plain loop, the same in the guard, its tests and the probes.
+resharper_cpp_clang_tidy_modernize_loop_convert_highlighting = none
+resharper_cpp_clang_tidy_modernize_use_ranges_highlighting = none
+resharper_cpp_use_range_algorithm_highlighting = none
+resharper_cpp_clang_tidy_readability_use_anyofallof_highlighting = none
+resharper_cpp_clang_tidy_modernize_use_starts_ends_with_highlighting = none
+resharper_cpp_clang_tidy_readability_use_std_min_max_highlighting = none
+resharper_cpp_clang_tidy_modernize_raw_string_literal_highlighting = none
+resharper_cpp_clang_tidy_modernize_use_emplace_highlighting = none
+resharper_cpp_clang_tidy_modernize_return_braced_init_list_highlighting = none
+resharper_cpp_use_associative_contains_highlighting = none
+resharper_cpp_too_wide_scope_highlighting = none
+resharper_cpp_if_can_be_replaced_by_constexpr_if_highlighting = none
+
+# A structure Windows defines and this SDK's headers do not give (RTL_PROCESS_MODULE_INFORMATION,
+# PROCESS_MEMORY_COUNTERS_EX2), and a test's stand-in for a Vulkan dispatchable object, are declared field for field:
+# the fields nothing names are what puts the others at their offsets.
+[src/native/{FrameLedger.Injector/src/fl_guard_sources.cpp,FrameLedger.ProcessStats/src/fl_process_stats.cpp,tools/fl-probe-guard/main.cpp,tests/vklayer_test.cpp}]
+resharper_cpp_declarator_never_used_highlighting = none
+
+# The linter's compiler, not the build's: NVAPI's header makes NvU32 `unsigned int` under clang and `unsigned long`
+# under MSVC, which is the compiler that builds this probe - and `%lu` is right for it.
+[src/native/tools/fl-probe-nvapi/main.cpp]
+resharper_cpp_clang_tidy_clang_diagnostic_format_highlighting = none
+
+# --- the probes, the harness and the tests ---
+[src/native/{tools,tests}/**.{cpp,h}]
+# printf, fprintf, fputs, fclose: a probe prints what it found and a test prints why it failed; neither has anything
+# to do about a failed write to its own console.
+resharper_cpp_clang_tidy_cert_err33_c_highlighting = none
+# atoi on the harness's own arguments, which its tests write: a number that does not parse is 0, and the run that
+# asked for it fails on its own assertion.
+resharper_cpp_clang_tidy_bugprone_unchecked_string_to_number_conversion_highlighting = none
+# A printf-shaped helper (`Note(fmt, ...)`): the attribute clang proposes is not MSVC's, and a parameter pack would
+# be a second implementation of printf.
+resharper_cpp_clang_tidy_modernize_avoid_variadic_functions_highlighting = none
+resharper_cpp_clang_tidy_clang_diagnostic_missing_format_attribute_highlighting = none
+# `&pointer` handed to an API that takes `void*` (ReadProcessMemory, a memcpy of a vtable slot, a Streamline array of
+# constants): the conversion is the call's own.
+resharper_cpp_clang_tidy_bugprone_multi_level_implicit_pointer_conversion_highlighting = none
+# A test builds a handle or an address from a number, on purpose: a fake one, or one read from another process.
+resharper_cpp_clang_tidy_performance_no_int_to_ptr_highlighting = none
+# A macro that pastes its argument into a name (FL_DEV(vkGetDeviceQueue)) cannot put it in parentheses.
+resharper_cpp_clang_tidy_bugprone_macro_parentheses_highlighting = none
+# A test's fixture: a global with a std::string in it, a memcpy into a byte buffer that is not a string, two strings
+# added in an assertion's message.
+resharper_cpp_clang_tidy_bugprone_throwing_static_initialization_highlighting = none
+resharper_cpp_clang_tidy_bugprone_not_null_terminated_result_highlighting = none
+resharper_cpp_clang_tidy_performance_inefficient_string_concatenation_highlighting = none
+# layout_test checks facts the compiler already knows - a constant's length, a bit-field's range - at run time, so
+# that a failure prints which one: the branch that cannot be taken is the test passing.
+resharper_cpp_unreachable_code_highlighting = none
+resharper_cpp_clang_tidy_clang_diagnostic_unreachable_code_highlighting = none
+resharper_cpp_clang_tidy_clang_diagnostic_tautological_value_range_compare_highlighting = none
+
+# --- CODE LOADED INTO A GAME: the Overlay, the Vulkan layer, the shared-memory headers ---
+# D100: here only a defect is fixed, in a pull request of its own with the hook's overhead measured (rule 5,
+# 14_TESTING §Hook overhead). The report found none. What it did say about these files, each kept as it is:
+[src/native/{FrameLedger.Overlay,FrameLedger.VkLayer,FrameLedger.Shm}/**.{cpp,h,inl}]
+# Arms with the same body are different cases, each with its own comment saying why it reads as it does.
+resharper_cpp_clang_tidy_bugprone_branch_clone_highlighting = none
+# MinHook's MH_ALL_HOOKS is NULL, by its header.
+resharper_cpp_zero_constant_can_be_replaced_with_nullptr_highlighting = none
+# Kept on purpose, each with its reason beside it in dllmain.cpp: a retired enumerator whose bit must not be reused;
+# slSetTag, deprecated by a header whose replacement no measured module exports.
+resharper_cpp_enumerator_never_used_highlighting = none
+resharper_cpp_clang_tidy_clang_diagnostic_deprecated_declarations_highlighting = none
+
+# DEAD CODE, FOUND AND NOT REMOVED: nothing calls dllmain.cpp's LogNoteW. D100 changes code loaded into a game for
+# a defect only, so taking it out is the owner's to order (HANDOFF, the native report's section) and not this
+# report's to do. Until then this one file is not read for an unused function. Remove this section with it.
+[src/native/FrameLedger.Overlay/src/dllmain.cpp]
+resharper_cpp_declarator_never_used_highlighting = none
+resharper_cpp_clang_tidy_clang_diagnostic_unused_function_highlighting = none
+
+# The guard's rule matcher, which the Overlay compiles too. ResolveTolerance clears its out parameter with memset, as
+# ResetRules does: a Tolerance is flags with default member initialisers, which is all "non-trivially default
+# constructible" means here, and zero is what those initialisers say.
+[src/native/FrameLedger.Injector/{src/fl_ac_rules.cpp,include/fl_ac_rules.h}]
+resharper_cpp_clang_tidy_bugprone_raw_memory_call_on_non_trivial_type_highlighting = none
