@@ -35,6 +35,12 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Fixed
+
+- **Two comparisons in the Advanced-metrics code say what they mean.** Whether a game gave FSR one field of view or
+  a range of them was decided by comparing two decimal numbers for equality; it is now decided by comparing the two
+  stored values bit for bit. Nothing you see changes. (Found by SonarCloud after 0.1.0-beta.40 was merged.)
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
