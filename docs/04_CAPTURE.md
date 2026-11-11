@@ -537,7 +537,7 @@ Crash-within-60s-of-injection happening twice for the same game ⇒ **hooking au
 |---|---|
 | Game process, per present | ≤ 1 µs; no syscall, no allocation, no lock, no logging (`17_HOOK_ENGINE`) |
 | Game process, resident | ≤ 8 MB (DLL + ring) |
-| Agent, during capture | ≤ 1% of one core average, ≤ 150 MB working set |
+| Agent, during capture | ~~≤ 1%~~ ≤ 2.5 % of one core average *(NFR-2 as D117 amended it, 2026-11-11: measured 1.93 %, `20_OPEN_QUESTIONS` §M16)*, ≤ 150 MB working set |
 | Agent, idle | ~0% (1 Hz process poll only) |
 | Measured game FPS impact | ≤ 0.5% vs uninstrumented, verified per release (`14_TESTING` §Hook overhead) |
 

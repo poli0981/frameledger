@@ -300,6 +300,57 @@ So:
 > **`third_party/streamline/README.md` asserted this pass existed for five days
 > before it did**, which is why it is described here rather than only there.
 
+### Which struct version carries which field (owner decision D115, 2026-11-11)
+
+**A field of a vendor struct is read only where it is proven to be there.** A game hands a hook a struct of the
+version it was built against; a member a later version added lies past the end of what an older game allocated, and
+reading it is reading game memory outside the argument (rule 4) — not merely a wrong value. So every read of a tail
+member is gated on the struct's own version, and the gate comes from this table, not from the one header in the tree
+— which declares only the newest shape, and for `sl::DLSSOptions` says nothing about which version added what.
+
+Established 2026-11-11 from the upstream tags, through GitHub's API: each tag's header was fetched by blob and the
+struct's declarations — type, name and order — compared across tags. The members' own types were checked at the
+oldest and the newest tag (`enum Boolean : char`, `enum class DLSSMode : uint32_t`, `enum class DLSSPreset :
+uint32_t`, `float2`/`float3`/`float4x4`; no `#pragma pack` in either).
+
+**Streamline** (`NVIDIA-RTX/Streamline`; tags v2.0.0, v2.1.0, v2.2.0, v2.4.0, v2.4.15, v2.7.2, v2.7.30, v2.7.32,
+v2.8.0, v2.9.0, v2.10.0, v2.10.3, v2.11.1, v2.12.0, v2.14.1, v2.14.16):
+
+| Struct | `structVersion` | First tag (blob of the header) | Members that version adds, in order |
+|---|---|---|---|
+| `sl::DLSSOptions` (`include/sl_dlss.h`) | 1 | v2.0.0 (`7de7411e507d`) | `mode`, `outputWidth`, `outputHeight`, `sharpness`, `preExposure`, `exposureScale`, `colorBuffersHDR`, `indicatorInvertAxisX`, `indicatorInvertAxisY`, `dlaaPreset`, `qualityPreset`, `balancedPreset`, `performancePreset`, `ultraPerformancePreset` |
+| | 2 | v2.1.0 (`60882f60e6f4`) | `ultraQualityPreset`, `useAutoExposure` |
+| | 3 | v2.4.0 (`27d352db364f`) | `alphaUpscalingEnabled` |
+| `sl::Constants` (`include/sl_consts.h`) | 1 | v2.0.0 (`db6f37adcf66`) | every member through `motionVectorsJittered` — the matrices, `jitterOffset`, `mvecScale`, `cameraPinholeOffset`, the camera's position and axes, `cameraNear`, `cameraFar`, `cameraFOV`, `cameraAspectRatio`, `motionVectorsInvalidValue`, the seven `Boolean`s |
+| | 2 | v2.4.0 (`bba15338a623`) | `minRelativeLinearDepthObjectSeparation` |
+
+`sl::DLSSOptions` keeps those seventeen declarations, same types and order, through v2.14.16 (`9a875bd4f843`); v2.8.0
+only re-spelled the deprecated `sharpness`. `sl::Constants` is unchanged from v2.4.0 through v2.14.16
+(`15589e577df9`). Streamline 1.x is refused before any read (`SpeaksStreamline2`).
+
+**FidelityFX** (`GPUOpen-LibrariesAndSDKs/FidelityFX-SDK`; tags v1.1.0 — FSR 3.1.0, the first ffx-api — v1.1.1,
+v1.1.2, v1.1.3, v1.1.4, v2.0.0, v2.1.0, v2.2.0, v2.3.0, v2.4.0). The descriptor header carries a `type` and no size
+or version, so the question is whether the declaration ever changed:
+
+| Struct | Tags | Result |
+|---|---|---|
+| `ffxDispatchDescUpscale` | v1.1.0 (`68860479bb94`) … v2.4.0 (`9d4a3e5f6c60`) | **one declaration in all ten**: twenty-three members, `flags` the last |
+| `ffxConfigureDescFrameGeneration` | v1.1.0 (`0ecdd4b4e59b`) … v2.4.0 (`823a3b4720f1`) | **one declaration in all ten**: thirteen members |
+| `FfxApiResource`, `FfxApiResourceDescription`, `FfxApiFloatCoords2D`, `FfxApiDimensions2D`, `FfxApiRect2D` | v1.1.0 … v2.4.0 | one declaration each in all ten |
+| `ffxQueryDescUpscaleGetGPUMemoryUsage` (`0x00010008`), `FfxApiEffectMemoryUsage` | from v1.1.2 | one declaration since; a game that sends the type knows the struct |
+| `ffxQueryDescUpscaleGetGPUMemoryUsageV2` (`0x00010009`) | from v2.0.0 | one declaration since |
+
+**What follows for a hook** (Advanced metrics, train B):
+
+- `sl::DLSSOptions`: a member is read at `structVersion >=` the row that adds it — never "at least 1" for the tail.
+- `sl::Constants`: everything this project may read is version 1's. The camera's position, axes and matrices are
+  never read at any version (rule 4; the catalog's `PlayerState`).
+- `ffxDispatchDescUpscale`, `ffxConfigureDescFrameGeneration`: every member may be read on the ffx-api route, since
+  no ffx-api release has a shorter one. `ffxDispatchDescFrameGenerationPrepareV2`'s camera arrays are never read.
+- **Not established, so nothing more is read there**: the FSR 3.0 host's legacy descriptors (`fsr3-v3.0.x`) beyond
+  the `renderSize` the existing hook pins; any struct of a Streamline or FidelityFX release newer than the last tag
+  above — a re-vendoring re-runs this comparison (`third_party/*/README.md` §Checklist).
+
 ### Ray tracing
 | Hook | Yields |
 |---|---|

@@ -145,7 +145,7 @@ own work item on the STA thread and puts back — and with the keys a parameter,
 ## Hook overhead measurement (NFR-1, per release)
 
 1. `hook-harness` in a fixed workload, present-rate uncapped: 3 runs hooked vs 3 unhooked → mean present-call cost delta must be ≤ 1 µs (measured with QPC around the call site in an instrumented harness build).
-2. Real game, fixed 10-minute scene, capture ON vs OFF, 3 runs each: **game's own Avg FPS delta ≤ 0.5%**, Agent CPU ≤ 1% of a core, Agent RSS ≤ 150 MB, Overlay resident ≤ 8 MB.
+2. Real game, fixed 10-minute scene, capture ON vs OFF, 3 runs each: **game's own Avg FPS delta ≤ 0.5%**, Agent CPU ~~≤ 1%~~ ≤ 2.5 % of a core *(NFR-2 as D117 amended it, 2026-11-11; `tools/agent-cost.ps1` measures the unhooked half without a game)*, Agent RSS ≤ 150 MB, Overlay resident ≤ 8 MB.
 
    > **NOT MEASURED. The runbook exists as of 2026-09-10 (P2 PR-G); the run is the owner's.**
    > `tools/fps-impact-runbook.ps1` sequences the six launches, holds consent granted for the ON leg and

@@ -115,24 +115,38 @@ four trains are [`handoff/history/0.1.0-beta.38.md`](handoff/history/0.1.0-beta.
 
 ### NEXT
 
-1. **Ask the owner `20_OPEN_QUESTIONS` §M16 before anything else.** The telemetry layer every session has always
-   used refreshes the sensor library once a second; measured on this PC that is about 1.4 % of one core, above
-   NFR-2's 1 % for the whole Agent. It is not this feature's cost and was not changed here. The choices are the
-   owner's: read it less often (and thin the fixed sensor series), keep it and amend NFR-2, or measure more first.
-2. **Train B (0.1.0-beta.40) starts with a plan of its own**, its decisions asked then: inside the game, on calls
-   already hooked (`DLSSOptions`, the FidelityFX dispatch) and on functions Streamline exports (`slSetConstants`,
-   `slGetFeatureVersion`, `slGetFeatureRequirements`, `slInit`), shared-memory layout 5. Every rule that governs a
-   hook applies — rules 4 and 5, `17_HOOK_ENGINE` §Hook inventory, the overhead measured, the open S-series — and
-   **`sl::Constants`' camera position, axes and matrices are never read** (the catalog's `PlayerState`). The page
-   needs no new screen: the catalog's `HookedCall` and `NewHook` rows become read, and Sources says so by itself.
+1. ~~**Ask the owner `20_OPEN_QUESTIONS` §M16 before anything else.**~~ **Asked 2026-11-11 — D110: measure it in a
+   real Agent first.** `tools/agent-cost.ps1` does, and §M16 holds the numbers: 1.93 % of one core with Advanced
+   metrics off, 2.04 % on. **D117: NFR-2 is amended to ≤ 2.5 %**; nothing in the code changes.
+2. ~~**Train B (0.1.0-beta.40) starts with a plan of its own**~~ **Train B was planned and approved the same day**
+   (D111–D116): [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B is the design. What that section does not
+   carry:
+   - **The approval covers 0.1.0-beta.40 whole** — five pull requests: (1) the decisions, the struct-version table,
+     §M16 measured; (2) shared-memory layout 5, written by nobody yet; (3) the Overlay reads the extra fields of the
+     calls it already hooks, behind the control word, with `overlay-fields-check` and the overhead measured; (4) the
+     Agent's sampler, the catalog's new reach, the page's words, Privacy 2.16; (5) the release, owner-only item 38.
+   - **beta.41 and beta.42 are designed and not begun.** Each starts only when the owner says the release before it
+     passed its owner-only item on real games — that wait is what the split is for.
+   - **The design was reviewed against the code before approval, and the review changed it**: the split itself; the
+     struct-version table (the tree holds one version of each header); storing a vendor `Boolean` or preset as its
+     value plus one and refusing the vendors' sentinels (`INVALID_FLOAT` is FLT_MAX); flags as "ever seen" masks and
+     the frame time as a sum the watchdog drains, since a value sampled once a second aliases a per-frame one; the
+     new region written by the watchdog alone and only while requested; `AdvancedSources`' new member optional, so a
+     beta.39 row still parses; `kMaxPatches = 48` to be checked before a patch is added.
 3. **Trains C and D** (Reflex latency; the Streamline state behind `slGetFeatureFunction`) each begin with a spike
    and end in the owner's go or no. D needs an amendment of rule 4 if it goes ahead — handing the game a wrapper is
    a write — and that question is put to the owner then, not assumed.
 
 ### Left open by this session
 
-- **This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
-  after this text. Record them in the next pull request, as beta.38's were in #387.
+- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
+  after this text. Record them in the next pull request, as beta.38's were in #387.~~ **Recorded 2026-11-11, in the
+  first pull request of train B: 0.1.0-beta.39 was released 2026-11-11T13:52:07Z** from the signed tag on `e63cd49`
+  (#394), by run 43031168146 — green at the first attempt, one run for the one tag push. Eight assets; the seven
+  digests of `SHA256SUMS.txt` equal the ones GitHub computed; the shipped natives carry `FL_BUILD_ID v0.1.0-beta.39`.
+  The delta from beta.38 is 3,144,205 bytes beside a full package of 110,678,706 — "Delta processed 0452 files. 0026
+  patched, 0426 unchanged". The wiki was published by run 43033077805. The rehearsal on the release branch (run
+  43026873256) had made a delta of 3,159,090 bytes with the same file counts.
 - **Nothing here was seen in the running App.** The page was rendered to images from a test over fixture data and
   looked at; a chart does not render into such an image. No real Agent answered a real App, no session was recorded
   with the option on, and no value was compared with another tool. All of that is owner-only item 37.
@@ -153,8 +167,12 @@ four trains are [`handoff/history/0.1.0-beta.38.md`](handoff/history/0.1.0-beta.
   `gh pr create`, ask the API for the runs of the head commit before walking away.
 - **`ShmDrainIntegrationTests.TheGuardInjectsTheOverlayAndTheReaderDrainsRealFrames` was red once** in a local gate
   (#392's first run): the guard's re-scan refused the harness mid-run, under the gate's load. It passed alone and in
-  the rerun; nothing in that pull request is on its path; it was not diagnosed. If it shows again, read the verdict's
-  reason first — the assertion prints only that it was a refusal.
+  the rerun; nothing in that pull request is on its path; it was not diagnosed. ~~If it shows again, read the verdict's
+  reason first — the assertion prints only that it was a refusal.~~ **It showed again the same day** (train B's first
+  local gate), on another line: the Overlay's status was still `Init` with fifty records already drained. That one
+  is a race in the test and is fixed — the Overlay publishes `Ready` after its last hook, later than its first
+  record, so the test now waits `Init` out, bounded. The refusal was not reproduced; the assertion now prints the
+  verdict, so the next one says why.
 - **`PagesLoadTests.EveryTextFollowsAThemeSwitch` was red once on a hosted runner** (#393's first run, green three
   times locally): *Settings: "Processor" shows in a fresh one only*. Every build of the Settings page in that fixture
   made a `SystemInfoViewModel` of its own, whose lines arrive from the thread pool, so two pages built a moment apart
@@ -471,8 +489,9 @@ with a real game, the first run as administrator with PawnIO, and what the Agent
    there has ever been (`20_OPEN_QUESTIONS` §M10, §M13): the processor per core, the memory and the motherboard's
    sensors appear on *This PC* and *Sources* says *Read*; watch for a pause or a hang when the page first opens,
    and compare a few values with HWiNFO. Without it, *Sources* gives the reason in words. (f) **What it costs**: the
-   Agent's processor time and memory during a session with the option on and with it off (NFR-2: 1 % of one core,
-   150 MB) — and with that in hand, the answer to §M16. (g) **The words**: the `vi` strings read as a Vietnamese
+   Agent's processor time and memory during a session with the option on and with it off (NFR-2: ~~1 %~~ 2.5 % of one
+   core since D117, 150 MB) — ~~and with that in hand, the answer to §M16~~ §M16 was measured without a game and
+   answered on 2026-11-11; what is left for a real game is the hooked session and the elevated one. (g) **The words**: the `vi` strings read as a Vietnamese
    speaker would write them; the `ja` strings marked `review`. (h) **A copy of the ledger** (`--data-dir`) that holds
    such a session: the page is there, opens on *Session*, and *This PC* says it is a copy.
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
@@ -597,6 +616,14 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D106 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Advanced metrics | a `.partial` chunk of an unknown type with a right checksum is skipped, where it ended the read |
 | D107 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Advanced metrics | with no game running the Agent reads sensors only while the page is open |
 | D108 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Advanced metrics | "never call a setter" is a build gate: every `NvAPI_*` call of the bridge is held to a committed list |
+| D110 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §M16 | the L2 telemetry layer's cost is measured in a real Agent before anything is changed (`tools/agent-cost.ps1`); what to do about the number is asked after |
+| D117 | [`02_SPEC.md`](02_SPEC.md) NFR-2 | asked with the measurement in hand (1.93 % off, 2.04 % on): NFR-2 is amended to ≤ 2.5 % of one core during capture; the sensors keep one reading a second and no code changes |
+| D111 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B | inside the game too, off means nothing more is read: the Overlay reads new fields and installs new hooks only while the Agent's control word says the session records Advanced metrics |
+| D112 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B | `slInit` is not hooked in train B; if ever, never `applicationId`, `projectId` or the paths |
+| D113 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B | train B is three releases: beta.40 fields of calls already hooked (no new patch site), beta.41 `slSetConstants` + `ffxConfigure`, beta.42 `slGetFeatureVersion` + `slGetFeatureRequirements`; each waits for the owner's run of the one before; C is beta.43, D beta.44 |
+| D114 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B | the field of view is stored as a session's range, never as a series |
+| D115 | [`17_HOOK_ENGINE.md`](17_HOOK_ENGINE.md) §Which struct version carries which field | a tail member of a vendor struct is read only where the upstream tags prove it is there |
+| D116 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B | "never the camera" is a build gate: `tools/overlay-fields-check.ps1` |
 | D109 | [`../legal/DISCLAIMER.md`](../legal/DISCLAIMER.md) §5, §5A | asked on 2026-11-11 with both sentences quoted: the Disclaimer goes to 2.15 with the Privacy Policy — PawnIO and the admin mode are no longer "for the CPU temperature" alone; with Advanced metrics on they also read the processor's, the memory's and the motherboard's sensors. The admin mode's disclosure follows (`agent-admin-dialog/2`) |
 
 ---
