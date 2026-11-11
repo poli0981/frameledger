@@ -436,7 +436,7 @@ public sealed class CaptureSession(
     {
         // D33: every re-scan names the family the injection named, and nothing else.
         var supervisor = new GuardSupervisor(guard, toleratedFamily);
-        var state = new DrainState(new ModuleTally(modules, ngx), new DisplaySampler(display));
+        var state = new DrainState(new ModuleTally(modules, ngx), new DisplaySampler(display)) { InGameAsked = AskInGameAdvanced(sink) };
         SessionEndReason end = await SuperviseAsync(pid, alive, sink, supervisor, state, ct, stop).ConfigureAwait(false);
 
         // On a safety unhook the verdict that matters is the one that FIRED mid-session, not the pass that
@@ -561,7 +561,7 @@ public sealed class CaptureSession(
         // still named; on TargetExited it reads nothing, which the tally counts rather than hides. The last
         // display sample stands until here (beta.10). The driver is not asked once the game has gone (Take, beta.27).
         state.Loaded.Take(pid, askDriver: !(alive.HasExited || end == SessionEndReason.TargetExited));
-        state.Display.Finish(state.Paused);
+        state.FinishSampling(sink);
 
         // ONE LAST DRAIN ON EVERY PATH, including the faulted one — that is the whole point of catching
         // the mid-loop throw rather than letting it leave the method. Then let go promptly: holding the
@@ -583,6 +583,19 @@ public sealed class CaptureSession(
     {
         state.Focus.Sample(alive.IsForeground);
         state.Display.Sample([pid], sink.DisplayState, state.Paused);
+        state.SampleInGame(sink);
+    }
+
+    /// <summary>
+    /// ADVANCED METRICS INSIDE THE GAME (train B, D111): the session's word, written EITHER WAY and before the first
+    /// guard result - the control block outlives a session, and a request the session before left standing would be
+    /// one nobody made. With it off the Overlay reads and hooks exactly what it did before the option existed.
+    /// </summary>
+    private bool AskInGameAdvanced(ICaptureSink sink)
+    {
+        bool asked = observer?.WantsInGameAdvanced ?? false;
+        sink.SetAdvancedRequested(asked);
+        return asked;
     }
 
     /// <summary>
@@ -736,6 +749,31 @@ public sealed class CaptureSession(
 
         public ModuleTally Loaded { get; } = loaded;
 
+        /// <summary>Whether this session asked the Overlay for what the game tells its upscaler (train B, D111).</summary>
+        public bool InGameAsked { get; init; }
+
+        /// <summary>The last publication of region 5 taken for this session; null until there is one (train B).</summary>
+        public InGameAdvanced? InGame { get; private set; }
+
+        /// <summary>
+        /// Region 5, when the session asked for it: a new <see cref="InGameAdvanced"/> only when the Overlay published
+        /// again - once a second - so the ticks between two publications carry the same instance and copy nothing.
+        /// </summary>
+        public void SampleInGame(ICaptureSink sink)
+        {
+            if (InGameAsked && sink.AdvancedState is { } published && (InGame is null || InGame.State.Samples != published.Samples))
+            {
+                InGame = new InGameAdvanced(published);
+            }
+        }
+
+        /// <summary>The last display sample stands until here, and region 5 is read once more before the last tick.</summary>
+        public void FinishSampling(ICaptureSink sink)
+        {
+            Display.Finish(Paused);
+            SampleInGame(sink);
+        }
+
         public CaptureProgress Progress(ICaptureSink sink, GuardSupervisor supervisor) => new()
         {
             Records = Records,
@@ -750,6 +788,7 @@ public sealed class CaptureSession(
             RuntimeModules = Loaded.Set,
             NgxDriver = Loaded.Ngx,
             AdapterLuid = sink.Handshake.AdapterLuid,
+            InGameAdvanced = InGame,
         };
     }
 

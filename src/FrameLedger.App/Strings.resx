@@ -40,7 +40,7 @@
     <value>FSR's own video memory, when the game asks it</value>
   </data>
   <data name="Adv_ffx_upscale_depth" xml:space="preserve">
-    <value>Near and far planes and field of view given to FSR</value>
+    <value>Near and far planes and the range of the field of view given to FSR</value>
   </data>
   <data name="Adv_ffx_upscale_exposure" xml:space="preserve">
     <value>Pre-exposure given to FSR</value>
@@ -52,7 +52,7 @@
     <value>The frame time the game reported to FSR</value>
   </data>
   <data name="Adv_ffx_upscale_jitter" xml:space="preserve">
-    <value>The jitter offsets the game gave FSR</value>
+    <value>The largest jitter offset the game gave FSR</value>
   </data>
   <data name="Adv_ffx_upscale_sharpening" xml:space="preserve">
     <value>FSR sharpening: on or off, and its strength</value>
@@ -495,6 +495,9 @@
   <data name="Advanced_Header" xml:space="preserve">
     <value>Advanced metrics</value>
   </data>
+  <data name="Advanced_InGameLine" xml:space="preserve">
+    <value>Inside the game: {0}.</value>
+  </data>
   <data name="Advanced_Machine_Intro" xml:space="preserve">
     <value>What the graphics driver and the hardware sensors say about this PC right now. It is read only while this page is open or a game is being recorded, and nothing shown here is stored.</value>
   </data>
@@ -552,6 +555,9 @@
   <data name="Advanced_State_Waiting" xml:space="preserve">
     <value>The capture agent is opening its sources…</value>
   </data>
+  <data name="Advanced_Status_InGame" xml:space="preserve">
+    <value>Read inside a game FrameLedger measures, when the game makes the call</value>
+  </data>
   <data name="Advanced_Status_Read" xml:space="preserve">
     <value>Read</value>
   </data>
@@ -603,8 +609,23 @@
   <data name="AdvGroup_Upscaling" xml:space="preserve">
     <value>Upscaling</value>
   </data>
+  <data name="AdvInGame_NotHooked" xml:space="preserve">
+    <value>the session was not measured inside the game</value>
+  </data>
+  <data name="AdvInGame_NothingSeen" xml:space="preserve">
+    <value>the game made none of the calls these are read from</value>
+  </data>
+  <data name="AdvInGame_Reading" xml:space="preserve">
+    <value>read from the game's own calls</value>
+  </data>
+  <data name="AdvInGame_Unknown" xml:space="preserve">
+    <value>not known</value>
+  </data>
   <data name="AdvReach_Deferred" xml:space="preserve">
     <value>Not read in this release</value>
+  </data>
+  <data name="AdvReach_Game" xml:space="preserve">
+    <value>Inside a game FrameLedger measures</value>
   </data>
   <data name="AdvReach_HookedCall" xml:space="preserve">
     <value>Inside the game - comes with a later release</value>
@@ -681,6 +702,9 @@
   <data name="AdvToken_driver_default" xml:space="preserve">
     <value>Driver default</value>
   </data>
+  <data name="AdvToken_draw_debug_view" xml:space="preserve">
+    <value>Debug view</value>
+  </data>
   <data name="AdvToken_edr" xml:space="preserve">
     <value>EDR</value>
   </data>
@@ -711,11 +735,29 @@
   <data name="AdvToken_no_profile_for_game" xml:space="preserve">
     <value>The driver has no profile for this game</value>
   </data>
+  <data name="AdvToken_non_linear_color_pq" xml:space="preserve">
+    <value>Non-linear colour, PQ</value>
+  </data>
+  <data name="AdvToken_non_linear_color_srgb" xml:space="preserve">
+    <value>Non-linear colour, sRGB</value>
+  </data>
+  <data name="AdvToken_none" xml:space="preserve">
+    <value>None</value>
+  </data>
   <data name="AdvToken_not_a_number" xml:space="preserve">
     <value>Not a number</value>
   </data>
   <data name="AdvToken_not_supported" xml:space="preserve">
     <value>Not supported</value>
+  </data>
+  <data name="AdvToken_off" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="AdvToken_on" xml:space="preserve">
+    <value>On</value>
+  </data>
+  <data name="AdvToken_on_and_off" xml:space="preserve">
+    <value>On at times, off at others</value>
   </data>
   <data name="AdvToken_pci" xml:space="preserve">
     <value>PCI</value>
@@ -1042,7 +1084,7 @@
     <value>The agent did not answer the rules update.</value>
   </data>
   <data name="Settings_Advanced_Body" xml:space="preserve">
-    <value>Read more from the graphics driver and the hardware sensors during a session - the graphics card's memory and load in detail, each fan and voltage, what your display can do, the driver's settings for the game - and store it with the session. Off: nothing more is read or stored. It applies from the next session, and a session recorded while it was off is not filled in later.</value>
+    <value>Read more from the graphics driver and the hardware sensors during a session - the graphics card's memory and load in detail, each fan and voltage, what your display can do, the driver's settings for the game - and, in a game FrameLedger measures from inside, what the game tells DLSS and FSR (sizes, presets, sharpening, exposure - never where the camera is). All of it is stored with the session. Off: nothing more is read or stored, inside a game either. It applies from the next session, and a session recorded while it was off is not filled in later.</value>
   </data>
   <data name="Settings_Advanced_Label" xml:space="preserve">
     <value>Advanced metrics</value>

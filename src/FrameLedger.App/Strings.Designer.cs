@@ -260,6 +260,7 @@ public static class Strings
         nameof(Advanced_Elevation_Hint),
         nameof(Advanced_Facts_Header),
         nameof(Advanced_Header),
+        nameof(Advanced_InGameLine),
         nameof(Advanced_Machine_Intro),
         nameof(Advanced_Max),
         nameof(Advanced_Mean),
@@ -279,6 +280,7 @@ public static class Strings
         nameof(Advanced_State_OlderAgent),
         nameof(Advanced_State_Viewer),
         nameof(Advanced_State_Waiting),
+        nameof(Advanced_Status_InGame),
         nameof(Advanced_Status_Read),
         nameof(Advanced_Status_Readable),
         nameof(Advanced_Status_SourceSilent),
@@ -296,7 +298,12 @@ public static class Strings
         nameof(AdvGroup_Memory),
         nameof(AdvGroup_Storage),
         nameof(AdvGroup_Upscaling),
+        nameof(AdvInGame_NothingSeen),
+        nameof(AdvInGame_NotHooked),
+        nameof(AdvInGame_Reading),
+        nameof(AdvInGame_Unknown),
         nameof(AdvReach_Deferred),
+        nameof(AdvReach_Game),
         nameof(AdvReach_HookedCall),
         nameof(AdvReach_Identifier),
         nameof(AdvReach_Licence),
@@ -321,6 +328,7 @@ public static class Strings
         nameof(AdvToken_desktop),
         nameof(AdvToken_discrete),
         nameof(AdvToken_dolby_vision),
+        nameof(AdvToken_draw_debug_view),
         nameof(AdvToken_driver_default),
         nameof(AdvToken_edr),
         nameof(AdvToken_fpci),
@@ -332,8 +340,14 @@ public static class Strings
         nameof(AdvToken_integrated),
         nameof(AdvToken_laptop),
         nameof(AdvToken_no_profile_for_game),
+        nameof(AdvToken_non_linear_color_pq),
+        nameof(AdvToken_non_linear_color_srgb),
+        nameof(AdvToken_none),
         nameof(AdvToken_not_a_number),
         nameof(AdvToken_not_supported),
+        nameof(AdvToken_off),
+        nameof(AdvToken_on),
+        nameof(AdvToken_on_and_off),
         nameof(AdvToken_pci),
         nameof(AdvToken_pci_express),
         nameof(AdvToken_rtx_new_feature),
@@ -1974,6 +1988,8 @@ public static class Strings
 
     public static string Advanced_Header => ResourceManager.GetString(nameof(Advanced_Header), Culture) ?? nameof(Advanced_Header);
 
+    public static string Advanced_InGameLine => ResourceManager.GetString(nameof(Advanced_InGameLine), Culture) ?? nameof(Advanced_InGameLine);
+
     public static string Advanced_Machine_Intro => ResourceManager.GetString(nameof(Advanced_Machine_Intro), Culture) ?? nameof(Advanced_Machine_Intro);
 
     public static string Advanced_Max => ResourceManager.GetString(nameof(Advanced_Max), Culture) ?? nameof(Advanced_Max);
@@ -2012,6 +2028,8 @@ public static class Strings
 
     public static string Advanced_State_Waiting => ResourceManager.GetString(nameof(Advanced_State_Waiting), Culture) ?? nameof(Advanced_State_Waiting);
 
+    public static string Advanced_Status_InGame => ResourceManager.GetString(nameof(Advanced_Status_InGame), Culture) ?? nameof(Advanced_Status_InGame);
+
     public static string Advanced_Status_Read => ResourceManager.GetString(nameof(Advanced_Status_Read), Culture) ?? nameof(Advanced_Status_Read);
 
     public static string Advanced_Status_Readable => ResourceManager.GetString(nameof(Advanced_Status_Readable), Culture) ?? nameof(Advanced_Status_Readable);
@@ -2046,7 +2064,17 @@ public static class Strings
 
     public static string AdvGroup_Upscaling => ResourceManager.GetString(nameof(AdvGroup_Upscaling), Culture) ?? nameof(AdvGroup_Upscaling);
 
+    public static string AdvInGame_NothingSeen => ResourceManager.GetString(nameof(AdvInGame_NothingSeen), Culture) ?? nameof(AdvInGame_NothingSeen);
+
+    public static string AdvInGame_NotHooked => ResourceManager.GetString(nameof(AdvInGame_NotHooked), Culture) ?? nameof(AdvInGame_NotHooked);
+
+    public static string AdvInGame_Reading => ResourceManager.GetString(nameof(AdvInGame_Reading), Culture) ?? nameof(AdvInGame_Reading);
+
+    public static string AdvInGame_Unknown => ResourceManager.GetString(nameof(AdvInGame_Unknown), Culture) ?? nameof(AdvInGame_Unknown);
+
     public static string AdvReach_Deferred => ResourceManager.GetString(nameof(AdvReach_Deferred), Culture) ?? nameof(AdvReach_Deferred);
+
+    public static string AdvReach_Game => ResourceManager.GetString(nameof(AdvReach_Game), Culture) ?? nameof(AdvReach_Game);
 
     public static string AdvReach_HookedCall => ResourceManager.GetString(nameof(AdvReach_HookedCall), Culture) ?? nameof(AdvReach_HookedCall);
 
@@ -2096,6 +2124,8 @@ public static class Strings
 
     public static string AdvToken_dolby_vision => ResourceManager.GetString(nameof(AdvToken_dolby_vision), Culture) ?? nameof(AdvToken_dolby_vision);
 
+    public static string AdvToken_draw_debug_view => ResourceManager.GetString(nameof(AdvToken_draw_debug_view), Culture) ?? nameof(AdvToken_draw_debug_view);
+
     public static string AdvToken_driver_default => ResourceManager.GetString(nameof(AdvToken_driver_default), Culture) ?? nameof(AdvToken_driver_default);
 
     public static string AdvToken_edr => ResourceManager.GetString(nameof(AdvToken_edr), Culture) ?? nameof(AdvToken_edr);
@@ -2118,9 +2148,21 @@ public static class Strings
 
     public static string AdvToken_no_profile_for_game => ResourceManager.GetString(nameof(AdvToken_no_profile_for_game), Culture) ?? nameof(AdvToken_no_profile_for_game);
 
+    public static string AdvToken_non_linear_color_pq => ResourceManager.GetString(nameof(AdvToken_non_linear_color_pq), Culture) ?? nameof(AdvToken_non_linear_color_pq);
+
+    public static string AdvToken_non_linear_color_srgb => ResourceManager.GetString(nameof(AdvToken_non_linear_color_srgb), Culture) ?? nameof(AdvToken_non_linear_color_srgb);
+
+    public static string AdvToken_none => ResourceManager.GetString(nameof(AdvToken_none), Culture) ?? nameof(AdvToken_none);
+
     public static string AdvToken_not_a_number => ResourceManager.GetString(nameof(AdvToken_not_a_number), Culture) ?? nameof(AdvToken_not_a_number);
 
     public static string AdvToken_not_supported => ResourceManager.GetString(nameof(AdvToken_not_supported), Culture) ?? nameof(AdvToken_not_supported);
+
+    public static string AdvToken_off => ResourceManager.GetString(nameof(AdvToken_off), Culture) ?? nameof(AdvToken_off);
+
+    public static string AdvToken_on => ResourceManager.GetString(nameof(AdvToken_on), Culture) ?? nameof(AdvToken_on);
+
+    public static string AdvToken_on_and_off => ResourceManager.GetString(nameof(AdvToken_on_and_off), Culture) ?? nameof(AdvToken_on_and_off);
 
     public static string AdvToken_pci => ResourceManager.GetString(nameof(AdvToken_pci), Culture) ?? nameof(AdvToken_pci);
 

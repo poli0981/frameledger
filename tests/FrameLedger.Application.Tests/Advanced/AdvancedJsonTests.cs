@@ -145,13 +145,46 @@ public sealed class AdvancedJsonTests
             new("nvapi.gpu.board_serial", Instance: null, AdvancedValue.OfText("0123456789")),
             new("nvapi.display.edid", "1", AdvancedValue.OfText("00ffffffffffff00")),
             new("sl.constants.camera", Instance: null, AdvancedValue.OfText("1.0 2.0 3.0")),
-            new("sl.dlss.presets", Instance: null, AdvancedValue.OfText("K")),
+            new("sl.constants.jitter", Instance: null, AdvancedValue.OfText("0.25 0.25")),
+            new("sl.dlss.presets", Instance: null, AdvancedValue.OfRows([new AdvancedRow("DLAA", "K")])),
             new("no.such.metric", Instance: null, AdvancedValue.Of(1)),
             new("lhm.board.model", Instance: null, AdvancedValue.OfText("ASUS ROG STRIX Z790-E")),
         ];
 
-        AdvancedJson.Storable(mixed).Select(static f => f.Id).Should().Equal("nvapi.gpu.rt_cores", "lhm.board.model");
+        // The camera's position is the player's state and is never stored, whatever produced it; a hook that is not
+        // built stores nothing; what the Overlay reads inside a game since 0.1.0-beta.40 may be stored.
+        AdvancedJson.Storable(mixed).Select(static f => f.Id).Should().Equal("nvapi.gpu.rt_cores", "sl.dlss.presets", "lhm.board.model");
         FluentActions.Invoking(static () => AdvancedJson.Storable(null!)).Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void ARowStoredBeforeTheInGameStateExistedStillParsesAndSaysNothingOfIt()
+    {
+        // 0.1.0-beta.39 wrote exactly this. The in-game state is a member that may be absent, never a required one.
+        const string beta39 = """{"facts":[{"id":"nvapi.session.vrr_enabled","number":1}],"sources":{"nvapi":"Reading","sensors":"Reading","elevatedSensors":"NotElevated"}}""";
+
+        (IReadOnlyList<AdvancedFact> facts, AdvancedSources sources) = AdvancedJson.ParseSession(beta39);
+
+        facts.Should().ContainSingle().Which.Id.Should().Be("nvapi.session.vrr_enabled");
+        sources.Nvapi.Should().Be(AdvancedSourceStatus.Reading);
+        sources.ElevatedSensors.Should().Be(AdvancedSourceStatus.NotElevated);
+        sources.InGame.Should().BeNull("a row that never said is not a row that said no");
+    }
+
+    [Theory]
+    [InlineData(AdvancedInGameStatus.Reading)]
+    [InlineData(AdvancedInGameStatus.NothingSeen)]
+    [InlineData(AdvancedInGameStatus.NotHooked)]
+    public void TheInGameStateOfASessionSurvivesTheLedger(AdvancedInGameStatus status)
+    {
+        AdvancedSources written = AdvancedSources.Unknown with { InGame = status };
+
+        string json = AdvancedJson.OfSession([], written);
+        (_, AdvancedSources read) = AdvancedJson.ParseSession(json);
+
+        json.Should().Contain("\"inGame\":\"" + status + "\"", "a status is its name, as the sources' are");
+        read.Should().Be(written);
+        AdvancedJson.OfSession([], AdvancedSources.Unknown).Should().NotContain("inGame", "the machine's state has no such member, and null is left out");
     }
 
     [Fact]

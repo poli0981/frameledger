@@ -35,6 +35,28 @@ alone — whether variable refresh was in use on the display the game ran on, th
 the driver's settings for that game — the lowest, average and highest of every reading, and a chart over the
 session's length.
 
+### What the game told its upscaler
+
+For a game FrameLedger measures **from inside** (hooking is on for it), a session recorded with Advanced metrics on
+also keeps what the game itself handed to DLSS and FSR:
+
+- **DLSS** — the output size, the model preset for each quality mode, whether the game said its colour buffers are
+  HDR, auto-exposure, alpha upscaling, and the exposure values.
+- **FSR** — sharpening (on or off, and how strong), the largest jitter offset, the exposure, the near and far planes,
+  the **range** of the field of view over the session, the flags of the call, the frame time the game reported, and
+  FSR's own video memory at the moments the game asked for it.
+
+These are the game's own words to the upscaler, shown in the vendor's notation (`preExposure`, preset `K`).
+FrameLedger does not check what the upscaler did with them.
+
+**Many games will show nothing here**, and the line under the session says why: *the game made none of the calls
+these are read from* — most games set their DLSS options through a call FrameLedger cannot see, and only games that
+use FSR 3.1 or later through AMD's own library show the FSR rows — or *the session was not measured inside the game*.
+It never means the game uses no upscaler; the session's summary still names the upscaler as before.
+
+**Where the camera is, which way it looks and its matrices are never read.** The field of view is kept as a lowest
+and a highest value, never as a line over time.
+
 A session's summary has an **Advanced metrics…** button that opens that session here.
 
 ## Sources
@@ -46,7 +68,8 @@ comes from, and whether it is read. Where it is not, the reason is written out:
   memory's and the motherboard's sensors need both ([Every setting](08-settings.md), *Run the agent as
   administrator*);
 - **not present on this PC** — the driver's own figures exist on NVIDIA cards only;
-- **inside the game — comes with a later release**;
+- **read inside a game FrameLedger measures, when the game makes the call** — what the game tells DLSS and FSR
+  (above). Some further readings inside the game **come with a later release**;
 - **never read** — a serial number, a display's identification data, which other programs are encoding, the camera's
   position in the game. FrameLedger does not read these at all.
 

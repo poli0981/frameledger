@@ -97,9 +97,27 @@ public sealed class SessionRecorderTests : IAsyncDisposable
             ValueTask.FromResult(AntiCheatVerdict.Allowed());
     }
 
-    private sealed class FakeSink(SteppingClock clock, int recordsToServe, ulong adapterLuid = 0) : ICaptureSink
+    /// <summary>Region 5 for a recorder test (train B): what the fake Overlay publishes, and what the loop asked of it.</summary>
+    private sealed class InGameScript
+    {
+        private uint _published;
+
+        /// <summary>What each publication carries; null publishes nothing. The count of publications goes in.</summary>
+        public Func<uint, FlAdvancedState>? Publish { get; init; }
+
+        public List<bool> Asked { get; } = [];
+
+        /// <summary>A new publication on every read, as if the watchdog ticked as often as the test's loop.</summary>
+        public FlAdvancedState? Next() => Publish?.Invoke(++_published);
+    }
+
+    private sealed class FakeSink(SteppingClock clock, int recordsToServe, ulong adapterLuid = 0, InGameScript? inGame = null) : ICaptureSink
     {
         private int _served;
+
+        public FlAdvancedState? AdvancedState => inGame?.Asked is [.., true] ? inGame.Next() : null;
+
+        public void SetAdvancedRequested(bool requested) => inGame?.Asked.Add(requested);
 
         public FlWriterState WriterState => new() { Status = (uint)FlStatus.Ready, HooksInstalledMask = 1, RuntimeCensus = 0x8000_0000 };
 
@@ -224,12 +242,12 @@ public sealed class SessionRecorderTests : IAsyncDisposable
     }
 
     private sealed class Factory(IGameConsentStore store, FakeGuard guard, SteppingClock clock, int records, FakeLiveness liveness,
-        IUserModeExceptionSwitch? exceptions = null, IDisplayProbe? display = null, ulong adapterLuid = 0) : ICaptureSessionFactory
+        IUserModeExceptionSwitch? exceptions = null, IDisplayProbe? display = null, ulong adapterLuid = 0, InGameScript? inGame = null) : ICaptureSessionFactory
     {
         public CaptureSession Create(ICaptureObserver observer) => new(
             store, new HookedCaptureGate(guard), guard, new FixedResolver(),
             new DelegateLivenessSource(_ => liveness),
-            new DelegateRingAttacher(_ => (new FakeSink(clock, records, adapterLuid), ShmAttachRefusal.Ok)),
+            new DelegateRingAttacher(_ => (new FakeSink(clock, records, adapterLuid, inGame), ShmAttachRefusal.Ok)),
             new CaptureOptions
             {
                 DrainInterval = TimeSpan.FromMilliseconds(1),
@@ -304,7 +322,8 @@ public sealed class SessionRecorderTests : IAsyncDisposable
 
     private async Task<Harness> MakeAsync(bool consented = true, AntiCheatVerdict? verdict = null, int records = 3_000, FakeLiveness? liveness = null, bool poller = true,
         bool clockStepsOnDrain = false, IDriverProfileSource? profiles = null, bool excepted = false, IDisplayProbe? display = null, ulong adapterLuid = 0,
-        AntiCheatVerdict? rescan = null, ICrashReporterSightings? reporters = null, IAdvancedHardware? advanced = null, bool advancedOn = false)
+        AntiCheatVerdict? rescan = null, ICrashReporterSightings? reporters = null, IAdvancedHardware? advanced = null, bool advancedOn = false,
+        InGameScript? inGame = null)
     {
         _db ??= await LedgerDatabase.OpenAsync(Path.Combine(_dir, LedgerPaths.DatabaseFileName), ct: TestContext.Current.CancellationToken).ConfigureAwait(false);
         var store = new SqliteGameConsentStore(_db);
@@ -330,7 +349,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         var partials = new FakePartialSessionStore();
         FakePoller? fakePoller = poller ? new FakePoller(clockStepsOnDrain ? clock : null) : null;
         var recorder = new SessionRecorder(
-            new Factory(store, guard, clock, records, liveness ?? _alive, excepted ? new FakeExceptionSwitch(on: true) : null, display, adapterLuid),
+            new Factory(store, guard, clock, records, liveness ?? _alive, excepted ? new FakeExceptionSwitch(on: true) : null, display, adapterLuid, inGame),
             games, new FakeSnapshots(), new FixedHardware(), partials,
             new SessionFinalizer(sessions, new RawSeriesCodec()), new NoCrashEvents(),
             _ => fakePoller, clock,
@@ -824,6 +843,86 @@ public sealed class SessionRecorderTests : IAsyncDisposable
     }
 
     [Fact]
+    public async Task WithAdvancedMetricsOffTheOverlayIsToldSoAndNothingTheGameSaidIsStored()
+    {
+        // D111, the Agent's half: off is a word that is written, and a region that holds something is not read.
+        var script = new InGameScript { Publish = static n => InGameStates.Ffx(n) };
+        Harness h = await MakeAsync(advanced: new FakeAdvanced { Latest = FakeAdvanced.Snapshot() }, advancedOn: false, inGame: script);
+
+        await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        script.Asked.Should().Equal(false);
+        FinalizedSession stored = h.Sessions.Stored.Single();
+        stored.Advanced.Should().BeNull();
+        stored.Sensors.Should().NotContain(static b => b.Series.StartsWith(AdvancedMetric.SeriesPrefix, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task WithAdvancedMetricsOnWhatTheGameToldItsUpscalerIsStoredWithTheSession()
+    {
+        var hub = new FakeAdvanced { Latest = FakeAdvanced.Snapshot() };
+        var script = new InGameScript { Publish = static n => InGameStates.Ffx(n) };
+        Harness h = await MakeAsync(advanced: hub, advancedOn: true, inGame: script);
+
+        RecordedSession r = await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        script.Asked.Should().Equal(true);
+        FinalizedSession stored = h.Sessions.Stored.Single();
+        AdvancedSessionRow row = stored.Advanced.Should().BeOfType<AdvancedSessionRow>().Subject;
+        (IReadOnlyList<AdvancedFact> facts, AdvancedSources sources) = AdvancedJson.ParseSession(row.FactsJson);
+        facts.Select(static f => f.Id).Should().Equal(
+            ["nvapi.session.vrr_enabled", "ffx.upscale.sharpening", "ffx.upscale.jitter", "ffx.upscale.exposure", "ffx.upscale.depth", "ffx.upscale.flags"],
+            "the driver's facts of the session, then what the game said");
+        facts.Single(static f => string.Equals(f.Id, "ffx.upscale.depth", StringComparison.Ordinal)).Value.Rows!.Select(static x => x.Value).Should().Contain("0.9 – 1.1 rad (51.6° – 63°)");
+        sources.InGame.Should().Be(AdvancedInGameStatus.Reading);
+        sources.Nvapi.Should().Be(AdvancedSourceStatus.Reading, "the Agent's own sources are said as before");
+
+        // The two series, beside whatever the Agent's own reader gave the same tick.
+        stored.Sensors.Select(static b => b.Series).Should().Contain([InGameAdvancedSampler.FrameTimeSeries, InGameAdvancedSampler.MemorySeries]);
+        row.StatsJson.Should().Contain(InGameAdvancedSampler.FrameTimeSeries).And.Contain(InGameAdvancedSampler.MemorySeries);
+        IReadOnlyDictionary<string, SensorSeriesStats> stats = AdvancedJson.ParseStats(row.StatsJson);
+        stats[InGameAdvancedSampler.FrameTimeSeries].Mean.Should().BeApproximately(16.0, 1e-3, "sixty dispatches of 16 ms a publication");
+        stats[InGameAdvancedSampler.MemorySeries].Max.Should().BeApproximately(256.0, 1e-3);
+        h.Partials.Created[r.Row.SessionGuid].AdvancedContexts.Should().NotBeEmpty("a recovered session keeps what the game said too");
+        r.Row.Tier.Should().Be(CaptureTier.Hooked);
+    }
+
+    [Fact]
+    public async Task AHookedSessionWhoseGameMadeNoneOfTheCallsSaysSoRatherThanNothing()
+    {
+        // Most titles: no FSR through ffx-api, and DLSS options set through a call that has no export. The row must
+        // not read as "the game uses no upscaler".
+        var script = new InGameScript();
+        Harness h = await MakeAsync(advanced: new FakeAdvanced { Latest = FakeAdvanced.Snapshot() }, advancedOn: true, inGame: script);
+
+        await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        script.Asked.Should().Equal(true);
+        AdvancedSessionRow row = h.Sessions.Stored.Single().Advanced.Should().BeOfType<AdvancedSessionRow>().Subject;
+        (IReadOnlyList<AdvancedFact> facts, AdvancedSources sources) = AdvancedJson.ParseSession(row.FactsJson);
+        facts.Select(static f => f.Id).Should().Equal("nvapi.session.vrr_enabled");
+        sources.InGame.Should().Be(AdvancedInGameStatus.NothingSeen);
+    }
+
+    [Fact]
+    public async Task ASessionThatWasNotMeasuredInsideTheGameSaysThatOfItsInGameEntries()
+    {
+        var script = new InGameScript { Publish = static n => InGameStates.Ffx(n) };
+        Harness h = await MakeAsync(
+            verdict: AntiCheatVerdict.Refused(AntiCheatRefusalReason.BlockedModule, "BattlEye", "BEClient_x64.dll"),
+            advanced: new FakeAdvanced { Latest = FakeAdvanced.Snapshot() }, advancedOn: true, inGame: script, clockStepsOnDrain: true);
+
+        RecordedSession r = await h.Recorder.RecordAsync(Request(), TestContext.Current.CancellationToken);
+
+        r.Row.Tier.Should().Be(CaptureTier.NotHooked);
+        script.Asked.Should().BeEmpty("there was no ring to write the word to");
+        AdvancedSessionRow row = h.Sessions.Stored.Single().Advanced.Should().BeOfType<AdvancedSessionRow>().Subject;
+        (IReadOnlyList<AdvancedFact> facts, AdvancedSources sources) = AdvancedJson.ParseSession(row.FactsJson);
+        facts.Should().NotContain(static f => f.Id.StartsWith("ffx.", StringComparison.Ordinal) || f.Id.StartsWith("sl.", StringComparison.Ordinal));
+        sources.InGame.Should().Be(AdvancedInGameStatus.NotHooked);
+    }
+
+    [Fact]
     public async Task ASessionWithTheOptionOnWhoseReaderNeverAnsweredStillStoresARowThatSaysSo()
     {
         // Nothing was read: no snapshot, and the facts read threw. The row is there with every source unknown, which the
@@ -837,7 +936,7 @@ public sealed class SessionRecorderTests : IAsyncDisposable
         row.MachineFactsJson.Should().BeNull();
         (IReadOnlyList<AdvancedFact> facts, AdvancedSources sources) = AdvancedJson.ParseSession(row.FactsJson);
         facts.Should().BeEmpty("a read that threw costs the session its facts, not itself");
-        sources.Should().Be(AdvancedSources.Unknown);
+        sources.Should().Be(AdvancedSources.Unknown with { InGame = AdvancedInGameStatus.NothingSeen }, "the Agent's sources never answered; the game was measured from inside and made none of the calls");
         hub.Released.Should().Be(1);
     }
 

@@ -833,6 +833,12 @@ public unsafe struct FlAdvancedState
     /// <summary><c>sl::DLSSPreset</c> PLUS ONE: DLAA, quality, balanced, performance, ultra performance, ultra quality.</summary>
     public fixed byte DlssPresets[6];
 
+    /// <summary>
+    /// The preset of one quality mode — 0 DLAA, 1 Quality, 2 Balanced, 3 Performance, 4 Ultra Performance, 5 Ultra
+    /// Quality — as the vendor's <c>sl::DLSSPreset</c> plus one; 0 for a mode that was not read, or out of range.
+    /// </summary>
+    public readonly byte DlssPresetAt(int mode) => (uint)mode < 6u ? DlssPresets[mode] : (byte)0;
+
     /// <summary><c>sl::Boolean</c> PLUS ONE; 0 = not read.</summary>
     public byte DlssColorBuffersHdr;
 

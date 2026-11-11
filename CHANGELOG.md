@@ -71,6 +71,19 @@ numeric core and does not move; the heading is the full version — corrected 20
   game belong to the session that asked for them: each session asks with a request of its own, and the agent reads
   only what answers it.
 
+- **Advanced metrics: what the game tells DLSS and FSR, kept with the session.** With Advanced metrics on, a session
+  of a game FrameLedger measures from inside now also keeps what the game itself handed to its upscaler: for DLSS the
+  output size, the model preset for each quality mode, whether the game said its colour buffers are HDR,
+  auto-exposure, alpha upscaling and the exposure values; for FSR the sharpening, the largest jitter offset, the
+  exposure, the near and far planes, the **range** of the field of view, the flags, the frame time the game reported
+  (as a chart) and FSR's own video memory at the moments the game asked. The Advanced page shows them under the
+  session, in the vendor's own notation. **Many games will show nothing**, and the session says why — most games
+  set their DLSS options through a call FrameLedger cannot see, and the FSR rows need FSR 3.1 or later through AMD's
+  library; it never means the game uses no upscaler. **Never read:** where the camera is, which way it looks, its
+  matrices. With the option off nothing more is read inside a game, exactly as before. Not yet read from a real game.
+- **Privacy Policy 2.16** names the above: what is stored, only with the option on and only for a game FrameLedger
+  injects into, and what is never read. You are shown it once after updating.
+
 ### Changed
 
 - **The agent's processor budget says what was measured.** The specification promised that the capture agent uses
@@ -79,6 +92,13 @@ numeric core and does not move; the heading is the full version — corrected 20
   that every session has always made, and its memory is 113 MiB (119 with the option on) against a limit of 150.
   The owner chose to keep the readings and amend the limit: **NFR-2 is now ≤ 2.5 % of one core** (D117). Nothing the
   agent does changes.
+
+### Fixed
+
+- **A crash dump is tried up to three times.** When FrameLedger or its agent stops on an error it never expected, a
+  small helper writes a dump of the program for a bug report - while the program's other threads are still
+  running. Windows can fail that once when the program changes under it, and one failure used to mean no dump at
+  all. It is now tried again, twice, a moment apart.
 
 ## Releases
 

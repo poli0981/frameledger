@@ -757,7 +757,11 @@ Sequential embedded SQL (`Migrations/0001_init.sql`, `0002_*.sql`, …), applied
 > option off has no row** — that absence is how the App says "the option was off when this was recorded" rather than
 > "nothing answered" — and is never given one. The JSON is `Application.Advanced.AdvancedJson`'s (camel case, nulls
 > left out, a status by its name); writing is strict, reading is tolerant, and **only a fact whose catalog entry is
-> read may be written** (`AdvancedJson.Storable`), so no identifier reaches either table (D104). A session deleted
+> read may be written** (`AdvancedJson.Storable`), so no identifier reaches either table (D104). **Since
+> 0.1.0-beta.40 (train B) the same row holds what the game told its upscaler** — the session facts of the entries
+> whose reach is `Game`, after the driver's, and `sources.inGame` (`Reading`, `NothingSeen`, `NotHooked`; absent in
+> a row beta.39 wrote, which reads as "not said") — and its two series are `adv.ffx.upscale.frame_time_delta` and
+> `adv.ffx.memory_usage` in `sensor_blobs`. No column and no script: schema 23 as it was. A session deleted
 > takes its row with it; a profile no session points to is left, as a hardware snapshot is; the retention sweep
 > removes a session's `adv.` series with its other raw series and keeps its row. Written by the Agent only, in the
 > session's own transaction (`SqliteSessionRepository.InsertAdvancedAsync`). `LatestVersion` is 23;

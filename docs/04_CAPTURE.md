@@ -26,6 +26,9 @@ public interface IFrameSource : IAsyncDisposable
 >     DrainResult Drain(Span<FlFrameRecord> into, IList<ulong> gapIndices);
 >     void PublishGuardResult(uint completedEvaluations, bool unhookRequested);
 >     void SetPaused(bool paused);         void RequestLogFlush();
+>     FlAdvancedState? AdvancedState { get; }   void SetAdvancedRequested(bool requested);   // region 5, train B (2026-11-12): the
+>         // word is written either way as the ring is attached, before the first guard result; the region is read only by
+>         // a session whose observer WantsInGameAdvanced, and carried on CaptureProgress.InGameAdvanced
 > }
 > public sealed class CaptureSession(...)              // the loop: gate → inject → attach → drain, until something ends it
 > {

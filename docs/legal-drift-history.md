@@ -63,6 +63,21 @@ are kept because they record what each version changed and why (owner decision D
 >
 > Version 2.5 (2026-09-27, 0.1.0-beta.10) adds how a tracked game's window is shown — read from Windows — and the engine build name read from an Unreal Engine game's executable. It is also the first version to say two things the software already did: it reads the **content** of a library game's executable (markers in its first 8 MB and its import table, since the detection of engines and features; and, when a session starts, the graphics-library markers in the whole file), and it reads the processor load and the memory in use (since 0.1.0-beta.3). Nothing here leaves your device, as before.
 
+### What version 2.16 of the Privacy Policy changed (0.1.0-beta.40)
+
+**Advanced metrics inside the game** (train B, owner decisions D111–D116; the content approved with the plan, once
+for the train's three releases). §1's item on Advanced metrics gains what a session stores **for a game FrameLedger
+injects into, only while the option is on**: what the game passed to its upscaler in the calls FrameLedger
+intercepts — the output size, presets and exposure values it gave DLSS, whether it said its colour buffers are HDR,
+auto-exposure and alpha upscaling; the sharpening, the jitter's size, the exposure, the depth range, the lowest and
+highest field of view and the flags it gave FSR, the frame time it reported, FSR's own memory when the game asked —
+and what is never read: where the camera is, which way it looks, its matrices. It also says that switching the option
+off stops the reading inside a game as well. §4 had always named "the parameters your games pass to the graphics APIs
+it intercepts"; it now says that with the option on more of the upscaling calls' parameters are read **and stored**,
+which is what is new. The accuracy block gains an item: these are the game's words to the upscaler, not a check of
+what the upscaler did, and many games show none. The Disclaimer stays 2.15, as the accuracy statement's additions
+have not moved it before (beta.19, beta.20, beta.25). §2 is unchanged: nothing is sent.
+
 ### What version 2.15 of the Privacy Policy and of the Disclaimer changed (0.1.0-beta.39)
 
 **Advanced metrics** (owner decisions D101–D108; the Privacy Policy's content approved with the plan, the Disclaimer's

@@ -92,30 +92,53 @@ public static class ParentDump
         return parentStarted <= helperStarted && string.Equals(imageDirectory, ours, StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// How many times a dump is tried. The process being dumped is alive and is not suspended: a thread that ends or a
+    /// module that unloads while dbghelp walks it fails that walk, and the next one finds the process as it then is.
+    /// </summary>
+    public const int Attempts = 3;
+
     /// <summary>Writes a minidump of <paramref name="target"/> — another process — into <paramref name="file"/>.</summary>
+    /// <remarks>
+    /// <b>Tried again, a bounded number of times</b> (2026-11-12). The dump is of a RUNNING process - the Agent or the
+    /// App on its way down, its other threads still at work - and <c>MiniDumpWriteDump</c> fails when the process
+    /// changes under it. One failure used to cost the only dump a crash would ever have; the test that dumps a busy test
+    /// host failed that way three times in two days (the helper exited 9), always under the full gate's load and never
+    /// alone. Each attempt starts from an empty file; only the last failure is reported, with how often it was tried.
+    /// </remarks>
     public static bool WriteDump(Process target, string file, Action<string> problem)
     {
         ArgumentNullException.ThrowIfNull(target);
         ArgumentException.ThrowIfNullOrWhiteSpace(file);
         ArgumentNullException.ThrowIfNull(problem);
 
-        bool written;
-        int error;
-        using (var stream = new FileStream(file, FileMode.Create, FileAccess.ReadWrite, FileShare.None))
+        int error = 0;
+        for (int attempt = 1; attempt <= Attempts; attempt++)
         {
-            written = PInvoke.MiniDumpWriteDump(new HANDLE(target.Handle), (uint)target.Id, new HANDLE(stream.SafeFileHandle.DangerousGetHandle()), _kind, null, null, null);
-            // At once, and the SYSTEM error: CsWin32 0.3.298 declares MiniDumpWriteDump without SetLastError, so
-            // GetLastPInvokeError() is whatever an earlier call left (0 when measured on CreateNamedPipeW, 2026-09-17). The
-            // value is an HRESULT, which is how dbghelp reports this function's failures.
-            error = Marshal.GetLastSystemError();
+            if (attempt > 1)
+            {
+                Thread.Sleep(150 * (attempt - 1));
+            }
+
+            if (TryWriteOnce(target, file, out error))
+            {
+                return true;
+            }
         }
 
-        if (!written)
-        {
-            problem($"crash dump: MiniDumpWriteDump failed (0x{error:X8})");
-            File.Delete(file);
-        }
+        problem($"crash dump: MiniDumpWriteDump failed (0x{error:X8}) on each of {Attempts} attempts");
+        File.Delete(file);
+        return false;
+    }
 
+    private static bool TryWriteOnce(Process target, string file, out int error)
+    {
+        using var stream = new FileStream(file, FileMode.Create, FileAccess.ReadWrite, FileShare.None);
+        bool written = PInvoke.MiniDumpWriteDump(new HANDLE(target.Handle), (uint)target.Id, new HANDLE(stream.SafeFileHandle.DangerousGetHandle()), _kind, null, null, null);
+        // At once, and the SYSTEM error: CsWin32 0.3.298 declares MiniDumpWriteDump without SetLastError, so
+        // GetLastPInvokeError() is whatever an earlier call left (0 when measured on CreateNamedPipeW, 2026-09-17). The
+        // value is an HRESULT, which is how dbghelp reports this function's failures.
+        error = Marshal.GetLastSystemError();
         return written;
     }
 }

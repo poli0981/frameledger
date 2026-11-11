@@ -46,7 +46,7 @@
     <comment>review</comment>
   </data>
   <data name="Adv_ffx_upscale_depth" xml:space="preserve">
-    <value>FSR に渡されたニア/ファー平面と視野角</value>
+    <value>FSR に渡されたニア/ファー平面と視野角の範囲</value>
     <comment>review</comment>
   </data>
   <data name="Adv_ffx_upscale_exposure" xml:space="preserve">
@@ -62,7 +62,7 @@
     <comment>review</comment>
   </data>
   <data name="Adv_ffx_upscale_jitter" xml:space="preserve">
-    <value>ゲームが FSR に渡したジッター オフセット</value>
+    <value>ゲームが FSR に渡したジッター オフセットの最大値</value>
     <comment>review</comment>
   </data>
   <data name="Adv_ffx_upscale_sharpening" xml:space="preserve">
@@ -653,6 +653,10 @@
     <value>詳細メトリクス</value>
     <comment>review</comment>
   </data>
+  <data name="Advanced_InGameLine" xml:space="preserve">
+    <value>ゲーム内: {0}。</value>
+    <comment>review</comment>
+  </data>
   <data name="Advanced_Machine_Intro" xml:space="preserve">
     <value>グラフィックス ドライバーとハードウェア センサーが、この PC について現在示している内容です。このページを開いている間、またはゲームを記録している間だけ読み取られ、ここに表示されるものは保存されません。</value>
     <comment>review</comment>
@@ -729,6 +733,10 @@
     <value>キャプチャ エージェントがソースを開いています…</value>
     <comment>review</comment>
   </data>
+  <data name="Advanced_Status_InGame" xml:space="preserve">
+    <value>FrameLedger が計測するゲーム内で、ゲームがその呼び出しを行ったときに読み取り</value>
+    <comment>review</comment>
+  </data>
   <data name="Advanced_Status_Read" xml:space="preserve">
     <value>読み取り中</value>
     <comment>review</comment>
@@ -797,8 +805,28 @@
     <value>アップスケーリング</value>
     <comment>review</comment>
   </data>
+  <data name="AdvInGame_NotHooked" xml:space="preserve">
+    <value>このセッションはゲーム内で計測されていません</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvInGame_NothingSeen" xml:space="preserve">
+    <value>これらを読み取れる呼び出しをゲームが行いませんでした</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvInGame_Reading" xml:space="preserve">
+    <value>ゲーム自身の呼び出しから読み取りました</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvInGame_Unknown" xml:space="preserve">
+    <value>不明</value>
+    <comment>review</comment>
+  </data>
   <data name="AdvReach_Deferred" xml:space="preserve">
     <value>このリリースでは読み取らない</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvReach_Game" xml:space="preserve">
+    <value>FrameLedger が計測するゲーム内</value>
     <comment>review</comment>
   </data>
   <data name="AdvReach_HookedCall" xml:space="preserve">
@@ -901,6 +929,10 @@
     <value>ドライバーの既定値</value>
     <comment>review</comment>
   </data>
+  <data name="AdvToken_draw_debug_view" xml:space="preserve">
+    <value>デバッグ ビュー</value>
+    <comment>review</comment>
+  </data>
   <data name="AdvToken_edr" xml:space="preserve">
     <value>EDR</value>
     <comment>review</comment>
@@ -941,12 +973,36 @@
     <value>ドライバーにこのゲームのプロファイルがない</value>
     <comment>review</comment>
   </data>
+  <data name="AdvToken_non_linear_color_pq" xml:space="preserve">
+    <value>非線形カラー (PQ)</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_non_linear_color_srgb" xml:space="preserve">
+    <value>非線形カラー (sRGB)</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_none" xml:space="preserve">
+    <value>なし</value>
+    <comment>review</comment>
+  </data>
   <data name="AdvToken_not_a_number" xml:space="preserve">
     <value>数値ではない</value>
     <comment>review</comment>
   </data>
   <data name="AdvToken_not_supported" xml:space="preserve">
     <value>非対応</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_off" xml:space="preserve">
+    <value>オフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_on" xml:space="preserve">
+    <value>オン</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_on_and_off" xml:space="preserve">
+    <value>オンのときとオフのときがあります</value>
     <comment>review</comment>
   </data>
   <data name="AdvToken_pci" xml:space="preserve">
@@ -1382,7 +1438,7 @@
     <comment>review</comment>
   </data>
   <data name="Settings_Advanced_Body" xml:space="preserve">
-    <value>セッション中にグラフィックス ドライバーとハードウェア センサーからさらに多くを読み取り、セッションと一緒に保存します - グラフィックス カードのメモリと負荷の詳細、各ファンと電圧、ディスプレイの対応機能、ゲームに対するドライバーの設定など。オフ: 追加の読み取りも保存も行いません。次のセッションから適用され、オフの間に記録したセッションが後から補われることはありません。</value>
+    <value>セッション中にグラフィックス ドライバーとハードウェア センサーからさらに多くを読み取り、セッションと一緒に保存します - グラフィックス カードのメモリと負荷の詳細、各ファンと電圧、ディスプレイの対応機能、ゲームに対するドライバーの設定など。FrameLedger が内部から計測するゲームでは、ゲームが DLSS と FSR に渡す内容 (サイズ、プリセット、シャープニング、露出) も読み取ります - カメラの位置は決して読み取りません。オフ: ゲーム内も含め、追加の読み取りも保存も行いません。次のセッションから適用され、オフの間に記録したセッションが後から補われることはありません。</value>
     <comment>review</comment>
   </data>
   <data name="Settings_Advanced_Label" xml:space="preserve">

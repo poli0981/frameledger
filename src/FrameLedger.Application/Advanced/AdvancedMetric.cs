@@ -37,7 +37,7 @@ public sealed record AdvancedMetric(
     public bool IsFamily { get; init; }
 
     /// <summary>True when a build with the option on reads it: every other reach is a reason it reads N/A.</summary>
-    public bool IsRead => Reach is AdvancedReach.Agent or AdvancedReach.AgentElevated;
+    public bool IsRead => Reach is AdvancedReach.Agent or AdvancedReach.AgentElevated or AdvancedReach.Game;
 
     /// <summary>The name of its series in <c>sensor_blobs</c> — for a family, the stem of its instances' names; null when it is not a series.</summary>
     public string? SeriesName => Scope == AdvancedScope.Series ? SeriesPrefix + Id : null;

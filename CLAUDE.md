@@ -118,6 +118,10 @@ src/
                                #   snapshot - each request is the page's hold on it (PR-6, D107). Recording/
                                #   AdvancedSessionBuilder stores what a session's samples carried (schema 0023:
                                #   machine_profiles + session_advanced, adv.* series with NaN for a gap, D102).
+                               #   Train B (0.1.0-beta.40, D111): Capture/InGameAdvancedSampler turns the shared
+                               #   memory's region 5 - what a hooked game told DLSS and FSR, read by the Overlay
+                               #   only while the session asks (ICaptureObserver.WantsInGameAdvanced) - into session
+                               #   facts and two adv.* series; reach `Game` in the catalog; no schema change.
   FrameLedger.Infrastructure/  # SQLite, shm reader, vendor APIs, injector interop, parsers,
                                #   and Capture/ (PR-C): ShmRingAttacher/ShmCaptureSink over the
                                #   reader, HeldProcessLivenessSource, TargetResolver (path only,

@@ -737,6 +737,22 @@ planning, the design reviewed against the code before it was approved.
   the Agent reads only what answers its own (`07_IPC` §Region 5). The detours consult one process-local flag, the
   watchdog is the region's one writer, and `fl_guard` shows the off half on a target that sends everything: every
   byte of the region zero until asked, untouched after an "off", a count that starts again at the next request.
+  **The Agent and the App, 2026-11-12 (PR-4).** A session that records Advanced metrics says so through
+  `ICaptureObserver.WantsInGameAdvanced`; `CaptureSession` writes the word either way as the ring is attached, before
+  its first guard result, and from then on carries each publication of region 5 on `CaptureProgress.InGameAdvanced`
+  — one instance a publication, the same one on the ten ticks between two. `Application.Capture.InGameAdvancedSampler`
+  turns a publication into what a session stores: the session facts of the thirteen `Game` entries below, in the
+  vendor's own words (a preset is its letter, a member its name), and two series —
+  `adv.ffx.upscale.frame_time_delta`, the mean of one second's dispatches, and `adv.ffx.memory_usage`, a point for
+  each second the game asked. The facts are one list until a field they are made of moves, so the recorder's context
+  is rewritten when a range widens and not once a second; the readings ride the newest telemetry sample of the tick.
+  **No schema change**: the facts go into `session_advanced.facts_json` beside the driver's, the series into
+  `sensor_blobs` under their `adv.` names, the `.partial`'s chunks 9 and 10 carry both. `AdvancedSources.InGame`
+  (optional; absent in every row 0.1.0-beta.39 wrote) says what became of those entries in the session: `Reading`,
+  `NothingSeen` — measured inside the game, and the game made none of the calls where they can be seen — or
+  `NotHooked`. The page says it in the session's sources line and, on Sources, that such an entry is read inside a
+  game FrameLedger measures when the game makes the call. The aliasable part of FSR's memory is published and not
+  shown: the catalog has one memory entry.
 - **D113 — three releases, because a new patch site cannot be proven in CI.** A crash in a game under the user-mode
   anti-cheat exception's trial ends that exception for good (D38), and every release already means restarting the
   game. **beta.40**: more fields of calls *already* hooked — `sl::DLSSOptions` where the game chains it into
@@ -776,10 +792,12 @@ info-frame controls. `NvAPI_DISP_GetTiming` calculates a timing from an input an
 
 One row per entry of `AdvancedMetricCatalog`, in its order; `AdvancedMetricCatalogTests` fails when this table and
 the catalog differ in either direction. **Reach** is where a value can be read from, or why it is not read: `Agent`
-(the Agent's own process), `AgentElevated` (the same, as administrator with PawnIO), `HookedCall` (an argument of a
-call the Overlay already hooks — Train B), `NewHook` (a hook that is not built — Train B), `Spike` (Trains C and D),
-`Refused`, `Deferred`, `Identifier` (D104), `PlayerState` (rule 4), `Licence`, `NotInHeaders`. Only the first two are
-read by a build of Train A.
+(the Agent's own process), `AgentElevated` (the same, as administrator with PawnIO), `Game` (read inside a game
+FrameLedger measures, from the arguments of a call the Overlay hooks, while the session records Advanced metrics —
+since 0.1.0-beta.40), `HookedCall` (an argument of a call the Overlay already hooks, not read yet), `NewHook` (a hook
+that is not built — Train B), `Spike` (Trains C and D), `Refused`, `Deferred`, `Identifier` (D104), `PlayerState`
+(rule 4), `Licence`, `NotInHeaders`. ~~Only the first two are read by a build of Train A.~~ The first three are read
+(`AdvancedMetric.IsRead`).
 
 **NVAPI, the graphics card: facts**
 
@@ -922,19 +940,19 @@ read by a build of Train A.
 
 | Id | What it is | Scope | Source | Reach | Unit |
 |---|---|---|---|---|---|
-| `sl.dlss.output_size` | The output size the game gave DLSS | SessionFact | Streamline | HookedCall | Text |
-| `sl.dlss.presets` | The DLSS model preset per quality mode | SessionFact | Streamline | HookedCall | Text |
-| `sl.dlss.hdr_input` | The game told DLSS its colour buffers are HDR | SessionFact | Streamline | HookedCall | Flag |
-| `sl.dlss.auto_exposure` | DLSS auto-exposure | SessionFact | Streamline | HookedCall | Flag |
-| `sl.dlss.alpha_upscaling` | DLSS upscales the alpha channel | SessionFact | Streamline | HookedCall | Flag |
-| `sl.dlss.exposure` | Pre-exposure and exposure scale given to DLSS | SessionFact | Streamline | HookedCall | Text |
-| `ffx.upscale.sharpening` | FSR sharpening: on or off, and its strength | SessionFact | FidelityFx | HookedCall | Text |
-| `ffx.upscale.jitter` | The jitter offsets the game gave FSR | SessionFact | FidelityFx | HookedCall | Text |
-| `ffx.upscale.exposure` | Pre-exposure given to FSR | SessionFact | FidelityFx | HookedCall | Text |
-| `ffx.upscale.depth` | Near and far planes and field of view given to FSR | SessionFact | FidelityFx | HookedCall | Text |
-| `ffx.upscale.flags` | The flags of the game's FSR dispatch | SessionFact | FidelityFx | HookedCall | Text |
-| `ffx.upscale.frame_time_delta` | The frame time the game reported to FSR | Series | FidelityFx | HookedCall | Milliseconds |
-| `ffx.memory_usage` | FSR's own video memory, when the game asks it | Series | FidelityFx | HookedCall | Mebibytes |
+| `sl.dlss.output_size` | The output size the game gave DLSS | SessionFact | Streamline | Game | Text |
+| `sl.dlss.presets` | The DLSS model preset per quality mode | SessionFact | Streamline | Game | Table |
+| `sl.dlss.hdr_input` | The game told DLSS its colour buffers are HDR | SessionFact | Streamline | Game | Flag |
+| `sl.dlss.auto_exposure` | DLSS auto-exposure | SessionFact | Streamline | Game | Flag |
+| `sl.dlss.alpha_upscaling` | DLSS upscales the alpha channel | SessionFact | Streamline | Game | Flag |
+| `sl.dlss.exposure` | Pre-exposure and exposure scale given to DLSS | SessionFact | Streamline | Game | Table |
+| `ffx.upscale.sharpening` | FSR sharpening: on or off, and its strength | SessionFact | FidelityFx | Game | Table |
+| `ffx.upscale.jitter` | The largest jitter offset the game gave FSR | SessionFact | FidelityFx | Game | Table |
+| `ffx.upscale.exposure` | Pre-exposure given to FSR | SessionFact | FidelityFx | Game | Text |
+| `ffx.upscale.depth` | Near and far planes and the range of the field of view given to FSR | SessionFact | FidelityFx | Game | Table |
+| `ffx.upscale.flags` | The flags of the game's FSR dispatch | SessionFact | FidelityFx | Game | Text |
+| `ffx.upscale.frame_time_delta` | The frame time the game reported to FSR | Series | FidelityFx | Game | Milliseconds |
+| `ffx.memory_usage` | FSR's own video memory, when the game asks it | Series | FidelityFx | Game | Mebibytes |
 
 **Inside the game: hooks that are not built**
 
