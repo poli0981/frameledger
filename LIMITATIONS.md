@@ -191,7 +191,11 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
     same.
   - **None of these readings has been checked against another tool**, and they are **not in an export or a bug
     report**.
-  - **No screen shows them yet** — the page comes with the release.
+  - **The Advanced page's "This PC" is read only while that page is open** (or a game is being recorded), is not
+    stored, and keeps five minutes of each reading in memory. A reading with more than eight parts — every
+    processor core — is drawn as its lowest, average and highest; the table lists each part.
+  - **A session's chart needs its per-second series**, which are kept for the newest sessions of each game only
+    (Settings ▸ Recording); an older session keeps its statistics.
 
   ([Telemetry](docs/18_GPU_VENDOR_APIS.md#advanced-metrics-owner-decisions-d101d108-2026-11-11))
 - **Whether the graphics card was held back by its power limit or by heat** (since 0.1.0-beta.14) is known only on

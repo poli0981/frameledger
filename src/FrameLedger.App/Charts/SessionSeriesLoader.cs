@@ -37,6 +37,49 @@ public sealed class SessionSeriesLoader
     public Task<IReadOnlyList<SensorSeries>> LoadSensorsAsync(long sessionId, CancellationToken ct = default) =>
         Task.Run(async () => (IReadOnlyList<SensorSeries>)DecodeSensors(await _sessions.FindSensorsAsync(sessionId, ct).ConfigureAwait(false), offsetS: 0), ct);
 
+    /// <summary>
+    /// The session's advanced series (owner decision D102), timed from the session's start by the same <c>t_ms</c> clock
+    /// as the sensors. A tick with no reading — NaN, and most ticks of a sensor read every fifth — is left out, never drawn
+    /// as a zero; a series may be negative, so nothing else is. Empty for a session recorded with the option off. On the
+    /// thread pool, as <see cref="LoadAsync"/>.
+    /// </summary>
+    public Task<IReadOnlyList<SensorSeries>> LoadAdvancedAsync(long sessionId, CancellationToken ct = default) =>
+        Task.Run(async () => DecodeAdvanced(await _sessions.FindAdvancedSensorsAsync(sessionId, ct).ConfigureAwait(false)), ct);
+
+    /// <summary>The advanced blobs decoded: <c>t_ms</c> is their clock, NaN is "no reading".</summary>
+    public static IReadOnlyList<SensorSeries> DecodeAdvanced(IReadOnlyList<SensorBlob> blobs)
+    {
+        ArgumentNullException.ThrowIfNull(blobs);
+        SensorBlob? clock = blobs.FirstOrDefault(static s => string.Equals(s.Series, "t_ms", StringComparison.Ordinal));
+        float[]? tMs = clock is null || !string.Equals(clock.Codec, SeriesCodec.Tag, StringComparison.Ordinal) ? null : SeriesCodec.DecodeFloat32(clock.Data.ToArray());
+        var result = new List<SensorSeries>();
+        foreach (SensorBlob blob in blobs)
+        {
+            if (string.Equals(blob.Series, "t_ms", StringComparison.Ordinal) || !string.Equals(blob.Codec, SeriesCodec.Tag, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            float[] values = SeriesCodec.DecodeFloat32(blob.Data.ToArray());
+            var xs = new List<double>();
+            var ys = new List<double>();
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (float.IsNaN(values[i]))
+                {
+                    continue;
+                }
+
+                xs.Add(tMs is not null && i < tMs.Length ? tMs[i] / 1000.0 : i / Math.Max(blob.Hz, 0.001));
+                ys.Add(values[i]);
+            }
+
+            result.Add(new SensorSeries(blob.Series, [.. xs], [.. ys]));
+        }
+
+        return result;
+    }
+
     private async Task<SessionSeries?> ReadAndDecodeAsync(long sessionId, CancellationToken ct)
     {
         FrameBlobs? frames = await _sessions.FindFramesAsync(sessionId, ct).ConfigureAwait(false);

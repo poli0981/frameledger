@@ -140,7 +140,9 @@ src/
                                #   is built as of 2026-09-14 (PR-5 Games/Dashboard, PR-6 summary +
                                #   charts, PR-7 trend/compare, PR-8a Settings/safety notices/Logs/
                                #   --diag, PR-8b tray + the Agent's maintenance flags, PR-9 first run
-                               #   + Legal Gate FR-11); Strings.resx en/vi/ja. `--data-dir <copy>`
+                               #   + Legal Gate FR-11); Strings.resx en/vi/ja. The Advanced page
+                               #   (2026-11-11, D101/D105: Pages/AdvancedPage, there and on Ctrl+6 only
+                               #   while `telemetry.advanced` is on - 08_UI §Advanced). `--data-dir <copy>`
                                #   (beta.15, D52) = a VIEWER: no Agent started or contacted,
                                #   nothing on the PC changed, the profile's own folder refused
   FrameLedger.CaptureHost/     # UNSHIPPED, and since P2 PR-C (2026-09-09) a THIN SHELL: verbs,

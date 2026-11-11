@@ -320,9 +320,27 @@ public sealed class AccessibilityTests
             ShellShortcuts.Navigate(navigator, parameter).Should().BeTrue();
         }
 
-        navigator.Pages.Should().Equal(navigationOrder);
-        navigationOrder.Should().Equal(nameof(DashboardPage), nameof(GamesPage), nameof(ComparePage), nameof(LogsPage), nameof(SettingsPage));
-        ShellShortcuts.Navigate(navigator, "6").Should().BeFalse();
+        // Owner decision D105 (2026-11-11): the Advanced page is the menu's last item and takes Ctrl+6 - Ctrl+1 … 5 keep the
+        // pages they had, Settings in the footer included - and only while its option is on.
+        navigationOrder.Should().Equal(nameof(DashboardPage), nameof(GamesPage), nameof(ComparePage), nameof(LogsPage), nameof(AdvancedPage), nameof(SettingsPage));
+        navigator.Pages.Should().Equal(navigationOrder.Where(static p => !string.Equals(p, nameof(AdvancedPage), StringComparison.Ordinal)));
+        bindings.Should().Contain((Key: "D6", Modifiers: "Control", Parameter: "6", Command: "{Binding ViewModel.NavigateToCommand}"));
+        bindings.Should().Contain((Key: "NumPad6", Modifiers: "Control", Parameter: "6", Command: "{Binding ViewModel.NavigateToCommand}"));
+        bool was = AdvancedOption.IsOn;
+        try
+        {
+            AdvancedOption.IsOn = false;
+            ShellShortcuts.Navigate(navigator, "6").Should().BeFalse("the number stays free while the option is off");
+            AdvancedOption.IsOn = true;
+            ShellShortcuts.Navigate(navigator, "6").Should().BeTrue();
+            navigator.Pages[^1].Should().Be(nameof(AdvancedPage));
+        }
+        finally
+        {
+            AdvancedOption.IsOn = was;
+        }
+
+        ShellShortcuts.Navigate(navigator, "7").Should().BeFalse();
         ShellShortcuts.Navigate(navigator, null).Should().BeFalse();
     }
 

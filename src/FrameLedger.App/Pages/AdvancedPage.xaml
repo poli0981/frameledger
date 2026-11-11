@@ -1,0 +1,183 @@
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+<!-- Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE -->
+
+<Page x:Class="FrameLedger.App.Pages.AdvancedPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+      xmlns:charts="clr-namespace:FrameLedger.App.Charts"
+      xmlns:controls="clr-namespace:FrameLedger.App.Controls"
+      xmlns:res="clr-namespace:FrameLedger.App"
+      xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
+      Title="{x:Static res:Strings.Advanced_Header}"
+      Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+      ScrollViewer.CanContentScroll="False">
+    <!--
+        08_UI §Advanced (owner decision D101). Three tabs, by what a value belongs to: This PC - what the Agent reads now,
+        asked only while this page is on screen (D107) and never stored; Session - what a session recorded with the option
+        on stored; Sources - every entry of the catalog with whether it is read, or why not. A reason is always words,
+        never a colour alone, and each chart has its readings in a table beside it.
+    -->
+    <Page.Resources>
+        <!-- One fact: label and value in two columns that line up within a group; a table-valued fact unfolds its rows.
+             Both templates are implicit - found by the type they show - so nothing on the page names a resource key. -->
+        <DataTemplate DataType="{x:Type vm:AdvancedFactRow}">
+            <StackPanel>
+                <Grid Margin="0,2,0,0" Visibility="{Binding HasDetails, Converter={StaticResource InverseBoolToVis}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" SharedSizeGroup="AdvancedFactLabel" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock MaxWidth="460" Style="{StaticResource FieldLabel}" Text="{Binding Label}" TextWrapping="Wrap" />
+                    <TextBlock Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding Value}" TextWrapping="Wrap" />
+                </Grid>
+                <Expander Margin="0,2,0,4" Visibility="{Binding HasDetails, Converter={StaticResource BoolToVis}}">
+                    <Expander.Header>
+                        <TextBlock TextWrapping="Wrap">
+                            <Run Text="{Binding Label, Mode=OneWay}" /><Run Text=" (" /><Run Text="{Binding Value, Mode=OneWay}" /><Run Text=")" />
+                        </TextBlock>
+                    </Expander.Header>
+                    <ItemsControl Margin="12,4,0,0" Focusable="False" Grid.IsSharedSizeScope="True" ItemsSource="{Binding Details}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:AdvancedDetailRow}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" SharedSizeGroup="AdvancedDetailName" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock MaxWidth="460" Style="{StaticResource FieldLabel}" Text="{Binding Name}" TextWrapping="Wrap" />
+                                    <TextBlock Grid.Column="1" Style="{StaticResource FieldValue}" Text="{Binding Value}" TextWrapping="Wrap" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Expander>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- A group of the catalog under its heading. -->
+        <DataTemplate DataType="{x:Type vm:AdvancedFactGroup}">
+            <StackPanel Margin="0,12,0,0">
+                <ui:TextBlock AutomationProperties.HeadingLevel="Level3" FontTypography="BodyStrong" Text="{Binding Title}" />
+                <ItemsControl Margin="0,4,0,0" Focusable="False" Grid.IsSharedSizeScope="True" ItemsSource="{Binding Rows}" />
+            </StackPanel>
+        </DataTemplate>
+    </Page.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Style="{StaticResource PageRoot}">
+            <ui:TextBlock AutomationProperties.HeadingLevel="Level1" FontTypography="Title" Text="{x:Static vm:AdvancedViewModel.Header}" />
+
+            <TabControl Margin="0,16,0,0" SelectedIndex="{Binding ViewModel.SelectedTab, Mode=TwoWay}">
+                <!-- This PC: read now, by the Agent, only while this page is open. -->
+                <TabItem Header="{x:Static vm:AdvancedViewModel.TabMachine}">
+                    <StackPanel Margin="0,12,0,0">
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Advanced_Machine_Intro}" TextWrapping="Wrap" />
+                        <ui:TextBlock Margin="0,8,0,0" Text="{Binding ViewModel.MachineStatus}" TextWrapping="Wrap" />
+                        <ui:TextBlock Margin="0,4,0,0" Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Advanced_Elevation_Hint}" TextWrapping="Wrap"
+                                      Visibility="{Binding ViewModel.ShowElevationHint, Converter={StaticResource BoolToVis}}" />
+
+                        <ui:TextBlock Margin="0,20,0,0" AutomationProperties.HeadingLevel="Level2" FontTypography="Subtitle" Text="{x:Static res:Strings.Advanced_Facts_Header}" />
+                        <ItemsControl Focusable="False" ItemsSource="{Binding ViewModel.MachineGroups}" />
+
+                        <ui:TextBlock Margin="0,20,0,0" AutomationProperties.HeadingLevel="Level2" FontTypography="Subtitle" Text="{x:Static res:Strings.Advanced_Now_Header}" />
+                        <DataGrid MaxHeight="360" Margin="0,8,0,0" AutoGenerateColumns="False" AutomationProperties.Name="{x:Static res:Strings.Advanced_Now_Header}"
+                                  CanUserAddRows="False" HeadersVisibility="Column" IsReadOnly="True" ItemsSource="{Binding ViewModel.LiveRows}" SelectionMode="Single">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Width="Auto" MinWidth="320" Binding="{Binding Label}" Header="{x:Static res:Strings.Advanced_Col_Name}" />
+                                <DataGridTextColumn Width="Auto" MinWidth="120" Binding="{Binding Value}" Header="{x:Static res:Strings.Advanced_Col_Value}" />
+                                <DataGridTextColumn Width="Auto" MinWidth="110" Binding="{Binding ReadAt}" Header="{x:Static res:Strings.Advanced_Col_ReadAt}" />
+                                <DataGridTemplateColumn Width="*" CanUserResize="False" CanUserSort="False" IsReadOnly="True" controls:CellName.Path="Label" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <ui:TextBlock Margin="0,20,0,0" AutomationProperties.HeadingLevel="Level2" FontTypography="Subtitle" Text="{x:Static res:Strings.Advanced_Chart_Header}" />
+                        <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
+                            <ui:TextBlock Margin="0,0,8,0" VerticalAlignment="Center" Text="{x:Static res:Strings.Advanced_Chart_Metric}" />
+                            <ComboBox MinWidth="360" AutomationProperties.Name="{x:Static res:Strings.A11y_Advanced_Metric}" DisplayMemberPath="Label"
+                                      ItemsSource="{Binding ViewModel.LiveMetrics}" SelectedItem="{Binding ViewModel.SelectedLiveMetric, Mode=TwoWay}" />
+                        </StackPanel>
+                        <ui:TextBlock Margin="0,6,0,0" Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Advanced_Chart_LiveNote}" TextWrapping="Wrap" />
+                        <ui:TextBlock Margin="0,4,0,0" Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Advanced_Chart_Band}" TextWrapping="Wrap"
+                                      Visibility="{Binding ViewModel.LiveBand, Converter={StaticResource BoolToVis}}" />
+                        <ui:TextBlock Margin="0,12,0,0" Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Advanced_Chart_Empty}"
+                                      Visibility="{Binding ViewModel.LiveChartEmpty, Converter={StaticResource BoolToVis}}" />
+                        <charts:AdvancedSeriesChart x:Name="LiveChart" Height="320" Margin="0,8,0,0" TimeOfDay="True"
+                                                    Visibility="{Binding ViewModel.LiveChartEmpty, Converter={StaticResource InverseBoolToVis}}" />
+                    </StackPanel>
+                </TabItem>
+
+                <!-- Session: what one session recorded with the option on stored. -->
+                <TabItem Header="{x:Static vm:AdvancedViewModel.TabSession}">
+                    <StackPanel Margin="0,12,0,0">
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Advanced_Session_Empty}" TextWrapping="Wrap"
+                                      Visibility="{Binding ViewModel.NoSessions, Converter={StaticResource BoolToVis}}" />
+                        <StackPanel Visibility="{Binding ViewModel.NoSessions, Converter={StaticResource InverseBoolToVis}}">
+                            <StackPanel Orientation="Horizontal">
+                                <ui:TextBlock Margin="0,0,8,0" VerticalAlignment="Center" Text="{x:Static res:Strings.Advanced_Session_Pick}" />
+                                <ComboBox MinWidth="420" AutomationProperties.Name="{x:Static res:Strings.A11y_Advanced_Session}" DisplayMemberPath="Text"
+                                          ItemsSource="{Binding ViewModel.SessionOptions}" SelectedItem="{Binding ViewModel.SelectedSession, Mode=TwoWay}" />
+                            </StackPanel>
+                            <ui:TextBlock Margin="0,8,0,0" Style="{StaticResource SecondaryText}" Text="{Binding ViewModel.SessionSources}" TextWrapping="Wrap"
+                                          Visibility="{Binding ViewModel.SessionSources, Converter={StaticResource NullToCollapsed}}" />
+
+                            <ui:TextBlock Margin="0,20,0,0" AutomationProperties.HeadingLevel="Level2" FontTypography="Subtitle" Text="{x:Static res:Strings.Advanced_Session_Facts}" />
+                            <ItemsControl Focusable="False" ItemsSource="{Binding ViewModel.SessionGroups}" />
+
+                            <ui:TextBlock Margin="0,20,0,0" AutomationProperties.HeadingLevel="Level2" FontTypography="Subtitle" Text="{x:Static res:Strings.Advanced_Session_Stats}" />
+                            <ui:TextBlock Margin="0,8,0,0" Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Advanced_Session_NoStats}" TextWrapping="Wrap"
+                                          Visibility="{Binding ViewModel.SessionHasNoStats, Converter={StaticResource BoolToVis}}" />
+                            <DataGrid MaxHeight="360" Margin="0,8,0,0" AutoGenerateColumns="False" AutomationProperties.Name="{x:Static res:Strings.Advanced_Session_Stats}"
+                                      CanUserAddRows="False" HeadersVisibility="Column" IsReadOnly="True" ItemsSource="{Binding ViewModel.SessionStats}" SelectionMode="Single"
+                                      Visibility="{Binding ViewModel.SessionHasNoStats, Converter={StaticResource InverseBoolToVis}}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Width="Auto" MinWidth="320" Binding="{Binding Label}" Header="{x:Static res:Strings.Advanced_Col_Name}" />
+                                    <DataGridTextColumn Width="Auto" MinWidth="90" Binding="{Binding Samples}" Header="{x:Static res:Strings.Advanced_Col_Samples}" />
+                                    <DataGridTextColumn Width="Auto" MinWidth="110" Binding="{Binding Min}" Header="{x:Static res:Strings.Advanced_Min}" />
+                                    <DataGridTextColumn Width="Auto" MinWidth="110" Binding="{Binding Mean}" Header="{x:Static res:Strings.Advanced_Mean}" />
+                                    <DataGridTextColumn Width="Auto" MinWidth="110" Binding="{Binding Max}" Header="{x:Static res:Strings.Advanced_Max}" />
+                                    <DataGridTemplateColumn Width="*" CanUserResize="False" CanUserSort="False" IsReadOnly="True" controls:CellName.Path="Label" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <ui:TextBlock Margin="0,20,0,0" AutomationProperties.HeadingLevel="Level2" FontTypography="Subtitle" Text="{x:Static res:Strings.Advanced_Chart_Header}" />
+                            <ui:TextBlock Margin="0,8,0,0" Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Advanced_Session_NoSeries}" TextWrapping="Wrap"
+                                          Visibility="{Binding ViewModel.SessionSeriesGone, Converter={StaticResource BoolToVis}}" />
+                            <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
+                                <ui:TextBlock Margin="0,0,8,0" VerticalAlignment="Center" Text="{x:Static res:Strings.Advanced_Chart_Metric}" />
+                                <ComboBox MinWidth="360" AutomationProperties.Name="{x:Static res:Strings.A11y_Advanced_Metric}" DisplayMemberPath="Label"
+                                          ItemsSource="{Binding ViewModel.SessionMetrics}" SelectedItem="{Binding ViewModel.SelectedSessionMetric, Mode=TwoWay}" />
+                            </StackPanel>
+                            <ui:TextBlock Margin="0,4,0,0" Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Advanced_Chart_Band}" TextWrapping="Wrap"
+                                          Visibility="{Binding ViewModel.SessionBand, Converter={StaticResource BoolToVis}}" />
+                            <ui:TextBlock Margin="0,12,0,0" Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Advanced_Chart_Empty}"
+                                          Visibility="{Binding ViewModel.SessionChartEmpty, Converter={StaticResource BoolToVis}}" />
+                            <charts:AdvancedSeriesChart x:Name="SessionChart" Height="320" Margin="0,8,0,0"
+                                                        Visibility="{Binding ViewModel.SessionChartEmpty, Converter={StaticResource InverseBoolToVis}}" />
+                        </StackPanel>
+                    </StackPanel>
+                </TabItem>
+
+                <!-- Sources: the whole catalog, read or not, with the reason. -->
+                <TabItem Header="{x:Static vm:AdvancedViewModel.TabSources}">
+                    <StackPanel Margin="0,12,0,0">
+                        <ui:TextBlock Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Advanced_Sources_Intro}" TextWrapping="Wrap" />
+                        <ui:TextBlock Margin="0,8,0,0" Text="{Binding ViewModel.SourcesNow}" TextWrapping="Wrap"
+                                      Visibility="{Binding ViewModel.SourcesNow, Converter={StaticResource NullToCollapsed}}" />
+                        <ui:TextBlock Margin="0,4,0,0" Style="{StaticResource SecondaryText}" Text="{x:Static res:Strings.Advanced_Elevation_Hint}" TextWrapping="Wrap" />
+                        <DataGrid MaxHeight="560" Margin="0,12,0,0" AutoGenerateColumns="False" AutomationProperties.Name="{x:Static vm:AdvancedViewModel.TabSources}"
+                                  CanUserAddRows="False" HeadersVisibility="Column" IsReadOnly="True" ItemsSource="{Binding ViewModel.SourceRows}" SelectionMode="Single">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Width="Auto" MinWidth="320" MaxWidth="520" Binding="{Binding Label}" Header="{x:Static res:Strings.Advanced_Col_Name}" />
+                                <DataGridTextColumn Width="Auto" MinWidth="120" Binding="{Binding Scope}" Header="{x:Static res:Strings.Advanced_Col_Scope}" />
+                                <DataGridTextColumn Width="Auto" MinWidth="140" Binding="{Binding Source}" Header="{x:Static res:Strings.Advanced_Col_Source}" />
+                                <DataGridTextColumn Width="Auto" MinWidth="260" Binding="{Binding Status}" Header="{x:Static res:Strings.Advanced_Col_Status}" />
+                                <DataGridTemplateColumn Width="*" CanUserResize="False" CanUserSort="False" IsReadOnly="True" controls:CellName.Path="Label" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </TabItem>
+            </TabControl>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

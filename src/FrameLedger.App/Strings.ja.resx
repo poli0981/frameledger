@@ -17,8 +17,980 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="A11y_Advanced_Metric" xml:space="preserve">
+    <value>グラフに表示する項目</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Advanced_Session" xml:space="preserve">
+    <value>表示するセッション</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Advanced" xml:space="preserve">
+    <value>詳細項目の時間推移</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_ChartData_Advanced" xml:space="preserve">
+    <value>各線が 1 つの項目です。グラフの横の表に同じ項目が一覧表示されます。</value>
+    <comment>review</comment>
+  </data>
   <data name="About_Title" xml:space="preserve">
     <value>FrameLedger について</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_ffx_framegen_config" xml:space="preserve">
+    <value>ゲームの FSR フレーム生成の構成</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_ffx_memory_usage" xml:space="preserve">
+    <value>FSR 自身のビデオ メモリ (ゲームが問い合わせたとき)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_ffx_upscale_depth" xml:space="preserve">
+    <value>FSR に渡されたニア/ファー平面と視野角</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_ffx_upscale_exposure" xml:space="preserve">
+    <value>FSR に渡されたプリ露出</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_ffx_upscale_flags" xml:space="preserve">
+    <value>ゲームの FSR ディスパッチのフラグ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_ffx_upscale_frame_time_delta" xml:space="preserve">
+    <value>ゲームが FSR に報告したフレーム時間</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_ffx_upscale_jitter" xml:space="preserve">
+    <value>ゲームが FSR に渡したジッター オフセット</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_ffx_upscale_sharpening" xml:space="preserve">
+    <value>FSR のシャープニング: オン/オフと強さ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_battery" xml:space="preserve">
+    <value>バッテリーのセンサー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_board_fan" xml:space="preserve">
+    <value>各ファン ヘッダーの回転数</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_board_fan_control" xml:space="preserve">
+    <value>各ファン ヘッダーのデューティ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_board_model" xml:space="preserve">
+    <value>マザーボードのメーカーとモデル</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_board_sensor_chip" xml:space="preserve">
+    <value>ボードのセンサー チップ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_board_temperature" xml:space="preserve">
+    <value>ボードの温度センサー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_board_voltage" xml:space="preserve">
+    <value>ボードの電圧レール</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_controller" xml:space="preserve">
+    <value>ファン コントローラーのセンサー: 同じく USB デバイスの探索が必要</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_cpu_clock" xml:space="preserve">
+    <value>各コアのクロックとバス クロック</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_cpu_load" xml:space="preserve">
+    <value>プロセッサの負荷: 全体と各コア</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_cpu_power" xml:space="preserve">
+    <value>プロセッサの電力: パッケージ、コア</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_cpu_temperature" xml:space="preserve">
+    <value>プロセッサの温度: パッケージと各コア</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_cpu_voltage" xml:space="preserve">
+    <value>プロセッサの電圧</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_gpu_clock" xml:space="preserve">
+    <value>カードのすべてのクロック</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_gpu_current" xml:space="preserve">
+    <value>カードのすべての電流</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_gpu_fan" xml:space="preserve">
+    <value>カードのすべてのファン</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_gpu_fan_control" xml:space="preserve">
+    <value>各ファンのデューティ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_gpu_load" xml:space="preserve">
+    <value>カードのすべての負荷: 各エンジン、バス、メモリ コントローラー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_gpu_memory" xml:space="preserve">
+    <value>カードのメモリ カウンター: 合計、空き、使用中、Direct3D の専用と共有</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_gpu_power" xml:space="preserve">
+    <value>カードのすべての電力値</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_gpu_temperature" xml:space="preserve">
+    <value>カードのすべての温度センサー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_gpu_throughput" xml:space="preserve">
+    <value>カードとの PCI Express 通信量</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_gpu_voltage" xml:space="preserve">
+    <value>カードのすべての電圧</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_memory_load" xml:space="preserve">
+    <value>使用中のメモリ: 物理と仮想</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_memory_modules" xml:space="preserve">
+    <value>メモリ モジュール: 容量、速度、メーカーの部品名 - シリアル番号は決して含まない</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_memory_temperature" xml:space="preserve">
+    <value>各メモリ モジュールの温度 (センサーがある場合)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_psu" xml:space="preserve">
+    <value>電源ユニットのセンサー: 読み取るとライブラリがすべての USB デバイスを探索する</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_storage_models" xml:space="preserve">
+    <value>ドライブのモデル名: ライブラリは取り外し可能なドライブに触れずにドライブを列挙できない</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_lhm_storage_temperature" xml:space="preserve">
+    <value>各ドライブの温度: 同じ理由でストレージ グループは開かない</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_ngx_parameters" xml:space="preserve">
+    <value>NGX パラメーター: 品質値、DLSS ヒント</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_clock_video" xml:space="preserve">
+    <value>ビデオ クロック</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_display_adaptive_sync_off" xml:space="preserve">
+    <value>ディスプレイでアダプティブ シンクがオフになっている</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_display_edid" xml:space="preserve">
+    <value>ディスプレイの EDID ブロック (シリアル番号を含む)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_display_hdr_formats" xml:space="preserve">
+    <value>ディスプレイが受け付ける HDR 形式: HDR10、HDR10+、HDR10+ Gaming、Dolby Vision、EDR</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_display_luminance_max" xml:space="preserve">
+    <value>HDR コンテンツでのディスプレイの最大輝度</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_display_luminance_max_frame_average" xml:space="preserve">
+    <value>ディスプレイの最大フレーム平均輝度</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_display_luminance_min" xml:space="preserve">
+    <value>ディスプレイの最小輝度</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_display_max_frame_interval" xml:space="preserve">
+    <value>アダプティブ シンクが保持するよう設定された最長フレーム間隔</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_display_vrr_support" xml:space="preserve">
+    <value>可変リフレッシュ: 対応、G-SYNC モジュールかアダプティブ シンクか、ULMB、現在のモードで使用可能か</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_driver_base_branch" xml:space="preserve">
+    <value>ドライバーのベース ブランチ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_driver_chipset" xml:space="preserve">
+    <value>ドライバーが報告するチップセットのベンダーと名前</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_driver_dch" xml:space="preserve">
+    <value>ドライバーが DCH パッケージである</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_driver_global_profile" xml:space="preserve">
+    <value>ドライバーのグローバル プロファイルの全設定 (読み取りのみ)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_driver_interface_version" xml:space="preserve">
+    <value>NVAPI 自体のインターフェイス バージョン</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_driver_package" xml:space="preserve">
+    <value>Game Ready、Studio、または RTX エンタープライズ ブランチ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_encoder_fps" xml:space="preserve">
+    <value>動作中セッションの平均エンコード レート</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_encoder_latency" xml:space="preserve">
+    <value>平均エンコード遅延</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_encoder_session_processes" xml:space="preserve">
+    <value>どのプログラムがエンコードしているか</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_encoder_sessions" xml:space="preserve">
+    <value>動作中のハードウェア エンコード セッション数 (全プログラム)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_architecture" xml:space="preserve">
+    <value>チップのアーキテクチャ、実装、リビジョン</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_board_serial" xml:space="preserve">
+    <value>カードのボード シリアル番号</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_bus_type" xml:space="preserve">
+    <value>カードが接続されているバス</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_clock_base_core" xml:space="preserve">
+    <value>コアの基本クロック</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_clock_base_memory" xml:space="preserve">
+    <value>メモリの基本クロック</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_clock_boost_core" xml:space="preserve">
+    <value>コアのブースト クロック</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_clock_boost_memory" xml:space="preserve">
+    <value>メモリのブースト クロック</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_core_count" xml:space="preserve">
+    <value>グラフィックス コア数</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_external" xml:space="preserve">
+    <value>外付けのカードである</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_fan_duty" xml:space="preserve">
+    <value>NVAPI 経由のファン デューティ (LibreHardwareMonitor が読み取る)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_pci_ids" xml:space="preserve">
+    <value>PCI のデバイス、サブシステム、リビジョン ID - 個体ではなくモデルを示す</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_power" xml:space="preserve">
+    <value>NVAPI 経由のカード電力 (LibreHardwareMonitor が読み取る)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_ram_bus_width" xml:space="preserve">
+    <value>カードのメモリ バス幅</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_ram_type" xml:space="preserve">
+    <value>カードのメモリの種類</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_rt_cores" xml:space="preserve">
+    <value>レイトレーシング コア数</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_system_type" xml:space="preserve">
+    <value>ドライバーから見たノート PC かデスクトップか</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_temp_default_max" xml:space="preserve">
+    <value>コア センサーの既定の最高温度</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_tensor_cores" xml:space="preserve">
+    <value>テンソル コア数</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_type" xml:space="preserve">
+    <value>内蔵グラフィックスかディスクリートか</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_uuid" xml:space="preserve">
+    <value>カードの一意の ID</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_vbios_version" xml:space="preserve">
+    <value>ビデオ BIOS のバージョン</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_gpu_voltage" xml:space="preserve">
+    <value>NVAPI 経由のカード電圧 (LibreHardwareMonitor が読み取る)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_limit_ac_battery" xml:space="preserve">
+    <value>読み取り時にバッテリーへの切り替えで抑えられていた: 100 または 0</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_limit_api" xml:space="preserve">
+    <value>読み取り時にプログラムの要求で抑えられていた: 100 または 0</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_limit_insufficient_power" xml:space="preserve">
+    <value>読み取り時に電源コネクタ不足で抑えられていた: 100 または 0</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_load_bus" xml:space="preserve">
+    <value>バス インターフェイスの使用率</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_load_framebuffer" xml:space="preserve">
+    <value>フレーム バッファー (メモリ コントローラー) の使用率</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_load_video" xml:space="preserve">
+    <value>ビデオ エンジンの使用率</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_pstate" xml:space="preserve">
+    <value>カードの現在のパフォーマンス状態 (P ステート ID)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_reflex_frame_report" xml:space="preserve">
+    <value>フレームごとの遅延: シミュレーション、レンダー送信、プレゼント、ドライバー、OS キュー、GPU レンダー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_reflex_mode" xml:space="preserve">
+    <value>Reflex: 低遅延モード、ブースト、フレーム レート制限</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_reflex_sleep_status" xml:space="preserve">
+    <value>ドライバーの低遅延の状態</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_session_driver_profile" xml:space="preserve">
+    <value>このゲーム用のドライバー プロファイルが自ら設定している項目 (読み取りのみ)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_session_source_colorspace" xml:space="preserve">
+    <value>ゲームが出力した色空間 (ドライバーがプロセスについて報告した値)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_session_vrr_display_mode" xml:space="preserve">
+    <value>ディスプレイ自体が可変リフレッシュ モードだった</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_session_vrr_enabled" xml:space="preserve">
+    <value>ゲームのディスプレイで可変リフレッシュが有効だった</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_session_vrr_possible" xml:space="preserve">
+    <value>そのディスプレイで可変リフレッシュが可能だった</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_session_vrr_requested" xml:space="preserve">
+    <value>そのディスプレイに可変リフレッシュが要求された</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_temp_board" xml:space="preserve">
+    <value>ボード周囲温度 (センサーがあるカードのみ)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_temp_power_supply" xml:space="preserve">
+    <value>カードの電源部の温度 (センサーがあるカードのみ)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_vram_available" xml:space="preserve">
+    <value>現在空いている専用ビデオ メモリ (全プログラム)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_vram_dedicated" xml:space="preserve">
+    <value>カード上の専用ビデオ メモリ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_vram_dedicated_available" xml:space="preserve">
+    <value>サーフェスに使える専用ビデオ メモリ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_vram_eviction_count" xml:space="preserve">
+    <value>ドライバー読み込み以降の専用ビデオ メモリからの退避回数</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_vram_evictions_size" xml:space="preserve">
+    <value>ドライバー読み込み以降、退避によって解放されたメモリ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_vram_framebuffer_physical" xml:space="preserve">
+    <value>物理フレーム バッファーのサイズ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_vram_framebuffer_virtual" xml:space="preserve">
+    <value>仮想フレーム バッファーのサイズ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_vram_in_use" xml:space="preserve">
+    <value>現在使用中の専用ビデオ メモリ (全プログラム): サーフェスに使える量から空きを引いた値</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_vram_promotion_count" xml:space="preserve">
+    <value>ドライバー読み込み以降の専用ビデオ メモリへの昇格回数</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_vram_promotions_size" xml:space="preserve">
+    <value>ドライバー読み込み以降、昇格によって移されたメモリ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_vram_shared" xml:space="preserve">
+    <value>ドライバーが割り当てられる共有システム メモリ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_nvapi_vram_system" xml:space="preserve">
+    <value>ドライバーが読み込み時に確保したシステム メモリ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_constants_camera" xml:space="preserve">
+    <value>カメラの位置、軸、行列</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_constants_depth" xml:space="preserve">
+    <value>ニア/ファー平面と、深度が反転しているか</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_constants_jitter" xml:space="preserve">
+    <value>ゲームが Streamline に渡したジッター オフセット</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_constants_motion_vectors" xml:space="preserve">
+    <value>モーション ベクターのスケールと、3D・膨張・ジッター付きかどうか</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_constants_projection" xml:space="preserve">
+    <value>視野角、アスペクト比、正射影かどうか</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_constants_resets" xml:space="preserve">
+    <value>ゲームがアップスケーラーの履歴をリセットした回数</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_deepdvc_options" xml:space="preserve">
+    <value>RTX Dynamic Vibrance のオプション</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_dlss_alpha_upscaling" xml:space="preserve">
+    <value>DLSS がアルファ チャンネルもアップスケールする</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_dlss_auto_exposure" xml:space="preserve">
+    <value>DLSS の自動露出</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_dlss_exposure" xml:space="preserve">
+    <value>DLSS に渡されたプリ露出と露出スケール</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_dlss_hdr_input" xml:space="preserve">
+    <value>ゲームがカラー バッファーは HDR だと DLSS に伝えた</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_dlss_optimal_settings" xml:space="preserve">
+    <value>DLSS が推奨するレンダー サイズとシャープネス</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_dlss_output_size" xml:space="preserve">
+    <value>ゲームが DLSS に渡した出力サイズ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_dlss_presets" xml:space="preserve">
+    <value>品質モードごとの DLSS モデル プリセット</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_dlss_vram_estimate" xml:space="preserve">
+    <value>DLSS 自身によるビデオ メモリ使用量の見積もり</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_dlssd_options" xml:space="preserve">
+    <value>Ray Reconstruction のオプション</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_dlssg_frames_presented" xml:space="preserve">
+    <value>DLSS フレーム生成が表示したフレーム数 (自身のカウント)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_dlssg_options" xml:space="preserve">
+    <value>DLSS フレーム生成: モード、生成するフレーム数</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_dlssg_state" xml:space="preserve">
+    <value>DLSS フレーム生成: 状態、生成できる最大フレーム数</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_dlssg_vram_estimate" xml:space="preserve">
+    <value>DLSS フレーム生成によるビデオ メモリ使用量の見積もり</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_feature_requirements" xml:space="preserve">
+    <value>各 Streamline 機能の要件: OS、ドライバー、バッファー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_feature_versions" xml:space="preserve">
+    <value>各 Streamline 機能のバージョンとその NGX モデル バージョン</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_init_preferences" xml:space="preserve">
+    <value>ゲームが Streamline の起動時に指定した設定</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_nis_options" xml:space="preserve">
+    <value>NVIDIA Image Scaling のオプション</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_nvperf" xml:space="preserve">
+    <value>Streamline のパフォーマンス カウンター (NSight Perf SDK のライセンス)</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_pcl_markers" xml:space="preserve">
+    <value>ゲームが設定する PC レイテンシ マーカー</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_sl_reflex_state" xml:space="preserve">
+    <value>Streamline 経由の Reflex: 利用可否とフレーム レポート</value>
+    <comment>review</comment>
+  </data>
+  <data name="Adv_xess_options" xml:space="preserve">
+    <value>XeSS のオプション</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Chart_Band" xml:space="preserve">
+    <value>系列が 8 を超えるため、その最小・平均・最大を描画しています。表には各系列を一覧表示します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Chart_Empty" xml:space="preserve">
+    <value>まだ描画するものがありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Chart_Header" xml:space="preserve">
+    <value>時間の推移</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Chart_LiveNote" xml:space="preserve">
+    <value>直近 5 分間。メモリ内にのみ保持されます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Chart_Metric" xml:space="preserve">
+    <value>表示</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Chart_Seconds" xml:space="preserve">
+    <value>セッション開始からの秒数</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Chart_Time" xml:space="preserve">
+    <value>時刻</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Col_Name" xml:space="preserve">
+    <value>項目</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Col_ReadAt" xml:space="preserve">
+    <value>読み取り時刻</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Col_Samples" xml:space="preserve">
+    <value>読み取り回数</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Col_Scope" xml:space="preserve">
+    <value>対象</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Col_Source" xml:space="preserve">
+    <value>ソース</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Col_Status" xml:space="preserve">
+    <value>状態</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Col_Value" xml:space="preserve">
+    <value>値</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Elevation_Hint" xml:space="preserve">
+    <value>プロセッサ・メモリ・マザーボードは、キャプチャ エージェントを管理者として実行し PawnIO をインストールしている場合にのみ読み取られます (設定 ▸ キャプチャ エージェント)。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Facts_Header" xml:space="preserve">
+    <value>この PC について</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Header" xml:space="preserve">
+    <value>詳細メトリクス</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Machine_Intro" xml:space="preserve">
+    <value>グラフィックス ドライバーとハードウェア センサーが、この PC について現在示している内容です。このページを開いている間、またはゲームを記録している間だけ読み取られ、ここに表示されるものは保存されません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Max" xml:space="preserve">
+    <value>最大</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Mean" xml:space="preserve">
+    <value>平均</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Min" xml:space="preserve">
+    <value>最小</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Now_Header" xml:space="preserve">
+    <value>現在の値</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Session_Empty" xml:space="preserve">
+    <value>詳細メトリクスをオンにして記録されたセッションはまだありません。オフの間に記録されたセッションが後から補われることはありません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Session_Facts" xml:space="preserve">
+    <value>PC とセッション</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Session_NoSeries" xml:space="preserve">
+    <value>このセッションの秒単位の系列は保持されていません (設定 ▸ 記録 ▸ ゲームごとに保持する生データ)。統計は残っています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Session_NoStats" xml:space="preserve">
+    <value>このセッションには読み取り値が保存されていません。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Session_Pick" xml:space="preserve">
+    <value>セッション</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Session_Stats" xml:space="preserve">
+    <value>セッションの統計</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Sources_Intro" xml:space="preserve">
+    <value>FrameLedger が読み取れるすべての項目と、読み取らないすべての項目およびその理由です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_SourcesLine" xml:space="preserve">
+    <value>NVIDIA ドライバー: {0}。グラフィックス カードのセンサー: {1}。プロセッサ・メモリ・マザーボードのセンサー: {2}。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_State_Live" xml:space="preserve">
+    <value>キャプチャ エージェントが {0} に読み取りました。NVIDIA の値は 1 秒ごと、センサーは 5 秒ごとに読み取られます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_State_NoAgent" xml:space="preserve">
+    <value>キャプチャ エージェントが応答していません。以下の表示は、併記された時刻のものです。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_State_Off" xml:space="preserve">
+    <value>詳細メトリクスがオフのため、何も読み取られません。設定 ▸ 記録 でオンにしてください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_State_OlderAgent" xml:space="preserve">
+    <value>実行中のキャプチャ エージェントは古いバージョンで、この要求に応答できません。FrameLedger を再起動してください。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_State_Viewer" xml:space="preserve">
+    <value>これは台帳のコピーです。この PC からは何も読み取りません。コピーに保存されたセッションは「セッション」にあります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_State_Waiting" xml:space="preserve">
+    <value>キャプチャ エージェントがソースを開いています…</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Status_Read" xml:space="preserve">
+    <value>読み取り中</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Status_Readable" xml:space="preserve">
+    <value>セッションまたはこのページの要求時に読み取り</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Status_SourceSilent" xml:space="preserve">
+    <value>現在は読み取れません: {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Tab_Machine" xml:space="preserve">
+    <value>この PC</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Tab_Session" xml:space="preserve">
+    <value>セッション</value>
+    <comment>review</comment>
+  </data>
+  <data name="Advanced_Tab_Sources" xml:space="preserve">
+    <value>ソース</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvGroup_Board" xml:space="preserve">
+    <value>マザーボード</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvGroup_Cpu" xml:space="preserve">
+    <value>プロセッサ</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvGroup_Display" xml:space="preserve">
+    <value>ディスプレイ</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvGroup_Driver" xml:space="preserve">
+    <value>グラフィックス ドライバー</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvGroup_FrameGeneration" xml:space="preserve">
+    <value>フレーム生成</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvGroup_Gpu" xml:space="preserve">
+    <value>グラフィックス カード</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvGroup_GpuMemory" xml:space="preserve">
+    <value>グラフィックス カードのメモリ</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvGroup_Latency" xml:space="preserve">
+    <value>遅延</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvGroup_Memory" xml:space="preserve">
+    <value>メモリ</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvGroup_Storage" xml:space="preserve">
+    <value>ストレージ</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvGroup_Upscaling" xml:space="preserve">
+    <value>アップスケーリング</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvReach_Deferred" xml:space="preserve">
+    <value>このリリースでは読み取らない</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvReach_HookedCall" xml:space="preserve">
+    <value>ゲーム内 - 今後のリリースで対応</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvReach_Identifier" xml:space="preserve">
+    <value>決して読み取らない: この PC、ディスプレイ、または他のプログラムを識別する情報のため</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvReach_Licence" xml:space="preserve">
+    <value>読み取らない: ベンダーのライセンスが許可していないため</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvReach_NewHook" xml:space="preserve">
+    <value>ゲーム内 (新しいフックが必要) - 今後のリリースで対応</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvReach_NotInHeaders" xml:space="preserve">
+    <value>このインターフェイスでは提供されない</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvReach_PlayerState" xml:space="preserve">
+    <value>決して読み取らない: ゲーム内のプレイヤーの状態のため</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvReach_Refused" xml:space="preserve">
+    <value>読み取らない: センサー ライブラリがすべての USB デバイスを探索することになるため</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvReach_Spike" xml:space="preserve">
+    <value>調査中 (未決定)</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvScope_MachineFact" xml:space="preserve">
+    <value>この PC</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvScope_Series" xml:space="preserve">
+    <value>セッション (時系列)</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvScope_SessionFact" xml:space="preserve">
+    <value>セッション</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvSource_Faulted" xml:space="preserve">
+    <value>読み取り中に失敗</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvSource_NotElevated" xml:space="preserve">
+    <value>キャプチャ エージェントが管理者として実行されていない</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvSource_NotPresent" xml:space="preserve">
+    <value>この PC にはない</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvSource_PawnIoMissing" xml:space="preserve">
+    <value>PawnIO がインストールされていない</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvSource_Reading" xml:space="preserve">
+    <value>応答中</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvSource_Unknown" xml:space="preserve">
+    <value>未確認</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_adaptive_sync" xml:space="preserve">
+    <value>アダプティブ シンク</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_agp" xml:space="preserve">
+    <value>AGP</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_axi" xml:space="preserve">
+    <value>AXI</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_bt2100_pq" xml:space="preserve">
+    <value>BT.2100 PQ (HDR10)</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_desktop" xml:space="preserve">
+    <value>デスクトップ</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_discrete" xml:space="preserve">
+    <value>ディスクリート</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_dolby_vision" xml:space="preserve">
+    <value>Dolby Vision</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_driver_default" xml:space="preserve">
+    <value>ドライバーの既定値</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_edr" xml:space="preserve">
+    <value>EDR</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_fpci" xml:space="preserve">
+    <value>FPCI</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_game_ready" xml:space="preserve">
+    <value>Game Ready</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_gsync_module" xml:space="preserve">
+    <value>G-SYNC モジュール</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_hdr10" xml:space="preserve">
+    <value>HDR10</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_hdr10_plus" xml:space="preserve">
+    <value>HDR10+</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_hdr10_plus_gaming" xml:space="preserve">
+    <value>HDR10+ Gaming</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_integrated" xml:space="preserve">
+    <value>内蔵</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_laptop" xml:space="preserve">
+    <value>ノート PC</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_no_profile_for_game" xml:space="preserve">
+    <value>ドライバーにこのゲームのプロファイルがない</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_not_a_number" xml:space="preserve">
+    <value>数値ではない</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_not_supported" xml:space="preserve">
+    <value>非対応</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_pci" xml:space="preserve">
+    <value>PCI</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_pci_express" xml:space="preserve">
+    <value>PCI Express</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_rtx_new_feature" xml:space="preserve">
+    <value>RTX 新機能ブランチ</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_rtx_production" xml:space="preserve">
+    <value>RTX プロダクション ブランチ</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_scrgb_linear" xml:space="preserve">
+    <value>scRGB (リニア)</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_srgb" xml:space="preserve">
+    <value>sRGB</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_studio" xml:space="preserve">
+    <value>Studio</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_ulmb" xml:space="preserve">
+    <value>ULMB</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_usable_now" xml:space="preserve">
+    <value>現在のモードで使用可能</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_user_set" xml:space="preserve">
+    <value>ユーザー設定</value>
+    <comment>review</comment>
+  </data>
+  <data name="AdvToken_variable_refresh" xml:space="preserve">
+    <value>可変リフレッシュ</value>
     <comment>review</comment>
   </data>
   <data name="Agent_Banner_Missing_Body" xml:space="preserve">
@@ -367,6 +1339,10 @@
   </data>
   <data name="Menu_Tools_VulkanLayer" xml:space="preserve">
     <value>Vulkan レイヤーの登録…</value>
+    <comment>review</comment>
+  </data>
+  <data name="Nav_Advanced" xml:space="preserve">
+    <value>詳細</value>
     <comment>review</comment>
   </data>
   <data name="Nav_Compare" xml:space="preserve">
@@ -1271,6 +2247,10 @@
   </data>
   <data name="Sessions_Col_Tier" xml:space="preserve">
     <value>ティア</value>
+    <comment>review</comment>
+  </data>
+  <data name="Summary_Advanced_Button" xml:space="preserve">
+    <value>詳細メトリクス…</value>
     <comment>review</comment>
   </data>
   <data name="Tier_Dash_Tooltip" xml:space="preserve">

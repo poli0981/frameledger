@@ -60,6 +60,7 @@ public sealed class SessionSummaryOpener : ISessionSummaryOpener, ISessionWindow
             new TriStateOverridePrompt(() => window!.Dialogs),
             _services.GetRequiredService<IFileSaver>(),
             _services.GetRequiredService<IMessageStrip>());
+        viewModel.ShowAdvanced = ShowAdvanced;
         window = new SessionSummaryWindow(viewModel, _services.GetRequiredService<IThemeApplier>(), _services.GetRequiredService<AppearanceSettings>())
         {
             Owner = _shell.Current,
@@ -85,6 +86,17 @@ public sealed class SessionSummaryOpener : ISessionSummaryOpener, ISessionWindow
     }
 
     /// <summary>The open window, back in front of the user: out of the taskbar first if it was minimised.</summary>
+    /// <summary>The summary's "Advanced metrics…": the page is asked for that session, opened, and the main window brought forward.</summary>
+    private void ShowAdvanced(long sessionId)
+    {
+        _services.GetRequiredService<AdvancedSelection>().Request(sessionId);
+        _services.GetRequiredService<IPageNavigator>().Navigate<Pages.AdvancedPage>();
+        if (_shell.Current is { } main)
+        {
+            BringForward(main);
+        }
+    }
+
     private static void BringForward(Window window)
     {
         if (window.WindowState == WindowState.Minimized)

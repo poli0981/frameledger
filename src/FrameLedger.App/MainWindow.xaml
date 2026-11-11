@@ -24,11 +24,14 @@
         <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="3" Key="D3" Modifiers="Control" />
         <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="4" Key="D4" Modifiers="Control" />
         <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="5" Key="D5" Modifiers="Control" />
+        <!-- Ctrl+6 (owner decision D105): the Advanced page, only while its option is on - ShellShortcuts refuses it otherwise. -->
+        <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="6" Key="D6" Modifiers="Control" />
         <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="1" Key="NumPad1" Modifiers="Control" />
         <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="2" Key="NumPad2" Modifiers="Control" />
         <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="3" Key="NumPad3" Modifiers="Control" />
         <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="4" Key="NumPad4" Modifiers="Control" />
         <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="5" Key="NumPad5" Modifiers="Control" />
+        <KeyBinding Command="{Binding ViewModel.NavigateToCommand}" CommandParameter="6" Key="NumPad6" Modifiers="Control" />
     </ui:FluentWindow.InputBindings>
 
     <!--
@@ -186,6 +189,11 @@
                 <ui:NavigationViewItem Content="{x:Static res:Strings.Nav_Logs}"
                                        Icon="{ui:SymbolIcon DocumentText24}"
                                        TargetPageType="{x:Type pages:LogsPage}" />
+                <!-- Advanced metrics (owner decisions D101/D105): last in the menu, and there only while the option is on. -->
+                <ui:NavigationViewItem Content="{x:Static res:Strings.Nav_Advanced}"
+                                       Icon="{ui:SymbolIcon DataUsage24}"
+                                       TargetPageType="{x:Type pages:AdvancedPage}"
+                                       Visibility="{Binding Path=(services:AdvancedOption.IsOn), Converter={StaticResource BoolToVis}}" />
             </ui:NavigationView.MenuItems>
             <ui:NavigationView.FooterMenuItems>
                 <ui:NavigationViewItem Content="{x:Static res:Strings.Nav_Settings}"

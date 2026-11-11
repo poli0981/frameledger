@@ -100,6 +100,15 @@ numeric core and does not move; the heading is the full version — corrected 20
   read only while the page is open" works without anything telling the agent that a page closed. With Advanced
   metrics off it answers that it is off, and nothing is read. On the App's side `AdvancedMachineFeed` asks once a
   second while a page watches it and keeps each value with the moment it was read.
+- **The Advanced page.** While Advanced metrics is on, **Advanced** is the last item in the list on the left, and
+  **Ctrl+6** opens it. **This PC** shows what the graphics driver and the sensors say right now — the card's
+  firmware, cores and memory, what each display can do, the driver's settings, and every reading with the time it
+  was read at and a chart of its last five minutes. It is read only while the page is open, and is not stored.
+  **Session** shows what a session recorded with the option on kept: the PC as it was, what belonged to that session,
+  the lowest, average and highest of each reading, and a chart over the session. **Sources** lists every reading
+  FrameLedger knows of and, for each one it does not read, why — the agent is not an administrator, PawnIO is not
+  installed, it comes with a later release, or it is never read. A session's summary has an **Advanced metrics…**
+  button that opens that session there. In `en`, `vi` and `ja`; the user guide has a page for it.
 - **The terms window shows the Privacy Policy 2.15 and the Disclaimer 2.15 once.** The Privacy Policy names what
   Advanced metrics reads and stores, only while it is on, and what it never reads: a serial number, a display's
   identification data, a list of other programs. The Disclaimer's two sentences about PawnIO and about running the

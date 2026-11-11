@@ -157,6 +157,8 @@ public sealed class SeriesDigestTests
 
         public ValueTask<IReadOnlyList<SessionRow>> ListRecentAsync(int count, CancellationToken ct = default) => inner.ListRecentAsync(count, ct);
 
+        public ValueTask<IReadOnlyList<SessionRow>> ListAdvancedAsync(int count, CancellationToken ct = default) => inner.ListAdvancedAsync(count, ct);
+
         public ValueTask<IReadOnlyList<SessionRow>> ListByGameAsync(long gameId, int limit, CancellationToken ct = default) => inner.ListByGameAsync(gameId, limit, ct);
 
         public ValueTask<IReadOnlyList<GameSessionSummary>> SummariseByGameAsync(CancellationToken ct = default) => inner.SummariseByGameAsync(ct);

@@ -52,6 +52,8 @@ public sealed partial class PagesLoadTests
 
         public LogsViewModel Logs { get; private set; } = null!;
 
+        public AdvancedViewModel Advanced { get; private set; } = null!;
+
         public SessionSummaryViewModel Summary { get; private set; } = null!;
 
         public FirstRunViewModel FirstRun { get; private set; } = null!;
@@ -74,6 +76,8 @@ public sealed partial class PagesLoadTests
                 new FgMixRow(FgMixKind.None, null, 118, 118, 2, 0.2, 1),
                 new FgMixRow(FgMixKind.Unclassified, null, null, null, 1, 0.1, 1),
             ]))!;
+            // Advanced metrics (D101): a session recorded with the option on, so the page's Session tab has facts, statistics and a chart.
+            await s.SessionAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-2), sensors: AdvancedFixtures.Blobs(), advanced: AdvancedFixtures.Row()).ConfigureAwait(false);
             long withFrames = await s.SessionWithFramesAsync(game.Id, DateTimeOffset.UtcNow.AddHours(-5), frames: 600, spikeEvery: 200, shape: r => r with { FgMixJson = mix }).ConfigureAwait(false);
             var surfaces = new Surfaces(s);
             await surfaces.LoadPagesAsync(game.Id).ConfigureAwait(false);
@@ -128,6 +132,12 @@ public sealed partial class PagesLoadTests
             (SettingsViewModel settings, LogsViewModel logs) = await SettingsAndLogsAsync(s, consent, strip).ConfigureAwait(false);
             Settings = settings;
             Logs = logs;
+            // The Advanced page with this PC as the Agent last read it - facts, a table that unfolds, live rows, a chart - and
+            // the session above; no feed loop runs, so nothing here waits on a clock.
+            Advanced = new AdvancedViewModel(Own(new AdvancedMachineFeed(new NoAgent(), TimeProvider.System)), s.Sessions, s.Games, new SessionSeriesLoader(s.Sessions), new AdvancedSelection());
+            Task pending5 = Advanced.Pending;
+            await pending5.ConfigureAwait(false);
+            Advanced.ShowMachine(AdvancedFixtures.View());
         }
 
         /// <summary>Every surface by name, each with a builder to call on the STA thread.</summary>
@@ -142,6 +152,7 @@ public sealed partial class PagesLoadTests
             ("Compare", () => new ComparePage(Compare)),
             ("Settings", () => new SettingsPage(Settings, new SystemInfoViewModel(new FixedHardware(), new NoClipboard(), new NoStrip()))),
             ("Logs", () => new LogsPage(Logs)),
+            ("Advanced", () => new AdvancedPage(Advanced)),
         ];
 
         /// <summary>The first run's gate and the secondary windows: About, the user guide, a session's summary.</summary>

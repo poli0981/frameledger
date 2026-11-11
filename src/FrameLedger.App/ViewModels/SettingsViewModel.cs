@@ -432,7 +432,16 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     partial void OnRemoveUninstalledGamesChanged(bool value) => Persist(SettingsRegistry.RetentionRemoveUninstalledGames, value);
 
-    partial void OnAdvancedMetricsChanged(bool value) => Persist(SettingsRegistry.TelemetryAdvanced, value);
+    partial void OnAdvancedMetricsChanged(bool value)
+    {
+        if (!_loading)
+        {
+            // The page's navigation item and Ctrl+6 follow the switch at once (D105); what is read follows at the next session.
+            AdvancedOption.IsOn = value;
+        }
+
+        Persist(SettingsRegistry.TelemetryAdvanced, value);
+    }
 
     partial void OnHideAntiCheatHookingChanged(bool value) => Persist(SettingsRegistry.UiHideAntiCheatHooking, value);
 

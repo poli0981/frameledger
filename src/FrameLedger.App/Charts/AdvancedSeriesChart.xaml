@@ -1,0 +1,13 @@
+<!-- SPDX-License-Identifier: GPL-3.0-only -->
+<!-- Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE -->
+
+<UserControl x:Class="FrameLedger.App.Charts.AdvancedSeriesChart"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:charts="clr-namespace:FrameLedger.App.Charts"
+             xmlns:res="clr-namespace:FrameLedger.App"
+             MinHeight="260">
+    <!-- 08_UI §Advanced: one catalog entry over time - its series, or their lowest, average and highest above eight. The
+         table beside it on the page lists the same readings (A11y_ChartData_Advanced). -->
+    <charts:ChartPlot x:Name="Plot" AutomationProperties.Name="{x:Static res:Strings.A11y_Chart_Advanced}" AutomationProperties.HelpText="{x:Static res:Strings.A11y_ChartData_Advanced}" />
+</UserControl>

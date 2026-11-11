@@ -215,8 +215,8 @@ Frame timing is derived from high-resolution timestamps taken at the moment the 
 >   clocks, fans, voltages and power in detail, what a display can do, the driver's settings for the game — as they
 >   report it: NVIDIA's figures once a second, the sensor library's every five seconds. None of these readings has
 >   been checked against another tool. The processor's, the memory's and the motherboard's need the Agent as
->   administrator with PawnIO and have never been read on real hardware; a drive's temperature is not read. No
->   screen of the App shows them yet.
+>   administrator with PawnIO and have never been read on real hardware; a drive's temperature is not read. The
+>   Advanced page shows them as they were stored, and what the PC reads at the moment only while that page is open.
 > - **Safety:** every pre-injection check runs before injection, including the signed-by-a-known-vendor
 >   half of the suspicious-module rule. During every capture the Agent re-runs the checks every 30 s and
 >   stops capturing on a refusal: a Direct3D or OpenGL game's hooks are removed, and the Vulkan layer

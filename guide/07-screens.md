@@ -20,7 +20,7 @@ What each part of FrameLedger shows and what each button does. What the numbers 
 update** (it waits while a game is being recorded); and the safety notices — a game's hooking refused, measurement
 stopped, hooking turned off — each with one button that only says you have read it.
 
-**The pages** are on the left: **Dashboard**, **Games**, **Compare**, **Logs**, and **Settings** at the bottom.
+**The pages** are on the left: **Dashboard**, **Games**, **Compare**, **Logs**, and **Settings** at the bottom. **Advanced** joins them, after Logs, while Advanced metrics is switched on.
 
 ## The menus
 
@@ -107,6 +107,7 @@ It opens from a session row, from the Dashboard, and from the notice when a sess
 - **Frame generation in this session** — a bar and a table of every frame-generation state the session held, when it
   held more than one, with how frame generation was set.
 - **Tags and notes** with **Save**, and **Export CSV**, **Export JSON**, **Export PNG**.
+- **Advanced metrics…**, for a session recorded with Advanced metrics on: it opens that session on the Advanced page.
 
 ## Compare
 
@@ -119,6 +120,13 @@ not) and **frame generation** — a session you ticked stays in the list. **Clea
 
 What FrameLedger and its agent wrote down. Choose **App** or **Agent**, a level, and search; **Pause** stops the view from
 following new lines. **Open logs folder**, and **Export bug bundle**, which does the same as Help ▸ Report a bug….
+
+## Advanced
+
+There only while Settings ▸ Recording ▸ **Advanced metrics** is on. Three tabs: **This PC** — what the graphics
+driver and the sensors say right now, read only while the page is open; **Session** — what a session recorded with
+the option on kept, in a table and a chart; **Sources** — every reading FrameLedger knows of, and for each one it
+does not read, why. [Advanced metrics](12-advanced-metrics.md) describes each.
 
 ## Settings
 
@@ -133,7 +141,8 @@ is ready.
 
 ## Keyboard and mouse
 
-- **Ctrl+1** … **Ctrl+5** open Dashboard, Games, Compare, Logs and Settings, and put the keyboard in that page.
+- **Ctrl+1** … **Ctrl+5** open Dashboard, Games, Compare, Logs and Settings, and put the keyboard in that page;
+  **Ctrl+6** opens Advanced while Advanced metrics is on.
 - **Alt** or **F10** moves to the menus; **Alt** with a menu's underlined letter opens it (**Alt+F**, **Alt+T** and
   **Alt+H** for File, Tools and Help in English).
 - **Esc** closes a dialog the way its Close or Cancel button does.

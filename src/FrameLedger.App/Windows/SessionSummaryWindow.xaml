@@ -242,6 +242,9 @@
                     <ui:Button Margin="8,0,0,0" Command="{Binding ViewModel.ExportJsonCommand}" Content="{x:Static vm:SessionSummaryViewModel.ExportJsonText}" />
                     <ui:Button Margin="8,0,0,0" Click="OnExportPng" Content="{x:Static vm:SessionSummaryViewModel.ExportPngText}"
                                IsEnabled="{Binding ViewModel.IsHooked}" />
+                    <!-- Advanced metrics (D101): only for a session recorded with the option on; it opens that session on the page. -->
+                    <ui:Button Margin="8,0,0,0" Command="{Binding ViewModel.OpenAdvancedCommand}" Content="{x:Static vm:SessionSummaryViewModel.AdvancedText}"
+                               Visibility="{Binding ViewModel.HasAdvanced, Converter={StaticResource BoolToVis}}" />
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>
