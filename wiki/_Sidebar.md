@@ -14,6 +14,7 @@
 - [When something goes wrong](../guide/09-troubleshooting.md)
 - [Words FrameLedger uses](../guide/10-glossary.md)
 - [Alpha builds](../guide/11-alpha-builds.md)
+- [Advanced metrics](../guide/12-advanced-metrics.md)
 - [The terms, in plain words](../guide/terms-in-plain-words.md)
 - [Limitations](../LIMITATIONS.md)
 - [Accessibility](../ACCESSIBILITY.md)

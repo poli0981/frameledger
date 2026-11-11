@@ -29,7 +29,7 @@ notices Windows shows for it. It draws nothing inside a game, so it cannot make 
 
 | Keys | What they do |
 |---|---|
-| **Ctrl+1** … **Ctrl+5** (also with the numeric keypad) | Open Dashboard, Games, Compare, Logs and Settings, and move the keyboard into that page; a screen reader hears its title. |
+| **Ctrl+1** … **Ctrl+5** (also with the numeric keypad) | Open Dashboard, Games, Compare, Logs and Settings, and move the keyboard into that page; a screen reader hears its title. **Ctrl+6** opens Advanced the same way while Advanced metrics is switched on, and does nothing while it is off. |
 | **Alt** or **F10**, then the arrow keys and **Enter** | Move to the menus. **Alt** with a menu's underlined letter opens it (*File*, *Tools*, *Help* in English). |
 | **Tab** and **Shift+Tab** | Move through a page or a dialog in reading order. |
 | The **arrow keys**, **Home**, **End**, **Page Up**, **Page Down** | Move inside a list or a table — a game's sessions, the games list, the Compare list, the import checklist. |
@@ -96,7 +96,7 @@ from the same translations. The documents — the user guide, this page, the leg
   into a screen; every text reads against its background in both themes and after a theme switch, and under Windows'
   four contrast themes and two edited ones is drawn in the theme's own colours at 4.5:1 or better; **Esc** closes the
   open dialog without an answer, and a dialog gives the focus back; **Ctrl+1** … **Ctrl+5** open the pages in their
-  order and move the keyboard into them; a page slides in only while Windows' animation effects are on; the program
+  order and move the keyboard into them, and **Ctrl+6** the Advanced page only while its option is on; a page slides in only while Windows' animation effects are on; the program
   declares it follows each screen's scaling.
 - **By hand**: the owner's pass of 2026-11-09 above, repeated for each release that changes a screen.
 - **Not tested yet**: NVDA, JAWS, Voice Access, touch, Windows 10, and other people's PCs. They should work through the
@@ -107,6 +107,9 @@ from the same translations. The documents — the user guide, this page, the leg
 
 Each one with what to do instead. A barrier that is not on this list is worth reporting.
 
+- **The Advanced page's "This PC" does not announce its readings as they change.** They change every second; a
+  screen reader reads the table when you move through it, and each row says its reading, its value and the time it
+  was read at.
 - **A chart's points cannot be read one by one.** A screen reader hears the chart's name and where its numbers are:
   a session's figures and *Statistics per series* in its summary, the table under the Compare chart, the Sessions table
   and the list of changes under a trend chart, and **File ▸ Export ▸ Session CSV** or **Session JSON**.

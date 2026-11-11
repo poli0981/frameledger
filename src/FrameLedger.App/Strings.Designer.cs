@@ -29,9 +29,12 @@ public static class Strings
     /// <summary>Every key, for an audit that walks them.</summary>
     public static IReadOnlyList<string> Keys { get; } =
     [
+        nameof(A11y_Advanced_Metric),
+        nameof(A11y_Advanced_Session),
         nameof(A11y_Agent_Connected),
         nameof(A11y_Change_Format),
         nameof(A11y_ChangeMarker_Format),
+        nameof(A11y_Chart_Advanced),
         nameof(A11y_Chart_Clocks),
         nameof(A11y_Chart_Compare),
         nameof(A11y_Chart_ControlType),
@@ -45,6 +48,7 @@ public static class Strings
         nameof(A11y_Chart_Temps),
         nameof(A11y_Chart_Trend),
         nameof(A11y_Chart_Vram),
+        nameof(A11y_ChartData_Advanced),
         nameof(A11y_ChartData_Compare),
         nameof(A11y_ChartData_Latency),
         nameof(A11y_ChartData_Sessions),
@@ -102,6 +106,245 @@ public static class Strings
         nameof(AddGame_Dialog_Title),
         nameof(AddGame_Failed_Format),
         nameof(AddGame_Filter),
+        nameof(Adv_ffx_framegen_config),
+        nameof(Adv_ffx_memory_usage),
+        nameof(Adv_ffx_upscale_depth),
+        nameof(Adv_ffx_upscale_exposure),
+        nameof(Adv_ffx_upscale_flags),
+        nameof(Adv_ffx_upscale_frame_time_delta),
+        nameof(Adv_ffx_upscale_jitter),
+        nameof(Adv_ffx_upscale_sharpening),
+        nameof(Adv_lhm_battery),
+        nameof(Adv_lhm_board_fan),
+        nameof(Adv_lhm_board_fan_control),
+        nameof(Adv_lhm_board_model),
+        nameof(Adv_lhm_board_sensor_chip),
+        nameof(Adv_lhm_board_temperature),
+        nameof(Adv_lhm_board_voltage),
+        nameof(Adv_lhm_controller),
+        nameof(Adv_lhm_cpu_clock),
+        nameof(Adv_lhm_cpu_load),
+        nameof(Adv_lhm_cpu_power),
+        nameof(Adv_lhm_cpu_temperature),
+        nameof(Adv_lhm_cpu_voltage),
+        nameof(Adv_lhm_gpu_clock),
+        nameof(Adv_lhm_gpu_current),
+        nameof(Adv_lhm_gpu_fan),
+        nameof(Adv_lhm_gpu_fan_control),
+        nameof(Adv_lhm_gpu_load),
+        nameof(Adv_lhm_gpu_memory),
+        nameof(Adv_lhm_gpu_power),
+        nameof(Adv_lhm_gpu_temperature),
+        nameof(Adv_lhm_gpu_throughput),
+        nameof(Adv_lhm_gpu_voltage),
+        nameof(Adv_lhm_memory_load),
+        nameof(Adv_lhm_memory_modules),
+        nameof(Adv_lhm_memory_temperature),
+        nameof(Adv_lhm_psu),
+        nameof(Adv_lhm_storage_models),
+        nameof(Adv_lhm_storage_temperature),
+        nameof(Adv_ngx_parameters),
+        nameof(Adv_nvapi_clock_video),
+        nameof(Adv_nvapi_display_adaptive_sync_off),
+        nameof(Adv_nvapi_display_edid),
+        nameof(Adv_nvapi_display_hdr_formats),
+        nameof(Adv_nvapi_display_luminance_max),
+        nameof(Adv_nvapi_display_luminance_max_frame_average),
+        nameof(Adv_nvapi_display_luminance_min),
+        nameof(Adv_nvapi_display_max_frame_interval),
+        nameof(Adv_nvapi_display_vrr_support),
+        nameof(Adv_nvapi_driver_base_branch),
+        nameof(Adv_nvapi_driver_chipset),
+        nameof(Adv_nvapi_driver_dch),
+        nameof(Adv_nvapi_driver_global_profile),
+        nameof(Adv_nvapi_driver_interface_version),
+        nameof(Adv_nvapi_driver_package),
+        nameof(Adv_nvapi_encoder_fps),
+        nameof(Adv_nvapi_encoder_latency),
+        nameof(Adv_nvapi_encoder_session_processes),
+        nameof(Adv_nvapi_encoder_sessions),
+        nameof(Adv_nvapi_gpu_architecture),
+        nameof(Adv_nvapi_gpu_board_serial),
+        nameof(Adv_nvapi_gpu_bus_type),
+        nameof(Adv_nvapi_gpu_clock_base_core),
+        nameof(Adv_nvapi_gpu_clock_base_memory),
+        nameof(Adv_nvapi_gpu_clock_boost_core),
+        nameof(Adv_nvapi_gpu_clock_boost_memory),
+        nameof(Adv_nvapi_gpu_core_count),
+        nameof(Adv_nvapi_gpu_external),
+        nameof(Adv_nvapi_gpu_fan_duty),
+        nameof(Adv_nvapi_gpu_pci_ids),
+        nameof(Adv_nvapi_gpu_power),
+        nameof(Adv_nvapi_gpu_ram_bus_width),
+        nameof(Adv_nvapi_gpu_ram_type),
+        nameof(Adv_nvapi_gpu_rt_cores),
+        nameof(Adv_nvapi_gpu_system_type),
+        nameof(Adv_nvapi_gpu_temp_default_max),
+        nameof(Adv_nvapi_gpu_tensor_cores),
+        nameof(Adv_nvapi_gpu_type),
+        nameof(Adv_nvapi_gpu_uuid),
+        nameof(Adv_nvapi_gpu_vbios_version),
+        nameof(Adv_nvapi_gpu_voltage),
+        nameof(Adv_nvapi_limit_ac_battery),
+        nameof(Adv_nvapi_limit_api),
+        nameof(Adv_nvapi_limit_insufficient_power),
+        nameof(Adv_nvapi_load_bus),
+        nameof(Adv_nvapi_load_framebuffer),
+        nameof(Adv_nvapi_load_video),
+        nameof(Adv_nvapi_pstate),
+        nameof(Adv_nvapi_reflex_frame_report),
+        nameof(Adv_nvapi_reflex_mode),
+        nameof(Adv_nvapi_reflex_sleep_status),
+        nameof(Adv_nvapi_session_driver_profile),
+        nameof(Adv_nvapi_session_source_colorspace),
+        nameof(Adv_nvapi_session_vrr_display_mode),
+        nameof(Adv_nvapi_session_vrr_enabled),
+        nameof(Adv_nvapi_session_vrr_possible),
+        nameof(Adv_nvapi_session_vrr_requested),
+        nameof(Adv_nvapi_temp_board),
+        nameof(Adv_nvapi_temp_power_supply),
+        nameof(Adv_nvapi_vram_available),
+        nameof(Adv_nvapi_vram_dedicated),
+        nameof(Adv_nvapi_vram_dedicated_available),
+        nameof(Adv_nvapi_vram_eviction_count),
+        nameof(Adv_nvapi_vram_evictions_size),
+        nameof(Adv_nvapi_vram_framebuffer_physical),
+        nameof(Adv_nvapi_vram_framebuffer_virtual),
+        nameof(Adv_nvapi_vram_in_use),
+        nameof(Adv_nvapi_vram_promotion_count),
+        nameof(Adv_nvapi_vram_promotions_size),
+        nameof(Adv_nvapi_vram_shared),
+        nameof(Adv_nvapi_vram_system),
+        nameof(Adv_sl_constants_camera),
+        nameof(Adv_sl_constants_depth),
+        nameof(Adv_sl_constants_jitter),
+        nameof(Adv_sl_constants_motion_vectors),
+        nameof(Adv_sl_constants_projection),
+        nameof(Adv_sl_constants_resets),
+        nameof(Adv_sl_deepdvc_options),
+        nameof(Adv_sl_dlss_alpha_upscaling),
+        nameof(Adv_sl_dlss_auto_exposure),
+        nameof(Adv_sl_dlss_exposure),
+        nameof(Adv_sl_dlss_hdr_input),
+        nameof(Adv_sl_dlss_optimal_settings),
+        nameof(Adv_sl_dlss_output_size),
+        nameof(Adv_sl_dlss_presets),
+        nameof(Adv_sl_dlss_vram_estimate),
+        nameof(Adv_sl_dlssd_options),
+        nameof(Adv_sl_dlssg_frames_presented),
+        nameof(Adv_sl_dlssg_options),
+        nameof(Adv_sl_dlssg_state),
+        nameof(Adv_sl_dlssg_vram_estimate),
+        nameof(Adv_sl_feature_requirements),
+        nameof(Adv_sl_feature_versions),
+        nameof(Adv_sl_init_preferences),
+        nameof(Adv_sl_nis_options),
+        nameof(Adv_sl_nvperf),
+        nameof(Adv_sl_pcl_markers),
+        nameof(Adv_sl_reflex_state),
+        nameof(Adv_xess_options),
+        nameof(Advanced_Chart_Band),
+        nameof(Advanced_Chart_Empty),
+        nameof(Advanced_Chart_Header),
+        nameof(Advanced_Chart_LiveNote),
+        nameof(Advanced_Chart_Metric),
+        nameof(Advanced_Chart_Seconds),
+        nameof(Advanced_Chart_Time),
+        nameof(Advanced_Col_Name),
+        nameof(Advanced_Col_ReadAt),
+        nameof(Advanced_Col_Samples),
+        nameof(Advanced_Col_Scope),
+        nameof(Advanced_Col_Source),
+        nameof(Advanced_Col_Status),
+        nameof(Advanced_Col_Value),
+        nameof(Advanced_Elevation_Hint),
+        nameof(Advanced_Facts_Header),
+        nameof(Advanced_Header),
+        nameof(Advanced_Machine_Intro),
+        nameof(Advanced_Max),
+        nameof(Advanced_Mean),
+        nameof(Advanced_Min),
+        nameof(Advanced_Now_Header),
+        nameof(Advanced_Session_Empty),
+        nameof(Advanced_Session_Facts),
+        nameof(Advanced_Session_NoSeries),
+        nameof(Advanced_Session_NoStats),
+        nameof(Advanced_Session_Pick),
+        nameof(Advanced_Session_Stats),
+        nameof(Advanced_Sources_Intro),
+        nameof(Advanced_SourcesLine),
+        nameof(Advanced_State_Live),
+        nameof(Advanced_State_NoAgent),
+        nameof(Advanced_State_Off),
+        nameof(Advanced_State_OlderAgent),
+        nameof(Advanced_State_Viewer),
+        nameof(Advanced_State_Waiting),
+        nameof(Advanced_Status_Read),
+        nameof(Advanced_Status_Readable),
+        nameof(Advanced_Status_SourceSilent),
+        nameof(Advanced_Tab_Machine),
+        nameof(Advanced_Tab_Session),
+        nameof(Advanced_Tab_Sources),
+        nameof(AdvGroup_Board),
+        nameof(AdvGroup_Cpu),
+        nameof(AdvGroup_Display),
+        nameof(AdvGroup_Driver),
+        nameof(AdvGroup_FrameGeneration),
+        nameof(AdvGroup_Gpu),
+        nameof(AdvGroup_GpuMemory),
+        nameof(AdvGroup_Latency),
+        nameof(AdvGroup_Memory),
+        nameof(AdvGroup_Storage),
+        nameof(AdvGroup_Upscaling),
+        nameof(AdvReach_Deferred),
+        nameof(AdvReach_HookedCall),
+        nameof(AdvReach_Identifier),
+        nameof(AdvReach_Licence),
+        nameof(AdvReach_NewHook),
+        nameof(AdvReach_NotInHeaders),
+        nameof(AdvReach_PlayerState),
+        nameof(AdvReach_Refused),
+        nameof(AdvReach_Spike),
+        nameof(AdvScope_MachineFact),
+        nameof(AdvScope_Series),
+        nameof(AdvScope_SessionFact),
+        nameof(AdvSource_Faulted),
+        nameof(AdvSource_NotElevated),
+        nameof(AdvSource_NotPresent),
+        nameof(AdvSource_PawnIoMissing),
+        nameof(AdvSource_Reading),
+        nameof(AdvSource_Unknown),
+        nameof(AdvToken_adaptive_sync),
+        nameof(AdvToken_agp),
+        nameof(AdvToken_axi),
+        nameof(AdvToken_bt2100_pq),
+        nameof(AdvToken_desktop),
+        nameof(AdvToken_discrete),
+        nameof(AdvToken_dolby_vision),
+        nameof(AdvToken_driver_default),
+        nameof(AdvToken_edr),
+        nameof(AdvToken_fpci),
+        nameof(AdvToken_game_ready),
+        nameof(AdvToken_gsync_module),
+        nameof(AdvToken_hdr10),
+        nameof(AdvToken_hdr10_plus),
+        nameof(AdvToken_hdr10_plus_gaming),
+        nameof(AdvToken_integrated),
+        nameof(AdvToken_laptop),
+        nameof(AdvToken_no_profile_for_game),
+        nameof(AdvToken_not_a_number),
+        nameof(AdvToken_not_supported),
+        nameof(AdvToken_pci),
+        nameof(AdvToken_pci_express),
+        nameof(AdvToken_rtx_new_feature),
+        nameof(AdvToken_rtx_production),
+        nameof(AdvToken_scrgb_linear),
+        nameof(AdvToken_srgb),
+        nameof(AdvToken_studio),
+        nameof(AdvToken_ulmb),
+        nameof(AdvToken_usable_now),
+        nameof(AdvToken_user_set),
+        nameof(AdvToken_variable_refresh),
         nameof(Agent_Banner_Missing_Body),
         nameof(Agent_Banner_Offline_Body),
         nameof(Agent_Banner_Offline_Title),
@@ -801,6 +1044,7 @@ public static class Strings
         nameof(Menu_Tools_OpenDataFolder),
         nameof(Menu_Tools_UpdateRules),
         nameof(Menu_Tools_VulkanLayer),
+        nameof(Nav_Advanced),
         nameof(Nav_Compare),
         nameof(Nav_Dashboard),
         nameof(Nav_Games),
@@ -1064,6 +1308,7 @@ public static class Strings
         nameof(Store_Gog_Format),
         nameof(Store_Steam_Format),
         nameof(Store_Xbox_Format),
+        nameof(Summary_Advanced_Button),
         nameof(Summary_Annotations_Header),
         nameof(Summary_Crash_Body),
         nameof(Summary_Crash_Title),
@@ -1267,11 +1512,17 @@ public static class Strings
         nameof(Viewer_ChangesThisPc_Off),
     ];
 
+    public static string A11y_Advanced_Metric => ResourceManager.GetString(nameof(A11y_Advanced_Metric), Culture) ?? nameof(A11y_Advanced_Metric);
+
+    public static string A11y_Advanced_Session => ResourceManager.GetString(nameof(A11y_Advanced_Session), Culture) ?? nameof(A11y_Advanced_Session);
+
     public static string A11y_Agent_Connected => ResourceManager.GetString(nameof(A11y_Agent_Connected), Culture) ?? nameof(A11y_Agent_Connected);
 
     public static string A11y_Change_Format => ResourceManager.GetString(nameof(A11y_Change_Format), Culture) ?? nameof(A11y_Change_Format);
 
     public static string A11y_ChangeMarker_Format => ResourceManager.GetString(nameof(A11y_ChangeMarker_Format), Culture) ?? nameof(A11y_ChangeMarker_Format);
+
+    public static string A11y_Chart_Advanced => ResourceManager.GetString(nameof(A11y_Chart_Advanced), Culture) ?? nameof(A11y_Chart_Advanced);
 
     public static string A11y_Chart_Clocks => ResourceManager.GetString(nameof(A11y_Chart_Clocks), Culture) ?? nameof(A11y_Chart_Clocks);
 
@@ -1298,6 +1549,8 @@ public static class Strings
     public static string A11y_Chart_Trend => ResourceManager.GetString(nameof(A11y_Chart_Trend), Culture) ?? nameof(A11y_Chart_Trend);
 
     public static string A11y_Chart_Vram => ResourceManager.GetString(nameof(A11y_Chart_Vram), Culture) ?? nameof(A11y_Chart_Vram);
+
+    public static string A11y_ChartData_Advanced => ResourceManager.GetString(nameof(A11y_ChartData_Advanced), Culture) ?? nameof(A11y_ChartData_Advanced);
 
     public static string A11y_ChartData_Compare => ResourceManager.GetString(nameof(A11y_ChartData_Compare), Culture) ?? nameof(A11y_ChartData_Compare);
 
@@ -1412,6 +1665,484 @@ public static class Strings
     public static string AddGame_Failed_Format => ResourceManager.GetString(nameof(AddGame_Failed_Format), Culture) ?? nameof(AddGame_Failed_Format);
 
     public static string AddGame_Filter => ResourceManager.GetString(nameof(AddGame_Filter), Culture) ?? nameof(AddGame_Filter);
+
+    public static string Adv_ffx_framegen_config => ResourceManager.GetString(nameof(Adv_ffx_framegen_config), Culture) ?? nameof(Adv_ffx_framegen_config);
+
+    public static string Adv_ffx_memory_usage => ResourceManager.GetString(nameof(Adv_ffx_memory_usage), Culture) ?? nameof(Adv_ffx_memory_usage);
+
+    public static string Adv_ffx_upscale_depth => ResourceManager.GetString(nameof(Adv_ffx_upscale_depth), Culture) ?? nameof(Adv_ffx_upscale_depth);
+
+    public static string Adv_ffx_upscale_exposure => ResourceManager.GetString(nameof(Adv_ffx_upscale_exposure), Culture) ?? nameof(Adv_ffx_upscale_exposure);
+
+    public static string Adv_ffx_upscale_flags => ResourceManager.GetString(nameof(Adv_ffx_upscale_flags), Culture) ?? nameof(Adv_ffx_upscale_flags);
+
+    public static string Adv_ffx_upscale_frame_time_delta => ResourceManager.GetString(nameof(Adv_ffx_upscale_frame_time_delta), Culture) ?? nameof(Adv_ffx_upscale_frame_time_delta);
+
+    public static string Adv_ffx_upscale_jitter => ResourceManager.GetString(nameof(Adv_ffx_upscale_jitter), Culture) ?? nameof(Adv_ffx_upscale_jitter);
+
+    public static string Adv_ffx_upscale_sharpening => ResourceManager.GetString(nameof(Adv_ffx_upscale_sharpening), Culture) ?? nameof(Adv_ffx_upscale_sharpening);
+
+    public static string Adv_lhm_battery => ResourceManager.GetString(nameof(Adv_lhm_battery), Culture) ?? nameof(Adv_lhm_battery);
+
+    public static string Adv_lhm_board_fan => ResourceManager.GetString(nameof(Adv_lhm_board_fan), Culture) ?? nameof(Adv_lhm_board_fan);
+
+    public static string Adv_lhm_board_fan_control => ResourceManager.GetString(nameof(Adv_lhm_board_fan_control), Culture) ?? nameof(Adv_lhm_board_fan_control);
+
+    public static string Adv_lhm_board_model => ResourceManager.GetString(nameof(Adv_lhm_board_model), Culture) ?? nameof(Adv_lhm_board_model);
+
+    public static string Adv_lhm_board_sensor_chip => ResourceManager.GetString(nameof(Adv_lhm_board_sensor_chip), Culture) ?? nameof(Adv_lhm_board_sensor_chip);
+
+    public static string Adv_lhm_board_temperature => ResourceManager.GetString(nameof(Adv_lhm_board_temperature), Culture) ?? nameof(Adv_lhm_board_temperature);
+
+    public static string Adv_lhm_board_voltage => ResourceManager.GetString(nameof(Adv_lhm_board_voltage), Culture) ?? nameof(Adv_lhm_board_voltage);
+
+    public static string Adv_lhm_controller => ResourceManager.GetString(nameof(Adv_lhm_controller), Culture) ?? nameof(Adv_lhm_controller);
+
+    public static string Adv_lhm_cpu_clock => ResourceManager.GetString(nameof(Adv_lhm_cpu_clock), Culture) ?? nameof(Adv_lhm_cpu_clock);
+
+    public static string Adv_lhm_cpu_load => ResourceManager.GetString(nameof(Adv_lhm_cpu_load), Culture) ?? nameof(Adv_lhm_cpu_load);
+
+    public static string Adv_lhm_cpu_power => ResourceManager.GetString(nameof(Adv_lhm_cpu_power), Culture) ?? nameof(Adv_lhm_cpu_power);
+
+    public static string Adv_lhm_cpu_temperature => ResourceManager.GetString(nameof(Adv_lhm_cpu_temperature), Culture) ?? nameof(Adv_lhm_cpu_temperature);
+
+    public static string Adv_lhm_cpu_voltage => ResourceManager.GetString(nameof(Adv_lhm_cpu_voltage), Culture) ?? nameof(Adv_lhm_cpu_voltage);
+
+    public static string Adv_lhm_gpu_clock => ResourceManager.GetString(nameof(Adv_lhm_gpu_clock), Culture) ?? nameof(Adv_lhm_gpu_clock);
+
+    public static string Adv_lhm_gpu_current => ResourceManager.GetString(nameof(Adv_lhm_gpu_current), Culture) ?? nameof(Adv_lhm_gpu_current);
+
+    public static string Adv_lhm_gpu_fan => ResourceManager.GetString(nameof(Adv_lhm_gpu_fan), Culture) ?? nameof(Adv_lhm_gpu_fan);
+
+    public static string Adv_lhm_gpu_fan_control => ResourceManager.GetString(nameof(Adv_lhm_gpu_fan_control), Culture) ?? nameof(Adv_lhm_gpu_fan_control);
+
+    public static string Adv_lhm_gpu_load => ResourceManager.GetString(nameof(Adv_lhm_gpu_load), Culture) ?? nameof(Adv_lhm_gpu_load);
+
+    public static string Adv_lhm_gpu_memory => ResourceManager.GetString(nameof(Adv_lhm_gpu_memory), Culture) ?? nameof(Adv_lhm_gpu_memory);
+
+    public static string Adv_lhm_gpu_power => ResourceManager.GetString(nameof(Adv_lhm_gpu_power), Culture) ?? nameof(Adv_lhm_gpu_power);
+
+    public static string Adv_lhm_gpu_temperature => ResourceManager.GetString(nameof(Adv_lhm_gpu_temperature), Culture) ?? nameof(Adv_lhm_gpu_temperature);
+
+    public static string Adv_lhm_gpu_throughput => ResourceManager.GetString(nameof(Adv_lhm_gpu_throughput), Culture) ?? nameof(Adv_lhm_gpu_throughput);
+
+    public static string Adv_lhm_gpu_voltage => ResourceManager.GetString(nameof(Adv_lhm_gpu_voltage), Culture) ?? nameof(Adv_lhm_gpu_voltage);
+
+    public static string Adv_lhm_memory_load => ResourceManager.GetString(nameof(Adv_lhm_memory_load), Culture) ?? nameof(Adv_lhm_memory_load);
+
+    public static string Adv_lhm_memory_modules => ResourceManager.GetString(nameof(Adv_lhm_memory_modules), Culture) ?? nameof(Adv_lhm_memory_modules);
+
+    public static string Adv_lhm_memory_temperature => ResourceManager.GetString(nameof(Adv_lhm_memory_temperature), Culture) ?? nameof(Adv_lhm_memory_temperature);
+
+    public static string Adv_lhm_psu => ResourceManager.GetString(nameof(Adv_lhm_psu), Culture) ?? nameof(Adv_lhm_psu);
+
+    public static string Adv_lhm_storage_models => ResourceManager.GetString(nameof(Adv_lhm_storage_models), Culture) ?? nameof(Adv_lhm_storage_models);
+
+    public static string Adv_lhm_storage_temperature => ResourceManager.GetString(nameof(Adv_lhm_storage_temperature), Culture) ?? nameof(Adv_lhm_storage_temperature);
+
+    public static string Adv_ngx_parameters => ResourceManager.GetString(nameof(Adv_ngx_parameters), Culture) ?? nameof(Adv_ngx_parameters);
+
+    public static string Adv_nvapi_clock_video => ResourceManager.GetString(nameof(Adv_nvapi_clock_video), Culture) ?? nameof(Adv_nvapi_clock_video);
+
+    public static string Adv_nvapi_display_adaptive_sync_off => ResourceManager.GetString(nameof(Adv_nvapi_display_adaptive_sync_off), Culture) ?? nameof(Adv_nvapi_display_adaptive_sync_off);
+
+    public static string Adv_nvapi_display_edid => ResourceManager.GetString(nameof(Adv_nvapi_display_edid), Culture) ?? nameof(Adv_nvapi_display_edid);
+
+    public static string Adv_nvapi_display_hdr_formats => ResourceManager.GetString(nameof(Adv_nvapi_display_hdr_formats), Culture) ?? nameof(Adv_nvapi_display_hdr_formats);
+
+    public static string Adv_nvapi_display_luminance_max => ResourceManager.GetString(nameof(Adv_nvapi_display_luminance_max), Culture) ?? nameof(Adv_nvapi_display_luminance_max);
+
+    public static string Adv_nvapi_display_luminance_max_frame_average => ResourceManager.GetString(nameof(Adv_nvapi_display_luminance_max_frame_average), Culture) ?? nameof(Adv_nvapi_display_luminance_max_frame_average);
+
+    public static string Adv_nvapi_display_luminance_min => ResourceManager.GetString(nameof(Adv_nvapi_display_luminance_min), Culture) ?? nameof(Adv_nvapi_display_luminance_min);
+
+    public static string Adv_nvapi_display_max_frame_interval => ResourceManager.GetString(nameof(Adv_nvapi_display_max_frame_interval), Culture) ?? nameof(Adv_nvapi_display_max_frame_interval);
+
+    public static string Adv_nvapi_display_vrr_support => ResourceManager.GetString(nameof(Adv_nvapi_display_vrr_support), Culture) ?? nameof(Adv_nvapi_display_vrr_support);
+
+    public static string Adv_nvapi_driver_base_branch => ResourceManager.GetString(nameof(Adv_nvapi_driver_base_branch), Culture) ?? nameof(Adv_nvapi_driver_base_branch);
+
+    public static string Adv_nvapi_driver_chipset => ResourceManager.GetString(nameof(Adv_nvapi_driver_chipset), Culture) ?? nameof(Adv_nvapi_driver_chipset);
+
+    public static string Adv_nvapi_driver_dch => ResourceManager.GetString(nameof(Adv_nvapi_driver_dch), Culture) ?? nameof(Adv_nvapi_driver_dch);
+
+    public static string Adv_nvapi_driver_global_profile => ResourceManager.GetString(nameof(Adv_nvapi_driver_global_profile), Culture) ?? nameof(Adv_nvapi_driver_global_profile);
+
+    public static string Adv_nvapi_driver_interface_version => ResourceManager.GetString(nameof(Adv_nvapi_driver_interface_version), Culture) ?? nameof(Adv_nvapi_driver_interface_version);
+
+    public static string Adv_nvapi_driver_package => ResourceManager.GetString(nameof(Adv_nvapi_driver_package), Culture) ?? nameof(Adv_nvapi_driver_package);
+
+    public static string Adv_nvapi_encoder_fps => ResourceManager.GetString(nameof(Adv_nvapi_encoder_fps), Culture) ?? nameof(Adv_nvapi_encoder_fps);
+
+    public static string Adv_nvapi_encoder_latency => ResourceManager.GetString(nameof(Adv_nvapi_encoder_latency), Culture) ?? nameof(Adv_nvapi_encoder_latency);
+
+    public static string Adv_nvapi_encoder_session_processes => ResourceManager.GetString(nameof(Adv_nvapi_encoder_session_processes), Culture) ?? nameof(Adv_nvapi_encoder_session_processes);
+
+    public static string Adv_nvapi_encoder_sessions => ResourceManager.GetString(nameof(Adv_nvapi_encoder_sessions), Culture) ?? nameof(Adv_nvapi_encoder_sessions);
+
+    public static string Adv_nvapi_gpu_architecture => ResourceManager.GetString(nameof(Adv_nvapi_gpu_architecture), Culture) ?? nameof(Adv_nvapi_gpu_architecture);
+
+    public static string Adv_nvapi_gpu_board_serial => ResourceManager.GetString(nameof(Adv_nvapi_gpu_board_serial), Culture) ?? nameof(Adv_nvapi_gpu_board_serial);
+
+    public static string Adv_nvapi_gpu_bus_type => ResourceManager.GetString(nameof(Adv_nvapi_gpu_bus_type), Culture) ?? nameof(Adv_nvapi_gpu_bus_type);
+
+    public static string Adv_nvapi_gpu_clock_base_core => ResourceManager.GetString(nameof(Adv_nvapi_gpu_clock_base_core), Culture) ?? nameof(Adv_nvapi_gpu_clock_base_core);
+
+    public static string Adv_nvapi_gpu_clock_base_memory => ResourceManager.GetString(nameof(Adv_nvapi_gpu_clock_base_memory), Culture) ?? nameof(Adv_nvapi_gpu_clock_base_memory);
+
+    public static string Adv_nvapi_gpu_clock_boost_core => ResourceManager.GetString(nameof(Adv_nvapi_gpu_clock_boost_core), Culture) ?? nameof(Adv_nvapi_gpu_clock_boost_core);
+
+    public static string Adv_nvapi_gpu_clock_boost_memory => ResourceManager.GetString(nameof(Adv_nvapi_gpu_clock_boost_memory), Culture) ?? nameof(Adv_nvapi_gpu_clock_boost_memory);
+
+    public static string Adv_nvapi_gpu_core_count => ResourceManager.GetString(nameof(Adv_nvapi_gpu_core_count), Culture) ?? nameof(Adv_nvapi_gpu_core_count);
+
+    public static string Adv_nvapi_gpu_external => ResourceManager.GetString(nameof(Adv_nvapi_gpu_external), Culture) ?? nameof(Adv_nvapi_gpu_external);
+
+    public static string Adv_nvapi_gpu_fan_duty => ResourceManager.GetString(nameof(Adv_nvapi_gpu_fan_duty), Culture) ?? nameof(Adv_nvapi_gpu_fan_duty);
+
+    public static string Adv_nvapi_gpu_pci_ids => ResourceManager.GetString(nameof(Adv_nvapi_gpu_pci_ids), Culture) ?? nameof(Adv_nvapi_gpu_pci_ids);
+
+    public static string Adv_nvapi_gpu_power => ResourceManager.GetString(nameof(Adv_nvapi_gpu_power), Culture) ?? nameof(Adv_nvapi_gpu_power);
+
+    public static string Adv_nvapi_gpu_ram_bus_width => ResourceManager.GetString(nameof(Adv_nvapi_gpu_ram_bus_width), Culture) ?? nameof(Adv_nvapi_gpu_ram_bus_width);
+
+    public static string Adv_nvapi_gpu_ram_type => ResourceManager.GetString(nameof(Adv_nvapi_gpu_ram_type), Culture) ?? nameof(Adv_nvapi_gpu_ram_type);
+
+    public static string Adv_nvapi_gpu_rt_cores => ResourceManager.GetString(nameof(Adv_nvapi_gpu_rt_cores), Culture) ?? nameof(Adv_nvapi_gpu_rt_cores);
+
+    public static string Adv_nvapi_gpu_system_type => ResourceManager.GetString(nameof(Adv_nvapi_gpu_system_type), Culture) ?? nameof(Adv_nvapi_gpu_system_type);
+
+    public static string Adv_nvapi_gpu_temp_default_max => ResourceManager.GetString(nameof(Adv_nvapi_gpu_temp_default_max), Culture) ?? nameof(Adv_nvapi_gpu_temp_default_max);
+
+    public static string Adv_nvapi_gpu_tensor_cores => ResourceManager.GetString(nameof(Adv_nvapi_gpu_tensor_cores), Culture) ?? nameof(Adv_nvapi_gpu_tensor_cores);
+
+    public static string Adv_nvapi_gpu_type => ResourceManager.GetString(nameof(Adv_nvapi_gpu_type), Culture) ?? nameof(Adv_nvapi_gpu_type);
+
+    public static string Adv_nvapi_gpu_uuid => ResourceManager.GetString(nameof(Adv_nvapi_gpu_uuid), Culture) ?? nameof(Adv_nvapi_gpu_uuid);
+
+    public static string Adv_nvapi_gpu_vbios_version => ResourceManager.GetString(nameof(Adv_nvapi_gpu_vbios_version), Culture) ?? nameof(Adv_nvapi_gpu_vbios_version);
+
+    public static string Adv_nvapi_gpu_voltage => ResourceManager.GetString(nameof(Adv_nvapi_gpu_voltage), Culture) ?? nameof(Adv_nvapi_gpu_voltage);
+
+    public static string Adv_nvapi_limit_ac_battery => ResourceManager.GetString(nameof(Adv_nvapi_limit_ac_battery), Culture) ?? nameof(Adv_nvapi_limit_ac_battery);
+
+    public static string Adv_nvapi_limit_api => ResourceManager.GetString(nameof(Adv_nvapi_limit_api), Culture) ?? nameof(Adv_nvapi_limit_api);
+
+    public static string Adv_nvapi_limit_insufficient_power => ResourceManager.GetString(nameof(Adv_nvapi_limit_insufficient_power), Culture) ?? nameof(Adv_nvapi_limit_insufficient_power);
+
+    public static string Adv_nvapi_load_bus => ResourceManager.GetString(nameof(Adv_nvapi_load_bus), Culture) ?? nameof(Adv_nvapi_load_bus);
+
+    public static string Adv_nvapi_load_framebuffer => ResourceManager.GetString(nameof(Adv_nvapi_load_framebuffer), Culture) ?? nameof(Adv_nvapi_load_framebuffer);
+
+    public static string Adv_nvapi_load_video => ResourceManager.GetString(nameof(Adv_nvapi_load_video), Culture) ?? nameof(Adv_nvapi_load_video);
+
+    public static string Adv_nvapi_pstate => ResourceManager.GetString(nameof(Adv_nvapi_pstate), Culture) ?? nameof(Adv_nvapi_pstate);
+
+    public static string Adv_nvapi_reflex_frame_report => ResourceManager.GetString(nameof(Adv_nvapi_reflex_frame_report), Culture) ?? nameof(Adv_nvapi_reflex_frame_report);
+
+    public static string Adv_nvapi_reflex_mode => ResourceManager.GetString(nameof(Adv_nvapi_reflex_mode), Culture) ?? nameof(Adv_nvapi_reflex_mode);
+
+    public static string Adv_nvapi_reflex_sleep_status => ResourceManager.GetString(nameof(Adv_nvapi_reflex_sleep_status), Culture) ?? nameof(Adv_nvapi_reflex_sleep_status);
+
+    public static string Adv_nvapi_session_driver_profile => ResourceManager.GetString(nameof(Adv_nvapi_session_driver_profile), Culture) ?? nameof(Adv_nvapi_session_driver_profile);
+
+    public static string Adv_nvapi_session_source_colorspace => ResourceManager.GetString(nameof(Adv_nvapi_session_source_colorspace), Culture) ?? nameof(Adv_nvapi_session_source_colorspace);
+
+    public static string Adv_nvapi_session_vrr_display_mode => ResourceManager.GetString(nameof(Adv_nvapi_session_vrr_display_mode), Culture) ?? nameof(Adv_nvapi_session_vrr_display_mode);
+
+    public static string Adv_nvapi_session_vrr_enabled => ResourceManager.GetString(nameof(Adv_nvapi_session_vrr_enabled), Culture) ?? nameof(Adv_nvapi_session_vrr_enabled);
+
+    public static string Adv_nvapi_session_vrr_possible => ResourceManager.GetString(nameof(Adv_nvapi_session_vrr_possible), Culture) ?? nameof(Adv_nvapi_session_vrr_possible);
+
+    public static string Adv_nvapi_session_vrr_requested => ResourceManager.GetString(nameof(Adv_nvapi_session_vrr_requested), Culture) ?? nameof(Adv_nvapi_session_vrr_requested);
+
+    public static string Adv_nvapi_temp_board => ResourceManager.GetString(nameof(Adv_nvapi_temp_board), Culture) ?? nameof(Adv_nvapi_temp_board);
+
+    public static string Adv_nvapi_temp_power_supply => ResourceManager.GetString(nameof(Adv_nvapi_temp_power_supply), Culture) ?? nameof(Adv_nvapi_temp_power_supply);
+
+    public static string Adv_nvapi_vram_available => ResourceManager.GetString(nameof(Adv_nvapi_vram_available), Culture) ?? nameof(Adv_nvapi_vram_available);
+
+    public static string Adv_nvapi_vram_dedicated => ResourceManager.GetString(nameof(Adv_nvapi_vram_dedicated), Culture) ?? nameof(Adv_nvapi_vram_dedicated);
+
+    public static string Adv_nvapi_vram_dedicated_available => ResourceManager.GetString(nameof(Adv_nvapi_vram_dedicated_available), Culture) ?? nameof(Adv_nvapi_vram_dedicated_available);
+
+    public static string Adv_nvapi_vram_eviction_count => ResourceManager.GetString(nameof(Adv_nvapi_vram_eviction_count), Culture) ?? nameof(Adv_nvapi_vram_eviction_count);
+
+    public static string Adv_nvapi_vram_evictions_size => ResourceManager.GetString(nameof(Adv_nvapi_vram_evictions_size), Culture) ?? nameof(Adv_nvapi_vram_evictions_size);
+
+    public static string Adv_nvapi_vram_framebuffer_physical => ResourceManager.GetString(nameof(Adv_nvapi_vram_framebuffer_physical), Culture) ?? nameof(Adv_nvapi_vram_framebuffer_physical);
+
+    public static string Adv_nvapi_vram_framebuffer_virtual => ResourceManager.GetString(nameof(Adv_nvapi_vram_framebuffer_virtual), Culture) ?? nameof(Adv_nvapi_vram_framebuffer_virtual);
+
+    public static string Adv_nvapi_vram_in_use => ResourceManager.GetString(nameof(Adv_nvapi_vram_in_use), Culture) ?? nameof(Adv_nvapi_vram_in_use);
+
+    public static string Adv_nvapi_vram_promotion_count => ResourceManager.GetString(nameof(Adv_nvapi_vram_promotion_count), Culture) ?? nameof(Adv_nvapi_vram_promotion_count);
+
+    public static string Adv_nvapi_vram_promotions_size => ResourceManager.GetString(nameof(Adv_nvapi_vram_promotions_size), Culture) ?? nameof(Adv_nvapi_vram_promotions_size);
+
+    public static string Adv_nvapi_vram_shared => ResourceManager.GetString(nameof(Adv_nvapi_vram_shared), Culture) ?? nameof(Adv_nvapi_vram_shared);
+
+    public static string Adv_nvapi_vram_system => ResourceManager.GetString(nameof(Adv_nvapi_vram_system), Culture) ?? nameof(Adv_nvapi_vram_system);
+
+    public static string Adv_sl_constants_camera => ResourceManager.GetString(nameof(Adv_sl_constants_camera), Culture) ?? nameof(Adv_sl_constants_camera);
+
+    public static string Adv_sl_constants_depth => ResourceManager.GetString(nameof(Adv_sl_constants_depth), Culture) ?? nameof(Adv_sl_constants_depth);
+
+    public static string Adv_sl_constants_jitter => ResourceManager.GetString(nameof(Adv_sl_constants_jitter), Culture) ?? nameof(Adv_sl_constants_jitter);
+
+    public static string Adv_sl_constants_motion_vectors => ResourceManager.GetString(nameof(Adv_sl_constants_motion_vectors), Culture) ?? nameof(Adv_sl_constants_motion_vectors);
+
+    public static string Adv_sl_constants_projection => ResourceManager.GetString(nameof(Adv_sl_constants_projection), Culture) ?? nameof(Adv_sl_constants_projection);
+
+    public static string Adv_sl_constants_resets => ResourceManager.GetString(nameof(Adv_sl_constants_resets), Culture) ?? nameof(Adv_sl_constants_resets);
+
+    public static string Adv_sl_deepdvc_options => ResourceManager.GetString(nameof(Adv_sl_deepdvc_options), Culture) ?? nameof(Adv_sl_deepdvc_options);
+
+    public static string Adv_sl_dlss_alpha_upscaling => ResourceManager.GetString(nameof(Adv_sl_dlss_alpha_upscaling), Culture) ?? nameof(Adv_sl_dlss_alpha_upscaling);
+
+    public static string Adv_sl_dlss_auto_exposure => ResourceManager.GetString(nameof(Adv_sl_dlss_auto_exposure), Culture) ?? nameof(Adv_sl_dlss_auto_exposure);
+
+    public static string Adv_sl_dlss_exposure => ResourceManager.GetString(nameof(Adv_sl_dlss_exposure), Culture) ?? nameof(Adv_sl_dlss_exposure);
+
+    public static string Adv_sl_dlss_hdr_input => ResourceManager.GetString(nameof(Adv_sl_dlss_hdr_input), Culture) ?? nameof(Adv_sl_dlss_hdr_input);
+
+    public static string Adv_sl_dlss_optimal_settings => ResourceManager.GetString(nameof(Adv_sl_dlss_optimal_settings), Culture) ?? nameof(Adv_sl_dlss_optimal_settings);
+
+    public static string Adv_sl_dlss_output_size => ResourceManager.GetString(nameof(Adv_sl_dlss_output_size), Culture) ?? nameof(Adv_sl_dlss_output_size);
+
+    public static string Adv_sl_dlss_presets => ResourceManager.GetString(nameof(Adv_sl_dlss_presets), Culture) ?? nameof(Adv_sl_dlss_presets);
+
+    public static string Adv_sl_dlss_vram_estimate => ResourceManager.GetString(nameof(Adv_sl_dlss_vram_estimate), Culture) ?? nameof(Adv_sl_dlss_vram_estimate);
+
+    public static string Adv_sl_dlssd_options => ResourceManager.GetString(nameof(Adv_sl_dlssd_options), Culture) ?? nameof(Adv_sl_dlssd_options);
+
+    public static string Adv_sl_dlssg_frames_presented => ResourceManager.GetString(nameof(Adv_sl_dlssg_frames_presented), Culture) ?? nameof(Adv_sl_dlssg_frames_presented);
+
+    public static string Adv_sl_dlssg_options => ResourceManager.GetString(nameof(Adv_sl_dlssg_options), Culture) ?? nameof(Adv_sl_dlssg_options);
+
+    public static string Adv_sl_dlssg_state => ResourceManager.GetString(nameof(Adv_sl_dlssg_state), Culture) ?? nameof(Adv_sl_dlssg_state);
+
+    public static string Adv_sl_dlssg_vram_estimate => ResourceManager.GetString(nameof(Adv_sl_dlssg_vram_estimate), Culture) ?? nameof(Adv_sl_dlssg_vram_estimate);
+
+    public static string Adv_sl_feature_requirements => ResourceManager.GetString(nameof(Adv_sl_feature_requirements), Culture) ?? nameof(Adv_sl_feature_requirements);
+
+    public static string Adv_sl_feature_versions => ResourceManager.GetString(nameof(Adv_sl_feature_versions), Culture) ?? nameof(Adv_sl_feature_versions);
+
+    public static string Adv_sl_init_preferences => ResourceManager.GetString(nameof(Adv_sl_init_preferences), Culture) ?? nameof(Adv_sl_init_preferences);
+
+    public static string Adv_sl_nis_options => ResourceManager.GetString(nameof(Adv_sl_nis_options), Culture) ?? nameof(Adv_sl_nis_options);
+
+    public static string Adv_sl_nvperf => ResourceManager.GetString(nameof(Adv_sl_nvperf), Culture) ?? nameof(Adv_sl_nvperf);
+
+    public static string Adv_sl_pcl_markers => ResourceManager.GetString(nameof(Adv_sl_pcl_markers), Culture) ?? nameof(Adv_sl_pcl_markers);
+
+    public static string Adv_sl_reflex_state => ResourceManager.GetString(nameof(Adv_sl_reflex_state), Culture) ?? nameof(Adv_sl_reflex_state);
+
+    public static string Adv_xess_options => ResourceManager.GetString(nameof(Adv_xess_options), Culture) ?? nameof(Adv_xess_options);
+
+    public static string Advanced_Chart_Band => ResourceManager.GetString(nameof(Advanced_Chart_Band), Culture) ?? nameof(Advanced_Chart_Band);
+
+    public static string Advanced_Chart_Empty => ResourceManager.GetString(nameof(Advanced_Chart_Empty), Culture) ?? nameof(Advanced_Chart_Empty);
+
+    public static string Advanced_Chart_Header => ResourceManager.GetString(nameof(Advanced_Chart_Header), Culture) ?? nameof(Advanced_Chart_Header);
+
+    public static string Advanced_Chart_LiveNote => ResourceManager.GetString(nameof(Advanced_Chart_LiveNote), Culture) ?? nameof(Advanced_Chart_LiveNote);
+
+    public static string Advanced_Chart_Metric => ResourceManager.GetString(nameof(Advanced_Chart_Metric), Culture) ?? nameof(Advanced_Chart_Metric);
+
+    public static string Advanced_Chart_Seconds => ResourceManager.GetString(nameof(Advanced_Chart_Seconds), Culture) ?? nameof(Advanced_Chart_Seconds);
+
+    public static string Advanced_Chart_Time => ResourceManager.GetString(nameof(Advanced_Chart_Time), Culture) ?? nameof(Advanced_Chart_Time);
+
+    public static string Advanced_Col_Name => ResourceManager.GetString(nameof(Advanced_Col_Name), Culture) ?? nameof(Advanced_Col_Name);
+
+    public static string Advanced_Col_ReadAt => ResourceManager.GetString(nameof(Advanced_Col_ReadAt), Culture) ?? nameof(Advanced_Col_ReadAt);
+
+    public static string Advanced_Col_Samples => ResourceManager.GetString(nameof(Advanced_Col_Samples), Culture) ?? nameof(Advanced_Col_Samples);
+
+    public static string Advanced_Col_Scope => ResourceManager.GetString(nameof(Advanced_Col_Scope), Culture) ?? nameof(Advanced_Col_Scope);
+
+    public static string Advanced_Col_Source => ResourceManager.GetString(nameof(Advanced_Col_Source), Culture) ?? nameof(Advanced_Col_Source);
+
+    public static string Advanced_Col_Status => ResourceManager.GetString(nameof(Advanced_Col_Status), Culture) ?? nameof(Advanced_Col_Status);
+
+    public static string Advanced_Col_Value => ResourceManager.GetString(nameof(Advanced_Col_Value), Culture) ?? nameof(Advanced_Col_Value);
+
+    public static string Advanced_Elevation_Hint => ResourceManager.GetString(nameof(Advanced_Elevation_Hint), Culture) ?? nameof(Advanced_Elevation_Hint);
+
+    public static string Advanced_Facts_Header => ResourceManager.GetString(nameof(Advanced_Facts_Header), Culture) ?? nameof(Advanced_Facts_Header);
+
+    public static string Advanced_Header => ResourceManager.GetString(nameof(Advanced_Header), Culture) ?? nameof(Advanced_Header);
+
+    public static string Advanced_Machine_Intro => ResourceManager.GetString(nameof(Advanced_Machine_Intro), Culture) ?? nameof(Advanced_Machine_Intro);
+
+    public static string Advanced_Max => ResourceManager.GetString(nameof(Advanced_Max), Culture) ?? nameof(Advanced_Max);
+
+    public static string Advanced_Mean => ResourceManager.GetString(nameof(Advanced_Mean), Culture) ?? nameof(Advanced_Mean);
+
+    public static string Advanced_Min => ResourceManager.GetString(nameof(Advanced_Min), Culture) ?? nameof(Advanced_Min);
+
+    public static string Advanced_Now_Header => ResourceManager.GetString(nameof(Advanced_Now_Header), Culture) ?? nameof(Advanced_Now_Header);
+
+    public static string Advanced_Session_Empty => ResourceManager.GetString(nameof(Advanced_Session_Empty), Culture) ?? nameof(Advanced_Session_Empty);
+
+    public static string Advanced_Session_Facts => ResourceManager.GetString(nameof(Advanced_Session_Facts), Culture) ?? nameof(Advanced_Session_Facts);
+
+    public static string Advanced_Session_NoSeries => ResourceManager.GetString(nameof(Advanced_Session_NoSeries), Culture) ?? nameof(Advanced_Session_NoSeries);
+
+    public static string Advanced_Session_NoStats => ResourceManager.GetString(nameof(Advanced_Session_NoStats), Culture) ?? nameof(Advanced_Session_NoStats);
+
+    public static string Advanced_Session_Pick => ResourceManager.GetString(nameof(Advanced_Session_Pick), Culture) ?? nameof(Advanced_Session_Pick);
+
+    public static string Advanced_Session_Stats => ResourceManager.GetString(nameof(Advanced_Session_Stats), Culture) ?? nameof(Advanced_Session_Stats);
+
+    public static string Advanced_Sources_Intro => ResourceManager.GetString(nameof(Advanced_Sources_Intro), Culture) ?? nameof(Advanced_Sources_Intro);
+
+    public static string Advanced_SourcesLine => ResourceManager.GetString(nameof(Advanced_SourcesLine), Culture) ?? nameof(Advanced_SourcesLine);
+
+    public static string Advanced_State_Live => ResourceManager.GetString(nameof(Advanced_State_Live), Culture) ?? nameof(Advanced_State_Live);
+
+    public static string Advanced_State_NoAgent => ResourceManager.GetString(nameof(Advanced_State_NoAgent), Culture) ?? nameof(Advanced_State_NoAgent);
+
+    public static string Advanced_State_Off => ResourceManager.GetString(nameof(Advanced_State_Off), Culture) ?? nameof(Advanced_State_Off);
+
+    public static string Advanced_State_OlderAgent => ResourceManager.GetString(nameof(Advanced_State_OlderAgent), Culture) ?? nameof(Advanced_State_OlderAgent);
+
+    public static string Advanced_State_Viewer => ResourceManager.GetString(nameof(Advanced_State_Viewer), Culture) ?? nameof(Advanced_State_Viewer);
+
+    public static string Advanced_State_Waiting => ResourceManager.GetString(nameof(Advanced_State_Waiting), Culture) ?? nameof(Advanced_State_Waiting);
+
+    public static string Advanced_Status_Read => ResourceManager.GetString(nameof(Advanced_Status_Read), Culture) ?? nameof(Advanced_Status_Read);
+
+    public static string Advanced_Status_Readable => ResourceManager.GetString(nameof(Advanced_Status_Readable), Culture) ?? nameof(Advanced_Status_Readable);
+
+    public static string Advanced_Status_SourceSilent => ResourceManager.GetString(nameof(Advanced_Status_SourceSilent), Culture) ?? nameof(Advanced_Status_SourceSilent);
+
+    public static string Advanced_Tab_Machine => ResourceManager.GetString(nameof(Advanced_Tab_Machine), Culture) ?? nameof(Advanced_Tab_Machine);
+
+    public static string Advanced_Tab_Session => ResourceManager.GetString(nameof(Advanced_Tab_Session), Culture) ?? nameof(Advanced_Tab_Session);
+
+    public static string Advanced_Tab_Sources => ResourceManager.GetString(nameof(Advanced_Tab_Sources), Culture) ?? nameof(Advanced_Tab_Sources);
+
+    public static string AdvGroup_Board => ResourceManager.GetString(nameof(AdvGroup_Board), Culture) ?? nameof(AdvGroup_Board);
+
+    public static string AdvGroup_Cpu => ResourceManager.GetString(nameof(AdvGroup_Cpu), Culture) ?? nameof(AdvGroup_Cpu);
+
+    public static string AdvGroup_Display => ResourceManager.GetString(nameof(AdvGroup_Display), Culture) ?? nameof(AdvGroup_Display);
+
+    public static string AdvGroup_Driver => ResourceManager.GetString(nameof(AdvGroup_Driver), Culture) ?? nameof(AdvGroup_Driver);
+
+    public static string AdvGroup_FrameGeneration => ResourceManager.GetString(nameof(AdvGroup_FrameGeneration), Culture) ?? nameof(AdvGroup_FrameGeneration);
+
+    public static string AdvGroup_Gpu => ResourceManager.GetString(nameof(AdvGroup_Gpu), Culture) ?? nameof(AdvGroup_Gpu);
+
+    public static string AdvGroup_GpuMemory => ResourceManager.GetString(nameof(AdvGroup_GpuMemory), Culture) ?? nameof(AdvGroup_GpuMemory);
+
+    public static string AdvGroup_Latency => ResourceManager.GetString(nameof(AdvGroup_Latency), Culture) ?? nameof(AdvGroup_Latency);
+
+    public static string AdvGroup_Memory => ResourceManager.GetString(nameof(AdvGroup_Memory), Culture) ?? nameof(AdvGroup_Memory);
+
+    public static string AdvGroup_Storage => ResourceManager.GetString(nameof(AdvGroup_Storage), Culture) ?? nameof(AdvGroup_Storage);
+
+    public static string AdvGroup_Upscaling => ResourceManager.GetString(nameof(AdvGroup_Upscaling), Culture) ?? nameof(AdvGroup_Upscaling);
+
+    public static string AdvReach_Deferred => ResourceManager.GetString(nameof(AdvReach_Deferred), Culture) ?? nameof(AdvReach_Deferred);
+
+    public static string AdvReach_HookedCall => ResourceManager.GetString(nameof(AdvReach_HookedCall), Culture) ?? nameof(AdvReach_HookedCall);
+
+    public static string AdvReach_Identifier => ResourceManager.GetString(nameof(AdvReach_Identifier), Culture) ?? nameof(AdvReach_Identifier);
+
+    public static string AdvReach_Licence => ResourceManager.GetString(nameof(AdvReach_Licence), Culture) ?? nameof(AdvReach_Licence);
+
+    public static string AdvReach_NewHook => ResourceManager.GetString(nameof(AdvReach_NewHook), Culture) ?? nameof(AdvReach_NewHook);
+
+    public static string AdvReach_NotInHeaders => ResourceManager.GetString(nameof(AdvReach_NotInHeaders), Culture) ?? nameof(AdvReach_NotInHeaders);
+
+    public static string AdvReach_PlayerState => ResourceManager.GetString(nameof(AdvReach_PlayerState), Culture) ?? nameof(AdvReach_PlayerState);
+
+    public static string AdvReach_Refused => ResourceManager.GetString(nameof(AdvReach_Refused), Culture) ?? nameof(AdvReach_Refused);
+
+    public static string AdvReach_Spike => ResourceManager.GetString(nameof(AdvReach_Spike), Culture) ?? nameof(AdvReach_Spike);
+
+    public static string AdvScope_MachineFact => ResourceManager.GetString(nameof(AdvScope_MachineFact), Culture) ?? nameof(AdvScope_MachineFact);
+
+    public static string AdvScope_Series => ResourceManager.GetString(nameof(AdvScope_Series), Culture) ?? nameof(AdvScope_Series);
+
+    public static string AdvScope_SessionFact => ResourceManager.GetString(nameof(AdvScope_SessionFact), Culture) ?? nameof(AdvScope_SessionFact);
+
+    public static string AdvSource_Faulted => ResourceManager.GetString(nameof(AdvSource_Faulted), Culture) ?? nameof(AdvSource_Faulted);
+
+    public static string AdvSource_NotElevated => ResourceManager.GetString(nameof(AdvSource_NotElevated), Culture) ?? nameof(AdvSource_NotElevated);
+
+    public static string AdvSource_NotPresent => ResourceManager.GetString(nameof(AdvSource_NotPresent), Culture) ?? nameof(AdvSource_NotPresent);
+
+    public static string AdvSource_PawnIoMissing => ResourceManager.GetString(nameof(AdvSource_PawnIoMissing), Culture) ?? nameof(AdvSource_PawnIoMissing);
+
+    public static string AdvSource_Reading => ResourceManager.GetString(nameof(AdvSource_Reading), Culture) ?? nameof(AdvSource_Reading);
+
+    public static string AdvSource_Unknown => ResourceManager.GetString(nameof(AdvSource_Unknown), Culture) ?? nameof(AdvSource_Unknown);
+
+    public static string AdvToken_adaptive_sync => ResourceManager.GetString(nameof(AdvToken_adaptive_sync), Culture) ?? nameof(AdvToken_adaptive_sync);
+
+    public static string AdvToken_agp => ResourceManager.GetString(nameof(AdvToken_agp), Culture) ?? nameof(AdvToken_agp);
+
+    public static string AdvToken_axi => ResourceManager.GetString(nameof(AdvToken_axi), Culture) ?? nameof(AdvToken_axi);
+
+    public static string AdvToken_bt2100_pq => ResourceManager.GetString(nameof(AdvToken_bt2100_pq), Culture) ?? nameof(AdvToken_bt2100_pq);
+
+    public static string AdvToken_desktop => ResourceManager.GetString(nameof(AdvToken_desktop), Culture) ?? nameof(AdvToken_desktop);
+
+    public static string AdvToken_discrete => ResourceManager.GetString(nameof(AdvToken_discrete), Culture) ?? nameof(AdvToken_discrete);
+
+    public static string AdvToken_dolby_vision => ResourceManager.GetString(nameof(AdvToken_dolby_vision), Culture) ?? nameof(AdvToken_dolby_vision);
+
+    public static string AdvToken_driver_default => ResourceManager.GetString(nameof(AdvToken_driver_default), Culture) ?? nameof(AdvToken_driver_default);
+
+    public static string AdvToken_edr => ResourceManager.GetString(nameof(AdvToken_edr), Culture) ?? nameof(AdvToken_edr);
+
+    public static string AdvToken_fpci => ResourceManager.GetString(nameof(AdvToken_fpci), Culture) ?? nameof(AdvToken_fpci);
+
+    public static string AdvToken_game_ready => ResourceManager.GetString(nameof(AdvToken_game_ready), Culture) ?? nameof(AdvToken_game_ready);
+
+    public static string AdvToken_gsync_module => ResourceManager.GetString(nameof(AdvToken_gsync_module), Culture) ?? nameof(AdvToken_gsync_module);
+
+    public static string AdvToken_hdr10 => ResourceManager.GetString(nameof(AdvToken_hdr10), Culture) ?? nameof(AdvToken_hdr10);
+
+    public static string AdvToken_hdr10_plus => ResourceManager.GetString(nameof(AdvToken_hdr10_plus), Culture) ?? nameof(AdvToken_hdr10_plus);
+
+    public static string AdvToken_hdr10_plus_gaming => ResourceManager.GetString(nameof(AdvToken_hdr10_plus_gaming), Culture) ?? nameof(AdvToken_hdr10_plus_gaming);
+
+    public static string AdvToken_integrated => ResourceManager.GetString(nameof(AdvToken_integrated), Culture) ?? nameof(AdvToken_integrated);
+
+    public static string AdvToken_laptop => ResourceManager.GetString(nameof(AdvToken_laptop), Culture) ?? nameof(AdvToken_laptop);
+
+    public static string AdvToken_no_profile_for_game => ResourceManager.GetString(nameof(AdvToken_no_profile_for_game), Culture) ?? nameof(AdvToken_no_profile_for_game);
+
+    public static string AdvToken_not_a_number => ResourceManager.GetString(nameof(AdvToken_not_a_number), Culture) ?? nameof(AdvToken_not_a_number);
+
+    public static string AdvToken_not_supported => ResourceManager.GetString(nameof(AdvToken_not_supported), Culture) ?? nameof(AdvToken_not_supported);
+
+    public static string AdvToken_pci => ResourceManager.GetString(nameof(AdvToken_pci), Culture) ?? nameof(AdvToken_pci);
+
+    public static string AdvToken_pci_express => ResourceManager.GetString(nameof(AdvToken_pci_express), Culture) ?? nameof(AdvToken_pci_express);
+
+    public static string AdvToken_rtx_new_feature => ResourceManager.GetString(nameof(AdvToken_rtx_new_feature), Culture) ?? nameof(AdvToken_rtx_new_feature);
+
+    public static string AdvToken_rtx_production => ResourceManager.GetString(nameof(AdvToken_rtx_production), Culture) ?? nameof(AdvToken_rtx_production);
+
+    public static string AdvToken_scrgb_linear => ResourceManager.GetString(nameof(AdvToken_scrgb_linear), Culture) ?? nameof(AdvToken_scrgb_linear);
+
+    public static string AdvToken_srgb => ResourceManager.GetString(nameof(AdvToken_srgb), Culture) ?? nameof(AdvToken_srgb);
+
+    public static string AdvToken_studio => ResourceManager.GetString(nameof(AdvToken_studio), Culture) ?? nameof(AdvToken_studio);
+
+    public static string AdvToken_ulmb => ResourceManager.GetString(nameof(AdvToken_ulmb), Culture) ?? nameof(AdvToken_ulmb);
+
+    public static string AdvToken_usable_now => ResourceManager.GetString(nameof(AdvToken_usable_now), Culture) ?? nameof(AdvToken_usable_now);
+
+    public static string AdvToken_user_set => ResourceManager.GetString(nameof(AdvToken_user_set), Culture) ?? nameof(AdvToken_user_set);
+
+    public static string AdvToken_variable_refresh => ResourceManager.GetString(nameof(AdvToken_variable_refresh), Culture) ?? nameof(AdvToken_variable_refresh);
 
     public static string Agent_Banner_Missing_Body => ResourceManager.GetString(nameof(Agent_Banner_Missing_Body), Culture) ?? nameof(Agent_Banner_Missing_Body);
 
@@ -2811,6 +3542,8 @@ public static class Strings
 
     public static string Menu_Tools_VulkanLayer => ResourceManager.GetString(nameof(Menu_Tools_VulkanLayer), Culture) ?? nameof(Menu_Tools_VulkanLayer);
 
+    public static string Nav_Advanced => ResourceManager.GetString(nameof(Nav_Advanced), Culture) ?? nameof(Nav_Advanced);
+
     public static string Nav_Compare => ResourceManager.GetString(nameof(Nav_Compare), Culture) ?? nameof(Nav_Compare);
 
     public static string Nav_Dashboard => ResourceManager.GetString(nameof(Nav_Dashboard), Culture) ?? nameof(Nav_Dashboard);
@@ -3336,6 +4069,8 @@ public static class Strings
     public static string Store_Steam_Format => ResourceManager.GetString(nameof(Store_Steam_Format), Culture) ?? nameof(Store_Steam_Format);
 
     public static string Store_Xbox_Format => ResourceManager.GetString(nameof(Store_Xbox_Format), Culture) ?? nameof(Store_Xbox_Format);
+
+    public static string Summary_Advanced_Button => ResourceManager.GetString(nameof(Summary_Advanced_Button), Culture) ?? nameof(Summary_Advanced_Button);
 
     public static string Summary_Annotations_Header => ResourceManager.GetString(nameof(Summary_Annotations_Header), Culture) ?? nameof(Summary_Annotations_Header);
 

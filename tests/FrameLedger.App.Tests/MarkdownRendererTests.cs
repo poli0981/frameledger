@@ -156,7 +156,7 @@ public sealed partial class MarkdownRendererTests
             return problems;
         });
 
-        documents.Should().HaveCount(24, "eleven documents and the guide's thirteen pages");
+        documents.Should().HaveCount(25, "eleven documents and the guide's fourteen pages");
         missing.Should().BeEmpty("the renderer must never shorten a document a user reads or accepts");
     }
 

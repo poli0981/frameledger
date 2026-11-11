@@ -31,6 +31,10 @@ public static class ShellShortcuts
             case "4":
                 navigator.Navigate<LogsPage>();
                 return true;
+            case "6" when AdvancedOption.IsOn:
+                // Owner decision D105: the Advanced page keeps its number free while its option is off.
+                navigator.Navigate<AdvancedPage>();
+                return true;
             case "5":
                 navigator.Navigate<SettingsPage>();
                 return true;

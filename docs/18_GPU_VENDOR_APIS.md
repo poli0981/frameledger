@@ -654,7 +654,7 @@ and motherboard groups in a session with the option on. The texts that state wha
 Disclaimer 2.15 §5 and §5A (the owner's answer of 2026-11-11), the admin mode's disclosure (`agent-admin-dialog/2`),
 Settings, the first run, the guide and `LIMITATIONS.md` — and Privacy Policy 2.15 names what is read and stored.
 
-### The page's feed (built 2026-11-11, Advanced PR-6; shown by nothing yet)
+### The page's feed (built 2026-11-11, Advanced PR-6; shown by the page since PR-7)
 
 With no game running the Agent reads sensors **only while the page is open** (D107), and nothing tells the Agent
 that a page opened or closed:
@@ -669,6 +669,20 @@ that a page opened or closed:
   fifth tick is "1400, as of then", never shown as new — five minutes of each series for the live charts, and the
   sources' states. It stores nothing. Its states are the page's own words for why there is nothing to show: waiting
   for the first read, off, no agent (a viewer never has one), an older agent.
+
+### The page (built 2026-11-11, Advanced PR-7)
+
+`08_UI` §Advanced is the screen. What this document's model becomes there:
+
+- **A machine fact** is under *This PC* ▸ *About this PC* while the Agent answers, and under *Session* as it was
+  when that session was recorded (`machine_profiles`, one row per distinct set).
+- **A session fact** is under *Session* only.
+- **A series** is a row of *Right now* and a line of *Over time* while live — never stored then — and a row of the
+  session's statistics and a line of its chart once a session stored it.
+- **An entry that is not read** is on *Sources* with its reason, in the same words as §Left out, by name.
+
+`ISessionRepository.ListAdvancedAsync` lists the sessions that have a row; `SessionSeriesLoader.LoadAdvancedAsync`
+decodes their series against `t_ms`, leaving a NaN tick out and keeping a negative reading.
 
 ### What belongs to what
 

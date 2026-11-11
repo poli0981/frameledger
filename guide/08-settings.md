@@ -22,7 +22,7 @@ The link under them, *Read what the hook does and does not do*, opens the safety
 | **Minimum session length (s)** | A shorter session is not kept. 5 to 600 seconds. *Agent.* | 30 |
 | **Sensor interval (ms)** | How often the PC's sensors are read during a session. 500 to 2000 ms. *Agent.* | 1000 |
 | **Raw series kept per game** | How many of each game's newest sessions keep their per-frame data; older ones keep their statistics. 0 keeps everything. *Agent.* | 20 |
-| **Advanced metrics** | Reads more from the graphics driver and the hardware sensors during a session — the graphics card's memory and load in detail, each fan and voltage, what your display can do, the driver's settings for the game — and stores it with the session. Off: nothing more is read or stored. It applies from the next session; a session recorded while it was off is not filled in later. *Agent.* | Off |
+| **Advanced metrics** | Reads more from the graphics driver and the hardware sensors during a session — the graphics card's memory and load in detail, each fan and voltage, what your display can do, the driver's settings for the game — and stores it with the session. Off: nothing more is read or stored. It applies from the next session; a session recorded while it was off is not filled in later. While it is on, the **Advanced** page is in the list on the left ([Advanced metrics](12-advanced-metrics.md)). *Agent.* | Off |
 
 ## Data
 

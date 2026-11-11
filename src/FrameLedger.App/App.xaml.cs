@@ -108,6 +108,10 @@ public partial class App : System.Windows.Application
             LoggingLevel.SetDebug(await registered.GetBooleanAsync(SettingsRegistry.LogDebug).ConfigureAwait(true));
             FpsDecimals.Two = await registered.GetBooleanAsync(SettingsRegistry.UiFpsDecimals).ConfigureAwait(true);
             ScrollBarHiding.Apply(await registered.GetBooleanAsync(SettingsRegistry.UiHideScrollBars).ConfigureAwait(true));
+            // Advanced metrics (D101/D105): the page is offered while the option is on - and in a viewer also when the copy holds
+            // a session recorded with it on, since that is what a copy is opened to look at.
+            AdvancedOption.IsOn = await registered.GetBooleanAsync(SettingsRegistry.TelemetryAdvanced).ConfigureAwait(true)
+                || (UiPaths.IsViewer && (await new SqliteSessionRepository(_db).ListAdvancedAsync(1).ConfigureAwait(true)).Count > 0);
             var closePolicy = new WindowClosePolicy { MinimizeToTray = await registered.GetBooleanAsync(SettingsRegistry.UiMinimizeToTray).ConfigureAwait(true) };
 
             _host = BuildHost(_db, appearance, registered, closePolicy);
@@ -359,6 +363,9 @@ public partial class App : System.Windows.Application
         builder.Services.AddTransient<GameDetailViewModel>();
         builder.Services.AddTransient<ComparePage>();
         builder.Services.AddTransient<CompareViewModel>();
+        builder.Services.AddTransient<AdvancedPage>();
+        builder.Services.AddTransient<AdvancedViewModel>();
+        builder.Services.AddSingleton<AdvancedSelection>();
         builder.Services.AddTransient<LogsPage>();
         builder.Services.AddTransient<LogsViewModel>();
         builder.Services.AddTransient<SettingsPage>();

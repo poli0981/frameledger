@@ -26,6 +26,10 @@ namespace FrameLedger.App.ViewModels;
 [SuppressMessage("Performance", "CA1863:Use 'CompositeFormat'", Justification = "the format strings are resources that follow the UI culture, which changes at runtime")]
 public sealed partial class SessionSummaryViewModel : ObservableObject
 {
+    /// <summary>Whether this session stored advanced metrics — it was recorded with the option on (owner decision D101).</summary>
+    [ObservableProperty]
+    private bool _hasAdvanced;
+
     private readonly ISessionRepository _sessions;
     private readonly IGameRepository _games;
     private readonly ISessionAnnotationRepository _annotations;
@@ -248,6 +252,14 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
 
     public static string ExportPngText => Strings.Summary_Export_Png;
 
+    public static string AdvancedText => Strings.Summary_Advanced_Button;
+
+    /// <summary>
+    /// Opens this session on the Advanced page (owner decision D101); set by whoever opened the window. Null — a test, a
+    /// host with no shell — and the button does nothing.
+    /// </summary>
+    public Action<long>? ShowAdvanced { get; set; }
+
     public SessionRow? Row { get; private set; }
 
     public GameRow? Game { get; private set; }
@@ -284,6 +296,8 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
         }
 
         NotFound = false;
+        // Recorded with Advanced metrics on: the row is there, and the button that leads to it is shown (D101).
+        HasAdvanced = await _sessions.FindAdvancedAsync(sessionId, ct).ConfigureAwait(true) is not null;
         _annotation = await _annotations.FindAsync(sessionId, ct).ConfigureAwait(true);
         _segments = await _sessions.FindSegmentsAsync(sessionId, ct).ConfigureAwait(true);
         _snapshot = await _hardware.FindAsync(Row.SnapshotId, ct).ConfigureAwait(true);
@@ -297,6 +311,15 @@ public sealed partial class SessionSummaryViewModel : ObservableObject
 
     [RelayCommand]
     private Task SaveAnnotationAsync() => Run(SaveAnnotationCoreAsync);
+
+    [RelayCommand]
+    private void OpenAdvanced()
+    {
+        if (Row is { } row)
+        {
+            ShowAdvanced?.Invoke(row.Id);
+        }
+    }
 
     [RelayCommand]
     private Task ExportCsvAsync() => Run(() => ExportAsync("csv", "CSV|*.csv", WriteCsv));

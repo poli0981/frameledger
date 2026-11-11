@@ -52,6 +52,9 @@ internal sealed class FakeSessionRepository : ISessionRepository
     public ValueTask<SessionRow?> FindAsync(Guid sessionGuid, CancellationToken ct = default) =>
         ValueTask.FromResult(Stored.Select(s => s.Row).FirstOrDefault(r => r.SessionGuid == sessionGuid));
 
+    public ValueTask<IReadOnlyList<SessionRow>> ListAdvancedAsync(int count, CancellationToken ct = default) =>
+        ValueTask.FromResult<IReadOnlyList<SessionRow>>([.. Stored.Where(static s => s.Advanced is not null).Select(static s => s.Row).TakeLast(count).Reverse()]);
+
     public ValueTask<IReadOnlyList<SessionRow>> ListRecentAsync(int count, CancellationToken ct = default) =>
         ValueTask.FromResult<IReadOnlyList<SessionRow>>([.. Stored.Select(s => s.Row).TakeLast(count).Reverse()]);
 

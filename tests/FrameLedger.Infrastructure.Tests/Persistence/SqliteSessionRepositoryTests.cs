@@ -548,6 +548,23 @@ public sealed class SqliteSessionRepositoryTests
     }
 
     [Fact]
+    public async Task TheAdvancedListNamesOnlySessionsRecordedWithTheOptionOnNewestFirst()
+    {
+        // What the Advanced page offers to look at (owner decision D101): a session with no row was recorded with the
+        // option off, and is not on the list.
+        await using LedgerFixture f = await LedgerFixture.OpenAsync();
+        (long gameId, long snapshotId) = await SeedAsync(f);
+        var repo = new SqliteSessionRepository(f.Db);
+        DateTimeOffset t0 = DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_000_000);
+        long older = await repo.InsertFinalizedAsync(new FinalizedSession { Row = Row(gameId, snapshotId, started: t0), Sensors = SensorsWithAdvanced(), Advanced = Advanced() }, Ct);
+        await repo.InsertFinalizedAsync(new FinalizedSession { Row = Row(gameId, snapshotId, started: t0.AddHours(1)), Sensors = [.. SensorsWithAdvanced().Take(2)] }, Ct);
+        long newer = await repo.InsertFinalizedAsync(new FinalizedSession { Row = Row(gameId, snapshotId, started: t0.AddHours(2)), Sensors = SensorsWithAdvanced(), Advanced = Advanced() }, Ct);
+
+        (await repo.ListAdvancedAsync(10, Ct)).Select(static s => s.Id).Should().Equal(newer, older);
+        (await repo.ListAdvancedAsync(1, Ct)).Select(static s => s.Id).Should().Equal(newer);
+    }
+
+    [Fact]
     public async Task ASessionRecordedWithTheOptionOffHasNoAdvancedRow()
     {
         await using LedgerFixture f = await LedgerFixture.OpenAsync();

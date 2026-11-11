@@ -13,8 +13,737 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="A11y_Advanced_Metric" xml:space="preserve">
+    <value>Chỉ số để vẽ biểu đồ</value>
+  </data>
+  <data name="A11y_Advanced_Session" xml:space="preserve">
+    <value>Phiên để hiển thị</value>
+  </data>
+  <data name="A11y_Chart_Advanced" xml:space="preserve">
+    <value>Chỉ số nâng cao theo thời gian</value>
+  </data>
+  <data name="A11y_ChartData_Advanced" xml:space="preserve">
+    <value>Mỗi đường là một chỉ số. Bảng cạnh biểu đồ liệt kê cùng các chỉ số đó.</value>
+  </data>
   <data name="About_Title" xml:space="preserve">
     <value>Giới thiệu FrameLedger</value>
+  </data>
+  <data name="Adv_ffx_framegen_config" xml:space="preserve">
+    <value>Cấu hình tạo khung hình FSR của game</value>
+  </data>
+  <data name="Adv_ffx_memory_usage" xml:space="preserve">
+    <value>Bộ nhớ video của riêng FSR, khi game hỏi</value>
+  </data>
+  <data name="Adv_ffx_upscale_depth" xml:space="preserve">
+    <value>Mặt phẳng gần, xa và góc nhìn đưa cho FSR</value>
+  </data>
+  <data name="Adv_ffx_upscale_exposure" xml:space="preserve">
+    <value>Tiền phơi sáng đưa cho FSR</value>
+  </data>
+  <data name="Adv_ffx_upscale_flags" xml:space="preserve">
+    <value>Các cờ trong lệnh dispatch FSR của game</value>
+  </data>
+  <data name="Adv_ffx_upscale_frame_time_delta" xml:space="preserve">
+    <value>Thời gian khung hình game báo cho FSR</value>
+  </data>
+  <data name="Adv_ffx_upscale_jitter" xml:space="preserve">
+    <value>Độ lệch jitter game đưa cho FSR</value>
+  </data>
+  <data name="Adv_ffx_upscale_sharpening" xml:space="preserve">
+    <value>Làm nét của FSR: bật hay tắt, và cường độ</value>
+  </data>
+  <data name="Adv_lhm_battery" xml:space="preserve">
+    <value>Cảm biến pin</value>
+  </data>
+  <data name="Adv_lhm_board_fan" xml:space="preserve">
+    <value>Tốc độ của từng chân cắm quạt</value>
+  </data>
+  <data name="Adv_lhm_board_fan_control" xml:space="preserve">
+    <value>Mức điều khiển của từng chân cắm quạt</value>
+  </data>
+  <data name="Adv_lhm_board_model" xml:space="preserve">
+    <value>Hãng và model bo mạch chủ</value>
+  </data>
+  <data name="Adv_lhm_board_sensor_chip" xml:space="preserve">
+    <value>Chip cảm biến của bo mạch</value>
+  </data>
+  <data name="Adv_lhm_board_temperature" xml:space="preserve">
+    <value>Các cảm biến nhiệt độ của bo mạch</value>
+  </data>
+  <data name="Adv_lhm_board_voltage" xml:space="preserve">
+    <value>Các đường điện áp của bo mạch</value>
+  </data>
+  <data name="Adv_lhm_controller" xml:space="preserve">
+    <value>Cảm biến bộ điều khiển quạt: cũng phải dò thiết bị USB như vậy</value>
+  </data>
+  <data name="Adv_lhm_cpu_clock" xml:space="preserve">
+    <value>Xung của từng nhân, và xung bus</value>
+  </data>
+  <data name="Adv_lhm_cpu_load" xml:space="preserve">
+    <value>Tải bộ xử lý: tổng và từng nhân</value>
+  </data>
+  <data name="Adv_lhm_cpu_power" xml:space="preserve">
+    <value>Công suất bộ xử lý: cả gói, các nhân</value>
+  </data>
+  <data name="Adv_lhm_cpu_temperature" xml:space="preserve">
+    <value>Nhiệt độ bộ xử lý: cả gói và từng nhân</value>
+  </data>
+  <data name="Adv_lhm_cpu_voltage" xml:space="preserve">
+    <value>Các điện áp của bộ xử lý</value>
+  </data>
+  <data name="Adv_lhm_gpu_clock" xml:space="preserve">
+    <value>Mọi xung nhịp của card</value>
+  </data>
+  <data name="Adv_lhm_gpu_current" xml:space="preserve">
+    <value>Mọi dòng điện của card</value>
+  </data>
+  <data name="Adv_lhm_gpu_fan" xml:space="preserve">
+    <value>Mọi quạt của card</value>
+  </data>
+  <data name="Adv_lhm_gpu_fan_control" xml:space="preserve">
+    <value>Mức điều khiển của từng quạt</value>
+  </data>
+  <data name="Adv_lhm_gpu_load" xml:space="preserve">
+    <value>Mọi mức tải của card: các bộ xử lý, bus, bộ điều khiển bộ nhớ</value>
+  </data>
+  <data name="Adv_lhm_gpu_memory" xml:space="preserve">
+    <value>Các bộ đếm bộ nhớ của card: tổng, trống, đã dùng, Direct3D chuyên dụng và dùng chung</value>
+  </data>
+  <data name="Adv_lhm_gpu_power" xml:space="preserve">
+    <value>Mọi số đo công suất của card</value>
+  </data>
+  <data name="Adv_lhm_gpu_temperature" xml:space="preserve">
+    <value>Mọi cảm biến nhiệt độ của card</value>
+  </data>
+  <data name="Adv_lhm_gpu_throughput" xml:space="preserve">
+    <value>Lưu lượng PCI Express đến và đi từ card</value>
+  </data>
+  <data name="Adv_lhm_gpu_voltage" xml:space="preserve">
+    <value>Mọi điện áp của card</value>
+  </data>
+  <data name="Adv_lhm_memory_load" xml:space="preserve">
+    <value>Bộ nhớ đang dùng: vật lý và ảo</value>
+  </data>
+  <data name="Adv_lhm_memory_modules" xml:space="preserve">
+    <value>Các thanh nhớ: dung lượng, tốc độ, tên linh kiện của hãng - không bao giờ có số sê-ri</value>
+  </data>
+  <data name="Adv_lhm_memory_temperature" xml:space="preserve">
+    <value>Nhiệt độ từng thanh nhớ, nếu có cảm biến</value>
+  </data>
+  <data name="Adv_lhm_psu" xml:space="preserve">
+    <value>Cảm biến bộ nguồn: đọc chúng khiến thư viện dò mọi thiết bị USB</value>
+  </data>
+  <data name="Adv_lhm_storage_models" xml:space="preserve">
+    <value>Tên model các ổ đĩa: thư viện không liệt kê được ổ mà không chạm vào ổ tháo rời</value>
+  </data>
+  <data name="Adv_lhm_storage_temperature" xml:space="preserve">
+    <value>Nhiệt độ từng ổ đĩa: cùng lý do, nên nhóm lưu trữ không được mở</value>
+  </data>
+  <data name="Adv_ngx_parameters" xml:space="preserve">
+    <value>Tham số NGX: giá trị chất lượng, các gợi ý DLSS</value>
+  </data>
+  <data name="Adv_nvapi_clock_video" xml:space="preserve">
+    <value>Xung video</value>
+  </data>
+  <data name="Adv_nvapi_display_adaptive_sync_off" xml:space="preserve">
+    <value>Adaptive sync đang tắt trên màn hình</value>
+  </data>
+  <data name="Adv_nvapi_display_edid" xml:space="preserve">
+    <value>Khối EDID của màn hình, có chứa số sê-ri của nó</value>
+  </data>
+  <data name="Adv_nvapi_display_hdr_formats" xml:space="preserve">
+    <value>Định dạng HDR màn hình nhận: HDR10, HDR10+, HDR10+ Gaming, Dolby Vision, EDR</value>
+  </data>
+  <data name="Adv_nvapi_display_luminance_max" xml:space="preserve">
+    <value>Độ chói tối đa của màn hình cho nội dung HDR</value>
+  </data>
+  <data name="Adv_nvapi_display_luminance_max_frame_average" xml:space="preserve">
+    <value>Mức sáng trung bình khung hình tối đa của màn hình</value>
+  </data>
+  <data name="Adv_nvapi_display_luminance_min" xml:space="preserve">
+    <value>Độ chói tối thiểu của màn hình</value>
+  </data>
+  <data name="Adv_nvapi_display_max_frame_interval" xml:space="preserve">
+    <value>Khoảng khung hình dài nhất mà adaptive sync được đặt để giữ</value>
+  </data>
+  <data name="Adv_nvapi_display_vrr_support" xml:space="preserve">
+    <value>Tần số quét biến thiên: có hỗ trợ, mô-đun G-SYNC hay adaptive sync, ULMB, dùng được ở chế độ hiện tại</value>
+  </data>
+  <data name="Adv_nvapi_driver_base_branch" xml:space="preserve">
+    <value>Nhánh gốc của driver</value>
+  </data>
+  <data name="Adv_nvapi_driver_chipset" xml:space="preserve">
+    <value>Hãng và tên chipset, theo driver báo</value>
+  </data>
+  <data name="Adv_nvapi_driver_dch" xml:space="preserve">
+    <value>Driver là gói DCH</value>
+  </data>
+  <data name="Adv_nvapi_driver_global_profile" xml:space="preserve">
+    <value>Mọi thiết lập trong profile toàn cục của driver, chỉ đọc</value>
+  </data>
+  <data name="Adv_nvapi_driver_interface_version" xml:space="preserve">
+    <value>Phiên bản giao diện của chính NVAPI</value>
+  </data>
+  <data name="Adv_nvapi_driver_package" xml:space="preserve">
+    <value>Game Ready, Studio hay một nhánh RTX doanh nghiệp</value>
+  </data>
+  <data name="Adv_nvapi_encoder_fps" xml:space="preserve">
+    <value>Tốc độ mã hoá trung bình của các phiên đang chạy</value>
+  </data>
+  <data name="Adv_nvapi_encoder_latency" xml:space="preserve">
+    <value>Độ trễ mã hoá trung bình</value>
+  </data>
+  <data name="Adv_nvapi_encoder_session_processes" xml:space="preserve">
+    <value>Những chương trình nào đang mã hoá</value>
+  </data>
+  <data name="Adv_nvapi_encoder_sessions" xml:space="preserve">
+    <value>Số phiên mã hoá phần cứng đang chạy, mọi chương trình</value>
+  </data>
+  <data name="Adv_nvapi_gpu_architecture" xml:space="preserve">
+    <value>Kiến trúc chip, bản triển khai và phiên bản</value>
+  </data>
+  <data name="Adv_nvapi_gpu_board_serial" xml:space="preserve">
+    <value>Số sê-ri bo mạch của card</value>
+  </data>
+  <data name="Adv_nvapi_gpu_bus_type" xml:space="preserve">
+    <value>Bus mà card cắm vào</value>
+  </data>
+  <data name="Adv_nvapi_gpu_clock_base_core" xml:space="preserve">
+    <value>Xung nhân cơ sở</value>
+  </data>
+  <data name="Adv_nvapi_gpu_clock_base_memory" xml:space="preserve">
+    <value>Xung bộ nhớ cơ sở</value>
+  </data>
+  <data name="Adv_nvapi_gpu_clock_boost_core" xml:space="preserve">
+    <value>Xung nhân tăng tốc</value>
+  </data>
+  <data name="Adv_nvapi_gpu_clock_boost_memory" xml:space="preserve">
+    <value>Xung bộ nhớ tăng tốc</value>
+  </data>
+  <data name="Adv_nvapi_gpu_core_count" xml:space="preserve">
+    <value>Số nhân đồ hoạ</value>
+  </data>
+  <data name="Adv_nvapi_gpu_external" xml:space="preserve">
+    <value>Card là card gắn ngoài</value>
+  </data>
+  <data name="Adv_nvapi_gpu_fan_duty" xml:space="preserve">
+    <value>Mức điều khiển quạt qua NVAPI (LibreHardwareMonitor đọc số này)</value>
+  </data>
+  <data name="Adv_nvapi_gpu_pci_ids" xml:space="preserve">
+    <value>Mã PCI của thiết bị, hệ con và phiên bản - là model, không phải từng chiếc</value>
+  </data>
+  <data name="Adv_nvapi_gpu_power" xml:space="preserve">
+    <value>Công suất card qua NVAPI (LibreHardwareMonitor đọc số này)</value>
+  </data>
+  <data name="Adv_nvapi_gpu_ram_bus_width" xml:space="preserve">
+    <value>Độ rộng bus bộ nhớ của card</value>
+  </data>
+  <data name="Adv_nvapi_gpu_ram_type" xml:space="preserve">
+    <value>Loại bộ nhớ của card</value>
+  </data>
+  <data name="Adv_nvapi_gpu_rt_cores" xml:space="preserve">
+    <value>Số nhân dò tia</value>
+  </data>
+  <data name="Adv_nvapi_gpu_system_type" xml:space="preserve">
+    <value>Laptop hay máy bàn, theo cách driver nhìn máy</value>
+  </data>
+  <data name="Adv_nvapi_gpu_temp_default_max" xml:space="preserve">
+    <value>Nhiệt độ tối đa mặc định của cảm biến nhân</value>
+  </data>
+  <data name="Adv_nvapi_gpu_tensor_cores" xml:space="preserve">
+    <value>Số nhân tensor</value>
+  </data>
+  <data name="Adv_nvapi_gpu_type" xml:space="preserve">
+    <value>Đồ hoạ tích hợp hay rời</value>
+  </data>
+  <data name="Adv_nvapi_gpu_uuid" xml:space="preserve">
+    <value>Mã định danh duy nhất của card</value>
+  </data>
+  <data name="Adv_nvapi_gpu_vbios_version" xml:space="preserve">
+    <value>Phiên bản Video BIOS</value>
+  </data>
+  <data name="Adv_nvapi_gpu_voltage" xml:space="preserve">
+    <value>Điện áp card qua NVAPI (LibreHardwareMonitor đọc số này)</value>
+  </data>
+  <data name="Adv_nvapi_limit_ac_battery" xml:space="preserve">
+    <value>Bị kìm do chuyển sang pin ở lần đọc: 100 hoặc 0</value>
+  </data>
+  <data name="Adv_nvapi_limit_api" xml:space="preserve">
+    <value>Bị kìm theo yêu cầu của một chương trình ở lần đọc: 100 hoặc 0</value>
+  </data>
+  <data name="Adv_nvapi_limit_insufficient_power" xml:space="preserve">
+    <value>Bị kìm do thiếu đầu cấp nguồn ở lần đọc: 100 hoặc 0</value>
+  </data>
+  <data name="Adv_nvapi_load_bus" xml:space="preserve">
+    <value>Mức dùng giao tiếp bus</value>
+  </data>
+  <data name="Adv_nvapi_load_framebuffer" xml:space="preserve">
+    <value>Mức dùng frame buffer (bộ điều khiển bộ nhớ)</value>
+  </data>
+  <data name="Adv_nvapi_load_video" xml:space="preserve">
+    <value>Mức dùng bộ xử lý video</value>
+  </data>
+  <data name="Adv_nvapi_pstate" xml:space="preserve">
+    <value>Trạng thái hiệu năng hiện tại của card (mã P-state)</value>
+  </data>
+  <data name="Adv_nvapi_reflex_frame_report" xml:space="preserve">
+    <value>Độ trễ từng khung hình: mô phỏng, gửi lệnh dựng hình, present, driver, hàng đợi hệ điều hành, GPU dựng hình</value>
+  </data>
+  <data name="Adv_nvapi_reflex_mode" xml:space="preserve">
+    <value>Reflex: chế độ độ trễ thấp, boost, giới hạn tốc độ khung hình</value>
+  </data>
+  <data name="Adv_nvapi_reflex_sleep_status" xml:space="preserve">
+    <value>Trạng thái độ trễ thấp của driver</value>
+  </data>
+  <data name="Adv_nvapi_session_driver_profile" xml:space="preserve">
+    <value>Các thiết lập mà profile của driver cho game này tự đặt, chỉ đọc</value>
+  </data>
+  <data name="Adv_nvapi_session_source_colorspace" xml:space="preserve">
+    <value>Không gian màu game xuất ra, theo driver báo cho tiến trình</value>
+  </data>
+  <data name="Adv_nvapi_session_vrr_display_mode" xml:space="preserve">
+    <value>Chính màn hình đã ở chế độ tần số quét biến thiên</value>
+  </data>
+  <data name="Adv_nvapi_session_vrr_enabled" xml:space="preserve">
+    <value>Tần số quét biến thiên đã hoạt động trên màn hình của game</value>
+  </data>
+  <data name="Adv_nvapi_session_vrr_possible" xml:space="preserve">
+    <value>Tần số quét biến thiên khả dụng trên màn hình đó</value>
+  </data>
+  <data name="Adv_nvapi_session_vrr_requested" xml:space="preserve">
+    <value>Tần số quét biến thiên đã được yêu cầu cho màn hình đó</value>
+  </data>
+  <data name="Adv_nvapi_temp_board" xml:space="preserve">
+    <value>Nhiệt độ môi trường trên bo của card, nếu card có cảm biến</value>
+  </data>
+  <data name="Adv_nvapi_temp_power_supply" xml:space="preserve">
+    <value>Nhiệt độ khối cấp nguồn của card, nếu card có cảm biến</value>
+  </data>
+  <data name="Adv_nvapi_vram_available" xml:space="preserve">
+    <value>Bộ nhớ video chuyên dụng còn trống lúc này, mọi chương trình</value>
+  </data>
+  <data name="Adv_nvapi_vram_dedicated" xml:space="preserve">
+    <value>Bộ nhớ video chuyên dụng trên card</value>
+  </data>
+  <data name="Adv_nvapi_vram_dedicated_available" xml:space="preserve">
+    <value>Bộ nhớ video chuyên dụng dùng được cho bề mặt</value>
+  </data>
+  <data name="Adv_nvapi_vram_eviction_count" xml:space="preserve">
+    <value>Số lần bị đẩy khỏi bộ nhớ video chuyên dụng, tính từ lúc driver nạp</value>
+  </data>
+  <data name="Adv_nvapi_vram_evictions_size" xml:space="preserve">
+    <value>Bộ nhớ được giải phóng do bị đẩy ra, tính từ lúc driver nạp</value>
+  </data>
+  <data name="Adv_nvapi_vram_framebuffer_physical" xml:space="preserve">
+    <value>Kích thước frame buffer vật lý</value>
+  </data>
+  <data name="Adv_nvapi_vram_framebuffer_virtual" xml:space="preserve">
+    <value>Kích thước frame buffer ảo</value>
+  </data>
+  <data name="Adv_nvapi_vram_in_use" xml:space="preserve">
+    <value>Bộ nhớ video chuyên dụng đang dùng lúc này, mọi chương trình: phần dùng được cho bề mặt trừ phần còn trống</value>
+  </data>
+  <data name="Adv_nvapi_vram_promotion_count" xml:space="preserve">
+    <value>Số lần thăng cấp vào bộ nhớ video chuyên dụng, tính từ lúc driver nạp</value>
+  </data>
+  <data name="Adv_nvapi_vram_promotions_size" xml:space="preserve">
+    <value>Bộ nhớ được đưa vào do thăng cấp, tính từ lúc driver nạp</value>
+  </data>
+  <data name="Adv_nvapi_vram_shared" xml:space="preserve">
+    <value>Bộ nhớ hệ thống dùng chung driver có thể cấp</value>
+  </data>
+  <data name="Adv_nvapi_vram_system" xml:space="preserve">
+    <value>Bộ nhớ hệ thống driver giữ lúc nạp</value>
+  </data>
+  <data name="Adv_sl_constants_camera" xml:space="preserve">
+    <value>Vị trí, các trục và ma trận của camera</value>
+  </data>
+  <data name="Adv_sl_constants_depth" xml:space="preserve">
+    <value>Mặt phẳng gần và xa, và độ sâu có bị đảo hay không</value>
+  </data>
+  <data name="Adv_sl_constants_jitter" xml:space="preserve">
+    <value>Độ lệch jitter game đưa cho Streamline</value>
+  </data>
+  <data name="Adv_sl_constants_motion_vectors" xml:space="preserve">
+    <value>Tỉ lệ vector chuyển động, và chúng có là 3D, giãn nở, có jitter hay không</value>
+  </data>
+  <data name="Adv_sl_constants_projection" xml:space="preserve">
+    <value>Góc nhìn, tỉ lệ khung, phép chiếu trực giao hay không</value>
+  </data>
+  <data name="Adv_sl_constants_resets" xml:space="preserve">
+    <value>Số lần game đặt lại lịch sử của bộ nâng cấp</value>
+  </data>
+  <data name="Adv_sl_deepdvc_options" xml:space="preserve">
+    <value>Các tuỳ chọn của RTX Dynamic Vibrance</value>
+  </data>
+  <data name="Adv_sl_dlss_alpha_upscaling" xml:space="preserve">
+    <value>DLSS nâng cấp cả kênh alpha</value>
+  </data>
+  <data name="Adv_sl_dlss_auto_exposure" xml:space="preserve">
+    <value>Tự động phơi sáng của DLSS</value>
+  </data>
+  <data name="Adv_sl_dlss_exposure" xml:space="preserve">
+    <value>Tiền phơi sáng và hệ số phơi sáng đưa cho DLSS</value>
+  </data>
+  <data name="Adv_sl_dlss_hdr_input" xml:space="preserve">
+    <value>Game báo cho DLSS rằng bộ đệm màu là HDR</value>
+  </data>
+  <data name="Adv_sl_dlss_optimal_settings" xml:space="preserve">
+    <value>Kích thước dựng hình và độ nét DLSS khuyến nghị</value>
+  </data>
+  <data name="Adv_sl_dlss_output_size" xml:space="preserve">
+    <value>Kích thước đầu ra game đưa cho DLSS</value>
+  </data>
+  <data name="Adv_sl_dlss_presets" xml:space="preserve">
+    <value>Preset mô hình DLSS theo từng chế độ chất lượng</value>
+  </data>
+  <data name="Adv_sl_dlss_vram_estimate" xml:space="preserve">
+    <value>Ước tính của chính DLSS về bộ nhớ video nó dùng</value>
+  </data>
+  <data name="Adv_sl_dlssd_options" xml:space="preserve">
+    <value>Các tuỳ chọn của Ray Reconstruction</value>
+  </data>
+  <data name="Adv_sl_dlssg_frames_presented" xml:space="preserve">
+    <value>Số khung tạo khung hình DLSS đã hiển thị, theo bộ đếm của chính nó</value>
+  </data>
+  <data name="Adv_sl_dlssg_options" xml:space="preserve">
+    <value>Tạo khung hình DLSS: chế độ, số khung cần tạo</value>
+  </data>
+  <data name="Adv_sl_dlssg_state" xml:space="preserve">
+    <value>Tạo khung hình DLSS: trạng thái, số khung tối đa có thể tạo</value>
+  </data>
+  <data name="Adv_sl_dlssg_vram_estimate" xml:space="preserve">
+    <value>Ước tính của tạo khung hình DLSS về bộ nhớ video nó dùng</value>
+  </data>
+  <data name="Adv_sl_feature_requirements" xml:space="preserve">
+    <value>Yêu cầu của từng tính năng Streamline: hệ điều hành, driver, bộ đệm</value>
+  </data>
+  <data name="Adv_sl_feature_versions" xml:space="preserve">
+    <value>Phiên bản từng tính năng Streamline và phiên bản mô hình NGX của nó</value>
+  </data>
+  <data name="Adv_sl_init_preferences" xml:space="preserve">
+    <value>Các tuỳ chọn game dùng khi khởi động Streamline</value>
+  </data>
+  <data name="Adv_sl_nis_options" xml:space="preserve">
+    <value>Các tuỳ chọn của NVIDIA Image Scaling</value>
+  </data>
+  <data name="Adv_sl_nvperf" xml:space="preserve">
+    <value>Bộ đếm hiệu năng của Streamline (giấy phép NSight Perf SDK)</value>
+  </data>
+  <data name="Adv_sl_pcl_markers" xml:space="preserve">
+    <value>Các mốc PC-latency game đặt</value>
+  </data>
+  <data name="Adv_sl_reflex_state" xml:space="preserve">
+    <value>Reflex qua Streamline: có khả dụng không và các báo cáo khung hình của nó</value>
+  </data>
+  <data name="Adv_xess_options" xml:space="preserve">
+    <value>Các tuỳ chọn của XeSS</value>
+  </data>
+  <data name="Advanced_Chart_Band" xml:space="preserve">
+    <value>Hơn tám chuỗi: biểu đồ vẽ giá trị thấp nhất, trung bình và cao nhất của chúng. Bảng liệt kê từng chuỗi.</value>
+  </data>
+  <data name="Advanced_Chart_Empty" xml:space="preserve">
+    <value>Chưa có gì để vẽ.</value>
+  </data>
+  <data name="Advanced_Chart_Header" xml:space="preserve">
+    <value>Theo thời gian</value>
+  </data>
+  <data name="Advanced_Chart_LiveNote" xml:space="preserve">
+    <value>Năm phút gần nhất, chỉ giữ trong bộ nhớ.</value>
+  </data>
+  <data name="Advanced_Chart_Metric" xml:space="preserve">
+    <value>Hiển thị</value>
+  </data>
+  <data name="Advanced_Chart_Seconds" xml:space="preserve">
+    <value>Giây tính từ đầu phiên</value>
+  </data>
+  <data name="Advanced_Chart_Time" xml:space="preserve">
+    <value>Thời gian</value>
+  </data>
+  <data name="Advanced_Col_Name" xml:space="preserve">
+    <value>Chỉ số</value>
+  </data>
+  <data name="Advanced_Col_ReadAt" xml:space="preserve">
+    <value>Đọc lúc</value>
+  </data>
+  <data name="Advanced_Col_Samples" xml:space="preserve">
+    <value>Số lần đọc</value>
+  </data>
+  <data name="Advanced_Col_Scope" xml:space="preserve">
+    <value>Thuộc về</value>
+  </data>
+  <data name="Advanced_Col_Source" xml:space="preserve">
+    <value>Nguồn</value>
+  </data>
+  <data name="Advanced_Col_Status" xml:space="preserve">
+    <value>Trạng thái</value>
+  </data>
+  <data name="Advanced_Col_Value" xml:space="preserve">
+    <value>Giá trị</value>
+  </data>
+  <data name="Advanced_Elevation_Hint" xml:space="preserve">
+    <value>Bộ xử lý, bộ nhớ và bo mạch chỉ được đọc khi capture agent chạy quyền quản trị và máy đã cài PawnIO (Cài đặt ▸ Capture agent).</value>
+  </data>
+  <data name="Advanced_Facts_Header" xml:space="preserve">
+    <value>Về máy này</value>
+  </data>
+  <data name="Advanced_Header" xml:space="preserve">
+    <value>Thông số nâng cao</value>
+  </data>
+  <data name="Advanced_Machine_Intro" xml:space="preserve">
+    <value>Những gì driver đồ hoạ và các cảm biến phần cứng cho biết về máy này lúc này. Chỉ được đọc khi trang này đang mở hoặc đang ghi một game, và những gì hiện ở đây không được lưu.</value>
+  </data>
+  <data name="Advanced_Max" xml:space="preserve">
+    <value>Cao nhất</value>
+  </data>
+  <data name="Advanced_Mean" xml:space="preserve">
+    <value>Trung bình</value>
+  </data>
+  <data name="Advanced_Min" xml:space="preserve">
+    <value>Thấp nhất</value>
+  </data>
+  <data name="Advanced_Now_Header" xml:space="preserve">
+    <value>Lúc này</value>
+  </data>
+  <data name="Advanced_Session_Empty" xml:space="preserve">
+    <value>Chưa có phiên nào được ghi khi Thông số nâng cao đang bật. Phiên ghi lúc tắt sẽ không được bổ sung về sau.</value>
+  </data>
+  <data name="Advanced_Session_Facts" xml:space="preserve">
+    <value>Máy và phiên</value>
+  </data>
+  <data name="Advanced_Session_NoSeries" xml:space="preserve">
+    <value>Chuỗi theo giây của phiên này không còn được giữ (Cài đặt ▸ Ghi phiên ▸ Số chuỗi thô giữ lại mỗi game); thống kê thì vẫn còn.</value>
+  </data>
+  <data name="Advanced_Session_NoStats" xml:space="preserve">
+    <value>Phiên này không lưu số đo nào.</value>
+  </data>
+  <data name="Advanced_Session_Pick" xml:space="preserve">
+    <value>Phiên</value>
+  </data>
+  <data name="Advanced_Session_Stats" xml:space="preserve">
+    <value>Thống kê của phiên</value>
+  </data>
+  <data name="Advanced_Sources_Intro" xml:space="preserve">
+    <value>Mọi thứ FrameLedger biết cách đọc, và mọi thứ nó không đọc, kèm lý do.</value>
+  </data>
+  <data name="Advanced_SourcesLine" xml:space="preserve">
+    <value>Driver NVIDIA: {0}. Cảm biến card đồ hoạ: {1}. Cảm biến bộ xử lý, bộ nhớ và bo mạch: {2}.</value>
+  </data>
+  <data name="Advanced_State_Live" xml:space="preserve">
+    <value>Capture agent đọc lúc {0}. Số liệu của NVIDIA được đọc mỗi giây, các cảm biến mỗi năm giây.</value>
+  </data>
+  <data name="Advanced_State_NoAgent" xml:space="preserve">
+    <value>Capture agent không trả lời. Những gì hiện bên dưới cũ đúng như thời điểm ghi kèm.</value>
+  </data>
+  <data name="Advanced_State_Off" xml:space="preserve">
+    <value>Thông số nâng cao đang tắt nên không đọc gì cả. Bật ở Cài đặt ▸ Ghi phiên.</value>
+  </data>
+  <data name="Advanced_State_OlderAgent" xml:space="preserve">
+    <value>Capture agent đang chạy là bản cũ hơn và không trả lời được yêu cầu này. Hãy khởi động lại FrameLedger.</value>
+  </data>
+  <data name="Advanced_State_Viewer" xml:space="preserve">
+    <value>Đây là bản sao của một sổ ghi: không đọc gì từ máy này. Các phiên lưu trong bản sao nằm ở thẻ Phiên.</value>
+  </data>
+  <data name="Advanced_State_Waiting" xml:space="preserve">
+    <value>Capture agent đang mở các nguồn đọc…</value>
+  </data>
+  <data name="Advanced_Status_Read" xml:space="preserve">
+    <value>Đang đọc</value>
+  </data>
+  <data name="Advanced_Status_Readable" xml:space="preserve">
+    <value>Được đọc khi một phiên hoặc trang này yêu cầu</value>
+  </data>
+  <data name="Advanced_Status_SourceSilent" xml:space="preserve">
+    <value>Hiện không đọc được: {0}</value>
+  </data>
+  <data name="Advanced_Tab_Machine" xml:space="preserve">
+    <value>Máy này</value>
+  </data>
+  <data name="Advanced_Tab_Session" xml:space="preserve">
+    <value>Phiên</value>
+  </data>
+  <data name="Advanced_Tab_Sources" xml:space="preserve">
+    <value>Nguồn</value>
+  </data>
+  <data name="AdvGroup_Board" xml:space="preserve">
+    <value>Bo mạch chủ</value>
+  </data>
+  <data name="AdvGroup_Cpu" xml:space="preserve">
+    <value>Bộ xử lý</value>
+  </data>
+  <data name="AdvGroup_Display" xml:space="preserve">
+    <value>Màn hình</value>
+  </data>
+  <data name="AdvGroup_Driver" xml:space="preserve">
+    <value>Driver đồ hoạ</value>
+  </data>
+  <data name="AdvGroup_FrameGeneration" xml:space="preserve">
+    <value>Tạo khung hình</value>
+  </data>
+  <data name="AdvGroup_Gpu" xml:space="preserve">
+    <value>Card đồ hoạ</value>
+  </data>
+  <data name="AdvGroup_GpuMemory" xml:space="preserve">
+    <value>Bộ nhớ card đồ hoạ</value>
+  </data>
+  <data name="AdvGroup_Latency" xml:space="preserve">
+    <value>Độ trễ</value>
+  </data>
+  <data name="AdvGroup_Memory" xml:space="preserve">
+    <value>Bộ nhớ</value>
+  </data>
+  <data name="AdvGroup_Storage" xml:space="preserve">
+    <value>Lưu trữ</value>
+  </data>
+  <data name="AdvGroup_Upscaling" xml:space="preserve">
+    <value>Nâng cấp hình ảnh</value>
+  </data>
+  <data name="AdvReach_Deferred" xml:space="preserve">
+    <value>Không đọc trong bản phát hành này</value>
+  </data>
+  <data name="AdvReach_HookedCall" xml:space="preserve">
+    <value>Bên trong game - sẽ có ở bản phát hành sau</value>
+  </data>
+  <data name="AdvReach_Identifier" xml:space="preserve">
+    <value>Không bao giờ đọc: nó định danh máy này, một màn hình hoặc chương trình khác</value>
+  </data>
+  <data name="AdvReach_Licence" xml:space="preserve">
+    <value>Không đọc: giấy phép của hãng không cho phép</value>
+  </data>
+  <data name="AdvReach_NewHook" xml:space="preserve">
+    <value>Bên trong game, cần hook mới - sẽ có ở bản phát hành sau</value>
+  </data>
+  <data name="AdvReach_NotInHeaders" xml:space="preserve">
+    <value>Giao diện này không cung cấp</value>
+  </data>
+  <data name="AdvReach_PlayerState" xml:space="preserve">
+    <value>Không bao giờ đọc: đó là trạng thái của người chơi trong game</value>
+  </data>
+  <data name="AdvReach_Refused" xml:space="preserve">
+    <value>Không đọc: việc này khiến thư viện cảm biến dò mọi thiết bị USB</value>
+  </data>
+  <data name="AdvReach_Spike" xml:space="preserve">
+    <value>Đang nghiên cứu; chưa quyết định</value>
+  </data>
+  <data name="AdvScope_MachineFact" xml:space="preserve">
+    <value>Máy này</value>
+  </data>
+  <data name="AdvScope_Series" xml:space="preserve">
+    <value>Một phiên, theo thời gian</value>
+  </data>
+  <data name="AdvScope_SessionFact" xml:space="preserve">
+    <value>Một phiên</value>
+  </data>
+  <data name="AdvSource_Faulted" xml:space="preserve">
+    <value>gặp lỗi khi đọc</value>
+  </data>
+  <data name="AdvSource_NotElevated" xml:space="preserve">
+    <value>capture agent không chạy quyền quản trị</value>
+  </data>
+  <data name="AdvSource_NotPresent" xml:space="preserve">
+    <value>không có trên máy này</value>
+  </data>
+  <data name="AdvSource_PawnIoMissing" xml:space="preserve">
+    <value>chưa cài PawnIO</value>
+  </data>
+  <data name="AdvSource_Reading" xml:space="preserve">
+    <value>đang trả lời</value>
+  </data>
+  <data name="AdvSource_Unknown" xml:space="preserve">
+    <value>chưa được hỏi</value>
+  </data>
+  <data name="AdvToken_adaptive_sync" xml:space="preserve">
+    <value>Adaptive sync</value>
+  </data>
+  <data name="AdvToken_agp" xml:space="preserve">
+    <value>AGP</value>
+  </data>
+  <data name="AdvToken_axi" xml:space="preserve">
+    <value>AXI</value>
+  </data>
+  <data name="AdvToken_bt2100_pq" xml:space="preserve">
+    <value>BT.2100 PQ (HDR10)</value>
+  </data>
+  <data name="AdvToken_desktop" xml:space="preserve">
+    <value>Máy bàn</value>
+  </data>
+  <data name="AdvToken_discrete" xml:space="preserve">
+    <value>Rời</value>
+  </data>
+  <data name="AdvToken_dolby_vision" xml:space="preserve">
+    <value>Dolby Vision</value>
+  </data>
+  <data name="AdvToken_driver_default" xml:space="preserve">
+    <value>Mặc định của driver</value>
+  </data>
+  <data name="AdvToken_edr" xml:space="preserve">
+    <value>EDR</value>
+  </data>
+  <data name="AdvToken_fpci" xml:space="preserve">
+    <value>FPCI</value>
+  </data>
+  <data name="AdvToken_game_ready" xml:space="preserve">
+    <value>Game Ready</value>
+  </data>
+  <data name="AdvToken_gsync_module" xml:space="preserve">
+    <value>Mô-đun G-SYNC</value>
+  </data>
+  <data name="AdvToken_hdr10" xml:space="preserve">
+    <value>HDR10</value>
+  </data>
+  <data name="AdvToken_hdr10_plus" xml:space="preserve">
+    <value>HDR10+</value>
+  </data>
+  <data name="AdvToken_hdr10_plus_gaming" xml:space="preserve">
+    <value>HDR10+ Gaming</value>
+  </data>
+  <data name="AdvToken_integrated" xml:space="preserve">
+    <value>Tích hợp</value>
+  </data>
+  <data name="AdvToken_laptop" xml:space="preserve">
+    <value>Laptop</value>
+  </data>
+  <data name="AdvToken_no_profile_for_game" xml:space="preserve">
+    <value>Driver không có profile cho game này</value>
+  </data>
+  <data name="AdvToken_not_a_number" xml:space="preserve">
+    <value>Không phải số</value>
+  </data>
+  <data name="AdvToken_not_supported" xml:space="preserve">
+    <value>Không hỗ trợ</value>
+  </data>
+  <data name="AdvToken_pci" xml:space="preserve">
+    <value>PCI</value>
+  </data>
+  <data name="AdvToken_pci_express" xml:space="preserve">
+    <value>PCI Express</value>
+  </data>
+  <data name="AdvToken_rtx_new_feature" xml:space="preserve">
+    <value>Nhánh RTX tính năng mới</value>
+  </data>
+  <data name="AdvToken_rtx_production" xml:space="preserve">
+    <value>Nhánh RTX production</value>
+  </data>
+  <data name="AdvToken_scrgb_linear" xml:space="preserve">
+    <value>scRGB (tuyến tính)</value>
+  </data>
+  <data name="AdvToken_srgb" xml:space="preserve">
+    <value>sRGB</value>
+  </data>
+  <data name="AdvToken_studio" xml:space="preserve">
+    <value>Studio</value>
+  </data>
+  <data name="AdvToken_ulmb" xml:space="preserve">
+    <value>ULMB</value>
+  </data>
+  <data name="AdvToken_usable_now" xml:space="preserve">
+    <value>Dùng được ở chế độ hiện tại</value>
+  </data>
+  <data name="AdvToken_user_set" xml:space="preserve">
+    <value>Do người dùng đặt</value>
+  </data>
+  <data name="AdvToken_variable_refresh" xml:space="preserve">
+    <value>Tần số quét biến thiên</value>
   </data>
   <data name="Agent_Banner_Missing_Body" xml:space="preserve">
     <value>Không tìm thấy FrameLedger.Agent.exe cạnh ứng dụng. Vẫn đọc được các phiên chơi; trạng thái trực tiếp và điều khiển thu thập thì không.</value>
@@ -276,6 +1005,9 @@
   </data>
   <data name="Menu_Tools_VulkanLayer" xml:space="preserve">
     <value>Đăng ký Vulkan layer…</value>
+  </data>
+  <data name="Nav_Advanced" xml:space="preserve">
+    <value>Nâng cao</value>
   </data>
   <data name="Nav_Compare" xml:space="preserve">
     <value>So sánh</value>
@@ -954,6 +1686,9 @@
   </data>
   <data name="Sessions_Col_Tier" xml:space="preserve">
     <value>Tier</value>
+  </data>
+  <data name="Summary_Advanced_Button" xml:space="preserve">
+    <value>Thông số nâng cao…</value>
   </data>
   <data name="Tier_Dash_Tooltip" xml:space="preserve">
     <value>—: đã đo là không có frame generation, nên không có FPS hiển thị khác với FPS gốc</value>

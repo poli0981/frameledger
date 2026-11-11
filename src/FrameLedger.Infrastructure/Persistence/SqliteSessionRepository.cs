@@ -229,6 +229,18 @@ public sealed class SqliteSessionRepository : ISessionRepository
                 MachineFactsJson = r.IsDBNull(4) ? null : r.GetString(4),
             }), ct);
 
+    public ValueTask<IReadOnlyList<SessionRow>> ListAdvancedAsync(int count, CancellationToken ct = default)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);
+        return _db.ReadAsync((c, token) => SqliteReaders.ReadAllAsync(
+            c,
+            new CommandDefinition(
+                SessionRowColumns.Select + " WHERE id IN (SELECT session_id FROM session_advanced) ORDER BY started_at DESC, id DESC LIMIT @count",
+                new { count },
+                cancellationToken: token),
+            SessionRowColumns.Read), ct);
+    }
+
     public ValueTask<IReadOnlyList<SessionRow>> ListRecentAsync(int count, CancellationToken ct = default)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(count);

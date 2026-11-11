@@ -93,4 +93,10 @@ public interface ISessionRepository
     /// with Advanced metrics off (or before they existed).
     /// </summary>
     ValueTask<AdvancedSessionRow?> FindAdvancedAsync(long sessionId, CancellationToken ct = default);
+
+    /// <summary>
+    /// The newest sessions that have a row of <c>session_advanced</c> — recorded with Advanced metrics on — newest
+    /// first, at most <paramref name="count"/>: what the Advanced page offers to look at (owner decision D101).
+    /// </summary>
+    ValueTask<IReadOnlyList<SessionRow>> ListAdvancedAsync(int count, CancellationToken ct = default);
 }

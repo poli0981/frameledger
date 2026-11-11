@@ -18,8 +18,737 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="A11y_Advanced_Metric" xml:space="preserve">
+    <value>Reading to chart</value>
+  </data>
+  <data name="A11y_Advanced_Session" xml:space="preserve">
+    <value>Session to show</value>
+  </data>
+  <data name="A11y_Chart_Advanced" xml:space="preserve">
+    <value>Advanced reading over time</value>
+  </data>
+  <data name="A11y_ChartData_Advanced" xml:space="preserve">
+    <value>Each line is one reading. The table beside the chart lists the same readings.</value>
+  </data>
   <data name="About_Title" xml:space="preserve">
     <value>About FrameLedger</value>
+  </data>
+  <data name="Adv_ffx_framegen_config" xml:space="preserve">
+    <value>The game's FSR frame-generation configuration</value>
+  </data>
+  <data name="Adv_ffx_memory_usage" xml:space="preserve">
+    <value>FSR's own video memory, when the game asks it</value>
+  </data>
+  <data name="Adv_ffx_upscale_depth" xml:space="preserve">
+    <value>Near and far planes and field of view given to FSR</value>
+  </data>
+  <data name="Adv_ffx_upscale_exposure" xml:space="preserve">
+    <value>Pre-exposure given to FSR</value>
+  </data>
+  <data name="Adv_ffx_upscale_flags" xml:space="preserve">
+    <value>The flags of the game's FSR dispatch</value>
+  </data>
+  <data name="Adv_ffx_upscale_frame_time_delta" xml:space="preserve">
+    <value>The frame time the game reported to FSR</value>
+  </data>
+  <data name="Adv_ffx_upscale_jitter" xml:space="preserve">
+    <value>The jitter offsets the game gave FSR</value>
+  </data>
+  <data name="Adv_ffx_upscale_sharpening" xml:space="preserve">
+    <value>FSR sharpening: on or off, and its strength</value>
+  </data>
+  <data name="Adv_lhm_battery" xml:space="preserve">
+    <value>Battery sensors</value>
+  </data>
+  <data name="Adv_lhm_board_fan" xml:space="preserve">
+    <value>Each fan header's speed</value>
+  </data>
+  <data name="Adv_lhm_board_fan_control" xml:space="preserve">
+    <value>Each fan header's duty</value>
+  </data>
+  <data name="Adv_lhm_board_model" xml:space="preserve">
+    <value>The motherboard's maker and model</value>
+  </data>
+  <data name="Adv_lhm_board_sensor_chip" xml:space="preserve">
+    <value>The board's sensor chip</value>
+  </data>
+  <data name="Adv_lhm_board_temperature" xml:space="preserve">
+    <value>The board's temperature sensors</value>
+  </data>
+  <data name="Adv_lhm_board_voltage" xml:space="preserve">
+    <value>The board's voltage rails</value>
+  </data>
+  <data name="Adv_lhm_controller" xml:space="preserve">
+    <value>Fan-controller sensors: the same search of USB devices</value>
+  </data>
+  <data name="Adv_lhm_cpu_clock" xml:space="preserve">
+    <value>Each core's clock, and the bus clock</value>
+  </data>
+  <data name="Adv_lhm_cpu_load" xml:space="preserve">
+    <value>Processor load: the total and each core</value>
+  </data>
+  <data name="Adv_lhm_cpu_power" xml:space="preserve">
+    <value>Processor power: the package, the cores</value>
+  </data>
+  <data name="Adv_lhm_cpu_temperature" xml:space="preserve">
+    <value>Processor temperatures: the package and each core</value>
+  </data>
+  <data name="Adv_lhm_cpu_voltage" xml:space="preserve">
+    <value>Processor voltages</value>
+  </data>
+  <data name="Adv_lhm_gpu_clock" xml:space="preserve">
+    <value>Every clock of the card</value>
+  </data>
+  <data name="Adv_lhm_gpu_current" xml:space="preserve">
+    <value>Every current of the card</value>
+  </data>
+  <data name="Adv_lhm_gpu_fan" xml:space="preserve">
+    <value>Every fan of the card</value>
+  </data>
+  <data name="Adv_lhm_gpu_fan_control" xml:space="preserve">
+    <value>Each fan's duty</value>
+  </data>
+  <data name="Adv_lhm_gpu_load" xml:space="preserve">
+    <value>Every load of the card: its engines, its bus, its memory controller</value>
+  </data>
+  <data name="Adv_lhm_gpu_memory" xml:space="preserve">
+    <value>The card's memory counters: total, free, used, Direct3D dedicated and shared</value>
+  </data>
+  <data name="Adv_lhm_gpu_power" xml:space="preserve">
+    <value>Every power reading of the card</value>
+  </data>
+  <data name="Adv_lhm_gpu_temperature" xml:space="preserve">
+    <value>Every temperature sensor of the card</value>
+  </data>
+  <data name="Adv_lhm_gpu_throughput" xml:space="preserve">
+    <value>PCI Express traffic to and from the card</value>
+  </data>
+  <data name="Adv_lhm_gpu_voltage" xml:space="preserve">
+    <value>Every voltage of the card</value>
+  </data>
+  <data name="Adv_lhm_memory_load" xml:space="preserve">
+    <value>Memory in use: physical and virtual</value>
+  </data>
+  <data name="Adv_lhm_memory_modules" xml:space="preserve">
+    <value>The memory modules: size, speed, maker's part name - never a serial number</value>
+  </data>
+  <data name="Adv_lhm_memory_temperature" xml:space="preserve">
+    <value>Each memory module's temperature, where it has a sensor</value>
+  </data>
+  <data name="Adv_lhm_psu" xml:space="preserve">
+    <value>Power-supply sensors: reading them makes the library search every USB device</value>
+  </data>
+  <data name="Adv_lhm_storage_models" xml:space="preserve">
+    <value>The drives' model names: the library cannot list drives without touching removable ones</value>
+  </data>
+  <data name="Adv_lhm_storage_temperature" xml:space="preserve">
+    <value>Each drive's temperature: the same, so the storage group is not opened</value>
+  </data>
+  <data name="Adv_ngx_parameters" xml:space="preserve">
+    <value>NGX parameters: the quality value, the DLSS hints</value>
+  </data>
+  <data name="Adv_nvapi_clock_video" xml:space="preserve">
+    <value>Video clock</value>
+  </data>
+  <data name="Adv_nvapi_display_adaptive_sync_off" xml:space="preserve">
+    <value>Adaptive sync is switched off on the display</value>
+  </data>
+  <data name="Adv_nvapi_display_edid" xml:space="preserve">
+    <value>A display's EDID block, which carries its serial number</value>
+  </data>
+  <data name="Adv_nvapi_display_hdr_formats" xml:space="preserve">
+    <value>HDR formats a display accepts: HDR10, HDR10+, HDR10+ Gaming, Dolby Vision, EDR</value>
+  </data>
+  <data name="Adv_nvapi_display_luminance_max" xml:space="preserve">
+    <value>A display's maximum luminance for HDR content</value>
+  </data>
+  <data name="Adv_nvapi_display_luminance_max_frame_average" xml:space="preserve">
+    <value>Its maximum frame-average light level</value>
+  </data>
+  <data name="Adv_nvapi_display_luminance_min" xml:space="preserve">
+    <value>Its minimum luminance</value>
+  </data>
+  <data name="Adv_nvapi_display_max_frame_interval" xml:space="preserve">
+    <value>The longest frame interval adaptive sync is set to hold</value>
+  </data>
+  <data name="Adv_nvapi_display_vrr_support" xml:space="preserve">
+    <value>Variable refresh: supported, G-SYNC module or adaptive sync, ULMB, usable at the current mode</value>
+  </data>
+  <data name="Adv_nvapi_driver_base_branch" xml:space="preserve">
+    <value>The driver's base branch</value>
+  </data>
+  <data name="Adv_nvapi_driver_chipset" xml:space="preserve">
+    <value>Chipset vendor and name, as the driver reports them</value>
+  </data>
+  <data name="Adv_nvapi_driver_dch" xml:space="preserve">
+    <value>The driver is a DCH package</value>
+  </data>
+  <data name="Adv_nvapi_driver_global_profile" xml:space="preserve">
+    <value>Every setting of the driver's global profile, read-only</value>
+  </data>
+  <data name="Adv_nvapi_driver_interface_version" xml:space="preserve">
+    <value>NVAPI's own interface version</value>
+  </data>
+  <data name="Adv_nvapi_driver_package" xml:space="preserve">
+    <value>Game Ready, Studio or an RTX enterprise branch</value>
+  </data>
+  <data name="Adv_nvapi_encoder_fps" xml:space="preserve">
+    <value>Average encoding rate of the active sessions</value>
+  </data>
+  <data name="Adv_nvapi_encoder_latency" xml:space="preserve">
+    <value>Average encoding latency</value>
+  </data>
+  <data name="Adv_nvapi_encoder_session_processes" xml:space="preserve">
+    <value>Which programs are encoding</value>
+  </data>
+  <data name="Adv_nvapi_encoder_sessions" xml:space="preserve">
+    <value>Active hardware-encoder sessions, all programs</value>
+  </data>
+  <data name="Adv_nvapi_gpu_architecture" xml:space="preserve">
+    <value>Chip architecture, implementation and revision</value>
+  </data>
+  <data name="Adv_nvapi_gpu_board_serial" xml:space="preserve">
+    <value>The card's board serial number</value>
+  </data>
+  <data name="Adv_nvapi_gpu_bus_type" xml:space="preserve">
+    <value>The bus the card sits on</value>
+  </data>
+  <data name="Adv_nvapi_gpu_clock_base_core" xml:space="preserve">
+    <value>Base core clock</value>
+  </data>
+  <data name="Adv_nvapi_gpu_clock_base_memory" xml:space="preserve">
+    <value>Base memory clock</value>
+  </data>
+  <data name="Adv_nvapi_gpu_clock_boost_core" xml:space="preserve">
+    <value>Boost core clock</value>
+  </data>
+  <data name="Adv_nvapi_gpu_clock_boost_memory" xml:space="preserve">
+    <value>Boost memory clock</value>
+  </data>
+  <data name="Adv_nvapi_gpu_core_count" xml:space="preserve">
+    <value>Graphics cores</value>
+  </data>
+  <data name="Adv_nvapi_gpu_external" xml:space="preserve">
+    <value>The card is an external one</value>
+  </data>
+  <data name="Adv_nvapi_gpu_fan_duty" xml:space="preserve">
+    <value>Fan duty through NVAPI (LibreHardwareMonitor reads it)</value>
+  </data>
+  <data name="Adv_nvapi_gpu_pci_ids" xml:space="preserve">
+    <value>PCI device, subsystem and revision ids - the model, not the unit</value>
+  </data>
+  <data name="Adv_nvapi_gpu_power" xml:space="preserve">
+    <value>Card power through NVAPI (LibreHardwareMonitor reads it)</value>
+  </data>
+  <data name="Adv_nvapi_gpu_ram_bus_width" xml:space="preserve">
+    <value>Width of the card's memory bus</value>
+  </data>
+  <data name="Adv_nvapi_gpu_ram_type" xml:space="preserve">
+    <value>The card's memory type</value>
+  </data>
+  <data name="Adv_nvapi_gpu_rt_cores" xml:space="preserve">
+    <value>Ray-tracing cores</value>
+  </data>
+  <data name="Adv_nvapi_gpu_system_type" xml:space="preserve">
+    <value>Laptop or desktop, as the driver sees the PC</value>
+  </data>
+  <data name="Adv_nvapi_gpu_temp_default_max" xml:space="preserve">
+    <value>The core sensor's default maximum temperature</value>
+  </data>
+  <data name="Adv_nvapi_gpu_tensor_cores" xml:space="preserve">
+    <value>Tensor cores</value>
+  </data>
+  <data name="Adv_nvapi_gpu_type" xml:space="preserve">
+    <value>Integrated or discrete graphics</value>
+  </data>
+  <data name="Adv_nvapi_gpu_uuid" xml:space="preserve">
+    <value>The card's unique id</value>
+  </data>
+  <data name="Adv_nvapi_gpu_vbios_version" xml:space="preserve">
+    <value>Video BIOS version</value>
+  </data>
+  <data name="Adv_nvapi_gpu_voltage" xml:space="preserve">
+    <value>Card voltage through NVAPI (LibreHardwareMonitor reads it)</value>
+  </data>
+  <data name="Adv_nvapi_limit_ac_battery" xml:space="preserve">
+    <value>Held back by a switch to battery on the tick: 100 or 0</value>
+  </data>
+  <data name="Adv_nvapi_limit_api" xml:space="preserve">
+    <value>Held back at a program's request on the tick: 100 or 0</value>
+  </data>
+  <data name="Adv_nvapi_limit_insufficient_power" xml:space="preserve">
+    <value>Held back by a missing power connector on the tick: 100 or 0</value>
+  </data>
+  <data name="Adv_nvapi_load_bus" xml:space="preserve">
+    <value>Bus-interface utilisation</value>
+  </data>
+  <data name="Adv_nvapi_load_framebuffer" xml:space="preserve">
+    <value>Frame-buffer (memory controller) utilisation</value>
+  </data>
+  <data name="Adv_nvapi_load_video" xml:space="preserve">
+    <value>Video-engine utilisation</value>
+  </data>
+  <data name="Adv_nvapi_pstate" xml:space="preserve">
+    <value>The card's current performance state (P-state id)</value>
+  </data>
+  <data name="Adv_nvapi_reflex_frame_report" xml:space="preserve">
+    <value>Latency per frame: simulation, render submit, present, driver, OS queue, GPU render</value>
+  </data>
+  <data name="Adv_nvapi_reflex_mode" xml:space="preserve">
+    <value>Reflex: low-latency mode, boost, the frame-rate limit</value>
+  </data>
+  <data name="Adv_nvapi_reflex_sleep_status" xml:space="preserve">
+    <value>What the driver's low-latency state is</value>
+  </data>
+  <data name="Adv_nvapi_session_driver_profile" xml:space="preserve">
+    <value>The settings the driver's profile for this game sets itself, read-only</value>
+  </data>
+  <data name="Adv_nvapi_session_source_colorspace" xml:space="preserve">
+    <value>The colour space the game presented in, as the driver reports it for the process</value>
+  </data>
+  <data name="Adv_nvapi_session_vrr_display_mode" xml:space="preserve">
+    <value>The display itself was in variable-refresh mode</value>
+  </data>
+  <data name="Adv_nvapi_session_vrr_enabled" xml:space="preserve">
+    <value>Variable refresh was active on the game's display</value>
+  </data>
+  <data name="Adv_nvapi_session_vrr_possible" xml:space="preserve">
+    <value>Variable refresh was possible on it</value>
+  </data>
+  <data name="Adv_nvapi_session_vrr_requested" xml:space="preserve">
+    <value>Variable refresh was requested for it</value>
+  </data>
+  <data name="Adv_nvapi_temp_board" xml:space="preserve">
+    <value>Board ambient temperature, where the card has the sensor</value>
+  </data>
+  <data name="Adv_nvapi_temp_power_supply" xml:space="preserve">
+    <value>The card's power-supply temperature, where it has the sensor</value>
+  </data>
+  <data name="Adv_nvapi_vram_available" xml:space="preserve">
+    <value>Dedicated video memory available now, all programs</value>
+  </data>
+  <data name="Adv_nvapi_vram_dedicated" xml:space="preserve">
+    <value>Dedicated video memory on the card</value>
+  </data>
+  <data name="Adv_nvapi_vram_dedicated_available" xml:space="preserve">
+    <value>Dedicated video memory available for surfaces</value>
+  </data>
+  <data name="Adv_nvapi_vram_eviction_count" xml:space="preserve">
+    <value>Evictions from dedicated video memory since the driver loaded</value>
+  </data>
+  <data name="Adv_nvapi_vram_evictions_size" xml:space="preserve">
+    <value>Memory released by evictions since the driver loaded</value>
+  </data>
+  <data name="Adv_nvapi_vram_framebuffer_physical" xml:space="preserve">
+    <value>Physical frame buffer size</value>
+  </data>
+  <data name="Adv_nvapi_vram_framebuffer_virtual" xml:space="preserve">
+    <value>Virtual frame buffer size</value>
+  </data>
+  <data name="Adv_nvapi_vram_in_use" xml:space="preserve">
+    <value>Dedicated video memory in use now, all programs: available for surfaces less available now</value>
+  </data>
+  <data name="Adv_nvapi_vram_promotion_count" xml:space="preserve">
+    <value>Promotions into dedicated video memory since the driver loaded</value>
+  </data>
+  <data name="Adv_nvapi_vram_promotions_size" xml:space="preserve">
+    <value>Memory moved in by promotions since the driver loaded</value>
+  </data>
+  <data name="Adv_nvapi_vram_shared" xml:space="preserve">
+    <value>Shared system memory the driver may commit</value>
+  </data>
+  <data name="Adv_nvapi_vram_system" xml:space="preserve">
+    <value>System memory the driver reserved at load</value>
+  </data>
+  <data name="Adv_sl_constants_camera" xml:space="preserve">
+    <value>Camera position, axes and matrices</value>
+  </data>
+  <data name="Adv_sl_constants_depth" xml:space="preserve">
+    <value>Near and far planes, and whether depth is inverted</value>
+  </data>
+  <data name="Adv_sl_constants_jitter" xml:space="preserve">
+    <value>The jitter offsets the game gave Streamline</value>
+  </data>
+  <data name="Adv_sl_constants_motion_vectors" xml:space="preserve">
+    <value>Motion-vector scale, and whether they are 3D, dilated, jittered</value>
+  </data>
+  <data name="Adv_sl_constants_projection" xml:space="preserve">
+    <value>Field of view, aspect ratio, orthographic or not</value>
+  </data>
+  <data name="Adv_sl_constants_resets" xml:space="preserve">
+    <value>How often the game reset the upscaler's history</value>
+  </data>
+  <data name="Adv_sl_deepdvc_options" xml:space="preserve">
+    <value>RTX Dynamic Vibrance's options</value>
+  </data>
+  <data name="Adv_sl_dlss_alpha_upscaling" xml:space="preserve">
+    <value>DLSS upscales the alpha channel</value>
+  </data>
+  <data name="Adv_sl_dlss_auto_exposure" xml:space="preserve">
+    <value>DLSS auto-exposure</value>
+  </data>
+  <data name="Adv_sl_dlss_exposure" xml:space="preserve">
+    <value>Pre-exposure and exposure scale given to DLSS</value>
+  </data>
+  <data name="Adv_sl_dlss_hdr_input" xml:space="preserve">
+    <value>The game told DLSS its colour buffers are HDR</value>
+  </data>
+  <data name="Adv_sl_dlss_optimal_settings" xml:space="preserve">
+    <value>The render size and sharpness DLSS recommends</value>
+  </data>
+  <data name="Adv_sl_dlss_output_size" xml:space="preserve">
+    <value>The output size the game gave DLSS</value>
+  </data>
+  <data name="Adv_sl_dlss_presets" xml:space="preserve">
+    <value>The DLSS model preset per quality mode</value>
+  </data>
+  <data name="Adv_sl_dlss_vram_estimate" xml:space="preserve">
+    <value>DLSS's own estimate of its video memory</value>
+  </data>
+  <data name="Adv_sl_dlssd_options" xml:space="preserve">
+    <value>Ray reconstruction's options</value>
+  </data>
+  <data name="Adv_sl_dlssg_frames_presented" xml:space="preserve">
+    <value>Frames DLSS frame generation presented, by its own count</value>
+  </data>
+  <data name="Adv_sl_dlssg_options" xml:space="preserve">
+    <value>DLSS frame generation: mode, frames to generate</value>
+  </data>
+  <data name="Adv_sl_dlssg_state" xml:space="preserve">
+    <value>DLSS frame generation: status, the most frames it can generate</value>
+  </data>
+  <data name="Adv_sl_dlssg_vram_estimate" xml:space="preserve">
+    <value>DLSS frame generation's estimate of its video memory</value>
+  </data>
+  <data name="Adv_sl_feature_requirements" xml:space="preserve">
+    <value>What each Streamline feature requires: operating system, driver, buffers</value>
+  </data>
+  <data name="Adv_sl_feature_versions" xml:space="preserve">
+    <value>Each Streamline feature's version and its NGX model version</value>
+  </data>
+  <data name="Adv_sl_init_preferences" xml:space="preserve">
+    <value>The preferences the game started Streamline with</value>
+  </data>
+  <data name="Adv_sl_nis_options" xml:space="preserve">
+    <value>NVIDIA Image Scaling's options</value>
+  </data>
+  <data name="Adv_sl_nvperf" xml:space="preserve">
+    <value>Streamline's performance counters (NSight Perf SDK licence)</value>
+  </data>
+  <data name="Adv_sl_pcl_markers" xml:space="preserve">
+    <value>PC-latency markers the game sets</value>
+  </data>
+  <data name="Adv_sl_reflex_state" xml:space="preserve">
+    <value>Reflex through Streamline: availability and its frame reports</value>
+  </data>
+  <data name="Adv_xess_options" xml:space="preserve">
+    <value>XeSS's options</value>
+  </data>
+  <data name="Advanced_Chart_Band" xml:space="preserve">
+    <value>More than eight series: the lowest, the average and the highest of them are drawn. The table lists each one.</value>
+  </data>
+  <data name="Advanced_Chart_Empty" xml:space="preserve">
+    <value>Nothing to draw yet.</value>
+  </data>
+  <data name="Advanced_Chart_Header" xml:space="preserve">
+    <value>Over time</value>
+  </data>
+  <data name="Advanced_Chart_LiveNote" xml:space="preserve">
+    <value>The last five minutes, kept in memory only.</value>
+  </data>
+  <data name="Advanced_Chart_Metric" xml:space="preserve">
+    <value>Show</value>
+  </data>
+  <data name="Advanced_Chart_Seconds" xml:space="preserve">
+    <value>Seconds from the session's start</value>
+  </data>
+  <data name="Advanced_Chart_Time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="Advanced_Col_Name" xml:space="preserve">
+    <value>Reading</value>
+  </data>
+  <data name="Advanced_Col_ReadAt" xml:space="preserve">
+    <value>Read at</value>
+  </data>
+  <data name="Advanced_Col_Samples" xml:space="preserve">
+    <value>Readings</value>
+  </data>
+  <data name="Advanced_Col_Scope" xml:space="preserve">
+    <value>Belongs to</value>
+  </data>
+  <data name="Advanced_Col_Source" xml:space="preserve">
+    <value>Source</value>
+  </data>
+  <data name="Advanced_Col_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Advanced_Col_Value" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="Advanced_Elevation_Hint" xml:space="preserve">
+    <value>The processor, the memory and the motherboard are read only when the capture agent runs as administrator with PawnIO installed (Settings ▸ Capture agent).</value>
+  </data>
+  <data name="Advanced_Facts_Header" xml:space="preserve">
+    <value>About this PC</value>
+  </data>
+  <data name="Advanced_Header" xml:space="preserve">
+    <value>Advanced metrics</value>
+  </data>
+  <data name="Advanced_Machine_Intro" xml:space="preserve">
+    <value>What the graphics driver and the hardware sensors say about this PC right now. It is read only while this page is open or a game is being recorded, and nothing shown here is stored.</value>
+  </data>
+  <data name="Advanced_Max" xml:space="preserve">
+    <value>Highest</value>
+  </data>
+  <data name="Advanced_Mean" xml:space="preserve">
+    <value>Average</value>
+  </data>
+  <data name="Advanced_Min" xml:space="preserve">
+    <value>Lowest</value>
+  </data>
+  <data name="Advanced_Now_Header" xml:space="preserve">
+    <value>Right now</value>
+  </data>
+  <data name="Advanced_Session_Empty" xml:space="preserve">
+    <value>No session has been recorded with Advanced metrics on yet. A session recorded while it was off is not filled in later.</value>
+  </data>
+  <data name="Advanced_Session_Facts" xml:space="preserve">
+    <value>The PC and the session</value>
+  </data>
+  <data name="Advanced_Session_NoSeries" xml:space="preserve">
+    <value>This session's per-second series are no longer kept (Settings ▸ Recording ▸ Raw series kept per game); its statistics are.</value>
+  </data>
+  <data name="Advanced_Session_NoStats" xml:space="preserve">
+    <value>No reading was stored for this session.</value>
+  </data>
+  <data name="Advanced_Session_Pick" xml:space="preserve">
+    <value>Session</value>
+  </data>
+  <data name="Advanced_Session_Stats" xml:space="preserve">
+    <value>Statistics of the session</value>
+  </data>
+  <data name="Advanced_Sources_Intro" xml:space="preserve">
+    <value>Everything FrameLedger knows how to read, and everything it does not read, with the reason.</value>
+  </data>
+  <data name="Advanced_SourcesLine" xml:space="preserve">
+    <value>NVIDIA driver: {0}. Graphics-card sensors: {1}. Processor, memory and motherboard sensors: {2}.</value>
+  </data>
+  <data name="Advanced_State_Live" xml:space="preserve">
+    <value>Read by the capture agent at {0}. NVIDIA's figures are read every second, the sensors every five.</value>
+  </data>
+  <data name="Advanced_State_NoAgent" xml:space="preserve">
+    <value>The capture agent is not answering. What is shown below is as old as its time says.</value>
+  </data>
+  <data name="Advanced_State_Off" xml:space="preserve">
+    <value>Advanced metrics is off, so nothing is read. Turn it on in Settings ▸ Recording.</value>
+  </data>
+  <data name="Advanced_State_OlderAgent" xml:space="preserve">
+    <value>The capture agent that is running is an older version and cannot answer this. Restart FrameLedger.</value>
+  </data>
+  <data name="Advanced_State_Viewer" xml:space="preserve">
+    <value>This is a copy of a ledger: nothing is read from this PC. The sessions stored in the copy are under Session.</value>
+  </data>
+  <data name="Advanced_State_Waiting" xml:space="preserve">
+    <value>The capture agent is opening its sources…</value>
+  </data>
+  <data name="Advanced_Status_Read" xml:space="preserve">
+    <value>Read</value>
+  </data>
+  <data name="Advanced_Status_Readable" xml:space="preserve">
+    <value>Read when a session or this page asks</value>
+  </data>
+  <data name="Advanced_Status_SourceSilent" xml:space="preserve">
+    <value>Not read now: {0}</value>
+  </data>
+  <data name="Advanced_Tab_Machine" xml:space="preserve">
+    <value>This PC</value>
+  </data>
+  <data name="Advanced_Tab_Session" xml:space="preserve">
+    <value>Session</value>
+  </data>
+  <data name="Advanced_Tab_Sources" xml:space="preserve">
+    <value>Sources</value>
+  </data>
+  <data name="AdvGroup_Board" xml:space="preserve">
+    <value>Motherboard</value>
+  </data>
+  <data name="AdvGroup_Cpu" xml:space="preserve">
+    <value>Processor</value>
+  </data>
+  <data name="AdvGroup_Display" xml:space="preserve">
+    <value>Displays</value>
+  </data>
+  <data name="AdvGroup_Driver" xml:space="preserve">
+    <value>Graphics driver</value>
+  </data>
+  <data name="AdvGroup_FrameGeneration" xml:space="preserve">
+    <value>Frame generation</value>
+  </data>
+  <data name="AdvGroup_Gpu" xml:space="preserve">
+    <value>Graphics card</value>
+  </data>
+  <data name="AdvGroup_GpuMemory" xml:space="preserve">
+    <value>Graphics card memory</value>
+  </data>
+  <data name="AdvGroup_Latency" xml:space="preserve">
+    <value>Latency</value>
+  </data>
+  <data name="AdvGroup_Memory" xml:space="preserve">
+    <value>Memory</value>
+  </data>
+  <data name="AdvGroup_Storage" xml:space="preserve">
+    <value>Storage</value>
+  </data>
+  <data name="AdvGroup_Upscaling" xml:space="preserve">
+    <value>Upscaling</value>
+  </data>
+  <data name="AdvReach_Deferred" xml:space="preserve">
+    <value>Not read in this release</value>
+  </data>
+  <data name="AdvReach_HookedCall" xml:space="preserve">
+    <value>Inside the game - comes with a later release</value>
+  </data>
+  <data name="AdvReach_Identifier" xml:space="preserve">
+    <value>Never read: it identifies this PC, a display or another program</value>
+  </data>
+  <data name="AdvReach_Licence" xml:space="preserve">
+    <value>Not read: the vendor's licence does not allow it</value>
+  </data>
+  <data name="AdvReach_NewHook" xml:space="preserve">
+    <value>Inside the game, with a new hook - comes with a later release</value>
+  </data>
+  <data name="AdvReach_NotInHeaders" xml:space="preserve">
+    <value>Not offered by this interface</value>
+  </data>
+  <data name="AdvReach_PlayerState" xml:space="preserve">
+    <value>Never read: it is the player's state in the game</value>
+  </data>
+  <data name="AdvReach_Refused" xml:space="preserve">
+    <value>Not read: it would make the sensor library search every USB device</value>
+  </data>
+  <data name="AdvReach_Spike" xml:space="preserve">
+    <value>Being studied; not decided</value>
+  </data>
+  <data name="AdvScope_MachineFact" xml:space="preserve">
+    <value>This PC</value>
+  </data>
+  <data name="AdvScope_Series" xml:space="preserve">
+    <value>A session, over time</value>
+  </data>
+  <data name="AdvScope_SessionFact" xml:space="preserve">
+    <value>A session</value>
+  </data>
+  <data name="AdvSource_Faulted" xml:space="preserve">
+    <value>failed while reading</value>
+  </data>
+  <data name="AdvSource_NotElevated" xml:space="preserve">
+    <value>the capture agent is not running as administrator</value>
+  </data>
+  <data name="AdvSource_NotPresent" xml:space="preserve">
+    <value>not present on this PC</value>
+  </data>
+  <data name="AdvSource_PawnIoMissing" xml:space="preserve">
+    <value>PawnIO is not installed</value>
+  </data>
+  <data name="AdvSource_Reading" xml:space="preserve">
+    <value>answering</value>
+  </data>
+  <data name="AdvSource_Unknown" xml:space="preserve">
+    <value>not asked yet</value>
+  </data>
+  <data name="AdvToken_adaptive_sync" xml:space="preserve">
+    <value>Adaptive sync</value>
+  </data>
+  <data name="AdvToken_agp" xml:space="preserve">
+    <value>AGP</value>
+  </data>
+  <data name="AdvToken_axi" xml:space="preserve">
+    <value>AXI</value>
+  </data>
+  <data name="AdvToken_bt2100_pq" xml:space="preserve">
+    <value>BT.2100 PQ (HDR10)</value>
+  </data>
+  <data name="AdvToken_desktop" xml:space="preserve">
+    <value>Desktop</value>
+  </data>
+  <data name="AdvToken_discrete" xml:space="preserve">
+    <value>Discrete</value>
+  </data>
+  <data name="AdvToken_dolby_vision" xml:space="preserve">
+    <value>Dolby Vision</value>
+  </data>
+  <data name="AdvToken_driver_default" xml:space="preserve">
+    <value>Driver default</value>
+  </data>
+  <data name="AdvToken_edr" xml:space="preserve">
+    <value>EDR</value>
+  </data>
+  <data name="AdvToken_fpci" xml:space="preserve">
+    <value>FPCI</value>
+  </data>
+  <data name="AdvToken_game_ready" xml:space="preserve">
+    <value>Game Ready</value>
+  </data>
+  <data name="AdvToken_gsync_module" xml:space="preserve">
+    <value>G-SYNC module</value>
+  </data>
+  <data name="AdvToken_hdr10" xml:space="preserve">
+    <value>HDR10</value>
+  </data>
+  <data name="AdvToken_hdr10_plus" xml:space="preserve">
+    <value>HDR10+</value>
+  </data>
+  <data name="AdvToken_hdr10_plus_gaming" xml:space="preserve">
+    <value>HDR10+ Gaming</value>
+  </data>
+  <data name="AdvToken_integrated" xml:space="preserve">
+    <value>Integrated</value>
+  </data>
+  <data name="AdvToken_laptop" xml:space="preserve">
+    <value>Laptop</value>
+  </data>
+  <data name="AdvToken_no_profile_for_game" xml:space="preserve">
+    <value>The driver has no profile for this game</value>
+  </data>
+  <data name="AdvToken_not_a_number" xml:space="preserve">
+    <value>Not a number</value>
+  </data>
+  <data name="AdvToken_not_supported" xml:space="preserve">
+    <value>Not supported</value>
+  </data>
+  <data name="AdvToken_pci" xml:space="preserve">
+    <value>PCI</value>
+  </data>
+  <data name="AdvToken_pci_express" xml:space="preserve">
+    <value>PCI Express</value>
+  </data>
+  <data name="AdvToken_rtx_new_feature" xml:space="preserve">
+    <value>RTX new-feature branch</value>
+  </data>
+  <data name="AdvToken_rtx_production" xml:space="preserve">
+    <value>RTX production branch</value>
+  </data>
+  <data name="AdvToken_scrgb_linear" xml:space="preserve">
+    <value>scRGB (linear)</value>
+  </data>
+  <data name="AdvToken_srgb" xml:space="preserve">
+    <value>sRGB</value>
+  </data>
+  <data name="AdvToken_studio" xml:space="preserve">
+    <value>Studio</value>
+  </data>
+  <data name="AdvToken_ulmb" xml:space="preserve">
+    <value>ULMB</value>
+  </data>
+  <data name="AdvToken_usable_now" xml:space="preserve">
+    <value>Usable at the current mode</value>
+  </data>
+  <data name="AdvToken_user_set" xml:space="preserve">
+    <value>Set by the user</value>
+  </data>
+  <data name="AdvToken_variable_refresh" xml:space="preserve">
+    <value>Variable refresh</value>
   </data>
   <data name="Agent_Banner_Missing_Body" xml:space="preserve">
     <value>FrameLedger.Agent.exe was not found beside this application. Sessions are still readable; live status and capture control are not.</value>
@@ -281,6 +1010,9 @@
   </data>
   <data name="Menu_Tools_VulkanLayer" xml:space="preserve">
     <value>Vulkan layer registration…</value>
+  </data>
+  <data name="Nav_Advanced" xml:space="preserve">
+    <value>Advanced</value>
   </data>
   <data name="Nav_Compare" xml:space="preserve">
     <value>Compare</value>
@@ -959,6 +1691,9 @@
   </data>
   <data name="Sessions_Col_Tier" xml:space="preserve">
     <value>Tier</value>
+  </data>
+  <data name="Summary_Advanced_Button" xml:space="preserve">
+    <value>Advanced metrics…</value>
   </data>
   <data name="Tier_Dash_Tooltip" xml:space="preserve">
     <value>—: frame generation was measured as none, so there is no displayed rate distinct from the native one</value>

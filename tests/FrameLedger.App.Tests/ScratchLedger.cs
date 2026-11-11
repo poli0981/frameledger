@@ -44,7 +44,7 @@ internal sealed class ScratchLedger : IAsyncDisposable
 
     public async Task<long> SessionAsync(long gameId, DateTimeOffset startedAt, int seconds = 600, bool hooked = true, string fgMode = "none", double? native = 60, double? displayed = null, double? factor = null, ExitStatus exit = ExitStatus.Normal, string? fgRefusal = null, double? presented = null, string? qualifier = null,
         IReadOnlyList<SensorBlob>? sensors = null, Domain.Display.DisplaySummary? display = null, bool settingsChanged = false,
-        Func<SessionRow, SessionRow>? shape = null)
+        Func<SessionRow, SessionRow>? shape = null, AdvancedSessionRow? advanced = null)
     {
         long snapshotId = await new SqliteHardwareSnapshotRepository(Db).EnsureAsync(new HardwareSnapshot { GpuName = "G" }, startedAt, TestContext.Current.CancellationToken).ConfigureAwait(false);
         var row = new SessionRow
@@ -81,7 +81,7 @@ internal sealed class ScratchLedger : IAsyncDisposable
         };
         row = Application.Recording.SessionDisplayColumns.WithDisplay(row, display);
         row = shape?.Invoke(row) ?? row;
-        return await Sessions.InsertFinalizedAsync(new FinalizedSession { Row = row, Sensors = sensors ?? [] }, TestContext.Current.CancellationToken).ConfigureAwait(false);
+        return await Sessions.InsertFinalizedAsync(new FinalizedSession { Row = row, Sensors = sensors ?? [], Advanced = advanced }, TestContext.Current.CancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>A session that was not hooked, with the sensors a Tier-2 row keeps (since 2026-09-22): three ticks of GPU temperature and power.</summary>
