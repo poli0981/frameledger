@@ -18,6 +18,10 @@ public sealed class ShmCaptureSink(ShmRingReader reader) : ICaptureSink
 
     public FlDisplayState? DisplayState => _reader.DisplayState;
 
+    public FlAdvancedState? AdvancedState => _reader.AdvancedState;
+
+    public void SetAdvancedRequested(bool requested) => _reader.SetAdvancedRequested(requested);
+
     public long TotalDropped => _reader.TotalDropped;
 
     public long TotalGaps => _reader.TotalGaps;

@@ -39,9 +39,10 @@ int main() {
     std::printf("{\n");
     std::printf("  \"layoutVersion\": %u,\n", FL_SHM_LAYOUT_VERSION);
     std::printf(
-        "  \"regions\": { \"handshake\": %u, \"writer\": %u, \"control\": %u, \"display\": %u, \"ring\": %u },\n",
+        "  \"regions\": { \"handshake\": %u, \"writer\": %u, \"control\": %u, \"display\": %u, \"advanced\": %u, "
+        "\"ring\": %u },\n",
         FL_SHM_HANDSHAKE_OFFSET, FL_SHM_WRITER_OFFSET, FL_SHM_CONTROL_OFFSET, FL_SHM_DISPLAY_OFFSET,
-        FL_SHM_RING_OFFSET);
+        FL_SHM_ADVANCED_OFFSET, FL_SHM_RING_OFFSET);
     // D33: the tolerance mapping (fl_tolerance.h) the Agent writes before an injection under a user-mode exception.
     std::printf("  \"tolerance\": { \"magic\": %u, \"version\": %u, \"maxFamilies\": %u, \"nameLen\": %u },\n",
                 FL_TOLERANCE_MAGIC, FL_TOLERANCE_VERSION, FL_TOLERANCE_MAX_FAMILIES, FL_TOLERANCE_NAME_LEN);
@@ -86,7 +87,8 @@ int main() {
     Field("overlayEnabled", offsetof(FlControlBlock, overlayEnabled), sizeof(uint32_t));
     Field("guardTicks", offsetof(FlControlBlock, guardTicks), sizeof(uint32_t));
     Field("logFlushRequested", offsetof(FlControlBlock, logFlushRequested), sizeof(uint32_t));
-    Field("reserved", offsetof(FlControlBlock, reserved), sizeof(uint32_t) * 11, true);
+    Field("advancedRequested", offsetof(FlControlBlock, advancedRequested), sizeof(uint32_t));
+    Field("reserved", offsetof(FlControlBlock, reserved), sizeof(uint32_t) * 10, true);
     std::printf("    ] },\n");
 
     // Layout 4 (beta.10): region 4, the presenting swap chain's display facts.
@@ -102,6 +104,72 @@ int main() {
     Field("samples", offsetof(FlDisplayState, samples), sizeof(uint32_t));
     Field("sampleQpc", offsetof(FlDisplayState, sampleQpc), sizeof(uint64_t));
     Field("reserved", offsetof(FlDisplayState, reserved), sizeof(uint32_t) * 4, true);
+    std::printf("    ] },\n");
+
+    // Layout 5 (Advanced metrics train B): region 5, what a hooked game told its upscaler. EVERY member, the ones a
+    // later release fills included - the mirror is checked whole or it is not checked.
+#define FL_ADV_FIELD(name) Field(#name, offsetof(FlAdvancedState, name), sizeof(FlAdvancedState::name))
+    std::printf("    \"FlAdvancedState\": { \"size\": %zu, \"fields\": [\n", sizeof(FlAdvancedState));
+    FL_ADV_FIELD(seq);
+    FL_ADV_FIELD(validMask);
+    FL_ADV_FIELD(samples);
+    FL_ADV_FIELD(reserved0);
+    FL_ADV_FIELD(sampleQpc);
+    FL_ADV_FIELD(reservedHeader);
+    FL_ADV_FIELD(dlssStructVersion);
+    FL_ADV_FIELD(dlssOptionsSeen);
+    FL_ADV_FIELD(dlssOutputWidth);
+    FL_ADV_FIELD(dlssOutputHeight);
+    FL_ADV_FIELD(dlssPreExposureBits);
+    FL_ADV_FIELD(dlssExposureScaleBits);
+    FL_ADV_FIELD(dlssPresets);
+    FL_ADV_FIELD(dlssColorBuffersHdr);
+    FL_ADV_FIELD(dlssAutoExposure);
+    FL_ADV_FIELD(dlssAlphaUpscaling);
+    FL_ADV_FIELD(dlssPad);
+    FL_ADV_FIELD(reservedDlss);
+    FL_ADV_FIELD(ffxDispatches);
+    FL_ADV_FIELD(ffxSharpenSeen);
+    FL_ADV_FIELD(ffxSharpnessMinBits);
+    FL_ADV_FIELD(ffxSharpnessMaxBits);
+    FL_ADV_FIELD(ffxJitterMaxXBits);
+    FL_ADV_FIELD(ffxJitterMaxYBits);
+    FL_ADV_FIELD(ffxPreExposureMinBits);
+    FL_ADV_FIELD(ffxPreExposureMaxBits);
+    FL_ADV_FIELD(ffxNearBits);
+    FL_ADV_FIELD(ffxFarBits);
+    FL_ADV_FIELD(ffxFovMinBits);
+    FL_ADV_FIELD(ffxFovMaxBits);
+    FL_ADV_FIELD(ffxFlagsSeen);
+    FL_ADV_FIELD(ffxResets);
+    FL_ADV_FIELD(ffxFrameTimeCount);
+    FL_ADV_FIELD(ffxFrameTimeSumUs);
+    FL_ADV_FIELD(ffxMemoryTotalBytes);
+    FL_ADV_FIELD(ffxMemoryAliasableBytes);
+    FL_ADV_FIELD(ffxMemoryQueries);
+    FL_ADV_FIELD(ffxFgConfigures);
+    FL_ADV_FIELD(ffxFgEnabledSeen);
+    FL_ADV_FIELD(ffxFgAsyncSeen);
+    FL_ADV_FIELD(ffxFgOnlyGeneratedSeen);
+    FL_ADV_FIELD(ffxFgFlagsSeen);
+    FL_ADV_FIELD(ffxFgRect);
+    FL_ADV_FIELD(reservedFfx);
+    FL_ADV_FIELD(slConstantsCalls);
+    FL_ADV_FIELD(slResets);
+    FL_ADV_FIELD(slJitterMaxXBits);
+    FL_ADV_FIELD(slJitterMaxYBits);
+    FL_ADV_FIELD(slMvecScaleXBits);
+    FL_ADV_FIELD(slMvecScaleYBits);
+    FL_ADV_FIELD(slNearBits);
+    FL_ADV_FIELD(slFarBits);
+    FL_ADV_FIELD(slFovMinBits);
+    FL_ADV_FIELD(slFovMaxBits);
+    FL_ADV_FIELD(slAspectBits);
+    FL_ADV_FIELD(slFlagsSeenTrue);
+    FL_ADV_FIELD(slFlagsSeenFalse);
+    FL_ADV_FIELD(reservedSl);
+    Field("features", offsetof(FlAdvancedState, features), sizeof(FlAdvancedState::features), true);
+#undef FL_ADV_FIELD
     std::printf("    ] },\n");
 
     std::printf("    \"FlFrameRecord\": { \"size\": %zu, \"fields\": [\n", sizeof(FlFrameRecord));

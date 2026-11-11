@@ -37,7 +37,7 @@ public static class ShmLayout
     /// user to restart the game — the DLL lives inside a running process, so the two sides cannot be
     /// assumed to update in lockstep.
     /// </summary>
-    public const uint LayoutVersion = 4u;
+    public const uint LayoutVersion = 5u;
 
     public const uint HandshakeOffset = 0x00u;
     public const uint WriterOffset = 0x40u;
@@ -46,7 +46,13 @@ public static class ShmLayout
     /// <summary>Region 4, <see cref="FlDisplayState"/> (layout 4, beta.10): the ring moved from 0xC0 to make room for it.</summary>
     public const uint DisplayOffset = 0xC0u;
 
-    public const uint RingOffset = 0x100u;
+    /// <summary>
+    /// Region 5, <see cref="FlAdvancedState"/> (layout 5, Advanced metrics train B, owner decisions D111 and D113): what a
+    /// hooked game told its upscaler. The ring moved from 0x100 to make room for it.
+    /// </summary>
+    public const uint AdvancedOffset = 0x100u;
+
+    public const uint RingOffset = 0x6C0u;
 
     /// <summary>8192 × 64 B = 512 KiB, ≈16 s at 500 fps.</summary>
     public const uint DefaultCapacity = 8192u;
@@ -657,8 +663,15 @@ public unsafe struct FlControlBlock
     /// </summary>
     public uint LogFlushRequested;
 
+    /// <summary>
+    /// 1 while the session this ring belongs to records Advanced metrics, 0 otherwise (owner decision D111). Written
+    /// unconditionally at attach - the block outlives a session. While it is 0 the Overlay reads and hooks exactly what it
+    /// did before the option existed, and region 5 stays zero.
+    /// </summary>
+    public uint AdvancedRequested;
+
     /// <summary>Must be zero.</summary>
-    public fixed uint Reserved[11];
+    public fixed uint Reserved[10];
 }
 
 /// <summary><see cref="FlDisplayState.Flags"/> bits (layout 4, beta.10). A reader ignores a bit it does not know.</summary>
@@ -725,7 +738,204 @@ public unsafe struct FlDisplayState
     public fixed uint Reserved[4];
 }
 
-/// <summary>Region 5 — the ring. Exactly 64 bytes, no implicit padding.</summary>
+/// <summary><see cref="FlAdvancedState.ValidMask"/> bits (layout 5). A reader ignores a bit it does not know.</summary>
+[Flags]
+public enum FlAdvancedValid : uint
+{
+    None = 0,
+
+    /// <summary><c>sl::DLSSOptions</c> was seen chained into <c>slEvaluateFeature</c>'s inputs.</summary>
+    DlssOptions = 1u << 0,
+
+    /// <summary>An ffx upscale dispatch's extra fields were read.</summary>
+    FfxUpscale = 1u << 1,
+
+    /// <summary>The game asked <c>ffxQuery</c> for the upscaler's memory, and it answered.</summary>
+    FfxMemory = 1u << 2,
+
+    /// <summary>0.1.0-beta.41: <c>ffxConfigure</c> with a frame-generation descriptor was seen.</summary>
+    FfxFgConfig = 1u << 3,
+
+    /// <summary>0.1.0-beta.41: <c>slSetConstants</c> was seen.</summary>
+    SlConstants = 1u << 4,
+
+    /// <summary>0.1.0-beta.42: at least one feature slot is filled.</summary>
+    SlFeatures = 1u << 5,
+}
+
+/// <summary>
+/// Region 5 — Overlay-written by its watchdog, once a second, <b>only while <see cref="FlControlBlock.AdvancedRequested"/>
+/// is 1</b> (layout 5, 2026-11-11, Advanced metrics train B): what a hooked game told its upscaler, read from the arguments
+/// of calls the Overlay hooks. Sized once for the three releases of the train: a member a later release fills is here
+/// and stays zero until then.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>Zero is "not read", never a value.</b> <see cref="ValidMask"/> says which groups were ever read. Inside a group a
+/// Streamline Boolean or a DLSS preset is the vendor's value PLUS ONE, a float is its bits with
+/// <see cref="FloatNone"/> for "no value seen", and a size of 0 is "not given".
+/// </para>
+/// <para>
+/// <b>A seqlock with one writer.</b> <see cref="Seq"/> is odd while the watchdog is inside; a copy taken between two reads
+/// of an even, unchanged value is consistent (<c>ShmRingReader.AdvancedState</c>).
+/// </para>
+/// </remarks>
+[StructLayout(LayoutKind.Sequential, Size = 1472)]
+public unsafe struct FlAdvancedState
+{
+    /// <summary>A float nobody saw: the bits no detour stores.</summary>
+    public const uint FloatNone = 0xFFFFFFFFu;
+
+    /// <summary>How many feature slots <see cref="Features"/> holds.</summary>
+    public const int FeatureSlots = 12;
+
+    /// <summary>How many words one feature slot is (<c>fl_shm.h</c> lists them).</summary>
+    public const int FeatureWords = 24;
+
+    /// <summary>Odd while the watchdog is inside; +2 per publication.</summary>
+    public uint Seq;
+
+    public FlAdvancedValid ValidMask;
+
+    /// <summary>Publications (wraps).</summary>
+    public uint Samples;
+
+    /// <summary>Must be zero.</summary>
+    public uint Reserved0;
+
+    /// <summary>QueryPerformanceCounter at the last publication.</summary>
+    public ulong SampleQpc;
+
+    /// <summary>Must be zero.</summary>
+    public fixed uint ReservedHeader[10];
+
+    /// <summary>The <c>structVersion</c> the game's <c>sl::DLSSOptions</c> declared; 0 = none seen.</summary>
+    public uint DlssStructVersion;
+
+    /// <summary>Evaluates that chained a <c>DLSSOptions</c> (wraps).</summary>
+    public uint DlssOptionsSeen;
+
+    /// <summary>0 = not given.</summary>
+    public uint DlssOutputWidth;
+
+    public uint DlssOutputHeight;
+
+    /// <summary>Float bits, or <see cref="FloatNone"/>.</summary>
+    public uint DlssPreExposureBits;
+
+    public uint DlssExposureScaleBits;
+
+    /// <summary><c>sl::DLSSPreset</c> PLUS ONE: DLAA, quality, balanced, performance, ultra performance, ultra quality.</summary>
+    public fixed byte DlssPresets[6];
+
+    /// <summary><c>sl::Boolean</c> PLUS ONE; 0 = not read.</summary>
+    public byte DlssColorBuffersHdr;
+
+    public byte DlssAutoExposure;
+
+    public byte DlssAlphaUpscaling;
+
+    /// <summary>Must be zero.</summary>
+    public fixed byte DlssPad[3];
+
+    /// <summary>Must be zero.</summary>
+    public fixed uint ReservedDlss[7];
+
+    /// <summary>Upscale dispatches whose extras were read (wraps).</summary>
+    public uint FfxDispatches;
+
+    /// <summary>Bit 0: sharpening seen off; bit 1: seen on.</summary>
+    public uint FfxSharpenSeen;
+
+    public uint FfxSharpnessMinBits;
+
+    public uint FfxSharpnessMaxBits;
+
+    /// <summary>The largest |jitterOffset.x| seen.</summary>
+    public uint FfxJitterMaxXBits;
+
+    public uint FfxJitterMaxYBits;
+
+    public uint FfxPreExposureMinBits;
+
+    public uint FfxPreExposureMaxBits;
+
+    public uint FfxNearBits;
+
+    public uint FfxFarBits;
+
+    /// <summary>Radians: the lowest and the highest of the session (owner decision D114).</summary>
+    public uint FfxFovMinBits;
+
+    public uint FfxFovMaxBits;
+
+    /// <summary>Every <c>FFX_UPSCALE_FLAG</c> bit any dispatch carried.</summary>
+    public uint FfxFlagsSeen;
+
+    public uint FfxResets;
+
+    /// <summary>Dispatches since the last publication, and the sum of their <c>frameTimeDelta</c> in microseconds.</summary>
+    public uint FfxFrameTimeCount;
+
+    public uint FfxFrameTimeSumUs;
+
+    public ulong FfxMemoryTotalBytes;
+
+    public ulong FfxMemoryAliasableBytes;
+
+    public uint FfxMemoryQueries;
+
+    public uint FfxFgConfigures;
+
+    public uint FfxFgEnabledSeen;
+
+    public uint FfxFgAsyncSeen;
+
+    public uint FfxFgOnlyGeneratedSeen;
+
+    public uint FfxFgFlagsSeen;
+
+    /// <summary>left, top, width, height.</summary>
+    public fixed int FfxFgRect[4];
+
+    /// <summary>Must be zero.</summary>
+    public fixed uint ReservedFfx[2];
+
+    public uint SlConstantsCalls;
+
+    public uint SlResets;
+
+    public uint SlJitterMaxXBits;
+
+    public uint SlJitterMaxYBits;
+
+    public uint SlMvecScaleXBits;
+
+    public uint SlMvecScaleYBits;
+
+    public uint SlNearBits;
+
+    public uint SlFarBits;
+
+    public uint SlFovMinBits;
+
+    public uint SlFovMaxBits;
+
+    public uint SlAspectBits;
+
+    /// <summary>One bit per <c>sl::Constants</c> Boolean seen true, in the header's order.</summary>
+    public uint SlFlagsSeenTrue;
+
+    public uint SlFlagsSeenFalse;
+
+    /// <summary>Must be zero.</summary>
+    public fixed uint ReservedSl[3];
+
+    /// <summary><see cref="FeatureSlots"/> slots of <see cref="FeatureWords"/> words each (0.1.0-beta.42).</summary>
+    public fixed uint Features[FeatureSlots * FeatureWords];
+}
+
+/// <summary>Region 6 — the ring. Exactly 64 bytes, no implicit padding.</summary>
 [StructLayout(LayoutKind.Sequential, Size = 64)]
 public unsafe struct FlFrameRecord
 {
