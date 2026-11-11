@@ -35,106 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Added
-
-- **"Advanced metrics" is planned, and its inventory is written — nothing reads it yet.** The owner asked for a
-  setting, *Thông số nâng cao*, with a navigation item of its own that shows as much as the NVAPI and Streamline
-  headers and PawnIO make available, each value under what it belongs to: one game session, or the PC. This pull
-  request is the first of that train and changes nothing you can see or record. It adds the list everything else in
-  the train reads — `AdvancedMetricCatalog`, 137 entries: what the Agent will read from NVAPI and
-  LibreHardwareMonitor (the card's firmware, architecture and cores; its memory with evictions and promotions; its
-  utilisation by domain; what a display can do with HDR and variable refresh; the driver's profile; and, as
-  administrator with PawnIO, the processor per core, the motherboard, the memory modules and the drives'
-  temperatures), what can only be read inside a game and waits for a later release, **and what is never read with the
-  reason** — a serial number, a display's EDID, the list of programs that are encoding, the camera's position, what
-  a vendor's licence closes. `docs/18_GPU_VENDOR_APIS.md` §Advanced metrics holds the design, the owner's decisions
-  D101–D108 and the same list as a table; a test fails when the table and the catalog differ in either direction.
-
-- **The NVIDIA bridge can read what Advanced metrics will show — and nothing calls it yet.**
-  `FrameLedger.NvapiBridge.dll`, the library the Agent loads into its own process and never into a game, gains five
-  reads (its ABI 3): the card's facts — firmware version, architecture, ray-tracing and tensor core counts, base and
-  boost clocks, its memory sizes, the driver's package; what it says now — free and used video memory with evictions
-  and promotions, the frame-buffer, video and bus utilisation, the performance state, the encoder's load; what each
-  connected display can do with HDR and variable refresh; the state of the display a game presents on; and every
-  setting of a driver profile. On the development PC's RTX 5080 all twenty facts and eight of the ten live groups
-  answer — the card has no board or power-supply temperature sensor, so those two will read N/A.
-  **It reads no identifier**: no serial number, no unique id, no display EDID, and not which programs are encoding.
-- **"The bridge never calls a setter" is now a build check.** A new gate, `tools/nvapi-readonly-check.ps1`, compares
-  every NVAPI call in the bridge's source with a committed list of forty-four reads, in both directions, and refuses a
-  name that sets, saves, restores, registers or controls something — or returns an identifier — even when someone
-  adds it to the list.
-
-- **The reader behind Advanced metrics exists, was measured on a real PC, and is still not switched on.** One
-  reader for the whole Agent, on a thread of its own, that runs only while a session or the page needs it: NVIDIA's
-  figures every second, and every sensor LibreHardwareMonitor has for the graphics card — each fan and its duty, the
-  core voltage, PCI Express traffic, the load of every engine. When the Agent runs as administrator with PawnIO
-  installed it will also read the processor per core, the memory and the motherboard's sensor chip.
-  **A drive's temperature is not read**: the library cannot list drives without touching removable ones, so that
-  group is never opened and the value will read N/A with that reason.
-- **`FrameLedger.CaptureHost probe-advanced`** (a developer tool, not shipped): runs that reader for a few seconds
-  on your own rights and prints everything it read and what it cost. On the development PC it read 35 facts and 58
-  values a second — and showed that one refresh of the sensor library takes 14 ms of processor time, so the reader
-  refreshes it every five seconds, where NVIDIA's own figures (0.4 ms) stay at one a second.
-
-- **The ledger can hold Advanced metrics — and holds none yet.** Schema 23 adds two tables: one for the facts of
-  the PC, stored once per distinct set, and one for what a session recorded with the option on knows — its own
-  facts, which sources answered and why the others did not, and the statistics of its extra series. Nothing is
-  added to the session row itself, so what the JSON export and a bug bundle carry does not grow. The extra series
-  are stored beside the others under names of their own, with a real "no reading" for a second in which a sensor
-  was not read. One hour of them is about 0.2 MB. **A session recorded with the option off stores nothing of this**,
-  and the option does not exist yet. *A 0.1.0-beta.38 cannot open a ledger a later build has migrated.*
-
-- **Settings ▸ Recording ▸ Advanced metrics — the switch exists, off by default.** On, the capture agent reads more
-  from the graphics driver and the hardware sensors during a session and stores it with the session: the graphics
-  card's memory, load, clocks, fans, voltages and power in detail, what each display can do with HDR and variable
-  refresh and what the game's display did, the driver's settings for the game — and, when the agent runs as
-  administrator with PawnIO installed, the processor per core, the memory and the motherboard's sensors. **Off,
-  nothing more is read or stored**, and the shared reader is not even started. It applies from the next session, and
-  a session recorded while it was off is not filled in later. NVIDIA's figures are read once a second, the sensors
-  every five. **No page shows what is stored yet** — that is the next pull requests' — and none of it is in an
-  export or a bug report.
-- **The App can ask the agent what this PC reads right now — and no page asks yet.** A new request,
-  `GetAdvancedMachine`, answers what the agent's shared reader last read: the PC's facts, the newest value of every
-  series, and which sources answer or why they do not. It never touches a sensor itself, so it cannot hold up the
-  pipe. Each request also keeps the reader running for five seconds, which is how "with no game running, sensors are
-  read only while the page is open" works without anything telling the agent that a page closed. With Advanced
-  metrics off it answers that it is off, and nothing is read. On the App's side `AdvancedMachineFeed` asks once a
-  second while a page watches it and keeps each value with the moment it was read.
-- **The Advanced page.** While Advanced metrics is on, **Advanced** is the last item in the list on the left, and
-  **Ctrl+6** opens it. **This PC** shows what the graphics driver and the sensors say right now — the card's
-  firmware, cores and memory, what each display can do, the driver's settings, and every reading with the time it
-  was read at and a chart of its last five minutes. It is read only while the page is open, and is not stored.
-  **Session** shows what a session recorded with the option on kept: the PC as it was, what belonged to that session,
-  the lowest, average and highest of each reading, and a chart over the session. **Sources** lists every reading
-  FrameLedger knows of and, for each one it does not read, why — the agent is not an administrator, PawnIO is not
-  installed, it comes with a later release, or it is never read. A session's summary has an **Advanced metrics…**
-  button that opens that session there. In `en`, `vi` and `ja`; the user guide has a page for it.
-- **The terms window shows the Privacy Policy 2.15 and the Disclaimer 2.15 once.** The Privacy Policy names what
-  Advanced metrics reads and stores, only while it is on, and what it never reads: a serial number, a display's
-  identification data, a list of other programs. The Disclaimer's two sentences about PawnIO and about running the
-  agent as administrator said "the CPU temperature"; they now also name the processor's, the memory's and the
-  motherboard's sensors, read with Advanced metrics on. The same sentence changed in Settings, the first run, the
-  administrator dialog, the guide and `LIMITATIONS.md`.
-
-### Changed
-
-- **A crash file from a newer build no longer loses its tail in an older one.** The file a session writes as it goes
-  (so that a crash keeps what was recorded) is made of chunks; a reader that met a chunk of a kind it did not know
-  stopped there. It now passes over a whole chunk it does not know and reads on.
-
-### Fixed
-
-- **A sentence in the documents that kept a function from being called.** `docs/18_GPU_VENDOR_APIS.md` said the
-  vendored NVAPI headers do not declare `NvAPI_GPU_GetMemoryInfoEx`. They do — in `nvapi_lite_common.h`, which
-  `nvapi.h` includes; the search that found nothing had looked in `nvapi.h` alone. The row is corrected, and the
-  bridge will call it for the advanced memory rows. Nothing about the memory figures FrameLedger shows today changes.
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.39` | 2026-11-11 | [`docs/changelog/0.1.0-beta.39.md`](docs/changelog/0.1.0-beta.39.md) |
 | `0.1.0-beta.38` | 2026-11-11 | [`docs/changelog/0.1.0-beta.38.md`](docs/changelog/0.1.0-beta.38.md) |
 | `0.1.0-alpha.4` | 2026-11-11 | [`docs/changelog/0.1.0-alpha.4.md`](docs/changelog/0.1.0-alpha.4.md) |
 | `0.1.0-beta.37` | 2026-11-11 | [`docs/changelog/0.1.0-beta.37.md`](docs/changelog/0.1.0-beta.37.md) |
