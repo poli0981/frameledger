@@ -3,9 +3,9 @@
 #
 # The nuget entry also covers .config/dotnet-tools.json (the SonarScanner for
 # .NET, since 2026-10-25). No dotnet-sdk entry, on purpose: global.json is a
-# floor (10.0.100) with rollForward latestFeature, so every machine and the CI
-# runner already build with the newest 10.0 SDK they have; raising the floor is
-# a decision, not an update (docs/12_BUILD.md).
+# floor (11.0.100 since beta.37, D94) with rollForward latestFeature, so every
+# machine and the CI runner already build with the newest 11.0 SDK they have;
+# raising the floor is a decision, not an update (docs/12_BUILD.md).
 #
 # COOLDOWN (2026-10-25): a version update waits seven days after a release is
 # published, so a release that is pulled or found compromised in its first

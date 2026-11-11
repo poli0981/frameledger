@@ -13,8 +13,7 @@ namespace FrameLedger.Agent.Tests;
 public sealed class AgentCommandLineSurfaceTests
 {
     [Fact]
-    public void TheAcceptedOptionsAreExactlyThese()
-    {
+    public void TheAcceptedOptionsAreExactlyThese() =>
         // --exe / --seconds / --args are the host's three, with the same property: none can widen WHAT is
         // injected or skip a check. --last pages `sessions`. --data-dir is HANDOFF §P2 decision D6: a scratch
         // ledger for an operator or a test, and it exists only under --console.
@@ -22,7 +21,6 @@ public sealed class AgentCommandLineSurfaceTests
         // act: it bounds how often a RUNNING session writes its own crash-recovery file, so like --seconds it
         // cannot widen what is injected or skip a check.
         AgentCommandLine.AcceptedOptions.Should().BeEquivalentTo(["--exe", "--seconds", "--args", "--last", "--data-dir", "--partial-flush-seconds"]);
-    }
 
     [Fact]
     public void NoVerbOrOptionNamesAPidAPayloadOrAnOverride()
@@ -149,7 +147,7 @@ public sealed class AgentCommandLineSurfaceTests
     [Fact]
     public void ServeTakesOnlyTheAdminModesTwoOptions()
     {
-        string sid = FrameLedger.Infrastructure.Startup.AgentElevation.CurrentUserSid();
+        string sid = Infrastructure.Startup.AgentElevation.CurrentUserSid();
         AgentCommandLine forUser = AgentCommandLine.Parse(["--serve", "--for-user", sid]);
         forUser.Error.Should().BeNull();
         forUser.Verb.Should().Be(AgentVerb.Serve);

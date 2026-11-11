@@ -473,7 +473,7 @@ public sealed class AntiCheatPreScanSweepTests
         _ = await r.Sweep.SweepOnceAsync(Ct);
 
         r.Guard.Scanned.Should().BeEmpty("the notorious titles are on the lists by design");
-        r.Consent.Eligibility.Should().ContainSingle().Which.Should().Be((false, (string?)null, 0));
+        r.Consent.Eligibility.Should().ContainSingle().Which.Should().Be((false, null, 0));
     }
 
     [Fact]

@@ -8,12 +8,14 @@
       - TargetFramework's platform version selects which Windows API
         projections are available to compile against.
       - SupportedOSPlatformVersion is the floor CA1416 enforces.
-    NFR-8 requires Windows 10 22H2 = build 19045. Letting the supported version
-    default to the TFM's 19041 would silently accept installs three releases
-    below the stated floor.
+    NFR-8 names Windows 10 22H2 = build 19045 as the oldest Windows the code is
+    held to (since 2026-11-11, D95: not blocked there, and neither tested nor
+    supported - Microsoft supports .NET 11 on Windows 11). Letting the supported
+    version default to the TFM's 19041 would silently accept installs three
+    releases below that floor.
 
-    A bare `net10.0-windows` is wrong for a different reason: it resolves to
-    net10.0-windows7.0, and CA1416 would then error on Mica, MiniDumpWriteDump
+    A bare `net11.0-windows` is wrong for a different reason: it resolves to
+    net11.0-windows7.0, and CA1416 would then error on Mica, MiniDumpWriteDump
     and IDXGIAdapter3::QueryVideoMemoryInfo — every Windows-10-era API this
     application is built on.
 
@@ -25,8 +27,8 @@
     nothing and CA1416 still enforces the 19045 floor at the API level.
   -->
   <PropertyGroup>
-    <!-- THE ALPHA BRANCH (D73/D76): net11.0 - the one line of this file that differs from main (docs/12_BUILD.md
-         §The alpha line). SupportedOSPlatformVersion stays 19045: CA1416 holds the code to Windows 10 22H2. -->
+    <!-- .NET 11 since 0.1.0-beta.37 (owner decision D94, 2026-11-11; docs/12_BUILD.md). net10.0 until then, and
+         net11.0 on the alpha branch from 2026-10-31. -->
     <TargetFramework>net11.0-windows10.0.22621.0</TargetFramework>
     <SupportedOSPlatformVersion>10.0.19045.0</SupportedOSPlatformVersion>
 
@@ -71,17 +73,27 @@
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
 
     <!-- D73 (2026-10-31): the RELEASE LINE, from the RELEASE_LINE file beside VERSION - `main`, the betas and releases on
-         the .NET that global.json pins, or `alpha`, a beta's source built on a prerelease .NET from the long-lived `alpha`
-         branch, where this file and global.json are two of the few lines that differ (docs/12_BUILD.md §The alpha line).
+         the .NET that global.json pins, or `alpha`, a beta's source built to try a newer .NET from the long-lived `alpha`
+         branch, where this file and global.json are two of the few lines that differ while it does (docs/12_BUILD.md
+         §The alpha line).
          Not a property a command line sets: the file is the one source, release.yml refuses a tag that disagrees with it,
          and the target below refuses a value that is neither line. Every assembly carries it (the ItemGroup below), and
          Shared.BuildLine reads it at run time. -->
     <FrameLedgerReleaseLineFile>$(MSBuildThisFileDirectory)RELEASE_LINE</FrameLedgerReleaseLineFile>
     <FlReleaseLine Condition="Exists('$(FrameLedgerReleaseLineFile)')">$([System.IO.File]::ReadAllText('$(FrameLedgerReleaseLineFile)').Trim())</FlReleaseLine>
+
+    <!-- D98 (2026-11-11): THE ALPHA LINE RESTS - the betas build on the same .NET as the newest alpha (0.1.0-alpha.4,
+         .NET 11.0.0), so no alpha is cut until a newer .NET is tried. An alpha built while this says true tells its user
+         that the line is paused and to install the beta: a resting alpha gets no update, its anti-cheat list included
+         (Shared.AlphaLine, App/Services/AlphaTexts). Stamped on both lines, read by an alpha alone. When the `alpha`
+         branch starts trying a newer .NET it sets this to false there - one more line of its switch (docs/12_BUILD.md
+         §The alpha line). -->
+    <FlAlphaLineRests>true</FlAlphaLineRests>
   </PropertyGroup>
 
   <ItemGroup>
     <AssemblyMetadata Include="FrameLedger.ReleaseLine" Value="$(FlReleaseLine)" />
+    <AssemblyMetadata Include="FrameLedger.AlphaLineRests" Value="$(FlAlphaLineRests)" />
   </ItemGroup>
 
   <Target Name="FrameLedgerReleaseLineCheck" BeforeTargets="BeforeBuild" Condition="'$(FlReleaseLine)' != 'main' And '$(FlReleaseLine)' != 'alpha'">
@@ -89,7 +101,7 @@
   </Target>
 
   <!-- The NuGet audit (2026-10-25, docs/13_CI_CD.md §Dependabot and the NuGet audit): every restore checks the WHOLE
-       package graph, transitive packages included, against the advisory database, at every severity. These are the
+       package graph, transitive packages included, against the advisory database, at every severity. These were the
        SDK's defaults for net10.0, written down so that a later SDK's defaults cannot move them. With
        TreatWarningsAsErrors, a vulnerable package is NU1901-NU1904 and the restore - and so the gate - is red, which
        is what happened with SQLitePCLRaw 2.1.11 (Directory.Packages.props). -->

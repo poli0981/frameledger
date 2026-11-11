@@ -338,6 +338,8 @@ public sealed class CaptureSession(
         bool layered = verdict.Reason == AntiCheatRefusalReason.TargetIsVulkanLayered;
         if (!verdict.IsAllowed && !layered)
         {
+            // Closed here, before the refusal is recorded; the `using` above closes it on every other path.
+            // ReSharper disable once DisposeOnUsingVariable
             channel?.Dispose();
             return await RefusedAsync(verdict, request, observed, alive, pid, launchWait, ct, stop).ConfigureAwait(false);
         }
@@ -656,7 +658,7 @@ public sealed class CaptureSession(
         /// </param>
         public void Take(int pid, bool askDriver = true)
         {
-            TouchQpc.Add(System.Diagnostics.Stopwatch.GetTimestamp());
+            TouchQpc.Add(Stopwatch.GetTimestamp());
             if (source is not null)
             {
                 Set = Set.Merge(source.Take(pid));

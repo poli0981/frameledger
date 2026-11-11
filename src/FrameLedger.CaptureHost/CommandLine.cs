@@ -2,7 +2,6 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.Globalization;
-using FrameLedger.Application.Capture;
 namespace FrameLedger.CaptureHost;
 
 /// <summary>

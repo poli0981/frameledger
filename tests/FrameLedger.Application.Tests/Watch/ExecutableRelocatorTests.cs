@@ -80,7 +80,7 @@ public sealed class ExecutableRelocatorTests
         ExecutableFingerprint? moved = await relocator.TryRelocateAsync(row, Ct);
 
         moved.Should().NotBeNull();
-        moved!.Value.ExePath.Should().Be(@"H:\SteamLibrary\steamapps\common\Title\game.exe");
+        moved.Value.ExePath.Should().Be(@"H:\SteamLibrary\steamapps\common\Title\game.exe");
         games.Rows.Should().ContainKey(moved.Value.ExePath).And.NotContainKey(_stored, "the row moved; it was not copied");
         games.Rows[moved.Value.ExePath].Id.Should().Be(row.Id, "the same row: its consent, its block, its sessions");
         log.Should().ContainSingle().Which.Should().Contain("executable moved").And.Contain("consent and block kept");

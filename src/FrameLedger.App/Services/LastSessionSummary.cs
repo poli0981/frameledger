@@ -3,7 +3,6 @@
 
 using System.IO;
 using FrameLedger.Application.Persistence;
-using FrameLedger.Domain.Sessions;
 
 namespace FrameLedger.App.Services;
 

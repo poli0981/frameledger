@@ -6,14 +6,15 @@
 
 **New here? Start with the [user guide](guide/README.md)** — install, record a game, read your results, stay safe with
 anti-cheat, and look after your data, a page each, then every screen, every setting and what to do when something goes
-wrong. What FrameLedger cannot do is on one page: [Limitations](LIMITATIONS.md). Both are in the app too (Help ▸ User
-guide, Help ▸ Limitations), and on the project's [wiki](https://github.com/poli0981/frameledger/wiki) with the developer
-pages.
+wrong. What FrameLedger cannot do is on one page: [Limitations](LIMITATIONS.md). How it works with the keyboard alone, a
+screen reader or a contrast theme, and how to report a barrier: [Accessibility](ACCESSIBILITY.md). All three are in the
+app too (Help ▸ User guide, Help ▸ Limitations, Help ▸ Accessibility), and on the project's
+[wiki](https://github.com/poli0981/frameledger/wiki) with the developer pages.
 
 <!-- accuracy-block:begin -->
 > ⚠ **What FrameLedger actually measures today — 2026-11-06.** The software is a beta; its latest
-> **beta is `0.1.0-beta.34`** (2026-11-06), an unsigned installer built from that tag with its
-> checksums published beside it (alphas — experimental builds on a prerelease .NET — are published apart). The source holds the desktop app
+> **beta is `0.1.0-beta.37`** (2026-11-11), an unsigned installer built from that tag with its
+> checksums published beside it (alphas — experimental builds that try a newer .NET — are published apart). The source holds the desktop app
 > (library, store import, charts, settings) and the background Agent, which records a session when a
 > game in the library runs (unless you switched its recording off), injects only into games you enabled
 > and only past the safety guard, and
@@ -168,7 +169,8 @@ The tier is recorded on every session and shown in the UI. Metrics unavailable a
 
 ## Requirements
 
-- Windows 10 (22H2) or Windows 11, 64-bit
+- Windows 11, 64-bit. Windows 10 (22H2) is not blocked, but FrameLedger is built on .NET 11 since 0.1.0-beta.37, which Microsoft does not support on Windows 10 Home or Pro, and FrameLedger has never been tested there
+- A processor with SSE4.2 and POPCNT — any that Windows 11 accepts. Without them FrameLedger does not start
 - A 64-bit DirectX 11/12 or OpenGL game, or a Vulkan game FrameLedger starts, for hooked (Tier-1) capture. **32-bit games — including most DirectX 9 titles — cannot be measured at all**: the component FrameLedger loads is x64 and an x64 DLL cannot enter a 32-bit process. Such a title records duration and hardware telemetry and nothing else. *(This line previously said "supported at Tier 2 only", which meant frame times without injection. That tier no longer exists.)*
 - Optional: [PawnIO](https://pawnio.eu/) for CPU temperature, read only when the Agent runs as administrator (since 0.1.0-beta.3; not yet checked on real hardware). CPU load, memory in use and all GPU telemetry work without it
 
@@ -176,7 +178,7 @@ Elevation is **optional — for everything.** Hooked capture is the normal path 
 
 ## Install
 
-> **The latest beta is `v0.1.0-beta.34` (2026-11-06); before it `v0.1.0-beta.33` (2026-11-03), `v0.1.0-beta.32` (2026-10-31), `v0.1.0-beta.31` (2026-10-26), `v0.1.0-beta.30` (2026-10-26), `v0.1.0-beta.29` (2026-10-25), `v0.1.0-beta.28` (2026-10-20), `v0.1.0-beta.27` (2026-10-20), `v0.1.0-beta.26` (2026-10-19), `v0.1.0-beta.25` (2026-10-19), `v0.1.0-beta.24` (2026-10-19), `v0.1.0-beta.23` (2026-10-14), `v0.1.0-beta.22` (2026-10-13), `v0.1.0-beta.21` (2026-10-13), `v0.1.0-beta.20` (2026-10-12), `v0.1.0-beta.19` (2026-10-12), `v0.1.0-beta.18` (2026-10-07), `v0.1.0-beta.17` (2026-10-07), `v0.1.0-beta.16` (2026-10-06), `v0.1.0-beta.15` (2026-10-06), `v0.1.0-beta.14` (2026-10-06), `v0.1.0-beta.13` (2026-10-04), `v0.1.0-beta.12` (2026-10-04), `v0.1.0-beta.11` (2026-10-03), `v0.1.0-beta.10` (2026-09-28), `v0.1.0-beta.9` (2026-09-26), `v0.1.0-beta.8` (2026-09-25), `v0.1.0-beta.7` (2026-09-23), `v0.1.0-beta.6` (2026-09-23), `v0.1.0-beta.5` (2026-09-22), `v0.1.0-beta.4` (2026-09-21), `v0.1.0-beta.3` (2026-09-21), `v0.1.0-beta.2` (2026-09-17) and `v0.1.0-beta.1` (2026-09-16).** They are pre-releases: read the notes of the one you install — `CHANGELOG.md` links each release's own file under `docs/changelog/` — for what it measures, what it does not yet, and how to update, before installing. A source build is `docs/12_BUILD.md`.
+> **The latest beta is `v0.1.0-beta.37` (2026-11-11); before it `v0.1.0-beta.36` (2026-11-10), `v0.1.0-beta.35` (2026-11-09), `v0.1.0-beta.34` (2026-11-06), `v0.1.0-beta.33` (2026-11-03), `v0.1.0-beta.32` (2026-10-31), `v0.1.0-beta.31` (2026-10-26), `v0.1.0-beta.30` (2026-10-26), `v0.1.0-beta.29` (2026-10-25), `v0.1.0-beta.28` (2026-10-20), `v0.1.0-beta.27` (2026-10-20), `v0.1.0-beta.26` (2026-10-19), `v0.1.0-beta.25` (2026-10-19), `v0.1.0-beta.24` (2026-10-19), `v0.1.0-beta.23` (2026-10-14), `v0.1.0-beta.22` (2026-10-13), `v0.1.0-beta.21` (2026-10-13), `v0.1.0-beta.20` (2026-10-12), `v0.1.0-beta.19` (2026-10-12), `v0.1.0-beta.18` (2026-10-07), `v0.1.0-beta.17` (2026-10-07), `v0.1.0-beta.16` (2026-10-06), `v0.1.0-beta.15` (2026-10-06), `v0.1.0-beta.14` (2026-10-06), `v0.1.0-beta.13` (2026-10-04), `v0.1.0-beta.12` (2026-10-04), `v0.1.0-beta.11` (2026-10-03), `v0.1.0-beta.10` (2026-09-28), `v0.1.0-beta.9` (2026-09-26), `v0.1.0-beta.8` (2026-09-25), `v0.1.0-beta.7` (2026-09-23), `v0.1.0-beta.6` (2026-09-23), `v0.1.0-beta.5` (2026-09-22), `v0.1.0-beta.4` (2026-09-21), `v0.1.0-beta.3` (2026-09-21), `v0.1.0-beta.2` (2026-09-17) and `v0.1.0-beta.1` (2026-09-16).** They are pre-releases: read the notes of the one you install — `CHANGELOG.md` links each release's own file under `docs/changelog/` — for what it measures, what it does not yet, and how to update, before installing. A source build is `docs/12_BUILD.md`.
 
 1. Download the latest `FrameLedger.App-win-Setup.exe` from [Releases](https://github.com/poli0981/frameledger/releases). It installs into `%LOCALAPPDATA%\FrameLedger.App`; your data stays in `%LOCALAPPDATA%\FrameLedger`, and uninstalling asks before touching it.
 2. SmartScreen may warn — releases are not code-signed (free, open-source project). Verify the SHA-256 checksum published with each release, then **More info → Run anyway**.
@@ -203,7 +205,8 @@ FrameLedger is GPL-3.0-only free software, and you are welcome to build it, chan
 - **Build it:** [`docs/12_BUILD.md`](docs/12_BUILD.md) — `./build.ps1 check` is the whole quality gate, the same one CI runs.
 - **Contribute:** [`CONTRIBUTING.md`](CONTRIBUTING.md) — the definition of done, what will not be merged, and that a
   contribution is licensed GPL-3.0-only with the [`NOTICE`](NOTICE) terms (no CLA). Conduct:
-  [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). Security reports: [`SECURITY.md`](SECURITY.md).
+  [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). Security reports: [`SECURITY.md`](SECURITY.md). Accessibility — the goal,
+  the checks and how a barrier is reported: [`ACCESSIBILITY.md`](ACCESSIBILITY.md).
 - **Fork or redistribute:** [`FORKING.md`](FORKING.md) — what the GPL asks of anyone who distributes builds, and the names
   a fork must change so it does not share FrameLedger's update feed, install folder, data, pipe or Vulkan layer.
 - **Find your way around:** the [wiki](https://github.com/poli0981/frameledger/wiki)'s developer pages are short, and each

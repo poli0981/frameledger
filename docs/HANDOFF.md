@@ -73,6 +73,9 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.31` | [`handoff/history/0.1.0-beta.31.md`](handoff/history/0.1.0-beta.31.md) |
 | `§beta.32` | [`handoff/history/0.1.0-beta.32.md`](handoff/history/0.1.0-beta.32.md) |
 | `§beta.33` | [`handoff/history/0.1.0-beta.33.md`](handoff/history/0.1.0-beta.33.md) |
+| `§beta.34` | [`handoff/history/0.1.0-beta.34.md`](handoff/history/0.1.0-beta.34.md) |
+| `§beta.35` | [`handoff/history/0.1.0-beta.35.md`](handoff/history/0.1.0-beta.35.md) |
+| `§beta.36` | [`handoff/history/0.1.0-beta.36.md`](handoff/history/0.1.0-beta.36.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
 | `§Owner-only`, a passed item (3, 12, 14–19) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
@@ -80,92 +83,99 @@ owner-only items stay below; the history of every train, the passed owner-only i
 
 ---
 
-## **START HERE** — 2026-11-06, 0.1.0-beta.34: DLSS 5 and DLSS 4.5 from what the game and the driver did; filters; Games at once
+## **START HERE** — 2026-11-11, 0.1.0-beta.37: the main line on .NET 11, what an alpha is now, and why no C# 15 yet
 
-*Status is `docs/changelog/0.1.0-beta.34.md`; this is what no other file carries.* The owner asked for seven things, the
-usual train: (1) how DLSS 5 Neural Rendering is detected on Hogwarts Legacy (Neural Rendering on in the game), and its
-version; (2) under the NVIDIA App's *Dynamic* multi frame generation the label read DLSS 4, though Dynamic and ×6 exist
-only in DLSS 4.5 (Phantom Blade Zero); (3) filters on Games and Compare; (4) the Compare page's layout, from a
-screenshot; (5) the documents and the tested-games list, from the database; (6) switching to Games stalled 0.5–1.5 s;
-(7) a language change landed on the last content page instead of Settings. And while planning: "Bạn check Streamline các
-bản gần đây có gì thay đổi và sửa luôn nếu thật sự cần nhé." — check what changed in recent Streamline versions and fix it
-if really needed. #356 (two fixes from a self-review of #351 and #352), #357 (D83), #358 (D84, Streamline `v2.14.16`),
-#359 (items 6 and 7), #360 (items 3 and 4, D85, D86), #361 (item 5) and this release; `0.1.0-alpha.3` follows (D87) —
-the owner's screenshot is of an alpha, so the alpha is how these reach the owner's PC.
+*Status is `docs/changelog/0.1.0-beta.37.md`; this is what no other file carries.* The owner, with two screenshots — a
+Qodana Ultimate licence in the JetBrains console, and the Qodana Cloud project's setup page: "Bạn có thể bắt đầu với phiên
+cải tiến cho .net 11 và set up cho qodana cho tất cả ngôn ngữ (gói ultimate) nhé." The session D92 had left for after
+.NET 11's release (2026-11-10), and Qodana for every language on the Ultimate licence. One plan, approved whole, in
+three parts: **beta.37** (#376 the move, #379 what an alpha is, #380 .NET 11's API and the C# 15 finding, and this
+release) → **alpha.4** → **Qodana Ultimate in two reports**. This section is the first part; the other two follow it on
+`main` the same way.
 
 **Decisions (asked while planning, do not re-ask):**
 
-- **D83 — Dynamic frame generation is DLSS 4.5's**: the owner's rule, "Dynamic and ×6 exist only in DLSS 4.5". The
-  evidence is the game's driver profile setting Dynamic (`NGX_DLSSG_MODE` = 4) **and** the driver reporting its
-  frame-generation override applied in the game's process (`FG_MODE` in its FG word), in a session where DLSS
-  Frame Generation was identified (`fg_mode = dlssg`; its factor need not have been counted); a state measured at ×5 or more still ranks first, and a *Fixed* multiplier names nothing by itself
-  (amends D64). The driver's `frameGenerationMode` — 3 under Dynamic and 1 under Fixed in every session read, and unnamed
-  by NVIDIA — is recorded in `spike-notes` §26, not keyed on.
-- **D84 — DLSS 5 is the session's generation where its neural rendering was measured running**: the Overlay decodes
-  `kFeatureDLSS_NR` in its `slEvaluateFeature` detour and the Agent keeps its share of the Streamline batches
-  (`sessions.dlss_nr_pct`, schema 0022) — *DLSS 5 (neural rendering on N % of rendered frames)*; loaded and seen not
-  running, *runtime loaded, not seen running*; where nothing could tell, *runtime loaded*, as before (amends D64).
-- **D85 — the filters**: Games — store, engine, state, installed, played; Compare — game, tier, frame generation, no
-  period; Compare lists every session (it listed the newest 200).
-- **D86 — the left pane's selected item keeps its label**: our copy of WPF UI 4.3.0's LeftFluent item template, whose
-  `IsActive` trigger animated it away.
-- **D87 — alpha.3 right after beta.34**, on RC3: the train reaches it before .NET 11's release on 2026-11-10.
-
-Streamline was re-vendored at `v2.14.16` on the owner's instruction above, not as a decision of its own. The wording of
-the Disclaimer 2.13 and the Privacy Policy 2.14, and the tested-games list (D35), were approved with the plan (D36).
+- **D94 — the main line moves to .NET 11 now.** Asked whether the betas move or only alpha.4 — with
+  `20_OPEN_QUESTIONS` §G's table quoted: two alphas on the released runtime and an owner's run of a hooked title first —
+  the owner chose "Chuyển main sang .NET 11 ngay". Condition (a) of that table was **set aside, not met**;
+  `12_BUILD` §The main line's .NET says what stood in for it, and owner-only item 34 is the run it asked for.
+- **D95 — Windows 10 22H2 is not blocked, and is stated as untested and unsupported** ("Vẫn chạy, ghi rõ không được hỗ
+  trợ"). NFR-8 is amended; a processor needs SSE4.2 and POPCNT.
+- **D96 — C# 15 in the same release** ("Áp dụng cả C# 15 ngay trong beta.37"). The plan narrowed it in writing, and was
+  approved with that: a construct only where the build, CodeQL and Qodana all read it.
+- **D97 — all three legal texts reworded** ("Sửa cả ba văn bản"): EULA 1.7, Disclaimer 2.14, Alpha notice 1.1. Their
+  text was in the plan and approved with it.
+- **D98 — alpha.4, then the alpha line rests** until a newer .NET has a preview ("alpha.4 rồi nghỉ tới .NET 12
+  Preview").
+- **The order**: beta.37 → alpha.4 first, Qodana after; and Qodana in **two reports from the start** (the third part's
+  decision, D99).
 
 **Choices made here:**
 
-- **Neural rendering's share is over the Streamline batches**, not every present: a generated frame evaluates nothing,
-  and a title that never drains a batch reads *nothing could tell* (null), never 0 %.
-- **A writer older than beta.34 is told apart by its family bit**, `FL_HOOK_SL_NEURAL_RENDERING` (bit 12), published with
-  the detour — an old Overlay's silence leaves `dlss_nr_pct` null instead of a measured 0 %; no layout change.
-- **The Games page is the window's**, kept by our own page provider (`WindowPageCache`), not `NavigationCacheMode`: WPF UI
-  4.3.0 reads that only when neither a service provider nor a page provider is set, and `SetNavigationControl` sets one
-  (`16_WPFUI_SYNTAX` §Navigation). One per window, so a language change's window builds its own.
-- **The cards come before the executable checks** — 39 of the owner's 41 Steam games are on a USB drive that sleeps — and
-  each card gets its *Not installed* pill when its check answers.
-- **The pane's item template is a copy changed in one place**, reading WPF UI's own `NavigationViewConstants.xaml`: before
-  the WPF UI pin moves, the upstream template is read again.
+- **No C# 15 construct is used, although the owner asked for them.** The rule decided it, not a preference:
+  ReSharper's engine, which Qodana runs, reads none of the four (`13_CI_CD` §C# 15 and the analyses, `spike-notes`
+  §29). Unions would not have been the form in any case — the SDK's own CA1815 asks every union to hand-write its
+  equality, and the shapes that wanted one are closed record hierarchies. What the release takes is API.
+- **.NET 11's `IHost.RunAsync` is accepted, not wrapped**: a failed background service now ends the Agent through its
+  crash report. A catch there would hide a fault, and could not reproduce .NET 10's exit exactly either.
+- **A resting alpha says so in the build, not only in its notes**: the anti-cheat list reaches a user only inside a
+  release, so an alpha nobody updates carries an ageing one. `FlAlphaLineRests` is stamped on both lines; the `alpha`
+  branch sets it to false when it next tries a .NET.
+- **"A prerelease .NET" is said only by a build that runs on one**, read from the runtime's own description — the next
+  preview alpha says it again with no change to the code.
+- **`release.yml` names the .NET 10 runtime `vpk` needs**, rather than relying on the hosted image carrying one.
+- **The Community Qodana job was kept alive across the move** by installing the SDK into its container — an interim;
+  the Ultimate linter replaces the job in the third part.
+- **The 2026-10-31 forms stay where they read as well** (`json.AsSpan().TrimStart().StartsWith('[')` avoids a string):
+  .NET 11's `char` overloads replaced a span only where the span was there for .NET 10's sake.
 
-**Measured on the way:** the owner's DLSS sessions of 2026-11-01 → 11-06, the driver's frame-generation numbering and
-Streamline's `v2.12.0` → `v2.14.16` changes are `spike-notes` §26 (the ledger read read-only; the vendored copy was
-`v2.12.0` byte for byte); the Games page before and after is §27 (first cards 822–830 ms → 10–15 ms with the first
-executable check held 800 ms; a revisit 181–215 ms → 15–16 ms). The neural-rendering decode costs nothing measurable in
-the detour and 0.14–0.19 ns on the present's feature byte (#358's body; NFR-1's budget is 1 µs per present).
+**Measured on the way** (`spike-notes` §28 and §29): the gate on SDK 11.0.100 — two analyzer sites beyond RC3's
+twenty-one, both in tests written after the last alpha; `IHost.RunAsync` rethrowing, observed for the first time; the
+first delta across two runtime majors (372 of 443 files patched, 72.6 MB on the rehearsal); `main`'s first full CodeQL
+C# analysis on `net11.0` (1,221 of 1,221 files, the same 23 unresolved `Windows.Win32` types as on .NET 10); the
+SonarScanner 12.0.0 on the 11.0 runtime; InspectCode 2026.2.3.1 and 2026.3.0 against each C# 15 construct.
 
 **Traps met on the way:**
 
-- **`notice-check` reads the tracked tree**: a file deleted from the working tree but not from the index fails it with
-  *Could not find file* — after every build and test had passed (#360's first local gate). Stage the change
-  (`git add -A`) before the gate.
-- **A new hook family bit belongs in the native token test's exact mask** (`guard_test.cpp`), and a new Streamline fact
-  in the 0xF00D case's list of facts it must not light — #358's first gate (`0x100f` against `15`).
-- **WPF UI 4.3.0**: `NavigationCacheMode` is ignored once a page provider is set; `INavigationService.SetNavigationControl`
-  hands the NavigationView the container's provider, so ours is set after it; LeftFluent's item template collapses the
-  selected item's label.
-- **Microsoft.Data.Sqlite's async methods run synchronously**: a read awaited on the UI thread blocks it — `Task.Run` it.
+- **A pull request's CodeQL C# run is an overlay analysis**: it extracts the changed files on top of `main`'s cached
+  database, and its "scanned N out of N" is `main`'s baseline. #376 wrote "CodeQL reads `net11.0` whole" from one and
+  was corrected, dated, two pull requests later with `main`'s own run. For anything the extractor has not met, dispatch
+  `codeql.yml` on the branch (it takes `workflow_dispatch` since #380).
+- **`ShmDrainIntegrationTests.TheGuardInjectsTheOverlayAndTheReaderDrainsRealFrames` failed once on the dev box** —
+  "our own harness must not start matching the blocklist mid-run": the guard's re-scan refused the harness in one gate
+  run of five. The class passed three times in a row straight after and no guard code had changed; not looked into.
+- **A wiki page names no version** (`wiki-check`): "since 0.1.0-alpha.4" in `wiki/Releasing.md` was red. The guide's
+  pages may.
+- **The runner queue**: with three workflows per pull request and a probe's pull request open beside the train,
+  `check` waited about 25 minutes for a runner. Cancel a probe's runs once it has told what it can.
+- **A Bash heredoc halves the backslashes** of an inline Python regex — write the script with the Write tool.
+- **`x.Should().NotBeNull(); x!.Member`**: ReSharper reads the `!` as redundant (Qodana's one finding on #376) and the
+  compiler wants it. Keep the value the assertion needs, not the object.
+- **CA2025** on a lambda that captures a `using` variable in a test: await inside a `try`, assert after.
+- **A local gate reseeds `%LOCALAPPDATA%\FrameLedger\rules`** while the owner's installed copy runs beside it: the
+  files were hashed before and after every gate (identical each time — the repository's rules were the installed ones).
 
-**Owner-only:** item 30 — beta.34 on real hardware.
+**Owner-only:** item 34 — beta.37 on real hardware, a hooked session on .NET 11.0.0, and Windows 10 if a PC with it is
+at hand.
 
-### 0.1.0-alpha.3 — the third alpha, the same day (D87)
+### 0.1.0-alpha.4 — the fourth alpha, the same day, and the last for now (D98)
 
-`alpha` takes main at this pull request — `v0.1.0-beta.34` and these notes, no other change — by a merge commit, as
-`13_CI_CD` §The alpha line says. One file the switch holds moved on main — `legal/THIRD_PARTY_NOTICES.md`, its
-Streamline row (#358) — on a line the switch does not touch (the switch changes the *Transitive* row), so the merge
-takes both without a conflict (`git merge-tree` before the pull request); main's package set did not move, and the
-switch stays the first alpha's (SDK `11.0.100-rc.3.26522.148`, the three packages at `11.0.0-rc.3.26522.148`, the same
-NuGet licence texts) — the train reached it before .NET 11's release. Its gate on the 11 SDK must pass before the pull
-request into `alpha` is merged by
-hand (the branch has no auto-merge); the release runs from the signed tag `v0.1.0-alpha.3` on `alpha`, with its delta
-from alpha.2. Its notes are `docs/changelog/0.1.0-alpha.3.md`, which open with the experimental-build warning. It is
-the first alpha whose ledger moves (schema 22): the copy it makes first is the database as alpha.2 left it, and going
-back is to the newest beta, which opens schema 22.
+`alpha` takes main at this pull request — `v0.1.0-beta.37` and these notes, no other change — by a merge commit. **This
+sync is not like the three before it**: main now holds what the switch held (`global.json`, the TFM, the three
+packages, `legal/licenses/nuget/`, the *Transitive* row), so every switch file conflicts, and each is resolved by
+taking main's — the branch's RC3 lines go, `RELEASE_LINE` stays `alpha`, and `git diff --name-only origin/main` on the
+merged tree must print that one name. Its gate must pass on `alpha` before the pull request is merged by hand (the
+branch has no auto-merge); the release runs from the signed tag `v0.1.0-alpha.4` on `alpha`, with its delta from
+alpha.3. Its notes are `docs/changelog/0.1.0-alpha.4.md`: the warning, and that it is the last alpha for now.
 
-- **The next alpha moves to .NET 11's release**: from 2026-11-10 the switch is SDK `11.0.100` and the packages `11.0.0`,
-  and RC3 is out of support — move the alpha even if no beta comes.
+- **After it the line rests** (`12_BUILD` §The alpha line): no sync follows a beta and no alpha is cut until a newer
+  .NET has a preview. `FlAlphaLineRests` in `Directory.Build.props` says so to the build; the next trial sets it to
+  `false` on `alpha` with the rest of the switch.
+- **What a resting alpha costs its user** is in its notes, the guide and its banner: no update, the anti-cheat list
+  included; and once ten betas have followed it, a copy of alpha.3 or older no longer finds alpha.4 (Velopack reads
+  the newest ten releases).
 
-**Owner-only:** item 31 — the third alpha on real hardware.
+**Owner-only:** item 35 — the fourth alpha on real hardware, and the beta installed over it.
 
 
 ## Owner-only — no PR can close these
@@ -396,6 +406,50 @@ back is to the newest beta, which opens schema 22.
    window shows the Disclaimer 2.13, the Privacy Policy 2.14 and the Alpha notice with its box again, and Accept waits for
    the tick. (c) `%LOCALAPPDATA%\FrameLedger\backups\ledger-before-0.1.0-alpha.3.db` exists beside alpha.2's, and opens;
    the ledger it left is at schema 22. (d) Item 30's checks, on the alpha.
+32. **beta.35 on real hardware** (D88–D91). (a) **The update from beta.34** (or alpha.3's): no terms window, the ledger
+   unchanged. (b) **Narrator**: a safety notice is read as it appears; the agent's banner going and coming; Tools ▸
+   Database maintenance ▸ Check reads its result; a short message at the bottom is read; **H** moves between each page's
+   title and its sections; Settings ▸ Theme's options read their words; the Sessions table's cells read their values;
+   Tab to a chart says its name and where its numbers are, and its arrows, Ctrl+arrows and A move it without scrolling
+   the page; a double-click shows all of it. (c) **Contrast themes**: Aquatic and Desert, and one with an edited colour
+   (Windows 10 if at hand) — every page, a dialog, the title bar's agent pill, a short message, a chart; turned on and
+   off with FrameLedger open, it follows at once; Settings ▸ Theme shows its line. (d) **Ctrl+1 … Ctrl+5** put the
+   keyboard in the page and Narrator says its title. (e) **Animation effects off** (Settings ▸ Accessibility ▸ Visual
+   effects): no page slides in. (f) **Remove** on a game's page: the box opens over the window, its Cancel puts the focus
+   back on Remove; the light theme's agent pill and a *done* message read clearly. (g) Help ▸ Accessibility shows the
+   statement. (h) The 35 `ja` strings this release adds, all marked `review`: `Menu_Help_Accessibility`,
+   `Accessibility_Title`, `Settings_Theme_ContrastOn` and 32 `A11y_*` (the names, the chart names and keys, the
+   announcements).
+33. **Qodana, and beta.36 on real hardware** (D93). (a) **The update from beta.35**: no terms window, the ledger
+   unchanged. (b) **The re-pointed bindings, by hand** — the tests pin their text, not a click: on Games, a card opens
+   its game and both Play buttons (card and list) start it, greyed in a viewer; on the Dashboard a recent session
+   opens; on a game's page a session row's *Open* opens its summary; in a session's summary a Yes/No/N/A chip opens the
+   override dialog; a safety notice's button dismisses it; Settings lists the hooked games with *Revoke*, the
+   exception rows with *Grant*/*Withdraw*, and the system information lines. (c) **Qodana Cloud**: the trial's end
+   changes nothing in CI (the Community linter needs no licence; the token names the project the report goes to). If
+   an Ultimate licence is wanted — JetBrains has a programme for open-source projects — `13_CI_CD` §Qodana says what
+   moves. (d) **`qodana` as a required check, or not**: advisory today, like `sonarcloud`. (e) **The members nothing
+   uses** (`13_CI_CD` §Qodana, 34 and 49 getters): say which are dead, and a pull request removes them.
+34. **beta.37 on real hardware — the first build on .NET 11's release** (D94–D98). (a) **The update from beta.36**:
+   Help ▸ Check for updates offers beta.37 and *Restart to update* installs it — a download of about 70 MB, not a few;
+   the terms window shows the **EULA 1.7 and the Disclaimer 2.14** once and nothing else; the ledger stays at schema 22.
+   (b) **A hooked session on .NET 11.0.0**: one title you measure often, Tier 1 — frame times, the upscaler and frame
+   generation as before; the Agent's log opens with `release line main, .NET 11.0.0`, and Help ▸ About reads *Runs on
+   .NET 11.0.0*. This is the run `20_OPEN_QUESTIONS` §G's table asked for before the move and did not get (D94).
+   (c) **The Agent in admin mode and the logon task** still start it — the publish is self-contained on a new runtime.
+   (d) **Windows 10 22H2, if a PC or a VM with it is at hand**: does it install and start? No version has ever been run
+   there; D95 states it as untested, and one run would be the first evidence either way. (e) **The Japanese** of the
+   three alpha strings that changed or are new (`Alpha_Banner_Body_Format`, `Alpha_Banner_Body_Resting_Format`,
+   `About_Runtime_Alpha_Format`) and of the first-run summary's first line. (f) **Going back** — only if something is
+   wrong: install beta.36 over it; the ledger opens.
+35. **alpha.4 on real hardware — the last alpha for now** (D98). (a) **The update from alpha.3**: Help ▸ Check for
+   updates offers alpha.4 and *Restart to update* installs it — a large download, the runtime moving from the release
+   candidate to 11.0.0. (b) The terms window shows the **EULA 1.7, the Disclaimer 2.14 and the Alpha notice 1.1** and
+   waits for the notice's box; `…\backups\ledger-before-0.1.0-alpha.4.db` exists beside the older copies, and opens;
+   the ledger stays at schema 22. (c) **The banner says the alpha line is paused** and to install the beta — not the
+   experimental-build warning — and Help ▸ About reads *Alpha build — runs on .NET 11.0.0*, with no "prerelease".
+   (d) **Then install beta.37 over it**: the installer asks to replace it; the beta opens the ledger, shows no Alpha
+   notice, and its update channel is no longer locked.
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
@@ -491,12 +545,23 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D79 | [`05_DETECTION.md`](05_DETECTION.md) §Platform signatures & metadata | the platform is "Xbox" (`xbox`), in full: import, artwork, Play, capture, detection, docs and legal |
 | D80 | [`08_UI.md`](08_UI.md) §Games | Play on an Xbox game always activates its package, in both modes; the Agent answers `PackagedGame` and records it in attach mode |
 | D81 | [`20_OPEN_QUESTIONS.md`](20_OPEN_QUESTIONS.md) §G | title lists stay keyed by Steam id; an Xbox copy is matched by everything but that entry |
-| D82 | [`HANDOFF.md`](HANDOFF.md) §START HERE | alpha.2 right after beta.33; on RC3 unless the train reaches it after .NET 11 ships (then SDK 11.0.100, packages 11.0.0) |
+| D82 | [`handoff/history/0.1.0-beta.33.md`](handoff/history/0.1.0-beta.33.md) | alpha.2 right after beta.33; on RC3 unless the train reaches it after .NET 11 ships (then SDK 11.0.100, packages 11.0.0) |
 | D83 | [`05_DETECTION.md`](05_DETECTION.md) §DLSS generation | the NVIDIA App's Dynamic frame generation, reported applied by the driver in a session where DLSS Frame Generation was identified, is DLSS 4.5 (amends D64) |
 | D84 | [`05_DETECTION.md`](05_DETECTION.md) §DLSS generation | DLSS 5 heads the DLSS line where its neural rendering was measured running (`kFeatureDLSS_NR`, `dlss_nr_pct`); loaded only reads "runtime loaded" (amends D64) |
 | D85 | [`08_UI.md`](08_UI.md) §Games, §Compare | filters: Games — store, engine, state, installed, played; Compare — game, tier, frame generation (no period); Compare lists every session |
 | D86 | [`08_UI.md`](08_UI.md) (the shell) | the left pane's selected item keeps its label: our copy of WPF UI 4.3.0's LeftFluent item template |
-| D87 | [`HANDOFF.md`](HANDOFF.md) §START HERE | alpha.3 right after beta.34, on RC3 (before .NET 11's release, 2026-11-10) |
+| D87 | [`handoff/history/0.1.0-beta.34.md`](handoff/history/0.1.0-beta.34.md) | alpha.3 right after beta.34, on RC3 (before .NET 11's release, 2026-11-10) |
+| D88 | [`../ACCESSIBILITY.md`](../ACCESSIBILITY.md) | the accessibility statement at the root, under Help ▸ Accessibility and on the wiki: WCAG 2.2 AA through WCAG2ICT is a goal, never a claim; reports by severity, no promised times |
+| D89 | [`08_UI.md`](08_UI.md) §Screen readers | what appears is said to a screen reader — notices, the agent's and the update's banners, the snackbars, a game page's notice, Database maintenance's results — while FrameLedger's window is active |
+| D90 | [`08_UI.md`](08_UI.md) §Screen readers | page titles heading 1, section titles heading 2; every chart named with where its numbers are; no series told apart by colour alone |
+| D91 | [`08_UI.md`](08_UI.md) §Contrast | Windows contrast themes are followed, whatever Settings ▸ Theme says |
+| D92 | [`handoff/history/0.1.0-beta.35.md`](handoff/history/0.1.0-beta.35.md) | beta.35 in this train, no alpha; alpha.4 is the move to .NET 11's release (SDK 11.0.100, packages 11.0.0), a task of its own after 2026-11-10 |
+| D93 | [`13_CI_CD.md`](13_CI_CD.md) §Qodana | Qodana Community for .NET from a workflow of its own (the organisation's licence is a 30-day trial, so not the Rider linter): a gate of zero problems, advisory; an inspection is switched off only in `.editorconfig`, with its reason |
+| D94 | [`12_BUILD.md`](12_BUILD.md) §The main line's .NET | the main line moves to .NET 11 with 0.1.0-beta.37, the day after it shipped; condition (a) of `20_OPEN_QUESTIONS` §G's table — two alphas on the released runtime — set aside by the owner, not met |
+| D95 | [`02_SPEC.md`](02_SPEC.md) NFR-8 | Windows 10 22H2 is not blocked, and is stated as untested and unsupported (Microsoft supports .NET 11 on Windows 11); a processor needs SSE4.2 and POPCNT |
+| D96 | [`13_CI_CD.md`](13_CI_CD.md) §C# 15 and the analyses | C# 15 on the main line from beta.37, a construct only where the build, CodeQL and Qodana read it — none of the four yet (Qodana's engine reads none, 2026-11-11), so beta.37 takes .NET 11's API and no syntax; no preview feature |
+| D97 | [`../legal/ALPHA_NOTICE.md`](../legal/ALPHA_NOTICE.md) | an alpha is "a beta's source built to try a newer version of .NET, at times a prerelease one": EULA 1.7, Disclaimer 2.14 (with a paragraph on Windows and the processor), Alpha notice 1.1, approved with the plan; the App says "a prerelease .NET" only where the runtime is one |
+| D98 | [`12_BUILD.md`](12_BUILD.md) §The alpha line | alpha.4 is beta.37's source on .NET 11.0.0, and then the alpha line rests until a newer .NET has a preview; a resting alpha tells its user to install the beta |
 
 ---
 

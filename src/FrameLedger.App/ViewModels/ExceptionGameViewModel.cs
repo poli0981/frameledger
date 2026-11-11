@@ -50,4 +50,11 @@ public sealed partial class ExceptionGameViewModel
 
     [RelayCommand]
     private Task WithdrawAsync() => _withdraw(this);
+
+    /// <summary>The row's buttons, naming the game they act on (beta.35, D88).</summary>
+    public string GrantName => SpokenText.Pair(Strings.Settings_Exceptions_Grant.TrimEnd('…'), Name);
+
+    public string WithdrawName => SpokenText.Pair(Strings.Settings_Exceptions_Withdraw, Name);
+
+    public override string ToString() => Name;
 }

@@ -75,7 +75,7 @@ internal static class SensorSampleCodec
             return 0;
         }
 
-        var fields = new double?[_wideFields];
+        double?[] fields = new double?[_wideFields];
         int at = fixedBytes;
         for (int i = 0; i < count; i++)
         {

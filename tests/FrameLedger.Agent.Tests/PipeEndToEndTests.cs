@@ -138,7 +138,7 @@ public sealed class PipeEndToEndTests : IDisposable
         LedgerDatabase db = await LedgerDatabase.OpenAsync(paths.Database, ct: Ct).ConfigureAwait(true);
         await using (db.ConfigureAwait(true))
         {
-            ExecutableFingerprint fingerprint = FrameLedger.Infrastructure.Io.ExecutableIdentity.Read(ConsentedExecutable)!.Value;
+            ExecutableFingerprint fingerprint = Infrastructure.Io.ExecutableIdentity.Read(ConsentedExecutable)!.Value;
             GameRow row = await new SqliteGameRepository(db).EnsureAsync(fingerprint, "Held harness", Ct).ConfigureAwait(true);
             row.HookEnabled.Should().BeFalse("a row that was merely added has hooking off");
             ServiceProvider services = new ServiceCollection().AddFrameLedgerAgent(db, paths, _pipeName).BuildServiceProvider();
@@ -166,7 +166,7 @@ public sealed class PipeEndToEndTests : IDisposable
 
     private async Task GrantConsentAsync(LedgerDatabase db)
     {
-        ExecutableFingerprint fingerprint = FrameLedger.Infrastructure.Io.ExecutableIdentity.Read(ConsentedExecutable)!.Value;
+        ExecutableFingerprint fingerprint = Infrastructure.Io.ExecutableIdentity.Read(ConsentedExecutable)!.Value;
         ConsentWriteOutcome written = await new SqliteGameConsentStore(db).RecordOperatorAcknowledgementAsync(new OperatorAcknowledgement
         {
             Fingerprint = fingerprint,

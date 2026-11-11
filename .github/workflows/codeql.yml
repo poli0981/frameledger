@@ -16,6 +16,11 @@
 
 name: CodeQL
 
+# `workflow_dispatch` since 2026-11-11 (beta.37): on a pull request the C# analysis
+# is an OVERLAY - it extracts the changed files on top of the database cached from
+# `main` - so it cannot show what the extractor makes of the whole source, or of a
+# construct it has not met (the move to .NET 11, a C# 15 feature). A dispatch on a
+# branch is a full analysis of that branch (docs/13_CI_CD.md §C# 15 and the analyses).
 on:
   push:
     branches: [main]
@@ -23,6 +28,7 @@ on:
     branches: [main]
   schedule:
     - cron: '27 4 * * 1'
+  workflow_dispatch:
 
 permissions:
   contents: read

@@ -185,7 +185,7 @@ public sealed class SettingsViewModelTests
         Harness h = await OpenAsync(s, confirmations: confirm, deletion: new SessionDeletion(agent));
 
         await h.Vm.DeleteAllSessionsCommand.ExecuteAsync(null);
-        confirm.Asked.Should().Equal(((string?)null, 2L));
+        confirm.Asked.Should().Equal((null, 2L));
         agent.Asked.Should().BeEmpty("a no deletes nothing");
 
         confirm.Answer = true;

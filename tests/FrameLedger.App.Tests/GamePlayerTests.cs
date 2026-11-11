@@ -12,7 +12,6 @@ using FrameLedger.Domain.Consent;
 using FrameLedger.Infrastructure.Ipc;
 using FrameLedger.Infrastructure.Persistence;
 using FrameLedger.Shared.Ipc;
-using Xunit;
 
 namespace FrameLedger.App.Tests;
 
@@ -279,7 +278,7 @@ public sealed class GamePlayerTests
         var shell = new Shell();
         PlayResult result = await Player(s, shell, agent, xbox).PlayAsync(game, Ct);
         result.Should().Be(new PlayResult(PlayOutcome.HandedToStore, "xbox"));
-        shell.Started.Should().ContainSingle().Which.Should().Be((StoreLaunches.ExplorerPath, @"shell:AppsFolder\" + family + "!Game", (string?)null));
+        shell.Started.Should().ContainSingle().Which.Should().Be((StoreLaunches.ExplorerPath, @"shell:AppsFolder\" + family + "!Game", null));
         GamePlayer.Describe(result, "FINAL FANTASY").Should().Be(
             ("Windows is starting FINAL FANTASY through its package, as its Start-menu tile does — a game from the Xbox app always starts this way. FrameLedger records it once it appears.", false));
 

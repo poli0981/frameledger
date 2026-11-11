@@ -53,6 +53,8 @@
     <EmbeddedResource Include="..\..\LICENSE" LogicalName="LICENSE" />
     <!-- beta.10 (D36): what the whole software cannot do, shown under Help > Limitations; information, not one of FR-11's accepted documents. -->
     <EmbeddedResource Include="..\..\LIMITATIONS.md" LogicalName="LIMITATIONS.md" />
+    <!-- beta.35 (D88): the accessibility statement, shown under Help > Accessibility; information, not one of FR-11's accepted documents. -->
+    <EmbeddedResource Include="..\..\ACCESSIBILITY.md" LogicalName="ACCESSIBILITY.md" />
     <!-- beta.12: what Help > About shows, rendered from the text this build carries (D45: the copyright line and the GPLv3
          section 7 terms, the trademark note, the third-party notices and the index of every shipped package's licence). -->
     <EmbeddedResource Include="..\..\NOTICE" LogicalName="NOTICE" />

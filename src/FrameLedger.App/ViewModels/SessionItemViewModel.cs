@@ -118,4 +118,15 @@ public sealed class SessionItemViewModel
     public TriStateChipModel Pt { get; }
 
     public TriStateChipModel Rr { get; }
+
+    /// <summary>The row as a screen reader reads it (beta.35, D88): when, how long, and whether it was measured.</summary>
+    public string AccessibleName => SpokenText.List(DateText, DurationText, TierText);
+
+    /// <summary>The row's Open button, naming the session it opens — three rows would otherwise read "Open" three times.</summary>
+    public string OpenName => SpokenText.Pair(Strings.Summary_Open, DateText);
+
+    /// <summary>The ray-tracing chips' cell in words: each chip with its value and where the value came from.</summary>
+    public string FeaturesText => SpokenText.List(Rt.AccessibleName, Pt.AccessibleName, Rr.AccessibleName);
+
+    public override string ToString() => AccessibleName;
 }

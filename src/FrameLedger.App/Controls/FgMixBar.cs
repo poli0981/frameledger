@@ -5,8 +5,6 @@ using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Media;
 using FrameLedger.App.Charts;
-using FrameLedger.App.Services;
-using Wpf.Ui.Appearance;
 
 namespace FrameLedger.App.Controls;
 

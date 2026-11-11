@@ -20,8 +20,8 @@ name: CI
 
 on:
   push:
-    # `alpha` since 2026-10-31 (D73, docs/13_CI_CD.md §The alpha line): the same source on a prerelease .NET, whose
-    # merges and syncs from main need the same gate under its own global.json.
+    # `alpha` since 2026-10-31 (D73, docs/13_CI_CD.md §The alpha line): the same source on the .NET that line is
+    # trying, whose merges and syncs from main need the same gate under its own global.json.
     branches: [main, alpha]
   pull_request:
   workflow_dispatch:

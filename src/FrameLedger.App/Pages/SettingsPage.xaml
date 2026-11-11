@@ -6,16 +6,17 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:res="clr-namespace:FrameLedger.App"
+      xmlns:services="clr-namespace:FrameLedger.App.Services"
       xmlns:vm="clr-namespace:FrameLedger.App.ViewModels"
       Title="{x:Static res:Strings.Settings_Header}"
       Foreground="{DynamicResource TextFillColorPrimaryBrush}"
       ScrollViewer.CanContentScroll="False">
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Style="{StaticResource PageRoot}">
-            <ui:TextBlock FontTypography="Title" Text="{x:Static vm:SettingsViewModel.Header}" />
+            <ui:TextBlock FontTypography="Title" AutomationProperties.HeadingLevel="Level1" Text="{x:Static vm:SettingsViewModel.Header}" />
 
             <!-- 08_UI §Settings: Capture first, most important — the kill switch, the hook-enabled games, the layer, the safety link. -->
-            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Capture_Header}" />
+            <ui:TextBlock FontTypography="Subtitle" AutomationProperties.HeadingLevel="Level2" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Capture_Header}" />
             <ui:CardExpander Margin="0,4,0,0" IsExpanded="True" Icon="{ui:SymbolIcon ShieldError24}">
                 <ui:CardExpander.Header>
                     <Grid>
@@ -39,7 +40,7 @@
                 <StackPanel>
                     <ItemsControl ItemsSource="{Binding ViewModel.HookedGames}">
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate DataType="{x:Type vm:HookedGameViewModel}">
                                 <Grid Margin="0,4">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -48,7 +49,7 @@
                                     <ui:TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{Binding Name}" />
                                     <ui:Button Grid.Column="1"
                                                Appearance="Secondary"
-                                               Command="{Binding RevokeCommand}"
+                                               AutomationProperties.Name="{Binding RevokeName}" Command="{Binding RevokeCommand}"
                                                Content="{x:Static res:Strings.Settings_HookedGames_Revoke}" />
                                 </Grid>
                             </DataTemplate>
@@ -97,7 +98,7 @@
                                   Visibility="{Binding ViewModel.ExceptionGames.Count, Converter={StaticResource ZeroToVisible}}" />
                     <ItemsControl ItemsSource="{Binding ViewModel.ExceptionGames}" IsEnabled="{Binding ViewModel.ActsOnThisPc}">
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate DataType="{x:Type vm:ExceptionGameViewModel}">
                                 <Grid Margin="0,6">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -112,11 +113,11 @@
                                     </StackPanel>
                                     <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Orientation="Horizontal">
                                         <ui:Button Appearance="Secondary"
-                                                   Command="{Binding GrantCommand}"
+                                                   AutomationProperties.Name="{Binding GrantName}" Command="{Binding GrantCommand}"
                                                    Content="{x:Static res:Strings.Settings_Exceptions_Grant}"
                                                    Visibility="{Binding CanGrant, Converter={StaticResource BoolToVis}}" />
                                         <ui:Button Appearance="Secondary"
-                                                   Command="{Binding WithdrawCommand}"
+                                                   AutomationProperties.Name="{Binding WithdrawName}" Command="{Binding WithdrawCommand}"
                                                    Content="{x:Static res:Strings.Settings_Exceptions_Withdraw}"
                                                    Visibility="{Binding CanWithdraw, Converter={StaticResource BoolToVis}}" />
                                     </StackPanel>
@@ -167,7 +168,7 @@
 
             <!-- Recording policy: the three numbers and background capture (D16: the Agent reads them at session start) — off in a
                  viewer, which has no Agent (beta.18; every setting the Agent reads is, ViewerModeTests). -->
-            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Policy_Header}" />
+            <ui:TextBlock FontTypography="Subtitle" AutomationProperties.HeadingLevel="Level2" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Policy_Header}" />
             <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Timer24}">
                 <ui:CardControl.Header>
                     <StackPanel>
@@ -218,7 +219,7 @@
                  meant recording nothing. Removed until a launch path exists. -->
 
             <!-- beta.11 (owner request 2026-10-03: no row without a control): Data - Delete all sessions (D40). -->
-            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Data_Header}" />
+            <ui:TextBlock FontTypography="Subtitle" AutomationProperties.HeadingLevel="Level2" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Data_Header}" />
             <!-- beta.19 (owner decision D55): the Agent removes an entry whose game is no longer installed and that has no session. -->
             <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon BoxDismiss24}">
                 <ui:CardControl.Header>
@@ -242,7 +243,7 @@
             </ui:CardControl>
 
             <!-- Agent: elevation is optional and no tier needs it. beta.11: the elevation line is the admin mode's own status, not a row of its own. -->
-            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Agent_Header}" />
+            <ui:TextBlock FontTypography="Subtitle" AutomationProperties.HeadingLevel="Level2" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Agent_Header}" />
             <!-- beta.10, the admin mode (D34): off by default; on shows the disclosure, and Windows asks at every Agent start. -->
             <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Shield24}">
                 <ui:CardControl.Header>
@@ -281,7 +282,7 @@
             </ui:CardControl>
 
             <!-- Appearance (PR-2) and window. -->
-            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static vm:SettingsViewModel.AppearanceHeader}" />
+            <ui:TextBlock FontTypography="Subtitle" AutomationProperties.HeadingLevel="Level2" Margin="0,20,0,8" Text="{x:Static vm:SettingsViewModel.AppearanceHeader}" />
             <ui:CardControl Margin="0,4,0,0" Header="{x:Static vm:SettingsViewModel.ThemeLabel}" Icon="{ui:SymbolIcon Color24}">
                 <ComboBox MinWidth="180"
                           AutomationProperties.Name="{x:Static vm:SettingsViewModel.ThemeLabel}"
@@ -290,6 +291,10 @@
                           SelectedValue="{Binding ViewModel.SelectedTheme, Mode=TwoWay}"
                           SelectedValuePath="Value" />
             </ui:CardControl>
+            <!-- beta.35 (D91): a Windows contrast theme's colours win; this says so while one is on, and goes when it is off. -->
+            <ui:TextBlock Margin="12,4,0,0" Style="{StaticResource SecondaryText}" TextWrapping="Wrap"
+                          Text="{x:Static res:Strings.Settings_Theme_ContrastOn}"
+                          Visibility="{Binding Path=(services:ContrastTheme.IsOn), Converter={StaticResource BoolToVis}}" />
             <ui:CardControl Margin="0,8,0,0" Header="{x:Static vm:SettingsViewModel.LanguageLabel}" Icon="{ui:SymbolIcon LocalLanguage24}">
                 <ComboBox MinWidth="180"
                           AutomationProperties.Name="{x:Static vm:SettingsViewModel.LanguageLabel}"
@@ -300,7 +305,7 @@
             </ui:CardControl>
 
             <!-- beta.21 (owner decision D59): what Play does. The App's own setting; the Agent never reads it. -->
-            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Games_Header}" />
+            <ui:TextBlock FontTypography="Subtitle" AutomationProperties.HeadingLevel="Level2" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Games_Header}" />
             <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Play24}">
                 <ui:CardControl.Header>
                     <StackPanel>
@@ -338,7 +343,7 @@
                 <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_GameArtTint_Label}" IsChecked="{Binding ViewModel.GameArtTint, Mode=TwoWay}" />
             </ui:CardControl>
 
-            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Window_Header}" />
+            <ui:TextBlock FontTypography="Subtitle" AutomationProperties.HeadingLevel="Level2" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Window_Header}" />
             <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Power24}">
                 <ui:CardControl.Header>
                     <StackPanel>
@@ -386,7 +391,7 @@
                 not exist is the same over-disclosure the privacy policy's version 2.2 removed from its table. The
                 setting stays in the registry, off, for the day a consumer exists (06_DATA_MODEL §Settings registry).
             -->
-            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Updates_Header}" />
+            <ui:TextBlock FontTypography="Subtitle" AutomationProperties.HeadingLevel="Level2" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Updates_Header}" />
             <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon ArrowSync24}">
                 <ui:CardControl.Header>
                     <StackPanel>
@@ -416,7 +421,7 @@
                 <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_AutoCheck_Label}" IsChecked="{Binding ViewModel.AutoCheckUpdates, Mode=TwoWay}" IsEnabled="{Binding ViewModel.ActsOnThisPc}" />
             </ui:CardControl>
 
-            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Logging_Header}" />
+            <ui:TextBlock FontTypography="Subtitle" AutomationProperties.HeadingLevel="Level2" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Logging_Header}" />
             <ui:CardControl Margin="0,4,0,0" Icon="{ui:SymbolIcon Bug24}">
                 <ui:CardControl.Header>
                     <StackPanel>
@@ -427,12 +432,12 @@
                 <ui:ToggleSwitch AutomationProperties.Name="{x:Static res:Strings.Settings_LogDebug_Label}" IsChecked="{Binding ViewModel.LogDebug, Mode=TwoWay}" />
             </ui:CardControl>
 
-            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static vm:SystemInfoViewModel.Header}" />
+            <ui:TextBlock FontTypography="Subtitle" AutomationProperties.HeadingLevel="Level2" Margin="0,20,0,8" Text="{x:Static vm:SystemInfoViewModel.Header}" />
             <ui:Card Margin="0,4,0,0">
                 <StackPanel>
                     <ItemsControl ItemsSource="{Binding SystemInfo.Lines}" Focusable="False">
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate DataType="{x:Type vm:LabelledValue}">
                                 <Grid Margin="0,2">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="160" />
@@ -449,7 +454,7 @@
                 </StackPanel>
             </ui:Card>
 
-            <ui:TextBlock FontTypography="Subtitle" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Legal_Header}" />
+            <ui:TextBlock FontTypography="Subtitle" AutomationProperties.HeadingLevel="Level2" Margin="0,20,0,8" Text="{x:Static res:Strings.Settings_Legal_Header}" />
             <ui:CardAction Margin="0,4,0,24" Command="{Binding ViewModel.ReopenLegalCommand}" Icon="{ui:SymbolIcon DocumentText24}">
                 <ui:TextBlock Text="{x:Static res:Strings.Settings_Legal_Reopen}" />
             </ui:CardAction>

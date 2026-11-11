@@ -20,7 +20,7 @@ public partial class LatencyChart : UserControl
 
     public void Show(SessionSeries? series, long? avgUs, long? p95Us)
     {
-        ScottPlot.Plot plot = Plot.Plot;
+        Plot plot = Plot.Plot;
         plot.Clear();
         ChartTheme.Apply(plot);
         plot.XLabel(Strings.Chart_Axis_Time);

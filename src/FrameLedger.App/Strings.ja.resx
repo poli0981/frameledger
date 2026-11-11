@@ -333,6 +333,14 @@
     <value>FrameLedger にできないこと</value>
     <comment>review</comment>
   </data>
+  <data name="Menu_Help_Accessibility" xml:space="preserve">
+    <value>アクセシビリティ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Accessibility_Title" xml:space="preserve">
+    <value>アクセシビリティ</value>
+    <comment>review</comment>
+  </data>
   <data name="Menu_Help_ReportBug" xml:space="preserve">
     <value>不具合を報告…</value>
     <comment>review</comment>
@@ -415,6 +423,10 @@
   </data>
   <data name="Settings_Theme_Label" xml:space="preserve">
     <value>テーマ</value>
+    <comment>review</comment>
+  </data>
+  <data name="Settings_Theme_ContrastOn" xml:space="preserve">
+    <value>Windows のコントラスト テーマがオンのため、FrameLedger はその色を使います。ここでの選択は、テーマをオフにすると再び適用されます。</value>
     <comment>review</comment>
   </data>
   <data name="Settings_Theme_Light" xml:space="preserve">
@@ -4786,7 +4798,15 @@
     <comment>review</comment>
   </data>
   <data name="Alpha_Banner_Body_Format" xml:space="preserve">
+    <value>試験版：{0} で動作するアルファ版です。結果が誤っていたり、クラッシュしたりすることがあります。ご利用は自己責任です。安定して使えるのはベータ版です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Alpha_Banner_Body_Prerelease_Format" xml:space="preserve">
     <value>試験版：プレリリース版の .NET である {0} で動作しています。結果が誤っていたり、クラッシュしたりすることがあります。ご利用は自己責任です。安定して使えるのはベータ版です。</value>
+    <comment>review</comment>
+  </data>
+  <data name="Alpha_Banner_Body_Resting_Format" xml:space="preserve">
+    <value>アルファ版の提供は一時停止中です。ベータ版も {0} で動作するようになり、更新を受け取るのはベータ版だけです（アンチチートのリストも含みます）。最新のベータ版をこのアルファ版に上書きインストールしてください。データはそのまま残ります。</value>
     <comment>review</comment>
   </data>
   <data name="Alpha_Banner_Read" xml:space="preserve">
@@ -4799,7 +4819,7 @@
   </data>
   <data name="FirstRun_Alpha_Summary" xml:space="preserve">
     <value>これはアルファ版です:
-• ベータ版のソースをプレリリース版の .NET でビルドしたものです。測定値の誤りやクラッシュを含め、ベータ版より多くの問題が起こることを想定してください。
+• ベータ版のソースを、より新しい .NET（プレリリース版の場合もあります）を試すためにビルドしたものです。測定値の誤りやクラッシュを含め、ベータ版より多くの問題が起こることを想定してください。
 • この PC のベータ版を置き換え、そのデータを共有します。初めて台帳を開く前に backups フォルダーへコピーし、コピーできない場合は開きません。
 • ご利用は完全に自己責任です。下の一覧にあるアルファ版に関する通知が同意する文書です。読んだことを示すためにチェックを入れてください。</value>
     <comment>review</comment>
@@ -4817,7 +4837,139 @@
     <comment>review</comment>
   </data>
   <data name="About_Runtime_Alpha_Format" xml:space="preserve">
+    <value>アルファ版 — {0} で動作</value>
+    <comment>review</comment>
+  </data>
+  <data name="About_Runtime_Alpha_Prerelease_Format" xml:space="preserve">
     <value>アルファ版 — プレリリース版の .NET である {0} で動作</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Pair_Format" xml:space="preserve">
+    <value>{0}：{1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_TitleAndBody_Format" xml:space="preserve">
+    <value>{0}。{1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_List_Separator" xml:space="preserve">
+    <value>、</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Empty" xml:space="preserve">
+    <value>空欄</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chip_Format" xml:space="preserve">
+    <value>{0}：{1}（{2}）</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Change_Format" xml:space="preserve">
+    <value>変更 {0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_ChangeMarker_Format" xml:space="preserve">
+    <value>変更 {0}、{1}：{2}</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Compare_Best_Format" xml:space="preserve">
+    <value>{0}（最良）</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_SensorStat_Format" xml:space="preserve">
+    <value>{0}：平均 {1}、中央値 {2}、最小 {3}、最大 {4}（{5} 回の読み取り）</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Fps_Generated_Format" xml:space="preserve">
+    <value>ネイティブ {0} FPS、表示 {1} FPS、フレーム生成 ×{2:0.0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Fps_GeneratedSteady_Format" xml:space="preserve">
+    <value>ネイティブ {0} FPS、表示 {1} FPS、フレーム生成 ×{2:0.0}（セッションの {3:0}%）</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Fps_Presented_Format" xml:space="preserve">
+    <value>表示された {0} FPS（Presented）。{1}</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_ToggleSection_Format" xml:space="preserve">
+    <value>表示/非表示：{0}</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Agent_Connected" xml:space="preserve">
+    <value>キャプチャエージェントに再接続しました。</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Update_Downloading_Format" xml:space="preserve">
+    <value>バージョン {0} をダウンロードしています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_ControlType" xml:space="preserve">
+    <value>グラフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Keys" xml:space="preserve">
+    <value>矢印キーで表示範囲を移動、Ctrl と矢印キーで拡大・縮小、A キーまたはダブルクリックで全体を表示します。</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Frametime" xml:space="preserve">
+    <value>フレーム時間のグラフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Histogram" xml:space="preserve">
+    <value>FPS のヒストグラム</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Percentiles" xml:space="preserve">
+    <value>パーセンタイル別のフレームレート</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Temps" xml:space="preserve">
+    <value>温度・負荷・電力のグラフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Vram" xml:space="preserve">
+    <value>ビデオメモリのグラフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Ram" xml:space="preserve">
+    <value>メモリのグラフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Clocks" xml:space="preserve">
+    <value>クロックとファンのグラフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Compare" xml:space="preserve">
+    <value>パーセンタイル別のフレームレート（セッションごとに 1 本）</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Latency" xml:space="preserve">
+    <value>レイテンシのグラフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_Trend" xml:space="preserve">
+    <value>推移のグラフ（セッションごとに 1 点）</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_Chart_RenderScale" xml:space="preserve">
+    <value>レンダースケールのグラフ</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_ChartData_Summary" xml:space="preserve">
+    <value>セッションの数値と「系列ごとの統計」にこれらの数値が書かれています。ファイル ▸ エクスポート ▸ Session CSV ですべての点を保存できます。</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_ChartData_Sessions" xml:space="preserve">
+    <value>「セッション」タブの表に各セッションの数値があり、変更はグラフの下に一覧されています。</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_ChartData_Compare" xml:space="preserve">
+    <value>グラフの下の表に各セッションの数値があります。</value>
+    <comment>review</comment>
+  </data>
+  <data name="A11y_ChartData_Latency" xml:space="preserve">
+    <value>平均と 95 パーセンタイルはグラフの上に書かれています。</value>
     <comment>review</comment>
   </data>
 </root>

@@ -71,7 +71,7 @@ public static class ShmLayout
     /// </para>
     /// </remarks>
     public static long SizeForCapacity(uint capacity) =>
-        RingOffset + ((long)capacity * Unsafe.SizeOf<FlFrameRecord>());
+        RingOffset + (capacity * Unsafe.SizeOf<FlFrameRecord>());
 }
 
 /// <summary>Values published in <see cref="FlWriterState.Status"/>.</summary>
@@ -544,7 +544,7 @@ public unsafe struct FlShmHandshake
 /// atomics: <c>std::atomic&lt;T&gt;</c> has no guaranteed layout and could not be mirrored here at all.
 /// </summary>
 [StructLayout(LayoutKind.Sequential, Size = 64)]
-public unsafe struct FlWriterState
+public struct FlWriterState
 {
     /// <summary>Monotonic; release-stored by the writer. Read it with <c>Volatile.Read</c>.</summary>
     public ulong WriteIndex;

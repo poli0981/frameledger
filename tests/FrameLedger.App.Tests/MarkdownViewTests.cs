@@ -6,7 +6,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using FluentAssertions;
 using FrameLedger.App.Controls;
-using Xunit;
 
 namespace FrameLedger.App.Tests;
 

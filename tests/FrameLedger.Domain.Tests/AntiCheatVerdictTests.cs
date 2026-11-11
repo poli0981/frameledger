@@ -9,13 +9,11 @@ namespace FrameLedger.Domain.Tests;
 public sealed class AntiCheatVerdictTests
 {
     [Fact]
-    public void DefaultConstructed_IsNotAllowed()
-    {
+    public void DefaultConstructed_IsNotAllowed() =>
         // If a code path ever forgets to assign a verdict, what it leaves
         // behind must not read as permission. This is the managed half of the
         // static_assert on the native side.
         default(AntiCheatVerdict).IsAllowed.Should().BeFalse();
-    }
 
     /// <summary>
     /// The two allows are the only permitting values: a plain pass, and since D33 (2026-09-26) a pass whose only findings

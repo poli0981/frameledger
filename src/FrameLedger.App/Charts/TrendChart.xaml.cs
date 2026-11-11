@@ -57,7 +57,7 @@ public partial class TrendChart : UserControl
     /// <summary>The session whose points a click landed on (<see cref="TrendPoint.SessionId"/>).</summary>
     public event EventHandler<SessionClickedEventArgs>? SessionClicked;
 
-    public ScottPlot.Plot ScottPlot => Plot.Plot;
+    public Plot ScottPlot => Plot.Plot;
 
     public int DrawnPoints { get; private set; }
 
@@ -86,7 +86,7 @@ public partial class TrendChart : UserControl
         ArgumentNullException.ThrowIfNull(lines);
         ArgumentNullException.ThrowIfNull(changes);
         CloseTip();
-        ScottPlot.Plot plot = Plot.Plot;
+        Plot plot = Plot.Plot;
         plot.Clear();
         // The date axis REPLACES the bottom axis, so it goes first (beta.8): made after the theme and the label, it dropped
         // both — an unlabelled axis in the default colours, unreadable in the dark theme.
@@ -130,7 +130,7 @@ public partial class TrendChart : UserControl
     }
 
     /// <summary>Every line, its points and hollow points; the points drawn, and the counts the tests read.</summary>
-    private List<TrendPoint> AddLines(ScottPlot.Plot plot, IReadOnlyList<TrendLine> lines, string? left, string? right)
+    private List<TrendPoint> AddLines(Plot plot, IReadOnlyList<TrendLine> lines, string? left, string? right)
     {
         ChartPalette p = ChartTheme.Current;
         Color[] palette = [p.Native, p.Displayed, p.Percentile, p.Sensor, p.SensorSecondary, p.Stutter, p.Histogram, p.Segment];
@@ -146,7 +146,7 @@ public partial class TrendChart : UserControl
                 continue;
             }
 
-            hollow += AddLine(plot, line, palette[i % palette.Length], p.Data, isRight);
+            hollow += AddLine(plot, line, palette[i % palette.Length], p.Data, isRight, i);
             onRight += isRight ? 1 : 0;
             drawn.AddRange(line.Points);
         }
@@ -157,7 +157,7 @@ public partial class TrendChart : UserControl
     }
 
     /// <summary>The day markers (beta.30, D70), on the date axis <see cref="Show(IReadOnlyList{TrendLine}, IReadOnlyList{ChangeMarker})"/> made.</summary>
-    private void AddMarkers(ScottPlot.Plot plot, IReadOnlyList<ChangeMarker> changes)
+    private void AddMarkers(Plot plot, IReadOnlyList<ChangeMarker> changes)
     {
         if (changes.Count == 0)
         {
@@ -171,7 +171,7 @@ public partial class TrendChart : UserControl
     }
 
     /// <summary>One line, its hollow points, against the left or the right axis; how many were hollow.</summary>
-    private static int AddLine(ScottPlot.Plot plot, TrendLine line, Color color, Color hollowColor, bool isRight)
+    private static int AddLine(Plot plot, TrendLine line, Color color, Color hollowColor, bool isRight, int index)
     {
         double[] xs = [.. line.Points.Select(static t => t.At.LocalDateTime.ToOADate())];
         double[] ys = [.. line.Points.Select(static t => t.Value)];
@@ -179,6 +179,9 @@ public partial class TrendChart : UserControl
         scatter.LineWidth = 2;
         scatter.MarkerSize = 7;
         scatter.LegendText = isRight ? line.Label + " ▸" : line.Label;
+        // beta.35 (D90): each metric its own pattern and, since every trend line shows its points, its own marker
+        ChartPatterns.Line(scatter, index);
+        ChartPatterns.Points(scatter, index);
         if (isRight)
         {
             scatter.Axes.YAxis = plot.Axes.Right;
@@ -219,7 +222,7 @@ public partial class TrendChart : UserControl
         }
 
         (Pixel at, float reach) = PlotPointer(e);
-        ScottPlot.Plot plot = Plot.Plot;
+        Plot plot = Plot.Plot;
         TrendPoint? nearest = null;
         double best = double.MaxValue;
         foreach (TrendPoint point in _all)

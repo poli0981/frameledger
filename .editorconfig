@@ -59,6 +59,94 @@ dotnet_diagnostic.MA0011.severity = warning
 # and GenerateDocumentationFile is on for the shipping ones.
 dotnet_diagnostic.CS1591.severity = suggestion
 
+# --- ReSharper inspections: what Qodana reads (docs/13_CI_CD.md §Qodana, D93) ---
+# Qodana Community for .NET is ReSharper's InspectCode, and InspectCode reads these keys - so does Rider or ReSharper
+# in the editor, which is why they are here and not in qodana.yaml: the same list everywhere. An inspection is off
+# only where it argues with a choice this project made; each line says which. Everything else it reports is fixed.
+[*.{cs,xaml}]
+# The compiler's missing-XML-comment warning, already a suggestion above (CS1591): InspectCode reports suggestions.
+resharper_c_sharp_warnings_cs1591_highlighting = none
+# Naming is this file's rule and the .NET analyzers'. ReSharper's own scheme would rename product names and units
+# (OpenGL -> OpenGl, XeSS -> XeSs, Presents5s -> Presents5S) and every Chart_* resource key.
+resharper_inconsistent_naming_highlighting = none
+# `x is long v` / `x is > 0 and int v` is how this code unwraps a nullable AND names its type; `{ } v` or `var v`
+# hides it, against csharp_style_var_for_built_in_types above.
+resharper_convert_type_check_pattern_to_null_check_highlighting = none
+resharper_pattern_always_matches_highlighting = none
+# A code-behind class names its base so that the type reads whole without the half XAML generates.
+resharper_redundant_extends_list_entry_highlighting = none
+# An argument that repeats a default says which value the call relies on.
+resharper_redundant_argument_default_value_highlighting = none
+# `partial void OnXChanged(T value)`: the signature is CommunityToolkit.Mvvm's generator's, used or not.
+resharper_unused_parameter_in_partial_method_highlighting = none
+# Exception messages and log lines are English by design (docs/09_I18N.md); what a user reads comes from .resx,
+# and tools/resx-audit.ps1 gates that.
+resharper_localizable_element_highlighting = none
+# WPF UI's styles (DefaultImageStyle ...) arrive with ui:ControlsDictionary at run time, from a package's compiled
+# resources the inspection does not read. A key that does not exist fails PagesLoadTests.
+resharper_xaml_static_resource_not_resolved_highlighting = none
+# Proposals, not findings - ReSharper's suggestions for a style this project did not take. Its style is this file,
+# `dotnet format` and the analyzers the build treats as errors.
+resharper_convert_to_primary_constructor_highlighting = none
+resharper_merge_into_pattern_highlighting = none
+resharper_merge_conditional_expression_highlighting = none
+resharper_use_object_or_collection_initializer_highlighting = none
+resharper_use_utf8_string_literal_highlighting = none
+resharper_redundant_explicit_params_array_creation_highlighting = none
+resharper_arrange_object_creation_when_type_evident_highlighting = none
+resharper_convert_to_using_declaration_highlighting = none
+resharper_convert_closure_to_method_group_highlighting = none
+resharper_redundant_type_declaration_body_highlighting = none
+resharper_replace_with_field_keyword_highlighting = none
+resharper_replace_conditional_expression_with_null_coalescing_highlighting = none
+resharper_append_to_collection_expression_highlighting = none
+resharper_use_collection_expression_highlighting = none
+resharper_use_with_expression_to_copy_struct_highlighting = none
+resharper_convert_to_auto_property_highlighting = none
+resharper_convert_to_static_class_highlighting = none
+resharper_use_index_from_end_expression_highlighting = none
+# A notice for code moving to C# 14, which this code was written in.
+resharper_c_sharp14_overload_resolution_with_span_breaking_change_highlighting = none
+# `await using` needs ConfigureAwait(false) on the disposable under CA2007, which reads worse than the `using` it
+# replaces; the streams these name are closed synchronously on purpose.
+resharper_use_await_using_highlighting = none
+# A member's accessibility is what its type offers, not a count of today's callers.
+resharper_member_can_be_private_global_highlighting = none
+resharper_member_can_be_private_local_highlighting = none
+resharper_property_can_be_made_init_only_global_highlighting = none
+resharper_property_can_be_made_init_only_local_highlighting = none
+resharper_auto_property_can_be_made_get_only_global_highlighting = none
+resharper_auto_property_can_be_made_get_only_local_highlighting = none
+# "Never used" across the solution is not what decides for a member other code can reach: an enum's values mirror
+# the native layout and the stored columns, an exception type carries the constructors CA1032 asks for, a row or a
+# message is read by Dapper and System.Text.Json, an interface states a contract. The private kind (.Local) stays on.
+resharper_unused_member_global_highlighting = none
+resharper_unused_type_global_highlighting = none
+resharper_unused_auto_property_accessor_global_highlighting = none
+resharper_unused_member_in_super_global_highlighting = none
+resharper_unused_method_return_value_global_highlighting = none
+resharper_unused_parameter_global_highlighting = none
+resharper_class_never_instantiated_global_highlighting = none
+resharper_event_never_subscribed_to_global_highlighting = none
+
+# The compiler's nullable analysis is the gate (warnings are errors). These three go further and call a guard
+# redundant because an annotation promises non-null - where a dependency property, a JSON document or a WPF event
+# hands over null all the same.
+resharper_null_coalescing_condition_is_always_not_null_according_to_api_contract_highlighting = none
+resharper_conditional_access_qualifier_is_non_nullable_according_to_api_contract_highlighting = none
+resharper_condition_is_always_true_or_false_according_to_nullable_api_contract_highlighting = none
+# A record's positional property is part of its equality and of what it prints, read by name or not.
+resharper_not_accessed_positional_property_global_highlighting = none
+resharper_not_accessed_positional_property_local_highlighting = none
+# Every one compares a value with the one it was copied from (max == r) or with an exact sentinel (scale == 1.0).
+resharper_compare_of_floats_by_equality_operator_highlighting = none
+# A nested record may name a property as the type that holds it names a helper; the compiler tells them apart.
+resharper_member_hides_static_from_outer_class_highlighting = none
+# `default: break;` is how a switch over a kind says that the rest is left alone on purpose.
+resharper_redundant_empty_switch_section_highlighting = none
+# A binding path through a null yields no value, and the template shows nothing: that is the design.
+resharper_xaml_possible_null_reference_exception_highlighting = none
+
 [src/FrameLedger.App/**.cs]
 # WPF codegen constraints, not style choices. The generated App.g.cs and
 # *.g.cs partials declare these types public, so making them internal is a
@@ -72,3 +160,19 @@ dotnet_diagnostic.MA0049.severity = none    # type name matches containing names
 [tests/**/*.cs]
 dotnet_diagnostic.CA1707.severity = none    # underscores in test method names
 dotnet_diagnostic.CA2007.severity = none
+# A test's assertion lambda runs inside the `using` scope it captures from - and reads a variable the test changes
+# on purpose - and a test's `using var x = new T { ... }` leaks nothing a test process keeps.
+resharper_access_to_disposed_closure_highlighting = none
+resharper_access_to_modified_closure_highlighting = none
+resharper_using_statement_resource_initialization_highlighting = none
+# A test that dereferences a null fails, which is what it is for.
+resharper_assign_null_to_not_null_attribute_highlighting = none
+resharper_possible_null_reference_exception_highlighting = none
+# A test double keeps the shape of what it stands for: an accessor nothing reads, a collection only filled, a result
+# only some tests look at, a value an arrange step sets before the lambda that reads it runs.
+resharper_unused_auto_property_accessor_local_highlighting = none
+resharper_collection_never_queried_local_highlighting = none
+resharper_collection_never_updated_local_highlighting = none
+resharper_unused_method_return_value_local_highlighting = none
+resharper_redundant_assignment_highlighting = none
+resharper_return_type_can_be_not_nullable_highlighting = none

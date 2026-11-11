@@ -137,15 +137,9 @@ public sealed class AgentLauncher : IAgentLauncher
     {
         using (started.Process)
         {
-            try
-            {
-                return Process.GetProcessById(started.Pid);
-            }
-            catch (ArgumentException)
-            {
-                // Gone already; its exit code is lost with it, and the next round says whether an Agent answers.
-                return null;
-            }
+            // False when it is gone already: its exit code is lost with it, and the next round says whether an Agent
+            // answers. (.NET 11's TryGetProcessById; until beta.36 this was GetProcessById and its ArgumentException.)
+            return Process.TryGetProcessById(started.Pid, out Process? process) ? process : null;
         }
     }
 

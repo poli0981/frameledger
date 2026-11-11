@@ -89,7 +89,7 @@ public sealed class PacingSyncAndEfficiencyAggregationTests
 
         SessionRow vulkan = Aggregate(SessionFixtures.Stream(100, FlMeasured.OutputRes, api: FlApi.Vulkan));
         (vulkan.VsyncPresentPct, vulkan.TearingAllowedPct, vulkan.SyncIntervalMode)
-            .Should().Be(((double?)null, (double?)null, (string?)null), "a Vulkan present carries no arguments: N/A, never 0 %");
+            .Should().Be((null, null, null), "a Vulkan present carries no arguments: N/A, never 0 %");
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public sealed class PacingSyncAndEfficiencyAggregationTests
 
         SessionRow noReasons = SessionAggregator.WithSensorAggregates(SessionFixtures.Skeleton(), SessionFixtures.Sensors(4));
         (noReasons.PowerLimitPct, noReasons.ThermalLimitPct, noReasons.AvgGpuCoreClockMhz)
-            .Should().Be(((double?)null, (double?)null, (double?)null), "no layer reported a reason or a clock: N/A, never 'not limited'");
+            .Should().Be((null, null, null), "no layer reported a reason or a clock: N/A, never 'not limited'");
     }
 
     [Fact]
@@ -140,9 +140,9 @@ public sealed class PacingSyncAndEfficiencyAggregationTests
     [InlineData(0x8000_0000u, 0.0, 0.0)]
     [InlineData(0u, 0.0, 0.0)]
     public void EachLimitIsItsOwnBit(uint reasons, double power, double thermal) =>
-        (GpuLimitReasons.PowerLimited(reasons), GpuLimitReasons.ThermalLimited(reasons)).Should().Be(((double?)power, (double?)thermal));
+        (GpuLimitReasons.PowerLimited(reasons), GpuLimitReasons.ThermalLimited(reasons)).Should().Be((power, thermal));
 
     [Fact]
     public void ATickWithNoReasonsIsNoAnswer() =>
-        (GpuLimitReasons.PowerLimited(null), GpuLimitReasons.ThermalLimited(null)).Should().Be(((double?)null, (double?)null));
+        (GpuLimitReasons.PowerLimited(null), GpuLimitReasons.ThermalLimited(null)).Should().Be((null, null));
 }

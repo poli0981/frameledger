@@ -2,6 +2,7 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using FrameLedger.App.Services;
 
@@ -25,4 +26,7 @@ public sealed class FpsReadout : Control
         get => (FpsReadoutModel)GetValue(ModelProperty);
         set => SetValue(ModelProperty, value);
     }
+
+    /// <summary>beta.35 (D88): the readout in words — Native, Displayed and the factor together (rule 6) — and the tooltip's text as help.</summary>
+    protected override AutomationPeer OnCreateAutomationPeer() => new SpokenTextAutomationPeer(this, () => Model?.SpokenText, () => Model?.QualifierTooltip);
 }

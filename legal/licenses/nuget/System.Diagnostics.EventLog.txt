@@ -1,4 +1,4 @@
-System.Diagnostics.EventLog 11.0.0-rc.3.26522.148
+System.Diagnostics.EventLog 11.0.0
 
 Licence declared: MIT
 Text below: the standard MIT text; the package ships no licence file

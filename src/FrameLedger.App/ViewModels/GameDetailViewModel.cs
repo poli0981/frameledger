@@ -52,6 +52,7 @@ public sealed partial class GameDetailViewModel : ObservableObject
     private readonly SessionDeletion? _deletion;
     private readonly Func<string, bool> _exists;
     private readonly GameArt? _art;
+    private readonly IAnnouncer _announcer;
     private readonly CoverStore? _covers;
     private readonly IImagePicker? _images;
     private readonly long? _gameId;
@@ -294,8 +295,9 @@ public sealed partial class GameDetailViewModel : ObservableObject
         SessionSeriesLoader loader, IHardwareSnapshotRepository hardware, SessionSelection sessionSelection, IGamePicker picker,
         RegisteredSettings? settings = null, IAgentLink? agent = null, AntiCheatExceptions? exceptions = null, SessionDeletion? deletion = null,
         UiMode? mode = null, GamePlayer? player = null, Func<string, bool>? executableExists = null, GameArt? art = null, CoverStore? covers = null,
-        IImagePicker? images = null)
+        IImagePicker? images = null, IAnnouncer? announcer = null)
     {
+        _announcer = announcer ?? NoAnnouncer.Instance;
         _art = art;
         _covers = covers;
         _images = images;
@@ -1144,6 +1146,19 @@ public sealed partial class GameDetailViewModel : ObservableObject
         NoticeText = result.MessageFor(gameName);
         NoticeSeverity = result.Succeeded ? InfoBarSeverity.Success : InfoBarSeverity.Warning;
         OnPropertyChanged(nameof(NoticeVisible));
+        SayNotice();
+    }
+
+    /// <summary>
+    /// beta.35 (D89): the page's notice is said as it appears — it shows above the page, away from the button that was
+    /// pressed, where a screen reader's focus is.
+    /// </summary>
+    private void SayNotice()
+    {
+        if (NoticeText is { Length: > 0 } text)
+        {
+            _announcer.Announce(text, NoticeSeverity is InfoBarSeverity.Success or InfoBarSeverity.Informational ? AnnouncementKind.Status : AnnouncementKind.Alert, "Page");
+        }
     }
 
     /// <summary>
@@ -1160,12 +1175,13 @@ public sealed partial class GameDetailViewModel : ObservableObject
             // beta.22: the page reads what is stored after every ask, so whether hooking changed is shown beside this.
             HookingConsentOutcome.Unanswered => (Strings.Agent_Unanswered, InfoBarSeverity.Warning),
             // The Agent could not read the executable (beta.8): say whether its drive or the file is missing, not the IPC code.
-            HookingConsentOutcome.Failed when string.Equals(result.Detail, Shared.Ipc.IpcErrorCode.ExecutableUnreadable, StringComparison.Ordinal) && Game is not null
+            HookingConsentOutcome.Failed when string.Equals(result.Detail, IpcErrorCode.ExecutableUnreadable, StringComparison.Ordinal) && Game is not null
                 => (_executableMissingWhy ?? Formats.ExecutableMissingText(Game.Fingerprint.ExePath), InfoBarSeverity.Warning),
             HookingConsentOutcome.Failed => (result.Detail ?? Strings.Common_NotAvailable, InfoBarSeverity.Warning),
             _ => (null, InfoBarSeverity.Informational),
         };
         OnPropertyChanged(nameof(NoticeVisible));
+        SayNotice();
     }
 
     private void Present(GameDetail detail)

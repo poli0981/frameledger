@@ -27,4 +27,7 @@ public sealed record ChangeMarker(int Number, DateTimeOffset At, IReadOnlyList<s
 
     /// <summary>The tooltip near the marker: the number and the day, then the changes.</summary>
     public string ToolTipText => string.Format(CultureInfo.CurrentCulture, Strings.Trend_Change_Heading_Format, NumberText, DateText) + Environment.NewLine + Text;
+
+    /// <summary>The row as a screen reader reads it (beta.35, D88): its number — the chart's badge — the day and the changes.</summary>
+    public override string ToString() => string.Format(CultureInfo.CurrentCulture, Strings.A11y_ChangeMarker_Format, NumberText, DateText, SpokenText.List([.. Lines]));
 }

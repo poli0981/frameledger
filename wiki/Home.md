@@ -2,8 +2,8 @@
 
 **FrameLedger** records how your games run on this PC — frame rate and frame times, the settings a game really renders
 with, ray tracing, temperatures, and the game's own memory — and keeps every session so you can compare them later.
-Everything stays on your PC: no account, no telemetry. It is free software under the GNU GPL v3, for 64-bit Windows 10
-(22H2) and Windows 11, and it is in beta.
+Everything stays on your PC: no account, no telemetry. It is free software under the GNU GPL v3, for 64-bit Windows 11
+(it may run on Windows 10 22H2, untested and unsupported), and it is in beta.
 
 Download it from the [Releases page](https://github.com/poli0981/frameledger/releases).
 
@@ -20,8 +20,9 @@ The [user guide](../guide/README.md) is the one FrameLedger shows under Help ▸
 
 To look something up: [The screens](../guide/07-screens.md), [Every setting](../guide/08-settings.md),
 [When something goes wrong](../guide/09-troubleshooting.md), [Words FrameLedger uses](../guide/10-glossary.md),
-[The terms, in plain words](../guide/terms-in-plain-words.md), and [Limitations](../LIMITATIONS.md) — what FrameLedger
-cannot do.
+[The terms, in plain words](../guide/terms-in-plain-words.md), [Limitations](../LIMITATIONS.md) — what FrameLedger
+cannot do — and [Accessibility](../ACCESSIBILITY.md): what works with the keyboard alone, a screen reader or a contrast
+theme, and how to report a barrier.
 
 ## Build or change FrameLedger
 
@@ -38,6 +39,7 @@ document in [`docs/`](../docs/README.md).
 ## More
 
 - A bug or a question: the project's [issues](https://github.com/poli0981/frameledger/issues). A game whose anti-cheat
-  FrameLedger missed: the **Safety gap** form there.
+  FrameLedger missed: the **Safety gap** form there. Something that cannot be reached, read or seen: the
+  **Accessibility problem** form.
 - A vulnerability: [`SECURITY.md`](../SECURITY.md).
 - The licence: [`LICENSE`](../LICENSE) (GPL v3) and [`NOTICE`](../NOTICE); the name: [`legal/TRADEMARKS.md`](../legal/TRADEMARKS.md).

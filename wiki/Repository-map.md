@@ -2,7 +2,7 @@
 
 The layout with its history is in [`CLAUDE.md`](../CLAUDE.md) §Solution layout.
 
-## Managed code (`src/`, .NET 10, C#)
+## Managed code (`src/`, .NET 11, C#)
 
 | Project | What it holds |
 |---|---|
@@ -43,3 +43,4 @@ Dependencies point inwards: App and Agent → Application → Domain; Infrastruc
 | `legal/` | The documents a user accepts, the accuracy statement, licences and notices. |
 | `.github/workflows/` | CI, CodeQL, the rules gate, the release and the wiki. |
 | `LIMITATIONS.md` | What the whole software cannot do, in a player's words; also in the App. |
+| `ACCESSIBILITY.md` | The accessibility statement: the goal, what works, the known limits, how a barrier is reported; also in the App. |

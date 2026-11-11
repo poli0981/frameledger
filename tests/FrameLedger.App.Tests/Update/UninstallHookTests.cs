@@ -38,7 +38,7 @@ public sealed class UninstallHookTests
             unregisterLayer: () =>
             {
                 Layer++;
-                return LayerBehaviour is { } b ? b() : true;
+                return LayerBehaviour is not { } b || b();
             },
             removeTask: () =>
             {

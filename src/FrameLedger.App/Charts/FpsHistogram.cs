@@ -41,7 +41,7 @@ public sealed record FpsHistogram(double[] Centers, double[] Counts, double BinW
             first++;
         }
 
-        var fps = new double[count - first];
+        double[] fps = new double[count - first];
         for (int i = 0; i < fps.Length; i++)
         {
             fps[i] = 1000.0 / sortedAppFrameTimesMs[count - 1 - i];
@@ -66,7 +66,7 @@ public sealed record FpsHistogram(double[] Centers, double[] Counts, double BinW
         }
 
         double width = (hi - lo) / bins;
-        var counts = new double[bins];
+        double[] counts = new double[bins];
         int outside = 0;
         foreach (double v in sorted)
         {

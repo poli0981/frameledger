@@ -19,7 +19,7 @@ public sealed class RollingMedianTests
         IReadOnlyList<double>? m = RollingMedian.Of(series);
 
         m.Should().NotBeNull();
-        m![0].Should().Be(0, "a window of one is the value itself");
+        m[0].Should().Be(0, "a window of one is the value itself");
         m[1].Should().Be(10, "frames 0..2");
         m[2].Should().Be(20, "frames 0..4");
         m[9].Should().Be(90, "the full 19-frame window, centered");

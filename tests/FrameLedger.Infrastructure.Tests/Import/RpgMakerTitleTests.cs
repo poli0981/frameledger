@@ -63,8 +63,5 @@ public sealed class RpgMakerTitleTests : IDisposable
     }
 
     [Fact]
-    public void NoFileIsNull()
-    {
-        RpgMakerTitle.TryRead(Write(@"None\Game.exe", "")).Should().BeNull();
-    }
+    public void NoFileIsNull() => RpgMakerTitle.TryRead(Write(@"None\Game.exe", "")).Should().BeNull();
 }

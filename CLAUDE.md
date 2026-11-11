@@ -42,14 +42,14 @@ A C++ DLL (`FrameLedger.Overlay.dll`) is injected into games the user explicitly
 
 | Concern | Choice |
 |---|---|
-| Managed runtime | .NET 10 (LTS, pinned via `global.json`), C# 14, TFM `net10.0-windows10.0.22621.0` with `SupportedOSPlatformVersion=10.0.19045.0` (Win10 22H2 floor, NFR-8), x64 only — `docs/12_BUILD.md`. **The `alpha` branch** (D73–D76, 2026-10-31) builds the same source on a prerelease .NET — .NET 11 RC3, C# 15 — and differs from main only where `docs/12_BUILD.md` §The alpha line lists; code on main must keep compiling as C# 14 on .NET 10, so no C# 15 syntax |
+| Managed runtime | .NET 11 (STS, pinned via `global.json`: the 11.0 SDK band) and C# 15 since 0.1.0-beta.37 (owner decisions D94 and D96, 2026-11-11; .NET 10 and C# 14 until beta.36), TFM `net11.0-windows10.0.22621.0` with `SupportedOSPlatformVersion=10.0.19045.0` (NFR-8 as D95 amended it: Windows 11 is the supported platform; Windows 10 22H2 is not blocked, and is neither tested nor supported), x64 only — `docs/12_BUILD.md` §The main line's .NET. No preview feature (`runtime-async`, the updated memory-safety rules). **No C# 15 construct is used yet** — collection expression arguments, `closed`, `union`, labeled jumps: a construct is used only where the build, CodeQL and Qodana all read it, and Qodana's engine reads none of the four (`docs/13_CI_CD.md` §C# 15 and the analyses). .NET 11's API is used freely. **The `alpha` branch** (D73–D76, 2026-10-31) builds a released beta's source to try a newer .NET; it rests since 0.1.0-alpha.4 (D98) and then differs from main in `RELEASE_LINE` alone — `docs/12_BUILD.md` §The alpha line |
 | Native | **C++20, MSVC v143+, `/MT` static CRT, `/GS`, `/guard:cf`, no RTTI, no C++ exceptions in hook paths** |
 | Hooking | **MinHook** (BSD-2-Clause) for inline hooks; direct vtable-entry swap for COM interfaces |
 | Vulkan | **Implicit Vulkan layer** (`VK_LAYER_FRAMELEDGER_overlay`), not hooking — `17_HOOK_ENGINE` §Vulkan |
 | UI | WPF + WPF UI (`WPF-UI` pinned = 4.3.0) + CommunityToolkit.Mvvm — `docs/16_WPFUI_SYNTAX.md` |
 | App composition | .NET Generic Host + DI in `FrameLedger.App` |
 | Charts | ScottPlot 5 |
-| Markdown in the App | **Markdig** (BSD-2-Clause, pinned ~~1.4.0~~ 1.5.0 since beta.31 — 1.4.2 in beta.30) → WPF `FlowDocument`, HTML off, no image fetched — the Legal Gate, the user guide, Help ▸ Limitations, the update notes, About (beta.12; row added 2026-10-04) |
+| Markdown in the App | **Markdig** (BSD-2-Clause, pinned ~~1.4.0~~ 1.5.0 since beta.31 — 1.4.2 in beta.30) → WPF `FlowDocument`, HTML off, no image fetched — the Legal Gate, the user guide, Help ▸ Limitations, Help ▸ Accessibility (beta.35, D88), the update notes, About (beta.12; row added 2026-10-04) |
 | GPU telemetry | **The game process's own memory since beta.12 (D43):** `FrameLedger.ProcessStats.dll` (C++, loaded by the Agent, never into a game) reads its dedicated/shared GPU memory from the `GPU Process Memory` counters and its working sets from `GetProcessMemoryInfo` — `18_GPU_VENDOR_APIS` §The game process's memory. Layered: DXGI + PDH counters (all vendors) → LibreHardwareMonitorLib (MPL-2.0, all vendors) → **NVAPI (MIT, headers + `amd64/nvapi64.lib` vendored 2026-08-05** at `src/native/third_party/nvapi/`, consumed via the `fl_nvapi` target; NVIDIA extras + Reflex). **No AMD/Intel vendor SDK** — `docs/18_GPU_VENDOR_APIS.md`. ~~**No telemetry source exists in code yet**~~ **`LhmTelemetrySource` (L2) exists since 2026-09-03 (`20_OPEN_QUESTIONS` §M5 row R1, eight GPU fields unelevated); L1 (`BaselineTelemetrySource`: DXGI identity + the PDH adapter-memory counter, the first CsWin32 consumer), `CompositeTelemetrySource` and the 1 Hz `TelemetryPoller` since 2026-09-09; L3 (`NvapiTelemetrySource` over the native `FrameLedger.NvapiBridge.dll` — the only shipped binary linking `nvapi64.lib`, loaded by the Agent into its own process and never into a game) since 2026-09-10 (PR-E2)** — `ctest fl_nvapi_probe` was the only NVAPI consumer until then, and it exists so the vendoring is verified rather than asserted. This row said no source existed for six days after one did, recorded 2026-09-09 rather than repaired quietly. This row previously claimed the vendoring in the present tense while `third_party/` held only `vulkan-headers`; `legal/` had already caught the identical claim about itself and gained a bidirectional gate, which is what made the real vendoring a red-then-green |
 | CPU/board sensors | LibreHardwareMonitorLib ≥ 0.9.6 (PawnIO) — **optional**, elevated only |
 | Tier-2 fallback | **There is none, and Tier 2 is not a measurement.** Owner decision 2026-08-28: the ladder is two rungs — hooked, or duration + sensors + the reason. ~~ETW-based, no injection~~; ~~Intel PresentMon console binary~~ dropped 2026-08-27 after §S31 retired it. Whether a shipped build ever regains a no-injection measurement is `docs/20_OPEN_QUESTIONS.md` §G |
@@ -67,11 +67,15 @@ A C++ DLL (`FrameLedger.Overlay.dll`) is injected into games the user explicitly
 FrameLedger.slnx               # XML solution format (SDK default since .NET 10)
 NOTICE                         # copyright + the GPLv3 section 7 additional terms (beta.12, D45)
 CONTRIBUTING.md  FORKING.md  CODE_OF_CONDUCT.md   # for people who build, contribute or redistribute
+LIMITATIONS.md  ACCESSIBILITY.md               # what the software cannot do; the accessibility statement (D36, D88)
 global.json                    # pins the SDK band — see 12_BUILD
 RELEASE_LINE                   # `main`, or `alpha` on the alpha branch (D73, 2026-10-31) — 12_BUILD §The alpha line
 build.ps1                      # the quality gate; CI runs this identical script
 SonarQube.Analysis.xml         # SonarCloud's settings for ci.yml's sonarcloud job (D68, 2026-10-25; it replaced
 .config/dotnet-tools.json      #   .sonarcloud.properties) and the scanner it runs — 13_CI_CD §SonarCloud
+qodana.yaml                    # Qodana's settings for .github/workflows/qodana.yml (D93, 2026-11-10): the linter, the
+                               #   solution, a gate of zero problems; the inspections' severities are .editorconfig's
+                               #   resharper_* keys — 13_CI_CD §Qodana
 src/
   native/
     FrameLedger.Overlay/       # C++20 DLL injected into the game (hooks + ring writer + optional overlay)
@@ -165,7 +169,7 @@ guide/                         # the user guide (beta.12, D44): ~~eight~~ short 
                                #   (twelve since beta.17, D54: the screens, every setting, troubleshooting, a glossary;
                                #   and the guide is the wiki's End-user part)
 wiki/                          # the wiki's own pages (beta.17, D53): Home, _Sidebar, the developer pages. wiki.yml
-                               #   publishes them with guide/ and LIMITATIONS.md to the Wiki tab at a release;
+                               #   publishes them with guide/, LIMITATIONS.md and ACCESSIBILITY.md to the Wiki tab at a release;
                                #   tools/wiki-build.ps1 assembles and checks them (build.ps1 wiki-check)
 docs/  legal/  legal/licenses/
 ```
@@ -174,7 +178,7 @@ Dependency direction: `App/Agent → Application → Domain`; **`Application →
 
 ## Coding conventions
 
-**C# —** `Nullable enable`, `TreatWarningsAsErrors`, `AnalysisLevel latest-all`, file-scoped namespaces, Roslynator + Meziantou + VS Threading analyzers, `dotnet format` clean. Async suffixed `Async`, `ConfigureAwait(false)` off the UI. All user-visible strings from `.resx`. Timestamps UTC (unix-ms in SQLite); QPC ticks only inside the capture pipeline.
+**C# —** `Nullable enable`, `TreatWarningsAsErrors`, `AnalysisLevel latest-all`, file-scoped namespaces, Roslynator + Meziantou + VS Threading analyzers, `dotnet format` clean. Qodana Community for .NET (ReSharper's inspections) reads the C# and the XAML in an advisory workflow of its own, with a gate of zero problems *(since 2026-11-10, D93 — `13_CI_CD` §Qodana)*: fix what it reports, or switch the inspection off in `.editorconfig` with the reason beside it — never in `qodana.yaml`, never without one. Async suffixed `Async`, `ConfigureAwait(false)` off the UI. All user-visible strings from `.resx`. Timestamps UTC (unix-ms in SQLite); QPC ticks only inside the capture pipeline.
 
 **C++ —** `clang-format` (LLVM base, 4-space, 120 col) enforced in CI. No STL containers that allocate in hook paths. No `std::mutex` in hook paths. `-D_HAS_EXCEPTIONS=0` in the Overlay target. Every hook entry point wrapped per the `FL_HOOK_GUARD` macro (`17_HOOK_ENGINE`). Static analysis: ~~`/analyze` + clang-tidy (`bugprone-*`, `cert-*`, `concurrency-*`)~~ CodeQL (`codeql.yml`, a required check); `/analyze` and clang-tidy are not configured *(corrected 2026-10-04)*. SonarCloud analyses the C++ too, from CMake's compilation database, in `ci.yml`'s advisory `sonarcloud` job *(since 2026-10-25, D68 — `13_CI_CD` §SonarCloud)*.
 
@@ -196,6 +200,8 @@ The version handshake is wired end to end as of 2026-08-05: `FlGuardBuildId` giv
 - Hook-path changes state measured overhead in the PR body (`14_TESTING` §Hook overhead).
 - Any new hook is listed in `17_HOOK_ENGINE` §Hook inventory and justified against rule 4.
 - New user-visible strings exist in `en`, `vi`, `ja`.
+- A change to what the App shows keeps `ACCESSIBILITY.md` §For contributors (names, theme colours, nothing by colour alone,
+  keyboard reach) and updates that page when it moves what works or what does not (D88).
 - Any deviation from a doc updates that doc in the same PR.
 
 ## Reading order
@@ -219,7 +225,10 @@ The version handshake is wired end to end as of 2026-08-05: `FlGuardBuildId` giv
 10. Remaining (`09`–`15`).
 11. **`LIMITATIONS.md`** (repository root; shown in the App under Help ▸ Limitations) — what the WHOLE software cannot
     do, in the user's words, each item linked to its details. When a change moves a limit, the page changes in the same
-    PR (D36, 2026-09-27). **`docs/LIST_GAME_TESTED.md`** — the real games FrameLedger has been run with and what each
+    PR (D36, 2026-09-27). **`ACCESSIBILITY.md`** (repository root; Help ▸ Accessibility) — the accessibility statement:
+    WCAG 2.2 AA through WCAG2ICT as a goal, never a claim; what works with the keyboard, a screen reader and contrast
+    themes, what does not, how a barrier is reported (D88, 2026-11-09); `docs/08_UI.md` §Accessibility holds its checks.
+    **`docs/LIST_GAME_TESTED.md`** — the real games FrameLedger has been run with and what each
     session measured, from a copy of the owner's ledger and the repository's own evidence (D35).
 
 **Before writing native or capture code, read `docs/20_OPEN_QUESTIONS.md`** (its open entries; since beta.24 the

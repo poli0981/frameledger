@@ -6,21 +6,21 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
              xmlns:res="clr-namespace:FrameLedger.App"
-             xmlns:sp="clr-namespace:ScottPlot.WPF;assembly=ScottPlot.WPF">
+             xmlns:charts="clr-namespace:FrameLedger.App.Charts">
     <!-- 08_UI §Games › Sensors: temperatures / load / power; then video memory and memory, each with THIS GAME's own figure
          and the whole graphics card's / whole PC's as SEPARATE, differently-labelled series (beta.12, D43). -->
     <StackPanel>
         <ui:TextBlock FontTypography="BodyStrong" Text="{x:Static res:Strings.Sensors_Temps_Header}" />
-        <sp:WpfPlot x:Name="Temps" Height="240" Margin="0,6,0,0" />
+        <charts:ChartPlot x:Name="Temps" AutomationProperties.Name="{x:Static res:Strings.A11y_Chart_Temps}" AutomationProperties.HelpText="{x:Static res:Strings.A11y_ChartData_Summary}" Height="240" Margin="0,6,0,0" />
         <ui:TextBlock Margin="0,12,0,0" FontTypography="BodyStrong" Text="{x:Static res:Strings.Sensors_Vram_Header}" />
-        <sp:WpfPlot x:Name="Vram" Height="220" Margin="0,6,0,0" />
+        <charts:ChartPlot x:Name="Vram" AutomationProperties.Name="{x:Static res:Strings.A11y_Chart_Vram}" AutomationProperties.HelpText="{x:Static res:Strings.A11y_ChartData_Summary}" Height="220" Margin="0,6,0,0" />
         <ui:TextBlock Margin="0,12,0,0" FontTypography="BodyStrong" Text="{x:Static res:Strings.Sensors_Ram_Header}" />
-        <sp:WpfPlot x:Name="Ram" Height="220" Margin="0,6,0,0" />
+        <charts:ChartPlot x:Name="Ram" AutomationProperties.Name="{x:Static res:Strings.A11y_Chart_Ram}" AutomationProperties.HelpText="{x:Static res:Strings.A11y_ChartData_Summary}" Height="220" Margin="0,6,0,0" />
         <!-- beta.14 (D49): the card's clocks (MHz) and fan (RPM, right axis), with the ticks its power limit or heat held it
              back shaded. Collapsed when the session stored none of them. -->
         <StackPanel x:Name="ClocksSection">
             <ui:TextBlock Margin="0,12,0,0" FontTypography="BodyStrong" Text="{x:Static res:Strings.Sensors_Clocks_Header}" />
-            <sp:WpfPlot x:Name="Clocks" Height="220" Margin="0,6,0,0" />
+            <charts:ChartPlot x:Name="Clocks" AutomationProperties.Name="{x:Static res:Strings.A11y_Chart_Clocks}" AutomationProperties.HelpText="{x:Static res:Strings.A11y_ChartData_Summary}" Height="220" Margin="0,6,0,0" />
         </StackPanel>
     </StackPanel>
 </UserControl>

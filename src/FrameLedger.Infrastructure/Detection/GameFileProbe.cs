@@ -138,7 +138,7 @@ public sealed class GameFileProbe : IGameFileProbe
         string? exeDirectory = Path.GetDirectoryName(exe);
         string? beside = exeDirectory is null ? null : Path.Combine(exeDirectory, "UnityPlayer.dll");
         string? player = beside is not null && File.Exists(beside) ? beside : Shallowest(snapshot, static name => string.Equals(name, "UnityPlayer.dll", StringComparison.OrdinalIgnoreCase));
-        return ValueTask.FromResult(UnityBuildReader.Read(player, UnityDataFile(snapshot, exe, player)));
+        return ValueTask.FromResult(UnityBuildReader.Read(player, UnityDataFile(exe, player)));
     }
 
     /// <inheritdoc />
@@ -179,7 +179,7 @@ public sealed class GameFileProbe : IGameFileProbe
         int bestDepth = int.MaxValue;
         foreach (string relative in snapshot.RelativeFiles)
         {
-            int slash = relative.AsSpan().LastIndexOf('/');
+            int slash = relative.LastIndexOf('/', StringComparison.Ordinal);
             if (!named(relative[(slash + 1)..]))
             {
                 continue;
@@ -195,7 +195,7 @@ public sealed class GameFileProbe : IGameFileProbe
         return best is null ? null : Native(snapshot.GameDirectory.TrimEnd('/') + "/" + best);
     }
 
-    private static string? UnityDataFile(GameFileSnapshot snapshot, string exe, string? player)
+    private static string? UnityDataFile(string exe, string? player)
     {
         string? exeDirectory = Path.GetDirectoryName(exe);
         if (exeDirectory is not null)
@@ -268,7 +268,7 @@ public sealed class GameFileProbe : IGameFileProbe
 
         (string FullPath, string RelativePath)? best = null;
         long bestSize = -1;
-        foreach (string relative in snapshot.RelativeFiles.Where(static f => IsShipping(f[(f.AsSpan().LastIndexOf('/') + 1)..])))
+        foreach (string relative in snapshot.RelativeFiles.Where(static f => IsShipping(f[(f.LastIndexOf('/', StringComparison.Ordinal) + 1)..])))
         {
             string full = snapshot.GameDirectory.TrimEnd('/') + "/" + relative;
             long size = SizeOf(full);

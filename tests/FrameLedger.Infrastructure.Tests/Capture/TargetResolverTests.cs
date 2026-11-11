@@ -177,7 +177,7 @@ public sealed class TargetResolverTests : IDisposable
 
         watched.Should().Be(ProcessImagePath.Read(only.Id, ProcessImagePath.GuardRights, out _));
         watched.Should().Be(ExecutableIdentity.Normalise(_exe));
-        new TargetResolver().Resolve(watched!, out SessionEndReason reason).Should().Be(only.Id);
+        new TargetResolver().Resolve(watched, out SessionEndReason reason).Should().Be(only.Id);
         reason.Should().Be(SessionEndReason.Running);
     }
 

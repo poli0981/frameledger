@@ -21,7 +21,7 @@ public sealed class SeriesDigestTests
     {
         // A fixed scramble, the same on every run (a Random would be CA5394 here and adds nothing).
         uint state = (uint)seed | 1;
-        var times = new double[count];
+        double[] times = new double[count];
         for (int i = 0; i < count; i++)
         {
             state = (state * 1_664_525) + 1_013_904_223;

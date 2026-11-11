@@ -15,7 +15,7 @@ internal static class DetectionFixtures
     public static GameFileSnapshot Snapshot(
         IEnumerable<string>? files = null,
         IEnumerable<string>? dirs = null,
-        string exe = @"C:/Games/Example/Game.exe",
+        string exe = "C:/Games/Example/Game.exe",
         string exeName = "Game",
         string gameDir = "C:/Games/Example",
         string? company = "Example Studios",

@@ -52,7 +52,7 @@ public sealed class GameLibraryTests
         {
             GameRow? added = await s.Library.AddAsync(exe, Ct);
             added.Should().NotBeNull();
-            added!.HookEnabled.Should().BeFalse("CLAUDE.md rule 1: adding never enables anything");
+            added.HookEnabled.Should().BeFalse("CLAUDE.md rule 1: adding never enables anything");
             added.Name.Should().Be(Path.GetFileNameWithoutExtension(exe));
             (await s.Library.AddAsync(exe, Ct))!.Id.Should().Be(added.Id, "the same path is the same row");
         }

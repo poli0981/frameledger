@@ -43,7 +43,7 @@ public sealed class LogTail
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         long start = Math.Max(0, stream.Length - MaxBytes);
         stream.Position = start;
-        var buffer = new byte[stream.Length - start];
+        byte[] buffer = new byte[stream.Length - start];
         stream.ReadExactly(buffer);
         string text = Encoding.UTF8.GetString(buffer);
         string[] lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries);

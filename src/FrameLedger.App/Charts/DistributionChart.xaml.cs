@@ -26,10 +26,10 @@ public partial class DistributionChart : UserControl
         ChartTheme.Attach(Percentiles);
     }
 
-    public ScottPlot.Plot HistogramPlot => Histogram.Plot;
+    public Plot HistogramPlot => Histogram.Plot;
 
     /// <summary>The percentile plot, for a test's look at its axis.</summary>
-    public ScottPlot.Plot PercentilePlot => Percentiles.Plot;
+    public Plot PercentilePlot => Percentiles.Plot;
 
     public void Show(SessionSeries? series)
     {
@@ -42,7 +42,7 @@ public partial class DistributionChart : UserControl
     /// <summary>Draws the histogram; the frames its range left out.</summary>
     private int DrawHistogram(SessionSeries? series)
     {
-        ScottPlot.Plot plot = Histogram.Plot;
+        Plot plot = Histogram.Plot;
         plot.Clear();
         ChartTheme.Apply(plot);
         plot.XLabel(Strings.Chart_Axis_Fps);
@@ -73,7 +73,7 @@ public partial class DistributionChart : UserControl
 
     private void DrawPercentiles(SessionSeries? series)
     {
-        ScottPlot.Plot plot = Percentiles.Plot;
+        Plot plot = Percentiles.Plot;
         plot.Clear();
         ChartTheme.Apply(plot);
         plot.XLabel(Strings.Chart_Axis_Percentile);
@@ -94,6 +94,7 @@ public partial class DistributionChart : UserControl
                 Scatter low = plot.Add.ScatterPoints(new[] { x }, new[] { fps }, ChartTheme.Current.Stutter);
                 low.MarkerSize = 7;
                 low.LegendText = pointOne ? Strings.Summary_Stat_P01Low : Strings.Summary_Stat_P1Low;
+                ChartPatterns.Points(low, pointOne ? 2 : 0);   // beta.35 (D90): the 1% low a circle, the 0.1% low a square
             }
 
             // The axis is 0–100 whatever the curve covers: AutoScale first, then the X limits (AutoScale afterwards undid them).

@@ -327,7 +327,7 @@ public sealed class SqliteGameRepositoryTests
         after.HookEnabled.Should().BeFalse("everything downstream is keyed on the executable; a consent is about the one it was given for");
         after.HookConsentAt.Should().BeNull();
         after.HookPrescanState.Should().Be("not_run");
-        (after.HookPrescanRulesVersion, after.HookPrescanExeSizeBytes, after.HookPrescanExeMtimeMs).Should().Be(((string?)null, (long?)null, (long?)null),
+        (after.HookPrescanRulesVersion, after.HookPrescanExeSizeBytes, after.HookPrescanExeMtimeMs).Should().Be((null, null, null),
             "the pre-scan's key goes with its state, so the new executable is scanned even with the old one's size and mtime");
         after.HookBlockedReason.Should().Be("a block", "nothing clears a block, and pointing the row elsewhere is not a way round that");
         (await repo.FindAsync(_exe.ExePath, Ct)).Should().BeNull("the row moved; it was not copied");

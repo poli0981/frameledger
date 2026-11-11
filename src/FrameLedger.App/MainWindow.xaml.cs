@@ -2,6 +2,7 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.Diagnostics;
+using System.Windows;
 using System.Windows.Threading;
 using FrameLedger.App.Services;
 using FrameLedger.App.ViewModels;
@@ -19,6 +20,8 @@ namespace FrameLedger.App;
 /// </summary>
 public partial class MainWindow : FluentWindow
 {
+    private readonly PageMotion _motion;
+
     public MainWindow(
         MainWindowViewModel viewModel,
         INavigationService navigation,
@@ -26,7 +29,8 @@ public partial class MainWindow : FluentWindow
         IContentDialogService dialogs,
         INavigationViewPageProvider pages,
         IThemeApplier theme,
-        AppearanceSettings appearance)
+        AppearanceSettings appearance,
+        PageFocus pageFocus)
     {
         ArgumentNullException.ThrowIfNull(navigation);
         ArgumentNullException.ThrowIfNull(snackbar);
@@ -34,6 +38,7 @@ public partial class MainWindow : FluentWindow
         ArgumentNullException.ThrowIfNull(pages);
         ArgumentNullException.ThrowIfNull(theme);
         ArgumentNullException.ThrowIfNull(appearance);
+        ArgumentNullException.ThrowIfNull(pageFocus);
 
         ViewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         DataContext = this;
@@ -55,6 +60,17 @@ public partial class MainWindow : FluentWindow
 
         Loaded += (_, _) => theme.Apply(appearance.Theme, this);
         TimeNavigations();
+
+        // beta.35: a page slides in only while Windows' animation effects are on, followed while the window lives; and the
+        // page a shortcut opens takes the keyboard (PageFocus) — the shell says which page is shown after every navigation.
+        _motion = PageMotion.Follow(RootNavigation);
+        RootNavigation.Navigated += (_, e) =>
+        {
+            if (e.Page is FrameworkElement page)
+            {
+                pageFocus.Shown(page);
+            }
+        };
     }
 
     /// <summary>
@@ -78,4 +94,10 @@ public partial class MainWindow : FluentWindow
     }
 
     public MainWindowViewModel ViewModel { get; }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _motion.Dispose();
+        base.OnClosed(e);
+    }
 }

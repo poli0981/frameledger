@@ -25,7 +25,7 @@ public sealed class PeImportsTests
         using var pe = new MemoryStream(SyntheticPe.Build(imports: ["KERNEL32.dll", "vulkan-1.dll"], delayImports: []));
         IReadOnlySet<string>? names = PeImports.Read(pe);
         names.Should().NotBeNull();
-        names!.Count.Should().Be(2);
+        names.Count.Should().Be(2);
         names.Contains("VULKAN-1.DLL").Should().BeTrue("the set is case-insensitive: the file's spelling is kept, the lookup does not care");
         names.Contains("kernel32.dll").Should().BeTrue();
     }

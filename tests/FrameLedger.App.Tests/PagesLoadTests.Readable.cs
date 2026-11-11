@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using FluentAssertions;
+using FrameLedger.App.Services;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Markup;
 
@@ -66,6 +67,109 @@ public sealed partial class PagesLoadTests
 
         result.Texts.Should().BeGreaterThan(300, "every surface was rendered and holds text");
         string.Join(Environment.NewLine, result.Faint).Should().BeEmpty($"every text the App shows reads at {_readableAtLeast}:1 or better in the {theme} theme");
+    }
+
+    /// <summary>
+    /// Under a Windows contrast theme (beta.35, owner decision D91) every text is drawn in one of the theme's own colours over
+    /// one of them — nothing of the Fluent theme under it, nothing made translucent — and reads at 4.5:1 or better: WPF UI's
+    /// four default themes, and two the user edited (<see cref="ContrastThemeTests.EditedDark"/>, <see cref="ContrastThemeTests.EditedLight"/>).
+    /// </summary>
+    [Theory]
+    [InlineData("HC1")]
+    [InlineData("HC2")]
+    [InlineData("HCBlack")]
+    [InlineData("HCWhite")]
+    [InlineData("EditedDark")]
+    [InlineData("EditedLight")]
+    public async Task EveryTextIsInTheContrastThemesColoursAndReadable(string name)
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        using Surfaces surfaces = await Surfaces.LoadAsync(s);
+
+        (int Texts, List<string> Wrong) result = await OnStaAsync(() =>
+        {
+            ContrastPalette palette = ContrastThemeTests.Named(name);
+            return Visuals.UnderContrast(palette, () =>
+            {
+                HashSet<Color> colours = [.. palette.Colors];
+                int texts = 0;
+                var wrong = new List<string>();
+                foreach ((string surface, Func<FrameworkElement> build) in surfaces.All())
+                {
+                    (Window host, FrameworkElement root) = Hosted(build);
+                    try
+                    {
+                        Lay(root);
+                        foreach (TextBlock text in ShownTexts(root))
+                        {
+                            texts++;
+                            Color under = Visuals.PaintedUnder(text, root, palette.Window);
+                            Color drawn = Visuals.TextOver(text, under);
+                            double ratio = Wcag.Ratio(drawn, under);
+                            if (!colours.Contains(drawn) || !colours.Contains(under) || ratio < Wcag.AA)
+                            {
+                                wrong.Add(string.Create(CultureInfo.InvariantCulture, $"{surface}: \"{text.Text}\" {drawn} on {under}, {ratio:0.00}:1"));
+                            }
+                        }
+                    }
+                    finally
+                    {
+                        host.Close();
+                    }
+                }
+
+                return (texts, wrong);
+            });
+        });
+
+        result.Texts.Should().BeGreaterThan(300, "every surface was rendered and holds text");
+        string.Join(Environment.NewLine, result.Wrong).Should().BeEmpty($"under the {name} contrast theme every text is the theme's colour on the theme's colour, at {Wcag.AA}:1 or better");
+    }
+
+    /// <summary>
+    /// The line under Settings ▸ Theme says a contrast theme's colours are used while one is on, and goes when it is off — on
+    /// the page as it is shown, without visiting it again (beta.35, D91).
+    /// </summary>
+    [Fact]
+    public async Task TheSettingsPageSaysAContrastThemeIsOnWhileItIs()
+    {
+        await using ScratchLedger s = await ScratchLedger.OpenAsync();
+        using Surfaces surfaces = await Surfaces.LoadAsync(s);
+
+        var facts = await OnStaAsync(() => Visuals.UnderTheme(ApplicationTheme.Dark, () =>
+        {
+            Func<FrameworkElement> build = surfaces.All().Single(static p => string.Equals(p.Item1, "Settings", StringComparison.Ordinal)).Item2;
+            (Window host, FrameworkElement root) = Hosted(build);
+            try
+            {
+                Lay(root);
+                TextBlock note = Visuals.FindAll<TextBlock>(root).Single(static t => string.Equals(t.Text, Strings.Settings_Theme_ContrastOn, StringComparison.Ordinal));
+                Visibility off = note.Visibility;
+                ResourceDictionary resources = System.Windows.Application.Current.Resources;
+                ContrastOverlay.Install(resources, ContrastThemeTests.EditedDark);
+                Visibility on;
+                try
+                {
+                    Visuals.Pump();
+                    on = note.Visibility;
+                }
+                finally
+                {
+                    ContrastOverlay.Remove(resources);
+                }
+
+                Visuals.Pump();
+                return (off, on, Again: note.Visibility);
+            }
+            finally
+            {
+                host.Close();
+            }
+        }));
+
+        facts.off.Should().Be(Visibility.Collapsed);
+        facts.on.Should().Be(Visibility.Visible);
+        facts.Again.Should().Be(Visibility.Collapsed);
     }
 
     /// <summary>

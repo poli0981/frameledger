@@ -43,7 +43,7 @@ internal sealed class ScratchLedger : IAsyncDisposable
     }
 
     public async Task<long> SessionAsync(long gameId, DateTimeOffset startedAt, int seconds = 600, bool hooked = true, string fgMode = "none", double? native = 60, double? displayed = null, double? factor = null, ExitStatus exit = ExitStatus.Normal, string? fgRefusal = null, double? presented = null, string? qualifier = null,
-        IReadOnlyList<SensorBlob>? sensors = null, FrameLedger.Domain.Display.DisplaySummary? display = null, bool settingsChanged = false,
+        IReadOnlyList<SensorBlob>? sensors = null, Domain.Display.DisplaySummary? display = null, bool settingsChanged = false,
         Func<SessionRow, SessionRow>? shape = null)
     {
         long snapshotId = await new SqliteHardwareSnapshotRepository(Db).EnsureAsync(new HardwareSnapshot { GpuName = "G" }, startedAt, TestContext.Current.CancellationToken).ConfigureAwait(false);
@@ -79,7 +79,7 @@ internal sealed class ScratchLedger : IAsyncDisposable
             MaxGpuTemp = 71,
             SettingsChangedMidSession = settingsChanged,
         };
-        row = FrameLedger.Application.Recording.SessionDisplayColumns.WithDisplay(row, display);
+        row = Application.Recording.SessionDisplayColumns.WithDisplay(row, display);
         row = shape?.Invoke(row) ?? row;
         return await Sessions.InsertFinalizedAsync(new FinalizedSession { Row = row, Sensors = sensors ?? [] }, TestContext.Current.CancellationToken).ConfigureAwait(false);
     }
@@ -87,18 +87,18 @@ internal sealed class ScratchLedger : IAsyncDisposable
     /// <summary>A session that was not hooked, with the sensors a Tier-2 row keeps (since 2026-09-22): three ticks of GPU temperature and power.</summary>
     public Task<long> NotHookedWithSensorsAsync(long gameId, DateTimeOffset startedAt) => SessionAsync(gameId, startedAt, hooked: false, sensors:
     [
-        new SensorBlob { Series = "t_ms", Hz = 1, Codec = FrameLedger.Infrastructure.Blobs.SeriesCodec.Tag, Data = FrameLedger.Infrastructure.Blobs.SeriesCodec.EncodeFloat32([500, 1500, 2500]) },
-        new SensorBlob { Series = "gpu_temp", Hz = 1, Codec = FrameLedger.Infrastructure.Blobs.SeriesCodec.Tag, Data = FrameLedger.Infrastructure.Blobs.SeriesCodec.EncodeFloat32([55, 56, 57]) },
-        new SensorBlob { Series = "gpu_power", Hz = 1, Codec = FrameLedger.Infrastructure.Blobs.SeriesCodec.Tag, Data = FrameLedger.Infrastructure.Blobs.SeriesCodec.EncodeFloat32([150, 160, 170]) },
+        new SensorBlob { Series = "t_ms", Hz = 1, Codec = Infrastructure.Blobs.SeriesCodec.Tag, Data = Infrastructure.Blobs.SeriesCodec.EncodeFloat32([500, 1500, 2500]) },
+        new SensorBlob { Series = "gpu_temp", Hz = 1, Codec = Infrastructure.Blobs.SeriesCodec.Tag, Data = Infrastructure.Blobs.SeriesCodec.EncodeFloat32([55, 56, 57]) },
+        new SensorBlob { Series = "gpu_power", Hz = 1, Codec = Infrastructure.Blobs.SeriesCodec.Tag, Data = Infrastructure.Blobs.SeriesCodec.EncodeFloat32([150, 160, 170]) },
     ]);
 
     /// <summary>A hooked session WITH blobs: <paramref name="frames"/> presents at 60 fps, a 4× spike every <paramref name="spikeEvery"/> frames, one segment, a gpu_temp series.</summary>
     public async Task<long> SessionWithFramesAsync(long gameId, DateTimeOffset startedAt, int frames, int spikeEvery, Func<SessionRow, SessionRow>? shape = null)
     {
         long snapshotId = await new SqliteHardwareSnapshotRepository(Db).EnsureAsync(new HardwareSnapshot { GpuName = "G" }, startedAt, TestContext.Current.CancellationToken).ConfigureAwait(false);
-        var frametimes = new float[frames];
-        var flags = new byte[frames];
-        var index = new uint[frames];
+        float[] frametimes = new float[frames];
+        byte[] flags = new byte[frames];
+        uint[] index = new uint[frames];
         flags[0] = 4;   // the first present carries no interval (FrameFlagBits.Gap = 1 << 2)
         for (int i = 1; i < frames; i++)
         {
@@ -115,17 +115,17 @@ internal sealed class ScratchLedger : IAsyncDisposable
             Segments = [new SegmentRow { SwapchainId = 1, StartFrame = 0, EndFrame = frames - 1, RenderW = 1485, RenderH = 835, OutputW = 2560, OutputH = 1440, Upscaler = "dlss", UpscalerQuality = "Quality", FgMode = "none", NativeFps = 60 }],
             Frames = new FrameBlobs
             {
-                Codec = FrameLedger.Infrastructure.Blobs.SeriesCodec.Tag,
+                Codec = Infrastructure.Blobs.SeriesCodec.Tag,
                 SampleCount = frames,
-                FrameTimes = FrameLedger.Infrastructure.Blobs.SeriesCodec.EncodeFloat32(frametimes),
-                FrameFlags = FrameLedger.Infrastructure.Blobs.SeriesCodec.EncodeBytes(flags),
-                FrameIndex = FrameLedger.Infrastructure.Blobs.SeriesCodec.EncodeUInt32(index),
+                FrameTimes = Infrastructure.Blobs.SeriesCodec.EncodeFloat32(frametimes),
+                FrameFlags = Infrastructure.Blobs.SeriesCodec.EncodeBytes(flags),
+                FrameIndex = Infrastructure.Blobs.SeriesCodec.EncodeUInt32(index),
                 FirstPresentMs = 0,    // schema 0013: the frames and the sensors share a zero, so the overlay is drawn
             },
             Sensors =
             [
-                new SensorBlob { Series = "t_ms", Hz = 1, Codec = FrameLedger.Infrastructure.Blobs.SeriesCodec.Tag, Data = FrameLedger.Infrastructure.Blobs.SeriesCodec.EncodeFloat32([0, 1000, 2000]) },
-                new SensorBlob { Series = "gpu_temp", Hz = 1, Codec = FrameLedger.Infrastructure.Blobs.SeriesCodec.Tag, Data = FrameLedger.Infrastructure.Blobs.SeriesCodec.EncodeFloat32([60, 61, 62]) },
+                new SensorBlob { Series = "t_ms", Hz = 1, Codec = Infrastructure.Blobs.SeriesCodec.Tag, Data = Infrastructure.Blobs.SeriesCodec.EncodeFloat32([0, 1000, 2000]) },
+                new SensorBlob { Series = "gpu_temp", Hz = 1, Codec = Infrastructure.Blobs.SeriesCodec.Tag, Data = Infrastructure.Blobs.SeriesCodec.EncodeFloat32([60, 61, 62]) },
             ],
         }, TestContext.Current.CancellationToken).ConfigureAwait(false);
     }
