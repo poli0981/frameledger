@@ -155,6 +155,11 @@ four trains are [`handoff/history/0.1.0-beta.38.md`](handoff/history/0.1.0-beta.
   (#392's first run): the guard's re-scan refused the harness mid-run, under the gate's load. It passed alone and in
   the rerun; nothing in that pull request is on its path; it was not diagnosed. If it shows again, read the verdict's
   reason first — the assertion prints only that it was a refusal.
+- **`PagesLoadTests.EveryTextFollowsAThemeSwitch` was red once on a hosted runner** (#393's first run, green three
+  times locally): *Settings: "Processor" shows in a fresh one only*. Every build of the Settings page in that fixture
+  made a `SystemInfoViewModel` of its own, whose lines arrive from the thread pool, so two pages built a moment apart
+  could differ by a row. The fixture now loads one and awaits it (`Surfaces.SystemInfo`) — fixed in the release's
+  pull request, test code only. A surface whose view model loads by itself is loaded once, awaited, then shared.
 - **SonarCloud's coverage of new code** (advisory, 80 % asked) was 75.3 % on #391: the uncovered part was Win32
   (`WindowGeometryProbe.MonitorDeviceOf`). A lookup that takes a named window, as `Observe` does, can be tested
   against the harness's window; one that only searches for a visible window cannot, on a hosted runner.
