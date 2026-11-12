@@ -107,6 +107,7 @@ public sealed partial class AdvancedMetricCatalogTests
         // Train B, 0.1.0-beta.40: thirteen entries, each a member of a call the Overlay already hooked - and each
         // matched by a name on tools/overlay-allowed-fields.txt, which a build gate holds to the Overlay's own code.
         // 0.1.0-beta.43: six more, from the two calls hooked only for Advanced metrics (slSetConstants, ffxConfigure).
+        // 0.1.0-beta.44: two more, what Streamline answers about a feature (slGetFeatureVersion, slGetFeatureRequirements).
         // Everything else of Streamline and FidelityFX is still named, not read; NGX and XeSS are never read.
         string[] inGame = [.. _all.Where(static m => m.Reach == AdvancedReach.Game).Select(static m => m.Id)];
         inGame.Should().Equal(
@@ -114,7 +115,10 @@ public sealed partial class AdvancedMetricCatalogTests
             "ffx.upscale.sharpening", "ffx.upscale.jitter", "ffx.upscale.exposure", "ffx.upscale.depth", "ffx.upscale.flags",
             "ffx.upscale.frame_time_delta", "ffx.memory_usage",
             "sl.constants.jitter", "sl.constants.motion_vectors", "sl.constants.depth", "sl.constants.projection", "sl.constants.resets",
-            "ffx.framegen.config");
+            "ffx.framegen.config",
+            "sl.feature.versions", "sl.feature.requirements");
+        // What a game starts Streamline with is still not read (D112: slInit is not hooked).
+        AdvancedMetricCatalog.Find("sl.init.preferences")!.Reach.Should().Be(AdvancedReach.NewHook);
         // The camera's position, axes and matrices are in the same struct as the constants read, and are the player's.
         AdvancedMetricCatalog.Find("sl.constants.camera")!.Reach.Should().Be(AdvancedReach.PlayerState);
 

@@ -55,11 +55,20 @@ also keeps what the game itself handed to DLSS and FSR:
   in. A setting the game changed during the session reads *on and off*. This is what the game **asked for**; how
   many frames were generated is in the session's summary, as before.
 
+- **Streamline's features** (since 0.1.0-beta.44) — what Streamline answered when the game asked about a feature:
+  which version it is (Streamline's own, and the DLSS model's), and what it requires — the graphics APIs it works
+  with, whether V-Sync must be off, whether hardware-accelerated GPU scheduling must be on, how many threads,
+  viewports and buffers, and the Windows and driver versions Streamline found beside the ones the feature needs.
+  The features carry NVIDIA's own names: `kFeatureDLSS` is DLSS, `kFeatureDLSS_G` DLSS frame generation,
+  `kFeatureDLSS_RR` ray reconstruction, `kFeatureReflex` Reflex. **A game asks these while it starts**, usually
+  before FrameLedger is in it, so most sessions show none and the line under the session says *hooked — the game
+  asks this while it starts, and did not ask again*.
+
 These are the game's own words to the upscaler, shown in the vendor's notation (`preExposure`, preset `K`).
 FrameLedger does not check what the upscaler did with them.
 
-The last two are read from calls FrameLedger hooks **only for Advanced metrics**: in a game where no session has
-been recorded with the option on since it started, those two hooks are not there. The line under the session says,
+The last three are read from calls FrameLedger hooks **only for Advanced metrics** — four calls in all: in a game
+where no session has been recorded with the option on since it started, those hooks are not there. The line under the session says,
 for each of the two, whether it was *read*, *hooked — the game did not make the call*, or *not hooked — the game did
 not load the library that has the call*.
 

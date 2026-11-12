@@ -145,7 +145,7 @@ public sealed class AdvancedJsonTests
             new("nvapi.gpu.board_serial", Instance: null, AdvancedValue.OfText("0123456789")),
             new("nvapi.display.edid", "1", AdvancedValue.OfText("00ffffffffffff00")),
             new("sl.constants.camera", Instance: null, AdvancedValue.OfText("1.0 2.0 3.0")),
-            new("sl.feature.versions", Instance: null, AdvancedValue.OfText("DLSS 3.7.0")),
+            new("sl.init.preferences", Instance: null, AdvancedValue.OfText("eDisableCLStateTracking")),
             new("sl.dlss.presets", Instance: null, AdvancedValue.OfRows([new AdvancedRow("DLAA", "K")])),
             new("no.such.metric", Instance: null, AdvancedValue.Of(1)),
             new("lhm.board.model", Instance: null, AdvancedValue.OfText("ASUS ROG STRIX Z790-E")),
@@ -193,6 +193,32 @@ public sealed class AdvancedJsonTests
         older.InGame.Should().Be(AdvancedInGameStatus.Reading);
         older.StreamlineConstants.Should().BeNull("a row that never said is not a row that said the hook was not in");
         older.FsrFrameGeneration.Should().BeNull();
+    }
+
+    [Fact]
+    public void WhatBecameOfTheTwoQuestionsAboutAFeatureSurvivesTheLedgerAndAnOlderRowSaysNothingOfThem()
+    {
+        AdvancedSources written = AdvancedSources.Unknown with
+        {
+            InGame = AdvancedInGameStatus.Reading,
+            StreamlineConstants = AdvancedInGameCall.Read,
+            FsrFrameGeneration = AdvancedInGameCall.NotHooked,
+            StreamlineFeatureVersion = AdvancedInGameCall.Read,
+            StreamlineFeatureRequirements = AdvancedInGameCall.NeverCalled,
+        };
+
+        string json = AdvancedJson.OfSession([], written);
+        (_, AdvancedSources read) = AdvancedJson.ParseSession(json);
+
+        json.Should().Contain("\"streamlineFeatureVersion\":\"Read\"").And.Contain("\"streamlineFeatureRequirements\":\"NeverCalled\"");
+        read.Should().Be(written);
+
+        // 0.1.0-beta.43 wrote exactly this: the two calls of that release and neither of these.
+        const string beta43 = """{"facts":[],"sources":{"nvapi":"Reading","sensors":"Reading","elevatedSensors":"Reading","inGame":"Reading","streamlineConstants":"Read","fsrFrameGeneration":"NeverCalled"}}""";
+        (_, AdvancedSources older) = AdvancedJson.ParseSession(beta43);
+        older.StreamlineConstants.Should().Be(AdvancedInGameCall.Read);
+        older.StreamlineFeatureVersion.Should().BeNull("a row that never said is not a row that said the hook was not in");
+        older.StreamlineFeatureRequirements.Should().BeNull();
     }
 
     [Theory]

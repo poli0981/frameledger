@@ -63,6 +63,23 @@ are kept because they record what each version changed and why (owner decision D
 >
 > Version 2.5 (2026-09-27, 0.1.0-beta.10) adds how a tracked game's window is shown — read from Windows — and the engine build name read from an Unreal Engine game's executable. It is also the first version to say two things the software already did: it reads the **content** of a library game's executable (markers in its first 8 MB and its import table, since the detection of engines and features; and, when a session starts, the graphics-library markers in the whole file), and it reads the processor load and the memory in use (since 0.1.0-beta.3). Nothing here leaves your device, as before.
 
+### What version 2.18 of the Privacy Policy changed (0.1.0-beta.44)
+
+**Two more calls read inside the game, only while Advanced metrics is on** (train B's third step, owner decisions
+D126–D128 beside it; the wording approved with the plan of 0.1.0-beta.44). Version 2.17 named Streamline's per-frame
+constants and the frame-generation configuration, and "two further calls"; this release reads what Streamline
+**answers** when the game asks about a feature, which is in neither list, so the version moves. §1's item on
+Advanced metrics gains **which features the game asked about, the version of each and of its NGX model, and what
+each requires** — the graphics APIs it supports, whether V-Sync must be off and hardware-accelerated GPU scheduling
+on, how many processor threads, viewports and buffers, and the versions of Windows and of the graphics driver that
+Streamline found beside the ones the feature needs. It also says what of that answer is never read: **the lists it
+points to** — the buffers' names, the names of Vulkan extensions and features — which a check in the build holds
+(the count of required buffers is read; its list is not). §4's "two further calls" is four, and its list of what is
+stored names the versions and requirements. The versions of Windows and of the driver are the ones Streamline
+reports to the game; FrameLedger already stores the driver's version with a session's hardware. The accuracy
+block's item says what these are — Streamline's answers, not a check of the PC — and that a game asks while it
+starts, so most sessions have none. The Disclaimer stays 2.15. §2 is unchanged: nothing is sent.
+
 ### What version 2.17 of the Privacy Policy changed (0.1.0-beta.43)
 
 **Two more calls read inside the game, only while Advanced metrics is on** (train B's second step, owner decisions

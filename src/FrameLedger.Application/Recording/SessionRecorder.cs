@@ -2,6 +2,7 @@
 // Copyright (C) 2026 poli0981 - additional terms under GPLv3 section 7: see NOTICE
 
 using System.Globalization;
+using System.Runtime.InteropServices;
 using FrameLedger.Application.Advanced;
 using FrameLedger.Application.Capture;
 using FrameLedger.Application.Persistence;
@@ -374,8 +375,8 @@ public sealed class SessionRecorder : ISessionRecorder
         // records Advanced metrics - the same condition the shared reader is held under.
         private readonly InGameAdvancedSampler? _inGame = advanced is null ? null : new InGameAdvancedSampler();
         private IReadOnlyList<AdvancedReading>? _inGamePending;
-        private (IReadOnlyList<AdvancedFact> Facts, AdvancedInGameStatus Status, AdvancedInGameCall? Streamline, AdvancedInGameCall? FrameGeneration) _inGameContext =
-            ([], AdvancedInGameStatus.Unknown, null, null);
+        private (IReadOnlyList<AdvancedFact> Facts, AdvancedInGameStatus Status, InGameCallStates Calls) _inGameContext =
+            ([], AdvancedInGameStatus.Unknown, default);
         private IReadOnlyList<AdvancedFact> _sessionWithGame = [];
 
         /// <summary>A session that records Advanced metrics asks the Overlay for what the game tells its upscaler (D111).</summary>
@@ -486,10 +487,9 @@ public sealed class SessionRecorder : ISessionRecorder
             IReadOnlyList<AdvancedFact>? session = _sessionFacts;
             IReadOnlyList<AdvancedFact> game = _inGame?.Facts ?? [];
             AdvancedInGameStatus status = InGameStatus();
-            (AdvancedInGameCall? streamline, AdvancedInGameCall? frameGeneration) = InGameCalls();
+            InGameCallStates calls = InGameCalls();
             (IReadOnlyList<AdvancedFact>?, IReadOnlyList<AdvancedSeriesInfo>?, AdvancedSources?, IReadOnlyList<AdvancedFact>?) now = (snapshot?.MachineFacts, snapshot?.Series, snapshot?.Sources, session);
-            bool sameGame = ReferenceEquals(game, _inGameContext.Facts) && status == _inGameContext.Status
-                && streamline == _inGameContext.Streamline && frameGeneration == _inGameContext.FrameGeneration;
+            bool sameGame = ReferenceEquals(game, _inGameContext.Facts) && status == _inGameContext.Status && calls == _inGameContext.Calls;
             if ((snapshot is null && session is null && game.Count == 0)
                 || (sameGame && ReferenceEquals(now.Item1, _context.Machine) && ReferenceEquals(now.Item2, _context.Series) && Equals(now.Item3, _context.Sources) && ReferenceEquals(now.Item4, _context.Session)))
             {
@@ -503,32 +503,49 @@ public sealed class SessionRecorder : ISessionRecorder
             }
 
             _context = now;
-            _inGameContext = (game, status, streamline, frameGeneration);
+            _inGameContext = (game, status, calls);
             writer.SetAdvancedContext(new AdvancedSessionData(
                 snapshot?.MachineFacts ?? [],
                 _sessionWithGame,
                 snapshot?.Series ?? [],
-                (snapshot?.Sources ?? AdvancedSources.Unknown) with { InGame = status, StreamlineConstants = streamline, FsrFrameGeneration = frameGeneration }));
+                (snapshot?.Sources ?? AdvancedSources.Unknown) with
+                {
+                    InGame = status,
+                    StreamlineConstants = calls.Streamline,
+                    FsrFrameGeneration = calls.FrameGeneration,
+                    StreamlineFeatureVersion = calls.FeatureVersion,
+                    StreamlineFeatureRequirements = calls.FeatureRequirements,
+                }));
         }
 
         /// <summary>
-        /// What became of the two calls hooked only for Advanced metrics (0.1.0-beta.43), for a session measured
-        /// inside the game: read, hooked and never called, or not hooked - from the hook families the capture side
-        /// last published and from what its publications carried. Null for a session not measured inside the game:
-        /// <see cref="AdvancedInGameStatus.NotHooked"/> already says so.
+        /// What became of the calls hooked only for Advanced metrics (two since 0.1.0-beta.43, four since
+        /// 0.1.0-beta.44), for a session measured inside the game: read, hooked and never called, or not hooked - from
+        /// the hook families the capture side last published and from what its publications carried. All null for a
+        /// session not measured inside the game: <see cref="AdvancedInGameStatus.NotHooked"/> already says so.
         /// </summary>
-        private (AdvancedInGameCall? Streamline, AdvancedInGameCall? FrameGeneration) InGameCalls()
+        private InGameCallStates InGameCalls()
         {
             if (_inGame is null || AttachedAt is null)
             {
-                return (null, null);
+                return default;
             }
 
             var hooks = (FlHookFamily)(_last?.WriterState.HooksInstalledMask ?? 0u);
-            return (
+            return new InGameCallStates(
                 _inGame.Call(FlAdvancedValid.SlConstants, hooks.HasFlag(FlHookFamily.SlConstants)),
-                _inGame.Call(FlAdvancedValid.FfxFgConfig, hooks.HasFlag(FlHookFamily.FfxConfigure)));
+                _inGame.Call(FlAdvancedValid.FfxFgConfig, hooks.HasFlag(FlHookFamily.FfxConfigure)),
+                _inGame.FeatureCall(FlAdvancedState.FeatureVersionAnswered, hooks.HasFlag(FlHookFamily.SlFeatureVersion)),
+                _inGame.FeatureCall(FlAdvancedState.FeatureRequirementsAnswered, hooks.HasFlag(FlHookFamily.SlFeatureRequirements)));
         }
+
+        /// <summary>The four calls' states, compared as one value when deciding whether the session's context moved.</summary>
+        [StructLayout(LayoutKind.Auto)]
+        private readonly record struct InGameCallStates(
+            AdvancedInGameCall? Streamline,
+            AdvancedInGameCall? FrameGeneration,
+            AdvancedInGameCall? FeatureVersion,
+            AdvancedInGameCall? FeatureRequirements);
 
         /// <summary>
         /// What the row says of the entries read inside the game: read, measured inside the game with none of their

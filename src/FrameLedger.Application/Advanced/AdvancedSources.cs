@@ -32,6 +32,16 @@ public sealed record AdvancedSources(
     /// <summary>The same for how the game configures FSR frame generation (<c>ffxConfigure</c>, <c>ffx.framegen.config</c>).</summary>
     public AdvancedInGameCall? FsrFrameGeneration { get; init; }
 
+    /// <summary>
+    /// The same for which version each Streamline feature is (<c>slGetFeatureVersion</c>, <c>sl.feature.versions</c>;
+    /// 0.1.0-beta.44). A game asks while it starts: <see cref="AdvancedInGameCall.NeverCalled"/> is what a session
+    /// attached after that says, and it means "not asked again", not "never asked".
+    /// </summary>
+    public AdvancedInGameCall? StreamlineFeatureVersion { get; init; }
+
+    /// <summary>The same for what each feature requires (<c>slGetFeatureRequirements</c>, <c>sl.feature.requirements</c>).</summary>
+    public AdvancedInGameCall? StreamlineFeatureRequirements { get; init; }
+
     /// <summary>Nothing asked yet.</summary>
     public static AdvancedSources Unknown { get; } = new(AdvancedSourceStatus.Unknown, NvapiCode: null, AdvancedSourceStatus.Unknown, AdvancedSourceStatus.Unknown);
 }

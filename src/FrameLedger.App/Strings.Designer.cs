@@ -261,6 +261,7 @@ public static class Strings
         nameof(Advanced_Facts_Header),
         nameof(Advanced_Header),
         nameof(Advanced_InGameCallsLine),
+        nameof(Advanced_InGameFeatureCallsLine),
         nameof(Advanced_InGameLine),
         nameof(Advanced_Machine_Intro),
         nameof(Advanced_Max),
@@ -304,6 +305,7 @@ public static class Strings
         nameof(AdvInGame_Reading),
         nameof(AdvInGame_Unknown),
         nameof(AdvInGameCall_NeverCalled),
+        nameof(AdvInGameCall_NotAskedAgain),
         nameof(AdvInGameCall_NotHooked),
         nameof(AdvInGameCall_Read),
         nameof(AdvInGameCall_Unknown),
@@ -1996,6 +1998,8 @@ public static class Strings
 
     public static string Advanced_InGameCallsLine => ResourceManager.GetString(nameof(Advanced_InGameCallsLine), Culture) ?? nameof(Advanced_InGameCallsLine);
 
+    public static string Advanced_InGameFeatureCallsLine => ResourceManager.GetString(nameof(Advanced_InGameFeatureCallsLine), Culture) ?? nameof(Advanced_InGameFeatureCallsLine);
+
     public static string Advanced_InGameLine => ResourceManager.GetString(nameof(Advanced_InGameLine), Culture) ?? nameof(Advanced_InGameLine);
 
     public static string Advanced_Machine_Intro => ResourceManager.GetString(nameof(Advanced_Machine_Intro), Culture) ?? nameof(Advanced_Machine_Intro);
@@ -2081,6 +2085,8 @@ public static class Strings
     public static string AdvInGame_Unknown => ResourceManager.GetString(nameof(AdvInGame_Unknown), Culture) ?? nameof(AdvInGame_Unknown);
 
     public static string AdvInGameCall_NeverCalled => ResourceManager.GetString(nameof(AdvInGameCall_NeverCalled), Culture) ?? nameof(AdvInGameCall_NeverCalled);
+
+    public static string AdvInGameCall_NotAskedAgain => ResourceManager.GetString(nameof(AdvInGameCall_NotAskedAgain), Culture) ?? nameof(AdvInGameCall_NotAskedAgain);
 
     public static string AdvInGameCall_NotHooked => ResourceManager.GetString(nameof(AdvInGameCall_NotHooked), Culture) ?? nameof(AdvInGameCall_NotHooked);
 

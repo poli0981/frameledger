@@ -982,6 +982,26 @@ public unsafe struct FlAdvancedState
 
     /// <summary><see cref="FeatureSlots"/> slots of <see cref="FeatureWords"/> words each (0.1.0-beta.44).</summary>
     public fixed uint Features[FeatureSlots * FeatureWords];
+
+    /// <summary>Word 1 of a slot: <c>slGetFeatureVersion</c> answered for this feature.</summary>
+    public const uint FeatureVersionAnswered = 1u << 0;
+
+    /// <summary>Word 1 of a slot: <c>slGetFeatureRequirements</c> answered for this feature.</summary>
+    public const uint FeatureRequirementsAnswered = 1u << 1;
+
+    /// <summary>
+    /// One word of one feature slot, as <c>fl_shm.h</c> lays them out: 0 the <c>sl::Feature</c> id plus one (0 = an
+    /// empty slot; slots fill from 0), 1 which question was answered, 2..7 the two versions, 8 the flags, 9..11 three
+    /// counts, 12..23 four versions.
+    /// </summary>
+    public readonly uint FeatureWordAt(int slot, int word)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(slot);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(slot, FeatureSlots);
+        ArgumentOutOfRangeException.ThrowIfNegative(word);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(word, FeatureWords);
+        return Features[(slot * FeatureWords) + word];
+    }
 }
 
 /// <summary>Region 6 — the ring. Exactly 64 bytes, no implicit padding.</summary>

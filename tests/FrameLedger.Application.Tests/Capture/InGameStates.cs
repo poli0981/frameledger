@@ -126,6 +126,32 @@ internal static class InGameStates
         1920,
         1080);
 
+    /// <summary>
+    /// What the stub interposer answers <c>hook-harness --advanced</c> about DLSS and DLSS frame generation
+    /// (0.1.0-beta.44), beside what the same target tells Streamline each frame: slots 0 and 1, both questions answered.
+    /// </summary>
+    public static FlAdvancedState Features(uint samples = 1) => WithFeature(
+        WithFeature(Streamline(samples), 0, 0, 3, 2, 14, 1, 310, 4, 0, 7, 2, 32, 3, 10, 0, 26100, 10, 0, 19041, 591, 44, 0, 512, 15, 0),
+        1, 1000, 3, 2, 14, 1, 310, 4, 1, 26, 1, 1, 4, 10, 0, 26100, 10, 0, 19041, 591, 44, 0, 551, 23, 0);
+
+    /// <summary>
+    /// One feature slot, set through the struct's bytes: the <c>sl::Feature</c> id, which questions were answered, and
+    /// the slot's words from 2 on - versionSL, versionNGX, the flags, three counts, then Windows found and required and
+    /// the driver found and required (three words a version). The group's bit of the mask goes on with it.
+    /// </summary>
+    public static FlAdvancedState WithFeature(FlAdvancedState state, int slot, uint feature, uint answered, params ReadOnlySpan<uint> from2)
+    {
+        int at = (int)Marshal.OffsetOf<FlAdvancedState>(nameof(FlAdvancedState.Features)) + (slot * FlAdvancedState.FeatureWords * sizeof(uint));
+        Span<uint> words = MemoryMarshal.Cast<byte, uint>(
+            MemoryMarshal.AsBytes(new Span<FlAdvancedState>(ref state)).Slice(at, FlAdvancedState.FeatureWords * sizeof(uint)));
+        words.Clear();
+        words[0] = feature + 1;
+        words[1] = answered;
+        from2.CopyTo(words[2..]);
+        state.ValidMask |= FlAdvancedValid.SlFeatures;
+        return state;
+    }
+
     /// <summary>The generation rectangle - left, top, width, height: a fixed buffer, set through the struct's bytes.</summary>
     public static FlAdvancedState WithRect(FlAdvancedState state, int left, int top, int width, int height)
     {
