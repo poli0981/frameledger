@@ -187,7 +187,8 @@ Asked for as "Resolution Scaling = FSR 3, frame generation off". Read the same w
   owner is no longer hypothetical**: a list that cannot be read is not a finding, and rule 2 treats it as a refusal
   so that an unreadable game is never hooked; reading it again a bounded number of times before refusing would
   keep that — a list that stays unreadable still refuses — and stop losing sessions to a moment of loading. It
-  changes what the guard does on a check, so it is the owner's decision, and it is not made here.
+  changes what the guard does on a check, so it is the owner's decision, and it is not made here. *(Made the same
+  day: D123, §NEXT item 1b.)*
 
 ### NEXT
 
@@ -195,14 +196,27 @@ Asked for as "Resolution Scaling = FSR 3, frame generation off". Read the same w
    quits the game the ordinary way. Its `logs\overlay-<pid>-….log` is what beta.43 waits for.~~ **Run 2026-11-12;
    the section above is what it showed.** What is left of item 40 is (d), a session that changes upscaler, and
    the owner's word on the rest.
-1a. **Before beta.43's plan: one session of Cyberpunk 2077 with Resolution Scaling = FSR 3, frame generation
+1a. ~~**Before beta.43's plan: one session of Cyberpunk 2077 with Resolution Scaling = FSR 3, frame generation
    off** (the second bullet above), and a second with it on. It says whether FrameLedger names FSR 3 there —
    the route through the loader that D121 was first taken to be about — and whether the 2.3 loader counts an
    UPSCALE twice. *(Tried 2026-11-12 10:08 and 10:12: the game was still on FSR 2 — the section above. The check
-   that the right thing ran is the file: `ResolutionScaling = FSR3`.)*
-1b. **The owner's decision on the guard's module-list read** (the section above): refuse at the first incomplete
+   that the right thing ran is the file: `ResolutionScaling = FSR3`.)*~~
+   **It cannot be run, the owner said the same day: Cyberpunk 2077 has FSR 2.1 as its only FSR upscaler and
+   FSR 3.1 as frame generation only — two separate settings, not a pair; there is no FSR 3 under Resolution
+   Scaling.** So D121 is closed for good — every Cyberpunk session upscaling with FSR reads "unknown", by the
+   limit `LIMITATIONS.md` states — and **no title run so far upscales through a 2.3 loader**. The double
+   count stays unobserved. What IS measured is that this loader hands a frame-generation dispatch to the leaf's
+   export; an UPSCALE through the same `ffxDispatch` would take the same path. beta.43's plan therefore counts
+   an UPSCALE at the first hooked module that sees it (as `fl::adv::Owns` does) as a precaution, with a fixture
+   whose loader forwards to the leaf's export — rather than wait for a session that cannot be had.
+1b. ~~**The owner's decision on the guard's module-list read** (the section above): refuse at the first incomplete
    list, as now, or read again a bounded number of times first. If the second, it is a pull request of its own
-   in the guard (`FrameLedger.Injector`), with `19_SAFETY` amended in it, before or with beta.43.
+   in the guard (`FrameLedger.Injector`), with `19_SAFETY` amended in it, before or with beta.43.~~ **Decided
+   2026-11-12 — read again (D123) — and built the same day**: `Collected::kUnsettled`, up to three re-reads,
+   `19_SAFETY` amended. Not released: it ships with the next pre-release, and until then a launch can still be
+   lost this way on beta.42. What the owner then checks is the Agent's log: no `guard=ModuleScanFailed` end at a
+   game's launch, and if one comes its signal now says which kind — *kept changing while it was read* (four reads
+   were not enough) or *came back incomplete* (more modules than the guard's buffer holds).
 2. **~~Read that log, then~~ plan 0.1.0-beta.43** — `slSetConstants` and `ffxConfigure`, and the fix for D121 if the
    log shows the route. What to look for: which `HOOK_INSTALLED` lines there are (which of the four ffx modules and
    the FSR 3.0 host were patched); the `FFX_DISPATCH` lines — is `b=0x10001` (UPSCALE) on any module, or only
@@ -724,6 +738,7 @@ Where each owner decision is recorded — the file and its section, and a label 
 | D120 | [`03_METRICS.md`](03_METRICS.md) §Upscaling | a session's upscaler is the technology named on the most samples, and its quality and render size are read from that technology's samples — not the first one named, with the others' values beside it |
 | D121 | [`HANDOFF.md`](HANDOFF.md) §NEXT | Cyberpunk 2077 was set to FSR upscaling and FrameLedger named none: a detection gap, to be investigated — which first needs a native log that survives the game's exit |
 | D122 | [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_APIS.md) §Train B | train B's second step is split: **beta.42** has no new patch site (D119–D121 and the patch registry's hardening); **beta.43** is the two new hooks, begun only after the owner has run Cyberpunk on beta.42 and its log was read. The third release is beta.44, train C beta.45, train D beta.46 |
+| D123 | [`19_SAFETY_AND_ANTICHEAT.md`](19_SAFETY_AND_ANTICHEAT.md) §Pre-injection checks, check 1 | a module list that changed while the guard read it is read again, at most three times, before it refuses — five real sessions on one PC in a week had ended as a safety unhook with no frame recorded; a list that never settles still refuses, and nothing else about what refuses changed |
 | D109 | [`../legal/DISCLAIMER.md`](../legal/DISCLAIMER.md) §5, §5A | asked on 2026-11-11 with both sentences quoted: the Disclaimer goes to 2.15 with the Privacy Policy — PawnIO and the admin mode are no longer "for the CPU temperature" alone; with Advanced metrics on they also read the processor's, the memory's and the motherboard's sensors. The admin mode's disclosure follows (`agent-admin-dialog/2`) |
 
 ---

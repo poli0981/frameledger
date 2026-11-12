@@ -277,11 +277,25 @@ enum class Collected : std::uint8_t {
     // kProcessUnreadable -- so it is never a pass. ACCESS_DENIED (a protected process) is kFailed and is never retried.
     // Every other consumer of Collected treats anything but kOk as a failure.
     kRetry,
+    // EnumerateModules ONLY (owner decision D123, 2026-11-12): the module list CHANGED WHILE IT WAS READ -- a module
+    // that was in the list could not be named a moment later, because the process unloaded it, or was still loading
+    // it, between the two calls. Not a finding and not a protected process: a game at its launch loads and unloads
+    // modules for seconds. Until D123 this was kIncomplete and refused at once, which ended real sessions as a safety
+    // unhook with no frame recorded (five in the Agent's logs of one PC in a week: Phantom Blade Zero, Crown & Coin,
+    // Cyberpunk 2077). The module check reads the whole scan set again, up to kMaxUnsettledRereads times, each
+    // after kScanRetryPauseMs; a list that is still unsettled on the last read refuses as kModuleScanFailed -- so it
+    // is never a pass, and nothing that was not read whole is ever allowed. A list too long for the buffer stays
+    // kIncomplete and is not read again: a second read would be as long.
+    kUnsettled,
 };
 
-// How long the module check waits before its one re-read (D48). A process that was still loading has its modules
+// How long the module check waits before a re-read (D48, D123). A process that was still loading has its modules
 // well within it; one that has exited is out of the fresh snapshot.
 inline constexpr std::uint32_t kScanRetryPauseMs = 250;
+
+// How many times the module check reads the scan set again for a list that changed under the read (D123): three, so
+// four reads in all and at most 750 ms of pauses. D48's re-read for a process still being created stays ONE.
+inline constexpr std::uint32_t kMaxUnsettledRereads = 3;
 
 // Callbacks receive (context, name) for each item found. Returning false stops
 // enumeration early — used when a match has already been found.
