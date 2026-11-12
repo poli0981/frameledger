@@ -225,6 +225,8 @@ const char* CollectedName(fl::guard::Collected c) {
         return "INCOMPLETE";
     case fl::guard::Collected::kRetry:
         return "RETRY (still loading, or gone)";
+    case fl::guard::Collected::kUnsettled:
+        return "UNSETTLED (the list changed while it was read)";
     }
     return "?";
 }

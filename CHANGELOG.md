@@ -37,6 +37,16 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ### Fixed
 
+- **A game is no longer left unrecorded because it was still loading when FrameLedger looked at it.** Before it
+  hooks a game, and again right after, FrameLedger lists the modules the game has loaded and checks them against
+  the anti-cheat list. A game that is starting loads and unloads modules for several seconds, and when the list
+  changed in the middle of being read FrameLedger treated it as unreadable and stopped: the session ended as a
+  safety stop with nothing recorded, and the game ran on unmeasured until it was restarted. It now reads the list
+  again — up to three more times, a quarter of a second apart — and only stops if the list never holds still. What
+  stops a session has not changed: an anti-cheat module found in any read stops it at once, a protected process
+  still stops it at once, and a list that cannot be read in the end is still a stop, never a pass. (Owner decision
+  D123; seen five times in one PC's logs in a week.)
+
 - **A test of the Overlay's log reads its lines without `strlen`.** The helper that looks for a line in the log
   took its text as C strings and measured one with `strlen`; it takes strings now. Test code only: nothing in the
   installed software changes. (Found by SonarCloud after 0.1.0-beta.42 was merged.)

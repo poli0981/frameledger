@@ -60,9 +60,29 @@ Implemented in `FrameLedger.Injector` and reached from managed code through a th
    > at once), waits `kScanRetryPauseMs` (250 ms), takes a **fresh** scan set and scans it whole. A member still unreadable
    > then refuses `kProcessUnreadable`, as before; one that has gone is not in the new set; a target that has gone leaves
    > no set, which refuses `kProcessTreeUnavailable`. **`ERROR_ACCESS_DENIED` — a protected process — is never retried**,
-   > and no other answer of any source is. The sentence above stands: every failure still means REFUSE; what changed is
+   > and no other answer of any source is *(one more since D123, below)*. The sentence above stands: every failure still means REFUSE; what changed is
    > how many times "still loading" is asked before it counts as one. ctest `fl_guard` `[D48]` holds both directions,
    > against fakes and against the real source (a process created suspended, a pid with no process).
+   >
+   > **Amended 2026-11-12 (owner decision D123): a module list that changed while it was read is read again, at most
+   > three times — never a pass.** The module check lists a process's modules and then asks each one's name. A game at
+   > its launch loads and unloads modules for seconds, and a module that was in the list and could not be named a
+   > moment later made the whole answer "incomplete": a refusal before injection, or — 0.5 s after it, at the first
+   > supervision scan — a safety unhook with no frame recorded, the game then running on unrecorded. **Five such ends
+   > in one PC's Agent logs in a week** (Phantom Blade Zero three times on 2026-11-05, Crown & Coin on 11-10,
+   > Cyberpunk 2077 on 11-12), and twice in this repository's own gate. Asked with that, the owner chose: read it
+   > again. Such a list is now `Collected::kUnsettled`; the pass finishes — **a blocklisted module among those that
+   > were read still refuses at once** — waits `kScanRetryPauseMs`, takes a fresh scan set and reads it whole, up to
+   > `kMaxUnsettledRereads` (3) times: four reads and 750 ms of pauses at most. A list still unsettled on the last
+   > read refuses `kModuleScanFailed` ("a module list kept changing while it was read"). **What did not change:** a
+   > list too long for the guard's buffer is still `kIncomplete` and refuses at once (a second read would be as
+   > long); a protected process still refuses at once; D48's re-read is still one for the whole check; every read is
+   > of the whole scan set, and the read that allows is one in which every member was read whole and none held a
+   > finding. A failure to read is still never a pass — what changed is how many times a list that is moving is
+   > asked before it counts as unreadable. The launch poll's presentation-runtime probe treats an unsettled list as
+   > "ask again" rather than deciding on half of one. ctest `fl_guard` `[D123]`: against fakes, every direction
+   > above; against the real source, a process that loads and frees a module in a loop — read some 3,600 times in
+   > three seconds, about one read in four is unsettled and none is anything else.
    >
    > **Launch mode (2026-09-06, P1 item 2) does not weaken this.** `FlGuardedInjectWhenReady` polls
    > the same enumeration to learn *when* the launched target has mapped a presentation runtime, and a

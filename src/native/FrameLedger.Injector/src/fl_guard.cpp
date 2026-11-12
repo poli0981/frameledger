@@ -391,9 +391,12 @@ Verdict LoadRules(const Sources& s, Rules& rules) noexcept {
 // One pass of check 1 over a fresh scan set. `allowRetry` (D48): on the first pass a member that is still being
 // created or already gone (Collected::kRetry) is noted in `retryWanted` and the pass goes on -- a finding in any other
 // member still refuses at once; on the second pass the same answer refuses as kProcessUnreadable, exactly as an
-// unreadable member always has. Anything but the four answers refuses too: no answer is a pass by omission.
+// unreadable member always has. `allowUnsettled` (D123): the same for a member whose module list changed while it
+// was read (Collected::kUnsettled), noted in `unsettledWanted`; when it is not allowed -- the last read -- the same
+// answer refuses as kModuleScanFailed. Anything but the answers named refuses too: no answer is a pass by omission.
 Verdict ScanModulesOnce(const Sources& s, const Rules& rules, std::uint32_t targetPid, const Tolerance* tolerance,
-                        ToleratedFinding& finding, bool allowRetry, bool& retryWanted) noexcept {
+                        ToleratedFinding& finding, bool allowRetry, bool& retryWanted, bool allowUnsettled,
+                        bool& unsettledWanted) noexcept {
     ScanSet set;
     if (s.EnumerateScanSet(targetPid, &ScanSetSink, &set) != Collected::kOk || set.overflowed || set.count == 0) {
         // An empty scan set is not "nothing to scan" — it is "we do not know
@@ -426,6 +429,16 @@ Verdict ScanModulesOnce(const Sources& s, const Rules& rules, std::uint32_t targ
         // whole point of this guard is that a partial look is not a clean one.
         if (c == Collected::kFailed || c == Collected::kRetry) {
             return Refuse(Reason::kProcessUnreadable, nullptr, "a process in the scan set could not be read");
+        }
+        // D123: a list that changed under the read is read again from a fresh scan set -- AFTER the finding check
+        // above, so a blocklisted module among those that were read still refuses at once. The members read whole
+        // in this pass are read again too: the pass that allows is one in which every member was read whole.
+        if (c == Collected::kUnsettled) {
+            if (allowUnsettled) {
+                unsettledWanted = true;
+                continue;
+            }
+            return Refuse(Reason::kModuleScanFailed, nullptr, "a module list kept changing while it was read");
         }
         if (c != Collected::kOk) {
             return Refuse(Reason::kModuleScanFailed, nullptr, "a module list came back incomplete");
@@ -464,24 +477,40 @@ Verdict ScanModulesOnce(const Sources& s, const Rules& rules, std::uint32_t targ
 // whole. A member still unreadable then refuses as before; one that is gone is not in the new set; a target that is
 // gone makes the new set unavailable, which refuses. The re-read can only turn a refusal of "could not read" into a
 // full read -- never into a pass that skipped anything.
+//
+// D123 (owner decision, 2026-11-12): a member whose module list CHANGED WHILE IT WAS READ -- a game at its launch,
+// loading and unloading -- refused the session the same way, and five real sessions on one PC ended as a safety
+// unhook with no frame recorded. Such a list is read again the same way, up to kMaxUnsettledRereads times; one that
+// has not settled by the last read refuses as kModuleScanFailed. D48's re-read stays ONE for the whole check: a
+// member still being created on a second read refuses, whichever read first saw it. Every read is of the whole
+// scan set, and the read that allows is one in which every member was read whole and none held a finding.
 Verdict CheckModules(const Sources& s, const Rules& rules, std::uint32_t targetPid, const Tolerance* tolerance,
                      ToleratedFinding& finding) noexcept {
     if (s.EnumerateScanSet == nullptr || s.EnumerateModules == nullptr) {
         return Refuse(Reason::kProcessTreeUnavailable, nullptr, "no process source");
     }
 
-    bool          retryWanted = false;
-    const Verdict first = ScanModulesOnce(s, rules, targetPid, tolerance, finding, true, retryWanted);
-    if (!first.Allowed() || !retryWanted) {
-        return first;
+    bool          retryUsed = false;       // D48's one re-read, for the whole check
+    std::uint32_t unsettledRereads = 0;    // D123's, up to kMaxUnsettledRereads
+    for (;;) {
+        bool          retryWanted = false;
+        bool          unsettledWanted = false;
+        const Verdict pass = ScanModulesOnce(s, rules, targetPid, tolerance, finding, !retryUsed, retryWanted,
+                                             unsettledRereads < kMaxUnsettledRereads, unsettledWanted);
+        // A refusal is final, and so is a pass in which every member was read whole. A `wanted` flag is only ever
+        // set where the pass was allowed to ask, so this cannot loop past either bound.
+        if (!pass.Allowed() || (!retryWanted && !unsettledWanted)) {
+            return pass;
+        }
+        retryUsed = retryUsed || retryWanted;
+        if (unsettledWanted) {
+            ++unsettledRereads;
+        }
+        if (s.Pause != nullptr) {
+            s.Pause(kScanRetryPauseMs);
+        }
+        finding = ToleratedFinding{};    // collected again from the pass that decides
     }
-
-    if (s.Pause != nullptr) {
-        s.Pause(kScanRetryPauseMs);
-    }
-    finding = ToleratedFinding{};    // collected again from the pass that decides
-    bool again = false;
-    return ScanModulesOnce(s, rules, targetPid, tolerance, finding, false, again);
 }
 
 // Check 2 — machine-wide drivers. Independent of process identity, which is
@@ -893,8 +922,10 @@ PresentationRuntime FindPresentationRuntime(const Sources& s, std::uint32_t pid)
     }
     RuntimeProbe    p;
     const Collected c = s.EnumerateModules(pid, &RuntimeSinkFn, &p);
-    if (c == Collected::kFailed || c == Collected::kRetry) {
-        return PresentationRuntime::kNone;    // still in its loader, or unreadable -- the full scan refuses the latter
+    if (c == Collected::kFailed || c == Collected::kRetry || c == Collected::kUnsettled) {
+        // Still in its loader, a list that moved under the read (D123: half a list could miss vulkan-1.dll and send
+        // the Overlay into a Vulkan title), or unreadable -- the full scan refuses the last. The poll asks again.
+        return PresentationRuntime::kNone;
     }
     if (p.vk) {
         return PresentationRuntime::kVulkan;

@@ -116,6 +116,9 @@
 //                    sl::DLSSOptions into slEvaluateFeature's inputs, --hold-presenting-ffx fills the rest of the
 //                    UPSCALE descriptor (sharpening, jitter, exposure, depth range, field of view, flags, frame time).
 //                    The values are the kAdv* constants below; the injected fl_guard cases assert them
+//   --churn-module <dll>
+//                    load and free the module in a loop on a thread of its own, for the life of the process: a
+//                    module list that keeps changing under whoever reads it (the guard's D123, 2026-11-12)
 //   --ffx-infinite-far
 //                    with --advanced: the UPSCALE descriptor's cameraFar is FLT_MAX, as an engine with an infinite
 //                    depth states the plane at infinity (0.1.0-beta.42, D119), instead of kAdvFfxFar
@@ -3078,6 +3081,19 @@ void AskQuality(PfnFfxQuery query, FfxQuery what) {
     }
 }
 
+// --churn-module <dll>: one thread that loads and frees the module for as long as the process lives (D123's fixture).
+wchar_t g_churnPath[MAX_PATH * 2]{};
+
+DWORD WINAPI ChurnModuleThread(LPVOID) {
+    for (;;) {
+        if (HMODULE h = LoadLibraryW(g_churnPath); h != nullptr) {
+            FreeLibrary(h);
+        } else {
+            Sleep(1);
+        }
+    }
+}
+
 // --ffx-infinite-far (with --advanced): cameraFar is FLT_MAX rather than kAdvFfxFar.
 bool g_ffxInfiniteFar = false;
 
@@ -3505,6 +3521,17 @@ int main(int argc, char** argv) {
             } else {
                 i += 2;
             }
+        } else if (std::strcmp(argv[i], "--churn-module") == 0 && i + 1 < argc) {
+            // The fixture for D123: a process whose module list keeps changing, as a game's does at its launch. One
+            // thread loads and frees the named module for the life of the process.
+            const char* path = argv[++i];
+            MultiByteToWideChar(CP_ACP, 0, path, -1, g_churnPath, static_cast<int>(std::size(g_churnPath)));
+            HANDLE t = CreateThread(nullptr, 0, &ChurnModuleThread, nullptr, 0, nullptr);
+            std::printf("  --churn-module %s -> %s\n", path, t != nullptr ? "started" : "FAILED");
+            if (t == nullptr) {
+                return 3;
+            }
+            CloseHandle(t);
         } else if (std::strcmp(argv[i], "--load") == 0 && i + 1 < argc) {
             // The fixture for the guard's signer half: put a named module into
             // THIS process before the guard looks. Loaded, not injected, and it
@@ -3529,11 +3556,11 @@ int main(int argc, char** argv) {
             std::strcmp(argv[i], "--advanced") == 0 || std::strcmp(argv[i], "--ffx-memory-query") == 0 ||
             std::strcmp(argv[i], "--ffx-infinite-far") == 0 || std::strcmp(argv[i], "--sl-tag-whole-resource") == 0 ||
             std::strcmp(argv[i], "--sl-tag-dlssg-inputs") == 0 || std::strcmp(argv[i], "--load") == 0 ||
-            std::strcmp(argv[i], "--load-after-ms") == 0) {
+            std::strcmp(argv[i], "--churn-module") == 0 || std::strcmp(argv[i], "--load-after-ms") == 0) {
             if (std::strcmp(argv[i], "--plus-ui") == 0 || std::strcmp(argv[i], "--present-interval-ms") == 0 ||
                 std::strcmp(argv[i], "--presents-per-eval") == 0 || std::strcmp(argv[i], "--ffx-topology") == 0 ||
                 std::strcmp(argv[i], "--ffx-query") == 0 || std::strcmp(argv[i], "--ffx-memory-query") == 0 ||
-                std::strcmp(argv[i], "--load") == 0) {
+                std::strcmp(argv[i], "--load") == 0 || std::strcmp(argv[i], "--churn-module") == 0) {
                 ++i;
             }
             if (std::strcmp(argv[i], "--load-after-ms") == 0) {

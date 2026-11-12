@@ -119,7 +119,11 @@ Collected EnumerateModulesImpl(std::uint32_t pid, ModuleSink sink, void* ctx) no
         char name[MAX_PATH]{};
         if (GetModuleBaseNameA(h, mods[i], name, MAX_PATH) == 0) {
             CloseHandle(h);
-            return Collected::kIncomplete;    // a module we could not name is one we could not check
+            // A module we could not name is one we could not check -- and it WAS in the list a moment ago, so the
+            // list moved under the read (unloaded, or its loader entry not yet whole). The module check reads the
+            // scan set again a bounded number of times and refuses if it never settles (D123); until then this was
+            // kIncomplete, an immediate refusal.
+            return Collected::kUnsettled;
         }
 
         // The load path, for §S22(b)'s ownership question. Failing to get it is

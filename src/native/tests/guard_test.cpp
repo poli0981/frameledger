@@ -1025,6 +1025,134 @@ TEST_CASE("D48 — a scan-set member still loading, or gone, is read again once"
     }
 }
 
+// ===========================================================================
+// D123 (owner decision, 2026-11-12) — a module list that CHANGED WHILE IT WAS READ
+// is read again, a bounded number of times, and a list that never settles refuses.
+//
+// What it is for: a game at its launch loads and unloads modules for seconds. A
+// module that was in the list and could not be named a moment later made the
+// whole check "incomplete", and the session ended as a safety unhook with no
+// frame recorded -- five times in a week in one PC's Agent logs (Phantom Blade
+// Zero, Crown & Coin, Cyberpunk 2077). What it must never do is the same as
+// D48: pass anything that was not read whole.
+// ===========================================================================
+TEST_CASE("D123 — a module list that changed under the read is read again, at most three times",
+          "[guard][failclosed][D123]") {
+    ResetFake();
+    g.scanSet = {1234, 1000, 4000};    // the target, its launcher, a child
+
+    SECTION("the target's list settles on the second read: one pause, two snapshots, allowed") {
+        g.moduleResultsInTurn[1234] = {Collected::kUnsettled, Collected::kOk};
+
+        CHECK(EvaluateWithSources(1234, FakeSources()).Allowed());
+        CHECK(g.pauses == 1);
+        CHECK(g.lastPauseMs == kScanRetryPauseMs);
+        CHECK(g.scanSetCalls == 2);
+        CHECK(g.moduleCallsByPid[1000] == 2);    // the members that read whole are read again too
+    }
+
+    SECTION("it settles on the fourth read: three pauses, four snapshots, allowed") {
+        g.moduleResultsInTurn[1234] = {Collected::kUnsettled, Collected::kUnsettled, Collected::kUnsettled,
+                                       Collected::kOk};
+
+        CHECK(EvaluateWithSources(1234, FakeSources()).Allowed());
+        CHECK(g.pauses == 3);
+        CHECK(g.scanSetCalls == 4);
+    }
+
+    SECTION("a list that never settles refuses -- after four reads and not one more") {
+        g.moduleResultsInTurn[1234] = {Collected::kUnsettled};    // the last answer repeats
+
+        const Verdict v = EvaluateWithSources(1234, FakeSources());
+        REQUIRE_FALSE(v.Allowed());
+        CHECK(v.reason == Reason::kModuleScanFailed);
+        CHECK(std::string(v.signal) == "a module list kept changing while it was read");
+        CHECK(g.pauses == static_cast<int>(kMaxUnsettledRereads));
+        CHECK(g.scanSetCalls == static_cast<int>(kMaxUnsettledRereads) + 1);
+        CHECK(g.moduleCallsByPid[1234] == static_cast<int>(kMaxUnsettledRereads) + 1);
+    }
+
+    SECTION("a list too long for the buffer is not read again: it would be as long") {
+        g.moduleResultByPid[4000] = Collected::kIncomplete;
+
+        const Verdict v = EvaluateWithSources(1234, FakeSources());
+        REQUIRE_FALSE(v.Allowed());
+        CHECK(v.reason == Reason::kModuleScanFailed);
+        CHECK(std::string(v.signal) == "a module list came back incomplete");
+        CHECK(g.pauses == 0);
+        CHECK(g.scanSetCalls == 1);
+    }
+
+    SECTION("a finding among the modules that WERE read refuses at once, with no pause") {
+        // The half-read list held a blocklisted module: the re-read is for what could not be read, never a second
+        // chance for what was.
+        g.moduleResultsInTurn[4000] = {Collected::kUnsettled, Collected::kOk};
+        g.modulesByPid[4000] = {"kernel32.dll", "EasyAntiCheat_EOS.dll"};
+
+        const Verdict v = EvaluateWithSources(1234, FakeSources());
+        REQUIRE_FALSE(v.Allowed());
+        CHECK(v.reason == Reason::kBlockedModule);
+        CHECK(g.pauses == 0);
+        CHECK(g.scanSetCalls == 1);
+    }
+
+    SECTION("a finding in another member refuses at once, with no pause") {
+        g.moduleResultsInTurn[4000] = {Collected::kUnsettled, Collected::kOk};
+        g.modulesByPid[1000] = {"EasyAntiCheat_EOS.dll"};
+
+        const Verdict v = EvaluateWithSources(1234, FakeSources());
+        REQUIRE_FALSE(v.Allowed());
+        CHECK(v.reason == Reason::kBlockedModule);
+        CHECK(g.pauses == 0);
+    }
+
+    SECTION("a finding the re-read sees refuses") {
+        g.moduleResultsInTurn[4000] = {Collected::kUnsettled, Collected::kOk};
+        g.modulesByPid[1234] = {"kernel32.dll"};
+        g.modulesByPid[1000] = {"kernel32.dll"};
+        g.modulesLate = {"EasyAntiCheat_EOS.dll"};
+        g.moduleCallsBeforeLate = 3;    // the first read's three; the module is there on the re-read
+
+        const Verdict v = EvaluateWithSources(1234, FakeSources());
+        REQUIRE_FALSE(v.Allowed());
+        CHECK(v.reason == Reason::kBlockedModule);
+        CHECK(g.pauses == 1);
+    }
+
+    SECTION("a protected process met on a re-read refuses as unreadable: the re-read excuses nothing else") {
+        g.moduleResultsInTurn[1234] = {Collected::kUnsettled, Collected::kOk};
+        g.moduleResultsInTurn[4000] = {Collected::kOk, Collected::kFailed};
+
+        const Verdict v = EvaluateWithSources(1234, FakeSources());
+        REQUIRE_FALSE(v.Allowed());
+        CHECK(v.reason == Reason::kProcessUnreadable);
+        CHECK(g.pauses == 1);
+    }
+
+    SECTION("D48's re-read stays ONE, whichever read first met the member still being created") {
+        // The target's list is unsettled on reads 1 and 2; a child is still being created on reads 2 and 3. Its first
+        // kRetry is excused -- D48 -- and its second refuses, though the unsettled list would have allowed a fourth
+        // read.
+        g.moduleResultsInTurn[1234] = {Collected::kUnsettled, Collected::kUnsettled, Collected::kOk};
+        g.moduleResultsInTurn[4000] = {Collected::kOk, Collected::kRetry, Collected::kRetry};
+
+        const Verdict v = EvaluateWithSources(1234, FakeSources());
+        REQUIRE_FALSE(v.Allowed());
+        CHECK(v.reason == Reason::kProcessUnreadable);
+        CHECK(g.pauses == 2);
+        CHECK(g.scanSetCalls == 3);
+    }
+
+    SECTION("...and the two together still end in a read of everything, whole") {
+        g.moduleResultsInTurn[1234] = {Collected::kUnsettled, Collected::kOk};
+        g.moduleResultsInTurn[4000] = {Collected::kRetry, Collected::kOk};
+
+        CHECK(EvaluateWithSources(1234, FakeSources()).Allowed());
+        CHECK(g.pauses == 1);
+        CHECK(g.scanSetCalls == 2);
+    }
+}
+
 TEST_CASE("D48 — the real module source answers kRetry for a process still loading and for one that is gone",
           "[guard][D48][live]") {
     const Sources s = SystemSources();
@@ -2921,6 +3049,40 @@ TEST_CASE("region 4 describes a swap chain on a real window: its window, its bac
     CHECK(r.st->faultCount == 0u);
 }
 
+TEST_CASE("D123 — the real module source says a churning list is unsettled, never too long and never unreadable",
+          "[guard][D123][live]") {
+    // A process that loads and frees one module as fast as it can: a list that changes under every read. The real
+    // source may read it whole (kOk) or meet a module it can no longer name (kUnsettled); what it must not say is
+    // kIncomplete -- which is not read again -- or kFailed. How often it is unsettled is the machine's to decide, so
+    // the count is reported and not asserted: on the PC this was written on, about one read in four.
+    Child child;
+    REQUIRE(StartHarness(child, std::wstring(L"--churn-module \"") + FL_STUB_SL_COMMON + L"\" --hold 30"));
+
+    const Sources s = SystemSources();
+    REQUIRE(s.EnumerateModules != nullptr);
+    auto none = [](void*, const char*, const wchar_t*) noexcept -> bool { return true; };
+
+    int             ok = 0;
+    int             unsettled = 0;
+    int             other = 0;
+    const ULONGLONG until = GetTickCount64() + 3000;
+    while (GetTickCount64() < until) {
+        // An if-chain, not a switch: the two answers are named and every other one is "other" on purpose.
+        const Collected c = s.EnumerateModules(child.pi.dwProcessId, none, nullptr);
+        if (c == Collected::kOk) {
+            ++ok;
+        } else if (c == Collected::kUnsettled) {
+            ++unsettled;
+        } else {
+            ++other;
+        }
+    }
+    WARN("a churning module list, read " << (ok + unsettled + other) << " times in 3 s: " << ok << " whole, "
+                                         << unsettled << " unsettled, " << other << " other");
+    CHECK(ok > 0);
+    CHECK(other == 0);
+}
+
 TEST_CASE("the native log: written at init, on the Agent's request, and on the stop -- and the stop restores each "
           "patch by compare-and-restore",
           "[guard][inject][shm][log]") {
@@ -3816,7 +3978,7 @@ TEST_CASE("an isolation seam that cannot answer refuses, and so does a guard wir
     REQUIRE(StartHarness(child));
 
     // Every fact clear beside a failed result: the result is what is honoured, never the facts next to it.
-    for (const Collected bad : {Collected::kFailed, Collected::kIncomplete, Collected::kRetry}) {
+    for (const Collected bad : {Collected::kFailed, Collected::kIncomplete, Collected::kRetry, Collected::kUnsettled}) {
         ResetFake();
         g.modules = {"kernel32.dll"};
         g.scanSet = {child.pi.dwProcessId};
