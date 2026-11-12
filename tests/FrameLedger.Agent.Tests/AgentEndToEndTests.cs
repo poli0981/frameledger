@@ -366,6 +366,38 @@ public sealed class AgentEndToEndTests : IDisposable
         sources.StreamlineFeatureVersion.Should().Be(AdvancedInGameCall.Read, row.FactsJson);
         sources.StreamlineFeatureRequirements.Should().Be(AdvancedInGameCall.Read, row.FactsJson);
         sources.FsrFrameGeneration.Should().Be(AdvancedInGameCall.NotHooked, "this target loads no FidelityFX library: " + row.FactsJson);
+        AssertWhatTheHarnessDidWithStreamlinesFeatures(row);
+    }
+
+    /// <summary>
+    /// 0.1.0-beta.45: whether each feature is supported and loaded, as the stub says - a refusal is the answer and is
+    /// named - and what the harness does with two of them every sixteenth frame. The counts depend on how long the
+    /// session ran; that they are there, and for the right feature, does not.
+    /// </summary>
+    private static void AssertWhatTheHarnessDidWithStreamlinesFeatures(AdvancedSessionRow row)
+    {
+        (IReadOnlyList<AdvancedFact> facts, AdvancedSources sources) = AdvancedJson.ParseSession(row.FactsJson);
+        string[] Rows(string id) => [.. facts.Single(f => string.Equals(f.Id, id, StringComparison.Ordinal)).Value.Rows!.Select(static r => r.Name + "=" + r.Value)];
+
+        Rows("sl.feature.support").Should().Equal(
+            "kFeatureDLSS · slIsFeatureSupported=eOk",
+            "kFeatureDLSS · slIsFeatureLoaded=on",
+            "kFeatureDLSS_G · slIsFeatureSupported=eOk",
+            "kFeatureNIS · slIsFeatureSupported=eErrorFeatureNotSupported",
+            "kFeatureReflex · slIsFeatureSupported=eErrorFeatureMissing",
+            "kFeaturePCL · slIsFeatureLoaded=off");
+        string[] lifecycle = Rows("sl.feature.lifecycle");
+        lifecycle.Should().Contain("kFeatureDLSS · slSetFeatureLoaded=on").And.Contain("kFeatureDLSS_G · slSetFeatureLoaded=on_and_off");
+        lifecycle.Should().Contain(static r => r.StartsWith("kFeatureDLSS · slAllocateResources=", StringComparison.Ordinal))
+            .And.Contain(static r => r.StartsWith("kFeatureDLSS_G · slFreeResources=", StringComparison.Ordinal))
+            .And.Contain(static r => r.StartsWith("slShutdown=", StringComparison.Ordinal))
+            .And.NotContain(static r => r.StartsWith("kFeatureDLSS_G · slAllocateResources=", StringComparison.Ordinal));
+        sources.StreamlineFeatureSupported.Should().Be(AdvancedInGameCall.Read, row.FactsJson);
+        sources.StreamlineFeatureLoaded.Should().Be(AdvancedInGameCall.Read, row.FactsJson);
+        sources.StreamlineSetFeatureLoaded.Should().Be(AdvancedInGameCall.Read, row.FactsJson);
+        sources.StreamlineAllocateResources.Should().Be(AdvancedInGameCall.Read, row.FactsJson);
+        sources.StreamlineFreeResources.Should().Be(AdvancedInGameCall.Read, row.FactsJson);
+        sources.StreamlineShutdown.Should().Be(AdvancedInGameCall.Read, row.FactsJson);
     }
 
     /// <summary>The stored row of a session that asked, against what <c>hook-harness --advanced --ffx-memory-query</c> sends and the FSR stub answers.</summary>
@@ -395,6 +427,8 @@ public sealed class AgentEndToEndTests : IDisposable
         sources.StreamlineConstants.Should().Be(AdvancedInGameCall.NotHooked, row.FactsJson);
         sources.StreamlineFeatureVersion.Should().Be(AdvancedInGameCall.NotHooked, row.FactsJson);
         sources.StreamlineFeatureRequirements.Should().Be(AdvancedInGameCall.NotHooked, row.FactsJson);
+        sources.StreamlineFeatureSupported.Should().Be(AdvancedInGameCall.NotHooked, row.FactsJson);
+        sources.StreamlineShutdown.Should().Be(AdvancedInGameCall.NotHooked, row.FactsJson);
 
         IReadOnlyDictionary<string, Application.Recording.SensorSeriesStats> stats = AdvancedJson.ParseStats(row.StatsJson);
         stats.Should().ContainKey(InGameAdvancedSampler.FrameTimeSeries, row.StatsJson);

@@ -108,6 +108,7 @@ public sealed partial class AdvancedMetricCatalogTests
         // matched by a name on tools/overlay-allowed-fields.txt, which a build gate holds to the Overlay's own code.
         // 0.1.0-beta.43: six more, from the two calls hooked only for Advanced metrics (slSetConstants, ffxConfigure).
         // 0.1.0-beta.44: two more, what Streamline answers about a feature (slGetFeatureVersion, slGetFeatureRequirements).
+        // 0.1.0-beta.45: two more, from six calls - whether a feature is supported and loaded, and what the game does with it.
         // Everything else of Streamline and FidelityFX is still named, not read; NGX and XeSS are never read.
         string[] inGame = [.. _all.Where(static m => m.Reach == AdvancedReach.Game).Select(static m => m.Id)];
         inGame.Should().Equal(
@@ -116,9 +117,13 @@ public sealed partial class AdvancedMetricCatalogTests
             "ffx.upscale.frame_time_delta", "ffx.memory_usage",
             "sl.constants.jitter", "sl.constants.motion_vectors", "sl.constants.depth", "sl.constants.projection", "sl.constants.resets",
             "ffx.framegen.config",
-            "sl.feature.versions", "sl.feature.requirements");
-        // What a game starts Streamline with is still not read (D112: slInit is not hooked).
-        AdvancedMetricCatalog.Find("sl.init.preferences")!.Reach.Should().Be(AdvancedReach.NewHook);
+            "sl.feature.versions", "sl.feature.requirements",
+            "sl.feature.support", "sl.feature.lifecycle");
+        // What a game starts Streamline with is not read and will not be (D129): the call is made before FrameLedger is
+        // inside the game. No entry waits for a hook any more.
+        AdvancedMetricCatalog.Find("sl.init.preferences")!.Reach.Should().Be(AdvancedReach.BeforeAttach);
+        AdvancedMetricCatalog.Find("sl.init.preferences")!.IsRead.Should().BeFalse();
+        _all.Should().NotContain(static m => m.Reach == AdvancedReach.NewHook);
         // The camera's position, axes and matrices are in the same struct as the constants read, and are the player's.
         AdvancedMetricCatalog.Find("sl.constants.camera")!.Reach.Should().Be(AdvancedReach.PlayerState);
 

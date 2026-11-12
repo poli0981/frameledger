@@ -423,6 +423,12 @@
   <data name="Adv_sl_feature_requirements" xml:space="preserve">
     <value>What each Streamline feature requires: operating system, driver, buffers</value>
   </data>
+  <data name="Adv_sl_feature_lifecycle" xml:space="preserve">
+    <value>Each feature switched on or off, its resources allocated and freed, Streamline shut down</value>
+  </data>
+  <data name="Adv_sl_feature_support" xml:space="preserve">
+    <value>Whether Streamline says each feature is supported, and loaded</value>
+  </data>
   <data name="Adv_sl_feature_versions" xml:space="preserve">
     <value>Each Streamline feature's version and its NGX model version</value>
   </data>
@@ -500,6 +506,9 @@
   </data>
   <data name="Advanced_InGameFeatureCallsLine" xml:space="preserve">
     <value>Which version each Streamline feature is: {0}. What each requires: {1}.</value>
+  </data>
+  <data name="Advanced_InGameMoreCallsLine" xml:space="preserve">
+    <value>Streamline's other calls - read: {0}; hooked, the game did not make the call: {1}; not hooked: {2}.</value>
   </data>
   <data name="Advanced_InGameLine" xml:space="preserve">
     <value>Inside the game: {0}.</value>
@@ -659,6 +668,9 @@
   </data>
   <data name="AdvReach_NewHook" xml:space="preserve">
     <value>Inside the game, with a new hook - comes with a later release</value>
+  </data>
+  <data name="AdvReach_BeforeAttach" xml:space="preserve">
+    <value>Not read: the game makes this call once, before FrameLedger is inside it</value>
   </data>
   <data name="AdvReach_NotInHeaders" xml:space="preserve">
     <value>Not offered by this interface</value>

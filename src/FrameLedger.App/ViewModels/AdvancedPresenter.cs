@@ -216,7 +216,44 @@ public static class AdvancedPresenter
                 AdvancedLabels.InGameStartupCall(requirements));
         }
 
+        // The six calls of 0.1.0-beta.45, in one sentence: each by its own name, under which of the three things
+        // happened to it. A row stored before carries none of the six.
+        if (MoreCalls(sources) is { } more)
+        {
+            line += " " + more;
+        }
+
         return line;
+    }
+
+    private static string? MoreCalls(AdvancedSources sources)
+    {
+        (string Name, AdvancedInGameCall? State)[] calls =
+        [
+            ("slIsFeatureSupported", sources.StreamlineFeatureSupported),
+            ("slIsFeatureLoaded", sources.StreamlineFeatureLoaded),
+            ("slSetFeatureLoaded", sources.StreamlineSetFeatureLoaded),
+            ("slAllocateResources", sources.StreamlineAllocateResources),
+            ("slFreeResources", sources.StreamlineFreeResources),
+            ("slShutdown", sources.StreamlineShutdown),
+        ];
+        if (calls.Any(static c => c.State is null))
+        {
+            return null;
+        }
+
+        string Names(AdvancedInGameCall state)
+        {
+            string[] names = [.. calls.Where(c => c.State == state).Select(static c => c.Name)];
+            return names.Length == 0 ? AdvancedLabels.Token("none") : string.Join(", ", names);
+        }
+
+        return string.Format(
+            CultureInfo.CurrentCulture,
+            Strings.Advanced_InGameMoreCallsLine,
+            Names(AdvancedInGameCall.Read),
+            Names(AdvancedInGameCall.NeverCalled),
+            Names(AdvancedInGameCall.NotHooked));
     }
 
     private static string StatusOf(AdvancedMetric metric, AdvancedSources? now)

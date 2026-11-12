@@ -753,7 +753,7 @@ planning, the design reviewed against the code before it was approved.
   `ICaptureObserver.WantsInGameAdvanced`; `CaptureSession` writes the word either way as the ring is attached, before
   its first guard result, and from then on carries each publication of region 5 on `CaptureProgress.InGameAdvanced`
   — one instance a publication, the same one on the ten ticks between two. `Application.Capture.InGameAdvancedSampler`
-  turns a publication into what a session stores: the session facts of the thirteen `Game` entries below (nineteen since 0.1.0-beta.43, twenty-one since 0.1.0-beta.44), in the
+  turns a publication into what a session stores: the session facts of the thirteen `Game` entries below (nineteen since 0.1.0-beta.43, twenty-one since 0.1.0-beta.44, twenty-three since 0.1.0-beta.45), in the
   vendor's own words (a preset is its letter, a member its name), and two series —
   `adv.ffx.upscale.frame_time_delta`, the mean of one second's dispatches, and `adv.ffx.memory_usage`, a point for
   each second the game asked. The facts are one list until a field they are made of moves, so the recorder's context
@@ -797,6 +797,20 @@ planning, the design reviewed against the code before it was approved.
   starts**~~ *(not the usual case: measured 2026-11-12, six of six Streamline sessions on five games read both, bar
   Cyberpunk 2077's version question)*, and the page words it as "did not ask again"; or `NotHooked`. The slots are not emptied by a new request, so a second
   session of a game that kept running stores what the first one read. `sl.init.preferences` stays unread (D112).
+  **The fourth step, 2026-11-12 (0.1.0-beta.45).** Two more entries have reach `Game`, from six calls
+  (`17_HOOK_ENGINE` §Hook inventory): `sl.feature.support` — `<feature> · slIsFeatureSupported`, the `sl::Result`
+  by NVIDIA's enumerator (`eOk`, `eErrorFeatureNotSupported`; `result 40` for a number past the forty this build
+  names, `result 255` for a code a byte could not carry), and `<feature> · slIsFeatureLoaded`, `on` or `off` — and
+  `sl.feature.lifecycle` — `<feature> · slSetFeatureLoaded` (`on`, `off`, `on_and_off`: what the game asked for
+  during the session, not the state it left), `· slAllocateResources` and `· slFreeResources` (a count; `≥ 15`
+  where the four bits stopped), and a row `slShutdown` with the number of shutdowns. All of it is word 1 of the
+  twelve feature slots and one word that was reserved (layout 5 and schema 23 as they were). A feature with nothing
+  to say has no row and a fact with no row is not stored. `AdvancedSources` has one member a call
+  (`StreamlineFeatureSupported`, `…Loaded`, `StreamlineSetFeatureLoaded`, `StreamlineAllocateResources`,
+  `StreamlineFreeResources`, `StreamlineShutdown`), `Read` / `NeverCalled` / `NotHooked` as before and null in a
+  row written before; the page says the six in one sentence. The switching and the counts are a session's — the
+  capture side clears them at a new request — so, unlike the answers, a second session does not inherit them.
+  `sl.init.preferences` now has reach `BeforeAttach` (D129): not a later release, never.
 - **D113 — three releases, because a new patch site cannot be proven in CI.** A crash in a game under the user-mode
   anti-cheat exception's trial ends that exception for good (D38), and every release already means restarting the
   game. **beta.40**: more fields of calls *already* hooked — `sl::DLSSOptions` where the game chains it into
@@ -847,6 +861,10 @@ planning, the design reviewed against the code before it was approved.
 - **What will read N/A, and says why.** Many titles set their DLSS options through `slDLSSSetOptions`, which is not
   an export (train D), so `sl.dlss.*` is filled only for a title that passes its options with the evaluate call.
   `slGetFeatureVersion` and `slGetFeatureRequirements` are calls a game makes while starting.
+- **Privacy Policy 2.19** at beta.45 (approved with that release's plan): 2.18 named two of Streamline's answers
+  about a feature; whether it is supported and loaded, the game switching it, allocating and freeing its resources
+  and shutting Streamline down are in neither list, so they are named — with two more things never read: what
+  identifies the graphics card a game hands over with its question, and the content of a graphics resource.
 - **Privacy Policy 2.18** at beta.44 (approved with that release's plan): 2.17 named two further calls and what
   they give; Streamline's answers about a feature are in neither list, so they are named, with what of the answer
   is never read — the lists it points to.
@@ -876,7 +894,8 @@ the catalog differ in either direction. **Reach** is where a value can be read f
 (the Agent's own process), `AgentElevated` (the same, as administrator with PawnIO), `Game` (read inside a game
 FrameLedger measures, from the arguments of a call the Overlay hooks, while the session records Advanced metrics —
 since 0.1.0-beta.40), `HookedCall` (an argument of a call the Overlay already hooks, not read yet), `NewHook` (a hook
-that is not built — Train B), `Spike` (Trains C and D), `Refused`, `Deferred`, `Identifier` (D104), `PlayerState`
+that is not built — Train B; no entry carries it since 0.1.0-beta.45), `BeforeAttach` (a call the game makes once,
+before FrameLedger is inside it, so no hook could read it — D129), `Spike` (Trains C and D), `Refused`, `Deferred`, `Identifier` (D104), `PlayerState`
 (rule 4), `Licence`, `NotInHeaders`. ~~Only the first two are read by a build of Train A.~~ The first three are read
 (`AdvancedMetric.IsRead`).
 
@@ -1047,7 +1066,9 @@ that is not built — Train B), `Spike` (Trains C and D), `Refused`, `Deferred`,
 | `ffx.framegen.config` | The game's FSR frame-generation configuration | SessionFact | FidelityFx | Game | Table |
 | `sl.feature.versions` | Each Streamline feature's version and its NGX model version | SessionFact | Streamline | Game | Table |
 | `sl.feature.requirements` | What each Streamline feature requires: operating system, driver, buffers | SessionFact | Streamline | Game | Table |
-| `sl.init.preferences` | The preferences the game started Streamline with | SessionFact | Streamline | NewHook | Text |
+| `sl.feature.support` | Whether Streamline says each feature is supported, and loaded | SessionFact | Streamline | Game | Table |
+| `sl.feature.lifecycle` | Each feature switched on or off, its resources allocated and freed, Streamline shut down | SessionFact | Streamline | Game | Table |
+| `sl.init.preferences` | The preferences the game started Streamline with | SessionFact | Streamline | BeforeAttach | Text |
 | `sl.constants.camera` | Camera position, axes and matrices | SessionFact | Streamline | PlayerState | Text |
 
 **Inside the game: routes a spike decides**

@@ -220,6 +220,19 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
     generation while shipping an older plugin; which file that newer one is was not looked into. The games run so
     far do not ask Streamline about DLSS upscaling unless they upscale through it, so a game can list frame
     generation here and no upscaler.
+  - **Whether each Streamline feature is supported and loaded, and what the game did with it** (since
+    0.1.0-beta.45) come from six more calls, hooked the same way — only once a session with Advanced metrics on has
+    started in that game. **What the game did before that is not seen**: a feature it switched on while it started
+    has no "switched" row, and resources it allocated then are not counted. The counts are **calls the game made**,
+    not resources, and each stops at fifteen (shown as `≥ 15`); they and the switching start again with each
+    session, while the two answers are kept from an earlier session of a game that kept running. "Supported" is
+    Streamline's answer for the graphics card the game asked about; which card that was is never read, so on a PC
+    with two cards the row does not say. A refusal is shown by NVIDIA's own name for it
+    (`eErrorFeatureNotSupported`), and it is the game that was refused, not FrameLedger. None of this says a
+    feature ran or drew anything. **Not confirmed on a real game yet.**
+  - **What a game started Streamline with is not read, and will not be**: the game makes that call once, before
+    FrameLedger can be inside it — also when FrameLedger starts the game itself. The Advanced page lists the entry
+    with that reason.
   - **The driver's own figures** — the card's firmware and architecture, its memory in detail, what a display can do
     with HDR and variable refresh, the driver's settings for the game — exist on **NVIDIA** cards only. On other cards
     they read N/A; the card's sensors (fans, voltages, loads) are read on every brand, and none has been tested on an

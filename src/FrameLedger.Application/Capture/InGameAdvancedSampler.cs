@@ -48,6 +48,20 @@ public sealed class InGameAdvancedSampler
     // FfxApiDispatchUpscaleFlags (ffx_upscale.h), by bit.
     private static readonly string[] _flagTokens = ["draw_debug_view", "non_linear_color_srgb", "non_linear_color_pq"];
 
+    // sl::Result (sl_result.h), by value.
+    private static readonly string[] _results =
+    [
+        "eOk", "eErrorIO", "eErrorDriverOutOfDate", "eErrorOSOutOfDate", "eErrorOSDisabledHWS", "eErrorDeviceNotCreated",
+        "eErrorNoSupportedAdapterFound", "eErrorAdapterNotSupported", "eErrorNoPlugins", "eErrorVulkanAPI", "eErrorDXGIAPI",
+        "eErrorD3DAPI", "eErrorNRDAPI", "eErrorNVAPI", "eErrorReflexAPI", "eErrorNGXFailed", "eErrorJSONParsing",
+        "eErrorMissingProxy", "eErrorMissingResourceState", "eErrorInvalidIntegration", "eErrorMissingInputParameter",
+        "eErrorNotInitialized", "eErrorComputeFailed", "eErrorInitNotCalled", "eErrorExceptionHandler", "eErrorInvalidParameter",
+        "eErrorMissingConstants", "eErrorDuplicatedConstants", "eErrorMissingOrInvalidAPI", "eErrorCommonConstantsMissing",
+        "eErrorUnsupportedInterface", "eErrorFeatureMissing", "eErrorFeatureNotSupported", "eErrorFeatureMissingHooks",
+        "eErrorFeatureFailedToLoad", "eErrorFeatureWrongPriority", "eErrorFeatureMissingDependency",
+        "eErrorFeatureManagerInvalidState", "eErrorInvalidState", "eWarnOutOfVRAM",
+    ];
+
     // sl::FeatureRequirementFlags (sl_core_types.h), by bit: the vendor's own names, shown as they are.
     private static readonly string[] _requirementFlags =
     [
@@ -97,10 +111,21 @@ public sealed class InGameAdvancedSampler
     /// mask covers both, so the question is told by what the slots carry): <paramref name="question"/> is
     /// <see cref="FlAdvancedState.FeatureVersionAnswered"/> or <see cref="FlAdvancedState.FeatureRequirementsAnswered"/>.
     /// A game asks while it starts, so <see cref="AdvancedInGameCall.NeverCalled"/> here is the usual answer of a
-    /// session attached later, and the App words it that way.
+    /// session attached later, and the App words it that way. Since 0.1.0-beta.45 <paramref name="question"/> may be
+    /// any bits of a slot's word 1 that one call writes: the answer bit of <c>slIsFeatureSupported</c> or
+    /// <c>slIsFeatureLoaded</c>, the two switch bits of <c>slSetFeatureLoaded</c>, a count's four bits.
     /// </summary>
     public AdvancedInGameCall FeatureCall(uint question, bool hookedIn) =>
         (_featureAnswers & question) != 0 ? AdvancedInGameCall.Read : hookedIn ? AdvancedInGameCall.NeverCalled : AdvancedInGameCall.NotHooked;
+
+    /// <summary>What a word 1 carries when the game switched a feature through <c>slSetFeatureLoaded</c>, either way.</summary>
+    public const uint FeatureSwitched = FlAdvancedState.FeatureSwitchedOff | FlAdvancedState.FeatureSwitchedOn;
+
+    /// <summary>The four bits of a word 1 that count <c>slAllocateResources</c> calls.</summary>
+    public const uint FeatureAllocated = FlAdvancedState.FeatureCountMask << FlAdvancedState.FeatureAllocShift;
+
+    /// <summary>The four bits of a word 1 that count <c>slFreeResources</c> calls.</summary>
+    public const uint FeatureFreed = FlAdvancedState.FeatureCountMask << FlAdvancedState.FeatureFreeShift;
 
     /// <summary>
     /// The session is ending: the facts are brought up to the last publication where they carry a COUNT. A count
@@ -200,8 +225,81 @@ public sealed class InGameAdvancedSampler
             AddStreamlineFeatures(published, facts);
         }
 
+        if ((published.State.ValidMask & (FlAdvancedValid.SlFeatures | FlAdvancedValid.SlShutdown)) != FlAdvancedValid.None)
+        {
+            AddStreamlineFeatureState(published, facts);
+        }
+
         return facts;
     }
+
+    // Whether Streamline says each feature is supported and loaded, and what the game did with it while the session
+    // watched (0.1.0-beta.45): two facts, rows named as the versions' are. A refusal is the answer to "is it
+    // supported", so the result is said by the vendor's own name whatever it is. A count that reached 15 stopped there.
+    private static void AddStreamlineFeatureState(InGameAdvanced published, List<AdvancedFact> facts)
+    {
+        ref readonly FlAdvancedState s = ref published.State;
+        var support = new List<AdvancedRow>(8);
+        var lifecycle = new List<AdvancedRow>(8);
+        for (int slot = 0; slot < FlAdvancedState.FeatureSlots && s.ValidMask.HasFlag(FlAdvancedValid.SlFeatures); slot++)
+        {
+            uint id = s.FeatureWordAt(slot, 0);
+            if (id == 0)
+            {
+                break;
+            }
+
+            string feature = FeatureName(id - 1);
+            uint word = s.FeatureWordAt(slot, 1);
+            if ((word & FlAdvancedState.FeatureSupportAnswered) != 0)
+            {
+                support.Add(new AdvancedRow(feature + " · slIsFeatureSupported", ResultName((word >> FlAdvancedState.FeatureSupportResultShift) & 0xFFu)));
+            }
+
+            if ((word & FlAdvancedState.FeatureLoadedAnswered) != 0)
+            {
+                string loaded = (word & FlAdvancedState.FeatureLoadedValue) != 0 ? "on" : "off";
+                support.Add(new AdvancedRow(feature + " · slIsFeatureLoaded", loaded, loaded));
+            }
+
+            // Bit 0 seen off, bit 1 seen on: the two bits AddSwitch reads.
+            uint switched = ((word & FlAdvancedState.FeatureSwitchedOff) != 0 ? 1u : 0u) | ((word & FlAdvancedState.FeatureSwitchedOn) != 0 ? 2u : 0u);
+            AddSwitch(lifecycle, feature + " · slSetFeatureLoaded", switched);
+            AddCount(lifecycle, feature + " · slAllocateResources", (word >> FlAdvancedState.FeatureAllocShift) & FlAdvancedState.FeatureCountMask);
+            AddCount(lifecycle, feature + " · slFreeResources", (word >> FlAdvancedState.FeatureFreeShift) & FlAdvancedState.FeatureCountMask);
+        }
+
+        if (s.ValidMask.HasFlag(FlAdvancedValid.SlShutdown))
+        {
+            lifecycle.Add(new AdvancedRow("slShutdown", s.SlShutdowns.ToString(CultureInfo.InvariantCulture)));
+        }
+
+        if (support.Count > 0)
+        {
+            facts.Add(Fact("sl.feature.support", AdvancedValue.OfRows(support)));
+        }
+
+        if (lifecycle.Count > 0)
+        {
+            facts.Add(Fact("sl.feature.lifecycle", AdvancedValue.OfRows(lifecycle)));
+        }
+    }
+
+    // A four-bit count of calls: nothing where the game made none, the number, or "15 or more" in signs no language
+    // needs translated - the count stops at 15.
+    private static void AddCount(List<AdvancedRow> rows, string name, uint count)
+    {
+        if (count != 0)
+        {
+            rows.Add(new AdvancedRow(name, count >= FlAdvancedState.FeatureCountMask ? "≥ 15" : count.ToString(CultureInfo.InvariantCulture)));
+        }
+    }
+
+    // sl::Result by the vendor's own name (sl_result.h): forty codes, the same ones in the same order at every
+    // Streamline tag from v2.0.0 to v2.14.16 (17_HOOK_ENGINE, the row of slIsFeatureSupported). A number past the list
+    // is said as a number; 0xFF is what the capture side writes for a code a byte could not carry.
+    private static string ResultName(uint code) =>
+        code < (uint)_results.Length ? _results[code] : string.Create(CultureInfo.InvariantCulture, $"result {code}");
 
     // What Streamline answered when the game asked about a feature (slGetFeatureVersion, slGetFeatureRequirements;
     // 0.1.0-beta.44): a slot per feature in the order the game first asked, the vendor's own names throughout. A
@@ -638,7 +736,7 @@ public sealed class InGameAdvancedSampler
             }
 
             return new FactKey(
-                s.ValidMask & (FlAdvancedValid.DlssOptions | FlAdvancedValid.FfxUpscale | FlAdvancedValid.FfxFgConfig | FlAdvancedValid.SlConstants | FlAdvancedValid.SlFeatures),
+                s.ValidMask & (FlAdvancedValid.DlssOptions | FlAdvancedValid.FfxUpscale | FlAdvancedValid.FfxFgConfig | FlAdvancedValid.SlConstants | FlAdvancedValid.SlFeatures | FlAdvancedValid.SlShutdown),
                 s.DlssOutputWidth,
                 s.DlssOutputHeight,
                 s.DlssPreExposureBits,
@@ -675,13 +773,14 @@ public sealed class InGameAdvancedSampler
         private static ulong FeaturesHash(InGameAdvanced published)
         {
             ref readonly FlAdvancedState s = ref published.State;
-            if (!s.ValidMask.HasFlag(FlAdvancedValid.SlFeatures))
+            if ((s.ValidMask & (FlAdvancedValid.SlFeatures | FlAdvancedValid.SlShutdown)) == FlAdvancedValid.None)
             {
                 return 0;
             }
 
-            ulong hash = 14695981039346656037UL;
-            for (int slot = 0; slot < FlAdvancedState.FeatureSlots && s.FeatureWordAt(slot, 0) != 0; slot++)
+            // The shutdowns first (0.1.0-beta.45): a count, but one that moves a handful of times in a session at most.
+            ulong hash = (14695981039346656037UL ^ s.SlShutdowns) * 1099511628211UL;
+            for (int slot = 0; slot < FlAdvancedState.FeatureSlots && s.ValidMask.HasFlag(FlAdvancedValid.SlFeatures) && s.FeatureWordAt(slot, 0) != 0; slot++)
             {
                 for (int word = 0; word < FlAdvancedState.FeatureWords; word++)
                 {

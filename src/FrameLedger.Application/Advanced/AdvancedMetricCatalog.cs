@@ -174,8 +174,12 @@ public static class AdvancedMetricCatalog
         Session("sl.feature.versions", Streamline, Game, Table, Upscaling, "Each Streamline feature's version and its NGX model version"),
         Session("sl.feature.requirements", Streamline, Game, Table, Upscaling, "What each Streamline feature requires: operating system, driver, buffers"),
 
-        // ---- Inside the game: hooks that are not built ----------------------------------------------------------
-        Session("sl.init.preferences", Streamline, NewHook, Text, Upscaling, "The preferences the game started Streamline with"),
+        // ---- Inside the game: six more hooks of their own (0.1.0-beta.45) - a feature's support, and what the game does with it
+        Session("sl.feature.support", Streamline, Game, Table, Upscaling, "Whether Streamline says each feature is supported, and loaded"),
+        Session("sl.feature.lifecycle", Streamline, Game, Table, Upscaling, "Each feature switched on or off, its resources allocated and freed, Streamline shut down"),
+
+        // ---- Inside the game: a call no hook can see (owner decision D129) ------------------------------------------
+        Session("sl.init.preferences", Streamline, BeforeAttach, Text, Upscaling, "The preferences the game started Streamline with"),
         Session("sl.constants.camera", Streamline, PlayerState, Text, Upscaling, "Camera position, axes and matrices"),
 
         // ---- Inside the game: routes a spike decides ------------------------------------------------------------

@@ -42,6 +42,23 @@ public sealed record AdvancedSources(
     /// <summary>The same for what each feature requires (<c>slGetFeatureRequirements</c>, <c>sl.feature.requirements</c>).</summary>
     public AdvancedInGameCall? StreamlineFeatureRequirements { get; init; }
 
+    /// <summary>
+    /// The same for the six calls of 0.1.0-beta.45, one member a call: <c>slIsFeatureSupported</c> and
+    /// <c>slIsFeatureLoaded</c> (<c>sl.feature.support</c>), <c>slSetFeatureLoaded</c>, <c>slAllocateResources</c>,
+    /// <c>slFreeResources</c> and <c>slShutdown</c> (<c>sl.feature.lifecycle</c>). Null in every row stored before.
+    /// </summary>
+    public AdvancedInGameCall? StreamlineFeatureSupported { get; init; }
+
+    public AdvancedInGameCall? StreamlineFeatureLoaded { get; init; }
+
+    public AdvancedInGameCall? StreamlineSetFeatureLoaded { get; init; }
+
+    public AdvancedInGameCall? StreamlineAllocateResources { get; init; }
+
+    public AdvancedInGameCall? StreamlineFreeResources { get; init; }
+
+    public AdvancedInGameCall? StreamlineShutdown { get; init; }
+
     /// <summary>Nothing asked yet.</summary>
     public static AdvancedSources Unknown { get; } = new(AdvancedSourceStatus.Unknown, NvapiCode: null, AdvancedSourceStatus.Unknown, AdvancedSourceStatus.Unknown);
 }
