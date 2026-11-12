@@ -125,7 +125,8 @@ inline constexpr uint32_t kFamiliesEvaluateFeatureDoesNotImplement =
     static_cast<uint32_t>(fl::FL_HOOK_PSO) | static_cast<uint32_t>(fl::FL_HOOK_COLOR_SPACE) |
     static_cast<uint32_t>(fl::FL_HOOK_REFLEX) | static_cast<uint32_t>(fl::FL_HOOK_VRAM) |
     static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY) | static_cast<uint32_t>(fl::FL_HOOK_SL_CONSTANTS) |
-    static_cast<uint32_t>(fl::FL_HOOK_FFX_CONFIGURE);
+    static_cast<uint32_t>(fl::FL_HOOK_FFX_CONFIGURE) | static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_VERSION) |
+    static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_REQUIREMENTS);
 
 static_assert((kFamilyEvaluateFeature & kFamiliesEvaluateFeatureDoesNotImplement) == 0u,
               "the slEvaluateFeature row claims a family its detour does not implement -- hookinventory-check "
@@ -209,7 +210,8 @@ inline constexpr uint32_t kFamiliesFfxDispatchDoesNotImplement =
     static_cast<uint32_t>(fl::FL_HOOK_PSO) | static_cast<uint32_t>(fl::FL_HOOK_COLOR_SPACE) |
     static_cast<uint32_t>(fl::FL_HOOK_REFLEX) | static_cast<uint32_t>(fl::FL_HOOK_VRAM) |
     static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_QUALITY) | static_cast<uint32_t>(fl::FL_HOOK_SL_NEURAL_RENDERING) |
-    static_cast<uint32_t>(fl::FL_HOOK_SL_CONSTANTS) | static_cast<uint32_t>(fl::FL_HOOK_FFX_CONFIGURE);
+    static_cast<uint32_t>(fl::FL_HOOK_SL_CONSTANTS) | static_cast<uint32_t>(fl::FL_HOOK_FFX_CONFIGURE) |
+    static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_VERSION) | static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_REQUIREMENTS);
 
 static_assert((kFamilyFfxDispatch & kFamiliesFfxDispatchDoesNotImplement) == 0u,
               "the ffxDispatch rows claim a family their detour does not implement -- hookinventory-check reads "
@@ -303,6 +305,37 @@ static_assert(kFamilySlConstants != kFamilyEvaluateFeature && kFamilySlConstants
               "InstallByFamily binds a row by EQUALITY on this value -- a collision would hand slSetConstants' "
               "detour to another export, or another's to it");
 
+// --- Streamline: slGetFeatureVersion and slGetFeatureRequirements (0.1.0-beta.44, train B's third step) ---
+//
+// THE TWO QUESTIONS A GAME ASKS STREAMLINE ABOUT A FEATURE: which version it is (Streamline's own, and the NGX
+// model's), and what it requires -- the graphics APIs, V-Sync off, hardware-accelerated GPU scheduling, how many
+// threads and viewports, how many buffers, and the versions of Windows and of the driver it found beside the ones it
+// needs. THE ANSWER IS WHAT IS READ: the detour calls the original first and reads the struct the game passed only
+// when the original said OK. The pointers the same answer carries -- the list of required buffer tags, the names of
+// Vulkan extensions and features -- are never followed (fl_adv_fields.h; tools/overlay-fields-check.ps1).
+//
+// INSTALLED ONLY WHERE ASKED FOR, as slSetConstants is (D111), a row and a bit each. THEY ARE THE FIRST ROWS OF THE
+// TABLE because a game asks while it starts: the watchdog patches the rows in the table's order, each patch stops
+// the game's threads for a moment, and in a process that was asked these two are the ones that cannot wait. In a
+// process never asked they are passed over before anything is resolved, and the order changes nothing.
+inline constexpr uint32_t kFamilySlFeatureVersion = static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_VERSION);
+inline constexpr uint32_t kFamilySlFeatureRequirements = static_cast<uint32_t>(fl::FL_HOOK_SL_FEATURE_REQUIREMENTS);
+static_assert(kFamilySlFeatureVersion != kFamilySlFeatureRequirements &&
+                  kFamilySlFeatureVersion != kFamilyEvaluateFeature && kFamilySlFeatureVersion != kFamilyFfxDispatch &&
+                  kFamilySlFeatureVersion != kFamilyFfxQuery && kFamilySlFeatureVersion != kFamilySlConstants &&
+                  kFamilySlFeatureVersion != static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_PARAMS) &&
+                  kFamilySlFeatureVersion != static_cast<uint32_t>(fl::FL_HOOK_FG_EVALUATIONS),
+              "InstallByFamily binds a row by EQUALITY on this value -- a collision would hand slGetFeatureVersion's "
+              "detour to another export, or another's to it");
+static_assert(kFamilySlFeatureRequirements != kFamilyEvaluateFeature &&
+                  kFamilySlFeatureRequirements != kFamilyFfxDispatch &&
+                  kFamilySlFeatureRequirements != kFamilyFfxQuery &&
+                  kFamilySlFeatureRequirements != kFamilySlConstants &&
+                  kFamilySlFeatureRequirements != static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_PARAMS) &&
+                  kFamilySlFeatureRequirements != static_cast<uint32_t>(fl::FL_HOOK_FG_EVALUATIONS),
+              "InstallByFamily binds a row by EQUALITY on this value -- a collision would hand "
+              "slGetFeatureRequirements' detour to another export, or another's to it");
+
 // --- AMD FidelityFX: ffxConfigure on the same four modules (0.1.0-beta.43, Advanced metrics train B) ---
 //
 // HOW THE GAME CONFIGURES FRAME GENERATION: a title calls ffxConfigure with a frame-generation descriptor, usually
@@ -319,6 +352,8 @@ static_assert(kFamilySlConstants != kFamilyEvaluateFeature && kFamilySlConstants
 inline constexpr uint32_t kFamilyFfxConfigure = static_cast<uint32_t>(fl::FL_HOOK_FFX_CONFIGURE);
 static_assert(kFamilyFfxConfigure != kFamilyEvaluateFeature && kFamilyFfxConfigure != kFamilyFfxDispatch &&
                   kFamilyFfxConfigure != kFamilyFfxQuery && kFamilyFfxConfigure != kFamilySlConstants &&
+                  kFamilyFfxConfigure != kFamilySlFeatureVersion &&
+                  kFamilyFfxConfigure != kFamilySlFeatureRequirements &&
                   kFamilyFfxConfigure != static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_PARAMS) &&
                   kFamilyFfxConfigure != static_cast<uint32_t>(fl::FL_HOOK_FG_EVALUATIONS),
               "InstallByFamily binds a row by EQUALITY on this value -- a collision would hand ffxConfigure's detour "
@@ -415,6 +450,8 @@ inline int FfxLeafOf(const wchar_t* moduleName) noexcept {
 // first, it entitled records the second row was not yet producing (measured 38 of
 // 41 on the frame-based fixture), which is the ffx leaves' defect from #110 again.
 #define FL_HOOK_INVENTORY(X)                                                                                           \
+    X(L"sl.interposer.dll", "slGetFeatureVersion", fl::inventory::kFamilySlFeatureVersion)                             \
+    X(L"sl.interposer.dll", "slGetFeatureRequirements", fl::inventory::kFamilySlFeatureRequirements)                   \
     X(L"sl.interposer.dll", "slEvaluateFeature", fl::inventory::kFamilyEvaluateFeature)                                \
     X(L"sl.interposer.dll", "slSetTag", fl::FL_HOOK_UPSCALER_PARAMS)                                                   \
     X(L"sl.interposer.dll", "slSetTagForFrame", fl::FL_HOOK_UPSCALER_PARAMS)                                           \
@@ -439,7 +476,7 @@ inline int FfxLeafOf(const wchar_t* moduleName) noexcept {
 #define FL_COUNT_ROW(mod, sym, family) +1u
 inline constexpr uint32_t kRowCount = 0u FL_HOOK_INVENTORY(FL_COUNT_ROW);
 #undef FL_COUNT_ROW
-static_assert(kRowCount == 18u, "a row was added or removed: say so here, and in 17_HOOK_ENGINE §Hook inventory");
+static_assert(kRowCount == 20u, "a row was added or removed: say so here, and in 17_HOOK_ENGINE §Hook inventory");
 
 // A row's "module!symbol", for the native log, built at compile time from the row's own two spellings -- so an
 // install line names the module it patched, and no second list of names exists to drift from the table

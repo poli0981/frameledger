@@ -35,6 +35,20 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **Two more calls are hooked inside a game, only where Advanced metrics was asked for** (Advanced metrics train B,
+  the third step): `slGetFeatureVersion` and `slGetFeatureRequirements` of `sl.interposer.dll` — what Streamline
+  answers when a game asks which version a feature is and what it requires. The original call runs first and its
+  answer is read only when it succeeded: the feature's Streamline and NGX versions; the graphics APIs it supports,
+  whether V-Sync must be off and hardware-accelerated GPU scheduling on, how many threads, viewports and buffers,
+  and the Windows and driver versions found beside the ones required. **The lists the answer points to — the
+  buffer tags, the names of Vulkan extensions and features — are never followed.** As with `slSetConstants`,
+  neither patch is made in a game no session has asked, and each stays for the life of the process once made. A
+  game asks these while it starts, so the two rows are the first the Overlay patches — and most sessions, attached
+  later, will still not see the calls. Nothing is shown of them yet: the Agent and the App read them in the next
+  pull request. No layout change (5), no schema change (23).
+
 ### Changed
 
 - **Switching hooking back on starts the count of early abnormal ends again** (owner decision D126). The count was

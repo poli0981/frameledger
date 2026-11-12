@@ -35,4 +35,10 @@ public enum HookFamilies
 
     /// <summary><c>ffxConfigure</c> is hooked (0.1.0-beta.43) - only where Advanced metrics was ever asked for.</summary>
     FfxConfigure = 1 << 14,
+
+    /// <summary><c>slGetFeatureVersion</c> is hooked (0.1.0-beta.44) - only where Advanced metrics was ever asked for.</summary>
+    SlFeatureVersion = 1 << 15,
+
+    /// <summary><c>slGetFeatureRequirements</c> is hooked (0.1.0-beta.44) - only where Advanced metrics was ever asked for.</summary>
+    SlFeatureRequirements = 1 << 16,
 }

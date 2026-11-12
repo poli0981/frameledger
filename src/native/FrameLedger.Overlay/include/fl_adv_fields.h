@@ -188,7 +188,15 @@ struct Accumulators {
     std::atomic<uint32_t> slAspectBits{FL_ADV_FLOAT_NONE};
     std::atomic<uint32_t> slFlagsSeenTrue{0u};
     std::atomic<uint32_t> slFlagsSeenFalse{0u};
+
+    // What Streamline answered about each feature the game asked about (0.1.0-beta.44): FL_ADV_FEATURE_SLOTS slots
+    // of FL_ADV_FEATURE_WORDS words, laid out as the region's `features` (fl_shm.h). Kept across a new request.
+    std::atomic<uint32_t> features[FL_ADV_FEATURE_SLOTS * FL_ADV_FEATURE_WORDS]{};
 };
+
+// Word 1 of a feature slot: which of the two questions has an answer in it.
+inline constexpr uint32_t kFeatureVersionAnswered = 1u << 0;
+inline constexpr uint32_t kFeatureRequirementsAnswered = 1u << 1;
 
 // Whether `leaf` is the module whose calls a summary counts: the first one seen, and
 // from then on only it. A title that goes through the loader has the same call
@@ -461,15 +469,85 @@ inline void ObserveSlConstants(const sl::Constants& k, uint32_t viewport, Accumu
     NoteBits(a.validMask, FL_ADV_VALID_SL_CONSTANTS);
 }
 
+// The slot of `feature`: the one that holds it already, else the first empty one, claimed here. nullptr when every
+// slot holds another feature -- a thirteenth is not kept -- and for the one id that cannot be stored plus one.
+// Slots fill from 0 and are never emptied, so the first empty slot ends the search.
+inline std::atomic<uint32_t>* FeatureSlot(uint32_t feature, Accumulators& a) noexcept {
+    const uint32_t id = feature + 1u;
+    if (id == 0u) {
+        return nullptr;
+    }
+    for (uint32_t i = 0; i < FL_ADV_FEATURE_SLOTS; ++i) {
+        std::atomic<uint32_t>* slot = &a.features[i * FL_ADV_FEATURE_WORDS];
+        uint32_t               held = slot[0].load(std::memory_order_relaxed);
+        if (held == 0u && slot[0].compare_exchange_strong(held, id, std::memory_order_relaxed)) {
+            return slot;
+        }
+        if (held == id) {    // it was there, or another thread asking about the same feature claimed it just now
+            return slot;
+        }
+    }
+    return nullptr;
+}
+
+// Three words of a slot from one sl::Version: major, minor, build.
+inline void PutVersion(std::atomic<uint32_t>* words, const sl::Version& number) noexcept {
+    words[0].store(number.major, std::memory_order_relaxed);
+    words[1].store(number.minor, std::memory_order_relaxed);
+    words[2].store(number.build, std::memory_order_relaxed);
+}
+
+// What slGetFeatureVersion ANSWERED (0.1.0-beta.44): the caller is the detour, after the original returned OK and
+// the struct's GUID and version were checked. Both members are version 1's (17_HOOK_ENGINE "Which struct version
+// carries which field"). A feature asked about again overwrites its own slot: the last answer is the one kept.
+inline void ObserveSlFeatureVersion(uint32_t feature, const sl::FeatureVersion& fv, Accumulators& a) noexcept {
+    std::atomic<uint32_t>* slot = FeatureSlot(feature, a);
+    if (slot == nullptr) {
+        return;
+    }
+    PutVersion(slot + 2, fv.versionSL);
+    PutVersion(slot + 5, fv.versionNGX);
+    NoteBits(slot[1], kFeatureVersionAnswered);
+    NoteBits(a.validMask, FL_ADV_VALID_SL_FEATURES);
+}
+
+// What slGetFeatureRequirements ANSWERED (0.1.0-beta.44), under the same conditions. WHAT IS READ: the flags, three
+// counts, the number of required buffer tags, and four versions -- every one a member of struct version 1, the last
+// of them `driverVersionRequired`. WHAT IS NOT, EVER: `requiredTags`, the pointer the count belongs to, and every
+// member after the versions -- the Vulkan queue counts and the pointers to the names of extensions and features.
+// Nothing here follows a pointer of the game's.
+inline void ObserveSlFeatureRequirements(uint32_t feature, const sl::FeatureRequirements& fr,
+                                         Accumulators& a) noexcept {
+    std::atomic<uint32_t>* slot = FeatureSlot(feature, a);
+    if (slot == nullptr) {
+        return;
+    }
+    slot[8].store(static_cast<uint32_t>(fr.flags), std::memory_order_relaxed);
+    slot[9].store(fr.maxNumCPUThreads, std::memory_order_relaxed);
+    slot[10].store(fr.maxNumViewports, std::memory_order_relaxed);
+    slot[11].store(fr.numRequiredTags, std::memory_order_relaxed);
+    PutVersion(slot + 12, fr.osVersionDetected);
+    PutVersion(slot + 15, fr.osVersionRequired);
+    PutVersion(slot + 18, fr.driverVersionDetected);
+    PutVersion(slot + 21, fr.driverVersionRequired);
+    NoteBits(slot[1], kFeatureRequirementsAnswered);
+    NoteBits(a.validMask, FL_ADV_VALID_SL_FEATURES);
+}
+
 // A NEW REQUEST: the summaries start afresh, so a session's ranges, masks and
 // counts are its own and not those of the session before it in the same game.
 // THE WATCHDOG'S. A detour running beside it loses nothing that matters: what it
 // stores is of the call it is in, which belongs to the request that is starting.
 // The two owners stay - which module's calls are counted is a fact about the
-// process, not about a session.
+// process, not about a session. SO DO THE FEATURE SLOTS (0.1.0-beta.44): what
+// version a feature is and what it requires do not change while the game runs,
+// and a game asks once, while it starts -- a second session of the same process
+// would otherwise have nothing where the first had the answer. Their bit of the
+// mask is therefore kept with them.
 inline void Reset(Accumulators& a) noexcept {
     const auto relaxed = std::memory_order_relaxed;
-    a.validMask.store(0u, relaxed);
+    a.validMask.store(a.features[0].load(relaxed) != 0u ? static_cast<uint32_t>(FL_ADV_VALID_SL_FEATURES) : 0u,
+                      relaxed);
     a.dlssStructVersion.store(0u, relaxed);
     a.dlssOptionsSeen.store(0u, relaxed);
     a.dlssOutputWidth.store(0u, relaxed);
@@ -608,6 +686,10 @@ inline void Publish(Accumulators& a, FlAdvancedState* region, uint32_t request, 
     put32(region->slAspectBits, a.slAspectBits.load(relaxed));
     put32(region->slFlagsSeenTrue, a.slFlagsSeenTrue.load(relaxed));
     put32(region->slFlagsSeenFalse, a.slFlagsSeenFalse.load(relaxed));
+
+    for (uint32_t i = 0; i < FL_ADV_FEATURE_SLOTS * FL_ADV_FEATURE_WORDS; ++i) {
+        put32(region->features[i], a.features[i].load(relaxed));
+    }
 
     std::atomic_ref<uint32_t> samples{region->samples};
     samples.store(samples.load(relaxed) + 1u, relaxed);

@@ -292,6 +292,16 @@ public enum FlHookFamily : uint
     /// was asked for Advanced metrics at least once; it entitles no frame field.
     /// </summary>
     FfxConfigure = 1u << 14,
+
+    /// <summary>
+    /// <c>slGetFeatureVersion</c> is hooked (0.1.0-beta.44, Advanced metrics train B). Only in a process that was asked
+    /// for Advanced metrics at least once. A game asks while it starts, so the bit beside a feature with no version means
+    /// "hooked, and the game did not ask again"; it entitles no frame field.
+    /// </summary>
+    SlFeatureVersion = 1u << 15,
+
+    /// <summary><c>slGetFeatureRequirements</c> is hooked (0.1.0-beta.44), under the same conditions.</summary>
+    SlFeatureRequirements = 1u << 16,
 }
 
 /// <summary>

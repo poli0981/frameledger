@@ -58,6 +58,8 @@ $script:Parameter = [ordered]@{
     q    = 'ffxQueryDescUpscaleGetGPUMemoryUsage'
     k    = 'sl::Constants'
     g    = 'ffxConfigureDescFrameGeneration'
+    fv   = 'sl::FeatureVersion'
+    fr   = 'sl::FeatureRequirements'
     desc = 'ffxQueryDescHeader'
 }
 
@@ -106,7 +108,7 @@ function Get-HeaderRead([string]$Code) {
     $reads = [System.Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal)
     $problems = [System.Collections.Generic.List[string]]::new()
 
-    foreach ($m in [regex]::Matches($Code, '(?<![\w.>:])(o|d|m|q|k|g)\b(\s*\.\s*([A-Za-z_]\w*))?')) {
+    foreach ($m in [regex]::Matches($Code, '(?<![\w.>:])(o|d|m|q|k|g|fv|fr)\b(\s*\.\s*([A-Za-z_]\w*))?')) {
         $name = $m.Groups[1].Value
         if ($m.Groups[3].Success) {
             [void]$reads.Add("$($script:Parameter[$name])::$($m.Groups[3].Value)")
@@ -219,6 +221,9 @@ inline void Publish(Accumulators& a, FlAdvancedState* region) noexcept { region-
         @{ Name = 'the sl::Constants parameter handed on whole FAILS'; Header = $goodHeader + "`ninline void ObserveK(const sl::Constants& k, Accumulators& a) noexcept { a.n.store(k.cameraNear); Other(k); }"; List = $goodList + "sl::Constants::cameraNear`n"; Other = $goodOther; Expect = 1 },
         @{ Name = 'the frame-generation configuration read through its parameter, each member on the list, passes'; Header = $goodHeader + "`ninline void ObserveG(const ffxConfigureDescHeader* desc, Accumulators& a) noexcept { const auto& g = *reinterpret_cast<const ffxConfigureDescFrameGeneration*>(desc); a.n.store(g.flags + g.generationRect.left); }"; List = $goodList + "ffxConfigureDescFrameGeneration::flags`nffxConfigureDescFrameGeneration::generationRect`n"; Other = $goodOther; Expect = 0 },
         @{ Name = 'a member of the frame-generation configuration the list does not allow FAILS'; Header = $goodHeader + "`ninline void ObserveG(const ffxConfigureDescHeader* desc, Accumulators& a) noexcept { const auto& g = *reinterpret_cast<const ffxConfigureDescFrameGeneration*>(desc); a.n.store(g.flags); Keep(g.swapChain); }"; List = $goodList + "ffxConfigureDescFrameGeneration::flags`n"; Other = $goodOther; Expect = 1 },
+        @{ Name = 'the answers about a feature read through their parameters, each member on the list, pass'; Header = $goodHeader + "`ninline void ObserveV(uint32_t feature, const sl::FeatureVersion& fv, Accumulators& a) noexcept { Put(a.f, fv.versionSL); }`ninline void ObserveR(uint32_t feature, const sl::FeatureRequirements& fr, Accumulators& a) noexcept { a.n.store(fr.numRequiredTags); Put(a.f, fr.osVersionDetected); }"; List = $goodList + "sl::FeatureVersion::versionSL`nsl::FeatureRequirements::numRequiredTags`nsl::FeatureRequirements::osVersionDetected`n"; Other = $goodOther; Expect = 0 },
+        @{ Name = 'the list of required tags, a pointer of the game''s, FAILS when it is not on the list'; Header = $goodHeader + "`ninline void ObserveR(uint32_t feature, const sl::FeatureRequirements& fr, Accumulators& a) noexcept { a.n.store(fr.numRequiredTags); Keep(fr.requiredTags[0]); }"; List = $goodList + "sl::FeatureRequirements::numRequiredTags`n"; Other = $goodOther; Expect = 1 },
+        @{ Name = 'a member of the answer read outside the header FAILS'; Header = $goodHeader + "`ninline void ObserveR(uint32_t feature, const sl::FeatureRequirements& fr, Accumulators& a) noexcept { a.n.store(fr.numRequiredTags); }"; List = $goodList + "sl::FeatureRequirements::numRequiredTags`n"; Other = @{ 'dllmain.cpp' = 'void Hook(sl::FeatureRequirements& requirements) { Keep(requirements.numRequiredTags); }' }; Expect = 1 },
         @{ Name = 'a header with no read at all FAILS'; Header = '// o.outputWidth is somewhere else'; List = "# nothing`n"; Other = $goodOther; Expect = 1 }
     )
     foreach ($c in $cases) {

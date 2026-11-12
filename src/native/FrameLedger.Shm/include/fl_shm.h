@@ -415,6 +415,13 @@ enum FlHookFamily : uint32_t {
     // dispatch and query families are. Beside a zero ffxFgConfigures it says "hooked, and the game never configured
     // frame generation"; it entitles no measured field of a frame record.
     FL_HOOK_FFX_CONFIGURE = 1u << 14,
+    // Advanced metrics, train B's third step (0.1.0-beta.44): slGetFeatureVersion and slGetFeatureRequirements are
+    // hooked -- a bit each, because a patch each. Published only in a process that was asked for Advanced metrics at
+    // least once, as the two above. A GAME ASKS THESE WHILE IT STARTS, so the usual reading of a bit beside a slot
+    // that has no answer of that kind is "hooked, and the game did not ask again"; neither entitles a measured field
+    // of a frame record.
+    FL_HOOK_SL_FEATURE_VERSION = 1u << 15,
+    FL_HOOK_SL_FEATURE_REQUIREMENTS = 1u << 16,
 };
 
 // FlWriterState::runtimeCensus -- which vendor RUNTIME MODULES the loader reported
@@ -966,6 +973,9 @@ enum FlAdvancedValid : uint32_t {
 #define FL_ADV_FLOAT_INFINITE 0x7F800000u
 
 // Feature slots (0.1.0-beta.44): FL_ADV_FEATURE_SLOTS slots of FL_ADV_FEATURE_WORDS uint32 each, in `features`.
+// Filled in the order the game first asked about each feature, from slot 0, and NOT emptied by a new request: what
+// version a feature is and what it requires are facts about the process, and a game asks once, while it starts. A
+// thirteenth feature is not kept.
 //   [0]      sl::Feature id PLUS ONE; 0 = an empty slot
 //   [1]      bit 0: slGetFeatureVersion answered; bit 1: slGetFeatureRequirements answered
 //   [2..4]   versionSL  major, minor, build        [5..7]   versionNGX
