@@ -35,60 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Added
-
-- **Three more of Streamline's calls are hooked inside a game, only where Advanced metrics was asked for** (owner
-  decisions D129–D131): `slIsFeatureSupported`, `slIsFeatureLoaded` and `slSetFeatureLoaded` — whether Streamline
-  says a feature is supported (its answer, a refusal included), whether it is loaded, and the game switching a
-  feature off and on while it runs. No vendor struct is read for these: the feature's id, a result code, a yes or
-  no. **The adapter a game names when it asks whether a feature is supported is never read**, and the build now
-  refuses code that names what identifies it. As with the four hooks before them, none of the three patches is made
-  in a game no session has asked. Nothing is shown of them yet: the Agent and the App read them in a later pull
-  request. No layout change (5), no schema change (23).
-- **And three more, counted only**: `slAllocateResources`, `slFreeResources` and `slShutdown` — how many times a
-  game allocated and freed a feature's resources (up to fifteen each) and how many times it shut Streamline down.
-  The feature's id is the only argument looked at; the two that sit on a game's way out note the call and then
-  call the original, and run nothing after it. Six new calls in all in this release, each patched only where a
-  session asked.
-- **`slInit` is not hooked, and will not be** (D129). A game starts Streamline once, before FrameLedger can be in
-  it — also when FrameLedger starts the game itself — so a hook there would be a patch that reads nothing. The
-  Advanced page's entry for what a game started Streamline with now gives that reason instead of "a later release".
-- **A session shows whether each Streamline feature is supported and loaded, and what the game did with it**
-  (Advanced metrics). Two catalog entries are read from the six calls above: `sl.feature.support` — Streamline's
-  answer by NVIDIA's own name (`kFeatureDLSS_G · slIsFeatureSupported` = `eOk`; a refusal is named, and it is an
-  answer) and whether the feature is loaded — and `sl.feature.lifecycle` — the game switching a feature on, off or
-  both, how many times it allocated and freed the feature's resources (`≥ 15` past fifteen), and how many times it
-  shut Streamline down. The line under the session names the six calls in one sentence: read; hooked, the game did
-  not make the call; not hooked. They begin when FrameLedger is in the game — what a game did while it started is
-  not there — and they are calls the game made, not a statement that a feature ran. Not confirmed on a real game.
-
-### Fixed
-
-- **A stop that restores many patches no longer leaves its last lines out of the Overlay's log.** Restoring a patch
-  takes about 160 ms, and the wait for the stop's log lines was two seconds whatever the number of patches: with
-  fifteen the log ended "the stop was still writing". The patches were restored; the log did not say so. The wait
-  is now sized to the number of patches a game can hold.
-
-### Changed
-
-- **Privacy Policy 2.19**: it names, for each Streamline feature a game asks about or controls, whether Streamline
-  says it is supported and loaded, the game switching it on or off, and how many times its resources were allocated
-  and freed, and how many times the game shut Streamline down — and two more things that are never read: what
-  identifies the graphics card a game hands over with its question, and the content of a graphics resource. "Four
-  further calls" is ten. The terms window shows once after the update. The Disclaimer stays 2.15.
-- **The limitations, the accuracy statement and the user guide no longer say that most sessions will show nothing
-  of what Streamline answers about a feature.** 0.1.0-beta.44's notes expected that, because a game asks while it
-  starts. The first real sessions (2026-11-12, five games) read both answers in every Streamline session: the
-  Unreal Engine games ask again later. The pages now say what was seen — and two things the readings showed: the
-  version Streamline gives for a feature can be newer than the file in the game's folder, and a game that does not
-  upscale through Streamline lists frame generation there and no upscaler. No code changes.
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.45` | 2026-11-12 | [`docs/changelog/0.1.0-beta.45.md`](docs/changelog/0.1.0-beta.45.md) |
 | `0.1.0-beta.44` | 2026-11-12 | [`docs/changelog/0.1.0-beta.44.md`](docs/changelog/0.1.0-beta.44.md) |
 | `0.1.0-beta.43` | 2026-11-12 | [`docs/changelog/0.1.0-beta.43.md`](docs/changelog/0.1.0-beta.43.md) |
 | `0.1.0-beta.42` | 2026-11-12 | [`docs/changelog/0.1.0-beta.42.md`](docs/changelog/0.1.0-beta.42.md) |
