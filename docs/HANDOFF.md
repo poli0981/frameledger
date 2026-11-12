@@ -135,8 +135,10 @@ line.
   quality mode) once at start; **no module was ever handed `0x10001`**, and there is no `UPSCALE_ROUTE` line. The
   NVIDIA driver's words for the session say DLSS was not running. So the upscale goes through no export at all —
   the case `LIMITATIONS.md` already names ("FSR 2 and upscalers built into the game are not identified"), and
-  "unknown" beside a measured render size is the true reading. **The owner had said FSR 3 or 4; that the setting is
-  FSR 2.1 is read from the file, and is the owner's to confirm.** Nothing to fix for it in beta.43.
+  "unknown" beside a measured render size is the true reading. ~~**The owner had said FSR 3 or 4; that the setting is
+  FSR 2.1 is read from the file, and is the owner's to confirm.**~~ **Confirmed by the owner the same morning with
+  a screenshot of the game's Graphics menu: Resolution Scaling reads "AMD FidelityFX Super Resolution 2.1"** (the
+  file's `FSR2`), with its own quality and sharpening rows under it. Nothing to fix for it in beta.43.
 - **The loader of SDK 2.3 passes a dispatch on to the leaf's export — the older loader does not — and that is a
   double count waiting for the first title that upscales through it.** In Cyberpunk each frame-generation dispatch
   type is logged on the loader AND on the frame-generation leaf: the game calls the loader, the loader calls the
@@ -166,8 +168,9 @@ Asked for as "Resolution Scaling = FSR 3, frame generation off". Read the same w
 
 - **The game was still on FSR 2.** After the last of them `UserSettings.json` has `ResolutionScaling = FSR2`,
   `FSR2 = Performance` (it was `Quality` at 09:50), `FSR3 = Auto` untouched, `FrameGeneration = Off`. So the quality
-  and the frame generation were changed and the upscaler was not — or the menu's name for what the file calls
-  `FSR2` is not what either of us took it to be; **the owner reads the exact label in the game's menu**. Both
+  and the frame generation were changed and the upscaler was not: **the owner's screenshot of the menu, taken after
+  them, shows Resolution Scaling = "AMD FidelityFX Super Resolution 2.1", Performance, Frame Generation Off** —
+  the file's `FSR2` is the menu's FSR 2.1. Both
   stored sessions (215 s and 158 s, attached to a game already running) agree with FSR 2.1 built in and frame
   generation off: every hook in, **not one ffx dispatch or query of any type**, no Streamline evaluation, no render
   size, upscaler "unknown", factor 1.0 from Streamline's frame tokens, ~290 FPS. **So the 2.3 loader's double count
