@@ -81,7 +81,7 @@ owner-only items stay below; the history of every train, the passed owner-only i
 | `§beta.39`, train B's plan as approved (its `§NEXT`) | [`handoff/history/0.1.0-beta.39.md`](handoff/history/0.1.0-beta.39.md) |
 | `§beta.40`, what the owner's first sessions with it showed, train B's traps | [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta.40.md) |
 | `§Owner-only`, an open item | [§Owner-only](#owner-only--no-pr-can-close-these) below |
-| `§Owner-only`, a passed item (3, 12, 14–19) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
+| `§Owner-only`, a passed item (3, 12, 14–19, 38, 39) | [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) |
 | `§Traps`, `§Two corrections carried forward` | [`handoff/traps.md`](handoff/traps.md) |
 | `Dnn` | [§Decisions index](#decisions-index) below |
 
@@ -115,9 +115,12 @@ the traps — is [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta
 
 ### NEXT
 
-1. **The owner runs item 39** (this fix, on the PC that showed the fault) **and the rest of item 38** (an FSR 3.1+
-   title; two sessions of one running game; the cost; the values of Lies of P against the game's own settings).
-2. **0.1.0-beta.42 — train B's second release — when the owner says item 38 passed**: `slSetConstants` and
+1. ~~**The owner runs item 39** (this fix, on the PC that showed the fault) **and the rest of item 38** (an FSR 3.1+
+   title; two sessions of one running game; the cost; the values of Lies of P against the game's own settings).~~
+   **Both passed on 2026-11-12, on the owner's word** ("Bạn có thể đánh dấu là pass và tiếp tục") after the thirteen
+   sessions below; [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) says what those sessions covered and
+   what they did not.
+2. **0.1.0-beta.42 — train B's second release — ~~when the owner says item 38 passed~~ begins now, with its plan**: `slSetConstants` and
    `ffxConfigure`. A plan of its own first. What it must settle, beside what
    [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta.40.md) §NEXT lists (`kMaxPatches = 48`, the window
    of `sl::Constants` pinned outside the camera members, the per-call overhead, the gate's list for the two new
@@ -154,7 +157,8 @@ the traps — is [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta
   not one `advanced:` line, and every session with the option on stored its 212 or 213 series, the processor's 119
   among them. On beta.40 the same morning the processor device faulted out after **each** of the six sessions
   recorded between 04:34 and 05:07. The rarer fault — the reader failing to open — was one session in sixteen, so
-  seven clean ones do not yet say it is gone. Whether item 39 has passed is the owner's to say.
+  seven clean ones do not yet say it is gone. ~~Whether item 39 has passed is the owner's to say.~~ The owner
+  marked it passed the same day.
 - **What those sessions say of train B's first release** (the same log and ledger; the owner named which games are
   first-person — Kingdom Come: Deliverance II, Cyberpunk 2077, Dying Light: The Beast, Valor Mortis — the rest
   third-person, and Psycho-Sleuth 2D):
@@ -177,24 +181,27 @@ the traps — is [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta
     say; `ffxConfigure` (beta.42) is where its frame generation would be read.
   - **One session of Dying Light names DLSS as its upscaler and carries FSR's quality byte and render size** (81
     seconds, both an FSR dispatch and a DLSS evaluation seen, "settings changed" not set). Not this train's code —
-    the session summary's choice between two upscalers seen in one session — and not looked into.
+    the session summary's choice between two upscalers seen in one session — and not looked into. **The owner,
+    2026-11-12: Dying Light and Expedition 33 were set, in the game, to FSR upscaling with DLSS frame generation.**
+    So "FSR beside DLSS frame generation" in their other sessions is the setting, not a misreading; in this one the
+    summary picked the wrong one of the two for its upscaler line, which is still to be looked at.
   - **A session without consent says so**: two Cyberpunk sessions before its consent dialog was accepted are
     Tier 2, and their Advanced row says *not measured inside the game*. **The option off stored nothing** again,
     this time on a title that upscales with FSR 3.1 (Dying Light, beta.41).
 - **`LIMITATIONS.md` and the accuracy statement still say the processor's, the memory's and the motherboard's
   sensors "have never been read on real hardware".** They have been read on one PC and compared with nothing. The
   owner's to reword.
-- **SonarCloud's `csharpsquid:S3869` on `ParentDump.cs`** is open on `main` until the owner accepts it again (item 38
-  (j); the owner said on 2026-11-12 that they will). Until then `main`'s `sonarcloud` job is red on that one line.
+- **SonarCloud's `csharpsquid:S3869` on `ParentDump.cs`** is open on `main` until the owner accepts it again (it was item
+  38 (j), the one part of that item not done; the owner said on 2026-11-12 that they will). Until then `main`'s `sonarcloud` job is red on that one line.
 - **Items 36 (d) (`LogNoteW`) and 37 are still open**; the ledger shows part of 37 (e) happened — the elevated
   groups opened and read — and nothing of it was compared with another tool. The alpha line still rests (D98).
 
-**Owner-only:** item 39 — beta.41 on the PC that showed the fault: several sessions as administrator with PawnIO,
-the Advanced page open and closed between them, and the Agent's log afterwards.
+**Owner-only:** ~~item 39~~ passed 2026-11-12, with item 38. Nothing new is open from this release; items 36 (d)
+and 37 still are.
 
 ## Owner-only — no PR can close these
 
-*The items that passed — 3, 12, 14–19 — moved verbatim to [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) on 2026-10-19 (D66); the numbers are kept, and a number is never reused.*
+*The items that passed — 3, 12, 14–19, and 38 and 39 on 2026-11-12 — moved verbatim to [`handoff/owner-only-passed.md`](handoff/owner-only-passed.md) (the first eight on 2026-10-19, D66); the numbers are kept, and a number is never reused.*
 
 1. **§S23-2 — branch protection.** `Rules / validate` is not a required status check on
    `main`, so the gate that makes the anti-cheat blocklist un-removable is advisory.
@@ -493,43 +500,6 @@ the Advanced page open and closed between them, and the Agent's log afterwards.
    answered on 2026-11-11; what is left for a real game is the hooked session and the elevated one. (g) **The words**: the `vi` strings read as a Vietnamese
    speaker would write them; the `ja` strings marked `review`. (h) **A copy of the ledger** (`--data-dir`) that holds
    such a session: the page is there, opens on *Session*, and *This PC* says it is a copy.
-38. **beta.40, Advanced metrics inside a real game** (D111–D116; train B's first release — beta.41 is not begun
-   until this passes). (a) **The update from beta.39**: the terms window shows the **Privacy Policy 2.16** once, and
-   not the Disclaimer; a game that was **running across the update** is refused until it is restarted, with the
-   reason, and measured normally after. (b) **The option off, a hooked game that uses DLSS or FSR**: the game runs
-   and is measured as in beta.39; the session is not on the Advanced page's list; nothing in the Agent's or the
-   Overlay's log mentions the upscaler's options. (c) **The option on, a title that upscales through FSR 3.1 or
-   later** (AMD's `amd_fidelityfx_*.dll` in its folder; a title on the older FSR 3.0 interface, such as one that
-   ships `ffx_fsr3_x64.dll` alone, is expected to show none): on *Session*, under Upscaling, sharpening on or off
-   and its strength against the game's own setting; the field of view as a range, against the game's slider (it is
-   the **vertical** angle, in radians with degrees beside it) — and wider after zooming or aiming; the near and far
-   planes; the flags; the chart of the frame time the game reported beside the session's own frame time; FSR's
-   memory only if the game asks for it. (d) **The option on, a DLSS title**: most are expected to say *the game made
-   none of the calls these are read from*. If one shows rows, this is the first sight of them anywhere: the output
-   size against the display resolution, the preset letters against the NVIDIA app's override or the DLSS
-   indicator, HDR input against the game's HDR setting. Write down which title did. (e) **The sentence under the
-   session** says which of the three it was, and the session's summary still names the upscaler and its quality as
-   before. (f) **Two sessions of one game that kept running**, both with the option on: the second one's field-of-
-   view range and counts are its own, not the first one's carried over. (g) **A game under the user-mode anti-cheat
-   exception**, the option on: it runs, the session is hooked, and its trial is not ended by anything new. (h) **What
-   it costs**: the game's own frame rate with the option on and off, and the Agent's processor time in a hooked
-   session (NFR-2: 2.5 % of one core). (i) **The words**: the fourteen new `vi` strings and the Settings text; the
-   `ja` ones are marked `review`. (j) **SonarCloud**: accept `csharpsquid:S3869` on
-   `src/FrameLedger.Infrastructure/Diagnostics/ParentDump.cs` again — the same call the acceptance of beta.24 covers,
-   raised anew because #398 moved it (`13_CI_CD` §SonarCloud says why it is safe); until then `main`'s reliability
-   rating on new code shows E for that one line.
-39. **beta.41, the sensor library on the PC that showed the fault** (D118; `20_OPEN_QUESTIONS` §M13). (a) **The
-   update from beta.40**: no terms window, the ledger opens as before; a game running across the update is refused
-   until restarted, as after every update. (b) **As administrator with PawnIO, Advanced metrics on**: five or more
-   sessions of different games, some with the Advanced page left open on *This PC* throughout, some with it closed,
-   one started within a few seconds of another ending. **Afterwards the Agent's log (Logs page, or
-   `agent-<date>.log`) holds no `advanced: a device is left alone` and no `advanced: the sensor library did not
-   open`**, and every one of those sessions has its processor, memory and motherboard readings on *Session* (about
-   two hundred series; a session with seventeen is the fault). (c) **The page after a session ends**: the
-   processor's rows on *This PC* are still there and still moving, without reopening the page. (d) **Not as
-   administrator**: nothing differs from beta.40 — the card's sensors and the driver's figures, and *Sources* says
-   why the rest is not read. (e) While there, the part of item 37 (e) nobody has done: a few of the processor's and
-   the motherboard's values beside HWiNFO.
 **Answered 2026-08-05, do not re-ask:** remove `gameguard` and keep `guard` (approved
 over a red `Rules` gate, with the reasoning recorded in the merge commit); vendor NVAPI
 headers **and** `amd64/nvapi64.lib`; Windows 11 is the **measurement scope** only —
