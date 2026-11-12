@@ -2508,7 +2508,7 @@ bool ProbeAdvFields() {
         fl::adv::ObserveSlFeatureRequirements(sl::kFeatureDLSS, r, a);
 
         const auto word = [&a](uint32_t slot, uint32_t i) {
-            return a.features[slot * FL_ADV_FEATURE_WORDS + i].load();
+            return a.features[static_cast<size_t>(slot) * FL_ADV_FEATURE_WORDS + i].load();
         };
         Check(word(0, 0) == sl::kFeatureDLSS + 1u && word(1, 0) == sl::kFeatureDLSS_G + 1u && word(2, 0) == 0u,
               "a slot per feature, in the order first asked about, the id plus one; the next slot is empty");
@@ -2548,7 +2548,7 @@ bool ProbeAdvFields() {
         fl::adv::ObserveSlFeatureVersion(0xFFFFFFFFu, v, full);
         bool twelve = true;
         for (uint32_t i = 0; i < FL_ADV_FEATURE_SLOTS; ++i) {
-            twelve = twelve && full.features[i * FL_ADV_FEATURE_WORDS].load() == 101u + i;
+            twelve = twelve && full.features[static_cast<size_t>(i) * FL_ADV_FEATURE_WORDS].load() == 101u + i;
         }
         Check(twelve,
               "twelve features fill the twelve slots in order; the thirteenth and feature 0xFFFFFFFF are dropped");

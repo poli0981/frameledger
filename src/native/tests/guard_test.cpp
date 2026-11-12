@@ -7055,7 +7055,7 @@ bool FeatureSlotsAreEmpty(const fl::FlAdvancedState& a) {
 // The slot region 5 holds for `feature` (the id plus one in its first word), or nullptr.
 const uint32_t* FeatureSlotOf(const fl::FlAdvancedState& a, uint32_t feature) {
     for (uint32_t i = 0; i < FL_ADV_FEATURE_SLOTS; ++i) {
-        const uint32_t* slot = &a.features[i * FL_ADV_FEATURE_WORDS];
+        const uint32_t* slot = &a.features[static_cast<size_t>(i) * FL_ADV_FEATURE_WORDS];
         if (slot[0] == feature + 1u) {
             return slot;
         }
@@ -7414,7 +7414,7 @@ TEST_CASE("region 5 carries what a Streamline title chains into its evaluation, 
     CHECK(FeatureSlotOf(a, kFeatureIdPcl) == nullptr);
     CHECK(a.features[0] == kFeatureIdDlss + 1u);
     CHECK(a.features[FL_ADV_FEATURE_WORDS] == kFeatureIdDlssG + 1u);
-    CHECK(a.features[2u * FL_ADV_FEATURE_WORDS] == 0u);    // two features, two slots
+    CHECK(a.features[size_t{2} * FL_ADV_FEATURE_WORDS] == 0u);    // two features, two slots
 
     // The options chained into the evaluation, as before.
     CHECK(a.dlssStructVersion == 3u);    // the version these headers declare, which is what entitles the tail
