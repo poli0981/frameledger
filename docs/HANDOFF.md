@@ -157,9 +157,17 @@ sessions on beta.42 showed, and the design as planned, are
 
 ### Left open by this session
 
-- **This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
+- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
   after this text. Record them in the next pull request, with what SonarCloud and Qodana said of #413–#417 (the
-  `sonarcloud` job on `main` is cancelled by the next merge, so it answers on the release's commit).
+  `sonarcloud` job on `main` is cancelled by the next merge, so it answers on the release's commit).~~ **Recorded
+  2026-11-12: 0.1.0-beta.43 was released 2026-11-12T06:57:57Z** (13:57 in the owner's time zone) from the signed
+  tag on `6c7ba74` (#418), by run 43169675460 — green at the first attempt, one run for the one tag push. Eight
+  assets; the seven digests of `SHA256SUMS.txt` equal the ones GitHub computed; the four shipped natives carry
+  `FL_BUILD_ID v0.1.0-beta.43`. The delta from beta.42 is 1,934,264 bytes beside a full package of 110,736,398 —
+  "Delta processed 0452 files. 0025 patched, 0427 unchanged". The wiki was published by run 43171842051. The
+  rehearsal on the release branch (run 43167388933, the same tree before it was rebased onto #417's squash) had
+  made a delta of 1,944,086 bytes with the same file counts. **SonarCloud answered on `6c7ba74`: the quality gate
+  passed and no issue is open on `main`. Qodana's two reports are green on that commit**, and were on #417's.
 - **No real game was run on this build.** Two new patch sites, tested with the harness and the stubs; their cost
   measured on the headers. Whether a real `sl.interposer.dll` 2.x lays `sl::Constants` out as the vendored header
   does is checked on every call by the struct's GUID and version, not by a real game yet.
