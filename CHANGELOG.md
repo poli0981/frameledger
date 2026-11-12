@@ -35,72 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
-### Added
-
-- **Advanced metrics: a session now shows what the game told Streamline each frame and how it configured FSR frame
-  generation.** For a game FrameLedger measures from inside, a session recorded with **Advanced metrics** on keeps
-  — beside what the game told DLSS and FSR — the largest jitter offset, the motion-vector scale and how motion
-  vectors are stored, the near and far planes and whether depth is inverted, the range of the field of view, the
-  aspect ratio, whether the projection is orthographic and how often the game reset the upscaler's history
-  (Streamline); and whether FSR frame generation was configured on, whether it may run asynchronously, its flags,
-  whether only generated frames are presented, and the part of the picture it generates in. A setting the game
-  changed during the session reads *on and off*. The line under the session now also says, for each of the two,
-  whether it was read, hooked and never called by the game, or not hooked because the game did not load the
-  library — so an empty page says which it is. These are what the game asked for, not a check of what happened;
-  neither has been confirmed on a real game yet. Never read: where the camera is, which way it looks, its
-  matrices.
-
-- **The terms are shown once after this update: Privacy Policy 2.17.** It names the two new readings above and says
-  that the two calls they come from are intercepted in a game only once a session with Advanced metrics on has
-  started there. Nothing is sent anywhere, as before.
-
-- **Advanced metrics, inside the game: how the game configures FSR frame generation** (the part inside the game;
-  what a session shows of it comes with the same release). With **Advanced metrics** on, FrameLedger now also
-  reads, from the call a game makes to configure AMD's frame generation, whether generation is on, whether it may
-  run asynchronously, its flags, whether only generated frames are presented, and the part of the picture it
-  generates in. Nothing else of that call is read. Like the Streamline hook, this one is put into a game only once
-  Advanced metrics has been asked for. Measured cost: about 15 billionths of a second per call while the option is
-  on, under 2 while it is off.
-
-- **Advanced metrics, inside the game: what the game tells NVIDIA Streamline about each frame** (the part inside the
-  game; what a session shows of it comes with the same release). With **Advanced metrics** on, FrameLedger now also
-  reads, from a call a Streamline game makes every frame, the size of the jitter, the motion-vector scale, the depth
-  range, the range of the field of view, the aspect ratio and seven on/off settings (inverted depth, how motion
-  vectors are stored, whether the upscaler's history was reset). It never reads where the game's camera is, which
-  way it looks, or its matrices, which sit in the same data — a check in the build refuses any code that names
-  them. This is the first reading that needs a hook of its own, and that hook is put into a game only once
-  Advanced metrics has been asked for: with the option off, nothing in the game is touched for it. Measured cost:
-  about 20 billionths of a second per frame while the option is on, under one billionth while it is off.
-
-### Fixed
-
-- **FSR upscaling is counted once per frame whichever way the game's FidelityFX loader passes it on.** Newer
-  FidelityFX loaders hand a call on to the library behind them in a way that brought the same upscale to
-  FrameLedger twice; with frame generation off, the count of frames the game rendered would have doubled — Native
-  FPS twice too high. Seen in how Cyberpunk 2077's loader passes on its frame-generation calls; no game tested so
-  far upscales through such a loader, so this is a precaution. The upscale is now counted where the game calls it,
-  and nowhere else. (Owner decision D125. Measured cost: none that can be told from noise.)
-
-- **A game is no longer left unrecorded because it was still loading when FrameLedger looked at it.** Before it
-  hooks a game, and again right after, FrameLedger lists the modules the game has loaded and checks them against
-  the anti-cheat list. A game that is starting loads and unloads modules for several seconds, and when the list
-  changed in the middle of being read FrameLedger treated it as unreadable and stopped: the session ended as a
-  safety stop with nothing recorded, and the game ran on unmeasured until it was restarted. It now reads the list
-  again — up to three more times, a quarter of a second apart — and only stops if the list never holds still. What
-  stops a session has not changed: an anti-cheat module found in any read stops it at once, a protected process
-  still stops it at once, and a list that cannot be read in the end is still a stop, never a pass. (Owner decision
-  D123; seen five times in one PC's logs in a week.)
-
-- **A test of the Overlay's log reads its lines without `strlen`.** The helper that looks for a line in the log
-  took its text as C strings and measured one with `strlen`; it takes strings now. Test code only: nothing in the
-  installed software changes. (Found by SonarCloud after 0.1.0-beta.42 was merged.)
-
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.
 
 | Version | Date | Notes |
 |---|---|---|
+| `0.1.0-beta.43` | 2026-11-12 | [`docs/changelog/0.1.0-beta.43.md`](docs/changelog/0.1.0-beta.43.md) |
 | `0.1.0-beta.42` | 2026-11-12 | [`docs/changelog/0.1.0-beta.42.md`](docs/changelog/0.1.0-beta.42.md) |
 | `0.1.0-beta.41` | 2026-11-12 | [`docs/changelog/0.1.0-beta.41.md`](docs/changelog/0.1.0-beta.41.md) |
 | `0.1.0-beta.40` | 2026-11-12 | [`docs/changelog/0.1.0-beta.40.md`](docs/changelog/0.1.0-beta.40.md) |
