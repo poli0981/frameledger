@@ -29,4 +29,7 @@ public enum HookFamilies
 
     /// <summary>The Streamline detour decodes DLSS 5's neural rendering (beta.34, D84).</summary>
     SlNeuralRendering = 1 << 12,
+
+    /// <summary><c>slSetConstants</c> is hooked (0.1.0-beta.43) - only where Advanced metrics was ever asked for.</summary>
+    SlConstants = 1 << 13,
 }

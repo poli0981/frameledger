@@ -162,6 +162,22 @@ struct Accumulators {
     std::atomic<uint64_t> ffxMemoryAliasableBytes{0u};
     std::atomic<uint32_t> ffxMemoryQueries{0u};
     std::atomic<uint32_t> ffxMemoryOwner{0u};    // leaf + 1 of the module whose answered queries are counted
+
+    // sl::Constants (0.1.0-beta.43), summarised - from the first viewport seen; the calls count every viewport
+    std::atomic<uint64_t> slViewport{0u};    // that viewport's id + 1; 0 = none yet
+    std::atomic<uint32_t> slConstantsCalls{0u};
+    std::atomic<uint32_t> slResets{0u};
+    std::atomic<uint32_t> slJitterMaxXBits{FL_ADV_FLOAT_NONE};
+    std::atomic<uint32_t> slJitterMaxYBits{FL_ADV_FLOAT_NONE};
+    std::atomic<uint32_t> slMvecScaleXBits{FL_ADV_FLOAT_NONE};
+    std::atomic<uint32_t> slMvecScaleYBits{FL_ADV_FLOAT_NONE};
+    std::atomic<uint32_t> slNearBits{FL_ADV_FLOAT_NONE};
+    std::atomic<uint32_t> slFarBits{FL_ADV_FLOAT_NONE};
+    std::atomic<uint32_t> slFovMinBits{FL_ADV_FLOAT_NONE};
+    std::atomic<uint32_t> slFovMaxBits{FL_ADV_FLOAT_NONE};
+    std::atomic<uint32_t> slAspectBits{FL_ADV_FLOAT_NONE};
+    std::atomic<uint32_t> slFlagsSeenTrue{0u};
+    std::atomic<uint32_t> slFlagsSeenFalse{0u};
 };
 
 // Whether `leaf` is the module whose calls a summary counts: the first one seen, and
@@ -307,6 +323,86 @@ inline void ObserveFfxMemoryQuery(uint32_t leaf, const ffxQueryDescHeader* desc,
     }
 }
 
+// One sl::Boolean of sl::Constants into the two "seen" words: true sets its bit in `seenTrue`, false in `seenFalse`,
+// the third state ("invalid": the game set nothing) in neither.
+inline void NoteSlBoolean(sl::Boolean value, uint32_t bit, uint32_t& seenTrue, uint32_t& seenFalse) noexcept {
+    if (value == sl::Boolean::eTrue) {
+        seenTrue |= bit;
+    } else if (value == sl::Boolean::eFalse) {
+        seenFalse |= bit;
+    }
+}
+
+// What the game told Streamline about a frame (slSetConstants, 0.1.0-beta.43). The caller has matched the struct's
+// GUID and found its version at least 1, on THIS call (fl_sl_inputs.h IsReadable): every member read below is one
+// version 1 carries (17_HOOK_ENGINE "Which struct version carries which field").
+//
+// WHAT IS READ: the jitter, the motion-vector scale, the two depth planes, the field of view, the aspect ratio and
+// the seven Booleans. WHAT IS NOT, EVER: the five matrices that precede them and the pinhole offset, the camera's
+// position and its three axes that sit between the scale and the planes (rule 4). Nothing here names them, and
+// tools/overlay-fields-check.ps1 fails the build if anything in the code loaded into a game does.
+//
+// THE SUMMARIES ARE THE FIRST VIEWPORT'S. A title with two viewports -- a scene and a picture-in-picture, a
+// split screen -- sets constants for each every frame; "the last value seen" across them would flip twice a frame
+// and a range would span two cameras. The first viewport that calls is the one summarised, for the life of the
+// process. The call count is of every viewport: it says how often the game called.
+//
+// FLT_MAX IS "NOT SET" HERE (Streamline's INVALID_FLOAT) and is kept nowhere: the plane at infinity of D119 is
+// FidelityFX's convention and stays on that route.
+inline void ObserveSlConstants(const sl::Constants& k, uint32_t viewport, Accumulators& a) noexcept {
+    a.slConstantsCalls.fetch_add(1u, std::memory_order_relaxed);
+
+    const uint64_t me = static_cast<uint64_t>(viewport) + 1u;
+    uint64_t       owner = a.slViewport.load(std::memory_order_relaxed);
+    if (owner == 0u && a.slViewport.compare_exchange_strong(owner, me, std::memory_order_relaxed)) {
+        owner = me;
+    }
+    if (owner != me) {
+        return;
+    }
+
+    if (Usable(k.jitterOffset.x) && Usable(k.jitterOffset.y)) {
+        KeepMax(a.slJitterMaxXBits, Magnitude(k.jitterOffset.x));
+        KeepMax(a.slJitterMaxYBits, Magnitude(k.jitterOffset.y));
+    }
+    if (Usable(k.mvecScale.x) && Usable(k.mvecScale.y)) {
+        a.slMvecScaleXBits.store(std::bit_cast<uint32_t>(k.mvecScale.x), std::memory_order_relaxed);
+        a.slMvecScaleYBits.store(std::bit_cast<uint32_t>(k.mvecScale.y), std::memory_order_relaxed);
+    }
+    if (Usable(k.cameraNear)) {
+        a.slNearBits.store(std::bit_cast<uint32_t>(k.cameraNear), std::memory_order_relaxed);
+    }
+    if (Usable(k.cameraFar)) {
+        a.slFarBits.store(std::bit_cast<uint32_t>(k.cameraFar), std::memory_order_relaxed);
+    }
+    // A range, lowest to highest, never a series (D114).
+    if (Usable(k.cameraFOV) && k.cameraFOV > 0.0f) {
+        KeepMin(a.slFovMinBits, k.cameraFOV);
+        KeepMax(a.slFovMaxBits, k.cameraFOV);
+    }
+    if (Usable(k.cameraAspectRatio) && k.cameraAspectRatio > 0.0f) {
+        a.slAspectBits.store(std::bit_cast<uint32_t>(k.cameraAspectRatio), std::memory_order_relaxed);
+    }
+
+    // One bit per Boolean, in the header's order (FlAdvancedState::slFlagsSeenTrue).
+    uint32_t seenTrue = 0u;
+    uint32_t seenFalse = 0u;
+    NoteSlBoolean(k.depthInverted, 1u << 0, seenTrue, seenFalse);
+    NoteSlBoolean(k.cameraMotionIncluded, 1u << 1, seenTrue, seenFalse);
+    NoteSlBoolean(k.motionVectors3D, 1u << 2, seenTrue, seenFalse);
+    NoteSlBoolean(k.reset, 1u << 3, seenTrue, seenFalse);
+    NoteSlBoolean(k.orthographicProjection, 1u << 4, seenTrue, seenFalse);
+    NoteSlBoolean(k.motionVectorsDilated, 1u << 5, seenTrue, seenFalse);
+    NoteSlBoolean(k.motionVectorsJittered, 1u << 6, seenTrue, seenFalse);
+    NoteBits(a.slFlagsSeenTrue, seenTrue);
+    NoteBits(a.slFlagsSeenFalse, seenFalse);
+    if ((seenTrue & (1u << 3)) != 0u) {
+        a.slResets.fetch_add(1u, std::memory_order_relaxed);
+    }
+
+    NoteBits(a.validMask, FL_ADV_VALID_SL_CONSTANTS);
+}
+
 // A NEW REQUEST: the summaries start afresh, so a session's ranges, masks and
 // counts are its own and not those of the session before it in the same game.
 // THE WATCHDOG'S. A detour running beside it loses nothing that matters: what it
@@ -343,6 +439,20 @@ inline void Reset(Accumulators& a) noexcept {
     a.ffxMemoryTotalBytes.store(0u, relaxed);
     a.ffxMemoryAliasableBytes.store(0u, relaxed);
     a.ffxMemoryQueries.store(0u, relaxed);
+    // Which viewport is summarised stays, as the two owners do: a fact about the process.
+    a.slConstantsCalls.store(0u, relaxed);
+    a.slResets.store(0u, relaxed);
+    a.slJitterMaxXBits.store(FL_ADV_FLOAT_NONE, relaxed);
+    a.slJitterMaxYBits.store(FL_ADV_FLOAT_NONE, relaxed);
+    a.slMvecScaleXBits.store(FL_ADV_FLOAT_NONE, relaxed);
+    a.slMvecScaleYBits.store(FL_ADV_FLOAT_NONE, relaxed);
+    a.slNearBits.store(FL_ADV_FLOAT_NONE, relaxed);
+    a.slFarBits.store(FL_ADV_FLOAT_NONE, relaxed);
+    a.slFovMinBits.store(FL_ADV_FLOAT_NONE, relaxed);
+    a.slFovMaxBits.store(FL_ADV_FLOAT_NONE, relaxed);
+    a.slAspectBits.store(FL_ADV_FLOAT_NONE, relaxed);
+    a.slFlagsSeenTrue.store(0u, relaxed);
+    a.slFlagsSeenFalse.store(0u, relaxed);
 }
 
 // Copies the accumulators into region 5, under the request they answer. THE
@@ -409,6 +519,20 @@ inline void Publish(Accumulators& a, FlAdvancedState* region, uint32_t request, 
     put64(region->ffxMemoryTotalBytes, a.ffxMemoryTotalBytes.load(relaxed));
     put64(region->ffxMemoryAliasableBytes, a.ffxMemoryAliasableBytes.load(relaxed));
     put32(region->ffxMemoryQueries, a.ffxMemoryQueries.load(relaxed));
+
+    put32(region->slConstantsCalls, a.slConstantsCalls.load(relaxed));
+    put32(region->slResets, a.slResets.load(relaxed));
+    put32(region->slJitterMaxXBits, a.slJitterMaxXBits.load(relaxed));
+    put32(region->slJitterMaxYBits, a.slJitterMaxYBits.load(relaxed));
+    put32(region->slMvecScaleXBits, a.slMvecScaleXBits.load(relaxed));
+    put32(region->slMvecScaleYBits, a.slMvecScaleYBits.load(relaxed));
+    put32(region->slNearBits, a.slNearBits.load(relaxed));
+    put32(region->slFarBits, a.slFarBits.load(relaxed));
+    put32(region->slFovMinBits, a.slFovMinBits.load(relaxed));
+    put32(region->slFovMaxBits, a.slFovMaxBits.load(relaxed));
+    put32(region->slAspectBits, a.slAspectBits.load(relaxed));
+    put32(region->slFlagsSeenTrue, a.slFlagsSeenTrue.load(relaxed));
+    put32(region->slFlagsSeenFalse, a.slFlagsSeenFalse.load(relaxed));
 
     std::atomic_ref<uint32_t> samples{region->samples};
     samples.store(samples.load(relaxed) + 1u, relaxed);

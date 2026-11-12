@@ -17,9 +17,9 @@
 
       1. The reads are in ONE header, src/native/FrameLedger.Overlay/include/fl_adv_fields.h, through parameters with
          fixed names - `o` (sl::DLSSOptions), `d` (ffxDispatchDescUpscale), `m` (FfxApiEffectMemoryUsage), `q` (the
-         memory query's descriptor) and `desc` (a query's header). Every member read through them is on
+         memory query's descriptor), `k` (sl::Constants, since 0.1.0-beta.43) and `desc` (a query's header). Every member read through them is on
          tools/overlay-allowed-fields.txt, and every name on that list is read.
-      2. Those parameters are not aliased: each of the four letters appears only as `x.member` or where it is
+      2. Those parameters are not aliased: each of the five letters appears only as `x.member` or where it is
          declared, and `->` is applied to nothing but `desc` and the Overlay's own `region`. So a member cannot be
          read under a name this check does not look at.
       3. No other source of the Overlay or the Vulkan layer reads a member the list names (the names every struct
@@ -55,6 +55,7 @@ $script:Parameter = [ordered]@{
     d    = 'ffxDispatchDescUpscale'
     m    = 'FfxApiEffectMemoryUsage'
     q    = 'ffxQueryDescUpscaleGetGPUMemoryUsage'
+    k    = 'sl::Constants'
     desc = 'ffxQueryDescHeader'
 }
 
@@ -103,7 +104,7 @@ function Get-HeaderRead([string]$Code) {
     $reads = [System.Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal)
     $problems = [System.Collections.Generic.List[string]]::new()
 
-    foreach ($m in [regex]::Matches($Code, '(?<![\w.>:])(o|d|m|q)\b(\s*\.\s*([A-Za-z_]\w*))?')) {
+    foreach ($m in [regex]::Matches($Code, '(?<![\w.>:])(o|d|m|q|k)\b(\s*\.\s*([A-Za-z_]\w*))?')) {
         $name = $m.Groups[1].Value
         if ($m.Groups[3].Success) {
             [void]$reads.Add("$($script:Parameter[$name])::$($m.Groups[3].Value)")
@@ -210,6 +211,10 @@ inline void Publish(Accumulators& a, FlAdvancedState* region) noexcept { region-
         @{ Name = 'a pointer to it, and offsetof into it, pass'; Header = $goodHeader; List = $goodList; Other = $goodOther; Expect = 0 },
         @{ Name = 'a name listed twice FAILS'; Header = $goodHeader; List = $goodList + "sl::DLSSOptions::outputWidth`n"; Other = $goodOther; Expect = 1 },
         @{ Name = 'a line that is not one Struct::member FAILS'; Header = $goodHeader; List = $goodList + "sl::DLSSOptions::outputWidth  # the size`n"; Other = $goodOther; Expect = 1 },
+        @{ Name = 'sl::Constants read through its parameter, each member on the list, passes'; Header = $goodHeader + "`ninline void ObserveK(const sl::Constants& k, uint32_t viewport, Accumulators& a) noexcept { a.n.store(k.cameraNear + k.jitterOffset.x); }"; List = $goodList + "sl::Constants::cameraNear`nsl::Constants::jitterOffset`n"; Other = $goodOther; Expect = 0 },
+        @{ Name = 'a member of sl::Constants the list does not allow FAILS'; Header = $goodHeader + "`ninline void ObserveK(const sl::Constants& k, Accumulators& a) noexcept { a.n.store(k.cameraNear + k.cameraFOV); }"; List = $goodList + "sl::Constants::cameraNear`n"; Other = $goodOther; Expect = 1 },
+        @{ Name = 'the camera read through the sl::Constants parameter FAILS, listed or not'; Header = $goodHeader + "`ninline void ObserveK(const sl::Constants& k, Accumulators& a) noexcept { a.n.store(k.cameraPos.x); }"; List = $goodList + "sl::Constants::cameraPos`n"; Other = $goodOther; Expect = 2 },
+        @{ Name = 'the sl::Constants parameter handed on whole FAILS'; Header = $goodHeader + "`ninline void ObserveK(const sl::Constants& k, Accumulators& a) noexcept { a.n.store(k.cameraNear); Other(k); }"; List = $goodList + "sl::Constants::cameraNear`n"; Other = $goodOther; Expect = 1 },
         @{ Name = 'a header with no read at all FAILS'; Header = '// o.outputWidth is somewhere else'; List = "# nothing`n"; Other = $goodOther; Expect = 1 }
     )
     foreach ($c in $cases) {

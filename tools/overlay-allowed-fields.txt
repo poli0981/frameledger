@@ -43,6 +43,24 @@ ffxDispatchDescUpscale::flags
 ffxDispatchDescUpscale::reset
 ffxDispatchDescUpscale::frameTimeDelta
 
+# sl::Constants, what the game tells slSetConstants about a frame (parameter `k`; 0.1.0-beta.43). The jitter, the
+# motion-vector scale, the depth range, the field of view, the aspect ratio and the seven Booleans - numbers and
+# switches of the kind a settings menu or a debug overlay shows. The five matrices, the pinhole offset, the camera's
+# position and its three axes sit in the same struct and are refused by name wherever they appear (rule 4).
+sl::Constants::jitterOffset
+sl::Constants::mvecScale
+sl::Constants::cameraNear
+sl::Constants::cameraFar
+sl::Constants::cameraFOV
+sl::Constants::cameraAspectRatio
+sl::Constants::depthInverted
+sl::Constants::cameraMotionIncluded
+sl::Constants::motionVectors3D
+sl::Constants::reset
+sl::Constants::orthographicProjection
+sl::Constants::motionVectorsDilated
+sl::Constants::motionVectorsJittered
+
 # The upscaler's memory query: the header's type, the game's out-pointer in either version of the descriptor
 # (parameter `q`), and what ffxQuery wrote through it after answering OK (parameter `m`)
 ffxQueryDescHeader::type

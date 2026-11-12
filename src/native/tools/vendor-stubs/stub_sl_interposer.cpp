@@ -62,6 +62,9 @@ StubFrameToken g_tokenPool[8];
 static_assert(fl::stub::InventoryHas("slGetNewFrameToken"),
               "fl_hook_inventory.h no longer contains \"slGetNewFrameToken\", so the frame-token fixture would "
               "exercise a row the Overlay does not install.");
+static_assert(fl::stub::InventoryHas("slSetConstants"),
+              "fl_hook_inventory.h no longer contains \"slSetConstants\", so the constants fixture would exercise a "
+              "row the Overlay does not install.");
 static_assert(fl::stub::InventoryHas("slSetTagForFrame"),
               "fl_hook_inventory.h no longer contains \"slSetTagForFrame\", so the frame-based tag fixture would "
               "exercise a row the Overlay does not install.");
@@ -141,6 +144,16 @@ SL_API sl::Result slSetD3DDevice(void* d3dDevice) {
 SL_API sl::Result slIsFeatureLoaded(sl::Feature feature, bool& loaded) {
     (void)feature;
     loaded = true;
+    return sl::Result::eOk;
+}
+
+// The per-frame constants (0.1.0-beta.43). Signature from the vendored header, like the others. The stub keeps
+// nothing: the harness hands it known values and the injected cases assert what the Overlay read of them.
+SL_API sl::Result slSetConstants(const sl::Constants& values, const sl::FrameToken& frame,
+                                 const sl::ViewportHandle& viewport) {
+    (void)values;
+    (void)frame;
+    (void)viewport;
     return sl::Result::eOk;
 }
 

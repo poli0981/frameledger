@@ -6959,6 +6959,16 @@ constexpr float    kAdvFfxFar = 1000.0f;
 constexpr float    kAdvFfxFovLow = 0.9f;
 constexpr float    kAdvFfxFovHigh = 1.1f;
 constexpr uint32_t kAdvFfxFrameTimeUs = 16000u;
+// ...and hands slSetConstants for viewport 0 (0.1.0-beta.43); a second viewport gets other numbers every frame.
+constexpr float    kAdvSlJitterX = 0.3125f;
+constexpr float    kAdvSlJitterY = 0.4375f;
+constexpr float    kAdvSlMvecScaleX = 0.5f;
+constexpr float    kAdvSlMvecScaleY = 0.25f;
+constexpr float    kAdvSlNear = 0.25f;
+constexpr float    kAdvSlFar = 4000.0f;
+constexpr float    kAdvSlFovLow = 0.8f;
+constexpr float    kAdvSlFovHigh = 1.2f;
+constexpr float    kAdvSlAspect = 1.75f;
 constexpr uint64_t kAdvMemoryTotal = 123456789ull;
 constexpr uint64_t kAdvMemoryAliasable = 23456789ull;
 
@@ -7017,14 +7027,61 @@ uint32_t BitsOf(float v) {
     return std::bit_cast<uint32_t>(v);
 }
 
-// What 0.1.0-beta.43 and beta.44 fill (beta.41 and beta.42 until D118 and D122): declared, written by nothing yet.
+// What later releases fill: declared, written by nothing yet. (The sl::Constants group left this list with
+// 0.1.0-beta.43, which fills it; SlConstantsAreUnread below is for a target that never calls slSetConstants.)
 bool LaterGroupsAreZero(const fl::FlAdvancedState& a) {
-    bool zero = a.ffxFgConfigures == 0u && a.ffxFgEnabledSeen == 0u && a.ffxFgFlagsSeen == 0u &&
-                a.slConstantsCalls == 0u && a.slResets == 0u && a.slFlagsSeenTrue == 0u && a.slFlagsSeenFalse == 0u;
+    bool zero = a.ffxFgConfigures == 0u && a.ffxFgEnabledSeen == 0u && a.ffxFgFlagsSeen == 0u;
     for (uint32_t i = 0; i < FL_ADV_FEATURE_SLOTS * FL_ADV_FEATURE_WORDS; ++i) {
         zero = zero && a.features[i] == 0u;
     }
     return zero;
+}
+
+bool SlConstantsAreUnread(const fl::FlAdvancedState& a) {
+    return a.slConstantsCalls == 0u && a.slResets == 0u && a.slFlagsSeenTrue == 0u && a.slFlagsSeenFalse == 0u &&
+           (a.validMask & fl::FL_ADV_VALID_SL_CONSTANTS) == 0u;
+}
+
+// The first 16 bytes of one export of a module AS THEY ARE IN ANOTHER PROCESS: the export's offset from this
+// process's own mapping of the same file (mapped as an image, nothing run), the module's base from the target's
+// module list. What a patch changes, and what a restore puts back.
+bool ReadTargetExportBytes(DWORD pid, const wchar_t* dllPath, const char* symbol, unsigned char out[16]) {
+    const HMODULE mine = LoadLibraryExW(dllPath, nullptr, DONT_RESOLVE_DLL_REFERENCES);
+    if (mine == nullptr) {
+        return false;
+    }
+    const auto*  entry = reinterpret_cast<const unsigned char*>(GetProcAddress(mine, symbol));
+    const size_t rva =
+        entry != nullptr ? static_cast<size_t>(entry - reinterpret_cast<const unsigned char*>(mine)) : 0u;
+    FreeLibrary(mine);
+    const wchar_t* slash = wcsrchr(dllPath, L'\\');
+    const wchar_t* slash2 = wcsrchr(dllPath, L'/');
+    const wchar_t* leaf = slash != nullptr && (slash2 == nullptr || slash > slash2) ? slash + 1
+                          : slash2 != nullptr                                       ? slash2 + 1
+                                                                                    : dllPath;
+    if (rva == 0u) {
+        return false;
+    }
+    HANDLE h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+    if (h == nullptr) {
+        return false;
+    }
+    HMODULE mods[1024]{};
+    DWORD   needed = 0;
+    bool    read = false;
+    if (EnumProcessModulesEx(h, mods, sizeof(mods), &needed, LIST_MODULES_ALL)) {
+        const size_t n = (needed > sizeof(mods) ? sizeof(mods) : needed) / sizeof(HMODULE);
+        for (size_t i = 0; i < n && !read; ++i) {
+            wchar_t name[MAX_PATH]{};
+            if (GetModuleBaseNameW(h, mods[i], name, MAX_PATH) != 0 && _wcsicmp(name, leaf) == 0) {
+                SIZE_T got = 0;
+                read = ReadProcessMemory(h, reinterpret_cast<const unsigned char*>(mods[i]) + rva, out, 16, &got) &&
+                       got == 16;
+            }
+        }
+    }
+    CloseHandle(h);
+    return read;
 }
 
 }    // namespace
@@ -7094,6 +7151,7 @@ TEST_CASE("region 5 stays empty until the Agent asks, then carries what an FSR t
     // hands the same query on to the leaf and both are hooked.
     CHECK(a.ffxMemoryTotalBytes == kAdvMemoryTotal);
     CHECK(a.ffxMemoryAliasableBytes == kAdvMemoryAliasable);
+    CHECK(SlConstantsAreUnread(a));    // an FSR title with no Streamline: nothing calls slSetConstants
     CHECK(a.ffxMemoryQueries != 0u);
     CHECK(a.ffxMemoryQueries <= a.ffxDispatches + 2u);
     CHECK(LaterGroupsAreZero(a));
@@ -7160,10 +7218,14 @@ TEST_CASE("FSR's plane at infinity (beta.42, D119): a far plane of FLT_MAX reach
     CHECK(r.st->status == fl::FL_STATUS_READY);
 }
 
-TEST_CASE("region 5 carries the DLSS options a title chains into its evaluation, and only while asked",
+TEST_CASE("region 5 carries what a Streamline title chains into its evaluation and tells slSetConstants, and "
+          "slSetConstants is patched only once the Agent has asked",
           "[guard][inject][shm][advanced]") {
+    // ONE TARGET, FOUR STRETCHES: never asked -> asked -> no longer asked -> stopped. The target does the same thing
+    // throughout: it chains an sl::DLSSOptions into every evaluation and calls slSetConstants for two viewports every
+    // frame, with the matrices and the camera's position and axes set to loud, changing values.
     Child child;
-    REQUIRE(StartHarness(child, L"--real --advanced --hold-presenting-upscaled 30"));
+    REQUIRE(StartHarness(child, L"--real --advanced --hold-presenting-upscaled 60"));
 
     ResetFake();
     g.modules = {"kernel32.dll"};
@@ -7176,19 +7238,40 @@ TEST_CASE("region 5 carries the DLSS options a title chains into its evaluation,
         return;    // not reached after the REQUIRE; said in the form a static analyser follows (cpp:S2259)
     }
     REQUIRE(WaitForIdentityHook(r.st));
+    const auto slConstants = static_cast<uint32_t>(fl::FL_HOOK_SL_CONSTANTS);
 
-    // Not asked: the evaluation is hooked, the options are chained into every one, and none of it is kept.
+    // ---- 1. NEVER ASKED (owner decision D111): the evaluation is hooked, the game calls slSetConstants every frame,
+    // and that export is not patched -- its first bytes in the target are the file's -- nor is anything kept.
+    unsigned char pristine[16]{};
+    unsigned char now[16]{};
+    REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_SL_INTERPOSER, "slSetConstants", pristine));
     const std::uint64_t atHooks = r.st->writeIndex;
-    TickFor(r, 2500);
+    TickFor(r, 2500);    // two watchdog ticks and more: every row that installs unasked has had its chance
     REQUIRE(r.st->writeIndex > atHooks + 30u);
     CHECK(RegionFiveIsZero(r));
+    CHECK((r.st->hooksInstalledMask & slConstants) == 0u);
+    REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_SL_INTERPOSER, "slSetConstants", now));
+    CHECK(std::memcmp(pristine, now, sizeof(now)) == 0);
 
+    // ---- 2. ASKED: the patch goes in on the tick that sees the request, and the next publications carry both groups.
     SetAdvancedRequest(r, 1u);
+    REQUIRE(WaitForHookFamily(r.st, slConstants));
+    REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_SL_INTERPOSER, "slSetConstants", now));
+    CHECK(std::memcmp(pristine, now, sizeof(now)) != 0);    // patched now
+
     fl::FlAdvancedState a{};
-    REQUIRE(ReadAdvanced(r, 1u, a, 0u, fl::FL_ADV_VALID_DLSS_OPTIONS));
-    INFO("mask 0x" << std::hex << a.validMask << std::dec << " version " << a.dlssStructVersion << " seen "
-                   << a.dlssOptionsSeen << " output " << a.dlssOutputWidth << "x" << a.dlssOutputHeight);
-    CHECK(a.validMask == static_cast<uint32_t>(fl::FL_ADV_VALID_DLSS_OPTIONS));    // no ffx call in this target
+    REQUIRE(ReadAdvanced(r, 1u, a, 0u, fl::FL_ADV_VALID_DLSS_OPTIONS | fl::FL_ADV_VALID_SL_CONSTANTS));
+    // A reset arrives on one frame in sixty-four and both halves of each alternation within two: read on until the
+    // summaries hold all of them (bounded by ReadAdvanced's own wait, a few publications).
+    for (int i = 0; i < 8 && (a.slResets == 0u || a.slFovMinBits == a.slFovMaxBits); ++i) {
+        REQUIRE(ReadAdvanced(r, 1u, a, a.samples, fl::FL_ADV_VALID_DLSS_OPTIONS | fl::FL_ADV_VALID_SL_CONSTANTS));
+    }
+    INFO("mask 0x" << std::hex << a.validMask << " true 0x" << a.slFlagsSeenTrue << " false 0x" << a.slFlagsSeenFalse
+                   << std::dec << " calls " << a.slConstantsCalls << " resets " << a.slResets << " version "
+                   << a.dlssStructVersion << " output " << a.dlssOutputWidth << "x" << a.dlssOutputHeight);
+    CHECK(a.validMask == static_cast<uint32_t>(fl::FL_ADV_VALID_DLSS_OPTIONS | fl::FL_ADV_VALID_SL_CONSTANTS));
+
+    // The options chained into the evaluation, as before.
     CHECK(a.dlssStructVersion == 3u);    // the version these headers declare, which is what entitles the tail
     CHECK(a.dlssOptionsSeen != 0u);
     CHECK(a.dlssOutputWidth == kAdvDlssOutputW);
@@ -7207,11 +7290,69 @@ TEST_CASE("region 5 carries the DLSS options a title chains into its evaluation,
     CHECK(a.dlssColorBuffersHdr == 1u);
     CHECK(a.dlssAutoExposure == 2u);
     CHECK(a.dlssAlphaUpscaling == 2u);
-    CHECK(a.ffxDispatches == 0u);
+
+    // What the game told slSetConstants for the FIRST viewport: exactly the harness's numbers, and not one of the
+    // second viewport's (near 9, far 99, a field of view of 2, depth not inverted, an orthographic projection).
+    CHECK(a.slConstantsCalls > 60u);    // both viewports' calls are counted
+    CHECK(a.slJitterMaxXBits == BitsOf(kAdvSlJitterX));
+    CHECK(a.slJitterMaxYBits == BitsOf(kAdvSlJitterY));
+    CHECK(a.slMvecScaleXBits == BitsOf(kAdvSlMvecScaleX));
+    CHECK(a.slMvecScaleYBits == BitsOf(kAdvSlMvecScaleY));
+    CHECK(a.slNearBits == BitsOf(kAdvSlNear));
+    CHECK(a.slFarBits == BitsOf(kAdvSlFar));
+    CHECK(a.slFovMinBits == BitsOf(kAdvSlFovLow));    // a range, never a series (D114)
+    CHECK(a.slFovMaxBits == BitsOf(kAdvSlFovHigh));
+    CHECK(a.slAspectBits == BitsOf(kAdvSlAspect));
+    // Bits in the header's order: depthInverted 0, cameraMotionIncluded 1, motionVectors3D 2, reset 3,
+    // orthographicProjection 4, motionVectorsDilated 5, motionVectorsJittered 6.
+    CHECK(a.slFlagsSeenTrue == ((1u << 0) | (1u << 1) | (1u << 3) | (1u << 6)));
+    CHECK(a.slFlagsSeenFalse == ((1u << 2) | (1u << 3) | (1u << 4) | (1u << 5)));
+    CHECK(a.slResets >= 1u);
+    CHECK(a.slResets * 32u < a.slConstantsCalls);    // one frame in sixty-four of ONE viewport, not of both
+
+    CHECK(a.ffxDispatches == 0u);                         // no ffx call in this target
     CHECK(a.ffxSharpnessMinBits == FL_ADV_FLOAT_NONE);    // a float nobody saw is "none", never 0.0
     CHECK(a.ffxMemoryQueries == 0u);
     CHECK(LaterGroupsAreZero(a));
 
+    // ---- 3. NO LONGER ASKED: the detour forwards without looking, the region is as it was left, and the patch stays
+    // (it is never taken out mid-session).
+    SetAdvancedRequest(r, 0u);
+    TickFor(r, 1500);
+    fl::FlAdvancedState held{};
+    std::memcpy(&held, RegionFive(r), sizeof(held));
+    TickFor(r, 2500);
+    CHECK(std::memcmp(&held, RegionFive(r), sizeof(held)) == 0);
+    CHECK((r.st->hooksInstalledMask & slConstants) != 0u);
+    REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_SL_INTERPOSER, "slSetConstants", now));
+    CHECK(std::memcmp(pristine, now, sizeof(now)) != 0);
+
     CHECK(r.st->faultCount == 0u);
     CHECK(r.st->status == fl::FL_STATUS_READY);
+
+    // ---- 4. STOPPED: the export's first bytes are the file's again, and the log says which patch was restored.
+    r.ctl->unhookRequested = 1;
+    for (int i = 0; i < 60 && r.st->status != fl::FL_STATUS_UNHOOKED; ++i) {
+        ++r.ctl->guardTicks;
+        Sleep(50);
+    }
+    REQUIRE(r.st->status == fl::FL_STATUS_UNHOOKED);
+    std::wstring log;
+    std::string  text;
+    for (int i = 0; i < 100; ++i) {
+        if ((!log.empty() || FindOverlayLog(child.pi.dwProcessId, child.pi.hProcess, log))) {
+            text = ReadWholeFile(log);
+            if (text.find("STOP_FLUSHED") != std::string::npos) {
+                break;
+            }
+        }
+        Sleep(100);
+    }
+    INFO("after the stop:\n" << text);
+    REQUIRE(ReadTargetExportBytes(child.pi.dwProcessId, FL_STUB_SL_INTERPOSER, "slSetConstants", now));
+    CHECK(std::memcmp(pristine, now, sizeof(now)) == 0);
+    CHECK(text.find("HOOK_INSTALLED   sl.interposer.dll!slSetConstants") != std::string::npos);
+    CHECK(text.find("UNHOOK_RESTORED  sl.interposer.dll!slSetConstants") != std::string::npos);
+    CHECK(text.find("UNHOOK_DECLINED") == std::string::npos);
+    CHECK(text.find("PATCH_FAILED") == std::string::npos);
 }
