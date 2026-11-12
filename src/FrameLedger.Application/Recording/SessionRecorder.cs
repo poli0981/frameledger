@@ -192,8 +192,8 @@ public sealed class SessionRecorder : ISessionRecorder
             return DriverProfileRecord.Serialize(await read.WaitAsync(DriverProfileBudget).ConfigureAwait(false));
         }
         catch (Exception ex) when (ex is TimeoutException or InvalidOperationException or ArgumentException
-                                       or System.Runtime.InteropServices.ExternalException or DllNotFoundException or EntryPointNotFoundException
-                                       or BadImageFormatException or System.Runtime.InteropServices.MarshalDirectiveException)
+                                       or ExternalException or DllNotFoundException or EntryPointNotFoundException
+                                       or BadImageFormatException or MarshalDirectiveException)
         {
             return null;
         }
