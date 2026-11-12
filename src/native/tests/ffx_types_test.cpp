@@ -113,6 +113,7 @@ TEST_CASE("threads that meet the same new types at once keep each exactly once",
     for (int round = 0; round < 200; ++round) {
         fl::ffxtypes::Seen       seen;
         std::vector<std::thread> threads;
+        threads.reserve(8);
         for (int t = 0; t < 8; ++t) {
             threads.emplace_back([&seen, t] {
                 for (int i = 0; i < 6; ++i) {

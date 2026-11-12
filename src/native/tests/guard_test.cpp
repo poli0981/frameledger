@@ -6835,7 +6835,7 @@ uint32_t BitsOf(float v) {
     return std::bit_cast<uint32_t>(v);
 }
 
-// What 0.1.0-beta.41 and beta.42 fill: declared now, written by nothing in this release.
+// What 0.1.0-beta.43 and beta.44 fill (beta.41 and beta.42 until D118 and D122): declared, written by nothing yet.
 bool LaterGroupsAreZero(const fl::FlAdvancedState& a) {
     bool zero = a.ffxFgConfigures == 0u && a.ffxFgEnabledSeen == 0u && a.ffxFgFlagsSeen == 0u &&
                 a.slConstantsCalls == 0u && a.slResets == 0u && a.slFlagsSeenTrue == 0u && a.slFlagsSeenFalse == 0u;
@@ -6938,6 +6938,42 @@ TEST_CASE("region 5 stays empty until the Agent asks, then carries what an FSR t
     CHECK(b.ffxFovMinBits == BitsOf(kAdvFfxFovLow));
     CHECK(b.ffxMemoryTotalBytes == kAdvMemoryTotal);
 
+    CHECK(r.st->faultCount == 0u);
+    CHECK(r.st->status == fl::FL_STATUS_READY);
+}
+
+TEST_CASE("FSR's plane at infinity (beta.42, D119): a far plane of FLT_MAX reaches region 5 as +infinity, beside "
+          "the finite near plane",
+          "[guard][inject][shm][advanced]") {
+    // An engine with an infinite depth hands FSR FLT_MAX for one plane. The Overlay took that for Streamline's "not
+    // set" and dropped it, so three real titles showed one plane of two. Through the shipped DLL, on the SDK 1.1.x
+    // monolith: the same target as the case above, with the far plane at infinity.
+    Child child;
+    REQUIRE(StartHarness(child, L"--real --ffx-topology 1x --advanced --ffx-infinite-far --hold-presenting-ffx 30"));
+
+    ResetFake();
+    g.modules = {"kernel32.dll"};
+    g.scanSet = {child.pi.dwProcessId};
+    REQUIRE(GuardedInjectWithSources(child.pi.dwProcessId, FL_OVERLAY_DLL, FakeSources()).Allowed());
+
+    MappedRing r;
+    REQUIRE(OpenRingFor(child.pi.dwProcessId, r));
+    if (r.st == nullptr || r.ctl == nullptr) {
+        return;    // not reached after the REQUIRE; said in the form a static analyser follows (cpp:S2259)
+    }
+    REQUIRE(WaitForIdentityHook(r.st));
+
+    SetAdvancedRequest(r, 11u);
+    fl::FlAdvancedState a{};
+    REQUIRE(ReadAdvanced(r, 11u, a, 0u, fl::FL_ADV_VALID_FFX_UPSCALE));
+    INFO("near 0x" << std::hex << a.ffxNearBits << " far 0x" << a.ffxFarBits);
+    CHECK(a.ffxFarBits == FL_ADV_FLOAT_INFINITE);
+    CHECK(std::bit_cast<float>(a.ffxFarBits) > 3.0e38f);    // the float it decodes to IS infinity
+    CHECK(a.ffxNearBits == BitsOf(kAdvFfxNear));
+    // And nothing else of the descriptor took the pattern.
+    CHECK(a.ffxPreExposureMaxBits == BitsOf(kAdvFfxPreExposure));
+    CHECK(a.ffxFovMaxBits == BitsOf(kAdvFfxFovHigh));
+    CHECK(a.ffxSharpnessMaxBits == BitsOf(kAdvFfxSharpness));
     CHECK(r.st->faultCount == 0u);
     CHECK(r.st->status == fl::FL_STATUS_READY);
 }

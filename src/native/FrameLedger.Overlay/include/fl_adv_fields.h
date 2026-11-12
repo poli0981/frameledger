@@ -57,6 +57,18 @@ inline bool Usable(float v) noexcept {
     return (std::bit_cast<uint32_t>(v) & 0x7FFFFFFFu) < 0x7F7FFFFFu;
 }
 
+// A depth plane as FSR is handed one (owner decision D119): an ordinary value as its bits; FLT_MAX or +infinity --
+// how an engine with an infinite depth says "this plane is at infinity" -- as FL_ADV_FLOAT_INFINITE; anything else
+// (a NaN, a negative infinity, -FLT_MAX) as "no value". FOR THE ffx ROUTE ONLY: Streamline's INVALID_FLOAT is
+// FLT_MAX and means nobody set it, which is why Usable refuses it everywhere else.
+inline uint32_t FfxDepthPlaneBits(float v) noexcept {
+    const uint32_t bits = std::bit_cast<uint32_t>(v);
+    if (Usable(v)) {
+        return bits;
+    }
+    return bits == 0x7F7FFFFFu || bits == FL_ADV_FLOAT_INFINITE ? FL_ADV_FLOAT_INFINITE : FL_ADV_FLOAT_NONE;
+}
+
 inline float Magnitude(float v) noexcept {
     return std::bit_cast<float>(std::bit_cast<uint32_t>(v) & 0x7FFFFFFFu);
 }
@@ -237,11 +249,12 @@ inline void ObserveFfxUpscale(uint32_t leaf, const ffxDispatchDescUpscale& d, Ac
         KeepMax(a.ffxPreExposureMaxBits, d.preExposure);
     }
 
-    if (Usable(d.cameraNear)) {
-        a.ffxNearBits.store(std::bit_cast<uint32_t>(d.cameraNear), std::memory_order_relaxed);
+    // The two depth planes, the last of each; one of them may be at infinity (D119).
+    if (const uint32_t nearBits = FfxDepthPlaneBits(d.cameraNear); nearBits != FL_ADV_FLOAT_NONE) {
+        a.ffxNearBits.store(nearBits, std::memory_order_relaxed);
     }
-    if (Usable(d.cameraFar)) {
-        a.ffxFarBits.store(std::bit_cast<uint32_t>(d.cameraFar), std::memory_order_relaxed);
+    if (const uint32_t farBits = FfxDepthPlaneBits(d.cameraFar); farBits != FL_ADV_FLOAT_NONE) {
+        a.ffxFarBits.store(farBits, std::memory_order_relaxed);
     }
     // The field of view as a range (owner decision D114): the lowest and the highest, never a series.
     if (Usable(d.cameraFovAngleVertical) && d.cameraFovAngleVertical > 0.0f) {

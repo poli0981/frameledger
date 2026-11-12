@@ -193,8 +193,8 @@ public sealed class InGameAdvancedSampler
         }
 
         var depth = new List<AdvancedRow>(3);
-        AddNumber(depth, "cameraNear", s.FfxNearBits);
-        AddNumber(depth, "cameraFar", s.FfxFarBits);
+        AddDepthPlane(depth, "cameraNear", s.FfxNearBits);
+        AddDepthPlane(depth, "cameraFar", s.FfxFarBits);
         // A range, lowest to highest - never a series, which would say when the player aimed (D114).
         if (Number(s.FfxFovMinBits) is double low && Number(s.FfxFovMaxBits) is double high)
         {
@@ -230,6 +230,19 @@ public sealed class InGameAdvancedSampler
         {
             facts.Add(Fact(id, AdvancedValue.Of(plusOne == 2)));
         }
+    }
+
+    // A depth plane of FSR's: a number, or the plane at infinity (owner decision D119) - which Number, rightly for every
+    // other field, takes for no value at all.
+    private static void AddDepthPlane(List<AdvancedRow> rows, string member, uint bits)
+    {
+        if (bits == FlAdvancedState.FloatInfinite)
+        {
+            rows.Add(new AdvancedRow(member, "∞"));
+            return;
+        }
+
+        AddNumber(rows, member, bits);
     }
 
     private static void AddNumber(List<AdvancedRow> rows, string member, uint bits)

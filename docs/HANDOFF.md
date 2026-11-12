@@ -139,9 +139,11 @@ the traps — is [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta
    [`handoff/history/0.1.0-beta.40.md`](handoff/history/0.1.0-beta.40.md) §NEXT lists (`kMaxPatches = 48`, the window
    of `sl::Constants` pinned outside the camera members, the per-call overhead, the gate's list for the two new
    structs):
-   - **`FLT_MAX` in an FSR depth plane.** Lies of P gave `cameraFar = 10` and no `cameraNear`; most likely the
+   - ~~**`FLT_MAX` in an FSR depth plane.** Lies of P gave `cameraFar = 10` and no `cameraNear`; most likely the
      plane at infinity is `FLT_MAX`, which the Overlay refuses as "nobody set this". Decide whether it is stored as
-     "infinite" — an Overlay change, with its overhead stated.
+     "infinite" — an Overlay change, with its overhead stated.~~ *(Decided, D119, and built in beta.42:
+     `FL_ADV_FLOAT_INFINITE`, shown "∞". Whether Lies of P's missing plane IS `FLT_MAX` is still the hypothesis it
+     was — item 40 reads it.)*
    - ~~**Valor Mortis.** One exit by access violation 51 seconds after injection under beta.40, none under an earlier
      build, not attributed. Its crash count is 1; a second such end switches its hooking off. Before adding a hook
      to that game's process, ask the owner whether it happened again.~~ **Answered by the owner, 2026-11-12: it was

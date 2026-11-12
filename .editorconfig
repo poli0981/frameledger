@@ -263,6 +263,12 @@ resharper_cpp_if_can_be_replaced_by_constexpr_if_highlighting = none
 [src/native/{FrameLedger.Injector/src/fl_guard_sources.cpp,FrameLedger.ProcessStats/src/fl_process_stats.cpp,tools/fl-probe-guard/main.cpp,tests/vklayer_test.cpp}]
 resharper_cpp_declarator_never_used_highlighting = none
 
+# fl::patch::Install takes its hook engine as a template parameter and calls Create / Enable / Disable on it. The
+# test's two stand-in engines are used that way and no other, which ReSharper's "never used" does not follow through a
+# dependent call: six reports, one per member (Qodana, 2026-11-12). The members are the test.
+[src/native/tests/unhook_inline_test.cpp]
+resharper_cpp_declarator_never_used_highlighting = none
+
 # The linter's compiler, not the build's: NVAPI's header makes NvU32 `unsigned int` under clang and `unsigned long`
 # under MSVC, which is the compiler that builds this probe - and `%lu` is right for it.
 [src/native/tools/fl-probe-nvapi/main.cpp]

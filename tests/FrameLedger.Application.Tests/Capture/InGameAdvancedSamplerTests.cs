@@ -97,6 +97,46 @@ public sealed class InGameAdvancedSamplerTests
     }
 
     [Fact]
+    public void AnFsrDepthPlaneAtInfinityIsShownAsInfiniteAndInNoOtherFieldIsInfinityAValue()
+    {
+        // Owner decision D119: an engine with an infinite depth hands FSR FLT_MAX for one plane, and the Overlay
+        // stores that as +infinity's own bits. Lies of P's shape: the far plane a small number, the near one at
+        // infinity.
+        var sampler = new InGameAdvancedSampler();
+        sampler.Take(new InGameAdvanced(InGameStates.Ffx() with
+        {
+            FfxNearBits = FlAdvancedState.FloatInfinite,
+            FfxFarBits = BitConverter.SingleToUInt32Bits(10f),
+        }));
+
+        Rows(Fact(sampler, "ffx.upscale.depth")).Should().StartWith(["cameraNear=∞", "cameraFar=10"]);
+
+        // The other way round, in the same session: the fact follows what the game says now.
+        sampler.Take(new InGameAdvanced(InGameStates.Ffx(2) with
+        {
+            FfxNearBits = BitConverter.SingleToUInt32Bits(0.05f),
+            FfxFarBits = FlAdvancedState.FloatInfinite,
+        }));
+        Rows(Fact(sampler, "ffx.upscale.depth")).Should().StartWith(["cameraNear=0.05", "cameraFar=∞"]);
+
+        // Infinity is a depth plane's value and nobody else's: an exposure or a jitter carrying the pattern is, as
+        // before, no value - the Overlay never stores it there, and a reader does not invent a meaning for it.
+        var other = new InGameAdvancedSampler();
+        other.Take(new InGameAdvanced(InGameStates.Ffx() with
+        {
+            FfxPreExposureMinBits = FlAdvancedState.FloatInfinite,
+            FfxPreExposureMaxBits = FlAdvancedState.FloatInfinite,
+            FfxJitterMaxXBits = FlAdvancedState.FloatInfinite,
+            FfxJitterMaxYBits = FlAdvancedState.FloatInfinite,
+            FfxNearBits = FlAdvancedState.FloatNone,
+            FfxFarBits = 0xFF800000u,
+        }));
+        other.Facts.Should().NotContain(static f => f.Id == "ffx.upscale.exposure" || f.Id == "ffx.upscale.jitter");
+        Rows(Fact(other, "ffx.upscale.depth")).Should().OnlyContain(static row => row.StartsWith("cameraFov", StringComparison.Ordinal),
+            "a plane nobody gave and a negative infinity are not planes");
+    }
+
+    [Fact]
     public void SharpeningSeenBothWaysARangeAndAFlagNobodyNamedAreSaidAsTheyAre()
     {
         FlAdvancedState s = InGameStates.Ffx() with

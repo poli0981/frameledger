@@ -125,7 +125,7 @@ What the region is, as a contract between the two sides:
   inside on every attempt — a watchdog killed with its process leaves `seq` odd for good, and what it published
   before is still what the game said.
 - **Zero is "not read", never a value.** A Streamline `Boolean` and a DLSS preset are stored as the vendor's value
-  plus one; a float as its bits, with `FL_ADV_FLOAT_NONE` for "none seen" — the vendors' own sentinels are refused in
+  plus one; a float as its bits, with `FL_ADV_FLOAT_NONE` for "none seen" — and, in `ffxNearBits` / `ffxFarBits` alone, `FL_ADV_FLOAT_INFINITE` (`0x7F800000`, +infinity's own bits) for a plane at infinity *(0.1.0-beta.42, owner decision D119: an engine with an infinite depth hands FSR `FLT_MAX` or +infinity for one plane; for Streamline `FLT_MAX` is "not set" and stays refused)* — the vendors' own sentinels are refused in
   the detour and never reach the region; a size of 0 is "not given".
 - **A per-frame value is summarised where it is seen**: a flag is an "ever seen" mask, a jitter the largest magnitude,
   a field of view its lowest and highest (D114), the reported frame time a count and a sum the watchdog drains.

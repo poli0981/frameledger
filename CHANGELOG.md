@@ -35,6 +35,13 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Added
+
+- **Advanced metrics: FSR's depth plane at infinity is shown as "∞".** Engines with an infinite depth range tell
+  FSR that one of the two camera planes is at infinity, and FrameLedger took that value for "not set" — so a
+  session's depth range showed one plane where the game had given two. The plane at infinity is now stored and
+  shown as such. Only for FSR, and only while Advanced metrics is on; nothing else about what is read changed.
+
 ### Changed
 
 - **The Overlay's log is whole after a game exits, and says more.** The log FrameLedger's part inside the game
