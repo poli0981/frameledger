@@ -71,6 +71,13 @@ It never means the game uses no upscaler; the session's summary still names the 
 **Where the camera is, which way it looks and its matrices are never read.** The field of view is kept as a lowest
 and a highest value, never as a line over time.
 
+**A game may use a unit of its own.** NVIDIA's and AMD's libraries expect the field of view in radians, and
+FrameLedger shows it that way with the degrees beside it. Some games give degrees instead (Cyberpunk 2077 does, to
+Streamline): a value too large to be radians is shown as the game gave it, with a line that says *Not radians*, and
+is not converted — FrameLedger shows what the game said, not what it may have meant. The number of **resets** is
+the number of calls in which the game told the upscaler to drop its history; menus and loading screens raise it. A
+frame-generation configuration with no flag set says *None*.
+
 A session's summary has an **Advanced metrics…** button that opens that session here.
 
 ## Sources

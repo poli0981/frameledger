@@ -349,6 +349,7 @@ public static class Strings
         nameof(AdvToken_non_linear_color_srgb),
         nameof(AdvToken_none),
         nameof(AdvToken_not_a_number),
+        nameof(AdvToken_not_radians),
         nameof(AdvToken_not_supported),
         nameof(AdvToken_off),
         nameof(AdvToken_on),
@@ -2170,6 +2171,8 @@ public static class Strings
     public static string AdvToken_none => ResourceManager.GetString(nameof(AdvToken_none), Culture) ?? nameof(AdvToken_none);
 
     public static string AdvToken_not_a_number => ResourceManager.GetString(nameof(AdvToken_not_a_number), Culture) ?? nameof(AdvToken_not_a_number);
+
+    public static string AdvToken_not_radians => ResourceManager.GetString(nameof(AdvToken_not_radians), Culture) ?? nameof(AdvToken_not_radians);
 
     public static string AdvToken_not_supported => ResourceManager.GetString(nameof(AdvToken_not_supported), Culture) ?? nameof(AdvToken_not_supported);
 

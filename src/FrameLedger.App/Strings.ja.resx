@@ -1009,6 +1009,10 @@
     <value>数値ではない</value>
     <comment>review</comment>
   </data>
+  <data name="AdvToken_not_radians" xml:space="preserve">
+    <value>ラジアンではありません: 値が π より大きいためです。ゲームはおそらく度で渡しています。</value>
+    <comment>review</comment>
+  </data>
   <data name="AdvToken_not_supported" xml:space="preserve">
     <value>非対応</value>
     <comment>review</comment>

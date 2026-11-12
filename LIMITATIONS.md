@@ -51,6 +51,10 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
   game). Unity's crash handler and Chromium's `crashpad_handler` start with every game that has them, so their presence
   says nothing. Sessions recorded before 0.1.0-beta.14 keep how they were stored — a few of them may read *crashed*
   because Windows logged a memory report about the game. ([details](docs/04_CAPTURE.md))
+- **A game that faults while it is closing can read *ended normally* in a session measured from inside the game.**
+  FrameLedger looks for Windows' crash report when it saves the session, and for such a session that is before
+  Windows has written it; the same fault in a session that was not measured from inside reads *crashed*. Seen on one
+  game whose graphics-driver library faults at every exit, measured or not (2026-11-12). Not changed yet.
 
 ## Frame rate and frame generation
 
@@ -194,7 +198,13 @@ shown is recorded too, from outside the game. ([Capture](docs/04_CAPTURE.md))
     generation and gets none still reads "on", and the session's summary is where what was generated is measured. A
     setting the game changed during the session reads "on and off". The session's line says, for each of the two,
     whether it was read, hooked and never called by the game, or not hooked (the game did not load the library).
-    Streamline 1.x is not read. **Neither has been confirmed on a real game yet.**
+    Streamline 1.x is not read. Streamline's values have been read from three real games and the frame-generation
+    configuration from one (2026-11-12); **a configuration that reaches FSR through AMD's 2.3 loader has not been
+    read from a real game yet.** **A game may give a value in a unit of its own**: Cyberpunk 2077 gives Streamline
+    its field of view in degrees where NVIDIA's header says radians. A field of view too large to be radians is
+    shown as the game gave it, with a line saying so, and is never converted (since 0.1.0-beta.44; a session
+    recorded before keeps the line it was stored with, which labels the degrees as radians). The count of resets is
+    the number of calls in which the game said so — menus and loading screens raise it.
   - **The driver's own figures** — the card's firmware and architecture, its memory in detail, what a display can do
     with HDR and variable refresh, the driver's settings for the game — exist on **NVIDIA** cards only. On other cards
     they read N/A; the card's sensors (fans, voltages, loads) are read on every brand, and none has been tested on an
@@ -273,7 +283,9 @@ a barrier is on its own page: [Accessibility](ACCESSIBILITY.md) (in the app: Hel
 - **Some games will not start directly** (seen on two Steam games, 2026-10-19 and 20). Lies of P, started by *Start
   directly*, hands itself to Steam within seconds — since 0.1.0-beta.27 the game Steam then starts is recorded —, and
   Clair Obscur: Expedition 33 closes within seconds, with or without FrameLedger's hook. Each such start ends a
-  measured session early, which the crash safety counts: two turn hooking off for the game. Start such a game through
+  measured session early, which the crash safety counts: two turn hooking off for the game — and since
+  0.1.0-beta.44 the count starts again each time you switch hooking back on (before, one more such end was enough
+  once a game had been switched off). Start such a game through
   its store (Settings ▸ Games ▸ *Play button*); the notice after Play says when a Steam game may hand itself to Steam.
   ([details](docs/spike-notes/23-owner-runs-2026-10-20.md))
 

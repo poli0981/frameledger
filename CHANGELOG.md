@@ -35,6 +35,30 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Changed
+
+- **Switching hooking back on starts the count of early abnormal ends again** (owner decision D126). The count was
+  never set back, so a game that had once been switched off — after two ends within 60 seconds of injection — was
+  switched off again by every single such end after its user switched it on, under a reason that still said
+  "twice". Seen on 2026-11-12: Lies of P, two ends in October, one crash of its own that day. Two are needed again
+  each time. Nothing else about the rule moves: it only switches off, an anti-cheat block is never cleared, and the
+  user-mode exception's trial keeps its own record.
+
+### Fixed
+
+- **A field of view a game gives in degrees is no longer labelled radians** (Advanced metrics; owner decision
+  D128). Cyberpunk 2077 gives NVIDIA Streamline 51–90 where the library expects radians, and the session read
+  `51.0055 – 90 rad (2922.4° – 5156.6°)`. A value too large to be radians is now shown as the game gave it, with a
+  line that says it is not radians, and is not converted. Sessions recorded on 0.1.0-beta.43 keep the line they
+  were stored with.
+- **An FSR frame-generation configuration with no flag set says "None"** (Advanced metrics). The row was missing,
+  where an upscale with no flag has always said so.
+- **The accuracy statement and the limitations no longer say that what a game tells Streamline, and how it
+  configures FSR frame generation, have not been read from a real game**: they were, on 2026-11-12 — three games
+  and one. What is still unconfirmed is named: the DLSS options, and a configuration that reaches FSR through
+  AMD's 2.3 loader. A fault while a game is closing, which a session measured from inside the game does not see,
+  is written down as a limit (owner decision D127: not changed in this release).
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

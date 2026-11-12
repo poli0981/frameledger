@@ -152,7 +152,7 @@ public sealed class InGameAdvancedSamplerTests
         sampler.Take(new InGameAdvanced(s));
 
         Rows(Fact(sampler, "ffx.upscale.sharpening")).Should().Equal("enableSharpening=on_and_off", "sharpness=0.2 – 0.35");
-        InGameAdvancedSampler.Tokens.Should().Contain(["on", "off", "on_and_off", "none", "draw_debug_view", "non_linear_color_srgb", "non_linear_color_pq"],
+        InGameAdvancedSampler.Tokens.Should().Contain(["on", "off", "on_and_off", "none", "not_radians", "draw_debug_view", "non_linear_color_srgb", "non_linear_color_pq"],
             "each is a word the App has in three languages; a test there holds it to this list");
         Fact(sampler, "ffx.upscale.exposure").Value.Text.Should().Be("1.25 – 2");
         Rows(Fact(sampler, "ffx.upscale.depth")).Should().Contain("cameraFovAngleVertical=0.9 rad (51.6°)", "one value is said once");
@@ -277,10 +277,41 @@ public sealed class InGameAdvancedSamplerTests
         Rows(Fact(other, "ffx.framegen.config")).Should().Equal(
             "frameGenerationEnabled=on_and_off", "onlyPresentGenerated=off", "flags=DRAW_DEBUG_TEAR_LINES, bit 9");
 
-        // A rectangle with no area is one the game did not give.
+        // A rectangle with no area is one the game did not give. A configure that set no flag says so, as an upscale
+        // does (0.1.0-beta.44): the row was missing, and "no row" read as "not read".
         var none = new InGameAdvancedSampler();
         none.Take(new InGameAdvanced(InGameStates.WithRect(InGameStates.FrameGeneration() with { FfxFgFlagsSeen = 0 }, 0, 0, 0, 0)));
-        Rows(Fact(none, "ffx.framegen.config")).Should().Equal("frameGenerationEnabled=on", "allowAsyncWorkloads=off", "onlyPresentGenerated=off");
+        AdvancedFact noFlags = Fact(none, "ffx.framegen.config");
+        Rows(noFlags).Should().Equal("frameGenerationEnabled=on", "allowAsyncWorkloads=off", "onlyPresentGenerated=off", "flags=none");
+        noFlags.Value.Rows![3].Token.Should().Be("none", "the App translates the word");
+    }
+
+    [Fact]
+    public void AFieldOfViewOverPiIsSaidAsTheGameGaveItAndNeverConverted()
+    {
+        // D128. Cyberpunk 2077 gives Streamline its field of view in degrees - 51.0055 to 90 on 2026-11-12 - where the
+        // vendor's header says radians, and the row read "51.0055 - 90 rad (2922.4 deg - 5156.6 deg)". A value over pi
+        // cannot be radians: it is said as given, a second row says what it is not, and nothing is converted.
+        var sampler = new InGameAdvancedSampler();
+        sampler.Take(new InGameAdvanced(InGameStates.Streamline() with { SlFovMinBits = InGameStates.Bits(51.0055f), SlFovMaxBits = InGameStates.Bits(90f) }));
+
+        AdvancedFact projection = Fact(sampler, "sl.constants.projection");
+        Rows(projection).Should().Equal("cameraFOV=51.0055 – 90", "cameraFOV unit=not_radians", "cameraAspectRatio=1.75", "orthographicProjection=off");
+        projection.Value.Rows![0].Token.Should().BeNull("the number is the game's");
+        projection.Value.Rows![1].Token.Should().Be("not_radians", "the App says it in three languages");
+
+        // One value, and FSR's field the same way; a range that only ends over pi is not half radians.
+        var one = new InGameAdvancedSampler();
+        one.Take(new InGameAdvanced(InGameStates.Ffx() with { FfxFovMinBits = InGameStates.Bits(75f), FfxFovMaxBits = InGameStates.Bits(75f) }));
+        Rows(Fact(one, "ffx.upscale.depth")).Should().ContainInOrder("cameraFovAngleVertical=75", "cameraFovAngleVertical unit=not_radians");
+        var mixed = new InGameAdvancedSampler();
+        mixed.Take(new InGameAdvanced(InGameStates.Streamline() with { SlFovMinBits = InGameStates.Bits(1.2f), SlFovMaxBits = InGameStates.Bits(3.5f) }));
+        Rows(Fact(mixed, "sl.constants.projection")).Take(2).Should().Equal("cameraFOV=1.2 – 3.5", "cameraFOV unit=not_radians");
+
+        // Pi itself is a radian: a half-turn, which no game renders, and still not this rule's to refuse.
+        var edge = new InGameAdvancedSampler();
+        edge.Take(new InGameAdvanced(InGameStates.Streamline() with { SlFovMinBits = InGameStates.Bits(3.0f), SlFovMaxBits = InGameStates.Bits(3.0f) }));
+        Rows(Fact(edge, "sl.constants.projection")).Take(2).Should().Equal("cameraFOV=3 rad (171.9°)", "cameraAspectRatio=1.75");
     }
 
     [Fact]
