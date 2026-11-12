@@ -780,14 +780,16 @@ compare-and-restore that never restores is not a fix.
 No logging in hook bodies. A small fixed-size in-memory ring of structured events (hook installed, symbol missing, fault, unhook) is flushed to `logs\overlay-<pid>-*.log` by the init thread at session end, on unhook, or on Agent request — never mid-frame.
 
 > **Built 2026-09-06 (P1 item 4), as specified, with the details a bug report needs.** A ring of 256 ×
-> 64-byte events (`qpc`, code, two operands, a 40-char name) appended with one `fetch_add` from init and
+> ~~64-byte events (`qpc`, code, two operands, a 40-char name)~~ 96-byte events (`qpc`, code, two operands, a
+> 72-char name — 64 bytes and 40 characters until beta.42) appended with one `fetch_add` from init and
 > watchdog paths and from a hook's **SEH handler** — `NoteFault` records the exception code and the hook's
 > `__func__` — never from a hook body. Codes: `RING_CREATED`, `PRESENT_HOOKS`, `HOOK_INSTALLED` (one per
 > patch, with the target address), `SYMBOL_MISSING` (once per pair, and only when the module IS mapped),
 > `FAULT`, `STOP` (the reason), `UNHOOK_RESTORED` / `UNHOOK_DECLINED` (one per patch), `LOADER_DETOUR`,
 > `SUPERVISION_LOST`, since beta.24 `STOP_FLUSHED` (the last line after a stop: `a=1` when the stop had finished
-> writing), and since beta.42 `PATCH_FAILED` (a patch that did not go in, once per target and reason — §Unhooking).
-> **Three flush points, none on a present path:** the end of `InitThread` (so the
+> writing), and since beta.42 `PATCH_FAILED` (a patch that did not go in, once per target and reason — §Unhooking)
+> and `FFX_DISPATCH`, `FFX_QUERY`, `UPSCALE_ROUTE`, `RUNTIME_CENSUS` (the note at the end of this section).
+> **Three flush points — four since beta.42, the same note —, none on a present path:** the end of `InitThread` (so the
 > file exists from the start of the session and a crash mid-session still leaves it), the watchdog when
 > `FlControlBlock.logFlushRequested` changes (a counter the Agent bumps at session end; nothing clears it),
 > and the watchdog on its way out after any stop. Appended, never recreated; events overwritten before a
@@ -805,8 +807,52 @@ No logging in hook bodies. A small fixed-size in-memory ring of structured event
 > line. Nothing on a present path changed. Path: `%LOCALAPPDATA%\FrameLedger\logs\overlay-<pid>-<yyyymmdd-hhmmss>.log`,
 > resolved by `SHGetKnownFolderPath` (§S21's rule, not the environment). No allocation: static ring,
 > static 64 KiB format buffer, static path. The CaptureHost prints the file and its `FAULT` / `STOP` /
-> `UNHOOK_*` / `SYMBOL_MISSING` / `SUPERVISION_LOST` lines at the end of every session
+> `UNHOOK_*` / `SYMBOL_MISSING` / `PATCH_FAILED` / `SUPERVISION_LOST` lines at the end of every session
 > (`Consume/OverlayLog.cs`).
+>
+> **The log outlives the game, and says what each ffx module was handed (0.1.0-beta.42, owner decision D121).**
+> Cyberpunk 2077, set to FSR upscaling with FSR frame generation, was recorded with frame generation measured and
+> the upscaler "unknown": PREPARE and FRAMEGENERATION dispatches arrived and no UPSCALE ever did. The log could
+> not say why. **It ended half a second into the session** — written at the end of init, then only when the Agent
+> asked or a stop ran, and a game that exits does neither: the watchdog dies with the process. And **it could not
+> have said much**: the two one-target rows logged their symbol and every other row the word `hook`, so four ffx
+> modules were one indistinguishable line each. Four changes, none of them a new patch site:
+>
+> 1. **A fourth flush point: the watchdog, on any tick that finds something new in the ring** (`FlushLogIfNew`:
+>    one load on an uneventful tick, no file opened). Events are few and bounded — installs, first sights, three
+>    faults at most — so this is a handful of appends a session. The init thread's flush moved to **before** the
+>    watchdog is created: `FlushLog`'s state belongs to one thread at a time, and with the watchdog flushing on its
+>    first tick the old order could run two at once.
+> 2. **Every install line names its module and its symbol** — `amd_fidelityfx_dx12.dll!ffxDispatch` — built at
+>    compile time from the inventory row's own two spellings (`fl::inventory::NameOfRow`), so no second list of
+>    names exists. The same name is on the `UNHOOK_*` and `PATCH_FAILED` lines. The event's text grew from 40 to
+>    72 characters for it (an event is 96 bytes; the ring 24 KiB, static), and `PatchTarget` lost its default
+>    name, so a new call site cannot log `hook`.
+> 3. **`FFX_DISPATCH` / `FFX_QUERY`: each descriptor type a hooked ffx-api module was handed, once**
+>    (`fl_ffx_types.h`). Text = the module, `b` = the type (`0x10001` UPSCALE, `0x20004` / `0x2000c` PREPARE,
+>    `0x20003` FRAMEGENERATION, …); `a` ≠ 0 with `b=0` says what did not fit (`1` a ninth distinct type, `2` a
+>    type of zero). The detour keeps the value of `type` — the member it reads already to choose an arm — in the
+>    first free of eight slots per module and entry point; the watchdog writes it. A query's type is kept whatever
+>    the vendor answered. `UPSCALE_ROUTE` names each source an UPSCALE came from, once (the FSR 3.0 host has no
+>    descriptor type, so this is the only line that says its export was called), and `RUNTIME_CENSUS` repeats the
+>    census word (`b`) whenever it gains a bit — both from words the detours kept before, at no cost to a hook.
+> 4. **`PATCH_FAILED`** (§Unhooking) is the fourth: a patch that did not go in used to leave no line at all.
+>
+> **This is a diagnostic, not a measurement, and it is not behind the Advanced-metrics switch** — like
+> `HOOK_INSTALLED`, it reaches the log file and nothing else: no record, no region of the shared memory, no session.
+> Rule 4: the only thing read is `type`, of a descriptor handed to a hooked call. Rule 5: no allocation, no lock,
+> no logging in the body; a type already kept costs loads and no write.
+>
+> **Measured overhead** (on `fl_ffx_types.h` itself with the Overlay's compile flags — `/O2 /GS /guard:cf
+> /Qspectre`, 50 million calls a run, three runs, i7-14700KF): a frame's three dispatch types in turn, **+3.8 ns a
+> dispatch** (3.79 / 3.87 / 3.81); a type in the first slot +0.9 to +1.0 ns; in the eighth, the worst steady
+> state, +8.1 to +8.4 ns. A new type costs one compare-exchange, once per type and module.
+>
+> ctest `fl_ffx_types` (the header, including eight threads meeting the same six types at once: each kept exactly
+> once) and `fl_guard` `[log]`: a harness on the 1.1.x monolith, generating frames and asking a ratio query, is
+> supervised and told **nothing else** — no flush request, no stop — and its log holds the two install lines by
+> module and symbol, the three dispatch types and the query type once each, the route and the census; the process
+> is then killed and the file is as it was, one header, no `STOP`.
 
 > **Tests and the real logs folder (2026-09-15).** The injection tests use the shipped Overlay, so their harness
 > logs land in the user's real `logs\` too: measured that day, 2506 overlay logs, **2492 of them hook-harness's**,

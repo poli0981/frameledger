@@ -35,6 +35,18 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Changed
+
+- **The Overlay's log is whole after a game exits, and says more.** The log FrameLedger's part inside the game
+  writes (`logs\overlay-<pid>-….log`) used to hold only the first half second of a session unless the session
+  ended while the game was still running: a game that exits takes the thread that writes the log with it. It is
+  now written during the session, whenever something new was noted. Each hook that went in is named by its module
+  and function (four AMD modules used to be four identical lines), a hook that could not go in says why, and the
+  log lists which kinds of call each AMD FidelityFX module received and which upscaling and frame-generation
+  modules the game loaded, and when. This is for finding out why a game's upscaler reads "unknown" — nothing in
+  it is a measurement, and nothing from it is stored in a session. Measured cost: about 4 billionths of a second
+  per FidelityFX call.
+
 ### Fixed
 
 - **The part inside the game can no longer leave a hook in after it has stopped.** Two gaps in how the Overlay keeps

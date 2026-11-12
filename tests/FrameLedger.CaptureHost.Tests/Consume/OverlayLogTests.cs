@@ -33,6 +33,8 @@ public sealed class OverlayLogTests : IDisposable
             "# FrameLedger.Overlay build abc pid 4242 layout v3 image game.exe",
             "+     0.001s  RING_CREATED     Local\\FrameLedger.Ring.<pid>              a=8192 b=0x0",
             "+     0.020s  HOOK_INSTALLED   dxgi!IDXGISwapChain::Present             a=0 b=0x7ff0",
+            "+     1.020s  PATCH_FAILED     amd_fidelityfx_dx12.dll!ffxDispatch      a=4 b=0x7ff8",
+            "+     2.020s  FFX_DISPATCH     amd_fidelityfx_dx12.dll                  a=0 b=0x10001",
             "+     3.400s  FAULT            Hook_Present                             a=3221225477 b=0x0",
             "+     9.000s  STOP             observing stopped                        a=3 b=0x0",
             "+     9.001s  UNHOOK_RESTORED  dxgi!IDXGISwapChain::Present             a=1 b=0x7ff0",
@@ -44,12 +46,13 @@ public sealed class OverlayLogTests : IDisposable
         OverlayLog.Find(4242, _dir).Should().Be(newer);
         List<string> lines = [.. OverlayLog.Describe(4242, _dir)];
 
-        lines[0].Should().Contain(newer).And.Contain("(6 event(s))");
-        lines.Should().HaveCount(5, "the header, then FAULT, STOP and the two unhook decisions; the installs stay in the file");
-        lines[1].Should().Contain("FAULT");
-        lines[2].Should().Contain("STOP");
-        lines[3].Should().Contain("UNHOOK_RESTORED");
-        lines[4].Should().Contain("UNHOOK_DECLINED");
+        lines[0].Should().Contain(newer).And.Contain("(8 event(s))");
+        lines.Should().HaveCount(6, "the header, then the patch that failed, FAULT, STOP and the two unhook decisions; the installs and what was seen stay in the file");
+        lines[1].Should().Contain("PATCH_FAILED");
+        lines[2].Should().Contain("FAULT");
+        lines[3].Should().Contain("STOP");
+        lines[4].Should().Contain("UNHOOK_RESTORED");
+        lines[5].Should().Contain("UNHOOK_DECLINED");
     }
 
     [Fact]
