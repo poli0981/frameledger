@@ -35,6 +35,12 @@ numeric core and does not move; the heading is the full version — corrected 20
 
 ## [Unreleased]
 
+### Fixed
+
+- **A test of the Overlay's log reads its lines without `strlen`.** The helper that looks for a line in the log
+  took its text as C strings and measured one with `strlen`; it takes strings now. Test code only: nothing in the
+  installed software changes. (Found by SonarCloud after 0.1.0-beta.42 was merged.)
+
 ## Releases
 
 Newest first. Each file holds that release's section exactly as it stood here.

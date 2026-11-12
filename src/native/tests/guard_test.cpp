@@ -5988,7 +5988,7 @@ TEST_CASE("the FSR 3.0 host facade: Fsr3 identity and the count from its upscale
 namespace {
 
 // Whether the log has a line of this code whose text starts with `name` and which ends in `tail`.
-bool LogHasLine(const std::string& text, const char* code, const char* name, const char* tail) {
+bool LogHasLine(const std::string& text, const char* code, const std::string& name, const std::string& tail) {
     const std::string head = std::string("s  ") + code + " ";
     std::size_t       at = 0;
     while (at < text.size()) {
@@ -6003,9 +6003,9 @@ bool LogHasLine(const std::string& text, const char* code, const char* name, con
             while (n < line.size() && line[n] == ' ') {
                 ++n;
             }
-            const std::string tailText = tail;
-            if (line.compare(n, std::strlen(name), name) == 0 && line.size() >= tailText.size() &&
-                line.compare(line.size() - tailText.size(), tailText.size(), tailText) == 0) {
+            // The lengths are the strings' own (SonarCloud's cpp:S5813 was a strlen here).
+            if (line.compare(n, name.size(), name) == 0 && line.size() >= tail.size() &&
+                line.compare(line.size() - tail.size(), tail.size(), tail) == 0) {
                 return true;
             }
         }
