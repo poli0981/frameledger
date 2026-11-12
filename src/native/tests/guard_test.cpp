@@ -5985,6 +5985,117 @@ TEST_CASE("the FSR 3.0 host facade: Fsr3 identity and the count from its upscale
     }
 }
 
+namespace {
+
+// Whether the log has a line of this code whose text starts with `name` and which ends in `tail`.
+bool LogHasLine(const std::string& text, const char* code, const char* name, const char* tail) {
+    const std::string head = std::string("s  ") + code + " ";
+    std::size_t       at = 0;
+    while (at < text.size()) {
+        std::size_t end = text.find('\n', at);
+        if (end == std::string::npos) {
+            end = text.size();
+        }
+        const std::string line = text.substr(at, end - at);
+        const std::size_t h = line.find(head);
+        if (h != std::string::npos) {
+            std::size_t n = h + head.size();
+            while (n < line.size() && line[n] == ' ') {
+                ++n;
+            }
+            const std::string tailText = tail;
+            if (line.compare(n, std::strlen(name), name) == 0 && line.size() >= tailText.size() &&
+                line.compare(line.size() - tailText.size(), tailText.size(), tailText) == 0) {
+                return true;
+            }
+        }
+        at = end + 1;
+    }
+    return false;
+}
+
+std::size_t CountOf(const std::string& text, const char* needle) {
+    std::size_t n = 0;
+    for (std::size_t at = text.find(needle); at != std::string::npos; at = text.find(needle, at + 1)) {
+        ++n;
+    }
+    return n;
+}
+
+}    // namespace
+
+TEST_CASE("the native log outlives a game that just exits (beta.42, D121): the watchdog writes it unasked -- installs "
+          "by module and symbol, the descriptor types each ffx module was handed, the census",
+          "[guard][inject][shm][ffx][log]") {
+    // WHAT A REAL SESSION LOOKED LIKE UNTIL NOW. The log was written at the end of init, when the Agent asked, and on
+    // a stop. A game that exits asks for nothing and stops nothing: the file held the first half second -- before
+    // the title had loaded its upscaler -- and Cyberpunk 2077's "unknown" upscaler (FSR set, frame generation
+    // measured) could not be read back from anywhere. Here nobody asks and nothing stops; the process is then killed.
+    Child child;
+    REQUIRE(StartHarness(
+        child, L"--real --presents-per-eval 4 --ffx-topology 1x --ffx-query ratios --hold-presenting-ffx 14"));
+
+    ResetFake();
+    g.modules = {"kernel32.dll"};
+    g.scanSet = {child.pi.dwProcessId};
+    REQUIRE(GuardedInjectWithSources(child.pi.dwProcessId, FL_OVERLAY_DLL, FakeSources()).Allowed());
+
+    MappedRing r;
+    REQUIRE(OpenRingFor(child.pi.dwProcessId, r));
+
+    // The monolith's three dispatch types of an SDK 1.1.x title generating frames, and the ratio query, by value:
+    // UPSCALE 0x10001, FRAMEGENERATION_PREPARE 0x20004, FRAMEGENERATION 0x20003, GETUPSCALERATIOFROMQUALITYMODE
+    // 0x10002 (the vendored ffx_upscale.h / ffx_framegeneration.h).
+    const char*  mono = "amd_fidelityfx_dx12.dll";
+    std::wstring log;
+    std::string  text;
+    bool         complete = false;
+    for (int i = 0; i < 150 && !complete; ++i) {
+        ++r.ctl->guardTicks;    // supervised, as a session is -- and that is ALL this test tells the Overlay
+        Sleep(100);
+        if (log.empty() && !FindOverlayLog(child.pi.dwProcessId, child.pi.hProcess, log)) {
+            continue;
+        }
+        text = ReadWholeFile(log);
+        complete = LogHasLine(text, "FFX_DISPATCH", mono, " b=0x10001") &&
+                   LogHasLine(text, "FFX_DISPATCH", mono, " b=0x20004") &&
+                   LogHasLine(text, "FFX_DISPATCH", mono, " b=0x20003") &&
+                   LogHasLine(text, "FFX_QUERY", mono, " b=0x10002") &&
+                   LogHasLine(text, "UPSCALE_ROUTE", mono, " a=1 b=0x0");
+    }
+    INFO("log " << Narrow(log) << ":\n" << text);
+    REQUIRE(complete);
+    CHECK(r.ctl->logFlushRequested == 0u);
+    CHECK(r.ctl->unhookRequested == 0u);
+    CHECK(r.st->status == fl::FL_STATUS_READY);
+    CHECK(r.st->faultCount == 0u);
+
+    // The game exits. No stop, no last flush, no watchdog left to make one.
+    REQUIRE(TerminateProcess(child.pi.hProcess, 0));
+    WaitForSingleObject(child.pi.hProcess, 5000);
+    text = ReadWholeFile(log);
+    INFO("after the exit:\n" << text);
+
+    CHECK(CountOf(text, "# FrameLedger.Overlay build ") == 1u);    // one file, one header, however many flushes
+    CHECK(CountOf(text, "RING_CREATED") == 1u);
+    // Every row that went in says which module and which symbol -- these two read "hook" until now.
+    CHECK(LogHasLine(text, "HOOK_INSTALLED", "amd_fidelityfx_dx12.dll!ffxDispatch", ""));
+    CHECK(LogHasLine(text, "HOOK_INSTALLED", "amd_fidelityfx_dx12.dll!ffxQuery", ""));
+    CHECK(text.find(" hook ") == std::string::npos);
+    // Each type once, however many thousand dispatches carried it.
+    CHECK(CountOf(text, "FFX_DISPATCH") == 3u);
+    CHECK(CountOf(text, "FFX_QUERY") == 1u);
+    CHECK(CountOf(text, "UPSCALE_ROUTE") == 1u);
+    // The census, with the monolith's bit in the word it carries.
+    CHECK(text.find("RUNTIME_CENSUS") != std::string::npos);
+    // And nothing that did not happen.
+    CHECK(text.find(" STOP ") == std::string::npos);
+    CHECK(text.find("STOP_FLUSHED") == std::string::npos);
+    CHECK(text.find("PATCH_FAILED") == std::string::npos);
+    CHECK(text.find("FAULT") == std::string::npos);
+    CHECK(text.find("overwritten before") == std::string::npos);
+}
+
 TEST_CASE("FSR's quality mode (beta.25, D65): the mode the title asked for names the dispatch, by its size and by "
           "its ratio",
           "[guard][inject][shm][ffx]") {

@@ -75,12 +75,16 @@ internal static class OverlayLog
         }
     }
 
-    /// <summary>Faults, the stop, unhook decisions, a missing symbol, supervision loss — never the routine installs.</summary>
+    /// <summary>
+    /// Faults, the stop, unhook decisions, a missing symbol, a patch that did not go in, supervision loss — never the
+    /// routine installs.
+    /// </summary>
     private static bool IsWorthPrinting(string line) =>
         line.StartsWith('+', StringComparison.Ordinal)
         && (line.Contains(" FAULT ", StringComparison.Ordinal)
             || line.Contains(" STOP ", StringComparison.Ordinal)
             || line.Contains(" UNHOOK_", StringComparison.Ordinal)
             || line.Contains(" SYMBOL_MISSING ", StringComparison.Ordinal)
+            || line.Contains(" PATCH_FAILED ", StringComparison.Ordinal)
             || line.Contains(" SUPERVISION_LOST ", StringComparison.Ordinal));
 }

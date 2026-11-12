@@ -50,6 +50,7 @@
 #include <fl_d3d12_vtable.h>
 #include <fl_dxgi_count.h>
 #include <fl_dxgi_vtable.h>
+#include <fl_ffx_types.h>
 #include <fl_hook_inventory.h>
 #include <fl_patch_check.h>
 #include <fl_patch_registry.h>
@@ -134,6 +135,15 @@ void PublishHandshake() noexcept {
 // present path. No allocation anywhere: the ring, the format buffer and the path
 // are static; the one system call that could allocate (SHGetKnownFolderPath)
 // runs on the init/watchdog thread and is freed at once.
+//
+// AND, SINCE 0.1.0-beta.42, BY THE WATCHDOG WHENEVER SOMETHING NEW WAS LOGGED. A
+// game that exits takes the watchdog with it: nothing asks for a flush and no
+// stop runs, so the file held what init wrote and nothing after -- the first
+// half second of a session. Cyberpunk 2077's upscaler read "unknown" (D121) and
+// the log that should have said which hooks went in and what they were handed
+// ended before the game had loaded its upscaler. Events are few and bounded
+// (installs, a handful of first sights, three faults at most), so this is a few
+// appends per session, on the watchdog's own tick.
 // ---------------------------------------------------------------------------
 enum FlLogCode : uint32_t {
     kLogRingCreated = 1,
@@ -149,6 +159,10 @@ enum FlLogCode : uint32_t {
     kLogTolerance,
     kLogStopFlushed,
     kLogPatchFailed,
+    kLogFfxDispatchType,
+    kLogFfxQueryType,
+    kLogUpscaleRoute,
+    kLogRuntimeCensus,
 };
 
 const char* LogCodeName(uint32_t code) noexcept {
@@ -179,18 +193,31 @@ const char* LogCodeName(uint32_t code) noexcept {
         return "STOP_FLUSHED";
     case kLogPatchFailed:
         return "PATCH_FAILED";
+    case kLogFfxDispatchType:
+        return "FFX_DISPATCH";
+    case kLogFfxQueryType:
+        return "FFX_QUERY";
+    case kLogUpscaleRoute:
+        return "UPSCALE_ROUTE";
+    case kLogRuntimeCensus:
+        return "RUNTIME_CENSUS";
     default:
         return "?";
     }
 }
 
+// 72 characters of text since 0.1.0-beta.42 (40 until then): an install line names its module AND its symbol, and
+// "amd_fidelityfx_framegeneration_dx12.dll!ffxDispatch" is 51.
 struct FlLogEvent {
     uint64_t qpc;
     uint32_t code;
     uint32_t a;
     uint64_t b;
-    char     text[40];
+    char     text[72];
 };
+static_assert(sizeof(FlLogEvent) == 96, "the native log's event: 256 of them are static storage in a game's process");
+static_assert(sizeof(fl::inventory::RowName::text) <= sizeof(FlLogEvent::text),
+              "a row's module!symbol name must fit an event's text, or two rows could log the same truncated name");
 
 constexpr uint32_t    kLogCapacity = 256;
 FlLogEvent            g_log[kLogCapacity]{};
@@ -228,7 +255,7 @@ void LogNote(uint32_t code, const char* text, uint32_t a = 0, uint64_t b = 0) no
 
 // Narrow ASCII copy of a module name for the log; anything outside ASCII is '?'.
 void LogNoteW(uint32_t code, const wchar_t* text, uint32_t a = 0, uint64_t b = 0) noexcept {
-    char   narrow[40]{};
+    char   narrow[sizeof(FlLogEvent::text)]{};
     size_t i = 0;
     for (; text != nullptr && i + 1 < sizeof(narrow) && text[i] != L'\0'; ++i) {
         narrow[i] = (text[i] < 128) ? static_cast<char>(text[i]) : '?';
@@ -331,6 +358,14 @@ void FlushLog(bool lastFlush = false) noexcept {
         WriteFile(h, buf, static_cast<DWORD>(used), &written, nullptr);
     }
     CloseHandle(h);
+}
+
+// The watchdog's own flush: only when something was logged since the last one, so an uneventful second costs one
+// load and opens no file. Watchdog thread only -- see FlushLog.
+void FlushLogIfNew() noexcept {
+    if (g_logNext.load(std::memory_order_acquire) != g_logFlushed) {
+        FlushLog();
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -935,7 +970,7 @@ void StopObserving(uint32_t reason) noexcept {
 // cannot reuse InstallRow because its targets come from a VTABLE rather than from a
 // name; the LoadLibrary detour was the third, and until 0.1.0-beta.42 it carried a
 // copy of the sequence with the re-check left out.
-bool PatchTarget(void* target, void* detour, void** original, const char* name = "hook") noexcept {
+bool PatchTarget(void* target, void* detour, void** original, const char* name) noexcept {
     const fl::patch::InstallResult result =
         fl::patch::Install(g_patches, g_observing, MinHookEngine{}, target, detour, original, name);
     if (result == fl::patch::InstallResult::Installed) {
@@ -1878,6 +1913,14 @@ void NoteFfxExtent(const FfxApiDimensions2D& size) noexcept {
     NoteFfxExtent(size.width, size.height);
 }
 
+// Which descriptor types each hooked ffx-api module was handed, per entry point, for the native log (fl_ffx_types.h;
+// D121). The detours keep a type the first time it is seen; the watchdog writes it. A diagnostic: nothing here reaches
+// a record or the shared memory.
+fl::ffxtypes::Seen     g_ffxDispatchTypes[fl::inventory::kFfxLeafCount];
+fl::ffxtypes::Seen     g_ffxQueryTypes[fl::inventory::kFfxLeafCount];
+fl::ffxtypes::Reported g_ffxDispatchTypesLogged[fl::inventory::kFfxLeafCount];    // watchdog only
+fl::ffxtypes::Reported g_ffxQueryTypesLogged[fl::inventory::kFfxLeafCount];       // watchdog only
+
 // The answer one query returned, kept for the dispatch arm. Read only after the vendor answered OK; a mode, a size or a
 // ratio the byte or the match cannot carry is not kept.
 void ObserveFfxQuery(uint32_t leaf, const ffxQueryDescHeader* desc) noexcept {
@@ -1962,6 +2005,7 @@ void ObserveFfxDispatch(uint32_t leaf, const ffxDispatchDescHeader* desc) noexce
     if (desc == nullptr) {
         return;
     }
+    fl::ffxtypes::Note(g_ffxDispatchTypes[leaf], desc->type);
     switch (desc->type) {
     case FFX_API_DISPATCH_DESC_TYPE_UPSCALE: {
         const auto* up = reinterpret_cast<const ffxDispatchDescUpscale*>(desc);
@@ -2065,8 +2109,14 @@ ffxReturnCode_t Hook_FfxQueryT(ffxContext* context, ffxQueryDescHeader* desc) {
     static_assert(Leaf < fl::inventory::kFfxLeafCount, "a trampoline per leaf, and no more");
     const ffxReturnCode_t rc = g_origFfxQuery[Leaf](context, desc);
     FL_HOOK_GUARD({
-        if (rc == FFX_API_RETURN_OK && MayObserve()) {
-            ObserveFfxQuery(Leaf, desc);
+        if (MayObserve()) {
+            // The type is kept whatever the vendor answered: a query that was refused is still a query that was made.
+            if (desc != nullptr) {
+                fl::ffxtypes::Note(g_ffxQueryTypes[Leaf], desc->type);
+            }
+            if (rc == FFX_API_RETURN_OK) {
+                ObserveFfxQuery(Leaf, desc);
+            }
         }
     })
     return rc;
@@ -2220,6 +2270,8 @@ void PublishHookFamily(uint32_t family, std::atomic<uint32_t>& live) noexcept {
 // upscaler runtime in this process" -- which is not the same question as "did the
 // title generate frames", and fl_shm.h spends a section on why it must not be
 // read as one.
+uint32_t g_runtimeCensusLogged = 0;    // watchdog only
+
 void PublishRuntimeCensus() noexcept {
     if (g_state == nullptr) {
         return;
@@ -2227,6 +2279,42 @@ void PublishRuntimeCensus() noexcept {
     const uint32_t            seen = fl::inventory::ObserveRuntimeModules();
     std::atomic_ref<uint32_t> census{g_state->runtimeCensus};
     census.fetch_or(seen, std::memory_order_relaxed);
+    // The same word in the log whenever it gains a bit (0.1.0-beta.42): `b` is the whole census so far, so the last
+    // such line of a session's log is the census the session ended with, and the time of each line is when a
+    // runtime appeared.
+    if ((seen & ~g_runtimeCensusLogged) != 0u) {
+        g_runtimeCensusLogged |= seen;
+        LogNote(kLogRuntimeCensus, "FlRuntimeCensus bits (fl_shm.h)", 0u, g_runtimeCensusLogged);
+    }
+}
+
+// The diagnostics the watchdog writes from what the detours kept (0.1.0-beta.42, D121): each descriptor type a hooked
+// ffx-api module was handed, once -- FFX_DISPATCH / FFX_QUERY, the module, b = the type; a = More bits and b = 0 for
+// what did not fit -- and each source an UPSCALE came from, once. Watchdog only; nothing here is on a hook path.
+uint32_t g_upscaleRoutesLogged = 0;
+
+void LogFfxObservations() noexcept {
+    for (uint32_t leaf = 0; leaf < fl::inventory::kFfxLeafCount; ++leaf) {
+        const wchar_t* moduleName = fl::inventory::kFfxLeafModules[leaf];
+        fl::ffxtypes::ReportNew(
+            g_ffxDispatchTypes[leaf], g_ffxDispatchTypesLogged[leaf],
+            [moduleName](uint64_t type) noexcept { LogNoteW(kLogFfxDispatchType, moduleName, 0u, type); },
+            [moduleName](uint32_t more) noexcept { LogNoteW(kLogFfxDispatchType, moduleName, more, 0u); });
+        fl::ffxtypes::ReportNew(
+            g_ffxQueryTypes[leaf], g_ffxQueryTypesLogged[leaf],
+            [moduleName](uint64_t type) noexcept { LogNoteW(kLogFfxQueryType, moduleName, 0u, type); },
+            [moduleName](uint32_t more) noexcept { LogNoteW(kLogFfxQueryType, moduleName, more, 0u); });
+    }
+    // g_ffxUpscaleLeaf: leaf + 1 for an ffx-api leaf, kFfxUpscaleSourceFsr3Host for the 3.0 host's own export, 0 for
+    // none yet. The host has no descriptor type, so this is the only line that says its export was called.
+    const uint32_t route = g_ffxUpscaleLeaf.load(std::memory_order_relaxed);
+    if (route != 0u && route <= kFfxUpscaleSourceFsr3Host && (g_upscaleRoutesLogged & (1u << route)) == 0u) {
+        g_upscaleRoutesLogged |= 1u << route;
+        LogNoteW(kLogUpscaleRoute,
+                 route == kFfxUpscaleSourceFsr3Host ? fl::inventory::kModuleFfxFsr3Host
+                                                    : fl::inventory::kFfxLeafModules[route - 1u],
+                 route);
+    }
 }
 
 // The tag census, on the same tick and by the same rule: OR-only, from the
@@ -2278,7 +2366,7 @@ void        NoteSymbolMissingOnce(const wchar_t* moduleName, const char* symbol)
 }
 
 bool InstallRow(const wchar_t* moduleName, const char* symbol, uint32_t family, void* detour, void** original,
-                std::atomic<uint32_t>& live) noexcept {
+                std::atomic<uint32_t>& live, const char* name) noexcept {
     if (live.load(std::memory_order_acquire) != 0) {
         return true;
     }
@@ -2292,7 +2380,7 @@ bool InstallRow(const wchar_t* moduleName, const char* symbol, uint32_t family, 
         return false;
     }
 
-    if (!PatchTarget(target, detour, original, symbol)) {
+    if (!PatchTarget(target, detour, original, name)) {
         return false;
     }
 
@@ -2306,14 +2394,17 @@ bool InstallRow(const wchar_t* moduleName, const char* symbol, uint32_t family, 
 // is the safe direction: an unbound row is a table entry somebody added without
 // writing its hook, and hooking it with a neighbour's body is exactly what this
 // function exists to stop.
-bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t family) noexcept {
+//
+// `name` is the row's "module!symbol", for the log (0.1.0-beta.42): until then the two one-target rows logged their
+// symbol and every other row logged the word "hook", so a log could not say WHICH of four ffx modules was patched.
+bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t family, const char* name) noexcept {
     // EQUALITY AGAINST THE COMPOUND CONSTANT, not `& FL_HOOK_UPSCALER_IDENTITY`. A
     // bit test would bind any future row that happens to include identity to THIS
     // detour -- which is the neighbour's-body defect this function exists to stop,
     // and it would arrive silently because the row would still install.
     if (family == fl::inventory::kFamilyEvaluateFeature) {
         return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlEvaluateFeature),
-                          reinterpret_cast<void**>(&g_origSlEvaluateFeature), g_upscalerIdentityLive);
+                          reinterpret_cast<void**>(&g_origSlEvaluateFeature), g_upscalerIdentityLive, name);
     }
     if (family == static_cast<uint32_t>(fl::FL_HOOK_UPSCALER_PARAMS)) {
         // TWO ROWS IN THIS FAMILY WITH DIFFERENT SIGNATURES, so the family alone would
@@ -2338,7 +2429,7 @@ bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t fam
             frameRow ? reinterpret_cast<void*>(&Hook_SlSetTagForFrame) : reinterpret_cast<void*>(&Hook_SlSetTag);
         void** original =
             frameRow ? reinterpret_cast<void**>(&g_origSlSetTagForFrame) : reinterpret_cast<void**>(&g_origSlSetTag);
-        if (!PatchTarget(target, detour, original)) {
+        if (!PatchTarget(target, detour, original, name)) {
             return false;
         }
         patched.store(1, std::memory_order_release);
@@ -2346,7 +2437,7 @@ bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t fam
     }
     if (family == static_cast<uint32_t>(fl::FL_HOOK_FG_EVALUATIONS)) {
         return InstallRow(moduleName, symbol, family, reinterpret_cast<void*>(&Hook_SlGetNewFrameToken),
-                          reinterpret_cast<void**>(&g_origSlGetNewFrameToken), g_frameTokensLive);
+                          reinterpret_cast<void**>(&g_origSlGetNewFrameToken), g_frameTokensLive, name);
     }
     if (family == fl::inventory::kFamilyFfxDispatch) {
         // FOUR ROWS, ONE ARM: the row's MODULE picks the trampoline and the latch slot,
@@ -2379,7 +2470,7 @@ bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t fam
                 return false;    // not loaded, or a module of the name that does not speak the 3.0 host ABI
             }
             if (!PatchTarget(target, reinterpret_cast<void*>(&Hook_FfxFsr3ContextDispatchUpscale),
-                             reinterpret_cast<void**>(&g_origFfxFsr3DispatchUpscale))) {
+                             reinterpret_cast<void**>(&g_origFfxFsr3DispatchUpscale), name)) {
                 return false;
             }
             g_fsr3HostPatched.store(1, std::memory_order_release);
@@ -2393,7 +2484,7 @@ bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t fam
         if (target == nullptr) {
             return false;    // not loaded, or a module of the name that does not speak ffx-api
         }
-        if (!PatchTarget(target, FfxDispatchDetour(slot), reinterpret_cast<void**>(&g_origFfxDispatch[slot]))) {
+        if (!PatchTarget(target, FfxDispatchDetour(slot), reinterpret_cast<void**>(&g_origFfxDispatch[slot]), name)) {
             return false;
         }
         g_ffxPatched[slot].store(1, std::memory_order_release);
@@ -2414,7 +2505,7 @@ bool InstallByFamily(const wchar_t* moduleName, const char* symbol, uint32_t fam
         if (target == nullptr) {
             return false;    // not loaded, or a module of the name that does not speak ffx-api
         }
-        if (!PatchTarget(target, FfxQueryDetour(slot), reinterpret_cast<void**>(&g_origFfxQuery[slot]))) {
+        if (!PatchTarget(target, FfxQueryDetour(slot), reinterpret_cast<void**>(&g_origFfxQuery[slot]), name)) {
             return false;
         }
         g_ffxQueryPatched[slot].store(1, std::memory_order_release);
@@ -2514,7 +2605,11 @@ void PublishParamsFamilyIfWhole() noexcept {
 
 bool InstallUpscalerHooks() noexcept {
     bool any = false;
-#define FL_INSTALL_ROW(mod, sym, family) any = InstallByFamily(mod, sym, static_cast<uint32_t>(family)) || any;
+#define FL_INSTALL_ROW(mod, sym, family)                                                                               \
+    {                                                                                                                  \
+        static constexpr fl::inventory::RowName kRowName = fl::inventory::NameOfRow(mod, sym);                         \
+        any = InstallByFamily(mod, sym, static_cast<uint32_t>(family), kRowName.text) || any;                          \
+    }
     FL_HOOK_INVENTORY(FL_INSTALL_ROW)
 #undef FL_INSTALL_ROW
     PublishParamsFamilyIfWhole();
@@ -2649,13 +2744,15 @@ bool InstallRtHooks() noexcept {
 
         if (dispatchAgrees && g_rtDispatchLive.load(std::memory_order_acquire) == 0 &&
             PatchTarget(directVtbl[fl::d3d12::kDispatchRaysIndex], reinterpret_cast<void*>(&Hook_DispatchRays),
-                        reinterpret_cast<void**>(&g_origDispatchRays))) {
+                        reinterpret_cast<void**>(&g_origDispatchRays),
+                        "d3d12!ID3D12GraphicsCommandList4::DispatchRays")) {
             PublishHookFamily(static_cast<uint32_t>(fl::FL_HOOK_RT_DISPATCH), g_rtDispatchLive);
             installed = true;
         }
         if (buildAgrees && g_rtAsBuildLive.load(std::memory_order_acquire) == 0 &&
             PatchTarget(directVtbl[fl::d3d12::kBuildRaytracingAccelerationStructureIndex],
-                        reinterpret_cast<void*>(&Hook_BuildRtAs), reinterpret_cast<void**>(&g_origBuildRtAs))) {
+                        reinterpret_cast<void*>(&Hook_BuildRtAs), reinterpret_cast<void**>(&g_origBuildRtAs),
+                        "d3d12!ID3D12GraphicsCommandList4::BuildRaytracingAccelerationStructure")) {
             PublishHookFamily(static_cast<uint32_t>(fl::FL_HOOK_RT_AS_BUILD), g_rtAsBuildLive);
             installed = true;
         }
@@ -2778,6 +2875,11 @@ DWORD WatchdogLoop() noexcept {
         PublishSlTagCensus();
         PublishDxgiPresentCounters();
         PublishLoaderWords();
+
+        // What the detours kept for the log, then the log itself when this tick -- or a fault in a hook since the
+        // last one -- added to it. BEFORE the supervision check: its healthy branch continues the loop.
+        LogFfxObservations();
+        FlushLogIfNew();
 
         // Supervision loss. guardTicks counts COMPLETED guard evaluations, not
         // seconds, so a stalled guard loop stops it advancing even while the
@@ -3743,6 +3845,14 @@ DWORD WINAPI InitThread(LPVOID) noexcept {
     // fatal: the present-path checks still work, and an Overlay that reacts only
     // while the game presents is strictly better than none. It is recorded in the
     // fault counter so the Agent can see it rather than inferring it.
+    //
+    // The first flush: init is over, on the init thread, never mid-frame. The
+    // file therefore exists from the start of the session, which is what makes a
+    // crash mid-session diagnosable at all (10_LOGGING). BEFORE THE WATCHDOG
+    // EXISTS since 0.1.0-beta.42: FlushLog's state belongs to one thread at a
+    // time, and the watchdog now flushes on its own first tick -- placed after
+    // CreateThread, as it was, this flush could run beside that one.
+    FlushLog();
     HANDLE watchdog = CreateThread(nullptr, 0, WatchdogThread, nullptr, 0, nullptr);
     if (watchdog == nullptr) {
         std::atomic_ref<uint32_t> faults{g_state->faultCount};
@@ -3750,10 +3860,6 @@ DWORD WINAPI InitThread(LPVOID) noexcept {
     } else {
         CloseHandle(watchdog);    // fire and forget; it exits on its own once stopped
     }
-    // The first flush: init is over, on the init thread, never mid-frame. The
-    // file therefore exists from the start of the session, which is what makes a
-    // crash mid-session diagnosable at all (10_LOGGING).
-    FlushLog();
     return 0;
 }
 

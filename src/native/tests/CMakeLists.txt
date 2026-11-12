@@ -178,6 +178,15 @@ target_compile_options(fl_unhook_inline_test PRIVATE /EHsc)
 target_compile_definitions(fl_unhook_inline_test PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
 add_test(NAME fl_unhook_inline COMMAND fl_unhook_inline_test)
 
+# fl_ffx_types.h (0.1.0-beta.42, D121): the descriptor types an ffx-api module was handed, kept by the detours for
+# the native log. The header the Overlay compiles, driven without the Overlay -- including from eight threads.
+add_executable(fl_ffx_types_test ffx_types_test.cpp)
+target_include_directories(fl_ffx_types_test PRIVATE "${CMAKE_SOURCE_DIR}/FrameLedger.Overlay/include")
+target_link_libraries(fl_ffx_types_test PRIVATE fl_native_flags Catch2::Catch2WithMain)
+target_compile_options(fl_ffx_types_test PRIVATE /EHsc)
+target_compile_definitions(fl_ffx_types_test PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
+add_test(NAME fl_ffx_types COMMAND fl_ffx_types_test)
+
 add_test(NAME fl_vklayer COMMAND fl_vklayer_test "[vklayer]")
 add_test(NAME fl_vklayer_supervision COMMAND fl_vklayer_test "[vklayer-deadline]")
 # The real-loader leg SKIPS (Catch2 exit 4) where there is no Vulkan loader or no

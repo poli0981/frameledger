@@ -383,6 +383,52 @@ inline constexpr uint32_t kRowCount = 0u FL_HOOK_INVENTORY(FL_COUNT_ROW);
 #undef FL_COUNT_ROW
 static_assert(kRowCount == 13u, "a row was added or removed: say so here, and in 17_HOOK_ENGINE §Hook inventory");
 
+// A row's "module!symbol", for the native log, built at compile time from the row's own two spellings -- so an
+// install line names the module it patched, and no second list of names exists to drift from the table
+// (0.1.0-beta.42). The module names are ASCII by the table's own spelling; the assert below keeps every row inside
+// the text, so no two rows can log the same truncated name.
+struct RowName {
+    char text[72]{};
+};
+constexpr RowName NameOfRow(const wchar_t* moduleName, const char* symbol) noexcept {
+    RowName name{};
+    size_t  i = 0;
+    for (; *moduleName != L'\0' && i + 1 < sizeof(name.text); ++moduleName) {
+        name.text[i++] = static_cast<char>(*moduleName);
+    }
+    if (i + 1 < sizeof(name.text)) {
+        name.text[i++] = '!';
+    }
+    for (; *symbol != '\0' && i + 1 < sizeof(name.text); ++symbol) {
+        name.text[i++] = *symbol;
+    }
+    return name;
+}
+constexpr size_t LengthW(const wchar_t* text) noexcept {
+    size_t n = 0;
+    while (text[n] != L'\0') {
+        ++n;
+    }
+    return n;
+}
+constexpr size_t LengthA(const char* text) noexcept {
+    size_t n = 0;
+    while (text[n] != '\0') {
+        ++n;
+    }
+    return n;
+}
+constexpr bool EveryRowNameFits() noexcept {
+#define FL_ROW_NAME_FITS(mod, sym, family)                                                                             \
+    if (LengthW(mod) + 1 + LengthA(sym) + 1 > sizeof(RowName::text)) {                                                 \
+        return false;                                                                                                  \
+    }
+    FL_HOOK_INVENTORY(FL_ROW_NAME_FITS)
+#undef FL_ROW_NAME_FITS
+    return true;
+}
+static_assert(EveryRowNameFits(), "a row's module!symbol does not fit RowName::text -- widen it, and the log event's");
+
 // The FSR 3.0 host module and the one symbol dllmain's ffx arm keys on for it. Named
 // constants HERE, for the reason kModuleSlInterposer gives below, and bound to the
 // table so the row and the arm cannot drift apart.
