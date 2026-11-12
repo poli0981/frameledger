@@ -116,6 +116,9 @@
 //                    sl::DLSSOptions into slEvaluateFeature's inputs, --hold-presenting-ffx fills the rest of the
 //                    UPSCALE descriptor (sharpening, jitter, exposure, depth range, field of view, flags, frame time).
 //                    The values are the kAdv* constants below; the injected fl_guard cases assert them
+//   --ffx-infinite-far
+//                    with --advanced: the UPSCALE descriptor's cameraFar is FLT_MAX, as an engine with an infinite
+//                    depth states the plane at infinity (0.1.0-beta.42, D119), instead of kAdvFfxFar
 //   --ffx-memory-query v1|v2
 //                    before every UPSCALE, ask the entry module ffxQuery how much memory the upscaler holds, in
 //                    the descriptor of ffx-api 1.1.2 (v1) or 2.0 (v2); the stub answers kAdvMemory*
@@ -2159,6 +2162,60 @@ bool ProbeAdvFields() {
         Check(off.ffxFlagsSeen.load() == 0u && off.ffxResets.load() == 0u, "nothing is invented");
     }
 
+    // --- FSR's plane at infinity (0.1.0-beta.42, owner decision D119)
+    // -------------------------------------------------
+    {
+        const float flatMax = std::bit_cast<float>(0x7F7FFFFFu);
+        const float plusInf = std::bit_cast<float>(0x7F800000u);
+        Check(fl::adv::FfxDepthPlaneBits(0.1f) == bitsOf(0.1f) && fl::adv::FfxDepthPlaneBits(0.0f) == bitsOf(0.0f),
+              "an ordinary plane is its own bits");
+        Check(fl::adv::FfxDepthPlaneBits(flatMax) == FL_ADV_FLOAT_INFINITE &&
+                  fl::adv::FfxDepthPlaneBits(plusInf) == FL_ADV_FLOAT_INFINITE,
+              "FLT_MAX and +infinity are the plane at infinity");
+        Check(fl::adv::FfxDepthPlaneBits(std::bit_cast<float>(0x7FC00000u)) == FL_ADV_FLOAT_NONE &&
+                  fl::adv::FfxDepthPlaneBits(std::bit_cast<float>(0xFF800000u)) == FL_ADV_FLOAT_NONE &&
+                  fl::adv::FfxDepthPlaneBits(std::bit_cast<float>(0xFF7FFFFFu)) == FL_ADV_FLOAT_NONE,
+              "a NaN, a negative infinity and -FLT_MAX are no plane");
+        Check(std::bit_cast<float>(static_cast<uint32_t>(FL_ADV_FLOAT_INFINITE)) > flatMax,
+              "the stored pattern IS +infinity, so a reader that never heard of it still reads a float that means it");
+
+        // Lies of P's shape: an inverted, infinite depth -- the far plane a small number, the near one FLT_MAX.
+        fl::adv::Accumulators  a;
+        ffxDispatchDescUpscale d{};
+        d.cameraNear = flatMax;
+        d.cameraFar = 10.0f;
+        fl::adv::ObserveFfxUpscale(0u, d, a);
+        Check(a.ffxNearBits.load() == FL_ADV_FLOAT_INFINITE && a.ffxFarBits.load() == bitsOf(10.0f),
+              "the plane at infinity is kept beside the finite one -- it used to be dropped");
+        // ...and the other way round, as +infinity; then a NaN changes nothing that was kept.
+        d.cameraNear = 0.05f;
+        d.cameraFar = plusInf;
+        fl::adv::ObserveFfxUpscale(0u, d, a);
+        Check(a.ffxNearBits.load() == bitsOf(0.05f) && a.ffxFarBits.load() == FL_ADV_FLOAT_INFINITE,
+              "either plane may be the infinite one, and the last value of each is what is kept");
+        d.cameraNear = std::bit_cast<float>(0x7FC00000u);
+        d.cameraFar = std::bit_cast<float>(0xFF800000u);
+        fl::adv::ObserveFfxUpscale(0u, d, a);
+        Check(a.ffxNearBits.load() == bitsOf(0.05f) && a.ffxFarBits.load() == FL_ADV_FLOAT_INFINITE,
+              "a plane that is no plane leaves the last one in place");
+
+        // THE STREAMLINE ROUTE IS UNCHANGED: there FLT_MAX is INVALID_FLOAT, nobody's value.
+        fl::adv::Accumulators s;
+        sl::DLSSOptions       o;
+        o.preExposure = sl::INVALID_FLOAT;
+        o.exposureScale = plusInf;
+        fl::adv::ObserveDlssOptions(o, s);
+        Check(s.dlssPreExposureBits.load() == FL_ADV_FLOAT_NONE && s.dlssExposureScaleBits.load() == FL_ADV_FLOAT_NONE,
+              "for Streamline FLT_MAX stays 'not set' and an infinity stays no value: the rule is the ffx route's");
+        d.preExposure = flatMax;
+        d.cameraFovAngleVertical = plusInf;
+        fl::adv::Accumulators other;
+        fl::adv::ObserveFfxUpscale(0u, d, other);
+        Check(other.ffxPreExposureMaxBits.load() == FL_ADV_FLOAT_NONE &&
+                  other.ffxFovMaxBits.load() == FL_ADV_FLOAT_NONE,
+              "an exposure or a field of view of FLT_MAX or infinity is still no value");
+    }
+
     // --- the ffx upscaler's memory, both query versions
     // ------------------------------------------------------------------
     {
@@ -3021,6 +3078,9 @@ void AskQuality(PfnFfxQuery query, FfxQuery what) {
     }
 }
 
+// --ffx-infinite-far (with --advanced): cameraFar is FLT_MAX rather than kAdvFfxFar.
+bool g_ffxInfiniteFar = false;
+
 int HoldPresentingFfx(Gfx& g, int seconds, bool real, int presentsPerEval, FfxTopology topology, bool prepare,
                       FfxQuery ask, bool advanced, FfxMemoryQuery askMemory) {
     if (!HaveD3D11(g, "--hold-presenting-ffx")) {
@@ -3143,7 +3203,8 @@ int HoldPresentingFfx(Gfx& g, int seconds, bool real, int presentsPerEval, FfxTo
         up.sharpness = kAdvFfxSharpness;
         up.preExposure = kAdvFfxPreExposure;
         up.cameraNear = kAdvFfxNear;
-        up.cameraFar = kAdvFfxFar;
+        // --ffx-infinite-far: the plane at infinity as an engine with an infinite depth states it (D119).
+        up.cameraFar = g_ffxInfiniteFar ? std::bit_cast<float>(0x7F7FFFFFu) : kAdvFfxFar;
         up.frameTimeDelta = kAdvFfxFrameTimeMs;
         up.flags = FFX_UPSCALE_FLAG_NON_LINEAR_COLOR_PQ;
     }
@@ -3418,6 +3479,8 @@ int main(int argc, char** argv) {
             ffxQuery = std::strcmp(q, "sizes") == 0    ? FfxQuery::Sizes
                        : std::strcmp(q, "ratios") == 0 ? FfxQuery::Ratios
                                                        : FfxQuery::None;
+        } else if (std::strcmp(argv[i], "--ffx-infinite-far") == 0) {
+            g_ffxInfiniteFar = true;
         } else if (std::strcmp(argv[i], "--advanced") == 0) {
             advancedInputs = true;
         } else if (std::strcmp(argv[i], "--ffx-memory-query") == 0 && i + 1 < argc) {
@@ -3464,7 +3527,7 @@ int main(int argc, char** argv) {
             std::strcmp(argv[i], "--ffx-topology") == 0 || std::strcmp(argv[i], "--ffx-no-prepare") == 0 ||
             std::strcmp(argv[i], "--ffx-query") == 0 || std::strcmp(argv[i], "--sl-tag-for-frame") == 0 ||
             std::strcmp(argv[i], "--advanced") == 0 || std::strcmp(argv[i], "--ffx-memory-query") == 0 ||
-            std::strcmp(argv[i], "--sl-tag-whole-resource") == 0 ||
+            std::strcmp(argv[i], "--ffx-infinite-far") == 0 || std::strcmp(argv[i], "--sl-tag-whole-resource") == 0 ||
             std::strcmp(argv[i], "--sl-tag-dlssg-inputs") == 0 || std::strcmp(argv[i], "--load") == 0 ||
             std::strcmp(argv[i], "--load-after-ms") == 0) {
             if (std::strcmp(argv[i], "--plus-ui") == 0 || std::strcmp(argv[i], "--present-interval-ms") == 0 ||

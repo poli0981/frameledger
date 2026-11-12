@@ -932,18 +932,30 @@ struct alignas(64) FlDisplayState {
 
 // FlAdvancedState.validMask: which groups below were ever read. Additive: a reader ignores a bit it does not know.
 enum FlAdvancedValid : uint32_t {
-    FL_ADV_VALID_DLSS_OPTIONS = 1u << 0,     // sl::DLSSOptions seen chained into slEvaluateFeature's inputs
-    FL_ADV_VALID_FFX_UPSCALE = 1u << 1,      // an ffx upscale dispatch's extra fields were read
-    FL_ADV_VALID_FFX_MEMORY = 1u << 2,       // the game asked ffxQuery for the upscaler's memory, and it answered
-    FL_ADV_VALID_FFX_FG_CONFIG = 1u << 3,    // (0.1.0-beta.41) ffxConfigure with a frame-generation descriptor seen
-    FL_ADV_VALID_SL_CONSTANTS = 1u << 4,     // (0.1.0-beta.41) slSetConstants seen
-    FL_ADV_VALID_SL_FEATURES = 1u << 5,      // (0.1.0-beta.42) at least one feature slot filled
+    FL_ADV_VALID_DLSS_OPTIONS = 1u << 0,    // sl::DLSSOptions seen chained into slEvaluateFeature's inputs
+    FL_ADV_VALID_FFX_UPSCALE = 1u << 1,     // an ffx upscale dispatch's extra fields were read
+    FL_ADV_VALID_FFX_MEMORY = 1u << 2,      // the game asked ffxQuery for the upscaler's memory, and it answered
+    // The release numbers on the three groups below moved twice (owner decisions D118 and D122, 2026-11-12): beta.41
+    // was a fix release and the second step became two. They are declared here and written by nothing until then.
+    FL_ADV_VALID_FFX_FG_CONFIG = 1u << 3,    // (0.1.0-beta.43) ffxConfigure with a frame-generation descriptor seen
+    FL_ADV_VALID_SL_CONSTANTS = 1u << 4,     // (0.1.0-beta.43) slSetConstants seen
+    FL_ADV_VALID_SL_FEATURES = 1u << 5,      // (0.1.0-beta.44) at least one feature slot filled
 };
 
-// A float nobody saw. An all-ones pattern is a NaN no detour stores: every value is checked finite first.
+// A float nobody saw. An all-ones pattern is a NaN no detour stores: every value is checked finite first -- with the
+// one exception below.
 #define FL_ADV_FLOAT_NONE 0xFFFFFFFFu
 
-// Feature slots (0.1.0-beta.42): FL_ADV_FEATURE_SLOTS slots of FL_ADV_FEATURE_WORDS uint32 each, in `features`.
+// THE PLANE AT INFINITY (0.1.0-beta.42, owner decision D119): +infinity's own bits, in ffxNearBits or ffxFarBits and
+// in no other field. An engine with an inverted, infinite depth hands FSR one finite plane and FLT_MAX -- or
+// +infinity -- for the other; three of the first four FSR titles read gave `cameraFar` alone (10, 1, 0.1), the other
+// plane having been refused as "nobody set this". For FSR that reading is wrong: its FLT_MAX is a plane, not a
+// sentinel. For Streamline it is right -- INVALID_FLOAT is FLT_MAX -- so this is the ffx route's alone. Stored as
+// the real +infinity rather than as a second all-ones-like pattern, so that a reader which knows nothing of this
+// constant still decodes a float that means what it says.
+#define FL_ADV_FLOAT_INFINITE 0x7F800000u
+
+// Feature slots (0.1.0-beta.44): FL_ADV_FEATURE_SLOTS slots of FL_ADV_FEATURE_WORDS uint32 each, in `features`.
 //   [0]      sl::Feature id PLUS ONE; 0 = an empty slot
 //   [1]      bit 0: slGetFeatureVersion answered; bit 1: slGetFeatureRequirements answered
 //   [2..4]   versionSL  major, minor, build        [5..7]   versionNGX
@@ -988,7 +1000,7 @@ struct alignas(64) FlAdvancedState {
     uint32_t ffxJitterMaxYBits;        // @148
     uint32_t ffxPreExposureMinBits;    // @152
     uint32_t ffxPreExposureMaxBits;    // @156
-    uint32_t ffxNearBits;              // @160  cameraNear, the last one seen
+    uint32_t ffxNearBits;              // @160  cameraNear, the last one seen; FL_ADV_FLOAT_INFINITE = at infinity
     uint32_t ffxFarBits;               // @164
     uint32_t ffxFovMinBits;            // @168  cameraFovAngleVertical, radians: the lowest and the highest (D114)
     uint32_t ffxFovMaxBits;            // @172
@@ -1001,15 +1013,15 @@ struct alignas(64) FlAdvancedState {
     uint64_t ffxMemoryTotalBytes;        // @192  FfxApiEffectMemoryUsage, as the last answered query gave it
     uint64_t ffxMemoryAliasableBytes;    // @200
     uint32_t ffxMemoryQueries;           // @208  answered memory queries (wraps)
-    uint32_t ffxFgConfigures;            // @212  (beta.41) ffxConfigure calls with a frame-generation descriptor
-    uint32_t ffxFgEnabledSeen;           // @216  (beta.41) bit 0: seen off; bit 1: seen on
-    uint32_t ffxFgAsyncSeen;             // @220  (beta.41) allowAsyncWorkloads, the same two bits
-    uint32_t ffxFgOnlyGeneratedSeen;     // @224  (beta.41) onlyPresentGenerated, the same two bits
-    uint32_t ffxFgFlagsSeen;             // @228  (beta.41) every dispatch flag any configure carried
-    int32_t  ffxFgRect[4];               // @232..247  (beta.41) generationRect: left, top, width, height - the last
+    uint32_t ffxFgConfigures;            // @212  (beta.43) ffxConfigure calls with a frame-generation descriptor
+    uint32_t ffxFgEnabledSeen;           // @216  (beta.43) bit 0: seen off; bit 1: seen on
+    uint32_t ffxFgAsyncSeen;             // @220  (beta.43) allowAsyncWorkloads, the same two bits
+    uint32_t ffxFgOnlyGeneratedSeen;     // @224  (beta.43) onlyPresentGenerated, the same two bits
+    uint32_t ffxFgFlagsSeen;             // @228  (beta.43) every dispatch flag any configure carried
+    int32_t  ffxFgRect[4];               // @232..247  (beta.43) generationRect: left, top, width, height - the last
     uint32_t reservedFfx[2];             // @248..255  must be zero
 
-    // ---- line 4: sl::Constants, summarised (beta.41) - never the camera's position, axes or matrices -----------
+    // ---- line 4: sl::Constants, summarised (beta.43) - never the camera's position, axes or matrices -----------
     uint32_t slConstantsCalls;    // @256  slSetConstants calls, every viewport together (wraps)
     uint32_t slResets;            // @260  calls with `reset` true
     uint32_t slJitterMaxXBits;    // @264
@@ -1027,7 +1039,7 @@ struct alignas(64) FlAdvancedState {
     uint32_t slFlagsSeenFalse;    // @304
     uint32_t reservedSl[3];       // @308..319  must be zero
 
-    // ---- lines 5..22: Streamline's features (beta.42) --------------------------------------------------------------
+    // ---- lines 5..22: Streamline's features (beta.44) --------------------------------------------------------------
     uint32_t features[FL_ADV_FEATURE_SLOTS * FL_ADV_FEATURE_WORDS];    // @320..1471
 };
 

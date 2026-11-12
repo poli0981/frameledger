@@ -755,13 +755,13 @@ public enum FlAdvancedValid : uint
     /// <summary>The game asked <c>ffxQuery</c> for the upscaler's memory, and it answered.</summary>
     FfxMemory = 1u << 2,
 
-    /// <summary>0.1.0-beta.41: <c>ffxConfigure</c> with a frame-generation descriptor was seen.</summary>
+    /// <summary>0.1.0-beta.43 (D118, D122): <c>ffxConfigure</c> with a frame-generation descriptor was seen.</summary>
     FfxFgConfig = 1u << 3,
 
-    /// <summary>0.1.0-beta.41: <c>slSetConstants</c> was seen.</summary>
+    /// <summary>0.1.0-beta.43 (D118, D122): <c>slSetConstants</c> was seen.</summary>
     SlConstants = 1u << 4,
 
-    /// <summary>0.1.0-beta.42: at least one feature slot is filled.</summary>
+    /// <summary>0.1.0-beta.44 (D118, D122): at least one feature slot is filled.</summary>
     SlFeatures = 1u << 5,
 }
 
@@ -787,6 +787,14 @@ public unsafe struct FlAdvancedState
 {
     /// <summary>A float nobody saw: the bits no detour stores.</summary>
     public const uint FloatNone = 0xFFFFFFFFu;
+
+    /// <summary>
+    /// The plane at infinity (0.1.0-beta.42, owner decision D119): +infinity's own bits, in <see cref="FfxNearBits"/>
+    /// or <see cref="FfxFarBits"/> and in no other field. An engine with an infinite depth hands FSR
+    /// <c>FLT_MAX</c> or +infinity for one plane; the Overlay stores either as this. Never from Streamline, whose
+    /// <c>FLT_MAX</c> is "not set".
+    /// </summary>
+    public const uint FloatInfinite = 0x7F800000u;
 
     /// <summary>How many feature slots <see cref="Features"/> holds.</summary>
     public const int FeatureSlots = 12;
@@ -942,7 +950,7 @@ public unsafe struct FlAdvancedState
     /// <summary>Must be zero.</summary>
     public fixed uint ReservedSl[3];
 
-    /// <summary><see cref="FeatureSlots"/> slots of <see cref="FeatureWords"/> words each (0.1.0-beta.42).</summary>
+    /// <summary><see cref="FeatureSlots"/> slots of <see cref="FeatureWords"/> words each (0.1.0-beta.44).</summary>
     public fixed uint Features[FeatureSlots * FeatureWords];
 }
 
