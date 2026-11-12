@@ -160,6 +160,32 @@ line.
 - **Dying Light was named FSR, Quality, with DLSS frame generation ×3.99** — its settings as the owner gave them.
   No session changed upscaler part-way, so D120's case was not exercised.
 
+### And three more starts of Cyberpunk 2077, 10:05–10:15 the same morning
+
+Asked for as "Resolution Scaling = FSR 3, frame generation off". Read the same way.
+
+- **The game was still on FSR 2.** After the last of them `UserSettings.json` has `ResolutionScaling = FSR2`,
+  `FSR2 = Performance` (it was `Quality` at 09:50), `FSR3 = Auto` untouched, `FrameGeneration = Off`. So the quality
+  and the frame generation were changed and the upscaler was not — or the menu's name for what the file calls
+  `FSR2` is not what either of us took it to be; **the owner reads the exact label in the game's menu**. Both
+  stored sessions (215 s and 158 s, attached to a game already running) agree with FSR 2.1 built in and frame
+  generation off: every hook in, **not one ffx dispatch or query of any type**, no Streamline evaluation, no render
+  size, upscaler "unknown", factor 1.0 from Streamline's frame tokens, ~290 FPS. **So the 2.3 loader's double count
+  is still unobserved either way**: what answers it is a session in which `UserSettings.json` says
+  `ResolutionScaling = FSR3` afterwards.
+- **The first start was lost to the transient this file recorded an hour earlier — in a real session this time.**
+  10:05:20 the game appeared; the Overlay went in at 10:05:23; 0.47 s later it was told to stop, and the Agent's
+  log says why: `SafetyUnhook; Discarded (tier 1, exit=UnhookedSafety, frames=0); guard=ModuleScanFailed/a module
+  list came back incomplete`. The Overlay's log shows the four patches restored within 0.75 s. The game ran on
+  unrecorded for two minutes until the owner restarted it. **It is not new and not rare**: the Agent's logs kept on
+  this PC (2026-11-05 onwards) hold five such ends — Phantom Blade Zero three times on 2026-11-05 (two safety
+  unhooks and one refusal before injection), Crown & Coin on 2026-11-10, Cyberpunk today — beside the two test
+  runs. Each is a module list read while the target was still loading modules, at a launch. **The question for the
+  owner is no longer hypothetical**: a list that cannot be read is not a finding, and rule 2 treats it as a refusal
+  so that an unreadable game is never hooked; reading it again a bounded number of times before refusing would
+  keep that — a list that stays unreadable still refuses — and stop losing sessions to a moment of loading. It
+  changes what the guard does on a check, so it is the owner's decision, and it is not made here.
+
 ### NEXT
 
 1. ~~**The owner runs item 40** — above all **one session of Cyberpunk 2077 with FSR upscaling** on beta.42, then
@@ -169,7 +195,11 @@ line.
 1a. **Before beta.43's plan: one session of Cyberpunk 2077 with Resolution Scaling = FSR 3, frame generation
    off** (the second bullet above), and a second with it on. It says whether FrameLedger names FSR 3 there —
    the route through the loader that D121 was first taken to be about — and whether the 2.3 loader counts an
-   UPSCALE twice.
+   UPSCALE twice. *(Tried 2026-11-12 10:08 and 10:12: the game was still on FSR 2 — the section above. The check
+   that the right thing ran is the file: `ResolutionScaling = FSR3`.)*
+1b. **The owner's decision on the guard's module-list read** (the section above): refuse at the first incomplete
+   list, as now, or read again a bounded number of times first. If the second, it is a pull request of its own
+   in the guard (`FrameLedger.Injector`), with `19_SAFETY` amended in it, before or with beta.43.
 2. **~~Read that log, then~~ plan 0.1.0-beta.43** — `slSetConstants` and `ffxConfigure`, and the fix for D121 if the
    log shows the route. What to look for: which `HOOK_INSTALLED` lines there are (which of the four ffx modules and
    the FSR 3.0 host were patched); the `FFX_DISPATCH` lines — is `b=0x10001` (UPSCALE) on any module, or only
