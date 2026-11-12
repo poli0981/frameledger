@@ -25,8 +25,14 @@
   -->
   <Property Name="sonar.exclusions">src/native/third_party/**,**/Strings.Designer.cs,src/native/tools/hook-harness/dxr_raygen_dxil.h,src/native/tools/vendor-stubs/**,tests/fixtures/**,legal/licenses/**,docs/vendor-exports.json,src/FrameLedger.Infrastructure/Persistence/Migrations/**,build/**,out/**,**/bin/**,**/obj/**,**/TestResults/**</Property>
 
-  <!-- Tests repeat their arrange steps on purpose; duplication there is not a defect. -->
-  <Property Name="sonar.cpd.exclusions">tests/**,src/native/tests/**</Property>
+  <!--
+    Tests repeat their arrange steps on purpose; duplication there is not a defect.
+    HookFamilies.cs is the Domain's mirror of FlHookFamily (ShmLayout.cs): Domain references nothing, so the enum is
+    written twice by design and MetricEnumMirrorTests fails when the two differ. Six members added at once
+    (0.1.0-beta.45) were 39 duplicated lines of 1,063 new ones, 3.7 % against the gate's 3 %, and failed it on the
+    release's commit with no issue open. The mirror is left out of the detection; FlHookFamily itself is not.
+  -->
+  <Property Name="sonar.cpd.exclusions">tests/**,src/native/tests/**,src/FrameLedger.Domain/Metrics/HookFamilies.cs</Property>
 
   <Property Name="sonar.sourceEncoding">UTF-8</Property>
 

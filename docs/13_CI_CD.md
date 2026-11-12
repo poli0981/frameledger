@@ -357,7 +357,10 @@ from CI.
 writes into the checkout, since the scanner walks all of it (`build/`, with the sources CMake fetches there, `out/`,
 every `bin/` and `obj/`, `TestResults/`) — SonarCloud also drops what `.gitignore` names (the first run: "63 files
 ignored because of scm ignore settings"), and the patterns say it in the file rather than rely on that; the same
-duplication exclusions; C++20; UTF-8; the OpenCover paths; the compilation database;
+duplication exclusions *(and, since 2026-11-12, `src/FrameLedger.Domain/Metrics/HookFamilies.cs`: the Domain's
+mirror of `FlHookFamily`, the same enum twice by design and held together by `MetricEnumMirrorTests`. The six
+members 0.1.0-beta.45 added to both were 3.7 % duplication on new code against the gate's 3 %, and failed the gate
+on the release's commit with no issue open)*; C++20; UTF-8; the OpenCover paths; the compilation database;
 **`sonar.cs.roslyn.ignoreIssues`** — Roslynator, Meziantou, the VS threading and the .NET
 analyzers already gate the build, warnings as errors, and what they report at a lower severity is this project's
 choice, so only SonarCloud's own rules are imported; and **two rules ignored where they apply by design** — `S8417`
