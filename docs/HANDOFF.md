@@ -162,8 +162,27 @@ calls, with their measured cost) and [`18_GPU_VENDOR_APIS.md`](18_GPU_VENDOR_API
 
 ### Left open by this session
 
-- **This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
-  after this text. Record them in the next pull request, with what SonarCloud and Qodana said.
+- ~~**This release's own facts** — the tag's run, the digests, the delta — are not in any file yet: the release is cut
+  after this text. Record them in the next pull request, with what SonarCloud and Qodana said.~~ **Recorded
+  2026-11-12: 0.1.0-beta.45 was released 2026-11-12T16:40:42Z** (23:40 in the owner's time zone) from the signed
+  tag on `550d830` (#431), by run 43257803723 — green at the first attempt, one run for the one tag push. Eight
+  assets; the seven digests of `SHA256SUMS.txt` equal the ones GitHub computed; the four shipped natives carry
+  `FL_BUILD_ID v0.1.0-beta.45`. The delta from beta.44 is 1,762,465 bytes beside a full package of 110,767,499 —
+  "Delta processed 0452 files. 0024 patched, 0428 unchanged". The wiki was published by run 43261335359. The
+  rehearsal on the release branch (run 43253780609, at `f4e3fe2`, the released tree) had made a delta of 1,779,418
+  bytes with the same file counts. **Qodana's two reports are green on `550d830`.** On the way Qodana's native
+  report found two index products in the harness's probe (#427), fixed before that pull request merged; every
+  later report was clean, and each was read before its merge. No required check failed on this train.
+  **SonarCloud's quality gate failed on `550d830`, on one condition: duplicated lines on new code, 3.7 % where the
+  gate allows 3 %.** No issue is open and coverage on new code is 98.6 %. The 39 lines are the six new members of
+  `FlHookFamily` (`ShmLayout.cs`) and of its Domain mirror `HookFamilies` — two enums that are the same on purpose
+  (Domain references nothing, and `MetricEnumMirrorTests` fails when they differ), which six members at once took
+  over a threshold that two at a time had stayed under. The job is advisory and the release was already cut. The
+  pull request that records this leaves the Domain's mirror out of duplication detection, with the reason in
+  `SonarQube.Analysis.xml` and in `13_CI_CD` §SonarCloud; **whether the gate is green again is for the analysis of
+  that commit on `main` to say**, and it is not in this text. One more thing the train showed: main's branch
+  protection wants a pull request up to date, so of two that were green at once the second (#430) had to be
+  rebased after the first merged, and ran its checks again.
 - **No real game was run on this build.** Six new patch sites, tested with the harness and the stub; their cost
   measured on the headers.
 - **Off means off (item 42 (f)) has never been exercised on a real game**; it is item 43 (f) now, for all ten.
